@@ -54,97 +54,26 @@
                       width="100%"
                       style="border-collapse: collapse;"
                     >
-                      <tr class="content-section first-section">
-                        <td class="info-frame">
-                          <table class="section-content" role="presentation" border="0" cellpadding="0" cellspacing="0">
-                            <tr>
-                              <td>
-                                <table>
-                                  <tr class="content-number">
-                                    <td class="content-number-circle">
-                                      <p class="content-number-item">1</p>
-                                    </td>
-                                  </tr>
-                                  <tr style="float: left; display: block;">
-                                    <td>
-                                      <p class="content-title">Download Parsec application</p>
-                                    </td>
-                                  </tr>
-                                  <tr>
-                                    <td style="padding-top: 16px;">
-                                      <p class="content-section-text">
-                                        Make sure to download and install Parsec:</p>
-                                      </p>
-                                    </td>
-                                  </tr>
-                                  <tr>
-                                    <td style="padding-top: 16px;">
-                                      <!-- HTML links that open in a new tab or window allow the target page to access the DOM of the
-                                        origin page using window.opener unless link type noopener or noreferrer is specified. -->
-                                      <a class="button button-secondary" href="https://parsec.cloud/en/start-parsec" rel="noopener noreferrer" target="_blank" class="button">Download Parsec</a>
-                                    </td>
-                                  </tr>
-                                  <tr>
-                                    <td style="padding-top: 16px;">
-                                      <a href="https://parsec.cloud/en/start-parsec" style="font-size: 13px; color: #51517B;" rel="noopener noreferrer" target="_blank">https://parsec.cloud/en/start-parsec</a>
-                                    </td>
-                                  </tr>
-                                </table>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-
-                      <tr class="content-section second-section">
-                        <td class="info-frame">
-                          <table class="section-content" role="presentation" border="0" cellpadding="0" cellspacing="0">
-                            <tr>
-                              <td>
-                                <table>
-                                  <tr class="content-number">
-                                    <td class="content-number-circle">
-                                      <p class="content-number-item">2</p>
-                                    </td>
-                                  </tr>
-                                  <tr style="float: left; display: block;">
-                                    <td>
-                                    </td>
-                                  </tr>
-                                  <tr>
-                                    <td style="padding-top: 16px;">
-                                      <p class="content-section-text">
-                                        Once installed, click on the link below to confirm your email address.
-                                      </p>
-                                    </td>
-                                  </tr>
-                                  <tr>
-                                    <td style="padding-top: 16px;">
-                                      <!-- HTML links that open in a new tab or window allow the target page to access the DOM of the
-                                        origin page using window.opener unless link type noopener or noreferrer is specified. -->
-                                      <a class="button" href="{{ validation_url }}" rel="noopener noreferrer" target="_blank" class="button">Confirm
-                                        email address</a>
-                                    </td>
-                                  </tr>
-                                  <tr>
-                                    <td style="padding-top: 16px;">
-                                      <p style="font-size: 14px; color: #51517B;">If the button does not work, please click on the following link:</p>
-                                      <a href="{{ validation_url }}" style="font-size: 13px; color: #51517B;" rel="noopener noreferrer" target="_blank">{{
-                                        validation_url }}</a>
-                                    </td>
-                                  </tr>
-                                </table>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-
-                      <tr class="content-footer">
-                        <td class="note">
-                        </td>
-                      </tr>
-
+                      {% from "email/macros.html.j2" import gen_contents, render_link, render_fallback_link %}
+                      {{
+                        gen_contents([
+                          namespace(
+                            title="Download Parsec application",
+                            text="Make sure to download and install Parsec:",
+                            extras=[
+                              render_link("https://parsec.cloud/en/start-parsec", "Download Parsec", extra_class="button-secondary"),
+                              render_fallback_link("https://parsec.cloud/en/start-parsec")
+                            ]
+                          ),
+                          namespace(
+                            text="Once installed, click on the link below to confirm your email address.",
+                            extras=[
+                              render_link(validation_url, "Confirm email address"),
+                              render_fallback_link(validation_url)
+                            ]
+                          )
+                        ])
+                      }}
                     </table>
                   </td>
                 </tr>

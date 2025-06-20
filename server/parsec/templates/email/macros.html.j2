@@ -1,0 +1,61 @@
+{% macro render_content(index, content) %}
+<tr class="content-section">
+    <td class="info-frame">
+        <table class="section-content" role="presentation" border="0" cellpadding="0" cellspacing="0">
+            <tr>
+                <td>
+                    <table>
+                        <tr class="content-number">
+                            <td class="content-number-circle">
+                                <p class="content-number-item">{{ index }}</p>
+                            </td>
+                        </tr>
+                        <tr style="float: left; display: block;">
+                            <td>
+                                <p class="content-title">{{ content | attr("title") | default }}</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding-top: 16px;">
+                                <p class="content-section-text">{{ content.text }}</p>
+                            </td>
+                        </tr>
+                        {% for extra in content | attr("extras") | default([]) %}
+                        <tr>
+                            <td style="padding-top: 16px;">{{ extra }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </td>
+</tr>
+{% endmacro %}
+
+{% macro gen_contents(contents) %}
+{% for content in contents %}
+{{ render_content(loop.index, content) }}
+{% endfor %}
+{% endmacro %}
+
+{% macro render_note() %}
+<tr class="content-footer">
+    <td class="note">
+        {{ caller() }}
+    </td>
+</tr>
+{% endmacro %}
+
+{% macro render_link(url, title, extra_class="") %}
+<!-- HTML links that open in a new tab or window allow the target page to access the DOM of the
+origin page using window.opener unless link type noopener or noreferrer is specified. -->
+<a href="{{ url }}" class="button {{ extra_class }}" rel="noopener noreferrer" target="_blank">{{ title }}</a>
+{% endmacro %}
+
+{% macro render_fallback_link(url) %}
+<p style="font-size: 14px; color: #51517B;">
+    If the button does not work, please click on the following link:
+</p>
+<a href="{{ url }}" style="font-size: 13px; color: #51517B;" rel="noopener noreferrer" target="_blank">{{ url }}</a>
+{% endmacro %}
