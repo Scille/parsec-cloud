@@ -4,8 +4,9 @@
   <notification-item :notification="notification">
     <div class="notification-icon-container">
       <!-- This icon is only a default placeholder, replace/add notification specific icons -->
+      <!-- prettier-ignore -->
       <ms-image
-        :image="LogoIconGradient"
+        :image="(ResourcesManager.instance().get(Resources.LogoIcon, LogoIconGradient) as string)"
         class="notification-icon"
       />
     </div>
@@ -40,6 +41,7 @@ import { getWorkspaceRoleTranslationKey } from '@/services/translation';
 import { IonText } from '@ionic/vue';
 import { Ref, onMounted, ref } from 'vue';
 import { EventDistributor } from '@/services/eventDistributor';
+import { ResourcesManager, Resources } from '@/services/resourcesManager';
 
 const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
 

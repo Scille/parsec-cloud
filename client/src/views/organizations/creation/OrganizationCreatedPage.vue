@@ -6,9 +6,10 @@
       {{ $msTranslate('CreateOrganization.organizationCreated') }}
     </ms-informative-text>
 
+    <!-- prettier-ignore -->
     <ms-image
       v-if="isSmallDisplay"
-      :image="LogoIconWhite"
+      :image="(ResourcesManager.instance().get(Resources.LogoIcon, LogoIconWhite) as string)"
       class="created-page__logo"
     />
     <ion-text
@@ -55,6 +56,8 @@ import { OrganizationID } from '@/parsec';
 import { MsInformativeText, useWindowSize, LogoIconWhite, MsImage } from 'megashark-lib';
 import { chevronForward } from 'ionicons/icons';
 import { IonPage, IonText, IonButton, IonFooter, IonButtons, IonIcon } from '@ionic/vue';
+import { Resources, ResourcesManager } from '@/services/resourcesManager';
+
 const { isSmallDisplay } = useWindowSize();
 
 defineProps<{

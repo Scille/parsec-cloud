@@ -2,8 +2,9 @@
 
 <template>
   <ion-page class="creation-page page-modal-container">
+    <!-- prettier-ignore -->
     <ms-image
-      :image="isSmallDisplay ? LogoIconWhite : LogoIconGradient"
+      :image="(ResourcesManager.instance().get(Resources.LogoIcon, isSmallDisplay ? LogoIconWhite : LogoIconGradient) as string)"
       class="creation-page__logo"
     />
     <ion-text
@@ -22,6 +23,7 @@
 <script setup lang="ts">
 import { IonPage, IonText } from '@ionic/vue';
 import { MsImage, MsSpinner, LogoIconGradient, LogoIconWhite, useWindowSize } from 'megashark-lib';
+import { Resources, ResourcesManager } from '@/services/resourcesManager';
 
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 </script>

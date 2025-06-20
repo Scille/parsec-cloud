@@ -27,9 +27,10 @@
             >
               <ion-avatar class="organization-avatar body-lg">
                 <span v-if="!isTrialOrg">{{ userInfo ? userInfo.organizationId.substring(0, 2) : '' }}</span>
+                <!-- prettier-ignore -->
                 <ms-image
                   v-else
-                  :image="LogoIconGradient"
+                  :image="(ResourcesManager.instance().get(Resources.LogoIcon, LogoIconGradient) as string)"
                   class="organization-avatar-logo"
                 />
               </ion-avatar>
@@ -461,6 +462,7 @@ import { isUserAction, UserAction } from '@/views/users';
 import { useCustomTabBar } from '@/views/menu/utils';
 import { getSecurityWarnings, RecommendationAction, SecurityWarnings } from '@/components/misc';
 import RecommendationChecklistPopover from '@/components/misc/RecommendationChecklistPopover.vue';
+import { Resources, ResourcesManager } from '@/services/resourcesManager';
 
 defineProps<{
   userInfo: ClientInfo;

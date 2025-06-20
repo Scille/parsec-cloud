@@ -6,9 +6,10 @@
       <div class="current-organization-content">
         <ion-avatar class="organization-avatar">
           <span v-if="currentOrg && !currentOrg.trial">{{ currentOrg.id.substring(0, 2) }}</span>
+          <!-- prettier-ignore -->
           <ms-image
             v-else
-            :image="LogoIconGradient"
+            :image="(ResourcesManager.instance().get(Resources.LogoIcon, LogoIconGradient) as string)"
             class="organization-avatar-logo"
           />
         </ion-avatar>
@@ -51,9 +52,10 @@
               class="organization-avatar"
               :class="org.isOnline ? 'online' : 'offline'"
             >
+              <!-- prettier-ignore -->
               <ms-image
                 v-if="org.trial"
-                :image="LogoIconGradient"
+                :image="(ResourcesManager.instance().get(Resources.LogoIcon, LogoIconGradient) as string)"
                 class="organization-avatar-logo"
               />
               <span v-else>{{ org.id.substring(0, 2) }}</span>
@@ -88,6 +90,7 @@ import { IonAvatar, IonItem, IonLabel, IonList, IonText, IonTitle, popoverContro
 import { Ref, onMounted, ref } from 'vue';
 import { isTrialOrganizationDevice, getDurationBeforeExpiration, formatExpirationTime } from '@/common/organization';
 import { MsImage, LogoIconGradient, MsModalResult } from 'megashark-lib';
+import { Resources, ResourcesManager } from '@/services/resourcesManager';
 
 interface ConnectedOrganization {
   id: OrganizationID;

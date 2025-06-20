@@ -133,7 +133,6 @@ onMounted(() => {
   &::before {
     content: '';
     opacity: 0.5;
-    background: var(--parsec-color-light-gradient-background);
     position: absolute;
     height: 100%;
     max-height: 100%;

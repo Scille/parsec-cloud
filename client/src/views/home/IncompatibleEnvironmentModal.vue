@@ -7,8 +7,9 @@
       :close-button="{ visible: false }"
     >
       <div class="incompatible-image-container">
-        <img
-          src="@/assets/images/logo-incompatible.svg"
+        <!-- prettier-ignore -->
+        <ms-image
+          :image="(ResourcesManager.instance().get(Resources.LogoIcon, IncompatibleIcon) as string)"
           class="incompatible-image"
         />
       </div>
@@ -26,7 +27,9 @@
 
 <script setup lang="ts">
 import { IonPage, IonText } from '@ionic/vue';
-import { MsModal, MsReportTheme, Translatable } from 'megashark-lib';
+import { MsImage, MsModal, MsReportTheme, Translatable } from 'megashark-lib';
+import { Resources, ResourcesManager } from '@/services/resourcesManager';
+import IncompatibleIcon from '@/assets/images/logo-incompatible.svg?raw';
 
 defineProps<{
   message: Translatable;

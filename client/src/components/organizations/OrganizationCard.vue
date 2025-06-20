@@ -15,9 +15,10 @@
       >
         {{ device.organizationId?.substring(0, 2) }}
       </ion-text>
+      <!-- prettier-ignore -->
       <ms-image
         v-else
-        :image="LogoIconWhite"
+        :image="(ResourcesManager.instance().get(Resources.LogoIcon, LogoIconWhite) as string)"
         class="organization-card-header__logo"
       />
     </div>
@@ -86,6 +87,7 @@ import { checkmarkCircle, person, time } from 'ionicons/icons';
 import { MsImage, formatTimeSince, I18n, LogoIconWhite, useWindowSize } from 'megashark-lib';
 import { formatExpirationTime, isTrialOrganizationDevice, getDurationBeforeExpiration } from '@/common/organization';
 import { Duration, DateTime } from 'luxon';
+import { Resources, ResourcesManager } from '@/services/resourcesManager';
 
 const { isSmallDisplay, isLargeDisplay } = useWindowSize();
 const isTrialOrg = ref(false);
