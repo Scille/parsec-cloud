@@ -24,8 +24,8 @@ pub use url::Url;
 use libparsec_crypto::VerifyKey;
 
 use crate::{
-    AccountDeletionToken, BootstrapToken, EmailValidationToken, IndexInt, InvitationToken,
-    InvitationType, OrganizationID, VlobID,
+    BootstrapToken, EmailValidationToken, IndexInt, InvitationToken, InvitationType,
+    OrganizationID, VlobID,
 };
 
 pub const PARSEC_SCHEME: &str = "parsec3";
@@ -41,7 +41,6 @@ const PARSEC_ACTION_CLAIM_DEVICE: &str = "claim_device";
 const PARSEC_ACTION_CLAIM_SHAMIR_RECOVERY: &str = "claim_shamir_recovery";
 const PARSEC_ACTION_PKI_ENROLLMENT: &str = "pki_enrollment";
 const PARSEC_ACCOUNT_ACTION_EMAIL_VALIDATION: &str = "create_account";
-const PARSEC_ACCOUNT_ACTION_DELETE_ACCOUNT: &str = "delete_account";
 
 /// Url has a special way to parse http/https schemes. This is because those kind
 /// of url have special needs (for instance host cannot be empty).
@@ -946,7 +945,6 @@ impl ParsecInvitationAddr {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ParsecAccountActionAddr {
     AccountValidation(ParsecAccountEmailValidationAddr),
-    AccountDeletion,
     AccountRecovery,
 }
 
@@ -955,7 +953,7 @@ impl ParsecAccountActionAddr {
         if let Ok(addr) = ParsecAccountEmailValidationAddr::from_any(url) {
             Ok(ParsecAccountActionAddr::AccountValidation(addr))
         } else {
-            todo!("Missing account deletion and recovery addr")
+            todo!("Missing account recovery addr")
         }
     }
 
@@ -965,7 +963,7 @@ impl ParsecAccountActionAddr {
         if let Ok(addr) = ParsecAccountEmailValidationAddr::_from_url(&parsed) {
             Ok(ParsecAccountActionAddr::AccountValidation(addr))
         } else {
-            todo!("Missing account deletion and recovery addr")
+            todo!("Missing account recovery addr")
         }
     }
 }
@@ -1042,67 +1040,6 @@ impl ParsecAccountEmailValidationAddr {
     }
 
     pub fn token(&self) -> EmailValidationToken {
-        self.token
-    }
-}
-
-/*
- * ParsecAccountDeletionAddr
- */
-
-/// Represent the URL to validate an email for parsec account
-///
-/// (e.g. ``parsec3://parsec.example.com?a=delete_account&p=xBA8nAZGHV1EJRYFW8O8xS0L``)  // cspell:disable-line
-#[derive(Clone, PartialEq, Eq, Hash)]
-pub struct ParsecAccountDeletionAddr {
-    base: BaseParsecAddr,
-    token: AccountDeletionToken,
-}
-
-impl_common_stuff!(ParsecAccountDeletionAddr);
-
-impl ParsecAccountDeletionAddr {
-    pub fn new(server_addr: impl Into<ParsecAddr>, token: AccountDeletionToken) -> Self {
-        Self {
-            base: server_addr.into().base,
-            token,
-        }
-    }
-
-    fn _from_url(parsed: &ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
-        let base = BaseParsecAddr::from_url(parsed)?;
-        let pairs = parsed.0.query_pairs();
-
-        extract_param_and_expect_value(
-            &pairs,
-            PARSEC_PARAM_ACTION,
-            PARSEC_ACCOUNT_ACTION_DELETE_ACCOUNT,
-        )?;
-
-        let token = extract_param_and_b64_msgpack_deserialize!(
-            &pairs,
-            PARSEC_PARAM_PAYLOAD,
-            AccountDeletionToken
-        )?;
-
-        Ok(Self { base, token })
-    }
-
-    expose_base_parsec_addr_fields!();
-
-    fn _to_url(&self, mut url: Url) -> Url {
-        url.path_segments_mut()
-            .expect("expected url not to be a cannot-be-a-base");
-
-        let payload = b64_msgpack_serialize(&self.token);
-
-        url.query_pairs_mut()
-            .append_pair(PARSEC_PARAM_ACTION, PARSEC_ACCOUNT_ACTION_DELETE_ACCOUNT)
-            .append_pair(PARSEC_PARAM_PAYLOAD, &payload);
-        url
-    }
-
-    pub fn token(&self) -> AccountDeletionToken {
         self.token
     }
 }

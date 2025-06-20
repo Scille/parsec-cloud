@@ -2,11 +2,9 @@ Hello!
 
 You have requested to delete your Parsec Account.
 
-To confirm your Parsec Account deletion:
+To confirm your Parsec Account deletion, use the following code:
 
-1. Make sure to download and install Parsec app (https://parsec.cloud/en/start-parsec)
-2. Once installed, click on the link below to delete your Parsec Account:
-{{ deletion_url }}
+{{ deletion_code }}
 
 Thank you,
 
