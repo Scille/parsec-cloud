@@ -49,10 +49,10 @@ from parsec._parsec import (
     UserID,
     UserProfile,
     UserUpdateCertificate,
-    ValidationCode,
     VerifyKey,
     VlobID,
 )
+from parsec.components.account import ValidationCodeInfo
 from parsec.components.invite import InvitationCreatedBy
 from parsec.components.organization import TermsOfService
 from parsec.components.sequester import SequesterServiceType
@@ -108,7 +108,7 @@ class MemoryDatamodel:
     unverified_emails: dict[EmailAddress, tuple[EmailValidationToken, DateTime]] = field(
         default_factory=dict
     )
-    accounts_deletion_requested: dict[EmailAddress, tuple[ValidationCode, DateTime]] = field(
+    accounts_deletion_requested: dict[EmailAddress, ValidationCodeInfo] = field(
         default_factory=dict
     )
 
@@ -909,7 +909,7 @@ class MemoryAccount:
     # to allow pre-filling human handle during enrollment.
     human_label: str
     current_vault: MemoryAccountVault
-    # current vault is not part of previous vaults
+    # Current vault is not part of previous vaults
     previous_vaults: list[MemoryAccountVault] = field(default_factory=list)
     # Note that any active auth methods gets disabled when the account is deleted
     deleted_on: DateTime | None = None

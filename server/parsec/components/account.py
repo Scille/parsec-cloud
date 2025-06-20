@@ -97,6 +97,33 @@ class VaultItems:
     items: dict[HashDigest, bytes]
 
 
+VALIDATION_CODE_VALIDITY_DURATION_SECONDS: int = 3600
+"""
+How much seconds a validation code remain usable (valid)
+"""
+
+VALIDATION_CODE_MAX_FAILED_ATTEMPTS: int = 3
+"""How much an user can "guess" the code"""
+
+
+@dataclass(slots=True)
+class ValidationCodeInfo:
+    code: ValidationCode
+    created_at: DateTime
+    failed_attempts: int = 0
+
+    def is_expired(self, now: DateTime) -> bool:
+        """Check that the validation code is not expired"""
+        return (now - self.created_at) > VALIDATION_CODE_VALIDITY_DURATION_SECONDS
+
+    def has_remaining_attempts(self) -> bool:
+        """Check if we are below the max attempts for the code"""
+        return self.failed_attempts < VALIDATION_CODE_MAX_FAILED_ATTEMPTS
+
+    def can_be_used(self, now: DateTime) -> bool:
+        return not self.is_expired(now) and self.has_remaining_attempts()
+
+
 class BaseAccountComponent:
     def __init__(self, config: BackendConfig):
         self._config = config
@@ -272,10 +299,8 @@ class BaseAccountComponent:
             message=message,
         )
 
-    def should_resend_token(self, now: DateTime, last_email_datetime: DateTime) -> bool:
-        return now > last_email_datetime.add(
-            seconds=self._config.account_confirmation_email_resend_delay
-        )
+    def can_send_new_code_email(self, last_email_datetime: DateTime, now: DateTime) -> bool:
+        return (now - last_email_datetime) > self._config.account_confirmation_email_resend_delay
 
     def test_get_token_by_email(self, email: EmailAddress) -> EmailValidationToken | None:
         raise NotImplementedError
@@ -423,12 +448,25 @@ class BaseAccountComponent:
             email_config=self._config.email_config, to_addr=email, message=message
         )
 
-    async def create_email_deletion_token(
+    async def get_account_deletion_code_info(
+        self, email: EmailAddress
+    ) -> ValidationCodeInfo | None:
+        raise NotImplementedError
+
+    async def set_account_deletion_code_info(self, email: EmailAddress, info: ValidationCodeInfo):
+        raise NotImplementedError
+
+    async def create_email_deletion_code(
         self,
         email: EmailAddress,
         now: DateTime,
     ) -> ValidationCode | AccountCreateAccountDeletionTokenBadOutcome:
-        raise NotImplementedError
+        code_info = await self.get_account_deletion_code_info(email)
+        if code_info is not None and not self.can_send_new_code_email(code_info.created_at, now):
+            return AccountCreateAccountDeletionTokenBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND
+        code = ValidationCode.generate()
+        await self.set_account_deletion_code_info(email, ValidationCodeInfo(code, now))
+        return code
 
     @api
     async def api_account_delete_send_validation_email(
@@ -436,7 +474,7 @@ class BaseAccountComponent:
         client_ctx: AuthenticatedAccountClientContext,
         req: authenticated_account_cmds.latest.account_delete_send_code.Req,
     ) -> authenticated_account_cmds.latest.account_delete_send_code.Rep:
-        outcome = await self.create_email_deletion_token(client_ctx.account_email, DateTime.now())
+        outcome = await self.create_email_deletion_code(client_ctx.account_email, DateTime.now())
         match outcome:
             case ValidationCode() as code:
                 outcome = await self._send_email_deletion_code(code, client_ctx.account_email)
