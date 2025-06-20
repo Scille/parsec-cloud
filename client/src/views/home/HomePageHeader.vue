@@ -3,19 +3,27 @@
 <template>
   <div class="homepage-header">
     <div
-      class="menu-secondary"
-      v-if="showSecondaryMenu"
+      v-if="updateAvailability !== null"
+      class="update-container"
+      @click="update()"
     >
+      <ion-text class="update-text form-label">{{ $msTranslate('notificationCenter.newVersionAvailable') }}</ion-text>
       <ion-button
-        v-if="updateAvailability !== null"
         class="update-button form-label"
         id="trigger-update-button"
         fill="clear"
-        @click="update()"
       >
-        {{ $msTranslate('notificationCenter.newVersionAvailable') }}
+        {{ $msTranslate('notificationCenter.update') }}
+        <ion-icon
+          :icon="arrowForward"
+          class="update-button-icon"
+        />
       </ion-button>
-
+    </div>
+    <div
+      class="menu-secondary"
+      v-if="showSecondaryMenu"
+    >
       <ion-buttons class="menu-secondary-buttons">
         <!-- about button -->
         <ion-button
@@ -137,7 +145,7 @@
 
 <script setup lang="ts">
 import { IonButton, IonButtons, IonIcon, modalController, IonText } from '@ionic/vue';
-import { arrowBack, caretDown, cog, informationCircle, open, personCircle } from 'ionicons/icons';
+import { arrowBack, arrowForward, caretDown, cog, informationCircle, open, personCircle } from 'ionicons/icons';
 import ProfileHeaderHomepage from '@/views/header/ProfileHeaderHomePage.vue';
 import { EventData, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
@@ -274,6 +282,72 @@ const emits = defineEmits<{
 </script>
 
 <style lang="scss" scoped>
+.update-container {
+  margin-right: auto;
+  min-height: 1rem;
+  width: 100%;
+  margin: 0 0.25rem 2rem;
+  background: linear-gradient(90deg, var(--parsec-color-light-primary-700) 0%, var(--parsec-color-light-primary-600) 100%);
+  color: var(--parsec-color-light-secondary-background);
+  min-height: 32px;
+  padding: 0 0.325rem;
+  border-radius: var(--parsec-radius-8);
+  transition: all 150ms linear;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  &:hover {
+    --background-hover: none;
+    box-shadow: var(--parsec-shadow-light);
+  }
+
+  @include ms.responsive-breakpoint('md') {
+    flex-direction: column;
+  }
+
+  @include ms.responsive-breakpoint('xs') {
+    width: 100%;
+  }
+
+  .update-text {
+    margin-left: 0.5rem;
+    color: var(--parsec-color-light-secondary-background);
+    transition: bottom 150ms linear;
+    position: relative;
+    bottom: 0;
+  }
+
+  .update-button {
+    --background-hover: none;
+    color: var(--parsec-color-light-secondary-white);
+    font-weight: 700;
+    transition: top 150ms linear;
+    position: absolute;
+    top: 3rem;
+
+    &:hover {
+      color: var(--parsec-color-light-secondary-background);
+    }
+
+    &-icon {
+      font-size: 1rem;
+      margin-left: 0.25rem;
+    }
+  }
+
+  &:hover {
+    .update-text {
+      bottom: 1.5rem;
+    }
+
+    .update-button {
+      top: 1.375rem;
+    }
+  }
+}
+
 .menu-secondary {
   display: flex;
   width: 100%;
@@ -283,31 +357,6 @@ const emits = defineEmits<{
   @include ms.responsive-breakpoint('md') {
     flex-direction: column;
     gap: 1rem;
-  }
-
-  .update-button {
-    margin-right: auto;
-    min-height: 1rem;
-    background: var(--parsec-color-light-primary-50);
-    color: var(--parsec-color-light-primary-700);
-    min-height: 1rem;
-    border: 1px solid var(--parsec-color-light-primary-100);
-    padding: 0 0.325rem;
-    border-radius: var(--parsec-radius-32);
-    transition: all 150ms linear;
-
-    &:hover {
-      --background-hover: none;
-      box-shadow: var(--parsec-shadow-light);
-    }
-
-    @include ms.responsive-breakpoint('md') {
-      flex-direction: column;
-    }
-
-    @include ms.responsive-breakpoint('xs') {
-      width: 100%;
-    }
   }
 
   &-buttons {

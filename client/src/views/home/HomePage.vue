@@ -693,7 +693,7 @@ function getBackButtonTitle(): string {
 
   // Should be edited later with responsive
   .homepage-header {
-    padding: 2rem 5rem 0 5rem;
+    padding: 1.5rem 4rem 0 4rem;
 
     @include ms.responsive-breakpoint('lg') {
       flex-direction: column-reverse;
