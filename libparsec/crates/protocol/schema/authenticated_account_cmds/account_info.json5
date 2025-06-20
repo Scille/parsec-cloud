@@ -1,0 +1,20 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "account_info",
+        "req": {},
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "human_handle",
+                        "type": "HumanHandle"
+                    }
+                ]
+            }
+        ]
+    }
+]
