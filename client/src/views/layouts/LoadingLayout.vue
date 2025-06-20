@@ -5,8 +5,9 @@
     <ion-content :fullscreen="true">
       <div class="loading-container">
         <div class="loading-content">
+          <!-- prettier-ignore -->
           <ms-image
-            :image="LogoIconGradient"
+            :image="(ResourcesManager.instance().get(Resources.LogoIcon, LogoIconGradient) as string)"
             class="logo-img"
           />
           <ms-spinner title="HomePage.organizationLogin.loading" />
@@ -21,6 +22,7 @@ import { Base64, LogoIconGradient, MsImage, MsSpinner } from 'megashark-lib';
 import { RouteBackup, Routes, getCurrentRouteQuery, navigateTo } from '@/router';
 import { IonContent, IonPage } from '@ionic/vue';
 import { onMounted } from 'vue';
+import { Resources, ResourcesManager } from '@/services/resourcesManager';
 
 onMounted(async () => {
   // When trying to switch from one connected org to another,

@@ -79,10 +79,11 @@
               <!-- left element: qr code -->
               <figure class="qrcode">
                 <!-- #4294FF is light-primary-500 -->
+                <!-- prettier-ignore -->
                 <q-r-code-vue3
                   :value="greeter.invitationLink"
                   :key="greeter.invitationLink"
-                  :image="LogoIconGradient"
+                  :image="(ResourcesManager.instance().get(Resources.LogoIcon, LogoIconGradient) as string)"
                   :image-options="{ hideBackgroundDots: true, imageSize: 1, margin: 1 }"
                   :qr-options="{ errorCorrectionLevel: 'L' }"
                   :dots-options="{
@@ -278,6 +279,7 @@ import { checkmarkCircle, close, copy, phonePortrait } from 'ionicons/icons';
 import QRCodeVue3 from 'qrcode-vue3';
 import { computed, onMounted, ref } from 'vue';
 import { DateTime } from 'luxon';
+import { Resources, ResourcesManager } from '@/services/resourcesManager';
 
 enum GreetDeviceStep {
   WaitForGuest = 0,

@@ -14,9 +14,10 @@
         <template v-if="userInfo">
           <ion-avatar class="organization-header-avatar body-lg">
             <span v-if="!isTrialOrg">{{ userInfo.organizationId.substring(0, 2) }}</span>
+            <!-- prettier-ignore -->
             <ms-image
               v-else
-              :image="LogoIconGradient"
+              :image="(ResourcesManager.instance().get(Resources.LogoIcon, LogoIconGradient) as string)"
               class="avatar-logo"
             />
           </ion-avatar>
@@ -116,6 +117,7 @@ import OrganizationConfigurationInformation from '@/components/organizations/Org
 import OrganizationStorageInformation from '@/components/organizations/OrganizationStorageInformation.vue';
 import { isTrialOrganizationDevice } from '@/common/organization';
 import { useWindowSize } from 'megashark-lib';
+import { Resources, ResourcesManager } from '@/services/resourcesManager';
 
 const { isSmallDisplay } = useWindowSize();
 

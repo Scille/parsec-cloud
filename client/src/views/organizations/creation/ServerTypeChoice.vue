@@ -29,8 +29,9 @@
             src="@/assets/images/background/background-shapes-small.svg"
             id="center"
           />
-          <img
-            src="@/assets/images/app-icon-parsec.svg"
+          <!-- prettier-ignore -->
+          <ms-image
+            :image="(ResourcesManager.instance().get(Resources.AppIcon, AppIconParsec) as string)"
             class="icon"
           />
         </div>
@@ -90,12 +91,14 @@
 import { IonPage, IonButton, IonText, IonFooter, IonIcon } from '@ionic/vue';
 import { ref } from 'vue';
 import { ServerType } from '@/services/parsecServers';
-import { I18n } from 'megashark-lib';
+import { I18n, MsImage } from 'megashark-lib';
 import TrialUS from '@/assets/images/trial-US.svg';
 import TrialFR from '@/assets/images/trial-FR.svg';
 import { checkmarkCircle } from 'ionicons/icons';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
 import { Env } from '@/services/environment';
+import { ResourcesManager, Resources } from '@/services/resourcesManager';
+import AppIconParsec from '@/assets/images/app-icon-parsec.svg?raw';
 
 const emits = defineEmits<{
   (e: 'serverChosen', serverType: ServerType): void;

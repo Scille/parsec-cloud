@@ -5,6 +5,7 @@ import { Env } from '@/services/environment';
 import axios from 'axios';
 
 enum Resources {
+  AppIcon = 'app_icon.svg',
   LogoFull = 'logo.svg',
   LogoIcon = 'logo_icon.svg',
   TranslationEnUs = 'en_US.json',
@@ -29,8 +30,9 @@ type convertFunction = (buffer: ArrayBuffer) => Promise<NonNullable<unknown>>;
 const ResourceConverters = new Map<Resources, convertFunction>([
   [Resources.TranslationEnUs, convertJSON],
   [Resources.TranslationFrFr, convertJSON],
-  [Resources.LogoFull, convertSVG],
+  [Resources.AppIcon, convertSVG],
   [Resources.LogoIcon, convertSVG],
+  [Resources.LogoFull, convertSVG],
   [Resources.HomeSidebar, convertBinary],
 ]);
 
