@@ -20,9 +20,9 @@ async function checkAppUpdateModal(page: Page): Promise<void> {
 }
 
 msTest('Opens app update modal on home page', async ({ home }) => {
-  const updateButton = home.locator('.homepage-header').locator('#trigger-update-button');
-  await expect(updateButton).toHaveText('A new version is available');
-  await updateButton.click();
+  const updateContainer = home.locator('.update-container');
+  await expect(updateContainer.locator('.update-text')).toHaveText('A new version is available');
+  await updateContainer.click();
   await checkAppUpdateModal(home);
 });
 
