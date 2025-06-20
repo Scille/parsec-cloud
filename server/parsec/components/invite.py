@@ -155,7 +155,7 @@ def generate_invite_email(
     is_device_invitation = invitation_type == invitation_type.DEVICE
     is_shamir_recovery_invitation = invitation_type == invitation_type.SHAMIR_RECOVERY
 
-    html = get_template("invitation_mail.html").render(
+    html = get_template("email/invitation.html.j2").render(
         is_user_invitation=is_user_invitation,
         is_device_invitation=is_device_invitation,
         is_shamir_recovery_invitation=is_shamir_recovery_invitation,
@@ -164,7 +164,7 @@ def generate_invite_email(
         invitation_url=invitation_url,
         server_url=server_url,
     )
-    text = get_template("invitation_mail.txt").render(
+    text = get_template("email/invitation.txt.j2").render(
         is_user_invitation=is_user_invitation,
         is_device_invitation=is_device_invitation,
         is_shamir_recovery_invitation=is_shamir_recovery_invitation,
