@@ -24,12 +24,14 @@ const API_LATEST_MAJOR_VERSION: u32 = API_LATEST_VERSION.version;
 /// Send commands in an anonymous context.
 #[derive(Debug)]
 pub struct AnonymousAccountCmds {
+    // Note the `pub(super)` for some fields here, their solely purpose is to
+    // implement `AuthenticatedAccountCmds::from_anonymous`
     /// HTTP Client that contain the basic configuration to communicate with the server.
-    client: Client,
-    addr: ParsecAddr,
+    pub(super) client: Client,
+    pub(super) addr: ParsecAddr,
     url: Url,
     #[cfg(feature = "test-with-testbed")]
-    send_hook: SendHookConfig,
+    pub(super) send_hook: SendHookConfig,
 }
 
 impl AnonymousAccountCmds {
