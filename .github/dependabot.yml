@@ -247,7 +247,7 @@ updates:
       separator: "-"
     labels:
       - I-Dependency
-      - I-Javascript
+      - I-CICD
     schedule:
       interval: weekly
       day: monday

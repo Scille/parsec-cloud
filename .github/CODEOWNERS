@@ -41,6 +41,7 @@ mypy.ini                @Scille/python-code-owners
 setup.cfg               @Scille/python-code-owners
 
 # Ops team is responsible for the CI & the packaging system.
+/.cspell/               @Scille/ops-code-owners
 /.github/               @Scille/ops-code-owners
 /server/packaging/      @Scille/ops-code-owners
 /misc/                  @Scille/ops-code-owners
