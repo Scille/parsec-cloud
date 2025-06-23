@@ -150,8 +150,8 @@ is preferred (e.g. try `my workspace (1)`, `my workspace (2)` and so on).
 | Error | Expected behavior |
 | ----- | ----------------- |
 | **Unable to create workspace dir** | If either `base_mountpoint_dir` or `workspace_dir_path` cannot be created (e.g. permissions, disk space, other), the mount should be aborted as there is no way to correctly mount the workspace. |
-| **Workspace unmounted** | If the workspace crashes, or is manually unmounted by the user, no action is performed. The workspace should be re-mounted when the user attemps to access the workspace again from Parsec GUI. |
-| **Workspace directory removed** | If the workspace directory is manually removed by the user, no action is performed. The workspace should be re-mounted when the user attemps to access the workspace again from Parsec GUI. |
+| **Workspace unmounted** | If the workspace crashes, or is manually unmounted by the user, no action is performed. The workspace should be re-mounted when the user attempts to access the workspace again from Parsec GUI. |
+| **Workspace directory removed** | If the workspace directory is manually removed by the user, no action is performed. The workspace should be re-mounted when the user attempts to access the workspace again from Parsec GUI. |
 
 In either of the previous cases, Parsec should inform the user about the issue.
 This could be done in a non-intrusive manner such as displaying a warning sign
