@@ -10,8 +10,6 @@ from typing import (
     get_type_hints,
 )
 
-from parsec._parsec import ApiVersion
-
 if TYPE_CHECKING:
     from parsec.client_context import (
         AnonymousAccountClientContext,
@@ -34,11 +32,6 @@ if TYPE_CHECKING:
     )
     ApiFn = Callable[[ClientContext, Req], Awaitable[Rep | None]]
     ApiFnWithSelf = Callable[[Any, ClientContext, Req], Awaitable[Rep | None]]
-
-
-ALLOWED_API_VERSIONS = {
-    ApiVersion.API_V4_VERSION.version,
-}
 
 
 def api(fn: ApiFnWithSelf) -> ApiFnWithSelf:  # pyright: ignore[reportMissingTypeArgument] see TODO for Req/Rep above
