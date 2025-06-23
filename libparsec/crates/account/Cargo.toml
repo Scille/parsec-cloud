@@ -19,6 +19,7 @@ libparsec_platform_device_loader = { workspace = true }
 libparsec_protocol = { workspace = true }
 
 thiserror = { workspace = true }
+log = { workspace = true }
 
 [dev-dependencies]
 libparsec_tests_lite = { workspace = true }

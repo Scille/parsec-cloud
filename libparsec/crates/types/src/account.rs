@@ -20,12 +20,32 @@ use crate::{
  * Helpers
  */
 
+macro_rules! impl_dump {
+    ($name:ident) => {
+        impl $name {
+            pub fn dump(&self) -> Vec<u8> {
+                format_v0_dump(&self)
+            }
+        }
+    };
+}
+
 macro_rules! impl_dump_and_encrypt {
     ($name:ident) => {
         impl $name {
             pub fn dump_and_encrypt(&self, key: &::libparsec_crypto::SecretKey) -> Vec<u8> {
                 let serialized = format_v0_dump(&self);
                 key.encrypt(&serialized)
+            }
+        }
+    };
+}
+
+macro_rules! impl_load {
+    ($name:ident) => {
+        impl $name {
+            pub fn load(serialized: &[u8]) -> Result<$name, DataError> {
+                format_vx_load(&serialized)
             }
         }
     };
@@ -121,6 +141,19 @@ impl From<ValidationCode> for String {
 }
 
 /*
+ * AccountVaultItem
+ */
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum AccountVaultItem {
+    WebLocalDeviceKey(AccountVaultItemWebLocalDeviceKey),
+    RegistrationDevice(AccountVaultItemRegistrationDevice),
+}
+
+impl_load!(AccountVaultItem);
+
+/*
  * AccountVaultItemWebLocalDeviceKey
  */
 
@@ -130,12 +163,12 @@ impl From<ValidationCode> for String {
     from = "AccountVaultItemWebLocalDeviceKeyData"
 )]
 pub struct AccountVaultItemWebLocalDeviceKey {
-    organization_id: OrganizationID,
-    device_id: DeviceID,
+    pub organization_id: OrganizationID,
+    pub device_id: DeviceID,
     /// `SecretKey` encrypted by the vault key.
     /// This key is itself used to decrypt the `LocalDevice` stored on
     /// the web client's storage
-    encrypted_data: Bytes,
+    pub encrypted_data: Bytes,
 }
 
 parsec_data!("schema/account/account_vault_item_web_local_device_key.json5");
@@ -148,8 +181,7 @@ impl_transparent_data_format_conversion!(
     encrypted_data,
 );
 
-impl_dump_and_encrypt!(AccountVaultItemWebLocalDeviceKey);
-impl_decrypt_and_load!(AccountVaultItemWebLocalDeviceKey);
+impl_dump!(AccountVaultItemWebLocalDeviceKey);
 
 /*
  * AccountVaultItemRegistrationDevice
@@ -161,10 +193,10 @@ impl_decrypt_and_load!(AccountVaultItemWebLocalDeviceKey);
     from = "AccountVaultItemRegistrationDeviceData"
 )]
 pub struct AccountVaultItemRegistrationDevice {
-    organization_id: OrganizationID,
-    user_id: UserID,
+    pub organization_id: OrganizationID,
+    pub user_id: UserID,
     /// `LocalDevice` encrypted by the vault key
-    encrypted_data: Bytes,
+    pub encrypted_data: Bytes,
 }
 
 parsec_data!("schema/account/account_vault_item_registration_device.json5");
@@ -177,8 +209,7 @@ impl_transparent_data_format_conversion!(
     encrypted_data,
 );
 
-impl_dump_and_encrypt!(AccountVaultItemRegistrationDevice);
-impl_decrypt_and_load!(AccountVaultItemRegistrationDevice);
+impl_dump!(AccountVaultItemRegistrationDevice);
 
 /*
  * AccountVaultKeyAccess
@@ -187,7 +218,7 @@ impl_decrypt_and_load!(AccountVaultItemRegistrationDevice);
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "AccountVaultKeyAccessData", from = "AccountVaultKeyAccessData")]
 pub struct AccountVaultKeyAccess {
-    vault_key: SecretKey,
+    pub vault_key: SecretKey,
 }
 
 parsec_data!("schema/account/account_vault_key_access.json5");
