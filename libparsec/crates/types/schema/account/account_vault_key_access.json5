@@ -1,0 +1,10 @@
+{
+    "label": "AccountVaultKeyAccess",
+    "type": "vault_key_access",
+    "other_fields": [
+        {
+            "name": "vault_key",
+            "type": "SecretKey"
+        }
+    ]
+}

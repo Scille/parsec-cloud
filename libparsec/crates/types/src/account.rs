@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::*;
 use thiserror::Error;
 
+use libparsec_crypto::SecretKey;
 use libparsec_serialization_format::parsec_data;
 
 use crate::{
@@ -178,6 +179,27 @@ impl_transparent_data_format_conversion!(
 
 impl_dump_and_encrypt!(AccountVaultItemRegistrationDevice);
 impl_decrypt_and_load!(AccountVaultItemRegistrationDevice);
+
+/*
+ * AccountVaultKeyAccess
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(into = "AccountVaultKeyAccessData", from = "AccountVaultKeyAccessData")]
+pub struct AccountVaultKeyAccess {
+    vault_key: SecretKey,
+}
+
+parsec_data!("schema/account/account_vault_key_access.json5");
+
+impl_transparent_data_format_conversion!(
+    AccountVaultKeyAccess,
+    AccountVaultKeyAccessData,
+    vault_key,
+);
+
+impl_dump_and_encrypt!(AccountVaultKeyAccess);
+impl_decrypt_and_load!(AccountVaultKeyAccess);
 
 #[cfg(test)]
 #[path = "../tests/unit/account.rs"]

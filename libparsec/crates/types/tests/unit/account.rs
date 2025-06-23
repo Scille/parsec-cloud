@@ -125,3 +125,37 @@ fn serde_account_vault_item_registration_device() {
     let data2 = AccountVaultItemRegistrationDevice::decrypt_and_load(&raw2, &key).unwrap();
     p_assert_eq!(data2, expected);
 }
+
+#[rstest]
+fn serde_account_vault_key_access() {
+    let key = SecretKey::from(hex!(
+        "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
+    ));
+    let vault_key = SecretKey::from(hex!(
+        "114413b514a2197e083c49b8b3637dbc330bdf7c0e7e8b2a9a9dc6236885485f"
+    ));
+
+    // Generated from Parsec 3.4.1-a.0+dev
+    // Content:
+    //   type: 'vault_key_access'
+    //   vault_key: 0x114413b514a2197e083c49b8b3637dbc330bdf7c0e7e8b2a9a9dc6236885485f
+    let raw: &[u8] = hex!(
+        "19d3b8ec723939ad27eb82790a1e83db0d4ff8e67843b67d7ab8ef2631d630080ddc41"
+        "5c4aac2959ec5b34f67f1d4f55ecb718275449b7dc1d00418931e02569e0cafe013aee"
+        "29ae50d3a4d2a61d9bcafed90912500834c243dece2d8f221683a9bddc2306de70f2f5"
+        "3dfd00dd126b5b1b2c182613"
+    )
+    .as_ref();
+
+    let expected = AccountVaultKeyAccess { vault_key };
+    println!("***expected: {:?}", expected.dump_and_encrypt(&key));
+
+    let data = AccountVaultKeyAccess::decrypt_and_load(raw, &key).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump_and_encrypt(&key);
+    let data2 = AccountVaultKeyAccess::decrypt_and_load(&raw2, &key).unwrap();
+    p_assert_eq!(data2, expected);
+}
