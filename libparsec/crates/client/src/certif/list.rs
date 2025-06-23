@@ -314,12 +314,18 @@ pub(super) async fn get_user_device(
 pub struct WorkspaceUserAccessInfo {
     pub user_id: UserID,
     pub human_handle: HumanHandle,
-    pub current_profile: UserProfile,
-    pub current_role: RealmRole,
+    /// The user's current profile or `None` if the user has been revoked
+    pub current_profile: Option<UserProfile>,
+    /// The user's current role or `None` if the user no longer has access to the workspace
+    pub current_role: Option<RealmRole>,
 }
 
-/// List users currently part of the given workspace (i.e. user not revoked
-/// and with a valid role)
+/// List all users who have (or had at some point) access to the workspace.
+///
+/// This includes:
+/// - Users who have access to the workspace, their current role & profile are set accordingly.
+/// - Users who no longer have access to the workspace (i.e. unshared), their current role is set to `None`.
+/// - Users who are no longer part of the organization (i.e. revoked), their current profile is set to `None`.
 pub(super) async fn list_workspace_users(
     ops: &CertificateOps,
     realm_id: VlobID,
@@ -329,26 +335,13 @@ pub(super) async fn list_workspace_users(
     ops.store
         .for_read(async |store| {
             let per_user_certifs = store
-                .get_realm_current_users_roles(UpTo::Current, realm_id)
+                .get_realm_current_users_roles(UpTo::Current, realm_id, true)
                 .await?;
 
             for (user_id, role_certif) in per_user_certifs {
-                let current_role = role_certif
-                    .role
-                    .expect("unshared user should not be listed");
-
-                // Ignore revoked users
-                let maybe_revoked = store
-                    .get_revoked_user_certificate(UpTo::Current, user_id)
-                    .await?;
-                if maybe_revoked.is_some() {
-                    continue;
-                }
-
                 let user_certif = match store.get_user_certificate(UpTo::Current, user_id).await {
                     Ok(user_certif) => user_certif,
-                    // We got the user ID from the certificate store, it is guaranteed to
-                    // be present !
+                    // We got the user ID from the certificate store, it is guaranteed to be present!
                     Err(
                         GetCertificateError::NonExisting
                         | GetCertificateError::ExistButTooRecent { .. },
@@ -356,20 +349,29 @@ pub(super) async fn list_workspace_users(
                     Err(GetCertificateError::Internal(err)) => return Err(err),
                 };
 
-                let current_profile = match store
-                    .get_last_user_update_certificate(UpTo::Current, user_id)
-                    .await?
-                {
-                    Some(user_update_certif) => user_update_certif.new_profile,
-                    // Profile has never been updated, use the initial one
-                    None => user_certif.profile,
+                let maybe_revoked = store
+                    .get_revoked_user_certificate(UpTo::Current, user_id)
+                    .await?;
+                let current_profile = if maybe_revoked.is_some() {
+                    // Revoked user, set current profile to None
+                    None
+                } else {
+                    // Non-revoked user, get last user profile
+                    match store
+                        .get_last_user_update_certificate(UpTo::Current, user_id)
+                        .await?
+                    {
+                        Some(user_update_certif) => Some(user_update_certif.new_profile),
+                        // Profile has never been updated, use the initial one
+                        None => Some(user_certif.profile),
+                    }
                 };
 
                 let user_info = WorkspaceUserAccessInfo {
                     user_id,
                     human_handle: user_certif.human_handle.as_ref().to_owned(),
                     current_profile,
-                    current_role,
+                    current_role: role_certif.role, // None if unshared from workspace
                 };
                 infos.push(user_info);
             }

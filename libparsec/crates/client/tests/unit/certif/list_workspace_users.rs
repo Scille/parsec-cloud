@@ -33,8 +33,8 @@ async fn ok(env: &TestbedEnv) {
         res,
         [(
             "alice".parse().unwrap(),
-            UserProfile::Admin,
-            RealmRole::Owner
+            Some(UserProfile::Admin),
+            Some(RealmRole::Owner)
         )]
     );
 }
@@ -75,13 +75,13 @@ async fn multiple(env: &TestbedEnv) {
         [
             (
                 "bob".parse().unwrap(),
-                UserProfile::Standard,
-                RealmRole::Contributor
+                Some(UserProfile::Standard),
+                Some(RealmRole::Contributor)
             ),
             (
                 "alice".parse().unwrap(),
-                UserProfile::Admin,
-                RealmRole::Owner
+                Some(UserProfile::Admin),
+                Some(RealmRole::Owner)
             ),
         ]
     );

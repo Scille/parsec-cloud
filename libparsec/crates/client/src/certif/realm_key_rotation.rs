@@ -245,7 +245,7 @@ async fn generate_realm_rotate_key_req(
 
             let per_participant_keys_bundle_access = {
                 let mut per_user_role = store
-                    .get_realm_current_users_roles(UpTo::Current, realm_id)
+                    .get_realm_current_users_roles(UpTo::Current, realm_id, false)
                     .await?;
 
                 let mut per_participant_keys_bundle_access =

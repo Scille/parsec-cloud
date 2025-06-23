@@ -55,20 +55,15 @@ async fn ok(
 
     let wksp1_users = client.list_workspace_users(wksp1_id).await.unwrap();
 
-    let (alice_entry, bob_entry) = match kind {
-        CertifChange::BobRevoked | CertifChange::BobNoRealmRole => {
-            p_assert_eq!(wksp1_users.len(), 1);
-            (&wksp1_users[0], None)
-        }
-        _ => {
-            p_assert_eq!(wksp1_users.len(), 2);
-            let a = &wksp1_users[0];
-            let b = &wksp1_users[1];
-            if a.user_id == alice_user_id {
-                (a, Some(b))
-            } else {
-                (b, Some(a))
-            }
+    // Alice & Bob are always present since list_workspace_users includes revoked & unshared users
+    let (alice_entry, bob_entry) = {
+        p_assert_eq!(wksp1_users.len(), 2);
+        let a = &wksp1_users[0];
+        let b = &wksp1_users[1];
+        if a.user_id == alice_user_id {
+            (a, b)
+        } else {
+            (b, a)
         }
     };
 
@@ -89,36 +84,43 @@ async fn ok(
                 MaybeRedacted::Redacted(_) => unreachable!(),
             }
         );
-        p_assert_eq!(*current_profile, UserProfile::Admin);
-        p_assert_eq!(*current_role, RealmRole::Owner);
+        p_assert_eq!((*current_profile).unwrap(), UserProfile::Admin);
+        p_assert_eq!((*current_role).unwrap(), RealmRole::Owner);
     }
 
-    // Check Bob (if he hasn't been revoked)
-    if let Some(bob_entry) = bob_entry {
-        let WorkspaceUserAccessInfo {
-            user_id,
-            human_handle,
-            current_profile,
-            current_role,
-        } = bob_entry;
-        let (certif, _) = env.get_user_certificate("bob");
-        p_assert_eq!(*user_id, certif.user_id);
-        p_assert_eq!(
-            human_handle,
-            match &certif.human_handle {
-                MaybeRedacted::Real(human_handle) => human_handle,
-                MaybeRedacted::Redacted(_) => unreachable!(),
-            }
-        );
-        if matches!(kind, CertifChange::BobNewUserProfile) {
-            p_assert_eq!(*current_profile, UserProfile::Outsider);
-        } else {
-            p_assert_eq!(*current_profile, UserProfile::Standard);
+    // Check Bob
+    let WorkspaceUserAccessInfo {
+        user_id,
+        human_handle,
+        current_profile,
+        current_role,
+    } = bob_entry;
+    let (certif, _) = env.get_user_certificate("bob");
+    p_assert_eq!(*user_id, certif.user_id);
+    p_assert_eq!(
+        human_handle,
+        match &certif.human_handle {
+            MaybeRedacted::Real(human_handle) => human_handle,
+            MaybeRedacted::Redacted(_) => unreachable!(),
         }
-        if matches!(kind, CertifChange::BobNewRealmRole) {
-            p_assert_eq!(*current_role, RealmRole::Manager);
-        } else {
-            p_assert_eq!(*current_role, RealmRole::Reader);
+    );
+    match kind {
+        CertifChange::None => (),
+        CertifChange::BobNewUserProfile => {
+            p_assert_eq!((*current_profile).unwrap(), UserProfile::Outsider);
+            p_assert_eq!((*current_role).unwrap(), RealmRole::Reader);
+        }
+        CertifChange::BobNewRealmRole => {
+            p_assert_eq!((*current_profile).unwrap(), UserProfile::Standard);
+            p_assert_eq!((*current_role).unwrap(), RealmRole::Manager);
+        }
+        CertifChange::BobRevoked => {
+            assert!((*current_profile).is_none());
+            p_assert_eq!((*current_role).unwrap(), RealmRole::Reader);
+        }
+        CertifChange::BobNoRealmRole => {
+            p_assert_eq!((*current_profile).unwrap(), UserProfile::Standard);
+            assert!((*current_role).is_none());
         }
     }
 }

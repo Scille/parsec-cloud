@@ -325,7 +325,7 @@ async fn get_realm_current_users_roles(env: &TestbedEnv) {
     let last_user_roles = store
         .for_read(async |store| {
             store
-                .get_realm_current_users_roles(UpTo::Current, realm_id)
+                .get_realm_current_users_roles(UpTo::Current, realm_id, false)
                 .await
         })
         .await

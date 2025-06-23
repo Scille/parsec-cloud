@@ -77,7 +77,11 @@ async fn ok(#[values("author_is_owner", "author_is_manager")] kind: &str, env: &
 
     let cook_access_info =
         |info: Vec<WorkspaceUserAccessInfo>| -> HashMap<UserID, WorkspaceUserAccessInfo> {
-            HashMap::from_iter(info.into_iter().map(|info| (info.user_id, info)))
+            HashMap::from_iter(
+                info.into_iter()
+                    .filter(|info| info.current_role.is_some() && info.current_profile.is_some())
+                    .map(|info| (info.user_id, info)),
+            )
         };
 
     let mut expected_wksp1_access_info =
@@ -96,8 +100,8 @@ async fn ok(#[values("author_is_owner", "author_is_manager")] kind: &str, env: &
         WorkspaceUserAccessInfo {
             user_id: mallory.user_id,
             human_handle: mallory.human_handle.clone(),
-            current_profile: UserProfile::Standard,
-            current_role: RealmRole::Contributor,
+            current_profile: Some(UserProfile::Standard),
+            current_role: Some(RealmRole::Contributor),
         },
     );
     p_assert_eq!(wksp1_access_info, expected_wksp1_access_info);
@@ -113,7 +117,7 @@ async fn ok(#[values("author_is_owner", "author_is_manager")] kind: &str, env: &
     expected_wksp1_access_info
         .get_mut(&mallory.user_id)
         .unwrap()
-        .current_role = RealmRole::Reader;
+        .current_role = Some(RealmRole::Reader);
     p_assert_eq!(wksp1_access_info, expected_wksp1_access_info);
 
     // Finally unshare
@@ -280,6 +284,7 @@ async fn can_unshare_with_revoked_recipient(
     }
 
     let alice = env.local_device("alice@dev1");
+    let bob = env.local_device("bob@dev1");
     let client = client_factory(&env.discriminant_dir, alice.clone()).await;
 
     client
@@ -287,15 +292,34 @@ async fn can_unshare_with_revoked_recipient(
         .await
         .unwrap();
 
-    let wksp1_access_info = client.list_workspace_users(wksp1_id).await.unwrap();
+    let wksp1_user_access_info = client.list_workspace_users(wksp1_id).await.unwrap();
+    let (alice_access_info, bob_access_info) = {
+        p_assert_eq!(wksp1_user_access_info.len(), 2);
+        let a = &wksp1_user_access_info[0];
+        let b: &WorkspaceUserAccessInfo = &wksp1_user_access_info[1];
+        if a.user_id == alice.user_id {
+            (a, b)
+        } else {
+            (b, a)
+        }
+    };
     p_assert_eq!(
-        wksp1_access_info,
-        [WorkspaceUserAccessInfo {
+        *alice_access_info,
+        WorkspaceUserAccessInfo {
             user_id: alice.user_id,
             human_handle: alice.human_handle.clone(),
-            current_profile: UserProfile::Admin,
-            current_role: RealmRole::Owner,
-        }]
+            current_profile: Some(UserProfile::Admin),
+            current_role: Some(RealmRole::Owner),
+        }
+    );
+    p_assert_eq!(
+        *bob_access_info,
+        WorkspaceUserAccessInfo {
+            user_id: bob.user_id,
+            human_handle: bob.human_handle.clone(),
+            current_profile: None,
+            current_role: None,
+        }
     );
 }
 

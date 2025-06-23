@@ -293,6 +293,9 @@ async fn multiple_realms_and_needs(env: &TestbedEnv) {
                 .await
                 .unwrap()
                 .into_iter()
+                .filter(|access_info| {
+                    access_info.current_role.is_some() && access_info.current_profile.is_some()
+                })
                 .map(|e| e.user_id)
                 .collect::<Vec<_>>();
             users.sort();

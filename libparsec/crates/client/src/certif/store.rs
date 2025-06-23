@@ -957,14 +957,17 @@ macro_rules! impl_read_methods {
             )
         }
 
-        /// For the given realm, return the last role certificate for each user still
-        /// part of it (i.e. if the last role certificate for a given user is an
-        /// unsharing one, then the user will be discarded).
+        /// For the given realm, return the last role certificate for each user.
+        ///
+        /// If include_unshared is true, users who no longer has (but used to have) access are also
+        /// included. Otherwise, if the last role certificate for a given user is an unsharing one,
+        /// then the user is excluded.
         #[allow(unused)]
         pub async fn get_realm_current_users_roles(
             &mut self,
             up_to: UpTo,
             realm_id: VlobID,
+            include_unshared: bool,
         ) -> anyhow::Result<HashMap<UserID, Arc<RealmRoleCertificate>>> {
             let all_certifs = self.get_realm_roles(up_to, realm_id).await?;
             let mut per_user_role = HashMap::new();
@@ -974,7 +977,13 @@ macro_rules! impl_read_methods {
                         per_user_role.insert(certif.user_id, certif);
                     }
                     None => {
-                        per_user_role.remove(&certif.user_id);
+                        if !include_unshared
+                        {
+                            per_user_role.remove(&certif.user_id);
+                        }
+                        else{
+                            per_user_role.insert(certif.user_id, certif);
+                        }
                     }
                 }
             }
