@@ -41,7 +41,7 @@
           "type": "AccountAuthMethodID"
         },
         {
-          // `VaultKeyAccess` encrypted with the `auth_method_secret_key`
+          // `AccountVaultKeyAccess` encrypted with the `auth_method_secret_key`
           "name": "vault_key_access",
           "type": "Bytes"
         }
