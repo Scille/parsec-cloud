@@ -75,7 +75,7 @@ jobs:
         uses: ./.github/actions/system-info
         timeout-minutes: 1
 
-      - uses: actions-rust-lang/setup-rust-toolchain@9d7e65c320fdb52dcd45ffaa68deb6c02c8754d9 # pin v1.12.0
+      - uses: actions-rust-lang/setup-rust-toolchain@fb51252c7ba57d633bc668f941da052e410add48 # pin v1.13.0
         with:
           # We setup the cache by hand, see below
           cache: false
@@ -102,7 +102,7 @@ jobs:
         timeout-minutes: 5
 
       # Install cargo nextest command
-      - uses: taiki-e/install-action@7b20dfd705618832f20d29066e34aa2f2f6194c2 # pin v2.52.8
+      - uses: taiki-e/install-action@9ba3ac3fd006a70c6e186a683577abc1ccf0ff3a # pin v2.54.0
         with:
           tool: nextest@0.9.92, wasm-pack@0.13.1, cargo-deny@0.18.1
 
@@ -231,7 +231,7 @@ jobs:
         uses: ./.github/actions/system-info
         timeout-minutes: 1
 
-      - uses: actions-rust-lang/setup-rust-toolchain@9d7e65c320fdb52dcd45ffaa68deb6c02c8754d9 # pin v1.12.0
+      - uses: actions-rust-lang/setup-rust-toolchain@fb51252c7ba57d633bc668f941da052e410add48 # pin v1.13.0
         with:
           # We setup the cache by hand, see below
           cache: false
@@ -274,7 +274,7 @@ jobs:
         timeout-minutes: 5
 
       # Install cargo nextest command
-      - uses: taiki-e/install-action@7b20dfd705618832f20d29066e34aa2f2f6194c2 # pin v2.52.8
+      - uses: taiki-e/install-action@9ba3ac3fd006a70c6e186a683577abc1ccf0ff3a # pin v2.54.0
         with:
           tool: nextest@0.9.92
 
