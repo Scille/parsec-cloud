@@ -16,7 +16,7 @@ use libparsec_types::prelude::*;
 use crate::testbed::{get_send_hook, SendHookConfig};
 use crate::{
     error::{ConnectionError, ConnectionResult},
-    API_VERSION_HEADER_NAME, PARSEC_CONTENT_TYPE,
+    AnonymousAccountCmds, API_VERSION_HEADER_NAME, PARSEC_CONTENT_TYPE,
 };
 
 const API_LATEST_MAJOR_VERSION: u32 = API_LATEST_VERSION.version;
@@ -65,6 +65,39 @@ impl AuthenticatedAccountCmds {
 
         #[cfg(feature = "test-with-testbed")]
         let send_hook = get_send_hook(_config_dir);
+
+        Self {
+            client,
+            addr,
+            url,
+            #[cfg(feature = "test-with-testbed")]
+            send_hook,
+            time_provider: account.time_provider.new_child(),
+            account,
+        }
+    }
+
+    /// Recycle an anonymous cmds into an authenticated one.
+    ///
+    /// There is two benefits here:
+    /// - Keeping the underlying `reqwest::Client` allows for connection reuse, hence
+    ///   saving on proxy config, TLS handshake etc.
+    /// - During tests, the send hook config (contained in anonymous/authenticated cmds)
+    ///   shouldn't be dropped if some request registered with
+    ///   `test_register_sequence_of_send_hooks` has yet to occur.
+    pub fn from_anonymous(
+        anonymous_cmds: AnonymousAccountCmds,
+        account: AccountAuthMethod,
+    ) -> Self {
+        let AnonymousAccountCmds {
+            client,
+            addr,
+            #[cfg(feature = "test-with-testbed")]
+            send_hook,
+            ..
+        } = anonymous_cmds;
+
+        let url = addr.to_authenticated_account_url();
 
         Self {
             client,
