@@ -28,6 +28,7 @@ chatbubbles
 checkiconhandler
 choco
 cibuildwheel
+CICD
 cipherkey
 clusterfuck
 coordinatorlayout
