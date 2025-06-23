@@ -503,6 +503,13 @@ class BaseAuthenticatedAccountRpcClient:
         raw_rep = await self._do_request(req.dump(), "authenticated_account")
         return authenticated_account_cmds.latest.account_delete_send_code.Rep.load(raw_rep)
 
+    async def account_info(
+        self,
+    ) -> authenticated_account_cmds.latest.account_info.Rep:
+        req = authenticated_account_cmds.latest.account_info.Req()
+        raw_rep = await self._do_request(req.dump(), "authenticated_account")
+        return authenticated_account_cmds.latest.account_info.Rep.load(raw_rep)
+
     async def ping(self, ping: str) -> authenticated_account_cmds.latest.ping.Rep:
         req = authenticated_account_cmds.latest.ping.Req(ping=ping)
         raw_rep = await self._do_request(req.dump(), "authenticated_account")

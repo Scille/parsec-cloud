@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from . import (
     account_delete_send_code,
+    account_info,
     ping,
     vault_item_list,
     vault_item_recovery_list,
@@ -19,6 +20,7 @@ class AnyCmdReq:
         cls, raw: bytes
     ) -> (
         account_delete_send_code.Req
+        | account_info.Req
         | ping.Req
         | vault_item_list.Req
         | vault_item_recovery_list.Req
@@ -29,6 +31,7 @@ class AnyCmdReq:
 __all__ = [
     "AnyCmdReq",
     "account_delete_send_code",
+    "account_info",
     "ping",
     "vault_item_list",
     "vault_item_recovery_list",
