@@ -549,7 +549,13 @@ async function associateDefaultEvents(eventDistributor: EventDistributor, inform
 
   // Since this is going to be alive the whole time, we don't need to remember the id to clear it later
   await eventDistributor.registerCallback(
-    Events.Offline | Events.Online | Events.IncompatibleServer | Events.ExpiredOrganization | Events.ClientRevoked,
+    Events.Offline |
+      Events.Online |
+      Events.IncompatibleServer |
+      Events.ExpiredOrganization |
+      Events.ClientRevoked |
+      Events.ClientFrozen |
+      Events.OrganizationNotFound,
     async (event: Events, _data?: EventData) => {
       switch (event) {
         case Events.Offline: {
@@ -621,6 +627,26 @@ async function associateDefaultEvents(eventDistributor: EventDistributor, inform
           await informationManager.present(
             new Information({
               message: 'globalErrors.clientRevoked',
+              level: InformationLevel.Error,
+            }),
+            PresentationMode.Modal,
+          );
+          break;
+        }
+        case Events.OrganizationNotFound: {
+          await informationManager.present(
+            new Information({
+              message: 'globalErrors.organizationNotFound',
+              level: InformationLevel.Error,
+            }),
+            PresentationMode.Modal,
+          );
+          break;
+        }
+        case Events.ClientFrozen: {
+          await informationManager.present(
+            new Information({
+              message: 'globalErrors.clientFrozen',
               level: InformationLevel.Error,
             }),
             PresentationMode.Modal,

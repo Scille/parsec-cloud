@@ -87,7 +87,11 @@ export async function switchOrganization(handle: ConnectionHandle | null, backup
 
   const startedClients = await listStartedClients();
   // No handle, or an invalid handle, navigate to organization list
-  if (!handle || startedClients.find(([sHandle, _deviceId]) => sHandle === handle) === undefined) {
+  if (!handle) {
+    await navigateTo(Routes.Home, { skipHandle: true, replace: true });
+    return;
+  } else if (startedClients.find(([sHandle, _deviceId]) => sHandle === handle) === undefined) {
+    window.electronAPI.log('warn', `Handle '${handle}' not found in the list of started clients`);
     await navigateTo(Routes.Home, { skipHandle: true, replace: true });
     return;
   }
