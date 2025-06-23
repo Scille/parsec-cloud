@@ -14,6 +14,7 @@ from parsec._parsec import (
     EmailAddress,
     EmailValidationToken,
     HashDigest,
+    HumanHandle,
     ParsecAccountEmailValidationAddr,
     SecretKey,
     UntrustedPasswordAlgorithm,
@@ -28,6 +29,10 @@ from parsec.components.email import SendEmailBadOutcome, send_email
 from parsec.config import BackendConfig
 from parsec.templates import get_template
 from parsec.types import BadOutcomeEnum
+
+
+class AccountInfoBadOutcome(BadOutcomeEnum):
+    ACCOUNT_NOT_FOUND = auto()
 
 
 class AccountCreateEmailValidationTokenBadOutcome(BadOutcomeEnum):
@@ -66,6 +71,11 @@ class AccountVaultItemRecoveryList(BadOutcomeEnum):
 
 class AccountCreateAccountDeletionTokenBadOutcome(BadOutcomeEnum):
     TOO_SOON_AFTER_PREVIOUS_DEMAND = auto()
+
+
+@dataclass(slots=True)
+class AccountInfo:
+    human_handle: HumanHandle
 
 
 @dataclass(slots=True)
@@ -118,6 +128,12 @@ class BaseAccountComponent:
         return UntrustedPasswordAlgorithm.generate_fake_from_seed(
             email.str, self._config.fake_account_password_algorithm_seed
         )
+
+    async def account_info(
+        self,
+        auth_method_id: AccountAuthMethodID,
+    ) -> AccountInfo | AccountInfoBadOutcome:
+        raise NotImplementedError
 
     async def create_email_validation_token(
         self, email: EmailAddress, now: DateTime
@@ -451,6 +467,21 @@ class BaseAccountComponent:
                         return authenticated_account_cmds.latest.account_delete_send_code.RepEmailRecipientRefused()
             case AccountCreateAccountDeletionTokenBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND:
                 return authenticated_account_cmds.latest.account_delete_send_code.RepOk()
+
+    @api
+    async def api_account_account_info(
+        self,
+        client_ctx: AuthenticatedAccountClientContext,
+        req: authenticated_account_cmds.latest.account_info.Req,
+    ) -> authenticated_account_cmds.latest.account_info.Rep:
+        outcome = await self.account_info(auth_method_id=client_ctx.auth_method_id)
+        match outcome:
+            case AccountInfo() as info:
+                return authenticated_account_cmds.latest.account_info.RepOk(
+                    human_handle=info.human_handle
+                )
+            case AccountInfoBadOutcome.ACCOUNT_NOT_FOUND:
+                client_ctx.account_not_found_abort()
 
 
 def generate_email_validation_email(

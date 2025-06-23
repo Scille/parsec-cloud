@@ -8,6 +8,7 @@ from parsec._parsec import (
     EmailAddress,
     EmailValidationToken,
     HashDigest,
+    HumanHandle,
     SecretKey,
     ValidationCode,
 )
@@ -15,6 +16,8 @@ from parsec.components.account import (
     AccountCreateAccountBadOutcome,
     AccountCreateAccountDeletionTokenBadOutcome,
     AccountCreateEmailValidationTokenBadOutcome,
+    AccountInfo,
+    AccountInfoBadOutcome,
     AccountVaultItemListBadOutcome,
     AccountVaultItemRecoveryList,
     AccountVaultItemUploadBadOutcome,
@@ -64,6 +67,28 @@ class MemoryAccountComponent(BaseAccountComponent):
         # Account does not exists or it does not have an active password algorithm.
         # In either case, a fake configuration is returned.
         return self._generate_fake_password_algorithm(email)
+
+    @override
+    async def account_info(
+        self,
+        auth_method_id: AccountAuthMethodID,
+    ) -> AccountInfo | AccountInfoBadOutcome:
+        match self._data.get_account_from_active_auth_method(auth_method_id=auth_method_id):
+            case (account, _):
+                pass
+            case None:
+                return AccountInfoBadOutcome.ACCOUNT_NOT_FOUND
+
+        try:
+            human_handle = HumanHandle(account.account_email, account.human_label)
+        except ValueError as err:
+            raise RuntimeError(
+                f"Invalid data for auth_method_id={auth_method_id} (email={account.account_email!r}, label={account.human_label!r})"
+            ) from err
+
+        return AccountInfo(
+            human_handle=human_handle,
+        )
 
     @override
     async def create_email_validation_token(
