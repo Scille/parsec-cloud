@@ -105,10 +105,10 @@ async function parsecEventCallback(handle: ConnectionHandle, event: ClientEvent)
       );
       break;
     case ClientEventTag.RevokedSelfUser:
-      distributor.dispatchEvent(Events.ClientRevoked);
+      distributor.dispatchEvent(Events.ClientRevoked, undefined, { delay: 5000 });
       break;
     case ClientEventTag.ExpiredOrganization:
-      distributor.dispatchEvent(Events.ExpiredOrganization);
+      distributor.dispatchEvent(Events.ExpiredOrganization, undefined, { delay: 5000 });
       break;
     case ClientEventTag.WorkspaceLocallyCreated:
       distributor.dispatchEvent(Events.WorkspaceCreated);
@@ -137,6 +137,12 @@ async function parsecEventCallback(handle: ConnectionHandle, event: ClientEvent)
       break;
     case ClientEventTag.ClientStopped:
       injectionProvider.getDefault().eventDistributor.dispatchEvent(Events.ClientStopped, { handle: handle });
+      break;
+    case ClientEventTag.OrganizationNotFound:
+      distributor.dispatchEvent(Events.OrganizationNotFound, undefined, { delay: 5000 });
+      break;
+    case ClientEventTag.FrozenSelfUser:
+      distributor.dispatchEvent(Events.ClientFrozen, undefined, { delay: 5000 });
       break;
     default:
       window.electronAPI.log('debug', `Unhandled event ${event.tag}`);

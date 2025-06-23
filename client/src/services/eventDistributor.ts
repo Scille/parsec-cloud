@@ -29,6 +29,8 @@ enum Events {
   ClientStarted = 1 << 18,
   ClientStopped = 1 << 19,
   MenuAction = 1 << 20,
+  ClientFrozen = 1 << 21,
+  OrganizationNotFound = 1 << 22,
 }
 
 interface WorkspaceCreatedData {
@@ -173,6 +175,7 @@ export {
   EventData,
   EventDistributor,
   Events,
+  IncompatibleServerData,
   InvitationUpdatedData,
   MenuActionData,
   UpdateAvailabilityData,
