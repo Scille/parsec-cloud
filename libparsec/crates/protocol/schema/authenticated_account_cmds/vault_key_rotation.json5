@@ -29,7 +29,7 @@
                 },
                 {
                     "name": "new_vault_key_access",
-                    // `VaultKeyAccess` encrypted with the `auth_method_secret_key`
+                    // `AccountVaultKeyAccess` encrypted with the `auth_method_secret_key`
                     "type": "Bytes"
                 },
                 {

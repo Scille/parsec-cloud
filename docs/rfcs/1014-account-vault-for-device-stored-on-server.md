@@ -126,11 +126,11 @@ Add `account_vault_strategy` fields to the `OrganizationConfig` event.
 ### 2.2 - Vault key access
 
 The `vault_key` is encrypted for each authentication method related to the vault.
-For this purpose, the `vault_key` is serialized into the `VaultKeyAccess` structure:
+For this purpose, the `vault_key` is serialized into the `AccountVaultKeyAccess` structure:
 
 ```json5
 {
-    "label": "VaultKeyAccess",
+    "label": "AccountVaultKeyAccess",
     "type": "vault_key_access",
     "other_fields": [
         {
@@ -266,7 +266,7 @@ Authenticated account API:
 >   item still needs to be recovered), but not against equivalent items (e.g. two
 >   registration devices for the same organization/user couple).
 >   This is considered okay considering it is unlikely and not a big deal anyway.
-> - Since `VaultKeyAccess` is not encrypted nor signed (only serialized), it can be
+> - Since `AccountVaultKeyAccess` is not encrypted nor signed (only serialized), it can be
 >   tempered by the server.
 >   For this reason, the client should check the decrypted content against the clear text
 >   organization/user/device IDs.
@@ -291,7 +291,7 @@ Authenticated account API:
                 "fields": [
                     {
                         "name": "key_access",
-                        // `VaultKeyAccess` encrypted with the `auth_method_secret_key`
+                        // `AccountVaultKeyAccess` encrypted with the `auth_method_secret_key`
                         "type": "Bytes"
                     },
                     {
@@ -342,7 +342,7 @@ Authenticated account API:
                 },
                 {
                     "name": "new_vault_key_access",
-                    // `VaultKeyAccess` encrypted with the `auth_method_secret_key`
+                    // `AccountVaultKeyAccess` encrypted with the `auth_method_secret_key`
                     "type": "Bytes"
                 },
                 {
@@ -444,7 +444,7 @@ To list all protected device from all vault except current/active one:
                     },
                     {
                         "name": "vault_key_access",
-                        // `VaultKeyAccess` encrypted with the `auth_method_secret_key`
+                        // `AccountVaultKeyAccess` encrypted with the `auth_method_secret_key`
                         "type": "Bytes"
                     },
                     {

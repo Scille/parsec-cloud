@@ -490,7 +490,7 @@ Anonymous account API:
           "type": "AccountAuthMethodID"
         },
         {
-          // `VaultKeyAccess` encrypted with the `auth_method_secret_key`
+          // `AccountVaultKeyAccess` encrypted with the `auth_method_secret_key`
           "name": "vault_key_access",
           "type": "Bytes"
         }
@@ -585,7 +585,7 @@ Authenticated account API:
         "type": "SecretKey"
       },
       {
-        // `VaultKeyAccess` encrypted with the `auth_method_secret_key`
+        // `AccountVaultKeyAccess` encrypted with the `auth_method_secret_key`
         "name": "vault_key_access",
         "type": "Bytes"
       }
@@ -679,7 +679,7 @@ Anonymous account API:
       },
       {
         "name": "vault_key_access",
-        // `VaultKeyAccess` encrypted with the `auth_method_secret_key`
+        // `AccountVaultKeyAccess` encrypted with the `auth_method_secret_key`
         "type": "Bytes"
       }
     ]
