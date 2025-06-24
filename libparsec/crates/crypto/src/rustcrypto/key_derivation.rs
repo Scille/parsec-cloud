@@ -9,7 +9,7 @@ use generic_array::{
     },
     ArrayLength, GenericArray,
 };
-use rand::RngCore;
+use rand::{rngs::OsRng, RngCore};
 use serde::Deserialize;
 use serde_bytes::Bytes;
 
@@ -29,7 +29,7 @@ impl KeyDerivation {
 
     pub fn generate() -> Self {
         let mut bytes = [0u8; Self::SIZE];
-        rand::thread_rng().fill_bytes(&mut bytes);
+        OsRng.fill_bytes(&mut bytes);
         Self(bytes.into())
     }
 
