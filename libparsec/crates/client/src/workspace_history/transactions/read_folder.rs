@@ -89,6 +89,7 @@ impl WorkspaceHistoryFolderReader {
             created: self.manifest.created,
             updated: self.manifest.updated,
             version: self.manifest.version,
+            last_updater: self.manifest.author,
         }
     }
 

@@ -23,6 +23,7 @@ async fn ok_folder(
     let wksp1_foo_v2_children_available_timestamp: DateTime = *env
         .template
         .get_stuff("wksp1_foo_v2_children_available_timestamp");
+    let alice = env.local_device("alice@dev1");
     let ops = match strategy
         .start_workspace_history_ops_at(env, wksp1_foo_v2_children_available_timestamp)
         .await
@@ -40,6 +41,7 @@ async fn ok_folder(
             created,
             updated,
             version,
+            last_updater,
         })
         if {
             p_assert_eq!(id, wksp1_id);
@@ -47,6 +49,7 @@ async fn ok_folder(
             p_assert_eq!(created, "2000-01-12T00:00:00Z".parse().unwrap());
             p_assert_eq!(updated, "2000-01-12T00:00:00Z".parse().unwrap());
             p_assert_eq!(version, 2);
+            p_assert_eq!(last_updater, alice.device_id);
             true
         }
     );
@@ -63,6 +66,7 @@ async fn ok_file(
     let wksp1_foo_v2_children_available_timestamp: DateTime = *env
         .template
         .get_stuff("wksp1_foo_v2_children_available_timestamp");
+    let mallory = env.local_device("mallory@dev1");
     let ops = match strategy
         .start_workspace_history_ops_at(env, wksp1_foo_v2_children_available_timestamp)
         .await
@@ -89,6 +93,7 @@ async fn ok_file(
             updated,
             version,
             size,
+            last_updater,
         })
         if {
             p_assert_eq!(id, wksp1_bar_txt_id);
@@ -97,6 +102,7 @@ async fn ok_file(
             p_assert_eq!(updated, "2000-01-18T00:00:00Z".parse().unwrap());
             p_assert_eq!(version, 2);
             p_assert_eq!(size, 14);
+            p_assert_eq!(last_updater, mallory.device_id);
             true
         }
     );
