@@ -185,6 +185,7 @@ async function openPopover(event: CustomEvent): Promise<void> {
   ignoreNextEvent = true;
   const popover = await popoverController.create({
     component: HeaderBreadcrumbPopover,
+    cssClass: 'breadcrumbs-popover',
     alignment: 'center',
     event: event,
     showBackdrop: false,
