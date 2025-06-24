@@ -20,6 +20,7 @@ pub enum WorkspaceHistoryEntryStat {
         updated: DateTime,
         version: VersionInt,
         size: SizeInt,
+        last_updater: DeviceID,
     },
     // Here Folder can also be the root of the workspace (i.e. WorkspaceManifest)
     Folder {
@@ -28,6 +29,7 @@ pub enum WorkspaceHistoryEntryStat {
         created: DateTime,
         updated: DateTime,
         version: VersionInt,
+        last_updater: DeviceID,
     },
 }
 
@@ -106,6 +108,7 @@ pub(crate) async fn stat_entry_by_id(
             created: manifest.created,
             updated: manifest.updated,
             version: manifest.version,
+            last_updater: manifest.author,
         },
         ArcChildManifest::File(manifest) => WorkspaceHistoryEntryStat::File {
             id: manifest.id,
@@ -114,6 +117,7 @@ pub(crate) async fn stat_entry_by_id(
             updated: manifest.updated,
             version: manifest.version,
             size: manifest.size,
+            last_updater: manifest.author,
         },
     };
 
@@ -166,6 +170,7 @@ pub(crate) async fn stat_entry(
             created: manifest.created,
             updated: manifest.updated,
             version: manifest.version,
+            last_updater: manifest.author,
         },
         ArcChildManifest::File(manifest) => WorkspaceHistoryEntryStat::File {
             id: manifest.id,
@@ -174,6 +179,7 @@ pub(crate) async fn stat_entry(
             updated: manifest.updated,
             version: manifest.version,
             size: manifest.size,
+            last_updater: manifest.author,
         },
     };
     Ok(info)

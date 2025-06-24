@@ -90,7 +90,6 @@ async fn stat_entry(#[values(true, false)] local_cache: bool, env: &TestbedEnv) 
             p_assert_eq!(is_placeholder, false);
             p_assert_eq!(need_sync, false);
             p_assert_eq!(last_updater, alice.device_id);
-
             true
         }
     );

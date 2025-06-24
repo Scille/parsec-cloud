@@ -30,6 +30,7 @@ async fn ok(
     let wksp1_foo_v2_children_available_timestamp: DateTime = *env
         .template
         .get_stuff("wksp1_foo_v2_children_available_timestamp");
+    let mallory = env.local_device("mallory@dev1");
     let ops = match strategy
         .start_workspace_history_ops_at(env, wksp1_foo_v2_children_available_timestamp)
         .await
@@ -64,6 +65,7 @@ async fn ok(
                     updated: "2000-01-20T00:00:00Z".parse().unwrap(),
                     version: 1,
                     size: 0,
+                    last_updater: mallory.device_id,
                 }
             ),
             (
@@ -74,6 +76,7 @@ async fn ok(
                     created: "2000-01-21T00:00:00Z".parse().unwrap(),
                     updated: "2000-01-21T00:00:00Z".parse().unwrap(),
                     version: 1,
+                    last_updater: mallory.device_id,
                 }
             ),
         ]
