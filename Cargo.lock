@@ -2034,7 +2034,6 @@ dependencies = [
  "android_logger",
  "jni",
  "lazy_static",
- "libparsec",
  "log",
  "tokio",
 ]

@@ -15,7 +15,6 @@ crate-type = ["staticlib", "cdylib"]
 workspace = true
 
 [dependencies]
-libparsec = { workspace = true }
 lazy_static = { workspace = true }
 jni = { workspace = true }
 log = { workspace = true }

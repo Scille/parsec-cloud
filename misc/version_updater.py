@@ -80,20 +80,21 @@ RUSTUP_INSTALL = ReplaceRegex(
 
 @enum.unique
 class Tool(enum.Enum):
-    Rust = "rust"
-    Python = "python"
-    Poetry = "poetry"
-    Node = "node"
-    WasmPack = "wasm-pack"
-    Nextest = "nextest"
-    Parsec = "parsec"
-    License = "license"
-    PostgreSQL = "postgres"
-    WinFSP = "winfsp"
-    Testbed = "testbed"
-    PreCommit = "pre-commit"
-    Cross = "cross"
     CargoDeny = "cargo-deny"
+    CargoUdeps = "cargo-udeps"
+    Cross = "cross"
+    License = "license"
+    Nextest = "nextest"
+    Node = "node"
+    Parsec = "parsec"
+    Poetry = "poetry"
+    PostgreSQL = "postgres"
+    PreCommit = "pre-commit"
+    Python = "python"
+    Rust = "rust"
+    Testbed = "testbed"
+    WasmPack = "wasm-pack"
+    WinFSP = "winfsp"
 
     def post_update_hook(self, updated_files: set[Path]) -> set[Path]:
         updated: set[Path] = set()
@@ -226,6 +227,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
     },
     ROOT_DIR / ".github/workflows/ci-rust.yml": {
         Tool.CargoDeny: [ReplaceRegex(r"cargo-deny@[0-9.]+", "cargo-deny@{version}")],
+        Tool.CargoUdeps: [ReplaceRegex(r"cargo-udeps@[0-9.]+", "cargo-udeps@{version}")],
         Tool.Nextest: [ReplaceRegex(r"nextest@[0-9.]+", "nextest@{version}")],
         Tool.Testbed: [TESTBED_VERSION],
         Tool.WasmPack: [ReplaceRegex(r"wasm-pack@[0-9.]+", "wasm-pack@{version}")],
