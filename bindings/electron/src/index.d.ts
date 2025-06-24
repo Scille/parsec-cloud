@@ -1635,6 +1635,7 @@ export interface EntryStatFile {
     is_placeholder: boolean
     need_sync: boolean
     size: number
+    last_updater: string
 }
 export interface EntryStatFolder {
     tag: "Folder"
@@ -1646,6 +1647,7 @@ export interface EntryStatFolder {
     base_version: number
     is_placeholder: boolean
     need_sync: boolean
+    last_updater: string
 }
 export type EntryStat =
   | EntryStatFile
