@@ -7208,6 +7208,18 @@ fn variant_entry_stat_js_to_rs<'a>(
                     v
                 }
             };
+            let last_updater = {
+                let js_val: Handle<JsString> = obj.get(cx, "lastUpdater")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                        libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
             Ok(libparsec::EntryStat::File {
                 confinement_point,
                 id,
@@ -7218,6 +7230,7 @@ fn variant_entry_stat_js_to_rs<'a>(
                 is_placeholder,
                 need_sync,
                 size,
+                last_updater,
             })
         }
         "EntryStatFolder" => {
@@ -7313,6 +7326,18 @@ fn variant_entry_stat_js_to_rs<'a>(
                 let js_val: Handle<JsBoolean> = obj.get(cx, "needSync")?;
                 js_val.value(cx)
             };
+            let last_updater = {
+                let js_val: Handle<JsString> = obj.get(cx, "lastUpdater")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                        libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
             Ok(libparsec::EntryStat::Folder {
                 confinement_point,
                 id,
@@ -7322,6 +7347,7 @@ fn variant_entry_stat_js_to_rs<'a>(
                 base_version,
                 is_placeholder,
                 need_sync,
+                last_updater,
             })
         }
         _ => cx.throw_type_error("Object is not a EntryStat"),
@@ -7345,6 +7371,7 @@ fn variant_entry_stat_rs_to_js<'a>(
             is_placeholder,
             need_sync,
             size,
+            last_updater,
             ..
         } => {
             let js_tag = JsString::try_new(cx, "EntryStatFile").or_throw(cx)?;
@@ -7411,6 +7438,16 @@ fn variant_entry_stat_rs_to_js<'a>(
             js_obj.set(cx, "needSync", js_need_sync)?;
             let js_size = JsBigInt::from_u64(cx, size);
             js_obj.set(cx, "size", js_size)?;
+            let js_last_updater = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(last_updater) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "lastUpdater", js_last_updater)?;
         }
         libparsec::EntryStat::Folder {
             confinement_point,
@@ -7421,6 +7458,7 @@ fn variant_entry_stat_rs_to_js<'a>(
             base_version,
             is_placeholder,
             need_sync,
+            last_updater,
             ..
         } => {
             let js_tag = JsString::try_new(cx, "EntryStatFolder").or_throw(cx)?;
@@ -7485,6 +7523,16 @@ fn variant_entry_stat_rs_to_js<'a>(
             js_obj.set(cx, "isPlaceholder", js_is_placeholder)?;
             let js_need_sync = JsBoolean::new(cx, need_sync);
             js_obj.set(cx, "needSync", js_need_sync)?;
+            let js_last_updater = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(last_updater) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "lastUpdater", js_last_updater)?;
         }
     }
     Ok(js_obj)

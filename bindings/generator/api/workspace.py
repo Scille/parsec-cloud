@@ -5,6 +5,7 @@ from typing import Optional
 from .common import (
     U64,
     DateTime,
+    DeviceID,
     EntryName,
     ErrorVariant,
     FsPath,
@@ -316,6 +317,7 @@ class EntryStat(Variant):
         is_placeholder: bool
         need_sync: bool
         size: SizeInt
+        last_updater: DeviceID
 
     class Folder:
         confinement_point: Optional[VlobID]
@@ -326,6 +328,7 @@ class EntryStat(Variant):
         base_version: VersionInt
         is_placeholder: bool
         need_sync: bool
+        last_updater: DeviceID
 
 
 async def workspace_stat_entry(

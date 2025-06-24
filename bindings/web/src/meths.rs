@@ -7954,6 +7954,21 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                     v
                 }
             };
+            let last_updater = {
+                let js_val = Reflect::get(&obj, &"lastUpdater".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                            libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+            };
             Ok(libparsec::EntryStat::File {
                 confinement_point,
                 id,
@@ -7964,6 +7979,7 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                 is_placeholder,
                 need_sync,
                 size,
+                last_updater,
             })
         }
         "EntryStatFolder" => {
@@ -8072,6 +8088,21 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                     .map_err(|_| TypeError::new("Not a boolean"))?
                     .value_of()
             };
+            let last_updater = {
+                let js_val = Reflect::get(&obj, &"lastUpdater".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                            libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+            };
             Ok(libparsec::EntryStat::Folder {
                 confinement_point,
                 id,
@@ -8081,6 +8112,7 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                 base_version,
                 is_placeholder,
                 need_sync,
+                last_updater,
             })
         }
         _ => Err(JsValue::from(TypeError::new("Object is not a EntryStat"))),
@@ -8101,6 +8133,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
             is_placeholder,
             need_sync,
             size,
+            last_updater,
             ..
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"EntryStatFile".into())?;
@@ -8167,6 +8200,16 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
             Reflect::set(&js_obj, &"needSync".into(), &js_need_sync)?;
             let js_size = JsValue::from(size);
             Reflect::set(&js_obj, &"size".into(), &js_size)?;
+            let js_last_updater = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(last_updater) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"lastUpdater".into(), &js_last_updater)?;
         }
         libparsec::EntryStat::Folder {
             confinement_point,
@@ -8177,6 +8220,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
             base_version,
             is_placeholder,
             need_sync,
+            last_updater,
             ..
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"EntryStatFolder".into())?;
@@ -8241,6 +8285,16 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
             Reflect::set(&js_obj, &"isPlaceholder".into(), &js_is_placeholder)?;
             let js_need_sync = need_sync.into();
             Reflect::set(&js_obj, &"needSync".into(), &js_need_sync)?;
+            let js_last_updater = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(last_updater) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"lastUpdater".into(), &js_last_updater)?;
         }
     }
     Ok(js_obj)

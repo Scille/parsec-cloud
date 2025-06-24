@@ -1905,6 +1905,7 @@ export interface EntryStatFile {
     isPlaceholder: boolean
     needSync: boolean
     size: SizeInt
+    lastUpdater: DeviceID
 }
 export interface EntryStatFolder {
     tag: EntryStatTag.Folder
@@ -1916,6 +1917,7 @@ export interface EntryStatFolder {
     baseVersion: VersionInt
     isPlaceholder: boolean
     needSync: boolean
+    lastUpdater: DeviceID
 }
 export type EntryStat =
   | EntryStatFile
