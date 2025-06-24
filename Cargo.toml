@@ -136,7 +136,6 @@ env_logger = { version = "0.11.8", default-features = false }
 error_set = { version = "0.8.5", default-features = false }
 event-listener = { version = "5.4.0", default-features = false }
 eventsource-stream = { version = "0.2.3", default-features = false }
-flate2 = { version = "1.1.2", features = ["rust_backend"], default-features = false }
 flume = { version = "0.11.1", default-features = false }
 fnmatch-regex = { version = "0.2.1", default-features = false }
 fuser = { version = "0.15.1", default-features = false }
