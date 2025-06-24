@@ -25,8 +25,8 @@ try:
     type TestbedTemplate = tuple[OrganizationID, int, testbed.TestbedTemplateContent]  # pyright: ignore[reportRedeclaration]
 except ImportError:
     TESTBED_AVAILABLE = False
-    type TestbedTemplate = tuple[OrganizationID, int, Any]  # pyright: ignore[reportRedeclaration]
-    type TestbedTemplateContent = Any  # pyright: ignore[reportRedeclaration]
+    type TestbedTemplate = tuple[OrganizationID, int, Any]
+    type TestbedTemplateContent = Any
 
 from parsec.asgi import AsgiApp, app_factory, serve_parsec_asgi_app
 from parsec.backend import Backend, backend_factory

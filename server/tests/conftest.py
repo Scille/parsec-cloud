@@ -179,7 +179,7 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
     # Divide tests into slices of equal size
-    slices_to_run, total_slices = config.getoption("--slice-tests")  # type: ignore
+    slices_to_run, total_slices = config.getoption("--slice-tests")
     if total_slices > 1:
         # Reorder tests to be deterministic given they will be ran across multiples instances
         # Note this must be done as an in-place update to have it taken into account

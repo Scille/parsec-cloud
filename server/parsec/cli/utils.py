@@ -298,7 +298,7 @@ async def start_backend(
         db_config=db_config,
         blockstore_config=blockstore_config,
         administration_token=None,  # type: ignore
-        fake_account_password_algorithm_seed=None,  # type: ignore
+        fake_account_password_algorithm_seed=None,
         email_config=None,
         server_addr=None,
     )
