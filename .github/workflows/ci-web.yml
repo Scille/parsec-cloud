@@ -217,7 +217,7 @@ jobs:
       - name: E2E tests
         uses: docker://mcr.microsoft.com/playwright:v1.51.0
         with:
-          args: npm run test:e2e:headless -- --shard=${{ matrix.shard_index }}/${{ matrix.shard_total }}
+          args: cd client; npm run test:e2e:headless -- --shard=${{ matrix.shard_index }}/${{ matrix.shard_total }}
         env:
           TESTBED_SERVER: parsec3://parsec-testbed-server:6777?no_ssl=true
           PARSEC_APP_TRIAL_SERVERS: parsec-testbed-server:6777?no_ssl=true
