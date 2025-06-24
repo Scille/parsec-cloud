@@ -127,7 +127,7 @@ function isAccountAutoLoginEnabled(): boolean {
 const CUSTOM_BRANDING_ENV_VARIABLE = 'PARSEC_APP_ENABLE_CUSTOM_BRANDING';
 
 function isCustomBrandingEnabled(): boolean {
-  return import.meta.env[CUSTOM_BRANDING_ENV_VARIABLE] === 'true';
+  return import.meta.env[CUSTOM_BRANDING_ENV_VARIABLE] === 'true' || (window as any).TESTING_ENABLE_CUSTOM_BRANDING === true;
 }
 
 /*

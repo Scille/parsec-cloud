@@ -13,6 +13,7 @@ interface SetupOptions {
   location?: string;
   skipGoto?: boolean;
   withParsecAccount?: boolean;
+  withCustomBranding?: boolean;
   displaySize?: DisplaySize;
 }
 
@@ -21,10 +22,13 @@ const DEV_TOOLS_OFFSET = 400;
 export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promise<void> {
   page.on('console', (msg) => console.log('> ', msg.text()));
 
-  await page.addInitScript((withParsecAccount: boolean) => {
+  await page.addInitScript((options: SetupOptions) => {
     (window as any).TESTING = true;
-    if (withParsecAccount) {
+    if (options.withParsecAccount) {
       (window as any).TESTING_ENABLE_ACCOUNT = true;
+    }
+    if (options.withCustomBranding) {
+      (window as any).TESTING_ENABLE_CUSTOM_BRANDING = true;
     }
     (window as any).showSaveFilePicker = async (): Promise<FileSystemFileHandle> => {
       console.log('Show save file Picker');
@@ -75,7 +79,7 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
         isSameEntry: async (_other: FileSystemHandle): Promise<boolean> => false,
       };
     };
-  }, opts.withParsecAccount === true);
+  }, opts);
   if (!opts.skipGoto) {
     await page.goto(opts.location ?? '/');
   }
