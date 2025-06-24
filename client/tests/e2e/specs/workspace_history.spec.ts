@@ -110,11 +110,11 @@ msTest('Test viewer in history', async ({ documents }) => {
 
 msTest('Workspace history breadcrumbs', async ({ documents }) => {
   async function clickOnBreadcrumb(i: number): Promise<void> {
-    await documents.locator('.navigation-breadcrumb').locator('ion-breadcrumb').nth(i).click();
+    await documents.locator('.history-container').locator('.navigation-breadcrumb').locator('ion-breadcrumb').nth(i).click();
   }
 
   async function headerContentMatch(breadcrumbs: Array<string | RegExp>): Promise<void> {
-    const bcs = documents.locator('.navigation-breadcrumb').locator('ion-breadcrumb');
+    const bcs = documents.locator('.history-container').locator('.navigation-breadcrumb').locator('ion-breadcrumb');
     expect(bcs).toHaveCount(breadcrumbs.length);
     await expect(bcs).toHaveText(breadcrumbs, { useInnerText: true });
   }
@@ -123,12 +123,16 @@ msTest('Workspace history breadcrumbs', async ({ documents }) => {
     await documents.locator('.folder-container').getByRole('listitem').nth(0).dblclick();
   }
 
+  const entries = documents.locator('.folder-container').locator('.file-list-item');
   await navigateDown();
   await createFolder(documents, 'Subdir 1');
+  await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(['Subdir 1']);
   await navigateDown();
   await createFolder(documents, 'Subdir 2');
+  await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(['Subdir 2']);
   await navigateDown();
   await createFolder(documents, 'Subdir 3');
+  await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(['Subdir 3']);
   await documents.locator('.sidebar').locator('#goHome').click();
   await expect(documents).toBeWorkspacePage();
   await expect(documents.locator('.workspace-card-item')).toHaveCount(1);
@@ -147,7 +151,7 @@ msTest('Workspace history breadcrumbs', async ({ documents }) => {
   await navigateDown();
   await headerContentMatch(['wksp1', '', '', '', 'Subdir 3']);
 
-  const popoverItems = documents.locator('ion-popover').locator('.popover-item');
+  const popoverItems = documents.locator('.breadcrumbs-popover').locator('.popover-item');
   await clickOnBreadcrumb(1);
   await expect(popoverItems).toHaveCount(3);
   await popoverItems.nth(2).click();
@@ -156,9 +160,9 @@ msTest('Workspace history breadcrumbs', async ({ documents }) => {
   await headerContentMatch(['wksp1']);
 
   await documents.setDisplaySize(DisplaySize.Small);
-  const smallBreadcrumbs = documents.locator('.navigation-breadcrumb').locator('.breadcrumb-small-container');
+  const smallBreadcrumbs = documents.locator('.history-container').locator('.navigation-breadcrumb').locator('.breadcrumb-small-container');
 
-  await expect(documents.locator('.navigation-breadcrumb').locator('ion-breadcrumbs')).not.toBeVisible();
+  await expect(documents.locator('.history-container').locator('.navigation-breadcrumb').locator('ion-breadcrumbs')).not.toBeVisible();
   await expect(smallBreadcrumbs).toBeVisible();
   await expect(smallBreadcrumbs.locator('ion-text')).toHaveCount(1);
   await expect(smallBreadcrumbs.locator('ion-text')).toHaveText('wksp1');
