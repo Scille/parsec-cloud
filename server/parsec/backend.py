@@ -55,8 +55,8 @@ if TYPE_CHECKING:
         type TestbedEvent = testbed.TestbedEvent  # pyright: ignore[reportRedeclaration]
         type TestbedTemplateContent = testbed.TestbedTemplateContent  # pyright: ignore[reportRedeclaration]
     except ImportError:
-        type TestbedEvent = Any  # pyright: ignore[reportRedeclaration]
-        type TestbedTemplateContent = Any  # pyright: ignore[reportRedeclaration]
+        type TestbedEvent = Any
+        type TestbedTemplateContent = Any
 
 logger = get_logger()
 
