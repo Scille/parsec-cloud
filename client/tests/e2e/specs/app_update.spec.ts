@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { expect, msTest } from '@tests/e2e/helpers';
+import { DisplaySize, expect, msTest } from '@tests/e2e/helpers';
 
 async function checkAppUpdateModal(page: Page): Promise<void> {
   const modal = page.locator('.update-app-modal');
@@ -26,22 +26,32 @@ msTest('Opens app update modal on home page', async ({ home }) => {
   await checkAppUpdateModal(home);
 });
 
-msTest('Opens app update modal with notification', async ({ connected }) => {
-  const header = connected.locator('#connected-header');
-  const notifButton = header.locator('#trigger-notifications-button');
-  const notifCenter = connected.locator('.notification-center-popover');
-  await expect(notifButton).toHaveTheClass('unread');
-  await expect(notifCenter).toBeHidden();
-  await notifButton.click();
-  await expect(notifCenter).toBeVisible();
-  await expect(notifCenter.locator('.notification-center-header__counter')).toHaveText('1');
-  const notifs = notifCenter.locator('.notification-container').locator('.notification');
-  await expect(notifs).toHaveCount(1);
-  await expect(notifs.nth(0).locator('.notification-details__message')).toHaveText('A new version is available (v13.37)');
-  await notifs.nth(0).click();
-  await expect(notifCenter).toBeHidden();
-  await checkAppUpdateModal(connected);
-});
+for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
+  msTest(`Opens app update modal with notification on ${displaySize}`, async ({ connected }) => {
+    const header = connected.locator('#connected-header');
+    const notifButton = header.locator('#trigger-notifications-button');
+    await expect(notifButton).toHaveTheClass('unread');
+    const notifCenter =
+      displaySize === DisplaySize.Small
+        ? connected.locator('.notification-center-modal')
+        : connected.locator('.notification-center-popover');
+
+    if (displaySize === DisplaySize.Small) {
+      await connected.setDisplaySize(DisplaySize.Small);
+    }
+    await expect(notifCenter).toBeHidden();
+    await notifButton.click();
+    await expect(notifCenter).toBeVisible();
+    await expect(notifCenter.locator('.notification-center-header__counter')).toHaveText('1');
+    const notifs = notifCenter.locator('.notification-container').locator('.notification');
+    await expect(notifs).toHaveCount(1);
+    await expect(notifs.nth(0).locator('.notification-details__message')).toHaveText('A new version is available (v13.37)');
+    await notifs.nth(0).click();
+    await expect(notifCenter).toBeHidden();
+
+    await checkAppUpdateModal(connected);
+  });
+}
 
 msTest('Opens app update modal with profile popover', async ({ connected }) => {
   const header = connected.locator('#connected-header');

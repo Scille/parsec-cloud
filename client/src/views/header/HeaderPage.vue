@@ -146,6 +146,7 @@ import { InformationManager, InformationManagerKey } from '@/services/informatio
 import useSidebarMenu from '@/services/sidebarMenu';
 import { Translatable, MsImage, SidebarToggle, useWindowSize } from 'megashark-lib';
 import NotificationCenterPopover from '@/views/header/NotificationCenterPopover.vue';
+import NotificationCenterModal from '@/views/header/NotificationCenterModal.vue';
 import ProfileHeaderOrganization from '@/views/header/ProfileHeaderOrganization.vue';
 import { openSettingsModal } from '@/views/settings';
 import {
@@ -161,6 +162,7 @@ import {
   IonTitle,
   IonText,
   popoverController,
+  modalController,
 } from '@ionic/vue';
 import { home, notifications, search } from 'ionicons/icons';
 import { Ref, inject, onMounted, onUnmounted, ref, computed, watch } from 'vue';
@@ -323,21 +325,43 @@ function getTitleForRoute(): Translatable {
 async function openNotificationCenter(event: Event): Promise<void> {
   event.stopPropagation();
   notificationPopoverIsVisible.value = true;
-  const popover = await popoverController.create({
-    component: NotificationCenterPopover,
-    alignment: 'center',
-    event: event,
-    cssClass: 'notification-center-popover',
-    showBackdrop: false,
-    componentProps: {
-      notificationManager: informationManager.notificationManager,
-      eventDistributor: eventDistributor,
-    },
-  });
-  await popover.present();
-  await popover.onWillDismiss();
+
+  if (isLargeDisplay.value) {
+    const popover = await popoverController.create({
+      component: NotificationCenterPopover,
+      alignment: 'center',
+      event: event,
+      cssClass: 'notification-center-popover',
+      showBackdrop: false,
+      componentProps: {
+        notificationManager: informationManager.notificationManager,
+        eventDistributor: eventDistributor,
+      },
+    });
+    await popover.present();
+    await popover.onDidDismiss();
+    await popover.dismiss();
+  } else {
+    const modal = await modalController.create({
+      component: NotificationCenterModal,
+      cssClass: 'notification-center-modal',
+      showBackdrop: true,
+      handle: false,
+      backdropDismiss: true,
+      breakpoints: isLargeDisplay.value ? undefined : [1],
+      // https://ionicframework.com/docs/api/modal#scrolling-content-at-all-breakpoints
+      // expandToScroll: false, should be added to scroll with Ionic 8
+      initialBreakpoint: isLargeDisplay.value ? undefined : 1,
+      componentProps: {
+        notificationManager: informationManager.notificationManager,
+        eventDistributor: eventDistributor,
+      },
+    });
+    await modal.present();
+    await modal.onDidDismiss();
+    await modal.dismiss();
+  }
   notificationPopoverIsVisible.value = false;
-  await popover.dismiss();
 }
 </script>
 

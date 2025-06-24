@@ -85,6 +85,9 @@
 // ------- File & User (option button) -------
 .file-options,
 .user-options {
+  display: flex;
+  justify-content: flex-end;
+
   .options-button {
     --background-hover: none;
 
