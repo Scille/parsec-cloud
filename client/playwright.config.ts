@@ -9,6 +9,8 @@ import dotenv from 'dotenv';
  */
 dotenv.config({ path: '.env.playwright' });
 
+const IN_CI = !!process.env.CI;
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -17,13 +19,13 @@ export default defineConfig({
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
-  forbidOnly: !!process.env.CI,
+  forbidOnly: IN_CI,
   /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
+  retries: IN_CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 5 : undefined,
+  workers: IN_CI ? 5 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: process.env.CI ? 'blob' : 'list',
+  reporter: IN_CI ? 'blob' : 'list',
   webServer: {
     command: 'npm run dev -- --port 8080',
     url: 'http://localhost:8080',
@@ -43,7 +45,11 @@ export default defineConfig({
   projects: [
     {
       name: 'Google Chrome',
-      use: { ...devices['Desktop Chrome'], channel: 'chrome' },
+      use: {
+        ...devices['Desktop Chrome'],
+        // We use chrome over chromium because we need some media codec during e2e test for the file viewer feature.
+        channel: 'chrome',
+      },
     },
 
     // {
