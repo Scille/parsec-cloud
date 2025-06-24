@@ -13563,6 +13563,21 @@ fn variant_workspace_history2_entry_stat_js_to_rs(
                     v
                 }
             };
+            let last_updater = {
+                let js_val = Reflect::get(&obj, &"lastUpdater".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                            libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+            };
             Ok(libparsec::WorkspaceHistory2EntryStat::File {
                 id,
                 parent,
@@ -13570,6 +13585,7 @@ fn variant_workspace_history2_entry_stat_js_to_rs(
                 updated,
                 version,
                 size,
+                last_updater,
             })
         }
         "WorkspaceHistory2EntryStatFolder" => {
@@ -13641,12 +13657,28 @@ fn variant_workspace_history2_entry_stat_js_to_rs(
                     v
                 }
             };
+            let last_updater = {
+                let js_val = Reflect::get(&obj, &"lastUpdater".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                            libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+            };
             Ok(libparsec::WorkspaceHistory2EntryStat::Folder {
                 id,
                 parent,
                 created,
                 updated,
                 version,
+                last_updater,
             })
         }
         _ => Err(JsValue::from(TypeError::new(
@@ -13668,6 +13700,7 @@ fn variant_workspace_history2_entry_stat_rs_to_js(
             updated,
             version,
             size,
+            last_updater,
             ..
         } => {
             Reflect::set(
@@ -13721,6 +13754,16 @@ fn variant_workspace_history2_entry_stat_rs_to_js(
             Reflect::set(&js_obj, &"version".into(), &js_version)?;
             let js_size = JsValue::from(size);
             Reflect::set(&js_obj, &"size".into(), &js_size)?;
+            let js_last_updater = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(last_updater) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"lastUpdater".into(), &js_last_updater)?;
         }
         libparsec::WorkspaceHistory2EntryStat::Folder {
             id,
@@ -13728,6 +13771,7 @@ fn variant_workspace_history2_entry_stat_rs_to_js(
             created,
             updated,
             version,
+            last_updater,
             ..
         } => {
             Reflect::set(
@@ -13779,6 +13823,16 @@ fn variant_workspace_history2_entry_stat_rs_to_js(
             Reflect::set(&js_obj, &"updated".into(), &js_updated)?;
             let js_version = JsValue::from(version);
             Reflect::set(&js_obj, &"version".into(), &js_version)?;
+            let js_last_updater = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(last_updater) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"lastUpdater".into(), &js_last_updater)?;
         }
     }
     Ok(js_obj)

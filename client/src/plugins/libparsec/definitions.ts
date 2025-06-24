@@ -3155,6 +3155,7 @@ export interface WorkspaceHistory2EntryStatFile {
     updated: DateTime
     version: VersionInt
     size: SizeInt
+    lastUpdater: DeviceID
 }
 export interface WorkspaceHistory2EntryStatFolder {
     tag: WorkspaceHistory2EntryStatTag.Folder
@@ -3163,6 +3164,7 @@ export interface WorkspaceHistory2EntryStatFolder {
     created: DateTime
     updated: DateTime
     version: VersionInt
+    lastUpdater: DeviceID
 }
 export type WorkspaceHistory2EntryStat =
   | WorkspaceHistory2EntryStatFile

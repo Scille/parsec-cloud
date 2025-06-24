@@ -3,6 +3,7 @@
 from .common import (
     U64,
     DateTime,
+    DeviceID,
     EntryName,
     ErrorVariant,
     FsPath,
@@ -177,6 +178,7 @@ class WorkspaceHistory2EntryStat(Variant):
         updated: DateTime
         version: VersionInt
         size: SizeInt
+        last_updater: DeviceID
 
     class Folder:
         id: VlobID
@@ -184,6 +186,7 @@ class WorkspaceHistory2EntryStat(Variant):
         created: DateTime
         updated: DateTime
         version: VersionInt
+        last_updater: DeviceID
 
 
 class WorkspaceHistory2StatEntryError(ErrorVariant):

@@ -12236,6 +12236,18 @@ fn variant_workspace_history2_entry_stat_js_to_rs<'a>(
                     v
                 }
             };
+            let last_updater = {
+                let js_val: Handle<JsString> = obj.get(cx, "lastUpdater")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                        libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
             Ok(libparsec::WorkspaceHistory2EntryStat::File {
                 id,
                 parent,
@@ -12243,6 +12255,7 @@ fn variant_workspace_history2_entry_stat_js_to_rs<'a>(
                 updated,
                 version,
                 size,
+                last_updater,
             })
         }
         "WorkspaceHistory2EntryStatFolder" => {
@@ -12309,12 +12322,25 @@ fn variant_workspace_history2_entry_stat_js_to_rs<'a>(
                     v
                 }
             };
+            let last_updater = {
+                let js_val: Handle<JsString> = obj.get(cx, "lastUpdater")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                        libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
             Ok(libparsec::WorkspaceHistory2EntryStat::Folder {
                 id,
                 parent,
                 created,
                 updated,
                 version,
+                last_updater,
             })
         }
         _ => cx.throw_type_error("Object is not a WorkspaceHistory2EntryStat"),
@@ -12335,6 +12361,7 @@ fn variant_workspace_history2_entry_stat_rs_to_js<'a>(
             updated,
             version,
             size,
+            last_updater,
             ..
         } => {
             let js_tag = JsString::try_new(cx, "WorkspaceHistory2EntryStatFile").or_throw(cx)?;
@@ -12383,6 +12410,16 @@ fn variant_workspace_history2_entry_stat_rs_to_js<'a>(
             js_obj.set(cx, "version", js_version)?;
             let js_size = JsBigInt::from_u64(cx, size);
             js_obj.set(cx, "size", js_size)?;
+            let js_last_updater = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(last_updater) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "lastUpdater", js_last_updater)?;
         }
         libparsec::WorkspaceHistory2EntryStat::Folder {
             id,
@@ -12390,6 +12427,7 @@ fn variant_workspace_history2_entry_stat_rs_to_js<'a>(
             created,
             updated,
             version,
+            last_updater,
             ..
         } => {
             let js_tag = JsString::try_new(cx, "WorkspaceHistory2EntryStatFolder").or_throw(cx)?;
@@ -12436,6 +12474,16 @@ fn variant_workspace_history2_entry_stat_rs_to_js<'a>(
             js_obj.set(cx, "updated", js_updated)?;
             let js_version = JsNumber::new(cx, version as f64);
             js_obj.set(cx, "version", js_version)?;
+            let js_last_updater = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(last_updater) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "lastUpdater", js_last_updater)?;
         }
     }
     Ok(js_obj)
