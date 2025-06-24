@@ -7,6 +7,7 @@ mod list_user_devices;
 mod list_users;
 mod list_workspace_users;
 mod list_workspaces;
+mod organization_info;
 mod process_workspaces_needs;
 mod recovery;
 mod rename_workspace;
