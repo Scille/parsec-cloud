@@ -23,7 +23,7 @@ export default defineConfig({
   /* Retry on CI only */
   retries: IN_CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
-  workers: IN_CI ? 5 : undefined,
+  workers: IN_CI ? 4 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: IN_CI ? 'blob' : 'list',
   webServer: {
