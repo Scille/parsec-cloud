@@ -4,6 +4,7 @@ use libparsec_client_connection::ConnectionError;
 use libparsec_protocol::authenticated_cmds::latest::organization_info::{Rep, Req};
 use libparsec_types::anyhow;
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct OrganizationInfo {
     pub total_block_bytes: u64,
     pub total_metadata_bytes: u64,
