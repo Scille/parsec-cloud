@@ -51,7 +51,11 @@ const props = defineProps<{
 const data: NewVersionAvailableData = props.notification.getData<NewVersionAvailableData>();
 
 async function update(): Promise<void> {
-  await popoverController.dismiss();
+  if (await popoverController.getTop()) {
+    await popoverController.dismiss();
+  } else if (await modalController.getTop()) {
+    await modalController.dismiss();
+  }
 
   const modal = await modalController.create({
     component: UpdateAppModal,

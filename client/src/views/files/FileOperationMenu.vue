@@ -24,7 +24,7 @@
     </div>
     <ion-list class="upload-menu-tabs">
       <ion-item
-        class="upload-menu-tabs__item body"
+        class="upload-menu-tabs__item button-medium"
         :class="{ active: currentTab === Tabs.InProgress }"
         @click="currentTab = Tabs.InProgress"
       >
@@ -35,7 +35,7 @@
       </ion-item>
 
       <ion-item
-        class="upload-menu-tabs__item body"
+        class="upload-menu-tabs__item button-medium"
         :class="{ active: currentTab === Tabs.Done }"
         @click="currentTab = Tabs.Done"
       >
@@ -46,7 +46,7 @@
       </ion-item>
 
       <ion-item
-        class="upload-menu-tabs__item body"
+        class="upload-menu-tabs__item button-medium"
         :class="{ active: currentTab === Tabs.Error }"
         @click="currentTab = Tabs.Error"
       >
@@ -500,6 +500,7 @@ async function onFileOperationEvent(
   position: absolute;
   border-radius: var(--parsec-radius-8) var(--parsec-radius-8) 0 0;
   box-shadow: var(--parsec-shadow-strong);
+  background: var(--parsec-color-light-secondary-white);
   bottom: 0;
   right: 2rem;
   overflow: hidden;
@@ -509,6 +510,7 @@ async function onFileOperationEvent(
   @include ms.responsive-breakpoint('sm') {
     right: 0;
     min-width: 100%;
+    width: 100%;
   }
 
   &-header {
@@ -527,14 +529,40 @@ async function onFileOperationEvent(
     padding: 0;
     overflow: hidden;
     background: var(--parsec-color-light-secondary-white);
+    position: relative;
+    --current-tab: 0;
+
+    @include ms.responsive-breakpoint('sm') {
+      background: var(--parsec-color-light-secondary-premiere);
+      padding: 0.25rem;
+      border-radius: var(--parsec-radius-24);
+      margin: 1rem 0.5rem 0;
+    }
 
     &__item {
       color: var(--parsec-color-light-secondary-grey);
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      --padding-start: 0;
+      --inner-padding-end: 0px;
 
       &::part(native) {
         padding: 1rem 0.75rem 0.5rem 0.75rem;
-        --inner-padding-end: 0px;
+        background: transparent;
+
+        @include ms.responsive-breakpoint('sm') {
+          padding: 0.5rem 0.25rem;
+        }
+
+        @include ms.responsive-breakpoint('sm') {
+          padding: 0.5rem 0;
+        }
+      }
+
+      @include ms.responsive-breakpoint('sm') {
+        width: 100%;
       }
 
       .item-container {
@@ -566,9 +594,44 @@ async function onFileOperationEvent(
       &.active {
         color: var(--parsec-color-light-primary-500);
 
+        // @include ms.responsive-breakpoint('sm') {
+        //   background: var(--parsec-color-light-secondary-white);
+        //   border-radius: var(--parsec-radius-24);
+        //   box-shadow: var(--parsec-shadow-soft);
+        // }
+
         .text-counter {
           background: var(--parsec-color-light-primary-50);
         }
+      }
+    }
+
+    &::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      height: calc(100% - 0.5rem);
+      width: calc(100% / 3 - 0.5rem);
+      border-radius: var(--parsec-radius-24);
+      background-color: var(--parsec-color-light-secondary-white);
+      transition: transform 250ms ease-in-out;
+    }
+
+    &:has(.upload-menu-tabs__item:nth-child(1).active) {
+      &::before {
+        transform: translate(0, -0.25rem);
+      }
+    }
+
+    &:has(.upload-menu-tabs__item:nth-child(2).active) {
+      &::before {
+        transform: translate(calc(100% + 0.5rem), -0.25rem);
+      }
+    }
+
+    &:has(.upload-menu-tabs__item:nth-child(3).active) {
+      &::before {
+        transform: translate(calc(200% + 1rem), -0.25rem);
       }
     }
   }
@@ -601,7 +664,7 @@ async function onFileOperationEvent(
 
   &__item {
     color: var(--parsec-color-light-secondary-inversed-contrast);
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     cursor: pointer;
     border-radius: var(--parsec-radius-8);
     padding: 0.5rem;

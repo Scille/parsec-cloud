@@ -4,7 +4,7 @@ import { DisplaySize, expect, fillIonInput, logout, msTest, sortBy } from '@test
 
 const USER_NAMES = ['Alicey McAliceFace', 'Boby McBobFace', 'Malloryy McMalloryFace'];
 
-for (const displaySize of ['small', 'large']) {
+for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
   msTest(`Home default state with devices on ${displaySize} display`, async ({ home }) => {
     if (displaySize === 'small') {
       await home.setDisplaySize(DisplaySize.Small);

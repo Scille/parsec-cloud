@@ -73,9 +73,6 @@ defineEmits<{
   margin: 0 1rem;
   padding: 0.125rem 1rem;
   min-height: 3rem;
-  border-radius: var(--parsec-radius-12);
-  border-bottom: 1px solid var(--parsec-color-light-secondary-premiere);
-  background-color: var(--parsec-color-light-secondary-background);
   gap: 0.5rem;
 
   &--selection {
