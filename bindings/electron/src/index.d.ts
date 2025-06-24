@@ -2660,6 +2660,7 @@ export interface WorkspaceHistory2EntryStatFile {
     updated: number
     version: number
     size: number
+    last_updater: string
 }
 export interface WorkspaceHistory2EntryStatFolder {
     tag: "Folder"
@@ -2668,6 +2669,7 @@ export interface WorkspaceHistory2EntryStatFolder {
     created: number
     updated: number
     version: number
+    last_updater: string
 }
 export type WorkspaceHistory2EntryStat =
   | WorkspaceHistory2EntryStatFile
