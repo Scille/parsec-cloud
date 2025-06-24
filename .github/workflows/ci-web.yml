@@ -214,17 +214,23 @@ jobs:
       - name: Check testbed server is running
         run: curl http://localhost:6777
 
-      - name: Install Playwright dependencies
-        run: npx playwright install --with-deps chrome
-        working-directory: client
-        timeout-minutes: 5
+      - name: Get current uid:gid
+        id: user
+        run: echo "id=$(id -u):$(id -g)" | tee -a $GITHUB_OUTPUT
+        timeout-minutes: 1
 
       - name: E2E tests
-        run: npm run test:e2e:headless -- --shard=${{ matrix.shard_index }}/${{ matrix.shard_total }}
+        uses: docker://playwright/chrome:playwright-1.51.0
+        with:
+          # To use `playwright-chrome` docker image, we need 2 things, settings the entrypoint to `sh` and configure the user inside the container because it use a different uid:gid than CI.
+          #
+          # But Github action only allows to set `entrypoint` and `command` option for `docker run`.
+          # Fortunately, Github does not sanitize the input of `entrypoint` so we can inject `--user` option by doing some shell quote escape shenanigan.
+          entrypoint: sh" --user "${{ steps.user.outputs.id }}
+          args: -c "cd client; npm run test:e2e:headless -- --shard=${{ matrix.shard_index }}/${{ matrix.shard_total }}"
         env:
-          TESTBED_SERVER: parsec3://localhost:6777?no_ssl=true
-          PARSEC_APP_TRIAL_SERVERS: localhost:6777?no_ssl=true
-        working-directory: client
+          TESTBED_SERVER: parsec3://parsec-testbed-server:6777?no_ssl=true
+          PARSEC_APP_TRIAL_SERVERS: parsec-testbed-server:6777?no_ssl=true
         timeout-minutes: 20
 
       - name: Upload blob report to GitHub Actions Artifacts
