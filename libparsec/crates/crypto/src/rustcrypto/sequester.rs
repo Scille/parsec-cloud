@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use rand::rngs::OsRng;
 use rsa::{
     oaep::Oaep,
     pkcs8::{
@@ -42,7 +43,7 @@ impl SequesterPrivateKeyDer {
     const ALGORITHM: &'static str = "RSAES-OAEP-SHA256-XSALSA20-POLY1305";
 
     pub fn generate_pair(size_in_bits: SequesterKeySize) -> (Self, SequesterPublicKeyDer) {
-        let priv_key = RsaPrivateKey::new(&mut rand::thread_rng(), size_in_bits as usize)
+        let priv_key = RsaPrivateKey::new(&mut OsRng, size_in_bits as usize)
             .expect("Cannot generate the RSA key");
         let pub_key = RsaPublicKey::from(&priv_key);
 
@@ -148,12 +149,11 @@ impl SequesterPublicKeyDer {
     // Encryption format:
     //   <algorithm name>:<encrypted secret key with RSA key><encrypted data with secret key>
     pub fn encrypt(&self, data: &[u8]) -> Vec<u8> {
-        let mut rng = rand::thread_rng();
         let padding = Oaep::new::<Sha256>();
         let secret_key = SecretKey::generate();
         let secret_key_encrypted = self
             .0
-            .encrypt(&mut rng, padding, secret_key.as_ref())
+            .encrypt(&mut OsRng, padding, secret_key.as_ref())
             .expect("Unreachable");
 
         // RSAES-OAEP uses 42 bytes for padding, hence even with an insecure
@@ -230,8 +230,7 @@ impl SequesterSigningKeyDer {
     // Signature format:
     //   <algorithm name>:<signature><data>
     pub fn sign(&self, data: &[u8]) -> Vec<u8> {
-        let mut rng = rand::thread_rng();
-        let signature = self.0.sign_with_rng(&mut rng, data);
+        let signature = self.0.sign_with_rng(&mut OsRng, data);
 
         serialize_with_armor(
             signature.as_ref(),
