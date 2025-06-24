@@ -243,6 +243,7 @@ tracebackhide
 Trademeet
 trustme
 tvlob
+udeps
 uncaseified
 uncaseify
 uncatched

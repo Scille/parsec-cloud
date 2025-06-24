@@ -386,7 +386,7 @@ impl TestbedTemplateBuilder {
         &mut self,
         device: impl TryInto<DeviceID>,
         realm: impl TryInto<VlobID>,
-    ) -> TestbedEventCreateOrUpdateFolderManifestVlobBuilder {
+    ) -> TestbedEventCreateOrUpdateFolderManifestVlobBuilder<'_> {
         let realm: VlobID = realm
             .try_into()
             .unwrap_or_else(|_| panic!("Invalid value for param realm"));
@@ -399,7 +399,7 @@ impl TestbedTemplateBuilder {
         device: impl TryInto<DeviceID>,
         realm: impl TryInto<VlobID>,
         prevent_sync_pattern: impl TryInto<PreventSyncPattern>,
-    ) -> TestbedEventWorkspaceDataStorageFetchFolderVlobBuilder {
+    ) -> TestbedEventWorkspaceDataStorageFetchFolderVlobBuilder<'_> {
         let realm: VlobID = realm
             .try_into()
             .unwrap_or_else(|_| panic!("Invalid value for param realm"));
@@ -411,7 +411,7 @@ impl TestbedTemplateBuilder {
         &mut self,
         device: impl TryInto<DeviceID>,
         realm: impl TryInto<VlobID>,
-    ) -> TestbedEventWorkspaceDataStorageLocalFolderManifestCreateOrUpdateBuilder {
+    ) -> TestbedEventWorkspaceDataStorageLocalFolderManifestCreateOrUpdateBuilder<'_> {
         let realm: VlobID = realm
             .try_into()
             .unwrap_or_else(|_| panic!("Invalid value for param realm"));
@@ -610,7 +610,10 @@ impl TestbedEventNewShamirRecoveryInvitationBuilder<'_> {
 impl_event_builder!(NewRealm, [first_owner: UserID]);
 
 impl TestbedTemplateBuilder {
-    pub fn new_user_realm(&mut self, user: impl TryInto<UserID>) -> TestbedEventNewRealmBuilder {
+    pub fn new_user_realm(
+        &mut self,
+        user: impl TryInto<UserID>,
+    ) -> TestbedEventNewRealmBuilder<'_> {
         let user: UserID = user
             .try_into()
             .unwrap_or_else(|_| panic!("Invalid value for param user"));

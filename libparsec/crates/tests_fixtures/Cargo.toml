@@ -8,6 +8,15 @@ license.workspace = true
 version.workspace = true
 repository.workspace = true
 
+[package.metadata.cargo-udeps.ignore]
+# We only depends on these to enable their testbed compat feature.
+normal = [
+    "libparsec_client_connection",
+    "libparsec_platform_device_loader",
+    "libparsec_platform_ipc",
+    "libparsec_platform_storage",
+]
+
 [lints]
 workspace = true
 

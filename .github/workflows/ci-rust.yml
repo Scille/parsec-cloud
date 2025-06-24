@@ -104,7 +104,7 @@ jobs:
       # Install cargo nextest command
       - uses: taiki-e/install-action@9ba3ac3fd006a70c6e186a683577abc1ccf0ff3a # pin v2.54.0
         with:
-          tool: nextest@0.9.92, wasm-pack@0.13.1, cargo-deny@0.18.1
+          tool: nextest@0.9.92, wasm-pack@0.13.1, cargo-deny@0.18.1, cargo-udeps@0.1.56
 
       - name: Categorize workspace crates
         id: crates
@@ -208,6 +208,14 @@ jobs:
           cargo deny --color=never check --hide-inclusion-graph --show-stats 2>&1
           echo "::remove-matcher owner=cargo-deny::"
         timeout-minutes: 2
+
+      - name: Check for unused dependencies
+        # We reused `check-cargo-deny` since it's only trigger in `Cargo.toml` changes
+        if: inputs.check-cargo-deny
+        run: cargo +nightly udeps --workspace
+        env:
+          RUSTFLAGS: ${{ env.RUSTFLAGS }} -W warnings
+        timeout-minutes: 10
 
   test-rust-non-linux:
     strategy:
