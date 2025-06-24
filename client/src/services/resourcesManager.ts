@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { isWeb } from '@/parsec';
+import { Env } from '@/services/environment';
 import axios from 'axios';
 
 enum Resources {
@@ -115,6 +116,12 @@ class _ResourcesManager {
   }
 
   async loadAll(): Promise<void> {
+    if (!Env.isCustomBrandingEnabled()) {
+      window.electronAPI.log('info', 'Custom branding is not enabled, not loading resources');
+      return;
+    } else {
+      window.electronAPI.log('info', 'Custom branding is enabled, loading resources...');
+    }
     const promises: Array<Promise<NonNullable<unknown>>> = [];
     for (const res of Object.values(Resources)) {
       const promise = this.provider.load(res);
@@ -127,7 +134,7 @@ class _ResourcesManager {
           }
         })
         .catch((reason) => {
-          window.electronAPI.log('info', `Failed to retrieve custom resource ${res}: ${reason.toString()}`);
+          window.electronAPI.log('debug', `Failed to retrieve custom resource ${res}: ${reason.toString()}`);
         });
       promises.push(promise);
     }

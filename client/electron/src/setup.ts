@@ -283,13 +283,15 @@ export class ElectronCapacitorApp {
     let customAppIconPath: string | undefined = undefined;
     let customTrayIconPath: string | undefined = undefined;
 
-    const customFolder = join(app.getPath('userData'), 'custom');
+    if (Env.ENABLE_CUSTOM_BRANDING) {
+      const customFolder = join(app.getPath('userData'), 'custom');
 
-    if (fs.existsSync(join(customFolder, 'app_icon.png'))) {
-      customAppIconPath = join(customFolder, 'app_icon.png');
-    }
-    if (fs.existsSync(join(customFolder, 'tray_icon.png'))) {
-      customTrayIconPath = join(customFolder, 'tray_icon.png');
+      if (fs.existsSync(join(customFolder, 'app_icon.png'))) {
+        customAppIconPath = join(customFolder, 'app_icon.png');
+      }
+      if (fs.existsSync(join(customFolder, 'tray_icon.png'))) {
+        customTrayIconPath = join(customFolder, 'tray_icon.png');
+      }
     }
 
     switch (process.platform) {
@@ -436,9 +438,15 @@ export class ElectronCapacitorApp {
 
     if (this.CapacitorFileConfig.electron.splashScreenEnabled) {
       this.splash = new SplashScreen({ width: 624, height: 424 });
-      const customSplashPath = join(app.getPath('userData'), 'custom', 'splash.png');
+      let splashPath = join(app.getAppPath(), 'assets', 'splash-screen.png');
 
-      await this.splash.load(fs.existsSync(customSplashPath) ? customSplashPath : join(app.getAppPath(), 'assets', 'splash-screen.png'));
+      if (Env.ENABLE_CUSTOM_BRANDING) {
+        const customSplashPath = join(app.getPath('userData'), 'custom', 'splash.png');
+        if (fs.existsSync(customSplashPath)) {
+          splashPath = customSplashPath;
+        }
+      }
+      await this.splash.load(splashPath);
     }
 
     if (this.CapacitorFileConfig.backgroundColor) {
