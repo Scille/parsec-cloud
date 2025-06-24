@@ -121,6 +121,16 @@ function isAccountAutoLoginEnabled(): boolean {
 }
 
 /*
+ Custom branding
+*/
+
+const CUSTOM_BRANDING_ENV_VARIABLE = 'PARSEC_APP_ENABLE_CUSTOM_BRANDING';
+
+function isCustomBrandingEnabled(): boolean {
+  return import.meta.env[CUSTOM_BRANDING_ENV_VARIABLE] === 'true';
+}
+
+/*
  Links
 */
 
@@ -197,6 +207,7 @@ export const Env = {
   isAccountMocked,
   isAccountEnabled,
   isAccountAutoLoginEnabled,
+  isCustomBrandingEnabled,
   Links: {
     openDocumentationLink,
     openDocumentationUserGuideLink,
