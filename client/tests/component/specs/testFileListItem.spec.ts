@@ -38,6 +38,7 @@ describe('File List Item', () => {
       path: '/',
       isFile: (): boolean => true,
       isSelected: false,
+      lastUpdater: '42',
     };
 
     const wrapper = mount(FileListItem, {
@@ -78,6 +79,7 @@ describe('File List Item', () => {
       path: '/',
       isFile: (): boolean => false,
       isSelected: false,
+      lastUpdater: '42',
     };
 
     const wrapper = mount(FileListItem, {
