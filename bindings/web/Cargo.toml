@@ -18,7 +18,7 @@ crate-type = ["cdylib", "rlib"]
 [lints]
 workspace = true
 
-[dependencies]
+[target.'cfg(target_arch = "wasm32")'.dependencies]
 libparsec = { workspace = true }
 wasm-bindgen = { workspace = true, features = ["spans", "std"] }
 wasm-bindgen-futures = { workspace = true }
@@ -31,9 +31,6 @@ console_log = { workspace = true }
 # all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
 # code size when deploying.
 console_error_panic_hook = { workspace = true, optional = true }
-
-[dev-dependencies]
-wasm-bindgen-test = { workspace = true }
 
 # [profile.release]
 # # Tell `rustc` to optimize for small code size.

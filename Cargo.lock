@@ -2064,7 +2064,6 @@ dependencies = [
  "log",
  "wasm-bindgen",
  "wasm-bindgen-futures",
- "wasm-bindgen-test",
 ]
 
 [[package]]
