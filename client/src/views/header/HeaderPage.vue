@@ -346,12 +346,12 @@ async function openNotificationCenter(event: Event): Promise<void> {
       component: NotificationCenterModal,
       cssClass: 'notification-center-modal',
       showBackdrop: true,
-      handle: false,
+      handle: true,
       backdropDismiss: true,
-      breakpoints: isLargeDisplay.value ? undefined : [1],
+      breakpoints: isLargeDisplay.value ? undefined : [0, 0.5, 1],
       // https://ionicframework.com/docs/api/modal#scrolling-content-at-all-breakpoints
       // expandToScroll: false, should be added to scroll with Ionic 8
-      initialBreakpoint: isLargeDisplay.value ? undefined : 1,
+      initialBreakpoint: isLargeDisplay.value ? undefined : 0.5,
       componentProps: {
         notificationManager: informationManager.notificationManager,
         eventDistributor: eventDistributor,

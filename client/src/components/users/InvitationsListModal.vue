@@ -81,43 +81,12 @@ async function onInviteClick(): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
-.invitations-list-container {
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  --fill-color: var(--parsec-color-light-primary-900);
-  overflow: visible;
-}
-
 .invitations-list {
   width: 100%;
   border-radius: 0;
   overflow: hidden;
 
   &-header {
-    background: var(--parsec-color-light-primary-800);
-    color: var(--parsec-color-light-primary-30);
-    padding: 0.5rem 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-
-    &__title {
-      padding: 0;
-      display: flex;
-      align-items: center;
-    }
-
-    &__counter {
-      margin-right: auto;
-      padding: 0 0.25rem;
-      background: var(--parsec-color-light-primary-30-opacity15);
-      border-radius: var(--parsec-radius-12);
-      display: flex;
-      height: fit-content;
-      align-items: center;
-    }
-
     &__button {
       --background: var(--parsec-color-light-primary-30-opacity15) !important;
       --background-hover: var(--parsec-color-light-primary-30-opacity15) !important;
@@ -147,28 +116,6 @@ async function onInviteClick(): Promise<void> {
           opacity: 1;
         }
       }
-    }
-  }
-
-  &-content {
-    background: var(--parsec-color-light-secondary-white);
-    color: var(--parsec-color-light-primary-900);
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    padding: 0;
-    height: 40vh;
-    max-height: 25rem;
-    transition: all 250ms ease-in-out;
-
-    &__empty {
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5rem;
-      margin: auto;
-      color: var(--parsec-color-light-secondary-grey);
     }
   }
 }
