@@ -54,7 +54,7 @@
     <!-- file size -->
     <div
       class="file-size"
-      v-if="data.getDataType() === FileOperationDataType.Import"
+      v-if="data.getDataType() === FileOperationDataType.Import && isLargeDisplay"
     >
       <ion-label class="label-size cell">
         {{ $msTranslate(formatFileSize((data as ImportData).file.size)) }}
