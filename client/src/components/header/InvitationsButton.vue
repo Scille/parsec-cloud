@@ -107,12 +107,12 @@ async function openInvitationsMenu(event: Event): Promise<void> {
       component: InvitationsListModal,
       cssClass: 'invitations-list-modal',
       showBackdrop: true,
-      handle: false,
+      handle: true,
       backdropDismiss: true,
-      breakpoints: isLargeDisplay.value ? undefined : [1],
+      breakpoints: isLargeDisplay.value ? undefined : [0, 0.5, 1],
       // https://ionicframework.com/docs/api/modal#scrolling-content-at-all-breakpoints
       // expandToScroll: false, should be added to scroll with Ionic 8
-      initialBreakpoint: isLargeDisplay.value ? undefined : 1,
+      initialBreakpoint: isLargeDisplay.value ? undefined : 0.5,
       componentProps: {
         informationManager: informationManager,
       },

@@ -594,12 +594,6 @@ async function onFileOperationEvent(
       &.active {
         color: var(--parsec-color-light-primary-500);
 
-        // @include ms.responsive-breakpoint('sm') {
-        //   background: var(--parsec-color-light-secondary-white);
-        //   border-radius: var(--parsec-radius-24);
-        //   box-shadow: var(--parsec-shadow-soft);
-        // }
-
         .text-counter {
           background: var(--parsec-color-light-primary-50);
         }

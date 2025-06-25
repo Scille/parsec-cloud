@@ -20,7 +20,7 @@
           <ion-icon
             class="notification-center-header-actions__close"
             :icon="close"
-            @click="closeModal()"
+            @click="modalController.dismiss()"
           />
         </div>
       </div>
@@ -74,10 +74,6 @@ const notifications = computed(() => {
 });
 const onlyReadToggle: Ref<boolean> = ref(false);
 
-function closeModal(): void {
-  modalController.dismiss();
-}
-
 function getComponentType(notification: Notification): Component {
   if (!notification.information.data) {
     return Notifications.DefaultNotification;
@@ -112,58 +108,20 @@ function onNotificationMouseOver(notification: Notification): void {
 </script>
 
 <style lang="scss" scoped>
-.notification-center-container {
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  --fill-color: var(--parsec-color-light-primary-900);
-  overflow: visible;
-}
-
 .notification-center {
   width: 100%;
+  height: 100%;
   border-radius: var(--parsec-radius-12);
   overflow: hidden;
 
   &-header {
-    background: var(--parsec-color-light-primary-800);
-    color: var(--parsec-color-light-primary-30);
-    padding: 1rem 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-
-    @include ms.responsive-breakpoint('sm') {
-      padding: 0.5rem 0.25rem 0.5rem 1rem;
-    }
-
-    &__title {
-      padding: 0;
-      display: flex;
-      align-items: center;
-    }
-
-    &__counter {
-      margin-right: auto;
-      padding: 0 0.25rem;
-      background: var(--parsec-color-light-primary-30-opacity15);
-      border-radius: var(--parsec-radius-12);
-      display: flex;
-      align-items: center;
-      height: fit-content;
-    }
-
     &-actions {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-
-      @include ms.responsive-breakpoint('sm') {
-        gap: 0.25rem;
-      }
+      gap: 0.25rem;
 
       &__close {
-        color: var(--parsec-color-light-secondary-inversed-contrast);
+        color: var(--parsec-color-light-secondary-hard-grey);
         font-size: 1.25rem;
         cursor: pointer;
         border-radius: var(--parsec-radius-8);
@@ -176,7 +134,7 @@ function onNotificationMouseOver(notification: Notification): void {
 
       // eslint-disable-next-line vue-scoped-css/no-unused-selector
       &__toggle {
-        color: var(--parsec-color-light-secondary-medium);
+        color: var(--parsec-color-light-secondary-text);
         margin-left: auto;
         display: flex;
         align-items: center;
@@ -187,36 +145,30 @@ function onNotificationMouseOver(notification: Notification): void {
           margin-right: 0.5rem;
         }
 
+        &::part(track) {
+          background: var(--parsec-color-light-secondary-disabled);
+          opacity: 0.8;
+        }
+
+        &::part(handle) {
+          background: var(--parsec-color-light-secondary-text);
+        }
+
         &:hover,
         &.toggle-checked {
           &::part(label) {
             opacity: 1;
           }
+
+          &::part(track) {
+            background: var(--parsec-color-light-secondary-disabled);
+          }
+
+          &::part(handle) {
+            background: var(--parsec-color-light-secondary-text);
+          }
         }
       }
-    }
-  }
-
-  &-content {
-    background: var(--parsec-color-light-secondary-white);
-    color: var(--parsec-color-light-primary-900);
-    border-radius: 0 0 var(--parsec-radius-6) var(--parsec-radius-6);
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    padding: 0;
-    height: 40vh;
-    max-height: 25rem;
-    transition: all 250ms ease-in-out;
-
-    &__empty {
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5rem;
-      margin: auto;
-      color: var(--parsec-color-light-secondary-grey);
     }
   }
 }
