@@ -114,7 +114,7 @@ class BmsAccess {
       client: {
         firstname: data.firstname,
         lastname: data.lastname,
-        phone: data.phone,
+        phone: data.phone ?? null,
         country: data.country,
         company: data.company,
         job: data.job,
