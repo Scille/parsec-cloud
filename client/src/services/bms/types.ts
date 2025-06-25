@@ -307,7 +307,7 @@ interface UpdatePersonalInformationQueryData extends UserQueryData {
   client: {
     firstname?: string;
     lastname?: string;
-    phone?: string;
+    phone?: string | null;
     country?: string;
     company?: string;
     job?: string;

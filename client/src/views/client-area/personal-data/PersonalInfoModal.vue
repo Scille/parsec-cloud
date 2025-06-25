@@ -37,7 +37,6 @@
             v-model="phoneRef"
             @on-enter-keyup="submit"
           />
-          {{ phoneRef }}
           <div
             class="form-error form-helperText body"
             v-if="fieldHasError(Fields.Phone)"
@@ -102,7 +101,7 @@ async function submit(): Promise<boolean> {
     const response = await BmsAccessInstance.get().updatePersonalInformation({
       firstname: firstnameRef.value,
       lastname: lastnameRef.value,
-      phone: props.phone === undefined && phoneRef.value.length === 0 ? undefined : phoneRef.value,
+      phone: phoneRef.value.length === 0 ? undefined : phoneRef.value,
     });
 
     if (response.isError) {
