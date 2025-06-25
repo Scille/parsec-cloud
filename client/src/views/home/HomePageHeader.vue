@@ -161,7 +161,7 @@ import { ParsecAccount, HumanHandle } from '@/parsec';
 import { AccountSettingsTabs } from '@/views/account/types';
 import { navigateTo, Routes, watchRoute } from '@/router';
 
-const { isSmallDisplay, isLargeDisplay } = useWindowSize();
+const { isSmallDisplay } = useWindowSize();
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const eventDistributor = injectionProvider.getDefault().eventDistributor;
 let eventCbId: string | null = null;

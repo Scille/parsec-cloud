@@ -136,6 +136,7 @@
   .file-loading {
     min-width: 4rem;
     width: 4rem;
+    max-width: 4rem;
     justify-content: end;
 
     @include ms.responsive-breakpoint('sm') {
