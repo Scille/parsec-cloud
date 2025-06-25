@@ -35,8 +35,7 @@
 
     <!-- last update -->
     <div class="file-creationDate">
-      <ion-label class="label-last-update cell">
-      </ion-label>
+      <ion-label class="label-last-update cell" />
     </div>
 
     <!-- last update -->
@@ -49,7 +48,7 @@
     <!-- file size -->
     <div
       class="file-size"
-      v-if="data.getDataType() === FileOperationDataType.Import"
+      v-if="data.getDataType() === FileOperationDataType.Import && isLargeDisplay"
     >
       <ion-label class="label-size cell">
         {{ $msTranslate(formatFileSize((data as ImportData).file.size)) }}
