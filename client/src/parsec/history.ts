@@ -27,6 +27,7 @@ import {
   WorkspaceHistoryHandle,
   WorkspaceID,
 } from '@/parsec/types';
+import { getUserInfoFromDeviceID } from '@/parsec/user';
 import { generateNoHandleError } from '@/parsec/utils';
 import { libparsec } from '@/plugins/libparsec';
 import { getConnectionHandle } from '@/router';
@@ -129,6 +130,7 @@ export class WorkspaceHistory {
     if (result.ok) {
       const cooked: Array<WorkspaceHistoryEntryStat> = [];
       for (const [name, stat] of result.value) {
+        const userInfoResult = await getUserInfoFromDeviceID(stat.lastUpdater);
         stat.created = DateTime.fromSeconds(stat.created as any as number);
         stat.updated = DateTime.fromSeconds(stat.updated as any as number);
         if (stat.tag === WorkspaceHistory2EntryStatTag.File) {
@@ -136,12 +138,14 @@ export class WorkspaceHistory {
           (stat as unknown as WorkspaceHistoryEntryStatFile).isFile = (): boolean => true;
           (stat as unknown as WorkspaceHistoryEntryStatFile).name = name;
           (stat as unknown as WorkspaceHistoryEntryStatFile).path = await Path.join(path, name);
+          (stat as unknown as WorkspaceHistoryEntryStatFile).lastUpdater = userInfoResult.ok ? userInfoResult.value : undefined;
         } else {
-          (stat as WorkspaceHistoryEntryStatFolder).isFile = (): boolean => false;
-          (stat as WorkspaceHistoryEntryStatFolder).name = name;
-          (stat as WorkspaceHistoryEntryStatFolder).path = await Path.join(path, name);
+          (stat as unknown as WorkspaceHistoryEntryStatFolder).isFile = (): boolean => false;
+          (stat as unknown as WorkspaceHistoryEntryStatFolder).name = name;
+          (stat as unknown as WorkspaceHistoryEntryStatFolder).path = await Path.join(path, name);
+          (stat as unknown as WorkspaceHistoryEntryStatFolder).lastUpdater = userInfoResult.ok ? userInfoResult.value : undefined;
         }
-        cooked.push(stat as WorkspaceHistoryEntryStat);
+        cooked.push(stat as unknown as WorkspaceHistoryEntryStat);
       }
       return { ok: true, value: cooked };
     }
@@ -156,17 +160,20 @@ export class WorkspaceHistory {
     const fileName = (await Path.filename(path)) || '';
     const result = await libparsec.workspaceHistory2StatEntry(this.handle, path);
     if (result.ok) {
+      const userInfoResult = await getUserInfoFromDeviceID(result.value.lastUpdater);
       if (result.value.tag === WorkspaceHistory2EntryStatTag.File) {
         (result.value as unknown as WorkspaceHistoryEntryStatFile).size = Number(result.value.size);
         (result.value as unknown as WorkspaceHistoryEntryStatFile).isFile = (): boolean => true;
         (result.value as unknown as WorkspaceHistoryEntryStatFile).name = fileName;
         (result.value as unknown as WorkspaceHistoryEntryStatFile).path = path;
+        (result.value as unknown as WorkspaceHistoryEntryStatFile).lastUpdater = userInfoResult.ok ? userInfoResult.value : undefined;
       } else {
-        (result.value as WorkspaceHistoryEntryStatFolder).isFile = (): boolean => false;
-        (result.value as WorkspaceHistoryEntryStatFolder).name = fileName;
-        (result.value as WorkspaceHistoryEntryStatFolder).path = path;
+        (result.value as unknown as WorkspaceHistoryEntryStatFolder).isFile = (): boolean => false;
+        (result.value as unknown as WorkspaceHistoryEntryStatFolder).name = fileName;
+        (result.value as unknown as WorkspaceHistoryEntryStatFolder).path = path;
+        (result.value as unknown as WorkspaceHistoryEntryStatFolder).lastUpdater = userInfoResult.ok ? userInfoResult.value : undefined;
       }
-      return result as Result<WorkspaceHistoryEntryStat, WorkspaceHistory2StatEntryError>;
+      return result as unknown as Result<WorkspaceHistoryEntryStat, WorkspaceHistory2StatEntryError>;
     }
     return result;
   }

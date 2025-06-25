@@ -2,7 +2,7 @@
 
 import { FileModel, FolderModel } from '@/components/files';
 import FileCard from '@/components/files/FileCard.vue';
-import { FileType } from '@/parsec';
+import { FileType, UserInfo } from '@/parsec';
 import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
@@ -35,7 +35,8 @@ describe('File Card Item', () => {
       path: '/',
       isFile: (): boolean => true,
       isSelected: false,
-      lastUpdater: '42',
+      // Not used anyway
+      lastUpdater: {} as UserInfo,
     };
 
     const wrapper = mount(FileCard, {
@@ -74,7 +75,8 @@ describe('File Card Item', () => {
       path: '/',
       isFile: (): boolean => false,
       isSelected: false,
-      lastUpdater: '42',
+      // Not used anyway
+      lastUpdater: {} as UserInfo,
     };
 
     const wrapper = mount(FileCard, {

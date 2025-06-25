@@ -29,6 +29,7 @@ import {
   WorkspaceStatEntryError,
   WorkspaceStatFolderChildrenError,
 } from '@/parsec/types';
+import { getUserInfoFromDeviceID } from '@/parsec/user';
 import { MoveEntryModeTag, libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
@@ -70,17 +71,20 @@ export async function entryStat(workspaceHandle: WorkspaceHandle, path: FsPath):
   if (result.ok) {
     result.value.created = DateTime.fromSeconds(result.value.created as any as number);
     result.value.updated = DateTime.fromSeconds(result.value.updated as any as number);
+    const userInfoResult = await getUserInfoFromDeviceID(result.value.lastUpdater);
     if (result.value.tag === FileType.File) {
       (result.value as unknown as EntryStatFile).size = Number(result.value.size);
       (result.value as unknown as EntryStatFile).isFile = (): boolean => true;
       (result.value as unknown as EntryStatFile).name = fileName;
       (result.value as unknown as EntryStatFile).path = path;
       (result.value as unknown as EntryStatFile).isConfined = (): boolean => result.value.confinementPoint !== null;
+      (result.value as unknown as EntryStatFile).lastUpdater = userInfoResult.ok ? userInfoResult.value : undefined;
     } else {
-      (result.value as EntryStatFolder).isFile = (): boolean => false;
-      (result.value as EntryStatFolder).name = fileName;
-      (result.value as EntryStatFolder).path = path;
-      (result.value as EntryStatFolder).isConfined = (): boolean => result.value.confinementPoint !== null;
+      (result.value as unknown as EntryStatFolder).isFile = (): boolean => false;
+      (result.value as unknown as EntryStatFolder).name = fileName;
+      (result.value as unknown as EntryStatFolder).path = path;
+      (result.value as unknown as EntryStatFolder).isConfined = (): boolean => result.value.confinementPoint !== null;
+      (result.value as unknown as EntryStatFolder).lastUpdater = userInfoResult.ok ? userInfoResult.value : undefined;
     }
   }
   return result as Result<EntryStat, WorkspaceStatEntryError>;
@@ -110,6 +114,7 @@ export async function statFolderChildren(
       continue;
     }
     if (!stat.confinementPoint || !excludeConfined) {
+      const userInfoResult = await getUserInfoFromDeviceID(stat.lastUpdater);
       stat.created = DateTime.fromSeconds(stat.created as any as number);
       stat.updated = DateTime.fromSeconds(stat.updated as any as number);
       if (stat.tag === FileType.File) {
@@ -118,13 +123,15 @@ export async function statFolderChildren(
         (stat as unknown as EntryStatFile).name = name;
         (stat as unknown as EntryStatFile).path = await Path.join(path, name);
         (stat as unknown as EntryStatFile).isConfined = (): boolean => stat.confinementPoint !== null;
+        (stat as unknown as EntryStatFile).lastUpdater = userInfoResult.ok ? userInfoResult.value : undefined;
       } else {
-        (stat as EntryStatFolder).isFile = (): boolean => false;
-        (stat as EntryStatFolder).name = name;
-        (stat as EntryStatFolder).path = await Path.join(path, name);
-        (stat as EntryStatFolder).isConfined = (): boolean => stat.confinementPoint !== null;
+        (stat as unknown as EntryStatFolder).isFile = (): boolean => false;
+        (stat as unknown as EntryStatFolder).name = name;
+        (stat as unknown as EntryStatFolder).path = await Path.join(path, name);
+        (stat as unknown as EntryStatFolder).isConfined = (): boolean => stat.confinementPoint !== null;
+        (stat as unknown as EntryStatFolder).lastUpdater = userInfoResult.ok ? userInfoResult.value : undefined;
       }
-      cooked.push(stat as EntryStat);
+      cooked.push(stat as unknown as EntryStat);
     }
   }
 
