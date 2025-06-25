@@ -44,22 +44,33 @@ for (const testData of TEST_DATA) {
     await expect(documents.locator('.file-details-modal')).toBeVisible();
     const modal = documents.locator('.file-details-modal');
     await expect(modal.locator('.ms-modal-header__title ')).toHaveText(new RegExp(`^Details on ${nameMatcher}$`));
-    await expect(modal.locator('.file-info-basic__edit')).toHaveText(/^Updated: [A-Za-z]{3} \d{1,2}, 20[0-9]{2}$/);
 
-    const details = modal.locator('.file-info-details-item');
-    await expect(details).toHaveCount(testData.isFile ? 3 : 2);
-    await expect(details.nth(0).locator('.file-info-details-item__title')).toHaveText('Created');
-    await expect(details.nth(0).locator('.file-info-details-item__value')).toHaveText(/^[A-Za-z]{3} \d{1,2}, 20[0-9]{2}$/);
+    const generalDetails = modal.locator('.file-info-details-content').nth(0);
+    const generalDetailsItem = generalDetails.locator('.file-info-details-item');
+    await expect(generalDetails.locator('.file-info-details-content__title')).toHaveText('General information');
+    await expect(generalDetailsItem).toHaveCount(testData.isFile ? 3 : 2);
+    await expect(generalDetailsItem.nth(0).locator('.file-info-details-item__title')).toHaveText('Created');
+    await expect(generalDetailsItem.nth(0).locator('.file-info-details-item__value')).toHaveText(/^[A-Za-z]{3} \d{1,2}, 20[0-9]{2}$/);
 
     if (testData.isFile) {
-      await expect(details.nth(1).locator('.file-info-details-item__title')).toHaveText('Size');
-      await expect(details.nth(1).locator('.file-info-details-item__value')).toHaveText(/^[\d.]{1,4} (K|M)?B$/);
+      await expect(generalDetailsItem.nth(1).locator('.file-info-details-item__title')).toHaveText('Size');
+      await expect(generalDetailsItem.nth(1).locator('.file-info-details-item__value')).toHaveText(/^[\d.]{1,4} (K|M)?B$/);
     }
 
-    await expect(details.nth(testData.isFile ? 2 : 1).locator('.file-info-details-item__title')).toHaveText('Version');
-    await expect(details.nth(testData.isFile ? 2 : 1).locator('.file-info-details-item__value')).toHaveText(/^\d+$/);
+    await expect(generalDetailsItem.nth(testData.isFile ? 2 : 1).locator('.file-info-details-item__title')).toHaveText('Version');
+    await expect(generalDetailsItem.nth(testData.isFile ? 2 : 1).locator('.file-info-details-item__value')).toHaveText(/^\d+$/);
 
     await expect(modal.locator('.label-id')).toHaveText(/^(Internal ID: )[a-f0-9-]+$/);
+
+    const updateDetails = modal.locator('.file-info-details-content').nth(1);
+    const updateDetailsItem = updateDetails.locator('.file-info-details-item');
+    await expect(updateDetails.locator('.file-info-details-content__title')).toHaveText('Last update');
+    await expect(updateDetailsItem).toHaveCount(2);
+    await expect(updateDetailsItem.nth(0).locator('.file-info-details-item__title')).toHaveText('Updated');
+    await expect(updateDetailsItem.nth(0).locator('.file-info-details-item__value')).toHaveText(/^[A-Za-z]{3} \d{1,2}, 20[0-9]{2}$/);
+
+    await expect(updateDetailsItem.nth(1).locator('.file-info-details-item__title')).toHaveText('Editor');
+    await expect(updateDetailsItem.nth(1).locator('.file-info-details-item__value')).toHaveText('Alicey McAliceFace');
 
     await expect(modal.locator('.file-info-path-value__text')).toHaveText(new RegExp(`^/${nameMatcher}$`));
 

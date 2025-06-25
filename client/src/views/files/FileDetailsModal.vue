@@ -11,7 +11,7 @@
         <div class="file-info">
           <ms-image
             :image="entry.isFile() ? getFileIcon(entry.name) : Folder"
-            class="file-info-image"
+            class="file-info__image"
           />
           <ion-icon
             class="cloud-overlay"
@@ -19,18 +19,13 @@
             :icon="entry.needSync ? cloudOffline : cloudDone"
             @click="openTooltip($event, getSyncString())"
           />
-          <div class="file-info-basic">
-            <ion-text class="file-info-basic__name title-h4">
-              {{ entry.name }}
-            </ion-text>
-            <ion-label class="file-info-basic__edit body">
-              <span>{{ $msTranslate('FileDetails.stats.updated') }}</span>
-              <span>{{ $msTranslate(I18n.formatDate(entry.updated, 'short')) }}</span>
-            </ion-label>
-          </div>
+          <ion-text class="file-info__name title-h4">
+            {{ entry.name }}
+          </ion-text>
         </div>
 
         <div class="file-info-details-content">
+          <ion-text class="file-info-details-content__title subtitles-sm">{{ $msTranslate('FileDetails.stats.generalInfo') }}</ion-text>
           <div class="file-info-details">
             <!-- Created -->
             <div class="file-info-details-item">
@@ -62,6 +57,33 @@
             </div>
           </div>
           <technical-id :id="entry.id" />
+        </div>
+
+        <div class="file-info-details-content">
+          <ion-text class="file-info-details-content__title subtitles-sm">{{ $msTranslate('FileDetails.stats.lastUpdate') }}</ion-text>
+          <div class="file-info-details">
+            <!-- Updated -->
+            <div class="file-info-details-item">
+              <ion-label class="file-info-details-item__title subtitles-sm">
+                {{ $msTranslate('FileDetails.stats.updated') }}
+              </ion-label>
+              <ion-text class="file-info-details-item__value body">
+                {{ $msTranslate(I18n.formatDate(entry.updated, 'short')) }}
+              </ion-text>
+            </div>
+            <!-- Editor -->
+            <div
+              class="file-info-details-item"
+              v-if="entry.lastUpdater"
+            >
+              <ion-label class="file-info-details-item__title subtitles-sm">
+                {{ $msTranslate('FileDetails.stats.editor') }}
+              </ion-label>
+              <ion-text class="file-info-details-item__value body">
+                {{ entry.lastUpdater.humanHandle.label }}
+              </ion-text>
+            </div>
+          </div>
         </div>
 
         <!-- Path -->
@@ -166,13 +188,18 @@ async function copyPath(): Promise<void> {
   gap: 2rem;
   --background-color: var(--parsec-color-light-secondary-premiere);
   --color: var(--parsec-color-light-primary-600);
-  margin-top: 1.5rem;
+  margin-top: 0.5rem;
+
+  @include ms.responsive-breakpoint('sm') {
+    margin-bottom: 2rem;
+  }
 }
 
 .file-info {
   display: flex;
   gap: 1rem;
   position: relative;
+  align-items: center;
 
   .cloud-overlay {
     cursor: pointer;
@@ -194,24 +221,14 @@ async function copyPath(): Promise<void> {
     }
   }
 
-  &-image {
+  &__image {
     display: flex;
     width: 3rem;
     height: 3rem;
   }
 
-  &-basic {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-
-    &__name {
-      color: var(--parsec-color-light-secondary-text);
-    }
-
-    &__edit {
-      color: var(--parsec-color-light-secondary-grey);
-    }
+  &__name {
+    color: var(--parsec-color-light-secondary-text);
   }
 
   &-details {
@@ -223,6 +240,10 @@ async function copyPath(): Promise<void> {
       display: flex;
       flex-direction: column;
       gap: 0.75rem;
+
+      &__title {
+        color: var(--parsec-color-light-secondary-text);
+      }
     }
 
     &-item {

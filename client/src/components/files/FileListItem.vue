@@ -74,13 +74,11 @@
 
       <!-- updated by -->
       <!-- Can't get the information right now, maybe later -->
-      <div
-        class="file-updatedBy"
-        v-show="false"
-      >
+      <div class="file-updatedBy">
         <user-avatar-name
-          :user-avatar="entry.id"
-          :user-name="entry.id"
+          v-if="entry.lastUpdater"
+          :user-avatar="entry.lastUpdater.humanHandle.label"
+          :user-name="entry.lastUpdater.humanHandle.label"
         />
       </div>
 

@@ -10,6 +10,7 @@ export {
   ClientCreateWorkspaceErrorTag,
   ClientEventTag,
   ClientExportRecoveryDeviceErrorTag,
+  ClientGetUserDeviceErrorTag,
   ClientInfoErrorTag,
   ClientListUserDevicesErrorTag,
   ClientListUsersErrorTag,
@@ -96,6 +97,7 @@ export type {
   ClientEventPing,
   ClientExportRecoveryDeviceError,
   ClientGetTosError,
+  ClientGetUserDeviceError,
   ClientInfo,
   ClientInfoError,
   ClientListUserDevicesError,
@@ -244,34 +246,38 @@ interface OwnDeviceInfo extends DeviceInfo {
   isRecovery: boolean;
 }
 
-interface EntryStatFolder extends ParsecEntryStatFolder {
+interface EntryStatFolder extends Omit<ParsecEntryStatFolder, 'lastUpdater'> {
   isFile: () => boolean;
   isConfined: () => boolean;
   path: FsPath;
   name: EntryName;
+  lastUpdater?: UserInfo;
 }
 
-interface EntryStatFile extends Omit<ParsecEntryStatFile, 'size'> {
+interface EntryStatFile extends Omit<ParsecEntryStatFile, 'size' | 'lastUpdater'> {
   isFile: () => boolean;
   isConfined: () => boolean;
   path: FsPath;
   name: EntryName;
   size: number;
+  lastUpdater?: UserInfo;
 }
 
 type EntryStat = EntryStatFile | EntryStatFolder;
 
-interface WorkspaceHistoryEntryStatFile extends Omit<ParsecWorkspaceHistory2EntryStatFile, 'size'> {
+interface WorkspaceHistoryEntryStatFile extends Omit<ParsecWorkspaceHistory2EntryStatFile, 'size' | 'lastUpdater'> {
   isFile: () => boolean;
   path: FsPath;
   name: EntryName;
   size: number;
+  lastUpdater?: UserInfo;
 }
 
-interface WorkspaceHistoryEntryStatFolder extends ParsecWorkspaceHistory2EntryStatFolder {
+interface WorkspaceHistoryEntryStatFolder extends Omit<ParsecWorkspaceHistory2EntryStatFolder, 'lastUpdater'> {
   isFile: () => boolean;
   path: FsPath;
   name: EntryName;
+  lastUpdater?: UserInfo;
 }
 
 type WorkspaceHistoryEntryStat = WorkspaceHistoryEntryStatFile | WorkspaceHistoryEntryStatFolder;

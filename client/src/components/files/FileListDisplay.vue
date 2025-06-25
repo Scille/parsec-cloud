@@ -33,10 +33,7 @@
           <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-name">
             {{ $msTranslate('FoldersPage.listDisplayTitles.name') }}
           </ion-label>
-          <ion-label
-            class="folder-list-header__label cell-title ion-text-nowrap label-updatedBy"
-            v-show="false"
-          >
+          <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-updatedBy">
             {{ $msTranslate('FoldersPage.listDisplayTitles.updatedBy') }}
           </ion-label>
           <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-lastUpdate">

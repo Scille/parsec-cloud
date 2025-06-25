@@ -6,7 +6,7 @@ mockLibParsec();
 
 import { FileModel, FolderModel } from '@/components/files';
 import FileListItem from '@/components/files/FileListItem.vue';
-import { FileType } from '@/parsec';
+import { FileType, UserInfo } from '@/parsec';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -38,7 +38,8 @@ describe('File List Item', () => {
       path: '/',
       isFile: (): boolean => true,
       isSelected: false,
-      lastUpdater: '42',
+      // Not used anyway
+      lastUpdater: {} as UserInfo,
     };
 
     const wrapper = mount(FileListItem, {
@@ -79,7 +80,8 @@ describe('File List Item', () => {
       path: '/',
       isFile: (): boolean => false,
       isSelected: false,
-      lastUpdater: '42',
+      // Not used anyway
+      lastUpdater: {} as UserInfo,
     };
 
     const wrapper = mount(FileListItem, {

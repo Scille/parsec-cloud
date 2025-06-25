@@ -740,10 +740,13 @@
     "FileDetails": {
         "title": "Détails de {name}",
         "stats": {
+            "generalInfo": "Informations générales",
+            "lastUpdate": "Dernière mise à jour",
+            "editor": "Éditeur",
             "file": "Fichier",
             "folder": "Dossier",
             "created": "Créé le",
-            "updated": "Mis à jour : ",
+            "updated": "Mis à jour",
             "version": "Version",
             "size": "Taille",
             "path": "Emplacement",

@@ -742,10 +742,13 @@
     "FileDetails": {
         "title": "Details on {name}",
         "stats": {
+            "generalInfo": "General information",
+            "lastUpdate": "Last update",
+            "editor": "Editor",
             "file": "File",
             "folder": "Folder",
             "created": "Created",
-            "updated": "Updated: ",
+            "updated": "Updated",
             "version": "Version",
             "size": "Size",
             "path": "Path",
