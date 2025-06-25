@@ -118,7 +118,7 @@
         </ion-button>
 
         <profile-header-homepage
-          v-if="isLargeDisplay && Env.isAccountEnabled() && accountLoggedIn && accountInfo"
+          v-if="Env.isAccountEnabled() && accountLoggedIn && accountInfo"
           :name="accountInfo.label"
           :email="accountInfo.email"
           :is-online="true"

@@ -73,10 +73,11 @@
       </div>
 
       <!-- updated by -->
-      <!-- Can't get the information right now, maybe later -->
-      <div class="file-updatedBy">
+      <div
+        class="file-updatedBy"
+        v-if="entry.lastUpdater && isLargeDisplay"
+      >
         <user-avatar-name
-          v-if="entry.lastUpdater"
           :user-avatar="entry.lastUpdater.humanHandle.label"
           :user-name="entry.lastUpdater.humanHandle.label"
         />
