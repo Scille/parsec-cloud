@@ -102,9 +102,6 @@ impl From<RegisterNewDeviceError> for ClientExportRecoveryDeviceError {
                 ballpark_client_early_offset,
                 ballpark_client_late_offset,
             },
-            RegisterNewDeviceError::InvalidCertificate(invalid_certificate_error) => {
-                ClientExportRecoveryDeviceError::InvalidCertificate(invalid_certificate_error)
-            }
         }
     }
 }
@@ -170,9 +167,6 @@ impl From<RegisterNewDeviceError> for ImportRecoveryDeviceError {
                 ballpark_client_early_offset,
                 ballpark_client_late_offset,
             },
-            RegisterNewDeviceError::InvalidCertificate(invalid_certificate_error) => {
-                ImportRecoveryDeviceError::InvalidCertificate(invalid_certificate_error)
-            }
         }
     }
 }
@@ -268,8 +262,6 @@ pub enum RegisterNewDeviceError {
         ballpark_client_early_offset: f64,
         ballpark_client_late_offset: f64,
     },
-    #[error(transparent)]
-    InvalidCertificate(#[from] Box<InvalidCertificateError>),
 }
 
 #[derive(Debug)]
