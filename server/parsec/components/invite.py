@@ -47,29 +47,16 @@ InviteListInvitationCreatedBy = authenticated_cmds.latest.invite_list.Invitation
 
 @dataclass(slots=True)
 class BaseInvitationCreatedBy:
-    def for_invite_info(self) -> InviteInfoInvitationCreatedBy:
+    def cook_for_api[T](
+        self,
+        created_by_user_cls: Callable[[UserID, HumanHandle], T],
+        created_by_external_service_cls: Callable[[str], T],
+    ) -> T:
         match self:
             case InvitationCreatedByUser(user_id, human_handle):
-                return invited_cmds.latest.invite_info.InvitationCreatedByUser(
-                    user_id, human_handle
-                )
+                return created_by_user_cls(user_id, human_handle)
             case InvitationCreatedByExternalService(service_label):
-                return invited_cmds.latest.invite_info.InvitationCreatedByExternalService(
-                    service_label
-                )
-            case unknown:
-                assert False, unknown
-
-    def for_invite_list(self) -> InviteListInvitationCreatedBy:
-        match self:
-            case InvitationCreatedByUser(user_id, human_handle):
-                return authenticated_cmds.latest.invite_list.InvitationCreatedByUser(
-                    user_id, human_handle
-                )
-            case InvitationCreatedByExternalService(service_label):
-                return authenticated_cmds.latest.invite_list.InvitationCreatedByExternalService(
-                    service_label
-                )
+                return created_by_external_service_cls(service_label)
             case unknown:
                 assert False, unknown
 
@@ -847,6 +834,8 @@ class BaseInviteComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.invite_list.Req,
     ) -> authenticated_cmds.latest.invite_list.Rep:
+        invite_list = authenticated_cmds.latest.invite_list
+
         outcome = await self.list(
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
@@ -867,63 +856,83 @@ class BaseInviteComponent:
         for invitation in invitations:
             match invitation:
                 case UserInvitation():
-                    cooked = authenticated_cmds.latest.invite_list.InviteListItemUser(
+                    cooked = invite_list.InviteListItemUser(
                         token=invitation.token,
                         created_on=invitation.created_on,
-                        created_by=invitation.created_by.for_invite_list(),
+                        created_by=invitation.created_by.cook_for_api(
+                            invite_list.InvitationCreatedByUser,
+                            invite_list.InvitationCreatedByExternalService,
+                        ),
                         claimer_email=invitation.claimer_email,
                         status=invitation.status,
                     )
                 case DeviceInvitation():
-                    cooked = authenticated_cmds.latest.invite_list.InviteListItemDevice(
+                    cooked = invite_list.InviteListItemDevice(
                         token=invitation.token,
                         created_on=invitation.created_on,
-                        created_by=invitation.created_by.for_invite_list(),
+                        created_by=invitation.created_by.cook_for_api(
+                            invite_list.InvitationCreatedByUser,
+                            invite_list.InvitationCreatedByExternalService,
+                        ),
                         status=invitation.status,
                     )
                 case ShamirRecoveryInvitation():
-                    cooked = authenticated_cmds.latest.invite_list.InviteListItemShamirRecovery(
+                    cooked = invite_list.InviteListItemShamirRecovery(
                         token=invitation.token,
                         created_on=invitation.created_on,
-                        created_by=invitation.created_by.for_invite_list(),
+                        created_by=invitation.created_by.cook_for_api(
+                            invite_list.InvitationCreatedByUser,
+                            invite_list.InvitationCreatedByExternalService,
+                        ),
                         status=invitation.status,
                         claimer_user_id=invitation.claimer_user_id,
                         shamir_recovery_created_on=invitation.shamir_recovery_created_on,
                     )
             cooked_invitations.append(cooked)
 
-        return authenticated_cmds.latest.invite_list.RepOk(invitations=cooked_invitations)
+        return invite_list.RepOk(invitations=cooked_invitations)
 
     @api
     async def api_invite_info(
         self, client_ctx: InvitedClientContext, req: invited_cmds.latest.invite_info.Req
     ) -> invited_cmds.latest.invite_info.Rep:
+        invite_info = invited_cmds.latest.invite_info
+
         outcome = await self.info_as_invited(
             organization_id=client_ctx.organization_id, token=client_ctx.token
         )
         match outcome:
             case UserInvitation() as invitation:
-                return invited_cmds.latest.invite_info.RepOk(
-                    invited_cmds.latest.invite_info.InvitationTypeUser(
+                return invite_info.RepOk(
+                    invite_info.InvitationTypeUser(
                         claimer_email=invitation.claimer_email,
-                        created_by=invitation.created_by.for_invite_info(),
+                        created_by=invitation.created_by.cook_for_api(
+                            invite_info.InvitationCreatedByUser,
+                            invite_info.InvitationCreatedByExternalService,
+                        ),
                         administrators=invitation.administrators,
                     )
                 )
             case DeviceInvitation() as invitation:
-                return invited_cmds.latest.invite_info.RepOk(
-                    invited_cmds.latest.invite_info.InvitationTypeDevice(
+                return invite_info.RepOk(
+                    invite_info.InvitationTypeDevice(
                         claimer_user_id=invitation.claimer_user_id,
                         claimer_human_handle=invitation.claimer_human_handle,
-                        created_by=invitation.created_by.for_invite_info(),
+                        created_by=invitation.created_by.cook_for_api(
+                            invite_info.InvitationCreatedByUser,
+                            invite_info.InvitationCreatedByExternalService,
+                        ),
                     )
                 )
             case ShamirRecoveryInvitation() as invitation:
-                return invited_cmds.latest.invite_info.RepOk(
-                    invited_cmds.latest.invite_info.InvitationTypeShamirRecovery(
+                return invite_info.RepOk(
+                    invite_info.InvitationTypeShamirRecovery(
                         claimer_user_id=invitation.claimer_user_id,
                         claimer_human_handle=invitation.claimer_human_handle,
-                        created_by=invitation.created_by.for_invite_info(),
+                        created_by=invitation.created_by.cook_for_api(
+                            invite_info.InvitationCreatedByUser,
+                            invite_info.InvitationCreatedByExternalService,
+                        ),
                         shamir_recovery_created_on=invitation.shamir_recovery_created_on,
                         threshold=invitation.threshold,
                         recipients=invitation.recipients,

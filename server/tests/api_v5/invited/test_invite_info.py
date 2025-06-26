@@ -34,7 +34,10 @@ async def test_invited_invite_info_ok(user_or_device: str, coolorg: CoolorgRpcCl
                     created_by=InvitationCreatedByUser(
                         user_id=coolorg.alice.user_id,
                         human_handle=coolorg.alice.human_handle,
-                    ).for_invite_info(),
+                    ).cook_for_api(
+                        invited_cmds.latest.invite_info.InvitationCreatedByUser,
+                        invited_cmds.latest.invite_info.InvitationCreatedByExternalService,
+                    ),
                     administrators=[
                         UserGreetingAdministrator(
                             user_id=coolorg.alice.user_id,
@@ -55,7 +58,10 @@ async def test_invited_invite_info_ok(user_or_device: str, coolorg: CoolorgRpcCl
                     created_by=InvitationCreatedByUser(
                         user_id=coolorg.alice.user_id,
                         human_handle=coolorg.alice.human_handle,
-                    ).for_invite_info(),
+                    ).cook_for_api(
+                        invited_cmds.latest.invite_info.InvitationCreatedByUser,
+                        invited_cmds.latest.invite_info.InvitationCreatedByExternalService,
+                    ),
                 )
             )
 
@@ -84,7 +90,10 @@ async def test_invited_invite_info_for_user_with_greeting_attempt(
             created_by=InvitationCreatedByUser(
                 user_id=coolorg.alice.user_id,
                 human_handle=coolorg.alice.human_handle,
-            ).for_invite_info(),
+            ).cook_for_api(
+                invited_cmds.latest.invite_info.InvitationCreatedByUser,
+                invited_cmds.latest.invite_info.InvitationCreatedByExternalService,
+            ),
             administrators=[
                 UserGreetingAdministrator(
                     user_id=coolorg.alice.user_id,
@@ -110,7 +119,10 @@ async def test_invited_invite_info_for_user_with_multiple_admins(
             created_by=InvitationCreatedByUser(
                 user_id=coolorg.alice.user_id,
                 human_handle=coolorg.alice.human_handle,
-            ).for_invite_info(),
+            ).cook_for_api(
+                invited_cmds.latest.invite_info.InvitationCreatedByUser,
+                invited_cmds.latest.invite_info.InvitationCreatedByExternalService,
+            ),
             administrators=[
                 UserGreetingAdministrator(
                     user_id=coolorg.alice.user_id,
@@ -170,7 +182,10 @@ async def test_invited_invite_info_for_user_with_multiple_admins(
             created_by=InvitationCreatedByUser(
                 user_id=coolorg.alice.user_id,
                 human_handle=coolorg.alice.human_handle,
-            ).for_invite_info(),
+            ).cook_for_api(
+                invited_cmds.latest.invite_info.InvitationCreatedByUser,
+                invited_cmds.latest.invite_info.InvitationCreatedByExternalService,
+            ),
             administrators=[
                 UserGreetingAdministrator(
                     user_id=coolorg.alice.user_id,
@@ -217,7 +232,10 @@ async def test_invited_invite_info_for_user_with_multiple_admins(
             created_by=InvitationCreatedByUser(
                 user_id=coolorg.alice.user_id,
                 human_handle=coolorg.alice.human_handle,
-            ).for_invite_info(),
+            ).cook_for_api(
+                invited_cmds.latest.invite_info.InvitationCreatedByUser,
+                invited_cmds.latest.invite_info.InvitationCreatedByExternalService,
+            ),
             administrators=[
                 UserGreetingAdministrator(
                     user_id=coolorg.alice.user_id,
@@ -263,7 +281,10 @@ async def test_invited_invite_info_ok_with_shamir(
             created_by=InvitationCreatedByUser(
                 user_id=shamirorg.bob.user_id,
                 human_handle=shamirorg.bob.human_handle,
-            ).for_invite_info(),
+            ).cook_for_api(
+                invited_cmds.latest.invite_info.InvitationCreatedByUser,
+                invited_cmds.latest.invite_info.InvitationCreatedByExternalService,
+            ),
             shamir_recovery_created_on=shamirorg.alice_brief_certificate.timestamp,
             threshold=2,
             recipients=[
