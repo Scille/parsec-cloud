@@ -5,17 +5,15 @@ from dataclasses import dataclass
 from email.message import Message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from enum import auto
+from enum import Enum, auto
 from typing import Literal
 
 from parsec._parsec import (
     AccountAuthMethodID,
     DateTime,
     EmailAddress,
-    EmailValidationToken,
     HashDigest,
     HumanHandle,
-    ParsecAccountEmailValidationAddr,
     SecretKey,
     UntrustedPasswordAlgorithm,
     UntrustedPasswordAlgorithmArgon2id,
@@ -35,13 +33,12 @@ class AccountInfoBadOutcome(BadOutcomeEnum):
     ACCOUNT_NOT_FOUND = auto()
 
 
-class AccountCreateEmailValidationTokenBadOutcome(BadOutcomeEnum):
+class AccountCreateEmailValidationCodeBadOutcome(BadOutcomeEnum):
     ACCOUNT_ALREADY_EXISTS = auto()
     TOO_SOON_AFTER_PREVIOUS_DEMAND = auto()
 
 
 class AccountCreateAccountBadOutcome(BadOutcomeEnum):
-    INVALID_TOKEN = auto()
     AUTH_METHOD_ALREADY_EXISTS = auto()
 
 
@@ -134,6 +131,14 @@ class ValidationCodeInfo:
         return not self.is_expired(now) and self.has_remaining_attempts()
 
 
+class ValidationCodeComparison(Enum):
+    NOT_FOUND = auto()
+    VALID = auto()
+    EXPIRED = auto()
+    NO_REMAINING_ATTEMPTS = auto()
+    INVALID = auto()
+
+
 class BaseAccountComponent:
     def __init__(self, config: BackendConfig):
         self._config = config
@@ -156,29 +161,39 @@ class BaseAccountComponent:
             email.str, self._config.fake_account_password_algorithm_seed
         )
 
+    async def process_creation_validation_code(
+        self, email: EmailAddress, code: ValidationCode, now: DateTime
+    ) -> ValidationCodeComparison:
+        """
+        returns if code is ok, and if not increments attempt count
+        """
+        raise NotImplementedError
+
     async def account_info(
         self,
         auth_method_id: AccountAuthMethodID,
     ) -> AccountInfo | AccountInfoBadOutcome:
         raise NotImplementedError
 
-    async def create_email_validation_token(
+    async def create_email_validation_code(
         self, email: EmailAddress, now: DateTime
-    ) -> EmailValidationToken | AccountCreateEmailValidationTokenBadOutcome:
+    ) -> ValidationCode | AccountCreateEmailValidationCodeBadOutcome:
         raise NotImplementedError
 
     async def create_account(
         self,
-        token: EmailValidationToken,
         now: DateTime,
         mac_key: SecretKey,
         vault_key_access: bytes,
-        human_label: str,
+        human_handle: HumanHandle,
         created_by_user_agent: str,
         created_by_ip: str | Literal[""],
         auth_method_id: AccountAuthMethodID,
         auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
     ) -> None | AccountCreateAccountBadOutcome:
+        """
+        The validation code should have been checked previously
+        """
         raise NotImplementedError
 
     async def vault_item_upload(
@@ -229,10 +244,10 @@ class BaseAccountComponent:
         client_ctx: AnonymousAccountClientContext,
         req: anonymous_account_cmds.latest.account_create_send_validation_email.Req,
     ) -> anonymous_account_cmds.latest.account_create_send_validation_email.Rep:
-        outcome = await self.create_email_validation_token(req.email, DateTime.now())
+        outcome = await self.create_email_validation_code(req.email, DateTime.now())
         match outcome:
-            case EmailValidationToken() as token:
-                outcome = await self._send_email_validation_token(token, req.email)
+            case ValidationCode() as code:
+                outcome = await self._send_email_validation_code(code, req.email)
                 match outcome:
                     case None:
                         return anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
@@ -244,8 +259,8 @@ class BaseAccountComponent:
                         return anonymous_account_cmds.latest.account_create_send_validation_email.RepEmailRecipientRefused()
 
             case (
-                AccountCreateEmailValidationTokenBadOutcome.ACCOUNT_ALREADY_EXISTS
-                | AccountCreateEmailValidationTokenBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND
+                AccountCreateEmailValidationCodeBadOutcome.ACCOUNT_ALREADY_EXISTS
+                | AccountCreateEmailValidationCodeBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND
             ):
                 # Respond OK without sending token to prevent creating oracle
                 return anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
@@ -256,60 +271,90 @@ class BaseAccountComponent:
         client_ctx: AnonymousAccountClientContext,
         req: anonymous_account_cmds.latest.account_create_proceed.Req,
     ) -> anonymous_account_cmds.latest.account_create_proceed.Rep:
-        # TODO #10599
-        # now = DateTime.now()
-        # match req.auth_method_password_algorithm:
-        #     case UntrustedPasswordAlgorithmArgon2id() as algo:
-        #         pass
-        #     case _:
-        #         # No other algorithm is supported/implemented for now
-        #         raise NotImplementedError
+        now = DateTime.now()
 
-        # outcome = await self.create_account(
-        #     token=req.validation_token,
-        #     now=now,
-        #     mac_key=req.auth_method_hmac_key,
-        #     vault_key_access=req.vault_key_access,
-        #     human_label=req.human_label,
-        #     created_by_user_agent=client_ctx.client_user_agent,
-        #     created_by_ip=client_ctx.client_ip_address,
-        #     auth_method_id=req.auth_method_id,
-        #     auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
-        #         opslimit=algo.opslimit,
-        #         memlimit_kb=algo.memlimit_kb,
-        #         parallelism=algo.parallelism,
-        #     ),
-        # )
+        # check code
+        match req.account_create_step:
+            case (
+                anonymous_account_cmds.latest.account_create_proceed.AccountCreateStepNumber0CheckCode() as step
+            ):
+                code = step.validation_code
+                email = step.email
+            case (
+                anonymous_account_cmds.latest.account_create_proceed.AccountCreateStepNumber1Create() as step
+            ):
+                code = step.validation_code
+                email = step.human_handle.email
+            case _:
+                raise NotImplementedError
 
-        # match outcome:
-        #     case None:
-        #         return anonymous_account_cmds.latest.account_create_proceed.RepOk()
-        #     case AccountCreateAccountBadOutcome.INVALID_TOKEN:
-        #         return (
-        #             anonymous_account_cmds.latest.account_create_proceed.RepInvalidValidationCode()
-        #         )
-        #     case AccountCreateAccountBadOutcome.AUTH_METHOD_ALREADY_EXISTS:
-        #         return anonymous_account_cmds.latest.account_create_proceed.RepAuthMethodIdAlreadyExists()
+        match await self.process_creation_validation_code(email, code, now):
+            case ValidationCodeComparison.NOT_FOUND:
+                return anonymous_account_cmds.latest.account_create_proceed.RepEmailNotFound()
+            case ValidationCodeComparison.INVALID:
+                return (
+                    anonymous_account_cmds.latest.account_create_proceed.RepInvalidValidationCode()
+                )
+            case ValidationCodeComparison.EXPIRED:
+                return (
+                    anonymous_account_cmds.latest.account_create_proceed.RepExpiredValidationCode()
+                )
+            case ValidationCodeComparison.NO_REMAINING_ATTEMPTS:
+                return anonymous_account_cmds.latest.account_create_proceed.RepTooManyAttemptsForValidationCode()
+            case ValidationCodeComparison.VALID:
+                pass
 
-        return anonymous_account_cmds.latest.account_create_proceed.RepOk()
+        # create account
+        match req.account_create_step:
+            case anonymous_account_cmds.latest.account_create_proceed.AccountCreateStepNumber0CheckCode():
+                # no account creation at this step
+                return anonymous_account_cmds.latest.account_create_proceed.RepOk()
+            case (
+                anonymous_account_cmds.latest.account_create_proceed.AccountCreateStepNumber1Create() as step
+            ):
+                match step.auth_method_password_algorithm:
+                    case UntrustedPasswordAlgorithmArgon2id() as algo:
+                        pass
+                    case _:
+                        # No other algorithm is supported/implemented for now
+                        raise NotImplementedError
 
-    async def _send_email_validation_token(
+                outcome = await self.create_account(
+                    now=now,
+                    mac_key=step.auth_method_hmac_key,
+                    vault_key_access=step.vault_key_access,
+                    human_handle=step.human_handle,
+                    created_by_user_agent=client_ctx.client_user_agent,
+                    created_by_ip=client_ctx.client_ip_address,
+                    auth_method_id=step.auth_method_id,
+                    auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
+                        opslimit=algo.opslimit,
+                        memlimit_kb=algo.memlimit_kb,
+                        parallelism=algo.parallelism,
+                    ),
+                )
+
+                match outcome:
+                    case None:
+                        return anonymous_account_cmds.latest.account_create_proceed.RepOk()
+                    case AccountCreateAccountBadOutcome.AUTH_METHOD_ALREADY_EXISTS:
+                        return anonymous_account_cmds.latest.account_create_proceed.RepAuthMethodIdAlreadyExists()
+
+            case _:
+                raise NotImplementedError
+
+    async def _send_email_validation_code(
         self,
-        token: EmailValidationToken,
+        validation_code: ValidationCode,
         claimer_email: EmailAddress,
     ) -> None | SendEmailBadOutcome:
         if not self._config.server_addr:
             return SendEmailBadOutcome.BAD_SMTP_CONFIG
 
-        validation_url = ParsecAccountEmailValidationAddr.build(
-            server_addr=self._config.server_addr,
-            token=token,
-        ).to_http_redirection_url()
-
         message = generate_email_validation_email(
             from_addr=self._config.email_config.sender,
             to_addr=claimer_email,
-            validation_url=validation_url,
+            validation_code=validation_code,
             server_url=self._config.server_addr.to_http_url(),
         )
         return await send_email(
@@ -321,7 +366,7 @@ class BaseAccountComponent:
     def can_send_new_code_email(self, last_email_datetime: DateTime, now: DateTime) -> bool:
         return (now - last_email_datetime) > self._config.account_confirmation_email_resend_delay
 
-    def test_get_token_by_email(self, email: EmailAddress) -> EmailValidationToken | None:
+    def test_get_code_by_email(self, email: EmailAddress) -> ValidationCode | None:
         raise NotImplementedError
 
     @api
@@ -528,18 +573,18 @@ class BaseAccountComponent:
 def generate_email_validation_email(
     from_addr: EmailAddress,
     to_addr: EmailAddress,
-    validation_url: str,
+    validation_code: ValidationCode,
     server_url: str,
 ) -> Message:
     # Quick fix to have a similar behavior between Rust and Python
     server_url = server_url.removesuffix("/")
 
     html = get_template("email/account_validation.html.j2").render(
-        validation_url=validation_url,
+        validation_code=validation_code,
         server_url=server_url,
     )
     text = get_template("email/account_validation.txt.j2").render(
-        validation_url=validation_url,
+        validation_code=validation_code,
         server_url=server_url,
     )
 

@@ -17,6 +17,7 @@ from parsec._parsec import (
     DateTime,
     EmailAddress,
     EmailValidationToken,
+    HumanHandle,
     SecretKey,
 )
 from parsec.backend import Backend
@@ -48,19 +49,18 @@ async def create_account(
     created_by_ip: str,
     created_by_user_agent: str,
     created_on: DateTime,
-    human_label: str,
+    human_handle: HumanHandle,
     mac_key: SecretKey,
     auth_method_password_algorithm: UntrustedPasswordAlgorithmArgon2id,
     vault_key_access: bytes,
 ):
-    email_token = await account_component.create_email_validation_token(account_email, created_on)
+    email_token = await account_component.create_email_validation_code(account_email, created_on)
     assert isinstance(email_token, EmailValidationToken), email_token
     res = await account_component.create_account(
-        token=email_token,
         now=created_on,
         mac_key=mac_key,
         vault_key_access=vault_key_access,
-        human_label=human_label,
+        human_handle=human_handle,
         created_by_user_agent=created_by_user_agent,
         created_by_ip=created_by_ip,
         auth_method_id=auth_method_id,
@@ -82,7 +82,7 @@ async def alice_account(
         created_by_ip="127.0.0.1",
         created_by_user_agent="Parsec-Client/3.4.0 Linux",
         created_on=ALICE_ACCOUNT_CREATED_ON,
-        human_label="Alicey McAliceFace",
+        human_handle=HumanHandle(ALICE_ACCOUNT_EMAIL, "Alicey McAliceFace"),
         mac_key=ALICE_ACCOUNT_AUTH_METHOD_MAC_KEY,
         vault_key_access=b"<alice_vault_key_access>",
         auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
@@ -109,7 +109,7 @@ async def bob_account(
         created_by_ip="127.0.0.1",
         created_by_user_agent="Parsec-Client/3.4.0 Linux",
         created_on=BOB_ACCOUNT_CREATED_ON,
-        human_label="Boby McBobFace",
+        human_handle=HumanHandle(BOB_ACCOUNT_EMAIL, "Boby McBobFace"),
         mac_key=BOB_ACCOUNT_AUTH_METHOD_MAC_KEY,
         vault_key_access=b"<bob_vault_key_access>",
         auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(

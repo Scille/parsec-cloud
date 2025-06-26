@@ -4,7 +4,7 @@
 import pytest
 
 from parsec._parsec import DateTime, EmailAddress, EmailValidationToken, anonymous_account_cmds
-from parsec.components.account import AccountCreateEmailValidationTokenBadOutcome
+from parsec.components.account import AccountCreateEmailValidationCodeBadOutcome
 from parsec.components.email import SendEmailBadOutcome
 from tests.common import AnonymousAccountRpcClient, Backend, HttpCommonErrorsTester, LetterBox
 
@@ -39,17 +39,17 @@ async def test_anonymous_account_account_create_send_validation_email_ok_edge_ca
 
     # 1st account creation request
     now = DateTime.now()
-    rep1 = await backend.account.create_email_validation_token(email, now)
+    rep1 = await backend.account.create_email_validation_code(email, now)
     assert isinstance(rep1, EmailValidationToken)
 
     # 2nd account creation request too soon for a new mail
-    rep2 = await backend.account.create_email_validation_token(email, now.add(microseconds=1))
-    assert rep2 is AccountCreateEmailValidationTokenBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND
+    rep2 = await backend.account.create_email_validation_code(email, now.add(microseconds=1))
+    assert rep2 is AccountCreateEmailValidationCodeBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND
     # default delay for a new mail during tests is 5 secs
 
     # 3rd account creation request: a new mail is sent, with a new token
 
-    rep3 = await backend.account.create_email_validation_token(
+    rep3 = await backend.account.create_email_validation_code(
         email,
         now.add(seconds=backend.config.account_confirmation_email_resend_delay + 1),
     )

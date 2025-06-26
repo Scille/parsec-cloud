@@ -21,11 +21,11 @@ from parsec._parsec import (
     DeviceCertificate,
     DeviceID,
     EmailAddress,
-    EmailValidationToken,
     EnrollmentID,
     GreeterOrClaimer,
     GreetingAttemptID,
     HashDigest,
+    HumanHandle,
     InvitationStatus,
     InvitationToken,
     InvitationType,
@@ -105,7 +105,8 @@ class MemoryDatamodel:
     # accounts are not associated to one organization
     # (email, account)
     accounts: dict[EmailAddress, MemoryAccount] = field(default_factory=dict)
-    unverified_emails: dict[EmailAddress, tuple[EmailValidationToken, DateTime]] = field(
+    # (email, ((code, code_created_at, remaining attempts), last_email_sent_at))
+    unverified_emails: dict[EmailAddress, tuple[ValidationCodeInfo, DateTime]] = field(
         default_factory=dict
     )
     accounts_deletion_requested: dict[EmailAddress, ValidationCodeInfo] = field(
@@ -907,7 +908,7 @@ class MemoryAccount:
     account_email: EmailAddress
     # Not used by Parsec Account but works as a quality-of-life feature
     # to allow pre-filling human handle during enrollment.
-    human_label: str
+    human_handle: HumanHandle
     current_vault: MemoryAccountVault
     # Current vault is not part of previous vaults
     previous_vaults: list[MemoryAccountVault] = field(default_factory=list)
