@@ -705,6 +705,14 @@ function getBackButtonTitle(): string {
 <style lang="scss" scoped>
 .homepage-content {
   --background: var(--parsec-color-light-secondary-background);
+
+  &::part(scroll) {
+    --keyboard-offset: 0;
+
+    @include ms.responsive-breakpoint('xs') {
+      --keyboard-offset: 290px;
+    }
+  }
 }
 
 #page {
