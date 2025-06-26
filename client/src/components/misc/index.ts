@@ -2,4 +2,5 @@
 
 import TechnicalId from '@/components/misc/TechnicalId.vue';
 
+export * from '@/components/misc/securityRecommendations';
 export { TechnicalId };

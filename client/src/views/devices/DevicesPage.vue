@@ -49,8 +49,10 @@ import { Information, InformationLevel, InformationManager, InformationManagerKe
 import GreetDeviceModal from '@/views/devices/GreetDeviceModal.vue';
 import { IonButton, IonItem, IonList, IonText, modalController } from '@ionic/vue';
 import { Ref, inject, onMounted, ref, onUnmounted } from 'vue';
+import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;
+const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 const devices: Ref<OwnDeviceInfo[]> = ref([]);
 
 const routeWatchCancel = watchRoute(async () => {
@@ -112,6 +114,10 @@ async function onAddDeviceClick(): Promise<void> {
   await modal.dismiss();
   if (modalResult.role === MsModalResult.Confirm) {
     await refreshDevicesList();
+    const lastDevice = devices.value.toSorted((d1, d2) => (d1.createdOn > d2.createdOn ? -1 : 1))[0];
+    if (lastDevice) {
+      eventDistributor.dispatchEvent(Events.DeviceCreated, { info: lastDevice });
+    }
   }
 }
 </script>

@@ -18,7 +18,7 @@ msTest('Sidebar in organization management', async ({ organizationPage }) => {
 
   await expect(sidebar.locator('.manage-organization')).toBeVisible();
   await expect(sidebar.locator('.manage-organization').locator('.list-sidebar-header')).toHaveText('Manage my organization');
-  const items = sidebar.locator('.manage-organization').locator('.list-sidebar-content').getByRole('listitem');
+  const items = sidebar.locator('.manage-organization').locator('.organization-card-buttons').getByRole('listitem');
   await expect(items).toHaveText(['Users', 'Information']);
 });
 

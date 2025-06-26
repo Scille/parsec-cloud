@@ -251,7 +251,7 @@
         <!-- manage organization -->
         <ion-list
           v-show="currentRouteIsOrganizationManagementRoute()"
-          class="manage-organization list-sidebar"
+          class="list-sidebar manage-organization"
         >
           <ion-header
             lines="none"
@@ -266,7 +266,7 @@
             </ion-text>
           </ion-header>
           <!-- user actions -->
-          <div class="list-sidebar-content">
+          <div class="organization-card-buttons">
             <!-- users -->
             <ion-item
               lines="none"
@@ -320,6 +320,39 @@
             </ion-item>
           </div>
         </ion-list>
+
+        <!-- security checklist -->
+        <ion-list
+          class="list-sidebar organization-checklist ion-no-padding"
+          v-show="securityWarningsCount > 0"
+        >
+          <ion-item
+            button
+            lines="none"
+            class="sidebar-item-manage ion-no-padding item-selected checklist"
+            @click="openSecurityWarningsPopover"
+          >
+            <div class="checklist-text">
+              <ion-text class="checklist-text__title title-h5">{{ $msTranslate('SideMenu.checklist.title') }}</ion-text>
+              <ion-text class="checklist-text__description button-small">
+                {{
+                  $msTranslate({
+                    key: 'SideMenu.checklist.remaining',
+                    data: { count: securityWarningsCount },
+                    count: securityWarningsCount,
+                  })
+                }}
+              </ion-text>
+            </div>
+            <div class="checklist-button">
+              <ion-text class="checklist-button__text button-small">{{ $msTranslate({ key: 'SideMenu.checklist.open' }) }}</ion-text>
+              <ion-icon
+                :icon="chevronForward"
+                class="checklist-button__icon"
+              />
+            </div>
+          </ion-item>
+        </ion-list>
       </ion-content>
     </ion-menu>
     <tab-bar-menu
@@ -371,9 +404,11 @@ import {
   folderOpen,
   addCircle,
   personAdd,
+  chevronForward,
 } from 'ionicons/icons';
 import { SidebarWorkspaceItem, SidebarRecentFileItem, SidebarMenuList } from '@/components/sidebar';
 import {
+  ProfilePages,
   Routes,
   currentRouteIs,
   currentRouteIsOrganizationManagementRoute,
@@ -395,6 +430,7 @@ import {
   AvailableDevice,
   getLoggedInDevices,
   getClientInfo,
+  WorkspaceRole,
 } from '@/parsec';
 import { ChevronExpand, MsImage, LogoIconGradient, I18n, MsModalResult, useWindowSize } from 'megashark-lib';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
@@ -403,7 +439,14 @@ import { openPath } from '@/services/fileOpener';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import { StorageManagerKey, StorageManager } from '@/services/storageManager';
 import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
-import { EventData, EventDistributor, EventDistributorKey, Events, MenuActionData } from '@/services/eventDistributor';
+import {
+  EventData,
+  EventDistributor,
+  EventDistributorKey,
+  Events,
+  MenuActionData,
+  WorkspaceRoleUpdateData,
+} from '@/services/eventDistributor';
 import { WorkspaceDefaultData, WORKSPACES_PAGE_DATA_KEY, WorkspacesPageSavedData } from '@/components/workspaces';
 import { getDurationBeforeExpiration, isTrialOrganizationDevice } from '@/common/organization';
 import { Duration } from 'luxon';
@@ -416,6 +459,8 @@ import { FolderGlobalAction } from '@/views/files';
 import { WorkspaceAction } from '@/views/workspaces';
 import { isUserAction, UserAction } from '@/views/users';
 import { useCustomTabBar } from '@/views/menu/utils';
+import { getSecurityWarnings, RecommendationAction, SecurityWarnings } from '@/components/misc';
+import RecommendationChecklistPopover from '@/components/misc/RecommendationChecklistPopover.vue';
 
 defineProps<{
   userInfo: ClientInfo;
@@ -444,6 +489,17 @@ const expirationDuration = ref<Duration | undefined>(undefined);
 const currentDevice = ref<AvailableDevice | null>(null);
 const isTrialOrg = ref(false);
 let timeoutId: number | undefined = undefined;
+const securityWarnings = ref<SecurityWarnings | undefined>();
+const securityWarningsCount = computed(() => {
+  if (!securityWarnings.value) {
+    return 0;
+  }
+  return (
+    (securityWarnings.value.hasRecoveryDevice ? 0 : 1) +
+    (securityWarnings.value.hasMultipleDevices ? 0 : 1) +
+    (securityWarnings.value.soloOwnerWorkspaces.length === 0 ? 0 : 1)
+  );
+});
 
 const { isSmallDisplay, windowWidth } = useWindowSize();
 const actions = ref<Array<Array<MenuAction>>>([]);
@@ -570,9 +626,18 @@ const watchRouteCancel = watchRoute(async () => {
 
 onMounted(async () => {
   eventDistributorCbId = await eventDistributor.registerCallback(
-    Events.WorkspaceCreated | Events.WorkspaceFavorite | Events.WorkspaceUpdated | Events.ExpiredOrganization | Events.MenuAction,
+    Events.WorkspaceCreated |
+      Events.WorkspaceFavorite |
+      Events.WorkspaceUpdated |
+      Events.ExpiredOrganization |
+      Events.MenuAction |
+      Events.WorkspaceRoleUpdate |
+      Events.DeviceCreated,
     async (event: Events, data?: EventData) => {
-      if (event === Events.WorkspaceCreated || event === Events.WorkspaceFavorite || event === Events.WorkspaceUpdated) {
+      if (event === Events.WorkspaceCreated) {
+        await loadAll();
+        securityWarnings.value = await getSecurityWarnings();
+      } else if (event === Events.WorkspaceFavorite || event === Events.WorkspaceUpdated) {
         await loadAll();
       } else if (event === Events.ExpiredOrganization) {
         isExpired.value = true;
@@ -583,6 +648,19 @@ onMounted(async () => {
             await navigateTo(Routes.Users, { query: { openInvite: true } });
           }
         }
+      } else if (event === Events.DeviceCreated) {
+        if (!securityWarnings.value || !securityWarnings.value.hasMultipleDevices || !securityWarnings.value.hasRecoveryDevice) {
+          securityWarnings.value = await getSecurityWarnings();
+        }
+      } else if (event === Events.WorkspaceRoleUpdate) {
+        const updateData = data as WorkspaceRoleUpdateData;
+
+        // Don't need to check everything, we're only interested if a owner was added or removed
+        if (updateData.newRole === null || updateData.newRole === WorkspaceRole.Owner) {
+          securityWarnings.value = await getSecurityWarnings();
+        }
+      } else if (event === Events.Online) {
+        securityWarnings.value = await getSecurityWarnings();
       }
     },
   );
@@ -625,6 +703,7 @@ onMounted(async () => {
       expirationDuration.value = getDurationBeforeExpiration(currentDevice.value.createdOn);
     }
   }
+  securityWarnings.value = await getSecurityWarnings();
 
   updateDividerPosition();
 });
@@ -651,6 +730,36 @@ async function goToWorkspace(workspace: WorkspaceInfo): Promise<void> {
 
   await navigateToWorkspace(workspace.handle);
   await menuController.close();
+}
+
+async function openSecurityWarningsPopover(event: MouseEvent): Promise<void> {
+  if (!securityWarnings.value) {
+    return;
+  }
+  const popover = await popoverController.create({
+    component: RecommendationChecklistPopover,
+    cssClass: 'recommendation-checklist',
+    event: event,
+    side: 'right',
+    alignment: 'end',
+    showBackdrop: false,
+    backdropDismiss: true,
+    componentProps: {
+      securityWarnings: securityWarnings.value,
+    },
+  });
+  await popover.present();
+  const { data, role } = await popover.onWillDismiss();
+  await popover.dismiss();
+  if (role === MsModalResult.Confirm && data.action) {
+    if (data.action === RecommendationAction.AddDevice) {
+      await navigateTo(Routes.MyProfile, { query: { profilePage: ProfilePages.Devices } });
+    } else if (data.action === RecommendationAction.CreateRecoveryFiles) {
+      await navigateTo(Routes.MyProfile, { query: { profilePage: ProfilePages.Recovery } });
+    } else if (data.action === RecommendationAction.AddWorkspaceOwner) {
+      await navigateTo(Routes.Workspaces);
+    }
+  }
 }
 
 async function openOrganizationChoice(event: Event): Promise<void> {
@@ -796,7 +905,8 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
   }
 
   .organization-workspaces,
-  .file-workspaces {
+  .file-workspaces,
+  .organization-checklist {
     display: flex;
     flex-direction: column;
     padding: 0 0.75rem;
@@ -973,12 +1083,6 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
     }
   }
 
-  &-content {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
   &-divider {
     background: var(--parsec-color-light-primary-30-opacity15);
     display: flex;
@@ -1131,6 +1235,58 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
     --padding-top: 0;
     --padding-bottom: 0;
     color: var(--parsec-color-light-primary-600);
+  }
+}
+
+.organization-checklist {
+  position: absolute;
+  bottom: 2rem;
+  width: 100%;
+
+  .checklist {
+    display: flex;
+    background: var(--parsec-color-light-primary-30-opacity15);
+    --background: none;
+
+    &::part(native) {
+      padding: 0.5rem 0 0.5rem 0.75rem;
+    }
+
+    & * {
+      pointer-events: none;
+    }
+
+    &-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      flex-grow: 1;
+
+      &__title {
+        color: var(--parsec-color-light-secondary-inversed-contrast);
+      }
+
+      &__description {
+        color: var(--parsec-color-light-secondary-premiere);
+        opacity: 0.8;
+      }
+    }
+
+    &-button {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--parsec-color-light-secondary-inversed-contrast);
+
+      &__text {
+        color: var(--parsec-color-light-secondary-inversed-contrast);
+      }
+
+      &__icon {
+        color: var(--parsec-color-light-primary-30);
+        font-size: 0.875rem;
+      }
+    }
   }
 }
 
