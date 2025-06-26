@@ -15,6 +15,9 @@ from parsec._parsec import (
     EmailValidationToken,
     HashDigest,
     HumanHandle,
+    InvitationToken,
+    InvitationType,
+    OrganizationID,
     ParsecAccountEmailValidationAddr,
     SecretKey,
     UntrustedPasswordAlgorithm,
@@ -71,6 +74,10 @@ class AccountVaultItemRecoveryList(BadOutcomeEnum):
 
 class AccountCreateAccountDeletionTokenBadOutcome(BadOutcomeEnum):
     TOO_SOON_AFTER_PREVIOUS_DEMAND = auto()
+
+
+class AccountInviteListBadOutcome(BadOutcomeEnum):
+    ACCOUNT_NOT_FOUND = auto()
 
 
 @dataclass(slots=True)
@@ -210,6 +217,11 @@ class BaseAccountComponent:
         self,
         auth_method_id: AccountAuthMethodID,
     ) -> VaultItemRecoveryList | AccountVaultItemRecoveryList:
+        raise NotImplementedError
+
+    async def invite_self_list(
+        self, auth_method_id: AccountAuthMethodID
+    ) -> list[tuple[OrganizationID, InvitationToken, InvitationType]] | AccountInviteListBadOutcome:
         raise NotImplementedError
 
     @api
@@ -523,6 +535,25 @@ class BaseAccountComponent:
                 )
             case AccountInfoBadOutcome.ACCOUNT_NOT_FOUND:
                 client_ctx.account_not_found_abort()
+
+    @api
+    async def api_invite_self_list(
+        self,
+        client_ctx: AuthenticatedAccountClientContext,
+        req: authenticated_account_cmds.latest.invite_self_list.Req,
+    ) -> authenticated_account_cmds.latest.invite_self_list.Rep:
+        invite_self_list = authenticated_account_cmds.latest.invite_self_list
+
+        outcome = await self.invite_self_list(
+            client_ctx.auth_method_id,
+        )
+        match outcome:
+            case list() as invitations:
+                pass
+            case AccountInviteListBadOutcome.ACCOUNT_NOT_FOUND:
+                client_ctx.account_not_found_abort()
+
+        return invite_self_list.RepOk(invitations=invitations)
 
 
 def generate_email_validation_email(

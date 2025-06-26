@@ -9,13 +9,18 @@ from parsec._parsec import (
     EmailValidationToken,
     HashDigest,
     HumanHandle,
+    InvitationToken,
+    InvitationType,
+    OrganizationID,
     SecretKey,
+    UserID,
 )
 from parsec.components.account import (
     AccountCreateAccountBadOutcome,
     AccountCreateEmailValidationTokenBadOutcome,
     AccountInfo,
     AccountInfoBadOutcome,
+    AccountInviteListBadOutcome,
     AccountVaultItemListBadOutcome,
     AccountVaultItemRecoveryList,
     AccountVaultItemUploadBadOutcome,
@@ -280,3 +285,49 @@ class MemoryAccountComponent(BaseAccountComponent):
     @override
     async def set_account_deletion_code_info(self, email: EmailAddress, info: ValidationCodeInfo):
         self._data.accounts_deletion_requested[email] = info
+
+    @override
+    async def invite_self_list(
+        self, auth_method_id: AccountAuthMethodID
+    ) -> list[tuple[OrganizationID, InvitationToken, InvitationType]] | AccountInviteListBadOutcome:
+        match self._data.get_account_from_active_auth_method(auth_method_id=auth_method_id):
+            case (account, _):
+                pass
+            case None:
+                return AccountInviteListBadOutcome.ACCOUNT_NOT_FOUND
+
+        res = []
+        for org in self._data.organizations.values():
+            # For each organization, we must first determine if the account's email
+            # address corresponds to an active user.
+            # - If that's the case, we list only the invitations related to this user's ID
+            #   (i.e. we will return only device&shamir invitations).
+            # - Otherwise, we list only the user invitations related to the account's email.
+            maybe_active_user = next(
+                (
+                    u.cooked.user_id
+                    for u in org.active_users()
+                    if u.cooked.human_handle.email == account.account_email
+                ),
+                None,
+            )
+            match maybe_active_user:
+                case UserID() as active_user_id:
+                    invitations = (
+                        invitation
+                        for invitation in org.invitations.values()
+                        if invitation.claimer_user_id == active_user_id
+                    )
+                case None:
+                    invitations = (
+                        invitation
+                        for invitation in org.invitations.values()
+                        if invitation.claimer_email == account.account_email
+                    )
+
+            res.extend(
+                (org.organization_id, invitation.token, invitation.type)
+                for invitation in invitations
+            )
+
+        return res
