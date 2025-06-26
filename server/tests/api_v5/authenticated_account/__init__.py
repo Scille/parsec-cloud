@@ -3,6 +3,7 @@
 # ruff: noqa: F403
 from .test_account_delete_send_code import *
 from .test_account_info import *
+from .test_invite_self_list import *
 from .test_ping import *
 from .test_vault_item_list import *
 from .test_vault_item_recovery_list import *
