@@ -289,7 +289,7 @@ const emits = defineEmits<{
   margin: 0 0.25rem 2rem;
   background: linear-gradient(90deg, var(--parsec-color-light-primary-700) 0%, var(--parsec-color-light-primary-600) 100%);
   color: var(--parsec-color-light-secondary-background);
-  min-height: 32px;
+  min-height: 2rem;
   padding: 0 0.325rem;
   border-radius: var(--parsec-radius-8);
   transition: all 150ms linear;
@@ -297,6 +297,8 @@ const emits = defineEmits<{
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
 
   &:hover {
     --background-hover: none;
@@ -312,7 +314,6 @@ const emits = defineEmits<{
   }
 
   .update-text {
-    margin-left: 0.5rem;
     color: var(--parsec-color-light-secondary-background);
     transition: bottom 150ms linear;
     position: relative;
@@ -325,7 +326,7 @@ const emits = defineEmits<{
     font-weight: 700;
     transition: top 150ms linear;
     position: absolute;
-    top: 3rem;
+    top: 2rem;
 
     &:hover {
       color: var(--parsec-color-light-secondary-background);
@@ -343,7 +344,11 @@ const emits = defineEmits<{
     }
 
     .update-button {
-      top: 1.375rem;
+        top: -0.125rem;
+
+      @include ms.responsive-breakpoint('md') {
+        top: -0.125rem;
+      }
     }
   }
 }
