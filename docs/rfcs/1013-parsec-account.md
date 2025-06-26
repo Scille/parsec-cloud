@@ -782,6 +782,35 @@ At that point the server can remove the client, and its related data.
 > On top of that, it allows the `account_delete_proceed` command to be authenticated,
 > which improves security.
 
+### 4.10 - List organization invitations related to the account's email
+
+Authenticated account API:
+
+```json5
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "invite_self_list",
+        "req": {},
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "invitations",
+                        // Only the bare minimum is provided here, additional information
+                        // about should be retrieved using `invite_info` invited API.
+                        "type": "List<(OrganizationID, InvitationToken, InvitationType)>"
+                    }
+                ]
+            }
+        ]
+    }
+]
+```
+
 ## 5 - Misc
 
 ### Missing elements to be defined in the future
