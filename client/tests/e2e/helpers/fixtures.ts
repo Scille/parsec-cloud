@@ -15,6 +15,7 @@ interface SetupOptions {
   withParsecAccount?: boolean;
   withCustomBranding?: boolean;
   displaySize?: DisplaySize;
+  mockBrowser?: 'Chrome' | 'Firefox' | 'Safari' | 'Edge' | 'Brave' | 'Chromium';
 }
 
 const DEV_TOOLS_OFFSET = 400;
@@ -29,6 +30,9 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
     }
     if (options.withCustomBranding) {
       (window as any).TESTING_ENABLE_CUSTOM_BRANDING = true;
+    }
+    if (options.mockBrowser) {
+      (window as any).TESTING_MOCK_BROWSER = options.mockBrowser;
     }
     (window as any).showSaveFilePicker = async (): Promise<FileSystemFileHandle> => {
       console.log('Show save file Picker');
