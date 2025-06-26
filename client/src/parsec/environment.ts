@@ -52,6 +52,9 @@ export async function detectBrowser(): Promise<Browser | undefined> {
   if (!isWeb()) {
     return;
   }
+  if ((window as any).TESTING_MOCK_BROWSER !== undefined) {
+    return (window as any).TESTING_MOCK_BROWSER as Browser;
+  }
   const result = await detectIncognito();
   return result.browserName as Browser;
 }

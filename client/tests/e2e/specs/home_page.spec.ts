@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { DisplaySize, expect, fillIonInput, logout, msTest, sortBy } from '@tests/e2e/helpers';
+import { DisplaySize, expect, fillIonInput, logout, MsPage, msTest, setupNewPage, sortBy } from '@tests/e2e/helpers';
 
 const USER_NAMES = ['Alicey McAliceFace', 'Boby McBobFace', 'Malloryy McMalloryFace'];
 
@@ -207,4 +207,15 @@ msTest('Open feedback', async ({ home }) => {
   const newTab = await newTabPromise;
   await newTab.waitForLoadState();
   await expect(newTab).toHaveURL(new RegExp('https://sign(-dev)?.parsec.cloud/contact'));
+});
+
+msTest('Warn on Safari', async ({ context }) => {
+  const page = (await context.newPage()) as MsPage;
+  // Tried changing the user agent but the detection is too good,
+  // so we need a little extra step.
+  await setupNewPage(page, { mockBrowser: 'Safari' });
+  const modal = page.locator('.incompatible-environment');
+  await expect(modal).toBeVisible();
+  await expect(modal.locator('.incompatible-content__title')).toHaveText('Your browser is not compatibly with Parsec yet.');
+  await context.close();
 });
