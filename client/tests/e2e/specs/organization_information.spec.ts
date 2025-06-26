@@ -40,12 +40,6 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
   });
 
   msTest(`Org info after one revocation ${displaySize} display`, async ({ usersPage }) => {
-    const sidebarButtons = usersPage
-      .locator('.sidebar')
-      .locator('.manage-organization')
-      .locator('.list-sidebar-content')
-      .getByRole('listitem');
-
     if (displaySize === DisplaySize.Small) {
       await usersPage.setDisplaySize(DisplaySize.Small);
       const userSmall = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
@@ -55,6 +49,12 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
       await usersPage.locator('.question-modal').locator('ion-button').nth(1).click();
       await expect(usersPage).toShowToast('Boby McBobFace has been revoked. They can no longer access this organization.', 'Success');
     } else {
+      const sidebarButtons = usersPage
+        .locator('.sidebar')
+        .locator('.manage-organization')
+        .locator('.organization-card-buttons')
+        .getByRole('listitem');
+
       const user = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
       await user.hover();
       await user.locator('.options-button').click();

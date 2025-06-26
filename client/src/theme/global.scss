@@ -199,3 +199,10 @@ svg {
     }
   }
 }
+
+// temporary fix for the main menu
+.main-menu {
+  .checklist .item-bottom {
+    display: none;
+  }
+}

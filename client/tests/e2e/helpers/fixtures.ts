@@ -324,7 +324,7 @@ export const msTest = debugTest.extend<{
     const sidebarItem = connected
       .locator('.sidebar')
       .locator('.manage-organization')
-      .locator('.list-sidebar-content')
+      .locator('.organization-card-buttons')
       .locator('.organization-title');
     await expect(sidebarItem).toHaveTheClass('item-not-selected');
     await sidebarItem.click();

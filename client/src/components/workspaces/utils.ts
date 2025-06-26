@@ -80,6 +80,7 @@ export function canChangeRole(
 export async function workspaceShareClick(
   workspace: WorkspaceInfo,
   informationManager: InformationManager,
+  eventDistributor: EventDistributor,
   isLargeDisplay = true,
 ): Promise<void> {
   const modal = await modalController.create({
@@ -95,6 +96,7 @@ export async function workspaceShareClick(
       workspaceName: workspace.currentName,
       ownRole: workspace.currentSelfRole,
       informationManager: informationManager,
+      eventDistributor: eventDistributor,
     },
     cssClass: 'workspace-sharing-modal',
   });
@@ -177,7 +179,7 @@ export async function openWorkspaceContextMenu(
   if (data !== undefined) {
     switch (data.action) {
       case WorkspaceAction.Share:
-        await workspaceShareClick(workspace, informationManager);
+        await workspaceShareClick(workspace, informationManager, eventDistributor);
         break;
       case WorkspaceAction.CopyLink:
         await copyLinkToClipboard(workspace, informationManager);

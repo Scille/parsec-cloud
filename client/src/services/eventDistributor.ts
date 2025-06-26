@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { ApiVersion, ConnectionHandle, EntryID, InvitationStatus, InvitationToken, WorkspaceID } from '@/parsec';
-import { GreetingAttemptID } from '@/plugins/libparsec';
+import { ApiVersion, ConnectionHandle, EntryID, InvitationStatus, InvitationToken, WorkspaceID, WorkspaceRole } from '@/parsec';
+import { DeviceInfo, GreetingAttemptID, UserID } from '@/plugins/libparsec';
 import { MenuAction } from '@/views/menu';
 import { v4 as uuid4 } from 'uuid';
 
@@ -31,6 +31,8 @@ enum Events {
   MenuAction = 1 << 20,
   ClientFrozen = 1 << 21,
   OrganizationNotFound = 1 << 22,
+  DeviceCreated = 1 << 23,
+  WorkspaceRoleUpdate = 1 << 24,
 }
 
 interface WorkspaceCreatedData {
@@ -81,6 +83,17 @@ interface MenuActionData {
   action: MenuAction;
 }
 
+interface DeviceCreatedData {
+  info: DeviceInfo;
+}
+
+interface WorkspaceRoleUpdateData {
+  workspaceId: WorkspaceID;
+  userId: UserID;
+  oldRole: WorkspaceRole | null;
+  newRole: WorkspaceRole | null;
+}
+
 type EventData =
   | WorkspaceCreatedData
   | InvitationUpdatedData
@@ -91,7 +104,9 @@ type EventData =
   | GreetingAttemptCancelledData
   | GreetingAttemptJoinedData
   | ClientStatusUpdateData
-  | MenuActionData;
+  | MenuActionData
+  | DeviceCreatedData
+  | WorkspaceRoleUpdateData;
 
 interface Callback {
   id: string;
@@ -171,6 +186,7 @@ class EventDistributor {
 }
 
 export {
+  DeviceCreatedData,
   EntrySyncData,
   EventData,
   EventDistributor,
@@ -180,4 +196,5 @@ export {
   MenuActionData,
   UpdateAvailabilityData,
   WorkspaceCreatedData,
+  WorkspaceRoleUpdateData,
 };

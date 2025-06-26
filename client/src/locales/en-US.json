@@ -829,6 +829,17 @@
         "goToHome": "My workspaces",
         "recentDocuments": "Recent documents",
         "back": "Back",
+        "checklist": {
+            "title": "Security checklist",
+            "description": "To reduce the risk of data loss, we strongly recommend that you take the following actions.",
+            "remaining": "1 remaining | {count} remaining",
+            "open": "Open",
+            "items": {
+                "ownerRequired": "Add an Owner to the workspace {workspace} | Add a second Owner to the workspaces you own",
+                "multipleDevices": "Add second device",
+                "createRecoveryFiles": "Create a recovery file"
+            }
+        },
         "tabbar": {
             "workspaces": "Workspaces",
             "files": "Files",

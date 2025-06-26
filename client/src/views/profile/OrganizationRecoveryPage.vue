@@ -130,7 +130,8 @@ import { IonButton, IonIcon, IonText } from '@ionic/vue';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { I18n, Translatable, askQuestion, Answer, DownloadIcon, MsImage } from 'megashark-lib';
 import { checkmarkCircle, reload, informationCircle } from 'ionicons/icons';
-import { inject, onMounted, ref } from 'vue';
+import { computed, inject, onMounted, ref } from 'vue';
+import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 
 let code = '';
 let content: Uint8Array = new Uint8Array();
@@ -140,9 +141,14 @@ const recoveryFileDownloaded = ref(false);
 const disableFileDownload = ref(false);
 const disableKeyDownload = ref(false);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
+const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 const orgId = ref('');
 const recoveryDeviceTemplate = ref(false);
 const hasRecoveryDevice = ref(false);
+
+const bothDownloaded = computed(() => {
+  return recoveryKeyDownloaded.value && recoveryFileDownloaded.value;
+});
 
 onMounted(async (): Promise<void> => {
   const result = await getClientInfo();
@@ -186,6 +192,18 @@ async function goToExportRecoveryDevice(): Promise<void> {
   recoveryDeviceTemplate.value = true;
 }
 
+async function sendRecoveryDeviceCreatedEvent(): Promise<void> {
+  if (bothDownloaded.value) {
+    const devicesResult = await listOwnDevices();
+    if (devicesResult.ok) {
+      const lastDevice = devicesResult.value.toSorted((d1, d2) => (d1.createdOn > d2.createdOn ? -1 : 1))[0];
+      if (lastDevice) {
+        eventDistributor.dispatchEvent(Events.DeviceCreated, { info: lastDevice });
+      }
+    }
+  }
+}
+
 async function downloadRecoveryKey(): Promise<void> {
   disableKeyDownload.value = true;
   await downloadFile(code, 'text/plain', { key: 'ExportRecoveryDevicePage.filenames.recoveryKey', data: { org: orgId.value } });
@@ -199,6 +217,7 @@ async function downloadRecoveryKey(): Promise<void> {
       }),
       PresentationMode.Toast,
     );
+    sendRecoveryDeviceCreatedEvent();
   }, 500);
 }
 
@@ -218,6 +237,7 @@ async function downloadRecoveryFile(): Promise<void> {
       }),
       PresentationMode.Toast,
     );
+    sendRecoveryDeviceCreatedEvent();
   }, 500);
 }
 

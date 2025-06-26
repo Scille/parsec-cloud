@@ -827,6 +827,17 @@
         "goToHome": "Mes espaces",
         "recentDocuments": "Documents récents",
         "back": "Retour",
+        "checklist": {
+            "title": "Actions recommandées",
+            "description": "Pour réduire le risque de perte de données, nous vous recommandons d'effectuer les tâches suivantes.",
+            "remaining": "1 restant | {count} restants",
+            "open": "Ouvrir",
+            "items": {
+                "ownerRequired": "Ajouter un propriétaire à l'espace de travail {workspace} | Ajouter un second propriétaire aux espaces de travail vous appartenant",
+                "multipleDevices": "Ajouter un second appareil",
+                "createRecoveryFiles": "Créer des fichiers de récupération"
+            }
+        },
         "tabbar": {
             "workspaces": "Espaces de travail",
             "files": "Fichiers",
