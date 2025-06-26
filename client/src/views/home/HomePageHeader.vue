@@ -344,7 +344,7 @@ const emits = defineEmits<{
     }
 
     .update-button {
-        top: -0.125rem;
+      top: -0.125rem;
 
       @include ms.responsive-breakpoint('md') {
         top: -0.125rem;
@@ -362,6 +362,7 @@ const emits = defineEmits<{
   @include ms.responsive-breakpoint('md') {
     flex-direction: column;
     gap: 1rem;
+    padding: 0 0 1rem;
   }
 
   &-buttons {

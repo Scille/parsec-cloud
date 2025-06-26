@@ -969,7 +969,8 @@
             "forgottenPassword": "Forgotten password",
             "recoveryFile": "Recovery file",
             "recoveryKey": "Secret key",
-            "setNewPassword": "Choose a new authentication",
+            "setNewPassword": "Choose a new password",
+            "setNewAuthentication": "Choose a new authentication method",
             "passwordChanged": "Authentication was successfully updated!"
         },
         "subtitles": {

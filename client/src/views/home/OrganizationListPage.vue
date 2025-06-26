@@ -351,6 +351,10 @@ const filteredDevices = computed(() => {
   max-width: 40rem;
   background: var(--parsec-color-light-secondary-white);
 
+  @include ms.responsive-breakpoint('xs') {
+    padding: 1.5rem 1.5rem 0 1.5rem;
+  }
+
   .organization-filter {
     display: flex;
     justify-content: space-between;

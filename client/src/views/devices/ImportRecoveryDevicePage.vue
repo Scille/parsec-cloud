@@ -109,13 +109,15 @@
   >
     <div class="recovery-header">
       <ion-title class="recovery-header__title title-h1">
-        {{ $msTranslate('ImportRecoveryDevicePage.titles.setNewPassword') }}
+        <span v-if="isWeb()">{{ $msTranslate('ImportRecoveryDevicePage.titles.setNewPassword') }}</span>
+        <span v-else>{{ $msTranslate('ImportRecoveryDevicePage.titles.setNewAuthentication') }}</span>
       </ion-title>
     </div>
     <ion-card class="recovery-card">
       <choose-authentication
         ref="chooseAuthRef"
         class="authentication-content"
+        :class="isWeb() ? 'web-authentication' : ''"
       />
       <ion-button
         id="validate-password-btn"
@@ -163,6 +165,7 @@ import {
   DeviceSaveStrategyTag,
   importRecoveryDevice,
   ImportRecoveryDeviceErrorTag,
+  isWeb,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonCard, IonCardContent, IonCardTitle, IonIcon, IonTitle } from '@ionic/vue';
@@ -294,15 +297,20 @@ async function onLoginClick(): Promise<void> {
   gap: 2rem;
   box-shadow: none;
 
-  @include ms.responsive-breakpoint('lg') {
+  @include ms.responsive-breakpoint('sm') {
     width: 100%;
     max-width: none;
+    margin: 0 auto;
+    gap: 1.5rem;
   }
 }
 
 .recovery-header {
   &__title {
-    color: var(--parsec-color-light-secondary-text);
+    background: var(--parsec-color-light-gradient-background);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 }
 
@@ -316,6 +324,10 @@ async function onLoginClick(): Promise<void> {
   border-radius: var(--parsec-radius-12);
   box-shadow: var(--parsec-shadow-light);
   background: var(--parsec-color-light-secondary-white);
+
+  @include ms.responsive-breakpoint('sm') {
+    padding: 1.5rem;
+  }
 }
 
 .card-container {
@@ -404,23 +416,42 @@ async function onLoginClick(): Promise<void> {
   display: flex;
   width: fit-content;
   margin-left: auto;
+
+  @include ms.responsive-breakpoint('sm') {
+    width: 100%;
+  }
+
+  ion-button {
+    @include ms.responsive-breakpoint('sm') {
+      width: 100%;
+    }
+  }
 }
 
 #validate-password-btn {
   margin-top: 2rem;
 }
 
-.success-card {
-  &__title {
-    color: var(--parsec-color-light-primary-700);
-    margin-bottom: 1.5rem;
-  }
+#success-step {
+  margin-inline: auto;
+  transform: translate(0, 20%);
 
-  &__button {
-    margin-top: 2.5rem;
-    display: flex;
-    width: fit-content;
-    margin-left: auto;
+  .success-card {
+    &__title {
+      color: var(--parsec-color-light-primary-700);
+      margin-bottom: 1.5rem;
+    }
+
+    &__button {
+      margin-top: 2rem;
+      display: flex;
+      width: fit-content;
+      margin-left: auto;
+
+      @include ms.responsive-breakpoint('sm') {
+        width: 100%;
+      }
+    }
   }
 }
 </style>
