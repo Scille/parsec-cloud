@@ -216,6 +216,6 @@ msTest('Warn on Safari', async ({ context }) => {
   await setupNewPage(page, { mockBrowser: 'Safari' });
   const modal = page.locator('.incompatible-environment');
   await expect(modal).toBeVisible();
-  await expect(modal.locator('.incompatible-content__title')).toHaveText('Your browser is not compatibly with Parsec yet.');
+  await expect(modal.locator('.incompatible-content__title')).toHaveText('Your browser is not compatible with Parsec yet.');
   await context.close();
 });
