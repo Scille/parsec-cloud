@@ -1,10 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{path::Path, sync::Arc};
+use std::path::Path;
 
 use libparsec_client_connection::{AuthenticatedCmds, ConnectionError, ProxyConfig};
 use libparsec_platform_device_loader::{
-    get_default_key_file, save_device, PlatformImportRecoveryDeviceError, SaveDeviceError,
+    get_default_key_file, save_device, LoadRecoveryDeviceError, SaveDeviceError,
 };
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_protocol::authenticated_cmds::latest::device_create;
@@ -20,11 +20,12 @@ pub async fn export_recovery_device(
     client: &Client,
     device_label: DeviceLabel,
 ) -> Result<(SecretKeyPassphrase, Vec<u8>), ClientExportRecoveryDeviceError> {
-    let (passphrase, data, recovery_device) =
-        libparsec_platform_device_loader::export_recovery_device(&client.device, device_label)
-            .await;
+    // 1. Generate recovery device (device ID, signing key etc.)
 
-    // save recovery device
+    let recovery_device = LocalDevice::from_existing_device_for_user(&client.device, device_label);
+
+    // 2. Upload the recovery device on the server
+
     let latest_known_timestamp = register_new_device(
         &client.cmds,
         &recovery_device,
@@ -32,6 +33,10 @@ pub async fn export_recovery_device(
         &client.device,
     )
     .await?;
+
+    // From now on, our newly generated recovery device has an actual existence !
+
+    // 3. Fetch the new device certificate from the server
 
     let latest_known_timestamp = PerTopicLastTimestamps::new_for_common(latest_known_timestamp);
 
@@ -49,6 +54,12 @@ pub async fn export_recovery_device(
                 .context("Cannot poll server for new certificates")
                 .into(),
         })?;
+
+    // 4. Serialize and return the recovery device
+
+    let (passphrase, data) =
+        libparsec_platform_device_loader::dump_recovery_device(&recovery_device);
+
     Ok((passphrase, data))
 }
 
@@ -128,16 +139,14 @@ pub enum ImportRecoveryDeviceError {
     InvalidPath(anyhow::Error),
 }
 
-impl From<PlatformImportRecoveryDeviceError> for ImportRecoveryDeviceError {
-    fn from(value: PlatformImportRecoveryDeviceError) -> Self {
+impl From<LoadRecoveryDeviceError> for ImportRecoveryDeviceError {
+    fn from(value: LoadRecoveryDeviceError) -> Self {
         match value {
-            PlatformImportRecoveryDeviceError::InvalidData => {
-                ImportRecoveryDeviceError::InvalidData
-            }
-            PlatformImportRecoveryDeviceError::InvalidPassphrase => {
+            LoadRecoveryDeviceError::InvalidData => ImportRecoveryDeviceError::InvalidData,
+            LoadRecoveryDeviceError::InvalidPassphrase => {
                 ImportRecoveryDeviceError::InvalidPassphrase
             }
-            PlatformImportRecoveryDeviceError::DecryptionFailed => {
+            LoadRecoveryDeviceError::DecryptionFailed => {
                 ImportRecoveryDeviceError::DecryptionFailed
             }
         }
@@ -324,15 +333,14 @@ pub async fn import_recovery_device(
     device_label: DeviceLabel,
     save_strategy: DeviceSaveStrategy,
 ) -> Result<AvailableDevice, ImportRecoveryDeviceError> {
-    // 0) Load the recovery device
+    // 1. Load the recovery device
 
-    let recovery_device: Arc<_> = libparsec_platform_device_loader::import_recovery_device(
-        recovery_device,
-        passphrase.into(),
-    )
-    .await?
-    .into();
-    let cmds = AuthenticatedCmds::new(config_dir, recovery_device.clone(), ProxyConfig::default())?;
+    let recovery_device =
+        libparsec_platform_device_loader::load_recovery_device(recovery_device, passphrase.into())?;
+
+    // 2. Generate the new device (device ID, signing key etc.)
+
+    let new_device = LocalDevice::from_existing_device_for_user(&recovery_device, device_label);
 
     // We first register the new device to the server, and only then save it on disk.
     // This is to ensure the device found on disk are always valid, however the drawback
@@ -341,10 +349,9 @@ pub async fn import_recovery_device(
     // This is considered acceptable given 1) the error window is small and
     // 2) if this occurs, the user can always re-import the recovery device.
 
-    let new_device = LocalDevice::from_existing_device_for_user(&recovery_device, device_label);
+    // 3. Upload the new device on the server
 
-    // 1) Upload the device on the server
-
+    let cmds = AuthenticatedCmds::new(config_dir, recovery_device.clone(), ProxyConfig::default())?;
     register_new_device(
         &cmds,
         &new_device,
@@ -353,7 +360,9 @@ pub async fn import_recovery_device(
     )
     .await?;
 
-    // 2) Save the device on disk
+    // From now on, our new device has an actual existence !
+
+    // 4. Save the new device on disk
 
     let access = {
         let key_file = get_default_key_file(config_dir, new_device.device_id);

@@ -289,7 +289,7 @@ pub use platform::remove_device;
 use zeroize::Zeroizing;
 
 #[derive(Debug, thiserror::Error)]
-pub enum PlatformImportRecoveryDeviceError {
+pub enum LoadRecoveryDeviceError {
     #[error("Cannot deserialize file content")]
     InvalidData,
     #[error("Passphrase format is invalid")]
@@ -298,49 +298,45 @@ pub enum PlatformImportRecoveryDeviceError {
     DecryptionFailed,
 }
 
-/// Returns recovery device
-pub async fn import_recovery_device(
+/// Decrypt and deserialize the local device to use as recovery device (i.e. the device
+/// creating a new device) during a recovery device import operation.
+pub fn load_recovery_device(
     recovery_device: &[u8],
     passphrase: SecretKeyPassphrase,
-) -> Result<LocalDevice, PlatformImportRecoveryDeviceError> {
+) -> Result<Arc<LocalDevice>, LoadRecoveryDeviceError> {
     let key = SecretKey::from_recovery_passphrase(passphrase)
-        .map_err(|_| PlatformImportRecoveryDeviceError::InvalidPassphrase)?;
+        .map_err(|_| LoadRecoveryDeviceError::InvalidPassphrase)?;
 
     // Regular load
-    let device_file = DeviceFile::load(recovery_device)
-        .map_err(|_| PlatformImportRecoveryDeviceError::InvalidData)?;
+    let device_file =
+        DeviceFile::load(recovery_device).map_err(|_| LoadRecoveryDeviceError::InvalidData)?;
 
     let recovery_device = match device_file {
         DeviceFile::Recovery(x) => {
             let cleartext = key
                 .decrypt(&x.ciphertext)
                 .map(Zeroizing::new)
-                .map_err(|_| PlatformImportRecoveryDeviceError::DecryptionFailed)?;
+                .map_err(|_| LoadRecoveryDeviceError::DecryptionFailed)?;
 
-            LocalDevice::load(&cleartext)
-                .map_err(|_| PlatformImportRecoveryDeviceError::InvalidData)?
+            LocalDevice::load(&cleartext).map_err(|_| LoadRecoveryDeviceError::InvalidData)?
         }
         // We are not expecting other type of device file
-        _ => return Err(PlatformImportRecoveryDeviceError::InvalidData),
+        _ => return Err(LoadRecoveryDeviceError::InvalidData),
     };
 
-    Ok(recovery_device)
+    Ok(Arc::new(recovery_device))
 }
 
-/// create a new recovery device from provided local device
-/// returns the passphrase associated with the key that
-/// encrypted device data, the dumped recovery device data
-/// and the recovery device itself
-pub async fn export_recovery_device(
-    device: &LocalDevice,
-    device_label: DeviceLabel,
-) -> (SecretKeyPassphrase, Vec<u8>, LocalDevice) {
-    let created_on = device.now();
+/// Serialize the provided local device into a package that can be exported as
+/// recovery device (i.e. a buffer containing the encrypted local device and
+/// its corresponding passphrase to be used for decryption).
+pub fn dump_recovery_device(recovery_device: &LocalDevice) -> (SecretKeyPassphrase, Vec<u8>) {
+    let created_on = recovery_device.now();
     let server_url = {
         ParsecAddr::new(
-            device.organization_addr.hostname().to_owned(),
-            Some(device.organization_addr.port()),
-            device.organization_addr.use_ssl(),
+            recovery_device.organization_addr.hostname().to_owned(),
+            Some(recovery_device.organization_addr.port()),
+            recovery_device.organization_addr.use_ssl(),
         )
         .to_http_url(None)
         .to_string()
@@ -348,7 +344,6 @@ pub async fn export_recovery_device(
 
     let (passphrase, key) = SecretKey::generate_recovery_passphrase();
 
-    let recovery_device = LocalDevice::from_existing_device_for_user(device, device_label);
     let ciphertext = {
         let cleartext = Zeroizing::new(recovery_device.dump());
         let ciphertext = key.encrypt(&cleartext);
@@ -369,7 +364,7 @@ pub async fn export_recovery_device(
     })
     .dump();
 
-    (passphrase, file_content, recovery_device)
+    (passphrase, file_content)
 }
 
 fn load_available_device_from_blob(
