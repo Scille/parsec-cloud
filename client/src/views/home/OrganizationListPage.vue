@@ -408,6 +408,7 @@ const filteredDevices = computed(() => {
 .recovery-devices {
   display: flex;
   align-items: center;
+  justify-content: center;
   position: fixed;
   border-top: 1px solid var(--parsec-color-light-secondary-medium);
   width: 100%;
@@ -416,7 +417,8 @@ const filteredDevices = computed(() => {
   padding: 0.5rem 0.5rem 1.5rem;
   color: var(--parsec-color-light-secondary-grey);
   bottom: 0;
-  z-index: 100;
+  left: 0;
+  z-index: 10;
 }
 
 .no-devices {

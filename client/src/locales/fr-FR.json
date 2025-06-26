@@ -968,7 +968,7 @@
             "recoveryFile": "Fichier de récupération",
             "recoveryKey": "Clé secrète",
             "setNewPassword": "Choisissez votre nouveau mot de passe",
-            "setNewAuthentication": "Choisissez votre méthode d'authentification",
+            "setNewAuthentication": "Choisissez une méthode d'authentification",
             "passwordChanged": "L'authentification a bien été modifiée"
         },
         "subtitles": {
