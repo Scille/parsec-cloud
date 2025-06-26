@@ -6,14 +6,14 @@ from parsec._parsec import (
     AccountAuthMethodID,
     DateTime,
     EmailAddress,
-    EmailValidationToken,
     HashDigest,
     HumanHandle,
     SecretKey,
+    ValidationCode,
 )
 from parsec.components.account import (
     AccountCreateAccountBadOutcome,
-    AccountCreateEmailValidationTokenBadOutcome,
+    AccountCreateEmailValidationCodeBadOutcome,
     AccountInfo,
     AccountInfoBadOutcome,
     AccountVaultItemListBadOutcome,
@@ -22,6 +22,7 @@ from parsec.components.account import (
     AccountVaultKeyRotation,
     BaseAccountComponent,
     UntrustedPasswordAlgorithm,
+    ValidationCodeComparison,
     ValidationCodeInfo,
     VaultItemRecoveryAuthMethod,
     VaultItemRecoveryList,
@@ -78,54 +79,61 @@ class MemoryAccountComponent(BaseAccountComponent):
             case None:
                 return AccountInfoBadOutcome.ACCOUNT_NOT_FOUND
 
-        try:
-            human_handle = HumanHandle(account.account_email, account.human_label)
-        except ValueError as err:
-            raise RuntimeError(
-                f"Invalid data for auth_method_id={auth_method_id} (email={account.account_email!r}, label={account.human_label!r})"
-            ) from err
-
         return AccountInfo(
-            human_handle=human_handle,
+            human_handle=account.human_handle,
         )
 
     @override
-    async def create_email_validation_token(
+    async def create_email_validation_code(
         self, email: EmailAddress, now: DateTime
-    ) -> EmailValidationToken | AccountCreateEmailValidationTokenBadOutcome:
+    ) -> ValidationCode | AccountCreateEmailValidationCodeBadOutcome:
         if email in self._data.accounts:
-            return AccountCreateEmailValidationTokenBadOutcome.ACCOUNT_ALREADY_EXISTS
+            return AccountCreateEmailValidationCodeBadOutcome.ACCOUNT_ALREADY_EXISTS
         elif email in self._data.unverified_emails:
             (_, last_email_datetime) = self._data.unverified_emails[email]
             if not self.can_send_new_code_email(last_email_datetime, now):
-                return AccountCreateEmailValidationTokenBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND
+                return AccountCreateEmailValidationCodeBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND
 
-        token = EmailValidationToken.new()
-        self._data.unverified_emails[email] = (token, now)
-        return token
+        code = ValidationCode.generate()
+        info = ValidationCodeInfo(code, now, 0)
+        self._data.unverified_emails[email] = (info, now)
+        return code
+
+    @override
+    async def process_creation_validation_code(
+        self, email: EmailAddress, code: ValidationCode, now: DateTime
+    ) -> ValidationCodeComparison:
+        info = self._data.unverified_emails.get(email)
+        if info is None:
+            return ValidationCodeComparison.NOT_FOUND
+
+        (info, last_sent_email) = info
+        if info.is_expired(now):
+            # TODO, should the email be removed from unverified email?
+            return ValidationCodeComparison.EXPIRED
+        if not info.has_remaining_attempts:
+            # TODO, should the email be removed from unverified email?
+            return ValidationCodeComparison.NO_REMAINING_ATTEMPTS
+        if info.code != code:
+            # increment attempt
+            info.failed_attempts += 1
+            self._data.unverified_emails[email] = (info, last_sent_email)
+            return ValidationCodeComparison.INVALID
+
+        return ValidationCodeComparison.VALID
 
     @override
     async def create_account(
         self,
-        token: EmailValidationToken,
         now: DateTime,
         mac_key: SecretKey,
         vault_key_access: bytes,
-        human_label: str,
+        human_handle: HumanHandle,
         created_by_user_agent: str,
         created_by_ip: str | Literal[""],
         auth_method_id: AccountAuthMethodID,
         auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
     ) -> None | AccountCreateAccountBadOutcome:
-        # look for an email linked to the provided token
-        unverified_email = next(
-            (k for (k, v) in self._data.unverified_emails.items() if v[0] == token), None
-        )
-        if unverified_email is None:
-            # the provided token is not in unverified emails
-            return AccountCreateAccountBadOutcome.INVALID_TOKEN
-        email = unverified_email
-
         # create authentication method
         auth_method = MemoryAuthenticationMethod(
             id=auth_method_id,
@@ -145,20 +153,21 @@ class MemoryAccountComponent(BaseAccountComponent):
 
         vault = MemoryAccountVault(items={}, authentication_methods=authentication_methods)
 
-        self._data.accounts[email] = MemoryAccount(
-            account_email=email,
-            human_label=human_label,
+        self._data.accounts[human_handle.email] = MemoryAccount(
+            account_email=human_handle.email,
+            human_handle=human_handle,
             previous_vaults=[],
             current_vault=vault,
         )
 
         # remove from unverified emails at the end
-        self._data.unverified_emails.pop(email)
+        # if nothing is removed, that means the code has not been checked
+        assert self._data.unverified_emails.pop(human_handle.email) is not None
 
     @override
-    def test_get_token_by_email(self, email: EmailAddress) -> EmailValidationToken | None:
+    def test_get_code_by_email(self, email: EmailAddress) -> ValidationCode | None:
         """Use only in tests, nothing is checked."""
-        return self._data.unverified_emails[email][0]
+        return self._data.unverified_emails[email][0].code
 
     def auth_method_id_already_exists(self, auth_method_id: AccountAuthMethodID) -> bool:
         return self._data.get_account_from_any_auth_method(auth_method_id) is not None

@@ -23,7 +23,7 @@ async def test_anonymous_account_account_create_proceed_ok(
     assert rep == anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
 
     # retrieve alice's token that was sent by email
-    token = backend.account.test_get_token_by_email(email)
+    token = backend.account.test_get_code_by_email(email)
     assert token is not None
 
     # rep = await anonymous_account.account_create_proceed(
@@ -40,7 +40,7 @@ async def test_anonymous_account_account_create_proceed_ok(
 
     # Alice's mail removed from unverified emails
     try:
-        token = backend.account.test_get_token_by_email(email)
+        token = backend.account.test_get_code_by_email(email)
     except KeyError:
         pass
 
@@ -58,7 +58,7 @@ async def test_anonymous_account_account_create_proceed_invalid_validation_code(
     assert rep == anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
 
     # retrieve alice's token that was sent by email
-    token = backend.account.test_get_token_by_email(email)
+    token = backend.account.test_get_code_by_email(email)
     assert token is not None
 
     # other_token = EmailValidationToken.new()
@@ -76,7 +76,7 @@ async def test_anonymous_account_account_create_proceed_invalid_validation_code(
     # assert rep == anonymous_account_cmds.latest.account_create_proceed.RepInvalidValidationCode()
 
     # Alice's mail kept in unverified emails
-    token = backend.account.test_get_token_by_email(email)
+    token = backend.account.test_get_code_by_email(email)
     assert token is not None
 
 
@@ -118,7 +118,7 @@ async def test_anonymous_account_account_create_proceed_auth_method_id_already_e
     assert rep == anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
 
     # retrieve alice's token that was sent by email
-    token = backend.account.test_get_token_by_email(email)
+    token = backend.account.test_get_code_by_email(email)
     assert token is not None
 
     # rep = await anonymous_account.account_create_proceed(
@@ -140,7 +140,7 @@ async def test_anonymous_account_account_create_proceed_auth_method_id_already_e
     assert rep == anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
 
     # retrieve bob's token that was sent by email
-    token = backend.account.test_get_token_by_email(email)
+    token = backend.account.test_get_code_by_email(email)
     assert token is not None
 
     # rep = await anonymous_account.account_create_proceed(

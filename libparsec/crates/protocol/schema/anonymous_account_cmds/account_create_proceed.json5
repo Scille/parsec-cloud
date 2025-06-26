@@ -20,6 +20,15 @@
         "status": "invalid_validation_code"
       },
       {
+        "status": "expired_validation_code"
+      },
+      {
+        "status": "too_many_attempts_for_validation_code"
+      },
+      {
+        "status": "email_not_found"
+      },
+      {
         // In practice this error should never occur since collision on the ID is
         // virtually non-existent as long as the client generates a proper UUID.
         "status": "auth_method_id_already_exists"

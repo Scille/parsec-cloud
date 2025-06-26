@@ -74,6 +74,21 @@ class RepInvalidValidationCode(Rep):
         self,
     ) -> None: ...
 
+class RepExpiredValidationCode(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
+class RepTooManyAttemptsForValidationCode(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
+class RepEmailNotFound(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
 class RepAuthMethodIdAlreadyExists(Rep):
     def __init__(
         self,
