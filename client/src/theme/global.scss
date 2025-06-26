@@ -160,6 +160,22 @@ svg {
   }
 }
 
+// hiding keyring option in web for the recovery device
+.recovery-content {
+  .web-authentication {
+    .radio-list {
+      display: none !important;
+    }
+
+    .choose-password {
+      padding: 0 !important;
+      border: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
+    }
+  }
+}
+
 // manage homepage content inside the slider
 .homepage-content .slider-container {
   padding: 2rem 4rem 0;
@@ -169,10 +185,17 @@ svg {
   }
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 2rem 1.5rem 0;
+    padding: 1rem 1.5rem 0;
   }
 
   &:has(.account-settings-page-container) {
     background: var(--parsec-color-light-secondary-premiere);
+  }
+
+  &:has(.recovery-content),
+  &:has(.login-popup) {
+    @include ms.responsive-breakpoint('sm') {
+      padding: 0.5rem 1.5rem 0;
+    }
   }
 }

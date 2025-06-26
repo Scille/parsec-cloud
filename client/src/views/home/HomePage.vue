@@ -2,7 +2,10 @@
 
 <template>
   <ion-page>
-    <ion-content :fullscreen="true">
+    <ion-content
+      class="homepage-content"
+      :fullscreen="true"
+    >
       <div id="page">
         <!-- sidebar -->
         <home-page-sidebar class="homepage-sidebar" />
@@ -700,6 +703,10 @@ function getBackButtonTitle(): string {
 </script>
 
 <style lang="scss" scoped>
+.homepage-content {
+  --background: var(--parsec-color-light-secondary-background);
+}
+
 #page {
   position: relative;
   height: 100vh;

@@ -145,7 +145,7 @@ defineExpose({
   box-shadow: none;
 
   @include ms.responsive-breakpoint('sm') {
-    margin: 0;
+    margin: 0 auto;
   }
 
   .login-header__title {
@@ -168,6 +168,10 @@ defineExpose({
     width: 100%;
     transition: box-shadow 150ms ease-in-out;
     overflow-y: auto;
+
+    @include ms.responsive-breakpoint('sm') {
+      padding: 1.5rem;
+    }
 
     &:has(.has-focus) {
       box-shadow: var(--parsec-shadow-light);
