@@ -56,6 +56,10 @@ impl AuthenticatedCmds {
         Ok(Self::from_client(client, config_dir, device))
     }
 
+    pub fn client(&self) -> &Client {
+        &self.client
+    }
+
     pub fn from_client(client: Client, _config_dir: &Path, device: Arc<LocalDevice>) -> Self {
         let url = device.organization_addr.to_authenticated_http_url();
 

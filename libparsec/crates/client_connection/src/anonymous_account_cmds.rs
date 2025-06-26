@@ -40,6 +40,10 @@ impl AnonymousAccountCmds {
         Ok(Self::from_client(client, config_dir, addr))
     }
 
+    pub fn client(&self) -> &Client {
+        &self.client
+    }
+
     pub fn from_client(client: Client, _config_dir: &Path, addr: ParsecAddr) -> Self {
         let url = addr.to_http_url(Some("/anonymous_account/"));
 
