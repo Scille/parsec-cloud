@@ -243,6 +243,7 @@ generate_field_type_enum!(
     InvitationToken => libparsec_types::InvitationToken,
     EmailValidationToken => libparsec_types::EmailValidationToken,
     InvitationStatus => libparsec_types::InvitationStatus,
+    InvitationType => libparsec_types::InvitationType,
     CertificateSigner => libparsec_types::CertificateSigner,
     BlockAccess => libparsec_types::BlockAccess,
     EntryName => libparsec_types::EntryName,

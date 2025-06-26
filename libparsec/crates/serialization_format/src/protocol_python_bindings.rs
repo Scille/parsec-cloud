@@ -921,6 +921,7 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
             quote_rs_to_py_class!(crate::token::EmailValidationToken)
         }
         FieldType::InvitationStatus => quote_rs_to_py_class!(crate::enumerate::InvitationStatus),
+        FieldType::InvitationType => quote_rs_to_py_class!(crate::enumerate::InvitationType),
         FieldType::CertificateSigner => {
             quote_rs_to_py_class!(crate::certif::CertificateSigner)
         }
@@ -1022,6 +1023,7 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         FieldType::InvitationToken => quote! { crate::token::InvitationToken },
         FieldType::EmailValidationToken => quote! { crate::token::EmailValidationToken },
         FieldType::InvitationStatus => quote! { crate::enumerate::InvitationStatus },
+        FieldType::InvitationType => quote! { crate::enumerate::InvitationType },
         FieldType::CertificateSigner => quote! { crate::certif::CertificateSigner },
         FieldType::BlockAccess => quote! { crate::data::BlockAccess },
         FieldType::EntryName => quote! { crate::data::EntryName },
@@ -1165,6 +1167,7 @@ fn internal_quote_field_as_fn_new_conversion(field_name: &Ident, ty: &FieldType)
         | FieldType::InvitationToken
         | FieldType::EmailValidationToken
         | FieldType::InvitationStatus
+        | FieldType::InvitationType
         | FieldType::CertificateSigner
         | FieldType::BlockAccess
         | FieldType::EntryName
