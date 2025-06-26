@@ -26,7 +26,7 @@ async fn login_with_master_secret(env: &TestbedEnv) {
     });
 
     let account = Account::login_with_master_secret(
-        &env.discriminant_dir,
+        env.discriminant_dir.clone(),
         ProxyConfig::default(),
         addr,
         KeyDerivation::from(hex!(
@@ -70,7 +70,7 @@ async fn login_with_password(env: &TestbedEnv) {
 
     let addr = env.server_addr.clone();
     let account = Account::login_with_password(
-        &env.discriminant_dir,
+        env.discriminant_dir.clone(),
         ProxyConfig::default(),
         addr,
         email,
@@ -104,7 +104,7 @@ async fn login_with_password_server_returns_bad_config(env: &TestbedEnv) {
     let addr = env.server_addr.clone();
     p_assert_matches!(
         Account::login_with_password(
-            &env.discriminant_dir,
+            env.discriminant_dir.clone(),
             ProxyConfig::default(),
             addr,
             email,
@@ -124,7 +124,7 @@ async fn login_with_password_server_offline(env: &TestbedEnv) {
     let addr = env.server_addr.clone();
     p_assert_matches!(
         Account::login_with_password(
-            &env.discriminant_dir,
+            env.discriminant_dir.clone(),
             ProxyConfig::default(),
             addr,
             email,
@@ -141,7 +141,7 @@ async fn login_with_master_secret_server_offline(env: &TestbedEnv) {
     let addr = env.server_addr.clone();
     p_assert_matches!(
         Account::login_with_master_secret(
-            &env.discriminant_dir,
+            env.discriminant_dir.clone(),
             ProxyConfig::default(),
             addr,
             KeyDerivation::from(hex!(
