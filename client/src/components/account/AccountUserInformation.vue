@@ -47,7 +47,7 @@
         />
       </ion-button>
       <!-- error -->
-      <ms-informative-text v-show="error"> {{ $msTranslate(error) }}; </ms-informative-text>
+      <ms-informative-text v-show="error"> {{ $msTranslate(error) }} </ms-informative-text>
     </div>
   </div>
 </template>
@@ -58,7 +58,7 @@ import { IonButton } from '@ionic/vue';
 import { computed, onMounted, ref } from 'vue';
 import { parsecAddrValidator, emailValidator } from '@/common/validators';
 import { MsInput, Validity, MsInformativeText, MsSpinner } from 'megashark-lib';
-import { AccountCreationStepper } from '@/parsec';
+import { AccountCreationStepper, AccountSendEmailValidationTokenErrorTag } from '@/parsec';
 
 const props = defineProps<{
   creationStepper: AccountCreationStepper;
@@ -102,8 +102,20 @@ async function submit(): Promise<void> {
   try {
     const result = await props.creationStepper.start(firstName.value, lastName.value, email.value, server.value);
     if (!result.ok) {
-      // Check error (offline, invalid email, invalid server, ...)
-      error.value = 'FAILED';
+      switch (result.error.tag) {
+        case AccountSendEmailValidationTokenErrorTag.Offline:
+          error.value = 'loginPage.createAccount.errors.offline';
+          break;
+        case AccountSendEmailValidationTokenErrorTag.EmailParseError:
+        case AccountSendEmailValidationTokenErrorTag.EmailRecipientRefused:
+        case AccountSendEmailValidationTokenErrorTag.InvalidEmail:
+          error.value = 'loginPage.createAccount.errors.invalidEmail';
+          break;
+        default:
+          error.value = 'loginPage.createAccount.errors.generic';
+          window.electronAPI.log('error', `Create account start error: ${result.error.tag} (${result.error.error})`);
+          break;
+      }
     } else {
       emits('creationStarted');
     }
