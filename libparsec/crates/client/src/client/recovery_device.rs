@@ -86,7 +86,6 @@ pub enum ClientExportRecoveryDeviceError {
 impl From<RegisterNewDeviceError> for ClientExportRecoveryDeviceError {
     fn from(value: RegisterNewDeviceError) -> Self {
         match value {
-            RegisterNewDeviceError::Stopped => ClientExportRecoveryDeviceError::Stopped,
             RegisterNewDeviceError::Offline(e) => ClientExportRecoveryDeviceError::Offline(e),
             RegisterNewDeviceError::Internal(error) => {
                 ClientExportRecoveryDeviceError::Internal(error)
@@ -153,7 +152,6 @@ impl From<LoadRecoveryDeviceError> for ImportRecoveryDeviceError {
 impl From<RegisterNewDeviceError> for ImportRecoveryDeviceError {
     fn from(value: RegisterNewDeviceError) -> Self {
         match value {
-            RegisterNewDeviceError::Stopped => ImportRecoveryDeviceError::Stopped,
             RegisterNewDeviceError::Offline(e) => ImportRecoveryDeviceError::Offline(e),
             RegisterNewDeviceError::Internal(error) => ImportRecoveryDeviceError::Internal(error),
             RegisterNewDeviceError::TimestampOutOfBallpark {
@@ -249,8 +247,6 @@ pub(crate) fn generate_new_device_certificates(
 
 #[derive(Debug, thiserror::Error)]
 pub enum RegisterNewDeviceError {
-    #[error("Component has stopped")]
-    Stopped,
     #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),
     #[error(transparent)]
