@@ -499,6 +499,13 @@ class BaseAuthenticatedAccountRpcClient:
         raw_rep = await self._do_request(req.dump(), "authenticated_account")
         return authenticated_account_cmds.latest.account_info.Rep.load(raw_rep)
 
+    async def invite_self_list(
+        self,
+    ) -> authenticated_account_cmds.latest.invite_self_list.Rep:
+        req = authenticated_account_cmds.latest.invite_self_list.Req()
+        raw_rep = await self._do_request(req.dump(), "authenticated_account")
+        return authenticated_account_cmds.latest.invite_self_list.Rep.load(raw_rep)
+
     async def ping(self, ping: str) -> authenticated_account_cmds.latest.ping.Rep:
         req = authenticated_account_cmds.latest.ping.Req(ping=ping)
         raw_rep = await self._do_request(req.dump(), "authenticated_account")
