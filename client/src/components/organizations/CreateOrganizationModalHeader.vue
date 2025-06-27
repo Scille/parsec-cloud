@@ -81,7 +81,7 @@ defineEmits<{
   gap: 1rem;
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 0 3rem 1.5rem 0;
+    padding: 1.5rem 2rem;
     border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
   }
 

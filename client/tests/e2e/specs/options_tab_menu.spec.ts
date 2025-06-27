@@ -190,7 +190,7 @@ msTest('Test user options tab menu', async ({ usersPage }) => {
   // `Role assign` button
   await tabItem.nth(1).click();
   await expect(usersPage.locator('.role-assignment-modal')).toBeVisible();
-  await usersPage.locator('.role-assignment-modal').locator('.closeBtn').click();
+  await usersPage.locator('.role-assignment-modal').locator('.closeBtn').nth(1).click();
 
   // `Profile` button
   await tabItem.nth(2).click();

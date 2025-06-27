@@ -34,7 +34,7 @@
           })
         }}
       </ion-text>
-      <ion-text class="modal-header__title title-h2">
+      <ion-text class="modal-header__title title-h3">
         {{ $msTranslate(steps[currentStep].title) }}
       </ion-text>
     </div>
