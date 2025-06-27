@@ -10,8 +10,15 @@ from .common import (
     EmailAddress,
     ErrorVariant,
     ValidationCode,
+    Handle,
+    OrganizationID,
+    UserID,
+    DeviceLabel,
+    InvitationToken,
+    InvitationType,
 )
 from .addr import ParsecAddr
+from .device import DeviceSaveStrategy, AvailableDevice
 
 
 class AccountCreateSendValidationEmailError(ErrorVariant):
@@ -66,4 +73,116 @@ async def account_create_3_proceed(
     human_handle: HumanHandle,
     password: Password,
 ) -> Result[None, AccountCreateError]:
+    raise NotImplementedError
+
+
+class AccountLoginWithPasswordError(ErrorVariant):
+    class BadPasswordAlgorithm:
+        pass
+
+    class Offline:
+        pass
+
+    class Internal:
+        pass
+
+
+async def account_login_with_password(
+    config_dir: Path,
+    addr: ParsecAddr,
+    email: EmailAddress,
+    password: Password,
+) -> Result[Handle, AccountLoginWithPasswordError]:
+    raise NotImplementedError
+
+
+class AccountLogoutError(ErrorVariant):
+    class Internal:
+        pass
+
+
+def account_logout(account: Handle) -> Result[None, AccountLogoutError]:
+    raise NotImplementedError
+
+
+class AccountGetHumanHandleError(ErrorVariant):
+    class Internal:
+        pass
+
+
+def account_get_human_handle(account: Handle) -> Result[HumanHandle, AccountGetHumanHandleError]:
+    raise NotImplementedError
+
+
+class AccountListInvitationsError(ErrorVariant):
+    class Offline:
+        pass
+
+    class Internal:
+        pass
+
+
+async def account_list_invitations(
+    account: Handle,
+) -> Result[
+    list[tuple[OrganizationID, InvitationToken, InvitationType]], AccountListInvitationsError
+]:
+    raise NotImplementedError
+
+
+class AccountFetchRegistrationDevicesError(ErrorVariant):
+    class BadVaultKeyAccess:
+        pass
+
+    class Offline:
+        pass
+
+    class Internal:
+        pass
+
+
+async def account_fetch_registration_devices(
+    account: Handle,
+) -> Result[None, AccountFetchRegistrationDevicesError]:
+    raise NotImplementedError
+
+
+class AccountListRegistrationDevicesError(ErrorVariant):
+    class Internal:
+        pass
+
+
+def account_list_registration_devices(
+    account: Handle,
+) -> Result[set[tuple[OrganizationID, UserID]], AccountListRegistrationDevicesError]:
+    raise NotImplementedError
+
+
+class AccountRegisterNewDeviceError(ErrorVariant):
+    class UnknownRegistrationDevice:
+        pass
+
+    class Offline:
+        pass
+
+    class Internal:
+        pass
+
+    class StorageNotAvailable:
+        pass
+
+    class InvalidPath:
+        pass
+
+    class TimestampOutOfBallpark:
+        pass
+
+
+async def account_register_new_device(
+    account: Handle,
+    organization_id: OrganizationID,
+    user_id: UserID,
+    new_device_label: DeviceLabel,
+    save_strategy: DeviceSaveStrategy,
+) -> Result[AvailableDevice, AccountRegisterNewDeviceError]:
     raise NotImplementedError
