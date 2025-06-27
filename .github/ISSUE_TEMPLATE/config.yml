@@ -3,7 +3,4 @@ blank_issues_enabled: true
 contact_links:
   - name: Read the docs
     url: https://docs.parsec.cloud/en/latest/
-    about: You may find what you're looking for in the user documentation
-  - name: Report a vulnerability
-    url: https://github.com/Scille/parsec-cloud/blob/master/SECURITY.md
-    about: Report a vulnerability following `SECURITY.md`'s steps
+    about: Find out more about Parsec in the user documentation.
