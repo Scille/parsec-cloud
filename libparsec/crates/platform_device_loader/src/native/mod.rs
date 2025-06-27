@@ -268,7 +268,8 @@ pub async fn save_device(
         }
 
         DeviceAccessStrategy::Password { key_file, password } => {
-            let key_algo = PasswordAlgorithm::generate_argon2id();
+            let key_algo =
+                PasswordAlgorithm::generate_argon2id(PasswordAlgorithmSaltStrategy::Random);
             let key = key_algo
                 .compute_secret_key(password)
                 .expect("Failed to derive key from password");
