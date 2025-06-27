@@ -213,7 +213,7 @@ async function onCreateClicked(): Promise<void> {
     const response = await BmsAccessInstance.get().createOrganization(organizationName.value);
 
     if (response.isError) {
-      console.log('Failed to create organization');
+      window.electronAPI.log('error', `Failed to create organization: ${JSON.stringify(response.errors)}`);
       // TODO: Change this error handling with the real backend response
       if (response.errors && response.errors.some((error) => error.code === 'parsec_bad_status')) {
         currentError.value = 'CreateOrganization.errors.alreadyExists';

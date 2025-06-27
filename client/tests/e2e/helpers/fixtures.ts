@@ -16,6 +16,8 @@ interface SetupOptions {
   withCustomBranding?: boolean;
   displaySize?: DisplaySize;
   mockBrowser?: 'Chrome' | 'Firefox' | 'Safari' | 'Edge' | 'Brave' | 'Chromium';
+  trialServers?: string;
+  saasServers?: string;
 }
 
 const DEV_TOOLS_OFFSET = 400;
@@ -33,6 +35,12 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
     }
     if (options.mockBrowser) {
       (window as any).TESTING_MOCK_BROWSER = options.mockBrowser;
+    }
+    if (options.saasServers) {
+      (window as any).TESTING_SAAS_SERVERS = options.saasServers;
+    }
+    if (options.trialServers) {
+      (window as any).TESTING_TRIAL_SERVERS = options.trialServers;
     }
     (window as any).showSaveFilePicker = async (): Promise<FileSystemFileHandle> => {
       console.log('Show save file Picker');

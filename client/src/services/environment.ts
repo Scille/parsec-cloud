@@ -78,6 +78,9 @@ const DEFAULT_SAAS_SERVERS = ['saas-v3.parsec.cloud', 'saas-demo-v3-mightyfairy.
 const DEFAULT_TRIAL_SERVERS = ['trial.parsec.cloud'];
 
 function getSaasServers(): Array<string> {
+  if ((window as any).TESTING_SAAS_SERVERS) {
+    return (window as any).TESTING_SAAS_SERVERS.split(';');
+  }
   if (import.meta.env[SAAS_SERVERS_ENV_VARIABLE]) {
     return import.meta.env[SAAS_SERVERS_ENV_VARIABLE].split(';');
   }
@@ -85,6 +88,9 @@ function getSaasServers(): Array<string> {
 }
 
 function getTrialServers(): Array<string> {
+  if ((window as any).TESTING_TRIAL_SERVERS) {
+    return (window as any).TESTING_TRIAL_SERVERS.split(';');
+  }
   if (import.meta.env[TRIAL_SERVERS_ENV_VARIABLE]) {
     return import.meta.env[TRIAL_SERVERS_ENV_VARIABLE].split(';');
   }

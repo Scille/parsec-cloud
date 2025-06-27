@@ -1,7 +1,16 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Locator, Page } from '@playwright/test';
-import { DEFAULT_USER_INFORMATION, expect, fillInputModal, fillIonInput, getTestbedBootstrapAddr, msTest } from '@tests/e2e/helpers';
+import {
+  DEFAULT_USER_INFORMATION,
+  expect,
+  fillInputModal,
+  fillIonInput,
+  getTestbedBootstrapAddr,
+  MsPage,
+  msTest,
+  setupNewPage,
+} from '@tests/e2e/helpers';
 import { randomInt } from 'crypto';
 
 async function openCreateOrganizationModal(page: Page): Promise<Locator> {
@@ -199,11 +208,15 @@ msTest('Go through custom org creation process', async ({ home }) => {
   await expect(modal).toBeHidden();
 });
 
-msTest.skip('Go through custom org creation process from bootstrap link', async ({ home }) => {
-  await home.locator('#create-organization-button').click();
-  await home.locator('.popover-viewport').getByRole('listitem').nth(1).click();
-  await fillInputModal(home, getTestbedBootstrapAddr(home.orgInfo.name));
-  const modal = home.locator('.create-organization-modal');
+msTest('Go through custom org creation process from bootstrap link', async ({ context }) => {
+  const page = (await context.newPage()) as MsPage;
+  // Making sure that the testbed is recognized as the custom server
+  await setupNewPage(page, { trialServers: 'unknown.host', saasServers: 'unknown.host' });
+
+  await page.locator('#create-organization-button').click();
+  await page.locator('.popover-viewport').getByRole('listitem').nth(1).click();
+  await fillInputModal(page, getTestbedBootstrapAddr(page.orgInfo.name));
+  const modal = page.locator('.create-organization-modal');
 
   const orgServerContainer = modal.locator('.organization-name-and-server-page');
   await expect(orgServerContainer.locator('.modal-header-title__text')).toHaveText('Create organization on my Parsec server');
@@ -213,9 +226,11 @@ msTest.skip('Go through custom org creation process from bootstrap link', async 
   await expect(orgNext).toNotHaveDisabledAttribute();
 
   await expect(orgServerContainer.locator('ion-input').nth(0)).toHaveTheClass('input-disabled');
-  await expect(orgServerContainer.locator('ion-input').nth(0).locator('input')).toHaveValue(home.orgInfo.name);
+  await expect(orgServerContainer.locator('ion-input').nth(0).locator('input')).toHaveValue(page.orgInfo.name);
   await expect(orgServerContainer.locator('ion-input').nth(1)).toHaveTheClass('input-disabled');
-  await expect(orgServerContainer.locator('ion-input').nth(1).locator('input')).toHaveValue(`${home.orgInfo.serverAddr}`);
+  await expect(orgServerContainer.locator('ion-input').nth(1).locator('input')).toHaveValue(
+    `parsec3://${new URL(page.orgInfo.serverAddr).host}`,
+  );
   await orgNext.click();
 
   const userInfoContainer = modal.locator('.user-information-page');
@@ -279,11 +294,12 @@ msTest.skip('Go through custom org creation process from bootstrap link', async 
     'Authentication method',
   ]);
   await expect(summaryContainer.locator('.summary-item__text')).toHaveText([
-    home.orgInfo.name,
+    page.orgInfo.name,
     DEFAULT_USER_INFORMATION.name,
     DEFAULT_USER_INFORMATION.email,
     'Custom Server',
     'Password',
   ]);
   await summaryNext.click();
+  await page.release();
 });

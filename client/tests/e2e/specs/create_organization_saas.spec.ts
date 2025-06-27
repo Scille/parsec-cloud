@@ -4,11 +4,13 @@ import { Locator, Page } from '@playwright/test';
 import {
   DEFAULT_USER_INFORMATION,
   MockBms,
+  MsPage,
   expect,
   fillInputModal,
   fillIonInput,
   getTestbedBootstrapAddr,
   msTest,
+  setupNewPage,
 } from '@tests/e2e/helpers';
 import { randomInt } from 'crypto';
 
@@ -235,17 +237,23 @@ for (const testInfo of [
     await expect(summaryContainer.locator('.login-button-error')).toHaveText(testInfo.expectedMessage);
   });
 
-msTest.skip('Go through saas org creation process from bootstrap link', async ({ home }) => {
-  const uniqueOrgName = `${home.orgInfo.name}-${randomInt(2 ** 47)}`;
+msTest('Go through saas org creation process from bootstrap link', async ({ context }) => {
+  const page = (await context.newPage()) as MsPage;
+  // Making sure that the testbed is recognized as the saas server
+  const testbedUrl = new URL(process.env.TESTBED_SERVER ?? '');
+  await setupNewPage(page, { trialServers: 'unknown.host', saasServers: testbedUrl.host });
 
-  await home.locator('#create-organization-button').click();
-  await home.locator('.popover-viewport').getByRole('listitem').nth(1).click();
-  await fillInputModal(home, getTestbedBootstrapAddr(uniqueOrgName));
-  const modal = home.locator('.create-organization-modal');
+  const uniqueOrgName = `${page.orgInfo.name}-${randomInt(2 ** 47)}`;
 
-  await MockBms.mockLogin(home);
-  await MockBms.mockUserRoute(home);
-  await MockBms.mockCreateOrganization(home, getTestbedBootstrapAddr(uniqueOrgName));
+  await page.locator('#create-organization-button').click();
+  await page.locator('.popover-viewport').getByRole('listitem').nth(1).click();
+  await fillInputModal(page, getTestbedBootstrapAddr(uniqueOrgName));
+  const modal = page.locator('.create-organization-modal');
+
+  // Mock the BMS
+  await MockBms.mockLogin(page);
+  await MockBms.mockUserRoute(page);
+  await MockBms.mockCreateOrganization(page, getTestbedBootstrapAddr(uniqueOrgName));
 
   const bmsContainer = modal.locator('.saas-login');
   await expect(bmsContainer.locator('.modal-header-title__text')).toHaveText('Link your customer account to your new organization');
@@ -294,7 +302,7 @@ msTest.skip('Go through saas org creation process from bootstrap link', async ({
   await expect(summaryEditButtons.nth(3)).not.toBeVisible();
   await expect(summaryEditButtons.nth(4)).toBeVisible();
 
-  await cancelAndResume(home, summaryContainer);
+  await cancelAndResume(page, summaryContainer);
 
   await expect(summaryContainer.locator('.summary-item__label')).toHaveText([
     'Organization',
@@ -317,13 +325,15 @@ msTest.skip('Go through saas org creation process from bootstrap link', async ({
   await expect(summaryContainer).toBeHidden();
   await expect(modal.locator('.creation-page')).toBeVisible();
   await expect(modal.locator('.creation-page').locator('.closeBtn')).toBeHidden();
-  await home.waitForTimeout(1000);
+  await page.waitForTimeout(1000);
 
   await expect(modal.locator('.created-page')).toBeVisible();
   await expect(modal.locator('.creation-page')).toBeHidden();
   await expect(modal.locator('.created-page').locator('.closeBtn')).toBeHidden();
   await modal.locator('.created-page-footer').locator('ion-button').click();
   await expect(modal).toBeHidden();
+
+  await page.release();
 });
 
 msTest('Open account creation', async ({ home }) => {
