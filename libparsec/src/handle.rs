@@ -71,6 +71,8 @@ pub(crate) enum HandleItem {
         workspace_history_ops: Arc<libparsec_client::WorkspaceHistoryOps>,
     },
 
+    Account(Arc<libparsec_account::Account>),
+
     UserGreetInitial(libparsec_client::UserGreetInitialCtx),
     DeviceGreetInitial(libparsec_client::DeviceGreetInitialCtx),
     ShamirRecoveryGreetInitial(libparsec_client::ShamirRecoveryGreetInitialCtx),
