@@ -1,46 +1,54 @@
-name: 🐛 | Bug Report
+name: 🐛 Bug Report
 description: Submit a bug report
-title: "[🐛 | Bug]: "
 labels:
-  - C-Bug
   - B-Triage
 type: Bug
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for helping improve Parsec! Please fill in the required fields below and add any extra
-        information that can help us understand the issue.
+        Thanks for helping improve Parsec!
+
+        Please fill in the required fields below and add any extra information that can help us
+        understand the issue.
   - type: input
     id: version
     attributes:
-      label: "Parsec version tested on:"
-      description: You can find it in Parsec GUI title bar (or by running `parsec.cli --version` in a terminal).
-      placeholder: 2.15.0
+      label: Parsec version
+      description: You can find it in the "About" menu in Parsec app.
+      placeholder: 3.4.0
     validations:
       required: true
-  - type: dropdown
+  - type: checkboxes
     id: platform
     attributes:
-      label: "Platforms tested on:"
-      description: On which platforms have you seen the problem?
-      multiple: true
+      label: Which platform(s) you have observed the problem
+      description: You may select more than one
       options:
-        - Any
-        - Linux
-        - MacOS
-        - Windows
-        - Android
-        - Web
+        - label: Any
+        - label: macOS
+        - label: Linux
+        - label: Windows
+        - label: Web
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug description
+      description: >
+        Give a clear description of what happened.
     validations:
       required: true
   - type: textarea
-    id: what-happened
+    id: steps
     attributes:
-      label: "Bug description:"
-      description: >
-        Give a clear description of what happened. If possible, include the steps to reproduce the bug
-        and any other information that can help us understand the issue.
+      label: Reproduction steps
+      description: How do you trigger this bug? Please walk us through it step by step.
+      value: |
+        1.
+        2.
+        3.
+        ...
+      render: bash
     validations:
       required: true
   - type: textarea
