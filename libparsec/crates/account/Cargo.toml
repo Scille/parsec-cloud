@@ -18,6 +18,7 @@ normal = [
 workspace = true
 
 [dependencies]
+libparsec_client = { workspace = true }
 libparsec_client_connection = { workspace = true }
 libparsec_types = { workspace = true }
 libparsec_platform_async = { workspace = true }

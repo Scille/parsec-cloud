@@ -50,6 +50,12 @@ export enum InvitationStatus {
     Pending = 'InvitationStatusPending',
 }
 
+export enum InvitationType {
+    Device = 'InvitationTypeDevice',
+    ShamirRecovery = 'InvitationTypeShamirRecovery',
+    User = 'InvitationTypeUser',
+}
+
 export enum LogLevel {
     Debug = 'LogLevelDebug',
     Error = 'LogLevelError',
@@ -431,89 +437,165 @@ export interface WorkspaceUserAccessInfo {
 }
 
 
-// AccountCreateProceedError
-export interface AccountCreateProceedErrorAuthMethodIdAlreadyExists {
+// AccountCreateError
+export interface AccountCreateErrorAuthMethodIdAlreadyExists {
     tag: "AuthMethodIdAlreadyExists"
     error: string
 }
-export interface AccountCreateProceedErrorCryptoError {
-    tag: "CryptoError"
-    error: string
-}
-export interface AccountCreateProceedErrorInternal {
+export interface AccountCreateErrorInternal {
     tag: "Internal"
     error: string
 }
-export interface AccountCreateProceedErrorInvalidValidationCode {
+export interface AccountCreateErrorInvalidValidationCode {
     tag: "InvalidValidationCode"
     error: string
 }
-export interface AccountCreateProceedErrorOffline {
+export interface AccountCreateErrorOffline {
     tag: "Offline"
     error: string
 }
-export interface AccountCreateProceedErrorStopped {
-    tag: "Stopped"
-    error: string
-}
-export type AccountCreateProceedError =
-  | AccountCreateProceedErrorAuthMethodIdAlreadyExists
-  | AccountCreateProceedErrorCryptoError
-  | AccountCreateProceedErrorInternal
-  | AccountCreateProceedErrorInvalidValidationCode
-  | AccountCreateProceedErrorOffline
-  | AccountCreateProceedErrorStopped
+export type AccountCreateError =
+  | AccountCreateErrorAuthMethodIdAlreadyExists
+  | AccountCreateErrorInternal
+  | AccountCreateErrorInvalidValidationCode
+  | AccountCreateErrorOffline
 
 
-// AccountCreateStep
-export interface AccountCreateStepCheckCode {
-    tag: "CheckCode"
-    validation_code: string
-    email: string
-}
-export interface AccountCreateStepCreate {
-    tag: "Create"
-    human_handle: HumanHandle
-    password: string
-    validation_code: string
-}
-export type AccountCreateStep =
-  | AccountCreateStepCheckCode
-  | AccountCreateStepCreate
-
-
-// AccountSendEmailValidationTokenError
-export interface AccountSendEmailValidationTokenErrorEmailParseError {
-    tag: "EmailParseError"
-    error: string
-}
-export interface AccountSendEmailValidationTokenErrorEmailRecipientRefused {
+// AccountCreateSendValidationEmailError
+export interface AccountCreateSendValidationEmailErrorEmailRecipientRefused {
     tag: "EmailRecipientRefused"
     error: string
 }
-export interface AccountSendEmailValidationTokenErrorEmailServerUnavailable {
+export interface AccountCreateSendValidationEmailErrorEmailServerUnavailable {
     tag: "EmailServerUnavailable"
     error: string
 }
-export interface AccountSendEmailValidationTokenErrorInternal {
+export interface AccountCreateSendValidationEmailErrorInternal {
     tag: "Internal"
     error: string
 }
-export interface AccountSendEmailValidationTokenErrorOffline {
+export interface AccountCreateSendValidationEmailErrorOffline {
     tag: "Offline"
     error: string
 }
-export interface AccountSendEmailValidationTokenErrorStopped {
-    tag: "Stopped"
+export type AccountCreateSendValidationEmailError =
+  | AccountCreateSendValidationEmailErrorEmailRecipientRefused
+  | AccountCreateSendValidationEmailErrorEmailServerUnavailable
+  | AccountCreateSendValidationEmailErrorInternal
+  | AccountCreateSendValidationEmailErrorOffline
+
+
+// AccountFetchRegistrationDevicesError
+export interface AccountFetchRegistrationDevicesErrorBadVaultKeyAccess {
+    tag: "BadVaultKeyAccess"
     error: string
 }
-export type AccountSendEmailValidationTokenError =
-  | AccountSendEmailValidationTokenErrorEmailParseError
-  | AccountSendEmailValidationTokenErrorEmailRecipientRefused
-  | AccountSendEmailValidationTokenErrorEmailServerUnavailable
-  | AccountSendEmailValidationTokenErrorInternal
-  | AccountSendEmailValidationTokenErrorOffline
-  | AccountSendEmailValidationTokenErrorStopped
+export interface AccountFetchRegistrationDevicesErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface AccountFetchRegistrationDevicesErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export type AccountFetchRegistrationDevicesError =
+  | AccountFetchRegistrationDevicesErrorBadVaultKeyAccess
+  | AccountFetchRegistrationDevicesErrorInternal
+  | AccountFetchRegistrationDevicesErrorOffline
+
+
+// AccountGetHumanHandleError
+export interface AccountGetHumanHandleErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export type AccountGetHumanHandleError =
+  | AccountGetHumanHandleErrorInternal
+
+
+// AccountListInvitationsError
+export interface AccountListInvitationsErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface AccountListInvitationsErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export type AccountListInvitationsError =
+  | AccountListInvitationsErrorInternal
+  | AccountListInvitationsErrorOffline
+
+
+// AccountListRegistrationDevicesError
+export interface AccountListRegistrationDevicesErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export type AccountListRegistrationDevicesError =
+  | AccountListRegistrationDevicesErrorInternal
+
+
+// AccountLoginWithPasswordError
+export interface AccountLoginWithPasswordErrorBadPasswordAlgorithm {
+    tag: "BadPasswordAlgorithm"
+    error: string
+}
+export interface AccountLoginWithPasswordErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface AccountLoginWithPasswordErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export type AccountLoginWithPasswordError =
+  | AccountLoginWithPasswordErrorBadPasswordAlgorithm
+  | AccountLoginWithPasswordErrorInternal
+  | AccountLoginWithPasswordErrorOffline
+
+
+// AccountLogoutError
+export interface AccountLogoutErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export type AccountLogoutError =
+  | AccountLogoutErrorInternal
+
+
+// AccountRegisterNewDeviceError
+export interface AccountRegisterNewDeviceErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface AccountRegisterNewDeviceErrorInvalidPath {
+    tag: "InvalidPath"
+    error: string
+}
+export interface AccountRegisterNewDeviceErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface AccountRegisterNewDeviceErrorStorageNotAvailable {
+    tag: "StorageNotAvailable"
+    error: string
+}
+export interface AccountRegisterNewDeviceErrorTimestampOutOfBallpark {
+    tag: "TimestampOutOfBallpark"
+    error: string
+}
+export interface AccountRegisterNewDeviceErrorUnknownRegistrationDevice {
+    tag: "UnknownRegistrationDevice"
+    error: string
+}
+export type AccountRegisterNewDeviceError =
+  | AccountRegisterNewDeviceErrorInternal
+  | AccountRegisterNewDeviceErrorInvalidPath
+  | AccountRegisterNewDeviceErrorOffline
+  | AccountRegisterNewDeviceErrorStorageNotAvailable
+  | AccountRegisterNewDeviceErrorTimestampOutOfBallpark
+  | AccountRegisterNewDeviceErrorUnknownRegistrationDevice
 
 
 // ActiveUsersLimit
@@ -3797,16 +3879,52 @@ export type WorkspaceWatchEntryOneShotError =
   | WorkspaceWatchEntryOneShotErrorStopped
 
 
-export function accountCreateProceed(
-    step: AccountCreateStep,
+export function accountCreate1SendValidationEmail(
     config_dir: string,
-    addr: string
-): Promise<Result<null, AccountCreateProceedError>>
-export function accountCreateSendValidationEmail(
+    addr: string,
+    email: string
+): Promise<Result<null, AccountCreateSendValidationEmailError>>
+export function accountCreate2CheckValidationCode(
+    config_dir: string,
+    addr: string,
+    validation_code: string,
+    email: string
+): Promise<Result<null, AccountCreateError>>
+export function accountCreate3Proceed(
+    config_dir: string,
+    addr: string,
+    validation_code: string,
+    human_handle: HumanHandle,
+    password: string
+): Promise<Result<null, AccountCreateError>>
+export function accountFetchRegistrationDevices(
+    account: number
+): Promise<Result<null, AccountFetchRegistrationDevicesError>>
+export function accountGetHumanHandle(
+    account: number
+): Promise<Result<HumanHandle, AccountGetHumanHandleError>>
+export function accountListInvitations(
+    account: number
+): Promise<Result<Array<[string, string, InvitationType]>, AccountListInvitationsError>>
+export function accountListRegistrationDevices(
+    account: number
+): Promise<Result<Array<[string, string]>, AccountListRegistrationDevicesError>>
+export function accountLoginWithPassword(
+    config_dir: string,
+    addr: string,
     email: string,
-    config_dir: string,
-    addr: string
-): Promise<Result<null, AccountSendEmailValidationTokenError>>
+    password: string
+): Promise<Result<number, AccountLoginWithPasswordError>>
+export function accountLogout(
+    account: number
+): Promise<Result<null, AccountLogoutError>>
+export function accountRegisterNewDevice(
+    account: number,
+    organization_id: string,
+    user_id: string,
+    new_device_label: string,
+    save_strategy: DeviceSaveStrategy
+): Promise<Result<AvailableDevice, AccountRegisterNewDeviceError>>
 export function archiveDevice(
     device_path: string
 ): Promise<Result<null, ArchiveDeviceError>>

@@ -1,14 +1,25 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{path::Path, str::FromStr};
+use std::{
+    collections::HashSet,
+    path::PathBuf,
+    sync::{Arc, Mutex},
+};
 
-use libparsec_client_connection::{
-    AccountAuthMethod, AnonymousAccountCmds, AuthenticatedAccountCmds, ConnectionError, ProxyConfig,
-};
-use libparsec_protocol::anonymous_account_cmds::v5::{
-    account_create_proceed, account_create_send_validation_email,
-};
+use libparsec_client_connection::{AnonymousAccountCmds, AuthenticatedAccountCmds, ProxyConfig};
 use libparsec_types::prelude::*;
+
+mod account_create;
+mod fetch_list_registration_devices;
+mod list_invitations;
+mod login;
+mod register_new_device;
+
+pub use account_create::*;
+pub use fetch_list_registration_devices::*;
+pub use list_invitations::*;
+pub use login::*;
+pub use register_new_device::*;
 
 // The auth method master secret is the root secret from which are derived
 // all other data used for authentication and end-2-end encryption:
@@ -23,391 +34,161 @@ const AUTH_METHOD_SECRET_KEY_DERIVATION_UUID: uuid::Uuid =
 
 #[derive(Debug)]
 pub struct Account {
+    config_dir: PathBuf,
+    time_provider: TimeProvider,
     human_handle: HumanHandle,
     cmds: AuthenticatedAccountCmds,
     auth_method_secret_key: SecretKey,
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum AccountLoginWithPasswordError {
-    #[error("Server provided an invalid password algorithm config: {0}")]
-    BadPasswordAlgorithm(CryptoError),
-    #[error("Component has stopped")]
-    Stopped,
-    #[error("Cannot communicate with the server: {0}")]
-    Offline(#[from] ConnectionError),
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum AccountSendEmailValidationTokenError {
-    #[error("Email recipient refused")]
-    EmailRecipientRefused,
-    #[error("Email server unavailable")]
-    EmailServerUnavailable,
-    #[error("Unable to parse email")]
-    EmailParseError(#[from] EmailAddressParseError),
-    #[error("Component has stopped")]
-    Stopped,
-    #[error("Cannot communicate with the server: {0}")]
-    Offline(#[from] ConnectionError),
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum AccountLoginWithMasterSecretError {
-    #[error("Cannot communicate with the server: {0}")]
-    Offline(#[from] ConnectionError),
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
-}
-
-impl From<AccountLoginWithMasterSecretError> for AccountLoginWithPasswordError {
-    fn from(value: AccountLoginWithMasterSecretError) -> Self {
-        match value {
-            AccountLoginWithMasterSecretError::Offline(err) => {
-                AccountLoginWithPasswordError::Offline(err)
-            }
-            AccountLoginWithMasterSecretError::Internal(err) => {
-                AccountLoginWithPasswordError::Internal(err)
-            }
-        }
-    }
-}
-
-pub struct AccountListRegistrationDeviceItem {
-    pub organization_id: OrganizationID,
-    pub user_id: UserID,
-}
-
-pub struct AccountListRegistrationDeviceItems {
-    pub items: Vec<AccountListRegistrationDeviceItem>,
-    pub bad_entries: Vec<()>,
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum AccountListRegistrationDeviceError {
-    #[error("Cannot decrypt the vault key access return by the server: {0}")]
-    BadVaultKeyAccess(DataError),
-    #[error("Cannot communicate with the server: {0}")]
-    Offline(#[from] ConnectionError),
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
+    registration_devices_cache: Mutex<Vec<Arc<LocalDevice>>>,
 }
 
 impl Account {
+    /// To create a new account, the user's email address must first be validated.
+    /// This method ask the server to send an email containing a validation code.
+    pub async fn create_1_send_validation_email(
+        cmds: &AnonymousAccountCmds,
+        email: EmailAddress,
+    ) -> Result<(), AccountCreateSendValidationEmailError> {
+        account_create_send_validation_email(cmds, email).await
+    }
+
+    /// Since the validation code is supposed to be copied by the user from his
+    /// email client to the Parsec client by hand, this method can be used (but
+    /// is not mandatory, `create_3_proceed` can also be called right away!) to
+    /// ensure the validation code + email couple is valid and can lead.
+    ///
+    /// Also note that calling too many time this method with an invalid
+    /// validation code leads to a full invalidation of the attempt and requires
+    /// a new validation email to be sent.
+    pub async fn create_2_check_validation_code(
+        cmds: &AnonymousAccountCmds,
+        validation_code: ValidationCode,
+        email: EmailAddress,
+    ) -> Result<(), AccountCreateError> {
+        account_create(
+            cmds,
+            AccountCreateStep::CheckCode {
+                validation_code,
+                email,
+            },
+        )
+        .await
+    }
+
+    /// Similar to `create_2_check_validation_code`, but this time we actually want
+    /// to create the account!
+    pub async fn create_3_proceed(
+        cmds: &AnonymousAccountCmds,
+        validation_code: ValidationCode,
+        human_handle: HumanHandle,
+        password: Password,
+    ) -> Result<(), AccountCreateError> {
+        account_create(
+            cmds,
+            AccountCreateStep::Proceed {
+                human_handle,
+                password,
+                validation_code,
+            },
+        )
+        .await
+    }
+
+    /// Convenient helper to avoid the first request (fetching the human handle)
+    /// whenever we need an `Account` instance in the tests.
+    #[cfg(test)]
+    pub async fn test_new(
+        config_dir: PathBuf,
+        addr: ParsecAddr,
+        auth_method_master_secret: KeyDerivation,
+        human_handle: HumanHandle,
+    ) -> Self {
+        account_login_with_master_secret(
+            config_dir,
+            ProxyConfig::default(),
+            addr,
+            auth_method_master_secret,
+            None,
+            Some(human_handle),
+        )
+        .await
+        .unwrap()
+    }
+
+    #[cfg(test)]
+    pub fn test_set_registration_devices_cache(
+        &self,
+        new_cache: impl IntoIterator<Item = Arc<LocalDevice>>,
+    ) {
+        let mut guard = self
+            .registration_devices_cache
+            .lock()
+            .expect("Mutex is poisoned");
+        *guard = new_cache.into_iter().collect();
+    }
+
     pub fn human_handle(&self) -> &HumanHandle {
         &self.human_handle
     }
 
     pub async fn login_with_master_secret(
-        config_dir: &Path,
+        config_dir: PathBuf,
         proxy: ProxyConfig,
         addr: ParsecAddr,
         auth_method_master_secret: KeyDerivation,
     ) -> Result<Self, AccountLoginWithMasterSecretError> {
-        Self::_login_with_master_secret(config_dir, proxy, addr, auth_method_master_secret, None)
-            .await
-    }
-
-    async fn _login_with_master_secret(
-        config_dir: &Path,
-        proxy: ProxyConfig,
-        addr: ParsecAddr,
-        auth_method_master_secret: KeyDerivation,
-        // We must recycle anonymous_cmds if it exists, otherwise its drop will complain
-        // during tests if some request registered with `test_register_sequence_of_send_hooks`
-        // has yet to occur.
-        anonymous_cmds: Option<AnonymousAccountCmds>,
-    ) -> Result<Self, AccountLoginWithMasterSecretError> {
-        // Derive from the master secret the data used to authenticate with the server.
-        let auth_method_id = AccountAuthMethodID::from(
-            auth_method_master_secret.derive_uuid_from_uuid(AUTH_METHOD_ID_DERIVATION_UUID),
-        );
-        let auth_method_mac_key = auth_method_master_secret
-            .derive_secret_key_from_uuid(AUTH_METHOD_MAC_KEY_DERIVATION_UUID);
-        let auth_method_secret_key = auth_method_master_secret
-            .derive_secret_key_from_uuid(AUTH_METHOD_SECRET_KEY_DERIVATION_UUID);
-
-        let auth_method = AccountAuthMethod {
-            time_provider: TimeProvider::default(),
-            id: auth_method_id,
-            mac_key: auth_method_mac_key,
-        };
-
-        let cmds = match anonymous_cmds {
-            None => AuthenticatedAccountCmds::new(config_dir, addr, proxy, auth_method)
-                .context("Cannot configure server connection")?,
-            Some(anonymous_cmds) => {
-                AuthenticatedAccountCmds::from_anonymous(anonymous_cmds, auth_method)
-            }
-        };
-
-        let human_handle = {
-            use libparsec_protocol::authenticated_account_cmds::latest::account_info::{Rep, Req};
-
-            let req = Req {};
-            let rep = cmds.send(req).await?;
-
-            match rep {
-                Rep::Ok { human_handle } => human_handle,
-                bad_rep @ Rep::UnknownStatus { .. } => {
-                    return Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into());
-                }
-            }
-        };
-
-        Ok(Self {
-            human_handle,
-            cmds,
-            auth_method_secret_key,
-        })
+        account_login_with_master_secret(
+            config_dir,
+            proxy,
+            addr,
+            auth_method_master_secret,
+            None,
+            None,
+        )
+        .await
     }
 
     pub async fn login_with_password(
-        config_dir: &Path,
+        config_dir: PathBuf,
         proxy: ProxyConfig,
         addr: ParsecAddr,
         email: EmailAddress,
         password: Password,
     ) -> Result<Self, AccountLoginWithPasswordError> {
-        // The password algorithm configuration is obtained from the server
-        // to know how to turn the password into `auth_method_master_secret`.
+        account_login_with_password(config_dir, proxy, addr, email, password).await
+    }
 
-        let anonymous_cmds = AnonymousAccountCmds::new(config_dir, addr.clone(), proxy.clone())
-            .context("Cannot configure server connection")?;
+    pub async fn list_invitations(
+        &self,
+    ) -> Result<Vec<(OrganizationID, InvitationToken, InvitationType)>, AccountListInvitationsError>
+    {
+        account_list_invitations(self).await
+    }
 
-        let untrusted_password_algorithm = {
-            use libparsec_protocol::anonymous_account_cmds::latest::auth_method_password_get_algorithm::{Rep, Req};
+    pub async fn fetch_registration_devices(
+        &self,
+    ) -> Result<(), AccountFetchRegistrationDevicesError> {
+        account_fetch_registration_devices(self).await
+    }
 
-            let req = Req {
-                email: email.clone(),
-            };
-            let rep = anonymous_cmds.send(req).await?;
+    pub fn list_registration_devices(&self) -> HashSet<(OrganizationID, UserID)> {
+        account_list_registration_devices(self)
+    }
 
-            match rep {
-                Rep::Ok { password_algorithm } => password_algorithm,
-                bad_rep @ Rep::UnknownStatus { .. } => {
-                    return Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into());
-                }
-            }
-        };
-
-        let password_algorithm = untrusted_password_algorithm
-            .validate(email.as_ref())
-            .map_err(AccountLoginWithPasswordError::BadPasswordAlgorithm)?;
-
-        let auth_method_master_secret = password_algorithm
-            .compute_key_derivation(&password)
-            .map_err(AccountLoginWithPasswordError::BadPasswordAlgorithm)?;
-
-        Self::_login_with_master_secret(
-            config_dir,
-            proxy,
-            addr,
-            auth_method_master_secret,
-            Some(anonymous_cmds),
+    pub async fn register_new_device(
+        &self,
+        organization_id: OrganizationID,
+        user_id: UserID,
+        new_device_label: DeviceLabel,
+        save_strategy: DeviceSaveStrategy,
+    ) -> Result<AvailableDevice, AccountRegisterNewDeviceError> {
+        account_register_new_device(
+            self,
+            organization_id,
+            user_id,
+            new_device_label,
+            save_strategy,
         )
         .await
-        .map_err(|err| err.into())
-    }
-
-    pub async fn list_registration_device(
-        &self,
-    ) -> Result<AccountListRegistrationDeviceItems, AccountListRegistrationDeviceError> {
-        let (ciphered_key_access, items) = {
-            use libparsec_protocol::authenticated_account_cmds::latest::vault_item_list::{
-                Rep, Req,
-            };
-
-            let req = Req {};
-            let rep = self.cmds.send(req).await?;
-
-            match rep {
-                Rep::Ok { key_access, items } => (key_access, items),
-                bad_rep @ Rep::UnknownStatus { .. } => {
-                    return Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into());
-                }
-            }
-        };
-
-        let _vault_key = {
-            let access = AccountVaultKeyAccess::decrypt_and_load(
-                &ciphered_key_access,
-                &self.auth_method_secret_key,
-            )
-            .map_err(AccountListRegistrationDeviceError::BadVaultKeyAccess)?;
-            access.vault_key
-        };
-
-        let mut res = AccountListRegistrationDeviceItems {
-            items: Vec::new(),
-            bad_entries: Vec::new(),
-        };
-
-        for (_, item_raw) in items {
-            let item = match AccountVaultItem::load(&item_raw) {
-                Ok(item) => item,
-                Err(err) => {
-                    log::warn!("Cannot deserialize account vault item: {}", err);
-                    continue;
-                }
-            };
-            match item {
-                AccountVaultItem::RegistrationDevice(registration_device) => {
-                    res.items.push(AccountListRegistrationDeviceItem {
-                        organization_id: registration_device.organization_id,
-                        user_id: registration_device.user_id,
-                    });
-                }
-                AccountVaultItem::WebLocalDeviceKey(_) => (),
-            }
-        }
-
-        Ok(res)
     }
 }
-
-pub async fn account_create_send_validation_email(
-    email: &str,
-    config_dir: &Path,
-    addr: ParsecAddr,
-) -> Result<(), AccountSendEmailValidationTokenError> {
-    let cmds = AnonymousAccountCmds::new(config_dir, addr, ProxyConfig::default())?;
-    let email = EmailAddress::from_str(email)?;
-
-    match cmds
-        .send(account_create_send_validation_email::Req { email })
-        .await?
-    {
-        account_create_send_validation_email::Rep::Ok => Ok(()),
-
-        account_create_send_validation_email::Rep::EmailRecipientRefused => {
-            Err(AccountSendEmailValidationTokenError::EmailRecipientRefused)
-        }
-        account_create_send_validation_email::Rep::EmailServerUnavailable => {
-            Err(AccountSendEmailValidationTokenError::EmailServerUnavailable)
-        }
-        bad_rep @ account_create_send_validation_email::Rep::UnknownStatus { .. } => {
-            Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
-        }
-    }
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum AccountCreateProceedError {
-    #[error("Component has stopped")]
-    Stopped,
-    #[error("Cannot communicate with the server: {0}")]
-    Offline(#[from] ConnectionError),
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
-    #[error("Invalid validation code")]
-    InvalidValidationCode,
-    #[error("Auth method id already exists")]
-    AuthMethodIdAlreadyExists,
-    #[error(transparent)]
-    CryptoError(#[from] CryptoError),
-}
-
-pub enum AccountCreateStep {
-    CheckCode {
-        validation_code: ValidationCode,
-        email: EmailAddress,
-    },
-    Create {
-        human_handle: HumanHandle,
-        password: Password,
-        validation_code: ValidationCode,
-    },
-}
-
-pub async fn account_create_proceed(
-    step: AccountCreateStep,
-    config_dir: &Path,
-    addr: ParsecAddr,
-) -> Result<(), AccountCreateProceedError> {
-    let cmds = AnonymousAccountCmds::new(config_dir, addr, ProxyConfig::default())?;
-
-    let req_step = match step {
-        AccountCreateStep::CheckCode {
-            validation_code,
-            email,
-        } => account_create_proceed::AccountCreateStep::Number0CheckCode {
-            validation_code,
-            email,
-        },
-        AccountCreateStep::Create {
-            human_handle,
-            password,
-            validation_code,
-        } => {
-            let memlimit_kb = 1024;
-            let parallelism = 1;
-            let opslimit = 1;
-
-            let auth_method_password_algorithm = UntrustedPasswordAlgorithm::Argon2id {
-                opslimit,
-                memlimit_kb,
-                parallelism,
-            };
-
-            let trusted_password_algorithm = auth_method_password_algorithm
-                .clone()
-                .validate(human_handle.email().as_ref())?;
-
-            let auth_method_master_secret =
-                trusted_password_algorithm.compute_key_derivation(&password)?;
-
-            let auth_method_secret_key = auth_method_master_secret
-                .derive_secret_key_from_uuid(AUTH_METHOD_SECRET_KEY_DERIVATION_UUID);
-
-            let auth_method = AccountAuthMethod {
-                time_provider: TimeProvider::default(),
-                id: AccountAuthMethodID::from(
-                    auth_method_master_secret.derive_uuid_from_uuid(AUTH_METHOD_ID_DERIVATION_UUID),
-                ),
-                mac_key: auth_method_master_secret
-                    .derive_secret_key_from_uuid(AUTH_METHOD_MAC_KEY_DERIVATION_UUID),
-            };
-            let vault_key = SecretKey::generate();
-
-            let vault_key_access = AccountVaultKeyAccess { vault_key };
-
-            let vault_key_access_bytes = vault_key_access.dump_and_encrypt(&auth_method_secret_key);
-
-            account_create_proceed::AccountCreateStep::Number1Create {
-                validation_code,
-                auth_method_hmac_key: auth_method.mac_key,
-                auth_method_id: auth_method.id,
-                auth_method_password_algorithm: Some(auth_method_password_algorithm),
-                human_handle,
-                vault_key_access: vault_key_access_bytes.into(),
-            }
-        }
-    };
-
-    match cmds
-        .send(account_create_proceed::Req {
-            account_create_step: req_step,
-        })
-        .await?
-    {
-        account_create_proceed::Rep::Ok => Ok(()),
-        account_create_proceed::Rep::AuthMethodIdAlreadyExists => {
-            Err(AccountCreateProceedError::AuthMethodIdAlreadyExists)
-        }
-        account_create_proceed::Rep::InvalidValidationCode => {
-            Err(AccountCreateProceedError::InvalidValidationCode)
-        }
-        bad_rep @ account_create_proceed::Rep::UnknownStatus { .. } => {
-            Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
-        }
-    }
-}
-
-#[cfg(test)]
-#[path = "../tests/unit/account.rs"]
-mod tests;

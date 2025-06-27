@@ -55,6 +55,10 @@ impl AuthenticatedAccountCmds {
         Ok(Self::from_client(client, config_dir, addr, account))
     }
 
+    pub fn client(&self) -> &Client {
+        &self.client
+    }
+
     pub fn from_client(
         client: Client,
         _config_dir: &Path,

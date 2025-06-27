@@ -39,10 +39,31 @@ pub enum PasswordAlgorithm {
     },
 }
 
+fn argon2id_derived_salt_from_email(email: &str) -> [u8; ARGON2ID_SALTBYTES] {
+    blake2b_hash([UNTRUSTED_PASSWORD_ARGON2IL_SALT_PREFIX, email.as_bytes()].into_iter()).into()
+}
+
+pub enum PasswordAlgorithmSaltStrategy<'a> {
+    /// Use random salt for `TrustPasswordAlgorithm` since the salt can simply be stored
+    /// along with the encrypted payload.
+    Random,
+    /// Derive the salt from the email for `UntrustedPasswordAlgorithm` so that 3rd
+    /// party is not in control of it.
+    DerivedFromEmail { email: &'a str },
+}
+
 impl PasswordAlgorithm {
-    pub fn generate_argon2id() -> Self {
-        let mut salt = [0; ARGON2ID_SALTBYTES];
-        generate_rand(&mut salt);
+    pub fn generate_argon2id(salt_strategy: PasswordAlgorithmSaltStrategy) -> Self {
+        let salt = match salt_strategy {
+            PasswordAlgorithmSaltStrategy::Random => {
+                let mut salt = [0; ARGON2ID_SALTBYTES];
+                generate_rand(&mut salt);
+                salt
+            }
+            PasswordAlgorithmSaltStrategy::DerivedFromEmail { email } => {
+                argon2id_derived_salt_from_email(email)
+            }
+        };
 
         Self::Argon2id {
             memlimit_kb: ARGON2ID_DEFAULT_MEMLIMIT_KB,
@@ -170,10 +191,7 @@ impl UntrustedPasswordAlgorithm {
                     return Err(CryptoError::Algorithm("Config too weak".to_string()));
                 }
 
-                let salt: [u8; ARGON2ID_SALTBYTES] = blake2b_hash(
-                    [UNTRUSTED_PASSWORD_ARGON2IL_SALT_PREFIX, email.as_bytes()].into_iter(),
-                )
-                .into();
+                let salt = argon2id_derived_salt_from_email(email);
 
                 Ok(PasswordAlgorithm::Argon2id {
                     memlimit_kb,
@@ -212,6 +230,23 @@ impl UntrustedPasswordAlgorithm {
             memlimit_kb: ARGON2ID_DEFAULT_MEMLIMIT_KB,
             opslimit: ARGON2ID_DEFAULT_OPSLIMIT,
             parallelism: ARGON2ID_DEFAULT_PARALLELISM,
+        }
+    }
+}
+
+impl From<PasswordAlgorithm> for UntrustedPasswordAlgorithm {
+    fn from(value: PasswordAlgorithm) -> Self {
+        match value {
+            PasswordAlgorithm::Argon2id {
+                memlimit_kb,
+                opslimit,
+                parallelism,
+                ..
+            } => UntrustedPasswordAlgorithm::Argon2id {
+                memlimit_kb,
+                opslimit,
+                parallelism,
+            },
         }
     }
 }

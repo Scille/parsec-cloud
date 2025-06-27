@@ -299,3 +299,9 @@ class InvitationStatus(Enum):
     Pending = EnumItemUnit
     Finished = EnumItemUnit
     Cancelled = EnumItemUnit
+
+
+class InvitationType(Enum):
+    User = EnumItemUnit
+    Device = EnumItemUnit
+    ShamirRecovery = EnumItemUnit
