@@ -15,7 +15,7 @@ use crate::{Account, AccountRegisterNewDeviceError};
 #[parsec_test(testbed = "minimal", with_server)]
 async fn ok(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
-    let mut account = Account::test_new(
+    let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
         KeyDerivation::from(hex!(
@@ -24,7 +24,7 @@ async fn ok(env: &TestbedEnv) {
         alice.human_handle.clone(),
     )
     .await;
-    account.registration_devices_cache.push(alice.clone());
+    account.test_set_registration_devices_cache([alice.clone()]);
 
     let new_device_label: DeviceLabel = "NewLabel".parse().unwrap();
     let available_device = account
@@ -84,7 +84,7 @@ async fn ok(env: &TestbedEnv) {
 #[parsec_test(testbed = "minimal")]
 async fn unknown_registration_device(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
-    let mut account = Account::test_new(
+    let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
         KeyDerivation::from(hex!(
@@ -93,7 +93,7 @@ async fn unknown_registration_device(env: &TestbedEnv) {
         alice.human_handle.clone(),
     )
     .await;
-    account.registration_devices_cache.push(alice.clone());
+    account.test_set_registration_devices_cache([alice.clone()]);
 
     // Bad organization ID
 
@@ -127,7 +127,7 @@ async fn unknown_registration_device(env: &TestbedEnv) {
 #[parsec_test(testbed = "minimal")]
 async fn offline(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
-    let mut account = Account::test_new(
+    let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
         KeyDerivation::from(hex!(
@@ -136,7 +136,7 @@ async fn offline(env: &TestbedEnv) {
         alice.human_handle.clone(),
     )
     .await;
-    account.registration_devices_cache.push(alice.clone());
+    account.test_set_registration_devices_cache([alice.clone()]);
 
     p_assert_matches!(
         account
@@ -154,7 +154,7 @@ async fn offline(env: &TestbedEnv) {
 #[parsec_test(testbed = "minimal")]
 async fn unknown_server_response(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
-    let mut account = Account::test_new(
+    let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
         KeyDerivation::from(hex!(
@@ -163,7 +163,7 @@ async fn unknown_server_response(env: &TestbedEnv) {
         alice.human_handle.clone(),
     )
     .await;
-    account.registration_devices_cache.push(alice.clone());
+    account.test_set_registration_devices_cache([alice.clone()]);
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
@@ -190,7 +190,7 @@ async fn unknown_server_response(env: &TestbedEnv) {
 #[parsec_test(testbed = "minimal")]
 async fn timestamp_out_of_ballpark(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
-    let mut account = Account::test_new(
+    let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
         KeyDerivation::from(hex!(
@@ -199,7 +199,7 @@ async fn timestamp_out_of_ballpark(env: &TestbedEnv) {
         alice.human_handle.clone(),
     )
     .await;
-    account.registration_devices_cache.push(alice.clone());
+    account.test_set_registration_devices_cache([alice.clone()]);
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,

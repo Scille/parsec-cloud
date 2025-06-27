@@ -28,10 +28,8 @@ pub enum AccountFetchRegistrationDevicesError {
 }
 
 pub(super) async fn account_fetch_registration_devices(
-    account: &mut Account,
+    account: &Account,
 ) -> Result<(), AccountFetchRegistrationDevicesError> {
-    account.registration_devices_cache.clear();
-
     let (ciphered_key_access, items) = {
         use libparsec_protocol::authenticated_account_cmds::latest::vault_item_list::{Rep, Req};
 
@@ -55,6 +53,7 @@ pub(super) async fn account_fetch_registration_devices(
         access.vault_key
     };
 
+    let mut registration_devices = vec![];
     for (_, item_raw) in items {
         let item = match AccountVaultItem::load(&item_raw) {
             Ok(item) => item,
@@ -86,10 +85,15 @@ pub(super) async fn account_fetch_registration_devices(
 
         registration_device.time_provider = account.time_provider.clone();
 
-        account
-            .registration_devices_cache
-            .push(Arc::new(registration_device));
+        registration_devices.push(Arc::new(registration_device));
     }
+
+    // Last step is to overwrite the cache
+    let mut guard = account
+        .registration_devices_cache
+        .lock()
+        .expect("Mutex is poisoned");
+    *guard = registration_devices;
 
     Ok(())
 }
@@ -99,6 +103,8 @@ pub(super) fn account_list_registration_devices(
 ) -> HashSet<(OrganizationID, UserID)> {
     account
         .registration_devices_cache
+        .lock()
+        .expect("Mutex is poisoned")
         .iter()
         .map(|device| (device.organization_id().to_owned(), device.user_id))
         .collect()

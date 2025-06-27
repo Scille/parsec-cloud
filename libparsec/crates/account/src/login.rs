@@ -105,7 +105,7 @@ pub(super) async fn account_login_with_master_secret(
         human_handle,
         cmds,
         auth_method_secret_key,
-        registration_devices_cache: vec![],
+        registration_devices_cache: Default::default(),
     })
 }
 

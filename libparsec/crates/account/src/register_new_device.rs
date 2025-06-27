@@ -35,10 +35,12 @@ pub(super) async fn account_register_new_device(
     new_device_label: DeviceLabel,
     save_strategy: DeviceSaveStrategy,
 ) -> Result<AvailableDevice, AccountRegisterNewDeviceError> {
-    // 1. Retreive the registration device from the cache
+    // 1. Retrieve the registration device from the cache
 
     let registration_device = account
         .registration_devices_cache
+        .lock()
+        .expect("Mutex is poisoned")
         .iter()
         .find(|device| *device.organization_id() == organization_id && device.user_id == user_id)
         .ok_or(AccountRegisterNewDeviceError::UnknownRegistrationDevice)?
