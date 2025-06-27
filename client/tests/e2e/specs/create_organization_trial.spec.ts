@@ -1,7 +1,16 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Locator, Page } from '@playwright/test';
-import { DEFAULT_USER_INFORMATION, expect, fillInputModal, fillIonInput, getTestbedBootstrapAddr, msTest } from '@tests/e2e/helpers';
+import {
+  DEFAULT_USER_INFORMATION,
+  expect,
+  fillInputModal,
+  fillIonInput,
+  getTestbedBootstrapAddr,
+  MsPage,
+  msTest,
+  setupNewPage,
+} from '@tests/e2e/helpers';
 
 async function openCreateOrganizationModal(page: Page): Promise<Locator> {
   await page.locator('#create-organization-button').click();
@@ -120,12 +129,17 @@ msTest('Go through trial org creation process', async ({ home }) => {
   await expect(modal).toBeHidden();
 });
 
-msTest.skip('Go through trial org creation process from bootstrap link', async ({ home }) => {
-  await home.locator('#create-organization-button').click();
-  await home.locator('.popover-viewport').getByRole('listitem').nth(1).click();
+msTest('Go through trial org creation process from bootstrap link', async ({ context }) => {
+  const page = (await context.newPage()) as MsPage;
+  // Making sure that the testbed is recognized as the trial server
+  const testbedUrl = new URL(process.env.TESTBED_SERVER ?? '');
+  await setupNewPage(page, { trialServers: testbedUrl.host, saasServers: 'unknown.host' });
+
+  await page.locator('#create-organization-button').click();
+  await page.locator('.popover-viewport').getByRole('listitem').nth(1).click();
   const bootstrapAddr = getTestbedBootstrapAddr('CustomOrg');
-  await fillInputModal(home, bootstrapAddr);
-  const modal = home.locator('.create-organization-modal');
+  await fillInputModal(page, bootstrapAddr);
+  const modal = page.locator('.create-organization-modal');
 
   const userInfoContainer = modal.locator('.user-information-page');
   const userPrevious = modal.locator('.user-information-page-footer').locator('ion-button').nth(0);
@@ -162,10 +176,11 @@ msTest.skip('Go through trial org creation process from bootstrap link', async (
   await expect(userInfoContainer).toBeHidden();
   await expect(authContainer).toBeHidden();
   await expect(modal.locator('.creation-page')).toBeVisible();
-  await home.waitForTimeout(1000);
+  await page.waitForTimeout(1000);
 
   await expect(modal.locator('.created-page')).toBeVisible();
   await expect(modal.locator('.creation-page')).toBeHidden();
   await modal.locator('.created-page-footer').locator('ion-button').click();
   await expect(modal).toBeHidden();
+  await page.release();
 });

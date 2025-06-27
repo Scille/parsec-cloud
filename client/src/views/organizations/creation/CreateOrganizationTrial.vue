@@ -79,7 +79,6 @@ const emits = defineEmits<{
 }>();
 
 const step = ref<Steps>(Steps.PersonalInformation);
-const bootstrapLink = ref<string | undefined>(props.bootstrapLink);
 const email = ref<string | undefined>(undefined);
 const name = ref<string | undefined>(undefined);
 const saveStrategy = ref<DeviceSaveStrategy | undefined>(undefined);
@@ -88,8 +87,8 @@ const currentError = ref<Translatable | undefined>(undefined);
 const organizationName = ref<OrganizationID | undefined>(undefined);
 
 onMounted(async () => {
-  if (bootstrapLink.value) {
-    const result = await parseParsecAddr(bootstrapLink.value);
+  if (props.bootstrapLink) {
+    const result = await parseParsecAddr(props.bootstrapLink);
     if (result.ok && result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
       organizationName.value = result.value.organizationId;
     }
@@ -139,15 +138,15 @@ async function createOrganization(): Promise<Result<AvailableDevice, BootstrapOr
 }
 
 async function bootstrapOrganization(): Promise<Result<AvailableDevice, BootstrapOrganizationError>> {
-  if (!name.value || !email.value || !saveStrategy.value || !bootstrapLink.value) {
+  if (!name.value || !email.value || !saveStrategy.value || !props.bootstrapLink) {
     return { ok: false, error: { tag: BootstrapOrganizationErrorTag.Internal, error: 'Missing data' } };
   }
   const result = await parsecBootstrapOrganization(
-    bootstrapLink.value,
+    props.bootstrapLink,
     name.value,
     email.value,
     getDefaultDeviceName(),
-    saveStrategy.value,
+    isProxy(saveStrategy.value) ? toRaw(saveStrategy.value) : saveStrategy.value,
   );
   return result;
 }
@@ -163,7 +162,7 @@ async function onAuthenticationChosen(strategy: DeviceSaveStrategy): Promise<voi
   step.value = Steps.Creation;
   let result;
 
-  if (bootstrapLink.value) {
+  if (props.bootstrapLink) {
     result = await bootstrapOrganization();
   } else {
     result = await createOrganization();
