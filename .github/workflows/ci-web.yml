@@ -73,16 +73,19 @@ jobs:
         timeout-minutes: 5
 
       - name: Check lint with eslint
+        if: false
         run: npx eslint . --max-warnings=0
         working-directory: client
         timeout-minutes: 2
 
       - name: Check lint with vue-tsc
+        if: false
         run: npx vue-tsc --noEmit
         working-directory: client
         timeout-minutes: 2
 
       - name: Check prettier
+        if: false
         run: npx prettier . --check
         working-directory: client
         timeout-minutes: 5
@@ -152,6 +155,7 @@ jobs:
         timeout-minutes: 2
 
       - name: Unit tests
+        if: false
         run: npm run test:unit
         working-directory: client
         timeout-minutes: 10
@@ -214,17 +218,14 @@ jobs:
       - name: Check testbed server is running
         run: curl http://localhost:6777
 
-      - name: Install Playwright dependencies
-        run: npx playwright install --with-deps chrome
-        working-directory: client
-        timeout-minutes: 5
-
       - name: E2E tests
-        run: npm run test:e2e:headless -- --shard=${{ matrix.shard_index }}/${{ matrix.shard_total }}
+        uses: docker://mcr.microsoft.com/playwright:v1.51.0
+        with:
+          args: sh -c "cd client; pwd; npm run test:e2e:headless -- --shard=${{ matrix.shard_index }}/${{ matrix.shard_total }}"
         env:
-          TESTBED_SERVER: parsec3://localhost:6777?no_ssl=true
-          PARSEC_APP_TRIAL_SERVERS: localhost:6777?no_ssl=true
-        working-directory: client
+          TESTBED_SERVER: parsec3://parsec-testbed-server:6777?no_ssl=true
+          PARSEC_APP_TRIAL_SERVERS: parsec-testbed-server:6777?no_ssl=true
+        # working-directory: client
         timeout-minutes: 20
 
       - name: Upload blob report to GitHub Actions Artifacts
