@@ -21,7 +21,7 @@
       ref="navigationRef"
     >
       <div ref="buttonsRef">
-        <ion-buttons>
+        <ion-buttons class="navigation-buttons">
           <ion-button
             fill="clear"
             @click="back()"
@@ -54,6 +54,17 @@
     </div>
     <ion-list class="folder-list">
       <ion-text
+        class="current-folder button-medium"
+        v-if="headerPath.length > 0 && pathLength > 1"
+      >
+        <ms-image
+          :image="Folder"
+          class="current-folder__icon"
+        />
+        <span class="current-folder__text">{{ `${headerPath[headerPath.length - 1].display}` }}</span>
+      </ion-text>
+
+      <ion-text
         class="folder-list__empty body"
         v-if="currentEntries.length === 0"
       >
@@ -64,21 +75,28 @@
         v-if="currentEntries.length > 0"
       >
         <ion-item
-          class="file-list-item"
+          class="file-item"
           v-for="entry in currentEntries"
           :key="entry[0].id"
           :disabled="entry[1]"
           @click="enterFolder(entry[0])"
         >
-          <div class="file-name">
-            <div class="file-name__icons">
-              <ms-image
-                :image="entry[0].isFile() ? getFileIcon(entry[0].name) : Folder"
-                class="file-icon"
-              />
-            </div>
-            <ion-label class="file-name__label cell">
-              {{ entry[0].name }}
+          <div class="file-item-image">
+            <ms-image
+              :image="entry[0].isFile() ? getFileIcon(entry[0].name) : Folder"
+              class="file-item-image__icon"
+            />
+          </div>
+          <ion-label class="file-item__name cell">
+            {{ entry[0].name }}
+          </ion-label>
+          <!-- last update -->
+          <div
+            class="file-lastUpdate"
+            v-if="isLargeDisplay"
+          >
+            <ion-label class="label-last-update cell">
+              {{ $msTranslate(formatTimeSince(entry[0].updated, '--', 'short')) }}
             </ion-label>
           </div>
         </ion-item>
@@ -92,7 +110,7 @@ import { getFileIcon } from '@/common/file';
 import { pxToRem } from '@/common/utils';
 import { Routes } from '@/router';
 import { FolderSelectionOptions } from '@/components/files';
-import { Folder, MsImage, MsModalResult, MsModal, useWindowSize } from 'megashark-lib';
+import { Folder, MsImage, MsModalResult, MsModal, formatTimeSince, useWindowSize } from 'megashark-lib';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import { EntryStat, FsPath, Path, StartedWorkspaceInfo, getWorkspaceInfo, statFolderChildren } from '@/parsec';
 import { IonButton, IonButtons, IonText, IonIcon, IonItem, IonLabel, IonList, modalController } from '@ionic/vue';
@@ -110,7 +128,7 @@ const forwardStack: FsPath[] = [];
 const breadcrumbsWidth = ref(0);
 const navigationRef = ref();
 const buttonsRef = ref();
-const { windowWidth, isSmallDisplay } = useWindowSize();
+const { windowWidth, isSmallDisplay, isLargeDisplay } = useWindowSize();
 
 const topbarWidthWatchCancel = watch([windowWidth, pathLength], () => {
   if (navigationRef.value?.offsetWidth && buttonsRef.value?.offsetWidth) {
@@ -236,49 +254,113 @@ async function cancel(): Promise<boolean> {
 <style scoped lang="scss">
 .navigation {
   display: flex;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
+  margin-bottom: 1rem;
+
+  @include ms.responsive-breakpoint('md') {
+    border-bottom: none;
+  }
 
   .disabled {
     pointer-events: none;
     color: var(--parsec-color-light-secondary-light);
     opacity: 1;
   }
+
+  &-buttons {
+    display: flex;
+    align-items: center;
+    margin-right: 0.5rem;
+
+    @include ms.responsive-breakpoint('sm') {
+      position: absolute;
+      bottom: 3.25rem;
+
+      ion-icon {
+        font-size: 1.5rem;
+      }
+    }
+  }
 }
 
 .folder-list {
   overflow-y: auto;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   background: var(--parsec-color-light-secondary-background);
-  padding: 0.5rem;
+  border: 1px solid var(--parsec-color-light-secondary-premiere);
   height: -webkit-fill-available;
-  border-radius: var(--parsec-radius-6);
+  border-radius: var(--parsec-radius-8);
+  height: 100%;
+  padding: 0;
 
   &__empty {
-    max-width: 10rem;
+    align-self: center;
     text-align: center;
     color: var(--parsec-color-light-secondary-soft-text);
+    display: flex;
+    align-items: center;
+    height: 100%;
+  }
+
+  .current-folder {
+    color: var(--parsec-color-light-secondary-text);
+    background: var(--parsec-color-light-secondary-white);
+    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    overflow: hidden;
+
+    &__text {
+      flex-grow: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &__icon {
+      flex-shrink: 0;
+      width: 1.25rem;
+      height: 1.25rem;
+    }
   }
 }
 
 .folder-container {
   overflow-y: auto;
   width: 100%;
+  padding: 0.5rem;
 }
 
-.file-list-item {
-  border-radius: var(--parsec-radius-4);
+.file-item {
+  border-radius: var(--parsec-radius-6);
   --show-full-highlight: 0;
+  --background: var(--parsec-color-light-secondary-background);
+  --background-hover: var(--parsec-color-light-secondary-white);
   cursor: pointer;
+  position: relative;
+  overflow: visible;
 
   &::part(native) {
     --padding-start: 0px;
+    padding: 0.125rem 0.75rem;
+    border-radius: var(--parsec-radius-6);
+  }
+
+  &:not(:last-child):after {
+    content: '';
+    position: absolute;
+    left: 3rem;
+    width: calc(100% - 3rem);
+    height: 1px;
+    z-index: 10;
+    background-color: var(--parsec-color-light-secondary-medium);
   }
 
   &:hover {
     color: var(--parsec-color-light-secondary-text);
+    --background: var(--parsec-color-light-secondary-white);
   }
 
   &:focus,
@@ -288,22 +370,15 @@ async function cancel(): Promise<boolean> {
     --background-focused-opacity: 1;
     --border-width: 0;
   }
-}
 
-.file-name {
-  padding: 0.75rem 1rem;
-  width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-
-  .file-icon {
-    width: 2rem;
-    height: 2rem;
+  &__name {
+    color: var(--parsec-color-light-secondary-text);
+    margin-left: 1rem;
   }
 
-  &__label {
-    color: var(--parsec-color-light-secondary-text);
-    margin-left: 1em;
+  &-image {
+    width: 1.75rem;
+    height: 1.75rem;
   }
 }
 </style>
