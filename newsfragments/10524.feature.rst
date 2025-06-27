@@ -1,1 +1,0 @@
-Display login and logout buttons in the homepage
