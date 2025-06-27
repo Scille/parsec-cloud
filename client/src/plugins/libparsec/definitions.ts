@@ -49,6 +49,12 @@ export enum InvitationStatus {
     Pending = 'InvitationStatusPending',
 }
 
+export enum InvitationType {
+    Device = 'InvitationTypeDevice',
+    ShamirRecovery = 'InvitationTypeShamirRecovery',
+    User = 'InvitationTypeUser',
+}
+
 export enum LogLevel {
     Debug = 'LogLevelDebug',
     Error = 'LogLevelError',
@@ -418,110 +424,209 @@ export interface WorkspaceUserAccessInfo {
     currentRole: RealmRole
 }
 
-// AccountCreateProceedError
-export enum AccountCreateProceedErrorTag {
-    AuthMethodIdAlreadyExists = 'AccountCreateProceedErrorAuthMethodIdAlreadyExists',
-    CryptoError = 'AccountCreateProceedErrorCryptoError',
-    Internal = 'AccountCreateProceedErrorInternal',
-    InvalidValidationCode = 'AccountCreateProceedErrorInvalidValidationCode',
-    Offline = 'AccountCreateProceedErrorOffline',
-    Stopped = 'AccountCreateProceedErrorStopped',
+// AccountCreateError
+export enum AccountCreateErrorTag {
+    AuthMethodIdAlreadyExists = 'AccountCreateErrorAuthMethodIdAlreadyExists',
+    Internal = 'AccountCreateErrorInternal',
+    InvalidValidationCode = 'AccountCreateErrorInvalidValidationCode',
+    Offline = 'AccountCreateErrorOffline',
 }
 
-export interface AccountCreateProceedErrorAuthMethodIdAlreadyExists {
-    tag: AccountCreateProceedErrorTag.AuthMethodIdAlreadyExists
+export interface AccountCreateErrorAuthMethodIdAlreadyExists {
+    tag: AccountCreateErrorTag.AuthMethodIdAlreadyExists
     error: string
 }
-export interface AccountCreateProceedErrorCryptoError {
-    tag: AccountCreateProceedErrorTag.CryptoError
+export interface AccountCreateErrorInternal {
+    tag: AccountCreateErrorTag.Internal
     error: string
 }
-export interface AccountCreateProceedErrorInternal {
-    tag: AccountCreateProceedErrorTag.Internal
+export interface AccountCreateErrorInvalidValidationCode {
+    tag: AccountCreateErrorTag.InvalidValidationCode
     error: string
 }
-export interface AccountCreateProceedErrorInvalidValidationCode {
-    tag: AccountCreateProceedErrorTag.InvalidValidationCode
+export interface AccountCreateErrorOffline {
+    tag: AccountCreateErrorTag.Offline
     error: string
 }
-export interface AccountCreateProceedErrorOffline {
-    tag: AccountCreateProceedErrorTag.Offline
-    error: string
-}
-export interface AccountCreateProceedErrorStopped {
-    tag: AccountCreateProceedErrorTag.Stopped
-    error: string
-}
-export type AccountCreateProceedError =
-  | AccountCreateProceedErrorAuthMethodIdAlreadyExists
-  | AccountCreateProceedErrorCryptoError
-  | AccountCreateProceedErrorInternal
-  | AccountCreateProceedErrorInvalidValidationCode
-  | AccountCreateProceedErrorOffline
-  | AccountCreateProceedErrorStopped
+export type AccountCreateError =
+  | AccountCreateErrorAuthMethodIdAlreadyExists
+  | AccountCreateErrorInternal
+  | AccountCreateErrorInvalidValidationCode
+  | AccountCreateErrorOffline
 
-// AccountCreateStep
-export enum AccountCreateStepTag {
-    CheckCode = 'AccountCreateStepCheckCode',
-    Create = 'AccountCreateStepCreate',
+// AccountCreateSendValidationEmailError
+export enum AccountCreateSendValidationEmailErrorTag {
+    EmailRecipientRefused = 'AccountCreateSendValidationEmailErrorEmailRecipientRefused',
+    EmailServerUnavailable = 'AccountCreateSendValidationEmailErrorEmailServerUnavailable',
+    Internal = 'AccountCreateSendValidationEmailErrorInternal',
+    Offline = 'AccountCreateSendValidationEmailErrorOffline',
 }
 
-export interface AccountCreateStepCheckCode {
-    tag: AccountCreateStepTag.CheckCode
-    validationCode: ValidationCode
-    email: EmailAddress
+export interface AccountCreateSendValidationEmailErrorEmailRecipientRefused {
+    tag: AccountCreateSendValidationEmailErrorTag.EmailRecipientRefused
+    error: string
 }
-export interface AccountCreateStepCreate {
-    tag: AccountCreateStepTag.Create
-    humanHandle: HumanHandle
-    password: Password
-    validationCode: ValidationCode
+export interface AccountCreateSendValidationEmailErrorEmailServerUnavailable {
+    tag: AccountCreateSendValidationEmailErrorTag.EmailServerUnavailable
+    error: string
 }
-export type AccountCreateStep =
-  | AccountCreateStepCheckCode
-  | AccountCreateStepCreate
+export interface AccountCreateSendValidationEmailErrorInternal {
+    tag: AccountCreateSendValidationEmailErrorTag.Internal
+    error: string
+}
+export interface AccountCreateSendValidationEmailErrorOffline {
+    tag: AccountCreateSendValidationEmailErrorTag.Offline
+    error: string
+}
+export type AccountCreateSendValidationEmailError =
+  | AccountCreateSendValidationEmailErrorEmailRecipientRefused
+  | AccountCreateSendValidationEmailErrorEmailServerUnavailable
+  | AccountCreateSendValidationEmailErrorInternal
+  | AccountCreateSendValidationEmailErrorOffline
 
-// AccountSendEmailValidationTokenError
-export enum AccountSendEmailValidationTokenErrorTag {
-    EmailParseError = 'AccountSendEmailValidationTokenErrorEmailParseError',
-    EmailRecipientRefused = 'AccountSendEmailValidationTokenErrorEmailRecipientRefused',
-    EmailServerUnavailable = 'AccountSendEmailValidationTokenErrorEmailServerUnavailable',
-    Internal = 'AccountSendEmailValidationTokenErrorInternal',
-    Offline = 'AccountSendEmailValidationTokenErrorOffline',
-    Stopped = 'AccountSendEmailValidationTokenErrorStopped',
+// AccountFetchRegistrationDevicesError
+export enum AccountFetchRegistrationDevicesErrorTag {
+    BadVaultKeyAccess = 'AccountFetchRegistrationDevicesErrorBadVaultKeyAccess',
+    Internal = 'AccountFetchRegistrationDevicesErrorInternal',
+    Offline = 'AccountFetchRegistrationDevicesErrorOffline',
 }
 
-export interface AccountSendEmailValidationTokenErrorEmailParseError {
-    tag: AccountSendEmailValidationTokenErrorTag.EmailParseError
+export interface AccountFetchRegistrationDevicesErrorBadVaultKeyAccess {
+    tag: AccountFetchRegistrationDevicesErrorTag.BadVaultKeyAccess
     error: string
 }
-export interface AccountSendEmailValidationTokenErrorEmailRecipientRefused {
-    tag: AccountSendEmailValidationTokenErrorTag.EmailRecipientRefused
+export interface AccountFetchRegistrationDevicesErrorInternal {
+    tag: AccountFetchRegistrationDevicesErrorTag.Internal
     error: string
 }
-export interface AccountSendEmailValidationTokenErrorEmailServerUnavailable {
-    tag: AccountSendEmailValidationTokenErrorTag.EmailServerUnavailable
+export interface AccountFetchRegistrationDevicesErrorOffline {
+    tag: AccountFetchRegistrationDevicesErrorTag.Offline
     error: string
 }
-export interface AccountSendEmailValidationTokenErrorInternal {
-    tag: AccountSendEmailValidationTokenErrorTag.Internal
+export type AccountFetchRegistrationDevicesError =
+  | AccountFetchRegistrationDevicesErrorBadVaultKeyAccess
+  | AccountFetchRegistrationDevicesErrorInternal
+  | AccountFetchRegistrationDevicesErrorOffline
+
+// AccountGetHumanHandleError
+export enum AccountGetHumanHandleErrorTag {
+    Internal = 'AccountGetHumanHandleErrorInternal',
+}
+
+export interface AccountGetHumanHandleErrorInternal {
+    tag: AccountGetHumanHandleErrorTag.Internal
     error: string
 }
-export interface AccountSendEmailValidationTokenErrorOffline {
-    tag: AccountSendEmailValidationTokenErrorTag.Offline
+export type AccountGetHumanHandleError =
+  | AccountGetHumanHandleErrorInternal
+
+// AccountListInvitationsError
+export enum AccountListInvitationsErrorTag {
+    Internal = 'AccountListInvitationsErrorInternal',
+    Offline = 'AccountListInvitationsErrorOffline',
+}
+
+export interface AccountListInvitationsErrorInternal {
+    tag: AccountListInvitationsErrorTag.Internal
     error: string
 }
-export interface AccountSendEmailValidationTokenErrorStopped {
-    tag: AccountSendEmailValidationTokenErrorTag.Stopped
+export interface AccountListInvitationsErrorOffline {
+    tag: AccountListInvitationsErrorTag.Offline
     error: string
 }
-export type AccountSendEmailValidationTokenError =
-  | AccountSendEmailValidationTokenErrorEmailParseError
-  | AccountSendEmailValidationTokenErrorEmailRecipientRefused
-  | AccountSendEmailValidationTokenErrorEmailServerUnavailable
-  | AccountSendEmailValidationTokenErrorInternal
-  | AccountSendEmailValidationTokenErrorOffline
-  | AccountSendEmailValidationTokenErrorStopped
+export type AccountListInvitationsError =
+  | AccountListInvitationsErrorInternal
+  | AccountListInvitationsErrorOffline
+
+// AccountListRegistrationDevicesError
+export enum AccountListRegistrationDevicesErrorTag {
+    Internal = 'AccountListRegistrationDevicesErrorInternal',
+}
+
+export interface AccountListRegistrationDevicesErrorInternal {
+    tag: AccountListRegistrationDevicesErrorTag.Internal
+    error: string
+}
+export type AccountListRegistrationDevicesError =
+  | AccountListRegistrationDevicesErrorInternal
+
+// AccountLoginWithPasswordError
+export enum AccountLoginWithPasswordErrorTag {
+    BadPasswordAlgorithm = 'AccountLoginWithPasswordErrorBadPasswordAlgorithm',
+    Internal = 'AccountLoginWithPasswordErrorInternal',
+    Offline = 'AccountLoginWithPasswordErrorOffline',
+}
+
+export interface AccountLoginWithPasswordErrorBadPasswordAlgorithm {
+    tag: AccountLoginWithPasswordErrorTag.BadPasswordAlgorithm
+    error: string
+}
+export interface AccountLoginWithPasswordErrorInternal {
+    tag: AccountLoginWithPasswordErrorTag.Internal
+    error: string
+}
+export interface AccountLoginWithPasswordErrorOffline {
+    tag: AccountLoginWithPasswordErrorTag.Offline
+    error: string
+}
+export type AccountLoginWithPasswordError =
+  | AccountLoginWithPasswordErrorBadPasswordAlgorithm
+  | AccountLoginWithPasswordErrorInternal
+  | AccountLoginWithPasswordErrorOffline
+
+// AccountLogoutError
+export enum AccountLogoutErrorTag {
+    Internal = 'AccountLogoutErrorInternal',
+}
+
+export interface AccountLogoutErrorInternal {
+    tag: AccountLogoutErrorTag.Internal
+    error: string
+}
+export type AccountLogoutError =
+  | AccountLogoutErrorInternal
+
+// AccountRegisterNewDeviceError
+export enum AccountRegisterNewDeviceErrorTag {
+    Internal = 'AccountRegisterNewDeviceErrorInternal',
+    InvalidPath = 'AccountRegisterNewDeviceErrorInvalidPath',
+    Offline = 'AccountRegisterNewDeviceErrorOffline',
+    StorageNotAvailable = 'AccountRegisterNewDeviceErrorStorageNotAvailable',
+    TimestampOutOfBallpark = 'AccountRegisterNewDeviceErrorTimestampOutOfBallpark',
+    UnknownRegistrationDevice = 'AccountRegisterNewDeviceErrorUnknownRegistrationDevice',
+}
+
+export interface AccountRegisterNewDeviceErrorInternal {
+    tag: AccountRegisterNewDeviceErrorTag.Internal
+    error: string
+}
+export interface AccountRegisterNewDeviceErrorInvalidPath {
+    tag: AccountRegisterNewDeviceErrorTag.InvalidPath
+    error: string
+}
+export interface AccountRegisterNewDeviceErrorOffline {
+    tag: AccountRegisterNewDeviceErrorTag.Offline
+    error: string
+}
+export interface AccountRegisterNewDeviceErrorStorageNotAvailable {
+    tag: AccountRegisterNewDeviceErrorTag.StorageNotAvailable
+    error: string
+}
+export interface AccountRegisterNewDeviceErrorTimestampOutOfBallpark {
+    tag: AccountRegisterNewDeviceErrorTag.TimestampOutOfBallpark
+    error: string
+}
+export interface AccountRegisterNewDeviceErrorUnknownRegistrationDevice {
+    tag: AccountRegisterNewDeviceErrorTag.UnknownRegistrationDevice
+    error: string
+}
+export type AccountRegisterNewDeviceError =
+  | AccountRegisterNewDeviceErrorInternal
+  | AccountRegisterNewDeviceErrorInvalidPath
+  | AccountRegisterNewDeviceErrorOffline
+  | AccountRegisterNewDeviceErrorStorageNotAvailable
+  | AccountRegisterNewDeviceErrorTimestampOutOfBallpark
+  | AccountRegisterNewDeviceErrorUnknownRegistrationDevice
 
 // ActiveUsersLimit
 export enum ActiveUsersLimitTag {
@@ -4552,16 +4657,52 @@ export type WorkspaceWatchEntryOneShotError =
   | WorkspaceWatchEntryOneShotErrorStopped
 
 export interface LibParsecPlugin {
-    accountCreateProceed(
-        step: AccountCreateStep,
+    accountCreate1SendValidationEmail(
         config_dir: Path,
-        addr: ParsecAddr
-    ): Promise<Result<null, AccountCreateProceedError>>
-    accountCreateSendValidationEmail(
-        email: string,
+        addr: ParsecAddr,
+        email: EmailAddress
+    ): Promise<Result<null, AccountCreateSendValidationEmailError>>
+    accountCreate2CheckValidationCode(
         config_dir: Path,
-        addr: ParsecAddr
-    ): Promise<Result<null, AccountSendEmailValidationTokenError>>
+        addr: ParsecAddr,
+        validation_code: ValidationCode,
+        email: EmailAddress
+    ): Promise<Result<null, AccountCreateError>>
+    accountCreate3Proceed(
+        config_dir: Path,
+        addr: ParsecAddr,
+        validation_code: ValidationCode,
+        human_handle: HumanHandle,
+        password: Password
+    ): Promise<Result<null, AccountCreateError>>
+    accountFetchRegistrationDevices(
+        account: Handle
+    ): Promise<Result<null, AccountFetchRegistrationDevicesError>>
+    accountGetHumanHandle(
+        account: Handle
+    ): Promise<Result<HumanHandle, AccountGetHumanHandleError>>
+    accountListInvitations(
+        account: Handle
+    ): Promise<Result<Array<[OrganizationID, InvitationToken, InvitationType]>, AccountListInvitationsError>>
+    accountListRegistrationDevices(
+        account: Handle
+    ): Promise<Result<Array<[OrganizationID, UserID]>, AccountListRegistrationDevicesError>>
+    accountLoginWithPassword(
+        config_dir: Path,
+        addr: ParsecAddr,
+        email: EmailAddress,
+        password: Password
+    ): Promise<Result<Handle, AccountLoginWithPasswordError>>
+    accountLogout(
+        account: Handle
+    ): Promise<Result<null, AccountLogoutError>>
+    accountRegisterNewDevice(
+        account: Handle,
+        organization_id: OrganizationID,
+        user_id: UserID,
+        new_device_label: DeviceLabel,
+        save_strategy: DeviceSaveStrategy
+    ): Promise<Result<AvailableDevice, AccountRegisterNewDeviceError>>
     archiveDevice(
         device_path: Path
     ): Promise<Result<null, ArchiveDeviceError>>
