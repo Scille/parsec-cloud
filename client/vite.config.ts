@@ -97,9 +97,6 @@ const config: UserConfigFnObject = (_env: ConfigEnv) => ({
     preprocessorOptions: {
       scss: {
         additionalData: additionalData,
-        // Needed to avoid using default legacy API till upgrade to Vite 6
-        // https://sass-lang.com/documentation/breaking-changes/legacy-js-api/#bundlers
-        api: 'modern-compiler',
       },
     },
   },
