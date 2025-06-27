@@ -235,6 +235,7 @@ import { IonList, IonPage, IonText, IonIcon } from '@ionic/vue';
 import { checkmarkCircle, chevronDown } from 'ionicons/icons';
 import { Ref, onMounted, ref, computed } from 'vue';
 import { canChangeRole } from '@/components/workspaces/utils';
+import { EventDistributor, Events } from '@/services/eventDistributor';
 
 const search = ref('');
 let ownProfile = UserProfile.Outsider;
@@ -246,6 +247,7 @@ const props = defineProps<{
   workspaceName: WorkspaceName;
   ownRole: WorkspaceRole | null;
   informationManager: InformationManager;
+  eventDistributor: EventDistributor;
 }>();
 
 interface UserRole {
@@ -434,7 +436,7 @@ function isOnlyOwner(): boolean {
 
 async function updateUserRole(
   user: UserTuple,
-  _oldRole: WorkspaceRole | null,
+  oldRole: WorkspaceRole | null,
   newRole: WorkspaceRole | null,
   reject: () => void,
 ): Promise<void> {
@@ -497,6 +499,12 @@ async function updateUserRole(
         PresentationMode.Toast,
       );
     }
+    props.eventDistributor.dispatchEvent(Events.WorkspaceRoleUpdate, {
+      newRole: newRole,
+      oldRole: oldRole,
+      workspaceId: props.workspaceId,
+      userId: user.id,
+    });
   } else {
     reject();
     props.informationManager.present(

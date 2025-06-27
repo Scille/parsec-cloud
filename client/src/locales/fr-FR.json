@@ -827,6 +827,17 @@
         "goToHome": "Mes espaces",
         "recentDocuments": "Documents récents",
         "back": "Retour",
+        "checklist": {
+            "title": "Checklist sécurité",
+            "description": "Pour garantir la sécurité de votre organisation, nous vous recommandons d'effectuer les tâches suivantes.",
+            "remaining": "1 restant | {count} restants",
+            "open": "Ouvrir",
+            "items": {
+                "ownerRequired": "Ajouter un propriétaire à l'espace de travail {workspace} | Ajouter un propriétaire à chaque espace de travail vous appartenant",
+                "multipleDevices": "Ajouter un second appareil",
+                "createRecoveryFiles": "Créer des fichiers de récupération"
+            }
+        },
         "tabbar": {
             "workspaces": "Espaces de travail",
             "files": "Fichiers",
