@@ -18,9 +18,55 @@ use libparsec_crypto::{
  */
 
 #[test]
-fn argon2id() {
-    let algo = PasswordAlgorithm::generate_argon2id();
+fn argon2id_random_salt() {
+    let algo = PasswordAlgorithm::generate_argon2id(
+        libparsec_crypto::PasswordAlgorithmSaltStrategy::Random,
+    );
     p_assert_matches!(algo, PasswordAlgorithm::Argon2id { .. });
+
+    let algo2 = PasswordAlgorithm::generate_argon2id(
+        libparsec_crypto::PasswordAlgorithmSaltStrategy::Random,
+    );
+    match (algo, algo2) {
+        (
+            PasswordAlgorithm::Argon2id { salt, .. },
+            PasswordAlgorithm::Argon2id { salt: salt2, .. },
+        ) => assert_ne!(salt, salt2),
+    }
+}
+
+#[test]
+fn argon2id_salt_from_email() {
+    let algo = PasswordAlgorithm::generate_argon2id(
+        libparsec_crypto::PasswordAlgorithmSaltStrategy::DerivedFromEmail {
+            email: "alice@example.com",
+        },
+    );
+    p_assert_matches!(algo, PasswordAlgorithm::Argon2id { .. });
+
+    let algo2 = PasswordAlgorithm::generate_argon2id(
+        libparsec_crypto::PasswordAlgorithmSaltStrategy::DerivedFromEmail {
+            email: "alice@example.com",
+        },
+    );
+    match (algo.clone(), algo2) {
+        (
+            PasswordAlgorithm::Argon2id { salt, .. },
+            PasswordAlgorithm::Argon2id { salt: salt2, .. },
+        ) => p_assert_eq!(salt, salt2),
+    }
+
+    let algo3 = PasswordAlgorithm::generate_argon2id(
+        libparsec_crypto::PasswordAlgorithmSaltStrategy::DerivedFromEmail {
+            email: "bob@example.com",
+        },
+    );
+    match (algo, algo3) {
+        (
+            PasswordAlgorithm::Argon2id { salt, .. },
+            PasswordAlgorithm::Argon2id { salt: salt3, .. },
+        ) => assert_ne!(salt, salt3),
+    }
 }
 
 macro_rules! compute_test {
@@ -167,7 +213,11 @@ fn untrusted_generate_fake_from_seed() {
 
     assert_eq!(alice_algo1, alice_algo1_retried);
 
-    let legit = PasswordAlgorithm::generate_argon2id();
+    let legit = PasswordAlgorithm::generate_argon2id(
+        libparsec_crypto::PasswordAlgorithmSaltStrategy::DerivedFromEmail {
+            email: "zack@example.com",
+        },
+    );
     match (&alice_algo1, &legit) {
         (
             UntrustedPasswordAlgorithm::Argon2id {
