@@ -94,7 +94,7 @@ async function onClick(action: RecommendationAction): Promise<void> {
   padding: 1.5rem 1.25rem;
   background-color: var(--parsec-color-light-secondary-background);
   border: 1px solid var(--parsec-color-light-secondary-medium);
-  border-radius: var(--parsec-radius-light);
+  border-radius: var(--parsec-radius-12);
 }
 
 .checklist-header {
