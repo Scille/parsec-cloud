@@ -607,8 +607,15 @@
   }
 }
 
-.role-assignment-modal::part(content) {
-  max-width: var(--parsec-modal-width-sm);
+.role-assignment-modal {
+  &::part(content) {
+    max-width: var(--parsec-modal-width-md);
+
+    @include ms.responsive-breakpoint('sm') {
+      height: 100%;
+      max-height: calc(100% - 2rem);
+    }
+  }
 }
 
 .authentication-modal,
@@ -646,7 +653,7 @@
 
 .update-profile-modal {
   &::part(content) {
-    max-width: var(--parsec-modal-width-md);
+    max-width: var(--parsec-modal-width-sm);
   }
 }
 
