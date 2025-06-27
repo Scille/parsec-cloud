@@ -30,12 +30,12 @@ async fn ok(env: &TestbedEnv) {
     )
     .unwrap();
 
-    let retreived_stuff = Arc::new(Mutex::new(None));
+    let retrieved_stuff = Arc::new(Mutex::new(None));
 
     test_register_sequence_of_send_hooks!(&env.discriminant_dir, {
         let expected_human_handle = human_handle.clone();
         let expected_validation_code = validation_code.clone();
-        let retreived_stuff = retreived_stuff.clone();
+        let retrieved_stuff = retrieved_stuff.clone();
         move |req: anonymous_account_cmds::latest::account_create_proceed::Req| {
             match req.account_create_step {
                 anonymous_account_cmds::latest::account_create_proceed::AccountCreateStep::Number1Create {
@@ -49,7 +49,7 @@ async fn ok(env: &TestbedEnv) {
                     p_assert_eq!(human_handle, expected_human_handle);
                     p_assert_eq!(validation_code, expected_validation_code);
 
-                    retreived_stuff.lock().unwrap().replace((
+                    retrieved_stuff.lock().unwrap().replace((
                         auth_method_password_algorithm,
                         auth_method_id,
                         auth_method_hmac_key,
@@ -76,7 +76,7 @@ async fn ok(env: &TestbedEnv) {
     // Now try the connection
 
     let (auth_method_password_algorithm, _auth_method_id, _auth_method_hmac_key, vault_key_access) =
-        retreived_stuff.lock().unwrap().take().unwrap();
+        retrieved_stuff.lock().unwrap().take().unwrap();
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,

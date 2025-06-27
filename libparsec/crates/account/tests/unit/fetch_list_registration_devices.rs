@@ -16,7 +16,7 @@ use crate::{Account, AccountFetchRegistrationDevicesError};
 
 #[parsec_test(testbed = "coolorg")]
 async fn list_and_fetch_ok(env: &TestbedEnv) {
-    let mut account = Account::test_new(
+    let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
         KeyDerivation::from(hex!(
@@ -141,7 +141,7 @@ async fn list_and_fetch_ok(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "coolorg")]
 async fn fetch_invalid_vault_key(env: &TestbedEnv) {
-    let mut account = Account::test_new(
+    let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
         KeyDerivation::from(hex!(
@@ -168,7 +168,7 @@ async fn fetch_invalid_vault_key(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "empty")]
 async fn fetch_offline(env: &TestbedEnv) {
-    let mut account = Account::test_new(
+    let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
         KeyDerivation::from(hex!(
@@ -186,7 +186,7 @@ async fn fetch_offline(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "empty")]
 async fn fetch_unknown_server_response(env: &TestbedEnv) {
-    let mut account = Account::test_new(
+    let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
         KeyDerivation::from(hex!(

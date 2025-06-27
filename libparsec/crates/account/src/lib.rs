@@ -1,6 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{collections::HashSet, path::PathBuf, sync::Arc};
+use std::{
+    collections::HashSet,
+    path::PathBuf,
+    sync::{Arc, Mutex},
+};
 
 use libparsec_client_connection::{AnonymousAccountCmds, AuthenticatedAccountCmds, ProxyConfig};
 use libparsec_types::prelude::*;
@@ -35,7 +39,7 @@ pub struct Account {
     human_handle: HumanHandle,
     cmds: AuthenticatedAccountCmds,
     auth_method_secret_key: SecretKey,
-    registration_devices_cache: Vec<Arc<LocalDevice>>,
+    registration_devices_cache: Mutex<Vec<Arc<LocalDevice>>>,
 }
 
 impl Account {
@@ -111,6 +115,18 @@ impl Account {
         .unwrap()
     }
 
+    #[cfg(test)]
+    pub fn test_set_registration_devices_cache(
+        &self,
+        new_cache: impl IntoIterator<Item = Arc<LocalDevice>>,
+    ) {
+        let mut guard = self
+            .registration_devices_cache
+            .lock()
+            .expect("Mutex is poisoned");
+        *guard = new_cache.into_iter().collect();
+    }
+
     pub fn human_handle(&self) -> &HumanHandle {
         &self.human_handle
     }
@@ -150,7 +166,7 @@ impl Account {
     }
 
     pub async fn fetch_registration_devices(
-        &mut self,
+        &self,
     ) -> Result<(), AccountFetchRegistrationDevicesError> {
         account_fetch_registration_devices(self).await
     }
