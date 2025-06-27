@@ -36,7 +36,7 @@
       <small-display-modal-header
         v-else
         @close-clicked="cancel()"
-        :title="`UsersPage.assignRoles.title`"
+        title="UsersPage.assignRoles.title"
       />
       <div
         class="modal-content"

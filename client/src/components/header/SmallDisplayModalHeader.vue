@@ -13,7 +13,7 @@
     />
   </ion-button>
   <ion-header class="modal-header">
-    <ion-text class="modal-header__title title-h2">
+    <ion-text class="modal-header__title title-h3">
       {{ $msTranslate(title) }}
     </ion-text>
     <ion-text
@@ -50,7 +50,7 @@ defineEmits<{
   gap: 1rem;
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 2rem 3rem 1.5rem 2rem;
+    padding: 1.5rem 3rem 1.5rem 2rem;
     border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
   }
 
