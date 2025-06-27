@@ -15,8 +15,11 @@
     </ion-button>
 
     <div class="modal">
-      <ion-header class="modal-header">
-        <ion-title class="modal-header__title title-h2">
+      <ion-header
+        class="modal-header"
+        v-if="isLargeDisplay"
+      >
+        <ion-title class="modal-header__title title-h3">
           {{ $msTranslate('UsersPage.assignRoles.title') }}
         </ion-title>
         <ion-text class="modal-header__text body">
@@ -30,7 +33,28 @@
           </i18n-t>
         </ion-text>
       </ion-header>
-      <div v-if="currentPage === Steps.SelectUser">
+      <small-display-modal-header
+        v-else
+        @close-clicked="cancel()"
+        :title="`UsersPage.assignRoles.title`"
+      />
+      <div
+        class="modal-content"
+        v-if="currentPage === Steps.SelectUser"
+      >
+        <ion-text
+          class="modal-header__text body"
+          v-if="isSmallDisplay"
+        >
+          <i18n-t
+            keypath="UsersPage.userContextMenu.subtitleAssignRoles"
+            scope="global"
+          >
+            <template #sourceUser>
+              <strong> {{ sourceUser.humanHandle.label }} </strong>
+            </template>
+          </i18n-t>
+        </ion-text>
         <user-select
           :exclude-users="[sourceUser, currentUser]"
           v-model="targetUser"
@@ -49,32 +73,33 @@
         v-if="[Steps.Summary, Steps.End].includes(currentPage) && targetUser"
       >
         <div class="chosen-users">
-          <user-avatar-name
-            class="chosen-users-source"
-            :user-avatar="sourceUser.humanHandle.label"
-            :user-name="sourceUser.humanHandle.label"
-          />
-          <ion-icon
-            :icon="arrowForward"
-            class="arrow-icon"
-          />
-          <div
-            class="chosen-users-target"
-            :class="currentPage === Steps.Summary ? 'chosen-users-target-active' : ''"
-          >
-            <user-avatar-name
-              :user-avatar="targetUser.humanHandle.label"
-              :user-name="targetUser.humanHandle.label"
-            />
-            <ion-icon
-              :icon="pencil"
-              v-show="currentPage !== Steps.End"
+          <div class="chosen-users-source">
+            <ion-text class="chosen-users-source__text subtitles-sm">
+              {{ $msTranslate({ key: 'UsersPage.assignRoles.copyFrom', data: { count: roleUpdates.length } }) }}
+            </ion-text>
+            <div class="chosen-users-source__info">
+              <ion-text class="info-name subtitles-sm">{{ sourceUser.humanHandle.label }}</ion-text>
+            </div>
+          </div>
+          <div class="chosen-users-target">
+            <ion-text class="chosen-users-target__text subtitles-sm">{{ $msTranslate('UsersPage.assignRoles.copyTo') }}</ion-text>
+            <div
+              class="chosen-users-target__info"
+              :class="currentPage === Steps.Summary ? 'chosen-users-target-active' : ''"
               @click="currentPage = Steps.SelectUser"
-            />
+            >
+              <ion-text class="info-name subtitles-sm">{{ targetUser.humanHandle.label }}</ion-text>
+              <ion-text
+                v-show="currentPage !== Steps.End"
+                class="info-button button-medium"
+              >
+                {{ $msTranslate('UsersPage.assignRoles.update') }}
+              </ion-text>
+            </div>
           </div>
         </div>
 
-        <div>
+        <div class="workspace-list-container">
           <ms-report-text
             v-show="roleUpdates.length === 0"
             :theme="MsReportTheme.Info"
@@ -82,6 +107,9 @@
             {{ $msTranslate({ key: 'UsersPage.assignRoles.noRoles', data: { user: targetUser.humanHandle.label } }) }}
           </ms-report-text>
 
+          <ion-text class="workspace-title subtitles-sm">
+            {{ $msTranslate({ key: 'UsersPage.assignRoles.workspacesList', data: { count: roleUpdates.length } }) }}
+          </ion-text>
           <ion-list class="workspace-list">
             <ion-item
               class="ion-no-padding workspace-item-container"
@@ -90,7 +118,6 @@
             >
               <div class="workspace-item">
                 <div class="workspace-item__name">
-                  <ion-icon :icon="business" />
                   <ion-text class="title-h5">{{ roleUpdate.workspace.currentName }}</ion-text>
                 </div>
                 <div class="workspace-item__role">
@@ -150,7 +177,6 @@
 
 <script setup lang="ts">
 import { UserSelect } from '@/components/users';
-import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import {
   IonPage,
   IonButtons,
@@ -166,10 +192,11 @@ import {
 } from '@ionic/vue';
 import { getWorkspacesSharedWith, shareWorkspace, UserInfo, UserProfile, WorkspaceInfo, WorkspaceRole } from '@/parsec';
 import { ref, Ref } from 'vue';
-import { close, checkmarkCircle, closeCircle, business, arrowForward, pencil } from 'ionicons/icons';
-import { MsModalResult, MsSpinner, MsReportText, MsReportTheme } from 'megashark-lib';
+import { close, checkmarkCircle, closeCircle, arrowForward } from 'ionicons/icons';
+import { MsModalResult, MsSpinner, MsReportText, MsReportTheme, useWindowSize } from 'megashark-lib';
 import { compareWorkspaceRoles } from '@/components/workspaces/utils';
 import { getWorkspaceRoleTranslationKey } from '@/services/translation';
+import SmallDisplayModalHeader from '@/components/header/SmallDisplayModalHeader.vue';
 import { wait } from '@/parsec/internals';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 
@@ -191,6 +218,7 @@ const targetUser: Ref<UserInfo | undefined> = ref();
 const currentPage: Ref<Steps> = ref(Steps.SelectUser);
 const roleUpdates: Ref<WorkspaceRoleUpdate[]> = ref([]);
 const finished = ref(false);
+const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 
 const props = defineProps<{
   sourceUser: UserInfo;
@@ -344,128 +372,183 @@ function getNextButtonText(): string {
 </script>
 
 <style scoped lang="scss">
+.modal {
+  @include ms.responsive-breakpoint('sm') {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+}
+
 .modal-content {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  overflow: hidden;
+
+  @include ms.responsive-breakpoint('sm') {
+    padding: 0 1.5rem;
+    height: 100%;
+  }
 }
 
 .chosen-users {
   display: flex;
-  align-items: center;
   gap: 1.5rem;
+
+  @include ms.responsive-breakpoint('sm') {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 1rem;
+  }
 
   .chosen-users-source,
   .chosen-users-target {
     display: flex;
-    align-items: center;
     padding: 0.25rem 0.5rem 0.25rem 0.25rem;
     border-radius: var(--parsec-radius-6);
-    flex-grow: 1;
-  }
+    width: 100%;
+    flex-direction: column;
+    gap: 0.5rem;
 
-  .chosen-users-target-active {
-    justify-content: space-between;
-    cursor: pointer;
-    transition: background 150ms ease-in-out;
-
-    ion-icon {
-      color: var(--parsec-color-light-secondary-soft-grey);
+    &__text {
+      color: var(--parsec-color-light-secondary-grey);
     }
 
-    &:hover {
-      background: var(--parsec-color-light-primary-50);
+    &__info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem 0.5rem 0.75rem;
+      justify-content: space-between;
+      border: 1px solid var(--parsec-color-light-secondary-premiere);
+      border-radius: var(--parsec-radius-6);
 
-      ion-icon {
-        color: var(--parsec-color-light-primary-700);
+      @include ms.responsive-breakpoint('sm') {
+        width: 100%;
+        padding: 0.75rem 1rem 0.75rem 0.75rem;
+      }
+
+      .info-name {
+        color: var(--parsec-color-light-secondary-text);
+      }
+
+      .info-button {
+        color: var(--parsec-color-light-primary-500);
       }
     }
   }
 
-  .arrow-icon {
-    color: var(--parsec-color-light-secondary-soft-grey);
-    width: 1rem;
+  .chosen-users-target {
+    &__info {
+      background: var(--parsec-color-light-secondary-background);
+    }
+
+    &-active {
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 150ms ease-in-out;
+
+      &:hover {
+        background: var(--parsec-color-light-primary-50);
+        border: 1px solid var(--parsec-color-light-primary-100);
+      }
+    }
   }
 }
 
-.workspace-list {
-  padding: 0;
+.workspace-list-container {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  max-height: 15rem;
-  overflow-y: auto;
-}
+  overflow: hidden;
 
-.workspace-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-radius: var(--parsec-radius-4);
-  border-left: 3px solid var(--parsec-color-light-secondary-medium);
-  background: var(--parsec-color-light-secondary-background);
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  width: 100%;
-
-  &-container {
-    flex-shrink: 0;
-    --inner-padding-end: 0;
-    --background: none;
+  .workspace-title {
+    color: var(--parsec-color-light-secondary-grey);
   }
 
-  &__name {
+  .workspace-list {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 16rem;
+    overflow-y: auto;
+
+    @include ms.responsive-breakpoint('sm') {
+      max-height: 100%;
+    }
+  }
+
+  .workspace-item {
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    border-radius: var(--parsec-radius-4);
+    background: var(--parsec-color-light-secondary-background);
     gap: 0.5rem;
-    overflow: hidden;
+    padding: 0.75rem 1rem;
+    width: 100%;
 
-    ion-icon {
-      color: var(--parsec-color-light-secondary-soft-text);
-      font-size: 1.125rem;
+    &-container {
+      flex-shrink: 0;
+      --inner-padding-end: 0;
+      --background: none;
+    }
+
+    &__name {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      overflow: hidden;
+
+      ion-icon {
+        color: var(--parsec-color-light-secondary-soft-text);
+        font-size: 1.125rem;
+        flex-shrink: 0;
+      }
+
+      ion-text {
+        color: var(--parsec-color-light-secondary-text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+
+    &__role {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--parsec-color-light-secondary-hard-text);
+
+      ion-text {
+        white-space: nowrap;
+      }
+
+      &-old {
+        color: var(--parsec-color-light-secondary-grey);
+      }
+      &-new {
+        color: var(--parsec-color-light-primary-700);
+      }
+
+      ion-icon {
+        color: var(--parsec-color-light-secondary-soft-grey);
+      }
+    }
+
+    .success-icon {
+      color: var(--parsec-color-light-success-500);
+      display: flex;
       flex-shrink: 0;
     }
 
-    ion-text {
-      color: var(--parsec-color-light-secondary-text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    .error-icon {
+      color: var(--parsec-color-light-danger-500);
+      display: flex;
+      flex-shrink: 0;
     }
-  }
-
-  &__role {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--parsec-color-light-secondary-hard-text);
-
-    ion-text {
-      white-space: nowrap;
-    }
-
-    &-old {
-      color: var(--parsec-color-light-secondary-grey);
-    }
-    &-new {
-      color: var(--parsec-color-light-primary-700);
-    }
-
-    ion-icon {
-      color: var(--parsec-color-light-secondary-soft-grey);
-    }
-  }
-
-  .success-icon {
-    color: var(--parsec-color-light-success-500);
-    display: flex;
-    flex-shrink: 0;
-  }
-
-  .error-icon {
-    color: var(--parsec-color-light-danger-500);
-    display: flex;
-    flex-shrink: 0;
   }
 }
 </style>
