@@ -829,6 +829,17 @@
         "goToHome": "My workspaces",
         "recentDocuments": "Recent documents",
         "back": "Back",
+        "checklist": {
+            "title": "Security checklist",
+            "description": "To ensure the security of your organization, we recommend that you complete the following tasks.",
+            "remaining": "1 remaining | {count} remaining",
+            "open": "Open",
+            "items": {
+                "ownerRequired": "Add an owner to the workspace {workspace} | Add an owner to each workspace you own",
+                "multipleDevices": "Add secondary device",
+                "createRecoveryFiles": "Create recovery files"
+            }
+        },
         "tabbar": {
             "workspaces": "Workspaces",
             "files": "Files",

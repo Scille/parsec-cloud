@@ -251,7 +251,7 @@
         <!-- manage organization -->
         <ion-list
           v-show="currentRouteIsOrganizationManagementRoute()"
-          class="manage-organization list-sidebar"
+          class="list-sidebar manage-organization"
         >
           <ion-header
             lines="none"
@@ -266,7 +266,7 @@
             </ion-text>
           </ion-header>
           <!-- user actions -->
-          <div class="list-sidebar-content">
+          <div class="organization-card-buttons">
             <!-- users -->
             <ion-item
               lines="none"
@@ -321,18 +321,28 @@
           </div>
         </ion-list>
 
+        <!-- security checklist -->
         <ion-list
-          class="list-sidebar"
+          class="list-sidebar organization-checklist ion-no-padding"
           v-show="securityWarningsCount > 0"
         >
           <ion-item
             button
             lines="none"
-            class="sidebar-item-manage button-medium item-selected"
+            class="sidebar-item-manage ion-no-padding item-selected checklist"
             @click="openSecurityWarningsPopover"
-          >
-            {{ 'RECOMMENDATIONS' }}
-            {{ securityWarningsCount }}
+          > 
+            <div class="checklist-text">
+              <ion-text class="checklist-text__title title-h5">{{ $msTranslate('SideMenu.checklist.title') }}</ion-text>
+              <ion-text class="checklist-text__description button-small">{{ $msTranslate({ key: 'SideMenu.checklist.remaining', data: { count: securityWarningsCount }, count: securityWarningsCount }) }}</ion-text>
+            </div>
+            <div class="checklist-button">
+              <ion-text class="checklist-button__text button-small">{{ $msTranslate({ key: 'SideMenu.checklist.open' }) }}</ion-text>
+              <ion-icon
+                :icon="chevronForward"
+                class="checklist-button__icon"
+              />
+            </div>
           </ion-item>
         </ion-list>
       </ion-content>
@@ -386,6 +396,7 @@ import {
   folderOpen,
   addCircle,
   personAdd,
+  chevronForward,
 } from 'ionicons/icons';
 import { SidebarWorkspaceItem, SidebarRecentFileItem, SidebarMenuList } from '@/components/sidebar';
 import {
@@ -717,7 +728,7 @@ async function openSecurityWarningsPopover(event: MouseEvent): Promise<void> {
     cssClass: 'recommendation-checklist',
     event: event,
     side: 'right',
-    alignment: 'center',
+    alignment: 'end',
     showBackdrop: false,
     backdropDismiss: true,
     componentProps: {
@@ -881,7 +892,8 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
   }
 
   .organization-workspaces,
-  .file-workspaces {
+  .file-workspaces,
+  .organization-checklist {
     display: flex;
     flex-direction: column;
     padding: 0 0.75rem;
@@ -1216,6 +1228,58 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
     --padding-top: 0;
     --padding-bottom: 0;
     color: var(--parsec-color-light-primary-600);
+  }
+}
+
+.organization-checklist {
+  position: absolute;
+  bottom: 2rem;
+  width: 100%;
+
+  .checklist {
+    display: flex;
+    background: var(--parsec-color-light-primary-30-opacity15);
+    --background: none;
+
+    &::part(native) {
+      padding: 0.5rem 0 0.5rem 0.75rem;
+    }
+
+    & * {
+      pointer-events: none;
+    }
+
+    &-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      flex-grow: 1;
+
+      &__title {
+        color: var(--parsec-color-light-secondary-inversed-contrast);
+      }
+
+      &__description {
+        color: var(--parsec-color-light-secondary-premiere);
+        opacity: 0.8;
+      }
+    }
+
+    &-button {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--parsec-color-light-secondary-inversed-contrast);
+
+      &__text {
+        color: var(--parsec-color-light-secondary-inversed-contrast);
+      }
+
+      &__icon {
+        color: var(--parsec-color-light-primary-30);
+        font-size: 0.875rem
+      }
+    }
   }
 }
 
