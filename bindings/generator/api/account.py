@@ -9,16 +9,12 @@ from .common import (
     Result,
     EmailAddress,
     ErrorVariant,
-    Variant,
     ValidationCode,
 )
 from .addr import ParsecAddr
 
 
-class AccountSendEmailValidationTokenError(ErrorVariant):
-    class Stopped:
-        pass
-
+class AccountCreateSendValidationEmailError(ErrorVariant):
     class Offline:
         pass
 
@@ -31,14 +27,16 @@ class AccountSendEmailValidationTokenError(ErrorVariant):
     class EmailServerUnavailable:
         pass
 
-    class EmailParseError:
-        pass
+
+async def account_create_1_send_validation_email(
+    config_dir: Ref[Path],
+    addr: ParsecAddr,
+    email: EmailAddress,
+) -> Result[None, AccountCreateSendValidationEmailError]:
+    raise NotImplementedError
 
 
-class AccountCreateProceedError(ErrorVariant):
-    class Stopped:
-        pass
-
+class AccountCreateError(ErrorVariant):
     class Offline:
         pass
 
@@ -51,32 +49,21 @@ class AccountCreateProceedError(ErrorVariant):
     class AuthMethodIdAlreadyExists:
         pass
 
-    class CryptoError:
-        pass
 
-
-async def account_create_send_validation_email(
-    email: Ref[str],
+async def account_create_2_check_validation_code(
     config_dir: Ref[Path],
     addr: ParsecAddr,
-) -> Result[None, AccountSendEmailValidationTokenError]:
+    validation_code: ValidationCode,
+    email: EmailAddress,
+) -> Result[None, AccountCreateError]:
     raise NotImplementedError
 
 
-class AccountCreateStep(Variant):
-    class CheckCode:
-        validation_code: ValidationCode
-        email: EmailAddress
-
-    class Create:
-        human_handle: HumanHandle
-        password: Password
-        validation_code: ValidationCode
-
-
-async def account_create_proceed(
-    step: AccountCreateStep,
+async def account_create_3_proceed(
     config_dir: Ref[Path],
     addr: ParsecAddr,
-) -> Result[None, AccountCreateProceedError]:
+    validation_code: ValidationCode,
+    human_handle: HumanHandle,
+    password: Password,
+) -> Result[None, AccountCreateError]:
     raise NotImplementedError

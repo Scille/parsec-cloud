@@ -2,24 +2,39 @@
 
 use std::path::Path;
 
-use libparsec_types::ParsecAddr;
+use libparsec_client::ProxyConfig;
+use libparsec_client_connection::AnonymousAccountCmds;
+use libparsec_types::prelude::*;
 
-pub use libparsec_account::{
-    AccountCreateProceedError, AccountCreateStep, AccountSendEmailValidationTokenError,
-};
+pub use libparsec_account::{AccountCreateError, AccountCreateSendValidationEmailError};
 
-pub async fn account_create_send_validation_email(
-    email: &str,
+pub async fn account_create_1_send_validation_email(
     config_dir: &Path,
     addr: ParsecAddr,
-) -> Result<(), AccountSendEmailValidationTokenError> {
-    libparsec_account::account_create_send_validation_email(email, config_dir, addr).await
+    email: EmailAddress,
+) -> Result<(), AccountCreateSendValidationEmailError> {
+    let cmds = AnonymousAccountCmds::new(config_dir, addr, ProxyConfig::default())?;
+    libparsec_account::Account::create_1_send_validation_email(&cmds, email).await
 }
 
-pub async fn account_create_proceed(
-    step: AccountCreateStep,
+pub async fn account_create_2_check_validation_code(
     config_dir: &Path,
     addr: ParsecAddr,
-) -> Result<(), AccountCreateProceedError> {
-    libparsec_account::account_create_proceed(step, config_dir, addr).await
+    validation_code: ValidationCode,
+    email: EmailAddress,
+) -> Result<(), AccountCreateError> {
+    let cmds = AnonymousAccountCmds::new(config_dir, addr, ProxyConfig::default())?;
+    libparsec_account::Account::create_2_check_validation_code(&cmds, validation_code, email).await
+}
+
+pub async fn account_create_3_proceed(
+    config_dir: &Path,
+    addr: ParsecAddr,
+    validation_code: ValidationCode,
+    human_handle: HumanHandle,
+    password: Password,
+) -> Result<(), AccountCreateError> {
+    let cmds = AnonymousAccountCmds::new(config_dir, addr, ProxyConfig::default())?;
+    libparsec_account::Account::create_3_proceed(&cmds, validation_code, human_handle, password)
+        .await
 }
