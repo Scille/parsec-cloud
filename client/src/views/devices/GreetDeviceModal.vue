@@ -26,7 +26,7 @@
         class="modal-header"
         v-if="isLargeDisplay"
       >
-        <ion-title class="modal-header__title title-h2">
+        <ion-title class="modal-header__title title-h3">
           {{ $msTranslate(steps[pageStep]?.title) }}
         </ion-title>
         <ion-text
