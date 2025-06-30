@@ -536,6 +536,20 @@ export type AccountListRegistrationDevicesError =
   | AccountListRegistrationDevicesErrorInternal
 
 
+// AccountLoginWithMasterSecretError
+export interface AccountLoginWithMasterSecretErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface AccountLoginWithMasterSecretErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export type AccountLoginWithMasterSecretError =
+  | AccountLoginWithMasterSecretErrorInternal
+  | AccountLoginWithMasterSecretErrorOffline
+
+
 // AccountLoginWithPasswordError
 export interface AccountLoginWithPasswordErrorBadPasswordAlgorithm {
     tag: "BadPasswordAlgorithm"
@@ -3928,6 +3942,11 @@ export function accountListInvitations(
 export function accountListRegistrationDevices(
     account: number
 ): Promise<Result<Array<[string, string]>, AccountListRegistrationDevicesError>>
+export function accountLoginWithMasterSecret(
+    config_dir: string,
+    addr: string,
+    auth_method_master_secret: Uint8Array
+): Promise<Result<number, AccountLoginWithMasterSecretError>>
 export function accountLoginWithPassword(
     config_dir: string,
     addr: string,
@@ -4323,6 +4342,10 @@ export function pathParent(
 export function pathSplit(
     path: string
 ): Promise<Array<string>>
+export function testCheckMailbox(
+    server_addr: string,
+    email: string
+): Promise<Result<Array<[string, number, string]>, TestbedError>>
 export function testDropTestbed(
     path: string
 ): Promise<Result<null, TestbedError>>
@@ -4332,6 +4355,9 @@ export function testGetTestbedBootstrapOrganizationAddr(
 export function testGetTestbedOrganizationId(
     discriminant_dir: string
 ): Promise<Result<string | null, TestbedError>>
+export function testNewAccount(
+    server_addr: string
+): Promise<Result<[HumanHandle, Uint8Array], TestbedError>>
 export function testNewTestbed(
     template: string,
     test_server: string | null
