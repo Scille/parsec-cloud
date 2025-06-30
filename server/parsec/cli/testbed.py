@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-import tempfile
+from base64 import b64encode
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from typing import Any
@@ -38,6 +38,7 @@ from parsec.config import (
     MockedBlockStoreConfig,
     MockedDatabaseConfig,
     MockedEmailConfig,
+    MockedSentEmail,
     PostgreSQLBlockStoreConfig,
     PostgreSQLDatabaseConfig,
 )
@@ -233,6 +234,36 @@ async def test_drop(raw_organization_id: str, request: Request) -> Response:
     return Response(status_code=200, content=b"")
 
 
+@testbed_router.get("/testbed/mailbox/{raw_recipient}")
+async def test_mailbox(raw_recipient: str, request: Request) -> Response:
+    testbed: TestbedBackend = request.app.state.testbed
+
+    try:
+        recipient = EmailAddress(raw_recipient)
+    except ValueError:
+        return Response(status_code=400, content=b"invalid email address")
+
+    match testbed.backend.config.email_config:
+        case MockedEmailConfig() as email_config:
+            sent_emails = (mail for mail in email_config.sent_emails if mail.recipient == recipient)
+        case _:
+            return Response(
+                status_code=400, content=b"mailbox is only available with MockedEmailConfig !"
+            )
+
+    # Body should be something like `<sender_email>\t<timestamp>\t<base64(body)`,
+    # also multiple mails can be send one after the other separated by `\n`
+
+    def _encode_mail(mail: MockedSentEmail) -> bytes:
+        return f"{mail.sender.str}\t{mail.timestamp.to_rfc3339()}\t".encode() + b64encode(
+            mail.body.encode("utf8")
+        )
+
+    rep_body = b"\n".join(_encode_mail(mail) for mail in sent_emails)
+
+    return Response(status_code=200, content=rep_body)
+
+
 @asynccontextmanager
 async def testbed_backend_factory(
     server_addr: ParsecAddr, with_postgresql: str | None
@@ -248,15 +279,13 @@ async def testbed_backend_factory(
             url=with_postgresql, min_connections=1, max_connections=5
         )
 
-    # TODO: avoid tempdir for email ?
-    tmpdir = tempfile.mkdtemp(prefix="tmp-email-folder-")
     config = BackendConfig(
         debug=True,
         db_config=db_config,
         sse_keepalive=30,
         proxy_trusted_addresses=None,
         server_addr=server_addr,
-        email_config=MockedEmailConfig(EmailAddress("no-reply@parsec.com"), tmpdir),
+        email_config=MockedEmailConfig(EmailAddress("no-reply@parsec.com")),
         blockstore_config=blockstore_config,
         administration_token="s3cr3t",
         fake_account_password_algorithm_seed=SecretKey(b"F" * 32),

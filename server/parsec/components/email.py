@@ -4,14 +4,13 @@ from __future__ import annotations
 import smtplib
 import ssl
 import sys
-import tempfile
 from email.message import Message
 from enum import auto
 
 import anyio
 
-from parsec._parsec import EmailAddress
-from parsec.config import EmailConfig, MockedEmailConfig, SmtpEmailConfig
+from parsec._parsec import DateTime, EmailAddress
+from parsec.config import EmailConfig, MockedEmailConfig, MockedSentEmail, SmtpEmailConfig
 from parsec.logging import get_logger
 from parsec.types import BadOutcomeEnum
 
@@ -46,7 +45,7 @@ def _smtp_send_email(
                     logger.warning("Email TLS connection isn't encrypted")
             if email_config.host_user and email_config.host_password:
                 server.login(email_config.host_user, email_config.host_password)
-            server.sendmail(str(email_config.sender), str(to_addr), message.as_string())
+            server.sendmail(email_config.sender.str, to_addr.str, message.as_string())
 
     except smtplib.SMTPConnectError:
         return SendEmailBadOutcome.SERVER_UNAVAILABLE
@@ -67,20 +66,22 @@ def _smtp_send_email(
 def _mocked_send_email(
     email_config: MockedEmailConfig, to_addr: EmailAddress, message: Message
 ) -> None | SendEmailBadOutcome:
-    with tempfile.NamedTemporaryFile(
-        prefix="tmp-email-",
-        suffix=".html",
-        dir=email_config.tmpdir,
-        mode="w",
-        delete_on_close=False,
-        delete=False,
-    ) as tmpfile:
-        tmpfile.write(message.as_string())
+    message_body = message.as_string()
+    timestamp = DateTime.now()
+    email_config.sent_emails.append(
+        MockedSentEmail(
+            sender=email_config.sender, recipient=to_addr, timestamp=timestamp, body=message_body
+        )
+    )
     print(
-        f"""\
-        A request to send an e-mail to {to_addr} has been triggered and mocked.
-        The mail file can be found here: {tmpfile.name}\n""",
-        tmpfile.name,
+        f"""A request to send an e-mail has been triggered and mocked:
+FROM: {email_config.sender.str}
+TO: {to_addr.str}
+AT: {timestamp.to_rfc3339()}
+================== EMAIL BODY ===================
+{message_body}
+=============== END OF EMAIL BODY ===============
+""",
         file=sys.stderr,
     )
 

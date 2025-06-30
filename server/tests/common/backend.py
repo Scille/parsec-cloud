@@ -28,7 +28,6 @@ def backend_mocked_data() -> dict[OrganizationID, MemoryOrganization]:
 
 @pytest.fixture
 def backend_config(
-    tmpdir: str,
     db_config: BaseDatabaseConfig,
     blockstore_config: BaseBlockStoreConfig,
     backend_mocked_data: dict[OrganizationID, MemoryOrganization],
@@ -39,7 +38,7 @@ def backend_config(
         sse_keepalive=30,
         proxy_trusted_addresses=None,
         server_addr=ParsecAddr(hostname=SERVER_DOMAIN, port=None, use_ssl=True),
-        email_config=MockedEmailConfig(EmailAddress("no-reply@parsec.com"), tmpdir),
+        email_config=MockedEmailConfig(EmailAddress("no-reply@parsec.com")),
         blockstore_config=blockstore_config,
         administration_token="s3cr3t",
         fake_account_password_algorithm_seed=SecretKey(b"F" * 32),
