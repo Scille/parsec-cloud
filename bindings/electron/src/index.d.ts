@@ -1095,6 +1095,25 @@ export type ClientGetUserDeviceError =
   | ClientGetUserDeviceErrorStopped
 
 
+// ClientGetUserInfoError
+export interface ClientGetUserInfoErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClientGetUserInfoErrorNonExisting {
+    tag: "NonExisting"
+    error: string
+}
+export interface ClientGetUserInfoErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export type ClientGetUserInfoError =
+  | ClientGetUserInfoErrorInternal
+  | ClientGetUserInfoErrorNonExisting
+  | ClientGetUserInfoErrorStopped
+
+
 // ClientInfoError
 export interface ClientInfoErrorInternal {
     tag: "Internal"
@@ -3958,6 +3977,10 @@ export function clientGetUserDevice(
     client: number,
     device: string
 ): Promise<Result<[UserInfo, DeviceInfo], ClientGetUserDeviceError>>
+export function clientGetUserInfo(
+    client: number,
+    user_id: string
+): Promise<Result<UserInfo, ClientGetUserInfoError>>
 export function clientInfo(
     client: number
 ): Promise<Result<ClientInfo, ClientInfoError>>

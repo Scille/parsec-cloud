@@ -6222,6 +6222,33 @@ fn variant_client_get_user_device_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// ClientGetUserInfoError
+
+#[allow(dead_code)]
+fn variant_client_get_user_info_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientGetUserInfoError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientGetUserInfoError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientGetUserInfoErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientGetUserInfoError::NonExisting { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientGetUserInfoErrorNonExisting").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientGetUserInfoError::Stopped { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientGetUserInfoErrorStopped").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientInfoError
 
 #[allow(dead_code)]
@@ -17003,6 +17030,68 @@ fn client_get_user_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// client_get_user_info
+fn client_get_user_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let user_id = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_get_user_info(client, user_id).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_user_info_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_client_get_user_info_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // client_info
 fn client_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -25192,6 +25281,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("clientGetTos", client_get_tos)?;
     cx.export_function("clientGetUserDevice", client_get_user_device)?;
+    cx.export_function("clientGetUserInfo", client_get_user_info)?;
     cx.export_function("clientInfo", client_info)?;
     cx.export_function("clientListFrozenUsers", client_list_frozen_users)?;
     cx.export_function("clientListInvitations", client_list_invitations)?;
