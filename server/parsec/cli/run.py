@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import asyncio
-import tempfile
 from hashlib import blake2b
 from pathlib import Path
 from typing import Any
@@ -462,11 +461,10 @@ def run_cmd(
     with cli_exception_handler(debug):
         email_config: EmailConfig
         if email_host == "MOCKED":
-            tmpdir = tempfile.mkdtemp(prefix="tmp-email-folder-")
             if email_sender:
-                email_config = MockedEmailConfig(sender=email_sender, tmpdir=tmpdir)
+                email_config = MockedEmailConfig(sender=email_sender)
             else:
-                email_config = MockedEmailConfig(sender=DEFAULT_EMAIL_SENDER, tmpdir=tmpdir)
+                email_config = MockedEmailConfig(sender=DEFAULT_EMAIL_SENDER)
         else:
             if not email_sender:
                 raise ValueError("--email-sender is required when --email-host is provided")

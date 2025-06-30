@@ -7,7 +7,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Literal
 from urllib.parse import urlparse, urlunparse
 
-from parsec._parsec import ActiveUsersLimit, EmailAddress, ParsecAddr, SecretKey
+from parsec._parsec import ActiveUsersLimit, DateTime, EmailAddress, ParsecAddr, SecretKey
 
 if TYPE_CHECKING:
     from parsec.components.memory.organization import MemoryOrganization, OrganizationID
@@ -164,11 +164,21 @@ class SmtpEmailConfig:
 
 
 @dataclass(slots=True)
+class MockedSentEmail:
+    sender: EmailAddress
+    recipient: EmailAddress
+    timestamp: DateTime
+    body: str
+
+
+@dataclass(slots=True)
 class MockedEmailConfig:
     type = "MOCKED"
 
     sender: EmailAddress
-    tmpdir: str
+    # Emails sent, ordered from oldest to newest.
+    # Keeping the emails is needed for testbed server's `GET /testbed/mailbox/{email}` route.
+    sent_emails: list[MockedSentEmail] = field(default_factory=list)
 
 
 EmailConfig = SmtpEmailConfig | MockedEmailConfig
