@@ -105,3 +105,19 @@ pub async fn test_check_mailbox(
 ) -> Result<Vec<(EmailAddress, DateTime, String)>, TestbedError> {
     Err(TestbedError::Disabled)
 }
+
+#[cfg(feature = "test-utils")]
+pub async fn test_new_account(
+    server_addr: &ParsecAddr,
+) -> Result<(HumanHandle, KeyDerivation), TestbedError> {
+    libparsec_testbed::test_new_account(server_addr)
+        .await
+        .map_err(TestbedError::Internal)
+}
+
+#[cfg(not(feature = "test-utils"))]
+pub async fn test_new_account(
+    _server_addr: &ParsecAddr,
+) -> Result<(HumanHandle, KeyDerivation), TestbedError> {
+    Err(TestbedError::Disabled)
+}
