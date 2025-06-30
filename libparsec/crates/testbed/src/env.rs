@@ -1224,3 +1224,51 @@ pub async fn test_check_mailbox(
 
     Ok(mails)
 }
+
+pub async fn test_new_account(
+    server_addr: &ParsecAddr,
+) -> anyhow::Result<(HumanHandle, KeyDerivation)> {
+    let auth_method_master_secret = KeyDerivation::generate();
+
+    let auth_method_id = AccountAuthMethodID::from(
+        auth_method_master_secret.derive_uuid_from_uuid(AUTH_METHOD_ID_DERIVATION_UUID),
+    );
+    let auth_method_mac_key =
+        auth_method_master_secret.derive_secret_key_from_uuid(AUTH_METHOD_MAC_KEY_DERIVATION_UUID);
+    let auth_method_secret_key = auth_method_master_secret
+        .derive_secret_key_from_uuid(AUTH_METHOD_SECRET_KEY_DERIVATION_UUID);
+
+    let url = server_addr.to_http_url(Some("/testbed/account/new"));
+    let vault_key_access = AccountVaultKeyAccess {
+        vault_key: SecretKey::generate(),
+    }
+    .dump_and_encrypt(&auth_method_secret_key);
+    let config = format!(
+        "{}\n{}\n{}",
+        &auth_method_id.hex(),
+        &data_encoding::BASE64.encode(auth_method_mac_key.as_ref()),
+        &data_encoding::BASE64.encode(vault_key_access.as_ref()),
+    );
+    let response = HTTP_CLIENT
+        .post(url)
+        .body(config.into_bytes())
+        .send()
+        .await
+        .map_err(|e| anyhow::anyhow!("Cannot communicate with testbed server: {}", e))?;
+    if response.status() != StatusCode::OK {
+        return Err(anyhow::anyhow!(
+            "Bad response status from testbed server: {:?}",
+            response
+        ));
+    }
+
+    let response_body = response
+        .text()
+        .await
+        .map_err(|e| anyhow::anyhow!("Bad response body from testbed server: {}", e))?;
+
+    let human_handle = HumanHandle::from_str(&response_body)
+        .map_err(|e| anyhow::anyhow!("Bad response body from testbed server: {}", e))?;
+
+    Ok((human_handle, auth_method_master_secret))
+}
