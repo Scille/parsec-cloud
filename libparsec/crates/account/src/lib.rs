@@ -21,17 +21,6 @@ pub use list_invitations::*;
 pub use login::*;
 pub use register_new_device::*;
 
-// The auth method master secret is the root secret from which are derived
-// all other data used for authentication and end-2-end encryption:
-// - ID & MAC key: used for server authentication.
-// - Secret key: used for end-2-end encryption.
-const AUTH_METHOD_ID_DERIVATION_UUID: uuid::Uuid =
-    uuid::uuid!("00000000-0000-0000-0000-000000000000");
-const AUTH_METHOD_MAC_KEY_DERIVATION_UUID: uuid::Uuid =
-    uuid::uuid!("11111111-1111-1111-1111-111111111111");
-const AUTH_METHOD_SECRET_KEY_DERIVATION_UUID: uuid::Uuid =
-    uuid::uuid!("22222222-2222-2222-2222-222222222222");
-
 #[derive(Debug)]
 pub struct Account {
     config_dir: PathBuf,
