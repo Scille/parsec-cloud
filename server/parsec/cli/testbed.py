@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from base64 import b64encode
+from base64 import b64decode, b64encode
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from typing import Any
@@ -14,7 +14,16 @@ import structlog
 from fastapi import APIRouter, BackgroundTasks, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
-from parsec._parsec import EmailAddress, OrganizationID, ParsecAddr, SecretKey
+from parsec._parsec import (
+    AccountAuthMethodID,
+    DateTime,
+    EmailAddress,
+    EmailValidationToken,
+    HumanHandle,
+    OrganizationID,
+    ParsecAddr,
+    SecretKey,
+)
 
 try:
     from parsec._parsec import testbed
@@ -75,6 +84,7 @@ class TestbedBackend:
     ):
         self.backend = backend
         self._org_count = 0
+        self._account_count = 0
         self._load_template_lock = anyio.Lock()
         # keys: template ID, values: (to duplicate organization ID, CRC, template content)
         self._loaded_templates = {} if loaded_templates is None else loaded_templates
@@ -237,7 +247,6 @@ async def test_drop(raw_organization_id: str, request: Request) -> Response:
 @testbed_router.get("/testbed/mailbox/{raw_recipient}")
 async def test_mailbox(raw_recipient: str, request: Request) -> Response:
     testbed: TestbedBackend = request.app.state.testbed
-
     try:
         recipient = EmailAddress(raw_recipient)
     except ValueError:
@@ -260,6 +269,54 @@ async def test_mailbox(raw_recipient: str, request: Request) -> Response:
         )
 
     rep_body = b"\n".join(_encode_mail(mail) for mail in sent_emails)
+
+    return Response(status_code=200, content=rep_body)
+
+
+@testbed_router.post("/testbed/account/new")
+async def test_new_account(request: Request) -> Response:
+    testbed: TestbedBackend = request.app.state.testbed
+
+    req_body = await request.body()
+    try:
+        (
+            raw_auth_method_id,
+            raw_mac_key,
+            raw_vault_key_access,
+        ) = req_body.split(b"\n")
+
+        auth_method_id = AccountAuthMethodID.from_hex(raw_auth_method_id.decode("ascii"))
+        mac_key = SecretKey(b64decode(raw_mac_key))
+        vault_key_access = b64decode(raw_vault_key_access)
+
+    except ValueError:
+        return Response(
+            status_code=400,
+            content=b"invalid body, expected `<auth_method_id as hex>\nb64(<mac_key>)\nb64(<vault_key_access>)`",
+        )
+
+    testbed._account_count += 1
+    email = EmailAddress(f"agent{testbed._account_count}@example.com")
+    human_label = f"Agent{testbed._account_count:0>3}"
+
+    outcome = await testbed.backend.account.create_email_validation_token(email, DateTime.now())
+    assert isinstance(outcome, EmailValidationToken)
+    token = outcome
+
+    outcome = await testbed.backend.account.create_account(
+        token=token,
+        now=DateTime.now(),
+        mac_key=mac_key,
+        vault_key_access=vault_key_access,
+        human_label=human_label,
+        created_by_user_agent="TestbedAgent",
+        created_by_ip="",
+        auth_method_id=auth_method_id,
+        auth_method_password_algorithm=None,
+    )
+    assert outcome is None
+
+    rep_body = f"{HumanHandle(email, human_label).str}".encode()
 
     return Response(status_code=200, content=rep_body)
 
