@@ -2323,6 +2323,7 @@ name = "libparsec_testbed"
 version = "3.4.1-a.0+dev"
 dependencies = [
  "crc32fast",
+ "data-encoding",
  "hex-literal",
  "lazy_static",
  "libparsec_types",

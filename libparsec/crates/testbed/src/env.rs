@@ -1161,3 +1161,66 @@ pub async fn test_drop_testbed(discriminant_dir: &Path) -> anyhow::Result<()> {
 
     Ok(())
 }
+
+/// Returns the list of received emails (sender, timestamp, body), ordered
+/// from oldest to newest.
+pub async fn test_check_mailbox(
+    server_addr: &ParsecAddr,
+    email: &EmailAddress,
+) -> anyhow::Result<Vec<(EmailAddress, DateTime, String)>> {
+    let url = server_addr.to_http_url(Some(&format!("/testbed/mailbox/{}", email)));
+    let response = HTTP_CLIENT
+        .get(url)
+        .send()
+        .await
+        .map_err(|e| anyhow::anyhow!("Cannot communicate with testbed server: {}", e))?;
+    if response.status() != StatusCode::OK {
+        return Err(anyhow::anyhow!(
+            "Bad response status from testbed server: {:?}",
+            response
+        ));
+    }
+
+    let response_body = response
+        .text()
+        .await
+        .map_err(|e| anyhow::anyhow!("Bad response body from testbed server: {}", e))?;
+
+    // Body should be something like `<sender_email>\t<timestamp>\t<base64(body)\n`,
+    // also multiple mails can be send one after the other
+    let mut mails = vec![];
+    for raw_mail in response_body.split('\n') {
+        if raw_mail.is_empty() {
+            continue;
+        }
+        let mut s = raw_mail.split('\t');
+
+        let base64_to_str = |b64: &str| -> Result<String, ()> {
+            let as_bytes = data_encoding::BASE64
+                .decode(b64.as_bytes())
+                .map_err(|_| ())?;
+            String::from_utf8(as_bytes).map_err(|_| ())
+        };
+
+        let (sender, timestamp, body) = match (
+            s.next().map(EmailAddress::from_str),
+            s.next().map(DateTime::from_str),
+            s.next().map(base64_to_str),
+            s.next(),
+        ) {
+            (Some(Ok(sender)), Some(Ok(timestamp)), Some(Ok(body)), None) => {
+                (sender, timestamp, body)
+            }
+            _ => {
+                return Err(anyhow::anyhow!(
+                    "Bad response body from testbed server: {:?}",
+                    response_body
+                ))
+            }
+        };
+
+        mails.push((sender, timestamp, body));
+    }
+
+    Ok(mails)
+}

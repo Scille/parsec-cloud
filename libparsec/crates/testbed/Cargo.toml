@@ -25,3 +25,4 @@ reqwest = { workspace = true, features = ["default-tls"] }
 regex = { workspace = true, features = ["std", "perf", "unicode"] }
 log = { workspace = true }
 paste = { workspace = true }
+data-encoding = { workspace = true }
