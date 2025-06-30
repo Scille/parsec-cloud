@@ -41,7 +41,7 @@ starlette = "^0.46.2"
 structlog = "^25.4.0"
 # ASGI server
 fastapi = "^0.115.13"
-uvicorn = "^0.34.3"
+uvicorn = "^0.35.0"
 jinja2 = "^3.0"
 # PostgreSQL
 asyncpg = "^0.29.0"
