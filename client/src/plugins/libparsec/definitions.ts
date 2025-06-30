@@ -111,6 +111,7 @@ export type SequesterServiceID = string
 export type UserID = string
 export type ValidationCode = string
 export type VlobID = string
+export type KeyDerivation = Uint8Array
 export type SequesterVerifyKeyDer = Uint8Array
 export type NonZeroU8 = number
 export type U8 = number
@@ -549,6 +550,24 @@ export interface AccountListRegistrationDevicesErrorInternal {
 }
 export type AccountListRegistrationDevicesError =
   | AccountListRegistrationDevicesErrorInternal
+
+// AccountLoginWithMasterSecretError
+export enum AccountLoginWithMasterSecretErrorTag {
+    Internal = 'AccountLoginWithMasterSecretErrorInternal',
+    Offline = 'AccountLoginWithMasterSecretErrorOffline',
+}
+
+export interface AccountLoginWithMasterSecretErrorInternal {
+    tag: AccountLoginWithMasterSecretErrorTag.Internal
+    error: string
+}
+export interface AccountLoginWithMasterSecretErrorOffline {
+    tag: AccountLoginWithMasterSecretErrorTag.Offline
+    error: string
+}
+export type AccountLoginWithMasterSecretError =
+  | AccountLoginWithMasterSecretErrorInternal
+  | AccountLoginWithMasterSecretErrorOffline
 
 // AccountLoginWithPasswordError
 export enum AccountLoginWithPasswordErrorTag {
@@ -4687,6 +4706,11 @@ export interface LibParsecPlugin {
     accountListRegistrationDevices(
         account: Handle
     ): Promise<Result<Array<[OrganizationID, UserID]>, AccountListRegistrationDevicesError>>
+    accountLoginWithMasterSecret(
+        config_dir: Path,
+        addr: ParsecAddr,
+        auth_method_master_secret: KeyDerivation
+    ): Promise<Result<Handle, AccountLoginWithMasterSecretError>>
     accountLoginWithPassword(
         config_dir: Path,
         addr: ParsecAddr,
@@ -5078,6 +5102,10 @@ export interface LibParsecPlugin {
     pathSplit(
         path: FsPath
     ): Promise<Array<EntryName>>
+    testCheckMailbox(
+        server_addr: ParsecAddr,
+        email: EmailAddress
+    ): Promise<Result<Array<[EmailAddress, DateTime, string]>, TestbedError>>
     testDropTestbed(
         path: Path
     ): Promise<Result<null, TestbedError>>
@@ -5087,6 +5115,9 @@ export interface LibParsecPlugin {
     testGetTestbedOrganizationId(
         discriminant_dir: Path
     ): Promise<Result<OrganizationID | null, TestbedError>>
+    testNewAccount(
+        server_addr: ParsecAddr
+    ): Promise<Result<[HumanHandle, KeyDerivation], TestbedError>>
     testNewTestbed(
         template: string,
         test_server: ParsecAddr | null

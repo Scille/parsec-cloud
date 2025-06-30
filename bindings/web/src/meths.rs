@@ -4461,6 +4461,34 @@ fn variant_account_list_registration_devices_error_rs_to_js(
     Ok(js_obj)
 }
 
+// AccountLoginWithMasterSecretError
+
+#[allow(dead_code)]
+fn variant_account_login_with_master_secret_error_rs_to_js(
+    rs_obj: libparsec::AccountLoginWithMasterSecretError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::AccountLoginWithMasterSecretError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountLoginWithMasterSecretErrorInternal".into(),
+            )?;
+        }
+        libparsec::AccountLoginWithMasterSecretError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountLoginWithMasterSecretErrorOffline".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // AccountLoginWithPasswordError
 
 #[allow(dead_code)]
@@ -16581,6 +16609,57 @@ pub fn accountListRegistrationDevices(account: u32) -> Promise {
     }))
 }
 
+// account_login_with_master_secret
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn accountLoginWithMasterSecret(
+    config_dir: String,
+    addr: String,
+    auth_method_master_secret: Uint8Array,
+) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config_dir = {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let addr = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let auth_method_master_secret = auth_method_master_secret
+            .to_vec()
+            .as_slice()
+            .try_into()
+            .map_err(|_| JsValue::from(TypeError::new("Not a valid KeyDerivation")))?;
+
+        let ret = libparsec::account_login_with_master_secret(
+            config_dir,
+            addr,
+            auth_method_master_secret,
+        )
+        .await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from(value);
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_account_login_with_master_secret_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
 // account_login_with_password
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -19766,6 +19845,88 @@ pub fn pathSplit(path: String) -> Promise {
     }))
 }
 
+// test_check_mailbox
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn testCheckMailbox(server_addr: String, email: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let server_addr = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(server_addr).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let email = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(email).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::test_check_mailbox(&server_addr, &email).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(value.len() as u32);
+                    for (i, elem) in value.into_iter().enumerate() {
+                        let js_elem = {
+                            let (x1, x2, x3) = elem;
+                            // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                            let js_array = Array::new_with_length(3);
+                            let js_value = JsValue::from_str({
+                                let custom_to_rs_string =
+                                    |x: libparsec::EmailAddress| -> Result<_, &'static str> {
+                                        Ok(x.to_string())
+                                    };
+                                match custom_to_rs_string(x1) {
+                                    Ok(ok) => ok,
+                                    Err(err) => {
+                                        return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                    }
+                                }
+                                .as_ref()
+                            });
+                            js_array.set(0, js_value);
+                            let js_value = {
+                                let custom_to_rs_f64 =
+                                    |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                                        Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                                    };
+                                let v = match custom_to_rs_f64(x2) {
+                                    Ok(ok) => ok,
+                                    Err(err) => {
+                                        return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                    }
+                                };
+                                JsValue::from(v)
+                            };
+                            js_array.set(1, js_value);
+                            let js_value = x3.into();
+                            js_array.set(2, js_value);
+                            js_array.into()
+                        };
+                        js_array.set(i as u32, js_elem);
+                    }
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_testbed_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
 // test_drop_testbed
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -19858,6 +20019,47 @@ pub fn testGetTestbedOrganizationId(discriminant_dir: String) -> Promise {
                 let js_value = match value {
                     Some(val) => JsValue::from_str(val.as_ref()),
                     None => JsValue::NULL,
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_testbed_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// test_new_account
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn testNewAccount(server_addr: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let server_addr = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(server_addr).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::test_new_account(&server_addr).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let (x1, x2) = value;
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(2);
+                    let js_value = struct_human_handle_rs_to_js(x1)?;
+                    js_array.set(0, js_value);
+                    let js_value = JsValue::from(Uint8Array::from(x2.as_ref()));
+                    js_array.set(1, js_value);
+                    js_array.into()
                 };
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj

@@ -4180,6 +4180,31 @@ fn variant_account_list_registration_devices_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// AccountLoginWithMasterSecretError
+
+#[allow(dead_code)]
+fn variant_account_login_with_master_secret_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AccountLoginWithMasterSecretError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::AccountLoginWithMasterSecretError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "AccountLoginWithMasterSecretErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountLoginWithMasterSecretError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "AccountLoginWithMasterSecretErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // AccountLoginWithPasswordError
 
 #[allow(dead_code)]
@@ -15072,6 +15097,86 @@ fn account_list_registration_devices(mut cx: FunctionContext) -> JsResult<JsProm
     Ok(promise)
 }
 
+// account_login_with_master_secret
+fn account_login_with_master_secret(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let config_dir = {
+        let js_val = cx.argument::<JsString>(0)?;
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let addr = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let auth_method_master_secret = {
+        let js_val = cx.argument::<JsTypedArray<u8>>(2)?;
+        {
+            #[allow(clippy::unnecessary_mut_passed)]
+            match js_val.as_slice(&mut cx).try_into() {
+                Ok(val) => val,
+                // err can't infer type in some case, because of the previous `try_into`
+                #[allow(clippy::useless_format)]
+                Err(err) => return cx.throw_type_error(format!("{}", err)),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::account_login_with_master_secret(
+                config_dir,
+                addr,
+                auth_method_master_secret,
+            )
+            .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = JsNumber::new(&mut cx, ok as f64);
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_account_login_with_master_secret_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // account_login_with_password
 fn account_login_with_password(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -21064,6 +21169,100 @@ fn path_split(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// test_check_mailbox
+fn test_check_mailbox(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let server_addr = {
+        let js_val = cx.argument::<JsString>(0)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let email = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME.lock().expect("Mutex is poisoned").spawn(async move {
+
+        let ret = libparsec::test_check_mailbox(
+            &server_addr,
+            &email,
+        ).await;
+
+        deferred.settle_with(&channel, move |mut cx| {
+            let js_ret = match ret {
+    Ok(ok) => {
+        let js_obj = JsObject::new(&mut cx);
+        let js_tag = JsBoolean::new(&mut cx, true);
+        js_obj.set(&mut cx, "ok", js_tag)?;
+        let js_value = {
+    // JsArray::new allocates with `undefined` value, that's why we `set` value
+    let js_array = JsArray::new(&mut cx, ok.len());
+    for (i, elem) in ok.into_iter().enumerate() {
+        let js_elem = {
+    let (x0, x1, x2) = elem;
+    let js_array = JsArray::new(&mut cx, 3);
+    let js_value = JsString::try_new(&mut cx,{
+    let custom_to_rs_string = |x: libparsec::EmailAddress| -> Result<_, &'static str> { Ok(x.to_string()) };
+    match custom_to_rs_string(x0) {
+        Ok(ok) => ok,
+        Err(err) => return cx.throw_type_error(err),
+    }
+}).or_throw(&mut cx)?;
+    js_array.set(&mut cx, 0, js_value)?;
+    let js_value = JsNumber::new(&mut cx,{
+    let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> { Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64) };
+    match custom_to_rs_f64(x1) {
+        Ok(ok) => ok,
+        Err(err) => return cx.throw_type_error(err),
+    }
+});
+    js_array.set(&mut cx, 1, js_value)?;
+    let js_value = JsString::try_new(&mut cx, x2).or_throw(&mut cx)?;
+    js_array.set(&mut cx, 2, js_value)?;
+    js_array
+};
+        js_array.set(&mut cx, i as u32, js_elem)?;
+    }
+    js_array
+};
+        js_obj.set(&mut cx, "value", js_value)?;
+        js_obj
+    }
+    Err(err) => {
+        let js_obj = cx.empty_object();
+        let js_tag = JsBoolean::new(&mut cx, false);
+        js_obj.set(&mut cx, "ok", js_tag)?;
+        let js_err = variant_testbed_error_rs_to_js(&mut cx, err)?;
+        js_obj.set(&mut cx, "error", js_err)?;
+        js_obj
+    }
+};
+            Ok(js_ret)
+        });
+    });
+
+    Ok(promise)
+}
+
 // test_drop_testbed
 fn test_drop_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -21207,6 +21406,73 @@ fn test_get_testbed_organization_id(mut cx: FunctionContext) -> JsResult<JsPromi
     };
     let (deferred, promise) = cx.promise();
     deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
+// test_new_account
+fn test_new_account(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let server_addr = {
+        let js_val = cx.argument::<JsString>(0)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::test_new_account(&server_addr).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            let (x0, x1) = ok;
+                            let js_array = JsArray::new(&mut cx, 2);
+                            let js_value = struct_human_handle_rs_to_js(&mut cx, x0)?;
+                            js_array.set(&mut cx, 0, js_value)?;
+                            let js_value = {
+                                let rs_buff = { x1.as_ref() };
+                                let mut js_buff = JsArrayBuffer::new(&mut cx, rs_buff.len())?;
+                                let js_buff_slice = js_buff.as_mut_slice(&mut cx);
+                                for (i, c) in rs_buff.iter().enumerate() {
+                                    js_buff_slice[i] = *c;
+                                }
+                                js_buff
+                            };
+                            js_array.set(&mut cx, 1, js_value)?;
+                            js_array
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_testbed_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
     Ok(promise)
 }
 
@@ -25741,6 +26007,10 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         "accountListRegistrationDevices",
         account_list_registration_devices,
     )?;
+    cx.export_function(
+        "accountLoginWithMasterSecret",
+        account_login_with_master_secret,
+    )?;
     cx.export_function("accountLoginWithPassword", account_login_with_password)?;
     cx.export_function("accountLogout", account_logout)?;
     cx.export_function("accountRegisterNewDevice", account_register_new_device)?;
@@ -25995,6 +26265,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("pathNormalize", path_normalize)?;
     cx.export_function("pathParent", path_parent)?;
     cx.export_function("pathSplit", path_split)?;
+    cx.export_function("testCheckMailbox", test_check_mailbox)?;
     cx.export_function("testDropTestbed", test_drop_testbed)?;
     cx.export_function(
         "testGetTestbedBootstrapOrganizationAddr",
@@ -26004,6 +26275,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         "testGetTestbedOrganizationId",
         test_get_testbed_organization_id,
     )?;
+    cx.export_function("testNewAccount", test_new_account)?;
     cx.export_function("testNewTestbed", test_new_testbed)?;
     cx.export_function(
         "updateDeviceChangeAuthentication",
