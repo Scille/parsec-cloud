@@ -68,6 +68,7 @@ pub use crate::certif::{
     CertifForgetAllCertificatesError as ClientForgetAllCertificatesError,
     CertifGetCurrentSelfProfileError as ClientGetCurrentSelfProfileError,
     CertifGetUserDeviceError as ClientGetUserDeviceError,
+    CertifGetUserInfoError as ClientGetUserInfoError,
     CertifListUserDevicesError as ClientListUserDevicesError,
     CertifListUsersError as ClientListUsersError,
     CertifListWorkspaceUsersError as ClientListWorkspaceUsersError,
@@ -336,6 +337,11 @@ impl Client {
 
     pub async fn revoke_user(&self, user: UserID) -> Result<(), ClientRevokeUserError> {
         user_revoke::revoke_user(self, user).await
+    }
+
+    /// Get user info.
+    pub async fn get_user_info(&self, user_id: UserID) -> Result<UserInfo, ClientGetUserInfoError> {
+        self.certificates_ops.get_user_info(user_id).await
     }
 
     /// List all users.
