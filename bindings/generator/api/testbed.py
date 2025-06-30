@@ -3,7 +3,7 @@
 from typing import Optional
 
 from .addr import ParsecAddr, ParsecOrganizationBootstrapAddr
-from .common import OrganizationID, Path, Ref, ErrorVariant, Result
+from .common import OrganizationID, Path, Ref, ErrorVariant, Result, EmailAddress, DateTime
 
 
 class TestbedError(ErrorVariant):
@@ -33,4 +33,11 @@ def test_get_testbed_bootstrap_organization_addr(
 
 
 async def test_drop_testbed(path: Ref[Path]) -> Result[None, TestbedError]:
+    raise NotImplementedError
+
+
+async def test_check_mailbox(
+    server_addr: Ref[ParsecAddr],
+    email: Ref[EmailAddress],
+) -> Result[list[tuple[EmailAddress, DateTime, str]], TestbedError]:
     raise NotImplementedError

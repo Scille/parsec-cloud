@@ -85,3 +85,23 @@ pub async fn test_drop_testbed(discriminant_dir: &Path) -> Result<(), TestbedErr
 pub async fn test_drop_testbed(_discriminant_dir: &Path) -> Result<(), TestbedError> {
     Err(TestbedError::Disabled)
 }
+
+#[cfg(feature = "test-utils")]
+/// Returns the list of received emails (sender, timestamp, body), ordered
+/// from oldest to newest.
+pub async fn test_check_mailbox(
+    server_addr: &ParsecAddr,
+    email: &EmailAddress,
+) -> Result<Vec<(EmailAddress, DateTime, String)>, TestbedError> {
+    libparsec_testbed::test_check_mailbox(server_addr, email)
+        .await
+        .map_err(TestbedError::Internal)
+}
+
+#[cfg(not(feature = "test-utils"))]
+pub async fn test_check_mailbox(
+    _server_addr: &ParsecAddr,
+    _email: &EmailAddress,
+) -> Result<Vec<(EmailAddress, DateTime, String)>, TestbedError> {
+    Err(TestbedError::Disabled)
+}
