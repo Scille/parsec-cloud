@@ -18,6 +18,8 @@ use libparsec_types::prelude::*;
 
 use crate::{Account, AccountCreateError};
 
+// Note a test with the actual server is done within send_validation_email's tests
+
 #[parsec_test(testbed = "empty")]
 async fn ok(env: &TestbedEnv) {
     let human_handle: HumanHandle = "Zack <zack@example.com>".parse().unwrap();

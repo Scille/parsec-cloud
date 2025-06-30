@@ -13,6 +13,24 @@ use libparsec_types::prelude::*;
 
 use crate::{Account, AccountLoginWithMasterSecretError, AccountLoginWithPasswordError};
 
+#[parsec_test(testbed = "empty", with_server)]
+async fn testbed(env: &TestbedEnv) {
+    let (human_handle, auth_method_master_secret) =
+        libparsec_tests_fixtures::test_new_account(&env.server_addr)
+            .await
+            .unwrap();
+
+    let account = Account::login_with_master_secret(
+        env.discriminant_dir.clone(),
+        ProxyConfig::default(),
+        env.server_addr.clone(),
+        auth_method_master_secret,
+    )
+    .await
+    .unwrap();
+    p_assert_eq!(*account.human_handle(), human_handle);
+}
+
 #[parsec_test(testbed = "empty")]
 async fn login_with_master_secret(env: &TestbedEnv) {
     let addr = env.server_addr.clone();
