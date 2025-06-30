@@ -1338,6 +1338,30 @@ export type ClientGetUserDeviceError =
   | ClientGetUserDeviceErrorNonExisting
   | ClientGetUserDeviceErrorStopped
 
+// ClientGetUserInfoError
+export enum ClientGetUserInfoErrorTag {
+    Internal = 'ClientGetUserInfoErrorInternal',
+    NonExisting = 'ClientGetUserInfoErrorNonExisting',
+    Stopped = 'ClientGetUserInfoErrorStopped',
+}
+
+export interface ClientGetUserInfoErrorInternal {
+    tag: ClientGetUserInfoErrorTag.Internal
+    error: string
+}
+export interface ClientGetUserInfoErrorNonExisting {
+    tag: ClientGetUserInfoErrorTag.NonExisting
+    error: string
+}
+export interface ClientGetUserInfoErrorStopped {
+    tag: ClientGetUserInfoErrorTag.Stopped
+    error: string
+}
+export type ClientGetUserInfoError =
+  | ClientGetUserInfoErrorInternal
+  | ClientGetUserInfoErrorNonExisting
+  | ClientGetUserInfoErrorStopped
+
 // ClientInfoError
 export enum ClientInfoErrorTag {
     Internal = 'ClientInfoErrorInternal',
@@ -4854,6 +4878,10 @@ export interface LibParsecPlugin {
         client: Handle,
         device: DeviceID
     ): Promise<Result<[UserInfo, DeviceInfo], ClientGetUserDeviceError>>
+    clientGetUserInfo(
+        client: Handle,
+        user_id: UserID
+    ): Promise<Result<UserInfo, ClientGetUserInfoError>>
     clientInfo(
         client: Handle
     ): Promise<Result<ClientInfo, ClientInfoError>>
