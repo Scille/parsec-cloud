@@ -7,7 +7,7 @@ pub use libparsec_client::{
     ClientAcceptTosError, ClientCreateWorkspaceError, ClientDeleteShamirRecoveryError,
     ClientForgetAllCertificatesError, ClientGetCurrentSelfProfileError,
     ClientGetSelfShamirRecoveryError, ClientGetTosError, ClientGetUserDeviceError,
-    ClientListFrozenUsersError, ClientListShamirRecoveriesForOthersError,
+    ClientGetUserInfoError, ClientListFrozenUsersError, ClientListShamirRecoveriesForOthersError,
     ClientListUserDevicesError, ClientListUsersError, ClientListWorkspaceUsersError,
     ClientOrganizationInfoError, ClientRenameWorkspaceError, ClientRevokeUserError,
     ClientSetupShamirRecoveryError, ClientShareWorkspaceError, ClientUserUpdateProfileError,
@@ -449,6 +449,19 @@ pub async fn client_list_users(
     let client = borrow_client(client)?;
 
     client.list_users(skip_revoked, None, None).await
+}
+
+/*
+ * Get user info
+ */
+
+pub async fn client_get_user_info(
+    client: Handle,
+    user_id: UserID,
+) -> Result<UserInfo, ClientGetUserInfoError> {
+    let client = borrow_client(client)?;
+
+    client.get_user_info(user_id).await
 }
 
 /*

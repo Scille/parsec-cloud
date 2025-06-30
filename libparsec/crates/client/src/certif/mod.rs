@@ -35,9 +35,9 @@ pub use forget_all_certificates::CertifForgetAllCertificatesError;
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 pub use list::{
     CertifGetCurrentSelfProfileError, CertifGetCurrentSelfRealmRoleError,
-    CertifGetCurrentSelfRealmsRoleError, CertifGetUserDeviceError, CertifListUserDevicesError,
-    CertifListUsersError, CertifListWorkspaceUsersError, DeviceInfo, UserInfo,
-    WorkspaceUserAccessInfo,
+    CertifGetCurrentSelfRealmsRoleError, CertifGetUserDeviceError, CertifGetUserInfoError,
+    CertifListUserDevicesError, CertifListUsersError, CertifListWorkspaceUsersError, DeviceInfo,
+    UserInfo, WorkspaceUserAccessInfo,
 };
 pub use manifest_validate::{CertifValidateManifestError, InvalidManifestError};
 pub use poll::CertifPollServerError;
@@ -629,6 +629,11 @@ impl CertificateOps {
         user_id: UserID,
     ) -> Result<Vec<DeviceInfo>, CertifListUserDevicesError> {
         list::list_user_devices(self, user_id).await
+    }
+
+    /// Get user info for the given UserID
+    pub async fn get_user_info(&self, user_id: UserID) -> Result<UserInfo, CertifGetUserInfoError> {
+        list::get_user_info(self, user_id).await
     }
 
     pub async fn get_user_device(
