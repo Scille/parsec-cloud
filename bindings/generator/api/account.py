@@ -16,6 +16,7 @@ from .common import (
     DeviceLabel,
     InvitationToken,
     InvitationType,
+    KeyDerivation,
 )
 from .addr import ParsecAddr
 from .device import DeviceSaveStrategy, AvailableDevice
@@ -93,6 +94,22 @@ async def account_login_with_password(
     email: EmailAddress,
     password: Password,
 ) -> Result[Handle, AccountLoginWithPasswordError]:
+    raise NotImplementedError
+
+
+class AccountLoginWithMasterSecretError(ErrorVariant):
+    class Offline:
+        pass
+
+    class Internal:
+        pass
+
+
+async def account_login_with_master_secret(
+    config_dir: Path,
+    addr: ParsecAddr,
+    auth_method_master_secret: KeyDerivation,
+) -> Result[Handle, AccountLoginWithMasterSecretError]:
     raise NotImplementedError
 
 

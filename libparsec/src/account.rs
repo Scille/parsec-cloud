@@ -57,7 +57,7 @@ pub async fn account_create_3_proceed(
         .await
 }
 
-pub async fn login_with_master_secret(
+pub async fn account_login_with_master_secret(
     config_dir: PathBuf,
     addr: ParsecAddr,
     auth_method_master_secret: KeyDerivation,
