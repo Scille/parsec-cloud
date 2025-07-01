@@ -52,6 +52,18 @@
       >
         <ion-toggle v-model="config.enableTelemetry" />
       </settings-option>
+      <settings-option
+        :title="'SettingsModal.seeLogs.label'"
+        :description="'SettingsModal.seeLogs.description'"
+      >
+        <ion-button
+          @click="openLogs"
+          fill="clear"
+          class="see-logs-button"
+        >
+          {{ $msTranslate('SettingsModal.seeLogs.seeLogs') }}
+        </ion-button>
+      </settings-option>
     </ion-list>
 
     <ion-list class="settings-list">
@@ -111,6 +123,7 @@ import { IonList, IonToggle, isPlatform, IonButton } from '@ionic/vue';
 import { inject, onMounted, onUnmounted, ref, toRaw, watch } from 'vue';
 import { Sentry } from '@/services/sentry';
 import { Env } from '@/services/environment';
+import { openLogDisplayModal } from '@/components/misc';
 
 const themeManager: ThemeManager = inject(ThemeManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
@@ -170,6 +183,10 @@ async function changeTheme(selectedTheme: Theme): Promise<void> {
 
 async function openConfigDir(): Promise<void> {
   window.electronAPI.openConfigDir();
+}
+
+async function openLogs(): Promise<void> {
+  await openLogDisplayModal();
 }
 
 onMounted(async (): Promise<void> => {

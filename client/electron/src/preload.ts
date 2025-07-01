@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 require('./rt/electron-rt');
-import log from 'electron-log/main';
 import * as fs from 'fs';
 
 // User Defined Preload scripts below
@@ -57,10 +56,8 @@ process.once('loaded', async () => {
     seeInExplorer: (path: string) => {
       ipcRenderer.send(PageToWindowChannel.SeeInExplorer, path);
     },
-    getLogs: (): Promise<Array<string>> => {
-      return new Promise((resolve, _reject) => {
-        resolve(log.transports.file.readAllLogs().flatMap((v) => v.lines));
-      });
+    getLogs: () => {
+      ipcRenderer.send(PageToWindowChannel.GetLogs);
     },
     readCustomFile: (file: string): Promise<ArrayBuffer> => {
       return new Promise((resolve, _reject) => {

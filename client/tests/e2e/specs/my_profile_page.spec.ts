@@ -140,7 +140,7 @@ msTest('Check settings section', async ({ myProfilePage }) => {
   await checkMenuItem(myProfilePage, 0, 'Settings', 'Settings');
   const settings = myProfilePage.locator('.settings-list-container');
   const options = settings.locator('.settings-option');
-  await expect(options).toHaveCount(3);
+  await expect(options).toHaveCount(4);
   const lang = options.nth(0);
   await expect(lang.locator('.settings-option__content').locator('.title')).toHaveText('Language');
   await expect(lang.locator('.settings-option__content').locator('.description')).toHaveText('Choose application language');
@@ -161,6 +161,10 @@ msTest('Check settings section', async ({ myProfilePage }) => {
   await expect(telemetry.locator('.settings-option__content').locator('.description')).toHaveText(
     "Les rapports d'erreur aident à améliorer Parsec",
   );
+
+  const logs = options.nth(3);
+  await expect(logs.locator('.settings-option__content').locator('.title')).toHaveText('Logs');
+  await expect(logs.locator('.settings-option__content').locator('.description')).toHaveText("Afficher les logs de l'application");
 });
 
 msTest('Open documentation', async ({ myProfilePage }) => {

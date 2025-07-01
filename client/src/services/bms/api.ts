@@ -731,20 +731,19 @@ async function getCustomOrderInvoices(
   });
 }
 
-interface FileData {
+export interface FileData {
   name: string;
   data: Uint8Array;
   mimeType: string;
 }
 
 interface BugReportOptions {
-  includeLogs?: boolean;
+  logs?: Array<string>;
   includeScreenshot?: boolean;
   files?: Array<FileData>;
 }
 
 async function reportBug(query: BugReportQueryData, opts?: BugReportOptions): Promise<BmsResponse> {
-  console.log(opts?.includeLogs);
   return wrapQuery(async () => {
     const formData = new FormData();
     const json = {
@@ -757,7 +756,7 @@ async function reportBug(query: BugReportQueryData, opts?: BugReportOptions): Pr
       description: query.description,
       version: APP_VERSION,
       timestamp: DateTime.now().toISO(),
-      logs: opts?.includeLogs ? await window.electronAPI.getLogs() : [],
+      logs: opts?.logs,
     };
     formData.append('data', new Blob([JSON.stringify(json)], { type: 'application/json' }));
 

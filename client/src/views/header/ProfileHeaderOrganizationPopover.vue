@@ -103,6 +103,13 @@
       >
         <ion-text class="body-sm version"> {{ $msTranslate('MenuPage.about') }} (v{{ APP_VERSION }}) </ion-text>
       </ion-item>
+      <ion-item
+        class="footer-list__item"
+        @click="onOptionClick(ProfilePopoverOption.ReportBug)"
+        v-show="showBugReport"
+      >
+        <ion-text class="body-sm version"> {{ $msTranslate('MenuPage.reportBug') }} </ion-text>
+      </ion-item>
     </div>
   </ion-list>
 </template>
@@ -118,6 +125,7 @@ export enum ProfilePopoverOption {
   Feedback = 6,
   About = 7,
   Update = 8,
+  ReportBug = 9,
 }
 </script>
 
@@ -129,12 +137,15 @@ import { UpdateAvailabilityData } from '@/services/eventDistributor';
 import { popoverController } from '@ionic/core';
 import { IonIcon, IonItem, IonLabel, IonList, IonText } from '@ionic/vue';
 import { cog, fingerPrint, idCard, logOut, phonePortrait } from 'ionicons/icons';
+import { ref } from 'vue';
 
 defineProps<{
   email: string;
   profile: UserProfile;
   updateAvailability: UpdateAvailabilityData;
 }>();
+
+const showBugReport = ref(window.isTesting() || window.usesTestbed());
 
 async function onOptionClick(option: ProfilePopoverOption): Promise<void> {
   await popoverController.dismiss({

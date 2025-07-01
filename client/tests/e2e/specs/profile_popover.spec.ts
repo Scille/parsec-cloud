@@ -16,7 +16,7 @@ msTest('Profile popover default state', async ({ connected }) => {
   await expect(buttons).toHaveText(['Settings', 'My devices', 'Authentication', 'Recovery file', 'Log out']);
 
   const footer = popover.locator('.footer-list');
-  await expect(footer.locator('ion-item')).toHaveText(['Documentation', 'Feedback', /About \(v.+\)/]);
+  await expect(footer.locator('ion-item')).toHaveText(['Documentation', 'Feedback', /About \(v.+\)/, 'Report a bug']);
 });
 
 msTest('Profile popover open documentation', async ({ connected }) => {
