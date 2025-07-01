@@ -761,6 +761,14 @@ async function mockGetCustomOrderInvoices(
   );
 }
 
+async function mockReportBug(page: MsPage, options?: MockRouteOptions): Promise<void> {
+  await mockRoute(page, '**/feedback', options, {
+    POST: async (route) => {
+      await route.fulfill({ status: 200 });
+    },
+  });
+}
+
 export const MockBms = {
   mockLogin,
   mockUserRoute,
@@ -781,4 +789,5 @@ export const MockBms = {
   mockUpdateEmailSendCode,
   mockCustomOrderRequest,
   mockGetCustomOrderInvoices,
+  mockReportBug,
 };

@@ -59,6 +59,14 @@ export async function fillIonInput(ionInput: Locator, text: string): Promise<voi
   await expect(ionInput).not.toBeFocused();
 }
 
+export async function fillIonTextArea(ionTextArea: Locator, text: string): Promise<void> {
+  const textArea = ionTextArea.locator('textarea');
+  await textArea.fill(text);
+  await textArea.blur();
+  await expect(textArea).toHaveValue(text);
+  await expect(ionTextArea).not.toBeFocused();
+}
+
 export async function fillInputModal(root: Locator | Page, text: string, clear?: boolean): Promise<void> {
   const modal = root.locator('.text-input-modal');
   await expect(modal).toBeVisible();

@@ -32,6 +32,7 @@ import {
 } from '@/services/bms/types';
 import { parseCustomOrderInvoice } from '@/services/bms/utils';
 import { APP_VERSION, Env } from '@/services/environment';
+import { formatLogEntry } from '@/services/webLogger';
 import axios, { AxiosError, AxiosInstance, AxiosResponse, isAxiosError } from 'axios';
 import { DateTime } from 'luxon';
 import { decodeToken } from 'megashark-lib';
@@ -731,7 +732,7 @@ async function getCustomOrderInvoices(
   });
 }
 
-interface FileData {
+export interface FileData {
   name: string;
   data: Uint8Array;
   mimeType: string;
@@ -744,7 +745,6 @@ interface BugReportOptions {
 }
 
 async function reportBug(query: BugReportQueryData, opts?: BugReportOptions): Promise<BmsResponse> {
-  console.log(opts?.includeLogs);
   return wrapQuery(async () => {
     const formData = new FormData();
     const json = {
@@ -757,7 +757,7 @@ async function reportBug(query: BugReportQueryData, opts?: BugReportOptions): Pr
       description: query.description,
       version: APP_VERSION,
       timestamp: DateTime.now().toISO(),
-      logs: opts?.includeLogs ? await window.electronAPI.getLogs() : [],
+      logs: opts?.includeLogs ? (await window.electronAPI.getLogs()).map((entry) => formatLogEntry(entry)) : [],
     };
     formData.append('data', new Blob([JSON.stringify(json)], { type: 'application/json' }));
 

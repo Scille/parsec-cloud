@@ -103,6 +103,18 @@
       >
         <ion-text class="body-sm version"> {{ $msTranslate('MenuPage.about') }} (v{{ APP_VERSION }}) </ion-text>
       </ion-item>
+      <ion-item
+        class="footer-list__item"
+        @click="onOptionClick(ProfilePopoverOption.SeeLogs)"
+      >
+        <ion-text class="body-sm version"> {{ 'SEE LOGS' }} </ion-text>
+      </ion-item>
+      <ion-item
+        class="footer-list__item"
+        @click="onOptionClick(ProfilePopoverOption.ReportBug)"
+      >
+        <ion-text class="body-sm version"> {{ 'REPORT BUG' }} </ion-text>
+      </ion-item>
     </div>
   </ion-list>
 </template>
@@ -118,6 +130,8 @@ export enum ProfilePopoverOption {
   Feedback = 6,
   About = 7,
   Update = 8,
+  SeeLogs = 9,
+  ReportBug = 10,
 }
 </script>
 
