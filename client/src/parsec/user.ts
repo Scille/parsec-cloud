@@ -4,6 +4,7 @@ import { libparsec, UserInfo as ParsecUserInfo } from '@/plugins/libparsec';
 
 import {
   ClientGetUserDeviceError,
+  ClientGetUserInfoError,
   ClientListUsersError,
   ClientRevokeUserError,
   ClientUserUpdateProfileError,
@@ -66,33 +67,13 @@ export async function revokeUser(userId: UserID): Promise<Result<null, ClientRev
   return generateNoHandleError<ClientRevokeUserError>();
 }
 
-export enum UserInfoErrorTag {
-  NotFound = 'NotFound',
-  Internal = 'Internal',
-}
+export async function getUserInfo(userId: UserID): Promise<Result<UserInfo, ClientGetUserInfoError>> {
+  const handle = getConnectionHandle();
 
-interface UserInfoNotFoundError {
-  tag: UserInfoErrorTag.NotFound;
-}
-
-interface UserInfoInternalError {
-  tag: UserInfoErrorTag.Internal;
-}
-
-export type UserInfoError = UserInfoInternalError | UserInfoNotFoundError;
-
-export async function getUserInfo(userId: UserID): Promise<Result<UserInfo, UserInfoError>> {
-  const listResult = await listUsers(false);
-
-  if (!listResult.ok) {
-    return { ok: false, error: { tag: UserInfoErrorTag.Internal } };
+  if (handle !== null) {
+    await libparsec.clientGetUserInfo(handle, userId);
   }
-
-  const userInfo = listResult.value.find((item) => item.id === userId);
-  if (!userInfo) {
-    return { ok: false, error: { tag: UserInfoErrorTag.NotFound } };
-  }
-  return { ok: true, value: userInfo };
+  return generateNoHandleError<ClientGetUserInfoError>();
 }
 
 export async function updateProfile(userId: UserID, profile: UserProfile): Promise<Result<null, ClientUserUpdateProfileError>> {
