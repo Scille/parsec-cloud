@@ -53,6 +53,8 @@ pub enum AccountCreateError {
     Internal(#[from] anyhow::Error),
     #[error("Invalid validation code")]
     InvalidValidationCode,
+    #[error("Send validation code required")]
+    SendValidationCodeRequired,
     #[error("Auth method id already exists")]
     AuthMethodIdAlreadyExists,
 }
@@ -135,6 +137,9 @@ pub(super) async fn account_create(
         }
         account_create_proceed::Rep::InvalidValidationCode => {
             Err(AccountCreateError::InvalidValidationCode)
+        }
+        account_create_proceed::Rep::SendValidationCodeRequired => {
+            Err(AccountCreateError::SendValidationCodeRequired)
         }
         bad_rep @ account_create_proceed::Rep::UnknownStatus { .. } => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
