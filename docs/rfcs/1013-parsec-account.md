@@ -451,48 +451,8 @@ Anonymous account API:
     "req": {
       "fields": [
         {
-          "name": "email",
-          "type": "EmailAddress"
-        },
-        {
-          // Code received by email following use of `account_create_send_validation_email`
-          // Should be 6 base32 characters.
-          "name": "validation_code",
-          "type": "ValidationCode"
-        },
-        {
-          // Quality-of-life field to pre-fill the human handle's label during enrollment
-          "name": "human_label",
-          "type": "String"
-        },
-        {
-            // Auth method can be of two types:
-            // - ClientProvided, for which the client is able to store
-            //   `auth_method_master_secret` all by itself.
-            // - Password, for which the client must obtain some configuration
-            //   (i.e. this field !) from the server in order to know how
-            //   to turn the password into `auth_method_master_secret`.
-            "name": "auth_method_password_algorithm",
-            "type": "RequiredOption<UntrustedPasswordAlgorithm>"
-        }
-        {
-          // Secret key shared between the client and the server and used for
-          // account authenticated API family's HMAC authentication.
-          "name": "auth_method_hmac_key",
-          "type": "SecretKey"
-        },
-        {
-          // UUID used to identify the authentication method in the `Authorization` HTTP header.
-          //
-          // This cannot be generated server-side since the client derives it from the
-          // `auth_method_master_secret`.
-          "name": "auth_method_id",
-          "type": "AccountAuthMethodID"
-        },
-        {
-          // `AccountVaultKeyAccess` encrypted with the `auth_method_secret_key`
-          "name": "vault_key_access",
-          "type": "Bytes"
+          "name": "account_create_step",
+          "type": "AccountCreateStep"
         }
       ]
     },
@@ -504,14 +464,86 @@ Anonymous account API:
         "status": "invalid_validation_code"
       },
       {
-        // No validation code exists, or 3 bad attempts have been done on the
-        // current validation code.
+        // No validation code exists, or the current validation code is too old, or
+        // has been attempted 3 times without success.
         "status": "send_validation_code_required"
       },
       {
-      // In practice this error should never occur since collision on the ID is
-      // virtually non-existent as long as the client generates a proper UUID.
-      "status": "auth_method_id_already_exists"
+        // In practice this error should never occur since collision on the ID is
+        // virtually non-existent as long as the client generates a proper UUID.
+        "status": "auth_method_id_already_exists"
+      }
+    ],
+    "nested_types": [
+      {
+        "name": "AccountCreateStep",
+        "discriminant_field": "step",
+        "variants": [
+          {
+            /// This step is optional
+            "name": "Number0CheckCode",
+            "discriminant_value": "NUMBER_0_CHECK_CODE",
+            "fields": [
+              {
+                /// Code received by email following use of `account_create_send_validation_email`
+                "name": "validation_code",
+                "type": "ValidationCode"
+              },
+              {
+                "name": "email",
+                "type": "EmailAddress"
+              }
+            ]
+          },
+          {
+            "name": "Number1Create",
+            "discriminant_value": "NUMBER_1_CREATE",
+            "fields": [
+              {
+                /// Code received by email following use of `account_create_send_validation_email`
+                "name": "validation_code",
+                "type": "ValidationCode"
+              },
+              {
+                // On top of the email we actually need to identify the account to create,
+                // this field contains the human label as a quality-of-life feature to be
+                // able to pre-fill the human handle's label later on during organization
+                // enrollment.
+                "name": "human_handle",
+                "type": "HumanHandle"
+              },
+              {
+                // Auth method can be of two types:
+                // - ClientProvided, for which the client is able to store
+                //   `auth_method_master_secret` all by itself.
+                // - Password, for which the client must obtain some configuration
+                //   (i.e. this field !) from the server in order to know how
+                //   to turn the password into `auth_method_master_secret`.
+                "name": "auth_method_password_algorithm",
+                "type": "RequiredOption<UntrustedPasswordAlgorithm>"
+              },
+              {
+                // Secret key shared between the client and the server and used for
+                // account authenticated API family's HMAC authentication.
+                "name": "auth_method_hmac_key",
+                "type": "SecretKey"
+              },
+              {
+                // UUID used to identify the authentication method in the `Authorization` HTTP header.
+                //
+                // This cannot be generated server-side since the client derives it from the
+                // `auth_method_master_secret`.
+                "name": "auth_method_id",
+                "type": "AccountAuthMethodID"
+              },
+              {
+                // `VaultKeyAccess` encrypted with the `auth_method_secret_key`
+                "name": "vault_key_access",
+                "type": "Bytes"
+              }
+            ]
+          }
+        ]
       }
     ]
   }
