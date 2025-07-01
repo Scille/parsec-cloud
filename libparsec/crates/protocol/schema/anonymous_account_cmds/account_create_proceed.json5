@@ -20,6 +20,11 @@
         "status": "invalid_validation_code"
       },
       {
+        // No validation code exists, or the current validation code is too old, or
+        // has been attempted 3 times without success.
+        "status": "send_validation_code_required"
+      },
+      {
         // In practice this error should never occur since collision on the ID is
         // virtually non-existent as long as the client generates a proper UUID.
         "status": "auth_method_id_already_exists"
@@ -56,7 +61,10 @@
                 "type": "ValidationCode"
               },
               {
-                // Quality-of-life field to pre-fill the human handle's label during enrollment
+                // On top of the email we actually need to identify the account to create,
+                // this field contains the human label as a quality-of-life feature to be
+                // able to pre-fill the human handle's label later on during organization
+                // enrollment.
                 "name": "human_handle",
                 "type": "HumanHandle"
               },
