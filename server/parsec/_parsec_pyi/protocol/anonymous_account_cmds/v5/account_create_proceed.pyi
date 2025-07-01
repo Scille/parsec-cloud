@@ -29,14 +29,14 @@ class AccountCreateStepNumber1Create(AccountCreateStep):
         validation_code: ValidationCode,
         human_handle: HumanHandle,
         auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
-        auth_method_hmac_key: SecretKey,
+        auth_method_mac_key: SecretKey,
         auth_method_id: AccountAuthMethodID,
         vault_key_access: bytes,
     ) -> None: ...
     @property
-    def auth_method_hmac_key(self) -> SecretKey: ...
-    @property
     def auth_method_id(self) -> AccountAuthMethodID: ...
+    @property
+    def auth_method_mac_key(self) -> SecretKey: ...
     @property
     def auth_method_password_algorithm(self) -> UntrustedPasswordAlgorithm | None: ...
     @property
@@ -70,6 +70,11 @@ class RepOk(Rep):
     ) -> None: ...
 
 class RepInvalidValidationCode(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
+class RepSendValidationEmailRequired(Rep):
     def __init__(
         self,
     ) -> None: ...

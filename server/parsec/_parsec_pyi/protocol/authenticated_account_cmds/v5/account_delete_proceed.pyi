@@ -7,10 +7,10 @@ from __future__ import annotations
 from parsec._parsec import ValidationCode
 
 class Req:
-    def __init__(self, deletion_code: ValidationCode) -> None: ...
+    def __init__(self, validation_code: ValidationCode) -> None: ...
     def dump(self) -> bytes: ...
     @property
-    def deletion_code(self) -> ValidationCode: ...
+    def validation_code(self) -> ValidationCode: ...
 
 class Rep:
     @staticmethod
@@ -29,12 +29,12 @@ class RepOk(Rep):
         self,
     ) -> None: ...
 
-class RepInvalidDeletionCode(Rep):
+class RepInvalidValidationCode(Rep):
     def __init__(
         self,
     ) -> None: ...
 
-class RepNewCodeNeeded(Rep):
+class RepSendValidationEmailRequired(Rep):
     def __init__(
         self,
     ) -> None: ...
