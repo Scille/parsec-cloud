@@ -118,7 +118,7 @@ async def test_authenticated_invite_new_device_send_email_bad_outcome(
     minimalorg: MinimalorgRpcClients,
     backend: Backend,
     bad_outcome: SendEmailBadOutcome,
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     async def _mocked_send_email(*args, **kwargs):
         return bad_outcome
