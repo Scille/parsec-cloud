@@ -24,7 +24,7 @@
             {
                 // No validation code exists, or 3 bad attempts have been done on the
                 // current validation code.
-                "status": "send_validation_code_required"
+                "status": "send_validation_email_required"
             }
         ]
     }
