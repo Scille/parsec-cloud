@@ -4039,6 +4039,11 @@ fn variant_account_create_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "AccountCreateErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::AccountCreateError::SendValidationEmailRequired { .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateErrorSendValidationEmailRequired")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
     }
     Ok(js_obj)
 }
@@ -4077,6 +4082,81 @@ fn variant_account_create_send_validation_email_error_rs_to_js<'a>(
         }
         libparsec::AccountCreateSendValidationEmailError::Offline { .. } => {
             let js_tag = JsString::try_new(cx, "AccountCreateSendValidationEmailErrorOffline")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// AccountDeleteProceedError
+
+#[allow(dead_code)]
+fn variant_account_delete_proceed_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AccountDeleteProceedError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::AccountDeleteProceedError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "AccountDeleteProceedErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountDeleteProceedError::InvalidValidationCode { .. } => {
+            let js_tag = JsString::try_new(cx, "AccountDeleteProceedErrorInvalidValidationCode")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountDeleteProceedError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "AccountDeleteProceedErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountDeleteProceedError::SendValidationEmailRequired { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "AccountDeleteProceedErrorSendValidationEmailRequired")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// AccountDeleteSendValidationEmailError
+
+#[allow(dead_code)]
+fn variant_account_delete_send_validation_email_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AccountDeleteSendValidationEmailError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::AccountDeleteSendValidationEmailError::EmailRecipientRefused { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "AccountDeleteSendValidationEmailErrorEmailRecipientRefused",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountDeleteSendValidationEmailError::EmailServerUnavailable { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "AccountDeleteSendValidationEmailErrorEmailServerUnavailable",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountDeleteSendValidationEmailError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "AccountDeleteSendValidationEmailErrorInternal")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountDeleteSendValidationEmailError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "AccountDeleteSendValidationEmailErrorOffline")
                 .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
@@ -14858,7 +14938,7 @@ fn account_create_3_proceed(mut cx: FunctionContext) -> JsResult<JsPromise> {
                 addr,
                 validation_code,
                 human_handle,
-                password,
+                &password,
             )
             .await;
 
@@ -14881,6 +14961,128 @@ fn account_create_3_proceed(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_err = variant_account_create_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// account_delete_1_send_validation_email
+fn account_delete_1_send_validation_email(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let account = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::account_delete_1_send_validation_email(account).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_account_delete_send_validation_email_error_rs_to_js(
+                            &mut cx, err,
+                        )?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// account_delete_2_proceed
+fn account_delete_2_proceed(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let account = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let validation_code = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::ValidationCode, _> {
+                libparsec::ValidationCode::from_str(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::account_delete_2_proceed(account, validation_code).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_account_delete_proceed_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -15261,7 +15463,7 @@ fn account_login_with_password(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .expect("Mutex is poisoned")
         .spawn(async move {
             let ret =
-                libparsec::account_login_with_password(config_dir, addr, email, password).await;
+                libparsec::account_login_with_password(config_dir, addr, email, &password).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -26086,6 +26288,11 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         account_create_2_check_validation_code,
     )?;
     cx.export_function("accountCreate3Proceed", account_create_3_proceed)?;
+    cx.export_function(
+        "accountDelete1SendValidationEmail",
+        account_delete_1_send_validation_email,
+    )?;
+    cx.export_function("accountDelete2Proceed", account_delete_2_proceed)?;
     cx.export_function(
         "accountFetchRegistrationDevices",
         account_fetch_registration_devices,

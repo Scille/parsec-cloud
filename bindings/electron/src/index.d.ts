@@ -454,11 +454,16 @@ export interface AccountCreateErrorOffline {
     tag: "Offline"
     error: string
 }
+export interface AccountCreateErrorSendValidationEmailRequired {
+    tag: "SendValidationEmailRequired"
+    error: string
+}
 export type AccountCreateError =
   | AccountCreateErrorAuthMethodIdAlreadyExists
   | AccountCreateErrorInternal
   | AccountCreateErrorInvalidValidationCode
   | AccountCreateErrorOffline
+  | AccountCreateErrorSendValidationEmailRequired
 
 
 // AccountCreateSendValidationEmailError
@@ -483,6 +488,54 @@ export type AccountCreateSendValidationEmailError =
   | AccountCreateSendValidationEmailErrorEmailServerUnavailable
   | AccountCreateSendValidationEmailErrorInternal
   | AccountCreateSendValidationEmailErrorOffline
+
+
+// AccountDeleteProceedError
+export interface AccountDeleteProceedErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface AccountDeleteProceedErrorInvalidValidationCode {
+    tag: "InvalidValidationCode"
+    error: string
+}
+export interface AccountDeleteProceedErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface AccountDeleteProceedErrorSendValidationEmailRequired {
+    tag: "SendValidationEmailRequired"
+    error: string
+}
+export type AccountDeleteProceedError =
+  | AccountDeleteProceedErrorInternal
+  | AccountDeleteProceedErrorInvalidValidationCode
+  | AccountDeleteProceedErrorOffline
+  | AccountDeleteProceedErrorSendValidationEmailRequired
+
+
+// AccountDeleteSendValidationEmailError
+export interface AccountDeleteSendValidationEmailErrorEmailRecipientRefused {
+    tag: "EmailRecipientRefused"
+    error: string
+}
+export interface AccountDeleteSendValidationEmailErrorEmailServerUnavailable {
+    tag: "EmailServerUnavailable"
+    error: string
+}
+export interface AccountDeleteSendValidationEmailErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface AccountDeleteSendValidationEmailErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export type AccountDeleteSendValidationEmailError =
+  | AccountDeleteSendValidationEmailErrorEmailRecipientRefused
+  | AccountDeleteSendValidationEmailErrorEmailServerUnavailable
+  | AccountDeleteSendValidationEmailErrorInternal
+  | AccountDeleteSendValidationEmailErrorOffline
 
 
 // AccountFetchRegistrationDevicesError
@@ -3930,6 +3983,13 @@ export function accountCreate3Proceed(
     human_handle: HumanHandle,
     password: string
 ): Promise<Result<null, AccountCreateError>>
+export function accountDelete1SendValidationEmail(
+    account: number
+): Promise<Result<null, AccountDeleteSendValidationEmailError>>
+export function accountDelete2Proceed(
+    account: number,
+    validation_code: string
+): Promise<Result<null, AccountDeleteProceedError>>
 export function accountFetchRegistrationDevices(
     account: number
 ): Promise<Result<null, AccountFetchRegistrationDevicesError>>

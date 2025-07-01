@@ -4310,6 +4310,13 @@ fn variant_account_create_error_rs_to_js(
         libparsec::AccountCreateError::Offline { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"AccountCreateErrorOffline".into())?;
         }
+        libparsec::AccountCreateError::SendValidationEmailRequired { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateErrorSendValidationEmailRequired".into(),
+            )?;
+        }
     }
     Ok(js_obj)
 }
@@ -4350,6 +4357,90 @@ fn variant_account_create_send_validation_email_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"AccountCreateSendValidationEmailErrorOffline".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// AccountDeleteProceedError
+
+#[allow(dead_code)]
+fn variant_account_delete_proceed_error_rs_to_js(
+    rs_obj: libparsec::AccountDeleteProceedError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::AccountDeleteProceedError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountDeleteProceedErrorInternal".into(),
+            )?;
+        }
+        libparsec::AccountDeleteProceedError::InvalidValidationCode { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountDeleteProceedErrorInvalidValidationCode".into(),
+            )?;
+        }
+        libparsec::AccountDeleteProceedError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountDeleteProceedErrorOffline".into(),
+            )?;
+        }
+        libparsec::AccountDeleteProceedError::SendValidationEmailRequired { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountDeleteProceedErrorSendValidationEmailRequired".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// AccountDeleteSendValidationEmailError
+
+#[allow(dead_code)]
+fn variant_account_delete_send_validation_email_error_rs_to_js(
+    rs_obj: libparsec::AccountDeleteSendValidationEmailError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::AccountDeleteSendValidationEmailError::EmailRecipientRefused { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountDeleteSendValidationEmailErrorEmailRecipientRefused".into(),
+            )?;
+        }
+        libparsec::AccountDeleteSendValidationEmailError::EmailServerUnavailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountDeleteSendValidationEmailErrorEmailServerUnavailable".into(),
+            )?;
+        }
+        libparsec::AccountDeleteSendValidationEmailError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountDeleteSendValidationEmailErrorInternal".into(),
+            )?;
+        }
+        libparsec::AccountDeleteSendValidationEmailError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountDeleteSendValidationEmailErrorOffline".into(),
             )?;
         }
     }
@@ -16454,12 +16545,13 @@ pub fn accountCreate3Proceed(
             let custom_from_rs_string = |s: String| -> Result<_, String> { Ok(s.into()) };
             custom_from_rs_string(password).map_err(|e| TypeError::new(e.as_ref()))
         }?;
+
         let ret = libparsec::account_create_3_proceed(
             &config_dir,
             addr,
             validation_code,
             human_handle,
-            password,
+            &password,
         )
         .await;
         Ok(match ret {
@@ -16477,6 +16569,68 @@ pub fn accountCreate3Proceed(
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_account_create_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// account_delete_1_send_validation_email
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn accountDelete1SendValidationEmail(account: u32) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::account_delete_1_send_validation_email(account).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_account_delete_send_validation_email_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// account_delete_2_proceed
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn accountDelete2Proceed(account: u32, validation_code: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let validation_code = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::ValidationCode, _> {
+                libparsec::ValidationCode::from_str(&s).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(validation_code).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::account_delete_2_proceed(account, validation_code).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_account_delete_proceed_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -16726,7 +16880,8 @@ pub fn accountLoginWithPassword(
             let custom_from_rs_string = |s: String| -> Result<_, String> { Ok(s.into()) };
             custom_from_rs_string(password).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-        let ret = libparsec::account_login_with_password(config_dir, addr, email, password).await;
+
+        let ret = libparsec::account_login_with_password(config_dir, addr, email, &password).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();

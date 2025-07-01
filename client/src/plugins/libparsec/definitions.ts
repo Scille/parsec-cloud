@@ -431,6 +431,7 @@ export enum AccountCreateErrorTag {
     Internal = 'AccountCreateErrorInternal',
     InvalidValidationCode = 'AccountCreateErrorInvalidValidationCode',
     Offline = 'AccountCreateErrorOffline',
+    SendValidationEmailRequired = 'AccountCreateErrorSendValidationEmailRequired',
 }
 
 export interface AccountCreateErrorAuthMethodIdAlreadyExists {
@@ -449,11 +450,16 @@ export interface AccountCreateErrorOffline {
     tag: AccountCreateErrorTag.Offline
     error: string
 }
+export interface AccountCreateErrorSendValidationEmailRequired {
+    tag: AccountCreateErrorTag.SendValidationEmailRequired
+    error: string
+}
 export type AccountCreateError =
   | AccountCreateErrorAuthMethodIdAlreadyExists
   | AccountCreateErrorInternal
   | AccountCreateErrorInvalidValidationCode
   | AccountCreateErrorOffline
+  | AccountCreateErrorSendValidationEmailRequired
 
 // AccountCreateSendValidationEmailError
 export enum AccountCreateSendValidationEmailErrorTag {
@@ -484,6 +490,66 @@ export type AccountCreateSendValidationEmailError =
   | AccountCreateSendValidationEmailErrorEmailServerUnavailable
   | AccountCreateSendValidationEmailErrorInternal
   | AccountCreateSendValidationEmailErrorOffline
+
+// AccountDeleteProceedError
+export enum AccountDeleteProceedErrorTag {
+    Internal = 'AccountDeleteProceedErrorInternal',
+    InvalidValidationCode = 'AccountDeleteProceedErrorInvalidValidationCode',
+    Offline = 'AccountDeleteProceedErrorOffline',
+    SendValidationEmailRequired = 'AccountDeleteProceedErrorSendValidationEmailRequired',
+}
+
+export interface AccountDeleteProceedErrorInternal {
+    tag: AccountDeleteProceedErrorTag.Internal
+    error: string
+}
+export interface AccountDeleteProceedErrorInvalidValidationCode {
+    tag: AccountDeleteProceedErrorTag.InvalidValidationCode
+    error: string
+}
+export interface AccountDeleteProceedErrorOffline {
+    tag: AccountDeleteProceedErrorTag.Offline
+    error: string
+}
+export interface AccountDeleteProceedErrorSendValidationEmailRequired {
+    tag: AccountDeleteProceedErrorTag.SendValidationEmailRequired
+    error: string
+}
+export type AccountDeleteProceedError =
+  | AccountDeleteProceedErrorInternal
+  | AccountDeleteProceedErrorInvalidValidationCode
+  | AccountDeleteProceedErrorOffline
+  | AccountDeleteProceedErrorSendValidationEmailRequired
+
+// AccountDeleteSendValidationEmailError
+export enum AccountDeleteSendValidationEmailErrorTag {
+    EmailRecipientRefused = 'AccountDeleteSendValidationEmailErrorEmailRecipientRefused',
+    EmailServerUnavailable = 'AccountDeleteSendValidationEmailErrorEmailServerUnavailable',
+    Internal = 'AccountDeleteSendValidationEmailErrorInternal',
+    Offline = 'AccountDeleteSendValidationEmailErrorOffline',
+}
+
+export interface AccountDeleteSendValidationEmailErrorEmailRecipientRefused {
+    tag: AccountDeleteSendValidationEmailErrorTag.EmailRecipientRefused
+    error: string
+}
+export interface AccountDeleteSendValidationEmailErrorEmailServerUnavailable {
+    tag: AccountDeleteSendValidationEmailErrorTag.EmailServerUnavailable
+    error: string
+}
+export interface AccountDeleteSendValidationEmailErrorInternal {
+    tag: AccountDeleteSendValidationEmailErrorTag.Internal
+    error: string
+}
+export interface AccountDeleteSendValidationEmailErrorOffline {
+    tag: AccountDeleteSendValidationEmailErrorTag.Offline
+    error: string
+}
+export type AccountDeleteSendValidationEmailError =
+  | AccountDeleteSendValidationEmailErrorEmailRecipientRefused
+  | AccountDeleteSendValidationEmailErrorEmailServerUnavailable
+  | AccountDeleteSendValidationEmailErrorInternal
+  | AccountDeleteSendValidationEmailErrorOffline
 
 // AccountFetchRegistrationDevicesError
 export enum AccountFetchRegistrationDevicesErrorTag {
@@ -4718,6 +4784,13 @@ export interface LibParsecPlugin {
         human_handle: HumanHandle,
         password: Password
     ): Promise<Result<null, AccountCreateError>>
+    accountDelete1SendValidationEmail(
+        account: Handle
+    ): Promise<Result<null, AccountDeleteSendValidationEmailError>>
+    accountDelete2Proceed(
+        account: Handle,
+        validation_code: ValidationCode
+    ): Promise<Result<null, AccountDeleteProceedError>>
     accountFetchRegistrationDevices(
         account: Handle
     ): Promise<Result<null, AccountFetchRegistrationDevicesError>>
