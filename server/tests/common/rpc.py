@@ -486,21 +486,23 @@ class BaseAuthenticatedAccountRpcClient:
     async def _do_request(self, req: bytes, family: str) -> bytes:
         raise NotImplementedError
 
-    async def account_delete_confirm(
-        self, deletion_code: ValidationCode
-    ) -> authenticated_account_cmds.latest.account_delete_confirm.Rep:
-        req = authenticated_account_cmds.latest.account_delete_confirm.Req(
-            deletion_code=deletion_code
+    async def account_delete_proceed(
+        self, validation_code: ValidationCode
+    ) -> authenticated_account_cmds.latest.account_delete_proceed.Rep:
+        req = authenticated_account_cmds.latest.account_delete_proceed.Req(
+            validation_code=validation_code
         )
         raw_rep = await self._do_request(req.dump(), "authenticated_account")
-        return authenticated_account_cmds.latest.account_delete_confirm.Rep.load(raw_rep)
+        return authenticated_account_cmds.latest.account_delete_proceed.Rep.load(raw_rep)
 
-    async def account_delete_send_code(
+    async def account_delete_send_validation_email(
         self,
-    ) -> authenticated_account_cmds.latest.account_delete_send_code.Rep:
-        req = authenticated_account_cmds.latest.account_delete_send_code.Req()
+    ) -> authenticated_account_cmds.latest.account_delete_send_validation_email.Rep:
+        req = authenticated_account_cmds.latest.account_delete_send_validation_email.Req()
         raw_rep = await self._do_request(req.dump(), "authenticated_account")
-        return authenticated_account_cmds.latest.account_delete_send_code.Rep.load(raw_rep)
+        return authenticated_account_cmds.latest.account_delete_send_validation_email.Rep.load(
+            raw_rep
+        )
 
     async def account_info(
         self,
