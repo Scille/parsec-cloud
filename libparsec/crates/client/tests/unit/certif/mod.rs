@@ -26,6 +26,7 @@ mod get_current_self_realm_role;
 mod get_current_self_realms_role;
 mod get_realm_needs;
 mod get_user_device;
+mod get_user_info;
 mod list_user_devices;
 mod list_users;
 mod list_workspace_users;

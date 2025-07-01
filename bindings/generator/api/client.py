@@ -228,6 +228,24 @@ async def client_revoke_user(
     raise NotImplementedError
 
 
+class ClientGetUserInfoError(ErrorVariant):
+    class Stopped:
+        pass
+
+    class NonExisting:
+        pass
+
+    class Internal:
+        pass
+
+
+async def client_get_user_info(
+    client: Handle,
+    user_id: UserID,
+) -> Result[UserInfo, ClientGetUserInfoError]:
+    raise NotImplementedError
+
+
 class ClientListUsersError(ErrorVariant):
     class Stopped:
         pass

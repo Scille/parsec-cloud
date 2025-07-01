@@ -105,41 +105,25 @@ pub(super) async fn list_users(
             };
 
             let mut infos = Vec::with_capacity(certifs.len());
-            for certif in certifs {
-                let maybe_revoked = store
-                    .get_revoked_user_certificate(UpTo::Current, certif.user_id)
+            for user_certif in certifs {
+                let revoked_certif = store
+                    .get_revoked_user_certificate(UpTo::Current, user_certif.user_id)
                     .await?;
-                if skip_revoked && maybe_revoked.is_some() {
+                if skip_revoked && revoked_certif.is_some() {
                     continue;
                 }
-                let (revoked_on, revoked_by) = match maybe_revoked {
-                    None => (None, None),
-                    Some(certif) => (Some(certif.timestamp), Some(certif.author.to_owned())),
-                };
-
-                let maybe_update = store
-                    .get_last_user_update_certificate(UpTo::Current, certif.user_id)
+                let update_certif = store
+                    .get_last_user_update_certificate(UpTo::Current, user_certif.user_id)
                     .await?;
-                let current_profile = match maybe_update {
-                    Some(update) => update.new_profile,
-                    None => certif.profile,
-                };
 
-                let created_by = match &certif.author {
-                    CertificateSigner::User(author) => Some(author.to_owned()),
-                    CertificateSigner::Root => None,
-                };
-
-                let info = UserInfo {
-                    id: certif.user_id.to_owned(),
-                    human_handle: certif.human_handle.as_ref().to_owned(),
-                    current_profile,
-                    created_on: certif.timestamp,
-                    created_by,
-                    revoked_on,
-                    revoked_by,
-                };
-                infos.push(info);
+                infos.push(
+                    cook_user_info_from_certificates(
+                        user_certif.as_ref(),
+                        revoked_certif.as_deref(),
+                        update_certif.as_deref(),
+                    )
+                    .await,
+                );
 
                 if skip_revoked && infos.len() == limit.unwrap_or(u32::MAX) as usize {
                     break;
@@ -147,6 +131,90 @@ pub(super) async fn list_users(
             }
 
             Ok(infos)
+        })
+        .await?
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum CertifGetUserInfoError {
+    #[error("No user with this UserID")]
+    NonExisting,
+    #[error("Component has stopped")]
+    Stopped,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+impl From<CertifStoreError> for CertifGetUserInfoError {
+    fn from(value: CertifStoreError) -> Self {
+        match value {
+            CertifStoreError::Stopped => Self::Stopped,
+            CertifStoreError::Internal(err) => err.into(),
+        }
+    }
+}
+
+async fn cook_user_info_from_certificates(
+    user_certificate: &UserCertificate,
+    revoked_certificate: Option<&RevokedUserCertificate>,
+    update_certificate: Option<&UserUpdateCertificate>,
+) -> UserInfo {
+    let (revoked_on, revoked_by) = match revoked_certificate {
+        None => (None, None),
+        Some(certif) => (Some(certif.timestamp), Some(certif.author.to_owned())),
+    };
+    let current_profile = match update_certificate {
+        None => user_certificate.profile,
+        Some(update_certificate) => update_certificate.new_profile,
+    };
+
+    let created_by = match &user_certificate.author {
+        CertificateSigner::User(author) => Some(author.to_owned()),
+        CertificateSigner::Root => None,
+    };
+
+    UserInfo {
+        id: user_certificate.user_id.to_owned(),
+        human_handle: user_certificate.human_handle.as_ref().to_owned(),
+        current_profile,
+        created_on: user_certificate.timestamp,
+        created_by,
+        revoked_on,
+        revoked_by,
+    }
+}
+
+pub(super) async fn get_user_info(
+    ops: &CertificateOps,
+    user_id: UserID,
+) -> Result<UserInfo, CertifGetUserInfoError> {
+    ops.store
+        .for_read(async |store| {
+            let user_certificate = match store.get_user_certificate(UpTo::Current, user_id).await {
+                Ok(certif) => certif,
+                Err(GetCertificateError::ExistButTooRecent { .. }) => {
+                    unreachable!("query up to current")
+                }
+                Err(GetCertificateError::NonExisting) => {
+                    return Err(CertifGetUserInfoError::NonExisting)
+                }
+                Err(GetCertificateError::Internal(err)) => {
+                    return Err(CertifGetUserInfoError::Internal(err))
+                }
+            };
+            let revoked_certificate = store
+                .get_revoked_user_certificate(UpTo::Current, user_certificate.user_id)
+                .await?;
+            let update_certificate = store
+                .get_last_user_update_certificate(UpTo::Current, user_certificate.user_id)
+                .await?;
+
+            Ok(cook_user_info_from_certificates(
+                user_certificate.as_ref(),
+                revoked_certificate.as_deref(),
+                update_certificate.as_deref(),
+            )
+            .await)
         })
         .await?
 }
