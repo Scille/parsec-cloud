@@ -12,16 +12,16 @@ use super::authenticated_account_cmds;
 pub fn req() {
     // Generated from Parsec 3.4.1-a.0+dev
     // Content:
-    //   cmd: 'account_delete_send_validation_code'
+    //   cmd: 'account_delete_send_validation_email'
     let raw: &[u8] = hex!(
-        "81a3636d64d9236163636f756e745f64656c6574655f73656e645f76616c6964617469"
-        "6f6e5f636f6465"
+        "81a3636d64d9246163636f756e745f64656c6574655f73656e645f76616c6964617469"
+        "6f6e5f656d61696c"
     )
     .as_ref();
 
-    let req = authenticated_account_cmds::account_delete_send_validation_code::Req {};
+    let req = authenticated_account_cmds::account_delete_send_validation_email::Req {};
     let expected =
-        authenticated_account_cmds::AnyCmdReq::AccountDeleteSendValidationCode(req.clone());
+        authenticated_account_cmds::AnyCmdReq::AccountDeleteSendValidationEmail(req.clone());
     println!("***expected: {:?}", req.dump().unwrap());
     let data = authenticated_account_cmds::AnyCmdReq::load(raw).unwrap();
 
@@ -42,17 +42,17 @@ pub fn rep_ok() {
     //   status: 'ok'
     let raw: &[u8] = hex!("81a6737461747573a26f6b").as_ref();
 
-    let expected = authenticated_account_cmds::account_delete_send_validation_code::Rep::Ok;
+    let expected = authenticated_account_cmds::account_delete_send_validation_email::Rep::Ok;
     println!("***expected: {:?}", expected.dump().unwrap());
     let data =
-        authenticated_account_cmds::account_delete_send_validation_code::Rep::load(raw).unwrap();
+        authenticated_account_cmds::account_delete_send_validation_email::Rep::load(raw).unwrap();
 
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
     let data2 =
-        authenticated_account_cmds::account_delete_send_validation_code::Rep::load(&raw2).unwrap();
+        authenticated_account_cmds::account_delete_send_validation_email::Rep::load(&raw2).unwrap();
 
     p_assert_eq!(data2, expected);
 }
@@ -65,17 +65,17 @@ pub fn rep_email_server_unavailable() {
         hex!("81a6737461747573b8656d61696c5f7365727665725f756e617661696c61626c65").as_ref();
 
     let expected =
-        authenticated_account_cmds::account_delete_send_validation_code::Rep::EmailServerUnavailable;
+        authenticated_account_cmds::account_delete_send_validation_email::Rep::EmailServerUnavailable;
     println!("***expected: {:?}", expected.dump().unwrap());
     let data =
-        authenticated_account_cmds::account_delete_send_validation_code::Rep::load(raw).unwrap();
+        authenticated_account_cmds::account_delete_send_validation_email::Rep::load(raw).unwrap();
 
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
     let data2 =
-        authenticated_account_cmds::account_delete_send_validation_code::Rep::load(&raw2).unwrap();
+        authenticated_account_cmds::account_delete_send_validation_email::Rep::load(&raw2).unwrap();
 
     p_assert_eq!(data2, expected);
 }
@@ -88,17 +88,17 @@ pub fn rep_email_recipient_refused() {
         hex!("81a6737461747573b7656d61696c5f726563697069656e745f72656675736564").as_ref();
 
     let expected =
-        authenticated_account_cmds::account_delete_send_validation_code::Rep::EmailRecipientRefused;
+        authenticated_account_cmds::account_delete_send_validation_email::Rep::EmailRecipientRefused;
     println!("***expected: {:?}", expected.dump().unwrap());
     let data =
-        authenticated_account_cmds::account_delete_send_validation_code::Rep::load(raw).unwrap();
+        authenticated_account_cmds::account_delete_send_validation_email::Rep::load(raw).unwrap();
 
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
     let data2 =
-        authenticated_account_cmds::account_delete_send_validation_code::Rep::load(&raw2).unwrap();
+        authenticated_account_cmds::account_delete_send_validation_email::Rep::load(&raw2).unwrap();
 
     p_assert_eq!(data2, expected);
 }
