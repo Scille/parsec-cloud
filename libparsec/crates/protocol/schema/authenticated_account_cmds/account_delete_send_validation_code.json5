@@ -3,8 +3,10 @@
         "major_versions": [
             5
         ],
-        "cmd": "account_delete_send_code",
-        "req": {},
+        "cmd": "account_delete_send_validation_code",
+        "req": {
+            // No email to provide: the email of the authenticated user will be used.
+        },
         "reps": [
             {
                 "status": "ok"
