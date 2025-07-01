@@ -800,3 +800,34 @@
     }
   }
 }
+
+.bug-report-modal {
+  &::part(content) {
+    --max-height: 800px;
+
+    @media only screen and (max-height: 800px) {
+      --height: 90vh;
+      height: 90vh;
+    }
+  }
+
+  .ms-modal {
+    overflow-y: auto;
+  }
+}
+
+.log-modal {
+  &::part(content) {
+    --height: 600px;
+    height: 600px;
+
+    @media only screen and (max-height: 600px) {
+      --height: 90vh;
+      height: 90vh;
+    }
+  }
+
+  .ms-modal-content {
+    overflow: hidden;
+  }
+}

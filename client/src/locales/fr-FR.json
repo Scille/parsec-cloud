@@ -87,6 +87,19 @@
         "invite": "Inviter un nouveau membre",
         "noInvitations": "Aucune invitation"
     },
+    "browseFiles": {
+        "title": "Joindre un fichier",
+        "noFilesFound": "Aucun fichier ajouté",
+        "browse": "Parcourir",
+        "maxFileSize": "taille maximum : {maxFileSize}",
+        "addFile": "Ajouter un fichier",
+        "removeFile": "Supprimer",
+        "currentFilesCount": "Fichiers inclus: {current} / {limit}",
+        "errors": {
+            "generic": "Impossible de lister les fichiers.",
+            "offline": "Impossible de contacter le serveur. Veuillez vérifier votre connexion internet."
+        }
+    },
     "notification": {
         "changeRole": "Votre rôle a été modifié en tant que {role} dans l'espace de travail {workspace}",
         "workspaceAccess": "Vous avez accès à l'espace de travail {workspace}",
@@ -355,7 +368,12 @@
         "helpLink": "{signUrl}/contact",
         "contactLink": "{signUrl}/contact",
         "documentationLink": "https://docs.parsec.cloud/fr/{version}",
-        "documentationGuideLink": "https://docs.parsec.cloud/fr/{version}/userguide/{page}.html"
+        "documentationGuideLink": "https://docs.parsec.cloud/fr/{version}/userguide/{page}.html",
+        "reportBug": "Signaler un bug"
+    },
+    "bugReport": {
+        "failed": "Impossible d'envoyer le rapport",
+        "sent": "Le rapport de bug a été envoyé. Merci pour votre aide !"
     },
     "HeaderPage": {
         "titles": {
@@ -419,6 +437,11 @@
         "enableTelemetry": {
             "label": "Envoyer les rapports d'erreur",
             "description": "Les rapports d'erreur aident à améliorer Parsec"
+        },
+        "seeLogs": {
+            "label": "Logs",
+            "description": "Afficher les logs de l'application",
+            "seeLogs": "Voir les logs"
         },
         "minimizeToSystemTray": {
             "label": "Réduire dans la barre d'état",
@@ -1351,6 +1374,27 @@
             "update": "Mettre à jour",
             "showChangelog": "Voir l'historique des versions"
         }
+    },
+    "ReportBugModal": {
+        "title": "Signaler un problème",
+        "subtitle": "Si vous avez rencontré un problème dans l'application, signalez-le afin que nous puissions enquêter.",
+        "form": {
+            "email": "Votre email",
+            "description": "Description du problème",
+            "joinFile": "Joindre un fichier",
+            "browse": "Parcourir",
+            "cancel": "Annuler",
+            "submit": "Envoyer le rapport"
+        },
+        "log": {
+            "title": "Inclure les logs pour mieux comprendre le problème.",
+            "description": "Les logs peuvent contenir des données sensibles (noms de fichiers, noms de dossiers ou noms d'espaces de travail).",
+            "seeLogs": "Voir les logs"
+        }
+    },
+    "LogDisplayModal": {
+        "title": "Logs",
+        "noLog": "Aucun log disponible."
     },
     "ClaimDeviceModal": {
         "stepper": {

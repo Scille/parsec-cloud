@@ -87,8 +87,21 @@
         "invite": "Invite a new member",
         "noInvitations": "No invitations"
     },
+    "browseFiles": {
+        "title": "Join a file",
+        "noFilesFound": "No file selected",
+        "browse": "Browse",
+        "maxFileSize": "max size: {maxFileSize}",
+        "addFile": "Add a file",
+        "removeFile": "Remove",
+        "currentFilesCount": "Included files: {current} / {limit}",
+        "errors": {
+            "generic": "Failed to list files.",
+            "offline": "Failed to contact the server. Please check your internet connection."
+        }
+    },
     "notification": {
-        "changeRole": "Your role a been changed to {role} on the workspace {workspace}",
+        "changeRole": "Your role has been changed to {role} on the workspace {workspace}",
         "workspaceAccess": "You have access to the workspace {workspace}",
         "userJoinWorkspace": "{name} has joined the workspace {workspace}",
         "multipleUsersJoinWorkspace": "{count} have joined the workspace {workspace}",
@@ -355,7 +368,12 @@
         "helpLink": "{signUrl}/contact",
         "contactLink": "{signUrl}/contact",
         "documentationLink": "https://docs.parsec.cloud/en/{version}",
-        "documentationGuideLink": "https://docs.parsec.cloud/en/{version}/userguide/{page}.html"
+        "documentationGuideLink": "https://docs.parsec.cloud/en/{version}/userguide/{page}.html",
+        "reportBug": "Report a bug"
+    },
+    "bugReport": {
+        "failed": "Failed to send the report",
+        "sent": "The bug report has been sent. Thank you for your help!"
     },
     "HeaderPage": {
         "titles": {
@@ -419,6 +437,11 @@
         "enableTelemetry": {
             "label": "Send error reports",
             "description": "Error reports help us improve Parsec"
+        },
+        "seeLogs": {
+            "label": "Logs",
+            "description": "View the application logs",
+            "seeLogs": "View logs"
         },
         "minimizeToSystemTray": {
             "label": "Minimize to system tray",
@@ -1351,6 +1374,27 @@
             "update": "Update",
             "showChangelog": "Show changelog"
         }
+    },
+    "ReportBugModal": {
+        "title": "Report a bug",
+        "subtitle": "If you encountered a problem in the app, report it so we can investigate.",
+        "form": {
+            "email": "Your email",
+            "description": "Bug description",
+            "joinFile": "Join a file",
+            "browse": "Browse",
+            "cancel": "Cancel",
+            "submit": "Send report"
+        },
+        "log": {
+            "title": "Include logs to help better understand the problem.",
+            "description": "Logs may contain sensitive data (file names, folder names, or workspace names).",
+            "seeLogs": "View logs"
+        }
+    },
+    "LogDisplayModal": {
+        "title": "Logs",
+        "noLog": "No logs available."
     },
     "ClaimDeviceModal": {
         "stepper": {

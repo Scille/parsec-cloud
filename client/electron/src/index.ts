@@ -5,6 +5,7 @@ import { getCapacitorElectronConfig, setupElectronDeepLinking } from '@capacitor
 import * as Sentry from '@sentry/electron/main';
 import type { MenuItemConstructorOptions } from 'electron';
 import { MenuItem, app, dialog, ipcMain, shell } from 'electron';
+import log from 'electron-log/main';
 import unhandled from 'electron-unhandled';
 import { electronIsDev } from './utils';
 
@@ -64,6 +65,16 @@ try {
   app.setPath('userData', newConfigDir);
 } catch (e: any) {
   console.log(`Failed to set config path to '${newConfigDir}'`);
+}
+
+log.initialize();
+Object.assign(console, log.functions);
+if (!electronIsDev) {
+  log.transports.file.level = 'info';
+  log.transports.console.level = 'info';
+} else {
+  log.transports.file.level = 'debug';
+  log.transports.console.level = 'debug';
 }
 
 // Configure Sentry
@@ -269,4 +280,19 @@ ipcMain.on(PageToWindowChannel.CriticalError, async (_event, message: string, er
   dialog.showErrorBox('Critical error', `${message}: ${error.message}`);
   myCapacitorApp.forceClose = true;
   await myCapacitorApp.quitApp();
+});
+
+ipcMain.on(PageToWindowChannel.GetLogs, async () => {
+  const RE = /^\[(.+)\] \[(debug|info|warn|error|critical)\] (.+)$/;
+  const logs = log.transports.file.readAllLogs().flatMap((v) => {
+    return v.lines
+      .map((line) => {
+        const match = line.match(RE);
+        if (match && match.length === 4) {
+          return { message: match[3], level: match[2], timestamp: match[1] };
+        }
+      })
+      .filter((record) => record !== undefined);
+  });
+  myCapacitorApp.sendEvent(WindowToPageChannel.LogRecords, logs);
 });

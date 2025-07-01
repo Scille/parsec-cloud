@@ -7,7 +7,7 @@ async function checkModal(modal: Locator): Promise<void> {
   await expect(modal.locator('.ms-modal-header__title')).toHaveText('Settings');
   const content = modal.locator('.settings-list-container');
   const options = content.locator('.settings-option');
-  await expect(options).toHaveCount(3);
+  await expect(options).toHaveCount(4);
   const lang = options.nth(0);
   await expect(lang.locator('.settings-option__content').locator('.title')).toHaveText('Language');
   await expect(lang.locator('.settings-option__content').locator('.description')).toHaveText('Choose application language');
@@ -25,6 +25,10 @@ async function checkModal(modal: Locator): Promise<void> {
   await expect(telemetry.locator('.settings-option__content').locator('.description')).toHaveText(
     "Les rapports d'erreur aident à améliorer Parsec",
   );
+
+  const logs = options.nth(3);
+  await expect(logs.locator('.settings-option__content').locator('.title')).toHaveText('Logs');
+  await expect(logs.locator('.settings-option__content').locator('.description')).toHaveText("Afficher les logs de l'application");
 }
 
 msTest('Settings modal on home page', async ({ home }) => {

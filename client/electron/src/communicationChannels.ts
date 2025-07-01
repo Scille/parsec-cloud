@@ -15,6 +15,7 @@ export enum PageToWindowChannel {
   MacfuseNotInstalled = 'parsec-macfuse-not-installed',
   SeeInExplorer = 'parsec-see-in-explorer',
   PageInitError = 'parsec-page-init-error',
+  GetLogs = 'parsec-get-logs',
 }
 
 export enum WindowToPageChannel {
@@ -27,4 +28,5 @@ export enum WindowToPageChannel {
   PrintToConsole = 'parsec-print-to-console',
   LongPathsDisabled = 'parsec-long-paths-disabled',
   CustomBrandingFolder = 'parsec-custom-branding-folder',
+  LogRecords = 'parsec-log-records',
 }

@@ -51,12 +51,15 @@ import { inject, onMounted, onUnmounted, ref, Ref } from 'vue';
 import { Env } from '@/services/environment';
 import UpdateAppModal from '@/views/about/UpdateAppModal.vue';
 import { APP_VERSION } from '@/services/environment';
+import { openBugReportModal } from '@/components/misc';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 
 const isOnline = ref(false);
 const isPopoverOpen = ref(false);
 
 const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+const informationManager: InformationManager = inject(InformationManagerKey)!;
 const updateAvailability: Ref<UpdateAvailabilityData> = ref({ updateAvailable: false });
 let eventCbId: null | string = null;
 
@@ -162,6 +165,17 @@ async function openOrganizationPopover(event: Event): Promise<void> {
     await navigateTo(Routes.MyProfile, { query: { profilePage: ProfilePages.Authentication } });
   } else if (data.option === ProfilePopoverOption.Recovery) {
     await navigateTo(Routes.MyProfile, { query: { profilePage: ProfilePages.Recovery } });
+  } else if (data.option === ProfilePopoverOption.ReportBug) {
+    const result = await openBugReportModal();
+    if (result === MsModalResult.Confirm) {
+      informationManager.present(
+        new Information({
+          message: 'bugReport.sent',
+          level: InformationLevel.Success,
+        }),
+        PresentationMode.Toast,
+      );
+    }
   }
 }
 </script>

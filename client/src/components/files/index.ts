@@ -9,6 +9,7 @@ import FileDownloadItem from '@/components/files/FileDownloadItem.vue';
 import FileDropZone from '@/components/files/FileDropZone.vue';
 import FileGridDisplay from '@/components/files/FileGridDisplay.vue';
 import FileImportPopover from '@/components/files/FileImportPopover.vue';
+import FileInputList from '@/components/files/FileInputList.vue';
 import FileInputs from '@/components/files/FileInputs.vue';
 import FileListDisplay from '@/components/files/FileListDisplay.vue';
 import FileListItem from '@/components/files/FileListItem.vue';
@@ -40,6 +41,7 @@ export {
   FileDropZone,
   FileGridDisplay,
   FileImportPopover,
+  FileInputList,
   FileInputs,
   FileListDisplay,
   FileListItem,
