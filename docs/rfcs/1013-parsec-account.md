@@ -466,7 +466,7 @@ Anonymous account API:
       {
         // No validation code exists, or the current validation code is too old, or
         // has been attempted 3 times without success.
-        "status": "send_validation_code_required"
+        "status": "send_validation_email_required"
       },
       {
         // In practice this error should never occur since collision on the ID is
@@ -726,7 +726,7 @@ Anonymous account API:
     {
       // No validation code exists, or 3 bad attempts have been done on the
       // current validation code.
-      "status": "send_validation_code_required"
+      "status": "send_validation_email_required"
     }
   ]
 }
@@ -802,7 +802,7 @@ Authenticated account API:
             {
                 // No validation code exists, or 3 bad attempts have been done on the
                 // current validation code.
-                "status": "send_validation_code_required"
+                "status": "send_validation_email_required"
             }
         ]
     }
