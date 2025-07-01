@@ -650,7 +650,7 @@ Anonymous account API:
 
 ```json5
 {
-  "cmd": "account_recovery_send_validation_code",
+  "cmd": "account_recovery_send_validation_email",
   "req": {
     "fields": [
       {
@@ -746,7 +746,7 @@ Authenticated account API:
         "major_versions": [
             5
         ],
-        "cmd": "account_delete_send_validation_code",
+        "cmd": "account_delete_send_validation_email",
         "req": {
             // No email to provide: the email of the authenticated user will be used.
         },
