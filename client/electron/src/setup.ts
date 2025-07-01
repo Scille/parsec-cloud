@@ -90,16 +90,6 @@ export class ElectronCapacitorApp {
       }),
     ];
 
-    log.initialize();
-    Object.assign(console, log.functions);
-    if (!electronIsDev) {
-      log.transports.file.level = 'info';
-      log.transports.console.level = 'info';
-    } else {
-      log.transports.file.level = 'debug';
-      log.transports.console.level = 'debug';
-    }
-
     for (let i = 1; i < process.argv.length; i++) {
       const arg = process.argv.at(i);
       // We're only interested in potential Parsec links

@@ -4,10 +4,14 @@ import { DateTime } from 'luxon';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
-interface LogEntry {
+export interface LogEntry {
   message: string;
   timestamp: string;
   level: LogLevel;
+}
+
+export function formatLogEntry(entry: LogEntry): string {
+  return `[${entry.timestamp}] [${entry.level}] ${entry.message}`;
 }
 
 class _WebLogger {

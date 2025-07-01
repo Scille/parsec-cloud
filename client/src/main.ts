@@ -556,12 +556,8 @@ function setupMockElectronAPI(injectionProvider: InjectionProvider): void {
     seeInExplorer: (_path: string): void => {
       console.log('SeeInExplorer: Not available');
     },
-    getLogs: (): Promise<Array<string>> => {
-      return new Promise((resolve, _reject) => {
-        WebLogger.getEntries().then((entries) => {
-          resolve(entries.map((entry) => `[${entry.timestamp}] [${entry.level}] ${entry.message}`));
-        });
-      });
+    getLogs: (): void => {
+      console.warn('Call WebLogger directly in web mode');
     },
     readCustomFile: (_file: string): Promise<ArrayBuffer | undefined> => {
       console.log('readCustomFile: Not available');
@@ -696,7 +692,7 @@ declare global {
       pageIsInitialized: () => void;
       openConfigDir: () => void;
       seeInExplorer: (path: string) => void;
-      getLogs: () => Promise<Array<string>>;
+      getLogs: () => void;
       initError: (error?: string) => void;
       readCustomFile: (file: string) => Promise<ArrayBuffer | undefined>;
     };
