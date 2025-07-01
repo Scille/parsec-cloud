@@ -709,25 +709,30 @@ The server will send an email with a validation code (similar to the creation va
 Authenticated account API:
 
 ```json5
-{
-  "cmd": "account_delete_send_validation_code",
-  "req": {
-    // No email to provide: the email of the authenticated user will be used.
-  },
-  "reps": [
+[
     {
-      "status": "ok"
-    },
-    {
-      // The email could not be sent due to SMTP server issue
-      "status": "email_server_unavailable"
-    },
-    {
-      // The SMTP server rejected the email recipient
-      "status": "email_recipient_refused"
+        "major_versions": [
+            5
+        ],
+        "cmd": "account_delete_send_validation_code",
+        "req": {
+            // No email to provide: the email of the authenticated user will be used.
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                // The email could not be sent due to SMTP server issue
+                "status": "email_server_unavailable"
+            },
+            {
+                // The SMTP server rejected the email recipient
+                "status": "email_recipient_refused"
+            }
+        ]
     }
-  ]
-}
+]
 ```
 
 > [!IMPORTANT]
@@ -739,30 +744,37 @@ Authenticated account API:
 Authenticated account API:
 
 ```json5
-{
-  "cmd": "account_delete_proceed",
-  "req": [
+[
     {
-      // Code received by email following use of `account_create_send_validation_email`
-      // Should be 6 base32 characters.
-      "name": "validation_code",
-      "type": "ValidationCode"
+        "major_versions": [
+            5
+        ],
+        "cmd": "account_delete_proceed",
+        "req": {
+            "fields": [
+                {
+                    // Code received by email following use of `account_create_send_validation_email`
+                    // Should be 6 base32 characters.
+                    "name": "validation_code",
+                    "type": "ValidationCode"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "invalid_validation_code"
+            },
+            {
+                // No validation code exists, or 3 bad attempts have been done on the
+                // current validation code.
+                "status": "send_validation_code_required"
+            }
+        ]
     }
-  ]
-  "reps": {
-    {
-      "status": "ok"
-    },
-    {
-      "status": "invalid_validation_code"
-    },
-    {
-      // No validation code exists, or 3 bad attempts have been done on the
-      // current validation code.
-      "status": "send_validation_code_required"
-    }
-  }
-}
+]
 ```
 
 At that point the server can remove the client, and its related data.
