@@ -54,7 +54,7 @@ class AccountCreateError(ErrorVariant):
     class InvalidValidationCode:
         pass
 
-    class SendValidationCodeRequired:
+    class SendValidationEmailRequired:
         pass
 
     class AuthMethodIdAlreadyExists:

@@ -172,17 +172,18 @@ pub fn rep_ok() {
     p_assert_eq!(data2, expected);
 }
 
-pub fn rep_send_validation_code_required() {
+pub fn rep_send_validation_email_required() {
     // Generated from Parsec 3.4.1-a.0+dev
     // Content:
-    //   status: 'send_validation_code_required'
+    //   status: 'send_validation_email_required'
     let raw: &[u8] = hex!(
-        "81a6737461747573bd73656e645f76616c69646174696f6e5f636f64655f7265717569"
-        "726564"
+        "81a6737461747573be73656e645f76616c69646174696f6e5f656d61696c5f72657175"
+        "69726564"
     )
     .as_ref();
+
     let expected =
-        anonymous_account_cmds::account_create_proceed::Rep::SendValidationCodeRequired {};
+        anonymous_account_cmds::account_create_proceed::Rep::SendValidationEmailRequired {};
     println!("***expected: {:?}", expected.dump().unwrap());
 
     let data = anonymous_account_cmds::account_create_proceed::Rep::load(raw).unwrap();
