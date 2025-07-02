@@ -147,7 +147,7 @@ class MemoryAccountComponent(BaseAccountComponent):
         except KeyError:
             return AccountCreateProceedBadOutcome.SEND_VALIDATION_EMAIL_REQUIRED
 
-        if last_mail_info.is_expired(now) or not last_mail_info.has_remaining_attempts():
+        if not last_mail_info.can_be_used(now):
             return AccountCreateProceedBadOutcome.SEND_VALIDATION_EMAIL_REQUIRED
 
         if last_mail_info.validation_code != validation_code:
@@ -270,7 +270,7 @@ class MemoryAccountComponent(BaseAccountComponent):
             except KeyError:
                 return AccountDeleteProceedBadOutcome.SEND_VALIDATION_EMAIL_REQUIRED
 
-            if last_mail_info.is_expired(now) or not last_mail_info.has_remaining_attempts():
+            if not last_mail_info.can_be_used(now):
                 return AccountDeleteProceedBadOutcome.SEND_VALIDATION_EMAIL_REQUIRED
 
             if last_mail_info.validation_code != validation_code:
