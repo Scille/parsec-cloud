@@ -1221,6 +1221,11 @@ impl ShamirRecoveryGreetInProgress3Ctx {
             _ => return Err(anyhow::anyhow!("Unexpected claimer step: {:?}", claimer_step).into()),
         };
 
+        // Note that we don't call invite_complete here, as it is done on the claimer's side,
+        // as we cannot know if the recovery process is over yet
+        // See "invite_complete command" section in RFC 1011
+        // https://github.com/Scille/parsec-cloud/blob/master/docs/rfcs/1011-non-blocking-invite-transport.md#invite_complete-command
+
         Ok(())
     }
 }
@@ -1487,6 +1492,9 @@ impl UserGreetInProgress4Ctx {
             invite_greeter_step::ClaimerStep::Number8Acknowledge => {}
             _ => return Err(anyhow::anyhow!("Unexpected claimer step: {:?}", claimer_step).into()),
         };
+        // Note that we call invite_complete here, as it not is done on the claimer's side.
+        // See "invite_complete command" section in RFC 1011
+        // https://github.com/Scille/parsec-cloud/blob/master/docs/rfcs/1011-non-blocking-invite-transport.md#invite_complete-command
 
         {
             use authenticated_cmds::latest::invite_complete::{Rep, Req};
@@ -1631,7 +1639,9 @@ impl DeviceGreetInProgress4Ctx {
             invite_greeter_step::ClaimerStep::Number8Acknowledge => {}
             _ => return Err(anyhow::anyhow!("Unexpected claimer step: {:?}", claimer_step).into()),
         };
-
+        // Note that we call invite_complete here, as it not is done on the claimer's side.
+        // See "invite_complete command" section in RFC 1011
+        // https://github.com/Scille/parsec-cloud/blob/master/docs/rfcs/1011-non-blocking-invite-transport.md#invite_complete-command
         {
             use authenticated_cmds::latest::invite_complete::{Rep, Req};
 

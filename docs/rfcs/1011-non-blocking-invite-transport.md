@@ -918,6 +918,10 @@ A better approach is then to explicitly complete the invitation with a dedicated
 - Device invitation: only the corresponding user is allowed
 - Shamir invitation: any recipient of the freshly recovered user are allowed
 
+In practice, invite_complete is called:
+- by the greeter, for user and device invitation
+- by the claimer, for shamir invitation
+
 Pseudo-code:
 
 ```python
