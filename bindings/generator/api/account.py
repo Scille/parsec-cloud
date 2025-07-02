@@ -206,3 +206,44 @@ async def account_register_new_device(
     save_strategy: DeviceSaveStrategy,
 ) -> Result[AvailableDevice, AccountRegisterNewDeviceError]:
     raise NotImplementedError
+
+
+class AccountDeleteSendValidationEmailError(ErrorVariant):
+    class Offline:
+        pass
+
+    class Internal:
+        pass
+
+    class EmailRecipientRefused:
+        pass
+
+    class EmailServerUnavailable:
+        pass
+
+
+async def account_delete_1_send_validation_email(
+    account: Handle,
+) -> Result[None, AccountDeleteSendValidationEmailError]:
+    raise NotImplementedError
+
+
+class AccountDeleteProceedError(ErrorVariant):
+    class Offline:
+        pass
+
+    class Internal:
+        pass
+
+    class InvalidValidationCode:
+        pass
+
+    class SendValidationEmailRequired:
+        pass
+
+
+async def account_delete_2_proceed(
+    account: Handle,
+    validation_code: ValidationCode,
+) -> Result[None, AccountDeleteProceedError]:
+    raise NotImplementedError

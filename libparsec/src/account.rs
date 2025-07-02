@@ -7,9 +7,9 @@ use std::{
 };
 
 pub use libparsec_account::{
-    AccountCreateError, AccountCreateSendValidationEmailError,
-    AccountFetchRegistrationDevicesError, AccountListInvitationsError,
-    AccountLoginWithMasterSecretError, AccountLoginWithPasswordError,
+    AccountCreateError, AccountCreateSendValidationEmailError, AccountDeleteProceedError,
+    AccountDeleteSendValidationEmailError, AccountFetchRegistrationDevicesError,
+    AccountListInvitationsError, AccountLoginWithMasterSecretError, AccountLoginWithPasswordError,
     AccountRegisterNewDeviceError,
 };
 use libparsec_client_connection::{AnonymousAccountCmds, ProxyConfig};
@@ -170,4 +170,21 @@ pub async fn account_register_new_device(
     account
         .register_new_device(organization_id, user_id, new_device_label, save_strategy)
         .await
+}
+
+pub async fn account_delete_1_send_validation_email(
+    account: Handle,
+) -> Result<(), AccountDeleteSendValidationEmailError> {
+    let account_handle = account;
+    let account = borrow_account(account_handle)?;
+    account.delete_1_send_validation_email().await
+}
+
+pub async fn account_delete_2_proceed(
+    account: Handle,
+    validation_code: ValidationCode,
+) -> Result<(), AccountDeleteProceedError> {
+    let account_handle = account;
+    let account = borrow_account(account_handle)?;
+    account.delete_2_proceed(validation_code).await
 }
