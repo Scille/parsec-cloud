@@ -27,9 +27,9 @@ export enum DeviceFileType {
 
 export enum DevicePurpose {
     PassphraseRecovery = 'DevicePurposePassphraseRecovery',
+    Registration = 'DevicePurposeRegistration',
     ShamirRecovery = 'DevicePurposeShamirRecovery',
     Standard = 'DevicePurposeStandard',
-    WebAuth = 'DevicePurposeWebAuth',
 }
 
 export enum GreeterOrClaimer {
@@ -460,6 +460,54 @@ export type AccountCreateError =
   | AccountCreateErrorInvalidValidationCode
   | AccountCreateErrorOffline
   | AccountCreateErrorSendValidationEmailRequired
+
+// AccountCreateRegistrationDeviceError
+export enum AccountCreateRegistrationDeviceErrorTag {
+    BadVaultKeyAccess = 'AccountCreateRegistrationDeviceErrorBadVaultKeyAccess',
+    Internal = 'AccountCreateRegistrationDeviceErrorInternal',
+    LoadDeviceDecryptionFailed = 'AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed',
+    LoadDeviceInvalidData = 'AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData',
+    LoadDeviceInvalidPath = 'AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath',
+    Offline = 'AccountCreateRegistrationDeviceErrorOffline',
+    TimestampOutOfBallpark = 'AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark',
+}
+
+export interface AccountCreateRegistrationDeviceErrorBadVaultKeyAccess {
+    tag: AccountCreateRegistrationDeviceErrorTag.BadVaultKeyAccess
+    error: string
+}
+export interface AccountCreateRegistrationDeviceErrorInternal {
+    tag: AccountCreateRegistrationDeviceErrorTag.Internal
+    error: string
+}
+export interface AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed {
+    tag: AccountCreateRegistrationDeviceErrorTag.LoadDeviceDecryptionFailed
+    error: string
+}
+export interface AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData {
+    tag: AccountCreateRegistrationDeviceErrorTag.LoadDeviceInvalidData
+    error: string
+}
+export interface AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath {
+    tag: AccountCreateRegistrationDeviceErrorTag.LoadDeviceInvalidPath
+    error: string
+}
+export interface AccountCreateRegistrationDeviceErrorOffline {
+    tag: AccountCreateRegistrationDeviceErrorTag.Offline
+    error: string
+}
+export interface AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark {
+    tag: AccountCreateRegistrationDeviceErrorTag.TimestampOutOfBallpark
+    error: string
+}
+export type AccountCreateRegistrationDeviceError =
+  | AccountCreateRegistrationDeviceErrorBadVaultKeyAccess
+  | AccountCreateRegistrationDeviceErrorInternal
+  | AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed
+  | AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData
+  | AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath
+  | AccountCreateRegistrationDeviceErrorOffline
+  | AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark
 
 // AccountCreateSendValidationEmailError
 export enum AccountCreateSendValidationEmailErrorTag {
@@ -4784,6 +4832,10 @@ export interface LibParsecPlugin {
         human_handle: HumanHandle,
         password: Password
     ): Promise<Result<null, AccountCreateError>>
+    accountCreateRegistrationDevice(
+        account: Handle,
+        existing_local_device_access: DeviceAccessStrategy
+    ): Promise<Result<null, AccountCreateRegistrationDeviceError>>
     accountDelete1SendValidationEmail(
         account: Handle
     ): Promise<Result<null, AccountDeleteSendValidationEmailError>>

@@ -112,9 +112,9 @@ fn enum_device_purpose_js_to_rs<'a>(
 ) -> NeonResult<libparsec::DevicePurpose> {
     match raw_value {
         "DevicePurposePassphraseRecovery" => Ok(libparsec::DevicePurpose::PassphraseRecovery),
+        "DevicePurposeRegistration" => Ok(libparsec::DevicePurpose::Registration),
         "DevicePurposeShamirRecovery" => Ok(libparsec::DevicePurpose::ShamirRecovery),
         "DevicePurposeStandard" => Ok(libparsec::DevicePurpose::Standard),
-        "DevicePurposeWebAuth" => Ok(libparsec::DevicePurpose::WebAuth),
         _ => cx.throw_range_error(format!(
             "Invalid value `{raw_value}` for enum DevicePurpose"
         )),
@@ -125,9 +125,9 @@ fn enum_device_purpose_js_to_rs<'a>(
 fn enum_device_purpose_rs_to_js(value: libparsec::DevicePurpose) -> &'static str {
     match value {
         libparsec::DevicePurpose::PassphraseRecovery => "DevicePurposePassphraseRecovery",
+        libparsec::DevicePurpose::Registration => "DevicePurposeRegistration",
         libparsec::DevicePurpose::ShamirRecovery => "DevicePurposeShamirRecovery",
         libparsec::DevicePurpose::Standard => "DevicePurposeStandard",
-        libparsec::DevicePurpose::WebAuth => "DevicePurposeWebAuth",
     }
 }
 
@@ -4042,6 +4042,69 @@ fn variant_account_create_error_rs_to_js<'a>(
         libparsec::AccountCreateError::SendValidationEmailRequired { .. } => {
             let js_tag = JsString::try_new(cx, "AccountCreateErrorSendValidationEmailRequired")
                 .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// AccountCreateRegistrationDeviceError
+
+#[allow(dead_code)]
+fn variant_account_create_registration_device_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AccountCreateRegistrationDeviceError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::AccountCreateRegistrationDeviceError::BadVaultKeyAccess { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorBadVaultKeyAccess")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountCreateRegistrationDeviceError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorInternal")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceDecryptionFailed { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidData { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidPath { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountCreateRegistrationDeviceError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorOffline")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountCreateRegistrationDeviceError::TimestampOutOfBallpark { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark",
+            )
+            .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -14972,6 +15035,70 @@ fn account_create_3_proceed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// account_create_registration_device
+fn account_create_registration_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let account = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let existing_local_device_access = {
+        let js_val = cx.argument::<JsObject>(1)?;
+        variant_device_access_strategy_js_to_rs(&mut cx, js_val)?
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::account_create_registration_device(
+                account,
+                &existing_local_device_access,
+            )
+            .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_account_create_registration_device_error_rs_to_js(
+                            &mut cx, err,
+                        )?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // account_delete_1_send_validation_email
 fn account_delete_1_send_validation_email(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -19186,7 +19313,7 @@ fn client_start(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::client_start(config, access).await;
+            let ret = libparsec::client_start(config, &access).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -26288,6 +26415,10 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         account_create_2_check_validation_code,
     )?;
     cx.export_function("accountCreate3Proceed", account_create_3_proceed)?;
+    cx.export_function(
+        "accountCreateRegistrationDevice",
+        account_create_registration_device,
+    )?;
     cx.export_function(
         "accountDelete1SendValidationEmail",
         account_delete_1_send_validation_email,
