@@ -12,7 +12,7 @@ pub use libparsec_account::{
     AccountListInvitationsError, AccountLoginWithMasterSecretError, AccountLoginWithPasswordError,
     AccountRegisterNewDeviceError,
 };
-use libparsec_client_connection::{AnonymousAccountCmds, ProxyConfig};
+use libparsec_client_connection::{AnonymousAccountCmds, ConnectionError, ProxyConfig};
 use libparsec_types::prelude::*;
 
 use crate::handle::{
@@ -187,4 +187,91 @@ pub async fn account_delete_2_proceed(
     let account_handle = account;
     let account = borrow_account(account_handle)?;
     account.delete_2_proceed(validation_code).await
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum AccountCreateRegistrationDeviceError {
+    #[error("Cannot load device file: invalid path ({})", .0)]
+    LoadDeviceInvalidPath(anyhow::Error),
+    #[error("Cannot load device file: invalid data")]
+    LoadDeviceInvalidData,
+    #[error("Cannot load device file: decryption failed")]
+    LoadDeviceDecryptionFailed,
+    #[error("Cannot decrypt the vault key access return by the server: {0}")]
+    BadVaultKeyAccess(DataError),
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    TimestampOutOfBallpark {
+        server_timestamp: DateTime,
+        client_timestamp: DateTime,
+        ballpark_client_early_offset: f64,
+        ballpark_client_late_offset: f64,
+    },
+}
+
+impl From<libparsec_platform_device_loader::LoadDeviceError>
+    for AccountCreateRegistrationDeviceError
+{
+    fn from(value: libparsec_platform_device_loader::LoadDeviceError) -> Self {
+        use libparsec_platform_device_loader::LoadDeviceError;
+        match value {
+            e @ LoadDeviceError::StorageNotAvailable => Self::LoadDeviceInvalidPath(e.into()),
+            LoadDeviceError::InvalidPath(err) => Self::LoadDeviceInvalidPath(err),
+            LoadDeviceError::InvalidData => Self::LoadDeviceInvalidData,
+            LoadDeviceError::DecryptionFailed => Self::LoadDeviceDecryptionFailed,
+            LoadDeviceError::Internal(e) => Self::Internal(e),
+        }
+    }
+}
+
+impl From<libparsec_account::AccountCreateRegistrationDeviceError>
+    for AccountCreateRegistrationDeviceError
+{
+    fn from(value: libparsec_account::AccountCreateRegistrationDeviceError) -> Self {
+        match value {
+            libparsec_account::AccountCreateRegistrationDeviceError::BadVaultKeyAccess(err) => {
+                AccountCreateRegistrationDeviceError::BadVaultKeyAccess(err)
+            }
+            libparsec_account::AccountCreateRegistrationDeviceError::Offline(err) => {
+                AccountCreateRegistrationDeviceError::Offline(err)
+            }
+            libparsec_account::AccountCreateRegistrationDeviceError::Internal(err) => {
+                AccountCreateRegistrationDeviceError::Internal(err)
+            }
+            libparsec_account::AccountCreateRegistrationDeviceError::TimestampOutOfBallpark {
+                server_timestamp,
+                client_timestamp,
+                ballpark_client_early_offset,
+                ballpark_client_late_offset,
+            } => AccountCreateRegistrationDeviceError::TimestampOutOfBallpark {
+                server_timestamp,
+                client_timestamp,
+                ballpark_client_early_offset,
+                ballpark_client_late_offset,
+            },
+        }
+    }
+}
+
+pub async fn account_create_registration_device(
+    account: Handle,
+    existing_local_device_access: &DeviceAccessStrategy,
+) -> Result<(), AccountCreateRegistrationDeviceError> {
+    let account_handle = account;
+    let account = borrow_account(account_handle)?;
+
+    let existing_local_device = libparsec_platform_device_loader::load_device(
+        account.config_dir(),
+        existing_local_device_access,
+    )
+    .await?;
+
+    account
+        .create_registration_device(existing_local_device)
+        .await?;
+
+    Ok(())
 }
