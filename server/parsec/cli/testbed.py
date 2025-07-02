@@ -306,6 +306,15 @@ async def test_new_account(request: Request) -> Response:
     )
     assert isinstance(validation_code, ValidationCode)
 
+    # Discard the mail that have been generated during the account creation
+    match testbed.backend.config.email_config:
+        case MockedEmailConfig() as email_config:
+            email_config.sent_emails = [
+                mail for mail in email_config.sent_emails if mail.recipient != human_handle.email
+            ]
+        case _:
+            pass
+
     outcome = await testbed.backend.account.create_proceed(
         now=DateTime.now(),
         validation_code=validation_code,
