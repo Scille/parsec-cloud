@@ -64,8 +64,8 @@
                     "discriminant_value": "PASSPHRASE_RECOVERY"
                 },
                 {
-                    "name": "WebAuth",
-                    "discriminant_value": "WEB_AUTH"
+                    "name": "Registration",
+                    "discriminant_value": "REGISTRATION"
                 }
             ]
         }

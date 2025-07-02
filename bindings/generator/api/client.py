@@ -178,7 +178,7 @@ class DevicePurpose(Enum):
     Standard = EnumItemUnit
     ShamirRecovery = EnumItemUnit
     PassphraseRecovery = EnumItemUnit
-    WebAuth = EnumItemUnit
+    Registration = EnumItemUnit
 
 
 class DeviceInfo(Structure):

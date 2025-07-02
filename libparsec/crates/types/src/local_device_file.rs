@@ -213,12 +213,6 @@ pub enum DeviceAccessStrategy {
     Smartcard {
         key_file: PathBuf,
     },
-    // Future API that will be use for parsec-web
-    // ServerSide{
-    //     url: ParsecOrganizationAddr,
-    //     email: EmailAddress,
-    //     password: Password,
-    // }
 }
 
 impl DeviceAccessStrategy {
