@@ -8,7 +8,7 @@ Join an organization
 You have been invited to join an organization on Parsec! Before you get started,
 please make sure you have :ref:`installed the Parsec app <doc_userguide_install_parsec>`.
 
-1. Start the invitation process
+Start the invitation process
 -------------------------------
 
 If you have received an **invitation email**, simply click the link in the email.
@@ -20,7 +20,7 @@ with an **invitation link**. Paste the link on the login screen and click ``Join
 
 .. _doc_userguide_join_organization_token_exchange:
 
-2. Token exchange
+Token exchange
 -----------------
 
 In order to create a secure channel between the **guest** (you) and
@@ -59,7 +59,7 @@ Then, share your code to the host and wait until it is selected.
 
 
 
-3. Set up your account
+Set up your account
 ----------------------
 
 Finally, enter your **contact details** and choose the preferred **authentication method**

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.0.0-rc.1+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-03 18:59+0200\n"
+"POT-Creation-Date: 2025-07-02 08:08+0000\n"
 "PO-Revision-Date: 2024-09-18 18:49+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
 "Language: fr\n"
@@ -32,8 +32,8 @@ msgstr ""
 "<doc_userguide_install_parsec>`."
 
 #: ../../userguide/join_organization.rst:12
-msgid "1. Start the invitation process"
-msgstr "1. Lancer le processus d'invitation"
+msgid "Start the invitation process"
+msgstr "Lancer le processus d'invitation"
 
 #: ../../userguide/join_organization.rst:14
 msgid ""
@@ -56,8 +56,8 @@ msgstr ""
 "de connexion et cliquez sur « Rejoindre »."
 
 #: ../../userguide/join_organization.rst:24
-msgid "2. Token exchange"
-msgstr "2. Échange de token"
+msgid "Token exchange"
+msgstr "Échange de token"
 
 #: ../../userguide/join_organization.rst:26
 msgid ""
@@ -116,8 +116,8 @@ msgstr ""
 "Attaque_de_l%27homme_du_milieu>`_."
 
 #: ../../userguide/join_organization.rst:63
-msgid "3. Set up your account"
-msgstr "3. Configurez votre compte"
+msgid "Set up your account"
+msgstr "Configurez votre compte"
 
 #: ../../userguide/join_organization.rst:65
 msgid ""
