@@ -475,6 +475,7 @@ def testbed_cmd(
                     port=port,
                     app=app,
                     proxy_trusted_addresses=None,
+                    ssl_ciphers=["TLSv1"],
                 )
 
                 click.echo("bye ;-)")
