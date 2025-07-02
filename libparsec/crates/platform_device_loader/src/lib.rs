@@ -124,11 +124,11 @@ pub async fn list_available_devices(
 pub enum LoadDeviceError {
     #[error("Device storage is not available")]
     StorageNotAvailable,
-    #[error(transparent)]
+    #[error("Invalid path: {}", .0)]
     InvalidPath(anyhow::Error),
-    #[error("Cannot deserialize file content")]
+    #[error("Invalid data")]
     InvalidData,
-    #[error("Failed to decrypt file content")]
+    #[error("Decryption failed")]
     DecryptionFailed,
     #[error(transparent)]
     Internal(anyhow::Error),

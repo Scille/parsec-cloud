@@ -69,7 +69,7 @@ class ClientStartError(ErrorVariant):
 
 async def client_start(
     config: ClientConfig,
-    access: DeviceAccessStrategy,
+    access: Ref[DeviceAccessStrategy],
 ) -> Result[Handle, ClientStartError]:
     raise NotImplementedError
 
