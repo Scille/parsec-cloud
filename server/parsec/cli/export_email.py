@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import tempfile
 from base64 import urlsafe_b64decode
 from collections.abc import Callable
 from email.message import Message
@@ -10,17 +9,19 @@ from pathlib import Path
 import click
 
 from parsec._parsec import EmailAddress, InvitationType, OrganizationID, ValidationCode
-from parsec.components.account import generate_email_deletion_email, generate_email_validation_email
+from parsec.components.account import (
+    _generate_account_create_validation_email,
+    _generate_account_delete_validation_email,
+)
 from parsec.components.invite import generate_invite_email
 
-PARSEC_EMAIL_ADDR = EmailAddress("parsec@example.com")
-ALICE_EMAIL_ADDR = EmailAddress("alice@example.com")
+DEFAULT_SENDER_EMAIL = EmailAddress("parsec@example.com")
+DEFAULT_RECIPIENT_EMAIL = EmailAddress("alice@example.com")
+DEFAULT_ORGANIZATION_ID = OrganizationID("CoolOrg")
 DEFAULT_INVITATION_URL = "https://invitation.parsec.example.com"
-DEFAULT_ACCOUNT_VALIDATION_URL = "https://validate.parsec.example.com"
-DEFAULT_ACCOUNT_DELETION_URL = "https://del.parsec.example.com"
 DEFAULT_BASE_SERVER_URL = "https://parsec.example.com"
 # cspell: words DELC8D
-DEFAULT_ACCOUNT_DELETION_CODE = ValidationCode("DELC8D")
+DEFAULT_VALIDATION_CODE = ValidationCode("DELC8D")
 
 
 def write_mail_file_to_filesystem(message: Message, output_dir: Path, file_prefix: str):
@@ -57,9 +58,21 @@ def write_mail_file_to_filesystem(message: Message, output_dir: Path, file_prefi
 def mail_templates_shared_options[**P, T](fn: Callable[P, T]) -> Callable[P, T]:
     decorators = [
         click.option(
+            "--sender",
+            show_default=True,
+            type=EmailAddress,
+            default=DEFAULT_SENDER_EMAIL.str,
+        ),
+        click.option(
+            "--recipient",
+            show_default=True,
+            type=EmailAddress,
+            default=DEFAULT_RECIPIENT_EMAIL.str,
+        ),
+        click.option(
             "--output-dir",
             show_default=True,
-            callback=lambda ctx, param, value: value or Path(tempfile.gettempdir()),
+            default=".",
             type=click.Path(dir_okay=True, file_okay=False, path_type=Path),
             help="The output directory to save the email file",
         ),
@@ -75,7 +88,7 @@ def mail_templates_shared_options[**P, T](fn: Callable[P, T]) -> Callable[P, T]:
     return fn
 
 
-@click.group(short_help="Export server email to a file")
+@click.group(short_help="Export server email to a file for debugging purpose")
 def export_email():
     pass
 
@@ -89,60 +102,87 @@ def export_email():
     show_default=True,
     callback=lambda ctx, param, value: InvitationType.from_str(value.upper()),
 )
-@click.option("--organization-id", type=OrganizationID, required=True)
+@click.option(
+    "--organization-id", type=OrganizationID, default=DEFAULT_ORGANIZATION_ID, show_default=True
+)
 @click.option("--invitation-url", default=DEFAULT_INVITATION_URL, show_default=True)
+@click.option(
+    "--reply-to",
+    show_default=True,
+    type=EmailAddress,
+    default=None,
+)
 @click.option("--greeter-name", default=None, type=str, show_default=True, help="The greeter name")
 def invite(
+    sender: EmailAddress,
+    recipient: EmailAddress,
     invitation_type: InvitationType,
     organization_id: OrganizationID,
     invitation_url: str,
     greeter_name: str | None,
+    reply_to: EmailAddress | None,
     server_url: str,
     output_dir: Path,
 ):
     message = generate_invite_email(
+        from_addr=sender,
+        to_addr=recipient,
         invitation_type=invitation_type,
         organization_id=organization_id,
-        from_addr=PARSEC_EMAIL_ADDR,
-        to_addr=ALICE_EMAIL_ADDR,
         invitation_url=invitation_url,
         server_url=server_url,
         greeter_name=greeter_name,
+        reply_to=reply_to,
     )
 
     write_mail_file_to_filesystem(message, output_dir, "invitation_mail")
 
 
-@export_email.command(short_help="Export account validation email")
+@export_email.command(short_help="Export account create validation email")
 @mail_templates_shared_options
 @click.option(
-    "--validation-url", type=str, default=DEFAULT_ACCOUNT_VALIDATION_URL, show_default=True
-)
-def account_validation(validation_url: str, server_url: str, output_dir: Path):
-    message = generate_email_validation_email(
-        from_addr=PARSEC_EMAIL_ADDR,
-        to_addr=ALICE_EMAIL_ADDR,
-        validation_url=validation_url,
-        server_url=server_url,
-    )
-
-    write_mail_file_to_filesystem(message, output_dir, "account_validation_email")
-
-
-@export_email.command(short_help="Export account deletion email")
-@mail_templates_shared_options
-@click.option(
-    "--deletion-code",
+    "--validation-code",
     type=ValidationCode,
-    default=DEFAULT_ACCOUNT_DELETION_CODE.str,
+    default=DEFAULT_VALIDATION_CODE.str,
     show_default=True,
 )
-def account_deletion(deletion_code: ValidationCode, server_url: str, output_dir: Path):
-    message = generate_email_deletion_email(
-        from_addr=PARSEC_EMAIL_ADDR,
-        to_addr=ALICE_EMAIL_ADDR,
-        deletion_code=deletion_code,
+def account_create(
+    sender: EmailAddress,
+    recipient: EmailAddress,
+    validation_code: ValidationCode,
+    server_url: str,
+    output_dir: Path,
+):
+    message = _generate_account_create_validation_email(
+        from_addr=sender,
+        to_addr=recipient,
+        validation_code=validation_code,
         server_url=server_url,
     )
 
-    write_mail_file_to_filesystem(message, output_dir, "account_deletion_email")
+    write_mail_file_to_filesystem(message, output_dir, "account_create_validation_email")
+
+
+@export_email.command(short_help="Export account delete validation email")
+@mail_templates_shared_options
+@click.option(
+    "--validation-code",
+    type=ValidationCode,
+    default=DEFAULT_VALIDATION_CODE.str,
+    show_default=True,
+)
+def account_delete(
+    sender: EmailAddress,
+    recipient: EmailAddress,
+    validation_code: ValidationCode,
+    server_url: str,
+    output_dir: Path,
+):
+    message = _generate_account_delete_validation_email(
+        from_addr=sender,
+        to_addr=recipient,
+        validation_code=validation_code,
+        server_url=server_url,
+    )
+
+    write_mail_file_to_filesystem(message, output_dir, "account_delete_validation_email")

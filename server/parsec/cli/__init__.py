@@ -50,9 +50,12 @@ cli.add_command(migrate, "migrate")
 cli.add_command(export_realm, "export_realm")
 cli.add_command(human_accesses, "human_accesses")
 cli.add_command(server_sequester_cmd, "sequester")
-cli.add_command(export_email)
 if TESTBED_AVAILABLE:
     cli.add_command(testbed_cmd, "testbed")
+    # Since `export_email` is only for debugging purpose, we don't expose it
+    # in release (and a close enough way to detect this is to check if
+    # `TESTBED_AVAILABLE` is defined)
+    cli.add_command(export_email, "export_email")
 
 
 # Add support for PARSEC_CMD_ARGS env var

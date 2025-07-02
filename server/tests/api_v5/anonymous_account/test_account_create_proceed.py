@@ -1,160 +1,253 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-
 import pytest
 
 from parsec._parsec import (
+    AccountAuthMethodID,
+    DateTime,
     EmailAddress,
+    SecretKey,
+    UntrustedPasswordAlgorithmArgon2id,
+    ValidationCode,
     anonymous_account_cmds,
 )
-from tests.common import AnonymousAccountRpcClient, Backend, HttpCommonErrorsTester
+from parsec.components.account import (
+    VALIDATION_CODE_MAX_FAILED_ATTEMPTS,
+    VALIDATION_CODE_VALIDITY_DURATION_SECONDS,
+)
+from parsec.config import MockedEmailConfig
+from tests.common import (
+    ALICE_ACCOUNT_HUMAN_HANDLE,
+    AnonymousAccountRpcClient,
+    Backend,
+    HttpCommonErrorsTester,
+)
+from tests.common.client import AuthenticatedAccountRpcClient
 
 
-@pytest.mark.skip(reason="TODO #10599")
+@pytest.fixture
+async def alice_validation_code(backend: Backend) -> ValidationCode:
+    assert isinstance(backend.config.email_config, MockedEmailConfig)
+    assert len(backend.config.email_config.sent_emails) == 0  # Sanity check
+
+    validation_code = await backend.account.create_send_validation_email(
+        DateTime.now(), ALICE_ACCOUNT_HUMAN_HANDLE.email
+    )
+    assert isinstance(validation_code, ValidationCode)
+    backend.config.email_config.sent_emails.clear()
+
+    return validation_code
+
+
 async def test_anonymous_account_account_create_proceed_ok(
     xfail_if_postgresql: None,
     anonymous_account: AnonymousAccountRpcClient,
-    backend: Backend,
+    alice_validation_code: ValidationCode,
 ) -> None:
-    email = EmailAddress("alice@invalid.com")
-    # 1st account creation request
+    # Once step 1 has been done once, the steps can obviously no longer be retried
+    for attempt in range(2):
+        # Optional step 0
 
-    rep = await anonymous_account.account_create_send_validation_email(email=email)
-    assert rep == anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
+        rep = await anonymous_account.account_create_proceed(
+            account_create_step=anonymous_account_cmds.latest.account_create_proceed.AccountCreateStepNumber0CheckCode(
+                validation_code=alice_validation_code,
+                email=ALICE_ACCOUNT_HUMAN_HANDLE.email,
+            )
+        )
 
-    # retrieve alice's token that was sent by email
-    token = backend.account.test_get_token_by_email(email)
-    assert token is not None
+        if attempt == 0:
+            assert rep == anonymous_account_cmds.latest.account_create_proceed.RepOk()
+        else:
+            assert (
+                rep
+                == anonymous_account_cmds.latest.account_create_proceed.RepSendValidationEmailRequired()
+            )
 
-    # rep = await anonymous_account.account_create_proceed(
-    #     validation_token=token,
-    #     human_label="Anonymous Alice",
-    #     auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
-    #         opslimit=1, memlimit_kb=2, parallelism=3
-    #     ),
-    #     auth_method_hmac_key=SecretKey.generate(),
-    #     vault_key_access=b"vault_key_access",
-    #     auth_method_id=AccountAuthMethodID.from_hex("9aae259f748045cc9fe7146eab0b132e"),
-    # )
-    # assert rep == anonymous_account_cmds.latest.account_create_proceed.RepOk()
+        # Step 1
 
-    # Alice's mail removed from unverified emails
-    try:
-        token = backend.account.test_get_token_by_email(email)
-    except KeyError:
-        pass
+        rep = await anonymous_account.account_create_proceed(
+            account_create_step=anonymous_account_cmds.latest.account_create_proceed.AccountCreateStepNumber1Create(
+                validation_code=alice_validation_code,
+                human_handle=ALICE_ACCOUNT_HUMAN_HANDLE,
+                auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
+                    opslimit=1, memlimit_kb=2, parallelism=3
+                ),
+                auth_method_hmac_key=SecretKey.generate(),
+                vault_key_access=b"vault_key_access",
+                auth_method_id=AccountAuthMethodID.from_hex("9aae259f748045cc9fe7146eab0b132e"),
+            )
+        )
+        if attempt == 0:
+            assert rep == anonymous_account_cmds.latest.account_create_proceed.RepOk()
+        else:
+            assert (
+                rep
+                == anonymous_account_cmds.latest.account_create_proceed.RepSendValidationEmailRequired()
+            )
 
 
-@pytest.mark.skip(reason="TODO #10599")
+@pytest.mark.parametrize("kind", ("step_0", "step_1"))
 async def test_anonymous_account_account_create_proceed_invalid_validation_code(
     xfail_if_postgresql: None,
+    kind: str,
     anonymous_account: AnonymousAccountRpcClient,
+    alice_validation_code: ValidationCode,
+):
+    while True:
+        bad_validation_code = ValidationCode.generate()
+        if bad_validation_code != alice_validation_code:
+            break
+
+    match kind:
+        case "step_0":
+
+            async def do_request(
+                validation_code: ValidationCode,
+            ) -> anonymous_account_cmds.latest.account_create_proceed.Rep:
+                return await anonymous_account.account_create_proceed(
+                    account_create_step=anonymous_account_cmds.latest.account_create_proceed.AccountCreateStepNumber0CheckCode(
+                        validation_code=bad_validation_code,
+                        email=ALICE_ACCOUNT_HUMAN_HANDLE.email,
+                    )
+                )
+
+        case "step_1":
+
+            async def do_request(
+                validation_code: ValidationCode,
+            ) -> anonymous_account_cmds.latest.account_create_proceed.Rep:
+                return await anonymous_account.account_create_proceed(
+                    account_create_step=anonymous_account_cmds.latest.account_create_proceed.AccountCreateStepNumber1Create(
+                        validation_code=bad_validation_code,
+                        human_handle=ALICE_ACCOUNT_HUMAN_HANDLE,
+                        auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
+                            opslimit=1, memlimit_kb=2, parallelism=3
+                        ),
+                        auth_method_hmac_key=SecretKey.generate(),
+                        vault_key_access=b"vault_key_access",
+                        auth_method_id=AccountAuthMethodID.from_hex(
+                            "9aae259f748045cc9fe7146eab0b132e"
+                        ),
+                    )
+                )
+
+        case unkown:
+            assert False, unkown
+
+    # Multiple bad attempts
+    for _ in range(VALIDATION_CODE_MAX_FAILED_ATTEMPTS):
+        rep = await do_request(bad_validation_code)
+        assert (
+            rep == anonymous_account_cmds.latest.account_create_proceed.RepInvalidValidationCode()
+        )
+
+    # Further attempts are no longer considered even if the good validation code is provided
+    for validation_code in (bad_validation_code, alice_validation_code):
+        rep = await do_request(validation_code)
+        assert (
+            rep
+            == anonymous_account_cmds.latest.account_create_proceed.RepSendValidationEmailRequired()
+        )
+
+
+@pytest.mark.parametrize(
+    "kind",
+    (
+        "validation_code_already_used",
+        "validation_code_too_many_attemps",
+        "validation_code_too_old",
+        "wrong_email_address",
+    ),
+)
+async def test_anonymous_account_account_create_proceed_send_validation_email_required(
+    xfail_if_postgresql: None,
+    kind: str,
+    anonymous_account: AnonymousAccountRpcClient,
+    bob_account: AuthenticatedAccountRpcClient,
     backend: Backend,
 ):
-    email = EmailAddress("alice@invalid.com")
-    # 1st account creation request
+    validation_code = None
+    match kind:
+        case "validation_code_already_used":
+            # Nothing to do: this has already been testbed at the end of
+            # `test_anonymous_account_account_create_proceed_ok`
+            return
 
-    rep = await anonymous_account.account_create_send_validation_email(email=email)
-    assert rep == anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
+        case "validation_code_too_many_attemps":
+            # Nothing to do: this has already been testbed at the end of
+            # `test_anonymous_account_account_create_proceed_invalid_validation_code`
+            return
 
-    # retrieve alice's token that was sent by email
-    token = backend.account.test_get_token_by_email(email)
-    assert token is not None
+        case "validation_code_too_old":
+            timestamp_too_old = DateTime.now().add(
+                seconds=-VALIDATION_CODE_VALIDITY_DURATION_SECONDS
+            )
+            validation_code = await backend.account.create_send_validation_email(
+                timestamp_too_old, ALICE_ACCOUNT_HUMAN_HANDLE.email
+            )
 
-    # other_token = EmailValidationToken.new()
+        case "wrong_email_address":
+            validation_code = await backend.account.create_send_validation_email(
+                DateTime.now(), EmailAddress("dummy@example.com")
+            )
 
-    # rep = await anonymous_account.account_create_proceed(
-    #     validation_token=other_token,
-    #     human_label="Anonymous Alice",
-    #     auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
-    #         opslimit=1, memlimit_kb=2, parallelism=3
-    #     ),
-    #     auth_method_hmac_key=SecretKey.generate(),
-    #     vault_key_access=b"vault_key_access",
-    #     auth_method_id=AccountAuthMethodID.from_hex("9aae259f748045cc9fe7146eab0b132e"),
-    # )
-    # assert rep == anonymous_account_cmds.latest.account_create_proceed.RepInvalidValidationCode()
+        case unknown:
+            assert False, unknown
 
-    # Alice's mail kept in unverified emails
-    token = backend.account.test_get_token_by_email(email)
-    assert token is not None
+    assert isinstance(validation_code, ValidationCode)
+
+    rep = await anonymous_account.account_create_proceed(
+        account_create_step=anonymous_account_cmds.latest.account_create_proceed.AccountCreateStepNumber1Create(
+            validation_code=validation_code,
+            human_handle=ALICE_ACCOUNT_HUMAN_HANDLE,
+            auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
+                opslimit=1, memlimit_kb=2, parallelism=3
+            ),
+            auth_method_hmac_key=SecretKey.generate(),
+            vault_key_access=b"vault_key_access",
+            auth_method_id=bob_account.auth_method_id,
+        )
+    )
+    assert (
+        rep == anonymous_account_cmds.latest.account_create_proceed.RepSendValidationEmailRequired()
+    )
 
 
-@pytest.mark.skip(reason="TODO #10599")
+async def test_anonymous_account_account_create_proceed_auth_method_id_already_exists(
+    xfail_if_postgresql: None,
+    anonymous_account: AnonymousAccountRpcClient,
+    alice_validation_code: ValidationCode,
+    bob_account: AuthenticatedAccountRpcClient,
+):
+    rep = await anonymous_account.account_create_proceed(
+        account_create_step=anonymous_account_cmds.latest.account_create_proceed.AccountCreateStepNumber1Create(
+            validation_code=alice_validation_code,
+            human_handle=ALICE_ACCOUNT_HUMAN_HANDLE,
+            auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
+                opslimit=1, memlimit_kb=2, parallelism=3
+            ),
+            auth_method_hmac_key=SecretKey.generate(),
+            vault_key_access=b"vault_key_access",
+            auth_method_id=bob_account.auth_method_id,
+        )
+    )
+    assert (
+        rep == anonymous_account_cmds.latest.account_create_proceed.RepAuthMethodIdAlreadyExists()
+    )
+
+
 async def test_anonymous_account_account_create_proceed_http_common_errors(
     xfail_if_postgresql: None,
     anonymous_account: AnonymousAccountRpcClient,
     anonymous_account_http_common_errors_tester: HttpCommonErrorsTester,
+    alice_validation_code: ValidationCode,
 ) -> None:
-    raise NotImplementedError
-    # async def do():
-    # other_token = EmailValidationToken.new()
+    async def do():
+        await anonymous_account.account_create_proceed(
+            account_create_step=anonymous_account_cmds.latest.account_create_proceed.AccountCreateStepNumber0CheckCode(
+                validation_code=alice_validation_code,
+                email=ALICE_ACCOUNT_HUMAN_HANDLE.email,
+            )
+        )
 
-    # await anonymous_account.account_create_proceed(
-    #     validation_token=other_token,
-    #     human_label="Anonymous Alice",
-    #     auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
-    #         opslimit=1, memlimit_kb=2, parallelism=3
-    #     ),
-    #     auth_method_hmac_key=SecretKey.generate(),
-    #     vault_key_access=b"vault_key_access",
-    #     auth_method_id=AccountAuthMethodID.from_hex("9aae259f748045cc9fe7146eab0b132e"),
-    # )
-
-    # await anonymous_account_http_common_errors_tester(do)
-
-
-@pytest.mark.skip(reason="TODO #10599")
-async def test_anonymous_account_account_create_proceed_auth_method_id_already_exists(
-    xfail_if_postgresql: None,
-    anonymous_account: AnonymousAccountRpcClient,
-    backend: Backend,
-):
-    # 1st ok account creation
-    email = EmailAddress("alice@invalid.com")
-    # 1st account creation request
-
-    rep = await anonymous_account.account_create_send_validation_email(email=email)
-    assert rep == anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
-
-    # retrieve alice's token that was sent by email
-    token = backend.account.test_get_token_by_email(email)
-    assert token is not None
-
-    # rep = await anonymous_account.account_create_proceed(
-    #     validation_token=token,
-    #     human_label="Anonymous Alice",
-    #     auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
-    #         opslimit=1, memlimit_kb=2, parallelism=3
-    #     ),
-    #     auth_method_hmac_key=SecretKey.generate(),
-    #     vault_key_access=b"vault_key_access",
-    #     auth_method_id=AccountAuthMethodID.from_hex("9aae259f748045cc9fe7146eab0b132e"),
-    # )
-
-    # assert rep == anonymous_account_cmds.latest.account_create_proceed.RepOk()
-
-    # Second account creation
-    email = EmailAddress("bob@invalid.com")
-    rep = await anonymous_account.account_create_send_validation_email(email=email)
-    assert rep == anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
-
-    # retrieve bob's token that was sent by email
-    token = backend.account.test_get_token_by_email(email)
-    assert token is not None
-
-    # rep = await anonymous_account.account_create_proceed(
-    #     validation_token=token,
-    #     human_label="Anonymous Bob",
-    #     auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
-    #         opslimit=1, memlimit_kb=2, parallelism=3
-    #     ),
-    #     auth_method_hmac_key=SecretKey.generate(),
-    #     vault_key_access=b"vault_key_access",
-    #     # Same auth method id as previous
-    #     auth_method_id=AccountAuthMethodID.from_hex("9aae259f748045cc9fe7146eab0b132e"),
-    # )
-
-    # assert (
-    #     rep == anonymous_account_cmds.latest.account_create_proceed.RepAuthMethodIdAlreadyExists()
-    # )
+    await anonymous_account_http_common_errors_tester(do)

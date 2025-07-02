@@ -18,11 +18,11 @@ from parsec._parsec import (
     AccountAuthMethodID,
     DateTime,
     EmailAddress,
-    EmailValidationToken,
     HumanHandle,
     OrganizationID,
     ParsecAddr,
     SecretKey,
+    ValidationCode,
 )
 
 try:
@@ -296,19 +296,21 @@ async def test_new_account(request: Request) -> Response:
         )
 
     testbed._account_count += 1
-    email = EmailAddress(f"agent{testbed._account_count}@example.com")
-    human_label = f"Agent{testbed._account_count:0>3}"
+    human_handle = HumanHandle(
+        email=EmailAddress(f"agent{testbed._account_count}@example.com"),
+        label=f"Agent{testbed._account_count:0>3}",
+    )
 
-    outcome = await testbed.backend.account.create_email_validation_token(email, DateTime.now())
-    assert isinstance(outcome, EmailValidationToken)
-    token = outcome
+    validation_code = await testbed.backend.account.create_send_validation_email(
+        DateTime.now(), human_handle.email
+    )
+    assert isinstance(validation_code, ValidationCode)
 
-    outcome = await testbed.backend.account.create_account(
-        token=token,
+    outcome = await testbed.backend.account.create_proceed(
         now=DateTime.now(),
-        mac_key=mac_key,
+        validation_code=validation_code,
         vault_key_access=vault_key_access,
-        human_label=human_label,
+        human_handle=human_handle,
         created_by_user_agent="TestbedAgent",
         created_by_ip="",
         auth_method_id=auth_method_id,
@@ -316,7 +318,7 @@ async def test_new_account(request: Request) -> Response:
     )
     assert outcome is None
 
-    rep_body = f"{HumanHandle(email, human_label).str}".encode()
+    rep_body = f"{human_handle.str}".encode()
 
     return Response(status_code=200, content=rep_body)
 
@@ -347,7 +349,7 @@ async def testbed_backend_factory(
         administration_token="s3cr3t",
         fake_account_password_algorithm_seed=SecretKey(b"F" * 32),
         organization_spontaneous_bootstrap=True,
-        account_confirmation_email_resend_delay=60,
+        validation_email_cooldown_delay=60,
     )
     async with backend_factory(config=config) as backend:
         yield TestbedBackend(backend=backend)

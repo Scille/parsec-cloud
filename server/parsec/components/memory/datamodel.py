@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from asyncio import Event
+from asyncio import Event, Lock
 from collections import defaultdict
 from collections.abc import AsyncIterator, Iterable, Iterator
 from contextlib import asynccontextmanager
@@ -21,11 +21,11 @@ from parsec._parsec import (
     DeviceCertificate,
     DeviceID,
     EmailAddress,
-    EmailValidationToken,
     EnrollmentID,
     GreeterOrClaimer,
     GreetingAttemptID,
     HashDigest,
+    HumanHandle,
     InvitationStatus,
     InvitationToken,
     InvitationType,
@@ -105,12 +105,15 @@ class MemoryDatamodel:
     # accounts are not associated to one organization
     # (email, account)
     accounts: dict[EmailAddress, MemoryAccount] = field(default_factory=dict)
-    unverified_emails: dict[EmailAddress, tuple[EmailValidationToken, DateTime]] = field(
+    account_create_validation_emails: dict[EmailAddress, ValidationCodeInfo] = field(
         default_factory=dict
     )
-    accounts_deletion_requested: dict[EmailAddress, ValidationCodeInfo] = field(
+    account_delete_validation_emails: dict[EmailAddress, ValidationCodeInfo] = field(
         default_factory=dict
     )
+    # Single big lock used for all account creation steps (i.e. sending validation mail,
+    # checking validation code, creating account)
+    account_creation_lock: Lock = field(default_factory=Lock)
 
     def get_account_from_active_auth_method(
         self, auth_method_id: AccountAuthMethodID
@@ -907,7 +910,7 @@ class MemoryAccount:
     account_email: EmailAddress
     # Not used by Parsec Account but works as a quality-of-life feature
     # to allow pre-filling human handle during enrollment.
-    human_label: str
+    human_handle: HumanHandle
     current_vault: MemoryAccountVault
     # Current vault is not part of previous vaults
     previous_vaults: list[MemoryAccountVault] = field(default_factory=list)

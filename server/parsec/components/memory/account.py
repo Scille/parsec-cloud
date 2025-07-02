@@ -6,7 +6,6 @@ from parsec._parsec import (
     AccountAuthMethodID,
     DateTime,
     EmailAddress,
-    EmailValidationToken,
     HashDigest,
     HumanHandle,
     InvitationToken,
@@ -14,11 +13,13 @@ from parsec._parsec import (
     OrganizationID,
     SecretKey,
     UserID,
+    ValidationCode,
 )
 from parsec.components.account import (
-    AccountCreateAccountBadOutcome,
-    AccountCreateEmailValidationTokenBadOutcome,
-    AccountDeletionConfirmBadOutcome,
+    AccountCreateProceedBadOutcome,
+    AccountCreateSendValidationEmailBadOutcome,
+    AccountDeleteProceedBadOutcome,
+    AccountDeleteSendValidationEmailBadOutcome,
     AccountInfo,
     AccountInfoBadOutcome,
     AccountInviteListBadOutcome,
@@ -34,6 +35,7 @@ from parsec.components.account import (
     VaultItemRecoveryVault,
     VaultItems,
 )
+from parsec.components.email import SendEmailBadOutcome
 from parsec.components.events import EventBus
 from parsec.components.memory.datamodel import (
     MemoryAccount,
@@ -54,6 +56,9 @@ class MemoryAccountComponent(BaseAccountComponent):
         super().__init__(config)
         self._data = data
         self._event_bus = event_bus
+
+    def _auth_method_id_already_exists(self, auth_method_id: AccountAuthMethodID) -> bool:
+        return self._data.get_account_from_any_auth_method(auth_method_id) is not None
 
     @override
     async def get_password_algorithm_or_fake_it(
@@ -84,90 +89,204 @@ class MemoryAccountComponent(BaseAccountComponent):
             case None:
                 return AccountInfoBadOutcome.ACCOUNT_NOT_FOUND
 
-        try:
-            human_handle = HumanHandle(account.account_email, account.human_label)
-        except ValueError as err:
-            raise RuntimeError(
-                f"Invalid data for auth_method_id={auth_method_id} (email={account.account_email!r}, label={account.human_label!r})"
-            ) from err
-
         return AccountInfo(
-            human_handle=human_handle,
+            human_handle=account.human_handle,
         )
 
     @override
-    async def create_email_validation_token(
-        self, email: EmailAddress, now: DateTime
-    ) -> EmailValidationToken | AccountCreateEmailValidationTokenBadOutcome:
-        if email in self._data.accounts:
-            return AccountCreateEmailValidationTokenBadOutcome.ACCOUNT_ALREADY_EXISTS
-        elif email in self._data.unverified_emails:
-            (_, last_email_datetime) = self._data.unverified_emails[email]
-            if not self.can_send_new_code_email(last_email_datetime, now):
-                return AccountCreateEmailValidationTokenBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND
+    async def create_send_validation_email(
+        self,
+        now: DateTime,
+        email: EmailAddress,
+    ) -> ValidationCode | SendEmailBadOutcome | AccountCreateSendValidationEmailBadOutcome:
+        async with self._data.account_creation_lock:
+            if email in self._data.accounts:
+                assert email not in self._data.account_create_validation_emails  # Sanity check
+                return AccountCreateSendValidationEmailBadOutcome.ACCOUNT_ALREADY_EXISTS
+            elif email in self._data.account_create_validation_emails:
+                last_mail_info = self._data.account_create_validation_emails[email]
+                if not self._can_send_new_validation_email(last_mail_info.created_at, now):
+                    return AccountCreateSendValidationEmailBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND
 
-        token = EmailValidationToken.new()
-        self._data.unverified_emails[email] = (token, now)
-        return token
+            validation_code = ValidationCode.generate()
+            self._data.account_create_validation_emails[email] = ValidationCodeInfo(
+                validation_code, now
+            )
+
+        # Note we send the email after the lock has been released, this is to
+        # simulation what is done in PostgreSQL where the transaction has to be
+        # finished before sending the email since this operation can be long.
+        outcome = await self._send_account_create_validation_email(
+            email=email,
+            validation_code=validation_code,
+        )
+        match outcome:
+            case None:
+                return validation_code
+            case error:
+                return error
 
     @override
-    async def create_account(
+    async def create_check_validation_code(
         self,
-        token: EmailValidationToken,
         now: DateTime,
-        mac_key: SecretKey,
+        email: EmailAddress,
+        validation_code: ValidationCode,
+    ) -> None | AccountCreateProceedBadOutcome:
+        async with self._data.account_creation_lock:
+            return self._create_account_check_code(now, email, validation_code)
+
+    def _create_account_check_code(
+        self,
+        now: DateTime,
+        email: EmailAddress,
+        validation_code: ValidationCode,
+    ) -> None | AccountCreateProceedBadOutcome:
+        try:
+            last_mail_info = self._data.account_create_validation_emails[email]
+        except KeyError:
+            return AccountCreateProceedBadOutcome.SEND_VALIDATION_EMAIL_REQUIRED
+
+        if last_mail_info.is_expired(now) or not last_mail_info.has_remaining_attempts():
+            return AccountCreateProceedBadOutcome.SEND_VALIDATION_EMAIL_REQUIRED
+
+        if last_mail_info.validation_code != validation_code:
+            # Register the failed attempt
+            last_mail_info.failed_attempts += 1
+            return AccountCreateProceedBadOutcome.INVALID_VALIDATION_CODE
+
+        # Sanity check
+        assert email not in self._data.accounts
+
+        return None
+
+    @override
+    async def create_proceed(
+        self,
+        now: DateTime,
+        validation_code: ValidationCode,
         vault_key_access: bytes,
-        human_label: str,
+        human_handle: HumanHandle,
         created_by_user_agent: str,
         created_by_ip: str | Literal[""],
         auth_method_id: AccountAuthMethodID,
         auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
-    ) -> None | AccountCreateAccountBadOutcome:
-        # look for an email linked to the provided token
-        unverified_email = next(
-            (k for (k, v) in self._data.unverified_emails.items() if v[0] == token), None
-        )
-        if unverified_email is None:
-            # the provided token is not in unverified emails
-            return AccountCreateAccountBadOutcome.INVALID_TOKEN
-        email = unverified_email
+    ) -> None | AccountCreateProceedBadOutcome:
+        async with self._data.account_creation_lock:
+            outcome = self._create_account_check_code(now, human_handle.email, validation_code)
+            match outcome:
+                case None:
+                    pass
+                case error:
+                    return error
 
-        # create authentication method
-        auth_method = MemoryAuthenticationMethod(
-            id=auth_method_id,
-            created_on=now,
-            created_by_ip=created_by_ip,
-            created_by_user_agent=created_by_user_agent,
-            mac_key=mac_key,
-            vault_key_access=vault_key_access,
-            password_algorithm=auth_method_password_algorithm,
-            disabled_on=None,
-        )
+            # Create authentication method
+            auth_method = MemoryAuthenticationMethod(
+                id=auth_method_id,
+                created_on=now,
+                created_by_ip=created_by_ip,
+                created_by_user_agent=created_by_user_agent,
+                mac_key=auth_method_mac_key,
+                vault_key_access=vault_key_access,
+                password_algorithm=auth_method_password_algorithm,
+                disabled_on=None,
+            )
 
-        authentication_methods = {auth_method_id: auth_method}
-        # check for auth method uniqueness
-        if self.auth_method_id_already_exists(auth_method_id):
-            return AccountCreateAccountBadOutcome.AUTH_METHOD_ALREADY_EXISTS
+            # Check for auth method uniqueness
+            if self._auth_method_id_already_exists(auth_method_id):
+                return AccountCreateProceedBadOutcome.AUTH_METHOD_ID_ALREADY_EXISTS
 
-        vault = MemoryAccountVault(items={}, authentication_methods=authentication_methods)
+            vault = MemoryAccountVault(
+                items={}, authentication_methods={auth_method_id: auth_method}
+            )
 
-        self._data.accounts[email] = MemoryAccount(
-            account_email=email,
-            human_label=human_label,
-            previous_vaults=[],
-            current_vault=vault,
-        )
+            self._data.accounts[human_handle.email] = MemoryAccount(
+                account_email=human_handle.email,
+                human_handle=human_handle,
+                previous_vaults=[],
+                current_vault=vault,
+            )
 
-        # remove from unverified emails at the end
-        self._data.unverified_emails.pop(email)
+            # And finally discard the used validation email
+            del self._data.account_create_validation_emails[human_handle.email]
 
     @override
-    def test_get_token_by_email(self, email: EmailAddress) -> EmailValidationToken | None:
-        """Use only in tests, nothing is checked."""
-        return self._data.unverified_emails[email][0]
+    async def delete_send_validation_email(
+        self,
+        now: DateTime,
+        auth_method_id: AccountAuthMethodID,
+    ) -> ValidationCode | SendEmailBadOutcome | AccountDeleteSendValidationEmailBadOutcome:
+        async with self._data.account_creation_lock:
+            match self._data.get_account_from_active_auth_method(auth_method_id=auth_method_id):
+                case (account, _):
+                    pass
+                case None:
+                    return AccountDeleteSendValidationEmailBadOutcome.ACCOUNT_NOT_FOUND
 
-    def auth_method_id_already_exists(self, auth_method_id: AccountAuthMethodID) -> bool:
-        return self._data.get_account_from_any_auth_method(auth_method_id) is not None
+            last_mail_info = self._data.account_delete_validation_emails.get(account.account_email)
+            if last_mail_info and not self._can_send_new_validation_email(
+                last_mail_info.created_at, now
+            ):
+                return AccountDeleteSendValidationEmailBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND
+
+            validation_code = ValidationCode.generate()
+            self._data.account_delete_validation_emails[account.account_email] = ValidationCodeInfo(
+                validation_code, now
+            )
+
+        # Note we send the email after the lock has been released, this is to
+        # simulation what is done in PostgreSQL where the transaction has to be
+        # finished before sending the email since this operation can be long.
+        outcome = await self._send_account_delete_validation_email(
+            email=account.account_email,
+            validation_code=validation_code,
+        )
+        match outcome:
+            case None:
+                return validation_code
+            case error:
+                return error
+
+    @override
+    async def delete_proceed(
+        self,
+        now: DateTime,
+        auth_method_id: AccountAuthMethodID,
+        validation_code: ValidationCode,
+    ) -> None | AccountDeleteProceedBadOutcome:
+        async with self._data.account_creation_lock:
+            match self._data.get_account_from_active_auth_method(auth_method_id=auth_method_id):
+                case (account, _):
+                    pass
+                case None:
+                    return AccountDeleteProceedBadOutcome.ACCOUNT_NOT_FOUND
+
+            assert account.deleted_on is None  # Sanity check
+
+            # Check validation code
+
+            try:
+                last_mail_info = self._data.account_delete_validation_emails[account.account_email]
+            except KeyError:
+                return AccountDeleteProceedBadOutcome.SEND_VALIDATION_EMAIL_REQUIRED
+
+            if last_mail_info.is_expired(now) or not last_mail_info.has_remaining_attempts():
+                return AccountDeleteProceedBadOutcome.SEND_VALIDATION_EMAIL_REQUIRED
+
+            if last_mail_info.validation_code != validation_code:
+                # Register the failed attempt
+                last_mail_info.failed_attempts += 1
+                return AccountDeleteProceedBadOutcome.INVALID_VALIDATION_CODE
+
+            # All good, we can do the actual deletion
+
+            account.deleted_on = now
+            for auth_method in account.current_vault.authentication_methods.values():
+                if auth_method.disabled_on is None:
+                    auth_method.disabled_on = now
+
+            # And finally discard the used validation email
+            del self._data.account_delete_validation_emails[account.account_email]
 
     @override
     async def vault_item_upload(
@@ -219,7 +338,7 @@ class MemoryAccountComponent(BaseAccountComponent):
             case None:
                 return AccountVaultKeyRotation.ACCOUNT_NOT_FOUND
 
-        if self.auth_method_id_already_exists(new_auth_method_id):
+        if self._auth_method_id_already_exists(new_auth_method_id):
             return AccountVaultKeyRotation.NEW_AUTH_METHOD_ID_ALREADY_EXISTS
 
         if account.current_vault.items.keys() != items.keys():
@@ -278,16 +397,6 @@ class MemoryAccountComponent(BaseAccountComponent):
         )
 
     @override
-    async def get_account_deletion_code_info(
-        self, email: EmailAddress
-    ) -> ValidationCodeInfo | None:
-        return self._data.accounts_deletion_requested.get(email)
-
-    @override
-    async def set_account_deletion_code_info(self, email: EmailAddress, info: ValidationCodeInfo):
-        self._data.accounts_deletion_requested[email] = info
-
-    @override
     async def invite_self_list(
         self, auth_method_id: AccountAuthMethodID
     ) -> list[tuple[OrganizationID, InvitationToken, InvitationType]] | AccountInviteListBadOutcome:
@@ -332,20 +441,3 @@ class MemoryAccountComponent(BaseAccountComponent):
             )
 
         return res
-
-    @override
-    async def delete_account(
-        self, auth_method_id: AccountAuthMethodID, now: DateTime
-    ) -> None | AccountDeletionConfirmBadOutcome:
-        match self._data.get_account_from_active_auth_method(auth_method_id=auth_method_id):
-            case (account, _):
-                pass
-            case None:
-                return AccountDeletionConfirmBadOutcome.ACCOUNT_NOT_FOUND
-
-        if account.deleted_on is not None:
-            return AccountDeletionConfirmBadOutcome.ALREADY_DELETED
-
-        account.deleted_on = now
-        for method in account.current_vault.authentication_methods.values():
-            method.disabled_on = now

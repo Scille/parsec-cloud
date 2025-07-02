@@ -16,16 +16,17 @@ from parsec._parsec import (
     AccountAuthMethodID,
     DateTime,
     EmailAddress,
-    EmailValidationToken,
+    HumanHandle,
     SecretKey,
+    ValidationCode,
 )
 from parsec.backend import Backend
-from parsec.components.account import BaseAccountComponent, UntrustedPasswordAlgorithmArgon2id
-from parsec.components.memory.account import MemoryAccountComponent
+from parsec.components.account import UntrustedPasswordAlgorithmArgon2id
+from parsec.config import MockedEmailConfig
 from tests.common.client import AnonymousAccountRpcClient, AuthenticatedAccountRpcClient
 
 # Note `alice@invalid.com` is Alice's email in `CoolOrg`, `MinimalOrg` etc.
-ALICE_ACCOUNT_EMAIL = EmailAddress("alice@example.com")
+ALICE_ACCOUNT_HUMAN_HANDLE = HumanHandle(EmailAddress("alice@example.com"), "Alicey McAliceFace")
 ALICE_ACCOUNT_AUTH_METHOD_MAC_KEY = SecretKey(
     base64.b64decode("0UdFSrwcYKyfhAkTdorrLM46+cwHh49XelCMdoxI4qA=")
 )
@@ -33,7 +34,7 @@ ALICE_ACCOUNT_AUTH_METHOD_ID = AccountAuthMethodID.from_hex("9aae259f748045cc9fe
 ALICE_ACCOUNT_CREATED_ON = DateTime(2000, 1, 1)
 
 
-BOB_ACCOUNT_EMAIL = EmailAddress("bob@example.com")
+BOB_ACCOUNT_HUMAN_HANDLE = HumanHandle(EmailAddress("bob@example.com"), "Boby McBobFace")
 BOB_ACCOUNT_AUTH_METHOD_MAC_KEY = SecretKey(
     base64.b64decode("YtFH3Mr8iA5rrduaQPc5fbr+8rGZIU7SZ8wMqwSubhU=")
 )
@@ -42,25 +43,30 @@ BOB_ACCOUNT_CREATED_ON = DateTime(2000, 1, 2)
 
 
 async def create_account(
-    account_component: BaseAccountComponent,
-    account_email: EmailAddress,
+    backend: Backend,
     auth_method_id: AccountAuthMethodID,
     created_by_ip: str,
     created_by_user_agent: str,
     created_on: DateTime,
-    human_label: str,
-    mac_key: SecretKey,
+    human_handle: HumanHandle,
+    auth_method_mac_key: SecretKey,
     auth_method_password_algorithm: UntrustedPasswordAlgorithmArgon2id,
     vault_key_access: bytes,
 ):
-    email_token = await account_component.create_email_validation_token(account_email, created_on)
-    assert isinstance(email_token, EmailValidationToken), email_token
-    res = await account_component.create_account(
-        token=email_token,
+    assert isinstance(backend.config.email_config, MockedEmailConfig)
+    assert len(backend.config.email_config.sent_emails) == 0  # Sanity check
+
+    validation_code = await backend.account.create_send_validation_email(
+        created_on, human_handle.email
+    )
+    assert isinstance(validation_code, ValidationCode), validation_code
+    backend.config.email_config.sent_emails.clear()
+
+    res = await backend.account.create_proceed(
         now=created_on,
-        mac_key=mac_key,
+        validation_code=validation_code,
         vault_key_access=vault_key_access,
-        human_label=human_label,
+        human_handle=human_handle,
         created_by_user_agent=created_by_user_agent,
         created_by_ip=created_by_ip,
         auth_method_id=auth_method_id,
@@ -74,16 +80,13 @@ async def alice_account(
     backend: Backend,
     client: AsyncClient,
 ) -> AuthenticatedAccountRpcClient:
-    assert isinstance(backend.account, MemoryAccountComponent)
     await create_account(
-        backend.account,
-        account_email=ALICE_ACCOUNT_EMAIL,
+        backend,
         auth_method_id=ALICE_ACCOUNT_AUTH_METHOD_ID,
         created_by_ip="127.0.0.1",
         created_by_user_agent="Parsec-Client/3.4.0 Linux",
         created_on=ALICE_ACCOUNT_CREATED_ON,
-        human_label="Alicey McAliceFace",
-        mac_key=ALICE_ACCOUNT_AUTH_METHOD_MAC_KEY,
+        human_handle=ALICE_ACCOUNT_HUMAN_HANDLE,
         vault_key_access=b"<alice_vault_key_access>",
         auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
             opslimit=65536,
@@ -92,7 +95,10 @@ async def alice_account(
         ),
     )
     return AuthenticatedAccountRpcClient(
-        client, ALICE_ACCOUNT_EMAIL, ALICE_ACCOUNT_AUTH_METHOD_ID, ALICE_ACCOUNT_AUTH_METHOD_MAC_KEY
+        client,
+        ALICE_ACCOUNT_HUMAN_HANDLE.email,
+        ALICE_ACCOUNT_AUTH_METHOD_ID,
+        ALICE_ACCOUNT_AUTH_METHOD_MAC_KEY,
     )
 
 
@@ -101,16 +107,13 @@ async def bob_account(
     backend: Backend,
     client: AsyncClient,
 ) -> AuthenticatedAccountRpcClient:
-    assert isinstance(backend.account, MemoryAccountComponent)
     await create_account(
-        backend.account,
-        account_email=BOB_ACCOUNT_EMAIL,
+        backend,
         auth_method_id=BOB_ACCOUNT_AUTH_METHOD_ID,
         created_by_ip="127.0.0.1",
         created_by_user_agent="Parsec-Client/3.4.0 Linux",
         created_on=BOB_ACCOUNT_CREATED_ON,
-        human_label="Boby McBobFace",
-        mac_key=BOB_ACCOUNT_AUTH_METHOD_MAC_KEY,
+        human_handle=BOB_ACCOUNT_HUMAN_HANDLE,
         vault_key_access=b"<bob_vault_key_access>",
         auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
             opslimit=65536,
@@ -119,7 +122,10 @@ async def bob_account(
         ),
     )
     return AuthenticatedAccountRpcClient(
-        client, BOB_ACCOUNT_EMAIL, BOB_ACCOUNT_AUTH_METHOD_ID, BOB_ACCOUNT_AUTH_METHOD_MAC_KEY
+        client,
+        BOB_ACCOUNT_HUMAN_HANDLE.email,
+        BOB_ACCOUNT_AUTH_METHOD_ID,
+        BOB_ACCOUNT_AUTH_METHOD_MAC_KEY,
     )
 
 
