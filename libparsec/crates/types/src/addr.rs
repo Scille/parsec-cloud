@@ -23,10 +23,7 @@ pub use url::Url;
 
 use libparsec_crypto::VerifyKey;
 
-use crate::{
-    BootstrapToken, EmailValidationToken, IndexInt, InvitationToken, InvitationType,
-    OrganizationID, VlobID,
-};
+use crate::{BootstrapToken, IndexInt, InvitationToken, InvitationType, OrganizationID, VlobID};
 
 pub const PARSEC_SCHEME: &str = "parsec3";
 const HTTP_OR_HTTPS_SCHEME: &str = "http(s)";
@@ -40,7 +37,6 @@ const PARSEC_ACTION_CLAIM_USER: &str = "claim_user";
 const PARSEC_ACTION_CLAIM_DEVICE: &str = "claim_device";
 const PARSEC_ACTION_CLAIM_SHAMIR_RECOVERY: &str = "claim_shamir_recovery";
 const PARSEC_ACTION_PKI_ENROLLMENT: &str = "pki_enrollment";
-const PARSEC_ACCOUNT_ACTION_EMAIL_VALIDATION: &str = "create_account";
 
 /// Url has a special way to parse http/https schemes. This is because those kind
 /// of url have special needs (for instance host cannot be empty).
@@ -935,112 +931,6 @@ impl ParsecInvitationAddr {
     pub fn to_invited_url(&self) -> Url {
         self.base
             .to_http_url(Some(&format!("/invited/{}", &self.organization_id)))
-    }
-}
-
-/*
- * ParsecAccountActionAddr
- */
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ParsecAccountActionAddr {
-    AccountValidation(ParsecAccountEmailValidationAddr),
-    AccountRecovery,
-}
-
-impl ParsecAccountActionAddr {
-    pub fn from_any(url: &str) -> Result<Self, AddrError> {
-        if let Ok(addr) = ParsecAccountEmailValidationAddr::from_any(url) {
-            Ok(ParsecAccountActionAddr::AccountValidation(addr))
-        } else {
-            todo!("Missing account recovery addr")
-        }
-    }
-
-    pub fn from_http_redirection(url: &str) -> Result<Self, AddrError> {
-        let parsed = ParsecUrlAsHTTPScheme::from_http_redirection(url)?;
-
-        if let Ok(addr) = ParsecAccountEmailValidationAddr::_from_url(&parsed) {
-            Ok(ParsecAccountActionAddr::AccountValidation(addr))
-        } else {
-            todo!("Missing account recovery addr")
-        }
-    }
-}
-
-impl std::str::FromStr for ParsecAccountActionAddr {
-    type Err = AddrError;
-
-    #[inline]
-    fn from_str(url: &str) -> Result<Self, Self::Err> {
-        let parsed = url.parse()?;
-
-        if let Ok(addr) = ParsecAccountEmailValidationAddr::_from_url(&parsed) {
-            Ok(ParsecAccountActionAddr::AccountValidation(addr))
-        } else {
-            todo!("Missing account deletion and recovery addr")
-        }
-    }
-}
-
-/*
- * ParsecAccountEmailValidationAddr
- */
-
-/// Represent the URL to validate an email for parsec account
-///
-/// (e.g. ``parsec3://parsec.example.com?a=create_account&p=xBA8nAZGHV1EJRYFW8O8xS0L``)  // cspell:disable-line
-#[derive(Clone, PartialEq, Eq, Hash)]
-pub struct ParsecAccountEmailValidationAddr {
-    base: BaseParsecAddr,
-    token: EmailValidationToken,
-}
-
-impl_common_stuff!(ParsecAccountEmailValidationAddr);
-
-impl ParsecAccountEmailValidationAddr {
-    pub fn new(server_addr: impl Into<ParsecAddr>, token: EmailValidationToken) -> Self {
-        Self {
-            base: server_addr.into().base,
-            token,
-        }
-    }
-
-    fn _from_url(parsed: &ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
-        let base = BaseParsecAddr::from_url(parsed)?;
-        let pairs = parsed.0.query_pairs();
-
-        extract_param_and_expect_value(
-            &pairs,
-            PARSEC_PARAM_ACTION,
-            PARSEC_ACCOUNT_ACTION_EMAIL_VALIDATION,
-        )?;
-
-        let token = extract_param_and_b64_msgpack_deserialize!(
-            &pairs,
-            PARSEC_PARAM_PAYLOAD,
-            EmailValidationToken
-        )?;
-
-        Ok(Self { base, token })
-    }
-
-    expose_base_parsec_addr_fields!();
-
-    fn _to_url(&self, mut url: Url) -> Url {
-        url.path_segments_mut()
-            .expect("expected url not to be a cannot-be-a-base");
-
-        let payload = b64_msgpack_serialize(&self.token);
-
-        url.query_pairs_mut()
-            .append_pair(PARSEC_PARAM_ACTION, PARSEC_ACCOUNT_ACTION_EMAIL_VALIDATION)
-            .append_pair(PARSEC_PARAM_PAYLOAD, &payload);
-        url
-    }
-
-    pub fn token(&self) -> EmailValidationToken {
-        self.token
     }
 }
 
