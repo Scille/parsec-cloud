@@ -10,12 +10,14 @@ use libparsec_client_connection::{AnonymousAccountCmds, AuthenticatedAccountCmds
 use libparsec_types::prelude::*;
 
 mod account_create;
+mod account_delete;
 mod fetch_list_registration_devices;
 mod list_invitations;
 mod login;
 mod register_new_device;
 
 pub use account_create::*;
+pub use account_delete::*;
 pub use fetch_list_registration_devices::*;
 pub use list_invitations::*;
 pub use login::*;
@@ -179,5 +181,26 @@ impl Account {
             save_strategy,
         )
         .await
+    }
+
+    /// Before deleting the account, a confirmation email containing a validation
+    /// code must first be send to the user's email address.
+    pub async fn delete_1_send_validation_email(
+        &self,
+    ) -> Result<(), AccountDeleteSendValidationEmailError> {
+        account_delete_send_validation_email(self).await
+    }
+
+    /// Actually delete the account by providing the validation code obtained
+    /// from the confirmation email.
+    ///
+    /// Note that, unlike for account creation, there is no need for a "check code"
+    /// flavor here. This is because since the user has no configuration to provide
+    /// there is no need to validate a code before actually trying to use it.
+    pub async fn delete_2_proceed(
+        &self,
+        validation_code: ValidationCode,
+    ) -> Result<(), AccountDeleteProceedError> {
+        account_delete_proceed(self, validation_code).await
     }
 }
