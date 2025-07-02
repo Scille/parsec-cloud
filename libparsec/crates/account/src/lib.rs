@@ -11,6 +11,7 @@ use libparsec_types::prelude::*;
 
 mod account_create;
 mod account_delete;
+mod create_registration_device;
 mod fetch_list_registration_devices;
 mod list_invitations;
 mod login;
@@ -18,6 +19,7 @@ mod register_new_device;
 
 pub use account_create::*;
 pub use account_delete::*;
+pub use create_registration_device::*;
 pub use fetch_list_registration_devices::*;
 pub use list_invitations::*;
 pub use login::*;
@@ -166,6 +168,8 @@ impl Account {
         account_list_registration_devices(self)
     }
 
+    /// Use an existing registration device to create a new device that
+    /// will be saved locally.
     pub async fn register_new_device(
         &self,
         organization_id: OrganizationID,
@@ -181,6 +185,15 @@ impl Account {
             save_strategy,
         )
         .await
+    }
+
+    /// Use an existing local device to create and upload on the server a new device
+    /// that will be used as registration device.
+    pub async fn create_registration_device(
+        &self,
+        existing_local_device: Arc<LocalDevice>,
+    ) -> Result<DeviceID, AccountCreateRegistrationDeviceError> {
+        account_create_registration_device(self, existing_local_device).await
     }
 
     /// Before deleting the account, a confirmation email containing a validation
