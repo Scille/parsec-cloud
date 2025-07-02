@@ -149,6 +149,7 @@ async def serve_parsec_asgi_app(
     host: str,
     port: int,
     proxy_trusted_addresses: str | None,
+    ssl_ciphers: list[str],
     ssl_certfile: Path | None = None,
     ssl_keyfile: Path | None = None,
     workers: int | None = None,
@@ -177,6 +178,8 @@ async def serve_parsec_asgi_app(
         log_config=None,
         ssl_keyfile=ssl_keyfile,
         ssl_certfile=ssl_certfile,
+        # openssl expect the list to be colon separated.
+        ssl_ciphers=":".join(ssl_ciphers),
         workers=workers,
         # Enable/Disable X-Forwarded-Proto, X-Forwarded-For to populate remote address info.
         # When enabled, is restricted to only trusting connecting IPs in forwarded-allow-ips.
