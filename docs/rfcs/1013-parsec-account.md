@@ -669,7 +669,7 @@ Anonymous account API:
     "major_versions": [
       5
     ],
-    "cmd": "account_recovery_send_validation_email",
+    "cmd": "account_recover_send_validation_email",
     "req": {
       "fields": [
         {
@@ -710,7 +710,7 @@ Anonymous account API:
     "major_versions": [
       5
     ],
-    "cmd": "account_recovery_proceed",
+    "cmd": "account_recover_proceed",
     "req": {
       "fields": [
         {
@@ -724,19 +724,33 @@ Anonymous account API:
           "type": "ValidationCode"
         },
         {
-            // Auth method can be of two types:
-            // - ClientProvided, for which the client is able to store
-            //   `auth_method_master_secret` all by itself.
-            // - Password, for which the client must obtain some configuration
-            //   (i.e. this field !) from the server in order to know how
-            //   to turn the password into `auth_method_master_secret`.
-            "name": "auth_method_password_algorithm",
-            "type": "RequiredOption<UntrustedPasswordAlgorithm>"
-        },
-        {
           "name": "vault_key_access",
           // `AccountVaultKeyAccess` encrypted with the `auth_method_secret_key`
           "type": "Bytes"
+        },
+        {
+          // Auth method can be of two types:
+          // - ClientProvided, for which the client is able to store
+          //   `auth_method_master_secret` all by itself.
+          // - Password, for which the client must obtain some configuration
+          //   (i.e. this field !) from the server in order to know how
+          //   to turn the password into `auth_method_master_secret`.
+          "name": "auth_method_password_algorithm",
+          "type": "RequiredOption<UntrustedPasswordAlgorithm>"
+        },
+        {
+          // Secret key shared between the client and the server and used for
+          // account authenticated API family's HMAC authentication.
+          "name": "auth_method_hmac_key",
+          "type": "SecretKey"
+        },
+        {
+          // UUID used to identify the authentication method in the `Authorization` HTTP header.
+          //
+          // This cannot be generated server-side since the client derives it from the
+          // `auth_method_master_secret`.
+          "name": "auth_method_id",
+          "type": "AccountAuthMethodID"
         }
       ]
     },
@@ -751,6 +765,11 @@ Anonymous account API:
         // No validation code exists, or 3 bad attempts have been done on the
         // current validation code.
         "status": "send_validation_email_required"
+      },
+      {
+        // In practice this error should never occur since collision on the ID is
+        // virtually non-existent as long as the client generates a proper UUID.
+        "status": "auth_method_id_already_exists"
       }
     ]
   }
