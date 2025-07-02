@@ -1544,7 +1544,7 @@
                 "accountCreationFailed": "Failed to create your account.",
                 "accountCreationOkLoginFailed": "Your account has been created but we could not log you in automatically.",
                 "offline": "Failed to contact server. Please make sure you are online.",
-                "offlineOrIncorrectServer": "Failed to contact server. Please make sure you are online or that the server address is correct",
+                "offlineOrIncorrectServer": "Failed to contact server. Please make sure you are online or that the server address is correct.",
                 "invalidEmail": "This email is not recognized as a valid email.",
                 "generic": "An unknown error occurred."
             }
