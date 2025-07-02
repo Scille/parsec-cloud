@@ -12,13 +12,11 @@ from parsec._parsec import (
     AccountAuthMethodID,
     DateTime,
     EmailAddress,
-    EmailValidationToken,
     HashDigest,
     HumanHandle,
     InvitationToken,
     InvitationType,
     OrganizationID,
-    ParsecAccountEmailValidationAddr,
     SecretKey,
     UntrustedPasswordAlgorithm,
     UntrustedPasswordAlgorithmArgon2id,
@@ -38,14 +36,26 @@ class AccountInfoBadOutcome(BadOutcomeEnum):
     ACCOUNT_NOT_FOUND = auto()
 
 
-class AccountCreateEmailValidationTokenBadOutcome(BadOutcomeEnum):
+class AccountCreateSendValidationEmailBadOutcome(BadOutcomeEnum):
     ACCOUNT_ALREADY_EXISTS = auto()
     TOO_SOON_AFTER_PREVIOUS_DEMAND = auto()
 
 
-class AccountCreateAccountBadOutcome(BadOutcomeEnum):
-    INVALID_TOKEN = auto()
-    AUTH_METHOD_ALREADY_EXISTS = auto()
+class AccountCreateProceedBadOutcome(BadOutcomeEnum):
+    INVALID_VALIDATION_CODE = auto()
+    SEND_VALIDATION_EMAIL_REQUIRED = auto()
+    AUTH_METHOD_ID_ALREADY_EXISTS = auto()
+
+
+class AccountDeleteSendValidationEmailBadOutcome(BadOutcomeEnum):
+    ACCOUNT_NOT_FOUND = auto()
+    TOO_SOON_AFTER_PREVIOUS_DEMAND = auto()
+
+
+class AccountDeleteProceedBadOutcome(BadOutcomeEnum):
+    ACCOUNT_NOT_FOUND = auto()
+    INVALID_VALIDATION_CODE = auto()
+    SEND_VALIDATION_EMAIL_REQUIRED = auto()
 
 
 class AccountGetPasswordSecretKeyBadOutcome(BadOutcomeEnum):
@@ -72,19 +82,8 @@ class AccountVaultItemRecoveryList(BadOutcomeEnum):
     ACCOUNT_NOT_FOUND = auto()
 
 
-class AccountCreateAccountDeletionTokenBadOutcome(BadOutcomeEnum):
-    TOO_SOON_AFTER_PREVIOUS_DEMAND = auto()
-
-
 class AccountInviteListBadOutcome(BadOutcomeEnum):
     ACCOUNT_NOT_FOUND = auto()
-
-
-class AccountDeletionConfirmBadOutcome(BadOutcomeEnum):
-    NEW_CODE_NEEDED = auto()
-    INVALID_CODE = auto()
-    ACCOUNT_NOT_FOUND = auto()
-    ALREADY_DELETED = auto()
 
 
 @dataclass(slots=True)
@@ -132,7 +131,7 @@ VALIDATION_CODE_MAX_FAILED_ATTEMPTS: int = 3
 
 @dataclass(slots=True)
 class ValidationCodeInfo:
-    code: ValidationCode
+    validation_code: ValidationCode
     created_at: DateTime
     failed_attempts: int = 0
 
@@ -152,6 +151,51 @@ class BaseAccountComponent:
     def __init__(self, config: BackendConfig):
         self._config = config
 
+    def _can_send_new_validation_email(self, last_email_datetime: DateTime, now: DateTime) -> bool:
+        return (now - last_email_datetime) > self._config.validation_email_cooldown_delay
+
+    # Used by `create_proceed` implementations
+    async def _send_account_create_validation_email(
+        self,
+        email: EmailAddress,
+        validation_code: ValidationCode,
+    ) -> None | SendEmailBadOutcome:
+        if not self._config.server_addr:
+            return SendEmailBadOutcome.BAD_SMTP_CONFIG
+
+        message = _generate_account_create_validation_email(
+            from_addr=self._config.email_config.sender,
+            to_addr=email,
+            validation_code=validation_code,
+            server_url=self._config.server_addr.to_http_url(),
+        )
+
+        return await send_email(
+            email_config=self._config.email_config,
+            to_addr=email,
+            message=message,
+        )
+
+    # Used by `delete_proceed` implementations
+    async def _send_account_delete_validation_email(
+        self,
+        email: EmailAddress,
+        validation_code: ValidationCode,
+    ) -> None | SendEmailBadOutcome:
+        if not self._config.server_addr:
+            return SendEmailBadOutcome.BAD_SMTP_CONFIG
+
+        message = _generate_account_delete_validation_email(
+            from_addr=self._config.email_config.sender,
+            to_addr=email,
+            validation_code=validation_code,
+            server_url=self._config.server_addr.to_http_url(),
+        )
+
+        return await send_email(
+            email_config=self._config.email_config, to_addr=email, message=message
+        )
+
     async def get_password_algorithm_or_fake_it(
         self, email: EmailAddress
     ) -> UntrustedPasswordAlgorithm:
@@ -165,6 +209,7 @@ class BaseAccountComponent:
         """
         raise NotImplementedError
 
+    # Used by `get_password_algorithm_or_fake_it` implementations
     def _generate_fake_password_algorithm(self, email: EmailAddress) -> UntrustedPasswordAlgorithm:
         return UntrustedPasswordAlgorithm.generate_fake_from_seed(
             email.str, self._config.fake_account_password_algorithm_seed
@@ -176,23 +221,45 @@ class BaseAccountComponent:
     ) -> AccountInfo | AccountInfoBadOutcome:
         raise NotImplementedError
 
-    async def create_email_validation_token(
-        self, email: EmailAddress, now: DateTime
-    ) -> EmailValidationToken | AccountCreateEmailValidationTokenBadOutcome:
+    async def create_send_validation_email(
+        self, now: DateTime, email: EmailAddress
+    ) -> ValidationCode | SendEmailBadOutcome | AccountCreateSendValidationEmailBadOutcome:
         raise NotImplementedError
 
-    async def create_account(
+    async def create_check_validation_code(
         self,
-        token: EmailValidationToken,
         now: DateTime,
-        mac_key: SecretKey,
+        email: EmailAddress,
+        validation_code: ValidationCode,
+    ) -> None | AccountCreateProceedBadOutcome:
+        raise NotImplementedError
+
+    async def create_proceed(
+        self,
+        now: DateTime,
+        validation_code: ValidationCode,
         vault_key_access: bytes,
-        human_label: str,
+        human_handle: HumanHandle,
         created_by_user_agent: str,
         created_by_ip: str | Literal[""],
         auth_method_id: AccountAuthMethodID,
         auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
-    ) -> None | AccountCreateAccountBadOutcome:
+    ) -> None | AccountCreateProceedBadOutcome:
+        raise NotImplementedError
+
+    async def delete_send_validation_email(
+        self,
+        now: DateTime,
+        auth_method_id: AccountAuthMethodID,
+    ) -> ValidationCode | SendEmailBadOutcome | AccountDeleteSendValidationEmailBadOutcome:
+        raise NotImplementedError
+
+    async def delete_proceed(
+        self,
+        now: DateTime,
+        auth_method_id: AccountAuthMethodID,
+        validation_code: ValidationCode,
+    ) -> None | AccountDeleteProceedBadOutcome:
         raise NotImplementedError
 
     async def vault_item_upload(
@@ -248,26 +315,23 @@ class BaseAccountComponent:
         client_ctx: AnonymousAccountClientContext,
         req: anonymous_account_cmds.latest.account_create_send_validation_email.Req,
     ) -> anonymous_account_cmds.latest.account_create_send_validation_email.Rep:
-        outcome = await self.create_email_validation_token(req.email, DateTime.now())
+        outcome = await self.create_send_validation_email(DateTime.now(), req.email)
         match outcome:
-            case EmailValidationToken() as token:
-                outcome = await self._send_email_validation_token(token, req.email)
-                match outcome:
-                    case None:
-                        return anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
-                    case (
-                        SendEmailBadOutcome.BAD_SMTP_CONFIG | SendEmailBadOutcome.SERVER_UNAVAILABLE
-                    ):
-                        return anonymous_account_cmds.latest.account_create_send_validation_email.RepEmailServerUnavailable()
-                    case SendEmailBadOutcome.RECIPIENT_REFUSED:
-                        return anonymous_account_cmds.latest.account_create_send_validation_email.RepEmailRecipientRefused()
+            case ValidationCode():
+                return anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
 
             case (
-                AccountCreateEmailValidationTokenBadOutcome.ACCOUNT_ALREADY_EXISTS
-                | AccountCreateEmailValidationTokenBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND
+                AccountCreateSendValidationEmailBadOutcome.ACCOUNT_ALREADY_EXISTS
+                | AccountCreateSendValidationEmailBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND
             ):
                 # Respond OK without sending token to prevent creating oracle
                 return anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
+
+            case SendEmailBadOutcome.BAD_SMTP_CONFIG | SendEmailBadOutcome.SERVER_UNAVAILABLE:
+                return anonymous_account_cmds.latest.account_create_send_validation_email.RepEmailServerUnavailable()
+
+            case SendEmailBadOutcome.RECIPIENT_REFUSED:
+                return anonymous_account_cmds.latest.account_create_send_validation_email.RepEmailRecipientRefused()
 
     @api
     async def api_account_create_proceed(
@@ -275,73 +339,94 @@ class BaseAccountComponent:
         client_ctx: AnonymousAccountClientContext,
         req: anonymous_account_cmds.latest.account_create_proceed.Req,
     ) -> anonymous_account_cmds.latest.account_create_proceed.Rep:
-        # TODO #10599
-        # now = DateTime.now()
-        # match req.auth_method_password_algorithm:
-        #     case UntrustedPasswordAlgorithmArgon2id() as algo:
-        #         pass
-        #     case _:
-        #         # No other algorithm is supported/implemented for now
-        #         raise NotImplementedError
+        match req.account_create_step:
+            case (
+                anonymous_account_cmds.latest.account_create_proceed.AccountCreateStepNumber0CheckCode() as step
+            ):
+                outcome = await self.create_check_validation_code(
+                    now=DateTime.now(),
+                    email=step.email,
+                    validation_code=step.validation_code,
+                )
 
-        # outcome = await self.create_account(
-        #     token=req.validation_token,
-        #     now=now,
-        #     mac_key=req.auth_method_hmac_key,
-        #     vault_key_access=req.vault_key_access,
-        #     human_label=req.human_label,
-        #     created_by_user_agent=client_ctx.client_user_agent,
-        #     created_by_ip=client_ctx.client_ip_address,
-        #     auth_method_id=req.auth_method_id,
-        #     auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
-        #         opslimit=algo.opslimit,
-        #         memlimit_kb=algo.memlimit_kb,
-        #         parallelism=algo.parallelism,
-        #     ),
-        # )
+            case (
+                anonymous_account_cmds.latest.account_create_proceed.AccountCreateStepNumber1Create() as step
+            ):
+                outcome = await self.create_proceed(
+                    now=DateTime.now(),
+                    validation_code=step.validation_code,
+                    vault_key_access=step.vault_key_access,
+                    human_handle=step.human_handle,
+                    created_by_user_agent=client_ctx.client_user_agent,
+                    created_by_ip=client_ctx.client_ip_address,
+                    auth_method_id=step.auth_method_id,
+                    auth_method_mac_key=step.auth_method_mac_key,
+                    auth_method_password_algorithm=step.auth_method_password_algorithm,
+                )
 
-        # match outcome:
-        #     case None:
-        #         return anonymous_account_cmds.latest.account_create_proceed.RepOk()
-        #     case AccountCreateAccountBadOutcome.INVALID_TOKEN:
-        #         return (
-        #             anonymous_account_cmds.latest.account_create_proceed.RepInvalidValidationCode()
-        #         )
-        #     case AccountCreateAccountBadOutcome.AUTH_METHOD_ALREADY_EXISTS:
-        #         return anonymous_account_cmds.latest.account_create_proceed.RepAuthMethodIdAlreadyExists()
+            case unknown:
+                assert False, f"Unknown step {unknown}"
 
-        return anonymous_account_cmds.latest.account_create_proceed.RepOk()
+        match outcome:
+            case None:
+                return anonymous_account_cmds.latest.account_create_proceed.RepOk()
 
-    async def _send_email_validation_token(
+            case AccountCreateProceedBadOutcome.INVALID_VALIDATION_CODE:
+                return (
+                    anonymous_account_cmds.latest.account_create_proceed.RepInvalidValidationCode()
+                )
+
+            case AccountCreateProceedBadOutcome.SEND_VALIDATION_EMAIL_REQUIRED:
+                return anonymous_account_cmds.latest.account_create_proceed.RepSendValidationEmailRequired()
+
+            case AccountCreateProceedBadOutcome.AUTH_METHOD_ID_ALREADY_EXISTS:
+                return anonymous_account_cmds.latest.account_create_proceed.RepAuthMethodIdAlreadyExists()
+
+    @api
+    async def api_account_delete_send_validation_email(
         self,
-        token: EmailValidationToken,
-        claimer_email: EmailAddress,
-    ) -> None | SendEmailBadOutcome:
-        if not self._config.server_addr:
-            return SendEmailBadOutcome.BAD_SMTP_CONFIG
+        client_ctx: AuthenticatedAccountClientContext,
+        req: authenticated_account_cmds.latest.account_delete_send_validation_email.Req,
+    ) -> authenticated_account_cmds.latest.account_delete_send_validation_email.Rep:
+        outcome = await self.delete_send_validation_email(DateTime.now(), client_ctx.auth_method_id)
+        match outcome:
+            case ValidationCode():
+                return (
+                    authenticated_account_cmds.latest.account_delete_send_validation_email.RepOk()
+                )
 
-        validation_url = ParsecAccountEmailValidationAddr.build(
-            server_addr=self._config.server_addr,
-            token=token,
-        ).to_http_redirection_url()
+            case AccountDeleteSendValidationEmailBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND:
+                return (
+                    authenticated_account_cmds.latest.account_delete_send_validation_email.RepOk()
+                )
 
-        message = generate_email_validation_email(
-            from_addr=self._config.email_config.sender,
-            to_addr=claimer_email,
-            validation_url=validation_url,
-            server_url=self._config.server_addr.to_http_url(),
+            case SendEmailBadOutcome.BAD_SMTP_CONFIG | SendEmailBadOutcome.SERVER_UNAVAILABLE:
+                return authenticated_account_cmds.latest.account_delete_send_validation_email.RepEmailServerUnavailable()
+
+            case SendEmailBadOutcome.RECIPIENT_REFUSED:
+                return authenticated_account_cmds.latest.account_delete_send_validation_email.RepEmailRecipientRefused()
+
+            case AccountDeleteSendValidationEmailBadOutcome.ACCOUNT_NOT_FOUND:
+                client_ctx.account_not_found_abort()
+
+    @api
+    async def api_account_delete_proceed(
+        self,
+        client_ctx: AuthenticatedAccountClientContext,
+        req: authenticated_account_cmds.latest.account_delete_proceed.Req,
+    ) -> authenticated_account_cmds.latest.account_delete_proceed.Rep:
+        outcome = await self.delete_proceed(
+            DateTime.now(), client_ctx.auth_method_id, req.validation_code
         )
-        return await send_email(
-            email_config=self._config.email_config,
-            to_addr=claimer_email,
-            message=message,
-        )
-
-    def can_send_new_code_email(self, last_email_datetime: DateTime, now: DateTime) -> bool:
-        return (now - last_email_datetime) > self._config.account_confirmation_email_resend_delay
-
-    def test_get_token_by_email(self, email: EmailAddress) -> EmailValidationToken | None:
-        raise NotImplementedError
+        match outcome:
+            case None:
+                return authenticated_account_cmds.latest.account_delete_proceed.RepOk()
+            case AccountDeleteProceedBadOutcome.INVALID_VALIDATION_CODE:
+                return authenticated_account_cmds.latest.account_delete_proceed.RepInvalidValidationCode()
+            case AccountDeleteProceedBadOutcome.SEND_VALIDATION_EMAIL_REQUIRED:
+                return authenticated_account_cmds.latest.account_delete_proceed.RepSendValidationEmailRequired()
+            case AccountDeleteProceedBadOutcome.ACCOUNT_NOT_FOUND:
+                client_ctx.account_not_found_abort()
 
     @api
     async def api_account_vault_item_upload(
@@ -469,65 +554,6 @@ class BaseAccountComponent:
             case AccountVaultItemRecoveryList.ACCOUNT_NOT_FOUND:
                 client_ctx.account_not_found_abort()
 
-    async def _send_email_deletion_code(
-        self, code: ValidationCode, email: EmailAddress
-    ) -> None | SendEmailBadOutcome:
-        if not self._config.server_addr:
-            return SendEmailBadOutcome.BAD_SMTP_CONFIG
-
-        message = generate_email_deletion_email(
-            from_addr=self._config.email_config.sender,
-            to_addr=email,
-            deletion_code=code,
-            server_url=self._config.server_addr.to_http_url(),
-        )
-
-        return await send_email(
-            email_config=self._config.email_config, to_addr=email, message=message
-        )
-
-    async def get_account_deletion_code_info(
-        self, email: EmailAddress
-    ) -> ValidationCodeInfo | None:
-        raise NotImplementedError
-
-    async def set_account_deletion_code_info(self, email: EmailAddress, info: ValidationCodeInfo):
-        raise NotImplementedError
-
-    async def create_email_deletion_code(
-        self,
-        email: EmailAddress,
-        now: DateTime,
-    ) -> ValidationCode | AccountCreateAccountDeletionTokenBadOutcome:
-        code_info = await self.get_account_deletion_code_info(email)
-        if code_info is not None and not self.can_send_new_code_email(code_info.created_at, now):
-            return AccountCreateAccountDeletionTokenBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND
-        code = ValidationCode.generate()
-        await self.set_account_deletion_code_info(email, ValidationCodeInfo(code, now))
-        return code
-
-    @api
-    async def api_account_delete_send_validation_email(
-        self,
-        client_ctx: AuthenticatedAccountClientContext,
-        req: authenticated_account_cmds.latest.account_delete_send_code.Req,
-    ) -> authenticated_account_cmds.latest.account_delete_send_code.Rep:
-        outcome = await self.create_email_deletion_code(client_ctx.account_email, DateTime.now())
-        match outcome:
-            case ValidationCode() as code:
-                outcome = await self._send_email_deletion_code(code, client_ctx.account_email)
-                match outcome:
-                    case None:
-                        return authenticated_account_cmds.latest.account_delete_send_code.RepOk()
-                    case (
-                        SendEmailBadOutcome.BAD_SMTP_CONFIG | SendEmailBadOutcome.SERVER_UNAVAILABLE
-                    ):
-                        return authenticated_account_cmds.latest.account_delete_send_code.RepEmailServerUnavailable()
-                    case SendEmailBadOutcome.RECIPIENT_REFUSED:
-                        return authenticated_account_cmds.latest.account_delete_send_code.RepEmailRecipientRefused()
-            case AccountCreateAccountDeletionTokenBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND:
-                return authenticated_account_cmds.latest.account_delete_send_code.RepOk()
-
     @api
     async def api_account_account_info(
         self,
@@ -562,60 +588,22 @@ class BaseAccountComponent:
 
         return invite_self_list.RepOk(invitations=invitations)
 
-    async def delete_account(
-        self, auth_method_id: AccountAuthMethodID, now: DateTime
-    ) -> None | AccountDeletionConfirmBadOutcome:
-        raise NotImplementedError
 
-    async def confirm_account_deletion(
-        self,
-        client_ctx: AuthenticatedAccountClientContext,
-        deletion_code: ValidationCode,
-        now: DateTime,
-    ) -> None | AccountDeletionConfirmBadOutcome:
-        code_info = await self.get_account_deletion_code_info(client_ctx.account_email)
-        if code_info is None or not code_info.can_be_used(now):
-            return AccountDeletionConfirmBadOutcome.NEW_CODE_NEEDED
-        if code_info.code != deletion_code:
-            code_info.failed_attempts += 1
-            await self.set_account_deletion_code_info(client_ctx.account_email, code_info)
-            return AccountDeletionConfirmBadOutcome.INVALID_CODE
-
-        return await self.delete_account(client_ctx.auth_method_id, now)
-
-    @api
-    async def api_account_delete_confirm(
-        self,
-        client_ctx: AuthenticatedAccountClientContext,
-        req: authenticated_account_cmds.latest.account_delete_confirm.Req,
-    ) -> authenticated_account_cmds.latest.account_delete_confirm.Rep:
-        outcome = await self.confirm_account_deletion(client_ctx, req.deletion_code, DateTime.now())
-        match outcome:
-            case None | AccountDeletionConfirmBadOutcome.ALREADY_DELETED:
-                return authenticated_account_cmds.latest.account_delete_confirm.RepOk()
-            case AccountDeletionConfirmBadOutcome.INVALID_CODE:
-                return authenticated_account_cmds.latest.account_delete_confirm.RepInvalidDeletionCode()
-            case AccountDeletionConfirmBadOutcome.NEW_CODE_NEEDED:
-                return authenticated_account_cmds.latest.account_delete_confirm.RepNewCodeNeeded()
-            case AccountDeletionConfirmBadOutcome.ACCOUNT_NOT_FOUND:
-                client_ctx.account_not_found_abort()
-
-
-def generate_email_validation_email(
+def _generate_account_create_validation_email(
     from_addr: EmailAddress,
     to_addr: EmailAddress,
-    validation_url: str,
+    validation_code: ValidationCode,
     server_url: str,
 ) -> Message:
     # Quick fix to have a similar behavior between Rust and Python
     server_url = server_url.removesuffix("/")
 
     html = get_template("email/account_validation.html.j2").render(
-        validation_url=validation_url,
+        validation_code=validation_code.str,
         server_url=server_url,
     )
     text = get_template("email/account_validation.txt.j2").render(
-        validation_url=validation_url,
+        validation_code=validation_code.str,
         server_url=server_url,
     )
 
@@ -638,21 +626,21 @@ def generate_email_validation_email(
     return message
 
 
-def generate_email_deletion_email(
+def _generate_account_delete_validation_email(
     from_addr: EmailAddress,
     to_addr: EmailAddress,
-    deletion_code: ValidationCode,
+    validation_code: ValidationCode,
     server_url: str,
 ) -> Message:
     # Quick fix to have a similar behavior between Rust and Python
     server_url = server_url.removesuffix("/")
 
     html = get_template("email/account_deletion.html.j2").render(
-        deletion_code=deletion_code.str,
+        validation_code=validation_code.str,
         server_url=server_url,
     )
     text = get_template("email/account_deletion.txt.j2").render(
-        deletion_code=deletion_code.str,
+        validation_code=validation_code.str,
         server_url=server_url,
     )
 

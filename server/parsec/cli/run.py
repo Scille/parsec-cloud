@@ -243,12 +243,19 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
     default=AccountVaultStrategy.ALLOWED,
 )
 @click.option(
-    "--account-confirmation-email-resend-delay",
+    "--validation-email-cooldown-delay",
     default=60,
     show_default=True,
-    envvar="PARSEC_ACCOUNT_CONFIRMATION_EMAIL_RESEND_DELAY",
+    envvar="PARSEC_VALIDATION_EMAIL_COOLDOWN_DELAY",
     show_envvar=True,
-    help="Delay before resending an account creation confirmation email (in seconds)",
+    help="""Delay (in seconds) before a validation email can be resend (e.g.
+    for creating or reseting an account).
+
+    Note this cooldown is applied to both the recipient email address and the
+    initiator IP address (e.i. a given IP address can request sending an email
+    once every cooldown time, an email can be send once every cooldown time
+    for any given email address).
+""",
 )
 @click.option(
     "--fake-account-password-algorithm-seed",
@@ -433,7 +440,7 @@ def run_cmd(
     organization_initial_tos: dict[TosLocale, TosUrl] | None,
     organization_initial_allowed_client_agent: AllowedClientAgent,
     organization_initial_account_vault_strategy: AccountVaultStrategy,
-    account_confirmation_email_resend_delay: int,
+    validation_email_cooldown_delay: int,
     fake_account_password_algorithm_seed: SecretKey,
     server_addr: ParsecAddr,
     email_host: str,
@@ -499,7 +506,7 @@ def run_cmd(
             organization_initial_tos=organization_initial_tos,
             organization_initial_allowed_client_agent=organization_initial_allowed_client_agent,
             organization_initial_account_vault_strategy=organization_initial_account_vault_strategy,
-            account_confirmation_email_resend_delay=account_confirmation_email_resend_delay,
+            validation_email_cooldown_delay=validation_email_cooldown_delay,
             fake_account_password_algorithm_seed=fake_account_password_algorithm_seed,
         )
 

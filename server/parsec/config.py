@@ -242,7 +242,14 @@ class BackendConfig:
     # Bearer token used to authenticate the administration API
     administration_token: str
 
-    account_confirmation_email_resend_delay: int
+    # Delay (in seconds) before a validation email can be resend (e.g.
+    # for creating or reseting an account).
+    #
+    # Note this cooldown is applied to both the recipient email address and the
+    # initiator IP address (e.i. a given IP address can request sending an email
+    # once every cooldown time, an email can be send once every cooldown time
+    # for any given email address).
+    validation_email_cooldown_delay: int
 
     # Random value used to make unpredictable (but still stable & realistic) the password
     # algorithm configuration returned for non-existing accounts, hence preventing an

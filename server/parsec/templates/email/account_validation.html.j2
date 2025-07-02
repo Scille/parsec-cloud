@@ -6,7 +6,7 @@
 {% block title %}To confirm your Parsec Account creation:{% endblock %}
 
 {% block main_content %}
-{% from "email/macros.html.j2" import gen_contents, render_link, render_fallback_link %}
+{% from "email/macros.html.j2" import gen_contents, render_link, render_fallback_link, render_code %}
 {{
   gen_contents([
     namespace(
@@ -18,12 +18,12 @@
       ]
     ),
     namespace(
-      text="Once installed, click on the link below to confirm your email address.",
+      title="Use validation code",
+      text="To confirm your email address, use the following code:",
       extras=[
-        render_link(validation_url, "Confirm email address"),
-        render_fallback_link(validation_url)
+        render_code(validation_code)
       ]
-    )
+    ),
   ])
 }}
 {% endblock %}
