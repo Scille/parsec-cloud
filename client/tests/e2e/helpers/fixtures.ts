@@ -13,6 +13,7 @@ interface SetupOptions {
   location?: string;
   skipGoto?: boolean;
   withParsecAccount?: boolean;
+  parsecAccountAutoLogin?: boolean;
   withCustomBranding?: boolean;
   displaySize?: DisplaySize;
   mockBrowser?: 'Chrome' | 'Firefox' | 'Safari' | 'Edge' | 'Brave' | 'Chromium';
@@ -29,6 +30,9 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
     (window as any).TESTING = true;
     if (options.withParsecAccount) {
       (window as any).TESTING_ENABLE_ACCOUNT = true;
+    }
+    if (options.parsecAccountAutoLogin) {
+      (window as any).TESTING_ACCOUNT_AUTO_LOGIN = true;
     }
     if (options.withCustomBranding) {
       (window as any).TESTING_ENABLE_CUSTOM_BRANDING = true;
@@ -499,12 +503,11 @@ export const msTest = debugTest.extend<{
     await page.release();
   },
 
-  parsecAccountLoggedIn: async ({ parsecAccount }, use) => {
-    const accountLogin = parsecAccount.locator('.account-login-container');
-    await accountLogin.locator('.account-login-content__input').nth(2).locator('input').fill('a@b.c');
-    await accountLogin.locator('.account-login-content__input').nth(4).locator('input').fill('BigP@ssw0rd.');
-    await accountLogin.locator('.account-login-button__item').click();
-    await expect(parsecAccount).toHaveURL(/.+\/home$/);
-    await use(parsecAccount);
+  parsecAccountLoggedIn: async ({ context }, use) => {
+    const page = (await context.newPage()) as MsPage;
+    await setupNewPage(page, { withParsecAccount: true, parsecAccountAutoLogin: true, location: '/home' });
+    await expect(page).toHaveURL(/.+\/home$/);
+    await use(page);
+    await page.release();
   },
 });

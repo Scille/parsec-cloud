@@ -2,6 +2,7 @@
 
 import { Locator } from '@playwright/test';
 import { DEFAULT_USER_INFORMATION, expect, fillIonInput, msTest } from '@tests/e2e/helpers';
+// import { testbedGetAccountCreationCode } from '@tests/e2e/helpers/testbed';
 
 msTest('Parsec account create account', async ({ parsecAccount }) => {
   async function checkVisible(containers: Array<Locator>, visibleIndex: number): Promise<void> {
@@ -35,7 +36,7 @@ msTest('Parsec account create account', async ({ parsecAccount }) => {
   const userInfoNext = userInfoContainer.locator('.account-login-content-button__item');
   await expect(userInfoNext).toHaveText('Next');
   await expect(userInfoNext).toBeTrulyDisabled();
-  await fillIonInput(inputContainers.nth(0).locator('ion-input'), 'parsec3://localhost');
+  await fillIonInput(inputContainers.nth(0).locator('ion-input'), process.env.TESTBED_SERVER as string);
   await expect(userInfoNext).toBeTrulyDisabled();
   await fillIonInput(inputContainers.nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.firstName);
   await expect(userInfoNext).toBeTrulyDisabled();
@@ -46,6 +47,7 @@ msTest('Parsec account create account', async ({ parsecAccount }) => {
   await userInfoNext.click();
   await checkVisible(containers, 1);
   await expect(title).toHaveText('Validate your email');
+  // const _code = await testbedGetAccountCreationCode(parsecAccount, DEFAULT_USER_INFORMATION.email);
 
   // const validationNext = validationContainer.locator('ion-button').nth(0);
   // await expect(validationNext).toHaveText('Create an account');
