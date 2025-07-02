@@ -1,9 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use libparsec_client_connection::{AccountAuthMethod, AnonymousAccountCmds, ConnectionError};
-use libparsec_protocol::anonymous_account_cmds::v5::{
-    account_create_proceed, account_create_send_validation_email,
-};
 use libparsec_types::prelude::*;
 
 use super::{
@@ -27,19 +24,20 @@ pub(super) async fn account_create_send_validation_email(
     cmds: &AnonymousAccountCmds,
     email: EmailAddress,
 ) -> Result<(), AccountCreateSendValidationEmailError> {
-    match cmds
-        .send(account_create_send_validation_email::Req { email })
-        .await?
-    {
-        account_create_send_validation_email::Rep::Ok => Ok(()),
+    use libparsec_protocol::anonymous_account_cmds::v5::account_create_send_validation_email::{
+        Rep, Req,
+    };
 
-        account_create_send_validation_email::Rep::EmailRecipientRefused => {
+    match cmds.send(Req { email }).await? {
+        Rep::Ok => Ok(()),
+
+        Rep::EmailRecipientRefused => {
             Err(AccountCreateSendValidationEmailError::EmailRecipientRefused)
         }
-        account_create_send_validation_email::Rep::EmailServerUnavailable => {
+        Rep::EmailServerUnavailable => {
             Err(AccountCreateSendValidationEmailError::EmailServerUnavailable)
         }
-        bad_rep @ account_create_send_validation_email::Rep::UnknownStatus { .. } => {
+        bad_rep @ Rep::UnknownStatus { .. } => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
         }
     }
@@ -75,11 +73,15 @@ pub(super) async fn account_create(
     cmds: &AnonymousAccountCmds,
     step: AccountCreateStep,
 ) -> Result<(), AccountCreateError> {
+    use libparsec_protocol::anonymous_account_cmds::v5::account_create_proceed::{
+        AccountCreateStep as ReqAccountCreateStep, Rep, Req,
+    };
+
     let req_step = match step {
         AccountCreateStep::CheckCode {
             validation_code,
             email,
-        } => account_create_proceed::AccountCreateStep::Number0CheckCode {
+        } => ReqAccountCreateStep::Number0CheckCode {
             validation_code,
             email,
         },
@@ -114,7 +116,7 @@ pub(super) async fn account_create(
 
             let vault_key_access_bytes = vault_key_access.dump_and_encrypt(&auth_method_secret_key);
 
-            account_create_proceed::AccountCreateStep::Number1Create {
+            ReqAccountCreateStep::Number1Create {
                 validation_code,
                 auth_method_hmac_key: auth_method.mac_key,
                 auth_method_id: auth_method.id,
@@ -126,22 +128,16 @@ pub(super) async fn account_create(
     };
 
     match cmds
-        .send(account_create_proceed::Req {
+        .send(Req {
             account_create_step: req_step,
         })
         .await?
     {
-        account_create_proceed::Rep::Ok => Ok(()),
-        account_create_proceed::Rep::AuthMethodIdAlreadyExists => {
-            Err(AccountCreateError::AuthMethodIdAlreadyExists)
-        }
-        account_create_proceed::Rep::InvalidValidationCode => {
-            Err(AccountCreateError::InvalidValidationCode)
-        }
-        account_create_proceed::Rep::SendValidationEmailRequired => {
-            Err(AccountCreateError::SendValidationEmailRequired)
-        }
-        bad_rep @ account_create_proceed::Rep::UnknownStatus { .. } => {
+        Rep::Ok => Ok(()),
+        Rep::AuthMethodIdAlreadyExists => Err(AccountCreateError::AuthMethodIdAlreadyExists),
+        Rep::InvalidValidationCode => Err(AccountCreateError::InvalidValidationCode),
+        Rep::SendValidationEmailRequired => Err(AccountCreateError::SendValidationEmailRequired),
+        bad_rep @ Rep::UnknownStatus { .. } => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
         }
     }
