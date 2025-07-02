@@ -14,7 +14,7 @@ use libparsec_types::prelude::*;
 use crate::{Account, AccountCreateSendValidationEmailError};
 
 #[parsec_test(testbed = "empty", with_server)]
-async fn ok_with_server_and_create(env: &TestbedEnv) {
+async fn ok_with_server_then_check_code_and_create(env: &TestbedEnv) {
     // Randomize email since the testbed server will conserve it between runs
     let email: EmailAddress = format!("{}@example.com", uuid::Uuid::new_v4())
         .parse()
@@ -41,41 +41,43 @@ async fn ok_with_server_and_create(env: &TestbedEnv) {
         .unwrap();
     p_assert_eq!(mails.len(), 1);
 
-    // TODO: Get validation code from the email and use to to actually create the account
-    //       once migration out of invitation addr is done.
+    let validation_code: ValidationCode = {
+        let mail_body: &str = mails[0].2.as_ref();
+        const NEEDLE_START: &str = "<pre id=\"code\">";
+        const NEEDLE_END: &str = "</pre>";
+        let start = mail_body.find(NEEDLE_START).unwrap() + NEEDLE_START.len();
+        let offset = mail_body[start..].find(NEEDLE_END).unwrap();
+        mail_body[start..start + offset].parse().unwrap()
+    };
 
-    // let invitation_token = {
-    //     let mail_body: &str = mails[0].2.as_ref();
-    //     let needle = "<a href=\"";
-    //     let addr_start = mail_body.find(needle).unwrap() + needle.len();
-    //     let addr_offset = mail_body[addr_start..].find("\"").unwrap();
-    //     // Note we cannot use the address to configure `AnonymousAccountCmds` since its
-    //     // contains an invalid domain (i.e. `saas.parsec.invalid/`)
-    //     let invitation_addr = ParsecAccountEmailValidationAddr::from_http_redirection(&mail_body[addr_start..addr_start + addr_offset]).unwrap();
-    //     invitation_addr.token()
-    // };
+    // All ready, now try to check the code...
 
-    // let human_handle: HumanHandle = "Zack <zack@example.com>".parse().unwrap();
-    // let password: Password = "P@ssw0rd.".to_string().into();
-    // let validation_code: ValidationCode = "AD3FXJ".parse().unwrap();
+    let human_handle = HumanHandle::new(email, "Zack").unwrap();
+    let password: Password = "P@ssw0rd.".to_string().into();
 
-    // let cmds = AnonymousAccountCmds::new(
-    //     &env.discriminant_dir,
-    //     env.server_addr.clone(),
-    //     ProxyConfig::default(),
-    // )
-    // .unwrap();
+    let cmds = AnonymousAccountCmds::new(
+        &env.discriminant_dir,
+        env.server_addr.clone(),
+        ProxyConfig::default(),
+    )
+    .unwrap();
 
-    // p_assert_matches!(
-    //     Account::create_3_proceed(
-    //         &cmds,
-    //         validation_code,
-    //         human_handle.clone(),
-    //         password.clone()
-    //     )
-    //     .await,
-    //     Ok(())
-    // );
+    p_assert_matches!(
+        Account::create_2_check_validation_code(
+            &cmds,
+            validation_code.clone(),
+            human_handle.email().to_owned(),
+        )
+        .await,
+        Ok(())
+    );
+
+    // ...and finally do the actual account creation!
+
+    p_assert_matches!(
+        Account::create_3_proceed(&cmds, validation_code, human_handle.clone(), &password,).await,
+        Ok(())
+    );
 }
 
 #[parsec_test(testbed = "empty")]
