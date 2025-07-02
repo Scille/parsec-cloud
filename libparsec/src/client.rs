@@ -89,11 +89,11 @@ pub async fn wait_for_device_available(
 pub enum ClientStartError {
     #[error("Device already used by another process")]
     DeviceUsedByAnotherProcess,
-    #[error(transparent)]
+    #[error("Cannot load device file: invalid path ({})", .0)]
     LoadDeviceInvalidPath(anyhow::Error),
-    #[error("Cannot deserialize file content")]
+    #[error("Cannot load device file: invalid data")]
     LoadDeviceInvalidData,
-    #[error("Failed to decrypt file content")]
+    #[error("Cannot load device file: decryption failed")]
     LoadDeviceDecryptionFailed,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
@@ -103,9 +103,7 @@ impl From<libparsec_platform_device_loader::LoadDeviceError> for ClientStartErro
     fn from(value: libparsec_platform_device_loader::LoadDeviceError) -> Self {
         use libparsec_platform_device_loader::LoadDeviceError;
         match value {
-            e @ LoadDeviceError::StorageNotAvailable => {
-                ClientStartError::LoadDeviceInvalidPath(e.into())
-            }
+            e @ LoadDeviceError::StorageNotAvailable => Self::LoadDeviceInvalidPath(e.into()),
             LoadDeviceError::InvalidPath(err) => Self::LoadDeviceInvalidPath(err),
             LoadDeviceError::InvalidData => Self::LoadDeviceInvalidData,
             LoadDeviceError::DecryptionFailed => Self::LoadDeviceDecryptionFailed,
@@ -116,13 +114,13 @@ impl From<libparsec_platform_device_loader::LoadDeviceError> for ClientStartErro
 
 pub async fn client_start(
     config: ClientConfig,
-    access: DeviceAccessStrategy,
+    access: &DeviceAccessStrategy,
 ) -> Result<Handle, ClientStartError> {
     let config: Arc<libparsec_client::ClientConfig> = config.into();
 
     // 1) Load the device
 
-    let device = libparsec_platform_device_loader::load_device(&config.config_dir, &access).await?;
+    let device = libparsec_platform_device_loader::load_device(&config.config_dir, access).await?;
 
     // 2) Make sure another client is not running this device
 
