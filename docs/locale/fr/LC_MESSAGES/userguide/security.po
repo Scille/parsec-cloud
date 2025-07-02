@@ -6,17 +6,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.4.1-a.0+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-20 00:56+0200\n"
+"POT-Creation-Date: 2025-07-09 12:51+0000\n"
 "PO-Revision-Date: 2025-06-20 01:03+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
-"Language-Team: fr <dev-parsec@scille.fr>\n"
 "Language: fr\n"
+"Language-Team: fr <dev-parsec@scille.fr>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "Generated-By: Babel 2.17.0\n"
-"X-Generator: Poedit 3.6\n"
 
 #: ../../userguide/security.rst:6
 msgid "Security best practices"
@@ -253,3 +252,70 @@ msgstr ""
 "Gardez à l'esprit que certains logiciels, comme Microsoft Word ou Google "
 "Drive, peuvent télécharger automatiquement vos fichiers dans le nuage sans "
 "que vous en soyez nécessairement conscient."
+
+#: ../../userguide/security.rst:96
+msgid "How to verify a Parsec link"
+msgstr "Comment vérifier un lien Parsec"
+
+#: ../../userguide/security.rst:99
+msgid "What is a Parsec link?"
+msgstr "Qu'est-ce qu'un lien Parsec ?"
+
+#: ../../userguide/security.rst:101
+msgid ""
+"A Parsec link is a link that is used by the Parsec application, you use such "
+"link when (non-exhaustive):"
+msgstr ""
+"Un lien Parsec est un lien utilisé par l'application Parsec, vous utilisez "
+"ce lien lorsque (liste non exhaustive) :"
+
+#: ../../userguide/security.rst:103
+msgid ""
+":ref:`You are invited to a new organization "
+"<doc_userguide_join_organization>`."
+msgstr ""
+":ref:`Vous êtes invité dans une nouvelle organisation "
+"<doc_userguide_join_organization>`."
+
+#: ../../userguide/security.rst:104
+msgid ":ref:`You add a new device <userguide-add-new-device>`."
+msgstr ":ref:`Vous ajoutez un nouvel appareil <userguide-add-new-device>`."
+
+#: ../../userguide/security.rst:105
+msgid ":ref:`You share a file <userguide-share-file>`."
+msgstr ":ref:`Vous partagez un fichier <userguide-share-file>`."
+
+#: ../../userguide/security.rst:108
+msgid "What should I verify in a Parsec link?"
+msgstr "Qu'est-ce que je dois vérifier dans un lien Parsec ?"
+
+#: ../../userguide/security.rst:110
+msgid "A Parsec link is formatted like so:"
+msgstr "Un lien Parsec est formaté comme ça :"
+
+#: ../../userguide/security.rst:118
+msgid ""
+"The `URL scheme <url-scheme_>`_ ``parsec3`` may be replaced by ``https`` for "
+"links received by e-mail."
+msgstr ""
+"Le schéma d’URL <url-scheme_> ``parsec3`` peut être remplacé par ``https`` "
+"pour les liens reçus par e-mail."
+
+#: ../../userguide/security.rst:123
+msgid ""
+"When you receive a link, you just need to check if the ``SERVER`` and "
+"``ORGANIZATION`` parts match your organization's server. This can be found "
+"on the \"Information\" page, when you login to your organization."
+msgstr ""
+"Lorsque vous recevez un lien, il vous suffit de vérifier si les parties "
+"``SERVER`` et ``ORGANIZATION`` correspondent au serveur de votre "
+"organisation. Vous pouvez trouver cette information sur la page "
+"\"Information\", lorsque vous vous connectez à votre organisation."
+
+#: ../../userguide/security.rst:125
+msgid ""
+"When joining an organization, you should contact an administrator of the "
+"organization to provide or confirm this information."
+msgstr ""
+"Lorsque vous rejoignez une organisation, vous devez contacter un "
+"administrateur de l'organisation pour fournir ou confirmer ces informations."

@@ -11,12 +11,16 @@ please make sure you have :ref:`installed the Parsec app <doc_userguide_install_
 Start the invitation process
 -------------------------------
 
-If you have received an **invitation email**, simply click the link in the email.
-The Parsec app will start and guide you through the invitation process.
+If you received an **invitation link** either by email or by any other means, :ref:`first verify it <userguide-verify-parsec-link>`.
 
-If Parsec does not start automatically, you can still join the organization
-with an **invitation link**. Paste the link on the login screen and click ``Join``.
+.. important::
 
+   If you do not trust the link, do not proceed with the invitation.
+
+After making sure that the link is safe, simply click on the link.
+Parsec will start and guide you through the invitation process.
+
+You can also start Parsec manually and paste the **invitation link** on the login screen then click ``Join``.
 
 .. _doc_userguide_join_organization_token_exchange:
 
