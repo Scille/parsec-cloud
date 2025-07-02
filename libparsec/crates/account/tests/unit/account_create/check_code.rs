@@ -36,7 +36,7 @@ async fn ok(env: &TestbedEnv) {
     });
 
     p_assert_matches!(
-        Account::create_2_check_validation_code(&cmds, validation_code, email,).await,
+        Account::create_2_check_validation_code(&cmds, validation_code, email).await,
         Ok(())
     );
 }
@@ -53,7 +53,7 @@ async fn offline(env: &TestbedEnv) {
     .unwrap();
 
     p_assert_matches!(
-        Account::create_2_check_validation_code(&cmds, validation_code, email,)
+        Account::create_2_check_validation_code(&cmds, validation_code, email)
             .await
             .unwrap_err(),
         AccountCreateError::Offline(_)
@@ -113,10 +113,36 @@ async fn invalid_validation_code(env: &TestbedEnv) {
     );
 
     p_assert_matches!(
-        Account::create_2_check_validation_code(&cmds, validation_code, email,)
+        Account::create_2_check_validation_code(&cmds, validation_code, email)
             .await
             .unwrap_err(),
         AccountCreateError::InvalidValidationCode
+    );
+}
+
+#[parsec_test(testbed = "empty")]
+async fn send_validation_email_required(env: &TestbedEnv) {
+    let email: EmailAddress = "zack@example.com".parse().unwrap();
+    let validation_code: ValidationCode = "AD3FXJ".parse().unwrap();
+    let cmds = AnonymousAccountCmds::new(
+        &env.discriminant_dir,
+        env.server_addr.clone(),
+        ProxyConfig::default(),
+    )
+    .unwrap();
+
+    test_register_sequence_of_send_hooks!(
+        &env.discriminant_dir,
+        move |_req: anonymous_account_cmds::latest::account_create_proceed::Req| {
+            anonymous_account_cmds::latest::account_create_proceed::Rep::SendValidationEmailRequired
+        }
+    );
+
+    p_assert_matches!(
+        Account::create_2_check_validation_code(&cmds, validation_code, email)
+            .await
+            .unwrap_err(),
+        AccountCreateError::SendValidationEmailRequired
     );
 }
 
@@ -139,7 +165,7 @@ async fn auth_method_id_already_exists(env: &TestbedEnv) {
     );
 
     p_assert_matches!(
-        Account::create_2_check_validation_code(&cmds, validation_code, email,)
+        Account::create_2_check_validation_code(&cmds, validation_code, email)
             .await
             .unwrap_err(),
         AccountCreateError::AuthMethodIdAlreadyExists

@@ -199,6 +199,33 @@ async fn invalid_validation_code(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "empty")]
+async fn send_validation_email_required(env: &TestbedEnv) {
+    let human_handle: HumanHandle = "Zack <zack@example.com>".parse().unwrap();
+    let password = "P@ssw0rd.".to_string().into();
+    let validation_code: ValidationCode = "AD3FXJ".parse().unwrap();
+    let cmds = AnonymousAccountCmds::new(
+        &env.discriminant_dir,
+        env.server_addr.clone(),
+        ProxyConfig::default(),
+    )
+    .unwrap();
+
+    test_register_sequence_of_send_hooks!(
+        &env.discriminant_dir,
+        move |_req: anonymous_account_cmds::latest::account_create_proceed::Req| {
+            anonymous_account_cmds::latest::account_create_proceed::Rep::SendValidationEmailRequired
+        }
+    );
+
+    p_assert_matches!(
+        Account::create_3_proceed(&cmds, validation_code, human_handle, &password)
+            .await
+            .unwrap_err(),
+        AccountCreateError::SendValidationEmailRequired
+    );
+}
+
+#[parsec_test(testbed = "empty")]
 async fn auth_method_id_already_exists(env: &TestbedEnv) {
     let human_handle: HumanHandle = "Zack <zack@example.com>".parse().unwrap();
     let password = "P@ssw0rd.".to_string().into();
