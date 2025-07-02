@@ -13,12 +13,15 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.types import Receive, Scope, Send
+from structlog import get_logger
 
 from parsec._version import __version__ as parsec_version
 from parsec.asgi.administration import administration_router
 from parsec.asgi.redirect import redirect_router
 from parsec.asgi.rpc import Backend, rpc_router
 from parsec.templates import JINJA_ENV_CONFIG
+
+logger = get_logger()
 
 type AsgiApp = FastAPI
 
@@ -149,6 +152,7 @@ async def serve_parsec_asgi_app(
     host: str,
     port: int,
     proxy_trusted_addresses: str | None,
+    ssl_ciphers: list[str],
     ssl_certfile: Path | None = None,
     ssl_keyfile: Path | None = None,
     workers: int | None = None,
@@ -164,6 +168,8 @@ async def serve_parsec_asgi_app(
         # ex: parsec/3
         server_header = f"parsec/{v_major}"
 
+    logger.debug("Using the following TLS ciphers suite", ciphers=ssl_ciphers)
+
     # Note: Uvicorn comes with default values for incoming data size to
     # avoid DoS abuse, so just trust them on that ;-)
     config = uvicorn.Config(
@@ -177,6 +183,8 @@ async def serve_parsec_asgi_app(
         log_config=None,
         ssl_keyfile=ssl_keyfile,
         ssl_certfile=ssl_certfile,
+        # openssl expects the list to be colon separated.
+        ssl_ciphers=":".join(ssl_ciphers),
         workers=workers,
         # Enable/Disable X-Forwarded-Proto, X-Forwarded-For to populate remote address info.
         # When enabled, is restricted to only trusting connecting IPs in forwarded-allow-ips.

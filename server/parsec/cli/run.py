@@ -386,6 +386,20 @@ for any given email address).
     show_envvar=True,
     help="SSL certificate file. This setting enables serving Parsec over SSL.",
 )
+@click.option(
+    "--ssl-ciphers",
+    type=str,
+    envvar="PARSEC_SSL_CIPHERS",
+    show_envvar=True,
+    callback=lambda ctx, param, value: value.split(","),
+    default="TLSv1",
+    help="""
+    TLS Cipher suite to use, in the format of an OpenSSL cipher list (but using `,` instead of `:` as separator)
+
+    By default we use the default cipher list from Python's `ssl` module.
+    See the [OpenSSL Cipher List Format Documentation](https://docs.openssl.org/3.5/man1/openssl-ciphers/) for details on the format of an OpenSSL cipher list and possible values.
+    """,
+)
 # Add --log-level/--log-format/--log-file
 @logging_config_options(default_log_level="INFO")
 # Add --sentry-url
@@ -466,6 +480,7 @@ def run_cmd(
     proxy_trusted_addresses: str | None,
     ssl_keyfile: Path | None,
     ssl_certfile: Path | None,
+    ssl_ciphers: list[str],
     log_level: LogLevel,
     log_format: str,
     log_file: str | None,
@@ -543,6 +558,7 @@ def run_cmd(
                     port=port,
                     ssl_certfile=ssl_certfile,
                     ssl_keyfile=ssl_keyfile,
+                    ssl_ciphers=ssl_ciphers,
                     retry_policy=retry_policy,
                     with_client_web_app=with_client_web_app,
                     cors_allow_origins=cors_allow_origins,
@@ -588,6 +604,7 @@ async def _run_backend(
     port: int,
     ssl_certfile: Path | None,
     ssl_keyfile: Path | None,
+    ssl_ciphers: list[str],
     retry_policy: RetryPolicy,
     with_client_web_app: Path | None,
     cors_allow_origins: list[str],
@@ -622,6 +639,7 @@ async def _run_backend(
                     port=port,
                     ssl_certfile=ssl_certfile,
                     ssl_keyfile=ssl_keyfile,
+                    ssl_ciphers=ssl_ciphers,
                     proxy_trusted_addresses=app_config.proxy_trusted_addresses,
                 )
                 return
