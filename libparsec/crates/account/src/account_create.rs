@@ -51,7 +51,7 @@ pub enum AccountCreateError {
     Internal(#[from] anyhow::Error),
     #[error("Invalid validation code")]
     InvalidValidationCode,
-    #[error("Send validation code required")]
+    #[error("Send validation email required")]
     SendValidationEmailRequired,
     #[error("Auth method id already exists")]
     AuthMethodIdAlreadyExists,
