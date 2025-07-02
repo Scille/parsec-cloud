@@ -19,7 +19,7 @@ from .common import (
     KeyDerivation,
 )
 from .addr import ParsecAddr
-from .device import DeviceSaveStrategy, AvailableDevice
+from .device import DeviceAccessStrategy, DeviceSaveStrategy, AvailableDevice
 
 
 class AccountCreateSendValidationEmailError(ErrorVariant):
@@ -246,4 +246,34 @@ async def account_delete_2_proceed(
     account: Handle,
     validation_code: ValidationCode,
 ) -> Result[None, AccountDeleteProceedError]:
+    raise NotImplementedError
+
+
+class AccountCreateRegistrationDeviceError(ErrorVariant):
+    class LoadDeviceInvalidPath:
+        pass
+
+    class LoadDeviceInvalidData:
+        pass
+
+    class LoadDeviceDecryptionFailed:
+        pass
+
+    class BadVaultKeyAccess:
+        pass
+
+    class Offline:
+        pass
+
+    class Internal:
+        pass
+
+    class TimestampOutOfBallpark:
+        pass
+
+
+async def account_create_registration_device(
+    account: Handle,
+    existing_local_device_access: Ref[DeviceAccessStrategy],
+) -> Result[None, AccountCreateRegistrationDeviceError]:
     raise NotImplementedError
