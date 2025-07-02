@@ -454,7 +454,7 @@ fn serde_device_certificate(
         "standard",
         "shamir_recovery",
         "passphrase_recovery",
-        "web_auth",
+        "registration",
     )]
     kind: &str,
 ) {
@@ -612,11 +612,11 @@ fn serde_device_certificate(
             (data, expected)
         }
 
-        "web_auth" => {
-            // Generated from Parsec 3.1.1-a.0+dev
+        "registration" => {
+            // Generated from Parsec 3.4.1-a.0+dev
             // Content:
             //   type: 'device_certificate'
-            //   purpose: 'WEB_AUTH'
+            //   purpose: 'REGISTRATION'
             //   author: ext(2, 0xde10a11cec0010000000000000000000)
             //   timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
             //   user_id: ext(2, 0xa11cec00100000000000000000000000)
@@ -625,21 +625,22 @@ fn serde_device_certificate(
             //   verify_key: 0x840d872f4252da2d1c9f81a77db5f0a5b9b60a5cde1eeabf40388ef6bca64909
             //   algorithm: 'ED25519'
             let data: &[u8] = hex!(
-                "5d9bb4081cb98055d9d608e855a101395b215aabe9ff5cc61bd7fbd9e5323a7cecae29"
-                "32edbd1db5d2f1907522ad2a7855f74cffd59906e0e917092cf3b79f0b0028b52ffd00"
-                "585d0600a40b89a474797065b26465766963655f6365727469666963617465a7707572"
-                "706f7365a85745425f41555448a6617574686f72d802de10a11cec001000a974696d65"
-                "7374616d70d7010005d250a2269a75a7757365725f6964d8020000a96964d802de1080"
-                "8c00ac6c6162656caf4d792064657631206d616368696e65aa7665726966795f6b6579"
-                "c420840d872f4252da2d1c9f81a77db5f0a5b9b60a5cde1eeabf40388ef6bca64909a9"
-                "616c676f726974686da74544323535313905003f193368b88bb3e153d2ed0ba0"
+                "f1b7f9574e83f383125aa9fb2b87db58d01fc0b2b2819c5dc6210d2e40ec0fb9a2561c"
+                "ff9daa63a5e9dc4a39d5ce21ccc720ccd8d42a53536834744de245bd020028b52ffd00"
+                "587d0600e40b89a474797065b26465766963655f6365727469666963617465a7707572"
+                "706f7365ac524547495354524154494f4ea6617574686f72d802de10a11cec001000a9"
+                "74696d657374616d70d7010005d250a2269a75a7757365725f6964d8020000a96964d8"
+                "02de10808c00ac6c6162656caf4d792064657631206d616368696e65aa766572696679"
+                "5f6b6579c420840d872f4252da2d1c9f81a77db5f0a5b9b60a5cde1eeabf40388ef6bc"
+                "a64909a9616c676f726974686da74544323535313905003f193368b88cb3e153d2fd0b"
+                "a0"
             )
             .as_ref();
 
             let expected = DeviceCertificate {
                 author: CertificateSigner::User(alice.device_id),
                 timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
-                purpose: DevicePurpose::WebAuth,
+                purpose: DevicePurpose::Registration,
                 user_id: alice.user_id,
                 device_id: bob.device_id.to_owned(),
                 device_label: MaybeRedacted::Real(bob.device_label.to_owned()),
@@ -653,6 +654,10 @@ fn serde_device_certificate(
         unknown => panic!("Unknown kind: {}", unknown),
     };
     let data = Bytes::from_static(data);
+    println!(
+        "***expected: {:?}",
+        expected.dump_and_sign(&alice.signing_key)
+    );
 
     let certif = DeviceCertificate::verify_and_load(
         &data,
@@ -719,7 +724,7 @@ fn serde_device_certificate_redacted(
         "standard",
         "shamir_recovery",
         "passphrase_recovery",
-        "web_auth",
+        "registration",
     )]
     kind: &str,
 ) {
@@ -874,11 +879,11 @@ fn serde_device_certificate_redacted(
             (data, expected)
         }
 
-        "web_auth" => {
-            // Generated from Parsec 3.1.1-a.0+dev
+        "registration" => {
+            // Generated from Parsec 3.4.1-a.0+dev
             // Content:
             //   type: 'device_certificate'
-            //   purpose: 'WEB_AUTH'
+            //   purpose: 'REGISTRATION'
             //   author: ext(2, 0xde10a11cec0010000000000000000000)
             //   timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
             //   user_id: ext(2, 0xa11cec00100000000000000000000000)
@@ -887,21 +892,21 @@ fn serde_device_certificate_redacted(
             //   verify_key: 0x840d872f4252da2d1c9f81a77db5f0a5b9b60a5cde1eeabf40388ef6bca64909
             //   algorithm: 'ED25519'
             let data: &[u8] = hex!(
-                "1ccd27b3faf282353ae98aae7c39e1650768d3fb1ea7f776f5ffb092d1dd5b43cdde37"
-                "9bf8e02a9ee2a4eb175fe346bd819744fecd244d4c767da625aeaf3d070028b52ffd00"
-                "58e50500b40a89a474797065b26465766963655f6365727469666963617465a7707572"
-                "706f7365a85745425f41555448a6617574686f72d802de10a11cec001000a974696d65"
-                "7374616d70d7010005d250a2269a75a7757365725f6964d8020000a96964d802de1080"
-                "8c00ac6c6162656cc0aa7665726966795f6b6579c420840d872f4252da2d1c9f81a77d"
-                "b5f0a5b9b60a5cde1eeabf40388ef6bca64909a9616c676f726974686da74544323535"
-                "313905003f193368b88bb3e153d2ed0ba0"
+                "fb0b184a9c38335b8158dd6384613be9cfb520d5e8a854becdeea7fc6942847a9c1b72"
+                "9a4d03559deb1708841e9997992eac039e33923f19dee23e9221ab93070028b52ffd00"
+                "58050600f40a89a474797065b26465766963655f6365727469666963617465a7707572"
+                "706f7365ac524547495354524154494f4ea6617574686f72d802de10a11cec001000a9"
+                "74696d657374616d70d7010005d250a2269a75a7757365725f6964d8020000a96964d8"
+                "02de10808c00ac6c6162656cc0aa7665726966795f6b6579c420840d872f4252da2d1c"
+                "9f81a77db5f0a5b9b60a5cde1eeabf40388ef6bca64909a9616c676f726974686da745"
+                "44323535313905003f193368b88cb3e153d2fd0ba0"
             )
             .as_ref();
 
             let expected = DeviceCertificate {
                 author: CertificateSigner::User(alice.device_id),
                 timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
-                purpose: DevicePurpose::WebAuth,
+                purpose: DevicePurpose::Registration,
                 user_id: alice.user_id,
                 device_id: bob.device_id.to_owned(),
                 device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(bob.device_id)),
@@ -915,6 +920,10 @@ fn serde_device_certificate_redacted(
         unknown => panic!("Unknown kind: {}", unknown),
     };
     let data = Bytes::from_static(data);
+    println!(
+        "***expected: {:?}",
+        expected.dump_and_sign(&alice.signing_key)
+    );
 
     let certif = DeviceCertificate::verify_and_load(
         &data,
