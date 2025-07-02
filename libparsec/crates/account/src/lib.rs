@@ -2,7 +2,7 @@
 
 use std::{
     collections::HashSet,
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::{Arc, Mutex},
 };
 
@@ -122,6 +122,10 @@ impl Account {
 
     pub fn human_handle(&self) -> &HumanHandle {
         &self.human_handle
+    }
+
+    pub fn config_dir(&self) -> &Path {
+        &self.config_dir
     }
 
     pub async fn login_with_master_secret(
