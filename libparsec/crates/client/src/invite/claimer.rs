@@ -1786,6 +1786,10 @@ impl UserClaimFinalizeCtx {
         )
         .await
         .map_err(|e| anyhow::anyhow!("Error while saving the device file: {e}"))
+
+        // Note that we don't call invite_complete here, as it is done on the greeter's side.
+        // See "invite_complete command" section in RFC 1011
+        // https://github.com/Scille/parsec-cloud/blob/master/docs/rfcs/1011-non-blocking-invite-transport.md#invite_complete-command
     }
 }
 
@@ -1814,6 +1818,10 @@ impl DeviceClaimFinalizeCtx {
         )
         .await
         .map_err(|e| anyhow::anyhow!("Error while saving the device file: {e}"))
+
+        // Note that we don't call invite_complete here, as it is done on the greeter's side.
+        // See "invite_complete command" section in RFC 1011
+        // https://github.com/Scille/parsec-cloud/blob/master/docs/rfcs/1011-non-blocking-invite-transport.md#invite_complete-command
     }
 }
 
@@ -1844,7 +1852,10 @@ impl ShamirRecoveryClaimFinalizeCtx {
         .await
         .map_err(|e| anyhow::anyhow!("Error while saving the device file: {e}"))?;
 
-        // After the device has been successfully saved, we still have to mark the invitation as completed.
+        // After the device has been successfully saved, we still have to mark the invitation as completed,
+        // because the greeter cannot know if the process is complete
+        // See "invite_complete command" section in RFC 1011
+        // https://github.com/Scille/parsec-cloud/blob/master/docs/rfcs/1011-non-blocking-invite-transport.md#invite_complete-command
         // However, we don't want to return an error if this part fails, as the user cannot really do anything
         // about it. Instead, we log the error and return the device.
         'mark_invitation_as_completed: {
