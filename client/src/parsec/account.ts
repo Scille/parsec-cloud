@@ -55,7 +55,6 @@ class AccountCreationStepper {
       await wait(1500);
       result = { ok: true, value: null };
     } else {
-      console.log(server);
       result = await libparsec.accountCreate1SendValidationEmail(getClientConfig().configDir, server, email);
       if (!result.ok) {
         return result;
@@ -163,7 +162,7 @@ class _ParsecAccount {
 
   constructor() {
     if (Env.isAccountAutoLoginEnabled()) {
-      console.log('Using Parsec Account auto-login');
+      console.log(`Using Parsec Account auto-login, server is '${Env.getAccountServer()}'`);
       libparsec.testNewAccount(Env.getAccountServer()).then((result) => {
         if (!result.ok) {
           console.error(`No auto-login possible, testNewAccount failed: ${result.error.tag} (${result.error.error})`);
