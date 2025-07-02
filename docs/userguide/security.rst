@@ -89,3 +89,37 @@ the files will be stored, your company security policy, etc.
 
 Keep in mind that some software, like Microsoft Word or Google Drive, may automatically upload your
 files to the cloud without your necessarily being aware of it.
+
+.. _userguide-verify-parsec-link:
+
+How to verify a Parsec link
+===========================
+
+What is a Parsec link?
+---------------------------
+
+A Parsec link is a link that is used by the Parsec application, you use such link when (non-exhaustive):
+
+- :ref:`You are invited to a new organization <doc_userguide_join_organization>`.
+- :ref:`You add a new device <userguide-add-new-device>`.
+- :ref:`You share a file <userguide-share-file>`.
+
+What should I verify in a Parsec link?
+--------------------------------------
+
+A Parsec link is formatted like so:
+
+.. code-block:: jinja
+
+   parsec3://<SERVER>/<ORGANIZATION>?<PARAMETERS>
+
+.. note::
+
+   The `URL scheme <url-scheme_>`_ ``parsec3`` may be replaced by ``https`` for links received by e-mail.
+
+.. _url-scheme: https://en.wikipedia.org/wiki/List_of_URI_schemes
+
+
+When you receive a link, you just need to check if the ``SERVER`` and ``ORGANIZATION`` parts match your organization's server. This can be found on the "Information" page, when you login to your organization.
+
+When joining an organization, you should contact an administrator of the organization to provide or confirm this information.

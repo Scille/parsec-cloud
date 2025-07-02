@@ -102,6 +102,8 @@ Either right-click on a file and select ``Move``, or select a file and click ``M
     :align: center
     :alt: move files screenshot
 
+.. _userguide-share-file:
+
 Share a link to a file
 ^^^^^^^^^^^^^^^^^^^^^^
 
