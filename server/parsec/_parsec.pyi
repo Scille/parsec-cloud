@@ -6,8 +6,6 @@ from parsec._parsec_pyi import (
     testbed,  # Only define when build with `test-utils` feature
 )
 from parsec._parsec_pyi.addrs import (
-    ParsecAccountActionAddr,
-    ParsecAccountEmailValidationAddr,
     ParsecActionAddr,
     ParsecAddr,
     ParsecInvitationAddr,
@@ -70,7 +68,6 @@ from parsec._parsec_pyi.ids import (
     DeviceID,
     DeviceLabel,
     EmailAddress,
-    EmailValidationToken,
     EnrollmentID,
     GreetingAttemptID,
     HumanHandle,
@@ -173,7 +170,6 @@ __all__ = [
     "GreetingAttemptID",
     "HumanHandle",
     "InvitationToken",
-    "EmailValidationToken",
     "OrganizationID",
     "SequesterServiceID",
     "UserID",
@@ -184,8 +180,6 @@ __all__ = [
     "ParsecActionAddr",
     "ParsecAddr",
     "ParsecInvitationAddr",
-    "ParsecAccountEmailValidationAddr",
-    "ParsecAccountActionAddr",
     "ParsecOrganizationAddr",
     "ParsecOrganizationBootstrapAddr",
     "ParsecPkiEnrollmentAddr",
