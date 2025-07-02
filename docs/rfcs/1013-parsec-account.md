@@ -393,30 +393,35 @@ To create an account, the client starts by requesting an email validation code.
 Anonymous account API:
 
 ```json5
-{
-  "cmd": "account_create_send_validation_email",
-  "req": {
-    "fields": [
+[
+  {
+    "major_versions": [
+      5
+    ],
+    "cmd": "account_create_send_validation_email",
+    "req": {
+      "fields": [
+        {
+          "name": "email",
+          "type": "EmailAddress"
+        }
+      ]
+    },
+    "reps": [
       {
-        "name": "email",
-        "type": "EmailAddress"
+        "status": "ok"
+      },
+      {
+        // The email could not be sent due to SMTP server issue
+        "status": "email_server_unavailable"
+      },
+      {
+        // The SMTP server rejected the email recipient
+        "status": "email_recipient_refused"
       }
     ]
-  },
-  "reps": [
-    {
-      "status": "ok"
-    },
-    {
-      // The email could not be sent due to SMTP server issue
-      "status": "email_server_unavailable"
-    },
-    {
-      // The SMTP server rejected the email recipient
-      "status": "email_recipient_refused"
-    }
-  ]
-}
+  }
+]
 ```
 
 > [!NOTE]
@@ -562,30 +567,35 @@ the password algorithm parameters for a given account must be first obtained.
 Anonymous account API:
 
 ```json5
-{
-    "cmd": "auth_method_password_get_algorithm",
-    "req": {
-        "fields": [
-            {
-                "name": "email",
-                "type": "EmailAddress"
-            }
-        ]
-    },
-    "reps": [
-        {
-            "status": "ok",
-            "fields": {
-                {
-                    // Algorithm used to turn the password into the `auth_method_master_secret`
-                    // (itself used to generate `auth_method_mac_key` and `auth_method_secret_key`).
-                    "name": "password_algorithm",
-                    "type": "UntrustedPasswordAlgorithm"
-                }
-            }
-        }
-    ]
-}
+[
+  {
+    "major_versions": [
+      5
+    ],
+      "cmd": "auth_method_password_get_algorithm",
+      "req": {
+          "fields": [
+              {
+                  "name": "email",
+                  "type": "EmailAddress"
+              }
+          ]
+      },
+      "reps": [
+          {
+              "status": "ok",
+              "fields": {
+                  {
+                      // Algorithm used to turn the password into the `auth_method_master_secret`
+                      // (itself used to generate `auth_method_mac_key` and `auth_method_secret_key`).
+                      "name": "password_algorithm",
+                      "type": "UntrustedPasswordAlgorithm"
+                  }
+              }
+          }
+      ]
+  }
+]
 ```
 
 > [!NOTE]
@@ -600,35 +610,40 @@ Anonymous account API:
 Authenticated account API:
 
 ```json5
-{
-  "cmd": "auth_method_password_update",
-  "req": {
-    "fields": [
+[
+  {
+    "major_versions": [
+      5
+    ],
+    "cmd": "auth_method_password_update",
+    "req": {
+      "fields": [
+        {
+          // Algorithm used to turn the password into the `auth_method_master_secret`
+          // (itself used to generate `auth_method_mac_key` and `auth_method_secret_key`).
+          "name": "password_algorithm",
+          "type": "UntrustedPasswordAlgorithm"
+        },
+        {
+          // Secret key shared between the client and the server and used for
+          // account authenticated API family's MAC authentication.
+          "name": "auth_method_mac_key",
+          "type": "SecretKey"
+        },
+        {
+          // `AccountVaultKeyAccess` encrypted with the `auth_method_secret_key`
+          "name": "vault_key_access",
+          "type": "Bytes"
+        }
+      ]
+    },
+    "reps": [
       {
-        // Algorithm used to turn the password into the `auth_method_master_secret`
-        // (itself used to generate `auth_method_mac_key` and `auth_method_secret_key`).
-        "name": "password_algorithm",
-        "type": "UntrustedPasswordAlgorithm"
-      },
-      {
-        // Secret key shared between the client and the server and used for
-        // account authenticated API family's MAC authentication.
-        "name": "auth_method_mac_key",
-        "type": "SecretKey"
-      },
-      {
-        // `AccountVaultKeyAccess` encrypted with the `auth_method_secret_key`
-        "name": "vault_key_access",
-        "type": "Bytes"
+        "status": "ok",
       }
-    ]
-  },
-  "reps": [
-    {
-      "status": "ok",
-    }
-  ],
-}
+    ],
+  }
+]
 ```
 
 In essence, this replaces the password authentication method from the current active vault
@@ -649,30 +664,35 @@ If the email does not exist the server will still respond with OK status for the
 Anonymous account API:
 
 ```json5
-{
-  "cmd": "account_recovery_send_validation_email",
-  "req": {
-    "fields": [
+[
+  {
+    "major_versions": [
+      5
+    ],
+    "cmd": "account_recovery_send_validation_email",
+    "req": {
+      "fields": [
+        {
+          "name": "email",
+          "type": "EmailAddress"
+        }
+      ]
+    },
+    "reps": [
       {
-        "name": "email",
-        "type": "EmailAddress"
+        "status": "ok"
+      },
+      {
+        // The email could not be sent due to SMTP server issue
+        "status": "email_server_unavailable"
+      },
+      {
+        // The SMTP server rejected the email recipient
+        "status": "email_recipient_refused"
       }
     ]
-  },
-  "reps": [
-    {
-      "status": "ok"
-    },
-    {
-      // The email could not be sent due to SMTP server issue
-      "status": "email_server_unavailable"
-    },
-    {
-      // The SMTP server rejected the email recipient
-      "status": "email_recipient_refused"
-    }
-  ]
-}
+  }
+]
 ```
 
 The server will send an email with a validation code (similar to the creation validation code) to confirm the operation.
@@ -685,51 +705,56 @@ The server will send an email with a validation code (similar to the creation va
 Anonymous account API:
 
 ```json5
-{
-  "cmd": "account_recovery_proceed",
-  "req": {
-    "fields": [
+[
+  {
+    "major_versions": [
+      5
+    ],
+    "cmd": "account_recovery_proceed",
+    "req": {
+      "fields": [
+        {
+          "name": "email",
+          "type": "EmailAddress"
+        },
+        {
+          // Code received by email following use of `account_create_send_validation_email`
+          // Should be 6 base32 characters.
+          "name": "validation_code",
+          "type": "ValidationCode"
+        },
+        {
+            // Auth method can be of two types:
+            // - ClientProvided, for which the client is able to store
+            //   `auth_method_master_secret` all by itself.
+            // - Password, for which the client must obtain some configuration
+            //   (i.e. this field !) from the server in order to know how
+            //   to turn the password into `auth_method_master_secret`.
+            "name": "auth_method_password_algorithm",
+            "type": "RequiredOption<UntrustedPasswordAlgorithm>"
+        },
+        {
+          "name": "vault_key_access",
+          // `AccountVaultKeyAccess` encrypted with the `auth_method_secret_key`
+          "type": "Bytes"
+        }
+      ]
+    },
+    "reps": [
       {
-        "name": "email",
-        "type": "EmailAddress"
+        "status": "ok"
       },
       {
-        // Code received by email following use of `account_create_send_validation_email`
-        // Should be 6 base32 characters.
-        "name": "validation_code",
-        "type": "ValidationCode"
+        "status": "invalid_validation_code"
       },
       {
-          // Auth method can be of two types:
-          // - ClientProvided, for which the client is able to store
-          //   `auth_method_master_secret` all by itself.
-          // - Password, for which the client must obtain some configuration
-          //   (i.e. this field !) from the server in order to know how
-          //   to turn the password into `auth_method_master_secret`.
-          "name": "auth_method_password_algorithm",
-          "type": "RequiredOption<UntrustedPasswordAlgorithm>"
-      },
-      {
-        "name": "vault_key_access",
-        // `AccountVaultKeyAccess` encrypted with the `auth_method_secret_key`
-        "type": "Bytes"
+        // No validation code exists, or 3 bad attempts have been done on the
+        // current validation code.
+        "status": "send_validation_email_required"
       }
     ]
-  },
-  "reps": [
-    {
-      "status": "ok"
-    },
-    {
-      "status": "invalid_validation_code"
-    },
-    {
-      // No validation code exists, or 3 bad attempts have been done on the
-      // current validation code.
-      "status": "send_validation_email_required"
-    }
-  ]
-}
+  }
+]
 ```
 
 The server will create a new [`Vault`] & [`Authentication Method`]
