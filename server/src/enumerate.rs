@@ -138,8 +138,8 @@ crate::binding_utils::gen_py_wrapper_class_for_enum!(
         libparsec_types::DevicePurpose::PassphraseRecovery
     ],
     [
-        "WEB_AUTH",
-        web_auth,
-        libparsec_types::DevicePurpose::WebAuth
+        "REGISTRATION",
+        registration,
+        libparsec_types::DevicePurpose::Registration
     ]
 );
