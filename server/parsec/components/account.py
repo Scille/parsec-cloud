@@ -135,16 +135,16 @@ class ValidationCodeInfo:
     created_at: DateTime
     failed_attempts: int = 0
 
-    def is_expired(self, now: DateTime) -> bool:
+    def _is_expired(self, now: DateTime) -> bool:
         """Check that the validation code is not expired"""
         return (now - self.created_at) > VALIDATION_CODE_VALIDITY_DURATION_SECONDS
 
-    def has_remaining_attempts(self) -> bool:
+    def _has_remaining_attempts(self) -> bool:
         """Check if we are below the max attempts for the code"""
         return self.failed_attempts < VALIDATION_CODE_MAX_FAILED_ATTEMPTS
 
     def can_be_used(self, now: DateTime) -> bool:
-        return not self.is_expired(now) and self.has_remaining_attempts()
+        return not self._is_expired(now) and self._has_remaining_attempts()
 
 
 class BaseAccountComponent:
