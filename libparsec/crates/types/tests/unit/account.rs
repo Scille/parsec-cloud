@@ -88,6 +88,20 @@ fn serde_account_vault_item_web_local_device_key() {
         }
         AccountVaultItem::RegistrationDevice(_) => unreachable!(),
     }
+
+    // Finally test the fingerprint
+    p_assert_eq!(
+        expected.fingerprint(),
+        HashDigest::from(hex!(
+            "0d97bbe805b808a1c53b1f0a117349d014c47a26ee5a513c3956fdb420699595"
+        )),
+    );
+    p_assert_eq!(
+        AccountVaultItem::WebLocalDeviceKey(expected).fingerprint(),
+        HashDigest::from(hex!(
+            "0d97bbe805b808a1c53b1f0a117349d014c47a26ee5a513c3956fdb420699595"
+        )),
+    );
 }
 
 #[rstest]
@@ -129,6 +143,20 @@ fn serde_account_vault_item_registration_device() {
         }
         AccountVaultItem::WebLocalDeviceKey(_) => unreachable!(),
     };
+
+    // Finally test the fingerprint
+    p_assert_eq!(
+        expected.fingerprint(),
+        HashDigest::from(hex!(
+            "d95abc46277602ddd46f79612de18420c8ad72cebe9137e7452c0ea59c4bef79"
+        )),
+    );
+    p_assert_eq!(
+        AccountVaultItem::RegistrationDevice(expected).fingerprint(),
+        HashDigest::from(hex!(
+            "d95abc46277602ddd46f79612de18420c8ad72cebe9137e7452c0ea59c4bef79"
+        )),
+    );
 }
 
 #[rstest]

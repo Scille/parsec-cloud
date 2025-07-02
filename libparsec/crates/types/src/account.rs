@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use bytes::Bytes;
-use libparsec_crypto::SecretKey;
+use libparsec_crypto::{HashDigest, SecretKey};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
@@ -162,6 +162,15 @@ pub enum AccountVaultItem {
     RegistrationDevice(AccountVaultItemRegistrationDevice),
 }
 
+impl AccountVaultItem {
+    pub fn fingerprint(&self) -> HashDigest {
+        match self {
+            AccountVaultItem::WebLocalDeviceKey(item) => item.fingerprint(),
+            AccountVaultItem::RegistrationDevice(item) => item.fingerprint(),
+        }
+    }
+}
+
 impl_load!(AccountVaultItem);
 
 /*
@@ -180,6 +189,23 @@ pub struct AccountVaultItemWebLocalDeviceKey {
     /// This key is itself used to decrypt the `LocalDevice` stored on
     /// the web client's storage
     pub encrypted_data: Bytes,
+}
+
+impl AccountVaultItemWebLocalDeviceKey {
+    pub fn fingerprint(&self) -> HashDigest {
+        // This format should not change in order to preserve compatibility with
+        // the items already uploaded in the account vault.
+        const WEB_LOCAL_DEVICE_KEY_LABEL: &str = "WEB_LOCAL_DEVICE_KEY";
+        HashDigest::from_data(
+            format!(
+                "{}.{}.{}",
+                WEB_LOCAL_DEVICE_KEY_LABEL,
+                &self.organization_id,
+                self.device_id.hex()
+            )
+            .as_bytes(),
+        )
+    }
 }
 
 parsec_data!("schema/account/account_vault_item_web_local_device_key.json5");
@@ -208,6 +234,23 @@ pub struct AccountVaultItemRegistrationDevice {
     pub user_id: UserID,
     /// `LocalDevice` encrypted by the vault key
     pub encrypted_data: Bytes,
+}
+
+impl AccountVaultItemRegistrationDevice {
+    pub fn fingerprint(&self) -> HashDigest {
+        // This format should not change in order to preserve compatibility with
+        // the items already uploaded in the account vault.
+        const WEB_LOCAL_DEVICE_KEY_LABEL: &str = "REGISTRATION_DEVICE";
+        HashDigest::from_data(
+            format!(
+                "{}.{}.{}",
+                WEB_LOCAL_DEVICE_KEY_LABEL,
+                &self.organization_id,
+                self.user_id.hex()
+            )
+            .as_bytes(),
+        )
+    }
 }
 
 parsec_data!("schema/account/account_vault_item_registration_device.json5");
