@@ -1,0 +1,29 @@
+[
+  {
+    "major_versions": [
+      5
+    ],
+    "cmd": "account_recover_send_validation_email",
+    "req": {
+      "fields": [
+        {
+          "name": "email",
+          "type": "EmailAddress"
+        }
+      ]
+    },
+    "reps": [
+      {
+        "status": "ok"
+      },
+      {
+        // The email could not be sent due to SMTP server issue
+        "status": "email_server_unavailable"
+      },
+      {
+        // The SMTP server rejected the email recipient
+        "status": "email_recipient_refused"
+      }
+    ]
+  }
+]
