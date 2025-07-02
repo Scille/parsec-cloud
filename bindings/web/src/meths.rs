@@ -112,9 +112,9 @@ fn enum_device_file_type_rs_to_js(value: libparsec::DeviceFileType) -> &'static 
 fn enum_device_purpose_js_to_rs(raw_value: &str) -> Result<libparsec::DevicePurpose, JsValue> {
     match raw_value {
         "DevicePurposePassphraseRecovery" => Ok(libparsec::DevicePurpose::PassphraseRecovery),
+        "DevicePurposeRegistration" => Ok(libparsec::DevicePurpose::Registration),
         "DevicePurposeShamirRecovery" => Ok(libparsec::DevicePurpose::ShamirRecovery),
         "DevicePurposeStandard" => Ok(libparsec::DevicePurpose::Standard),
-        "DevicePurposeWebAuth" => Ok(libparsec::DevicePurpose::WebAuth),
         _ => {
             let range_error = RangeError::new("Invalid value for enum DevicePurpose");
             range_error.set_cause(&JsValue::from(raw_value));
@@ -127,9 +127,9 @@ fn enum_device_purpose_js_to_rs(raw_value: &str) -> Result<libparsec::DevicePurp
 fn enum_device_purpose_rs_to_js(value: libparsec::DevicePurpose) -> &'static str {
     match value {
         libparsec::DevicePurpose::PassphraseRecovery => "DevicePurposePassphraseRecovery",
+        libparsec::DevicePurpose::Registration => "DevicePurposeRegistration",
         libparsec::DevicePurpose::ShamirRecovery => "DevicePurposeShamirRecovery",
         libparsec::DevicePurpose::Standard => "DevicePurposeStandard",
-        libparsec::DevicePurpose::WebAuth => "DevicePurposeWebAuth",
     }
 }
 
@@ -4315,6 +4315,69 @@ fn variant_account_create_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"AccountCreateErrorSendValidationEmailRequired".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// AccountCreateRegistrationDeviceError
+
+#[allow(dead_code)]
+fn variant_account_create_registration_device_error_rs_to_js(
+    rs_obj: libparsec::AccountCreateRegistrationDeviceError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::AccountCreateRegistrationDeviceError::BadVaultKeyAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateRegistrationDeviceErrorBadVaultKeyAccess".into(),
+            )?;
+        }
+        libparsec::AccountCreateRegistrationDeviceError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateRegistrationDeviceErrorInternal".into(),
+            )?;
+        }
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceDecryptionFailed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed".into(),
+            )?;
+        }
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidData { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData".into(),
+            )?;
+        }
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidPath { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath".into(),
+            )?;
+        }
+        libparsec::AccountCreateRegistrationDeviceError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateRegistrationDeviceErrorOffline".into(),
+            )?;
+        }
+        libparsec::AccountCreateRegistrationDeviceError::TimestampOutOfBallpark { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark".into(),
             )?;
         }
     }
@@ -16576,6 +16639,43 @@ pub fn accountCreate3Proceed(
     }))
 }
 
+// account_create_registration_device
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn accountCreateRegistrationDevice(
+    account: u32,
+    existing_local_device_access: Object,
+) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let existing_local_device_access = existing_local_device_access.into();
+        let existing_local_device_access =
+            variant_device_access_strategy_js_to_rs(existing_local_device_access)?;
+
+        let ret =
+            libparsec::account_create_registration_device(account, &existing_local_device_access)
+                .await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_account_create_registration_device_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
 // account_delete_1_send_validation_email
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -18865,7 +18965,7 @@ pub fn clientStart(config: Object, access: Object) -> Promise {
         let access = access.into();
         let access = variant_device_access_strategy_js_to_rs(access)?;
 
-        let ret = libparsec::client_start(config, access).await;
+        let ret = libparsec::client_start(config, &access).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();

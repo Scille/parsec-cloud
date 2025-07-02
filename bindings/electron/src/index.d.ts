@@ -28,9 +28,9 @@ export enum DeviceFileType {
 
 export enum DevicePurpose {
     PassphraseRecovery = 'DevicePurposePassphraseRecovery',
+    Registration = 'DevicePurposeRegistration',
     ShamirRecovery = 'DevicePurposeShamirRecovery',
     Standard = 'DevicePurposeStandard',
-    WebAuth = 'DevicePurposeWebAuth',
 }
 
 export enum GreeterOrClaimer {
@@ -464,6 +464,45 @@ export type AccountCreateError =
   | AccountCreateErrorInvalidValidationCode
   | AccountCreateErrorOffline
   | AccountCreateErrorSendValidationEmailRequired
+
+
+// AccountCreateRegistrationDeviceError
+export interface AccountCreateRegistrationDeviceErrorBadVaultKeyAccess {
+    tag: "BadVaultKeyAccess"
+    error: string
+}
+export interface AccountCreateRegistrationDeviceErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed {
+    tag: "LoadDeviceDecryptionFailed"
+    error: string
+}
+export interface AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData {
+    tag: "LoadDeviceInvalidData"
+    error: string
+}
+export interface AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath {
+    tag: "LoadDeviceInvalidPath"
+    error: string
+}
+export interface AccountCreateRegistrationDeviceErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark {
+    tag: "TimestampOutOfBallpark"
+    error: string
+}
+export type AccountCreateRegistrationDeviceError =
+  | AccountCreateRegistrationDeviceErrorBadVaultKeyAccess
+  | AccountCreateRegistrationDeviceErrorInternal
+  | AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed
+  | AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData
+  | AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath
+  | AccountCreateRegistrationDeviceErrorOffline
+  | AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark
 
 
 // AccountCreateSendValidationEmailError
@@ -3983,6 +4022,10 @@ export function accountCreate3Proceed(
     human_handle: HumanHandle,
     password: string
 ): Promise<Result<null, AccountCreateError>>
+export function accountCreateRegistrationDevice(
+    account: number,
+    existing_local_device_access: DeviceAccessStrategy
+): Promise<Result<null, AccountCreateRegistrationDeviceError>>
 export function accountDelete1SendValidationEmail(
     account: number
 ): Promise<Result<null, AccountDeleteSendValidationEmailError>>
