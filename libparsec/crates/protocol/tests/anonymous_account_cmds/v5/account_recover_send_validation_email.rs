@@ -110,3 +110,32 @@ pub fn rep_email_recipient_refused() {
 
     p_assert_eq!(data2, expected);
 }
+
+pub fn rep_email_sending_rate_limited() {
+    // Generated from Parsec 3.4.1-a.0+dev
+    // Content:
+    //   status: 'email_sending_rate_limited'
+    //   wait_until: ext(1, 946684800000000) i.e. 2000-01-01T01:00:00Z
+    let raw: &[u8] = hex!(
+        "82a6737461747573ba656d61696c5f73656e64696e675f726174655f6c696d69746564"
+        "aa776169745f756e74696cd70100035d013b37e000"
+    )
+    .as_ref();
+
+    let expected =
+        anonymous_account_cmds::account_recover_send_validation_email::Rep::EmailSendingRateLimited {
+            wait_until: "2000-01-01T00:00:00Z".parse().unwrap(),
+        };
+    let data =
+        anonymous_account_cmds::account_recover_send_validation_email::Rep::load(raw).unwrap();
+    println!("***expected: {:?}", expected.dump().unwrap());
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 =
+        anonymous_account_cmds::account_recover_send_validation_email::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected);
+}
