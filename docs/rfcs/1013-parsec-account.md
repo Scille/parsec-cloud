@@ -165,6 +165,36 @@ The detail of how to retrieve `auth_method_master_secret` depends on the authent
 - `Password`, for which the client must obtain some configuration from the server in order to know how
   to turn the password into `auth_method_master_secret`.
 
+### 2.7 Email rate limit
+
+Account create/reset/delete rely on a validation code sent to the user through a
+confirmation email.
+
+This opens the door to abuse (especially for the account create & reset operations
+where, by definition, not authentication can be done) and DOS (Deny Of Service) attacks.
+
+To protect against this, a rate limit system is to be implemented to limit the number of
+requests:
+
+- Per IP address of the client using the API.
+- Per recipient email address.
+
+The rate limit system should work along two metrics:
+
+- The minimum cooldown delay (in seconds) between two emails.
+- The maximum number of emails for a sliding 1 hour window.
+
+Hence, a typical rate limit configuration would be:
+
+- Max 1 mail per minute.
+- 3 mails per sliding 1 hour.
+
+Also the rate limit should be applied at the very beginning of any command, before
+any actual business logic is run. This way it cannot be used by an attacker as an
+oracle (e.g. if the check is done later on, a create request on a existing email
+may never be rate limited since it returns a OK status without actually sending
+any mail!).
+
 ## 3 - Data model
 
 ### 3.1 - Glossary
@@ -418,6 +448,17 @@ Anonymous account API:
       {
         // The SMTP server rejected the email recipient
         "status": "email_recipient_refused"
+      },
+      {
+        // Too many attempts at sending email from the client IP address or
+        // to the requested recipient email address.
+        "status": "email_sending_rate_limited",
+        "fields": [
+          {
+            "name": "wait_until",
+            "type": "DateTime"
+          }
+        ]
       }
     ]
   }
@@ -431,16 +472,6 @@ On `ok`, the server would have sent a mail with a unique validation code to use 
 
 If an account already exists with this email, a `ok` response will still be sent (without sending an email)
 to avoid creating an oracle about emails registered in the service.
-
-If an account creation has already been requested for an email and the email is not validated yet, a new email with a
-new validation code may or may not been sent depending on how long ago the previous one was sent.
-
-TODO: Use a Proof of work based solution (see [Anubis](https://anubis.techaro.lol/)) to protect against DOS
-
-To avoid DOS (Deny Of Service) attack, the server will limit the number of requests:
-
-- Per IP address of the client using the API
-- Per email address
 
 ### 4.4 - Account creation: actual creation
 
@@ -689,6 +720,17 @@ Anonymous account API:
       {
         // The SMTP server rejected the email recipient
         "status": "email_recipient_refused"
+      },
+      {
+        // Too many attempts at sending email from the client IP address or
+        // to the requested recipient email address.
+        "status": "email_sending_rate_limited",
+        "fields": [
+          {
+            "name": "wait_until",
+            "type": "DateTime"
+          }
+        ]
       }
     ]
   }
@@ -805,6 +847,17 @@ Authenticated account API:
             {
                 // The SMTP server rejected the email recipient
                 "status": "email_recipient_refused"
+            },
+            {
+                // Too many attempts at sending email from the client IP address or
+                // to the requested recipient email address.
+                "status": "email_sending_rate_limited",
+                "fields": [
+                    {
+                      "name": "wait_until",
+                      "type": "DateTime"
+                    }
+                ]
             }
         ]
     }
