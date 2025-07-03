@@ -132,7 +132,6 @@ async function areFieldsCorrect(): Promise<boolean> {
 }
 
 .radio-list {
-  display: flex;
   gap: 1rem;
 }
 
@@ -151,11 +150,8 @@ async function areFieldsCorrect(): Promise<boolean> {
 .item-radio {
   gap: 0.5rem;
   padding: 1rem;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
+  width: 50%;
   border-radius: var(--parsec-radius-12);
-  width: 100%;
   z-index: 2;
 
   @include ms.responsive-breakpoint('sm') {
