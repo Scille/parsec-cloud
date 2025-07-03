@@ -58,6 +58,18 @@ class AccountDeleteProceedBadOutcome(BadOutcomeEnum):
     SEND_VALIDATION_EMAIL_REQUIRED = auto()
 
 
+class AccountRecoverSendValidationEmailBadOutcome(BadOutcomeEnum):
+    ACCOUNT_NOT_FOUND = auto()
+    TOO_SOON_AFTER_PREVIOUS_DEMAND = auto()
+
+
+class AccountRecoverProceedBadOutcome(BadOutcomeEnum):
+    ACCOUNT_NOT_FOUND = auto()
+    INVALID_VALIDATION_CODE = auto()
+    SEND_VALIDATION_EMAIL_REQUIRED = auto()
+    AUTH_METHOD_ID_ALREADY_EXISTS = auto()
+
+
 class AccountGetPasswordSecretKeyBadOutcome(BadOutcomeEnum):
     USER_NOT_FOUND = auto()
     UNABLE_TO_GET_SECRET_KEY = auto()
@@ -196,6 +208,26 @@ class BaseAccountComponent:
             email_config=self._config.email_config, to_addr=email, message=message
         )
 
+    # Used by `recover_proceed` implementations
+    async def _send_account_recover_validation_email(
+        self,
+        email: EmailAddress,
+        validation_code: ValidationCode,
+    ) -> None | SendEmailBadOutcome:
+        if not self._config.server_addr:
+            return SendEmailBadOutcome.BAD_SMTP_CONFIG
+
+        message = _generate_account_recover_validation_email(
+            from_addr=self._config.email_config.sender,
+            to_addr=email,
+            validation_code=validation_code,
+            server_url=self._config.server_addr.to_http_url(),
+        )
+
+        return await send_email(
+            email_config=self._config.email_config, to_addr=email, message=message
+        )
+
     async def get_password_algorithm_or_fake_it(
         self, email: EmailAddress
     ) -> UntrustedPasswordAlgorithm:
@@ -261,6 +293,25 @@ class BaseAccountComponent:
         auth_method_id: AccountAuthMethodID,
         validation_code: ValidationCode,
     ) -> None | AccountDeleteProceedBadOutcome:
+        raise NotImplementedError
+
+    async def recover_send_validation_email(
+        self, now: DateTime, email: EmailAddress
+    ) -> ValidationCode | SendEmailBadOutcome | AccountRecoverSendValidationEmailBadOutcome:
+        raise NotImplementedError
+
+    async def recover_proceed(
+        self,
+        now: DateTime,
+        validation_code: ValidationCode,
+        email: EmailAddress,
+        created_by_user_agent: str,
+        created_by_ip: str | Literal[""],
+        new_vault_key_access: bytes,
+        new_auth_method_id: AccountAuthMethodID,
+        new_auth_method_mac_key: SecretKey,
+        new_auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
+    ) -> None | AccountRecoverProceedBadOutcome:
         raise NotImplementedError
 
     async def vault_item_upload(
@@ -428,6 +479,65 @@ class BaseAccountComponent:
                 return authenticated_account_cmds.latest.account_delete_proceed.RepSendValidationEmailRequired()
             case AccountDeleteProceedBadOutcome.ACCOUNT_NOT_FOUND:
                 client_ctx.account_not_found_abort()
+
+    @api
+    async def api_account_recover_send_validation_email(
+        self,
+        client_ctx: AnonymousAccountClientContext,
+        req: anonymous_account_cmds.latest.account_recover_send_validation_email.Req,
+    ) -> anonymous_account_cmds.latest.account_recover_send_validation_email.Rep:
+        outcome = await self.recover_send_validation_email(DateTime.now(), req.email)
+        match outcome:
+            case ValidationCode():
+                return anonymous_account_cmds.latest.account_recover_send_validation_email.RepOk()
+
+            case (
+                AccountRecoverSendValidationEmailBadOutcome.ACCOUNT_NOT_FOUND
+                | AccountRecoverSendValidationEmailBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND
+            ):
+                # Respond OK without sending token to prevent creating oracle
+                return anonymous_account_cmds.latest.account_recover_send_validation_email.RepOk()
+
+            case SendEmailBadOutcome.BAD_SMTP_CONFIG | SendEmailBadOutcome.SERVER_UNAVAILABLE:
+                return anonymous_account_cmds.latest.account_recover_send_validation_email.RepEmailServerUnavailable()
+
+            case SendEmailBadOutcome.RECIPIENT_REFUSED:
+                return anonymous_account_cmds.latest.account_recover_send_validation_email.RepEmailRecipientRefused()
+
+    @api
+    async def api_account_recover_proceed(
+        self,
+        client_ctx: AnonymousAccountClientContext,
+        req: anonymous_account_cmds.latest.account_recover_proceed.Req,
+    ) -> anonymous_account_cmds.latest.account_recover_proceed.Rep:
+        outcome = await self.recover_proceed(
+            now=DateTime.now(),
+            validation_code=req.validation_code,
+            email=req.email,
+            created_by_user_agent=client_ctx.client_user_agent,
+            created_by_ip=client_ctx.client_ip_address,
+            new_vault_key_access=req.new_vault_key_access,
+            new_auth_method_id=req.new_auth_method_id,
+            new_auth_method_mac_key=req.new_auth_method_mac_key,
+            new_auth_method_password_algorithm=req.new_auth_method_password_algorithm,
+        )
+        match outcome:
+            case None:
+                return anonymous_account_cmds.latest.account_recover_proceed.RepOk()
+
+            case (
+                AccountRecoverProceedBadOutcome.ACCOUNT_NOT_FOUND
+                | AccountRecoverProceedBadOutcome.INVALID_VALIDATION_CODE
+            ):
+                return (
+                    anonymous_account_cmds.latest.account_recover_proceed.RepInvalidValidationCode()
+                )
+
+            case AccountRecoverProceedBadOutcome.SEND_VALIDATION_EMAIL_REQUIRED:
+                return anonymous_account_cmds.latest.account_recover_proceed.RepSendValidationEmailRequired()
+
+            case AccountRecoverProceedBadOutcome.AUTH_METHOD_ID_ALREADY_EXISTS:
+                return anonymous_account_cmds.latest.account_recover_proceed.RepAuthMethodIdAlreadyExists()
 
     @api
     async def api_account_vault_item_upload(
@@ -649,6 +759,43 @@ def _generate_account_delete_validation_email(
     message = MIMEMultipart("alternative")
 
     message["Subject"] = "Parsec Account: Confirm account deletion"
+    message["From"] = str(from_addr)
+    message["To"] = str(to_addr)
+
+    # Turn parts into MIMEText objects
+    part1 = MIMEText(text, "plain")
+    part2 = MIMEText(html, "html")
+
+    # Add HTML/plain-text parts to MIMEMultipart message
+    # The email client will try to render the last part first
+    message.attach(part1)
+    message.attach(part2)
+
+    return message
+
+
+def _generate_account_recover_validation_email(
+    from_addr: EmailAddress,
+    to_addr: EmailAddress,
+    validation_code: ValidationCode,
+    server_url: str,
+) -> Message:
+    # Quick fix to have a similar behavior between Rust and Python
+    server_url = server_url.removesuffix("/")
+
+    html = get_template("email/account_recover.html.j2").render(
+        validation_code=validation_code.str,
+        server_url=server_url,
+    )
+    text = get_template("email/account_recover.txt.j2").render(
+        validation_code=validation_code.str,
+        server_url=server_url,
+    )
+
+    # mail settings
+    message = MIMEMultipart("alternative")
+
+    message["Subject"] = "Parsec Account: Confirm account recovery"
     message["From"] = str(from_addr)
     message["To"] = str(to_addr)
 
