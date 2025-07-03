@@ -359,7 +359,9 @@ async def testbed_backend_factory(
         administration_token="s3cr3t",
         fake_account_password_algorithm_seed=SecretKey(b"F" * 32),
         organization_spontaneous_bootstrap=True,
-        validation_email_cooldown_delay=60,
+        # Disable the rate limit
+        email_rate_limit_cooldown_delay=0,
+        email_rate_limit_max_per_hour=0,
     )
     async with backend_factory(config=config) as backend:
         yield TestbedBackend(backend=backend)
