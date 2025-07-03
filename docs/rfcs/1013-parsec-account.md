@@ -529,8 +529,8 @@ Anonymous account API:
               },
               {
                 // Secret key shared between the client and the server and used for
-                // account authenticated API family's HMAC authentication.
-                "name": "auth_method_hmac_key",
+                // account authenticated API family's MAC authentication.
+                "name": "auth_method_mac_key",
                 "type": "SecretKey"
               },
               {
@@ -740,8 +740,8 @@ Anonymous account API:
         },
         {
           // Secret key shared between the client and the server and used for
-          // account authenticated API family's HMAC authentication.
-          "name": "auth_method_hmac_key",
+          // account authenticated API family's MAC authentication.
+          "name": "auth_method_mac_key",
           "type": "SecretKey"
         },
         {
