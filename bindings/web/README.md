@@ -1,34 +1,37 @@
-# libparsec-electron-bindings
+# Libparsec web bindings
 
-Remember to have [`wasm-pack`](../../docs/development/README.md#base-requirement) installed !
+This directory contains libparsec bindings for the web application.
 
 ## Build
 
-tl;dr: `../../make.py wr`
+> [!NOTE]
+> The internal build commands relies on [`wasm-pack`](https://github.com/rustwasm/wasm-pack).
+> Remember to install it as described in the [base requirements`](../../docs/development/README.md#base-requirement).
 
-First run (to install dependencies)
+Build bindings using the `make.py` scripts at the root of the repo.
+
+First run (to install dependencies):
 
 ```shell
-../../make.py wi    # wi is an alias for web-dev-install
+./make.py wi    # wi is an alias for web-dev-install
 ```
 
-Subsequent runs
+Subsequent runs:
 
 ```shell
-../../make.py wr    # wr is an alias for web-dev-rebuild
+./make.py wr    # wr is an alias for web-dev-rebuild
 ```
 
 Basically `make.py` wraps the following commands:
 
 ```shell
+# install dependencies
 npm install
-# (re)generate dist/libparsec.node
+# (re)generate dist/libparsec.node (this is a .so that node can load)
 npm run build:dev
 # Or for release
 npm run build:release
 ```
-
-The internal build command itself relies on [`wasm-pack`](https://github.com/rustwasm/wasm-pack).
 
 ## Interactive testing
 
