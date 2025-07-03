@@ -4695,6 +4695,97 @@ fn variant_account_logout_error_rs_to_js(
     Ok(js_obj)
 }
 
+// AccountRecoverProceedError
+
+#[allow(dead_code)]
+fn variant_account_recover_proceed_error_rs_to_js(
+    rs_obj: libparsec::AccountRecoverProceedError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::AccountRecoverProceedError::AuthMethodIdAlreadyExists { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountRecoverProceedErrorAuthMethodIdAlreadyExists".into(),
+            )?;
+        }
+        libparsec::AccountRecoverProceedError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountRecoverProceedErrorInternal".into(),
+            )?;
+        }
+        libparsec::AccountRecoverProceedError::InvalidValidationCode { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountRecoverProceedErrorInvalidValidationCode".into(),
+            )?;
+        }
+        libparsec::AccountRecoverProceedError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountRecoverProceedErrorOffline".into(),
+            )?;
+        }
+        libparsec::AccountRecoverProceedError::SendValidationEmailRequired { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountRecoverProceedErrorSendValidationEmailRequired".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// AccountRecoverSendValidationEmailError
+
+#[allow(dead_code)]
+fn variant_account_recover_send_validation_email_error_rs_to_js(
+    rs_obj: libparsec::AccountRecoverSendValidationEmailError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::AccountRecoverSendValidationEmailError::EmailRecipientRefused { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountRecoverSendValidationEmailErrorEmailRecipientRefused".into(),
+            )?;
+        }
+        libparsec::AccountRecoverSendValidationEmailError::EmailServerUnavailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountRecoverSendValidationEmailErrorEmailServerUnavailable".into(),
+            )?;
+        }
+        libparsec::AccountRecoverSendValidationEmailError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountRecoverSendValidationEmailErrorInternal".into(),
+            )?;
+        }
+        libparsec::AccountRecoverSendValidationEmailError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountRecoverSendValidationEmailErrorOffline".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // AccountRegisterNewDeviceError
 
 #[allow(dead_code)]
@@ -17022,6 +17113,127 @@ pub fn accountLogout(account: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_account_logout_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// account_recover_1_send_validation_email
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn accountRecover1SendValidationEmail(
+    config_dir: String,
+    addr: String,
+    email: String,
+) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config_dir = {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let addr = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let email = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(email).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret =
+            libparsec::account_recover_1_send_validation_email(&config_dir, addr, email).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_account_recover_send_validation_email_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// account_recover_2_proceed
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn accountRecover2Proceed(
+    config_dir: String,
+    addr: String,
+    validation_code: String,
+    email: String,
+    new_password: String,
+) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config_dir = {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let addr = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let validation_code = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::ValidationCode, _> {
+                libparsec::ValidationCode::from_str(&s).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(validation_code).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let email = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(email).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let new_password = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> { Ok(s.into()) };
+            custom_from_rs_string(new_password).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::account_recover_2_proceed(
+            &config_dir,
+            addr,
+            validation_code,
+            email,
+            &new_password,
+        )
+        .await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_account_recover_proceed_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

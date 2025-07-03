@@ -719,6 +719,72 @@ export interface AccountLogoutErrorInternal {
 export type AccountLogoutError =
   | AccountLogoutErrorInternal
 
+// AccountRecoverProceedError
+export enum AccountRecoverProceedErrorTag {
+    AuthMethodIdAlreadyExists = 'AccountRecoverProceedErrorAuthMethodIdAlreadyExists',
+    Internal = 'AccountRecoverProceedErrorInternal',
+    InvalidValidationCode = 'AccountRecoverProceedErrorInvalidValidationCode',
+    Offline = 'AccountRecoverProceedErrorOffline',
+    SendValidationEmailRequired = 'AccountRecoverProceedErrorSendValidationEmailRequired',
+}
+
+export interface AccountRecoverProceedErrorAuthMethodIdAlreadyExists {
+    tag: AccountRecoverProceedErrorTag.AuthMethodIdAlreadyExists
+    error: string
+}
+export interface AccountRecoverProceedErrorInternal {
+    tag: AccountRecoverProceedErrorTag.Internal
+    error: string
+}
+export interface AccountRecoverProceedErrorInvalidValidationCode {
+    tag: AccountRecoverProceedErrorTag.InvalidValidationCode
+    error: string
+}
+export interface AccountRecoverProceedErrorOffline {
+    tag: AccountRecoverProceedErrorTag.Offline
+    error: string
+}
+export interface AccountRecoverProceedErrorSendValidationEmailRequired {
+    tag: AccountRecoverProceedErrorTag.SendValidationEmailRequired
+    error: string
+}
+export type AccountRecoverProceedError =
+  | AccountRecoverProceedErrorAuthMethodIdAlreadyExists
+  | AccountRecoverProceedErrorInternal
+  | AccountRecoverProceedErrorInvalidValidationCode
+  | AccountRecoverProceedErrorOffline
+  | AccountRecoverProceedErrorSendValidationEmailRequired
+
+// AccountRecoverSendValidationEmailError
+export enum AccountRecoverSendValidationEmailErrorTag {
+    EmailRecipientRefused = 'AccountRecoverSendValidationEmailErrorEmailRecipientRefused',
+    EmailServerUnavailable = 'AccountRecoverSendValidationEmailErrorEmailServerUnavailable',
+    Internal = 'AccountRecoverSendValidationEmailErrorInternal',
+    Offline = 'AccountRecoverSendValidationEmailErrorOffline',
+}
+
+export interface AccountRecoverSendValidationEmailErrorEmailRecipientRefused {
+    tag: AccountRecoverSendValidationEmailErrorTag.EmailRecipientRefused
+    error: string
+}
+export interface AccountRecoverSendValidationEmailErrorEmailServerUnavailable {
+    tag: AccountRecoverSendValidationEmailErrorTag.EmailServerUnavailable
+    error: string
+}
+export interface AccountRecoverSendValidationEmailErrorInternal {
+    tag: AccountRecoverSendValidationEmailErrorTag.Internal
+    error: string
+}
+export interface AccountRecoverSendValidationEmailErrorOffline {
+    tag: AccountRecoverSendValidationEmailErrorTag.Offline
+    error: string
+}
+export type AccountRecoverSendValidationEmailError =
+  | AccountRecoverSendValidationEmailErrorEmailRecipientRefused
+  | AccountRecoverSendValidationEmailErrorEmailServerUnavailable
+  | AccountRecoverSendValidationEmailErrorInternal
+  | AccountRecoverSendValidationEmailErrorOffline
+
 // AccountRegisterNewDeviceError
 export enum AccountRegisterNewDeviceErrorTag {
     Internal = 'AccountRegisterNewDeviceErrorInternal',
@@ -4869,6 +4935,18 @@ export interface LibParsecPlugin {
     accountLogout(
         account: Handle
     ): Promise<Result<null, AccountLogoutError>>
+    accountRecover1SendValidationEmail(
+        config_dir: Path,
+        addr: ParsecAddr,
+        email: EmailAddress
+    ): Promise<Result<null, AccountRecoverSendValidationEmailError>>
+    accountRecover2Proceed(
+        config_dir: Path,
+        addr: ParsecAddr,
+        validation_code: ValidationCode,
+        email: EmailAddress,
+        new_password: Password
+    ): Promise<Result<null, AccountRecoverProceedError>>
     accountRegisterNewDevice(
         account: Handle,
         organization_id: OrganizationID,
