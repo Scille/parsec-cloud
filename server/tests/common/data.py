@@ -20,6 +20,7 @@ from parsec._parsec import (
     UserID,
     UserProfile,
     UserUpdateCertificate,
+    ValidationCode,
     VlobID,
     authenticated_cmds,
 )
@@ -938,3 +939,10 @@ async def invited_greeting_with_deleted_shamir_tester(
     yield _invited_http_common_errors_tester
 
     assert tester_called
+
+
+def generate_different_validation_code(existing_code: ValidationCode) -> ValidationCode:
+    while True:
+        new_code = ValidationCode.generate()
+        if new_code != existing_code:
+            return new_code
