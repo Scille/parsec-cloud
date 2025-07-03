@@ -111,6 +111,9 @@ class MemoryDatamodel:
     account_delete_validation_emails: dict[EmailAddress, ValidationCodeInfo] = field(
         default_factory=dict
     )
+    account_recover_validation_emails: dict[EmailAddress, ValidationCodeInfo] = field(
+        default_factory=dict
+    )
     # Single big lock used for all account creation steps (i.e. sending validation mail,
     # checking validation code, creating account)
     account_creation_lock: Lock = field(default_factory=Lock)
