@@ -78,6 +78,13 @@ export class Cryptpad {
         }
         resolve();
       };
+
+      // Add error handling for HTTPS/security issues
+      this.script!.onerror = (error): void => {
+        console.error('Failed to load CryptPad script:', error);
+        console.error('This might be due to HTTPS requirements. Check if CryptPad server requires secure context.');
+        resolve();
+      };
     });
   }
 

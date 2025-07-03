@@ -399,7 +399,7 @@ async function loadCryptpad(): Promise<void> {
     editorConfig: {
       lang: longLocaleCodeToShort(I18n.getLocale()),
     },
-    autosave: 1000,
+    autosave: 10,
     events: {
       // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
       onSave: async (file: Blob, callback: () => void) => {
