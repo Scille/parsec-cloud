@@ -23,6 +23,17 @@
       {
         // The SMTP server rejected the email recipient
         "status": "email_recipient_refused"
+      },
+      {
+        // Too many attempts at sending email from the client IP address or
+        // to the requested recipient email address.
+        "status": "email_sending_rate_limited",
+        "fields": [
+          {
+            "name": "wait_until",
+            "type": "DateTime"
+          }
+        ]
       }
     ]
   }
