@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from parsec._parsec import EmailAddress
+from parsec._parsec import DateTime, EmailAddress
 
 class Req:
     def __init__(self, email: EmailAddress) -> None: ...
@@ -38,3 +38,8 @@ class RepEmailRecipientRefused(Rep):
     def __init__(
         self,
     ) -> None: ...
+
+class RepEmailSendingRateLimited(Rep):
+    def __init__(self, wait_until: DateTime) -> None: ...
+    @property
+    def wait_until(self) -> DateTime: ...
