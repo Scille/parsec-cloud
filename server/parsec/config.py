@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Literal
 from urllib.parse import urlparse, urlunparse
 
 from parsec._parsec import ActiveUsersLimit, DateTime, EmailAddress, ParsecAddr, SecretKey
+from parsec.email_rate_limit import EmailRateLimit
 
 if TYPE_CHECKING:
     from parsec.components.memory.organization import MemoryOrganization, OrganizationID
@@ -242,14 +243,15 @@ class BackendConfig:
     # Bearer token used to authenticate the administration API
     administration_token: str
 
-    # Delay (in seconds) before a validation email can be resend (e.g.
-    # for creating or reseting an account).
-    #
-    # Note this cooldown is applied to both the recipient email address and the
-    # initiator IP address (e.i. a given IP address can request sending an email
-    # once every cooldown time, an email can be send once every cooldown time
-    # for any given email address).
-    validation_email_cooldown_delay: int
+    # Minimal wait time (in seconds) between two email having the same recipient or initiator IP address
+    email_rate_limit_cooldown_delay: int
+    # Maximum number of mail send per hour for any given recipient or initiator IP address
+    # Note setting it to `0` disable the check.
+    email_rate_limit_max_per_hour: int
+    # Small hack here: since the rate limit system is purely in-memory and configured
+    # only by fields from this class, we instantiate here to simplify passing it
+    # to the different components needing it.
+    email_rate_limit: EmailRateLimit = field(init=False)
 
     # Random value used to make unpredictable (but still stable & realistic) the password
     # algorithm configuration returned for non-existing accounts, hence preventing an
@@ -295,4 +297,11 @@ class BackendConfig:
         assert self.sse_keepalive is None or self.sse_keepalive >= 0, self.sse_keepalive
         assert self.organization_initial_minimum_archiving_period >= 0, (
             self.organization_initial_minimum_archiving_period
+        )
+        assert self.email_rate_limit_cooldown_delay >= 0, self.email_rate_limit_cooldown_delay
+        assert self.email_rate_limit_max_per_hour >= 0, self.email_rate_limit_max_per_hour
+
+        self.email_rate_limit = EmailRateLimit(
+            cooldown_delay=self.email_rate_limit_cooldown_delay,
+            max_per_hour=self.email_rate_limit_max_per_hour,
         )

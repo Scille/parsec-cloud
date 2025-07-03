@@ -105,11 +105,8 @@ class MemoryAccountComponent(BaseAccountComponent):
             if email in self._data.accounts:
                 assert email not in self._data.account_create_validation_emails  # Sanity check
                 return AccountCreateSendValidationEmailBadOutcome.ACCOUNT_ALREADY_EXISTS
-            elif email in self._data.account_create_validation_emails:
-                last_mail_info = self._data.account_create_validation_emails[email]
-                if not self._can_send_new_validation_email(last_mail_info.created_at, now):
-                    return AccountCreateSendValidationEmailBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND
 
+            # Note we simply overwrite any existing previous validation code
             validation_code = ValidationCode.generate()
             self._data.account_create_validation_emails[email] = ValidationCodeInfo(
                 validation_code, now
@@ -226,12 +223,7 @@ class MemoryAccountComponent(BaseAccountComponent):
                 case None:
                     return AccountDeleteSendValidationEmailBadOutcome.ACCOUNT_NOT_FOUND
 
-            last_mail_info = self._data.account_delete_validation_emails.get(account.account_email)
-            if last_mail_info and not self._can_send_new_validation_email(
-                last_mail_info.created_at, now
-            ):
-                return AccountDeleteSendValidationEmailBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND
-
+            # Note we simply overwrite any existing previous validation code
             validation_code = ValidationCode.generate()
             self._data.account_delete_validation_emails[account.account_email] = ValidationCodeInfo(
                 validation_code, now
@@ -303,13 +295,7 @@ class MemoryAccountComponent(BaseAccountComponent):
             if account.deleted_on is not None:
                 return AccountRecoverSendValidationEmailBadOutcome.ACCOUNT_NOT_FOUND
 
-            if email in self._data.account_recover_validation_emails:
-                last_mail_info = self._data.account_recover_validation_emails[email]
-                if not self._can_send_new_validation_email(last_mail_info.created_at, now):
-                    return (
-                        AccountRecoverSendValidationEmailBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND
-                    )
-
+            # Note we simply overwrite any existing previous validation code
             validation_code = ValidationCode.generate()
             self._data.account_recover_validation_emails[email] = ValidationCodeInfo(
                 validation_code, now
