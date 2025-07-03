@@ -23,6 +23,8 @@ from parsec.components.account import (
     AccountInfo,
     AccountInfoBadOutcome,
     AccountInviteListBadOutcome,
+    AccountRecoverProceedBadOutcome,
+    AccountRecoverSendValidationEmailBadOutcome,
     AccountVaultItemListBadOutcome,
     AccountVaultItemRecoveryList,
     AccountVaultItemUploadBadOutcome,
@@ -288,6 +290,104 @@ class MemoryAccountComponent(BaseAccountComponent):
 
             # And finally discard the used validation email
             del self._data.account_delete_validation_emails[account.account_email]
+
+    @override
+    async def recover_send_validation_email(
+        self, now: DateTime, email: EmailAddress
+    ) -> ValidationCode | SendEmailBadOutcome | AccountRecoverSendValidationEmailBadOutcome:
+        async with self._data.account_creation_lock:
+            try:
+                account = self._data.accounts[email]
+            except KeyError:
+                return AccountRecoverSendValidationEmailBadOutcome.ACCOUNT_NOT_FOUND
+            if account.deleted_on is not None:
+                return AccountRecoverSendValidationEmailBadOutcome.ACCOUNT_NOT_FOUND
+
+            if email in self._data.account_recover_validation_emails:
+                last_mail_info = self._data.account_recover_validation_emails[email]
+                if not self._can_send_new_validation_email(last_mail_info.created_at, now):
+                    return (
+                        AccountRecoverSendValidationEmailBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND
+                    )
+
+            validation_code = ValidationCode.generate()
+            self._data.account_recover_validation_emails[email] = ValidationCodeInfo(
+                validation_code, now
+            )
+
+        # Note we send the email after the lock has been released, this is to
+        # simulation what is done in PostgreSQL where the transaction has to be
+        # finished before sending the email since this operation can be long.
+        outcome = await self._send_account_recover_validation_email(
+            email=email,
+            validation_code=validation_code,
+        )
+        match outcome:
+            case None:
+                return validation_code
+            case error:
+                return error
+
+    @override
+    async def recover_proceed(
+        self,
+        now: DateTime,
+        validation_code: ValidationCode,
+        email: EmailAddress,
+        created_by_user_agent: str,
+        created_by_ip: str | Literal[""],
+        new_vault_key_access: bytes,
+        new_auth_method_id: AccountAuthMethodID,
+        new_auth_method_mac_key: SecretKey,
+        new_auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
+    ) -> None | AccountRecoverProceedBadOutcome:
+        async with self._data.account_creation_lock:
+            try:
+                account = self._data.accounts[email]
+            except KeyError:
+                return AccountRecoverProceedBadOutcome.ACCOUNT_NOT_FOUND
+            if account.deleted_on is not None:
+                return AccountRecoverProceedBadOutcome.ACCOUNT_NOT_FOUND
+
+            # Check validation code
+
+            try:
+                last_mail_info = self._data.account_recover_validation_emails[account.account_email]
+            except KeyError:
+                return AccountRecoverProceedBadOutcome.SEND_VALIDATION_EMAIL_REQUIRED
+
+            if not last_mail_info.can_be_used(now):
+                return AccountRecoverProceedBadOutcome.SEND_VALIDATION_EMAIL_REQUIRED
+
+            if last_mail_info.validation_code != validation_code:
+                # Register the failed attempt
+                last_mail_info.failed_attempts += 1
+                return AccountRecoverProceedBadOutcome.INVALID_VALIDATION_CODE
+
+            # Create authentication method
+            auth_method = MemoryAuthenticationMethod(
+                id=new_auth_method_id,
+                created_on=now,
+                created_by_ip=created_by_ip,
+                created_by_user_agent=created_by_user_agent,
+                mac_key=new_auth_method_mac_key,
+                vault_key_access=new_vault_key_access,
+                password_algorithm=new_auth_method_password_algorithm,
+                disabled_on=None,
+            )
+
+            # Check for auth method uniqueness
+            if self._auth_method_id_already_exists(new_auth_method_id):
+                return AccountRecoverProceedBadOutcome.AUTH_METHOD_ID_ALREADY_EXISTS
+
+            new_vault = MemoryAccountVault(
+                items={}, authentication_methods={new_auth_method_id: auth_method}
+            )
+            account.previous_vaults.append(account.current_vault)
+            account.current_vault = new_vault
+
+            # And finally discard the used validation email
+            del self._data.account_recover_validation_emails[email]
 
     @override
     async def vault_item_upload(
