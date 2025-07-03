@@ -510,6 +510,11 @@ export interface AccountCreateSendValidationEmailErrorEmailRecipientRefused {
     tag: "EmailRecipientRefused"
     error: string
 }
+export interface AccountCreateSendValidationEmailErrorEmailSendingRateLimited {
+    tag: "EmailSendingRateLimited"
+    error: string
+    wait_until: number
+}
 export interface AccountCreateSendValidationEmailErrorEmailServerUnavailable {
     tag: "EmailServerUnavailable"
     error: string
@@ -524,6 +529,7 @@ export interface AccountCreateSendValidationEmailErrorOffline {
 }
 export type AccountCreateSendValidationEmailError =
   | AccountCreateSendValidationEmailErrorEmailRecipientRefused
+  | AccountCreateSendValidationEmailErrorEmailSendingRateLimited
   | AccountCreateSendValidationEmailErrorEmailServerUnavailable
   | AccountCreateSendValidationEmailErrorInternal
   | AccountCreateSendValidationEmailErrorOffline
@@ -558,6 +564,11 @@ export interface AccountDeleteSendValidationEmailErrorEmailRecipientRefused {
     tag: "EmailRecipientRefused"
     error: string
 }
+export interface AccountDeleteSendValidationEmailErrorEmailSendingRateLimited {
+    tag: "EmailSendingRateLimited"
+    error: string
+    wait_until: number
+}
 export interface AccountDeleteSendValidationEmailErrorEmailServerUnavailable {
     tag: "EmailServerUnavailable"
     error: string
@@ -572,6 +583,7 @@ export interface AccountDeleteSendValidationEmailErrorOffline {
 }
 export type AccountDeleteSendValidationEmailError =
   | AccountDeleteSendValidationEmailErrorEmailRecipientRefused
+  | AccountDeleteSendValidationEmailErrorEmailSendingRateLimited
   | AccountDeleteSendValidationEmailErrorEmailServerUnavailable
   | AccountDeleteSendValidationEmailErrorInternal
   | AccountDeleteSendValidationEmailErrorOffline
@@ -704,6 +716,11 @@ export interface AccountRecoverSendValidationEmailErrorEmailRecipientRefused {
     tag: "EmailRecipientRefused"
     error: string
 }
+export interface AccountRecoverSendValidationEmailErrorEmailSendingRateLimited {
+    tag: "EmailSendingRateLimited"
+    error: string
+    wait_until: number
+}
 export interface AccountRecoverSendValidationEmailErrorEmailServerUnavailable {
     tag: "EmailServerUnavailable"
     error: string
@@ -718,6 +735,7 @@ export interface AccountRecoverSendValidationEmailErrorOffline {
 }
 export type AccountRecoverSendValidationEmailError =
   | AccountRecoverSendValidationEmailErrorEmailRecipientRefused
+  | AccountRecoverSendValidationEmailErrorEmailSendingRateLimited
   | AccountRecoverSendValidationEmailErrorEmailServerUnavailable
   | AccountRecoverSendValidationEmailErrorInternal
   | AccountRecoverSendValidationEmailErrorOffline
