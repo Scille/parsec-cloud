@@ -45,7 +45,8 @@ def backend_config(
         organization_spontaneous_bootstrap=False,
         organization_bootstrap_webhook_url=None,
         backend_mocked_data=backend_mocked_data,
-        validation_email_cooldown_delay=5,
+        email_rate_limit_cooldown_delay=60,
+        email_rate_limit_max_per_hour=3,
     )
 
 

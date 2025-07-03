@@ -38,7 +38,6 @@ class AccountInfoBadOutcome(BadOutcomeEnum):
 
 class AccountCreateSendValidationEmailBadOutcome(BadOutcomeEnum):
     ACCOUNT_ALREADY_EXISTS = auto()
-    TOO_SOON_AFTER_PREVIOUS_DEMAND = auto()
 
 
 class AccountCreateProceedBadOutcome(BadOutcomeEnum):
@@ -49,7 +48,6 @@ class AccountCreateProceedBadOutcome(BadOutcomeEnum):
 
 class AccountDeleteSendValidationEmailBadOutcome(BadOutcomeEnum):
     ACCOUNT_NOT_FOUND = auto()
-    TOO_SOON_AFTER_PREVIOUS_DEMAND = auto()
 
 
 class AccountDeleteProceedBadOutcome(BadOutcomeEnum):
@@ -60,7 +58,6 @@ class AccountDeleteProceedBadOutcome(BadOutcomeEnum):
 
 class AccountRecoverSendValidationEmailBadOutcome(BadOutcomeEnum):
     ACCOUNT_NOT_FOUND = auto()
-    TOO_SOON_AFTER_PREVIOUS_DEMAND = auto()
 
 
 class AccountRecoverProceedBadOutcome(BadOutcomeEnum):
@@ -162,9 +159,6 @@ class ValidationCodeInfo:
 class BaseAccountComponent:
     def __init__(self, config: BackendConfig):
         self._config = config
-
-    def _can_send_new_validation_email(self, last_email_datetime: DateTime, now: DateTime) -> bool:
-        return (now - last_email_datetime) > self._config.validation_email_cooldown_delay
 
     # Used by `create_proceed` implementations
     async def _send_account_create_validation_email(
@@ -367,15 +361,29 @@ class BaseAccountComponent:
         client_ctx: AnonymousAccountClientContext,
         req: anonymous_account_cmds.latest.account_create_send_validation_email.Req,
     ) -> anonymous_account_cmds.latest.account_create_send_validation_email.Rep:
-        outcome = await self.create_send_validation_email(DateTime.now(), req.email)
+        now = DateTime.now()
+
+        match self._config.email_rate_limit.register_send_intent(
+            now=now,
+            client_ip_address=client_ctx.client_ip_address,
+            recipient=req.email,
+        ):
+            case None:
+                pass
+            case DateTime() as wait_until:
+                return anonymous_account_cmds.latest.account_create_send_validation_email.RepEmailSendingRateLimited(
+                    wait_until=wait_until,
+                )
+
+        outcome = await self.create_send_validation_email(
+            now=now,
+            email=req.email,
+        )
         match outcome:
             case ValidationCode():
                 return anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
 
-            case (
-                AccountCreateSendValidationEmailBadOutcome.ACCOUNT_ALREADY_EXISTS
-                | AccountCreateSendValidationEmailBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND
-            ):
+            case AccountCreateSendValidationEmailBadOutcome.ACCOUNT_ALREADY_EXISTS:
                 # Respond OK without sending token to prevent creating oracle
                 return anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
 
@@ -440,14 +448,23 @@ class BaseAccountComponent:
         client_ctx: AuthenticatedAccountClientContext,
         req: authenticated_account_cmds.latest.account_delete_send_validation_email.Req,
     ) -> authenticated_account_cmds.latest.account_delete_send_validation_email.Rep:
-        outcome = await self.delete_send_validation_email(DateTime.now(), client_ctx.auth_method_id)
-        match outcome:
-            case ValidationCode():
-                return (
-                    authenticated_account_cmds.latest.account_delete_send_validation_email.RepOk()
+        now = DateTime.now()
+
+        match self._config.email_rate_limit.register_send_intent(
+            now=now,
+            client_ip_address=client_ctx.client_ip_address,
+            recipient=client_ctx.account_email,
+        ):
+            case None:
+                pass
+            case DateTime() as wait_until:
+                return authenticated_account_cmds.latest.account_delete_send_validation_email.RepEmailSendingRateLimited(
+                    wait_until=wait_until,
                 )
 
-            case AccountDeleteSendValidationEmailBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND:
+        outcome = await self.delete_send_validation_email(now, client_ctx.auth_method_id)
+        match outcome:
+            case ValidationCode():
                 return (
                     authenticated_account_cmds.latest.account_delete_send_validation_email.RepOk()
                 )
@@ -486,15 +503,26 @@ class BaseAccountComponent:
         client_ctx: AnonymousAccountClientContext,
         req: anonymous_account_cmds.latest.account_recover_send_validation_email.Req,
     ) -> anonymous_account_cmds.latest.account_recover_send_validation_email.Rep:
-        outcome = await self.recover_send_validation_email(DateTime.now(), req.email)
+        now = DateTime.now()
+
+        match self._config.email_rate_limit.register_send_intent(
+            now=now,
+            client_ip_address=client_ctx.client_ip_address,
+            recipient=req.email,
+        ):
+            case None:
+                pass
+            case DateTime() as wait_until:
+                return anonymous_account_cmds.latest.account_recover_send_validation_email.RepEmailSendingRateLimited(
+                    wait_until=wait_until,
+                )
+
+        outcome = await self.recover_send_validation_email(now, req.email)
         match outcome:
             case ValidationCode():
                 return anonymous_account_cmds.latest.account_recover_send_validation_email.RepOk()
 
-            case (
-                AccountRecoverSendValidationEmailBadOutcome.ACCOUNT_NOT_FOUND
-                | AccountRecoverSendValidationEmailBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND
-            ):
+            case AccountRecoverSendValidationEmailBadOutcome.ACCOUNT_NOT_FOUND:
                 # Respond OK without sending token to prevent creating oracle
                 return anonymous_account_cmds.latest.account_recover_send_validation_email.RepOk()
 

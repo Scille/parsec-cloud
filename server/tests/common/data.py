@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import re
 from collections.abc import AsyncGenerator, Awaitable, Callable, Coroutine
 
 import pytest
@@ -946,3 +947,9 @@ def generate_different_validation_code(existing_code: ValidationCode) -> Validat
         new_code = ValidationCode.generate()
         if new_code != existing_code:
             return new_code
+
+
+def extract_validation_code_from_email(email_body: str) -> ValidationCode:
+    validation_code_match = re.search(r"<pre id=\"code\">([A-Z0-9]+)</pre>", email_body)
+    assert validation_code_match is not None
+    return ValidationCode(validation_code_match.group(1))

@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import re
 
 import pytest
 
@@ -12,8 +11,11 @@ from parsec.components.account import (
 )
 from parsec.components.email import SendEmailBadOutcome
 from parsec.config import MockedEmailConfig
-from tests.common.client import AuthenticatedAccountRpcClient
-from tests.common.data import HttpCommonErrorsTester
+from tests.common import (
+    AuthenticatedAccountRpcClient,
+    HttpCommonErrorsTester,
+    extract_validation_code_from_email,
+)
 
 
 @pytest.mark.parametrize(
@@ -25,7 +27,7 @@ from tests.common.data import HttpCommonErrorsTester
         "out_of_cooldown_and_too_many_attempts_previous",
     ),
 )
-async def test_authenticated_account_account_delete_send_validation_email_ok_new(
+async def test_authenticated_account_account_delete_send_validation_email_ok(
     xfail_if_postgresql: None,
     kind: str,
     alice_account: AuthenticatedAccountRpcClient,
@@ -40,7 +42,7 @@ async def test_authenticated_account_account_delete_send_validation_email_ok_new
 
         case "out_of_cooldown_and_still_valid_previous":
             timestamp_out_of_cooldown = DateTime.now().add(
-                seconds=-backend.config.validation_email_cooldown_delay
+                seconds=-backend.config.email_rate_limit_cooldown_delay
             )
             outcome = await backend.account.delete_send_validation_email(
                 timestamp_out_of_cooldown, alice_account.auth_method_id
@@ -62,7 +64,7 @@ async def test_authenticated_account_account_delete_send_validation_email_ok_new
 
         case "out_of_cooldown_and_too_many_attempts_previous":
             timestamp_out_of_cooldown = DateTime.now().add(
-                seconds=-backend.config.validation_email_cooldown_delay
+                seconds=-backend.config.email_rate_limit_cooldown_delay
             )
             old_validation_code = await backend.account.delete_send_validation_email(
                 timestamp_out_of_cooldown, alice_account.auth_method_id
@@ -96,12 +98,9 @@ async def test_authenticated_account_account_delete_send_validation_email_ok_new
 
     assert len(backend.config.email_config.sent_emails) == 1
     assert backend.config.email_config.sent_emails[-1].recipient == alice_account.account_email
-    # Extract the validation code from the email
-    validation_code_match = re.search(
-        r"<pre id=\"code\">([A-Z0-9]+)</pre>", backend.config.email_config.sent_emails[-1].body
+    new_validation_code = extract_validation_code_from_email(
+        backend.config.email_config.sent_emails[-1].body
     )
-    assert validation_code_match is not None
-    new_validation_code = ValidationCode(validation_code_match.group(1))
 
     # Finally ensure the previous validation code is no longer usable...
     if old_validation_code is not None:
@@ -118,7 +117,7 @@ async def test_authenticated_account_account_delete_send_validation_email_ok_new
 
 
 @pytest.mark.parametrize("kind", ("still_valid_previous", "too_many_attempts_previous"))
-async def test_authenticated_account_account_delete_send_validation_email_ok_but_too_soon_for_new_mail(
+async def test_authenticated_account_account_delete_send_validation_email_email_sending_rate_limited(
     xfail_if_postgresql: None,
     kind: str,
     alice_account: AuthenticatedAccountRpcClient,
@@ -128,11 +127,14 @@ async def test_authenticated_account_account_delete_send_validation_email_ok_but
 
     # Previous request (that is recent enough)
 
-    validation_code = await backend.account.delete_send_validation_email(
-        DateTime.now(), alice_account.auth_method_id
-    )
-    assert isinstance(validation_code, ValidationCode)
+    # Note we cannot use `backend.account.create_send_validation_email()` here
+    # since the rate limit is done in a upper layer.
+    rep = await alice_account.account_delete_send_validation_email()
+    assert rep == authenticated_account_cmds.latest.account_delete_send_validation_email.RepOk()
     assert len(backend.config.email_config.sent_emails) == 1
+    validation_code = extract_validation_code_from_email(
+        backend.config.email_config.sent_emails[-1].body
+    )
     backend.config.email_config.sent_emails.clear()
 
     match kind:
@@ -162,7 +164,10 @@ async def test_authenticated_account_account_delete_send_validation_email_ok_but
     # New attempt that is too soon for a new mail
 
     rep = await alice_account.account_delete_send_validation_email()
-    assert rep == authenticated_account_cmds.latest.account_delete_send_validation_email.RepOk()
+    assert isinstance(
+        rep,
+        authenticated_account_cmds.latest.account_delete_send_validation_email.RepEmailSendingRateLimited,
+    )
 
     assert len(backend.config.email_config.sent_emails) == 0
 

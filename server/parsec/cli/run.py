@@ -243,18 +243,29 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
     default=AccountVaultStrategy.ALLOWED,
 )
 @click.option(
-    "--validation-email-cooldown-delay",
-    default=60,
+    "--validation-email-rate-limit",
+    default=(60, 3),
+    type=(int, int),
     show_default=True,
-    envvar="PARSEC_VALIDATION_EMAIL_COOLDOWN_DELAY",
+    metavar="<MIN_DELAY_SECONDS MAX_EMAILS_PER_HOUR>",
+    envvar="PARSEC_VALIDATION_EMAIL_RATE_LIMIT",
     show_envvar=True,
-    help="""Delay (in seconds) before a validation email can be resend (e.g.
-    for creating or reseting an account).
+    help="""Limit before a validation email can be resend (e.g. for creating or
+reseting an account).
 
-    Note this cooldown is applied to both the recipient email address and the
-    initiator IP address (e.i. a given IP address can request sending an email
-    once every cooldown time, an email can be send once every cooldown time
-    for any given email address).
+\b
+This config is divided into two parts:
+- The minimum cooldown delay (in seconds) between two emails
+- The maximum number of emails for a sliding 1 hour window
+
+For each email sent, both the recipient email address and initiator IP address
+(i.e. IP address of the Parsec client that requested the server) are registered
+for rate limit.
+
+Note this cooldown is applied to both the recipient email address and the
+initiator IP address (e.i. a given IP address can request sending an email
+once every cooldown time, an email can be send once every cooldown time
+for any given email address).
 """,
 )
 @click.option(
@@ -441,7 +452,8 @@ def run_cmd(
     organization_initial_tos: dict[TosLocale, TosUrl] | None,
     organization_initial_allowed_client_agent: AllowedClientAgent,
     organization_initial_account_vault_strategy: AccountVaultStrategy,
-    validation_email_cooldown_delay: int,
+    # (cooldown in seconds, max number of email per hour)
+    validation_email_rate_limit: tuple[int, int],
     fake_account_password_algorithm_seed: SecretKey,
     server_addr: ParsecAddr,
     email_host: str,
@@ -507,7 +519,8 @@ def run_cmd(
             organization_initial_tos=organization_initial_tos,
             organization_initial_allowed_client_agent=organization_initial_allowed_client_agent,
             organization_initial_account_vault_strategy=organization_initial_account_vault_strategy,
-            validation_email_cooldown_delay=validation_email_cooldown_delay,
+            email_rate_limit_cooldown_delay=max(validation_email_rate_limit[0], 0),
+            email_rate_limit_max_per_hour=max(validation_email_rate_limit[1], 0),
             fake_account_password_algorithm_seed=fake_account_password_algorithm_seed,
         )
 
