@@ -170,6 +170,7 @@ class MemoryAccountComponent(BaseAccountComponent):
         created_by_user_agent: str,
         created_by_ip: str | Literal[""],
         auth_method_id: AccountAuthMethodID,
+        auth_method_mac_key: SecretKey,
         auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
     ) -> None | AccountCreateProceedBadOutcome:
         async with self._data.account_creation_lock:

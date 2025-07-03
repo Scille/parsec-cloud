@@ -92,7 +92,7 @@ async fn login_with_password(env: &TestbedEnv) {
         ProxyConfig::default(),
         addr,
         email,
-        password,
+        &password,
     )
     .await
     .unwrap();
@@ -126,7 +126,7 @@ async fn login_with_password_server_returns_bad_config(env: &TestbedEnv) {
             ProxyConfig::default(),
             addr,
             email,
-            password,
+            &password,
         )
         .await
         .unwrap_err(),
@@ -146,7 +146,7 @@ async fn login_with_password_server_offline(env: &TestbedEnv) {
             ProxyConfig::default(),
             addr,
             email,
-            password,
+            &password,
         )
         .await
         .unwrap_err(),

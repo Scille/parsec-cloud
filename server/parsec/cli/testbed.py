@@ -286,7 +286,7 @@ async def test_new_account(request: Request) -> Response:
         ) = req_body.split(b"\n")
 
         auth_method_id = AccountAuthMethodID.from_hex(raw_auth_method_id.decode("ascii"))
-        mac_key = SecretKey(b64decode(raw_mac_key))
+        auth_method_mac_key = SecretKey(b64decode(raw_mac_key))
         vault_key_access = b64decode(raw_vault_key_access)
 
     except ValueError:
@@ -323,6 +323,7 @@ async def test_new_account(request: Request) -> Response:
         created_by_user_agent="TestbedAgent",
         created_by_ip="",
         auth_method_id=auth_method_id,
+        auth_method_mac_key=auth_method_mac_key,
         auth_method_password_algorithm=None,
     )
     assert outcome is None

@@ -50,7 +50,7 @@ pub async fn account_create_3_proceed(
     addr: ParsecAddr,
     validation_code: ValidationCode,
     human_handle: HumanHandle,
-    password: Password,
+    password: &Password,
 ) -> Result<(), AccountCreateError> {
     let cmds = AnonymousAccountCmds::new(config_dir, addr, ProxyConfig::default())?;
     libparsec_account::Account::create_3_proceed(&cmds, validation_code, human_handle, password)
@@ -80,7 +80,7 @@ pub async fn account_login_with_password(
     config_dir: PathBuf,
     addr: ParsecAddr,
     email: EmailAddress,
-    password: Password,
+    password: &Password,
 ) -> Result<Handle, AccountLoginWithPasswordError> {
     let proxy = ProxyConfig::default();
     let account =

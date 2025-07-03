@@ -57,21 +57,21 @@ pub enum AccountCreateError {
     AuthMethodIdAlreadyExists,
 }
 
-pub(super) enum AccountCreateStep {
+pub(super) enum AccountCreateStep<'a> {
     CheckCode {
         validation_code: ValidationCode,
         email: EmailAddress,
     },
     Proceed {
         human_handle: HumanHandle,
-        password: Password,
+        password: &'a Password,
         validation_code: ValidationCode,
     },
 }
 
 pub(super) async fn account_create(
     cmds: &AnonymousAccountCmds,
-    step: AccountCreateStep,
+    step: AccountCreateStep<'_>,
 ) -> Result<(), AccountCreateError> {
     use libparsec_protocol::anonymous_account_cmds::v5::account_create_proceed::{
         AccountCreateStep as ReqAccountCreateStep, Rep, Req,
@@ -96,7 +96,7 @@ pub(super) async fn account_create(
                 },
             );
             let auth_method_master_secret = auth_method_password_algorithm
-                .compute_key_derivation(&password)
+                .compute_key_derivation(password)
                 .expect("algorithm config is valid");
 
             let auth_method_secret_key = auth_method_master_secret
@@ -118,7 +118,7 @@ pub(super) async fn account_create(
 
             ReqAccountCreateStep::Number1Create {
                 validation_code,
-                auth_method_hmac_key: auth_method.mac_key,
+                auth_method_mac_key: auth_method.mac_key,
                 auth_method_id: auth_method.id,
                 auth_method_password_algorithm: Some(auth_method_password_algorithm.into()),
                 human_handle,
