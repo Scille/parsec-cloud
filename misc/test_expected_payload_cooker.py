@@ -184,7 +184,15 @@ def decode_expected_raw(raw: bytes) -> dict[str, object]:
     return deserialized
 
 
-def cook_msgpack_type(value):
+def multilines_indent(lines: list[str], newline_indent: str) -> str:
+    sub_items = lines[1:-1]
+    if sub_items:
+        return f"\n{newline_indent}  ".join(lines[:-1]) + f"\n{newline_indent}{lines[-1]}"
+    else:
+        return f"{lines[0]}\n{newline_indent}{lines[-1]}"
+
+
+def cook_msgpack_type(value, newline_indent: str) -> str:
     if isinstance(value, bytes):
         return f"0x{value.hex()}"
 
@@ -203,20 +211,30 @@ def cook_msgpack_type(value):
                 pass
 
     if isinstance(value, dict):
-        out = "{ "
+        lines = ["{"]
+        indent = f"{newline_indent}  "
         for k, v in value.items():
             if not isinstance(k, str):
-                k = cook_msgpack_type(k)
-            out += f"{k}: {cook_msgpack_type(v)}, "
-        out += "}"
-        return out
+                k = cook_msgpack_type(k, newline_indent=indent)
+            lines.append(f"{k}: {cook_msgpack_type(v, newline_indent=indent)},")
+        lines.append("}")
+        mono_line = " ".join(lines)
+        if len(mono_line) <= 80:
+            return mono_line
+        else:
+            return multilines_indent(lines, newline_indent=newline_indent)
 
     if isinstance(value, list):
-        out = "[ "
+        lines = ["["]
+        indent = f"{newline_indent}  "
         for v in value:
-            out += f"{cook_msgpack_type(v)}, "
-        out += "]"
-        return out
+            lines.append(f"{cook_msgpack_type(v, newline_indent=indent)},")
+        lines.append("]")
+        mono_line = " ".join(lines)
+        if len(mono_line) <= 80:
+            return mono_line
+        else:
+            return multilines_indent(lines, newline_indent=newline_indent)
 
     return repr(value)
 
@@ -248,7 +266,8 @@ def parse_lines(lines):
 
         output_lines.append("    // Content:")
         for k, v in expected_decoded.items():
-            output_lines.append(f"    //   {k}: {cook_msgpack_type(v)}")
+            indent = "    //   "
+            output_lines.append(f"{indent}{k}: {cook_msgpack_type(v, newline_indent=indent)}")
 
         output_lines.append("    let raw: &[u8] = hex!(")
 
