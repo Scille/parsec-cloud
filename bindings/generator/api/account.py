@@ -277,3 +277,52 @@ async def account_create_registration_device(
     existing_local_device_access: Ref[DeviceAccessStrategy],
 ) -> Result[None, AccountCreateRegistrationDeviceError]:
     raise NotImplementedError
+
+
+class AccountRecoverSendValidationEmailError(ErrorVariant):
+    class Offline:
+        pass
+
+    class Internal:
+        pass
+
+    class EmailRecipientRefused:
+        pass
+
+    class EmailServerUnavailable:
+        pass
+
+
+async def account_recover_1_send_validation_email(
+    config_dir: Ref[Path],
+    addr: ParsecAddr,
+    email: EmailAddress,
+) -> Result[None, AccountRecoverSendValidationEmailError]:
+    raise NotImplementedError
+
+
+class AccountRecoverProceedError(ErrorVariant):
+    class Offline:
+        pass
+
+    class Internal:
+        pass
+
+    class InvalidValidationCode:
+        pass
+
+    class SendValidationEmailRequired:
+        pass
+
+    class AuthMethodIdAlreadyExists:
+        pass
+
+
+async def account_recover_2_proceed(
+    config_dir: Ref[Path],
+    addr: ParsecAddr,
+    validation_code: ValidationCode,
+    email: EmailAddress,
+    new_password: Ref[Password],
+) -> Result[None, AccountRecoverProceedError]:
+    raise NotImplementedError
