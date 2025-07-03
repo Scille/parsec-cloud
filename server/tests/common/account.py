@@ -70,6 +70,7 @@ async def create_account(
         created_by_user_agent=created_by_user_agent,
         created_by_ip=created_by_ip,
         auth_method_id=auth_method_id,
+        auth_method_mac_key=auth_method_mac_key,
         auth_method_password_algorithm=auth_method_password_algorithm,
     )
     assert res is None
@@ -88,6 +89,7 @@ async def alice_account(
         created_on=ALICE_ACCOUNT_CREATED_ON,
         human_handle=ALICE_ACCOUNT_HUMAN_HANDLE,
         vault_key_access=b"<alice_vault_key_access>",
+        auth_method_mac_key=ALICE_ACCOUNT_AUTH_METHOD_MAC_KEY,
         auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
             opslimit=65536,
             memlimit_kb=3,
@@ -115,6 +117,7 @@ async def bob_account(
         created_on=BOB_ACCOUNT_CREATED_ON,
         human_handle=BOB_ACCOUNT_HUMAN_HANDLE,
         vault_key_access=b"<bob_vault_key_access>",
+        auth_method_mac_key=BOB_ACCOUNT_AUTH_METHOD_MAC_KEY,
         auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
             opslimit=65536,
             memlimit_kb=3,

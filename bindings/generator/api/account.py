@@ -75,7 +75,7 @@ async def account_create_3_proceed(
     addr: ParsecAddr,
     validation_code: ValidationCode,
     human_handle: HumanHandle,
-    password: Password,
+    password: Ref[Password],
 ) -> Result[None, AccountCreateError]:
     raise NotImplementedError
 
@@ -95,7 +95,7 @@ async def account_login_with_password(
     config_dir: Path,
     addr: ParsecAddr,
     email: EmailAddress,
-    password: Password,
+    password: Ref[Password],
 ) -> Result[Handle, AccountLoginWithPasswordError]:
     raise NotImplementedError
 

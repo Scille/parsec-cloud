@@ -4,29 +4,33 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
-use bytes::Bytes;
-
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::anonymous_account_cmds;
-use std::str::FromStr;
 
 fn step0() {
     let raw_req = [
         (
-    // Generated from Parsec 3.4.1-a.0+dev
-    // Content:
-    //   cmd: 'account_create_proceed'
-    //   account_create_step: { step: 'NUMBER_0_CHECK_CODE', email: 'alice@invalid.com', validation_code: 'C88DEE', }
-    hex!(
-        "82a3636d64b66163636f756e745f6372656174655f70726f63656564b36163636f756e"
-        "745f6372656174655f7374657083a473746570b34e554d4245525f305f434845434b5f"
-        "434f4445a5656d61696cb1616c69636540696e76616c69642e636f6daf76616c696461"
-        "74696f6e5f636f6465a6433838444545"
-    ).as_ref(),
+            // Generated from Parsec 3.4.1-a.0+dev
+            // Content:
+            //   cmd: 'account_create_proceed'
+            //   account_create_step: {
+            //     step: 'NUMBER_0_CHECK_CODE',
+            //     email: 'alice@invalid.com',
+            //     validation_code: 'C88DEE',
+            //   }
+            hex!(
+                "82a3636d64b66163636f756e745f6372656174655f70726f63656564b36163636f756e"
+                "745f6372656174655f7374657083a473746570b34e554d4245525f305f434845434b5f"
+                "434f4445a5656d61696cb1616c69636540696e76616c69642e636f6daf76616c696461"
+                "74696f6e5f636f6465a6433838444545"
+            ).as_ref(),
             anonymous_account_cmds::account_create_proceed::Req {
-                account_create_step: anonymous_account_cmds::account_create_proceed::AccountCreateStep::Number0CheckCode {validation_code: ValidationCode::from_str("C88DEE").unwrap(), email:EmailAddress::try_from("alice@invalid.com").unwrap() },
+                account_create_step: anonymous_account_cmds::account_create_proceed::AccountCreateStep::Number0CheckCode {
+                    validation_code: "C88DEE".parse().unwrap(),
+                    email: "alice@invalid.com".parse().unwrap()
+                },
             },
         ),
 
@@ -55,73 +59,85 @@ fn step0() {
 fn step1() {
     let raw_req = [
         (
-    // Generated from Parsec 3.4.1-a.0+dev
-    // Content:
-    //   cmd: 'account_create_proceed'
-    //   account_create_step: { step: 'NUMBER_1_CREATE', auth_method_hmac_key: 0x2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1, auth_method_id: ext(2, 0x9aae259f748045cc9fe7146eab0b132e), auth_method_password_algorithm: { type: 'ARGON2ID', memlimit_kb: 131072, opslimit: 3, parallelism: 1, }, human_handle: [ 'alice@invalid.com', 'Anonymous Alice', ], validation_code: 'C88DEE', vault_key_access: 0x7661756c745f6b65795f616363657373, }
-    hex!(
-        "82a3636d64b66163636f756e745f6372656174655f70726f63656564b36163636f756e"
-        "745f6372656174655f7374657087a473746570af4e554d4245525f315f435245415445"
-        "b4617574685f6d6574686f645f686d61635f6b6579c4202ff13803789977db4f8ccabf"
-        "b6b26f3e70eb4453d396dcb2315f7690cbc2e3f1ae617574685f6d6574686f645f6964"
-        "d8029aae259f748045cc9fe7146eab0b132ebe617574685f6d6574686f645f70617373"
-        "776f72645f616c676f726974686d84a474797065a84152474f4e324944ab6d656d6c69"
-        "6d69745f6b62ce00020000a86f70736c696d697403ab706172616c6c656c69736d01ac"
-        "68756d616e5f68616e646c6592b1616c69636540696e76616c69642e636f6daf416e6f"
-        "6e796d6f757320416c696365af76616c69646174696f6e5f636f6465a6433838444545"
-        "b07661756c745f6b65795f616363657373c4107661756c745f6b65795f616363657373"
-    ).as_ref(),
+            // Generated from Parsec 3.4.1-a.0+dev
+            // Content:
+            //   cmd: 'account_create_proceed'
+            //   account_create_step: {
+            //     step: 'NUMBER_1_CREATE',
+            //     auth_method_id: ext(2, 0x9aae259f748045cc9fe7146eab0b132e),
+            //     auth_method_mac_key: 0x2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1,
+            //     auth_method_password_algorithm: { type: 'ARGON2ID', memlimit_kb: 131072, opslimit: 3, parallelism: 1, },
+            //     human_handle: [ 'alice@invalid.com', 'Anonymous Alice', ],
+            //     validation_code: 'C88DEE',
+            //     vault_key_access: 0x7661756c745f6b65795f616363657373,
+            //   }
+            hex!(
+                "82a3636d64b66163636f756e745f6372656174655f70726f63656564b36163636f756e"
+                "745f6372656174655f7374657087a473746570af4e554d4245525f315f435245415445"
+                "ae617574685f6d6574686f645f6964d8029aae259f748045cc9fe7146eab0b132eb361"
+                "7574685f6d6574686f645f6d61635f6b6579c4202ff13803789977db4f8ccabfb6b26f"
+                "3e70eb4453d396dcb2315f7690cbc2e3f1be617574685f6d6574686f645f7061737377"
+                "6f72645f616c676f726974686d84a474797065a84152474f4e324944ab6d656d6c696d"
+                "69745f6b62ce00020000a86f70736c696d697403ab706172616c6c656c69736d01ac68"
+                "756d616e5f68616e646c6592b1616c69636540696e76616c69642e636f6daf416e6f6e"
+                "796d6f757320416c696365af76616c69646174696f6e5f636f6465a6433838444545b0"
+                "7661756c745f6b65795f616363657373c4107661756c745f6b65795f616363657373"
+            ).as_ref(),
             anonymous_account_cmds::account_create_proceed::Req {
-
                 account_create_step: anonymous_account_cmds::account_create_proceed::AccountCreateStep::Number1Create {
-
-    validation_code: ValidationCode::from_str("C88DEE").unwrap(),
-                human_handle: HumanHandle::new(EmailAddress::try_from("alice@invalid.com").unwrap(),"Anonymous Alice").unwrap(),
-                vault_key_access: Bytes::from("vault_key_access"),
-                auth_method_id: AccountAuthMethodID::from_hex("9aae259f748045cc9fe7146eab0b132e")
-                    .unwrap(),
-                auth_method_hmac_key: SecretKey::from(hex!(
-                    "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
-                )),
-                auth_method_password_algorithm: Some(UntrustedPasswordAlgorithm::Argon2id {
-                    memlimit_kb: 128 * 1024,
-                    opslimit: 3,
-                    parallelism: 1,
-                }),
-            }
+                    validation_code: "C88DEE".parse().unwrap(),
+                    human_handle: "Anonymous Alice <alice@invalid.com>".parse().unwrap(),
+                    vault_key_access: Bytes::from_static(b"vault_key_access"),
+                    auth_method_id: AccountAuthMethodID::from_hex("9aae259f748045cc9fe7146eab0b132e")
+                        .unwrap(),
+                    auth_method_mac_key: SecretKey::from(hex!(
+                        "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
+                    )),
+                    auth_method_password_algorithm: Some(UntrustedPasswordAlgorithm::Argon2id {
+                        memlimit_kb: 128 * 1024,
+                        opslimit: 3,
+                        parallelism: 1,
+                    }),
+                }
             },
         ),
         (
-    // Generated from Parsec 3.4.1-a.0+dev
-    // Content:
-    //   cmd: 'account_create_proceed'
-    //   account_create_step: { step: 'NUMBER_1_CREATE', auth_method_hmac_key: 0x2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1, auth_method_id: ext(2, 0x9aae259f748045cc9fe7146eab0b132e), auth_method_password_algorithm: None, human_handle: [ 'alice@invalid.com', 'Anonymous Alice', ], validation_code: 'C88DEE', vault_key_access: 0x7661756c745f6b65795f616363657373, }
-    hex!(
-        "82a3636d64b66163636f756e745f6372656174655f70726f63656564b36163636f756e"
-        "745f6372656174655f7374657087a473746570af4e554d4245525f315f435245415445"
-        "b4617574685f6d6574686f645f686d61635f6b6579c4202ff13803789977db4f8ccabf"
-        "b6b26f3e70eb4453d396dcb2315f7690cbc2e3f1ae617574685f6d6574686f645f6964"
-        "d8029aae259f748045cc9fe7146eab0b132ebe617574685f6d6574686f645f70617373"
-        "776f72645f616c676f726974686dc0ac68756d616e5f68616e646c6592b1616c696365"
-        "40696e76616c69642e636f6daf416e6f6e796d6f757320416c696365af76616c696461"
-        "74696f6e5f636f6465a6433838444545b07661756c745f6b65795f616363657373c410"
-        "7661756c745f6b65795f616363657373"
-    ).as_ref(),
+            // Generated from Parsec 3.4.1-a.0+dev
+            // Content:
+            //   cmd: 'account_create_proceed'
+            //   account_create_step: {
+            //     step: 'NUMBER_1_CREATE',
+            //     auth_method_id: ext(2, 0x9aae259f748045cc9fe7146eab0b132e),
+            //     auth_method_mac_key: 0x2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1,
+            //     auth_method_password_algorithm: None,
+            //     human_handle: [ 'alice@invalid.com', 'Anonymous Alice', ],
+            //     validation_code: 'C88DEE',
+            //     vault_key_access: 0x7661756c745f6b65795f616363657373,
+            //   }
+            hex!(
+                "82a3636d64b66163636f756e745f6372656174655f70726f63656564b36163636f756e"
+                "745f6372656174655f7374657087a473746570af4e554d4245525f315f435245415445"
+                "ae617574685f6d6574686f645f6964d8029aae259f748045cc9fe7146eab0b132eb361"
+                "7574685f6d6574686f645f6d61635f6b6579c4202ff13803789977db4f8ccabfb6b26f"
+                "3e70eb4453d396dcb2315f7690cbc2e3f1be617574685f6d6574686f645f7061737377"
+                "6f72645f616c676f726974686dc0ac68756d616e5f68616e646c6592b1616c69636540"
+                "696e76616c69642e636f6daf416e6f6e796d6f757320416c696365af76616c69646174"
+                "696f6e5f636f6465a6433838444545b07661756c745f6b65795f616363657373c41076"
+                "61756c745f6b65795f616363657373"
+            ).as_ref(),
             anonymous_account_cmds::account_create_proceed::Req {
-
-
                 account_create_step: anonymous_account_cmds::account_create_proceed::AccountCreateStep::Number1Create {
-validation_code: ValidationCode::from_str("C88DEE").unwrap(),
-                human_handle: HumanHandle::new(EmailAddress::try_from("alice@invalid.com").unwrap(),"Anonymous Alice").unwrap(),
-                vault_key_access: Bytes::from("vault_key_access"),
-                auth_method_id: AccountAuthMethodID::from_hex("9aae259f748045cc9fe7146eab0b132e")
-                    .unwrap(),
-                auth_method_hmac_key: SecretKey::from(hex!(
-                    "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
-                )),
-                auth_method_password_algorithm: None,
-            }
-        },
+                    validation_code: "C88DEE".parse().unwrap(),
+                    human_handle: "Anonymous Alice <alice@invalid.com>".parse().unwrap(),
+                    vault_key_access: Bytes::from_static(b"vault_key_access"),
+                    auth_method_id: AccountAuthMethodID::from_hex("9aae259f748045cc9fe7146eab0b132e")
+                        .unwrap(),
+                    auth_method_mac_key: SecretKey::from(hex!(
+                        "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
+                    )),
+                    auth_method_password_algorithm: None,
+                }
+            },
         ),
     ];
 

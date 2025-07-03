@@ -114,7 +114,7 @@ pub(super) async fn account_login_with_password(
     proxy: ProxyConfig,
     addr: ParsecAddr,
     email: EmailAddress,
-    password: Password,
+    password: &Password,
 ) -> Result<Account, AccountLoginWithPasswordError> {
     // The password algorithm configuration is obtained from the server
     // to know how to turn the password into `auth_method_master_secret`.
@@ -143,7 +143,7 @@ pub(super) async fn account_login_with_password(
         .map_err(AccountLoginWithPasswordError::BadPasswordAlgorithm)?;
 
     let auth_method_master_secret = password_algorithm
-        .compute_key_derivation(&password)
+        .compute_key_derivation(password)
         .map_err(AccountLoginWithPasswordError::BadPasswordAlgorithm)?;
 
     account_login_with_master_secret(

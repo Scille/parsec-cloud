@@ -72,7 +72,7 @@ impl Account {
         cmds: &AnonymousAccountCmds,
         validation_code: ValidationCode,
         human_handle: HumanHandle,
-        password: Password,
+        password: &Password,
     ) -> Result<(), AccountCreateError> {
         account_create(
             cmds,
@@ -144,7 +144,7 @@ impl Account {
         proxy: ProxyConfig,
         addr: ParsecAddr,
         email: EmailAddress,
-        password: Password,
+        password: &Password,
     ) -> Result<Self, AccountLoginWithPasswordError> {
         account_login_with_password(config_dir, proxy, addr, email, password).await
     }

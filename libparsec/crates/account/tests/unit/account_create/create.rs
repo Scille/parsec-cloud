@@ -45,7 +45,7 @@ async fn ok(env: &TestbedEnv) {
                     validation_code,
                     auth_method_password_algorithm,
                     auth_method_id,
-                    auth_method_hmac_key,
+                    auth_method_mac_key,
                     vault_key_access,
                 } => {
                     p_assert_eq!(human_handle, expected_human_handle);
@@ -54,7 +54,7 @@ async fn ok(env: &TestbedEnv) {
                     retrieved_stuff.lock().unwrap().replace((
                         auth_method_password_algorithm,
                         auth_method_id,
-                        auth_method_hmac_key,
+                        auth_method_mac_key,
                         vault_key_access,
                     ));
                 }
@@ -65,19 +65,13 @@ async fn ok(env: &TestbedEnv) {
     });
 
     p_assert_matches!(
-        Account::create_3_proceed(
-            &cmds,
-            validation_code,
-            human_handle.clone(),
-            password.clone()
-        )
-        .await,
+        Account::create_3_proceed(&cmds, validation_code, human_handle.clone(), &password).await,
         Ok(())
     );
 
     // Now try the connection
 
-    let (auth_method_password_algorithm, _auth_method_id, _auth_method_hmac_key, vault_key_access) =
+    let (auth_method_password_algorithm, _auth_method_id, _auth_method_mac_key, vault_key_access) =
         retrieved_stuff.lock().unwrap().take().unwrap();
 
     test_register_sequence_of_send_hooks!(
@@ -102,7 +96,7 @@ async fn ok(env: &TestbedEnv) {
         ProxyConfig::default(),
         env.server_addr.clone(),
         human_handle.email().to_owned(),
-        password,
+        &password,
     )
     .await
     .unwrap();
@@ -133,7 +127,7 @@ async fn offline(env: &TestbedEnv) {
     .unwrap();
 
     p_assert_matches!(
-        Account::create_3_proceed(&cmds, validation_code, human_handle, password)
+        Account::create_3_proceed(&cmds, validation_code, human_handle, &password)
             .await
             .unwrap_err(),
         AccountCreateError::Offline(_)
@@ -163,7 +157,7 @@ async fn unknown_status(env: &TestbedEnv) {
     );
 
     p_assert_matches!(
-        Account::create_3_proceed(&cmds, validation_code, human_handle, password)
+        Account::create_3_proceed(&cmds, validation_code, human_handle, &password)
         .await
         .unwrap_err(),
         AccountCreateError::Internal(err)
@@ -191,7 +185,7 @@ async fn invalid_validation_code(env: &TestbedEnv) {
     );
 
     p_assert_matches!(
-        Account::create_3_proceed(&cmds, validation_code, human_handle, password)
+        Account::create_3_proceed(&cmds, validation_code, human_handle, &password)
             .await
             .unwrap_err(),
         AccountCreateError::InvalidValidationCode
@@ -245,7 +239,7 @@ async fn auth_method_id_already_exists(env: &TestbedEnv) {
     );
 
     p_assert_matches!(
-        Account::create_3_proceed(&cmds, validation_code, human_handle, password)
+        Account::create_3_proceed(&cmds, validation_code, human_handle, &password)
             .await
             .unwrap_err(),
         AccountCreateError::AuthMethodIdAlreadyExists
