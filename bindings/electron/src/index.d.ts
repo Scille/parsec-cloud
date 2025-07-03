@@ -670,6 +670,59 @@ export type AccountLogoutError =
   | AccountLogoutErrorInternal
 
 
+// AccountRecoverProceedError
+export interface AccountRecoverProceedErrorAuthMethodIdAlreadyExists {
+    tag: "AuthMethodIdAlreadyExists"
+    error: string
+}
+export interface AccountRecoverProceedErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface AccountRecoverProceedErrorInvalidValidationCode {
+    tag: "InvalidValidationCode"
+    error: string
+}
+export interface AccountRecoverProceedErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface AccountRecoverProceedErrorSendValidationEmailRequired {
+    tag: "SendValidationEmailRequired"
+    error: string
+}
+export type AccountRecoverProceedError =
+  | AccountRecoverProceedErrorAuthMethodIdAlreadyExists
+  | AccountRecoverProceedErrorInternal
+  | AccountRecoverProceedErrorInvalidValidationCode
+  | AccountRecoverProceedErrorOffline
+  | AccountRecoverProceedErrorSendValidationEmailRequired
+
+
+// AccountRecoverSendValidationEmailError
+export interface AccountRecoverSendValidationEmailErrorEmailRecipientRefused {
+    tag: "EmailRecipientRefused"
+    error: string
+}
+export interface AccountRecoverSendValidationEmailErrorEmailServerUnavailable {
+    tag: "EmailServerUnavailable"
+    error: string
+}
+export interface AccountRecoverSendValidationEmailErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface AccountRecoverSendValidationEmailErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export type AccountRecoverSendValidationEmailError =
+  | AccountRecoverSendValidationEmailErrorEmailRecipientRefused
+  | AccountRecoverSendValidationEmailErrorEmailServerUnavailable
+  | AccountRecoverSendValidationEmailErrorInternal
+  | AccountRecoverSendValidationEmailErrorOffline
+
+
 // AccountRegisterNewDeviceError
 export interface AccountRegisterNewDeviceErrorInternal {
     tag: "Internal"
@@ -4059,6 +4112,18 @@ export function accountLoginWithPassword(
 export function accountLogout(
     account: number
 ): Promise<Result<null, AccountLogoutError>>
+export function accountRecover1SendValidationEmail(
+    config_dir: string,
+    addr: string,
+    email: string
+): Promise<Result<null, AccountRecoverSendValidationEmailError>>
+export function accountRecover2Proceed(
+    config_dir: string,
+    addr: string,
+    validation_code: string,
+    email: string,
+    new_password: string
+): Promise<Result<null, AccountRecoverProceedError>>
 export function accountRegisterNewDevice(
     account: number,
     organization_id: string,
