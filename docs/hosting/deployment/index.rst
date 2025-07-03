@@ -61,8 +61,12 @@ The `Parsec`_ server depends on the following external components in order to wo
 Parsec testing infra
 ********************
 
+.. _with-docker:
+
 With Docker
 ===========
+
+.. _gen-tls-certs:
 
 Generating the required TLS certificates
 ----------------------------------------
@@ -431,3 +435,43 @@ The important takeaways are:
     The ``Forwarded`` header (`RFC-7239 <https://datatracker.ietf.org/doc/html/rfc7239>`_) is not used by Parsec, but it may be in the future.
 
 - Set the header ``host`` to the accessible address. Here we force the value to be ``example.com``, but you can set it to ``$host`` like for ``X-Forwarded-Host``.
+
+TLS Recommendation
+******************
+
+We recommend that connections to the service are made using a TLS layer.
+If you are using a :ref:`reverse proxy<behind_a_proxy>` refer to it's documentation on how to configure TLS:
+
+- `Nginx SSL module configuration <https://nginx.org/en/docs/http/ngx_http_ssl_module.html>`_
+- `Apache httpd SSL Howto <https://httpd.apache.org/docs/current/en/ssl/ssl_howto.html>`__
+- `Traefik TLS configuration <https://doc.traefik.io/traefik/https/tls>`__
+
+Or if you do not use a reverse proxy, see how to configure :ref:`TLS on the server <server-tls-config>`
+
+.. _server-tls-config:
+
+TLS Server configuration
+************************
+
+We recommend that when user directly connects to the server (i.e. without using a :ref:`reverse proxy<behind_a_proxy>`)
+to configure the TLS settings on the server.
+
+We provide 3 options to configure the TLS connection:
+
+.. cspell: ignore Recommandations, sécurité
+
+- ``--ssl-keyfile [env var: PARSEC_SSL_KEYFILE]``: The TLS key file
+- ``--ssl-certfile [env var: PARSEC_SSL_CERTFILE]``: The TLS certificate file
+- ``--ssl-ciphers [env var: PARSEC_SSL_CIPHERS]``: A list of ciphers that can be used when the client & server negotiate which algorithm to use when doing the TLS handcheck
+
+  .. note::
+
+    You are not require to provide the ciphers list as we use a default list that was recommended by the `French Cybersecurity Agency (ANSSI) <https://cyber.gouv.fr/en>`__ in `Recommandations de sécurité relatives à TLS <anssi-reco-tls_>`_
+
+.. _anssi-reco-tls: https://cyber.gouv.fr/sites/default/files/2017/07/anssi-guide-recommandations_de_securite_relatives_a_tls-v1.2.pdf
+
+.. hint::
+
+   If you followed the installation :ref:`using docker <with-docker>`,
+   you should only have to replace the file ``parsec-server.crt`` and ``parsec-server.key`` that where generated during `Generating the required TLS certificates`_.
+   The env variable ``PARSEC_SSL_KEYFILE`` and ``PARSEC_SSL_CERTFILE`` are already configured in ``parsec.env`` that was defined in `Parsec server configuration`_.

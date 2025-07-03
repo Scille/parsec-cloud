@@ -1,6 +1,7 @@
 Adamy
 Alicey
 Alicy
+Apache
 Arkin
 ANSSI
 Bartosz
@@ -53,6 +54,7 @@ Swatinem
 taplo
 titeuf
 touilleman
+Traefik
 vxgmichel
 yzhang
 zoidberg
