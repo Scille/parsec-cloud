@@ -219,7 +219,7 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
     show_envvar=True,
     type=click.Choice(AllowedClientAgent),
     help="""Limit the type of Parsec client allowed to connect for the newly created organizations (default: NATIVE_OR_WEB)
-
+\b
 - NATIVE_ONLY: Only desktop client is allowed
 - NATIVE_OR_WEB: Desktop and web clients are allowed
 """,
@@ -354,8 +354,9 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
     envvar="PARSEC_PROXY_TRUSTED_ADDRESSES",
     type=str,
     show_envvar=True,
-    help="""\b
+    help="""
         Comma-separated list of IP Addresses, IP Networks or literals to trust with proxy headers.
+
         Use "*" to trust all proxies. If not provided, the gunicorn/uvicorn `FORWARDED_ALLOW_IPS`
         environment variable is used, defaulting to trusting only localhost if absent.
         """,
