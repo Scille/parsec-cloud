@@ -18,6 +18,8 @@ pub enum AccountRecoverSendValidationEmailError {
     EmailRecipientRefused,
     #[error("Email server unavailable")]
     EmailServerUnavailable,
+    #[error("Too many email sent, must wait until {}", &wait_until.to_rfc3339())]
+    EmailSendingRateLimited { wait_until: DateTime },
 }
 
 pub async fn account_recover_send_validation_email(
@@ -36,6 +38,9 @@ pub async fn account_recover_send_validation_email(
         }
         Rep::EmailServerUnavailable => {
             Err(AccountRecoverSendValidationEmailError::EmailServerUnavailable)
+        }
+        Rep::EmailSendingRateLimited { wait_until } => {
+            Err(AccountRecoverSendValidationEmailError::EmailSendingRateLimited { wait_until })
         }
         bad_rep @ Rep::UnknownStatus { .. } => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())

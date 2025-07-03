@@ -169,6 +169,33 @@ async fn email_server_unavailable(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "empty")]
+async fn email_sending_rate_limited(env: &TestbedEnv) {
+    let account = Account::test_new(
+        env.discriminant_dir.clone(),
+        env.server_addr.clone(),
+        KeyDerivation::from(hex!(
+            "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
+        )),
+        "Zack <zack@example.com>".parse().unwrap(),
+    )
+    .await;
+    let expected_wait_until = "2000-01-01T00:00:00Z".parse().unwrap();
+
+    test_register_sequence_of_send_hooks!(&env.discriminant_dir, {
+        move |_req: authenticated_account_cmds::latest::account_delete_send_validation_email::Req| {
+            authenticated_account_cmds::latest::account_delete_send_validation_email::Rep::EmailSendingRateLimited {
+                wait_until: expected_wait_until
+            }
+        }
+    });
+
+    p_assert_matches!(
+        account.delete_1_send_validation_email().await.unwrap_err(),
+        AccountDeleteSendValidationEmailError::EmailSendingRateLimited { wait_until } if wait_until == expected_wait_until
+    );
+}
+
+#[parsec_test(testbed = "empty")]
 async fn unknown_status(env: &TestbedEnv) {
     let account = Account::test_new(
         env.discriminant_dir.clone(),

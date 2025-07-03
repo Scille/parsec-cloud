@@ -18,6 +18,8 @@ pub enum AccountCreateSendValidationEmailError {
     EmailRecipientRefused,
     #[error("Email server unavailable")]
     EmailServerUnavailable,
+    #[error("Too many email sent, must wait until {}", &wait_until.to_rfc3339())]
+    EmailSendingRateLimited { wait_until: DateTime },
 }
 
 pub(super) async fn account_create_send_validation_email(
@@ -36,6 +38,9 @@ pub(super) async fn account_create_send_validation_email(
         }
         Rep::EmailServerUnavailable => {
             Err(AccountCreateSendValidationEmailError::EmailServerUnavailable)
+        }
+        Rep::EmailSendingRateLimited { wait_until } => {
+            Err(AccountCreateSendValidationEmailError::EmailSendingRateLimited { wait_until })
         }
         bad_rep @ Rep::UnknownStatus { .. } => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
