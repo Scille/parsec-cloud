@@ -7,6 +7,8 @@ from __future__ import annotations
 from . import (
     account_create_proceed,
     account_create_send_validation_email,
+    account_recover_proceed,
+    account_recover_send_validation_email,
     auth_method_password_get_algorithm,
     ping,
 )
@@ -18,6 +20,8 @@ class AnyCmdReq:
     ) -> (
         account_create_proceed.Req
         | account_create_send_validation_email.Req
+        | account_recover_proceed.Req
+        | account_recover_send_validation_email.Req
         | auth_method_password_get_algorithm.Req
         | ping.Req
     ): ...
@@ -26,6 +30,8 @@ __all__ = [
     "AnyCmdReq",
     "account_create_proceed",
     "account_create_send_validation_email",
+    "account_recover_proceed",
+    "account_recover_send_validation_email",
     "auth_method_password_get_algorithm",
     "ping",
 ]
