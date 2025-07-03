@@ -10,6 +10,7 @@ pub use libparsec_account::{
     AccountCreateError, AccountCreateSendValidationEmailError, AccountDeleteProceedError,
     AccountDeleteSendValidationEmailError, AccountFetchRegistrationDevicesError,
     AccountListInvitationsError, AccountLoginWithMasterSecretError, AccountLoginWithPasswordError,
+    AccountRecoverProceedError, AccountRecoverSendValidationEmailError,
     AccountRegisterNewDeviceError,
 };
 use libparsec_client_connection::{AnonymousAccountCmds, ConnectionError, ProxyConfig};
@@ -274,4 +275,24 @@ pub async fn account_create_registration_device(
         .await?;
 
     Ok(())
+}
+
+pub async fn account_recover_1_send_validation_email(
+    config_dir: &Path,
+    addr: ParsecAddr,
+    email: EmailAddress,
+) -> Result<(), AccountRecoverSendValidationEmailError> {
+    let cmds = AnonymousAccountCmds::new(config_dir, addr, ProxyConfig::default())?;
+    libparsec_account::Account::recover_1_send_validation_email(&cmds, email).await
+}
+
+pub async fn account_recover_2_proceed(
+    config_dir: &Path,
+    addr: ParsecAddr,
+    validation_code: ValidationCode,
+    email: EmailAddress,
+    new_password: &Password,
+) -> Result<(), AccountRecoverProceedError> {
+    let cmds = AnonymousAccountCmds::new(config_dir, addr, ProxyConfig::default())?;
+    libparsec_account::Account::recover_2_proceed(&cmds, validation_code, email, new_password).await
 }
