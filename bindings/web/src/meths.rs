@@ -4401,6 +4401,27 @@ fn variant_account_create_send_validation_email_error_rs_to_js(
                 &"AccountCreateSendValidationEmailErrorEmailRecipientRefused".into(),
             )?;
         }
+        libparsec::AccountCreateSendValidationEmailError::EmailSendingRateLimited {
+            wait_until,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateSendValidationEmailErrorEmailSendingRateLimited".into(),
+            )?;
+            let js_wait_until = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(wait_until) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"waitUntil".into(), &js_wait_until)?;
+        }
         libparsec::AccountCreateSendValidationEmailError::EmailServerUnavailable { .. } => {
             Reflect::set(
                 &js_obj,
@@ -4484,6 +4505,27 @@ fn variant_account_delete_send_validation_email_error_rs_to_js(
                 &"tag".into(),
                 &"AccountDeleteSendValidationEmailErrorEmailRecipientRefused".into(),
             )?;
+        }
+        libparsec::AccountDeleteSendValidationEmailError::EmailSendingRateLimited {
+            wait_until,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountDeleteSendValidationEmailErrorEmailSendingRateLimited".into(),
+            )?;
+            let js_wait_until = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(wait_until) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"waitUntil".into(), &js_wait_until)?;
         }
         libparsec::AccountDeleteSendValidationEmailError::EmailServerUnavailable { .. } => {
             Reflect::set(
@@ -4760,6 +4802,27 @@ fn variant_account_recover_send_validation_email_error_rs_to_js(
                 &"tag".into(),
                 &"AccountRecoverSendValidationEmailErrorEmailRecipientRefused".into(),
             )?;
+        }
+        libparsec::AccountRecoverSendValidationEmailError::EmailSendingRateLimited {
+            wait_until,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountRecoverSendValidationEmailErrorEmailSendingRateLimited".into(),
+            )?;
+            let js_wait_until = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(wait_until) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"waitUntil".into(), &js_wait_until)?;
         }
         libparsec::AccountRecoverSendValidationEmailError::EmailServerUnavailable { .. } => {
             Reflect::set(

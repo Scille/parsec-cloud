@@ -512,6 +512,7 @@ export type AccountCreateRegistrationDeviceError =
 // AccountCreateSendValidationEmailError
 export enum AccountCreateSendValidationEmailErrorTag {
     EmailRecipientRefused = 'AccountCreateSendValidationEmailErrorEmailRecipientRefused',
+    EmailSendingRateLimited = 'AccountCreateSendValidationEmailErrorEmailSendingRateLimited',
     EmailServerUnavailable = 'AccountCreateSendValidationEmailErrorEmailServerUnavailable',
     Internal = 'AccountCreateSendValidationEmailErrorInternal',
     Offline = 'AccountCreateSendValidationEmailErrorOffline',
@@ -520,6 +521,11 @@ export enum AccountCreateSendValidationEmailErrorTag {
 export interface AccountCreateSendValidationEmailErrorEmailRecipientRefused {
     tag: AccountCreateSendValidationEmailErrorTag.EmailRecipientRefused
     error: string
+}
+export interface AccountCreateSendValidationEmailErrorEmailSendingRateLimited {
+    tag: AccountCreateSendValidationEmailErrorTag.EmailSendingRateLimited
+    error: string
+    waitUntil: DateTime
 }
 export interface AccountCreateSendValidationEmailErrorEmailServerUnavailable {
     tag: AccountCreateSendValidationEmailErrorTag.EmailServerUnavailable
@@ -535,6 +541,7 @@ export interface AccountCreateSendValidationEmailErrorOffline {
 }
 export type AccountCreateSendValidationEmailError =
   | AccountCreateSendValidationEmailErrorEmailRecipientRefused
+  | AccountCreateSendValidationEmailErrorEmailSendingRateLimited
   | AccountCreateSendValidationEmailErrorEmailServerUnavailable
   | AccountCreateSendValidationEmailErrorInternal
   | AccountCreateSendValidationEmailErrorOffline
@@ -572,6 +579,7 @@ export type AccountDeleteProceedError =
 // AccountDeleteSendValidationEmailError
 export enum AccountDeleteSendValidationEmailErrorTag {
     EmailRecipientRefused = 'AccountDeleteSendValidationEmailErrorEmailRecipientRefused',
+    EmailSendingRateLimited = 'AccountDeleteSendValidationEmailErrorEmailSendingRateLimited',
     EmailServerUnavailable = 'AccountDeleteSendValidationEmailErrorEmailServerUnavailable',
     Internal = 'AccountDeleteSendValidationEmailErrorInternal',
     Offline = 'AccountDeleteSendValidationEmailErrorOffline',
@@ -580,6 +588,11 @@ export enum AccountDeleteSendValidationEmailErrorTag {
 export interface AccountDeleteSendValidationEmailErrorEmailRecipientRefused {
     tag: AccountDeleteSendValidationEmailErrorTag.EmailRecipientRefused
     error: string
+}
+export interface AccountDeleteSendValidationEmailErrorEmailSendingRateLimited {
+    tag: AccountDeleteSendValidationEmailErrorTag.EmailSendingRateLimited
+    error: string
+    waitUntil: DateTime
 }
 export interface AccountDeleteSendValidationEmailErrorEmailServerUnavailable {
     tag: AccountDeleteSendValidationEmailErrorTag.EmailServerUnavailable
@@ -595,6 +608,7 @@ export interface AccountDeleteSendValidationEmailErrorOffline {
 }
 export type AccountDeleteSendValidationEmailError =
   | AccountDeleteSendValidationEmailErrorEmailRecipientRefused
+  | AccountDeleteSendValidationEmailErrorEmailSendingRateLimited
   | AccountDeleteSendValidationEmailErrorEmailServerUnavailable
   | AccountDeleteSendValidationEmailErrorInternal
   | AccountDeleteSendValidationEmailErrorOffline
@@ -758,6 +772,7 @@ export type AccountRecoverProceedError =
 // AccountRecoverSendValidationEmailError
 export enum AccountRecoverSendValidationEmailErrorTag {
     EmailRecipientRefused = 'AccountRecoverSendValidationEmailErrorEmailRecipientRefused',
+    EmailSendingRateLimited = 'AccountRecoverSendValidationEmailErrorEmailSendingRateLimited',
     EmailServerUnavailable = 'AccountRecoverSendValidationEmailErrorEmailServerUnavailable',
     Internal = 'AccountRecoverSendValidationEmailErrorInternal',
     Offline = 'AccountRecoverSendValidationEmailErrorOffline',
@@ -766,6 +781,11 @@ export enum AccountRecoverSendValidationEmailErrorTag {
 export interface AccountRecoverSendValidationEmailErrorEmailRecipientRefused {
     tag: AccountRecoverSendValidationEmailErrorTag.EmailRecipientRefused
     error: string
+}
+export interface AccountRecoverSendValidationEmailErrorEmailSendingRateLimited {
+    tag: AccountRecoverSendValidationEmailErrorTag.EmailSendingRateLimited
+    error: string
+    waitUntil: DateTime
 }
 export interface AccountRecoverSendValidationEmailErrorEmailServerUnavailable {
     tag: AccountRecoverSendValidationEmailErrorTag.EmailServerUnavailable
@@ -781,6 +801,7 @@ export interface AccountRecoverSendValidationEmailErrorOffline {
 }
 export type AccountRecoverSendValidationEmailError =
   | AccountRecoverSendValidationEmailErrorEmailRecipientRefused
+  | AccountRecoverSendValidationEmailErrorEmailSendingRateLimited
   | AccountRecoverSendValidationEmailErrorEmailServerUnavailable
   | AccountRecoverSendValidationEmailErrorInternal
   | AccountRecoverSendValidationEmailErrorOffline
