@@ -23,6 +23,7 @@ from tests.common import (
     AnonymousAccountRpcClient,
     Backend,
     HttpCommonErrorsTester,
+    generate_different_validation_code,
 )
 from tests.common.client import AuthenticatedAccountRpcClient
 
@@ -127,10 +128,7 @@ async def test_anonymous_account_account_recover_proceed_invalid_validation_code
     anonymous_account: AnonymousAccountRpcClient,
     alice_validation_code: ValidationCode,
 ):
-    while True:
-        bad_validation_code = ValidationCode.generate()
-        if bad_validation_code != alice_validation_code:
-            break
+    bad_validation_code = generate_different_validation_code(alice_validation_code)
 
     async def do_request(
         validation_code: ValidationCode,

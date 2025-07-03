@@ -10,8 +10,12 @@ from parsec.components.account import (
     AccountDeleteProceedBadOutcome,
 )
 from parsec.config import MockedEmailConfig
-from tests.common.client import AuthenticatedAccountRpcClient, RpcTransportError
-from tests.common.data import HttpCommonErrorsTester
+from tests.common import (
+    AuthenticatedAccountRpcClient,
+    HttpCommonErrorsTester,
+    RpcTransportError,
+    generate_different_validation_code,
+)
 
 
 @pytest.fixture
@@ -58,10 +62,7 @@ async def test_authenticated_account_account_delete_proceed_invalid_validation_c
     alice_account: AuthenticatedAccountRpcClient,
     alice_validation_code: ValidationCode,
 ):
-    while True:
-        bad_validation_code = ValidationCode.generate()
-        if bad_validation_code != alice_validation_code:
-            break
+    bad_validation_code = generate_different_validation_code(alice_validation_code)
 
     # Multiple bad attempts
     for _ in range(VALIDATION_CODE_MAX_FAILED_ATTEMPTS):
