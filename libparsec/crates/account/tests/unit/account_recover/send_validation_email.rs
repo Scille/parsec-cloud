@@ -178,6 +178,33 @@ async fn email_server_unavailable(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "empty")]
+async fn email_sending_rate_limited(env: &TestbedEnv) {
+    let email: EmailAddress = "zack@example.com".parse().unwrap();
+    let cmds = AnonymousAccountCmds::new(
+        &env.discriminant_dir,
+        env.server_addr.clone(),
+        ProxyConfig::default(),
+    )
+    .unwrap();
+    let expected_wait_until = "2000-01-01T00:00:00Z".parse().unwrap();
+
+    test_register_sequence_of_send_hooks!(&env.discriminant_dir, {
+        move |_req: anonymous_account_cmds::latest::account_recover_send_validation_email::Req| {
+            anonymous_account_cmds::latest::account_recover_send_validation_email::Rep::EmailSendingRateLimited {
+                wait_until: expected_wait_until
+            }
+        }
+    });
+
+    p_assert_matches!(
+        Account::recover_1_send_validation_email(&cmds, email)
+            .await
+            .unwrap_err(),
+        AccountRecoverSendValidationEmailError::EmailSendingRateLimited { wait_until } if wait_until == expected_wait_until
+    );
+}
+
+#[parsec_test(testbed = "empty")]
 async fn unknown_status(env: &TestbedEnv) {
     let email: EmailAddress = "zack@example.com".parse().unwrap();
     let cmds = AnonymousAccountCmds::new(
