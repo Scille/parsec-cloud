@@ -1,7 +1,9 @@
 Adamy
 Alicey
 Alicy
+Apache
 Arkin
+ANSSI
 Bartosz
 bierner
 bkryza
@@ -52,6 +54,7 @@ Swatinem
 taplo
 titeuf
 touilleman
+Traefik
 vxgmichel
 yzhang
 zoidberg
