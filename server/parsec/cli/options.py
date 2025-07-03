@@ -474,8 +474,6 @@ RAID0/1/5 cluster.
 Each configuration must be provided with the form
 `<raid_type>:<node>:<config>` with `<raid_type>` RAID0/RAID1/RAID5, `<node>` a
 integer and `<config>` the MOCKED/POSTGRESQL/S3/SWIFT config.
-
-\b
 """,
         )
     ]
