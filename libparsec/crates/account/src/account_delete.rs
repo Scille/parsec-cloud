@@ -15,6 +15,8 @@ pub enum AccountDeleteSendValidationEmailError {
     EmailRecipientRefused,
     #[error("Email server unavailable")]
     EmailServerUnavailable,
+    #[error("Too many email sent, must wait until {}", &wait_until.to_rfc3339())]
+    EmailSendingRateLimited { wait_until: DateTime },
 }
 
 pub(super) async fn account_delete_send_validation_email(
@@ -30,6 +32,9 @@ pub(super) async fn account_delete_send_validation_email(
         }
         Rep::EmailServerUnavailable => {
             Err(AccountDeleteSendValidationEmailError::EmailServerUnavailable)
+        }
+        Rep::EmailSendingRateLimited { wait_until } => {
+            Err(AccountDeleteSendValidationEmailError::EmailSendingRateLimited { wait_until })
         }
         bad_rep @ Rep::UnknownStatus { .. } => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())

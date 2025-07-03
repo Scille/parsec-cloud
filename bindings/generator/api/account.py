@@ -17,6 +17,7 @@ from .common import (
     InvitationToken,
     InvitationType,
     KeyDerivation,
+    DateTime,
 )
 from .addr import ParsecAddr
 from .device import DeviceAccessStrategy, DeviceSaveStrategy, AvailableDevice
@@ -34,6 +35,9 @@ class AccountCreateSendValidationEmailError(ErrorVariant):
 
     class EmailServerUnavailable:
         pass
+
+    class EmailSendingRateLimited:
+        wait_until: DateTime
 
 
 async def account_create_1_send_validation_email(
@@ -221,6 +225,9 @@ class AccountDeleteSendValidationEmailError(ErrorVariant):
     class EmailServerUnavailable:
         pass
 
+    class EmailSendingRateLimited:
+        wait_until: DateTime
+
 
 async def account_delete_1_send_validation_email(
     account: Handle,
@@ -291,6 +298,9 @@ class AccountRecoverSendValidationEmailError(ErrorVariant):
 
     class EmailServerUnavailable:
         pass
+
+    class EmailSendingRateLimited:
+        wait_until: DateTime
 
 
 async def account_recover_1_send_validation_email(
