@@ -11,6 +11,7 @@ use libparsec_types::prelude::*;
 
 mod account_create;
 mod account_delete;
+mod account_recover;
 mod create_registration_device;
 mod fetch_list_registration_devices;
 mod list_invitations;
@@ -19,6 +20,7 @@ mod register_new_device;
 
 pub use account_create::*;
 pub use account_delete::*;
+pub use account_recover::*;
 pub use create_registration_device::*;
 pub use fetch_list_registration_devices::*;
 pub use list_invitations::*;
@@ -219,5 +221,33 @@ impl Account {
         validation_code: ValidationCode,
     ) -> Result<(), AccountDeleteProceedError> {
         account_delete_proceed(self, validation_code).await
+    }
+
+    /// Before recovering the account, a confirmation email containing a validation
+    /// code must first be send to the user's email address.
+    pub async fn recover_1_send_validation_email(
+        cmds: &AnonymousAccountCmds,
+        email: EmailAddress,
+    ) -> Result<(), AccountRecoverSendValidationEmailError> {
+        account_recover_send_validation_email(cmds, email).await
+    }
+
+    /// Actually recover the account by providing the validation code obtained
+    /// from the confirmation email.
+    ///
+    /// Recovering the account means a new vault and authentication method will be
+    /// setup (hence all items stored in the current vault will no longer be
+    /// accessible until they are properly recovered).
+    ///
+    /// Note that, unlike for account creation, there is no need for a "check code"
+    /// flavor here. This is because since the user has no configuration to provide
+    /// there is no need to validate a code before actually trying to use it.
+    pub async fn recover_2_proceed(
+        cmds: &AnonymousAccountCmds,
+        validation_code: ValidationCode,
+        email: EmailAddress,
+        new_password: &Password,
+    ) -> Result<(), AccountRecoverProceedError> {
+        account_recover_proceed(cmds, validation_code, email, new_password).await
     }
 }
