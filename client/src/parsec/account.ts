@@ -1,6 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { getDefaultDeviceName } from '@/common/device';
 import { getClientConfig, wait } from '@/parsec/internals';
+import { SaveStrategy } from '@/parsec/login';
 import {
   AccountAccess,
   AccountAccessStrategy,
@@ -8,16 +10,27 @@ import {
   AccountCreateErrorTag,
   AccountCreateSendValidationEmailError,
   AccountCreateSendValidationEmailErrorTag,
-  AccountGetHumanHandleErrorTag,
+  AccountGetHumanHandleError,
   AccountHandle,
+  AccountInvitation,
+  AccountListInvitationsError,
+  AccountListRegistrationDevicesError,
   AccountLoginWithMasterSecretError,
   AccountLoginWithPasswordError,
   AccountLoginWithPasswordErrorTag,
+  AccountRegisterNewDeviceError,
+  AccountRegisterNewDeviceErrorTag,
+  AvailableDevice,
+  DeviceFileType,
   HumanHandle,
+  InvitationType,
+  RegistrationDevice,
   Result,
 } from '@/parsec/types';
-import { AccountGetHumanHandleError, libparsec } from '@/plugins/libparsec';
+import { generateNoHandleError } from '@/parsec/utils';
+import { libparsec } from '@/plugins/libparsec';
 import { Env } from '@/services/environment';
+import { DateTime } from 'luxon';
 
 class AccountCreationStepper {
   accountInfo?: {
@@ -218,6 +231,7 @@ class _ParsecAccount {
         const result = await libparsec.accountLoginWithMasterSecret(getClientConfig().configDir, server, authentication.secret);
         if (result.ok) {
           this.handle = result.value;
+          await libparsec.accountFetchRegistrationDevices(result.value);
         }
         return result;
       } else {
@@ -226,9 +240,90 @@ class _ParsecAccount {
     }
   }
 
+  async listInvitations(): Promise<Result<Array<AccountInvitation>, AccountListInvitationsError>> {
+    if (!this.handle) {
+      return generateNoHandleError<AccountListInvitationsError>();
+    }
+    if (Env.isAccountMocked()) {
+      await wait(2000);
+      return { ok: true, value: [{ organizationId: 'BlackMesa', token: 'abcdefgh', type: InvitationType.User }] };
+    }
+    const result = await libparsec.accountListInvitations(this.handle);
+    if (result.ok) {
+      return {
+        ok: true,
+        value: result.value.map(([organizationId, token, type]) => {
+          return { organizationId: organizationId, token: token, type: type };
+        }),
+      };
+    }
+    return result;
+  }
+
+  async listRegistrationDevices(): Promise<Result<Array<RegistrationDevice>, AccountListRegistrationDevicesError>> {
+    if (!this.handle) {
+      return generateNoHandleError<AccountListRegistrationDevicesError>();
+    }
+    if (Env.isAccountMocked()) {
+      await wait(2000);
+      return { ok: true, value: [] };
+    }
+    const result = await libparsec.accountListRegistrationDevices(this.handle);
+    if (result.ok) {
+      return {
+        ok: true,
+        value: result.value.map(([organizationId, userId]) => {
+          return {
+            organizationId: organizationId,
+            userId: userId,
+          };
+        }),
+      };
+    }
+    return result;
+  }
+
+  async registerNewDevice(
+    registrationDevice: RegistrationDevice,
+    authentication: AccountAccess,
+  ): Promise<Result<AvailableDevice, AccountRegisterNewDeviceError>> {
+    if (!this.handle) {
+      return generateNoHandleError<AccountRegisterNewDeviceError>();
+    }
+    if (Env.isAccountMocked()) {
+      await wait(2000);
+      return {
+        ok: true,
+        value: {
+          keyFilePath: '/',
+          createdOn: DateTime.now(),
+          protectedOn: DateTime.now(),
+          serverUrl: 'parsec3://localhost:6770?no_ssl=true',
+          organizationId: 'BlackMesa',
+          userId: 'abcd',
+          deviceId: 'abcd',
+          humanHandle: { label: 'Gordon Freeman', email: 'gordon.freeman@blackmesa.nm' },
+          deviceLabel: 'HEV Suit',
+          ty: DeviceFileType.Password,
+        },
+      };
+    }
+    if (authentication.strategy !== AccountAccessStrategy.Password) {
+      return { ok: false, error: { tag: AccountRegisterNewDeviceErrorTag.Internal, error: 'invalid-auth' } };
+    }
+    const saveStrategy = SaveStrategy.usePassword(authentication.password);
+    return await libparsec.accountRegisterNewDevice(
+      this.handle,
+      registrationDevice.organizationId,
+      registrationDevice.userId,
+      getDefaultDeviceName(),
+      saveStrategy,
+    );
+  }
+
   async getInfo(): Promise<Result<HumanHandle, AccountGetHumanHandleError>> {
     if (!this.handle) {
-      return { ok: false, error: { tag: AccountGetHumanHandleErrorTag.Internal, error: 'not logged in' } };
+      return generateNoHandleError<AccountGetHumanHandleError>();
     }
     if (Env.isAccountMocked()) {
       await wait(2000);

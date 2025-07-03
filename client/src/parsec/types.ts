@@ -4,8 +4,11 @@ export {
   AccountCreateErrorTag,
   AccountCreateSendValidationEmailErrorTag,
   AccountGetHumanHandleErrorTag,
+  AccountListInvitationsErrorTag,
+  AccountListRegistrationDevicesErrorTag,
   AccountLoginWithMasterSecretErrorTag,
   AccountLoginWithPasswordErrorTag,
+  AccountRegisterNewDeviceErrorTag,
   AnyClaimRetrievedInfoTag,
   BootstrapOrganizationErrorTag,
   CancelledGreetingAttemptReason,
@@ -86,8 +89,11 @@ export type {
   AccountCreateError,
   AccountCreateSendValidationEmailError,
   AccountGetHumanHandleError,
+  AccountListInvitationsError,
+  AccountListRegistrationDevicesError,
   AccountLoginWithMasterSecretError,
   AccountLoginWithPasswordError,
+  AccountRegisterNewDeviceError,
   AnyClaimRetrievedInfoDevice,
   AnyClaimRetrievedInfoUser,
   ApiVersion,
@@ -149,7 +155,6 @@ export type {
   VlobID as FileID,
   GreetInProgressError,
   ImportRecoveryDeviceError,
-  InvitationToken,
   InviteListItem,
   ListAvailableDeviceError,
   ListInvitationsError,
@@ -221,6 +226,7 @@ import type {
   FsPath,
   Handle,
   HumanHandle,
+  InvitationToken,
   OrganizationID,
   EntryStatFile as ParsecEntryStatFile,
   EntryStatFolder as ParsecEntryStatFolder,
@@ -236,7 +242,7 @@ import type {
   VlobID,
 } from '@/plugins/libparsec';
 
-import { RealmRole as WorkspaceRole } from '@/plugins/libparsec';
+import { InvitationType, RealmRole as WorkspaceRole } from '@/plugins/libparsec';
 
 type WorkspaceHistoryHandle = Handle;
 type WorkspaceHandle = Handle;
@@ -389,10 +395,22 @@ interface AccountAccessMasterSecret {
 
 type AccountAccess = AccountAccessPassword | AccountAccessMasterSecret;
 
+interface AccountInvitation {
+  organizationId: OrganizationID;
+  token: InvitationToken;
+  type: InvitationType;
+}
+
+interface RegistrationDevice {
+  organizationId: OrganizationID;
+  userId: UserID;
+}
+
 export {
   AccountAccess,
   AccountAccessStrategy,
   AccountHandle,
+  AccountInvitation,
   ConnectionHandle,
   DateTime,
   EntryID,
@@ -405,6 +423,8 @@ export {
   GetWorkspaceNameError,
   GetWorkspaceNameErrorTag,
   HumanHandle,
+  InvitationToken,
+  InvitationType,
   MountpointHandle,
   OpenOptions,
   OrganizationID,
@@ -413,6 +433,7 @@ export {
   OrganizationInfoErrorTag,
   OwnDeviceInfo,
   ParsecOrganizationAddr,
+  RegistrationDevice,
   StartedWorkspaceInfo,
   SystemPath,
   UserID,
