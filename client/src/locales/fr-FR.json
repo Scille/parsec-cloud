@@ -655,7 +655,9 @@
             "fileFailedGeneric": "Impossible d'ouvrir ce fichier.",
             "folderFailed": "Le dossier `{name}` n'a pas pu être ouvert.",
             "unavailableOnWeb": "Cette fonctionnalité n'est pas encore disponible en mode web.",
-            "unhandledFileType": "Impossible d'afficher le contenu de ce fichier."
+            "unhandledFileType": "Impossible d'afficher le contenu de ce fichier.",
+            "noVisibleOnWeb": "Parsec ne peut pas afficher ce type de document. Vous pouvez télécharger ce fichier en le sélectionnant ou en ouvrant les options puis en cliquant sur 'Télécharger'.",
+            "noVisibleOnWebTitle": "Impossible d'afficher ce fichier"
         },
         "linkNotCopiedToClipboard": "Impossible de copier le lien. Il est possible que votre navigateur ou votre appareil n'autorise pas le copier/coller.",
         "linkCopiedToClipboard": "Le lien a été copié dans le presse-papier.",

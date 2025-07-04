@@ -20,9 +20,9 @@ The following files can be customized at the moment:
 - ``logo_icon.svg``: the icon version of the logo, it will be used for your organizations.
 - ``home_sidebar.png``: the image displayed in the home page sidebar.
 
-Specifically for the desktop app, you may also add:
+Specifically for the desktop app on ``Linux`` and ``Windows``, you may also add:
 
-- ``app_icon.png``: the icon displayed in the taskbar and window title (doesn't work on MacOS).
+- ``app_icon.png``: the icon displayed in the taskbar and window title.
 - ``tray_icon.png``: the icon displayed in the system tray or notification area.
 - ``splash.png``: the splash screen image. We recommend you match the size of the original splash screen, which is 624x424.
 
@@ -34,27 +34,13 @@ Specifically for the desktop app, you may also add:
 
   We recommend that you check the app using different display resolutions, as some images may look great on your screen, but completely off on another. If you use the recommended sizes when mentioned, you shouldn't have any problem.
 
-You can also customize the texts, by adding:
+You can also customize some texts, that contain either explicit mentions of ``Parsec``, URLs and email addresses, or taglines.
+To do so, simply copy the following ``.json`` code exerpts to ``custom_en-US.json`` and ``custom_fr-FR.json`` files, edit the original text values (but not the keys!) to your liking, and put both files in the same ``custom`` folder as before.
 
-- ``en_US.json``: the English translations, based on `en_US.json <https://github.com/Scille/parsec-cloud/blob/e7c5cdbc4234f606ccf3ab2be7e9edc22db16feb/client/src/locales/en-US.json>`_
+.. collapse:: custom_en-US.json
+  .. literalinclude:: custom_en-US.json
+    :language: json
 
-- ``fr_FR.json``: the French translations, based on `fr_FR.json <https://github.com/Scille/parsec-cloud/blob/e7c5cdbc4234f606ccf3ab2be7e9edc22db16feb/client/src/locales/fr-FR.json>`_
-
-You do not need to replace every element in those files, only the values you want to change. For example, to replace the ``Welcome to Parsec`` message of the homepage with ``Welcome to MyApp``, your ``en_US.json`` file should look like this:
-
-  .. code-block:: json
-
-    {
-      "HomePage": {
-        "topbar": {
-            "welcome": "Welcome to MyApp"
-        }
-      }
-    }
-
-
-It will only replace the value with the key ``HomePage.topbar.welcome`` and leave the default values for every other key.
-
-.. note::
-
-  The files containing the texts are not particularly well ordered and are in need of some cleaning. You may struggle to find the right texts to replace.
+.. collapse:: custom_fr-FR.json
+  .. literalinclude:: custom_fr-FR.json
+    :language: json

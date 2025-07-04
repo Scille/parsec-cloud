@@ -30,6 +30,7 @@ extensions = [
     # Allow to use svg images in latex build.
     # https://www.sphinx-doc.org/en/master/usage/extensions/imgconverter.html
     "sphinx.ext.imgconverter",
+    "sphinx_toolbox.collapse",
 ]
 
 # Sphinx-intl config

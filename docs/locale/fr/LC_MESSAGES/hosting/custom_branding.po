@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.4.1-a.0+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-19 14:40+0200\n"
+"POT-Creation-Date: 2025-07-04 14:59+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -94,23 +94,24 @@ msgstr ""
 #: ../../hosting/custom_branding.rst:21
 msgid "``home_sidebar.png``: the image displayed in the home page sidebar."
 msgstr ""
+"``home_sidebar.png`` : l'image affichée sur la barre latérale de la page "
+"d'accueil."
 
 #: ../../hosting/custom_branding.rst:23
-msgid "Specifically for the desktop app, you may also add:"
+msgid ""
+"Specifically for the desktop app on ``Linux`` and ``Windows``, you may also "
+"add:"
 msgstr ""
-"Spécifiquement pour l'application de bureau, vous pouvez également ajouter :"
+"Spécifiquement pour l'application de bureau sur ``Linux`` et ``Windows``, "
+"vous pouvez également ajouter :"
 
 #: ../../hosting/custom_branding.rst:25
-#, fuzzy
-msgid ""
-"``app_icon.png``: the icon displayed in the taskbar and window title "
-"(doesn't work on MacOS)."
+msgid "``app_icon.png``: the icon displayed in the taskbar and window title."
 msgstr ""
 "``app_icon.png`` : 'icône affichée dans la barre des tâches ou dans le titre "
-"de la fenêtre (ne fonctionne pas sur MacOS)."
+"de la fenêtre."
 
 #: ../../hosting/custom_branding.rst:26
-#, fuzzy
 msgid ""
 "``tray_icon.png``: the icon displayed in the system tray or notification "
 "area."
@@ -119,7 +120,6 @@ msgstr ""
 "notifications."
 
 #: ../../hosting/custom_branding.rst:27
-#, fuzzy
 msgid ""
 "``splash.png``: the splash screen image. We recommend you match the size of "
 "the original splash screen, which is 624x424."
@@ -145,55 +145,16 @@ msgstr ""
 "rencontrer de problème."
 
 #: ../../hosting/custom_branding.rst:37
-msgid "You can also customize the texts, by adding:"
-msgstr "Vous pouvez également personnaliser les textes, en ajoutant :"
-
-#: ../../hosting/custom_branding.rst:39
 msgid ""
-"``en_US.json``: the English translations, based on `en_US.json <https://"
-"github.com/Scille/parsec-cloud/blob/e7c5cdbc4234f606ccf3ab2be7e9edc22db16feb/"
-"client/src/locales/en-US.json>`_"
+"You can also customize some texts, that contain either explicit mentions of "
+"``Parsec``, URLs and email addresses, or taglines. To do so, simply copy the "
+"following ``.json`` code exerpts to ``custom_en-US.json`` and ``custom_fr-FR."
+"json`` files, edit the original text values (but not the keys!) to your "
+"liking, and put both files in the same ``custom`` folder as before."
 msgstr ""
-"``en_US.json`` : les traductions en anglais, basées sur `en_US.json <https://"
-"github.com/Scille/parsec-cloud/blob/e7c5cdbc4234f606ccf3ab2be7e9edc22db16feb/"
-"client/src/locales/en-US.json>`_"
-
-#: ../../hosting/custom_branding.rst:41
-msgid ""
-"``fr_FR.json``: the French translations, based on `fr_FR.json <https://"
-"github.com/Scille/parsec-cloud/blob/e7c5cdbc4234f606ccf3ab2be7e9edc22db16feb/"
-"client/src/locales/fr-FR.json>`_"
-msgstr ""
-"``fr_FR.json`` : les traductions en français, basées sur `fr_FR.json "
-"<https://github.com/Scille/parsec-cloud/blob/"
-"e7c5cdbc4234f606ccf3ab2be7e9edc22db16feb/client/src/locales/fr-FR.json>`_"
-
-#: ../../hosting/custom_branding.rst:43
-msgid ""
-"You do not need to replace every element in those files, only the values you "
-"want to change. For example, to replace the ``Welcome to Parsec`` message of "
-"the homepage with ``Welcome to MyApp``, your ``en_US.json`` file should look "
-"like this:"
-msgstr ""
-"Vous n'avez pas besoin de remplacer chaque élément dans ces fichiers, "
-"seulement les valeurs que vous souhaitez modifier. Par exemple, pour "
-"remplacer le message ``Welcome to Parsec`` de la page d'accueil par "
-"``Welcome to MyApp``, votre fichier ``en_US.json`` devrait ressembler à "
-"ceci :"
-
-#: ../../hosting/custom_branding.rst:56
-msgid ""
-"It will only replace the value with the key ``HomePage.topbar.welcome`` and "
-"leave the default values for every other key."
-msgstr ""
-"Cela remplacera uniquement la valeur avec la clé ``HomePage.topbar.welcome`` "
-"et laissera les valeurs par défaut pour toutes les autres clés."
-
-#: ../../hosting/custom_branding.rst:60
-msgid ""
-"The files containing the texts are not particularly well ordered and are in "
-"need of some cleaning. You may struggle to find the right texts to replace."
-msgstr ""
-"Les fichiers contenant les textes ne sont pas particulièrement bien "
-"organisés et nécessitent un peu de nettoyage. Vous pourriez avoir du mal à "
-"trouver les bons textes à remplacer."
+"Vous pouvez également personnaliser certains textes, contenant des mentions "
+"explicites de ``Parsec``, des liens et adresses email, ou des slogans. Pour "
+"ce faire, copiez les extraits ``.json`` ci-après dans des fichiers ``custom-"
+"en-US.json``  et ``custom_fr-FR.json`` respectivement, éditez les textes "
+"originaux (mais pas les clefs !) à votre convenance, et mettez les deux "
+"fichiers ainsi modifiés dans le même dossier ``custom`` que précédemment."

@@ -1,0 +1,181 @@
+{
+    "app": {
+        "name": "Parsec Cloud",
+        "developer": "Parsec Cloud",
+        "developerLink": "https://parsec.cloud",
+        "projectSources": "https://github.com/Scille/parsec-cloud",
+        "issueUrl": "https://github.com/Scille/parsec-cloud/issues/{issue}",
+        "licenseLink": "https://raw.githubusercontent.com/Scille/parsec-cloud/{version}/LICENSE",
+        "history": "https://docs.parsec.cloud/fr/{version}/history.html",
+        "pricingLink": "https://parsec.cloud/tarifs/"
+    },
+    "quit": {
+        "title": "Quitter Parsec"
+    },
+    "globalErrors": {
+        "clientRevoked": "Vous avez été révoqué(e) de cette organisation. Vous avez toujours accès à certaines données, mais l'accès à la plupart des fonctionnalités vous sera refusé.",
+        "clientFrozen": "Vous avez été suspendu(e) dans l'organisation. L'accès à la plupart des fonctionnalités vous sera refusé. Contactez un administrateur.",
+        "incompatibleEnvironment": "Votre navigateur n'est pas encore compatible avec Parsec.",
+        "incompatibleWithSafari": "Parsec ne prend pas encore en charge Safari. Veuillez utiliser un autre navigateur tel que Chrome, Firefox ou Edge."
+    },
+    "link": {
+        "appIsBusy": "Parsec est occupé. Veuillez fermer toutes les fenêtres ouvertes avant de re-cliquer sur le lien."
+    },
+    "notification": {
+        "serverOnline": "Vous êtes connecté au serveur Parsec",
+        "serverOffline": "Vous n'êtes plus connecté au serveur Parsec"
+    },
+    "HomePage": {
+        "sidebar": {
+            "tagline": "Gardez le contrôle sur la confidentialité de vos données"
+        },
+        "profile": {
+            "settings": {
+                "description": "Gérer vos paramètres Parsec"
+            },
+            "account": {
+                "description": "Gérer votre compte Parsec"
+            }
+        },
+        "topbar": {
+            "welcome": "Bienvenue sur Parsec",
+            "updateConfirmTitle": "Mettre à jour Parsec",
+            "updateYes": "Mettre à jour Parsec"
+        },
+        "organizationList": {
+            "errors": {
+                "noStorage": "Impossible de lister ou de sauvegarder vos organisations : le stockage de l'application n'est pas disponible. Assurez-vous que votre disque a suffisamment d'espace et que vous avez les permissions d'accéder au dossier de configuration Parsec en lecture et en écriture."
+            }
+        },
+        "noDevices": {
+            "titleCreateOrga": "Vous débutez sur Parsec ?"
+        }
+    },
+    "CreateOrganization": {
+        "serverAddress": "Adresse du serveur Parsec",
+        "serverAddressPlaceholder": "parsec3://",
+        "useParsecServer": "Utiliser le serveur Parsec principal",
+        "useMyOwnServer": "Je dispose de mon propre serveur Parsec",
+        "saas": "Parsec SaaS",
+        "acceptTOS": {
+            "label": "En utilisant Parsec, j'accepte les",
+            "tosLink": "https://parsec.cloud/cgvu-parsec/",
+            "privacyPolicyLink": "https://parsec.cloud/fr/politique-de-confidentialite/"
+        },
+        "parsecServerUrl": "URL de votre serveur Parsec",
+        "title": {
+            "nameAndServer": "Créer une organisation sur mon serveur Parsec"
+        },
+        "server": {
+            "saas": "Créer mon organisation sur Parsec",
+            "trial": {
+                "title": "Essayer Parsec pendant 15 jours"
+            },
+            "ownServer": "Utiliser un autre serveur Parsec"
+        },
+        "errors": {
+            "incompatibleServer": "Votre version de Parsec n'est pas compatible avec le serveur. Veuillez mettre à jour votre application ou contacter un administrateur."
+        }
+    },
+    "MenuPage": {
+        "documentationLink": "https://docs.parsec.cloud/fr/{version}",
+        "documentationGuideLink": "https://docs.parsec.cloud/fr/{version}/userguide/{page}.html"
+    },
+    "SettingsModal": {
+        "enableTelemetry": {
+            "description": "Les rapports d'erreur aident à améliorer Parsec"
+        },
+        "minimizeToSystemTray": {
+            "description": "Lorsque la fenêtre est fermée, Parsec continuera à fonctionner en arrière-plan"
+        },
+        "configDir": {
+            "description": "Dossier où est stockée la configuration de Parsec"
+        },
+        "skipAccount": {
+            "label": "Passer Parsec Account",
+            "description": "Ne pas demander à se connecter à Parsec Account au démarrage de l'application"
+        }
+    },
+    "FoldersPage": {
+        "open": {
+            "noVisibleOnWeb": "Parsec ne peut pas afficher ce type de document. Vous pouvez télécharger ce fichier en le sélectionnant ou en ouvrant les options puis en cliquant sur 'Télécharger'."
+        },
+        "DownloadFile": {
+            "downloadWarningText": "Si vous téléchargez ce fichier en dehors de Parsec, nous ne pourrons plus garantir sa sécurité."
+        }
+    },
+    "SideMenu": {
+        "frozen": {
+            "email": "contact{'@'}parsec.cloud"
+        }
+    },
+    "DevicesPage": {
+        "greet": {
+            "subtitles": {
+                "waitForGuest": "Vous devez avoir Parsec ouvert sur les deux appareils pendant la durée du processus d'ajout."
+            }
+        }
+    },
+    "ExportRecoveryDevicePage": {
+        "subtitles": {
+            "warningUniqueness": "Veuillez noter que ces fichiers ne sont pas stockés par Parsec. Si vous perdez l'un de ces fichiers ou les deux, vous devrez créer un nouveau fichier de récupération."
+        },
+        "filenames": {
+            "recoveryFile": "Parsec_Fichier_Récupération_{org}.psrk",
+            "recoveryKey": "Parsec_Code_Récupération_{org}.txt"
+        }
+    },
+    "JoinOrganization": {
+        "linkFormPlaceholder": "parsec3://exemple.com/Org?...",
+        "instructions": {
+            "finish": {
+                "first": "Vous pouvez maintenant vous connecter à Parsec."
+            }
+        },
+        "titles": {
+            "waitForHost": "Bienvenue sur Parsec !"
+        }
+    },
+    "ClaimDeviceModal": {
+        "subtitles": {
+            "claimDevice": "Vous devez ouvrir Parsec sur les deux appareils pendant la durée du processus d'accueil.",
+            "done": "L'appareil a bien été créé et ajouté à cette organisation. Vous pouvez maintenant vous connecter à Parsec avec celui-ci."
+        }
+    },
+    "validators": {
+        "invalidProtocol": "Le lien doit commencer par 'parsec3://'.",
+        "claimLink": {
+            "invalidProtocol": "Le lien doit commencer par 'parsec3://'."
+        },
+        "claimUserLink": {
+            "invalidProtocol": "Le lien doit commencer par 'parsec3://'."
+        },
+        "claimDeviceLink": {
+            "invalidProtocol": "Le lien doit commencer par 'parsec3://'."
+        },
+        "bootstrapLink": {
+            "invalidProtocol": "Le lien doit commencer par 'parsec3://'."
+        }
+    },
+    "loginPage": {
+        "title": "Mon compte Parsec",
+        "noAccount": "Pas de compte Parsec ?",
+        "createAccount": {
+            "description": "Pas encore de compte Parsec ?",
+            "welcome": "Bienvenue sur Parsec",
+            "welcomeDescription": "Votre compte Parsec Share a bien été créé. Vous avez désormais accès à Parsec."
+        }
+    },
+    "clientArea": {
+        "sidebar": {
+            "noOrganizationDescription": "Créer votre première organisation pour commencer à utiliser Parsec."
+        },
+        "orders": {
+            "request": {
+                "userNeeds": {
+                    "label": "Combien de personnes utiliseraient Parsec ?"
+                }
+            }
+        }
+    }
+}
