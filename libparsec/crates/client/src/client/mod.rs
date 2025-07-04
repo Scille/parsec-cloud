@@ -57,7 +57,9 @@ use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
 
 use libparsec_types::prelude::*;
-pub use organization_info::{ClientOrganizationInfoError, OrganizationInfo};
+pub use organization_info::{
+    ClientGetOrganizationBootstrapDateError, ClientOrganizationInfoError, OrganizationInfo,
+};
 pub use recovery_device::{
     import_recovery_device, register_new_device, ClientExportRecoveryDeviceError,
     ImportRecoveryDeviceError, RegisterNewDeviceError,
@@ -665,6 +667,12 @@ impl Client {
 
     pub async fn organization_info(&self) -> Result<OrganizationInfo, ClientOrganizationInfoError> {
         organization_info::organization_info(self).await
+    }
+
+    pub async fn get_organization_bootstrap_date(
+        &self,
+    ) -> Result<DateTime, ClientGetOrganizationBootstrapDateError> {
+        organization_info::get_organization_bootstrap_date(self).await
     }
 }
 
