@@ -14,7 +14,11 @@ Customization is done by adding specific files in certain locations. If Parsec d
     - Linux ``~/.config/parsec3/app``
     - MacOS ``~/Library/Application Support/parsec3/app``
 
-The following files can be customized at the moment:
+
+Images
+------
+
+The following images can be customized at the moment:
 
 - ``logo.svg``: the logo displayed in the bottom left corner of the home page.
 - ``logo_icon.svg``: the icon version of the logo, it will be used for your organizations.
@@ -28,21 +32,32 @@ Specifically for the desktop app on ``Linux`` and ``Windows``, you may also add:
 
 .. note::
 
-  The file extension and type matter.
+  The image type and file extension matter. If you use a different type, Parsec may not be able to load it.
 
 .. note::
 
-  We recommend that you check the app using different display resolutions, as some images may look great on your screen, but completely off on another. If you use the recommended sizes when mentioned, you shouldn't have any problem.
+  We recommend that you check how your images are displayed in Parsec using different display resolutions.
+  Some images may look great on your screen, but completely off on another.
+  If you use the recommended sizes when mentioned, you shouldn't have any problem.
 
-You can also customize some texts, that contain either explicit mentions of ``Parsec``, URLs and email addresses, or taglines.
-To do so, simply copy the following ``.json`` code excerpts to ``custom_en-US.json`` and ``custom_fr-FR.json`` files, edit the original text values (but not the keys!) to your liking, and put both files in the same ``custom`` folder as before.
 
-.. collapse:: custom_en-US.json
+Texts
+-----
 
-  .. literalinclude:: custom_en-US.json
-    :language: json
+You can also customize some specific texts in Parsec. To do so, simply:
+1. Copy the following ``.json`` code excerpts to ``custom_en-US.json`` and ``custom_fr-FR.json`` files
+2. Edit the original text values (but not the keys)
+3. Put both files in the same ``custom`` folder as before
 
-.. collapse:: custom_fr-FR.json
 
-  .. literalinclude:: custom_fr-FR.json
-    :language: json
+.. tabs::
+
+  .. group-tab:: custom_en-US.json
+
+    .. literalinclude:: custom_en-US.json
+      :language: json
+
+  .. group-tab:: custom_fr-FR.json
+
+    .. literalinclude:: custom_fr-FR.json
+      :language: json
