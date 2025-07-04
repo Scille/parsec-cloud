@@ -12,7 +12,7 @@
 
 ### 2.1 - `LocalDevice` stored on native client
 
-The `LocalDevice` is contains the secret data related to a device
+The `LocalDevice` contains the secret data related to a device
 (mainly the local key and the private part of user & device keys).
 
 On a Parsec client running natively, those data are typically stored as a device
