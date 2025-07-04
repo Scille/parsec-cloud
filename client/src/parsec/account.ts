@@ -10,6 +10,9 @@ import {
   AccountCreateErrorTag,
   AccountCreateSendValidationEmailError,
   AccountCreateSendValidationEmailErrorTag,
+  AccountDeleteProceedError,
+  AccountDeleteProceedErrorTag,
+  AccountDeleteSendValidationEmailError,
   AccountGetHumanHandleError,
   AccountHandle,
   AccountInvitation,
@@ -18,6 +21,7 @@ import {
   AccountLoginWithMasterSecretError,
   AccountLoginWithPasswordError,
   AccountLoginWithPasswordErrorTag,
+  AccountLogoutError,
   AccountRegisterNewDeviceError,
   AccountRegisterNewDeviceErrorTag,
   AvailableDevice,
@@ -333,50 +337,52 @@ class _ParsecAccount {
     }
   }
 
-  async logout(): Promise<void> {
+  async logout(): Promise<Result<null, AccountLogoutError>> {
     if (!this.handle) {
-      return;
+      return generateNoHandleError<AccountLogoutError>();
     }
-    if (!Env.isAccountMocked()) {
-      console.log('Log out');
-      // await libparsec.accountLogOut(this.handle);
+    if (Env.isAccountMocked()) {
+      this.handle = undefined;
+      return { ok: true, value: null };
     }
-    this.handle = undefined;
+    const result = await libparsec.accountLogout(this.handle);
+    if (result.ok) {
+      this.handle = undefined;
+    }
+    return result;
   }
 
-  // async requestAccountDeletion(): Promise<Result<null, AccountError>> {
-  //   if (!this.handle) {
-  //     return { ok: false, error: { tag: AccountErrorTag.NotLoggedIn, error: 'not-logged-in' } };
-  //   }
-  //   if (Env.isAccountMocked()) {
-  //     await wait(2000);
-  //     return { ok: true, value: null };
-  //   } else {
-  //     throw new Error('NOT IMPLEMENTED');
-  //     // return await libparsec.requestAccountDeletion(this.handle);
-  //   }
-  // }
+  async requestAccountDeletion(): Promise<Result<null, AccountDeleteSendValidationEmailError>> {
+    if (!this.handle) {
+      return generateNoHandleError<AccountDeleteSendValidationEmailError>();
+    }
+    if (Env.isAccountMocked()) {
+      await wait(2000);
+      return { ok: true, value: null };
+    } else {
+      return await libparsec.accountDelete1SendValidationEmail(this.handle);
+    }
+  }
 
-  // async confirmAccountDeletion(code: Array<string>): Promise<Result<null, AccountError>> {
-  //   if (!this.handle) {
-  //     return { ok: false, error: { tag: AccountErrorTag.NotLoggedIn, error: 'not-logged-in' } };
-  //   }
-  //   if (Env.isAccountMocked()) {
-  //     await wait(2000);
-  //     if (code.join('') !== 'ABCDEF') {
-  //       return { ok: false, error: { tag: AccountErrorTag.InvalidCode, error: 'invalid-code' } };
-  //     }
-  //     this.handle = undefined;
-  //     return { ok: true, value: null };
-  //   } else {
-  //     throw new Error('NOT IMPLEMENTED');
-  //     // const result = await libparsec.confirmAccountDeletion(this.handle, code);
-  //     // if (result.ok) {
-  //     //   this.handle = undefined;
-  //     // }
-  //     // return result;
-  //   }
-  // }
+  async confirmAccountDeletion(code: Array<string>): Promise<Result<null, AccountDeleteProceedError>> {
+    if (!this.handle) {
+      return generateNoHandleError<AccountDeleteProceedError>();
+    }
+    if (Env.isAccountMocked()) {
+      await wait(2000);
+      if (code.join('') !== 'ABCDEF') {
+        return { ok: false, error: { tag: AccountDeleteProceedErrorTag.InvalidValidationCode, error: 'invalid-code' } };
+      }
+      this.handle = undefined;
+      return { ok: true, value: null };
+    } else {
+      const result = await libparsec.accountDelete2Proceed(this.handle, code.join(''));
+      if (result.ok) {
+        this.handle = undefined;
+      }
+      return result;
+    }
+  }
 }
 
 const ParsecAccount = new _ParsecAccount();
