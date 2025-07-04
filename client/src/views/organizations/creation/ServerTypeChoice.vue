@@ -31,7 +31,7 @@
           />
           <!-- prettier-ignore -->
           <ms-image
-            :image="(ResourcesManager.instance().get(Resources.AppIcon, AppIconParsec) as string)"
+            :image="(ResourcesManager.instance().get(Resources.LogoIcon, AppIconParsec) as string)"
             class="icon"
           />
         </div>

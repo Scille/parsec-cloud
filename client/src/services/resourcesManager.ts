@@ -5,12 +5,11 @@ import { Env } from '@/services/environment';
 import axios from 'axios';
 
 enum Resources {
-  AppIcon = 'app_icon.svg',
   LogoFull = 'logo.svg',
   LogoIcon = 'logo_icon.svg',
-  TranslationEnUs = 'en_US.json',
-  TranslationFrFr = 'fr_FR.json',
   HomeSidebar = 'home_sidebar.png',
+  TranslationEnUs = 'custom_en-US.json',
+  TranslationFrFr = 'custom_fr-FR.json',
 }
 
 async function convertSVG(buffer: ArrayBuffer): Promise<string> {
@@ -28,12 +27,11 @@ async function convertBinary(buffer: ArrayBuffer): Promise<Uint8Array> {
 type convertFunction = (buffer: ArrayBuffer) => Promise<NonNullable<unknown>>;
 
 const ResourceConverters = new Map<Resources, convertFunction>([
-  [Resources.TranslationEnUs, convertJSON],
-  [Resources.TranslationFrFr, convertJSON],
-  [Resources.AppIcon, convertSVG],
   [Resources.LogoIcon, convertSVG],
   [Resources.LogoFull, convertSVG],
   [Resources.HomeSidebar, convertBinary],
+  [Resources.TranslationEnUs, convertJSON],
+  [Resources.TranslationFrFr, convertJSON],
 ]);
 
 class ResourcesMap {
