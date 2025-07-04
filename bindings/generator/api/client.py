@@ -773,3 +773,26 @@ async def client_organization_info(
     client_handle: Handle,
 ) -> Result[OrganizationInfo, ClientOrganizationInfoError]:
     raise NotImplementedError
+
+
+class ClientGetOrganizationBootstrapDateError(ErrorVariant):
+    class Internal:
+        pass
+
+    class Stopped:
+        pass
+
+    class BootstrapDateNotFound:
+        pass
+
+    class Offline:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+
+async def client_get_organization_bootstrap_date(
+    client_handle: Handle,
+) -> Result[DateTime, ClientGetOrganizationBootstrapDateError]:
+    raise NotImplementedError

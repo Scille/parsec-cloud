@@ -7103,6 +7103,55 @@ fn variant_client_forget_all_certificates_error_rs_to_js(
     Ok(js_obj)
 }
 
+// ClientGetOrganizationBootstrapDateError
+
+#[allow(dead_code)]
+fn variant_client_get_organization_bootstrap_date_error_rs_to_js(
+    rs_obj: libparsec::ClientGetOrganizationBootstrapDateError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientGetOrganizationBootstrapDateError::BootstrapDateNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientGetOrganizationBootstrapDateErrorBootstrapDateNotFound".into(),
+            )?;
+        }
+        libparsec::ClientGetOrganizationBootstrapDateError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientGetOrganizationBootstrapDateErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientGetOrganizationBootstrapDateError::InvalidCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientGetOrganizationBootstrapDateErrorInvalidCertificate".into(),
+            )?;
+        }
+        libparsec::ClientGetOrganizationBootstrapDateError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientGetOrganizationBootstrapDateErrorOffline".into(),
+            )?;
+        }
+        libparsec::ClientGetOrganizationBootstrapDateError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientGetOrganizationBootstrapDateErrorStopped".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientGetSelfShamirRecoveryError
 
 #[allow(dead_code)]
@@ -18453,6 +18502,40 @@ pub fn clientForgetAllCertificates(client: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_client_forget_all_certificates_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// client_get_organization_bootstrap_date
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientGetOrganizationBootstrapDate(client_handle: u32) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::client_get_organization_bootstrap_date(client_handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                        Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                    };
+                    let v = match custom_to_rs_f64(value) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    };
+                    JsValue::from(v)
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_get_organization_bootstrap_date_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

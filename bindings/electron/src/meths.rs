@@ -6512,6 +6512,52 @@ fn variant_client_forget_all_certificates_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// ClientGetOrganizationBootstrapDateError
+
+#[allow(dead_code)]
+fn variant_client_get_organization_bootstrap_date_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientGetOrganizationBootstrapDateError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientGetOrganizationBootstrapDateError::BootstrapDateNotFound { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientGetOrganizationBootstrapDateErrorBootstrapDateNotFound",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientGetOrganizationBootstrapDateError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientGetOrganizationBootstrapDateErrorInternal")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientGetOrganizationBootstrapDateError::InvalidCertificate { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientGetOrganizationBootstrapDateErrorInvalidCertificate",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientGetOrganizationBootstrapDateError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientGetOrganizationBootstrapDateErrorOffline")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientGetOrganizationBootstrapDateError::Stopped { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientGetOrganizationBootstrapDateErrorStopped")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientGetSelfShamirRecoveryError
 
 #[allow(dead_code)]
@@ -18274,6 +18320,67 @@ fn client_forget_all_certificates(mut cx: FunctionContext) -> JsResult<JsPromise
     Ok(promise)
 }
 
+// client_get_organization_bootstrap_date
+fn client_get_organization_bootstrap_date(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client_handle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_get_organization_bootstrap_date(client_handle).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = JsNumber::new(&mut cx, {
+                            let custom_to_rs_f64 =
+                                |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                                };
+                            match custom_to_rs_f64(ok) {
+                                Ok(ok) => ok,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        });
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_client_get_organization_bootstrap_date_error_rs_to_js(
+                            &mut cx, err,
+                        )?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // client_get_self_shamir_recovery
 fn client_get_self_shamir_recovery(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -26885,6 +26992,10 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function(
         "clientForgetAllCertificates",
         client_forget_all_certificates,
+    )?;
+    cx.export_function(
+        "clientGetOrganizationBootstrapDate",
+        client_get_organization_bootstrap_date,
     )?;
     cx.export_function(
         "clientGetSelfShamirRecovery",

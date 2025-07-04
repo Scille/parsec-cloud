@@ -1492,6 +1492,42 @@ export type ClientForgetAllCertificatesError =
   | ClientForgetAllCertificatesErrorInternal
   | ClientForgetAllCertificatesErrorStopped
 
+// ClientGetOrganizationBootstrapDateError
+export enum ClientGetOrganizationBootstrapDateErrorTag {
+    BootstrapDateNotFound = 'ClientGetOrganizationBootstrapDateErrorBootstrapDateNotFound',
+    Internal = 'ClientGetOrganizationBootstrapDateErrorInternal',
+    InvalidCertificate = 'ClientGetOrganizationBootstrapDateErrorInvalidCertificate',
+    Offline = 'ClientGetOrganizationBootstrapDateErrorOffline',
+    Stopped = 'ClientGetOrganizationBootstrapDateErrorStopped',
+}
+
+export interface ClientGetOrganizationBootstrapDateErrorBootstrapDateNotFound {
+    tag: ClientGetOrganizationBootstrapDateErrorTag.BootstrapDateNotFound
+    error: string
+}
+export interface ClientGetOrganizationBootstrapDateErrorInternal {
+    tag: ClientGetOrganizationBootstrapDateErrorTag.Internal
+    error: string
+}
+export interface ClientGetOrganizationBootstrapDateErrorInvalidCertificate {
+    tag: ClientGetOrganizationBootstrapDateErrorTag.InvalidCertificate
+    error: string
+}
+export interface ClientGetOrganizationBootstrapDateErrorOffline {
+    tag: ClientGetOrganizationBootstrapDateErrorTag.Offline
+    error: string
+}
+export interface ClientGetOrganizationBootstrapDateErrorStopped {
+    tag: ClientGetOrganizationBootstrapDateErrorTag.Stopped
+    error: string
+}
+export type ClientGetOrganizationBootstrapDateError =
+  | ClientGetOrganizationBootstrapDateErrorBootstrapDateNotFound
+  | ClientGetOrganizationBootstrapDateErrorInternal
+  | ClientGetOrganizationBootstrapDateErrorInvalidCertificate
+  | ClientGetOrganizationBootstrapDateErrorOffline
+  | ClientGetOrganizationBootstrapDateErrorStopped
+
 // ClientGetSelfShamirRecoveryError
 export enum ClientGetSelfShamirRecoveryErrorTag {
     Internal = 'ClientGetSelfShamirRecoveryErrorInternal',
@@ -5116,6 +5152,9 @@ export interface LibParsecPlugin {
     clientForgetAllCertificates(
         client: Handle
     ): Promise<Result<null, ClientForgetAllCertificatesError>>
+    clientGetOrganizationBootstrapDate(
+        client_handle: Handle
+    ): Promise<Result<DateTime, ClientGetOrganizationBootstrapDateError>>
     clientGetSelfShamirRecovery(
         client_handle: Handle
     ): Promise<Result<SelfShamirRecoveryInfo, ClientGetSelfShamirRecoveryError>>
