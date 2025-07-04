@@ -167,7 +167,7 @@ impl CertificatesStore {
         let maybe_storage = mutex.take();
         // Go idempotent if the storage is already stopped
         if let Some(storage) = maybe_storage {
-            // Note the cache is never ahead of storage (i.e. it strictly constains
+            // Note the cache is never ahead of storage (i.e. it strictly contains
             // a subset of what's in the DB), hence no flush before stop is needed
             storage.stop().await?
         }
