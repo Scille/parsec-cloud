@@ -3,12 +3,11 @@
 # This file is distributed under the same license as the Parsec package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.4.1-a.0+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-19 14:40+0200\n"
+"POT-Creation-Date: 2025-07-07 09:23+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -72,18 +71,22 @@ msgstr "Linux : ``~/.config/parsec3/app``"
 msgid "MacOS ``~/Library/Application Support/parsec3/app``"
 msgstr "MacOS : ``~/Library/Application Support/parsec3/app``"
 
-#: ../../hosting/custom_branding.rst:17
-msgid "The following files can be customized at the moment:"
-msgstr "Les fichiers suivants peuvent être personnalisés pour le moment :"
-
 #: ../../hosting/custom_branding.rst:19
+msgid "Images"
+msgstr "Images"
+
+#: ../../hosting/custom_branding.rst:21
+msgid "The following images can be customized at the moment:"
+msgstr "Les images suivantes peuvent être personnalisées pour le moment :"
+
+#: ../../hosting/custom_branding.rst:23
 msgid ""
 "``logo.svg``: the logo displayed in the bottom left corner of the home page."
 msgstr ""
 "``logo.svg`` : le logo affiché dans le coin inférieur gauche de la page "
 "d'accueil."
 
-#: ../../hosting/custom_branding.rst:20
+#: ../../hosting/custom_branding.rst:24
 msgid ""
 "``logo_icon.svg``: the icon version of the logo, it will be used for your "
 "organizations."
@@ -91,26 +94,27 @@ msgstr ""
 "``logo_icon.svg`` : la version icône du logo, elle sera utilisée pour vos "
 "organisations."
 
-#: ../../hosting/custom_branding.rst:21
+#: ../../hosting/custom_branding.rst:25
 msgid "``home_sidebar.png``: the image displayed in the home page sidebar."
 msgstr ""
+"``home_sidebar.png`` : l'image affichée sur la barre latérale de la page "
+"d'accueil."
 
-#: ../../hosting/custom_branding.rst:23
-msgid "Specifically for the desktop app, you may also add:"
-msgstr ""
-"Spécifiquement pour l'application de bureau, vous pouvez également ajouter :"
-
-#: ../../hosting/custom_branding.rst:25
-#, fuzzy
+#: ../../hosting/custom_branding.rst:27
 msgid ""
-"``app_icon.png``: the icon displayed in the taskbar and window title "
-"(doesn't work on MacOS)."
+"Specifically for the desktop app on ``Linux`` and ``Windows``, you may also "
+"add:"
 msgstr ""
-"``app_icon.png`` : 'icône affichée dans la barre des tâches ou dans le titre "
-"de la fenêtre (ne fonctionne pas sur MacOS)."
+"Spécifiquement pour l'application de bureau sur ``Linux`` et ``Windows``, "
+"vous pouvez également ajouter :"
 
-#: ../../hosting/custom_branding.rst:26
-#, fuzzy
+#: ../../hosting/custom_branding.rst:29
+msgid "``app_icon.png``: the icon displayed in the taskbar and window title."
+msgstr ""
+"``app_icon.png`` : l'icône affichée dans la barre des tâches ou dans le "
+"titre de la fenêtre."
+
+#: ../../hosting/custom_branding.rst:30
 msgid ""
 "``tray_icon.png``: the icon displayed in the system tray or notification "
 "area."
@@ -118,8 +122,7 @@ msgstr ""
 "``tray_icon.png`` : l'icône affichée dans la barre d'état système ou de "
 "notifications."
 
-#: ../../hosting/custom_branding.rst:27
-#, fuzzy
+#: ../../hosting/custom_branding.rst:31
 msgid ""
 "``splash.png``: the splash screen image. We recommend you match the size of "
 "the original splash screen, which is 624x424."
@@ -128,15 +131,20 @@ msgstr ""
 "recommandons de respecter la taille de l'écran de démarrage original, qui "
 "est de 624x424."
 
-#: ../../hosting/custom_branding.rst:31
-msgid "The file extension and type matter."
-msgstr "L'extension et le type de fichier sont importants."
-
 #: ../../hosting/custom_branding.rst:35
 msgid ""
-"We recommend that you check the app using different display resolutions, as "
-"some images may look great on your screen, but completely off on another. If "
-"you use the recommended sizes when mentioned, you shouldn't have any problem."
+"The image type and file extension matter. If you use a different type, "
+"Parsec may not be able to load it."
+msgstr ""
+"Le type d'image et l'extension de fichier sont importants. Si vous utilisez "
+"un type différent, Parsec ne pourra peut-être pas le charger."
+
+#: ../../hosting/custom_branding.rst:37
+msgid ""
+"We recommend that you check how your images are displayed in Parsec using "
+"different display resolutions. Some images may look great on your screen, "
+"but completely off on another. If you use the recommended sizes when "
+"mentioned, you shouldn't have any problem."
 msgstr ""
 "Nous vous recommandons de vérifier l'application avec différentes "
 "résolutions d'affichage, car certaines images peuvent sembler parfaites sur "
@@ -144,56 +152,38 @@ msgstr ""
 "tailles recommandées lorsqu'elles sont mentionnées, vous ne devriez pas "
 "rencontrer de problème."
 
-#: ../../hosting/custom_branding.rst:37
-msgid "You can also customize the texts, by adding:"
-msgstr "Vous pouvez également personnaliser les textes, en ajoutant :"
-
-#: ../../hosting/custom_branding.rst:39
-msgid ""
-"``en_US.json``: the English translations, based on `en_US.json <https://"
-"github.com/Scille/parsec-cloud/blob/e7c5cdbc4234f606ccf3ab2be7e9edc22db16feb/"
-"client/src/locales/en-US.json>`_"
-msgstr ""
-"``en_US.json`` : les traductions en anglais, basées sur `en_US.json <https://"
-"github.com/Scille/parsec-cloud/blob/e7c5cdbc4234f606ccf3ab2be7e9edc22db16feb/"
-"client/src/locales/en-US.json>`_"
-
-#: ../../hosting/custom_branding.rst:41
-msgid ""
-"``fr_FR.json``: the French translations, based on `fr_FR.json <https://"
-"github.com/Scille/parsec-cloud/blob/e7c5cdbc4234f606ccf3ab2be7e9edc22db16feb/"
-"client/src/locales/fr-FR.json>`_"
-msgstr ""
-"``fr_FR.json`` : les traductions en français, basées sur `fr_FR.json "
-"<https://github.com/Scille/parsec-cloud/blob/"
-"e7c5cdbc4234f606ccf3ab2be7e9edc22db16feb/client/src/locales/fr-FR.json>`_"
-
 #: ../../hosting/custom_branding.rst:43
-msgid ""
-"You do not need to replace every element in those files, only the values you "
-"want to change. For example, to replace the ``Welcome to Parsec`` message of "
-"the homepage with ``Welcome to MyApp``, your ``en_US.json`` file should look "
-"like this:"
+msgid "Texts"
+msgstr "Textes"
+
+#: ../../hosting/custom_branding.rst:45
+msgid "You can also customize some specific texts in Parsec. To do so, simply:"
 msgstr ""
-"Vous n'avez pas besoin de remplacer chaque élément dans ces fichiers, "
-"seulement les valeurs que vous souhaitez modifier. Par exemple, pour "
-"remplacer le message ``Welcome to Parsec`` de la page d'accueil par "
-"``Welcome to MyApp``, votre fichier ``en_US.json`` devrait ressembler à "
-"ceci :"
+"Vous pouvez également personnaliser certains textes dans Parsec. Pour ce "
+"faire :"
+
+#: ../../hosting/custom_branding.rst:47
+msgid ""
+"Copy the following ``.json`` code excerpts to ``custom_en-US.json`` and "
+"``custom_fr-FR.json`` files"
+msgstr ""
+"Copiez les extraits ``.json`` ci-après dans des fichiers ``custom_en-US."
+"json``  et ``custom_fr-FR.json`` respectivement"
+
+#: ../../hosting/custom_branding.rst:49
+msgid "Edit the original text values (but not the keys)"
+msgstr "Éditez les textes originaux (mais pas les clefs)"
+
+#: ../../hosting/custom_branding.rst:51
+msgid "Put both files in the same ``custom`` folder as before"
+msgstr ""
+"Mettez les deux fichiers ainsi modifiés dans le même dossier ``custom`` que "
+"précédemment."
 
 #: ../../hosting/custom_branding.rst:56
-msgid ""
-"It will only replace the value with the key ``HomePage.topbar.welcome`` and "
-"leave the default values for every other key."
-msgstr ""
-"Cela remplacera uniquement la valeur avec la clé ``HomePage.topbar.welcome`` "
-"et laissera les valeurs par défaut pour toutes les autres clés."
+msgid "custom_en-US.json"
+msgstr "custom_en-US.json"
 
-#: ../../hosting/custom_branding.rst:60
-msgid ""
-"The files containing the texts are not particularly well ordered and are in "
-"need of some cleaning. You may struggle to find the right texts to replace."
-msgstr ""
-"Les fichiers contenant les textes ne sont pas particulièrement bien "
-"organisés et nécessitent un peu de nettoyage. Vous pourriez avoir du mal à "
-"trouver les bons textes à remplacer."
+#: ../../hosting/custom_branding.rst:61
+msgid "custom_fr-FR.json"
+msgstr "custom_fr-FR.json"

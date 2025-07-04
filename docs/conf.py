@@ -107,7 +107,7 @@ pygments_style = "sphinx"
 # -- sphinx-tabs
 #
 # By default, tabs can be closed by selecting the open tab.
-sphinx_tabs_disable_tab_closing = True
+sphinx_tabs_disable_tab_closing = False
 
 
 # -- Options for HTML output -------------------------------------------
