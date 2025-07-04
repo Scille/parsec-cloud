@@ -1302,6 +1302,35 @@ export type ClientForgetAllCertificatesError =
   | ClientForgetAllCertificatesErrorStopped
 
 
+// ClientGetOrganizationBootstrapDateError
+export interface ClientGetOrganizationBootstrapDateErrorBootstrapDateNotFound {
+    tag: "BootstrapDateNotFound"
+    error: string
+}
+export interface ClientGetOrganizationBootstrapDateErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClientGetOrganizationBootstrapDateErrorInvalidCertificate {
+    tag: "InvalidCertificate"
+    error: string
+}
+export interface ClientGetOrganizationBootstrapDateErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface ClientGetOrganizationBootstrapDateErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export type ClientGetOrganizationBootstrapDateError =
+  | ClientGetOrganizationBootstrapDateErrorBootstrapDateNotFound
+  | ClientGetOrganizationBootstrapDateErrorInternal
+  | ClientGetOrganizationBootstrapDateErrorInvalidCertificate
+  | ClientGetOrganizationBootstrapDateErrorOffline
+  | ClientGetOrganizationBootstrapDateErrorStopped
+
+
 // ClientGetSelfShamirRecoveryError
 export interface ClientGetSelfShamirRecoveryErrorInternal {
     tag: "Internal"
@@ -4290,6 +4319,9 @@ export function clientExportRecoveryDevice(
 export function clientForgetAllCertificates(
     client: number
 ): Promise<Result<null, ClientForgetAllCertificatesError>>
+export function clientGetOrganizationBootstrapDate(
+    client_handle: number
+): Promise<Result<number, ClientGetOrganizationBootstrapDateError>>
 export function clientGetSelfShamirRecovery(
     client_handle: number
 ): Promise<Result<SelfShamirRecoveryInfo, ClientGetSelfShamirRecoveryError>>
