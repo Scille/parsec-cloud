@@ -97,6 +97,7 @@ overrides:
       - "**/client/tests/e2e/specs/settings_modal.spec.ts"
       - "**/docs/development/glossary-FR.md"
       - "**/docs/locale/fr/**/*"
+      - "**/docs/hosting/custom_fr-FR.json"
   # JSON files containing only a single word in French
   - words:
       - reforme
