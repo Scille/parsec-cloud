@@ -154,7 +154,7 @@ async def account_list_invitations(
     raise NotImplementedError
 
 
-class AccountFetchRegistrationDevicesError(ErrorVariant):
+class AccountListRegistrationDevicesError(ErrorVariant):
     class BadVaultKeyAccess:
         pass
 
@@ -165,20 +165,39 @@ class AccountFetchRegistrationDevicesError(ErrorVariant):
         pass
 
 
-async def account_fetch_registration_devices(
+async def account_list_registration_devices(
     account: Handle,
-) -> Result[None, AccountFetchRegistrationDevicesError]:
+) -> Result[set[tuple[OrganizationID, UserID]], AccountListRegistrationDevicesError]:
     raise NotImplementedError
 
 
-class AccountListRegistrationDevicesError(ErrorVariant):
+class AccountCreateRegistrationDeviceError(ErrorVariant):
+    class LoadDeviceInvalidPath:
+        pass
+
+    class LoadDeviceInvalidData:
+        pass
+
+    class LoadDeviceDecryptionFailed:
+        pass
+
+    class BadVaultKeyAccess:
+        pass
+
+    class Offline:
+        pass
+
     class Internal:
         pass
 
+    class TimestampOutOfBallpark:
+        pass
 
-def account_list_registration_devices(
+
+async def account_create_registration_device(
     account: Handle,
-) -> Result[set[tuple[OrganizationID, UserID]], AccountListRegistrationDevicesError]:
+    existing_local_device_access: Ref[DeviceAccessStrategy],
+) -> Result[None, AccountCreateRegistrationDeviceError]:
     raise NotImplementedError
 
 
@@ -253,36 +272,6 @@ async def account_delete_2_proceed(
     account: Handle,
     validation_code: ValidationCode,
 ) -> Result[None, AccountDeleteProceedError]:
-    raise NotImplementedError
-
-
-class AccountCreateRegistrationDeviceError(ErrorVariant):
-    class LoadDeviceInvalidPath:
-        pass
-
-    class LoadDeviceInvalidData:
-        pass
-
-    class LoadDeviceDecryptionFailed:
-        pass
-
-    class BadVaultKeyAccess:
-        pass
-
-    class Offline:
-        pass
-
-    class Internal:
-        pass
-
-    class TimestampOutOfBallpark:
-        pass
-
-
-async def account_create_registration_device(
-    account: Handle,
-    existing_local_device_access: Ref[DeviceAccessStrategy],
-) -> Result[None, AccountCreateRegistrationDeviceError]:
     raise NotImplementedError
 
 

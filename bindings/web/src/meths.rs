@@ -4552,41 +4552,6 @@ fn variant_account_delete_send_validation_email_error_rs_to_js(
     Ok(js_obj)
 }
 
-// AccountFetchRegistrationDevicesError
-
-#[allow(dead_code)]
-fn variant_account_fetch_registration_devices_error_rs_to_js(
-    rs_obj: libparsec::AccountFetchRegistrationDevicesError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::AccountFetchRegistrationDevicesError::BadVaultKeyAccess { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountFetchRegistrationDevicesErrorBadVaultKeyAccess".into(),
-            )?;
-        }
-        libparsec::AccountFetchRegistrationDevicesError::Internal { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountFetchRegistrationDevicesErrorInternal".into(),
-            )?;
-        }
-        libparsec::AccountFetchRegistrationDevicesError::Offline { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountFetchRegistrationDevicesErrorOffline".into(),
-            )?;
-        }
-    }
-    Ok(js_obj)
-}
-
 // AccountGetHumanHandleError
 
 #[allow(dead_code)]
@@ -4646,11 +4611,25 @@ fn variant_account_list_registration_devices_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        libparsec::AccountListRegistrationDevicesError::BadVaultKeyAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountListRegistrationDevicesErrorBadVaultKeyAccess".into(),
+            )?;
+        }
         libparsec::AccountListRegistrationDevicesError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
                 &"AccountListRegistrationDevicesErrorInternal".into(),
+            )?;
+        }
+        libparsec::AccountListRegistrationDevicesError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountListRegistrationDevicesErrorOffline".into(),
             )?;
         }
     }
@@ -16892,34 +16871,6 @@ pub fn accountDelete2Proceed(account: u32, validation_code: String) -> Promise {
     }))
 }
 
-// account_fetch_registration_devices
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn accountFetchRegistrationDevices(account: u32) -> Promise {
-    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
-        let ret = libparsec::account_fetch_registration_devices(account).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = {
-                    let _ = value;
-                    JsValue::null()
-                };
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_account_fetch_registration_devices_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    }))
-}
-
 // account_get_human_handle
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -17003,7 +16954,7 @@ pub fn accountListInvitations(account: u32) -> Promise {
 #[wasm_bindgen]
 pub fn accountListRegistrationDevices(account: u32) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
-        let ret = libparsec::account_list_registration_devices(account);
+        let ret = libparsec::account_list_registration_devices(account).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();

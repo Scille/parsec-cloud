@@ -4269,37 +4269,6 @@ fn variant_account_delete_send_validation_email_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// AccountFetchRegistrationDevicesError
-
-#[allow(dead_code)]
-fn variant_account_fetch_registration_devices_error_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::AccountFetchRegistrationDevicesError,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
-    js_obj.set(cx, "error", js_display)?;
-    match rs_obj {
-        libparsec::AccountFetchRegistrationDevicesError::BadVaultKeyAccess { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "AccountFetchRegistrationDevicesErrorBadVaultKeyAccess")
-                    .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::AccountFetchRegistrationDevicesError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "AccountFetchRegistrationDevicesErrorInternal")
-                .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::AccountFetchRegistrationDevicesError::Offline { .. } => {
-            let js_tag = JsString::try_new(cx, "AccountFetchRegistrationDevicesErrorOffline")
-                .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
 // AccountGetHumanHandleError
 
 #[allow(dead_code)]
@@ -4356,9 +4325,20 @@ fn variant_account_list_registration_devices_error_rs_to_js<'a>(
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
+        libparsec::AccountListRegistrationDevicesError::BadVaultKeyAccess { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "AccountListRegistrationDevicesErrorBadVaultKeyAccess")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::AccountListRegistrationDevicesError::Internal { .. } => {
             let js_tag = JsString::try_new(cx, "AccountListRegistrationDevicesErrorInternal")
                 .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountListRegistrationDevicesError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "AccountListRegistrationDevicesErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -15366,62 +15346,6 @@ fn account_delete_2_proceed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
-// account_fetch_registration_devices
-fn account_fetch_registration_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    crate::init_sentry();
-    let account = {
-        let js_val = cx.argument::<JsNumber>(0)?;
-        {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            v
-        }
-    };
-    let channel = cx.channel();
-    let (deferred, promise) = cx.promise();
-
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
-    let _handle = crate::TOKIO_RUNTIME
-        .lock()
-        .expect("Mutex is poisoned")
-        .spawn(async move {
-            let ret = libparsec::account_fetch_registration_devices(account).await;
-
-            deferred.settle_with(&channel, move |mut cx| {
-                let js_ret = match ret {
-                    Ok(ok) => {
-                        let js_obj = JsObject::new(&mut cx);
-                        let js_tag = JsBoolean::new(&mut cx, true);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = {
-                            #[allow(clippy::let_unit_value)]
-                            let _ = ok;
-                            JsNull::new(&mut cx)
-                        };
-                        js_obj.set(&mut cx, "value", js_value)?;
-                        js_obj
-                    }
-                    Err(err) => {
-                        let js_obj = cx.empty_object();
-                        let js_tag = JsBoolean::new(&mut cx, false);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_account_fetch_registration_devices_error_rs_to_js(
-                            &mut cx, err,
-                        )?;
-                        js_obj.set(&mut cx, "error", js_err)?;
-                        js_obj
-                    }
-                };
-                Ok(js_ret)
-            });
-        });
-
-    Ok(promise)
-}
-
 // account_get_human_handle
 fn account_get_human_handle(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -15548,53 +15472,67 @@ fn account_list_registration_devices(mut cx: FunctionContext) -> JsResult<JsProm
             v
         }
     };
-    let ret = libparsec::account_list_registration_devices(account);
-    let js_ret = match ret {
-        Ok(ok) => {
-            let js_obj = JsObject::new(&mut cx);
-            let js_tag = JsBoolean::new(&mut cx, true);
-            js_obj.set(&mut cx, "ok", js_tag)?;
-            let js_value = {
-                // JsArray::new allocates with `undefined` value, that's why we `set` value
-                let js_array = JsArray::new(&mut cx, ok.len());
-                for (i, elem) in ok.into_iter().enumerate() {
-                    let js_elem = {
-                        let (x0, x1) = elem;
-                        let js_array = JsArray::new(&mut cx, 2);
-                        let js_value = JsString::try_new(&mut cx, x0).or_throw(&mut cx)?;
-                        js_array.set(&mut cx, 0, js_value)?;
-                        let js_value = JsString::try_new(&mut cx, {
-                            let custom_to_rs_string =
-                                |x: libparsec::UserID| -> Result<String, &'static str> {
-                                    Ok(x.hex())
-                                };
-                            match custom_to_rs_string(x1) {
-                                Ok(ok) => ok,
-                                Err(err) => return cx.throw_type_error(err),
-                            }
-                        })
-                        .or_throw(&mut cx)?;
-                        js_array.set(&mut cx, 1, js_value)?;
-                        js_array
-                    };
-                    js_array.set(&mut cx, i as u32, js_elem)?;
-                }
-                js_array
-            };
-            js_obj.set(&mut cx, "value", js_value)?;
-            js_obj
-        }
-        Err(err) => {
-            let js_obj = cx.empty_object();
-            let js_tag = JsBoolean::new(&mut cx, false);
-            js_obj.set(&mut cx, "ok", js_tag)?;
-            let js_err = variant_account_list_registration_devices_error_rs_to_js(&mut cx, err)?;
-            js_obj.set(&mut cx, "error", js_err)?;
-            js_obj
-        }
-    };
+    let channel = cx.channel();
     let (deferred, promise) = cx.promise();
-    deferred.resolve(&mut cx, js_ret);
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::account_list_registration_devices(account).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            // JsArray::new allocates with `undefined` value, that's why we `set` value
+                            let js_array = JsArray::new(&mut cx, ok.len());
+                            for (i, elem) in ok.into_iter().enumerate() {
+                                let js_elem = {
+                                    let (x0, x1) = elem;
+                                    let js_array = JsArray::new(&mut cx, 2);
+                                    let js_value =
+                                        JsString::try_new(&mut cx, x0).or_throw(&mut cx)?;
+                                    js_array.set(&mut cx, 0, js_value)?;
+                                    let js_value = JsString::try_new(&mut cx, {
+                                        let custom_to_rs_string =
+                                            |x: libparsec::UserID| -> Result<String, &'static str> {
+                                                Ok(x.hex())
+                                            };
+                                        match custom_to_rs_string(x1) {
+                                            Ok(ok) => ok,
+                                            Err(err) => return cx.throw_type_error(err),
+                                        }
+                                    })
+                                    .or_throw(&mut cx)?;
+                                    js_array.set(&mut cx, 1, js_value)?;
+                                    js_array
+                                };
+                                js_array.set(&mut cx, i as u32, js_elem)?;
+                            }
+                            js_array
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_account_list_registration_devices_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
     Ok(promise)
 }
 
@@ -26757,10 +26695,6 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         account_delete_1_send_validation_email,
     )?;
     cx.export_function("accountDelete2Proceed", account_delete_2_proceed)?;
-    cx.export_function(
-        "accountFetchRegistrationDevices",
-        account_fetch_registration_devices,
-    )?;
     cx.export_function("accountGetHumanHandle", account_get_human_handle)?;
     cx.export_function("accountListInvitations", account_list_invitations)?;
     cx.export_function(

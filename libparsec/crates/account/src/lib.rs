@@ -3,7 +3,7 @@
 use std::{
     collections::HashSet,
     path::{Path, PathBuf},
-    sync::{Arc, Mutex},
+    sync::Arc,
 };
 
 use libparsec_client_connection::{AnonymousAccountCmds, AuthenticatedAccountCmds, ProxyConfig};
@@ -13,8 +13,11 @@ mod account_create;
 mod account_delete;
 mod account_recover;
 mod create_registration_device;
-mod fetch_list_registration_devices;
+mod create_web_local_device_key;
+mod fetch_vault_items;
+mod get_web_local_device_key;
 mod list_invitations;
+mod list_registration_devices;
 mod login;
 mod register_new_device;
 
@@ -22,19 +25,23 @@ pub use account_create::*;
 pub use account_delete::*;
 pub use account_recover::*;
 pub use create_registration_device::*;
-pub use fetch_list_registration_devices::*;
+pub use create_web_local_device_key::*;
+pub use fetch_vault_items::*;
+pub use get_web_local_device_key::*;
 pub use list_invitations::*;
+pub use list_registration_devices::*;
 pub use login::*;
 pub use register_new_device::*;
 
 #[derive(Debug)]
 pub struct Account {
     config_dir: PathBuf,
-    time_provider: TimeProvider,
     human_handle: HumanHandle,
     cmds: AuthenticatedAccountCmds,
+    // Note the `Account` object is related to a single auth method, this means
+    // we don't have to bother with vault rotation since, if it occurs, our auth
+    // method will simply gets invalidated.
     auth_method_secret_key: SecretKey,
-    registration_devices_cache: Mutex<Vec<Arc<LocalDevice>>>,
 }
 
 impl Account {
@@ -110,18 +117,6 @@ impl Account {
         .unwrap()
     }
 
-    #[cfg(test)]
-    pub fn test_set_registration_devices_cache(
-        &self,
-        new_cache: impl IntoIterator<Item = Arc<LocalDevice>>,
-    ) {
-        let mut guard = self
-            .registration_devices_cache
-            .lock()
-            .expect("Mutex is poisoned");
-        *guard = new_cache.into_iter().collect();
-    }
-
     pub fn human_handle(&self) -> &HumanHandle {
         &self.human_handle
     }
@@ -157,6 +152,8 @@ impl Account {
         account_login_with_password(config_dir, proxy, addr, email, password).await
     }
 
+    /// Fetch from the server the pending invitations accross all organizations
+    /// corresponding to the account's email address.
     pub async fn list_invitations(
         &self,
     ) -> Result<Vec<(OrganizationID, InvitationToken, InvitationType)>, AccountListInvitationsError>
@@ -164,18 +161,45 @@ impl Account {
         account_list_invitations(self).await
     }
 
-    pub async fn fetch_registration_devices(
+    /// Fetch the account vault items from the server and return a single web local device key
+    pub async fn get_web_local_device_key(
         &self,
-    ) -> Result<(), AccountFetchRegistrationDevicesError> {
-        account_fetch_registration_devices(self).await
+        organization_id: &OrganizationID,
+        device_id: DeviceID,
+    ) -> Result<SecretKey, AccountGetWebLocalDeviceKeyError> {
+        account_get_web_local_device_key(self, organization_id, device_id).await
     }
 
-    pub fn list_registration_devices(&self) -> HashSet<(OrganizationID, UserID)> {
-        account_list_registration_devices(self)
+    /// Fetch the account vault items from the server and return a single web local device key
+    pub async fn create_web_local_device_key(
+        &self,
+        organization_id: OrganizationID,
+        device_id: DeviceID,
+        web_local_device_key: SecretKey,
+    ) -> Result<(), AccountCreateWebLocalDeviceKeyError> {
+        account_create_web_local_device_key(self, organization_id, device_id, web_local_device_key)
+            .await
     }
 
-    /// Use an existing registration device to create a new device that
-    /// will be saved locally.
+    /// Fetch the account vault items from the server and return all available registration devices
+    pub async fn list_registration_devices(
+        &self,
+    ) -> Result<HashSet<(OrganizationID, UserID)>, AccountListRegistrationDevicesError> {
+        account_list_registration_devices(self).await
+    }
+
+    /// Use an existing local device to create (i.e. upload a device certificate)
+    /// and upload (i.e. store a vault item) on the server a new device that will
+    /// be used as registration device.
+    pub async fn create_registration_device(
+        &self,
+        existing_local_device: Arc<LocalDevice>,
+    ) -> Result<DeviceID, AccountCreateRegistrationDeviceError> {
+        account_create_registration_device(self, existing_local_device).await
+    }
+
+    /// Use an existing registration device to create (i.e. upload a device certificate
+    /// to the server) a new device that then will be saved locally.
     pub async fn register_new_device(
         &self,
         organization_id: OrganizationID,
@@ -191,15 +215,6 @@ impl Account {
             save_strategy,
         )
         .await
-    }
-
-    /// Use an existing local device to create and upload on the server a new device
-    /// that will be used as registration device.
-    pub async fn create_registration_device(
-        &self,
-        existing_local_device: Arc<LocalDevice>,
-    ) -> Result<DeviceID, AccountCreateRegistrationDeviceError> {
-        account_create_registration_device(self, existing_local_device).await
     }
 
     /// Before deleting the account, a confirmation email containing a validation

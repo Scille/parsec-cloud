@@ -57,10 +57,8 @@ pub(super) async fn account_create_registration_device(
     // 2. Generate the new device (device ID, signing key etc.)
 
     let new_device_label = "Registration device".parse().expect("valid");
-    let new_device = Arc::new(LocalDevice::from_existing_device_for_user(
-        &existing_local_device,
-        new_device_label,
-    ));
+    let new_device =
+        LocalDevice::from_existing_device_for_user(&existing_local_device, new_device_label);
 
     // We first register the new device to the server (i.e. upload a device certificate),
     // and only then save it in the account vault.
@@ -132,17 +130,7 @@ pub(super) async fn account_create_registration_device(
         }
     }
 
-    // 5. Also populate the registration device in the cache without waiting for
-    // a new `fetch_list_registration_device` since it's simple and convenient.
-
-    let new_device_id = new_device.device_id;
-    account
-        .registration_devices_cache
-        .lock()
-        .expect("Mutex is poisoned")
-        .push(new_device);
-
-    Ok(new_device_id)
+    Ok(new_device.device_id)
 }
 
 #[cfg(test)]

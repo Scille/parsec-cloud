@@ -613,30 +613,6 @@ export type AccountDeleteSendValidationEmailError =
   | AccountDeleteSendValidationEmailErrorInternal
   | AccountDeleteSendValidationEmailErrorOffline
 
-// AccountFetchRegistrationDevicesError
-export enum AccountFetchRegistrationDevicesErrorTag {
-    BadVaultKeyAccess = 'AccountFetchRegistrationDevicesErrorBadVaultKeyAccess',
-    Internal = 'AccountFetchRegistrationDevicesErrorInternal',
-    Offline = 'AccountFetchRegistrationDevicesErrorOffline',
-}
-
-export interface AccountFetchRegistrationDevicesErrorBadVaultKeyAccess {
-    tag: AccountFetchRegistrationDevicesErrorTag.BadVaultKeyAccess
-    error: string
-}
-export interface AccountFetchRegistrationDevicesErrorInternal {
-    tag: AccountFetchRegistrationDevicesErrorTag.Internal
-    error: string
-}
-export interface AccountFetchRegistrationDevicesErrorOffline {
-    tag: AccountFetchRegistrationDevicesErrorTag.Offline
-    error: string
-}
-export type AccountFetchRegistrationDevicesError =
-  | AccountFetchRegistrationDevicesErrorBadVaultKeyAccess
-  | AccountFetchRegistrationDevicesErrorInternal
-  | AccountFetchRegistrationDevicesErrorOffline
-
 // AccountGetHumanHandleError
 export enum AccountGetHumanHandleErrorTag {
     Internal = 'AccountGetHumanHandleErrorInternal',
@@ -669,15 +645,27 @@ export type AccountListInvitationsError =
 
 // AccountListRegistrationDevicesError
 export enum AccountListRegistrationDevicesErrorTag {
+    BadVaultKeyAccess = 'AccountListRegistrationDevicesErrorBadVaultKeyAccess',
     Internal = 'AccountListRegistrationDevicesErrorInternal',
+    Offline = 'AccountListRegistrationDevicesErrorOffline',
 }
 
+export interface AccountListRegistrationDevicesErrorBadVaultKeyAccess {
+    tag: AccountListRegistrationDevicesErrorTag.BadVaultKeyAccess
+    error: string
+}
 export interface AccountListRegistrationDevicesErrorInternal {
     tag: AccountListRegistrationDevicesErrorTag.Internal
     error: string
 }
+export interface AccountListRegistrationDevicesErrorOffline {
+    tag: AccountListRegistrationDevicesErrorTag.Offline
+    error: string
+}
 export type AccountListRegistrationDevicesError =
+  | AccountListRegistrationDevicesErrorBadVaultKeyAccess
   | AccountListRegistrationDevicesErrorInternal
+  | AccountListRegistrationDevicesErrorOffline
 
 // AccountLoginWithMasterSecretError
 export enum AccountLoginWithMasterSecretErrorTag {
@@ -4930,9 +4918,6 @@ export interface LibParsecPlugin {
         account: Handle,
         validation_code: ValidationCode
     ): Promise<Result<null, AccountDeleteProceedError>>
-    accountFetchRegistrationDevices(
-        account: Handle
-    ): Promise<Result<null, AccountFetchRegistrationDevicesError>>
     accountGetHumanHandle(
         account: Handle
     ): Promise<Result<HumanHandle, AccountGetHumanHandleError>>

@@ -1,16 +1,22 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::sync::Arc;
+
 use libparsec_client::RegisterNewDeviceError;
 use libparsec_client_connection::{AuthenticatedCmds, ConnectionError};
 use libparsec_platform_device_loader::{get_default_key_file, save_device, SaveDeviceError};
 use libparsec_types::prelude::*;
 
-use super::Account;
+use super::{fetch_vault_items, Account, FetchVaultItemsError};
 
 #[derive(Debug, thiserror::Error)]
 pub enum AccountRegisterNewDeviceError {
-    #[error("Not registration device exists for this organization/user IDs")]
+    #[error("Cannot decrypt the vault key access return by the server: {0}")]
+    BadVaultKeyAccess(DataError),
+    #[error("No registration device exists for this organization/user IDs")]
     UnknownRegistrationDevice,
+    #[error("The registration device appears to be corrupted")]
+    CorruptedRegistrationDevice,
     #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),
     #[error(transparent)]
@@ -35,18 +41,43 @@ pub(super) async fn account_register_new_device(
     new_device_label: DeviceLabel,
     save_strategy: DeviceSaveStrategy,
 ) -> Result<AvailableDevice, AccountRegisterNewDeviceError> {
-    // 1. Retrieve the registration device from the cache
+    // 1. Retrieve from the server the vault item containing the registration device
 
-    let registration_device = account
-        .registration_devices_cache
-        .lock()
-        .expect("Mutex is poisoned")
-        .iter()
-        .find(|device| *device.organization_id() == organization_id && device.user_id == user_id)
-        .ok_or(AccountRegisterNewDeviceError::UnknownRegistrationDevice)?
-        .to_owned();
+    let (vault_key, vault_items) = fetch_vault_items(account).await.map_err(|err| match err {
+        FetchVaultItemsError::BadVaultKeyAccess(err) => {
+            AccountRegisterNewDeviceError::BadVaultKeyAccess(err)
+        }
+        FetchVaultItemsError::Offline(err) => AccountRegisterNewDeviceError::Offline(err),
+        FetchVaultItemsError::Internal(err) => AccountRegisterNewDeviceError::Internal(err),
+    })?;
 
-    // 2. Generate the new device (device ID, signing key etc.)
+    let encrypted_data = vault_items
+        .into_iter()
+        .find_map(|item| match item {
+            AccountVaultItem::RegistrationDevice(item)
+                if item.organization_id == organization_id && item.user_id == user_id =>
+            {
+                Some(item.encrypted_data)
+            }
+            _ => None,
+        })
+        .ok_or(AccountRegisterNewDeviceError::UnknownRegistrationDevice)?;
+
+    // 2. Decrypt the encrypted data and verify it actually corresponds to our registration device
+
+    let unsecure_registration_device = LocalDevice::decrypt_and_load(&encrypted_data, &vault_key)
+        .map(Arc::new)
+        .map_err(|_| AccountRegisterNewDeviceError::CorruptedRegistrationDevice)?;
+
+    if *unsecure_registration_device.organization_id() != organization_id
+        || unsecure_registration_device.user_id != user_id
+    {
+        return Err(AccountRegisterNewDeviceError::CorruptedRegistrationDevice);
+    }
+
+    let registration_device = unsecure_registration_device;
+
+    // 3. Generate the new device (device ID, signing key etc.)
 
     let new_device =
         LocalDevice::from_existing_device_for_user(&registration_device, new_device_label);

@@ -589,25 +589,6 @@ export type AccountDeleteSendValidationEmailError =
   | AccountDeleteSendValidationEmailErrorOffline
 
 
-// AccountFetchRegistrationDevicesError
-export interface AccountFetchRegistrationDevicesErrorBadVaultKeyAccess {
-    tag: "BadVaultKeyAccess"
-    error: string
-}
-export interface AccountFetchRegistrationDevicesErrorInternal {
-    tag: "Internal"
-    error: string
-}
-export interface AccountFetchRegistrationDevicesErrorOffline {
-    tag: "Offline"
-    error: string
-}
-export type AccountFetchRegistrationDevicesError =
-  | AccountFetchRegistrationDevicesErrorBadVaultKeyAccess
-  | AccountFetchRegistrationDevicesErrorInternal
-  | AccountFetchRegistrationDevicesErrorOffline
-
-
 // AccountGetHumanHandleError
 export interface AccountGetHumanHandleErrorInternal {
     tag: "Internal"
@@ -632,12 +613,22 @@ export type AccountListInvitationsError =
 
 
 // AccountListRegistrationDevicesError
+export interface AccountListRegistrationDevicesErrorBadVaultKeyAccess {
+    tag: "BadVaultKeyAccess"
+    error: string
+}
 export interface AccountListRegistrationDevicesErrorInternal {
     tag: "Internal"
     error: string
 }
+export interface AccountListRegistrationDevicesErrorOffline {
+    tag: "Offline"
+    error: string
+}
 export type AccountListRegistrationDevicesError =
+  | AccountListRegistrationDevicesErrorBadVaultKeyAccess
   | AccountListRegistrationDevicesErrorInternal
+  | AccountListRegistrationDevicesErrorOffline
 
 
 // AccountLoginWithMasterSecretError
@@ -4104,9 +4095,6 @@ export function accountDelete2Proceed(
     account: number,
     validation_code: string
 ): Promise<Result<null, AccountDeleteProceedError>>
-export function accountFetchRegistrationDevices(
-    account: number
-): Promise<Result<null, AccountFetchRegistrationDevicesError>>
 export function accountGetHumanHandle(
     account: number
 ): Promise<Result<HumanHandle, AccountGetHumanHandleError>>

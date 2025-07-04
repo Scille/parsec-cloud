@@ -111,7 +111,7 @@ async fn ok(env: &TestbedEnv) {
         }
     );
 
-    account.fetch_registration_devices().await.unwrap();
+    account.list_registration_devices().await.unwrap();
 }
 
 #[parsec_test(testbed = "empty")]
