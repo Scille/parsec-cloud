@@ -158,14 +158,14 @@ impl From<ValidationCode> for String {
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
 pub enum AccountVaultItem {
-    WebLocalDeviceKey(AccountVaultItemWebLocalDeviceKey),
+    DeviceFileKeyAccess(AccountVaultItemDeviceFileKeyAccess),
     RegistrationDevice(AccountVaultItemRegistrationDevice),
 }
 
 impl AccountVaultItem {
     pub fn fingerprint(&self) -> HashDigest {
         match self {
-            AccountVaultItem::WebLocalDeviceKey(item) => item.fingerprint(),
+            AccountVaultItem::DeviceFileKeyAccess(item) => item.fingerprint(),
             AccountVaultItem::RegistrationDevice(item) => item.fingerprint(),
         }
     }
@@ -174,15 +174,15 @@ impl AccountVaultItem {
 impl_load!(AccountVaultItem);
 
 /*
- * AccountVaultItemWebLocalDeviceKey
+ * AccountVaultItemDeviceFileKeyAccess
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(
-    into = "AccountVaultItemWebLocalDeviceKeyData",
-    from = "AccountVaultItemWebLocalDeviceKeyData"
+    into = "AccountVaultItemDeviceFileKeyAccessData",
+    from = "AccountVaultItemDeviceFileKeyAccessData"
 )]
-pub struct AccountVaultItemWebLocalDeviceKey {
+pub struct AccountVaultItemDeviceFileKeyAccess {
     pub organization_id: OrganizationID,
     pub device_id: DeviceID,
     /// `SecretKey` encrypted by the vault key.
@@ -191,7 +191,7 @@ pub struct AccountVaultItemWebLocalDeviceKey {
     pub encrypted_data: Bytes,
 }
 
-impl AccountVaultItemWebLocalDeviceKey {
+impl AccountVaultItemDeviceFileKeyAccess {
     pub fn fingerprint(&self) -> HashDigest {
         // This format should not change in order to preserve compatibility with
         // the items already uploaded in the account vault.
@@ -208,17 +208,17 @@ impl AccountVaultItemWebLocalDeviceKey {
     }
 }
 
-parsec_data!("schema/account/account_vault_item_web_local_device_key.json5");
+parsec_data!("schema/account/account_vault_item_device_file_key_access.json5");
 
 impl_transparent_data_format_conversion!(
-    AccountVaultItemWebLocalDeviceKey,
-    AccountVaultItemWebLocalDeviceKeyData,
+    AccountVaultItemDeviceFileKeyAccess,
+    AccountVaultItemDeviceFileKeyAccessData,
     organization_id,
     device_id,
     encrypted_data,
 );
 
-impl_dump!(AccountVaultItemWebLocalDeviceKey);
+impl_dump!(AccountVaultItemDeviceFileKeyAccess);
 
 /*
  * AccountVaultItemRegistrationDevice
@@ -285,6 +285,30 @@ impl_transparent_data_format_conversion!(
 
 impl_dump_and_encrypt!(AccountVaultKeyAccess);
 impl_decrypt_and_load!(AccountVaultKeyAccess);
+
+/*
+ * DeviceFileAccountVaultCiphertextKey
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(
+    into = "DeviceFileAccountVaultCiphertextKeyData",
+    from = "DeviceFileAccountVaultCiphertextKeyData"
+)]
+pub struct DeviceFileAccountVaultCiphertextKey {
+    pub ciphertext_key: SecretKey,
+}
+
+parsec_data!("schema/account/device_file_account_vault_ciphertext_key.json5");
+
+impl_transparent_data_format_conversion!(
+    DeviceFileAccountVaultCiphertextKey,
+    DeviceFileAccountVaultCiphertextKeyData,
+    ciphertext_key,
+);
+
+impl_dump_and_encrypt!(DeviceFileAccountVaultCiphertextKey);
+impl_decrypt_and_load!(DeviceFileAccountVaultCiphertextKey);
 
 #[cfg(test)]
 #[path = "../tests/unit/account.rs"]

@@ -251,6 +251,16 @@ pub async fn load_and_unlock_device(
         DeviceFileType::Keyring => DeviceAccessStrategy::Keyring {
             key_file: device.key_file_path.clone(),
         },
+        DeviceFileType::AccountVault => {
+            // In theory we should support this authentication method here,
+            // however:
+            // - It is cumbersome since it requires obtaining the account authentication
+            //   info (login&password) from the CLI parameters.
+            // - In practice it is only used on web, where CLI is never going to be used.
+            return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(
+                device.ty,
+            ));
+        }
         DeviceFileType::Recovery => {
             return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(
                 device.ty,

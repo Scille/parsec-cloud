@@ -4,7 +4,7 @@ use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
-use libparsec_crypto::Password;
+use libparsec_crypto::{Password, SecretKey};
 use libparsec_serialization_format::parsec_data;
 
 use crate::{self as libparsec_types};
@@ -146,12 +146,46 @@ impl_transparent_data_format_conversion!(
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(
+    into = "DeviceFileAccountVaultData",
+    from = "DeviceFileAccountVaultData"
+)]
+pub struct DeviceFileAccountVault {
+    pub created_on: DateTime,
+    pub protected_on: DateTime,
+    pub server_url: String,
+    pub organization_id: OrganizationID,
+    pub user_id: UserID,
+    pub device_id: DeviceID,
+    pub human_handle: HumanHandle,
+    pub device_label: DeviceLabel,
+    pub ciphertext: Bytes,
+}
+
+parsec_data!("schema/local_device/device_file_account_vault.json5");
+
+impl_transparent_data_format_conversion!(
+    DeviceFileAccountVault,
+    DeviceFileAccountVaultData,
+    created_on,
+    protected_on,
+    server_url,
+    organization_id,
+    user_id,
+    device_id,
+    human_handle,
+    device_label,
+    ciphertext,
+);
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum DeviceFile {
     Keyring(DeviceFileKeyring),
     Password(DeviceFilePassword),
     Recovery(DeviceFileRecovery),
     Smartcard(DeviceFileSmartcard),
+    AccountVault(DeviceFileAccountVault),
 }
 
 impl DeviceFile {
@@ -169,6 +203,7 @@ impl DeviceFile {
             DeviceFile::Password(device) => &device.ciphertext,
             DeviceFile::Recovery(device) => &device.ciphertext,
             DeviceFile::Smartcard(device) => &device.ciphertext,
+            DeviceFile::AccountVault(device) => &device.ciphertext,
         }
     }
 }
@@ -179,13 +214,23 @@ pub enum DeviceFileType {
     Password,
     Recovery,
     Smartcard,
+    AccountVault,
 }
 
 #[derive(Debug, Clone)]
 pub enum DeviceSaveStrategy {
     Keyring,
-    Password { password: Password },
+    Password {
+        password: Password,
+    },
     Smartcard,
+    AccountVault {
+        /// This key is the one stored in the account vault.
+        ///
+        /// Note it is `libparsec_account`'s job to deal with encrypting&uploading
+        /// the account vault item containing this key.
+        ciphertext_key: SecretKey,
+    },
 }
 
 impl DeviceSaveStrategy {
@@ -196,6 +241,12 @@ impl DeviceSaveStrategy {
                 DeviceAccessStrategy::Password { key_file, password }
             }
             DeviceSaveStrategy::Smartcard => DeviceAccessStrategy::Smartcard { key_file },
+            DeviceSaveStrategy::AccountVault { ciphertext_key } => {
+                DeviceAccessStrategy::AccountVault {
+                    key_file,
+                    ciphertext_key,
+                }
+            }
         }
     }
 }
@@ -213,6 +264,14 @@ pub enum DeviceAccessStrategy {
     Smartcard {
         key_file: PathBuf,
     },
+    AccountVault {
+        key_file: PathBuf,
+        /// This key is the one stored in the account vault.
+        ///
+        /// Note it is `libparsec_account`'s job to deal with fetching&decrypting
+        /// the account vault item containing this key.
+        ciphertext_key: SecretKey,
+    },
 }
 
 impl DeviceAccessStrategy {
@@ -221,6 +280,7 @@ impl DeviceAccessStrategy {
             Self::Keyring { key_file } => key_file,
             Self::Password { key_file, .. } => key_file,
             Self::Smartcard { key_file } => key_file,
+            Self::AccountVault { key_file, .. } => key_file,
         }
     }
 
@@ -229,6 +289,7 @@ impl DeviceAccessStrategy {
             Self::Keyring { .. } => DeviceFileType::Keyring,
             Self::Password { .. } => DeviceFileType::Password,
             Self::Smartcard { .. } => DeviceFileType::Smartcard,
+            Self::AccountVault { .. } => DeviceFileType::AccountVault,
         }
     }
 }

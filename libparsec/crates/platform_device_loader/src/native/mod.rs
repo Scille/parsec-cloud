@@ -148,6 +148,12 @@ pub async fn load_device(
         (DeviceAccessStrategy::Smartcard { .. }, DeviceFile::Smartcard(_device)) => {
             todo!("Load smartcard device")
         }
+
+        (
+            DeviceAccessStrategy::AccountVault { ciphertext_key, .. },
+            DeviceFile::AccountVault(device),
+        ) => Ok((ciphertext_key.clone(), device.created_on)),
+
         _ => Err(LoadDeviceError::InvalidData),
     }?;
 
@@ -296,6 +302,29 @@ pub async fn save_device(
 
         DeviceAccessStrategy::Smartcard { .. } => {
             todo!("Save smartcard device")
+        }
+
+        DeviceAccessStrategy::AccountVault {
+            key_file,
+            ciphertext_key,
+        } => {
+            let ciphertext = super::encrypt_device(device, ciphertext_key);
+
+            let file_content = DeviceFile::AccountVault(DeviceFileAccountVault {
+                created_on,
+                protected_on,
+                server_url: server_url.clone(),
+                organization_id: device.organization_id().to_owned(),
+                user_id: device.user_id,
+                device_id: device.device_id,
+                human_handle: device.human_handle.to_owned(),
+                device_label: device.device_label.to_owned(),
+                ciphertext,
+            });
+
+            let file_content = file_content.dump();
+
+            save_content(key_file, &file_content).await?;
         }
     }
 

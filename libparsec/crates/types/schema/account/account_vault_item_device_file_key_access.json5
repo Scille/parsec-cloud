@@ -1,6 +1,6 @@
 {
-    "label": "AccountVaultItemWebLocalDeviceKey",
-    "type": "account_vault_item_web_local_device_key",
+    "label": "AccountVaultItemDeviceFileKeyAccess",
+    "type": "account_vault_item_device_file_key_access",
     // Introduced in Parsec 3.5.0
     "introduced_in_revision": 350,
     "other_fields": [
@@ -15,9 +15,9 @@
             "type": "DeviceID"
         },
         {
-            // `SecretKey` encrypted by the vault key.
-            // This key is itself used to decrypt the `LocalDevice` stored on
-            // the web client's storage.
+            // `DeviceFileAccountVaultCiphertextKey` encrypted by the vault key.
+            // `DeviceFileAccountVaultCiphertextKey` itself contains a key used
+            // to decrypt the `LocalDevice` stored in a `DeviceFileAccountVault`.
             "name": "encrypted_data",
             "type": "Bytes"
         }

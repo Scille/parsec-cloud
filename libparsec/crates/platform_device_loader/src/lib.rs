@@ -16,6 +16,7 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
+use zeroize::Zeroizing;
 
 use libparsec_types::prelude::*;
 #[cfg(not(target_arch = "wasm32"))]
@@ -286,7 +287,6 @@ pub enum RemoveDeviceError {
 }
 
 pub use platform::remove_device;
-use zeroize::Zeroizing;
 
 #[derive(Debug, thiserror::Error)]
 pub enum LoadRecoveryDeviceError {
@@ -419,6 +419,17 @@ fn load_available_device_from_blob(
         ),
         DeviceFile::Smartcard(device) => (
             DeviceFileType::Smartcard,
+            device.created_on,
+            device.protected_on,
+            device.server_url,
+            device.organization_id,
+            device.user_id,
+            device.device_id,
+            device.human_handle,
+            device.device_label,
+        ),
+        DeviceFile::AccountVault(device) => (
+            DeviceFileType::AccountVault,
             device.created_on,
             device.protected_on,
             device.server_url,

@@ -1,6 +1,11 @@
+// `AccountVaultKeyAccess` is the structure encrypted separately for each
+// auth methods of a given vault and containing the vault key (itself used
+// to encrypt everything in the vault).
 {
     "label": "AccountVaultKeyAccess",
-    "type": "vault_key_access",
+    "type": "account_vault_key_access",
+    // Introduced in Parsec 3.5.0
+    "introduced_in_revision": 350,
     "other_fields": [
         {
             "name": "vault_key",
