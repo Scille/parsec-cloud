@@ -1568,7 +1568,12 @@
             "button": "Access"
         },
         "logOut": "Log out",
-        "skip": "Skip this step"
+        "skip": "Skip this step",
+        "storeAccountTitle": "Store this device to Parsec Account",
+        "storeAccountQuestion": "This device is not stored in Parsec Account. Do you want to store it so that it'll be available everywhere?",
+        "storeAccountYes": "Store to Parsec Account",
+        "storeSuccess": "The device has been stored in Parsec Account.",
+        "storeFailed": "Could not store the device to Parsec Account"
     },
     "clientArea": {
         "app": {

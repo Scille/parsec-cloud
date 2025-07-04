@@ -197,6 +197,7 @@ const routeWatchCancel = watchRoute(async () => {
   }
   accountLoggedIn.value = ParsecAccount.isLoggedIn();
   await handleQuery();
+  await refreshDeviceList();
 });
 
 onMounted(async () => {
@@ -470,6 +471,8 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
     }
     if (device.ty.tag === AvailableDeviceTypeTag.Keyring) {
       await login(device, AccessStrategy.useKeyring(device));
+    } else if (device.ty.tag === AvailableDeviceTypeTag.AccountVault) {
+      await login(device, await AccessStrategy.useAccountVault(device));
     } else {
       selectedDevice.value = device;
       state.value = HomePageState.Login;
@@ -510,6 +513,38 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
   }
 }
 
+async function handleRegistration(device: AvailableDevice, access: DeviceAccessStrategy): Promise<void> {
+  if (ParsecAccount.isLoggedIn()) {
+    const isRegResult = await ParsecAccount.isDeviceRegistered(device);
+    if (isRegResult.ok && !isRegResult.value) {
+      const answer = await askQuestion('loginPage.storeAccountTitle', 'loginPage.storeAccountQuestion', {
+        yesText: 'loginPage.storeAccountYes',
+      });
+      if (answer === Answer.Yes) {
+        const regResult = await ParsecAccount.createRegistrationDevice(access);
+        if (regResult.ok) {
+          informationManager.present(
+            new Information({
+              message: 'loginPage.storeSuccess',
+              level: InformationLevel.Success,
+            }),
+            PresentationMode.Toast,
+          );
+        } else {
+          window.electronAPI.log('error', `Failed to register the device: ${regResult.error.tag} (${regResult.error.error})`);
+          informationManager.present(
+            new Information({
+              message: 'loginPage.storeFailed',
+              level: InformationLevel.Error,
+            }),
+            PresentationMode.Toast,
+          );
+        }
+      }
+    }
+  }
+}
+
 async function login(device: AvailableDevice, access: DeviceAccessStrategy): Promise<void> {
   const eventDistributor = new EventDistributor();
   loginInProgress.value = true;
@@ -523,6 +558,8 @@ async function login(device: AvailableDevice, access: DeviceAccessStrategy): Pro
       storedDeviceDataDict.value[device.deviceId].lastLogin = DateTime.now();
     }
     await storageManager.storeDevicesData(toRaw(storedDeviceDataDict.value));
+
+    await handleRegistration(device, access);
 
     const query = getCurrentRouteQuery();
     const routeData: RouteBackup = {

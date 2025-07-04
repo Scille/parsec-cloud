@@ -273,8 +273,6 @@ async function setupApp(): Promise<void> {
   // and only awaited when it is called from third party code (i.e. when
   // obtained through `window.nextStageHook`, see below)
   const nextStage = async (testbedDiscriminantPath?: string, locale?: Locale): Promise<void> => {
-    await router.isReady();
-
     if (testbedDiscriminantPath) {
       window.usesTestbed = (): boolean => true;
       window.getConfigDir = (): string => testbedDiscriminantPath;
@@ -283,6 +281,10 @@ async function setupApp(): Promise<void> {
     } else {
       window.usesTestbed = (): boolean => false;
     }
+
+    await ParsecAccount.init();
+
+    await router.isReady();
 
     if ((await detectBrowser()) === 'Safari') {
       const modal = await modalController.create({
