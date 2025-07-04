@@ -35,28 +35,30 @@ def generate_new_alice_device_certificates(
     device_id=NEW_ALICE_DEVICE_ID,
     verify_key=NEW_ALICE_SIGNING_KEY.verify_key,
     author_device_id=None,
+    purpose=DevicePurpose.STANDARD,
+    algorithm=SigningKeyAlgorithm.ED25519,
 ) -> tuple[bytes, bytes]:
     author_device_id = author_device_id or alice.device_id
     raw_device_certificate = DeviceCertificate(
         author=author_device_id,
         timestamp=timestamp,
-        purpose=DevicePurpose.STANDARD,
+        purpose=purpose,
         user_id=user_id,
         device_id=device_id,
         device_label=DeviceLabel("New device"),
         verify_key=verify_key,
-        algorithm=SigningKeyAlgorithm.ED25519,
+        algorithm=algorithm,
     ).dump_and_sign(alice.signing_key)
 
     raw_redacted_device_certificate = DeviceCertificate(
         author=author_device_id,
         timestamp=timestamp,
-        purpose=DevicePurpose.STANDARD,
+        purpose=purpose,
         user_id=user_id,
         device_id=device_id,
         device_label=None,
         verify_key=verify_key,
-        algorithm=SigningKeyAlgorithm.ED25519,
+        algorithm=algorithm,
     ).dump_and_sign(alice.signing_key)
 
     return raw_device_certificate, raw_redacted_device_certificate
@@ -119,6 +121,8 @@ async def test_authenticated_device_create_ok(
         "user_id_mismatch",
         "device_id_mismatch",
         "verify_key_mismatch",
+        "purpose_mismatch",
+        # "algorithm_mismatch",  # Disabled since currently there is only a single algorithm
         "not_redacted",
     ),
 )
@@ -167,6 +171,10 @@ async def test_authenticated_device_create_invalid_certificate(
         case "verify_key_mismatch":
             _, redacted_device_certificate = generate_new_alice_device_certificates(
                 coolorg.alice, t1, verify_key=SigningKey.generate().verify_key
+            )
+        case "purpose_mismatch":
+            _, redacted_device_certificate = generate_new_alice_device_certificates(
+                coolorg.alice, t1, purpose=DevicePurpose.PASSPHRASE_RECOVERY
             )
         case "not_redacted":
             redacted_device_certificate = device_certificate
