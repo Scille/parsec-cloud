@@ -2,6 +2,7 @@
 
 export {
   AccountCreateErrorTag,
+  AccountCreateRegistrationDeviceErrorTag,
   AccountCreateSendValidationEmailErrorTag,
   AccountGetHumanHandleErrorTag,
   AccountListInvitationsErrorTag,
@@ -87,6 +88,7 @@ export {
 } from '@/plugins/libparsec';
 export type {
   AccountCreateError,
+  AccountCreateRegistrationDeviceError,
   AccountCreateSendValidationEmailError,
   AccountGetHumanHandleError,
   AccountListInvitationsError,
