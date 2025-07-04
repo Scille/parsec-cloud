@@ -655,7 +655,9 @@
             "fileFailedGeneric": "Impossible d'ouvrir ce fichier.",
             "folderFailed": "Le dossier `{name}` n'a pas pu être ouvert.",
             "unavailableOnWeb": "Cette fonctionnalité n'est pas encore disponible en mode web.",
-            "unhandledFileType": "Impossible d'afficher le contenu de ce fichier."
+            "unhandledFileType": "Impossible d'afficher le contenu de ce fichier.",
+            "noVisibleOnWeb": "Parsec ne peut pas prévisualiser ce type de document. Vous pouvez le télécharger en sélectionnant le fichier ou en affichant les options, puis en cliquant sur 'Télécharger'.",
+            "noVisibleOnWebTitle": "Impossible de prévisualiser ce fichier"
         },
         "linkNotCopiedToClipboard": "Impossible de copier le lien. Il est possible que votre navigateur ou votre appareil n'autorise pas le copier/coller.",
         "linkCopiedToClipboard": "Le lien a été copié dans le presse-papier.",
@@ -1317,7 +1319,11 @@
             "assignAllFailed": "Impossible de transférer les rôles.",
             "processing": "Calcul des changements...",
             "noRoles": "Aucun nouveau rôle à transférer à {user}",
-            "close": "Fermer"
+            "copyFrom": "Copier le rôle de : | Copier les rôles de :",
+            "copyTo": "À :",
+            "workspacesList": "Pour l'espace de travail :| Pour les espaces de travail :",
+            "close": "Fermer",
+            "update": "Modifier"
         },
         "tabbar": {
             "details": "Détails",

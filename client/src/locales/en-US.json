@@ -1319,7 +1319,11 @@
             "assignAllFailed": "Could not transfer the roles.",
             "processing": "Processing the changes to be made...",
             "noRoles": "No new roles to transfer to {user}.",
-            "close": "Close"
+            "copyFrom": "Copy role from: | Copy roles from:",
+            "copyTo": "To:",
+            "workspacesList": "For the workspace: | For the workspaces:",
+            "close": "Close",
+            "update": "Update"
         },
         "tabbar": {
             "details": "Details",
