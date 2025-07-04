@@ -50,22 +50,22 @@ fn serde_validation_code() {
 }
 
 #[rstest]
-fn serde_account_vault_item_web_local_device_key() {
+fn serde_account_vault_item_device_file_key_access() {
     // Generated from Parsec 3.4.1-a.0+dev
     // Content:
-    //   type: 'account_vault_item_web_local_device_key'
+    //   type: 'account_vault_item_device_file_key_access'
     //   organization_id: 'CoolOrg'
     //   device_id: ext(2, 0xac42ef607148434a94cc502fd5e61bad)
     //   encrypted_data: 0x3c656e637279707465645f646174613e
     let raw: &[u8] = hex!(
-        "0028b52ffd0058d50300f40684a474797065d9276163636f756e745f7661756c745f69"
-        "74656d5f7765625f6c6f63616c5f6465766963655f6b6579af6f7267616e697a617469"
-        "6f6e5f6964a7436f6f6c4f7267a96964d802ac42ef607148434a94cc502fd5e61badae"
-        "656e637279707465645f64617461c4103c3e0200a6291f31ae3203"
+        "0028b52ffd0058e50300140784a474797065d9296163636f756e745f7661756c745f69"
+        "74656d5f6465766963655f66696c655f6b65795f616363657373af6f7267616e697a61"
+        "74696f6e5f6964a7436f6f6c4f7267a96964d802ac42ef607148434a94cc502fd5e61b"
+        "adae656e637279707465645f64617461c4103c3e0200a6295f91ae3203"
     )
     .as_ref();
 
-    let expected = AccountVaultItemWebLocalDeviceKey {
+    let expected = AccountVaultItemDeviceFileKeyAccess {
         organization_id: "CoolOrg".parse().unwrap(),
         device_id: DeviceID::from_hex("ac42ef607148434a94cc502fd5e61bad").unwrap(),
         encrypted_data: Bytes::from_static(b"<encrypted_data>"),
@@ -73,7 +73,7 @@ fn serde_account_vault_item_web_local_device_key() {
     println!("***expected: {:?}", expected.dump());
 
     let data = match AccountVaultItem::load(raw).unwrap() {
-        AccountVaultItem::WebLocalDeviceKey(data) => {
+        AccountVaultItem::DeviceFileKeyAccess(data) => {
             p_assert_eq!(data, expected);
             data
         }
@@ -83,7 +83,7 @@ fn serde_account_vault_item_web_local_device_key() {
     // Also test serialization round trip
     let raw2 = data.dump();
     match AccountVaultItem::load(&raw2).unwrap() {
-        AccountVaultItem::WebLocalDeviceKey(data2) => {
+        AccountVaultItem::DeviceFileKeyAccess(data2) => {
             p_assert_eq!(data2, expected);
         }
         AccountVaultItem::RegistrationDevice(_) => unreachable!(),
@@ -97,7 +97,7 @@ fn serde_account_vault_item_web_local_device_key() {
         )),
     );
     p_assert_eq!(
-        AccountVaultItem::WebLocalDeviceKey(expected).fingerprint(),
+        AccountVaultItem::DeviceFileKeyAccess(expected).fingerprint(),
         HashDigest::from(hex!(
             "0d97bbe805b808a1c53b1f0a117349d014c47a26ee5a513c3956fdb420699595"
         )),
@@ -132,7 +132,7 @@ fn serde_account_vault_item_registration_device() {
             p_assert_eq!(data, expected);
             data
         }
-        AccountVaultItem::WebLocalDeviceKey(_) => unreachable!(),
+        AccountVaultItem::DeviceFileKeyAccess(_) => unreachable!(),
     };
 
     // Also test serialization round trip
@@ -141,7 +141,7 @@ fn serde_account_vault_item_registration_device() {
         AccountVaultItem::RegistrationDevice(data2) => {
             p_assert_eq!(data2, expected);
         }
-        AccountVaultItem::WebLocalDeviceKey(_) => unreachable!(),
+        AccountVaultItem::DeviceFileKeyAccess(_) => unreachable!(),
     };
 
     // Finally test the fingerprint
@@ -170,13 +170,13 @@ fn serde_account_vault_key_access() {
 
     // Generated from Parsec 3.4.1-a.0+dev
     // Content:
-    //   type: 'vault_key_access'
+    //   type: 'account_vault_key_access'
     //   vault_key: 0x114413b514a2197e083c49b8b3637dbc330bdf7c0e7e8b2a9a9dc6236885485f
     let raw: &[u8] = hex!(
-        "19d3b8ec723939ad27eb82790a1e83db0d4ff8e67843b67d7ab8ef2631d630080ddc41"
-        "5c4aac2959ec5b34f67f1d4f55ecb718275449b7dc1d00418931e02569e0cafe013aee"
-        "29ae50d3a4d2a61d9bcafed90912500834c243dece2d8f221683a9bddc2306de70f2f5"
-        "3dfd00dd126b5b1b2c182613"
+        "dcf034d9e316e6d993b8f7f00083be8e0ba54fa5c05a67de6bde294d1a93310b58d7c5"
+        "f41c9d1f6eb93cac8a70fc4ba1bc5629e3d1c6aef955aaaa56012906640c9a8fb0dc25"
+        "bc0ed018bf6e99f6933b0f0fa0baeb76bfc9ebb03f58d75e829da97f80aadfebad07a6"
+        "d80ee03671205a1a50f860497d4502ae2debc7bb"
     )
     .as_ref();
 
@@ -190,5 +190,40 @@ fn serde_account_vault_key_access() {
     // Also test serialization round trip
     let raw2 = data.dump_and_encrypt(&key);
     let data2 = AccountVaultKeyAccess::decrypt_and_load(&raw2, &key).unwrap();
+    p_assert_eq!(data2, expected);
+}
+
+#[rstest]
+fn serde_device_file_account_vault_ciphertext_key() {
+    let key = SecretKey::from(hex!(
+        "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
+    ));
+    let ciphertext_key = SecretKey::from(hex!(
+        "114413b514a2197e083c49b8b3637dbc330bdf7c0e7e8b2a9a9dc6236885485f"
+    ));
+
+    // Generated from Parsec 3.4.1-a.0+dev
+    // Content:
+    //   type: 'device_file_account_vault_ciphertext_key'
+    //   ciphertext_key: 0x114413b514a2197e083c49b8b3637dbc330bdf7c0e7e8b2a9a9dc6236885485f
+    let raw: &[u8] = hex!(
+        "1c588e71efcf3dcdcc0b30901cb9675e863741d4f3ad12d4ecb31b5d7402a412ab4c7e"
+        "2bce045395cc4cec57f224035ec516630b5b64be5eee11039e715672ac87b4fc6aa1ba"
+        "315963fe58c3a9cc6b94fb5055da616ad2bd9bdb74c338209a179f2d88c3a0b7feb903"
+        "62c3b74f49883f0e54e22351361c293b32f65bfd3f96afca9d25bc2d980adc5d981729"
+        "b5"
+    )
+    .as_ref();
+
+    let expected = DeviceFileAccountVaultCiphertextKey { ciphertext_key };
+    println!("***expected: {:?}", expected.dump_and_encrypt(&key));
+
+    let data = DeviceFileAccountVaultCiphertextKey::decrypt_and_load(raw, &key).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump_and_encrypt(&key);
+    let data2 = DeviceFileAccountVaultCiphertextKey::decrypt_and_load(&raw2, &key).unwrap();
     p_assert_eq!(data2, expected);
 }
