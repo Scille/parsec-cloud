@@ -2,6 +2,7 @@
 
 export {
   AccountCreateErrorTag,
+  AccountCreateRegistrationDeviceErrorTag,
   AccountCreateSendValidationEmailErrorTag,
   AccountDeleteProceedErrorTag,
   AccountDeleteSendValidationEmailErrorTag,
@@ -90,6 +91,7 @@ export {
 } from '@/plugins/libparsec';
 export type {
   AccountCreateError,
+  AccountCreateRegistrationDeviceError,
   AccountCreateSendValidationEmailError,
   AccountDeleteProceedError,
   AccountDeleteSendValidationEmailError,
