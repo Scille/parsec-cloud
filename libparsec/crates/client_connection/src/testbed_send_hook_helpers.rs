@@ -440,3 +440,72 @@ macro_rules! test_send_hook_block_read {
         test_send_hook_block_read!($env, $realm_id, allowed: [$block_id])
     };
 }
+
+/// Register a `vault_item_list` RPC call.
+#[macro_export]
+macro_rules! test_send_hook_vault_item_list {
+    ($env: expr, $auth_method_secret_key: expr, $vault_key: expr, registration_devices: [$($local_device: expr),* $(,)?] $(,)?) => {{
+        let env: &TestbedEnv = $env;
+        let auth_method_secret_key: &SecretKey = &$auth_method_secret_key;
+        let vault_key: &SecretKey = &$vault_key;
+
+        let mut items = std::collections::HashMap::new();
+        $(
+            let local_device: &LocalDevice = &$local_device;
+            let item = AccountVaultItemRegistrationDevice {
+                organization_id: local_device.organization_id().to_owned(),
+                user_id: local_device.user_id,
+                encrypted_data: local_device.dump_and_encrypt(&vault_key).into(),
+            };
+            items.insert(item.fingerprint(), item.dump().into());
+        )*
+
+        let key_access: Bytes = AccountVaultKeyAccess {
+            vault_key: vault_key.to_owned(),
+        }
+        .dump_and_encrypt(auth_method_secret_key)
+        .into();
+
+        move |_req: authenticated_account_cmds::latest::vault_item_list::Req| {
+            authenticated_account_cmds::latest::vault_item_list::Rep::Ok {
+                key_access,
+                items,
+            }
+        }
+    }};
+    ($env: expr, $auth_method_secret_key: expr, $vault_key: expr, device_file_key_accesses: [$(($local_device: expr, $ciphertext_key: expr)),* $(,)?] $(,)?) => {{
+        let env: &TestbedEnv = $env;
+        let auth_method_secret_key: &SecretKey = &$auth_method_secret_key;
+        let vault_key: &SecretKey = &$vault_key;
+
+        let mut items = std::collections::HashMap::new();
+        $(
+            let local_device: &LocalDevice = &$local_device;
+            let encrypted_data = DeviceFileAccountVaultCiphertextKey {
+                ciphertext_key: $ciphertext_key.to_owned(),
+            }.dump_and_encrypt(&vault_key).into();
+            let item = AccountVaultItemDeviceFileKeyAccess {
+                organization_id: local_device.organization_id().to_owned(),
+                device_id: local_device.device_id,
+                encrypted_data,
+            };
+            items.insert(item.fingerprint(), item.dump().into());
+        )*
+
+        let key_access: Bytes = AccountVaultKeyAccess {
+            vault_key: vault_key.to_owned(),
+        }
+        .dump_and_encrypt(auth_method_secret_key)
+        .into();
+
+        move |_req: authenticated_account_cmds::latest::vault_item_list::Req| {
+            authenticated_account_cmds::latest::vault_item_list::Rep::Ok {
+                key_access,
+                items,
+            }
+        }
+    }};
+    ($env: expr, $auth_method_secret_key:expr, $vault_key: expr) => {
+        test_send_hook_vault_item_list!($env, $auth_method_secret_key, $vault_key, registration_devices: [])
+    };
+}
