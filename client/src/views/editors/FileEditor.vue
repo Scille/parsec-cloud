@@ -404,18 +404,16 @@ async function loadCryptpad(): Promise<void> {
       // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
       onSave: async (file: Blob, callback: () => void) => {
         console.log('Cryptpad onSave event triggered');
-        console.log('file:', file);
         // Handle save logic here
         const workspaceHandle = getWorkspaceHandle();
-        console.log('workspaceHandle:', workspaceHandle);
         const openResult = await openFile(workspaceHandle!, getDocumentPath(), { write: true, truncate: true });
 
         if (!openResult.ok) {
           return undefined;
         }
         const fd = openResult.value;
-        console.log('cryptpad file size:', file.size);
-        await writeFile(workspaceHandle!, fd, 0, await file.bytes());
+        const arrayBuffer = await file.arrayBuffer();
+        await writeFile(workspaceHandle!, fd, 0, new Uint8Array(arrayBuffer));
         await closeFile(workspaceHandle!, fd);
         callback();
       },
