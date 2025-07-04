@@ -1,0 +1,10 @@
+{
+    "label": "WebLocalDeviceKeyAccess",
+    "type": "web_local_device_key_access",
+    "other_fields": [
+        {
+            "name": "web_local_device_key",
+            "type": "SecretKey"
+        }
+    ]
+}

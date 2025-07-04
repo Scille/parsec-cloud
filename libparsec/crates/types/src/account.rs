@@ -286,6 +286,30 @@ impl_transparent_data_format_conversion!(
 impl_dump_and_encrypt!(AccountVaultKeyAccess);
 impl_decrypt_and_load!(AccountVaultKeyAccess);
 
+/*
+ * WebLocalDeviceKeyAccess
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(
+    into = "WebLocalDeviceKeyAccessData",
+    from = "WebLocalDeviceKeyAccessData"
+)]
+pub struct WebLocalDeviceKeyAccess {
+    pub web_local_device_key: SecretKey,
+}
+
+parsec_data!("schema/account/web_local_device_key_access.json5");
+
+impl_transparent_data_format_conversion!(
+    WebLocalDeviceKeyAccess,
+    WebLocalDeviceKeyAccessData,
+    web_local_device_key,
+);
+
+impl_dump_and_encrypt!(WebLocalDeviceKeyAccess);
+impl_decrypt_and_load!(WebLocalDeviceKeyAccess);
+
 #[cfg(test)]
 #[path = "../tests/unit/account.rs"]
 mod tests;

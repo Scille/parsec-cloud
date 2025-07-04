@@ -192,3 +192,39 @@ fn serde_account_vault_key_access() {
     let data2 = AccountVaultKeyAccess::decrypt_and_load(&raw2, &key).unwrap();
     p_assert_eq!(data2, expected);
 }
+
+#[rstest]
+fn serde_web_local_device_key_access() {
+    let key = SecretKey::from(hex!(
+        "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
+    ));
+    let web_local_device_key = SecretKey::from(hex!(
+        "114413b514a2197e083c49b8b3637dbc330bdf7c0e7e8b2a9a9dc6236885485f"
+    ));
+
+    // Generated from Parsec 3.4.1-a.0+dev
+    // Content:
+    //   type: 'web_local_device_key_access'
+    //   web_local_device_key: 0x114413b514a2197e083c49b8b3637dbc330bdf7c0e7e8b2a9a9dc6236885485f
+    let raw: &[u8] = hex!(
+        "8ce1d47ee9f211c403b62afce2f8fa9ed3938bf019b62d9664080ceabc296db935af36"
+        "38460d83450878b9f9d286e3c5967a8220b743a4abfe023875279a8242893b4b263542"
+        "21068df5da9601d03076eb523555310dfd148d14a18a3d4531974401a8213fd592af50"
+        "4059f44cee2185842febbad47b098df73f7cd77d0016"
+    )
+    .as_ref();
+
+    let expected = WebLocalDeviceKeyAccess {
+        web_local_device_key,
+    };
+    println!("***expected: {:?}", expected.dump_and_encrypt(&key));
+
+    let data = WebLocalDeviceKeyAccess::decrypt_and_load(raw, &key).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump_and_encrypt(&key);
+    let data2 = WebLocalDeviceKeyAccess::decrypt_and_load(&raw2, &key).unwrap();
+    p_assert_eq!(data2, expected);
+}
