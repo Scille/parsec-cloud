@@ -35,12 +35,14 @@ Specifically for the desktop app on ``Linux`` and ``Windows``, you may also add:
   We recommend that you check the app using different display resolutions, as some images may look great on your screen, but completely off on another. If you use the recommended sizes when mentioned, you shouldn't have any problem.
 
 You can also customize some texts, that contain either explicit mentions of ``Parsec``, URLs and email addresses, or taglines.
-To do so, simply copy the following ``.json`` code exerpts to ``custom_en-US.json`` and ``custom_fr-FR.json`` files, edit the original text values (but not the keys!) to your liking, and put both files in the same ``custom`` folder as before.
+To do so, simply copy the following ``.json`` code excerpts to ``custom_en-US.json`` and ``custom_fr-FR.json`` files, edit the original text values (but not the keys!) to your liking, and put both files in the same ``custom`` folder as before.
 
 .. collapse:: custom_en-US.json
+
   .. literalinclude:: custom_en-US.json
     :language: json
 
 .. collapse:: custom_fr-FR.json
+
   .. literalinclude:: custom_fr-FR.json
     :language: json
