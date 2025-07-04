@@ -72,7 +72,7 @@
               @click="validateCode"
               :disabled="code.length === 0"
             >
-              {{ $msTranslate('loginPage.createAccount.createAccountButton') }}
+              {{ $msTranslate('loginPage.createAccount.nextButton') }}
             </ion-button>
 
             <div class="validation-email-step-footer">
@@ -117,7 +117,7 @@
               @click="createAccount"
               :disabled="!validAuth"
             >
-              {{ $msTranslate('loginPage.createAccount.nextButton') }}
+              {{ $msTranslate('loginPage.createAccount.createAccountButton') }}
             </ion-button>
           </div>
         </div>

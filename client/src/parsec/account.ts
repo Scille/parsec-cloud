@@ -2,17 +2,19 @@
 
 import { getDefaultDeviceName } from '@/common/device';
 import { getClientConfig, wait } from '@/parsec/internals';
-import { SaveStrategy } from '@/parsec/login';
+import { listAvailableDevices, SaveStrategy } from '@/parsec/login';
 import {
   AccountAccess,
   AccountAccessStrategy,
   AccountCreateError,
   AccountCreateErrorTag,
+  AccountCreateRegistrationDeviceError,
   AccountCreateSendValidationEmailError,
   AccountCreateSendValidationEmailErrorTag,
   AccountDeleteProceedError,
   AccountDeleteProceedErrorTag,
   AccountDeleteSendValidationEmailError,
+  AccountFetchOpaqueKeyFromVaultError,
   AccountGetHumanHandleError,
   AccountHandle,
   AccountInvitation,
@@ -26,10 +28,13 @@ import {
   AccountRegisterNewDeviceErrorTag,
   AvailableDevice,
   AvailableDeviceTypeTag,
+  DeviceAccessStrategy,
+  DeviceSaveStrategyTag,
   HumanHandle,
   InvitationType,
   RegistrationDevice,
   Result,
+  SecretKey,
 } from '@/parsec/types';
 import { generateNoHandleError } from '@/parsec/utils';
 import { libparsec } from '@/plugins/libparsec';
@@ -177,17 +182,35 @@ class _ParsecAccount {
   handle: AccountHandle | undefined = undefined;
   skipped: boolean = false;
 
-  constructor() {
-    if (Env.isAccountAutoLoginEnabled()) {
-      console.log(`Using Parsec Account auto-login, server is '${Env.getAccountServer()}'`);
-      libparsec.testNewAccount(Env.getAccountServer()).then((result) => {
-        if (!result.ok) {
-          console.error(`No auto-login possible, testNewAccount failed: ${result.error.tag} (${result.error.error})`);
-          return;
-        }
-        this.login(ParsecAccountAccess.useMasterSecret(result.value[1]), Env.getAccountServer());
-      });
+  async init(): Promise<void> {
+    if (!Env.isAccountAutoLoginEnabled()) {
+      return;
     }
+    console.log(`Using Parsec Account auto-login, server is '${Env.getAccountServer()}'`);
+    const newAccountResult = await libparsec.testNewAccount(Env.getAccountServer());
+    if (!newAccountResult.ok) {
+      console.error(`No auto-login possible, testNewAccount failed: ${newAccountResult.error.tag} (${newAccountResult.error.error})`);
+      return;
+    }
+    const loginResult = await this.login(ParsecAccountAccess.useMasterSecret(newAccountResult.value[1]), Env.getAccountServer());
+    if (!loginResult.ok) {
+      console.error(`Failed to login: ${loginResult.error.tag} (${loginResult.error.error})`);
+    }
+    // if (usesTestbed() && this.handle) {
+    //   const devices = await listAvailableDevices();
+    //   console.log(devices);
+    //   let device = devices.find((d) => d.humanHandle.label === 'Alicey McAliceFace' && d.deviceLabel.includes('dev2'));
+    //   if (!device) {
+    //     device = devices[0];
+    //     console.error(`Could not find Alice's device, using ${device.humanHandle.label}`);
+    //   }
+    //   const regDeviceResult = await libparsec.accountCreateRegistrationDevice(
+    //     this.handle, AccessStrategy.usePassword(device, 'P@ssw0rd.')
+    //   );
+    //   if (!regDeviceResult.ok) {
+    //     console.error(`Failed to register local device: ${regDeviceResult.error.tag} (${regDeviceResult.error.error})`);
+    //   }
+    // }
   }
 
   getHandle(): AccountHandle | undefined {
@@ -220,25 +243,63 @@ class _ParsecAccount {
       }
       return { ok: false, error: { tag: AccountLoginWithPasswordErrorTag.BadPasswordAlgorithm, error: 'Invalid authentication' } };
     } else {
+      let result: Result<AccountHandle, AccountLoginWithMasterSecretError | AccountLoginWithPasswordError> | undefined;
       if (authentication.strategy === AccountAccessStrategy.Password) {
-        const result = await libparsec.accountLoginWithPassword(
+        result = await libparsec.accountLoginWithPassword(
           getClientConfig().configDir,
           server,
           authentication.email,
           authentication.password,
         );
-        if (result.ok) {
-          this.handle = result.value;
-        }
-        return result;
       } else if (authentication.strategy === AccountAccessStrategy.MasterSecret) {
-        const result = await libparsec.accountLoginWithMasterSecret(getClientConfig().configDir, server, authentication.secret);
-        if (result.ok) {
-          this.handle = result.value;
-        }
-        return result;
+        result = await libparsec.accountLoginWithMasterSecret(getClientConfig().configDir, server, authentication.secret);
       } else {
         return { ok: false, error: { tag: AccountLoginWithPasswordErrorTag.BadPasswordAlgorithm, error: 'Unknown authentication method' } };
+      }
+      if (!result.ok) {
+        return result;
+      }
+      this.handle = result.value;
+      await this.registerAllDevices();
+      return result;
+    }
+  }
+
+  private async registerAllDevices(): Promise<void> {
+    if (!this.handle) {
+      return;
+    }
+    const listResult = await this.listRegistrationDevices();
+    if (!listResult.ok) {
+      console.error(`Failed to list registration devices: ${listResult.error.tag} (${listResult.error.error})`);
+      return;
+    }
+    const keyResult = await libparsec.accountUploadOpaqueKeyInVault(this.handle);
+    if (!keyResult.ok) {
+      console.error(`Failed to upload opaque key: ${keyResult.error.tag} (${keyResult.error.error})`);
+      return;
+    }
+    const availableDevices = await listAvailableDevices(false);
+
+    for (const regDevice of listResult.value) {
+      const existingDevice = availableDevices.find(
+        (ad) =>
+          ad.organizationId === regDevice.organizationId &&
+          ad.userId === regDevice.userId &&
+          ad.ty.tag === AvailableDeviceTypeTag.AccountVault,
+      );
+      if (existingDevice !== undefined) {
+        continue;
+      }
+      const regResult = await libparsec.accountRegisterNewDevice(
+        this.handle,
+        regDevice.organizationId,
+        regDevice.userId,
+        getDefaultDeviceName(),
+        { tag: DeviceSaveStrategyTag.AccountVault, ciphertextKeyId: keyResult.value[0], ciphertextKey: keyResult.value[1] },
+      );
+      if (!regResult.ok) {
+        console.error(`Failed to register new device: ${regResult.error.tag} (${regResult.error.error}`);
       }
     }
   }
@@ -324,6 +385,28 @@ class _ParsecAccount {
     );
   }
 
+  async createRegistrationDevice(accessStrategy: DeviceAccessStrategy): Promise<Result<null, AccountCreateRegistrationDeviceError>> {
+    if (!this.handle) {
+      return generateNoHandleError<AccountCreateRegistrationDeviceError>();
+    }
+    if (Env.isAccountMocked()) {
+      await wait(2000);
+      return { ok: true, value: null };
+    }
+    return await libparsec.accountCreateRegistrationDevice(this.handle, accessStrategy);
+  }
+
+  async isDeviceRegistered(device: AvailableDevice): Promise<Result<boolean, AccountListRegistrationDevicesError>> {
+    const result = await this.listRegistrationDevices();
+    if (!result.ok) {
+      return result;
+    }
+    return {
+      ok: true,
+      value: result.value.find((rd) => rd.organizationId === device.organizationId && rd.userId === device.userId) !== undefined,
+    };
+  }
+
   async getInfo(): Promise<Result<HumanHandle, AccountGetHumanHandleError>> {
     if (!this.handle) {
       return generateNoHandleError<AccountGetHumanHandleError>();
@@ -381,6 +464,17 @@ class _ParsecAccount {
       }
       return result;
     }
+  }
+
+  async fetchKeyFromVault(cipherKeyId: string): Promise<Result<SecretKey, AccountFetchOpaqueKeyFromVaultError>> {
+    if (!this.handle) {
+      return generateNoHandleError<AccountFetchOpaqueKeyFromVaultError>();
+    }
+    if (Env.isAccountMocked()) {
+      await wait(2000);
+      return { ok: true, value: new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]) };
+    }
+    return await libparsec.accountFetchOpaqueKeyFromVault(this.handle, cipherKeyId);
   }
 }
 

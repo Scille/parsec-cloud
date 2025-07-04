@@ -1,7 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { DeviceAccessStrategyKeyring, DeviceSaveStrategyKeyring, DeviceSaveStrategyPassword, libparsec } from '@/plugins/libparsec';
+import {
+  AvailableDeviceTypeTag,
+  DeviceAccessStrategyAccountVault,
+  DeviceAccessStrategyKeyring,
+  DeviceSaveStrategyKeyring,
+  DeviceSaveStrategyPassword,
+  libparsec,
+} from '@/plugins/libparsec';
 
+import { ParsecAccount } from '@/parsec/account';
 import { getClientConfig } from '@/parsec/internals';
 import { parseParsecAddr } from '@/parsec/organization';
 import {
@@ -115,6 +123,9 @@ export async function listAvailableDevicesWithError(filter = true): Promise<Resu
 
   if (!result.ok) {
     return result;
+  }
+  if (!ParsecAccount.isLoggedIn()) {
+    result.value = result.value.filter((device) => device.ty.tag !== AvailableDeviceTypeTag.AccountVault);
   }
   const availableDevices = result.value.map((d) => {
     d.createdOn = DateTime.fromSeconds(d.createdOn as any as number);
@@ -246,6 +257,21 @@ export const AccessStrategy = {
     return {
       tag: DeviceAccessStrategyTag.Keyring,
       keyFile: device.keyFilePath,
+    };
+  },
+  async useAccountVault(device: AvailableDevice): Promise<DeviceAccessStrategyAccountVault> {
+    if (device.ty.tag !== AvailableDeviceTypeTag.AccountVault) {
+      throw new Error('Invalid device type, expected account vault');
+    }
+    const keyResult = await ParsecAccount.fetchKeyFromVault(device.ty.ciphertextKeyId);
+    if (!keyResult.ok) {
+      throw new Error(`Failed to fetch key from vault: ${keyResult.error.tag} (${keyResult.error.error})`);
+    }
+    return {
+      tag: DeviceAccessStrategyTag.AccountVault,
+      keyFile: device.keyFilePath,
+      ciphertextKeyId: device.ty.ciphertextKeyId,
+      ciphertextKey: keyResult.value,
     };
   },
 };

@@ -431,6 +431,8 @@ const filteredDevices = computed(() => {
   gap: 1.5rem;
   padding: 0;
   overflow: auto;
+  background: transparent;
+  box-shadow: none;
 
   .create-organization,
   .invitation {

@@ -1573,7 +1573,12 @@
             "button": "Accéder"
         },
         "logOut": "Se déconnecter",
-        "skip": "Passer cette étape"
+        "skip": "Passer cette étape",
+        "storeAccountTitle": "Stocker dans Parsec Account",
+        "storeAccountQuestion": "Cet appareil n'est pas stocké dans Parsec Account. Voulez-vous le stocker pour qu'il soit disponible partout ?",
+        "storeAccountYes": "Stocker dans Parsec Account",
+        "storeSuccess": "L'appareil a été stocké dans Parsec Account.",
+        "storeFailed": "Impossible de stocker l'appareil dans Parsec Account."
     },
     "clientArea": {
         "app": {

@@ -2,9 +2,11 @@
 
 export {
   AccountCreateErrorTag,
+  AccountCreateRegistrationDeviceErrorTag,
   AccountCreateSendValidationEmailErrorTag,
   AccountDeleteProceedErrorTag,
   AccountDeleteSendValidationEmailErrorTag,
+  AccountFetchOpaqueKeyFromVaultErrorTag,
   AccountGetHumanHandleErrorTag,
   AccountListInvitationsErrorTag,
   AccountListRegistrationDevicesErrorTag,
@@ -90,9 +92,11 @@ export {
 } from '@/plugins/libparsec';
 export type {
   AccountCreateError,
+  AccountCreateRegistrationDeviceError,
   AccountCreateSendValidationEmailError,
   AccountDeleteProceedError,
   AccountDeleteSendValidationEmailError,
+  AccountFetchOpaqueKeyFromVaultError,
   AccountGetHumanHandleError,
   AccountListInvitationsError,
   AccountListRegistrationDevicesError,
@@ -180,6 +184,7 @@ export type {
   ParseParsecAddrError,
   Result,
   SASCode,
+  SecretKey,
   SizeInt,
   Tos,
   UpdateDeviceError,
