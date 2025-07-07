@@ -94,7 +94,7 @@ class DevOption(click.Option):
 
 
 @click.command(
-    context_settings={"max_content_width": 400},
+    context_settings={"max_content_width": 400, "show_default": True},
     short_help="run the server",
     epilog="""Note each parameter has a corresponding environ variable with the `PARSEC_` prefix
 (e.g. `--email-port=42` parameter is equivalent to environ variable `PARSEC_EMAIL_PORT=42`).
