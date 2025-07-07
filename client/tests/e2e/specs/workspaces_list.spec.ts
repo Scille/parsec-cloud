@@ -55,32 +55,32 @@ for (const gridMode of [false, true]) {
     }
   });
 
-  msTest(`Workspace sort order in ${gridMode ? 'grid' : 'list'} mode`, async ({ workspaces }) => {
+  msTest(`Workspace sort order in ${gridMode ? 'grid' : 'list'} mode`, async ({ workspacesStandard }) => {
     if (!gridMode) {
-      await toggleViewMode(workspaces);
+      await toggleViewMode(workspacesStandard);
     }
     for (const wk of WORKSPACES) {
       if (wk !== 'wksp1') {
-        await createWorkspace(workspaces, wk);
+        await createWorkspace(workspacesStandard, wk);
       }
     }
     // Order by name asc (default)
     // Don't use `sort` because it sorts in place
     let names = [...WORKSPACES].sort((wName1, wName2) => wName1.localeCompare(wName2));
     if (gridMode) {
-      await expect(workspaces.locator('.workspaces-container').locator('.workspace-card-content__title')).toHaveText(names);
+      await expect(workspacesStandard.locator('.workspaces-container').locator('.workspace-card-content__title')).toHaveText(names);
     } else {
-      await expect(workspaces.locator('.workspaces-container').locator('.workspace-name__label')).toHaveText(names);
+      await expect(workspacesStandard.locator('.workspaces-container').locator('.workspace-name__label')).toHaveText(names);
     }
-    const actionBar = workspaces.locator('#workspaces-ms-action-bar');
+    const actionBar = workspacesStandard.locator('#workspaces-ms-action-bar');
     const sortSelector = actionBar.locator('#workspace-filter-select');
     await expect(sortSelector).toHaveText('Name');
-    await expect(workspaces.locator('.popover-viewport')).toBeHidden();
+    await expect(workspacesStandard.locator('.popover-viewport')).toBeHidden();
     await sortSelector.click();
-    const popover = workspaces.locator('.popover-viewport');
+    const popover = workspacesStandard.locator('.popover-viewport');
     const sortItems = popover.getByRole('listitem');
-    await expect(sortItems).toHaveCount(2);
-    await expect(sortItems).toHaveText(['Ascending', 'Name']);
+    await expect(sortItems).toHaveCount(3);
+    await expect(sortItems).toHaveText(['Ascending', 'Name', 'Role']);
     for (const [index, checked] of [false, true].entries()) {
       if (checked) {
         await expect(sortItems.nth(index)).toHaveTheClass('selected');
@@ -89,16 +89,39 @@ for (const gridMode of [false, true]) {
       }
     }
     await sortItems.nth(0).click();
-    await expect(workspaces.locator('.popover-viewport')).toBeHidden();
+    await expect(workspacesStandard.locator('.popover-viewport')).toBeHidden();
     // Order by name desc
     names = [...WORKSPACES].sort((wName1, wName2) => wName2.localeCompare(wName1));
     await sortSelector.click();
     if (gridMode) {
-      await expect(workspaces.locator('.workspaces-container').locator('.workspace-card-content__title')).toHaveText(names);
+      await expect(workspacesStandard.locator('.workspaces-container').locator('.workspace-card-content__title')).toHaveText(names);
     } else {
-      await expect(workspaces.locator('.workspaces-container').locator('.workspace-name__label')).toHaveText(names);
+      await expect(workspacesStandard.locator('.workspaces-container').locator('.workspace-name__label')).toHaveText(names);
     }
-    await expect(workspaces.locator('.popover-viewport').getByRole('listitem').nth(0)).toHaveText('Descending');
+    await expect(workspacesStandard.locator('.popover-viewport').getByRole('listitem').nth(0)).toHaveText('Descending');
+
+    // Order by role desc
+    await sortItems.nth(2).click();
+    // wksp1 is Reader, should be shown first, other are Owner
+    if (gridMode) {
+      await expect(workspacesStandard.locator('.workspaces-container').locator('.workspace-card-content__title').first()).toHaveText(
+        'wksp1',
+      );
+    } else {
+      await expect(workspacesStandard.locator('.workspaces-container').locator('.workspace-name__label').first()).toHaveText('wksp1');
+    }
+
+    // Order by role asc
+    await sortSelector.click();
+    await sortItems.nth(0).click();
+    // wksp1 is Reader, should be shown last, other are Owner
+    if (gridMode) {
+      await expect(workspacesStandard.locator('.workspaces-container').locator('.workspace-card-content__title').last()).toHaveText(
+        'wksp1',
+      );
+    } else {
+      await expect(workspacesStandard.locator('.workspaces-container').locator('.workspace-name__label').last()).toHaveText('wksp1');
+    }
   });
 }
 
@@ -155,7 +178,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
 }
 
 for (const gridMode of [false, true]) {
-  msTest(`Workspace filter in ${gridMode ? 'grid' : 'list'} mode`, async ({ workspaces }) => {
+  msTest(`Workspace search filter in ${gridMode ? 'grid' : 'list'} mode`, async ({ workspaces }) => {
     if (!gridMode) {
       await toggleViewMode(workspaces);
     }
@@ -187,6 +210,43 @@ for (const gridMode of [false, true]) {
     await fillIonInput(searchInput, '');
     await expect(workspaces.locator('.no-workspaces')).toBeHidden();
     await expect(titles).toHaveText(WORKSPACES);
+  });
+
+  msTest(`Workspace list filter in ${gridMode ? 'grid' : 'list'} mode`, async ({ workspacesStandard }) => {
+    if (!gridMode) {
+      await toggleViewMode(workspacesStandard);
+    }
+    for (const wk of WORKSPACES) {
+      if (wk !== 'wksp1') {
+        await createWorkspace(workspacesStandard, wk);
+      }
+    }
+    const container = workspacesStandard.locator('.workspaces-container');
+    const titles = gridMode ? container.locator('.workspace-card-content__title') : container.locator('.workspace-name__label');
+    const roles = gridMode ? container.locator('.workspace-card-bottom').locator('.label-role') : container.locator('.label-role-text');
+    await expect(roles).toHaveText(['Owner', 'Owner', 'Owner', 'Reader']);
+
+    const filterButton = workspacesStandard.locator('.filter-button');
+    await filterButton.click();
+    const filterPopover = workspacesStandard.locator('.filter-popover');
+    await expect(filterPopover).toBeVisible();
+    await expect(filterPopover.locator('.list-group-title')).toHaveText('Role');
+    const popoverItems = filterPopover.locator('.list-group-item');
+    await expect(popoverItems).toHaveCount(4);
+    await expect(popoverItems).toHaveText(['Owner', 'Manager', 'Contributor', 'Reader']);
+
+    await expect(titles).toHaveCount(4);
+    await expect(roles).toHaveText(['Owner', 'Owner', 'Owner', 'Reader']);
+    await popoverItems.nth(2).click();
+    await expect(titles).toHaveCount(4);
+    await expect(roles).toHaveText(['Owner', 'Owner', 'Owner', 'Reader']);
+    await popoverItems.nth(0).click();
+    await expect(titles).toHaveCount(1);
+    await expect(roles).toHaveText(['Reader']);
+    await popoverItems.nth(0).click();
+    await popoverItems.nth(3).click();
+    await expect(titles).toHaveCount(3);
+    await expect(roles).toHaveText(['Owner', 'Owner', 'Owner']);
   });
 }
 

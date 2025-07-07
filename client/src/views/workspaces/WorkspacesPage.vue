@@ -18,9 +18,14 @@
             </ion-text>
           </div>
           <ms-search-input
-            v-model="filterWorkspaceName"
+            v-model="searchFilterContent"
             placeholder="WorkspacesPage.filterPlaceholder"
             id="search-input-workspace"
+          />
+          <workspace-filter
+            :filters="workspaceFilters"
+            @change="onFilterUpdate"
+            class="mobile-filters__filter"
           />
           <ms-sorter
             id="workspace-filter-select"
@@ -43,10 +48,15 @@
           v-if="isSmallDisplay"
         >
           <ms-search-input
-            v-model="filterWorkspaceName"
+            v-model="searchFilterContent"
             placeholder="WorkspacesPage.filterPlaceholder"
             id="search-input-workspace"
             class="mobile-filters__search"
+          />
+          <workspace-filter
+            :filters="workspaceFilters"
+            @change="onFilterUpdate"
+            class="mobile-filters__filter"
           />
           <ms-sorter
             id="workspace-filter-select"
@@ -175,6 +185,7 @@ import {
 import {
   WORKSPACES_PAGE_DATA_KEY,
   WorkspaceDefaultData,
+  WorkspaceFilter,
   WorkspacesPageSavedData,
   openWorkspaceContextMenu,
   toggleFavorite,
@@ -201,6 +212,7 @@ import {
   getWorkspaceSharing as parsecGetWorkspaceSharing,
   listWorkspaces as parsecListWorkspaces,
   mountWorkspace as parsecMountWorkspace,
+  WorkspaceRole,
 } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, navigateToWorkspace, watchRoute } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events, MenuActionData } from '@/services/eventDistributor';
@@ -212,7 +224,7 @@ import { addCircle } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
 import { recentDocumentManager } from '@/services/recentDocuments';
 import { isWorkspaceAction, WorkspaceAction } from '@/views/workspaces/types';
-import { compareWorkspaceRoles } from '@/components/workspaces/utils';
+import { compareWorkspaceRoles, WorkspacesPageFilters } from '@/components/workspaces/utils';
 
 enum SortWorkspaceBy {
   Name = 'name',
@@ -228,7 +240,8 @@ const sortByAsc = ref(true);
 const workspaceList: Ref<Array<WorkspaceInfo>> = ref([]);
 const displayView = ref(DisplayState.Grid);
 const favorites: Ref<WorkspaceID[]> = ref([]);
-const filterWorkspaceName = ref('');
+const searchFilterContent = ref('');
+const workspaceFilters = ref<WorkspacesPageFilters>({ owner: true, manager: true, contributor: true, reader: true });
 const querying = ref(true);
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;
@@ -461,9 +474,9 @@ async function refreshWorkspacesList(): Promise<void> {
 }
 
 const filteredWorkspaces = computed(() => {
-  const filter = filterWorkspaceName.value.toLocaleLowerCase();
+  const filter = searchFilterContent.value.toLocaleLowerCase();
   return Array.from(workspaceList.value)
-    .filter((workspace) => workspace.currentName.toLocaleLowerCase().includes(filter))
+    .filter((workspace) => workspace.currentName.toLocaleLowerCase().includes(filter) && !isWorkspaceFiltered(workspace.currentSelfRole))
     .sort((a: WorkspaceInfo, b: WorkspaceInfo) => {
       if (favorites.value.includes(b.id) !== favorites.value.includes(a.id)) {
         return favorites.value.includes(b.id) ? 1 : -1;
@@ -590,6 +603,23 @@ const actionBarOptionsWorkspacesPage = computed(() => {
   });
   return actionsArray;
 });
+
+function isWorkspaceFiltered(role: WorkspaceRole): boolean {
+  switch (role) {
+    case WorkspaceRole.Owner:
+      return workspaceFilters.value.owner === false;
+    case WorkspaceRole.Manager:
+      return workspaceFilters.value.manager === false;
+    case WorkspaceRole.Contributor:
+      return workspaceFilters.value.contributor === false;
+    case WorkspaceRole.Reader:
+      return workspaceFilters.value.reader === false;
+  }
+}
+
+async function onFilterUpdate(): Promise<void> {
+  await refreshWorkspacesList();
+}
 </script>
 
 <style lang="scss" scoped>

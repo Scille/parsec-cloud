@@ -529,7 +529,11 @@
         },
         "getLinkError": "Impossible de récupérer un lien vers l'espace de travail",
         "linkCopiedToClipboard": "Le lien a été copié dans le presse-papier.",
-        "linkNotCopiedToClipboard": "Impossible de copier le lien. Il est possible que votre navigateur ou votre appareil n'autorise pas le copier/coller."
+        "linkNotCopiedToClipboard": "Impossible de copier le lien. Il est possible que votre navigateur ou votre appareil n'autorise pas le copier/coller.",
+        "filter": {
+            "title": "Filtrer",
+            "roles": "Rôle"
+        }
     },
     "FoldersPage": {
         "createFolder": "Nouveau dossier",
