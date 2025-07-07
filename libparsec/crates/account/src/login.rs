@@ -69,7 +69,7 @@ pub(super) async fn account_login_with_master_secret(
         .derive_secret_key_from_uuid(AUTH_METHOD_SECRET_KEY_DERIVATION_UUID);
 
     let auth_method = AccountAuthMethod {
-        time_provider: time_provider.clone(),
+        time_provider,
         id: auth_method_id,
         mac_key: auth_method_mac_key,
     };
@@ -101,11 +101,9 @@ pub(super) async fn account_login_with_master_secret(
 
     Ok(Account {
         config_dir,
-        time_provider,
         human_handle,
         cmds,
         auth_method_secret_key,
-        registration_devices_cache: Default::default(),
     })
 }
 

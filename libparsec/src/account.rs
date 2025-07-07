@@ -8,10 +8,10 @@ use std::{
 
 pub use libparsec_account::{
     AccountCreateError, AccountCreateSendValidationEmailError, AccountDeleteProceedError,
-    AccountDeleteSendValidationEmailError, AccountFetchRegistrationDevicesError,
-    AccountListInvitationsError, AccountLoginWithMasterSecretError, AccountLoginWithPasswordError,
-    AccountRecoverProceedError, AccountRecoverSendValidationEmailError,
-    AccountRegisterNewDeviceError,
+    AccountDeleteSendValidationEmailError, AccountListInvitationsError,
+    AccountListRegistrationDevicesError, AccountLoginWithMasterSecretError,
+    AccountLoginWithPasswordError, AccountRecoverProceedError,
+    AccountRecoverSendValidationEmailError, AccountRegisterNewDeviceError,
 };
 use libparsec_client_connection::{AnonymousAccountCmds, ConnectionError, ProxyConfig};
 use libparsec_types::prelude::*;
@@ -126,6 +126,7 @@ pub fn account_get_human_handle(
 ) -> Result<HumanHandle, AccountGetHumanHandleError> {
     let account_handle = account;
     let account = borrow_account(account_handle)?;
+
     Ok(account.human_handle().to_owned())
 }
 
@@ -137,26 +138,33 @@ pub async fn account_list_invitations(
     account.list_invitations().await
 }
 
-pub async fn account_fetch_registration_devices(
-    account: Handle,
-) -> Result<(), AccountFetchRegistrationDevicesError> {
-    let account_handle = account;
-    let account = borrow_account(account_handle)?;
-    account.fetch_registration_devices().await
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum AccountListRegistrationDevicesError {
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
-}
-
-pub fn account_list_registration_devices(
+pub async fn account_list_registration_devices(
     account: Handle,
 ) -> Result<HashSet<(OrganizationID, UserID)>, AccountListRegistrationDevicesError> {
     let account_handle = account;
     let account = borrow_account(account_handle)?;
-    Ok(account.list_registration_devices())
+
+    account.list_registration_devices().await
+}
+
+pub async fn account_create_registration_device(
+    account: Handle,
+    existing_local_device_access: &DeviceAccessStrategy,
+) -> Result<(), AccountCreateRegistrationDeviceError> {
+    let account_handle = account;
+    let account = borrow_account(account_handle)?;
+
+    let existing_local_device = libparsec_platform_device_loader::load_device(
+        account.config_dir(),
+        existing_local_device_access,
+    )
+    .await?;
+
+    account
+        .create_registration_device(existing_local_device)
+        .await?;
+
+    Ok(())
 }
 
 pub async fn account_register_new_device(
@@ -168,6 +176,7 @@ pub async fn account_register_new_device(
 ) -> Result<AvailableDevice, AccountRegisterNewDeviceError> {
     let account_handle = account;
     let account = borrow_account(account_handle)?;
+
     account
         .register_new_device(organization_id, user_id, new_device_label, save_strategy)
         .await
@@ -178,6 +187,7 @@ pub async fn account_delete_1_send_validation_email(
 ) -> Result<(), AccountDeleteSendValidationEmailError> {
     let account_handle = account;
     let account = borrow_account(account_handle)?;
+
     account.delete_1_send_validation_email().await
 }
 
@@ -187,6 +197,7 @@ pub async fn account_delete_2_proceed(
 ) -> Result<(), AccountDeleteProceedError> {
     let account_handle = account;
     let account = borrow_account(account_handle)?;
+
     account.delete_2_proceed(validation_code).await
 }
 
@@ -255,26 +266,6 @@ impl From<libparsec_account::AccountCreateRegistrationDeviceError>
             },
         }
     }
-}
-
-pub async fn account_create_registration_device(
-    account: Handle,
-    existing_local_device_access: &DeviceAccessStrategy,
-) -> Result<(), AccountCreateRegistrationDeviceError> {
-    let account_handle = account;
-    let account = borrow_account(account_handle)?;
-
-    let existing_local_device = libparsec_platform_device_loader::load_device(
-        account.config_dir(),
-        existing_local_device_access,
-    )
-    .await?;
-
-    account
-        .create_registration_device(existing_local_device)
-        .await?;
-
-    Ok(())
 }
 
 pub async fn account_recover_1_send_validation_email(
