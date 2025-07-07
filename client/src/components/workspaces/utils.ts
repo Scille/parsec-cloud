@@ -37,6 +37,13 @@ export interface WorkspacesPageSavedData {
   favoriteList?: WorkspaceID[];
 }
 
+export interface WorkspacesPageFilters {
+  owner: boolean;
+  manager: boolean;
+  contributor: boolean;
+  reader: boolean;
+}
+
 export const WorkspaceDefaultData: Required<WorkspacesPageSavedData> = {
   displayState: DisplayState.Grid,
   favoriteList: [],

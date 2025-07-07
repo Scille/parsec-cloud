@@ -529,7 +529,11 @@
         },
         "getLinkError": "Failed to get a link to the workspace",
         "linkCopiedToClipboard": "Workspace link has been copied to clipboard.",
-        "linkNotCopiedToClipboard": "Failed to copy the link. Your browser or device does not seem to support copy/paste."
+        "linkNotCopiedToClipboard": "Failed to copy the link. Your browser or device does not seem to support copy/paste.",
+        "filter": {
+            "title": "Filter",
+            "roles": "Role"
+        }
     },
     "FoldersPage": {
         "createFolder": "New folder",
