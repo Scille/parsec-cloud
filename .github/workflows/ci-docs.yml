@@ -26,6 +26,9 @@ jobs:
     name: Build & Check documentations
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: docs
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
         with:
@@ -49,7 +52,6 @@ jobs:
         timeout-minutes: 5
 
       - name: Install docs deps
-        working-directory: docs
         run: |
           poetry env info
           poetry install
@@ -58,17 +60,14 @@ jobs:
 
       - name: Update translation
         run: poetry run make --environment-overrides intl-fr
-        working-directory: docs
         timeout-minutes: 2
 
       - name: Wrap `*.po` files
         run: poetry run make --environment-overrides wrap
-        working-directory: docs
         timeout-minutes: 1
 
       - name: Check if `*.po` were modified
         shell: bash
-        working-directory: docs
         run: |
           if [ -n "$(git status --porcelain '*.po' | tee /dev/stderr)" ]; then
             # PO files were modified, the step fail
@@ -80,5 +79,4 @@ jobs:
 
       - name: Build html documentation
         run: poetry run make --environment-overrides html
-        working-directory: docs
         timeout-minutes: 2
