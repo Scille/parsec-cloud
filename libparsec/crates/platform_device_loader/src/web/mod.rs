@@ -4,13 +4,13 @@ pub(crate) mod error;
 pub(crate) mod internal;
 pub(crate) mod wrapper;
 
-use std::{path::Path, sync::Arc};
+use std::path::Path;
 
 use libparsec_types::prelude::*;
 
 use crate::{
-    ArchiveDeviceError, ListAvailableDeviceError, LoadDeviceError, RemoveDeviceError,
-    SaveDeviceError, UpdateDeviceError,
+    ArchiveDeviceError, ListAvailableDeviceError, LoadCiphertextKeyError, ReadFileError,
+    RemoveDeviceError, SaveDeviceError, UpdateDeviceError,
 };
 use internal::Storage;
 
@@ -42,15 +42,42 @@ pub async fn list_available_devices(
  * Save & load
  */
 
-pub async fn load_device(
-    access: &DeviceAccessStrategy,
-) -> Result<(Arc<LocalDevice>, DateTime), LoadDeviceError> {
+pub async fn read_file(file: &Path) -> Result<Vec<u8>, ReadFileError> {
     let Ok(storage) = Storage::new().await.inspect_err(|e| {
         log::error!("Failed to access storage: {e}");
     }) else {
-        return Err(LoadDeviceError::StorageNotAvailable);
+        return Err(ReadFileError::StorageNotAvailable);
     };
-    storage.load_device(access).await.map_err(Into::into)
+    storage
+        .read_file(file)
+        .await
+        .map_err(|err| ReadFileError::Internal(anyhow::anyhow!("{err}")))
+}
+
+pub async fn load_ciphertext_key(
+    access: &DeviceAccessStrategy,
+    device_file: &DeviceFile,
+) -> Result<SecretKey, LoadCiphertextKeyError> {
+    match (access, &device_file) {
+        (DeviceAccessStrategy::Password { password, .. }, DeviceFile::Password(device)) => {
+            let key = device
+                .algorithm
+                .compute_secret_key(password)
+                .map_err(|_| LoadCiphertextKeyError::InvalidData)?;
+
+            Ok(key)
+        }
+
+        (
+            DeviceAccessStrategy::AccountVault { ciphertext_key, .. },
+            DeviceFile::AccountVault(_),
+        ) => Ok(ciphertext_key.clone()),
+
+        (DeviceAccessStrategy::Keyring { .. }, _) => panic!("Keyring not supported on Web"),
+        (DeviceAccessStrategy::Smartcard { .. }, _) => panic!("Smartcard not supported on Web"),
+
+        _ => Err(LoadCiphertextKeyError::InvalidData),
+    }
 }
 
 pub async fn save_device(
@@ -70,43 +97,28 @@ pub async fn save_device(
 }
 
 pub async fn update_device(
-    current_access: &DeviceAccessStrategy,
+    device: &LocalDevice,
+    created_on: DateTime,
+    current_key_file: &Path,
     new_access: &DeviceAccessStrategy,
-    overwrite_server_addr: Option<ParsecAddr>,
-) -> Result<(AvailableDevice, ParsecAddr), UpdateDeviceError> {
+) -> Result<AvailableDevice, UpdateDeviceError> {
     let Ok(storage) = Storage::new().await.inspect_err(|e| {
         log::error!("Failed to access storage: {e}");
     }) else {
         return Err(UpdateDeviceError::StorageNotAvailable);
     };
 
-    let (mut device, created_on) = storage.load_device(current_access).await?;
-
-    let old_server_addr = ParsecAddr::new(
-        device.organization_addr.hostname().to_owned(),
-        Some(device.organization_addr.port()),
-        device.organization_addr.use_ssl(),
-    );
-    if let Some(overwrite_server_addr) = overwrite_server_addr {
-        Arc::make_mut(&mut device).organization_addr = ParsecOrganizationAddr::new(
-            overwrite_server_addr,
-            device.organization_addr.organization_id().to_owned(),
-            device.organization_addr.root_verify_key().to_owned(),
-        );
-    }
-
     let available_device = storage.save_device(new_access, &device, created_on).await?;
 
-    let key_file = current_access.key_file();
     let new_key_file = new_access.key_file();
 
-    if key_file != new_key_file {
-        if let Err(err) = storage.remove_device(key_file).await {
-            log::warn!("Cannot remove old key file {key_file:?}: {err}");
+    if current_key_file != new_key_file {
+        if let Err(err) = storage.remove_device(current_key_file).await {
+            log::warn!("Cannot remove old key file {current_key_file:?}: {err}");
         }
     }
 
-    Ok((available_device, old_server_addr))
+    Ok(available_device)
 }
 
 pub async fn archive_device(device_path: &Path) -> Result<(), ArchiveDeviceError> {

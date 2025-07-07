@@ -89,15 +89,10 @@ error_set::error_set! {
             path: PathBuf
         }
     };
-    LoadDeviceError = AwaitPromiseError
-        || RmpDecodeError
-        || {
-            GetFile(GetFileHandleError),
-            ReadFile(ReadToEndError),
-            InvalidFileType,
-            GetSecretKey(libparsec_crypto::CryptoError),
-            DecryptAndLoad(crate::DecryptDeviceFileError),
-        };
+    ReadFile = {
+        GetFile(GetFileHandleError),
+        ReadFile(ReadToEndError),
+    };
     SaveDeviceError = SaveDeviceFileError;
     SaveDeviceFileError = GetFileHandleError || WriteAllError;
     RemoveEntryError = NotFoundError || DomExceptionError || AwaitPromiseError || GetDirectoryHandleError;
@@ -124,31 +119,11 @@ macro_rules! impl_from_new_storage_error {
 }
 
 impl_from_new_storage_error!(
-    crate::LoadDeviceError,
     crate::SaveDeviceError,
     crate::UpdateDeviceError,
     crate::ArchiveDeviceError,
     crate::RemoveDeviceError
 );
-
-impl From<LoadDeviceError> for crate::LoadDeviceError {
-    fn from(value: LoadDeviceError) -> Self {
-        match value {
-            LoadDeviceError::GetFile(get_file_error) => match get_file_error {
-                GetFileHandleError::NotFound { .. } => {
-                    Self::InvalidPath(anyhow::anyhow!("{get_file_error}"))
-                }
-                _ => Self::Internal(anyhow::anyhow!("{get_file_error}")),
-            },
-            LoadDeviceError::ReadFile(_) => Self::Internal(anyhow::anyhow!("{value}")),
-            LoadDeviceError::InvalidFileType => Self::InvalidData,
-            LoadDeviceError::GetSecretKey(_) => Self::DecryptionFailed,
-            LoadDeviceError::DecryptAndLoad(_) => Self::DecryptionFailed,
-            LoadDeviceError::Promise { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            LoadDeviceError::RmpDecode(_) => Self::InvalidData,
-        }
-    }
-}
 
 impl From<SaveDeviceError> for crate::SaveDeviceError {
     fn from(value: SaveDeviceError) -> Self {
@@ -164,20 +139,6 @@ impl From<SaveDeviceError> for crate::SaveDeviceError {
             SaveDeviceError::Cast { .. } => Self::Internal(anyhow::anyhow!("{value}")),
             SaveDeviceError::Promise { .. } => Self::Internal(anyhow::anyhow!("{value}")),
             SaveDeviceError::NoSpaceLeft { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-        }
-    }
-}
-
-impl From<LoadDeviceError> for crate::UpdateDeviceError {
-    fn from(value: LoadDeviceError) -> Self {
-        match value {
-            LoadDeviceError::InvalidFileType => Self::InvalidData,
-            LoadDeviceError::GetSecretKey(_) => Self::DecryptionFailed,
-            LoadDeviceError::DecryptAndLoad(e) => e.into(),
-            LoadDeviceError::Promise { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            LoadDeviceError::RmpDecode(_) => Self::InvalidData,
-            LoadDeviceError::GetFile(_) => Self::Internal(anyhow::anyhow!("{value}")),
-            LoadDeviceError::ReadFile(_) => Self::Internal(anyhow::anyhow!("{value}")),
         }
     }
 }

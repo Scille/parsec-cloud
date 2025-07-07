@@ -3,17 +3,15 @@
 use itertools::Itertools as _;
 use keyring::Entry as KeyringEntry;
 use libparsec_platform_async::future::FutureExt as _;
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
-};
+use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
 use libparsec_types::prelude::*;
 
 use crate::{
-    get_device_archive_path, ArchiveDeviceError, ListAvailableDeviceError, LoadDeviceError,
-    RemoveDeviceError, SaveDeviceError, UpdateDeviceError, DEVICE_FILE_EXT,
+    get_device_archive_path, ArchiveDeviceError, ListAvailableDeviceError, LoadCiphertextKeyError,
+    LoadDeviceError, ReadFileError, RemoveDeviceError, SaveDeviceError, UpdateDeviceError,
+    DEVICE_FILE_EXT,
 };
 
 const KEYRING_SERVICE: &str = "parsec";
@@ -113,53 +111,58 @@ fn load_available_device(
  * Save & load
  */
 
-pub async fn load_device(
-    access: &DeviceAccessStrategy,
-) -> Result<(Arc<LocalDevice>, DateTime), LoadDeviceError> {
-    let key_file = access.key_file();
-    let content = tokio::fs::read(key_file)
+pub async fn read_file(file: &Path) -> Result<Vec<u8>, ReadFileError> {
+    tokio::fs::read(file)
         .await
-        .map_err(|e| LoadDeviceError::InvalidPath(e.into()))?;
+        .map_err(|e| ReadFileError::Internal(e.into()))
+}
 
-    // Regular load
-    let device_file = DeviceFile::load(&content).map_err(|_| LoadDeviceError::InvalidData)?;
-
-    let (key, created_on) = match (access, &device_file) {
+pub async fn load_ciphertext_key(
+    access: &DeviceAccessStrategy,
+    device_file: &DeviceFile,
+) -> Result<SecretKey, LoadCiphertextKeyError> {
+    match (access, &device_file) {
         (DeviceAccessStrategy::Keyring { .. }, DeviceFile::Keyring(device)) => {
-            let entry = KeyringEntry::new(&device.keyring_service, &device.keyring_user)?;
+            let entry =
+                KeyringEntry::new(&device.keyring_service, &device.keyring_user).map_err(|e| {
+                    LoadCiphertextKeyError::Internal(anyhow::anyhow!("OS Keyring error: {e}"))
+                })?;
 
-            let passphrase = entry.get_password()?.into();
+            let passphrase = entry
+                .get_password()
+                .map_err(|e| {
+                    LoadCiphertextKeyError::Internal(anyhow::anyhow!(
+                        "Cannot retrieve password from OS Keyring: {e}"
+                    ))
+                })?
+                .into();
 
             let key = SecretKey::from_recovery_passphrase(passphrase)
-                .map_err(|_| LoadDeviceError::DecryptionFailed)?;
+                .map_err(|_| LoadCiphertextKeyError::DecryptionFailed)?;
 
-            Ok((key, device.created_on))
+            Ok(key)
         }
 
         (DeviceAccessStrategy::Password { password, .. }, DeviceFile::Password(device)) => {
             let key = device
                 .algorithm
                 .compute_secret_key(password)
-                .map_err(|_| LoadDeviceError::InvalidData)?;
+                .map_err(|_| LoadCiphertextKeyError::InvalidData)?;
 
-            Ok((key, device.created_on))
+            Ok(key)
         }
 
-        (DeviceAccessStrategy::Smartcard { .. }, DeviceFile::Smartcard(_device)) => {
+        (DeviceAccessStrategy::Smartcard { .. }, DeviceFile::Smartcard(_)) => {
             todo!("Load smartcard device")
         }
 
         (
             DeviceAccessStrategy::AccountVault { ciphertext_key, .. },
-            DeviceFile::AccountVault(device),
-        ) => Ok((ciphertext_key.clone(), device.created_on)),
+            DeviceFile::AccountVault(_),
+        ) => Ok(ciphertext_key.clone()),
 
-        _ => Err(LoadDeviceError::InvalidData),
-    }?;
-
-    let device = super::decrypt_device_file(&device_file, &key)?;
-
-    Ok((Arc::new(device), created_on))
+        _ => Err(LoadCiphertextKeyError::InvalidData),
+    }
 }
 
 async fn save_content(key_file: &PathBuf, file_content: &[u8]) -> Result<(), SaveDeviceError> {
@@ -343,41 +346,31 @@ pub async fn save_device(
 }
 
 pub async fn update_device(
-    current_access: &DeviceAccessStrategy,
+    device: &LocalDevice,
+    created_on: DateTime,
+    current_key_file: &Path,
     new_access: &DeviceAccessStrategy,
-    overwrite_server_addr: Option<ParsecAddr>,
-) -> Result<(AvailableDevice, ParsecAddr), UpdateDeviceError> {
-    let (mut device, created_on) = load_device(current_access).await?;
+) -> Result<AvailableDevice, UpdateDeviceError> {
+    let available_device = save_device(new_access, device, created_on)
+        .await
+        .map_err(|err| match err {
+            SaveDeviceError::StorageNotAvailable => UpdateDeviceError::StorageNotAvailable,
+            SaveDeviceError::InvalidPath(err) => UpdateDeviceError::InvalidPath(err),
+            SaveDeviceError::Internal(err) => UpdateDeviceError::Internal(err),
+        })?;
 
-    let old_server_addr = ParsecAddr::new(
-        device.organization_addr.hostname().to_owned(),
-        Some(device.organization_addr.port()),
-        device.organization_addr.use_ssl(),
-    );
-    if let Some(overwrite_server_addr) = overwrite_server_addr {
-        Arc::make_mut(&mut device).organization_addr = ParsecOrganizationAddr::new(
-            overwrite_server_addr,
-            device.organization_addr.organization_id().to_owned(),
-            device.organization_addr.root_verify_key().to_owned(),
-        );
-    }
-
-    let available_device = save_device(new_access, &device, created_on).await?;
-
-    let key_file = current_access.key_file();
     let new_key_file = new_access.key_file();
 
-    if key_file != new_key_file {
-        if let Err(err) = tokio::fs::remove_file(key_file).await {
-            log::warn!("Cannot remove old key file {key_file:?}: {err}");
+    if current_key_file != new_key_file {
+        if let Err(err) = tokio::fs::remove_file(current_key_file).await {
+            log::warn!("Cannot remove old key file {current_key_file:?}: {err}");
         }
     }
 
-    Ok((available_device, old_server_addr))
+    Ok(available_device)
 }
 
-/// Archive a device identified by its path.
-pub async fn archive_device(device_path: &Path) -> Result<(), ArchiveDeviceError> {
+pub(super) async fn archive_device(device_path: &Path) -> Result<(), ArchiveDeviceError> {
     let archive_device_path = get_device_archive_path(device_path);
 
     log::debug!(
@@ -391,7 +384,7 @@ pub async fn archive_device(device_path: &Path) -> Result<(), ArchiveDeviceError
         .map_err(|e| ArchiveDeviceError::Internal(e.into()))
 }
 
-pub async fn remove_device(device_path: &Path) -> Result<(), RemoveDeviceError> {
+pub(super) async fn remove_device(device_path: &Path) -> Result<(), RemoveDeviceError> {
     log::debug!("Removing device {}", device_path.display());
 
     tokio::fs::remove_file(device_path)

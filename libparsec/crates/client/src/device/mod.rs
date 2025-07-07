@@ -18,7 +18,7 @@ pub async fn remove_device(
     config: &ClientConfig,
     device: &AvailableDevice,
 ) -> Result<(), RemoveDeviceError> {
-    libparsec_platform_device_loader::remove_device(&device.key_file_path)
+    libparsec_platform_device_loader::remove_device(&config.config_dir, &device.key_file_path)
         .await
         .map_err(RemoveDeviceError::DeviceRemovalError)?;
     libparsec_platform_storage::remove_device_data(&config.data_base_dir, device.device_id)
