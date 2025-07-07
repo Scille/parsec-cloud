@@ -40,18 +40,24 @@
             "type": "DeviceLabel"
         },
         {
+            // Certificate here refers to the X509 certificate that describes what is
+            // in the smartcard.
             "name": "certificate_id",
             "type": "String"
         },
         {
+            // Certificate here refers to the X509 certificate that describes what is
+            // in the smartcard.
             "name": "certificate_sha1",
             "type": "RequiredOption<Bytes>"
         },
         {
+            // `SecretKey` encrypted by asymmetric key from the smartcard.
             "name": "encrypted_key",
             "type": "Bytes"
         },
         {
+            // `LocalDevice` encrypted with the secret key from the `encrypted_key` field.
             "name": "ciphertext",
             "type": "Bytes"
         }

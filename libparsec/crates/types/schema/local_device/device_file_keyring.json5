@@ -48,6 +48,8 @@
             "type": "String"
         },
         {
+            // `LocalDevice` encrypted with a secret key which is itself stored
+            // as a passphrase in the OS keyring.
             "name": "ciphertext",
             "type": "Bytes"
         }
