@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{path::Path, rc::Rc, sync::Arc};
+use std::{path::Path, rc::Rc};
 
 use libparsec_platform_async::{lock::Mutex, stream::StreamExt};
 use libparsec_types::prelude::*;
@@ -94,35 +94,9 @@ impl Storage {
         Ok(devices)
     }
 
-    pub(crate) async fn load_device(
-        &self,
-        access: &DeviceAccessStrategy,
-    ) -> Result<(Arc<LocalDevice>, DateTime), LoadDeviceError> {
-        let file = self
-            .root_dir
-            .get_file_from_path(access.key_file(), None)
-            .await?;
-        let raw_data = file.read_to_end().await?;
-        let device = DeviceFile::load(&raw_data)?;
-        let (key, created_on) = match (access, &device) {
-            (DeviceAccessStrategy::Password { password, .. }, DeviceFile::Password(device)) => {
-                let key = device
-                    .algorithm
-                    .compute_secret_key(password)
-                    .map_err(LoadDeviceError::GetSecretKey)?;
-                Ok((key, device.created_on))
-            }
-            (
-                DeviceAccessStrategy::AccountVault { ciphertext_key, .. },
-                DeviceFile::AccountVault(device),
-            ) => Ok((ciphertext_key.clone(), device.created_on)),
-            (DeviceAccessStrategy::Keyring { .. }, _) => panic!("Keyring not supported on Web"),
-            (DeviceAccessStrategy::Smartcard { .. }, _) => panic!("Smartcard not supported on Web"),
-            _ => Err(LoadDeviceError::InvalidFileType),
-        }?;
-
-        let device = crate::decrypt_device_file(&device, &key)?;
-        Ok((Arc::new(device), created_on))
+    pub(crate) async fn read_file(&self, file: &Path) -> Result<Vec<u8>, ReadFile> {
+        let file = self.root_dir.get_file_from_path(file, None).await?;
+        file.read_to_end().await.map_err(|e| e.into())
     }
 
     pub(crate) async fn save_device(

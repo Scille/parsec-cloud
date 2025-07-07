@@ -31,6 +31,27 @@ pub const PARSEC_BASE_CONFIG_DIR: &str = "PARSEC_BASE_CONFIG_DIR";
 pub const PARSEC_BASE_DATA_DIR: &str = "PARSEC_BASE_DATA_DIR";
 pub const PARSEC_BASE_HOME_DIR: &str = "PARSEC_BASE_HOME_DIR";
 
+#[derive(Debug, thiserror::Error)]
+enum ReadFileError {
+    #[cfg_attr(not(target_arch = "wasm32"), expect(dead_code))]
+    #[error("Device storage is not available")]
+    StorageNotAvailable,
+    #[error(transparent)]
+    Internal(anyhow::Error),
+}
+
+#[derive(Debug, thiserror::Error)]
+enum LoadCiphertextKeyError {
+    #[error("Invalid data")]
+    InvalidData,
+    #[cfg_attr(target_arch = "wasm32", expect(dead_code))]
+    #[error("Decryption failed")]
+    DecryptionFailed,
+    #[cfg_attr(target_arch = "wasm32", expect(dead_code))]
+    #[error(transparent)]
+    Internal(anyhow::Error),
+}
+
 pub fn get_default_data_base_dir() -> PathBuf {
     #[cfg(target_arch = "wasm32")]
     {
@@ -122,6 +143,50 @@ pub async fn list_available_devices(
 }
 
 #[derive(Debug, thiserror::Error)]
+pub enum LoadAvailableDeviceError {
+    #[error("Device storage is not available")]
+    StorageNotAvailable,
+    #[error("Invalid path: {}", .0)]
+    InvalidPath(anyhow::Error),
+    #[error("Invalid data")]
+    InvalidData,
+    #[error(transparent)]
+    Internal(anyhow::Error),
+}
+
+/// Similar than `load_device`, but without the decryption part.
+///
+/// This is only needed for device file vault access that needs its
+/// organization & device IDs to determine which account vault item
+/// contains its decryption key.
+///
+/// Note `config_dir` is only used as discriminant for the testbed here
+pub async fn load_available_device(
+    #[cfg_attr(not(feature = "test-with-testbed"), allow(unused_variables))] config_dir: &Path,
+    device_file: PathBuf,
+) -> Result<AvailableDevice, LoadAvailableDeviceError> {
+    #[cfg(feature = "test-with-testbed")]
+    if let Some(all_available_devices) = testbed::maybe_list_available_devices(config_dir) {
+        if let Some(result) = all_available_devices
+            .into_iter()
+            .find(|c_access| c_access.key_file_path == device_file)
+        {
+            return Ok(result);
+        }
+    }
+
+    let file_content = platform::read_file(&device_file)
+        .await
+        .map_err(|err| match err {
+            ReadFileError::StorageNotAvailable => LoadAvailableDeviceError::StorageNotAvailable,
+            ReadFileError::Internal(err) => LoadAvailableDeviceError::InvalidPath(err),
+        })?;
+
+    load_available_device_from_blob(device_file, &file_content)
+        .map_err(|_| LoadAvailableDeviceError::InvalidData)
+}
+
+#[derive(Debug, thiserror::Error)]
 pub enum LoadDeviceError {
     #[error("Device storage is not available")]
     StorageNotAvailable,
@@ -146,9 +211,26 @@ pub async fn load_device(
         return result;
     }
 
-    platform::load_device(access)
+    let file_content = platform::read_file(access.key_file())
         .await
-        .map(|(device, _)| device)
+        .map_err(|err| match err {
+            ReadFileError::StorageNotAvailable => LoadDeviceError::StorageNotAvailable,
+            ReadFileError::Internal(err) => LoadDeviceError::InvalidPath(err),
+        })?;
+    let device_file = DeviceFile::load(&file_content).map_err(|_| LoadDeviceError::InvalidData)?;
+    let ciphertext_key = platform::load_ciphertext_key(access, &device_file)
+        .await
+        .map_err(|err| match err {
+            LoadCiphertextKeyError::InvalidData => LoadDeviceError::InvalidData,
+            LoadCiphertextKeyError::DecryptionFailed => LoadDeviceError::DecryptionFailed,
+            LoadCiphertextKeyError::Internal(err) => LoadDeviceError::Internal(err),
+        })?;
+    let device = decrypt_device_file(&device_file, &ciphertext_key).map_err(|err| match err {
+        DecryptDeviceFileError::Decrypt(_) => LoadDeviceError::DecryptionFailed,
+        DecryptDeviceFileError::Load(_) => LoadDeviceError::InvalidData,
+    })?;
+
+    Ok(Arc::new(device))
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -190,28 +272,6 @@ pub enum UpdateDeviceError {
     Internal(anyhow::Error),
 }
 
-impl From<LoadDeviceError> for UpdateDeviceError {
-    fn from(value: LoadDeviceError) -> Self {
-        match value {
-            LoadDeviceError::StorageNotAvailable => Self::StorageNotAvailable,
-            LoadDeviceError::DecryptionFailed => Self::DecryptionFailed,
-            LoadDeviceError::InvalidData => Self::InvalidData,
-            LoadDeviceError::InvalidPath(e) => Self::InvalidPath(e),
-            LoadDeviceError::Internal(e) => Self::Internal(e),
-        }
-    }
-}
-
-impl From<SaveDeviceError> for UpdateDeviceError {
-    fn from(value: SaveDeviceError) -> Self {
-        match value {
-            SaveDeviceError::StorageNotAvailable => Self::StorageNotAvailable,
-            SaveDeviceError::InvalidPath(e) => Self::InvalidPath(e),
-            SaveDeviceError::Internal(e) => Self::Internal(e),
-        }
-    }
-}
-
 /// Note `config_dir` is only used as discriminant for the testbed here
 pub async fn update_device_change_authentication(
     #[cfg_attr(not(feature = "test-with-testbed"), allow(unused_variables))] config_dir: &Path,
@@ -224,9 +284,39 @@ pub async fn update_device_change_authentication(
         return result.map(|(available_device, _)| available_device);
     }
 
-    platform::update_device(current_access, new_access, None)
+    let current_key_file = current_access.key_file();
+
+    // 1. Load the current device keys file...
+
+    let file_content = platform::read_file(current_key_file)
         .await
-        .map(|(available_device, _)| available_device)
+        .map_err(|err| match err {
+            ReadFileError::StorageNotAvailable => UpdateDeviceError::StorageNotAvailable,
+            ReadFileError::Internal(err) => UpdateDeviceError::InvalidPath(err),
+        })?;
+    let device_file =
+        DeviceFile::load(&file_content).map_err(|_| UpdateDeviceError::InvalidData)?;
+    let ciphertext_key = platform::load_ciphertext_key(current_access, &device_file)
+        .await
+        .map_err(|err| match err {
+            LoadCiphertextKeyError::InvalidData => UpdateDeviceError::InvalidData,
+            LoadCiphertextKeyError::DecryptionFailed => UpdateDeviceError::DecryptionFailed,
+            LoadCiphertextKeyError::Internal(err) => UpdateDeviceError::Internal(err),
+        })?;
+    let device = decrypt_device_file(&device_file, &ciphertext_key).map_err(|err| match err {
+        DecryptDeviceFileError::Decrypt(_) => UpdateDeviceError::DecryptionFailed,
+        DecryptDeviceFileError::Load(_) => UpdateDeviceError::InvalidData,
+    })?;
+
+    // 2. ...and ask to overwrite it
+
+    platform::update_device(
+        &device,
+        device_file.created_on(),
+        current_key_file,
+        new_access,
+    )
+    .await
 }
 
 /// Note `config_dir` is only used as discriminant for the testbed here
@@ -244,9 +334,47 @@ pub async fn update_device_overwrite_server_addr(
         return result.map(|(_, old_server_addr)| old_server_addr);
     }
 
-    platform::update_device(access, access, Some(new_server_addr))
+    let key_file = access.key_file();
+
+    // 1. Load the current device keys file...
+
+    let file_content = platform::read_file(key_file)
         .await
-        .map(|(_, old_server_addr)| old_server_addr)
+        .map_err(|err| match err {
+            ReadFileError::StorageNotAvailable => UpdateDeviceError::StorageNotAvailable,
+            ReadFileError::Internal(err) => UpdateDeviceError::InvalidPath(err),
+        })?;
+    let device_file =
+        DeviceFile::load(&file_content).map_err(|_| UpdateDeviceError::InvalidData)?;
+    let ciphertext_key = platform::load_ciphertext_key(access, &device_file)
+        .await
+        .map_err(|err| match err {
+            LoadCiphertextKeyError::InvalidData => UpdateDeviceError::InvalidData,
+            LoadCiphertextKeyError::DecryptionFailed => UpdateDeviceError::DecryptionFailed,
+            LoadCiphertextKeyError::Internal(err) => UpdateDeviceError::Internal(err),
+        })?;
+    let mut device =
+        decrypt_device_file(&device_file, &ciphertext_key).map_err(|err| match err {
+            DecryptDeviceFileError::Decrypt(_) => UpdateDeviceError::DecryptionFailed,
+            DecryptDeviceFileError::Load(_) => UpdateDeviceError::InvalidData,
+        })?;
+
+    let old_server_addr = ParsecAddr::new(
+        device.organization_addr.hostname().to_owned(),
+        Some(device.organization_addr.port()),
+        device.organization_addr.use_ssl(),
+    );
+    device.organization_addr = ParsecOrganizationAddr::new(
+        new_server_addr,
+        device.organization_addr.organization_id().to_owned(),
+        device.organization_addr.root_verify_key().to_owned(),
+    );
+
+    // 2. ...and ask to overwrite it
+
+    platform::update_device(&device, device_file.created_on(), key_file, access).await?;
+
+    Ok(old_server_addr)
 }
 
 pub fn is_keyring_available() -> bool {
@@ -276,7 +404,18 @@ pub(crate) fn get_device_archive_path(path: &Path) -> PathBuf {
     }
 }
 
-pub use platform::archive_device;
+/// Archive a device identified by its path.
+pub async fn archive_device(
+    #[cfg_attr(not(feature = "test-with-testbed"), allow(unused_variables))] config_dir: &Path,
+    device_path: &Path,
+) -> Result<(), ArchiveDeviceError> {
+    #[cfg(feature = "test-with-testbed")]
+    if let Some(result) = testbed::maybe_archive_device(config_dir, device_path) {
+        return result;
+    }
+
+    platform::archive_device(device_path).await
+}
 
 #[derive(Debug, thiserror::Error)]
 pub enum RemoveDeviceError {
@@ -286,7 +425,17 @@ pub enum RemoveDeviceError {
     Internal(#[from] anyhow::Error),
 }
 
-pub use platform::remove_device;
+pub async fn remove_device(
+    #[cfg_attr(not(feature = "test-with-testbed"), allow(unused_variables))] config_dir: &Path,
+    device_path: &Path,
+) -> Result<(), RemoveDeviceError> {
+    #[cfg(feature = "test-with-testbed")]
+    if let Some(result) = testbed::maybe_remove_device(config_dir, device_path) {
+        return result;
+    }
+
+    platform::remove_device(device_path).await
+}
 
 #[derive(Debug, thiserror::Error)]
 pub enum LoadRecoveryDeviceError {
@@ -468,29 +617,11 @@ pub enum DecryptDeviceFileError {
     Load(&'static str),
 }
 
-impl From<DecryptDeviceFileError> for LoadDeviceError {
-    fn from(value: DecryptDeviceFileError) -> Self {
-        match value {
-            DecryptDeviceFileError::Decrypt(_) => LoadDeviceError::DecryptionFailed,
-            DecryptDeviceFileError::Load(_) => LoadDeviceError::InvalidData,
-        }
-    }
-}
-
-impl From<DecryptDeviceFileError> for UpdateDeviceError {
-    fn from(value: DecryptDeviceFileError) -> Self {
-        match value {
-            DecryptDeviceFileError::Decrypt(_) => UpdateDeviceError::DecryptionFailed,
-            DecryptDeviceFileError::Load(_) => UpdateDeviceError::InvalidData,
-        }
-    }
-}
-
 fn decrypt_device_file(
     device_file: &DeviceFile,
-    key: &SecretKey,
+    ciphertext_key: &SecretKey,
 ) -> Result<LocalDevice, DecryptDeviceFileError> {
-    let cleartext = key
+    let cleartext = ciphertext_key
         .decrypt(device_file.ciphertext())
         .map_err(DecryptDeviceFileError::Decrypt)
         .map(zeroize::Zeroizing::new)?;

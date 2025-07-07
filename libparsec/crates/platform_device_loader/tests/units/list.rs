@@ -4,7 +4,10 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
-use crate::list_available_devices;
+use crate::{
+    archive_device, list_available_devices, remove_device, save_device,
+    update_device_change_authentication, update_device_overwrite_server_addr,
+};
 use libparsec_testbed::TestbedEnv;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -336,18 +339,133 @@ async fn testbed(env: &TestbedEnv) {
         builder.new_user("mallory"); // mallory@dev1
     })
     .await;
+    let organization_addr = env.local_device("alice@dev1").organization_addr.clone();
+    let devices = list_available_devices(&env.discriminant_dir).await.unwrap();
+    p_assert_eq!(
+        devices
+            .iter()
+            .map(|a| a.device_id)
+            .collect::<Vec<DeviceID>>(),
+        [
+            "mallory@dev1".parse().unwrap(),
+            "bob@dev1".parse().unwrap(),
+            "alice@dev1".parse().unwrap(),
+            "bob@dev2".parse().unwrap(),
+            "alice@dev2".parse().unwrap(),
+        ]
+    );
+    let alice1 = devices
+        .iter()
+        .find(|x| x.device_id == "alice@dev1".parse().unwrap())
+        .unwrap();
+    let alice2 = devices
+        .iter()
+        .find(|x| x.device_id == "alice@dev2".parse().unwrap())
+        .unwrap();
+    let bob1 = devices
+        .iter()
+        .find(|x| x.device_id == "bob@dev1".parse().unwrap())
+        .unwrap();
+    let bob2 = devices
+        .iter()
+        .find(|x| x.device_id == "bob@dev2".parse().unwrap())
+        .unwrap();
+    let mallory = devices
+        .iter()
+        .find(|x| x.device_id == "mallory@dev1".parse().unwrap())
+        .unwrap();
+
+    // Check list alteration
+
+    remove_device(&env.discriminant_dir, &alice1.key_file_path)
+        .await
+        .unwrap();
+
+    archive_device(&env.discriminant_dir, &alice2.key_file_path)
+        .await
+        .unwrap();
+
+    let zack_ciphertext_key =
+        hex!("f22f042ac3bc5c70d14dcae7f896d5b4f7ef032579b7589b767e66a74cc8ede3").into();
+    let zack_key_file = env.discriminant_dir.join("zack_new_device.keys");
+    let zack = save_device(
+        &env.discriminant_dir,
+        &DeviceAccessStrategy::AccountVault {
+            key_file: zack_key_file,
+            ciphertext_key: zack_ciphertext_key,
+        },
+        &LocalDevice::generate_new_device(
+            organization_addr.clone(),
+            UserProfile::Admin,
+            HumanHandle::from_raw("zack@dev1", "Zack").unwrap(),
+            "PC1".parse().unwrap(),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ),
+    )
+    .await
+    .unwrap();
+
+    update_device_overwrite_server_addr(
+        &env.discriminant_dir,
+        &DeviceAccessStrategy::Password {
+            key_file: bob1.key_file_path.clone(),
+            password: "P@ssw0rd.".to_string().into(),
+        },
+        ParsecAddr::new("newhost.example.com".to_string(), None, true),
+    )
+    .await
+    .unwrap();
+
+    let bob2_ciphertext_key =
+        hex!("a7fa4758e0e71fd58467194b50f657d1e717132b66419fae9b836c0ea39fb05b").into();
+    let bob2_new_key_file = env.discriminant_dir.join("bob2_new_device.keys");
+    update_device_change_authentication(
+        &env.discriminant_dir,
+        &DeviceAccessStrategy::Password {
+            key_file: bob2.key_file_path.clone(),
+            password: "P@ssw0rd.".to_string().into(),
+        },
+        &DeviceAccessStrategy::AccountVault {
+            key_file: bob2_new_key_file,
+            ciphertext_key: bob2_ciphertext_key,
+        },
+    )
+    .await
+    .unwrap();
+
     let devices = list_available_devices(&env.discriminant_dir).await.unwrap();
     p_assert_eq!(
         devices
             .into_iter()
-            .map(|a| a.device_id)
-            .collect::<Vec<DeviceID>>(),
+            .map(|a| (a.device_id, a.server_url, a.ty))
+            .collect::<Vec<(DeviceID, String, DeviceFileType)>>(),
         [
-            "alice@dev1".parse().unwrap(),
-            "bob@dev1".parse().unwrap(),
-            "alice@dev2".parse().unwrap(),
-            "bob@dev2".parse().unwrap(),
-            "mallory@dev1".parse().unwrap(),
+            (
+                bob2.device_id,
+                "https://noserver.example.com/".to_string(),
+                DeviceFileType::AccountVault,
+            ),
+            (
+                mallory.device_id,
+                "https://noserver.example.com/".to_string(),
+                DeviceFileType::Password,
+            ),
+            (
+                bob1.device_id,
+                "https://newhost.example.com/".to_string(),
+                DeviceFileType::Password,
+            ),
+            (
+                zack.device_id,
+                "https://noserver.example.com/".to_string(),
+                DeviceFileType::AccountVault,
+            ),
         ]
     );
 }

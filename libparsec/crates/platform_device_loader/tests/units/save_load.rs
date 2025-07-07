@@ -2,7 +2,7 @@
 
 use std::path::Path;
 
-use crate::{load_device, save_device};
+use crate::{load_available_device, load_device, save_device};
 use libparsec_tests_fixtures::{tmp_path, TmpPath};
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
@@ -111,4 +111,11 @@ async fn save_load(#[case] kind: DeviceFileType, tmp_path: TmpPath) {
     let res = load_device(Path::new(""), &access).await.unwrap();
 
     p_assert_eq!(*res, device);
+
+    // Also test `load_available_device`
+
+    let available_device = load_available_device(Path::new(""), access.key_file().to_owned())
+        .await
+        .unwrap();
+    p_assert_eq!(available_device, expected_available_device)
 }

@@ -9,6 +9,7 @@ use libparsec_types::prelude::*;
 #[case::password(DeviceFileType::Password)]
 // TODO: support keyring device on web
 #[cfg_attr(not(target_arch = "wasm32"), case::keyring(DeviceFileType::Keyring))]
+#[case::account_vault(DeviceFileType::AccountVault)]
 async fn save_list(#[case] kind: DeviceFileType, tmp_path: TmpPath) {
     use crate::tests::utils::key_present_in_system;
 
@@ -68,6 +69,28 @@ async fn save_list(#[case] kind: DeviceFileType, tmp_path: TmpPath) {
                 human_handle: device.human_handle.clone(),
                 device_label: device.device_label.clone(),
                 ty: DeviceFileType::Password,
+            };
+            (access, expected_available_device)
+        }
+        DeviceFileType::AccountVault => {
+            let access = DeviceAccessStrategy::AccountVault {
+                key_file: key_file.clone(),
+                ciphertext_key: hex!(
+                    "2f64db9fae22c574ade28c44cd206c00f8119e9b49dacc131dad31c043ebe766"
+                )
+                .into(),
+            };
+            let expected_available_device = AvailableDevice {
+                key_file_path: key_file.clone(),
+                created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
+                protected_on: "2000-01-01T00:00:00Z".parse().unwrap(),
+                server_url: "http://test.invalid/".to_string(),
+                organization_id: device.organization_id().to_owned(),
+                user_id: device.user_id,
+                device_id: device.device_id,
+                human_handle: device.human_handle.clone(),
+                device_label: device.device_label.clone(),
+                ty: DeviceFileType::AccountVault,
             };
             (access, expected_available_device)
         }
