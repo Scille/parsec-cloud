@@ -79,33 +79,6 @@ fn enum_cancelled_greeting_attempt_reason_rs_to_js(
     }
 }
 
-// DeviceFileType
-
-#[allow(dead_code)]
-fn enum_device_file_type_js_to_rs(raw_value: &str) -> Result<libparsec::DeviceFileType, JsValue> {
-    match raw_value {
-        "DeviceFileTypeKeyring" => Ok(libparsec::DeviceFileType::Keyring),
-        "DeviceFileTypePassword" => Ok(libparsec::DeviceFileType::Password),
-        "DeviceFileTypeRecovery" => Ok(libparsec::DeviceFileType::Recovery),
-        "DeviceFileTypeSmartcard" => Ok(libparsec::DeviceFileType::Smartcard),
-        _ => {
-            let range_error = RangeError::new("Invalid value for enum DeviceFileType");
-            range_error.set_cause(&JsValue::from(raw_value));
-            Err(JsValue::from(range_error))
-        }
-    }
-}
-
-#[allow(dead_code)]
-fn enum_device_file_type_rs_to_js(value: libparsec::DeviceFileType) -> &'static str {
-    match value {
-        libparsec::DeviceFileType::Keyring => "DeviceFileTypeKeyring",
-        libparsec::DeviceFileType::Password => "DeviceFileTypePassword",
-        libparsec::DeviceFileType::Recovery => "DeviceFileTypeRecovery",
-        libparsec::DeviceFileType::Smartcard => "DeviceFileTypeSmartcard",
-    }
-}
-
 // DevicePurpose
 
 #[allow(dead_code)]
@@ -399,8 +372,7 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
                 let custom_from_rs_string =
                     |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid Path"))?
+            })?
     };
     let created_on = {
         let js_val = Reflect::get(&obj, &"createdOn".into())?;
@@ -446,8 +418,7 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
                     libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid OrganizationID"))?
+            })?
     };
     let user_id = {
         let js_val = Reflect::get(&obj, &"userId".into())?;
@@ -461,8 +432,7 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
                     libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid UserID"))?
+            })?
     };
     let device_id = {
         let js_val = Reflect::get(&obj, &"deviceId".into())?;
@@ -476,8 +446,7 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
                     libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+            })?
     };
     let human_handle = {
         let js_val = Reflect::get(&obj, &"humanHandle".into())?;
@@ -495,19 +464,11 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
                     libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid DeviceLabel"))?
+            })?
     };
     let ty = {
         let js_val = Reflect::get(&obj, &"ty".into())?;
-        {
-            let raw_string = js_val.as_string().ok_or_else(|| {
-                let type_error = TypeError::new("value is not a string");
-                type_error.set_cause(&js_val);
-                JsValue::from(type_error)
-            })?;
-            enum_device_file_type_js_to_rs(raw_string.as_str())
-        }?
+        variant_available_device_type_js_to_rs(js_val)?
     };
     Ok(libparsec::AvailableDevice {
         key_file_path,
@@ -591,7 +552,7 @@ fn struct_available_device_rs_to_js(
     Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
     let js_device_label = JsValue::from_str(rs_obj.device_label.as_ref());
     Reflect::set(&js_obj, &"deviceLabel".into(), &js_device_label)?;
-    let js_ty = JsValue::from_str(enum_device_file_type_rs_to_js(rs_obj.ty));
+    let js_ty = variant_available_device_type_rs_to_js(rs_obj.ty)?;
     Reflect::set(&js_obj, &"ty".into(), &js_ty)?;
     Ok(js_obj)
 }
@@ -611,8 +572,7 @@ fn struct_client_config_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig
                 let custom_from_rs_string =
                     |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid Path"))?
+            })?
     };
     let data_base_dir = {
         let js_val = Reflect::get(&obj, &"dataBaseDir".into())?;
@@ -625,8 +585,7 @@ fn struct_client_config_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig
                 let custom_from_rs_string =
                     |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid Path"))?
+            })?
     };
     let mountpoint_mount_strategy = {
         let js_val = Reflect::get(&obj, &"mountpointMountStrategy".into())?;
@@ -761,8 +720,7 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
                     libparsec::ParsecOrganizationAddr::from_any(&s).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid ParsecOrganizationAddr"))?
+            })?
     };
     let organization_id = {
         let js_val = Reflect::get(&obj, &"organizationId".into())?;
@@ -776,8 +734,7 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
                     libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid OrganizationID"))?
+            })?
     };
     let device_id = {
         let js_val = Reflect::get(&obj, &"deviceId".into())?;
@@ -791,8 +748,7 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
                     libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+            })?
     };
     let user_id = {
         let js_val = Reflect::get(&obj, &"userId".into())?;
@@ -806,8 +762,7 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
                     libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid UserID"))?
+            })?
     };
     let device_label = {
         let js_val = Reflect::get(&obj, &"deviceLabel".into())?;
@@ -821,8 +776,7 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
                     libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid DeviceLabel"))?
+            })?
     };
     let human_handle = {
         let js_val = Reflect::get(&obj, &"humanHandle".into())?;
@@ -1002,8 +956,7 @@ fn struct_device_claim_in_progress1_info_js_to_rs(
                     libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid UserID"))?
+            })?
     };
     let greeter_human_handle = {
         let js_val = Reflect::get(&obj, &"greeterHumanHandle".into())?;
@@ -1021,8 +974,7 @@ fn struct_device_claim_in_progress1_info_js_to_rs(
                     s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid SASCode"))?
+            })?
     };
     let greeter_sas_choices = {
         let js_val = Reflect::get(&obj, &"greeterSasChoices".into())?;
@@ -1042,8 +994,7 @@ fn struct_device_claim_in_progress1_info_js_to_rs(
                             s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid SASCode"))?;
+                    })?;
                 converted.push(x_converted);
             }
             converted
@@ -1132,8 +1083,7 @@ fn struct_device_claim_in_progress2_info_js_to_rs(
                     s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid SASCode"))?
+            })?
     };
     Ok(libparsec::DeviceClaimInProgress2Info {
         handle,
@@ -1218,8 +1168,7 @@ fn struct_device_greet_in_progress1_info_js_to_rs(
                     s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid SASCode"))?
+            })?
     };
     Ok(libparsec::DeviceGreetInProgress1Info {
         handle,
@@ -1271,8 +1220,7 @@ fn struct_device_greet_in_progress2_info_js_to_rs(
                     s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid SASCode"))?
+            })?
     };
     let claimer_sas_choices = {
         let js_val = Reflect::get(&obj, &"claimerSasChoices".into())?;
@@ -1292,8 +1240,7 @@ fn struct_device_greet_in_progress2_info_js_to_rs(
                             s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid SASCode"))?;
+                    })?;
                 converted.push(x_converted);
             }
             converted
@@ -1397,8 +1344,7 @@ fn struct_device_greet_in_progress4_info_js_to_rs(
                     libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid DeviceLabel"))?
+            })?
     };
     Ok(libparsec::DeviceGreetInProgress4Info {
         handle,
@@ -1471,8 +1417,7 @@ fn struct_device_info_js_to_rs(obj: JsValue) -> Result<libparsec::DeviceInfo, Js
                     libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+            })?
     };
     let purpose = {
         let js_val = Reflect::get(&obj, &"purpose".into())?;
@@ -1497,8 +1442,7 @@ fn struct_device_info_js_to_rs(obj: JsValue) -> Result<libparsec::DeviceInfo, Js
                     libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid DeviceLabel"))?
+            })?
     };
     let created_on = {
         let js_val = Reflect::get(&obj, &"createdOn".into())?;
@@ -1528,8 +1472,7 @@ fn struct_device_info_js_to_rs(obj: JsValue) -> Result<libparsec::DeviceInfo, Js
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?,
+                    })?,
             )
         }
     };
@@ -1602,8 +1545,7 @@ fn struct_file_stat_js_to_rs(obj: JsValue) -> Result<libparsec::FileStat, JsValu
                     libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid VlobID"))?
+            })?
     };
     let created = {
         let js_val = Reflect::get(&obj, &"created".into())?;
@@ -1738,8 +1680,7 @@ fn struct_human_handle_js_to_rs(obj: JsValue) -> Result<libparsec::HumanHandle, 
                     libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid EmailAddress"))?
+            })?
     };
     let label = {
         let js_val = Reflect::get(&obj, &"label".into())?;
@@ -1805,8 +1746,7 @@ fn struct_new_invitation_info_js_to_rs(
                     libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid ParsecInvitationAddr"))?
+            })?
     };
     let token = {
         let js_val = Reflect::get(&obj, &"token".into())?;
@@ -1820,8 +1760,7 @@ fn struct_new_invitation_info_js_to_rs(
                     libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid InvitationToken"))?
+            })?
     };
     let email_sent_status = {
         let js_val = Reflect::get(&obj, &"emailSentStatus".into())?;
@@ -2048,8 +1987,7 @@ fn struct_shamir_recovery_claim_in_progress1_info_js_to_rs(
                     libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid UserID"))?
+            })?
     };
     let greeter_human_handle = {
         let js_val = Reflect::get(&obj, &"greeterHumanHandle".into())?;
@@ -2067,8 +2005,7 @@ fn struct_shamir_recovery_claim_in_progress1_info_js_to_rs(
                     s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid SASCode"))?
+            })?
     };
     let greeter_sas_choices = {
         let js_val = Reflect::get(&obj, &"greeterSasChoices".into())?;
@@ -2088,8 +2025,7 @@ fn struct_shamir_recovery_claim_in_progress1_info_js_to_rs(
                             s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid SASCode"))?;
+                    })?;
                 converted.push(x_converted);
             }
             converted
@@ -2178,8 +2114,7 @@ fn struct_shamir_recovery_claim_in_progress2_info_js_to_rs(
                     s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid SASCode"))?
+            })?
     };
     Ok(libparsec::ShamirRecoveryClaimInProgress2Info {
         handle,
@@ -2264,8 +2199,7 @@ fn struct_shamir_recovery_claim_initial_info_js_to_rs(
                     libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid UserID"))?
+            })?
     };
     let greeter_human_handle = {
         let js_val = Reflect::get(&obj, &"greeterHumanHandle".into())?;
@@ -2369,8 +2303,7 @@ fn struct_shamir_recovery_greet_in_progress1_info_js_to_rs(
                     s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid SASCode"))?
+            })?
     };
     Ok(libparsec::ShamirRecoveryGreetInProgress1Info {
         handle,
@@ -2422,8 +2355,7 @@ fn struct_shamir_recovery_greet_in_progress2_info_js_to_rs(
                     s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid SASCode"))?
+            })?
     };
     let claimer_sas_choices = {
         let js_val = Reflect::get(&obj, &"claimerSasChoices".into())?;
@@ -2443,8 +2375,7 @@ fn struct_shamir_recovery_greet_in_progress2_info_js_to_rs(
                             s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid SASCode"))?;
+                    })?;
                 converted.push(x_converted);
             }
             converted
@@ -2567,8 +2498,7 @@ fn struct_shamir_recovery_recipient_js_to_rs(
                     libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid UserID"))?
+            })?
     };
     let human_handle = {
         let js_val = Reflect::get(&obj, &"humanHandle".into())?;
@@ -2708,8 +2638,7 @@ fn struct_started_workspace_info_js_to_rs(
                     libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid VlobID"))?
+            })?
     };
     let current_name = {
         let js_val = Reflect::get(&obj, &"currentName".into())?;
@@ -2723,8 +2652,7 @@ fn struct_started_workspace_info_js_to_rs(
                     s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid EntryName"))?
+            })?
     };
     let current_self_role = {
         let js_val = Reflect::get(&obj, &"currentSelfRole".into())?;
@@ -2772,8 +2700,7 @@ fn struct_started_workspace_info_js_to_rs(
                                     Ok(std::path::PathBuf::from(s))
                                 };
                                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                            })
-                            .map_err(|_| TypeError::new("Not a valid Path"))?
+                            })?
                     },
                 );
                 converted.push(x_converted);
@@ -2995,8 +2922,7 @@ fn struct_user_claim_in_progress1_info_js_to_rs(
                     libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid UserID"))?
+            })?
     };
     let greeter_human_handle = {
         let js_val = Reflect::get(&obj, &"greeterHumanHandle".into())?;
@@ -3014,8 +2940,7 @@ fn struct_user_claim_in_progress1_info_js_to_rs(
                     s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid SASCode"))?
+            })?
     };
     let greeter_sas_choices = {
         let js_val = Reflect::get(&obj, &"greeterSasChoices".into())?;
@@ -3035,8 +2960,7 @@ fn struct_user_claim_in_progress1_info_js_to_rs(
                             s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid SASCode"))?;
+                    })?;
                 converted.push(x_converted);
             }
             converted
@@ -3125,8 +3049,7 @@ fn struct_user_claim_in_progress2_info_js_to_rs(
                     s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid SASCode"))?
+            })?
     };
     Ok(libparsec::UserClaimInProgress2Info {
         handle,
@@ -3211,8 +3134,7 @@ fn struct_user_claim_initial_info_js_to_rs(
                     libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid UserID"))?
+            })?
     };
     let greeter_human_handle = {
         let js_val = Reflect::get(&obj, &"greeterHumanHandle".into())?;
@@ -3333,8 +3255,7 @@ fn struct_user_greet_in_progress1_info_js_to_rs(
                     s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid SASCode"))?
+            })?
     };
     Ok(libparsec::UserGreetInProgress1Info {
         handle,
@@ -3386,8 +3307,7 @@ fn struct_user_greet_in_progress2_info_js_to_rs(
                     s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid SASCode"))?
+            })?
     };
     let claimer_sas_choices = {
         let js_val = Reflect::get(&obj, &"claimerSasChoices".into())?;
@@ -3407,8 +3327,7 @@ fn struct_user_greet_in_progress2_info_js_to_rs(
                             s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid SASCode"))?;
+                    })?;
                 converted.push(x_converted);
             }
             converted
@@ -3516,8 +3435,7 @@ fn struct_user_greet_in_progress4_info_js_to_rs(
                     libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid DeviceLabel"))?
+            })?
     };
     Ok(libparsec::UserGreetInProgress4Info {
         handle,
@@ -3599,8 +3517,7 @@ fn struct_user_greeting_administrator_js_to_rs(
                     libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid UserID"))?
+            })?
     };
     let human_handle = {
         let js_val = Reflect::get(&obj, &"humanHandle".into())?;
@@ -3698,8 +3615,7 @@ fn struct_user_info_js_to_rs(obj: JsValue) -> Result<libparsec::UserInfo, JsValu
                     libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid UserID"))?
+            })?
     };
     let human_handle = {
         let js_val = Reflect::get(&obj, &"humanHandle".into())?;
@@ -3744,8 +3660,7 @@ fn struct_user_info_js_to_rs(obj: JsValue) -> Result<libparsec::UserInfo, JsValu
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?,
+                    })?,
             )
         }
     };
@@ -3781,8 +3696,7 @@ fn struct_user_info_js_to_rs(obj: JsValue) -> Result<libparsec::UserInfo, JsValu
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?,
+                    })?,
             )
         }
     };
@@ -3886,8 +3800,7 @@ fn struct_workspace_history2_file_stat_js_to_rs(
                     libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid VlobID"))?
+            })?
     };
     let created = {
         let js_val = Reflect::get(&obj, &"created".into())?;
@@ -4006,8 +3919,7 @@ fn struct_workspace_history_file_stat_js_to_rs(
                     libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid VlobID"))?
+            })?
     };
     let created = {
         let js_val = Reflect::get(&obj, &"created".into())?;
@@ -4124,8 +4036,7 @@ fn struct_workspace_info_js_to_rs(obj: JsValue) -> Result<libparsec::WorkspaceIn
                     libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid VlobID"))?
+            })?
     };
     let current_name = {
         let js_val = Reflect::get(&obj, &"currentName".into())?;
@@ -4139,8 +4050,7 @@ fn struct_workspace_info_js_to_rs(obj: JsValue) -> Result<libparsec::WorkspaceIn
                     s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid EntryName"))?
+            })?
     };
     let current_self_role = {
         let js_val = Reflect::get(&obj, &"currentSelfRole".into())?;
@@ -4219,8 +4129,7 @@ fn struct_workspace_user_access_info_js_to_rs(
                     libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid UserID"))?
+            })?
     };
     let human_handle = {
         let js_val = Reflect::get(&obj, &"humanHandle".into())?;
@@ -4552,35 +4461,49 @@ fn variant_account_delete_send_validation_email_error_rs_to_js(
     Ok(js_obj)
 }
 
-// AccountFetchRegistrationDevicesError
+// AccountFetchOpaqueKeyFromVaultError
 
 #[allow(dead_code)]
-fn variant_account_fetch_registration_devices_error_rs_to_js(
-    rs_obj: libparsec::AccountFetchRegistrationDevicesError,
+fn variant_account_fetch_opaque_key_from_vault_error_rs_to_js(
+    rs_obj: libparsec::AccountFetchOpaqueKeyFromVaultError,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::AccountFetchRegistrationDevicesError::BadVaultKeyAccess { .. } => {
+        libparsec::AccountFetchOpaqueKeyFromVaultError::BadVaultKeyAccess { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"AccountFetchRegistrationDevicesErrorBadVaultKeyAccess".into(),
+                &"AccountFetchOpaqueKeyFromVaultErrorBadVaultKeyAccess".into(),
             )?;
         }
-        libparsec::AccountFetchRegistrationDevicesError::Internal { .. } => {
+        libparsec::AccountFetchOpaqueKeyFromVaultError::CorruptedOpaqueKey { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"AccountFetchRegistrationDevicesErrorInternal".into(),
+                &"AccountFetchOpaqueKeyFromVaultErrorCorruptedOpaqueKey".into(),
             )?;
         }
-        libparsec::AccountFetchRegistrationDevicesError::Offline { .. } => {
+        libparsec::AccountFetchOpaqueKeyFromVaultError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"AccountFetchRegistrationDevicesErrorOffline".into(),
+                &"AccountFetchOpaqueKeyFromVaultErrorInternal".into(),
+            )?;
+        }
+        libparsec::AccountFetchOpaqueKeyFromVaultError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountFetchOpaqueKeyFromVaultErrorOffline".into(),
+            )?;
+        }
+        libparsec::AccountFetchOpaqueKeyFromVaultError::UnknownOpaqueKey { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountFetchOpaqueKeyFromVaultErrorUnknownOpaqueKey".into(),
             )?;
         }
     }
@@ -4646,11 +4569,25 @@ fn variant_account_list_registration_devices_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        libparsec::AccountListRegistrationDevicesError::BadVaultKeyAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountListRegistrationDevicesErrorBadVaultKeyAccess".into(),
+            )?;
+        }
         libparsec::AccountListRegistrationDevicesError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
                 &"AccountListRegistrationDevicesErrorInternal".into(),
+            )?;
+        }
+        libparsec::AccountListRegistrationDevicesError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountListRegistrationDevicesErrorOffline".into(),
             )?;
         }
     }
@@ -4859,6 +4796,20 @@ fn variant_account_register_new_device_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        libparsec::AccountRegisterNewDeviceError::BadVaultKeyAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountRegisterNewDeviceErrorBadVaultKeyAccess".into(),
+            )?;
+        }
+        libparsec::AccountRegisterNewDeviceError::CorruptedRegistrationDevice { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountRegisterNewDeviceErrorCorruptedRegistrationDevice".into(),
+            )?;
+        }
         libparsec::AccountRegisterNewDeviceError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -4899,6 +4850,41 @@ fn variant_account_register_new_device_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"AccountRegisterNewDeviceErrorUnknownRegistrationDevice".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// AccountUploadOpaqueKeyInVaultError
+
+#[allow(dead_code)]
+fn variant_account_upload_opaque_key_in_vault_error_rs_to_js(
+    rs_obj: libparsec::AccountUploadOpaqueKeyInVaultError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::AccountUploadOpaqueKeyInVaultError::BadVaultKeyAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountUploadOpaqueKeyInVaultErrorBadVaultKeyAccess".into(),
+            )?;
+        }
+        libparsec::AccountUploadOpaqueKeyInVaultError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountUploadOpaqueKeyInVaultErrorInternal".into(),
+            )?;
+        }
+        libparsec::AccountUploadOpaqueKeyInVaultError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountUploadOpaqueKeyInVaultErrorOffline".into(),
             )?;
         }
     }
@@ -4990,8 +4976,7 @@ fn variant_any_claim_retrieved_info_js_to_rs(
                             libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid UserID"))?
+                    })?
             };
             let greeter_human_handle = {
                 let js_val = Reflect::get(&obj, &"greeterHumanHandle".into())?;
@@ -5030,8 +5015,7 @@ fn variant_any_claim_retrieved_info_js_to_rs(
                             libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid UserID"))?
+                    })?
             };
             let claimer_human_handle = {
                 let js_val = Reflect::get(&obj, &"claimerHumanHandle".into())?;
@@ -5132,8 +5116,7 @@ fn variant_any_claim_retrieved_info_js_to_rs(
                             libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid EmailAddress"))?
+                    })?
             };
             let created_by = {
                 let js_val = Reflect::get(&obj, &"createdBy".into())?;
@@ -5351,6 +5334,101 @@ fn variant_archive_device_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ArchiveDeviceErrorStorageNotAvailable".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// AvailableDeviceType
+
+#[allow(dead_code)]
+fn variant_available_device_type_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::AvailableDeviceType, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "AvailableDeviceTypeAccountVault" => {
+            let ciphertext_key_id = {
+                let js_val = Reflect::get(&obj, &"ciphertextKeyId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string =
+                            |s: String| -> Result<libparsec::AccountVaultItemOpaqueKeyID, _> {
+                                libparsec::AccountVaultItemOpaqueKeyID::from_hex(s.as_str())
+                                    .map_err(|e| e.to_string())
+                            };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            };
+            Ok(libparsec::AvailableDeviceType::AccountVault { ciphertext_key_id })
+        }
+        "AvailableDeviceTypeKeyring" => Ok(libparsec::AvailableDeviceType::Keyring {}),
+        "AvailableDeviceTypePassword" => Ok(libparsec::AvailableDeviceType::Password {}),
+        "AvailableDeviceTypeRecovery" => Ok(libparsec::AvailableDeviceType::Recovery {}),
+        "AvailableDeviceTypeSmartcard" => Ok(libparsec::AvailableDeviceType::Smartcard {}),
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a AvailableDeviceType",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_available_device_type_rs_to_js(
+    rs_obj: libparsec::AvailableDeviceType,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::AvailableDeviceType::AccountVault {
+            ciphertext_key_id, ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AvailableDeviceTypeAccountVault".into(),
+            )?;
+            let js_ciphertext_key_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::AccountVaultItemOpaqueKeyID| -> Result<String, &'static str> {
+                        Ok(x.hex())
+                    };
+                match custom_to_rs_string(ciphertext_key_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"ciphertextKeyId".into(), &js_ciphertext_key_id)?;
+        }
+        libparsec::AvailableDeviceType::Keyring { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AvailableDeviceTypeKeyring".into())?;
+        }
+        libparsec::AvailableDeviceType::Password { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AvailableDeviceTypePassword".into(),
+            )?;
+        }
+        libparsec::AvailableDeviceType::Recovery { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AvailableDeviceTypeRecovery".into(),
+            )?;
+        }
+        libparsec::AvailableDeviceType::Smartcard { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AvailableDeviceTypeSmartcard".into(),
             )?;
         }
     }
@@ -5904,8 +5982,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+                    })?
             };
             Ok(libparsec::ClientEvent::ClientStarted { device_id })
         }
@@ -5922,8 +5999,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+                    })?
             };
             Ok(libparsec::ClientEvent::ClientStopped { device_id })
         }
@@ -5944,8 +6020,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                                     .map_err(|e| e.to_string())
                             };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid InvitationToken"))?
+                    })?
             };
             let greeting_attempt = {
                 let js_val = Reflect::get(&obj, &"greetingAttempt".into())?;
@@ -5961,8 +6036,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                                     .map_err(|e| e.to_string())
                             };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid GreetingAttemptID"))?
+                    })?
             };
             Ok(libparsec::ClientEvent::GreetingAttemptCancelled {
                 token,
@@ -5984,8 +6058,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                                     .map_err(|e| e.to_string())
                             };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid InvitationToken"))?
+                    })?
             };
             let greeting_attempt = {
                 let js_val = Reflect::get(&obj, &"greetingAttempt".into())?;
@@ -6001,8 +6074,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                                     .map_err(|e| e.to_string())
                             };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid GreetingAttemptID"))?
+                    })?
             };
             Ok(libparsec::ClientEvent::GreetingAttemptJoined {
                 token,
@@ -6024,8 +6096,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                                     .map_err(|e| e.to_string())
                             };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid InvitationToken"))?
+                    })?
             };
             let greeting_attempt = {
                 let js_val = Reflect::get(&obj, &"greetingAttempt".into())?;
@@ -6041,8 +6112,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                                     .map_err(|e| e.to_string())
                             };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid GreetingAttemptID"))?
+                    })?
             };
             Ok(libparsec::ClientEvent::GreetingAttemptReady {
                 token,
@@ -6062,8 +6132,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                             libparsec::ApiVersion::try_from(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid ApiVersion"))?
+                    })?
             };
             let supported_api_version = {
                 let js_val = Reflect::get(&obj, &"supportedApiVersion".into())?;
@@ -6084,8 +6153,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                                         .map_err(|e| e.to_string())
                                 };
                                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                            })
-                            .map_err(|_| TypeError::new("Not a valid ApiVersion"))?;
+                            })?;
                         converted.push(x_converted);
                     }
                     converted
@@ -6114,8 +6182,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                                     .map_err(|e| e.to_string())
                             };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid InvitationToken"))?
+                    })?
             };
             let status = {
                 let js_val = Reflect::get(&obj, &"status".into())?;
@@ -6230,8 +6297,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+                    })?
             };
             let entry_id = {
                 let js_val = Reflect::get(&obj, &"entryId".into())?;
@@ -6245,8 +6311,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+                    })?
             };
             Ok(libparsec::ClientEvent::WorkspaceOpsInboundSyncDone { realm_id, entry_id })
         }
@@ -6263,8 +6328,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+                    })?
             };
             let entry_id = {
                 let js_val = Reflect::get(&obj, &"entryId".into())?;
@@ -6278,8 +6342,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+                    })?
             };
             Ok(libparsec::ClientEvent::WorkspaceOpsOutboundSyncAborted { realm_id, entry_id })
         }
@@ -6296,8 +6359,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+                    })?
             };
             let entry_id = {
                 let js_val = Reflect::get(&obj, &"entryId".into())?;
@@ -6311,8 +6373,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+                    })?
             };
             Ok(libparsec::ClientEvent::WorkspaceOpsOutboundSyncDone { realm_id, entry_id })
         }
@@ -6329,8 +6390,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+                    })?
             };
             let entry_id = {
                 let js_val = Reflect::get(&obj, &"entryId".into())?;
@@ -6344,8 +6404,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+                    })?
             };
             let blocks = {
                 let js_val = Reflect::get(&obj, &"blocks".into())?;
@@ -6392,8 +6451,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+                    })?
             };
             let entry_id = {
                 let js_val = Reflect::get(&obj, &"entryId".into())?;
@@ -6407,8 +6465,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+                    })?
             };
             Ok(libparsec::ClientEvent::WorkspaceOpsOutboundSyncStarted { realm_id, entry_id })
         }
@@ -6425,8 +6482,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+                    })?
             };
             let entry_id = {
                 let js_val = Reflect::get(&obj, &"entryId".into())?;
@@ -6440,8 +6496,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+                    })?
             };
             Ok(libparsec::ClientEvent::WorkspaceWatchedEntryChanged { realm_id, entry_id })
         }
@@ -8356,6 +8411,55 @@ fn variant_device_access_strategy_js_to_rs(
         .as_string()
         .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
     match tag.as_str() {
+        "DeviceAccessStrategyAccountVault" => {
+            let key_file = {
+                let js_val = Reflect::get(&obj, &"keyFile".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
+                            Ok(std::path::PathBuf::from(s))
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            };
+            let ciphertext_key_id = {
+                let js_val = Reflect::get(&obj, &"ciphertextKeyId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string =
+                            |s: String| -> Result<libparsec::AccountVaultItemOpaqueKeyID, _> {
+                                libparsec::AccountVaultItemOpaqueKeyID::from_hex(s.as_str())
+                                    .map_err(|e| e.to_string())
+                            };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            };
+            let ciphertext_key = {
+                let js_val = Reflect::get(&obj, &"ciphertextKey".into())?;
+                js_val
+                    .dyn_into::<Uint8Array>()
+                    .map(|x| x.to_vec())
+                    .map_err(|_| TypeError::new("Not a Uint8Array"))
+                    .and_then(|x| {
+                        let xx: &[u8] = &x;
+                        xx.try_into()
+                            .map_err(|_| TypeError::new("Not a valid SecretKey"))
+                    })?
+            };
+            Ok(libparsec::DeviceAccessStrategy::AccountVault {
+                key_file,
+                ciphertext_key_id,
+                ciphertext_key,
+            })
+        }
         "DeviceAccessStrategyKeyring" => {
             let key_file = {
                 let js_val = Reflect::get(&obj, &"keyFile".into())?;
@@ -8369,8 +8473,7 @@ fn variant_device_access_strategy_js_to_rs(
                             Ok(std::path::PathBuf::from(s))
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid Path"))?
+                    })?
             };
             Ok(libparsec::DeviceAccessStrategy::Keyring { key_file })
         }
@@ -8386,8 +8489,7 @@ fn variant_device_access_strategy_js_to_rs(
                         let custom_from_rs_string =
                             |s: String| -> Result<_, String> { Ok(s.into()) };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid Password"))?
+                    })?
             };
             let key_file = {
                 let js_val = Reflect::get(&obj, &"keyFile".into())?;
@@ -8401,8 +8503,7 @@ fn variant_device_access_strategy_js_to_rs(
                             Ok(std::path::PathBuf::from(s))
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid Path"))?
+                    })?
             };
             Ok(libparsec::DeviceAccessStrategy::Password { password, key_file })
         }
@@ -8419,8 +8520,7 @@ fn variant_device_access_strategy_js_to_rs(
                             Ok(std::path::PathBuf::from(s))
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid Path"))?
+                    })?
             };
             Ok(libparsec::DeviceAccessStrategy::Smartcard { key_file })
         }
@@ -8436,6 +8536,45 @@ fn variant_device_access_strategy_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        libparsec::DeviceAccessStrategy::AccountVault {
+            key_file,
+            ciphertext_key_id,
+            ciphertext_key,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"DeviceAccessStrategyAccountVault".into(),
+            )?;
+            let js_key_file = JsValue::from_str({
+                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                    path.into_os_string()
+                        .into_string()
+                        .map_err(|_| "Path contains non-utf8 characters")
+                };
+                match custom_to_rs_string(key_file) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"keyFile".into(), &js_key_file)?;
+            let js_ciphertext_key_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::AccountVaultItemOpaqueKeyID| -> Result<String, &'static str> {
+                        Ok(x.hex())
+                    };
+                match custom_to_rs_string(ciphertext_key_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"ciphertextKeyId".into(), &js_ciphertext_key_id)?;
+            let js_ciphertext_key = JsValue::from(Uint8Array::from(ciphertext_key.as_ref()));
+            Reflect::set(&js_obj, &"ciphertextKey".into(), &js_ciphertext_key)?;
+        }
         libparsec::DeviceAccessStrategy::Keyring { key_file, .. } => {
             Reflect::set(
                 &js_obj,
@@ -8515,6 +8654,40 @@ fn variant_device_save_strategy_js_to_rs(
         .as_string()
         .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
     match tag.as_str() {
+        "DeviceSaveStrategyAccountVault" => {
+            let ciphertext_key_id = {
+                let js_val = Reflect::get(&obj, &"ciphertextKeyId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string =
+                            |s: String| -> Result<libparsec::AccountVaultItemOpaqueKeyID, _> {
+                                libparsec::AccountVaultItemOpaqueKeyID::from_hex(s.as_str())
+                                    .map_err(|e| e.to_string())
+                            };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            };
+            let ciphertext_key = {
+                let js_val = Reflect::get(&obj, &"ciphertextKey".into())?;
+                js_val
+                    .dyn_into::<Uint8Array>()
+                    .map(|x| x.to_vec())
+                    .map_err(|_| TypeError::new("Not a Uint8Array"))
+                    .and_then(|x| {
+                        let xx: &[u8] = &x;
+                        xx.try_into()
+                            .map_err(|_| TypeError::new("Not a valid SecretKey"))
+                    })?
+            };
+            Ok(libparsec::DeviceSaveStrategy::AccountVault {
+                ciphertext_key_id,
+                ciphertext_key,
+            })
+        }
         "DeviceSaveStrategyKeyring" => Ok(libparsec::DeviceSaveStrategy::Keyring {}),
         "DeviceSaveStrategyPassword" => {
             let password = {
@@ -8528,8 +8701,7 @@ fn variant_device_save_strategy_js_to_rs(
                         let custom_from_rs_string =
                             |s: String| -> Result<_, String> { Ok(s.into()) };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid Password"))?
+                    })?
             };
             Ok(libparsec::DeviceSaveStrategy::Password { password })
         }
@@ -8546,6 +8718,31 @@ fn variant_device_save_strategy_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        libparsec::DeviceSaveStrategy::AccountVault {
+            ciphertext_key_id,
+            ciphertext_key,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"DeviceSaveStrategyAccountVault".into(),
+            )?;
+            let js_ciphertext_key_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::AccountVaultItemOpaqueKeyID| -> Result<String, &'static str> {
+                        Ok(x.hex())
+                    };
+                match custom_to_rs_string(ciphertext_key_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"ciphertextKeyId".into(), &js_ciphertext_key_id)?;
+            let js_ciphertext_key = JsValue::from(Uint8Array::from(ciphertext_key.as_ref()));
+            Reflect::set(&js_obj, &"ciphertextKey".into(), &js_ciphertext_key)?;
+        }
         libparsec::DeviceSaveStrategy::Keyring { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"DeviceSaveStrategyKeyring".into())?;
         }
@@ -8593,8 +8790,7 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                                             .map_err(|e| e.to_string())
                                     };
                                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                            })
-                            .map_err(|_| TypeError::new("Not a valid VlobID"))?,
+                            })?,
                     )
                 }
             };
@@ -8610,8 +8806,7 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+                    })?
             };
             let parent = {
                 let js_val = Reflect::get(&obj, &"parent".into())?;
@@ -8625,8 +8820,7 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+                    })?
             };
             let created = {
                 let js_val = Reflect::get(&obj, &"created".into())?;
@@ -8700,8 +8894,7 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+                    })?
             };
             Ok(libparsec::EntryStat::File {
                 confinement_point,
@@ -8735,8 +8928,7 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                                             .map_err(|e| e.to_string())
                                     };
                                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                            })
-                            .map_err(|_| TypeError::new("Not a valid VlobID"))?,
+                            })?,
                     )
                 }
             };
@@ -8752,8 +8944,7 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+                    })?
             };
             let parent = {
                 let js_val = Reflect::get(&obj, &"parent".into())?;
@@ -8767,8 +8958,7 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+                    })?
             };
             let created = {
                 let js_val = Reflect::get(&obj, &"created".into())?;
@@ -8834,8 +9024,7 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+                    })?
             };
             Ok(libparsec::EntryStat::Folder {
                 confinement_point,
@@ -9380,8 +9569,7 @@ fn variant_invite_info_invitation_created_by_js_to_rs(
                             libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid UserID"))?
+                    })?
             };
             let human_handle = {
                 let js_val = Reflect::get(&obj, &"humanHandle".into())?;
@@ -9475,8 +9663,7 @@ fn variant_invite_list_invitation_created_by_js_to_rs(
                             libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid UserID"))?
+                    })?
             };
             let human_handle = {
                 let js_val = Reflect::get(&obj, &"humanHandle".into())?;
@@ -9557,8 +9744,7 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                             libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid ParsecInvitationAddr"))?
+                    })?
             };
             let token = {
                 let js_val = Reflect::get(&obj, &"token".into())?;
@@ -9574,8 +9760,7 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                                     .map_err(|e| e.to_string())
                             };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid InvitationToken"))?
+                    })?
             };
             let created_on = {
                 let js_val = Reflect::get(&obj, &"createdOn".into())?;
@@ -9625,8 +9810,7 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                             libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid ParsecInvitationAddr"))?
+                    })?
             };
             let token = {
                 let js_val = Reflect::get(&obj, &"token".into())?;
@@ -9642,8 +9826,7 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                                     .map_err(|e| e.to_string())
                             };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid InvitationToken"))?
+                    })?
             };
             let created_on = {
                 let js_val = Reflect::get(&obj, &"createdOn".into())?;
@@ -9673,8 +9856,7 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                             libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid UserID"))?
+                    })?
             };
             let shamir_recovery_created_on = {
                 let js_val = Reflect::get(&obj, &"shamirRecoveryCreatedOn".into())?;
@@ -9722,8 +9904,7 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                             libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid ParsecInvitationAddr"))?
+                    })?
             };
             let token = {
                 let js_val = Reflect::get(&obj, &"token".into())?;
@@ -9739,8 +9920,7 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                                     .map_err(|e| e.to_string())
                             };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid InvitationToken"))?
+                    })?
             };
             let created_on = {
                 let js_val = Reflect::get(&obj, &"createdOn".into())?;
@@ -9770,8 +9950,7 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                             libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid EmailAddress"))?
+                    })?
             };
             let status = {
                 let js_val = Reflect::get(&obj, &"status".into())?;
@@ -10072,8 +10251,7 @@ fn variant_mountpoint_mount_strategy_js_to_rs(
                             Ok(std::path::PathBuf::from(s))
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid Path"))?
+                    })?
             };
             Ok(libparsec::MountpointMountStrategy::Directory { base_dir })
         }
@@ -10226,8 +10404,7 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                             libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid UserID"))?
+                    })?
             };
             let created_on = {
                 let js_val = Reflect::get(&obj, &"createdOn".into())?;
@@ -10253,8 +10430,7 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+                    })?
             };
             let threshold = {
                 let js_val = Reflect::get(&obj, &"threshold".into())?;
@@ -10310,8 +10486,7 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                                             .map_err(|e| e.to_string())
                                     };
                                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                            })
-                            .map_err(|_| TypeError::new("Not a valid UserID"))?;
+                            })?;
                         let value = {
                             let v = js_value
                                 .dyn_into::<Number>()
@@ -10360,8 +10535,7 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+                    })?
             };
             Ok(libparsec::OtherShamirRecoveryInfo::Deleted {
                 user_id,
@@ -10386,8 +10560,7 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                             libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid UserID"))?
+                    })?
             };
             let created_on = {
                 let js_val = Reflect::get(&obj, &"createdOn".into())?;
@@ -10413,8 +10586,7 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+                    })?
             };
             let threshold = {
                 let js_val = Reflect::get(&obj, &"threshold".into())?;
@@ -10470,8 +10642,7 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                                             .map_err(|e| e.to_string())
                                     };
                                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                            })
-                            .map_err(|_| TypeError::new("Not a valid UserID"))?;
+                            })?;
                         let value = {
                             let v = js_value
                                 .dyn_into::<Number>()
@@ -10517,8 +10688,7 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                             libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid UserID"))?
+                    })?
             };
             let created_on = {
                 let js_val = Reflect::get(&obj, &"createdOn".into())?;
@@ -10544,8 +10714,7 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+                    })?
             };
             let threshold = {
                 let js_val = Reflect::get(&obj, &"threshold".into())?;
@@ -10601,8 +10770,7 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                                             .map_err(|e| e.to_string())
                                     };
                                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                            })
-                            .map_err(|_| TypeError::new("Not a valid UserID"))?;
+                            })?;
                         let value = {
                             let v = js_value
                                 .dyn_into::<Number>()
@@ -10647,8 +10815,7 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                                             .map_err(|e| e.to_string())
                                     };
                                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                            })
-                            .map_err(|_| TypeError::new("Not a valid UserID"))?;
+                            })?;
                         converted.push(x_converted);
                     }
                     converted.into_iter().collect()
@@ -10676,8 +10843,7 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                             libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid UserID"))?
+                    })?
             };
             let created_on = {
                 let js_val = Reflect::get(&obj, &"createdOn".into())?;
@@ -10703,8 +10869,7 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+                    })?
             };
             let threshold = {
                 let js_val = Reflect::get(&obj, &"threshold".into())?;
@@ -10760,8 +10925,7 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                                             .map_err(|e| e.to_string())
                                     };
                                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                            })
-                            .map_err(|_| TypeError::new("Not a valid UserID"))?;
+                            })?;
                         let value = {
                             let v = js_value
                                 .dyn_into::<Number>()
@@ -10806,8 +10970,7 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                                             .map_err(|e| e.to_string())
                                     };
                                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                            })
-                            .map_err(|_| TypeError::new("Not a valid UserID"))?;
+                            })?;
                         converted.push(x_converted);
                     }
                     converted.into_iter().collect()
@@ -11316,8 +11479,7 @@ fn variant_parsed_parsec_addr_js_to_rs(
                                 .map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid OrganizationID"))?
+                    })?
             };
             let token = {
                 let js_val = Reflect::get(&obj, &"token".into())?;
@@ -11333,8 +11495,7 @@ fn variant_parsed_parsec_addr_js_to_rs(
                                     .map_err(|e| e.to_string())
                             };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid InvitationToken"))?
+                    })?
             };
             Ok(libparsec::ParsedParsecAddr::InvitationDevice {
                 hostname,
@@ -11387,8 +11548,7 @@ fn variant_parsed_parsec_addr_js_to_rs(
                                 .map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid OrganizationID"))?
+                    })?
             };
             let token = {
                 let js_val = Reflect::get(&obj, &"token".into())?;
@@ -11404,8 +11564,7 @@ fn variant_parsed_parsec_addr_js_to_rs(
                                     .map_err(|e| e.to_string())
                             };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid InvitationToken"))?
+                    })?
             };
             Ok(libparsec::ParsedParsecAddr::InvitationShamirRecovery {
                 hostname,
@@ -11458,8 +11617,7 @@ fn variant_parsed_parsec_addr_js_to_rs(
                                 .map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid OrganizationID"))?
+                    })?
             };
             let token = {
                 let js_val = Reflect::get(&obj, &"token".into())?;
@@ -11475,8 +11633,7 @@ fn variant_parsed_parsec_addr_js_to_rs(
                                     .map_err(|e| e.to_string())
                             };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid InvitationToken"))?
+                    })?
             };
             Ok(libparsec::ParsedParsecAddr::InvitationUser {
                 hostname,
@@ -11529,8 +11686,7 @@ fn variant_parsed_parsec_addr_js_to_rs(
                                 .map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid OrganizationID"))?
+                    })?
             };
             Ok(libparsec::ParsedParsecAddr::Organization {
                 hostname,
@@ -11582,8 +11738,7 @@ fn variant_parsed_parsec_addr_js_to_rs(
                                 .map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid OrganizationID"))?
+                    })?
             };
             let token = {
                 let js_val = Reflect::get(&obj, &"token".into())?;
@@ -11650,8 +11805,7 @@ fn variant_parsed_parsec_addr_js_to_rs(
                                 .map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid OrganizationID"))?
+                    })?
             };
             Ok(libparsec::ParsedParsecAddr::PkiEnrollment {
                 hostname,
@@ -11739,8 +11893,7 @@ fn variant_parsed_parsec_addr_js_to_rs(
                                 .map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid OrganizationID"))?
+                    })?
             };
             let workspace_id = {
                 let js_val = Reflect::get(&obj, &"workspaceId".into())?;
@@ -11754,8 +11907,7 @@ fn variant_parsed_parsec_addr_js_to_rs(
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+                    })?
             };
             let key_index = {
                 let js_val = Reflect::get(&obj, &"keyIndex".into())?;
@@ -12051,8 +12203,7 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+                    })?
             };
             let threshold = {
                 let js_val = Reflect::get(&obj, &"threshold".into())?;
@@ -12108,8 +12259,7 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                                             .map_err(|e| e.to_string())
                                     };
                                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                            })
-                            .map_err(|_| TypeError::new("Not a valid UserID"))?;
+                            })?;
                         let value = {
                             let v = js_value
                                 .dyn_into::<Number>()
@@ -12158,8 +12308,7 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+                    })?
             };
             Ok(libparsec::SelfShamirRecoveryInfo::Deleted {
                 created_on,
@@ -12196,8 +12345,7 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+                    })?
             };
             let threshold = {
                 let js_val = Reflect::get(&obj, &"threshold".into())?;
@@ -12253,8 +12401,7 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                                             .map_err(|e| e.to_string())
                                     };
                                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                            })
-                            .map_err(|_| TypeError::new("Not a valid UserID"))?;
+                            })?;
                         let value = {
                             let v = js_value
                                 .dyn_into::<Number>()
@@ -12311,8 +12458,7 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+                    })?
             };
             let threshold = {
                 let js_val = Reflect::get(&obj, &"threshold".into())?;
@@ -12368,8 +12514,7 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                                             .map_err(|e| e.to_string())
                                     };
                                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                            })
-                            .map_err(|_| TypeError::new("Not a valid UserID"))?;
+                            })?;
                         let value = {
                             let v = js_value
                                 .dyn_into::<Number>()
@@ -12414,8 +12559,7 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                                             .map_err(|e| e.to_string())
                                     };
                                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                            })
-                            .map_err(|_| TypeError::new("Not a valid UserID"))?;
+                            })?;
                         converted.push(x_converted);
                     }
                     converted.into_iter().collect()
@@ -12454,8 +12598,7 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+                    })?
             };
             let threshold = {
                 let js_val = Reflect::get(&obj, &"threshold".into())?;
@@ -12511,8 +12654,7 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                                             .map_err(|e| e.to_string())
                                     };
                                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                            })
-                            .map_err(|_| TypeError::new("Not a valid UserID"))?;
+                            })?;
                         let value = {
                             let v = js_value
                                 .dyn_into::<Number>()
@@ -12557,8 +12699,7 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                                             .map_err(|e| e.to_string())
                                     };
                                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                            })
-                            .map_err(|_| TypeError::new("Not a valid UserID"))?;
+                            })?;
                         converted.push(x_converted);
                     }
                     converted.into_iter().collect()
@@ -13106,8 +13247,7 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_js_to_rs(
                             libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid UserID"))?
+                    })?
             };
             let claimer_human_handle = {
                 let js_val = Reflect::get(&obj, &"claimerHumanHandle".into())?;
@@ -13193,8 +13333,7 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_js_to_rs(
                                             .map_err(|e| e.to_string())
                                     };
                                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                            })
-                            .map_err(|_| TypeError::new("Not a valid UserID"))?;
+                            })?;
                         let value = {
                             let v = js_value
                                 .dyn_into::<Number>()
@@ -13266,8 +13405,7 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_js_to_rs(
                             libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid UserID"))?
+                    })?
             };
             let claimer_human_handle = {
                 let js_val = Reflect::get(&obj, &"claimerHumanHandle".into())?;
@@ -14233,8 +14371,7 @@ fn variant_workspace_history2_entry_stat_js_to_rs(
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+                    })?
             };
             let parent = {
                 let js_val = Reflect::get(&obj, &"parent".into())?;
@@ -14248,8 +14385,7 @@ fn variant_workspace_history2_entry_stat_js_to_rs(
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+                    })?
             };
             let created = {
                 let js_val = Reflect::get(&obj, &"created".into())?;
@@ -14309,8 +14445,7 @@ fn variant_workspace_history2_entry_stat_js_to_rs(
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+                    })?
             };
             Ok(libparsec::WorkspaceHistory2EntryStat::File {
                 id,
@@ -14335,8 +14470,7 @@ fn variant_workspace_history2_entry_stat_js_to_rs(
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+                    })?
             };
             let parent = {
                 let js_val = Reflect::get(&obj, &"parent".into())?;
@@ -14350,8 +14484,7 @@ fn variant_workspace_history2_entry_stat_js_to_rs(
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+                    })?
             };
             let created = {
                 let js_val = Reflect::get(&obj, &"created".into())?;
@@ -14403,8 +14536,7 @@ fn variant_workspace_history2_entry_stat_js_to_rs(
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+                    })?
             };
             Ok(libparsec::WorkspaceHistory2EntryStat::Folder {
                 id,
@@ -14836,8 +14968,7 @@ fn variant_workspace_history2_realm_export_decryptor_js_to_rs(
                                     .map_err(|e| e.to_string())
                             };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid SequesterServiceID"))?
+                    })?
             };
             let private_key_pem_path = {
                 let js_val = Reflect::get(&obj, &"privateKeyPemPath".into())?;
@@ -14851,8 +14982,7 @@ fn variant_workspace_history2_realm_export_decryptor_js_to_rs(
                             Ok(std::path::PathBuf::from(s))
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid Path"))?
+                    })?
             };
             Ok(
                 libparsec::WorkspaceHistory2RealmExportDecryptor::SequesterService {
@@ -15315,8 +15445,7 @@ fn variant_workspace_history_entry_stat_js_to_rs(
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+                    })?
             };
             let parent = {
                 let js_val = Reflect::get(&obj, &"parent".into())?;
@@ -15330,8 +15459,7 @@ fn variant_workspace_history_entry_stat_js_to_rs(
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+                    })?
             };
             let created = {
                 let js_val = Reflect::get(&obj, &"created".into())?;
@@ -15401,8 +15529,7 @@ fn variant_workspace_history_entry_stat_js_to_rs(
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+                    })?
             };
             let parent = {
                 let js_val = Reflect::get(&obj, &"parent".into())?;
@@ -15416,8 +15543,7 @@ fn variant_workspace_history_entry_stat_js_to_rs(
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+                    })?
             };
             let created = {
                 let js_val = Reflect::get(&obj, &"created".into())?;
@@ -16941,27 +17067,32 @@ pub fn accountDelete2Proceed(account: u32, validation_code: String) -> Promise {
     }))
 }
 
-// account_fetch_registration_devices
+// account_fetch_opaque_key_from_vault
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn accountFetchRegistrationDevices(account: u32) -> Promise {
+pub fn accountFetchOpaqueKeyFromVault(account: u32, key_id: String) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
-        let ret = libparsec::account_fetch_registration_devices(account).await;
+        let key_id = {
+            let custom_from_rs_string =
+                |s: String| -> Result<libparsec::AccountVaultItemOpaqueKeyID, _> {
+                    libparsec::AccountVaultItemOpaqueKeyID::from_hex(s.as_str())
+                        .map_err(|e| e.to_string())
+                };
+            custom_from_rs_string(key_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::account_fetch_opaque_key_from_vault(account, key_id).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = {
-                    let _ = value;
-                    JsValue::null()
-                };
+                let js_value = JsValue::from(Uint8Array::from(value.as_ref()));
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_account_fetch_registration_devices_error_rs_to_js(err)?;
+                let js_err = variant_account_fetch_opaque_key_from_vault_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -17052,7 +17183,7 @@ pub fn accountListInvitations(account: u32) -> Promise {
 #[wasm_bindgen]
 pub fn accountListRegistrationDevices(account: u32) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
-        let ret = libparsec::account_list_registration_devices(account);
+        let ret = libparsec::account_list_registration_devices(account).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -17412,18 +17543,65 @@ pub fn accountRegisterNewDevice(
     }))
 }
 
+// account_upload_opaque_key_in_vault
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn accountUploadOpaqueKeyInVault(account: u32) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::account_upload_opaque_key_in_vault(account).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let (x1, x2) = value;
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(2);
+                    let js_value = JsValue::from_str({
+                        let custom_to_rs_string = |x: libparsec::AccountVaultItemOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) };
+                        match custom_to_rs_string(x1) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        }
+                        .as_ref()
+                    });
+                    js_array.set(0, js_value);
+                    let js_value = JsValue::from(Uint8Array::from(x2.as_ref()));
+                    js_array.set(1, js_value);
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_account_upload_opaque_key_in_vault_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
 // archive_device
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn archiveDevice(device_path: String) -> Promise {
+pub fn archiveDevice(config_dir: String, device_path: String) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config_dir = {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
         let device_path = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
             custom_from_rs_string(device_path).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
-        let ret = libparsec::archive_device(&device_path).await;
+        let ret = libparsec::archive_device(&config_dir, &device_path).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -19201,8 +19379,7 @@ pub fn clientSetupShamirRecovery(
                             libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid UserID"))?;
+                    })?;
                 let rs_value = {
                     let v = js_value
                         .dyn_into::<Number>()

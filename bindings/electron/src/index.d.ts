@@ -19,13 +19,6 @@ export enum CancelledGreetingAttemptReason {
     UndeserializablePayload = 'CancelledGreetingAttemptReasonUndeserializablePayload',
 }
 
-export enum DeviceFileType {
-    Keyring = 'DeviceFileTypeKeyring',
-    Password = 'DeviceFileTypePassword',
-    Recovery = 'DeviceFileTypeRecovery',
-    Smartcard = 'DeviceFileTypeSmartcard',
-}
-
 export enum DevicePurpose {
     PassphraseRecovery = 'DevicePurposePassphraseRecovery',
     Registration = 'DevicePurposeRegistration',
@@ -102,7 +95,7 @@ export interface AvailableDevice {
     deviceId: string
     humanHandle: HumanHandle
     deviceLabel: string
-    ty: DeviceFileType
+    ty: AvailableDeviceType
 }
 
 
@@ -589,23 +582,33 @@ export type AccountDeleteSendValidationEmailError =
   | AccountDeleteSendValidationEmailErrorOffline
 
 
-// AccountFetchRegistrationDevicesError
-export interface AccountFetchRegistrationDevicesErrorBadVaultKeyAccess {
+// AccountFetchOpaqueKeyFromVaultError
+export interface AccountFetchOpaqueKeyFromVaultErrorBadVaultKeyAccess {
     tag: "BadVaultKeyAccess"
     error: string
 }
-export interface AccountFetchRegistrationDevicesErrorInternal {
+export interface AccountFetchOpaqueKeyFromVaultErrorCorruptedOpaqueKey {
+    tag: "CorruptedOpaqueKey"
+    error: string
+}
+export interface AccountFetchOpaqueKeyFromVaultErrorInternal {
     tag: "Internal"
     error: string
 }
-export interface AccountFetchRegistrationDevicesErrorOffline {
+export interface AccountFetchOpaqueKeyFromVaultErrorOffline {
     tag: "Offline"
     error: string
 }
-export type AccountFetchRegistrationDevicesError =
-  | AccountFetchRegistrationDevicesErrorBadVaultKeyAccess
-  | AccountFetchRegistrationDevicesErrorInternal
-  | AccountFetchRegistrationDevicesErrorOffline
+export interface AccountFetchOpaqueKeyFromVaultErrorUnknownOpaqueKey {
+    tag: "UnknownOpaqueKey"
+    error: string
+}
+export type AccountFetchOpaqueKeyFromVaultError =
+  | AccountFetchOpaqueKeyFromVaultErrorBadVaultKeyAccess
+  | AccountFetchOpaqueKeyFromVaultErrorCorruptedOpaqueKey
+  | AccountFetchOpaqueKeyFromVaultErrorInternal
+  | AccountFetchOpaqueKeyFromVaultErrorOffline
+  | AccountFetchOpaqueKeyFromVaultErrorUnknownOpaqueKey
 
 
 // AccountGetHumanHandleError
@@ -632,12 +635,22 @@ export type AccountListInvitationsError =
 
 
 // AccountListRegistrationDevicesError
+export interface AccountListRegistrationDevicesErrorBadVaultKeyAccess {
+    tag: "BadVaultKeyAccess"
+    error: string
+}
 export interface AccountListRegistrationDevicesErrorInternal {
     tag: "Internal"
     error: string
 }
+export interface AccountListRegistrationDevicesErrorOffline {
+    tag: "Offline"
+    error: string
+}
 export type AccountListRegistrationDevicesError =
+  | AccountListRegistrationDevicesErrorBadVaultKeyAccess
   | AccountListRegistrationDevicesErrorInternal
+  | AccountListRegistrationDevicesErrorOffline
 
 
 // AccountLoginWithMasterSecretError
@@ -742,6 +755,14 @@ export type AccountRecoverSendValidationEmailError =
 
 
 // AccountRegisterNewDeviceError
+export interface AccountRegisterNewDeviceErrorBadVaultKeyAccess {
+    tag: "BadVaultKeyAccess"
+    error: string
+}
+export interface AccountRegisterNewDeviceErrorCorruptedRegistrationDevice {
+    tag: "CorruptedRegistrationDevice"
+    error: string
+}
 export interface AccountRegisterNewDeviceErrorInternal {
     tag: "Internal"
     error: string
@@ -767,12 +788,33 @@ export interface AccountRegisterNewDeviceErrorUnknownRegistrationDevice {
     error: string
 }
 export type AccountRegisterNewDeviceError =
+  | AccountRegisterNewDeviceErrorBadVaultKeyAccess
+  | AccountRegisterNewDeviceErrorCorruptedRegistrationDevice
   | AccountRegisterNewDeviceErrorInternal
   | AccountRegisterNewDeviceErrorInvalidPath
   | AccountRegisterNewDeviceErrorOffline
   | AccountRegisterNewDeviceErrorStorageNotAvailable
   | AccountRegisterNewDeviceErrorTimestampOutOfBallpark
   | AccountRegisterNewDeviceErrorUnknownRegistrationDevice
+
+
+// AccountUploadOpaqueKeyInVaultError
+export interface AccountUploadOpaqueKeyInVaultErrorBadVaultKeyAccess {
+    tag: "BadVaultKeyAccess"
+    error: string
+}
+export interface AccountUploadOpaqueKeyInVaultErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface AccountUploadOpaqueKeyInVaultErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export type AccountUploadOpaqueKeyInVaultError =
+  | AccountUploadOpaqueKeyInVaultErrorBadVaultKeyAccess
+  | AccountUploadOpaqueKeyInVaultErrorInternal
+  | AccountUploadOpaqueKeyInVaultErrorOffline
 
 
 // ActiveUsersLimit
@@ -832,6 +874,31 @@ export interface ArchiveDeviceErrorStorageNotAvailable {
 export type ArchiveDeviceError =
   | ArchiveDeviceErrorInternal
   | ArchiveDeviceErrorStorageNotAvailable
+
+
+// AvailableDeviceType
+export interface AvailableDeviceTypeAccountVault {
+    tag: "AccountVault"
+    ciphertext_key_id: string
+}
+export interface AvailableDeviceTypeKeyring {
+    tag: "Keyring"
+}
+export interface AvailableDeviceTypePassword {
+    tag: "Password"
+}
+export interface AvailableDeviceTypeRecovery {
+    tag: "Recovery"
+}
+export interface AvailableDeviceTypeSmartcard {
+    tag: "Smartcard"
+}
+export type AvailableDeviceType =
+  | AvailableDeviceTypeAccountVault
+  | AvailableDeviceTypeKeyring
+  | AvailableDeviceTypePassword
+  | AvailableDeviceTypeRecovery
+  | AvailableDeviceTypeSmartcard
 
 
 // BootstrapOrganizationError
@@ -1979,6 +2046,12 @@ export type ClientUserUpdateProfileError =
 
 
 // DeviceAccessStrategy
+export interface DeviceAccessStrategyAccountVault {
+    tag: "AccountVault"
+    key_file: string
+    ciphertext_key_id: string
+    ciphertext_key: Uint8Array
+}
 export interface DeviceAccessStrategyKeyring {
     tag: "Keyring"
     key_file: string
@@ -1993,12 +2066,18 @@ export interface DeviceAccessStrategySmartcard {
     key_file: string
 }
 export type DeviceAccessStrategy =
+  | DeviceAccessStrategyAccountVault
   | DeviceAccessStrategyKeyring
   | DeviceAccessStrategyPassword
   | DeviceAccessStrategySmartcard
 
 
 // DeviceSaveStrategy
+export interface DeviceSaveStrategyAccountVault {
+    tag: "AccountVault"
+    ciphertext_key_id: string
+    ciphertext_key: Uint8Array
+}
 export interface DeviceSaveStrategyKeyring {
     tag: "Keyring"
 }
@@ -2010,6 +2089,7 @@ export interface DeviceSaveStrategySmartcard {
     tag: "Smartcard"
 }
 export type DeviceSaveStrategy =
+  | DeviceSaveStrategyAccountVault
   | DeviceSaveStrategyKeyring
   | DeviceSaveStrategyPassword
   | DeviceSaveStrategySmartcard
@@ -4133,9 +4213,10 @@ export function accountDelete2Proceed(
     account: number,
     validation_code: string
 ): Promise<Result<null, AccountDeleteProceedError>>
-export function accountFetchRegistrationDevices(
-    account: number
-): Promise<Result<null, AccountFetchRegistrationDevicesError>>
+export function accountFetchOpaqueKeyFromVault(
+    account: number,
+    key_id: string
+): Promise<Result<Uint8Array, AccountFetchOpaqueKeyFromVaultError>>
 export function accountGetHumanHandle(
     account: number
 ): Promise<Result<HumanHandle, AccountGetHumanHandleError>>
@@ -4178,7 +4259,11 @@ export function accountRegisterNewDevice(
     new_device_label: string,
     save_strategy: DeviceSaveStrategy
 ): Promise<Result<AvailableDevice, AccountRegisterNewDeviceError>>
+export function accountUploadOpaqueKeyInVault(
+    account: number
+): Promise<Result<[string, Uint8Array], AccountUploadOpaqueKeyInVaultError>>
 export function archiveDevice(
+    config_dir: string,
     device_path: string
 ): Promise<Result<null, ArchiveDeviceError>>
 export function bootstrapOrganization(

@@ -18,13 +18,6 @@ export enum CancelledGreetingAttemptReason {
     UndeserializablePayload = 'CancelledGreetingAttemptReasonUndeserializablePayload',
 }
 
-export enum DeviceFileType {
-    Keyring = 'DeviceFileTypeKeyring',
-    Password = 'DeviceFileTypePassword',
-    Recovery = 'DeviceFileTypeRecovery',
-    Smartcard = 'DeviceFileTypeSmartcard',
-}
-
 export enum DevicePurpose {
     PassphraseRecovery = 'DevicePurposePassphraseRecovery',
     Registration = 'DevicePurposeRegistration',
@@ -89,6 +82,7 @@ export enum UserProfile {
     Outsider = 'UserProfileOutsider',
     Standard = 'UserProfileStandard',
 }
+export type AccountVaultItemOpaqueKeyID = string
 export type ApiVersion = string
 export type DeviceID = string
 export type DeviceLabel = string
@@ -112,6 +106,7 @@ export type UserID = string
 export type ValidationCode = string
 export type VlobID = string
 export type KeyDerivation = Uint8Array
+export type SecretKey = Uint8Array
 export type SequesterVerifyKeyDer = Uint8Array
 export type NonZeroU8 = number
 export type U8 = number
@@ -137,7 +132,7 @@ export interface AvailableDevice {
     deviceId: DeviceID
     humanHandle: HumanHandle
     deviceLabel: DeviceLabel
-    ty: DeviceFileType
+    ty: AvailableDeviceType
 }
 
 export interface ClientConfig {
@@ -613,29 +608,41 @@ export type AccountDeleteSendValidationEmailError =
   | AccountDeleteSendValidationEmailErrorInternal
   | AccountDeleteSendValidationEmailErrorOffline
 
-// AccountFetchRegistrationDevicesError
-export enum AccountFetchRegistrationDevicesErrorTag {
-    BadVaultKeyAccess = 'AccountFetchRegistrationDevicesErrorBadVaultKeyAccess',
-    Internal = 'AccountFetchRegistrationDevicesErrorInternal',
-    Offline = 'AccountFetchRegistrationDevicesErrorOffline',
+// AccountFetchOpaqueKeyFromVaultError
+export enum AccountFetchOpaqueKeyFromVaultErrorTag {
+    BadVaultKeyAccess = 'AccountFetchOpaqueKeyFromVaultErrorBadVaultKeyAccess',
+    CorruptedOpaqueKey = 'AccountFetchOpaqueKeyFromVaultErrorCorruptedOpaqueKey',
+    Internal = 'AccountFetchOpaqueKeyFromVaultErrorInternal',
+    Offline = 'AccountFetchOpaqueKeyFromVaultErrorOffline',
+    UnknownOpaqueKey = 'AccountFetchOpaqueKeyFromVaultErrorUnknownOpaqueKey',
 }
 
-export interface AccountFetchRegistrationDevicesErrorBadVaultKeyAccess {
-    tag: AccountFetchRegistrationDevicesErrorTag.BadVaultKeyAccess
+export interface AccountFetchOpaqueKeyFromVaultErrorBadVaultKeyAccess {
+    tag: AccountFetchOpaqueKeyFromVaultErrorTag.BadVaultKeyAccess
     error: string
 }
-export interface AccountFetchRegistrationDevicesErrorInternal {
-    tag: AccountFetchRegistrationDevicesErrorTag.Internal
+export interface AccountFetchOpaqueKeyFromVaultErrorCorruptedOpaqueKey {
+    tag: AccountFetchOpaqueKeyFromVaultErrorTag.CorruptedOpaqueKey
     error: string
 }
-export interface AccountFetchRegistrationDevicesErrorOffline {
-    tag: AccountFetchRegistrationDevicesErrorTag.Offline
+export interface AccountFetchOpaqueKeyFromVaultErrorInternal {
+    tag: AccountFetchOpaqueKeyFromVaultErrorTag.Internal
     error: string
 }
-export type AccountFetchRegistrationDevicesError =
-  | AccountFetchRegistrationDevicesErrorBadVaultKeyAccess
-  | AccountFetchRegistrationDevicesErrorInternal
-  | AccountFetchRegistrationDevicesErrorOffline
+export interface AccountFetchOpaqueKeyFromVaultErrorOffline {
+    tag: AccountFetchOpaqueKeyFromVaultErrorTag.Offline
+    error: string
+}
+export interface AccountFetchOpaqueKeyFromVaultErrorUnknownOpaqueKey {
+    tag: AccountFetchOpaqueKeyFromVaultErrorTag.UnknownOpaqueKey
+    error: string
+}
+export type AccountFetchOpaqueKeyFromVaultError =
+  | AccountFetchOpaqueKeyFromVaultErrorBadVaultKeyAccess
+  | AccountFetchOpaqueKeyFromVaultErrorCorruptedOpaqueKey
+  | AccountFetchOpaqueKeyFromVaultErrorInternal
+  | AccountFetchOpaqueKeyFromVaultErrorOffline
+  | AccountFetchOpaqueKeyFromVaultErrorUnknownOpaqueKey
 
 // AccountGetHumanHandleError
 export enum AccountGetHumanHandleErrorTag {
@@ -669,15 +676,27 @@ export type AccountListInvitationsError =
 
 // AccountListRegistrationDevicesError
 export enum AccountListRegistrationDevicesErrorTag {
+    BadVaultKeyAccess = 'AccountListRegistrationDevicesErrorBadVaultKeyAccess',
     Internal = 'AccountListRegistrationDevicesErrorInternal',
+    Offline = 'AccountListRegistrationDevicesErrorOffline',
 }
 
+export interface AccountListRegistrationDevicesErrorBadVaultKeyAccess {
+    tag: AccountListRegistrationDevicesErrorTag.BadVaultKeyAccess
+    error: string
+}
 export interface AccountListRegistrationDevicesErrorInternal {
     tag: AccountListRegistrationDevicesErrorTag.Internal
     error: string
 }
+export interface AccountListRegistrationDevicesErrorOffline {
+    tag: AccountListRegistrationDevicesErrorTag.Offline
+    error: string
+}
 export type AccountListRegistrationDevicesError =
+  | AccountListRegistrationDevicesErrorBadVaultKeyAccess
   | AccountListRegistrationDevicesErrorInternal
+  | AccountListRegistrationDevicesErrorOffline
 
 // AccountLoginWithMasterSecretError
 export enum AccountLoginWithMasterSecretErrorTag {
@@ -808,6 +827,8 @@ export type AccountRecoverSendValidationEmailError =
 
 // AccountRegisterNewDeviceError
 export enum AccountRegisterNewDeviceErrorTag {
+    BadVaultKeyAccess = 'AccountRegisterNewDeviceErrorBadVaultKeyAccess',
+    CorruptedRegistrationDevice = 'AccountRegisterNewDeviceErrorCorruptedRegistrationDevice',
     Internal = 'AccountRegisterNewDeviceErrorInternal',
     InvalidPath = 'AccountRegisterNewDeviceErrorInvalidPath',
     Offline = 'AccountRegisterNewDeviceErrorOffline',
@@ -816,6 +837,14 @@ export enum AccountRegisterNewDeviceErrorTag {
     UnknownRegistrationDevice = 'AccountRegisterNewDeviceErrorUnknownRegistrationDevice',
 }
 
+export interface AccountRegisterNewDeviceErrorBadVaultKeyAccess {
+    tag: AccountRegisterNewDeviceErrorTag.BadVaultKeyAccess
+    error: string
+}
+export interface AccountRegisterNewDeviceErrorCorruptedRegistrationDevice {
+    tag: AccountRegisterNewDeviceErrorTag.CorruptedRegistrationDevice
+    error: string
+}
 export interface AccountRegisterNewDeviceErrorInternal {
     tag: AccountRegisterNewDeviceErrorTag.Internal
     error: string
@@ -841,12 +870,38 @@ export interface AccountRegisterNewDeviceErrorUnknownRegistrationDevice {
     error: string
 }
 export type AccountRegisterNewDeviceError =
+  | AccountRegisterNewDeviceErrorBadVaultKeyAccess
+  | AccountRegisterNewDeviceErrorCorruptedRegistrationDevice
   | AccountRegisterNewDeviceErrorInternal
   | AccountRegisterNewDeviceErrorInvalidPath
   | AccountRegisterNewDeviceErrorOffline
   | AccountRegisterNewDeviceErrorStorageNotAvailable
   | AccountRegisterNewDeviceErrorTimestampOutOfBallpark
   | AccountRegisterNewDeviceErrorUnknownRegistrationDevice
+
+// AccountUploadOpaqueKeyInVaultError
+export enum AccountUploadOpaqueKeyInVaultErrorTag {
+    BadVaultKeyAccess = 'AccountUploadOpaqueKeyInVaultErrorBadVaultKeyAccess',
+    Internal = 'AccountUploadOpaqueKeyInVaultErrorInternal',
+    Offline = 'AccountUploadOpaqueKeyInVaultErrorOffline',
+}
+
+export interface AccountUploadOpaqueKeyInVaultErrorBadVaultKeyAccess {
+    tag: AccountUploadOpaqueKeyInVaultErrorTag.BadVaultKeyAccess
+    error: string
+}
+export interface AccountUploadOpaqueKeyInVaultErrorInternal {
+    tag: AccountUploadOpaqueKeyInVaultErrorTag.Internal
+    error: string
+}
+export interface AccountUploadOpaqueKeyInVaultErrorOffline {
+    tag: AccountUploadOpaqueKeyInVaultErrorTag.Offline
+    error: string
+}
+export type AccountUploadOpaqueKeyInVaultError =
+  | AccountUploadOpaqueKeyInVaultErrorBadVaultKeyAccess
+  | AccountUploadOpaqueKeyInVaultErrorInternal
+  | AccountUploadOpaqueKeyInVaultErrorOffline
 
 // ActiveUsersLimit
 export enum ActiveUsersLimitTag {
@@ -919,6 +974,38 @@ export interface ArchiveDeviceErrorStorageNotAvailable {
 export type ArchiveDeviceError =
   | ArchiveDeviceErrorInternal
   | ArchiveDeviceErrorStorageNotAvailable
+
+// AvailableDeviceType
+export enum AvailableDeviceTypeTag {
+    AccountVault = 'AvailableDeviceTypeAccountVault',
+    Keyring = 'AvailableDeviceTypeKeyring',
+    Password = 'AvailableDeviceTypePassword',
+    Recovery = 'AvailableDeviceTypeRecovery',
+    Smartcard = 'AvailableDeviceTypeSmartcard',
+}
+
+export interface AvailableDeviceTypeAccountVault {
+    tag: AvailableDeviceTypeTag.AccountVault
+    ciphertextKeyId: AccountVaultItemOpaqueKeyID
+}
+export interface AvailableDeviceTypeKeyring {
+    tag: AvailableDeviceTypeTag.Keyring
+}
+export interface AvailableDeviceTypePassword {
+    tag: AvailableDeviceTypeTag.Password
+}
+export interface AvailableDeviceTypeRecovery {
+    tag: AvailableDeviceTypeTag.Recovery
+}
+export interface AvailableDeviceTypeSmartcard {
+    tag: AvailableDeviceTypeTag.Smartcard
+}
+export type AvailableDeviceType =
+  | AvailableDeviceTypeAccountVault
+  | AvailableDeviceTypeKeyring
+  | AvailableDeviceTypePassword
+  | AvailableDeviceTypeRecovery
+  | AvailableDeviceTypeSmartcard
 
 // BootstrapOrganizationError
 export enum BootstrapOrganizationErrorTag {
@@ -2334,11 +2421,18 @@ export type ClientUserUpdateProfileError =
 
 // DeviceAccessStrategy
 export enum DeviceAccessStrategyTag {
+    AccountVault = 'DeviceAccessStrategyAccountVault',
     Keyring = 'DeviceAccessStrategyKeyring',
     Password = 'DeviceAccessStrategyPassword',
     Smartcard = 'DeviceAccessStrategySmartcard',
 }
 
+export interface DeviceAccessStrategyAccountVault {
+    tag: DeviceAccessStrategyTag.AccountVault
+    keyFile: Path
+    ciphertextKeyId: AccountVaultItemOpaqueKeyID
+    ciphertextKey: SecretKey
+}
 export interface DeviceAccessStrategyKeyring {
     tag: DeviceAccessStrategyTag.Keyring
     keyFile: Path
@@ -2353,17 +2447,24 @@ export interface DeviceAccessStrategySmartcard {
     keyFile: Path
 }
 export type DeviceAccessStrategy =
+  | DeviceAccessStrategyAccountVault
   | DeviceAccessStrategyKeyring
   | DeviceAccessStrategyPassword
   | DeviceAccessStrategySmartcard
 
 // DeviceSaveStrategy
 export enum DeviceSaveStrategyTag {
+    AccountVault = 'DeviceSaveStrategyAccountVault',
     Keyring = 'DeviceSaveStrategyKeyring',
     Password = 'DeviceSaveStrategyPassword',
     Smartcard = 'DeviceSaveStrategySmartcard',
 }
 
+export interface DeviceSaveStrategyAccountVault {
+    tag: DeviceSaveStrategyTag.AccountVault
+    ciphertextKeyId: AccountVaultItemOpaqueKeyID
+    ciphertextKey: SecretKey
+}
 export interface DeviceSaveStrategyKeyring {
     tag: DeviceSaveStrategyTag.Keyring
 }
@@ -2375,6 +2476,7 @@ export interface DeviceSaveStrategySmartcard {
     tag: DeviceSaveStrategyTag.Smartcard
 }
 export type DeviceSaveStrategy =
+  | DeviceSaveStrategyAccountVault
   | DeviceSaveStrategyKeyring
   | DeviceSaveStrategyPassword
   | DeviceSaveStrategySmartcard
@@ -4966,9 +5068,10 @@ export interface LibParsecPlugin {
         account: Handle,
         validation_code: ValidationCode
     ): Promise<Result<null, AccountDeleteProceedError>>
-    accountFetchRegistrationDevices(
-        account: Handle
-    ): Promise<Result<null, AccountFetchRegistrationDevicesError>>
+    accountFetchOpaqueKeyFromVault(
+        account: Handle,
+        key_id: AccountVaultItemOpaqueKeyID
+    ): Promise<Result<SecretKey, AccountFetchOpaqueKeyFromVaultError>>
     accountGetHumanHandle(
         account: Handle
     ): Promise<Result<HumanHandle, AccountGetHumanHandleError>>
@@ -5011,7 +5114,11 @@ export interface LibParsecPlugin {
         new_device_label: DeviceLabel,
         save_strategy: DeviceSaveStrategy
     ): Promise<Result<AvailableDevice, AccountRegisterNewDeviceError>>
+    accountUploadOpaqueKeyInVault(
+        account: Handle
+    ): Promise<Result<[AccountVaultItemOpaqueKeyID, SecretKey], AccountUploadOpaqueKeyInVaultError>>
     archiveDevice(
+        config_dir: Path,
         device_path: Path
     ): Promise<Result<null, ArchiveDeviceError>>
     bootstrapOrganization(
