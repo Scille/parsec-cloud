@@ -36,6 +36,7 @@ pub use libparsec_platform_device_loader::{
 };
 pub use libparsec_platform_storage as storage;
 pub use libparsec_protocol::*;
+pub use libparsec_types::prelude::*;
 pub use path::*;
 pub use platform::*;
 pub use recovery::*;

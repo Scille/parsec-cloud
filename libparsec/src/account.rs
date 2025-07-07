@@ -8,10 +8,11 @@ use std::{
 
 pub use libparsec_account::{
     AccountCreateError, AccountCreateSendValidationEmailError, AccountDeleteProceedError,
-    AccountDeleteSendValidationEmailError, AccountListInvitationsError,
-    AccountListRegistrationDevicesError, AccountLoginWithMasterSecretError,
-    AccountLoginWithPasswordError, AccountRecoverProceedError,
+    AccountDeleteSendValidationEmailError, AccountFetchDeviceFileAccountVaultKeyError,
+    AccountListInvitationsError, AccountListRegistrationDevicesError,
+    AccountLoginWithMasterSecretError, AccountLoginWithPasswordError, AccountRecoverProceedError,
     AccountRecoverSendValidationEmailError, AccountRegisterNewDeviceError,
+    AccountUploadDeviceFileAccountVaultKeyError,
 };
 use libparsec_client_connection::{AnonymousAccountCmds, ConnectionError, ProxyConfig};
 use libparsec_types::prelude::*;
@@ -136,6 +137,36 @@ pub async fn account_list_invitations(
     let account_handle = account;
     let account = borrow_account(account_handle)?;
     account.list_invitations().await
+}
+
+pub async fn account_fetch_device_file_account_vault_key(
+    account: Handle,
+    organization_id: &OrganizationID,
+    device_id: DeviceID,
+) -> Result<SecretKey, AccountFetchDeviceFileAccountVaultKeyError> {
+    let account_handle = account;
+    let account = borrow_account(account_handle)?;
+
+    account
+        .fetch_device_file_account_vault_key(organization_id, device_id)
+        .await
+}
+
+pub async fn account_upload_device_file_account_vault_key(
+    account: Handle,
+    organization_id: OrganizationID,
+    device_id: DeviceID,
+) -> Result<SecretKey, AccountUploadDeviceFileAccountVaultKeyError> {
+    let account_handle = account;
+    let account = borrow_account(account_handle)?;
+
+    let ciphertext_key = SecretKey::generate();
+
+    account
+        .upload_device_file_account_vault_key(organization_id, device_id, ciphertext_key.clone())
+        .await?;
+
+    Ok(ciphertext_key)
 }
 
 pub async fn account_list_registration_devices(

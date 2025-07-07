@@ -18,6 +18,8 @@ from .common import (
     InvitationType,
     KeyDerivation,
     DateTime,
+    DeviceID,
+    SecretKey,
 )
 from .addr import ParsecAddr
 from .device import DeviceAccessStrategy, DeviceSaveStrategy, AvailableDevice
@@ -151,6 +153,50 @@ async def account_list_invitations(
 ) -> Result[
     list[tuple[OrganizationID, InvitationToken, InvitationType]], AccountListInvitationsError
 ]:
+    raise NotImplementedError
+
+
+class AccountFetchDeviceFileAccountVaultKeyError(ErrorVariant):
+    class BadVaultKeyAccess:
+        pass
+
+    class UnknownWebLocalDeviceKey:
+        pass
+
+    class CorruptedWebLocalDeviceKey:
+        pass
+
+    class Offline:
+        pass
+
+    class Internal:
+        pass
+
+
+async def account_fetch_device_file_account_vault_key(
+    account: Handle,
+    organization_id: Ref[OrganizationID],
+    device_id: DeviceID,
+) -> Result[SecretKey, AccountFetchDeviceFileAccountVaultKeyError]:
+    raise NotImplementedError
+
+
+class AccountUploadDeviceFileAccountVaultKeyError(ErrorVariant):
+    class BadVaultKeyAccess:
+        pass
+
+    class Offline:
+        pass
+
+    class Internal:
+        pass
+
+
+async def account_upload_device_file_account_vault_key(
+    account: Handle,
+    organization_id: OrganizationID,
+    device_id: DeviceID,
+) -> Result[SecretKey, AccountUploadDeviceFileAccountVaultKeyError]:
     raise NotImplementedError
 
 
