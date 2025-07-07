@@ -9,7 +9,8 @@ export const StorageManagerKey = 'storageManager';
 export const ThemeManagerKey = 'themeManager';
 
 export interface StoredDeviceData {
-  lastLogin: DateTime;
+  lastLogin?: DateTime;
+  orgCreationDate?: DateTime;
 }
 
 export interface BmsAccessData {
@@ -76,9 +77,11 @@ export class StorageManager {
     const serialized: { [deviceId: string]: object } = {};
 
     Object.keys(data).forEach((deviceId: string, _data) => {
-      if (data[deviceId] && data[deviceId].lastLogin) {
+      if (data[deviceId]) {
+        const deviceData = data[deviceId];
         serialized[deviceId] = {
-          lastLogin: data[deviceId].lastLogin.toISO(),
+          lastLogin: deviceData?.lastLogin ? deviceData.lastLogin.toISO() : undefined,
+          orgCreationDate: deviceData?.orgCreationDate ? deviceData.orgCreationDate.toISO() : undefined,
         };
       }
     });
@@ -94,11 +97,12 @@ export class StorageManager {
       return deviceData;
     }
     Object.keys(data).forEach((deviceId, _data) => {
-      if (data[deviceId] && data[deviceId].lastLogin) {
+      if (data[deviceId]) {
         deviceData[deviceId] = {
           // Need to add setZone because Luxon (and JavaScript's date) ignore
           // the timezone part otherwise
-          lastLogin: DateTime.fromISO(data[deviceId].lastLogin, { setZone: true }),
+          lastLogin: data[deviceId].lastLogin ? DateTime.fromISO(data[deviceId].lastLogin, { setZone: true }) : undefined,
+          orgCreationDate: data[deviceId].orgCreationDate ? DateTime.fromISO(data[deviceId].orgCreationDate, { setZone: true }) : undefined,
         };
       }
     });

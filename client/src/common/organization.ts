@@ -42,6 +42,5 @@ export function formatExpirationTime(duration: Duration): Translatable {
 export function isTrialOrganizationDevice(device: AvailableDevice): boolean {
   const url = new URL(device.serverUrl);
   const serverType = getServerTypeFromHost(url.hostname, url.port.length > 0 ? parseInt(url.port) : undefined);
-
   return serverType === ServerType.Trial;
 }

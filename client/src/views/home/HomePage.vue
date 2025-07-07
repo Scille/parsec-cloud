@@ -101,6 +101,7 @@ import {
   listAvailableDevicesWithError,
   login as parsecLogin,
   ParsecAccount,
+  getOrganizationCreationDate,
 } from '@/parsec';
 import { RouteBackup, Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, switchOrganization, watchRoute } from '@/router';
 import { EventData, EventDistributor, Events } from '@/services/eventDistributor';
@@ -515,13 +516,11 @@ async function login(device: AvailableDevice, access: DeviceAccessStrategy): Pro
   loginInProgress.value = true;
   const result = await parsecLogin(device, access);
   if (result.ok) {
-    if (!storedDeviceDataDict.value[device.deviceId]) {
-      storedDeviceDataDict.value[device.deviceId] = {
-        lastLogin: DateTime.now(),
-      };
-    } else {
-      storedDeviceDataDict.value[device.deviceId].lastLogin = DateTime.now();
-    }
+    const creationDateResult = await getOrganizationCreationDate(result.value);
+    storedDeviceDataDict.value[device.deviceId] = {
+      lastLogin: DateTime.now(),
+      orgCreationDate: creationDateResult.ok ? creationDateResult.value : undefined,
+    };
     await storageManager.storeDevicesData(toRaw(storedDeviceDataDict.value));
 
     const query = getCurrentRouteQuery();
