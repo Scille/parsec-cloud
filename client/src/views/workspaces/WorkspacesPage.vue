@@ -212,9 +212,11 @@ import { addCircle } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
 import { recentDocumentManager } from '@/services/recentDocuments';
 import { isWorkspaceAction, WorkspaceAction } from '@/views/workspaces/types';
+import { compareWorkspaceRoles } from '@/components/workspaces/utils';
 
 enum SortWorkspaceBy {
   Name = 'name',
+  Role = 'role',
   Size = 'size',
   LastUpdate = 'lastUpdate',
 }
@@ -468,6 +470,8 @@ const filteredWorkspaces = computed(() => {
       }
       if (sortBy.value === SortWorkspaceBy.Name) {
         return sortByAsc.value ? a.currentName.localeCompare(b.currentName) : b.currentName.localeCompare(a.currentName);
+      } else if (sortBy.value === SortWorkspaceBy.Role) {
+        return compareWorkspaceRoles(b.currentSelfRole, a.currentSelfRole) * (sortByAsc.value ? 1 : -1);
       } else if (sortBy.value === SortWorkspaceBy.Size) {
         return sortByAsc.value ? a.size - b.size : b.size - a.size;
       } else if (sortBy.value === SortWorkspaceBy.LastUpdate) {
@@ -479,6 +483,7 @@ const filteredWorkspaces = computed(() => {
 
 const msSorterOptions: MsOptions = new MsOptions([
   { label: 'WorkspacesPage.sort.sortByName', key: SortWorkspaceBy.Name },
+  { label: 'WorkspacesPage.sort.sortByRole', key: SortWorkspaceBy.Role },
   // for now we don't have the data for both size and last update
   // { label: 'WorkspacesPage.sort.sortBySize', key: SortWorkspaceBy.Size },
   // { label: 'WorkspacesPage.sort.sortByLastUpdated', key: SortWorkspaceBy.LastUpdate },

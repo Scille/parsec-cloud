@@ -523,6 +523,7 @@
         },
         "sort": {
             "sortByName": "Name",
+            "sortByRole": "Role",
             "sortBySize": "Size",
             "sortByLastUpdated": "Last updated"
         },
