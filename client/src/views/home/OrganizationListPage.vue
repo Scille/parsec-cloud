@@ -112,8 +112,9 @@
             class="organization-list-item"
             :device="device"
             :last-login-device="storedDeviceDataDict[device.deviceId]?.lastLogin"
+            :org-creation-date="storedDeviceDataDict[device.deviceId]?.orgCreationDate"
             @click="$emit('organizationSelect', device)"
-            :logged-in="loggedInDevices.find((info) => info.device.deviceId === device.deviceId) !== undefined"
+            :logged-in="loggedInDevices.find((info: LoggedInDeviceInfo) => info.device.deviceId === device.deviceId) !== undefined"
           />
         </div>
       </div>
@@ -303,12 +304,12 @@ const filteredDevices = computed(() => {
         }
       } else if (sortBy.value === SortCriteria.LastLogin) {
         const aLastLogin =
-          a.deviceId in storedDeviceDataDict.value && storedDeviceDataDict.value[a.deviceId].lastLogin !== undefined
-            ? storedDeviceDataDict.value[a.deviceId].lastLogin
+          storedDeviceDataDict.value[a.deviceId]?.lastLogin !== undefined
+            ? (storedDeviceDataDict.value[a.deviceId].lastLogin as DateTime)
             : DateTime.fromMillis(0);
         const bLastLogin =
-          b.deviceId in storedDeviceDataDict.value && storedDeviceDataDict.value[b.deviceId].lastLogin !== undefined
-            ? storedDeviceDataDict.value[b.deviceId].lastLogin
+          storedDeviceDataDict.value[b.deviceId]?.lastLogin !== undefined
+            ? (storedDeviceDataDict.value[b.deviceId].lastLogin as DateTime)
             : DateTime.fromMillis(0);
         let diff = 0;
         if (sortByAsc.value) {

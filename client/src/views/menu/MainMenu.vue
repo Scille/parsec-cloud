@@ -428,10 +428,10 @@ import {
   UserProfile,
   listWorkspaces,
   getCurrentAvailableDevice,
-  AvailableDevice,
   getLoggedInDevices,
   getClientInfo,
   WorkspaceRole,
+  getOrganizationCreationDate,
 } from '@/parsec';
 import { ChevronExpand, MsImage, LogoIconGradient, I18n, MsModalResult, useWindowSize } from 'megashark-lib';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, watch, useTemplateRef } from 'vue';
@@ -488,7 +488,6 @@ const loggedInDevices = ref<LoggedInDeviceInfo[]>([]);
 const isExpired = ref(false);
 const menusVisible = ref({ favorites: true, recentWorkspaces: true, recentFiles: true });
 const expirationDuration = ref<Duration | undefined>(undefined);
-const currentDevice = ref<AvailableDevice | null>(null);
 const isTrialOrg = ref(false);
 let timeoutId: number | undefined = undefined;
 const securityWarnings = ref<SecurityWarnings | undefined>();
@@ -548,10 +547,10 @@ async function loadAll(): Promise<void> {
 
   const deviceResult = await getCurrentAvailableDevice();
   if (deviceResult.ok) {
-    currentDevice.value = deviceResult.value;
-    isTrialOrg.value = isTrialOrganizationDevice(currentDevice.value);
-    if (isTrialOrg.value) {
-      expirationDuration.value = getDurationBeforeExpiration(currentDevice.value.createdOn);
+    isTrialOrg.value = isTrialOrganizationDevice(deviceResult.value);
+    const orgCreationDateResult = await getOrganizationCreationDate();
+    if (isTrialOrg.value && orgCreationDateResult.ok) {
+      expirationDuration.value = getDurationBeforeExpiration(orgCreationDateResult.value);
     }
   }
 
@@ -699,12 +698,6 @@ onMounted(async () => {
     gesture.enable();
   }
 
-  if (currentDevice.value) {
-    isTrialOrg.value = isTrialOrganizationDevice(currentDevice.value);
-    if (isTrialOrg.value) {
-      expirationDuration.value = getDurationBeforeExpiration(currentDevice.value.createdOn);
-    }
-  }
   securityWarnings.value = await getSecurityWarnings();
 
   updateDividerPosition();

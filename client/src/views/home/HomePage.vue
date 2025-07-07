@@ -100,6 +100,7 @@ import {
   listAvailableDevicesWithError,
   login as parsecLogin,
   ParsecAccount,
+  getOrganizationCreationDate,
 } from '@/parsec';
 import { RouteBackup, Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, switchOrganization, watchRoute } from '@/router';
 import { EventData, EventDistributor, Events } from '@/services/eventDistributor';
@@ -437,7 +438,11 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
     const handle = await getDeviceHandle(device);
     switchOrganization(handle ?? null, false);
   } else {
-    if (isTrialOrganizationDevice(device) && isExpired(getDurationBeforeExpiration(device.createdOn))) {
+    if (
+      isTrialOrganizationDevice(device) &&
+      storedDeviceDataDict.value[device.deviceId]?.orgCreationDate &&
+      isExpired(getDurationBeforeExpiration(storedDeviceDataDict.value[device.deviceId].orgCreationDate as DateTime))
+    ) {
       const answer = await askQuestion('HomePage.expiredDevice.questionTitle', 'HomePage.expiredDevice.questionMessage', {
         yesIsDangerous: true,
         yesText: 'HomePage.expiredDevice.questionYes',
@@ -548,13 +553,11 @@ async function login(device: AvailableDevice, access: DeviceAccessStrategy): Pro
   loginInProgress.value = true;
   const result = await parsecLogin(device, access);
   if (result.ok) {
-    if (!storedDeviceDataDict.value[device.deviceId]) {
-      storedDeviceDataDict.value[device.deviceId] = {
-        lastLogin: DateTime.now(),
-      };
-    } else {
-      storedDeviceDataDict.value[device.deviceId].lastLogin = DateTime.now();
-    }
+    const creationDateResult = await getOrganizationCreationDate(result.value);
+    storedDeviceDataDict.value[device.deviceId] = {
+      lastLogin: DateTime.now(),
+      orgCreationDate: creationDateResult.ok ? creationDateResult.value : undefined,
+    };
     await storageManager.storeDevicesData(toRaw(storedDeviceDataDict.value));
 
     await handleRegistration(device, access);
