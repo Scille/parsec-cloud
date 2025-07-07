@@ -206,6 +206,16 @@ impl DeviceFile {
             DeviceFile::AccountVault(device) => &device.ciphertext,
         }
     }
+
+    pub fn created_on(&self) -> DateTime {
+        match self {
+            DeviceFile::Keyring(device) => device.created_on,
+            DeviceFile::Password(device) => device.created_on,
+            DeviceFile::Recovery(device) => device.created_on,
+            DeviceFile::Smartcard(device) => device.created_on,
+            DeviceFile::AccountVault(device) => device.created_on,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
