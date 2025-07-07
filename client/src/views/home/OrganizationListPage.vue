@@ -409,7 +409,7 @@ const filteredDevices = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  position: fixed;
+  position: absolute;
   border-top: 1px solid var(--parsec-color-light-secondary-medium);
   width: 100%;
   gap: 0.5rem;
@@ -419,6 +419,10 @@ const filteredDevices = computed(() => {
   bottom: 0;
   left: 0;
   z-index: 10;
+
+  @include ms.responsive-breakpoint('sm') {
+    position: fixed;
+  }
 }
 
 .no-devices {
