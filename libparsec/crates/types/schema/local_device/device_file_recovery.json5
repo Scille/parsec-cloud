@@ -40,6 +40,8 @@
             "type": "DeviceLabel"
         },
         {
+            // `LocalDevice` encrypted with a secret key which the end-user is
+            // expected to know in a passphrase form.
             "name": "ciphertext",
             "type": "Bytes"
         }
