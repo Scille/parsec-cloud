@@ -38,6 +38,10 @@ jobs:
             docs
         timeout-minutes: 2
 
+      - uses: taiki-e/install-action@a27ef18d36cfa66b0af3a360104621793b41c036 # pin v2.54.3
+        with:
+          tool: ripgrep
+
       - uses: ./.github/actions/setup-python-poetry
         id: setup-python
         with:
@@ -64,6 +68,11 @@ jobs:
 
       - name: Wrap `*.po` files
         run: poetry run make --environment-overrides wrap
+        timeout-minutes: 1
+
+      - name: No fuzzy translation
+        run: |
+          ! rg '#, fuzzy' locale/
         timeout-minutes: 1
 
       - name: Check if `*.po` were modified
