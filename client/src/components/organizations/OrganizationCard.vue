@@ -96,14 +96,15 @@ const expirationDuration = ref<Duration>();
 const props = defineProps<{
   device: AvailableDevice;
   lastLoginDevice?: DateTime;
+  orgCreationDate?: DateTime;
   orgNameOnly?: boolean;
   loggedIn?: boolean;
 }>();
 
 onMounted(async () => {
   isTrialOrg.value = isTrialOrganizationDevice(props.device);
-  if (isTrialOrg.value) {
-    expirationDuration.value = getDurationBeforeExpiration(props.device.createdOn);
+  if (isTrialOrg.value && props.orgCreationDate) {
+    expirationDuration.value = getDurationBeforeExpiration(props.orgCreationDate);
   }
 });
 

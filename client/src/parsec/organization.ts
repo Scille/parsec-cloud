@@ -14,6 +14,8 @@ import {
   BootstrapOrganizationError,
   BootstrapOrganizationErrorTag,
   ClientConfig,
+  ClientGetOrganizationBootstrapDateError,
+  ConnectionHandle,
   DeviceSaveStrategy,
   OrganizationID,
   OrganizationInfo,
@@ -26,6 +28,7 @@ import {
   UserProfile,
 } from '@/parsec/types';
 import { listUsers } from '@/parsec/user';
+import { generateNoHandleError } from '@/parsec/utils';
 import { getConnectionHandle } from '@/router';
 import { DateTime } from 'luxon';
 
@@ -108,7 +111,7 @@ export async function getOrganizationInfo(): Promise<Result<OrganizationInfo, Or
   const handle = getConnectionHandle();
 
   if (!handle) {
-    return { ok: false, error: { tag: OrganizationInfoErrorTag.Internal } };
+    return generateNoHandleError<OrganizationInfoError>();
   }
 
   const usersResult = await listUsers(false);
@@ -128,6 +131,9 @@ export async function getOrganizationInfo(): Promise<Result<OrganizationInfo, Or
       data: Number(orgInfoResult.value.totalBlockBytes),
     };
   }
+
+  const creationDateResult = await getOrganizationCreationDate();
+
   return {
     ok: true,
     value: {
@@ -149,6 +155,21 @@ export async function getOrganizationInfo(): Promise<Result<OrganizationInfo, Or
       hasUserLimit: clientInfoResult.value.serverConfig.activeUsersLimit.tag !== ActiveUsersLimitTag.NoLimit,
       organizationAddr: clientInfoResult.value.organizationAddr,
       organizationId: clientInfoResult.value.organizationId,
+      creationDate: creationDateResult.ok ? creationDateResult.value : undefined,
     },
   };
+}
+
+export async function getOrganizationCreationDate(
+  connHandle: ConnectionHandle | null = null,
+): Promise<Result<DateTime, ClientGetOrganizationBootstrapDateError>> {
+  const handle = connHandle ?? getConnectionHandle();
+  if (!handle) {
+    return generateNoHandleError<ClientGetOrganizationBootstrapDateError>();
+  }
+  const result = await libparsec.clientGetOrganizationBootstrapDate(handle);
+  if (result.ok) {
+    result.value = DateTime.fromSeconds(result.value as any as number);
+  }
+  return result;
 }
