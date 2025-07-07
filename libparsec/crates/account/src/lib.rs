@@ -13,21 +13,29 @@ mod account_create;
 mod account_delete;
 mod account_recover;
 mod create_registration_device;
+// mod fetch_access_and_load_device_file_account_vault;
+mod fetch_device_file_account_vault_key;
 mod fetch_vault_items;
 mod list_invitations;
 mod list_registration_devices;
 mod login;
 mod register_new_device;
+// mod save_device_file_account_vault_and_upload_access;
+mod upload_device_file_account_vault_key;
 
 pub use account_create::*;
 pub use account_delete::*;
 pub use account_recover::*;
 pub use create_registration_device::*;
+// pub use fetch_access_and_load_device_file_account_vault::*;
+pub use fetch_device_file_account_vault_key::*;
 pub use fetch_vault_items::*;
 pub use list_invitations::*;
 pub use list_registration_devices::*;
 pub use login::*;
 pub use register_new_device::*;
+// pub use save_device_file_account_vault_and_upload_access::*;
+pub use upload_device_file_account_vault_key::*;
 
 #[derive(Debug)]
 pub struct Account {
@@ -155,6 +163,39 @@ impl Account {
     ) -> Result<Vec<(OrganizationID, InvitationToken, InvitationType)>, AccountListInvitationsError>
     {
         account_list_invitations(self).await
+    }
+
+    /// Fetch the account vault items from the server and return the key from
+    /// the `DeviceFileAccountVaultCiphertextKey` matching org/device IDs.
+    ///
+    /// This key is then supposed to be used to decrypt the `ciphertext` field of
+    /// a `DeviceFileAccountVault`.
+    pub async fn fetch_device_file_account_vault_key(
+        &self,
+        organization_id: &OrganizationID,
+        device_id: DeviceID,
+    ) -> Result<SecretKey, AccountFetchDeviceFileAccountVaultKeyError> {
+        account_fetch_device_file_account_vault_key(self, organization_id, device_id).await
+    }
+
+    /// Upload a new `DeviceFileAccountVaultCiphertextKey` (i.e. store a vault item)
+    /// containing a newly generated key.
+    ///
+    /// This key is returned and is then supposed to be used to encrypt the `ciphertext`
+    /// field of a new `DeviceFileAccountVault`.
+    pub async fn upload_device_file_account_vault_key(
+        &self,
+        organization_id: OrganizationID,
+        device_id: DeviceID,
+        ciphertext_key: SecretKey,
+    ) -> Result<(), AccountUploadDeviceFileAccountVaultKeyError> {
+        account_upload_device_file_account_vault_key(
+            self,
+            organization_id,
+            device_id,
+            ciphertext_key,
+        )
+        .await
     }
 
     /// Fetch the account vault items from the server and return all available registration devices
