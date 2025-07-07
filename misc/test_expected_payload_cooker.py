@@ -194,7 +194,11 @@ def multilines_indent(lines: list[str], newline_indent: str) -> str:
 
 def cook_msgpack_type(value, newline_indent: str) -> str:
     if isinstance(value, bytes):
-        return f"0x{value.hex()}"
+        mono_line = f"0x{value.hex()}"
+        if len(mono_line) <= 80:
+            return mono_line
+        else:
+            return f"\n{newline_indent}  ".join(("", *textwrap.wrap(mono_line, width=80)))
 
     if isinstance(value, msgpack.ExtType):
         match value.code:
