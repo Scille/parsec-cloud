@@ -6,7 +6,9 @@
 
 use std::collections::{HashMap, HashSet};
 
-use libparsec_client_connection::{test_register_sequence_of_send_hooks, ProxyConfig};
+use libparsec_client_connection::{
+    test_register_sequence_of_send_hooks, test_send_hook_vault_item_list, ProxyConfig,
+};
 use libparsec_protocol::{authenticated_account_cmds, authenticated_cmds};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -35,19 +37,10 @@ async fn ok_with_server(env: &TestbedEnv) {
         .await
         .unwrap();
 
-    // The registration device is already available...
+    // List the new registration device from the server
 
     assert_eq!(
-        account.list_registration_devices(),
-        HashSet::from_iter([(alice.organization_id().to_owned(), alice.user_id)])
-    );
-
-    // ...but force the load of the registration device from the server
-
-    account.fetch_registration_devices().await.unwrap();
-
-    assert_eq!(
-        account.list_registration_devices(),
+        account.list_registration_devices().await.unwrap(),
         HashSet::from_iter([(alice.organization_id().to_owned(), alice.user_id)])
     );
 
@@ -83,20 +76,7 @@ async fn ok_mocked(env: &TestbedEnv) {
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
-        {
-            let key_access = AccountVaultKeyAccess {
-                vault_key: vault_key.clone(),
-            }
-            .dump_and_encrypt(&account.auth_method_secret_key)
-            .into();
-
-            move |_req: authenticated_account_cmds::latest::vault_item_list::Req| {
-                authenticated_account_cmds::latest::vault_item_list::Rep::Ok {
-                    key_access,
-                    items: HashMap::new(),
-                }
-            }
-        },
+        test_send_hook_vault_item_list!(env, &account.auth_method_secret_key, &vault_key),
         {
             let alice = alice.clone();
 
@@ -118,6 +98,8 @@ async fn ok_mocked(env: &TestbedEnv) {
                 )
                 .unwrap();
                 p_assert_eq!(certif.device_id, redacted_certif.device_id);
+                p_assert_ne!(certif.device_id, alice.device_id);
+                p_assert_matches!(certif.purpose, DevicePurpose::Registration);
 
                 authenticated_cmds::latest::device_create::Rep::Ok
             }
@@ -159,7 +141,6 @@ async fn ok_mocked(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal")]
-
 async fn offline(
     #[values(
         "during_vault_item_list",
@@ -188,20 +169,11 @@ async fn offline(
         "during_device_create" => {
             test_register_sequence_of_send_hooks!(
                 &env.discriminant_dir,
-                {
-                    let key_access = AccountVaultKeyAccess {
-                        vault_key: SecretKey::generate(),
-                    }
-                    .dump_and_encrypt(&account.auth_method_secret_key)
-                    .into();
-
-                    move |_req: authenticated_account_cmds::latest::vault_item_list::Req| {
-                        authenticated_account_cmds::latest::vault_item_list::Rep::Ok {
-                            key_access,
-                            items: HashMap::new(),
-                        }
-                    }
-                },
+                test_send_hook_vault_item_list!(
+                    env,
+                    &account.auth_method_secret_key,
+                    &SecretKey::generate()
+                ),
                 // `device_create` is missing !
             );
         }
@@ -209,20 +181,11 @@ async fn offline(
         "during_vault_item_upload" => {
             test_register_sequence_of_send_hooks!(
                 &env.discriminant_dir,
-                {
-                    let key_access = AccountVaultKeyAccess {
-                        vault_key: SecretKey::generate(),
-                    }
-                    .dump_and_encrypt(&account.auth_method_secret_key)
-                    .into();
-
-                    move |_req: authenticated_account_cmds::latest::vault_item_list::Req| {
-                        authenticated_account_cmds::latest::vault_item_list::Rep::Ok {
-                            key_access,
-                            items: HashMap::new(),
-                        }
-                    }
-                },
+                test_send_hook_vault_item_list!(
+                    env,
+                    &account.auth_method_secret_key,
+                    &SecretKey::generate()
+                ),
                 move |_req: authenticated_cmds::latest::device_create::Req| {
                     authenticated_cmds::latest::device_create::Rep::Ok
                 } // `vault_item_upload` is missing !
@@ -253,20 +216,11 @@ async fn fingerprint_already_exists(env: &TestbedEnv) {
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
-        {
-            let key_access = AccountVaultKeyAccess {
-                vault_key: SecretKey::generate(),
-            }
-            .dump_and_encrypt(&account.auth_method_secret_key)
-            .into();
-
-            move |_req: authenticated_account_cmds::latest::vault_item_list::Req| {
-                authenticated_account_cmds::latest::vault_item_list::Rep::Ok {
-                    key_access,
-                    items: HashMap::new(),
-                }
-            }
-        },
+        test_send_hook_vault_item_list!(
+            env,
+            &account.auth_method_secret_key,
+            &SecretKey::generate()
+        ),
         move |_req: authenticated_cmds::latest::device_create::Req| {
             authenticated_cmds::latest::device_create::Rep::Ok
         },
@@ -297,20 +251,11 @@ async fn timestamp_out_of_ballpark(env: &TestbedEnv) {
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
-        {
-            let key_access = AccountVaultKeyAccess {
-                vault_key: SecretKey::generate(),
-            }
-            .dump_and_encrypt(&account.auth_method_secret_key)
-            .into();
-
-            move |_req: authenticated_account_cmds::latest::vault_item_list::Req| {
-                authenticated_account_cmds::latest::vault_item_list::Rep::Ok {
-                    key_access,
-                    items: HashMap::new(),
-                }
-            }
-        },
+        test_send_hook_vault_item_list!(
+            env,
+            &account.auth_method_secret_key,
+            &SecretKey::generate()
+        ),
         move |_req: authenticated_cmds::latest::device_create::Req| {
             authenticated_cmds::latest::device_create::Rep::TimestampOutOfBallpark {
                 ballpark_client_early_offset: 300.,
@@ -402,20 +347,11 @@ async fn unknown_server_response(
         "during_device_create" => {
             test_register_sequence_of_send_hooks!(
                 &env.discriminant_dir,
-                {
-                    let key_access = AccountVaultKeyAccess {
-                        vault_key: SecretKey::generate(),
-                    }
-                    .dump_and_encrypt(&account.auth_method_secret_key)
-                    .into();
-
-                    move |_req: authenticated_account_cmds::latest::vault_item_list::Req| {
-                        authenticated_account_cmds::latest::vault_item_list::Rep::Ok {
-                            key_access,
-                            items: HashMap::new(),
-                        }
-                    }
-                },
+                test_send_hook_vault_item_list!(
+                    env,
+                    &account.auth_method_secret_key,
+                    &SecretKey::generate()
+                ),
                 move |_req: authenticated_cmds::latest::device_create::Req| {
                     authenticated_cmds::latest::device_create::Rep::UnknownStatus {
                         unknown_status: "unknown".to_string(),
@@ -428,20 +364,11 @@ async fn unknown_server_response(
         "during_vault_item_upload" => {
             test_register_sequence_of_send_hooks!(
                 &env.discriminant_dir,
-                {
-                    let key_access = AccountVaultKeyAccess {
-                        vault_key: SecretKey::generate(),
-                    }
-                    .dump_and_encrypt(&account.auth_method_secret_key)
-                    .into();
-
-                    move |_req: authenticated_account_cmds::latest::vault_item_list::Req| {
-                        authenticated_account_cmds::latest::vault_item_list::Rep::Ok {
-                            key_access,
-                            items: HashMap::new(),
-                        }
-                    }
-                },
+                test_send_hook_vault_item_list!(
+                    env,
+                    &account.auth_method_secret_key,
+                    &SecretKey::generate()
+                ),
                 move |_req: authenticated_cmds::latest::device_create::Req| {
                     authenticated_cmds::latest::device_create::Rep::Ok
                 },
