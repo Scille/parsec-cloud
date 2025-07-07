@@ -16,7 +16,7 @@ pub use libparsec_client::{
 };
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_types::prelude::*;
-pub use libparsec_types::{DeviceAccessStrategy, RealmRole};
+pub use libparsec_types::RealmRole;
 
 use crate::{
     handle::{
@@ -122,9 +122,18 @@ pub async fn client_start(
 
     let device = libparsec_platform_device_loader::load_device(&config.config_dir, access).await?;
 
-    // 2) Make sure another client is not running this device
+    // 2) Actually start the client
 
-    // 2.1) Is our own process already running this device ?
+    client_start_from_local_device(config, device).await
+}
+
+pub(super) async fn client_start_from_local_device(
+    config: Arc<libparsec_client::ClientConfig>,
+    device: Arc<LocalDevice>,
+) -> Result<Handle, ClientStartError> {
+    // 1) Make sure another client is not running this device
+
+    // 1.1) Is our own process already running this device ?
 
     enum RegisterFailed {
         AlreadyRegistered(Handle),
@@ -165,7 +174,7 @@ pub async fn client_start(
         }
     };
 
-    // 2.2) Is another process running this device ?
+    // 1.2) Is another process running this device ?
 
     // On web there is no other processes able to use the devices we have access of.
     #[cfg(not(target_arch = "wasm32"))]
@@ -178,7 +187,7 @@ pub async fn client_start(
         })?
     };
 
-    // 3) Actually start the client
+    // 2) Actually start the client
 
     let on_event_callback = super::get_on_event_callback();
     let on_event = OnEventCallbackPlugged::new(initializing.handle(), on_event_callback.clone());

@@ -247,6 +247,10 @@ class KeyDerivation(BytesBasedType):
     pass
 
 
+class SecretKey(BytesBasedType):
+    pass
+
+
 class SASCode(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<_, String> { s.parse::<libparsec::SASCode>().map_err(|e| e.to_string()) }"
 

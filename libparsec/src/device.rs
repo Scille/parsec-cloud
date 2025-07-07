@@ -14,8 +14,11 @@ pub async fn list_available_devices(
     libparsec_platform_device_loader::list_available_devices(config_dir).await
 }
 
-pub async fn archive_device(device_path: &Path) -> Result<(), ArchiveDeviceError> {
-    libparsec_platform_device_loader::archive_device(device_path).await
+pub async fn archive_device(
+    config_dir: &Path,
+    device_path: &Path,
+) -> Result<(), ArchiveDeviceError> {
+    libparsec_platform_device_loader::archive_device(config_dir, device_path).await
 }
 
 pub async fn update_device_change_authentication(

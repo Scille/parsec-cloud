@@ -16,6 +16,7 @@ from .common import (
     Structure,
     UserID,
     Variant,
+    SecretKey,
 )
 from .addr import ParsecAddr
 
@@ -25,6 +26,7 @@ class DeviceFileType(Enum):
     Password = EnumItemUnit
     Recovery = EnumItemUnit
     Smartcard = EnumItemUnit
+    AccountVault = EnumItemUnit
 
 
 class DeviceSaveStrategy(Variant):
@@ -37,6 +39,9 @@ class DeviceSaveStrategy(Variant):
     class Smartcard:
         pass
 
+    class AccountVault:
+        ciphertext_key: SecretKey
+
 
 class DeviceAccessStrategy(Variant):
     class Keyring:
@@ -48,6 +53,10 @@ class DeviceAccessStrategy(Variant):
 
     class Smartcard:
         key_file: Path
+
+    class AccountVault:
+        key_file: Path
+        ciphertext_key: SecretKey
 
 
 class AvailableDevice(Structure):
@@ -85,7 +94,10 @@ class ArchiveDeviceError(ErrorVariant):
         pass
 
 
-async def archive_device(device_path: Ref[Path]) -> Result[None, ArchiveDeviceError]:
+async def archive_device(
+    config_dir: Ref[Path],
+    device_path: Ref[Path],
+) -> Result[None, ArchiveDeviceError]:
     raise NotImplementedError
 
 

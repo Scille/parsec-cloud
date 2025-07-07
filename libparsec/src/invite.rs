@@ -15,7 +15,7 @@ pub use libparsec_protocol::invited_cmds::latest::invite_info::{
     InvitationCreatedBy as InviteInfoInvitationCreatedBy, ShamirRecoveryRecipient,
     UserGreetingAdministrator, UserOnlineStatus,
 };
-pub use libparsec_types::prelude::*;
+use libparsec_types::prelude::*;
 
 use crate::{
     handle::{borrow_from_handle, register_handle, take_and_close_handle, Handle, HandleItem},
