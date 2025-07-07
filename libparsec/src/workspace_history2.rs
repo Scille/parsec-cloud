@@ -98,7 +98,7 @@ pub async fn client_start_workspace_history2(
 
 pub enum WorkspaceHistory2RealmExportDecryptor {
     User {
-        access: super::DeviceAccessStrategy,
+        access: DeviceAccessStrategy,
     },
     SequesterService {
         sequester_service_id: SequesterServiceID,
