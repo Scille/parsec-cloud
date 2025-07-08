@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec::{DeviceAccessStrategy, DeviceFileType, DeviceSaveStrategy};
+use libparsec::{AvailableDeviceType, DeviceAccessStrategy, DeviceSaveStrategy};
 
 use crate::utils::*;
 
@@ -38,7 +38,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
     };
 
     let current_access_strategy = match device.ty {
-        DeviceFileType::Password => {
+        AvailableDeviceType::Password => {
             let password = read_password(if args.password_stdin {
                 ReadPasswordFrom::Stdin
             } else {
@@ -53,15 +53,15 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
             }
         }
 
-        DeviceFileType::Smartcard => DeviceAccessStrategy::Smartcard {
+        AvailableDeviceType::Smartcard => DeviceAccessStrategy::Smartcard {
             key_file: device.key_file_path.clone(),
         },
 
-        DeviceFileType::Keyring => DeviceAccessStrategy::Keyring {
+        AvailableDeviceType::Keyring => DeviceAccessStrategy::Keyring {
             key_file: device.key_file_path.clone(),
         },
 
-        DeviceFileType::AccountVault => {
+        AvailableDeviceType::AccountVault { .. } => {
             // In theory we should support this authentication method here,
             // however:
             // - It is cumbersome since it requires obtaining the account authentication
@@ -70,7 +70,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
             return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(device.ty).into());
         }
 
-        DeviceFileType::Recovery => {
+        AvailableDeviceType::Recovery => {
             return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(device.ty).into());
         }
     };

@@ -6,8 +6,8 @@ use anyhow::anyhow;
 use dialoguer::FuzzySelect;
 use libparsec::{
     internal::{Client, EventBus},
-    list_available_devices, AuthenticatedCmds, AvailableDevice, DeviceAccessStrategy,
-    DeviceFileType, DeviceLabel, HumanHandle, LocalDevice, Password, ProxyConfig, SASCode,
+    list_available_devices, AuthenticatedCmds, AvailableDevice, AvailableDeviceType,
+    DeviceAccessStrategy, DeviceLabel, HumanHandle, LocalDevice, Password, ProxyConfig, SASCode,
     UserProfile,
 };
 use libparsec_platform_ipc::{
@@ -176,7 +176,7 @@ pub enum LoadAndUnlockDeviceError {
     /// Error while loading the device file
     LoadDevice(LoadDeviceError),
     /// The device file authentication is not supported
-    UnsupportedAuthentication(DeviceFileType),
+    UnsupportedAuthentication(AvailableDeviceType),
     /// Error while unlocking the device
     UnlockDevice(libparsec::LoadDeviceError),
     /// Internal error
@@ -231,7 +231,7 @@ pub async fn load_and_unlock_device(
     log::debug!("Loading device {:?}", device.ty);
 
     let access_strategy = match device.ty {
-        DeviceFileType::Password => {
+        AvailableDeviceType::Password => {
             let password = read_password(if password_stdin {
                 ReadPasswordFrom::Stdin
             } else {
@@ -245,13 +245,13 @@ pub async fn load_and_unlock_device(
                 password,
             }
         }
-        DeviceFileType::Smartcard => DeviceAccessStrategy::Smartcard {
+        AvailableDeviceType::Smartcard => DeviceAccessStrategy::Smartcard {
             key_file: device.key_file_path.clone(),
         },
-        DeviceFileType::Keyring => DeviceAccessStrategy::Keyring {
+        AvailableDeviceType::Keyring => DeviceAccessStrategy::Keyring {
             key_file: device.key_file_path.clone(),
         },
-        DeviceFileType::AccountVault => {
+        AvailableDeviceType::AccountVault { .. } => {
             // In theory we should support this authentication method here,
             // however:
             // - It is cumbersome since it requires obtaining the account authentication
@@ -261,7 +261,7 @@ pub async fn load_and_unlock_device(
                 device.ty,
             ));
         }
-        DeviceFileType::Recovery => {
+        AvailableDeviceType::Recovery => {
             return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(
                 device.ty,
             ));
