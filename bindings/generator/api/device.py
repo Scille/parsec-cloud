@@ -4,8 +4,6 @@ from .common import (
     DateTime,
     DeviceID,
     DeviceLabel,
-    Enum,
-    EnumItemUnit,
     ErrorVariant,
     HumanHandle,
     OrganizationID,
@@ -17,16 +15,20 @@ from .common import (
     UserID,
     Variant,
     SecretKey,
+    VariantItemUnit,
+    AccountVaultItemOpaqueKeyID,
 )
 from .addr import ParsecAddr
 
 
-class DeviceFileType(Enum):
-    Keyring = EnumItemUnit
-    Password = EnumItemUnit
-    Recovery = EnumItemUnit
-    Smartcard = EnumItemUnit
-    AccountVault = EnumItemUnit
+class AvailableDeviceType(Variant):
+    Keyring = VariantItemUnit
+    Password = VariantItemUnit
+    Recovery = VariantItemUnit
+    Smartcard = VariantItemUnit
+
+    class AccountVault:
+        ciphertext_key_id: AccountVaultItemOpaqueKeyID
 
 
 class DeviceSaveStrategy(Variant):
@@ -40,6 +42,7 @@ class DeviceSaveStrategy(Variant):
         pass
 
     class AccountVault:
+        ciphertext_key_id: AccountVaultItemOpaqueKeyID
         ciphertext_key: SecretKey
 
 
@@ -56,6 +59,7 @@ class DeviceAccessStrategy(Variant):
 
     class AccountVault:
         key_file: Path
+        ciphertext_key_id: AccountVaultItemOpaqueKeyID
         ciphertext_key: SecretKey
 
 
@@ -69,7 +73,7 @@ class AvailableDevice(Structure):
     device_id: DeviceID
     human_handle: HumanHandle
     device_label: DeviceLabel
-    ty: DeviceFileType
+    ty: AvailableDeviceType
 
 
 class ListAvailableDeviceError(ErrorVariant):
