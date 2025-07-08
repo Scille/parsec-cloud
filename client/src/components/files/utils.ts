@@ -1,10 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import FolderSelectionModal from '@/components/files/FolderSelectionModal.vue';
+import { SortProperty } from '@/components/files/types';
 import { FsPath, Path, WorkspaceHandle, getPathLink } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { modalController } from '@ionic/vue';
-import { Clipboard, MsModalResult, Translatable } from 'megashark-lib';
+import { Clipboard, DisplayState, MsModalResult, MsOption, Translatable } from 'megashark-lib';
 
 export interface FileImportTuple {
   file: File;
@@ -20,6 +21,20 @@ export interface FolderSelectionOptions {
   excludePaths?: Array<FsPath>;
   okButtonLabel?: Translatable;
 }
+
+interface SortProperties {
+  option: MsOption;
+  sortByAsc: boolean;
+}
+export interface FoldersPageSavedData {
+  displayState?: DisplayState;
+  sortProperties?: SortProperties;
+}
+
+export const FolderDefaultData: Required<FoldersPageSavedData> = {
+  displayState: DisplayState.List,
+  sortProperties: { option: { label: 'FoldersPage.sort.byName', key: SortProperty.Name }, sortByAsc: true },
+};
 
 export async function copyPathLinkToClipboard(
   path: FsPath,

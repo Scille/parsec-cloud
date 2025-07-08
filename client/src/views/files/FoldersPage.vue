@@ -39,9 +39,9 @@
           </div>
 
           <ms-sorter
-            :label="'FoldersPage.sort.byName'"
+            :label="sortOption.label"
             :options="msSorterOptions"
-            :default-option="SortProperty.Name"
+            :default-option="sortOption.key"
             :sorter-labels="msSorterLabels"
             @change="onSortChange"
           />
@@ -67,9 +67,9 @@
         class="action-bar-mobile-filter"
       >
         <ms-sorter
-          :label="'FoldersPage.sort.byName'"
+          :label="sortOption.label"
           :options="msSorterOptions"
-          :default-option="SortProperty.Name"
+          :default-option="sortOption.key"
           :sorter-labels="msSorterLabels"
           @change="onSortChange"
         />
@@ -181,6 +181,7 @@ import {
   MsSpinner,
   I18n,
   useWindowSize,
+  MsOption,
 } from 'megashark-lib';
 import * as parsec from '@/parsec';
 
@@ -200,6 +201,8 @@ import {
   selectFolder,
   copyPathLinkToClipboard,
   EntryModel,
+  FolderDefaultData,
+  FoldersPageSavedData,
 } from '@/components/files';
 import SmallDisplayHeaderTitle from '@/components/header/SmallDisplayHeaderTitle.vue';
 import {
@@ -265,19 +268,12 @@ import { WorkspaceTagRole } from '@/components/workspaces';
 import { showDirectoryPicker, showSaveFilePicker } from 'native-file-system-adapter';
 import { MenuAction, TabBarOptions, useCustomTabBar } from '@/views/menu';
 
-interface FoldersPageSavedData {
-  displayState?: DisplayState;
-}
-
 const customTabBar = useCustomTabBar();
 
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 
 const msSorterOptions: MsOptions = new MsOptions([
-  {
-    label: 'FoldersPage.sort.byName',
-    key: SortProperty.Name,
-  },
+  { label: 'FoldersPage.sort.byName', key: SortProperty.Name },
   { label: 'FoldersPage.sort.byLastUpdate', key: SortProperty.LastUpdate },
   { label: 'FoldersPage.sort.byCreation', key: SortProperty.CreationDate },
   { label: 'FoldersPage.sort.bySize', key: SortProperty.Size },
@@ -368,7 +364,7 @@ const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 
 const FOLDERS_PAGE_DATA_KEY = 'FoldersPage';
 
-const sortProperty = ref(SortProperty.Name);
+const sortOption = ref<MsOption>({ label: 'FoldersPage.sort.byName', key: SortProperty.Name });
 const sortAsc = ref(true);
 
 const fileOperations: Ref<Array<FileOperationProgress>> = ref([]);
@@ -536,11 +532,11 @@ function getDisplayText(): Translatable {
 }
 
 onMounted(async () => {
-  displayView.value = (
-    await storageManager.retrieveComponentData<FoldersPageSavedData>(FOLDERS_PAGE_DATA_KEY, {
-      displayState: DisplayState.List,
-    })
-  ).displayState;
+  const componentData = await storageManager.retrieveComponentData<FoldersPageSavedData>(FOLDERS_PAGE_DATA_KEY, FolderDefaultData);
+
+  displayView.value = componentData.displayState;
+  sortOption.value = { label: componentData.sortProperties.option.label, key: componentData.sortProperties.option.key };
+  sortAsc.value = componentData.sortProperties.sortByAsc;
 
   await defineShortcuts();
 
@@ -650,11 +646,16 @@ async function onDisplayStateChange(): Promise<void> {
   await storageManager.storeComponentData<FoldersPageSavedData>(FOLDERS_PAGE_DATA_KEY, { displayState: displayView.value });
 }
 
-function onSortChange(event: MsSorterChangeEvent): void {
+async function onSortChange(event: MsSorterChangeEvent): Promise<void> {
   folders.value.sort(event.option.key, event.sortByAsc);
   files.value.sort(event.option.key, event.sortByAsc);
-  sortProperty.value = event.option.key;
+  sortOption.value = event.option;
   sortAsc.value = event.sortByAsc;
+  await storageManager.updateComponentData<FoldersPageSavedData>(
+    FOLDERS_PAGE_DATA_KEY,
+    { sortProperties: { option: { label: sortOption.value.label, key: sortOption.value.key }, sortByAsc: sortAsc.value } },
+    FolderDefaultData,
+  );
 }
 
 async function onFileOperationState(state: FileOperationState, operationData?: FileOperationData, stateData?: StateData): Promise<void> {
@@ -704,7 +705,7 @@ async function onFileOperationState(state: FileOperationState, operationData?: F
           existing.updated = statResult.value.updated;
           existing.isSelected = false;
         }
-        files.value.sort(sortProperty.value, sortAsc.value);
+        files.value.sort(sortOption.value.key, sortAsc.value);
       }
     }
   } else if (state === FileOperationState.EntryMoved && operationData) {
@@ -741,7 +742,7 @@ async function onFileOperationState(state: FileOperationState, operationData?: F
           if (!folders.value.getEntries().find((entry) => entry.id === statResult.value.id)) {
             (statResult.value as FolderModel).isSelected = false;
             folders.value.append(statResult.value as FolderModel);
-            folders.value.sort(sortProperty.value, sortAsc.value);
+            folders.value.sort(sortOption.value.key, sortAsc.value);
           }
         }
       }
@@ -869,8 +870,8 @@ async function listFolder(options?: { selectFile?: EntryName; sameFolder?: boole
     }
     folders.value.smartUpdate(newFolders);
     files.value.smartUpdate(newFiles);
-    folders.value.sort(sortProperty.value, sortAsc.value);
-    files.value.sort(sortProperty.value, sortAsc.value);
+    folders.value.sort(sortOption.value.key, sortAsc.value);
+    files.value.sort(sortOption.value.key, sortAsc.value);
   } else {
     // This happens when the handle becomes invalid (if we're logging out for example) and the app tries to refresh at the same
     // time. Logging out while importing files is a good example of that: logging out will cancel the imports which will trigger
