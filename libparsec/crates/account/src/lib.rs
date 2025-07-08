@@ -13,29 +13,25 @@ mod account_create;
 mod account_delete;
 mod account_recover;
 mod create_registration_device;
-// mod fetch_access_and_load_device_file_account_vault;
-mod fetch_device_file_account_vault_key;
+mod fetch_opaque_key_from_vault;
 mod fetch_vault_items;
 mod list_invitations;
 mod list_registration_devices;
 mod login;
 mod register_new_device;
-// mod save_device_file_account_vault_and_upload_access;
-mod upload_device_file_account_vault_key;
+mod upload_opaque_key_in_vault;
 
 pub use account_create::*;
 pub use account_delete::*;
 pub use account_recover::*;
 pub use create_registration_device::*;
-// pub use fetch_access_and_load_device_file_account_vault::*;
-pub use fetch_device_file_account_vault_key::*;
+pub use fetch_opaque_key_from_vault::*;
 pub use fetch_vault_items::*;
 pub use list_invitations::*;
 pub use list_registration_devices::*;
 pub use login::*;
 pub use register_new_device::*;
-// pub use save_device_file_account_vault_and_upload_access::*;
-pub use upload_device_file_account_vault_key::*;
+pub use upload_opaque_key_in_vault::*;
 
 #[derive(Debug)]
 pub struct Account {
@@ -165,37 +161,27 @@ impl Account {
         account_list_invitations(self).await
     }
 
-    /// Fetch the account vault items from the server and return the key from
-    /// the `DeviceFileAccountVaultCiphertextKey` matching org/device IDs.
+    /// Fetch the account vault items from the server and return the opaque
+    /// key matching the ID.
     ///
-    /// This key is then supposed to be used to decrypt the `ciphertext` field of
-    /// a `DeviceFileAccountVault`.
-    pub async fn fetch_device_file_account_vault_key(
+    /// This key is typically supposed to be used to decrypt the `ciphertext`
+    /// field of a `DeviceFileAccountVault`.
+    pub async fn fetch_opaque_key_from_vault(
         &self,
-        organization_id: &OrganizationID,
-        device_id: DeviceID,
-    ) -> Result<SecretKey, AccountFetchDeviceFileAccountVaultKeyError> {
-        account_fetch_device_file_account_vault_key(self, organization_id, device_id).await
+        key_id: AccountVaultItemOpaqueKeyID,
+    ) -> Result<SecretKey, AccountFetchOpaqueKeyFromVaultError> {
+        account_fetch_opaque_key_from_vault(self, key_id).await
     }
 
-    /// Upload a new `DeviceFileAccountVaultCiphertextKey` (i.e. store a vault item)
-    /// containing a newly generated key.
+    /// Generate a new opaque key and upload it as `AccountVaultItemOpaqueKey` in the
+    /// account vault.
     ///
-    /// This key is returned and is then supposed to be used to encrypt the `ciphertext`
-    /// field of a new `DeviceFileAccountVault`.
-    pub async fn upload_device_file_account_vault_key(
+    /// This key is then typically supposed to be used while saving a local device
+    /// to encrypt the `ciphertext` field of a `DeviceFileAccountVault`.
+    pub async fn upload_opaque_key_in_vault(
         &self,
-        organization_id: OrganizationID,
-        device_id: DeviceID,
-        ciphertext_key: SecretKey,
-    ) -> Result<(), AccountUploadDeviceFileAccountVaultKeyError> {
-        account_upload_device_file_account_vault_key(
-            self,
-            organization_id,
-            device_id,
-            ciphertext_key,
-        )
-        .await
+    ) -> Result<(AccountVaultItemOpaqueKeyID, SecretKey), AccountUploadOpaqueKeyInVaultError> {
+        account_upload_opaque_key_in_vault(self).await
     }
 
     /// Fetch the account vault items from the server and return all available registration devices

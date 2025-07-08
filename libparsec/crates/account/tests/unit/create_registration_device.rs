@@ -124,7 +124,7 @@ async fn ok_mocked(env: &TestbedEnv) {
                         // a new device!
                         p_assert_ne!(local_device.device_id, alice.device_id);
                     }
-                    AccountVaultItem::DeviceFileKeyAccess(unexpected) => {
+                    AccountVaultItem::OpaqueKey(unexpected) => {
                         unreachable!("{:?}", unexpected)
                     }
                 }

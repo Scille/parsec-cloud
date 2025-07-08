@@ -62,7 +62,7 @@ async fn ok_with_server(env: &TestbedEnv) {
             device_id: available_device.device_id,
             human_handle: alice.human_handle.clone(),
             device_label: new_device_label,
-            ty: DeviceFileType::Password,
+            ty: AvailableDeviceType::Password,
         }
     );
     // Make sure that an *actual* new device has been created
@@ -166,7 +166,7 @@ async fn ok_mocked(env: &TestbedEnv) {
             device_id: available_device.device_id,
             human_handle: alice.human_handle.clone(),
             device_label: new_device_label,
-            ty: DeviceFileType::Password,
+            ty: AvailableDeviceType::Password,
         }
     );
 }

@@ -4,7 +4,10 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 
 use libparsec_client_connection::{
     test_register_sequence_of_send_hooks, test_send_hook_vault_item_list, ProxyConfig,
@@ -13,12 +16,10 @@ use libparsec_protocol::authenticated_account_cmds;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::{Account, AccountUploadDeviceFileAccountVaultKeyError};
+use crate::{Account, AccountUploadOpaqueKeyInVaultError};
 
-#[parsec_test(testbed = "minimal", with_server)]
+#[parsec_test(testbed = "empty", with_server)]
 async fn ok_with_server(env: &TestbedEnv) {
-    let alice = env.local_device("alice@dev1");
-    let ciphertext_key = SecretKey::generate();
     let (_, auth_method_master_secret) =
         libparsec_tests_fixtures::test_new_account(&env.server_addr)
             .await
@@ -33,26 +34,21 @@ async fn ok_with_server(env: &TestbedEnv) {
     .await
     .unwrap();
 
-    account
-        .upload_device_file_account_vault_key(
-            alice.organization_id().to_owned(),
-            alice.device_id,
-            ciphertext_key,
-        )
-        .await
-        .unwrap();
+    let (ciphertext_key_id, ciphertext_key) = account.upload_opaque_key_in_vault().await.unwrap();
 
     // Get back our local device key from the server
 
-    account
-        .fetch_device_file_account_vault_key(alice.organization_id(), alice.device_id)
-        .await
-        .unwrap();
+    p_assert_eq!(
+        account
+            .fetch_opaque_key_from_vault(ciphertext_key_id)
+            .await
+            .unwrap(),
+        ciphertext_key
+    );
 }
 
-#[parsec_test(testbed = "minimal")]
+#[parsec_test(testbed = "empty")]
 async fn ok_mocked(env: &TestbedEnv) {
-    let alice = env.local_device("alice@dev1");
     let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
@@ -64,29 +60,28 @@ async fn ok_mocked(env: &TestbedEnv) {
     .await;
 
     let vault_key = SecretKey::generate();
-    let ciphertext_key = SecretKey::generate();
+    let expected_stuff: Arc<Mutex<Option<(AccountVaultItemOpaqueKeyID, SecretKey)>>> =
+        Default::default();
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
         test_send_hook_vault_item_list!(env, &account.auth_method_secret_key, &vault_key),
         {
-            let alice = alice.clone();
             let vault_key = vault_key.clone();
-            let ciphertext_key = ciphertext_key.clone();
+            let expected_stuff = expected_stuff.clone();
 
             move |req: authenticated_account_cmds::latest::vault_item_upload::Req| {
                 let item = AccountVaultItem::load(&req.item).unwrap();
                 p_assert_eq!(req.item_fingerprint, item.fingerprint());
                 match item {
-                    AccountVaultItem::DeviceFileKeyAccess(item) => {
-                        p_assert_eq!(item.organization_id, *alice.organization_id());
-                        p_assert_eq!(item.device_id, alice.device_id);
-                        let key_access = DeviceFileAccountVaultCiphertextKey::decrypt_and_load(
+                    AccountVaultItem::OpaqueKey(item) => {
+                        let key_access = AccountVaultItemOpaqueKeyEncryptedData::decrypt_and_load(
                             &item.encrypted_data,
                             &vault_key,
                         )
                         .unwrap();
-                        p_assert_eq!(key_access.ciphertext_key, ciphertext_key);
+                        p_assert_eq!(item.key_id, key_access.key_id);
+                        *expected_stuff.lock().unwrap() = Some((item.key_id, key_access.key));
                     }
                     AccountVaultItem::RegistrationDevice(unexpected) => {
                         unreachable!("{:?}", unexpected)
@@ -98,22 +93,19 @@ async fn ok_mocked(env: &TestbedEnv) {
         },
     );
 
-    account
-        .upload_device_file_account_vault_key(
-            alice.organization_id().to_owned(),
-            alice.device_id,
-            ciphertext_key,
-        )
-        .await
-        .unwrap();
+    let (ciphertext_key_id, ciphertext_key) = account.upload_opaque_key_in_vault().await.unwrap();
+
+    let (expected_ciphertext_key_id, expected_ciphertext_key) =
+        expected_stuff.lock().unwrap().clone().unwrap();
+    p_assert_eq!(ciphertext_key_id, expected_ciphertext_key_id);
+    p_assert_eq!(ciphertext_key, expected_ciphertext_key);
 }
 
-#[parsec_test(testbed = "minimal")]
+#[parsec_test(testbed = "empty")]
 async fn offline(
     #[values("during_vault_item_list", "during_vault_item_upload")] kind: &str,
     env: &TestbedEnv,
 ) {
-    let alice = env.local_device("alice@dev1");
     let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
@@ -145,20 +137,13 @@ async fn offline(
     }
 
     p_assert_matches!(
-        account
-            .upload_device_file_account_vault_key(
-                alice.organization_id().to_owned(),
-                alice.device_id,
-                SecretKey::generate()
-            )
-            .await,
-        Err(AccountUploadDeviceFileAccountVaultKeyError::Offline(_))
+        account.upload_opaque_key_in_vault().await,
+        Err(AccountUploadOpaqueKeyInVaultError::Offline(_))
     );
 }
 
-#[parsec_test(testbed = "minimal")]
+#[parsec_test(testbed = "empty")]
 async fn fingerprint_already_exists(env: &TestbedEnv) {
-    let alice = env.local_device("alice@dev1");
     let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
@@ -182,15 +167,14 @@ async fn fingerprint_already_exists(env: &TestbedEnv) {
     );
 
     p_assert_matches!(
-        account.upload_device_file_account_vault_key(alice.organization_id().to_owned(), alice.device_id, SecretKey::generate()).await,
-        Err(AccountUploadDeviceFileAccountVaultKeyError::Internal(err))
+        account.upload_opaque_key_in_vault().await,
+        Err(AccountUploadOpaqueKeyInVaultError::Internal(err))
         if format!("{}", err) == "Unexpected server response: FingerprintAlreadyExists"
     );
 }
 
-#[parsec_test(testbed = "minimal")]
+#[parsec_test(testbed = "empty")]
 async fn bad_vault_key_access(env: &TestbedEnv) {
-    let alice = env.local_device("alice@dev1");
     let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
@@ -212,23 +196,16 @@ async fn bad_vault_key_access(env: &TestbedEnv) {
     );
 
     p_assert_matches!(
-        account
-            .upload_device_file_account_vault_key(
-                alice.organization_id().to_owned(),
-                alice.device_id,
-                SecretKey::generate()
-            )
-            .await,
-        Err(AccountUploadDeviceFileAccountVaultKeyError::BadVaultKeyAccess(_))
+        account.upload_opaque_key_in_vault().await,
+        Err(AccountUploadOpaqueKeyInVaultError::BadVaultKeyAccess(_))
     );
 }
 
-#[parsec_test(testbed = "minimal")]
+#[parsec_test(testbed = "empty")]
 async fn unknown_server_response(
     #[values("during_vault_item_list", "during_vault_item_upload")] kind: &str,
     env: &TestbedEnv,
 ) {
-    let alice = env.local_device("alice@dev1");
     let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
@@ -273,8 +250,8 @@ async fn unknown_server_response(
     }
 
     p_assert_matches!(
-        account.upload_device_file_account_vault_key(alice.organization_id().to_owned(), alice.device_id, SecretKey::generate()).await,
-        Err(AccountUploadDeviceFileAccountVaultKeyError::Internal(err))
+        account.upload_opaque_key_in_vault().await,
+        Err(AccountUploadOpaqueKeyInVaultError::Internal(err))
         if format!("{}", err) == "Unexpected server response: UnknownStatus { unknown_status: \"unknown\", reason: None }"
     );
 }
