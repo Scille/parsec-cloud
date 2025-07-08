@@ -6,7 +6,7 @@ use libparsec_types::prelude::*;
 use super::Account;
 
 #[derive(Debug, thiserror::Error)]
-pub enum AccountUploadDeviceFileAccountVaultKeyError {
+pub enum AccountUploadOpaqueKeyInVaultError {
     #[error("Cannot decrypt the vault key access return by the server: {0}")]
     BadVaultKeyAccess(DataError),
     #[error("Cannot communicate with the server: {0}")]
@@ -15,12 +15,9 @@ pub enum AccountUploadDeviceFileAccountVaultKeyError {
     Internal(#[from] anyhow::Error),
 }
 
-pub(super) async fn account_upload_device_file_account_vault_key(
+pub(super) async fn account_upload_opaque_key_in_vault(
     account: &Account,
-    organization_id: OrganizationID,
-    device_id: DeviceID,
-    ciphertext_key: SecretKey,
-) -> Result<(), AccountUploadDeviceFileAccountVaultKeyError> {
+) -> Result<(AccountVaultItemOpaqueKeyID, SecretKey), AccountUploadOpaqueKeyInVaultError> {
     // 1. Load the vault key
 
     let ciphered_key_access = {
@@ -42,19 +39,24 @@ pub(super) async fn account_upload_device_file_account_vault_key(
             &ciphered_key_access,
             &account.auth_method_secret_key,
         )
-        .map_err(AccountUploadDeviceFileAccountVaultKeyError::BadVaultKeyAccess)?;
+        .map_err(AccountUploadOpaqueKeyInVaultError::BadVaultKeyAccess)?;
         access.vault_key
     };
 
     // 2. Encrypt the key and save it in the account vault
 
-    let encrypted_data = DeviceFileAccountVaultCiphertextKey { ciphertext_key }
-        .dump_and_encrypt(&vault_key)
-        .into();
+    let key_id = AccountVaultItemOpaqueKeyID::default();
+    let key = SecretKey::generate();
 
-    let item = AccountVaultItemDeviceFileKeyAccess {
-        organization_id,
-        device_id,
+    let encrypted_data = AccountVaultItemOpaqueKeyEncryptedData {
+        key_id,
+        key: key.clone(),
+    }
+    .dump_and_encrypt(&vault_key)
+    .into();
+
+    let item = AccountVaultItemOpaqueKey {
+        key_id,
         encrypted_data,
     };
 
@@ -78,9 +80,9 @@ pub(super) async fn account_upload_device_file_account_vault_key(
         }
     }
 
-    Ok(())
+    Ok((key_id, key))
 }
 
 #[cfg(test)]
-#[path = "../tests/unit/upload_device_file_account_vault_key.rs"]
+#[path = "../tests/unit/upload_opaque_key_in_vault.rs"]
 mod tests;

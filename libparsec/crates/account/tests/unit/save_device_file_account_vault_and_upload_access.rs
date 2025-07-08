@@ -79,10 +79,10 @@ async fn ok_mocked(env: &TestbedEnv) {
                 let item = AccountVaultItem::load(&req.item).unwrap();
                 p_assert_eq!(req.item_fingerprint, item.fingerprint());
                 match item {
-                    AccountVaultItem::DeviceFileKeyAccess(item) => {
+                    AccountVaultItem::OpaqueKey(item) => {
                         p_assert_eq!(item.organization_id, *alice.organization_id());
                         p_assert_eq!(item.device_id, alice.device_id);
-                        let key_access = DeviceFileAccountVaultCiphertextKey::decrypt_and_load(
+                        let key_access = AccountVaultItemOpaqueKeyEncryptedData::decrypt_and_load(
                             &item.encrypted_data,
                             &vault_key,
                         )

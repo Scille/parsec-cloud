@@ -13,51 +13,50 @@ use libparsec_client_connection::{
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::{Account, AccountFetchDeviceFileAccountVaultKeyError};
+use crate::{Account, AccountFetchOpaqueKeyFromVaultError};
 
-#[parsec_test(testbed = "coolorg")]
+#[parsec_test(testbed = "empty")]
 async fn ok(env: &TestbedEnv) {
-    let alice = env.local_device("alice@dev1");
-    let bob = env.local_device("bob@dev1");
     let vault_key = SecretKey::generate();
-    let alice_ciphertext_key = SecretKey::generate();
+    let opaque_key_id = AccountVaultItemOpaqueKeyID::default();
+    let opaque_key = SecretKey::generate();
     let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
         KeyDerivation::from(hex!(
             "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
         )),
-        alice.human_handle.clone(),
+        "Zack <zack@example.com>".parse().unwrap(),
     )
     .await;
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
-        test_send_hook_vault_item_list!(env, &account.auth_method_secret_key, &vault_key, device_file_key_accesses: [
-            (&alice, alice_ciphertext_key),
-            (&bob, &SecretKey::generate())
+        test_send_hook_vault_item_list!(env, &account.auth_method_secret_key, &vault_key, opaque_keys: [
+            (opaque_key_id, opaque_key),
+            (AccountVaultItemOpaqueKeyID::default(), &SecretKey::generate()),
         ]),
     );
 
     p_assert_eq!(
         account
-            .fetch_device_file_account_vault_key(alice.organization_id(), alice.device_id)
+            .fetch_opaque_key_from_vault(opaque_key_id)
             .await
             .unwrap(),
-        alice_ciphertext_key
+        opaque_key
     );
 }
 
-#[parsec_test(testbed = "coolorg")]
+#[parsec_test(testbed = "empty")]
 async fn bad_vault_key_access(env: &TestbedEnv) {
-    let alice = env.local_device("alice@dev1");
+    let opaque_key_id = AccountVaultItemOpaqueKeyID::default();
     let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
         KeyDerivation::from(hex!(
             "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
         )),
-        alice.human_handle.clone(),
+        "Zack <zack@example.com>".parse().unwrap(),
     )
     .await;
 
@@ -71,44 +70,40 @@ async fn bad_vault_key_access(env: &TestbedEnv) {
     });
 
     p_assert_matches!(
-        account
-            .fetch_device_file_account_vault_key(alice.organization_id(), alice.device_id)
-            .await,
-        Err(AccountFetchDeviceFileAccountVaultKeyError::BadVaultKeyAccess(_))
+        account.fetch_opaque_key_from_vault(opaque_key_id).await,
+        Err(AccountFetchOpaqueKeyFromVaultError::BadVaultKeyAccess(_))
     );
 }
 
-#[parsec_test(testbed = "minimal")]
+#[parsec_test(testbed = "empty")]
 async fn offline(env: &TestbedEnv) {
-    let alice = env.local_device("alice@dev1");
+    let opaque_key_id = AccountVaultItemOpaqueKeyID::default();
     let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
         KeyDerivation::from(hex!(
             "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
         )),
-        alice.human_handle.clone(),
+        "Zack <zack@example.com>".parse().unwrap(),
     )
     .await;
 
     p_assert_matches!(
-        account
-            .fetch_device_file_account_vault_key(alice.organization_id(), alice.device_id)
-            .await,
-        Err(AccountFetchDeviceFileAccountVaultKeyError::Offline(_))
+        account.fetch_opaque_key_from_vault(opaque_key_id).await,
+        Err(AccountFetchOpaqueKeyFromVaultError::Offline(_))
     );
 }
 
-#[parsec_test(testbed = "minimal")]
+#[parsec_test(testbed = "empty")]
 async fn unknown_server_response(env: &TestbedEnv) {
-    let alice = env.local_device("alice@dev1");
+    let opaque_key_id = AccountVaultItemOpaqueKeyID::default();
     let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
         KeyDerivation::from(hex!(
             "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
         )),
-        alice.human_handle.clone(),
+        "Zack <zack@example.com>".parse().unwrap(),
     )
     .await;
 
@@ -123,8 +118,8 @@ async fn unknown_server_response(env: &TestbedEnv) {
     );
 
     p_assert_matches!(
-        account.fetch_device_file_account_vault_key(alice.organization_id(), alice.device_id).await,
-        Err(AccountFetchDeviceFileAccountVaultKeyError::Internal(err))
+        account.fetch_opaque_key_from_vault(opaque_key_id).await,
+        Err(AccountFetchOpaqueKeyFromVaultError::Internal(err))
         if format!("{}", err) == "Unexpected server response: UnknownStatus { unknown_status: \"unknown\", reason: None }"
     );
 }
