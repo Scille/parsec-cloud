@@ -313,3 +313,8 @@ class InvitationType(Enum):
     User = EnumItemUnit
     Device = EnumItemUnit
     ShamirRecovery = EnumItemUnit
+
+
+class AccountVaultItemOpaqueKeyID(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<libparsec::AccountVaultItemOpaqueKeyID, _> { libparsec::AccountVaultItemOpaqueKeyID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = "|x: libparsec::AccountVaultItemOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) }"
