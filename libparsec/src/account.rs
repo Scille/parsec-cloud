@@ -8,11 +8,11 @@ use std::{
 
 pub use libparsec_account::{
     AccountCreateError, AccountCreateSendValidationEmailError, AccountDeleteProceedError,
-    AccountDeleteSendValidationEmailError, AccountFetchDeviceFileAccountVaultKeyError,
+    AccountDeleteSendValidationEmailError, AccountFetchOpaqueKeyFromVaultError,
     AccountListInvitationsError, AccountListRegistrationDevicesError,
     AccountLoginWithMasterSecretError, AccountLoginWithPasswordError, AccountRecoverProceedError,
     AccountRecoverSendValidationEmailError, AccountRegisterNewDeviceError,
-    AccountUploadDeviceFileAccountVaultKeyError,
+    AccountUploadOpaqueKeyInVaultError,
 };
 use libparsec_client_connection::{AnonymousAccountCmds, ConnectionError, ProxyConfig};
 use libparsec_types::prelude::*;
@@ -139,34 +139,23 @@ pub async fn account_list_invitations(
     account.list_invitations().await
 }
 
-pub async fn account_fetch_device_file_account_vault_key(
+pub async fn account_fetch_opaque_key_from_vault(
     account: Handle,
-    organization_id: &OrganizationID,
-    device_id: DeviceID,
-) -> Result<SecretKey, AccountFetchDeviceFileAccountVaultKeyError> {
+    key_id: AccountVaultItemOpaqueKeyID,
+) -> Result<SecretKey, AccountFetchOpaqueKeyFromVaultError> {
     let account_handle = account;
     let account = borrow_account(account_handle)?;
 
-    account
-        .fetch_device_file_account_vault_key(organization_id, device_id)
-        .await
+    account.fetch_opaque_key_from_vault(key_id).await
 }
 
-pub async fn account_upload_device_file_account_vault_key(
+pub async fn account_upload_opaque_key_in_vault(
     account: Handle,
-    organization_id: OrganizationID,
-    device_id: DeviceID,
-) -> Result<SecretKey, AccountUploadDeviceFileAccountVaultKeyError> {
+) -> Result<(AccountVaultItemOpaqueKeyID, SecretKey), AccountUploadOpaqueKeyInVaultError> {
     let account_handle = account;
     let account = borrow_account(account_handle)?;
 
-    let ciphertext_key = SecretKey::generate();
-
-    account
-        .upload_device_file_account_vault_key(organization_id, device_id, ciphertext_key.clone())
-        .await?;
-
-    Ok(ciphertext_key)
+    account.upload_opaque_key_in_vault().await
 }
 
 pub async fn account_list_registration_devices(
