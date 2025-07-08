@@ -18,7 +18,7 @@ use internal::Storage;
  * List available devices
  */
 
-pub async fn list_available_devices(
+pub(super) async fn list_available_devices(
     config_dir: &Path,
 ) -> Result<Vec<AvailableDevice>, ListAvailableDeviceError> {
     let Ok(storage) = Storage::new().await.inspect_err(|e| {
@@ -42,7 +42,7 @@ pub async fn list_available_devices(
  * Save & load
  */
 
-pub async fn read_file(file: &Path) -> Result<Vec<u8>, ReadFileError> {
+pub(super) async fn read_file(file: &Path) -> Result<Vec<u8>, ReadFileError> {
     let Ok(storage) = Storage::new().await.inspect_err(|e| {
         log::error!("Failed to access storage: {e}");
     }) else {
@@ -54,7 +54,7 @@ pub async fn read_file(file: &Path) -> Result<Vec<u8>, ReadFileError> {
         .map_err(|err| ReadFileError::Internal(anyhow::anyhow!("{err}")))
 }
 
-pub async fn load_ciphertext_key(
+pub(super) async fn load_ciphertext_key(
     access: &DeviceAccessStrategy,
     device_file: &DeviceFile,
 ) -> Result<SecretKey, LoadCiphertextKeyError> {
@@ -80,7 +80,7 @@ pub async fn load_ciphertext_key(
     }
 }
 
-pub async fn save_device(
+pub(super) async fn save_device(
     access: &DeviceAccessStrategy,
     device: &LocalDevice,
     created_on: DateTime,
@@ -96,7 +96,7 @@ pub async fn save_device(
         .map_err(Into::into)
 }
 
-pub async fn update_device(
+pub(super) async fn update_device(
     device: &LocalDevice,
     created_on: DateTime,
     current_key_file: &Path,
@@ -121,7 +121,7 @@ pub async fn update_device(
     Ok(available_device)
 }
 
-pub async fn archive_device(device_path: &Path) -> Result<(), ArchiveDeviceError> {
+pub(super) async fn archive_device(device_path: &Path) -> Result<(), ArchiveDeviceError> {
     let Ok(storage) = Storage::new().await.inspect_err(|e| {
         log::error!("Failed to access storage: {e}");
     }) else {
@@ -133,7 +133,7 @@ pub async fn archive_device(device_path: &Path) -> Result<(), ArchiveDeviceError
         .map_err(Into::into)
 }
 
-pub async fn remove_device(device_path: &Path) -> Result<(), RemoveDeviceError> {
+pub(super) async fn remove_device(device_path: &Path) -> Result<(), RemoveDeviceError> {
     let Ok(storage) = Storage::new().await.inspect_err(|e| {
         log::error!("Failed to access storage: {e}");
     }) else {

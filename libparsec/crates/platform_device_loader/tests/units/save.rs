@@ -82,7 +82,7 @@ async fn ok_simple(tmp_path: TmpPath, env: &TestbedEnv) {
             device_id: alice_device.device_id,
             human_handle: alice_device.human_handle.clone(),
             device_label: alice_device.device_label.clone(),
-            ty: DeviceFileType::Password,
+            ty: AvailableDeviceType::Password,
         }
     );
 
@@ -147,7 +147,7 @@ async fn ok(tmp_path: TmpPath, #[case] kind: OkKind, env: &TestbedEnv) {
             device_id: alice_device.device_id,
             human_handle: alice_device.human_handle.clone(),
             device_label: alice_device.device_label.clone(),
-            ty: DeviceFileType::Password,
+            ty: AvailableDeviceType::Password,
         }
     );
 

@@ -534,7 +534,7 @@ fn load_available_device_from_blob(
         device_label,
     ) = match device_file {
         DeviceFile::Keyring(device) => (
-            DeviceFileType::Keyring,
+            AvailableDeviceType::Keyring,
             device.created_on,
             device.protected_on,
             device.server_url,
@@ -545,7 +545,7 @@ fn load_available_device_from_blob(
             device.device_label,
         ),
         DeviceFile::Password(device) => (
-            DeviceFileType::Password,
+            AvailableDeviceType::Password,
             device.created_on,
             device.protected_on,
             device.server_url,
@@ -556,7 +556,7 @@ fn load_available_device_from_blob(
             device.device_label,
         ),
         DeviceFile::Recovery(device) => (
-            DeviceFileType::Recovery,
+            AvailableDeviceType::Recovery,
             device.created_on,
             device.protected_on,
             device.server_url,
@@ -567,7 +567,7 @@ fn load_available_device_from_blob(
             device.device_label,
         ),
         DeviceFile::Smartcard(device) => (
-            DeviceFileType::Smartcard,
+            AvailableDeviceType::Smartcard,
             device.created_on,
             device.protected_on,
             device.server_url,
@@ -578,7 +578,9 @@ fn load_available_device_from_blob(
             device.device_label,
         ),
         DeviceFile::AccountVault(device) => (
-            DeviceFileType::AccountVault,
+            AvailableDeviceType::AccountVault {
+                ciphertext_key_id: device.ciphertext_key_id,
+            },
             device.created_on,
             device.protected_on,
             device.server_url,
