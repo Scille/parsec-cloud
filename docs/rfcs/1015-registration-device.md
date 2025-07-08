@@ -76,58 +76,9 @@ Parsec client that still has access to corresponding identity:
 > Removing `WebAuth` is fine regarding backward compatibility since this value
 > was never used (as it was introduced in preparation to Parsec account support).
 
-### 3.2 - API: Add `RegistrationDevice` to `AccountVaultItem`
+### 3.2 - Add `RegistrationDevice` to `AccountVaultItem`
 
-```json5
-{
-    "label": "AccountVaultItem",
-    "type": "account_vault_item",
-    "other_fields": [
-        {
-          "name": "organization_id",
-          "type": "OrganizationID"
-        },
-        {
-          // Data encrypted by the vault key
-          "name": "encrypted_data",
-          "type": "Bytes"
-        },
-        {
-          "name": "data_type",
-          "type": "VaultItemDataType",
-        }
-    ],
-    "nested_types": [
-      {
-        "name": "VaultItemDataType",
-        "discriminant_field": "type",
-        "variants": [
-
-          // Omitted items
-          // […]
-
-          {
-            "name": "RegistrationDevice",
-            "discriminant_value": "REGISTRATION_DEVICE",
-            "fields": [
-              // Device ID is not provided here since it is not relevant:
-              // this item is only used to give access to this organization/user
-              // couple.
-              {
-                "name": "user_id",
-                "type": "UserID"
-              }
-            ]
-          }
-        ]
-      }
-    ]
-}
-```
-
-> [!NOTE]
-> `WebLocalDeviceKey` is only allowed for organization having their `ClientSourceStrategy`
-> configured with `NativeOrWeb` (see [RFC 1017](1017-web-client-allowed-on-per-org-basis.md)).
+See `AccountVaultItem` format defined in [RFC 1014](1014-account-vault-for-device-stored-on-server.md).
 
 ### 3.3 - Client
 
