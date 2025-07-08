@@ -50,30 +50,27 @@ fn serde_validation_code() {
 }
 
 #[rstest]
-fn serde_account_vault_item_device_file_key_access() {
+fn serde_account_vault_item_opaque_key() {
     // Generated from Parsec 3.4.1-a.0+dev
     // Content:
-    //   type: 'account_vault_item_device_file_key_access'
-    //   organization_id: 'CoolOrg'
-    //   device_id: ext(2, 0xac42ef607148434a94cc502fd5e61bad)
+    //   type: 'account_vault_item_opaque_key'
+    //   key_id: ext(2, 0xac42ef607148434a94cc502fd5e61bad)
     //   encrypted_data: 0x3c656e637279707465645f646174613e
     let raw: &[u8] = hex!(
-        "0028b52ffd0058e50300140784a474797065d9296163636f756e745f7661756c745f69"
-        "74656d5f6465766963655f66696c655f6b65795f616363657373af6f7267616e697a61"
-        "74696f6e5f6964a7436f6f6c4f7267a96964d802ac42ef607148434a94cc502fd5e61b"
-        "adae656e637279707465645f64617461c4103c3e0200a6295f91ae3203"
+        "0028b52ffd0058c50200040583a474797065bd6163636f756e745f7661756c745f6974"
+        "656d5f6f70617175655f6b6579a66b65795f6964d802ac42ef607148434a94cc502fd5"
+        "e61badae656e637279707465645f64617461c4103c3e01000fc9330a"
     )
     .as_ref();
 
-    let expected = AccountVaultItemDeviceFileKeyAccess {
-        organization_id: "CoolOrg".parse().unwrap(),
-        device_id: DeviceID::from_hex("ac42ef607148434a94cc502fd5e61bad").unwrap(),
+    let expected = AccountVaultItemOpaqueKey {
+        key_id: AccountVaultItemOpaqueKeyID::from_hex("ac42ef607148434a94cc502fd5e61bad").unwrap(),
         encrypted_data: Bytes::from_static(b"<encrypted_data>"),
     };
     println!("***expected: {:?}", expected.dump());
 
     let data = match AccountVaultItem::load(raw).unwrap() {
-        AccountVaultItem::DeviceFileKeyAccess(data) => {
+        AccountVaultItem::OpaqueKey(data) => {
             p_assert_eq!(data, expected);
             data
         }
@@ -83,7 +80,7 @@ fn serde_account_vault_item_device_file_key_access() {
     // Also test serialization round trip
     let raw2 = data.dump();
     match AccountVaultItem::load(&raw2).unwrap() {
-        AccountVaultItem::DeviceFileKeyAccess(data2) => {
+        AccountVaultItem::OpaqueKey(data2) => {
             p_assert_eq!(data2, expected);
         }
         AccountVaultItem::RegistrationDevice(_) => unreachable!(),
@@ -93,13 +90,13 @@ fn serde_account_vault_item_device_file_key_access() {
     p_assert_eq!(
         expected.fingerprint(),
         HashDigest::from(hex!(
-            "0d97bbe805b808a1c53b1f0a117349d014c47a26ee5a513c3956fdb420699595"
+            "16b5e0feafc39019374541cafd328924d664e9be0aadad82b406cfbed48619f2"
         )),
     );
     p_assert_eq!(
-        AccountVaultItem::DeviceFileKeyAccess(expected).fingerprint(),
+        AccountVaultItem::OpaqueKey(expected).fingerprint(),
         HashDigest::from(hex!(
-            "0d97bbe805b808a1c53b1f0a117349d014c47a26ee5a513c3956fdb420699595"
+            "16b5e0feafc39019374541cafd328924d664e9be0aadad82b406cfbed48619f2"
         )),
     );
 }
@@ -132,7 +129,7 @@ fn serde_account_vault_item_registration_device() {
             p_assert_eq!(data, expected);
             data
         }
-        AccountVaultItem::DeviceFileKeyAccess(_) => unreachable!(),
+        AccountVaultItem::OpaqueKey(_) => unreachable!(),
     };
 
     // Also test serialization round trip
@@ -141,7 +138,7 @@ fn serde_account_vault_item_registration_device() {
         AccountVaultItem::RegistrationDevice(data2) => {
             p_assert_eq!(data2, expected);
         }
-        AccountVaultItem::DeviceFileKeyAccess(_) => unreachable!(),
+        AccountVaultItem::OpaqueKey(_) => unreachable!(),
     };
 
     // Finally test the fingerprint
@@ -194,36 +191,42 @@ fn serde_account_vault_key_access() {
 }
 
 #[rstest]
-fn serde_device_file_account_vault_ciphertext_key() {
+fn serde_account_vault_item_opaque_key_encrypted_data() {
     let key = SecretKey::from(hex!(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
-    let ciphertext_key = SecretKey::from(hex!(
+    let opaque_key_id =
+        AccountVaultItemOpaqueKeyID::from_hex("ac42ef607148434a94cc502fd5e61bad").unwrap();
+    let opaque_key = SecretKey::from(hex!(
         "114413b514a2197e083c49b8b3637dbc330bdf7c0e7e8b2a9a9dc6236885485f"
     ));
 
     // Generated from Parsec 3.4.1-a.0+dev
     // Content:
-    //   type: 'device_file_account_vault_ciphertext_key'
-    //   ciphertext_key: 0x114413b514a2197e083c49b8b3637dbc330bdf7c0e7e8b2a9a9dc6236885485f
+    //   type: 'account_vault_item_opaque_key_encrypted_data'
+    //   key_id: ext(2, 0xac42ef607148434a94cc502fd5e61bad)
+    //   key: 0x114413b514a2197e083c49b8b3637dbc330bdf7c0e7e8b2a9a9dc6236885485f
     let raw: &[u8] = hex!(
-        "1c588e71efcf3dcdcc0b30901cb9675e863741d4f3ad12d4ecb31b5d7402a412ab4c7e"
-        "2bce045395cc4cec57f224035ec516630b5b64be5eee11039e715672ac87b4fc6aa1ba"
-        "315963fe58c3a9cc6b94fb5055da616ad2bd9bdb74c338209a179f2d88c3a0b7feb903"
-        "62c3b74f49883f0e54e22351361c293b32f65bfd3f96afca9d25bc2d980adc5d981729"
-        "b5"
+        "b30275bbbb0eb119bd1b404afb38f65984aeab8aa0c2134ea373fda42c48a027a93347"
+        "7060796473ad3b100462bf2cea11dd7bb3b80ad5a30e3cc680aa72e96c9ed72ddc1bdb"
+        "a660aeb060631fcd159eca47428486b15e68fc0cd7ca77d1b071f48be1bffcfcf18c69"
+        "40330dfbf040028949dd6aa7a9ceed733cc6930fb7ce0b041dadd96c40f89c3d4eb7d7"
+        "75fa7cee4967d17586e8a09047916f5b85aa3fb274776eab11"
     )
     .as_ref();
 
-    let expected = DeviceFileAccountVaultCiphertextKey { ciphertext_key };
+    let expected = AccountVaultItemOpaqueKeyEncryptedData {
+        key_id: opaque_key_id,
+        key: opaque_key,
+    };
     println!("***expected: {:?}", expected.dump_and_encrypt(&key));
 
-    let data = DeviceFileAccountVaultCiphertextKey::decrypt_and_load(raw, &key).unwrap();
+    let data = AccountVaultItemOpaqueKeyEncryptedData::decrypt_and_load(raw, &key).unwrap();
 
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump_and_encrypt(&key);
-    let data2 = DeviceFileAccountVaultCiphertextKey::decrypt_and_load(&raw2, &key).unwrap();
+    let data2 = AccountVaultItemOpaqueKeyEncryptedData::decrypt_and_load(&raw2, &key).unwrap();
     p_assert_eq!(data2, expected);
 }

@@ -9,8 +9,8 @@ use libparsec_serialization_format::parsec_data;
 
 use crate::{self as libparsec_types};
 use crate::{
-    impl_transparent_data_format_conversion, DateTime, DeviceID, DeviceLabel, HumanHandle,
-    OrganizationID, PasswordAlgorithm, UserID,
+    impl_transparent_data_format_conversion, AccountVaultItemOpaqueKeyID, DateTime, DeviceID,
+    DeviceLabel, HumanHandle, OrganizationID, PasswordAlgorithm, UserID,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -159,6 +159,7 @@ pub struct DeviceFileAccountVault {
     pub device_id: DeviceID,
     pub human_handle: HumanHandle,
     pub device_label: DeviceLabel,
+    pub ciphertext_key_id: AccountVaultItemOpaqueKeyID,
     pub ciphertext: Bytes,
 }
 
@@ -175,6 +176,7 @@ impl_transparent_data_format_conversion!(
     device_id,
     human_handle,
     device_label,
+    ciphertext_key_id,
     ciphertext,
 );
 
@@ -218,15 +220,6 @@ impl DeviceFile {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum DeviceFileType {
-    Keyring,
-    Password,
-    Recovery,
-    Smartcard,
-    AccountVault,
-}
-
 #[derive(Debug, Clone)]
 pub enum DeviceSaveStrategy {
     Keyring,
@@ -239,6 +232,7 @@ pub enum DeviceSaveStrategy {
         ///
         /// Note it is `libparsec_account`'s job to deal with encrypting&uploading
         /// the account vault item containing this key.
+        ciphertext_key_id: AccountVaultItemOpaqueKeyID,
         ciphertext_key: SecretKey,
     },
 }
@@ -251,12 +245,14 @@ impl DeviceSaveStrategy {
                 DeviceAccessStrategy::Password { key_file, password }
             }
             DeviceSaveStrategy::Smartcard => DeviceAccessStrategy::Smartcard { key_file },
-            DeviceSaveStrategy::AccountVault { ciphertext_key } => {
-                DeviceAccessStrategy::AccountVault {
-                    key_file,
-                    ciphertext_key,
-                }
-            }
+            DeviceSaveStrategy::AccountVault {
+                ciphertext_key_id,
+                ciphertext_key,
+            } => DeviceAccessStrategy::AccountVault {
+                key_file,
+                ciphertext_key_id,
+                ciphertext_key,
+            },
         }
     }
 }
@@ -280,6 +276,7 @@ pub enum DeviceAccessStrategy {
         ///
         /// Note it is `libparsec_account`'s job to deal with fetching&decrypting
         /// the account vault item containing this key.
+        ciphertext_key_id: AccountVaultItemOpaqueKeyID,
         ciphertext_key: SecretKey,
     },
 }
@@ -294,14 +291,29 @@ impl DeviceAccessStrategy {
         }
     }
 
-    pub fn ty(&self) -> DeviceFileType {
+    pub fn ty(&self) -> AvailableDeviceType {
         match self {
-            Self::Keyring { .. } => DeviceFileType::Keyring,
-            Self::Password { .. } => DeviceFileType::Password,
-            Self::Smartcard { .. } => DeviceFileType::Smartcard,
-            Self::AccountVault { .. } => DeviceFileType::AccountVault,
+            Self::Keyring { .. } => AvailableDeviceType::Keyring,
+            Self::Password { .. } => AvailableDeviceType::Password,
+            Self::Smartcard { .. } => AvailableDeviceType::Smartcard,
+            Self::AccountVault {
+                ciphertext_key_id, ..
+            } => AvailableDeviceType::AccountVault {
+                ciphertext_key_id: *ciphertext_key_id,
+            },
         }
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum AvailableDeviceType {
+    Keyring,
+    Password,
+    Recovery,
+    Smartcard,
+    AccountVault {
+        ciphertext_key_id: AccountVaultItemOpaqueKeyID,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -315,7 +327,7 @@ pub struct AvailableDevice {
     pub device_id: DeviceID,
     pub human_handle: HumanHandle,
     pub device_label: DeviceLabel,
-    pub ty: DeviceFileType,
+    pub ty: AvailableDeviceType,
 }
 
 #[cfg(test)]

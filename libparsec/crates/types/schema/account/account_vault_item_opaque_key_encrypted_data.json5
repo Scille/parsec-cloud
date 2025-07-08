@@ -1,0 +1,16 @@
+{
+    "label": "AccountVaultItemOpaqueKeyEncryptedData",
+    "type": "account_vault_item_opaque_key_encrypted_data",
+    // Introduced in Parsec 3.5.0
+    "introduced_in_revision": 350,
+    "other_fields": [
+        {
+            "name": "key_id",
+            "type": "AccountVaultItemOpaqueKeyID"
+        },
+        {
+            "name": "key",
+            "type": "SecretKey"
+        }
+    ]
+}
