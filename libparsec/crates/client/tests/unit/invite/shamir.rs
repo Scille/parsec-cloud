@@ -258,7 +258,7 @@ async fn shamir_full_greeting(tmp_path: TmpPath, env: &TestbedEnv) {
     p_assert_eq!(available_device.device_id, new_local_device.device_id,);
     p_assert_eq!(available_device.device_label, device_label);
     p_assert_eq!(available_device.human_handle, alice.human_handle);
-    p_assert_eq!(available_device.ty, DeviceFileType::Password);
+    p_assert_eq!(available_device.ty, AvailableDeviceType::Password);
     p_assert_eq!(
         available_device.organization_id,
         bob.organization_id().clone()
