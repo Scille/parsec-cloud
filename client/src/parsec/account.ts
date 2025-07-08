@@ -25,7 +25,7 @@ import {
   AccountRegisterNewDeviceError,
   AccountRegisterNewDeviceErrorTag,
   AvailableDevice,
-  DeviceFileType,
+  AvailableDeviceTypeTag,
   HumanHandle,
   InvitationType,
   RegistrationDevice,
@@ -307,7 +307,7 @@ class _ParsecAccount {
           deviceId: 'abcd',
           humanHandle: { label: 'Gordon Freeman', email: 'gordon.freeman@blackmesa.nm' },
           deviceLabel: 'HEV Suit',
-          ty: DeviceFileType.Password,
+          ty: { tag: AvailableDeviceTypeTag.Password },
         },
       };
     }

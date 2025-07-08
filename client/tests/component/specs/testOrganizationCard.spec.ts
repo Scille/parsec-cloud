@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
-import { AvailableDevice, DeviceFileType } from '@/plugins/libparsec';
+import { AvailableDevice, AvailableDeviceTypeTag } from '@/plugins/libparsec';
 import { VueWrapper, mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -26,7 +26,7 @@ describe('Organization Card', () => {
       email: 'freeman.gordon@black-mesa.com',
     },
     deviceLabel: 'hev',
-    ty: DeviceFileType.Password,
+    ty: { tag: AvailableDeviceTypeTag.Password },
   };
 
   beforeEach(() => {

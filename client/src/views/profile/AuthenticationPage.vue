@@ -8,13 +8,13 @@
           :image-src="keypadGradient"
           image-alt="keypad icon"
           method-name="Authentication.method.system"
-          v-show="currentDevice && currentDevice.ty === DeviceFileType.Keyring"
+          v-show="currentDevice && currentDevice.ty === AvailableDeviceType.Keyring"
         />
         <authentication-card
           :image-src="ellipsisGradient"
           image-alt="ellipsis icon"
           method-name="Authentication.method.password"
-          v-show="currentDevice && currentDevice.ty === DeviceFileType.Password"
+          v-show="currentDevice && currentDevice.ty === AvailableDeviceType.Password"
         />
         <ion-button
           id="change-authentication-button"
@@ -42,7 +42,7 @@
 
 <script setup lang="ts">
 import { MsModalResult } from 'megashark-lib';
-import { AvailableDevice, DeviceFileType, getCurrentAvailableDevice, isWeb } from '@/parsec';
+import { AvailableDevice, AvailableDeviceType, getCurrentAvailableDevice, isWeb } from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import UpdateAuthenticationModal from '@/views/users/UpdateAuthenticationModal.vue';
 import keypadGradient from '@/assets/images/keypad-gradient.svg';

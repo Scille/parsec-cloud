@@ -92,7 +92,7 @@ import {
   ClientStartError,
   ClientStartErrorTag,
   DeviceAccessStrategy,
-  DeviceFileType,
+  AvailableDeviceTypeTag,
   getDeviceHandle,
   isDeviceLoggedIn,
   isWeb,
@@ -468,7 +468,7 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
         }
       }
     }
-    if (device.ty === DeviceFileType.Keyring) {
+    if (device.ty.tag === AvailableDeviceTypeTag.Keyring) {
       await login(device, AccessStrategy.useKeyring(device));
     } else {
       selectedDevice.value = device;
@@ -478,14 +478,14 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
 }
 
 async function handleLoginError(device: AvailableDevice, error: ClientStartError): Promise<void> {
-  if (device.ty === DeviceFileType.Password) {
+  if (device.ty.tag === AvailableDeviceTypeTag.Password) {
     selectedDevice.value = device;
     state.value = HomePageState.Login;
     await nextTick();
     if (loginPageRef.value) {
       loginPageRef.value.setLoginError(error);
     }
-  } else if (device.ty === DeviceFileType.Keyring) {
+  } else if (device.ty.tag === AvailableDeviceTypeTag.Keyring) {
     if (error.tag === ClientStartErrorTag.LoadDeviceDecryptionFailed) {
       const answer = await askQuestion('HomePage.loginErrors.keyringFailedTitle', 'HomePage.loginErrors.keyringFailedQuestion', {
         yesIsDangerous: false,
