@@ -96,7 +96,7 @@ export async function listUserDevices(user: UserID): Promise<Result<Array<Device
 }
 
 export async function archiveDevice(device: AvailableDevice): Promise<Result<null, ArchiveDeviceError>> {
-  return await libparsec.archiveDevice(device.keyFilePath);
+  return await libparsec.archiveDevice(window.getConfigDir(), device.keyFilePath);
 }
 
 export async function createDeviceInvitation(sendEmail: boolean): Promise<Result<NewInvitationInfo, ClientNewDeviceInvitationError>> {
