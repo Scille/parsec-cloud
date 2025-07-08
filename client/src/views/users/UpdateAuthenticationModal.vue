@@ -56,7 +56,7 @@
         >
           <choose-authentication
             ref="chooseAuthRef"
-            :disable-keyring="currentDevice.ty === DeviceFileType.Keyring"
+            :disable-keyring="currentDevice.ty.tag === AvailableDeviceTypeTag.Keyring"
           />
         </div>
       </div>
@@ -95,7 +95,7 @@ import {
   AvailableDevice,
   UpdateDeviceErrorTag,
   updateDeviceChangeAuthentication,
-  DeviceFileType,
+  AvailableDeviceTypeTag,
   DeviceAccessStrategyPassword,
   DeviceAccessStrategyTag,
   isAuthenticationValid,
@@ -131,7 +131,7 @@ const querying = ref(false);
 
 onMounted(async () => {
   await currentPasswordInput.value.setFocus();
-  if (props.currentDevice.ty === DeviceFileType.Password) {
+  if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.Password) {
     pageStep.value = ChangeAuthenticationStep.InputCurrentPassword;
   } else {
     pageStep.value = ChangeAuthenticationStep.ChooseNewAuthMethod;
@@ -171,7 +171,7 @@ const canGoForward = asyncComputed(async () => {
 async function changeAuthentication(): Promise<void> {
   let accessStrategy: DeviceAccessStrategyKeyring | DeviceAccessStrategyPassword;
 
-  if (props.currentDevice.ty === DeviceFileType.Keyring) {
+  if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.Keyring) {
     accessStrategy = {
       tag: DeviceAccessStrategyTag.Keyring,
       keyFile: props.currentDevice.keyFilePath,
