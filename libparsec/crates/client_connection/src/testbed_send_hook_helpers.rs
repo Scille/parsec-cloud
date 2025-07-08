@@ -473,20 +473,21 @@ macro_rules! test_send_hook_vault_item_list {
             }
         }
     }};
-    ($env: expr, $auth_method_secret_key: expr, $vault_key: expr, device_file_key_accesses: [$(($local_device: expr, $ciphertext_key: expr)),* $(,)?] $(,)?) => {{
+    ($env: expr, $auth_method_secret_key: expr, $vault_key: expr, opaque_keys: [$(($key_id: expr, $key: expr)),* $(,)?] $(,)?) => {{
         let env: &TestbedEnv = $env;
         let auth_method_secret_key: &SecretKey = &$auth_method_secret_key;
         let vault_key: &SecretKey = &$vault_key;
 
         let mut items = std::collections::HashMap::new();
         $(
-            let local_device: &LocalDevice = &$local_device;
-            let encrypted_data = DeviceFileAccountVaultCiphertextKey {
-                ciphertext_key: $ciphertext_key.to_owned(),
+            let key_id: AccountVaultItemOpaqueKeyID = $key_id;
+            let key: &SecretKey = &$key;
+            let encrypted_data = AccountVaultItemOpaqueKeyEncryptedData {
+                key_id,
+                key: $key.to_owned(),
             }.dump_and_encrypt(&vault_key).into();
-            let item = AccountVaultItemDeviceFileKeyAccess {
-                organization_id: local_device.organization_id().to_owned(),
-                device_id: local_device.device_id,
+            let item = AccountVaultItemOpaqueKey {
+                key_id,
                 encrypted_data,
             };
             items.insert(item.fingerprint(), item.dump().into());
