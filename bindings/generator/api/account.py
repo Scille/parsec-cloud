@@ -18,8 +18,8 @@ from .common import (
     InvitationType,
     KeyDerivation,
     DateTime,
-    DeviceID,
     SecretKey,
+    AccountVaultItemOpaqueKeyID,
 )
 from .addr import ParsecAddr
 from .device import DeviceAccessStrategy, DeviceSaveStrategy, AvailableDevice
@@ -156,14 +156,14 @@ async def account_list_invitations(
     raise NotImplementedError
 
 
-class AccountFetchDeviceFileAccountVaultKeyError(ErrorVariant):
+class AccountFetchOpaqueKeyFromVaultError(ErrorVariant):
     class BadVaultKeyAccess:
         pass
 
-    class UnknownWebLocalDeviceKey:
+    class UnknownOpaqueKey:
         pass
 
-    class CorruptedWebLocalDeviceKey:
+    class CorruptedOpaqueKey:
         pass
 
     class Offline:
@@ -173,15 +173,14 @@ class AccountFetchDeviceFileAccountVaultKeyError(ErrorVariant):
         pass
 
 
-async def account_fetch_device_file_account_vault_key(
+async def account_fetch_opaque_key_from_vault(
     account: Handle,
-    organization_id: Ref[OrganizationID],
-    device_id: DeviceID,
-) -> Result[SecretKey, AccountFetchDeviceFileAccountVaultKeyError]:
+    key_id: AccountVaultItemOpaqueKeyID,
+) -> Result[SecretKey, AccountFetchOpaqueKeyFromVaultError]:
     raise NotImplementedError
 
 
-class AccountUploadDeviceFileAccountVaultKeyError(ErrorVariant):
+class AccountUploadOpaqueKeyInVaultError(ErrorVariant):
     class BadVaultKeyAccess:
         pass
 
@@ -192,11 +191,9 @@ class AccountUploadDeviceFileAccountVaultKeyError(ErrorVariant):
         pass
 
 
-async def account_upload_device_file_account_vault_key(
+async def account_upload_opaque_key_in_vault(
     account: Handle,
-    organization_id: OrganizationID,
-    device_id: DeviceID,
-) -> Result[SecretKey, AccountUploadDeviceFileAccountVaultKeyError]:
+) -> Result[tuple[AccountVaultItemOpaqueKeyID, SecretKey], AccountUploadOpaqueKeyInVaultError]:
     raise NotImplementedError
 
 
