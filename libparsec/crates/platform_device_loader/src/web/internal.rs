@@ -132,7 +132,11 @@ impl Storage {
 
                 self.save_device_file(&key_file, &file_data).await?;
             }
-            DeviceAccessStrategy::AccountVault { ciphertext_key, .. } => {
+            DeviceAccessStrategy::AccountVault {
+                ciphertext_key_id,
+                ciphertext_key,
+                ..
+            } => {
                 let ciphertext = crate::encrypt_device(device, &ciphertext_key);
                 let file_data = DeviceFile::AccountVault(DeviceFileAccountVault {
                     created_on,
@@ -143,6 +147,7 @@ impl Storage {
                     device_id: device.device_id,
                     human_handle: device.human_handle.clone(),
                     device_label: device.device_label.clone(),
+                    ciphertext_key_id: *ciphertext_key_id,
                     ciphertext,
                 });
 

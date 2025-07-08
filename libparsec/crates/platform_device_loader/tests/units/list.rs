@@ -254,6 +254,54 @@ async fn list_devices(tmp_path: TmpPath) {
     )
     .as_ref();
 
+    // AccountVault
+
+    let account_vault_expected = DeviceFileAccountVault {
+        created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
+        protected_on: "2000-01-01T00:00:01Z".parse().unwrap(),
+        server_url: "https://parsec.invalid".to_string(),
+        organization_id: "CoolOrg".parse().unwrap(),
+        user_id: "philip".parse().unwrap(),
+        device_id: "philip@dev1".parse().unwrap(),
+        human_handle: "Philip <philip@parsec.invalid>".parse().unwrap(),
+        device_label: "My dev1 machine".parse().unwrap(),
+        ciphertext_key_id: AccountVaultItemOpaqueKeyID::from_hex(
+            "098dfa03df464cd6a580b151d7d3bb30",
+        )
+        .unwrap(),
+        ciphertext: b"<ciphertext>".as_ref().into(),
+    };
+    println!(
+        "***expected: {:?}",
+        DeviceFile::AccountVault(account_vault_expected.clone()).dump()
+    );
+
+    // Generated from Parsec 3.4.1-a.0+dev
+    // Content:
+    //   type: 'account_vault'
+    //   created_on: ext(1, 946684800000000) i.e. 2000-01-01T01:00:00Z
+    //   protected_on: ext(1, 946684801000000) i.e. 2000-01-01T01:00:01Z
+    //   server_url: 'https://parsec.invalid'
+    //   organization_id: 'CoolOrg'
+    //   user_id: ext(2, 0x91119ec0010000000000000000000000)
+    //   device_id: ext(2, 0xde1091119ec001000000000000000000)
+    //   human_handle: [ 'philip@parsec.invalid', 'Philip', ]
+    //   device_label: 'My dev1 machine'
+    //   ciphertext_key_id: ext(2, 0x098dfa03df464cd6a580b151d7d3bb30)
+    //   ciphertext: 0x3c636970686572746578743e
+    let account_vault_raw: &[u8] = hex!(
+        "8ba474797065ad6163636f756e745f7661756c74aa637265617465645f6f6ed7010003"
+        "5d013b37e000ac70726f7465637465645f6f6ed70100035d013b472240aa7365727665"
+        "725f75726cb668747470733a2f2f7061727365632e696e76616c6964af6f7267616e69"
+        "7a6174696f6e5f6964a7436f6f6c4f7267a7757365725f6964d80291119ec001000000"
+        "0000000000000000a96465766963655f6964d802de1091119ec0010000000000000000"
+        "00ac68756d616e5f68616e646c6592b57068696c6970407061727365632e696e76616c"
+        "6964a65068696c6970ac6465766963655f6c6162656caf4d792064657631206d616368"
+        "696e65b1636970686572746578745f6b65795f6964d802098dfa03df464cd6a580b151"
+        "d7d3bb30aa63697068657274657874c40c3c636970686572746578743e"
+    )
+    .as_ref();
+
     // 2. Store the raws in files
 
     let keyring_path = tmp_path.join("devices/94a8691e9765497984d63aad3c7df9e0.keys");
@@ -261,12 +309,14 @@ async fn list_devices(tmp_path: TmpPath) {
     let password_path = tmp_path.join("devices/foo/bar/spam/whatever.keys");
     let smartcard_path = tmp_path.join("devices/foo/bar/spam/whatever2.keys");
     let recovery_path = tmp_path.join("devices/foo/whatever.keys");
+    let account_vault_path = tmp_path.join("devices/whatever.keys");
 
     for (path, raw) in [
         (&keyring_path, keyring_raw),
         (&password_path, password_raw),
         (&smartcard_path, smartcard_raw),
         (&recovery_path, recovery_raw),
+        (&account_vault_path, account_vault_raw),
     ] {
         crate::tests::utils::create_device_file(path, raw).await;
     }
@@ -286,7 +336,7 @@ async fn list_devices(tmp_path: TmpPath) {
             device_id: keyring_expected.device_id,
             human_handle: keyring_expected.human_handle,
             device_label: keyring_expected.device_label,
-            ty: DeviceFileType::Keyring,
+            ty: AvailableDeviceType::Keyring,
         },
         AvailableDevice {
             key_file_path: password_path,
@@ -298,7 +348,7 @@ async fn list_devices(tmp_path: TmpPath) {
             device_id: password_expected.device_id,
             human_handle: password_expected.human_handle,
             device_label: password_expected.device_label,
-            ty: DeviceFileType::Password,
+            ty: AvailableDeviceType::Password,
         },
         AvailableDevice {
             key_file_path: smartcard_path,
@@ -310,7 +360,7 @@ async fn list_devices(tmp_path: TmpPath) {
             device_id: smartcard_expected.device_id,
             human_handle: smartcard_expected.human_handle,
             device_label: smartcard_expected.device_label,
-            ty: DeviceFileType::Smartcard,
+            ty: AvailableDeviceType::Smartcard,
         },
         AvailableDevice {
             key_file_path: recovery_path,
@@ -322,7 +372,21 @@ async fn list_devices(tmp_path: TmpPath) {
             device_id: recovery_expected.device_id,
             human_handle: recovery_expected.human_handle,
             device_label: recovery_expected.device_label,
-            ty: DeviceFileType::Recovery,
+            ty: AvailableDeviceType::Recovery,
+        },
+        AvailableDevice {
+            key_file_path: account_vault_path,
+            created_on: account_vault_expected.created_on,
+            protected_on: account_vault_expected.protected_on,
+            server_url: account_vault_expected.server_url,
+            organization_id: account_vault_expected.organization_id,
+            user_id: account_vault_expected.user_id,
+            device_id: account_vault_expected.device_id,
+            human_handle: account_vault_expected.human_handle,
+            device_label: account_vault_expected.device_label,
+            ty: AvailableDeviceType::AccountVault {
+                ciphertext_key_id: account_vault_expected.ciphertext_key_id,
+            },
         },
     ]);
 
@@ -385,6 +449,8 @@ async fn testbed(env: &TestbedEnv) {
         .await
         .unwrap();
 
+    let zack_ciphertext_key_id =
+        AccountVaultItemOpaqueKeyID::from_hex("84cbb64f7fbf46cd98196343210df9b0").unwrap();
     let zack_ciphertext_key =
         hex!("f22f042ac3bc5c70d14dcae7f896d5b4f7ef032579b7589b767e66a74cc8ede3").into();
     let zack_key_file = env.discriminant_dir.join("zack_new_device.keys");
@@ -392,6 +458,7 @@ async fn testbed(env: &TestbedEnv) {
         &env.discriminant_dir,
         &DeviceAccessStrategy::AccountVault {
             key_file: zack_key_file,
+            ciphertext_key_id: zack_ciphertext_key_id,
             ciphertext_key: zack_ciphertext_key,
         },
         &LocalDevice::generate_new_device(
@@ -422,6 +489,8 @@ async fn testbed(env: &TestbedEnv) {
     .await
     .unwrap();
 
+    let bob2_ciphertext_key_id =
+        AccountVaultItemOpaqueKeyID::from_hex("4ce154500ce340bcaa4d44dcb9b841a1").unwrap();
     let bob2_ciphertext_key =
         hex!("a7fa4758e0e71fd58467194b50f657d1e717132b66419fae9b836c0ea39fb05b").into();
     let bob2_new_key_file = env.discriminant_dir.join("bob2_new_device.keys");
@@ -433,6 +502,7 @@ async fn testbed(env: &TestbedEnv) {
         },
         &DeviceAccessStrategy::AccountVault {
             key_file: bob2_new_key_file,
+            ciphertext_key_id: bob2_ciphertext_key_id,
             ciphertext_key: bob2_ciphertext_key,
         },
     )
@@ -444,27 +514,31 @@ async fn testbed(env: &TestbedEnv) {
         devices
             .into_iter()
             .map(|a| (a.device_id, a.server_url, a.ty))
-            .collect::<Vec<(DeviceID, String, DeviceFileType)>>(),
+            .collect::<Vec<(DeviceID, String, AvailableDeviceType)>>(),
         [
             (
                 bob2.device_id,
                 "https://noserver.example.com/".to_string(),
-                DeviceFileType::AccountVault,
+                AvailableDeviceType::AccountVault {
+                    ciphertext_key_id: bob2_ciphertext_key_id
+                },
             ),
             (
                 mallory.device_id,
                 "https://noserver.example.com/".to_string(),
-                DeviceFileType::Password,
+                AvailableDeviceType::Password,
             ),
             (
                 bob1.device_id,
                 "https://newhost.example.com/".to_string(),
-                DeviceFileType::Password,
+                AvailableDeviceType::Password,
             ),
             (
                 zack.device_id,
                 "https://noserver.example.com/".to_string(),
-                DeviceFileType::AccountVault,
+                AvailableDeviceType::AccountVault {
+                    ciphertext_key_id: zack_ciphertext_key_id
+                },
             ),
         ]
     );

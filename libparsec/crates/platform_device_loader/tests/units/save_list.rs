@@ -6,11 +6,10 @@ use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
 
 #[parsec_test]
-#[case::password(DeviceFileType::Password)]
-// TODO: support keyring device on web
-#[cfg_attr(not(target_arch = "wasm32"), case::keyring(DeviceFileType::Keyring))]
-#[case::account_vault(DeviceFileType::AccountVault)]
-async fn save_list(#[case] kind: DeviceFileType, tmp_path: TmpPath) {
+#[case("password")]
+#[cfg_attr(not(target_arch = "wasm32"), case("keyring"))]
+#[case("account_vault")]
+async fn save_list(#[case] kind: &str, tmp_path: TmpPath) {
     use crate::tests::utils::key_present_in_system;
 
     let devices_dir = crate::get_devices_dir(&tmp_path);
@@ -35,7 +34,7 @@ async fn save_list(#[case] kind: DeviceFileType, tmp_path: TmpPath) {
     );
 
     let (access, expected_available_device) = match kind {
-        DeviceFileType::Keyring => {
+        "keyring" => {
             let access = DeviceAccessStrategy::Keyring {
                 key_file: key_file.clone(),
             };
@@ -49,11 +48,12 @@ async fn save_list(#[case] kind: DeviceFileType, tmp_path: TmpPath) {
                 device_id: device.device_id,
                 human_handle: device.human_handle.clone(),
                 device_label: device.device_label.clone(),
-                ty: DeviceFileType::Keyring,
+                ty: AvailableDeviceType::Keyring,
             };
             (access, expected_available_device)
         }
-        DeviceFileType::Password => {
+
+        "password" => {
             let access = DeviceAccessStrategy::Password {
                 key_file: key_file.clone(),
                 password: "P@ssw0rd.".to_string().into(),
@@ -68,13 +68,17 @@ async fn save_list(#[case] kind: DeviceFileType, tmp_path: TmpPath) {
                 device_id: device.device_id,
                 human_handle: device.human_handle.clone(),
                 device_label: device.device_label.clone(),
-                ty: DeviceFileType::Password,
+                ty: AvailableDeviceType::Password,
             };
             (access, expected_available_device)
         }
-        DeviceFileType::AccountVault => {
+
+        "account_vault" => {
+            let ciphertext_key_id =
+                AccountVaultItemOpaqueKeyID::from_hex("4ce154500ce340bcaa4d44dcb9b841a1").unwrap();
             let access = DeviceAccessStrategy::AccountVault {
                 key_file: key_file.clone(),
+                ciphertext_key_id,
                 ciphertext_key: hex!(
                     "2f64db9fae22c574ade28c44cd206c00f8119e9b49dacc131dad31c043ebe766"
                 )
@@ -90,10 +94,11 @@ async fn save_list(#[case] kind: DeviceFileType, tmp_path: TmpPath) {
                 device_id: device.device_id,
                 human_handle: device.human_handle.clone(),
                 device_label: device.device_label.clone(),
-                ty: DeviceFileType::AccountVault,
+                ty: AvailableDeviceType::AccountVault { ciphertext_key_id },
             };
             (access, expected_available_device)
         }
+
         unknown => panic!("Unknown kind: {unknown:?}"),
     };
 

@@ -206,7 +206,7 @@ fn populate_template_available_devices(
                 device_id,
                 human_handle: human_handle.clone(),
                 device_label: device_label.clone(),
-                ty: DeviceFileType::Password,
+                ty: AvailableDeviceType::Password,
             };
 
             Some(available_device)

@@ -57,7 +57,7 @@ fn find_device_files(path: &Path) -> Result<Vec<PathBuf>, ListAvailableDeviceErr
     }
 }
 
-pub async fn list_available_devices(
+pub(super) async fn list_available_devices(
     config_dir: &Path,
 ) -> Result<Vec<AvailableDevice>, ListAvailableDeviceError> {
     let devices_dir = crate::get_devices_dir(config_dir);
@@ -111,13 +111,13 @@ fn load_available_device(
  * Save & load
  */
 
-pub async fn read_file(file: &Path) -> Result<Vec<u8>, ReadFileError> {
+pub(super) async fn read_file(file: &Path) -> Result<Vec<u8>, ReadFileError> {
     tokio::fs::read(file)
         .await
         .map_err(|e| ReadFileError::Internal(e.into()))
 }
 
-pub async fn load_ciphertext_key(
+pub(super) async fn load_ciphertext_key(
     access: &DeviceAccessStrategy,
     device_file: &DeviceFile,
 ) -> Result<SecretKey, LoadCiphertextKeyError> {
@@ -223,7 +223,7 @@ async fn generate_keyring_user(
     Ok((key, keyring_user))
 }
 
-pub async fn save_device(
+pub(super) async fn save_device(
     access: &DeviceAccessStrategy,
     device: &LocalDevice,
     created_on: DateTime,
@@ -309,6 +309,7 @@ pub async fn save_device(
 
         DeviceAccessStrategy::AccountVault {
             key_file,
+            ciphertext_key_id,
             ciphertext_key,
         } => {
             let ciphertext = super::encrypt_device(device, ciphertext_key);
@@ -322,6 +323,7 @@ pub async fn save_device(
                 device_id: device.device_id,
                 human_handle: device.human_handle.to_owned(),
                 device_label: device.device_label.to_owned(),
+                ciphertext_key_id: *ciphertext_key_id,
                 ciphertext,
             });
 
@@ -345,7 +347,7 @@ pub async fn save_device(
     })
 }
 
-pub async fn update_device(
+pub(super) async fn update_device(
     device: &LocalDevice,
     created_on: DateTime,
     current_key_file: &Path,
@@ -392,7 +394,7 @@ pub(super) async fn remove_device(device_path: &Path) -> Result<(), RemoveDevice
         .map_err(|e| RemoveDeviceError::Internal(e.into()))
 }
 
-pub fn is_keyring_available() -> bool {
+pub(super) fn is_keyring_available() -> bool {
     // Using "tmp" as user, because keyring-rs forbids the use of empty string
     // due to an issue in macOS. See: https://github.com/hwchen/keyring-rs/pull/87
     let result = KeyringEntry::new(KEYRING_SERVICE, "tmp");
