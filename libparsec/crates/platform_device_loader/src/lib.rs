@@ -162,7 +162,7 @@ pub enum LoadAvailableDeviceError {
 ///
 /// Note `config_dir` is only used as discriminant for the testbed here
 pub async fn load_available_device(
-    #[cfg_attr(not(feature = "test-with-testbed"), allow(unused_variables))] config_dir: &Path,
+    #[cfg_attr(not(feature = "test-with-testbed"), expect(unused_variables))] config_dir: &Path,
     device_file: PathBuf,
 ) -> Result<AvailableDevice, LoadAvailableDeviceError> {
     #[cfg(feature = "test-with-testbed")]
@@ -202,7 +202,7 @@ pub enum LoadDeviceError {
 
 /// Note `config_dir` is only used as discriminant for the testbed here
 pub async fn load_device(
-    #[cfg_attr(not(feature = "test-with-testbed"), allow(unused_variables))] config_dir: &Path,
+    #[cfg_attr(not(feature = "test-with-testbed"), expect(unused_variables))] config_dir: &Path,
     access: &DeviceAccessStrategy,
 ) -> Result<Arc<LocalDevice>, LoadDeviceError> {
     log::debug!("Loading device at {}", access.key_file().display());
@@ -245,7 +245,7 @@ pub enum SaveDeviceError {
 
 /// Note `config_dir` is only used as discriminant for the testbed here
 pub async fn save_device(
-    #[cfg_attr(not(feature = "test-with-testbed"), allow(unused_variables))] config_dir: &Path,
+    #[cfg_attr(not(feature = "test-with-testbed"), expect(unused_variables))] config_dir: &Path,
     access: &DeviceAccessStrategy,
     device: &LocalDevice,
 ) -> Result<AvailableDevice, SaveDeviceError> {
@@ -274,7 +274,7 @@ pub enum UpdateDeviceError {
 
 /// Note `config_dir` is only used as discriminant for the testbed here
 pub async fn update_device_change_authentication(
-    #[cfg_attr(not(feature = "test-with-testbed"), allow(unused_variables))] config_dir: &Path,
+    #[cfg_attr(not(feature = "test-with-testbed"), expect(unused_variables))] config_dir: &Path,
     current_access: &DeviceAccessStrategy,
     new_access: &DeviceAccessStrategy,
 ) -> Result<AvailableDevice, UpdateDeviceError> {
@@ -323,7 +323,7 @@ pub async fn update_device_change_authentication(
 ///
 /// Returns the old server address
 pub async fn update_device_overwrite_server_addr(
-    #[cfg_attr(not(feature = "test-with-testbed"), allow(unused_variables))] config_dir: &Path,
+    #[cfg_attr(not(feature = "test-with-testbed"), expect(unused_variables))] config_dir: &Path,
     access: &DeviceAccessStrategy,
     new_server_addr: ParsecAddr,
 ) -> Result<ParsecAddr, UpdateDeviceError> {
@@ -406,7 +406,7 @@ pub(crate) fn get_device_archive_path(path: &Path) -> PathBuf {
 
 /// Archive a device identified by its path.
 pub async fn archive_device(
-    #[cfg_attr(not(feature = "test-with-testbed"), allow(unused_variables))] config_dir: &Path,
+    #[cfg_attr(not(feature = "test-with-testbed"), expect(unused_variables))] config_dir: &Path,
     device_path: &Path,
 ) -> Result<(), ArchiveDeviceError> {
     #[cfg(feature = "test-with-testbed")]
@@ -426,7 +426,7 @@ pub enum RemoveDeviceError {
 }
 
 pub async fn remove_device(
-    #[cfg_attr(not(feature = "test-with-testbed"), allow(unused_variables))] config_dir: &Path,
+    #[cfg_attr(not(feature = "test-with-testbed"), expect(unused_variables))] config_dir: &Path,
     device_path: &Path,
 ) -> Result<(), RemoveDeviceError> {
     #[cfg(feature = "test-with-testbed")]
