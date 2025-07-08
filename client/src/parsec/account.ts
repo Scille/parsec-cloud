@@ -235,7 +235,6 @@ class _ParsecAccount {
         const result = await libparsec.accountLoginWithMasterSecret(getClientConfig().configDir, server, authentication.secret);
         if (result.ok) {
           this.handle = result.value;
-          await libparsec.accountFetchRegistrationDevices(result.value);
         }
         return result;
       } else {
