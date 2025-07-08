@@ -47,9 +47,11 @@ However, among its authentication methods:
 
 So instead we roll out our own approach:
 
-- The `LocalDevice` is encrypted by a secret key (the `WEB_LOCAL_DEVICE_KEY`)
-  that is itself encrypted by the Account Vault key.
-- The `LocalDevice` is stored (encrypted) in the web browser's data storage.
+- The `LocalDevice` is encrypted by a secret key (the ciphertext key).
+- The ciphertext key is serialized as a `AccountVaultItemOpaqueKey`, which is itself
+  encrypted by the vault key and stored in the vault as a `AccountVaultItemOpaqueKeyEncryptedData`.
+- The `LocalDevice` is stored (encrypted) in the web browser's data storage as
+  a `DeviceFileAccountVault`.
 
 This way, the web local device key can be re-encrypted from anywhere whenever
 the Account Vault key changes, but only the web client that created the
@@ -61,56 +63,106 @@ the Account Vault key changes, but only the web client that created the
 > This is acceptable for the web client however (especially since the web page
 > itself is hosted by the server !).
 
-## 3 - Changes
+## 3 - Data model
 
-### 3.1 - Add `WebLocalDeviceKey` to `AccountVaultItem`
+### 3.1 New `DeviceFileAccountVault` schema
 
 ```json5
 {
-    "label": "AccountVaultItem",
-    "type": "account_vault_item",
+    "label": "DeviceFileAccountVault",
+    "type": "account_vault",
     "other_fields": [
         {
-          "name": "organization_id",
-          "type": "OrganizationID"
+            // This refers to when the device file has been originally created.
+            "name": "created_on",
+            "type": "DateTime"
         },
         {
-          // Data encrypted by the vault key
-          "name": "encrypted_data",
-          "type": "Bytes"
+            // This field gets updated every time the device file changes its protection.
+            "name": "protected_on",
+            "type": "DateTime"
         },
         {
-          "name": "data_type",
-          "type": "VaultItemDataType",
+            // Url to the server in the format `https://parsec.example.com:443`.
+            // Note we don't use the `parsec3://` scheme here to avoid compatibility
+            // issue if we later decide to change the scheme.
+            "name": "server_url",
+            "type": "String"
+        },
+        {
+            "name": "organization_id",
+            "type": "OrganizationID"
+        },
+        {
+            "name": "user_id",
+            "type": "UserID"
+        },
+        {
+            "name": "device_id",
+            "type": "DeviceID"
+        },
+        {
+            "name": "human_handle",
+            "type": "HumanHandle"
+        },
+        {
+            "name": "device_label",
+            "type": "DeviceLabel"
+        },
+        {
+            // ID of the opaque key stored on the account vault that should be used
+            // to decrypt the `ciphertext` field.
+            "name": "ciphertext_key_id",
+            "type": "AccountVaultItemOpaqueKeyID"
+        },
+        {
+            // `LocalDevice` encrypted with the ciphertext key
+            "name": "ciphertext",
+            "type": "Bytes"
         }
-    ],
-    "nested_types": [
-      {
-        "name": "VaultItemDataType",
-        "discriminant_field": "type",
-        "variants": [
-
-          // Omitted items
-          // […]
-
-          {
-            "name": "WebLocalDeviceKey",
-            "discriminant_value": "WEB_LOCAL_DEVICE_KEY",
-            "fields": [
-              // User ID is not provided here since it is not relevant:
-              // this item is only used by clients looking to decrypt a given device.
-              {
-                "name": "device_id",
-                "type": "DeviceID"
-              }
-            ]
-          }
-        ]
-      }
     ]
 }
 ```
 
-> [!NOTE]
-> `WebLocalDeviceKey` is only allowed for organization having their `ClientSourceStrategy`
-> configured with `NativeOrWeb` (see [RFC 1017](1017-web-client-allowed-on-per-org-basis.md)).
+### 3.2 - New `AccountVaultItemOpaqueKeyEncryptedData` schema
+
+```json5
+{
+    "label": "AccountVaultItemOpaqueKeyEncryptedData",
+    "type": "account_vault_item_opaque_key_encrypted_data",
+    "other_fields": [
+        {
+            "name": "key_id",
+            "type": "AccountVaultItemOpaqueKeyID"
+        },
+        {
+            "name": "key",
+            "type": "SecretKey"
+        }
+    ]
+}
+```
+
+### 3.3 New `AccountVaultItemOpaqueKey` schema
+
+```json5
+{
+    "label": "AccountVaultItemOpaqueKey",
+    "type": "account_vault_item_opaque_key",
+    "other_fields": [
+        {
+            "name": "key_id",
+            "type": "AccountVaultItemOpaqueKeyID"
+        },
+        {
+            // `AccountVaultItemOpaqueKeyEncryptedData` encrypted by the vault key
+            "name": "encrypted_data",
+            "type": "Bytes"
+        }
+    ]
+}
+```
+
+### 3.4 - Add `OpaqueKey` to `AccountVaultItem`
+
+See `AccountVaultItem` format defined in [RFC 1014](1014-account-vault-for-device-stored-on-server.md).

@@ -153,9 +153,11 @@ serialized before being send to the server.
 ```rust
 pub enum AccountVaultItem {
     RegistrationDevice(AccountVaultItemRegistrationDevice)
-    WebLocalDeviceKey(AccountVaultItemWebLocalDeviceKey)
+    OpaqueKey(AccountVaultItemOpaqueKey)
 }
 ```
+
+Store a registration device (see [RFC 1015](1015-registration-device)):
 
 ```json5
 {
@@ -182,25 +184,20 @@ pub enum AccountVaultItem {
 }
 ```
 
+Store an opaque key, used to store the key that encrypt a local device
+within a `DeviceFileAccountVault` (see [RFC 1016](1016-local-device-storage-in-web-client)):
+
 ```json5
 {
-    "label": "AccountVaultItemWebLocalDeviceKey",
-    "type": "account_vault_item_web_local_device_key",
+    "label": "AccountVaultItemOpaqueKey",
+    "type": "account_vault_item_opaque_key",
     "other_fields": [
         {
-            "name": "organization_id",
-            "type": "OrganizationID"
-        },
-        // User ID is not provided here since it is not relevant:
-        // this item is only used by clients looking to decrypt a given device.
-        {
-            "name": "device_id",
-            "type": "DeviceID"
+            "name": "key_id",
+            "type": "AccountVaultItemOpaqueKeyID"
         },
         {
-            // `SecretKey` encrypted by the vault key.
-            // This key is itself used to decrypt the `LocalDevice` stored on
-            // the web client's storage.
+            // `AccountVaultItemOpaqueKeyEncryptedData` encrypted by the vault key
             "name": "encrypted_data",
             "type": "Bytes"
         }
