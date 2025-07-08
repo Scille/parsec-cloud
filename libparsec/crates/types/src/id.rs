@@ -254,6 +254,7 @@ new_uuid_type!(pub SequesterServiceID);
 new_uuid_type!(pub EnrollmentID);
 new_uuid_type!(pub GreetingAttemptID);
 new_uuid_type!(pub AccountAuthMethodID);
+new_uuid_type!(pub AccountVaultItemOpaqueKeyID);
 
 impl_from_maybe!(std::collections::HashSet<VlobID>);
 

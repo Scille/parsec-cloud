@@ -234,6 +234,7 @@ generate_field_type_enum!(
     EnrollmentID => libparsec_types::EnrollmentID,
     SequesterServiceID => libparsec_types::SequesterServiceID,
     AccountAuthMethodID => libparsec_types::AccountAuthMethodID,
+    AccountVaultItemOpaqueKeyID => libparsec_types::AccountVaultItemOpaqueKeyID,
     DeviceLabel => libparsec_types::DeviceLabel,
     HumanHandle => libparsec_types::HumanHandle,
     EmailAddress => libparsec_types::EmailAddress,

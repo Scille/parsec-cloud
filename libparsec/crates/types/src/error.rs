@@ -6,7 +6,7 @@ use thiserror::Error;
 
 use libparsec_crypto::CryptoError;
 
-use crate::{DateTime, DeviceFileType, DeviceID, HumanHandle, UserID, VlobID};
+use crate::{DateTime, DeviceID, HumanHandle, UserID, VlobID};
 
 pub use rmp_serde::{decode::Error as RmpDecodeError, encode::Error as RmpEncodeError};
 
@@ -86,44 +86,3 @@ pub enum PkiEnrollmentLocalPendingError {
 }
 
 pub type PkiEnrollmentLocalPendingResult<T> = Result<T, PkiEnrollmentLocalPendingError>;
-
-#[derive(Error, Debug, Clone, PartialEq, Eq)]
-pub enum LocalDeviceError {
-    #[error("{exc}")]
-    CryptoError { exc: CryptoError },
-
-    #[error("Not a Device {ty:?} file")]
-    Validation { ty: DeviceFileType },
-
-    #[cfg(not(target_arch = "wasm32"))]
-    #[error("Device key file `{0}` already exists")]
-    AlreadyExists(PathBuf),
-
-    #[cfg(not(target_arch = "wasm32"))]
-    #[error("Could not access to the dir/file: {0}")]
-    Access(PathBuf),
-
-    #[cfg(not(target_arch = "wasm32"))]
-    #[error("Deserialization error: {0}")]
-    Deserialization(PathBuf),
-
-    #[cfg(not(target_arch = "wasm32"))]
-    #[error("Serialization error: {0}")]
-    Serialization(PathBuf),
-
-    #[cfg(target_arch = "wasm32")]
-    #[error("Device not found: {device_id}")]
-    NotFound { device_id: DeviceID },
-
-    #[cfg(target_arch = "wasm32")]
-    #[error("LocalStorage is not available")]
-    LocalStorageNotAvailable,
-}
-
-impl From<CryptoError> for LocalDeviceError {
-    fn from(exc: CryptoError) -> Self {
-        Self::CryptoError { exc }
-    }
-}
-
-pub type LocalDeviceResult<T> = Result<T, LocalDeviceError>;

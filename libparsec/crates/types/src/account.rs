@@ -13,7 +13,7 @@ use crate::{
     self as libparsec_types,
     data_macros::impl_transparent_data_format_conversion,
     serialization::{format_v0_dump, format_vx_load},
-    DataError, DeviceID, OrganizationID, UserID,
+    AccountVaultItemOpaqueKeyID, DataError, OrganizationID, UserID,
 };
 
 // The auth method master secret is the root secret from which are derived
@@ -158,14 +158,14 @@ impl From<ValidationCode> for String {
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
 pub enum AccountVaultItem {
-    DeviceFileKeyAccess(AccountVaultItemDeviceFileKeyAccess),
+    OpaqueKey(AccountVaultItemOpaqueKey),
     RegistrationDevice(AccountVaultItemRegistrationDevice),
 }
 
 impl AccountVaultItem {
     pub fn fingerprint(&self) -> HashDigest {
         match self {
-            AccountVaultItem::DeviceFileKeyAccess(item) => item.fingerprint(),
+            AccountVaultItem::OpaqueKey(item) => item.fingerprint(),
             AccountVaultItem::RegistrationDevice(item) => item.fingerprint(),
         }
     }
@@ -174,51 +174,41 @@ impl AccountVaultItem {
 impl_load!(AccountVaultItem);
 
 /*
- * AccountVaultItemDeviceFileKeyAccess
+ * AccountVaultItemOpaqueKey
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(
-    into = "AccountVaultItemDeviceFileKeyAccessData",
-    from = "AccountVaultItemDeviceFileKeyAccessData"
+    into = "AccountVaultItemOpaqueKeyData",
+    from = "AccountVaultItemOpaqueKeyData"
 )]
-pub struct AccountVaultItemDeviceFileKeyAccess {
-    pub organization_id: OrganizationID,
-    pub device_id: DeviceID,
+pub struct AccountVaultItemOpaqueKey {
+    pub key_id: AccountVaultItemOpaqueKeyID,
     /// `SecretKey` encrypted by the vault key.
     /// This key is itself used to decrypt the `LocalDevice` stored on
     /// the web client's storage
     pub encrypted_data: Bytes,
 }
 
-impl AccountVaultItemDeviceFileKeyAccess {
+impl AccountVaultItemOpaqueKey {
     pub fn fingerprint(&self) -> HashDigest {
         // This format should not change in order to preserve compatibility with
         // the items already uploaded in the account vault.
-        const WEB_LOCAL_DEVICE_KEY_LABEL: &str = "WEB_LOCAL_DEVICE_KEY";
-        HashDigest::from_data(
-            format!(
-                "{}.{}.{}",
-                WEB_LOCAL_DEVICE_KEY_LABEL,
-                &self.organization_id,
-                self.device_id.hex()
-            )
-            .as_bytes(),
-        )
+        const LABEL: &str = "OPAQUE_KEY";
+        HashDigest::from_data(format!("{}.{}", LABEL, self.key_id.hex()).as_bytes())
     }
 }
 
-parsec_data!("schema/account/account_vault_item_device_file_key_access.json5");
+parsec_data!("schema/account/account_vault_item_opaque_key.json5");
 
 impl_transparent_data_format_conversion!(
-    AccountVaultItemDeviceFileKeyAccess,
-    AccountVaultItemDeviceFileKeyAccessData,
-    organization_id,
-    device_id,
+    AccountVaultItemOpaqueKey,
+    AccountVaultItemOpaqueKeyData,
+    key_id,
     encrypted_data,
 );
 
-impl_dump!(AccountVaultItemDeviceFileKeyAccess);
+impl_dump!(AccountVaultItemOpaqueKey);
 
 /*
  * AccountVaultItemRegistrationDevice
@@ -240,15 +230,9 @@ impl AccountVaultItemRegistrationDevice {
     pub fn fingerprint(&self) -> HashDigest {
         // This format should not change in order to preserve compatibility with
         // the items already uploaded in the account vault.
-        const WEB_LOCAL_DEVICE_KEY_LABEL: &str = "REGISTRATION_DEVICE";
+        const LABEL: &str = "REGISTRATION_DEVICE";
         HashDigest::from_data(
-            format!(
-                "{}.{}.{}",
-                WEB_LOCAL_DEVICE_KEY_LABEL,
-                &self.organization_id,
-                self.user_id.hex()
-            )
-            .as_bytes(),
+            format!("{}.{}.{}", LABEL, &self.organization_id, self.user_id.hex()).as_bytes(),
         )
     }
 }
@@ -287,28 +271,30 @@ impl_dump_and_encrypt!(AccountVaultKeyAccess);
 impl_decrypt_and_load!(AccountVaultKeyAccess);
 
 /*
- * DeviceFileAccountVaultCiphertextKey
+ * AccountVaultItemOpaqueKeyEncryptedData
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(
-    into = "DeviceFileAccountVaultCiphertextKeyData",
-    from = "DeviceFileAccountVaultCiphertextKeyData"
+    into = "AccountVaultItemOpaqueKeyEncryptedDataData",
+    from = "AccountVaultItemOpaqueKeyEncryptedDataData"
 )]
-pub struct DeviceFileAccountVaultCiphertextKey {
-    pub ciphertext_key: SecretKey,
+pub struct AccountVaultItemOpaqueKeyEncryptedData {
+    pub key_id: AccountVaultItemOpaqueKeyID,
+    pub key: SecretKey,
 }
 
-parsec_data!("schema/account/device_file_account_vault_ciphertext_key.json5");
+parsec_data!("schema/account/account_vault_item_opaque_key_encrypted_data.json5");
 
 impl_transparent_data_format_conversion!(
-    DeviceFileAccountVaultCiphertextKey,
-    DeviceFileAccountVaultCiphertextKeyData,
-    ciphertext_key,
+    AccountVaultItemOpaqueKeyEncryptedData,
+    AccountVaultItemOpaqueKeyEncryptedDataData,
+    key_id,
+    key,
 );
 
-impl_dump_and_encrypt!(DeviceFileAccountVaultCiphertextKey);
-impl_decrypt_and_load!(DeviceFileAccountVaultCiphertextKey);
+impl_dump_and_encrypt!(AccountVaultItemOpaqueKeyEncryptedData);
+impl_decrypt_and_load!(AccountVaultItemOpaqueKeyEncryptedData);
 
 #[cfg(test)]
 #[path = "../tests/unit/account.rs"]

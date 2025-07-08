@@ -46,8 +46,13 @@
             "type": "DeviceLabel"
         },
         {
-            // `LocalDevice` encrypted with a key that is itself stored encrypted as a
-            // `DeviceFileAccountVaultCiphertextKey` in the account vault (i.e. stored server-side).
+            // ID of the opaque key stored on the account vault that should be used
+            // to decrypt the `ciphertext` field.
+            "name": "ciphertext_key_id",
+            "type": "AccountVaultItemOpaqueKeyID"
+        },
+        {
+            // `LocalDevice` encrypted with the ciphertext key
             "name": "ciphertext",
             "type": "Bytes"
         }
