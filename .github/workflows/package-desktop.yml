@@ -254,8 +254,8 @@ jobs:
           Write-Output "Hello World" >> $NewWorkspace\foo.txt
 
           git config --global --add safe.directory $NewWorkspace
-          git init "$($Volume.DriveLetter):\"
-          git init $NewWorkspace
+          # git init "$($Volume.DriveLetter):\"
+          # git init $NewWorkspace
 
           Write-Output "DEV_DRIVE=$($Volume.DriveLetter):" >> $env:GITHUB_ENV
           Write-Output "GITHUB_WORKSPACE=$NewWorkspace" >> $env:GITHUB_ENV
@@ -288,7 +288,10 @@ jobs:
               | ft -auto
           }
 
+          Get-Item ${{ github.workspace }}
           Get-Permissions ${{ github.workspace }}
+
+          Get-Item $env:GITHUB_WORKSPACE
           Get-Permissions $env:GITHUB_WORKSPACE
 
 
