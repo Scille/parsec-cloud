@@ -273,6 +273,25 @@ jobs:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
 
+      -
+        working-directory: C:\
+        run: |
+          function Get-Permissions ($folder) {
+            (get-acl $folder).access | select `
+              @{Label="Identity";           Expression={$_.IdentityReference}}, `
+              @{Label="Owner";              Expression={$_.Owner}}, `
+              @{Label="Right";              Expression={$_.FileSystemRights}}, `
+              @{Label="Access";             Expression={$_.AccessControlType}}, `
+              @{Label="Inherited";          Expression={$_.IsInherited}}, `
+              @{Label="Inheritance Flags";  Expression={$_.InheritanceFlags}}, `
+              @{Label="Propagation Flags";  Expression={$_.PropagationFlags}} `
+              | ft -auto
+          }
+
+          Get-Permissions ${{ github.workspace }}
+          Get-Permissions $env:GITHUB_WORKSPACE
+
+
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # pin v4.4.0
         with:
           node-version: ${{ env.node-version }}
