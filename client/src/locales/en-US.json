@@ -241,6 +241,28 @@
             "invitationJoin": "Join",
             "subtitle": "Enjoy a cloud experience with the guarantee that your data belongs to you."
         },
+        "webAccess": {
+            "title": "Would you like to access your organization from this browser?",
+            "subtitle": "If you have already joined an organization on Parsec, follow these steps to access it from this browser:",
+            "step": {
+                "showButton": "Show steps",
+                "hideButton": "Hide steps",
+                "one": "Launch {application} (desktop app) and {login} to your organization.",
+                "two": "From your account menu (top right), select {myDevices}, then click on {addDevice} and {copyInvitation}.",
+                "three": "{pasteInvitation} below and follow the instructions to set up your web browser.",
+                "application": "Parsec",
+                "login": "log in",
+                "myDevices": "My devices",
+                "addDevice": "Add New Device",
+                "copyInvitation": "copy the link",
+                "pasteInvitation": "Paste the link"
+            },
+            "pasteLinkLabel": "Enter the invitation link",
+            "pasteLinkPlaceholder": "parsec3://example.com/Org?...",
+            "joinButton": "Continue",
+            "info": "Parsec securely stores your access keys in your browser. Make sure that browser storage is enabled and that it is not deleted when you close your browser ({more}).",
+            "more": "Learn more"
+        },
         "lostDevice": "Lost your access?",
         "recoverDevice": "Recover my session"
     },
@@ -368,7 +390,7 @@
         "helpLink": "{signUrl}/contact",
         "contactLink": "{signUrl}/contact",
         "documentationLink": "https://docs.parsec.cloud/en/{version}",
-        "documentationGuideLink": "https://docs.parsec.cloud/en/{version}/userguide/{page}.html",
+        "documentationGuideLink": "https://docs.parsec.cloud/en/{version}/userguide/{page}.html#{anchor}",
         "reportBug": "Report a bug"
     },
     "bugReport": {

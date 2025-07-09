@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.4.1-a.0+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-09 12:51+0000\n"
+"POT-Creation-Date: 2025-07-18 17:16+0000\n"
 "PO-Revision-Date: 2025-06-20 01:03+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
 "Language: fr\n"
@@ -266,15 +266,15 @@ msgid ""
 "A Parsec link is a link that is used by the Parsec application, you use such "
 "link when (non-exhaustive):"
 msgstr ""
-"Un lien Parsec est un lien utilisé par l'application Parsec, vous utilisez "
-"ce lien lorsque (liste non exhaustive) :"
+"Un lien Parsec est un lien utilisé par l'application Parsec. Vous utilisez "
+"ce type de lien dans les cas suivants (liste non exhaustive) :"
 
 #: ../../userguide/security.rst:103
 msgid ""
 ":ref:`You are invited to a new organization "
 "<doc_userguide_join_organization>`."
 msgstr ""
-":ref:`Vous êtes invité dans une nouvelle organisation "
+":ref:`Vous êtes invités à une nouvelle organisation "
 "<doc_userguide_join_organization>`."
 
 #: ../../userguide/security.rst:104
@@ -287,19 +287,19 @@ msgstr ":ref:`Vous partagez un fichier <userguide-share-file>`."
 
 #: ../../userguide/security.rst:108
 msgid "What should I verify in a Parsec link?"
-msgstr "Qu'est-ce que je dois vérifier dans un lien Parsec ?"
+msgstr "Que dois-je vérifier dans un lien Parsec ?"
 
 #: ../../userguide/security.rst:110
 msgid "A Parsec link is formatted like so:"
-msgstr "Un lien Parsec est formaté comme ça :"
+msgstr "Un lien Parsec est formaté de la manière suivante :"
 
 #: ../../userguide/security.rst:118
 msgid ""
 "The `URL scheme <url-scheme_>`_ ``parsec3`` may be replaced by ``https`` for "
 "links received by e-mail."
 msgstr ""
-"Le schéma d’URL <url-scheme_> ``parsec3`` peut être remplacé par ``https`` "
-"pour les liens reçus par e-mail."
+"Le schéma `URL scheme <url-scheme_>`_ ``parsec3`` peut être remplacé par "
+"``https`` pour les liens reçus par e-mail."
 
 #: ../../userguide/security.rst:123
 msgid ""
@@ -307,10 +307,10 @@ msgid ""
 "``ORGANIZATION`` parts match your organization's server. This can be found "
 "on the \"Information\" page, when you login to your organization."
 msgstr ""
-"Lorsque vous recevez un lien, il vous suffit de vérifier si les parties "
+"Lorsque vous recevez un lien, il vous suffit de vérifier si les parties  "
 "``SERVER`` et ``ORGANIZATION`` correspondent au serveur de votre "
-"organisation. Vous pouvez trouver cette information sur la page "
-"\"Information\", lorsque vous vous connectez à votre organisation."
+"organisation. Vous trouverez ces informations sur la page \"Information\", "
+"lorsque vous vous connectez à votre organisation."
 
 #: ../../userguide/security.rst:125
 msgid ""
@@ -319,3 +319,111 @@ msgid ""
 msgstr ""
 "Lorsque vous rejoignez une organisation, vous devez contacter un "
 "administrateur de l'organisation pour fournir ou confirmer ces informations."
+
+#: ../../userguide/security.rst:128
+msgid "How to enable web browser storage"
+msgstr "Comment activer le stockage du navigateur web pour Parsec ?"
+
+#: ../../userguide/security.rst:130
+msgid ""
+"Parsec needs to securely store your access keys (device) on your web browser "
+"so you can login to your organizations."
+msgstr ""
+"Parsec doit stocker en toute sécurité vos clés d'accès (appareil) sur votre "
+"navigateur web afin que vous puissiez vous connecter à vos organisations."
+
+#: ../../userguide/security.rst:132
+msgid ""
+"This section explains how to enable storage for Parsec depending on your web "
+"browser."
+msgstr ""
+"Cette section explique comment activer le stockage pour Parsec en fonction "
+"de votre navigateur web."
+
+#: ../../userguide/security.rst:135
+msgid "Chrome"
+msgstr "Chrome"
+
+#: ../../userguide/security.rst:137
+msgid "Go to the settings menu (three dots in the upper right corner)."
+msgstr ""
+"Accédez au menu des paramètres (trois points dans le coin supérieur droit)."
+
+#: ../../userguide/security.rst:138
+msgid "Click on \"Privacy and security\"."
+msgstr "Cliquez sur \"Confidentialité et sécurité.\""
+
+#: ../../userguide/security.rst:139
+msgid "Click on \"Site settings\"."
+msgstr "Cliquez sur \"Paramètres des sites.\""
+
+#: ../../userguide/security.rst:140
+msgid "Under \"Content\", click on \"Third-party cookies\"."
+msgstr "Sous \"Contenu,\" cliquez sur \"Cookies et données des sites.\""
+
+#: ../../userguide/security.rst:141
+msgid ""
+"Make sure \"Allow third-party cookies\" is enabled or add Parsec website "
+"`https://app.parsec.cloud` to the list of allowed sites in \"Site allowed to "
+"use third-party cookies\"."
+msgstr ""
+"Assurez-vous que l'option \"Autoriser les cookies tiers\" est activée ou "
+"ajoutez le site web Parsec `https://app.parsec.cloud` à la liste des sites "
+"autorisés dans \"Sites autorisés à utiliser des cookies tiers\"."
+
+#: ../../userguide/security.rst:144
+msgid "Firefox"
+msgstr "Firefox"
+
+#: ../../userguide/security.rst:146
+msgid "Go to the settings menu (horizontal lines in the upper right corner)."
+msgstr ""
+"Accédez au menu des paramètres (lignes horizontales dans le coin supérieur)."
+
+#: ../../userguide/security.rst:147
+msgid "Click on \"Settings\" then \"Privacy & Security\"."
+msgstr "Cliquez sur \"Réglages\" puis \"Confidentialité & Sécurité.\"."
+
+#: ../../userguide/security.rst:148
+msgid ""
+"In the \"Cookies and Site Data\" section, click on \"Manage Exceptions...\"."
+msgstr ""
+"Dans la section \"Cookies et données du site\", cliquez sur \"Gérer les "
+"exceptions...\"."
+
+#: ../../userguide/security.rst:149
+msgid ""
+"Add Parsec website `https://app.parsec.cloud` to the list of allowed sites "
+"and then click \"Allow\"."
+msgstr ""
+"Ajoutez le site web Parsec `https://app.parsec.cloud` à la liste des sites "
+"autorisés puis cliquez sur \"Autoriser\"."
+
+#: ../../userguide/security.rst:153
+msgid ""
+"Please note that even if you enabled \"Delete cookies and site data when "
+"Firefox is closed\", the exception for Parsec website will **remain**."
+msgstr ""
+"Veuillez noter que même si vous avez activé l'option « Supprimer les cookies "
+"et les données du site lorsque Firefox est fermé, l'exception pour le site "
+"web Parsec **restera** en vigueur."
+
+#: ../../userguide/security.rst:156
+msgid "Safari"
+msgstr "Safari"
+
+#: ../../userguide/security.rst:158
+msgid "Go to \"Safari\" in the menu bar and select \"Preferences\"."
+msgstr ""
+"Dans le menu en haut, allez dans \"Safari\" et sélectionnez \"Préférences.\"."
+
+#: ../../userguide/security.rst:159
+msgid "Click on the \"Privacy\" tab."
+msgstr "Cliquez sur l'onglet \"Confidentialité\""
+
+#: ../../userguide/security.rst:160
+msgid ""
+"Ensure that \"Block all cookies\" is unchecked to allow sites to store data."
+msgstr ""
+"Assurez-vous que l'option \"Bloquer tous les cookies\" est décochée n'est "
+"pas cochée pour permettre aux sites de stocker des données"

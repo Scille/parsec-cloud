@@ -4,11 +4,6 @@
 // at the moment, we are forced to put this in every scss file, since vite is not adding preprocessors additionalData to files imported by @use & @forward
 @use 'megashark-lib/theme' as ms;
 
-.invitation-link .form-error {
-  position: absolute;
-  bottom: -1.5rem;
-}
-
 // Workspace Sharing Modal
 .current-user {
   // remove currentUser icon in dropdown

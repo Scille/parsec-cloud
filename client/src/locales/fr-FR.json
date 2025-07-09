@@ -241,6 +241,28 @@
             "invitationJoin": "Rejoindre",
             "subtitle": "Profitez d'une expérience du cloud avec la garantie que vos données vous appartiennent."
         },
+        "webAccess": {
+            "title": "Vous souhaitez accéder à votre organisation depuis ce navigateur ?",
+            "subtitle": "Si vous avez déjà rejoint une organisation sur Parsec, suivez ces étapes pour y accéder depuis ce navigateur :",
+            "step": {
+                "showButton": "Voir les étapes",
+                "hideButton": "Masquer les étapes",
+                "one": "{application} (version ordinateur) et {login} à votre organisation.",
+                "two": "Dans le menu de votre compte (en haut à droite), sélectionnez {myDevices}, puis cliquez sur {addDevice} et {copyInvitation}.",
+                "three": "{pasteInvitation} ci-dessous et suivez les instructions pour configurer votre navigateur web.",
+                "application": "Ouvrez Parsec",
+                "login": "se connecter",
+                "myDevices": "Mes appareils",
+                "addDevice": "Ajouter un nouvel appareil",
+                "copyInvitation": "copier le lien",
+                "pasteInvitation": "Coller le lien"
+            },
+            "pasteLinkLabel": "Coller le lien d'invitation",
+            "pasteLinkPlaceholder": "parsec3://example.com/Org?...",
+            "joinButton": "Continuer",
+            "info": "Parsec stocke en toute sécurité vos clés d'accès dans votre navigateur. Assurez-vous que le stockage du navigateur est activé et qu'il n'est pas supprimé lorsque vous fermez votre navigateur ({more}).",
+            "more": "En savoir plus"
+        },
         "lostDevice": "Vous avez perdu votre accès ?",
         "recoverDevice": "Récupérer ma session"
     },
@@ -368,7 +390,7 @@
         "helpLink": "{signUrl}/contact",
         "contactLink": "{signUrl}/contact",
         "documentationLink": "https://docs.parsec.cloud/fr/{version}",
-        "documentationGuideLink": "https://docs.parsec.cloud/fr/{version}/userguide/{page}.html",
+        "documentationGuideLink": "https://docs.parsec.cloud/fr/{version}/userguide/{page}.html#{anchor}",
         "reportBug": "Signaler un bug"
     },
     "bugReport": {

@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { DisplaySize, expect, fillIonInput, logout, MsPage, msTest, setupNewPage, sortBy } from '@tests/e2e/helpers';
+import { answerQuestion, DisplaySize, expect, fillIonInput, logout, MsPage, msTest, setupNewPage, sortBy } from '@tests/e2e/helpers';
 
 const USER_NAMES = ['Alicey McAliceFace', 'Boby McBobFace', 'Malloryy McMalloryFace'];
 
@@ -246,14 +246,37 @@ msTest('Empty home page', async ({ context }) => {
   await expect(container.locator('.invitation').locator('.invitation__title')).toHaveText('You have received an invitation link?');
   const joinBtn = container.locator('.invitation').locator('#join-organization-button');
   const linkInput = container.locator('.invitation').locator('ion-input');
+  const modal = page.locator('.join-organization-modal');
   await expect(joinBtn).toHaveText('Join');
   await expect(joinBtn).toBeTrulyDisabled();
   // cspell:disable-next-line
   await fillIonInput(linkInput, 'parsec3://parsec.cloud/Test?a=claim_user&p=xBBHJlEjlpxNZYTCvBWWDPIS');
   await expect(joinBtn).toBeTrulyEnabled();
-  await expect(page.locator('.join-organization-modal')).toBeHidden();
+  await expect(modal).toBeHidden();
   await joinBtn.click();
-  await expect(page.locator('.join-organization-modal')).toBeVisible();
+  await expect(modal).toBeVisible();
+  await page.locator('.join-organization-modal').locator('.closeBtn').click();
+  await answerQuestion(page, true);
+  await expect(container.locator('.webAccess').locator('.webAccess-header__title')).toHaveText(
+    'Would you like to access your organization from this browser?',
+  );
+  await expect(container.locator('.webAccess').locator('.webAccess-step')).toBeHidden();
+  await container.locator('.webAccess').locator('.webAccess-header-info').click();
+  await expect(container.locator('.webAccess').locator('.webAccess-step')).toBeVisible();
+  const continueBtn = container.locator('.webAccess').locator('#join-organization-button');
+  const webLinkInput = container.locator('.webAccess').locator('ion-input');
+  await expect(continueBtn).toHaveText('Continue');
+  await expect(continueBtn).toBeTrulyDisabled();
+  // cspell:disable-next-line
+  await fillIonInput(webLinkInput, 'parsec3://parsec.cloud/Test?a=claim_user&p=xBBHJlEjlpxNZYTCvBWWDPIS');
+  await expect(continueBtn).toBeTrulyEnabled();
+  await expect(modal).toBeHidden();
+  await continueBtn.click();
+  await expect(modal).toBeVisible();
+  await page.locator('.join-organization-modal').locator('.closeBtn').click();
+  await expect(modal).toBeHidden();
+  await webLinkInput.press('Enter');
+  await expect(modal).toBeVisible();
 
   await page.release();
 });
