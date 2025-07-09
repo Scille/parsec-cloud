@@ -234,7 +234,7 @@ jobs:
 
           Get-Permissions ${{ github.workspace }}
 
-          $VHDPath = D:\parsec_cloud_dev_drive.vhdx
+          $VHDPath = 'D:\parsec_cloud_dev_drive.vhdx'
 
           $Volume = New-VHD -Path $VHDPath -SizeBytes 40GB |
                     Mount-VHD -Passthru |
