@@ -10,7 +10,7 @@ const SIMPLE_LOGO = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 msTest('Use custom branding', async ({ context }) => {
   const page = (await context.newPage()) as MsPage;
 
-  page.route('/custom/custom_en-US.json', async (route, request) => {
+  page.route('**/custom/custom_en-US.json', async (route, request) => {
     if (request.method().toUpperCase() === 'GET') {
       await route.fulfill({
         status: 200,
@@ -29,7 +29,7 @@ msTest('Use custom branding', async ({ context }) => {
     }
   });
 
-  page.route('/custom/logo.svg', async (route, request) => {
+  page.route('**/custom/logo.svg', async (route, request) => {
     if (request.method().toUpperCase() === 'GET') {
       await route.fulfill({
         status: 200,
