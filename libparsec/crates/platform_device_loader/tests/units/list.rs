@@ -5,8 +5,8 @@
 #![allow(clippy::unwrap_used)]
 
 use crate::{
-    archive_device, list_available_devices, remove_device, save_device,
-    update_device_change_authentication, update_device_overwrite_server_addr,
+    archive_device, list_available_devices, load_available_device, load_device, remove_device,
+    save_device, update_device_change_authentication, update_device_overwrite_server_addr,
 };
 use libparsec_testbed::TestbedEnv;
 use libparsec_tests_fixtures::prelude::*;
@@ -418,6 +418,7 @@ async fn testbed(env: &TestbedEnv) {
             "alice@dev2".parse().unwrap(),
         ]
     );
+
     let alice1 = devices
         .iter()
         .find(|x| x.device_id == "alice@dev1".parse().unwrap())
@@ -438,6 +439,28 @@ async fn testbed(env: &TestbedEnv) {
         .iter()
         .find(|x| x.device_id == "mallory@dev1".parse().unwrap())
         .unwrap();
+
+    // Ensure loading a device doesn't change it
+
+    p_assert_eq!(
+        load_available_device(&env.discriminant_dir, alice1.key_file_path.clone())
+            .await
+            .unwrap(),
+        *alice1,
+    );
+    load_device(
+        &env.discriminant_dir,
+        &DeviceAccessStrategy::Password {
+            key_file: alice2.key_file_path.clone(),
+            password: "P@ssw0rd.".to_string().into(),
+        },
+    )
+    .await
+    .unwrap();
+    p_assert_eq!(
+        list_available_devices(&env.discriminant_dir).await.unwrap(),
+        devices
+    );
 
     // Check list alteration
 
