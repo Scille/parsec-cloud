@@ -1,1 +1,0 @@
-Add "Security best practices" section to the User Guide
