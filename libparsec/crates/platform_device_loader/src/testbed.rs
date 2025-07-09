@@ -111,7 +111,7 @@ fn load_local_device(key_file: &Path, env: &TestbedEnv) -> Option<(Arc<LocalDevi
                         local_symkey: d.local_symkey.clone(),
                         time_provider: TimeProvider::default(),
                     }),
-                    u.timestamp,
+                    d.timestamp,
                 )),
                 TestbedEvent::NewUser(u) if u.user_id == d.user_id => Some((
                     Arc::new(LocalDevice {
@@ -128,7 +128,7 @@ fn load_local_device(key_file: &Path, env: &TestbedEnv) -> Option<(Arc<LocalDevi
                         local_symkey: d.local_symkey.clone(),
                         time_provider: TimeProvider::default(),
                     }),
-                    u.timestamp,
+                    d.timestamp,
                 )),
                 _ => None,
             })
