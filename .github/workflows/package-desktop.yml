@@ -262,6 +262,11 @@ jobs:
         working-directory: C:\
         timeout-minutes: 2
 
+      - if: matrix.platform == 'windows'
+        run: |
+          echo ${{ github.workspace }}
+          echo $env:GITHUB_WORKSPACE
+
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
         with:
           ref: ${{ inputs.commit_sha }}
