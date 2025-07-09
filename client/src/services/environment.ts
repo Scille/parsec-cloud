@@ -164,8 +164,10 @@ type Pages =
   | 'manage_devices'
   | 'security';
 
-async function openDocumentationUserGuideLink(page: Pages): Promise<void> {
-  await openUrl(I18n.translate({ key: 'MenuPage.documentationGuideLink', data: { version: APP_VERSION_PREFIX, page: page } }));
+async function openDocumentationUserGuideLink(page: Pages, anchor = ''): Promise<void> {
+  await openUrl(
+    I18n.translate({ key: 'MenuPage.documentationGuideLink', data: { version: APP_VERSION_PREFIX, page: page, anchor: anchor } }),
+  );
 }
 
 async function openDocumentationLink(): Promise<void> {
