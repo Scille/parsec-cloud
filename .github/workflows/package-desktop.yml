@@ -370,6 +370,8 @@ jobs:
         working-directory: client
         timeout-minutes: 30
 
+      - run: Get-ChildItem -Path ${{ github.workspace }} -Recurse -Directory
+
       - name: Install electron dependencies
         run: npm clean-install --verbose
         working-directory: client/electron
