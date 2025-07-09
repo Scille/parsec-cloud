@@ -247,7 +247,7 @@ jobs:
           $NewWorkspace = "$($Volume.DriveLetter):\parsec-cloud"
           Remove-Item -Path ${{ github.workspace }}
           New-Item -Path $NewWorkspace -ItemType Directory
-          # New-Item -Path ${{ github.workspace }} -ItemType SymbolicLink -Value $NewWorkspace
+          New-Item -Path ${{ github.workspace }} -ItemType SymbolicLink -Value $NewWorkspace
 
           Get-Permissions $NewWorkspace
 
@@ -263,6 +263,7 @@ jobs:
         timeout-minutes: 2
 
       - if: matrix.platform == 'windows'
+        working-directory: C:\
         run: |
           echo '${{ github.workspace }}'
           echo $env:GITHUB_WORKSPACE
