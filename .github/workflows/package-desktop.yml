@@ -234,7 +234,9 @@ jobs:
 
           Get-Permissions ${{ github.workspace }}
 
-          $Volume = New-VHD -Path D:/parsec_cloud_dev_drive.vhdx -SizeBytes 40GB |
+          $VHDPath = D:\parsec_cloud_dev_drive.vhdx
+
+          $Volume = New-VHD -Path $VHDPath -SizeBytes 40GB |
                     Mount-VHD -Passthru |
                     Initialize-Disk -Passthru |
                     New-Partition -DriveLetter K -UseMaximumSize |
@@ -243,8 +245,20 @@ jobs:
           # Return all volumes
           Get-Volume
 
+          $Drive = "$($Volume.DriveLetter):"
+          # Trust drive
+          fsutil devdrv trust $Drive
+          # Disable anti virus
+          fsutil devdrv enable /disallowAv
+
+          # Remount for the change to take effect
+          Dismount-VHD -Path $VHDPath
+          Mount-VHD -Path $VHDPath
+
+          fsutil devdrv query $Drive
+
           # Replace `github.workspace` dir with a created volume because `actions/checkout` do not allow checkin-out of `github.workspace`
-          $NewWorkspace = "$($Volume.DriveLetter):\parsec-cloud"
+          $NewWorkspace = "$Drive\parsec-cloud"
           Remove-Item -Path ${{ github.workspace }}
           New-Item -Path $NewWorkspace -ItemType Directory
           New-Item -Path ${{ github.workspace }} -ItemType SymbolicLink -Value $NewWorkspace
