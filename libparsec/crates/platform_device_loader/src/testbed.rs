@@ -30,14 +30,22 @@ struct KeyFilesCache {
 }
 
 struct ComponentStore {
+    /// Whenever a new device needs to be loaded, we populate this field from
+    /// the testbed template.
+    /// Also note this field also tracks the updates and removals of device files.
+    already_accessed_key_files: Mutex<KeyFilesCache>,
+    /// Lazily build the list of available devices from the testbed template on
+    /// the first call to `maybe_list_available_devices`.
+    /// Note this field alone is not enough to return the actual list of available
+    /// devices: the changes from `already_accessed_key_files` must also be taken
+    /// into account!
     template_available_devices: Mutex<MaybePopulated<Vec<AvailableDevice>>>,
-    key_files_cache: Mutex<KeyFilesCache>,
 }
 
 fn store_factory(_env: &TestbedEnv) -> Arc<dyn Any + Send + Sync> {
     Arc::new(ComponentStore {
         template_available_devices: Mutex::new(MaybePopulated::Stalled),
-        key_files_cache: Mutex::default(),
+        already_accessed_key_files: Mutex::default(),
     })
 }
 
@@ -48,7 +56,10 @@ fn get_device_key_file(config_dir: &Path, device_id: DeviceID) -> PathBuf {
 /// Generate the `LocalDevice` from the template events, this saves us from
 /// password derivation, generation of the key file, only to do it
 /// deserialization&decryption right away.
-fn load_local_device(key_file: &Path, env: &TestbedEnv) -> Option<(Arc<LocalDevice>, DateTime)> {
+fn load_local_device_from_template(
+    key_file: &Path,
+    env: &TestbedEnv,
+) -> Option<(Arc<LocalDevice>, DateTime)> {
     // Parsec stores the key file as `<config_dir>/devices/<device ID as hex>.keys`,
     // however we also handle the device nickname as it is convenient for testing
     // (e.g. `<config_dir>/devices/alice@dev1.keys`).
@@ -218,13 +229,16 @@ pub(crate) fn maybe_list_available_devices(config_dir: &Path) -> Option<Vec<Avai
     test_get_testbed_component_store::<ComponentStore>(config_dir, STORE_ENTRY_KEY, store_factory)
         .map(|store| {
             let mut available_devices = vec![];
-            let key_files_cache = store.key_files_cache.lock().expect("Mutex is poisoned");
+            let already_accessed_key_files = store
+                .already_accessed_key_files
+                .lock()
+                .expect("Mutex is poisoned");
 
             // 1. Start with the devices we already know about
 
-            for (access, device, created_on) in key_files_cache.available.iter() {
+            for (access, device, created_on) in already_accessed_key_files.available.iter() {
                 // Sanity check
-                assert!(!key_files_cache
+                assert!(!already_accessed_key_files
                     .destroyed
                     .contains(&access.key_file().to_owned()));
 
@@ -273,7 +287,7 @@ pub(crate) fn maybe_list_available_devices(config_dir: &Path) -> Option<Vec<Avai
                 }
             };
             for available_device in template_available_devices.iter() {
-                if key_files_cache
+                if already_accessed_key_files
                     .destroyed
                     .contains(&available_device.key_file_path)
                 {
@@ -305,7 +319,10 @@ pub(crate) fn maybe_load_device(
         .and_then(|store| {
             // 1) Try to load from the cache
 
-            let mut cache = store.key_files_cache.lock().expect("Mutex is poisoned");
+            let mut cache = store
+                .already_accessed_key_files
+                .lock()
+                .expect("Mutex is poisoned");
             let found = cache.available.iter().find_map(|(c_access, c_device, _)| {
                 match (access, c_access) {
                     (
@@ -357,7 +374,7 @@ pub(crate) fn maybe_load_device(
                 // This is because in practice the path is always provided absolute given it
                 // is obtained in the first place by `list_template_available_devices`.
                 let env = test_get_testbed(config_dir).expect("Must exist");
-                let (device, created_on) = load_local_device(&key_file, &env)?; // Short circuit if not found
+                let (device, created_on) = load_local_device_from_template(&key_file, &env)?; // Short circuit if not found
                 if !decryption_success {
                     return Some(Err(LoadDeviceError::DecryptionFailed));
                 }
@@ -384,7 +401,10 @@ pub(crate) fn maybe_save_device(
             // This is because in practice the path is always provided absolute given it
             // is obtained in the first place by `list_available_devices`.
 
-            let mut cache = store.key_files_cache.lock().expect("Mutex is poisoned");
+            let mut cache = store
+                .already_accessed_key_files
+                .lock()
+                .expect("Mutex is poisoned");
             cache.available.retain(|(c_access, _, _)| {
                 let c_key_file = c_access.key_file();
                 c_key_file != key_file
@@ -494,7 +514,10 @@ pub(crate) fn maybe_remove_device(
             // This is because in practice the path is always provided absolute given it
             // is obtained in the first place by `list_template_available_devices`.
 
-            let mut cache = store.key_files_cache.lock().expect("Mutex is poisoned");
+            let mut cache = store
+                .already_accessed_key_files
+                .lock()
+                .expect("Mutex is poisoned");
             cache.available.retain(|(c_access, _, _)| {
                 let c_key_file = c_access.key_file();
                 c_key_file != key_file
