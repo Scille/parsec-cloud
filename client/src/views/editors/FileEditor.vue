@@ -69,10 +69,12 @@
                 {{ $msTranslate('fileViewers.openWithDefault') }}
               </ion-button>
               <ion-button
-                v-show="false"
                 class="file-viewer-topbar-buttons__item toggle-menu"
+                @click="toggleMainHeader"
+                :class="{ 'header-visible': isHeaderVisible }"
               >
-                {{ $msTranslate('fileViewers.hideMenu') }}
+                <ion-icon :icon="isHeaderVisible ? chevronUp : chevronDown" />
+                {{ $msTranslate(isHeaderVisible ? 'fileViewers.hideMenu' : 'fileViewers.showMenu') }}
               </ion-button>
             </ion-buttons>
           </div>
@@ -111,7 +113,7 @@ import {
   writeFile,
 } from '@/parsec';
 import { IonPage, IonContent, IonButton, IonText, IonIcon, IonButtons, modalController } from '@ionic/vue';
-import { link, informationCircle, open } from 'ionicons/icons';
+import { link, informationCircle, open, chevronDown, chevronUp } from 'ionicons/icons';
 import { Base64, MsSpinner, MsImage, I18n, DownloadIcon } from 'megashark-lib';
 import { ref, Ref, inject, onMounted, onUnmounted } from 'vue';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
@@ -126,6 +128,7 @@ import { FileDetailsModal } from '@/views/files';
 import { showSaveFilePicker } from 'native-file-system-adapter';
 import { CryptpadDocumentType, Cryptpad, CryptpadConfig, getDocumentTypeFromExtension } from '@/services/cryptpad';
 import { longLocaleCodeToShort } from '@/services/translation';
+import useHeaderControl from '@/services/headerControl';
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const contentInfo: Ref<FileContentInfo | undefined> = ref(undefined);
@@ -136,6 +139,7 @@ const fileEditor: Ref<HTMLDivElement | null> = ref(null);
 const documentType = ref<CryptpadDocumentType | null>(null);
 const cryptpadInstance = ref<Cryptpad | null>(null);
 const fileInfoId = ref<string | undefined>(undefined);
+const { isHeaderVisible, toggleHeader: toggleMainHeader, showHeader, hideHeader } = useHeaderControl();
 
 const cancelRouteWatch = watchRoute(async () => {
   if (!currentRouteIs(Routes.Editor)) {
@@ -378,6 +382,8 @@ onMounted(async () => {
   // file viewer function
   await loadFile();
   await loadCryptpad();
+  // Set header hidden by default when entering editor
+  hideHeader();
 });
 
 async function loadCryptpad(): Promise<void> {
@@ -436,6 +442,8 @@ async function loadCryptpad(): Promise<void> {
 
 onUnmounted(async () => {
   cancelRouteWatch();
+  // Ensure header is visible when leaving editor
+  showHeader();
 });
 
 async function openWithSystem(path: FsPath): Promise<boolean> {
@@ -621,6 +629,7 @@ async function downloadFile(path: FsPath): Promise<void> {
         .toggle-menu {
           position: relative;
           margin-left: 0.5rem;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
           &::before {
             content: '';
