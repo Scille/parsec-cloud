@@ -1005,8 +1005,11 @@ class GitForceMode(enum.Enum):
     WithLease = "with-lease"
 
     @classmethod
-    def values(cls) -> list[str]:
-        return list(e.value for e in cls)
+    def values(cls) -> list[GitForceMode]:
+        return list(e for e in cls)
+
+    def __str__(self) -> str:
+        return self.value
 
     @property
     def tag_args(self) -> list[str]:
@@ -1082,8 +1085,8 @@ def cli(description: str) -> argparse.Namespace:
     )
     build.add_argument(
         "--git-force",
-        default=GitForceMode.NoForce,
-        const=GitForceMode.Force,
+        default=GitForceMode.NoForce.value,
+        const=GitForceMode.Force.value,
         type=GitForceMode,
         choices=GitForceMode.values(),
         nargs="?",
