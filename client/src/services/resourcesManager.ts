@@ -71,7 +71,7 @@ class WebResourcesProvider implements IResourcesProvider {
 
   async load(res: Resources): Promise<NonNullable<unknown>> {
     const axiosInstance = axios.create({
-      baseURL: this.path,
+      baseURL: `${import.meta.env.BASE_URL ?? ''}${this.path}`,
       timeout: 1000,
     });
 
