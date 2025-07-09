@@ -386,6 +386,42 @@ for any given email address).
     show_envvar=True,
     help="SSL certificate file. This setting enables serving Parsec over SSL.",
 )
+@click.option(
+    "--ssl-ciphers",
+    type=str,
+    envvar="PARSEC_SSL_CIPHERS",
+    show_envvar=True,
+    callback=lambda ctx, param, value: value.split(","),
+    # List of recommended cipher suites by ANSSI
+    # https://cyber.gouv.fr/sites/default/files/2017/07/anssi-guide-recommandations_de_securite_relatives_a_tls-v1.2.pdf
+    default=",".join(
+        [
+            # We need to translate the cipher names to be compatible with openssl naming,
+            # We use https://docs.openssl.org/3.5/man1/openssl-ciphers/#cipher-suite-names for that.
+            # For TLSv1.3, openssl use the same naming so no translation.
+            # https://docs.openssl.org/3.5/man1/openssl-ciphers/#tls-v13-cipher-suites
+            "TLS_AES_256_GCM_SHA384",
+            "TLS_AES_128_GCM_SHA256",
+            "TLS_AES_128_CCM_SHA256",
+            "TLS_CHACHA20_POLY1305_SHA256",
+            # For TLSv1.2
+            # https://docs.openssl.org/3.5/man1/openssl-ciphers/#tls-v12-cipher-suites
+            # using ECDSA
+            "ECDHE-ECDSA-AES256-GCM-SHA384",  # TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+            "ECDHE-ECDSA-AES128-GCM-SHA256",  # TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+            "ECDHE-ECDSA-AES256-CCM",  # TLS_ECDHE_ECDSA_WITH_AES_256_CCM
+            "ECDHE-ECDSA-AES128-CCM",  # TLS_ECDHE_ECDSA_WITH_AES_128_CCM
+            # https://docs.openssl.org/3.5/man1/openssl-ciphers/#chacha20-poly1305-cipher-suites-extending-tls-v12
+            "ECDHE-ECDSA-CHACHA20-POLY1305",  # TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
+            # using RSA
+            "ECDHE-RSA-AES256-GCM-SHA384",  # TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+            "ECDHE-RSA-AES128-GCM-SHA256",  # TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+            # https://docs.openssl.org/3.5/man1/openssl-ciphers/#chacha20-poly1305-cipher-suites-extending-tls-v12
+            "ECDHE-RSA-CHACHA20-POLY1305",  # TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+        ]
+    ),
+    help="Comma separated of TLS cipher suite to use",
+)
 # Add --log-level/--log-format/--log-file
 @logging_config_options(default_log_level="INFO")
 # Add --sentry-url
@@ -466,6 +502,7 @@ def run_cmd(
     proxy_trusted_addresses: str | None,
     ssl_keyfile: Path | None,
     ssl_certfile: Path | None,
+    ssl_ciphers: list[str],
     log_level: LogLevel,
     log_format: str,
     log_file: str | None,
@@ -543,6 +580,7 @@ def run_cmd(
                     port=port,
                     ssl_certfile=ssl_certfile,
                     ssl_keyfile=ssl_keyfile,
+                    ssl_ciphers=ssl_ciphers,
                     retry_policy=retry_policy,
                     with_client_web_app=with_client_web_app,
                     cors_allow_origins=cors_allow_origins,
@@ -588,6 +626,7 @@ async def _run_backend(
     port: int,
     ssl_certfile: Path | None,
     ssl_keyfile: Path | None,
+    ssl_ciphers: list[str],
     retry_policy: RetryPolicy,
     with_client_web_app: Path | None,
     cors_allow_origins: list[str],
@@ -622,6 +661,7 @@ async def _run_backend(
                     port=port,
                     ssl_certfile=ssl_certfile,
                     ssl_keyfile=ssl_keyfile,
+                    ssl_ciphers=ssl_ciphers,
                     proxy_trusted_addresses=app_config.proxy_trusted_addresses,
                 )
                 return
