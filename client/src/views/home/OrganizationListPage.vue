@@ -10,7 +10,7 @@
             <ion-text class="create-organization-text__title title-h3">
               {{ $msTranslate('HomePage.noDevices.titleCreateOrga') }}
             </ion-text>
-            <ion-text class="create-organization-text__subtitle body">{{ $msTranslate('HomePage.noDevices.subtitle') }}</ion-text>
+            <ion-text class="create-organization-text__subtitle body-lg">{{ $msTranslate('HomePage.noDevices.subtitle') }}</ion-text>
             <ion-button
               @click="$emit('createOrganizationClick')"
               size="default"
@@ -39,9 +39,9 @@
           />
         </div>
         <div class="invitation">
-          <ion-title class="invitation__title title-h4">
+          <ion-text class="invitation__title title-h4">
             {{ $msTranslate('HomePage.noDevices.titleInvitation') }}
-          </ion-title>
+          </ion-text>
           <div class="invitation-link">
             <ms-input
               label="HomePage.noDevices.invitationLink"
@@ -54,7 +54,6 @@
             />
             <ion-button
               @click="onLinkClick(link)"
-              size="large"
               fill="clear"
               id="join-organization-button"
               :disabled="!linkRef || linkRef.validity !== Validity.Valid"
@@ -63,8 +62,132 @@
             </ion-button>
           </div>
         </div>
+        <div class="webAccess">
+          <div
+            @click="toggleWebAccess"
+            class="webAccess-header"
+          >
+            <div class="webAccess-header__title-container">
+              <ion-text class="webAccess-header__title title-h4">
+                {{ $msTranslate('HomePage.webAccess.title') }}
+              </ion-text>
+              <ion-text class="webAccess-header-info button-medium">
+                <span class="webAccess-header-info__text">{{ $msTranslate('HomePage.webAccess.step.button') }}</span>
+                <ion-icon
+                  :icon="chevronDown"
+                  class="webAccess-header-info__icon"
+                  :class="{ 'webAccess-header-info__icon--open': showWebAccess }"
+                />
+              </ion-text>
+            </div>
+            <ion-text
+              class="webAccess-header__subtitle body-lg"
+              v-show="showWebAccess"
+            >
+              {{ $msTranslate('HomePage.webAccess.subtitle') }}
+            </ion-text>
+          </div>
+          <div class="webAccess__content">
+            <div
+              class="webAccess-step"
+              v-show="showWebAccess"
+            >
+              <ion-text class="body webAccess-step-item">
+                <ion-icon
+                  :icon="caretForward"
+                  class="webAccess-step-item__icon"
+                />
+                <span class="webAccess-step-item__text">
+                  <i18n-t
+                    keypath="HomePage.webAccess.step.one"
+                    scope="global"
+                  >
+                    <template #application>
+                      <strong> {{ $msTranslate('HomePage.webAccess.step.application') }} </strong>
+                    </template>
+                    <template #login>
+                      <strong> {{ $msTranslate('HomePage.webAccess.step.login') }} </strong>
+                    </template>
+                  </i18n-t>
+                </span>
+              </ion-text>
+              <ion-text class="body webAccess-step-item">
+                <ion-icon
+                  :icon="caretForward"
+                  class="webAccess-step-item__icon"
+                />
+                <span class="webAccess-step-item__text">
+                  <i18n-t
+                    keypath="HomePage.webAccess.step.two"
+                    scope="global"
+                  >
+                    <template #myDevices>
+                      <strong> {{ $msTranslate('HomePage.webAccess.step.myDevices') }} </strong>
+                    </template>
+                    <template #addDevice>
+                      <strong> {{ $msTranslate('HomePage.webAccess.step.addDevice') }} </strong>
+                    </template>
+                    <template #copyInvitation>
+                      <strong> {{ $msTranslate('HomePage.webAccess.step.copyInvitation') }} </strong>
+                    </template>
+                  </i18n-t>
+                </span>
+              </ion-text>
+              <ion-text class="body webAccess-step-item">
+                <ion-icon
+                  :icon="caretForward"
+                  class="webAccess-step-item__icon"
+                />
+                <span class="webAccess-step-item__text">
+                  <i18n-t
+                    keypath="HomePage.webAccess.step.three"
+                    scope="global"
+                  >
+                    <template #pasteInvitation>
+                      <strong> {{ $msTranslate('HomePage.webAccess.step.pasteInvitation') }} </strong>
+                    </template>
+                  </i18n-t>
+                </span>
+              </ion-text>
+            </div>
+            <div class="webAccess-link">
+              <ms-input
+                label="HomePage.webAccess.pasteLinkLabel"
+                placeholder="HomePage.webAccess.pasteLinkPlaceholder"
+                v-model="link"
+                @on-enter-keyup="onLinkClick"
+                :validator="claimAndBootstrapLinkValidator"
+                class="webAccess-link__input"
+                ref="linkRef"
+              />
+              <ion-button
+                @click="onLinkClick(link)"
+                fill="clear"
+                id="join-organization-button"
+                :disabled="!linkRef || linkRef.validity !== Validity.Valid"
+              >
+                {{ $msTranslate('HomePage.webAccess.joinButton') }}
+              </ion-button>
+            </div>
+            <ion-text class="webAccess-info body">
+              <i18n-t
+                keypath="HomePage.webAccess.info"
+                scope="global"
+              >
+                <template #more>
+                  <strong
+                    class="more-link"
+                    @click="openMoreLink"
+                  >
+                    {{ $msTranslate('HomePage.webAccess.more') }}
+                  </strong>
+                </template>
+              </i18n-t>
+            </ion-text>
+          </div>
+        </div>
       </div>
-      <!-- enf of No organization -->
+      <!-- end of No organization -->
     </template>
     <template v-else>
       <div class="organization-content">
@@ -143,14 +266,15 @@ import {
   Validity,
   AddIcon,
   useWindowSize,
+  I18n,
 } from 'megashark-lib';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AvailableDevice, getLoggedInDevices, LoggedInDeviceInfo } from '@/parsec';
 import { Routes } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
-import { IonButton, IonIcon, IonText, IonTitle } from '@ionic/vue';
-import { addCircle } from 'ionicons/icons';
+import { IonButton, IonIcon, IonText } from '@ionic/vue';
+import { addCircle, caretForward, chevronDown } from 'ionicons/icons';
 import { DateTime } from 'luxon';
 import { computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
 
@@ -188,6 +312,7 @@ const searchQuery = ref('');
 const searchInputRef = ref();
 const linkRef = ref();
 const link = ref('');
+const showWebAccess = ref(false);
 const loggedInDevices = ref<Array<LoggedInDeviceInfo>>([]);
 
 interface OrganizationListSavedData {
@@ -322,6 +447,14 @@ const filteredDevices = computed(() => {
       return 0;
     });
 });
+
+function toggleWebAccess(): void {
+  showWebAccess.value = !showWebAccess.value;
+}
+
+async function openMoreLink(): Promise<void> {
+  window.open(I18n.translate({ key: 'HomePage.webAccess.moreLink' }), '_blank');
+}
 </script>
 
 <style lang="scss" scoped>
@@ -345,7 +478,6 @@ const filteredDevices = computed(() => {
   margin-bottom: 4.3125rem;
   height: 100%;
   border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
-  box-shadow: var(--parsec-shadow-soft);
   padding: 2rem 2rem 0 2rem;
   width: 100%;
   max-width: 40rem;
@@ -426,7 +558,7 @@ const filteredDevices = computed(() => {
 }
 
 .no-devices {
-  max-width: 45rem;
+  max-width: 50rem;
   margin-bottom: 0.5rem;
   gap: 1.5rem;
   padding: 0;
@@ -435,17 +567,39 @@ const filteredDevices = computed(() => {
   box-shadow: none;
 
   .create-organization,
-  .invitation {
+  .invitation,
+  .webAccess {
     background: var(--parsec-color-light-secondary-white);
     border: 1px solid var(--parsec-color-light-secondary-medium);
     border-radius: var(--parsec-radius-12);
     display: flex;
   }
 
+  .invitation,
+  .webAccess {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 2rem;
+
+    @include ms.responsive-breakpoint('xs') {
+      padding: 1.5rem;
+    }
+
+    ion-button {
+      --background: var(--parsec-color-light-secondary-text);
+      --color: var(--parsec-color-light-secondary-white);
+      padding-bottom: 0.125rem;
+
+      @include ms.responsive-breakpoint('xs') {
+        width: 100%;
+      }
+    }
+  }
+
   .create-organization {
     align-items: center;
     gap: 1.5rem;
-    padding: 3rem 2rem;
+    padding: 2rem 2rem;
 
     @include ms.responsive-breakpoint('xs') {
       padding: 1.5rem;
@@ -454,7 +608,7 @@ const filteredDevices = computed(() => {
     &-text {
       display: flex;
       flex-direction: column;
-      max-width: 24rem;
+      max-width: 30rem;
 
       @include ms.responsive-breakpoint('xs') {
         max-width: 100%;
@@ -479,6 +633,7 @@ const filteredDevices = computed(() => {
 
         ion-icon {
           margin-inline-end: 0.5rem;
+          font-size: 1rem;
         }
       }
 
@@ -503,11 +658,11 @@ const filteredDevices = computed(() => {
 
     &-image {
       width: 100%;
-      max-width: 10rem;
+      max-width: 9rem;
       margin: auto;
 
       @include ms.responsive-breakpoint('md') {
-        max-width: 8rem;
+        max-width: 6rem;
       }
 
       @include ms.responsive-breakpoint('xs') {
@@ -517,20 +672,131 @@ const filteredDevices = computed(() => {
   }
 
   .invitation {
-    flex-direction: column;
-    gap: 1.5rem;
-    padding: 2rem 2rem 3rem;
-
-    @include ms.responsive-breakpoint('xs') {
-      padding: 1.5rem;
-    }
-
     &__title {
-      color: var(--parsec-color-light-primary-800);
+      color: var(--parsec-color-light-secondary-text);
       padding: 0;
     }
 
     .invitation-link {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-end;
+
+      @include ms.responsive-breakpoint('xs') {
+        flex-direction: column;
+      }
+
+      &__input {
+        width: 100%;
+        max-width: 30rem;
+      }
+    }
+  }
+
+  .webAccess {
+    position: relative;
+    margin-bottom: 2rem;
+
+    &-header {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 0.75rem;
+      cursor: pointer;
+
+      &__title-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+      }
+
+      &__title {
+        color: var(--parsec-color-light-secondary-text);
+        padding: 0;
+        width: auto;
+
+        &:hover {
+          color: var(--parsec-color-light-primary-600);
+        }
+      }
+
+      &__subtitle {
+        color: var(--parsec-color-light-secondary-hard-grey);
+      }
+
+      &-info {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        color: var(--parsec-color-light-secondary-soft-text);
+        position: relative;
+        right: 0;
+        top: 0;
+        flex-shrink: 0;
+
+        &__text {
+          font-weight: 600;
+          @include ms.responsive-breakpoint('xs') {
+            display: none;
+          }
+        }
+
+        &__icon {
+          transition: transform 0.2s ease-in-out;
+
+          &--open {
+            transform: rotate(180deg);
+          }
+
+          @include ms.responsive-breakpoint('xs') {
+            font-size: 1.25rem;
+          }
+        }
+
+        &:hover {
+          color: var(--parsec-color-light-primary-600);
+        }
+      }
+    }
+
+    &__content {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    &-step {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      color: var(--parsec-color-light-secondary-grey);
+      padding: 1rem;
+      border-radius: var(--parsec-radius-8);
+      background: var(--parsec-color-light-secondary-background);
+
+      @include ms.responsive-breakpoint('sm') {
+        flex-direction: column;
+      }
+
+      &-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        &__icon {
+          color: var(--parsec-color-light-secondary-light);
+          font-size: 1rem;
+          flex-shrink: 0;
+        }
+
+        &__text {
+          color: var(--parsec-color-light-secondary-text);
+        }
+      }
+    }
+
+    &-link {
       display: flex;
       gap: 1rem;
       align-items: flex-end;
@@ -549,6 +815,20 @@ const filteredDevices = computed(() => {
 
         @include ms.responsive-breakpoint('xs') {
           width: 100%;
+        }
+      }
+    }
+
+    &-info {
+      color: var(--parsec-color-light-secondary-hard-grey);
+
+      .more-link {
+        color: var(--parsec-color-light-primary-500);
+        cursor: pointer;
+        text-decoration: underline;
+
+        &:hover {
+          color: var(--parsec-color-light-primary-600);
         }
       }
     }
