@@ -36,7 +36,7 @@ export interface LoggedInDeviceInfo {
 }
 
 export async function getLoggedInDevices(): Promise<Array<LoggedInDeviceInfo>> {
-  const availableDevices = await listAvailableDevices();
+  const availableDevices = await listAvailableDevices(false);
   const startedDevices = await libparsec.listStartedClients();
   const loggedInDevices: Array<LoggedInDeviceInfo> = [];
 
