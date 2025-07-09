@@ -266,7 +266,7 @@ jobs:
         working-directory: C:\
         run: |
           echo '${{ github.workspace }}'
-          echo $env:GITHUB_WORKSPACE
+          echo K:\parsec-cloud
 
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
         with:
@@ -291,8 +291,8 @@ jobs:
           Get-Item ${{ github.workspace }}
           Get-Permissions ${{ github.workspace }}
 
-          Get-Item $env:GITHUB_WORKSPACE
-          Get-Permissions $env:GITHUB_WORKSPACE
+          Get-Item K:\parsec-cloud
+          Get-Permissions K:\parsec-cloud
 
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # pin v4.4.0
