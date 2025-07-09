@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "parsec-cloud"
-version = "3.5.0-a.1"
+version = "3.5.0-a.2+dev"
 description = "Secure file sharing in the cloud"
 authors = ["Scille SAS <contact@scille.fr>"]
 license = "BUSL-1.1"
