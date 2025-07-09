@@ -123,3 +123,38 @@ A Parsec link is formatted like so:
 When you receive a link, you just need to check if the ``SERVER`` and ``ORGANIZATION`` parts match your organization's server. This can be found on the "Information" page, when you login to your organization.
 
 When joining an organization, you should contact an administrator of the organization to provide or confirm this information.
+
+How to enable web browser storage
+=================================
+
+Parsec needs to securely store your access keys (device) on your web browser so you can login to your organizations.
+
+This section explains how to enable storage for Parsec depending on your web browser.
+
+Chrome
+------
+
+1. Go to the settings menu (three dots in the upper right corner).
+2. Click on "Privacy and security".
+3. Click on "Site settings".
+4. Under "Content", click on "Third-party cookies".
+5. Make sure "Allow third-party cookies" is enabled or add Parsec website `https://app.parsec.cloud` to the list of allowed sites in "Site allowed to use third-party cookies".
+
+Firefox
+-------
+
+1. Go to the settings menu (horizontal lines in the upper right corner).
+2. Click on "Settings" then "Privacy & Security".
+3. In the "Cookies and Site Data" section, click on "Manage Exceptions...".
+4. Add Parsec website `https://app.parsec.cloud` to the list of allowed sites and then click "Allow".
+
+.. important::
+
+  Please note that even if you enabled "Delete cookies and site data when Firefox is closed", the exception for Parsec website will **remain**.
+
+Safari
+------
+
+1. Go to "Safari" in the menu bar and select "Preferences".
+2. Click on the "Privacy" tab.
+3. Ensure that "Block all cookies" is unchecked to allow sites to store data.

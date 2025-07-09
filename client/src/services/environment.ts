@@ -162,7 +162,8 @@ type Pages =
   | 'parsec_workspaces'
   | 'manage_files'
   | 'manage_devices'
-  | 'security';
+  | 'security'
+  | 'how_to_enable_web_browser_storage';
 
 async function openDocumentationUserGuideLink(page: Pages): Promise<void> {
   await openUrl(I18n.translate({ key: 'MenuPage.documentationGuideLink', data: { version: APP_VERSION_PREFIX, page: page } }));
