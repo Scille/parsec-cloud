@@ -1,0 +1,11 @@
+{
+    "HomePage": {
+        "topbar": {
+            "welcome": "CNRS - Parsec"
+        }
+    },
+    "MenuPage": {
+        "documentationLink": "https://docs.parsec.cloud/en/{version}",
+        "documentationGuideLink": "https://docs.parsec.cloud/en/{version}/userguide/{page}.html"
+    }
+}
