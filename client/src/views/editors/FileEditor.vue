@@ -556,7 +556,6 @@ async function downloadFile(path: FsPath): Promise<void> {
 
   .file-viewer, .file-editor {
     display: flex;
-    gap: 1rem;
     flex-direction: column;
     height: 100%;
     justify-content: center;
