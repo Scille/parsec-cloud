@@ -1372,7 +1372,7 @@
     },
     "ReportBugModal": {
         "title": "Report a bug",
-        "subtitle": "If you encountered a problem in the app, report it so we can investigate.",
+        "subtitle": "If you encountered a problem using the app, you can report it to our development team.",
         "form": {
             "email": "Your email",
             "description": "Bug description",
