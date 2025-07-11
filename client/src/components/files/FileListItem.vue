@@ -48,9 +48,9 @@
           class="file-icon"
         />
         <div class="file-mobile-text">
-          <ion-label class="file-name__label cell">
+          <ion-text class="file-name__label cell">
             {{ entry.name }}
-          </ion-label>
+          </ion-text>
           <ion-text
             v-if="isSmallDisplay"
             class="file-mobile-text__data body-sm"
@@ -85,26 +85,26 @@
 
       <!-- last update -->
       <div class="file-lastUpdate">
-        <ion-label class="label-last-update cell">
+        <ion-text class="label-last-update cell">
           {{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}
-        </ion-label>
+        </ion-text>
       </div>
 
       <!-- last update -->
       <div class="file-creationDate">
-        <ion-label class="label-last-update cell">
+        <ion-text class="label-last-update cell">
           {{ $msTranslate(formatTimeSince(entry.created, '--', 'short')) }}
-        </ion-label>
+        </ion-text>
       </div>
 
       <!-- file size -->
       <div class="file-size">
-        <ion-label
+        <ion-text
           v-if="entry.isFile()"
           class="label-size cell"
         >
           {{ $msTranslate(formatFileSize((entry as FileModel).size)) }}
-        </ion-label>
+        </ion-text>
       </div>
 
       <!-- options -->
@@ -135,7 +135,7 @@ import { EntryModel, FileModel } from '@/components/files/types';
 import { FileImportTuple } from '@/components/files/utils';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { FsPath, Path } from '@/parsec';
-import { IonButton, IonIcon, IonItem, IonLabel, IonText } from '@ionic/vue';
+import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
 import { cloudDone, cloudOffline, ellipsisHorizontal } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
 

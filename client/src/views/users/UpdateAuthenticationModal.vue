@@ -62,10 +62,7 @@
       </div>
 
       <ion-footer class="modal-footer">
-        <ion-buttons
-          slot="primary"
-          class="modal-footer-buttons"
-        >
+        <div class="modal-footer-buttons">
           <ion-button
             fill="clear"
             size="default"
@@ -83,7 +80,7 @@
             {{ $msTranslate(getNextButtonText()) }}
           </ion-button>
           <ms-spinner v-show="querying" />
-        </ion-buttons>
+        </div>
       </ion-footer>
     </div>
   </ion-page>

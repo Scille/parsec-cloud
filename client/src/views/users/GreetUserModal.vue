@@ -142,10 +142,7 @@
         </div>
       </div>
       <ion-footer class="modal-footer">
-        <ion-buttons
-          slot="primary"
-          class="modal-footer-buttons"
-        >
+        <div class="modal-footer-buttons">
           <ion-button
             fill="solid"
             size="default"
@@ -170,7 +167,7 @@
             </ion-text>
             <ms-spinner class="spinner" />
           </div>
-        </ion-buttons>
+        </div>
       </ion-footer>
     </div>
   </ion-page>

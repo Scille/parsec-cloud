@@ -8,9 +8,9 @@
         v-if="canRevoke"
       >
         <ion-item class="list-group-title button-small">
-          <ion-label class="list-group-title__label">
+          <ion-text class="list-group-title__label">
             {{ $msTranslate('UsersPage.userContextMenu.titleRemove') }}
-          </ion-label>
+          </ion-text>
         </ion-item>
 
         <ion-item
@@ -18,10 +18,13 @@
           @click="onClick(UserAction.Revoke)"
           class="ion-no-padding list-group-item"
         >
-          <ion-icon :icon="personRemove" />
-          <ion-label class="body list-group-item__label">
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="personRemove"
+          />
+          <ion-text class="body list-group-item__label">
             {{ $msTranslate({ key: 'UsersPage.userContextMenu.actionRevoke', count: multipleSelected ? 2 : 1 }) }}
-          </ion-label>
+          </ion-text>
         </ion-item>
       </ion-item-group>
 
@@ -30,19 +33,22 @@
         v-if="canUpdateProfile"
       >
         <ion-item class="list-group-title button-small">
-          <ion-label class="list-group-title__label">
+          <ion-text class="list-group-title__label">
             {{ $msTranslate('UsersPage.userContextMenu.titleUpdateProfile') }}
-          </ion-label>
+          </ion-text>
         </ion-item>
         <ion-item
           button
           @click="onClick(UserAction.UpdateProfile)"
           class="ion-no-padding list-group-item"
         >
-          <ion-icon :icon="repeat" />
-          <ion-label class="body list-group-item__label">
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="repeat"
+          />
+          <ion-text class="body list-group-item__label">
             {{ $msTranslate({ key: 'UsersPage.userContextMenu.actionUpdateProfile', count: multipleSelected ? 2 : 1 }) }}
-          </ion-label>
+          </ion-text>
         </ion-item>
       </ion-item-group>
 
@@ -51,19 +57,22 @@
         v-if="!multipleSelected"
       >
         <ion-item class="list-group-title button-small">
-          <ion-label class="list-group-title__label">
+          <ion-text class="list-group-title__label">
             {{ $msTranslate('UsersPage.userContextMenu.titleDetails') }}
-          </ion-label>
+          </ion-text>
         </ion-item>
         <ion-item
           button
           @click="onClick(UserAction.Details)"
           class="ion-no-padding list-group-item"
         >
-          <ion-icon :icon="informationCircle" />
-          <ion-label class="body list-group-item__label">
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="informationCircle"
+          />
+          <ion-text class="body list-group-item__label">
             {{ $msTranslate('UsersPage.userContextMenu.actionDetails') }}
-          </ion-label>
+          </ion-text>
         </ion-item>
       </ion-item-group>
 
@@ -72,19 +81,22 @@
         v-if="!multipleSelected"
       >
         <ion-item class="list-group-title button-small">
-          <ion-label class="list-group-title__label">
+          <ion-text class="list-group-title__label">
             {{ $msTranslate('UsersPage.userContextMenu.titleAssignRoles') }}
-          </ion-label>
+          </ion-text>
         </ion-item>
         <ion-item
           button
           @click="onClick(UserAction.AssignRoles)"
           class="ion-no-padding list-group-item"
         >
-          <ion-icon :icon="returnUpForward" />
-          <ion-label class="body list-group-item__label">
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="returnUpForward"
+          />
+          <ion-text class="body list-group-item__label">
             {{ $msTranslate('UsersPage.userContextMenu.actionAssignRoles') }}
-          </ion-label>
+          </ion-text>
         </ion-item>
       </ion-item-group>
     </ion-list>
@@ -92,7 +104,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonContent, IonIcon, IonItem, IonItemGroup, IonLabel, IonList, popoverController } from '@ionic/vue';
+import { IonContent, IonIcon, IonItem, IonItemGroup, IonText, IonList, popoverController } from '@ionic/vue';
 import { informationCircle, personRemove, returnUpForward, repeat } from 'ionicons/icons';
 import { UserAction } from '@/views/users/types';
 

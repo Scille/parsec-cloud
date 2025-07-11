@@ -111,10 +111,7 @@
       </div>
       <!-- the buttons must be only enabled if all fields are filled in -->
       <ion-footer class="modal-footer">
-        <ion-buttons
-          slot="primary"
-          class="modal-footer-buttons"
-        >
+        <div class="modal-footer-buttons">
           <ion-button
             fill="solid"
             size="default"
@@ -133,7 +130,7 @@
           >
             <ms-spinner title="JoinOrganization.waitingForHost" />
           </div>
-        </ion-buttons>
+        </div>
       </ion-footer>
     </div>
   </ion-page>

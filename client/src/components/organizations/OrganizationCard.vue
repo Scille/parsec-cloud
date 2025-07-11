@@ -147,7 +147,7 @@ function getLastLoginText(): string {
 
   // when using the card as a header only
   &.header-only {
-    padding: 0;
+    padding: 0 0.5rem 0 0;
     box-shadow: none;
     border: none;
     background: var(--parsec-color-light-secondary-background);

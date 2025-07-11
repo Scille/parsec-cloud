@@ -147,10 +147,9 @@
       </div>
 
       <ion-footer class="modal-footer">
-        <ion-buttons
-          slot="primary"
-          class="modal-footer-buttons"
+        <div
           v-show="currentPage !== Steps.Processing"
+          class="modal-footer-buttons"
         >
           <ion-button
             fill="clear"
@@ -169,7 +168,7 @@
           >
             {{ $msTranslate(getNextButtonText()) }}
           </ion-button>
-        </ion-buttons>
+        </div>
       </ion-footer>
     </div>
   </ion-page>

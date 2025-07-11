@@ -49,14 +49,13 @@
           :disabled="password.length == 0 || loginInProgress === true"
           class="login-button"
         >
-          {{ $msTranslate('HomePage.organizationLogin.login') }}
+          <span v-show="!loginInProgress">{{ $msTranslate('HomePage.organizationLogin.login') }}</span>
+          <ms-spinner
+            v-show="loginInProgress === true"
+            :size="14"
+            :speed="2"
+          />
         </ion-button>
-        <ms-spinner
-          v-show="loginInProgress === true"
-          :height="28"
-          :width="28"
-          :speed="2"
-        />
       </ion-footer>
     </ion-card>
     <!-- end of login -->

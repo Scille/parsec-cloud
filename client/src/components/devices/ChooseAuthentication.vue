@@ -1,7 +1,10 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-list class="choose-auth-page">
+  <ion-list
+    class="choose-auth-page"
+    :class="{'choose-auth-page--web': isWeb()}"
+  >
     <ion-text
       class="body choose-auth-page__label"
       v-show="showTitle"
@@ -119,16 +122,10 @@ async function areFieldsCorrect(): Promise<boolean> {
 </script>
 
 <style scoped lang="scss">
-.choose-auth-page {
-  &__label {
-    color: var(--parsec-color-light-primary-700);
-    margin-bottom: 1rem;
-    display: block;
-  }
-  // eslint-disable-next-line vue-scoped-css/no-unused-selector
-  .choose-password {
-    padding: 1.5rem 1rem;
-  }
+.choose-auth-page__label {
+  color: var(--parsec-color-light-primary-700);
+  margin-bottom: 1rem;
+  display: block;
 }
 
 .radio-list {
@@ -136,6 +133,7 @@ async function areFieldsCorrect(): Promise<boolean> {
 }
 
 .choose-password {
+  padding: 1.5rem 1rem;
   border: 1px solid var(--parsec-color-light-secondary-medium);
   border-radius: var(--parsec-radius-12) 0 var(--parsec-radius-12) var(--parsec-radius-12);
   box-shadow: var(--parsec-shadow-soft);
@@ -246,6 +244,22 @@ async function areFieldsCorrect(): Promise<boolean> {
     .item-radio__label {
       color: var(--parsec-color-light-primary-600);
     }
+  }
+}
+
+.choose-auth-page--web {
+  padding: 0;
+
+  .radio-list {
+    display: none;
+  }
+
+  .choose-password {
+    border-radius: none;
+    border: none;
+    box-shadow: none;
+    padding: 0 0.25rem;
+    background: none;
   }
 }
 </style>

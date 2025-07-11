@@ -81,6 +81,20 @@
     flex-direction: column;
     gap: 1rem;
 
+    .filter-text,
+    .status-tag {
+      width: 100%;
+    }
+
+    .filter-text {
+      color: var(--parsec-color-light-secondary-soft-text);
+    }
+
+    .filter-checkbox {
+      max-height: 1.25rem;
+      max-width: 1.25rem;
+    }
+
     &-small {
       margin-top: 1rem;
     }
@@ -118,33 +132,32 @@
     --padding-end: 0.5rem;
     --padding-top: 0.375rem;
     --padding-bottom: 0.375rem;
-    color: var(--parsec-color-light-secondary-hard-grey);
     border-radius: var(--parsec-radius-6);
     cursor: pointer;
     transition: all 0.15s ease-in-out;
 
     &__label {
-      margin: 0;
+      color: var(--parsec-color-light-secondary-hard-grey);
+    }
+
+
+    &__icon {
+      font-size: 1.125rem;
+      margin-right: 0.5em;
+      color: var(--parsec-color-light-secondary-hard-grey);
+      --fill-color: var(--parsec-color-light-secondary-hard-grey);
     }
 
     &:hover {
       background: var(--parsec-color-light-primary-30);
-      --color: var(--parsec-color-light-primary-600);
-      color: var(--parsec-color-light-primary-600);
 
-      ion-icon,
-      .item-icon {
+      .filter-text,
+      .filter-icon,
+      .list-group-item__icon,
+      .list-group-item__label {
         color: var(--parsec-color-light-primary-600);
         --fill-color: var(--parsec-color-light-primary-600);
       }
-    }
-
-    ion-icon,
-    .item-icon {
-      font-size: 1.125rem;
-      margin-right: 0.5em;
-      color: var(--parsec-color-light-secondary-grey);
-      --fill-color: var(--parsec-color-light-secondary-grey);
     }
   }
 
@@ -165,10 +178,6 @@
         margin-right: 0.5em;
       }
     }
-  }
-
-  ion-label {
-    margin: 0;
   }
 }
 
