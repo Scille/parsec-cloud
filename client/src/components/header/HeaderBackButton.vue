@@ -45,6 +45,7 @@ defineProps<{
   margin-top: 0px;
   margin-bottom: 0px;
   min-height: 0;
+  flex-shrink: 0;
 
   @include ms.responsive-breakpoint('sm') {
     background: var(--parsec-color-light-secondary-premiere);

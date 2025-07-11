@@ -30,22 +30,22 @@
               :indeterminate="someSelected && !allSelected"
             />
           </ion-label>
-          <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-name">
+          <ion-text class="folder-list-header__label cell-title ion-text-nowrap label-name">
             {{ $msTranslate('FoldersPage.listDisplayTitles.name') }}
-          </ion-label>
-          <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-updatedBy">
+          </ion-text>
+          <ion-text class="folder-list-header__label cell-title ion-text-nowrap label-updatedBy">
             {{ $msTranslate('FoldersPage.listDisplayTitles.updatedBy') }}
-          </ion-label>
-          <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-lastUpdate">
+          </ion-text>
+          <ion-text class="folder-list-header__label cell-title ion-text-nowrap label-lastUpdate">
             {{ $msTranslate('FoldersPage.listDisplayTitles.lastUpdate') }}
-          </ion-label>
-          <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-creationDate">
+          </ion-text>
+          <ion-text class="folder-list-header__label cell-title ion-text-nowrap label-creationDate">
             {{ $msTranslate('FoldersPage.listDisplayTitles.creation') }}
-          </ion-label>
-          <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-size">
+          </ion-text>
+          <ion-text class="folder-list-header__label cell-title ion-text-nowrap label-size">
             {{ $msTranslate('FoldersPage.listDisplayTitles.size') }}
-          </ion-label>
-          <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-space" />
+          </ion-text>
+          <ion-text class="folder-list-header__label cell-title ion-text-nowrap label-space" />
         </ion-list-header>
         <div>
           <file-list-item
@@ -92,7 +92,7 @@ import FileListItemProcessing from '@/components/files/FileListItemProcessing.vu
 import { EntryCollection, EntryModel, FileOperationProgress, FileModel, FolderModel } from '@/components/files/types';
 import { FileImportTuple } from '@/components/files/utils';
 import { FsPath, WorkspaceRole } from '@/parsec';
-import { IonLabel, IonList, IonListHeader } from '@ionic/vue';
+import { IonText, IonList, IonLabel, IonListHeader } from '@ionic/vue';
 import { computed, ref } from 'vue';
 import { MsCheckbox, useWindowSize } from 'megashark-lib';
 

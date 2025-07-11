@@ -27,6 +27,7 @@
             "
           />
           <ms-checkbox
+            class="filter-checkbox"
             v-model="users.filters.statusActive"
             @change="users.unselectHiddenUsers()"
           />
@@ -44,6 +45,7 @@
             "
           />
           <ms-checkbox
+            class="filter-checkbox"
             v-model="users.filters.statusRevoked"
             @change="users.unselectHiddenUsers()"
           />
@@ -62,6 +64,7 @@
             "
           />
           <ms-checkbox
+            class="filter-checkbox"
             v-model="users.filters.statusFrozen"
             @change="users.unselectHiddenUsers()"
           />
@@ -78,16 +81,17 @@
           class="list-group-item ion-no-padding"
           id="filter-check-admin"
         >
-          <ion-label
-            class="body"
+          <ion-text
+            class="filter-text body"
             @click="
               users.filters.profileAdmin = !users.filters.profileAdmin;
               users.unselectHiddenUsers();
             "
           >
             {{ $msTranslate('UsersPage.filter.admin') }}
-          </ion-label>
+          </ion-text>
           <ms-checkbox
+            class="filter-checkbox"
             v-model="users.filters.profileAdmin"
             @change="users.unselectHiddenUsers()"
           />
@@ -96,31 +100,33 @@
           class="list-group-item ion-no-padding"
           id="filter-check-standard"
         >
-          <ion-label
-            class="body"
+          <ion-text
+            class="filter-text body"
             @click="
               users.filters.profileStandard = !users.filters.profileStandard;
               users.unselectHiddenUsers();
             "
           >
             {{ $msTranslate('UsersPage.filter.standard') }}
-          </ion-label>
+          </ion-text>
           <ms-checkbox
+            class="filter-checkbox"
             v-model="users.filters.profileStandard"
             @ion-change="users.unselectHiddenUsers()"
           />
         </ion-item>
         <ion-item class="list-group-item ion-no-padding">
-          <ion-label
-            class="body"
+          <ion-text
+            class="filter-text body"
             @click="
               users.filters.profileOutsider = !users.filters.profileOutsider;
               users.unselectHiddenUsers();
             "
           >
             {{ $msTranslate('UsersPage.filter.outsider') }}
-          </ion-label>
+          </ion-text>
           <ms-checkbox
+            class="filter-checkbox"
             v-model="users.filters.profileOutsider"
             @ion-change="users.unselectHiddenUsers()"
           />
@@ -134,7 +140,7 @@
 <script setup lang="ts">
 import UserStatusTag from '@/components/users/UserStatusTag.vue';
 import { UserCollection } from '@/components/users/types';
-import { IonContent, IonItem, IonItemGroup, IonList, IonText, IonLabel } from '@ionic/vue';
+import { IonContent, IonItem, IonItemGroup, IonList, IonText } from '@ionic/vue';
 import { MsCheckbox } from 'megashark-lib';
 
 defineProps<{

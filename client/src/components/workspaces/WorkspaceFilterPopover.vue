@@ -18,43 +18,55 @@
           class="list-group-item ion-no-padding"
           id="filter-check-admin"
         >
-          <ion-label
-            class="body"
+          <ion-text
+            class="filter-text body"
             @click="filters.owner = !filters.owner"
           >
             {{ $msTranslate('workspaceRoles.owner.label') }}
-          </ion-label>
-          <ms-checkbox v-model="filters.owner" />
+          </ion-text>
+          <ms-checkbox
+            v-model="filters.owner"
+            class="filter-checkbox"
+          />
         </ion-item>
         <ion-item
           class="list-group-item ion-no-padding"
           id="filter-check-standard"
         >
-          <ion-label
-            class="body"
+          <ion-text
+            class="filter-text body"
             @click="filters.manager = !filters.manager"
           >
             {{ $msTranslate('workspaceRoles.manager.label') }}
-          </ion-label>
-          <ms-checkbox v-model="filters.manager" />
+          </ion-text>
+          <ms-checkbox
+            v-model="filters.manager"
+            class="filter-checkbox"
+          />
         </ion-item>
         <ion-item class="list-group-item ion-no-padding">
-          <ion-label
-            class="body"
+          <ion-text
+            class="filter-text body"
             @click="filters.contributor = !filters.contributor"
           >
             {{ $msTranslate('workspaceRoles.contributor.label') }}
-          </ion-label>
-          <ms-checkbox v-model="filters.contributor" />
+          </ion-text>
+          <ms-checkbox
+            v-model="filters.contributor"
+            class="filter-checkbox"
+          />
         </ion-item>
         <ion-item class="list-group-item ion-no-padding">
-          <ion-label
-            class="body"
+          <ion-text
+            class="filter-text body"
             @click="filters.reader = !filters.reader"
           >
             {{ $msTranslate('workspaceRoles.reader.label') }}
-          </ion-label>
-          <ms-checkbox v-model="filters.reader" />
+          </ion-text>
+          <ms-checkbox
+            v-model="filters.reader"
+            class="filter-checkbox"
+          />
         </ion-item>
       </ion-item-group>
     </ion-list>

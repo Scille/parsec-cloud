@@ -55,6 +55,7 @@ const emits = defineEmits<{
   flex: 1;
   margin-bottom: 1rem;
   border-radius: var(--parsec-radius-8);
+  background: transparent;
 
   &.list-file {
     margin: 1rem 0;

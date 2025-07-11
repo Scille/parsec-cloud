@@ -904,6 +904,11 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
     --background: transparent;
     position: relative;
     z-index: 12;
+
+    &::part(scroll) {
+      display: flex;
+      flex-direction: column;
+    }
   }
 
   .organization-workspaces,
@@ -912,6 +917,7 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
     display: flex;
     flex-direction: column;
     padding: 0 0.75rem;
+    background: transparent;
   }
 
   .organization-workspaces:has(.current-workspace) .workspaces {
@@ -1241,17 +1247,16 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
 }
 
 .organization-checklist {
-  position: absolute;
-  bottom: 2rem;
+  margin-top: auto;
   width: 100%;
 
   .checklist {
     display: flex;
-    background: var(--parsec-color-light-primary-30-opacity15);
+    border: 1px solid var(--parsec-color-light-primary-30-opacity15);
     --background: none;
 
     &::part(native) {
-      padding: 0.5rem 0 0.5rem 0.75rem;
+      padding: 0.5rem 0.5rem 0.5rem 0.75rem;
     }
 
     & * {
@@ -1296,10 +1301,11 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
   display: flex;
   flex-direction: column;
   color: var(--parsec-color-light-secondary-inversed-contrast);
-  padding: 0 1.25rem;
   gap: 0.5rem;
+  background: transparent;
 
   .title-h4 {
+    margin: 0 1.25rem;
     padding: 1.5em 0 1em;
   }
 }
