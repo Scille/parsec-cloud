@@ -2,7 +2,7 @@
 
 import { createFolder, expect, msTest } from '@tests/e2e/helpers';
 
-msTest.skip('Switch back and forth', async ({ connected }) => {
+msTest('Switch back and forth', async ({ connected }) => {
   // Logged in as Alice
 
   const profileName = connected.locator('#connected-header').locator('.topbar-right').locator('.text-content-name');
