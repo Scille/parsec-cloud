@@ -62,10 +62,7 @@
       </div>
 
       <ion-footer class="modal-footer">
-        <ion-buttons
-          slot="primary"
-          class="modal-footer-buttons"
-        >
+        <div class="modal-footer-buttons">
           <ion-button
             fill="clear"
             size="default"
@@ -83,7 +80,7 @@
             {{ $msTranslate(getNextButtonText()) }}
           </ion-button>
           <ms-spinner v-show="querying" />
-        </ion-buttons>
+        </div>
       </ion-footer>
     </div>
   </ion-page>
@@ -102,7 +99,7 @@ import {
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { Translatable, useWindowSize } from 'megashark-lib';
-import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonTitle, modalController } from '@ionic/vue';
+import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonTitle, modalController } from '@ionic/vue';
 import { close } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
 import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';

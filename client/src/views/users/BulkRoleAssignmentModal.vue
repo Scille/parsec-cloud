@@ -147,10 +147,9 @@
       </div>
 
       <ion-footer class="modal-footer">
-        <ion-buttons
-          slot="primary"
-          class="modal-footer-buttons"
+        <div
           v-show="currentPage !== Steps.Processing"
+          class="modal-footer-buttons"
         >
           <ion-button
             fill="clear"
@@ -169,7 +168,7 @@
           >
             {{ $msTranslate(getNextButtonText()) }}
           </ion-button>
-        </ion-buttons>
+        </div>
       </ion-footer>
     </div>
   </ion-page>
@@ -177,19 +176,7 @@
 
 <script setup lang="ts">
 import { UserSelect } from '@/components/users';
-import {
-  IonPage,
-  IonButtons,
-  IonButton,
-  IonFooter,
-  IonIcon,
-  IonHeader,
-  IonTitle,
-  IonList,
-  IonItem,
-  modalController,
-  IonText,
-} from '@ionic/vue';
+import { IonPage, IonButton, IonFooter, IonIcon, IonHeader, IonTitle, IonList, IonItem, modalController, IonText } from '@ionic/vue';
 import { getWorkspacesSharedWith, shareWorkspace, UserInfo, UserProfile, WorkspaceInfo, WorkspaceRole } from '@/parsec';
 import { ref, Ref } from 'vue';
 import { close, checkmarkCircle, closeCircle, arrowForward } from 'ionicons/icons';
@@ -384,7 +371,6 @@ function getNextButtonText(): string {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  overflow: hidden;
 
   @include ms.responsive-breakpoint('sm') {
     padding: 0 1.5rem;

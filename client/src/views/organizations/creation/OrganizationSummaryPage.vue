@@ -160,10 +160,7 @@
     </ion-text>
 
     <ion-footer class="summary-page-footer">
-      <ion-buttons
-        slot="primary"
-        class="modal-footer-buttons"
-      >
+      <div class="modal-footer-buttons">
         <ion-button
           fill="clear"
           size="default"
@@ -192,7 +189,7 @@
             size="small"
           />
         </ion-button>
-      </ion-buttons>
+      </div>
     </ion-footer>
   </ion-page>
 </template>
@@ -201,7 +198,7 @@
 import { DeviceSaveStrategyTag, OrganizationID } from '@/parsec';
 import { ServerType } from '@/services/parsecServers';
 import { chevronForward, chevronBack, warning } from 'ionicons/icons';
-import { IonPage, IonItem, IonButton, IonText, IonButtons, IonIcon, IonFooter, IonList } from '@ionic/vue';
+import { IonPage, IonItem, IonButton, IonText, IonIcon, IonFooter, IonList } from '@ionic/vue';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
 import { Translatable } from 'megashark-lib';
 

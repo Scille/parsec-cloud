@@ -18,12 +18,12 @@
         >
           <ion-icon
             v-if="action.icon"
-            class="item-icon"
+            class="list-group-item__icon"
             :icon="action.icon"
           />
-          <ion-label class="button-large list-group-item__label-small">
+          <ion-text class="button-large list-group-item__label-small">
             {{ $msTranslate(action.label) }}
-          </ion-label>
+          </ion-text>
         </ion-item>
       </ion-item-group>
     </ion-list>
@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonIcon, IonItem, IonList, IonItemGroup, IonLabel, modalController } from '@ionic/vue';
+import { IonPage, IonIcon, IonItem, IonList, IonItemGroup, IonText, modalController } from '@ionic/vue';
 import { MenuAction } from '@/views/menu/types';
 import { MsModalResult } from 'megashark-lib';
 

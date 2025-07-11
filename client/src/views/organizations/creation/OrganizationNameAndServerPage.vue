@@ -45,10 +45,7 @@
       </ion-text>
     </div>
     <ion-footer class="organization-name-and-server-page-footer">
-      <ion-buttons
-        slot="primary"
-        class="modal-footer-buttons"
-      >
+      <div class="modal-footer-buttons">
         <ion-button
           fill="clear"
           size="default"
@@ -78,14 +75,14 @@
             size="small"
           />
         </ion-button>
-      </ion-buttons>
+      </div>
     </ion-footer>
   </ion-page>
 </template>
 
 <script setup lang="ts">
 import { OrganizationID } from '@/parsec';
-import { IonPage, IonButton, IonText, IonButtons, IonFooter, IonIcon } from '@ionic/vue';
+import { IonPage, IonButton, IonText, IonFooter, IonIcon } from '@ionic/vue';
 import { computed, onMounted, ref } from 'vue';
 import { chevronForward, chevronBack } from 'ionicons/icons';
 import { organizationValidator, parsecAddrValidator } from '@/common/validators';

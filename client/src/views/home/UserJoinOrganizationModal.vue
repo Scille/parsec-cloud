@@ -169,10 +169,7 @@
       </div>
       <!-- the buttons must be only enabled if all fields are filled in -->
       <ion-footer class="modal-footer">
-        <ion-buttons
-          slot="primary"
-          class="modal-footer-buttons"
-        >
+        <div class="modal-footer-buttons">
           <ion-button
             fill="solid"
             size="default"
@@ -191,14 +188,14 @@
           >
             <ms-spinner :title="getSpinnerTitle()" />
           </div>
-        </ion-buttons>
+        </div>
       </ion-footer>
     </div>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
+import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
 import SmallDisplayStepModalHeader from '@/components/header/SmallDisplayStepModalHeader.vue';
 import SmallDisplayModalHeader from '@/components/header/SmallDisplayModalHeader.vue';
 import { getDefaultDeviceName } from '@/common/device';

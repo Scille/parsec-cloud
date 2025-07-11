@@ -17,9 +17,9 @@
         class="file-icon"
       />
 
-      <ion-label class="file-name__label cell">
+      <ion-text class="file-name__label cell">
         {{ fileName }}
-      </ion-label>
+      </ion-text>
     </div>
 
     <!-- updated by -->
@@ -35,14 +35,14 @@
 
     <!-- last update -->
     <div class="file-creationDate">
-      <ion-label class="label-last-update cell" />
+      <ion-text class="label-last-update cell" />
     </div>
 
     <!-- last update -->
     <div class="file-lastUpdate">
-      <ion-label class="label-last-update cell">
+      <ion-text class="label-last-update cell">
         {{ $msTranslate(getFileOperationLabel()) }}
-      </ion-label>
+      </ion-text>
     </div>
 
     <!-- file size -->
@@ -50,9 +50,9 @@
       class="file-size"
       v-if="data.getDataType() === FileOperationDataType.Import && isLargeDisplay"
     >
-      <ion-label class="label-size cell">
+      <ion-text class="label-size cell">
         {{ $msTranslate(formatFileSize((data as ImportData).file.size)) }}
-      </ion-label>
+      </ion-text>
     </div>
 
     <!-- options -->
@@ -66,7 +66,7 @@ import { MsImage, Translatable } from 'megashark-lib';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { ClientInfo, EntryName, getClientInfo, Path } from '@/parsec';
 import { CopyData, FileOperationData, FileOperationDataType, ImportData } from '@/services/fileOperationManager';
-import { IonItem, IonLabel } from '@ionic/vue';
+import { IonItem, IonText } from '@ionic/vue';
 import { Ref, onMounted, ref } from 'vue';
 import { MsSpinner, useWindowSize } from 'megashark-lib';
 

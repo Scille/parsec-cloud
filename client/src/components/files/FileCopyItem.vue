@@ -29,12 +29,12 @@
             })
           }}
         </ion-text>
-        <ion-label
+        <ion-text
           class="element-details__workspace body-sm"
           v-if="workspaceName"
         >
           {{ workspaceName }}
-        </ion-label>
+        </ion-text>
         <div
           class="element-details-progress-container"
           v-show="state === FileOperationState.OperationProgress"
@@ -116,7 +116,7 @@ import {
   OperationProgressStateData,
   StateData,
 } from '@/services/fileOperationManager';
-import { IonIcon, IonItem, IonLabel, IonText } from '@ionic/vue';
+import { IonIcon, IonItem, IonText } from '@ionic/vue';
 import { closeCircle, checkmarkCircle } from 'ionicons/icons';
 import { onMounted, ref } from 'vue';
 

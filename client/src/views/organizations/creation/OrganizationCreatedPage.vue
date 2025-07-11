@@ -27,10 +27,7 @@
     </ion-text>
 
     <ion-footer class="created-page-footer">
-      <ion-buttons
-        slot="primary"
-        class="modal-footer-buttons"
-      >
+      <div class="modal-footer-buttons">
         <ion-button
           fill="solid"
           size="default"
@@ -46,7 +43,7 @@
             size="small"
           />
         </ion-button>
-      </ion-buttons>
+      </div>
     </ion-footer>
   </ion-page>
 </template>
@@ -55,7 +52,7 @@
 import { OrganizationID } from '@/parsec';
 import { MsInformativeText, useWindowSize, LogoIconWhite, MsImage } from 'megashark-lib';
 import { chevronForward } from 'ionicons/icons';
-import { IonPage, IonText, IonButton, IonFooter, IonButtons, IonIcon } from '@ionic/vue';
+import { IonPage, IonText, IonButton, IonFooter, IonIcon } from '@ionic/vue';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
 
 const { isSmallDisplay } = useWindowSize();

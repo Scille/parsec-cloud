@@ -13,10 +13,13 @@
             @click="onClick(WorkspaceAction.MakeAvailableOffline)"
             class="ion-no-padding list-group-item"
           >
-            <ion-icon :icon="cloudy" />
-            <ion-label class="button-large list-group-item__label-small">
+            <ion-icon
+              class="list-group-item__icon"
+              :icon="cloudy"
+            />
+            <ion-text class="button-large list-group-item__label-small">
               {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionOffline') }}
-            </ion-label>
+            </ion-text>
           </ion-item>
         </ion-item-group>
 
@@ -30,10 +33,13 @@
             @click="onClick(WorkspaceAction.Rename)"
             class="ion-no-padding list-group-item"
           >
-            <ion-icon :icon="pencil" />
-            <ion-label class="button-large list-group-item__label-small">
+            <ion-icon
+              class="list-group-item__icon"
+              :icon="pencil"
+            />
+            <ion-text class="button-large list-group-item__label-small">
               {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionRename') }}
-            </ion-label>
+            </ion-text>
           </ion-item>
 
           <ion-item
@@ -43,9 +49,9 @@
             class="ion-no-padding list-group-item"
           >
             <ion-icon :icon="open" />
-            <ion-label class="button-large list-group-item__label-small">
+            <ion-text class="button-large list-group-item__label-small">
               {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionOpenInExplorer') }}
-            </ion-label>
+            </ion-text>
           </ion-item>
 
           <ion-item
@@ -54,10 +60,13 @@
             class="ion-no-padding list-group-item"
             v-show="clientRole === WorkspaceRole.Manager || clientRole === WorkspaceRole.Owner"
           >
-            <ion-icon :icon="time" />
-            <ion-label class="button-large list-group-item__label-small">
+            <ion-icon
+              class="list-group-item__icon"
+              :icon="time"
+            />
+            <ion-text class="button-large list-group-item__label-small">
               {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionHistory') }}
-            </ion-label>
+            </ion-text>
           </ion-item>
 
           <ion-item
@@ -66,10 +75,13 @@
             @click="onClick(WorkspaceAction.ShowDetails)"
             class="ion-no-padding list-group-item"
           >
-            <ion-icon :icon="informationCircle" />
-            <ion-label class="button-large list-group-item__label-small">
+            <ion-icon
+              class="list-group-item__icon"
+              :icon="informationCircle"
+            />
+            <ion-text class="button-large list-group-item__label-small">
               {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionDetails') }}
-            </ion-label>
+            </ion-text>
           </ion-item>
         </ion-item-group>
         <ion-item-group class="list-group">
@@ -78,10 +90,13 @@
             @click="onClick(WorkspaceAction.CopyLink)"
             class="ion-no-padding list-group-item"
           >
-            <ion-icon :icon="link" />
-            <ion-label class="button-large list-group-item__label-small">
+            <ion-icon
+              class="list-group-item__icon"
+              :icon="link"
+            />
+            <ion-text class="button-large list-group-item__label-small">
               {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionCopyLink') }}
-            </ion-label>
+            </ion-text>
           </ion-item>
 
           <ion-item
@@ -90,10 +105,13 @@
             @click="onClick(WorkspaceAction.Share)"
             class="ion-no-padding list-group-item"
           >
-            <ion-icon :icon="shareSocial" />
-            <ion-label class="button-large list-group-item__label-small">
+            <ion-icon
+              class="list-group-item__icon"
+              :icon="shareSocial"
+            />
+            <ion-text class="button-large list-group-item__label-small">
               {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionShare') }}
-            </ion-label>
+            </ion-text>
           </ion-item>
         </ion-item-group>
         <ion-item-group class="list-group">
@@ -102,8 +120,11 @@
             @click="onClick(WorkspaceAction.Favorite)"
             class="ion-no-padding list-group-item"
           >
-            <ion-icon :icon="star" />
-            <ion-label class="button-large list-group-item__label-small">
+            <ion-icon
+              class="list-group-item__icon"
+              :icon="star"
+            />
+            <ion-text class="button-large list-group-item__label-small">
               {{
                 $msTranslate(
                   isFavorite
@@ -111,7 +132,7 @@
                     : 'WorkspacesPage.workspaceContextMenu.actionAddFavorite',
                 )
               }}
-            </ion-label>
+            </ion-text>
           </ion-item>
         </ion-item-group>
       </ion-list>
@@ -121,7 +142,7 @@
 
 <script setup lang="ts">
 import { UserProfile, WorkspaceName, WorkspaceRole, isDesktop } from '@/parsec';
-import { IonContent, IonIcon, IonItem, IonItemGroup, IonLabel, IonList, IonPage, modalController } from '@ionic/vue';
+import { IonContent, IonIcon, IonItem, IonItemGroup, IonText, IonList, IonPage, modalController } from '@ionic/vue';
 import { cloudy, informationCircle, link, open, pencil, shareSocial, star, time } from 'ionicons/icons';
 import { WorkspaceAction } from '@/views/workspaces/types';
 

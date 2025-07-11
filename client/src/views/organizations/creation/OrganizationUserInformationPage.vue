@@ -51,10 +51,7 @@
     </div>
 
     <ion-footer class="user-information-page-footer">
-      <ion-buttons
-        slot="primary"
-        class="modal-footer-buttons"
-      >
+      <div class="modal-footer-buttons">
         <ion-button
           fill="clear"
           size="default"
@@ -85,13 +82,13 @@
             size="small"
           />
         </ion-button>
-      </ion-buttons>
+      </div>
     </ion-footer>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonButton, IonButtons, IonFooter, IonIcon, IonText } from '@ionic/vue';
+import { IonPage, IonButton, IonFooter, IonIcon, IonText } from '@ionic/vue';
 import { onMounted, ref } from 'vue';
 import { chevronForward, chevronBack } from 'ionicons/icons';
 import { MsCheckbox } from 'megashark-lib';

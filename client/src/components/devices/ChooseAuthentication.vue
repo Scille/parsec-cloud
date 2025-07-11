@@ -3,7 +3,7 @@
 <template>
   <ion-list
     class="choose-auth-page"
-    :class="{'choose-auth-page--web': isWeb()}"
+    :class="{ 'choose-auth-page--web': isWeb() }"
   >
     <ion-text
       class="body choose-auth-page__label"
@@ -14,6 +14,7 @@
     <ion-radio-group
       v-model="authentication"
       class="radio-list"
+      :class="isWeb() ? 'radio-list--web' : ''"
       @ion-change="onChange"
     >
       <ion-radio
@@ -130,6 +131,10 @@ async function areFieldsCorrect(): Promise<boolean> {
 
 .radio-list {
   gap: 1rem;
+
+  &--web {
+    display: none;
+  }
 }
 
 .choose-password {
