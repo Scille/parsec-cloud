@@ -16,9 +16,9 @@
           :icon="cog"
           slot="start"
         />
-        <ion-label class="body item-label">
+        <ion-text class="body item-label">
           {{ $msTranslate('HomePage.topbar.settings') }}
-        </ion-label>
+        </ion-text>
       </ion-item>
       <ion-item
         class="main-list__item"
@@ -28,9 +28,9 @@
           :icon="person"
           slot="start"
         />
-        <ion-label class="body item-label">
+        <ion-text class="body item-label">
           {{ $msTranslate('HomePage.topbar.account') }}
-        </ion-label>
+        </ion-text>
       </ion-item>
       <ion-item
         class="main-list__item"
@@ -40,9 +40,9 @@
           :icon="fingerPrint"
           slot="start"
         />
-        <ion-label class="body item-label">
+        <ion-text class="body item-label">
           {{ $msTranslate('HomePage.topbar.authentication') }}
-        </ion-label>
+        </ion-text>
       </ion-item>
       <ion-item
         class="main-list__item logout"
@@ -52,9 +52,9 @@
           :icon="logOut"
           slot="start"
         />
-        <ion-label class="body item-label">
+        <ion-text class="body item-label">
           {{ $msTranslate('HomePage.topbar.logout') }}
-        </ion-label>
+        </ion-text>
       </ion-item>
     </div>
     <div class="footer-list">
@@ -95,7 +95,7 @@ export enum ProfilePopoverHomepageOption {
 <script setup lang="ts">
 import { APP_VERSION } from '@/services/environment';
 import { popoverController } from '@ionic/core';
-import { IonIcon, IonItem, IonLabel, IonList, IonText } from '@ionic/vue';
+import { IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
 import { ParsecAccount } from '@/parsec/account';
 import { AccountSettingsTabs } from '@/views/account/types';
 import { navigateTo, Routes } from '@/router';

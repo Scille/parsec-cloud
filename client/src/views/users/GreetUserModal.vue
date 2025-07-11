@@ -131,21 +131,18 @@
           />
           <div class="user-info">
             <div class="user-info__email">
-              <ion-text class="body">{{ $msTranslate('UsersPage.success.email') }}</ion-text>
-              <ion-text class="cell">{{ guestInfoPage.email }}</ion-text>
+              <ion-text class="info-label body">{{ $msTranslate('UsersPage.success.email') }}</ion-text>
+              <ion-text class="info-cell cell">{{ guestInfoPage.email }}</ion-text>
             </div>
             <div class="user-info__role">
-              <ion-text class="body">{{ $msTranslate('UsersPage.success.profile') }}</ion-text>
+              <ion-text class="info-label body">{{ $msTranslate('UsersPage.success.profile') }}</ion-text>
               <tag-profile :profile="profile ? profile : UserProfile.Outsider" />
             </div>
           </div>
         </div>
       </div>
       <ion-footer class="modal-footer">
-        <ion-buttons
-          slot="primary"
-          class="modal-footer-buttons"
-        >
+        <div class="modal-footer-buttons">
           <ion-button
             fill="solid"
             size="default"
@@ -170,14 +167,14 @@
             </ion-text>
             <ms-spinner class="spinner" />
           </div>
-        </ion-buttons>
+        </div>
       </ion-footer>
     </div>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
+import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
 import SmallDisplayStepModalHeader from '@/components/header/SmallDisplayStepModalHeader.vue';
 import SmallDisplayModalHeader from '@/components/header/SmallDisplayModalHeader.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
@@ -547,10 +544,17 @@ onMounted(async () => {
       display: flex;
       align-items: center;
       gap: 1rem;
+    }
 
-      .body {
-        color: var(--parsec-color-light-secondary-grey);
-      }
+    .info-label {
+      color: var(--parsec-color-light-secondary-grey);
+      flex-shrink: 0;
+    }
+
+    .info-cell {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   }
 }

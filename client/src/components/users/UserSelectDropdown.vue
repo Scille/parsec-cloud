@@ -10,21 +10,21 @@
       :key="user.id"
       @click="onUserClick(user)"
     >
-      <ion-label class="option-text">
+      <ion-text class="option-text">
         <span class="option-text__label body">
           {{ user.humanHandle.label }}
         </span>
         <span class="option-text__description body-sm">
           {{ user.humanHandle.email }}
         </span>
-      </ion-label>
+      </ion-text>
     </ion-item>
   </ion-list>
 </template>
 
 <script setup lang="ts">
 import { UserInfo } from '@/parsec';
-import { IonList, IonItem, IonLabel, popoverController } from '@ionic/vue';
+import { IonList, IonItem, IonText, popoverController } from '@ionic/vue';
 import { MsModalResult } from 'megashark-lib';
 
 defineProps<{

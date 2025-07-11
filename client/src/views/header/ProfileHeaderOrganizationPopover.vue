@@ -31,9 +31,9 @@
           :icon="cog"
           slot="start"
         />
-        <ion-label class="body item-label">
+        <ion-text class="body item-label">
           {{ $msTranslate('HomePage.topbar.settings') }}
-        </ion-label>
+        </ion-text>
       </ion-item>
       <ion-item
         class="main-list__item"
@@ -43,9 +43,9 @@
           :icon="phonePortrait"
           slot="start"
         />
-        <ion-label class="body item-label">
+        <ion-text class="body item-label">
           {{ $msTranslate('HomePage.topbar.devices') }}
-        </ion-label>
+        </ion-text>
       </ion-item>
       <ion-item
         class="main-list__item"
@@ -55,9 +55,9 @@
           :icon="fingerPrint"
           slot="start"
         />
-        <ion-label class="body item-label">
+        <ion-text class="body item-label">
           {{ $msTranslate('HomePage.topbar.authentication') }}
-        </ion-label>
+        </ion-text>
       </ion-item>
       <ion-item
         class="main-list__item"
@@ -67,9 +67,9 @@
           :icon="idCard"
           slot="start"
         />
-        <ion-label class="body item-label">
+        <ion-text class="body item-label">
           {{ $msTranslate('HomePage.topbar.recovery') }}
-        </ion-label>
+        </ion-text>
       </ion-item>
       <ion-item
         class="main-list__item logout"
@@ -79,9 +79,9 @@
           :icon="logOut"
           slot="start"
         />
-        <ion-label class="body item-label">
+        <ion-text class="body item-label">
           {{ $msTranslate('HomePage.topbar.logout') }}
-        </ion-label>
+        </ion-text>
       </ion-item>
     </div>
     <div class="footer-list">
@@ -135,7 +135,7 @@ import TagProfile from '@/components/users/TagProfile.vue';
 import { UserProfile } from '@/parsec';
 import { UpdateAvailabilityData } from '@/services/eventDistributor';
 import { popoverController } from '@ionic/core';
-import { IonIcon, IonItem, IonLabel, IonList, IonText } from '@ionic/vue';
+import { IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
 import { cog, fingerPrint, idCard, logOut, phonePortrait } from 'ionicons/icons';
 import { ref } from 'vue';
 

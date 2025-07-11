@@ -144,7 +144,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonButtons, IonIcon, modalController, IonText } from '@ionic/vue';
+import { IonButton, IonIcon, modalController, IonText } from '@ionic/vue';
 import { arrowBack, arrowForward, caretDown, cog, informationCircle, open, personCircle } from 'ionicons/icons';
 import ProfileHeaderHomepage from '@/views/header/ProfileHeaderHomePage.vue';
 import { EventData, Events, UpdateAvailabilityData } from '@/services/eventDistributor';

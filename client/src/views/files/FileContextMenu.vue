@@ -5,9 +5,9 @@
     <ion-list class="menu-list">
       <ion-item-group class="list-group">
         <ion-item class="list-group-title button-small">
-          <ion-label class="list-group-title__label">
+          <ion-text class="list-group-title__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.titleManage') }}
-          </ion-label>
+          </ion-text>
         </ion-item>
         <ion-item
           button
@@ -15,10 +15,13 @@
           @click="onClick(FileAction.Rename)"
           class="ion-no-padding list-group-item"
         >
-          <ion-icon :icon="pencil" />
-          <ion-label class="body list-group-item__label">
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="pencil"
+          />
+          <ion-text class="body list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionRename') }}
-          </ion-label>
+          </ion-text>
         </ion-item>
         <ion-item
           button
@@ -26,10 +29,13 @@
           @click="onClick(FileAction.MoveTo)"
           class="ion-no-padding list-group-item"
         >
-          <ion-icon :icon="arrowRedo" />
-          <ion-label class="body list-group-item__label">
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="arrowRedo"
+          />
+          <ion-text class="body list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionMoveTo') }}
-          </ion-label>
+          </ion-text>
         </ion-item>
 
         <ion-item
@@ -38,10 +44,13 @@
           @click="onClick(FileAction.MakeACopy)"
           class="ion-no-padding list-group-item"
         >
-          <ion-icon :icon="copy" />
-          <ion-label class="body list-group-item__label">
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="copy"
+          />
+          <ion-text class="body list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionMakeACopy') }}
-          </ion-label>
+          </ion-text>
         </ion-item>
 
         <ion-item
@@ -50,10 +59,13 @@
           @click="onClick(FileAction.Delete)"
           class="ion-no-padding list-group-item"
         >
-          <ion-icon :icon="trashBin" />
-          <ion-label class="body list-group-item__label">
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="trashBin"
+          />
+          <ion-text class="body list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionDelete') }}
-          </ion-label>
+          </ion-text>
         </ion-item>
 
         <ion-item
@@ -62,10 +74,13 @@
           @click="onClick(FileAction.Open)"
           class="ion-no-padding list-group-item"
         >
-          <ion-icon :icon="open" />
-          <ion-label class="body list-group-item__label">
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="open"
+          />
+          <ion-text class="body list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionOpen') }}
-          </ion-label>
+          </ion-text>
         </ion-item>
 
         <ion-item
@@ -74,10 +89,13 @@
           @click="onClick(FileAction.SeeInExplorer)"
           class="ion-no-padding list-group-item"
         >
-          <ion-icon :icon="open" />
-          <ion-label class="body list-group-item__label">
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="open"
+          />
+          <ion-text class="body list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionSeeInExplorer') }}
-          </ion-label>
+          </ion-text>
         </ion-item>
 
         <ion-item
@@ -86,10 +104,13 @@
           class="ion-no-padding list-group-item"
           v-show="!multipleFiles && role !== WorkspaceRole.Reader"
         >
-          <ion-icon :icon="time" />
-          <ion-label class="body list-group-item__label">
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="time"
+          />
+          <ion-text class="body list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionHistory') }}
-          </ion-label>
+          </ion-text>
         </ion-item>
 
         <ion-item
@@ -98,10 +119,13 @@
           @click="onClick(FileAction.Download)"
           class="ion-no-padding list-group-item"
         >
-          <ion-icon :icon="download" />
-          <ion-label class="body list-group-item__label">
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="download"
+          />
+          <ion-text class="body list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionDownload') }}
-          </ion-label>
+          </ion-text>
         </ion-item>
 
         <ion-item
@@ -110,10 +134,13 @@
           @click="onClick(FileAction.ShowDetails)"
           class="ion-no-padding list-group-item"
         >
-          <ion-icon :icon="informationCircle" />
-          <ion-label class="body list-group-item__label">
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="informationCircle"
+          />
+          <ion-text class="body list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionDetails') }}
-          </ion-label>
+          </ion-text>
         </ion-item>
       </ion-item-group>
       <ion-item-group
@@ -121,9 +148,9 @@
         v-if="!multipleFiles"
       >
         <ion-item class="list-group-title button-small">
-          <ion-label class="list-group-title__label">
+          <ion-text class="list-group-title__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.titleCollaboration') }}
-          </ion-label>
+          </ion-text>
         </ion-item>
         <ion-item
           button
@@ -131,10 +158,13 @@
           @click="onClick(FileAction.CopyLink)"
           class="ion-no-padding list-group-item"
         >
-          <ion-icon :icon="link" />
-          <ion-label class="body list-group-item__label">
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="link"
+          />
+          <ion-text class="body list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionCopyLink') }}
-          </ion-label>
+          </ion-text>
         </ion-item>
       </ion-item-group>
     </ion-list>
@@ -143,7 +173,7 @@
 
 <script setup lang="ts">
 import { isDesktop, WorkspaceRole } from '@/parsec';
-import { IonContent, IonIcon, IonItem, IonItemGroup, IonLabel, IonList, popoverController } from '@ionic/vue';
+import { IonContent, IonIcon, IonItem, IonItemGroup, IonList, IonText, popoverController } from '@ionic/vue';
 import { arrowRedo, copy, download, informationCircle, link, open, pencil, time, trashBin } from 'ionicons/icons';
 import { FileAction } from '@/views/files/types';
 

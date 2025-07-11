@@ -1,7 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-buttons class="button-list">
+  <div class="button-list">
     <ion-button
       class="button-choice code"
       fill="outline"
@@ -43,11 +43,11 @@
     >
       {{ $msTranslate('SasCodeChoice.noneOfTheChoices') }}
     </ion-button>
-  </ion-buttons>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonButtons } from '@ionic/vue';
+import { IonButton } from '@ionic/vue';
 
 defineProps<{
   choices: string[];

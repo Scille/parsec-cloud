@@ -6,26 +6,43 @@
       class="option"
       @click="onOptionClick(ImportType.Files)"
     >
-      <ion-label class="body item-label">
+      <ms-image
+        :image="ImportMultipleFiles"
+        class="option__icon"
+      />
+      <ion-icon
+        class="arrow-up"
+        :icon="arrowUp"
+      />
+      <ion-text class="body item-label">
         {{ $msTranslate('FoldersPage.ImportFile.importFilesAction') }}
-      </ion-label>
+      </ion-text>
     </ion-item>
     <ion-item
       class="option"
       @click="onOptionClick(ImportType.Folder)"
     >
-      <ion-label class="body item-label">
+      <ms-image
+        :image="Folder"
+        class="option__icon"
+      />
+      <ion-icon
+        class="arrow-up"
+        :icon="arrowUp"
+      />
+      <ion-text class="body item-label">
         {{ $msTranslate('FoldersPage.ImportFile.importFolderAction') }}
-      </ion-label>
+      </ion-text>
     </ion-item>
   </ion-list>
 </template>
 
 <script setup lang="ts">
-import { MsModalResult } from 'megashark-lib';
+import { MsModalResult, MsImage, ImportMultipleFiles, Folder } from 'megashark-lib';
 import { ImportType } from '@/components/files/types';
 import { popoverController } from '@ionic/core';
-import { IonItem, IonLabel, IonList } from '@ionic/vue';
+import { IonItem, IonText, IonList, IonIcon } from '@ionic/vue';
+import { arrowUp } from 'ionicons/icons';
 
 async function onOptionClick(type: ImportType): Promise<void> {
   await popoverController.dismiss(
@@ -48,7 +65,7 @@ async function onOptionClick(type: ImportType): Promise<void> {
 // eslint-disable-next-line vue-scoped-css/no-unused-selector
 .option {
   --background-hover: none;
-  --color: var(--parsec-color-light-secondary-grey);
+  --color: var(--parsec-color-light-secondary-hard-grey);
   padding: 0.375rem 0.75rem;
   --background: none;
   border-radius: var(--parsec-radius-6);
@@ -66,6 +83,23 @@ async function onOptionClick(type: ImportType): Promise<void> {
 
   &::part(native) {
     padding: 0;
+  }
+
+  .option__icon {
+    margin-right: 0.5rem;
+    width: 1.5rem;
+  }
+
+  .arrow-up {
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: var(--parsec-radius-6);
+    bottom: 0;
+    left: 1rem;
+    padding: 1px;
+    position: absolute;
+    color: var(--parsec-color-light-primary-600);
+    background: var(--parsec-color-light-secondary-white);
   }
 
   .item-label {

@@ -222,10 +222,7 @@
         </div>
       </div>
       <ion-footer class="modal-footer">
-        <ion-buttons
-          slot="primary"
-          class="modal-footer-buttons"
-        >
+        <div class="modal-footer-buttons">
           <ion-button
             fill="solid"
             size="default"
@@ -247,7 +244,7 @@
             </ion-text>
             <ms-spinner class="spinner" />
           </div>
-        </ion-buttons>
+        </div>
       </ion-footer>
     </div>
   </ion-page>
@@ -274,7 +271,7 @@ import {
   MsSpinner,
   useWindowSize,
 } from 'megashark-lib';
-import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
+import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
 import { checkmarkCircle, close, copy, phonePortrait } from 'ionicons/icons';
 import QRCodeVue3 from 'qrcode-vue3';
 import { computed, onMounted, ref } from 'vue';

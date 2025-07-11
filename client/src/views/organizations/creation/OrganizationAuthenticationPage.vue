@@ -16,10 +16,7 @@
     />
 
     <ion-footer class="authentication-page-footer">
-      <ion-buttons
-        slot="primary"
-        class="modal-footer-buttons"
-      >
+      <div class="modal-footer-buttons">
         <ion-button
           v-show="!hideBackButton"
           fill="clear"
@@ -50,7 +47,7 @@
             size="small"
           />
         </ion-button>
-      </ion-buttons>
+      </div>
     </ion-footer>
   </ion-page>
 </template>
@@ -59,7 +56,7 @@
 import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
 import { DeviceSaveStrategy } from '@/parsec';
 import { chevronForward, chevronBack } from 'ionicons/icons';
-import { IonPage, IonButton, IonButtons, IonIcon, IonFooter } from '@ionic/vue';
+import { IonPage, IonButton, IonIcon, IonFooter } from '@ionic/vue';
 import { asyncComputed } from 'megashark-lib';
 import { ref } from 'vue';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
