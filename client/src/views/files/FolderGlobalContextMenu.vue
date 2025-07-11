@@ -11,9 +11,9 @@
           class="ion-no-padding list-group-item"
         >
           <ion-icon :icon="folderOpen" />
-          <ion-label class="body list-group-item__label">
+          <ion-text class="body list-group-item__label">
             {{ $msTranslate('FoldersPage.createFolder') }}
-          </ion-label>
+          </ion-text>
         </ion-item>
         <ion-item
           button
@@ -21,10 +21,13 @@
           @click="onClick(FolderGlobalAction.ImportFiles)"
           class="ion-no-padding list-group-item"
         >
-          <ion-icon :icon="cloudUpload" />
-          <ion-label class="body list-group-item__label">
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="cloudUpload"
+          />
+          <ion-text class="body list-group-item__label">
             {{ $msTranslate('FoldersPage.ImportFile.importFilesAction') }}
-          </ion-label>
+          </ion-text>
         </ion-item>
 
         <ion-item
@@ -33,10 +36,13 @@
           @click="onClick(FolderGlobalAction.ImportFolder)"
           class="ion-no-padding list-group-item"
         >
-          <ion-icon :icon="cloudUpload" />
-          <ion-label class="body list-group-item__label">
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="cloudUpload"
+          />
+          <ion-text class="body list-group-item__label">
             {{ $msTranslate('FoldersPage.ImportFile.importFolderAction') }}
-          </ion-label>
+          </ion-text>
         </ion-item>
 
         <ion-item
@@ -45,10 +51,13 @@
           @click="onClick(FolderGlobalAction.OpenInExplorer)"
           class="ion-no-padding list-group-item"
         >
-          <ion-icon :icon="open" />
-          <ion-label class="body list-group-item__label">
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="open"
+          />
+          <ion-text class="body list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionSeeInExplorer') }}
-          </ion-label>
+          </ion-text>
         </ion-item>
       </ion-item-group>
     </ion-list>
@@ -57,7 +66,7 @@
 
 <script setup lang="ts">
 import { WorkspaceRole, isDesktop } from '@/parsec';
-import { IonContent, IonIcon, IonItem, IonItemGroup, IonLabel, IonList, popoverController } from '@ionic/vue';
+import { IonContent, IonIcon, IonItem, IonText, IonItemGroup, IonList, popoverController } from '@ionic/vue';
 import { folderOpen, cloudUpload, open } from 'ionicons/icons';
 import { FolderGlobalAction } from '@/views/files/types';
 

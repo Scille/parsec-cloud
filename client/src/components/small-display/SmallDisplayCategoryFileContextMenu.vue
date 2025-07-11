@@ -18,9 +18,9 @@
             class="ion-no-padding list-group-item"
           >
             <ion-icon :icon="checkmarkCircle" />
-            <ion-label class="button-large list-group-item__label-small">
+            <ion-text class="button-large list-group-item__label-small">
               {{ $msTranslate('FoldersPage.fileContextMenu.actionSelectAll') }}
-            </ion-label>
+            </ion-text>
           </ion-item>
         </ion-item-group>
       </ion-list>
@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonContent, IonIcon, IonItem, IonItemGroup, IonLabel, IonList, IonPage } from '@ionic/vue';
+import { IonContent, IonIcon, IonItem, IonItemGroup, IonText, IonList, IonPage } from '@ionic/vue';
 import { FolderGlobalAction } from '@/views/files';
 import { modalController } from '@ionic/vue';
 import SmallDisplayContextMenuButtons from '@/components/small-display/SmallDisplayContextMenuButtons.vue';
