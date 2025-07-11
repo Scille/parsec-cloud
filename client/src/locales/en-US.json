@@ -241,6 +241,28 @@
             "invitationJoin": "Join",
             "subtitle": "Enjoy a cloud experience with the guarantee that your data belongs to you."
         },
+        "webAccess": {
+            "title": "You would like to access your organization from a browser?",
+            "subtitle": "If you have already joined an organization on Parsec, follow these steps to access it from your browser:",
+            "step": {
+                "button": "Show steps",
+                "one": "Launch {application} (desktop app) and {login} to your organization.",
+                "two": "From your account menu (top right), select {myDevices}, then click on {addDevice} and {copyInvitation} link.",
+                "three": "{pasteInvitation} link below and follow the instructions to access it from this browser.",
+                "application": "Parsec",
+                "login": "log in",
+                "myDevices": "My devices",
+                "addDevice": "Add New Device",
+                "copyInvitation": "Copy the invitation",
+                "pasteInvitation": "Paste the invitation"
+            },
+            "pasteLinkLabel": "Enter the invitation link",
+            "pasteLinkPlaceholder": "parsec3://example.com/Org?...",
+            "joinButton": "Add this browser",
+            "info": "Parsec securely stores your access keys in your browser. Make sure that browser storage is enabled and that it is not deleted when you close your browser ({more}).",
+            "more": "Learn more",
+            "moreLink": "https://docs.parsec.cloud/en/{version}/userguide/parsec-web.html#browser-storage"
+        },
         "lostDevice": "Lost your access?",
         "recoverDevice": "Recover my session"
     },

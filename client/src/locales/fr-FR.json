@@ -241,6 +241,28 @@
             "invitationJoin": "Rejoindre",
             "subtitle": "Profitez d'une expérience du cloud avec la garantie que vos données vous appartiennent."
         },
+        "webAccess": {
+            "title": "Vous souhaitez accéder à votre organisation depuis un navigateur ?",
+            "subtitle": "Si vous avez déjà rejoint une organisation sur Parsec, suivez ces étapes pour y accéder depuis votre navigateur :",
+            "step": {
+                "button": "Voir les étapes",
+                "one": "{application} (version ordinateur) et {login} à votre organisation.",
+                "two": "Dans le menu de votre compte (en haut à droite), sélectionnez {myDevices}, puis cliquez sur {addDevice} et {copyInvitation}.",
+                "three": "{pasteInvitation} ci-dessous et suivez les instructions pour y accéder depuis ce navigateur.",
+                "application": "Ouvrez Parsec",
+                "login": "se connecter",
+                "myDevices": "Mes appareils",
+                "addDevice": "Ajouter un nouvel appareil",
+                "copyInvitation": "copier le lien d'invitation",
+                "pasteInvitation": "Coller le lien d'invitation"
+            },
+            "pasteLinkLabel": "Coller le lien d'invitation",
+            "pasteLinkPlaceholder": "parsec3://example.com/Org?...",
+            "joinButton": "Ajouter ce navigateur",
+            "info": "Parsec stocke en toute sécurité vos clés d'accès dans votre navigateur. Assurez-vous que le stockage du navigateur est activé et qu'il n'est pas supprimé lorsque vous fermez votre navigateur ({more}).",
+            "more": "En savoir plus",
+            "moreLink": "https://docs.parsec.cloud/fr/{version}/userguide/parsec-web.html#browser-storage"
+        },
         "lostDevice": "Vous avez perdu votre accès ?",
         "recoverDevice": "Récupérer ma session"
     },
