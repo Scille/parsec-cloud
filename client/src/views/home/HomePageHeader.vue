@@ -24,7 +24,7 @@
       class="menu-secondary"
       v-if="showSecondaryMenu"
     >
-      <ion-buttons class="menu-secondary-buttons">
+      <div class="menu-secondary-buttons">
         <!-- about button -->
         <ion-button
           id="trigger-version-button"
@@ -77,7 +77,7 @@
         >
           {{ $msTranslate('HomePage.topbar.customerArea') }}
         </ion-button>
-      </ion-buttons>
+      </div>
     </div>
     <div class="topbar">
       <div class="topbar-left">
@@ -370,7 +370,6 @@ const emits = defineEmits<{
     gap: 1rem;
 
     &__item {
-      background: none;
       color: var(--parsec-color-light-secondary-hard-grey);
       transition: all 150ms linear;
       position: relative;
@@ -382,6 +381,8 @@ const emits = defineEmits<{
       &::part(native) {
         padding: 0;
         border-radius: var(--parsec-radius-8);
+        background: none;
+        --background-hover: none;
       }
 
       @include ms.responsive-breakpoint('sm') {

@@ -297,11 +297,6 @@
       overflow: auto;
       height: auto;
 
-      @media only screen and (max-height: 700px) {
-        --height: 95vh;
-        height: 95vh;
-      }
-
       @include ms.responsive-breakpoint('sm') {
         min-width: 100%;
         max-width: 100%;

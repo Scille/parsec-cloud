@@ -21,7 +21,7 @@
         </div>
         <div
           class="report-text-content"
-          :class="{ 'report-text-content--open': isOpenReportTextContainer }"
+          :class="{ 'report-text-content--open': isOnlyOwner() || (showCheckboxes && orgHasExternalUsers) }"
           v-if="isOpenReportTextContainer"
         >
           <ms-report-text

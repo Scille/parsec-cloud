@@ -32,7 +32,8 @@
           <!-- prettier-ignore -->
           <ms-image
             :image="(ResourcesManager.instance().get(Resources.LogoIcon, AppIconParsec) as string)"
-            class="icon"
+            class="image-logo"
+            :class="ResourcesManager.instance().get(Resources.LogoIcon, AppIconParsec) === Resources.LogoIcon ? 'image-logo--custom' : ''"
           />
         </div>
         <ion-text class="server-choice-item__label subtitles-normal">
@@ -187,7 +188,7 @@ function getImagePath(): string {
     &__checkmark {
       position: absolute;
       top: 0.5rem;
-      right: 3rem;
+      right: 2rem;
       color: var(--parsec-color-light-primary-600);
       font-size: 1.5rem;
       z-index: 3;
@@ -253,9 +254,14 @@ function getImagePath(): string {
           bottom 0.3s;
       }
 
-      .icon {
+      .image-logo {
         position: relative;
         z-index: 3;
+
+        &--custom {
+          max-width: 5rem;
+          height: auto;
+        }
       }
     }
 

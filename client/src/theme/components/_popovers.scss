@@ -81,6 +81,20 @@
     flex-direction: column;
     gap: 1rem;
 
+    .filter-text,
+    .status-tag {
+      width: 100%;
+    }
+
+    .filter-text {
+      color: var(--parsec-color-light-secondary-soft-text);
+    }
+
+    .filter-checkbox {
+      max-height: 1.25rem;
+      max-width: 1.25rem;
+    }
+
     &-small {
       margin-top: 1rem;
     }
@@ -165,10 +179,6 @@
         margin-right: 0.5em;
       }
     }
-  }
-
-  ion-label {
-    margin: 0;
   }
 }
 

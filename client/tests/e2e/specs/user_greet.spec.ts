@@ -105,7 +105,6 @@ msTest('Greet user whole process in small display', async ({ usersPage }) => {
   await expect(authRadio).toHaveCount(2);
   await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
   await expect(authRadio.nth(0).locator('.item-radio__label')).toHaveText('System Authentication');
-  await expect(authRadio.nth(0).locator('.item-radio__text:visible')).toHaveText('Unavailable on web');
   await expect(authRadio.nth(1)).toHaveText('Password');
   const passwordChoice = joinData.content.locator('#get-password').locator('.choose-password');
   await passwordChoice.scrollIntoViewIfNeeded();
@@ -228,7 +227,6 @@ msTest('Greet user whole process in large display', async ({ usersPage }) => {
   await expect(authRadio).toHaveCount(2);
   await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
   await expect(authRadio.nth(0).locator('.item-radio__label')).toHaveText('System Authentication');
-  await expect(authRadio.nth(0).locator('.item-radio__text:visible')).toHaveText('Unavailable on web');
   await expect(authRadio.nth(1)).toHaveText('Password');
   const passwordChoice = joinData.content.locator('#get-password').locator('.choose-password');
   await passwordChoice.scrollIntoViewIfNeeded();

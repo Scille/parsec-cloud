@@ -184,7 +184,7 @@ onMounted(() => {
   }
 
   .logo-img {
-    max-width: 10rem;
+    max-width: 7rem;
     max-height: 10rem;
     width: 100%;
     height: fit-content;
