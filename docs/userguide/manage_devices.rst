@@ -24,6 +24,7 @@ access to your computer or cannot log in for any reason.
 
    We strongly encourage you to create a :ref:`recovery file <doc_userguide_recovery_files>`.
 
+.. _userguide-add-new-device:
 
 Add a new device
 ----------------
@@ -37,11 +38,22 @@ You can add a new device from your profile page.
     :align: center
     :alt: Device invitation link
 
-3. If you send the device invitation link by mail, simply click on the link in
-   the new device to start Parsec. Otherwise start Parsec on the new device and
-   select ``Join`` in the welcome page.
-4. Paste the device invitation link and follow the instructions to perform the
-   code exchange between your devices.
+3. Send the link to your new device, either by email or by any other means.
+   Always :ref:`verify the link <userguide-verify-parsec-link>`.
+
+.. important::
+
+  If you do not trust the link, do not proceed.
+
+4. Once the verification done, on the new device, you can simply click on the link to start Parsec.
+   Otherwise, you can copy the link, start Parsec and select ``Join`` in the welcome page
+   (the application should have pre-filled the link with the clipboard content, but you can manually paste it).
+   Then you follow the instructions to perform the code exchange between your devices.
+
+.. caution::
+
+   Always keep an eye on both devices during the process and not let anyone interfere.
+   This includes notably the step of copying the link to the new device.
 
 .. image:: screens/manage_devices_add.png
     :align: center
