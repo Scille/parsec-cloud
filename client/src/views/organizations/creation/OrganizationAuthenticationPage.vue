@@ -16,10 +16,7 @@
     />
 
     <ion-footer class="authentication-page-footer">
-      <ion-buttons
-        slot="primary"
-        class="modal-footer-buttons"
-      >
+      <div class="modal-footer-buttons">
         <ion-button
           v-show="!hideBackButton"
           fill="clear"
@@ -50,7 +47,7 @@
             size="small"
           />
         </ion-button>
-      </ion-buttons>
+      </div>
     </ion-footer>
   </ion-page>
 </template>

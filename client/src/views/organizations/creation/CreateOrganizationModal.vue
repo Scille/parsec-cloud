@@ -114,7 +114,6 @@ async function onBackToServerChoice(): Promise<void> {
 
 <style lang="scss" scoped>
 .modal-content {
-  min-width: 32em;
   --height: 100%;
   height: 100%;
   overflow: auto;

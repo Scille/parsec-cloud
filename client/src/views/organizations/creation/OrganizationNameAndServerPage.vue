@@ -45,10 +45,7 @@
       </ion-text>
     </div>
     <ion-footer class="organization-name-and-server-page-footer">
-      <ion-buttons
-        slot="primary"
-        class="modal-footer-buttons"
-      >
+      <div class="modal-footer-buttons">
         <ion-button
           fill="clear"
           size="default"
@@ -78,7 +75,7 @@
             size="small"
           />
         </ion-button>
-      </ion-buttons>
+      </div>
     </ion-footer>
   </ion-page>
 </template>

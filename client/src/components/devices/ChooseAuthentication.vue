@@ -11,6 +11,7 @@
     <ion-radio-group
       v-model="authentication"
       class="radio-list"
+      :class="isWeb() ? 'radio-list--web' : ''"
       @ion-change="onChange"
     >
       <ion-radio
@@ -133,6 +134,10 @@ async function areFieldsCorrect(): Promise<boolean> {
 
 .radio-list {
   gap: 1rem;
+
+  &--web {
+    display: none;
+  }
 }
 
 .choose-password {
