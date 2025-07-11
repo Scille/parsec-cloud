@@ -1377,7 +1377,7 @@
     },
     "ReportBugModal": {
         "title": "Signaler un problème",
-        "subtitle": "Si vous avez rencontré un problème dans l'application, signalez-le afin que nous puissions enquêter.",
+        "subtitle": "Si vous avez rencontré un problème dans l'application, vous pouvez le signaler à notre équipe de développement.",
         "form": {
             "email": "Votre email",
             "description": "Description du problème",
