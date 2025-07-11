@@ -10,10 +10,13 @@
           @click="onClick(FolderGlobalAction.CreateFolder)"
           class="ion-no-padding list-group-item"
         >
-          <ion-icon :icon="folderOpen" />
-          <ion-label class="body list-group-item__label">
+          <ion-icon 
+            class="list-group-item__icon"
+            :icon="folderOpen"
+          />
+          <ion-text class="body list-group-item__label">
             {{ $msTranslate('FoldersPage.createFolder') }}
-          </ion-label>
+          </ion-text>
         </ion-item>
         <ion-item
           button

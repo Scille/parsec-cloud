@@ -61,7 +61,7 @@
             </ion-button>
           </div>
 
-          <ion-buttons class="menu-secondary-buttons">
+          <div class="menu-secondary-buttons">
             <!-- about button -->
             <ion-button
               id="trigger-version-button"
@@ -104,7 +104,7 @@
                 {{ $msTranslate('MenuPage.settings') }}
               </span>
             </ion-button>
-          </ion-buttons>
+          </div>
         </div>
       </div>
     </ion-content>
@@ -116,7 +116,7 @@ import HomePageSidebar from '@/views/home/HomePageSidebar.vue';
 import AccountLoginPage from '@/views/account/AccountLoginPage.vue';
 import { getCurrentRouteParams, getCurrentRouteQuery, navigateTo, Routes } from '@/router';
 import { chevronForward, cog, informationCircle, open } from 'ionicons/icons';
-import { IonContent, IonPage, IonButton, IonButtons, IonIcon, IonText } from '@ionic/vue';
+import { IonContent, IonPage, IonButton, IonIcon, IonText } from '@ionic/vue';
 import { ParsecAccount } from '@/parsec';
 import { onMounted, ref } from 'vue';
 import { openAboutModal } from '@/views/about';
@@ -368,7 +368,11 @@ async function goToCustomerArea(): Promise<void> {
     transition: all 150ms linear;
     position: relative;
     padding: 0 0.5rem;
-    --background-hover: none;
+
+    &::part(native) {
+      --background: transparent;
+      --background-hover: transparent;
+    }
 
     @include ms.responsive-breakpoint('sm') {
       padding: 0;

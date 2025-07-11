@@ -35,7 +35,7 @@
       class="user-name"
       v-if="isLargeDisplay"
     >
-      <ion-label class="user-name__label cell">
+      <ion-text class="user-name__label cell">
         <user-avatar-name
           :user-avatar="user.humanHandle.label"
           :user-name="user.humanHandle.label"
@@ -46,7 +46,7 @@
         >
           {{ $msTranslate('UsersPage.currentUser') }}
         </span>
-      </ion-label>
+      </ion-text>
     </div>
     <div
       class="user-mobile"
@@ -96,16 +96,16 @@
 
     <!-- user mail -->
     <div class="user-email">
-      <ion-label class="user-email__label cell">
+      <ion-text class="user-email__label cell">
         {{ user.humanHandle.email }}
-      </ion-label>
+      </ion-text>
     </div>
 
     <!-- user joined on -->
     <div class="user-join">
-      <ion-label class="user-join-label cell">
+      <ion-text class="user-join-label cell">
         {{ $msTranslate(formatTimeSince(user.createdOn, '--', 'short')) }}
-      </ion-label>
+      </ion-text>
     </div>
 
     <!-- user status -->
@@ -144,7 +144,7 @@ import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import UserStatusTag from '@/components/users/UserStatusTag.vue';
 import { UserModel } from '@/components/users/types';
-import { IonButton, IonIcon, IonItem, IonLabel, IonText } from '@ionic/vue';
+import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
 import { ellipsisHorizontal } from 'ionicons/icons';
 import { ref } from 'vue';
 
