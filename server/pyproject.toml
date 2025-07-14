@@ -40,7 +40,7 @@ sentry-sdk = "^2.30.0"
 starlette = "^0.46.2"
 structlog = "^25.4.0"
 # ASGI server
-fastapi = "^0.115.13"
+fastapi = "^0.116.1"
 uvicorn = "^0.35.0"
 jinja2 = "^3.0"
 # PostgreSQL
