@@ -118,10 +118,10 @@ async-lock = { version = "3.4.0", default-features = false }
 blake2 = { version = "0.10.6", default-features = false }
 bytes = { version = "1.10.1", default-features = false }
 chrono = { version = "0.4.41", default-features = false }
-clap = { version = "4.5.40", default-features = false }
+clap = { version = "4.5.41", default-features = false }
 console_error_panic_hook = { version = "=0.1.6", default-features = false }
 console_log = { version = "1.0.0", default-features = false }
-crc32fast = { version = "1.4.2", default-features = false }
+crc32fast = { version = "1.5.0", default-features = false }
 crypto_box = { version = "0.9.1", default-features = false }
 crypto_secretbox = { version = "0.1.1", default-features = false }
 ctrlc = { version = "3.4.7", default-features = false }
@@ -130,7 +130,7 @@ data-encoding = { version = "2.9.0", default-features = false }
 dialoguer = { version = "0.11.0", default-features = false }
 digest = { version = "0.10.7", default-features = false }
 dirs = { version = "5.0.1", default-features = false }
-ed25519-dalek = { version = "2.1.1", default-features = false }
+ed25519-dalek = { version = "2.2.0", default-features = false }
 email-address-parser = { version = "2.0.0", default-features = false }
 env_logger = { version = "0.11.8", default-features = false }
 error_set = { version = "0.8.5", default-features = false }
