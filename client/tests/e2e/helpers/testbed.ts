@@ -48,7 +48,7 @@ export async function dropTestbed(page: Page): Promise<void> {
   });
 }
 
-export async function testbedGetAccountCreationCode(page: MsPage, email: string): Promise<string | undefined> {
+export async function testbedGetAccountCreationCode(page: MsPage, email: string): Promise<string> {
   const result = await page.evaluate(async (email) => {
     return await window.libparsec.testCheckMailbox(window.TESTBED_SERVER_URL, email);
   }, email);
@@ -56,16 +56,16 @@ export async function testbedGetAccountCreationCode(page: MsPage, email: string)
     throw new Error(`Failed to retrieve code: ${result.error.tag} (${result.error.error})`);
   }
   if (result.value.length === 0) {
-    return;
+    throw new Error('No content in mail box');
   }
   const mailContent = (result.value.at(-1) as [string, any, string])[2];
   if (!mailContent) {
-    return;
+    throw new Error('Email is empty');
   }
 
-  const match = mailContent.match(/<div id="code">([A-Z0-9]{4})<\/div>/);
+  const match = mailContent.match(/<pre id="code">([A-Z0-9]{6})<\/pre>/);
   if (!match || match.length < 2) {
-    return;
+    throw new Error('Failed to match the code in the email content');
   }
   return match[1];
 }

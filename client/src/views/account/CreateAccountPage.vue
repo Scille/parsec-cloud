@@ -274,6 +274,7 @@ async function validateCode(): Promise<void> {
       } else if (result.error.tag === AccountCreateErrorTag.Offline) {
         error.value = 'loginPage.createAccount.errors.offlineOrIncorrectServer';
       } else {
+        error.value = 'loginPage.createAccount.errors.offlineOrIncorrectServer';
         window.electronAPI.log('error', `Failed to validated the code: ${result.error.tag} (${result.error.error})`);
       }
     }

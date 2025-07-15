@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { getOrganizationAddr, getServerAddr } from '@tests/e2e/helpers/utils';
+import { randomUUID } from 'crypto';
 
 export interface UserInformation {
   id: string;
@@ -59,6 +60,10 @@ export function generateDefaultOrganizationInformation(): OrganizationInformatio
     serverAddr: getServerAddr(),
     bmsId: '42',
   };
+}
+
+export function generateUniqueEmail(): string {
+  return `${randomUUID()}@host.com`;
 }
 
 export const DEFAULT_ORGANIZATION_DATA_SLICE = {
