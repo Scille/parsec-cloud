@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 mod addr;
-mod history;
 mod merge;
 mod store;
 mod transactions;
@@ -18,7 +17,6 @@ use libparsec_types::prelude::*;
 
 use crate::{certif::CertificateOps, event_bus::EventBus, ClientConfig};
 pub use addr::{WorkspaceDecryptPathAddrError, WorkspaceGeneratePathAddrError};
-pub use history::*;
 use store::WorkspaceStore;
 use transactions::RemoveEntryExpect;
 pub use transactions::{
@@ -121,7 +119,6 @@ pub struct WorkspaceOps {
     /// certificates, and hence can be updated at any time.
     workspace_external_info: Mutex<WorkspaceExternalInfo>,
     entry_watchers: Arc<Mutex<transactions::EntryWatchers>>,
-    pub history: Arc<WorkspaceHistoryOps>,
 }
 
 impl std::panic::UnwindSafe for WorkspaceOps {}
@@ -173,13 +170,6 @@ impl WorkspaceOps {
         )
         .await?;
 
-        let history = Arc::new(WorkspaceHistoryOps::new(
-            config.clone(),
-            cmds.clone(),
-            certificates_ops.clone(),
-            realm_id,
-        ));
-
         Ok(Self {
             config,
             device,
@@ -197,7 +187,6 @@ impl WorkspaceOps {
                 opened_files: HashMap::new(),
             }),
             entry_watchers: Default::default(),
-            history,
         })
     }
 

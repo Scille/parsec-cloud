@@ -17,7 +17,6 @@ mod recovery;
 mod testbed;
 mod validation;
 mod workspace;
-mod workspace_history;
 mod workspace_history2;
 
 pub use account::*;
@@ -43,7 +42,6 @@ pub use recovery::*;
 pub use testbed::*;
 pub use validation::*;
 pub use workspace::*;
-pub use workspace_history::*;
 pub use workspace_history2::*;
 
 pub mod internal {
