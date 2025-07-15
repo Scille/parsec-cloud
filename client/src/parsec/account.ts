@@ -473,6 +473,7 @@ class _ParsecAccount {
     } else {
       const result = await libparsec.accountDelete2Proceed(this.handle, code.join(''));
       if (result.ok) {
+        await libparsec.accountLogout(this.handle);
         this.handle = undefined;
       }
       return result;
