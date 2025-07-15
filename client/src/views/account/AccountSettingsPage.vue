@@ -60,8 +60,8 @@
       >
         <div class="item-header">
           <ion-text class="item-header__title title-h3">{{ $msTranslate('HomePage.profile.account.title') }}</ion-text>
-          <ion-text class="item-header__description body">{{ $msTranslate('HomePage.profile.account.description') }}</ion-text>
         </div>
+        <manage-account-page />
       </div>
       <!-- authentication tab -->
       <div
@@ -81,6 +81,7 @@
 import SettingsList from '@/components/settings/SettingsList.vue';
 import { IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
 import { AccountSettingsTabs } from '@/views/account/types';
+import ManageAccountPage from '@/views/account/ManageAccountPage.vue';
 
 defineProps<{
   activeTab: AccountSettingsTabs;
@@ -134,7 +135,6 @@ defineEmits<{
     @include ms.responsive-breakpoint('sm') {
       gap: 1rem;
       padding: 0.5rem 0;
-      background: var(--parsec-color-light-secondary-background);
       border-radius: var(--parsec-radius-12);
     }
 
@@ -193,7 +193,7 @@ defineEmits<{
     .item-header {
       display: flex;
       flex-direction: column;
-      gap: 0.25rem;
+      gap: 0.5rem;
 
       &__title {
         font-weight: 600;
