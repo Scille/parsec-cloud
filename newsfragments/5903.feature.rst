@@ -1,0 +1,1 @@
+Added custom branding options for web and desktop clients
