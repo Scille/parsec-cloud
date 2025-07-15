@@ -29,11 +29,11 @@
         </ion-button>
       </div>
     </template>
-    <template v-else>
+    <template v-if="error">
       <div class="device-not-found">
         <ion-icon :icon="warning" />
         <ion-text class="item-container__text body">
-          {{ $msTranslate('MyProfilePage.errors.failedToRetrieveInformation') }}
+          {{ $msTranslate(error) }}
         </ion-text>
       </div>
     </template>
@@ -54,6 +54,7 @@ import { Ref, inject, onMounted, ref } from 'vue';
 
 const currentDevice: Ref<AvailableDevice | null> = ref(null);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
+const error = ref('');
 
 async function openChangeAuthentication(): Promise<void> {
   const modal = await modalController.create({
@@ -71,6 +72,9 @@ async function openChangeAuthentication(): Promise<void> {
     const result = await getCurrentAvailableDevice();
     if (result.ok) {
       currentDevice.value = result.value;
+      error.value = '';
+    } else {
+      error.value = 'MyProfilePage.errors.failedToRetrieveInformation';
     }
   }
 }
@@ -86,8 +90,10 @@ onMounted(async () => {
       }),
       PresentationMode.Toast,
     );
+    error.value = 'MyProfilePage.errors.failedToRetrieveInformation';
   } else {
     currentDevice.value = deviceResult.value;
+    error.value = '';
   }
 });
 </script>
