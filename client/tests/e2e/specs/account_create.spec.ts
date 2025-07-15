@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Locator } from '@playwright/test';
-import { DEFAULT_USER_INFORMATION, expect, fillIonInput, msTest } from '@tests/e2e/helpers';
-// import { testbedGetAccountCreationCode } from '@tests/e2e/helpers/testbed';
+import { DEFAULT_USER_INFORMATION, expect, fillIonInput, generateUniqueEmail, msTest } from '@tests/e2e/helpers';
+import { testbedGetAccountCreationCode } from '@tests/e2e/helpers/testbed';
 
 msTest('Parsec account create account', async ({ parsecAccount }) => {
   async function checkVisible(containers: Array<Locator>, visibleIndex: number): Promise<void> {
@@ -14,6 +14,8 @@ msTest('Parsec account create account', async ({ parsecAccount }) => {
       }
     }
   }
+
+  const EMAIL = generateUniqueEmail();
 
   const container = parsecAccount.locator('.homepage-content');
   await expect(container.locator('.account-login__title')).toHaveText('My Parsec account');
@@ -42,61 +44,57 @@ msTest('Parsec account create account', async ({ parsecAccount }) => {
   await expect(userInfoNext).toBeTrulyDisabled();
   await fillIonInput(inputContainers.nth(2).locator('ion-input'), DEFAULT_USER_INFORMATION.lastName);
   await expect(userInfoNext).toBeTrulyDisabled();
-  await fillIonInput(inputContainers.nth(3).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
+  await fillIonInput(inputContainers.nth(3).locator('ion-input'), EMAIL);
   await expect(userInfoNext).toBeTrulyEnabled();
   await userInfoNext.click();
   await checkVisible(containers, 1);
   await expect(title).toHaveText('Validate your email');
-  // const _code = await testbedGetAccountCreationCode(parsecAccount, DEFAULT_USER_INFORMATION.email);
 
-  // const validationNext = validationContainer.locator('ion-button').nth(0);
-  // await expect(validationNext).toHaveText('Create an account');
-  // await expect(validationNext).toBeTrulyDisabled();
-  // const codeInputs = validationContainer.locator('ion-input');
+  const validationNext = validationContainer.locator('ion-button').nth(0);
+  await expect(validationNext).toHaveText('Next');
+  await expect(validationNext).toBeTrulyDisabled();
+  const codeInputs = validationContainer.locator('ion-input');
 
-  // // Try with a wrong code first
-  // for (const [index, code] of ['1', '2', '3', '4', '5', '6'].entries()) {
-  //   await fillIonInput(codeInputs.nth(index), code);
-  //   if (index < 5) {
-  //     await expect(validationNext).toBeTrulyDisabled();
-  //   }
-  // }
-  // await expect(validationNext).toBeTrulyEnabled();
-  // await validationNext.click();
+  // Try with a wrong code first
+  for (const [index, char] of ['A', 'B', 'C', 'D', 'E', 'F'].entries()) {
+    await fillIonInput(codeInputs.nth(index), char);
+    if (index < 5) {
+      await expect(validationNext).toBeTrulyDisabled();
+    }
+  }
+  await expect(validationNext).toBeTrulyEnabled();
+  await validationNext.click();
 
-  // const passwordNext = passwordContainer.locator('ion-button');
-  // await expect(passwordNext).toBeTrulyDisabled();
-  // await fillIonInput(passwordContainer.locator('ion-input').nth(0), 'BigP@ssw0rd.');
-  // await expect(passwordNext).toBeTrulyDisabled();
-  // await fillIonInput(passwordContainer.locator('ion-input').nth(1), 'BigP@ssw0rd.');
-  // await expect(passwordNext).toBeTrulyEnabled();
-  // await passwordNext.click();
-  // await checkVisible(containers, 2);
-  // await expect(title).toHaveText('Choose your authentication method');
+  await checkVisible(containers, 1);
+  await expect(validationContainer.locator('.form-error')).toBeVisible();
+  await expect(validationContainer.locator('.form-error')).toHaveText('The code is invalid.');
 
-  // await checkVisible(containers, 3);
-  // await expect(title).toHaveText('Creating your account');
-  // await expect(parsecAccount.locator('.create-account-page-header__title')).toHaveText('Creating your account');
-  // await parsecAccount.waitForTimeout(2000);
-  // await checkVisible(containers, 2);
-  // await expect(title).toHaveText('Validate your email');
+  const code = await testbedGetAccountCreationCode(parsecAccount, EMAIL);
+  // Try with a wrong code first
+  for (let i = 0; i < code.length; i++) {
+    await fillIonInput(codeInputs.nth(i), code[i]);
+  }
+  await expect(validationNext).toBeTrulyEnabled();
+  await validationNext.click();
 
-  // await expect(validationContainer.locator('.validation-email-step-footer__error')).toBeVisible();
-  // await expect(validationContainer.locator('.validation-email-step-footer__error')).toHaveText('The code is invalid.');
+  await checkVisible(containers, 2);
+  await expect(title).toHaveText('Choose your authentication method');
+  const passwordNext = passwordContainer.locator('ion-button');
+  await expect(passwordNext).toBeTrulyDisabled();
+  await fillIonInput(passwordContainer.locator('ion-input').nth(0), 'BigP@ssw0rd.');
+  await expect(passwordNext).toBeTrulyDisabled();
+  await fillIonInput(passwordContainer.locator('ion-input').nth(1), 'BigP@ssw0rd.');
+  await expect(passwordNext).toBeTrulyEnabled();
+  await passwordNext.click();
 
-  // for (const [index, code] of ['A', 'B', 'C', 'D', 'E', 'F'].entries()) {
-  //   await fillIonInput(codeInputs.nth(index), code);
-  // }
-  // await expect(validationNext).toBeTrulyEnabled();
-  // await validationNext.click();
-  // await checkVisible(containers, 3);
-  // await expect(title).toHaveText('Creating your account');
-  // await expect(parsecAccount.locator('.create-account-page-header__title')).toHaveText('Creating your account');
-  // await parsecAccount.waitForTimeout(2000);
-  // await checkVisible(containers, 4);
-  // await expect(createdContainer.locator('.created-step-welcome__name')).toHaveText('Gordon Freeman');
-  // const createdNext = createdContainer.locator('.created-step-welcome-login__button');
-  // await expect(createdNext).toHaveText('Access organizations');
-  // await createdNext.click();
-  // await expect(parsecAccount).toBeHomePage();
+  await checkVisible(containers, 3);
+  await expect(title).toHaveText('Creating your account');
+  await expect(parsecAccount.locator('.create-account-page-header__title')).toHaveText('Creating your account');
+  await parsecAccount.waitForTimeout(2000);
+  await checkVisible(containers, 4);
+  await expect(createdContainer.locator('.created-step-welcome__name')).toHaveText('Gordon Freeman');
+  const createdNext = createdContainer.locator('.created-step-welcome-login__button');
+  await expect(createdNext).toHaveText('Access organizations');
+  await createdNext.click();
+  await expect(parsecAccount).toBeHomePage();
 });
