@@ -13,7 +13,6 @@ mod fd_read;
 mod fd_write;
 mod file_operations;
 mod folder_transactions;
-mod history;
 mod inbound_sync_file;
 mod inbound_sync_folder;
 mod inbound_sync_root;

@@ -14,7 +14,6 @@ from .platform import *
 from .testbed import *
 from .validation import *
 from .workspace import *
-from .workspace_history import *
 from .workspace_history2 import *
 from .account import *
 
