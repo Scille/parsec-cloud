@@ -11,8 +11,18 @@ async fn ok(env: &TestbedEnv) {
     let client = client_factory(&env.discriminant_dir, alice).await;
 
     assert_eq!(client.list_frozen_users().await.unwrap(), vec![]);
+}
 
-    // TODO: freeze bob and check again
+#[parsec_test(testbed = "coolorg", with_server)]
+async fn ok_with_frozen(env: &TestbedEnv) {
+    env.customize(|builder| {
+        builder.freeze_user(BOB_USER_ID);
+    })
+    .await;
+    let alice = env.local_device("alice@dev1");
+    let client = client_factory(&env.discriminant_dir, alice).await;
+
+    assert_eq!(client.list_frozen_users().await.unwrap(), vec![BOB_USER_ID]);
 }
 
 #[parsec_test(testbed = "coolorg", with_server)]
