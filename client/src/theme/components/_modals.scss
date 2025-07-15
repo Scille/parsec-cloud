@@ -826,3 +826,29 @@
     overflow: hidden;
   }
 }
+
+.account-code-validation-modal {
+  &::part(content) {
+    @include ms.responsive-breakpoint('sm') {
+      min-width: 100%;
+      max-width: 100%;
+      --height: auto;
+    }
+  }
+
+  .ms-modal-footer {
+    #cancel-button::part(native) {
+      color: var(--parsec-color-light-secondary-text);
+
+      &:hover {
+        --background-hover: var(--parsec-color-light-secondary-premiere);
+        color: var(--parsec-color-light-secondary-contrast);
+      }
+    }
+
+    #next-button::part(native) {
+      background: var(--parsec-color-light-danger-500);
+      --background-hover: var(--parsec-color-light-danger-700);
+    }
+  }
+}

@@ -133,7 +133,36 @@
             },
             "account": {
                 "title": "Mon compte",
-                "description": "Gérer votre compte Parsec"
+                "description": "Gérer votre compte Parsec",
+                "personalData": {
+                    "title": "Données personnelles",
+                    "name": "Nom",
+                    "email": "Email"
+                },
+                "deleteAccount": {
+                    "title": "Supprimer mon compte",
+                    "description": "En supprimant votre compte Parsec, toutes les données associées seront également supprimées.",
+                    "button": "Supprimer mon compte",
+                    "questionModal": {
+                        "title": "Envoi d'un code de validation par mail",
+                        "description": "Pour supprimer votre compte Parsec, vous devez confirmer votre action avec un code envoyé par e-mail.",
+                        "sendCode": "Envoyer le code",
+                        "cancel": "Annuler"
+                    },
+                    "codeModal": {
+                        "title": "Entrez le code pour supprimer votre compte",
+                        "description": "Nous avons envoyé un code de vérification à l'adresse e-mail associée à votre compte.",
+                        "irreversible": "Cette action est irréversible. Une fois votre compte supprimé, vous ne pourrez plus accéder à vos données ou services associés.",
+                        "resendCode": "Renvoyer le code",
+                        "button": "Supprimer mon compte",
+                        "cancel": "Annuler"
+                    },
+                    "success": "Votre compte a été supprimé avec succès.",
+                    "error": {
+                        "delete": "Le code est incorrect ou a expiré.",
+                        "sendCode": "Échec d'envoi du code."
+                    }
+                }
             },
             "authentication": {
                 "title": "Authentification",
