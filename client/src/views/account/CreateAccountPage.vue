@@ -60,7 +60,7 @@
         >
           <div class="validation-email-step__code">
             <ms-code-validation-input
-              ref="codeValidationInputRef"
+              ref="codeValidationInput"
               :code-length="6"
               :allowed-input="AllowedInput.UpperAlphaNumeric"
               @code-complete="onCodeComplete"
@@ -108,7 +108,7 @@
         >
           <div class="authentication-step-content">
             <ms-choose-password-input
-              ref="choosePasswordRef"
+              ref="choosePassword"
               class="choose-password"
               @on-enter-keyup="createAccount"
             />
@@ -187,7 +187,7 @@ import {
   MsChoosePasswordInput,
   AllowedInput,
 } from 'megashark-lib';
-import { onUnmounted, ref } from 'vue';
+import { onUnmounted, ref, useTemplateRef } from 'vue';
 import AccountUserInformation from '@/components/account/AccountUserInformation.vue';
 import { AccountCreateErrorTag, AccountCreationStepper, ParsecAccount, ParsecAccountAccess } from '@/parsec';
 import { wait } from '@/parsec/internals';
@@ -205,11 +205,11 @@ enum Steps {
 }
 
 const step = ref<Steps>(Steps.UserInformation);
-const codeValidationInputRef = ref<typeof MsCodeValidationInput>();
+const codeValidationInputRef = useTemplateRef<InstanceType<typeof MsCodeValidationInput>>('codeValidationInput');
 const creationStepper = new AccountCreationStepper();
 const error = ref('');
 const querying = ref(false);
-const choosePasswordRef = ref<typeof MsChoosePasswordInput>();
+const choosePasswordRef = useTemplateRef<InstanceType<typeof MsChoosePasswordInput>>('choosePassword');
 const refreshKey = ref(0);
 const code = ref<Array<string>>([]);
 
@@ -316,6 +316,10 @@ async function createAccount(): Promise<void> {
   try {
     step.value = Steps.Creating;
     const start = DateTime.now().toMillis();
+    if (!creationStepper.email || !choosePasswordRef.value) {
+      error.value = 'loginPage.createAccount.errors.missingFields';
+      return;
+    }
     const access = ParsecAccountAccess.usePassword(creationStepper.email!, choosePasswordRef.value?.password);
     const result = await creationStepper.createAccount(access);
     const end = DateTime.now().toMillis();

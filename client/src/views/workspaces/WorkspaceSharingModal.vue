@@ -93,7 +93,7 @@
           </ion-text>
           <ms-dropdown
             v-show="showCheckboxes"
-            ref="dropdownRef"
+            ref="dropdown"
             class="dropdown"
             :options="options"
             :disabled="selectedUsers.length === 0"
@@ -233,7 +233,7 @@ import { getWorkspaceRoleTranslationKey } from '@/services/translation';
 import { I18n, MsReportText, MsReportTheme, useWindowSize } from 'megashark-lib';
 import { IonList, IonPage, IonText, IonIcon } from '@ionic/vue';
 import { checkmarkCircle, chevronDown } from 'ionicons/icons';
-import { Ref, onMounted, ref, computed } from 'vue';
+import { Ref, onMounted, ref, computed, useTemplateRef } from 'vue';
 import { canChangeRole } from '@/components/workspaces/utils';
 import { EventDistributor, Events } from '@/services/eventDistributor';
 
@@ -259,7 +259,7 @@ interface UserRole {
 const clientInfo: Ref<ClientInfo | null> = ref(null);
 
 const showCheckboxes = ref<boolean>(false);
-const dropdownRef = ref();
+const dropdownRef = useTemplateRef<InstanceType<typeof MsDropdown>>('dropdown');
 
 const userRoles: Ref<Array<UserRole>> = ref([]);
 
@@ -586,7 +586,7 @@ async function onBatchRoleChange(newRoleOption: MsOption): Promise<void> {
     }
   }
 
-  dropdownRef.value.setCurrentKey(0);
+  dropdownRef.value?.setCurrentKey(0);
   showCheckboxes.value = false;
   await refreshSharingInfo();
 }

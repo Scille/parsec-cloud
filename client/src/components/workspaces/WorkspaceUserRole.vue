@@ -21,7 +21,7 @@
     </div>
 
     <ms-dropdown
-      ref="dropdownRef"
+      ref="dropdown"
       class="dropdown"
       :options="options"
       :disabled="disabled"
@@ -38,7 +38,7 @@ import { TagProfile, UserAvatarName } from '@/components/users';
 import { canChangeRole } from '@/components/workspaces/utils';
 import { UserProfile, UserTuple, WorkspaceRole } from '@/parsec';
 import { getWorkspaceRoleTranslationKey } from '@/services/translation';
-import { computed, ref } from 'vue';
+import { computed, useTemplateRef } from 'vue';
 
 const props = defineProps<{
   user: UserTuple;
@@ -53,7 +53,7 @@ const emits = defineEmits<{
   (e: 'roleUpdate', user: UserTuple, oldRole: WorkspaceRole | null, newRole: WorkspaceRole | null, reject: () => void): void;
 }>();
 
-const dropdownRef = ref();
+const dropdownRef = useTemplateRef<InstanceType<typeof MsDropdown>>('dropdown');
 
 const options = computed((): MsOptions => {
   return new MsOptions(
@@ -76,7 +76,7 @@ function onRoleChanged(user: UserTuple, newRoleOption: MsOption, oldRoleOption?:
     return;
   }
   emits('roleUpdate', user, oldRoleOption ? oldRoleOption.key : null, newRoleOption.key, () => {
-    dropdownRef.value.setCurrentKey(oldRoleOption ? oldRoleOption.key : null);
+    dropdownRef.value?.setCurrentKey(oldRoleOption ? oldRoleOption.key : null);
   });
 }
 </script>

@@ -115,7 +115,7 @@
     </div>
     <ion-card class="recovery-card">
       <choose-authentication
-        ref="chooseAuthRef"
+        ref="chooseAuth"
         class="authentication-content"
         :class="isWeb() ? 'web-authentication' : ''"
       />
@@ -170,7 +170,7 @@ import {
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonCard, IonCardContent, IonCardTitle, IonIcon, IonTitle } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
-import { Ref, inject, ref } from 'vue';
+import { Ref, inject, ref, useTemplateRef } from 'vue';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { getDefaultDeviceName } from '@/common/device';
 
@@ -181,8 +181,8 @@ enum ImportDevicePageState {
 }
 
 const state = ref(ImportDevicePageState.Start);
-const chooseAuthRef = ref();
-const hiddenInput = ref();
+const chooseAuthRef = useTemplateRef<InstanceType<typeof ChooseAuthentication>>('chooseAuth');
+const hiddenInputRef = useTemplateRef<HTMLInputElement>('hiddenInput');
 const secretKey: Ref<string> = ref('');
 const recoveryFile: Ref<File | null> = ref(null);
 const isSecretKeyValid = ref(false);
@@ -207,15 +207,15 @@ const props = defineProps<{
 }>();
 
 async function onInputChange(_event: Event): Promise<void> {
-  if (hiddenInput.value.files.length === 1) {
-    recoveryFile.value = hiddenInput.value.files[0];
+  if (hiddenInputRef.value!.files!.length === 1) {
+    recoveryFile.value = hiddenInputRef.value!.files![0];
   }
-  hiddenInput.value.removeEventListener('change', onInputChange);
+  hiddenInputRef.value!.removeEventListener('change', onInputChange);
 }
 
 async function importButtonClick(): Promise<void> {
-  hiddenInput.value.addEventListener('change', onInputChange);
-  hiddenInput.value.click();
+  hiddenInputRef.value!.addEventListener('change', onInputChange);
+  hiddenInputRef.value!.click();
 }
 
 async function checkSecretKeyValidity(): Promise<void> {
@@ -230,7 +230,7 @@ async function createNewDevice(): Promise<void> {
   if (!recoveryFile.value) {
     return;
   }
-  if (!(await chooseAuthRef.value.areFieldsCorrect())) {
+  if (!(await chooseAuthRef.value!.areFieldsCorrect())) {
     return;
   }
 
@@ -247,6 +247,17 @@ async function createNewDevice(): Promise<void> {
     content.set(buffer.value, offset);
   }
 
+  if (!chooseAuthRef.value) {
+    informationManager.present(
+      new Information({
+        message: 'ImportRecoveryDevicePage.errors.internalErrorMessage',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+    state.value = ImportDevicePageState.Start;
+    return;
+  }
   const saveStrategy = chooseAuthRef.value.getSaveStrategy();
   const result = await importRecoveryDevice(
     props.device ? props.device.deviceLabel : getDefaultDeviceName(),

@@ -18,9 +18,9 @@
     <!-- :disabled="backStack.length === 0" -->
     <div
       class="navigation"
-      ref="navigationRef"
+      ref="navigation"
     >
-      <div ref="buttonsRef">
+      <div ref="buttons">
         <ion-buttons class="navigation-buttons">
           <ion-button
             fill="clear"
@@ -28,7 +28,6 @@
             class="navigation-back-button"
             :disabled="backStack.length === 0"
             :class="{ disabled: backStack.length === 0 }"
-            ref="backButtonDisabled"
           >
             <ion-icon :icon="chevronBack" />
           </ion-button>
@@ -115,7 +114,7 @@ import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBre
 import { EntryStat, FsPath, Path, StartedWorkspaceInfo, getWorkspaceInfo, statFolderChildren } from '@/parsec';
 import { IonButton, IonButtons, IonText, IonIcon, IonItem, IonLabel, IonList, modalController } from '@ionic/vue';
 import { chevronBack, chevronForward, home } from 'ionicons/icons';
-import { Ref, onMounted, onUnmounted, ref, watch } from 'vue';
+import { Ref, onMounted, onUnmounted, ref, watch, useTemplateRef } from 'vue';
 
 const props = defineProps<FolderSelectionOptions>();
 const selectedPath: Ref<FsPath> = ref(props.startingPath);
@@ -126,8 +125,8 @@ const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
 const backStack: FsPath[] = [];
 const forwardStack: FsPath[] = [];
 const breadcrumbsWidth = ref(0);
-const navigationRef = ref();
-const buttonsRef = ref();
+const navigationRef = useTemplateRef<HTMLDivElement>('navigation');
+const buttonsRef = useTemplateRef<HTMLDivElement>('buttons');
 const { windowWidth, isSmallDisplay, isLargeDisplay } = useWindowSize();
 
 const topbarWidthWatchCancel = watch([windowWidth, pathLength], () => {

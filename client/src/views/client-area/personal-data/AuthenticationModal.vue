@@ -91,7 +91,7 @@ import {
 } from 'megashark-lib';
 import { IonPage, modalController, IonText, IonIcon } from '@ionic/vue';
 import { checkmark } from 'ionicons/icons';
-import { onMounted, Ref, ref } from 'vue';
+import { onMounted, Ref, ref, useTemplateRef } from 'vue';
 import { BmsAccessInstance, BmsLang } from '@/services/bms';
 import { longLocaleCodeToShort } from '@/services/translation';
 import { emailValidator } from '@/common/validators';
@@ -111,8 +111,8 @@ const translationPrefix = 'clientArea.personalDataPage.modals.authentication';
 const newEmailRef = ref('');
 const passwordRef = ref('');
 const error = ref('');
-const newEmailInput = ref();
-const passwordInput = ref();
+const newEmailInputRef = useTemplateRef<InstanceType<typeof MsInput>>('newEmailInput');
+const passwordInputRef = useTemplateRef<InstanceType<typeof MsPasswordInput>>('passwordInput');
 const resendDisabled = ref(false);
 const resendOk = ref(false);
 const validationCode: Ref<Array<string>> = ref([]);
@@ -120,7 +120,7 @@ const querying = ref(false);
 const isInit = ref(false);
 const labels = ref({ title: '', subtitle: '', button: '' });
 const codeSent = ref(false);
-const codeValidationInput = ref();
+const codeValidationInputRef = useTemplateRef<InstanceType<typeof MsCodeValidationInput>>('codeValidationInput');
 
 const canProgress = asyncComputed(async () => {
   if (!isInit.value) {
@@ -128,7 +128,7 @@ const canProgress = asyncComputed(async () => {
   }
   switch (step.value) {
     case Steps.NewEmail:
-      return newEmailInput.value.validity === Validity.Valid;
+      return newEmailInputRef.value?.validity === Validity.Valid;
     case Steps.Password:
       return passwordRef.value.length > 0;
     case Steps.Code:
@@ -212,7 +212,7 @@ async function switchStep(newStep: Steps): Promise<void> {
   step.value = newStep;
   switch (newStep) {
     case Steps.NewEmail:
-      await newEmailInput.value.setFocus();
+      await newEmailInputRef.value?.setFocus();
       labels.value = {
         title: `${translationPrefix}.emailTitle`,
         subtitle: `${translationPrefix}.emailSubtitle`,
@@ -220,7 +220,7 @@ async function switchStep(newStep: Steps): Promise<void> {
       };
       break;
     case Steps.Password:
-      await passwordInput.value.setFocus();
+      await passwordInputRef.value?.setFocus();
       labels.value = {
         title: `${translationPrefix}.passwordTitle`,
         subtitle: '',
@@ -230,7 +230,7 @@ async function switchStep(newStep: Steps): Promise<void> {
     case Steps.Code:
       // Set focus doesn't work, no idea why,
       // keeping it anyway in case it's fixed in megashark-lib
-      await codeValidationInput.value.setFocus();
+      await codeValidationInputRef.value?.setFocus();
       labels.value = {
         title: `${translationPrefix}.validateTitle`,
         subtitle: `${translationPrefix}.validateSubtitle`,

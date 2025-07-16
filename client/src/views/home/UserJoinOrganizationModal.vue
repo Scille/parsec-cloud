@@ -229,7 +229,7 @@ import {
   useWindowSize,
 } from 'megashark-lib';
 import { close, personAdd } from 'ionicons/icons';
-import { computed, onMounted, ref, Ref } from 'vue';
+import { computed, onMounted, ref, Ref, useTemplateRef } from 'vue';
 
 enum UserJoinOrganizationStep {
   WaitForHost = 0,
@@ -242,8 +242,8 @@ enum UserJoinOrganizationStep {
 
 const { isLargeDisplay } = useWindowSize();
 const pageStep = ref(UserJoinOrganizationStep.WaitForHost);
-const userInfoPage = ref();
-const authChoice = ref();
+const userInfoPageRef = useTemplateRef<InstanceType<typeof UserInformation>>('userInfoPage');
+const authChoiceRef = useTemplateRef<InstanceType<typeof ChooseAuthentication>>('authChoice');
 const fieldsUpdated = ref(false);
 const cancelled = ref(false);
 const organizationName: Ref<OrganizationID> = ref('');
@@ -366,10 +366,10 @@ const canGoForward = asyncComputed(async () => {
   if (fieldsUpdated.value) {
     fieldsUpdated.value = false;
   }
-  if (pageStep.value === UserJoinOrganizationStep.GetUserInfo && !(await userInfoPage.value.areFieldsCorrect())) {
+  if (pageStep.value === UserJoinOrganizationStep.GetUserInfo && !(await userInfoPageRef.value?.areFieldsCorrect())) {
     return false;
   } else if (pageStep.value === UserJoinOrganizationStep.Authentication) {
-    return await authChoice.value.areFieldsCorrect();
+    return await authChoiceRef.value?.areFieldsCorrect();
   }
   return true;
 });
@@ -395,7 +395,8 @@ async function nextStep(): Promise<void> {
     return;
   }
   if (pageStep.value === UserJoinOrganizationStep.Authentication) {
-    const strategy = authChoice.value.getSaveStrategy();
+    const strategy = authChoiceRef.value?.getSaveStrategy();
+    if (!strategy) return;
     const result = await claimer.value.finalize(strategy);
     if (!result.ok) {
       // Error here is quite bad because the user has been created in the organization
@@ -413,7 +414,9 @@ async function nextStep(): Promise<void> {
   } else if (pageStep.value === UserJoinOrganizationStep.GetUserInfo) {
     waitingForHost.value = true;
     const deviceName = getDefaultDeviceName();
-    const result = await claimer.value.doClaim(deviceName, userInfoPage.value.fullName, userInfoPage.value.email);
+    const userInfo = userInfoPageRef.value;
+    if (!userInfo) return;
+    const result = await claimer.value.doClaim(deviceName, userInfo.fullName, userInfo.email);
     if (!result.ok) {
       await showErrorAndRestart('JoinOrganization.errors.sendUserInfoFailed');
       return;
@@ -428,7 +431,8 @@ async function nextStep(): Promise<void> {
       level: InformationLevel.Success,
     });
     props.informationManager.present(notification, PresentationMode.Toast | PresentationMode.Console);
-    const saveStrategy: DeviceSaveStrategy = authChoice.value.getSaveStrategy();
+    const saveStrategy: DeviceSaveStrategy | undefined = authChoiceRef.value?.getSaveStrategy();
+    if (!saveStrategy) return;
     const accessStrategy =
       saveStrategy.tag === DeviceSaveStrategyTag.Keyring
         ? AccessStrategy.useKeyring(claimer.value.device)
@@ -445,7 +449,7 @@ async function nextStep(): Promise<void> {
     if (result.ok) {
       waitingForHost.value = false;
       pageStep.value += 1;
-      userInfoPage.value.setFocus();
+      userInfoPageRef.value?.setFocus();
     } else {
       let message: Translatable = '';
       switch (result.error.tag) {
@@ -513,8 +517,8 @@ async function startProcess(): Promise<void> {
     return;
   }
 
-  if (userInfoPage.value) {
-    userInfoPage.value.email = retrieveResult.value.claimerEmail;
+  if (userInfoPageRef.value) {
+    userInfoPageRef.value.email = retrieveResult.value.claimerEmail;
   }
   const waitResult = await claimer.value.initialWaitAllAdministrators();
   if (!waitResult.ok && !cancelled.value) {

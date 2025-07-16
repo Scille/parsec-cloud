@@ -4,7 +4,7 @@
   <div>
     <ms-input
       class="account-login-content__input"
-      ref="serverInputRef"
+      ref="serverInput"
       v-model="server"
       label="loginPage.inputFields.server"
       @on-enter-keyup="submit"
@@ -27,7 +27,7 @@
     />
     <ms-input
       class="account-login-content__input"
-      ref="emailInputRef"
+      ref="emailInput"
       v-model="email"
       label="loginPage.inputFields.email"
       @on-enter-keyup="submit()"
@@ -55,7 +55,7 @@
 <script setup lang="ts">
 import { Env } from '@/services/environment';
 import { IonButton } from '@ionic/vue';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, useTemplateRef } from 'vue';
 import { parsecAddrValidator, emailValidator } from '@/common/validators';
 import { MsInput, Validity, MsInformativeText, MsSpinner } from 'megashark-lib';
 import { AccountCreationStepper, AccountCreateSendValidationEmailErrorTag } from '@/parsec';
@@ -72,8 +72,8 @@ const server = ref<string>(Env.getAccountServer());
 const email = ref<string>('');
 const lastName = ref<string>('');
 const firstName = ref<string>('');
-const emailInputRef = ref<typeof MsInput>();
-const serverInputRef = ref<typeof MsInput>();
+const emailInputRef = useTemplateRef<InstanceType<typeof MsInput>>('emailInput');
+const serverInputRef = useTemplateRef<InstanceType<typeof MsInput>>('serverInput');
 const querying = ref(false);
 const error = ref<string>('');
 
@@ -81,12 +81,12 @@ const validInfo = computed(() => {
   return Boolean(
     email.value.length > 0 &&
       emailInputRef.value !== undefined &&
-      emailInputRef.value.validity === Validity.Valid &&
+      emailInputRef.value?.validity === Validity.Valid &&
       !querying.value &&
       lastName.value.length > 0 &&
       firstName.value.length > 0 &&
       serverInputRef.value !== undefined &&
-      serverInputRef.value.validity === Validity.Valid,
+      serverInputRef.value?.validity === Validity.Valid,
   );
 });
 

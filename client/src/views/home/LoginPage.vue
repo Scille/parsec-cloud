@@ -25,7 +25,7 @@
         <div class="login-card-content__password">
           <ms-password-input
             :label="'HomePage.organizationLogin.passwordLabel'"
-            ref="passwordInputRef"
+            ref="passwordInput"
             v-model="password"
             @on-enter-keyup="onLoginClick()"
             id="password-input"
@@ -67,7 +67,7 @@ import { MsInput, MsPasswordInput, MsSpinner } from 'megashark-lib';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AccessStrategy, AvailableDevice, ClientStartError, ClientStartErrorTag, DeviceAccessStrategyPassword } from '@/parsec';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonFooter, IonTitle } from '@ionic/vue';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, useTemplateRef } from 'vue';
 
 const props = defineProps<{
   device: AvailableDevice;
@@ -79,14 +79,14 @@ const emits = defineEmits<{
   (e: 'forgottenPasswordClick', device: AvailableDevice): void;
 }>();
 
-const passwordInputRef = ref();
+const passwordInputRef = useTemplateRef<InstanceType<typeof MsPasswordInput>>('passwordInput');
 const password = ref('');
 const errorMessage = ref('');
 const passwordIsInvalid = ref(false);
 const email = props.device.humanHandle.email;
 
 onMounted(async () => {
-  await passwordInputRef.value.setFocus();
+  await passwordInputRef.value?.setFocus();
 });
 
 async function onLoginClick(): Promise<void> {

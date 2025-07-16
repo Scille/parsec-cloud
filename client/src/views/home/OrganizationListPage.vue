@@ -50,14 +50,14 @@
               @on-enter-keyup="onLinkClick"
               :validator="claimAndBootstrapLinkValidator"
               class="invitation-link__input"
-              ref="linkRef"
+              ref="linkInput"
             />
             <ion-button
               @click="onLinkClick(link)"
               size="large"
               fill="clear"
               id="join-organization-button"
-              :disabled="!linkRef || linkRef.validity !== Validity.Valid"
+              :disabled="linkInputRef?.validity !== Validity.Valid"
             >
               {{ $msTranslate('HomePage.noDevices.invitationJoin') }}
             </ion-button>
@@ -74,7 +74,7 @@
             :placeholder="'HomePage.organizationList.search'"
             v-model="searchQuery"
             id="search-input-organization"
-            ref="searchInputRef"
+            ref="searchInput"
           />
           <ms-sorter
             v-if="confLoaded"
@@ -152,7 +152,7 @@ import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/
 import { IonButton, IonIcon, IonText, IonTitle } from '@ionic/vue';
 import { addCircle } from 'ionicons/icons';
 import { DateTime } from 'luxon';
-import { computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, inject, onMounted, onUnmounted, ref, watch, useTemplateRef } from 'vue';
 
 const emits = defineEmits<{
   (e: 'organizationSelect', device: AvailableDevice): void;
@@ -185,8 +185,8 @@ const sortBy = ref(SortCriteria.Organization);
 const sortByAsc = ref(true);
 const confLoaded = ref(false);
 const searchQuery = ref('');
-const searchInputRef = ref();
-const linkRef = ref();
+const searchInputRef = useTemplateRef<InstanceType<typeof MsSearchInput>>('searchInput');
+const linkInputRef = useTemplateRef<InstanceType<typeof MsInput>>('linkInput');
 const link = ref('');
 const loggedInDevices = ref<Array<LoggedInDeviceInfo>>([]);
 

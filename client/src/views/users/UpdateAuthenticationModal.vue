@@ -55,7 +55,7 @@
           class="step"
         >
           <choose-authentication
-            ref="chooseAuthRef"
+            ref="chooseAuth"
             :disable-keyring="currentDevice.ty.tag === AvailableDeviceTypeTag.Keyring"
           />
         </div>
@@ -101,7 +101,7 @@ import { Information, InformationLevel, InformationManager, PresentationMode } f
 import { Translatable, useWindowSize } from 'megashark-lib';
 import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonTitle, modalController } from '@ionic/vue';
 import { close } from 'ionicons/icons';
-import { Ref, onMounted, ref } from 'vue';
+import { Ref, onMounted, ref, useTemplateRef } from 'vue';
 import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
 import SmallDisplayModalHeader from '@/components/header/SmallDisplayModalHeader.vue';
 import { DeviceAccessStrategyKeyring } from '@/plugins/libparsec';
@@ -119,15 +119,15 @@ const props = defineProps<{
 
 const { isLargeDisplay } = useWindowSize();
 const pageStep = ref(ChangeAuthenticationStep.Undefined);
-const chooseAuthRef = ref();
+const chooseAuthRef = useTemplateRef<InstanceType<typeof ChooseAuthentication>>('chooseAuth');
 const currentPassword = ref('');
 const errorMessage: Ref<Translatable> = ref('');
 const passwordIsInvalid = ref(false);
-const currentPasswordInput = ref();
+const currentPasswordInputRef = useTemplateRef<InstanceType<typeof MsPasswordInput>>('currentPasswordInput');
 const querying = ref(false);
 
 onMounted(async () => {
-  await currentPasswordInput.value.setFocus();
+  await currentPasswordInputRef.value?.setFocus();
   if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.Password) {
     pageStep.value = ChangeAuthenticationStep.InputCurrentPassword;
   } else {
@@ -159,7 +159,7 @@ async function nextStep(): Promise<void> {
 const canGoForward = asyncComputed(async () => {
   if (pageStep.value === ChangeAuthenticationStep.InputCurrentPassword && currentPassword.value.length > 0) {
     return true;
-  } else if (pageStep.value === ChangeAuthenticationStep.ChooseNewAuthMethod) {
+  } else if (pageStep.value === ChangeAuthenticationStep.ChooseNewAuthMethod && chooseAuthRef.value) {
     return await chooseAuthRef.value.areFieldsCorrect();
   }
   return false;
@@ -181,7 +181,12 @@ async function changeAuthentication(): Promise<void> {
     };
   }
 
-  const result = await updateDeviceChangeAuthentication(accessStrategy, chooseAuthRef.value.getSaveStrategy());
+  const saveStrategy = chooseAuthRef.value?.getSaveStrategy();
+  if (!saveStrategy) {
+    return;
+  }
+
+  const result = await updateDeviceChangeAuthentication(accessStrategy, saveStrategy);
 
   if (result.ok) {
     props.informationManager.present(

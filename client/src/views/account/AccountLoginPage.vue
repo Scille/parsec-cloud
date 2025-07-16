@@ -8,7 +8,7 @@
         <div class="account-login-content-list">
           <ms-input
             class="account-login-content__input"
-            ref="serverInputRef"
+            ref="serverInput"
             v-model="server"
             label="loginPage.inputFields.server"
             @on-enter-keyup="onLoginClicked()"
@@ -17,7 +17,7 @@
           <!-- email -->
           <ms-input
             class="account-login-content__input"
-            ref="emailInputRef"
+            ref="emailInput"
             v-model="email"
             label="loginPage.inputFields.email"
             @on-enter-keyup="onLoginClicked()"
@@ -27,7 +27,7 @@
           <div class="input-password">
             <ms-password-input
               class="account-login-content__input"
-              ref="passwordInputRef"
+              ref="passwordInput"
               v-model="password"
               label="loginPage.inputFields.password"
               @on-enter-keyup="onLoginClicked()"
@@ -71,7 +71,7 @@ import { IonButton, IonText, IonIcon } from '@ionic/vue';
 import { MsInput, MsPasswordInput, Translatable, Validity, MsSpinner } from 'megashark-lib';
 import { emailValidator, parsecAddrValidator } from '@/common/validators';
 import { warning } from 'ionicons/icons';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, useTemplateRef } from 'vue';
 import { Env } from '@/services/environment';
 import { AccountHandle, ParsecAccount, ParsecAccountAccess } from '@/parsec';
 
@@ -86,20 +86,20 @@ const emits = defineEmits<{
 const email = ref<string>('');
 const password = ref<string>('');
 const server = ref<string>(Env.getAccountServer());
-const emailInputRef = ref();
-const passwordInputRef = ref();
-const serverInputRef = ref();
+const emailInputRef = useTemplateRef<InstanceType<typeof MsInput>>('emailInput');
+const passwordInputRef = useTemplateRef<InstanceType<typeof MsPasswordInput>>('passwordInput');
+const serverInputRef = useTemplateRef<InstanceType<typeof MsInput>>('serverInput');
 const querying = ref(false);
 const loginError = ref<Translatable>('');
 
 const validInfo = computed(() => {
   return Boolean(
     email.value.length > 0 &&
-      emailInputRef.value !== undefined &&
+      emailInputRef.value &&
       emailInputRef.value.validity === Validity.Valid &&
       !querying.value &&
       password.value.length > 0 &&
-      serverInputRef.value !== undefined &&
+      serverInputRef.value &&
       serverInputRef.value.validity === Validity.Valid,
   );
 });
@@ -108,12 +108,12 @@ onMounted(async () => {
   querying.value = false;
 
   if (email.value.length > 0) {
-    await emailInputRef.value.validate(email.value);
-    await passwordInputRef.value.setFocus();
+    await emailInputRef.value?.validate(email.value);
+    await passwordInputRef.value?.setFocus();
   } else {
-    await emailInputRef.value.setFocus();
+    await emailInputRef.value?.setFocus();
   }
-  await serverInputRef.value.validate(server.value);
+  await serverInputRef.value?.validate(server.value);
 });
 
 async function onLoginClicked(): Promise<void> {

@@ -59,7 +59,7 @@
 
 <script setup lang="ts">
 import { MsSpinner, I18n, Translatable, MsReportText, MsReportTheme } from 'megashark-lib';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 import XLSX from 'xlsx';
 import {
   FileControls,
@@ -85,12 +85,11 @@ const loading = ref(true);
 const error = ref('');
 let documentWorker: Worker;
 let pageWorker: Worker;
-const zoomControl = ref();
 const zoomLevel = ref(1);
 const rows = ref<Array<any>>([]);
 const columns = ref<Array<{ prop: string; name: string }>>([]);
 const loadingLabel = ref<Translatable>('');
-const gridContainer = ref();
+const gridContainerRef = useTemplateRef<HTMLDivElement>('gridContainer');
 const dropdownItems = ref<FileControlsDropdownItemContent[]>([]);
 
 onMounted(async () => {
@@ -176,8 +175,8 @@ function onZoomLevelChange(value: number): void {
 }
 
 async function toggleFullScreen(): Promise<void> {
-  if (gridContainer.value) {
-    await gridContainer.value.requestFullscreen();
+  if (gridContainerRef.value) {
+    await gridContainerRef.value.requestFullscreen();
   }
 }
 </script>

@@ -5,7 +5,7 @@
     <!-- email -->
     <ms-input
       class="saas-forgot-password-content__input"
-      ref="emailInputRef"
+      ref="emailInput"
       v-model="email"
       @keyup="error = ''"
       @on-enter-keyup="submit"
@@ -51,7 +51,7 @@ import { IonButton, IonText, IonIcon } from '@ionic/vue';
 import { MsInput, Translatable, Validity, MsSpinner, I18n } from 'megashark-lib';
 import { emailValidator } from '@/common/validators';
 import { warning, arrowBack } from 'ionicons/icons';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, useTemplateRef } from 'vue';
 import { BmsApi, BmsLang } from '@/services/bms';
 import { longLocaleCodeToShort } from '@/services/translation';
 
@@ -62,7 +62,7 @@ const emits = defineEmits<{
 }>();
 
 const email = ref<string>('');
-const emailInputRef = ref();
+const emailInputRef = useTemplateRef<InstanceType<typeof MsInput>>('emailInput');
 const querying = ref(false);
 const error = ref<Translatable>('');
 

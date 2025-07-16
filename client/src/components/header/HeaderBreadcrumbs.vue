@@ -16,7 +16,7 @@
         :path="path"
         class="breadcrumb-element breadcrumb-normal"
         :key="path.id"
-        ref="breadcrumbRef"
+        ref="breadcrumb"
       >
         <ion-icon
           class="main-icon"
@@ -56,7 +56,7 @@
       >
         {{ '/' }}
       </ion-text>
-      <div ref="smallDisplayButtonRef">
+      <div>
         <ion-button
           v-if="pathNodes.length > 1"
           @click="openPopover"
@@ -91,7 +91,7 @@ export interface RouterPathNode {
 import { Query, Routes } from '@/router';
 import { Translatable, useWindowSize } from 'megashark-lib';
 import { IonBreadcrumb, IonBreadcrumbs, IonButton, IonIcon, IonText, popoverController } from '@ionic/vue';
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { onMounted, onUnmounted, ref, watch, useTemplateRef } from 'vue';
 import HeaderBreadcrumbPopover from '@/components/header/HeaderBreadcrumbPopover.vue';
 import { caretDown } from 'ionicons/icons';
 
@@ -114,8 +114,7 @@ const props = withDefaults(
 );
 
 const { windowWidth, isLargeDisplay, isSmallDisplay } = useWindowSize();
-const breadcrumbRef = ref();
-const smallDisplayButtonRef = ref();
+const breadcrumbRef = useTemplateRef<HTMLIonBreadcrumbElement>('breadcrumb');
 const breadcrumbWidthProperty = ref('');
 let ignoreNextEvent = false;
 

@@ -70,11 +70,11 @@ import { MsChoosePasswordInput } from 'megashark-lib';
 import KeyringInformation from '@/components/devices/KeyringInformation.vue';
 import { DeviceSaveStrategy, DeviceSaveStrategyTag, SaveStrategy, isDesktop, isKeyringAvailable, isWeb } from '@/parsec';
 import { IonList, IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, useTemplateRef } from 'vue';
 
 const authentication = ref(DeviceSaveStrategyTag.Keyring);
 const keyringAvailable = ref(false);
-const choosePassword = ref();
+const choosePasswordRef = useTemplateRef<InstanceType<typeof MsChoosePasswordInput>>('choosePassword');
 
 const props = defineProps<{
   showTitle?: boolean;
@@ -100,8 +100,8 @@ onMounted(async () => {
 });
 
 async function onChange(_value: any): Promise<void> {
-  if (authentication.value === DeviceSaveStrategyTag.Password && choosePassword.value) {
-    await choosePassword.value.setFocus();
+  if (authentication.value === DeviceSaveStrategyTag.Password && choosePasswordRef.value) {
+    await choosePasswordRef.value.setFocus();
   }
 }
 
@@ -109,14 +109,14 @@ function getSaveStrategy(): DeviceSaveStrategy {
   if (authentication.value === DeviceSaveStrategyTag.Keyring) {
     return SaveStrategy.useKeyring();
   }
-  return SaveStrategy.usePassword(choosePassword.value.password);
+  return SaveStrategy.usePassword(choosePasswordRef.value?.password || '');
 }
 
 async function areFieldsCorrect(): Promise<boolean> {
   if (keyringAvailable.value && authentication.value === DeviceSaveStrategyTag.Keyring) {
     return true;
-  } else if (authentication.value === DeviceSaveStrategyTag.Password && choosePassword.value) {
-    return await choosePassword.value.areFieldsCorrect();
+  } else if (authentication.value === DeviceSaveStrategyTag.Password && choosePasswordRef.value) {
+    return await choosePasswordRef.value.areFieldsCorrect();
   }
   return false;
 }

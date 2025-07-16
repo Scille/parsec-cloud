@@ -13,7 +13,6 @@
     @dblclick="$emit('click', $event, entry)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
-    ref="itemRef"
   >
     <div class="file-selected">
       <!-- eslint-disable vue/no-mutating-props -->
@@ -85,7 +84,6 @@ defineExpose({
 });
 
 const currentPath: Ref<FsPath> = ref('/');
-const itemRef = ref();
 
 onMounted(async () => {
   if (props.entry.isFile()) {

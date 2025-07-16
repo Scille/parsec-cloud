@@ -45,7 +45,7 @@
       </ion-button>
       <input
         type="file"
-        ref="inputRef"
+        ref="input"
         hidden
         @change="onInputChange"
       />
@@ -56,7 +56,7 @@
 <script setup lang="ts">
 import { IonButton, IonIcon, IonText } from '@ionic/vue';
 import { documentOutline } from 'ionicons/icons';
-import { ref } from 'vue';
+import { ref, useTemplateRef } from 'vue';
 import { formatFileSize } from '@/common/file';
 
 const MAX_FILE_SIZE = 3 * 1024 * 1024;
@@ -75,7 +75,7 @@ defineExpose({
 });
 
 const files = ref<Array<File>>([]);
-const inputRef = ref<HTMLInputElement>();
+const inputRef = useTemplateRef<HTMLInputElement>('input');
 
 async function addFile(): Promise<void> {
   if (files.value.length >= props.limit || !inputRef.value) {

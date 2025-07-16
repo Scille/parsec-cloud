@@ -18,7 +18,7 @@
     <div class="report-bug-modal-container">
       <ms-input
         label="ReportBugModal.form.email"
-        ref="emailInputRef"
+        ref="emailInput"
         v-model="email"
         :validator="emailValidator"
       />
@@ -33,7 +33,7 @@
         >
           {{ $msTranslate('ReportBugModal.form.joinFile') }}
         </ion-text>
-        <file-input-list ref="listInputRef" />
+        <file-input-list ref="listInput" />
       </div>
     </div>
 
@@ -69,7 +69,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, useTemplateRef } from 'vue';
 import { MsModal, MsInput, MsTextarea, Validity, MsModalResult, MsReportTheme, MsReportText } from 'megashark-lib';
 import { isWeb, ParsecAccount } from '@/parsec';
 import { FileInputList } from '@/components/files';
@@ -79,11 +79,11 @@ import { openLogDisplayModal } from '@/components/misc';
 import { modalController, IonToggle, IonButton, IonText } from '@ionic/vue';
 import { formatLogEntry, LogEntry, WebLogger } from '@/services/webLogger';
 
-const emailInputRef = ref<typeof MsInput>();
+const emailInputRef = useTemplateRef<InstanceType<typeof MsInput>>('emailInput');
 const email = ref('');
 const description = ref('');
 const includeLogs = ref(false);
-const listInputRef = ref<typeof FileInputList>();
+const listInputRef = useTemplateRef<InstanceType<typeof FileInputList>>('listInput');
 const sendingReport = ref(false);
 const sendError = ref('');
 const logs = ref<Array<LogEntry>>([]);

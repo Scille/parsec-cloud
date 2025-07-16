@@ -9,7 +9,7 @@
     />
 
     <user-information
-      ref="userInformationRef"
+      ref="userInformation"
       :default-email="email"
       :default-name="name"
       :email-enabled="email === undefined"
@@ -89,7 +89,7 @@
 
 <script setup lang="ts">
 import { IonPage, IonButton, IonFooter, IonIcon, IonText } from '@ionic/vue';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, useTemplateRef } from 'vue';
 import { chevronForward, chevronBack } from 'ionicons/icons';
 import { MsCheckbox } from 'megashark-lib';
 import UserInformation from '@/components/users/UserInformation.vue';
@@ -108,7 +108,7 @@ const emits = defineEmits<{
   (e: 'goBackRequested'): void;
 }>();
 
-const userInformationRef = ref();
+const userInformationRef = useTemplateRef<InstanceType<typeof UserInformation>>('userInformation');
 const valid = ref(false);
 const tosAccepted = ref(false);
 

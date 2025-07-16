@@ -47,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { onMounted, onUnmounted, ref, watch, useTemplateRef } from 'vue';
 import { cog, infinite, musicalNotes, timer } from 'ionicons/icons';
 import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo, PlaybackSpeed, PlaybackSpeeds } from '@/views/viewers/utils';
@@ -68,7 +68,7 @@ const props = defineProps<{
 }>();
 
 const src = ref('');
-const audioElement = ref<HTMLAudioElement>();
+const audioElementRef = useTemplateRef<HTMLAudioElement>('audioElement');
 const length = ref(0);
 const ended = ref(false);
 const muted = ref(false);
@@ -82,9 +82,9 @@ const loading = ref(true);
 const cancelFluxProgressWatch = watch(
   () => fluxProgress.value,
   () => {
-    if (audioElement.value) {
-      audioElement.value.currentTime = fluxProgress.value.progress / 100;
-      if (audioElement.value.paused !== fluxProgress.value.paused) {
+    if (audioElementRef.value) {
+      audioElementRef.value.currentTime = fluxProgress.value.progress / 100;
+      if (audioElementRef.value.paused !== fluxProgress.value.paused) {
         togglePlayback();
       }
     }
@@ -94,8 +94,8 @@ const cancelFluxProgressWatch = watch(
 const cancelVolumeWatch = watch(
   () => volume.value,
   () => {
-    if (audioElement.value) {
-      audioElement.value.volume = volume.value / 100;
+    if (audioElementRef.value) {
+      audioElementRef.value.volume = volume.value / 100;
     }
   },
 );
@@ -142,20 +142,20 @@ async function onError(): Promise<void> {
 }
 
 function onTimeUpdate(): void {
-  if (!fluxProgress.value.paused && audioElement.value?.currentTime !== undefined) {
-    fluxProgress.value.progress = Math.floor(audioElement.value?.currentTime * 100);
+  if (!fluxProgress.value.paused && audioElementRef.value?.currentTime !== undefined) {
+    fluxProgress.value.progress = Math.floor(audioElementRef.value?.currentTime * 100);
   }
 }
 
 function togglePlayback(): void {
-  if (audioElement.value) {
-    audioElement.value.paused ? audioElement.value.play() : audioElement.value.pause();
+  if (audioElementRef.value) {
+    audioElementRef.value.paused ? audioElementRef.value.play() : audioElementRef.value.pause();
   }
 }
 
 async function changePlaybackSpeed(value: number): Promise<void> {
-  if (audioElement.value) {
-    audioElement.value.playbackRate = PlaybackSpeeds[value];
+  if (audioElementRef.value) {
+    audioElementRef.value.playbackRate = PlaybackSpeeds[value];
     dropdownItems.value[0].children?.forEach((item, index) => {
       item.isActive = value === index;
     });
@@ -163,9 +163,9 @@ async function changePlaybackSpeed(value: number): Promise<void> {
 }
 
 async function toggleLoop(): Promise<void> {
-  if (audioElement.value) {
+  if (audioElementRef.value) {
     loopState.value = !loopState.value;
-    audioElement.value.loop = loopState.value;
+    audioElementRef.value.loop = loopState.value;
     dropdownItems.value[1].isActive = loopState.value;
   }
 }

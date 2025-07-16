@@ -49,7 +49,7 @@
 <script setup lang="ts">
 import { Answer, MsBooleanToggle, MsModal, MsInput, MsModalResult, MsReportText, MsReportTheme } from 'megashark-lib';
 import { IonPage, modalController } from '@ionic/vue';
-import { onMounted, Ref, ref } from 'vue';
+import { onMounted, Ref, ref, useTemplateRef } from 'vue';
 import { BmsAccessInstance, BmsError } from '@/services/bms';
 
 const props = defineProps<{
@@ -62,11 +62,11 @@ const companyRef = ref(props.company);
 const jobRef = ref(props.job);
 const representCompanyRef = ref(areFieldsFilled() ? Answer.Yes : Answer.No);
 const errors: Ref<BmsError[]> = ref([]);
-const representCompanyInput = ref();
+const representCompanyInputRef = useTemplateRef<InstanceType<typeof MsBooleanToggle>>('representCompanyInput');
 const querying = ref(false);
 
 onMounted(async () => {
-  await representCompanyInput.value.setFocus();
+  await representCompanyInputRef.value?.setFocus();
 });
 
 async function submit(): Promise<boolean> {

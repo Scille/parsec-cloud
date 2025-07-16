@@ -39,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue';
+import { ref, onMounted, nextTick, useTemplateRef } from 'vue';
 import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo } from '@/views/viewers/utils';
 import { scan } from 'ionicons/icons';
@@ -52,10 +52,9 @@ const props = defineProps<{
 }>();
 
 const loading = ref(true);
-const documentContainer = ref();
-const documentContent = ref<HTMLDivElement>();
+const documentContainerRef = useTemplateRef<HTMLDivElement>('documentContainer');
+const documentContentRef = useTemplateRef<HTMLDivElement>('documentContent');
 const pages = ref<HTMLElement[]>([]);
-const zoomControl = ref();
 const zoomLevel = ref(1);
 const currentPage = ref(1);
 const error = ref('');
@@ -63,13 +62,13 @@ const error = ref('');
 onMounted(async () => {
   try {
     loading.value = true;
-    await renderAsync(props.contentInfo.data.buffer, documentContent.value!, undefined, {
+    await renderAsync(props.contentInfo.data.buffer, documentContentRef.value!, undefined, {
       ignoreLastRenderedPageBreak: false,
       className: 'docx-page',
     });
 
     // recommended way to get all pages by the library developer
-    pages.value = Array.from(documentContent.value!.querySelectorAll('section.docx-page'));
+    pages.value = Array.from(documentContentRef.value!.querySelectorAll('section.docx-page'));
     loading.value = false;
   } catch (e: any) {
     window.electronAPI.log('error', `Failed to load docx file: ${e}`);
@@ -100,7 +99,7 @@ function onScroll(): void {
     return;
   }
 
-  const documentContainerRect = documentContainer.value.getBoundingClientRect();
+  const documentContainerRect = documentContainerRef.value!.getBoundingClientRect();
   let currentPageIndex = -1;
   // minDistance is initialized to Infinity to ensure that any distance will be less than it
   let minDistance = Infinity;
@@ -128,7 +127,7 @@ async function toggleFullScreen(): Promise<void> {
     await document.exitFullscreen();
     return;
   }
-  await documentContainer.value!.requestFullscreen();
+  await documentContainerRef.value!.requestFullscreen();
 }
 </script>
 

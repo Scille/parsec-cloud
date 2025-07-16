@@ -6,7 +6,7 @@
     :close-button="{ visible: true }"
     :confirm-button="{
       label: 'clientArea.paymentMethodsPage.addPaymentMethod.confirm',
-      disabled: !cardForm?.isValid || querying,
+      disabled: !cardFormRef?.isValid || querying,
       onClick: confirm,
       queryingSpinner: querying,
     }"
@@ -33,7 +33,7 @@
 <script setup lang="ts">
 import { MsModal, MsModalResult, MsStripeCardForm, PaymentMethodResult, I18n, Translatable } from 'megashark-lib';
 import { IonToggle, modalController } from '@ionic/vue';
-import { ref } from 'vue';
+import { ref, useTemplateRef } from 'vue';
 import { BmsAccessInstance } from '@/services/bms';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 
@@ -41,47 +41,50 @@ const props = defineProps<{
   informationManager: InformationManager;
 }>();
 
-const cardForm = ref();
+const cardFormRef = useTemplateRef<InstanceType<typeof MsStripeCardForm>>('cardForm');
 const setDefault = ref(false);
 const error = ref<Translatable | undefined>(undefined);
 const querying = ref(false);
 
 async function confirm(): Promise<boolean> {
-  querying.value = true;
-  const result: PaymentMethodResult = await cardForm.value.submit();
-  if (result.error && result.error.message) {
-    error.value = I18n.valueAsTranslatable(result.error.message);
+  try {
+    querying.value = true;
+    const result: PaymentMethodResult | undefined = await cardFormRef.value!.submit();
+    if (!result) {
+      return false;
+    }
+    if (result.error && result.error.message) {
+      error.value = I18n.valueAsTranslatable(result.error.message);
+      return false;
+    }
+    if (!result.paymentMethod) {
+      error.value = 'clientArea.paymentMethodsPage.addPaymentMethod.failed';
+      return false;
+    }
+    const card = result.paymentMethod;
+    const response = await BmsAccessInstance.get().addPaymentMethod(card.id);
+    if (response.isError) {
+      error.value = 'clientArea.paymentMethodsPage.addPaymentMethod.failed';
+      return false;
+    }
+    let setDefaultFailed = false;
+    if (setDefault.value) {
+      const defaultResponse = await BmsAccessInstance.get().setDefaultPaymentMethod(card.id);
+      setDefaultFailed = defaultResponse.isError;
+    }
+    props.informationManager.present(
+      new Information({
+        message: setDefaultFailed
+          ? 'clientArea.paymentMethodsPage.addPaymentMethod.successButSetDefaultFailed'
+          : 'clientArea.paymentMethodsPage.addPaymentMethod.success',
+        level: response.isError ? InformationLevel.Warning : InformationLevel.Success,
+      }),
+      PresentationMode.Toast,
+    );
+    return await modalController.dismiss(undefined, MsModalResult.Confirm);
+  } finally {
     querying.value = false;
-    return false;
   }
-  if (!result.paymentMethod) {
-    error.value = 'clientArea.paymentMethodsPage.addPaymentMethod.failed';
-    querying.value = false;
-    return false;
-  }
-  const card = result.paymentMethod;
-  const response = await BmsAccessInstance.get().addPaymentMethod(card.id);
-  if (response.isError) {
-    error.value = 'clientArea.paymentMethodsPage.addPaymentMethod.failed';
-    querying.value = false;
-    return false;
-  }
-  let setDefaultFailed = false;
-  if (setDefault.value) {
-    const defaultResponse = await BmsAccessInstance.get().setDefaultPaymentMethod(card.id);
-    setDefaultFailed = defaultResponse.isError;
-  }
-  props.informationManager.present(
-    new Information({
-      message: setDefaultFailed
-        ? 'clientArea.paymentMethodsPage.addPaymentMethod.successButSetDefaultFailed'
-        : 'clientArea.paymentMethodsPage.addPaymentMethod.success',
-      level: response.isError ? InformationLevel.Warning : InformationLevel.Success,
-    }),
-    PresentationMode.Toast,
-  );
-  querying.value = false;
-  return await modalController.dismiss(undefined, MsModalResult.Confirm);
 }
 </script>
 

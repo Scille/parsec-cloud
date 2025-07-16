@@ -15,7 +15,7 @@
         {{ $msTranslate(error) }}
       </ms-report-text>
       <div
-        ref="container"
+        ref="textContainer"
         v-show="!loading && !error"
         class="text-container"
       />
@@ -39,7 +39,7 @@
 
 <script setup lang="ts">
 import { MsSpinner, Translatable, MsReportText, MsReportTheme } from 'megashark-lib';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, useTemplateRef } from 'vue';
 import * as monaco from 'monaco-editor';
 import { scan } from 'ionicons/icons';
 import { FileContentInfo } from '@/views/viewers/utils';
@@ -50,9 +50,8 @@ const props = defineProps<{
   contentInfo: FileContentInfo;
 }>();
 
-const container = ref();
+const textContainerRef = useTemplateRef<HTMLDivElement>('textContainer');
 const editor = ref<monaco.editor.IStandaloneCodeEditor>();
-const zoomControl = ref();
 const zoomLevel = ref(1);
 const loading = ref(true);
 const error = ref<Translatable>('');
@@ -76,8 +75,8 @@ onMounted(async () => {
 });
 
 function createEditor(text: string): void {
-  if (container.value) {
-    editor.value = monaco.editor.create(container.value, {
+  if (textContainerRef.value) {
+    editor.value = monaco.editor.create(textContainerRef.value, {
       value: text,
       readOnly: true,
       fontSize: 16,
@@ -149,8 +148,8 @@ function updateEditorZoomLevel(): void {
 }
 
 async function toggleFullScreen(): Promise<void> {
-  if (container.value) {
-    await container.value.requestFullscreen();
+  if (textContainerRef.value) {
+    await textContainerRef.value.requestFullscreen();
   }
 }
 </script>

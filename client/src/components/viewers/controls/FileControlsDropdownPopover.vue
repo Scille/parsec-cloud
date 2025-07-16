@@ -30,7 +30,7 @@
 <script setup lang="ts">
 import { FileControlsDropdownItem, FileControlsDropdownItemContent } from '@/components/viewers';
 import { IonIcon, IonList, IonText, popoverController } from '@ionic/vue';
-import { nextTick, ref, watch } from 'vue';
+import { nextTick, ref, watch, useTemplateRef } from 'vue';
 import { chevronBack } from 'ionicons/icons';
 import { Translatable } from 'megashark-lib';
 
@@ -40,7 +40,7 @@ const props = defineProps<{
 const displayedItems = ref<FileControlsDropdownItemContent[]>(props.items);
 const parentHistory = ref<Array<{ items: FileControlsDropdownItemContent[]; name: Translatable }>>([]);
 const prevHeight = ref(0);
-const popoverElement = ref();
+const popoverElementRef = useTemplateRef<InstanceType<typeof IonList>>('popoverElement');
 
 watch(displayedItems, async () => {
   await nextTick();
@@ -80,8 +80,8 @@ async function onBackClicked(): Promise<void> {
 
 async function getOffsetY(): Promise<string> {
   let offset = 0;
-  if (popoverElement.value?.$el) {
-    offset = popoverElement.value.$el.clientHeight - prevHeight.value;
+  if (popoverElementRef.value?.$el) {
+    offset = popoverElementRef.value.$el.clientHeight - prevHeight.value;
 
     return offset > 0 ? `-${offset}px` : '0px';
   }
@@ -89,7 +89,7 @@ async function getOffsetY(): Promise<string> {
 }
 
 function saveHeight(): void {
-  prevHeight.value = popoverElement.value?.$el.clientHeight;
+  prevHeight.value = popoverElementRef.value?.$el.clientHeight;
 }
 </script>
 

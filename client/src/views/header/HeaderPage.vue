@@ -22,10 +22,10 @@
         />
         <div
           class="topbar-left"
-          ref="topbarLeftRef"
+          ref="topbarLeft"
         >
           <div
-            ref="backBlockRef"
+            ref="backBlock"
             v-if="hasHistory() && !currentRouteIs(Routes.Workspaces)"
           >
             <header-back-button :short="currentRouteIsFileRoute() ? true : false" />
@@ -165,7 +165,7 @@ import {
   modalController,
 } from '@ionic/vue';
 import { home, notifications, search } from 'ionicons/icons';
-import { Ref, inject, onMounted, onUnmounted, ref, computed, watch } from 'vue';
+import { Ref, inject, onMounted, onUnmounted, ref, computed, watch, useTemplateRef } from 'vue';
 import { EventDistributor, EventDistributorKey } from '@/services/eventDistributor';
 
 const { windowWidth, isLargeDisplay, isSmallDisplay } = useWindowSize();
@@ -178,7 +178,7 @@ const fullPath: Ref<RouterPathNode[]> = ref([]);
 const notificationPopoverIsVisible: Ref<boolean> = ref(false);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
-const notificationCenterButton = ref();
+const notificationCenterButtonRef = useTemplateRef('notificationCenterButton');
 const showHeader = computed(() => {
   if (isSmallDisplay.value && (currentRouteIs(Routes.Organization) || currentRouteIs(Routes.MyProfile))) {
     return false;
@@ -186,8 +186,8 @@ const showHeader = computed(() => {
   return true;
 });
 const breadcrumbsWidth = ref(0);
-const backBlockRef = ref();
-const topbarLeftRef = ref();
+const backBlockRef = useTemplateRef('backBlock');
+const topbarLeftRef = useTemplateRef('topbarLeft');
 
 const topbarWidthWatchCancel = watch([windowWidth, fullPath], () => {
   if (topbarLeftRef.value?.offsetWidth && backBlockRef.value?.offsetWidth) {
@@ -280,7 +280,7 @@ onMounted(async () => {
   );
   hotkeys.add(
     { key: 'n', modifiers: Modifiers.Ctrl | Modifiers.Shift, platforms: Platforms.Desktop, disableIfModal: true },
-    async () => await notificationCenterButton.value.$el.click(),
+    async () => await notificationCenterButtonRef.value?.$el.click(),
   );
 
   const result = await getClientInfo();

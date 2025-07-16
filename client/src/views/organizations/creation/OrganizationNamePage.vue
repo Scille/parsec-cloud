@@ -16,7 +16,7 @@
         id="org-name-input"
         v-model="organizationName"
         :disabled="disableOrganizationNameField"
-        ref="organizationNameInputRef"
+        ref="organizationNameInput"
         @on-enter-keyup="$emit('organizationNameChosen', organizationName)"
         :validator="organizationValidator"
       />
@@ -77,7 +77,7 @@
 <script setup lang="ts">
 import { OrganizationID } from '@/parsec';
 import { IonPage, IonButton, IonText, IonFooter, IonIcon } from '@ionic/vue';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, useTemplateRef } from 'vue';
 import { chevronBack, chevronForward } from 'ionicons/icons';
 import { organizationValidator } from '@/common/validators';
 import { Translatable, Validity, MsInput } from 'megashark-lib';
@@ -97,7 +97,7 @@ defineEmits<{
   (e: 'closeRequested'): void;
 }>();
 
-const organizationNameInputRef = ref();
+const organizationNameInputRef = useTemplateRef<InstanceType<typeof MsInput>>('organizationNameInput');
 const organizationName = ref<OrganizationID>(props.organizationName ?? '');
 
 onMounted(async () => {
