@@ -512,20 +512,23 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
       );
     }
   } else {
-    window.electronAPI.log('error', `Unhandled device authentication type ${device.ty}`);
+    window.electronAPI.log('error', `Unhandled error for device authentication type ${device.ty.tag}`);
   }
 }
 
 async function handleRegistration(device: AvailableDevice, access: DeviceAccessStrategy): Promise<void> {
   if (ParsecAccount.isLoggedIn()) {
+    // Check if the device is already among the registration devices
     const isRegResult = await ParsecAccount.isDeviceRegistered(device);
     if (isRegResult.ok && !isRegResult.value) {
+      // Ask the user if they want to create a registration device
       const answer = await askQuestion('loginPage.storeAccountTitle', 'loginPage.storeAccountQuestion', {
         yesText: 'loginPage.storeAccountYes',
       });
       if (answer === Answer.Yes) {
-        const regResult = await ParsecAccount.createRegistrationDevice(access);
-        if (regResult.ok) {
+        // Create the registration device
+        const createRegResult = await ParsecAccount.createRegistrationDevice(access);
+        if (createRegResult.ok) {
           informationManager.present(
             new Information({
               message: 'loginPage.storeSuccess',
@@ -533,8 +536,15 @@ async function handleRegistration(device: AvailableDevice, access: DeviceAccessS
             }),
             PresentationMode.Toast,
           );
+          const regResult = await ParsecAccount.registerNewDevice({ organizationId: device.organizationId, userId: device.userId });
+          if (!regResult.ok) {
+            window.electronAPI.log('error', `Failed to register new device: ${regResult.error.tag} (${regResult.error.error})`);
+          }
         } else {
-          window.electronAPI.log('error', `Failed to register the device: ${regResult.error.tag} (${regResult.error.error})`);
+          window.electronAPI.log(
+            'error',
+            `Failed to create the registration device: ${createRegResult.error.tag} (${createRegResult.error.error})`,
+          );
           informationManager.present(
             new Information({
               message: 'loginPage.storeFailed',
@@ -560,7 +570,9 @@ async function login(device: AvailableDevice, access: DeviceAccessStrategy): Pro
     };
     await storageManager.storeDevicesData(toRaw(storedDeviceDataDict.value));
 
-    await handleRegistration(device, access);
+    if (device.ty.tag !== AvailableDeviceTypeTag.AccountVault) {
+      await handleRegistration(device, access);
+    }
 
     const query = getCurrentRouteQuery();
     const routeData: RouteBackup = {
