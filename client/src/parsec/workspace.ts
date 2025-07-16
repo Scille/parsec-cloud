@@ -112,14 +112,6 @@ export async function getWorkspaceInfo(workspaceHandle: WorkspaceHandle): Promis
   const result = await libparsec.workspaceInfo(workspaceHandle);
   if (result.ok) {
     (result.value as StartedWorkspaceInfo).handle = workspaceHandle;
-    const createdResult = await libparsec.workspaceHistoryGetWorkspaceManifestV1Timestamp(workspaceHandle);
-    if (createdResult.ok && createdResult.value) {
-      try {
-        (result.value as StartedWorkspaceInfo).created = DateTime.fromSeconds(createdResult.value as any as number);
-      } catch (error: any) {
-        console.error(error);
-      }
-    }
   }
   return result as Result<StartedWorkspaceInfo, WorkspaceInfoError>;
 }
