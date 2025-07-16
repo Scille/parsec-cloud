@@ -5,26 +5,26 @@ import {
   FileDescriptor,
   FsPath,
   Result,
-  WorkspaceHistory2EntryStatTag,
-  WorkspaceHistory2FdCloseError,
-  WorkspaceHistory2FdCloseErrorTag,
-  WorkspaceHistory2FdReadError,
-  WorkspaceHistory2FdReadErrorTag,
-  WorkspaceHistory2InternalOnlyError,
-  WorkspaceHistory2InternalOnlyErrorTag,
-  WorkspaceHistory2OpenFileError,
-  WorkspaceHistory2OpenFileErrorTag,
-  WorkspaceHistory2SetTimestampOfInterestError,
-  WorkspaceHistory2SetTimestampOfInterestErrorTag,
-  WorkspaceHistory2StartError,
-  WorkspaceHistory2StatEntryError,
-  WorkspaceHistory2StatEntryErrorTag,
-  WorkspaceHistory2StatFolderChildrenError,
-  WorkspaceHistory2StatFolderChildrenErrorTag,
   WorkspaceHistoryEntryStat,
   WorkspaceHistoryEntryStatFile,
   WorkspaceHistoryEntryStatFolder,
+  WorkspaceHistoryEntryStatTag,
+  WorkspaceHistoryFdCloseError,
+  WorkspaceHistoryFdCloseErrorTag,
+  WorkspaceHistoryFdReadError,
+  WorkspaceHistoryFdReadErrorTag,
   WorkspaceHistoryHandle,
+  WorkspaceHistoryInternalOnlyError,
+  WorkspaceHistoryInternalOnlyErrorTag,
+  WorkspaceHistoryOpenFileError,
+  WorkspaceHistoryOpenFileErrorTag,
+  WorkspaceHistorySetTimestampOfInterestError,
+  WorkspaceHistorySetTimestampOfInterestErrorTag,
+  WorkspaceHistoryStartError,
+  WorkspaceHistoryStatEntryError,
+  WorkspaceHistoryStatEntryErrorTag,
+  WorkspaceHistoryStatFolderChildrenError,
+  WorkspaceHistoryStatFolderChildrenErrorTag,
   WorkspaceID,
 } from '@/parsec/types';
 import { getUserInfoFromDeviceID } from '@/parsec/user';
@@ -71,29 +71,29 @@ export class WorkspaceHistory {
     this.currentTime = DateTime.fromMillis(0);
   }
 
-  async start(currentTime?: DateTime): Promise<Result<WorkspaceHistoryHandle, WorkspaceHistory2StartError>> {
+  async start(currentTime?: DateTime): Promise<Result<WorkspaceHistoryHandle, WorkspaceHistoryStartError>> {
     if (this.handle !== undefined) {
       return { ok: true, value: this.handle };
     }
     const connectionHandle = getConnectionHandle();
     if (!connectionHandle) {
-      return generateNoHandleError<WorkspaceHistory2StartError>();
+      return generateNoHandleError<WorkspaceHistoryStartError>();
     }
-    const result = await libparsec.clientStartWorkspaceHistory2(connectionHandle, this.workspaceId);
+    const result = await libparsec.clientStartWorkspaceHistory(connectionHandle, this.workspaceId);
     if (result.ok) {
       this.handle = result.value;
-      const upperBoundResult = await libparsec.workspaceHistory2GetTimestampHigherBound(result.value);
+      const upperBoundResult = await libparsec.workspaceHistoryGetTimestampHigherBound(result.value);
       if (upperBoundResult.ok) {
         this.upperBound = DateTime.fromSeconds(upperBoundResult.value as any as number);
       }
-      const lowerBoundResult = await libparsec.workspaceHistory2GetTimestampLowerBound(result.value);
+      const lowerBoundResult = await libparsec.workspaceHistoryGetTimestampLowerBound(result.value);
       if (lowerBoundResult.ok) {
         this.lowerBound = DateTime.fromSeconds(lowerBoundResult.value as any as number);
       }
       if (currentTime) {
         await this.setCurrentTime(currentTime);
       } else {
-        const toiResult = await libparsec.workspaceHistory2GetTimestampOfInterest(result.value);
+        const toiResult = await libparsec.workspaceHistoryGetTimestampOfInterest(result.value);
         if (toiResult.ok) {
           this.currentTime = DateTime.fromSeconds(toiResult.value as any as number);
         }
@@ -102,38 +102,38 @@ export class WorkspaceHistory {
     return result;
   }
 
-  async stop(): Promise<Result<null, WorkspaceHistory2InternalOnlyError>> {
+  async stop(): Promise<Result<null, WorkspaceHistoryInternalOnlyError>> {
     if (this.handle === undefined) {
-      return { ok: false, error: { tag: WorkspaceHistory2InternalOnlyErrorTag.Internal, error: 'Not started' } };
+      return { ok: false, error: { tag: WorkspaceHistoryInternalOnlyErrorTag.Internal, error: 'Not started' } };
     }
-    const result = await libparsec.workspaceHistory2Stop(this.handle);
+    const result = await libparsec.workspaceHistoryStop(this.handle);
     this.reset();
     return result;
   }
 
-  async setCurrentTime(time: DateTime): Promise<Result<null, WorkspaceHistory2SetTimestampOfInterestError>> {
+  async setCurrentTime(time: DateTime): Promise<Result<null, WorkspaceHistorySetTimestampOfInterestError>> {
     if (this.handle === undefined) {
-      return { ok: false, error: { tag: WorkspaceHistory2SetTimestampOfInterestErrorTag.Internal, error: 'Not started' } };
+      return { ok: false, error: { tag: WorkspaceHistorySetTimestampOfInterestErrorTag.Internal, error: 'Not started' } };
     }
-    const result = await libparsec.workspaceHistory2SetTimestampOfInterest(this.handle, time.toSeconds() as any as DateTime);
+    const result = await libparsec.workspaceHistorySetTimestampOfInterest(this.handle, time.toSeconds() as any as DateTime);
     if (result.ok) {
       this.currentTime = time;
     }
     return result;
   }
 
-  async statFolderChildren(path: FsPath): Promise<Result<Array<WorkspaceHistoryEntryStat>, WorkspaceHistory2StatFolderChildrenError>> {
+  async statFolderChildren(path: FsPath): Promise<Result<Array<WorkspaceHistoryEntryStat>, WorkspaceHistoryStatFolderChildrenError>> {
     if (this.handle === undefined) {
-      return { ok: false, error: { tag: WorkspaceHistory2StatFolderChildrenErrorTag.Internal, error: 'Not started' } };
+      return { ok: false, error: { tag: WorkspaceHistoryStatFolderChildrenErrorTag.Internal, error: 'Not started' } };
     }
-    const result = await libparsec.workspaceHistory2StatFolderChildren(this.handle, path);
+    const result = await libparsec.workspaceHistoryStatFolderChildren(this.handle, path);
     if (result.ok) {
       const cooked: Array<WorkspaceHistoryEntryStat> = [];
       for (const [name, stat] of result.value) {
         const userInfoResult = await getUserInfoFromDeviceID(stat.lastUpdater);
         stat.created = DateTime.fromSeconds(stat.created as any as number);
         stat.updated = DateTime.fromSeconds(stat.updated as any as number);
-        if (stat.tag === WorkspaceHistory2EntryStatTag.File) {
+        if (stat.tag === WorkspaceHistoryEntryStatTag.File) {
           (stat as unknown as WorkspaceHistoryEntryStatFile).size = Number(stat.size);
           (stat as unknown as WorkspaceHistoryEntryStatFile).isFile = (): boolean => true;
           (stat as unknown as WorkspaceHistoryEntryStatFile).name = name;
@@ -152,16 +152,16 @@ export class WorkspaceHistory {
     return result;
   }
 
-  async entryStat(path: FsPath): Promise<Result<WorkspaceHistoryEntryStat, WorkspaceHistory2StatEntryError>> {
+  async entryStat(path: FsPath): Promise<Result<WorkspaceHistoryEntryStat, WorkspaceHistoryStatEntryError>> {
     if (this.handle === undefined) {
-      return { ok: false, error: { tag: WorkspaceHistory2StatEntryErrorTag.Internal, error: 'Not started' } };
+      return { ok: false, error: { tag: WorkspaceHistoryStatEntryErrorTag.Internal, error: 'Not started' } };
     }
 
     const fileName = (await Path.filename(path)) || '';
-    const result = await libparsec.workspaceHistory2StatEntry(this.handle, path);
+    const result = await libparsec.workspaceHistoryStatEntry(this.handle, path);
     if (result.ok) {
       const userInfoResult = await getUserInfoFromDeviceID(result.value.lastUpdater);
-      if (result.value.tag === WorkspaceHistory2EntryStatTag.File) {
+      if (result.value.tag === WorkspaceHistoryEntryStatTag.File) {
         (result.value as unknown as WorkspaceHistoryEntryStatFile).size = Number(result.value.size);
         (result.value as unknown as WorkspaceHistoryEntryStatFile).isFile = (): boolean => true;
         (result.value as unknown as WorkspaceHistoryEntryStatFile).name = fileName;
@@ -173,30 +173,30 @@ export class WorkspaceHistory {
         (result.value as unknown as WorkspaceHistoryEntryStatFolder).path = path;
         (result.value as unknown as WorkspaceHistoryEntryStatFolder).lastUpdater = userInfoResult.ok ? userInfoResult.value : undefined;
       }
-      return result as unknown as Result<WorkspaceHistoryEntryStat, WorkspaceHistory2StatEntryError>;
+      return result as unknown as Result<WorkspaceHistoryEntryStat, WorkspaceHistoryStatEntryError>;
     }
     return result;
   }
 
-  async openFile(path: FsPath): Promise<Result<FileDescriptor, WorkspaceHistory2OpenFileError>> {
+  async openFile(path: FsPath): Promise<Result<FileDescriptor, WorkspaceHistoryOpenFileError>> {
     if (this.handle === undefined) {
-      return { ok: false, error: { tag: WorkspaceHistory2OpenFileErrorTag.Internal, error: 'Not started' } };
+      return { ok: false, error: { tag: WorkspaceHistoryOpenFileErrorTag.Internal, error: 'Not started' } };
     }
-    return await libparsec.workspaceHistory2OpenFile(this.handle, path);
+    return await libparsec.workspaceHistoryOpenFile(this.handle, path);
   }
 
-  async closeFile(fd: FileDescriptor): Promise<Result<null, WorkspaceHistory2FdCloseError>> {
+  async closeFile(fd: FileDescriptor): Promise<Result<null, WorkspaceHistoryFdCloseError>> {
     if (this.handle === undefined) {
-      return { ok: false, error: { tag: WorkspaceHistory2FdCloseErrorTag.Internal, error: 'Not started' } };
+      return { ok: false, error: { tag: WorkspaceHistoryFdCloseErrorTag.Internal, error: 'Not started' } };
     }
-    return await libparsec.workspaceHistory2FdClose(this.handle, fd);
+    return await libparsec.workspaceHistoryFdClose(this.handle, fd);
   }
 
-  async readFile(fd: FileDescriptor, offset: number, size: number): Promise<Result<Uint8Array, WorkspaceHistory2FdReadError>> {
+  async readFile(fd: FileDescriptor, offset: number, size: number): Promise<Result<Uint8Array, WorkspaceHistoryFdReadError>> {
     if (this.handle === undefined) {
-      return { ok: false, error: { tag: WorkspaceHistory2FdReadErrorTag.Internal, error: 'Not started' } };
+      return { ok: false, error: { tag: WorkspaceHistoryFdReadErrorTag.Internal, error: 'Not started' } };
     }
-    return await libparsec.workspaceHistory2FdRead(this.handle, fd, BigInt(offset), BigInt(size));
+    return await libparsec.workspaceHistoryFdRead(this.handle, fd, BigInt(offset), BigInt(size));
   }
 }
 

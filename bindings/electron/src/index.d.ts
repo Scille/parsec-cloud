@@ -395,7 +395,7 @@ export interface UserInfo {
 }
 
 
-export interface WorkspaceHistory2FileStat {
+export interface WorkspaceHistoryFileStat {
     id: string
     created: number
     updated: number
@@ -3114,8 +3114,8 @@ export type WorkspaceGeneratePathAddrError =
   | WorkspaceGeneratePathAddrErrorStopped
 
 
-// WorkspaceHistory2EntryStat
-export interface WorkspaceHistory2EntryStatFile {
+// WorkspaceHistoryEntryStat
+export interface WorkspaceHistoryEntryStatFile {
     tag: "File"
     id: string
     parent: string
@@ -3125,7 +3125,7 @@ export interface WorkspaceHistory2EntryStatFile {
     size: number
     last_updater: string
 }
-export interface WorkspaceHistory2EntryStatFolder {
+export interface WorkspaceHistoryEntryStatFolder {
     tag: "Folder"
     id: string
     parent: string
@@ -3134,390 +3134,390 @@ export interface WorkspaceHistory2EntryStatFolder {
     version: number
     last_updater: string
 }
-export type WorkspaceHistory2EntryStat =
-  | WorkspaceHistory2EntryStatFile
-  | WorkspaceHistory2EntryStatFolder
+export type WorkspaceHistoryEntryStat =
+  | WorkspaceHistoryEntryStatFile
+  | WorkspaceHistoryEntryStatFolder
 
 
-// WorkspaceHistory2FdCloseError
-export interface WorkspaceHistory2FdCloseErrorBadFileDescriptor {
+// WorkspaceHistoryFdCloseError
+export interface WorkspaceHistoryFdCloseErrorBadFileDescriptor {
     tag: "BadFileDescriptor"
     error: string
 }
-export interface WorkspaceHistory2FdCloseErrorInternal {
+export interface WorkspaceHistoryFdCloseErrorInternal {
     tag: "Internal"
     error: string
 }
-export type WorkspaceHistory2FdCloseError =
-  | WorkspaceHistory2FdCloseErrorBadFileDescriptor
-  | WorkspaceHistory2FdCloseErrorInternal
+export type WorkspaceHistoryFdCloseError =
+  | WorkspaceHistoryFdCloseErrorBadFileDescriptor
+  | WorkspaceHistoryFdCloseErrorInternal
 
 
-// WorkspaceHistory2FdReadError
-export interface WorkspaceHistory2FdReadErrorBadFileDescriptor {
+// WorkspaceHistoryFdReadError
+export interface WorkspaceHistoryFdReadErrorBadFileDescriptor {
     tag: "BadFileDescriptor"
     error: string
 }
-export interface WorkspaceHistory2FdReadErrorInternal {
+export interface WorkspaceHistoryFdReadErrorInternal {
     tag: "Internal"
     error: string
 }
-export interface WorkspaceHistory2FdReadErrorInvalidBlockAccess {
+export interface WorkspaceHistoryFdReadErrorInvalidBlockAccess {
     tag: "InvalidBlockAccess"
     error: string
 }
-export interface WorkspaceHistory2FdReadErrorInvalidCertificate {
+export interface WorkspaceHistoryFdReadErrorInvalidCertificate {
     tag: "InvalidCertificate"
     error: string
 }
-export interface WorkspaceHistory2FdReadErrorInvalidKeysBundle {
+export interface WorkspaceHistoryFdReadErrorInvalidKeysBundle {
     tag: "InvalidKeysBundle"
     error: string
 }
-export interface WorkspaceHistory2FdReadErrorNoRealmAccess {
+export interface WorkspaceHistoryFdReadErrorNoRealmAccess {
     tag: "NoRealmAccess"
     error: string
 }
-export interface WorkspaceHistory2FdReadErrorOffline {
+export interface WorkspaceHistoryFdReadErrorOffline {
     tag: "Offline"
     error: string
 }
-export interface WorkspaceHistory2FdReadErrorServerBlockstoreUnavailable {
+export interface WorkspaceHistoryFdReadErrorServerBlockstoreUnavailable {
     tag: "ServerBlockstoreUnavailable"
     error: string
 }
-export interface WorkspaceHistory2FdReadErrorStopped {
+export interface WorkspaceHistoryFdReadErrorStopped {
     tag: "Stopped"
     error: string
 }
-export type WorkspaceHistory2FdReadError =
-  | WorkspaceHistory2FdReadErrorBadFileDescriptor
-  | WorkspaceHistory2FdReadErrorInternal
-  | WorkspaceHistory2FdReadErrorInvalidBlockAccess
-  | WorkspaceHistory2FdReadErrorInvalidCertificate
-  | WorkspaceHistory2FdReadErrorInvalidKeysBundle
-  | WorkspaceHistory2FdReadErrorNoRealmAccess
-  | WorkspaceHistory2FdReadErrorOffline
-  | WorkspaceHistory2FdReadErrorServerBlockstoreUnavailable
-  | WorkspaceHistory2FdReadErrorStopped
+export type WorkspaceHistoryFdReadError =
+  | WorkspaceHistoryFdReadErrorBadFileDescriptor
+  | WorkspaceHistoryFdReadErrorInternal
+  | WorkspaceHistoryFdReadErrorInvalidBlockAccess
+  | WorkspaceHistoryFdReadErrorInvalidCertificate
+  | WorkspaceHistoryFdReadErrorInvalidKeysBundle
+  | WorkspaceHistoryFdReadErrorNoRealmAccess
+  | WorkspaceHistoryFdReadErrorOffline
+  | WorkspaceHistoryFdReadErrorServerBlockstoreUnavailable
+  | WorkspaceHistoryFdReadErrorStopped
 
 
-// WorkspaceHistory2FdStatError
-export interface WorkspaceHistory2FdStatErrorBadFileDescriptor {
+// WorkspaceHistoryFdStatError
+export interface WorkspaceHistoryFdStatErrorBadFileDescriptor {
     tag: "BadFileDescriptor"
     error: string
 }
-export interface WorkspaceHistory2FdStatErrorInternal {
+export interface WorkspaceHistoryFdStatErrorInternal {
     tag: "Internal"
     error: string
 }
-export type WorkspaceHistory2FdStatError =
-  | WorkspaceHistory2FdStatErrorBadFileDescriptor
-  | WorkspaceHistory2FdStatErrorInternal
+export type WorkspaceHistoryFdStatError =
+  | WorkspaceHistoryFdStatErrorBadFileDescriptor
+  | WorkspaceHistoryFdStatErrorInternal
 
 
-// WorkspaceHistory2InternalOnlyError
-export interface WorkspaceHistory2InternalOnlyErrorInternal {
+// WorkspaceHistoryInternalOnlyError
+export interface WorkspaceHistoryInternalOnlyErrorInternal {
     tag: "Internal"
     error: string
 }
-export type WorkspaceHistory2InternalOnlyError =
-  | WorkspaceHistory2InternalOnlyErrorInternal
+export type WorkspaceHistoryInternalOnlyError =
+  | WorkspaceHistoryInternalOnlyErrorInternal
 
 
-// WorkspaceHistory2OpenFileError
-export interface WorkspaceHistory2OpenFileErrorEntryNotAFile {
+// WorkspaceHistoryOpenFileError
+export interface WorkspaceHistoryOpenFileErrorEntryNotAFile {
     tag: "EntryNotAFile"
     error: string
 }
-export interface WorkspaceHistory2OpenFileErrorEntryNotFound {
+export interface WorkspaceHistoryOpenFileErrorEntryNotFound {
     tag: "EntryNotFound"
     error: string
 }
-export interface WorkspaceHistory2OpenFileErrorInternal {
+export interface WorkspaceHistoryOpenFileErrorInternal {
     tag: "Internal"
     error: string
 }
-export interface WorkspaceHistory2OpenFileErrorInvalidCertificate {
+export interface WorkspaceHistoryOpenFileErrorInvalidCertificate {
     tag: "InvalidCertificate"
     error: string
 }
-export interface WorkspaceHistory2OpenFileErrorInvalidHistory {
+export interface WorkspaceHistoryOpenFileErrorInvalidHistory {
     tag: "InvalidHistory"
     error: string
 }
-export interface WorkspaceHistory2OpenFileErrorInvalidKeysBundle {
+export interface WorkspaceHistoryOpenFileErrorInvalidKeysBundle {
     tag: "InvalidKeysBundle"
     error: string
 }
-export interface WorkspaceHistory2OpenFileErrorInvalidManifest {
+export interface WorkspaceHistoryOpenFileErrorInvalidManifest {
     tag: "InvalidManifest"
     error: string
 }
-export interface WorkspaceHistory2OpenFileErrorNoRealmAccess {
+export interface WorkspaceHistoryOpenFileErrorNoRealmAccess {
     tag: "NoRealmAccess"
     error: string
 }
-export interface WorkspaceHistory2OpenFileErrorOffline {
+export interface WorkspaceHistoryOpenFileErrorOffline {
     tag: "Offline"
     error: string
 }
-export interface WorkspaceHistory2OpenFileErrorStopped {
+export interface WorkspaceHistoryOpenFileErrorStopped {
     tag: "Stopped"
     error: string
 }
-export type WorkspaceHistory2OpenFileError =
-  | WorkspaceHistory2OpenFileErrorEntryNotAFile
-  | WorkspaceHistory2OpenFileErrorEntryNotFound
-  | WorkspaceHistory2OpenFileErrorInternal
-  | WorkspaceHistory2OpenFileErrorInvalidCertificate
-  | WorkspaceHistory2OpenFileErrorInvalidHistory
-  | WorkspaceHistory2OpenFileErrorInvalidKeysBundle
-  | WorkspaceHistory2OpenFileErrorInvalidManifest
-  | WorkspaceHistory2OpenFileErrorNoRealmAccess
-  | WorkspaceHistory2OpenFileErrorOffline
-  | WorkspaceHistory2OpenFileErrorStopped
+export type WorkspaceHistoryOpenFileError =
+  | WorkspaceHistoryOpenFileErrorEntryNotAFile
+  | WorkspaceHistoryOpenFileErrorEntryNotFound
+  | WorkspaceHistoryOpenFileErrorInternal
+  | WorkspaceHistoryOpenFileErrorInvalidCertificate
+  | WorkspaceHistoryOpenFileErrorInvalidHistory
+  | WorkspaceHistoryOpenFileErrorInvalidKeysBundle
+  | WorkspaceHistoryOpenFileErrorInvalidManifest
+  | WorkspaceHistoryOpenFileErrorNoRealmAccess
+  | WorkspaceHistoryOpenFileErrorOffline
+  | WorkspaceHistoryOpenFileErrorStopped
 
 
-// WorkspaceHistory2RealmExportDecryptor
-export interface WorkspaceHistory2RealmExportDecryptorSequesterService {
+// WorkspaceHistoryRealmExportDecryptor
+export interface WorkspaceHistoryRealmExportDecryptorSequesterService {
     tag: "SequesterService"
     sequester_service_id: string
     private_key_pem_path: string
 }
-export interface WorkspaceHistory2RealmExportDecryptorUser {
+export interface WorkspaceHistoryRealmExportDecryptorUser {
     tag: "User"
     access: DeviceAccessStrategy
 }
-export type WorkspaceHistory2RealmExportDecryptor =
-  | WorkspaceHistory2RealmExportDecryptorSequesterService
-  | WorkspaceHistory2RealmExportDecryptorUser
+export type WorkspaceHistoryRealmExportDecryptor =
+  | WorkspaceHistoryRealmExportDecryptorSequesterService
+  | WorkspaceHistoryRealmExportDecryptorUser
 
 
-// WorkspaceHistory2SetTimestampOfInterestError
-export interface WorkspaceHistory2SetTimestampOfInterestErrorEntryNotFound {
+// WorkspaceHistorySetTimestampOfInterestError
+export interface WorkspaceHistorySetTimestampOfInterestErrorEntryNotFound {
     tag: "EntryNotFound"
     error: string
 }
-export interface WorkspaceHistory2SetTimestampOfInterestErrorInternal {
+export interface WorkspaceHistorySetTimestampOfInterestErrorInternal {
     tag: "Internal"
     error: string
 }
-export interface WorkspaceHistory2SetTimestampOfInterestErrorInvalidCertificate {
+export interface WorkspaceHistorySetTimestampOfInterestErrorInvalidCertificate {
     tag: "InvalidCertificate"
     error: string
 }
-export interface WorkspaceHistory2SetTimestampOfInterestErrorInvalidHistory {
+export interface WorkspaceHistorySetTimestampOfInterestErrorInvalidHistory {
     tag: "InvalidHistory"
     error: string
 }
-export interface WorkspaceHistory2SetTimestampOfInterestErrorInvalidKeysBundle {
+export interface WorkspaceHistorySetTimestampOfInterestErrorInvalidKeysBundle {
     tag: "InvalidKeysBundle"
     error: string
 }
-export interface WorkspaceHistory2SetTimestampOfInterestErrorInvalidManifest {
+export interface WorkspaceHistorySetTimestampOfInterestErrorInvalidManifest {
     tag: "InvalidManifest"
     error: string
 }
-export interface WorkspaceHistory2SetTimestampOfInterestErrorNewerThanHigherBound {
+export interface WorkspaceHistorySetTimestampOfInterestErrorNewerThanHigherBound {
     tag: "NewerThanHigherBound"
     error: string
 }
-export interface WorkspaceHistory2SetTimestampOfInterestErrorNoRealmAccess {
+export interface WorkspaceHistorySetTimestampOfInterestErrorNoRealmAccess {
     tag: "NoRealmAccess"
     error: string
 }
-export interface WorkspaceHistory2SetTimestampOfInterestErrorOffline {
+export interface WorkspaceHistorySetTimestampOfInterestErrorOffline {
     tag: "Offline"
     error: string
 }
-export interface WorkspaceHistory2SetTimestampOfInterestErrorOlderThanLowerBound {
+export interface WorkspaceHistorySetTimestampOfInterestErrorOlderThanLowerBound {
     tag: "OlderThanLowerBound"
     error: string
 }
-export interface WorkspaceHistory2SetTimestampOfInterestErrorStopped {
+export interface WorkspaceHistorySetTimestampOfInterestErrorStopped {
     tag: "Stopped"
     error: string
 }
-export type WorkspaceHistory2SetTimestampOfInterestError =
-  | WorkspaceHistory2SetTimestampOfInterestErrorEntryNotFound
-  | WorkspaceHistory2SetTimestampOfInterestErrorInternal
-  | WorkspaceHistory2SetTimestampOfInterestErrorInvalidCertificate
-  | WorkspaceHistory2SetTimestampOfInterestErrorInvalidHistory
-  | WorkspaceHistory2SetTimestampOfInterestErrorInvalidKeysBundle
-  | WorkspaceHistory2SetTimestampOfInterestErrorInvalidManifest
-  | WorkspaceHistory2SetTimestampOfInterestErrorNewerThanHigherBound
-  | WorkspaceHistory2SetTimestampOfInterestErrorNoRealmAccess
-  | WorkspaceHistory2SetTimestampOfInterestErrorOffline
-  | WorkspaceHistory2SetTimestampOfInterestErrorOlderThanLowerBound
-  | WorkspaceHistory2SetTimestampOfInterestErrorStopped
+export type WorkspaceHistorySetTimestampOfInterestError =
+  | WorkspaceHistorySetTimestampOfInterestErrorEntryNotFound
+  | WorkspaceHistorySetTimestampOfInterestErrorInternal
+  | WorkspaceHistorySetTimestampOfInterestErrorInvalidCertificate
+  | WorkspaceHistorySetTimestampOfInterestErrorInvalidHistory
+  | WorkspaceHistorySetTimestampOfInterestErrorInvalidKeysBundle
+  | WorkspaceHistorySetTimestampOfInterestErrorInvalidManifest
+  | WorkspaceHistorySetTimestampOfInterestErrorNewerThanHigherBound
+  | WorkspaceHistorySetTimestampOfInterestErrorNoRealmAccess
+  | WorkspaceHistorySetTimestampOfInterestErrorOffline
+  | WorkspaceHistorySetTimestampOfInterestErrorOlderThanLowerBound
+  | WorkspaceHistorySetTimestampOfInterestErrorStopped
 
 
-// WorkspaceHistory2StartError
-export interface WorkspaceHistory2StartErrorCannotOpenRealmExportDatabase {
+// WorkspaceHistoryStartError
+export interface WorkspaceHistoryStartErrorCannotOpenRealmExportDatabase {
     tag: "CannotOpenRealmExportDatabase"
     error: string
 }
-export interface WorkspaceHistory2StartErrorIncompleteRealmExportDatabase {
+export interface WorkspaceHistoryStartErrorIncompleteRealmExportDatabase {
     tag: "IncompleteRealmExportDatabase"
     error: string
 }
-export interface WorkspaceHistory2StartErrorInternal {
+export interface WorkspaceHistoryStartErrorInternal {
     tag: "Internal"
     error: string
 }
-export interface WorkspaceHistory2StartErrorInvalidCertificate {
+export interface WorkspaceHistoryStartErrorInvalidCertificate {
     tag: "InvalidCertificate"
     error: string
 }
-export interface WorkspaceHistory2StartErrorInvalidKeysBundle {
+export interface WorkspaceHistoryStartErrorInvalidKeysBundle {
     tag: "InvalidKeysBundle"
     error: string
 }
-export interface WorkspaceHistory2StartErrorInvalidManifest {
+export interface WorkspaceHistoryStartErrorInvalidManifest {
     tag: "InvalidManifest"
     error: string
 }
-export interface WorkspaceHistory2StartErrorInvalidRealmExportDatabase {
+export interface WorkspaceHistoryStartErrorInvalidRealmExportDatabase {
     tag: "InvalidRealmExportDatabase"
     error: string
 }
-export interface WorkspaceHistory2StartErrorNoHistory {
+export interface WorkspaceHistoryStartErrorNoHistory {
     tag: "NoHistory"
     error: string
 }
-export interface WorkspaceHistory2StartErrorNoRealmAccess {
+export interface WorkspaceHistoryStartErrorNoRealmAccess {
     tag: "NoRealmAccess"
     error: string
 }
-export interface WorkspaceHistory2StartErrorOffline {
+export interface WorkspaceHistoryStartErrorOffline {
     tag: "Offline"
     error: string
 }
-export interface WorkspaceHistory2StartErrorStopped {
+export interface WorkspaceHistoryStartErrorStopped {
     tag: "Stopped"
     error: string
 }
-export interface WorkspaceHistory2StartErrorUnsupportedRealmExportDatabaseVersion {
+export interface WorkspaceHistoryStartErrorUnsupportedRealmExportDatabaseVersion {
     tag: "UnsupportedRealmExportDatabaseVersion"
     error: string
 }
-export type WorkspaceHistory2StartError =
-  | WorkspaceHistory2StartErrorCannotOpenRealmExportDatabase
-  | WorkspaceHistory2StartErrorIncompleteRealmExportDatabase
-  | WorkspaceHistory2StartErrorInternal
-  | WorkspaceHistory2StartErrorInvalidCertificate
-  | WorkspaceHistory2StartErrorInvalidKeysBundle
-  | WorkspaceHistory2StartErrorInvalidManifest
-  | WorkspaceHistory2StartErrorInvalidRealmExportDatabase
-  | WorkspaceHistory2StartErrorNoHistory
-  | WorkspaceHistory2StartErrorNoRealmAccess
-  | WorkspaceHistory2StartErrorOffline
-  | WorkspaceHistory2StartErrorStopped
-  | WorkspaceHistory2StartErrorUnsupportedRealmExportDatabaseVersion
+export type WorkspaceHistoryStartError =
+  | WorkspaceHistoryStartErrorCannotOpenRealmExportDatabase
+  | WorkspaceHistoryStartErrorIncompleteRealmExportDatabase
+  | WorkspaceHistoryStartErrorInternal
+  | WorkspaceHistoryStartErrorInvalidCertificate
+  | WorkspaceHistoryStartErrorInvalidKeysBundle
+  | WorkspaceHistoryStartErrorInvalidManifest
+  | WorkspaceHistoryStartErrorInvalidRealmExportDatabase
+  | WorkspaceHistoryStartErrorNoHistory
+  | WorkspaceHistoryStartErrorNoRealmAccess
+  | WorkspaceHistoryStartErrorOffline
+  | WorkspaceHistoryStartErrorStopped
+  | WorkspaceHistoryStartErrorUnsupportedRealmExportDatabaseVersion
 
 
-// WorkspaceHistory2StatEntryError
-export interface WorkspaceHistory2StatEntryErrorEntryNotFound {
+// WorkspaceHistoryStatEntryError
+export interface WorkspaceHistoryStatEntryErrorEntryNotFound {
     tag: "EntryNotFound"
     error: string
 }
-export interface WorkspaceHistory2StatEntryErrorInternal {
+export interface WorkspaceHistoryStatEntryErrorInternal {
     tag: "Internal"
     error: string
 }
-export interface WorkspaceHistory2StatEntryErrorInvalidCertificate {
+export interface WorkspaceHistoryStatEntryErrorInvalidCertificate {
     tag: "InvalidCertificate"
     error: string
 }
-export interface WorkspaceHistory2StatEntryErrorInvalidHistory {
+export interface WorkspaceHistoryStatEntryErrorInvalidHistory {
     tag: "InvalidHistory"
     error: string
 }
-export interface WorkspaceHistory2StatEntryErrorInvalidKeysBundle {
+export interface WorkspaceHistoryStatEntryErrorInvalidKeysBundle {
     tag: "InvalidKeysBundle"
     error: string
 }
-export interface WorkspaceHistory2StatEntryErrorInvalidManifest {
+export interface WorkspaceHistoryStatEntryErrorInvalidManifest {
     tag: "InvalidManifest"
     error: string
 }
-export interface WorkspaceHistory2StatEntryErrorNoRealmAccess {
+export interface WorkspaceHistoryStatEntryErrorNoRealmAccess {
     tag: "NoRealmAccess"
     error: string
 }
-export interface WorkspaceHistory2StatEntryErrorOffline {
+export interface WorkspaceHistoryStatEntryErrorOffline {
     tag: "Offline"
     error: string
 }
-export interface WorkspaceHistory2StatEntryErrorStopped {
+export interface WorkspaceHistoryStatEntryErrorStopped {
     tag: "Stopped"
     error: string
 }
-export type WorkspaceHistory2StatEntryError =
-  | WorkspaceHistory2StatEntryErrorEntryNotFound
-  | WorkspaceHistory2StatEntryErrorInternal
-  | WorkspaceHistory2StatEntryErrorInvalidCertificate
-  | WorkspaceHistory2StatEntryErrorInvalidHistory
-  | WorkspaceHistory2StatEntryErrorInvalidKeysBundle
-  | WorkspaceHistory2StatEntryErrorInvalidManifest
-  | WorkspaceHistory2StatEntryErrorNoRealmAccess
-  | WorkspaceHistory2StatEntryErrorOffline
-  | WorkspaceHistory2StatEntryErrorStopped
+export type WorkspaceHistoryStatEntryError =
+  | WorkspaceHistoryStatEntryErrorEntryNotFound
+  | WorkspaceHistoryStatEntryErrorInternal
+  | WorkspaceHistoryStatEntryErrorInvalidCertificate
+  | WorkspaceHistoryStatEntryErrorInvalidHistory
+  | WorkspaceHistoryStatEntryErrorInvalidKeysBundle
+  | WorkspaceHistoryStatEntryErrorInvalidManifest
+  | WorkspaceHistoryStatEntryErrorNoRealmAccess
+  | WorkspaceHistoryStatEntryErrorOffline
+  | WorkspaceHistoryStatEntryErrorStopped
 
 
-// WorkspaceHistory2StatFolderChildrenError
-export interface WorkspaceHistory2StatFolderChildrenErrorEntryIsFile {
+// WorkspaceHistoryStatFolderChildrenError
+export interface WorkspaceHistoryStatFolderChildrenErrorEntryIsFile {
     tag: "EntryIsFile"
     error: string
 }
-export interface WorkspaceHistory2StatFolderChildrenErrorEntryNotFound {
+export interface WorkspaceHistoryStatFolderChildrenErrorEntryNotFound {
     tag: "EntryNotFound"
     error: string
 }
-export interface WorkspaceHistory2StatFolderChildrenErrorInternal {
+export interface WorkspaceHistoryStatFolderChildrenErrorInternal {
     tag: "Internal"
     error: string
 }
-export interface WorkspaceHistory2StatFolderChildrenErrorInvalidCertificate {
+export interface WorkspaceHistoryStatFolderChildrenErrorInvalidCertificate {
     tag: "InvalidCertificate"
     error: string
 }
-export interface WorkspaceHistory2StatFolderChildrenErrorInvalidHistory {
+export interface WorkspaceHistoryStatFolderChildrenErrorInvalidHistory {
     tag: "InvalidHistory"
     error: string
 }
-export interface WorkspaceHistory2StatFolderChildrenErrorInvalidKeysBundle {
+export interface WorkspaceHistoryStatFolderChildrenErrorInvalidKeysBundle {
     tag: "InvalidKeysBundle"
     error: string
 }
-export interface WorkspaceHistory2StatFolderChildrenErrorInvalidManifest {
+export interface WorkspaceHistoryStatFolderChildrenErrorInvalidManifest {
     tag: "InvalidManifest"
     error: string
 }
-export interface WorkspaceHistory2StatFolderChildrenErrorNoRealmAccess {
+export interface WorkspaceHistoryStatFolderChildrenErrorNoRealmAccess {
     tag: "NoRealmAccess"
     error: string
 }
-export interface WorkspaceHistory2StatFolderChildrenErrorOffline {
+export interface WorkspaceHistoryStatFolderChildrenErrorOffline {
     tag: "Offline"
     error: string
 }
-export interface WorkspaceHistory2StatFolderChildrenErrorStopped {
+export interface WorkspaceHistoryStatFolderChildrenErrorStopped {
     tag: "Stopped"
     error: string
 }
-export type WorkspaceHistory2StatFolderChildrenError =
-  | WorkspaceHistory2StatFolderChildrenErrorEntryIsFile
-  | WorkspaceHistory2StatFolderChildrenErrorEntryNotFound
-  | WorkspaceHistory2StatFolderChildrenErrorInternal
-  | WorkspaceHistory2StatFolderChildrenErrorInvalidCertificate
-  | WorkspaceHistory2StatFolderChildrenErrorInvalidHistory
-  | WorkspaceHistory2StatFolderChildrenErrorInvalidKeysBundle
-  | WorkspaceHistory2StatFolderChildrenErrorInvalidManifest
-  | WorkspaceHistory2StatFolderChildrenErrorNoRealmAccess
-  | WorkspaceHistory2StatFolderChildrenErrorOffline
-  | WorkspaceHistory2StatFolderChildrenErrorStopped
+export type WorkspaceHistoryStatFolderChildrenError =
+  | WorkspaceHistoryStatFolderChildrenErrorEntryIsFile
+  | WorkspaceHistoryStatFolderChildrenErrorEntryNotFound
+  | WorkspaceHistoryStatFolderChildrenErrorInternal
+  | WorkspaceHistoryStatFolderChildrenErrorInvalidCertificate
+  | WorkspaceHistoryStatFolderChildrenErrorInvalidHistory
+  | WorkspaceHistoryStatFolderChildrenErrorInvalidKeysBundle
+  | WorkspaceHistoryStatFolderChildrenErrorInvalidManifest
+  | WorkspaceHistoryStatFolderChildrenErrorNoRealmAccess
+  | WorkspaceHistoryStatFolderChildrenErrorOffline
+  | WorkspaceHistoryStatFolderChildrenErrorStopped
 
 
 // WorkspaceInfoError
@@ -4215,10 +4215,10 @@ export function clientStartWorkspace(
     client: number,
     realm_id: string
 ): Promise<Result<number, ClientStartWorkspaceError>>
-export function clientStartWorkspaceHistory2(
+export function clientStartWorkspaceHistory(
     client: number,
     realm_id: string
-): Promise<Result<number, WorkspaceHistory2StartError>>
+): Promise<Result<number, WorkspaceHistoryStartError>>
 export function clientStop(
     client: number
 ): Promise<Result<null, ClientStopError>>
@@ -4471,69 +4471,69 @@ export function workspaceGeneratePathAddr(
     workspace: number,
     path: string
 ): Promise<Result<string, WorkspaceGeneratePathAddrError>>
-export function workspaceHistory2FdClose(
+export function workspaceHistoryFdClose(
     workspace_history: number,
     fd: number
-): Promise<Result<null, WorkspaceHistory2FdCloseError>>
-export function workspaceHistory2FdRead(
+): Promise<Result<null, WorkspaceHistoryFdCloseError>>
+export function workspaceHistoryFdRead(
     workspace_history: number,
     fd: number,
     offset: number,
     size: number
-): Promise<Result<Uint8Array, WorkspaceHistory2FdReadError>>
-export function workspaceHistory2FdStat(
+): Promise<Result<Uint8Array, WorkspaceHistoryFdReadError>>
+export function workspaceHistoryFdStat(
     workspace_history: number,
     fd: number
-): Promise<Result<WorkspaceHistory2FileStat, WorkspaceHistory2FdStatError>>
-export function workspaceHistory2GetTimestampHigherBound(
+): Promise<Result<WorkspaceHistoryFileStat, WorkspaceHistoryFdStatError>>
+export function workspaceHistoryGetTimestampHigherBound(
     workspace_history: number
-): Promise<Result<number, WorkspaceHistory2InternalOnlyError>>
-export function workspaceHistory2GetTimestampLowerBound(
+): Promise<Result<number, WorkspaceHistoryInternalOnlyError>>
+export function workspaceHistoryGetTimestampLowerBound(
     workspace_history: number
-): Promise<Result<number, WorkspaceHistory2InternalOnlyError>>
-export function workspaceHistory2GetTimestampOfInterest(
+): Promise<Result<number, WorkspaceHistoryInternalOnlyError>>
+export function workspaceHistoryGetTimestampOfInterest(
     workspace_history: number
-): Promise<Result<number, WorkspaceHistory2InternalOnlyError>>
-export function workspaceHistory2OpenFile(
+): Promise<Result<number, WorkspaceHistoryInternalOnlyError>>
+export function workspaceHistoryOpenFile(
     workspace_history: number,
     path: string
-): Promise<Result<number, WorkspaceHistory2OpenFileError>>
-export function workspaceHistory2OpenFileAndGetId(
+): Promise<Result<number, WorkspaceHistoryOpenFileError>>
+export function workspaceHistoryOpenFileAndGetId(
     workspace_history: number,
     path: string
-): Promise<Result<[number, string], WorkspaceHistory2OpenFileError>>
-export function workspaceHistory2OpenFileById(
+): Promise<Result<[number, string], WorkspaceHistoryOpenFileError>>
+export function workspaceHistoryOpenFileById(
     workspace_history: number,
     entry_id: string
-): Promise<Result<number, WorkspaceHistory2OpenFileError>>
-export function workspaceHistory2SetTimestampOfInterest(
+): Promise<Result<number, WorkspaceHistoryOpenFileError>>
+export function workspaceHistorySetTimestampOfInterest(
     workspace_history: number,
     toi: number
-): Promise<Result<null, WorkspaceHistory2SetTimestampOfInterestError>>
-export function workspaceHistory2StartWithRealmExport(
+): Promise<Result<null, WorkspaceHistorySetTimestampOfInterestError>>
+export function workspaceHistoryStartWithRealmExport(
     config: ClientConfig,
     export_db_path: string,
-    decryptors: Array<WorkspaceHistory2RealmExportDecryptor>
-): Promise<Result<number, WorkspaceHistory2StartError>>
-export function workspaceHistory2StatEntry(
+    decryptors: Array<WorkspaceHistoryRealmExportDecryptor>
+): Promise<Result<number, WorkspaceHistoryStartError>>
+export function workspaceHistoryStatEntry(
     workspace_history: number,
     path: string
-): Promise<Result<WorkspaceHistory2EntryStat, WorkspaceHistory2StatEntryError>>
-export function workspaceHistory2StatEntryById(
+): Promise<Result<WorkspaceHistoryEntryStat, WorkspaceHistoryStatEntryError>>
+export function workspaceHistoryStatEntryById(
     workspace_history: number,
     entry_id: string
-): Promise<Result<WorkspaceHistory2EntryStat, WorkspaceHistory2StatEntryError>>
-export function workspaceHistory2StatFolderChildren(
+): Promise<Result<WorkspaceHistoryEntryStat, WorkspaceHistoryStatEntryError>>
+export function workspaceHistoryStatFolderChildren(
     workspace_history: number,
     path: string
-): Promise<Result<Array<[string, WorkspaceHistory2EntryStat]>, WorkspaceHistory2StatFolderChildrenError>>
-export function workspaceHistory2StatFolderChildrenById(
+): Promise<Result<Array<[string, WorkspaceHistoryEntryStat]>, WorkspaceHistoryStatFolderChildrenError>>
+export function workspaceHistoryStatFolderChildrenById(
     workspace_history: number,
     entry_id: string
-): Promise<Result<Array<[string, WorkspaceHistory2EntryStat]>, WorkspaceHistory2StatFolderChildrenError>>
-export function workspaceHistory2Stop(
+): Promise<Result<Array<[string, WorkspaceHistoryEntryStat]>, WorkspaceHistoryStatFolderChildrenError>>
+export function workspaceHistoryStop(
     workspace_history: number
-): Promise<Result<null, WorkspaceHistory2InternalOnlyError>>
+): Promise<Result<null, WorkspaceHistoryInternalOnlyError>>
 export function workspaceInfo(
     workspace: number
 ): Promise<Result<StartedWorkspaceInfo, WorkspaceInfoError>>

@@ -27,7 +27,7 @@ from .client import ClientConfig, DeviceAccessStrategy
 #
 
 
-class WorkspaceHistory2StartError(ErrorVariant):
+class WorkspaceHistoryStartError(ErrorVariant):
     class Offline:
         pass
 
@@ -65,14 +65,14 @@ class WorkspaceHistory2StartError(ErrorVariant):
         pass
 
 
-async def client_start_workspace_history2(
+async def client_start_workspace_history(
     client: Handle,
     realm_id: VlobID,
-) -> Result[Handle, WorkspaceHistory2StartError]:
+) -> Result[Handle, WorkspaceHistoryStartError]:
     raise NotImplementedError
 
 
-class WorkspaceHistory2RealmExportDecryptor(Variant):
+class WorkspaceHistoryRealmExportDecryptor(Variant):
     class User:
         access: DeviceAccessStrategy
 
@@ -81,11 +81,11 @@ class WorkspaceHistory2RealmExportDecryptor(Variant):
         private_key_pem_path: Path
 
 
-async def workspace_history2_start_with_realm_export(
+async def workspace_history_start_with_realm_export(
     config: ClientConfig,
     export_db_path: Path,
-    decryptors: list[WorkspaceHistory2RealmExportDecryptor],
-) -> Result[Handle, WorkspaceHistory2StartError]:
+    decryptors: list[WorkspaceHistoryRealmExportDecryptor],
+) -> Result[Handle, WorkspaceHistoryStartError]:
     raise NotImplementedError
 
 
@@ -94,14 +94,14 @@ async def workspace_history2_start_with_realm_export(
 #
 
 
-class WorkspaceHistory2InternalOnlyError(ErrorVariant):
+class WorkspaceHistoryInternalOnlyError(ErrorVariant):
     class Internal:
         pass
 
 
-def workspace_history2_stop(
+def workspace_history_stop(
     workspace_history: Handle,
-) -> Result[None, WorkspaceHistory2InternalOnlyError]:
+) -> Result[None, WorkspaceHistoryInternalOnlyError]:
     raise NotImplementedError
 
 
@@ -110,25 +110,25 @@ def workspace_history2_stop(
 #
 
 
-def workspace_history2_get_timestamp_lower_bound(
+def workspace_history_get_timestamp_lower_bound(
     workspace_history: Handle,
-) -> Result[DateTime, WorkspaceHistory2InternalOnlyError]:
+) -> Result[DateTime, WorkspaceHistoryInternalOnlyError]:
     raise NotImplementedError
 
 
-def workspace_history2_get_timestamp_higher_bound(
+def workspace_history_get_timestamp_higher_bound(
     workspace_history: Handle,
-) -> Result[DateTime, WorkspaceHistory2InternalOnlyError]:
+) -> Result[DateTime, WorkspaceHistoryInternalOnlyError]:
     raise NotImplementedError
 
 
-def workspace_history2_get_timestamp_of_interest(
+def workspace_history_get_timestamp_of_interest(
     workspace_history: Handle,
-) -> Result[DateTime, WorkspaceHistory2InternalOnlyError]:
+) -> Result[DateTime, WorkspaceHistoryInternalOnlyError]:
     raise NotImplementedError
 
 
-class WorkspaceHistory2SetTimestampOfInterestError(ErrorVariant):
+class WorkspaceHistorySetTimestampOfInterestError(ErrorVariant):
     class OlderThanLowerBound:
         pass
 
@@ -163,14 +163,14 @@ class WorkspaceHistory2SetTimestampOfInterestError(ErrorVariant):
         pass
 
 
-async def workspace_history2_set_timestamp_of_interest(
+async def workspace_history_set_timestamp_of_interest(
     workspace_history: Handle,
     toi: DateTime,
-) -> Result[None, WorkspaceHistory2SetTimestampOfInterestError]:
+) -> Result[None, WorkspaceHistorySetTimestampOfInterestError]:
     raise NotImplementedError
 
 
-class WorkspaceHistory2EntryStat(Variant):
+class WorkspaceHistoryEntryStat(Variant):
     class File:
         id: VlobID
         parent: VlobID
@@ -189,7 +189,7 @@ class WorkspaceHistory2EntryStat(Variant):
         last_updater: DeviceID
 
 
-class WorkspaceHistory2StatEntryError(ErrorVariant):
+class WorkspaceHistoryStatEntryError(ErrorVariant):
     class Offline:
         pass
 
@@ -218,21 +218,21 @@ class WorkspaceHistory2StatEntryError(ErrorVariant):
         pass
 
 
-async def workspace_history2_stat_entry(
+async def workspace_history_stat_entry(
     workspace_history: Handle,
     path: Ref[FsPath],
-) -> Result[WorkspaceHistory2EntryStat, WorkspaceHistory2StatEntryError]:
+) -> Result[WorkspaceHistoryEntryStat, WorkspaceHistoryStatEntryError]:
     raise NotImplementedError
 
 
-async def workspace_history2_stat_entry_by_id(
+async def workspace_history_stat_entry_by_id(
     workspace_history: Handle,
     entry_id: VlobID,
-) -> Result[WorkspaceHistory2EntryStat, WorkspaceHistory2StatEntryError]:
+) -> Result[WorkspaceHistoryEntryStat, WorkspaceHistoryStatEntryError]:
     raise NotImplementedError
 
 
-class WorkspaceHistory2StatFolderChildrenError(ErrorVariant):
+class WorkspaceHistoryStatFolderChildrenError(ErrorVariant):
     class Offline:
         pass
 
@@ -264,25 +264,25 @@ class WorkspaceHistory2StatFolderChildrenError(ErrorVariant):
         pass
 
 
-async def workspace_history2_stat_folder_children(
+async def workspace_history_stat_folder_children(
     workspace_history: Handle,
     path: Ref[FsPath],
 ) -> Result[
-    list[tuple[EntryName, WorkspaceHistory2EntryStat]], WorkspaceHistory2StatFolderChildrenError
+    list[tuple[EntryName, WorkspaceHistoryEntryStat]], WorkspaceHistoryStatFolderChildrenError
 ]:
     raise NotImplementedError
 
 
-async def workspace_history2_stat_folder_children_by_id(
+async def workspace_history_stat_folder_children_by_id(
     workspace_history: Handle,
     entry_id: VlobID,
 ) -> Result[
-    list[tuple[EntryName, WorkspaceHistory2EntryStat]], WorkspaceHistory2StatFolderChildrenError
+    list[tuple[EntryName, WorkspaceHistoryEntryStat]], WorkspaceHistoryStatFolderChildrenError
 ]:
     raise NotImplementedError
 
 
-class WorkspaceHistory2OpenFileError(ErrorVariant):
+class WorkspaceHistoryOpenFileError(ErrorVariant):
     class Offline:
         pass
 
@@ -314,28 +314,28 @@ class WorkspaceHistory2OpenFileError(ErrorVariant):
         pass
 
 
-async def workspace_history2_open_file(
+async def workspace_history_open_file(
     workspace_history: Handle,
     path: FsPath,
-) -> Result[FileDescriptor, WorkspaceHistory2OpenFileError]:
+) -> Result[FileDescriptor, WorkspaceHistoryOpenFileError]:
     raise NotImplementedError
 
 
-async def workspace_history2_open_file_by_id(
+async def workspace_history_open_file_by_id(
     workspace_history: Handle,
     entry_id: VlobID,
-) -> Result[FileDescriptor, WorkspaceHistory2OpenFileError]:
+) -> Result[FileDescriptor, WorkspaceHistoryOpenFileError]:
     raise NotImplementedError
 
 
-async def workspace_history2_open_file_and_get_id(
+async def workspace_history_open_file_and_get_id(
     workspace_history: Handle,
     path: FsPath,
-) -> Result[tuple[FileDescriptor, VlobID], WorkspaceHistory2OpenFileError]:
+) -> Result[tuple[FileDescriptor, VlobID], WorkspaceHistoryOpenFileError]:
     raise NotImplementedError
 
 
-class WorkspaceHistory2FdCloseError(ErrorVariant):
+class WorkspaceHistoryFdCloseError(ErrorVariant):
     class BadFileDescriptor:
         pass
 
@@ -343,14 +343,14 @@ class WorkspaceHistory2FdCloseError(ErrorVariant):
         pass
 
 
-def workspace_history2_fd_close(
+def workspace_history_fd_close(
     workspace_history: Handle,
     fd: FileDescriptor,
-) -> Result[None, WorkspaceHistory2FdCloseError]:
+) -> Result[None, WorkspaceHistoryFdCloseError]:
     raise NotImplementedError
 
 
-class WorkspaceHistory2FdReadError(ErrorVariant):
+class WorkspaceHistoryFdReadError(ErrorVariant):
     class Offline:
         pass
 
@@ -379,16 +379,16 @@ class WorkspaceHistory2FdReadError(ErrorVariant):
         pass
 
 
-async def workspace_history2_fd_read(
+async def workspace_history_fd_read(
     workspace_history: Handle,
     fd: FileDescriptor,
     offset: U64,
     size: U64,
-) -> Result[bytes, WorkspaceHistory2FdReadError]:
+) -> Result[bytes, WorkspaceHistoryFdReadError]:
     raise NotImplementedError
 
 
-class WorkspaceHistory2FileStat(Structure):
+class WorkspaceHistoryFileStat(Structure):
     id: VlobID
     created: DateTime
     updated: DateTime
@@ -396,7 +396,7 @@ class WorkspaceHistory2FileStat(Structure):
     size: SizeInt
 
 
-class WorkspaceHistory2FdStatError(ErrorVariant):
+class WorkspaceHistoryFdStatError(ErrorVariant):
     class BadFileDescriptor:
         pass
 
@@ -404,8 +404,8 @@ class WorkspaceHistory2FdStatError(ErrorVariant):
         pass
 
 
-async def workspace_history2_fd_stat(
+async def workspace_history_fd_stat(
     workspace_history: Handle,
     fd: FileDescriptor,
-) -> Result[WorkspaceHistory2FileStat, WorkspaceHistory2FdStatError]:
+) -> Result[WorkspaceHistoryFileStat, WorkspaceHistoryFdStatError]:
     raise NotImplementedError
