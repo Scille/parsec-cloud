@@ -31,11 +31,23 @@ self.onconnect = async (msg: MessageEvent): Promise<void> => {
       console.error('libparsec_worker: skipping unknown message', msg.data);
       return;
     }
+    let promise;
+    try {
+      // An exception can be raised here in case the function doesn't exist, or the
+      // provided parameters are of the wrong type
+      const fn = libparsec[name as keyof LibParsecPlugin] as (...args: any[]) => Promise<any>;
+      promise = fn(...args);
+    } catch (err) {
+      port.postMessage({ id, result: err, isException: true });
+      return;
+    }
+
     // Since libparsec bindings never raise exceptions under normal conditions,
     // we don't need to catch them: any exception here is a bug and we should
     // just let it bubble up so that Sentry takes care of it.
-    const result = await (libparsec[name as keyof LibParsecPlugin] as (...args: any[]) => Promise<any>)(...args);
-    port.postMessage({ id, result });
+    const result = await promise;
+
+    port.postMessage({ id, result, isException: false });
   };
 
   // Notify the client that the worker is ready to process messages.
