@@ -1,13 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { expect, msTest } from '@tests/e2e/helpers';
+import { answerQuestion, expect, fillIonInput, logout, msTest } from '@tests/e2e/helpers';
 
-msTest.skip('Parsec account login initial page', async ({ parsecAccount }) => {
+msTest('Parsec account login initial page', async ({ parsecAccount }) => {
   const container = parsecAccount.locator('.homepage-content');
   await expect(container.locator('.account-login__title')).toHaveText('My Parsec account');
 });
 
-msTest.skip('Parsec account skip login', async ({ parsecAccount }) => {
+msTest('Parsec account skip login', async ({ parsecAccount }) => {
   const container = parsecAccount.locator('.homepage-content');
   await expect(container.locator('.homepage-skip__button')).toHaveText('Skip this step');
   await container.locator('.homepage-skip__button').click();
@@ -15,7 +15,7 @@ msTest.skip('Parsec account skip login', async ({ parsecAccount }) => {
   await expect(parsecAccount.locator('.organization-content')).toBeVisible();
 });
 
-msTest.skip('Parsec account go to customer area', async ({ parsecAccount }) => {
+msTest('Parsec account go to customer area', async ({ parsecAccount }) => {
   const container = parsecAccount.locator('.homepage-content');
   const customerAreaContainer = container.locator('.homepage-client-area');
   await expect(customerAreaContainer.locator('.homepage-client-area__title')).toHaveText('Customer area');
@@ -25,29 +25,14 @@ msTest.skip('Parsec account go to customer area', async ({ parsecAccount }) => {
   await expect(parsecAccount.locator('.saas-login-container')).toBeVisible();
 });
 
-msTest.skip('Parsec account go to creation', async ({ parsecAccount }) => {
+msTest('Parsec account go to creation', async ({ parsecAccount }) => {
   const container = parsecAccount.locator('.homepage-content');
   await expect(container.locator('.account-create__button')).toHaveText('Create an account');
   await container.locator('.account-create__button').click();
   await expect(parsecAccount).toHaveURL(/.+\/createAccount$/);
 });
 
-msTest.skip('Account login', async ({ parsecAccount }) => {
-  const accountLogin = parsecAccount.locator('.account-login-container');
-  await expect(accountLogin.locator('.account-login-content__input').nth(2).locator('#label')).toBeVisible();
-  await expect(accountLogin.locator('.account-login-content__input').nth(2).locator('#label')).toHaveText('Email address');
-  await accountLogin.locator('.account-login-content__input').nth(2).locator('input').fill('a@b.c');
-  await expect(accountLogin.locator('.account-login-content__input').locator('#passwordLabel')).toHaveText('Password');
-  await accountLogin.locator('.account-login-content__input').nth(4).locator('input').fill('BigP@ssw0rd.');
-  await accountLogin.locator('.account-login-button__item').click();
-  await expect(parsecAccount).toHaveURL(/.+\/home$/);
-
-  const accountNameButton = parsecAccount.locator('.profile-header-homepage');
-  await expect(accountNameButton).toBeVisible();
-  await expect(accountNameButton).toHaveText('Gordon Freeman');
-});
-
-msTest.skip('Open settings in profile homepage popover ', async ({ parsecAccountLoggedIn }) => {
+msTest('Open settings in profile homepage popover ', async ({ parsecAccountLoggedIn }) => {
   const accountNameButton = parsecAccountLoggedIn.locator('.profile-header-homepage');
   await expect(accountNameButton).toBeVisible();
   await expect(accountNameButton).toHaveText(/^Agent\d+$/);
@@ -63,14 +48,14 @@ msTest.skip('Open settings in profile homepage popover ', async ({ parsecAccount
   await popover.locator('.main-list').getByRole('listitem').nth(0).click();
 });
 
-msTest.skip('Open settings from header (secondary menu) ', async ({ parsecAccountLoggedIn }) => {
+msTest('Open settings from header (secondary menu) ', async ({ parsecAccountLoggedIn }) => {
   const settingsButton = parsecAccountLoggedIn.locator('.menu-secondary').locator('#trigger-settings-button');
   await expect(settingsButton).toBeVisible();
   await settingsButton.click();
   await expect(parsecAccountLoggedIn.locator('.profile-content-item').nth(0).locator('.item-header__title')).toHaveText('Settings');
 });
 
-msTest.skip('Switch tab from popover ', async ({ parsecAccountLoggedIn }) => {
+msTest('Switch tab from popover ', async ({ parsecAccountLoggedIn }) => {
   const accountNameButton = parsecAccountLoggedIn.locator('.profile-header-homepage');
   await expect(accountNameButton).toBeVisible();
   await expect(accountNameButton).toHaveText(/^Agent\d+$/);
@@ -86,4 +71,22 @@ msTest.skip('Switch tab from popover ', async ({ parsecAccountLoggedIn }) => {
   await expect(parsecAccountLoggedIn.locator('.profile-header-homepage-popover')).toBeVisible();
   await popover.locator('.main-list').getByRole('listitem').nth(2).click();
   await expect(parsecAccountLoggedIn.locator('.profile-content-item').nth(0).locator('.item-header__title')).toHaveText('Authentication');
+});
+
+msTest('Account auto-register device', async ({ parsecAccountLoggedIn }) => {
+  const home = parsecAccountLoggedIn;
+  await home.locator('.organization-list').locator('.organization-card').nth(0).click();
+  await fillIonInput(home.locator('#password-input').locator('ion-input'), 'P@ssw0rd.');
+  await home.locator('.login-card-footer').locator('.login-button').click();
+  await answerQuestion(home, true, {
+    expectedNegativeText: 'No',
+    expectedPositiveText: 'Store to Parsec Account',
+    expectedQuestionText: "This device is not stored in Parsec Account. Do you want to store it so that it'll be available everywhere?",
+    expectedTitleText: 'Store this device to Parsec Account',
+  });
+  await expect(home).toBeWorkspacePage();
+  await logout(home);
+  await home.locator('.organization-list').locator('.organization-card').nth(0).click();
+  // Doesn't ask for the password, using parsec account to authenticate
+  await expect(home).toBeWorkspacePage();
 });
