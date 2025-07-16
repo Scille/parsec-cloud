@@ -24,78 +24,88 @@ interface SetupOptions {
 const DEV_TOOLS_OFFSET = 400;
 
 export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promise<void> {
+  const TESTBED_SERVER = process.env.TESTBED_SERVER;
+  if (TESTBED_SERVER === undefined) {
+    throw new Error('Environ variable `TESTBED_SERVER` must be defined to use testbed');
+  }
+
   page.on('console', (msg) => console.log('> ', msg.text()));
 
-  await page.addInitScript((options: SetupOptions) => {
-    (window as any).TESTING = true;
-    if (options.withParsecAccount) {
-      (window as any).TESTING_ENABLE_ACCOUNT = true;
-    }
-    if (options.parsecAccountAutoLogin) {
-      (window as any).TESTING_ACCOUNT_AUTO_LOGIN = true;
-    }
-    if (options.withCustomBranding) {
-      (window as any).TESTING_ENABLE_CUSTOM_BRANDING = true;
-    }
-    if (options.mockBrowser) {
-      (window as any).TESTING_MOCK_BROWSER = options.mockBrowser;
-    }
-    if (options.saasServers) {
-      (window as any).TESTING_SAAS_SERVERS = options.saasServers;
-    }
-    if (options.trialServers) {
-      (window as any).TESTING_TRIAL_SERVERS = options.trialServers;
-    }
-    (window as any).showSaveFilePicker = async (): Promise<FileSystemFileHandle> => {
-      console.log('Show save file Picker');
-      return {
-        kind: 'file',
-        name: 'downloadedFile.tmp',
-        createWritable: async () => ({
-          write: async (data: Uint8Array): Promise<any> => {
-            if ((window as any).__downloadedFiles === undefined) {
-              (window as any).__downloadedFiles = {
-                default: data,
-              };
-            } else {
-              (window as any).__downloadedFiles.default = data;
-            }
-          },
-          close: async (): Promise<any> => {},
-        }),
-      } as FileSystemFileHandle;
-    };
-    (window as any).showDirectoryPicker = async (): Promise<FileSystemDirectoryHandle> => {
-      return {
-        kind: 'directory',
-        name: 'folder',
-        getFileHandle: async (name: string, _options?: FileSystemGetFileOptions): Promise<FileSystemFileHandle> => {
-          return {
-            kind: 'file',
-            name: name,
-            createWritable: async () => ({
-              write: async (data: Uint8Array): Promise<any> => {
-                if ((window as any).__downloadedFiles === undefined) {
-                  (window as any).__downloadedFiles = {
-                    [name]: data,
-                  };
-                } else {
-                  (window as any).__downloadedFiles[name] = data;
-                }
-              },
-              close: async (): Promise<any> => {},
-            }),
-          } as FileSystemFileHandle;
-        },
-        getDirectoryHandle: async (_name: string, _options?: FileSystemGetDirectoryOptions): Promise<FileSystemDirectoryHandle> => {
-          return {} as FileSystemDirectoryHandle;
-        },
-        removeEntry: async (_name: string, _options?: FileSystemRemoveOptions): Promise<void> => {},
-        resolve: async (_descendant: FileSystemHandle): Promise<string[] | null> => null,
-        isSameEntry: async (_other: FileSystemHandle): Promise<boolean> => false,
+  await page.addInitScript(
+    (options: SetupOptions & { testbedServer: string }) => {
+      (window as any).TESTING = true;
+      if (options.parsecAccountAutoLogin) {
+        options.withParsecAccount = true;
+        (window as any).TESTING_ACCOUNT_AUTO_LOGIN = true;
+      }
+      if (options.withParsecAccount) {
+        (window as any).TESTING_ENABLE_ACCOUNT = true;
+        (window as any).TESTING_ACCOUNT_SERVER = options.testbedServer;
+      }
+      if (options.withCustomBranding) {
+        (window as any).TESTING_ENABLE_CUSTOM_BRANDING = true;
+      }
+      if (options.mockBrowser) {
+        (window as any).TESTING_MOCK_BROWSER = options.mockBrowser;
+      }
+      if (options.saasServers) {
+        (window as any).TESTING_SAAS_SERVERS = options.saasServers;
+      }
+      if (options.trialServers) {
+        (window as any).TESTING_TRIAL_SERVERS = options.trialServers;
+      }
+      (window as any).showSaveFilePicker = async (): Promise<FileSystemFileHandle> => {
+        console.log('Show save file Picker');
+        return {
+          kind: 'file',
+          name: 'downloadedFile.tmp',
+          createWritable: async () => ({
+            write: async (data: Uint8Array): Promise<any> => {
+              if ((window as any).__downloadedFiles === undefined) {
+                (window as any).__downloadedFiles = {
+                  default: data,
+                };
+              } else {
+                (window as any).__downloadedFiles.default = data;
+              }
+            },
+            close: async (): Promise<any> => {},
+          }),
+        } as FileSystemFileHandle;
       };
-    };
-  }, opts);
+      (window as any).showDirectoryPicker = async (): Promise<FileSystemDirectoryHandle> => {
+        return {
+          kind: 'directory',
+          name: 'folder',
+          getFileHandle: async (name: string, _options?: FileSystemGetFileOptions): Promise<FileSystemFileHandle> => {
+            return {
+              kind: 'file',
+              name: name,
+              createWritable: async () => ({
+                write: async (data: Uint8Array): Promise<any> => {
+                  if ((window as any).__downloadedFiles === undefined) {
+                    (window as any).__downloadedFiles = {
+                      [name]: data,
+                    };
+                  } else {
+                    (window as any).__downloadedFiles[name] = data;
+                  }
+                },
+                close: async (): Promise<any> => {},
+              }),
+            } as FileSystemFileHandle;
+          },
+          getDirectoryHandle: async (_name: string, _options?: FileSystemGetDirectoryOptions): Promise<FileSystemDirectoryHandle> => {
+            return {} as FileSystemDirectoryHandle;
+          },
+          removeEntry: async (_name: string, _options?: FileSystemRemoveOptions): Promise<void> => {},
+          resolve: async (_descendant: FileSystemHandle): Promise<string[] | null> => null,
+          isSameEntry: async (_other: FileSystemHandle): Promise<boolean> => false,
+        };
+      };
+    },
+    { ...opts, testbedServer: TESTBED_SERVER },
+  );
   if (!opts.skipGoto) {
     await page.goto(opts.location ?? '/');
   }

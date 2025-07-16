@@ -108,6 +108,9 @@ const ENABLE_ACCOUNT_ENV_VARIABLE = 'PARSEC_APP_ENABLE_ACCOUNT';
 const ENABLE_ACCOUNT_AUTO_LOGIN_ENV_VARIABLE = 'PARSEC_APP_ENABLE_ACCOUNT_AUTO_LOGIN';
 
 function getAccountServer(): string {
+  if ((window as any).TESTING_ACCOUNT_SERVER) {
+    return (window as any).TESTING_ACCOUNT_SERVER;
+  }
   if (import.meta.env[ACCOUNT_SERVER_ENV_VARIABLE]) {
     return import.meta.env[ACCOUNT_SERVER_ENV_VARIABLE];
   }
