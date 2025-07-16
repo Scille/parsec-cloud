@@ -3782,12 +3782,12 @@ fn struct_user_info_rs_to_js(rs_obj: libparsec::UserInfo) -> Result<JsValue, JsV
     Ok(js_obj)
 }
 
-// WorkspaceHistory2FileStat
+// WorkspaceHistoryFileStat
 
 #[allow(dead_code)]
-fn struct_workspace_history2_file_stat_js_to_rs(
+fn struct_workspace_history_file_stat_js_to_rs(
     obj: JsValue,
-) -> Result<libparsec::WorkspaceHistory2FileStat, JsValue> {
+) -> Result<libparsec::WorkspaceHistoryFileStat, JsValue> {
     let id = {
         let js_val = Reflect::get(&obj, &"id".into())?;
         js_val
@@ -3848,7 +3848,7 @@ fn struct_workspace_history2_file_stat_js_to_rs(
             v
         }
     };
-    Ok(libparsec::WorkspaceHistory2FileStat {
+    Ok(libparsec::WorkspaceHistoryFileStat {
         id,
         created,
         updated,
@@ -3858,8 +3858,8 @@ fn struct_workspace_history2_file_stat_js_to_rs(
 }
 
 #[allow(dead_code)]
-fn struct_workspace_history2_file_stat_rs_to_js(
-    rs_obj: libparsec::WorkspaceHistory2FileStat,
+fn struct_workspace_history_file_stat_rs_to_js(
+    rs_obj: libparsec::WorkspaceHistoryFileStat,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_id = JsValue::from_str({
@@ -14228,18 +14228,18 @@ fn variant_workspace_generate_path_addr_error_rs_to_js(
     Ok(js_obj)
 }
 
-// WorkspaceHistory2EntryStat
+// WorkspaceHistoryEntryStat
 
 #[allow(dead_code)]
-fn variant_workspace_history2_entry_stat_js_to_rs(
+fn variant_workspace_history_entry_stat_js_to_rs(
     obj: JsValue,
-) -> Result<libparsec::WorkspaceHistory2EntryStat, JsValue> {
+) -> Result<libparsec::WorkspaceHistoryEntryStat, JsValue> {
     let tag = Reflect::get(&obj, &"tag".into())?;
     let tag = tag
         .as_string()
         .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
     match tag.as_str() {
-        "WorkspaceHistory2EntryStatFile" => {
+        "WorkspaceHistoryEntryStatFile" => {
             let id = {
                 let js_val = Reflect::get(&obj, &"id".into())?;
                 js_val
@@ -14328,7 +14328,7 @@ fn variant_workspace_history2_entry_stat_js_to_rs(
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
                     })?
             };
-            Ok(libparsec::WorkspaceHistory2EntryStat::File {
+            Ok(libparsec::WorkspaceHistoryEntryStat::File {
                 id,
                 parent,
                 created,
@@ -14338,7 +14338,7 @@ fn variant_workspace_history2_entry_stat_js_to_rs(
                 last_updater,
             })
         }
-        "WorkspaceHistory2EntryStatFolder" => {
+        "WorkspaceHistoryEntryStatFolder" => {
             let id = {
                 let js_val = Reflect::get(&obj, &"id".into())?;
                 js_val
@@ -14419,7 +14419,7 @@ fn variant_workspace_history2_entry_stat_js_to_rs(
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
                     })?
             };
-            Ok(libparsec::WorkspaceHistory2EntryStat::Folder {
+            Ok(libparsec::WorkspaceHistoryEntryStat::Folder {
                 id,
                 parent,
                 created,
@@ -14429,18 +14429,18 @@ fn variant_workspace_history2_entry_stat_js_to_rs(
             })
         }
         _ => Err(JsValue::from(TypeError::new(
-            "Object is not a WorkspaceHistory2EntryStat",
+            "Object is not a WorkspaceHistoryEntryStat",
         ))),
     }
 }
 
 #[allow(dead_code)]
-fn variant_workspace_history2_entry_stat_rs_to_js(
-    rs_obj: libparsec::WorkspaceHistory2EntryStat,
+fn variant_workspace_history_entry_stat_rs_to_js(
+    rs_obj: libparsec::WorkspaceHistoryEntryStat,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
-        libparsec::WorkspaceHistory2EntryStat::File {
+        libparsec::WorkspaceHistoryEntryStat::File {
             id,
             parent,
             created,
@@ -14453,7 +14453,7 @@ fn variant_workspace_history2_entry_stat_rs_to_js(
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2EntryStatFile".into(),
+                &"WorkspaceHistoryEntryStatFile".into(),
             )?;
             let js_id = JsValue::from_str({
                 let custom_to_rs_string =
@@ -14512,7 +14512,7 @@ fn variant_workspace_history2_entry_stat_rs_to_js(
             });
             Reflect::set(&js_obj, &"lastUpdater".into(), &js_last_updater)?;
         }
-        libparsec::WorkspaceHistory2EntryStat::Folder {
+        libparsec::WorkspaceHistoryEntryStat::Folder {
             id,
             parent,
             created,
@@ -14524,7 +14524,7 @@ fn variant_workspace_history2_entry_stat_rs_to_js(
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2EntryStatFolder".into(),
+                &"WorkspaceHistoryEntryStatFolder".into(),
             )?;
             let js_id = JsValue::from_str({
                 let custom_to_rs_string =
@@ -14585,256 +14585,256 @@ fn variant_workspace_history2_entry_stat_rs_to_js(
     Ok(js_obj)
 }
 
-// WorkspaceHistory2FdCloseError
+// WorkspaceHistoryFdCloseError
 
 #[allow(dead_code)]
-fn variant_workspace_history2_fd_close_error_rs_to_js(
-    rs_obj: libparsec::WorkspaceHistory2FdCloseError,
+fn variant_workspace_history_fd_close_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceHistoryFdCloseError,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::WorkspaceHistory2FdCloseError::BadFileDescriptor { .. } => {
+        libparsec::WorkspaceHistoryFdCloseError::BadFileDescriptor { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2FdCloseErrorBadFileDescriptor".into(),
+                &"WorkspaceHistoryFdCloseErrorBadFileDescriptor".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2FdCloseError::Internal { .. } => {
+        libparsec::WorkspaceHistoryFdCloseError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2FdCloseErrorInternal".into(),
+                &"WorkspaceHistoryFdCloseErrorInternal".into(),
             )?;
         }
     }
     Ok(js_obj)
 }
 
-// WorkspaceHistory2FdReadError
+// WorkspaceHistoryFdReadError
 
 #[allow(dead_code)]
-fn variant_workspace_history2_fd_read_error_rs_to_js(
-    rs_obj: libparsec::WorkspaceHistory2FdReadError,
+fn variant_workspace_history_fd_read_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceHistoryFdReadError,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::WorkspaceHistory2FdReadError::BadFileDescriptor { .. } => {
+        libparsec::WorkspaceHistoryFdReadError::BadFileDescriptor { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2FdReadErrorBadFileDescriptor".into(),
+                &"WorkspaceHistoryFdReadErrorBadFileDescriptor".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2FdReadError::Internal { .. } => {
+        libparsec::WorkspaceHistoryFdReadError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2FdReadErrorInternal".into(),
+                &"WorkspaceHistoryFdReadErrorInternal".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2FdReadError::InvalidBlockAccess { .. } => {
+        libparsec::WorkspaceHistoryFdReadError::InvalidBlockAccess { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2FdReadErrorInvalidBlockAccess".into(),
+                &"WorkspaceHistoryFdReadErrorInvalidBlockAccess".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2FdReadError::InvalidCertificate { .. } => {
+        libparsec::WorkspaceHistoryFdReadError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2FdReadErrorInvalidCertificate".into(),
+                &"WorkspaceHistoryFdReadErrorInvalidCertificate".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2FdReadError::InvalidKeysBundle { .. } => {
+        libparsec::WorkspaceHistoryFdReadError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2FdReadErrorInvalidKeysBundle".into(),
+                &"WorkspaceHistoryFdReadErrorInvalidKeysBundle".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2FdReadError::NoRealmAccess { .. } => {
+        libparsec::WorkspaceHistoryFdReadError::NoRealmAccess { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2FdReadErrorNoRealmAccess".into(),
+                &"WorkspaceHistoryFdReadErrorNoRealmAccess".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2FdReadError::Offline { .. } => {
+        libparsec::WorkspaceHistoryFdReadError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2FdReadErrorOffline".into(),
+                &"WorkspaceHistoryFdReadErrorOffline".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2FdReadError::ServerBlockstoreUnavailable { .. } => {
+        libparsec::WorkspaceHistoryFdReadError::ServerBlockstoreUnavailable { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2FdReadErrorServerBlockstoreUnavailable".into(),
+                &"WorkspaceHistoryFdReadErrorServerBlockstoreUnavailable".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2FdReadError::Stopped { .. } => {
+        libparsec::WorkspaceHistoryFdReadError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2FdReadErrorStopped".into(),
+                &"WorkspaceHistoryFdReadErrorStopped".into(),
             )?;
         }
     }
     Ok(js_obj)
 }
 
-// WorkspaceHistory2FdStatError
+// WorkspaceHistoryFdStatError
 
 #[allow(dead_code)]
-fn variant_workspace_history2_fd_stat_error_rs_to_js(
-    rs_obj: libparsec::WorkspaceHistory2FdStatError,
+fn variant_workspace_history_fd_stat_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceHistoryFdStatError,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::WorkspaceHistory2FdStatError::BadFileDescriptor { .. } => {
+        libparsec::WorkspaceHistoryFdStatError::BadFileDescriptor { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2FdStatErrorBadFileDescriptor".into(),
+                &"WorkspaceHistoryFdStatErrorBadFileDescriptor".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2FdStatError::Internal { .. } => {
+        libparsec::WorkspaceHistoryFdStatError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2FdStatErrorInternal".into(),
+                &"WorkspaceHistoryFdStatErrorInternal".into(),
             )?;
         }
     }
     Ok(js_obj)
 }
 
-// WorkspaceHistory2InternalOnlyError
+// WorkspaceHistoryInternalOnlyError
 
 #[allow(dead_code)]
-fn variant_workspace_history2_internal_only_error_rs_to_js(
-    rs_obj: libparsec::WorkspaceHistory2InternalOnlyError,
+fn variant_workspace_history_internal_only_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceHistoryInternalOnlyError,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::WorkspaceHistory2InternalOnlyError::Internal { .. } => {
+        libparsec::WorkspaceHistoryInternalOnlyError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2InternalOnlyErrorInternal".into(),
+                &"WorkspaceHistoryInternalOnlyErrorInternal".into(),
             )?;
         }
     }
     Ok(js_obj)
 }
 
-// WorkspaceHistory2OpenFileError
+// WorkspaceHistoryOpenFileError
 
 #[allow(dead_code)]
-fn variant_workspace_history2_open_file_error_rs_to_js(
-    rs_obj: libparsec::WorkspaceHistory2OpenFileError,
+fn variant_workspace_history_open_file_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceHistoryOpenFileError,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::WorkspaceHistory2OpenFileError::EntryNotAFile { .. } => {
+        libparsec::WorkspaceHistoryOpenFileError::EntryNotAFile { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2OpenFileErrorEntryNotAFile".into(),
+                &"WorkspaceHistoryOpenFileErrorEntryNotAFile".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2OpenFileError::EntryNotFound { .. } => {
+        libparsec::WorkspaceHistoryOpenFileError::EntryNotFound { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2OpenFileErrorEntryNotFound".into(),
+                &"WorkspaceHistoryOpenFileErrorEntryNotFound".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2OpenFileError::Internal { .. } => {
+        libparsec::WorkspaceHistoryOpenFileError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2OpenFileErrorInternal".into(),
+                &"WorkspaceHistoryOpenFileErrorInternal".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2OpenFileError::InvalidCertificate { .. } => {
+        libparsec::WorkspaceHistoryOpenFileError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2OpenFileErrorInvalidCertificate".into(),
+                &"WorkspaceHistoryOpenFileErrorInvalidCertificate".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2OpenFileError::InvalidHistory { .. } => {
+        libparsec::WorkspaceHistoryOpenFileError::InvalidHistory { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2OpenFileErrorInvalidHistory".into(),
+                &"WorkspaceHistoryOpenFileErrorInvalidHistory".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2OpenFileError::InvalidKeysBundle { .. } => {
+        libparsec::WorkspaceHistoryOpenFileError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2OpenFileErrorInvalidKeysBundle".into(),
+                &"WorkspaceHistoryOpenFileErrorInvalidKeysBundle".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2OpenFileError::InvalidManifest { .. } => {
+        libparsec::WorkspaceHistoryOpenFileError::InvalidManifest { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2OpenFileErrorInvalidManifest".into(),
+                &"WorkspaceHistoryOpenFileErrorInvalidManifest".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2OpenFileError::NoRealmAccess { .. } => {
+        libparsec::WorkspaceHistoryOpenFileError::NoRealmAccess { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2OpenFileErrorNoRealmAccess".into(),
+                &"WorkspaceHistoryOpenFileErrorNoRealmAccess".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2OpenFileError::Offline { .. } => {
+        libparsec::WorkspaceHistoryOpenFileError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2OpenFileErrorOffline".into(),
+                &"WorkspaceHistoryOpenFileErrorOffline".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2OpenFileError::Stopped { .. } => {
+        libparsec::WorkspaceHistoryOpenFileError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2OpenFileErrorStopped".into(),
+                &"WorkspaceHistoryOpenFileErrorStopped".into(),
             )?;
         }
     }
     Ok(js_obj)
 }
 
-// WorkspaceHistory2RealmExportDecryptor
+// WorkspaceHistoryRealmExportDecryptor
 
 #[allow(dead_code)]
-fn variant_workspace_history2_realm_export_decryptor_js_to_rs(
+fn variant_workspace_history_realm_export_decryptor_js_to_rs(
     obj: JsValue,
-) -> Result<libparsec::WorkspaceHistory2RealmExportDecryptor, JsValue> {
+) -> Result<libparsec::WorkspaceHistoryRealmExportDecryptor, JsValue> {
     let tag = Reflect::get(&obj, &"tag".into())?;
     let tag = tag
         .as_string()
         .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
     match tag.as_str() {
-        "WorkspaceHistory2RealmExportDecryptorSequesterService" => {
+        "WorkspaceHistoryRealmExportDecryptorSequesterService" => {
             let sequester_service_id = {
                 let js_val = Reflect::get(&obj, &"sequesterServiceId".into())?;
                 js_val
@@ -14866,32 +14866,32 @@ fn variant_workspace_history2_realm_export_decryptor_js_to_rs(
                     })?
             };
             Ok(
-                libparsec::WorkspaceHistory2RealmExportDecryptor::SequesterService {
+                libparsec::WorkspaceHistoryRealmExportDecryptor::SequesterService {
                     sequester_service_id,
                     private_key_pem_path,
                 },
             )
         }
-        "WorkspaceHistory2RealmExportDecryptorUser" => {
+        "WorkspaceHistoryRealmExportDecryptorUser" => {
             let access = {
                 let js_val = Reflect::get(&obj, &"access".into())?;
                 variant_device_access_strategy_js_to_rs(js_val)?
             };
-            Ok(libparsec::WorkspaceHistory2RealmExportDecryptor::User { access })
+            Ok(libparsec::WorkspaceHistoryRealmExportDecryptor::User { access })
         }
         _ => Err(JsValue::from(TypeError::new(
-            "Object is not a WorkspaceHistory2RealmExportDecryptor",
+            "Object is not a WorkspaceHistoryRealmExportDecryptor",
         ))),
     }
 }
 
 #[allow(dead_code)]
-fn variant_workspace_history2_realm_export_decryptor_rs_to_js(
-    rs_obj: libparsec::WorkspaceHistory2RealmExportDecryptor,
+fn variant_workspace_history_realm_export_decryptor_rs_to_js(
+    rs_obj: libparsec::WorkspaceHistoryRealmExportDecryptor,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
-        libparsec::WorkspaceHistory2RealmExportDecryptor::SequesterService {
+        libparsec::WorkspaceHistoryRealmExportDecryptor::SequesterService {
             sequester_service_id,
             private_key_pem_path,
             ..
@@ -14899,7 +14899,7 @@ fn variant_workspace_history2_realm_export_decryptor_rs_to_js(
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2RealmExportDecryptorSequesterService".into(),
+                &"WorkspaceHistoryRealmExportDecryptorSequesterService".into(),
             )?;
             let js_sequester_service_id = JsValue::from_str({
                 let custom_to_rs_string =
@@ -14935,11 +14935,11 @@ fn variant_workspace_history2_realm_export_decryptor_rs_to_js(
                 &js_private_key_pem_path,
             )?;
         }
-        libparsec::WorkspaceHistory2RealmExportDecryptor::User { access, .. } => {
+        libparsec::WorkspaceHistoryRealmExportDecryptor::User { access, .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2RealmExportDecryptorUser".into(),
+                &"WorkspaceHistoryRealmExportDecryptorUser".into(),
             )?;
             let js_access = variant_device_access_strategy_rs_to_js(access)?;
             Reflect::set(&js_obj, &"access".into(), &js_access)?;
@@ -14948,354 +14948,350 @@ fn variant_workspace_history2_realm_export_decryptor_rs_to_js(
     Ok(js_obj)
 }
 
-// WorkspaceHistory2SetTimestampOfInterestError
+// WorkspaceHistorySetTimestampOfInterestError
 
 #[allow(dead_code)]
-fn variant_workspace_history2_set_timestamp_of_interest_error_rs_to_js(
-    rs_obj: libparsec::WorkspaceHistory2SetTimestampOfInterestError,
+fn variant_workspace_history_set_timestamp_of_interest_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceHistorySetTimestampOfInterestError,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::WorkspaceHistory2SetTimestampOfInterestError::EntryNotFound { .. } => {
+        libparsec::WorkspaceHistorySetTimestampOfInterestError::EntryNotFound { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2SetTimestampOfInterestErrorEntryNotFound".into(),
+                &"WorkspaceHistorySetTimestampOfInterestErrorEntryNotFound".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2SetTimestampOfInterestError::Internal { .. } => {
+        libparsec::WorkspaceHistorySetTimestampOfInterestError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2SetTimestampOfInterestErrorInternal".into(),
+                &"WorkspaceHistorySetTimestampOfInterestErrorInternal".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2SetTimestampOfInterestError::InvalidCertificate { .. } => {
+        libparsec::WorkspaceHistorySetTimestampOfInterestError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2SetTimestampOfInterestErrorInvalidCertificate".into(),
+                &"WorkspaceHistorySetTimestampOfInterestErrorInvalidCertificate".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2SetTimestampOfInterestError::InvalidHistory { .. } => {
+        libparsec::WorkspaceHistorySetTimestampOfInterestError::InvalidHistory { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2SetTimestampOfInterestErrorInvalidHistory".into(),
+                &"WorkspaceHistorySetTimestampOfInterestErrorInvalidHistory".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2SetTimestampOfInterestError::InvalidKeysBundle { .. } => {
+        libparsec::WorkspaceHistorySetTimestampOfInterestError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2SetTimestampOfInterestErrorInvalidKeysBundle".into(),
+                &"WorkspaceHistorySetTimestampOfInterestErrorInvalidKeysBundle".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2SetTimestampOfInterestError::InvalidManifest { .. } => {
+        libparsec::WorkspaceHistorySetTimestampOfInterestError::InvalidManifest { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2SetTimestampOfInterestErrorInvalidManifest".into(),
+                &"WorkspaceHistorySetTimestampOfInterestErrorInvalidManifest".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2SetTimestampOfInterestError::NewerThanHigherBound {
-            ..
-        } => {
+        libparsec::WorkspaceHistorySetTimestampOfInterestError::NewerThanHigherBound { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2SetTimestampOfInterestErrorNewerThanHigherBound".into(),
+                &"WorkspaceHistorySetTimestampOfInterestErrorNewerThanHigherBound".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2SetTimestampOfInterestError::NoRealmAccess { .. } => {
+        libparsec::WorkspaceHistorySetTimestampOfInterestError::NoRealmAccess { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2SetTimestampOfInterestErrorNoRealmAccess".into(),
+                &"WorkspaceHistorySetTimestampOfInterestErrorNoRealmAccess".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2SetTimestampOfInterestError::Offline { .. } => {
+        libparsec::WorkspaceHistorySetTimestampOfInterestError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2SetTimestampOfInterestErrorOffline".into(),
+                &"WorkspaceHistorySetTimestampOfInterestErrorOffline".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2SetTimestampOfInterestError::OlderThanLowerBound { .. } => {
+        libparsec::WorkspaceHistorySetTimestampOfInterestError::OlderThanLowerBound { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2SetTimestampOfInterestErrorOlderThanLowerBound".into(),
+                &"WorkspaceHistorySetTimestampOfInterestErrorOlderThanLowerBound".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2SetTimestampOfInterestError::Stopped { .. } => {
+        libparsec::WorkspaceHistorySetTimestampOfInterestError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2SetTimestampOfInterestErrorStopped".into(),
+                &"WorkspaceHistorySetTimestampOfInterestErrorStopped".into(),
             )?;
         }
     }
     Ok(js_obj)
 }
 
-// WorkspaceHistory2StartError
+// WorkspaceHistoryStartError
 
 #[allow(dead_code)]
-fn variant_workspace_history2_start_error_rs_to_js(
-    rs_obj: libparsec::WorkspaceHistory2StartError,
+fn variant_workspace_history_start_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceHistoryStartError,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::WorkspaceHistory2StartError::CannotOpenRealmExportDatabase { .. } => {
+        libparsec::WorkspaceHistoryStartError::CannotOpenRealmExportDatabase { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StartErrorCannotOpenRealmExportDatabase".into(),
+                &"WorkspaceHistoryStartErrorCannotOpenRealmExportDatabase".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StartError::IncompleteRealmExportDatabase { .. } => {
+        libparsec::WorkspaceHistoryStartError::IncompleteRealmExportDatabase { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StartErrorIncompleteRealmExportDatabase".into(),
+                &"WorkspaceHistoryStartErrorIncompleteRealmExportDatabase".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StartError::Internal { .. } => {
+        libparsec::WorkspaceHistoryStartError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StartErrorInternal".into(),
+                &"WorkspaceHistoryStartErrorInternal".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StartError::InvalidCertificate { .. } => {
+        libparsec::WorkspaceHistoryStartError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StartErrorInvalidCertificate".into(),
+                &"WorkspaceHistoryStartErrorInvalidCertificate".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StartError::InvalidKeysBundle { .. } => {
+        libparsec::WorkspaceHistoryStartError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StartErrorInvalidKeysBundle".into(),
+                &"WorkspaceHistoryStartErrorInvalidKeysBundle".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StartError::InvalidManifest { .. } => {
+        libparsec::WorkspaceHistoryStartError::InvalidManifest { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StartErrorInvalidManifest".into(),
+                &"WorkspaceHistoryStartErrorInvalidManifest".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StartError::InvalidRealmExportDatabase { .. } => {
+        libparsec::WorkspaceHistoryStartError::InvalidRealmExportDatabase { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StartErrorInvalidRealmExportDatabase".into(),
+                &"WorkspaceHistoryStartErrorInvalidRealmExportDatabase".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StartError::NoHistory { .. } => {
+        libparsec::WorkspaceHistoryStartError::NoHistory { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StartErrorNoHistory".into(),
+                &"WorkspaceHistoryStartErrorNoHistory".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StartError::NoRealmAccess { .. } => {
+        libparsec::WorkspaceHistoryStartError::NoRealmAccess { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StartErrorNoRealmAccess".into(),
+                &"WorkspaceHistoryStartErrorNoRealmAccess".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StartError::Offline { .. } => {
+        libparsec::WorkspaceHistoryStartError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StartErrorOffline".into(),
+                &"WorkspaceHistoryStartErrorOffline".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StartError::Stopped { .. } => {
+        libparsec::WorkspaceHistoryStartError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StartErrorStopped".into(),
+                &"WorkspaceHistoryStartErrorStopped".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StartError::UnsupportedRealmExportDatabaseVersion {
-            ..
-        } => {
+        libparsec::WorkspaceHistoryStartError::UnsupportedRealmExportDatabaseVersion { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StartErrorUnsupportedRealmExportDatabaseVersion".into(),
+                &"WorkspaceHistoryStartErrorUnsupportedRealmExportDatabaseVersion".into(),
             )?;
         }
     }
     Ok(js_obj)
 }
 
-// WorkspaceHistory2StatEntryError
+// WorkspaceHistoryStatEntryError
 
 #[allow(dead_code)]
-fn variant_workspace_history2_stat_entry_error_rs_to_js(
-    rs_obj: libparsec::WorkspaceHistory2StatEntryError,
+fn variant_workspace_history_stat_entry_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceHistoryStatEntryError,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::WorkspaceHistory2StatEntryError::EntryNotFound { .. } => {
+        libparsec::WorkspaceHistoryStatEntryError::EntryNotFound { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StatEntryErrorEntryNotFound".into(),
+                &"WorkspaceHistoryStatEntryErrorEntryNotFound".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StatEntryError::Internal { .. } => {
+        libparsec::WorkspaceHistoryStatEntryError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StatEntryErrorInternal".into(),
+                &"WorkspaceHistoryStatEntryErrorInternal".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StatEntryError::InvalidCertificate { .. } => {
+        libparsec::WorkspaceHistoryStatEntryError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StatEntryErrorInvalidCertificate".into(),
+                &"WorkspaceHistoryStatEntryErrorInvalidCertificate".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StatEntryError::InvalidHistory { .. } => {
+        libparsec::WorkspaceHistoryStatEntryError::InvalidHistory { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StatEntryErrorInvalidHistory".into(),
+                &"WorkspaceHistoryStatEntryErrorInvalidHistory".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StatEntryError::InvalidKeysBundle { .. } => {
+        libparsec::WorkspaceHistoryStatEntryError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StatEntryErrorInvalidKeysBundle".into(),
+                &"WorkspaceHistoryStatEntryErrorInvalidKeysBundle".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StatEntryError::InvalidManifest { .. } => {
+        libparsec::WorkspaceHistoryStatEntryError::InvalidManifest { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StatEntryErrorInvalidManifest".into(),
+                &"WorkspaceHistoryStatEntryErrorInvalidManifest".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StatEntryError::NoRealmAccess { .. } => {
+        libparsec::WorkspaceHistoryStatEntryError::NoRealmAccess { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StatEntryErrorNoRealmAccess".into(),
+                &"WorkspaceHistoryStatEntryErrorNoRealmAccess".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StatEntryError::Offline { .. } => {
+        libparsec::WorkspaceHistoryStatEntryError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StatEntryErrorOffline".into(),
+                &"WorkspaceHistoryStatEntryErrorOffline".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StatEntryError::Stopped { .. } => {
+        libparsec::WorkspaceHistoryStatEntryError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StatEntryErrorStopped".into(),
+                &"WorkspaceHistoryStatEntryErrorStopped".into(),
             )?;
         }
     }
     Ok(js_obj)
 }
 
-// WorkspaceHistory2StatFolderChildrenError
+// WorkspaceHistoryStatFolderChildrenError
 
 #[allow(dead_code)]
-fn variant_workspace_history2_stat_folder_children_error_rs_to_js(
-    rs_obj: libparsec::WorkspaceHistory2StatFolderChildrenError,
+fn variant_workspace_history_stat_folder_children_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceHistoryStatFolderChildrenError,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::WorkspaceHistory2StatFolderChildrenError::EntryIsFile { .. } => {
+        libparsec::WorkspaceHistoryStatFolderChildrenError::EntryIsFile { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StatFolderChildrenErrorEntryIsFile".into(),
+                &"WorkspaceHistoryStatFolderChildrenErrorEntryIsFile".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StatFolderChildrenError::EntryNotFound { .. } => {
+        libparsec::WorkspaceHistoryStatFolderChildrenError::EntryNotFound { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StatFolderChildrenErrorEntryNotFound".into(),
+                &"WorkspaceHistoryStatFolderChildrenErrorEntryNotFound".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StatFolderChildrenError::Internal { .. } => {
+        libparsec::WorkspaceHistoryStatFolderChildrenError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StatFolderChildrenErrorInternal".into(),
+                &"WorkspaceHistoryStatFolderChildrenErrorInternal".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StatFolderChildrenError::InvalidCertificate { .. } => {
+        libparsec::WorkspaceHistoryStatFolderChildrenError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StatFolderChildrenErrorInvalidCertificate".into(),
+                &"WorkspaceHistoryStatFolderChildrenErrorInvalidCertificate".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StatFolderChildrenError::InvalidHistory { .. } => {
+        libparsec::WorkspaceHistoryStatFolderChildrenError::InvalidHistory { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StatFolderChildrenErrorInvalidHistory".into(),
+                &"WorkspaceHistoryStatFolderChildrenErrorInvalidHistory".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StatFolderChildrenError::InvalidKeysBundle { .. } => {
+        libparsec::WorkspaceHistoryStatFolderChildrenError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StatFolderChildrenErrorInvalidKeysBundle".into(),
+                &"WorkspaceHistoryStatFolderChildrenErrorInvalidKeysBundle".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StatFolderChildrenError::InvalidManifest { .. } => {
+        libparsec::WorkspaceHistoryStatFolderChildrenError::InvalidManifest { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StatFolderChildrenErrorInvalidManifest".into(),
+                &"WorkspaceHistoryStatFolderChildrenErrorInvalidManifest".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StatFolderChildrenError::NoRealmAccess { .. } => {
+        libparsec::WorkspaceHistoryStatFolderChildrenError::NoRealmAccess { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StatFolderChildrenErrorNoRealmAccess".into(),
+                &"WorkspaceHistoryStatFolderChildrenErrorNoRealmAccess".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StatFolderChildrenError::Offline { .. } => {
+        libparsec::WorkspaceHistoryStatFolderChildrenError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StatFolderChildrenErrorOffline".into(),
+                &"WorkspaceHistoryStatFolderChildrenErrorOffline".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2StatFolderChildrenError::Stopped { .. } => {
+        libparsec::WorkspaceHistoryStatFolderChildrenError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceHistory2StatFolderChildrenErrorStopped".into(),
+                &"WorkspaceHistoryStatFolderChildrenErrorStopped".into(),
             )?;
         }
     }
@@ -18793,10 +18789,10 @@ pub fn clientStartWorkspace(client: u32, realm_id: String) -> Promise {
     }))
 }
 
-// client_start_workspace_history2
+// client_start_workspace_history
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn clientStartWorkspaceHistory2(client: u32, realm_id: String) -> Promise {
+pub fn clientStartWorkspaceHistory(client: u32, realm_id: String) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let realm_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
@@ -18804,7 +18800,7 @@ pub fn clientStartWorkspaceHistory2(client: u32, realm_id: String) -> Promise {
             };
             custom_from_rs_string(realm_id).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-        let ret = libparsec::client_start_workspace_history2(client, realm_id).await;
+        let ret = libparsec::client_start_workspace_history(client, realm_id).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -18816,7 +18812,7 @@ pub fn clientStartWorkspaceHistory2(client: u32, realm_id: String) -> Promise {
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_history2_start_error_rs_to_js(err)?;
+                let js_err = variant_workspace_history_start_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -20808,17 +20804,17 @@ pub fn workspaceGeneratePathAddr(workspace: u32, path: String) -> Promise {
     }))
 }
 
-// workspace_history2_fd_close
+// workspace_history_fd_close
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn workspaceHistory2FdClose(workspace_history: u32, fd: u32) -> Promise {
+pub fn workspaceHistoryFdClose(workspace_history: u32, fd: u32) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
             let custom_from_rs_u32 =
                 |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
             custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-        let ret = libparsec::workspace_history2_fd_close(workspace_history, fd);
+        let ret = libparsec::workspace_history_fd_close(workspace_history, fd);
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -20833,7 +20829,7 @@ pub fn workspaceHistory2FdClose(workspace_history: u32, fd: u32) -> Promise {
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_history2_fd_close_error_rs_to_js(err)?;
+                let js_err = variant_workspace_history_fd_close_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -20841,10 +20837,10 @@ pub fn workspaceHistory2FdClose(workspace_history: u32, fd: u32) -> Promise {
     }))
 }
 
-// workspace_history2_fd_read
+// workspace_history_fd_read
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn workspaceHistory2FdRead(workspace_history: u32, fd: u32, offset: u64, size: u64) -> Promise {
+pub fn workspaceHistoryFdRead(workspace_history: u32, fd: u32, offset: u64, size: u64) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
             let custom_from_rs_u32 =
@@ -20852,7 +20848,7 @@ pub fn workspaceHistory2FdRead(workspace_history: u32, fd: u32, offset: u64, siz
             custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
-        let ret = libparsec::workspace_history2_fd_read(workspace_history, fd, offset, size).await;
+        let ret = libparsec::workspace_history_fd_read(workspace_history, fd, offset, size).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -20864,7 +20860,7 @@ pub fn workspaceHistory2FdRead(workspace_history: u32, fd: u32, offset: u64, siz
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_history2_fd_read_error_rs_to_js(err)?;
+                let js_err = variant_workspace_history_fd_read_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -20872,10 +20868,10 @@ pub fn workspaceHistory2FdRead(workspace_history: u32, fd: u32, offset: u64, siz
     }))
 }
 
-// workspace_history2_fd_stat
+// workspace_history_fd_stat
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn workspaceHistory2FdStat(workspace_history: u32, fd: u32) -> Promise {
+pub fn workspaceHistoryFdStat(workspace_history: u32, fd: u32) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
             let custom_from_rs_u32 =
@@ -20883,19 +20879,19 @@ pub fn workspaceHistory2FdStat(workspace_history: u32, fd: u32) -> Promise {
             custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
-        let ret = libparsec::workspace_history2_fd_stat(workspace_history, fd).await;
+        let ret = libparsec::workspace_history_fd_stat(workspace_history, fd).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_workspace_history2_file_stat_rs_to_js(value)?;
+                let js_value = struct_workspace_history_file_stat_rs_to_js(value)?;
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_history2_fd_stat_error_rs_to_js(err)?;
+                let js_err = variant_workspace_history_fd_stat_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -20903,12 +20899,12 @@ pub fn workspaceHistory2FdStat(workspace_history: u32, fd: u32) -> Promise {
     }))
 }
 
-// workspace_history2_get_timestamp_higher_bound
+// workspace_history_get_timestamp_higher_bound
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn workspaceHistory2GetTimestampHigherBound(workspace_history: u32) -> Promise {
+pub fn workspaceHistoryGetTimestampHigherBound(workspace_history: u32) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
-        let ret = libparsec::workspace_history2_get_timestamp_higher_bound(workspace_history);
+        let ret = libparsec::workspace_history_get_timestamp_higher_bound(workspace_history);
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -20929,7 +20925,7 @@ pub fn workspaceHistory2GetTimestampHigherBound(workspace_history: u32) -> Promi
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_history2_internal_only_error_rs_to_js(err)?;
+                let js_err = variant_workspace_history_internal_only_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -20937,12 +20933,12 @@ pub fn workspaceHistory2GetTimestampHigherBound(workspace_history: u32) -> Promi
     }))
 }
 
-// workspace_history2_get_timestamp_lower_bound
+// workspace_history_get_timestamp_lower_bound
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn workspaceHistory2GetTimestampLowerBound(workspace_history: u32) -> Promise {
+pub fn workspaceHistoryGetTimestampLowerBound(workspace_history: u32) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
-        let ret = libparsec::workspace_history2_get_timestamp_lower_bound(workspace_history);
+        let ret = libparsec::workspace_history_get_timestamp_lower_bound(workspace_history);
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -20963,7 +20959,7 @@ pub fn workspaceHistory2GetTimestampLowerBound(workspace_history: u32) -> Promis
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_history2_internal_only_error_rs_to_js(err)?;
+                let js_err = variant_workspace_history_internal_only_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -20971,12 +20967,12 @@ pub fn workspaceHistory2GetTimestampLowerBound(workspace_history: u32) -> Promis
     }))
 }
 
-// workspace_history2_get_timestamp_of_interest
+// workspace_history_get_timestamp_of_interest
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn workspaceHistory2GetTimestampOfInterest(workspace_history: u32) -> Promise {
+pub fn workspaceHistoryGetTimestampOfInterest(workspace_history: u32) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
-        let ret = libparsec::workspace_history2_get_timestamp_of_interest(workspace_history);
+        let ret = libparsec::workspace_history_get_timestamp_of_interest(workspace_history);
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -20997,7 +20993,7 @@ pub fn workspaceHistory2GetTimestampOfInterest(workspace_history: u32) -> Promis
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_history2_internal_only_error_rs_to_js(err)?;
+                let js_err = variant_workspace_history_internal_only_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -21005,10 +21001,10 @@ pub fn workspaceHistory2GetTimestampOfInterest(workspace_history: u32) -> Promis
     }))
 }
 
-// workspace_history2_open_file
+// workspace_history_open_file
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn workspaceHistory2OpenFile(workspace_history: u32, path: String) -> Promise {
+pub fn workspaceHistoryOpenFile(workspace_history: u32, path: String) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
@@ -21016,7 +21012,7 @@ pub fn workspaceHistory2OpenFile(workspace_history: u32, path: String) -> Promis
             };
             custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-        let ret = libparsec::workspace_history2_open_file(workspace_history, path).await;
+        let ret = libparsec::workspace_history_open_file(workspace_history, path).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -21036,7 +21032,7 @@ pub fn workspaceHistory2OpenFile(workspace_history: u32, path: String) -> Promis
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_history2_open_file_error_rs_to_js(err)?;
+                let js_err = variant_workspace_history_open_file_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -21044,10 +21040,10 @@ pub fn workspaceHistory2OpenFile(workspace_history: u32, path: String) -> Promis
     }))
 }
 
-// workspace_history2_open_file_and_get_id
+// workspace_history_open_file_and_get_id
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn workspaceHistory2OpenFileAndGetId(workspace_history: u32, path: String) -> Promise {
+pub fn workspaceHistoryOpenFileAndGetId(workspace_history: u32, path: String) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
@@ -21055,7 +21051,7 @@ pub fn workspaceHistory2OpenFileAndGetId(workspace_history: u32, path: String) -
             };
             custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-        let ret = libparsec::workspace_history2_open_file_and_get_id(workspace_history, path).await;
+        let ret = libparsec::workspace_history_open_file_and_get_id(workspace_history, path).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -21092,7 +21088,7 @@ pub fn workspaceHistory2OpenFileAndGetId(workspace_history: u32, path: String) -
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_history2_open_file_error_rs_to_js(err)?;
+                let js_err = variant_workspace_history_open_file_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -21100,10 +21096,10 @@ pub fn workspaceHistory2OpenFileAndGetId(workspace_history: u32, path: String) -
     }))
 }
 
-// workspace_history2_open_file_by_id
+// workspace_history_open_file_by_id
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn workspaceHistory2OpenFileById(workspace_history: u32, entry_id: String) -> Promise {
+pub fn workspaceHistoryOpenFileById(workspace_history: u32, entry_id: String) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let entry_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
@@ -21111,7 +21107,7 @@ pub fn workspaceHistory2OpenFileById(workspace_history: u32, entry_id: String) -
             };
             custom_from_rs_string(entry_id).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-        let ret = libparsec::workspace_history2_open_file_by_id(workspace_history, entry_id).await;
+        let ret = libparsec::workspace_history_open_file_by_id(workspace_history, entry_id).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -21131,7 +21127,7 @@ pub fn workspaceHistory2OpenFileById(workspace_history: u32, entry_id: String) -
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_history2_open_file_error_rs_to_js(err)?;
+                let js_err = variant_workspace_history_open_file_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -21139,10 +21135,10 @@ pub fn workspaceHistory2OpenFileById(workspace_history: u32, entry_id: String) -
     }))
 }
 
-// workspace_history2_set_timestamp_of_interest
+// workspace_history_set_timestamp_of_interest
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn workspaceHistory2SetTimestampOfInterest(workspace_history: u32, toi: f64) -> Promise {
+pub fn workspaceHistorySetTimestampOfInterest(workspace_history: u32, toi: f64) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let toi = {
             let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
@@ -21153,7 +21149,7 @@ pub fn workspaceHistory2SetTimestampOfInterest(workspace_history: u32, toi: f64)
         }?;
 
         let ret =
-            libparsec::workspace_history2_set_timestamp_of_interest(workspace_history, toi).await;
+            libparsec::workspace_history_set_timestamp_of_interest(workspace_history, toi).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -21169,7 +21165,7 @@ pub fn workspaceHistory2SetTimestampOfInterest(workspace_history: u32, toi: f64)
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err =
-                    variant_workspace_history2_set_timestamp_of_interest_error_rs_to_js(err)?;
+                    variant_workspace_history_set_timestamp_of_interest_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -21177,10 +21173,10 @@ pub fn workspaceHistory2SetTimestampOfInterest(workspace_history: u32, toi: f64)
     }))
 }
 
-// workspace_history2_start_with_realm_export
+// workspace_history_start_with_realm_export
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn workspaceHistory2StartWithRealmExport(
+pub fn workspaceHistoryStartWithRealmExport(
     config: Object,
     export_db_path: String,
     decryptors: Vec<Object>,
@@ -21197,12 +21193,12 @@ pub fn workspaceHistory2StartWithRealmExport(
         let mut decryptors_converted = Vec::with_capacity(decryptors.len());
         for js_elem in decryptors.iter() {
             let rs_elem =
-                variant_workspace_history2_realm_export_decryptor_js_to_rs(js_elem.into())?;
+                variant_workspace_history_realm_export_decryptor_js_to_rs(js_elem.into())?;
             decryptors_converted.push(rs_elem);
         }
         let decryptors = decryptors_converted;
 
-        let ret = libparsec::workspace_history2_start_with_realm_export(
+        let ret = libparsec::workspace_history_start_with_realm_export(
             config,
             export_db_path,
             decryptors,
@@ -21219,7 +21215,7 @@ pub fn workspaceHistory2StartWithRealmExport(
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_history2_start_error_rs_to_js(err)?;
+                let js_err = variant_workspace_history_start_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -21227,10 +21223,10 @@ pub fn workspaceHistory2StartWithRealmExport(
     }))
 }
 
-// workspace_history2_stat_entry
+// workspace_history_stat_entry
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn workspaceHistory2StatEntry(workspace_history: u32, path: String) -> Promise {
+pub fn workspaceHistoryStatEntry(workspace_history: u32, path: String) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
@@ -21239,19 +21235,19 @@ pub fn workspaceHistory2StatEntry(workspace_history: u32, path: String) -> Promi
             custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
-        let ret = libparsec::workspace_history2_stat_entry(workspace_history, &path).await;
+        let ret = libparsec::workspace_history_stat_entry(workspace_history, &path).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = variant_workspace_history2_entry_stat_rs_to_js(value)?;
+                let js_value = variant_workspace_history_entry_stat_rs_to_js(value)?;
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_history2_stat_entry_error_rs_to_js(err)?;
+                let js_err = variant_workspace_history_stat_entry_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -21259,10 +21255,10 @@ pub fn workspaceHistory2StatEntry(workspace_history: u32, path: String) -> Promi
     }))
 }
 
-// workspace_history2_stat_entry_by_id
+// workspace_history_stat_entry_by_id
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn workspaceHistory2StatEntryById(workspace_history: u32, entry_id: String) -> Promise {
+pub fn workspaceHistoryStatEntryById(workspace_history: u32, entry_id: String) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let entry_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
@@ -21270,19 +21266,19 @@ pub fn workspaceHistory2StatEntryById(workspace_history: u32, entry_id: String) 
             };
             custom_from_rs_string(entry_id).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-        let ret = libparsec::workspace_history2_stat_entry_by_id(workspace_history, entry_id).await;
+        let ret = libparsec::workspace_history_stat_entry_by_id(workspace_history, entry_id).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = variant_workspace_history2_entry_stat_rs_to_js(value)?;
+                let js_value = variant_workspace_history_entry_stat_rs_to_js(value)?;
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_history2_stat_entry_error_rs_to_js(err)?;
+                let js_err = variant_workspace_history_stat_entry_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -21290,10 +21286,10 @@ pub fn workspaceHistory2StatEntryById(workspace_history: u32, entry_id: String) 
     }))
 }
 
-// workspace_history2_stat_folder_children
+// workspace_history_stat_folder_children
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn workspaceHistory2StatFolderChildren(workspace_history: u32, path: String) -> Promise {
+pub fn workspaceHistoryStatFolderChildren(workspace_history: u32, path: String) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
@@ -21302,8 +21298,7 @@ pub fn workspaceHistory2StatFolderChildren(workspace_history: u32, path: String)
             custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
-        let ret =
-            libparsec::workspace_history2_stat_folder_children(workspace_history, &path).await;
+        let ret = libparsec::workspace_history_stat_folder_children(workspace_history, &path).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -21318,7 +21313,7 @@ pub fn workspaceHistory2StatFolderChildren(workspace_history: u32, path: String)
                             let js_array = Array::new_with_length(2);
                             let js_value = JsValue::from_str(x1.as_ref());
                             js_array.set(0, js_value);
-                            let js_value = variant_workspace_history2_entry_stat_rs_to_js(x2)?;
+                            let js_value = variant_workspace_history_entry_stat_rs_to_js(x2)?;
                             js_array.set(1, js_value);
                             js_array.into()
                         };
@@ -21332,7 +21327,7 @@ pub fn workspaceHistory2StatFolderChildren(workspace_history: u32, path: String)
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_history2_stat_folder_children_error_rs_to_js(err)?;
+                let js_err = variant_workspace_history_stat_folder_children_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -21340,13 +21335,10 @@ pub fn workspaceHistory2StatFolderChildren(workspace_history: u32, path: String)
     }))
 }
 
-// workspace_history2_stat_folder_children_by_id
+// workspace_history_stat_folder_children_by_id
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn workspaceHistory2StatFolderChildrenById(
-    workspace_history: u32,
-    entry_id: String,
-) -> Promise {
+pub fn workspaceHistoryStatFolderChildrenById(workspace_history: u32, entry_id: String) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let entry_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
@@ -21355,7 +21347,7 @@ pub fn workspaceHistory2StatFolderChildrenById(
             custom_from_rs_string(entry_id).map_err(|e| TypeError::new(e.as_ref()))
         }?;
         let ret =
-            libparsec::workspace_history2_stat_folder_children_by_id(workspace_history, entry_id)
+            libparsec::workspace_history_stat_folder_children_by_id(workspace_history, entry_id)
                 .await;
         Ok(match ret {
             Ok(value) => {
@@ -21371,7 +21363,7 @@ pub fn workspaceHistory2StatFolderChildrenById(
                             let js_array = Array::new_with_length(2);
                             let js_value = JsValue::from_str(x1.as_ref());
                             js_array.set(0, js_value);
-                            let js_value = variant_workspace_history2_entry_stat_rs_to_js(x2)?;
+                            let js_value = variant_workspace_history_entry_stat_rs_to_js(x2)?;
                             js_array.set(1, js_value);
                             js_array.into()
                         };
@@ -21385,7 +21377,7 @@ pub fn workspaceHistory2StatFolderChildrenById(
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_history2_stat_folder_children_error_rs_to_js(err)?;
+                let js_err = variant_workspace_history_stat_folder_children_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -21393,12 +21385,12 @@ pub fn workspaceHistory2StatFolderChildrenById(
     }))
 }
 
-// workspace_history2_stop
+// workspace_history_stop
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn workspaceHistory2Stop(workspace_history: u32) -> Promise {
+pub fn workspaceHistoryStop(workspace_history: u32) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
-        let ret = libparsec::workspace_history2_stop(workspace_history);
+        let ret = libparsec::workspace_history_stop(workspace_history);
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -21413,7 +21405,7 @@ pub fn workspaceHistory2Stop(workspace_history: u32) -> Promise {
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_history2_internal_only_error_rs_to_js(err)?;
+                let js_err = variant_workspace_history_internal_only_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

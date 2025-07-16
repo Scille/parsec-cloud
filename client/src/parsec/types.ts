@@ -67,14 +67,14 @@ export {
   WorkspaceFdReadErrorTag,
   WorkspaceFdResizeErrorTag,
   WorkspaceFdWriteErrorTag,
-  WorkspaceHistory2EntryStatTag,
-  WorkspaceHistory2FdCloseErrorTag,
-  WorkspaceHistory2FdReadErrorTag,
-  WorkspaceHistory2InternalOnlyErrorTag,
-  WorkspaceHistory2OpenFileErrorTag,
-  WorkspaceHistory2SetTimestampOfInterestErrorTag,
-  WorkspaceHistory2StatEntryErrorTag,
-  WorkspaceHistory2StatFolderChildrenErrorTag,
+  WorkspaceHistoryEntryStatTag,
+  WorkspaceHistoryFdCloseErrorTag,
+  WorkspaceHistoryFdReadErrorTag,
+  WorkspaceHistoryInternalOnlyErrorTag,
+  WorkspaceHistoryOpenFileErrorTag,
+  WorkspaceHistorySetTimestampOfInterestErrorTag,
+  WorkspaceHistoryStatEntryErrorTag,
+  WorkspaceHistoryStatFolderChildrenErrorTag,
   WorkspaceInfoErrorTag,
   WorkspaceMountErrorTag,
   WorkspaceMoveEntryErrorTag,
@@ -200,15 +200,14 @@ export type {
   WorkspaceFdResizeError,
   WorkspaceFdWriteError,
   WorkspaceGeneratePathAddrError,
-  WorkspaceHistory2EntryStat,
-  WorkspaceHistory2FdCloseError,
-  WorkspaceHistory2FdReadError,
-  WorkspaceHistory2InternalOnlyError,
-  WorkspaceHistory2OpenFileError,
-  WorkspaceHistory2SetTimestampOfInterestError,
-  WorkspaceHistory2StartError,
-  WorkspaceHistory2StatEntryError,
-  WorkspaceHistory2StatFolderChildrenError,
+  WorkspaceHistoryFdCloseError,
+  WorkspaceHistoryFdReadError,
+  WorkspaceHistoryInternalOnlyError,
+  WorkspaceHistoryOpenFileError,
+  WorkspaceHistorySetTimestampOfInterestError,
+  WorkspaceHistoryStartError,
+  WorkspaceHistoryStatEntryError,
+  WorkspaceHistoryStatFolderChildrenError,
   VlobID as WorkspaceID,
   WorkspaceInfoError,
   WorkspaceMountError,
@@ -234,8 +233,8 @@ import type {
   ParsecOrganizationAddr,
   StartedWorkspaceInfo as ParsecStartedWorkspaceInfo,
   UserInfo as ParsecUserInfo,
-  WorkspaceHistory2EntryStatFile as ParsecWorkspaceHistory2EntryStatFile,
-  WorkspaceHistory2EntryStatFolder as ParsecWorkspaceHistory2EntryStatFolder,
+  WorkspaceHistoryEntryStatFile as ParsecWorkspaceHistoryEntryStatFile,
+  WorkspaceHistoryEntryStatFolder as ParsecWorkspaceHistoryEntryStatFolder,
   WorkspaceInfo as ParsecWorkspaceInfo,
   Path,
   UserID,
@@ -284,7 +283,7 @@ interface EntryStatFile extends Omit<ParsecEntryStatFile, 'size' | 'lastUpdater'
 
 type EntryStat = EntryStatFile | EntryStatFolder;
 
-interface WorkspaceHistoryEntryStatFile extends Omit<ParsecWorkspaceHistory2EntryStatFile, 'size' | 'lastUpdater'> {
+interface WorkspaceHistoryEntryStatFile extends Omit<ParsecWorkspaceHistoryEntryStatFile, 'size' | 'lastUpdater'> {
   isFile: () => boolean;
   path: FsPath;
   name: EntryName;
@@ -292,7 +291,7 @@ interface WorkspaceHistoryEntryStatFile extends Omit<ParsecWorkspaceHistory2Entr
   lastUpdater?: UserInfo;
 }
 
-interface WorkspaceHistoryEntryStatFolder extends Omit<ParsecWorkspaceHistory2EntryStatFolder, 'lastUpdater'> {
+interface WorkspaceHistoryEntryStatFolder extends Omit<ParsecWorkspaceHistoryEntryStatFolder, 'lastUpdater'> {
   isFile: () => boolean;
   path: FsPath;
   name: EntryName;
