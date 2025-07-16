@@ -10,6 +10,7 @@ import { createWorkspace, fillInputModal, fillIonInput, importDefaultFiles, logo
 
 interface SetupOptions {
   testbedPath?: string;
+  skipTestbed?: boolean;
   location?: string;
   skipGoto?: boolean;
   withParsecAccount?: boolean;
@@ -103,14 +104,25 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
 
   await expect(page.locator('#app')).toHaveAttribute('app-state', 'initializing');
 
-  const testbed = await initTestBed(page, opts.testbedPath);
+  let testbed: string | undefined;
+  if (!opts.skipTestbed) {
+    testbed = await initTestBed(page, opts.testbedPath);
+  } else {
+    await page.evaluate(async () => {
+      const [, nextStage] = window.nextStageHook();
+      await nextStage(undefined, 'en-US');
+    });
+  }
   page.userData = generateDefaultUserData();
   page.orgInfo = generateDefaultOrganizationInformation();
   page.isReleased = false;
+  if (!page.skipTestbedRelease && opts.skipTestbed) {
+    page.skipTestbedRelease = true;
+  }
   page.openNewTab = async (): Promise<MsPage> => {
     const newTab = (await page.context().newPage()) as MsPage;
     newTab.skipTestbedRelease = true;
-    await setupNewPage(newTab, { testbedPath: testbed });
+    await setupNewPage(newTab, { ...opts, testbedPath: testbed });
     return newTab;
   };
   page.release = async (): Promise<void> => {

@@ -217,5 +217,43 @@ msTest('Warn on Safari', async ({ context }) => {
   const modal = page.locator('.incompatible-environment');
   await expect(modal).toBeVisible();
   await expect(modal.locator('.incompatible-content__title')).toHaveText('Your browser is not compatible with Parsec yet.');
-  await context.close();
+  await page.release();
+});
+
+msTest('Empty home page', async ({ context }) => {
+  const page = (await context.newPage()) as MsPage;
+
+  await setupNewPage(page, { skipTestbed: true });
+  const container = page.locator('.no-devices');
+  await expect(container).toBeVisible();
+  await expect(container.locator('.create-organization-text__title')).toHaveText('New to Parsec?');
+  const createOrgBtn = container.locator('#create-organization-button');
+  await expect(createOrgBtn).toHaveText('Create an organization');
+  await expect(page.locator('.create-organization-modal')).toBeHidden();
+  await createOrgBtn.click();
+  await expect(page.locator('.create-organization-modal')).toBeVisible();
+  await page.locator('.create-organization-modal').locator('.closeBtn').click();
+  await expect(page.locator('.create-organization-modal')).toBeHidden();
+
+  const recoverBtn = container.locator('.recovery-no-devices').locator('ion-button');
+  await expect(recoverBtn).toHaveText('Recover my session');
+  await expect(page.locator('.recovery-content')).toBeHidden();
+  await recoverBtn.click();
+  await expect(page.locator('.recovery-content')).toBeVisible();
+  await page.locator('.topbar-left__back-button').click();
+  await expect(page.locator('.recovery-content')).toBeHidden();
+
+  await expect(container.locator('.invitation').locator('.invitation__title')).toHaveText('You have received an invitation link?');
+  const joinBtn = container.locator('.invitation').locator('#join-organization-button');
+  const linkInput = container.locator('.invitation').locator('ion-input');
+  await expect(joinBtn).toHaveText('Join');
+  await expect(joinBtn).toBeTrulyDisabled();
+  // cspell:disable-next-line
+  await fillIonInput(linkInput, 'parsec3://parsec.cloud/Test?a=claim_user&p=xBBHJlEjlpxNZYTCvBWWDPIS');
+  await expect(joinBtn).toBeTrulyEnabled();
+  await expect(page.locator('.join-organization-modal')).toBeHidden();
+  await joinBtn.click();
+  await expect(page.locator('.join-organization-modal')).toBeVisible();
+
+  await page.release();
 });
