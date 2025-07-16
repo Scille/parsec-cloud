@@ -75,12 +75,6 @@ export {
   WorkspaceHistory2SetTimestampOfInterestErrorTag,
   WorkspaceHistory2StatEntryErrorTag,
   WorkspaceHistory2StatFolderChildrenErrorTag,
-  WorkspaceHistoryEntryStatTag,
-  WorkspaceHistoryFdCloseErrorTag,
-  WorkspaceHistoryFdReadErrorTag,
-  WorkspaceHistoryOpenFileErrorTag,
-  WorkspaceHistoryStatEntryErrorTag,
-  WorkspaceHistoryStatFolderChildrenErrorTag,
   WorkspaceInfoErrorTag,
   WorkspaceMountErrorTag,
   WorkspaceMoveEntryErrorTag,
@@ -215,11 +209,6 @@ export type {
   WorkspaceHistory2StartError,
   WorkspaceHistory2StatEntryError,
   WorkspaceHistory2StatFolderChildrenError,
-  WorkspaceHistoryFdCloseError,
-  WorkspaceHistoryFdReadError,
-  WorkspaceHistoryOpenFileError,
-  WorkspaceHistoryStatEntryError,
-  WorkspaceHistoryStatFolderChildrenError,
   VlobID as WorkspaceID,
   WorkspaceInfoError,
   WorkspaceMountError,
@@ -355,7 +344,6 @@ interface WorkspaceInfo extends ParsecWorkspaceInfo {
 
 interface StartedWorkspaceInfo extends ParsecStartedWorkspaceInfo {
   handle: WorkspaceHandle;
-  created?: DateTime;
 }
 
 enum OrganizationInfoErrorTag {

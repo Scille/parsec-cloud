@@ -220,9 +220,6 @@ async function loadHistory(): Promise<void> {
     const infoResult = await getWorkspaceInfo(workspaceHandle);
     if (infoResult.ok) {
       workspaceInfo.value = infoResult.value;
-      if (infoResult.value.created) {
-        minDate.value = infoResult.value.created.toJSDate();
-      }
     } else {
       console.error('Failed to retrieve workspace info');
     }
