@@ -124,9 +124,15 @@ async fn testbed(env: &TestbedEnv) {
 
     // Ok (new device for an existing user)
 
-    let access = DeviceAccessStrategy::Password {
+    let alice2_ciphertext_key_id =
+        AccountVaultItemOpaqueKeyID::from_hex("92631643a1414a7dbec89939f58d2ba8").unwrap();
+    let alice2_ciphertext_key: SecretKey =
+        hex!("8997c1865cf9339c15ae812de1fe1979547e0919c65ab9d0a1888d9cc0b9b8b7").into();
+
+    let access = DeviceAccessStrategy::AccountVault {
         key_file: env.discriminant_dir.join("devices/alice@dev2.keys"),
-        password: "P@ssw0rd.".to_owned().into(),
+        ciphertext_key_id: alice2_ciphertext_key_id,
+        ciphertext_key: alice2_ciphertext_key.clone(),
     };
     let device = load_device(&env.discriminant_dir, &access).await.unwrap();
     p_assert_eq!(device.device_id, "alice@dev2".parse().unwrap());
@@ -151,5 +157,31 @@ async fn testbed(env: &TestbedEnv) {
     p_assert_matches!(
         load_device(&env.discriminant_dir, &bad_path_access).await,
         Err(LoadDeviceError::InvalidPath(_))
+    );
+
+    // Ok with bad ciphertext key ID (since this field is ignored during device load)
+
+    let access = DeviceAccessStrategy::AccountVault {
+        key_file: env.discriminant_dir.join("devices/alice@dev2.keys"),
+        ciphertext_key_id: AccountVaultItemOpaqueKeyID::from_hex(
+            "92631643a1414a7dbec89939f58d2ba8",
+        )
+        .unwrap(),
+        ciphertext_key: alice2_ciphertext_key.clone(),
+    };
+    let device = load_device(&env.discriminant_dir, &access).await.unwrap();
+    p_assert_eq!(device.device_id, "alice@dev2".parse().unwrap());
+
+    // Bad ciphertext key (for account vault)
+
+    let bad_ciphertext_access = DeviceAccessStrategy::AccountVault {
+        key_file: env.discriminant_dir.join("devices/alice@dev2.keys"),
+        ciphertext_key_id: alice2_ciphertext_key_id,
+        ciphertext_key: hex!("f71eab23e31235512b4ca7e2b3786acf0684be08e096e583ba8466561a26f5e3")
+            .into(),
+    };
+    p_assert_matches!(
+        load_device(&env.discriminant_dir, &bad_ciphertext_access).await,
+        Err(LoadDeviceError::DecryptionFailed)
     );
 }
