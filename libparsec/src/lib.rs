@@ -17,7 +17,7 @@ mod recovery;
 mod testbed;
 mod validation;
 mod workspace;
-mod workspace_history2;
+mod workspace_history;
 
 pub use account::*;
 pub use addr::*;
@@ -42,7 +42,7 @@ pub use recovery::*;
 pub use testbed::*;
 pub use validation::*;
 pub use workspace::*;
-pub use workspace_history2::*;
+pub use workspace_history::*;
 
 pub mod internal {
     pub use libparsec_client::{

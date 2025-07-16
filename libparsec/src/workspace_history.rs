@@ -4,17 +4,12 @@ use std::{path::PathBuf, sync::Arc};
 
 pub use libparsec_client::{
     workspace_history::{
-        WorkspaceHistoryEntryStat as WorkspaceHistory2EntryStat,
-        WorkspaceHistoryFdCloseError as WorkspaceHistory2FdCloseError,
-        WorkspaceHistoryFdReadError as WorkspaceHistory2FdReadError,
-        WorkspaceHistoryFdStatError as WorkspaceHistory2FdStatError,
-        WorkspaceHistoryFileStat as WorkspaceHistory2FileStat,
-        WorkspaceHistoryOpenFileError as WorkspaceHistory2OpenFileError,
-        WorkspaceHistorySetTimestampOfInterestError as WorkspaceHistory2SetTimestampOfInterestError,
-        WorkspaceHistoryStatEntryError as WorkspaceHistory2StatEntryError,
-        WorkspaceHistoryStatFolderChildrenError as WorkspaceHistory2StatFolderChildrenError,
+        WorkspaceHistoryEntryStat, WorkspaceHistoryFdCloseError, WorkspaceHistoryFdReadError,
+        WorkspaceHistoryFdStatError, WorkspaceHistoryFileStat, WorkspaceHistoryOpenFileError,
+        WorkspaceHistorySetTimestampOfInterestError, WorkspaceHistoryStatEntryError,
+        WorkspaceHistoryStatFolderChildrenError,
     },
-    WorkspaceHistoryOpsStartError as WorkspaceHistory2StartError,
+    WorkspaceHistoryOpsStartError as WorkspaceHistoryStartError,
 };
 use libparsec_types::prelude::*;
 
@@ -38,10 +33,10 @@ fn borrow_workspace_history(
  * Start workspace history
  */
 
-pub async fn client_start_workspace_history2(
+pub async fn client_start_workspace_history(
     client: Handle,
     realm_id: VlobID,
-) -> Result<Handle, WorkspaceHistory2StartError> {
+) -> Result<Handle, WorkspaceHistoryStartError> {
     // 1. Register the start of the workspace history
 
     // Unlike for `WorkspaceOps`, it is totally possible to have multiple
@@ -96,7 +91,7 @@ pub async fn client_start_workspace_history2(
     Ok(workspace_history_handle)
 }
 
-pub enum WorkspaceHistory2RealmExportDecryptor {
+pub enum WorkspaceHistoryRealmExportDecryptor {
     User {
         access: DeviceAccessStrategy,
     },
@@ -106,15 +101,15 @@ pub enum WorkspaceHistory2RealmExportDecryptor {
     },
 }
 
-pub async fn workspace_history2_start_with_realm_export(
+pub async fn workspace_history_start_with_realm_export(
     #[allow(unused_variables)] config: super::ClientConfig,
     #[allow(unused_variables)] export_db_path: PathBuf,
-    #[allow(unused_variables)] decryptors: Vec<WorkspaceHistory2RealmExportDecryptor>,
-) -> Result<Handle, WorkspaceHistory2StartError> {
+    #[allow(unused_variables)] decryptors: Vec<WorkspaceHistoryRealmExportDecryptor>,
+) -> Result<Handle, WorkspaceHistoryStartError> {
     // Realm export database support is not available on web.
     #[cfg(target_arch = "wasm32")]
     {
-        Err(WorkspaceHistory2StartError::Internal(anyhow::anyhow!(
+        Err(WorkspaceHistoryStartError::Internal(anyhow::anyhow!(
             "Realm export database support is not available on web"
         )))
     }
@@ -133,12 +128,12 @@ pub async fn workspace_history2_start_with_realm_export(
         let mut cooked_decryptors = Vec::with_capacity(decryptors.len());
         for raw_decryptor in decryptors {
             let cooked_decryptor = match raw_decryptor {
-                WorkspaceHistory2RealmExportDecryptor::User { access } => {
+                WorkspaceHistoryRealmExportDecryptor::User { access } => {
                     let device =
                         libparsec_platform_device_loader::load_device(&config.config_dir, &access)
                             .await
                             .map_err(|e| {
-                                WorkspaceHistory2StartError::Internal(
+                                WorkspaceHistoryStartError::Internal(
                                     anyhow::Error::new(e).context("Cannot load device"),
                                 )
                             })?;
@@ -149,13 +144,13 @@ pub async fn workspace_history2_start_with_realm_export(
                     }
                 }
 
-                WorkspaceHistory2RealmExportDecryptor::SequesterService {
+                WorkspaceHistoryRealmExportDecryptor::SequesterService {
                     sequester_service_id,
                     private_key_pem_path,
                 } => {
                     let private_key_pem =
                         std::fs::read_to_string(private_key_pem_path).map_err(|e| {
-                            WorkspaceHistory2StartError::Internal(
+                            WorkspaceHistoryStartError::Internal(
                                 anyhow::Error::new(e)
                                     .context("Cannot load sequester private key PEM file"),
                             )
@@ -164,7 +159,7 @@ pub async fn workspace_history2_start_with_realm_export(
                     let private_key =
                         libparsec_crypto::SequesterPrivateKeyDer::load_pem(&private_key_pem)
                             .map_err(|e| {
-                                WorkspaceHistory2StartError::Internal(
+                                WorkspaceHistoryStartError::Internal(
                                     anyhow::Error::new(e)
                                         .context("Cannot load sequester private key PEM file"),
                                 )
@@ -203,14 +198,14 @@ pub async fn workspace_history2_start_with_realm_export(
  */
 
 #[derive(Debug, thiserror::Error)]
-pub enum WorkspaceHistory2InternalOnlyError {
+pub enum WorkspaceHistoryInternalOnlyError {
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
 
-pub fn workspace_history2_stop(
+pub fn workspace_history_stop(
     workspace_history: Handle,
-) -> Result<(), WorkspaceHistory2InternalOnlyError> {
+) -> Result<(), WorkspaceHistoryInternalOnlyError> {
     take_and_close_handle(workspace_history, |x| match x {
         HandleItem::WorkspaceHistory { .. } => {
             // `WorkspaceHistoryOps` has no stop method, dropping it is enough
@@ -225,119 +220,117 @@ pub fn workspace_history2_stop(
  * Workspace history FS operations
  */
 
-pub fn workspace_history2_get_timestamp_lower_bound(
+pub fn workspace_history_get_timestamp_lower_bound(
     workspace_history: Handle,
-) -> Result<DateTime, WorkspaceHistory2InternalOnlyError> {
+) -> Result<DateTime, WorkspaceHistoryInternalOnlyError> {
     let workspace_history = borrow_workspace_history(workspace_history)?;
 
     Ok(workspace_history.timestamp_lower_bound())
 }
 
-pub fn workspace_history2_get_timestamp_higher_bound(
+pub fn workspace_history_get_timestamp_higher_bound(
     workspace_history: Handle,
-) -> Result<DateTime, WorkspaceHistory2InternalOnlyError> {
+) -> Result<DateTime, WorkspaceHistoryInternalOnlyError> {
     let workspace_history = borrow_workspace_history(workspace_history)?;
 
     Ok(workspace_history.timestamp_higher_bound())
 }
 
-pub fn workspace_history2_get_timestamp_of_interest(
+pub fn workspace_history_get_timestamp_of_interest(
     workspace_history: Handle,
-) -> Result<DateTime, WorkspaceHistory2InternalOnlyError> {
+) -> Result<DateTime, WorkspaceHistoryInternalOnlyError> {
     let workspace_history = borrow_workspace_history(workspace_history)?;
 
     Ok(workspace_history.timestamp_of_interest())
 }
 
-pub async fn workspace_history2_set_timestamp_of_interest(
+pub async fn workspace_history_set_timestamp_of_interest(
     workspace_history: Handle,
     toi: DateTime,
-) -> Result<(), WorkspaceHistory2SetTimestampOfInterestError> {
+) -> Result<(), WorkspaceHistorySetTimestampOfInterestError> {
     let workspace_history = borrow_workspace_history(workspace_history)?;
 
     workspace_history.set_timestamp_of_interest(toi).await
 }
 
-pub async fn workspace_history2_stat_entry(
+pub async fn workspace_history_stat_entry(
     workspace_history: Handle,
     path: &FsPath,
-) -> Result<WorkspaceHistory2EntryStat, WorkspaceHistory2StatEntryError> {
+) -> Result<WorkspaceHistoryEntryStat, WorkspaceHistoryStatEntryError> {
     let workspace_history = borrow_workspace_history(workspace_history)?;
 
     workspace_history.stat_entry(path).await
 }
 
-pub async fn workspace_history2_stat_entry_by_id(
+pub async fn workspace_history_stat_entry_by_id(
     workspace_history: Handle,
     entry_id: VlobID,
-) -> Result<WorkspaceHistory2EntryStat, WorkspaceHistory2StatEntryError> {
+) -> Result<WorkspaceHistoryEntryStat, WorkspaceHistoryStatEntryError> {
     let workspace_history = borrow_workspace_history(workspace_history)?;
 
     workspace_history.stat_entry_by_id(entry_id).await
 }
 
-pub async fn workspace_history2_stat_folder_children(
+pub async fn workspace_history_stat_folder_children(
     workspace_history: Handle,
     path: &FsPath,
-) -> Result<Vec<(EntryName, WorkspaceHistory2EntryStat)>, WorkspaceHistory2StatFolderChildrenError>
-{
+) -> Result<Vec<(EntryName, WorkspaceHistoryEntryStat)>, WorkspaceHistoryStatFolderChildrenError> {
     let workspace_history = borrow_workspace_history(workspace_history)?;
 
     workspace_history.stat_folder_children(path).await
 }
 
-pub async fn workspace_history2_stat_folder_children_by_id(
+pub async fn workspace_history_stat_folder_children_by_id(
     workspace_history: Handle,
     entry_id: VlobID,
-) -> Result<Vec<(EntryName, WorkspaceHistory2EntryStat)>, WorkspaceHistory2StatFolderChildrenError>
-{
+) -> Result<Vec<(EntryName, WorkspaceHistoryEntryStat)>, WorkspaceHistoryStatFolderChildrenError> {
     let workspace_history = borrow_workspace_history(workspace_history)?;
 
     workspace_history.stat_folder_children_by_id(entry_id).await
 }
 
-pub async fn workspace_history2_open_file(
+pub async fn workspace_history_open_file(
     workspace_history: Handle,
     path: FsPath,
-) -> Result<FileDescriptor, WorkspaceHistory2OpenFileError> {
+) -> Result<FileDescriptor, WorkspaceHistoryOpenFileError> {
     let workspace_history = borrow_workspace_history(workspace_history)?;
 
     workspace_history.open_file(path).await
 }
 
-pub async fn workspace_history2_open_file_by_id(
+pub async fn workspace_history_open_file_by_id(
     workspace_history: Handle,
     entry_id: VlobID,
-) -> Result<FileDescriptor, WorkspaceHistory2OpenFileError> {
+) -> Result<FileDescriptor, WorkspaceHistoryOpenFileError> {
     let workspace_history = borrow_workspace_history(workspace_history)?;
 
     workspace_history.open_file_by_id(entry_id).await
 }
 
-pub async fn workspace_history2_open_file_and_get_id(
+pub async fn workspace_history_open_file_and_get_id(
     workspace_history: Handle,
     path: FsPath,
-) -> Result<(FileDescriptor, VlobID), WorkspaceHistory2OpenFileError> {
+) -> Result<(FileDescriptor, VlobID), WorkspaceHistoryOpenFileError> {
     let workspace_history = borrow_workspace_history(workspace_history)?;
 
     workspace_history.open_file_and_get_id(path).await
 }
 
-pub fn workspace_history2_fd_close(
+pub fn workspace_history_fd_close(
     workspace_history: Handle,
     fd: FileDescriptor,
-) -> Result<(), WorkspaceHistory2FdCloseError> {
+) -> Result<(), WorkspaceHistoryFdCloseError> {
     let workspace_history = borrow_workspace_history(workspace_history)?;
 
     workspace_history.fd_close(fd)
 }
 
-pub async fn workspace_history2_fd_read(
+pub async fn workspace_history_fd_read(
     workspace_history: Handle,
     fd: FileDescriptor,
     offset: u64,
     size: u64,
-) -> Result<Vec<u8>, WorkspaceHistory2FdReadError> {
+) -> Result<Vec<u8>, WorkspaceHistoryFdReadError> {
     let workspace_history = borrow_workspace_history(workspace_history)?;
 
     let mut buf = Vec::with_capacity(size as usize);
@@ -347,10 +340,10 @@ pub async fn workspace_history2_fd_read(
     Ok(buf)
 }
 
-pub async fn workspace_history2_fd_stat(
+pub async fn workspace_history_fd_stat(
     workspace_history: Handle,
     fd: FileDescriptor,
-) -> Result<WorkspaceHistory2FileStat, WorkspaceHistory2FdStatError> {
+) -> Result<WorkspaceHistoryFileStat, WorkspaceHistoryFdStatError> {
     let workspace_history = borrow_workspace_history(workspace_history)?;
 
     workspace_history.fd_stat(fd).await
