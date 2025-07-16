@@ -670,7 +670,7 @@ async function handleFileLink(link: string, informationManager: InformationManag
 
 declare global {
   interface Window {
-    nextStageHook: () => [any, (configPath: string, locale?: string) => Promise<void>];
+    nextStageHook: () => [any, (configPath?: string, locale?: string) => Promise<void>];
     testbedPath: string | null;
     getConfigDir: () => string;
     getDataBaseDir: () => string;
