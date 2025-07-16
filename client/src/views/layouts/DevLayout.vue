@@ -21,7 +21,13 @@ import { getClientInfo } from '@/parsec';
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const initialized = ref(false);
-const DEV_DEFAULT_HANDLE = 1;
+
+function getDevDefaultHandle(): parsec.ConnectionHandle {
+  if (parsec.ParsecAccount.isLoggedIn()) {
+    return 2;
+  }
+  return 1;
+}
 
 onMounted(async () => {
   initialized.value = false;
@@ -44,14 +50,17 @@ onMounted(async () => {
 
   // When in dev mode, we often open directly a connected page,
   // so a few states are not properly set.
-  if (handle !== DEV_DEFAULT_HANDLE) {
-    window.electronAPI.log('error', `In dev mode, you should use "${DEV_DEFAULT_HANDLE}" as the default handle`);
+  if (parsec.ParsecAccount.isLoggedIn()) {
+    window.electronAPI.log('info', 'Parsec Account logged in, default handle should be "2"');
+  }
+  if (handle !== getDevDefaultHandle()) {
+    window.electronAPI.log('error', `In dev mode, you should use "${getDevDefaultHandle()}" as the default handle`);
     // eslint-disable-next-line no-alert
-    alert(`Use "${DEV_DEFAULT_HANDLE}" as the default handle when not connecting properly`);
+    alert('Use "1" or "2" (if using ParsecAccount) as the default handle when not connecting properly');
     return;
   }
   window.electronAPI.log('info', 'Page was refreshed, login in a default device');
-  injectionProvider.createNewInjections(DEV_DEFAULT_HANDLE, new EventDistributor());
+  injectionProvider.createNewInjections(getDevDefaultHandle(), new EventDistributor());
   // Not filtering the devices, because we need alice first device, not the second one
   const listResult = await parsec.listAvailableDevicesWithError(false);
   let devices: Array<parsec.AvailableDevice> = [];
@@ -71,8 +80,8 @@ onMounted(async () => {
   const result = await parsec.login(device, parsec.AccessStrategy.usePassword(device, 'P@ssw0rd.'));
   if (!result.ok) {
     window.electronAPI.log('error', `Failed to log in on a default device: ${JSON.stringify(result.error)}`);
-  } else if (result.value !== DEV_DEFAULT_HANDLE) {
-    window.electronAPI.log('error', `Lib returned handle ${result.value} instead of ${DEV_DEFAULT_HANDLE}`);
+  } else if (result.value !== getDevDefaultHandle()) {
+    window.electronAPI.log('error', `Lib returned handle ${result.value} instead of ${getDevDefaultHandle()}`);
   } else {
     window.electronAPI.log('info', `Logged in as ${device.humanHandle.label}`);
   }
