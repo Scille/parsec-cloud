@@ -50,7 +50,7 @@ fn store_factory(_env: &TestbedEnv) -> Arc<dyn Any + Send + Sync> {
 }
 
 fn get_device_key_file(config_dir: &Path, device_id: DeviceID) -> PathBuf {
-    config_dir.join(format!("devices/{}.keys", device_id))
+    config_dir.join(format!("devices/{}.keys", device_id.hex()))
 }
 
 /// Generate the `LocalDevice` from the template events, this saves us from
@@ -349,6 +349,27 @@ pub(crate) fn maybe_load_device(
                         DeviceAccessStrategy::Keyring { key_file: kf },
                         DeviceAccessStrategy::Keyring { key_file: c_kf },
                     ) if c_kf == kf => Some(Ok(c_device.to_owned())),
+                    (
+                        DeviceAccessStrategy::AccountVault {
+                            key_file: kf,
+                            ciphertext_key_id: _,
+                            ciphertext_key: ck,
+                        },
+                        DeviceAccessStrategy::AccountVault {
+                            key_file: c_kf,
+                            ciphertext_key_id: _,
+                            ciphertext_key: c_ck,
+                        },
+                    ) if c_kf == kf => {
+                        // Note `ciphertext_key_id` is not compared here, this is because
+                        // it has no use during the actual device load (instead it is used
+                        // earlier on to fetch `ciphertext_key` from the server).
+                        if ck == c_ck {
+                            Some(Ok(c_device.to_owned()))
+                        } else {
+                            Some(Err(LoadDeviceError::DecryptionFailed))
+                        }
+                    }
                     _ => None,
                 }
             });
