@@ -434,7 +434,7 @@ import {
   WorkspaceRole,
 } from '@/parsec';
 import { ChevronExpand, MsImage, LogoIconGradient, I18n, MsModalResult, useWindowSize } from 'megashark-lib';
-import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
+import { Ref, computed, inject, onMounted, onUnmounted, ref, watch, useTemplateRef } from 'vue';
 import { recentDocumentManager, RecentFile } from '@/services/recentDocuments';
 import { openPath } from '@/services/fileOpener';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
@@ -481,7 +481,7 @@ const workspaces: Ref<Array<WorkspaceInfo>> = ref([]);
 const favorites: Ref<WorkspaceID[]> = ref([]);
 const { computedWidth: computedWidth, storedWidth: storedWidth, isVisible: isVisible } = useSidebarMenu();
 const sidebarWidthProperty = ref('');
-const divider = ref();
+const dividerRef = useTemplateRef('divider');
 const dividerWidthProperty = ref('');
 let eventDistributorCbId: string | null = null;
 const loggedInDevices = ref<LoggedInDeviceInfo[]>([]);
@@ -690,10 +690,10 @@ onMounted(async () => {
   }
 
   await loadAll();
-  if (divider.value) {
+  if (dividerRef.value) {
     const gesture = createGesture({
       gestureName: 'resize-menu',
-      el: divider.value,
+      el: dividerRef.value,
       onMove,
     });
     gesture.enable();

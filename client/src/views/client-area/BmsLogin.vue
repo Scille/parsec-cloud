@@ -32,7 +32,7 @@
         <ms-input
           v-show="!loading"
           class="saas-login-content__input"
-          ref="emailInputRef"
+          ref="emailInput"
           v-model="email"
           label="clientArea.app.emailLabel"
           @on-enter-keyup="onLoginClicked()"
@@ -58,7 +58,7 @@
         >
           <ms-password-input
             class="saas-login-content__input"
-            ref="passwordInputRef"
+            ref="passwordInput"
             v-model="password"
             label="clientArea.app.password"
             @on-enter-keyup="onLoginClicked()"
@@ -197,7 +197,7 @@ import { IonButton, IonText, IonFooter, IonIcon, IonSkeletonText } from '@ionic/
 import { MsInput, MsPasswordInput, Translatable, Validity, MsSpinner, MsCheckbox, useWindowSize } from 'megashark-lib';
 import { emailValidator } from '@/common/validators';
 import { warning, arrowBack, arrowForward, close } from 'ionicons/icons';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, useTemplateRef } from 'vue';
 import { AuthenticationToken, BmsAccessInstance, PersonalInformationResultData } from '@/services/bms';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
 import { Env } from '@/services/environment';
@@ -218,8 +218,8 @@ const emits = defineEmits<{
 const { isLargeDisplay } = useWindowSize();
 const email = ref<string>(props.email ?? '');
 const password = ref<string>('');
-const emailInputRef = ref();
-const passwordInputRef = ref();
+const emailInputRef = useTemplateRef<InstanceType<typeof MsInput>>('emailInput');
+const passwordInputRef = useTemplateRef<InstanceType<typeof MsPasswordInput>>('passwordInput');
 const querying = ref(false);
 const loginError = ref<Translatable>('');
 const loading = ref(true);
@@ -243,10 +243,10 @@ onMounted(async () => {
   }
 
   if (email.value.length > 0) {
-    await emailInputRef.value.validate(email.value);
-    await passwordInputRef.value.setFocus();
+    await emailInputRef.value?.validate(email.value);
+    await passwordInputRef.value?.setFocus();
   } else {
-    await emailInputRef.value.setFocus();
+    await emailInputRef.value?.setFocus();
   }
   loading.value = false;
 });

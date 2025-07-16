@@ -171,7 +171,7 @@ import {
 } from 'megashark-lib';
 import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
 import { checkmarkCircle, close, phonePortrait } from 'ionicons/icons';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, useTemplateRef } from 'vue';
 
 enum DeviceJoinOrganizationStep {
   Information = 0,
@@ -185,7 +185,7 @@ const { isLargeDisplay } = useWindowSize();
 const pageStep = ref(DeviceJoinOrganizationStep.Information);
 const serverAddr = ref<ParsedParsecAddrInvitationDevice | null>(null);
 const claimer = ref(new DeviceClaim());
-const authChoice = ref();
+const authChoiceRef = useTemplateRef<InstanceType<typeof ChooseAuthentication>>('authChoice');
 const cancelled = ref(false);
 
 const props = defineProps<{
@@ -281,7 +281,7 @@ const nextButtonIsVisible = computed(() => {
 
 const canGoForward = asyncComputed(async () => {
   if (pageStep.value === DeviceJoinOrganizationStep.Authentication) {
-    return await authChoice.value.areFieldsCorrect();
+    return await authChoiceRef.value?.areFieldsCorrect();
   }
   return true;
 });
@@ -313,7 +313,8 @@ async function nextStep(): Promise<void> {
     const doClaimResult = await claimer.value.doClaim(deviceName);
     if (doClaimResult.ok) {
       waitingForHost.value = false;
-      const strategy = authChoice.value.getSaveStrategy();
+      const strategy = authChoiceRef.value?.getSaveStrategy();
+      if (!strategy) return;
       const result = await claimer.value.finalize(strategy);
       if (!result.ok) {
         props.informationManager.present(
@@ -338,7 +339,8 @@ async function nextStep(): Promise<void> {
       level: InformationLevel.Success,
     });
     props.informationManager.present(notification, PresentationMode.Toast | PresentationMode.Console);
-    const saveStrategy: DeviceSaveStrategy = authChoice.value.getSaveStrategy();
+    const saveStrategy: DeviceSaveStrategy | undefined = authChoiceRef.value?.getSaveStrategy();
+    if (!saveStrategy) return;
     const accessStrategy =
       saveStrategy.tag === DeviceSaveStrategyTag.Keyring
         ? AccessStrategy.useKeyring(claimer.value.device)

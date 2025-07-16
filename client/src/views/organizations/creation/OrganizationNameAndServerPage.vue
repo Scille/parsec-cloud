@@ -16,7 +16,7 @@
           id="org-name-input"
           v-model="organizationName"
           :disabled="disableOrganizationNameField"
-          ref="organizationNameInputRef"
+          ref="organizationNameInput"
           :validator="organizationValidator"
         />
         <ion-text class="subtitles-sm org-name-criteria">
@@ -30,7 +30,7 @@
         id="server-addr-input"
         v-model="serverAddr"
         :disabled="disableServerAddrField"
-        ref="serverAddrInputRef"
+        ref="serverAddrInput"
         :validator="parsecAddrValidator"
       />
       <!-- error -->
@@ -83,7 +83,7 @@
 <script setup lang="ts">
 import { OrganizationID } from '@/parsec';
 import { IonPage, IonButton, IonText, IonFooter, IonIcon } from '@ionic/vue';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, useTemplateRef } from 'vue';
 import { chevronForward, chevronBack } from 'ionicons/icons';
 import { organizationValidator, parsecAddrValidator } from '@/common/validators';
 import { Translatable, Validity, MsInput } from 'megashark-lib';
@@ -105,8 +105,8 @@ defineEmits<{
   (e: 'goBackRequested'): void;
 }>();
 
-const organizationNameInputRef = ref();
-const serverAddrInputRef = ref();
+const organizationNameInputRef = useTemplateRef<InstanceType<typeof MsInput>>('organizationNameInput');
+const serverAddrInputRef = useTemplateRef<InstanceType<typeof MsInput>>('serverAddrInput');
 const organizationName = ref<OrganizationID>(props.organizationName ?? '');
 const serverAddr = ref<string>(props.serverAddr ?? '');
 const valid = computed(() => {

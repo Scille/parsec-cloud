@@ -25,7 +25,6 @@
         @keydown.up.prevent="zoomIn"
         @keydown.down.prevent="zoomOut"
         :maxlength="3"
-        ref="inputRef"
       />
       <file-controls-button
         :image="AddIcon"

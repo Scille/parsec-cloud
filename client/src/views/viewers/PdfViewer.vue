@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, onMounted, ref, Ref, shallowRef } from 'vue';
+import { nextTick, onMounted, ref, Ref, shallowRef, useTemplateRef } from 'vue';
 import { FileContentInfo } from '@/views/viewers/utils';
 import { FileViewerWrapper } from '@/views/viewers';
 import { FileControls, FileControlsButton, FileControlsPagination, FileControlsZoom } from '@/components/viewers';
@@ -67,10 +67,10 @@ const loading = ref(true);
 const error = ref('');
 const currentPage = ref(1);
 const pdf: Ref<pdfjs.PDFDocumentProxy | null> = shallowRef(null);
-const pdfContainer = ref<HTMLDivElement>();
-const zoomControl = ref();
+const pdfContainerRef = useTemplateRef<HTMLDivElement>('pdfContainer');
+const zoomControlRef = useTemplateRef<InstanceType<typeof FileControlsZoom>>('zoomControl');
 const scale = ref(1);
-const canvas = ref<HTMLCanvasElement[]>([]);
+const canvasRef = useTemplateRef<HTMLCanvasElement[]>('canvas');
 const isRendering = ref(false);
 const enum CanvasStates {
   Rendered = 'rendered',
@@ -80,7 +80,7 @@ const CanvasStateAttribute = 'data-canvas-state';
 
 onMounted(async () => {
   loading.value = true;
-  scale.value = zoomControl.value.getZoom() / 100;
+  scale.value = (zoomControlRef.value?.getZoom() ?? 100) / 100;
 
   try {
     pdf.value = await pdfjs.getDocument(props.contentInfo.data).promise;
@@ -96,7 +96,7 @@ onMounted(async () => {
 
 function isInViewport(canvasElement: HTMLCanvasElement): boolean {
   const rect = canvasElement.getBoundingClientRect();
-  const pdfContainerRect = pdfContainer.value!.getBoundingClientRect();
+  const pdfContainerRect = pdfContainerRef.value!.getBoundingClientRect();
   return rect.bottom >= pdfContainerRect.top && rect.top <= pdfContainerRect.bottom;
 }
 
@@ -122,14 +122,14 @@ async function loadPage(pageIndex: number): Promise<void> {
       throw new Error('Failed to load page');
     }
 
-    const canvasElement = canvas.value.at(pageIndex - 1);
+    const canvasElement = canvasRef.value?.at(pageIndex - 1);
     if (!canvasElement) {
       return;
     }
     const viewport = page.getViewport({ scale: scale.value });
     drawBlankCanvas(canvasElement, viewport);
   } catch (e: any) {
-    const canvasElement = canvas.value.at(pageIndex - 1);
+    const canvasElement = canvasRef.value?.at(pageIndex - 1);
     if (!canvasElement) {
       return;
     }
@@ -189,7 +189,7 @@ async function loadPages(): Promise<void> {
 }
 
 async function renderPage(pageNumber: number): Promise<void> {
-  const canvasElement = canvas.value.at(pageNumber - 1);
+  const canvasElement = canvasRef.value?.at(pageNumber - 1);
   if (isRendering.value || !canvasElement || isCanvasRendered(canvasElement) || isCanvasOnError(canvasElement)) {
     return;
   }
@@ -214,7 +214,7 @@ async function renderPage(pageNumber: number): Promise<void> {
     await page.render(renderContext).promise;
     canvasElement.setAttribute(CanvasStateAttribute, CanvasStates.Rendered);
   } catch (e: any) {
-    const canvasElement = canvas.value.at(pageNumber - 1);
+    const canvasElement = canvasRef.value?.at(pageNumber - 1);
     if (!canvasElement) {
       return;
     }
@@ -236,7 +236,7 @@ async function onPaginationChange(pageIndex: number): Promise<void> {
     return;
   }
 
-  const targetPage = canvas.value.at(pageIndex - 1);
+  const targetPage = canvasRef.value?.at(pageIndex - 1);
   if (targetPage) {
     await nextTick();
     targetPage.scrollIntoView({ behavior: 'smooth' });
@@ -249,12 +249,12 @@ async function onScroll(): Promise<void> {
     return;
   }
 
-  const pdfContainerRect = pdfContainer.value!.getBoundingClientRect();
+  const pdfContainerRect = pdfContainerRef.value!.getBoundingClientRect();
   let currentPageIndex = -1;
   // minDistance is initialized to Infinity to ensure that any distance will be less than it
   let minDistance = Infinity;
 
-  for (const [pIndex, page] of [...canvas.value].entries()) {
+  for (const [pIndex, page] of [...(canvasRef.value || [])].entries()) {
     const pageRect = page.getBoundingClientRect();
     if (isInViewport(page)) {
       await renderPage(pIndex + 1);
@@ -280,7 +280,7 @@ async function toggleFullScreen(): Promise<void> {
     await document.exitFullscreen();
     return;
   }
-  await pdfContainer.value!.requestFullscreen();
+  await pdfContainerRef.value!.requestFullscreen();
 }
 </script>
 

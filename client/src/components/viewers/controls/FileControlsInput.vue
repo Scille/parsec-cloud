@@ -14,7 +14,7 @@
     v-else
     class="file-controls-input editing-input"
     fill="outline"
-    ref="inputRef"
+    ref="input"
     :value="modelValue"
     @ion-blur="onFocusChanged(false)"
     @ion-focus="onFocusChanged(true)"
@@ -43,10 +43,10 @@
 <script setup lang="ts">
 import { IonInput, IonText } from '@ionic/vue';
 import { Translatable } from 'megashark-lib';
-import { ref } from 'vue';
+import { ref, useTemplateRef } from 'vue';
 
 const editing = ref(false);
-const inputRef = ref();
+const inputRef = useTemplateRef<InstanceType<typeof IonInput>>('input');
 const lostFocus = ref(false);
 
 const props = defineProps<{

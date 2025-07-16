@@ -76,7 +76,7 @@ import { Information, InformationLevel, InformationManager, PresentationMode } f
 import { IonIcon, IonButton, IonItem, IonLabel, IonText } from '@ionic/vue';
 import { formatTimeSince, Clipboard, askQuestion, Answer, Translatable, attachMouseOverTooltip } from 'megashark-lib';
 import { checkmarkCircle, link, mail, trash } from 'ionicons/icons';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, useTemplateRef } from 'vue';
 
 const props = defineProps<{
   invitation: UserInvitation;
@@ -91,12 +91,12 @@ defineEmits<{
 }>();
 
 const sendEmailDisabled = ref(false);
-const sendEmailButton = ref();
-const copyLinkButton = ref();
+const sendEmailButtonRef = useTemplateRef<InstanceType<typeof IonButton>>('sendEmailButton');
+const copyLinkButtonRef = useTemplateRef<InstanceType<typeof IonButton>>('copyLinkButton');
 
 onMounted(async () => {
-  attachMouseOverTooltip(sendEmailButton.value.$el, 'UsersPage.invitation.sendEmail');
-  attachMouseOverTooltip(copyLinkButton.value.$el, 'UsersPage.invitation.copyLink');
+  attachMouseOverTooltip(sendEmailButtonRef.value?.$el, 'UsersPage.invitation.sendEmail');
+  attachMouseOverTooltip(copyLinkButtonRef.value?.$el, 'UsersPage.invitation.copyLink');
 });
 
 async function copyLink(invitation: UserInvitation): Promise<void> {

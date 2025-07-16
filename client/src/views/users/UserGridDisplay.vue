@@ -12,7 +12,6 @@
     :class="{
       'current-user': user.isCurrent,
     }"
-    ref="userGridItemRefs"
   />
   <ion-text
     class="no-match-result body"

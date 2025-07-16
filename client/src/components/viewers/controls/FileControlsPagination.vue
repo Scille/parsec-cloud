@@ -14,14 +14,14 @@
       @keydown.down.prevent="previous"
       @keydown.left.prevent="previous"
       :maxlength="String(length).length"
-      ref="inputRef"
+      ref="input"
     />
   </file-controls-group>
 </template>
 
 <script setup lang="ts">
 import { I18n } from 'megashark-lib';
-import { onUnmounted, ref, watch, computed } from 'vue';
+import { onUnmounted, ref, watch, computed, useTemplateRef } from 'vue';
 import { FileControlsGroup, FileControlsInput } from '@/components/viewers';
 
 const props = defineProps<{
@@ -38,7 +38,7 @@ defineExpose({
   getCurrentPage,
 });
 
-const inputRef = ref();
+const inputRef = useTemplateRef<InstanceType<typeof FileControlsInput>>('input');
 const currentPage = ref('1');
 const inputLengthStyle = computed(() => {
   return `${5 + props.length.toString().length * 1}rem`;
@@ -47,7 +47,7 @@ const inputLengthStyle = computed(() => {
 const pageWatchCancel = watch(
   () => props.page,
   (value) => {
-    if (value === undefined || value === null || value < 1 || value > props.length || inputRef.value.isEditing()) {
+    if (value === undefined || value === null || value < 1 || value > props.length || inputRef.value?.isEditing()) {
       return;
     }
     currentPage.value = value.toString();

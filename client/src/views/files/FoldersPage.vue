@@ -85,7 +85,7 @@
       </div>
       <div class="folder-container scroll">
         <file-inputs
-          ref="fileInputsRef"
+          ref="fileInputs"
           :current-path="currentPath"
           @files-added="startImportFiles"
         />
@@ -123,7 +123,7 @@
         <div v-else-if="!querying">
           <div v-if="displayView === DisplayState.List">
             <file-list-display
-              ref="fileListDisplayRef"
+              ref="fileListDisplay"
               :files="files"
               :folders="folders"
               :operations-in-progress="fileOperationsCurrentDir"
@@ -139,7 +139,7 @@
           </div>
           <div v-if="displayView === DisplayState.Grid">
             <file-grid-display
-              ref="fileGridDisplayRef"
+              ref="fileGridDisplay"
               :files="files"
               :folders="folders"
               :operations-in-progress="fileOperationsCurrentDir"
@@ -264,7 +264,7 @@ import {
   time,
   duplicate,
 } from 'ionicons/icons';
-import { Ref, computed, inject, onMounted, onUnmounted, ref, nextTick, watch } from 'vue';
+import { Ref, computed, inject, onMounted, onUnmounted, ref, nextTick, watch, useTemplateRef } from 'vue';
 import { EntrySyncData, EventData, EventDistributor, EventDistributorKey, Events, MenuActionData } from '@/services/eventDistributor';
 import { openPath, showInExplorer } from '@/services/fileOpener';
 import { WorkspaceTagRole } from '@/components/workspaces';
@@ -380,10 +380,10 @@ const workspaceInfo: Ref<parsec.StartedWorkspaceInfo | null> = ref(null);
 // Init at true to avoid blinking while we're mounting the component
 // but we're not loading the files yet.
 const querying = ref(true);
-const fileListDisplayRef = ref<typeof FileListDisplay>();
-const fileGridDisplayRef = ref<typeof FileGridDisplay>();
+const fileListDisplayRef = useTemplateRef<InstanceType<typeof FileListDisplay>>('fileListDisplay');
+const fileGridDisplayRef = useTemplateRef<InstanceType<typeof FileGridDisplay>>('fileGridDisplay');
 
-const fileInputsRef = ref();
+const fileInputsRef = useTemplateRef<InstanceType<typeof FileInputs>>('fileInputs');
 let eventCbId: string | null = null;
 
 const selectedFilesCount = computed(() => {
@@ -417,7 +417,7 @@ async function defineShortcuts(): Promise<void> {
   hotkeys.add(
     { key: 'o', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop | Platforms.Web, disableIfModal: true, route: Routes.Documents },
     async () => {
-      await fileInputsRef.value.importFiles();
+      await fileInputsRef.value?.importFiles();
     },
   );
   hotkeys.add(
@@ -429,7 +429,7 @@ async function defineShortcuts(): Promise<void> {
       route: Routes.Documents,
     },
     async () => {
-      await fileInputsRef.value.importFolder();
+      await fileInputsRef.value?.importFolder();
     },
   );
   hotkeys.add(
@@ -980,9 +980,9 @@ async function onImportClicked(event: Event): Promise<void> {
     return;
   }
   if (result.data.type === ImportType.Files) {
-    await fileInputsRef.value.importFiles();
+    await fileInputsRef.value?.importFiles();
   } else if (result.data.type === ImportType.Folder) {
-    await fileInputsRef.value.importFolder();
+    await fileInputsRef.value?.importFolder();
   }
 }
 
@@ -1402,9 +1402,9 @@ async function performFolderAction(action: FolderGlobalAction): Promise<void> {
     case FolderGlobalAction.CreateFolder:
       return await createFolder();
     case FolderGlobalAction.ImportFiles:
-      return await fileInputsRef.value.importFiles();
+      return await fileInputsRef.value?.importFiles();
     case FolderGlobalAction.ImportFolder:
-      return await fileInputsRef.value.importFolder();
+      return await fileInputsRef.value?.importFolder();
     case FolderGlobalAction.OpenInExplorer:
       return await openPath(workspaceInfo.value.handle, currentPath.value, informationManager, { skipViewers: true });
     case FolderGlobalAction.ToggleSelect:

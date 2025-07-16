@@ -42,7 +42,6 @@
                 @create-or-join-organization-click="openCreateOrJoin"
                 :device-list="deviceList"
                 :querying="querying"
-                ref="organizationListRef"
               />
             </template>
             <template v-else-if="state === HomePageState.CustomerArea">
@@ -55,7 +54,7 @@
                 @login-click="login"
                 @forgotten-password-click="onForgottenPasswordClicked"
                 :login-in-progress="loginInProgress"
-                ref="loginPageRef"
+                ref="loginPage"
               />
             </template>
             <template v-else-if="state === HomePageState.ForgottenPassword">
@@ -131,7 +130,7 @@ import {
   Answer,
   useWindowSize,
 } from 'megashark-lib';
-import { Ref, inject, nextTick, onMounted, onUnmounted, ref, toRaw, watch, computed } from 'vue';
+import { Ref, inject, nextTick, onMounted, onUnmounted, ref, toRaw, watch, computed, useTemplateRef } from 'vue';
 import { getServerTypeFromAddress, ServerType } from '@/services/parsecServers';
 import { getDurationBeforeExpiration, isExpired, isTrialOrganizationDevice } from '@/common/organization';
 import HomePageButtons, { HomePageAction } from '@/views/home/HomePageButtons.vue';
@@ -155,12 +154,11 @@ const accountLoggedIn = ref(ParsecAccount.isLoggedIn());
 const state = ref(HomePageState.OrganizationList);
 const storedDeviceDataDict = ref<{ [deviceId: string]: StoredDeviceData }>({});
 const selectedDevice: Ref<AvailableDevice | undefined> = ref();
-const loginPageRef = ref<typeof LoginPage>();
+const loginPageRef = useTemplateRef<InstanceType<typeof LoginPage>>('loginPage');
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const informationManager: InformationManager = injectionProvider.getDefault().informationManager;
 const loginInProgress = ref(false);
 const queryInProgress = ref(false);
-const organizationListRef = ref<typeof OrganizationListPage>();
 const querying = ref(true);
 const deviceList: Ref<AvailableDevice[]> = ref([]);
 const activeTab = ref(AccountSettingsTabs.Settings);

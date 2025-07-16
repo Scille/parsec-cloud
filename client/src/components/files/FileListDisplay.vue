@@ -2,7 +2,7 @@
 
 <template>
   <file-drop-zone
-    ref="fileDropZoneRef"
+    ref="fileDropZone"
     :current-path="currentPath"
     @files-added="$emit('filesAdded', $event)"
     :show-drop-message="true"
@@ -50,7 +50,7 @@
         <div>
           <file-list-item
             v-for="folder in folders.getEntries()"
-            ref="folderItemsRef"
+            ref="folderItems"
             :key="folder.id"
             :entry="folder"
             :show-checkbox="someSelected || selectionEnabled === true"
@@ -63,7 +63,7 @@
           />
           <file-list-item
             v-for="file in files.getEntries()"
-            ref="fileItemsRef"
+            ref="fileItems"
             :key="file.id"
             :entry="file"
             :show-checkbox="someSelected || selectionEnabled === true"
@@ -93,7 +93,7 @@ import { EntryCollection, EntryModel, FileOperationProgress, FileModel, FolderMo
 import { FileImportTuple } from '@/components/files/utils';
 import { FsPath, WorkspaceRole } from '@/parsec';
 import { IonText, IonList, IonLabel, IonListHeader } from '@ionic/vue';
-import { computed, ref } from 'vue';
+import { computed, useTemplateRef } from 'vue';
 import { MsCheckbox, useWindowSize } from 'megashark-lib';
 
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
@@ -118,10 +118,10 @@ defineExpose({
   scrollToSelected,
 });
 
-const fileDropZoneRef = ref();
-const folderItemsRef = ref<Array<typeof FileListItem>>();
-const fileItemsRef = ref<Array<typeof FileListItem>>();
-const containerScroll = ref();
+const fileDropZoneRef = useTemplateRef('fileDropZone');
+const folderItemsRef = useTemplateRef<Array<typeof FileListItem>>('folderItems');
+const fileItemsRef = useTemplateRef<Array<typeof FileListItem>>('fileItems');
+const containerScrollRef = useTemplateRef('containerScroll');
 
 const allSelected = computed(() => {
   const selectedCount = props.files.selectedCount() + props.folders.selectedCount();
@@ -144,7 +144,7 @@ async function onMenuClick(event: Event, entry: EntryModel, onFinished: () => vo
 async function onSelectedChange(_entry: EntryModel, _checked: boolean): Promise<void> {}
 
 function onFilesAdded(imports: FileImportTuple[]): void {
-  fileDropZoneRef.value.reset();
+  fileDropZoneRef.value?.reset();
   emits('filesAdded', imports);
 }
 
@@ -177,7 +177,7 @@ async function scrollToSelected(): Promise<void> {
     if (selectedItem) {
       const offset = selectedItem.$el.offsetTop;
       const elHeight = selectedItem.$el.offsetHeight;
-      containerScroll.value.scrollTo({ top: offset - elHeight, behavior: 'smooth' });
+      containerScrollRef.value?.scrollTo({ top: offset - elHeight, behavior: 'smooth' });
     }
   }, 500);
 }

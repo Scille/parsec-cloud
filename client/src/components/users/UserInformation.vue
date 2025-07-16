@@ -7,7 +7,7 @@
       :placeholder="'CreateOrganization.fullnamePlaceholder'"
       name="fullname"
       v-model="fullName"
-      ref="firstInputFieldRef"
+      ref="firstInputField"
       :disabled="!$props.nameEnabled"
       @change="$emit('fieldUpdate')"
       @on-enter-keyup="$emit('onEnterKeyup', fullName)"
@@ -29,7 +29,7 @@
 <script setup lang="ts">
 import { emailValidator, userNameValidator } from '@/common/validators';
 import { MsInput, Validity } from 'megashark-lib';
-import { ref } from 'vue';
+import { ref, useTemplateRef } from 'vue';
 
 const props = defineProps({
   defaultEmail: {
@@ -52,7 +52,7 @@ const props = defineProps({
 
 const email = ref(props.defaultEmail);
 const fullName = ref(props.defaultName);
-const firstInputFieldRef = ref();
+const firstInputFieldRef = useTemplateRef<InstanceType<typeof MsInput>>('firstInputField');
 
 defineEmits<{
   (e: 'fieldUpdate'): void;
@@ -67,7 +67,7 @@ defineExpose({
 });
 
 async function setFocus(): Promise<void> {
-  await firstInputFieldRef.value.setFocus();
+  await firstInputFieldRef.value?.setFocus();
 }
 
 async function areFieldsCorrect(): Promise<boolean> {

@@ -121,18 +121,18 @@
         <!-- Final Step -->
         <div
           v-show="pageStep === GreetUserStep.Summary"
-          v-if="guestInfoPage"
+          v-if="guestInfoPageRef"
           class="final-step"
         >
           <user-avatar-name
             class="avatar"
-            :user-name="guestInfoPage.fullName"
-            :user-avatar="guestInfoPage.fullName"
+            :user-name="guestInfoPageRef.fullName"
+            :user-avatar="guestInfoPageRef.fullName"
           />
           <div class="user-info">
             <div class="user-info__email">
               <ion-text class="info-label body">{{ $msTranslate('UsersPage.success.email') }}</ion-text>
-              <ion-text class="info-cell cell">{{ guestInfoPage.email }}</ion-text>
+              <ion-text class="info-cell cell">{{ guestInfoPageRef.email }}</ion-text>
             </div>
             <div class="user-info__role">
               <ion-text class="info-label body">{{ $msTranslate('UsersPage.success.profile') }}</ion-text>
@@ -198,7 +198,7 @@ import {
   useWindowSize,
 } from 'megashark-lib';
 import { close, personAdd } from 'ionicons/icons';
-import { Ref, computed, onMounted, ref } from 'vue';
+import { Ref, computed, onMounted, ref, useTemplateRef } from 'vue';
 
 enum GreetUserStep {
   WaitForGuest = 0,
@@ -217,7 +217,7 @@ const props = defineProps<{
 }>();
 
 const profile: Ref<UserProfile | null> = ref(null);
-const guestInfoPage = ref();
+const guestInfoPageRef = useTemplateRef<InstanceType<typeof UserInformation>>('guestInfoPage');
 const canGoForward = ref(false);
 const waitingForGuest = ref(true);
 const greeter = ref(new UserGreet());
@@ -272,7 +272,7 @@ async function updateCanGoForward(): Promise<void> {
   if (pageStep.value === GreetUserStep.WaitForGuest && waitingForGuest.value === true) {
     canGoForward.value = false;
   } else if (pageStep.value === GreetUserStep.CheckGuestInfo) {
-    canGoForward.value = profile.value !== null && (await guestInfoPage.value.areFieldsCorrect());
+    canGoForward.value = profile.value !== null && ((await guestInfoPageRef.value?.areFieldsCorrect()) ?? false);
   } else {
     canGoForward.value = true;
   }
@@ -440,7 +440,7 @@ async function nextStep(): Promise<void> {
         message: {
           key: 'UsersPage.greet.success',
           data: {
-            user: guestInfoPage.value.fullName,
+            user: guestInfoPageRef.value?.fullName,
           },
         },
         level: InformationLevel.Success,
@@ -450,8 +450,16 @@ async function nextStep(): Promise<void> {
     await modalController.dismiss({}, MsModalResult.Confirm);
     return;
   } else if (pageStep.value === GreetUserStep.CheckGuestInfo && profile.value) {
+    const fullName = guestInfoPageRef.value?.fullName?.trim();
+    const email = guestInfoPageRef.value?.email?.trim();
+
+    if (!fullName || !email) {
+      await showErrorAndRestart('UsersPage.greet.errors.missingUserInfo');
+      return;
+    }
+
     querying.value = true;
-    const result = await greeter.value.createUser({ label: guestInfoPage.value.fullName, email: guestInfoPage.value.email }, profile.value);
+    const result = await greeter.value.createUser({ label: fullName, email: email }, profile.value);
     querying.value = false;
     if (!result.ok) {
       await showErrorAndRestart('UsersPage.greet.errors.createUserFailed');
@@ -499,9 +507,9 @@ async function nextStep(): Promise<void> {
     waitingForGuest.value = true;
     const result = await greeter.value.getClaimRequests();
     waitingForGuest.value = false;
-    if (result.ok) {
-      guestInfoPage.value.fullName = greeter.value.requestedHumanHandle?.label;
-      guestInfoPage.value.email = greeter.value.requestedHumanHandle?.email;
+    if (result.ok && guestInfoPageRef.value) {
+      guestInfoPageRef.value.fullName = greeter.value.requestedHumanHandle?.label || '';
+      guestInfoPageRef.value.email = greeter.value.requestedHumanHandle?.email || '';
       await nextStep();
     } else {
       await showErrorAndRestart('UsersPage.greet.errors.retrieveUserInfoFailed');

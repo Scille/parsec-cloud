@@ -67,7 +67,7 @@ import {
   asyncComputed,
 } from 'megashark-lib';
 import { IonPage, modalController } from '@ionic/vue';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, useTemplateRef } from 'vue';
 import { BmsAccessInstance } from '@/services/bms';
 
 const enum UpdatePasswordStep {
@@ -79,8 +79,8 @@ const translationPrefix = 'clientArea.personalDataPage.modals.security';
 const querying = ref(false);
 
 const passwordRef = ref('');
-const passwordInput = ref();
-const choosePasswordInput = ref<typeof MsChoosePasswordInput | null>(null);
+const passwordInputRef = useTemplateRef<InstanceType<typeof MsPasswordInput>>('passwordInput');
+const choosePasswordInputRef = useTemplateRef<InstanceType<typeof MsChoosePasswordInput>>('choosePasswordInput');
 const errors = ref({
   password: '',
   global: '',
@@ -91,7 +91,7 @@ const isConfirmButtonDisabled = asyncComputed(async (): Promise<boolean> => {
 });
 
 onMounted(async () => {
-  await passwordInput.value.setFocus();
+  await passwordInputRef.value?.setFocus();
 });
 
 async function submit(): Promise<boolean> {
@@ -110,7 +110,7 @@ async function submit(): Promise<boolean> {
 async function updatePassword(): Promise<boolean> {
   try {
     querying.value = true;
-    const response = await BmsAccessInstance.get().updateAuthentication(passwordRef.value, choosePasswordInput.value?.password ?? '');
+    const response = await BmsAccessInstance.get().updateAuthentication(passwordRef.value, choosePasswordInputRef.value?.password ?? '');
 
     if (response.isError) {
       switch (response.status) {
@@ -137,12 +137,12 @@ async function isFormValid(): Promise<boolean> {
     case UpdatePasswordStep.Password:
       return !!passwordRef.value;
     case UpdatePasswordStep.NewPassword:
-      return choosePasswordInput.value && (await choosePasswordInput.value.areFieldsCorrect()) && arePasswordsDifferent();
+      return !!(choosePasswordInputRef.value && (await choosePasswordInputRef.value.areFieldsCorrect()) && arePasswordsDifferent());
   }
 }
 
 function arePasswordsDifferent(): boolean {
-  return choosePasswordInput.value?.password !== passwordRef.value;
+  return choosePasswordInputRef.value?.password !== passwordRef.value;
 }
 
 function getStepTitle(): Translatable {

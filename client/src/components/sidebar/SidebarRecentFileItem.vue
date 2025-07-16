@@ -6,7 +6,6 @@
     button
     @click="$emit('fileClicked', file)"
     class="sidebar-item button-medium ion-no-padding"
-    ref="itemRef"
   >
     <div class="sidebar-item-file">
       <ion-text class="sidebar-item-file__label">{{ file.name }}</ion-text>

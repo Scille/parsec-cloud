@@ -72,7 +72,7 @@ import {
   FileControlsPlayback,
   FileControlsVolume,
 } from '@/components/viewers';
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { onMounted, onUnmounted, ref, watch, useTemplateRef } from 'vue';
 import { FileViewerWrapper } from '@/views/viewers';
 import { SliderState, PipIcon } from 'megashark-lib';
 import { getMimeTypeFromBuffer } from '@/common/fileTypes';
@@ -82,7 +82,7 @@ const props = defineProps<{
 }>();
 
 const src = ref('');
-const videoElement = ref<HTMLVideoElement>();
+const videoElementRef = useTemplateRef<HTMLVideoElement>('videoElement');
 const length = ref(0);
 const ended = ref(false);
 const muted = ref(false);
@@ -94,9 +94,9 @@ const mimeType = ref<undefined | string>(undefined);
 const cancelFluxProgressWatch = watch(
   () => fluxProgress.value,
   () => {
-    if (videoElement.value) {
-      videoElement.value.currentTime = fluxProgress.value.progress / 100;
-      if (videoElement.value.paused !== fluxProgress.value.paused) {
+    if (videoElementRef.value) {
+      videoElementRef.value.currentTime = fluxProgress.value.progress / 100;
+      if (videoElementRef.value.paused !== fluxProgress.value.paused) {
         togglePlayback();
       }
     }
@@ -106,8 +106,8 @@ const cancelFluxProgressWatch = watch(
 const cancelVolumeWatch = watch(
   () => volume.value,
   () => {
-    if (videoElement.value) {
-      videoElement.value.volume = volume.value / 100;
+    if (videoElementRef.value) {
+      videoElementRef.value.volume = volume.value / 100;
     }
   },
 );
@@ -159,19 +159,19 @@ async function onError(): Promise<void> {
 }
 
 function onTimeUpdate(): void {
-  if (!fluxProgress.value.paused && videoElement.value && videoElement.value.currentTime !== undefined) {
-    fluxProgress.value.progress = Math.floor(videoElement.value.currentTime * 100);
+  if (!fluxProgress.value.paused && videoElementRef.value && videoElementRef.value.currentTime !== undefined) {
+    fluxProgress.value.progress = Math.floor(videoElementRef.value.currentTime * 100);
   }
 }
 
 function togglePlayback(): void {
-  if (videoElement.value) {
-    videoElement.value.paused ? videoElement.value.play() : videoElement.value.pause();
+  if (videoElementRef.value) {
+    videoElementRef.value.paused ? videoElementRef.value.play() : videoElementRef.value.pause();
   }
 }
 
 async function toggleFullScreen(): Promise<void> {
-  await videoElement.value?.requestFullscreen();
+  await videoElementRef.value?.requestFullscreen();
 }
 
 function onTogglePictureInPicture(value: boolean): void {
@@ -181,7 +181,7 @@ function onTogglePictureInPicture(value: boolean): void {
 
 async function togglePictureInPicture(): Promise<void> {
   if (pipState.value === false) {
-    await videoElement.value?.requestPictureInPicture();
+    await videoElementRef.value?.requestPictureInPicture();
   } else {
     try {
       document.exitPictureInPicture();
@@ -192,8 +192,8 @@ async function togglePictureInPicture(): Promise<void> {
 }
 
 async function changePlaybackSpeed(value: number): Promise<void> {
-  if (videoElement.value) {
-    videoElement.value.playbackRate = PlaybackSpeeds[value];
+  if (videoElementRef.value) {
+    videoElementRef.value.playbackRate = PlaybackSpeeds[value];
     dropdownItems.value[0].children?.forEach((item, index) => {
       item.isActive = value === index;
     });
@@ -201,9 +201,9 @@ async function changePlaybackSpeed(value: number): Promise<void> {
 }
 
 async function toggleLoop(): Promise<void> {
-  if (videoElement.value) {
+  if (videoElementRef.value) {
     loopState.value = !loopState.value;
-    videoElement.value.loop = loopState.value;
+    videoElementRef.value.loop = loopState.value;
     dropdownItems.value[2].isActive = loopState.value;
   }
 }

@@ -4,7 +4,7 @@
   <div class="user-select-container">
     <ms-input
       id="select-user-input"
-      ref="inputRef"
+      ref="input"
       :label="label || 'UserSelect.defaultLabel'"
       :placeholder="placeholder || 'UserSelect.defaultPlaceholder'"
       @change="onInput"
@@ -23,7 +23,7 @@
 
 <script setup lang="ts">
 import { popoverController, IonText } from '@ionic/vue';
-import { onMounted, Ref, ref } from 'vue';
+import { onMounted, Ref, ref, useTemplateRef } from 'vue';
 import { MsInput, MsModalResult, Translatable } from 'megashark-lib';
 import { listUsers, UserInfo } from '@/parsec';
 import UserSelectDropdown from '@/components/users/UserSelectDropdown.vue';
@@ -40,7 +40,7 @@ const emits = defineEmits<{
 }>();
 
 const querying = ref(false);
-const inputRef = ref();
+const inputRef = useTemplateRef<InstanceType<typeof MsInput>>('input');
 const selectedUser: Ref<UserInfo | undefined> = ref();
 let queryCount = 0;
 const errorMessage = ref('');
@@ -110,7 +110,7 @@ async function onInput(value: string): Promise<void> {
 }
 
 onMounted(async () => {
-  await inputRef.value.setFocus();
+  await inputRef.value?.setFocus();
   if (props.modelValue) {
     selectedUser.value = props.modelValue;
   }

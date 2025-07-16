@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { onMounted, onUnmounted, ref, watch, useTemplateRef } from 'vue';
 import { FileControls, FileControlsButton, FileControlsZoom } from '@/components/viewers';
 import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo } from '@/views/viewers/utils';
@@ -53,10 +53,10 @@ const props = defineProps<{
 }>();
 
 const src = ref('');
-const zoomControl = ref();
+const zoomControlRef = useTemplateRef<InstanceType<typeof FileControlsZoom>>('zoomControl');
 const zoomLevel = ref(1);
-const imgElement = ref();
-const imageViewerContainer = ref();
+const imgElementRef = useTemplateRef<HTMLImageElement>('imgElement');
+const imageViewerContainerRef = useTemplateRef<HTMLDivElement>('imageViewerContainer');
 const isZoomedMoreThanViewport = ref(false);
 const restrictDirection = ref({
   up: true,
@@ -64,11 +64,11 @@ const restrictDirection = ref({
   left: true,
   right: true,
 });
-const draggableElement = ref();
+const draggableElementRef = useTemplateRef<InstanceType<typeof MsDraggable>>('draggableElement');
 
 function updateDraggingRestrictions(resetPosition = false): void {
   if (resetPosition) {
-    draggableElement.value?.resetPosition();
+    draggableElementRef.value?.resetPosition();
   }
 
   restrictDirection.value = {
@@ -78,9 +78,9 @@ function updateDraggingRestrictions(resetPosition = false): void {
     right: true,
   };
 
-  if (imgElement.value && imageViewerContainer.value) {
-    const imgRect = imgElement.value.getBoundingClientRect();
-    const containerRect = imageViewerContainer.value.getBoundingClientRect();
+  if (imgElementRef.value && imageViewerContainerRef.value) {
+    const imgRect = imgElementRef.value.getBoundingClientRect();
+    const containerRect = imageViewerContainerRef.value.getBoundingClientRect();
     isZoomedMoreThanViewport.value = imgRect.width > containerRect.width || imgRect.height > containerRect.height;
 
     // image is overflowing to the top
@@ -105,7 +105,7 @@ function updateDraggingRestrictions(resetPosition = false): void {
 onMounted(async () => {
   const mimeType = await getMimeTypeFromBuffer(props.contentInfo.data);
   src.value = URL.createObjectURL(new Blob([props.contentInfo.data], { type: mimeType }));
-  zoomLevel.value = zoomControl.value.getZoom() / 100;
+  zoomLevel.value = (zoomControlRef.value?.getZoom() ?? 100) / 100;
   window.addEventListener('resize', () => updateDraggingRestrictions(true));
 });
 
@@ -126,7 +126,7 @@ async function toggleFullScreen(): Promise<void> {
     await document.exitFullscreen();
     return;
   }
-  await imageViewerContainer.value!.requestFullscreen();
+  await imageViewerContainerRef.value?.requestFullscreen();
 }
 </script>
 

@@ -130,12 +130,12 @@ import { IonButton, IonIcon, IonText } from '@ionic/vue';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { I18n, Translatable, askQuestion, Answer, DownloadIcon, MsImage } from 'megashark-lib';
 import { checkmarkCircle, reload, informationCircle } from 'ionicons/icons';
-import { computed, inject, onMounted, ref } from 'vue';
+import { computed, inject, onMounted, ref, useTemplateRef } from 'vue';
 import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 
 let code = '';
 let content: Uint8Array = new Uint8Array();
-const downloadLink = ref();
+const downloadLinkRef = useTemplateRef('downloadLink');
 const recoveryKeyDownloaded = ref(false);
 const recoveryFileDownloaded = ref(false);
 const disableFileDownload = ref(false);
@@ -249,9 +249,9 @@ async function downloadFile(
   const blob = new Blob([data], { type: contentType });
   const url = window.URL.createObjectURL(blob);
 
-  downloadLink.value.setAttribute('href', url);
-  downloadLink.value.setAttribute('download', I18n.translate(fileName));
-  downloadLink.value.click();
+  downloadLinkRef.value?.setAttribute('href', url);
+  downloadLinkRef.value?.setAttribute('download', I18n.translate(fileName));
+  downloadLinkRef.value?.click();
 }
 </script>
 

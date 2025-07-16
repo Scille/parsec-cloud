@@ -2,7 +2,7 @@
 
 <template>
   <file-drop-zone
-    ref="fileDropZoneRef"
+    ref="fileDropZone"
     :current-path="currentPath"
     :show-drop-message="true"
     @files-added="$emit('filesAdded', $event)"
@@ -17,7 +17,7 @@
       <div class="folders-container-grid">
         <file-card
           class="folder-grid-item"
-          ref="folderItemsRef"
+          ref="folderItems"
           v-for="folder in folders.getEntries()"
           :key="folder.id"
           :entry="folder"
@@ -32,7 +32,7 @@
         />
         <file-card
           class="folder-grid-item"
-          ref="fileItemsRef"
+          ref="fileItems"
           v-for="file in files.getEntries()"
           :key="file.id"
           :entry="file"
@@ -63,7 +63,7 @@ import FileDropZone from '@/components/files/FileDropZone.vue';
 import { EntryCollection, EntryModel, FileOperationProgress, FileModel, FolderModel } from '@/components/files/types';
 import { FileImportTuple } from '@/components/files/utils';
 import { FsPath, WorkspaceRole } from '@/parsec';
-import { ref } from 'vue';
+import { useTemplateRef } from 'vue';
 
 const props = defineProps<{
   operationsInProgress: Array<FileOperationProgress>;
@@ -74,10 +74,10 @@ const props = defineProps<{
   selectionEnabled?: boolean;
 }>();
 
-const fileDropZoneRef = ref();
-const containerScroll = ref();
-const fileItemsRef = ref<Array<typeof FileCard>>();
-const folderItemsRef = ref<Array<typeof FileCard>>();
+const fileDropZoneRef = useTemplateRef('fileDropZone');
+const containerScrollRef = useTemplateRef('containerScroll');
+const fileItemsRef = useTemplateRef<Array<typeof FileCard>>('fileItems');
+const folderItemsRef = useTemplateRef<Array<typeof FileCard>>('folderItems');
 
 const emits = defineEmits<{
   (e: 'click', entry: EntryModel, event: Event): void;
@@ -102,7 +102,7 @@ defineExpose({
 });
 
 function onFilesAdded(imports: FileImportTuple[]): void {
-  fileDropZoneRef.value.reset();
+  fileDropZoneRef.value?.reset();
   emits('filesAdded', imports);
 }
 
@@ -132,7 +132,7 @@ async function scrollToSelected(): Promise<void> {
   // correct value yet.
   setTimeout(() => {
     if (selectedItem) {
-      containerScroll.value.scrollTo({ top: selectedItem.$el.offsetTop, behavior: 'smooth' });
+      containerScrollRef.value?.scrollTo({ top: selectedItem.$el.offsetTop, behavior: 'smooth' });
     }
   }, 500);
 }

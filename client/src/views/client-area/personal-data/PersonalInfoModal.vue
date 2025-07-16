@@ -59,7 +59,7 @@
 <script setup lang="ts">
 import { MsModal, MsInput, MsPhoneNumberInput, MsModalResult, MsReportTheme, MsReportText } from 'megashark-lib';
 import { IonPage, modalController } from '@ionic/vue';
-import { onMounted, Ref, ref } from 'vue';
+import { onMounted, Ref, ref, useTemplateRef } from 'vue';
 import { BmsAccessInstance, BmsError } from '@/services/bms';
 
 const props = defineProps<{
@@ -72,7 +72,7 @@ const translationPrefix = 'clientArea.personalDataPage.modals.personalInfo';
 const firstnameRef = ref(props.firstname);
 const lastnameRef = ref(props.lastname);
 const phoneRef = ref(props.phone ?? '');
-const firstnameInput = ref();
+const firstnameInputRef = useTemplateRef<InstanceType<typeof MsInput>>('firstnameInput');
 const errors: Ref<BmsError[]> = ref([]);
 const querying = ref(false);
 
@@ -81,7 +81,7 @@ enum Fields {
 }
 
 onMounted(async () => {
-  await firstnameInput.value.setFocus();
+  await firstnameInputRef.value?.setFocus();
 });
 
 async function dismissModal(): Promise<boolean> {

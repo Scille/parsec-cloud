@@ -10,9 +10,9 @@
     />
 
     <choose-authentication
-      ref="chooseAuthenticationRef"
-      @field-update="onFieldUpdated"
+      ref="chooseAuthentication"
       class="authentication-content"
+      @field-update="onFieldUpdated"
     />
 
     <ion-footer class="authentication-page-footer">
@@ -35,7 +35,7 @@
         <ion-button
           fill="solid"
           size="default"
-          @click="$emit('authenticationChosen', chooseAuthenticationRef.getSaveStrategy())"
+          @click="chooseAuthenticationRef?.getSaveStrategy() && $emit('authenticationChosen', chooseAuthenticationRef.getSaveStrategy())"
           :disabled="!valid"
         >
           <span>
@@ -58,7 +58,7 @@ import { DeviceSaveStrategy } from '@/parsec';
 import { chevronForward, chevronBack } from 'ionicons/icons';
 import { IonPage, IonButton, IonIcon, IonFooter } from '@ionic/vue';
 import { asyncComputed } from 'megashark-lib';
-import { ref } from 'vue';
+import { useTemplateRef } from 'vue';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
 
 defineProps<{
@@ -72,7 +72,7 @@ defineEmits<{
   (e: 'goBackRequested'): void;
 }>();
 
-const chooseAuthenticationRef = ref();
+const chooseAuthenticationRef = useTemplateRef<InstanceType<typeof ChooseAuthentication>>('chooseAuthentication');
 const valid = asyncComputed(async () => {
   if (!chooseAuthenticationRef.value) {
     return false;
@@ -80,10 +80,12 @@ const valid = asyncComputed(async () => {
   return await chooseAuthenticationRef.value.areFieldsCorrect();
 });
 
+// TODO: Since valid is supposed to be read-only, we should check if this is really necessary
 async function onFieldUpdated(): Promise<void> {
-  console.log('FIELD UPDATED');
+  if (!chooseAuthenticationRef.value) {
+    return;
+  }
   valid.value = await chooseAuthenticationRef.value.areFieldsCorrect();
-  console.log(valid.value);
 }
 </script>
 

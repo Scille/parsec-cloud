@@ -21,7 +21,7 @@
 <script setup lang="ts">
 import { FileImportTuple } from '@/components/files/utils';
 import { FsPath } from '@/parsec';
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, useTemplateRef } from 'vue';
 
 defineExpose({
   importFiles,
@@ -36,17 +36,17 @@ const emits = defineEmits<{
   (e: 'filesAdded', imports: FileImportTuple[]): void;
 }>();
 
-const hiddenInputFiles = ref();
-const hiddenInputFolder = ref();
+const hiddenInputFilesRef = useTemplateRef<HTMLInputElement>('hiddenInputFiles');
+const hiddenInputFolderRef = useTemplateRef<HTMLInputElement>('hiddenInputFolder');
 
 onMounted(() => {
-  hiddenInputFiles.value.addEventListener('change', onInputChange);
-  hiddenInputFolder.value.addEventListener('change', onInputChange);
+  hiddenInputFilesRef.value?.addEventListener('change', onInputChange);
+  hiddenInputFolderRef.value?.addEventListener('change', onInputChange);
 });
 
 onBeforeUnmount(() => {
-  hiddenInputFiles.value.removeEventListener('change', onInputChange);
-  hiddenInputFolder.value.removeEventListener('change', onInputChange);
+  hiddenInputFilesRef.value?.removeEventListener('change', onInputChange);
+  hiddenInputFolderRef.value?.removeEventListener('change', onInputChange);
 });
 
 async function onInputChange(event: any): Promise<void> {
@@ -72,11 +72,11 @@ async function onInputChange(event: any): Promise<void> {
 }
 
 async function importFiles(): Promise<void> {
-  hiddenInputFiles.value.click();
+  hiddenInputFilesRef.value?.click();
 }
 
 async function importFolder(): Promise<void> {
-  hiddenInputFolder.value.click();
+  hiddenInputFolderRef.value?.click();
 }
 
 async function onFilesImport(files: File[]): Promise<void> {

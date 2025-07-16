@@ -138,7 +138,7 @@ import { IonPage, IonContent, IonSkeletonText, IonSplitPane, IonMenu, GestureDet
 import ClientAreaHeader from '@/views/client-area/ClientAreaHeader.vue';
 import ClientAreaSidebar from '@/views/client-area/ClientAreaSidebar.vue';
 import { BillingSystem, BmsAccessInstance, BmsOrganization, DataType, CustomOrderStatus } from '@/services/bms';
-import { inject, onMounted, onUnmounted, ref, watch } from 'vue';
+import { inject, onMounted, onUnmounted, ref, watch, useTemplateRef } from 'vue';
 import { DefaultBmsOrganization, ClientAreaPages, isDefaultOrganization } from '@/views/client-area/types';
 import BillingDetailsPage from '@/views/client-area/billing-details/BillingDetailsPage.vue';
 import ContractsPage from '@/views/client-area/contracts/ContractsPage.vue';
@@ -163,7 +163,7 @@ const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const informationManager: InformationManager = injectionProvider.getDefault().informationManager;
 const { computedWidth: computedWidth, isVisible: isVisible } = useSidebarMenu();
 const organizations = ref<Array<BmsOrganization>>([]);
-const divider = ref();
+const dividerRef = useTemplateRef<HTMLDivElement>('divider');
 const currentPage = ref<ClientAreaPages>(ClientAreaPages.Dashboard);
 const currentOrganization = ref<BmsOrganization>(DefaultBmsOrganization);
 const sidebarWidthProperty = ref('');
@@ -200,10 +200,10 @@ onMounted(async () => {
   setToastOffset(computedWidth.value);
 
   // Enable the gesture for resizing the sidebar
-  if (divider.value) {
+  if (dividerRef.value) {
     const gesture = createGesture({
       gestureName: 'resize-menu',
-      el: divider.value,
+      el: dividerRef.value,
       onMove,
     });
     gesture.enable();

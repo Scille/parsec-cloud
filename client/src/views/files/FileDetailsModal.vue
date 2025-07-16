@@ -135,7 +135,7 @@ import { Clipboard, Folder, MsImage, MsModal, openTooltip, I18n } from 'megashar
 import { EntryStat, EntryStatFile, isDesktop, getSystemPath, WorkspaceHandle } from '@/parsec';
 import { IonButton, IonIcon, IonLabel, IonPage, IonText } from '@ionic/vue';
 import { cloudDone, cloudOffline, copy } from 'ionicons/icons';
-import { defineProps, ref } from 'vue';
+import { ref } from 'vue';
 import { TechnicalId } from '@/components/misc';
 
 enum CopyStatus {
