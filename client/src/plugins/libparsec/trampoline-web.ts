@@ -75,7 +75,11 @@ async function withSharedWorker(): Promise<any> {
     console.error(`libparsec_worker: an error occurred: ${e}`);
   };
 
-  const inFlight: Array<{ id: number; resolve: (value: unknown) => void }> = [];
+  const inFlight: Array<{
+    id: number;
+    resolve: (value: unknown) => void;
+    reject: (value: unknown) => void;
+  }> = [];
   let nextInFlightId = 1;
 
   worker.port.onmessageerror = (e: MessageEvent): void => {
@@ -84,12 +88,16 @@ async function withSharedWorker(): Promise<any> {
 
   worker.port.onmessage = (e: MessageEvent): void => {
     // console.debug('libparsec_port: onmessage', e.data);
-    const data = e.data as { id: number; result: any };
+    const data = e.data as { id: number; result: any; isException: boolean };
     for (let i = 0; i < inFlight.length; i += 1) {
       const candidate = inFlight[i];
       if (candidate.id === data.id) {
         inFlight.splice(i, 1);
-        candidate.resolve(data.result);
+        if (!data.isException) {
+          candidate.resolve(data.result);
+        } else {
+          candidate.reject(data.result);
+        }
         // console.debug('libparsec_port: method call resolved', e.data);
         return;
       }
@@ -134,9 +142,9 @@ async function withSharedWorker(): Promise<any> {
 
       return async (...args: any[]): Promise<any> => {
         // console.debug('libparsec_port: method call', nextInFlightId, name, args);
-        return new Promise((resolve, _reject) => {
+        return new Promise((resolve, reject) => {
           target.port.postMessage({ id: nextInFlightId, name, args });
-          inFlight.push({ id: nextInFlightId, resolve });
+          inFlight.push({ id: nextInFlightId, resolve, reject });
           nextInFlightId += 1;
         });
       };
