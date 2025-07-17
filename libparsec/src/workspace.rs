@@ -6,9 +6,9 @@ pub use libparsec_client::workspace::{
     EntryStat, FileStat, MoveEntryMode, OpenOptions, WorkspaceCreateFileError,
     WorkspaceCreateFolderError, WorkspaceDecryptPathAddrError, WorkspaceFdCloseError,
     WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdStatError,
-    WorkspaceFdWriteError, WorkspaceGeneratePathAddrError, WorkspaceMoveEntryError,
-    WorkspaceOpenFileError, WorkspaceRemoveEntryError, WorkspaceStatEntryError,
-    WorkspaceStatFolderChildrenError, WorkspaceWatchEntryOneShotError,
+    WorkspaceFdWriteError, WorkspaceGeneratePathAddrError, WorkspaceIsFileContentLocalError,
+    WorkspaceMoveEntryError, WorkspaceOpenFileError, WorkspaceRemoveEntryError,
+    WorkspaceStatEntryError, WorkspaceStatFolderChildrenError, WorkspaceWatchEntryOneShotError,
 };
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_types::prelude::*;
@@ -601,6 +601,15 @@ pub async fn workspace_remove_folder_all(
     let workspace = borrow_workspace(workspace)?;
 
     workspace.remove_folder_all(path).await
+}
+
+pub async fn workspace_is_file_content_local(
+    workspace: Handle,
+    path: FsPath,
+) -> Result<bool, WorkspaceIsFileContentLocalError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace.is_file_content_local(path).await
 }
 
 pub async fn workspace_open_file(

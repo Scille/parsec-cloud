@@ -25,9 +25,9 @@ pub use transactions::{
     WorkspaceCreateFolderError, WorkspaceFdCloseError, WorkspaceFdFlushError, WorkspaceFdReadError,
     WorkspaceFdResizeError, WorkspaceFdStatError, WorkspaceFdWriteError,
     WorkspaceGetNeedInboundSyncEntriesError, WorkspaceGetNeedOutboundSyncEntriesError,
-    WorkspaceMoveEntryError, WorkspaceOpenFileError, WorkspaceOpenFolderReaderError,
-    WorkspaceRemoveEntryError, WorkspaceStatEntryError, WorkspaceStatFolderChildrenError,
-    WorkspaceSyncError, WorkspaceWatchEntryOneShotError,
+    WorkspaceIsFileContentLocalError, WorkspaceMoveEntryError, WorkspaceOpenFileError,
+    WorkspaceOpenFolderReaderError, WorkspaceRemoveEntryError, WorkspaceStatEntryError,
+    WorkspaceStatFolderChildrenError, WorkspaceSyncError, WorkspaceWatchEntryOneShotError,
 };
 
 use self::{store::FileUpdater, transactions::FdWriteStrategy};
@@ -451,6 +451,13 @@ impl WorkspaceOps {
 
     pub async fn remove_folder_all(&self, path: FsPath) -> Result<(), WorkspaceRemoveEntryError> {
         transactions::remove_entry(self, path, RemoveEntryExpect::Folder).await
+    }
+
+    pub async fn is_file_content_local(
+        &self,
+        path: FsPath,
+    ) -> Result<bool, WorkspaceIsFileContentLocalError> {
+        transactions::is_file_content_local(self, path).await
     }
 
     pub async fn open_file(

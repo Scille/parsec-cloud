@@ -3529,6 +3529,55 @@ export type WorkspaceInfoError =
   | WorkspaceInfoErrorInternal
 
 
+// WorkspaceIsFileContentLocalError
+export interface WorkspaceIsFileContentLocalErrorEntryNotFound {
+    tag: "EntryNotFound"
+    error: string
+}
+export interface WorkspaceIsFileContentLocalErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface WorkspaceIsFileContentLocalErrorInvalidCertificate {
+    tag: "InvalidCertificate"
+    error: string
+}
+export interface WorkspaceIsFileContentLocalErrorInvalidKeysBundle {
+    tag: "InvalidKeysBundle"
+    error: string
+}
+export interface WorkspaceIsFileContentLocalErrorInvalidManifest {
+    tag: "InvalidManifest"
+    error: string
+}
+export interface WorkspaceIsFileContentLocalErrorNoRealmAccess {
+    tag: "NoRealmAccess"
+    error: string
+}
+export interface WorkspaceIsFileContentLocalErrorNotAFile {
+    tag: "NotAFile"
+    error: string
+}
+export interface WorkspaceIsFileContentLocalErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface WorkspaceIsFileContentLocalErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export type WorkspaceIsFileContentLocalError =
+  | WorkspaceIsFileContentLocalErrorEntryNotFound
+  | WorkspaceIsFileContentLocalErrorInternal
+  | WorkspaceIsFileContentLocalErrorInvalidCertificate
+  | WorkspaceIsFileContentLocalErrorInvalidKeysBundle
+  | WorkspaceIsFileContentLocalErrorInvalidManifest
+  | WorkspaceIsFileContentLocalErrorNoRealmAccess
+  | WorkspaceIsFileContentLocalErrorNotAFile
+  | WorkspaceIsFileContentLocalErrorOffline
+  | WorkspaceIsFileContentLocalErrorStopped
+
+
 // WorkspaceMountError
 export interface WorkspaceMountErrorDisabled {
     tag: "Disabled"
@@ -4537,6 +4586,10 @@ export function workspaceHistoryStop(
 export function workspaceInfo(
     workspace: number
 ): Promise<Result<StartedWorkspaceInfo, WorkspaceInfoError>>
+export function workspaceIsFileContentLocal(
+    workspace: number,
+    path: string
+): Promise<Result<boolean, WorkspaceIsFileContentLocalError>>
 export function workspaceMount(
     workspace: number
 ): Promise<Result<[number, string], WorkspaceMountError>>

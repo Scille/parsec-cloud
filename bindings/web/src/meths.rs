@@ -15315,6 +15315,83 @@ fn variant_workspace_info_error_rs_to_js(
     Ok(js_obj)
 }
 
+// WorkspaceIsFileContentLocalError
+
+#[allow(dead_code)]
+fn variant_workspace_is_file_content_local_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceIsFileContentLocalError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::WorkspaceIsFileContentLocalError::EntryNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceIsFileContentLocalErrorEntryNotFound".into(),
+            )?;
+        }
+        libparsec::WorkspaceIsFileContentLocalError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceIsFileContentLocalErrorInternal".into(),
+            )?;
+        }
+        libparsec::WorkspaceIsFileContentLocalError::InvalidCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceIsFileContentLocalErrorInvalidCertificate".into(),
+            )?;
+        }
+        libparsec::WorkspaceIsFileContentLocalError::InvalidKeysBundle { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceIsFileContentLocalErrorInvalidKeysBundle".into(),
+            )?;
+        }
+        libparsec::WorkspaceIsFileContentLocalError::InvalidManifest { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceIsFileContentLocalErrorInvalidManifest".into(),
+            )?;
+        }
+        libparsec::WorkspaceIsFileContentLocalError::NoRealmAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceIsFileContentLocalErrorNoRealmAccess".into(),
+            )?;
+        }
+        libparsec::WorkspaceIsFileContentLocalError::NotAFile { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceIsFileContentLocalErrorNotAFile".into(),
+            )?;
+        }
+        libparsec::WorkspaceIsFileContentLocalError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceIsFileContentLocalErrorOffline".into(),
+            )?;
+        }
+        libparsec::WorkspaceIsFileContentLocalError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceIsFileContentLocalErrorStopped".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // WorkspaceMountError
 
 #[allow(dead_code)]
@@ -21431,6 +21508,37 @@ pub fn workspaceInfo(workspace: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_workspace_info_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// workspace_is_file_content_local
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceIsFileContentLocal(workspace: u32, path: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let path = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::workspace_is_file_content_local(workspace, path).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = value.into();
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_is_file_content_local_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
