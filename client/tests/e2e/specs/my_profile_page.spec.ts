@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { DisplaySize, expect, fillIonInput, logout, msTest, selectDropdown } from '@tests/e2e/helpers';
+import { DisplaySize, expect, fillIonInput, logout, msTest, openExternalLink, selectDropdown } from '@tests/e2e/helpers';
 
 msTest('Check devices list', async ({ myProfilePage }) => {
   await expect(myProfilePage.locator('.menu-list__item').nth(1)).toHaveText('My devices');
@@ -169,20 +169,24 @@ msTest('Check settings section', async ({ myProfilePage }) => {
 
 msTest('Open documentation', async ({ myProfilePage }) => {
   await expect(myProfilePage.locator('.item-container__text').nth(4)).toHaveText('Documentation');
-  await myProfilePage.locator('.item-container__text').nth(4).click();
-  const newTab = await myProfilePage.waitForEvent('popup');
-  await newTab.waitForLoadState();
-  await expect(newTab).toHaveURL(new RegExp('https://docs.parsec.cloud/(en|fr)/[a-z0-9-+.]+'));
+  await openExternalLink(
+    myProfilePage,
+    myProfilePage.locator('.item-container__text').nth(4),
+    new RegExp('https://docs.parsec.cloud/(en|fr)/[a-z0-9-+.]+'),
+  );
   // Re-check, just to for it to wait
   await expect(myProfilePage.locator('.item-container__text').nth(4)).toHaveText('Documentation');
 });
 
 msTest('Open feedback', async ({ myProfilePage }) => {
   await expect(myProfilePage.locator('.item-container__text').nth(5)).toHaveText('Feedback');
-  await myProfilePage.locator('.item-container__text').nth(5).click();
-  const newTab = await myProfilePage.waitForEvent('popup');
-  await newTab.waitForLoadState();
-  await expect(newTab).toHaveURL(new RegExp('https://sign(-dev)?.parsec.cloud/contact'));
+
+  await openExternalLink(
+    myProfilePage,
+    myProfilePage.locator('.item-container__text').nth(5),
+    new RegExp('https://sign(-dev)?.parsec.cloud/contact'),
+  );
+  await expect(myProfilePage.locator('.item-container__text').nth(5)).toHaveText('Feedback');
 });
 
 msTest('Logout from my profile page', async ({ myProfilePage }) => {

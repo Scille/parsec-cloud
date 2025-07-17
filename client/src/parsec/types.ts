@@ -24,6 +24,7 @@ export {
   ClientCreateWorkspaceErrorTag,
   ClientEventTag,
   ClientExportRecoveryDeviceErrorTag,
+  ClientGetOrganizationBootstrapDateErrorTag,
   ClientGetUserDeviceErrorTag,
   ClientGetUserInfoErrorTag,
   ClientInfoErrorTag,
@@ -118,6 +119,7 @@ export type {
   ClientEventInvitationChanged,
   ClientEventPing,
   ClientExportRecoveryDeviceError,
+  ClientGetOrganizationBootstrapDateError,
   ClientGetTosError,
   ClientGetUserDeviceError,
   ClientGetUserInfoError,
@@ -374,6 +376,7 @@ interface OrganizationInfo {
   hasUserLimit: boolean;
   organizationAddr: ParsecOrganizationAddr;
   organizationId: OrganizationID;
+  creationDate?: DateTime;
 }
 
 enum AccountAccessStrategy {

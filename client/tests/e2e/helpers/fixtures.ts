@@ -4,6 +4,7 @@ import { Locator, TestInfo, test as base } from '@playwright/test';
 import { expect } from '@tests/e2e/helpers/assertions';
 import { MockBms, MockClientAreaOverload, MockRouteOptions } from '@tests/e2e/helpers/bms';
 import { DEFAULT_USER_INFORMATION, generateDefaultOrganizationInformation, generateDefaultUserData } from '@tests/e2e/helpers/data';
+import { mockExternalWebsites } from '@tests/e2e/helpers/externalWebsites';
 import { dropTestbed, initTestBed } from '@tests/e2e/helpers/testbed';
 import { DisplaySize, MsContext, MsPage } from '@tests/e2e/helpers/types';
 import { createWorkspace, fillInputModal, fillIonInput, importDefaultFiles, logout } from '@tests/e2e/helpers/utils';
@@ -214,6 +215,7 @@ export const msTest = debugTest.extend<{
   context: async ({ browser }, use) => {
     const context = (await browser.newContext()) as MsContext;
     await context.grantPermissions(['clipboard-read']);
+    await mockExternalWebsites(context);
     await use(context);
     await context.close();
   },

@@ -10,6 +10,7 @@ import {
   fillIonInput,
   getTestbedBootstrapAddr,
   msTest,
+  openExternalLink,
   setupNewPage,
 } from '@tests/e2e/helpers';
 import { randomInt } from 'crypto';
@@ -336,15 +337,16 @@ msTest('Go through saas org creation process from bootstrap link', async ({ cont
   await page.release();
 });
 
-msTest('Open account creation', async ({ home }) => {
+msTest('Open customer account creation', async ({ home }) => {
   const modal = await openCreateOrganizationModal(home);
 
   const bmsContainer = modal.locator('.saas-login');
   await expect(bmsContainer.locator('.saas-login-footer').locator('.create-account__link')).toHaveText('Create an account');
-  await bmsContainer.locator('.saas-login-footer').locator('.create-account__link').click();
-  const newTabPromise = home.waitForEvent('popup');
-  const newTab = await newTabPromise;
-  await expect(newTab).toHaveURL('https://sign-dev.parsec.cloud/');
+  await openExternalLink(
+    home,
+    bmsContainer.locator('.saas-login-footer').locator('.create-account__link'),
+    /https:\/\/sign-dev\.parsec\.cloud.*/,
+  );
 });
 
 msTest('Fail to login to BMS', async ({ home }) => {
