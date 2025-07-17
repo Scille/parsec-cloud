@@ -10,7 +10,7 @@ use super::WorkspaceCreateFileError;
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace::{
-        store::{ForUpdateFileError, ResolvePathError},
+        store::{ForUpdateFileError, ReadChunkOrBlockLocalOnlyError, ResolvePathError},
         FileUpdater, OpenedFile, OpenedFileCursor, ReadMode, WorkspaceOps, WriteMode,
     },
 };
@@ -49,6 +49,91 @@ impl OpenOptions {
             create_new: false,
         }
     }
+}
+#[derive(Debug, thiserror::Error)]
+pub enum WorkspaceIsFileContentLocalError {
+    #[error("Component has stopped")]
+    Stopped,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+
+    // resolve_path related errors
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
+    #[error("Not allowed to access this realm")]
+    NoRealmAccess,
+    #[error("Path doesn't exist")]
+    EntryNotFound,
+    #[error(transparent)]
+    InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
+    #[error(transparent)]
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
+    #[error(transparent)]
+    InvalidManifest(#[from] Box<InvalidManifestError>),
+
+    // specific errors
+    #[error("Path resolves to a folder, not a file")]
+    NotAFile,
+}
+
+/// Checks if all blocks are locally present for the given file `path`
+///
+/// This check allows to avoid unexpected errors when trying to open a file with
+/// missing blocks while being offline.
+///
+/// No check is performed if `path` is a folder, instead an error is returned.
+pub async fn is_file_content_local(
+    ops: &WorkspaceOps,
+    path: FsPath,
+) -> Result<bool, WorkspaceIsFileContentLocalError> {
+    let outcome = ops.store.resolve_path(&path).await;
+
+    let local_file_manifest = match outcome {
+        Ok((ArcLocalChildManifest::File(file), _)) => file,
+        Ok((ArcLocalChildManifest::Folder(_), _)) => {
+            return Err(WorkspaceIsFileContentLocalError::NotAFile)
+        }
+
+        Err(err) => {
+            return match err {
+                ResolvePathError::Offline(e) => Err(WorkspaceIsFileContentLocalError::Offline(e)),
+                ResolvePathError::Stopped => Err(WorkspaceIsFileContentLocalError::Stopped),
+                ResolvePathError::EntryNotFound => {
+                    Err(WorkspaceIsFileContentLocalError::EntryNotFound)
+                }
+                ResolvePathError::NoRealmAccess => {
+                    Err(WorkspaceIsFileContentLocalError::NoRealmAccess)
+                }
+                ResolvePathError::InvalidKeysBundle(err) => {
+                    Err(WorkspaceIsFileContentLocalError::InvalidKeysBundle(err))
+                }
+                ResolvePathError::InvalidCertificate(err) => {
+                    Err(WorkspaceIsFileContentLocalError::InvalidCertificate(err))
+                }
+                ResolvePathError::InvalidManifest(err) => {
+                    Err(WorkspaceIsFileContentLocalError::InvalidManifest(err))
+                }
+                ResolvePathError::Internal(err) => Err(err.context("cannot resolve path").into()),
+            }
+        }
+    };
+    for chunk_views in &local_file_manifest.blocks {
+        for chunk_view in chunk_views {
+            match ops.store.get_chunk_or_block_local_only(chunk_view).await {
+                Ok(_) => continue,
+                Err(ReadChunkOrBlockLocalOnlyError::Stopped) => {
+                    return Err(WorkspaceIsFileContentLocalError::Stopped)
+                }
+                Err(ReadChunkOrBlockLocalOnlyError::Internal(err)) => {
+                    return Err(err.context("read local chunk or block").into())
+                }
+
+                Err(ReadChunkOrBlockLocalOnlyError::ChunkNotFound) => return Ok(false),
+            }
+        }
+    }
+
+    Ok(true)
 }
 
 #[derive(Debug, thiserror::Error)]

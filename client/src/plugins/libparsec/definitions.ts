@@ -4236,6 +4236,66 @@ export interface WorkspaceInfoErrorInternal {
 export type WorkspaceInfoError =
   | WorkspaceInfoErrorInternal
 
+// WorkspaceIsFileContentLocalError
+export enum WorkspaceIsFileContentLocalErrorTag {
+    EntryNotFound = 'WorkspaceIsFileContentLocalErrorEntryNotFound',
+    Internal = 'WorkspaceIsFileContentLocalErrorInternal',
+    InvalidCertificate = 'WorkspaceIsFileContentLocalErrorInvalidCertificate',
+    InvalidKeysBundle = 'WorkspaceIsFileContentLocalErrorInvalidKeysBundle',
+    InvalidManifest = 'WorkspaceIsFileContentLocalErrorInvalidManifest',
+    NoRealmAccess = 'WorkspaceIsFileContentLocalErrorNoRealmAccess',
+    NotAFile = 'WorkspaceIsFileContentLocalErrorNotAFile',
+    Offline = 'WorkspaceIsFileContentLocalErrorOffline',
+    Stopped = 'WorkspaceIsFileContentLocalErrorStopped',
+}
+
+export interface WorkspaceIsFileContentLocalErrorEntryNotFound {
+    tag: WorkspaceIsFileContentLocalErrorTag.EntryNotFound
+    error: string
+}
+export interface WorkspaceIsFileContentLocalErrorInternal {
+    tag: WorkspaceIsFileContentLocalErrorTag.Internal
+    error: string
+}
+export interface WorkspaceIsFileContentLocalErrorInvalidCertificate {
+    tag: WorkspaceIsFileContentLocalErrorTag.InvalidCertificate
+    error: string
+}
+export interface WorkspaceIsFileContentLocalErrorInvalidKeysBundle {
+    tag: WorkspaceIsFileContentLocalErrorTag.InvalidKeysBundle
+    error: string
+}
+export interface WorkspaceIsFileContentLocalErrorInvalidManifest {
+    tag: WorkspaceIsFileContentLocalErrorTag.InvalidManifest
+    error: string
+}
+export interface WorkspaceIsFileContentLocalErrorNoRealmAccess {
+    tag: WorkspaceIsFileContentLocalErrorTag.NoRealmAccess
+    error: string
+}
+export interface WorkspaceIsFileContentLocalErrorNotAFile {
+    tag: WorkspaceIsFileContentLocalErrorTag.NotAFile
+    error: string
+}
+export interface WorkspaceIsFileContentLocalErrorOffline {
+    tag: WorkspaceIsFileContentLocalErrorTag.Offline
+    error: string
+}
+export interface WorkspaceIsFileContentLocalErrorStopped {
+    tag: WorkspaceIsFileContentLocalErrorTag.Stopped
+    error: string
+}
+export type WorkspaceIsFileContentLocalError =
+  | WorkspaceIsFileContentLocalErrorEntryNotFound
+  | WorkspaceIsFileContentLocalErrorInternal
+  | WorkspaceIsFileContentLocalErrorInvalidCertificate
+  | WorkspaceIsFileContentLocalErrorInvalidKeysBundle
+  | WorkspaceIsFileContentLocalErrorInvalidManifest
+  | WorkspaceIsFileContentLocalErrorNoRealmAccess
+  | WorkspaceIsFileContentLocalErrorNotAFile
+  | WorkspaceIsFileContentLocalErrorOffline
+  | WorkspaceIsFileContentLocalErrorStopped
+
 // WorkspaceMountError
 export enum WorkspaceMountErrorTag {
     Disabled = 'WorkspaceMountErrorDisabled',
@@ -5329,6 +5389,10 @@ export interface LibParsecPlugin {
     workspaceInfo(
         workspace: Handle
     ): Promise<Result<StartedWorkspaceInfo, WorkspaceInfoError>>
+    workspaceIsFileContentLocal(
+        workspace: Handle,
+        path: FsPath
+    ): Promise<Result<boolean, WorkspaceIsFileContentLocalError>>
     workspaceMount(
         workspace: Handle
     ): Promise<Result<[Handle, Path], WorkspaceMountError>>

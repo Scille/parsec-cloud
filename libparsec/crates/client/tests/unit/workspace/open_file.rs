@@ -12,7 +12,8 @@ use libparsec_types::prelude::*;
 use super::utils::{assert_ls, ls, workspace_ops_factory};
 use crate::{
     workspace::{
-        EntryStat, OpenOptions, WorkspaceFdReadError, WorkspaceFdWriteError, WorkspaceOpenFileError,
+        tests::utils::restart_workspace_ops, EntryStat, OpenOptions, WorkspaceFdReadError,
+        WorkspaceFdWriteError, WorkspaceIsFileContentLocalError, WorkspaceOpenFileError,
     },
     EventWorkspaceOpsOutboundSyncNeeded,
 };
@@ -107,6 +108,103 @@ async fn cannot_open_root(env: &TestbedEnv) {
         .unwrap_err();
     p_assert_matches!(err, WorkspaceOpenFileError::EntryNotAFile { entry_id} if entry_id == wksp1_id);
     spy.assert_no_events();
+}
+
+#[parsec_test(testbed = "minimal_client_ready")]
+async fn is_file_content_local_ok(env: &TestbedEnv) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+
+    let alice = env.local_device("alice@dev1");
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
+
+    let spy = ops.event_bus.spy.start_expecting();
+
+    assert!(ops
+        .is_file_content_local("/bar.txt".parse().unwrap())
+        .await
+        .unwrap());
+
+    spy.assert_no_events();
+
+    ops.stop().await.unwrap();
+}
+
+#[parsec_test(testbed = "minimal_client_ready")]
+async fn is_file_content_local_not_a_file(env: &TestbedEnv) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+
+    let alice = env.local_device("alice@dev1");
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
+
+    let spy = ops.event_bus.spy.start_expecting();
+
+    matches!(
+        ops.is_file_content_local("/foo".parse().unwrap())
+            .await
+            .unwrap_err(),
+        WorkspaceIsFileContentLocalError::NotAFile
+    );
+
+    spy.assert_no_events();
+
+    ops.stop().await.unwrap();
+}
+#[parsec_test(testbed = "minimal_client_ready")]
+async fn is_file_content_local_new_file(env: &TestbedEnv) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+
+    let alice = env.local_device("alice@dev1");
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
+
+    // create file
+    {
+        let options = OpenOptions {
+            read: false,
+            write: false,
+            truncate: false,
+            create: true,
+            create_new: false,
+        };
+        let fd = ops
+            .open_file("/new_file.txt".parse().unwrap(), options)
+            .await
+            .unwrap();
+        p_assert_matches!(fd.0, 1);
+    }
+
+    let ops = restart_workspace_ops(ops).await;
+
+    let spy = ops.event_bus.spy.start_expecting();
+
+    assert!(ops
+        .is_file_content_local("/new_file.txt".parse().unwrap())
+        .await
+        .unwrap());
+
+    spy.assert_no_events();
+
+    ops.stop().await.unwrap();
+}
+
+#[parsec_test(testbed = "minimal_client_ready")]
+async fn is_file_content_local_not_found(env: &TestbedEnv) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+
+    let alice = env.local_device("alice@dev1");
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
+
+    let spy = ops.event_bus.spy.start_expecting();
+
+    matches!(
+        ops.is_file_content_local("/not_found.txt".parse().unwrap())
+            .await
+            .unwrap_err(),
+        WorkspaceIsFileContentLocalError::EntryNotFound
+    );
+
+    spy.assert_no_events();
+
+    ops.stop().await.unwrap();
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]
