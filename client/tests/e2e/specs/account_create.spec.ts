@@ -16,6 +16,7 @@ msTest('Parsec account create account', async ({ parsecAccount }) => {
   }
 
   const EMAIL = generateUniqueEmail();
+  const PASSWORD = 'BigP@ssw0rd.';
 
   const container = parsecAccount.locator('.homepage-content');
   await expect(container.locator('.account-login__title')).toHaveText('My Parsec account');
@@ -81,9 +82,9 @@ msTest('Parsec account create account', async ({ parsecAccount }) => {
   await expect(title).toHaveText('Choose your authentication method');
   const passwordNext = passwordContainer.locator('ion-button');
   await expect(passwordNext).toBeTrulyDisabled();
-  await fillIonInput(passwordContainer.locator('ion-input').nth(0), 'BigP@ssw0rd.');
+  await fillIonInput(passwordContainer.locator('ion-input').nth(0), PASSWORD);
   await expect(passwordNext).toBeTrulyDisabled();
-  await fillIonInput(passwordContainer.locator('ion-input').nth(1), 'BigP@ssw0rd.');
+  await fillIonInput(passwordContainer.locator('ion-input').nth(1), PASSWORD);
   await expect(passwordNext).toBeTrulyEnabled();
   await passwordNext.click();
 
@@ -97,4 +98,28 @@ msTest('Parsec account create account', async ({ parsecAccount }) => {
   await expect(createdNext).toHaveText('Access organizations');
   await createdNext.click();
   await expect(parsecAccount).toBeHomePage();
+
+  await expect(parsecAccount.locator('.profile-header-homepage')).toHaveText(
+    `${DEFAULT_USER_INFORMATION.firstName} ${DEFAULT_USER_INFORMATION.lastName}`,
+  );
+  const profilePopover = parsecAccount.locator('.profile-header-homepage-popover');
+  await expect(profilePopover).toBeHidden();
+  await parsecAccount.locator('.profile-header-homepage').click();
+  await expect(profilePopover).toBeVisible();
+  await profilePopover.locator('.logout').click();
+  await expect(container.locator('.account-login__title')).toHaveText('My Parsec account');
+  await expect(parsecAccount).toHaveURL(/.+\/account$/);
+
+  const loginContainer = parsecAccount.locator('.account-login-container');
+  const loginButton = loginContainer.locator('.account-login-button').locator('ion-button');
+  await expect(loginButton).toBeTrulyDisabled();
+  await fillIonInput(loginContainer.locator('ion-input').nth(1), EMAIL);
+  await expect(loginButton).toBeTrulyDisabled();
+  await fillIonInput(loginContainer.locator('ion-input').nth(2), PASSWORD);
+  await expect(loginButton).toBeTrulyEnabled();
+  await loginButton.click();
+  await expect(parsecAccount).toBeHomePage();
+  await expect(parsecAccount.locator('.profile-header-homepage')).toHaveText(
+    `${DEFAULT_USER_INFORMATION.firstName} ${DEFAULT_USER_INFORMATION.lastName}`,
+  );
 });

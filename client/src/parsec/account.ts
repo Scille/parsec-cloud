@@ -2,7 +2,7 @@
 
 import { getDefaultDeviceName } from '@/common/device';
 import { getClientConfig, wait } from '@/parsec/internals';
-import { listAvailableDevices, SaveStrategy } from '@/parsec/login';
+import { listAvailableDevices } from '@/parsec/login';
 import {
   AccountAccess,
   AccountAccessStrategy,
@@ -40,6 +40,10 @@ import { generateNoHandleError } from '@/parsec/utils';
 import { libparsec } from '@/plugins/libparsec';
 import { Env } from '@/services/environment';
 import { DateTime } from 'luxon';
+
+function getAccountDefaultDeviceName(): string {
+  return `Account_${getDefaultDeviceName()}`;
+}
 
 class AccountCreationStepper {
   accountInfo?: {
@@ -295,7 +299,7 @@ class _ParsecAccount {
         this.handle,
         regDevice.organizationId,
         regDevice.userId,
-        getDefaultDeviceName(),
+        getAccountDefaultDeviceName(),
         { tag: DeviceSaveStrategyTag.AccountVault, ciphertextKeyId: keyResult.value[0], ciphertextKey: keyResult.value[1] },
       );
       if (!regResult.ok) {
@@ -347,10 +351,7 @@ class _ParsecAccount {
     return result;
   }
 
-  async registerNewDevice(
-    registrationDevice: RegistrationDevice,
-    authentication: AccountAccess,
-  ): Promise<Result<AvailableDevice, AccountRegisterNewDeviceError>> {
+  async registerNewDevice(registrationDevice: RegistrationDevice): Promise<Result<AvailableDevice, AccountRegisterNewDeviceError>> {
     if (!this.handle) {
       return generateNoHandleError<AccountRegisterNewDeviceError>();
     }
@@ -372,17 +373,29 @@ class _ParsecAccount {
         },
       };
     }
-    if (authentication.strategy !== AccountAccessStrategy.Password) {
-      return { ok: false, error: { tag: AccountRegisterNewDeviceErrorTag.Internal, error: 'invalid-auth' } };
+    const keyResult = await libparsec.accountUploadOpaqueKeyInVault(this.handle);
+    if (!keyResult.ok) {
+      console.error(`Failed to upload opaque key: ${keyResult.error.tag} (${keyResult.error.error})`);
+      return { ok: false, error: { tag: AccountRegisterNewDeviceErrorTag.BadVaultKeyAccess, error: 'failed to get key' } };
     }
-    const saveStrategy = SaveStrategy.usePassword(authentication.password);
-    return await libparsec.accountRegisterNewDevice(
+    const availableDevices = await listAvailableDevices(false);
+    const existingDevice = availableDevices.find(
+      (ad) =>
+        ad.organizationId === registrationDevice.organizationId &&
+        ad.userId === registrationDevice.userId &&
+        ad.ty.tag === AvailableDeviceTypeTag.AccountVault,
+    );
+    if (existingDevice !== undefined) {
+      return { ok: true, value: existingDevice };
+    }
+    const regResult = await libparsec.accountRegisterNewDevice(
       this.handle,
       registrationDevice.organizationId,
       registrationDevice.userId,
-      getDefaultDeviceName(),
-      saveStrategy,
+      getAccountDefaultDeviceName(),
+      { tag: DeviceSaveStrategyTag.AccountVault, ciphertextKeyId: keyResult.value[0], ciphertextKey: keyResult.value[1] },
     );
+    return regResult;
   }
 
   async createRegistrationDevice(accessStrategy: DeviceAccessStrategy): Promise<Result<null, AccountCreateRegistrationDeviceError>> {
