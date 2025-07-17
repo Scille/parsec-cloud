@@ -13950,6 +13950,67 @@ fn variant_workspace_info_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// WorkspaceIsFileContentLocalError
+
+#[allow(dead_code)]
+fn variant_workspace_is_file_content_local_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceIsFileContentLocalError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WorkspaceIsFileContentLocalError::EntryNotFound { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceIsFileContentLocalErrorEntryNotFound")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceIsFileContentLocalError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceIsFileContentLocalErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceIsFileContentLocalError::InvalidCertificate { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceIsFileContentLocalErrorInvalidCertificate")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceIsFileContentLocalError::InvalidKeysBundle { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceIsFileContentLocalErrorInvalidKeysBundle")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceIsFileContentLocalError::InvalidManifest { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceIsFileContentLocalErrorInvalidManifest")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceIsFileContentLocalError::NoRealmAccess { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceIsFileContentLocalErrorNoRealmAccess")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceIsFileContentLocalError::NotAFile { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceIsFileContentLocalErrorNotAFile").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceIsFileContentLocalError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceIsFileContentLocalErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceIsFileContentLocalError::Stopped { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceIsFileContentLocalErrorStopped").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // WorkspaceMountError
 
 #[allow(dead_code)]
@@ -24393,6 +24454,69 @@ fn workspace_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// workspace_is_file_content_local
+fn workspace_is_file_content_local(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let path = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::workspace_is_file_content_local(workspace, path).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = JsBoolean::new(&mut cx, ok);
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_workspace_is_file_content_local_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // workspace_mount
 fn workspace_mount(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -26023,6 +26147,10 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("workspaceHistoryStop", workspace_history_stop)?;
     cx.export_function("workspaceInfo", workspace_info)?;
+    cx.export_function(
+        "workspaceIsFileContentLocal",
+        workspace_is_file_content_local,
+    )?;
     cx.export_function("workspaceMount", workspace_mount)?;
     cx.export_function("workspaceMoveEntry", workspace_move_entry)?;
     cx.export_function("workspaceOpenFile", workspace_open_file)?;

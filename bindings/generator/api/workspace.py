@@ -476,6 +476,41 @@ class FileDescriptor(U32BasedType):
     custom_to_rs_u32 = "|fd: libparsec::FileDescriptor| -> Result<_, &'static str> { Ok(fd.0) }"
 
 
+class WorkspaceIsFileContentLocalError(ErrorVariant):
+    class Offline:
+        pass
+
+    class Stopped:
+        pass
+
+    class NoRealmAccess:
+        pass
+
+    class EntryNotFound:
+        pass
+
+    class InvalidKeysBundle:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class InvalidManifest:
+        pass
+
+    class Internal:
+        pass
+
+    class NotAFile:
+        pass
+
+
+async def workspace_is_file_content_local(
+    workspace: Handle, path: FsPath
+) -> Result[bool, WorkspaceIsFileContentLocalError]:
+    raise NotImplementedError
+
+
 class WorkspaceOpenFileError(ErrorVariant):
     class Offline:
         pass
