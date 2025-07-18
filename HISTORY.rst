@@ -4,6 +4,54 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.4.1-a.0.dev.20287+32cf33b (2025-07-18)
+------------------------------------------------
+
+Features
+~~~~~~~~
+
+* Files and folders can now be filtered by creation date.
+  (`#10454 <https://github.com/Scille/parsec-cloud/issues/10454>`__)
+
+* Display total data size in the organization information page
+  (`#10284 <https://github.com/Scille/parsec-cloud/issues/10284>`__)
+
+* Allows opening links in Word Document viewer and ask for confirmation before
+  opening them
+  (`#10466 <https://github.com/Scille/parsec-cloud/issues/10466>`__)
+
+* Added a checklist of security recommendations
+  (`#7142 <https://github.com/Scille/parsec-cloud/issues/7142>`__)
+
+* Added sort and filter by role options to the workspaces page
+  (`#10182 <https://github.com/Scille/parsec-cloud/issues/10182>`__)
+
+* Added custom branding options for web and desktop clients
+  (`#5903 <https://github.com/Scille/parsec-cloud/issues/5903>`__)
+
+* Display the user who last updated a file/folder
+  (`#8333 <https://github.com/Scille/parsec-cloud/issues/8333>`__)
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+* Add "Security best practices" section to the User Guide
+  (`#10537 <https://github.com/Scille/parsec-cloud/issues/10537>`__)
+
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* File sorting option and order are now persistent
+  (`#10693 <https://github.com/Scille/parsec-cloud/issues/10693>`__)
+
+* Display a warning message at startup if long paths support is not enabled on
+  Windows.
+  (`#10131 <https://github.com/Scille/parsec-cloud/issues/10131>`__)
+
+
+
 Parsec v3.4.0 (2025-06-11)
 --------------------------
 
