@@ -144,7 +144,7 @@
                     "description": "En supprimant votre compte Parsec, toutes les données associées seront également supprimées.",
                     "button": "Supprimer mon compte",
                     "questionModal": {
-                        "title": "Envoie d'un code de validation par mail",
+                        "title": "Envoi d'un code de validation par mail",
                         "description": "Pour supprimer votre compte Parsec, vous devez confirmer votre action avec un code envoyé par e-mail.",
                         "sendCode": "Envoyer le code",
                         "cancel": "Annuler"
@@ -160,7 +160,7 @@
                     "success": "Votre compte a été supprimé avec succès.",
                     "error": {
                         "delete": "Le code est incorrect ou a expiré.",
-                        "sendCode": "Échec d'envoie du code."
+                        "sendCode": "Échec d'envoi du code."
                     }
                 }
             },

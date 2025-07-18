@@ -161,7 +161,7 @@
                     "error": {
                         "delete": "The code is incorrect or has expired.",
                         "sendCode": "Failed to send the code.",
-                        "reSentCode": "Failed to resend the code to your email address, check your network."
+                        "reSentCode": "Failed to resend the code to your email address, please check your network."
                     }
                 }
             },
