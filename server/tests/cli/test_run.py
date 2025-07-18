@@ -40,7 +40,7 @@ def ssl_conf(request: pytest.FixtureRequest) -> Generator[SSLConf, None, None]:
             server_cert.private_key_pem.tempfile() as server_keyfile,
         ):
             yield SSLConf(
-                backend_opts=f" --ssl-keyfile={server_keyfile} --ssl-certfile={server_certfile} ",
+                backend_opts=f" --ssl-keyfile={server_keyfile} --ssl-certfile={server_certfile} --ssl-ciphers=DEFAULT",
                 ca_certfile=Path(ca_certfile),
             )
 
