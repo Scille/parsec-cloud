@@ -8,6 +8,7 @@ import {
   getSystemPath,
   getWorkspaceInfo,
   isDesktop,
+  isFileContentAvailable,
   isWeb,
   WorkspaceHandle,
   WorkspaceHistory,
@@ -129,6 +130,19 @@ async function openPath(
     }
     return;
   }
+
+  const available = await isFileContentAvailable(workspaceHandle, entry.path);
+  if (!available) {
+    await informationManager.present(
+      new Information({
+        message: 'FoldersPage.open.fileUnavailable',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Modal,
+    );
+    return;
+  }
+
   if (isDesktop() && options.skipViewers) {
     await openWithSystem(workspaceHandle, entry, informationManager);
     return;

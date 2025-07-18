@@ -685,7 +685,8 @@
             "unavailableOnWeb": "This feature is not yet available in web mode.",
             "unhandledFileType": "Cannot show a preview of this file.",
             "noVisibleOnWeb": "Parsec cannot preview this type of document. You can download it by selecting the file or showing options then click 'Download'.",
-            "noVisibleOnWebTitle": "Cannot preview this file"
+            "noVisibleOnWebTitle": "Cannot preview this file",
+            "fileUnavailable": "This file does not seem to be available. Make sure you are online so it can be downloaded."
         },
         "linkNotCopiedToClipboard": "Failed to copy link. Your browser or device does not seem to support copy/paste.",
         "linkCopiedToClipboard": "Link has been copied to clipboard.",
