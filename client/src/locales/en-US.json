@@ -144,7 +144,7 @@
                     "description": "By deleting your Parsec account, all associated data will also be deleted.",
                     "button": "Delete my account",
                     "questionModal": {
-                        "title": "A code is required to delete your account",
+                        "title": "Send a validation code by email",
                         "description": "In order to delete your Parsec account, you must confirm your action with a code sent by email.",
                         "sendCode": "Send code",
                         "cancel": "Cancel"
