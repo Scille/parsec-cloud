@@ -29,8 +29,8 @@ export type {
   WorkspaceHistoryFileModel,
   WorkspaceHistoryFolderModel,
 } from '@/components/files/types';
-export { copyPathLinkToClipboard, getFilesFromDrop, selectFolder } from '@/components/files/utils';
-export type { FileImportTuple, FolderSelectionOptions } from '@/components/files/utils';
+export { FolderDefaultData, copyPathLinkToClipboard, getFilesFromDrop, selectFolder } from '@/components/files/utils';
+export type { FileImportTuple, FolderSelectionOptions, FoldersPageSavedData } from '@/components/files/utils';
 export {
   FileAggregateDoneItem,
   FileAggregateQueuedItem,
