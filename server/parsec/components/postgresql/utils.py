@@ -10,6 +10,7 @@ from types import CoroutineType
 from typing import Any, Concatenate, ParamSpec, Protocol, TypeVar, cast
 
 from parsec._parsec import (
+    AccountAuthMethodID,
     ActiveUsersLimit,
     BlockID,
     DateTime,
@@ -40,6 +41,7 @@ SqlQueryParam = (
     | SequesterServiceID
     | UserID
     | VlobID
+    | AccountAuthMethodID
     | Iterable["SqlQueryParam"]
 )
 
