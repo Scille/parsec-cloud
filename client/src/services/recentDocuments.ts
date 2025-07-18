@@ -112,6 +112,21 @@ class RecentDocumentManager {
     }
   }
 
+  removeFileById(entryId: EntryID): void {
+    const index = this.files.value.findIndex((item) => item.entryId === entryId);
+    if (index !== -1) {
+      this.files.value.splice(index, 1);
+    }
+  }
+
+  updateFile(entryId: EntryID, update: Partial<RecentFile>): void {
+    const existingFile = this.files.value.find((item) => item.entryId === entryId);
+    if (!existingFile) {
+      return;
+    }
+    Object.assign(existingFile, update);
+  }
+
   removeWorkspace(workspace: RecentWorkspace): void {
     const index = this.workspaces.value.findIndex((item) => item.id === workspace.id);
     if (index !== -1) {
