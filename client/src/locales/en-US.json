@@ -133,7 +133,37 @@
             },
             "account": {
                 "title": "My account",
-                "description": "Manage your Parsec account"
+                "description": "Manage your Parsec account",
+                "personalData": {
+                    "title": "Personal data",
+                    "name": "Name",
+                    "email": "Email"
+                },
+                "deleteAccount": {
+                    "title": "Delete my account",
+                    "description": "By deleting your Parsec account, all associated data will also be deleted.",
+                    "button": "Delete my account",
+                    "questionModal": {
+                        "title": "Send a validation code by email",
+                        "description": "In order to delete your Parsec account, you must confirm your action with a code sent by email.",
+                        "sendCode": "Send code",
+                        "cancel": "Cancel"
+                    },
+                    "codeModal": {
+                        "title": "Enter the verification code to delete your account",
+                        "description": "We have sent a verification code to the email address associated with your account.",
+                        "irreversible": "This action is irreversible. Once your account is deleted, you will no longer be able to access your data or associated services.",
+                        "resendCode": "Resend code",
+                        "button": "Delete my account",
+                        "cancel": "Cancel"
+                    },
+                    "success": "Your account has been successfully deleted.",
+                    "error": {
+                        "delete": "The code is incorrect or has expired.",
+                        "sendCode": "Failed to send the code.",
+                        "reSentCode": "Failed to resend the code to your email address, please check your network."
+                    }
+                }
             },
             "authentication": {
                 "title": "Authentication",
