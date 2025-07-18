@@ -1020,6 +1020,12 @@ async function deleteEntries(entries: EntryModel[]): Promise<void> {
         }),
         PresentationMode.Toast,
       );
+    } else {
+      await eventDistributor.dispatchEvent(Events.EntryDeleted, {
+        workspaceHandle: workspaceInfo.value.handle,
+        entryId: entry.id,
+        path: entry.path,
+      });
     }
   } else {
     const answer = await askQuestion(
@@ -1047,6 +1053,12 @@ async function deleteEntries(entries: EntryModel[]): Promise<void> {
         : await parsec.deleteFolder(workspaceInfo.value.handle, path);
       if (!result.ok) {
         errorsEncountered += 1;
+      } else {
+        await eventDistributor.dispatchEvent(Events.EntryDeleted, {
+          workspaceHandle: workspaceInfo.value.handle,
+          entryId: entry.id,
+          path: entry.path,
+        });
       }
     }
     if (errorsEncountered > 0) {
@@ -1108,6 +1120,15 @@ async function renameEntries(entries: EntryModel[]): Promise<void> {
       PresentationMode.Toast,
     );
   } else {
+    await eventDistributor.dispatchEvent(Events.EntryRenamed, {
+      workspaceHandle: workspaceInfo.value.handle,
+      entryId: entry.id,
+      oldPath: entry.path,
+      newPath: result.value,
+      oldName: entry.name,
+      newName: newName,
+    });
+
     entry.name = newName;
     entry.path = result.value;
   }
