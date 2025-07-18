@@ -5,9 +5,11 @@ import {
   entryStat,
   EntryStat,
   FsPath,
+  getClientInfo,
   getSystemPath,
   getWorkspaceInfo,
   isDesktop,
+  isFileContentAvailable,
   isWeb,
   WorkspaceHandle,
   WorkspaceHistory,
@@ -129,6 +131,20 @@ async function openPath(
     }
     return;
   }
+
+  const [clientInfoResult, available] = await Promise.all([getClientInfo(), isFileContentAvailable(workspaceHandle, entry.path)]);
+
+  if (clientInfoResult.ok && !clientInfoResult.value.isServerOnline && !available) {
+    await informationManager.present(
+      new Information({
+        message: 'FoldersPage.open.fileUnavailable',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Modal,
+    );
+    return;
+  }
+
   if (isDesktop() && options.skipViewers) {
     await openWithSystem(workspaceHandle, entry, informationManager);
     return;
