@@ -10,7 +10,7 @@
 <script lang="ts" setup>
 import { getTOS, logout as parsecLogout, acceptTOS, getClientInfo, listStartedClients } from '@/parsec';
 import { getConnectionHandle, navigateTo, Routes } from '@/router';
-import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
+import { EntryDeletedData, EntryRenamedData, EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { FileOperationManagerKey } from '@/services/fileOperationManager';
 import { Information, InformationLevel, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey, Injections } from '@/services/injectionProvider';
@@ -67,12 +67,18 @@ onMounted(async () => {
   }
 
   callbackId = await injections.eventDistributor.registerCallback(
-    Events.TOSAcceptRequired | Events.LogoutRequested,
-    async (event: Events, _data?: EventData) => {
+    Events.TOSAcceptRequired | Events.LogoutRequested | Events.EntryDeleted | Events.EntryRenamed,
+    async (event: Events, data?: EventData) => {
       if (event === Events.LogoutRequested) {
         await logout();
       } else if (event === Events.TOSAcceptRequired) {
         await tryOpeningTOSModal();
+      } else if (event === Events.EntryDeleted) {
+        const deleteData = data as EntryDeletedData;
+        recentDocumentManager.removeFileById(deleteData.entryId);
+      } else if (event === Events.EntryRenamed) {
+        const renameData = data as EntryRenamedData;
+        recentDocumentManager.updateFile(renameData.entryId, { name: renameData.newName, path: renameData.newPath });
       }
     },
   );

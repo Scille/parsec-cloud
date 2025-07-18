@@ -1,7 +1,20 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { ApiVersion, ConnectionHandle, EntryID, InvitationStatus, InvitationToken, WorkspaceID, WorkspaceRole } from '@/parsec';
-import { DeviceInfo, GreetingAttemptID, UserID } from '@/plugins/libparsec';
+import {
+  ApiVersion,
+  ConnectionHandle,
+  DeviceInfo,
+  EntryID,
+  EntryName,
+  FsPath,
+  GreetingAttemptID,
+  InvitationStatus,
+  InvitationToken,
+  UserID,
+  WorkspaceHandle,
+  WorkspaceID,
+  WorkspaceRole,
+} from '@/parsec';
 import { MenuAction } from '@/views/menu';
 import { v4 as uuid4 } from 'uuid';
 
@@ -33,6 +46,8 @@ enum Events {
   OrganizationNotFound = 1 << 22,
   DeviceCreated = 1 << 23,
   WorkspaceRoleUpdate = 1 << 24,
+  EntryRenamed = 1 << 25,
+  EntryDeleted = 1 << 26,
 }
 
 interface WorkspaceCreatedData {
@@ -94,6 +109,21 @@ interface WorkspaceRoleUpdateData {
   newRole: WorkspaceRole | null;
 }
 
+interface EntryRenamedData {
+  workspaceHandle: WorkspaceHandle;
+  entryId: EntryID;
+  oldPath: FsPath;
+  newPath: FsPath;
+  oldName: EntryName;
+  newName: EntryName;
+}
+
+interface EntryDeletedData {
+  workspaceHandle: WorkspaceHandle;
+  entryId: EntryID;
+  path: FsPath;
+}
+
 type EventData =
   | WorkspaceCreatedData
   | InvitationUpdatedData
@@ -106,7 +136,9 @@ type EventData =
   | ClientStatusUpdateData
   | MenuActionData
   | DeviceCreatedData
-  | WorkspaceRoleUpdateData;
+  | WorkspaceRoleUpdateData
+  | EntryRenamedData
+  | EntryDeletedData;
 
 interface Callback {
   id: string;
@@ -187,6 +219,8 @@ class EventDistributor {
 
 export {
   DeviceCreatedData,
+  EntryDeletedData,
+  EntryRenamedData,
   EntrySyncData,
   EventData,
   EventDistributor,

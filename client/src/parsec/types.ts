@@ -158,6 +158,7 @@ export type {
   EntryName,
   FileDescriptor,
   VlobID as FileID,
+  GreetingAttemptID,
   GreetInProgressError,
   ImportRecoveryDeviceError,
   InviteListItem,
