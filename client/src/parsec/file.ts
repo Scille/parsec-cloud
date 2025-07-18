@@ -316,3 +316,9 @@ export async function listTree(workspaceHandle: WorkspaceHandle, path: FsPath, d
 
   return await _innerListTree(workspaceHandle, path, 0);
 }
+
+export async function isFileContentAvailable(workspaceHandle: WorkspaceHandle, path: FsPath): Promise<boolean> {
+  const result = await libparsec.workspaceIsFileContentLocal(workspaceHandle, path);
+
+  return result.ok && result.value;
+}
