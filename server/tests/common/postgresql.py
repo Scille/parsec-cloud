@@ -72,8 +72,13 @@ def bootstrap_postgresql_testbed() -> str:
 
 
 _Q_RESET_POSTGRESQL_TESTBED = """
-TRUNCATE TABLE organization
-RESTART IDENTITY CASCADE;
+TRUNCATE TABLE account RESTART IDENTITY CASCADE;
+
+TRUNCATE TABLE account_create_validation_code;
+TRUNCATE TABLE account_delete_validation_code;
+TRUNCATE TABLE account_recover_validation_code;
+
+TRUNCATE TABLE organization RESTART IDENTITY CASCADE;
 
 TRUNCATE TABLE block_data;
 
@@ -110,7 +115,11 @@ SELECT
     SETVAL(PG_GET_SERIAL_SEQUENCE('common_topic', '_id'), 24000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('sequester_topic', '_id'), 25000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('shamir_recovery_topic', '_id'), 26000),
-    SETVAL(PG_GET_SERIAL_SEQUENCE('realm_topic', '_id'), 27000)
+    SETVAL(PG_GET_SERIAL_SEQUENCE('realm_topic', '_id'), 27000),
+    SETVAL(PG_GET_SERIAL_SEQUENCE('account', '_id'), 28000),
+    SETVAL(PG_GET_SERIAL_SEQUENCE('vault', '_id'), 29000),
+    SETVAL(PG_GET_SERIAL_SEQUENCE('vault_item', '_id'), 30000),
+    SETVAL(PG_GET_SERIAL_SEQUENCE('vault_authentication_method', '_id'), 31000)
 ;
 """
 
@@ -118,6 +127,27 @@ SELECT
 async def reset_postgresql_testbed() -> None:
     assert _pg_db_url is not None
     await execute_pg_queries(_pg_db_url, _Q_RESET_POSTGRESQL_TESTBED)
+
+
+_Q_CLEAR_POSTGRESQL_ACCOUNT_DATA = """
+TRUNCATE TABLE account RESTART IDENTITY CASCADE;
+
+TRUNCATE TABLE account_create_validation_code;
+TRUNCATE TABLE account_delete_validation_code;
+TRUNCATE TABLE account_recover_validation_code;
+"""
+
+
+async def clear_postgresql_account_data() -> None:
+    """
+    Unlike for organizations, accounts are global across the whole database,
+    hence each test involving account need to start by clearing those data.
+
+    This is typically done by by the `clear_account_data` fixture, in turn used
+    by the `alice_account`/`bob_account`/`anonymous_account` fixtures.
+    """
+    assert _pg_db_url is not None
+    await execute_pg_queries(_pg_db_url, _Q_CLEAR_POSTGRESQL_ACCOUNT_DATA)
 
 
 def get_postgresql_url() -> str | None:

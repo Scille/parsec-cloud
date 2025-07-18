@@ -24,6 +24,7 @@ from parsec.backend import Backend
 from parsec.components.account import UntrustedPasswordAlgorithmArgon2id
 from parsec.config import MockedEmailConfig
 from tests.common.client import AnonymousAccountRpcClient, AuthenticatedAccountRpcClient
+from tests.common.postgresql import clear_postgresql_account_data
 
 # Note `alice@invalid.com` is Alice's email in `CoolOrg`, `MinimalOrg` etc.
 ALICE_ACCOUNT_HUMAN_HANDLE = HumanHandle(EmailAddress("alice@example.com"), "Alicey McAliceFace")
@@ -77,7 +78,24 @@ async def create_account(
 
 
 @pytest.fixture
+async def clear_account_data(
+    request: pytest.FixtureRequest,
+) -> None:
+    """
+    Unlike for organizations, accounts are global across the whole database,
+    hence each test involving account need to start by clearing those data.
+
+    This fixture is typically not directly used by the test, but instead
+    by the `alice_account`/`bob_account`/`anonymous_account` fixtures the test
+    itself relies on.
+    """
+    if request.config.getoption("--postgresql"):
+        await clear_postgresql_account_data()
+
+
+@pytest.fixture
 async def alice_account(
+    clear_account_data: None,
     backend: Backend,
     client: AsyncClient,
 ) -> AuthenticatedAccountRpcClient:
@@ -106,6 +124,7 @@ async def alice_account(
 
 @pytest.fixture
 async def bob_account(
+    clear_account_data: None,
     backend: Backend,
     client: AsyncClient,
 ) -> AuthenticatedAccountRpcClient:
@@ -133,5 +152,7 @@ async def bob_account(
 
 
 @pytest.fixture
-async def anonymous_account(client: AsyncClient) -> AnonymousAccountRpcClient:
+async def anonymous_account(
+    clear_account_data: None, client: AsyncClient
+) -> AnonymousAccountRpcClient:
     return AnonymousAccountRpcClient(client)
