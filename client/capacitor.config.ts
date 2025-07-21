@@ -20,6 +20,7 @@ const config: CapacitorElectronConfig = {
     splashScreenEnabled: true,
     deepLinkingEnabled: true,
     deepLinkingCustomProtocol: 'parsec3',
+    customUrlScheme: 'parsec-desktop',
   },
 };
 
