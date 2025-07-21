@@ -51,6 +51,14 @@
               </ion-button>
               <ion-button
                 class="file-handler-topbar-buttons__item"
+                @click="openEditor(contentInfo.path)"
+                v-if="!atDateTime && !currentRouteIs(Routes.Editor)"
+              >
+                <ion-icon :icon="create" />
+                {{ $msTranslate('fileViewers.openInEditor') }}
+              </ion-button>
+              <ion-button
+                class="file-handler-topbar-buttons__item"
                 @click="downloadFile(contentInfo.path)"
                 v-if="isWeb()"
               >
@@ -108,8 +116,8 @@ import {
   WorkspaceHistoryEntryStatFile,
 } from '@/parsec';
 import { IonPage, IonContent, IonButton, IonText, IonIcon, IonButtons, modalController } from '@ionic/vue';
-import { link, informationCircle, open, chevronDown, chevronUp } from 'ionicons/icons';
-import { Base64, MsSpinner, MsImage, I18n, DownloadIcon, askQuestion, Answer } from 'megashark-lib';
+import { link, informationCircle, open, chevronUp, chevronDown, create } from 'ionicons/icons';
+import { Base64, MsSpinner, MsImage, I18n, DownloadIcon, askQuestion, Answer, MsModalResult } from 'megashark-lib';
 import { ref, Ref, inject, onMounted, onUnmounted } from 'vue';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, Routes, watchRoute } from '@/router';
@@ -118,12 +126,15 @@ import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { DateTime } from 'luxon';
 import { getFileIcon } from '@/common/file';
 import { copyPathLinkToClipboard } from '@/components/files';
-import { FileDetailsModal } from '@/views/files';
 import { showSaveFilePicker } from 'native-file-system-adapter';
-import useHeaderControl from '@/services/headerControl';
 import { Env } from '@/services/environment';
+import { FileDetailsModal, openDownloadConfirmationModal } from '@/views/files';
+import useHeaderControl from '@/services/headerControl';
+import { openPath } from '@/services/fileOpener';
+import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;
+const storageManager: StorageManager = inject(StorageManagerKey)!;
 const contentInfo: Ref<FileContentInfo | undefined> = ref(undefined);
 const detectedFileType = ref<DetectedFileType | null>(null);
 const loaded = ref(false);
@@ -402,6 +413,13 @@ async function showDetails(): Promise<void> {
   }
 }
 
+async function openEditor(path: FsPath): Promise<void> {
+  const workspaceHandle = getWorkspaceHandle();
+  if (workspaceHandle) {
+    await openPath(workspaceHandle, path, informationManager, { useEditor: true });
+  }
+}
+
 async function onClick(event: MouseEvent): Promise<void> {
   event.preventDefault();
   if (!event.target) {
@@ -430,6 +448,11 @@ async function onClick(event: MouseEvent): Promise<void> {
 }
 
 async function downloadFile(path: FsPath): Promise<void> {
+  const result = await openDownloadConfirmationModal(storageManager);
+  if (result === MsModalResult.Cancel) {
+    return;
+  }
+
   const workspaceHandle = getWorkspaceHandle();
   if (!workspaceHandle) {
     window.electronAPI.log('error', 'Failed to retrieve workspace handle');

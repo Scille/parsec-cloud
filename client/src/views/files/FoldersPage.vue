@@ -247,9 +247,9 @@ import {
   openEntryContextMenu as _openEntryContextMenu,
   openGlobalContextMenu as _openGlobalContextMenu,
   isFolderGlobalAction,
-  askDownloadConfirmation,
   downloadEntry,
   downloadArchive,
+  openDownloadConfirmationModal,
 } from '@/views/files';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
 import {
@@ -1136,6 +1136,14 @@ async function renameEntries(entries: EntryModel[]): Promise<void> {
   await onSelectionCancel();
 }
 
+async function editEntries(entries: EntryModel[]): Promise<void> {
+  const workspaceHandle = getWorkspaceHandle();
+  if (entries.length !== 1 || !workspaceInfo.value || !workspaceHandle) {
+    return;
+  }
+  await openPath(workspaceHandle, entries[0].path, informationManager, { useEditor: true });
+}
+
 async function copyLink(entries: EntryModel[]): Promise<void> {
   if (entries.length !== 1 || !workspaceInfo.value) {
     return;
@@ -1272,17 +1280,10 @@ async function downloadEntries(entries: EntryModel[]): Promise<void> {
   if (entries.length < 1) {
     return;
   }
-  const config = await storageManager.retrieveConfig();
-  if (!config.disableDownloadWarning) {
-    const { result, noReminder } = await askDownloadConfirmation();
 
-    if (noReminder) {
-      config.disableDownloadWarning = true;
-      await storageManager.storeConfig(config);
-    }
-    if (result !== MsModalResult.Confirm) {
-      return;
-    }
+  const result = await openDownloadConfirmationModal(storageManager);
+  if (result === MsModalResult.Cancel) {
+    return;
   }
 
   if (entries.length === 1 && entries[0].isFile()) {
@@ -1390,6 +1391,7 @@ async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?
 
   const actions = new Map<FileAction, (file: EntryModel[]) => Promise<void>>([
     [FileAction.Rename, renameEntries],
+    [FileAction.Edit, editEntries],
     [FileAction.MoveTo, moveEntriesTo],
     [FileAction.MakeACopy, copyEntries],
     [FileAction.Open, openEntries],
