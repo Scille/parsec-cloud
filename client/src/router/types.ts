@@ -4,6 +4,7 @@ import { ConnectionHandle, EntryName, FsPath, ParsecAccount, ParsecWorkspacePath
 import { DeviceID, OrganizationID } from '@/plugins/libparsec';
 import { Env } from '@/services/environment';
 import { ServerType } from '@/services/parsecServers';
+import { FileHandlerMode } from '@/views/files/handler';
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { Ref } from 'vue';
 import { RouteLocationNormalizedLoaded, RouteRecordRaw, Router } from 'vue-router';
@@ -22,8 +23,8 @@ export enum Routes {
   Loading = 'loading',
   ClientArea = 'clientArea',
   History = 'history',
-  Viewer = 'viewer',
   RecoverAccount = 'recoverAccount',
+  FileHandler = 'fileHandler',
 }
 
 const routes: Array<RouteRecordRaw> = [
@@ -139,9 +140,17 @@ const routes: Array<RouteRecordRaw> = [
                         component: () => import('@/views/workspaces/WorkspaceHistoryPage.vue'),
                       },
                       {
-                        path: `/:handle(\\d+)/${Routes.Viewer}`,
-                        name: Routes.Viewer,
-                        component: () => import('@/views/files/handler/viewer/FileViewer.vue'),
+                        path: `/:handle(\\d+)/${Routes.FileHandler}/:mode(${FileHandlerMode.View}|${FileHandlerMode.Edit})?`,
+                        name: Routes.FileHandler,
+                        component: () => import('@/views/files/handler/FileHandler.vue'),
+                        beforeEnter: (_to, _from, next): boolean => {
+                          if (_to.params.mode === FileHandlerMode.Edit && !Env.isEditicsEnabled()) {
+                            next(_from);
+                          } else {
+                            next();
+                          }
+                          return true;
+                        },
                       },
                     ],
                   },

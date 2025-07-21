@@ -130,7 +130,7 @@ describe('CryptPad Service', () => {
 
       await initPromise;
 
-      expect(mockElectronAPI.log).toHaveBeenCalledWith('info', 'CryptPad API script loaded successfully.');
+      expect(mockElectronAPI.log).toHaveBeenCalledWith('info', 'CryptPad API script already loaded, reusing.');
     });
 
     it('should handle script loading errors', async () => {
@@ -214,16 +214,14 @@ describe('CryptPad Service', () => {
       expect(mockCryptPadAPI).toHaveBeenCalledWith(containerElement.id, config);
     });
 
-    it('should warn and return for unsupported document types', async () => {
-      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
+    it('should throw error for unsupported document types', async () => {
       const config = {
         document: {
           url: 'https://example.com/doc',
-          fileType: 'unsupported',
+          fileType: 'txt',
           title: 'Test Document',
         },
-        documentType: CryptpadDocumentType.Unsupported,
+        documentType: 'unsupported' as CryptpadDocumentType,
         editorConfig: {
           lang: 'en',
         },
@@ -238,17 +236,11 @@ describe('CryptPad Service', () => {
       mockScript.onload?.({} as Event);
       await initPromise;
 
-      await cryptpad.open(config);
-
-      expect(consoleSpy).toHaveBeenCalledWith('CryptPad edition for document type unsupported is not enabled.');
+      await expect(cryptpad.open(config)).rejects.toThrow('CryptPad edition for document type unsupported is not enabled.');
       expect(mockCryptPadAPI).not.toHaveBeenCalled();
-
-      consoleSpy.mockRestore();
     });
 
-    it('should warn if container element is not available', async () => {
-      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
+    it('should throw error if container element is not available', async () => {
       // Create cryptpad and initialize it first
       const cryptpad = new Cryptpad(containerElement, 'https://cryptpad.example.com');
       (global as any).window.CryptPadAPI = mockCryptPadAPI;
@@ -258,7 +250,7 @@ describe('CryptPad Service', () => {
       mockScript.onload?.({} as Event);
       await initPromise;
 
-      // Now set container to null to test the warning
+      // Now set container to null to test the error
       (cryptpad as any).containerElement = null;
 
       const config = {
@@ -277,12 +269,8 @@ describe('CryptPad Service', () => {
         },
       };
 
-      await cryptpad.open(config);
-
-      expect(consoleSpy).toHaveBeenCalledWith('Container element is not initialized. Please call init() before open().');
+      await expect(cryptpad.open(config)).rejects.toThrow('Container element is not initialized. Please call init() before open().');
       expect(mockCryptPadAPI).not.toHaveBeenCalled();
-
-      consoleSpy.mockRestore();
     });
   });
 

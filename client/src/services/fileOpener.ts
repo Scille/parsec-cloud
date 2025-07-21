@@ -18,6 +18,7 @@ import {
 import { currentRouteIs, getDocumentPath, navigateTo, Routes } from '@/router';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { recentDocumentManager } from '@/services/recentDocuments';
+import { FileHandlerMode } from '@/views/files/handler';
 import { DateTime } from 'luxon';
 import { Base64, openSpinnerModal } from 'megashark-lib';
 
@@ -150,7 +151,7 @@ async function openPath(
     return;
   }
 
-  if (currentRouteIs(Routes.Viewer) && getDocumentPath() === path) {
+  if (currentRouteIs(Routes.FileHandler) && getDocumentPath() === path) {
     return;
   }
 
@@ -196,12 +197,15 @@ async function openPath(
         });
       }
 
-      await navigateTo(Routes.Viewer, {
+      await navigateTo(Routes.FileHandler, {
         query: {
           workspaceHandle: workspaceHandle,
           documentPath: entry.path,
           timestamp: options.atTime?.toMillis().toString(),
           fileTypeInfo: Base64.fromObject(contentType),
+        },
+        params: {
+          mode: FileHandlerMode.View, // TODO: Add switch to Edit when editing is implemented
         },
       });
     }

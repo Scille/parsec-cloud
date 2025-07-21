@@ -10,7 +10,7 @@ msTest('File viewer page default state', async ({ documents }) => {
   await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
   await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
   await expect(documents).toBeViewerPage();
-  await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_.-]+$/);
+  await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_.-]+$/);
   await expect(documents.locator('#connected-header .topbar')).toBeHidden();
 });
 
@@ -22,8 +22,8 @@ msTest('File viewer page details', async ({ documents }) => {
   await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
   await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
   await expect(documents).toBeViewerPage();
-  await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_.-]+$/);
-  const buttons = documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-button');
+  await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_.-]+$/);
+  const buttons = documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-button');
   await expect(buttons).toHaveCount(4);
 });
 
@@ -35,11 +35,11 @@ msTest('Quick access loads correct document', async ({ documents }) => {
   await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
   await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
   await expect(documents).toBeViewerPage();
-  const doc1Name = (await documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text').textContent()) ?? '';
+  const doc1Name = (await documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text').textContent()) ?? '';
 
   // Ensure the main header is visible
   const isTopbarVisible = await documents.locator('#connected-header .topbar').isVisible();
-  const fileViewerButton = documents.locator('.file-viewer-topbar-buttons__item.toggle-menu');
+  const fileViewerButton = documents.locator('.file-handler-topbar-buttons__item.toggle-menu');
   if (!isTopbarVisible && fileViewerButton) {
     await fileViewerButton.click();
   }
@@ -50,7 +50,7 @@ msTest('Quick access loads correct document', async ({ documents }) => {
   await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
   await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
   await expect(documents).toBeViewerPage();
-  const doc2Name = (await documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text').textContent()) ?? '';
+  const doc2Name = (await documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text').textContent()) ?? '';
 
   const sidebar = documents.locator('.sidebar');
   const recentDocs = sidebar.locator('#sidebar-files').locator('.list-sidebar-content').getByRole('listitem');
@@ -62,13 +62,13 @@ msTest('Quick access loads correct document', async ({ documents }) => {
   await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
   await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
   await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
-  await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(doc1Name);
+  await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(doc1Name);
 
   await recentDocs.nth(1).click();
   await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
   await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
   await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
-  await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(doc2Name);
+  await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(doc2Name);
 });
 
 msTest('File viewer header control functionality', async ({ documents }) => {
@@ -79,7 +79,7 @@ msTest('File viewer header control functionality', async ({ documents }) => {
   await expect(documents).toBeViewerPage();
   await expect(documents.locator('#connected-header .topbar')).toBeHidden();
 
-  const toggleButton = documents.locator('.file-viewer-topbar-buttons__item.toggle-menu');
+  const toggleButton = documents.locator('.file-handler-topbar-buttons__item.toggle-menu');
   await expect(toggleButton).toBeVisible();
   await expect(toggleButton).toContainText('Show menu');
 
@@ -107,10 +107,10 @@ msTest('File viewer header control functionality', async ({ documents }) => {
 msTest('File viewer download', async ({ documents }) => {
   await openFileType(documents, 'pdf');
   await expect(documents).toBeViewerPage();
-  await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.pdf$/);
+  await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.pdf$/);
 
   // showSaveFilePicker is not yet supported by Playwright: https://github.com/microsoft/playwright/issues/31162
-  await documents.locator('.file-viewer-topbar-buttons').locator('ion-button').nth(1).click();
+  await documents.locator('.file-handler-topbar-buttons').locator('ion-button').nth(1).click();
 
   const modal = documents.locator('.download-warning-modal');
 
@@ -146,7 +146,7 @@ msTest('Audio viewer', async ({ documents }) => {
 
   await openFileType(documents, 'mp3');
   await expect(documents).toBeViewerPage();
-  await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.mp3$/);
+  await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.mp3$/);
 
   const bottomBar = documents.locator('.file-viewer-bottombar');
   const volume = bottomBar.locator('.volume');
@@ -243,7 +243,7 @@ msTest('Video viewer', async ({ documents }) => {
 
   await openFileType(documents, 'mp4');
   await expect(documents).toBeViewerPage();
-  await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.mp4$/);
+  await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.mp4$/);
 
   const bottomBar = documents.locator('.file-viewer-bottombar');
   const volume = bottomBar.locator('.volume');
@@ -358,9 +358,9 @@ msTest('Video viewer', async ({ documents }) => {
 msTest('Text viewer', async ({ documents }) => {
   await openFileType(documents, 'py');
   await expect(documents).toBeViewerPage();
-  await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.py$/);
+  await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.py$/);
 
-  const container = documents.locator('.file-viewer').locator('.text-container');
+  const container = documents.locator('.file-handler').locator('.text-container');
   const linesCount = (await container.locator('.margin').locator('.line-numbers').all()).length;
   await expect(container.locator('.margin').locator('.line-numbers')).toHaveText(new Array(linesCount).fill(/^\d+$/));
   // Didn't manage to make a better regex, I have no idea why but nothing matches
