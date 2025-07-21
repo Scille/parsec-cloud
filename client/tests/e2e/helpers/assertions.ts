@@ -136,7 +136,7 @@ export const expect = baseExpect.extend({
 
   async toHavePageTitle(page: Page, title: string): Promise<AssertReturnType> {
     try {
-      await expect(page.locator('.topbar-left').locator('.topbar-left__title')).toHaveText(title);
+      await expect(page.locator('.topbar-left').locator('.topbar-left-text__title')).toHaveText(title);
     } catch (error: any) {
       return {
         message: () => `Invalid page title, expected '${title}', got '${error.actual}'`,
@@ -324,7 +324,7 @@ export const expect = baseExpect.extend({
         await fileViewerButton.click();
         topbarToggled = true;
       }
-      await expect(page.locator('.topbar-left').locator('.topbar-left__title')).toHaveText('File viewer');
+      await expect(page.locator('.topbar-left').locator('.topbar-left-text__title')).toHaveText('File viewer');
 
       if (topbarToggled) {
         await fileViewerButton.click();

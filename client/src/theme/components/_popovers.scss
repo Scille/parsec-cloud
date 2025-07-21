@@ -174,7 +174,6 @@
       --padding-bottom: 0.5rem;
       color: var(--parsec-color-light-secondary-hard-grey);
 
-      ion-icon,
       .item-icon {
         font-size: 1.25rem;
         margin-right: 0.5em;
@@ -182,6 +181,10 @@
 
       &:hover {
         color: var(--parsec-color-light-primary-600);
+
+        .list-group-item__label-small {
+          color: var(--parsec-color-light-primary-600);
+        }
       }
     }
   }

@@ -22,22 +22,32 @@
           ref="topbarLeft"
         >
           <div
+            class="topbar-left-content"
             ref="backBlock"
             v-if="hasHistory() && !currentRouteIs(Routes.Workspaces)"
           >
-            <header-back-button :short="currentRouteIsFileRoute() ? true : false" />
+            <header-back-button
+              :short="currentRouteIsFileRoute()"
+              class="topbar-left__back-button"
+            />
           </div>
 
           <div
-            v-if="!currentRouteIsFileRoute() && isLargeDisplay"
-            class="topbar-left__title"
+            v-if="!currentRouteIsFileRoute()"
+            class="topbar-left-text"
           >
             <ion-label
-              class="title-h2"
+              class="topbar-left-text__title title-h2"
               :class="hasHistory() ? 'align-center' : 'align-left'"
             >
               {{ $msTranslate(getTitleForRoute()) }}
             </ion-label>
+            <ion-text
+              v-if="currentRouteIs(Routes.History) && workspaceName && isSmallDisplay"
+              class="topbar-left-text__workspace subtitles-sm"
+            >
+              {{ workspaceName }}
+            </ion-text>
           </div>
 
           <div
@@ -385,14 +395,6 @@ async function openNotificationCenter(event: Event): Promise<void> {
     padding: 1.5rem 1.5rem 1rem;
   }
 
-  &-history {
-    --background: var(--parsec-color-light-secondary-inversed-contrast);
-
-    .topbar-left {
-      min-height: 2.25rem;
-    }
-  }
-
   #trigger-toggle-menu-button {
     --fill-color: var(--parsec-color-light-secondary-grey);
     padding: 0.625rem;
@@ -504,9 +506,10 @@ async function openNotificationCenter(event: Event): Promise<void> {
     }
   }
 
-  &__title {
+  &-text {
     width: 100%;
     color: var(--parsec-color-light-primary-600);
+    text-align: center;
 
     .align-left {
       display: flex;
@@ -525,6 +528,38 @@ async function openNotificationCenter(event: Event): Promise<void> {
 
   &__breadcrumb {
     display: flex;
+  }
+}
+
+.topbar-history {
+  --background: var(--parsec-color-light-secondary-background);
+
+  @include ms.responsive-breakpoint('sm') {
+    .topbar-left {
+      justify-content: center;
+      width: 100%;
+      margin: 0;
+
+      &-content {
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+
+      &-text {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        &__title {
+          color: var(--parsec-color-light-primary-800);
+        }
+
+        &__workspace {
+          color: var(--parsec-color-light-secondary-grey);
+        }
+      }
+    }
   }
 }
 </style>

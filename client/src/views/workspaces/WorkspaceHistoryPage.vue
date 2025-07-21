@@ -9,17 +9,22 @@
       <div class="history-container">
         <div class="head-content">
           <ion-text
-            v-if="workspaceInfo"
+            v-if="workspaceInfo && isLargeDisplay"
             class="title-h3 head-content__title"
           >
-            <span class="subtitles-lg">{{ $msTranslate('workspaceHistory.workspace') }}</span>
+            <span class="body-lg">{{ $msTranslate('workspaceHistory.workspace') }}</span>
             {{ workspaceInfo.currentName }}
             <div v-show="querying">
               <ms-spinner />
             </div>
           </ion-text>
           <div class="date-selector">
-            <ion-text class="date-selector__label body-sm">{{ $msTranslate('workspaceHistory.date') }}</ion-text>
+            <ion-text
+              class="date-selector__label body-sm"
+              v-if="isLargeDisplay"
+            >
+              {{ $msTranslate('workspaceHistory.date') }}
+            </ion-text>
             <ms-datetime-picker
               v-model="selectedDateTime"
               @update:model-value="onDateTimeChange"
@@ -33,35 +38,37 @@
         <div
           class="folder-container"
           ref="folderContainer"
+          :class="{ 'folder-container--small': isSmallDisplay }"
         >
-          <div class="folder-container-header">
+          <div class="folder-header">
             <div
-              class="folder-container-header__navigation"
+              class="folder-header__navigation"
               v-if="!resultFromSearch"
             >
               <div ref="headerButtons">
-                <ion-buttons>
-                  <ion-button
-                    fill="clear"
-                    @click="back()"
-                    class="navigation-back-button"
-                    :disabled="backStack.length === 0"
-                    :class="{ disabled: backStack.length === 0 }"
-                  >
-                    <ion-icon :icon="chevronBack" />
-                  </ion-button>
-                  <ion-button
-                    fill="clear"
-                    @click="forward()"
-                    :disabled="forwardStack.length === 0"
-                    :class="{ disabled: forwardStack.length === 0 }"
-                    class="navigation-forward-button"
-                  >
-                    <ion-icon :icon="chevronForward" />
-                  </ion-button>
-                </ion-buttons>
+                <ion-button
+                  fill="clear"
+                  @click="back()"
+                  class="navigation-button"
+                  id="navigation-back-button"
+                  :disabled="backStack.length === 0"
+                  :class="{ disabled: backStack.length === 0 }"
+                >
+                  <ion-icon :icon="chevronBack" />
+                </ion-button>
+                <ion-button
+                  fill="clear"
+                  @click="forward()"
+                  :disabled="forwardStack.length === 0"
+                  :class="{ disabled: forwardStack.length === 0 }"
+                  class="navigation-button"
+                  id="navigation-forward-button"
+                >
+                  <ion-icon :icon="chevronForward" />
+                </ion-button>
               </div>
               <header-breadcrumbs
+                v-if="isLargeDisplay"
                 :path-nodes="headerPath"
                 @change="onPathChange"
                 class="navigation-breadcrumb"
@@ -72,9 +79,17 @@
               />
             </div>
             <div
-              class="folder-container-header__actions"
+              class="folder-header__actions"
               ref="topbarRight"
             >
+              <ion-button
+                class="select-button body"
+                @click="entries.selectAll(!allSelected)"
+                v-if="isLargeDisplay && entries.entriesCount() > 0"
+              >
+                <span v-if="!allSelected">{{ $msTranslate('workspaceHistory.actions.selectAll') }}</span>
+                <span v-else>{{ $msTranslate('workspaceHistory.actions.deselectAll') }}</span>
+              </ion-button>
               <ms-search-input
                 v-show="false"
                 @change="onSearchChanged"
@@ -82,12 +97,42 @@
                 :disabled="querying"
               />
               <ion-button
+                id="restore-button"
                 :disabled="!someSelected || querying"
                 @click="onRestoreClicked"
               >
                 {{ $msTranslate('workspaceHistory.actions.restore') }}
               </ion-button>
             </div>
+          </div>
+          <div
+            class="current-folder button-medium"
+            v-if="headerPath.length > 0 && isSmallDisplay"
+          >
+            <ms-image
+              v-show="pathLength > 1"
+              :image="Folder"
+              class="current-folder__icon"
+            />
+            <ion-text class="current-folder__text">{{ `${headerPath[headerPath.length - 1].display}` }}</ion-text>
+            <header-breadcrumbs
+              v-if="pathLength > 1"
+              :path-nodes="headerPath"
+              @change="onPathChange"
+              class="navigation-breadcrumb"
+              :items-before-collapse="0"
+              :items-after-collapse="0"
+              :max-shown="0"
+              :available-width="breadcrumbsWidth"
+              :show-parent-node="false"
+            />
+            <ion-button
+              class="select-button body"
+              @click="entries.selectAll(!allSelected)"
+            >
+              <span v-if="!allSelected">{{ $msTranslate('workspaceHistory.actions.selectAll') }}</span>
+              <span v-else>{{ $msTranslate('workspaceHistory.actions.deselectAll') }}</span>
+            </ion-button>
           </div>
           <div class="folder-content">
             <div
@@ -113,25 +158,6 @@
               v-show="!querying && entries.entriesCount() > 0"
               class="folder-list"
             >
-              <ion-list-header class="folder-list-header">
-                <ion-label class="folder-list-header__label ion-text-nowrap label-selected">
-                  <ms-checkbox
-                    @change="selectAll"
-                    :checked="allSelected"
-                    :indeterminate="someSelected && !allSelected"
-                  />
-                </ion-label>
-                <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-name">
-                  {{ $msTranslate('FoldersPage.listDisplayTitles.name') }}
-                </ion-label>
-                <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-lastUpdate">
-                  {{ $msTranslate('FoldersPage.listDisplayTitles.lastUpdate') }}
-                </ion-label>
-                <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-size">
-                  {{ $msTranslate('FoldersPage.listDisplayTitles.size') }}
-                </ion-label>
-                <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-space" />
-              </ion-list-header>
               <ion-list class="folder-list-main ion-no-padding">
                 <history-file-list-item
                   v-for="entry in entries.getEntries()"
@@ -151,10 +177,10 @@
 
 <script setup lang="ts">
 import { pxToRem } from '@/common/utils';
-import { IonPage, IonList, IonLabel, IonButtons, IonIcon, IonButton, IonListHeader, IonContent, IonText } from '@ionic/vue';
+import { IonPage, IonList, IonIcon, IonButton, IonContent, IonText } from '@ionic/vue';
 import { computed, onBeforeUnmount, onMounted, ref, Ref, inject, onUnmounted, watch, useTemplateRef } from 'vue';
 import { FsPath, Path, getWorkspaceInfo, StartedWorkspaceInfo, WorkspaceHistory, EntryName } from '@/parsec';
-import { MsCheckbox, MsSpinner, MsSearchInput, askQuestion, Answer, MsDatetimePicker, I18n, useWindowSize } from 'megashark-lib';
+import { MsSpinner, MsSearchInput, askQuestion, Answer, MsDatetimePicker, I18n, useWindowSize, MsImage, Folder } from 'megashark-lib';
 import { DateTime } from 'luxon';
 import { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import HeaderBreadcrumbs from '@/components/header/HeaderBreadcrumbs.vue';
@@ -179,7 +205,7 @@ const breadcrumbsWidth = ref(0);
 const folderContainerRef = useTemplateRef<HTMLDivElement>('folderContainer');
 const headerButtonsRef = useTemplateRef<HTMLDivElement>('headerButtons');
 const topbarRightRef = useTemplateRef<HTMLDivElement>('topbarRight');
-const { windowWidth } = useWindowSize();
+const { windowWidth, isLargeDisplay, isSmallDisplay } = useWindowSize();
 
 const entries: Ref<WorkspaceHistoryEntryCollection<WorkspaceHistoryEntryModel>> = ref(
   new WorkspaceHistoryEntryCollection<WorkspaceHistoryEntryModel>(),
@@ -364,10 +390,6 @@ async function onPathChange(node: RouterPathNode): Promise<void> {
   }
 }
 
-async function selectAll(selected: boolean): Promise<void> {
-  entries.value.selectAll(selected);
-}
-
 async function onEntryClicked(entry: WorkspaceHistoryEntryModel): Promise<void> {
   if (entry.isFile()) {
     if (!workspaceInfo.value) {
@@ -433,13 +455,17 @@ async function onRestoreClicked(): Promise<void> {
 
 <style scoped lang="scss">
 .global-content {
-  --background: var(--parsec-color-light-secondary-inversed-contrast);
+  --background: var(--parsec-color-light-secondary-background);
 }
 
 .history-container {
   display: flex;
   flex-direction: column;
   height: 100%;
+
+  @include ms.responsive-breakpoint('sm') {
+    padding-top: 0.25rem;
+  }
 }
 
 .head-content {
@@ -448,6 +474,10 @@ async function onRestoreClicked(): Promise<void> {
   margin-inline: 2.5rem;
   justify-content: space-between;
   position: relative;
+
+  @include ms.responsive-breakpoint('sm') {
+    margin-inline: 1rem;
+  }
 
   &__title {
     color: var(--parsec-color-light-secondary-text);
@@ -466,6 +496,10 @@ async function onRestoreClicked(): Promise<void> {
     flex-direction: column;
     gap: 0.25rem;
 
+    @include ms.responsive-breakpoint('sm') {
+      width: 100%;
+    }
+
     &__label {
       color: var(--parsec-color-light-secondary-hard-grey);
     }
@@ -476,6 +510,7 @@ async function onRestoreClicked(): Promise<void> {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  flex-grow: 1;
 
   &__loading,
   &__empty {
@@ -484,6 +519,7 @@ async function onRestoreClicked(): Promise<void> {
     display: flex;
     align-items: center;
     justify-content: center;
+    height: 100%;
     gap: 0.5rem;
   }
 }
@@ -492,8 +528,6 @@ async function onRestoreClicked(): Promise<void> {
   // multiple lines for cross-browser compatibility
   height: 100%;
   height: -webkit-fill-available;
-  height: -moz-available;
-  height: stretch;
   margin: 1.5rem 2.5rem;
   background: var(--parsec-color-light-secondary-white);
   border-radius: var(--parsec-radius-12);
@@ -502,7 +536,11 @@ async function onRestoreClicked(): Promise<void> {
   flex-direction: column;
   overflow: hidden;
 
-  &-header {
+  @include ms.responsive-breakpoint('sm') {
+    margin: 1rem;
+  }
+
+  .folder-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -511,12 +549,83 @@ async function onRestoreClicked(): Promise<void> {
 
     &__navigation {
       display: flex;
+      align-items: center;
       height: fit-content;
+
+      .navigation-button {
+        min-height: 1rem;
+
+        &::part(native) {
+          padding: 0.5rem;
+        }
+      }
+    }
+
+    @include ms.responsive-breakpoint('sm') {
+      padding: 0.75rem;
+      border-bottom: none;
+      border-top: 1px solid var(--parsec-color-light-secondary-medium);
+      order: 3;
     }
 
     &__actions {
       display: flex;
-      gap: 1.5rem;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    #restore-button {
+      min-width: 6rem;
+    }
+  }
+
+  .folder-content {
+    @include ms.responsive-breakpoint('sm') {
+      order: 2;
+    }
+  }
+
+  .current-folder {
+    color: var(--parsec-color-light-secondary-grey);
+    background: var(--parsec-color-light-secondary-white);
+    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+    padding: 0.5rem 1.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    overflow: hidden;
+
+    @include ms.responsive-breakpoint('sm') {
+      order: 1;
+      padding: 0.25rem 1rem;
+      flex-shrink: 0;
+    }
+
+    &__text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &__icon {
+      flex-shrink: 0;
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+  }
+
+  .select-button {
+    color: var(--parsec-color-light-primary-500);
+    cursor: pointer;
+    margin-left: auto;
+    font-size: 0.875rem;
+    --background: transparent;
+    --background-hover: var(--parsec-color-light-primary-50);
+
+    @include ms.responsive-breakpoint('sm') {
+      &::part(native) {
+        padding: 0.25rem 0.5rem;
+      }
     }
   }
 }
@@ -525,24 +634,6 @@ async function onRestoreClicked(): Promise<void> {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-
-  &-header {
-    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
-
-    &__label {
-      padding: 0.75rem 1rem;
-    }
-    .label-selected {
-      display: flex;
-      align-items: center;
-    }
-
-    .label-space {
-      min-width: 4rem;
-      flex-grow: 0;
-      margin-left: auto;
-    }
-  }
 
   &-main {
     height: 100%;

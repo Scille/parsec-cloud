@@ -136,7 +136,7 @@ msTest('Test files options tab menu', async ({ documents, context }) => {
   await expect(optionsTabModal).toBeVisible();
   await tabModalItem.nth(4).click();
   await expect(documents.locator('.history-container')).toBeVisible();
-  await expect(documents.locator('.history-container').locator('.head-content__title')).toHaveText('Workspace: wksp1');
+  await expect(documents.locator('.history-container').locator('.current-folder__text')).toHaveText('wksp1');
   await documents.locator('#connected-header').locator('.topbar-left').locator('.back-button-container').click();
 
   // `Details` button
