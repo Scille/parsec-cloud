@@ -8,6 +8,46 @@ interface AssertReturnType {
   pass: boolean;
 }
 
+// Helper function for file handler page assertions
+async function checkFileHandlerPage(page: MsPage, mode?: 'view' | 'edit'): Promise<AssertReturnType> {
+  try {
+    if (mode) {
+      await baseExpect(page).toHaveURL(new RegExp(`\\/\\d+\\/fileHandler\\/${mode}\\??.*$`));
+    } else {
+      await baseExpect(page).toHaveURL(/\/\d+\/fileHandler\/(view|edit)\??.*$/);
+    }
+
+    if ((await page.getDisplaySize()) === DisplaySize.Large) {
+      // Ensure header is visible before checking title
+      const isTopbarVisible = await page.locator('#connected-header .topbar').isVisible();
+      const fileViewerButton = page.locator('.file-handler-topbar-buttons__item.toggle-menu');
+      let topbarToggled = false;
+      if (!isTopbarVisible && fileViewerButton) {
+        await fileViewerButton.click();
+        topbarToggled = true;
+      }
+
+      // Check title based on mode
+      const expectedTitle = mode === 'edit' ? 'File editor' : 'File viewer';
+      await baseExpect(page.locator('.topbar-left-text__title')).toHaveText(expectedTitle);
+
+      if (topbarToggled) {
+        await fileViewerButton.click();
+      }
+    }
+  } catch (error: any) {
+    const modeText = mode ? ` in ${mode} mode` : '';
+    return {
+      message: () => `Page is not file handler page${modeText} : '${error.matcherResult?.expected}' VS '${error.matcherResult?.actual}')`,
+      pass: false,
+    };
+  }
+  return {
+    message: () => '',
+    pass: true,
+  };
+}
+
 export const expect = baseExpect.extend({
   async toHaveDisabledAttribute(locator: Locator): Promise<AssertReturnType> {
     try {
@@ -313,34 +353,15 @@ export const expect = baseExpect.extend({
   },
 
   async toBeViewerPage(page: MsPage): Promise<AssertReturnType> {
-    try {
-      await expect(page).toHaveURL(/\/\d+\/viewer\??.*$/);
+    return await checkFileHandlerPage(page, 'view');
+  },
 
-      if ((await page.getDisplaySize()) === DisplaySize.Large) {
-        // Ensure header is visible before checking title
-        const isTopbarVisible = await page.locator('#connected-header .topbar').isVisible();
-        const fileViewerButton = page.locator('.file-viewer-topbar-buttons__item.toggle-menu');
-        let topbarToggled = false;
-        if (!isTopbarVisible && fileViewerButton) {
-          await fileViewerButton.click();
-          topbarToggled = true;
-        }
-        await expect(page.locator('.topbar-left-text__title')).toHaveText('File viewer');
+  async toBeEditorPage(page: MsPage): Promise<AssertReturnType> {
+    return await checkFileHandlerPage(page, 'edit');
+  },
 
-        if (topbarToggled) {
-          await fileViewerButton.click();
-        }
-      }
-    } catch (error: any) {
-      return {
-        message: () => `Page is not viewer page : '${error.matcherResult.expected}' VS '${error.matcherResult.actual}')`,
-        pass: false,
-      };
-    }
-    return {
-      message: () => '',
-      pass: true,
-    };
+  async toBeFileHandlerPage(page: MsPage, mode?: 'view' | 'edit'): Promise<AssertReturnType> {
+    return await checkFileHandlerPage(page, mode);
   },
 
   async toBeClientAreaPage(page: Page): Promise<AssertReturnType> {

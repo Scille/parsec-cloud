@@ -101,8 +101,10 @@ msTest('Test viewer in history', async ({ documents }) => {
     }
   }
   await expect(documents).toBeViewerPage();
-  await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text').nth(0)).toHaveText(/^[a-z0-9_]+\.txt$/);
-  const textContainer = documents.locator('.file-viewer').locator('.text-container');
+  await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text').nth(0)).toHaveText(
+    /^[a-z0-9_]+\.txt$/,
+  );
+  const textContainer = documents.locator('.file-handler').locator('.text-container');
   await expect(textContainer.locator('.margin').locator('.line-numbers')).toHaveCount(2);
   await expect(textContainer.locator('.editor-scrollable')).toHaveText('A simple text file');
 });

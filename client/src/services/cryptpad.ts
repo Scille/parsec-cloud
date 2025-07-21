@@ -42,7 +42,7 @@ export class Cryptpad {
   private scriptId = 'cryptpad-api-js';
   private containerElement: HTMLElement;
   private script: HTMLScriptElement;
-  private scriptLoaded = false;
+  private instanceInitialized = false;
 
   constructor(containerElement: HTMLElement, serverUrl: string) {
     this.containerElement = containerElement;
@@ -65,44 +65,50 @@ export class Cryptpad {
   }
 
   async init(): Promise<void> {
-    if (this.scriptLoaded) return;
-    await new Promise<void>((resolve, reject) => {
-      this.script.onload = (): void => {
-        if (typeof (window as any).CryptPadAPI === 'function') {
-          this.scriptLoaded = true;
-          window.electronAPI.log('info', 'CryptPad API script loaded successfully.');
-          resolve();
-        } else {
-          const errorMessage = 'CryptPad API script loaded but CryptPadAPI function is not available.';
-          window.electronAPI.log('error', errorMessage);
-          reject(new Error(errorMessage));
-        }
-      };
+    if (this.instanceInitialized) return;
 
-      // Add error handling for HTTPS/security issues
-      this.script.onerror = (error): void => {
-        window.electronAPI.log('error', `Failed to load CryptPad script: ${error.toString()}`);
-        window.electronAPI.log('error', 'This might be due to HTTPS requirements. Check if CryptPad server requires secure context.');
-        reject(error);
-      };
-    });
+    // Check if script is already loaded globally
+    const isScriptAlreadyLoaded = document.getElementById(this.scriptId) && typeof (window as any).CryptPadAPI === 'function';
+
+    if (!isScriptAlreadyLoaded) {
+      await new Promise<void>((resolve, reject) => {
+        this.script.onload = (): void => {
+          if (typeof (window as any).CryptPadAPI === 'function') {
+            window.electronAPI.log('info', 'CryptPad API script loaded successfully.');
+            resolve();
+          } else {
+            const errorMessage = 'CryptPad API script loaded but CryptPadAPI function is not available.';
+            window.electronAPI.log('error', errorMessage);
+            reject(new Error(errorMessage));
+          }
+        };
+
+        // Add error handling for HTTPS/security issues
+        this.script.onerror = (error): void => {
+          window.electronAPI.log('error', `Failed to load CryptPad script: ${error.toString()}`);
+          window.electronAPI.log('error', 'This might be due to HTTPS requirements. Check if CryptPad server requires secure context.');
+          reject(error);
+        };
+      });
+    } else {
+      window.electronAPI.log('info', 'CryptPad API script already loaded, reusing.');
+    }
+
+    this.instanceInitialized = true;
   }
 
   async open(config: CryptpadConfig): Promise<void> {
     await this.init();
 
     if (!ENABLED_DOCUMENT_TYPES.includes(config.documentType)) {
-      console.warn(`CryptPad edition for document type ${config.documentType} is not enabled.`);
-      return;
+      throw new Error(`CryptPad edition for document type ${config.documentType} is not enabled.`);
     }
 
     if (!this.containerElement) {
-      console.warn('Container element is not initialized. Please call init() before open().');
-      return;
+      throw new Error('Container element is not initialized. Please call init() before open().');
     }
-    if (!this.scriptLoaded) {
-      console.warn('CryptPad API script is not loaded yet. Please wait for it to load before calling open().');
-      return;
+    if (!this.instanceInitialized) {
+      throw new Error('CryptPad instance is not initialized yet. Please wait for it to initialize before calling open().');
     }
 
     (window as any).CryptPadAPI(this.containerElement.id, { ...config });
