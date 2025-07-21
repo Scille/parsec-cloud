@@ -93,8 +93,7 @@ async function openMenuModal(): Promise<void> {
     handle: true,
     backdropDismiss: true,
     breakpoints: [0, 1],
-    // https://ionicframework.com/docs/api/modal#scrolling-content-at-all-breakpoints
-    // expandToScroll: false, should be added to scroll with Ionic 8
+    expandToScroll: false,
     initialBreakpoint: 1,
     componentProps: {
       actions: additionalActions.value,

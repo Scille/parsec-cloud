@@ -43,6 +43,7 @@ export async function openGlobalContextMenu(
       cssClass: 'file-context-sheet-modal',
       canDismiss: true,
       breakpoints: [0, 0.25, 1],
+      expandToScroll: false,
       initialBreakpoint: 0.25,
       showBackdrop: true,
       componentProps: {
@@ -92,8 +93,7 @@ export async function openEntryContextMenu(
       cssClass: 'file-context-sheet-modal',
       breakpoints: [0, 0.5, 1],
       initialBreakpoint: 0.5,
-      // https://ionicframework.com/docs/api/modal#scrolling-content-at-all-breakpoints
-      // expandToScroll: false, should be added to scroll with Ionic 8
+      expandToScroll: false,
       showBackdrop: true,
       componentProps: {
         role: ownRole,

@@ -95,8 +95,7 @@ export async function workspaceShareClick(
     showBackdrop: true,
     handle: false,
     breakpoints: isLargeDisplay ? undefined : [0, 1],
-    // https://ionicframework.com/docs/api/modal#scrolling-content-at-all-breakpoints
-    // expandToScroll: false, should be added to scroll with Ionic 8
+    expandToScroll: false,
     initialBreakpoint: isLargeDisplay ? undefined : 1,
     componentProps: {
       workspaceId: workspace.id,
@@ -168,8 +167,7 @@ export async function openWorkspaceContextMenu(
       cssClass: 'workspace-context-sheet-modal',
       showBackdrop: true,
       breakpoints: [0, 0.5, 1],
-      // https://ionicframework.com/docs/api/modal#scrolling-content-at-all-breakpoints
-      // expandToScroll: false, should be added to scroll with Ionic 8
+      expandToScroll: false,
       initialBreakpoint: 0.5,
       componentProps: {
         workspaceName: workspace.currentName,
