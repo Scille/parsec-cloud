@@ -139,10 +139,7 @@ fn init_logger(config: &ClientConfig) {
     let log_env = env_logger::Env::default()
         .filter_or(
             "PARSEC_RUST_LOG",
-            config
-                .log_level
-                .map(|lvl| lvl.to_string())
-                .unwrap_or_else(|| "info".to_string()),
+            config.log_level.map(|lvl| lvl.as_str()).unwrap_or("info"),
         )
         .write_style("PARSEC_RUST_LOG_STYLE");
     let mut builder = env_logger::Builder::from_env(log_env);
