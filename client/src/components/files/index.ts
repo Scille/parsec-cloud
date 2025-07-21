@@ -5,7 +5,7 @@ export * from '@/components/files/handler/viewer';
 export * from '@/components/files/operations';
 export * from '@/components/files/utils';
 
-export { EntryCollection, ImportType, SortProperty, WorkspaceHistoryEntryCollection } from '@/components/files/types';
+export { EntryCollection, ImportType, OpenFallbackChoice, SortProperty, WorkspaceHistoryEntryCollection } from '@/components/files/types';
 export type {
   EntryModel,
   FileModel,

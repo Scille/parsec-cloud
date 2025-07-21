@@ -399,7 +399,7 @@ async function onEntryClicked(entry: WorkspaceHistoryEntryModel): Promise<void> 
       return;
     }
 
-    await openPath(workspaceInfo.value.handle, entry.path, informationManager, {
+    await openPath(workspaceInfo.value.handle, entry.path, informationManager, fileOperationManager, {
       onlyViewers: true,
       atTime: DateTime.fromJSDate(selectedDateTime.value),
     });

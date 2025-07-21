@@ -8,6 +8,20 @@
           <ion-item
             button
             v-if="!multipleFiles && role !== WorkspaceRole.Reader"
+            @click="onClick(FileAction.Edit)"
+            class="ion-no-padding list-group-item"
+          >
+            <ion-icon
+              class="list-group-item__icon"
+              :icon="create"
+            />
+            <ion-text class="button-large list-group-item__label-small">
+              {{ $msTranslate('FoldersPage.fileContextMenu.actionEdit') }}
+            </ion-text>
+          </ion-item>
+          <ion-item
+            button
+            v-if="!multipleFiles && role !== WorkspaceRole.Reader"
             @click="onClick(FileAction.Rename)"
             class="ion-no-padding list-group-item"
           >
@@ -165,7 +179,7 @@
 <script setup lang="ts">
 import { isDesktop, WorkspaceRole } from '@/parsec';
 import { IonContent, IonPage, IonIcon, IonItem, IonItemGroup, IonText, IonList, modalController } from '@ionic/vue';
-import { arrowRedo, copy, download, informationCircle, link, open, pencil, time, trashBin } from 'ionicons/icons';
+import { arrowRedo, copy, create, download, informationCircle, link, open, pencil, time, trashBin } from 'ionicons/icons';
 import { FileAction } from '@/views/files/types';
 
 defineProps<{

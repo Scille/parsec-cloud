@@ -665,6 +665,7 @@
             "titleManage": "Manage file",
             "titleCollaboration": "Collaboration",
             "actionRename": "Rename",
+            "actionEdit": "Edit",
             "actionMoveTo": "Move to",
             "actionMakeACopy": "Make a copy",
             "actionOpen": "Open",
@@ -2282,6 +2283,7 @@
         "openWithDefault": "Open",
         "details": "Details",
         "copyLink": "Copy link",
+        "openInEditor": "Open in editor",
         "download": "Download",
         "hideMenu": "Hide menu",
         "showMenu": "Show menu",
@@ -2338,6 +2340,16 @@
             },
             "pip": "Picture in Picture",
             "loop": "Loop"
+        }
+    },
+    "openFallback": {
+        "title": "File editor is not available",
+        "subtitle": "Please choose an action for this file.",
+        "actions": {
+            "viewer": "Open in viewer",
+            "download": "Download file",
+            "open": "Open in explorer",
+            "cancel": "Cancel"
         }
     }
 }

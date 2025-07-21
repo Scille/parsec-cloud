@@ -386,6 +386,7 @@ import { useCustomTabBar } from '@/views/menu/utils';
 import { getSecurityWarnings, RecommendationAction, SecurityWarnings } from '@/components/misc';
 import RecommendationChecklistPopover from '@/components/misc/RecommendationChecklistPopover.vue';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
+import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
 
 defineProps<{
   userInfo: ClientInfo;
@@ -395,6 +396,7 @@ const emits = defineEmits<{
   (event: 'sidebarWidthChanged', value: number): void;
 }>();
 
+const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
 const customTabBar = useCustomTabBar();
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
@@ -706,7 +708,7 @@ async function openPricingLink(): Promise<void> {
 async function openRecentFile(file: RecentFile): Promise<void> {
   const config = await storageManager.retrieveConfig();
 
-  await openPath(file.workspaceHandle, file.path, informationManager, { skipViewers: config.skipViewers });
+  await openPath(file.workspaceHandle, file.path, informationManager, fileOperationManager, { skipViewers: config.skipViewers });
 }
 
 async function removeRecentFile(file: RecentFile): Promise<void> {
