@@ -21,77 +21,77 @@ WITH deleted_organizations AS (
 ),
 deleted_sequester_service AS (
     DELETE FROM sequester_service
-    WHERE organization in (select * from deleted_organizations)
+    WHERE organization in (SELECT * FROM deleted_organizations)
     RETURNING _id
 ),
 deleted_human AS (
     DELETE FROM human
-    WHERE organization in (select * from deleted_organizations)
+    WHERE organization in (SELECT * FROM deleted_organizations)
     RETURNING _id
 ),
 deleted_users AS (
     DELETE FROM user_
-    WHERE organization in (select * from deleted_organizations)
+    WHERE organization in (SELECT * FROM deleted_organizations)
     RETURNING _id
 ),
 deleted_devices AS (
     DELETE FROM device
-    WHERE user_ in (select * from deleted_users)
+    WHERE organization in (SELECT * FROM deleted_organizations)
     RETURNING _id
 ),
 deleted_profiles AS (
     DELETE FROM profile
-    WHERE user_ in (select * from deleted_users)
+    WHERE user_ in (SELECT * FROM deleted_users)
     RETURNING _id
 ),
 deleted_invitations AS (
     DELETE FROM invitation
-    WHERE organization in (select * from deleted_organizations)
+    WHERE organization in (SELECT * FROM deleted_organizations)
     RETURNING _id
 ),
 deleted_realms AS (
     DELETE FROM realm
-    WHERE organization in (select * from deleted_organizations)
+    WHERE organization in (SELECT * FROM deleted_organizations)
     RETURNING _id
 ),
 deleted_realm_user_roles AS (
     DELETE FROM realm_user_role
-    WHERE realm in (select * from deleted_realms)
+    WHERE realm in (SELECT * FROM deleted_realms)
     RETURNING _id
 ),
 deleted_vlob_atoms AS (
     DELETE FROM vlob_atom
-    WHERE realm in (select * from deleted_realms)
+    WHERE realm in (SELECT * FROM deleted_realms)
     RETURNING _id
 ),
 deleted_blocks AS (
     DELETE FROM block
-    WHERE organization in (select * from deleted_organizations)
+    WHERE organization in (SELECT * FROM deleted_organizations)
     RETURNING _id, block_id
 ),
 deleted_realm_keys_bundle AS (
     DELETE FROM realm_keys_bundle
-    WHERE realm in (select * from deleted_realms)
+    WHERE realm in (SELECT * FROM deleted_realms)
     RETURNING _id
 ),
 deleted_realm_keys_bundle_access AS (
     DELETE FROM realm_keys_bundle_access
-    WHERE realm in (select * from deleted_realms)
+    WHERE realm in (SELECT * FROM deleted_realms)
     RETURNING _id
 ),
 deleted_realm_sequester_keys_bundle_access AS (
     DELETE FROM realm_sequester_keys_bundle_access
-    WHERE realm_keys_bundle in (select * from deleted_realm_keys_bundle)
+    WHERE realm_keys_bundle in (SELECT * FROM deleted_realm_keys_bundle)
     RETURNING _id
 ),
 deleted_realm_names AS (
     DELETE FROM realm_name
-    WHERE realm in (select * from deleted_realms)
+    WHERE realm in (SELECT * FROM deleted_realms)
     RETURNING _id
 ),
 deleted_realm_vlob_updates AS (
     DELETE FROM realm_vlob_update
-    WHERE realm in (select * from deleted_realms)
+    WHERE realm in (SELECT * FROM deleted_realms)
     RETURNING _id
 ),
 deleted_block_datas AS (
@@ -101,48 +101,48 @@ deleted_block_datas AS (
 ),
 deleted_topics_common AS (
     DELETE FROM common_topic
-    WHERE organization in (select * from deleted_organizations)
+    WHERE organization in (SELECT * FROM deleted_organizations)
     RETURNING _id
 ),
 deleted_topics_sequester AS (
     DELETE FROM sequester_topic
-    WHERE organization in (select * from deleted_organizations)
+    WHERE organization in (SELECT * FROM deleted_organizations)
     RETURNING _id
 ),
 deleted_topics_shamir_recovery AS (
     DELETE FROM shamir_recovery_topic
-    WHERE organization in (select * from deleted_organizations)
+    WHERE organization in (SELECT * FROM deleted_organizations)
     RETURNING _id
 ),
 deleted_topics_realm AS (
     DELETE FROM realm_topic
-    WHERE organization in (select * from deleted_organizations)
-    OR realm in (select * from deleted_realms)
+    WHERE organization in (SELECT * FROM deleted_organizations)
+    OR realm in (SELECT * FROM deleted_realms)
     RETURNING _id
 ),
 deleted_greeting_sessions AS (
     DELETE FROM greeting_session
-    WHERE invitation in (select * from deleted_invitations)
+    WHERE invitation in (SELECT * FROM deleted_invitations)
     RETURNING _id
 ),
 deleted_greeting_attempts AS (
     DELETE FROM greeting_attempt
-    WHERE organization in (select * from deleted_organizations)
+    WHERE organization in (SELECT * FROM deleted_organizations)
     RETURNING _id
 ),
 deleted_greeting_steps AS (
     DELETE FROM greeting_step
-    WHERE greeting_attempt in (select * from deleted_greeting_attempts)
+    WHERE greeting_attempt in (SELECT * FROM deleted_greeting_attempts)
     RETURNING _id
 ),
 deleted_shamir_recovery_setups AS (
     DELETE FROM shamir_recovery_setup
-    WHERE organization in (select * from deleted_organizations)
+    WHERE organization in (SELECT * FROM deleted_organizations)
     RETURNING _id
 ),
 deleted_shamir_recovery_shares AS (
     DELETE FROM shamir_recovery_share
-    WHERE organization in (select * from deleted_organizations)
+    WHERE organization in (SELECT * FROM deleted_organizations)
     RETURNING _id
 )
 SELECT 1
@@ -202,7 +202,7 @@ new_sequester_services AS (
         sequester_revoked_service_certificate
     )
     SELECT
-        (select * from new_organization_ids),
+        (SELECT * FROM new_organization_ids),
         service_id,
         service_certificate,
         service_label,
@@ -214,6 +214,12 @@ new_sequester_services AS (
         sequester_revoked_service_certificate
     FROM sequester_service
     WHERE organization = {q_organization_internal_id("$source_id")}
+    -- Order by _id so that the new items are inserted in the same order than
+    -- the original ones. This is not strictly necessary, but it ensures that
+    -- a row with a smaller `_id` also has an older `created_on` (without the
+    -- order by clause, this can randomly no longer be the case depending on
+    -- how PostgreSQL decide to store rows...).
+    ORDER BY sequester_service._id
     RETURNING _id, service_id
 ),
 new_human_ids AS (
@@ -223,11 +229,12 @@ new_human_ids AS (
         label
     )
     SELECT
-        (select * from new_organization_ids),
+        (SELECT * FROM new_organization_ids),
         email,
         label
     FROM human
     WHERE organization = {q_organization_internal_id("$source_id")}
+    ORDER BY human._id
     RETURNING _id, email
 ),
 new_users AS (
@@ -246,7 +253,7 @@ new_users AS (
         initial_profile
     )
     SELECT
-        (select * from new_organization_ids),
+        (SELECT * FROM new_organization_ids),
         user_id,
         user_certificate,
         user_certifier,
@@ -263,6 +270,7 @@ new_users AS (
         initial_profile
     FROM user_
     WHERE organization = {q_organization_internal_id("$source_id")}
+    ORDER BY user_._id
     RETURNING _id, user_id
 ),
 new_devices AS (
@@ -278,7 +286,7 @@ new_devices AS (
         device_label
     )
     SELECT
-        (select * from new_organization_ids),
+        (SELECT * FROM new_organization_ids),
         (
             SELECT _id FROM new_users
             WHERE user_id = {q_user(_id="device.user_", select="user_id")}
@@ -292,6 +300,7 @@ new_devices AS (
         device_label
     FROM device
     WHERE organization = {q_organization_internal_id("$source_id")}
+    ORDER BY device._id
     RETURNING _id, device_id
 ),
 patched_user_certifiers AS (
@@ -300,7 +309,9 @@ patched_user_certifiers AS (
         SELECT _id FROM new_devices
         WHERE device_id = {q_device(_id="user_certifier", select="device_id")}
     )
-    WHERE user_certifier IS NOT NULL
+    WHERE
+        organization = (SELECT * FROM new_organization_ids)
+        AND user_certifier IS NOT NULL
     RETURNING _id
 ),
 patched_revoked_user_certifiers AS (
@@ -309,6 +320,9 @@ patched_revoked_user_certifiers AS (
         SELECT _id FROM new_devices
         WHERE device_id = {q_device(_id="revoked_user_certifier", select="device_id")}
     )
+    WHERE
+        organization = (SELECT * FROM new_organization_ids)
+        AND revoked_user_certifier IS NOT NULL
     RETURNING _id
 ),
 patched_device_certifiers AS (
@@ -317,6 +331,9 @@ patched_device_certifiers AS (
         SELECT _id FROM new_devices
         WHERE device_id = {q_device(_id="device_certifier", select="device_id")}
     )
+    WHERE
+        organization = (SELECT * FROM new_organization_ids)
+        AND device_certifier IS NOT NULL
     RETURNING _id
 ),
 new_profiles AS (
@@ -330,7 +347,7 @@ new_profiles AS (
     SELECT
         (
             SELECT _id FROM new_users
-            WHERE user_id = {q_user(_id="profile.user_", select="user_id")}
+            WHERE user_id = user_.user_id
         ),
         profile,
         profile_certificate,
@@ -342,6 +359,7 @@ new_profiles AS (
     FROM profile
     INNER JOIN user_ ON profile.user_ = user_._id
     WHERE user_.organization = {q_organization_internal_id("$source_id")}
+    ORDER BY profile._id
     RETURNING _id
 ),
 new_shamir_recovery_setups AS (
@@ -358,7 +376,7 @@ new_shamir_recovery_setups AS (
         deletion_certificate
     )
     SELECT
-        (select * from new_organization_ids),
+        (SELECT * FROM new_organization_ids),
         (
             SELECT _id FROM new_users
             WHERE user_id = {q_user(_id="shamir_recovery_setup.user_", select="user_id")}
@@ -373,6 +391,7 @@ new_shamir_recovery_setups AS (
         deletion_certificate
     FROM shamir_recovery_setup
     WHERE organization = {q_organization_internal_id("$source_id")}
+    ORDER BY shamir_recovery_setup._id
     RETURNING _id, reveal_token
 ),
 new_shamir_recovery_shares AS (
@@ -384,7 +403,7 @@ new_shamir_recovery_shares AS (
         shares
     )
     SELECT
-        (select * from new_organization_ids),
+        (SELECT * FROM new_organization_ids),
         (
             SELECT _id FROM new_shamir_recovery_setups
             WHERE reveal_token = (
@@ -400,6 +419,7 @@ new_shamir_recovery_shares AS (
         shares
     FROM shamir_recovery_share
     WHERE organization = {q_organization_internal_id("$source_id")}
+    ORDER BY shamir_recovery_share._id
     RETURNING _id
 ),
 new_invitations AS (
@@ -417,7 +437,7 @@ new_invitations AS (
         shamir_recovery
     )
     SELECT
-        (select * from new_organization_ids),
+        (SELECT * FROM new_organization_ids),
         token,
         type,
         (
@@ -442,6 +462,7 @@ new_invitations AS (
         )
     FROM invitation
     WHERE organization = {q_organization_internal_id("$source_id")}
+    ORDER BY invitation._id
     RETURNING _id, token
 ),
 new_realms AS (
@@ -452,12 +473,13 @@ new_realms AS (
         created_on
     )
     SELECT
-        (select * from new_organization_ids),
+        (SELECT * FROM new_organization_ids),
         realm_id,
         key_index,
         created_on
     FROM realm
     WHERE organization = {q_organization_internal_id("$source_id")}
+    ORDER BY realm._id
     RETURNING _id, realm_id
 ),
 new_realm_user_roles AS (
@@ -472,7 +494,7 @@ new_realm_user_roles AS (
     SELECT
         (
             SELECT _id FROM new_realms
-            WHERE realm_id = {q_realm(_id="realm_user_role.realm", select="realm_id")}
+            WHERE realm_id = realm.realm_id
         ),
         (
             SELECT _id FROM new_users
@@ -488,6 +510,7 @@ new_realm_user_roles AS (
     FROM realm_user_role
     INNER JOIN realm ON realm._id = realm_user_role.realm
     WHERE realm.organization = {q_organization_internal_id("$source_id")}
+    ORDER BY realm_user_role._id
     RETURNING _id
 ),
 new_vlob_atoms AS (
@@ -504,7 +527,7 @@ new_vlob_atoms AS (
     SELECT
         (
             SELECT _id FROM new_realms
-            WHERE realm_id = {q_realm(_id="vlob_atom.realm", select="realm_id")}
+            WHERE realm_id = realm.realm_id
         ),
         vlob_atom.key_index,
         vlob_atom.vlob_id,
@@ -519,6 +542,7 @@ new_vlob_atoms AS (
     FROM vlob_atom
     INNER JOIN realm ON realm._id = vlob_atom.realm
     WHERE realm.organization = {q_organization_internal_id("$source_id")}
+    ORDER BY vlob_atom._id
     returning _id, vlob_id, version
 ),
 new_blocks AS (
@@ -533,7 +557,7 @@ new_blocks AS (
         key_index
     )
     SELECT
-        (select * from new_organization_ids),
+        (SELECT * FROM new_organization_ids),
         block_id,
         (
             SELECT _id FROM new_realms
@@ -549,6 +573,7 @@ new_blocks AS (
         key_index
     FROM block
     WHERE organization = {q_organization_internal_id("$source_id")}
+    ORDER BY block._id
     RETURNING _id
 ),
 new_realm_keys_bundle AS (
@@ -564,7 +589,7 @@ new_realm_keys_bundle AS (
     SELECT
         (
             SELECT _id FROM new_realms
-            WHERE realm_id = {q_realm(_id="realm_keys_bundle.realm", select="realm_id")}
+            WHERE realm_id = realm.realm_id
         ),
         realm_keys_bundle.key_index,
         realm_key_rotation_certificate,
@@ -578,6 +603,7 @@ new_realm_keys_bundle AS (
     FROM realm_keys_bundle
     INNER JOIN realm ON realm._id = realm_keys_bundle.realm
     WHERE realm.organization = {q_organization_internal_id("$source_id")}
+    ORDER BY realm_keys_bundle._id
     RETURNING _id, realm, key_index
 ),
 new_realm_keys_bundle_access AS (
@@ -591,7 +617,7 @@ new_realm_keys_bundle_access AS (
     SELECT
         (
             SELECT _id FROM new_realms
-            WHERE realm_id = {q_realm(_id="realm_keys_bundle_access.realm", select="realm_id")}
+            WHERE realm_id = realm.realm_id
         ),
         (
             SELECT _id FROM new_users
@@ -599,10 +625,7 @@ new_realm_keys_bundle_access AS (
         ),
         (
             SELECT _id FROM new_realm_keys_bundle
-            WHERE realm = (
-                SELECT _id FROM new_realms
-                WHERE realm_id = {q_realm(_id="realm_keys_bundle_access.realm", select="realm_id")}
-            )
+            WHERE realm_id = realm.realm_id
             AND key_index = (
                 SELECT key_index FROM realm_keys_bundle
                 WHERE _id = realm_keys_bundle
@@ -611,7 +634,8 @@ new_realm_keys_bundle_access AS (
         access,
         (
             SELECT _id FROM realm_user_role
-            WHERE certificate = (
+            WHERE realm = realm._id
+            AND certificate = (
                 SELECT certificate FROM realm_user_role
                 WHERE _id = from_sharing
             )
@@ -619,6 +643,7 @@ new_realm_keys_bundle_access AS (
     FROM realm_keys_bundle_access
     INNER JOIN realm ON realm._id = realm_keys_bundle_access.realm
     WHERE realm.organization = {q_organization_internal_id("$source_id")}
+    ORDER BY realm_keys_bundle_access._id
     RETURNING _id
 ),
 new_realm_sequester_keys_bundle_access AS (
@@ -631,7 +656,7 @@ new_realm_sequester_keys_bundle_access AS (
     SELECT
         (
             SELECT _id FROM new_realms
-            WHERE realm_id = {q_realm(_id="realm_sequester_keys_bundle_access.realm", select="realm_id")}
+            WHERE realm_id = realm.realm_id
         ),
         (
             SELECT _id FROM new_sequester_services
@@ -641,7 +666,7 @@ new_realm_sequester_keys_bundle_access AS (
             SELECT _id FROM new_realm_keys_bundle
             WHERE realm = (
                 SELECT _id FROM new_realms
-                WHERE realm_id = {q_realm(_id="realm_sequester_keys_bundle_access.realm", select="realm_id")}
+                WHERE realm_id = realm.realm_id
             )
             AND key_index = (
                 SELECT key_index FROM realm_keys_bundle
@@ -652,6 +677,7 @@ new_realm_sequester_keys_bundle_access AS (
     FROM realm_sequester_keys_bundle_access
     INNER JOIN realm ON realm._id = realm_sequester_keys_bundle_access.realm
     WHERE realm.organization = {q_organization_internal_id("$source_id")}
+    ORDER BY realm_sequester_keys_bundle_access._id
     RETURNING _id
 ),
 new_realm_names AS (
@@ -675,6 +701,7 @@ new_realm_names AS (
     FROM realm_name
     INNER JOIN realm ON realm._id = realm_name.realm
     WHERE realm.organization = {q_organization_internal_id("$source_id")}
+    ORDER BY realm_name._id
     RETURNING _id
 ),
 new_realm_vlob_updates AS (
@@ -703,6 +730,7 @@ new_realm_vlob_updates AS (
     FROM realm_vlob_update
     INNER JOIN realm ON realm._id = realm_vlob_update.realm
     WHERE realm.organization = {q_organization_internal_id("$source_id")}
+    ORDER BY realm_vlob_update._id
     RETURNING _id
 ),
 new_block_data AS (
@@ -717,6 +745,7 @@ new_block_data AS (
         data
     FROM block_data
     WHERE organization_id = $source_id
+    ORDER BY block_data._id
     RETURNING _id
 ),
 new_topics_common AS (
@@ -725,10 +754,11 @@ new_topics_common AS (
         last_timestamp
     )
     SELECT
-        (select * from new_organization_ids),
+        (SELECT * FROM new_organization_ids),
         last_timestamp
     FROM common_topic
     WHERE organization = {q_organization_internal_id("$source_id")}
+    ORDER BY common_topic._id
     RETURNING _id
 ),
 new_topics_sequester AS (
@@ -737,10 +767,11 @@ new_topics_sequester AS (
         last_timestamp
     )
     SELECT
-        (select * from new_organization_ids),
+        (SELECT * FROM new_organization_ids),
         last_timestamp
     FROM sequester_topic
     WHERE organization = {q_organization_internal_id("$source_id")}
+    ORDER BY sequester_topic._id
     RETURNING _id
 ),
 new_topics_shamir_recovery AS (
@@ -749,10 +780,11 @@ new_topics_shamir_recovery AS (
         last_timestamp
     )
     SELECT
-        (select * from new_organization_ids),
+        (SELECT * FROM new_organization_ids),
         last_timestamp
     FROM shamir_recovery_topic
     WHERE organization = {q_organization_internal_id("$source_id")}
+    ORDER BY shamir_recovery_topic._id
     RETURNING _id
 ),
 new_topics_realm AS (
@@ -762,7 +794,7 @@ new_topics_realm AS (
         last_timestamp
     )
     SELECT
-        (select * from new_organization_ids),
+        (SELECT * FROM new_organization_ids),
         (
             SELECT _id FROM new_realms
             WHERE realm_id = {q_realm(_id="realm_topic.realm", select="realm_id")}
@@ -770,6 +802,7 @@ new_topics_realm AS (
         last_timestamp
     FROM realm_topic
     WHERE organization = {q_organization_internal_id("$source_id")}
+    ORDER BY realm_topic._id
     RETURNING _id
 ),
 new_greeting_sessions AS (
@@ -789,6 +822,7 @@ new_greeting_sessions AS (
     FROM greeting_session
     INNER JOIN invitation ON invitation._id = greeting_session.invitation
     WHERE invitation.organization = {q_organization_internal_id("$source_id")}
+    ORDER BY greeting_session._id
     RETURNING _id, invitation, greeter
 ),
 new_greeting_attempts AS (
@@ -803,7 +837,7 @@ new_greeting_attempts AS (
         cancelled_by
     )
     SELECT
-        (select * from new_organization_ids),
+        (SELECT * FROM new_organization_ids),
         greeting_attempt_id,
         (
             SELECT new_greeting_sessions._id FROM new_greeting_sessions
@@ -820,6 +854,7 @@ new_greeting_attempts AS (
     FROM greeting_attempt
     INNER JOIN greeting_session ON greeting_session._id = greeting_attempt.greeting_session
     WHERE organization = {q_organization_internal_id("$source_id")}
+    ORDER BY greeting_attempt._id
     RETURNING _id, greeting_attempt_id
 ),
 new_greeting_steps AS (
@@ -832,10 +867,7 @@ new_greeting_steps AS (
     SELECT
         (
             SELECT _id FROM new_greeting_attempts
-            WHERE greeting_attempt_id = (
-                SELECT greeting_attempt_id FROM greeting_attempt
-                WHERE greeting_attempt._id = greeting_step.greeting_attempt
-            )
+            WHERE greeting_attempt_id = greeting_attempt.greeting_attempt_id
         ),
         step,
         greeter_data,
@@ -843,6 +875,7 @@ new_greeting_steps AS (
     FROM greeting_step
     INNER JOIN greeting_attempt ON greeting_attempt._id = greeting_step.greeting_attempt
     WHERE organization = {q_organization_internal_id("$source_id")}
+    ORDER BY greeting_step._id
     RETURNING _id
 )
 SELECT 1
