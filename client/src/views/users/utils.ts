@@ -49,8 +49,7 @@ export async function openUserContextMenu(
       cssClass: 'user-context-sheet-modal',
       showBackdrop: true,
       breakpoints: [0, 0.5, 1],
-      // https://ionicframework.com/docs/api/modal#scrolling-content-at-all-breakpoints
-      // expandToScroll: false, should be added to scroll with Ionic 8
+      expandToScroll: false,
       initialBreakpoint: 0.5,
       componentProps: {
         multipleSelected: users.length > 1,
@@ -72,6 +71,7 @@ export async function openGlobalUserContextMenu(): Promise<{ action: UserAction 
     cssClass: 'user-context-sheet-modal',
     showBackdrop: true,
     breakpoints: [0, 0.25, 1],
+    expandToScroll: false,
     initialBreakpoint: 0.25,
   });
   await modal.present();

@@ -255,8 +255,7 @@ async function openCreateOrJoin(event: Event): Promise<void> {
       showBackdrop: true,
       handle: false,
       breakpoints: isLargeDisplay.value ? undefined : [1],
-      // https://ionicframework.com/docs/api/modal#scrolling-content-at-all-breakpoints
-      // expandToScroll: false, should be added to scroll with Ionic 8
+      expandToScroll: false,
       initialBreakpoint: isLargeDisplay.value ? undefined : 1,
     });
     await modal.present();
@@ -379,6 +378,7 @@ async function openCreateOrganizationModal(bootstrapLink?: string, defaultServer
     backdropDismiss: false,
     showBackdrop: true,
     breakpoints: isLargeDisplay.value ? undefined : [0.5, 1],
+    expandToScroll: false,
     handle: false,
     initialBreakpoint: isLargeDisplay.value ? undefined : 1,
     componentProps: {
@@ -416,6 +416,7 @@ async function openJoinByLinkModal(link: string): Promise<void> {
     backdropDismiss: false,
     showBackdrop: true,
     breakpoints: isLargeDisplay.value ? undefined : [0.5, 1],
+    expandToScroll: false,
     handle: false,
     initialBreakpoint: isLargeDisplay.value ? undefined : 1,
     componentProps: {
