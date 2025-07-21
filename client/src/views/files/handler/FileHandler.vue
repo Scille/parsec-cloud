@@ -137,7 +137,6 @@ import {
 } from '@/parsec';
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import { IonPage, IonContent, IonButton, IonText, IonIcon, IonButtons, modalController } from '@ionic/vue';
-<<<<<<<< HEAD:client/src/views/files/handler/FileHandler.vue
 import { link, informationCircle, open, chevronDown, chevronUp } from 'ionicons/icons';
 import {
   Base64,
@@ -165,32 +164,13 @@ import {
 } from '@/router';
 import { DetectedFileType } from '@/common/fileTypes';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
-========
-import { link, informationCircle, open, chevronUp, chevronDown } from 'ionicons/icons';
-import { Base64, MsSpinner, MsImage, I18n, DownloadIcon, askQuestion, Answer, MsModalResult } from 'megashark-lib';
-import { ref, Ref, type Component, inject, onMounted, shallowRef, onUnmounted } from 'vue';
-import {
-  ImageViewer,
-  VideoViewer,
-  SpreadsheetViewer,
-  DocumentViewer,
-  AudioViewer,
-  TextViewer,
-  PdfViewer,
-} from '@/views/files/handler/viewer';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import { currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, Routes, watchRoute } from '@/router';
-import { DetectedFileType, FileContentType } from '@/common/fileTypes';
-import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { Env } from '@/services/environment';
->>>>>>>> 51cfceb36 ([MS] Reorganize file related components & views):client/src/views/files/handler/viewer/FileViewer.vue
 import { DateTime } from 'luxon';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { getFileIcon } from '@/common/file';
 import { copyPathLinkToClipboard } from '@/components/files';
 import { askDownloadConfirmation, downloadEntry, FileDetailsModal } from '@/views/files';
 import useHeaderControl from '@/services/headerControl';
-import { Env } from '@/services/environment';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
 import FileEditor from '@/views/files/handler/editor/FileEditor.vue';
