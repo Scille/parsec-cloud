@@ -40,14 +40,14 @@ msTest('Test workspace history page', async ({ documents }) => {
   await documents.locator('.workspace-card-item').nth(0).locator('.icon-option-container').nth(0).click();
   const contextMenu = documents.locator('.workspace-context-menu');
   await contextMenu.locator('.menu-list').locator('ion-item-group').nth(1).locator('ion-item').nth(3).click();
-  await expect(documents.locator('.topbar-left').locator('.topbar-left__title')).toHaveText('History');
+  await expect(documents.locator('.topbar-left').locator('.topbar-left-text__title')).toHaveText('History');
   const container = documents.locator('.history-container');
   await expect(container.locator('.head-content__title')).toHaveText('Workspace: wksp1');
-  const header = container.locator('.folder-container-header');
+  const header = container.locator('.folder-header');
   const breadcrumbs = header.locator('ion-breadcrumb');
   await expect(breadcrumbs).toHaveCount(1);
   await expect(breadcrumbs).toHaveText(['wksp1']);
-  const restoreButton = header.locator('.folder-container-header__actions').locator('ion-button');
+  const restoreButton = header.locator('.folder-header__actions').locator('#restore-button');
   await expect(restoreButton).toHaveText('Restore');
   await expect(restoreButton).toBeTrulyDisabled();
   const folderList = container.locator('.folder-list-main');
@@ -87,7 +87,7 @@ msTest('Test viewer in history', async ({ documents }) => {
   await documents.locator('.workspace-card-item').nth(0).locator('.icon-option-container').nth(0).click();
   const contextMenu = documents.locator('.workspace-context-menu');
   await contextMenu.locator('.menu-list').locator('ion-item-group').nth(1).locator('ion-item').nth(3).click();
-  await expect(documents.locator('.topbar-left').locator('.topbar-left__title')).toHaveText('History');
+  await expect(documents.locator('.topbar-left').locator('.topbar-left-text__title')).toHaveText('History');
   const container = documents.locator('.history-container');
   await expect(container.locator('.head-content__title')).toHaveText('Workspace: wksp1');
   const folderList = container.locator('.folder-list-main');
@@ -159,27 +159,26 @@ msTest('Workspace history breadcrumbs', async ({ documents }) => {
   await headerContentMatch(['wksp1']);
 
   await documents.setDisplaySize(DisplaySize.Small);
-  const smallBreadcrumbs = documents.locator('.history-container').locator('.navigation-breadcrumb').locator('.breadcrumb-small-container');
+  const smallBreadcrumbsButton = documents
+    .locator('.history-container')
+    .locator('.breadcrumb-small-container')
+    .locator('.breadcrumb-popover-button');
 
   await expect(documents.locator('.history-container').locator('.navigation-breadcrumb').locator('ion-breadcrumbs')).not.toBeVisible();
-  await expect(smallBreadcrumbs).toBeVisible();
-  await expect(smallBreadcrumbs.locator('ion-text')).toHaveCount(1);
-  await expect(smallBreadcrumbs.locator('ion-text')).toHaveText('wksp1');
+  await expect(smallBreadcrumbsButton).toBeHidden();
+  await expect(documents.locator('.topbar-left-text__workspace')).toHaveText('wksp1');
+  const currentFolder = documents.locator('.history-container').locator('.current-folder__text');
   await navigateDown();
-  await expect(smallBreadcrumbs).toBeVisible();
-  await expect(smallBreadcrumbs.locator('ion-text')).toHaveCount(3);
-  await expect(smallBreadcrumbs.locator('ion-text').nth(0)).toHaveText('...');
-  await expect(smallBreadcrumbs.locator('ion-text').nth(1)).toHaveText('/');
-  await expect(smallBreadcrumbs.locator('ion-text').nth(2)).toHaveText('Dir_Folder');
-  await expect(smallBreadcrumbs.locator('.breadcrumb-popover-button')).toBeVisible();
+  await expect(currentFolder).toHaveText('Dir_Folder');
+  await expect(currentFolder).toBeVisible();
+  await expect(smallBreadcrumbsButton).toBeVisible();
   await navigateDown();
+  await expect(currentFolder).toHaveText('Subdir 1');
   await navigateDown();
+  await expect(currentFolder).toHaveText('Subdir 2');
   await navigateDown();
-  await expect(smallBreadcrumbs.locator('ion-text')).toHaveCount(3);
-  await expect(smallBreadcrumbs.locator('ion-text').nth(0)).toHaveText('...');
-  await expect(smallBreadcrumbs.locator('ion-text').nth(1)).toHaveText('/');
-  await expect(smallBreadcrumbs.locator('ion-text').nth(2)).toHaveText('Subdir 3');
-  await smallBreadcrumbs.locator('.breadcrumb-popover-button').click();
+  await expect(currentFolder).toHaveText('Subdir 3');
+  await smallBreadcrumbsButton.click();
 
   await expect(popoverItems).toHaveCount(4);
   await expect(popoverItems.nth(0)).toHaveText('wksp1');
@@ -187,14 +186,35 @@ msTest('Workspace history breadcrumbs', async ({ documents }) => {
   await expect(popoverItems.nth(2)).toHaveText('Subdir 1');
   await expect(popoverItems.nth(3)).toHaveText('Subdir 2');
   await popoverItems.nth(1).click();
-  await expect(smallBreadcrumbs.locator('ion-text')).toHaveCount(3);
-  await expect(smallBreadcrumbs.locator('ion-text').nth(0)).toHaveText('...');
-  await expect(smallBreadcrumbs.locator('ion-text').nth(1)).toHaveText('/');
-  await expect(smallBreadcrumbs.locator('ion-text').nth(2)).toHaveText('Dir_Folder');
-  await smallBreadcrumbs.locator('.breadcrumb-popover-button').click();
+  await expect(currentFolder).toHaveText('Dir_Folder');
+  await expect(smallBreadcrumbsButton).toBeVisible();
+  await smallBreadcrumbsButton.click();
   await expect(popoverItems).toHaveCount(1);
   await expect(popoverItems).toHaveText('wksp1');
   await popoverItems.click();
-  await expect(smallBreadcrumbs.locator('ion-text')).toHaveCount(1);
-  await expect(smallBreadcrumbs.locator('ion-text')).toHaveText('wksp1');
+  await expect(smallBreadcrumbsButton).toBeHidden();
+});
+
+msTest('Workspace history select all', async ({ documents }) => {
+  const entries = documents.locator('.folder-list-main').locator('.file-list-item');
+  await expect(documents.locator('.workspace-card-item')).toHaveCount(1);
+  await documents.locator('.sidebar').locator('#goHome').click();
+  await expect(documents).toBeWorkspacePage();
+  await documents.locator('.workspace-card-item').nth(0).locator('.icon-option-container').nth(0).click();
+  const contextMenu = documents.locator('.workspace-context-menu');
+  await expect(contextMenu).toBeVisible();
+  await contextMenu.locator('.menu-list').locator('ion-item-group').nth(1).locator('ion-item').nth(3).click();
+  await expect(documents).toBeWorkspaceHistoryPage();
+  const selectAllButton = documents.locator('.folder-header').locator('.select-button');
+  await expect(selectAllButton).toHaveText('Select all');
+  await selectAllButton.click();
+  await expect(entries).toHaveCount(9);
+  await expect(selectAllButton).toHaveText('Deselect all');
+  for (const entry of await entries.all()) {
+    await expect(entry.locator('ion-checkbox')).toHaveState('checked');
+  }
+  await selectAllButton.click();
+  for (const checkbox of await entries.locator('ion-checkbox').all()) {
+    await expect(checkbox).toHaveState('unchecked');
+  }
 });

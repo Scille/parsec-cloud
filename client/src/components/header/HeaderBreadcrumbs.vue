@@ -32,30 +32,32 @@
       v-if="isSmallDisplay && pathNodes.length > (fromHeaderPage ? 2 : 0)"
       class="breadcrumb-small-container"
     >
-      <ion-text
-        v-if="pathNodes.length > (fromHeaderPage ? 3 : 1)"
-        class="breadcrumb-normal breadcrumb-small"
-      >
-        {{ '...' }}
-      </ion-text>
-      <ion-text
-        v-if="pathNodes.length > (fromHeaderPage ? 3 : 1)"
-        class="breadcrumb-normal breadcrumb-small"
-      >
-        {{ '/' }}
-      </ion-text>
-      <ion-text
-        class="breadcrumb-normal breadcrumb-small breadcrumb-small-text"
-        :class="fromHeaderPage ? '' : 'breadcrumb-small-active'"
-      >
-        {{ `${pathNodes[pathNodes.length - (fromHeaderPage ? 2 : 1)].display}` }}
-      </ion-text>
-      <ion-text
-        v-if="fromHeaderPage"
-        class="breadcrumb-normal breadcrumb-small"
-      >
-        {{ '/' }}
-      </ion-text>
+      <template v-if="showParentNode">
+        <ion-text
+          v-if="pathNodes.length > (fromHeaderPage ? 3 : 1)"
+          class="breadcrumb-normal breadcrumb-small"
+        >
+          {{ '...' }}
+        </ion-text>
+        <ion-text
+          v-if="pathNodes.length > (fromHeaderPage ? 3 : 1)"
+          class="breadcrumb-normal breadcrumb-small"
+        >
+          {{ '/' }}
+        </ion-text>
+        <ion-text
+          class="breadcrumb-normal breadcrumb-small breadcrumb-small-text"
+          :class="fromHeaderPage ? '' : 'breadcrumb-small-active'"
+        >
+          {{ `${pathNodes[pathNodes.length - (fromHeaderPage ? 2 : 1)].display}` }}
+        </ion-text>
+        <ion-text
+          v-if="fromHeaderPage"
+          class="breadcrumb-normal breadcrumb-small"
+        >
+          {{ '/' }}
+        </ion-text>
+      </template>
       <div>
         <ion-button
           v-if="pathNodes.length > 1"
@@ -103,6 +105,7 @@ const props = withDefaults(
     maxShown?: number;
     fromHeaderPage?: boolean;
     availableWidth?: number;
+    showParentNode?: boolean;
   }>(),
   {
     itemsBeforeCollapse: 2,
@@ -110,6 +113,7 @@ const props = withDefaults(
     maxShown: 3,
     fromHeaderPage: false,
     availableWidth: 0,
+    showParentNode: true,
   },
 );
 
@@ -309,19 +313,24 @@ function navigateTo(path: RouterPathNode): void {
 
   .breadcrumb-popover-button {
     min-height: 0;
-    padding: 0.125rem;
+    min-width: 0;
+    padding: 0;
 
     &::part(native) {
-      --background: none;
-      --background-hover: none;
+      --background: var(--parsec-color-light-secondary-premiere);
+      --background-hover: var(--parsec-color-light-secondary-medium);
       --background-focused: none;
-      border: 1px solid var(--parsec-color-light-secondary-light);
-      padding: 0.25rem;
+      border: none;
+      padding: 0.375rem;
     }
 
     &__icon {
-      font-size: 1rem;
+      font-size: 0.875rem;
       color: var(--parsec-color-light-secondary-hard-grey);
+    }
+
+    &:hover .breadcrumb-popover-button__icon {
+      color: var(--parsec-color-light-secondary-text);
     }
   }
 }

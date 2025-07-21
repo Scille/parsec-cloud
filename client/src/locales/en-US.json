@@ -2209,7 +2209,9 @@
     "workspaceHistory": {
         "actions": {
             "restore": "Restore",
-            "cancel": "Cancel"
+            "cancel": "Cancel",
+            "selectAll": "Select all",
+            "deselectAll": "Deselect all"
         },
         "restoreConfirmTitle": "Confirm file restore?",
         "restoreConfirmQuestion": "Are you sure to restore the selected file or folder? This will overwrite any current version but you can still retrieve it in the History. | Are you sure to restore the selected files or folders? This will overwrite any current version but you can still retrieve them in the History.",

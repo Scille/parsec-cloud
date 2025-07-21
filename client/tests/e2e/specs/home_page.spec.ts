@@ -274,8 +274,9 @@ msTest('Empty home page', async ({ context }) => {
   await continueBtn.click();
   await expect(modal).toBeVisible();
   await page.locator('.join-organization-modal').locator('.closeBtn').click();
+  await webLinkInput.focus();
   await expect(modal).toBeHidden();
-  await webLinkInput.press('Enter');
+  await page.keyboard.press('Enter');
   await expect(modal).toBeVisible();
 
   await page.release();

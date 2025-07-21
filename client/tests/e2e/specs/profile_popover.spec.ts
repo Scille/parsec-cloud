@@ -50,7 +50,7 @@ msTest('Profile popover go to profile', async ({ connected }) => {
   await connected.locator('.topbar').locator('.profile-header').click();
   const popover = connected.locator('.profile-header-organization-popover');
   await popover.locator('.main-list').getByRole('listitem').nth(0).click();
-  await expect(connected.locator('#connected-header').locator('.topbar-left__title')).toHaveText('My profile');
+  await expect(connected.locator('#connected-header').locator('.topbar-left-text__title')).toHaveText('My profile');
 });
 
 msTest('Profile popover go to settings', async ({ connected }) => {

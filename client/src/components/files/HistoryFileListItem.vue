@@ -95,10 +95,21 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
+.file-selected {
+  flex-shrink: 0;
+  max-width: 2.5rem;
+}
+
 .file-name {
   .file-icon {
     width: 2rem;
     height: 2rem;
+    flex-shrink: 0;
+
+    @include ms.responsive-breakpoint('sm') {
+      width: 1.75rem;
+      height: 1.75rem;
+    }
   }
 
   &__label {

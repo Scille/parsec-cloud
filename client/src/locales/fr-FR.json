@@ -2207,7 +2207,9 @@
     "workspaceHistory": {
         "actions": {
             "restore": "Restaurer",
-            "cancel": "Annuler"
+            "cancel": "Annuler",
+            "selectAll": "Tout sélectionner",
+            "deselectAll": "Tout désélectionner"
         },
         "restoreConfirmTitle": "Confirmer la restauration des fichiers ?",
         "restoreConfirmQuestion": "Êtes-vous sûr de vouloir restaurer le fichier ou le dossier sélectionné ? Cette opération écrasera la version actuelle, mais vous pourrez toujours la retrouver dans l'historique. | Êtes-vous sûr de vouloir restaurer les fichiers ou dossiers sélectionnés ? Cette opération écrasera toute version actuelle, mais vous pourrez toujours les récupérer dans l'historique.",
