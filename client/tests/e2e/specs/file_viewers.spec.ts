@@ -10,8 +10,8 @@ msTest('File viewer page default state', async ({ documents }) => {
   await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
   await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
   await expect(documents).toBeViewerPage();
-  await expect(documents).toHavePageTitle('File viewer');
   await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_.-]+$/);
+  await expect(documents.locator('#connected-header .topbar')).toBeHidden();
 });
 
 msTest('File viewer page details', async ({ documents }) => {
@@ -22,7 +22,6 @@ msTest('File viewer page details', async ({ documents }) => {
   await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
   await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
   await expect(documents).toBeViewerPage();
-  await expect(documents).toHavePageTitle('File viewer');
   await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_.-]+$/);
   const buttons = documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-button');
   await expect(buttons).toHaveCount(4);
@@ -36,15 +35,21 @@ msTest('Quick access loads correct document', async ({ documents }) => {
   await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
   await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
   await expect(documents).toBeViewerPage();
-  await expect(documents).toHavePageTitle('File viewer');
   const doc1Name = (await documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text').textContent()) ?? '';
+
+  // Ensure the main header is visible
+  const isTopbarVisible = await documents.locator('#connected-header .topbar').isVisible();
+  const fileViewerButton = documents.locator('.file-viewer-topbar-buttons__item.toggle-menu');
+  if (!isTopbarVisible && fileViewerButton) {
+    await fileViewerButton.click();
+  }
+
   await documents.locator('.topbar-left').locator('.back-button').click();
   await entries.nth(3).dblclick();
   await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
   await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
   await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
   await expect(documents).toBeViewerPage();
-  await expect(documents).toHavePageTitle('File viewer');
   const doc2Name = (await documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text').textContent()) ?? '';
 
   const sidebar = documents.locator('.sidebar');
@@ -66,12 +71,44 @@ msTest('Quick access loads correct document', async ({ documents }) => {
   await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(doc2Name);
 });
 
+msTest('File viewer header control functionality', async ({ documents }) => {
+  const entries = documents.locator('.folder-container').locator('.file-list-item');
+
+  await entries.nth(2).dblclick();
+  await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
+  await expect(documents).toBeViewerPage();
+  await expect(documents.locator('#connected-header .topbar')).toBeHidden();
+
+  const toggleButton = documents.locator('.file-viewer-topbar-buttons__item.toggle-menu');
+  await expect(toggleButton).toBeVisible();
+  await expect(toggleButton).toContainText('Show menu');
+
+  await toggleButton.click();
+  await expect(documents.locator('#connected-header .topbar')).toBeVisible();
+  await expect(toggleButton).toContainText('Hide menu');
+
+  await toggleButton.click();
+  await expect(documents.locator('#connected-header .topbar')).toBeHidden();
+  await expect(toggleButton).toContainText('Show menu');
+
+  // Test that header state persists when navigating between files in viewer
+  await toggleButton.click();
+  await expect(documents.locator('#connected-header .topbar')).toBeVisible();
+  await documents.locator('.topbar-left').locator('.back-button').click();
+  await entries.nth(3).dblclick();
+  await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
+  await expect(documents.locator('#connected-header .topbar')).toBeHidden();
+
+  // Test leaving file viewer restores header
+  await documents.goBack();
+  await expect(documents.locator('#connected-header .topbar')).toBeVisible();
+});
+
 msTest('Audio viewer', async ({ documents }) => {
   msTest.setTimeout(60_000);
 
   await openFileType(documents, 'mp3');
   await expect(documents).toBeViewerPage();
-  await expect(documents).toHavePageTitle('File viewer');
   await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.mp3$/);
 
   const bottomBar = documents.locator('.file-viewer-bottombar');
@@ -169,7 +206,6 @@ msTest('Video viewer', async ({ documents }) => {
 
   await openFileType(documents, 'mp4');
   await expect(documents).toBeViewerPage();
-  await expect(documents).toHavePageTitle('File viewer');
   await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.mp4$/);
 
   const bottomBar = documents.locator('.file-viewer-bottombar');
@@ -285,7 +321,6 @@ msTest('Video viewer', async ({ documents }) => {
 msTest('Text viewer', async ({ documents }) => {
   await openFileType(documents, 'py');
   await expect(documents).toBeViewerPage();
-  await expect(documents).toHavePageTitle('File viewer');
   await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.py$/);
 
   const container = documents.locator('.file-viewer').locator('.text-container');
