@@ -10,6 +10,7 @@ directory are valid:
 
 import argparse
 import json
+import os
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Optional
@@ -17,6 +18,15 @@ from urllib.request import HTTPError, Request, urlopen
 
 # This list should be keep up to date with `misc/releaser.py::FRAGMENT_TYPES.keys()`
 VALID_TYPES = ["feature", "bugfix", "doc", "removal", "api", "misc", "empty"]
+HEADERS: dict[str, str] = {
+    "Accept": "application/vnd.github.v3+json",
+    "X-GitHub-Api-Version": "2022-11-28",
+    **(
+        {"Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}"}
+        if "GITHUB_TOKEN" in os.environ
+        else {}
+    ),
+}
 
 
 def check_newsfragment(fragment: Path) -> Optional[bool]:
@@ -38,7 +48,7 @@ def check_newsfragment(fragment: Path) -> Optional[bool]:
     req = Request(
         method="GET",
         url=url,
-        headers={"Accept": "application/vnd.github.v3+json"},
+        headers=HEADERS,
     )
     try:
         response = urlopen(req)
@@ -58,7 +68,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     args = parser.parse_args()
 
-    print(f"Checking news fragments...")
+    print("Checking news fragments...")
 
     with ThreadPoolExecutor() as pool:
         ret = list(
