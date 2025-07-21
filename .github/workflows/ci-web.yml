@@ -243,9 +243,11 @@ jobs:
           retention-days: 1
 
   playwright-reports:
-    # Run the report if `playwright-run` result in either a success or failure, skip if cancelled or skipped.
-    if: contains(fromJSON('["success", "failure"]'), needs.playwright-run.result)
+    # Run the report if the initial pre-check (format, unit test pass) and the workflow is not cancelled
+    # We do not depends on the result of the playwright runs.
+    if: needs.test-web-app.result == 'success' && !cancelled()
     needs:
+      - test-web-app
       - playwright-run
     runs-on: ubuntu-24.04
     timeout-minutes: 5
