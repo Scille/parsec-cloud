@@ -80,6 +80,7 @@
         "@types/w3c-image-capture": "^1.0.10",
         "@typescript-eslint/eslint-plugin": "^6.10.0",
         "@typescript-eslint/parser": "^6.10.0",
+        "@vitejs/plugin-basic-ssl": "^1.2.0",
         "@vitejs/plugin-vue": "^5.2.4",
         "@vue/eslint-config-typescript": "^12.0.0",
         "@vue/test-utils": "^2.4.6",
