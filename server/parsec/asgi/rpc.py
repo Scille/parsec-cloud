@@ -590,7 +590,7 @@ async def anonymous_api(raw_organization_id: str, request: Request) -> Response:
             },
         )
 
-    body: bytes = await _rpc_get_body_with_limit_check(request)
+    body = await _rpc_get_body_with_limit_check(request)
 
     try:
         req = ANONYMOUS_CMDS_LOAD_FN[parsed.settled_api_version.version](body)
@@ -619,7 +619,7 @@ async def anonymous_account_api(request: Request) -> Response:
         client_ip_address=request.client.host if request.client is not None else "",
     )
 
-    body: bytes = await _rpc_get_body_with_limit_check(request)
+    body = await _rpc_get_body_with_limit_check(request)
 
     try:
         req = ANONYMOUS_ACCOUNT_CMDS_LOAD_FN[parsed.settled_api_version.version](body)
@@ -641,7 +641,7 @@ async def authenticated_account_api(request: Request) -> Response:
 
     assert parsed.authentication_token is not None
 
-    body: bytes = await _rpc_get_body_with_limit_check(request)
+    body = await _rpc_get_body_with_limit_check(request)
     outcome = await backend.auth.authenticated_account_auth(
         now=DateTime.now(), token=parsed.authentication_token
     )
