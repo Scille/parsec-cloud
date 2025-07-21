@@ -203,7 +203,7 @@ async def test_anonymous_account_account_create_proceed_send_validation_email_re
             ),
             auth_method_mac_key=SecretKey.generate(),
             vault_key_access=b"vault_key_access",
-            auth_method_id=bob_account.auth_method_id,
+            auth_method_id=AccountAuthMethodID.from_hex("9aae259f748045cc9fe7146eab0b132e"),
         )
     )
     assert (

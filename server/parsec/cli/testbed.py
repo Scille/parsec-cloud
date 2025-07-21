@@ -74,6 +74,21 @@ class UnknownTemplateError(Exception):
     pass
 
 
+_ORG_ID_COUNT = 0
+
+
+def next_organization_id(prefix: str) -> OrganizationID:
+    """
+    Convenient helper to generate unique organization IDs for the tests.
+
+    Note the returned IDs are only unique across the lifetime of the process,
+    but this is enough since the PostgreSQL database gets reset before each run.
+    """
+    global _ORG_ID_COUNT
+    _ORG_ID_COUNT += 1
+    return OrganizationID(f"{prefix}{_ORG_ID_COUNT}")
+
+
 class TestbedBackend:
     __test__ = False  # Prevents Pytest from thinking this is a test class
 
@@ -83,7 +98,6 @@ class TestbedBackend:
         loaded_templates: dict[str, TestbedTemplate] | None = None,
     ):
         self.backend = backend
-        self._org_count = 0
         self._account_count = 0
         self._load_template_lock = anyio.Lock()
         # keys: template ID, values: (to duplicate organization ID, CRC, template content)
@@ -125,9 +139,7 @@ class TestbedBackend:
 
     async def new_organization(self, template: str) -> TestbedTemplate:
         template_org_id, template_crc, template_content = await self.get_template(template)
-
-        self._org_count += 1
-        new_org_id = OrganizationID(f"Org{self._org_count}")
+        new_org_id = next_organization_id(prefix="TestbedOrg")
         await self.backend.test_duplicate_organization(template_org_id, new_org_id)
         self.template_per_org[new_org_id] = template_content
 

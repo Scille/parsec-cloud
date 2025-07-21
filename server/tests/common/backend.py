@@ -51,9 +51,7 @@ def backend_config(
 
 
 @pytest.fixture
-async def backend(
-    backend_config: BackendConfig, reset_testbed: Callable[[], Awaitable[None]]
-) -> AsyncIterator[Backend]:
+async def backend(backend_config: BackendConfig) -> AsyncIterator[Backend]:
     # pytest-asyncio use different coroutines to run the init and teardown parts
     # of async generator fixtures.
     # However anyio's task group are required to run there async context manager init
@@ -68,25 +66,7 @@ async def backend(
         nonlocal backend
         async with backend_factory(config=backend_config) as backend:
             started.set()
-            try:
-                await should_stop.wait()
-            finally:
-                # Check that all non-template organizations have been dropped
-                try:
-                    organisations = await backend.organization.test_dump_organizations(
-                        skip_templates=True
-                    )
-                # The check cannot be performed, fully reset the testbed to avoid side effects
-                except Exception:
-                    await reset_testbed()
-                    raise
-                else:
-                    # A test that creates new organization should specifically use the `cleanup_organizations` fixture.
-                    # If organizations still exists at this point, it means the test did not properly performed its cleanup.
-                    # So we fully reset the testbed to avoid side effects.
-                    if organisations:
-                        await reset_testbed()
-                    assert organisations == {}, set(organisations)
+            await should_stop.wait()
 
     async with asyncio.TaskGroup() as tg:
         tg.create_task(_run_backend())
@@ -147,9 +127,11 @@ async def reset_testbed(
 ) -> Callable[[], Awaitable[None]]:
     """Fixture providing a helper to fully reset the testbed.
 
-    This is **not** done between all tests in order to speed up the test suite.
-    It is called by `backend` fixture in the case where the test did not properly
-    performed its cleanup.
+    This is **not** done between all tests in order to speed up the test suite (
+    template are loaded once).
+
+    You probably don't need it, this code is only kept given it is useful when
+    debugging a test.
     """
 
     async def _reset_testbed():
@@ -159,11 +141,3 @@ async def reset_testbed(
             await reset_postgresql_testbed()
 
     return _reset_testbed
-
-
-@pytest.fixture
-async def cleanup_organizations(backend: Backend) -> AsyncIterator[None]:
-    """Fixture ensuring all non-template organizations are dropped after the test."""
-    yield
-    for org_id in await backend.organization.test_dump_organizations(skip_templates=True):
-        await backend.organization.test_drop_organization(org_id)

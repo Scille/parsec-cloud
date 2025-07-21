@@ -156,28 +156,24 @@ async def test_ok(
     assert response.json() == {}
 
     dump = await backend.organization.test_dump_organizations()
-    assert dump == {
-        coolorg.organization_id: OrganizationDump(
-            organization_id=coolorg.organization_id,
-            bootstrap_token=ANY,
-            is_bootstrapped=True,
-            is_expired=params.get("is_expired", False),
-            active_users_limit=ActiveUsersLimit.from_maybe_int(
-                params.get("active_users_limit", None)
-            ),
-            user_profile_outsider_allowed=params.get("user_profile_outsider_allowed", True),
-            minimum_archiving_period=params.get("minimum_archiving_period", 2592000),
-            tos=TermsOfService(updated_on=ANY, per_locale_urls=params["tos"])
-            if "tos" in params
-            else None,
-            allowed_client_agent=AllowedClientAgent(
-                params.get("allowed_client_agent", "NATIVE_OR_WEB")
-            ),
-            account_vault_strategy=AccountVaultStrategy(
-                params.get("account_vault_strategy", "ALLOWED")
-            ),
-        )
-    }
+    assert dump[coolorg.organization_id] == OrganizationDump(
+        organization_id=coolorg.organization_id,
+        bootstrap_token=ANY,
+        is_bootstrapped=True,
+        is_expired=params.get("is_expired", False),
+        active_users_limit=ActiveUsersLimit.from_maybe_int(params.get("active_users_limit", None)),
+        user_profile_outsider_allowed=params.get("user_profile_outsider_allowed", True),
+        minimum_archiving_period=params.get("minimum_archiving_period", 2592000),
+        tos=TermsOfService(updated_on=ANY, per_locale_urls=params["tos"])
+        if "tos" in params
+        else None,
+        allowed_client_agent=AllowedClientAgent(
+            params.get("allowed_client_agent", "NATIVE_OR_WEB")
+        ),
+        account_vault_strategy=AccountVaultStrategy(
+            params.get("account_vault_strategy", "ALLOWED")
+        ),
+    )
 
 
 async def test_expire_and_cancel_expire(

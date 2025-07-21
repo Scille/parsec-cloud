@@ -32,17 +32,13 @@ from parsec._parsec import (
 from parsec._parsec import testbed as tb
 from parsec.ballpark import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 from parsec.components.organization import TermsOfService
-from tests.common import AnonymousRpcClient, AsyncClient, Backend, TestbedBackend
-
-
-@pytest.fixture
-def organization_id() -> OrganizationID:
-    return OrganizationID("NewOrg")
-
-
-@pytest.fixture
-def anonymous_client(client: AsyncClient, organization_id: OrganizationID) -> AnonymousRpcClient:
-    return AnonymousRpcClient(client, organization_id)
+from tests.common import (
+    AnonymousRpcClient,
+    AsyncClient,
+    Backend,
+    TestbedBackend,
+    next_organization_id,
+)
 
 
 @dataclass
@@ -100,13 +96,14 @@ def backend_bootstrap_config(backend: Backend, request: pytest.FixtureRequest) -
 
 @pytest.mark.usefixtures("ballpark_always_ok")
 async def test_anonymous_organization_bootstrap_ok(
-    organization_id: OrganizationID,
     backend_bootstrap_config: ConfigureBackend,
+    client: AsyncClient,
     backend: Backend,
     testbed: TestbedBackend,
-    anonymous_client: AnonymousRpcClient,
-    cleanup_organizations: None,
 ) -> None:
+    organization_id = next_organization_id(prefix="NewOrg")
+    anonymous_client = AnonymousRpcClient(client, organization_id)
+
     config = await backend_bootstrap_config(organization_id)
 
     # 1) To do the bootstrap we need certificates, so steal them from another organization
@@ -182,12 +179,13 @@ class OverrideCertifData:
 @pytest.mark.usefixtures("ballpark_always_ok")
 async def test_anonymous_organization_bootstrap_invalid_certificate(
     override_certif_data: OverrideCertifData,
-    organization_id: OrganizationID,
     backend_bootstrap_config: ConfigureBackend,
+    client: AsyncClient,
     testbed: TestbedBackend,
-    anonymous_client: AnonymousRpcClient,
-    cleanup_organizations: None,
 ) -> None:
+    organization_id = next_organization_id(prefix="NewOrg")
+    anonymous_client = AnonymousRpcClient(client, organization_id)
+
     config = await backend_bootstrap_config(organization_id)
 
     # 1) To do the bootstrap we need certificates, so steal them from another organization
@@ -229,12 +227,13 @@ async def test_anonymous_organization_bootstrap_invalid_certificate(
 
 @pytest.mark.usefixtures("ballpark_always_ok")
 async def test_anonymous_organization_bootstrap_organization_already_bootstrapped(
-    organization_id: OrganizationID,
     backend_bootstrap_config: ConfigureBackend,
+    client: AsyncClient,
     testbed: TestbedBackend,
-    anonymous_client: AnonymousRpcClient,
-    cleanup_organizations: None,
 ) -> None:
+    organization_id = next_organization_id(prefix="NewOrg")
+    anonymous_client = AnonymousRpcClient(client, organization_id)
+
     config = await backend_bootstrap_config(organization_id)
 
     # 1) To do the bootstrap we need certificates, so steal them from another organization
@@ -278,12 +277,13 @@ async def test_anonymous_organization_bootstrap_organization_already_bootstrappe
 
 @pytest.mark.usefixtures("ballpark_always_ok")
 async def test_anonymous_organization_bootstrap_invalid_bootstrap_token(
-    organization_id: OrganizationID,
     backend_bootstrap_config: ConfigureBackend,
+    client: AsyncClient,
     testbed: TestbedBackend,
-    anonymous_client: AnonymousRpcClient,
-    cleanup_organizations: None,
 ) -> None:
+    organization_id = next_organization_id(prefix="NewOrg")
+    anonymous_client = AnonymousRpcClient(client, organization_id)
+
     config = await backend_bootstrap_config(organization_id)
 
     # 1) To do the bootstrap we need certificates, so steal them from another organization
@@ -337,11 +337,12 @@ async def test_anonymous_organization_bootstrap_timestamp_out_of_ballpark(
     device_certif_late: bool,
     sequester_auth_certif_late: bool,
     ballpark_offset: int,
-    organization_id: OrganizationID,
     backend_bootstrap_config: ConfigureBackend,
-    anonymous_client: AnonymousRpcClient,
-    cleanup_organizations: None,
+    client: AsyncClient,
 ) -> None:
+    organization_id = next_organization_id(prefix="NewOrg")
+    anonymous_client = AnonymousRpcClient(client, organization_id)
+
     config = await backend_bootstrap_config(organization_id)
 
     now = DateTime.now()

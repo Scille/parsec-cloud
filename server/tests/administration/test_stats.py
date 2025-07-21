@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+from collections.abc import Collection
 from typing import Any
 
 import httpx
@@ -14,11 +15,11 @@ from parsec._parsec import (
     UserUpdateCertificate,
     VlobID,
 )
-from tests.common import Backend, CoolorgRpcClients, MinimalorgRpcClients
+from tests.common import Backend, CoolorgRpcClients, MinimalorgRpcClients, next_organization_id
 
 
-def _strip_template_orgs(stats: dict[str, Any]) -> dict[str, Any]:
-    stats["stats"] = [s for s in stats["stats"] if not s["organization_id"].endswith("Template")]
+def _strip_other_orgs(stats: dict[str, Any], allowed: Collection[OrganizationID]) -> dict[str, Any]:
+    stats["stats"] = [s for s in stats["stats"] if OrganizationID(s["organization_id"]) in allowed]
     return stats
 
 
@@ -71,9 +72,8 @@ async def test_ok(
     backend: Backend,
     coolorg: CoolorgRpcClients,
     minimalorg: MinimalorgRpcClients,
-    cleanup_organizations: None,
 ) -> None:
-    not_bootstrapped_org_id = OrganizationID("NotBootstrappedOrg")
+    not_bootstrapped_org_id = next_organization_id(prefix="NotBootstrappedOrg")
     await backend.organization.create(
         now=DateTime.now(),
         id=not_bootstrapped_org_id,
@@ -87,7 +87,10 @@ async def test_ok(
             },
         )
         assert response.status_code == 200, response.content
-        return _strip_template_orgs(response.json())
+        return _strip_other_orgs(
+            response.json(),
+            allowed=(coolorg.organization_id, minimalorg.organization_id, not_bootstrapped_org_id),
+        )
 
     async def org_stats(organization_id: OrganizationID):
         response = await client.get(
@@ -132,7 +135,7 @@ async def test_ok(
     expected_server_stats = {
         "stats": [
             {
-                "organization_id": "NotBootstrappedOrg",
+                "organization_id": not_bootstrapped_org_id.str,
                 "users": 0,
                 "active_users": 0,
                 "data_size": 0,
@@ -265,13 +268,13 @@ async def test_server_stats_format(
         return response
 
     response = await server_stats("json")
-    assert _strip_template_orgs(response.json()) == {
+    assert _strip_other_orgs(response.json(), allowed=(minimalorg.organization_id,)) == {
         "stats": [
             {
                 "active_users": 1,
                 "data_size": 0,
                 "metadata_size": 0,
-                "organization_id": "Org1",
+                "organization_id": minimalorg.organization_id.str,
                 "realms": 0,
                 "users": 1,
                 "users_per_profile_detail": {
@@ -287,15 +290,15 @@ async def test_server_stats_format(
     # Explicitly check for "\r\n" as line separator
     expected_line_separator = "\r\n"
     lines = response.content.decode("utf8").split(expected_line_separator)
-    filtered_response = [line for line in lines if line and "Template" not in line]
     assert response.headers["Content-Type"] == "text/csv; charset=utf-8"
-    first_line, second_line = filtered_response
+    first_line, *orgs_lines = lines
     assert first_line == (
         "organization_id,data_size,metadata_size,realms,active_users,admin_users_active,"
         "admin_users_revoked,standard_users_active,standard_users_revoked,"
         "outsider_users_active,outsider_users_revoked"
     )
-    assert second_line == "Org1,0,0,0,1,1,0,0,0,0,0"
+    expected_org_line = f"{minimalorg.organization_id.str},0,0,0,1,1,0,0,0,0,0"
+    assert expected_org_line in orgs_lines
 
 
 async def test_server_stats_at(
@@ -309,14 +312,14 @@ async def test_server_stats_at(
             },
         )
         assert response.status_code == 200, response.content
-        return _strip_template_orgs(response.json())
+        return _strip_other_orgs(response.json(), allowed=(minimalorg.organization_id,))
 
     # Org1 was created at 1970-01-01T00:00:00Z
     response = await server_stats("1990-01-01T00:00:00Z")
     expected = {
         "stats": [
             {
-                "organization_id": "Org1",
+                "organization_id": minimalorg.organization_id.str,
                 "data_size": 0,
                 "metadata_size": 0,
                 "realms": 0,
