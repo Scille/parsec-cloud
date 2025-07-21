@@ -362,6 +362,34 @@ export const expect = baseExpect.extend({
 
   async toBeFileHandlerPage(page: MsPage, mode?: 'view' | 'edit'): Promise<AssertReturnType> {
     return await checkFileHandlerPage(page, mode);
+    try {
+      await expect(page).toHaveURL(/\/\d+\/viewer\??.*$/);
+
+      if ((await page.getDisplaySize()) === DisplaySize.Large) {
+        // Ensure header is visible before checking title
+        const isTopbarVisible = await page.locator('#connected-header .topbar').isVisible();
+        const fileViewerButton = page.locator('.file-handler-topbar-buttons__item.toggle-menu');
+        let topbarToggled = false;
+        if (!isTopbarVisible && fileViewerButton) {
+          await fileViewerButton.click();
+          topbarToggled = true;
+        }
+        await expect(page.locator('.topbar-left-text__title')).toHaveText('File viewer');
+
+        if (topbarToggled) {
+          await fileViewerButton.click();
+        }
+      }
+    } catch (error: any) {
+      return {
+        message: () => `Page is not viewer page : '${error.matcherResult.expected}' VS '${error.matcherResult.actual}')`,
+        pass: false,
+      };
+    }
+    return {
+      message: () => '',
+      pass: true,
+    };
   },
 
   async toBeClientAreaPage(page: Page): Promise<AssertReturnType> {
