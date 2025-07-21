@@ -3,6 +3,7 @@
 /// <reference types="vitest" />
 
 import { sentryVitePlugin } from '@sentry/vite-plugin';
+import basicSsl from '@vitejs/plugin-basic-ssl';
 import vue from '@vitejs/plugin-vue';
 import path from 'path';
 import { ConfigEnv, defineConfig, loadEnv, PluginOption, UserConfigFnObject } from 'vite';
@@ -85,7 +86,12 @@ if (process.env.PARSEC_APP_SENTRY_AUTH_TOKEN) {
   console.log('PARSEC_APP_SENTRY_AUTH_TOKEN is not set');
 }
 
-// 3) Finally configure Vite
+// 3) Add dev specific plugins
+if (process.env.NODE_ENV === 'development' && !process.env.CI) {
+  plugins.push(basicSsl());
+}
+
+// 4) Finally configure Vite
 
 // scss additionalData is used to inject the theme variables in SCSS files imported in main.ts & .vue files
 // for SCSS files imported with sass @use / @forward methods, you need to add manually the theme import
