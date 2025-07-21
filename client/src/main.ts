@@ -303,9 +303,7 @@ async function setupApp(): Promise<void> {
     // Libparsec initialization
 
     await libparsec.libparsecInitSetOnEventCallback(parsecEventCallback);
-    if (platform !== Platform.Web) {
-      await libparsec.libparsecInitNativeOnlyInit(getClientConfig());
-    }
+    await libparsec.libparsecInit(getClientConfig());
 
     if (locale) {
       I18n.changeLocale(locale);

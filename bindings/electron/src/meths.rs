@@ -21182,8 +21182,8 @@ fn is_keyring_available(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
-// libparsec_init_native_only_init
-fn libparsec_init_native_only_init(mut cx: FunctionContext) -> JsResult<JsPromise> {
+// libparsec_init
+fn libparsec_init(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
     let config = {
         let js_val = cx.argument::<JsObject>(0)?;
@@ -21197,7 +21197,7 @@ fn libparsec_init_native_only_init(mut cx: FunctionContext) -> JsResult<JsPromis
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            libparsec::libparsec_init_native_only_init(config).await;
+            libparsec::libparsec_init(config).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = cx.null();
@@ -26045,10 +26045,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("importRecoveryDevice", import_recovery_device)?;
     cx.export_function("isKeyringAvailable", is_keyring_available)?;
-    cx.export_function(
-        "libparsecInitNativeOnlyInit",
-        libparsec_init_native_only_init,
-    )?;
+    cx.export_function("libparsecInit", libparsec_init)?;
     cx.export_function(
         "libparsecInitSetOnEventCallback",
         libparsec_init_set_on_event_callback,

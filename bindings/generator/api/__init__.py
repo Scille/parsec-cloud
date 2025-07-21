@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 # ruff: noqa: F403
 
+from .account import *
 from .addr import *
 from .cancel import *
 from .client import *
@@ -15,7 +16,6 @@ from .testbed import *
 from .validation import *
 from .workspace import *
 from .workspace_history import *
-from .account import *
 
 
 def libparsec_init_set_on_event_callback(
@@ -24,7 +24,7 @@ def libparsec_init_set_on_event_callback(
     raise NotImplementedError
 
 
-async def libparsec_init_native_only_init(
+async def libparsec_init(
     config: ClientConfig,
 ):
     raise NotImplementedError
