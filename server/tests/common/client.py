@@ -115,7 +115,7 @@ class AuthenticatedAccountRpcClient(BaseAuthenticatedAccountRpcClient):
             auth_method_id=self.auth_method_id,
             auth_method_mac_key=self.auth_method_mac_key,
         )
-        headers = {**self.headers, "Authorization": f"Bearer {token.decode()}"}
+        headers = {"Authorization": f"Bearer {token.decode()}", **self.headers}
         rep = await self.raw_client.post(self.url, headers=headers, content=req)
         if rep.status_code != 200:
             raise RpcTransportError(rep)
