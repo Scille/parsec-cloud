@@ -35,7 +35,6 @@ async def alice_validation_code(
 
 
 async def test_authenticated_account_account_delete_proceed_ok(
-    xfail_if_postgresql: None,
     backend: Backend,
     alice_account: AuthenticatedAccountRpcClient,
     alice_validation_code: ValidationCode,
@@ -57,7 +56,6 @@ async def test_authenticated_account_account_delete_proceed_ok(
 
 
 async def test_authenticated_account_account_delete_proceed_invalid_validation_code(
-    xfail_if_postgresql: None,
     backend: Backend,
     alice_account: AuthenticatedAccountRpcClient,
     alice_validation_code: ValidationCode,
@@ -90,7 +88,6 @@ async def test_authenticated_account_account_delete_proceed_invalid_validation_c
     ),
 )
 async def test_authenticated_account_account_delete_proceed_send_validation_email_required(
-    xfail_if_postgresql: None,
     kind: str,
     backend: Backend,
     alice_account: AuthenticatedAccountRpcClient,
@@ -128,7 +125,6 @@ async def test_authenticated_account_account_delete_proceed_send_validation_emai
 
 
 async def test_authenticated_account_account_delete_proceed_http_common_errors(
-    xfail_if_postgresql: None,
     alice_account: AuthenticatedAccountRpcClient,
     authenticated_account_http_common_errors_tester: HttpCommonErrorsTester,
 ):

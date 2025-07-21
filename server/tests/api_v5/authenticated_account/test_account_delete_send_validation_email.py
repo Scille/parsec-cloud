@@ -28,7 +28,6 @@ from tests.common import (
     ),
 )
 async def test_authenticated_account_account_delete_send_validation_email_ok(
-    xfail_if_postgresql: None,
     kind: str,
     alice_account: AuthenticatedAccountRpcClient,
     backend: Backend,
@@ -118,7 +117,6 @@ async def test_authenticated_account_account_delete_send_validation_email_ok(
 
 @pytest.mark.parametrize("kind", ("still_valid_previous", "too_many_attempts_previous"))
 async def test_authenticated_account_account_delete_send_validation_email_email_sending_rate_limited(
-    xfail_if_postgresql: None,
     kind: str,
     alice_account: AuthenticatedAccountRpcClient,
     backend: Backend,
@@ -188,7 +186,6 @@ async def test_authenticated_account_account_delete_send_validation_email_email_
     ),
 )
 async def test_authenticated_account_account_delete_send_validation_email_email_server_unavailable(
-    xfail_if_postgresql: None,
     alice_account: AuthenticatedAccountRpcClient,
     bad_outcome: SendEmailBadOutcome,
     monkeypatch: pytest.MonkeyPatch,
@@ -206,7 +203,6 @@ async def test_authenticated_account_account_delete_send_validation_email_email_
 
 
 async def test_authenticated_account_account_delete_send_validation_email_email_recipient_refused(
-    xfail_if_postgresql: None,
     alice_account: AuthenticatedAccountRpcClient,
     monkeypatch: pytest.MonkeyPatch,
 ):
@@ -223,7 +219,6 @@ async def test_authenticated_account_account_delete_send_validation_email_email_
 
 
 async def test_authenticated_account_account_delete_send_validation_email_http_common_errors(
-    xfail_if_postgresql: None,
     alice_account: AuthenticatedAccountRpcClient,
     authenticated_account_http_common_errors_tester: HttpCommonErrorsTester,
 ) -> None:

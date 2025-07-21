@@ -60,7 +60,11 @@ async def q_take_account_create_write_lock(
 
 
 _q_check_account_exists = Q("""
-SELECT deleted_on FROM account WHERE email = $email LIMIT 1 FOR UPDATE
+SELECT deleted_on
+FROM account
+WHERE email = $email
+LIMIT 1
+FOR UPDATE
 """)
 
 _q_insert_validation_code = Q("""
@@ -82,6 +86,46 @@ SET
     failed_attempts = 0
 """)
 
+
+async def create_send_validation_email(
+    conn: AsyncpgConnection,
+    now: DateTime,
+    email: EmailAddress,
+) -> ValidationCode | AccountCreateSendValidationEmailBadOutcome:
+    # Note the `read` lock mode here since we just want to make sure the `account`
+    # won't be modified (i.e. a new account with our `email` gets inserted) while
+    # we insert into the `account_create_validation_code` table.
+    await q_take_account_create_write_lock(conn, mode="read")
+
+    row = await conn.fetchrow(*_q_check_account_exists(email=email.str))
+    if row:
+        if row["deleted_on"] is not None:
+            return AccountCreateSendValidationEmailBadOutcome.ACCOUNT_ALREADY_EXISTS
+
+    validation_code = ValidationCode.generate()
+    await conn.execute(
+        *_q_insert_validation_code(
+            email=email.str, validation_code=validation_code.str, created_at=now
+        )
+    )
+
+    return validation_code
+
+
+async def create_check_validation_code(
+    pool: AsyncpgPool,
+    now: DateTime,
+    email: EmailAddress,
+    validation_code: ValidationCode,
+) -> None | AccountCreateProceedBadOutcome:
+    # Acquire a connection from the pool by hand is needed here since we don't
+    # want a rollback-on-error behavior (which is what the `@transaction`
+    # decorator does).
+    async with pool.acquire() as conn, conn.transaction():
+        conn = cast(AsyncpgConnection, conn)
+        return await _create_check_validation_code(conn, now, email, validation_code)
+
+
 _q_get_validation_code = Q("""
 SELECT
     validation_code as expected_validation_code,
@@ -94,7 +138,9 @@ FOR UPDATE
 """)
 
 _q_register_failed_attempt = Q("""
-UPDATE account_create_validation_code SET failed_attempts = failed_attempts + 1 WHERE email = $email
+UPDATE account_create_validation_code
+SET failed_attempts = failed_attempts + 1
+WHERE email = $email
 """)
 
 _q_insert_account = Q(
@@ -175,45 +221,6 @@ SELECT
 )
 
 
-async def create_send_validation_email(
-    conn: AsyncpgConnection,
-    now: DateTime,
-    email: EmailAddress,
-) -> ValidationCode | AccountCreateSendValidationEmailBadOutcome:
-    # Note the `read` lock mode here since we just want to make sure the `account`
-    # won't be modified (i.e. a new account with our `email` gets inserted) while
-    # we insert into the `account_create_validation_code` table.
-    await q_take_account_create_write_lock(conn, mode="read")
-
-    row = await conn.fetchrow(*_q_check_account_exists(email=email.str))
-    if row:
-        if row["deleted_on"] is not None:
-            return AccountCreateSendValidationEmailBadOutcome.ACCOUNT_ALREADY_EXISTS
-
-    validation_code = ValidationCode.generate()
-    await conn.execute(
-        *_q_insert_validation_code(
-            email=email.str, validation_code=validation_code.str, created_at=now
-        )
-    )
-
-    return validation_code
-
-
-async def create_check_validation_code(
-    pool: AsyncpgPool,
-    now: DateTime,
-    email: EmailAddress,
-    validation_code: ValidationCode,
-) -> None | AccountCreateProceedBadOutcome:
-    # Acquire a connection from the pool by hand is needed here since we don't
-    # want a rollback-on-error behavior (which is what the `@transaction`
-    # decorator does).
-    async with pool.acquire() as conn, conn.transaction():
-        conn = cast(AsyncpgConnection, conn)
-        return await _create_check_validation_code(conn, now, email, validation_code)
-
-
 async def _create_check_validation_code(
     conn: AsyncpgConnection,
     now: DateTime,
@@ -228,20 +235,20 @@ async def _create_check_validation_code(
     match row["expected_validation_code"]:
         case str() as raw_expected_validation_code:
             expected_validation_code = ValidationCode(raw_expected_validation_code)
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["created_at"]:
         case DateTime() as created_at:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["failed_attempts"]:
         case int() as failed_attempts:
-            assert failed_attempts >= 0, failed_attempts
-        case unknown:
-            assert False, unknown
+            assert failed_attempts >= 0, row
+        case _:
+            assert False, row
 
     last_mail_info = ValidationCodeInfo(
         validation_code=expected_validation_code,
@@ -355,6 +362,7 @@ async def _create_proceed(
             password_algorithm_argon2id_memlimit_kb = algo.memlimit_kb
             password_algorithm_argon2id_parallelism = algo.parallelism
         case unknown:
+            # A new kind of password algorithm has been added, but we forgot to update this code?
             assert False, f"Unexpected auth_method_password_algorithm: {unknown!r}"
 
     row = await conn.fetchrow(
@@ -384,9 +392,9 @@ async def _create_proceed(
         case None:
             # `auth_method_id` already exists in the database, return an error
             # and rollback the transaction.
-            return False, AccountCreateProceedBadOutcome.AUTH_METHOD_ID_ALREADY_EXISTS
-        case unknown:
-            assert False, repr(unknown)
+            return _rollback(AccountCreateProceedBadOutcome.AUTH_METHOD_ID_ALREADY_EXISTS)
+        case _:
+            assert False, row
 
     # All done! Ask for the transaction to be committed
     return _commit()
