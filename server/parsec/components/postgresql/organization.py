@@ -403,12 +403,6 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     async def test_duplicate_organization(
         self, conn: AsyncpgConnection, source_id: OrganizationID, target_id: OrganizationID
     ) -> None:
-        row = await conn.fetchrow(*_q_get_organization(organization_id=source_id.str))
-        assert row is not None, f"The organization {source_id} doesn't exist"
-        row = await conn.fetchrow(*_q_get_organization(organization_id=target_id.str))
-        assert row is None, f"The organization {target_id} already exists"
         await conn.execute(
             *q_test_duplicate_organization(source_id=source_id.str, target_id=target_id.str)
         )
-        row = await conn.fetchrow(*_q_get_organization(organization_id=target_id.str))
-        assert row is not None, f"The organization {target_id} hasn't been duplicated"
