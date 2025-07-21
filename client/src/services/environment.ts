@@ -201,6 +201,23 @@ async function openTOS(tosLink: string): Promise<void> {
   await openUrl(tosLink);
 }
 
+/* Editics / Cryptpad variables */
+
+const ENABLE_EDITICS_VARIABLE = 'PARSEC_APP_ENABLE_EDITICS';
+const CRYPTPAD_SERVER_VARIABLE = 'PARSEC_APP_DEFAULT_CRYPTPAD_SERVER';
+const DEFAULT_CRYPTPAD_SERVER = 'https://centakina.ddns.net';
+
+function isEditicsEnabled(): boolean {
+  return import.meta.env[ENABLE_EDITICS_VARIABLE] === 'true';
+}
+
+function getDefaultCryptpadServer(): string {
+  if (import.meta.env[CRYPTPAD_SERVER_VARIABLE]) {
+    return import.meta.env[CRYPTPAD_SERVER_VARIABLE];
+  }
+  return DEFAULT_CRYPTPAD_SERVER;
+}
+
 export const Env = {
   getStripeApiKey,
   getBmsUrl,
@@ -212,6 +229,8 @@ export const Env = {
   getAccountServer,
   isAccountMocked,
   isAccountEnabled,
+  isEditicsEnabled,
+  getDefaultCryptpadServer,
   isAccountAutoLoginEnabled,
   isCustomBrandingEnabled,
   Links: {

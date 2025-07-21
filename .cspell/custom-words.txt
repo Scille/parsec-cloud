@@ -35,6 +35,7 @@ coordinatorlayout
 coprimes
 corofn
 Crefreshiconhandler
+Cryptpad
 Cwindowsiconhandler
 CYGPATTERN
 dalek
@@ -58,6 +59,7 @@ doseq
 dotgraphs
 downcasted
 dvipdfmx
+Editics
 encrypter
 endmacro
 enterpictureinpicture
