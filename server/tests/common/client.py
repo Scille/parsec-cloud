@@ -455,8 +455,6 @@ async def coolorg(app: AsgiApp, testbed: TestbedBackend) -> AsyncGenerator[Coolo
             testbed_template=template_content,
         )
 
-        await testbed.drop_organization(organization_id)
-
 
 @dataclass(slots=True)
 class MinimalorgRpcClients:
@@ -528,8 +526,6 @@ async def minimalorg(
             organization_id=organization_id,
             testbed_template=template_content,
         )
-
-        await testbed.drop_organization(organization_id)
 
 
 @dataclass(slots=True)
@@ -761,8 +757,6 @@ async def shamirorg(
             testbed_template=template_content,
         )
 
-        await testbed.drop_organization(organization_id)
-
 
 @dataclass(slots=True)
 class SequesteredOrgRpcClients:
@@ -917,8 +911,6 @@ async def sequestered_org(
             testbed_template=template_content,
         )
 
-        await testbed.drop_organization(organization_id)
-
 
 @dataclass(slots=True)
 class WorkspaceHistoryOrgRpcClients:
@@ -1040,8 +1032,6 @@ async def workspace_history_org(
             organization_id=organization_id,
             testbed_template=template_content,
         )
-
-        await testbed.drop_organization(organization_id)
 
 
 def get_last_realm_certificate_timestamp(

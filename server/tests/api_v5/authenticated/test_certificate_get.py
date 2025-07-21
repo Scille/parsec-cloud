@@ -13,7 +13,6 @@ from parsec._parsec import (
     HashAlgorithm,
     HumanHandle,
     InvitationToken,
-    OrganizationID,
     PrivateKey,
     PrivateKeyAlgorithm,
     RealmKeyRotationCertificate,
@@ -44,6 +43,7 @@ from tests.common import (
     CoolorgRpcClients,
     HttpCommonErrorsTester,
     SequesteredOrgRpcClients,
+    next_organization_id,
 )
 from tests.common.data import wksp1_alice_gives_role
 
@@ -53,9 +53,8 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     backend: Backend,
     client: AsyncClient,
     redacted: bool,
-    cleanup_organizations: None,
 ) -> None:
-    org_id = OrganizationID("Org")
+    org_id = next_organization_id(prefix="NewOrg")
     root_key = SigningKey.generate()
 
     t0 = DateTime(1999, 12, 31)  # Oldest time: nothing occurred at this point

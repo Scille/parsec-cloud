@@ -27,9 +27,15 @@ async def test_authenticated_account_invite_self_list_ok(
         expected: authenticated_account_cmds.latest.invite_self_list.Rep,
     ):
         if isinstance(got, authenticated_account_cmds.latest.invite_self_list.RepOk):
+            to_keep_org_ids = (
+                minimalorg.organization_id,
+                shamirorg.organization_id,
+                coolorg.organization_id,
+            )
             cooked_got_invitations = sorted(
-                # Ignore template organization since they are not cleared between tests
-                (x for x in got.invitations if not x[0].str.endswith("Template")),
+                # Only consider the organizations we know about, since there is also
+                # template organizations and organizations created from previous tests.
+                (x for x in got.invitations if x[0] in to_keep_org_ids),
                 # Sort by org + invitation token
                 key=lambda x: (x[0].str, x[1].bytes),
             )

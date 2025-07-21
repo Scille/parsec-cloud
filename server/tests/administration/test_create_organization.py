@@ -20,7 +20,7 @@ from parsec.components.organization import (
     UnsetType,
 )
 from parsec.config import AccountVaultStrategy, AllowedClientAgent
-from tests.common import Backend, MinimalorgRpcClients
+from tests.common import Backend, MinimalorgRpcClients, next_organization_id
 
 
 async def test_create_organization_auth(client: httpx.AsyncClient) -> None:
@@ -175,12 +175,11 @@ def organization_initial_params(backend: Backend, request) -> Iterator[None]:
 async def test_ok(
     client: httpx.AsyncClient,
     backend: Backend,
-    cleanup_organizations: None,
     args: CreateOrganizationParams,
     organization_initial_params: None,
 ) -> None:
     url = "http://parsec.invalid/administration/organizations"
-    org_id = OrganizationID("MyNewOrg")
+    org_id = next_organization_id(prefix="MyNewOrg")
     response = await client.post(
         url,
         headers={"Authorization": f"Bearer {backend.config.administration_token}"},
@@ -242,28 +241,25 @@ async def test_ok(
             expected_account_vault_strategy = AccountVaultStrategy(raw)
 
     dump = await backend.organization.test_dump_organizations()
-    assert dump == {
-        org_id: OrganizationDump(
-            organization_id=org_id,
-            bootstrap_token=bootstrap_token,
-            is_bootstrapped=False,
-            is_expired=False,
-            active_users_limit=expected_active_users_limit,
-            user_profile_outsider_allowed=expected_user_profile_outsider_allowed,
-            minimum_archiving_period=expected_minimum_archiving_period,
-            tos=expected_tos,
-            allowed_client_agent=expected_allowed_client_agent,
-            account_vault_strategy=expected_account_vault_strategy,
-        )
-    }
+    assert dump[org_id] == OrganizationDump(
+        organization_id=org_id,
+        bootstrap_token=bootstrap_token,
+        is_bootstrapped=False,
+        is_expired=False,
+        active_users_limit=expected_active_users_limit,
+        user_profile_outsider_allowed=expected_user_profile_outsider_allowed,
+        minimum_archiving_period=expected_minimum_archiving_period,
+        tos=expected_tos,
+        allowed_client_agent=expected_allowed_client_agent,
+        account_vault_strategy=expected_account_vault_strategy,
+    )
 
 
 async def test_overwrite_existing(
     client: httpx.AsyncClient,
     backend: Backend,
-    cleanup_organizations: None,
 ) -> None:
-    org_id = OrganizationID("MyNewOrg")
+    org_id = next_organization_id(prefix="MyNewOrg")
     bootstrap_token = BootstrapToken.new()
 
     t0 = DateTime.now()
@@ -282,22 +278,20 @@ async def test_overwrite_existing(
 
     # Sanity check
     dump = await backend.organization.test_dump_organizations()
-    assert dump == {
-        org_id: OrganizationDump(
-            organization_id=org_id,
-            bootstrap_token=bootstrap_token,
-            is_bootstrapped=False,
-            is_expired=False,
-            active_users_limit=ActiveUsersLimit.limited_to(1),
-            user_profile_outsider_allowed=False,
-            minimum_archiving_period=2,
-            tos=TermsOfService(
-                updated_on=t0, per_locale_urls={"en_HK": "https://parsec.invalid/tos_en.pdf"}
-            ),
-            allowed_client_agent=AllowedClientAgent.NATIVE_ONLY,
-            account_vault_strategy=AccountVaultStrategy.FORBIDDEN,
-        )
-    }
+    assert dump[org_id] == OrganizationDump(
+        organization_id=org_id,
+        bootstrap_token=bootstrap_token,
+        is_bootstrapped=False,
+        is_expired=False,
+        active_users_limit=ActiveUsersLimit.limited_to(1),
+        user_profile_outsider_allowed=False,
+        minimum_archiving_period=2,
+        tos=TermsOfService(
+            updated_on=t0, per_locale_urls={"en_HK": "https://parsec.invalid/tos_en.pdf"}
+        ),
+        allowed_client_agent=AllowedClientAgent.NATIVE_ONLY,
+        account_vault_strategy=AccountVaultStrategy.FORBIDDEN,
+    )
 
     url = "http://parsec.invalid/administration/organizations"
     response = await client.post(
@@ -320,22 +314,20 @@ async def test_overwrite_existing(
     assert new_bootstrap_token != bootstrap_token.hex
 
     dump = await backend.organization.test_dump_organizations()
-    assert dump == {
-        org_id: OrganizationDump(
-            organization_id=org_id,
-            bootstrap_token=new_bootstrap_token,
-            is_bootstrapped=False,
-            is_expired=False,
-            active_users_limit=ActiveUsersLimit.NO_LIMIT,
-            user_profile_outsider_allowed=True,
-            minimum_archiving_period=1000,
-            tos=TermsOfService(
-                updated_on=ANY, per_locale_urls={"cn_HK": "https://parsec.invalid/tos_cn.pdf"}
-            ),
-            allowed_client_agent=AllowedClientAgent.NATIVE_OR_WEB,
-            account_vault_strategy=AccountVaultStrategy.ALLOWED,
-        )
-    }
+    assert dump[org_id] == OrganizationDump(
+        organization_id=org_id,
+        bootstrap_token=new_bootstrap_token,
+        is_bootstrapped=False,
+        is_expired=False,
+        active_users_limit=ActiveUsersLimit.NO_LIMIT,
+        user_profile_outsider_allowed=True,
+        minimum_archiving_period=1000,
+        tos=TermsOfService(
+            updated_on=ANY, per_locale_urls={"cn_HK": "https://parsec.invalid/tos_cn.pdf"}
+        ),
+        allowed_client_agent=AllowedClientAgent.NATIVE_OR_WEB,
+        account_vault_strategy=AccountVaultStrategy.ALLOWED,
+    )
 
 
 async def test_organization_already_bootstrapped(
