@@ -24,6 +24,7 @@ export enum Routes {
   History = 'history',
   Viewer = 'viewer',
   RecoverAccount = 'recoverAccount',
+  Editor = 'editor',
 }
 
 const routes: Array<RouteRecordRaw> = [
@@ -179,6 +180,11 @@ const routes: Array<RouteRecordRaw> = [
                     path: `/:handle(\\d+)/${Routes.MyProfile}`,
                     name: Routes.MyProfile,
                     component: () => import('@/views/users/MyProfilePage.vue'),
+                  },
+                  {
+                    path: `/:handle(\\d+)/${Routes.Editor}`,
+                    name: Routes.Editor,
+                    component: () => import('@/views/editors/FileEditor.vue'),
                   },
                 ],
               },
