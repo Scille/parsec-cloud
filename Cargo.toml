@@ -188,7 +188,7 @@ sentry-log = { version = "0.34.0", default-features = false }
 serde = { version = "1.0.219", default-features = false }
 serde-wasm-bindgen = { version = "0.6.4", default-features = false }
 serde_bytes = { version = "0.11.17", default-features = false }
-serde_json = { version = "1.0.140", default-features = false }
+serde_json = { version = "1.0.141", default-features = false }
 serde_test = { version = "1.0.177", default-features = false }
 serde_with = { version = "3.14.0", default-features = false }
 sha1 = { version = "0.10.6", default-features = false }
