@@ -4,6 +4,7 @@ from __future__ import annotations
 import smtplib
 import ssl
 import sys
+from base64 import b64decode
 from email.message import Message
 from enum import auto
 
@@ -73,13 +74,35 @@ def _mocked_send_email(
             sender=email_config.sender, recipient=to_addr, timestamp=timestamp, body=message_body
         )
     )
+
+    # Try to only display the plain text part for brevity...
+    for part in message.walk():
+        payload = part.get_payload()
+        if part.get_content_type() != "text/plain":
+            continue
+        if not isinstance(payload, str):
+            continue
+        match part.get_content_charset():
+            case "utf-8":
+                if part.get("Content-Transfer-Encoding") != "base64":
+                    continue
+                display_message_body = b64decode(payload).decode("utf8")
+            case "us-ascii":
+                display_message_body = payload
+            case _:
+                continue
+        break
+    else:
+        # ...or fallback to showing the full body :/
+        display_message_body = message_body
+
     print(
         f"""A request to send an e-mail has been triggered and mocked:
 FROM: {email_config.sender.str}
 TO: {to_addr.str}
 AT: {timestamp.to_rfc3339()}
 ================== EMAIL BODY ===================
-{message_body}
+{display_message_body}
 =============== END OF EMAIL BODY ===============
 """,
         file=sys.stderr,
