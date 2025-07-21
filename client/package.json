@@ -80,7 +80,7 @@
         "@types/w3c-image-capture": "^1.0.10",
         "@typescript-eslint/eslint-plugin": "^6.10.0",
         "@typescript-eslint/parser": "^6.10.0",
-        "@vitejs/plugin-vue": "^5.2.4",
+        "@vitejs/plugin-vue": "^6.0.0",
         "@vue/eslint-config-typescript": "^12.0.0",
         "@vue/test-utils": "^2.4.6",
         "@vue/typescript": "^1.8.20",
@@ -106,9 +106,9 @@
         "start-server-and-test": "^2.0.11",
         "typescript": "^5.8.2",
         "unique-names-generator": "^4.7.1",
-        "vite": "^6.3.5",
-        "vite-plugin-top-level-await": "^1.5.0",
-        "vitest": "3.0.5",
+        "vite": "^7.0.5",
+        "vite-plugin-top-level-await": "^1.6.0",
+        "vitest": "3.2.4",
         "vue-tsc": "^2.2.8"
     }
 }
