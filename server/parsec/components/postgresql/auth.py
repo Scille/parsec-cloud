@@ -3,18 +3,25 @@
 from typing import override
 
 from parsec._parsec import (
+    AccountAuthMethodID,
     DateTime,
     DeviceID,
+    EmailAddress,
     InvitationToken,
     InvitationType,
     OrganizationID,
+    SecretKey,
     UserID,
     VerifyKey,
 )
+from parsec.ballpark import timestamps_in_the_ballpark
 from parsec.components.auth import (
+    AccountAuthenticationToken,
     AnonymousAuthInfo,
     AuthAnonymousAuthBadOutcome,
+    AuthAuthenticatedAccountAuthBadOutcome,
     AuthAuthenticatedAuthBadOutcome,
+    AuthenticatedAccountAuthInfo,
     AuthenticatedAuthInfo,
     AuthInvitedAuthBadOutcome,
     BaseAuthComponent,
@@ -137,6 +144,27 @@ SELECT
     (SELECT revoked_on FROM my_user) as user_revoked_on,
     (SELECT frozen FROM my_user) as user_is_frozen,
     (SELECT user_must_accept_tos FROM my_user)
+"""
+)
+
+
+_q_authenticated_account_get_info = Q(
+    """
+SELECT
+    account._id as account_internal_id,
+    account.email as account_email,
+    vault_authentication_method._id as auth_method_internal_id,
+    vault_authentication_method.auth_method_id,
+    vault_authentication_method.mac_key as auth_method_mac_key
+FROM account
+JOIN vault ON vault.account = account._id
+JOIN vault_authentication_method ON vault_authentication_method.vault = vault._id
+WHERE
+    vault_authentication_method.auth_method_id = $auth_method_id
+    AND vault_authentication_method.disabled_on IS NULL
+    -- Extra safety check since a deleted account should not have any active authentication method
+    AND account.deleted_on IS NULL
+LIMIT 1
 """
 )
 
@@ -369,4 +397,63 @@ class PGAuthComponent(BaseAuthComponent):
             organization_internal_id=organization_internal_id,
             device_internal_id=device_internal_id,
             organization_allowed_client_agent=organization_allowed_client_agent,
+        )
+
+    @override
+    @no_transaction
+    async def authenticated_account_auth(
+        self,
+        conn: AsyncpgConnection,
+        now: DateTime,
+        token: AccountAuthenticationToken,
+    ) -> AuthenticatedAccountAuthInfo | AuthAuthenticatedAccountAuthBadOutcome:
+        row = await conn.fetchrow(
+            *_q_authenticated_account_get_info(auth_method_id=token.auth_method_id)
+        )
+        if not row:
+            return AuthAuthenticatedAccountAuthBadOutcome.ACCOUNT_NOT_FOUND
+
+        match row["account_internal_id"]:
+            case int() as account_internal_id:
+                pass
+            case _:
+                assert False, row
+
+        match row["account_email"]:
+            case str() as raw_account_email:
+                account_email = EmailAddress(raw_account_email)
+            case _:
+                assert False, row
+
+        match row["auth_method_internal_id"]:
+            case int() as auth_method_internal_id:
+                pass
+            case _:
+                assert False, row
+
+        match row["auth_method_id"]:
+            case str() as raw_auth_method_id:
+                auth_method_id = AccountAuthMethodID.from_hex(raw_auth_method_id)
+            case _:
+                assert False, row
+
+        match row["auth_method_mac_key"]:
+            case bytes() as raw_auth_method_mac_key:
+                auth_method_mac_key = SecretKey(raw_auth_method_mac_key)
+            case _:
+                assert False, row
+
+        # Verify the token with the MAC key
+        if not token.verify(auth_method_mac_key):
+            return AuthAuthenticatedAccountAuthBadOutcome.INVALID_TOKEN
+
+        # Check token timestamp is within ballpark
+        if timestamps_in_the_ballpark(token.timestamp, now) is not None:
+            return AuthAuthenticatedAccountAuthBadOutcome.TOKEN_TOO_OLD
+
+        return AuthenticatedAccountAuthInfo(
+            account_email=account_email,
+            auth_method_id=auth_method_id,
+            account_internal_id=account_internal_id,
+            auth_method_internal_id=auth_method_internal_id,
         )
