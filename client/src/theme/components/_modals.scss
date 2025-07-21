@@ -892,3 +892,15 @@
     }
   }
 }
+
+.file-open-fallback-choice {
+  &::part(content) {
+    max-width: var(--parsec-modal-width-sm);
+  }
+
+  &:has(.has-viewer-option) {
+    &::part(content) {
+      max-width: var(--parsec-modal-width-md);
+    }
+  }
+}

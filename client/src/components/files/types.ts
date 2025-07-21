@@ -15,6 +15,12 @@ export enum ImportType {
   Folder,
 }
 
+export enum OpenFallbackChoice {
+  Open,
+  Download,
+  View,
+}
+
 export interface FileOperationProgress {
   data: FileOperationData;
   progress: number;
