@@ -3,6 +3,7 @@
 import { WorkspaceHandle } from '@/parsec';
 import { getConnectionHandle, getWorkspaceHandle } from '@/router/params';
 import { RouteBackup, Routes, getRouter, getVisitedLastHistory } from '@/router/types';
+import { FileHandlerMode } from '@/views/files/handler/types';
 
 export function isLoggedIn(): boolean {
   return getConnectionHandle() !== null;
@@ -78,4 +79,19 @@ export function currentRouteIsLoggedRoute(): boolean {
     Routes.History,
     Routes.FileHandler,
   ]);
+}
+
+export function getFileHandlerMode(): FileHandlerMode | undefined {
+  const router = getRouter();
+  const currentRoute = router.currentRoute.value;
+  const mode = currentRoute.params.mode;
+
+  if (!mode || currentRoute.name !== Routes.FileHandler) {
+    return undefined;
+  }
+
+  if (typeof mode === 'string' && Object.values(FileHandlerMode).includes(mode as FileHandlerMode)) {
+    return mode as FileHandlerMode;
+  }
+  return undefined;
 }

@@ -144,7 +144,7 @@ const routes: Array<RouteRecordRaw> = [
                         name: Routes.FileHandler,
                         component: () => import('@/views/files/handler/FileHandler.vue'),
                         beforeEnter: (_to, _from, next): boolean => {
-                          if (_to.params.mode === FileHandlerMode.Edit && !Env.isEditicsEnabled()) {
+                          if (!_to.params.mode || (_to.params.mode === FileHandlerMode.Edit && !Env.isEditicsEnabled())) {
                             next(_from);
                           } else {
                             next();

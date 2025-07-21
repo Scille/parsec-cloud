@@ -664,6 +664,7 @@
             "titleManage": "Gestion du fichier",
             "titleCollaboration": "Collaboration",
             "actionRename": "Renommer",
+            "actionEdit": "Éditer",
             "actionMoveTo": "Déplacer vers",
             "actionMakeACopy": "Dupliquer vers",
             "actionOpen": "Ouvrir",
@@ -2281,6 +2282,7 @@
         "openWithDefault": "Ouvrir",
         "details": "Détails",
         "copyLink": "Copier le lien",
+        "openInEditor": "Ouvrir dans l'éditeur",
         "download": "Télécharger",
         "hideMenu": "Cacher le menu",
         "showMenu": "Afficher le menu",
@@ -2337,6 +2339,16 @@
             },
             "pip": "Picture in Picture",
             "loop": "Lecture en boucle"
+        }
+    },
+    "openFallback": {
+        "title": "L'éditeur de fichier n'est pas disponible",
+        "subtitle": "Veuillez choisir une action pour ce fichier.",
+        "actions": {
+            "viewer": "Ouvrir dans le visualiseur",
+            "download": "Télécharger le fichier",
+            "open": "Ouvrir dans l'explorateur",
+            "cancel": "Annuler"
         }
     }
 }

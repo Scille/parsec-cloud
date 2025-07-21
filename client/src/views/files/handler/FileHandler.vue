@@ -53,6 +53,14 @@
               </ion-button>
               <ion-button
                 class="file-handler-topbar-buttons__item"
+                @click="openEditor(contentInfo.path)"
+                v-if="!atDateTime && handlerMode === FileHandlerMode.View"
+              >
+                <ion-icon :icon="create" />
+                {{ $msTranslate('fileViewers.openInEditor') }}
+              </ion-button>
+              <ion-button
+                class="file-handler-topbar-buttons__item"
                 @click="downloadFile"
                 v-if="isWeb()"
                 :disabled="!handlerReadyRef"
@@ -116,15 +124,15 @@ import {
   WorkspaceHistoryEntryStatFile,
 } from '@/parsec';
 import { IonPage, IonContent, IonButton, IonText, IonIcon, IonButtons, modalController } from '@ionic/vue';
-import { link, informationCircle, open, chevronDown, chevronUp } from 'ionicons/icons';
+import { link, informationCircle, open, chevronDown, chevronUp, create } from 'ionicons/icons';
 import { Base64, MsSpinner, MsImage, I18n, DownloadIcon, askQuestion, Answer, MsModalResult } from 'megashark-lib';
 import { ref, Ref, inject, onMounted, onUnmounted, type Component, shallowRef } from 'vue';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import {
   currentRouteIs,
-  getCurrentRouteParams,
   getCurrentRouteQuery,
   getDocumentPath,
+  getFileHandlerMode,
   getWorkspaceHandle,
   navigateTo,
   Routes,
@@ -135,13 +143,14 @@ import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { DateTime } from 'luxon';
 import { getFileIcon } from '@/common/file';
 import { copyPathLinkToClipboard } from '@/components/files';
-import { askDownloadConfirmation, downloadEntry, FileDetailsModal } from '@/views/files';
+import { downloadEntry, FileDetailsModal, openDownloadConfirmationModal } from '@/views/files';
 import useHeaderControl from '@/services/headerControl';
 import { Env } from '@/services/environment';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
 import FileEditor from '@/views/files/handler/editor/FileEditor.vue';
 import FileViewer from '@/views/files/handler/viewer/FileViewer.vue';
+import { openPath } from '@/services/fileOpener';
 import { FileHandlerMode } from '@/views/files/handler';
 
 const storageManager: StorageManager = inject(StorageManagerKey)!;
@@ -154,6 +163,7 @@ const atDateTime: Ref<DateTime | undefined> = ref(undefined);
 const { isHeaderVisible, toggleHeader: toggleMainHeader, showHeader, hideHeader } = useHeaderControl();
 const handlerReadyRef = ref(false);
 const handlerComponent: Ref<Component | null> = shallowRef(null);
+const handlerMode = ref<FileHandlerMode | undefined>(undefined);
 
 const cancelRouteWatch = watchRoute(async () => {
   if (!currentRouteIs(Routes.FileHandler)) {
@@ -165,8 +175,13 @@ const cancelRouteWatch = watchRoute(async () => {
 
   // Same file, no need to reload
   if (contentInfo.value && contentInfo.value.path === getDocumentPath() && atDateTime.value?.toMillis() === timestamp) {
-    return;
+    const fileHandlerMode = getFileHandlerMode();
+    if (fileHandlerMode === handlerMode.value) {
+      return;
+    }
+    handlerMode.value = getFileHandlerMode();
   }
+
   await loadFile();
 });
 
@@ -348,8 +363,7 @@ async function loadFile(): Promise<void> {
 
 function loadComponent(): void {
   // Set the handler component based on the file type
-  const routeParams = getCurrentRouteParams() as { mode: FileHandlerMode };
-  switch (routeParams.mode) {
+  switch (handlerMode.value) {
     case FileHandlerMode.Edit:
       handlerComponent.value = FileEditor;
       break;
@@ -366,8 +380,8 @@ function loadComponent(): void {
 }
 
 onMounted(async () => {
+  handlerMode.value = getFileHandlerMode();
   await loadFile();
-  loadComponent();
   // Set header hidden by default when entering handler
   hideHeader();
 });
@@ -443,6 +457,13 @@ async function showDetails(): Promise<void> {
   }
 }
 
+async function openEditor(path: FsPath): Promise<void> {
+  const workspaceHandle = getWorkspaceHandle();
+  if (workspaceHandle) {
+    await openPath(workspaceHandle, path, informationManager, fileOperationManager, { useEditor: true });
+  }
+}
+
 async function onClick(event: MouseEvent): Promise<void> {
   event.preventDefault();
   if (!event.target) {
@@ -471,6 +492,11 @@ async function onClick(event: MouseEvent): Promise<void> {
 }
 
 async function downloadFile(): Promise<void> {
+  const result = await openDownloadConfirmationModal(storageManager);
+  if (result === MsModalResult.Cancel) {
+    return;
+  }
+
   const workspaceHandle = getWorkspaceHandle();
   if (!workspaceHandle) {
     window.electronAPI.log('error', 'Failed to retrieve workspace handle');
@@ -490,18 +516,6 @@ async function downloadFile(): Promise<void> {
     return;
   }
 
-  const config = await storageManager.retrieveConfig();
-  if (!config.disableDownloadWarning) {
-    const { result, noReminder } = await askDownloadConfirmation();
-
-    if (noReminder) {
-      config.disableDownloadWarning = true;
-      await storageManager.storeConfig(config);
-    }
-    if (result !== MsModalResult.Confirm) {
-      return;
-    }
-  }
   await downloadEntry({
     name: contentInfo.value.fileName,
     workspaceHandle: workspaceHandle,

@@ -24,7 +24,7 @@ msTest('File viewer page details', async ({ documents }) => {
   await expect(documents).toBeViewerPage();
   await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_.-]+$/);
   const buttons = documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-button');
-  await expect(buttons).toHaveCount(4);
+  await expect(buttons).toHaveCount(5);
 });
 
 msTest('Quick access loads correct document', async ({ documents }) => {
@@ -110,7 +110,7 @@ msTest('File viewer download', async ({ documents }) => {
   await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.pdf$/);
 
   // showSaveFilePicker is not yet supported by Playwright: https://github.com/microsoft/playwright/issues/31162
-  await documents.locator('.file-handler-topbar-buttons').locator('ion-button').nth(1).click();
+  await documents.locator('.file-handler-topbar-buttons').locator('ion-button').nth(2).click();
 
   const modal = documents.locator('.download-warning-modal');
 
