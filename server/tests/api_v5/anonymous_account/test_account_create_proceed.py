@@ -42,7 +42,6 @@ async def alice_validation_code(backend: Backend) -> ValidationCode:
 
 
 async def test_anonymous_account_account_create_proceed_ok(
-    xfail_if_postgresql: None,
     anonymous_account: AnonymousAccountRpcClient,
     alice_validation_code: ValidationCode,
     client: AsyncClient,
@@ -104,7 +103,6 @@ async def test_anonymous_account_account_create_proceed_ok(
 
 @pytest.mark.parametrize("kind", ("step_0", "step_1"))
 async def test_anonymous_account_account_create_proceed_invalid_validation_code(
-    xfail_if_postgresql: None,
     kind: str,
     anonymous_account: AnonymousAccountRpcClient,
     alice_validation_code: ValidationCode,
@@ -173,7 +171,6 @@ async def test_anonymous_account_account_create_proceed_invalid_validation_code(
     ),
 )
 async def test_anonymous_account_account_create_proceed_send_validation_email_required(
-    xfail_if_postgresql: None,
     kind: str,
     anonymous_account: AnonymousAccountRpcClient,
     bob_account: AuthenticatedAccountRpcClient,
@@ -227,7 +224,6 @@ async def test_anonymous_account_account_create_proceed_send_validation_email_re
 
 
 async def test_anonymous_account_account_create_proceed_auth_method_id_already_exists(
-    xfail_if_postgresql: None,
     anonymous_account: AnonymousAccountRpcClient,
     alice_validation_code: ValidationCode,
     bob_account: AuthenticatedAccountRpcClient,
@@ -250,7 +246,6 @@ async def test_anonymous_account_account_create_proceed_auth_method_id_already_e
 
 
 async def test_anonymous_account_account_create_proceed_http_common_errors(
-    xfail_if_postgresql: None,
     anonymous_account: AnonymousAccountRpcClient,
     anonymous_account_http_common_errors_tester: HttpCommonErrorsTester,
     alice_validation_code: ValidationCode,
