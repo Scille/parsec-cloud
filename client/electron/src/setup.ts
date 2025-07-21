@@ -417,6 +417,7 @@ export class ElectronCapacitorApp {
       webPreferences: {
         nodeIntegration: true,
         contextIsolation: true,
+        webSecurity: true,
         // Use preload to inject the electron variant overrides for capacitor plugins.
         // preload: join(app.getAppPath(), "node_modules", "@capacitor-community", "electron", "dist", "runtime", "electron-rt.js"),
         preload: preloadPath,
@@ -550,16 +551,111 @@ export class ElectronCapacitorApp {
 
 // Set a CSP up for our application based on the custom scheme
 export function setupContentSecurityPolicy(customScheme: string): void {
+  interface CspDomain {
+    domain: string;
+    directives: string[];
+  }
+
+  enum CspDirective {
+    DefaultSrc = 'default-src',
+    ScriptSrc = 'script-src',
+    ConnectSrc = 'connect-src',
+    ImgSrc = 'img-src',
+    StyleSrc = 'style-src',
+    FontSrc = 'font-src',
+    FrameSrc = 'frame-src',
+    WorkerSrc = 'worker-src',
+  }
+
+  const authorizedDomains: CspDomain[] = [
+    {
+      domain: 'https://*.parsec.cloud',
+      directives: [
+        CspDirective.DefaultSrc,
+        CspDirective.ScriptSrc,
+        CspDirective.ConnectSrc,
+        CspDirective.ImgSrc,
+        CspDirective.StyleSrc,
+        CspDirective.FontSrc,
+        CspDirective.FrameSrc,
+        CspDirective.WorkerSrc,
+      ],
+    },
+    {
+      domain: 'https://centakina.ddns.net',
+      directives: [
+        CspDirective.DefaultSrc,
+        CspDirective.ScriptSrc,
+        CspDirective.ConnectSrc,
+        CspDirective.ImgSrc,
+        CspDirective.StyleSrc,
+        CspDirective.FontSrc,
+        CspDirective.FrameSrc,
+        CspDirective.WorkerSrc,
+      ],
+    },
+    {
+      domain: 'https://*.stripe.com',
+      directives: [
+        CspDirective.DefaultSrc,
+        CspDirective.ConnectSrc,
+        CspDirective.ScriptSrc,
+        CspDirective.FrameSrc,
+        CspDirective.ImgSrc,
+        CspDirective.StyleSrc,
+      ],
+    },
+    {
+      domain: 'https://b.stripecdn.com',
+      directives: [
+        CspDirective.DefaultSrc,
+        CspDirective.ConnectSrc,
+        CspDirective.ScriptSrc,
+        CspDirective.FrameSrc,
+        CspDirective.ImgSrc,
+        CspDirective.StyleSrc,
+      ],
+    },
+    {
+      domain: 'https://m.stripe.network',
+      directives: [CspDirective.FrameSrc, CspDirective.WorkerSrc, CspDirective.ScriptSrc],
+    },
+    {
+      domain: 'https://hcaptcha.com',
+      directives: [CspDirective.ScriptSrc],
+    },
+    {
+      domain: 'https://*.hcaptcha.com',
+      directives: [CspDirective.ConnectSrc, CspDirective.FrameSrc],
+    },
+  ];
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-    callback({
-      responseHeaders: {
-        ...details.responseHeaders,
-        'Content-Security-Policy': [
-          electronIsDev
-            ? `default-src ${customScheme}://* 'unsafe-inline' devtools://* 'unsafe-eval' https://* 'unsafe-eval' data: blob:`
-            : `default-src ${customScheme}://* 'unsafe-inline' 'unsafe-eval' https://* 'unsafe-eval' data: blob:`,
-        ],
-      },
-    });
+    const responseHeaders = { ...details.responseHeaders };
+
+    responseHeaders['Content-Security-Policy'] = [
+      [
+        `default-src ${customScheme}://* 'unsafe-inline' 'unsafe-eval' data: blob:${electronIsDev ? ' devtools://*' : ''}`,
+        `frame-src ${customScheme}://* data: blob:`,
+        `connect-src ${customScheme}://* wss://* ws://* data: blob:`,
+        `img-src ${customScheme}://* data: blob:`,
+        `script-src ${customScheme}://* 'unsafe-inline' 'unsafe-eval'`,
+        `style-src ${customScheme}://* 'unsafe-inline'`,
+        `font-src ${customScheme}://* data:`,
+        `worker-src ${customScheme}://* blob:`,
+      ].join('; '),
+    ];
+
+    for (const authorizedDomain of authorizedDomains) {
+      for (const directive of authorizedDomain.directives) {
+        if (responseHeaders['Content-Security-Policy'][0].includes(directive)) {
+          responseHeaders['Content-Security-Policy'][0] = responseHeaders['Content-Security-Policy'][0].replace(
+            directive,
+            `${directive} ${authorizedDomain.domain}`,
+          );
+        }
+      }
+    }
+
+    callback({ responseHeaders });
   });
 }
