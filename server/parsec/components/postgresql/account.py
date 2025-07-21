@@ -1,10 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from typing import override
+from typing import Literal, override
 
 from parsec._parsec import (
+    AccountAuthMethodID,
     DateTime,
     EmailAddress,
+    HumanHandle,
+    SecretKey,
+    UntrustedPasswordAlgorithm,
     ValidationCode,
 )
 from parsec.components.account import (
@@ -16,6 +20,7 @@ from parsec.components.email import SendEmailBadOutcome
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.account_create import (
     create_check_validation_code,
+    create_proceed,
     create_send_validation_email,
 )
 from parsec.components.postgresql.utils import transaction
@@ -72,3 +77,32 @@ class PGAccountComponent(BaseAccountComponent):
         validation_code: ValidationCode,
     ) -> None | AccountCreateProceedBadOutcome:
         return await create_check_validation_code(self.pool, now, email, validation_code)
+
+    @override
+    # Note this operation doesn't use the regular `@transaction` decorator.
+    # This is because this decorator would rollback the transaction on error,
+    # while here we want to register the failed attempt in the database.
+    async def create_proceed(
+        self,
+        now: DateTime,
+        validation_code: ValidationCode,
+        vault_key_access: bytes,
+        human_handle: HumanHandle,
+        created_by_user_agent: str,
+        created_by_ip: str | Literal[""],
+        auth_method_id: AccountAuthMethodID,
+        auth_method_mac_key: SecretKey,
+        auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
+    ) -> None | AccountCreateProceedBadOutcome:
+        return await create_proceed(
+            self.pool,
+            now,
+            validation_code,
+            vault_key_access,
+            human_handle,
+            created_by_user_agent,
+            created_by_ip,
+            auth_method_id,
+            auth_method_mac_key,
+            auth_method_password_algorithm,
+        )
