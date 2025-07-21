@@ -98,12 +98,12 @@ class AuthenticatedAuthInfo:
 @dataclass
 class AuthenticatedToken:
     """
-    token format: `PARSEC-SIGN-ED25519.<b64_device_id>.<timestamp>.<b64_signature>`
+    Token format: `PARSEC-SIGN-ED25519.<device_id_hex>.<timestamp>.<b64_signature>`
     with:
-        <b64_device_id> = base64(<device_id>)
+        <device_id_hex> = hex(<device_id>)
         <timestamp> = str(<seconds since UNIX epoch>)
-        <b64_signature> = base64(ed25519(`PARSEC-SIGN-ED25519.<b64_device_id>.<timestamp>`))
-        base64() is the URL-safe variant (https://tools.ietf.org/html/rfc4648#section-5).
+        <b64_signature> = base64(ed25519(`PARSEC-SIGN-ED25519.<device_id_hex>.<timestamp>`))
+    base64() is the URL-safe variant (https://tools.ietf.org/html/rfc4648#section-5).
     """
 
     device_id: DeviceID
@@ -159,6 +159,18 @@ class AuthenticatedToken:
 
 @dataclass
 class AccountAuthenticationToken:
+    """
+    Token format: `PARSEC-MAC-BLAKE2B.<auth_method_id_hex>.<timestamp>.<b64_signature>`
+    with:
+        <auth_method_id_hex> = hex(<auth_method.id>)
+        <timestamp> = str(<seconds since UNIX epoch>)
+        <b64_signature> = base64(blake2b_mac_512bits(
+            data=`PARSEC-MAC-BLAKE2B.<auth_method_id_hex>.<timestamp>`,
+            key=`auth_method.mac_key`
+        ))
+    base64() is the URL-safe variant (https://tools.ietf.org/html/rfc4648#section-5).
+    """
+
     auth_method_id: AccountAuthMethodID
     timestamp: DateTime
     header_and_payload: bytes

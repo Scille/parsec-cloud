@@ -233,7 +233,10 @@ fn prepare_request(
 /// with:
 ///     <auth_method_id_hex> = hex(<auth_method.id>)
 ///     <timestamp> = str(<seconds since UNIX epoch>)
-///     <b64_signature> = base64(blake2b(data=`PARSEC-MAC-BLAKE2B.<auth_method_id_hex>.<timestamp>`, key=`auth_method.mac_key`))
+///     <b64_signature> = base64(blake2b_mac_512bits(
+///         data=`PARSEC-MAC-BLAKE2B.<auth_method_id_hex>.<timestamp>`,
+///         key=`auth_method.mac_key`
+///     ))
 /// base64() is the URL-safe variant (https://tools.ietf.org/html/rfc4648#section-5).
 fn generate_authorization_header_value(auth_method: &AccountAuthMethod, now: DateTime) -> String {
     let auth_method_id_hex = auth_method.id.hex();
