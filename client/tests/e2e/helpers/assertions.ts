@@ -315,6 +315,20 @@ export const expect = baseExpect.extend({
   async toBeViewerPage(page: Page): Promise<AssertReturnType> {
     try {
       await expect(page).toHaveURL(/\/\d+\/viewer\??.*$/);
+
+      // Ensure header is visible before checking title
+      const isTopbarVisible = await page.locator('#connected-header .topbar').isVisible();
+      const fileViewerButton = page.locator('.file-viewer-topbar-buttons__item.toggle-menu');
+      let topbarToggled = false;
+      if (!isTopbarVisible && fileViewerButton) {
+        await fileViewerButton.click();
+        topbarToggled = true;
+      }
+      await expect(page.locator('.topbar-left').locator('.topbar-left__title')).toHaveText('File viewer');
+
+      if (topbarToggled) {
+        await fileViewerButton.click();
+      }
     } catch (error: any) {
       return {
         message: () => `Page is not viewer page (url is '${error.matcherResult.actual}')`,

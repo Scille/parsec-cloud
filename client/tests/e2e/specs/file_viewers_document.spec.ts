@@ -5,7 +5,6 @@ import { expect, msTest, openFileType } from '@tests/e2e/helpers';
 msTest('Document viewer: content', async ({ documents }) => {
   await openFileType(documents, 'docx');
   await expect(documents).toBeViewerPage();
-  await expect(documents).toHavePageTitle('File viewer');
   await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.docx$/);
 
   const wrapper = documents.locator('.file-viewer-wrapper');

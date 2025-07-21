@@ -69,10 +69,11 @@
                 {{ $msTranslate('fileViewers.openWithDefault') }}
               </ion-button>
               <ion-button
-                v-show="false"
                 class="file-viewer-topbar-buttons__item toggle-menu"
+                @click="toggleHeader"
               >
-                {{ $msTranslate('fileViewers.hideMenu') }}
+                <ion-icon :icon="isHeaderVisible() ? chevronUp : chevronDown" />
+                {{ $msTranslate(isHeaderVisible() ? 'fileViewers.hideMenu' : 'fileViewers.showMenu') }}
               </ion-button>
             </ion-buttons>
           </div>
@@ -109,7 +110,7 @@ import {
   WorkspaceHistoryEntryStatFile,
 } from '@/parsec';
 import { IonPage, IonContent, IonButton, IonText, IonIcon, IonButtons, modalController } from '@ionic/vue';
-import { link, informationCircle, open } from 'ionicons/icons';
+import { link, informationCircle, open, chevronUp, chevronDown } from 'ionicons/icons';
 import { Base64, MsSpinner, MsImage, I18n, DownloadIcon, askQuestion, Answer } from 'megashark-lib';
 import { ref, Ref, type Component, inject, onMounted, shallowRef, onUnmounted } from 'vue';
 import { ImageViewer, VideoViewer, SpreadsheetViewer, DocumentViewer, AudioViewer, TextViewer, PdfViewer } from '@/views/viewers';
@@ -123,6 +124,7 @@ import { getFileIcon } from '@/common/file';
 import { copyPathLinkToClipboard } from '@/components/files';
 import { FileDetailsModal } from '@/views/files';
 import { showSaveFilePicker } from 'native-file-system-adapter';
+import useHeaderControl from '@/services/headerControl';
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const viewerComponent: Ref<Component | null> = shallowRef(null);
@@ -130,6 +132,7 @@ const contentInfo: Ref<FileContentInfo | undefined> = ref(undefined);
 const detectedFileType = ref<DetectedFileType | null>(null);
 const loaded = ref(false);
 const atDateTime: Ref<DateTime | undefined> = ref(undefined);
+const { isVisible: isHeaderVisible, toggleHeader, hideHeader, showHeader } = useHeaderControl();
 
 const cancelRouteWatch = watchRoute(async () => {
   if (!currentRouteIs(Routes.Viewer)) {
@@ -327,11 +330,13 @@ async function loadFile(): Promise<void> {
 }
 
 onMounted(async () => {
+  hideHeader();
   await loadFile();
 });
 
 onUnmounted(async () => {
   cancelRouteWatch();
+  showHeader();
 });
 
 async function getComponent(fileInfo: DetectedFileType): Promise<Component | undefined> {

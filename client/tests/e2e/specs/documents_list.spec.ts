@@ -313,7 +313,7 @@ for (const gridMode of [false, true]) {
       await documents.locator('.folder-container').getByRole('listitem').nth(2).dblclick();
     }
 
-    await expect(documents).toHavePageTitle('File viewer');
+    await expect(documents).toBeViewerPage();
   });
 
   msTest(`Navigation back and forth in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
@@ -362,7 +362,7 @@ msTest('Show recently opened files in sidebar', async ({ documents }) => {
   await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
   await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
   await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
-  await expect(documents).toHavePageTitle('File viewer');
+  await expect(documents).toBeViewerPage();
   // One file added
   await expect(sidebarRecentList.locator('.sidebar-item')).toHaveText([fileName ?? '']);
 });
