@@ -4,15 +4,15 @@ use generic_array::{
     typenum::{consts::U64, IsLessOrEqual, LeEq, NonZero},
     ArrayLength, GenericArray,
 };
+use libsodium_rs::crypto_kdf::blake2b;
 use serde::Deserialize;
 use serde_bytes::Bytes;
-use sodiumoxide::crypto::kdf::{derive_from_key, gen_key, Key, KEYBYTES};
 
 use crate::SecretKey;
 
 #[derive(Clone, PartialEq, Eq, Deserialize)]
 #[serde(try_from = "&Bytes")]
-pub struct KeyDerivation(Key);
+pub struct KeyDerivation(blake2b::Key);
 
 impl std::hash::Hash for KeyDerivation {
     fn hash<H>(&self, state: &mut H)
@@ -25,10 +25,10 @@ impl std::hash::Hash for KeyDerivation {
 
 impl KeyDerivation {
     pub const ALGORITHM: &'static str = "blake2b";
-    pub const SIZE: usize = KEYBYTES;
+    pub const SIZE: usize = blake2b::KEYBYTES;
 
     pub fn generate() -> Self {
-        Self(gen_key())
+        Self(blake2b::Key::generate().expect("Failed to generate key"))
     }
 
     pub fn derive_secret_key_from_uuid(&self, id: uuid::Uuid) -> SecretKey {
@@ -45,23 +45,34 @@ impl KeyDerivation {
         Size: ArrayLength<u8> + IsLessOrEqual<U64>,
         LeEq<Size, U64>: NonZero,
     {
-        let id_low: &[u8; 8] = id.as_bytes()[..8].try_into().unwrap();
-        let id_high: &[u8; 8] = id.as_bytes()[8..].try_into().unwrap();
+        let raw_uuid = id.as_bytes();
+
+        // Split uuid into sub array, we use unwrap here instead of expect because an uuid is
+        // always 16 bytes and rust does not provide a way to effectively split an array into 2.
+        #[allow(clippy::unwrap_used)]
+        let (id_low, id_high): (&[u8; 8], &[u8; 8]) = {
+            (
+                raw_uuid[..8].try_into().unwrap(),
+                raw_uuid[8..].try_into().unwrap(),
+            )
+        };
 
         let subkey_id = u64::from_le_bytes(*id_low);
         let context = id_high;
+        debug_assert_eq!(context.len(), blake2b::CONTEXTBYTES);
 
-        let mut subkey = GenericArray::default();
-        derive_from_key(&mut subkey, subkey_id, *context, &self.0)
+        let subkey = blake2b::derive_from_key(Size::USIZE, subkey_id, context, &self.0)
             .expect("subkey has always a valid size");
 
-        subkey
+        // TODO: replace `from_exact_iter` by `from_array` once generic-array is updated to v1.0+
+        // crypto_common from rustcrypto.
+        GenericArray::from_exact_iter(subkey).expect("Invalid derivation size")
     }
 }
 
 impl From<[u8; KeyDerivation::SIZE]> for KeyDerivation {
     fn from(key: [u8; KeyDerivation::SIZE]) -> Self {
-        Self(Key(key))
+        Self(blake2b::Key::from(key))
     }
 }
 

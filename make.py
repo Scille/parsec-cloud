@@ -53,12 +53,12 @@ if sys.platform == "linux":
         maybe_force_vendored_dbus_cargo_flags = "--features vendored-dbus"
 
 PYTHON_RELEASE_CARGO_FLAGS = (
-    f"--profile=release --features use-sodiumoxide {maybe_force_vendored_openssl_cargo_flags}"
+    f"--profile=release --features use-libsodium {maybe_force_vendored_openssl_cargo_flags}"
 )
 PYTHON_DEV_CARGO_FLAGS = "--profile=dev-python --features test-utils"
 PYTHON_CI_CARGO_FLAGS = "--profile=ci-python --features test-utils"
 
-ELECTRON_RELEASE_CARGO_FLAGS = f"--profile=release --features libparsec/use-sodiumoxide {maybe_force_vendored_openssl_cargo_flags} {maybe_force_vendored_dbus_cargo_flags}"
+ELECTRON_RELEASE_CARGO_FLAGS = f"--profile=release --features libparsec/use-libsodium {maybe_force_vendored_openssl_cargo_flags} {maybe_force_vendored_dbus_cargo_flags}"
 ELECTRON_DEV_CARGO_FLAGS = "--profile=dev --features test-utils"
 ELECTRON_CI_CARGO_FLAGS = "--profile=ci-rust --features test-utils"
 
