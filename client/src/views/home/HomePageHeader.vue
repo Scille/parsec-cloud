@@ -110,7 +110,7 @@
           @click="emits('createOrJoinOrganizationClick', $event)"
           size="default"
           id="create-organization-button"
-          class="button-default topbar-right-button"
+          class="button-default topbar-right-button button-large"
           v-if="displayCreateJoin && !showBackButton"
         >
           <span class="topbar-right-button__text">{{ $msTranslate('HomePage.noExistingOrganization.createOrJoin') }}</span>
@@ -597,6 +597,8 @@ const emits = defineEmits<{
     padding: 0.625rem 0.75rem;
     --background: none;
     --background-hover: none;
+    --background-focused: transparent;
+    --background-activated: transparent;
   }
 
   ion-icon {

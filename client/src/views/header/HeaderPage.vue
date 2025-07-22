@@ -67,7 +67,7 @@
             class="topbar-left-workspaces-mobile"
           >
             <ion-text class="topbar-left-workspaces-mobile__orga body">{{ userInfo.organizationId }}</ion-text>
-            <ion-title class="topbar-left-workspaces-mobile__title title-h2">{{ $msTranslate('HeaderPage.titles.workspaces') }}</ion-title>
+            <ion-text class="topbar-left-workspaces-mobile__title title-h2">{{ $msTranslate('HeaderPage.titles.workspaces') }}</ion-text>
           </div>
         </div>
 
@@ -167,7 +167,6 @@ import {
   IonPage,
   IonRouterOutlet,
   IonToolbar,
-  IonTitle,
   IonText,
   popoverController,
   modalController,
@@ -417,6 +416,12 @@ async function openNotificationCenter(event: Event): Promise<void> {
     display: flex;
     gap: 1em;
     align-items: center;
+
+    &::part(native) {
+      --background: transparent;
+      --background-activated: transparent;
+      --background-focused: transparent;
+    }
 
     &::after {
       content: '';

@@ -21,9 +21,9 @@
         <ion-icon :icon="star" />
       </div>
 
-      <ion-title class="workspace-card-content__title subtitle-sm">
+      <ion-text class="workspace-card-content__title subtitles-sm">
         {{ workspace.currentName }}
-      </ion-title>
+      </ion-text>
 
       <div class="workspace-card-content-info">
         <ion-text class="workspace-card-content__update subtitles-sm">
@@ -77,7 +77,7 @@
 import { formatTimeSince } from 'megashark-lib';
 import { formatFileSize } from '@/common/file';
 import { UserProfile, WorkspaceInfo } from '@/parsec';
-import { IonIcon, IonText, IonTitle } from '@ionic/vue';
+import { IonIcon, IonText } from '@ionic/vue';
 import { cloudDone, cloudOffline, ellipsisHorizontal, star, shareSocial } from 'ionicons/icons';
 import { ref } from 'vue';
 import { WorkspaceTagRole } from '@/components/workspaces';
