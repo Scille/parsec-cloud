@@ -16,8 +16,8 @@ name = "parsec"
 crate-type = ["cdylib"]
 
 [features]
-# Remember kid: RustCrypto is used if `use-sodiumoxide` is not set !
-use-sodiumoxide = ["libparsec_crypto/use-sodiumoxide"]
+# Remember kid: RustCrypto is used if `use-libsodium` is not set !
+use-libsodium = ["libparsec_crypto/use-libsodium"]
 vendored-openssl = ["libparsec_crypto/vendored-openssl"]
 test-utils = ["dep:libparsec_testbed", "libparsec_types/test-mock-time", "pyo3/py-clone"]
 
