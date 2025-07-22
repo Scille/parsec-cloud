@@ -14,7 +14,7 @@ name = "minimal_short_id"
 harness = false
 
 [features]
-use-sodiumoxide = ["libparsec_crypto/use-sodiumoxide"]
+use-libsodium = ["libparsec_crypto/use-libsodium"]
 vendored-openssl = ["libparsec_crypto/vendored-openssl"]
 vendored-dbus = ["libparsec/vendored-dbus"]
 testenv = []

@@ -19,7 +19,7 @@ pub use sign::*;
 pub(crate) use utils::*;
 
 pub fn init() {
-    if let Err(()) = sodiumoxide::init() {
-        panic!("Cannot initialize crypto");
+    if let Err(e) = libsodium_rs::ensure_init() {
+        panic!("Cannot initialize crypto: {e}");
     }
 }
