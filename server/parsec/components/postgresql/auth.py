@@ -193,22 +193,22 @@ class PGAuthComponent(BaseAuthComponent):
         match row["organization_internal_id"]:
             case int() as organization_internal_id:
                 pass
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["organization_is_expired"]:
             case False:
                 pass
             case True:
                 return AuthAnonymousAuthBadOutcome.ORGANIZATION_EXPIRED
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["organization_allowed_client_agent"]:
             case str() as raw_allowed_client_agent:
                 organization_allowed_client_agent = AllowedClientAgent(raw_allowed_client_agent)
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         return AnonymousAuthInfo(
             organization_id=organization_id,
@@ -234,44 +234,44 @@ class PGAuthComponent(BaseAuthComponent):
         match row["organization_internal_id"]:
             case int() as organization_internal_id:
                 pass
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["organization_is_expired"]:
             case False:
                 pass
             case True:
                 return AuthInvitedAuthBadOutcome.ORGANIZATION_EXPIRED
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["invitation_internal_id"]:
             case int() as invitation_internal_id:
                 pass
             case None:
                 return AuthInvitedAuthBadOutcome.INVITATION_NOT_FOUND
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["invitation_type"]:
             case str() as raw_invitation_type:
                 invitation_type = InvitationType.from_str(raw_invitation_type)
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["invitation_deleted_on"]:
             case None:
                 pass
             case DateTime():
                 return AuthInvitedAuthBadOutcome.INVITATION_ALREADY_USED
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["organization_allowed_client_agent"]:
             case str() as raw_allowed_client_agent:
                 organization_allowed_client_agent = AllowedClientAgent(raw_allowed_client_agent)
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         return InvitedAuthInfo(
             organization_id=organization_id,
@@ -299,7 +299,7 @@ class PGAuthComponent(BaseAuthComponent):
         match row["organization_internal_id"]:
             case int() as organization_internal_id:
                 pass
-            case unknown:
+            case _:
                 return AuthAuthenticatedAuthBadOutcome.ORGANIZATION_NOT_FOUND
 
         match row["organization_is_expired"]:
@@ -307,44 +307,44 @@ class PGAuthComponent(BaseAuthComponent):
                 pass
             case True:
                 return AuthAuthenticatedAuthBadOutcome.ORGANIZATION_EXPIRED
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["device_internal_id"]:
             case int() as device_internal_id:
                 pass
             case None:
                 return AuthAuthenticatedAuthBadOutcome.DEVICE_NOT_FOUND
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["device_verify_key"]:
             case bytes() as raw_device_verify_key:
                 device_verify_key = VerifyKey(raw_device_verify_key)
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["user_id"]:
             case str() as raw_user_id:
                 user_id = UserID.from_hex(raw_user_id)
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["user_revoked_on"]:
             case None:
                 pass
             case DateTime():
                 return AuthAuthenticatedAuthBadOutcome.USER_REVOKED
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["user_is_frozen"]:
             case False:
                 pass
             case True:
                 return AuthAuthenticatedAuthBadOutcome.USER_FROZEN
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         if tos_acceptance_required:
             match row["user_must_accept_tos"]:
@@ -352,14 +352,14 @@ class PGAuthComponent(BaseAuthComponent):
                     pass
                 case True:
                     return AuthAuthenticatedAuthBadOutcome.USER_MUST_ACCEPT_TOS
-                case unknown:
-                    assert False, repr(unknown)
+                case _:
+                    assert False, row
 
         match row["organization_allowed_client_agent"]:
             case str() as raw_allowed_client_agent:
                 organization_allowed_client_agent = AllowedClientAgent(raw_allowed_client_agent)
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         return AuthenticatedAuthInfo(
             organization_id=organization_id,

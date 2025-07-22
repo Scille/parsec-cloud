@@ -209,16 +209,16 @@ async def block_create(
             pass
         case None:
             return BlockCreateBadOutcome.ORGANIZATION_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["organization_is_expired"]:
         case False:
             pass
         case True:
             return BlockCreateBadOutcome.ORGANIZATION_EXPIRED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # 1.2) Check device & user
 
@@ -227,8 +227,8 @@ async def block_create(
             pass
         case None:
             return BlockCreateBadOutcome.AUTHOR_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # Since device exists, it corresponding user must also exist
 
@@ -237,32 +237,32 @@ async def block_create(
             pass
         case True:
             return BlockCreateBadOutcome.AUTHOR_REVOKED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["user_is_revoked"]:
         case False:
             pass
         case True:
             return BlockCreateBadOutcome.AUTHOR_REVOKED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # 1.3) Check topics
 
     match row["last_common_certificate_timestamp"]:
         case DateTime():
             pass
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["last_realm_certificate_timestamp"]:
         case DateTime() as last_realm_certificate_timestamp:
             pass
         case None:
             return BlockCreateBadOutcome.REALM_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # 1.4) Check realm
     # (Note since realm's topic exists, the realm itself must also exist)
@@ -270,8 +270,8 @@ async def block_create(
     match row["realm_internal_id"]:
         case int() as realm_internal_id:
             pass
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["realm_key_index"]:
         case int() as realm_current_key_index:
@@ -280,16 +280,16 @@ async def block_create(
                     last_realm_certificate_timestamp=last_realm_certificate_timestamp,
                 )
             pass
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["user_can_write"]:
         case True:
             pass
         case False:
             return BlockCreateBadOutcome.AUTHOR_NOT_ALLOWED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # 1.5) Check block
 
@@ -298,8 +298,8 @@ async def block_create(
             pass
         case True:
             return BlockCreateBadOutcome.BLOCK_ALREADY_EXISTS
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # 2) Upload block data in blockstore
 

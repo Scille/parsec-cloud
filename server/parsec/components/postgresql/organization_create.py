@@ -125,6 +125,6 @@ async def organization_create(
         case None:
             return OrganizationCreateBadOutcome.ORGANIZATION_ALREADY_EXISTS
         case unknown:
-            assert False, repr(unknown)
+            assert False, unknown
 
     return organization_internal_id

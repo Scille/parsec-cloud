@@ -66,26 +66,26 @@ async def lock_shamir_write(
     match row["last_shamir_recovery_certificate_timestamp"]:
         case DateTime() | None as last_shamir_recovery_certificate_timestamp:
             pass
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["last_shamir_recovery_setup_internal_id"]:
         case int() | None as last_shamir_recovery_setup_internal_id:
             pass
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["last_shamir_recovery_setup_created_on"]:
         case DateTime() | None as last_shamir_recovery_setup_created_on:
             pass
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["last_shamir_recovery_setup_deleted_on"]:
         case DateTime() | None as last_shamir_recovery_setup_deleted_on:
             pass
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     return LockShamirData(
         last_shamir_recovery_certificate_timestamp=last_shamir_recovery_certificate_timestamp,

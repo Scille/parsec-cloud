@@ -96,16 +96,16 @@ async def auth_no_lock(
             pass
         case None:
             return AuthNoLockBadOutcome.ORGANIZATION_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["organization_is_expired"]:
         case False:
             pass
         case True:
             return AuthNoLockBadOutcome.ORGANIZATION_EXPIRED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # 2) Check device & user
 
@@ -114,8 +114,8 @@ async def auth_no_lock(
             pass
         case None:
             return AuthNoLockBadOutcome.AUTHOR_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # Since device exists, its corresponding user must also exist
 
@@ -124,36 +124,36 @@ async def auth_no_lock(
             pass
         case None:
             return AuthNoLockBadOutcome.AUTHOR_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["user_id"]:
         case str() as raw_user_id:
             user_id = UserID.from_hex(raw_user_id)
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["user_is_frozen"]:
         case False:
             pass
         case True:
             return AuthNoLockBadOutcome.AUTHOR_REVOKED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["user_is_revoked"]:
         case False:
             pass
         case True:
             return AuthNoLockBadOutcome.AUTHOR_REVOKED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["user_current_profile"]:
         case str() as raw_user_current_profile:
             user_current_profile = UserProfile.from_str(raw_user_current_profile)
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     return AuthNoLockData(
         organization_internal_id=organization_internal_id,

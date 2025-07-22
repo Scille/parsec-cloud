@@ -143,14 +143,14 @@ async def user_create_device(
             pass
         case False:
             return UserCreateDeviceStoreBadOutcome.DEVICE_ALREADY_EXISTS
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["update_common_topic_ok"]:
         case True:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     await send_signal(
         conn,

@@ -80,21 +80,21 @@ async def user_accept_tos(
     match row["update_user_ok"]:
         case True:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["no_tos"]:
         case False:
             pass
         case True:
             return UserAcceptTosBadOutcome.NO_TOS
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["tos_mismatch"]:
         case False:
             pass
         case True:
             return UserAcceptTosBadOutcome.TOS_MISMATCH
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row

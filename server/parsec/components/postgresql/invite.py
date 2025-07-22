@@ -122,20 +122,20 @@ def invitation_info_from_record(record: Record) -> InvitationInfo:
     match record["invitation_internal_id"]:
         case int() as invitation_internal_id:
             pass
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, record
 
     match record["token"]:
         case str() as raw_token:
             token = InvitationToken.from_hex(raw_token)
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, record
 
     match record["type"]:
         case str() as raw_type:
             type = InvitationType.from_str(raw_type)
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, record
 
     match (record["created_by_user_id"], record["created_by_service_label"]):
         case (None, str() as created_by_service_label):
@@ -149,48 +149,48 @@ def invitation_info_from_record(record: Record) -> InvitationInfo:
                             email=EmailAddress(created_by_email), label=created_by_label
                         ),
                     )
-                case unknown:
-                    assert False, repr(unknown)
-        case unknown:
-            assert False, repr(unknown)
+                case _:
+                    assert False, record
+        case _:
+            assert False, record
 
     match record["created_on"]:
         case DateTime() as created_on:
             pass
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, record
 
     match record["deleted_on"]:
         case DateTime() | None as deleted_on:
             pass
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, record
 
     match record["deleted_reason"]:
         case None as deleted_reason:
             pass
         case str() as deleted_reason_str:
             deleted_reason = InvitationStatus.from_str(deleted_reason_str)
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, record
 
     if type == InvitationType.USER:
         match record["user_invitation_claimer_email"]:
             case str() as raw_claimer_email:
                 claimer_email = EmailAddress(raw_claimer_email)
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, record
 
-        assert record["device_invitation_claimer_user_id"] is None
-        assert record["device_invitation_claimer_human_email"] is None
-        assert record["device_invitation_claimer_human_label"] is None
-        assert record["shamir_recovery_internal_id"] is None
-        assert record["shamir_recovery_user_id"] is None
-        assert record["shamir_recovery_human_email"] is None
-        assert record["shamir_recovery_human_label"] is None
-        assert record["shamir_recovery_created_on"] is None
-        assert record["shamir_recovery_deleted_on"] is None
-        assert record["shamir_recovery_threshold"] is None
+        assert record["device_invitation_claimer_user_id"] is None, record
+        assert record["device_invitation_claimer_human_email"] is None, record
+        assert record["device_invitation_claimer_human_label"] is None, record
+        assert record["shamir_recovery_internal_id"] is None, record
+        assert record["shamir_recovery_user_id"] is None, record
+        assert record["shamir_recovery_human_email"] is None, record
+        assert record["shamir_recovery_human_label"] is None, record
+        assert record["shamir_recovery_created_on"] is None, record
+        assert record["shamir_recovery_deleted_on"] is None, record
+        assert record["shamir_recovery_threshold"] is None, record
 
         return UserInvitationInfo(
             internal_id=invitation_internal_id,
@@ -207,8 +207,8 @@ def invitation_info_from_record(record: Record) -> InvitationInfo:
         match record["device_invitation_claimer_user_id"]:
             case str() as claimer_user_id_str:
                 claimer_user_id = UserID.from_hex(claimer_user_id_str)
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, record
 
         match (
             record["device_invitation_claimer_human_email"],
@@ -218,17 +218,17 @@ def invitation_info_from_record(record: Record) -> InvitationInfo:
                 claimer_human_handle = HumanHandle(
                     email=EmailAddress(claimer_human_email), label=claimer_human_label
                 )
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, record
 
-        assert record["user_invitation_claimer_email"] is None
-        assert record["shamir_recovery_internal_id"] is None
-        assert record["shamir_recovery_user_id"] is None
-        assert record["shamir_recovery_human_email"] is None
-        assert record["shamir_recovery_human_label"] is None
-        assert record["shamir_recovery_created_on"] is None
-        assert record["shamir_recovery_deleted_on"] is None
-        assert record["shamir_recovery_threshold"] is None
+        assert record["user_invitation_claimer_email"] is None, record
+        assert record["shamir_recovery_internal_id"] is None, record
+        assert record["shamir_recovery_user_id"] is None, record
+        assert record["shamir_recovery_human_email"] is None, record
+        assert record["shamir_recovery_human_label"] is None, record
+        assert record["shamir_recovery_created_on"] is None, record
+        assert record["shamir_recovery_deleted_on"] is None, record
+        assert record["shamir_recovery_threshold"] is None, record
 
         return DeviceInvitationInfo(
             internal_id=invitation_internal_id,
@@ -246,14 +246,14 @@ def invitation_info_from_record(record: Record) -> InvitationInfo:
         match record["shamir_recovery_internal_id"]:
             case int() as shamir_recovery_setup_internal_id:
                 pass
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, record
 
         match record["shamir_recovery_user_id"]:
             case str() as shamir_recovery_setup_user_id_str:
                 claimer_user_id = UserID.from_hex(shamir_recovery_setup_user_id_str)
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, record
 
         match (record["shamir_recovery_human_email"], record["shamir_recovery_human_label"]):
             case (
@@ -264,31 +264,31 @@ def invitation_info_from_record(record: Record) -> InvitationInfo:
                     email=EmailAddress(shamir_recovery_setup_human_email),
                     label=shamir_recovery_setup_human_label,
                 )
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, record
 
         match record["shamir_recovery_threshold"]:
             case int() as shamir_recovery_threshold:
                 pass
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, record
 
         match record["shamir_recovery_created_on"]:
             case DateTime() as shamir_recovery_created_on:
                 pass
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, record
 
         match record["shamir_recovery_deleted_on"]:
             case DateTime() | None as shamir_recovery_deleted_on:
                 pass
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, record
 
-        assert record["user_invitation_claimer_email"] is None
-        assert record["device_invitation_claimer_user_id"] is None
-        assert record["device_invitation_claimer_human_email"] is None
-        assert record["device_invitation_claimer_human_label"] is None
+        assert record["user_invitation_claimer_email"] is None, record
+        assert record["device_invitation_claimer_user_id"] is None, record
+        assert record["device_invitation_claimer_human_email"] is None, record
+        assert record["device_invitation_claimer_human_label"] is None, record
 
         # Treat active invitation to a deleted shamir recovery as cancelled
         if shamir_recovery_deleted_on is not None and deleted_on is None:
@@ -1052,8 +1052,8 @@ async def _send_invitation_event_for_user(
             case str() as raw_user_id:
                 user_id = UserID.from_hex(raw_user_id)
                 possible_greeters.add(user_id)
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
     await send_signal(
         conn,
@@ -1106,8 +1106,8 @@ async def _send_invitation_event_for_shamir_recovery(
             case str() as raw_user_id:
                 user_id = UserID.from_hex(raw_user_id)
                 possible_greeters.add(user_id)
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
     await send_signal(
         conn,
@@ -1416,8 +1416,8 @@ class PGInviteComponent(BaseInviteComponent):
         match row["shamir_recovery_setup_internal_id"]:
             case int() as shamir_recovery_setup:
                 pass
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         shamir_recovery_recipients = await self._get_shamir_recovery_recipients(
             conn, internal_shamir_recovery_setup_id=shamir_recovery_setup
@@ -1494,20 +1494,20 @@ class PGInviteComponent(BaseInviteComponent):
             match row["user_id"]:
                 case str() as raw_user_id:
                     user_id = UserID.from_hex(raw_user_id)
-                case unknown:
-                    assert False, repr(unknown)
+                case _:
+                    assert False, row
 
             match (row["email"], row["label"]):
                 case (str() as raw_email, str() as raw_label):
                     human_handle = HumanHandle(email=EmailAddress(raw_email), label=raw_label)
-                case unknown:
-                    assert False, repr(unknown)
+                case _:
+                    assert False, row
 
             match row["last_greeter_joined"]:
                 case DateTime() | None as last_greeting_attempt_joined_on:
                     pass
-                case unknown:
-                    assert False, repr(unknown)
+                case _:
+                    assert False, row
 
             administrators.append(
                 UserGreetingAdministrator(
@@ -1622,8 +1622,8 @@ class PGInviteComponent(BaseInviteComponent):
         )
 
         invitations = []
-        for record in rows:
-            invitation_info = invitation_info_from_record(record)
+        for row in rows:
+            invitation_info = invitation_info_from_record(row)
 
             if invitation_info.deleted_on:
                 assert invitation_info.deleted_reason is not None
@@ -1781,20 +1781,20 @@ class PGInviteComponent(BaseInviteComponent):
         match row["reveal_token"]:
             case str() as reveal_token_str:
                 expected_reveal_token = InvitationToken.from_hex(reveal_token_str)
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["deleted_on"]:
             case DateTime() | None as deleted_on:
                 pass
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["ciphered_data"]:
             case Buffer() as ciphered_data:
                 pass
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         if deleted_on is not None or reveal_token != expected_reveal_token:
             return InviteShamirRecoveryRevealBadOutcome.BAD_REVEAL_TOKEN
@@ -1810,8 +1810,8 @@ class PGInviteComponent(BaseInviteComponent):
 
         # Loop over rows
         rows = await conn.fetch(*_q_list_all_invitations(organization_id=organization_id.str))
-        for record in rows:
-            invitation_info = invitation_info_from_record(record)
+        for row in rows:
+            invitation_info = invitation_info_from_record(row)
 
             # TODO: Update method to also return invitation created by external services
             if not isinstance(invitation_info.created_by, InvitationCreatedByUser):

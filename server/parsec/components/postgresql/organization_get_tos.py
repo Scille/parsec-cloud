@@ -39,8 +39,8 @@ async def organization_get_tos(
             return OrganizationGetTosBadOutcome.ORGANIZATION_EXPIRED
         case False:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match (row["tos_updated_on"], row["tos_per_locale_urls"]):
         case (None, None):
@@ -58,5 +58,5 @@ async def organization_get_tos(
                 per_locale_urls=tos_per_locale_urls,
             )
 
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row

@@ -57,8 +57,8 @@ async def user_list_frozen_users(
         match row["user_id"]:
             case str() as raw_user_id:
                 user_id = UserID.from_hex(raw_user_id)
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         users.append(user_id)
     return users

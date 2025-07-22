@@ -130,22 +130,22 @@ async def realm_export_do_base_info(
             pass
         case None:
             return RealmExportDoBaseInfoBadOutcome.ORGANIZATION_NOT_FOUND
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["realm_internal_id"]:
         case int() as realm_internal_id:
             pass
         case None:
             return RealmExportDoBaseInfoBadOutcome.REALM_NOT_FOUND
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["root_verify_key"]:
         case bytes() as root_verify_key:
             root_verify_key = VerifyKey(root_verify_key)
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     row = await conn.fetchrow(
         *_q_get_base_info(
@@ -160,46 +160,46 @@ async def realm_export_do_base_info(
     match row["vlob_offset_marker_upper_bound"]:
         case int() as vlob_offset_marker_upper_bound:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["block_offset_marker_upper_bound"]:
         case int() as block_offset_marker_upper_bound:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["vlobs_total_bytes"]:
         case int() as vlobs_total_bytes:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["blocks_total_bytes"]:
         case int() as blocks_total_bytes:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["realm_certificate_timestamp_upper_bound"]:
         case None:
             return RealmExportDoBaseInfoBadOutcome.REALM_DIDNT_EXIST_AT_SNAPSHOT_TIMESTAMP
         case DateTime() as realm_certificate_timestamp_upper_bound:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["common_certificate_timestamp_upper_bound"]:
         case DateTime() as common_certificate_timestamp_upper_bound:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["sequester_certificate_timestamp_upper_bound"]:
         case DateTime() | None as sequester_certificate_timestamp_upper_bound:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     return RealmExportDoBaseInfo(
         root_verify_key=root_verify_key,

@@ -134,16 +134,16 @@ async def vlob_poll_changes(
             pass
         case None:
             return VlobPollChangesAsUserBadOutcome.ORGANIZATION_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["organization_is_expired"]:
         case False:
             pass
         case True:
             return VlobPollChangesAsUserBadOutcome.ORGANIZATION_EXPIRED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # 1.2) Check device & user
 
@@ -152,24 +152,24 @@ async def vlob_poll_changes(
             pass
         case None:
             return VlobPollChangesAsUserBadOutcome.AUTHOR_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["user_is_frozen"]:
         case False:
             pass
         case True:
             return VlobPollChangesAsUserBadOutcome.AUTHOR_REVOKED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["user_is_revoked"]:
         case False:
             pass
         case True:
             return VlobPollChangesAsUserBadOutcome.AUTHOR_REVOKED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # 1.3) Check realm access
 
@@ -178,16 +178,16 @@ async def vlob_poll_changes(
             pass
         case None:
             return VlobPollChangesAsUserBadOutcome.REALM_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["user_can_read"]:
         case True:
             pass
         case False:
             return VlobPollChangesAsUserBadOutcome.AUTHOR_NOT_ALLOWED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # 2) Checks are good, we can retrieve the vlobs
 

@@ -47,26 +47,26 @@ async def user_get_user_info(
     match row["user_id"]:
         case str() as raw_user_id:
             user_id = UserID.from_hex(raw_user_id)
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["frozen"]:
         case bool() as frozen:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["email"]:
         case str() as raw_email:
             email = EmailAddress(raw_email)
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["label"]:
         case str() as label:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     human_handle = HumanHandle(email, label)
 
@@ -86,26 +86,26 @@ async def user_get_user_info_from_email(
     match row["user_id"]:
         case str() as raw_user_id:
             user_id = UserID.from_hex(raw_user_id)
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["frozen"]:
         case bool() as frozen:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["email"]:
         case str() as raw_email:
             email = EmailAddress(raw_email)
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["label"]:
         case str() as label:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     human_handle = HumanHandle(email, label)
 

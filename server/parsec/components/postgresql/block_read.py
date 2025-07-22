@@ -145,16 +145,16 @@ async def block_read(
             pass
         case None:
             return BlockReadBadOutcome.ORGANIZATION_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["organization_is_expired"]:
         case False:
             pass
         case True:
             return BlockReadBadOutcome.ORGANIZATION_EXPIRED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # 1.2) Check device & user
 
@@ -163,24 +163,24 @@ async def block_read(
             pass
         case None:
             return BlockReadBadOutcome.AUTHOR_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["user_is_frozen"]:
         case False:
             pass
         case True:
             return BlockReadBadOutcome.AUTHOR_REVOKED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["user_is_revoked"]:
         case False:
             pass
         case True:
             return BlockReadBadOutcome.AUTHOR_REVOKED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # 1.2) Check realm
 
@@ -189,8 +189,8 @@ async def block_read(
             pass
         case None:
             return BlockReadBadOutcome.REALM_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # 1.3) Check block
 
@@ -199,16 +199,16 @@ async def block_read(
             pass
         case None:
             return BlockReadBadOutcome.BLOCK_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["user_can_read"]:
         case True:
             pass
         case False:
             return BlockReadBadOutcome.AUTHOR_NOT_ALLOWED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # 2) Checks are good, we can retrieve the block
 

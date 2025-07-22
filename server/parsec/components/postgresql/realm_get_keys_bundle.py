@@ -162,8 +162,8 @@ async def realm_get_keys_bundle(
             pass
         case None:
             return RealmGetKeysBundleBadOutcome.REALM_NOT_FOUND
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["user_has_role"]:
         case True:
@@ -171,30 +171,30 @@ async def realm_get_keys_bundle(
         # `None` if user never had role, `False` if he has been unshared
         case False | None:
             return RealmGetKeysBundleBadOutcome.AUTHOR_NOT_ALLOWED
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["key_index"]:
         case int() as current_key_index:
             pass
         case None:
             return RealmGetKeysBundleBadOutcome.BAD_KEY_INDEX
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["keys_bundle"]:
         case bytes() as keys_bundle:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["keys_bundle_access"]:
         case bytes() as keys_bundle_access:
             pass
         case None:
             return RealmGetKeysBundleBadOutcome.ACCESS_NOT_AVAILABLE_FOR_AUTHOR
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     return KeysBundle(
         key_index=current_key_index,

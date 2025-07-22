@@ -198,15 +198,15 @@ async def shamir_setup(
                 )
             case False:
                 pass
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["recipient_internal_id"]:
             case int() as recipient_internal_id:
                 number_of_shares = cooked_brief.per_recipient_shares[recipient_id]
                 share_args.append((recipient_internal_id, share_certificate, number_of_shares))
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
     # 4) Ensure we are not breaking causality by adding a newer timestamp
 
@@ -241,8 +241,8 @@ async def shamir_setup(
     match row["shamir_recovery_setup_internal_id"]:
         case int() as shamir_recovery_setup_internal_id:
             pass
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     def arg_gen():
         for recipient_internal_id, share_certificate, number_of_shares in share_args:

@@ -167,16 +167,16 @@ async def vlob_update(
             pass
         case None:
             return VlobUpdateBadOutcome.ORGANIZATION_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["organization_is_expired"]:
         case False:
             pass
         case True:
             return VlobUpdateBadOutcome.ORGANIZATION_EXPIRED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # 1.2) Check device & user
 
@@ -185,8 +185,8 @@ async def vlob_update(
             pass
         case None:
             return VlobUpdateBadOutcome.AUTHOR_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # Since device exists, it corresponding user must also exist
 
@@ -195,32 +195,32 @@ async def vlob_update(
             pass
         case True:
             return VlobUpdateBadOutcome.AUTHOR_REVOKED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["user_is_revoked"]:
         case False:
             pass
         case True:
             return VlobUpdateBadOutcome.AUTHOR_REVOKED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # 1.3) Check topics
 
     match row["last_common_certificate_timestamp"]:
         case DateTime() as last_common_certificate_timestamp:
             pass
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["last_realm_certificate_timestamp"]:
         case DateTime() as last_realm_certificate_timestamp:
             pass
         case None:
             return VlobUpdateBadOutcome.REALM_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # 1.4) Check realm
     # (Note since realm's topic exists, the realm itself must also exist)
@@ -228,16 +228,16 @@ async def vlob_update(
     match row["realm_internal_id"]:
         case int() as realm_internal_id:
             pass
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["user_can_write"]:
         case True:
             pass
         case False:
             return VlobUpdateBadOutcome.AUTHOR_NOT_ALLOWED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["realm_key_index"]:
         case int() as realm_current_key_index:
@@ -246,8 +246,8 @@ async def vlob_update(
                     last_realm_certificate_timestamp=last_realm_certificate_timestamp,
                 )
             pass
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # 1.5) Check vlob
 
@@ -261,8 +261,8 @@ async def vlob_update(
                 return VlobUpdateBadOutcome.BAD_VLOB_VERSION
         case None:
             return VlobUpdateBadOutcome.VLOB_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # 2) Timestamp checks
 
@@ -304,8 +304,8 @@ async def vlob_update(
         case None:
             # Given concurrent vlob creation is allowed, unique violation may occur !
             return VlobUpdateBadOutcome.BAD_VLOB_VERSION
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["new_checkpoint"]:
         case int() as new_checkpoint:
@@ -316,8 +316,8 @@ async def vlob_update(
             # `INSERT` that updated the current checkpoint with this value.
             # The solution here is simply to retry the query from the start.
             raise RetryNeeded
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     await send_signal(
         conn,

@@ -186,8 +186,8 @@ async def user_revoke_user(
             pass
         case None:
             return UserRevokeUserStoreBadOutcome.USER_NOT_FOUND
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["recipient_is_revoked"]:
         case False:
@@ -196,8 +196,8 @@ async def user_revoke_user(
             return CertificateBasedActionIdempotentOutcome(
                 certificate_timestamp=db_common.last_common_certificate_timestamp
             )
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     # 3.2) Ensure we are not breaking causality by adding a newer timestamp.
 
@@ -214,8 +214,8 @@ async def user_revoke_user(
         # Can be `None` if the user to revoke is not part of any realm
         case None:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["vlobs_last_timestamp"]:
         case DateTime() as vlobs_last_timestamp:
@@ -224,8 +224,8 @@ async def user_revoke_user(
         case None:
             pass
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     if certif.timestamp <= last_timestamp:
         return RequireGreaterTimestamp(strictly_greater_than=last_timestamp)
@@ -246,14 +246,14 @@ async def user_revoke_user(
     match row["update_user_ok"]:
         case True:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["update_common_topic_ok"]:
         case True:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     await send_signal(
         conn,

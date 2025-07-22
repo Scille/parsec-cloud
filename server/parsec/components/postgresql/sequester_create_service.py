@@ -120,22 +120,22 @@ async def sequester_create_service(
             pass
         case None:
             return SequesterCreateServiceStoreBadOutcome.ORGANIZATION_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["sequester_authority_verify_key_der"]:
         case bytes() as raw_authority_verify_key_der:
             authority_verify_key_der = SequesterVerifyKeyDer(raw_authority_verify_key_der)
         case None:
             return SequesterCreateServiceStoreBadOutcome.SEQUESTER_DISABLED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["last_sequester_certificate_timestamp"]:
         case DateTime() as sequester_topic_last_timestamp:
             pass
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # 2) Validate the service certificate
 
@@ -175,14 +175,14 @@ async def sequester_create_service(
             pass
         case False:
             return SequesterCreateServiceStoreBadOutcome.SEQUESTER_SERVICE_ALREADY_EXISTS
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["topic_updated"]:
         case True:
             pass
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     await send_signal(
         conn, EventSequesterCertificate(organization_id=organization_id, timestamp=certif.timestamp)

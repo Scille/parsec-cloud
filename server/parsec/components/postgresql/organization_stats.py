@@ -94,8 +94,8 @@ async def _get_organization_stats(
         # `None` if the orga doesn't exist, `False` if the orga exists but is too recent
         case False | None:
             return OrganizationStatsBadOutcome.ORGANIZATION_NOT_FOUND
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     users = 0
     active_users = 0
@@ -103,8 +103,8 @@ async def _get_organization_stats(
     match row["users"]:
         case list() as raw_users:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     for u in raw_users:
         revoked_on, profile = u
@@ -124,20 +124,20 @@ async def _get_organization_stats(
     match row["data_size"]:
         case int() as data_size:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["metadata_size"]:
         case int() as metadata_size:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["realms"]:
         case int() as realms:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     return OrganizationStats(
         data_size=data_size,

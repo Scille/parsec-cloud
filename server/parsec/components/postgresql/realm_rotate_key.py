@@ -285,8 +285,8 @@ async def realm_rotate_key(
         match first_row["last_sequester_certificate_timestamp"]:
             case DateTime() as last_sequester_certificate_timestamp:
                 pass
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, first_row
 
         # Then following rows are services
         sequester_services = {}
@@ -294,14 +294,14 @@ async def realm_rotate_key(
             match row["service_id"]:
                 case str() as raw_service_id:
                     service_id = SequesterServiceID.from_hex(raw_service_id)
-                case unknown:
-                    assert False, repr(unknown)
+                case _:
+                    assert False, row
 
             match row["service_webhook_url"]:
                 case None | str() as service_webhook_url:
                     pass
-                case unknown:
-                    assert False, repr(unknown)
+                case _:
+                    assert False, row
 
             sequester_services[service_id] = service_webhook_url
 
@@ -340,14 +340,14 @@ async def realm_rotate_key(
     match row["update_realm_topic_ok"]:
         case True:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["keys_bundle_internal_id"]:
         case int() as keys_bundle_internal_id:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     def arg_gen():
         for user_id, access in per_participant_keys_bundle_access.items():

@@ -84,14 +84,14 @@ async def organization_test_dump_topics(
         match row["last_timestamp"]:
             case DateTime() as last_timestamp:
                 pass
-            case unknown:
-                assert False, unknown
+            case _:
+                assert False, row
 
         match row["discriminant"]:
             case str() | None as raw_discriminant:
                 pass
-            case unknown:
-                assert False, unknown
+            case _:
+                assert False, row
 
         match row["topic"]:
             case "common":
@@ -110,8 +110,8 @@ async def organization_test_dump_topics(
                 assert shamir_recovery_last_timestamp is None
                 assert raw_discriminant is None
                 shamir_recovery_last_timestamp = last_timestamp
-            case unknown:
-                assert False, unknown
+            case _:
+                assert False, row
 
     if common_last_timestamp is None:
         raise RuntimeError("Organization not found")

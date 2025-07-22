@@ -203,32 +203,32 @@ async def organization_bootstrap(
             pass
         case None:
             return OrganizationBootstrapStoreBadOutcome.ORGANIZATION_NOT_FOUND
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["organization_expired"]:
         case False:
             pass
         case True:
             return OrganizationBootstrapStoreBadOutcome.ORGANIZATION_EXPIRED
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["organization_already_bootstrapped"]:
         case False:
             pass
         case True:
             return OrganizationBootstrapStoreBadOutcome.ORGANIZATION_ALREADY_BOOTSTRAPPED
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["organization_invalid_bootstrap_token"]:
         case False:
             pass
         case True:
             return OrganizationBootstrapStoreBadOutcome.INVALID_BOOTSTRAP_TOKEN
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     # 3) All checks are good, now we do the insertions
 
@@ -257,14 +257,14 @@ async def organization_bootstrap(
     match row["update_organization_ok"]:
         case True:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["update_common_topic_ok"]:
         case True:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     # 4) If the organization is sequestered, we also need to create a corresponding topic
 

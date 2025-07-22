@@ -60,8 +60,8 @@ async def realm_dump_realms_granted_roles(
             pass
         case None:
             return RealmDumpRealmsGrantedRolesBadOutcome.ORGANIZATION_NOT_FOUND
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     rows = await conn.fetch(*_q_get_realm_roles(organization_internal_id=organization_internal_id))
     granted_roles = []
@@ -69,38 +69,38 @@ async def realm_dump_realms_granted_roles(
         match row["realm_id"]:
             case str() as raw_realm_id:
                 realm_id = VlobID.from_hex(raw_realm_id)
-            case unknown:
-                assert False, unknown
+            case _:
+                assert False, row
 
         match row["certificate"]:
             case bytes() as certificate:
                 pass
-            case unknown:
-                assert False, unknown
+            case _:
+                assert False, row
 
         match row["user_id"]:
             case str() as raw_user_id:
                 user_id = UserID.from_hex(raw_user_id)
-            case unknown:
-                assert False, unknown
+            case _:
+                assert False, row
 
         match row["role"]:
             case str() as raw_role:
                 role = RealmRole.from_str(raw_role)
-            case unknown:
-                assert False, unknown
+            case _:
+                assert False, row
 
         match row["certified_by"]:
             case str() as raw_certified_by:
                 certified_by = DeviceID.from_hex(raw_certified_by)
-            case unknown:
-                assert False, unknown
+            case _:
+                assert False, row
 
         match row["certified_on"]:
             case DateTime() as certified_on:
                 pass
-            case unknown:
-                assert False, unknown
+            case _:
+                assert False, row
 
         granted_roles.append(
             RealmGrantedRole(
