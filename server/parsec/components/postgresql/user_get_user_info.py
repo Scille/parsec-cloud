@@ -33,52 +33,12 @@ WHERE
 
 
 _q_get_user = _make_q_get_user_for("user_.user_id = $user_id")
-_q_get_user_for_email = _make_q_get_user_for("human.email = $email")
 
 
 async def user_get_user_info(
     conn: AsyncpgConnection, organization_id: OrganizationID, user_id: UserID
 ) -> UserInfo | None:
     row = await conn.fetchrow(*_q_get_user(organization_id=organization_id.str, user_id=user_id))
-
-    if row is None:
-        return None
-
-    match row["user_id"]:
-        case str() as raw_user_id:
-            user_id = UserID.from_hex(raw_user_id)
-        case _:
-            assert False, row
-
-    match row["frozen"]:
-        case bool() as frozen:
-            pass
-        case _:
-            assert False, row
-
-    match row["email"]:
-        case str() as raw_email:
-            email = EmailAddress(raw_email)
-        case _:
-            assert False, row
-
-    match row["label"]:
-        case str() as label:
-            pass
-        case _:
-            assert False, row
-
-    human_handle = HumanHandle(email, label)
-
-    return UserInfo(user_id, human_handle, frozen)
-
-
-async def user_get_user_info_from_email(
-    conn: AsyncpgConnection, organization_id: OrganizationID, email: EmailAddress
-) -> UserInfo | None:
-    row = await conn.fetchrow(
-        *_q_get_user_for_email(organization_id=organization_id.str, email=str(email))
-    )
 
     if row is None:
         return None
