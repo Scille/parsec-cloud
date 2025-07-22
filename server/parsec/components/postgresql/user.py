@@ -108,6 +108,7 @@ class PGUserComponent(BaseUserComponent):
         super().__init__()
         self.pool = pool
 
+    # TODO: Remove me once `server/parsec/components/postgresql/invite.py` no longer depends on it
     async def _check_common_topic(
         self, conn: AsyncpgConnection, organization_id: OrganizationID
     ) -> DateTime:
@@ -118,6 +119,7 @@ class PGUserComponent(BaseUserComponent):
             common_timestamp = DateTime.from_timestamp_micros(0)
         return common_timestamp
 
+    # TODO: Remove me once `server/parsec/components/postgresql/invite.py` no longer depends on it
     async def _check_device(
         self,
         conn: AsyncpgConnection,
@@ -144,6 +146,7 @@ class PGUserComponent(BaseUserComponent):
             common_timestamp,
         )
 
+    # TODO: Remove me once `server/parsec/components/postgresql/invite.py` no longer depends on it
     async def _get_profile_for_user(
         self,
         conn: AsyncpgConnection,
@@ -248,7 +251,8 @@ class PGUserComponent(BaseUserComponent):
             user_update_certificate,
         )
 
-    async def get_user_info(
+    # TODO: Remove me once `server/parsec/components/postgresql/invite.py` no longer depends on it
+    async def _get_user_info(
         self, conn: AsyncpgConnection, organization_id: OrganizationID, user_id: UserID
     ) -> UserInfo | None:
         return await user_get_user_info(conn, organization_id, user_id)

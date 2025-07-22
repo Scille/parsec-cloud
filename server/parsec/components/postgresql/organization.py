@@ -176,6 +176,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     ) -> Organization | OrganizationGetBadOutcome:
         return await self._get(conn, id)
 
+    # TODO: Remove me once `server/parsec/components/postgresql/invite.py` no longer depends on it
     @staticmethod
     async def _get(
         conn: AsyncpgConnection, id: OrganizationID, for_update: bool = False
