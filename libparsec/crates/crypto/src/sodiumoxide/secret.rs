@@ -5,19 +5,13 @@ use digest::{
     typenum::{IsLessOrEqual, LeEq, NonZero},
 };
 use generic_array::{ArrayLength, GenericArray};
+use libsodium_rs::{
+    crypto_pwhash::argon2id::SALTBYTES,
+    crypto_secretbox::{open, seal, Key, Nonce, KEYBYTES, MACBYTES, NONCEBYTES},
+    random,
+};
 use serde::Deserialize;
 use serde_bytes::Bytes;
-use sodiumoxide::{
-    crypto::{
-        pwhash::argon2id13::SALTBYTES,
-        secretbox::{
-            gen_nonce, open, seal,
-            xsalsa20poly1305::{gen_key, Key, KEYBYTES, MACBYTES, NONCEBYTES},
-            Nonce,
-        },
-    },
-    randombytes::randombytes,
-};
 
 use crate::CryptoError;
 
@@ -39,66 +33,51 @@ impl SecretKey {
     pub const SIZE: usize = KEYBYTES;
 
     pub fn generate() -> Self {
-        Self(gen_key())
+        Self(Key::generate())
     }
 
+    /// Returned format: NONCE | MAC | CIPHERTEXT
     pub fn encrypt(&self, data: &[u8]) -> Vec<u8> {
-        // Returned format: NONCE | MAC | CIPHERTEXT
         let mut ciphered = Vec::with_capacity(NONCEBYTES + MACBYTES + data.len());
-        let nonce = gen_nonce();
-        ciphered.extend_from_slice(&nonce.0);
+        let nonce = Nonce::generate();
+        ciphered.extend_from_slice(nonce.as_bytes());
         ciphered.append(&mut seal(data, &nonce, &self.0));
         ciphered
     }
 
     pub fn decrypt(&self, ciphered: &[u8]) -> Result<Vec<u8>, CryptoError> {
         let nonce_slice = ciphered.get(..NONCEBYTES).ok_or(CryptoError::Nonce)?;
-        let nonce = Nonce::from_slice(nonce_slice).ok_or(CryptoError::DataSize)?;
+        let nonce = Nonce::try_from_slice(nonce_slice).or(Err(CryptoError::DataSize))?;
         let plaintext =
             open(&ciphered[NONCEBYTES..], &nonce, &self.0).or(Err(CryptoError::Decryption))?;
         Ok(plaintext)
     }
 
-    /// # Safety
-    ///
-    /// This function requires access to libsodium methods that are not
-    /// exposed directly, so it uses the unsafe C API
-    /// ...
     fn mac<Size>(&self, data: &[u8]) -> GenericArray<u8, Size>
     where
         Size: ArrayLength<u8> + IsLessOrEqual<U64>,
         LeEq<Size, U64>: NonZero,
     {
-        let mut state = libsodium_sys::crypto_generichash_blake2b_state {
-            opaque: [0u8; 384usize],
-        };
-        // TODO: replace `from_exact_iter` by `from_array` once generic-array is updated to v1.0+
-        let mut out =
-            GenericArray::<u8, Size>::from_exact_iter(std::iter::repeat(0u8).take(Size::USIZE))
-                .expect("correct iterator size");
-
-        // SAFETY: Sodiumoxide doesn't expose those methods, so we have to access
-        // the libsodium C API directly.
-        // this remains safe because we provide bounds defined in Rust land when passing vectors.
-        // The only data structure provided by remote code is dropped
-        // at the end of the function.
-        unsafe {
-            libsodium_sys::crypto_generichash_blake2b_init(
-                &mut state,
-                self.as_ref().as_ptr(),
-                self.as_ref().len(),
-                Size::USIZE,
-            );
-            libsodium_sys::crypto_generichash_blake2b_update(
-                &mut state,
+        let mut out = GenericArray::<u8, Size>::default();
+        let raw_key = self.0.as_bytes();
+        // SAFETY: We provide valid pointers to `crypto_generichash_blake2b`
+        // The lib call to check that `outlen` is of correct size for cryptography purpose (at
+        // min `crypto_generichash_BYTES_MIN`).
+        // `outlen` will be smaller than that when generating SAS code.
+        // https://doc.libsodium.org/hashing/generic_hashing#usage
+        let res = unsafe {
+            libsodium_sys::crypto_generichash_blake2b(
+                out.as_mut_ptr(),
+                out.len(),
                 data.as_ptr(),
                 data.len() as u64,
-            );
-            libsodium_sys::crypto_generichash_blake2b_final(
-                &mut state,
-                out.as_mut_ptr(),
-                Size::USIZE,
-            );
+                raw_key.as_ptr(),
+                raw_key.len(),
+            )
+        };
+        if res != 0 {
+            panic!("Error while generating MAC");
+        } else {
             out
         }
     }
@@ -112,13 +91,13 @@ impl SecretKey {
     }
 
     pub fn generate_salt() -> Vec<u8> {
-        randombytes(SALTBYTES)
+        random::bytes(SALTBYTES)
     }
 }
 
-impl From<[u8; KEYBYTES]> for SecretKey {
-    fn from(key: [u8; KEYBYTES]) -> Self {
-        Self(Key(key))
+impl From<[u8; Self::SIZE]> for SecretKey {
+    fn from(key: [u8; Self::SIZE]) -> Self {
+        Self(Key::from(key))
     }
 }
 
