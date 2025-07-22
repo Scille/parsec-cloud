@@ -49,7 +49,7 @@ from parsec.components.sequester import (
     SequesterUpdateConfigForServiceStoreBadOutcome,
     WebhookSequesterService,
 )
-from parsec.components.user import UserFreezeUserBadOutcome, UserInfo, UserListUsersBadOutcome
+from parsec.components.user import UserFreezeUserBadOutcome, UserInfo, UserListActiveUsersBadOutcome
 from parsec.config import AccountVaultStrategy, AllowedClientAgent
 from parsec.events import ActiveUsersLimitField, DateTimeField, OrganizationIDField, UserIDField
 from parsec.logging import get_logger
@@ -448,11 +448,11 @@ async def administration_organization_users(
 
     organization_id = parse_organization_id_or_die(raw_organization_id)
 
-    outcome = await backend.user.list_users(organization_id)
+    outcome = await backend.user.list_active_users(organization_id)
     match outcome:
         case list() as users:
             pass
-        case UserListUsersBadOutcome.ORGANIZATION_NOT_FOUND:
+        case UserListActiveUsersBadOutcome.ORGANIZATION_NOT_FOUND:
             raise HTTPException(status_code=404, detail="Organization not found")
 
     return JSONResponse(
