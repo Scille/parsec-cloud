@@ -80,6 +80,7 @@ async def user_test_dump_current_users(
             revoked_on=row["revoked_on"],
             devices=[],
             profile_history=[(row["created_on"], UserProfile.from_str(row["initial_profile"]))],
+            frozen=row["frozen"],
         )
 
     rows = await conn.fetch(*_q_get_organization_devices(organization_id=organization_id.str))

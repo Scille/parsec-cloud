@@ -716,6 +716,7 @@ class MemoryUserComponent(BaseUserComponent):
                 if user.cooked_revoked is not None
                 else None,
                 human_handle=user.cooked.human_handle,
+                frozen=user.is_frozen,
             )
 
         return items

@@ -69,7 +69,6 @@ my_device AS (
 my_user AS (
     SELECT
         _id,
-        frozen,
         (revoked_on IS NOT NULL) AS revoked,
         user_id,
         current_profile
@@ -85,7 +84,6 @@ SELECT
     (SELECT last_timestamp FROM my_locked_common_topic) AS last_common_certificate_timestamp,
     (SELECT _id FROM my_device) AS device_internal_id,
     (SELECT _id FROM my_user) AS user_internal_id,
-    (SELECT frozen FROM my_user) AS user_is_frozen,
     (SELECT revoked FROM my_user) AS user_is_revoked,
     (SELECT user_id FROM my_user) AS user_id,
     (SELECT current_profile FROM my_user) AS user_current_profile
@@ -105,6 +103,22 @@ async def auth_and_lock_common_write(
     organization_id: OrganizationID,
     author: DeviceID,
 ) -> AuthAndLockCommonOnlyData | AuthAndLockCommonOnlyBadOutcome:
+    """
+    "Auth" in the name might be confusing:
+    - When doing an RPC request, actual authentication is done by
+      `BaseAuthComponent.authenticated_auth` which is implemented with
+      different queries.
+    - This function is only to be used to implement the internal methods the
+      RPC request implementation relies on (e.g. `BaseBlockComponent`'s `api_block_read`
+      vs `block_read`).
+
+    The key difference here is this auth doesn't check if the user is frozen, given
+    1) it is already checked by the RPC request authentication, and 2) it is not
+    an issue to accept an operation while concurrent operation has just frozen the
+    user (since freeze is just a server-side access control flag, unlike
+    user revocation which involve certificates which timestamp are required to
+    be consistent with other certificates&data).
+    """
     return await _do_query(
         conn,
         _q_auth_and_lock_common_write(
@@ -119,6 +133,22 @@ async def auth_and_lock_common_read(
     organization_id: OrganizationID,
     author: DeviceID,
 ) -> AuthAndLockCommonOnlyData | AuthAndLockCommonOnlyBadOutcome:
+    """
+    "Auth" in the name might be confusing:
+    - When doing an RPC request, actual authentication is done by
+      `BaseAuthComponent.authenticated_auth` which is implemented with
+      different queries.
+    - This function is only to be used to implement the internal methods the
+      RPC request implementation relies on (e.g. `BaseBlockComponent`'s `api_block_read`
+      vs `block_read`).
+
+    The key difference here is this auth doesn't check if the user is frozen, given
+    1) it is already checked by the RPC request authentication, and 2) it is not
+    an issue to accept an operation while concurrent operation has just frozen the
+    user (since freeze is just a server-side access control flag, unlike
+    user revocation which involve certificates which timestamp are required to
+    be consistent with other certificates&data).
+    """
     return await _do_query(
         conn,
         _q_auth_and_lock_common_read(
@@ -179,14 +209,6 @@ async def _do_query(
     match row["user_id"]:
         case str() as raw_user_id:
             user_id = UserID.from_hex(raw_user_id)
-        case _:
-            assert False, row
-
-    match row["user_is_frozen"]:
-        case False:
-            pass
-        case True:
-            return AuthAndLockCommonOnlyBadOutcome.AUTHOR_REVOKED
         case _:
             assert False, row
 

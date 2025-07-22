@@ -83,7 +83,6 @@ my_device AS (
 my_user AS (
     SELECT
         user_._id,
-        user_.frozen,
         (user_.revoked_on IS NOT NULL) AS revoked
     FROM user_
     INNER JOIN my_device ON user_._id = my_device.user_
@@ -94,7 +93,6 @@ SELECT
     (SELECT _id FROM my_organization) AS organization_internal_id,
     (SELECT is_expired FROM my_organization) AS organization_is_expired,
     (SELECT _id FROM my_device) AS device_internal_id,
-    (SELECT frozen FROM my_user) AS user_is_frozen,
     (SELECT revoked FROM my_user) AS user_is_revoked,
     (SELECT last_timestamp FROM my_locked_common_topic) AS last_common_certificate_timestamp,
     (SELECT last_timestamp FROM my_locked_realm_topic) AS last_realm_certificate_timestamp,
@@ -238,14 +236,6 @@ async def vlob_create(
             assert False, row
 
     # Since device exists, it corresponding user must also exist
-
-    match row["user_is_frozen"]:
-        case False:
-            pass
-        case True:
-            return VlobCreateBadOutcome.AUTHOR_REVOKED
-        case _:
-            assert False, row
 
     match row["user_is_revoked"]:
         case False:
