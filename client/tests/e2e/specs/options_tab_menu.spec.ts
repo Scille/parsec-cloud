@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { DisplaySize, expect, msTest } from '@tests/e2e/helpers';
+import { answerQuestion, DisplaySize, expect, msTest } from '@tests/e2e/helpers';
 
 async function isInGridMode(page: Page): Promise<boolean> {
   return (await page.locator('#folders-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
@@ -60,6 +60,8 @@ msTest('Files options tab menu display', async ({ documents }) => {
 });
 
 msTest('Test files options tab menu', async ({ documents, context }) => {
+  msTest.setTimeout(45_000);
+
   await toggleViewMode(documents);
   await documents.setDisplaySize(DisplaySize.Small);
   await context.grantPermissions(['clipboard-write']);
@@ -79,18 +81,18 @@ msTest('Test files options tab menu', async ({ documents, context }) => {
   await expect(documents.locator('.text-input-modal')).toBeVisible();
   await expect(documents.locator('.text-input-modal').locator('ion-text')).toHaveText('Rename a file');
   await documents.locator('.text-input-modal').locator('.closeBtn').click();
+  await expect(documents.locator('.text-input-modal')).toBeHidden();
 
   // `Move` button
   await tabItem.nth(1).click();
   await expect(documents.locator('.folder-selection-modal')).toBeVisible();
   await expect(documents.locator('.folder-selection-modal').locator('.ms-modal-header__title')).toHaveText('Move one item');
   await documents.locator('.folder-selection-modal').locator('.closeBtn').click();
+  await expect(documents.locator('.folder-selection-modal')).toBeHidden();
 
   // `Delete` button
   await tabItem.nth(2).click();
-  await expect(documents.locator('.question-modal')).toBeVisible();
-  await expect(documents.locator('.question-modal').locator('.ms-small-display-modal-header__title')).toHaveText('Delete one file');
-  await documents.locator('.question-modal').locator('.ms-small-display-modal-footer-buttons-cancel').click();
+  await answerQuestion(documents, false, { expectedTitleText: 'Delete one file' });
 
   // `More` button
   await tabItem.nth(3).click();
@@ -101,7 +103,9 @@ msTest('Test files options tab menu', async ({ documents, context }) => {
 
   // `Open` button
   await tabModalItem.nth(0).click();
+  await expect(optionsTabModal).toBeHidden();
   await documents.waitForTimeout(1000);
+  await expect(documents).toBeViewerPage();
   await expect(documents.locator('.file-viewer-topbar')).toBeVisible();
   await expect(documents.locator('.file-viewer-topbar').locator('.file-viewer-topbar__title')).toHaveText('audio.mp3');
 
@@ -112,6 +116,7 @@ msTest('Test files options tab menu', async ({ documents, context }) => {
     await fileViewerButton.click();
   }
   await documents.locator('#connected-header').locator('.topbar-left').locator('.back-button-container').click();
+  await expect(documents).toBeDocumentPage();
 
   // `Copy` button
   await entryFile.hover();
@@ -119,14 +124,17 @@ msTest('Test files options tab menu', async ({ documents, context }) => {
   await tabItem.nth(3).click();
   await expect(optionsTabModal).toBeVisible();
   await tabModalItem.nth(2).click();
+  await expect(optionsTabModal).toBeHidden();
   await expect(documents.locator('.folder-selection-modal')).toBeVisible();
   await expect(documents.locator('.folder-selection-modal').locator('.ms-modal-header__title')).toHaveText('Copy one item');
   await documents.locator('.folder-selection-modal').locator('.closeBtn').click();
+  await expect(documents.locator('.folder-selection-modal')).toBeHidden();
 
   // `Copy link` button
   await tabItem.nth(3).click();
   await expect(optionsTabModal).toBeVisible();
   await tabModalItem.nth(3).click();
+  await expect(optionsTabModal).toBeHidden();
   await expect(documents).toShowToast('Link has been copied to clipboard.', 'Info');
   const filePath = await documents.evaluate(() => navigator.clipboard.readText());
   expect(filePath).toMatch(/^parsec3:\/\/.+$/);
@@ -135,9 +143,12 @@ msTest('Test files options tab menu', async ({ documents, context }) => {
   await tabItem.nth(3).click();
   await expect(optionsTabModal).toBeVisible();
   await tabModalItem.nth(4).click();
+  await expect(optionsTabModal).toBeVisible();
+  await expect(documents).toBeWorkspaceHistoryPage();
   await expect(documents.locator('.history-container')).toBeVisible();
   await expect(documents.locator('.history-container').locator('.current-folder__text')).toHaveText('wksp1');
   await documents.locator('#connected-header').locator('.topbar-left').locator('.back-button-container').click();
+  await expect(documents).toBeDocumentPage();
 
   // `Details` button
   await entryFile.hover();
@@ -145,8 +156,11 @@ msTest('Test files options tab menu', async ({ documents, context }) => {
   await tabItem.nth(3).click();
   await expect(optionsTabModal).toBeVisible();
   await tabModalItem.nth(5).click();
+  await expect(optionsTabModal).toBeHidden();
   await expect(documents.locator('.file-details-modal')).toBeVisible();
   await expect(documents.locator('.file-details-modal').locator('.ms-modal-header__title')).toHaveText('Details on audio.mp3');
+  await documents.locator('.file-details-modal').locator('.closeBtn').click();
+  await expect(documents.locator('.file-details-modal')).toBeHidden();
 });
 
 msTest('Users options tab menu display', async ({ usersPage }) => {

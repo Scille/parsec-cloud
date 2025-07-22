@@ -199,6 +199,17 @@ svg {
   }
 }
 
+.recover-account-step {
+  .code-input-list {
+    gap: 0.5rem;
+  }
+
+  .choose-password .inputs-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
 // manage homepage content inside the slider
 .homepage-content .slider-container {
   padding: 2rem 4rem 0;

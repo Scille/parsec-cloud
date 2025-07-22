@@ -1665,6 +1665,38 @@
             "password": "Password",
             "confirmPassword": "Confirm password"
         },
+        "recoverAccount": {
+            "step1": {
+                "title": "Recover your account",
+                "description": "Please enter the email address used for your account to proceed.",
+                "nextButton": "Send a validation code"
+            },
+            "step2": {
+                "title": "Email Verification",
+                "description": "A verification code has been sent to your email address. Please enter it to update your password.",
+                "resendCode": "Resend code",
+                "nextButton": "Validate",
+                "update": "Update",
+                "info": "If you do not receive the code, please check your spam or junk folder."
+            },
+            "step3": {
+                "title": "Choose your new password",
+                "description": "Make sure your new password meets the minimum strength criteria.",
+                "nextButton": "Update password"
+            },
+            "step4": {
+                "title": "Your password has been updated",
+                "description": "You can now log in using your new password!",
+                "nextButton": "Log in"
+            },
+            "backButton": "Back to login",
+            "error": {
+                "generic": "Could not recover your account. Please check your email address.",
+                "invalidCode": "The verification code is invalid, make sure you entered the correct code.",
+                "offline": "You are offline. Please make sure you are connected to the Internet and try again.",
+                "resendFailed": "Failed to send the email."
+            }
+        },
         "login": "Log in",
         "loginFailed": "Failed to log in. Please check your email and password.",
         "clientArea": {
@@ -2071,8 +2103,7 @@
                     "description": "An error occurred while processing your order. Please contact us.",
                     "tag": "Error"
                 }
-            },
-            "error": "Failed to retrieve the information"
+            }
         },
         "billingDetailsPage": {
             "placeholders": {

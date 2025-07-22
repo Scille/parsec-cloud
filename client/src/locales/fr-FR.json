@@ -1664,6 +1664,38 @@
             "password": "Mot de passe",
             "confirmPassword": "Confirmer le mot de passe"
         },
+        "recoverAccount": {
+            "step1": {
+                "title": "Récupérer votre compte",
+                "description": "Veuillez renseigner l'adresse email liée à votre compte pour continuer.",
+                "nextButton": "Envoyer un code de validation"
+            },
+            "step2": {
+                "title": "Vérification de votre email",
+                "description": "Un code de vérification a été envoyé à votre adresse électronique. Veuillez le saisir pour mettre à jour votre mot de passe.",
+                "resendCode": "Renvoyer un code",
+                "nextButton": "Valider",
+                "update": "Modifier",
+                "info": "Si vous ne recevez pas le code, veuillez vérifier votre dossier de spam ou de courrier indésirable."
+            },
+            "step3": {
+                "title": "Choisissez votre nouveau mot de passe",
+                "description": "Votre nouveau mot de passe doit respecter les critères minimaux de robustesse.",
+                "nextButton": "Mettre à jour mon mot de passe"
+            },
+            "step4": {
+                "title": "Votre mot de passe a été mis à jour",
+                "description": "Vous pouvez maintenant vous connecter avec votre nouveau mot de passe !",
+                "nextButton": "Se connecter"
+            },
+            "backButton": "Revenir à la connexion",
+            "error": {
+                "generic": "Impossible de récupérer votre compte. Veuillez vérifier votre adresse email.",
+                "invalidCode": "Le code de vérification est invalide, assurez-vous d'avoir saisi le bon code.",
+                "offline": "Vous êtes hors-ligne. Assurez-vous d'être connecté à Internet puis réessayez.",
+                "resendFailed": "Impossible d'envoyer l'email."
+            }
+        },
         "login": "Se connecter",
         "loginFailed": "Impossible de se connecter. Veuillez vérifier votre adresse email et mot de passe.",
         "clientArea": {
