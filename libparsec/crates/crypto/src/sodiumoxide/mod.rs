@@ -17,3 +17,9 @@ pub use secret::*;
 pub use sequester::*;
 pub use sign::*;
 pub(crate) use utils::*;
+
+pub fn init() {
+    if let Err(e) = libsodium_rs::ensure_init() {
+        panic!("Cannot initialize crypto: {e}");
+    }
+}
