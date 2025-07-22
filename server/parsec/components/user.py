@@ -335,7 +335,7 @@ class CheckUserForAuthenticationBadOutcome(BadOutcomeEnum):
     USER_FROZEN = auto()
 
 
-class UserListUsersBadOutcome(BadOutcomeEnum):
+class UserListActiveUsersBadOutcome(BadOutcomeEnum):
     # Note we don't care the organization is expired here, this is because this
     # command is used by the administration.
     ORGANIZATION_NOT_FOUND = auto()
@@ -462,9 +462,9 @@ class BaseUserComponent:
     ) -> dict[UserID, UserDump]:
         raise NotImplementedError
 
-    async def list_users(
+    async def list_active_users(
         self, organization_id: OrganizationID
-    ) -> list[UserInfo] | UserListUsersBadOutcome:
+    ) -> list[UserInfo] | UserListActiveUsersBadOutcome:
         raise NotImplementedError
 
     async def freeze_user(

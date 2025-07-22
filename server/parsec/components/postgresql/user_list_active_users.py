@@ -11,7 +11,7 @@ from parsec.components.postgresql import AsyncpgConnection
 from parsec.components.postgresql.utils import Q, q_organization_internal_id
 from parsec.components.user import (
     UserInfo,
-    UserListUsersBadOutcome,
+    UserListActiveUsersBadOutcome,
 )
 
 _q_get_organization_users = Q(
@@ -25,17 +25,18 @@ FROM user_
 INNER JOIN human ON human._id = user_.human
 WHERE
     user_.organization = {q_organization_internal_id("$organization_id")}
+    AND user_.revoked_on IS NULL
 ORDER BY user_.created_on
 """
 )
 
 
-async def user_list_users(
+async def user_list_active_users(
     conn: AsyncpgConnection, organization_id: OrganizationID
-) -> list[UserInfo] | UserListUsersBadOutcome:
+) -> list[UserInfo] | UserListActiveUsersBadOutcome:
     rows = await conn.fetch(*_q_get_organization_users(organization_id=organization_id.str))
     if not rows:
-        return UserListUsersBadOutcome.ORGANIZATION_NOT_FOUND
+        return UserListActiveUsersBadOutcome.ORGANIZATION_NOT_FOUND
 
     users = []
     for row in rows:

@@ -2,8 +2,9 @@
 
 import httpx
 
+from parsec._parsec import RevokedUserCertificate
 from parsec.components.user import UserInfo
-from tests.common import Backend, CoolorgRpcClients
+from tests.common import Backend, CoolorgRpcClients, alice_gives_profile
 
 
 async def test_bad_auth(client: httpx.AsyncClient, coolorg: CoolorgRpcClients) -> None:
@@ -74,6 +75,10 @@ async def test_ok(
         ],
     }
 
+    # Revoked user are not listed
+    outcome = await alice_gives_profile(coolorg, backend, coolorg.mallory.user_id, None)
+    assert isinstance(outcome, RevokedUserCertificate)
+
     outcome = await backend.user.freeze_user(
         organization_id=coolorg.organization_id,
         user_id=coolorg.alice.user_id,
@@ -100,12 +105,6 @@ async def test_ok(
                 "user_id": "808c0010000000000000000000000000",
                 "user_email": "bob@example.com",
                 "user_name": "Boby McBobFace",
-                "frozen": False,
-            },
-            {
-                "user_id": "3a11031c001000000000000000000000",
-                "user_email": "mallory@example.com",
-                "user_name": "Malloryy McMalloryFace",
                 "frozen": False,
             },
         ],

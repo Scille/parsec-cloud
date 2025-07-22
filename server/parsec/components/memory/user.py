@@ -39,8 +39,8 @@ from parsec.components.user import (
     UserGetActiveDeviceVerifyKeyBadOutcome,
     UserGetCertificatesAsUserBadOutcome,
     UserInfo,
+    UserListActiveUsersBadOutcome,
     UserListFrozenUsersBadOutcome,
-    UserListUsersBadOutcome,
     UserRevokeUserStoreBadOutcome,
     UserRevokeUserValidateBadOutcome,
     UserUpdateUserStoreBadOutcome,
@@ -721,13 +721,13 @@ class MemoryUserComponent(BaseUserComponent):
         return items
 
     @override
-    async def list_users(
+    async def list_active_users(
         self, organization_id: OrganizationID
-    ) -> list[UserInfo] | UserListUsersBadOutcome:
+    ) -> list[UserInfo] | UserListActiveUsersBadOutcome:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
-            return UserListUsersBadOutcome.ORGANIZATION_NOT_FOUND
+            return UserListActiveUsersBadOutcome.ORGANIZATION_NOT_FOUND
 
         return [
             UserInfo(
@@ -736,6 +736,7 @@ class MemoryUserComponent(BaseUserComponent):
                 frozen=user.is_frozen,
             )
             for user in org.users.values()
+            if not user.is_revoked
         ]
 
     @override
