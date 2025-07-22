@@ -1,18 +1,18 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use libsodium_rs::crypto_hash::sha256;
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
-use sodiumoxide::crypto::hash::sha256;
 
 use crate::CryptoError;
 
 #[derive(Clone, PartialEq, Eq, Hash, Deserialize)]
 #[serde(try_from = "&Bytes")]
-pub struct HashDigest(sha256::Digest);
+pub struct HashDigest([u8; sha256::BYTES]);
 
 impl HashDigest {
     pub const ALGORITHM: &'static str = "sha256";
-    pub const SIZE: usize = sha256::DIGESTBYTES;
+    pub const SIZE: usize = sha256::BYTES;
 
     pub fn from_data(data: &[u8]) -> Self {
         Self(sha256::hash(data))
@@ -45,13 +45,13 @@ impl TryFrom<&[u8]> for HashDigest {
     type Error = CryptoError;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         let arr: [u8; Self::SIZE] = data.try_into().map_err(|_| CryptoError::DataSize)?;
-        Ok(Self(sha256::Digest(arr)))
+        Ok(Self(arr))
     }
 }
 
 impl From<[u8; Self::SIZE]> for HashDigest {
     fn from(digest: [u8; Self::SIZE]) -> Self {
-        Self(sha256::Digest(digest))
+        Self(digest)
     }
 }
 

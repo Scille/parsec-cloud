@@ -1,8 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use libsodium_rs::crypto_sign::{
+    sign, sign_detached, verify_detached, KeyPair, PublicKey, SecretKey, BYTES as SIGNATUREBYTES,
+    PUBLICKEYBYTES, SECRETKEYBYTES, SEEDBYTES,
+};
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
-use sodiumoxide::crypto::sign::{ed25519, gen_keypair, sign, verify_detached, Signature};
 
 use crate::CryptoError;
 
@@ -12,58 +15,65 @@ use crate::CryptoError;
 
 #[derive(Clone, PartialEq, Eq, Deserialize)]
 #[serde(try_from = "&Bytes")]
-pub struct SigningKey(ed25519::SecretKey);
+pub struct SigningKey(SecretKey);
 
 crate::impl_key_debug!(SigningKey);
 
 impl SigningKey {
     pub const ALGORITHM: &'static str = "ed25519";
     /// Size of the secret key.
-    /// `SEEDBYTES` is the size of the private key alone where `SECRETKEYBYTES` also contains the public part
-    pub const SIZE: usize = ed25519::SEEDBYTES;
-    pub const SIGNATURE_SIZE: usize = ed25519::SIGNATUREBYTES;
+    ///
+    /// The secret key is compose of secret + public part, the size correspond to the secret part
+    pub const SIZE: usize = SECRETKEYBYTES - PUBLICKEYBYTES;
+    pub const SIGNATURE_SIZE: usize = SIGNATUREBYTES;
 
     pub fn verify_key(&self) -> VerifyKey {
-        VerifyKey::try_from(self.0.public_key().0).unwrap()
+        VerifyKey(
+            PublicKey::from_secret_key(&self.0).expect("Cannot get public key from secret key"),
+        )
     }
 
     pub fn generate() -> Self {
-        Self(gen_keypair().1)
+        Self(
+            KeyPair::generate()
+                .expect("Cannot generate signing key")
+                .secret_key,
+        )
     }
 
     /// Sign the message and prefix it with the signature.
     pub fn sign(&self, data: &[u8]) -> Vec<u8> {
-        sign(data, &self.0)
+        sign(data, &self.0).expect("Cannot sign data")
     }
 
     /// Sign the message and return only the signature.
     pub fn sign_only_signature(&self, data: &[u8]) -> [u8; Self::SIGNATURE_SIZE] {
-        use sodiumoxide::crypto::sign::Signer;
-
-        self.0.sign(data).to_bytes()
+        sign_detached(data, &self.0).expect("Cannot sign data")
     }
 
     pub fn to_bytes(&self) -> [u8; Self::SIZE] {
         // SecretKey is composed of Seed then PublicKey, we export only seed here
-        <[u8; Self::SIZE]>::try_from(&self.0 .0[..Self::SIZE])
+        <[u8; Self::SIZE]>::try_from(&self.0.as_bytes()[..Self::SIZE])
             .expect("The internal array is > Self::SIZE")
     }
 }
 
 impl TryFrom<&[u8]> for SigningKey {
     type Error = CryptoError;
+
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
-        let arr: [u8; Self::SIZE] = data.try_into().map_err(|_| CryptoError::DataSize)?;
-        let (_, sk) = ed25519::keypair_from_seed(&ed25519::Seed(arr));
-        Ok(Self(sk))
+        <[u8; SEEDBYTES]>::try_from(data)
+            .map_err(|_| CryptoError::DataSize)
+            .and_then(|raw| KeyPair::from_seed(raw.as_slice()).map_err(|_| CryptoError::DataSize))
+            .map(|kp| Self(kp.secret_key))
     }
 }
 
 impl From<[u8; Self::SIZE]> for SigningKey {
     fn from(key: [u8; Self::SIZE]) -> Self {
-        // TODO: zero copy
-        let (_, sk) = ed25519::keypair_from_seed(&ed25519::Seed(key));
-        Self(sk)
+        KeyPair::from_seed(key.as_slice())
+            .map(|kp| Self(kp.secret_key))
+            .expect("Cannot generate keypair from seed")
     }
 }
 
@@ -89,7 +99,7 @@ impl Serialize for SigningKey {
 
 #[derive(Clone, PartialEq, Eq, Deserialize)]
 #[serde(try_from = "&Bytes")]
-pub struct VerifyKey(ed25519::PublicKey);
+pub struct VerifyKey(PublicKey);
 
 crate::impl_key_debug!(VerifyKey);
 
@@ -106,8 +116,10 @@ impl TryFrom<&[u8]> for VerifyKey {
     type Error = CryptoError;
 
     fn try_from(v: &[u8]) -> Result<Self, Self::Error> {
-        let arr: [u8; Self::SIZE] = v.try_into().map_err(|_| CryptoError::DataSize)?;
-        Ok(Self(ed25519::PublicKey(arr)))
+        <[u8; Self::SIZE]>::try_from(v)
+            .map(PublicKey::from)
+            .map(Self)
+            .map_err(|_| CryptoError::DataSize)
     }
 }
 
@@ -115,15 +127,24 @@ impl TryFrom<[u8; Self::SIZE]> for VerifyKey {
     type Error = CryptoError;
 
     fn try_from(key: [u8; Self::SIZE]) -> Result<Self, Self::Error> {
-        Ok(Self(ed25519::PublicKey(key)))
+        Ok(Self(PublicKey::from(key)))
     }
 }
+
+impl AsRef<[u8]> for VerifyKey {
+    fn as_ref(&self) -> &[u8] {
+        self.0.as_bytes()
+    }
+}
+
+super::impl_serde_traits!(VerifyKey);
 
 impl VerifyKey {
     pub const ALGORITHM: &'static str = "ed25519";
     /// Size of the public key.
-    pub const SIZE: usize = ed25519::PUBLICKEYBYTES;
+    pub const SIZE: usize = PUBLICKEYBYTES;
 
+    /// Unwrap a signed blob that use the following format: `SIGNATURE | DATA`
     pub fn unsecure_unwrap(
         signed: &[u8],
     ) -> Result<(&[u8; SigningKey::SIGNATURE_SIZE], &[u8]), CryptoError> {
@@ -149,33 +170,9 @@ impl VerifyKey {
         raw_signature: &[u8; SigningKey::SIGNATURE_SIZE],
         message: &[u8],
     ) -> Result<(), CryptoError> {
-        let signature = Signature::from_bytes(raw_signature).map_err(|_| CryptoError::Signature)?;
-        match verify_detached(&signature, message, &self.0) {
+        match verify_detached(raw_signature, message, &self.0) {
             true => Ok(()),
             false => Err(CryptoError::SignatureVerification),
         }
-    }
-}
-
-impl AsRef<[u8]> for VerifyKey {
-    #[inline]
-    fn as_ref(&self) -> &[u8] {
-        &self.0 .0
-    }
-}
-
-impl TryFrom<&Bytes> for VerifyKey {
-    type Error = CryptoError;
-    fn try_from(data: &Bytes) -> Result<Self, Self::Error> {
-        Self::try_from(data.as_ref())
-    }
-}
-
-impl Serialize for VerifyKey {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_bytes(self.as_ref())
     }
 }

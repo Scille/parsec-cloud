@@ -152,7 +152,8 @@ js-sys = { version = "0.3.70", default-features = false }
 keyring = { version = "3.6.3", default-features = false }
 lazy_static = { version = "1.5.0", default-features = false }
 libc = { version = "0.2.175", default-features = false }
-libsodium-sys = { version = "0.2.7", default-features = false }
+# We use the version on which depends `libsodium-rs`
+libsodium-sys-stable = { version = "*", default-features = false }
 libsqlite3-sys = { version = "0.30.1", default-features = false }
 log = { version = "0.4.27", default-features = false }
 miniserde = { version = "0.1.42", default-features = false }
@@ -194,7 +195,6 @@ sha1 = { version = "0.10.6", default-features = false }
 sha2 = { version = "0.10.9", default-features = false }
 blahaj = "0.6.0"
 smallvec = { version = "1.15.1", default-features = false }
-sodiumoxide = { version = "0.2.7", default-features = false }
 spinners = { version = "4.1.1", default-features = false }
 sqlx = { version = "0.8.6", default-features = false }
 syn = { version = "2.0.106", default-features = false }
@@ -215,6 +215,13 @@ winfsp_wrs_build = { version = "0.4.0", default-features = false }
 x25519-dalek = { version = "2.0.1", default-features = false }
 zeroize = { version = "1.8.1", default-features = false }
 zstd = { version = "0.13.3", default-features = false }
+
+[workspace.dependencies.libsodium-rs]
+version = "0.1.1"
+default-features = false
+# Waiting for new release
+rev = "a414f88ca3edd3c278491a561bd38f4bf292d935"
+git = "https://github.com/jedisct1/libsodium-rs.git"
 
 [patch.crates-io]
 # Patch web-sys for `Blob.bytes`

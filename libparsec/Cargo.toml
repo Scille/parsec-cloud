@@ -12,8 +12,8 @@ repository.workspace = true
 workspace = true
 
 [features]
-# Remember kid: RustCrypto is used if `use-sodiumoxide` is not set !
-use-sodiumoxide = ["libparsec_crypto/use-sodiumoxide"]
+# Remember kid: RustCrypto is used if `use-libsodium` is not set !
+use-libsodium = ["libparsec_crypto/use-libsodium"]
 vendored-openssl = ["libparsec_crypto/vendored-openssl"]
 vendored-dbus = ["libparsec_platform_device_loader/vendored-dbus"]
 test-utils = [
