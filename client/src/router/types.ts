@@ -23,6 +23,7 @@ export enum Routes {
   ClientArea = 'clientArea',
   History = 'history',
   Viewer = 'viewer',
+  RecoverAccount = 'recoverAccount',
 }
 
 const routes: Array<RouteRecordRaw> = [
@@ -57,6 +58,19 @@ const routes: Array<RouteRecordRaw> = [
     path: `/${Routes.CreateAccount}`,
     name: Routes.CreateAccount,
     component: () => import('@/views/account/CreateAccountPage.vue'),
+    beforeEnter: (_to, _from, next): boolean => {
+      if (!Env.isAccountEnabled()) {
+        next(`/${Routes.Home}`);
+      } else {
+        next();
+      }
+      return true;
+    },
+  },
+  {
+    path: `/${Routes.RecoverAccount}`,
+    name: Routes.RecoverAccount,
+    component: () => import('@/views/account/RecoverAccountPage.vue'),
     beforeEnter: (_to, _from, next): boolean => {
       if (!Env.isAccountEnabled()) {
         next(`/${Routes.Home}`);

@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { getDefaultDeviceName } from '@/common/device';
-import { getClientConfig, wait } from '@/parsec/internals';
+import { getClientConfig } from '@/parsec/internals';
 import { listAvailableDevices } from '@/parsec/login';
 import {
   AccountAccess,
@@ -12,7 +12,6 @@ import {
   AccountCreateSendValidationEmailError,
   AccountCreateSendValidationEmailErrorTag,
   AccountDeleteProceedError,
-  AccountDeleteProceedErrorTag,
   AccountDeleteSendValidationEmailError,
   AccountFetchOpaqueKeyFromVaultError,
   AccountGetHumanHandleError,
@@ -24,6 +23,9 @@ import {
   AccountLoginWithPasswordError,
   AccountLoginWithPasswordErrorTag,
   AccountLogoutError,
+  AccountRecoverProceedError,
+  AccountRecoverProceedErrorTag,
+  AccountRecoverSendValidationEmailError,
   AccountRegisterNewDeviceError,
   AccountRegisterNewDeviceErrorTag,
   AvailableDevice,
@@ -31,7 +33,6 @@ import {
   DeviceAccessStrategy,
   DeviceSaveStrategyTag,
   HumanHandle,
-  InvitationType,
   RegistrationDevice,
   Result,
   SecretKey,
@@ -39,7 +40,6 @@ import {
 import { generateNoHandleError } from '@/parsec/utils';
 import { libparsec } from '@/plugins/libparsec';
 import { Env } from '@/services/environment';
-import { DateTime } from 'luxon';
 
 function getAccountDefaultDeviceName(): string {
   return `Account_${getDefaultDeviceName()}`;
@@ -76,15 +76,9 @@ class AccountCreationStepper {
     email: string,
     server: string,
   ): Promise<Result<null, AccountCreateSendValidationEmailError>> {
-    let result!: Result<null, AccountCreateSendValidationEmailError>;
-    if (Env.isAccountMocked()) {
-      await wait(1500);
-      result = { ok: true, value: null };
-    } else {
-      result = await libparsec.accountCreate1SendValidationEmail(getClientConfig().configDir, server, email);
-      if (!result.ok) {
-        return result;
-      }
+    const result = await libparsec.accountCreate1SendValidationEmail(getClientConfig().configDir, server, email);
+    if (!result.ok) {
+      return result;
     }
     this.accountInfo = {
       server: server,
@@ -99,40 +93,23 @@ class AccountCreationStepper {
     if (!this.accountInfo) {
       return { ok: false, error: { tag: AccountCreateSendValidationEmailErrorTag.Internal, error: 'invalid_state' } };
     }
-    if (Env.isAccountMocked()) {
-      await wait(1500);
-      return { ok: true, value: null };
-    } else {
-      return await libparsec.accountCreate1SendValidationEmail(
-        getClientConfig().configDir,
-        this.accountInfo.server,
-        this.accountInfo.email,
-      );
-    }
+    return await libparsec.accountCreate1SendValidationEmail(getClientConfig().configDir, this.accountInfo.server, this.accountInfo.email);
   }
 
   async validateCode(code: Array<string>): Promise<Result<null, AccountCreateError>> {
     if (!this.accountInfo) {
       return { ok: false, error: { tag: AccountCreateErrorTag.Internal, error: 'invalid_state' } };
     }
-    if (Env.isAccountMocked()) {
-      await wait(1500);
-      if (code.join('') === 'ABCDEF') {
-        return { ok: true, value: null };
-      }
-      return { ok: false, error: { tag: AccountCreateErrorTag.InvalidValidationCode, error: 'invalid-token' } };
-    } else {
-      const result = await libparsec.accountCreate2CheckValidationCode(
-        getClientConfig().configDir,
-        this.accountInfo.server,
-        code.join(''),
-        this.accountInfo.email,
-      );
-      if (result.ok) {
-        this.code = code;
-      }
-      return result;
+    const result = await libparsec.accountCreate2CheckValidationCode(
+      getClientConfig().configDir,
+      this.accountInfo.server,
+      code.join(''),
+      this.accountInfo.email,
+    );
+    if (result.ok) {
+      this.code = code;
     }
+    return result;
   }
 
   async createAccount(authentication: AccountAccess): Promise<Result<null, AccountCreateError>> {
@@ -142,21 +119,16 @@ class AccountCreationStepper {
     if (authentication.strategy !== AccountAccessStrategy.Password) {
       return { ok: false, error: { tag: AccountCreateErrorTag.Internal, error: 'invalid_authentication' } };
     }
-    if (Env.isAccountMocked()) {
-      await wait(1500);
-      return { ok: true, value: null };
-    } else {
-      return await libparsec.accountCreate3Proceed(
-        getClientConfig().configDir,
-        this.accountInfo.server,
-        this.code.join(''),
-        {
-          label: `${this.accountInfo.firstName} ${this.accountInfo.lastName}`,
-          email: this.accountInfo.email,
-        },
-        authentication.password,
-      );
-    }
+    return await libparsec.accountCreate3Proceed(
+      getClientConfig().configDir,
+      this.accountInfo.server,
+      this.code.join(''),
+      {
+        label: `${this.accountInfo.firstName} ${this.accountInfo.lastName}`,
+        email: this.accountInfo.email,
+      },
+      authentication.password,
+    );
   }
 
   async reset(): Promise<void> {
@@ -237,36 +209,20 @@ class _ParsecAccount {
     authentication: AccountAccess,
     server: string,
   ): Promise<Result<AccountHandle, AccountLoginWithMasterSecretError | AccountLoginWithPasswordError>> {
-    if (Env.isAccountMocked()) {
-      if (!Env.isAccountAutoLoginEnabled()) {
-        await wait(2000);
-      }
-      if (authentication.strategy === AccountAccessStrategy.Password && authentication.password === 'BigP@ssw0rd.') {
-        this.handle = 1;
-        return { ok: true, value: 1 };
-      }
-      return { ok: false, error: { tag: AccountLoginWithPasswordErrorTag.BadPasswordAlgorithm, error: 'Invalid authentication' } };
+    let result: Result<AccountHandle, AccountLoginWithMasterSecretError | AccountLoginWithPasswordError> | undefined;
+    if (authentication.strategy === AccountAccessStrategy.Password) {
+      result = await libparsec.accountLoginWithPassword(getClientConfig().configDir, server, authentication.email, authentication.password);
+    } else if (authentication.strategy === AccountAccessStrategy.MasterSecret) {
+      result = await libparsec.accountLoginWithMasterSecret(getClientConfig().configDir, server, authentication.secret);
     } else {
-      let result: Result<AccountHandle, AccountLoginWithMasterSecretError | AccountLoginWithPasswordError> | undefined;
-      if (authentication.strategy === AccountAccessStrategy.Password) {
-        result = await libparsec.accountLoginWithPassword(
-          getClientConfig().configDir,
-          server,
-          authentication.email,
-          authentication.password,
-        );
-      } else if (authentication.strategy === AccountAccessStrategy.MasterSecret) {
-        result = await libparsec.accountLoginWithMasterSecret(getClientConfig().configDir, server, authentication.secret);
-      } else {
-        return { ok: false, error: { tag: AccountLoginWithPasswordErrorTag.BadPasswordAlgorithm, error: 'Unknown authentication method' } };
-      }
-      if (!result.ok) {
-        return result;
-      }
-      this.handle = result.value;
-      await this.registerAllDevices();
+      return { ok: false, error: { tag: AccountLoginWithPasswordErrorTag.BadPasswordAlgorithm, error: 'Unknown authentication method' } };
+    }
+    if (!result.ok) {
       return result;
     }
+    this.handle = result.value;
+    await this.registerAllDevices();
+    return result;
   }
 
   private async registerAllDevices(): Promise<void> {
@@ -312,10 +268,6 @@ class _ParsecAccount {
     if (!this.handle) {
       return generateNoHandleError<AccountListInvitationsError>();
     }
-    if (Env.isAccountMocked()) {
-      await wait(2000);
-      return { ok: true, value: [{ organizationId: 'BlackMesa', token: 'abcdefgh', type: InvitationType.User }] };
-    }
     const result = await libparsec.accountListInvitations(this.handle);
     if (result.ok) {
       return {
@@ -331,10 +283,6 @@ class _ParsecAccount {
   async listRegistrationDevices(): Promise<Result<Array<RegistrationDevice>, AccountListRegistrationDevicesError>> {
     if (!this.handle) {
       return generateNoHandleError<AccountListRegistrationDevicesError>();
-    }
-    if (Env.isAccountMocked()) {
-      await wait(2000);
-      return { ok: true, value: [] };
     }
     const result = await libparsec.accountListRegistrationDevices(this.handle);
     if (result.ok) {
@@ -354,24 +302,6 @@ class _ParsecAccount {
   async registerNewDevice(registrationDevice: RegistrationDevice): Promise<Result<AvailableDevice, AccountRegisterNewDeviceError>> {
     if (!this.handle) {
       return generateNoHandleError<AccountRegisterNewDeviceError>();
-    }
-    if (Env.isAccountMocked()) {
-      await wait(2000);
-      return {
-        ok: true,
-        value: {
-          keyFilePath: '/',
-          createdOn: DateTime.now(),
-          protectedOn: DateTime.now(),
-          serverUrl: 'parsec3://localhost:6770?no_ssl=true',
-          organizationId: 'BlackMesa',
-          userId: 'abcd',
-          deviceId: 'abcd',
-          humanHandle: { label: 'Gordon Freeman', email: 'gordon.freeman@blackmesa.nm' },
-          deviceLabel: 'HEV Suit',
-          ty: { tag: AvailableDeviceTypeTag.Password },
-        },
-      };
     }
     const keyResult = await libparsec.accountUploadOpaqueKeyInVault(this.handle);
     if (!keyResult.ok) {
@@ -402,10 +332,6 @@ class _ParsecAccount {
     if (!this.handle) {
       return generateNoHandleError<AccountCreateRegistrationDeviceError>();
     }
-    if (Env.isAccountMocked()) {
-      await wait(2000);
-      return { ok: true, value: null };
-    }
     return await libparsec.accountCreateRegistrationDevice(this.handle, accessStrategy);
   }
 
@@ -424,21 +350,12 @@ class _ParsecAccount {
     if (!this.handle) {
       return generateNoHandleError<AccountGetHumanHandleError>();
     }
-    if (Env.isAccountMocked()) {
-      await wait(2000);
-      return { ok: true, value: { email: 'gordon.freeman@blackmesa.nm', label: 'Gordon Freeman' } };
-    } else {
-      return await libparsec.accountGetHumanHandle(this.handle);
-    }
+    return await libparsec.accountGetHumanHandle(this.handle);
   }
 
   async logout(): Promise<Result<null, AccountLogoutError>> {
     if (!this.handle) {
       return generateNoHandleError<AccountLogoutError>();
-    }
-    if (Env.isAccountMocked()) {
-      this.handle = undefined;
-      return { ok: true, value: null };
     }
     const result = await libparsec.accountLogout(this.handle);
     if (result.ok) {
@@ -451,44 +368,51 @@ class _ParsecAccount {
     if (!this.handle) {
       return generateNoHandleError<AccountDeleteSendValidationEmailError>();
     }
-    if (Env.isAccountMocked()) {
-      await wait(2000);
-      return { ok: true, value: null };
-    } else {
-      return await libparsec.accountDelete1SendValidationEmail(this.handle);
-    }
+    return await libparsec.accountDelete1SendValidationEmail(this.handle);
   }
 
   async confirmAccountDeletion(code: Array<string>): Promise<Result<null, AccountDeleteProceedError>> {
     if (!this.handle) {
       return generateNoHandleError<AccountDeleteProceedError>();
     }
-    if (Env.isAccountMocked()) {
-      await wait(2000);
-      if (code.join('') !== 'ABCDEF') {
-        return { ok: false, error: { tag: AccountDeleteProceedErrorTag.InvalidValidationCode, error: 'invalid-code' } };
-      }
+    const result = await libparsec.accountDelete2Proceed(this.handle, code.join(''));
+    if (result.ok) {
+      await libparsec.accountLogout(this.handle);
       this.handle = undefined;
-      return { ok: true, value: null };
-    } else {
-      const result = await libparsec.accountDelete2Proceed(this.handle, code.join(''));
-      if (result.ok) {
-        await libparsec.accountLogout(this.handle);
-        this.handle = undefined;
-      }
-      return result;
     }
+    return result;
   }
 
   async fetchKeyFromVault(cipherKeyId: string): Promise<Result<SecretKey, AccountFetchOpaqueKeyFromVaultError>> {
     if (!this.handle) {
       return generateNoHandleError<AccountFetchOpaqueKeyFromVaultError>();
     }
-    if (Env.isAccountMocked()) {
-      await wait(2000);
-      return { ok: true, value: new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]) };
-    }
     return await libparsec.accountFetchOpaqueKeyFromVault(this.handle, cipherKeyId);
+  }
+
+  async recoveryRequest(email: string, server: string): Promise<Result<null, AccountRecoverSendValidationEmailError>> {
+    return await libparsec.accountRecover1SendValidationEmail(getClientConfig().configDir, server, email);
+  }
+
+  async recoveryProceed(
+    authentication: AccountAccess,
+    code: Array<string>,
+    server: string,
+  ): Promise<Result<null, AccountRecoverProceedError>> {
+    if (authentication.strategy !== AccountAccessStrategy.Password) {
+      return { ok: false, error: { tag: AccountRecoverProceedErrorTag.Internal, error: 'invalid_authentication' } };
+    }
+    return await libparsec.accountRecover2Proceed(
+      getClientConfig().configDir,
+      server,
+      code.join(''),
+      authentication.email,
+      authentication.password,
+    );
+  }
+
+  async sendRecoveryEmail(email: string, server: string): Promise<Result<null, AccountRecoverSendValidationEmailError>> {
+    return await libparsec.accountRecover1SendValidationEmail(getClientConfig().configDir, server, email);
   }
 }
 
