@@ -4,7 +4,8 @@
   <ion-page>
     <ion-header
       id="connected-header"
-      v-show="showHeader"
+      class="header-transition"
+      :class="{ 'header-hidden': !showHeader }"
     >
       <ion-toolbar
         v-if="showHeader"
@@ -115,7 +116,7 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content>
+    <ion-content class="content-transition">
       <ion-router-outlet />
     </ion-content>
   </ion-page>
@@ -144,6 +145,7 @@ import {
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import useSidebarMenu from '@/services/sidebarMenu';
+import useHeaderControl from '@/services/headerControl';
 import { Translatable, MsImage, SidebarToggle, useWindowSize } from 'megashark-lib';
 import NotificationCenterPopover from '@/views/header/NotificationCenterPopover.vue';
 import NotificationCenterModal from '@/views/header/NotificationCenterModal.vue';
@@ -173,6 +175,7 @@ const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 let hotkeys: HotkeyGroup | null = null;
 const workspaceName = ref('');
 const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu, hide: hideSidebarMenu } = useSidebarMenu();
+const { isHeaderVisible } = useHeaderControl();
 const userInfo: Ref<ClientInfo | null> = ref(null);
 const fullPath: Ref<RouterPathNode[]> = ref([]);
 const notificationPopoverIsVisible: Ref<boolean> = ref(false);
@@ -180,7 +183,15 @@ const informationManager: InformationManager = inject(InformationManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 const notificationCenterButtonRef = useTemplateRef('notificationCenterButton');
 const showHeader = computed(() => {
-  if (isSmallDisplay.value && (currentRouteIs(Routes.Organization) || currentRouteIs(Routes.MyProfile))) {
+  // Override for dynamic header control (used in FileEditor)
+  if (currentRouteIs(Routes.Editor)) {
+    return isHeaderVisible.value;
+  }
+
+  // Default behavior for other routes
+  if (isSmallDisplay.value && (
+    currentRouteIs(Routes.Organization) || currentRouteIs(Routes.MyProfile)
+  )) {
     return false;
   }
   return true;

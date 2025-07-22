@@ -9,6 +9,7 @@ import { ConfigEnv, defineConfig, loadEnv, PluginOption, UserConfigFnObject } fr
 import topLevelAwait from 'vite-plugin-top-level-await';
 // eslint-disable-next-line no-relative-import-paths/no-relative-import-paths
 import wasmPack from './scripts/vite_plugin_wasm_pack';
+import basicSsl from '@vitejs/plugin-basic-ssl';
 
 const plugins: PluginOption[] = [vue(), topLevelAwait()];
 // Web workers are packaged separately and rely on their own set of plugins.
@@ -83,6 +84,11 @@ if (process.env.PARSEC_APP_SENTRY_AUTH_TOKEN) {
   workerPluginsFactories.push(sentryPluginFactory);
 } else {
   console.log('PARSEC_APP_SENTRY_AUTH_TOKEN is not set');
+}
+
+// 3) Add dev specific plugins
+if (process.env.NODE_ENV === 'development') {
+  plugins.push(basicSsl());
 }
 
 // 3) Finally configure Vite
