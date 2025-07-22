@@ -51,6 +51,7 @@ class UserDump:
     # Initial profile + subsequent profile updates, ordered oldest to newest.
     profile_history: list[tuple[DateTime, UserProfile]]
     devices: list[DeviceID]
+    frozen: bool
 
     @property
     def current_profile(self) -> UserProfile:

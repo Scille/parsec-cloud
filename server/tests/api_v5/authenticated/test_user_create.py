@@ -131,6 +131,7 @@ async def test_authenticated_user_create_ok(
         created_on=t1,
         human_handle=NEW_MIKE_HUMAN_HANDLE,
         revoked_on=None,
+        frozen=False,
     )
     expected_topics = await backend.organization.test_dump_topics(minimalorg.organization_id)
     expected_topics.common = t1

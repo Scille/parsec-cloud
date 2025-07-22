@@ -115,7 +115,6 @@ WITH my_organization AS (
 my_user AS (
     SELECT
         _id,
-        frozen,
         (revoked_on IS NOT NULL) AS revoked,
         user_id,
         current_profile
@@ -152,7 +151,6 @@ SELECT
     (SELECT allowed_client_agent FROM my_organization) AS organization_allowed_client_agent,
     (SELECT account_vault_strategy FROM my_organization) AS organization_account_vault_strategy,
     (SELECT _id FROM my_user) AS user_internal_id,
-    (SELECT frozen FROM my_user) AS user_is_frozen,
     (SELECT revoked FROM my_user) AS user_is_revoked,
     (SELECT user_id FROM my_user) AS user_id,
     (SELECT current_profile FROM my_user) AS user_current_profile,
@@ -248,14 +246,6 @@ class PGEventsComponent(BaseEventsComponent):
         match row["user_id"]:
             case str() as raw_user_id:
                 user_id = UserID.from_hex(raw_user_id)
-            case _:
-                assert False, row
-
-        match row["user_is_frozen"]:
-            case False:
-                pass
-            case True:
-                return SseAPiEventsListenBadOutcome.AUTHOR_REVOKED
             case _:
                 assert False, row
 

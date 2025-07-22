@@ -108,6 +108,12 @@ CREATE TABLE user_ (
     -- This field is altered in an `ALTER TABLE` statement below
     -- in order to avoid cross-reference issues
     shamir_recovery INTEGER,
+    -- `frozen` is just a service-side access control flag to indicate the
+    -- user should not be allowed to authenticate anymore.
+    -- From a data consistency point of view, it is okay to let a frozen user
+    -- do anything it should normally be allowed to do.
+    -- For this reason, this check is expected to be enforced loosely during
+    -- authentication (so outside of the current operation actual transaction).
     frozen BOOLEAN NOT NULL DEFAULT FALSE,
     current_profile USER_PROFILE NOT NULL,
     -- NULL if no End User License Agreement has been accepted

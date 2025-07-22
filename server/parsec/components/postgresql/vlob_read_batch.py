@@ -45,7 +45,6 @@ my_device AS (
 my_user AS (
     SELECT
         _id,
-        frozen,
         (revoked_on IS NOT NULL) AS revoked
     FROM user_
     WHERE _id = (SELECT user_ FROM my_device)
@@ -65,7 +64,6 @@ SELECT
     (SELECT _id FROM my_organization) AS organization_internal_id,
     (SELECT is_expired FROM my_organization) AS organization_is_expired,
     (SELECT _id FROM my_device) AS device_internal_id,
-    (SELECT frozen FROM my_user) AS user_is_frozen,
     (SELECT revoked FROM my_user) AS user_is_revoked,
     (
         SELECT last_timestamp
@@ -178,14 +176,6 @@ async def vlob_read_batch(
             pass
         case None:
             return VlobReadAsUserBadOutcome.AUTHOR_NOT_FOUND
-        case _:
-            assert False, row
-
-    match row["user_is_frozen"]:
-        case False:
-            pass
-        case True:
-            return VlobReadAsUserBadOutcome.AUTHOR_REVOKED
         case _:
             assert False, row
 
