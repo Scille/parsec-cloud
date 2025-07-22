@@ -192,8 +192,8 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                 rvk = None
             case bytes() as root_verify_key:
                 rvk = VerifyKey(root_verify_key)
-            case unknown:
-                assert False, unknown
+            case _:
+                assert False, row
 
         match (row["sequester_authority_certificate"], row["sequester_authority_verify_key_der"]):
             # Sequester services certificates is None if sequester is not enabled
@@ -217,8 +217,8 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                     service["service_certificate"] for service in services
                 )
 
-            case unknown:
-                assert False, unknown
+            case _:
+                assert False, row
 
         raw_bootstrap_token = row["bootstrap_token"]
         bootstrap_token = (
@@ -241,26 +241,26 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                     per_locale_urls=tos_per_locale_urls,
                 )
 
-            case unknown:
-                assert False, unknown
+            case _:
+                assert False, row
 
         match row["allowed_client_agent"]:
             case str() as allowed_client_agent_raw:
                 allowed_client_agent = AllowedClientAgent(allowed_client_agent_raw)
-            case unknown:
-                assert False, unknown
+            case _:
+                assert False, row
 
         match row["account_vault_strategy"]:
             case str() as account_vault_strategy_raw:
                 account_vault_strategy = AccountVaultStrategy(account_vault_strategy_raw)
-            case unknown:
-                assert False, unknown
+            case _:
+                assert False, row
 
         match row["minimum_archiving_period"]:
             case int() as minimum_archiving_period if minimum_archiving_period >= 0:
                 pass
-            case unknown:
-                assert False, unknown
+            case _:
+                assert False, row
 
         return Organization(
             organization_id=id,

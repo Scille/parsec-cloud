@@ -70,16 +70,16 @@ async def realm_get_current_realms_for_user(
             pass
         case None:
             return RealmGetCurrentRealmsForUserBadOutcome.ORGANIZATION_NOT_FOUND
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["user_internal_id"]:
         case int() as user_internal_id:
             pass
         case None:
             return RealmGetCurrentRealmsForUserBadOutcome.USER_NOT_FOUND
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     rows = await conn.fetch(*_q_get_realms_for_user(user_internal_id=user_internal_id))
     user_realms = {}

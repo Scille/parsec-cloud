@@ -216,22 +216,22 @@ async def realm_share(
             pass
         case None:
             return RealmShareStoreBadOutcome.RECIPIENT_NOT_FOUND
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["recipient_is_revoked"]:
         case False:
             pass
         case True:
             return RealmShareStoreBadOutcome.RECIPIENT_REVOKED
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["recipient_current_profile"]:
         case str() as raw_recipient_current_profile:
             recipient_current_profile = UserProfile.from_str(raw_recipient_current_profile)
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     # 4.2) Check author is allowed to share recipient
 
@@ -240,8 +240,8 @@ async def realm_share(
             recipient_current_role = RealmRole.from_str(raw_recipient_current_role)
         case None as recipient_current_role:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     owner_only = (RealmRole.OWNER,)
     owner_or_manager = (RealmRole.OWNER, RealmRole.MANAGER)
@@ -276,14 +276,14 @@ async def realm_share(
             return BadKeyIndex(
                 last_realm_certificate_timestamp=db_realm.last_realm_certificate_timestamp
             )
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["last_key_index"]:
         case int() as last_key_index:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     if key_index != last_key_index:
         return BadKeyIndex(
@@ -305,8 +305,8 @@ async def realm_share(
                 db_common.last_common_certificate_timestamp,
                 db_realm.last_realm_certificate_timestamp,
             )
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     if last_timestamp >= certif.timestamp:
         return RequireGreaterTimestamp(strictly_greater_than=last_timestamp)
@@ -330,8 +330,8 @@ async def realm_share(
     match row["update_realm_topic_ok"]:
         case True:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     await send_signal(
         conn,

@@ -196,22 +196,22 @@ class PGEventsComponent(BaseEventsComponent):
                 pass
             case None:
                 return SseAPiEventsListenBadOutcome.ORGANIZATION_NOT_FOUND
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["organization_is_expired"]:
             case False:
                 pass
             case True:
                 return SseAPiEventsListenBadOutcome.ORGANIZATION_EXPIRED
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["organization_user_profile_outsider_allowed"]:
             case bool() as organization_user_profile_outsider_allowed:
                 pass
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["organization_active_users_limit"]:
             case None as organization_active_users_limit:
@@ -220,20 +220,20 @@ class PGEventsComponent(BaseEventsComponent):
                 organization_active_users_limit = ActiveUsersLimit.limited_to(
                     organization_active_users_limit
                 )
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["organization_allowed_client_agent"]:
             case str() as allowed_client_agent_raw:
                 allowed_client_agent = AllowedClientAgent(allowed_client_agent_raw)
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["organization_account_vault_strategy"]:
             case str() as account_vault_strategy_raw:
                 account_vault_strategy = AccountVaultStrategy(account_vault_strategy_raw)
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         # 2) Check user
 
@@ -242,36 +242,36 @@ class PGEventsComponent(BaseEventsComponent):
                 pass
             case None:
                 return SseAPiEventsListenBadOutcome.AUTHOR_NOT_FOUND
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["user_id"]:
             case str() as raw_user_id:
                 user_id = UserID.from_hex(raw_user_id)
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["user_is_frozen"]:
             case False:
                 pass
             case True:
                 return SseAPiEventsListenBadOutcome.AUTHOR_REVOKED
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["user_is_revoked"]:
             case False:
                 pass
             case True:
                 return SseAPiEventsListenBadOutcome.AUTHOR_REVOKED
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["user_current_profile"]:
             case str() as raw_user_current_profile:
                 user_current_profile = UserProfile.from_str(raw_user_current_profile)
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         # 3) Check realms
 
@@ -280,8 +280,8 @@ class PGEventsComponent(BaseEventsComponent):
                 user_realms = set(VlobID.from_hex(x) for x in raw_user_realms)
             case None:
                 user_realms = set()
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         org_config = EventOrganizationConfig(
             organization_id=organization_id,

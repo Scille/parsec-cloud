@@ -181,8 +181,8 @@ async def realm_unshare(
             pass
         case None:
             return RealmUnshareStoreBadOutcome.RECIPIENT_NOT_FOUND
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     # 4.2) Check author is allowed to unshare recipient
 
@@ -193,8 +193,8 @@ async def realm_unshare(
             return CertificateBasedActionIdempotentOutcome(
                 certificate_timestamp=db_realm.last_realm_certificate_timestamp
             )
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match (db_realm.realm_user_current_role, recipient_current_role):
         # OWNER can remove any role
@@ -221,8 +221,8 @@ async def realm_unshare(
                 db_common.last_common_certificate_timestamp,
                 db_realm.last_realm_certificate_timestamp,
             )
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     if last_timestamp >= certif.timestamp:
         return RequireGreaterTimestamp(strictly_greater_than=last_timestamp)
@@ -243,8 +243,8 @@ async def realm_unshare(
     match row["update_realm_topic_ok"]:
         case True:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     await send_signal(
         conn,

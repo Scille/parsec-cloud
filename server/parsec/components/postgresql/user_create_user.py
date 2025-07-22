@@ -244,38 +244,38 @@ async def user_create_user(
             pass
         case True:
             return UserCreateUserStoreBadOutcome.HUMAN_HANDLE_ALREADY_TAKEN
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["active_users_limit_reached"]:
         case False:
             pass
         case True:
             return UserCreateUserStoreBadOutcome.ACTIVE_USERS_LIMIT_REACHED
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["insert_new_user_ok"]:
         case True:
             pass
         case False:
             return UserCreateUserStoreBadOutcome.USER_ALREADY_EXISTS
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["insert_new_device_ok"]:
         case True:
             pass
         case False:
             return UserCreateUserStoreBadOutcome.USER_ALREADY_EXISTS
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["update_common_topic_ok"]:
         case True:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     await send_signal(
         conn,

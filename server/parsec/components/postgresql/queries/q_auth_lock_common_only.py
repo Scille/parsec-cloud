@@ -141,22 +141,22 @@ async def _do_query(
             pass
         case None:
             return AuthAndLockCommonOnlyBadOutcome.ORGANIZATION_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["organization_is_expired"]:
         case False:
             pass
         case True:
             return AuthAndLockCommonOnlyBadOutcome.ORGANIZATION_EXPIRED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["organization_is_sequestered"]:
         case bool() as organization_is_sequestered:
             pass
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # 2) Check device & user
 
@@ -165,52 +165,52 @@ async def _do_query(
             pass
         case None:
             return AuthAndLockCommonOnlyBadOutcome.AUTHOR_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # Since device exists, its corresponding user must also exist
 
     match row["user_internal_id"]:
         case int() as user_internal_id:
             pass
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["user_id"]:
         case str() as raw_user_id:
             user_id = UserID.from_hex(raw_user_id)
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["user_is_frozen"]:
         case False:
             pass
         case True:
             return AuthAndLockCommonOnlyBadOutcome.AUTHOR_REVOKED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["user_is_revoked"]:
         case False:
             pass
         case True:
             return AuthAndLockCommonOnlyBadOutcome.AUTHOR_REVOKED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["user_current_profile"]:
         case str() as raw_user_current_profile:
             user_current_profile = UserProfile.from_str(raw_user_current_profile)
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # 3) Check topics
 
     match row["last_common_certificate_timestamp"]:
         case DateTime() as last_common_certificate_timestamp:
             pass
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     return AuthAndLockCommonOnlyData(
         organization_internal_id=organization_internal_id,

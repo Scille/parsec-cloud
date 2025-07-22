@@ -148,24 +148,24 @@ async def user_update_user(
     match row["recipient_internal_id"]:
         case int() as recipient_internal_id:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["recipient_is_revoked"]:
         case False:
             pass
         case True:
             return UserUpdateUserStoreBadOutcome.USER_REVOKED
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["recipient_current_profile"]:
         case str() as raw_recipient_current_profile:
             recipient_current_profile = UserProfile.from_str(raw_recipient_current_profile)
             if certif.new_profile == recipient_current_profile:
                 return UserUpdateUserStoreBadOutcome.USER_NO_CHANGES
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     # 3.2) Ensure we are not breaking causality by adding a newer timestamp.
 
@@ -208,14 +208,14 @@ async def user_update_user(
     match row["update_user_ok"]:
         case True:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["update_common_topic_ok"]:
         case True:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     await send_signal(
         conn,

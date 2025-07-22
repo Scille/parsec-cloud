@@ -133,7 +133,7 @@ async def _do_lock_realm(
         case None:
             return LockRealmWriteRealmBadOutcome.REALM_NOT_FOUND
         case unknown:
-            assert False, repr(unknown)
+            assert False, unknown
 
     row = await conn.fetchrow(
         *_q_realm_info_after_lock(
@@ -149,24 +149,24 @@ async def _do_lock_realm(
     match row["realm_key_index"]:
         case int() as realm_key_index:
             pass
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["realm_user_current_role"]:
         case str() as raw_realm_user_current_role:
             realm_user_current_role = RealmRole.from_str(raw_realm_user_current_role)
         case None:
             return LockRealmWriteRealmBadOutcome.USER_NOT_IN_REALM
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # 2) Check topics
 
     match row["last_realm_certificate_timestamp"]:
         case DateTime() as last_realm_certificate_timestamp:
             pass
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     return LockRealmWriteRealmData(
         last_realm_certificate_timestamp=last_realm_certificate_timestamp,

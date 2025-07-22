@@ -72,48 +72,48 @@ async def sequester_get_service(
             pass
         case False:
             return SequesterGetServiceBadOutcome.ORGANIZATION_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["organization_is_sequestered"]:
         case True:
             pass
         case False:
             return SequesterGetServiceBadOutcome.SEQUESTER_DISABLED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["service_id"]:
         case str() as raw_service_id:
             service_id = SequesterServiceID.from_hex(raw_service_id)
         case None:
             return SequesterGetServiceBadOutcome.SEQUESTER_SERVICE_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["service_label"]:
         case str() as service_label:
             pass
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["service_certificate"]:
         case bytes() as service_certificate:
             pass
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["created_on"]:
         case DateTime() as created_on:
             pass
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["revoked_on"]:
         case DateTime() | None as revoked_on:
             pass
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match (row["service_type"], row["webhook_url"]):
         case SequesterServiceType.STORAGE.name, None:
@@ -133,8 +133,8 @@ async def sequester_get_service(
                 revoked_on=revoked_on,
                 webhook_url=webhook_url,
             )
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     return service
 
@@ -210,16 +210,16 @@ async def sequester_get_organization_services(
             pass
         case False:
             return SequesterGetOrganizationServicesBadOutcome.ORGANIZATION_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, first_row
 
     match first_row["organization_is_sequestered"]:
         case True:
             pass
         case False:
             return SequesterGetOrganizationServicesBadOutcome.SEQUESTER_DISABLED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, first_row
 
     # Then following rows are services
 
@@ -228,32 +228,32 @@ async def sequester_get_organization_services(
         match row["service_id"]:
             case str() as raw_service_id:
                 service_id = SequesterServiceID.from_hex(raw_service_id)
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["service_label"]:
             case str() as service_label:
                 pass
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["service_certificate"]:
             case bytes() as service_certificate:
                 pass
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["created_on"]:
             case DateTime() as created_on:
                 pass
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match row["revoked_on"]:
             case DateTime() | None as revoked_on:
                 pass
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         match (row["service_type"], row["webhook_url"]):
             case SequesterServiceType.STORAGE.name, None:
@@ -273,8 +273,8 @@ async def sequester_get_organization_services(
                     revoked_on=revoked_on,
                     webhook_url=webhook_url,
                 )
-            case unknown:
-                assert False, repr(unknown)
+            case _:
+                assert False, row
 
         services.append(service)
 

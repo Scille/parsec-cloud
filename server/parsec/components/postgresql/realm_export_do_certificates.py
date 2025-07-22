@@ -162,16 +162,16 @@ async def realm_export_do_certificates(
             pass
         case None:
             return RealmExportDoCertificatesBadOutcome.ORGANIZATION_NOT_FOUND
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["realm_internal_id"]:
         case int() as realm_internal_id:
             pass
         case None:
             return RealmExportDoCertificatesBadOutcome.REALM_NOT_FOUND
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     rows = await conn.fetch(
         *_q_get_certificates(

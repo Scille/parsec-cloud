@@ -81,16 +81,16 @@ async def realm_export_do_vlobs_batch(
             pass
         case None:
             return RealmExportDoVlobsBatchBadOutcome.ORGANIZATION_NOT_FOUND
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["realm_internal_id"]:
         case int() as realm_internal_id:
             pass
         case None:
             return RealmExportDoVlobsBatchBadOutcome.REALM_NOT_FOUND
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     rows = await conn.fetch(
         *_q_get_vlobs_batch(
@@ -106,44 +106,44 @@ async def realm_export_do_vlobs_batch(
         match row["vlob_atom_internal_id"]:
             case int() as vlob_atom_internal_id:
                 pass
-            case unknown:
-                assert False, unknown
+            case _:
+                assert False, row
 
         match row["vlob_id"]:
             case str() as raw_vlob_id:
                 vlob_id = VlobID.from_hex(raw_vlob_id)
-            case unknown:
-                assert False, unknown
+            case _:
+                assert False, row
 
         match row["version"]:
             case int() as version:
                 pass
-            case unknown:
-                assert False, unknown
+            case _:
+                assert False, row
 
         match row["key_index"]:
             case int() as key_index:
                 pass
-            case unknown:
-                assert False, unknown
+            case _:
+                assert False, row
 
         match row["blob"]:
             case bytes() as blob:
                 pass
-            case unknown:
-                assert False, unknown
+            case _:
+                assert False, row
 
         match row["author"]:
             case str() as raw_author:
                 author = DeviceID.from_hex(raw_author)
-            case unknown:
-                assert False, unknown
+            case _:
+                assert False, row
 
         match row["created_on"]:
             case DateTime() as created_on:
                 pass
-            case unknown:
-                assert False, unknown
+            case _:
+                assert False, row
 
         items.append(
             RealmExportVlobsBatchItem(

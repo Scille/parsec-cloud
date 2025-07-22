@@ -139,28 +139,28 @@ async def user_freeze_user(
             pass
         case False:
             return UserFreezeUserBadOutcome.ORGANIZATION_NOT_FOUND
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["user_id"]:
         case str() as raw_user_id:
             user_id = UserID.from_hex(raw_user_id)
         case None:
             return UserFreezeUserBadOutcome.USER_NOT_FOUND
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["human_handle_email"]:
         case str() as raw_human_handle_email:
             human_handle_email = EmailAddress(raw_human_handle_email)
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["human_handle_label"]:
         case str() as human_handle_label:
             pass
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     human_handle = HumanHandle(
         email=human_handle_email,

@@ -86,21 +86,21 @@ async def sequester_update_config_for_service(
             pass
         case False:
             return SequesterUpdateConfigForServiceStoreBadOutcome.ORGANIZATION_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["organization_is_sequestered"]:
         case True:
             pass
         case False:
             return SequesterUpdateConfigForServiceStoreBadOutcome.SEQUESTER_DISABLED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["service_exists"]:
         case True:
             pass
         case False:
             return SequesterUpdateConfigForServiceStoreBadOutcome.SEQUESTER_SERVICE_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row

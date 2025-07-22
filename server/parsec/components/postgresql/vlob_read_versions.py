@@ -138,16 +138,16 @@ async def vlob_read_versions(
             pass
         case None:
             return VlobReadAsUserBadOutcome.ORGANIZATION_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["organization_is_expired"]:
         case False:
             pass
         case True:
             return VlobReadAsUserBadOutcome.ORGANIZATION_EXPIRED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # 1.2) Check device & user
 
@@ -156,40 +156,40 @@ async def vlob_read_versions(
             pass
         case None:
             return VlobReadAsUserBadOutcome.AUTHOR_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["user_is_frozen"]:
         case False:
             pass
         case True:
             return VlobReadAsUserBadOutcome.AUTHOR_REVOKED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["user_is_revoked"]:
         case False:
             pass
         case True:
             return VlobReadAsUserBadOutcome.AUTHOR_REVOKED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # 1.3) Check topics
 
     match row["last_common_certificate_timestamp"]:
         case DateTime() as last_common_certificate_timestamp:
             pass
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["last_realm_certificate_timestamp"]:
         case DateTime() as last_realm_certificate_timestamp:
             pass
         case None:
             return VlobReadAsUserBadOutcome.REALM_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # 1.4) Check realm access
     # (Note since realm topic exists, then the realm also exist !)
@@ -197,16 +197,16 @@ async def vlob_read_versions(
     match row["realm_internal_id"]:
         case int() as realm_internal_id:
             pass
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     match row["user_can_read"]:
         case True:
             pass
         case False:
             return VlobReadAsUserBadOutcome.AUTHOR_NOT_ALLOWED
-        case unknown:
-            assert False, repr(unknown)
+        case _:
+            assert False, row
 
     # 2) Checks are good, we can retrieve the vlobs
 

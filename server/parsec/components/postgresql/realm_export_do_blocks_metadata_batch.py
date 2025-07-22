@@ -77,16 +77,16 @@ async def realm_export_do_blocks_metadata_batch(
             pass
         case None:
             return RealmExportDoBlocksBatchMetadataBadOutcome.ORGANIZATION_NOT_FOUND
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     match row["realm_internal_id"]:
         case int() as realm_internal_id:
             pass
         case None:
             return RealmExportDoBlocksBatchMetadataBadOutcome.REALM_NOT_FOUND
-        case unknown:
-            assert False, unknown
+        case _:
+            assert False, row
 
     rows = await conn.fetch(
         *_q_get_blocks_metadata_batch(
@@ -102,32 +102,32 @@ async def realm_export_do_blocks_metadata_batch(
         match row["block_internal_id"]:
             case int() as block_internal_id:
                 pass
-            case unknown:
-                assert False, unknown
+            case _:
+                assert False, row
 
         match row["block_id"]:
             case str() as raw_block_id:
                 block_id = BlockID.from_hex(raw_block_id)
-            case unknown:
-                assert False, unknown
+            case _:
+                assert False, row
 
         match row["author"]:
             case str() as raw_author:
                 author = DeviceID.from_hex(raw_author)
-            case unknown:
-                assert False, unknown
+            case _:
+                assert False, row
 
         match row["key_index"]:
             case int() as key_index:
                 pass
-            case unknown:
-                assert False, unknown
+            case _:
+                assert False, row
 
         match row["size"]:
             case int() as size:
                 pass
-            case unknown:
-                assert False, unknown
+            case _:
+                assert False, row
 
         items.append(
             RealmExportBlocksMetadataBatchItem(
