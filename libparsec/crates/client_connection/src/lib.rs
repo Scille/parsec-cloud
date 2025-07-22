@@ -70,6 +70,13 @@ pub fn build_client_with_proxy(
     proxy: ProxyConfig,
 ) -> libparsec_types::anyhow::Result<reqwest::Client> {
     let builder = reqwest::ClientBuilder::default().user_agent(CLIENT_USER_AGENT);
+
+    // Configure the minimum accepted TLS version, ideally we would use TLSv1.3 as Parsec is
+    // recent and does not need to support legacy configuration.
+    // But we are limited by `native-tls` that does not support that version.
+    #[cfg(not(target_arch = "wasm32"))]
+    let builder = builder.min_tls_version(reqwest::tls::Version::TLS_1_2);
+
     #[cfg(not(target_arch = "wasm32"))]
     let builder = if let Some(cafile) = std::env::var_os("SSL_CAFILE") {
         use libparsec_types::anyhow::Context;
@@ -83,7 +90,9 @@ pub fn build_client_with_proxy(
     } else {
         builder
     };
+
     let builder = proxy.configure_http_client(builder);
+
     Ok(builder.build()?)
 }
 
