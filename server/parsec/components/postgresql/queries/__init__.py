@@ -6,16 +6,16 @@ from parsec.components.postgresql.queries.q_auth_lock_common_only import (
     auth_and_lock_common_read,
     auth_and_lock_common_write,
 )
-from parsec.components.postgresql.queries.q_auth_lock_realm import (
-    LockRealmWriteRealmBadOutcome,
-    LockRealmWriteRealmData,
-    lock_realm_read,
-    lock_realm_write,
-)
 from parsec.components.postgresql.queries.q_auth_no_lock import (
     AuthNoLockBadOutcome,
     AuthNoLockData,
     auth_no_lock,
+)
+from parsec.components.postgresql.queries.q_lock_realm import (
+    LockRealmWriteRealmBadOutcome,
+    LockRealmWriteRealmData,
+    lock_realm_read,
+    lock_realm_write,
 )
 from parsec.components.postgresql.queries.q_lock_shamir import (
     LockShamirData,
