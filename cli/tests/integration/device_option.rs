@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use libparsec::{tmp_path, HumanHandle, LocalDevice, TmpPath};
+use libparsec::{tmp_path, HumanHandle, LocalDevice, ParsecAddr, TmpPath};
 use predicates::prelude::PredicateBooleanExt;
 
 use super::bootstrap_cli_test;
@@ -63,9 +63,11 @@ fn format_devices(
         let organization_id = &device.organization_id();
         let human_handle = &device.human_handle;
         let device_label = &device.device_label;
+        let server_url = ParsecAddr::from(&device.organization_addr).to_http_url(None);
+
         writeln!(
             writer,
-            "{YELLOW}{short_id}{RESET} - {organization_id}: {human_handle} @ {device_label}"
+            "{YELLOW}{short_id}{RESET} - {organization_id}: {human_handle} @ {device_label} ({server_url})"
         )?;
     }
     Ok(())

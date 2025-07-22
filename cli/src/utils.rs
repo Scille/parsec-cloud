@@ -48,9 +48,10 @@ pub fn format_devices(
         let organization_id = &device.organization_id;
         let human_handle = &device.human_handle;
         let device_label = &device.device_label;
+        let server_url = &device.server_url;
         writeln!(
             f,
-            "{YELLOW}{short_id}{RESET} - {organization_id}: {human_handle} @ {device_label}"
+            "{YELLOW}{short_id}{RESET} - {organization_id}: {human_handle} @ {device_label} ({server_url})"
         )?;
     }
 
