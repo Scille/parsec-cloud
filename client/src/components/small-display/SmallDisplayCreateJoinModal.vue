@@ -83,7 +83,7 @@ async function onCloseRequested(): Promise<void> {
 
   &__description {
     color: var(--parsec-color-light-secondary-soft-text);
-    margin: 0 0.5rem 1rem;
+    margin-bottom: 1rem;
   }
 }
 
