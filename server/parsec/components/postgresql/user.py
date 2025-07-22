@@ -26,7 +26,6 @@ from parsec.components.postgresql.user_freeze_user import user_freeze_user
 from parsec.components.postgresql.user_get_certificates import user_get_certificates
 from parsec.components.postgresql.user_get_user_info import (
     user_get_user_info,
-    user_get_user_info_from_email,
 )
 from parsec.components.postgresql.user_list_active_users import user_list_active_users
 from parsec.components.postgresql.user_list_frozen_users import user_list_frozen_users
@@ -253,11 +252,6 @@ class PGUserComponent(BaseUserComponent):
         self, conn: AsyncpgConnection, organization_id: OrganizationID, user_id: UserID
     ) -> UserInfo | None:
         return await user_get_user_info(conn, organization_id, user_id)
-
-    async def get_user_info_from_email(
-        self, conn: AsyncpgConnection, organization_id: OrganizationID, email: EmailAddress
-    ) -> UserInfo | None:
-        return await user_get_user_info_from_email(conn, organization_id, email)
 
     @override
     @no_transaction
