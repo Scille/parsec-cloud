@@ -1225,6 +1225,9 @@ async def _human_handle_from_user_id(
     return None
 
 
+# TODO: Rework the methods to:
+#       - be implemented in separate files
+#       - no longer depend on other components for the SQL queries
 class PGInviteComponent(BaseInviteComponent):
     def __init__(self, pool: AsyncpgPool, config: BackendConfig) -> None:
         super().__init__(config)
@@ -1557,7 +1560,7 @@ class PGInviteComponent(BaseInviteComponent):
         if invitation_info.is_cancelled():
             return InviteCancelBadOutcome.INVITATION_ALREADY_CANCELLED
 
-        match await self.user.get_user_info(conn, organization_id, author_user_id):
+        match await self.user._get_user_info(conn, organization_id, author_user_id):
             case UserInfo() as author_info:
                 pass
             case None:
@@ -2590,7 +2593,7 @@ class PGInviteComponent(BaseInviteComponent):
         if invitation_info.is_cancelled():
             return InviteCompleteBadOutcome.INVITATION_CANCELLED
 
-        match await self.user.get_user_info(conn, organization_id, author_user_id):
+        match await self.user._get_user_info(conn, organization_id, author_user_id):
             case UserInfo() as author_info:
                 pass
             case None:
