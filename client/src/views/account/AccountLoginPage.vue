@@ -32,6 +32,12 @@
               label="loginPage.inputFields.password"
               @on-enter-keyup="onLoginClicked()"
             />
+            <ion-button
+              class="input-password__forgot-password button-medium"
+              @click="recoverAccount"
+            >
+              {{ $msTranslate('loginPage.forgotPassword') }}
+            </ion-button>
           </div>
         </div>
         <!-- server -->
@@ -70,6 +76,7 @@
 import { IonButton, IonText, IonIcon } from '@ionic/vue';
 import { MsInput, MsPasswordInput, Translatable, Validity, MsSpinner } from 'megashark-lib';
 import { emailValidator, parsecAddrValidator } from '@/common/validators';
+import { navigateTo, Routes } from '@/router';
 import { warning } from 'ionicons/icons';
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
 import { Env } from '@/services/environment';
@@ -115,6 +122,10 @@ onMounted(async () => {
   }
   await serverInputRef.value?.validate(server.value);
 });
+
+async function recoverAccount(): Promise<void> {
+  await navigateTo(Routes.RecoverAccount, { skipHandle: true });
+}
 
 async function onLoginClicked(): Promise<void> {
   if (email.value.length === 0 || password.value.length === 0 || server.value.length === 0) {
@@ -174,7 +185,7 @@ async function onLoginClicked(): Promise<void> {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2rem;
+    gap: 1.5rem;
 
     &-list {
       width: 100%;
@@ -192,10 +203,27 @@ async function onLoginClicked(): Promise<void> {
       width: 100%;
       display: flex;
       flex-direction: column;
-      align-items: center;
 
       .account-login-content__input {
         width: 100%;
+      }
+
+      &__forgot-password {
+        width: fit-content;
+        text-align: right;
+        --background: transparent;
+        --background-hover: transparent;
+        --color: var(--parsec-color-light-secondary-text);
+        opacity: 0.5;
+        position: relative;
+
+        &::part(native) {
+          padding: 0.375rem 0;
+        }
+
+        &:hover {
+          opacity: 0.9;
+        }
       }
     }
   }

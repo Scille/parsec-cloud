@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { expect as baseExpect, Locator, Page } from '@playwright/test';
-import { dismissToast } from '@tests/e2e/helpers/utils';
+import { dismissToast, DisplaySize, MsPage } from '@tests/e2e/helpers';
 
 interface AssertReturnType {
   message: () => string;
@@ -312,26 +312,28 @@ export const expect = baseExpect.extend({
     };
   },
 
-  async toBeViewerPage(page: Page): Promise<AssertReturnType> {
+  async toBeViewerPage(page: MsPage): Promise<AssertReturnType> {
     try {
       await expect(page).toHaveURL(/\/\d+\/viewer\??.*$/);
 
-      // Ensure header is visible before checking title
-      const isTopbarVisible = await page.locator('#connected-header .topbar').isVisible();
-      const fileViewerButton = page.locator('.file-viewer-topbar-buttons__item.toggle-menu');
-      let topbarToggled = false;
-      if (!isTopbarVisible && fileViewerButton) {
-        await fileViewerButton.click();
-        topbarToggled = true;
-      }
-      await expect(page.locator('.topbar-left').locator('.topbar-left-text__title')).toHaveText('File viewer');
+      if ((await page.getDisplaySize()) === DisplaySize.Large) {
+        // Ensure header is visible before checking title
+        const isTopbarVisible = await page.locator('#connected-header .topbar').isVisible();
+        const fileViewerButton = page.locator('.file-viewer-topbar-buttons__item.toggle-menu');
+        let topbarToggled = false;
+        if (!isTopbarVisible && fileViewerButton) {
+          await fileViewerButton.click();
+          topbarToggled = true;
+        }
+        await expect(page.locator('.topbar-left-text__title')).toHaveText('File viewer');
 
-      if (topbarToggled) {
-        await fileViewerButton.click();
+        if (topbarToggled) {
+          await fileViewerButton.click();
+        }
       }
     } catch (error: any) {
       return {
-        message: () => `Page is not viewer page (url is '${error.matcherResult.actual}')`,
+        message: () => `Page is not viewer page : '${error.matcherResult.expected}' VS '${error.matcherResult.actual}')`,
         pass: false,
       };
     }

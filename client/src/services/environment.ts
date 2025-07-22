@@ -103,7 +103,6 @@ function getTrialServers(): Array<string> {
 
 const ACCOUNT_DEFAULT_SERVER = 'saas-v3.parsec.cloud';
 const ACCOUNT_SERVER_ENV_VARIABLE = 'PARSEC_APP_ACCOUNT_SERVER';
-const MOCK_ACCOUNT_ENV_VARIABLE = 'PARSEC_APP_MOCK_ACCOUNT';
 const ENABLE_ACCOUNT_ENV_VARIABLE = 'PARSEC_APP_ENABLE_ACCOUNT';
 const ENABLE_ACCOUNT_AUTO_LOGIN_ENV_VARIABLE = 'PARSEC_APP_ENABLE_ACCOUNT_AUTO_LOGIN';
 
@@ -115,10 +114,6 @@ function getAccountServer(): string {
     return import.meta.env[ACCOUNT_SERVER_ENV_VARIABLE];
   }
   return ACCOUNT_DEFAULT_SERVER;
-}
-
-function isAccountMocked(): boolean {
-  return import.meta.env[MOCK_ACCOUNT_ENV_VARIABLE] === 'true';
 }
 
 function isAccountEnabled(): boolean {
@@ -227,7 +222,6 @@ export const Env = {
   isStripeDisabled,
   isSentryDisabled,
   getAccountServer,
-  isAccountMocked,
   isAccountEnabled,
   isEditicsEnabled,
   getDefaultCryptpadServer,
