@@ -510,6 +510,20 @@
         "skipAccount": {
             "label": "Skip Parsec Account login",
             "description": "Will not prompt you to login to Parsec Account at the start of the application"
+        },
+        "fileOpening": {
+            "label": "File opening",
+            "description": "Choose file opening default function",
+            "values": {
+                "viewer": {
+                    "label": "View",
+                    "description": "Double clicking a compatible file will open it in the Parsec file viewer."
+                },
+                "editor": {
+                    "label": "Edit",
+                    "description": "Double clicking a compatible file will open it in the Parsec collaborative file editor."
+                }
+            }
         }
     },
     "WorkspacesPage": {

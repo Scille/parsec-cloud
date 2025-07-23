@@ -29,6 +29,20 @@
           :disabled="true"
         />
       </settings-option>
+      <!-- default file opening mode -->
+      <settings-option
+        :title="'SettingsModal.fileOpening.label'"
+        :description="'SettingsModal.fileOpening.description'"
+        v-if="Env.isCryptpadEnabled()"
+      >
+        <ms-dropdown
+          class="dropdown"
+          :options="fileOpeningOptions"
+          :key="config.fileOpening"
+          :default-option-key="config.fileOpening"
+          @change="config.fileOpening = $event.option.key"
+        />
+      </settings-option>
       <!-- minimize in status bar -->
       <settings-option
         v-if="isPlatform('electron') && !isMacOS()"
@@ -124,6 +138,7 @@ import { inject, onMounted, onUnmounted, ref, toRaw, watch } from 'vue';
 import { Sentry } from '@/services/sentry';
 import { Env } from '@/services/environment';
 import { openLogDisplayModal } from '@/components/misc';
+import { FileOpeningStrategy } from '@/views/files';
 
 const themeManager: ThemeManager = inject(ThemeManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
@@ -147,6 +162,19 @@ const themeOptions: MsOptions = new MsOptions([
   {
     key: Theme.System,
     label: 'SettingsModal.theme.values.system',
+  },
+]);
+
+const fileOpeningOptions: MsOptions = new MsOptions([
+  {
+    key: FileOpeningStrategy.View,
+    label: 'SettingsModal.fileOpening.values.viewer.label',
+    description: 'SettingsModal.fileOpening.values.viewer.description',
+  },
+  {
+    key: FileOpeningStrategy.Edit,
+    label: 'SettingsModal.fileOpening.values.editor.label',
+    description: 'SettingsModal.fileOpening.values.editor.description',
   },
 ]);
 

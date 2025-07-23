@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { isElectron } from '@/parsec';
+import { FileOpeningStrategy } from '@/views/files';
 import { Storage } from '@ionic/storage';
 import { DateTime } from 'luxon';
 import { I18n, Locale, Theme } from 'megashark-lib';
@@ -31,6 +32,7 @@ export interface Config {
   defaultAccountServer?: string;
   skipLongPathsSupportWarning: boolean;
   disableDownloadWarning: boolean;
+  fileOpening: FileOpeningStrategy;
 }
 
 export class StorageManager {
@@ -54,6 +56,7 @@ export class StorageManager {
       defaultAccountServer: undefined,
       skipLongPathsSupportWarning: false,
       disableDownloadWarning: false,
+      fileOpening: FileOpeningStrategy.View,
     };
   }
 
@@ -165,6 +168,7 @@ export class StorageManager {
       defaultAccountServer: data.defaultAccountServer,
       skipLongPathsSupportWarning: data.skipLongPathsSupportWarning,
       disableDownloadWarning: data.disableDownloadWarning,
+      fileOpening: data.fileOpening,
     });
     window.electronAPI.sendConfig(data);
   }
@@ -193,6 +197,7 @@ export class StorageManager {
       defaultAccountServer: data.defaultAccountServer ?? StorageManager.DEFAULT_CONFIG.defaultAccountServer,
       skipLongPathsSupportWarning: data.skipLongPathsSupportWarning ?? StorageManager.DEFAULT_CONFIG.skipLongPathsSupportWarning,
       disableDownloadWarning: data.disableDownloadWarning ?? StorageManager.DEFAULT_CONFIG.disableDownloadWarning,
+      fileOpening: data.fileOpening ?? StorageManager.DEFAULT_CONFIG.fileOpening,
     };
     return config;
   }

@@ -510,6 +510,20 @@
         "skipAccount": {
             "label": "Passer Parsec Account",
             "description": "Ne pas demander à se connecter à Parsec Account au démarrage de l'application"
+        },
+        "fileOpening": {
+            "label": "Ouverture de fichier",
+            "description": "Choisir la fonction par défaut lors de l'ouverture d'un fichier",
+            "values": {
+                "viewer": {
+                    "label": "Visualisation",
+                    "description": "Un double clic sur un fichier compatible l'ouvrira dans le visualisateur de fichiers de Parsec."
+                },
+                "editor": {
+                    "label": "Édition",
+                    "description": "Un double clic sur un fichier compatible l'ouvrira dans l'éditeur collaboratif de Parsec."
+                }
+            }
         }
     },
     "WorkspacesPage": {

@@ -16,16 +16,16 @@ import {
   WorkspaceHistoryEntryStat,
 } from '@/parsec';
 import { currentRouteIs, getDocumentPath, navigateTo, Routes } from '@/router';
+import { isEnabledCryptpadDocumentType } from '@/services/cryptpad';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { recentDocumentManager } from '@/services/recentDocuments';
 import { DateTime } from 'luxon';
 import { Base64, openSpinnerModal } from 'megashark-lib';
-import { Env } from '@/services/environment';
-import { isEnabledCryptpadDocumentType } from '@/services/cryptpad';
 
 interface OpenPathOptions {
   skipViewers?: boolean;
   onlyViewers?: boolean;
+  useCryptpad?: boolean;
   atTime?: DateTime;
 }
 
@@ -160,7 +160,7 @@ async function openPath(
   const contentType = await detectFileContentType(entry.name);
 
   try {
-    if (Env.isCryptpadEnabled()) {
+    if (options.useCryptpad) {
       if (contentType && contentType.type !== FileContentType.Unknown && isEnabledCryptpadDocumentType(contentType.extension)) {
         // Handle Cryptpad supported document types
         if ((entry as any).size <= OPEN_FILE_SIZE_LIMIT) {

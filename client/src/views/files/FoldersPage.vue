@@ -248,6 +248,7 @@ import {
   openGlobalContextMenu as _openGlobalContextMenu,
   isFolderGlobalAction,
   askDownloadConfirmation,
+  FileOpeningStrategy,
 } from '@/views/files';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
 import {
@@ -270,6 +271,7 @@ import { openPath, showInExplorer } from '@/services/fileOpener';
 import { WorkspaceTagRole } from '@/components/workspaces';
 import { showDirectoryPicker, showSaveFilePicker } from 'native-file-system-adapter';
 import { MenuAction, TabBarOptions, useCustomTabBar } from '@/views/menu';
+import { Env } from '@/services/environment';
 
 const customTabBar = useCustomTabBar();
 
@@ -1389,8 +1391,9 @@ async function openEntries(entries: EntryModel[]): Promise<void> {
   const workspaceHandle = workspaceInfo.value.handle;
 
   const config = await storageManager.retrieveConfig();
+  const useCryptpad = config.fileOpening === FileOpeningStrategy.Edit && Env.isCryptpadEnabled();
 
-  await openPath(workspaceHandle, entry.path, informationManager, { skipViewers: config.skipViewers });
+  await openPath(workspaceHandle, entry.path, informationManager, { skipViewers: config.skipViewers, useCryptpad: useCryptpad });
   selectionEnabled.value = false;
 }
 

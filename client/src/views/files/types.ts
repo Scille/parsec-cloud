@@ -24,6 +24,11 @@ enum FileAction {
   SeeInExplorer = 'file-see-in-explorer',
 }
 
+enum FileOpeningStrategy {
+  Edit = 'edit',
+  View = 'view',
+}
+
 function isFileAction(value: any): value is FileAction {
   return Object.values(FileAction).includes(value);
 }
@@ -32,4 +37,4 @@ function isFolderGlobalAction(value: any): value is FolderGlobalAction {
   return Object.values(FolderGlobalAction).includes(value);
 }
 
-export { FileAction, FolderGlobalAction, isFileAction, isFolderGlobalAction };
+export { FileAction, FileOpeningStrategy, FolderGlobalAction, isFileAction, isFolderGlobalAction };
