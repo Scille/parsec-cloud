@@ -248,6 +248,7 @@ import {
   openGlobalContextMenu as _openGlobalContextMenu,
   isFolderGlobalAction,
   askDownloadConfirmation,
+  downloadEntry,
 } from '@/views/files';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
 import {
@@ -268,7 +269,7 @@ import { Ref, computed, inject, onMounted, onUnmounted, ref, nextTick, watch, us
 import { EntrySyncData, EventData, EventDistributor, EventDistributorKey, Events, MenuActionData } from '@/services/eventDistributor';
 import { openPath, showInExplorer } from '@/services/fileOpener';
 import { WorkspaceTagRole } from '@/components/workspaces';
-import { showDirectoryPicker, showSaveFilePicker } from 'native-file-system-adapter';
+import { showDirectoryPicker } from 'native-file-system-adapter';
 import { MenuAction, TabBarOptions, useCustomTabBar } from '@/views/menu';
 
 const customTabBar = useCustomTabBar();
@@ -1309,40 +1310,14 @@ async function downloadEntries(entries: EntryModel[]): Promise<void> {
   }
 
   if (filesOnly.length === 1) {
-    // Only one, we can use the showSaveFilePicker to get a handle
-    try {
-      const saveHandle = await showSaveFilePicker({
-        _preferPolyfill: false,
-        suggestedName: filesOnly[0].name,
-      });
-      await fileOperationManager.downloadEntry(workspaceInfo.value.handle, workspaceInfo.value.id, saveHandle, filesOnly[0].path);
-    } catch (e: any) {
-      if (e.name === 'NotAllowedError') {
-        window.electronAPI.log('error', 'No permission for showSaveFilePicker');
-        informationManager.present(
-          new Information({
-            message: 'FoldersPage.DownloadFile.noPermissions',
-            level: InformationLevel.Error,
-          }),
-          PresentationMode.Modal,
-        );
-      } else if (e.name === 'AbortError') {
-        if ((e.toString() as string).toLocaleLowerCase().includes('user aborted')) {
-          window.electronAPI.log('debug', 'User cancelled the showSaveFilePicker');
-        } else {
-          informationManager.present(
-            new Information({
-              message: 'FoldersPage.DownloadFile.selectFolderFailed',
-              level: InformationLevel.Error,
-            }),
-            PresentationMode.Toast,
-          );
-          window.electronAPI.log('error', `Could not create the file: ${e.toString()}`);
-        }
-      } else {
-        window.electronAPI.log('error', `Failed to select destination file: ${e.toString()}`);
-      }
-    }
+    await downloadEntry({
+      name: filesOnly[0].name,
+      workspaceHandle: workspaceInfo.value.handle,
+      workspaceId: workspaceInfo.value.id,
+      path: filesOnly[0].path,
+      informationManager: informationManager,
+      fileOperationManager: fileOperationManager,
+    });
   } else {
     // Multiple, we use the showDirectoryPicker and get multiple handles
     try {

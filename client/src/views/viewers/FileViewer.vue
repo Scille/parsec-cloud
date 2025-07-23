@@ -51,7 +51,7 @@
               </ion-button>
               <ion-button
                 class="file-viewer-topbar-buttons__item"
-                @click="downloadFile(contentInfo.path)"
+                @click="downloadFile"
                 v-if="isWeb()"
               >
                 <ms-image
@@ -99,7 +99,6 @@ import {
   Path,
   readFile,
   getSystemPath,
-  createReadStream,
   isDesktop,
   isWeb,
   WorkspaceHistory,
@@ -111,7 +110,7 @@ import {
 } from '@/parsec';
 import { IonPage, IonContent, IonButton, IonText, IonIcon, IonButtons, modalController } from '@ionic/vue';
 import { link, informationCircle, open, chevronUp, chevronDown } from 'ionicons/icons';
-import { Base64, MsSpinner, MsImage, I18n, DownloadIcon, askQuestion, Answer } from 'megashark-lib';
+import { Base64, MsSpinner, MsImage, I18n, DownloadIcon, askQuestion, Answer, MsModalResult } from 'megashark-lib';
 import { ref, Ref, type Component, inject, onMounted, shallowRef, onUnmounted } from 'vue';
 import { ImageViewer, VideoViewer, SpreadsheetViewer, DocumentViewer, AudioViewer, TextViewer, PdfViewer } from '@/views/viewers';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
@@ -122,10 +121,13 @@ import { Env } from '@/services/environment';
 import { DateTime } from 'luxon';
 import { getFileIcon } from '@/common/file';
 import { copyPathLinkToClipboard } from '@/components/files';
-import { FileDetailsModal } from '@/views/files';
-import { showSaveFilePicker } from 'native-file-system-adapter';
+import { askDownloadConfirmation, downloadEntry, FileDetailsModal } from '@/views/files';
 import useHeaderControl from '@/services/headerControl';
+import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
+import { StorageManagerKey, StorageManager } from '@/services/storageManager';
 
+const storageManager: StorageManager = inject(StorageManagerKey)!;
+const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const viewerComponent: Ref<Component | null> = shallowRef(null);
 const contentInfo: Ref<FileContentInfo | undefined> = ref(undefined);
@@ -450,10 +452,18 @@ async function onClick(event: MouseEvent): Promise<void> {
   }
 }
 
-async function downloadFile(path: FsPath): Promise<void> {
+async function downloadFile(): Promise<void> {
   const workspaceHandle = getWorkspaceHandle();
   if (!workspaceHandle) {
     window.electronAPI.log('error', 'Failed to retrieve workspace handle');
+    return;
+  }
+  const workspaceInfoResult = await getWorkspaceInfo(workspaceHandle);
+  if (!workspaceInfoResult.ok) {
+    window.electronAPI.log(
+      'error',
+      `Failed to retrieve workspace info: ${workspaceInfoResult.error.tag} (${workspaceInfoResult.error.error})`,
+    );
     return;
   }
 
@@ -462,17 +472,26 @@ async function downloadFile(path: FsPath): Promise<void> {
     return;
   }
 
-  try {
-    const saveHandle = await showSaveFilePicker({
-      _preferPolyfill: false,
-      suggestedName: contentInfo.value.fileName,
-    });
+  const config = await storageManager.retrieveConfig();
+  if (!config.disableDownloadWarning) {
+    const { result, noReminder } = await askDownloadConfirmation();
 
-    const stream = await createReadStream(workspaceHandle, path);
-    await stream.pipeTo(await saveHandle.createWritable());
-  } catch (e: any) {
-    window.electronAPI.log('error', `Failed to download file: ${e.toString()}`);
+    if (noReminder) {
+      config.disableDownloadWarning = true;
+      await storageManager.storeConfig(config);
+    }
+    if (result !== MsModalResult.Confirm) {
+      return;
+    }
   }
+  await downloadEntry({
+    name: contentInfo.value.fileName,
+    workspaceHandle: workspaceHandle,
+    workspaceId: workspaceInfoResult.value.id,
+    path: contentInfo.value.path,
+    informationManager: informationManager,
+    fileOperationManager: fileOperationManager,
+  });
 }
 </script>
 

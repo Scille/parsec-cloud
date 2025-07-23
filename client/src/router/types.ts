@@ -124,6 +124,11 @@ const routes: Array<RouteRecordRaw> = [
                         name: Routes.History,
                         component: () => import('@/views/workspaces/WorkspaceHistoryPage.vue'),
                       },
+                      {
+                        path: `/:handle(\\d+)/${Routes.Viewer}`,
+                        name: Routes.Viewer,
+                        component: () => import('@/views/viewers/FileViewer.vue'),
+                      },
                     ],
                   },
                   {
@@ -160,11 +165,6 @@ const routes: Array<RouteRecordRaw> = [
                     path: `/:handle(\\d+)/${Routes.MyProfile}`,
                     name: Routes.MyProfile,
                     component: () => import('@/views/users/MyProfilePage.vue'),
-                  },
-                  {
-                    path: `/:handle(\\d+)/${Routes.Viewer}`,
-                    name: Routes.Viewer,
-                    component: () => import('@/views/viewers/FileViewer.vue'),
                   },
                 ],
               },
