@@ -18,7 +18,6 @@ from tests.common import (
 
 
 async def test_anonymous_account_auth_method_password_get_algorithm_ok_existing(
-    xfail_if_postgresql: None,
     anonymous_account: AnonymousAccountRpcClient,
     alice_account: AuthenticatedAccountRpcClient,
     bob_account: AuthenticatedAccountRpcClient,
@@ -66,7 +65,6 @@ async def test_anonymous_account_auth_method_password_get_algorithm_ok_existing(
 
 
 async def test_anonymous_account_auth_method_password_get_algorithm_ok_stable_fake(
-    xfail_if_postgresql: None,
     anonymous_account: AnonymousAccountRpcClient,
     # Use `alice_account` as an unrelated existing account to ensure it is ignored
     alice_account: AuthenticatedAccountRpcClient,
@@ -89,7 +87,6 @@ async def test_anonymous_account_auth_method_password_get_algorithm_ok_stable_fa
 
 
 async def test_anonymous_account_auth_method_password_get_algorithm_http_common_errors(
-    xfail_if_postgresql: None,
     anonymous_account: AnonymousAccountRpcClient,
     anonymous_account_http_common_errors_tester: HttpCommonErrorsTester,
 ) -> None:

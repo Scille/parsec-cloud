@@ -38,6 +38,9 @@ from parsec.components.postgresql.account_create import (
 )
 from parsec.components.postgresql.account_delete import delete_proceed, delete_send_validation_email
 from parsec.components.postgresql.account_info import account_info
+from parsec.components.postgresql.account_password_algorithm import (
+    get_password_algorithm,
+)
 from parsec.components.postgresql.account_recover import (
     recover_proceed,
     recover_send_validation_email,
@@ -236,6 +239,20 @@ class PGAccountComponent(BaseAccountComponent):
             new_auth_method_mac_key,
             new_auth_method_password_algorithm,
         )
+
+    @override
+    @no_transaction
+    async def get_password_algorithm_or_fake_it(
+        self, conn: AsyncpgConnection, email: EmailAddress
+    ) -> UntrustedPasswordAlgorithm:
+        match await get_password_algorithm(conn, email):
+            case None:
+                # Account does not exists or it does not have an active password algorithm.
+                # In either case, a fake configuration is returned.
+                return self._generate_fake_password_algorithm(email)
+
+            case algorithm:
+                return algorithm
 
     @override
     @no_transaction
