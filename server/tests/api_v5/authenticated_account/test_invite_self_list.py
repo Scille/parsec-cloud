@@ -14,7 +14,6 @@ from tests.common import (
 
 
 async def test_authenticated_account_invite_self_list_ok(
-    xfail_if_postgresql: None,
     backend: Backend,
     alice_account: AuthenticatedAccountRpcClient,
     bob_account: AuthenticatedAccountRpcClient,
@@ -105,7 +104,6 @@ async def test_authenticated_account_invite_self_list_ok(
 
 
 async def test_authenticated_account_invite_self_list_http_common_errors(
-    xfail_if_postgresql: None,
     alice_account: AuthenticatedAccountRpcClient,
     authenticated_account_http_common_errors_tester: HttpCommonErrorsTester,
 ) -> None:

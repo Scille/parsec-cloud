@@ -8,6 +8,9 @@ from parsec._parsec import (
     EmailAddress,
     HashDigest,
     HumanHandle,
+    InvitationToken,
+    InvitationType,
+    OrganizationID,
     SecretKey,
     UntrustedPasswordAlgorithm,
     ValidationCode,
@@ -19,6 +22,7 @@ from parsec.components.account import (
     AccountDeleteSendValidationEmailBadOutcome,
     AccountInfo,
     AccountInfoBadOutcome,
+    AccountInviteListBadOutcome,
     AccountRecoverProceedBadOutcome,
     AccountRecoverSendValidationEmailBadOutcome,
     AccountVaultItemListBadOutcome,
@@ -38,6 +42,7 @@ from parsec.components.postgresql.account_create import (
 )
 from parsec.components.postgresql.account_delete import delete_proceed, delete_send_validation_email
 from parsec.components.postgresql.account_info import account_info
+from parsec.components.postgresql.account_invite_self_list import invite_self_list
 from parsec.components.postgresql.account_password_algorithm import (
     get_password_algorithm,
 )
@@ -313,3 +318,10 @@ class PGAccountComponent(BaseAccountComponent):
         self, conn: AsyncpgConnection, auth_method_id: AccountAuthMethodID
     ) -> VaultItemRecoveryList | AccountVaultItemRecoveryList:
         return await vault_item_recovery_list(conn, auth_method_id)
+
+    @override
+    @no_transaction
+    async def invite_self_list(
+        self, conn: AsyncpgConnection, auth_method_id: AccountAuthMethodID
+    ) -> list[tuple[OrganizationID, InvitationToken, InvitationType]] | AccountInviteListBadOutcome:
+        return await invite_self_list(conn, auth_method_id)
