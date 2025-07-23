@@ -6,6 +6,7 @@ from parsec._parsec import (
     AccountAuthMethodID,
     DateTime,
     EmailAddress,
+    HashDigest,
     HumanHandle,
     SecretKey,
     UntrustedPasswordAlgorithm,
@@ -20,6 +21,7 @@ from parsec.components.account import (
     AccountInfoBadOutcome,
     AccountRecoverProceedBadOutcome,
     AccountRecoverSendValidationEmailBadOutcome,
+    AccountVaultItemUploadBadOutcome,
     BaseAccountComponent,
 )
 from parsec.components.email import SendEmailBadOutcome
@@ -35,6 +37,7 @@ from parsec.components.postgresql.account_recover import (
     recover_proceed,
     recover_send_validation_email,
 )
+from parsec.components.postgresql.account_vault_item_upload import vault_item_upload
 from parsec.components.postgresql.utils import no_transaction, transaction
 from parsec.config import BackendConfig
 
@@ -232,3 +235,14 @@ class PGAccountComponent(BaseAccountComponent):
         self, conn: AsyncpgConnection, auth_method_id: AccountAuthMethodID
     ) -> AccountInfo | AccountInfoBadOutcome:
         return await account_info(conn, auth_method_id)
+
+    @override
+    @transaction
+    async def vault_item_upload(
+        self,
+        conn: AsyncpgConnection,
+        auth_method_id: AccountAuthMethodID,
+        item_fingerprint: HashDigest,
+        item: bytes,
+    ) -> None | AccountVaultItemUploadBadOutcome:
+        return await vault_item_upload(conn, auth_method_id, item_fingerprint, item)
