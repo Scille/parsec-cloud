@@ -48,7 +48,6 @@ async def alice_validation_code(
 
 @pytest.mark.parametrize("kind", ("with_password", "without_password"))
 async def test_anonymous_account_account_recover_proceed_ok(
-    xfail_if_postgresql: None,
     kind: str,
     alice_account: AuthenticatedAccountRpcClient,
     anonymous_account: AnonymousAccountRpcClient,
@@ -145,7 +144,6 @@ async def test_anonymous_account_account_recover_proceed_ok(
 
 
 async def test_anonymous_account_account_recover_proceed_invalid_validation_code(
-    xfail_if_postgresql: None,
     anonymous_account: AnonymousAccountRpcClient,
     alice_validation_code: ValidationCode,
 ):
@@ -189,7 +187,6 @@ async def test_anonymous_account_account_recover_proceed_invalid_validation_code
     ),
 )
 async def test_anonymous_account_account_recover_proceed_send_validation_email_required(
-    xfail_if_postgresql: None,
     kind: str,
     anonymous_account: AnonymousAccountRpcClient,
     alice_account: AuthenticatedAccountRpcClient,
@@ -241,7 +238,6 @@ async def test_anonymous_account_account_recover_proceed_send_validation_email_r
 
 
 async def test_anonymous_account_account_recover_proceed_auth_method_id_already_exists(
-    xfail_if_postgresql: None,
     anonymous_account: AnonymousAccountRpcClient,
     alice_validation_code: ValidationCode,
     bob_account: AuthenticatedAccountRpcClient,
@@ -260,7 +256,6 @@ async def test_anonymous_account_account_recover_proceed_auth_method_id_already_
 
 
 async def test_anonymous_account_account_recover_proceed_http_common_errors(
-    xfail_if_postgresql: None,
     anonymous_account: AnonymousAccountRpcClient,
     anonymous_account_http_common_errors_tester: HttpCommonErrorsTester,
     alice_validation_code: ValidationCode,

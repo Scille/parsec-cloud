@@ -36,7 +36,6 @@ from tests.common import (
     ),
 )
 async def test_anonymous_account_account_recover_send_validation_email_ok(
-    xfail_if_postgresql: None,
     kind: str,
     anonymous_account: AnonymousAccountRpcClient,
     alice_account: AuthenticatedAccountRpcClient,
@@ -153,7 +152,6 @@ async def test_anonymous_account_account_recover_send_validation_email_ok(
 
 @pytest.mark.parametrize("kind", ("still_valid_previous", "too_many_attempts_previous"))
 async def test_anonymous_account_account_recover_send_validation_email_email_sending_rate_limited(
-    xfail_if_postgresql: None,
     kind: str,
     anonymous_account: AnonymousAccountRpcClient,
     alice_account: AuthenticatedAccountRpcClient,
@@ -226,7 +224,6 @@ async def test_anonymous_account_account_recover_send_validation_email_email_sen
     ),
 )
 async def test_anonymous_account_account_recover_send_validation_email_email_server_unavailable(
-    xfail_if_postgresql: None,
     bad_outcome: SendEmailBadOutcome,
     anonymous_account: AnonymousAccountRpcClient,
     alice_account: AuthenticatedAccountRpcClient,
@@ -246,7 +243,6 @@ async def test_anonymous_account_account_recover_send_validation_email_email_ser
 
 
 async def test_anonymous_account_account_recover_send_validation_email_email_recipient_refused(
-    xfail_if_postgresql: None,
     anonymous_account: AnonymousAccountRpcClient,
     monkeypatch: pytest.MonkeyPatch,
     alice_account: AuthenticatedAccountRpcClient,
@@ -265,7 +261,6 @@ async def test_anonymous_account_account_recover_send_validation_email_email_rec
 
 
 async def test_anonymous_account_account_recover_send_validation_email_http_common_errors(
-    xfail_if_postgresql: None,
     anonymous_account: AnonymousAccountRpcClient,
     anonymous_account_http_common_errors_tester: HttpCommonErrorsTester,
 ) -> None:
