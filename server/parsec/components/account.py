@@ -61,7 +61,8 @@ class AccountRecoverSendValidationEmailBadOutcome(BadOutcomeEnum):
 
 
 class AccountRecoverProceedBadOutcome(BadOutcomeEnum):
-    ACCOUNT_NOT_FOUND = auto()
+    # Note there is no `ACCOUNT_NOT_FOUND` here (since only a valid account
+    # can have a validation code in the first place!).
     INVALID_VALIDATION_CODE = auto()
     SEND_VALIDATION_EMAIL_REQUIRED = auto()
     AUTH_METHOD_ID_ALREADY_EXISTS = auto()
@@ -553,10 +554,7 @@ class BaseAccountComponent:
             case None:
                 return anonymous_account_cmds.latest.account_recover_proceed.RepOk()
 
-            case (
-                AccountRecoverProceedBadOutcome.ACCOUNT_NOT_FOUND
-                | AccountRecoverProceedBadOutcome.INVALID_VALIDATION_CODE
-            ):
+            case AccountRecoverProceedBadOutcome.INVALID_VALIDATION_CODE:
                 return (
                     anonymous_account_cmds.latest.account_recover_proceed.RepInvalidValidationCode()
                 )
