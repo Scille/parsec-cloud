@@ -16,6 +16,8 @@ from parsec.components.account import (
     AccountCreateSendValidationEmailBadOutcome,
     AccountDeleteProceedBadOutcome,
     AccountDeleteSendValidationEmailBadOutcome,
+    AccountInfo,
+    AccountInfoBadOutcome,
     AccountRecoverProceedBadOutcome,
     AccountRecoverSendValidationEmailBadOutcome,
     BaseAccountComponent,
@@ -28,11 +30,12 @@ from parsec.components.postgresql.account_create import (
     create_send_validation_email,
 )
 from parsec.components.postgresql.account_delete import delete_proceed, delete_send_validation_email
+from parsec.components.postgresql.account_info import account_info
 from parsec.components.postgresql.account_recover import (
     recover_proceed,
     recover_send_validation_email,
 )
-from parsec.components.postgresql.utils import transaction
+from parsec.components.postgresql.utils import no_transaction, transaction
 from parsec.config import BackendConfig
 
 
@@ -222,3 +225,10 @@ class PGAccountComponent(BaseAccountComponent):
             new_auth_method_mac_key,
             new_auth_method_password_algorithm,
         )
+
+    @override
+    @no_transaction
+    async def account_info(
+        self, conn: AsyncpgConnection, auth_method_id: AccountAuthMethodID
+    ) -> AccountInfo | AccountInfoBadOutcome:
+        return await account_info(conn, auth_method_id)
