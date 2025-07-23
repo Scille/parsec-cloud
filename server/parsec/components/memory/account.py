@@ -250,6 +250,8 @@ class MemoryAccountComponent(BaseAccountComponent):
         validation_code: ValidationCode,
     ) -> None | AccountDeleteProceedBadOutcome:
         async with self._data.account_creation_lock:
+            # 1) Retrieve the account
+
             match self._data.get_account_from_active_auth_method(auth_method_id=auth_method_id):
                 case (account, _):
                     pass
@@ -258,7 +260,7 @@ class MemoryAccountComponent(BaseAccountComponent):
 
             assert account.deleted_on is None  # Sanity check
 
-            # Check validation code
+            # 2) Check validation code
 
             try:
                 last_mail_info = self._data.account_delete_validation_emails[account.account_email]
@@ -273,14 +275,15 @@ class MemoryAccountComponent(BaseAccountComponent):
                 last_mail_info.failed_attempts += 1
                 return AccountDeleteProceedBadOutcome.INVALID_VALIDATION_CODE
 
-            # All good, we can do the actual deletion
+            # 3) All good, we can do the actual deletion
 
             account.deleted_on = now
             for auth_method in account.current_vault.authentication_methods.values():
                 if auth_method.disabled_on is None:
                     auth_method.disabled_on = now
 
-            # And finally discard the used validation email
+            # 4) And finally discard the used validation email
+
             del self._data.account_delete_validation_emails[account.account_email]
 
     @override
@@ -328,17 +331,10 @@ class MemoryAccountComponent(BaseAccountComponent):
         new_auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
     ) -> None | AccountRecoverProceedBadOutcome:
         async with self._data.account_creation_lock:
-            try:
-                account = self._data.accounts[email]
-            except KeyError:
-                return AccountRecoverProceedBadOutcome.ACCOUNT_NOT_FOUND
-            if account.deleted_on is not None:
-                return AccountRecoverProceedBadOutcome.ACCOUNT_NOT_FOUND
-
-            # Check validation code
+            # 1) Check validation code
 
             try:
-                last_mail_info = self._data.account_recover_validation_emails[account.account_email]
+                last_mail_info = self._data.account_recover_validation_emails[email]
             except KeyError:
                 return AccountRecoverProceedBadOutcome.SEND_VALIDATION_EMAIL_REQUIRED
 
@@ -350,8 +346,25 @@ class MemoryAccountComponent(BaseAccountComponent):
                 last_mail_info.failed_attempts += 1
                 return AccountRecoverProceedBadOutcome.INVALID_VALIDATION_CODE
 
-            # Create authentication method
-            auth_method = MemoryAuthenticationMethod(
+            # Since the validation code is valid, the account is guaranteed to exist
+            # (and not be deleted).
+
+            account = self._data.accounts[email]
+            assert account.deleted_on is None
+
+            # 2) Check for auth method uniqueness
+
+            if self._auth_method_id_already_exists(new_auth_method_id):
+                return AccountRecoverProceedBadOutcome.AUTH_METHOD_ID_ALREADY_EXISTS
+
+            # 3) Disable previous authentication methods
+
+            for auth_method in account.current_vault.active_authentication_methods:
+                auth_method.disabled_on = now
+
+            # 4) Create the new vault with its authentication method
+
+            new_auth_method = MemoryAuthenticationMethod(
                 id=new_auth_method_id,
                 created_on=now,
                 created_by_ip=created_by_ip,
@@ -361,18 +374,14 @@ class MemoryAccountComponent(BaseAccountComponent):
                 password_algorithm=new_auth_method_password_algorithm,
                 disabled_on=None,
             )
-
-            # Check for auth method uniqueness
-            if self._auth_method_id_already_exists(new_auth_method_id):
-                return AccountRecoverProceedBadOutcome.AUTH_METHOD_ID_ALREADY_EXISTS
-
             new_vault = MemoryAccountVault(
-                items={}, authentication_methods={new_auth_method_id: auth_method}
+                items={}, authentication_methods={new_auth_method_id: new_auth_method}
             )
             account.previous_vaults.append(account.current_vault)
             account.current_vault = new_vault
 
-            # And finally discard the used validation email
+            # 5) And finally discard the used validation email
+
             del self._data.account_recover_validation_emails[email]
 
     @override
