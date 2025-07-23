@@ -19,11 +19,12 @@ from parsec.config import MockedEmailConfig
 from tests.common import (
     ALICE_ACCOUNT_HUMAN_HANDLE,
     AnonymousAccountRpcClient,
+    AsyncClient,
+    AuthenticatedAccountRpcClient,
     Backend,
     HttpCommonErrorsTester,
     generate_different_validation_code,
 )
-from tests.common.client import AuthenticatedAccountRpcClient
 
 
 @pytest.fixture
@@ -44,7 +45,11 @@ async def test_anonymous_account_account_create_proceed_ok(
     xfail_if_postgresql: None,
     anonymous_account: AnonymousAccountRpcClient,
     alice_validation_code: ValidationCode,
+    client: AsyncClient,
 ) -> None:
+    new_auth_method_id = AccountAuthMethodID.from_hex("a11a285306c546bf89e2d59c8d7deafa")
+    new_auth_method_mac_key = SecretKey.generate()
+
     # Once step 1 has been done once, the steps can obviously no longer be retried
     for attempt in range(2):
         # Optional step 0
@@ -73,9 +78,9 @@ async def test_anonymous_account_account_create_proceed_ok(
                 auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
                     opslimit=1, memlimit_kb=2, parallelism=3
                 ),
-                auth_method_mac_key=SecretKey.generate(),
+                auth_method_mac_key=new_auth_method_mac_key,
                 vault_key_access=b"vault_key_access",
-                auth_method_id=AccountAuthMethodID.from_hex("9aae259f748045cc9fe7146eab0b132e"),
+                auth_method_id=new_auth_method_id,
             )
         )
         if attempt == 0:
@@ -85,6 +90,16 @@ async def test_anonymous_account_account_create_proceed_ok(
                 rep
                 == anonymous_account_cmds.latest.account_create_proceed.RepSendValidationEmailRequired()
             )
+
+    # Finally ensure we can connect to the new account
+
+    account = AuthenticatedAccountRpcClient(
+        client,
+        ALICE_ACCOUNT_HUMAN_HANDLE.email,
+        new_auth_method_id,
+        new_auth_method_mac_key,
+    )
+    await account.ping(ping="ping")
 
 
 @pytest.mark.parametrize("kind", ("step_0", "step_1"))
