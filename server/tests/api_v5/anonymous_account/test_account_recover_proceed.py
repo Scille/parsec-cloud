@@ -21,11 +21,13 @@ from parsec.config import MockedEmailConfig
 from tests.common import (
     ALICE_ACCOUNT_HUMAN_HANDLE,
     AnonymousAccountRpcClient,
+    AsyncClient,
+    AuthenticatedAccountRpcClient,
     Backend,
     HttpCommonErrorsTester,
+    RpcTransportError,
     generate_different_validation_code,
 )
-from tests.common.client import AuthenticatedAccountRpcClient
 
 
 @pytest.fixture
@@ -52,7 +54,10 @@ async def test_anonymous_account_account_recover_proceed_ok(
     anonymous_account: AnonymousAccountRpcClient,
     alice_validation_code: ValidationCode,
     backend: Backend,
+    client: AsyncClient,
 ) -> None:
+    new_auth_method_id = AccountAuthMethodID.from_hex("a11a285306c546bf89e2d59c8d7deafa")
+    new_auth_method_mac_key = SecretKey.generate()
     match kind:
         case "with_password":
             auth_method_password_algorithm = UntrustedPasswordAlgorithmArgon2id(
@@ -76,13 +81,12 @@ async def test_anonymous_account_account_recover_proceed_ok(
 
     # Do the actual recovery
 
-    new_auth_method_id = AccountAuthMethodID.new()
     rep = await anonymous_account.account_recover_proceed(
         validation_code=alice_validation_code,
         email=ALICE_ACCOUNT_HUMAN_HANDLE.email,
         new_vault_key_access=b"<new_vault_key_access>",
         new_auth_method_id=new_auth_method_id,
-        new_auth_method_mac_key=SecretKey.generate(),
+        new_auth_method_mac_key=new_auth_method_mac_key,
         new_auth_method_password_algorithm=auth_method_password_algorithm,
     )
     assert rep == anonymous_account_cmds.latest.account_recover_proceed.RepOk()
@@ -102,7 +106,23 @@ async def test_anonymous_account_account_recover_proceed_ok(
         == anonymous_account_cmds.latest.account_recover_proceed.RepSendValidationEmailRequired()
     )
 
-    # New ensure the new vault has no items...
+    # Now ensure that the old auth method is no longer usable...
+
+    with pytest.raises(RpcTransportError) as ctx:
+        await alice_account.ping(ping="ping")
+    assert ctx.value.rep.status_code == 403
+
+    # ...and the new one is!
+
+    account = AuthenticatedAccountRpcClient(
+        client,
+        ALICE_ACCOUNT_HUMAN_HANDLE.email,
+        new_auth_method_id,
+        new_auth_method_mac_key,
+    )
+    await account.ping(ping="ping")
+
+    # Finally ensure the new vault has no items...
 
     outcome = await backend.account.vault_item_list(auth_method_id=new_auth_method_id)
     assert isinstance(outcome, VaultItems)
@@ -120,6 +140,7 @@ async def test_anonymous_account_account_recover_proceed_ok(
     assert (
         outcome.previous_vaults[0].auth_methods[0].vault_key_access == b"<alice_vault_key_access>"
     )
+    assert outcome.previous_vaults[0].auth_methods[0].disabled_on is not None
     assert outcome.previous_vaults[0].vault_items == {HashDigest.from_data(b"item"): b"<item>"}
 
 
