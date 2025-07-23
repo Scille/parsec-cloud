@@ -5,7 +5,6 @@ from tests.common import AuthenticatedAccountRpcClient, Backend, HttpCommonError
 
 
 async def test_authenticated_account_vault_item_upload_ok(
-    xfail_if_postgresql: None,
     alice_account: AuthenticatedAccountRpcClient,
 ) -> None:
     item = b"<item>"
@@ -15,7 +14,6 @@ async def test_authenticated_account_vault_item_upload_ok(
 
 
 async def test_authenticated_account_vault_item_upload_fingerprint_already_exists(
-    xfail_if_postgresql: None,
     alice_account: AuthenticatedAccountRpcClient,
     backend: Backend,
 ) -> None:
@@ -32,7 +30,6 @@ async def test_authenticated_account_vault_item_upload_fingerprint_already_exist
 
 
 async def test_authenticated_account_vault_item_upload_http_common_errors(
-    xfail_if_postgresql: None,
     alice_account: AuthenticatedAccountRpcClient,
     authenticated_account_http_common_errors_tester: HttpCommonErrorsTester,
 ) -> None:
