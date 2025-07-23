@@ -2,7 +2,10 @@
 
 
 from parsec._parsec import (
+    AccountAuthMethodID,
+    DateTime,
     EmailAddress,
+    SecretKey,
     UntrustedPasswordAlgorithmArgon2id,
     anonymous_account_cmds,
 )
@@ -18,24 +21,55 @@ async def test_anonymous_account_auth_method_password_get_algorithm_ok_existing(
     xfail_if_postgresql: None,
     anonymous_account: AnonymousAccountRpcClient,
     alice_account: AuthenticatedAccountRpcClient,
+    bob_account: AuthenticatedAccountRpcClient,
     backend: Backend,
 ) -> None:
+    expected_password_algorithm_1 = UntrustedPasswordAlgorithmArgon2id(
+        opslimit=65536,
+        memlimit_kb=3,
+        parallelism=1,
+    )
     rep = await anonymous_account.auth_method_password_get_algorithm(
         email=alice_account.account_email
     )
     assert rep == anonymous_account_cmds.latest.auth_method_password_get_algorithm.RepOk(
-        password_algorithm=UntrustedPasswordAlgorithmArgon2id(
-            opslimit=65536,
-            memlimit_kb=3,
-            parallelism=1,
-        )
+        password_algorithm=expected_password_algorithm_1
+    )
+
+    # Now replace Alice account password algorithm with a new one to ensure the old one is ignored
+
+    expected_password_algorithm_2 = UntrustedPasswordAlgorithmArgon2id(
+        opslimit=131072,
+        memlimit_kb=6,
+        parallelism=2,
+    )
+
+    new_auth_method_id = AccountAuthMethodID.new()
+    new_auth_method_mac_key = SecretKey.generate()
+    await backend.account.vault_key_rotation(
+        now=DateTime.now(),
+        auth_method_id=alice_account.auth_method_id,
+        created_by_ip="",
+        created_by_user_agent="",
+        new_auth_method_id=new_auth_method_id,
+        new_auth_method_mac_key=new_auth_method_mac_key,
+        new_vault_key_access=b"",
+        new_auth_method_password_algorithm=expected_password_algorithm_2,
+        items={},
+    )
+    rep = await anonymous_account.auth_method_password_get_algorithm(
+        email=alice_account.account_email
+    )
+    assert rep == anonymous_account_cmds.latest.auth_method_password_get_algorithm.RepOk(
+        password_algorithm=expected_password_algorithm_2
     )
 
 
 async def test_anonymous_account_auth_method_password_get_algorithm_ok_stable_fake(
     xfail_if_postgresql: None,
     anonymous_account: AnonymousAccountRpcClient,
-    backend: Backend,
+    # Use `alice_account` as an unrelated existing account to ensure it is ignored
+    alice_account: AuthenticatedAccountRpcClient,
 ) -> None:
     unknown_email = EmailAddress("dummy@example.com")
 
