@@ -21,8 +21,10 @@ from parsec.components.account import (
     AccountInfoBadOutcome,
     AccountRecoverProceedBadOutcome,
     AccountRecoverSendValidationEmailBadOutcome,
+    AccountVaultItemListBadOutcome,
     AccountVaultItemUploadBadOutcome,
     BaseAccountComponent,
+    VaultItems,
 )
 from parsec.components.email import SendEmailBadOutcome
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
@@ -37,6 +39,7 @@ from parsec.components.postgresql.account_recover import (
     recover_proceed,
     recover_send_validation_email,
 )
+from parsec.components.postgresql.account_vault_item_list import vault_item_list
 from parsec.components.postgresql.account_vault_item_upload import vault_item_upload
 from parsec.components.postgresql.utils import no_transaction, transaction
 from parsec.config import BackendConfig
@@ -246,3 +249,10 @@ class PGAccountComponent(BaseAccountComponent):
         item: bytes,
     ) -> None | AccountVaultItemUploadBadOutcome:
         return await vault_item_upload(conn, auth_method_id, item_fingerprint, item)
+
+    @override
+    @no_transaction
+    async def vault_item_list(
+        self, conn: AsyncpgConnection, auth_method_id: AccountAuthMethodID
+    ) -> VaultItems | AccountVaultItemListBadOutcome:
+        return await vault_item_list(conn, auth_method_id)
