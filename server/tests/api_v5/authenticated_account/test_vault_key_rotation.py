@@ -15,7 +15,6 @@ from tests.common import AuthenticatedAccountRpcClient, HttpCommonErrorsTester
 
 
 async def test_authenticated_account_vault_key_rotation_ok(
-    xfail_if_postgresql: None,
     backend: Backend,
     alice_account: AuthenticatedAccountRpcClient,
 ) -> None:
@@ -54,7 +53,6 @@ async def test_authenticated_account_vault_key_rotation_ok(
 
 @pytest.mark.parametrize("kind", ("too-few", "too-many", "different"))
 async def test_authenticated_account_vault_key_rotation_items_mismatch(
-    xfail_if_postgresql: None,
     kind: str,
     alice_account: AuthenticatedAccountRpcClient,
     backend: Backend,
@@ -105,7 +103,6 @@ async def test_authenticated_account_vault_key_rotation_items_mismatch(
     "kind", ("reuse_from_current_vault", "reuse_from_old_vault", "reuse_from_other_account")
 )
 async def test_authenticated_account_vault_key_rotation_new_auth_method_id_already_exists(
-    xfail_if_postgresql: None,
     kind: str,
     alice_account: AuthenticatedAccountRpcClient,
     bob_account: AuthenticatedAccountRpcClient,
@@ -164,7 +161,6 @@ async def test_authenticated_account_vault_key_rotation_new_auth_method_id_alrea
 
 
 async def test_authenticated_account_vault_key_rotation_http_common_errors(
-    xfail_if_postgresql: None,
     alice_account: AuthenticatedAccountRpcClient,
     authenticated_account_http_common_errors_tester: HttpCommonErrorsTester,
 ) -> None:

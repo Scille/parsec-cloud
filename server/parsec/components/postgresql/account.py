@@ -23,6 +23,7 @@ from parsec.components.account import (
     AccountRecoverSendValidationEmailBadOutcome,
     AccountVaultItemListBadOutcome,
     AccountVaultItemUploadBadOutcome,
+    AccountVaultKeyRotation,
     BaseAccountComponent,
     VaultItems,
 )
@@ -41,6 +42,7 @@ from parsec.components.postgresql.account_recover import (
 )
 from parsec.components.postgresql.account_vault_item_list import vault_item_list
 from parsec.components.postgresql.account_vault_item_upload import vault_item_upload
+from parsec.components.postgresql.account_vault_key_rotation import vault_key_rotation
 from parsec.components.postgresql.utils import no_transaction, transaction
 from parsec.config import BackendConfig
 
@@ -256,3 +258,31 @@ class PGAccountComponent(BaseAccountComponent):
         self, conn: AsyncpgConnection, auth_method_id: AccountAuthMethodID
     ) -> VaultItems | AccountVaultItemListBadOutcome:
         return await vault_item_list(conn, auth_method_id)
+
+    @override
+    @transaction
+    async def vault_key_rotation(
+        self,
+        conn: AsyncpgConnection,
+        now: DateTime,
+        auth_method_id: AccountAuthMethodID,
+        created_by_ip: str | Literal[""],
+        created_by_user_agent: str,
+        new_auth_method_id: AccountAuthMethodID,
+        new_auth_method_mac_key: SecretKey,
+        new_auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
+        new_vault_key_access: bytes,
+        items: dict[HashDigest, bytes],
+    ) -> None | AccountVaultKeyRotation:
+        return await vault_key_rotation(
+            conn,
+            now,
+            auth_method_id,
+            created_by_ip,
+            created_by_user_agent,
+            new_auth_method_id,
+            new_auth_method_mac_key,
+            new_auth_method_password_algorithm,
+            new_vault_key_access,
+            items,
+        )
