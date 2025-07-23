@@ -27,10 +27,6 @@
             </div>
           </div>
 
-          <div>
-            <ion-button @click="recoverAccount"> FORGOT PASSWORD </ion-button>
-          </div>
-
           <!-- Client Area -->
           <div class="homepage-client-area">
             <ion-text class="homepage-client-area__title title-h4">
@@ -160,12 +156,6 @@ async function goToCustomerArea(): Promise<void> {
   const query = getCurrentRouteQuery();
   query.bmsLogin = true;
   await navigateTo(Routes.Home, { skipHandle: true, params: getCurrentRouteParams(), query: query });
-  disableGoTo.value = false;
-}
-
-async function recoverAccount(): Promise<void> {
-  disableGoTo.value = true;
-  await navigateTo(Routes.RecoverAccount, { skipHandle: true });
   disableGoTo.value = false;
 }
 </script>

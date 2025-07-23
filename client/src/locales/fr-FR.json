@@ -1662,6 +1662,37 @@
             "password": "Mot de passe",
             "confirmPassword": "Confirmer le mot de passe"
         },
+        "recoverAccount": {
+            "step1": {
+                "title": "Récupérer votre compte",
+                "description": "Pas d'inquiétude, nous allons vous aider à récupérer votre compte.",
+                "nextButton": "Envoyer un code de validation"
+            },
+            "step2": {
+                "title": "Vérification de votre email",
+                "description": "Un code de vérification a été envoyé à votre adresse électronique. Veuillez le saisir pour mettre à jour votre mot de passe.",
+                "resendCode": "Renvoyer un code",
+                "nextButton": "Valider",
+                "update": "Modifier",
+                "info": "Si vous ne recevez pas le code, veuillez vérifier votre dossier de spam ou de courrier indésirable."
+            },
+            "step3": {
+                "title": "Choisissez votre nouveau mot de passe",
+                "description": "Vérifiez que votre nouveau mot de passe comprend les critères minimaux pour être valide.",
+                "nextButton": "Mettre à jour mon mot de passe"
+            },
+            "step4": {
+                "title": "Votre mot de passe a été mis à jour",
+                "description": "Vous pouvez maintenant vous connecter avec votre nouveau mot de passe !",
+                "nextButton": "Se connecter"
+            },
+            "backButton": "Revenir à la connexion",
+            "error": {
+                "generic": "Impossible de récupérer votre compte. Veuillez vérifier votre adresse email.",
+                "invalidCode": "Le code de vérification est invalide, assurez-vous d'avoir saisi le bon code.",
+                "offline": "Vous êtes hors-ligne. Assurez-vous d'être connecté à Internet puis réessayez."
+            }
+        },
         "login": "Se connecter",
         "loginFailed": "Impossible de se connecter. Veuillez vérifier votre adresse email et mot de passe.",
         "clientArea": {
