@@ -1,0 +1,1 @@
+Fixed generic error when trying to open a file while offline.
