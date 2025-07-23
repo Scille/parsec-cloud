@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { expect, expectMedia, Media, msTest, openFileType, sliderClick } from '@tests/e2e/helpers';
+import { expect, expectMedia, getDownloadedFile, Media, msTest, openFileType, sliderClick } from '@tests/e2e/helpers';
 
 msTest('File viewer page default state', async ({ documents }) => {
   const entries = documents.locator('.folder-container').locator('.file-list-item');
@@ -102,6 +102,43 @@ msTest('File viewer header control functionality', async ({ documents }) => {
   // Test leaving file viewer restores header
   await documents.goBack();
   await expect(documents.locator('#connected-header .topbar')).toBeVisible();
+});
+
+msTest('File viewer download', async ({ documents }) => {
+  await openFileType(documents, 'pdf');
+  await expect(documents).toBeViewerPage();
+  await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.pdf$/);
+
+  // showSaveFilePicker is not yet supported by Playwright: https://github.com/microsoft/playwright/issues/31162
+  await documents.locator('.file-viewer-topbar-buttons').locator('ion-button').nth(1).click();
+
+  const modal = documents.locator('.download-warning-modal');
+
+  await expect(modal).toBeVisible();
+  await modal.locator('#next-button').click();
+  await expect(modal).toBeHidden();
+
+  await documents.waitForTimeout(1000);
+
+  const uploadMenu = documents.locator('.upload-menu');
+  await expect(uploadMenu).toBeVisible();
+  const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
+  await expect(tabs.locator('.text-counter')).toHaveText(['0', '9', '0']);
+  await expect(tabs.nth(0)).not.toHaveTheClass('active');
+  await expect(tabs.nth(1)).toHaveTheClass('active');
+  await expect(tabs.nth(2)).not.toHaveTheClass('active');
+
+  const container = uploadMenu.locator('.element-container');
+  const elements = container.locator('.element');
+  await expect(elements).toHaveCount(9);
+  await expect(elements.nth(0).locator('.element-details__name')).toHaveText(/^[A-Za-z0-9_-]+\.pdf$/);
+  await expect(elements.nth(0).locator('.element-details-info__size')).toHaveText('76.9 KB');
+
+  const content = await getDownloadedFile(documents);
+  expect(content).toBeTruthy();
+  if (content) {
+    expect(content.length).toEqual(78731);
+  }
 });
 
 msTest('Audio viewer', async ({ documents }) => {

@@ -2,11 +2,14 @@
 
 import { EntryModel } from '@/components/files';
 import { SmallDisplayCategoryFileContextMenu, SmallDisplayFileContextMenu } from '@/components/small-display';
-import { WorkspaceRole } from '@/parsec';
+import { EntryName, FsPath, WorkspaceHandle, WorkspaceID, WorkspaceRole } from '@/parsec';
+import { FileOperationManager } from '@/services/fileOperationManager';
+import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { FileAction, FileContextMenu, FolderGlobalAction, FolderGlobalContextMenu } from '@/views/files';
 import DownloadWarningModal from '@/views/files/DownloadWarningModal.vue';
 import { modalController, popoverController } from '@ionic/vue';
 import { MsModalResult } from 'megashark-lib';
+import { showSaveFilePicker } from 'native-file-system-adapter';
 
 export async function openGlobalContextMenu(
   event: Event,
@@ -120,4 +123,49 @@ export async function askDownloadConfirmation(): Promise<{ result: MsModalResult
   const { data, role } = await modal.onDidDismiss();
   await modal.dismiss();
   return { result: role ? (role as MsModalResult) : MsModalResult.Cancel, noReminder: data?.noReminder };
+}
+
+interface DownloadEntryOptions {
+  name: EntryName;
+  workspaceHandle: WorkspaceHandle;
+  workspaceId: WorkspaceID;
+  path: FsPath;
+  informationManager: InformationManager;
+  fileOperationManager: FileOperationManager;
+}
+
+export async function downloadEntry(options: DownloadEntryOptions): Promise<void> {
+  try {
+    const saveHandle = await showSaveFilePicker({
+      _preferPolyfill: false,
+      suggestedName: options.name,
+    });
+    await options.fileOperationManager.downloadEntry(options.workspaceHandle, options.workspaceId, saveHandle, options.path);
+  } catch (e: any) {
+    if (e.name === 'NotAllowedError') {
+      window.electronAPI.log('error', 'No permission for showSaveFilePicker');
+      options.informationManager.present(
+        new Information({
+          message: 'FoldersPage.DownloadFile.noPermissions',
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Modal,
+      );
+    } else if (e.name === 'AbortError') {
+      if ((e.toString() as string).toLocaleLowerCase().includes('user aborted')) {
+        window.electronAPI.log('debug', 'User cancelled the showSaveFilePicker');
+      } else {
+        options.informationManager.present(
+          new Information({
+            message: 'FoldersPage.DownloadFile.selectFolderFailed',
+            level: InformationLevel.Error,
+          }),
+          PresentationMode.Toast,
+        );
+        window.electronAPI.log('error', `Could not create the file: ${e.toString()}`);
+      }
+    } else {
+      window.electronAPI.log('error', `Failed to select destination file: ${e.toString()}`);
+    }
+  }
 }
