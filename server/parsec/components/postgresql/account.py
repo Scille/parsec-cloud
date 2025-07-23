@@ -16,6 +16,8 @@ from parsec.components.account import (
     AccountCreateSendValidationEmailBadOutcome,
     AccountDeleteProceedBadOutcome,
     AccountDeleteSendValidationEmailBadOutcome,
+    AccountRecoverProceedBadOutcome,
+    AccountRecoverSendValidationEmailBadOutcome,
     BaseAccountComponent,
 )
 from parsec.components.email import SendEmailBadOutcome
@@ -26,6 +28,10 @@ from parsec.components.postgresql.account_create import (
     create_send_validation_email,
 )
 from parsec.components.postgresql.account_delete import delete_proceed, delete_send_validation_email
+from parsec.components.postgresql.account_recover import (
+    recover_proceed,
+    recover_send_validation_email,
+)
 from parsec.components.postgresql.utils import transaction
 from parsec.config import BackendConfig
 
@@ -155,3 +161,64 @@ class PGAccountComponent(BaseAccountComponent):
         validation_code: ValidationCode,
     ) -> None | AccountDeleteProceedBadOutcome:
         return await delete_proceed(self.pool, now, auth_method_id, validation_code)
+
+    @override
+    async def recover_send_validation_email(
+        self, now: DateTime, email: EmailAddress
+    ) -> ValidationCode | SendEmailBadOutcome | AccountRecoverSendValidationEmailBadOutcome:
+        outcome = await self._recover_send_validation_email_db_operations(now, email)
+        match outcome:
+            case ValidationCode() as validation_code:
+                pass
+            case err:
+                return err
+
+        # Note we send the email once the PostgreSQL transaction is done, since this
+        # operation can be long.
+        outcome = await self._send_account_recover_validation_email(
+            email=email,
+            validation_code=validation_code,
+        )
+        match outcome:
+            case None:
+                return validation_code
+            case error:
+                return error
+
+    @transaction
+    async def _recover_send_validation_email_db_operations(
+        self,
+        conn: AsyncpgConnection,
+        now: DateTime,
+        email: EmailAddress,
+    ) -> ValidationCode | AccountRecoverSendValidationEmailBadOutcome:
+        return await recover_send_validation_email(conn, now, email)
+
+    @override
+    # Note this operation doesn't use the regular `@transaction` decorator.
+    # This is because this decorator would rollback the transaction on error,
+    # while here we want to register the failed attempt in the database.
+    async def recover_proceed(
+        self,
+        now: DateTime,
+        validation_code: ValidationCode,
+        email: EmailAddress,
+        created_by_user_agent: str,
+        created_by_ip: str | Literal[""],
+        new_vault_key_access: bytes,
+        new_auth_method_id: AccountAuthMethodID,
+        new_auth_method_mac_key: SecretKey,
+        new_auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
+    ) -> None | AccountRecoverProceedBadOutcome:
+        return await recover_proceed(
+            self.pool,
+            now,
+            validation_code,
+            email,
+            created_by_user_agent,
+            created_by_ip,
+            new_vault_key_access,
+            new_auth_method_id,
+            new_auth_method_mac_key,
+            new_auth_method_password_algorithm,
+        )
