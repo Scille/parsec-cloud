@@ -1679,7 +1679,7 @@
             },
             "step3": {
                 "title": "Choose your new password",
-                "description": "Make sure your new password meets the minimum criteria to be valid.",
+                "description": "Make sure your new password meets the minimum strength criteria.",
                 "nextButton": "Update password"
             },
             "step4": {
@@ -1691,7 +1691,8 @@
             "error": {
                 "generic": "Could not recover your account. Please check your email address.",
                 "invalidCode": "The verification code is invalid, make sure you entered the correct code.",
-                "offline": "You are offline. Please make sure you are connected to the Internet and try again."
+                "offline": "You are offline. Please make sure you are connected to the Internet and try again.",
+                "resendFailed": "Failed to send the email."
             }
         },
         "login": "Log in",

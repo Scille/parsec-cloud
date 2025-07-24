@@ -71,7 +71,6 @@ msTest('Parsec account create account', async ({ parsecAccount }) => {
   await expect(validationContainer.locator('.form-error')).toHaveText('The code is invalid.');
 
   const code = await testbedGetAccountCreationCode(parsecAccount, EMAIL);
-  // Try with a wrong code first
   for (let i = 0; i < code.length; i++) {
     await fillIonInput(codeInputs.nth(i), code[i]);
   }

@@ -158,7 +158,7 @@ export const Media = {
 
 // eslint-disable-next-line
 export async function openFileType(
-  documentsPage: Page,
+  documentsPage: MsPage,
   type: 'xlsx' | 'docx' | 'png' | 'pdf' | 'mp3' | 'mp4' | 'txt' | 'py',
 ): Promise<void> {
   const entries = documentsPage.locator('.folder-container').locator('.file-list-item');

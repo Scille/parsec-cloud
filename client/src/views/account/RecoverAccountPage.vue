@@ -147,7 +147,7 @@
 <script setup lang="ts">
 import { IonPage, IonContent, IonButton, IonIcon, IonText } from '@ionic/vue';
 import { home } from 'ionicons/icons';
-import { onMounted, ref, useTemplateRef } from 'vue';
+import { onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 import { emailValidator, parsecAddrValidator } from '@/common/validators';
 import {
   MsInput,
@@ -163,7 +163,7 @@ import {
 } from 'megashark-lib';
 import { AccountRecoverProceedErrorTag, AccountRecoverSendValidationEmailErrorTag, ParsecAccount, ParsecAccountAccess } from '@/parsec';
 import { Env } from '@/services/environment';
-import { getCurrentRouteParams, getCurrentRouteQuery, navigateTo, Routes } from '@/router';
+import { getCurrentRouteParams, getCurrentRouteQuery, navigateTo, Routes, watchRoute } from '@/router';
 
 enum Steps {
   Email = 0,
@@ -207,8 +207,14 @@ const TITLES: Array<{ title?: Translatable; subtitle?: Translatable }> = [
 
 // Should be updated
 async function resendCode(): Promise<void> {
+  if (!email.value || !server.value) {
+    return;
+  }
   resendDisabled.value = true;
-
+  const result = await ParsecAccount.sendRecoveryEmail(email.value, server.value);
+  if (!result.ok) {
+    error.value = 'loginPage.recoverAccount.error.resendFailed';
+  }
   setTimeout(() => {
     resendDisabled.value = false;
   }, 5000);
@@ -218,8 +224,29 @@ const validAuth = asyncComputed(async () => {
   return step.value === Steps.NewAuthentication && passwordInputRef.value && (await passwordInputRef.value.areFieldsCorrect());
 });
 
+const watchCancel = watchRoute(async (_newRoute, oldRoute) => {
+  if (oldRoute.name !== Routes.RecoverAccount) {
+    reset();
+  }
+});
+
+function reset(): void {
+  step.value = Steps.Email;
+  email.value = '';
+  code.value = [];
+  password.value = '';
+  server.value = Env.getAccountServer();
+  error.value = '';
+  resendDisabled.value = false;
+  querying.value = false;
+}
+
 onMounted(async () => {
   await serverInputRef.value?.validate(server.value);
+});
+
+onUnmounted(() => {
+  watchCancel();
 });
 
 function onFocusEmailInput(): void {
@@ -274,6 +301,7 @@ async function onPasswordChosen(): Promise<void> {
     if (result.error.tag === AccountRecoverProceedErrorTag.InvalidValidationCode) {
       step.value = Steps.Code;
       error.value = 'loginPage.recoverAccount.error.invalidCode';
+      await codeInputRef.value?.setFocus();
     } else if (result.error.tag === AccountRecoverProceedErrorTag.Offline) {
       error.value = 'loginPage.recoverAccount.error.offline';
     } else {
