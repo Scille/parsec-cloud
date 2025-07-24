@@ -136,6 +136,10 @@ svg {
 }
 
 .create-account-page {
+  @media screen and (max-height: 600px) {
+    padding: 2rem 0;
+  }
+
   .choose-auth-page {
     padding: 0;
   }
@@ -172,6 +176,25 @@ svg {
       border: none !important;
       background: transparent !important;
       box-shadow: none !important;
+    }
+  }
+}
+
+.homepage-scroll {
+  overflow-y: auto;
+  width: 100%;
+  height: 100%;
+
+  .homepage-content {
+    justify-content: center;
+    height: 100%;
+
+    @media screen and (max-height: 600px) {
+      justify-content: flex-start;
+    }
+
+    @include ms.responsive-breakpoint('sm') {
+      justify-content: flex-start;
     }
   }
 }

@@ -74,6 +74,7 @@
       <ion-button
         @click="$emit('serverChosen', ServerType.Custom)"
         fill="clear"
+        class="button-large"
       >
         {{ $msTranslate('CreateOrganization.server.ownServer') }}
       </ion-button>
@@ -81,6 +82,7 @@
         @click="onChoiceMade"
         size="large"
         :disabled="serverChoice === undefined"
+        class="button-large"
       >
         {{ $msTranslate('CreateOrganization.button.continue') }}
       </ion-button>
@@ -162,8 +164,10 @@ function getImagePath(): string {
   display: flex;
   padding: 0.5rem 2rem;
   justify-content: space-evenly;
+  height: fit-content;
 
   @include ms.responsive-breakpoint('sm') {
+    padding: 0.5rem 1.5rem;
     flex-direction: column;
     margin: auto;
     gap: 2rem;

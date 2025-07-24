@@ -4,9 +4,9 @@
   <div class="login-popup">
     <!-- login -->
     <div class="login-header">
-      <ion-title class="login-header__title title-h1">
+      <ion-text class="login-header__title title-h1">
         {{ $msTranslate('HomePage.organizationLogin.login') }}
-      </ion-title>
+      </ion-text>
     </div>
     <ion-card class="login-card">
       <ion-card-header class="login-card-header">
@@ -37,6 +37,7 @@
             fill="clear"
             @click="$emit('forgottenPasswordClick', device)"
             id="forgotten-password-button"
+            class="button-medium"
           >
             {{ $msTranslate('HomePage.organizationLogin.forgottenPassword') }}
           </ion-button>
@@ -49,7 +50,7 @@
           :disabled="password.length == 0 || loginInProgress === true"
           class="login-button"
         >
-          <span v-show="!loginInProgress">{{ $msTranslate('HomePage.organizationLogin.login') }}</span>
+          <span v-show="!loginInProgress">{{ $msTranslate('HomePage.organizationLogin.loginButton') }}</span>
           <ms-spinner
             v-show="loginInProgress === true"
             :size="14"
@@ -66,7 +67,7 @@
 import { MsInput, MsPasswordInput, MsSpinner } from 'megashark-lib';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AccessStrategy, AvailableDevice, ClientStartError, ClientStartErrorTag, DeviceAccessStrategyPassword } from '@/parsec';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonFooter, IonTitle } from '@ionic/vue';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonFooter, IonText } from '@ionic/vue';
 import { onMounted, ref, useTemplateRef } from 'vue';
 
 const props = defineProps<{
@@ -143,6 +144,10 @@ defineExpose({
   align-items: center;
   box-shadow: none;
 
+  @include ms.responsive-breakpoint('xl') {
+    margin: 0 auto;
+  }
+
   @include ms.responsive-breakpoint('sm') {
     margin: 0 auto;
   }
@@ -208,23 +213,8 @@ defineExpose({
           padding: 0 0 0 2px;
         }
 
-        &::after {
-          content: '';
-          position: absolute;
-          bottom: 0.25rem;
-          width: 0%;
-          height: 1px;
-          left: 0;
-          transition: all 200ms ease-in-out;
-        }
-
         &:hover {
-          color: var(--parsec-color-light-primary-500);
-
-          &::after {
-            background: var(--parsec-color-light-primary-500);
-            width: 100%;
-          }
+          color: var(--parsec-color-light-secondary-text);
         }
       }
     }

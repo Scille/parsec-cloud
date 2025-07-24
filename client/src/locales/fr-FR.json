@@ -173,6 +173,7 @@
             "welcome": "Bienvenue sur Parsec",
             "backToList": "Retour aux organisations",
             "backToLogin": "Retour à la connexion",
+            "back": "Retour",
             "settings": "Paramètres",
             "devices": "Mes appareils",
             "authentication": "Authentification",
@@ -242,7 +243,8 @@
             "deviceNotFound": "Le fichier de l'appareil n'a pas été trouvé.",
             "invalidData": "Le fichier de l'appareil contient des données invalides.",
             "unknownError": "Erreur inconnue.",
-            "login": "Se connecter",
+            "login": "Se connecter à une organisation",
+            "loginButton": "Se connecter",
             "loading": "Chargement...",
             "deviceAlreadyUsed": "Cet appareil est déjà utilisé par une autre application."
         },

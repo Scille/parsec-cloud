@@ -1,7 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div>
+  <div class="header-breadcrumbs">
     <ion-breadcrumbs
       v-show="isLargeDisplay"
       class="breadcrumb"
@@ -58,7 +58,7 @@
           {{ '/' }}
         </ion-text>
       </template>
-      <div>
+      <div class="breadcrumb-popover-button-container">
         <ion-button
           v-if="pathNodes.length > 1"
           @click="openPopover"
@@ -216,6 +216,12 @@ function navigateTo(path: RouterPathNode): void {
 </script>
 
 <style scoped lang="scss">
+.header-breadcrumbs {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
 .breadcrumb {
   padding: 0;
   color: var(--parsec-color-light-secondary-grey);
@@ -312,16 +318,20 @@ function navigateTo(path: RouterPathNode): void {
   }
 
   .breadcrumb-popover-button {
-    min-height: 0;
     min-width: 0;
     padding: 0;
+    background: var(--parsec-color-light-secondary-premiere);
+    border-radius: var(--parsec-radius-8);
 
     &::part(native) {
-      --background: var(--parsec-color-light-secondary-premiere);
-      --background-hover: var(--parsec-color-light-secondary-medium);
+      --background-hover: none;
       --background-focused: none;
       border: none;
       padding: 0.375rem;
+    }
+
+    &-container {
+      display: flex;
     }
 
     &__icon {

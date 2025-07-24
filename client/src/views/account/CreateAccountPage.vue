@@ -29,6 +29,13 @@
           >
             {{ $msTranslate(TITLES[step].subtitle) }}
           </ion-text>
+          <ms-report-text
+            v-if="error"
+            :theme="MsReportTheme.Error"
+            class="recover-account-text__error"
+          >
+            {{ $msTranslate(error) }}
+          </ms-report-text>
         </div>
         <!-- User Information Step -->
         <div
@@ -41,11 +48,11 @@
             @creation-started="onCreationStarted"
           />
           <div class="user-information-step-login">
-            <ion-text class="user-information-step-login__description body">
+            <ion-text class="user-information-step-login__description subtitles-normal">
               {{ $msTranslate('loginPage.createAccount.alreadyHaveAnAccount') }}
             </ion-text>
             <ion-button
-              class="user-information-step-login__button tertiary-button"
+              class="user-information-step-login__button button-large"
               @click="goToLogin"
             >
               {{ $msTranslate('loginPage.login') }}
@@ -67,36 +74,25 @@
               :disabled="querying"
             />
 
-            <ion-button
-              class="primary-button"
-              @click="validateCode"
-              :disabled="code.length === 0"
-            >
-              {{ $msTranslate('loginPage.createAccount.nextButton') }}
-            </ion-button>
-
             <div class="validation-email-step-footer">
-              <ion-text
-                v-show="error"
-                class="form-error body validation-email-step-footer__error"
+              <ion-button
+                class="primary-button button-large"
+                @click="validateCode"
+                :disabled="code.length === 0"
               >
-                <ion-icon
-                  class="form-error-icon"
-                  :icon="warning"
-                />
-                {{ $msTranslate(error) }}
-              </ion-text>
-
-              <div class="footer-content">
-                <ion-button
-                  class="validation-email-step-footer__resend"
-                  @click="resendCode"
-                  :disabled="querying"
-                >
-                  {{ $msTranslate('loginPage.createAccount.resendCode') }}
-                </ion-button>
-                <ms-spinner v-show="querying" />
-              </div>
+                {{ $msTranslate('loginPage.createAccount.nextButton') }}
+              </ion-button>
+              <ion-button
+                class="validation-email-step-footer__resend button-large"
+                @click="resendCode"
+                :disabled="querying"
+              >
+                {{ $msTranslate('loginPage.createAccount.resendCode') }}
+              </ion-button>
+              <ms-spinner
+                v-show="querying"
+                :size="14"
+              />
             </div>
           </div>
         </div>
@@ -113,7 +109,7 @@
               @on-enter-keyup="createAccount"
             />
             <ion-button
-              class="primary-button"
+              class="primary-button button-large"
               @click="createAccount"
               :disabled="!validAuth"
             >
@@ -176,7 +172,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonContent, IonButton, IonText, IonIcon } from '@ionic/vue';
+import { IonPage, IonContent, IonButton, IonText } from '@ionic/vue';
 import {
   asyncComputed,
   MsCodeValidationInput,
@@ -193,7 +189,6 @@ import { AccountCreateErrorTag, AccountCreationStepper, ParsecAccount, ParsecAcc
 import { wait } from '@/parsec/internals';
 import { getCurrentRouteParams, getCurrentRouteQuery, navigateTo, Routes, watchRoute } from '@/router';
 import { DateTime } from 'luxon';
-import { warning } from 'ionicons/icons';
 import { RouteLocationNormalizedLoaded } from 'vue-router';
 
 enum Steps {
@@ -348,6 +343,16 @@ async function createAccount(): Promise<void> {
 </script>
 
 <style scoped lang="scss">
+.create-account-page-container {
+  &::part(background) {
+    background: linear-gradient(
+      117deg,
+      var(--parsec-color-light-secondary-inversed-contrast, #fcfcfc) 0%,
+      var(--parsec-color-light-secondary-background, #f9f9fb) 100%
+    );
+  }
+}
+
 .create-account-page {
   display: flex;
   flex-direction: column;
@@ -356,11 +361,16 @@ async function createAccount(): Promise<void> {
   width: 100%;
   height: 100%;
   gap: 2rem;
-  background: linear-gradient(
-    117deg,
-    var(--parsec-color-light-secondary-inversed-contrast, #fcfcfc) 0%,
-    var(--parsec-color-light-secondary-background, #f9f9fb) 100%
-  );
+
+  @media screen and (max-height: 600px) {
+    padding: 2rem 0;
+    justify-content: flex-start !important;
+  }
+
+  @include ms.responsive-breakpoint('sm') {
+    padding: 3rem 0 1rem;
+    justify-content: flex-start !important;
+  }
 
   &-header {
     display: flex;
@@ -428,27 +438,11 @@ async function createAccount(): Promise<void> {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1.5rem;
+    gap: 2rem;
   }
 
   .primary-button {
     width: 100%;
-  }
-
-  .tertiary-button {
-    color: var(--parsec-color-light-secondary-text);
-    font-weight: 600;
-
-    &::part(native) {
-      --background-hover: transparent;
-      --background: transparent;
-      padding: 0.125rem;
-    }
-
-    &:hover {
-      color: var(--parsec-color-light-secondary-text-hover);
-      text-decoration: underline;
-    }
   }
 }
 
@@ -462,6 +456,37 @@ async function createAccount(): Promise<void> {
 
     &__description {
       color: var(--parsec-color-light-secondary-hard-grey);
+    }
+
+    &__button {
+      color: var(--parsec-color-light-primary-500);
+      position: relative;
+
+      &::part(native) {
+        --background-hover: transparent;
+        --background: transparent;
+        padding: 0.125rem;
+      }
+
+      &::before {
+        content: '';
+        position: absolute;
+        bottom: -0.25rem;
+        left: 0.125rem;
+        height: 1px;
+        width: 0px;
+        background: transparent;
+        transition: all 150ms linear;
+      }
+
+      &:hover {
+        color: var(--parsec-color-light-primary-600);
+
+        &::before {
+          width: calc(100% - 0.25rem);
+          background: var(--parsec-color-light-primary-600);
+        }
+      }
     }
   }
 }
@@ -486,15 +511,7 @@ async function createAccount(): Promise<void> {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-direction: column-reverse;
-
-    .footer-content {
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1rem;
-    }
+    flex-direction: column;
 
     &__resend {
       align-self: flex-end;
@@ -505,7 +522,6 @@ async function createAccount(): Promise<void> {
         width: 100%;
         --background-hover: transparent;
         color: var(--parsec-color-light-secondary-text);
-        padding: 0.125rem;
       }
 
       &:hover {
@@ -513,10 +529,6 @@ async function createAccount(): Promise<void> {
           --background-hover: var(--parsec-color-light-secondary-premiere);
         }
       }
-    }
-
-    &__error {
-      flex-shrink: 0;
     }
   }
 }

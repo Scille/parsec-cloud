@@ -125,8 +125,8 @@ async function onBackToServerChoice(): Promise<void> {
 
   @include ms.responsive-breakpoint('sm') {
     min-width: 100%;
-    --max-height: 80vh;
-    max-height: 80vh;
+    --max-height: 90vh;
+    max-height: 90vh;
   }
 }
 </style>

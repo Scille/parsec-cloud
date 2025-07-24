@@ -2,74 +2,73 @@
 
 <template>
   <ion-page>
-    <ion-content
-      class="homepage-content"
-      :fullscreen="true"
-    >
+    <ion-content :fullscreen="true">
       <div id="page">
         <!-- sidebar -->
         <home-page-sidebar class="homepage-sidebar" />
         <!-- main content -->
-        <div
-          class="homepage-content"
-          :class="{ 'login-fullscreen': state === HomePageState.Login }"
-        >
-          <!-- topbar -->
-          <home-page-header
-            class="homepage-header"
-            @back-click="backToPreviousPage"
-            @customer-area-click="goToCustomerAreaLogin"
-            @settings-click="goToAccountSettings"
-            @create-or-join-organization-click="openCreateOrJoin"
-            @change-tab="onChangeTab"
-            :display-create-join="deviceList.length > 0"
-            :back-button-title="getBackButtonTitle()"
-            :show-secondary-menu="state !== HomePageState.AccountSettings"
-            :show-back-button="showBackButton"
-          />
-          <slide-horizontal
-            :appear-from="slidePositions.appearFrom"
-            :disappear-to="slidePositions.disappearTo"
+        <div class="homepage-scroll">
+          <div
+            class="homepage-content"
+            :class="{ 'login-fullscreen': state === HomePageState.Login }"
           >
-            <template v-if="state === HomePageState.OrganizationList">
-              <organization-list-page
-                @create-organization-click="openCreateOrganizationModal"
-                @organization-select="onOrganizationSelected"
-                @join-organization-click="onJoinOrganizationClicked"
-                @join-organization-with-link-click="openJoinByLinkModal"
-                @bootstrap-organization-with-link-click="openCreateOrganizationModal"
-                @recover-click="onForgottenPasswordClicked"
-                @create-or-join-organization-click="openCreateOrJoin"
-                :device-list="deviceList"
-                :querying="querying"
-              />
-            </template>
-            <template v-else-if="state === HomePageState.CustomerArea">
-              <client-area-login-page />
-            </template>
-            <template v-else-if="state === HomePageState.Login">
-              <login-page
-                v-if="selectedDevice"
-                :device="selectedDevice"
-                @login-click="login"
-                @forgotten-password-click="onForgottenPasswordClicked"
-                :login-in-progress="loginInProgress"
-                ref="loginPage"
-              />
-            </template>
-            <template v-else-if="state === HomePageState.ForgottenPassword">
-              <import-recovery-device-page
-                :device="selectedDevice"
-                @organization-selected="login"
-              />
-            </template>
-            <template v-else-if="state === HomePageState.AccountSettings">
-              <account-settings-page
-                :active-tab="activeTab"
-                @tab-change="onChangeTab"
-              />
-            </template>
-          </slide-horizontal>
+            <!-- topbar -->
+            <home-page-header
+              class="homepage-header"
+              @back-click="backToPreviousPage"
+              @customer-area-click="goToCustomerAreaLogin"
+              @settings-click="goToAccountSettings"
+              @create-or-join-organization-click="openCreateOrJoin"
+              @change-tab="onChangeTab"
+              :display-create-join="deviceList.length > 0"
+              :back-button-title="getBackButtonTitle()"
+              :show-secondary-menu="state !== HomePageState.AccountSettings"
+              :show-back-button="showBackButton"
+            />
+            <slide-horizontal
+              :appear-from="slidePositions.appearFrom"
+              :disappear-to="slidePositions.disappearTo"
+            >
+              <template v-if="state === HomePageState.OrganizationList">
+                <organization-list-page
+                  @create-organization-click="openCreateOrganizationModal"
+                  @organization-select="onOrganizationSelected"
+                  @join-organization-click="onJoinOrganizationClicked"
+                  @join-organization-with-link-click="openJoinByLinkModal"
+                  @bootstrap-organization-with-link-click="openCreateOrganizationModal"
+                  @recover-click="onForgottenPasswordClicked"
+                  @create-or-join-organization-click="openCreateOrJoin"
+                  :device-list="deviceList"
+                  :querying="querying"
+                />
+              </template>
+              <template v-else-if="state === HomePageState.CustomerArea">
+                <client-area-login-page />
+              </template>
+              <template v-else-if="state === HomePageState.Login">
+                <login-page
+                  v-if="selectedDevice"
+                  :device="selectedDevice"
+                  @login-click="login"
+                  @forgotten-password-click="onForgottenPasswordClicked"
+                  :login-in-progress="loginInProgress"
+                  ref="loginPage"
+                />
+              </template>
+              <template v-else-if="state === HomePageState.ForgottenPassword">
+                <import-recovery-device-page
+                  :device="selectedDevice"
+                  @organization-selected="login"
+                />
+              </template>
+              <template v-else-if="state === HomePageState.AccountSettings">
+                <account-settings-page
+                  :active-tab="activeTab"
+                  @tab-change="onChangeTab"
+                />
+              </template>
+            </slide-horizontal>
+          </div>
         </div>
         <!-- end of organization -->
       </div>
@@ -147,7 +146,7 @@ enum HomePageState {
   AccountSettings = 'account-settings',
 }
 
-const { isLargeDisplay } = useWindowSize();
+const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 
@@ -377,10 +376,8 @@ async function openCreateOrganizationModal(bootstrapLink?: string, defaultServer
     cssClass: 'create-organization-modal',
     backdropDismiss: false,
     showBackdrop: true,
-    breakpoints: isLargeDisplay.value ? undefined : [0.5, 1],
     expandToScroll: false,
     handle: false,
-    initialBreakpoint: isLargeDisplay.value ? undefined : 1,
     componentProps: {
       informationManager: informationManager,
       bootstrapLink: bootstrapLink,
@@ -740,6 +737,9 @@ async function goToAccountSettings(): Promise<void> {
 }
 
 function getBackButtonTitle(): string {
+  if (isSmallDisplay.value) {
+    return 'HomePage.topbar.back';
+  }
   if (state.value === HomePageState.Login) {
     return 'HomePage.topbar.backToList';
   } else if (state.value === HomePageState.ForgottenPassword) {
@@ -754,18 +754,6 @@ function getBackButtonTitle(): string {
 </script>
 
 <style lang="scss" scoped>
-.homepage-content {
-  --background: var(--parsec-color-light-secondary-background);
-
-  &::part(scroll) {
-    --keyboard-offset: 0;
-
-    @include ms.responsive-breakpoint('xs') {
-      --keyboard-offset: 290px;
-    }
-  }
-}
-
 #page {
   position: relative;
   height: 100vh;
@@ -776,11 +764,19 @@ function getBackButtonTitle(): string {
   z-index: -10;
 
   .homepage-content {
-    width: 100%;
-    height: 100%;
     position: relative;
     display: flex;
     flex-direction: column;
+    --background: var(--parsec-color-light-secondary-background);
+
+    &::part(scroll) {
+      --keyboard-offset: 0;
+
+      // Disabled for now, as it causes issues with the keyboard on small displays
+      @include ms.responsive-breakpoint('xs') {
+        // --keyboard-offset: 290px;
+      }
+    }
   }
 
   // Should be edited later with responsive
@@ -798,6 +794,7 @@ function getBackButtonTitle(): string {
 
     @include ms.responsive-breakpoint('sm') {
       padding: 2rem 1.5rem 0;
+      margin-bottom: 1rem;
     }
   }
 

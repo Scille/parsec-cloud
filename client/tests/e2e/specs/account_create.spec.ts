@@ -67,8 +67,10 @@ msTest('Parsec account create account', async ({ parsecAccount }) => {
   await validationNext.click();
 
   await checkVisible(containers, 1);
-  await expect(validationContainer.locator('.form-error')).toBeVisible();
-  await expect(validationContainer.locator('.form-error')).toHaveText('The code is invalid.');
+  await expect(parsecAccount.locator('.create-account-page-header').locator('.container-textinfo__text')).toBeVisible();
+  await expect(parsecAccount.locator('.create-account-page-header').locator('.container-textinfo__text')).toHaveText(
+    'The code is invalid.',
+  );
 
   const code = await testbedGetAccountCreationCode(parsecAccount, EMAIL);
   // Try with a wrong code first
