@@ -9,6 +9,8 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from enum import auto
 
+from jinja2 import Environment
+
 from parsec._parsec import (
     CancelledGreetingAttemptReason,
     DateTime,
@@ -33,7 +35,6 @@ from parsec.client_context import AuthenticatedClientContext, InvitedClientConte
 from parsec.components.email import SendEmailBadOutcome, send_email
 from parsec.config import BackendConfig
 from parsec.logging import get_logger
-from parsec.templates import get_template
 from parsec.types import BadOutcome, BadOutcomeEnum
 
 logger = get_logger()
@@ -126,6 +127,7 @@ Invitation = UserInvitation | DeviceInvitation | ShamirRecoveryInvitation
 
 
 def generate_invite_email(
+    jinja_env: Environment,
     invitation_type: InvitationType,
     from_addr: EmailAddress,
     to_addr: EmailAddress,
@@ -142,7 +144,7 @@ def generate_invite_email(
     is_device_invitation = invitation_type == invitation_type.DEVICE
     is_shamir_recovery_invitation = invitation_type == invitation_type.SHAMIR_RECOVERY
 
-    html = get_template("email/invitation.html.j2").render(
+    html = jinja_env.get_template("email/invitation.html.j2").render(
         is_user_invitation=is_user_invitation,
         is_device_invitation=is_device_invitation,
         is_shamir_recovery_invitation=is_shamir_recovery_invitation,
@@ -151,7 +153,7 @@ def generate_invite_email(
         invitation_url=invitation_url,
         server_url=server_url,
     )
-    text = get_template("email/invitation.txt.j2").render(
+    text = jinja_env.get_template("email/invitation.txt.j2").render(
         is_user_invitation=is_user_invitation,
         is_device_invitation=is_device_invitation,
         is_shamir_recovery_invitation=is_shamir_recovery_invitation,
@@ -524,6 +526,7 @@ class BaseInviteComponent:
         ).to_http_redirection_url()
 
         message = generate_invite_email(
+            jinja_env=self._config.jinja_env,
             invitation_type=InvitationType.USER,
             from_addr=self._config.email_config.sender,
             to_addr=claimer_email,
@@ -558,6 +561,7 @@ class BaseInviteComponent:
         ).to_http_redirection_url()
 
         message = generate_invite_email(
+            jinja_env=self._config.jinja_env,
             invitation_type=InvitationType.DEVICE,
             from_addr=self._config.email_config.sender,
             to_addr=email,
@@ -591,6 +595,7 @@ class BaseInviteComponent:
         ).to_http_redirection_url()
 
         message = generate_invite_email(
+            jinja_env=self._config.jinja_env,
             invitation_type=InvitationType.SHAMIR_RECOVERY,
             from_addr=self._config.email_config.sender,
             to_addr=email,

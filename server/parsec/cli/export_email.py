@@ -14,6 +14,7 @@ from parsec.components.account import (
     _generate_account_delete_validation_email,
 )
 from parsec.components.invite import generate_invite_email
+from parsec.templates import get_environment
 
 DEFAULT_SENDER_EMAIL = EmailAddress("parsec@example.com")
 DEFAULT_RECIPIENT_EMAIL = EmailAddress("alice@example.com")
@@ -82,6 +83,11 @@ def mail_templates_shared_options[**P, T](fn: Callable[P, T]) -> Callable[P, T]:
             show_default=True,
             help="The base server url used to access static resources",
         ),
+        click.option(
+            "--template-dir",
+            type=click.Path(dir_okay=True, file_okay=False, exists=True, path_type=Path),
+            help="Load templates from the specified directory instead of using the default one",
+        ),
     ]
     for decorator in decorators:
         fn = decorator(fn)
@@ -123,8 +129,11 @@ def invite(
     reply_to: EmailAddress | None,
     server_url: str,
     output_dir: Path,
+    template_dir: Path | None,
 ):
+    jinja_env = get_environment(template_dir)
     message = generate_invite_email(
+        jinja_env=jinja_env,
         from_addr=sender,
         to_addr=recipient,
         invitation_type=invitation_type,
@@ -152,8 +161,11 @@ def account_create(
     validation_code: ValidationCode,
     server_url: str,
     output_dir: Path,
+    template_dir: Path | None,
 ):
+    jinja_env = get_environment(template_dir)
     message = _generate_account_create_validation_email(
+        jinja_env=jinja_env,
         from_addr=sender,
         to_addr=recipient,
         validation_code=validation_code,
@@ -177,8 +189,11 @@ def account_delete(
     validation_code: ValidationCode,
     server_url: str,
     output_dir: Path,
+    template_dir: Path | None,
 ):
+    jinja_env = get_environment(template_dir)
     message = _generate_account_delete_validation_email(
+        jinja_env=jinja_env,
         from_addr=sender,
         to_addr=recipient,
         validation_code=validation_code,
