@@ -77,19 +77,19 @@ msTest('Test files options tab menu', async ({ documents, context }) => {
   // `Rename` button
   await tabItem.nth(0).click();
   await expect(documents.locator('.text-input-modal')).toBeVisible();
-  await expect(documents.locator('.text-input-modal').locator('ion-title')).toHaveText('Rename a file');
+  await expect(documents.locator('.text-input-modal').locator('ion-text')).toHaveText('Rename a file');
   await documents.locator('.text-input-modal').locator('.closeBtn').click();
 
   // `Move` button
   await tabItem.nth(1).click();
   await expect(documents.locator('.folder-selection-modal')).toBeVisible();
-  await expect(documents.locator('.folder-selection-modal').locator('ion-title')).toHaveText('Move one item');
+  await expect(documents.locator('.folder-selection-modal').locator('.ms-modal-header__title')).toHaveText('Move one item');
   await documents.locator('.folder-selection-modal').locator('.closeBtn').click();
 
   // `Delete` button
   await tabItem.nth(2).click();
   await expect(documents.locator('.question-modal')).toBeVisible();
-  await expect(documents.locator('.question-modal').locator('ion-title')).toHaveText('Delete one file');
+  await expect(documents.locator('.question-modal').locator('.ms-small-display-modal-header__title')).toHaveText('Delete one file');
   await documents.locator('.question-modal').locator('.ms-small-display-modal-footer-buttons-cancel').click();
 
   // `More` button
@@ -120,7 +120,7 @@ msTest('Test files options tab menu', async ({ documents, context }) => {
   await expect(optionsTabModal).toBeVisible();
   await tabModalItem.nth(2).click();
   await expect(documents.locator('.folder-selection-modal')).toBeVisible();
-  await expect(documents.locator('.folder-selection-modal').locator('ion-title')).toHaveText('Copy one item');
+  await expect(documents.locator('.folder-selection-modal').locator('.ms-modal-header__title')).toHaveText('Copy one item');
   await documents.locator('.folder-selection-modal').locator('.closeBtn').click();
 
   // `Copy link` button

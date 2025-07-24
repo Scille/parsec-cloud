@@ -21,7 +21,7 @@
       ref="navigation"
     >
       <div ref="buttons">
-        <ion-buttons class="navigation-buttons">
+        <div class="navigation-buttons">
           <ion-button
             fill="clear"
             @click="back()"
@@ -40,7 +40,7 @@
           >
             <ion-icon :icon="chevronForward" />
           </ion-button>
-        </ion-buttons>
+        </div>
       </div>
       <header-breadcrumbs
         :path-nodes="headerPath"
@@ -112,7 +112,7 @@ import { FolderSelectionOptions } from '@/components/files';
 import { Folder, MsImage, MsModalResult, MsModal, formatTimeSince, useWindowSize } from 'megashark-lib';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import { EntryStat, FsPath, Path, StartedWorkspaceInfo, getWorkspaceInfo, statFolderChildren } from '@/parsec';
-import { IonButton, IonButtons, IonText, IonIcon, IonItem, IonLabel, IonList, modalController } from '@ionic/vue';
+import { IonButton, IonText, IonIcon, IonItem, IonLabel, IonList, modalController } from '@ionic/vue';
 import { chevronBack, chevronForward, home } from 'ionicons/icons';
 import { Ref, onMounted, onUnmounted, ref, watch, useTemplateRef } from 'vue';
 

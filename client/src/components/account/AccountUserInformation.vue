@@ -2,41 +2,43 @@
 
 <template>
   <div>
-    <ms-input
-      class="account-login-content__input"
-      ref="serverInput"
-      v-model="server"
-      label="loginPage.inputFields.server"
-      @on-enter-keyup="submit"
-      :validator="parsecAddrValidator"
-      :disabled="querying"
-    />
-    <ms-input
-      class="account-login-content__input"
-      v-model="firstName"
-      label="loginPage.inputFields.firstname"
-      @on-enter-keyup="submit"
-      :disabled="querying"
-    />
-    <ms-input
-      class="account-login-content__input"
-      v-model="lastName"
-      label="loginPage.inputFields.lastname"
-      @on-enter-keyup="submit"
-      :disabled="querying"
-    />
-    <ms-input
-      class="account-login-content__input"
-      ref="emailInput"
-      v-model="email"
-      label="loginPage.inputFields.email"
-      @on-enter-keyup="submit()"
-      :validator="emailValidator"
-      :disabled="querying"
-    />
+    <div class="account-login-content-list">
+      <ms-input
+        class="account-login-content__input"
+        ref="serverInput"
+        v-model="server"
+        label="loginPage.inputFields.server"
+        @on-enter-keyup="submit"
+        :validator="parsecAddrValidator"
+        :disabled="querying"
+      />
+      <ms-input
+        class="account-login-content__input"
+        v-model="firstName"
+        label="loginPage.inputFields.firstname"
+        @on-enter-keyup="submit"
+        :disabled="querying"
+      />
+      <ms-input
+        class="account-login-content__input"
+        v-model="lastName"
+        label="loginPage.inputFields.lastname"
+        @on-enter-keyup="submit"
+        :disabled="querying"
+      />
+      <ms-input
+        class="account-login-content__input"
+        ref="emailInput"
+        v-model="email"
+        label="loginPage.inputFields.email"
+        @on-enter-keyup="submit()"
+        :validator="emailValidator"
+        :disabled="querying"
+      />
+    </div>
     <div class="account-login-content-button">
       <ion-button
-        class="account-login-content-button__item"
+        class="account-login-content-button__item button-large"
         @click="submit"
         :disabled="querying || !validInfo"
       >
@@ -124,6 +126,12 @@ async function submit(): Promise<void> {
 </script>
 
 <style scoped lang="scss">
+.account-login-content-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
 .account-login-content-button {
   width: 100%;
   display: flex;
