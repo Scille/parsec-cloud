@@ -41,6 +41,7 @@ env:
   CARGO_NEXTEST_CI_FLAGS: --profile=ci --locked --cargo-profile=ci-rust
   WINFSP_VERSION: 2.0.23075
   WINFSP_TEST_EXE: C:/Program Files (x86)/WinFsp/bin/winfsp-tests-x64.exe
+  TEST_RUST_LOG: debug,hyper_util=info,reqwest=info,sqlx=info
 
 permissions:
   contents: read
@@ -120,7 +121,7 @@ jobs:
       - name: Test agnostic rust codebase
         run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} ${{ steps.crates.outputs.agnostic }}
         env:
-          RUST_LOG: debug
+          RUST_LOG: ${{ env.TEST_RUST_LOG }}
         timeout-minutes: 10
 
       # By default `libparsec_crypto` uses RustCrypto, so here we test the sodiumoxide
@@ -135,7 +136,7 @@ jobs:
         run: cargo check ${{ env.CARGO_CI_FLAGS }} ${{ steps.crates.outputs.agnostic }} ${{ steps.crates.outputs.platform }} --features use-sodiumoxide
         timeout-minutes: 10
         env:
-          RUST_LOG: debug
+          RUST_LOG: ${{ env.TEST_RUST_LOG }}
 
       - name: unlock keyring
         uses: t1m0thyj/unlock-keyring@728cc718a07b5e7b62c269fc89295e248b24cba7 # pin v1.1.0
@@ -147,7 +148,7 @@ jobs:
         run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} ${{ steps.crates.outputs.platform }} --features libparsec_crypto/use-sodiumoxide
         timeout-minutes: 30
         env:
-          RUST_LOG: debug
+          RUST_LOG: ${{ env.TEST_RUST_LOG }}
 
       - name: Test platform-async on wasm
         if: inputs.run-wasm-tests
