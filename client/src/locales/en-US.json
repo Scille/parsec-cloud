@@ -801,7 +801,13 @@
             "openFailed": "Could not open the file. You can try using your browser's downloads list.",
             "cancel": "Cancel",
             "download": "Download file",
-            "notRemindMe": "Do not remind me"
+            "notRemindMe": "Do not remind me",
+            "maximumRecursionReached": "Maximum subfolder depth reached, cannot download",
+            "maximumFilesReached": "Too many selected files, cannot download",
+            "archiveTitle": "Downloading multiple files",
+            "archiveQuestion": "The selected files will be downloaded as an archive, with a total size of {size}. Do you want to continue?",
+            "archiveYes": "Download archive",
+            "archiveNo": "Cancel"
         },
         "uploadsLeft": "{amount} imports pending",
         "copiesLeft": "{amount} copies pending",

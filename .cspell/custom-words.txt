@@ -272,4 +272,5 @@ Xdock
 xored
 xsalsa
 XTIMES
+zipjs
 zxcvbn

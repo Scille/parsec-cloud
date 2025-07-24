@@ -270,6 +270,8 @@ async function populateFiles(): Promise<void> {
     return;
   }
   for (const workspace of workspaces.value) {
+    await parsec.createFolder(workspace.handle, '/Folder_éèñÑ');
+
     for (const fileType in mockFiles.MockFileType) {
       const fileName = `document_${fileType}.${fileType.toLocaleLowerCase()}`;
       const openResult = await parsec.openFile(workspace.handle, `/${fileName}`, {

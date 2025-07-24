@@ -2,6 +2,7 @@
 
 import {
   DEFAULT_READ_SIZE,
+  EntryName,
   EntryStatFile,
   EntryTree,
   FileDescriptor,
@@ -30,6 +31,7 @@ import {
   writeFile,
 } from '@/parsec';
 import { wait } from '@/parsec/internals';
+import * as zipjs from '@zip.js/zip.js';
 import { DateTime } from 'luxon';
 import { FileSystemFileHandle } from 'native-file-system-adapter';
 import { v4 as uuid4 } from 'uuid';
@@ -66,10 +68,19 @@ enum FileOperationState {
   DownloadStarted,
   DownloadFailed,
   EntryDownloaded,
+  DownloadArchiveAdded,
+  DownloadArchiveStarted,
+  DownloadArchiveFailed,
+  ArchiveDownloaded,
 }
 
 export interface OperationProgressStateData {
   progress: number;
+}
+
+export interface DownloadOperationProgressStateData extends OperationProgressStateData {
+  currentFile: EntryName;
+  currentFileSize: number;
 }
 
 export interface CreateFailedStateData {
@@ -120,7 +131,8 @@ export type StateData =
   | FolderCreatedStateData
   | MoveFailedStateData
   | CopyFailedStateData
-  | RestoreFailedStateData;
+  | RestoreFailedStateData
+  | DownloadOperationProgressStateData;
 
 type FileOperationCallback = (state: FileOperationState, operationData?: FileOperationData, stateData?: StateData) => Promise<void>;
 type FileOperationID = string;
@@ -132,6 +144,7 @@ export enum FileOperationDataType {
   Move,
   Restore,
   Download,
+  DownloadArchive,
 }
 
 interface IFileOperationDataType {
@@ -239,6 +252,35 @@ class DownloadData extends FileOperationData {
   }
 }
 
+class DownloadArchiveData extends FileOperationData {
+  trees: Array<EntryTree>;
+  saveHandle: FileSystemFileHandle;
+  rootPath: FsPath;
+  totalFiles: number;
+  totalSize: number;
+
+  constructor(
+    workspaceHandle: WorkspaceHandle,
+    workspaceId: WorkspaceID,
+    saveHandle: FileSystemFileHandle,
+    trees: Array<EntryTree>,
+    rootPath: FsPath,
+    totalFiles: number,
+    totalSize: number,
+  ) {
+    super(workspaceHandle, workspaceId);
+    this.saveHandle = saveHandle;
+    this.trees = trees;
+    this.rootPath = rootPath;
+    this.totalFiles = totalFiles;
+    this.totalSize = totalSize;
+  }
+
+  getDataType(): FileOperationDataType {
+    return FileOperationDataType.DownloadArchive;
+  }
+}
+
 class FileOperationManager {
   private fileOperationData: Array<FileOperationData>;
   private callbacks: Array<[string, FileOperationCallback]>;
@@ -319,6 +361,23 @@ class FileOperationManager {
     }
     const newData = new DownloadData(workspaceHandle, workspaceId, path, saveStream, dateTime);
     await this.sendState(FileOperationState.DownloadAdded, newData);
+    this.fileOperationData.unshift(newData);
+  }
+
+  async downloadArchive(
+    workspaceHandle: WorkspaceHandle,
+    workspaceId: WorkspaceID,
+    saveStream: FileSystemFileHandle,
+    trees: Array<EntryTree>,
+    rootPath: FsPath,
+    totalFiles: number,
+    totalSize: number,
+  ): Promise<void> {
+    if (!this.isRunning) {
+      this.start();
+    }
+    const newData = new DownloadArchiveData(workspaceHandle, workspaceId, saveStream, trees, rootPath, totalFiles, totalSize);
+    await this.sendState(FileOperationState.DownloadArchiveAdded, newData);
     this.fileOperationData.unshift(newData);
   }
 
@@ -799,11 +858,93 @@ class FileOperationManager {
       await this.sendState(FileOperationState.EntryDownloaded, data);
     } catch (e: any) {
       await wStream.abort();
+      data.saveHandle.remove();
       if (cancelled) {
         await this.sendState(FileOperationState.Cancelled, data);
       } else {
         window.electronAPI.log('warn', `Error while downloading file: ${e?.toString()}`);
         await this.sendState(FileOperationState.DownloadFailed, data);
+      }
+    }
+  }
+
+  private async doDownloadArchive(data: DownloadArchiveData): Promise<void> {
+    await this.sendState(FileOperationState.DownloadArchiveStarted, data);
+    await this.sendState(FileOperationState.OperationProgress, data, { progress: 0 });
+
+    const totalSize = data.totalSize;
+    let zipWriter: zipjs.ZipWriter<any> | undefined;
+    let wStream: FileSystemWritableFileStream | undefined;
+    let cancelled = false;
+
+    try {
+      wStream = await data.saveHandle.createWritable();
+      zipWriter = new zipjs.ZipWriter(wStream, {
+        level: 3,
+        compressionMethod: 0x08,
+        useUnicodeFileNames: true,
+        supportZip64SplitFile: false,
+        zip64: false,
+      });
+
+      const start = DateTime.now();
+      let totalSizeRead = 0;
+
+      for (const tree of data.trees) {
+        for (const entry of tree.entries) {
+          // Check if the download has been cancelled
+          let shouldCancel = false;
+          const index = this.cancelList.findIndex((item) => item === data.id);
+
+          if (index !== -1) {
+            // Remove from cancel list
+            this.cancelList.splice(index, 1);
+            shouldCancel = true;
+          }
+          if (shouldCancel) {
+            cancelled = true;
+            throw Error('cancelled');
+          }
+
+          try {
+            const rStream = await createReadStream(data.workspaceHandle, entry.path, async (sizeRead: number) => {
+              totalSizeRead += sizeRead;
+              await this.sendState(FileOperationState.OperationProgress, data, {
+                progress: (totalSizeRead / totalSize) * 100,
+                currentFile: entry.name,
+                currentFileSize: entry.size,
+              });
+            });
+            const relPath = entry.path.startsWith(data.rootPath) ? entry.path.slice(data.rootPath.length) : entry.path;
+            await zipWriter.add(relPath, rStream);
+          } catch (e: any) {
+            window.electronAPI.log('error', `Failed to add file '${entry.name}' to archive`);
+            throw e;
+          }
+        }
+      }
+
+      const end = DateTime.now();
+      const diff = end.toMillis() - start.toMillis();
+
+      if (diff < MIN_OPERATION_TIME_MS) {
+        await wait(MIN_OPERATION_TIME_MS - diff);
+      }
+      await this.sendState(FileOperationState.ArchiveDownloaded, data);
+    } catch (e: any) {
+      if (wStream) {
+        await wStream.abort();
+      }
+      data.saveHandle.remove();
+      if (cancelled) {
+        await this.sendState(FileOperationState.Cancelled, data);
+      } else {
+        window.electronAPI.log('warn', `Error while downloading archive: ${e?.toString()}`);
+        await this.sendState(FileOperationState.DownloadArchiveFailed, data);
+      }
+    } finally {
+      if (zipWriter) {
+        zipWriter.close();
       }
     }
   }
@@ -971,6 +1112,8 @@ class FileOperationManager {
           job = this.doRestore(elem as RestoreData);
         } else if (elem.getDataType() === FileOperationDataType.Download) {
           job = this.doDownload(elem as DownloadData);
+        } else if (elem.getDataType() === FileOperationDataType.DownloadArchive) {
+          job = this.doDownloadArchive(elem as DownloadArchiveData);
         } else {
           console.warn(`Unhandled file operation '${elem.getDataType()}'`);
           continue;
@@ -993,4 +1136,14 @@ class FileOperationManager {
   }
 }
 
-export { CopyData, DownloadData, FileOperationData, FileOperationManager, FileOperationState, ImportData, MoveData, RestoreData };
+export {
+  CopyData,
+  DownloadArchiveData,
+  DownloadData,
+  FileOperationData,
+  FileOperationManager,
+  FileOperationState,
+  ImportData,
+  MoveData,
+  RestoreData,
+};

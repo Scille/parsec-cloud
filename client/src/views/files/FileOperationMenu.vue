@@ -178,6 +178,7 @@ import type { Component } from 'vue';
 import { DateTime } from 'luxon';
 import { FIFO } from '@/common/queue';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import FileDownloadArchive from '@/components/files/FileDownloadArchive.vue';
 
 interface OperationItem {
   data: FileOperationData;
@@ -199,6 +200,8 @@ const queuedMoveItems = ref<Array<OperationItem>>([]);
 const queuedUploadItems = ref<Array<OperationItem>>([]);
 const queuedRestoreItems = ref<Array<OperationItem>>([]);
 const queuedDownloadItems = ref<Array<OperationItem>>([]);
+const queuedArchiveItems = ref<Array<OperationItem>>([]);
+
 const doneItems = ref(new FIFO<OperationItem>(MAX_DONE_ERROR_ITEMS));
 const errorItems = ref(new FIFO<OperationItem>(MAX_DONE_ERROR_ITEMS));
 const doneItemsCount = ref<number>(0);
@@ -211,7 +214,8 @@ const inProgressAndQueuedLength = computed(() => {
     queuedCopyItems.value.length +
     queuedMoveItems.value.length +
     queuedRestoreItems.value.length +
-    queuedDownloadItems.value.length
+    queuedDownloadItems.value.length +
+    queuedArchiveItems.value.length
   );
 });
 
@@ -255,6 +259,8 @@ function getFileOperationComponent(item: OperationItem): Component | undefined {
       return FileRestoreItem;
     case FileOperationDataType.Download:
       return FileDownloadItem;
+    case FileOperationDataType.DownloadArchive:
+      return FileDownloadArchive;
   }
 }
 
@@ -301,6 +307,13 @@ function updateImportState(data: FileOperationData, state: FileOperationState, s
             inProgressItems.value.push(item);
           }
           break;
+        case FileOperationDataType.DownloadArchive:
+          index = queuedArchiveItems.value.findIndex((op) => op.data.id === data.id);
+          if (queuedArchiveItems.value[index]) {
+            const item = queuedArchiveItems.value.splice(index, 1)[0];
+            inProgressItems.value.push(item);
+          }
+          break;
       }
     }
   }
@@ -326,6 +339,8 @@ function updateImportState(data: FileOperationData, state: FileOperationState, s
       case FileOperationDataType.Download:
         currentOperationArray = queuedDownloadItems.value;
         break;
+      case FileOperationDataType.DownloadArchive:
+        currentOperationArray = queuedArchiveItems.value;
     }
     index = currentOperationArray.findIndex((op) => op.data.id === data.id);
   }
@@ -342,6 +357,7 @@ function updateImportState(data: FileOperationData, state: FileOperationState, s
         FileOperationState.EntryCopied,
         FileOperationState.EntryRestored,
         FileOperationState.EntryDownloaded,
+        FileOperationState.ArchiveDownloaded,
       ].includes(state)
     ) {
       operation.finishedDate = DateTime.now();
@@ -356,6 +372,7 @@ function updateImportState(data: FileOperationData, state: FileOperationState, s
         FileOperationState.Cancelled,
         FileOperationState.RestoreFailed,
         FileOperationState.DownloadFailed,
+        FileOperationState.DownloadArchiveFailed,
       ].includes(state)
     ) {
       operation.finishedDate = DateTime.now();
@@ -469,6 +486,14 @@ async function onFileOperationEvent(
       });
       scrollToTop();
       break;
+    case FileOperationState.DownloadArchiveAdded:
+      queuedArchiveItems.value.push({
+        data: fileOperationData as FileOperationData,
+        state: state,
+        stateData: stateData,
+      });
+      scrollToTop();
+      break;
     case FileOperationState.OperationProgress:
       updateImportState(fileOperationData as FileOperationData, state, stateData);
       break;
@@ -477,6 +502,7 @@ async function onFileOperationEvent(
     case FileOperationState.EntryCopied:
     case FileOperationState.EntryRestored:
     case FileOperationState.EntryDownloaded:
+    case FileOperationState.ArchiveDownloaded:
       updateImportState(fileOperationData as FileOperationData, state, stateData);
       break;
     case FileOperationState.CreateFailed:
@@ -484,6 +510,7 @@ async function onFileOperationEvent(
     case FileOperationState.CopyFailed:
     case FileOperationState.RestoreFailed:
     case FileOperationState.DownloadFailed:
+    case FileOperationState.DownloadArchiveFailed:
       updateImportState(fileOperationData as FileOperationData, state, stateData);
       break;
     case FileOperationState.Cancelled:
