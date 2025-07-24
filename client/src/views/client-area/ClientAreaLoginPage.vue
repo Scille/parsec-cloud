@@ -66,6 +66,11 @@ function getCurrentSectionClass(): string {
   display: flex;
   max-width: 48rem;
   margin: 0 auto;
+  padding: 0.5rem;
+
+  @include ms.responsive-breakpoint('sm') {
+    padding: 1.5rem;
+  }
 }
 
 .saas-login-page-container {
@@ -78,6 +83,7 @@ function getCurrentSectionClass(): string {
   overflow: hidden;
   border-radius: var(--parsec-radius-12);
   height: fit-content;
+  box-shadow: var(--parsec-shadow-light);
 
   &::before {
     z-index: 0;

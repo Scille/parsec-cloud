@@ -255,6 +255,12 @@
 }
 
 .create-organization-modal {
+  @include ms.responsive-breakpoint('sm') {
+    &::part(content) {
+      --height: 90vh;
+      height: 90vh;
+    }
+  }
   &:has(.OrgNameStep)::part(content),
   &:has(.UserInfoStep)::part(content),
   &:has(.organization-name-page.active)::part(content),
@@ -272,8 +278,24 @@
     }
   }
 
-  .saas-login .saas-login-mockup {
-    right: -5rem;
+  &:has(.saas-login) {
+    .ion-page {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .saas-login-mockup {
+      right: -5rem;
+    }
+
+    .modal-header {
+      @include ms.responsive-breakpoint('sm') {
+        padding: 0;
+        width: calc(100% - 2rem);
+      }
+    }
   }
 
   .page-modal-container {
@@ -376,9 +398,27 @@
   }
 }
 
-.settings-modal::part(content) {
-  min-width: var(--parsec-modal-width-lg);
-  --height: 600px;
+.settings-modal {
+  &::part(content) {
+    min-width: var(--parsec-modal-width-lg);
+    --height: 600px;
+
+    @include ms.responsive-breakpoint('sm') {
+      min-width: 100%;
+      max-width: 100%;
+      --height: 100%;
+    }
+
+    @media only screen and (max-height: 700px) {
+      --height: 90vh;
+      height: 90vh;
+    }
+  }
+
+  .ms-modal-content {
+    height: 100%;
+    overflow: auto;
+  }
 }
 
 .greet-organization-modal {

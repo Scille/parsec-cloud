@@ -21,7 +21,10 @@
       ref="navigation"
     >
       <div ref="buttons">
-        <ion-buttons class="navigation-buttons">
+        <div
+          class="navigation-buttons"
+          v-if="isLargeDisplay"
+        >
           <ion-button
             fill="clear"
             @click="back()"
@@ -40,7 +43,7 @@
           >
             <ion-icon :icon="chevronForward" />
           </ion-button>
-        </ion-buttons>
+        </div>
       </div>
       <header-breadcrumbs
         :path-nodes="headerPath"
@@ -101,6 +104,29 @@
         </ion-item>
       </div>
     </ion-list>
+    <div
+      class="navigation-buttons"
+      v-if="isSmallDisplay"
+    >
+      <ion-button
+        fill="clear"
+        @click="back()"
+        class="navigation-back-button"
+        :disabled="backStack.length === 0"
+        :class="{ disabled: backStack.length === 0 }"
+      >
+        <ion-icon :icon="chevronBack" />
+      </ion-button>
+      <ion-button
+        fill="clear"
+        @click="forward()"
+        :disabled="forwardStack.length === 0"
+        :class="{ disabled: forwardStack.length === 0 }"
+        class="navigation-forward-button"
+      >
+        <ion-icon :icon="chevronForward" />
+      </ion-button>
+    </div>
   </ms-modal>
 </template>
 
@@ -112,7 +138,7 @@ import { FolderSelectionOptions } from '@/components/files';
 import { Folder, MsImage, MsModalResult, MsModal, formatTimeSince, useWindowSize } from 'megashark-lib';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import { EntryStat, FsPath, Path, StartedWorkspaceInfo, getWorkspaceInfo, statFolderChildren } from '@/parsec';
-import { IonButton, IonButtons, IonText, IonIcon, IonItem, IonLabel, IonList, modalController } from '@ionic/vue';
+import { IonButton, IonText, IonIcon, IonItem, IonLabel, IonList, modalController } from '@ionic/vue';
 import { chevronBack, chevronForward, home } from 'ionicons/icons';
 import { Ref, onMounted, onUnmounted, ref, watch, useTemplateRef } from 'vue';
 
@@ -257,6 +283,7 @@ async function cancel(): Promise<boolean> {
 
   @include ms.responsive-breakpoint('md') {
     border-bottom: none;
+    overflow: visible;
   }
 
   .disabled {
@@ -273,6 +300,7 @@ async function cancel(): Promise<boolean> {
     @include ms.responsive-breakpoint('sm') {
       position: absolute;
       bottom: 3.25rem;
+      z-index: 10;
 
       ion-icon {
         font-size: 1.5rem;

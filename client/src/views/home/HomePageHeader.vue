@@ -20,65 +20,26 @@
         />
       </ion-button>
     </div>
-    <div
-      class="menu-secondary"
-      v-if="showSecondaryMenu"
+    <ion-menu
+      side="end"
+      content-id="main-content"
+      v-if="isSmallDisplay"
+      class="menu-secondary-collapse"
     >
-      <div class="menu-secondary-buttons">
-        <!-- about button -->
-        <ion-button
-          id="trigger-version-button"
-          class="menu-secondary-buttons__item"
-          @click="openAboutModal"
-        >
-          <ion-icon
-            :icon="informationCircle"
-            class="menu-secondary-buttons__icon"
-          />
-          <span class="menu-secondary-buttons__text">{{ $msTranslate('MenuPage.about') }}</span>
-        </ion-button>
-        <!-- doc button -->
-        <ion-button
-          class="menu-secondary-buttons__item"
-          @click="Env.Links.openDocumentationLink"
-        >
-          {{ isSmallDisplay ? $msTranslate('MenuPage.doc') : $msTranslate('MenuPage.documentation') }}
-          <ion-icon :icon="open" />
-        </ion-button>
-        <!-- contact button -->
-        <ion-button
-          class="menu-secondary-buttons__item"
-          @click="Env.Links.openContactLink"
-        >
-          {{ $msTranslate('MenuPage.contact') }}
-          <ion-icon :icon="open" />
-        </ion-button>
-        <!-- settings button -->
-        <ion-button
-          id="trigger-settings-button"
-          class="menu-secondary-buttons__item"
-          @click="openSettings"
-        >
-          <ion-icon
-            :icon="cog"
-            class="menu-secondary-buttons__icon"
-          />
-          <span class="menu-secondary-buttons__text">
-            {{ $msTranslate('MenuPage.settings') }}
-          </span>
-        </ion-button>
-        <!-- customer area button -->
-        <ion-button
-          class="menu-secondary-buttons__item"
-          v-show="!Env.isStripeDisabled()"
-          id="trigger-customer-area-button"
-          @click="$emit('customerAreaClick')"
-          v-if="!showBackButton"
-        >
-          {{ $msTranslate('HomePage.topbar.customerArea') }}
-        </ion-button>
-      </div>
-    </div>
+      <home-page-secondary-menu-collapse
+        :show-customer-area-button="!showBackButton"
+        @settings-click="openSettings"
+        @customer-area-click="$emit('customerAreaClick')"
+      />
+    </ion-menu>
+
+    <home-page-secondary-menu
+      v-if="isLargeDisplay"
+      class="homepage-menu-secondary"
+      @customer-area-click="$emit('customerAreaClick')"
+      @settings-click="openSettings"
+    />
+
     <div class="topbar">
       <div class="topbar-left">
         <div
@@ -104,13 +65,24 @@
           />
           {{ $msTranslate(backButtonTitle ?? 'HomePage.topbar.backToList') }}
         </ion-button>
+
+        <ion-menu-button
+          id="main-content"
+          class="menu-button"
+          v-if="windowWidth < WindowSizeBreakpoints.XS"
+        >
+          <ion-icon
+            :icon="menu"
+            class="menu-button__icon"
+          />
+        </ion-menu-button>
       </div>
       <div class="topbar-right">
         <ion-button
           @click="emits('createOrJoinOrganizationClick', $event)"
           size="default"
           id="create-organization-button"
-          class="button-default topbar-right-button button-large"
+          class="button-default topbar-right-button button-medium"
           v-if="displayCreateJoin && !showBackButton"
         >
           <span class="topbar-right-button__text">{{ $msTranslate('HomePage.noExistingOrganization.createOrJoin') }}</span>
@@ -138,18 +110,31 @@
           />
           <ion-text class="login-button-text subtitles-sm">{{ $msTranslate('loginPage.logIn') }}</ion-text>
         </ion-button>
+
+        <ion-menu-button
+          id="main-content"
+          class="menu-button"
+          v-if="windowWidth >= WindowSizeBreakpoints.XS && windowWidth < WindowSizeBreakpoints.SM"
+        >
+          <ion-icon
+            :icon="menu"
+            class="menu-button__icon"
+          />
+        </ion-menu-button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonIcon, modalController, IonText } from '@ionic/vue';
-import { arrowBack, arrowForward, caretDown, cog, informationCircle, open, personCircle } from 'ionicons/icons';
+import { IonButton, IonIcon, modalController, IonText, IonMenuButton, IonMenu } from '@ionic/vue';
+import { arrowBack, arrowForward, caretDown, menu, personCircle } from 'ionicons/icons';
 import ProfileHeaderHomepage from '@/views/header/ProfileHeaderHomePage.vue';
+import HomePageSecondaryMenu from '@/components/header/HomePageSecondaryMenu.vue';
+import HomePageSecondaryMenuCollapse from '@/components/header/HomePageSecondaryMenuCollapse.vue';
 import { EventData, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
-import { Translatable, MsModalResult, useWindowSize } from 'megashark-lib';
+import { Translatable, MsModalResult, useWindowSize, WindowSizeBreakpoints } from 'megashark-lib';
 import { onMounted, onUnmounted, ref, inject, Ref } from 'vue';
 import { Env } from '@/services/environment';
 import UpdateAppModal from '@/views/about/UpdateAppModal.vue';
@@ -161,7 +146,7 @@ import { ParsecAccount, HumanHandle } from '@/parsec';
 import { AccountSettingsTabs } from '@/views/account/types';
 import { navigateTo, Routes, watchRoute } from '@/router';
 
-const { isSmallDisplay } = useWindowSize();
+const { isSmallDisplay, isLargeDisplay, windowWidth } = useWindowSize();
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const eventDistributor = injectionProvider.getDefault().eventDistributor;
 let eventCbId: string | null = null;
@@ -347,145 +332,7 @@ const emits = defineEmits<{
       top: -0.125rem;
 
       @include ms.responsive-breakpoint('md') {
-        top: -0.125rem;
-      }
-    }
-  }
-}
-
-.menu-secondary {
-  display: flex;
-  width: 100%;
-  padding: 0 0 2rem;
-  justify-content: space-between;
-
-  @include ms.responsive-breakpoint('md') {
-    flex-direction: column;
-    gap: 1rem;
-    padding: 0 0 1rem;
-  }
-
-  &-buttons {
-    display: flex;
-    gap: 1rem;
-
-    &__item {
-      color: var(--parsec-color-light-secondary-hard-grey);
-      transition: all 150ms linear;
-      position: relative;
-      --background-hover: none;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-
-      &::part(native) {
-        padding: 0;
-        border-radius: var(--parsec-radius-8);
-        background: none;
-        --background-hover: none;
-      }
-
-      @include ms.responsive-breakpoint('sm') {
-        padding: 0;
-      }
-
-      &:nth-of-type(1) {
-        @include ms.responsive-breakpoint('xs') {
-          order: 3;
-          margin-left: auto;
-        }
-      }
-
-      &:nth-of-type(2) {
-        @include ms.responsive-breakpoint('xs') {
-          order: 1;
-        }
-      }
-
-      &:nth-of-type(3) {
-        @include ms.responsive-breakpoint('xs') {
-          order: 2;
-          margin-right: auto;
-        }
-      }
-
-      &:nth-of-type(4) {
-        @include ms.responsive-breakpoint('xs') {
-          order: 4;
-        }
-      }
-
-      ion-icon {
-        margin-left: 0.5rem;
-        font-size: 1rem;
-        color: var(--parsec-color-light-secondary-soft-grey);
-      }
-
-      &:hover {
-        color: var(--parsec-color-light-secondary-text);
-
-        ion-icon {
-          color: var(--parsec-color-light-secondary-hard-grey);
-        }
-      }
-
-      &:not(:last-child)::after {
-        content: '';
-        position: relative;
-        display: block;
-        height: 1rem;
-        width: 1px;
-        background: var(--parsec-color-light-secondary-disabled);
-        transition: all 150ms linear;
-
-        @include ms.responsive-breakpoint('xs') {
-          display: none;
-        }
-      }
-
-      .menu-secondary-buttons__text {
-        display: block;
-
-        @include ms.responsive-breakpoint('xs') {
-          display: none;
-        }
-      }
-
-      .menu-secondary-buttons__icon {
-        display: none;
-
-        @include ms.responsive-breakpoint('xs') {
-          display: block;
-          background: var(--parsec-color-light-secondary-premiere);
-          padding: 0.5rem;
-          border-radius: var(--parsec-radius-8);
-          font-size: 1.25rem;
-        }
-      }
-    }
-
-    #trigger-customer-area-button {
-      color: var(--parsec-color-light-primary-500);
-      border-radius: var(--parsec-radius-8);
-      position: relative;
-
-      &::before {
-        content: '';
-        position: absolute;
-        bottom: 0.125rem;
-        height: 1px;
-        width: 0px;
-        background: transparent;
-        transition: all 150ms linear;
-      }
-
-      &:hover {
-        color: var(--parsec-color-light-primary-600);
-
-        &::before {
-          width: 100%;
-          background: var(--parsec-color-light-primary-600);
-        }
+        top: 0;
       }
     }
   }
@@ -514,13 +361,21 @@ const emits = defineEmits<{
   .topbar-left {
     display: flex;
     align-items: center;
-    width: 100%;
     gap: 1.5rem;
+
+    @include ms.responsive-breakpoint('xs') {
+      width: 100%;
+    }
 
     &-text {
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
+
+      @include ms.responsive-breakpoint('xs') {
+        width: 100%;
+        justify-content: space-around;
+      }
 
       &__title {
         background: var(--parsec-color-light-gradient-background);
@@ -528,15 +383,15 @@ const emits = defineEmits<{
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         margin: 0.25rem 0;
-
-        @include ms.responsive-breakpoint('sm') {
-          max-width: 16rem;
-        }
       }
 
       &__subtitle {
         color: var(--parsec-color-light-secondary-hard-grey);
         margin: 0;
+
+        @include ms.responsive-breakpoint('sm') {
+          display: none;
+        }
       }
     }
 
@@ -546,6 +401,10 @@ const emits = defineEmits<{
       --overflow: visible;
       margin: 1px 0;
       padding-left: 1rem;
+
+      @include ms.responsive-breakpoint('xs') {
+        margin: 1px auto 1px 0;
+      }
 
       &::part(native) {
         background: none;
@@ -576,9 +435,20 @@ const emits = defineEmits<{
     display: flex;
     gap: 1.25rem;
     justify-content: flex-end;
-    width: fit-content;
     align-items: center;
     margin-left: auto;
+  }
+
+  .menu-button {
+    height: 2.5rem;
+    width: 2.5rem;
+    color: var(--parsec-color-light-secondary-text);
+    cursor: pointer;
+    overflow-y: visible;
+
+    &__icon {
+      font-size: 1.75rem;
+    }
   }
 }
 
@@ -612,6 +482,10 @@ const emits = defineEmits<{
   }
 }
 
+.homepage-menu-secondary {
+  justify-content: flex-end;
+}
+
 .login-button {
   border-radius: var(--parsec-radius-12);
   border: 1px solid transparent;
@@ -619,13 +493,22 @@ const emits = defineEmits<{
   --background-hover: var(--parsec-color-light-primary-600);
 
   &::part(native) {
+    padding: 0.625rem 0.75rem;
     border-radius: var(--parsec-radius-12);
+
+    @include ms.responsive-breakpoint('xs') {
+      font-size: 1.125rem;
+    }
   }
 
   &-icon {
-    font-size: 1.25rem;
+    font-size: 1rem;
     color: var(--parsec-color-light-secondary-white);
     margin-right: 0.5rem;
+
+    @include ms.responsive-breakpoint('xs') {
+      font-size: 1.125rem;
+    }
   }
 
   &-text {

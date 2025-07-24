@@ -7,9 +7,9 @@
   >
     <!-- step 1: recovery file -->
     <div class="recovery-header">
-      <ion-title class="recovery-header__title title-h1">
+      <ion-text class="recovery-header__title title-h1">
         {{ $msTranslate('ImportRecoveryDevicePage.titles.forgottenPassword') }}
-      </ion-title>
+      </ion-text>
     </div>
     <ion-card class="recovery-card">
       <ion-card-content class="card-container">
@@ -108,10 +108,10 @@
     class="recovery-content password-input"
   >
     <div class="recovery-header">
-      <ion-title class="recovery-header__title title-h1">
+      <ion-text class="recovery-header__title title-h1">
         <span v-if="isWeb()">{{ $msTranslate('ImportRecoveryDevicePage.titles.setNewPassword') }}</span>
         <span v-else>{{ $msTranslate('ImportRecoveryDevicePage.titles.setNewAuthentication') }}</span>
-      </ion-title>
+      </ion-text>
     </div>
     <ion-card class="recovery-card">
       <choose-authentication
@@ -168,7 +168,7 @@ import {
   isWeb,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { IonButton, IonCard, IonCardContent, IonCardTitle, IonIcon, IonTitle } from '@ionic/vue';
+import { IonButton, IonCard, IonCardContent, IonCardTitle, IonIcon, IonText } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
 import { Ref, inject, ref, useTemplateRef } from 'vue';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';

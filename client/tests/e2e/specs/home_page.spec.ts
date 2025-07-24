@@ -51,9 +51,12 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     } else {
       await expect(topBar.locator('.topbar-right').locator('ion-button')).toHaveText(['Create or join']);
       await expect(home.locator('.homepage-sidebar')).toBeHidden();
-      await expect(home.locator('.menu-secondary-buttons').locator('ion-button')).toHaveText([
+      await expect(home.locator('.menu-secondary')).toBeHidden();
+      await home.locator('.menu-button').isVisible();
+      await home.locator('.menu-button').click();
+      await expect(home.locator('.menu-secondary-collapse-buttons').locator('ion-button')).toHaveText([
         'About',
-        'Doc.',
+        'Documentation',
         'Contact',
         'Settings',
         'Customer area',
@@ -147,7 +150,7 @@ msTest('Check join link', async ({ home }) => {
 
 msTest('Login', async ({ home }) => {
   await home.locator('.organization-list').locator('.organization-card').nth(0).click();
-  await expect(home.locator('.login-header__title')).toHaveText('Log in');
+  await expect(home.locator('.login-header__title')).toHaveText('Log in to an organization');
   const loginButton = home.locator('.login-card-footer').locator('.login-button');
   await expect(loginButton).toHaveDisabledAttribute();
   const input = home.locator('#password-input').locator('ion-input');
@@ -158,16 +161,6 @@ msTest('Login', async ({ home }) => {
   await expect(home).toHaveHeader(['My workspaces'], false, false);
   const profile = home.locator('.topbar').locator('.profile-header');
   await expect(profile.locator('.text-content-name')).toHaveText('Alicey McAliceFace');
-});
-
-msTest('Login page and back to device list', async ({ home }) => {
-  await home.locator('.organization-list').locator('.organization-card').nth(0).click();
-  await expect(home.locator('.login-header__title')).toHaveText('Log in');
-  await expect(home.locator('.organization-list')).toBeHidden();
-  const backButton = home.locator('.topbar-left__back-button');
-  await expect(backButton).toHaveText('Return to organizations');
-  await backButton.click();
-  await expect(home.locator('.organization-list')).toBeVisible();
 });
 
 msTest('Login with invalid password', async ({ home }) => {
@@ -203,21 +196,56 @@ msTest('Check header buttons', async ({ home }) => {
   ]);
 });
 
-msTest('Open documentation', async ({ home }) => {
-  const newTabPromise = home.waitForEvent('popup');
-  await home.locator('.menu-secondary-buttons').locator('ion-button').nth(1).click();
-  const newTab = await newTabPromise;
-  await newTab.waitForLoadState();
-  await expect(newTab).toHaveURL(new RegExp('https://docs.parsec.cloud/(en|fr)/[a-z0-9-+.]+'));
-});
+for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
+  msTest(`Login page and back to device list ${displaySize} display`, async ({ home }) => {
+    await home.locator('.organization-list').locator('.organization-card').nth(0).click();
+    await expect(home.locator('.login-header__title')).toHaveText('Log in to an organization');
+    await expect(home.locator('.organization-list')).toBeHidden();
+    const backButton = home.locator('.topbar-left__back-button');
 
-msTest('Open feedback', async ({ home }) => {
-  const newTabPromise = home.waitForEvent('popup');
-  await home.locator('.menu-secondary-buttons').locator('ion-button').nth(2).click();
-  const newTab = await newTabPromise;
-  await newTab.waitForLoadState();
-  await expect(newTab).toHaveURL(new RegExp('https://sign(-dev)?.parsec.cloud/contact'));
-});
+    if (displaySize === DisplaySize.Small) {
+      await home.setDisplaySize(DisplaySize.Small);
+      await expect(backButton).toHaveText('Return');
+    } else {
+      await expect(backButton).toHaveText('Return to organizations');
+    }
+    await backButton.click();
+    await expect(home.locator('.organization-list')).toBeVisible();
+  });
+
+  msTest(`Open documentation ${displaySize} display`, async ({ home }) => {
+    const newTabPromise = home.waitForEvent('popup');
+
+    if (displaySize === DisplaySize.Small) {
+      await home.setDisplaySize(DisplaySize.Small);
+      await expect(home.locator('.menu-secondary')).toBeHidden();
+      await home.locator('.menu-button').isVisible();
+      await home.locator('.menu-button').click();
+      await home.locator('.menu-secondary-collapse-buttons').locator('ion-button').nth(1).click();
+    } else {
+      await home.locator('.menu-secondary-buttons').locator('ion-button').nth(1).click();
+    }
+    const newTab = await newTabPromise;
+    await newTab.waitForLoadState();
+    await expect(newTab).toHaveURL(new RegExp('https://docs.parsec.cloud/(en|fr)/[a-z0-9-+.]+'));
+  });
+
+  msTest(`Open feedback ${displaySize} display`, async ({ home }) => {
+    const newTabPromise = home.waitForEvent('popup');
+    if (displaySize === DisplaySize.Small) {
+      await home.setDisplaySize(DisplaySize.Small);
+      await expect(home.locator('.menu-secondary')).toBeHidden();
+      await home.locator('.menu-button').isVisible();
+      await home.locator('.menu-button').click();
+      await home.locator('.menu-secondary-collapse-buttons').locator('ion-button').nth(2).click();
+    } else {
+      await home.locator('.menu-secondary-buttons').locator('ion-button').nth(2).click();
+    }
+    const newTab = await newTabPromise;
+    await newTab.waitForLoadState();
+    await expect(newTab).toHaveURL(new RegExp('https://sign(-dev)?.parsec.cloud/contact'));
+  });
+}
 
 msTest('Warn on Safari', async ({ context }) => {
   const page = (await context.newPage()) as MsPage;

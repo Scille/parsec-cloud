@@ -151,7 +151,7 @@
             <ion-text class="trial-card-text__info body">{{ $msTranslate('SideMenu.trial.description') }}</ion-text>
           </div>
           <ion-button
-            class="trial-card__button"
+            class="trial-card__button button-medium"
             @click="openPricingLink"
           >
             {{ $msTranslate('SideMenu.trial.subscribe') }}
@@ -1236,6 +1236,10 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
     --padding-top: 0;
     --padding-bottom: 0;
     color: var(--parsec-color-light-primary-600);
+
+    &::part(native) {
+      padding: 0.625rem 1rem;
+    }
   }
 }
 

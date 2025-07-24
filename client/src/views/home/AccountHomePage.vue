@@ -6,104 +6,95 @@
       <div id="page">
         <!-- sidebar -->
         <home-page-sidebar class="homepage-sidebar" />
-        <!-- main content -->
-        <div class="homepage-content">
-          <div class="homepage-parsec-account account">
-            <account-login-page
-              :key="refreshKey"
-              @login-success="onLoginSuccess"
-              :disabled="disableGoTo"
+        <div class="homepage-scroll">
+          <!-- main content -->
+          <div class="homepage-content">
+            <ion-menu
+              side="end"
+              content-id="main-content"
+              class="menu-secondary-collapse"
+              v-if="windowWidth < WindowSizeBreakpoints.MD || windowHeight < 900"
+            >
+              <home-page-secondary-menu-collapse
+                :show-customer-area-button="true"
+                @customer-area-click="goToCustomerArea"
+                @settings-click="openSettingsModal"
+              />
+            </ion-menu>
+
+            <home-page-secondary-menu
+              v-else
+              class="homepage-menu-secondary"
+              @customer-area-click="goToCustomerArea"
+              @settings-click="openSettingsModal"
             />
 
-            <div class="account-create">
-              <ion-text class="account-create__description body">{{ $msTranslate('loginPage.createAccount.description') }}</ion-text>
+            <ion-menu-button
+              v-if="windowWidth < WindowSizeBreakpoints.MD || windowHeight < 900"
+              slot="end"
+              id="main-content"
+              class="menu-button"
+            >
+              <ion-icon
+                :icon="menu"
+                class="menu-button__icon"
+              />
+            </ion-menu-button>
+
+            <div class="homepage-parsec-account account">
+              <account-login-page
+                :key="refreshKey"
+                @login-success="onLoginSuccess"
+                :disabled="disableGoTo"
+              />
+
+              <div class="account-create">
+                <ion-text class="account-create__description subtitles-normal">
+                  {{ $msTranslate('loginPage.createAccount.description') }}
+                </ion-text>
+                <ion-button
+                  class="account-create__button button-large"
+                  @click="goToCreateAccount"
+                  :disabled="disableGoTo"
+                >
+                  {{ $msTranslate('loginPage.createAccount.createAccountButton') }}
+                </ion-button>
+              </div>
+            </div>
+
+            <!-- Client Area -->
+            <div class="homepage-client-area">
+              <ion-text class="homepage-client-area__title title-h4">
+                {{ $msTranslate('loginPage.clientArea.title') }}
+              </ion-text>
               <ion-button
-                class="account-create__button"
-                @click="goToCreateAccount"
+                @click="goToCustomerArea"
+                :disabled="disableGoTo"
+                fill="clear"
+                class="homepage-client-area__button"
+              >
+                {{ $msTranslate('loginPage.clientArea.button') }}
+              </ion-button>
+              <img
+                src="@/assets/images/background/background-shapes-small.svg"
+                class="homepage-client-area__blob"
+              />
+            </div>
+
+            <!-- Skip button -->
+            <div class="homepage-skip">
+              <ion-button
+                class="homepage-skip__button"
+                @click="onSkipClicked"
                 :disabled="disableGoTo"
               >
-                {{ $msTranslate('loginPage.createAccount.createAccountButton') }}
+                {{ $msTranslate('loginPage.skip') }}
+                <ion-icon
+                  :icon="chevronForward"
+                  class="homepage-skip__icon"
+                />
               </ion-button>
             </div>
-          </div>
-
-          <!-- Client Area -->
-          <div class="homepage-client-area">
-            <ion-text class="homepage-client-area__title title-h4">
-              {{ $msTranslate('loginPage.clientArea.title') }}
-            </ion-text>
-            <ion-button
-              @click="goToCustomerArea"
-              :disabled="disableGoTo"
-              fill="clear"
-              class="homepage-client-area__button"
-            >
-              {{ $msTranslate('loginPage.clientArea.button') }}
-            </ion-button>
-            <img
-              src="@/assets/images/background/background-shapes-small.svg"
-              class="homepage-client-area__blob"
-            />
-          </div>
-
-          <!-- Skip button -->
-          <div class="homepage-skip">
-            <ion-button
-              class="homepage-skip__button"
-              @click="onSkipClicked"
-              :disabled="disableGoTo"
-            >
-              {{ $msTranslate('loginPage.skip') }}
-              <ion-icon
-                :icon="chevronForward"
-                class="homepage-skip__icon"
-              />
-            </ion-button>
-          </div>
-
-          <div class="menu-secondary-buttons">
-            <!-- about button -->
-            <ion-button
-              id="trigger-version-button"
-              class="menu-secondary-buttons__item"
-              @click="openAboutModal"
-            >
-              <ion-icon
-                :icon="informationCircle"
-                class="menu-secondary-buttons__icon"
-              />
-              <span class="menu-secondary-buttons__text">{{ $msTranslate('MenuPage.about') }}</span>
-            </ion-button>
-            <!-- doc button -->
-            <ion-button
-              class="menu-secondary-buttons__item"
-              @click="Env.Links.openDocumentationLink"
-            >
-              {{ $msTranslate('MenuPage.documentation') }}
-              <ion-icon :icon="open" />
-            </ion-button>
-            <!-- contact button -->
-            <ion-button
-              class="menu-secondary-buttons__item"
-              @click="Env.Links.openContactLink"
-            >
-              {{ $msTranslate('MenuPage.contact') }}
-              <ion-icon :icon="open" />
-            </ion-button>
-            <!-- settings button -->
-            <ion-button
-              id="trigger-settings-button"
-              class="menu-secondary-buttons__item"
-              @click="openSettingsModal"
-            >
-              <ion-icon
-                :icon="cog"
-                class="menu-secondary-buttons__icon"
-              />
-              <span class="menu-secondary-buttons__text">
-                {{ $msTranslate('MenuPage.settings') }}
-              </span>
-            </ion-button>
           </div>
         </div>
       </div>
@@ -113,18 +104,20 @@
 
 <script setup lang="ts">
 import HomePageSidebar from '@/views/home/HomePageSidebar.vue';
+import HomePageSecondaryMenu from '@/components/header/HomePageSecondaryMenu.vue';
 import AccountLoginPage from '@/views/account/AccountLoginPage.vue';
+import HomePageSecondaryMenuCollapse from '@/components/header/HomePageSecondaryMenuCollapse.vue';
 import { getCurrentRouteParams, getCurrentRouteQuery, navigateTo, Routes } from '@/router';
-import { chevronForward, cog, informationCircle, open } from 'ionicons/icons';
-import { IonContent, IonPage, IonButton, IonIcon, IonText } from '@ionic/vue';
+import { chevronForward, menu } from 'ionicons/icons';
+import { IonContent, IonPage, IonButton, IonIcon, IonText, IonMenuButton, IonMenu } from '@ionic/vue';
 import { ParsecAccount } from '@/parsec';
 import { onMounted, ref } from 'vue';
-import { openAboutModal } from '@/views/about';
+import { useWindowSize, WindowSizeBreakpoints } from 'megashark-lib';
 import { openSettingsModal } from '@/views/settings';
-import { Env } from '@/services/environment';
 
 const disableGoTo = ref(false);
 const refreshKey = ref(0);
+const { windowHeight, windowWidth } = useWindowSize();
 
 onMounted(async () => {
   if (ParsecAccount.isLoggedIn()) {
@@ -172,6 +165,16 @@ async function goToCustomerArea(): Promise<void> {
     var(--parsec-color-light-secondary-background, #f9f9fb) 100%
   );
 
+  .homepage-scroll {
+    @media screen and (max-height: 600px) {
+      padding: 3rem 0 1rem;
+    }
+
+    @include ms.responsive-breakpoint('sm') {
+      padding: 3rem 0 1rem;
+    }
+  }
+
   // Should be edited later with responsive
   .homepage-sidebar {
     @include ms.responsive-breakpoint('xxl') {
@@ -206,10 +209,13 @@ async function goToCustomerArea(): Promise<void> {
     justify-content: center;
     gap: 2rem;
     padding: 2rem 0;
-    width: 100%;
     max-width: 28rem;
     align-items: center;
     margin: auto;
+
+    @media screen and (max-height: 600px) {
+      justify-content: flex-start !important;
+    }
 
     @include ms.responsive-breakpoint('lg') {
       padding: 2rem 0;
@@ -217,6 +223,7 @@ async function goToCustomerArea(): Promise<void> {
 
     @include ms.responsive-breakpoint('sm') {
       max-width: 30rem;
+      justify-content: flex-start !important;
     }
 
     @include ms.responsive-breakpoint('xs') {
@@ -272,8 +279,8 @@ async function goToCustomerArea(): Promise<void> {
       align-items: center;
 
       &__button {
-        color: var(--parsec-color-light-secondary-text);
-        font-weight: 600;
+        color: var(--parsec-color-light-primary-500);
+        position: relative;
 
         &::part(native) {
           --background-hover: transparent;
@@ -281,9 +288,24 @@ async function goToCustomerArea(): Promise<void> {
           padding: 0.125rem;
         }
 
+        &::before {
+          content: '';
+          position: absolute;
+          bottom: -0.25rem;
+          left: 0.125rem;
+          height: 1px;
+          width: 0px;
+          background: transparent;
+          transition: all 150ms linear;
+        }
+
         &:hover {
-          color: var(--parsec-color-light-secondary-text-hover);
-          text-decoration: underline;
+          color: var(--parsec-color-light-primary-600);
+
+          &::before {
+            width: calc(100% - 0.25rem);
+            background: var(--parsec-color-light-primary-600);
+          }
         }
       }
 
@@ -305,6 +327,11 @@ async function goToCustomerArea(): Promise<void> {
     padding: 0.75rem 1rem 0.75rem 1.5rem;
     overflow: hidden;
     position: relative;
+    flex-shrink: 0;
+
+    @include ms.responsive-breakpoint('sm') {
+      padding: 0.75rem 1rem;
+    }
 
     &__title {
       color: var(--parsec-color-light-primary-700);
@@ -330,6 +357,12 @@ async function goToCustomerArea(): Promise<void> {
     }
   }
 
+  .homepage-menu-secondary {
+    position: absolute;
+    top: 3rem;
+    right: 3rem;
+  }
+
   &::before {
     content: '';
     position: absolute;
@@ -346,112 +379,18 @@ async function goToCustomerArea(): Promise<void> {
     opacity: 0.1;
     filter: blur(600px);
   }
-}
 
-.menu-secondary-buttons {
-  display: flex;
-  margin-top: auto;
-  position: absolute;
-  bottom: 2rem;
+  .menu-button {
+    height: 2.5rem;
+    width: 2.5rem;
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    color: var(--parsec-color-light-secondary-text);
+    cursor: pointer;
 
-  @include ms.responsive-breakpoint('md') {
-    margin-left: auto;
-  }
-
-  @include ms.responsive-breakpoint('xs') {
-    margin-left: 0;
-  }
-
-  &__item {
-    background: none;
-    color: var(--parsec-color-light-secondary-hard-grey);
-    transition: all 150ms linear;
-    position: relative;
-    padding: 0 0.5rem;
-
-    &::part(native) {
-      --background: transparent;
-      --background-hover: transparent;
-    }
-
-    @include ms.responsive-breakpoint('sm') {
-      padding: 0;
-    }
-
-    &:nth-of-type(1) {
-      @include ms.responsive-breakpoint('xs') {
-        order: 3;
-        margin-left: auto;
-      }
-    }
-
-    &:nth-of-type(2) {
-      @include ms.responsive-breakpoint('xs') {
-        order: 1;
-      }
-    }
-
-    &:nth-of-type(3) {
-      @include ms.responsive-breakpoint('xs') {
-        order: 2;
-        margin-right: auto;
-      }
-    }
-
-    &:nth-of-type(4) {
-      @include ms.responsive-breakpoint('xs') {
-        order: 4;
-      }
-    }
-
-    ion-icon {
-      margin-left: 0.5rem;
-      font-size: 1rem;
-      color: var(--parsec-color-light-secondary-soft-grey);
-    }
-
-    &:hover {
-      color: var(--parsec-color-light-secondary-text);
-
-      ion-icon {
-        color: var(--parsec-color-light-secondary-hard-grey);
-      }
-    }
-
-    &:not(:first-child)::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      left: 0;
-      height: 80%;
-      width: 1px;
-      background: var(--parsec-color-light-secondary-disabled);
-      transition: all 150ms linear;
-
-      @include ms.responsive-breakpoint('xs') {
-        display: none;
-      }
-    }
-
-    .menu-secondary-buttons__text {
-      display: block;
-
-      @include ms.responsive-breakpoint('xs') {
-        display: none;
-      }
-    }
-
-    .menu-secondary-buttons__icon {
-      display: none;
-
-      @include ms.responsive-breakpoint('xs') {
-        display: block;
-        background: var(--parsec-color-light-secondary-premiere);
-        padding: 0.5rem;
-        border-radius: var(--parsec-radius-8);
-        font-size: 1.25rem;
-      }
+    &__icon {
+      font-size: 1.75rem;
     }
   }
 }

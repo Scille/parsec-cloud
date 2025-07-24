@@ -116,14 +116,17 @@
             button
             @click="$emit('goBackRequested')"
           >
-            <ion-icon :icon="arrowBack" />
-            <span v-if="isLargeDisplay">{{ $msTranslate('clientArea.app.backButton') }}</span>
+            <ion-icon
+              :icon="chevronBack"
+              class="custom-button__icon"
+            />
+            <span>{{ $msTranslate('clientArea.app.backButton') }}</span>
           </ion-text>
           <ion-button
             v-show="!loading"
             :disabled="!validEmail || !password.length || querying"
             @click="onLoginClicked"
-            class="saas-login-button__item"
+            class="saas-login-button__item button-large"
             size="large"
           >
             {{ $msTranslate('clientArea.app.login') }}
@@ -180,10 +183,7 @@
         </div>
       </ion-footer>
     </div>
-    <div
-      v-if="isLargeDisplay"
-      class="saas-login-mockup"
-    >
+    <div class="saas-login-mockup">
       <img
         src="@/assets/images/mockup-parsec-client.svg"
         alt="mockup"
@@ -194,9 +194,9 @@
 
 <script setup lang="ts">
 import { IonButton, IonText, IonFooter, IonIcon, IonSkeletonText } from '@ionic/vue';
-import { MsInput, MsPasswordInput, Translatable, Validity, MsSpinner, MsCheckbox, useWindowSize } from 'megashark-lib';
+import { MsInput, MsPasswordInput, Translatable, Validity, MsSpinner, MsCheckbox } from 'megashark-lib';
 import { emailValidator } from '@/common/validators';
-import { warning, arrowBack, arrowForward, close } from 'ionicons/icons';
+import { warning, arrowForward, close, chevronBack } from 'ionicons/icons';
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
 import { AuthenticationToken, BmsAccessInstance, PersonalInformationResultData } from '@/services/bms';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
@@ -215,7 +215,6 @@ const emits = defineEmits<{
   (e: 'forgottenPasswordClicked'): void;
 }>();
 
-const { isLargeDisplay } = useWindowSize();
 const email = ref<string>(props.email ?? '');
 const password = ref<string>('');
 const emailInputRef = useTemplateRef<InstanceType<typeof MsInput>>('emailInput');
@@ -302,7 +301,7 @@ async function onLoginClicked(): Promise<void> {
     position: relative;
     z-index: 2;
 
-    @include ms.responsive-breakpoint('sm') {
+    @include ms.responsive-breakpoint('md') {
       max-width: 100%;
     }
   }
@@ -388,8 +387,18 @@ async function onLoginClicked(): Promise<void> {
 
         &:nth-child(2) {
           @include ms.responsive-breakpoint('sm') {
-            width: 100%;
+            flex-grow: 1;
           }
+        }
+      }
+
+      .custom-button {
+        flex-shrink: 0;
+        width: fit-content;
+
+        &__icon {
+          font-size: 1rem;
+          width: 1rem;
         }
       }
 
@@ -525,7 +534,15 @@ async function onLoginClicked(): Promise<void> {
     align-items: flex-end;
     scale: 1.2;
 
-    @include ms.responsive-breakpoint('sm') {
+    @include ms.responsive-breakpoint('xl') {
+      right: -1rem;
+    }
+
+    @include ms.responsive-breakpoint('lg') {
+      right: -6rem;
+    }
+
+    @include ms.responsive-breakpoint('md') {
       display: none;
     }
   }
