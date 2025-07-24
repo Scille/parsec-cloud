@@ -281,7 +281,8 @@ export async function createWorkspace(workspacesPage: MsPage, name: string): Pro
   await dismissToast(workspacesPage);
 }
 
-export async function createFolder(documentsPage: Page, name: string, displaySize: DisplaySize = DisplaySize.Large): Promise<void> {
+export async function createFolder(documentsPage: MsPage, name: string): Promise<void> {
+  const displaySize = await documentsPage.getDisplaySize();
   if (displaySize === DisplaySize.Small) {
     await documentsPage.locator('#add-menu-fab-button').click();
     await documentsPage.locator('.tab-menu-modal').locator('.list-group-item').nth(0).click();
@@ -344,7 +345,7 @@ export async function logout(page: MsPage): Promise<void> {
   await expect(page.locator('.homepage-header').locator('.topbar-left-text__subtitle')).toHaveText('Access your organizations');
 }
 
-export async function importDefaultFiles(documentsPage: Page, testInfo: TestInfo): Promise<void> {
+export async function importDefaultFiles(documentsPage: MsPage, testInfo: TestInfo): Promise<void> {
   await expect(documentsPage).toBeDocumentPage();
   await createFolder(documentsPage, 'Dir_Folder');
   const dropZone = documentsPage.locator('.folder-container').locator('.drop-zone').nth(0);

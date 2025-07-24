@@ -33,7 +33,7 @@ import { getUserInfoFromDeviceID } from '@/parsec/user';
 import { MoveEntryModeTag, libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
-export const DEFAULT_READ_SIZE = 256_000;
+export const DEFAULT_READ_SIZE = 1_024_000;
 
 export async function createFile(workspaceHandle: WorkspaceHandle, path: FsPath): Promise<Result<FileID, WorkspaceCreateFileError>> {
   return await libparsec.workspaceCreateFile(workspaceHandle, path);
@@ -171,7 +171,11 @@ export async function parseFileLink(link: string): Promise<Result<ParsedParsecAd
   return result as Result<ParsedParsecAddrWorkspacePath, ParseParsecAddrError>;
 }
 
-export async function createReadStream(workspaceHandle: WorkspaceHandle, path: FsPath): Promise<ReadableStream> {
+export async function createReadStream(
+  workspaceHandle: WorkspaceHandle,
+  path: FsPath,
+  onReadCallback?: (readSize: number) => Promise<void>,
+): Promise<ReadableStream> {
   let fd: FileDescriptor | undefined;
   let offset = 0;
 
@@ -200,6 +204,10 @@ export async function createReadStream(workspaceHandle: WorkspaceHandle, path: F
         fd = undefined;
       } else {
         offset += result.value.length;
+        if (onReadCallback) {
+          await onReadCallback(result.value.length);
+        }
+        // Keep at the end
         controller.enqueue(result.value);
       }
     },
@@ -294,6 +302,7 @@ export async function listTree(workspaceHandle: WorkspaceHandle, path: FsPath, d
             return tree;
           }
           if (subTree.maxFilesReached) {
+            console.warn('Max file count reached for listTree');
             tree.maxFilesReached = true;
             return tree;
           }

@@ -1,6 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { expect, getDownloadedFile, MsPage, msTest } from '@tests/e2e/helpers';
+import { TestInfo } from '@playwright/test';
+import { answerQuestion, dragAndDropFile, expect, getDownloadedFile, MsPage, msTest, openExternalLink } from '@tests/e2e/helpers';
+import AdmZip from 'adm-zip';
+import path from 'path';
 
 async function confirmDownload(page: MsPage, noReminder = false): Promise<void> {
   const modal = page.locator('.download-warning-modal');
@@ -52,109 +55,12 @@ msTest('Download file', async ({ documents }) => {
   }
 });
 
-msTest('Download multiple files', async ({ documents }) => {
-  // showDirectoryPicker is not yet supported by Playwright: https://github.com/microsoft/playwright/issues/31162
+msTest('Download multiple files and folder', async ({ documents }, testInfo: TestInfo) => {
   const entries = documents.locator('.folder-container').locator('.file-list-item');
-  let mp3EntryName = '';
-  let xlsxEntryName = '';
-  let pdfEntryName = '';
-
-  for (const entry of await entries.all()) {
-    const entryName = (await entry.locator('.file-name').locator('.file-name__label').textContent()) ?? '';
-    if (entryName.endsWith('.mp3') || entryName.endsWith('.xlsx') || entryName.endsWith('.pdf')) {
-      if (entryName.endsWith('.mp3')) {
-        mp3EntryName = entryName;
-      } else if (entryName.endsWith('.xlsx')) {
-        xlsxEntryName = entryName;
-      } else if (entryName.endsWith('.pdf')) {
-        pdfEntryName = entryName;
-      }
-      await entry.hover();
-      await entry.locator('ion-checkbox').click();
-    }
-  }
-  const actionBar = documents.locator('#folders-ms-action-bar');
-  await expect(actionBar.locator('.counter')).toHaveText('3 selected items');
-  await expect(actionBar.locator('.ms-action-bar-button:visible').nth(3)).toHaveText('Download');
-  await actionBar.locator('.ms-action-bar-button:visible').nth(3).click();
-  await confirmDownload(documents, true);
-
+  await entries.nth(0).dblclick();
+  const dropZone = documents.locator('.folder-container').locator('.drop-zone').nth(0);
+  await dragAndDropFile(documents, dropZone, [path.join(testInfo.config.rootDir, 'data', 'imports', 'image.png')]);
   await documents.waitForTimeout(1000);
-
-  const uploadMenu = documents.locator('.upload-menu');
-  await expect(uploadMenu).toBeVisible();
-  const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
-  await expect(tabs.locator('.text-counter')).toHaveText(['0', '11', '0']);
-  await expect(tabs.nth(0)).not.toHaveTheClass('active');
-  await expect(tabs.nth(1)).toHaveTheClass('active');
-  await expect(tabs.nth(2)).not.toHaveTheClass('active');
-
-  const container = uploadMenu.locator('.element-container');
-  const elements = container.locator('.element');
-  await expect(elements).toHaveCount(11);
-
-  for (let i = 0; i < 3; i++) {
-    const fileRe = new RegExp(`^(${mp3EntryName}|${xlsxEntryName}|${pdfEntryName})$`);
-    await expect(elements.nth(i).locator('.element-details__name')).toHaveText(fileRe);
-    const sizeRe = /^(76\.9 KB|5\.99 KB|40\.9 KB)$/;
-    await expect(elements.nth(i).locator('.element-details-info__size')).toHaveText(sizeRe);
-  }
-
-  const mp3Content = await getDownloadedFile(documents, mp3EntryName);
-  const pdfContent = await getDownloadedFile(documents, pdfEntryName);
-  const xlsxContent = await getDownloadedFile(documents, xlsxEntryName);
-
-  expect(mp3Content).toBeTruthy();
-  expect(pdfContent).toBeTruthy();
-  expect(xlsxContent).toBeTruthy();
-
-  if (mp3Content && pdfContent && xlsxContent) {
-    expect(mp3Content.length).toEqual(41866);
-    expect(pdfContent.length).toEqual(78731);
-    expect(xlsxContent.length).toEqual(6139);
-  }
-});
-
-msTest('Download folder', async ({ documents }) => {
-  const entry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
-  await entry.hover();
-  await entry.locator('ion-checkbox').click();
-
-  const actionBar = documents.locator('#folders-ms-action-bar');
-  await expect(actionBar.locator('.ms-action-bar-button:visible').nth(4)).toHaveText('Download');
-  await actionBar.locator('.ms-action-bar-button:visible').nth(4).click();
-
-  await expect(documents).toShowToast('Cannot download folders.', 'Warning');
-  const uploadMenu = documents.locator('.upload-menu');
-  await expect(uploadMenu).toBeHidden();
-});
-
-msTest('Download file and folder', async ({ documents }) => {
-  const entries = documents.locator('.folder-container').locator('.file-list-item');
-  let entryName = '';
-
-  const folderEntry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
-  await folderEntry.hover();
-  await folderEntry.locator('ion-checkbox').click();
-
-  for (const entry of await entries.all()) {
-    entryName = (await entry.locator('.file-name').locator('.file-name__label').textContent()) ?? '';
-    if (entryName.endsWith('.mp3')) {
-      await entry.hover();
-      await entry.locator('ion-checkbox').click();
-      break;
-    }
-  }
-
-  const actionBar = documents.locator('#folders-ms-action-bar');
-  await expect(actionBar.locator('.counter')).toHaveText('2 selected items');
-  await expect(actionBar.locator('.ms-action-bar-button:visible').nth(3)).toHaveText('Download');
-  await actionBar.locator('.ms-action-bar-button:visible').nth(3).click();
-
-  await expect(documents).toShowToast('Folders will not be downloaded.', 'Warning');
-  await confirmDownload(documents, true);
-  await documents.waitForTimeout(1000);
-
   const uploadMenu = documents.locator('.upload-menu');
   await expect(uploadMenu).toBeVisible();
   const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
@@ -162,22 +68,68 @@ msTest('Download file and folder', async ({ documents }) => {
   await expect(tabs.nth(0)).not.toHaveTheClass('active');
   await expect(tabs.nth(1)).toHaveTheClass('active');
   await expect(tabs.nth(2)).not.toHaveTheClass('active');
+  await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
+  await expect(documents.locator('.folder-container').locator('.no-files-content')).toBeHidden();
+
+  await documents.locator('#connected-header').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(1).click();
+  await expect(documents).toHaveHeader(['wksp1'], true, true);
+  await expect(entries).toHaveCount(9);
+  await documents.waitForTimeout(1000);
+
+  for (const entry of await entries.all()) {
+    const entryName = (await entry.locator('.file-name').locator('.file-name__label').textContent()) ?? '';
+    if (entryName.endsWith('.mp3') || entryName.endsWith('.xlsx') || entryName.endsWith('.pdf') || entryName === 'Dir_Folder') {
+      await entry.hover();
+      await entry.locator('ion-checkbox').click();
+    }
+  }
+  const actionBar = documents.locator('#folders-ms-action-bar');
+  await expect(actionBar.locator('.counter')).toHaveText('4 selected items');
+  await expect(actionBar.locator('.ms-action-bar-button:visible').nth(3)).toHaveText('Download');
+  await actionBar.locator('.ms-action-bar-button:visible').nth(3).click();
+  await confirmDownload(documents, true);
+  await answerQuestion(documents, true, {
+    expectedNegativeText: 'Cancel',
+    expectedPositiveText: 'Download archive',
+    expectedQuestionText: 'The selected files will be downloaded as an archive, with a total size of 130 KB. Do you want to continue?',
+    expectedTitleText: 'Downloading multiple files',
+  });
+
+  await documents.waitForTimeout(1000);
+
+  await expect(uploadMenu).toBeVisible();
+  await expect(tabs.locator('.text-counter')).toHaveText(['0', '10', '0']);
+  await expect(tabs.nth(0)).not.toHaveTheClass('active');
+  await expect(tabs.nth(1)).toHaveTheClass('active');
+  await expect(tabs.nth(2)).not.toHaveTheClass('active');
 
   const container = uploadMenu.locator('.element-container');
   const elements = container.locator('.element');
-  await expect(elements).toHaveCount(9);
-  await expect(elements.nth(0).locator('.element-details__name')).toHaveText(entryName);
-  await expect(elements.nth(0).locator('.element-details-info__size')).toHaveText('40.9 KB');
+  await expect(elements).toHaveCount(10);
 
-  const content = await getDownloadedFile(documents);
-  expect(content).toBeTruthy();
-  if (content) {
-    expect(content.length).toEqual(41866);
+  await expect(elements.nth(0).locator('.element-details__name')).toHaveText('wksp1_ROOT.zip');
+  await expect(elements.nth(0).locator('.element-details-info__size')).toHaveText('130 KB');
+
+  const zipContent = await getDownloadedFile(documents);
+  expect(zipContent).toBeTruthy();
+  if (!zipContent) {
+    throw new Error('No downloaded file');
   }
+  expect(zipContent.length).toEqual(120415);
+  const zip = new AdmZip(Buffer.from(zipContent));
+  const zipEntries = zip.getEntries().sort((a, b) => a.entryName.localeCompare(b.entryName));
+  expect(zipEntries.length).toBe(4);
+  expect(zipEntries.at(0)?.entryName).toBe('audio.mp3');
+  expect(zipEntries.at(0)?.header.size).toBe(41866);
+  expect(zipEntries.at(1)?.entryName).toBe('Dir_Folder/image.png');
+  expect(zipEntries.at(1)?.header.size).toBe(6335);
+  expect(zipEntries.at(2)?.entryName).toBe('pdfDocument.pdf');
+  expect(zipEntries.at(2)?.header.size).toBe(78731);
+  expect(zipEntries.at(3)?.entryName).toBe('spreadsheet.xlsx');
+  expect(zipEntries.at(3)?.header.size).toBe(6139);
 });
 
 msTest('Download warning', async ({ documents }) => {
-  // showSaveFilePicker is not yet supported by Playwright: https://github.com/microsoft/playwright/issues/31162
   const entries = documents.locator('.folder-container').locator('.file-list-item');
 
   for (const entry of await entries.all()) {
@@ -199,11 +151,7 @@ msTest('Download warning', async ({ documents }) => {
 
   // Check the link to the doc
   await expect(docLink).toHaveText('documentation');
-  const newTabPromise = documents.waitForEvent('popup');
-  await docLink.click();
-  const newTab = await newTabPromise;
-  await expect(newTab).toHaveURL(new RegExp('^https://docs.parsec.cloud/.+$'));
-  await newTab.close();
+  await openExternalLink(documents, docLink, new RegExp('^https://docs.parsec.cloud/.+$'));
 
   // Check the do not remind me
   await warningModal.locator('.download-warning-checkbox').click();

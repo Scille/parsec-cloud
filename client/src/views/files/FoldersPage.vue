@@ -249,6 +249,7 @@ import {
   isFolderGlobalAction,
   askDownloadConfirmation,
   downloadEntry,
+  downloadArchive,
 } from '@/views/files';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
 import {
@@ -269,7 +270,6 @@ import { Ref, computed, inject, onMounted, onUnmounted, ref, nextTick, watch, us
 import { EntrySyncData, EventData, EventDistributor, EventDistributorKey, Events, MenuActionData } from '@/services/eventDistributor';
 import { openPath, showInExplorer } from '@/services/fileOpener';
 import { WorkspaceTagRole } from '@/components/workspaces';
-import { showDirectoryPicker } from 'native-file-system-adapter';
 import { MenuAction, TabBarOptions, useCustomTabBar } from '@/views/menu';
 
 const customTabBar = useCustomTabBar();
@@ -1272,30 +1272,6 @@ async function downloadEntries(entries: EntryModel[]): Promise<void> {
   if (entries.length < 1) {
     return;
   }
-  const filesOnly = entries.filter((e) => e.isFile());
-
-  // Only folders selected, abort
-  if (filesOnly.length === 0) {
-    informationManager.present(
-      new Information({
-        message: 'FoldersPage.DownloadFile.cannotDownloadFolders',
-        level: InformationLevel.Warning,
-      }),
-      PresentationMode.Toast,
-    );
-    return;
-  }
-  // Some folders selected, inform the user
-  if (filesOnly.length !== entries.length) {
-    informationManager.present(
-      new Information({
-        message: 'FoldersPage.DownloadFile.foldersNotDownloaded',
-        level: InformationLevel.Warning,
-      }),
-      PresentationMode.Toast,
-    );
-  }
-
   const config = await storageManager.retrieveConfig();
   if (!config.disableDownloadWarning) {
     const { result, noReminder } = await askDownloadConfirmation();
@@ -1309,50 +1285,25 @@ async function downloadEntries(entries: EntryModel[]): Promise<void> {
     }
   }
 
-  if (filesOnly.length === 1) {
+  if (entries.length === 1 && entries[0].isFile()) {
     await downloadEntry({
-      name: filesOnly[0].name,
+      name: entries[0].name,
+      path: entries[0].path,
       workspaceHandle: workspaceInfo.value.handle,
       workspaceId: workspaceInfo.value.id,
-      path: filesOnly[0].path,
       informationManager: informationManager,
       fileOperationManager: fileOperationManager,
     });
   } else {
-    // Multiple, we use the showDirectoryPicker and get multiple handles
-    try {
-      let errors = 0;
-      const directoryHandle = await showDirectoryPicker({ _preferPolyfill: false });
-      for (const entry of filesOnly) {
-        try {
-          const saveHandle = await directoryHandle.getFileHandle(entry.name, { create: true });
-          await fileOperationManager.downloadEntry(workspaceInfo.value.handle, workspaceInfo.value.id, saveHandle, entry.path);
-        } catch (e: any) {
-          // Will probably happen if not enough permission
-          window.electronAPI.log('error', `Failed to get a file handle: ${e.toString()}`);
-          errors += 1;
-        }
-      }
-      if (errors === filesOnly.length) {
-        informationManager.present(
-          new Information({
-            message: 'FoldersPage.DownloadFile.allFailed',
-            level: InformationLevel.Info,
-          }),
-          PresentationMode.Toast,
-        );
-      } else if (errors > 0) {
-        informationManager.present(
-          new Information({
-            message: 'FoldersPage.DownloadFile.allFailed',
-            level: InformationLevel.Info,
-          }),
-          PresentationMode.Toast,
-        );
-      }
-    } catch (e: any) {
-      window.electronAPI.log('error', `Failed to select destination folder: ${e.toString()}`);
-    }
+    await downloadArchive({
+      entries: entries,
+      archiveName: `${workspaceInfo.value.currentName}_${currentFolder.value === '/' ? 'ROOT' : currentFolder.value}.zip`,
+      workspaceHandle: workspaceInfo.value.handle,
+      workspaceId: workspaceInfo.value.id,
+      informationManager: informationManager,
+      fileOperationManager: fileOperationManager,
+      relativePath: currentPath.value ?? '/',
+    });
   }
   await onSelectionCancel();
 }

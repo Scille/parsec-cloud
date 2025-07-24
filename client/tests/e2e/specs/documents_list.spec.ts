@@ -219,7 +219,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
       await expect(smallBreadcrumbs.locator('ion-text').nth(0)).toHaveText('wksp1');
       await expect(smallBreadcrumbs.locator('ion-text').nth(1)).toHaveText('/');
       await expect(smallBreadcrumbs.locator('.breadcrumb-popover-button')).toBeVisible();
-      await createFolder(documents, 'Subdir', DisplaySize.Small);
+      await createFolder(documents, 'Subdir');
       await navigateDown();
       await expect(smallBreadcrumbs.locator('ion-text')).toHaveCount(4);
       await expect(smallBreadcrumbs.locator('ion-text').nth(0)).toHaveText('...');

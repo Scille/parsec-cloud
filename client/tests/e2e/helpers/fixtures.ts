@@ -35,6 +35,43 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
 
   await page.addInitScript(
     (options: SetupOptions & { testbedServer: string }) => {
+      async function createMockWritableStream(): Promise<FileSystemWritableFileStream> {
+        return {
+          write: async (data: any): Promise<any> => {
+            if ((window as any).__downloadedFiles === undefined) {
+              (window as any).__downloadedFiles = {
+                default: data,
+              };
+            } else {
+              (window as any).__downloadedFiles.default = data;
+            }
+          },
+          close: async (): Promise<any> => {},
+          abort: async (): Promise<any> => {
+            console.log('Stream aborted');
+          },
+          writable: {
+            size: 0,
+            getWriter: (): WritableStreamDefaultWriter => {
+              return {
+                ready: new Promise<void>((resolve) => resolve()),
+                close: async (): Promise<void> => {},
+                releaseLock: (): void => {},
+                write: async (chunk: any): Promise<void> => {
+                  if ((window as any).__downloadedFiles === undefined) {
+                    (window as any).__downloadedFiles = {
+                      default: chunk,
+                    };
+                  } else {
+                    (window as any).__downloadedFiles.default = new Uint8Array([...(window as any).__downloadedFiles.default, ...chunk]);
+                  }
+                },
+              } as WritableStreamDefaultWriter;
+            },
+          },
+        } as unknown as FileSystemWritableFileStream;
+      }
+
       (window as any).TESTING = true;
       if (options.parsecAccountAutoLogin) {
         options.withParsecAccount = true;
@@ -56,24 +93,19 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
       if (options.trialServers) {
         (window as any).TESTING_TRIAL_SERVERS = options.trialServers;
       }
-      (window as any).showSaveFilePicker = async (): Promise<FileSystemFileHandle> => {
-        console.log('Show save file Picker');
-        return {
-          kind: 'file',
-          name: 'downloadedFile.tmp',
-          createWritable: async () => ({
-            write: async (data: Uint8Array): Promise<any> => {
-              if ((window as any).__downloadedFiles === undefined) {
-                (window as any).__downloadedFiles = {
-                  default: data,
-                };
-              } else {
-                (window as any).__downloadedFiles.default = data;
+      (window as any).showSaveFilePicker = (opts?: { suggestedName?: string }): Promise<FileSystemFileHandle> => {
+        return new Promise((resolve) => {
+          resolve({
+            kind: 'file',
+            name: opts?.suggestedName ?? 'downloadedFile.tmp',
+            createWritable: createMockWritableStream,
+            remove: async (): Promise<undefined> => {
+              if ((window as any).__downloadedFiles) {
+                (window as any).__downloadedFiles.default = undefined;
               }
             },
-            close: async (): Promise<any> => {},
-          }),
-        } as FileSystemFileHandle;
+          } as unknown as FileSystemFileHandle);
+        });
       };
       (window as any).showDirectoryPicker = async (): Promise<FileSystemDirectoryHandle> => {
         return {
@@ -90,7 +122,7 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
                       [name]: data,
                     };
                   } else {
-                    (window as any).__downloadedFiles[name] = data;
+                    (window as any).__downloadedFiles[name] = new Uint8Array([...(window as any).__downloadedFiles[name], ...data]);
                   }
                 },
                 close: async (): Promise<any> => {},
