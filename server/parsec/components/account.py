@@ -8,6 +8,8 @@ from email.mime.text import MIMEText
 from enum import auto
 from typing import Literal
 
+from jinja2 import Environment
+
 from parsec._parsec import (
     AccountAuthMethodID,
     DateTime,
@@ -28,7 +30,6 @@ from parsec.api import api
 from parsec.client_context import AnonymousAccountClientContext, AuthenticatedAccountClientContext
 from parsec.components.email import SendEmailBadOutcome, send_email
 from parsec.config import BackendConfig
-from parsec.templates import get_template
 from parsec.types import BadOutcomeEnum
 
 
@@ -171,6 +172,7 @@ class BaseAccountComponent:
             return SendEmailBadOutcome.BAD_SMTP_CONFIG
 
         message = _generate_account_create_validation_email(
+            jinja_env=self._config.jinja_env,
             from_addr=self._config.email_config.sender,
             to_addr=email,
             validation_code=validation_code,
@@ -193,6 +195,7 @@ class BaseAccountComponent:
             return SendEmailBadOutcome.BAD_SMTP_CONFIG
 
         message = _generate_account_delete_validation_email(
+            jinja_env=self._config.jinja_env,
             from_addr=self._config.email_config.sender,
             to_addr=email,
             validation_code=validation_code,
@@ -213,6 +216,7 @@ class BaseAccountComponent:
             return SendEmailBadOutcome.BAD_SMTP_CONFIG
 
         message = _generate_account_recover_validation_email(
+            jinja_env=self._config.jinja_env,
             from_addr=self._config.email_config.sender,
             to_addr=email,
             validation_code=validation_code,
@@ -727,6 +731,7 @@ class BaseAccountComponent:
 
 
 def _generate_account_create_validation_email(
+    jinja_env: Environment,
     from_addr: EmailAddress,
     to_addr: EmailAddress,
     validation_code: ValidationCode,
@@ -735,11 +740,11 @@ def _generate_account_create_validation_email(
     # Quick fix to have a similar behavior between Rust and Python
     server_url = server_url.removesuffix("/")
 
-    html = get_template("email/account_create.html.j2").render(
+    html = jinja_env.get_template("email/account_create.html.j2").render(
         validation_code=validation_code.str,
         server_url=server_url,
     )
-    text = get_template("email/account_create.txt.j2").render(
+    text = jinja_env.get_template("email/account_create.txt.j2").render(
         validation_code=validation_code.str,
         server_url=server_url,
     )
@@ -764,6 +769,7 @@ def _generate_account_create_validation_email(
 
 
 def _generate_account_delete_validation_email(
+    jinja_env: Environment,
     from_addr: EmailAddress,
     to_addr: EmailAddress,
     validation_code: ValidationCode,
@@ -772,11 +778,11 @@ def _generate_account_delete_validation_email(
     # Quick fix to have a similar behavior between Rust and Python
     server_url = server_url.removesuffix("/")
 
-    html = get_template("email/account_delete.html.j2").render(
+    html = jinja_env.get_template("email/account_delete.html.j2").render(
         validation_code=validation_code.str,
         server_url=server_url,
     )
-    text = get_template("email/account_delete.txt.j2").render(
+    text = jinja_env.get_template("email/account_delete.txt.j2").render(
         validation_code=validation_code.str,
         server_url=server_url,
     )
@@ -801,6 +807,7 @@ def _generate_account_delete_validation_email(
 
 
 def _generate_account_recover_validation_email(
+    jinja_env: Environment,
     from_addr: EmailAddress,
     to_addr: EmailAddress,
     validation_code: ValidationCode,
@@ -809,11 +816,11 @@ def _generate_account_recover_validation_email(
     # Quick fix to have a similar behavior between Rust and Python
     server_url = server_url.removesuffix("/")
 
-    html = get_template("email/account_recover.html.j2").render(
+    html = jinja_env.get_template("email/account_recover.html.j2").render(
         validation_code=validation_code.str,
         server_url=server_url,
     )
-    text = get_template("email/account_recover.txt.j2").render(
+    text = jinja_env.get_template("email/account_recover.txt.j2").render(
         validation_code=validation_code.str,
         server_url=server_url,
     )

@@ -16,6 +16,7 @@ from parsec.config import (
     BaseDatabaseConfig,
     MockedEmailConfig,
 )
+from parsec.templates import get_environment
 from tests.common.postgresql import reset_postgresql_testbed
 
 SERVER_DOMAIN = "parsec.invalid"
@@ -33,6 +34,7 @@ def backend_config(
     backend_mocked_data: dict[OrganizationID, MemoryOrganization],
 ) -> BackendConfig:
     return BackendConfig(
+        jinja_env=get_environment(None),
         debug=True,
         db_config=db_config,
         sse_keepalive=30,
