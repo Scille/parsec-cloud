@@ -268,8 +268,9 @@ import { Ref, computed, inject, onMounted, onUnmounted, ref, nextTick, watch, us
 import { EntrySyncData, EventData, EventDistributor, EventDistributorKey, Events, MenuActionData } from '@/services/eventDistributor';
 import { openPath, showInExplorer } from '@/services/fileOpener';
 import { WorkspaceTagRole } from '@/components/workspaces';
-import { showDirectoryPicker, showSaveFilePicker } from 'native-file-system-adapter';
+import { showSaveFilePicker } from 'native-file-system-adapter';
 import { MenuAction, TabBarOptions, useCustomTabBar } from '@/views/menu';
+import { formatFileSize } from '@/common/file';
 
 const customTabBar = useCustomTabBar();
 
@@ -1263,6 +1264,92 @@ async function copyEntries(entries: EntryModel[]): Promise<void> {
   selectionEnabled.value = false;
 }
 
+async function downloadArchive(entries: EntryModel[]): Promise<void> {
+  if (!workspaceInfo.value) {
+    window.electronAPI.log('error', 'No workspace info when trying to download a file');
+    return;
+  }
+  if (entries.length < 1) {
+    return;
+  }
+
+  const trees: Array<parsec.EntryTree> = [];
+  let totalSize = 0;
+  let totalFiles = 0;
+  for (const entry of entries) {
+    if (entry.isFile()) {
+      trees.push({
+        totalSize: (entry as parsec.EntryStatFile).size,
+        entries: [entry as parsec.EntryStatFile],
+        maxRecursionReached: false,
+        maxFilesReached: false,
+      });
+      totalSize += (entry as parsec.EntryStatFile).size;
+      totalFiles += 1;
+    } else {
+      const tree = await parsec.listTree(workspaceInfo.value.handle, entry.path);
+      totalSize += tree.totalSize;
+      totalFiles += tree.entries.length;
+      trees.push(tree);
+      // How to warn the user in those cases?
+      if (tree.maxRecursionReached) {
+        window.electronAPI.log('error', 'Maximum recursion reached when downloading archive');
+      } else if (tree.maxFilesReached) {
+        window.electronAPI.log('error', 'Maximum file reached when downloading archive');
+      }
+    }
+  }
+
+  const answer = await askQuestion('BIG ARCHIVE', `${totalFiles} files for ${I18n.translate(formatFileSize(totalSize))}, are you sure?`, {
+    noText: 'CANCEL',
+    yesText: 'DOWNLOAD ARCHIVE',
+  });
+  if (answer === Answer.No) {
+    return;
+  }
+
+  try {
+    const archiveName = `${workspaceInfo.value.currentName}_${currentFolder.value === '/' ? 'ROOT' : currentFolder.value}.zip`;
+    const saveHandle = await showSaveFilePicker({
+      _preferPolyfill: false,
+      suggestedName: archiveName,
+    });
+    await fileOperationManager.downloadArchive(
+      workspaceInfo.value.handle,
+      workspaceInfo.value.id,
+      saveHandle,
+      trees,
+      currentPath.value ?? '/',
+    );
+  } catch (e: any) {
+    if (e.name === 'NotAllowedError') {
+      window.electronAPI.log('error', 'No permission for showSaveFilePicker');
+      informationManager.present(
+        new Information({
+          message: 'FoldersPage.DownloadFile.noPermissions',
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Modal,
+      );
+    } else if (e.name === 'AbortError') {
+      if ((e.toString() as string).toLocaleLowerCase().includes('user aborted')) {
+        window.electronAPI.log('debug', 'User cancelled the showSaveFilePicker');
+      } else {
+        informationManager.present(
+          new Information({
+            message: 'FoldersPage.DownloadFile.selectFolderFailed',
+            level: InformationLevel.Error,
+          }),
+          PresentationMode.Toast,
+        );
+        window.electronAPI.log('error', `Could not create the file: ${e.toString()}`);
+      }
+    } else {
+      window.electronAPI.log('error', `Failed to select destination file: ${e.toString()}`);
+    }
+  }
+}
+
 async function downloadEntries(entries: EntryModel[]): Promise<void> {
   if (!workspaceInfo.value) {
     window.electronAPI.log('error', 'No workspace info when trying to download a file');
@@ -1271,30 +1358,6 @@ async function downloadEntries(entries: EntryModel[]): Promise<void> {
   if (entries.length < 1) {
     return;
   }
-  const filesOnly = entries.filter((e) => e.isFile());
-
-  // Only folders selected, abort
-  if (filesOnly.length === 0) {
-    informationManager.present(
-      new Information({
-        message: 'FoldersPage.DownloadFile.cannotDownloadFolders',
-        level: InformationLevel.Warning,
-      }),
-      PresentationMode.Toast,
-    );
-    return;
-  }
-  // Some folders selected, inform the user
-  if (filesOnly.length !== entries.length) {
-    informationManager.present(
-      new Information({
-        message: 'FoldersPage.DownloadFile.foldersNotDownloaded',
-        level: InformationLevel.Warning,
-      }),
-      PresentationMode.Toast,
-    );
-  }
-
   const config = await storageManager.retrieveConfig();
   if (!config.disableDownloadWarning) {
     const { result, noReminder } = await askDownloadConfirmation();
@@ -1308,14 +1371,14 @@ async function downloadEntries(entries: EntryModel[]): Promise<void> {
     }
   }
 
-  if (filesOnly.length === 1) {
+  if (entries.length === 1 && entries[0].isFile()) {
     // Only one, we can use the showSaveFilePicker to get a handle
     try {
       const saveHandle = await showSaveFilePicker({
         _preferPolyfill: false,
-        suggestedName: filesOnly[0].name,
+        suggestedName: entries[0].name,
       });
-      await fileOperationManager.downloadEntry(workspaceInfo.value.handle, workspaceInfo.value.id, saveHandle, filesOnly[0].path);
+      await fileOperationManager.downloadEntry(workspaceInfo.value.handle, workspaceInfo.value.id, saveHandle, entries[0].path);
     } catch (e: any) {
       if (e.name === 'NotAllowedError') {
         window.electronAPI.log('error', 'No permission for showSaveFilePicker');
@@ -1344,40 +1407,7 @@ async function downloadEntries(entries: EntryModel[]): Promise<void> {
       }
     }
   } else {
-    // Multiple, we use the showDirectoryPicker and get multiple handles
-    try {
-      let errors = 0;
-      const directoryHandle = await showDirectoryPicker({ _preferPolyfill: false });
-      for (const entry of filesOnly) {
-        try {
-          const saveHandle = await directoryHandle.getFileHandle(entry.name, { create: true });
-          await fileOperationManager.downloadEntry(workspaceInfo.value.handle, workspaceInfo.value.id, saveHandle, entry.path);
-        } catch (e: any) {
-          // Will probably happen if not enough permission
-          window.electronAPI.log('error', `Failed to get a file handle: ${e.toString()}`);
-          errors += 1;
-        }
-      }
-      if (errors === filesOnly.length) {
-        informationManager.present(
-          new Information({
-            message: 'FoldersPage.DownloadFile.allFailed',
-            level: InformationLevel.Info,
-          }),
-          PresentationMode.Toast,
-        );
-      } else if (errors > 0) {
-        informationManager.present(
-          new Information({
-            message: 'FoldersPage.DownloadFile.allFailed',
-            level: InformationLevel.Info,
-          }),
-          PresentationMode.Toast,
-        );
-      }
-    } catch (e: any) {
-      window.electronAPI.log('error', `Failed to select destination folder: ${e.toString()}`);
-    }
+    await downloadArchive(entries);
   }
   await onSelectionCancel();
 }

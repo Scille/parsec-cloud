@@ -30,6 +30,7 @@ import {
   writeFile,
 } from '@/parsec';
 import { wait } from '@/parsec/internals';
+import * as zipjs from '@zip.js/zip.js';
 import { DateTime } from 'luxon';
 import { FileSystemFileHandle } from 'native-file-system-adapter';
 import { v4 as uuid4 } from 'uuid';
@@ -66,6 +67,10 @@ enum FileOperationState {
   DownloadStarted,
   DownloadFailed,
   EntryDownloaded,
+  DownloadArchiveAdded,
+  DownloadArchiveStarted,
+  DownloadArchiveFailed,
+  ArchiveDownloaded,
 }
 
 export interface OperationProgressStateData {
@@ -132,6 +137,7 @@ export enum FileOperationDataType {
   Move,
   Restore,
   Download,
+  DownloadArchive,
 }
 
 interface IFileOperationDataType {
@@ -239,6 +245,29 @@ class DownloadData extends FileOperationData {
   }
 }
 
+class DownloadArchiveData extends FileOperationData {
+  trees: Array<EntryTree>;
+  saveHandle: FileSystemFileHandle;
+  rootPath: FsPath;
+
+  constructor(
+    workspaceHandle: WorkspaceHandle,
+    workspaceId: WorkspaceID,
+    saveHandle: FileSystemFileHandle,
+    trees: Array<EntryTree>,
+    rootPath: FsPath,
+  ) {
+    super(workspaceHandle, workspaceId);
+    this.saveHandle = saveHandle;
+    this.trees = trees;
+    this.rootPath = rootPath;
+  }
+
+  getDataType(): FileOperationDataType {
+    return FileOperationDataType.DownloadArchive;
+  }
+}
+
 class FileOperationManager {
   private fileOperationData: Array<FileOperationData>;
   private callbacks: Array<[string, FileOperationCallback]>;
@@ -319,6 +348,21 @@ class FileOperationManager {
     }
     const newData = new DownloadData(workspaceHandle, workspaceId, path, saveStream, dateTime);
     await this.sendState(FileOperationState.DownloadAdded, newData);
+    this.fileOperationData.unshift(newData);
+  }
+
+  async downloadArchive(
+    workspaceHandle: WorkspaceHandle,
+    workspaceId: WorkspaceID,
+    saveStream: FileSystemFileHandle,
+    trees: Array<EntryTree>,
+    rootPath: FsPath,
+  ): Promise<void> {
+    if (!this.isRunning) {
+      this.start();
+    }
+    const newData = new DownloadArchiveData(workspaceHandle, workspaceId, saveStream, trees, rootPath);
+    await this.sendState(FileOperationState.DownloadArchiveAdded, newData);
     this.fileOperationData.unshift(newData);
   }
 
@@ -799,12 +843,76 @@ class FileOperationManager {
       await this.sendState(FileOperationState.EntryDownloaded, data);
     } catch (e: any) {
       await wStream.abort();
+      data.saveHandle.remove();
       if (cancelled) {
         await this.sendState(FileOperationState.Cancelled, data);
       } else {
         window.electronAPI.log('warn', `Error while downloading file: ${e?.toString()}`);
         await this.sendState(FileOperationState.DownloadFailed, data);
       }
+    }
+  }
+
+  private async doDownloadArchive(data: DownloadArchiveData): Promise<void> {
+    await this.sendState(FileOperationState.DownloadArchiveStarted, data);
+    await this.sendState(FileOperationState.OperationProgress, data, { progress: 0 });
+
+    const totalFileCount = data.trees.reduce((count, tree) => count + tree.entries.length, 0);
+    const wStream = await data.saveHandle.createWritable();
+    const zipWriter = new zipjs.ZipWriter(wStream);
+    let cancelled = false;
+
+    try {
+      const start = DateTime.now();
+      let fileCount = 0;
+
+      for (const tree of data.trees) {
+        for (const entry of tree.entries) {
+          // Check if the download has been cancelled
+          let shouldCancel = false;
+          const index = this.cancelList.findIndex((item) => item === data.id);
+
+          if (index !== -1) {
+            // Remove from cancel list
+            this.cancelList.splice(index, 1);
+            shouldCancel = true;
+          }
+          if (shouldCancel) {
+            cancelled = true;
+            throw Error('cancelled');
+          }
+
+          const rStream = await createReadStream(data.workspaceHandle, entry.path);
+          try {
+            const relPath = entry.path.startsWith(data.rootPath) ? entry.path.slice(data.rootPath.length) : entry.path;
+            await zipWriter.add(relPath, rStream);
+            await this.sendState(FileOperationState.OperationProgress, data, { progress: (fileCount / totalFileCount) * 100 });
+          } catch (e: any) {
+            window.electronAPI.log('error', `Failed to add file '${entry.name}' to archive`);
+          } finally {
+            fileCount += 1;
+          }
+        }
+      }
+
+      const end = DateTime.now();
+      const diff = end.toMillis() - start.toMillis();
+
+      if (diff < MIN_OPERATION_TIME_MS) {
+        await wait(MIN_OPERATION_TIME_MS - diff);
+      }
+      await this.sendState(FileOperationState.ArchiveDownloaded, data);
+    } catch (e: any) {
+      await wStream.abort();
+      data.saveHandle.remove();
+      if (cancelled) {
+        await this.sendState(FileOperationState.Cancelled, data);
+      } else {
+        window.electronAPI.log('warn', `Error while downloading archive: ${e?.toString()}`);
+        await this.sendState(FileOperationState.DownloadArchiveFailed, data);
+      }
+    } finally {
+      zipWriter.close();
     }
   }
 
@@ -971,6 +1079,8 @@ class FileOperationManager {
           job = this.doRestore(elem as RestoreData);
         } else if (elem.getDataType() === FileOperationDataType.Download) {
           job = this.doDownload(elem as DownloadData);
+        } else if (elem.getDataType() === FileOperationDataType.DownloadArchive) {
+          job = this.doDownloadArchive(elem as DownloadArchiveData);
         } else {
           console.warn(`Unhandled file operation '${elem.getDataType()}'`);
           continue;
@@ -993,4 +1103,14 @@ class FileOperationManager {
   }
 }
 
-export { CopyData, DownloadData, FileOperationData, FileOperationManager, FileOperationState, ImportData, MoveData, RestoreData };
+export {
+  CopyData,
+  DownloadArchiveData,
+  DownloadData,
+  FileOperationData,
+  FileOperationManager,
+  FileOperationState,
+  ImportData,
+  MoveData,
+  RestoreData,
+};
