@@ -19,16 +19,10 @@ from parsec._version import __version__ as parsec_version
 from parsec.asgi.administration import administration_router
 from parsec.asgi.redirect import redirect_router
 from parsec.asgi.rpc import Backend, rpc_router
-from parsec.templates import JINJA_ENV_CONFIG
 
 logger = get_logger()
 
 type AsgiApp = FastAPI
-
-
-templates = Jinja2Templates(
-    directory=(Path(__file__) / "../../templates").resolve(), **JINJA_ENV_CONFIG
-)
 
 tags_metadata = [
     {
@@ -80,6 +74,8 @@ def app_factory(
         allow_headers=["api-version", "authorization", "user-agent"],
     )
     app.state.backend = backend
+
+    templates = Jinja2Templates(env=backend.config.jinja_env)
 
     if with_client_web_app:
 

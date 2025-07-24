@@ -7,6 +7,8 @@ from enum import Enum
 from typing import TYPE_CHECKING, Literal
 from urllib.parse import urlparse, urlunparse
 
+from jinja2.environment import Environment
+
 from parsec._parsec import ActiveUsersLimit, DateTime, EmailAddress, ParsecAddr, SecretKey
 from parsec.email_rate_limit import EmailRateLimit
 
@@ -230,6 +232,7 @@ class AccountVaultStrategy(Enum):
 @dataclass(slots=True, kw_only=True)
 class BackendConfig:
     debug: bool
+    jinja_env: Environment
     db_config: BaseDatabaseConfig
     blockstore_config: BaseBlockStoreConfig
     email_config: SmtpEmailConfig | MockedEmailConfig

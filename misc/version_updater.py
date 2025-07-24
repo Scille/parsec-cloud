@@ -76,6 +76,10 @@ RUSTUP_INSTALL = ReplaceRegex(
     r"curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \| sh -s -- -y --default-toolchain [0-9.]+",
     "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain {version}",
 )
+PARSEC_REPO_SRC_BASE_URL = ReplaceRegex(
+    r"github.com/Scille/parsec-cloud/tree/v.*?/",
+    "github.com/Scille/parsec-cloud/tree/v{version}/",
+)
 
 
 @enum.unique
@@ -366,6 +370,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
             )
         ],
     },
+    ROOT_DIR / "docs/hosting/custom_branding.rst": {Tool.Parsec: [PARSEC_REPO_SRC_BASE_URL]},
     ROOT_DIR / "docs/hosting/install_cli.rst": {
         Tool.Parsec: [
             ReplaceRegex(

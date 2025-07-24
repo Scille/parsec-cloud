@@ -24,6 +24,7 @@ from parsec._parsec import (
     SecretKey,
     ValidationCode,
 )
+from parsec.templates import get_environment
 
 try:
     from parsec._parsec import testbed
@@ -360,7 +361,10 @@ async def testbed_backend_factory(
             url=with_postgresql, min_connections=1, max_connections=5
         )
 
+    jinja_env = get_environment(None)
+
     config = BackendConfig(
+        jinja_env=jinja_env,
         debug=True,
         db_config=db_config,
         sse_keepalive=30,

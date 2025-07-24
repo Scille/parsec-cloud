@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.4.1-a.0+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-07 09:23+0200\n"
+"POT-Creation-Date: 2025-07-25 06:18+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -187,3 +187,78 @@ msgstr "custom_en-US.json"
 #: ../../hosting/custom_branding.rst:61
 msgid "custom_fr-FR.json"
 msgstr "custom_fr-FR.json"
+
+#: ../../hosting/custom_branding.rst:67
+msgid "Server emails & HTML pages"
+msgstr "Emails et pages HTML du serveur"
+
+#: ../../hosting/custom_branding.rst:69
+msgid ""
+"Parsec server emails and HTML pages (index, 404) are based on the `Jinja "
+"template syntax`_."
+msgstr ""
+"Les courriels du serveur Parsec et les pages HTML (index, 404) sont basés "
+"sur `la syntaxe de template Jinja <Jinja template syntax_>`_."
+
+#: ../../hosting/custom_branding.rst:73
+msgid ""
+"You can customize them by providing a custom template directory when running "
+"the server with ``--template-dir`` or by setting the environment variable "
+"``PARSEC_TEMPLATE_DIR``."
+msgstr ""
+"Vous pouvez les personnaliser en fournissant un répertoire de modèles "
+"personnalisé lors de l'exécution du serveur avec ``--template-dir`` ou en "
+"définissant la variable d'environnement ``PARSEC_TEMPLATE_DIR``."
+
+#: ../../hosting/custom_branding.rst:75
+msgid "The directory should contain the following files:"
+msgstr "Le dossier doit contenir les fichiers suivants :"
+
+#: ../../hosting/custom_branding.rst:77
+msgid "``index.html``: default landing page when you access the server."
+msgstr ""
+"``index.html`` : page d'accueil par défaut lorsque vous accédez au serveur."
+
+#: ../../hosting/custom_branding.rst:78
+msgid "``404.html``: resource not found page."
+msgstr "``404.html`` : page de ressource non trouvée."
+
+#: ../../hosting/custom_branding.rst:79
+msgid ""
+"``email/account_create.[html|txt].j2``: HTML and TEXT templates for the "
+"email send to confirm Parsec account creation."
+msgstr ""
+"``email/account_create.[html|txt].j2`` : Modèles HTML et TEXTE pour le "
+"courriel envoyé afin de confirmer la création d'un compte Parsec."
+
+#: ../../hosting/custom_branding.rst:80
+msgid ""
+"``email/account_delete.[html|txt].j2``: HTML and TEXT email templates to "
+"confirm Parsec account deletion."
+msgstr ""
+"``email/account_delete.[html|txt].j2``: Modèles d'e-mail HTML et TEXTE pour "
+"confirmer la suppression du compte Parsec."
+
+#: ../../hosting/custom_branding.rst:81
+msgid ""
+"``email/account_recover.[html|txt].j2``: HTML and TEXT email templates to "
+"confirm Parsec account recovery."
+msgstr ""
+"``email/account_recover.[html|txt].j2`` : modèles d'e-mails HTML et TEXTE "
+"pour confirmer la récupération du compte Parsec."
+
+#: ../../hosting/custom_branding.rst:82
+msgid ""
+"``email/invitation.[html|txt].j2``: HTML and TEXT email templates to send "
+"invitation to join an organization."
+msgstr ""
+"``email/invitation.[html|txt].j2`` : modèles d'e-mails HTML et TEXTE pour "
+"envoyer une invitation à rejoindre une organisation."
+
+#: ../../hosting/custom_branding.rst:86
+msgid ""
+"You can base your customization on the default server's templates `found "
+"here <parsec-server-template-src_>`_."
+msgstr ""
+"Vous pouvez baser votre personnalisation sur les modèles du serveur par "
+"défaut `disponibles ici <parsec-server-template-src_>`_."

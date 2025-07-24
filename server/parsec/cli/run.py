@@ -36,6 +36,7 @@ from parsec.config import (
     SmtpEmailConfig,
 )
 from parsec.logging import get_logger
+from parsec.templates import get_environment
 
 logger = get_logger()
 
@@ -301,6 +302,12 @@ for any given email address).
     help="URL to reach this server (typically used in invitation emails)",
 )
 @click.option(
+    "--template-dir",
+    type=click.Path(dir_okay=True, file_okay=False, exists=True, path_type=Path),
+    help="Load templates from the specified directory instead of using the default one",
+    envvar="PARSEC_TEMPLATE_DIR",
+)
+@click.option(
     "--email-host",
     envvar="PARSEC_EMAIL_HOST",
     show_envvar=True,
@@ -470,6 +477,7 @@ def run_cmd(
     validation_email_rate_limit: tuple[int, int],
     fake_account_password_algorithm_seed: SecretKey,
     server_addr: ParsecAddr,
+    template_dir: Path | None,
     email_host: str,
     email_port: int,
     email_host_user: str | None,
@@ -514,7 +522,10 @@ def run_cmd(
             )
         logger.debug("Email config", config=email_config)
 
+        jinja_env = get_environment(template_dir)
+
         app_config = BackendConfig(
+            jinja_env=jinja_env,
             administration_token=administration_token,
             db_config=db,
             sse_keepalive=sse_keepalive,
