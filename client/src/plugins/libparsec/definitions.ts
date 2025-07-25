@@ -4784,7 +4784,7 @@ export interface LibParsecPlugin {
     ): Promise<Result<HumanHandle, AccountGetHumanHandleError>>
     accountListInvitations(
         account: Handle
-    ): Promise<Result<Array<[OrganizationID, InvitationToken, InvitationType]>, AccountListInvitationsError>>
+    ): Promise<Result<Array<[ParsecInvitationAddr, OrganizationID, InvitationToken, InvitationType]>, AccountListInvitationsError>>
     accountListRegistrationDevices(
         account: Handle
     ): Promise<Result<Array<[OrganizationID, UserID]>, AccountListRegistrationDevicesError>>

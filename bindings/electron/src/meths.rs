@@ -15095,20 +15095,28 @@ fn account_list_invitations(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let js_array = JsArray::new(&mut cx, ok.len());
     for (i, elem) in ok.into_iter().enumerate() {
         let js_elem = {
-    let (x0, x1, x2) = elem;
-    let js_array = JsArray::new(&mut cx, 3);
-    let js_value = JsString::try_new(&mut cx,x0).or_throw(&mut cx)?;
-    js_array.set(&mut cx, 0, js_value)?;
+    let (x0, x1, x2, x3) = elem;
+    let js_array = JsArray::new(&mut cx, 4);
     let js_value = JsString::try_new(&mut cx,{
-    let custom_to_rs_string = |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
-    match custom_to_rs_string(x1) {
+    let custom_to_rs_string = |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
+    match custom_to_rs_string(x0) {
         Ok(ok) => ok,
         Err(err) => return cx.throw_type_error(err),
     }
 }).or_throw(&mut cx)?;
+    js_array.set(&mut cx, 0, js_value)?;
+    let js_value = JsString::try_new(&mut cx,x1).or_throw(&mut cx)?;
     js_array.set(&mut cx, 1, js_value)?;
-    let js_value = JsString::try_new(&mut cx, enum_invitation_type_rs_to_js(x2)).or_throw(&mut cx)?;
+    let js_value = JsString::try_new(&mut cx,{
+    let custom_to_rs_string = |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+    match custom_to_rs_string(x2) {
+        Ok(ok) => ok,
+        Err(err) => return cx.throw_type_error(err),
+    }
+}).or_throw(&mut cx)?;
     js_array.set(&mut cx, 2, js_value)?;
+    let js_value = JsString::try_new(&mut cx, enum_invitation_type_rs_to_js(x3)).or_throw(&mut cx)?;
+    js_array.set(&mut cx, 3, js_value)?;
     js_array
 };
         js_array.set(&mut cx, i as u32, js_elem)?;

@@ -16361,14 +16361,12 @@ pub fn accountListInvitations(account: u32) -> Promise {
                     let js_array = Array::new_with_length(value.len() as u32);
                     for (i, elem) in value.into_iter().enumerate() {
                         let js_elem = {
-                            let (x1, x2, x3) = elem;
+                            let (x1, x2, x3, x4) = elem;
                             // Array::new_with_length allocates with `undefined` value, that's why we `set` value
-                            let js_array = Array::new_with_length(3);
-                            let js_value = JsValue::from_str(x1.as_ref());
-                            js_array.set(0, js_value);
+                            let js_array = Array::new_with_length(4);
                             let js_value = JsValue::from_str({
-                                let custom_to_rs_string = |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
-                                match custom_to_rs_string(x2) {
+                                let custom_to_rs_string = |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
+                                match custom_to_rs_string(x1) {
                                     Ok(ok) => ok,
                                     Err(err) => {
                                         return Err(JsValue::from(TypeError::new(err.as_ref())))
@@ -16376,9 +16374,22 @@ pub fn accountListInvitations(account: u32) -> Promise {
                                 }
                                 .as_ref()
                             });
+                            js_array.set(0, js_value);
+                            let js_value = JsValue::from_str(x2.as_ref());
                             js_array.set(1, js_value);
-                            let js_value = JsValue::from_str(enum_invitation_type_rs_to_js(x3));
+                            let js_value = JsValue::from_str({
+                                let custom_to_rs_string = |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                                match custom_to_rs_string(x3) {
+                                    Ok(ok) => ok,
+                                    Err(err) => {
+                                        return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                    }
+                                }
+                                .as_ref()
+                            });
                             js_array.set(2, js_value);
+                            let js_value = JsValue::from_str(enum_invitation_type_rs_to_js(x4));
+                            js_array.set(3, js_value);
                             js_array.into()
                         };
                         js_array.set(i as u32, js_elem);
