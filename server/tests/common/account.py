@@ -51,7 +51,7 @@ async def create_account(
     created_on: DateTime,
     human_handle: HumanHandle,
     auth_method_mac_key: SecretKey,
-    auth_method_password_algorithm: UntrustedPasswordAlgorithmArgon2id,
+    auth_method_password_algorithm: UntrustedPasswordAlgorithmArgon2id | None,
     vault_key_access: bytes,
 ):
     assert isinstance(backend.config.email_config, MockedEmailConfig)
@@ -137,11 +137,7 @@ async def bob_account(
         human_handle=BOB_ACCOUNT_HUMAN_HANDLE,
         vault_key_access=b"<bob_vault_key_access>",
         auth_method_mac_key=BOB_ACCOUNT_AUTH_METHOD_MAC_KEY,
-        auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
-            opslimit=65536,
-            memlimit_kb=3,
-            parallelism=1,
-        ),
+        auth_method_password_algorithm=None,
     )
     return AuthenticatedAccountRpcClient(
         client,
