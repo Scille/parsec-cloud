@@ -3981,7 +3981,7 @@ export function accountGetHumanHandle(
 ): Promise<Result<HumanHandle, AccountGetHumanHandleError>>
 export function accountListInvitations(
     account: number
-): Promise<Result<Array<[string, string, InvitationType]>, AccountListInvitationsError>>
+): Promise<Result<Array<[string, string, string, InvitationType]>, AccountListInvitationsError>>
 export function accountListRegistrationDevices(
     account: number
 ): Promise<Result<Array<[string, string]>, AccountListRegistrationDevicesError>>
