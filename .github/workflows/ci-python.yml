@@ -180,7 +180,7 @@ jobs:
       - name: Check python code style
         shell: bash -eux {0}
         run: |
-          for step in ruff-format ruff pyright ${{ !inputs.style-only && 'sqlfluff' || '' }}; do
+          for step in ruff-format ruff pyright ${{ !inputs.style-only && 'sqlfluff sqlfluff-in-python' || '' }}; do
             python \
               ${{ steps.pre-commit.outputs.install-path }} \
               run \

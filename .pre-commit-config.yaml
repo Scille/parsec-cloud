@@ -172,9 +172,39 @@ repos:
       - id: sqlfluff
         name: SQLFluff (using `poetry`)
         entry: poetry --project ./server run ./misc/lint_sql.py --fix
-        types_or: [python, sql]
+        types_or: [sql]
+        files: |
+            (?x)^(
+                libparsec/crates/platform_storage/src/native/.*|
+                server/parsec/components/postgresql/migrations/.*|
+                server/tests/migrations/.*
+            )$
+        require_serial: true
+        language: system
+
+      - id: sqlfluff-in-python
+        name: SQLFluff in Python server components (using `poetry`)
+        entry: poetry --project ./server run ./misc/lint_sql.py --non-sql-file-print-fix
+        types_or: [python]
+        files: ^(server/parsec/components/postgresql/)
         # TODO: currently SQL embedded in Python server code is dirty, so we ignore it
-        files: ^(server/parsec/components/postgresql/migrations/)|(libparsec/crates/platform_storage/src/native/)
+        exclude: |
+            (?x)^(
+                server/parsec/components/postgresql/auth.py|
+                server/parsec/components/postgresql/block.*|
+                server/parsec/components/postgresql/events.py|
+                server/parsec/components/postgresql/invite.py|
+                server/parsec/components/postgresql/organization.*|
+                server/parsec/components/postgresql/pki.py|
+                server/parsec/components/postgresql/queries.*|
+                server/parsec/components/postgresql/realm.*|
+                server/parsec/components/postgresql/sequester.*|
+                server/parsec/components/postgresql/shamir.*|
+                server/parsec/components/postgresql/test_queries.*|
+                server/parsec/components/postgresql/user.*|
+                server/parsec/components/postgresql/utils.*|
+                server/parsec/components/postgresql/vlob.*
+            )$
         require_serial: true
         language: system
 
