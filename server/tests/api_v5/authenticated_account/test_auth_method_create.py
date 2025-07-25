@@ -17,7 +17,6 @@ from tests.common import (
 
 
 async def test_authenticated_account_auth_method_create_ok(
-    xfail_if_postgresql: None,
     alice_account: AuthenticatedAccountRpcClient,
     client: AsyncClient,
 ) -> None:
@@ -48,7 +47,6 @@ async def test_authenticated_account_auth_method_create_ok(
 
 
 async def test_authenticated_account_auth_method_create_with_password_algorithm(
-    xfail_if_postgresql: None,
     # Use `bob_acount` here since its auth method has no password (while `alice_account` does)
     bob_account: AuthenticatedAccountRpcClient,
     client: AsyncClient,
@@ -119,7 +117,6 @@ async def test_authenticated_account_auth_method_create_with_password_algorithm(
 
 
 async def test_authenticated_account_auth_method_create_auth_method_id_already_exists(
-    xfail_if_postgresql: None,
     alice_account: AuthenticatedAccountRpcClient,
     bob_account: AuthenticatedAccountRpcClient,
 ) -> None:
@@ -139,7 +136,6 @@ async def test_authenticated_account_auth_method_create_auth_method_id_already_e
 
 
 async def test_authenticated_account_auth_method_create_http_common_errors(
-    xfail_if_postgresql: None,
     alice_account: AuthenticatedAccountRpcClient,
     authenticated_account_http_common_errors_tester: HttpCommonErrorsTester,
 ) -> None:
