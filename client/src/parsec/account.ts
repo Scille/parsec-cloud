@@ -320,7 +320,7 @@ class _ParsecAccount {
     if (result.ok) {
       return {
         ok: true,
-        value: result.value.map(([organizationId, token, type]) => {
+        value: result.value.map(([_invitationAddr, organizationId, token, type]) => {
           return { organizationId: organizationId, token: token, type: type };
         }),
       };

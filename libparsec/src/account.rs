@@ -133,10 +133,27 @@ pub fn account_get_human_handle(
 
 pub async fn account_list_invitations(
     account: Handle,
-) -> Result<Vec<ParsecInvitationAddr>, AccountListInvitationsError> {
+) -> Result<
+    Vec<(
+        ParsecInvitationAddr,
+        OrganizationID,
+        InvitationToken,
+        InvitationType,
+    )>,
+    AccountListInvitationsError,
+> {
     let account_handle = account;
     let account = borrow_account(account_handle)?;
-    account.list_invitations().await
+    let invitations = account.list_invitations().await?;
+    Ok(invitations
+        .into_iter()
+        .map(|addr| {
+            let organization_id = addr.organization_id().to_owned();
+            let token = addr.token();
+            let invitation_type = addr.invitation_type();
+            (addr, organization_id, token, invitation_type)
+        })
+        .collect())
 }
 
 pub async fn account_fetch_opaque_key_from_vault(
