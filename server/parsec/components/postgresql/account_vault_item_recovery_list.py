@@ -17,10 +17,9 @@ from parsec.components.postgresql import AsyncpgConnection
 from parsec.components.postgresql.utils import Q
 
 _q_get_account = Q("""
-SELECT
-    account._id as account_internal_id
+SELECT account._id AS account_internal_id
 FROM vault_authentication_method
-INNER JOIN vault ON vault._id = vault_authentication_method.vault
+INNER JOIN vault ON vault_authentication_method.vault = vault._id
 INNER JOIN account ON vault.account = account._id
 WHERE
     vault_authentication_method.auth_method_id = $auth_method_id
@@ -30,18 +29,15 @@ WHERE
 LIMIT 1
 """)
 
-_q_get_all_vaults_for_account = Q(
-    """
-SELECT
-    vault._id as vault_internal_id
+_q_get_all_vaults_for_account = Q("""
+SELECT vault._id AS vault_internal_id
 FROM vault
 WHERE vault.account = $account_internal_id
-"""
-)
+""")
 
 _q_get_all_auth_methods_for_account = Q("""
 SELECT
-    vault as vault_internal_id,
+    vault AS vault_internal_id,
     created_on,
     created_by_ip,
     created_by_user_agent,
@@ -52,16 +48,16 @@ SELECT
     password_algorithm_argon2id_parallelism,
     disabled_on
 FROM vault_authentication_method
-WHERE vault = ANY($vault_internal_ids::integer[])
+WHERE vault = ANY($vault_internal_ids::INTEGER [])
 """)
 
 _q_get_all_vault_items_for_account = Q("""
 SELECT
-    vault as vault_internal_id,
+    vault AS vault_internal_id,
     fingerprint,
     data
 FROM vault_item
-WHERE vault = ANY($vault_internal_ids::integer[])
+WHERE vault = ANY($vault_internal_ids::INTEGER [])
 """)
 
 

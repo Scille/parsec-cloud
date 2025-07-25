@@ -14,7 +14,7 @@ from parsec.components.postgresql.utils import Q
 _q_get_account_email = Q("""
 SELECT account.email
 FROM vault_authentication_method
-INNER JOIN vault ON vault._id = vault_authentication_method.vault
+INNER JOIN vault ON vault_authentication_method.vault = vault._id
 INNER JOIN account ON vault.account = account._id
 WHERE
     vault_authentication_method.auth_method_id = $auth_method_id
@@ -25,26 +25,26 @@ LIMIT 1
 """)
 
 
-_q_get_invitations = Q(
-    """
+_q_get_invitations = Q("""
 -- First retrieve the list of users across all organizations that have the given email
 WITH active_users_with_this_email AS (
     SELECT user_._id AS user_internal_id
     FROM user_
-    INNER JOIN human ON human._id = user_.human
+    INNER JOIN human ON user_.human = human._id
     WHERE
         human.email = $email
         AND user_.revoked_on IS NULL
-    -- There is at most a single user per organization with this email that is not revoked.
-    -- Note we don't use `LIMIT 1` here, because are looking across all organizations!
+-- There is at most a single user per organization with this email that is not revoked.
+-- Note we don't use `LIMIT 1` here, because are looking across all organizations!
 )
+
 SELECT
     organization.organization_id,
     invitation.token,
     invitation.type
 FROM invitation
-LEFT JOIN organization ON organization._id = invitation.organization
-LEFT JOIN shamir_recovery_setup ON shamir_recovery_setup._id = invitation.shamir_recovery
+LEFT JOIN organization ON invitation.organization = organization._id
+LEFT JOIN shamir_recovery_setup ON invitation.shamir_recovery = shamir_recovery_setup._id
 WHERE
     (
         invitation.user_invitation_claimer_email = $email
@@ -61,8 +61,7 @@ WHERE
         )
     )
     AND invitation.deleted_on IS NULL
-"""
-)
+""")
 
 
 async def invite_self_list(

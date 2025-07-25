@@ -21,8 +21,7 @@ from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.utils import Q
 
 _q_check_account_exists_and_not_deleted = Q("""
-SELECT
-    _id
+SELECT _id
 FROM account
 WHERE
     email = $email
@@ -49,11 +48,11 @@ INSERT INTO account_recover_validation_code (
 )
 -- Note we simply overwrite any existing previous validation code
 ON CONFLICT (account) DO UPDATE
-SET
-    account = EXCLUDED.account,
-    validation_code = EXCLUDED.validation_code,
-    created_at = EXCLUDED.created_at,
-    failed_attempts = 0
+    SET
+        account = excluded.account,
+        validation_code = excluded.validation_code,
+        created_at = excluded.created_at,
+        failed_attempts = 0
 """)
 
 
@@ -87,8 +86,7 @@ async def recover_send_validation_email(
 
 _q_get_account_and_validation_code = Q("""
 WITH my_account AS (
-    SELECT
-        _id
+    SELECT _id
     FROM account
     WHERE
         email = $email
@@ -102,13 +100,14 @@ WITH my_account AS (
     -- a deleted account with a non-disabled authentication method!).
     FOR UPDATE
 ),
+
 my_validation_code AS (
     SELECT
         validation_code,
         created_at,
         failed_attempts
     FROM account_recover_validation_code
-    WHERE account = (SELECT * FROM my_account)
+    WHERE account = (SELECT my_account._id FROM my_account)
     LIMIT 1
     -- Lock for update since this row should be updated on failed attempt
     FOR UPDATE
@@ -132,17 +131,17 @@ WHERE account = $account_internal_id
 _q_disable_previous_auth_methods = Q("""
 UPDATE vault_authentication_method
 SET disabled_on = $now
-WHERE vault IN (
-    SELECT _id
-    FROM vault
-    WHERE account = $account_internal_id
-) AND disabled_on IS NULL
+WHERE
+    vault IN (
+        SELECT _id
+        FROM vault
+        WHERE account = $account_internal_id
+    ) AND disabled_on IS NULL
 RETURNING _id
 """)
 
 
-_q_recover_account = Q(
-    """
+_q_recover_account = Q("""
 WITH removed_validation_code AS (
     DELETE FROM account_recover_validation_code
     WHERE account = $account_internal_id
@@ -192,9 +191,8 @@ new_auth_method AS (
 
 SELECT
     (SELECT validation_code FROM removed_validation_code) AS expected_validation_code,
-    (SELECT _id FROM new_auth_method) as new_auth_method_internal_id
-"""
-)
+    (SELECT _id FROM new_auth_method) AS new_auth_method_internal_id
+""")
 
 
 async def recover_proceed(

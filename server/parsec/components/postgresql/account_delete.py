@@ -15,7 +15,7 @@ from parsec.components.postgresql.utils import Q
 _q_get_account_from_auth_method = Q("""
 SELECT
     account._id AS account_internal_id,
-    account.email AS email
+    account.email
 FROM vault_authentication_method
 INNER JOIN vault ON vault_authentication_method.vault = vault._id
 INNER JOIN account ON vault.account = account._id
@@ -46,11 +46,11 @@ INSERT INTO account_delete_validation_code (
 )
 -- Note we simply overwrite any existing previous validation code
 ON CONFLICT (account) DO UPDATE
-SET
-    account = EXCLUDED.account,
-    validation_code = EXCLUDED.validation_code,
-    created_at = EXCLUDED.created_at,
-    failed_attempts = 0
+    SET
+        account = excluded.account,
+        validation_code = excluded.validation_code,
+        created_at = excluded.created_at,
+        failed_attempts = 0
 RETURNING TRUE
 """)
 
@@ -89,8 +89,7 @@ async def delete_send_validation_email(
     return validation_code, email
 
 
-_q_get_account_and_validation_code_from_auth_method = Q(
-    """
+_q_get_account_and_validation_code_from_auth_method = Q("""
 WITH my_account AS (
     SELECT account._id
     FROM vault_authentication_method
@@ -109,13 +108,14 @@ WITH my_account AS (
     -- a deleted account with a non-disabled authentication method!).
     FOR UPDATE
 ),
+
 my_validation_code AS (
     SELECT
         validation_code,
         created_at,
         failed_attempts
     FROM account_delete_validation_code
-    WHERE account = (SELECT _id FROM my_account)
+    WHERE account = (SELECT my_account._id FROM my_account)
     LIMIT 1
     -- Lock for update since this row should be updated on failed attempt
     FOR UPDATE
@@ -124,10 +124,9 @@ my_validation_code AS (
 SELECT
     (SELECT _id FROM my_account) AS account_internal_id,
     (SELECT validation_code FROM my_validation_code) AS expected_validation_code,
-    (SELECT created_at FROM my_validation_code),
-    (SELECT failed_attempts FROM my_validation_code)
-"""
-)
+    (SELECT created_at FROM my_validation_code) AS created_at,
+    (SELECT failed_attempts FROM my_validation_code) AS failed_attempts
+""")
 
 _q_register_failed_attempt = Q("""
 UPDATE account_delete_validation_code

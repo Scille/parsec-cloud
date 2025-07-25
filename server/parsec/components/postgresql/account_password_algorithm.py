@@ -9,8 +9,7 @@ from parsec._parsec import (
 from parsec.components.postgresql import AsyncpgConnection
 from parsec.components.postgresql.utils import Q
 
-_q_get_password_algorithm = Q(
-    """
+_q_get_password_algorithm = Q("""
 SELECT
     vault_authentication_method.password_algorithm,
     vault_authentication_method.password_algorithm_argon2id_opslimit,
@@ -18,7 +17,7 @@ SELECT
     vault_authentication_method.password_algorithm_argon2id_parallelism
 FROM vault_authentication_method
 INNER JOIN vault ON vault_authentication_method.vault = vault._id
-INNER JOIN account ON account._id = vault.account
+INNER JOIN account ON vault.account = account._id
 WHERE
     account.email = $email
     AND vault_authentication_method.disabled_on IS NULL
@@ -27,8 +26,7 @@ WHERE
     AND account.deleted_on IS NULL
 -- There is at most a single active password authentication method per account
 LIMIT 1
-"""
-)
+""")
 
 
 async def get_password_algorithm(
