@@ -16,6 +16,7 @@ from parsec._parsec import (
     ValidationCode,
 )
 from parsec.components.account import (
+    AccountAuthMethodCreateBadOutcome,
     AccountCreateProceedBadOutcome,
     AccountCreateSendValidationEmailBadOutcome,
     AccountDeleteProceedBadOutcome,
@@ -180,6 +181,10 @@ class MemoryAccountComponent(BaseAccountComponent):
                 case error:
                     return error
 
+            # Check for auth method uniqueness
+            if self._auth_method_id_already_exists(auth_method_id):
+                return AccountCreateProceedBadOutcome.AUTH_METHOD_ID_ALREADY_EXISTS
+
             # Create authentication method
             auth_method = MemoryAuthenticationMethod(
                 id=auth_method_id,
@@ -191,10 +196,6 @@ class MemoryAccountComponent(BaseAccountComponent):
                 password_algorithm=auth_method_password_algorithm,
                 disabled_on=None,
             )
-
-            # Check for auth method uniqueness
-            if self._auth_method_id_already_exists(auth_method_id):
-                return AccountCreateProceedBadOutcome.AUTH_METHOD_ID_ALREADY_EXISTS
 
             vault = MemoryAccountVault(
                 items={}, authentication_methods={auth_method_id: auth_method}
@@ -537,3 +538,53 @@ class MemoryAccountComponent(BaseAccountComponent):
             )
 
         return res
+
+    @override
+    async def auth_method_create(
+        self,
+        now: DateTime,
+        auth_method_id: AccountAuthMethodID,
+        created_by_user_agent: str,
+        created_by_ip: str | Literal[""],
+        new_auth_method_id: AccountAuthMethodID,
+        new_auth_method_mac_key: SecretKey,
+        new_auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
+        new_vault_key_access: bytes,
+    ) -> None | AccountAuthMethodCreateBadOutcome:
+        # Verify the requesting account exists and is active
+        match self._data.get_account_from_active_auth_method(auth_method_id=auth_method_id):
+            case (account, _):
+                pass
+            case None:
+                return AccountAuthMethodCreateBadOutcome.ACCOUNT_NOT_FOUND
+
+        # Check for auth method uniqueness
+        if self._auth_method_id_already_exists(new_auth_method_id):
+            return AccountAuthMethodCreateBadOutcome.AUTH_METHOD_ID_ALREADY_EXISTS
+
+        # If we're creating a password authentication method, disable any existing
+        # password authentication methods in the current vault
+        if new_auth_method_password_algorithm is not None:
+            for existing_auth_method in account.current_vault.authentication_methods.values():
+                if (
+                    existing_auth_method.password_algorithm is not None
+                    and existing_auth_method.disabled_on is None
+                ):
+                    existing_auth_method.disabled_on = now
+
+        # Create the new authentication method
+
+        new_auth_method = MemoryAuthenticationMethod(
+            id=new_auth_method_id,
+            created_on=now,
+            created_by_ip=created_by_ip,
+            created_by_user_agent=created_by_user_agent,
+            mac_key=new_auth_method_mac_key,
+            vault_key_access=new_vault_key_access,
+            password_algorithm=new_auth_method_password_algorithm,
+            disabled_on=None,
+        )
+
+        account.current_vault.authentication_methods[new_auth_method_id] = new_auth_method
+
+        return None
