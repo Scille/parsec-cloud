@@ -1,12 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec_client_connection::{AccountAuthMethod, AnonymousAccountCmds, ConnectionError};
+use libparsec_client_connection::{AnonymousAccountCmds, ConnectionError};
 use libparsec_types::prelude::*;
 
-use super::{
-    AUTH_METHOD_ID_DERIVATION_UUID, AUTH_METHOD_MAC_KEY_DERIVATION_UUID,
-    AUTH_METHOD_SECRET_KEY_DERIVATION_UUID,
-};
+use crate::AccountAuthMethodStrategy;
 
 #[derive(Debug, thiserror::Error)]
 pub enum AccountCreateSendValidationEmailError {
@@ -58,8 +55,6 @@ pub enum AccountCreateError {
     InvalidValidationCode,
     #[error("Send validation email required")]
     SendValidationEmailRequired,
-    #[error("Auth method id already exists")]
-    AuthMethodIdAlreadyExists,
 }
 
 pub(super) enum AccountCreateStep<'a> {
@@ -68,9 +63,9 @@ pub(super) enum AccountCreateStep<'a> {
         email: EmailAddress,
     },
     Proceed {
-        human_handle: HumanHandle,
-        password: &'a Password,
         validation_code: ValidationCode,
+        human_handle: HumanHandle,
+        auth_method_strategy: AccountAuthMethodStrategy<'a>,
     },
 }
 
@@ -91,41 +86,23 @@ pub(super) async fn account_create(
             email,
         },
         AccountCreateStep::Proceed {
-            human_handle,
-            password,
             validation_code,
+            human_handle,
+            auth_method_strategy,
         } => {
-            let auth_method_password_algorithm = PasswordAlgorithm::generate_argon2id(
-                PasswordAlgorithmSaltStrategy::DerivedFromEmail {
-                    email: human_handle.email().as_ref(),
-                },
-            );
-            let auth_method_master_secret = auth_method_password_algorithm
-                .compute_key_derivation(password)
-                .expect("algorithm config is valid");
+            let (auth_method_password_algorithm, auth_method_keys) =
+                auth_method_strategy.derive_keys(human_handle.email());
 
-            let auth_method_secret_key = auth_method_master_secret
-                .derive_secret_key_from_uuid(AUTH_METHOD_SECRET_KEY_DERIVATION_UUID);
-
-            let auth_method = AccountAuthMethod {
-                time_provider: TimeProvider::default(),
-                id: AccountAuthMethodID::from(
-                    auth_method_master_secret.derive_uuid_from_uuid(AUTH_METHOD_ID_DERIVATION_UUID),
-                ),
-                mac_key: auth_method_master_secret
-                    .derive_secret_key_from_uuid(AUTH_METHOD_MAC_KEY_DERIVATION_UUID),
-            };
             let vault_key = SecretKey::generate();
-
             let vault_key_access = AccountVaultKeyAccess { vault_key };
-
-            let vault_key_access_bytes = vault_key_access.dump_and_encrypt(&auth_method_secret_key);
+            let vault_key_access_bytes =
+                vault_key_access.dump_and_encrypt(&auth_method_keys.secret_key);
 
             ReqAccountCreateStep::Number1Create {
                 validation_code,
-                auth_method_mac_key: auth_method.mac_key,
-                auth_method_id: auth_method.id,
-                auth_method_password_algorithm: Some(auth_method_password_algorithm.into()),
+                auth_method_mac_key: auth_method_keys.mac_key,
+                auth_method_id: auth_method_keys.id,
+                auth_method_password_algorithm,
                 human_handle,
                 vault_key_access: vault_key_access_bytes.into(),
             }
@@ -139,10 +116,14 @@ pub(super) async fn account_create(
         .await?
     {
         Rep::Ok => Ok(()),
-        Rep::AuthMethodIdAlreadyExists => Err(AccountCreateError::AuthMethodIdAlreadyExists),
         Rep::InvalidValidationCode => Err(AccountCreateError::InvalidValidationCode),
         Rep::SendValidationEmailRequired => Err(AccountCreateError::SendValidationEmailRequired),
-        bad_rep @ Rep::UnknownStatus { .. } => {
+        bad_rep @ (
+            // Auth method ID is an UUID derived from the master secret, so it should
+            // statically never collide with an existing one.
+            Rep::AuthMethodIdAlreadyExists
+            | Rep::UnknownStatus { .. }
+        ) => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
         }
     }

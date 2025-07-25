@@ -16,15 +16,18 @@ use libparsec_client_connection::{
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::{Account, AccountRecoverProceedError};
+use crate::{Account, AccountAuthMethodStrategy, AccountLoginStrategy, AccountRecoverProceedError};
 
 // Note a test with the actual server is done within send_validation_email's tests
 
 #[parsec_test(testbed = "empty")]
-async fn ok(env: &TestbedEnv) {
+async fn ok(#[values("master_secret", "password")] kind: &str, env: &TestbedEnv) {
     let human_handle: HumanHandle = "Zack <zack@example.com>".parse().unwrap();
     let email = human_handle.email().to_owned();
     let password: Password = "P@ssw0rd.".to_string().into();
+    let master_secret = KeyDerivation::from(hex!(
+        "4a2bd7ff1096b61cc520eb237a3ccb53d517d60679f5afd55f2a0a780f26ed85"
+    ));
     let validation_code: ValidationCode = "AD3FXJ".parse().unwrap();
     let cmds = AnonymousAccountCmds::new(
         &env.discriminant_dir,
@@ -32,6 +35,21 @@ async fn ok(env: &TestbedEnv) {
         ProxyConfig::default(),
     )
     .unwrap();
+
+    let (auth_method_strategy, login_strategy) = match kind {
+        "master_secret" => (
+            AccountAuthMethodStrategy::MasterSecret(&master_secret),
+            AccountLoginStrategy::MasterSecret(&master_secret),
+        ),
+        "password" => (
+            AccountAuthMethodStrategy::Password(&password),
+            AccountLoginStrategy::Password {
+                email: &email,
+                password: &password,
+            },
+        ),
+        _ => panic!("Unknown kind: {}", kind),
+    };
 
     let retrieved_stuff = Arc::new(Mutex::new(None));
 
@@ -55,7 +73,8 @@ async fn ok(env: &TestbedEnv) {
     });
 
     p_assert_matches!(
-        Account::recover_2_proceed(&cmds, validation_code, email.clone(), &password,).await,
+        Account::recover_2_proceed(&cmds, validation_code, email.clone(), auth_method_strategy)
+            .await,
         Ok(())
     );
 
@@ -64,29 +83,37 @@ async fn ok(env: &TestbedEnv) {
     let (auth_method_password_algorithm, _auth_method_id, _auth_method_mac_key, vault_key_access) =
         retrieved_stuff.lock().unwrap().take().unwrap();
 
-    test_register_sequence_of_send_hooks!(
-        &env.discriminant_dir,
-        {
-            move |_req: anonymous_account_cmds::latest::auth_method_password_get_algorithm::Req| {
-                anonymous_account_cmds::latest::auth_method_password_get_algorithm::Rep::Ok {
-                    password_algorithm: auth_method_password_algorithm.unwrap(),
+    if kind == "password" {
+        test_register_sequence_of_send_hooks!(
+            &env.discriminant_dir,
+            {
+                move |_req: anonymous_account_cmds::latest::auth_method_password_get_algorithm::Req| {
+                    anonymous_account_cmds::latest::auth_method_password_get_algorithm::Rep::Ok {
+                        password_algorithm: auth_method_password_algorithm.unwrap(),
+                    }
+                }
+            },
+            {
+                let human_handle = human_handle.clone();
+                move |_req: authenticated_account_cmds::latest::account_info::Req| {
+                    authenticated_account_cmds::latest::account_info::Rep::Ok { human_handle }
                 }
             }
-        },
-        {
+        );
+    } else {
+        test_register_sequence_of_send_hooks!(&env.discriminant_dir, {
             let human_handle = human_handle.clone();
             move |_req: authenticated_account_cmds::latest::account_info::Req| {
                 authenticated_account_cmds::latest::account_info::Rep::Ok { human_handle }
             }
-        }
-    );
+        });
+    }
 
-    let account = Account::login_with_password(
+    let account = Account::login(
         env.discriminant_dir.clone(),
         ProxyConfig::default(),
         env.server_addr.clone(),
-        email.clone(),
-        &password,
+        login_strategy,
     )
     .await
     .unwrap();
@@ -107,7 +134,9 @@ async fn ok(env: &TestbedEnv) {
 #[parsec_test(testbed = "empty")]
 async fn offline(env: &TestbedEnv) {
     let email: EmailAddress = "zack@example.com".parse().unwrap();
-    let password = "P@ssw0rd.".to_string().into();
+    let master_secret = KeyDerivation::from(hex!(
+        "4a2bd7ff1096b61cc520eb237a3ccb53d517d60679f5afd55f2a0a780f26ed85"
+    ));
     let validation_code: ValidationCode = "AD3FXJ".parse().unwrap();
     let cmds = AnonymousAccountCmds::new(
         &env.discriminant_dir,
@@ -117,9 +146,14 @@ async fn offline(env: &TestbedEnv) {
     .unwrap();
 
     p_assert_matches!(
-        Account::recover_2_proceed(&cmds, validation_code, email, &password)
-            .await
-            .unwrap_err(),
+        Account::recover_2_proceed(
+            &cmds,
+            validation_code,
+            email,
+            AccountAuthMethodStrategy::MasterSecret(&master_secret)
+        )
+        .await
+        .unwrap_err(),
         AccountRecoverProceedError::Offline(_)
     );
 }
@@ -127,7 +161,9 @@ async fn offline(env: &TestbedEnv) {
 #[parsec_test(testbed = "empty")]
 async fn unknown_status(env: &TestbedEnv) {
     let email: EmailAddress = "zack@example.com".parse().unwrap();
-    let password = "P@ssw0rd.".to_string().into();
+    let master_secret = KeyDerivation::from(hex!(
+        "4a2bd7ff1096b61cc520eb237a3ccb53d517d60679f5afd55f2a0a780f26ed85"
+    ));
     let validation_code: ValidationCode = "AD3FXJ".parse().unwrap();
     let cmds = AnonymousAccountCmds::new(
         &env.discriminant_dir,
@@ -147,7 +183,7 @@ async fn unknown_status(env: &TestbedEnv) {
     );
 
     p_assert_matches!(
-        Account::recover_2_proceed(&cmds, validation_code, email, &password)
+        Account::recover_2_proceed(&cmds, validation_code, email, AccountAuthMethodStrategy::MasterSecret(&master_secret))
         .await
         .unwrap_err(),
         AccountRecoverProceedError::Internal(err)
@@ -158,7 +194,9 @@ async fn unknown_status(env: &TestbedEnv) {
 #[parsec_test(testbed = "empty")]
 async fn invalid_validation_code(env: &TestbedEnv) {
     let email: EmailAddress = "zack@example.com".parse().unwrap();
-    let password = "P@ssw0rd.".to_string().into();
+    let master_secret = KeyDerivation::from(hex!(
+        "4a2bd7ff1096b61cc520eb237a3ccb53d517d60679f5afd55f2a0a780f26ed85"
+    ));
     let validation_code: ValidationCode = "AD3FXJ".parse().unwrap();
     let cmds = AnonymousAccountCmds::new(
         &env.discriminant_dir,
@@ -175,9 +213,14 @@ async fn invalid_validation_code(env: &TestbedEnv) {
     );
 
     p_assert_matches!(
-        Account::recover_2_proceed(&cmds, validation_code, email, &password)
-            .await
-            .unwrap_err(),
+        Account::recover_2_proceed(
+            &cmds,
+            validation_code,
+            email,
+            AccountAuthMethodStrategy::MasterSecret(&master_secret)
+        )
+        .await
+        .unwrap_err(),
         AccountRecoverProceedError::InvalidValidationCode
     );
 }
@@ -185,7 +228,9 @@ async fn invalid_validation_code(env: &TestbedEnv) {
 #[parsec_test(testbed = "empty")]
 async fn send_validation_email_required(env: &TestbedEnv) {
     let email: EmailAddress = "zack@example.com".parse().unwrap();
-    let password = "P@ssw0rd.".to_string().into();
+    let master_secret = KeyDerivation::from(hex!(
+        "4a2bd7ff1096b61cc520eb237a3ccb53d517d60679f5afd55f2a0a780f26ed85"
+    ));
     let validation_code: ValidationCode = "AD3FXJ".parse().unwrap();
     let cmds = AnonymousAccountCmds::new(
         &env.discriminant_dir,
@@ -202,9 +247,14 @@ async fn send_validation_email_required(env: &TestbedEnv) {
     );
 
     p_assert_matches!(
-        Account::recover_2_proceed(&cmds, validation_code, email, &password)
-            .await
-            .unwrap_err(),
+        Account::recover_2_proceed(
+            &cmds,
+            validation_code,
+            email,
+            AccountAuthMethodStrategy::MasterSecret(&master_secret)
+        )
+        .await
+        .unwrap_err(),
         AccountRecoverProceedError::SendValidationEmailRequired
     );
 }
@@ -212,7 +262,9 @@ async fn send_validation_email_required(env: &TestbedEnv) {
 #[parsec_test(testbed = "empty")]
 async fn auth_method_id_already_exists(env: &TestbedEnv) {
     let email: EmailAddress = "zack@example.com".parse().unwrap();
-    let password = "P@ssw0rd.".to_string().into();
+    let master_secret = KeyDerivation::from(hex!(
+        "4a2bd7ff1096b61cc520eb237a3ccb53d517d60679f5afd55f2a0a780f26ed85"
+    ));
     let validation_code: ValidationCode = "AD3FXJ".parse().unwrap();
     let cmds = AnonymousAccountCmds::new(
         &env.discriminant_dir,
@@ -229,9 +281,10 @@ async fn auth_method_id_already_exists(env: &TestbedEnv) {
     );
 
     p_assert_matches!(
-        Account::recover_2_proceed(&cmds, validation_code, email, &password)
+        Account::recover_2_proceed(&cmds, validation_code, email, AccountAuthMethodStrategy::MasterSecret(&master_secret))
             .await
             .unwrap_err(),
-        AccountRecoverProceedError::AuthMethodIdAlreadyExists
+        AccountRecoverProceedError::Internal(err)
+        if format!("{}", err) == "Unexpected server response: AuthMethodIdAlreadyExists"
     );
 }
