@@ -16,6 +16,7 @@ from parsec._parsec import (
     ValidationCode,
 )
 from parsec.components.account import (
+    AccountAuthMethodCreateBadOutcome,
     AccountCreateProceedBadOutcome,
     AccountCreateSendValidationEmailBadOutcome,
     AccountDeleteProceedBadOutcome,
@@ -35,6 +36,7 @@ from parsec.components.account import (
 )
 from parsec.components.email import SendEmailBadOutcome
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
+from parsec.components.postgresql.account_auth_method_create import auth_method_create
 from parsec.components.postgresql.account_create import (
     create_check_validation_code,
     create_proceed,
@@ -325,3 +327,29 @@ class PGAccountComponent(BaseAccountComponent):
         self, conn: AsyncpgConnection, auth_method_id: AccountAuthMethodID
     ) -> list[tuple[OrganizationID, InvitationToken, InvitationType]] | AccountInviteListBadOutcome:
         return await invite_self_list(conn, auth_method_id)
+
+    @override
+    @transaction
+    async def auth_method_create(
+        self,
+        conn: AsyncpgConnection,
+        now: DateTime,
+        auth_method_id: AccountAuthMethodID,
+        created_by_user_agent: str,
+        created_by_ip: str | Literal[""],
+        new_auth_method_id: AccountAuthMethodID,
+        new_auth_method_mac_key: SecretKey,
+        new_auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
+        new_vault_key_access: bytes,
+    ) -> None | AccountAuthMethodCreateBadOutcome:
+        return await auth_method_create(
+            conn,
+            now,
+            auth_method_id,
+            created_by_user_agent,
+            created_by_ip,
+            new_auth_method_id,
+            new_auth_method_mac_key,
+            new_auth_method_password_algorithm,
+            new_vault_key_access,
+        )
