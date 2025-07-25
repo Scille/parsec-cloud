@@ -3,6 +3,8 @@
 
 from .common import (
     HumanHandle,
+    InvitationToken,
+    InvitationType,
     Password,
     Ref,
     Path,
@@ -148,7 +150,10 @@ class AccountListInvitationsError(ErrorVariant):
 
 async def account_list_invitations(
     account: Handle,
-) -> Result[list[ParsecInvitationAddr], AccountListInvitationsError]:
+) -> Result[
+    list[tuple[ParsecInvitationAddr, OrganizationID, InvitationToken, InvitationType]],
+    AccountListInvitationsError,
+]:
     raise NotImplementedError
 
 
