@@ -62,3 +62,27 @@ You can also customize some specific texts in Parsec. To do so, simply:
 
     .. literalinclude:: custom_fr-FR.json
       :language: json
+
+Server emails & HTML pages
+--------------------------
+
+Parsec server emails and HTML pages (index, 404) are based on the `Jinja template syntax`_.
+
+.. _Jinja template syntax: https://jinja.palletsprojects.com/en/stable/templates/
+
+You can customize them by providing a custom template directory when running the server with ``--template-dir`` or by setting the environment variable ``PARSEC_TEMPLATE_DIR``.
+
+The directory should contain the following files:
+
+- ``index.html``: default landing page when you access the server.
+- ``404.html``: resource not found page.
+- ``email/account_create.[html|txt].j2``: HTML and TEXT templates for the email send to confirm Parsec account creation.
+- ``email/account_delete.[html|txt].j2``: HTML and TEXT email templates to confirm Parsec account deletion.
+- ``email/account_recover.[html|txt].j2``: HTML and TEXT email templates to confirm Parsec account recovery.
+- ``email/invitation.[html|txt].j2``: HTML and TEXT email templates to send invitation to join an organization.
+
+.. note::
+
+   You can base your customization on the default server's templates `found here <parsec-server-template-src_>`_.
+
+.. _parsec-server-template-src: https://github.com/Scille/parsec-cloud/tree/v3.4.1-a.0+dev/server/parsec/templates
