@@ -7,11 +7,12 @@ use std::{
 };
 
 pub use libparsec_account::{
-    AccountCreateError, AccountCreateSendValidationEmailError, AccountDeleteProceedError,
-    AccountDeleteSendValidationEmailError, AccountFetchOpaqueKeyFromVaultError,
-    AccountListInvitationsError, AccountListRegistrationDevicesError, AccountLoginError,
-    AccountRecoverProceedError, AccountRecoverSendValidationEmailError,
-    AccountRegisterNewDeviceError, AccountUploadOpaqueKeyInVaultError,
+    AccountCreateAuthMethodError, AccountCreateError, AccountCreateSendValidationEmailError,
+    AccountDeleteProceedError, AccountDeleteSendValidationEmailError,
+    AccountFetchOpaqueKeyFromVaultError, AccountListInvitationsError,
+    AccountListRegistrationDevicesError, AccountLoginError, AccountRecoverProceedError,
+    AccountRecoverSendValidationEmailError, AccountRegisterNewDeviceError,
+    AccountUploadOpaqueKeyInVaultError,
 };
 use libparsec_client_connection::{AnonymousAccountCmds, ConnectionError, ProxyConfig};
 use libparsec_types::prelude::*;
@@ -110,6 +111,18 @@ pub async fn account_create_3_proceed(
         auth_method_strategy.as_real(),
     )
     .await
+}
+
+pub async fn account_create_auth_method(
+    account: Handle,
+    auth_method_strategy: AccountAuthMethodStrategy,
+) -> Result<(), AccountCreateAuthMethodError> {
+    let account_handle = account;
+    let account = borrow_account(account_handle)?;
+
+    account
+        .create_auth_method(auth_method_strategy.as_real())
+        .await
 }
 
 pub async fn account_login(
