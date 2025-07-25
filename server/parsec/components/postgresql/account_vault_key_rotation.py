@@ -17,28 +17,27 @@ from parsec.components.postgresql.utils import Q
 
 _q_get_account_and_vault_from_auth_method = Q("""
 SELECT
-    account._id as account_internal_id,
-    vault._id as vault_internal_id
+    account._id AS account_internal_id,
+    vault._id AS vault_internal_id
 FROM vault_authentication_method
-INNER JOIN vault ON vault._id = vault_authentication_method.vault
+INNER JOIN vault ON vault_authentication_method.vault = vault._id
 INNER JOIN account ON vault.account = account._id
 WHERE
     vault_authentication_method.auth_method_id = $auth_method_id
     AND vault_authentication_method.disabled_on IS NULL
     -- Extra safety check since a deleted account should not have any active authentication method
     AND account.deleted_on IS NULL
+LIMIT 1
 -- All queries modifying the account, its vaults or, its authentication methods must
 -- first take a lock on the account row.
 -- This is to avoid inconsistent state due to concurrent operations (e.g.
 -- deleting an account while creating a new authentication method, leading to
 -- a deleted account with a non-disabled authentication method!).
 FOR UPDATE
-LIMIT 1
 """)
 
 _q_get_vault_item_fingerprints = Q("""
-SELECT
-    fingerprint
+SELECT fingerprint
 FROM vault_item
 WHERE vault = $vault_internal_id
 """)
@@ -46,11 +45,12 @@ WHERE vault = $vault_internal_id
 _q_disable_previous_auth_methods = Q("""
 UPDATE vault_authentication_method
 SET disabled_on = $now
-WHERE vault IN (
-    SELECT _id
-    FROM vault
-    WHERE account = $account_internal_id
-) AND disabled_on IS NULL
+WHERE
+    vault IN (
+        SELECT _id
+        FROM vault
+        WHERE account = $account_internal_id
+    ) AND disabled_on IS NULL
 RETURNING _id
 """)
 
@@ -97,8 +97,8 @@ new_auth_method AS (
 )
 
 SELECT
-    (SELECT _id FROM new_auth_method) as new_auth_method_internal_id,
-    (SELECT _id FROM new_vault) as new_vault_internal_id
+    (SELECT _id FROM new_auth_method) AS new_auth_method_internal_id,
+    (SELECT _id FROM new_vault) AS new_vault_internal_id
 """)
 
 _q_insert_vault_item = Q("""

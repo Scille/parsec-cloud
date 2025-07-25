@@ -13,23 +13,22 @@ from parsec.components.postgresql import AsyncpgConnection
 from parsec.components.postgresql.utils import Q
 
 _q_get_vault_from_auth_method = Q("""
-SELECT
-    vault._id as vault_internal_id
+SELECT vault._id AS vault_internal_id
 FROM vault_authentication_method
-INNER JOIN vault ON vault._id = vault_authentication_method.vault
+INNER JOIN vault ON vault_authentication_method.vault = vault._id
 INNER JOIN account ON vault.account = account._id
 WHERE
     vault_authentication_method.auth_method_id = $auth_method_id
     AND vault_authentication_method.disabled_on IS NULL
     -- Extra safety check since a deleted account should not have any active authentication method
     AND account.deleted_on IS NULL
+LIMIT 1
 -- All queries modifying the account, its vaults or, its authentication methods must
 -- first take a lock on the account row.
 -- This is to avoid inconsistent state due to concurrent operations (e.g.
 -- deleting an account while creating a new authentication method, leading to
 -- a deleted account with a non-disabled authentication method!).
 FOR UPDATE
-LIMIT 1
 """)
 
 _q_insert_vault_item = Q("""

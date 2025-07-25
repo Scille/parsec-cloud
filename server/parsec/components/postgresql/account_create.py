@@ -79,11 +79,11 @@ INSERT INTO account_create_validation_code (
 )
 -- Note we simply overwrite any existing previous validation code
 ON CONFLICT (email) DO UPDATE
-SET
-    email = EXCLUDED.email,
-    validation_code = EXCLUDED.validation_code,
-    created_at = EXCLUDED.created_at,
-    failed_attempts = 0
+    SET
+        email = excluded.email,
+        validation_code = excluded.validation_code,
+        created_at = excluded.created_at,
+        failed_attempts = 0
 """)
 
 
@@ -143,8 +143,7 @@ SET failed_attempts = failed_attempts + 1
 WHERE email = $email
 """)
 
-_q_insert_account = Q(
-    """
+_q_insert_account = Q("""
 WITH removed_validation_code AS (
     DELETE FROM account_create_validation_code
     WHERE email = $email
@@ -161,13 +160,15 @@ new_account AS (
         $human_handle_label
     )
     ON CONFLICT (email) DO
-        UPDATE SET
-            human_handle_label = EXCLUDED.human_handle_label,
+    UPDATE
+        SET
+            human_handle_label = excluded.human_handle_label,
             deleted_on = NULL
         -- Re-enable the account if it has been previously deleted
         WHERE account.deleted_on IS NOT NULL
     RETURNING _id
 ),
+
 new_vault AS (
     INSERT INTO vault (
         account
@@ -182,6 +183,7 @@ new_vault AS (
     )
     RETURNING _id
 ),
+
 new_vault_authentication_method AS (
     INSERT INTO vault_authentication_method (
         auth_method_id,
@@ -217,8 +219,7 @@ SELECT
     (SELECT validation_code FROM removed_validation_code) AS expected_validation_code,
     (SELECT _id FROM new_account) AS account_internal_id,
     (SELECT _id FROM new_vault_authentication_method) AS authentication_method_internal_id
-"""
-)
+""")
 
 
 async def _create_check_validation_code(

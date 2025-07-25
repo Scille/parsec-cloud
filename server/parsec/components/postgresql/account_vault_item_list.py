@@ -8,10 +8,10 @@ from parsec.components.postgresql.utils import Q
 
 _q_get_vault_key_access = Q("""
 SELECT
-    vault._id as vault_internal_id,
+    vault._id AS vault_internal_id,
     vault_authentication_method.vault_key_access
 FROM vault_authentication_method
-INNER JOIN vault ON vault._id = vault_authentication_method.vault
+INNER JOIN vault ON vault_authentication_method.vault = vault._id
 INNER JOIN account ON vault.account = account._id
 WHERE
     vault_authentication_method.auth_method_id = $auth_method_id
