@@ -40,6 +40,7 @@
                 @bootstrap-organization-with-link-click="openCreateOrganizationModal"
                 @recover-click="onForgottenPasswordClicked"
                 @create-or-join-organization-click="openCreateOrJoin"
+                @invitation-click="onInvitationClicked"
                 :device-list="deviceList"
                 :querying="querying"
               />
@@ -101,6 +102,7 @@ import {
   login as parsecLogin,
   ParsecAccount,
   getOrganizationCreationDate,
+  AccountInvitation,
 } from '@/parsec';
 import { RouteBackup, Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, switchOrganization, watchRoute } from '@/router';
 import { EventData, EventDistributor, Events } from '@/services/eventDistributor';
@@ -710,6 +712,13 @@ async function associateDefaultEvents(eventDistributor: EventDistributor, inform
       }
     },
   );
+}
+
+async function onInvitationClicked(invitation: AccountInvitation): Promise<void> {
+  if (!ParsecAccount.isLoggedIn()) {
+    return;
+  }
+  console.log('Using invitation', invitation);
 }
 
 async function backToPreviousPage(): Promise<void> {

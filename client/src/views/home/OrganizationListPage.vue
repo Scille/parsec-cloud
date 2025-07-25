@@ -2,6 +2,16 @@
 
 <template>
   <div class="organization">
+    <div v-if="invitations">
+      <div
+        v-for="inv in invitations"
+        :key="inv.token"
+        @click="$emit('invitationClick', inv)"
+      >
+        {{ inv.organizationId }}
+      </div>
+    </div>
+
     <template v-if="deviceList.length === 0 && !querying">
       <!-- No organization -->
       <div class="organization-content no-devices">
@@ -279,7 +289,7 @@ import {
   useWindowSize,
 } from 'megashark-lib';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
-import { AvailableDevice, getLoggedInDevices, LoggedInDeviceInfo } from '@/parsec';
+import { AccountInvitation, AvailableDevice, getLoggedInDevices, LoggedInDeviceInfo, ParsecAccount } from '@/parsec';
 import { Routes } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
@@ -294,6 +304,7 @@ const emits = defineEmits<{
   (e: 'createOrganizationClick'): void;
   (e: 'joinOrganizationClick'): void;
   (e: 'joinOrganizationWithLinkClick', link: string): void;
+  (e: 'invitationClick', invitation: AccountInvitation): void;
   (e: 'bootstrapOrganizationWithLinkClick', link: string): void;
   (e: 'recoverClick'): void;
   (e: 'createOrJoinOrganizationClick', event: Event): void;
@@ -327,6 +338,7 @@ const link = ref('');
 const webLink = ref('');
 const showWebAccess = ref(false);
 const loggedInDevices = ref<Array<LoggedInDeviceInfo>>([]);
+const invitations = ref<Array<AccountInvitation>>([]);
 
 interface OrganizationListSavedData {
   sortByAsc?: boolean;
@@ -383,6 +395,13 @@ onMounted(async (): Promise<void> => {
   sortByAsc.value = storedData.sortByAsc;
   confLoaded.value = true;
   loggedInDevices.value = await getLoggedInDevices();
+  invitations.value = [];
+  if (ParsecAccount.isLoggedIn()) {
+    const invResult = await ParsecAccount.listInvitations();
+    if (invResult.ok) {
+      invitations.value = invResult.value;
+    }
+  }
 });
 
 onUnmounted(async () => {
