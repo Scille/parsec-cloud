@@ -421,11 +421,21 @@ export interface WorkspaceUserAccessInfo {
 }
 
 
-// AccountCreateError
-export interface AccountCreateErrorAuthMethodIdAlreadyExists {
-    tag: "AuthMethodIdAlreadyExists"
-    error: string
+// AccountAuthMethodStrategy
+export interface AccountAuthMethodStrategyMasterSecret {
+    tag: "MasterSecret"
+    master_secret: Uint8Array
 }
+export interface AccountAuthMethodStrategyPassword {
+    tag: "Password"
+    password: string
+}
+export type AccountAuthMethodStrategy =
+  | AccountAuthMethodStrategyMasterSecret
+  | AccountAuthMethodStrategyPassword
+
+
+// AccountCreateError
 export interface AccountCreateErrorInternal {
     tag: "Internal"
     error: string
@@ -443,7 +453,6 @@ export interface AccountCreateErrorSendValidationEmailRequired {
     error: string
 }
 export type AccountCreateError =
-  | AccountCreateErrorAuthMethodIdAlreadyExists
   | AccountCreateErrorInternal
   | AccountCreateErrorInvalidValidationCode
   | AccountCreateErrorOffline
@@ -644,37 +653,38 @@ export type AccountListRegistrationDevicesError =
   | AccountListRegistrationDevicesErrorOffline
 
 
-// AccountLoginWithMasterSecretError
-export interface AccountLoginWithMasterSecretErrorInternal {
-    tag: "Internal"
-    error: string
-}
-export interface AccountLoginWithMasterSecretErrorOffline {
-    tag: "Offline"
-    error: string
-}
-export type AccountLoginWithMasterSecretError =
-  | AccountLoginWithMasterSecretErrorInternal
-  | AccountLoginWithMasterSecretErrorOffline
-
-
-// AccountLoginWithPasswordError
-export interface AccountLoginWithPasswordErrorBadPasswordAlgorithm {
+// AccountLoginError
+export interface AccountLoginErrorBadPasswordAlgorithm {
     tag: "BadPasswordAlgorithm"
     error: string
 }
-export interface AccountLoginWithPasswordErrorInternal {
+export interface AccountLoginErrorInternal {
     tag: "Internal"
     error: string
 }
-export interface AccountLoginWithPasswordErrorOffline {
+export interface AccountLoginErrorOffline {
     tag: "Offline"
     error: string
 }
-export type AccountLoginWithPasswordError =
-  | AccountLoginWithPasswordErrorBadPasswordAlgorithm
-  | AccountLoginWithPasswordErrorInternal
-  | AccountLoginWithPasswordErrorOffline
+export type AccountLoginError =
+  | AccountLoginErrorBadPasswordAlgorithm
+  | AccountLoginErrorInternal
+  | AccountLoginErrorOffline
+
+
+// AccountLoginStrategy
+export interface AccountLoginStrategyMasterSecret {
+    tag: "MasterSecret"
+    master_secret: Uint8Array
+}
+export interface AccountLoginStrategyPassword {
+    tag: "Password"
+    email: string
+    password: string
+}
+export type AccountLoginStrategy =
+  | AccountLoginStrategyMasterSecret
+  | AccountLoginStrategyPassword
 
 
 // AccountLogoutError
@@ -687,10 +697,6 @@ export type AccountLogoutError =
 
 
 // AccountRecoverProceedError
-export interface AccountRecoverProceedErrorAuthMethodIdAlreadyExists {
-    tag: "AuthMethodIdAlreadyExists"
-    error: string
-}
 export interface AccountRecoverProceedErrorInternal {
     tag: "Internal"
     error: string
@@ -708,7 +714,6 @@ export interface AccountRecoverProceedErrorSendValidationEmailRequired {
     error: string
 }
 export type AccountRecoverProceedError =
-  | AccountRecoverProceedErrorAuthMethodIdAlreadyExists
   | AccountRecoverProceedErrorInternal
   | AccountRecoverProceedErrorInvalidValidationCode
   | AccountRecoverProceedErrorOffline
@@ -3959,7 +3964,7 @@ export function accountCreate3Proceed(
     addr: string,
     validation_code: string,
     human_handle: HumanHandle,
-    password: string
+    auth_method_strategy: AccountAuthMethodStrategy
 ): Promise<Result<null, AccountCreateError>>
 export function accountCreateRegistrationDevice(
     account: number,
@@ -3985,17 +3990,11 @@ export function accountListInvitations(
 export function accountListRegistrationDevices(
     account: number
 ): Promise<Result<Array<[string, string]>, AccountListRegistrationDevicesError>>
-export function accountLoginWithMasterSecret(
+export function accountLogin(
     config_dir: string,
     addr: string,
-    auth_method_master_secret: Uint8Array
-): Promise<Result<number, AccountLoginWithMasterSecretError>>
-export function accountLoginWithPassword(
-    config_dir: string,
-    addr: string,
-    email: string,
-    password: string
-): Promise<Result<number, AccountLoginWithPasswordError>>
+    login_strategy: AccountLoginStrategy
+): Promise<Result<number, AccountLoginError>>
 export function accountLogout(
     account: number
 ): Promise<Result<null, AccountLogoutError>>
@@ -4009,7 +4008,7 @@ export function accountRecover2Proceed(
     addr: string,
     validation_code: string,
     email: string,
-    new_password: string
+    auth_method_strategy: AccountAuthMethodStrategy
 ): Promise<Result<null, AccountRecoverProceedError>>
 export function accountRegisterNewDevice(
     account: number,

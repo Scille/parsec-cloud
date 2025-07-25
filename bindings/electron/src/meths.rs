@@ -3860,6 +3860,79 @@ fn struct_workspace_user_access_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// AccountAuthMethodStrategy
+
+#[allow(dead_code)]
+fn variant_account_auth_method_strategy_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::AccountAuthMethodStrategy> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "AccountAuthMethodStrategyMasterSecret" => {
+            let master_secret = {
+                let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "masterSecret")?;
+                {
+                    #[allow(clippy::unnecessary_mut_passed)]
+                    match js_val.as_slice(cx).try_into() {
+                        Ok(val) => val,
+                        // err can't infer type in some case, because of the previous `try_into`
+                        #[allow(clippy::useless_format)]
+                        Err(err) => return cx.throw_type_error(format!("{}", err)),
+                    }
+                }
+            };
+            Ok(libparsec::AccountAuthMethodStrategy::MasterSecret { master_secret })
+        }
+        "AccountAuthMethodStrategyPassword" => {
+            let password = {
+                let js_val: Handle<JsString> = obj.get(cx, "password")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> { Ok(s.into()) };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::AccountAuthMethodStrategy::Password { password })
+        }
+        _ => cx.throw_type_error("Object is not a AccountAuthMethodStrategy"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_account_auth_method_strategy_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AccountAuthMethodStrategy,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::AccountAuthMethodStrategy::MasterSecret { master_secret, .. } => {
+            let js_tag =
+                JsString::try_new(cx, "AccountAuthMethodStrategyMasterSecret").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_master_secret = {
+                let rs_buff = { master_secret.as_ref() };
+                let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
+                let js_buff_slice = js_buff.as_mut_slice(cx);
+                for (i, c) in rs_buff.iter().enumerate() {
+                    js_buff_slice[i] = *c;
+                }
+                js_buff
+            };
+            js_obj.set(cx, "masterSecret", js_master_secret)?;
+        }
+        libparsec::AccountAuthMethodStrategy::Password { password, .. } => {
+            let js_tag = JsString::try_new(cx, "AccountAuthMethodStrategyPassword").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_password = JsString::try_new(cx, password).or_throw(cx)?;
+            js_obj.set(cx, "password", js_password)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // AccountCreateError
 
 #[allow(dead_code)]
@@ -3871,11 +3944,6 @@ fn variant_account_create_error_rs_to_js<'a>(
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::AccountCreateError::AuthMethodIdAlreadyExists { .. } => {
-            let js_tag = JsString::try_new(cx, "AccountCreateErrorAuthMethodIdAlreadyExists")
-                .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
         libparsec::AccountCreateError::Internal { .. } => {
             let js_tag = JsString::try_new(cx, "AccountCreateErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -4238,56 +4306,125 @@ fn variant_account_list_registration_devices_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// AccountLoginWithMasterSecretError
+// AccountLoginError
 
 #[allow(dead_code)]
-fn variant_account_login_with_master_secret_error_rs_to_js<'a>(
+fn variant_account_login_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::AccountLoginWithMasterSecretError,
+    rs_obj: libparsec::AccountLoginError,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::AccountLoginWithMasterSecretError::Internal { .. } => {
+        libparsec::AccountLoginError::BadPasswordAlgorithm { .. } => {
             let js_tag =
-                JsString::try_new(cx, "AccountLoginWithMasterSecretErrorInternal").or_throw(cx)?;
+                JsString::try_new(cx, "AccountLoginErrorBadPasswordAlgorithm").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountLoginWithMasterSecretError::Offline { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "AccountLoginWithMasterSecretErrorOffline").or_throw(cx)?;
+        libparsec::AccountLoginError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "AccountLoginErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountLoginError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "AccountLoginErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
     Ok(js_obj)
 }
 
-// AccountLoginWithPasswordError
+// AccountLoginStrategy
 
 #[allow(dead_code)]
-fn variant_account_login_with_password_error_rs_to_js<'a>(
+fn variant_account_login_strategy_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::AccountLoginWithPasswordError,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::AccountLoginStrategy> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "AccountLoginStrategyMasterSecret" => {
+            let master_secret = {
+                let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "masterSecret")?;
+                {
+                    #[allow(clippy::unnecessary_mut_passed)]
+                    match js_val.as_slice(cx).try_into() {
+                        Ok(val) => val,
+                        // err can't infer type in some case, because of the previous `try_into`
+                        #[allow(clippy::useless_format)]
+                        Err(err) => return cx.throw_type_error(format!("{}", err)),
+                    }
+                }
+            };
+            Ok(libparsec::AccountLoginStrategy::MasterSecret { master_secret })
+        }
+        "AccountLoginStrategyPassword" => {
+            let email = {
+                let js_val: Handle<JsString> = obj.get(cx, "email")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let password = {
+                let js_val: Handle<JsString> = obj.get(cx, "password")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> { Ok(s.into()) };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::AccountLoginStrategy::Password { email, password })
+        }
+        _ => cx.throw_type_error("Object is not a AccountLoginStrategy"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_account_login_strategy_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AccountLoginStrategy,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
-    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
-    js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::AccountLoginWithPasswordError::BadPasswordAlgorithm { .. } => {
-            let js_tag = JsString::try_new(cx, "AccountLoginWithPasswordErrorBadPasswordAlgorithm")
-                .or_throw(cx)?;
+        libparsec::AccountLoginStrategy::MasterSecret { master_secret, .. } => {
+            let js_tag = JsString::try_new(cx, "AccountLoginStrategyMasterSecret").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
+            let js_master_secret = {
+                let rs_buff = { master_secret.as_ref() };
+                let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
+                let js_buff_slice = js_buff.as_mut_slice(cx);
+                for (i, c) in rs_buff.iter().enumerate() {
+                    js_buff_slice[i] = *c;
+                }
+                js_buff
+            };
+            js_obj.set(cx, "masterSecret", js_master_secret)?;
         }
-        libparsec::AccountLoginWithPasswordError::Internal { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "AccountLoginWithPasswordErrorInternal").or_throw(cx)?;
+        libparsec::AccountLoginStrategy::Password {
+            email, password, ..
+        } => {
+            let js_tag = JsString::try_new(cx, "AccountLoginStrategyPassword").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::AccountLoginWithPasswordError::Offline { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "AccountLoginWithPasswordErrorOffline").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
+            let js_email = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::EmailAddress| -> Result<_, &'static str> { Ok(x.to_string()) };
+                match custom_to_rs_string(email) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "email", js_email)?;
+            let js_password = JsString::try_new(cx, password).or_throw(cx)?;
+            js_obj.set(cx, "password", js_password)?;
         }
     }
     Ok(js_obj)
@@ -4323,12 +4460,6 @@ fn variant_account_recover_proceed_error_rs_to_js<'a>(
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::AccountRecoverProceedError::AuthMethodIdAlreadyExists { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "AccountRecoverProceedErrorAuthMethodIdAlreadyExists")
-                    .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
         libparsec::AccountRecoverProceedError::Internal { .. } => {
             let js_tag =
                 JsString::try_new(cx, "AccountRecoverProceedErrorInternal").or_throw(cx)?;
@@ -14705,15 +14836,9 @@ fn account_create_3_proceed(mut cx: FunctionContext) -> JsResult<JsPromise> {
         let js_val = cx.argument::<JsObject>(3)?;
         struct_human_handle_js_to_rs(&mut cx, js_val)?
     };
-    let password = {
-        let js_val = cx.argument::<JsString>(4)?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<_, String> { Ok(s.into()) };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
+    let auth_method_strategy = {
+        let js_val = cx.argument::<JsObject>(4)?;
+        variant_account_auth_method_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -14728,7 +14853,7 @@ fn account_create_3_proceed(mut cx: FunctionContext) -> JsResult<JsPromise> {
                 addr,
                 validation_code,
                 human_handle,
-                &password,
+                auth_method_strategy,
             )
             .await;
 
@@ -15220,8 +15345,8 @@ fn account_list_registration_devices(mut cx: FunctionContext) -> JsResult<JsProm
     Ok(promise)
 }
 
-// account_login_with_master_secret
-fn account_login_with_master_secret(mut cx: FunctionContext) -> JsResult<JsPromise> {
+// account_login
+fn account_login(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
     let config_dir = {
         let js_val = cx.argument::<JsString>(0)?;
@@ -15246,17 +15371,9 @@ fn account_login_with_master_secret(mut cx: FunctionContext) -> JsResult<JsPromi
             }
         }
     };
-    let auth_method_master_secret = {
-        let js_val = cx.argument::<JsTypedArray<u8>>(2)?;
-        {
-            #[allow(clippy::unnecessary_mut_passed)]
-            match js_val.as_slice(&mut cx).try_into() {
-                Ok(val) => val,
-                // err can't infer type in some case, because of the previous `try_into`
-                #[allow(clippy::useless_format)]
-                Err(err) => return cx.throw_type_error(format!("{}", err)),
-            }
-        }
+    let login_strategy = {
+        let js_val = cx.argument::<JsObject>(2)?;
+        variant_account_login_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -15266,12 +15383,7 @@ fn account_login_with_master_secret(mut cx: FunctionContext) -> JsResult<JsPromi
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::account_login_with_master_secret(
-                config_dir,
-                addr,
-                auth_method_master_secret,
-            )
-            .await;
+            let ret = libparsec::account_login(config_dir, addr, login_strategy).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -15287,94 +15399,7 @@ fn account_login_with_master_secret(mut cx: FunctionContext) -> JsResult<JsPromi
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err =
-                            variant_account_login_with_master_secret_error_rs_to_js(&mut cx, err)?;
-                        js_obj.set(&mut cx, "error", js_err)?;
-                        js_obj
-                    }
-                };
-                Ok(js_ret)
-            });
-        });
-
-    Ok(promise)
-}
-
-// account_login_with_password
-fn account_login_with_password(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    crate::init_sentry();
-    let config_dir = {
-        let js_val = cx.argument::<JsString>(0)?;
-        {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let addr = {
-        let js_val = cx.argument::<JsString>(1)?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let email = {
-        let js_val = cx.argument::<JsString>(2)?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let password = {
-        let js_val = cx.argument::<JsString>(3)?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<_, String> { Ok(s.into()) };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let channel = cx.channel();
-    let (deferred, promise) = cx.promise();
-
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
-    let _handle = crate::TOKIO_RUNTIME
-        .lock()
-        .expect("Mutex is poisoned")
-        .spawn(async move {
-            let ret =
-                libparsec::account_login_with_password(config_dir, addr, email, &password).await;
-
-            deferred.settle_with(&channel, move |mut cx| {
-                let js_ret = match ret {
-                    Ok(ok) => {
-                        let js_obj = JsObject::new(&mut cx);
-                        let js_tag = JsBoolean::new(&mut cx, true);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = JsNumber::new(&mut cx, ok as f64);
-                        js_obj.set(&mut cx, "value", js_value)?;
-                        js_obj
-                    }
-                    Err(err) => {
-                        let js_obj = cx.empty_object();
-                        let js_tag = JsBoolean::new(&mut cx, false);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err =
-                            variant_account_login_with_password_error_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_account_login_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -15559,15 +15584,9 @@ fn account_recover_2_proceed(mut cx: FunctionContext) -> JsResult<JsPromise> {
             }
         }
     };
-    let new_password = {
-        let js_val = cx.argument::<JsString>(4)?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<_, String> { Ok(s.into()) };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
+    let auth_method_strategy = {
+        let js_val = cx.argument::<JsObject>(4)?;
+        variant_account_auth_method_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -15582,7 +15601,7 @@ fn account_recover_2_proceed(mut cx: FunctionContext) -> JsResult<JsPromise> {
                 addr,
                 validation_code,
                 email,
-                &new_password,
+                auth_method_strategy,
             )
             .await;
 
@@ -25792,11 +25811,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         "accountListRegistrationDevices",
         account_list_registration_devices,
     )?;
-    cx.export_function(
-        "accountLoginWithMasterSecret",
-        account_login_with_master_secret,
-    )?;
-    cx.export_function("accountLoginWithPassword", account_login_with_password)?;
+    cx.export_function("accountLogin", account_login)?;
     cx.export_function("accountLogout", account_logout)?;
     cx.export_function(
         "accountRecover1SendValidationEmail",

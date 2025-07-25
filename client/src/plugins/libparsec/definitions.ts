@@ -412,19 +412,32 @@ export interface WorkspaceUserAccessInfo {
     currentRole: RealmRole
 }
 
+// AccountAuthMethodStrategy
+export enum AccountAuthMethodStrategyTag {
+    MasterSecret = 'AccountAuthMethodStrategyMasterSecret',
+    Password = 'AccountAuthMethodStrategyPassword',
+}
+
+export interface AccountAuthMethodStrategyMasterSecret {
+    tag: AccountAuthMethodStrategyTag.MasterSecret
+    masterSecret: KeyDerivation
+}
+export interface AccountAuthMethodStrategyPassword {
+    tag: AccountAuthMethodStrategyTag.Password
+    password: Password
+}
+export type AccountAuthMethodStrategy =
+  | AccountAuthMethodStrategyMasterSecret
+  | AccountAuthMethodStrategyPassword
+
 // AccountCreateError
 export enum AccountCreateErrorTag {
-    AuthMethodIdAlreadyExists = 'AccountCreateErrorAuthMethodIdAlreadyExists',
     Internal = 'AccountCreateErrorInternal',
     InvalidValidationCode = 'AccountCreateErrorInvalidValidationCode',
     Offline = 'AccountCreateErrorOffline',
     SendValidationEmailRequired = 'AccountCreateErrorSendValidationEmailRequired',
 }
 
-export interface AccountCreateErrorAuthMethodIdAlreadyExists {
-    tag: AccountCreateErrorTag.AuthMethodIdAlreadyExists
-    error: string
-}
 export interface AccountCreateErrorInternal {
     tag: AccountCreateErrorTag.Internal
     error: string
@@ -442,7 +455,6 @@ export interface AccountCreateErrorSendValidationEmailRequired {
     error: string
 }
 export type AccountCreateError =
-  | AccountCreateErrorAuthMethodIdAlreadyExists
   | AccountCreateErrorInternal
   | AccountCreateErrorInvalidValidationCode
   | AccountCreateErrorOffline
@@ -690,47 +702,48 @@ export type AccountListRegistrationDevicesError =
   | AccountListRegistrationDevicesErrorInternal
   | AccountListRegistrationDevicesErrorOffline
 
-// AccountLoginWithMasterSecretError
-export enum AccountLoginWithMasterSecretErrorTag {
-    Internal = 'AccountLoginWithMasterSecretErrorInternal',
-    Offline = 'AccountLoginWithMasterSecretErrorOffline',
+// AccountLoginError
+export enum AccountLoginErrorTag {
+    BadPasswordAlgorithm = 'AccountLoginErrorBadPasswordAlgorithm',
+    Internal = 'AccountLoginErrorInternal',
+    Offline = 'AccountLoginErrorOffline',
 }
 
-export interface AccountLoginWithMasterSecretErrorInternal {
-    tag: AccountLoginWithMasterSecretErrorTag.Internal
+export interface AccountLoginErrorBadPasswordAlgorithm {
+    tag: AccountLoginErrorTag.BadPasswordAlgorithm
     error: string
 }
-export interface AccountLoginWithMasterSecretErrorOffline {
-    tag: AccountLoginWithMasterSecretErrorTag.Offline
+export interface AccountLoginErrorInternal {
+    tag: AccountLoginErrorTag.Internal
     error: string
 }
-export type AccountLoginWithMasterSecretError =
-  | AccountLoginWithMasterSecretErrorInternal
-  | AccountLoginWithMasterSecretErrorOffline
+export interface AccountLoginErrorOffline {
+    tag: AccountLoginErrorTag.Offline
+    error: string
+}
+export type AccountLoginError =
+  | AccountLoginErrorBadPasswordAlgorithm
+  | AccountLoginErrorInternal
+  | AccountLoginErrorOffline
 
-// AccountLoginWithPasswordError
-export enum AccountLoginWithPasswordErrorTag {
-    BadPasswordAlgorithm = 'AccountLoginWithPasswordErrorBadPasswordAlgorithm',
-    Internal = 'AccountLoginWithPasswordErrorInternal',
-    Offline = 'AccountLoginWithPasswordErrorOffline',
+// AccountLoginStrategy
+export enum AccountLoginStrategyTag {
+    MasterSecret = 'AccountLoginStrategyMasterSecret',
+    Password = 'AccountLoginStrategyPassword',
 }
 
-export interface AccountLoginWithPasswordErrorBadPasswordAlgorithm {
-    tag: AccountLoginWithPasswordErrorTag.BadPasswordAlgorithm
-    error: string
+export interface AccountLoginStrategyMasterSecret {
+    tag: AccountLoginStrategyTag.MasterSecret
+    masterSecret: KeyDerivation
 }
-export interface AccountLoginWithPasswordErrorInternal {
-    tag: AccountLoginWithPasswordErrorTag.Internal
-    error: string
+export interface AccountLoginStrategyPassword {
+    tag: AccountLoginStrategyTag.Password
+    email: EmailAddress
+    password: Password
 }
-export interface AccountLoginWithPasswordErrorOffline {
-    tag: AccountLoginWithPasswordErrorTag.Offline
-    error: string
-}
-export type AccountLoginWithPasswordError =
-  | AccountLoginWithPasswordErrorBadPasswordAlgorithm
-  | AccountLoginWithPasswordErrorInternal
-  | AccountLoginWithPasswordErrorOffline
+export type AccountLoginStrategy =
+  | AccountLoginStrategyMasterSecret
+  | AccountLoginStrategyPassword
 
 // AccountLogoutError
 export enum AccountLogoutErrorTag {
@@ -746,17 +759,12 @@ export type AccountLogoutError =
 
 // AccountRecoverProceedError
 export enum AccountRecoverProceedErrorTag {
-    AuthMethodIdAlreadyExists = 'AccountRecoverProceedErrorAuthMethodIdAlreadyExists',
     Internal = 'AccountRecoverProceedErrorInternal',
     InvalidValidationCode = 'AccountRecoverProceedErrorInvalidValidationCode',
     Offline = 'AccountRecoverProceedErrorOffline',
     SendValidationEmailRequired = 'AccountRecoverProceedErrorSendValidationEmailRequired',
 }
 
-export interface AccountRecoverProceedErrorAuthMethodIdAlreadyExists {
-    tag: AccountRecoverProceedErrorTag.AuthMethodIdAlreadyExists
-    error: string
-}
 export interface AccountRecoverProceedErrorInternal {
     tag: AccountRecoverProceedErrorTag.Internal
     error: string
@@ -774,7 +782,6 @@ export interface AccountRecoverProceedErrorSendValidationEmailRequired {
     error: string
 }
 export type AccountRecoverProceedError =
-  | AccountRecoverProceedErrorAuthMethodIdAlreadyExists
   | AccountRecoverProceedErrorInternal
   | AccountRecoverProceedErrorInvalidValidationCode
   | AccountRecoverProceedErrorOffline
@@ -4762,7 +4769,7 @@ export interface LibParsecPlugin {
         addr: ParsecAddr,
         validation_code: ValidationCode,
         human_handle: HumanHandle,
-        password: Password
+        auth_method_strategy: AccountAuthMethodStrategy
     ): Promise<Result<null, AccountCreateError>>
     accountCreateRegistrationDevice(
         account: Handle,
@@ -4788,17 +4795,11 @@ export interface LibParsecPlugin {
     accountListRegistrationDevices(
         account: Handle
     ): Promise<Result<Array<[OrganizationID, UserID]>, AccountListRegistrationDevicesError>>
-    accountLoginWithMasterSecret(
+    accountLogin(
         config_dir: Path,
         addr: ParsecAddr,
-        auth_method_master_secret: KeyDerivation
-    ): Promise<Result<Handle, AccountLoginWithMasterSecretError>>
-    accountLoginWithPassword(
-        config_dir: Path,
-        addr: ParsecAddr,
-        email: EmailAddress,
-        password: Password
-    ): Promise<Result<Handle, AccountLoginWithPasswordError>>
+        login_strategy: AccountLoginStrategy
+    ): Promise<Result<Handle, AccountLoginError>>
     accountLogout(
         account: Handle
     ): Promise<Result<null, AccountLogoutError>>
@@ -4812,7 +4813,7 @@ export interface LibParsecPlugin {
         addr: ParsecAddr,
         validation_code: ValidationCode,
         email: EmailAddress,
-        new_password: Password
+        auth_method_strategy: AccountAuthMethodStrategy
     ): Promise<Result<null, AccountRecoverProceedError>>
     accountRegisterNewDevice(
         account: Handle,
