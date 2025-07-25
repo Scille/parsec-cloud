@@ -1,0 +1,54 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "auth_method_create",
+        "req": {
+            "fields": [
+                {
+                    // Auth method can be of two types:
+                    // - ClientProvided, for which the client is able to store
+                    //   `auth_method_master_secret` all by itself.
+                    // - Password, for which the client must obtain some configuration
+                    //   (i.e. this field !) from the server in order to know how
+                    //   to turn the password into `auth_method_master_secret`.
+                    //
+                    // ⚠️ There can only be one active `Password` at a time,
+                    // so if the client already has one it will be overwritten.
+                    "name": "auth_method_password_algorithm",
+                    "type": "RequiredOption<UntrustedPasswordAlgorithm>"
+                },
+                {
+                    // Secret key shared between the client and the server and used for
+                    // account authenticated API family's MAC authentication.
+                    "name": "auth_method_mac_key",
+                    "type": "SecretKey"
+                },
+                {
+                    // UUID used to identify the authentication method in the `Authorization` HTTP header.
+                    //
+                    // This cannot be generated server-side since the client derives it from the
+                    // `auth_method_master_secret`.
+                    "name": "auth_method_id",
+                    "type": "AccountAuthMethodID"
+                },
+                {
+                    // `VaultKeyAccess` encrypted with the `auth_method_secret_key`
+                    "name": "vault_key_access",
+                    "type": "Bytes"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                // In practice this error should never occur since collision on the ID is
+                // virtually non-existent as long as the client generates a proper UUID.
+                "status": "auth_method_id_already_exists"
+            }
+        ]
+    }
+]
