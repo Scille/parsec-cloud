@@ -19,7 +19,7 @@
 
 <script setup lang="ts">
 import { refresh, play, pause, playForward, playBack } from 'ionicons/icons';
-import { FileControlsButton, FileControlsGroup } from '@/components/viewers';
+import { FileControlsButton, FileControlsGroup } from '@/components/files/handler/viewer';
 import { computed } from 'vue';
 
 const props = defineProps<{

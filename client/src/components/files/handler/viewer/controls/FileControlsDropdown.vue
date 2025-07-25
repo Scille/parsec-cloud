@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { FileControlsDropdownPopover, FileControlsDropdownItemContent, FileControlsButton } from '@/components/viewers';
+import { FileControlsDropdownPopover, FileControlsDropdownItemContent, FileControlsButton } from '@/components/files/handler/viewer';
 import { Ref, ref } from 'vue';
 import { popoverController } from '@ionic/vue';
 import { Translatable } from 'megashark-lib';
