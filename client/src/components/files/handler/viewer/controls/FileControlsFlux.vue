@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import { MsSlider, SliderState } from 'megashark-lib';
-import { FileControlsGroup } from '@/components/viewers';
+import { FileControlsGroup } from '@/components/files/handler/viewer';
 import { onUnmounted, ref, watch } from 'vue';
 
 const props = defineProps<{

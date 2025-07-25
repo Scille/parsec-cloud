@@ -141,7 +141,7 @@ const routes: Array<RouteRecordRaw> = [
                       {
                         path: `/:handle(\\d+)/${Routes.Viewer}`,
                         name: Routes.Viewer,
-                        component: () => import('@/views/viewers/FileViewer.vue'),
+                        component: () => import('@/views/files/handler/viewer/FileViewer.vue'),
                       },
                     ],
                   },

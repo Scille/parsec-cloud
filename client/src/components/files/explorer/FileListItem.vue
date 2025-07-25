@@ -130,7 +130,7 @@
 <script setup lang="ts">
 import { formatFileSize, getFileIcon } from '@/common/file';
 import { Folder, formatTimeSince, MsImage, MsCheckbox, useWindowSize } from 'megashark-lib';
-import FileDropZone from '@/components/files/FileDropZone.vue';
+import FileDropZone from '@/components/files/explorer/FileDropZone.vue';
 import { EntryModel, FileModel } from '@/components/files/types';
 import { FileImportTuple } from '@/components/files/utils';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
