@@ -50,13 +50,13 @@ class AuthAuthenticatedAuthBadOutcome(BadOutcomeEnum):
     USER_MUST_ACCEPT_TOS = auto()
     DEVICE_NOT_FOUND = auto()
     INVALID_TOKEN = auto()
-    TOKEN_TOO_OLD = auto()
+    TOKEN_OUT_OF_BALLPARK = auto()
 
 
 class AuthAuthenticatedAccountAuthBadOutcome(BadOutcomeEnum):
     ACCOUNT_NOT_FOUND = auto()
     INVALID_TOKEN = auto()
-    TOKEN_TOO_OLD = auto()
+    TOKEN_OUT_OF_BALLPARK = auto()
 
 
 @dataclass
@@ -297,7 +297,7 @@ class BaseAuthComponent:
             return AuthAuthenticatedAuthBadOutcome.INVALID_TOKEN
 
         if timestamps_in_the_ballpark(token.timestamp, now) is not None:
-            return AuthAuthenticatedAuthBadOutcome.TOKEN_TOO_OLD
+            return AuthAuthenticatedAuthBadOutcome.TOKEN_OUT_OF_BALLPARK
 
         return auth_info
 

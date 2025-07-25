@@ -449,7 +449,7 @@ class PGAuthComponent(BaseAuthComponent):
 
         # Check token timestamp is within ballpark
         if timestamps_in_the_ballpark(token.timestamp, now) is not None:
-            return AuthAuthenticatedAccountAuthBadOutcome.TOKEN_TOO_OLD
+            return AuthAuthenticatedAccountAuthBadOutcome.TOKEN_OUT_OF_BALLPARK
 
         return AuthenticatedAccountAuthInfo(
             account_email=account_email,
