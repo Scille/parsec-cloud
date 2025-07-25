@@ -168,6 +168,7 @@ async fn auth_method_id_already_exists(env: &TestbedEnv) {
         Account::create_2_check_validation_code(&cmds, validation_code, email)
             .await
             .unwrap_err(),
-        AccountCreateError::AuthMethodIdAlreadyExists
+        AccountCreateError::Internal(err)
+        if format!("{}", err) == "Unexpected server response: AuthMethodIdAlreadyExists"
     );
 }

@@ -11,7 +11,9 @@ use libparsec_client_connection::{
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::{Account, AccountCreateSendValidationEmailError};
+use crate::{
+    Account, AccountAuthMethodStrategy, AccountCreateSendValidationEmailError, AccountLoginStrategy,
+};
 
 #[parsec_test(testbed = "empty", with_server)]
 async fn ok_with_server_then_check_code_and_create(env: &TestbedEnv) {
@@ -52,8 +54,12 @@ async fn ok_with_server_then_check_code_and_create(env: &TestbedEnv) {
 
     // All ready, now try to check the code...
 
+    // ⚠️ We cannot use a constant for the new master secret here, otherwise
+    // the testbed server might reject us if it already contains the auth method ID
+    // derived from this master secret!
+    let new_auth_method_master_secret = KeyDerivation::generate();
+
     let human_handle = HumanHandle::new(email, "Zack").unwrap();
-    let password: Password = "P@ssw0rd.".to_string().into();
 
     let cmds = AnonymousAccountCmds::new(
         &env.discriminant_dir,
@@ -72,12 +78,29 @@ async fn ok_with_server_then_check_code_and_create(env: &TestbedEnv) {
         Ok(())
     );
 
-    // ...and finally do the actual account creation!
+    // ...and do the actual account creation...
 
     p_assert_matches!(
-        Account::create_3_proceed(&cmds, validation_code, human_handle.clone(), &password,).await,
+        Account::create_3_proceed(
+            &cmds,
+            validation_code,
+            human_handle.clone(),
+            AccountAuthMethodStrategy::MasterSecret(&new_auth_method_master_secret)
+        )
+        .await,
         Ok(())
     );
+
+    // ...and finally we can connect with the new auth method!
+
+    Account::login(
+        env.discriminant_dir.clone(),
+        ProxyConfig::default(),
+        env.server_addr.clone(),
+        AccountLoginStrategy::MasterSecret(&new_auth_method_master_secret),
+    )
+    .await
+    .unwrap();
 }
 
 #[parsec_test(testbed = "empty")]
