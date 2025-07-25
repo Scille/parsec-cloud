@@ -554,7 +554,8 @@ async function downloadFile(path: FsPath): Promise<void> {
   height: 100%;
   background-color: var(--parsec-color-light-secondary-premiere);
 
-  .file-viewer, .file-editor {
+  .file-viewer,
+  .file-editor {
     display: flex;
     flex-direction: column;
     height: 100%;
