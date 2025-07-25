@@ -12,6 +12,7 @@ use libparsec_types::prelude::*;
 mod account_create;
 mod account_delete;
 mod account_recover;
+mod auth_method_create;
 mod auth_method_derived_keys;
 mod create_registration_device;
 mod fetch_opaque_key_from_vault;
@@ -25,6 +26,7 @@ mod upload_opaque_key_in_vault;
 pub use account_create::*;
 pub use account_delete::*;
 pub use account_recover::*;
+pub use auth_method_create::*;
 use auth_method_derived_keys::*;
 pub use create_registration_device::*;
 pub use fetch_opaque_key_from_vault::*;
@@ -109,6 +111,18 @@ impl Account {
             },
         )
         .await
+    }
+
+    /// Create a new authentication method for the account.
+    ///
+    /// Note that a new password auth method will replace the existing one
+    /// (if any).
+    /// On the contrary, there can be any number of master secret auth methods.
+    pub async fn auth_method_create(
+        &self,
+        auth_method_strategy: AccountAuthMethodStrategy<'_>,
+    ) -> Result<(), AccountAuthMethodCreateError> {
+        account_auth_method_create(self, auth_method_strategy).await
     }
 
     /// Convenient helper to avoid the first request (fetching the human handle)
