@@ -112,11 +112,19 @@ import { IonPage, IonContent, IonButton, IonText, IonIcon, IonButtons, modalCont
 import { link, informationCircle, open, chevronUp, chevronDown } from 'ionicons/icons';
 import { Base64, MsSpinner, MsImage, I18n, DownloadIcon, askQuestion, Answer, MsModalResult } from 'megashark-lib';
 import { ref, Ref, type Component, inject, onMounted, shallowRef, onUnmounted } from 'vue';
-import { ImageViewer, VideoViewer, SpreadsheetViewer, DocumentViewer, AudioViewer, TextViewer, PdfViewer } from '@/views/viewers';
+import {
+  ImageViewer,
+  VideoViewer,
+  SpreadsheetViewer,
+  DocumentViewer,
+  AudioViewer,
+  TextViewer,
+  PdfViewer,
+} from '@/views/files/handler/viewer';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, Routes, watchRoute } from '@/router';
 import { DetectedFileType, FileContentType } from '@/common/fileTypes';
-import { FileContentInfo } from '@/views/viewers/utils';
+import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { Env } from '@/services/environment';
 import { DateTime } from 'luxon';
 import { getFileIcon } from '@/common/file';
