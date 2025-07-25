@@ -14,14 +14,12 @@ from .common import (
     OrganizationID,
     UserID,
     DeviceLabel,
-    InvitationToken,
-    InvitationType,
     KeyDerivation,
     DateTime,
     SecretKey,
     AccountVaultItemOpaqueKeyID,
 )
-from .addr import ParsecAddr
+from .addr import ParsecAddr, ParsecInvitationAddr
 from .device import DeviceAccessStrategy, DeviceSaveStrategy, AvailableDevice
 
 
@@ -150,9 +148,7 @@ class AccountListInvitationsError(ErrorVariant):
 
 async def account_list_invitations(
     account: Handle,
-) -> Result[
-    list[tuple[OrganizationID, InvitationToken, InvitationType]], AccountListInvitationsError
-]:
+) -> Result[list[ParsecInvitationAddr], AccountListInvitationsError]:
     raise NotImplementedError
 
 
