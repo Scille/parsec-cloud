@@ -13,6 +13,7 @@ mod account_create;
 mod account_delete;
 mod account_recover;
 mod auth_method_derived_keys;
+mod create_auth_method;
 mod create_registration_device;
 mod fetch_opaque_key_from_vault;
 mod fetch_vault_items;
@@ -26,6 +27,7 @@ pub use account_create::*;
 pub use account_delete::*;
 pub use account_recover::*;
 use auth_method_derived_keys::*;
+pub use create_auth_method::*;
 pub use create_registration_device::*;
 pub use fetch_opaque_key_from_vault::*;
 pub use fetch_vault_items::*;
@@ -140,6 +142,18 @@ impl Account {
             },
         )
         .await
+    }
+
+    /// Create a new authentication method for the account.
+    ///
+    /// Note that a new password auth method will replace the existing one
+    /// (if any).
+    /// On the contrary, there can be any number of master secret auth methods.
+    pub async fn create_auth_method(
+        &self,
+        auth_method_strategy: AccountAuthMethodStrategy<'_>,
+    ) -> Result<(), AccountCreateAuthMethodError> {
+        account_create_auth_method(self, auth_method_strategy).await
     }
 
     /// Convenient helper to avoid the first request (fetching the human handle)
