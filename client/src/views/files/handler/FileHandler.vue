@@ -119,7 +119,6 @@ import { IonPage, IonContent, IonButton, IonText, IonIcon, IonButtons, modalCont
 import { link, informationCircle, open, chevronDown, chevronUp } from 'ionicons/icons';
 import { Base64, MsSpinner, MsImage, I18n, DownloadIcon, askQuestion, Answer, MsModalResult } from 'megashark-lib';
 import { ref, Ref, inject, onMounted, onUnmounted, type Component, shallowRef } from 'vue';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import {
   currentRouteIs,
   getCurrentRouteParams,
@@ -132,12 +131,13 @@ import {
 } from '@/router';
 import { DetectedFileType } from '@/common/fileTypes';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { Env } from '@/services/environment';
 import { DateTime } from 'luxon';
 import { getFileIcon } from '@/common/file';
 import { copyPathLinkToClipboard } from '@/components/files';
 import { askDownloadConfirmation, downloadEntry, FileDetailsModal } from '@/views/files';
 import useHeaderControl from '@/services/headerControl';
-import { Env } from '@/services/environment';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
 import FileEditor from '@/views/files/handler/editor/FileEditor.vue';
