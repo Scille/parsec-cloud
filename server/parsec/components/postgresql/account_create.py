@@ -128,7 +128,7 @@ async def create_check_validation_code(
 
 _q_get_validation_code = Q("""
 SELECT
-    validation_code as expected_validation_code,
+    validation_code AS expected_validation_code,
     created_at,
     failed_attempts
 FROM account_create_validation_code
