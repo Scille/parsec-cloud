@@ -23,7 +23,7 @@ async fn ok(env: &TestbedEnv) {
     let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
-        KeyDerivation::from(hex!(
+        &KeyDerivation::from(hex!(
             "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
         )),
         alice.human_handle.clone(),
@@ -49,7 +49,7 @@ async fn bad_vault_key_access(env: &TestbedEnv) {
     let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
-        KeyDerivation::from(hex!(
+        &KeyDerivation::from(hex!(
             "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
         )),
         "Zack <zack@example.com>".parse().unwrap(),
@@ -76,7 +76,7 @@ async fn offline(env: &TestbedEnv) {
     let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
-        KeyDerivation::from(hex!(
+        &KeyDerivation::from(hex!(
             "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
         )),
         "Zack <zack@example.com>".parse().unwrap(),
@@ -94,7 +94,7 @@ async fn unknown_server_response(env: &TestbedEnv) {
     let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
-        KeyDerivation::from(hex!(
+        &KeyDerivation::from(hex!(
             "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
         )),
         "Zack <zack@example.com>".parse().unwrap(),

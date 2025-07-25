@@ -12,6 +12,7 @@ use libparsec_types::prelude::*;
 mod account_create;
 mod account_delete;
 mod account_recover;
+mod auth_method_derived_keys;
 mod create_registration_device;
 mod fetch_opaque_key_from_vault;
 mod fetch_vault_items;
@@ -24,6 +25,7 @@ mod upload_opaque_key_in_vault;
 pub use account_create::*;
 pub use account_delete::*;
 pub use account_recover::*;
+use auth_method_derived_keys::*;
 pub use create_registration_device::*;
 pub use fetch_opaque_key_from_vault::*;
 pub use fetch_vault_items::*;
@@ -32,6 +34,50 @@ pub use list_registration_devices::*;
 pub use login::*;
 pub use register_new_device::*;
 pub use upload_opaque_key_in_vault::*;
+
+pub enum AccountAuthMethodStrategy<'a> {
+    MasterSecret(&'a KeyDerivation),
+    Password(&'a Password),
+}
+
+impl AccountAuthMethodStrategy<'_> {
+    pub(crate) fn derive_keys(
+        &self,
+        email: &EmailAddress,
+    ) -> (Option<UntrustedPasswordAlgorithm>, AuthMethodDerivedKeys) {
+        match self {
+            AccountAuthMethodStrategy::MasterSecret(auth_method_master_secret) => {
+                let auth_method_keys = derive_auth_method_keys(auth_method_master_secret);
+                (None, auth_method_keys)
+            }
+
+            AccountAuthMethodStrategy::Password(password) => {
+                let auth_method_password_algorithm = PasswordAlgorithm::generate_argon2id(
+                    PasswordAlgorithmSaltStrategy::DerivedFromEmail {
+                        email: email.as_ref(),
+                    },
+                );
+                let auth_method_master_secret = auth_method_password_algorithm
+                    .compute_key_derivation(password)
+                    .expect("algorithm config is valid");
+
+                let auth_method_keys = derive_auth_method_keys(&auth_method_master_secret);
+                (
+                    Some(auth_method_password_algorithm.into()),
+                    auth_method_keys,
+                )
+            }
+        }
+    }
+}
+
+pub enum AccountLoginStrategy<'a> {
+    MasterSecret(&'a KeyDerivation),
+    Password {
+        email: &'a EmailAddress,
+        password: &'a Password,
+    },
+}
 
 #[derive(Debug)]
 pub struct Account {
@@ -83,14 +129,14 @@ impl Account {
         cmds: &AnonymousAccountCmds,
         validation_code: ValidationCode,
         human_handle: HumanHandle,
-        password: &Password,
+        auth_method_strategy: AccountAuthMethodStrategy<'_>,
     ) -> Result<(), AccountCreateError> {
         account_create(
             cmds,
             AccountCreateStep::Proceed {
-                human_handle,
-                password,
                 validation_code,
+                human_handle,
+                auth_method_strategy,
             },
         )
         .await
@@ -102,15 +148,14 @@ impl Account {
     pub async fn test_new(
         config_dir: PathBuf,
         addr: ParsecAddr,
-        auth_method_master_secret: KeyDerivation,
+        auth_method_master_secret: &KeyDerivation,
         human_handle: HumanHandle,
     ) -> Self {
-        account_login_with_master_secret(
+        account_login(
             config_dir,
             ProxyConfig::default(),
             addr,
-            auth_method_master_secret,
-            None,
+            AccountLoginStrategy::MasterSecret(auth_method_master_secret),
             Some(human_handle),
         )
         .await
@@ -125,31 +170,13 @@ impl Account {
         &self.config_dir
     }
 
-    pub async fn login_with_master_secret(
+    pub async fn login(
         config_dir: PathBuf,
         proxy: ProxyConfig,
         addr: ParsecAddr,
-        auth_method_master_secret: KeyDerivation,
-    ) -> Result<Self, AccountLoginWithMasterSecretError> {
-        account_login_with_master_secret(
-            config_dir,
-            proxy,
-            addr,
-            auth_method_master_secret,
-            None,
-            None,
-        )
-        .await
-    }
-
-    pub async fn login_with_password(
-        config_dir: PathBuf,
-        proxy: ProxyConfig,
-        addr: ParsecAddr,
-        email: EmailAddress,
-        password: &Password,
-    ) -> Result<Self, AccountLoginWithPasswordError> {
-        account_login_with_password(config_dir, proxy, addr, email, password).await
+        login_strategy: AccountLoginStrategy<'_>,
+    ) -> Result<Self, AccountLoginError> {
+        account_login(config_dir, proxy, addr, login_strategy, None).await
     }
 
     /// Fetch from the server the pending invitations across all organizations
@@ -263,8 +290,8 @@ impl Account {
         cmds: &AnonymousAccountCmds,
         validation_code: ValidationCode,
         email: EmailAddress,
-        new_password: &Password,
+        auth_method_strategy: AccountAuthMethodStrategy<'_>,
     ) -> Result<(), AccountRecoverProceedError> {
-        account_recover_proceed(cmds, validation_code, email, new_password).await
+        account_recover_proceed(cmds, validation_code, email, auth_method_strategy).await
     }
 }

@@ -11,7 +11,10 @@ use libparsec_client_connection::{
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::{Account, AccountRecoverSendValidationEmailError};
+use crate::{
+    Account, AccountAuthMethodStrategy, AccountLoginStrategy,
+    AccountRecoverSendValidationEmailError,
+};
 
 #[parsec_test(testbed = "empty", with_server)]
 async fn ok_with_server_then_proceed(env: &TestbedEnv) {
@@ -64,26 +67,28 @@ async fn ok_with_server_then_proceed(env: &TestbedEnv) {
 
     // All ready, now do the final recovery!
 
-    let new_password: Password = "P@ssw0rd2".to_string().into();
+    // ⚠️ We cannot use a constant for the new master secret here, otherwise
+    // the testbed server might reject us if it already contains the auth method ID
+    // derived from this master secret!
+    let new_auth_method_master_secret = KeyDerivation::generate();
     p_assert_matches!(
         Account::recover_2_proceed(
             &cmds,
             validation_code,
             account_human_handle.email().to_owned(),
-            &new_password,
+            AccountAuthMethodStrategy::MasterSecret(&new_auth_method_master_secret)
         )
         .await,
         Ok(())
     );
 
-    // Finally we can connect with the new password!
+    // Finally we can connect with the new auth method!
 
-    Account::login_with_password(
+    Account::login(
         env.discriminant_dir.clone(),
         ProxyConfig::default(),
         env.server_addr.clone(),
-        account_human_handle.email().to_owned(),
-        &new_password,
+        AccountLoginStrategy::MasterSecret(&new_auth_method_master_secret),
     )
     .await
     .unwrap();

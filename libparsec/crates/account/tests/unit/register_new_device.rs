@@ -22,7 +22,7 @@ async fn ok_with_server(env: &TestbedEnv) {
     let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
-        auth_method_master_secret_key,
+        &auth_method_master_secret_key,
         account_human_handle.clone(),
     )
     .await;
@@ -95,14 +95,14 @@ async fn ok_with_server(env: &TestbedEnv) {
     );
 }
 
-#[parsec_test(testbed = "minimal", with_server)]
+#[parsec_test(testbed = "minimal")]
 async fn ok_mocked(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let vault_key = SecretKey::generate();
     let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
-        KeyDerivation::from(hex!(
+        &KeyDerivation::from(hex!(
             "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
         )),
         alice.human_handle.clone(),
@@ -179,7 +179,7 @@ async fn unknown_registration_device(env: &TestbedEnv) {
     let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
-        auth_method_master_secret,
+        &auth_method_master_secret,
         alice.human_handle.clone(),
     )
     .await;
@@ -234,7 +234,7 @@ async fn offline(
     let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
-        auth_method_master_secret,
+        &auth_method_master_secret,
         alice.human_handle.clone(),
     )
     .await;
@@ -279,7 +279,7 @@ async fn unknown_server_response(
     let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
-        auth_method_master_secret,
+        &auth_method_master_secret,
         alice.human_handle.clone(),
     )
     .await;
@@ -333,7 +333,7 @@ async fn timestamp_out_of_ballpark(env: &TestbedEnv) {
     let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
-        auth_method_master_secret,
+        &auth_method_master_secret,
         alice.human_handle.clone(),
     )
     .await;
