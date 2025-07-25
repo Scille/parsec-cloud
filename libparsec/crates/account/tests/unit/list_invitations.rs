@@ -25,27 +25,38 @@ async fn ok(env: &TestbedEnv) {
     .await;
 
     let expected_invitations = vec![
-        (
+        ParsecInvitationAddr::new(
+            account.cmds.addr().to_owned(),
             "Org1".parse().unwrap(),
-            InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
             InvitationType::User,
+            InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
         ),
-        (
+        ParsecInvitationAddr::new(
+            account.cmds.addr().to_owned(),
             "Org2".parse().unwrap(),
-            InvitationToken::from_hex("e4eaf751ba3546a899a9088002e51918").unwrap(),
             InvitationType::Device,
+            InvitationToken::from_hex("e4eaf751ba3546a899a9088002e51918").unwrap(),
         ),
     ];
 
     test_register_sequence_of_send_hooks!(&env.discriminant_dir, {
-        let invitations = expected_invitations.clone();
+        let invitations = expected_invitations
+            .iter()
+            .map(|invitation| {
+                (
+                    invitation.organization_id().clone(),
+                    invitation.token(),
+                    invitation.invitation_type(),
+                )
+            })
+            .collect();
         move |_req: authenticated_account_cmds::latest::invite_self_list::Req| {
             authenticated_account_cmds::latest::invite_self_list::Rep::Ok { invitations }
         }
     });
 
     let invitations = account.list_invitations().await.unwrap();
-    p_assert_eq!(invitations, expected_invitations,);
+    p_assert_eq!(invitations, expected_invitations);
 }
 
 #[parsec_test(testbed = "empty")]

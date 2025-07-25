@@ -15,7 +15,7 @@ pub enum AccountListInvitationsError {
 
 pub(super) async fn account_list_invitations(
     account: &Account,
-) -> Result<Vec<(OrganizationID, InvitationToken, InvitationType)>, AccountListInvitationsError> {
+) -> Result<Vec<ParsecInvitationAddr>, AccountListInvitationsError> {
     use libparsec_protocol::authenticated_account_cmds::latest::invite_self_list::{Rep, Req};
 
     let req = Req;
@@ -28,7 +28,17 @@ pub(super) async fn account_list_invitations(
         }
     };
 
-    Ok(invitations)
+    Ok(invitations
+        .into_iter()
+        .map(|(organization_id, token, invitation_type)| {
+            ParsecInvitationAddr::new(
+                account.cmds.addr().to_owned(),
+                organization_id,
+                invitation_type,
+                token,
+            )
+        })
+        .collect())
 }
 
 #[cfg(test)]

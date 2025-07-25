@@ -156,8 +156,7 @@ impl Account {
     /// corresponding to the account's email address.
     pub async fn list_invitations(
         &self,
-    ) -> Result<Vec<(OrganizationID, InvitationToken, InvitationType)>, AccountListInvitationsError>
-    {
+    ) -> Result<Vec<ParsecInvitationAddr>, AccountListInvitationsError> {
         account_list_invitations(self).await
     }
 
