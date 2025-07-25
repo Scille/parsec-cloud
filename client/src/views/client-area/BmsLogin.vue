@@ -180,10 +180,7 @@
         </div>
       </ion-footer>
     </div>
-    <div
-      v-if="isLargeDisplay"
-      class="saas-login-mockup"
-    >
+    <div class="saas-login-mockup">
       <img
         src="@/assets/images/mockup-parsec-client.svg"
         alt="mockup"
@@ -302,7 +299,7 @@ async function onLoginClicked(): Promise<void> {
     position: relative;
     z-index: 2;
 
-    @include ms.responsive-breakpoint('sm') {
+    @include ms.responsive-breakpoint('md') {
       max-width: 100%;
     }
   }
@@ -525,7 +522,15 @@ async function onLoginClicked(): Promise<void> {
     align-items: flex-end;
     scale: 1.2;
 
-    @include ms.responsive-breakpoint('sm') {
+    @include ms.responsive-breakpoint('xl') {
+      right: -1rem;
+    }
+
+    @include ms.responsive-breakpoint('lg') {
+      right: -6rem;
+    }
+
+    @include ms.responsive-breakpoint('md') {
       display: none;
     }
   }

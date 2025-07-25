@@ -49,6 +49,7 @@
         <ion-button
           fill="clear"
           size="default"
+          class="button-medium"
           id="previous-button"
           @click="$emit('goBackRequested')"
           v-show="!hidePrevious"
@@ -63,6 +64,7 @@
         <ion-button
           fill="solid"
           size="default"
+          class="button-medium"
           @click="$emit('organizationNameAndServerChosen', organizationName, serverAddr)"
           :disabled="!valid"
         >

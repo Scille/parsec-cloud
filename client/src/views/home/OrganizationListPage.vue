@@ -256,6 +256,7 @@
         <ion-button
           @click="$emit('recoverClick')"
           fill="clear"
+          class="button-medium"
         >
           {{ $msTranslate('HomePage.recoverDevice') }}
         </ion-button>
@@ -475,7 +476,6 @@ async function openDocumentation(): Promise<void> {
   background: none;
   width: 100%;
   max-width: var(--parsec-max-content-width);
-  box-shadow: none;
   display: flex;
   margin: 0;
   flex-direction: column;
@@ -488,7 +488,7 @@ async function openDocumentation(): Promise<void> {
   flex-direction: column;
   gap: 1.5rem;
   overflow: hidden;
-  margin-bottom: 4.3125rem;
+  margin-bottom: 4rem;
   height: 100%;
   border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
   padding: 2rem 2rem 0 2rem;
@@ -496,8 +496,14 @@ async function openDocumentation(): Promise<void> {
   max-width: 40rem;
   background: var(--parsec-color-light-secondary-white);
 
+  @include ms.responsive-breakpoint('sm') {
+    margin-inline: auto;
+  }
+
   @include ms.responsive-breakpoint('xs') {
     padding: 1.5rem 1.5rem 0 1.5rem;
+    margin-inline: 0;
+    box-shadow: var(--parsec-shadow-strong);
   }
 
   .organization-filter {

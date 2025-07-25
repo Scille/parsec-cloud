@@ -144,6 +144,10 @@ async function onLoginClicked(): Promise<void> {
   width: 100%;
   gap: 2rem;
 
+  @include ms.responsive-breakpoint('sm') {
+    gap: 1.5rem;
+  }
+
   &__title {
     background: var(--parsec-color-light-gradient-background);
     background-clip: text;

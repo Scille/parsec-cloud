@@ -1,0 +1,108 @@
+/* Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS */
+
+.menu-secondary-collapse {
+  &-logo {
+    width: 2rem;
+    display: flex;
+    margin-left: 0.5rem;
+    z-index: 1;
+  }
+
+  &__close {
+    color: var(--parsec-color-light-secondary-grey);
+    font-size: 1.5rem;
+    position: absolute;
+    right: 0;
+    top: -0.75rem;
+    padding: 0.5rem;
+    border-radius: var(--parsec-radius-circle);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--parsec-color-light-secondary-premiere);
+      color: var(--parsec-color-light-secondary-hard-grey);
+    }
+  }
+
+  &::part(container) {
+    background: linear-gradient(
+      117deg,
+      var(--parsec-color-light-secondary-inversed-contrast, #fcfcfc) 0%,
+      var(--parsec-color-light-secondary-background, #f9f9fb) 100%
+    );
+    margin: 1rem;
+    padding: 2rem 1rem;
+    height: auto;
+    box-shadow: var(--parsec-shadow-light);
+    border-radius: var(--parsec-radius-12);
+  }
+
+  &-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    height: 100%;
+    position: relative;
+    z-index: 2;
+
+    &-item {
+      color: var(--parsec-color-light-secondary-hard-grey);
+      transition: all 150ms linear;
+      display: flex;
+      gap: 1rem;
+
+      &::part(native) {
+        justify-content: flex-start;
+        padding: 0.75rem 0.5rem !important;
+        --background: var(--parsec-color-light-secondary-background);
+        --background-hover: var(--parsec-color-light-secondary-premiere);
+        border-radius: var(--parsec-radius-8);
+      }
+
+      ion-icon {
+        font-size: 1rem;
+        color: var(--parsec-color-light-secondary-soft-grey);
+      }
+
+      &:hover {
+        color: var(--parsec-color-light-secondary-text);
+
+        ion-icon {
+          color: var(--parsec-color-light-secondary-hard-grey);
+        }
+      }
+
+      &__text {
+        display: block;
+        margin-right: auto;
+      }
+
+      &__icon {
+        display: block;
+        margin-right: 0.5rem;
+        font-size: 1rem;
+      }
+    }
+
+    #trigger-customer-area-button {
+      color: var(--parsec-color-light-primary-500);
+      border-radius: var(--parsec-radius-8);
+      width: 100%;
+
+      &::part(native) {
+        --background: var(--parsec-color-light-primary-50);
+        --background-hover: var(--parsec-color-light-primary-100);
+        width: 100%;
+      }
+
+      &:hover {
+        color: var(--parsec-color-light-primary-600);
+
+        &::before {
+          width: 100%;
+          background: var(--parsec-color-light-primary-600);
+        }
+      }
+    }
+  }
+}

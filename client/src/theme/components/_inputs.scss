@@ -47,9 +47,13 @@
 }
 
 .organization-filter .ms-search-input {
-  border-color: var(--parsec-color-light-secondary-premiere);
-  background: var(--parsec-color-light-secondary-premiere);
+  border-color: var(--parsec-color-light-secondary-medium);
+  background: var(--parsec-color-light-secondary-background);
   transition: border-color 0.15s ease-in-out;
+
+  @include ms.responsive-breakpoint('xs') {
+    height: 2.25rem;
+  }
 
   input::placeholder {
     color: var(--parsec-color-light-secondary-grey);
