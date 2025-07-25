@@ -97,6 +97,11 @@ class AccountInviteListBadOutcome(BadOutcomeEnum):
     ACCOUNT_NOT_FOUND = auto()
 
 
+class AccountAuthMethodCreateBadOutcome(BadOutcomeEnum):
+    ACCOUNT_NOT_FOUND = auto()
+    AUTH_METHOD_ID_ALREADY_EXISTS = auto()
+
+
 @dataclass(slots=True)
 class AccountInfo:
     human_handle: HumanHandle
@@ -347,6 +352,19 @@ class BaseAccountComponent:
     async def invite_self_list(
         self, auth_method_id: AccountAuthMethodID
     ) -> list[tuple[OrganizationID, InvitationToken, InvitationType]] | AccountInviteListBadOutcome:
+        raise NotImplementedError
+
+    async def auth_method_create(
+        self,
+        now: DateTime,
+        auth_method_id: AccountAuthMethodID,
+        created_by_user_agent: str,
+        created_by_ip: str | Literal[""],
+        new_auth_method_id: AccountAuthMethodID,
+        new_auth_method_mac_key: SecretKey,
+        new_auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
+        new_vault_key_access: bytes,
+    ) -> None | AccountAuthMethodCreateBadOutcome:
         raise NotImplementedError
 
     @api
@@ -728,6 +746,30 @@ class BaseAccountComponent:
                 client_ctx.account_not_found_abort()
 
         return invite_self_list.RepOk(invitations=invitations)
+
+    @api
+    async def api_auth_method_create(
+        self,
+        client_ctx: AuthenticatedAccountClientContext,
+        req: authenticated_account_cmds.latest.auth_method_create.Req,
+    ) -> authenticated_account_cmds.latest.auth_method_create.Rep:
+        outcome = await self.auth_method_create(
+            now=DateTime.now(),
+            auth_method_id=client_ctx.auth_method_id,
+            created_by_user_agent=client_ctx.client_user_agent,
+            created_by_ip=client_ctx.client_ip_address,
+            new_auth_method_id=req.auth_method_id,
+            new_auth_method_mac_key=req.auth_method_mac_key,
+            new_auth_method_password_algorithm=req.auth_method_password_algorithm,
+            new_vault_key_access=req.vault_key_access,
+        )
+        match outcome:
+            case None:
+                return authenticated_account_cmds.latest.auth_method_create.RepOk()
+            case AccountAuthMethodCreateBadOutcome.AUTH_METHOD_ID_ALREADY_EXISTS:
+                return authenticated_account_cmds.latest.auth_method_create.RepAuthMethodIdAlreadyExists()
+            case AccountAuthMethodCreateBadOutcome.ACCOUNT_NOT_FOUND:
+                client_ctx.account_not_found_abort()
 
 
 def _generate_account_create_validation_email(
