@@ -13,7 +13,7 @@ workspace = true
 
 [features]
 vendored-openssl = ["openssl/vendored"]
-use-sodiumoxide = ["dep:sodiumoxide", "dep:libsodium-sys", "dep:openssl"]
+use-libsodium = ["dep:libsodium-rs", "dep:libsodium-sys-stable", "dep:openssl"]
 # In theory we should have this feature enabling optional dependencies,
 # but instead we consider use-rustcrypto as the default (see below)
 # use-rustcrypto = [
@@ -44,11 +44,16 @@ uuid = { workspace = true }
 zeroize = { workspace = true, features = ["alloc"] }
 
 #
-# SodiumOxide&friends stuff
+# Lib Sodium & friends stuff
 #
 
-sodiumoxide = { workspace = true, optional = true, features = ["std", "serde"] }
-libsodium-sys = { workspace = true, optional = true }
+libsodium-rs = { workspace = true, optional = true, features = [
+    # Features inherited from `libsodium-sys-stable`
+    # https://docs.rs/crate/libsodium-sys-stable/1.22.3
+    "optimized", # Build a version optimized for the current platform.
+    "minimal",   # Do not build deprecated APIs
+] }
+libsodium-sys-stable = { workspace = true, optional = true }
 # A word about vendoring. In Parsec, OpenSSL is used for two different things:
 # - Provide X509 support when Rust-Crypto is not used (aka "openssl-for-parsec")
 # - Provide SSL support when doing web request stuff (aka "openssl-for-reqwest")
@@ -92,13 +97,13 @@ openssl = { workspace = true, optional = true }
 # specify `no-default = true` (which defeat the whole point of having a default !).
 #
 # So the solution is instead to consider `use-rustcrypto` is set whenever
-# `use-sodiumoxide` is not.
+# `use-libsodium` is not.
 # But then we have another problem: `use-rustcrypto` have itself dependencies.
 # The solution is simple: we always enable those dependencies.
 # (Hence in the end `use-rustcrypto` feature has no existence here as it is
-# just the negation of `use-sodiumoxide`)
+# just the negation of `use-libsodium`)
 #
-# But what about the perf ??? Well compilation is a bit longer with `use-sodiumoxide`
+# But what about the perf ??? Well compilation is a bit longer with `use-libsodium`
 # but at link time all the rustcrypto related code is discarded given it is never used.
 
 argon2 = { workspace = true, features = [

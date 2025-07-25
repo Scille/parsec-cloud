@@ -4,7 +4,7 @@ use generic_array::{
     typenum::{consts::U64, IsLessOrEqual, LeEq, NonZero},
     ArrayLength, GenericArray,
 };
-use sodiumoxide::crypto::pwhash::argon2id13::{derive_key, MemLimit, OpsLimit, Salt};
+use libsodium_rs::crypto_pwhash::{argon2id, pwhash, ALG_ARGON2ID13};
 
 use crate::{CryptoError, Password, PasswordAlgorithm};
 
@@ -23,25 +23,36 @@ where
             memlimit_kb,
             parallelism,
         } => {
-            let mut key = GenericArray::<u8, Size>::default();
+            let opslimit = *opslimit as u64;
+            let memlimit = usize::try_from(*memlimit_kb).map_err(|_| CryptoError::DataSize)? * 1024;
 
             // Libsodium only support parallelism of 1
             if *parallelism != 1 {
                 return Err(CryptoError::DataSize);
             }
 
-            let salt = Salt::from_slice(salt).ok_or(CryptoError::DataSize)?;
+            debug_assert_eq!(salt.len(), argon2id::SALTBYTES);
 
-            let opslimit = OpsLimit((*opslimit).try_into().map_err(|_| CryptoError::DataSize)?);
-            let memlimit_kb: usize = (*memlimit_kb)
-                .try_into()
-                .map_err(|_| CryptoError::DataSize)?;
-            let memlimit = MemLimit(memlimit_kb * 1024);
+            if !(argon2id::OPSLIMIT_MIN..argon2id::OPSLIMIT_MAX).contains(&opslimit) {
+                return Err(CryptoError::DataSize);
+            }
 
-            derive_key(&mut key, password.as_bytes(), &salt, opslimit, memlimit)
-                .map_err(|_| CryptoError::DataSize)?;
+            if !(argon2id::MEMLIMIT_MIN..argon2id::MEMLIMIT_MAX).contains(&memlimit) {
+                return Err(CryptoError::DataSize);
+            }
 
-            Ok(key)
+            // We could use `argon2id::pwhash` instead since it use v1.3 but at least here the
+            // version is explicit with `ALG_ARGON2ID13`
+            pwhash(
+                Size::USIZE,
+                password.as_bytes(),
+                salt,
+                opslimit,
+                memlimit,
+                ALG_ARGON2ID13,
+            )
+            .map_err(|_| CryptoError::DataSize)
+            .and_then(|key| GenericArray::from_exact_iter(key).ok_or(CryptoError::DataSize))
         }
     }
 }
