@@ -43,7 +43,7 @@ import { ref, onMounted, nextTick, useTemplateRef } from 'vue';
 import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo } from '@/views/viewers/utils';
 import { scan } from 'ionicons/icons';
-import { FileControls, FileControlsButton, FileControlsPagination, FileControlsZoom } from '@/components/viewers';
+import { FileControls, FileControlsButton, FileControlsPagination, FileControlsZoom } from '@/components/files/handler/viewer';
 import { renderAsync } from 'docx-preview';
 import { MsSpinner } from 'megashark-lib';
 

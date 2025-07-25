@@ -68,7 +68,7 @@ import {
   FileControlsDropdownItemContent,
   FileControlsGroup,
   FileControlsZoom,
-} from '@/components/viewers';
+} from '@/components/files/handler/viewer';
 import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo } from '@/views/viewers/utils';
 import { chevronDown, scan } from 'ionicons/icons';

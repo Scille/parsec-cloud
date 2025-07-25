@@ -71,7 +71,7 @@ import {
   FileControlsGroup,
   FileControlsPlayback,
   FileControlsVolume,
-} from '@/components/viewers';
+} from '@/components/files/handler/viewer';
 import { onMounted, onUnmounted, ref, watch, useTemplateRef } from 'vue';
 import { FileViewerWrapper } from '@/views/viewers';
 import { SliderState, PipIcon } from 'megashark-lib';

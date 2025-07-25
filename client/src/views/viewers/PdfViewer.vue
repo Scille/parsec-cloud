@@ -53,7 +53,7 @@
 import { nextTick, onMounted, ref, Ref, shallowRef, useTemplateRef } from 'vue';
 import { FileContentInfo } from '@/views/viewers/utils';
 import { FileViewerWrapper } from '@/views/viewers';
-import { FileControls, FileControlsButton, FileControlsPagination, FileControlsZoom } from '@/components/viewers';
+import { FileControls, FileControlsButton, FileControlsPagination, FileControlsZoom } from '@/components/files/handler/viewer';
 import { MsSpinner, MsReportText, MsReportTheme, I18n } from 'megashark-lib';
 import * as pdfjs from 'pdfjs-dist';
 import { scan } from 'ionicons/icons';

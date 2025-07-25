@@ -59,7 +59,7 @@ import {
   FileControlsPlayback,
   FileControlsVolume,
   FileViewerBackground,
-} from '@/components/viewers';
+} from '@/components/files/handler/viewer';
 import { SliderState } from 'megashark-lib';
 import { getMimeTypeFromBuffer } from '@/common/fileTypes';
 

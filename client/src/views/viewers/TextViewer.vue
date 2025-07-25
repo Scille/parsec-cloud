@@ -44,7 +44,7 @@ import * as monaco from 'monaco-editor';
 import { scan } from 'ionicons/icons';
 import { FileContentInfo } from '@/views/viewers/utils';
 import { FileViewerWrapper } from '@/views/viewers';
-import { FileControls, FileControlsZoom, FileControlsGroup, FileControlsButton } from '@/components/viewers';
+import { FileControls, FileControlsZoom, FileControlsGroup, FileControlsButton } from '@/components/files/handler/viewer';
 
 const props = defineProps<{
   contentInfo: FileContentInfo;

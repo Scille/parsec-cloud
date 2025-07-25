@@ -35,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { FileControlsDropdownItemContent } from '@/components/viewers';
+import { FileControlsDropdownItemContent } from '@/components/files/handler/viewer';
 import { IonIcon, IonText } from '@ionic/vue';
 import { checkmark, chevronForward } from 'ionicons/icons';
 import { MsImage, Translatable } from 'megashark-lib';

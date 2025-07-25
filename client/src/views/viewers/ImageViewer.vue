@@ -41,7 +41,7 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch, useTemplateRef } from 'vue';
-import { FileControls, FileControlsButton, FileControlsZoom } from '@/components/viewers';
+import { FileControls, FileControlsButton, FileControlsZoom } from '@/components/files/handler/viewer';
 import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo } from '@/views/viewers/utils';
 import { MsDraggable } from 'megashark-lib';

@@ -86,9 +86,9 @@
 </template>
 
 <script setup lang="ts">
-import FileDropZone from '@/components/files/FileDropZone.vue';
-import FileListItem from '@/components/files/FileListItem.vue';
-import FileListItemProcessing from '@/components/files/FileListItemProcessing.vue';
+import FileDropZone from '@/components/files/explorer/FileDropZone.vue';
+import FileListItem from '@/components/files/explorer/FileListItem.vue';
+import FileListItemProcessing from '@/components/files/explorer/FileListItemProcessing.vue';
 import { EntryCollection, EntryModel, FileOperationProgress, FileModel, FolderModel } from '@/components/files/types';
 import { FileImportTuple } from '@/components/files/utils';
 import { FsPath, WorkspaceRole } from '@/parsec';

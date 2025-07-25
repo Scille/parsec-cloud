@@ -57,9 +57,9 @@
 </template>
 
 <script setup lang="ts">
-import FileCard from '@/components/files/FileCard.vue';
-import FileCardProcessing from '@/components/files/FileCardProcessing.vue';
-import FileDropZone from '@/components/files/FileDropZone.vue';
+import FileCard from '@/components/files/explorer/FileCard.vue';
+import FileCardProcessing from '@/components/files/explorer/FileCardProcessing.vue';
+import FileDropZone from '@/components/files/explorer/FileDropZone.vue';
 import { EntryCollection, EntryModel, FileOperationProgress, FileModel, FolderModel } from '@/components/files/types';
 import { FileImportTuple } from '@/components/files/utils';
 import { FsPath, WorkspaceRole } from '@/parsec';
