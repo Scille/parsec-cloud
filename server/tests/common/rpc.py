@@ -538,6 +538,22 @@ class BaseAuthenticatedAccountRpcClient:
         raw_rep = await self._do_request(req.dump(), "authenticated_account")
         return authenticated_account_cmds.latest.account_info.Rep.load(raw_rep)
 
+    async def auth_method_create(
+        self,
+        auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
+        auth_method_mac_key: SecretKey,
+        auth_method_id: AccountAuthMethodID,
+        vault_key_access: bytes,
+    ) -> authenticated_account_cmds.latest.auth_method_create.Rep:
+        req = authenticated_account_cmds.latest.auth_method_create.Req(
+            auth_method_password_algorithm=auth_method_password_algorithm,
+            auth_method_mac_key=auth_method_mac_key,
+            auth_method_id=auth_method_id,
+            vault_key_access=vault_key_access,
+        )
+        raw_rep = await self._do_request(req.dump(), "authenticated_account")
+        return authenticated_account_cmds.latest.auth_method_create.Rep.load(raw_rep)
+
     async def invite_self_list(
         self,
     ) -> authenticated_account_cmds.latest.invite_self_list.Rep:
