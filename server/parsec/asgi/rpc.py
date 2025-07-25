@@ -656,7 +656,7 @@ async def authenticated_account_api(request: Request) -> Response:
                 CustomHttpStatus.BadAuthenticationInfo,
                 api_version=parsed.settled_api_version,
             )
-        case AuthAuthenticatedAccountAuthBadOutcome.TOKEN_TOO_OLD:
+        case AuthAuthenticatedAccountAuthBadOutcome.TOKEN_OUT_OF_BALLPARK:
             _handshake_abort(
                 CustomHttpStatus.TokenExpired,
                 api_version=parsed.settled_api_version,
@@ -782,7 +782,7 @@ async def authenticated_api(raw_organization_id: str, request: Request) -> Respo
                 CustomHttpStatus.OrganizationNotFound,
                 api_version=parsed.settled_api_version,
             )
-        case AuthAuthenticatedAuthBadOutcome.TOKEN_TOO_OLD:
+        case AuthAuthenticatedAuthBadOutcome.TOKEN_OUT_OF_BALLPARK:
             _handshake_abort(
                 CustomHttpStatus.TokenExpired,
                 api_version=parsed.settled_api_version,
@@ -869,7 +869,7 @@ async def authenticated_events_api(raw_organization_id: str, request: Request) -
                 CustomHttpStatus.OrganizationNotFound,
                 api_version=parsed.settled_api_version,
             )
-        case AuthAuthenticatedAuthBadOutcome.TOKEN_TOO_OLD:
+        case AuthAuthenticatedAuthBadOutcome.TOKEN_OUT_OF_BALLPARK:
             _handshake_abort(
                 CustomHttpStatus.TokenExpired,
                 api_version=parsed.settled_api_version,
@@ -1146,7 +1146,7 @@ async def tos_api(raw_organization_id: str, request: Request) -> Response:
                 CustomHttpStatus.OrganizationNotFound,
                 api_version=parsed.settled_api_version,
             )
-        case AuthAuthenticatedAuthBadOutcome.TOKEN_TOO_OLD:
+        case AuthAuthenticatedAuthBadOutcome.TOKEN_OUT_OF_BALLPARK:
             _handshake_abort(
                 CustomHttpStatus.TokenExpired,
                 api_version=parsed.settled_api_version,
