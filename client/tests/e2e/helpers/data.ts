@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { getOrganizationAddr, getServerAddr } from '@tests/e2e/helpers/utils';
+import { getOrganizationAddr, getServerAddr, MsPage } from '@tests/e2e/helpers';
 import { randomUUID } from 'crypto';
 
 export interface UserInformation {
@@ -60,6 +60,16 @@ export function generateDefaultOrganizationInformation(): OrganizationInformatio
     serverAddr: getServerAddr(),
     bmsId: '42',
   };
+}
+
+export function generateMockInvitationLink(page: MsPage, type: 'user' | 'device'): string {
+  if (page.orgInfo.addr.includes('?')) {
+    // cspell:disable-next-line
+    return `${page.orgInfo.addr}&a=claim_${type}&p=xBBHJlEjlpxNZYTCvBWWDPIS`;
+  } else {
+    // cspell:disable-next-line
+    return `${page.orgInfo.addr}?a=claim_${type}&p=xBBHJlEjlpxNZYTCvBWWDPIS`;
+  }
 }
 
 export function generateUniqueEmail(): string {
