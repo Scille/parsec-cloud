@@ -707,7 +707,114 @@ and replace it by a new one.
 
 The IP address and User-agent of the creator are recorded (see Data Model).
 
-### 4.6 - Account recovery: validation
+### 4.7 - List active authentication methods
+
+Authenticated account API:
+
+```json5
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "auth_method_list",
+        "req": {},
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        // Note only non-disabled auth methods are listed here.
+                        "name": "items",
+                        "type": "List<AuthMethod>"
+                    }
+                ]
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "AuthMethod",
+                "fields": [
+                    {
+                        "name": "auth_method_id",
+                        "type": "AccountAuthMethodID"
+                    },
+                    {
+                        "name": "created_on",
+                        "type": "DateTime"
+                    },
+                    {
+                        // The content of this field is no guaranteed, it can contain:
+                        // - An IPv4 or IPv6 address (e.g. `10.53.48.2`), this should be the most common case though.
+                        // - Nothing :/
+                        "name": "created_by_ip",
+                        "type": "String"
+                    },
+                    {
+                        "name": "created_by_user_agent",
+                        "type": "String"
+                    },
+                    {
+                        "name": "vault_key_access",
+                        // `AccountVaultKeyAccess` encrypted with the `auth_method_secret_key`
+                        "type": "Bytes"
+                    },
+                    {
+                        // Auth method can be of two types:
+                        // - ClientProvided, for which the client is able to store
+                        //   `auth_method_master_secret` all by itself.
+                        // - Password, for which the client must obtain some configuration
+                        //   (i.e. this field !) from the server in order to know how
+                        //   to turn the password into `auth_method_master_secret`.
+                        "name": "password_algorithm",
+                        "type": "RequiredOption<UntrustedPasswordAlgorithm>"
+                    }
+                ]
+            }
+        ]
+    }
+]
+```
+
+### 4.8 - Disable an authentication method
+
+Authenticated account API:
+
+```json5
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "auth_method_disable",
+        "req": {
+            "fields": [
+                {
+                    "name": "auth_method_id",
+                    "type": "AccountAuthMethodID"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "auth_method_not_found"
+            },
+            {
+                "status": "auth_method_already_disabled"
+            },
+            {
+                // Cannot disable the authentication method used to do the request!
+                "status": "self_disable_not_allowed"
+            }
+        ]
+    }
+]
+```
+
+### 4.9 - Account recovery: validation
 
 Similar to `account_create_send_validation_email`, the server will send a mail to recover the account.
 If the email does not exist the server will still respond with OK status for the same reason as `account_create_send_validation_email`.
@@ -762,7 +869,7 @@ The server will send an email with a validation code (similar to the creation va
 > [!NOTE]
 > To avoid DOS attack, the server will limit the number of requests similarly to `account_create_send_validation_email`.
 
-### 4.7 - Account recovery: actual operation
+### 4.10 - Account recovery: actual operation
 
 Anonymous account API:
 
@@ -840,7 +947,7 @@ Anonymous account API:
 
 The server will create a new [`Vault`] & [`Authentication Method`]
 
-### 4.8 - Account deletion: validation
+### 4.11 - Account deletion: validation
 
 The server will send an email with a validation code (similar to the creation validation code) to confirm the suppression of the account.
 
@@ -888,7 +995,7 @@ Authenticated account API:
 > To avoid DOS attack, the server will limit the number of requests in a similar
 > way as for `account_create_send_validation_email`.
 
-### 4.9 - Account deletion: actual operation
+### 4.12 - Account deletion: actual operation
 
 Authenticated account API:
 
@@ -943,7 +1050,7 @@ At that point the server can remove the client, and its related data.
 > On top of that, it allows the `account_delete_proceed` command to be authenticated,
 > which improves security.
 
-### 4.10 - List organization invitations related to the account's email
+### 4.13 - List organization invitations related to the account's email
 
 Authenticated account API:
 
