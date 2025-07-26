@@ -4,8 +4,6 @@ import { getDefaultDeviceName } from '@/common/device';
 import { getClientConfig, wait } from '@/parsec/internals';
 import { listAvailableDevices } from '@/parsec/login';
 import {
-  AccountAccess,
-  AccountAccessStrategy,
   AccountCreateError,
   AccountCreateErrorTag,
   AccountCreateRegistrationDeviceError,
@@ -20,9 +18,10 @@ import {
   AccountInvitation,
   AccountListInvitationsError,
   AccountListRegistrationDevicesError,
-  AccountLoginWithMasterSecretError,
-  AccountLoginWithPasswordError,
-  AccountLoginWithPasswordErrorTag,
+  AccountLoginError,
+  AccountLoginErrorTag,
+  AccountLoginStrategy,
+  AccountLoginStrategyTag,
   AccountLogoutError,
   AccountRegisterNewDeviceError,
   AccountRegisterNewDeviceErrorTag,
@@ -37,7 +36,7 @@ import {
   SecretKey,
 } from '@/parsec/types';
 import { generateNoHandleError } from '@/parsec/utils';
-import { libparsec } from '@/plugins/libparsec';
+import { AccountAuthMethodStrategy, AccountAuthMethodStrategyTag, libparsec } from '@/plugins/libparsec';
 import { Env } from '@/services/environment';
 import { DateTime } from 'luxon';
 
@@ -135,12 +134,9 @@ class AccountCreationStepper {
     }
   }
 
-  async createAccount(authentication: AccountAccess): Promise<Result<null, AccountCreateError>> {
+  async createAccount(authentication: AccountAuthMethodStrategy): Promise<Result<null, AccountCreateError>> {
     if (!this.accountInfo || !this.code) {
       return { ok: false, error: { tag: AccountCreateErrorTag.Internal, error: 'invalid_state' } };
-    }
-    if (authentication.strategy !== AccountAccessStrategy.Password) {
-      return { ok: false, error: { tag: AccountCreateErrorTag.Internal, error: 'invalid_authentication' } };
     }
     if (Env.isAccountMocked()) {
       await wait(1500);
@@ -154,7 +150,7 @@ class AccountCreationStepper {
           label: `${this.accountInfo.firstName} ${this.accountInfo.lastName}`,
           email: this.accountInfo.email,
         },
-        authentication.password,
+        authentication,
       );
     }
   }
@@ -166,18 +162,32 @@ class AccountCreationStepper {
 }
 
 export const ParsecAccountAccess = {
-  usePassword(email: string, password: string): AccountAccess {
+  usePasswordForLogin(email: string, password: string): AccountLoginStrategy {
     return {
-      strategy: AccountAccessStrategy.Password,
+      tag: AccountLoginStrategyTag.Password,
       email: email,
       password: password,
     };
   },
 
-  useMasterSecret(secret: Uint8Array): AccountAccess {
+  useMasterSecretForLogin(masterSecret: Uint8Array): AccountLoginStrategy {
     return {
-      strategy: AccountAccessStrategy.MasterSecret,
-      secret: secret,
+      tag: AccountLoginStrategyTag.MasterSecret,
+      masterSecret: masterSecret,
+    };
+  },
+
+  usePasswordForCreate(password: string): AccountAuthMethodStrategy {
+    return {
+      tag: AccountAuthMethodStrategyTag.Password,
+      password: password,
+    };
+  },
+
+  useMasterSecretForCreate(masterSecret: Uint8Array): AccountAuthMethodStrategy {
+    return {
+      tag: AccountAuthMethodStrategyTag.MasterSecret,
+      masterSecret: masterSecret,
     };
   },
 };
@@ -196,7 +206,7 @@ class _ParsecAccount {
       console.error(`No auto-login possible, testNewAccount failed: ${newAccountResult.error.tag} (${newAccountResult.error.error})`);
       return;
     }
-    const loginResult = await this.login(ParsecAccountAccess.useMasterSecret(newAccountResult.value[1]), Env.getAccountServer());
+    const loginResult = await this.login(ParsecAccountAccess.useMasterSecretForLogin(newAccountResult.value[1]), Env.getAccountServer());
     if (!loginResult.ok) {
       console.error(`Failed to login: ${loginResult.error.tag} (${loginResult.error.error})`);
     }
@@ -233,33 +243,18 @@ class _ParsecAccount {
     return this.skipped;
   }
 
-  async login(
-    authentication: AccountAccess,
-    server: string,
-  ): Promise<Result<AccountHandle, AccountLoginWithMasterSecretError | AccountLoginWithPasswordError>> {
+  async login(authentication: AccountLoginStrategy, server: string): Promise<Result<AccountHandle, AccountLoginError>> {
     if (Env.isAccountMocked()) {
       if (!Env.isAccountAutoLoginEnabled()) {
         await wait(2000);
       }
-      if (authentication.strategy === AccountAccessStrategy.Password && authentication.password === 'BigP@ssw0rd.') {
+      if (authentication.tag === AccountLoginStrategyTag.Password && authentication.password === 'BigP@ssw0rd.') {
         this.handle = 1;
         return { ok: true, value: 1 };
       }
-      return { ok: false, error: { tag: AccountLoginWithPasswordErrorTag.BadPasswordAlgorithm, error: 'Invalid authentication' } };
+      return { ok: false, error: { tag: AccountLoginErrorTag.BadPasswordAlgorithm, error: 'Invalid authentication' } };
     } else {
-      let result: Result<AccountHandle, AccountLoginWithMasterSecretError | AccountLoginWithPasswordError> | undefined;
-      if (authentication.strategy === AccountAccessStrategy.Password) {
-        result = await libparsec.accountLoginWithPassword(
-          getClientConfig().configDir,
-          server,
-          authentication.email,
-          authentication.password,
-        );
-      } else if (authentication.strategy === AccountAccessStrategy.MasterSecret) {
-        result = await libparsec.accountLoginWithMasterSecret(getClientConfig().configDir, server, authentication.secret);
-      } else {
-        return { ok: false, error: { tag: AccountLoginWithPasswordErrorTag.BadPasswordAlgorithm, error: 'Unknown authentication method' } };
-      }
+      const result = await libparsec.accountLogin(getClientConfig().configDir, server, authentication);
       if (!result.ok) {
         return result;
       }
