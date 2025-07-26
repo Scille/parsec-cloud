@@ -5,6 +5,8 @@ from .test_account_delete_proceed import *
 from .test_account_delete_send_validation_email import *
 from .test_account_info import *
 from .test_auth_method_create import *
+from .test_auth_method_disable import *
+from .test_auth_method_list import *
 from .test_invite_self_list import *
 from .test_ping import *
 from .test_vault_item_list import *

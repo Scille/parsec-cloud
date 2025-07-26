@@ -17,6 +17,8 @@ from parsec._parsec import (
 )
 from parsec.components.account import (
     AccountAuthMethodCreateBadOutcome,
+    AccountAuthMethodDisableBadOutcome,
+    AccountAuthMethodListBadOutcome,
     AccountCreateProceedBadOutcome,
     AccountCreateSendValidationEmailBadOutcome,
     AccountDeleteProceedBadOutcome,
@@ -30,6 +32,7 @@ from parsec.components.account import (
     AccountVaultItemRecoveryList,
     AccountVaultItemUploadBadOutcome,
     AccountVaultKeyRotation,
+    AuthMethod,
     BaseAccountComponent,
     VaultItemRecoveryList,
     VaultItems,
@@ -37,6 +40,8 @@ from parsec.components.account import (
 from parsec.components.email import SendEmailBadOutcome
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.account_auth_method_create import auth_method_create
+from parsec.components.postgresql.account_auth_method_disable import auth_method_disable
+from parsec.components.postgresql.account_auth_method_list import auth_method_list
 from parsec.components.postgresql.account_create import (
     create_check_validation_code,
     create_proceed,
@@ -353,3 +358,21 @@ class PGAccountComponent(BaseAccountComponent):
             new_auth_method_password_algorithm,
             new_vault_key_access,
         )
+
+    @override
+    @no_transaction
+    async def auth_method_list(
+        self, conn: AsyncpgConnection, auth_method_id: AccountAuthMethodID
+    ) -> list[AuthMethod] | AccountAuthMethodListBadOutcome:
+        return await auth_method_list(conn, auth_method_id)
+
+    @override
+    @transaction
+    async def auth_method_disable(
+        self,
+        conn: AsyncpgConnection,
+        now: DateTime,
+        auth_method_id: AccountAuthMethodID,
+        to_disable_auth_method_id: AccountAuthMethodID,
+    ) -> None | AccountAuthMethodDisableBadOutcome:
+        return await auth_method_disable(conn, now, auth_method_id, to_disable_auth_method_id)

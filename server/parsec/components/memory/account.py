@@ -17,6 +17,8 @@ from parsec._parsec import (
 )
 from parsec.components.account import (
     AccountAuthMethodCreateBadOutcome,
+    AccountAuthMethodDisableBadOutcome,
+    AccountAuthMethodListBadOutcome,
     AccountCreateProceedBadOutcome,
     AccountCreateSendValidationEmailBadOutcome,
     AccountDeleteProceedBadOutcome,
@@ -30,10 +32,10 @@ from parsec.components.account import (
     AccountVaultItemRecoveryList,
     AccountVaultItemUploadBadOutcome,
     AccountVaultKeyRotation,
+    AuthMethod,
     BaseAccountComponent,
     UntrustedPasswordAlgorithm,
     ValidationCodeInfo,
-    VaultItemRecoveryAuthMethod,
     VaultItemRecoveryList,
     VaultItemRecoveryVault,
     VaultItems,
@@ -475,7 +477,7 @@ class MemoryAccountComponent(BaseAccountComponent):
         def _convert_vault(vault: MemoryAccountVault) -> VaultItemRecoveryVault:
             return VaultItemRecoveryVault(
                 auth_methods=[
-                    VaultItemRecoveryAuthMethod(
+                    AuthMethod(
                         auth_method_id=auth_method.id,
                         created_on=auth_method.created_on,
                         created_by_ip=auth_method.created_by_ip,
@@ -589,3 +591,61 @@ class MemoryAccountComponent(BaseAccountComponent):
         account.current_vault.authentication_methods[new_auth_method_id] = new_auth_method
 
         return None
+
+    @override
+    async def auth_method_list(
+        self,
+        auth_method_id: AccountAuthMethodID,
+    ) -> list[AuthMethod] | AccountAuthMethodListBadOutcome:
+        # Verify the requesting account exists and is active
+        match self._data.get_account_from_active_auth_method(auth_method_id=auth_method_id):
+            case (account, _):
+                pass
+            case None:
+                return AccountAuthMethodListBadOutcome.ACCOUNT_NOT_FOUND
+
+        # Return all active authentication methods for the account's current vault
+        items = [
+            AuthMethod(
+                auth_method_id=auth_method.id,
+                created_on=auth_method.created_on,
+                created_by_ip=auth_method.created_by_ip,
+                created_by_user_agent=auth_method.created_by_user_agent,
+                vault_key_access=auth_method.vault_key_access,
+                password_algorithm=auth_method.password_algorithm,
+                disabled_on=None,
+            )
+            for auth_method in account.current_vault.active_authentication_methods
+        ]
+        items.sort(key=lambda x: x.created_on)
+        return items
+
+    @override
+    async def auth_method_disable(
+        self,
+        now: DateTime,
+        auth_method_id: AccountAuthMethodID,
+        to_disable_auth_method_id: AccountAuthMethodID,
+    ) -> None | AccountAuthMethodDisableBadOutcome:
+        if auth_method_id == to_disable_auth_method_id:
+            return AccountAuthMethodDisableBadOutcome.SELF_DISABLE_NOT_ALLOWED
+
+        # Verify the requesting account exists and is active
+        match self._data.get_account_from_active_auth_method(auth_method_id=auth_method_id):
+            case (account, _):
+                pass
+            case None:
+                return AccountAuthMethodDisableBadOutcome.ACCOUNT_NOT_FOUND
+
+        # Find the target authentication method
+        match self._data.get_account_from_any_auth_method(to_disable_auth_method_id):
+            case None:
+                return AccountAuthMethodDisableBadOutcome.AUTH_METHOD_NOT_FOUND
+            case (target_account, target_auth_method):
+                if target_account is not account:
+                    return AccountAuthMethodDisableBadOutcome.CROSS_ACCOUNT_NOT_ALLOWED
+                if target_auth_method.disabled_on is not None:
+                    return AccountAuthMethodDisableBadOutcome.AUTH_METHOD_ALREADY_DISABLED
+
+        # Disable the authentication method
+        target_auth_method.disabled_on = now

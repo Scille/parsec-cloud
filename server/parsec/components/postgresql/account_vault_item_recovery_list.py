@@ -9,7 +9,7 @@ from parsec._parsec import (
 )
 from parsec.components.account import (
     AccountVaultItemRecoveryList,
-    VaultItemRecoveryAuthMethod,
+    AuthMethod,
     VaultItemRecoveryList,
     VaultItemRecoveryVault,
 )
@@ -177,7 +177,7 @@ async def vault_item_recovery_list(
             case _:
                 assert False, row
 
-        auth_method = VaultItemRecoveryAuthMethod(
+        auth_method = AuthMethod(
             auth_method_id=auth_method_id,
             created_on=created_on,
             created_by_ip=created_by_ip,
