@@ -3860,6 +3860,31 @@ fn struct_workspace_user_access_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// AccountAuthMethodCreateError
+
+#[allow(dead_code)]
+fn variant_account_auth_method_create_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AccountAuthMethodCreateError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::AccountAuthMethodCreateError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "AccountAuthMethodCreateErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountAuthMethodCreateError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "AccountAuthMethodCreateErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // AccountAuthMethodStrategy
 
 #[allow(dead_code)]
@@ -14615,6 +14640,65 @@ fn variant_workspace_watch_entry_one_shot_error_rs_to_js<'a>(
         }
     }
     Ok(js_obj)
+}
+
+// account_auth_method_create
+fn account_auth_method_create(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let account = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let auth_method_strategy = {
+        let js_val = cx.argument::<JsObject>(1)?;
+        variant_account_auth_method_strategy_js_to_rs(&mut cx, js_val)?
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::account_auth_method_create(account, auth_method_strategy).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_account_auth_method_create_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
 }
 
 // account_create_1_send_validation_email
@@ -25775,6 +25859,7 @@ fn workspace_watch_entry_oneshot(mut cx: FunctionContext) -> JsResult<JsPromise>
 }
 
 pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
+    cx.export_function("accountAuthMethodCreate", account_auth_method_create)?;
     cx.export_function(
         "accountCreate1SendValidationEmail",
         account_create_1_send_validation_email,

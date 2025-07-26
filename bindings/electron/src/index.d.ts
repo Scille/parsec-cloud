@@ -421,6 +421,20 @@ export interface WorkspaceUserAccessInfo {
 }
 
 
+// AccountAuthMethodCreateError
+export interface AccountAuthMethodCreateErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface AccountAuthMethodCreateErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export type AccountAuthMethodCreateError =
+  | AccountAuthMethodCreateErrorInternal
+  | AccountAuthMethodCreateErrorOffline
+
+
 // AccountAuthMethodStrategy
 export interface AccountAuthMethodStrategyMasterSecret {
     tag: "MasterSecret"
@@ -3948,6 +3962,10 @@ export type WorkspaceWatchEntryOneShotError =
   | WorkspaceWatchEntryOneShotErrorStopped
 
 
+export function accountAuthMethodCreate(
+    account: number,
+    auth_method_strategy: AccountAuthMethodStrategy
+): Promise<Result<null, AccountAuthMethodCreateError>>
 export function accountCreate1SendValidationEmail(
     config_dir: string,
     addr: string,

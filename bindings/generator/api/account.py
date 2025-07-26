@@ -92,6 +92,21 @@ async def account_create_3_proceed(
     raise NotImplementedError
 
 
+class AccountAuthMethodCreateError(ErrorVariant):
+    class Offline:
+        pass
+
+    class Internal:
+        pass
+
+
+async def account_auth_method_create(
+    account: Handle,
+    auth_method_strategy: AccountAuthMethodStrategy,
+) -> Result[None, AccountAuthMethodCreateError]:
+    raise NotImplementedError
+
+
 class AccountLoginStrategy(Variant):
     class Password:
         email: EmailAddress

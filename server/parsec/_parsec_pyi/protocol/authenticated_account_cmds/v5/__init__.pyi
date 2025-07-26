@@ -8,6 +8,7 @@ from . import (
     account_delete_proceed,
     account_delete_send_validation_email,
     account_info,
+    auth_method_create,
     invite_self_list,
     ping,
     vault_item_list,
@@ -24,6 +25,7 @@ class AnyCmdReq:
         account_delete_proceed.Req
         | account_delete_send_validation_email.Req
         | account_info.Req
+        | auth_method_create.Req
         | invite_self_list.Req
         | ping.Req
         | vault_item_list.Req
@@ -37,6 +39,7 @@ __all__ = [
     "account_delete_proceed",
     "account_delete_send_validation_email",
     "account_info",
+    "auth_method_create",
     "invite_self_list",
     "ping",
     "vault_item_list",
