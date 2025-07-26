@@ -421,6 +421,10 @@ To list all protected device from all vault except current/active one:
                 "name": "VaultItemRecoveryAuthMethod",
                 "fields": [
                     {
+                        "name": "auth_method_id",
+                        "type": "AccountAuthMethodID"
+                    },
+                    {
                         "name": "created_on",
                         "type": "DateTime"
                     },
