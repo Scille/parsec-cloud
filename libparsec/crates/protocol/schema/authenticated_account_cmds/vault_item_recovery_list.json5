@@ -39,6 +39,10 @@
                 "name": "VaultItemRecoveryAuthMethod",
                 "fields": [
                     {
+                        "name": "auth_method_id",
+                        "type": "AccountAuthMethodID"
+                    },
+                    {
                         "name": "created_on",
                         "type": "DateTime"
                     },
