@@ -4146,6 +4146,34 @@ fn variant_account_auth_method_strategy_rs_to_js(
     Ok(js_obj)
 }
 
+// AccountCreateAuthMethodError
+
+#[allow(dead_code)]
+fn variant_account_create_auth_method_error_rs_to_js(
+    rs_obj: libparsec::AccountCreateAuthMethodError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::AccountCreateAuthMethodError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateAuthMethodErrorInternal".into(),
+            )?;
+        }
+        libparsec::AccountCreateAuthMethodError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateAuthMethodErrorOffline".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // AccountCreateError
 
 #[allow(dead_code)]
@@ -16309,6 +16337,38 @@ pub fn accountCreate3Proceed(
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_account_create_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// account_create_auth_method
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn accountCreateAuthMethod(account: u32, auth_method_strategy: Object) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let auth_method_strategy = auth_method_strategy.into();
+        let auth_method_strategy =
+            variant_account_auth_method_strategy_js_to_rs(auth_method_strategy)?;
+
+        let ret = libparsec::account_create_auth_method(account, auth_method_strategy).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_account_create_auth_method_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

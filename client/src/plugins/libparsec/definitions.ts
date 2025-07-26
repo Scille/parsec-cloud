@@ -430,6 +430,24 @@ export type AccountAuthMethodStrategy =
   | AccountAuthMethodStrategyMasterSecret
   | AccountAuthMethodStrategyPassword
 
+// AccountCreateAuthMethodError
+export enum AccountCreateAuthMethodErrorTag {
+    Internal = 'AccountCreateAuthMethodErrorInternal',
+    Offline = 'AccountCreateAuthMethodErrorOffline',
+}
+
+export interface AccountCreateAuthMethodErrorInternal {
+    tag: AccountCreateAuthMethodErrorTag.Internal
+    error: string
+}
+export interface AccountCreateAuthMethodErrorOffline {
+    tag: AccountCreateAuthMethodErrorTag.Offline
+    error: string
+}
+export type AccountCreateAuthMethodError =
+  | AccountCreateAuthMethodErrorInternal
+  | AccountCreateAuthMethodErrorOffline
+
 // AccountCreateError
 export enum AccountCreateErrorTag {
     Internal = 'AccountCreateErrorInternal',
@@ -4771,6 +4789,10 @@ export interface LibParsecPlugin {
         human_handle: HumanHandle,
         auth_method_strategy: AccountAuthMethodStrategy
     ): Promise<Result<null, AccountCreateError>>
+    accountCreateAuthMethod(
+        account: Handle,
+        auth_method_strategy: AccountAuthMethodStrategy
+    ): Promise<Result<null, AccountCreateAuthMethodError>>
     accountCreateRegistrationDevice(
         account: Handle,
         existing_local_device_access: DeviceAccessStrategy
