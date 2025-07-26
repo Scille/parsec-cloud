@@ -554,6 +554,22 @@ class BaseAuthenticatedAccountRpcClient:
         raw_rep = await self._do_request(req.dump(), "authenticated_account")
         return authenticated_account_cmds.latest.auth_method_create.Rep.load(raw_rep)
 
+    async def auth_method_disable(
+        self, auth_method_id: AccountAuthMethodID
+    ) -> authenticated_account_cmds.latest.auth_method_disable.Rep:
+        req = authenticated_account_cmds.latest.auth_method_disable.Req(
+            auth_method_id=auth_method_id
+        )
+        raw_rep = await self._do_request(req.dump(), "authenticated_account")
+        return authenticated_account_cmds.latest.auth_method_disable.Rep.load(raw_rep)
+
+    async def auth_method_list(
+        self,
+    ) -> authenticated_account_cmds.latest.auth_method_list.Rep:
+        req = authenticated_account_cmds.latest.auth_method_list.Req()
+        raw_rep = await self._do_request(req.dump(), "authenticated_account")
+        return authenticated_account_cmds.latest.auth_method_list.Rep.load(raw_rep)
+
     async def invite_self_list(
         self,
     ) -> authenticated_account_cmds.latest.invite_self_list.Rep:
