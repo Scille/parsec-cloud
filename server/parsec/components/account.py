@@ -674,7 +674,7 @@ class BaseAccountComponent:
         match outcome:
             case VaultItemRecoveryList() as vaults:
 
-                def _convert_auth_methods(
+                def _convert_auth_method(
                     auth_method: VaultItemRecoveryAuthMethod,
                 ) -> authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryAuthMethod:
                     match auth_method.password_algorithm:
@@ -704,7 +704,7 @@ class BaseAccountComponent:
                     vault: VaultItemRecoveryVault,
                 ) -> authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryVault:
                     return authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryVault(
-                        auth_methods=[_convert_auth_methods(m) for m in vault.auth_methods],
+                        auth_methods=[_convert_auth_method(m) for m in vault.auth_methods],
                         vault_items=vault.vault_items,
                     )
 
