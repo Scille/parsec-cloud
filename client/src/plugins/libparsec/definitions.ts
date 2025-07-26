@@ -412,6 +412,24 @@ export interface WorkspaceUserAccessInfo {
     currentRole: RealmRole
 }
 
+// AccountAuthMethodCreateError
+export enum AccountAuthMethodCreateErrorTag {
+    Internal = 'AccountAuthMethodCreateErrorInternal',
+    Offline = 'AccountAuthMethodCreateErrorOffline',
+}
+
+export interface AccountAuthMethodCreateErrorInternal {
+    tag: AccountAuthMethodCreateErrorTag.Internal
+    error: string
+}
+export interface AccountAuthMethodCreateErrorOffline {
+    tag: AccountAuthMethodCreateErrorTag.Offline
+    error: string
+}
+export type AccountAuthMethodCreateError =
+  | AccountAuthMethodCreateErrorInternal
+  | AccountAuthMethodCreateErrorOffline
+
 // AccountAuthMethodStrategy
 export enum AccountAuthMethodStrategyTag {
     MasterSecret = 'AccountAuthMethodStrategyMasterSecret',
@@ -4753,6 +4771,10 @@ export type WorkspaceWatchEntryOneShotError =
   | WorkspaceWatchEntryOneShotErrorStopped
 
 export interface LibParsecPlugin {
+    accountAuthMethodCreate(
+        account: Handle,
+        auth_method_strategy: AccountAuthMethodStrategy
+    ): Promise<Result<null, AccountAuthMethodCreateError>>
     accountCreate1SendValidationEmail(
         config_dir: Path,
         addr: ParsecAddr,

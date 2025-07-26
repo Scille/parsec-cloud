@@ -4070,6 +4070,34 @@ fn struct_workspace_user_access_info_rs_to_js(
     Ok(js_obj)
 }
 
+// AccountAuthMethodCreateError
+
+#[allow(dead_code)]
+fn variant_account_auth_method_create_error_rs_to_js(
+    rs_obj: libparsec::AccountAuthMethodCreateError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::AccountAuthMethodCreateError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountAuthMethodCreateErrorInternal".into(),
+            )?;
+        }
+        libparsec::AccountAuthMethodCreateError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountAuthMethodCreateErrorOffline".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // AccountAuthMethodStrategy
 
 #[allow(dead_code)]
@@ -16135,6 +16163,38 @@ fn variant_workspace_watch_entry_one_shot_error_rs_to_js(
         }
     }
     Ok(js_obj)
+}
+
+// account_auth_method_create
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn accountAuthMethodCreate(account: u32, auth_method_strategy: Object) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let auth_method_strategy = auth_method_strategy.into();
+        let auth_method_strategy =
+            variant_account_auth_method_strategy_js_to_rs(auth_method_strategy)?;
+
+        let ret = libparsec::account_auth_method_create(account, auth_method_strategy).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_account_auth_method_create_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
 }
 
 // account_create_1_send_validation_email
