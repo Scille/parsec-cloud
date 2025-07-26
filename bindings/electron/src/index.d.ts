@@ -435,6 +435,20 @@ export type AccountAuthMethodStrategy =
   | AccountAuthMethodStrategyPassword
 
 
+// AccountCreateAuthMethodError
+export interface AccountCreateAuthMethodErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface AccountCreateAuthMethodErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export type AccountCreateAuthMethodError =
+  | AccountCreateAuthMethodErrorInternal
+  | AccountCreateAuthMethodErrorOffline
+
+
 // AccountCreateError
 export interface AccountCreateErrorInternal {
     tag: "Internal"
@@ -3966,6 +3980,10 @@ export function accountCreate3Proceed(
     human_handle: HumanHandle,
     auth_method_strategy: AccountAuthMethodStrategy
 ): Promise<Result<null, AccountCreateError>>
+export function accountCreateAuthMethod(
+    account: number,
+    auth_method_strategy: AccountAuthMethodStrategy
+): Promise<Result<null, AccountCreateAuthMethodError>>
 export function accountCreateRegistrationDevice(
     account: number,
     existing_local_device_access: DeviceAccessStrategy
