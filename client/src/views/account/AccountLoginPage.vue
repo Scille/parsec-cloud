@@ -133,7 +133,7 @@ async function onLoginClicked(): Promise<void> {
   }
   querying.value = true;
   try {
-    const result = await ParsecAccount.login(ParsecAccountAccess.usePassword(email.value, password.value), server.value);
+    const result = await ParsecAccount.login(ParsecAccountAccess.usePasswordForLogin(email.value, password.value), server.value);
 
     if (result.ok) {
       emits('loginSuccess', result.value);

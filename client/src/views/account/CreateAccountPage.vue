@@ -315,8 +315,9 @@ async function createAccount(): Promise<void> {
       error.value = 'loginPage.createAccount.errors.missingFields';
       return;
     }
-    const access = ParsecAccountAccess.usePassword(creationStepper.email!, choosePasswordRef.value?.password);
-    const result = await creationStepper.createAccount(access);
+    const email = creationStepper.email!;
+    const password = choosePasswordRef.value?.password;
+    const result = await creationStepper.createAccount(ParsecAccountAccess.usePasswordForCreate(password));
     const end = DateTime.now().toMillis();
     // Wait for a bit if it's too fast
     const diff = end - start;
@@ -330,7 +331,7 @@ async function createAccount(): Promise<void> {
         error.value = 'loginPage.createAccount.errors.accountCreationFailed';
       }
     } else {
-      const loginResult = await ParsecAccount.login(access, creationStepper.server!);
+      const loginResult = await ParsecAccount.login(ParsecAccountAccess.usePasswordForLogin(email, password), creationStepper.server!);
       if (!loginResult.ok) {
         error.value = 'loginPage.createAccount.errors.accountCreationOkLoginFailed';
       }

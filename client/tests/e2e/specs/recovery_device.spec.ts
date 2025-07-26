@@ -23,7 +23,7 @@ msTest('Export and use recovery files', async ({ myProfilePage }) => {
   const fileDownloadPromise = myProfilePage.waitForEvent('download');
   await recoveryItems.nth(0).locator('.recovery-item-download').locator('ion-button').click();
   const fileDownload = await fileDownloadPromise;
-  expect(fileDownload.suggestedFilename()).toMatch(/^Parsec_Recovery_File_Org\d+\.psrk$/);
+  expect(fileDownload.suggestedFilename()).toMatch(/^Parsec_Recovery_File_TestbedOrg\d+\.psrk$/);
   const fileStream = await fileDownload.createReadStream();
   const chunks: Array<Buffer> = [];
   for await (const chunk of fileStream) {
@@ -67,12 +67,14 @@ msTest('Export and use recovery files', async ({ myProfilePage }) => {
   expect(fileChooser.isMultiple()).toBe(false);
   await fileChooser.setFiles([
     {
-      name: 'Parsec_Recovery_File_OrgXX.psrk',
+      name: 'Parsec_Recovery_File_TestbedOrgXX.psrk',
       mimeType: 'application/octet-stream',
       buffer: fileContent,
     },
   ]);
-  await expect(importItems.nth(0).locator('.recovery-list-item__button').locator('div')).toHaveText('Parsec_Recovery_File_OrgXX.psrk');
+  await expect(importItems.nth(0).locator('.recovery-list-item__button').locator('div')).toHaveText(
+    'Parsec_Recovery_File_TestbedOrgXX.psrk',
+  );
   await expect(importItems.nth(1)).not.toHaveTheClass('disabled');
   await expect(recoveryContainer.locator('.next-button').locator('ion-button')).toBeTrulyDisabled();
   await fillIonInput(importItems.nth(1).locator('div.recovery-list-item__input'), passphraseContent);
@@ -117,7 +119,7 @@ for (const error of ['invalid-passphrase', 'invalid-file']) {
     const fileDownloadPromise = myProfilePage.waitForEvent('download');
     await recoveryItems.nth(0).locator('.recovery-item-download ion-button').click();
     const fileDownload = await fileDownloadPromise;
-    expect(fileDownload.suggestedFilename()).toMatch(/^Parsec_Recovery_File_Org\d+\.psrk$/);
+    expect(fileDownload.suggestedFilename()).toMatch(/^Parsec_Recovery_File_TestbedOrg\d+\.psrk$/);
     const fileStream = await fileDownload.createReadStream();
     const chunks: Array<Buffer> = [];
     for await (const chunk of fileStream) {
@@ -161,12 +163,14 @@ for (const error of ['invalid-passphrase', 'invalid-file']) {
     expect(fileChooser.isMultiple()).toBe(false);
     await fileChooser.setFiles([
       {
-        name: 'Parsec_Recovery_File_OrgXX.psrk',
+        name: 'Parsec_Recovery_File_TestbedOrgXX.psrk',
         mimeType: 'application/octet-stream',
         buffer: error === 'invalid-file' ? Buffer.from('meow', 'utf8') : fileContent,
       },
     ]);
-    await expect(importItems.nth(0).locator('.recovery-list-item__button').locator('div')).toHaveText('Parsec_Recovery_File_OrgXX.psrk');
+    await expect(importItems.nth(0).locator('.recovery-list-item__button').locator('div')).toHaveText(
+      'Parsec_Recovery_File_TestbedOrgXX.psrk',
+    );
     await expect(importItems.nth(1)).not.toHaveTheClass('disabled');
     await expect(recoveryContainer.locator('.next-button').locator('ion-button')).toBeTrulyDisabled();
     await fillIonInput(

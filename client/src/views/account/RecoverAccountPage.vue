@@ -297,7 +297,8 @@ async function onPasswordChosen(): Promise<void> {
   password.value = await passwordInputRef.value.password;
   querying.value = true;
   const result = await ParsecAccount.recoveryProceed(
-    ParsecAccountAccess.usePassword(email.value, password.value),
+    email.value,
+    ParsecAccountAccess.usePasswordForCreate(password.value),
     code.value,
     server.value,
   );
@@ -320,7 +321,7 @@ async function onPasswordChosen(): Promise<void> {
 }
 
 async function login(): Promise<void> {
-  const result = await ParsecAccount.login(ParsecAccountAccess.usePassword(email.value, password.value), server.value);
+  const result = await ParsecAccount.login(ParsecAccountAccess.usePasswordForLogin(email.value, password.value), server.value);
   if (result.ok) {
     await navigateTo(Routes.Home, { skipHandle: true, params: getCurrentRouteParams(), query: getCurrentRouteQuery() });
   } else {
