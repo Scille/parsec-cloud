@@ -38,6 +38,7 @@ WHERE vault.account = $account_internal_id
 _q_get_all_auth_methods_for_account = Q("""
 SELECT
     vault AS vault_internal_id,
+    auth_method_id,
     created_on,
     created_by_ip,
     created_by_user_agent,
@@ -108,6 +109,12 @@ async def vault_item_recovery_list(
             case _:
                 assert False, row
 
+        match row["auth_method_id"]:
+            case str() as raw_auth_method_id:
+                auth_method_id = AccountAuthMethodID.from_hex(raw_auth_method_id)
+            case _:
+                assert False, row
+
         match row["created_on"]:
             case DateTime() as created_on:
                 pass
@@ -171,6 +178,7 @@ async def vault_item_recovery_list(
                 assert False, row
 
         auth_method = VaultItemRecoveryAuthMethod(
+            auth_method_id=auth_method_id,
             created_on=created_on,
             created_by_ip=created_by_ip,
             created_by_user_agent=created_by_user_agent,
