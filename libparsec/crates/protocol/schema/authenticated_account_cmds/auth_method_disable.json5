@@ -1,0 +1,31 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "auth_method_disable",
+        "req": {
+            "fields": [
+                {
+                    "name": "auth_method_id",
+                    "type": "AccountAuthMethodID"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "auth_method_not_found"
+            },
+            {
+                "status": "auth_method_already_disabled"
+            },
+            {
+                // Cannot disable the authentication method used to do the request!
+                "status": "self_disable_not_allowed"
+            }
+        ]
+    }
+]
