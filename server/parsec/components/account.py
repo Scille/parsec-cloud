@@ -102,13 +102,25 @@ class AccountAuthMethodCreateBadOutcome(BadOutcomeEnum):
     AUTH_METHOD_ID_ALREADY_EXISTS = auto()
 
 
+class AccountAuthMethodListBadOutcome(BadOutcomeEnum):
+    ACCOUNT_NOT_FOUND = auto()
+
+
+class AccountAuthMethodDisableBadOutcome(BadOutcomeEnum):
+    ACCOUNT_NOT_FOUND = auto()
+    AUTH_METHOD_NOT_FOUND = auto()
+    AUTH_METHOD_ALREADY_DISABLED = auto()
+    SELF_DISABLE_NOT_ALLOWED = auto()
+    CROSS_ACCOUNT_NOT_ALLOWED = auto()
+
+
 @dataclass(slots=True)
 class AccountInfo:
     human_handle: HumanHandle
 
 
 @dataclass(slots=True)
-class VaultItemRecoveryAuthMethod:
+class AuthMethod:
     auth_method_id: AccountAuthMethodID
     created_on: DateTime
     # IP address or empty string if not available
@@ -121,7 +133,7 @@ class VaultItemRecoveryAuthMethod:
 
 @dataclass(slots=True)
 class VaultItemRecoveryVault:
-    auth_methods: list[VaultItemRecoveryAuthMethod]
+    auth_methods: list[AuthMethod]
     vault_items: dict[HashDigest, bytes]
 
 
@@ -366,6 +378,20 @@ class BaseAccountComponent:
         new_auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
         new_vault_key_access: bytes,
     ) -> None | AccountAuthMethodCreateBadOutcome:
+        raise NotImplementedError
+
+    async def auth_method_list(
+        self,
+        auth_method_id: AccountAuthMethodID,
+    ) -> list[AuthMethod] | AccountAuthMethodListBadOutcome:
+        raise NotImplementedError
+
+    async def auth_method_disable(
+        self,
+        now: DateTime,
+        auth_method_id: AccountAuthMethodID,
+        to_disable_auth_method_id: AccountAuthMethodID,
+    ) -> None | AccountAuthMethodDisableBadOutcome:
         raise NotImplementedError
 
     @api
@@ -675,7 +701,7 @@ class BaseAccountComponent:
             case VaultItemRecoveryList() as vaults:
 
                 def _convert_auth_method(
-                    auth_method: VaultItemRecoveryAuthMethod,
+                    auth_method: AuthMethod,
                 ) -> authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryAuthMethod:
                     match auth_method.password_algorithm:
                         case None:
@@ -771,6 +797,78 @@ class BaseAccountComponent:
             case AccountAuthMethodCreateBadOutcome.AUTH_METHOD_ID_ALREADY_EXISTS:
                 return authenticated_account_cmds.latest.auth_method_create.RepAuthMethodIdAlreadyExists()
             case AccountAuthMethodCreateBadOutcome.ACCOUNT_NOT_FOUND:
+                client_ctx.account_not_found_abort()
+
+    @api
+    async def api_auth_method_disable(
+        self,
+        client_ctx: AuthenticatedAccountClientContext,
+        req: authenticated_account_cmds.latest.auth_method_disable.Req,
+    ) -> authenticated_account_cmds.latest.auth_method_disable.Rep:
+        outcome = await self.auth_method_disable(
+            now=DateTime.now(),
+            auth_method_id=client_ctx.auth_method_id,
+            to_disable_auth_method_id=req.auth_method_id,
+        )
+        match outcome:
+            case None:
+                return authenticated_account_cmds.latest.auth_method_disable.RepOk()
+            case AccountAuthMethodDisableBadOutcome.AUTH_METHOD_NOT_FOUND:
+                return authenticated_account_cmds.latest.auth_method_disable.RepAuthMethodNotFound()
+            case AccountAuthMethodDisableBadOutcome.AUTH_METHOD_ALREADY_DISABLED:
+                return authenticated_account_cmds.latest.auth_method_disable.RepAuthMethodAlreadyDisabled()
+            case AccountAuthMethodDisableBadOutcome.SELF_DISABLE_NOT_ALLOWED:
+                return (
+                    authenticated_account_cmds.latest.auth_method_disable.RepSelfDisableNotAllowed()
+                )
+            case AccountAuthMethodDisableBadOutcome.CROSS_ACCOUNT_NOT_ALLOWED:
+                # From the client's perspective, it can't access an auth method from another account
+                return authenticated_account_cmds.latest.auth_method_disable.RepAuthMethodNotFound()
+            case AccountAuthMethodDisableBadOutcome.ACCOUNT_NOT_FOUND:
+                client_ctx.account_not_found_abort()
+
+    @api
+    async def api_auth_method_list(
+        self,
+        client_ctx: AuthenticatedAccountClientContext,
+        req: authenticated_account_cmds.latest.auth_method_list.Req,
+    ) -> authenticated_account_cmds.latest.auth_method_list.Rep:
+        outcome = await self.auth_method_list(
+            auth_method_id=client_ctx.auth_method_id,
+        )
+        match outcome:
+            case list() as items:
+
+                def _convert_auth_method(
+                    auth_method: AuthMethod,
+                ) -> authenticated_account_cmds.latest.auth_method_list.AuthMethod:
+                    match auth_method.password_algorithm:
+                        case None:
+                            password_algorithm = None
+                        case UntrustedPasswordAlgorithmArgon2id() as a:
+                            password_algorithm = UntrustedPasswordAlgorithmArgon2id(
+                                opslimit=a.opslimit,
+                                memlimit_kb=a.memlimit_kb,
+                                parallelism=a.parallelism,
+                            )
+                        # `UntrustedPasswordAlgorithm` is an abstract type
+                        case UntrustedPasswordAlgorithm() as unknown:
+                            assert False, unknown
+
+                    return authenticated_account_cmds.latest.auth_method_list.AuthMethod(
+                        auth_method_id=auth_method.auth_method_id,
+                        created_on=auth_method.created_on,
+                        created_by_ip=auth_method.created_by_ip,
+                        created_by_user_agent=auth_method.created_by_user_agent,
+                        vault_key_access=auth_method.vault_key_access,
+                        password_algorithm=password_algorithm,
+                    )
+
+                converted_items = [_convert_auth_method(item) for item in items]
+                return authenticated_account_cmds.latest.auth_method_list.RepOk(
+                    items=converted_items
+                )
+            case AccountAuthMethodListBadOutcome.ACCOUNT_NOT_FOUND:
                 client_ctx.account_not_found_abort()
 
 
