@@ -476,6 +476,7 @@ class MemoryAccountComponent(BaseAccountComponent):
             return VaultItemRecoveryVault(
                 auth_methods=[
                     VaultItemRecoveryAuthMethod(
+                        auth_method_id=auth_method.id,
                         created_on=auth_method.created_on,
                         created_by_ip=auth_method.created_by_ip,
                         created_by_user_agent=auth_method.created_by_user_agent,

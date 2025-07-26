@@ -109,6 +109,7 @@ class AccountInfo:
 
 @dataclass(slots=True)
 class VaultItemRecoveryAuthMethod:
+    auth_method_id: AccountAuthMethodID
     created_on: DateTime
     # IP address or empty string if not available
     created_by_ip: str | Literal[""]
@@ -690,6 +691,7 @@ class BaseAccountComponent:
                             assert False, unknown
 
                     return authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryAuthMethod(
+                        auth_method_id=auth_method.auth_method_id,
                         created_on=auth_method.created_on,
                         created_by_ip=auth_method.created_by_ip,
                         created_by_user_agent=auth_method.created_by_user_agent,

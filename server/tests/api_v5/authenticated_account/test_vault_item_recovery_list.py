@@ -21,6 +21,7 @@ async def test_authenticated_account_vault_item_recovery_list_ok(
         current_vault=authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryVault(
             auth_methods=[
                 authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryAuthMethod(
+                    auth_method_id=alice_account.auth_method_id,
                     created_on=DateTime(2000, 1, 1),
                     disabled_on=None,
                     created_by_ip="127.0.0.1",
@@ -78,6 +79,7 @@ async def test_authenticated_account_vault_item_recovery_list_ok(
     )
     assert outcome is None
 
+    old_auth_method_id = alice_account.auth_method_id
     alice_account.auth_method_id = new_auth_method_id
     alice_account.auth_method_mac_key = new_auth_method_mac_key
     rep = await alice_account.vault_item_recovery_list()
@@ -85,6 +87,7 @@ async def test_authenticated_account_vault_item_recovery_list_ok(
         current_vault=authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryVault(
             auth_methods=[
                 authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryAuthMethod(
+                    auth_method_id=new_auth_method_id,
                     created_on=DateTime(2000, 1, 31),
                     disabled_on=None,
                     created_by_ip="",
@@ -106,6 +109,7 @@ async def test_authenticated_account_vault_item_recovery_list_ok(
             authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryVault(
                 auth_methods=[
                     authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryAuthMethod(
+                        auth_method_id=old_auth_method_id,
                         created_on=DateTime(2000, 1, 1),
                         disabled_on=DateTime(2000, 1, 31),
                         created_by_ip="127.0.0.1",
