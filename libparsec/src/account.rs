@@ -9,10 +9,9 @@ use std::{
 pub use libparsec_account::{
     AccountCreateError, AccountCreateSendValidationEmailError, AccountDeleteProceedError,
     AccountDeleteSendValidationEmailError, AccountFetchOpaqueKeyFromVaultError,
-    AccountListInvitationsError, AccountListRegistrationDevicesError,
-    AccountLoginWithMasterSecretError, AccountLoginWithPasswordError, AccountRecoverProceedError,
-    AccountRecoverSendValidationEmailError, AccountRegisterNewDeviceError,
-    AccountUploadOpaqueKeyInVaultError,
+    AccountListInvitationsError, AccountListRegistrationDevicesError, AccountLoginError,
+    AccountRecoverProceedError, AccountRecoverSendValidationEmailError,
+    AccountRegisterNewDeviceError, AccountUploadOpaqueKeyInVaultError,
 };
 use libparsec_client_connection::{AnonymousAccountCmds, ConnectionError, ProxyConfig};
 use libparsec_types::prelude::*;
@@ -20,6 +19,55 @@ use libparsec_types::prelude::*;
 use crate::handle::{
     borrow_from_handle, register_handle, take_and_close_handle, Handle, HandleItem,
 };
+
+// TODO: must reimplement this structure since the bindings doesn't support
+//       structs with lifetime.
+pub enum AccountAuthMethodStrategy {
+    // Use struct style instead of tuple to declare the single params, since
+    // it is more convenient to use in the bindings.
+    MasterSecret { master_secret: KeyDerivation },
+    Password { password: Password },
+}
+
+impl AccountAuthMethodStrategy {
+    pub fn as_real(&self) -> libparsec_account::AccountAuthMethodStrategy<'_> {
+        match self {
+            AccountAuthMethodStrategy::MasterSecret { master_secret } => {
+                libparsec_account::AccountAuthMethodStrategy::MasterSecret(master_secret)
+            }
+            AccountAuthMethodStrategy::Password { password } => {
+                libparsec_account::AccountAuthMethodStrategy::Password(password)
+            }
+        }
+    }
+}
+
+// TODO: must reimplement this structure since the bindings doesn't support
+//       structs with lifetime.
+pub enum AccountLoginStrategy {
+    // Use struct style instead of tuple to declare the single params, since
+    // it is more convenient to use in the bindings.
+    MasterSecret {
+        master_secret: KeyDerivation,
+    },
+    Password {
+        email: EmailAddress,
+        password: Password,
+    },
+}
+
+impl AccountLoginStrategy {
+    pub fn as_real(&self) -> libparsec_account::AccountLoginStrategy<'_> {
+        match self {
+            AccountLoginStrategy::MasterSecret { master_secret } => {
+                libparsec_account::AccountLoginStrategy::MasterSecret(master_secret)
+            }
+            AccountLoginStrategy::Password { email, password } => {
+                libparsec_account::AccountLoginStrategy::Password { email, password }
+            }
+        }
+    }
+}
 
 fn borrow_account(account: Handle) -> anyhow::Result<Arc<libparsec_account::Account>> {
     borrow_from_handle(account, |x| match x {
@@ -52,41 +100,26 @@ pub async fn account_create_3_proceed(
     addr: ParsecAddr,
     validation_code: ValidationCode,
     human_handle: HumanHandle,
-    password: &Password,
+    auth_method_strategy: AccountAuthMethodStrategy,
 ) -> Result<(), AccountCreateError> {
     let cmds = AnonymousAccountCmds::new(config_dir, addr, ProxyConfig::default())?;
-    libparsec_account::Account::create_3_proceed(&cmds, validation_code, human_handle, password)
-        .await
-}
-
-pub async fn account_login_with_master_secret(
-    config_dir: PathBuf,
-    addr: ParsecAddr,
-    auth_method_master_secret: KeyDerivation,
-) -> Result<Handle, AccountLoginWithMasterSecretError> {
-    let proxy = ProxyConfig::default();
-    let account = libparsec_account::Account::login_with_master_secret(
-        config_dir,
-        proxy,
-        addr,
-        auth_method_master_secret,
+    libparsec_account::Account::create_3_proceed(
+        &cmds,
+        validation_code,
+        human_handle,
+        auth_method_strategy.as_real(),
     )
-    .await?;
-
-    let handle = register_handle(HandleItem::Account(account.into()));
-
-    Ok(handle)
+    .await
 }
 
-pub async fn account_login_with_password(
+pub async fn account_login(
     config_dir: PathBuf,
     addr: ParsecAddr,
-    email: EmailAddress,
-    password: &Password,
-) -> Result<Handle, AccountLoginWithPasswordError> {
+    login_strategy: AccountLoginStrategy,
+) -> Result<Handle, AccountLoginError> {
     let proxy = ProxyConfig::default();
     let account =
-        libparsec_account::Account::login_with_password(config_dir, proxy, addr, email, password)
+        libparsec_account::Account::login(config_dir, proxy, addr, login_strategy.as_real())
             .await?;
 
     let handle = register_handle(HandleItem::Account(account.into()));
@@ -319,8 +352,14 @@ pub async fn account_recover_2_proceed(
     addr: ParsecAddr,
     validation_code: ValidationCode,
     email: EmailAddress,
-    new_password: &Password,
+    auth_method_strategy: AccountAuthMethodStrategy,
 ) -> Result<(), AccountRecoverProceedError> {
     let cmds = AnonymousAccountCmds::new(config_dir, addr, ProxyConfig::default())?;
-    libparsec_account::Account::recover_2_proceed(&cmds, validation_code, email, new_password).await
+    libparsec_account::Account::recover_2_proceed(
+        &cmds,
+        validation_code,
+        email,
+        auth_method_strategy.as_real(),
+    )
+    .await
 }

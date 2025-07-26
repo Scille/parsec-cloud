@@ -20,6 +20,7 @@ from .common import (
     DateTime,
     SecretKey,
     AccountVaultItemOpaqueKeyID,
+    Variant,
 )
 from .addr import ParsecAddr, ParsecInvitationAddr
 from .device import DeviceAccessStrategy, DeviceSaveStrategy, AvailableDevice
@@ -63,9 +64,6 @@ class AccountCreateError(ErrorVariant):
     class SendValidationEmailRequired:
         pass
 
-    class AuthMethodIdAlreadyExists:
-        pass
-
 
 async def account_create_2_check_validation_code(
     config_dir: Ref[Path],
@@ -76,17 +74,34 @@ async def account_create_2_check_validation_code(
     raise NotImplementedError
 
 
+class AccountAuthMethodStrategy(Variant):
+    class Password:
+        password: Password
+
+    class MasterSecret:
+        master_secret: KeyDerivation
+
+
 async def account_create_3_proceed(
     config_dir: Ref[Path],
     addr: ParsecAddr,
     validation_code: ValidationCode,
     human_handle: HumanHandle,
-    password: Ref[Password],
+    auth_method_strategy: AccountAuthMethodStrategy,
 ) -> Result[None, AccountCreateError]:
     raise NotImplementedError
 
 
-class AccountLoginWithPasswordError(ErrorVariant):
+class AccountLoginStrategy(Variant):
+    class Password:
+        email: EmailAddress
+        password: Password
+
+    class MasterSecret:
+        master_secret: KeyDerivation
+
+
+class AccountLoginError(ErrorVariant):
     class BadPasswordAlgorithm:
         pass
 
@@ -97,28 +112,11 @@ class AccountLoginWithPasswordError(ErrorVariant):
         pass
 
 
-async def account_login_with_password(
+async def account_login(
     config_dir: Path,
     addr: ParsecAddr,
-    email: EmailAddress,
-    password: Ref[Password],
-) -> Result[Handle, AccountLoginWithPasswordError]:
-    raise NotImplementedError
-
-
-class AccountLoginWithMasterSecretError(ErrorVariant):
-    class Offline:
-        pass
-
-    class Internal:
-        pass
-
-
-async def account_login_with_master_secret(
-    config_dir: Path,
-    addr: ParsecAddr,
-    auth_method_master_secret: KeyDerivation,
-) -> Result[Handle, AccountLoginWithMasterSecretError]:
+    login_strategy: AccountLoginStrategy,
+) -> Result[Handle, AccountLoginError]:
     raise NotImplementedError
 
 
@@ -363,15 +361,12 @@ class AccountRecoverProceedError(ErrorVariant):
     class SendValidationEmailRequired:
         pass
 
-    class AuthMethodIdAlreadyExists:
-        pass
-
 
 async def account_recover_2_proceed(
     config_dir: Ref[Path],
     addr: ParsecAddr,
     validation_code: ValidationCode,
     email: EmailAddress,
-    new_password: Ref[Password],
+    auth_method_strategy: AccountAuthMethodStrategy,
 ) -> Result[None, AccountRecoverProceedError]:
     raise NotImplementedError

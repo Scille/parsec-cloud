@@ -7,13 +7,14 @@ use libparsec_client_connection::{
 };
 use libparsec_types::prelude::*;
 
-use super::{
-    Account, AUTH_METHOD_ID_DERIVATION_UUID, AUTH_METHOD_MAC_KEY_DERIVATION_UUID,
-    AUTH_METHOD_SECRET_KEY_DERIVATION_UUID,
+use crate::{
+    derive_auth_method_keys, retrieve_auth_method_master_secret_from_password, Account,
+    AccountLoginStrategy, RetrieveAuthMethodMasterSecretFromPasswordError,
 };
 
 #[derive(Debug, thiserror::Error)]
-pub enum AccountLoginWithPasswordError {
+pub enum AccountLoginError {
+    /// Obviously only occur if `authentication_strategy` is passed as `Password`
     #[error("Server provided an invalid password algorithm config: {0}")]
     BadPasswordAlgorithm(CryptoError),
     #[error("Cannot communicate with the server: {0}")]
@@ -22,59 +23,60 @@ pub enum AccountLoginWithPasswordError {
     Internal(#[from] anyhow::Error),
 }
 
-#[derive(Debug, thiserror::Error)]
-pub enum AccountLoginWithMasterSecretError {
-    #[error("Cannot communicate with the server: {0}")]
-    Offline(#[from] ConnectionError),
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
-}
-
-impl From<AccountLoginWithMasterSecretError> for AccountLoginWithPasswordError {
-    fn from(value: AccountLoginWithMasterSecretError) -> Self {
-        match value {
-            AccountLoginWithMasterSecretError::Offline(err) => {
-                AccountLoginWithPasswordError::Offline(err)
-            }
-            AccountLoginWithMasterSecretError::Internal(err) => {
-                AccountLoginWithPasswordError::Internal(err)
-            }
-        }
-    }
-}
-
-pub(super) async fn account_login_with_master_secret(
+pub(super) async fn account_login(
     config_dir: PathBuf,
     proxy: ProxyConfig,
     addr: ParsecAddr,
-    auth_method_master_secret: KeyDerivation,
-    // We must recycle anonymous_cmds if it exists, otherwise its drop will complain
-    // during tests if some request registered with `test_register_sequence_of_send_hooks`
-    // has yet to occur.
-    anonymous_cmds: Option<AnonymousAccountCmds>,
+    login_strategy: AccountLoginStrategy<'_>,
     // Since human handle is supposed to be fetched from the server, this parameter is
     // always set to `None`... Unless for `Account::test_new` where we precisely want
     // to avoid this initial server request!
     human_handle: Option<HumanHandle>,
-) -> Result<Account, AccountLoginWithMasterSecretError> {
-    let time_provider = TimeProvider::default();
+) -> Result<Account, AccountLoginError> {
+    let (maybe_anonymous_cmds, auth_method_keys) = match login_strategy {
+        AccountLoginStrategy::Password { password, email } => {
+            // The password algorithm configuration is obtained from the server
+            // to know how to turn the password into `auth_method_master_secret`.
 
-    // Derive from the master secret the data used to authenticate with the server.
-    let auth_method_id = AccountAuthMethodID::from(
-        auth_method_master_secret.derive_uuid_from_uuid(AUTH_METHOD_ID_DERIVATION_UUID),
-    );
-    let auth_method_mac_key =
-        auth_method_master_secret.derive_secret_key_from_uuid(AUTH_METHOD_MAC_KEY_DERIVATION_UUID);
-    let auth_method_secret_key = auth_method_master_secret
-        .derive_secret_key_from_uuid(AUTH_METHOD_SECRET_KEY_DERIVATION_UUID);
+            let anonymous_cmds =
+                AnonymousAccountCmds::new(&config_dir, addr.clone(), proxy.clone())
+                    .context("Cannot configure server connection")?;
 
-    let auth_method = AccountAuthMethod {
-        time_provider,
-        id: auth_method_id,
-        mac_key: auth_method_mac_key,
+            let auth_method_master_secret =
+                retrieve_auth_method_master_secret_from_password(&anonymous_cmds, email, password)
+                    .await
+                    .map_err(|e| match e {
+                        RetrieveAuthMethodMasterSecretFromPasswordError::BadPasswordAlgorithm(
+                            err,
+                        ) => AccountLoginError::BadPasswordAlgorithm(err),
+                        RetrieveAuthMethodMasterSecretFromPasswordError::Offline(err) => {
+                            AccountLoginError::Offline(err)
+                        }
+                        RetrieveAuthMethodMasterSecretFromPasswordError::Internal(err) => {
+                            AccountLoginError::Internal(err)
+                        }
+                    })?;
+
+            let auth_method_keys = derive_auth_method_keys(&auth_method_master_secret);
+
+            (Some(anonymous_cmds), auth_method_keys)
+        }
+        AccountLoginStrategy::MasterSecret(auth_method_master_secret) => {
+            let auth_method_keys = derive_auth_method_keys(auth_method_master_secret);
+            (None, auth_method_keys)
+        }
     };
 
-    let cmds = match anonymous_cmds {
+    let auth_method = AccountAuthMethod {
+        time_provider: TimeProvider::default(),
+        id: auth_method_keys.id,
+        mac_key: auth_method_keys.mac_key,
+    };
+
+    // We must recycle anonymous_cmds if it exists, otherwise its drop will complain
+    // during tests if some request registered with `test_register_sequence_of_send_hooks`
+    // has yet to occur.
+    let cmds = match maybe_anonymous_cmds {
         None => AuthenticatedAccountCmds::new(&config_dir, addr, proxy, auth_method)
             .context("Cannot configure server connection")?,
         Some(anonymous_cmds) => {
@@ -103,57 +105,8 @@ pub(super) async fn account_login_with_master_secret(
         config_dir,
         human_handle,
         cmds,
-        auth_method_secret_key,
+        auth_method_secret_key: auth_method_keys.secret_key,
     })
-}
-
-pub(super) async fn account_login_with_password(
-    config_dir: PathBuf,
-    proxy: ProxyConfig,
-    addr: ParsecAddr,
-    email: EmailAddress,
-    password: &Password,
-) -> Result<Account, AccountLoginWithPasswordError> {
-    // The password algorithm configuration is obtained from the server
-    // to know how to turn the password into `auth_method_master_secret`.
-
-    let anonymous_cmds = AnonymousAccountCmds::new(&config_dir, addr.clone(), proxy.clone())
-        .context("Cannot configure server connection")?;
-
-    let untrusted_password_algorithm = {
-        use libparsec_protocol::anonymous_account_cmds::latest::auth_method_password_get_algorithm::{Rep, Req};
-
-        let req = Req {
-            email: email.clone(),
-        };
-        let rep = anonymous_cmds.send(req).await?;
-
-        match rep {
-            Rep::Ok { password_algorithm } => password_algorithm,
-            bad_rep @ Rep::UnknownStatus { .. } => {
-                return Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into());
-            }
-        }
-    };
-
-    let password_algorithm = untrusted_password_algorithm
-        .validate(email.as_ref())
-        .map_err(AccountLoginWithPasswordError::BadPasswordAlgorithm)?;
-
-    let auth_method_master_secret = password_algorithm
-        .compute_key_derivation(password)
-        .map_err(AccountLoginWithPasswordError::BadPasswordAlgorithm)?;
-
-    account_login_with_master_secret(
-        config_dir,
-        proxy,
-        addr,
-        auth_method_master_secret,
-        Some(anonymous_cmds),
-        None,
-    )
-    .await
-    .map_err(|err| err.into())
 }
 
 #[cfg(test)]

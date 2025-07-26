@@ -11,7 +11,10 @@ use libparsec_client_connection::{
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::{Account, AccountDeleteSendValidationEmailError, AccountLoginWithMasterSecretError};
+use crate::{
+    Account, AccountDeleteSendValidationEmailError, AccountLoginError, AccountLoginStrategy,
+    ValidationCode,
+};
 
 #[parsec_test(testbed = "empty", with_server)]
 async fn ok_with_server_then_proceed(env: &TestbedEnv) {
@@ -21,11 +24,11 @@ async fn ok_with_server_then_proceed(env: &TestbedEnv) {
             .await
             .unwrap();
 
-    let account = Account::login_with_master_secret(
+    let account = Account::login(
         env.discriminant_dir.clone(),
         ProxyConfig::default(),
         env.server_addr.clone(),
-        auth_method_master_secret.clone(),
+        AccountLoginStrategy::MasterSecret(&auth_method_master_secret),
     )
     .await
     .unwrap();
@@ -68,14 +71,14 @@ async fn ok_with_server_then_proceed(env: &TestbedEnv) {
     // Finally we can no longer use this account
 
     p_assert_matches!(
-        Account::login_with_master_secret(
+        Account::login(
             env.discriminant_dir.clone(),
             ProxyConfig::default(),
             env.server_addr.clone(),
-            auth_method_master_secret
+            AccountLoginStrategy::MasterSecret(&auth_method_master_secret)
         )
         .await,
-        Err(AccountLoginWithMasterSecretError::Offline(
+        Err(AccountLoginError::Offline(
             ConnectionError::BadAuthenticationInfo
         ))
     );
@@ -86,7 +89,7 @@ async fn ok_mocked(env: &TestbedEnv) {
     let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
-        KeyDerivation::from(hex!(
+        &KeyDerivation::from(hex!(
             "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
         )),
         "Zack <zack@example.com>".parse().unwrap(),
@@ -107,7 +110,7 @@ async fn offline(env: &TestbedEnv) {
     let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
-        KeyDerivation::from(hex!(
+        &KeyDerivation::from(hex!(
             "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
         )),
         "Zack <zack@example.com>".parse().unwrap(),
@@ -125,7 +128,7 @@ async fn email_recipient_refused(env: &TestbedEnv) {
     let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
-        KeyDerivation::from(hex!(
+        &KeyDerivation::from(hex!(
             "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
         )),
         "Zack <zack@example.com>".parse().unwrap(),
@@ -149,7 +152,7 @@ async fn email_server_unavailable(env: &TestbedEnv) {
     let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
-        KeyDerivation::from(hex!(
+        &KeyDerivation::from(hex!(
             "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
         )),
         "Zack <zack@example.com>".parse().unwrap(),
@@ -173,7 +176,7 @@ async fn email_sending_rate_limited(env: &TestbedEnv) {
     let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
-        KeyDerivation::from(hex!(
+        &KeyDerivation::from(hex!(
             "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
         )),
         "Zack <zack@example.com>".parse().unwrap(),
@@ -200,7 +203,7 @@ async fn unknown_status(env: &TestbedEnv) {
     let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
-        KeyDerivation::from(hex!(
+        &KeyDerivation::from(hex!(
             "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
         )),
         "Zack <zack@example.com>".parse().unwrap(),

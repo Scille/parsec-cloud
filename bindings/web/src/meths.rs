@@ -4070,6 +4070,82 @@ fn struct_workspace_user_access_info_rs_to_js(
     Ok(js_obj)
 }
 
+// AccountAuthMethodStrategy
+
+#[allow(dead_code)]
+fn variant_account_auth_method_strategy_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::AccountAuthMethodStrategy, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "AccountAuthMethodStrategyMasterSecret" => {
+            let master_secret = {
+                let js_val = Reflect::get(&obj, &"masterSecret".into())?;
+                js_val
+                    .dyn_into::<Uint8Array>()
+                    .map(|x| x.to_vec())
+                    .map_err(|_| TypeError::new("Not a Uint8Array"))
+                    .and_then(|x| {
+                        let xx: &[u8] = &x;
+                        xx.try_into()
+                            .map_err(|_| TypeError::new("Not a valid KeyDerivation"))
+                    })?
+            };
+            Ok(libparsec::AccountAuthMethodStrategy::MasterSecret { master_secret })
+        }
+        "AccountAuthMethodStrategyPassword" => {
+            let password = {
+                let js_val = Reflect::get(&obj, &"password".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string =
+                            |s: String| -> Result<_, String> { Ok(s.into()) };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            };
+            Ok(libparsec::AccountAuthMethodStrategy::Password { password })
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a AccountAuthMethodStrategy",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_account_auth_method_strategy_rs_to_js(
+    rs_obj: libparsec::AccountAuthMethodStrategy,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::AccountAuthMethodStrategy::MasterSecret { master_secret, .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountAuthMethodStrategyMasterSecret".into(),
+            )?;
+            let js_master_secret = JsValue::from(Uint8Array::from(master_secret.as_ref()));
+            Reflect::set(&js_obj, &"masterSecret".into(), &js_master_secret)?;
+        }
+        libparsec::AccountAuthMethodStrategy::Password { password, .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountAuthMethodStrategyPassword".into(),
+            )?;
+            let js_password = JsValue::from_str(password.as_ref());
+            Reflect::set(&js_obj, &"password".into(), &js_password)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // AccountCreateError
 
 #[allow(dead_code)]
@@ -4080,13 +4156,6 @@ fn variant_account_create_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::AccountCreateError::AuthMethodIdAlreadyExists { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountCreateErrorAuthMethodIdAlreadyExists".into(),
-            )?;
-        }
         libparsec::AccountCreateError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"AccountCreateErrorInternal".into())?;
         }
@@ -4475,64 +4544,130 @@ fn variant_account_list_registration_devices_error_rs_to_js(
     Ok(js_obj)
 }
 
-// AccountLoginWithMasterSecretError
+// AccountLoginError
 
 #[allow(dead_code)]
-fn variant_account_login_with_master_secret_error_rs_to_js(
-    rs_obj: libparsec::AccountLoginWithMasterSecretError,
+fn variant_account_login_error_rs_to_js(
+    rs_obj: libparsec::AccountLoginError,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::AccountLoginWithMasterSecretError::Internal { .. } => {
+        libparsec::AccountLoginError::BadPasswordAlgorithm { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"AccountLoginWithMasterSecretErrorInternal".into(),
+                &"AccountLoginErrorBadPasswordAlgorithm".into(),
             )?;
         }
-        libparsec::AccountLoginWithMasterSecretError::Offline { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountLoginWithMasterSecretErrorOffline".into(),
-            )?;
+        libparsec::AccountLoginError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AccountLoginErrorInternal".into())?;
+        }
+        libparsec::AccountLoginError::Offline { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AccountLoginErrorOffline".into())?;
         }
     }
     Ok(js_obj)
 }
 
-// AccountLoginWithPasswordError
+// AccountLoginStrategy
 
 #[allow(dead_code)]
-fn variant_account_login_with_password_error_rs_to_js(
-    rs_obj: libparsec::AccountLoginWithPasswordError,
+fn variant_account_login_strategy_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::AccountLoginStrategy, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "AccountLoginStrategyMasterSecret" => {
+            let master_secret = {
+                let js_val = Reflect::get(&obj, &"masterSecret".into())?;
+                js_val
+                    .dyn_into::<Uint8Array>()
+                    .map(|x| x.to_vec())
+                    .map_err(|_| TypeError::new("Not a Uint8Array"))
+                    .and_then(|x| {
+                        let xx: &[u8] = &x;
+                        xx.try_into()
+                            .map_err(|_| TypeError::new("Not a valid KeyDerivation"))
+                    })?
+            };
+            Ok(libparsec::AccountLoginStrategy::MasterSecret { master_secret })
+        }
+        "AccountLoginStrategyPassword" => {
+            let email = {
+                let js_val = Reflect::get(&obj, &"email".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            };
+            let password = {
+                let js_val = Reflect::get(&obj, &"password".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string =
+                            |s: String| -> Result<_, String> { Ok(s.into()) };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            };
+            Ok(libparsec::AccountLoginStrategy::Password { email, password })
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a AccountLoginStrategy",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_account_login_strategy_rs_to_js(
+    rs_obj: libparsec::AccountLoginStrategy,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::AccountLoginWithPasswordError::BadPasswordAlgorithm { .. } => {
+        libparsec::AccountLoginStrategy::MasterSecret { master_secret, .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"AccountLoginWithPasswordErrorBadPasswordAlgorithm".into(),
+                &"AccountLoginStrategyMasterSecret".into(),
             )?;
+            let js_master_secret = JsValue::from(Uint8Array::from(master_secret.as_ref()));
+            Reflect::set(&js_obj, &"masterSecret".into(), &js_master_secret)?;
         }
-        libparsec::AccountLoginWithPasswordError::Internal { .. } => {
+        libparsec::AccountLoginStrategy::Password {
+            email, password, ..
+        } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"AccountLoginWithPasswordErrorInternal".into(),
+                &"AccountLoginStrategyPassword".into(),
             )?;
-        }
-        libparsec::AccountLoginWithPasswordError::Offline { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountLoginWithPasswordErrorOffline".into(),
-            )?;
+            let js_email = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::EmailAddress| -> Result<_, &'static str> { Ok(x.to_string()) };
+                match custom_to_rs_string(email) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"email".into(), &js_email)?;
+            let js_password = JsValue::from_str(password.as_ref());
+            Reflect::set(&js_obj, &"password".into(), &js_password)?;
         }
     }
     Ok(js_obj)
@@ -4565,13 +4700,6 @@ fn variant_account_recover_proceed_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::AccountRecoverProceedError::AuthMethodIdAlreadyExists { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountRecoverProceedErrorAuthMethodIdAlreadyExists".into(),
-            )?;
-        }
         libparsec::AccountRecoverProceedError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -16130,7 +16258,7 @@ pub fn accountCreate3Proceed(
     addr: String,
     validation_code: String,
     human_handle: Object,
-    password: String,
+    auth_method_strategy: Object,
 ) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let config_dir = {
@@ -16154,17 +16282,16 @@ pub fn accountCreate3Proceed(
         let human_handle = human_handle.into();
         let human_handle = struct_human_handle_js_to_rs(human_handle)?;
 
-        let password = {
-            let custom_from_rs_string = |s: String| -> Result<_, String> { Ok(s.into()) };
-            custom_from_rs_string(password).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
+        let auth_method_strategy = auth_method_strategy.into();
+        let auth_method_strategy =
+            variant_account_auth_method_strategy_js_to_rs(auth_method_strategy)?;
 
         let ret = libparsec::account_create_3_proceed(
             &config_dir,
             addr,
             validation_code,
             human_handle,
-            &password,
+            auth_method_strategy,
         )
         .await;
         Ok(match ret {
@@ -16464,14 +16591,10 @@ pub fn accountListRegistrationDevices(account: u32) -> Promise {
     }))
 }
 
-// account_login_with_master_secret
+// account_login
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn accountLoginWithMasterSecret(
-    config_dir: String,
-    addr: String,
-    auth_method_master_secret: Uint8Array,
-) -> Promise {
+pub fn accountLogin(config_dir: String, addr: String, login_strategy: Object) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let config_dir = {
             let custom_from_rs_string =
@@ -16484,18 +16607,10 @@ pub fn accountLoginWithMasterSecret(
             };
             custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-        let auth_method_master_secret = auth_method_master_secret
-            .to_vec()
-            .as_slice()
-            .try_into()
-            .map_err(|_| JsValue::from(TypeError::new("Not a valid KeyDerivation")))?;
+        let login_strategy = login_strategy.into();
+        let login_strategy = variant_account_login_strategy_js_to_rs(login_strategy)?;
 
-        let ret = libparsec::account_login_with_master_secret(
-            config_dir,
-            addr,
-            auth_method_master_secret,
-        )
-        .await;
+        let ret = libparsec::account_login(config_dir, addr, login_strategy).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -16507,59 +16622,7 @@ pub fn accountLoginWithMasterSecret(
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_account_login_with_master_secret_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    }))
-}
-
-// account_login_with_password
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn accountLoginWithPassword(
-    config_dir: String,
-    addr: String,
-    email: String,
-    password: String,
-) -> Promise {
-    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
-        let config_dir = {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-        let addr = {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
-            };
-            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-        let email = {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
-            };
-            custom_from_rs_string(email).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-        let password = {
-            let custom_from_rs_string = |s: String| -> Result<_, String> { Ok(s.into()) };
-            custom_from_rs_string(password).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-
-        let ret = libparsec::account_login_with_password(config_dir, addr, email, &password).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from(value);
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_account_login_with_password_error_rs_to_js(err)?;
+                let js_err = variant_account_login_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -16654,7 +16717,7 @@ pub fn accountRecover2Proceed(
     addr: String,
     validation_code: String,
     email: String,
-    new_password: String,
+    auth_method_strategy: Object,
 ) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let config_dir = {
@@ -16681,17 +16744,16 @@ pub fn accountRecover2Proceed(
             };
             custom_from_rs_string(email).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-        let new_password = {
-            let custom_from_rs_string = |s: String| -> Result<_, String> { Ok(s.into()) };
-            custom_from_rs_string(new_password).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
+        let auth_method_strategy = auth_method_strategy.into();
+        let auth_method_strategy =
+            variant_account_auth_method_strategy_js_to_rs(auth_method_strategy)?;
 
         let ret = libparsec::account_recover_2_proceed(
             &config_dir,
             addr,
             validation_code,
             email,
-            &new_password,
+            auth_method_strategy,
         )
         .await;
         Ok(match ret {

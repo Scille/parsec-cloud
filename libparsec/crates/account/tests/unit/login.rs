@@ -11,7 +11,7 @@ use libparsec_client_connection::{
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::{Account, AccountLoginWithMasterSecretError, AccountLoginWithPasswordError};
+use crate::{Account, AccountLoginError, AccountLoginStrategy};
 
 #[parsec_test(testbed = "empty", with_server)]
 async fn testbed(env: &TestbedEnv) {
@@ -20,11 +20,11 @@ async fn testbed(env: &TestbedEnv) {
             .await
             .unwrap();
 
-    let account = Account::login_with_master_secret(
+    let account = Account::login(
         env.discriminant_dir.clone(),
         ProxyConfig::default(),
         env.server_addr.clone(),
-        auth_method_master_secret,
+        AccountLoginStrategy::MasterSecret(&auth_method_master_secret),
     )
     .await
     .unwrap();
@@ -43,13 +43,13 @@ async fn login_with_master_secret(env: &TestbedEnv) {
         }
     });
 
-    let account = Account::login_with_master_secret(
+    let account = Account::login(
         env.discriminant_dir.clone(),
         ProxyConfig::default(),
         addr,
-        KeyDerivation::from(hex!(
+        AccountLoginStrategy::MasterSecret(&KeyDerivation::from(hex!(
             "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
-        )),
+        ))),
     )
     .await
     .unwrap();
@@ -87,12 +87,14 @@ async fn login_with_password(env: &TestbedEnv) {
     );
 
     let addr = env.server_addr.clone();
-    let account = Account::login_with_password(
+    let account = Account::login(
         env.discriminant_dir.clone(),
         ProxyConfig::default(),
         addr,
-        email,
-        &password,
+        AccountLoginStrategy::Password {
+            password: &password,
+            email: &email,
+        },
     )
     .await
     .unwrap();
@@ -121,16 +123,18 @@ async fn login_with_password_server_returns_bad_config(env: &TestbedEnv) {
 
     let addr = env.server_addr.clone();
     p_assert_matches!(
-        Account::login_with_password(
+        Account::login(
             env.discriminant_dir.clone(),
             ProxyConfig::default(),
             addr,
-            email,
-            &password,
+            AccountLoginStrategy::Password {
+                password: &password,
+                email: &email
+            },
         )
         .await
         .unwrap_err(),
-        AccountLoginWithPasswordError::BadPasswordAlgorithm(_)
+        AccountLoginError::BadPasswordAlgorithm(_)
     );
 }
 
@@ -141,16 +145,18 @@ async fn login_with_password_server_offline(env: &TestbedEnv) {
 
     let addr = env.server_addr.clone();
     p_assert_matches!(
-        Account::login_with_password(
+        Account::login(
             env.discriminant_dir.clone(),
             ProxyConfig::default(),
             addr,
-            email,
-            &password,
+            AccountLoginStrategy::Password {
+                password: &password,
+                email: &email
+            },
         )
         .await
         .unwrap_err(),
-        AccountLoginWithPasswordError::Offline(_)
+        AccountLoginError::Offline(_)
     );
 }
 
@@ -158,16 +164,16 @@ async fn login_with_password_server_offline(env: &TestbedEnv) {
 async fn login_with_master_secret_server_offline(env: &TestbedEnv) {
     let addr = env.server_addr.clone();
     p_assert_matches!(
-        Account::login_with_master_secret(
+        Account::login(
             env.discriminant_dir.clone(),
             ProxyConfig::default(),
             addr,
-            KeyDerivation::from(hex!(
+            AccountLoginStrategy::MasterSecret(&KeyDerivation::from(hex!(
                 "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
-            )),
+            ))),
         )
         .await
         .unwrap_err(),
-        AccountLoginWithMasterSecretError::Offline(_)
+        AccountLoginError::Offline(_)
     );
 }

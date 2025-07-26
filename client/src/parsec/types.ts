@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 export {
+  AccountAuthMethodStrategyTag,
   AccountCreateErrorTag,
   AccountCreateRegistrationDeviceErrorTag,
   AccountCreateSendValidationEmailErrorTag,
@@ -10,8 +11,8 @@ export {
   AccountGetHumanHandleErrorTag,
   AccountListInvitationsErrorTag,
   AccountListRegistrationDevicesErrorTag,
-  AccountLoginWithMasterSecretErrorTag,
-  AccountLoginWithPasswordErrorTag,
+  AccountLoginErrorTag,
+  AccountLoginStrategyTag,
   AccountLogoutErrorTag,
   AccountRegisterNewDeviceErrorTag,
   AnyClaimRetrievedInfoTag,
@@ -87,6 +88,7 @@ export {
   WorkspaceStopErrorTag,
 } from '@/plugins/libparsec';
 export type {
+  AccountAuthMethodStrategy,
   AccountCreateError,
   AccountCreateRegistrationDeviceError,
   AccountCreateSendValidationEmailError,
@@ -96,8 +98,8 @@ export type {
   AccountGetHumanHandleError,
   AccountListInvitationsError,
   AccountListRegistrationDevicesError,
-  AccountLoginWithMasterSecretError,
-  AccountLoginWithPasswordError,
+  AccountLoginError,
+  AccountLoginStrategy,
   AccountLogoutError,
   AccountRegisterNewDeviceError,
   AnyClaimRetrievedInfoDevice,
@@ -382,24 +384,6 @@ interface OrganizationInfo {
   creationDate?: DateTime;
 }
 
-enum AccountAccessStrategy {
-  Password = 'password',
-  MasterSecret = 'master-secret',
-}
-
-interface AccountAccessPassword {
-  strategy: AccountAccessStrategy.Password;
-  email: string;
-  password: string;
-}
-
-interface AccountAccessMasterSecret {
-  strategy: AccountAccessStrategy.MasterSecret;
-  secret: Uint8Array;
-}
-
-type AccountAccess = AccountAccessPassword | AccountAccessMasterSecret;
-
 interface AccountInvitation {
   organizationId: OrganizationID;
   token: InvitationToken;
@@ -412,8 +396,6 @@ interface RegistrationDevice {
 }
 
 export {
-  AccountAccess,
-  AccountAccessStrategy,
   AccountHandle,
   AccountInvitation,
   ConnectionHandle,
