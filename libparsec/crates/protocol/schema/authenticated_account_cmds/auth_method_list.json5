@@ -1,0 +1,62 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "auth_method_list",
+        "req": {},
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        // Note only non-disabled auth methods are listed here.
+                        "name": "items",
+                        "type": "List<AuthMethod>"
+                    }
+                ]
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "AuthMethod",
+                "fields": [
+                    {
+                        "name": "auth_method_id",
+                        "type": "AccountAuthMethodID"
+                    },
+                    {
+                        "name": "created_on",
+                        "type": "DateTime"
+                    },
+                    {
+                        // The content of this field is no guaranteed, it can contain:
+                        // - An IPv4 or IPv6 address (e.g. `10.53.48.2`), this should be the most common case though.
+                        // - Nothing :/
+                        "name": "created_by_ip",
+                        "type": "String"
+                    },
+                    {
+                        "name": "created_by_user_agent",
+                        "type": "String"
+                    },
+                    {
+                        "name": "vault_key_access",
+                        // `AccountVaultKeyAccess` encrypted with the `auth_method_secret_key`
+                        "type": "Bytes"
+                    },
+                    {
+                        // Auth method can be of two types:
+                        // - ClientProvided, for which the client is able to store
+                        //   `auth_method_master_secret` all by itself.
+                        // - Password, for which the client must obtain some configuration
+                        //   (i.e. this field !) from the server in order to know how
+                        //   to turn the password into `auth_method_master_secret`.
+                        "name": "password_algorithm",
+                        "type": "RequiredOption<UntrustedPasswordAlgorithm>"
+                    }
+                ]
+            }
+        ]
+    }
+]
