@@ -32,7 +32,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
 
     for (const card of await cards.all()) {
       const lastLogin = card.locator('.login-text').nth(0);
-      await expect(card.locator('.organization-card-content-text').locator('.title-h4')).toHaveText(/Org\d+/);
+      await expect(card.locator('.organization-card-content-text').locator('.title-h4')).toHaveText(/TestbedOrg\d+/);
       await expect(lastLogin).toHaveText('--');
     }
     await expect(cards.locator('.login-name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));

@@ -24,7 +24,7 @@ msTest('Switch back and forth', async ({ connected }) => {
   const switchButton = popover.locator('.section-buttons');
   const connectedOrgs = popover.locator('.connected-organization');
   const currentOrg = popover.locator('.current-organization');
-  await expect(currentOrg.locator('.organization-name')).toHaveText(/^Org\d+$/);
+  await expect(currentOrg.locator('.organization-name')).toHaveText(/^TestbedOrg\d+$/);
   await expect(connectedOrgs).toBeHidden();
   await expect(switchButton).toHaveText('Switch organization');
   await switchButton.click();
@@ -60,7 +60,7 @@ msTest('Switch back and forth', async ({ connected }) => {
   connected.locator('.sidebar').locator('.sidebar-header').locator('.organization-card-header-desktop').click();
   await expect(popover).toBeVisible();
   await expect(connectedOrgs).toBeVisible();
-  await expect(connectedOrgs.locator('.organization-list__item').locator('.organization-text-content__name')).toHaveText(/^Org\d+$/);
+  await expect(connectedOrgs.locator('.organization-list__item').locator('.organization-text-content__name')).toHaveText(/^TestbedOrg\d+$/);
   await expect(connectedOrgs.locator('.organization-list__item').locator('.organization-text-content__email')).toHaveText(
     'Alicey McAliceFace',
   );
@@ -75,7 +75,7 @@ msTest('Switch back and forth', async ({ connected }) => {
 
   connected.locator('.sidebar').locator('.sidebar-header').locator('.organization-card-header-desktop').click();
   await expect(popover).toBeVisible();
-  await expect(connectedOrgs.locator('.organization-list__item').locator('.organization-text-content__name')).toHaveText(/^Org\d+$/);
+  await expect(connectedOrgs.locator('.organization-list__item').locator('.organization-text-content__name')).toHaveText(/^TestbedOrg\d+$/);
   await expect(connectedOrgs.locator('.organization-list__item').locator('.organization-text-content__email')).toHaveText('Boby McBobFace');
   await switchButton.click();
 
