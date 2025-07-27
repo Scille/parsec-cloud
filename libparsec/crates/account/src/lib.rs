@@ -15,8 +15,10 @@ mod account_recover;
 mod auth_method_derived_keys;
 mod create_auth_method;
 mod create_registration_device;
+mod disable_auth_method;
 mod fetch_opaque_key_from_vault;
 mod fetch_vault_items;
+mod list_auth_methods;
 mod list_invitations;
 mod list_registration_devices;
 mod login;
@@ -29,8 +31,10 @@ pub use account_recover::*;
 use auth_method_derived_keys::*;
 pub use create_auth_method::*;
 pub use create_registration_device::*;
+pub use disable_auth_method::*;
 pub use fetch_opaque_key_from_vault::*;
 pub use fetch_vault_items::*;
+pub use list_auth_methods::*;
 pub use list_invitations::*;
 pub use list_registration_devices::*;
 pub use login::*;
@@ -89,10 +93,15 @@ pub struct Account {
     // Note the `Account` object is related to a single auth method, this means
     // we don't have to bother with vault rotation since, if it occurs, our auth
     // method will simply get invalidated.
+    auth_method_id: AccountAuthMethodID,
     auth_method_secret_key: SecretKey,
 }
 
 impl Account {
+    pub fn auth_method_id(&self) -> AccountAuthMethodID {
+        self.auth_method_id
+    }
+
     /// To create a new account, the user's email address must first be validated.
     /// This method ask the server to send an email containing a validation code.
     pub async fn create_1_send_validation_email(
@@ -154,6 +163,27 @@ impl Account {
         auth_method_strategy: AccountAuthMethodStrategy<'_>,
     ) -> Result<(), AccountCreateAuthMethodError> {
         account_create_auth_method(self, auth_method_strategy).await
+    }
+
+    /// List all authentication methods for the account.
+    ///
+    /// Note that only non-disabled auth methods are listed.
+    /// Also, since this method request the server under the hood, there should
+    /// always be at least one auth method (the one used to make the request!).
+    pub async fn list_auth_methods(
+        &self,
+    ) -> Result<Vec<AuthMethodInfo>, AccountListAuthMethodsError> {
+        account_list_auth_methods(self).await
+    }
+
+    /// Disable an authentication method for the account.
+    ///
+    /// Note that you cannot disable the authentication method used to make this request.
+    pub async fn disable_auth_method(
+        &self,
+        auth_method_id: AccountAuthMethodID,
+    ) -> Result<(), AccountDisableAuthMethodError> {
+        account_disable_auth_method(self, auth_method_id).await
     }
 
     /// Convenient helper to avoid the first request (fetching the human handle)
