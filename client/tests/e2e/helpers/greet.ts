@@ -151,5 +151,5 @@ export async function addUser(
   await joinData.nextButton.scrollIntoViewIfNeeded();
   await expect(joinData.nextButton).not.toHaveDisabledAttribute();
   await joinData.nextButton.click();
-  await expect(joinData.title).toHaveText(/^You have joined the organization Org\d+!$/);
+  await expect(joinData.title).toHaveText(/^You have joined the organization TestbedOrg\d+!$/);
 }

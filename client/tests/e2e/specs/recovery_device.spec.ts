@@ -37,7 +37,7 @@ msTest('Export and use recovery files', async ({ myProfilePage }) => {
   const passphraseDownloadPromise = myProfilePage.waitForEvent('download');
   await recoveryItems.nth(1).locator('.recovery-item-download').locator('ion-button').click();
   const passphraseDownload = await passphraseDownloadPromise;
-  expect(passphraseDownload.suggestedFilename()).toMatch(/Parsec_Recovery_Code_Org\d+\.txt/);
+  expect(passphraseDownload.suggestedFilename()).toMatch(/Parsec_Recovery_Code_TestbedOrg\d+\.txt/);
   const passphraseStream = await passphraseDownload.createReadStream();
   passphraseStream.setEncoding('utf8');
 
@@ -133,7 +133,7 @@ for (const error of ['invalid-passphrase', 'invalid-file']) {
     const passphraseDownloadPromise = myProfilePage.waitForEvent('download');
     await recoveryItems.nth(1).locator('.recovery-item-download').locator('ion-button').click();
     const passphraseDownload = await passphraseDownloadPromise;
-    expect(passphraseDownload.suggestedFilename()).toMatch(/Parsec_Recovery_Code_Org\d+\.txt/);
+    expect(passphraseDownload.suggestedFilename()).toMatch(/Parsec_Recovery_Code_TestbedOrg\d+\.txt/);
     const passphraseStream = await passphraseDownload.createReadStream();
     passphraseStream.setEncoding('utf8');
 
