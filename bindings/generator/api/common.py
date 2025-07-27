@@ -315,6 +315,13 @@ class InvitationType(Enum):
     ShamirRecovery = EnumItemUnit
 
 
+class AccountAuthMethodID(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<libparsec::AccountAuthMethodID, _> { libparsec::AccountAuthMethodID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = (
+        "|x: libparsec::AccountAuthMethodID| -> Result<String, &'static str> { Ok(x.hex()) }"
+    )
+
+
 class AccountVaultItemOpaqueKeyID(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<libparsec::AccountVaultItemOpaqueKeyID, _> { libparsec::AccountVaultItemOpaqueKeyID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
     custom_to_rs_string = "|x: libparsec::AccountVaultItemOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) }"

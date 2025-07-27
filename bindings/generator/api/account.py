@@ -19,8 +19,10 @@ from .common import (
     KeyDerivation,
     DateTime,
     SecretKey,
+    AccountAuthMethodID,
     AccountVaultItemOpaqueKeyID,
     Variant,
+    Structure,
 )
 from .addr import ParsecAddr, ParsecInvitationAddr
 from .device import DeviceAccessStrategy, DeviceSaveStrategy, AvailableDevice
@@ -104,6 +106,63 @@ async def account_create_auth_method(
     account: Handle,
     auth_method_strategy: AccountAuthMethodStrategy,
 ) -> Result[None, AccountCreateAuthMethodError]:
+    raise NotImplementedError
+
+
+class AccountGetInUseAuthMethodError(ErrorVariant):
+    class Internal:
+        pass
+
+
+def account_get_in_use_auth_method(
+    account: Handle,
+) -> Result[AccountAuthMethodID, AccountGetInUseAuthMethodError]:
+    raise NotImplementedError
+
+
+class AuthMethodInfo(Structure):
+    auth_method_id: AccountAuthMethodID
+    created_on: DateTime
+    created_by_ip: str
+    created_by_user_agent: str
+    use_password: bool
+
+
+class AccountListAuthMethodsError(ErrorVariant):
+    class Offline:
+        pass
+
+    class Internal:
+        pass
+
+
+async def account_list_auth_methods(
+    account: Handle,
+) -> Result[list[AuthMethodInfo], AccountListAuthMethodsError]:
+    raise NotImplementedError
+
+
+class AccountDisableAuthMethodError(ErrorVariant):
+    class Offline:
+        pass
+
+    class AuthMethodNotFound:
+        pass
+
+    class AuthMethodAlreadyDisabled:
+        pass
+
+    class SelfDisableNotAllowed:
+        pass
+
+    class Internal:
+        pass
+
+
+async def account_disable_auth_method(
+    account: Handle,
+    auth_method_id: AccountAuthMethodID,
+) -> Result[None, AccountDisableAuthMethodError]:
     raise NotImplementedError
 
 

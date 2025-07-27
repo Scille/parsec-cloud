@@ -9,10 +9,10 @@ use std::{
 pub use libparsec_account::{
     AccountCreateAuthMethodError, AccountCreateError, AccountCreateSendValidationEmailError,
     AccountDeleteProceedError, AccountDeleteSendValidationEmailError,
-    AccountFetchOpaqueKeyFromVaultError, AccountListInvitationsError,
-    AccountListRegistrationDevicesError, AccountLoginError, AccountRecoverProceedError,
-    AccountRecoverSendValidationEmailError, AccountRegisterNewDeviceError,
-    AccountUploadOpaqueKeyInVaultError,
+    AccountDisableAuthMethodError, AccountFetchOpaqueKeyFromVaultError,
+    AccountListAuthMethodsError, AccountListInvitationsError, AccountListRegistrationDevicesError,
+    AccountLoginError, AccountRecoverProceedError, AccountRecoverSendValidationEmailError,
+    AccountRegisterNewDeviceError, AccountUploadOpaqueKeyInVaultError, AuthMethodInfo,
 };
 use libparsec_client_connection::{AnonymousAccountCmds, ConnectionError, ProxyConfig};
 use libparsec_types::prelude::*;
@@ -123,6 +123,40 @@ pub async fn account_create_auth_method(
     account
         .create_auth_method(auth_method_strategy.as_real())
         .await
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum AccountGetInUseAuthMethodError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+pub fn account_get_in_use_auth_method(
+    account: Handle,
+) -> Result<AccountAuthMethodID, AccountGetInUseAuthMethodError> {
+    let account_handle = account;
+    let account = borrow_account(account_handle)?;
+
+    Ok(account.auth_method_id())
+}
+
+pub async fn account_list_auth_methods(
+    account: Handle,
+) -> Result<Vec<AuthMethodInfo>, AccountListAuthMethodsError> {
+    let account_handle = account;
+    let account = borrow_account(account_handle)?;
+
+    account.list_auth_methods().await
+}
+
+pub async fn account_disable_auth_method(
+    account: Handle,
+    auth_method_id: AccountAuthMethodID,
+) -> Result<(), AccountDisableAuthMethodError> {
+    let account_handle = account;
+    let account = borrow_account(account_handle)?;
+
+    account.disable_auth_method(auth_method_id).await
 }
 
 pub async fn account_login(
