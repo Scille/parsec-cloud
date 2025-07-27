@@ -105,6 +105,7 @@ pub(super) async fn account_login(
         config_dir,
         human_handle,
         cmds,
+        auth_method_id: auth_method_keys.id,
         auth_method_secret_key: auth_method_keys.secret_key,
     })
 }
