@@ -85,6 +85,15 @@ export enum UserProfile {
 }
 
 
+export interface AuthMethodInfo {
+    authMethodId: string
+    createdOn: number
+    createdByIp: string
+    createdByUserAgent: string
+    usePassword: boolean
+}
+
+
 export interface AvailableDevice {
     keyFilePath: string
     createdOn: number
@@ -596,6 +605,35 @@ export type AccountDeleteSendValidationEmailError =
   | AccountDeleteSendValidationEmailErrorOffline
 
 
+// AccountDisableAuthMethodError
+export interface AccountDisableAuthMethodErrorAuthMethodAlreadyDisabled {
+    tag: "AuthMethodAlreadyDisabled"
+    error: string
+}
+export interface AccountDisableAuthMethodErrorAuthMethodNotFound {
+    tag: "AuthMethodNotFound"
+    error: string
+}
+export interface AccountDisableAuthMethodErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface AccountDisableAuthMethodErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface AccountDisableAuthMethodErrorSelfDisableNotAllowed {
+    tag: "SelfDisableNotAllowed"
+    error: string
+}
+export type AccountDisableAuthMethodError =
+  | AccountDisableAuthMethodErrorAuthMethodAlreadyDisabled
+  | AccountDisableAuthMethodErrorAuthMethodNotFound
+  | AccountDisableAuthMethodErrorInternal
+  | AccountDisableAuthMethodErrorOffline
+  | AccountDisableAuthMethodErrorSelfDisableNotAllowed
+
+
 // AccountFetchOpaqueKeyFromVaultError
 export interface AccountFetchOpaqueKeyFromVaultErrorBadVaultKeyAccess {
     tag: "BadVaultKeyAccess"
@@ -632,6 +670,29 @@ export interface AccountGetHumanHandleErrorInternal {
 }
 export type AccountGetHumanHandleError =
   | AccountGetHumanHandleErrorInternal
+
+
+// AccountGetInUseAuthMethodError
+export interface AccountGetInUseAuthMethodErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export type AccountGetInUseAuthMethodError =
+  | AccountGetInUseAuthMethodErrorInternal
+
+
+// AccountListAuthMethodsError
+export interface AccountListAuthMethodsErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface AccountListAuthMethodsErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export type AccountListAuthMethodsError =
+  | AccountListAuthMethodsErrorInternal
+  | AccountListAuthMethodsErrorOffline
 
 
 // AccountListInvitationsError
@@ -3995,6 +4056,10 @@ export function accountDelete2Proceed(
     account: number,
     validation_code: string
 ): Promise<Result<null, AccountDeleteProceedError>>
+export function accountDisableAuthMethod(
+    account: number,
+    auth_method_id: string
+): Promise<Result<null, AccountDisableAuthMethodError>>
 export function accountFetchOpaqueKeyFromVault(
     account: number,
     key_id: string
@@ -4002,6 +4067,12 @@ export function accountFetchOpaqueKeyFromVault(
 export function accountGetHumanHandle(
     account: number
 ): Promise<Result<HumanHandle, AccountGetHumanHandleError>>
+export function accountGetInUseAuthMethod(
+    account: number
+): Promise<Result<string, AccountGetInUseAuthMethodError>>
+export function accountListAuthMethods(
+    account: number
+): Promise<Result<Array<AuthMethodInfo>, AccountListAuthMethodsError>>
 export function accountListInvitations(
     account: number
 ): Promise<Result<Array<[string, string, string, InvitationType]>, AccountListInvitationsError>>

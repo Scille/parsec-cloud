@@ -347,6 +347,96 @@ fn enum_user_profile_rs_to_js(value: libparsec::UserProfile) -> &'static str {
     }
 }
 
+// AuthMethodInfo
+
+#[allow(dead_code)]
+fn struct_auth_method_info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::AuthMethodInfo> {
+    let auth_method_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "authMethodId")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::AccountAuthMethodID, _> {
+                libparsec::AccountAuthMethodID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let created_on = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "createdOn")?;
+        {
+            let v = js_val.value(cx);
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            match custom_from_rs_f64(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let created_by_ip = {
+        let js_val: Handle<JsString> = obj.get(cx, "createdByIp")?;
+        js_val.value(cx)
+    };
+    let created_by_user_agent = {
+        let js_val: Handle<JsString> = obj.get(cx, "createdByUserAgent")?;
+        js_val.value(cx)
+    };
+    let use_password = {
+        let js_val: Handle<JsBoolean> = obj.get(cx, "usePassword")?;
+        js_val.value(cx)
+    };
+    Ok(libparsec::AuthMethodInfo {
+        auth_method_id,
+        created_on,
+        created_by_ip,
+        created_by_user_agent,
+        use_password,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_auth_method_info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AuthMethodInfo,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_auth_method_id = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::AccountAuthMethodID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.auth_method_id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "authMethodId", js_auth_method_id)?;
+    let js_created_on = JsNumber::new(cx, {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        match custom_to_rs_f64(rs_obj.created_on) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    });
+    js_obj.set(cx, "createdOn", js_created_on)?;
+    let js_created_by_ip = JsString::try_new(cx, rs_obj.created_by_ip).or_throw(cx)?;
+    js_obj.set(cx, "createdByIp", js_created_by_ip)?;
+    let js_created_by_user_agent =
+        JsString::try_new(cx, rs_obj.created_by_user_agent).or_throw(cx)?;
+    js_obj.set(cx, "createdByUserAgent", js_created_by_user_agent)?;
+    let js_use_password = JsBoolean::new(cx, rs_obj.use_password);
+    js_obj.set(cx, "usePassword", js_use_password)?;
+    Ok(js_obj)
+}
+
 // AvailableDevice
 
 #[allow(dead_code)]
@@ -4212,6 +4302,48 @@ fn variant_account_delete_send_validation_email_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// AccountDisableAuthMethodError
+
+#[allow(dead_code)]
+fn variant_account_disable_auth_method_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AccountDisableAuthMethodError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::AccountDisableAuthMethodError::AuthMethodAlreadyDisabled { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "AccountDisableAuthMethodErrorAuthMethodAlreadyDisabled")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountDisableAuthMethodError::AuthMethodNotFound { .. } => {
+            let js_tag = JsString::try_new(cx, "AccountDisableAuthMethodErrorAuthMethodNotFound")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountDisableAuthMethodError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "AccountDisableAuthMethodErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountDisableAuthMethodError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "AccountDisableAuthMethodErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountDisableAuthMethodError::SelfDisableNotAllowed { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "AccountDisableAuthMethodErrorSelfDisableNotAllowed")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // AccountFetchOpaqueKeyFromVaultError
 
 #[allow(dead_code)]
@@ -4269,6 +4401,51 @@ fn variant_account_get_human_handle_error_rs_to_js<'a>(
         libparsec::AccountGetHumanHandleError::Internal { .. } => {
             let js_tag =
                 JsString::try_new(cx, "AccountGetHumanHandleErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// AccountGetInUseAuthMethodError
+
+#[allow(dead_code)]
+fn variant_account_get_in_use_auth_method_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AccountGetInUseAuthMethodError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::AccountGetInUseAuthMethodError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "AccountGetInUseAuthMethodErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// AccountListAuthMethodsError
+
+#[allow(dead_code)]
+fn variant_account_list_auth_methods_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AccountListAuthMethodsError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::AccountListAuthMethodsError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "AccountListAuthMethodsErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountListAuthMethodsError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "AccountListAuthMethodsErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -15157,6 +15334,73 @@ fn account_delete_2_proceed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// account_disable_auth_method
+fn account_disable_auth_method(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let account = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let auth_method_id = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::AccountAuthMethodID, _> {
+                libparsec::AccountAuthMethodID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::account_disable_auth_method(account, auth_method_id).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_account_disable_auth_method_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // account_fetch_opaque_key_from_vault
 fn account_fetch_opaque_key_from_vault(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -15266,6 +15510,113 @@ fn account_get_human_handle(mut cx: FunctionContext) -> JsResult<JsPromise> {
     };
     let (deferred, promise) = cx.promise();
     deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
+// account_get_in_use_auth_method
+fn account_get_in_use_auth_method(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let account = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let ret = libparsec::account_get_in_use_auth_method(account);
+    let js_ret = match ret {
+        Ok(ok) => {
+            let js_obj = JsObject::new(&mut cx);
+            let js_tag = JsBoolean::new(&mut cx, true);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_value = JsString::try_new(&mut cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::AccountAuthMethodID| -> Result<String, &'static str> {
+                        Ok(x.hex())
+                    };
+                match custom_to_rs_string(ok) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(&mut cx)?;
+            js_obj.set(&mut cx, "value", js_value)?;
+            js_obj
+        }
+        Err(err) => {
+            let js_obj = cx.empty_object();
+            let js_tag = JsBoolean::new(&mut cx, false);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_err = variant_account_get_in_use_auth_method_error_rs_to_js(&mut cx, err)?;
+            js_obj.set(&mut cx, "error", js_err)?;
+            js_obj
+        }
+    };
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
+// account_list_auth_methods
+fn account_list_auth_methods(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let account = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::account_list_auth_methods(account).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            // JsArray::new allocates with `undefined` value, that's why we `set` value
+                            let js_array = JsArray::new(&mut cx, ok.len());
+                            for (i, elem) in ok.into_iter().enumerate() {
+                                let js_elem = struct_auth_method_info_rs_to_js(&mut cx, elem)?;
+                                js_array.set(&mut cx, i as u32, js_elem)?;
+                            }
+                            js_array
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_account_list_auth_methods_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
     Ok(promise)
 }
 
@@ -25886,11 +26237,14 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         account_delete_1_send_validation_email,
     )?;
     cx.export_function("accountDelete2Proceed", account_delete_2_proceed)?;
+    cx.export_function("accountDisableAuthMethod", account_disable_auth_method)?;
     cx.export_function(
         "accountFetchOpaqueKeyFromVault",
         account_fetch_opaque_key_from_vault,
     )?;
     cx.export_function("accountGetHumanHandle", account_get_human_handle)?;
+    cx.export_function("accountGetInUseAuthMethod", account_get_in_use_auth_method)?;
+    cx.export_function("accountListAuthMethods", account_list_auth_methods)?;
     cx.export_function("accountListInvitations", account_list_invitations)?;
     cx.export_function(
         "accountListRegistrationDevices",
