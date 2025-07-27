@@ -82,6 +82,7 @@ export enum UserProfile {
     Outsider = 'UserProfileOutsider',
     Standard = 'UserProfileStandard',
 }
+export type AccountAuthMethodID = string
 export type AccountVaultItemOpaqueKeyID = string
 export type ApiVersion = string
 export type DeviceID = string
@@ -121,6 +122,14 @@ export type I64 = bigint
 export type IndexInt = bigint
 export type SizeInt = bigint
 export type U64 = bigint
+
+export interface AuthMethodInfo {
+    authMethodId: AccountAuthMethodID
+    createdOn: DateTime
+    createdByIp: string
+    createdByUserAgent: string
+    usePassword: boolean
+}
 
 export interface AvailableDevice {
     keyFilePath: Path
@@ -630,6 +639,42 @@ export type AccountDeleteSendValidationEmailError =
   | AccountDeleteSendValidationEmailErrorInternal
   | AccountDeleteSendValidationEmailErrorOffline
 
+// AccountDisableAuthMethodError
+export enum AccountDisableAuthMethodErrorTag {
+    AuthMethodAlreadyDisabled = 'AccountDisableAuthMethodErrorAuthMethodAlreadyDisabled',
+    AuthMethodNotFound = 'AccountDisableAuthMethodErrorAuthMethodNotFound',
+    Internal = 'AccountDisableAuthMethodErrorInternal',
+    Offline = 'AccountDisableAuthMethodErrorOffline',
+    SelfDisableNotAllowed = 'AccountDisableAuthMethodErrorSelfDisableNotAllowed',
+}
+
+export interface AccountDisableAuthMethodErrorAuthMethodAlreadyDisabled {
+    tag: AccountDisableAuthMethodErrorTag.AuthMethodAlreadyDisabled
+    error: string
+}
+export interface AccountDisableAuthMethodErrorAuthMethodNotFound {
+    tag: AccountDisableAuthMethodErrorTag.AuthMethodNotFound
+    error: string
+}
+export interface AccountDisableAuthMethodErrorInternal {
+    tag: AccountDisableAuthMethodErrorTag.Internal
+    error: string
+}
+export interface AccountDisableAuthMethodErrorOffline {
+    tag: AccountDisableAuthMethodErrorTag.Offline
+    error: string
+}
+export interface AccountDisableAuthMethodErrorSelfDisableNotAllowed {
+    tag: AccountDisableAuthMethodErrorTag.SelfDisableNotAllowed
+    error: string
+}
+export type AccountDisableAuthMethodError =
+  | AccountDisableAuthMethodErrorAuthMethodAlreadyDisabled
+  | AccountDisableAuthMethodErrorAuthMethodNotFound
+  | AccountDisableAuthMethodErrorInternal
+  | AccountDisableAuthMethodErrorOffline
+  | AccountDisableAuthMethodErrorSelfDisableNotAllowed
+
 // AccountFetchOpaqueKeyFromVaultError
 export enum AccountFetchOpaqueKeyFromVaultErrorTag {
     BadVaultKeyAccess = 'AccountFetchOpaqueKeyFromVaultErrorBadVaultKeyAccess',
@@ -677,6 +722,36 @@ export interface AccountGetHumanHandleErrorInternal {
 }
 export type AccountGetHumanHandleError =
   | AccountGetHumanHandleErrorInternal
+
+// AccountGetInUseAuthMethodError
+export enum AccountGetInUseAuthMethodErrorTag {
+    Internal = 'AccountGetInUseAuthMethodErrorInternal',
+}
+
+export interface AccountGetInUseAuthMethodErrorInternal {
+    tag: AccountGetInUseAuthMethodErrorTag.Internal
+    error: string
+}
+export type AccountGetInUseAuthMethodError =
+  | AccountGetInUseAuthMethodErrorInternal
+
+// AccountListAuthMethodsError
+export enum AccountListAuthMethodsErrorTag {
+    Internal = 'AccountListAuthMethodsErrorInternal',
+    Offline = 'AccountListAuthMethodsErrorOffline',
+}
+
+export interface AccountListAuthMethodsErrorInternal {
+    tag: AccountListAuthMethodsErrorTag.Internal
+    error: string
+}
+export interface AccountListAuthMethodsErrorOffline {
+    tag: AccountListAuthMethodsErrorTag.Offline
+    error: string
+}
+export type AccountListAuthMethodsError =
+  | AccountListAuthMethodsErrorInternal
+  | AccountListAuthMethodsErrorOffline
 
 // AccountListInvitationsError
 export enum AccountListInvitationsErrorTag {
@@ -4804,6 +4879,10 @@ export interface LibParsecPlugin {
         account: Handle,
         validation_code: ValidationCode
     ): Promise<Result<null, AccountDeleteProceedError>>
+    accountDisableAuthMethod(
+        account: Handle,
+        auth_method_id: AccountAuthMethodID
+    ): Promise<Result<null, AccountDisableAuthMethodError>>
     accountFetchOpaqueKeyFromVault(
         account: Handle,
         key_id: AccountVaultItemOpaqueKeyID
@@ -4811,6 +4890,12 @@ export interface LibParsecPlugin {
     accountGetHumanHandle(
         account: Handle
     ): Promise<Result<HumanHandle, AccountGetHumanHandleError>>
+    accountGetInUseAuthMethod(
+        account: Handle
+    ): Promise<Result<AccountAuthMethodID, AccountGetInUseAuthMethodError>>
+    accountListAuthMethods(
+        account: Handle
+    ): Promise<Result<Array<AuthMethodInfo>, AccountListAuthMethodsError>>
     accountListInvitations(
         account: Handle
     ): Promise<Result<Array<[ParsecInvitationAddr, OrganizationID, InvitationToken, InvitationType]>, AccountListInvitationsError>>

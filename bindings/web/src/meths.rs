@@ -357,6 +357,107 @@ fn enum_user_profile_rs_to_js(value: libparsec::UserProfile) -> &'static str {
     }
 }
 
+// AuthMethodInfo
+
+#[allow(dead_code)]
+fn struct_auth_method_info_js_to_rs(obj: JsValue) -> Result<libparsec::AuthMethodInfo, JsValue> {
+    let auth_method_id = {
+        let js_val = Reflect::get(&obj, &"authMethodId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string =
+                    |s: String| -> Result<libparsec::AccountAuthMethodID, _> {
+                        libparsec::AccountAuthMethodID::from_hex(s.as_str())
+                            .map_err(|e| e.to_string())
+                    };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let created_on = {
+        let js_val = Reflect::get(&obj, &"createdOn".into())?;
+        {
+            let v = js_val.dyn_into::<Number>()?.value_of();
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            v
+        }
+    };
+    let created_by_ip = {
+        let js_val = Reflect::get(&obj, &"createdByIp".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+    };
+    let created_by_user_agent = {
+        let js_val = Reflect::get(&obj, &"createdByUserAgent".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+    };
+    let use_password = {
+        let js_val = Reflect::get(&obj, &"usePassword".into())?;
+        js_val
+            .dyn_into::<Boolean>()
+            .map_err(|_| TypeError::new("Not a boolean"))?
+            .value_of()
+    };
+    Ok(libparsec::AuthMethodInfo {
+        auth_method_id,
+        created_on,
+        created_by_ip,
+        created_by_user_agent,
+        use_password,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_auth_method_info_rs_to_js(rs_obj: libparsec::AuthMethodInfo) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_auth_method_id = JsValue::from_str({
+        let custom_to_rs_string =
+            |x: libparsec::AccountAuthMethodID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.auth_method_id) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"authMethodId".into(), &js_auth_method_id)?;
+    let js_created_on = {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        let v = match custom_to_rs_f64(rs_obj.created_on) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        };
+        JsValue::from(v)
+    };
+    Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
+    let js_created_by_ip = rs_obj.created_by_ip.into();
+    Reflect::set(&js_obj, &"createdByIp".into(), &js_created_by_ip)?;
+    let js_created_by_user_agent = rs_obj.created_by_user_agent.into();
+    Reflect::set(
+        &js_obj,
+        &"createdByUserAgent".into(),
+        &js_created_by_user_agent,
+    )?;
+    let js_use_password = rs_obj.use_password.into();
+    Reflect::set(&js_obj, &"usePassword".into(), &js_use_password)?;
+    Ok(js_obj)
+}
+
 // AvailableDevice
 
 #[allow(dead_code)]
@@ -4439,6 +4540,55 @@ fn variant_account_delete_send_validation_email_error_rs_to_js(
     Ok(js_obj)
 }
 
+// AccountDisableAuthMethodError
+
+#[allow(dead_code)]
+fn variant_account_disable_auth_method_error_rs_to_js(
+    rs_obj: libparsec::AccountDisableAuthMethodError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::AccountDisableAuthMethodError::AuthMethodAlreadyDisabled { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountDisableAuthMethodErrorAuthMethodAlreadyDisabled".into(),
+            )?;
+        }
+        libparsec::AccountDisableAuthMethodError::AuthMethodNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountDisableAuthMethodErrorAuthMethodNotFound".into(),
+            )?;
+        }
+        libparsec::AccountDisableAuthMethodError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountDisableAuthMethodErrorInternal".into(),
+            )?;
+        }
+        libparsec::AccountDisableAuthMethodError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountDisableAuthMethodErrorOffline".into(),
+            )?;
+        }
+        libparsec::AccountDisableAuthMethodError::SelfDisableNotAllowed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountDisableAuthMethodErrorSelfDisableNotAllowed".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // AccountFetchOpaqueKeyFromVaultError
 
 #[allow(dead_code)]
@@ -4503,6 +4653,55 @@ fn variant_account_get_human_handle_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"AccountGetHumanHandleErrorInternal".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// AccountGetInUseAuthMethodError
+
+#[allow(dead_code)]
+fn variant_account_get_in_use_auth_method_error_rs_to_js(
+    rs_obj: libparsec::AccountGetInUseAuthMethodError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::AccountGetInUseAuthMethodError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountGetInUseAuthMethodErrorInternal".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// AccountListAuthMethodsError
+
+#[allow(dead_code)]
+fn variant_account_list_auth_methods_error_rs_to_js(
+    rs_obj: libparsec::AccountListAuthMethodsError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::AccountListAuthMethodsError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountListAuthMethodsErrorInternal".into(),
+            )?;
+        }
+        libparsec::AccountListAuthMethodsError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountListAuthMethodsErrorOffline".into(),
             )?;
         }
     }
@@ -16475,6 +16674,40 @@ pub fn accountDelete2Proceed(account: u32, validation_code: String) -> Promise {
     }))
 }
 
+// account_disable_auth_method
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn accountDisableAuthMethod(account: u32, auth_method_id: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let auth_method_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::AccountAuthMethodID, _> {
+                libparsec::AccountAuthMethodID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(auth_method_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::account_disable_auth_method(account, auth_method_id).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_account_disable_auth_method_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
 // account_fetch_opaque_key_from_vault
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -16526,6 +16759,74 @@ pub fn accountGetHumanHandle(account: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_account_get_human_handle_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// account_get_in_use_auth_method
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn accountGetInUseAuthMethod(account: u32) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::account_get_in_use_auth_method(account);
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from_str({
+                    let custom_to_rs_string =
+                        |x: libparsec::AccountAuthMethodID| -> Result<String, &'static str> {
+                            Ok(x.hex())
+                        };
+                    match custom_to_rs_string(value) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    }
+                    .as_ref()
+                });
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_account_get_in_use_auth_method_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// account_list_auth_methods
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn accountListAuthMethods(account: u32) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::account_list_auth_methods(account).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(value.len() as u32);
+                    for (i, elem) in value.into_iter().enumerate() {
+                        let js_elem = struct_auth_method_info_rs_to_js(elem)?;
+                        js_array.set(i as u32, js_elem);
+                    }
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_account_list_auth_methods_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
