@@ -53,52 +53,58 @@ WITH my_organization AS (
         AND root_verify_key IS NOT NULL
     LIMIT 1
 ),
+
 -- Common topic lock must occur ASAP
 my_locked_common_topic AS (
     SELECT last_timestamp
     FROM common_topic
-    WHERE organization = (SELECT _id FROM my_organization)
+    WHERE organization = (SELECT my_organization._id FROM my_organization)
     LIMIT 1
     FOR SHARE
 ),
+
 my_realm AS (
     SELECT
-        realm._id,
+        _id,
         key_index
     FROM realm
     WHERE
-        organization = (SELECT _id FROM my_organization)
+        organization = (SELECT my_organization._id FROM my_organization)
         AND realm_id = $realm_id
     LIMIT 1
 ),
+
 -- Realm topic lock must occur ASAP
 my_locked_realm_topic AS (
     SELECT last_timestamp
     FROM realm_topic
     WHERE
-        organization = (SELECT _id FROM my_organization)
-        AND realm = (SELECT _id FROM my_realm)
+        organization = (SELECT my_organization._id FROM my_organization)
+        AND realm = (SELECT my_realm._id FROM my_realm)
     LIMIT 1
     FOR SHARE
 ),
+
 my_device AS (
     SELECT
-        device._id,
-        device.user_
+        _id,
+        user_
     FROM device
     WHERE
-        organization = (SELECT _id FROM my_organization)
-        AND device.device_id = $device_id
+        organization = (SELECT my_organization._id FROM my_organization)
+        AND device_id = $device_id
     LIMIT 1
 ),
+
 my_user AS (
     SELECT
         _id,
         (revoked_on IS NOT NULL) AS revoked
     FROM user_
-    WHERE _id = (SELECT user_ FROM my_device)
+    WHERE _id = (SELECT my_device.user_ FROM my_device)
     LIMIT 1
 )
+
 SELECT
     (SELECT _id FROM my_organization) AS organization_internal_id,
     (SELECT is_expired FROM my_organization) AS organization_is_expired,
@@ -113,18 +119,18 @@ SELECT
             SELECT role IN ('CONTRIBUTOR', 'MANAGER', 'OWNER')
             FROM realm_user_role
             WHERE
-                realm_user_role.user_ = (SELECT _id FROM my_user)
-                AND realm_user_role.realm = (SELECT _id FROM my_realm)
+                user_ = (SELECT my_user._id FROM my_user)
+                AND realm = (SELECT my_realm._id FROM my_realm)
             ORDER BY certified_on DESC
             LIMIT 1
         ),
-        False
+        FALSE
     ) AS user_can_write,
     EXISTS(
-        SELECT True
+        SELECT TRUE
         FROM block
         WHERE
-            block.realm = (SELECT _id FROM my_realm)
+            block.realm = (SELECT my_realm._id FROM my_realm)
             AND block.block_id = $block_id
         LIMIT 1
     ) AS block_already_exists
