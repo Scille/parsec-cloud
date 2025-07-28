@@ -1,0 +1,140 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "organization_self_list",
+        "req": {},
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "active",
+                        "type": "List<ActiveUser>"
+                    },
+                    {
+                        "name": "revoked",
+                        "type": "List<RevokedUser>"
+                    }
+                ]
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "AllowedClientAgent",
+                "variants": [
+                    {
+                        // The server will reject any connection to this organization
+                        // from a web client.
+                        "name": "NativeOnly",
+                        "discriminant_value": "NATIVE_ONLY"
+                    },
+                    {
+                        // The server allows connection to this organization from a web client.
+                        "name": "NativeOrWeb",
+                        "discriminant_value": "NATIVE_OR_WEB"
+                    }
+                ]
+            },
+            {
+                "name": "AccountVaultStrategy",
+                "variants": [
+                    {
+                        "name": "Allowed",
+                        "discriminant_value": "ALLOWED"
+                    },
+                    {
+                        // The user should not store any data related to this organization
+                        // server-side using his account vault.
+                        //
+                        // Note this is a purely advisory configuration since only the
+                        // client can decrypt the vault content, and hence it would be
+                        // pointless to try to enforce it on the server side.
+                        "name": "Forbidden",
+                        "discriminant_value": "FORBIDDEN"
+                    }
+                ]
+            },
+            {
+                "name": "OrganizationConfig",
+                "fields": [
+                    {
+                        "name": "is_expired",
+                        "type": "Boolean"
+                    },
+                    {
+                        "name": "user_profile_outsider_allowed",
+                        "type": "Boolean"
+                    },
+                    {
+                        "name": "active_users_limit",
+                        "type": "ActiveUsersLimit"
+                    },
+                    {
+                        "name": "allowed_client_agent",
+                        "type": "AllowedClientAgent"
+                    },
+                    {
+                        "name": "account_vault_strategy",
+                        "type": "AccountVaultStrategy"
+                    }
+                ]
+            },
+            {
+                "name": "ActiveUser",
+                "fields": [
+                    {
+                        "name": "organization_id",
+                        "type": "OrganizationID"
+                    },
+                    {
+                        "name": "user_id",
+                        "type": "UserID"
+                    },
+                    {
+                        "name": "created_on",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "is_frozen",
+                        "type": "Boolean"
+                    },
+                    {
+                        "name": "current_profile",
+                        "type": "UserProfile"
+                    },
+                    {
+                        "name": "organization_config",
+                        "type": "OrganizationConfig"
+                    }
+                ]
+            },
+            {
+                "name": "RevokedUser",
+                "fields": [
+                    {
+                        "name": "organization_id",
+                        "type": "OrganizationID"
+                    },
+                    {
+                        "name": "user_id",
+                        "type": "UserID"
+                    },
+                    {
+                        "name": "created_on",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "revoked_on",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "current_profile",
+                        "type": "UserProfile"
+                    }
+                ]
+            }
+        ]
+    }
+]
