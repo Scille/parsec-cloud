@@ -115,13 +115,13 @@ WITH my_organization AS (
 my_user AS (
     SELECT
         _id,
-        (revoked_on IS NOT NULL) AS revoked,
         user_id,
-        current_profile
+        current_profile,
+        (revoked_on IS NOT NULL) AS revoked
     FROM user_
     WHERE
         user_id = $user_id
-        AND organization = (SELECT _id FROM my_organization)
+        AND organization = (SELECT my_organization._id FROM my_organization)
     LIMIT 1
 ),
 
@@ -138,7 +138,10 @@ my_realms_last_roles AS (
 -- ...and only keep the realm the user is still part of
 my_realms AS (
     SELECT
-        (SELECT realm.realm_id FROM realm WHERE realm._id = my_realms_last_roles.realm)
+        (
+            SELECT realm.realm_id FROM realm
+            WHERE realm._id = my_realms_last_roles.realm
+        )
     FROM my_realms_last_roles
     WHERE role IS NOT NULL
 )
@@ -154,7 +157,7 @@ SELECT
     (SELECT revoked FROM my_user) AS user_is_revoked,
     (SELECT user_id FROM my_user) AS user_id,
     (SELECT current_profile FROM my_user) AS user_current_profile,
-    (SELECT ARRAY_AGG(realm_id) FROM my_realms) as user_realms
+    (SELECT ARRAY_AGG(realm_id) FROM my_realms) AS user_realms
 """)
 
 
