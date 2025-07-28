@@ -191,7 +191,6 @@ repos:
         exclude: |
             (?x)^(
                 server/parsec/components/postgresql/block_test_dump_blocks.py|
-                server/parsec/components/postgresql/events.py|
                 server/parsec/components/postgresql/invite.py|
                 server/parsec/components/postgresql/organization.*|
                 server/parsec/components/postgresql/pki.py|
