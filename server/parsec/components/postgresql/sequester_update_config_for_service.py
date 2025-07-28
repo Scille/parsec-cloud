@@ -27,23 +27,24 @@ WITH my_organization AS (
 my_locked_sequester_topic AS (
     SELECT last_timestamp
     FROM sequester_topic
-    WHERE organization = (SELECT _id FROM my_organization)
+    WHERE organization = (SELECT my_organization._id FROM my_organization)
     LIMIT 1
     FOR UPDATE
 ),
 
 updated_sequester_service AS (
     UPDATE sequester_service
-        SET
-            webhook_url = $webhook_url,
-            service_type = $service_type
+    SET
+        webhook_url = $webhook_url,
+        service_type = $service_type
     WHERE
-        organization = (SELECT _id FROM my_organization)
+        organization = (SELECT my_organization._id FROM my_organization)
         AND service_id = $service_id
     RETURNING TRUE
 )
 
 SELECT
+    (SELECT last_timestamp FROM my_locked_sequester_topic) AS last_sequester_certificate_timestamp,
     COALESCE(
         (SELECT TRUE FROM my_organization),
         FALSE
