@@ -41,9 +41,9 @@ logger = get_logger()
 _q_anonymous_get_info = Q(
     """
 SELECT
-    _id as organization_internal_id,
+    _id AS organization_internal_id,
     is_expired AS organization_is_expired,
-    allowed_client_agent as organization_allowed_client_agent
+    allowed_client_agent AS organization_allowed_client_agent
 FROM organization
 WHERE organization_id = $organization_id
 -- Note we don't filter out non-bootstrapped organization here, this is because
@@ -55,18 +55,21 @@ WHERE organization_id = $organization_id
 _q_invited_get_info = Q(
     """
 SELECT
-    _id as organization_internal_id,
-    is_expired as organization_is_expired,
-    allowed_client_agent as organization_allowed_client_agent,
+    _id AS organization_internal_id,
+    is_expired AS organization_is_expired,
+    allowed_client_agent AS organization_allowed_client_agent,
     (
-        SELECT _id FROM invitation WHERE organization = organization._id AND token = $token LIMIT 1
-    ) as invitation_internal_id,
+        SELECT invitation._id FROM invitation
+        WHERE invitation.organization = organization._id AND invitation.token = $token LIMIT 1
+    ) AS invitation_internal_id,
     (
-        SELECT type FROM invitation WHERE organization = organization._id AND token = $token LIMIT 1
-    ) as invitation_type,
+        SELECT invitation.type FROM invitation
+        WHERE invitation.organization = organization._id AND invitation.token = $token LIMIT 1
+    ) AS invitation_type,
     (
-        SELECT deleted_on FROM invitation WHERE organization = organization._id AND token = $token LIMIT
-    1) as invitation_deleted_on
+        SELECT invitation.deleted_on FROM invitation
+        WHERE invitation.organization = organization._id AND invitation.token = $token LIMIT 1
+    ) AS invitation_deleted_on
 FROM organization
 WHERE
     organization_id = $organization_id
@@ -106,28 +109,32 @@ my_device AS (
 
 my_user AS (
     SELECT
-        user_id,
-        revoked_on,
-        frozen,
+        user_.user_id,
+        user_.revoked_on,
+        user_.frozen,
         (
-            CASE WHEN user_.tos_accepted_on IS NULL
-                THEN
-                    -- The user hasn't accepted the TOS, this is acceptable if there
-                    -- is no TOS at all for this organization.
-                    COALESCE(
-                        (SELECT TRUE FROM my_organization WHERE tos_updated_on IS NOT NULL),
-                        FALSE
-                    )
+            CASE
+                WHEN user_.tos_accepted_on IS NULL
+                    THEN
+                        -- The user hasn't accepted the TOS, this is acceptable if there
+                        -- is no TOS at all for this organization.
+                        COALESCE(
+                            (
+                                SELECT TRUE FROM my_organization
+                                WHERE my_organization.tos_updated_on IS NOT NULL
+                            ),
+                            FALSE
+                        )
                 ELSE
                     -- The user has accepted an TOS, we must make sure it corresponds to
                     -- the current one in the organization.
                     -- If the organization no longer has a TOS, then what the user has
                     -- accepted in the past is irrelevant.
                     COALESCE(
-                        (user_.tos_accepted_on < (SELECT tos_updated_on FROM my_organization)),
+                        (user_.tos_accepted_on < (SELECT my_organization.tos_updated_on FROM my_organization)),
                         FALSE
                     )
-                END
+            END
         ) AS user_must_accept_tos
     FROM user_
     INNER JOIN my_device ON user_._id = my_device.user_
@@ -135,15 +142,15 @@ my_user AS (
 )
 
 SELECT
-    (SELECT _id FROM my_organization) as organization_internal_id,
-    (SELECT is_expired FROM my_organization) as organization_is_expired,
-    (SELECT allowed_client_agent FROM my_organization) as organization_allowed_client_agent,
-    (SELECT _id FROM my_device) as device_internal_id,
-    (SELECT verify_key FROM my_device) as device_verify_key,
-    (SELECT user_id FROM my_user) as user_id,
-    (SELECT revoked_on FROM my_user) as user_revoked_on,
-    (SELECT frozen FROM my_user) as user_is_frozen,
-    (SELECT user_must_accept_tos FROM my_user)
+    (SELECT _id FROM my_organization) AS organization_internal_id,
+    (SELECT is_expired FROM my_organization) AS organization_is_expired,
+    (SELECT allowed_client_agent FROM my_organization) AS organization_allowed_client_agent,
+    (SELECT _id FROM my_device) AS device_internal_id,
+    (SELECT verify_key FROM my_device) AS device_verify_key,
+    (SELECT user_id FROM my_user) AS user_id,
+    (SELECT revoked_on FROM my_user) AS user_revoked_on,
+    (SELECT frozen FROM my_user) AS user_is_frozen,
+    (SELECT user_must_accept_tos FROM my_user) AS user_must_accept_tos
 """
 )
 
@@ -151,14 +158,14 @@ SELECT
 _q_authenticated_account_get_info = Q(
     """
 SELECT
-    account._id as account_internal_id,
-    account.email as account_email,
-    vault_authentication_method._id as auth_method_internal_id,
+    account._id AS account_internal_id,
+    account.email AS account_email,
+    vault_authentication_method._id AS auth_method_internal_id,
     vault_authentication_method.auth_method_id,
-    vault_authentication_method.mac_key as auth_method_mac_key
+    vault_authentication_method.mac_key AS auth_method_mac_key
 FROM account
-JOIN vault ON vault.account = account._id
-JOIN vault_authentication_method ON vault_authentication_method.vault = vault._id
+INNER JOIN vault ON account._id = vault.account
+INNER JOIN vault_authentication_method ON vault._id = vault_authentication_method.vault
 WHERE
     vault_authentication_method.auth_method_id = $auth_method_id
     AND vault_authentication_method.disabled_on IS NULL
