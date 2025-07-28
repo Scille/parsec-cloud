@@ -26,6 +26,10 @@ from parsec.components.account import (
     AccountInfo,
     AccountInfoBadOutcome,
     AccountInviteListBadOutcome,
+    AccountOrganizationListBadOutcome,
+    AccountOrganizationSelfList,
+    AccountOrganizationSelfListActiveUser,
+    AccountOrganizationSelfListRevokedUser,
     AccountRecoverProceedBadOutcome,
     AccountRecoverSendValidationEmailBadOutcome,
     AccountVaultItemListBadOutcome,
@@ -541,6 +545,53 @@ class MemoryAccountComponent(BaseAccountComponent):
             )
 
         return res
+
+    async def organization_self_list(
+        self, auth_method_id: AccountAuthMethodID
+    ) -> AccountOrganizationSelfList | AccountOrganizationListBadOutcome:
+        match self._data.get_account_from_active_auth_method(auth_method_id=auth_method_id):
+            case (account, _):
+                pass
+            case None:
+                return AccountOrganizationListBadOutcome.ACCOUNT_NOT_FOUND
+
+        active = []
+        revoked = []
+        for org in self._data.organizations.values():
+            for user in org.users.values():
+                if user.cooked.human_handle.email != account.account_email:
+                    # The email is not part of this organization
+                    continue
+                if user.revoked_on is not None:
+                    revoked.append(
+                        AccountOrganizationSelfListRevokedUser(
+                            user_id=user.cooked.user_id,
+                            created_on=user.cooked.timestamp,
+                            revoked_on=user.revoked_on,
+                            current_profile=user.current_profile,
+                            organization_id=org.organization_id,
+                        )
+                    )
+                else:
+                    active.append(
+                        AccountOrganizationSelfListActiveUser(
+                            user_id=user.cooked.user_id,
+                            created_on=user.cooked.timestamp,
+                            current_profile=user.current_profile,
+                            is_frozen=user.is_frozen,
+                            organization_id=org.organization_id,
+                            organization_is_expired=org.is_expired,
+                            organization_user_profile_outsider_allowed=org.user_profile_outsider_allowed,
+                            organization_active_users_limit=org.active_users_limit,
+                            organization_allowed_client_agent=org.allowed_client_agent,
+                            organization_account_vault_strategy=org.account_vault_strategy,
+                        )
+                    )
+
+        return AccountOrganizationSelfList(
+            active=active,
+            revoked=revoked,
+        )
 
     @override
     async def auth_method_create(
