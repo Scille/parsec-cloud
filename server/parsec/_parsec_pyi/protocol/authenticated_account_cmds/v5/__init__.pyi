@@ -12,6 +12,7 @@ from . import (
     auth_method_disable,
     auth_method_list,
     invite_self_list,
+    organization_self_list,
     ping,
     vault_item_list,
     vault_item_recovery_list,
@@ -31,6 +32,7 @@ class AnyCmdReq:
         | auth_method_disable.Req
         | auth_method_list.Req
         | invite_self_list.Req
+        | organization_self_list.Req
         | ping.Req
         | vault_item_list.Req
         | vault_item_recovery_list.Req
@@ -47,6 +49,7 @@ __all__ = [
     "auth_method_disable",
     "auth_method_list",
     "invite_self_list",
+    "organization_self_list",
     "ping",
     "vault_item_list",
     "vault_item_recovery_list",
