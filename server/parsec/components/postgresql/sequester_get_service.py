@@ -36,7 +36,7 @@ my_service AS (
         webhook_url
     FROM sequester_service
     WHERE
-        organization = (SELECT _id FROM my_organization)
+        organization = (SELECT my_organization._id FROM my_organization)
         AND service_id = $service_id
 )
 
@@ -46,13 +46,13 @@ SELECT
         FALSE
     ) AS organization_exists,
     (SELECT is_sequestered FROM my_organization) AS organization_is_sequestered,
-    (SELECT service_id FROM my_service),
-    (SELECT service_label FROM my_service),
-    (SELECT service_certificate FROM my_service),
-    (SELECT created_on FROM my_service),
-    (SELECT revoked_on FROM my_service),
-    (SELECT service_type FROM my_service),
-    (SELECT webhook_url FROM my_service)
+    (SELECT service_id FROM my_service) AS service_id,
+    (SELECT service_label FROM my_service) AS service_label,
+    (SELECT service_certificate FROM my_service) AS service_certificate,
+    (SELECT created_on FROM my_service) AS created_on,
+    (SELECT revoked_on FROM my_service) AS revoked_on,
+    (SELECT service_type FROM my_service) AS service_type,
+    (SELECT webhook_url FROM my_service) AS webhook_url
 """)
 
 
@@ -175,8 +175,8 @@ UNION ALL -- Using UNION ALL is import to avoid sorting !
 -- Then following rows are services
 SELECT
     -- First row only: organization info columns
-    NULL,
-    NULL,
+    NULL AS organization_exists,
+    NULL AS organization_is_sequestered,
 
     -- Non-first rows only: service info columns
     service_id,
@@ -188,7 +188,7 @@ SELECT
     webhook_url
 FROM sequester_service
 WHERE
-    organization = (SELECT _id FROM my_organization)
+    organization = (SELECT my_organization._id FROM my_organization)
 """)
 
 

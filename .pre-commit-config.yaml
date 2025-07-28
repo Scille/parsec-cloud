@@ -196,7 +196,6 @@ repos:
                 server/parsec/components/postgresql/pki.py|
                 server/parsec/components/postgresql/queries.*|
                 server/parsec/components/postgresql/realm.*|
-                server/parsec/components/postgresql/sequester.*|
                 server/parsec/components/postgresql/shamir.*|
                 server/parsec/components/postgresql/test_queries.*|
                 server/parsec/components/postgresql/user.*|
