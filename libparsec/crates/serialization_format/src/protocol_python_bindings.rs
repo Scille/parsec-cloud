@@ -34,6 +34,7 @@ fn quote_cmds_family(family: &GenCmdsFamily) -> TokenStream {
     quote! {
         pub(crate) mod #family_mod_name {
             #![allow(clippy::too_many_arguments)]
+            #![allow(clippy::needless_question_mark)]
 
             use ::pyo3::prelude::*;
             use ::pyo3::types::*;
@@ -46,7 +47,7 @@ fn quote_cmds_family(family: &GenCmdsFamily) -> TokenStream {
             #versioned_cmds_items
             )*
             pub(super) fn #populate_mod_fn_name(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
-                let family_mod = PyModule::new_bound(py, #family_mod_name_as_str)?;
+                let family_mod = PyModule::new(py, #family_mod_name_as_str)?;
                 m.add_submodule(&family_mod)?;
                 #(#versioned_cmds_populates)*
 
@@ -78,7 +79,7 @@ fn quote_versioned_cmds(
         .unzip();
 
     let populate_code = quote! {
-        let versioned_cmds_mod = PyModule::new_bound(py, #versioned_cmds_mod_name_as_str)?;
+        let versioned_cmds_mod = PyModule::new(py, #versioned_cmds_mod_name_as_str)?;
         family_mod.add_submodule(&versioned_cmds_mod)?;
         versioned_cmds_mod.add_class::<#versioned_cmds_mod_name::AnyCmdReq>()?;
         #(#cmds_populate_codes)*
@@ -110,11 +111,11 @@ fn quote_versioned_cmds(
                 #[staticmethod]
                 fn load(py: Python, raw: &[u8]) -> PyResult<PyObject> {
                     let cmd = #protocol_versioned_cmds_path::AnyCmdReq::load(raw).map_err(|e| PyValueError::new_err(e.to_string()))?;
-                    Ok(match cmd {
+                    match cmd {
                         #(
-                            #protocol_versioned_cmds_path::AnyCmdReq::#any_cmd_values(x) => #any_cmd_reqs(x).into_py(py),
+                            #protocol_versioned_cmds_path::AnyCmdReq::#any_cmd_values(x) => #any_cmd_reqs(x).into_py_any(py),
                         )*
-                    })
+                    }
                 }
             }
         }
@@ -174,7 +175,7 @@ fn quote_cmd(family: &GenCmdsFamily, version: u32, cmd: &GenCmd) -> (TokenStream
                 quote_reps(reps, &protocol_path, py_module_path_as_str);
 
             let populate_code = quote! {
-                let cmd_mod = PyModule::new_bound(py, #cmd_mod_name_as_str)?;
+                let cmd_mod = PyModule::new(py, #cmd_mod_name_as_str)?;
                 versioned_cmds_mod.add_submodule(&cmd_mod)?;
                 cmd_mod.add_class::<#version_name::#cmd_mod_name::Req>()?;
                 #(cmd_mod.add_class::<#version_name::#cmd_mod_name::#nested_types_names>()?;)*
@@ -354,7 +355,7 @@ fn quote_reps(
             }
 
             fn dump<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
-                Ok(PyBytes::new_bound(
+                Ok(PyBytes::new(
                     py,
                     &self.0.dump().map_err(|e| PyValueError::new_err(e.to_string()))?,
                 ))
@@ -437,7 +438,7 @@ fn quote_req(
                     }
 
                     fn dump<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
-                        Ok(PyBytes::new_bound(
+                        Ok(PyBytes::new(
                             py,
                             &self.0.dump().map_err(|e| PyValueError::new_err(e.to_string()))?,
                         ))
@@ -514,7 +515,7 @@ fn quote_req(
                     #fn_new_and_getters_iml
 
                     fn dump<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
-                        Ok(PyBytes::new_bound(
+                        Ok(PyBytes::new(
                             py,
                             &self.0.dump().map_err(|e| PyValueError::new_err(e.to_string()))?,
                         ))
@@ -791,7 +792,7 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
             let conversion_value = quote_type_as_fn_getter_conversion(&value_name, value);
             quote! {
                 {
-                    let mut items = PyDict::new_bound(py);
+                    let mut items = PyDict::new(py);
                     for (k, v) in #field_path.iter() {
                         let k = #conversion_key;
                         let v = #conversion_value;
@@ -806,7 +807,7 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
             let conversion = quote_type_as_fn_getter_conversion(&nested_name, nested);
             quote! {
                 {
-                    let mut items = PyList::empty_bound(py);
+                    let mut items = PyList::empty(py);
                     for y in #field_path.iter() {
                         items.append(#conversion)?;
                     }
@@ -819,7 +820,7 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
             let conversion = quote_type_as_fn_getter_conversion(&nested_name, nested);
             quote! {
                 {
-                    let mut items = PySet::empty_bound(py)?;
+                    let mut items = PySet::empty(py)?;
                     for y in #field_path.iter() {
                         items.add(#conversion)?;
                     }
@@ -832,7 +833,7 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
             let nested_conversion = quote_type_as_fn_getter_conversion(&nested_name, nested);
             quote! {
                 match #field_path.as_ref() {
-                    None => PyNone::get_bound(py).to_owned().into_any(),
+                    None => PyNone::get(py).to_owned().into_any(),
                     Some(y) => #nested_conversion,
                 }
             }
@@ -842,7 +843,7 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
             let nested_conversion = quote_type_as_fn_getter_conversion(&nested_name, nested);
             quote! {
                 match #field_path.as_ref() {
-                    None => PyNone::get_bound(py).to_owned().into_any(),
+                    None => PyNone::get(py).to_owned().into_any(),
                     Some(y) => #nested_conversion,
                 }
             }
@@ -861,9 +862,9 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
             quote! {
                 {
                     let (#(#items_names),*) = #field_path;
-                    PyTuple::new_bound(py, [
+                    PyTuple::new(py, [
                         #(#items_conversions),*
-                    ]).into_any()
+                    ])?.into_any()
                 }
             }
         }
@@ -871,17 +872,17 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
             let nested_name = format_ident!("{}", nested);
             quote! { #nested_name::from_raw(py, #field_path.to_owned()).into_any() }
         }
-        FieldType::String => quote! { PyString::new_bound(py, #field_path).into_any() },
-        FieldType::Bytes => quote! { PyBytes::new_bound(py, #field_path).into_any() },
-        FieldType::Boolean => quote! { PyBool::new_bound(py, *#field_path).to_owned().into_any() },
-        FieldType::Float => quote! { PyFloat::new_bound(py, *#field_path).into_any() },
+        FieldType::String => quote! { PyString::new(py, #field_path).into_any() },
+        FieldType::Bytes => quote! { PyBytes::new(py, #field_path).into_any() },
+        FieldType::Boolean => quote! { PyBool::new(py, *#field_path).to_owned().into_any() },
+        FieldType::Float => quote! { PyFloat::new(py, *#field_path).into_any() },
         FieldType::Integer
         | FieldType::Version
         | FieldType::Size
         | FieldType::Index
         | FieldType::NonZeroInteger
         | FieldType::NonZeroU8 => {
-            quote! { (*#field_path).to_object(py).into_bound(py).into_any() }
+            quote! { (*#field_path).into_bound_py_any(py)? }
         }
         FieldType::PublicKey => quote_rs_to_py_class!(crate::crypto::PublicKey),
         FieldType::SigningKey => quote_rs_to_py_class!(crate::crypto::SigningKey),

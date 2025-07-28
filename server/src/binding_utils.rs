@@ -3,8 +3,8 @@
 use pyo3::{
     exceptions::PyNotImplementedError,
     pyclass::CompareOp,
-    types::{PyAnyMethods, PyByteArray, PyBytes, PyTuple},
-    FromPyObject, IntoPy, PyObject, PyResult,
+    types::{PyAnyMethods, PyByteArray, PyByteArrayMethods, PyBytes, PyBytesMethods, PyTuple},
+    Bound, FromPyObject, IntoPyObject, PyAny, PyResult, Python,
 };
 use std::{
     collections::hash_map::DefaultHasher,
@@ -14,27 +14,24 @@ use std::{
 #[derive(FromPyObject)]
 pub(crate) struct PathWrapper(pub std::path::PathBuf);
 
-impl IntoPy<PyObject> for PathWrapper {
-    fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
-        // Pathlib is part of the standard library
-        let pathlib_module = py
-            .import_bound("pathlib")
-            .expect("import `pathlib` module failed.");
-        let path_ctor = pathlib_module
-            .getattr("Path")
-            .expect("can't get `Path` from `pathlib`.");
+impl<'py> IntoPyObject<'py> for PathWrapper {
+    type Target = pyo3::PyAny;
+    type Output = Bound<'py, Self::Target>;
+    type Error = pyo3::PyErr;
 
-        path_ctor
-            .call1(PyTuple::new_bound(py, [self.0]))
-            .expect("call to `Path` constructor failed.")
-            .into_py(py)
+    fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
+        // Pathlib is part of the standard library
+        let pathlib_module = py.import("pathlib")?;
+        let path_ctor = pathlib_module.getattr("Path")?;
+
+        path_ctor.call1(PyTuple::new(py, [self.0])?)
     }
 }
 
 #[derive(FromPyObject)]
 pub enum BytesWrapper<'py> {
-    Bytes(&'py PyBytes),
-    ByteArray(&'py PyByteArray),
+    Bytes(Bound<'py, PyBytes>),
+    ByteArray(Bound<'py, PyByteArray>),
 }
 
 impl From<BytesWrapper<'_>> for Vec<u8> {
@@ -48,15 +45,7 @@ impl From<BytesWrapper<'_>> for Vec<u8> {
 
 impl From<BytesWrapper<'_>> for libparsec_types::Bytes {
     fn from(wrapper: BytesWrapper) -> Self {
-        match wrapper {
-            BytesWrapper::Bytes(bytes) => bytes.as_bytes().to_owned().into(),
-            BytesWrapper::ByteArray(byte_array) => {
-                // SAFETY: Using PyByteArray::as_bytes is safe as long as the corresponding memory is not modified.
-                // Here, the GIL is held during the entire access to `bytes` so there is no risk of another
-                // python thread modifying the bytearray behind our back.
-                unsafe { byte_array.as_bytes() }.to_owned().into()
-            }
-        }
+        <Vec<u8>>::from(wrapper).into()
     }
 }
 
@@ -132,6 +121,24 @@ pub(crate) fn hash_generic<T: Hash>(value_to_hash: T) -> PyResult<u64> {
     let mut s = DefaultHasher::new();
     value_to_hash.hash(&mut s);
     Ok(s.finish())
+}
+
+pub(crate) fn bytes_from_any<'a, 'py>(
+    // data: Borrowed<'a, 'py, PyAny>,
+    data: &'a Bound<'py, PyAny>,
+) -> Result<&'a [u8], pyo3::DowncastError<'a, 'py>>
+where
+    'py: 'a,
+{
+    data.downcast::<PyBytes>()
+        .map(|b| b.as_bytes())
+        .or_else(|_| {
+            data.downcast::<PyByteArray>().map(|b|
+                // SAFETY: Using PyByteArray::as_bytes is safe as long as the corresponding memory is not modified.
+                // Here, the GIL is held during the entire access to `bytes` so there is no risk of another
+                // python thread modifying the bytearray behind our back.
+                unsafe { b.as_bytes() })
+        })
 }
 
 macro_rules! parse_kwargs_optional {
@@ -277,7 +284,7 @@ macro_rules! gen_py_wrapper_class_for_enum {
 
         impl $class {
             #[allow(dead_code)]
-            pub fn convert(val: $wrapped_enum) -> &'static PyObject {
+            pub fn convert(val: $wrapped_enum) -> &'static pyo3::PyObject {
                 match val {
                     $($field_value => Self :: $fn_name ()),*
                 }
@@ -288,12 +295,19 @@ macro_rules! gen_py_wrapper_class_for_enum {
         impl $class {
             $(
                 #[classattr]
-                #[pyo3(name = $pyo3_name )]
-                pub(crate) fn $fn_name() -> &'static PyObject {
+                #[pyo3(name = $pyo3_name)]
+                pub(crate) fn $fn_name() -> &'static pyo3::PyObject {
                     lazy_static::lazy_static! {
-                        static ref VALUE: PyObject = {
+                        static ref VALUE: pyo3::PyObject = {
+                            use ::pyo3::conversion::IntoPyObjectExt;
+
                             Python::with_gil(|py| {
-                                $class($field_value).into_py(py)
+                                $class($field_value)
+                                    .into_py_any(py)
+                                    .expect(std::concat!(
+                                        "Cannot create static value for ",
+                                        std::stringify!($class::$fn_name)
+                                    ))
                             })
                         };
                     };
@@ -304,15 +318,22 @@ macro_rules! gen_py_wrapper_class_for_enum {
 
             #[classattr]
             #[pyo3(name = "VALUES")]
-            fn values() -> &'static PyObject {
+            fn values() -> &'static pyo3::PyObject {
                 lazy_static::lazy_static! {
-                    static ref VALUES: PyObject = {
+                    static ref VALUES: ::pyo3::PyObject = {
                         Python::with_gil(|py| {
-                            PyTuple::new_bound(py, [
+                            use ::pyo3::conversion::IntoPyObjectExt;
+
+                            PyTuple::new(py, [
                                 $(
                                     $class :: $fn_name ()
                                 ),*
-                            ]).into_py(py)
+                            ])
+                                .and_then(|v| v.into_py_any(py))
+                                .expect(std::concat!(
+                                    "Cannot create static values for class ",
+                                    std::stringify!($class)
+                                ))
                         })
                     };
                 };
@@ -321,10 +342,10 @@ macro_rules! gen_py_wrapper_class_for_enum {
             }
 
             #[classmethod]
-            fn from_str(_cls: &::pyo3::Bound<'_, PyType>, value: &str) -> PyResult<&'static PyObject> {
+            fn from_str(_cls: &::pyo3::Bound<'_, ::pyo3::types::PyType>, value: &str) -> pyo3::PyResult<&'static ::pyo3::PyObject> {
                 Ok(match value {
                         $($pyo3_name => Self:: $fn_name ()),*,
-                    _ => return Err(PyValueError::new_err(format!("Invalid value `{}`", value))),
+                    _ => return Err(::pyo3::exceptions::PyValueError::new_err(format!("Invalid value `{}`", value))),
                 })
             }
 

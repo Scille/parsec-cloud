@@ -9,7 +9,7 @@ use pyo3::{
     exceptions::PyValueError,
     pyclass, pyfunction, pymethods,
     types::{PyBytes, PyDict, PyDictMethods, PyTuple, PyType},
-    Bound, IntoPy, PyObject, PyResult, Python,
+    Bound, IntoPyObjectExt, PyObject, PyResult, Python,
 };
 use std::{collections::HashMap, num::NonZeroU64};
 
@@ -165,10 +165,7 @@ impl FileManifest {
         py: Python<'p>,
         author_signkey: &SigningKey,
     ) -> PyResult<Bound<'p, PyBytes>> {
-        Ok(PyBytes::new_bound(
-            py,
-            &self.0.dump_and_sign(&author_signkey.0),
-        ))
+        Ok(PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0)))
     }
 
     fn dump_sign_and_encrypt<'p>(
@@ -177,7 +174,7 @@ impl FileManifest {
         author_signkey: &SigningKey,
         key: &SecretKey,
     ) -> PyResult<Bound<'p, PyBytes>> {
-        Ok(PyBytes::new_bound(
+        Ok(PyBytes::new(
             py,
             &self.0.dump_sign_and_encrypt(&author_signkey.0, &key.0),
         ))
@@ -283,13 +280,8 @@ impl FileManifest {
 
     #[getter]
     fn blocks<'p>(&self, py: Python<'p>) -> PyResult<Bound<'p, PyTuple>> {
-        let elements: Vec<PyObject> = self
-            .0
-            .blocks
-            .iter()
-            .map(|x| BlockAccess(x.clone()).into_py(py))
-            .collect();
-        Ok(PyTuple::new_bound(py, elements))
+        let elements: Vec<BlockAccess> = self.0.blocks.iter().cloned().map(BlockAccess).collect();
+        PyTuple::new(py, elements)
     }
 }
 
@@ -337,10 +329,7 @@ impl FolderManifest {
         py: Python<'p>,
         author_signkey: &SigningKey,
     ) -> PyResult<Bound<'p, PyBytes>> {
-        Ok(PyBytes::new_bound(
-            py,
-            &self.0.dump_and_sign(&author_signkey.0),
-        ))
+        Ok(PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0)))
     }
 
     fn dump_sign_and_encrypt<'p>(
@@ -349,7 +338,7 @@ impl FolderManifest {
         author_signkey: &SigningKey,
         key: &SecretKey,
     ) -> PyResult<Bound<'p, PyBytes>> {
-        Ok(PyBytes::new_bound(
+        Ok(PyBytes::new(
             py,
             &self.0.dump_sign_and_encrypt(&author_signkey.0, &key.0),
         ))
@@ -436,11 +425,11 @@ impl FolderManifest {
 
     #[getter]
     fn children<'p>(&self, py: Python<'p>) -> PyResult<Bound<'p, PyDict>> {
-        let d = PyDict::new_bound(py);
+        let d = PyDict::new(py);
 
         for (k, v) in &self.0.children {
-            let en = EntryName(k.clone()).into_py(py);
-            let me = VlobID(*v).into_py(py);
+            let en = EntryName(k.clone());
+            let me = VlobID(*v);
             let _ = d.set_item(en, me);
         }
         Ok(d)
@@ -484,10 +473,7 @@ impl UserManifest {
         py: Python<'p>,
         author_signkey: &SigningKey,
     ) -> PyResult<Bound<'p, PyBytes>> {
-        Ok(PyBytes::new_bound(
-            py,
-            &self.0.dump_and_sign(&author_signkey.0),
-        ))
+        Ok(PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0)))
     }
 
     fn dump_sign_and_encrypt<'p>(
@@ -496,7 +482,7 @@ impl UserManifest {
         author_signkey: &SigningKey,
         key: &SecretKey,
     ) -> PyResult<Bound<'p, PyBytes>> {
-        Ok(PyBytes::new_bound(
+        Ok(PyBytes::new(
             py,
             &self.0.dump_sign_and_encrypt(&author_signkey.0, &key.0),
         ))
@@ -618,7 +604,7 @@ pub(crate) fn child_manifest_decrypt_verify_and_load(
         expected_version,
     )
     .map_err(|e| PyValueError::new_err(e.to_string()))
-    .map(|blob| unwrap_child_manifest(py, blob))
+    .and_then(|blob| unwrap_child_manifest(py, blob))
 }
 
 #[pyfunction]
@@ -641,12 +627,12 @@ pub(crate) fn child_manifest_verify_and_load(
         expected_version,
     )
     .map_err(|e| PyValueError::new_err(e.to_string()))
-    .map(|blob| unwrap_child_manifest(py, blob))
+    .and_then(|blob| unwrap_child_manifest(py, blob))
 }
 
-fn unwrap_child_manifest(py: Python, manifest: ChildManifest) -> PyObject {
+fn unwrap_child_manifest(py: Python, manifest: ChildManifest) -> PyResult<PyObject> {
     match manifest {
-        ChildManifest::File(file) => FileManifest(file).into_py(py),
-        ChildManifest::Folder(folder) => FolderManifest(folder).into_py(py),
+        ChildManifest::File(file) => FileManifest(file).into_py_any(py),
+        ChildManifest::Folder(folder) => FolderManifest(folder).into_py_any(py),
     }
 }

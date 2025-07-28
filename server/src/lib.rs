@@ -43,7 +43,7 @@ fn entrypoint(py: Python, m: Bound<'_, PyModule>) -> PyResult<()> {
     // Useful to expose `PanicException` for testing
     m.add(
         "PanicException",
-        <pyo3::panic::PanicException as pyo3::PyTypeInfo>::type_object_bound(py),
+        <pyo3::panic::PanicException as pyo3::PyTypeInfo>::type_object(py),
     )?;
 
     m.add_class::<ParsecAddr>()?;
@@ -92,7 +92,7 @@ fn entrypoint(py: Python, m: Bound<'_, PyModule>) -> PyResult<()> {
     {
         use pyo3::wrap_pyfunction;
 
-        let tm = PyModule::new_bound(py, "testbed")?;
+        let tm = PyModule::new(py, "testbed")?;
         m.add_submodule(&tm)?;
         // tm.add_function(wrap_pyfunction!(test_new_testbed, tm)?)?;
         // tm.add_function(wrap_pyfunction!(test_drop_testbed, tm)?)?;
@@ -132,18 +132,18 @@ fn entrypoint(py: Python, m: Bound<'_, PyModule>) -> PyResult<()> {
 /// see https://github.com/PyO3/pyo3/issues/2783
 /// TODO: remove me once (if ?) https://github.com/PyO3/pyo3/pull/3057 is merged
 fn patch_panic_exception_to_inherit_exception(py: Python) {
-    let panic_exception_cls =
-        <pyo3::panic::PanicException as pyo3::PyTypeInfo>::type_object_bound(py).as_ptr()
-            as *mut pyo3::ffi::PyTypeObject;
-    let exception_cls = <PyException as pyo3::PyTypeInfo>::type_object_bound(py);
-    let new_bases = PyTuple::new_bound(py, [exception_cls.clone()]);
+    let panic_exception_cls = <pyo3::panic::PanicException as pyo3::PyTypeInfo>::type_object(py)
+        .as_ptr() as *mut pyo3::ffi::PyTypeObject;
+    let exception_cls = <PyException as pyo3::PyTypeInfo>::type_object(py);
+    let new_bases =
+        PyTuple::new(py, [exception_cls.clone()]).expect("Failed to create tuple for new_bases");
     // SAFETY: `tp_mro` is a pointer to a tuple once the exception structure has been
     // initialized (which is done lazily the first time pyo3 accesses `PanicException`)
     let mro_any = unsafe { Bound::from_borrowed_ptr(py, (*panic_exception_cls).tp_mro) };
     let mro = mro_any
         .downcast::<PyTuple>()
         .expect("PanicException.tp_mro is a tuple");
-    let new_mro = PyTuple::new_bound(
+    let new_mro = PyTuple::new(
         py,
         [
             // 1. Take `PanicException`
@@ -155,7 +155,8 @@ fn patch_panic_exception_to_inherit_exception(py: Python) {
             // 4. Take `<class 'object'>`
             mro.get_item(2).expect("PanicException has 3 items mro"),
         ],
-    );
+    )
+    .expect("Failed to create tuple for new_mro");
     // SAFETY: `tp_base/tp_bases/tp_mro` are pointers that in theory should not be modified
     // once the exception has been initialized. But this is fine as long as `PanicException`
     // has not yet been used (which is the case here since we are initializing the pyo3 module)

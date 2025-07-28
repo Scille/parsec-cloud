@@ -9,7 +9,7 @@ use pyo3::{
     create_exception,
     exceptions::{PyException, PyValueError},
     prelude::*,
-    types::{PyByteArray, PyBytes, PyType},
+    types::{PyBytes, PyType},
     Bound,
 };
 
@@ -30,7 +30,7 @@ pub(crate) fn add_mod(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<UntrustedPasswordAlgorithmArgon2id>()?;
     m.add_function(wrap_pyfunction!(generate_sas_code_nonce, m)?)?;
 
-    m.add("CryptoError", py.get_type_bound::<CryptoError>())?;
+    m.add("CryptoError", py.get_type::<CryptoError>())?;
 
     Ok(())
 }
@@ -57,20 +57,14 @@ impl HashDigest {
     }
 
     #[staticmethod]
-    fn from_data(py: Python, data: PyObject) -> PyResult<Self> {
-        let bytes = match data.extract::<&PyByteArray>(py) {
-            // SAFETY: Using PyByteArray::as_bytes is safe as long as the corresponding memory is not modified.
-            // Here, the GIL is held during the entire access to `bytes` so there is no risk of another
-            // python thread modifying the bytearray behind our back.
-            Ok(x) => unsafe { x.as_bytes() },
-            Err(_) => data.extract::<&PyBytes>(py)?.as_bytes(),
-        };
+    fn from_data(data: Bound<'_, PyAny>) -> PyResult<Self> {
+        let bytes = crate::binding_utils::bytes_from_any(&data)?;
         Ok(Self(libparsec_crypto::HashDigest::from_data(bytes)))
     }
 
     #[getter]
     fn digest<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, self.0.as_ref())
+        PyBytes::new(py, self.0.as_ref())
     }
 
     fn hexdigest(&self) -> String {
@@ -108,16 +102,16 @@ impl SigningKey {
 
     /// Return the signature + the signed data
     fn sign<'py>(&self, py: Python<'py>, data: &[u8]) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, self.0.sign(data).as_slice())
+        PyBytes::new(py, self.0.sign(data).as_slice())
     }
 
     /// Return only the signature of the data
     fn sign_only_signature<'py>(&self, py: Python<'py>, data: &[u8]) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, self.0.sign_only_signature(data).as_slice())
+        PyBytes::new(py, self.0.sign_only_signature(data).as_slice())
     }
 
     fn encode<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.to_bytes())
+        PyBytes::new(py, &self.0.to_bytes())
     }
 }
 
@@ -143,7 +137,7 @@ impl VerifyKey {
     /// `signed` data is the concatenation of the `signature` + `data`
     fn verify<'py>(&self, py: Python<'py>, signed: &[u8]) -> PyResult<Bound<'py, PyBytes>> {
         match self.0.verify(signed) {
-            Ok(v) => Ok(PyBytes::new_bound(py, v)),
+            Ok(v) => Ok(PyBytes::new(py, v)),
             Err(_) => Err(CryptoError::new_err("Signature was forged or corrupt")),
         }
     }
@@ -167,11 +161,11 @@ impl VerifyKey {
     ) -> PyResult<Bound<'py, PyBytes>> {
         let (_, message) = libparsec_crypto::VerifyKey::unsecure_unwrap(signed)
             .map_err(|_| CryptoError::new_err("Signature was forged or corrupt"))?;
-        Ok(PyBytes::new_bound(py, message))
+        Ok(PyBytes::new(py, message))
     }
 
     fn encode<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, self.0.as_ref())
+        PyBytes::new(py, self.0.as_ref())
     }
 }
 
@@ -200,33 +194,31 @@ impl SecretKey {
 
     #[getter]
     fn secret<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, self.0.as_ref())
+        PyBytes::new(py, self.0.as_ref())
     }
 
-    fn encrypt<'py>(&self, py: Python<'py>, data: PyObject) -> PyResult<Bound<'py, PyBytes>> {
-        let bytes = match data.extract::<&PyByteArray>(py) {
-            // SAFETY: Using PyByteArray::as_bytes is safe as long as the corresponding memory is not modified.
-            // Here, the GIL is held during the entire access to `bytes` so there is no risk of another
-            // python thread modifying the bytearray behind our back.
-            Ok(x) => unsafe { x.as_bytes() },
-            Err(_) => data.extract::<&PyBytes>(py)?.as_bytes(),
-        };
-        Ok(PyBytes::new_bound(py, &self.0.encrypt(bytes)))
+    fn encrypt<'py>(
+        &self,
+        py: Python<'py>,
+        data: Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, PyBytes>> {
+        let bytes = crate::binding_utils::bytes_from_any(&data)?;
+        Ok(PyBytes::new(py, &self.0.encrypt(bytes)))
     }
 
     fn decrypt<'py>(&self, py: Python<'py>, ciphered: &[u8]) -> PyResult<Bound<'py, PyBytes>> {
         match self.0.decrypt(ciphered) {
-            Ok(v) => Ok(PyBytes::new_bound(py, &v)),
+            Ok(v) => Ok(PyBytes::new(py, &v)),
             Err(err) => Err(CryptoError::new_err(err.to_string())),
         }
     }
 
     fn mac_512<'py>(&self, py: Python<'py>, data: &[u8]) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.mac_512(data))
+        PyBytes::new(py, &self.0.mac_512(data))
     }
 
     fn sas_code<'py>(&self, py: Python<'py>, data: &[u8]) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.sas_code(data))
+        PyBytes::new(py, &self.0.sas_code(data))
     }
 
     #[classmethod]
@@ -277,13 +269,13 @@ impl PrivateKey {
         ciphered: &[u8],
     ) -> PyResult<Bound<'py, PyBytes>> {
         match self.0.decrypt_from_self(ciphered) {
-            Ok(v) => Ok(PyBytes::new_bound(py, &v)),
+            Ok(v) => Ok(PyBytes::new(py, &v)),
             Err(err) => Err(CryptoError::new_err(err.to_string())),
         }
     }
 
     fn encode<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.to_bytes())
+        PyBytes::new(py, &self.0.to_bytes())
     }
 
     fn generate_shared_secret_key(&self, peer_public_key: &PublicKey) -> SecretKey {
@@ -312,20 +304,14 @@ impl PublicKey {
     fn encrypt_for_self<'py>(
         &self,
         py: Python<'py>,
-        data: PyObject,
+        data: Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, PyBytes>> {
-        let bytes = match data.extract::<&PyByteArray>(py) {
-            // SAFETY: Using PyByteArray::as_bytes is safe as long as the corresponding memory is not modified.
-            // Here, the GIL is held during the entire access to `bytes` so there is no risk of another
-            // python thread modifying the bytearray behind our back.
-            Ok(x) => unsafe { x.as_bytes() },
-            Err(_) => data.extract::<&PyBytes>(py)?.as_bytes(),
-        };
-        Ok(PyBytes::new_bound(py, &self.0.encrypt_for_self(bytes)))
+        let bytes = crate::binding_utils::bytes_from_any(&data)?;
+        Ok(PyBytes::new(py, &self.0.encrypt_for_self(bytes)))
     }
 
     fn encode<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, self.0.as_ref())
+        PyBytes::new(py, self.0.as_ref())
     }
 }
 
@@ -368,7 +354,7 @@ impl SequesterPrivateKeyDer {
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.dump())
+        PyBytes::new(py, &self.0.dump())
     }
 
     fn dump_pem(&self) -> String {
@@ -385,7 +371,7 @@ impl SequesterPrivateKeyDer {
     fn decrypt<'py>(&self, py: Python<'py>, data: &[u8]) -> PyResult<Bound<'py, PyBytes>> {
         self.0
             .decrypt(data)
-            .map(|x| PyBytes::new_bound(py, &x))
+            .map(|x| PyBytes::new(py, &x))
             .map_err(|err| CryptoError::new_err(err.to_string()))
     }
 }
@@ -409,7 +395,7 @@ impl SequesterPublicKeyDer {
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.dump())
+        PyBytes::new(py, &self.0.dump())
     }
 
     fn dump_pem(&self) -> String {
@@ -424,7 +410,7 @@ impl SequesterPublicKeyDer {
     }
 
     fn encrypt<'py>(&self, py: Python<'py>, data: &[u8]) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.encrypt(data))
+        PyBytes::new(py, &self.0.encrypt(data))
     }
 }
 
@@ -467,7 +453,7 @@ impl SequesterSigningKeyDer {
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.dump())
+        PyBytes::new(py, &self.0.dump())
     }
 
     fn dump_pem(&self) -> String {
@@ -482,7 +468,7 @@ impl SequesterSigningKeyDer {
     }
 
     fn sign<'py>(&self, py: Python<'py>, data: &[u8]) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.sign(data))
+        PyBytes::new(py, &self.0.sign(data))
     }
 }
 
@@ -504,7 +490,7 @@ impl SequesterVerifyKeyDer {
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.dump())
+        PyBytes::new(py, &self.0.dump())
     }
 
     fn dump_pem(&self) -> String {
@@ -521,14 +507,14 @@ impl SequesterVerifyKeyDer {
     fn verify<'py>(&self, py: Python<'py>, data: &[u8]) -> PyResult<Bound<'py, PyBytes>> {
         self.0
             .verify(data)
-            .map(|x| PyBytes::new_bound(py, &x))
+            .map(|x| PyBytes::new(py, &x))
             .map_err(|err| CryptoError::new_err(err.to_string()))
     }
 }
 
 #[pyfunction]
 pub(crate) fn generate_sas_code_nonce(py: Python) -> Bound<'_, PyBytes> {
-    PyBytes::new_bound(py, &libparsec_crypto::generate_sas_code_nonce())
+    PyBytes::new(py, &libparsec_crypto::generate_sas_code_nonce())
 }
 
 #[pyclass(subclass)]

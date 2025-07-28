@@ -90,7 +90,7 @@ impl PkiEnrollmentAnswerPayload {
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.dump())
+        PyBytes::new(py, &self.0.dump())
     }
 }
 
@@ -141,7 +141,7 @@ impl PkiEnrollmentSubmitPayload {
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.dump())
+        PyBytes::new(py, &self.0.dump())
     }
 }
 
@@ -228,23 +228,23 @@ impl X509Certificate {
     }
 
     #[getter]
-    fn issuer<'py>(&self, py: Python<'py>) -> Bound<'py, PyDict> {
-        self.0.issuer.clone().into_py_dict_bound(py)
+    fn issuer<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
+        self.0.issuer.clone().into_py_dict(py)
     }
 
     #[getter]
-    fn subject<'py>(&self, py: Python<'py>) -> Bound<'py, PyDict> {
-        self.0.subject.clone().into_py_dict_bound(py)
+    fn subject<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
+        self.0.subject.clone().into_py_dict(py)
     }
 
     #[getter]
     fn der_x509_certificate<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.der_x509_certificate)
+        PyBytes::new(py, &self.0.der_x509_certificate)
     }
 
     #[getter]
     fn certificate_sha1<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.certificate_sha1)
+        PyBytes::new(py, &self.0.certificate_sha1)
     }
 
     #[getter]
@@ -294,7 +294,7 @@ impl LocalPendingEnrollment {
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.dump())
+        PyBytes::new(py, &self.0.dump())
     }
 
     fn save(&self, config_dir: Bound<'_, PyAny>) -> PyResult<String> {
@@ -410,11 +410,11 @@ impl LocalPendingEnrollment {
 
     #[getter]
     fn encrypted_key<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.encrypted_key)
+        PyBytes::new(py, &self.0.encrypted_key)
     }
 
     #[getter]
     fn ciphertext<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.ciphertext)
+        PyBytes::new(py, &self.0.ciphertext)
     }
 }
