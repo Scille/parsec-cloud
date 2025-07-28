@@ -1241,8 +1241,43 @@ class PGInviteComponent(BaseInviteComponent):
         self.user = user
 
     @override
-    @transaction
     async def new_for_user(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        claimer_email: EmailAddress,
+        send_email: bool,
+        # Only needed for testbed template
+        force_token: InvitationToken | None = None,
+    ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForUserBadOutcome:
+        # Perform operation inside a PostgreSQL transaction
+        outcome = await self._new_for_user(
+            now, organization_id, author, claimer_email, send_email, force_token
+        )
+        match outcome:
+            case (InvitationToken() as token, greeter_human_handle):
+                pass
+            case err:
+                return err
+
+        # Note we send the email once the PostgreSQL transaction is done, since this
+        # operation can be long.
+        send_email_outcome = (
+            None  # TODO: Use a specific SendEmailBadOutcome or InviteNewForUserBadOutcome
+            if not (send_email and greeter_human_handle)
+            else await self._send_user_invitation_email(
+                organization_id=organization_id,
+                claimer_email=claimer_email,
+                greeter_human_handle=greeter_human_handle,
+                token=token,
+            )
+        )
+
+        return token, send_email_outcome
+
+    @transaction
+    async def _new_for_user(
         self,
         conn: AsyncpgConnection,
         now: DateTime,
@@ -1252,7 +1287,7 @@ class PGInviteComponent(BaseInviteComponent):
         send_email: bool,
         # Only needed for testbed template
         force_token: InvitationToken | None = None,
-    ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForUserBadOutcome:
+    ) -> tuple[InvitationToken, None | HumanHandle] | InviteNewForUserBadOutcome:
         match await self.organization._get(conn, organization_id):
             case Organization() as organization:
                 pass
@@ -1291,6 +1326,9 @@ class PGInviteComponent(BaseInviteComponent):
             suggested_token=suggested_token,
         )
 
+        # Retrieve extra info required for email
+        # The actual email is not sent here because this code runs inside a PostgreSQL transaction
+        greeter_human_handle = None
         if send_email:
             greeter_human_handle = await _human_handle_from_user_id(
                 conn, organization_id=organization_id, user_id=author_user_id
@@ -1299,19 +1337,43 @@ class PGInviteComponent(BaseInviteComponent):
                 assert (
                     False
                 )  # TODO: Need a specific SendEmailBadOutcome or InviteNewForUserBadOutcome
-            send_email_outcome = await self._send_user_invitation_email(
-                organization_id=organization_id,
-                claimer_email=claimer_email,
-                greeter_human_handle=greeter_human_handle,
-                token=token,
-            )
-        else:
-            send_email_outcome = None
-        return token, send_email_outcome
+
+        return token, greeter_human_handle
 
     @override
-    @transaction
     async def new_for_device(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        send_email: bool,
+        # Only needed for testbed template
+        force_token: InvitationToken | None = None,
+    ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForDeviceBadOutcome:
+        # Perform operation inside a PostgreSQL transaction
+        outcome = await self._new_for_device(now, organization_id, author, send_email, force_token)
+        match outcome:
+            case (InvitationToken() as token, author_human_handle):
+                pass
+            case err:
+                return err
+
+        # Note we send the email once the PostgreSQL transaction is done, since this
+        # operation can be long.
+        send_email_outcome = (
+            None  # TODO: Use a specific SendEmailBadOutcome or InviteNewForDeviceBadOutcome
+            if not (send_email and author_human_handle)
+            else await self._send_device_invitation_email(
+                organization_id=organization_id,
+                email=author_human_handle.email,
+                token=token,
+            )
+        )
+
+        return token, send_email_outcome
+
+    @transaction
+    async def _new_for_device(
         self,
         conn: AsyncpgConnection,
         now: DateTime,
@@ -1320,7 +1382,7 @@ class PGInviteComponent(BaseInviteComponent):
         send_email: bool,
         # Only needed for testbed template
         force_token: InvitationToken | None = None,
-    ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForDeviceBadOutcome:
+    ) -> tuple[InvitationToken, None | HumanHandle] | InviteNewForDeviceBadOutcome:
         match await self.organization._get(conn, organization_id):
             case Organization() as organization:
                 pass
@@ -1353,26 +1415,58 @@ class PGInviteComponent(BaseInviteComponent):
             suggested_token=suggested_token,
         )
 
+        # Retrieve extra info required for email
+        # The actual email is not sent here because this code runs inside a PostgreSQL transaction
+        author_human_handle = None
         if send_email:
-            human_handle = await _human_handle_from_user_id(
+            author_human_handle = await _human_handle_from_user_id(
                 conn, organization_id=organization_id, user_id=author_user_id
             )
-            if not human_handle:
+            if not author_human_handle:
                 assert (
                     False
-                )  # TODO: Need a specific SendEmailBadOutcome or InviteNewForUserBadOutcome
-            send_email_outcome = await self._send_device_invitation_email(
-                organization_id=organization_id,
-                email=human_handle.email,
-                token=token,
-            )
-        else:
-            send_email_outcome = None
-        return token, send_email_outcome
+                )  # TODO: Need a specific SendEmailBadOutcome or InviteNewForDeviceBadOutcome
+
+        return token, author_human_handle
 
     @override
-    @transaction
     async def new_for_shamir_recovery(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        send_email: bool,
+        claimer_user_id: UserID,
+        # Only needed for testbed template
+        force_token: InvitationToken | None = None,
+    ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForShamirRecoveryBadOutcome:
+        # Perform operation inside a PostgreSQL transaction
+        outcome = await self._new_for_shamir_recovery(
+            now, organization_id, author, send_email, claimer_user_id, force_token
+        )
+        match outcome:
+            case (InvitationToken() as token, author_human_handle):
+                pass
+            case err:
+                return err
+
+        # Note we send the email once the PostgreSQL transaction is done, since this
+        # operation can be long.
+        send_email_outcome = (
+            None  # TODO: Use a specific SendEmailBadOutcome or InviteNewForShamirRecoveryBadOutcome
+            if not (send_email and author_human_handle)
+            else await self._send_shamir_recovery_invitation_email(
+                organization_id=organization_id,
+                email=author_human_handle.email,
+                token=token,
+                greeter_human_handle=author_human_handle,
+            )
+        )
+
+        return token, send_email_outcome
+
+    @transaction
+    async def _new_for_shamir_recovery(
         self,
         conn: AsyncpgConnection,
         now: DateTime,
@@ -1382,7 +1476,7 @@ class PGInviteComponent(BaseInviteComponent):
         claimer_user_id: UserID,
         # Only needed for testbed template
         force_token: InvitationToken | None = None,
-    ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForShamirRecoveryBadOutcome:
+    ) -> tuple[InvitationToken, None | HumanHandle] | InviteNewForShamirRecoveryBadOutcome:
         match await self.organization._get(conn, organization_id):
             case Organization() as organization:
                 pass
@@ -1442,25 +1536,17 @@ class PGInviteComponent(BaseInviteComponent):
             suggested_token=suggested_token,
         )
 
+        # Retrieve extra info required for email
+        # The actual email is not sent here because this code runs inside a PostgreSQL transaction
+        author_human_handle = None
         if send_email:
             author_human_handle = await _human_handle_from_user_id(
                 conn, organization_id=organization_id, user_id=author_user_id
             )
             if not author_human_handle:
-                assert (
-                    False
-                )  # TODO: Need a specific SendEmailBadOutcome or InviteNewForUserBadOutcome
+                assert False  # TODO: Need a specific SendEmailBadOutcome or InviteNewForShamirRecoveryBadOutcome
 
-            send_email_outcome = await self._send_shamir_recovery_invitation_email(
-                organization_id=organization_id,
-                email=claimer_human_handle.email,
-                token=token,
-                greeter_human_handle=author_human_handle,
-            )
-        else:
-            send_email_outcome = None
-
-        return token, send_email_outcome
+        return token, author_human_handle
 
     async def _get_shamir_recovery_recipients(
         self, conn: AsyncpgConnection, internal_shamir_recovery_setup_id: int
