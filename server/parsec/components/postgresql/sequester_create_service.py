@@ -37,14 +37,14 @@ WITH my_organization AS (
 my_locked_sequester_topic AS (
     SELECT last_timestamp
     FROM sequester_topic
-    WHERE organization = (SELECT _id FROM my_organization)
+    WHERE organization = (SELECT my_organization._id FROM my_organization)
     LIMIT 1
     FOR UPDATE
 )
 
 SELECT
     (SELECT _id FROM my_organization) AS organization_internal_id,
-    (SELECT sequester_authority_verify_key_der FROM my_organization),
+    (SELECT sequester_authority_verify_key_der FROM my_organization) AS sequester_authority_verify_key_der,
     (SELECT last_timestamp FROM my_locked_sequester_topic) AS last_sequester_certificate_timestamp
 """)
 
