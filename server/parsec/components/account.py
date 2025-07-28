@@ -12,6 +12,7 @@ from jinja2 import Environment
 
 from parsec._parsec import (
     AccountAuthMethodID,
+    ActiveUsersLimit,
     DateTime,
     EmailAddress,
     HashDigest,
@@ -22,6 +23,8 @@ from parsec._parsec import (
     SecretKey,
     UntrustedPasswordAlgorithm,
     UntrustedPasswordAlgorithmArgon2id,
+    UserID,
+    UserProfile,
     ValidationCode,
     anonymous_account_cmds,
     authenticated_account_cmds,
@@ -29,7 +32,7 @@ from parsec._parsec import (
 from parsec.api import api
 from parsec.client_context import AnonymousAccountClientContext, AuthenticatedAccountClientContext
 from parsec.components.email import SendEmailBadOutcome, send_email
-from parsec.config import BackendConfig
+from parsec.config import AccountVaultStrategy, AllowedClientAgent, BackendConfig
 from parsec.types import BadOutcomeEnum
 
 
@@ -97,6 +100,10 @@ class AccountInviteListBadOutcome(BadOutcomeEnum):
     ACCOUNT_NOT_FOUND = auto()
 
 
+class AccountOrganizationListBadOutcome(BadOutcomeEnum):
+    ACCOUNT_NOT_FOUND = auto()
+
+
 class AccountAuthMethodCreateBadOutcome(BadOutcomeEnum):
     ACCOUNT_NOT_FOUND = auto()
     AUTH_METHOD_ID_ALREADY_EXISTS = auto()
@@ -147,6 +154,35 @@ class VaultItemRecoveryList:
 class VaultItems:
     key_access: bytes
     items: dict[HashDigest, bytes]
+
+
+@dataclass(slots=True)
+class AccountOrganizationSelfListActiveUser:
+    user_id: UserID
+    created_on: DateTime
+    current_profile: UserProfile
+    is_frozen: bool
+    organization_id: OrganizationID
+    organization_is_expired: bool
+    organization_user_profile_outsider_allowed: bool
+    organization_active_users_limit: ActiveUsersLimit
+    organization_allowed_client_agent: AllowedClientAgent
+    organization_account_vault_strategy: AccountVaultStrategy
+
+
+@dataclass(slots=True)
+class AccountOrganizationSelfListRevokedUser:
+    user_id: UserID
+    created_on: DateTime
+    revoked_on: DateTime
+    current_profile: UserProfile
+    organization_id: OrganizationID
+
+
+@dataclass(slots=True)
+class AccountOrganizationSelfList:
+    active: list[AccountOrganizationSelfListActiveUser]
+    revoked: list[AccountOrganizationSelfListRevokedUser]
 
 
 VALIDATION_CODE_VALIDITY_DURATION_SECONDS: int = 3600
@@ -365,6 +401,11 @@ class BaseAccountComponent:
     async def invite_self_list(
         self, auth_method_id: AccountAuthMethodID
     ) -> list[tuple[OrganizationID, InvitationToken, InvitationType]] | AccountInviteListBadOutcome:
+        raise NotImplementedError
+
+    async def organization_self_list(
+        self, auth_method_id: AccountAuthMethodID
+    ) -> AccountOrganizationSelfList | AccountOrganizationListBadOutcome:
         raise NotImplementedError
 
     async def auth_method_create(
@@ -762,8 +803,6 @@ class BaseAccountComponent:
         client_ctx: AuthenticatedAccountClientContext,
         req: authenticated_account_cmds.latest.invite_self_list.Req,
     ) -> authenticated_account_cmds.latest.invite_self_list.Rep:
-        invite_self_list = authenticated_account_cmds.latest.invite_self_list
-
         outcome = await self.invite_self_list(
             client_ctx.auth_method_id,
         )
@@ -773,7 +812,80 @@ class BaseAccountComponent:
             case AccountInviteListBadOutcome.ACCOUNT_NOT_FOUND:
                 client_ctx.account_not_found_abort()
 
-        return invite_self_list.RepOk(invitations=invitations)
+        return authenticated_account_cmds.latest.invite_self_list.RepOk(invitations=invitations)
+
+    @api
+    async def api_organization_self_list(
+        self,
+        client_ctx: AuthenticatedAccountClientContext,
+        req: authenticated_account_cmds.latest.organization_self_list.Req,
+    ) -> authenticated_account_cmds.latest.organization_self_list.Rep:
+        organization_self_list = authenticated_account_cmds.latest.organization_self_list
+
+        outcome = await self.organization_self_list(
+            client_ctx.auth_method_id,
+        )
+        match outcome:
+            case AccountOrganizationSelfList() as result:
+                pass
+
+            case AccountOrganizationListBadOutcome.ACCOUNT_NOT_FOUND:
+                client_ctx.account_not_found_abort()
+
+        cooked_active = []
+        for active in result.active:
+            match active.organization_allowed_client_agent:
+                case AllowedClientAgent.NATIVE_ONLY:
+                    cooked_allowed_client_agent = (
+                        organization_self_list.AllowedClientAgent.NATIVE_ONLY
+                    )
+                case AllowedClientAgent.NATIVE_OR_WEB:
+                    cooked_allowed_client_agent = (
+                        organization_self_list.AllowedClientAgent.NATIVE_OR_WEB
+                    )
+
+            match active.organization_account_vault_strategy:
+                case AccountVaultStrategy.ALLOWED:
+                    cooked_account_vault_strategy = (
+                        organization_self_list.AccountVaultStrategy.ALLOWED
+                    )
+                case AccountVaultStrategy.FORBIDDEN:
+                    cooked_account_vault_strategy = (
+                        organization_self_list.AccountVaultStrategy.FORBIDDEN
+                    )
+
+            cooked_active.append(
+                organization_self_list.ActiveUser(
+                    user_id=active.user_id,
+                    created_on=active.created_on,
+                    is_frozen=active.is_frozen,
+                    current_profile=active.current_profile,
+                    organization_id=active.organization_id,
+                    organization_config=organization_self_list.OrganizationConfig(
+                        is_expired=active.organization_is_expired,
+                        user_profile_outsider_allowed=active.organization_user_profile_outsider_allowed,
+                        active_users_limit=active.organization_active_users_limit,
+                        allowed_client_agent=cooked_allowed_client_agent,
+                        account_vault_strategy=cooked_account_vault_strategy,
+                    ),
+                )
+            )
+
+        cooked_revoked = [
+            organization_self_list.RevokedUser(
+                user_id=revoked.user_id,
+                created_on=revoked.created_on,
+                revoked_on=revoked.revoked_on,
+                current_profile=revoked.current_profile,
+                organization_id=revoked.organization_id,
+            )
+            for revoked in result.revoked
+        ]
+
+        return organization_self_list.RepOk(
+            active=cooked_active,
+            revoked=cooked_revoked,
+        )
 
     @api
     async def api_auth_method_create(
