@@ -119,17 +119,9 @@ import { IonPage, IonContent, IonButton, IonText, IonIcon, IonButtons, modalCont
 import { link, informationCircle, open, chevronDown, chevronUp } from 'ionicons/icons';
 import { Base64, MsSpinner, MsImage, I18n, DownloadIcon, askQuestion, Answer, MsModalResult } from 'megashark-lib';
 import { ref, Ref, inject, onMounted, onUnmounted, type Component, shallowRef } from 'vue';
+import { getCurrentRouteParams } from '@/router';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import {
-  currentRouteIs,
-  getCurrentRouteParams,
-  getCurrentRouteQuery,
-  getDocumentPath,
-  getWorkspaceHandle,
-  navigateTo,
-  Routes,
-  watchRoute,
-} from '@/router';
+import { currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, Routes, watchRoute } from '@/router';
 import { DetectedFileType } from '@/common/fileTypes';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { DateTime } from 'luxon';
