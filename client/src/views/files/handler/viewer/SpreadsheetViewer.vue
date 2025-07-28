@@ -69,8 +69,8 @@ import {
   FileControlsGroup,
   FileControlsZoom,
 } from '@/components/files/handler/viewer';
-import { FileViewerWrapper } from '@/views/viewers';
-import { FileContentInfo } from '@/views/viewers/utils';
+import { FileViewerWrapper } from '@/views/files/handler/viewer';
+import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { chevronDown, scan } from 'ionicons/icons';
 import RevoGrid from '@revolist/vue3-datagrid';
 
@@ -93,8 +93,8 @@ const gridContainerRef = useTemplateRef<HTMLDivElement>('gridContainer');
 const dropdownItems = ref<FileControlsDropdownItemContent[]>([]);
 
 onMounted(async () => {
-  documentWorker = new Worker(new URL('@/views/viewers/workers/spreadsheet_document_loader.ts', import.meta.url));
-  pageWorker = new Worker(new URL('@/views/viewers/workers/spreadsheet_page_loader.ts', import.meta.url));
+  documentWorker = new Worker(new URL('@/views/files/handler/viewer/workers/spreadsheet_document_loader.ts', import.meta.url));
+  pageWorker = new Worker(new URL('@/views/files/handler/viewer/workers/spreadsheet_page_loader.ts', import.meta.url));
 
   loading.value = true;
   loadingLabel.value = 'fileViewers.spreadsheet.loadingDocument';

@@ -42,8 +42,8 @@ import { MsSpinner, Translatable, MsReportText, MsReportTheme } from 'megashark-
 import { onMounted, ref, useTemplateRef } from 'vue';
 import * as monaco from 'monaco-editor';
 import { scan } from 'ionicons/icons';
-import { FileContentInfo } from '@/views/viewers/utils';
-import { FileViewerWrapper } from '@/views/viewers';
+import { FileContentInfo } from '@/views/files/handler/viewer/utils';
+import { FileViewerWrapper } from '@/views/files/handler/viewer';
 import { FileControls, FileControlsZoom, FileControlsGroup, FileControlsButton } from '@/components/files/handler/viewer';
 
 const props = defineProps<{

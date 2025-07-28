@@ -61,7 +61,7 @@
 
 <script setup lang="ts">
 import { cog, infinite, scan, timer } from 'ionicons/icons';
-import { FileContentInfo, PlaybackSpeed, PlaybackSpeeds } from '@/views/viewers/utils';
+import { FileContentInfo, PlaybackSpeed, PlaybackSpeeds } from '@/views/files/handler/viewer/utils';
 import {
   FileControls,
   FileControlsButton,
@@ -73,7 +73,7 @@ import {
   FileControlsVolume,
 } from '@/components/files/handler/viewer';
 import { onMounted, onUnmounted, ref, watch, useTemplateRef } from 'vue';
-import { FileViewerWrapper } from '@/views/viewers';
+import { FileViewerWrapper } from '@/views/files/handler/viewer';
 import { SliderState, PipIcon } from 'megashark-lib';
 import { getMimeTypeFromBuffer } from '@/common/fileTypes';
 

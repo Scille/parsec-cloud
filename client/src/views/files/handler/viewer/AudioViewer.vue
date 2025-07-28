@@ -49,8 +49,8 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch, useTemplateRef } from 'vue';
 import { cog, infinite, musicalNotes, timer } from 'ionicons/icons';
-import { FileViewerWrapper } from '@/views/viewers';
-import { FileContentInfo, PlaybackSpeed, PlaybackSpeeds } from '@/views/viewers/utils';
+import { FileViewerWrapper } from '@/views/files/handler/viewer';
+import { FileContentInfo, PlaybackSpeed, PlaybackSpeeds } from '@/views/files/handler/viewer/utils';
 import {
   FileControls,
   FileControlsDropdown,

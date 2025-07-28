@@ -42,8 +42,8 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch, useTemplateRef } from 'vue';
 import { FileControls, FileControlsButton, FileControlsZoom } from '@/components/files/handler/viewer';
-import { FileViewerWrapper } from '@/views/viewers';
-import { FileContentInfo } from '@/views/viewers/utils';
+import { FileViewerWrapper } from '@/views/files/handler/viewer';
+import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { MsDraggable } from 'megashark-lib';
 import { scan } from 'ionicons/icons';
 import { getMimeTypeFromBuffer } from '@/common/fileTypes';

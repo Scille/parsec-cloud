@@ -119,7 +119,7 @@ import { ref, Ref, inject, onMounted, onUnmounted } from 'vue';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, Routes, watchRoute } from '@/router';
 import { DetectedFileType } from '@/common/fileTypes';
-import { FileContentInfo } from '@/views/viewers/utils';
+import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { Env } from '@/services/environment';
 import { DateTime } from 'luxon';
 import { getFileIcon } from '@/common/file';
