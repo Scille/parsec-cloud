@@ -10,7 +10,7 @@ use pyo3::{
     prelude::{PyAnyMethods, PyModuleMethods},
     pyclass, pymethods,
     types::{PyInt, PyModule, PyType},
-    Bound, IntoPy, PyObject, PyResult, Python,
+    Bound, IntoPyObjectExt, PyObject, PyResult, Python,
 };
 
 use libparsec_serialization_format::python_bindings_parsec_protocol_cmds_family;
@@ -49,7 +49,7 @@ impl ActiveUsersLimit {
             static ref VALUE: PyObject = {
                 Python::with_gil(|py| {
                     ActiveUsersLimit(libparsec_types::ActiveUsersLimit::NoLimit)
-                        .into_py(py)
+                        .into_py_any(py).expect("Failed to generate static value for ActiveUsersLimit::no_limit")
                 })
             };
         };
@@ -65,8 +65,8 @@ impl ActiveUsersLimit {
         count: Option<Bound<'py, PyInt>>,
     ) -> PyResult<PyObject> {
         match count {
-            Some(x) => Self::limited_to(cls, x).map(|x| x.into_py(py)),
-            None => Ok(Self::no_limit().into_py(py)),
+            Some(x) => Self::limited_to(cls, x).and_then(|x| x.into_py_any(py)),
+            None => Self::no_limit().into_py_any(py),
         }
     }
 
