@@ -59,7 +59,6 @@ enum Command {
 async fn main() -> anyhow::Result<()> {
     let arg = Arg::parse();
     env_logger::init();
-    libparsec_crypto::init();
 
     match arg.command {
         Command::Device(device) => device::dispatch_command(device).await,

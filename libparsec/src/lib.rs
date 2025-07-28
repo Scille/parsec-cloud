@@ -114,21 +114,24 @@ pub fn libparsec_init_set_on_event_callback(
 }
 
 #[cfg(target_arch = "wasm32")]
-pub async fn libparsec_init(_config: ClientConfig) {
-    libparsec_crypto::init();
+pub async fn libparsec_init_native_only_init(_config: ClientConfig) {
+    panic!("should not be called on web !");
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub async fn libparsec_init(config: ClientConfig) {
-    // 0) Initialize crypto
-    libparsec_crypto::init();
-
+pub async fn libparsec_init_native_only_init(config: ClientConfig) {
     // 1) Initialize logger
     init_logger(&config);
     log::debug!("Initializing libparsec");
 
     // 2) Clean base home directory
-    init_mountpoint(&config).await
+    if let MountpointMountStrategy::Directory { base_dir } = config.mountpoint_mount_strategy {
+        if let Err(err) = libparsec_platform_mountpoint::clean_base_mountpoint_dir(base_dir).await {
+            log::error!("Failed to clean base home directory ({err})");
+        } else {
+            log::debug!("Cleaned base home directory");
+        }
+    };
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -136,7 +139,10 @@ fn init_logger(config: &ClientConfig) {
     let log_env = env_logger::Env::default()
         .filter_or(
             "PARSEC_RUST_LOG",
-            config.log_level.map(|lvl| lvl.as_str()).unwrap_or("info"),
+            config
+                .log_level
+                .map(|lvl| lvl.to_string())
+                .unwrap_or_else(|| "info".to_string()),
         )
         .write_style("PARSEC_RUST_LOG_STYLE");
     let mut builder = env_logger::Builder::from_env(log_env);
@@ -169,19 +175,6 @@ fn init_logger(config: &ClientConfig) {
         log::error!("Logging already initialized: {e}")
     } else {
         log::info!("Writing log to {}", log_file_path.display());
-    };
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-async fn init_mountpoint(config: &ClientConfig) {
-    if let MountpointMountStrategy::Directory { ref base_dir } = config.mountpoint_mount_strategy {
-        if let Err(err) =
-            libparsec_platform_mountpoint::clean_base_mountpoint_dir(base_dir.to_owned()).await
-        {
-            log::error!("Failed to clean base home directory ({err})");
-        } else {
-            log::debug!("Cleaned base home directory");
-        }
     };
 }
 

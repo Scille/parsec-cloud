@@ -19597,15 +19597,15 @@ pub fn isKeyringAvailable() -> Promise {
     }))
 }
 
-// libparsec_init
+// libparsec_init_native_only_init
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn libparsecInit(config: Object) -> Promise {
+pub fn libparsecInitNativeOnlyInit(config: Object) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let config = config.into();
         let config = struct_client_config_js_to_rs(config)?;
 
-        libparsec::libparsec_init(config).await;
+        libparsec::libparsec_init_native_only_init(config).await;
         Ok(JsValue::NULL)
     }))
 }
