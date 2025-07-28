@@ -18,7 +18,8 @@ pub use sequester::*;
 pub use sign::*;
 pub(crate) use utils::*;
 
-pub fn init() {
+#[ctor::ctor]
+unsafe fn init() {
     if let Err(()) = sodiumoxide::init() {
         panic!("Cannot initialize crypto");
     }

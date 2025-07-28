@@ -225,6 +225,13 @@ wasm-bindgen = { git = "https://github.com/FirelightFlagboy/wasm-bindgen.git", r
 js-sys = { git = "https://github.com/FirelightFlagboy/wasm-bindgen.git", rev = "9402ae3bd1eea6d4a8c0d6b62dd62efa4c536d6e" }
 # End patch web-sys for `Blob.bytes`
 
+# Crate that allow configuring init function for rust crates.
+[workspace.dependencies.ctor]
+default-features = false
+version = "0.4.3"
+# We defined the list of feature here, to have the same config across our sub-crates
+features = ["proc_macro"]
+
 [workspace.dependencies.criterion]
 default-features = false
 version = "0.5.1"

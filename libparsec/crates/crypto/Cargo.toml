@@ -42,6 +42,7 @@ data-encoding = { workspace = true, features = ["alloc"] }
 uuid = { workspace = true }
 # `alloc` feature is required to properly erase struct containing vec/string
 zeroize = { workspace = true, features = ["alloc"] }
+ctor = { workspace = true }
 
 #
 # SodiumOxide&friends stuff

@@ -17,5 +17,3 @@ pub use secret::*;
 pub use sequester::*;
 pub use sign::*;
 pub(crate) use utils::*;
-
-pub fn init() {}
