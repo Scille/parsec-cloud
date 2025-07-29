@@ -6,22 +6,8 @@ import { MockBms, MockClientAreaOverload, MockRouteOptions } from '@tests/e2e/he
 import { DEFAULT_USER_INFORMATION, generateDefaultOrganizationInformation, generateDefaultUserData } from '@tests/e2e/helpers/data';
 import { mockExternalWebsites } from '@tests/e2e/helpers/externalWebsites';
 import { dropTestbed, initTestBed } from '@tests/e2e/helpers/testbed';
-import { DisplaySize, MsContext, MsPage } from '@tests/e2e/helpers/types';
+import { DisplaySize, MsContext, MsPage, SetupOptions } from '@tests/e2e/helpers/types';
 import { createWorkspace, fillInputModal, fillIonInput, importDefaultFiles, logout } from '@tests/e2e/helpers/utils';
-
-interface SetupOptions {
-  testbedPath?: string;
-  skipTestbed?: boolean;
-  location?: string;
-  skipGoto?: boolean;
-  withParsecAccount?: boolean;
-  parsecAccountAutoLogin?: boolean;
-  withCustomBranding?: boolean;
-  displaySize?: DisplaySize;
-  mockBrowser?: 'Chrome' | 'Firefox' | 'Safari' | 'Edge' | 'Brave' | 'Chromium';
-  trialServers?: string;
-  saasServers?: string;
-}
 
 const DEV_TOOLS_OFFSET = 400;
 
@@ -162,10 +148,10 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
   if (!page.skipTestbedRelease && opts.skipTestbed) {
     page.skipTestbedRelease = true;
   }
-  page.openNewTab = async (): Promise<MsPage> => {
+  page.openNewTab = async (newOpts?: SetupOptions): Promise<MsPage> => {
     const newTab = (await page.context().newPage()) as MsPage;
     newTab.skipTestbedRelease = true;
-    await setupNewPage(newTab, { ...opts, testbedPath: testbed });
+    await setupNewPage(newTab, newOpts !== undefined ? { ...newOpts, testbedPath: testbed } : { ...opts, testbedPath: testbed });
     return newTab;
   };
   page.release = async (): Promise<void> => {

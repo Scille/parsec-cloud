@@ -236,6 +236,10 @@
                 "generic": "Cannot list your organizations."
             }
         },
+        "invitationList": {
+            "title": "One invitation pending | {count} invitations pending",
+            "validation": "Validate the invitation to access the organization"
+        },
         "noExistingOrganization": {
             "createOrJoin": "Create or join",
             "createOrganization": "Create an organization",

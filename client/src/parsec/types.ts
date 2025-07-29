@@ -245,6 +245,7 @@ import type {
   AuthMethodInfo as ParsecAuthMethodInfo,
   EntryStatFile as ParsecEntryStatFile,
   EntryStatFolder as ParsecEntryStatFolder,
+  ParsecInvitationAddr,
   ParsecOrganizationAddr,
   StartedWorkspaceInfo as ParsecStartedWorkspaceInfo,
   UserInfo as ParsecUserInfo,
@@ -393,6 +394,7 @@ interface OrganizationInfo {
 }
 
 interface AccountInvitation {
+  addr: ParsecInvitationAddr;
   organizationId: OrganizationID;
   token: InvitationToken;
   type: InvitationType;
