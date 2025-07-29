@@ -22,9 +22,13 @@ from .common import (
     AccountVaultItemOpaqueKeyID,
     Variant,
     Structure,
+    UserProfile,
+    Enum,
+    EnumItemUnit,
 )
 from .addr import ParsecAddr, ParsecInvitationAddr
 from .device import DeviceAccessStrategy, DeviceSaveStrategy, AvailableDevice
+from .client import ActiveUsersLimit
 
 
 class AccountCreateSendValidationEmailError(ErrorVariant):
@@ -228,6 +232,63 @@ async def account_list_invitations(
     raise NotImplementedError
 
 
+class AccountListOrganizationsError(ErrorVariant):
+    class Offline:
+        pass
+
+    class Internal:
+        pass
+
+
+class AccountOrganizationsAllowedClientAgent(Enum):
+    NativeOnly = EnumItemUnit
+    NativeOrWeb = EnumItemUnit
+
+
+class AccountOrganizationsAccountVaultStrategy(Enum):
+    Allowed = EnumItemUnit
+    Forbidden = EnumItemUnit
+
+
+class AccountOrganizationsOrganizationConfig(Structure):
+    is_expired: bool
+    user_profile_outsider_allowed: bool
+    active_users_limit: ActiveUsersLimit
+    allowed_client_agent: AccountOrganizationsAllowedClientAgent
+    account_vault_strategy: AccountOrganizationsAccountVaultStrategy
+
+
+class AccountOrganizationsActiveUser(Structure):
+    organization_id: OrganizationID
+    user_id: UserID
+    created_on: DateTime
+    is_frozen: bool
+    current_profile: UserProfile
+    organization_config: AccountOrganizationsOrganizationConfig
+
+
+class AccountOrganizationsRevokedUser(Structure):
+    organization_id: OrganizationID
+    user_id: UserID
+    created_on: DateTime
+    revoked_on: DateTime
+    current_profile: UserProfile
+
+
+class AccountOrganizations(Structure):
+    active: list[AccountOrganizationsActiveUser]
+    revoked: list[AccountOrganizationsRevokedUser]
+
+
+async def account_list_organizations(
+    account: Handle,
+) -> Result[
+    AccountOrganizations,
+    AccountListOrganizationsError,
+]:
+    raise NotImplementedError
+
+
 class AccountFetchOpaqueKeyFromVaultError(ErrorVariant):
     class BadVaultKeyAccess:
         pass
@@ -253,6 +314,12 @@ async def account_fetch_opaque_key_from_vault(
 
 
 class AccountUploadOpaqueKeyInVaultError(ErrorVariant):
+    class NotAllowedByOrganizationVaultStrategy:
+        pass
+
+    class CannotObtainOrganizationVaultStrategy:
+        pass
+
     class BadVaultKeyAccess:
         pass
 
@@ -265,6 +332,7 @@ class AccountUploadOpaqueKeyInVaultError(ErrorVariant):
 
 async def account_upload_opaque_key_in_vault(
     account: Handle,
+    organization_id: OrganizationID,
 ) -> Result[tuple[AccountVaultItemOpaqueKeyID, SecretKey], AccountUploadOpaqueKeyInVaultError]:
     raise NotImplementedError
 
@@ -294,6 +362,12 @@ class AccountCreateRegistrationDeviceError(ErrorVariant):
         pass
 
     class LoadDeviceDecryptionFailed:
+        pass
+
+    class NotAllowedByOrganizationVaultStrategy:
+        pass
+
+    class CannotObtainOrganizationVaultStrategy:
         pass
 
     class BadVaultKeyAccess:
