@@ -245,11 +245,6 @@ class _ParsecAccount {
       console.error(`Failed to list registration devices: ${listResult.error.tag} (${listResult.error.error})`);
       return;
     }
-    const keyResult = await libparsec.accountUploadOpaqueKeyInVault(this.handle);
-    if (!keyResult.ok) {
-      console.error(`Failed to upload opaque key: ${keyResult.error.tag} (${keyResult.error.error})`);
-      return;
-    }
     const availableDevices = await listAvailableDevices(false);
 
     for (const regDevice of listResult.value) {
@@ -260,6 +255,11 @@ class _ParsecAccount {
           ad.ty.tag === AvailableDeviceTypeTag.AccountVault,
       );
       if (existingDevice !== undefined) {
+        continue;
+      }
+      const keyResult = await libparsec.accountUploadOpaqueKeyInVault(this.handle, regDevice.organizationId);
+      if (!keyResult.ok) {
+        console.error(`Failed to upload opaque key: ${keyResult.error.tag} (${keyResult.error.error})`);
         continue;
       }
       const regResult = await libparsec.accountRegisterNewDevice(
@@ -314,7 +314,7 @@ class _ParsecAccount {
     if (!this.handle) {
       return generateNoHandleError<AccountRegisterNewDeviceError>();
     }
-    const keyResult = await libparsec.accountUploadOpaqueKeyInVault(this.handle);
+    const keyResult = await libparsec.accountUploadOpaqueKeyInVault(this.handle, registrationDevice.organizationId);
     if (!keyResult.ok) {
       console.error(`Failed to upload opaque key: ${keyResult.error.tag} (${keyResult.error.error})`);
       return { ok: false, error: { tag: AccountRegisterNewDeviceErrorTag.BadVaultKeyAccess, error: 'failed to get key' } };
