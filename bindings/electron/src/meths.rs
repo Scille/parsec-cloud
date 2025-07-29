@@ -11,6 +11,74 @@ use neon::{
 };
 use std::str::FromStr;
 
+// AccountOrganizationsAccountVaultStrategy
+
+#[allow(dead_code)]
+fn enum_account_organizations_account_vault_strategy_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    raw_value: &str,
+) -> NeonResult<libparsec::AccountOrganizationsAccountVaultStrategy> {
+    match raw_value {
+        "AccountOrganizationsAccountVaultStrategyAllowed" => {
+            Ok(libparsec::AccountOrganizationsAccountVaultStrategy::Allowed)
+        }
+        "AccountOrganizationsAccountVaultStrategyForbidden" => {
+            Ok(libparsec::AccountOrganizationsAccountVaultStrategy::Forbidden)
+        }
+        _ => cx.throw_range_error(format!(
+            "Invalid value `{raw_value}` for enum AccountOrganizationsAccountVaultStrategy"
+        )),
+    }
+}
+
+#[allow(dead_code)]
+fn enum_account_organizations_account_vault_strategy_rs_to_js(
+    value: libparsec::AccountOrganizationsAccountVaultStrategy,
+) -> &'static str {
+    match value {
+        libparsec::AccountOrganizationsAccountVaultStrategy::Allowed => {
+            "AccountOrganizationsAccountVaultStrategyAllowed"
+        }
+        libparsec::AccountOrganizationsAccountVaultStrategy::Forbidden => {
+            "AccountOrganizationsAccountVaultStrategyForbidden"
+        }
+    }
+}
+
+// AccountOrganizationsAllowedClientAgent
+
+#[allow(dead_code)]
+fn enum_account_organizations_allowed_client_agent_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    raw_value: &str,
+) -> NeonResult<libparsec::AccountOrganizationsAllowedClientAgent> {
+    match raw_value {
+        "AccountOrganizationsAllowedClientAgentNativeOnly" => {
+            Ok(libparsec::AccountOrganizationsAllowedClientAgent::NativeOnly)
+        }
+        "AccountOrganizationsAllowedClientAgentNativeOrWeb" => {
+            Ok(libparsec::AccountOrganizationsAllowedClientAgent::NativeOrWeb)
+        }
+        _ => cx.throw_range_error(format!(
+            "Invalid value `{raw_value}` for enum AccountOrganizationsAllowedClientAgent"
+        )),
+    }
+}
+
+#[allow(dead_code)]
+fn enum_account_organizations_allowed_client_agent_rs_to_js(
+    value: libparsec::AccountOrganizationsAllowedClientAgent,
+) -> &'static str {
+    match value {
+        libparsec::AccountOrganizationsAllowedClientAgent::NativeOnly => {
+            "AccountOrganizationsAllowedClientAgentNativeOnly"
+        }
+        libparsec::AccountOrganizationsAllowedClientAgent::NativeOrWeb => {
+            "AccountOrganizationsAllowedClientAgentNativeOrWeb"
+        }
+    }
+}
+
 // CancelledGreetingAttemptReason
 
 #[allow(dead_code)]
@@ -345,6 +413,374 @@ fn enum_user_profile_rs_to_js(value: libparsec::UserProfile) -> &'static str {
         libparsec::UserProfile::Outsider => "UserProfileOutsider",
         libparsec::UserProfile::Standard => "UserProfileStandard",
     }
+}
+
+// AccountOrganizations
+
+#[allow(dead_code)]
+fn struct_account_organizations_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::AccountOrganizations> {
+    let active = {
+        let js_val: Handle<JsArray> = obj.get(cx, "active")?;
+        {
+            let size = js_val.len(cx);
+            let mut v = Vec::with_capacity(size as usize);
+            for i in 0..size {
+                let js_item: Handle<JsObject> = js_val.get(cx, i)?;
+                v.push(struct_account_organizations_active_user_js_to_rs(
+                    cx, js_item,
+                )?);
+            }
+            v
+        }
+    };
+    let revoked = {
+        let js_val: Handle<JsArray> = obj.get(cx, "revoked")?;
+        {
+            let size = js_val.len(cx);
+            let mut v = Vec::with_capacity(size as usize);
+            for i in 0..size {
+                let js_item: Handle<JsObject> = js_val.get(cx, i)?;
+                v.push(struct_account_organizations_revoked_user_js_to_rs(
+                    cx, js_item,
+                )?);
+            }
+            v
+        }
+    };
+    Ok(libparsec::AccountOrganizations { active, revoked })
+}
+
+#[allow(dead_code)]
+fn struct_account_organizations_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AccountOrganizations,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_active = {
+        // JsArray::new allocates with `undefined` value, that's why we `set` value
+        let js_array = JsArray::new(cx, rs_obj.active.len());
+        for (i, elem) in rs_obj.active.into_iter().enumerate() {
+            let js_elem = struct_account_organizations_active_user_rs_to_js(cx, elem)?;
+            js_array.set(cx, i as u32, js_elem)?;
+        }
+        js_array
+    };
+    js_obj.set(cx, "active", js_active)?;
+    let js_revoked = {
+        // JsArray::new allocates with `undefined` value, that's why we `set` value
+        let js_array = JsArray::new(cx, rs_obj.revoked.len());
+        for (i, elem) in rs_obj.revoked.into_iter().enumerate() {
+            let js_elem = struct_account_organizations_revoked_user_rs_to_js(cx, elem)?;
+            js_array.set(cx, i as u32, js_elem)?;
+        }
+        js_array
+    };
+    js_obj.set(cx, "revoked", js_revoked)?;
+    Ok(js_obj)
+}
+
+// AccountOrganizationsActiveUser
+
+#[allow(dead_code)]
+fn struct_account_organizations_active_user_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::AccountOrganizationsActiveUser> {
+    let organization_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let user_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "userId")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let created_on = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "createdOn")?;
+        {
+            let v = js_val.value(cx);
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            match custom_from_rs_f64(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let is_frozen = {
+        let js_val: Handle<JsBoolean> = obj.get(cx, "isFrozen")?;
+        js_val.value(cx)
+    };
+    let current_profile = {
+        let js_val: Handle<JsString> = obj.get(cx, "currentProfile")?;
+        {
+            let js_string = js_val.value(cx);
+            enum_user_profile_js_to_rs(cx, js_string.as_str())?
+        }
+    };
+    let organization_config = {
+        let js_val: Handle<JsObject> = obj.get(cx, "organizationConfig")?;
+        struct_account_organizations_organization_config_js_to_rs(cx, js_val)?
+    };
+    Ok(libparsec::AccountOrganizationsActiveUser {
+        organization_id,
+        user_id,
+        created_on,
+        is_frozen,
+        current_profile,
+        organization_config,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_account_organizations_active_user_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AccountOrganizationsActiveUser,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_organization_id = JsString::try_new(cx, rs_obj.organization_id).or_throw(cx)?;
+    js_obj.set(cx, "organizationId", js_organization_id)?;
+    let js_user_id = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.user_id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "userId", js_user_id)?;
+    let js_created_on = JsNumber::new(cx, {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        match custom_to_rs_f64(rs_obj.created_on) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    });
+    js_obj.set(cx, "createdOn", js_created_on)?;
+    let js_is_frozen = JsBoolean::new(cx, rs_obj.is_frozen);
+    js_obj.set(cx, "isFrozen", js_is_frozen)?;
+    let js_current_profile =
+        JsString::try_new(cx, enum_user_profile_rs_to_js(rs_obj.current_profile)).or_throw(cx)?;
+    js_obj.set(cx, "currentProfile", js_current_profile)?;
+    let js_organization_config =
+        struct_account_organizations_organization_config_rs_to_js(cx, rs_obj.organization_config)?;
+    js_obj.set(cx, "organizationConfig", js_organization_config)?;
+    Ok(js_obj)
+}
+
+// AccountOrganizationsOrganizationConfig
+
+#[allow(dead_code)]
+fn struct_account_organizations_organization_config_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::AccountOrganizationsOrganizationConfig> {
+    let is_expired = {
+        let js_val: Handle<JsBoolean> = obj.get(cx, "isExpired")?;
+        js_val.value(cx)
+    };
+    let user_profile_outsider_allowed = {
+        let js_val: Handle<JsBoolean> = obj.get(cx, "userProfileOutsiderAllowed")?;
+        js_val.value(cx)
+    };
+    let active_users_limit = {
+        let js_val: Handle<JsObject> = obj.get(cx, "activeUsersLimit")?;
+        variant_active_users_limit_js_to_rs(cx, js_val)?
+    };
+    let allowed_client_agent = {
+        let js_val: Handle<JsString> = obj.get(cx, "allowedClientAgent")?;
+        {
+            let js_string = js_val.value(cx);
+            enum_account_organizations_allowed_client_agent_js_to_rs(cx, js_string.as_str())?
+        }
+    };
+    let account_vault_strategy = {
+        let js_val: Handle<JsString> = obj.get(cx, "accountVaultStrategy")?;
+        {
+            let js_string = js_val.value(cx);
+            enum_account_organizations_account_vault_strategy_js_to_rs(cx, js_string.as_str())?
+        }
+    };
+    Ok(libparsec::AccountOrganizationsOrganizationConfig {
+        is_expired,
+        user_profile_outsider_allowed,
+        active_users_limit,
+        allowed_client_agent,
+        account_vault_strategy,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_account_organizations_organization_config_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AccountOrganizationsOrganizationConfig,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_is_expired = JsBoolean::new(cx, rs_obj.is_expired);
+    js_obj.set(cx, "isExpired", js_is_expired)?;
+    let js_user_profile_outsider_allowed = JsBoolean::new(cx, rs_obj.user_profile_outsider_allowed);
+    js_obj.set(
+        cx,
+        "userProfileOutsiderAllowed",
+        js_user_profile_outsider_allowed,
+    )?;
+    let js_active_users_limit = variant_active_users_limit_rs_to_js(cx, rs_obj.active_users_limit)?;
+    js_obj.set(cx, "activeUsersLimit", js_active_users_limit)?;
+    let js_allowed_client_agent = JsString::try_new(
+        cx,
+        enum_account_organizations_allowed_client_agent_rs_to_js(rs_obj.allowed_client_agent),
+    )
+    .or_throw(cx)?;
+    js_obj.set(cx, "allowedClientAgent", js_allowed_client_agent)?;
+    let js_account_vault_strategy = JsString::try_new(
+        cx,
+        enum_account_organizations_account_vault_strategy_rs_to_js(rs_obj.account_vault_strategy),
+    )
+    .or_throw(cx)?;
+    js_obj.set(cx, "accountVaultStrategy", js_account_vault_strategy)?;
+    Ok(js_obj)
+}
+
+// AccountOrganizationsRevokedUser
+
+#[allow(dead_code)]
+fn struct_account_organizations_revoked_user_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::AccountOrganizationsRevokedUser> {
+    let organization_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let user_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "userId")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let created_on = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "createdOn")?;
+        {
+            let v = js_val.value(cx);
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            match custom_from_rs_f64(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let revoked_on = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "revokedOn")?;
+        {
+            let v = js_val.value(cx);
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            match custom_from_rs_f64(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let current_profile = {
+        let js_val: Handle<JsString> = obj.get(cx, "currentProfile")?;
+        {
+            let js_string = js_val.value(cx);
+            enum_user_profile_js_to_rs(cx, js_string.as_str())?
+        }
+    };
+    Ok(libparsec::AccountOrganizationsRevokedUser {
+        organization_id,
+        user_id,
+        created_on,
+        revoked_on,
+        current_profile,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_account_organizations_revoked_user_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AccountOrganizationsRevokedUser,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_organization_id = JsString::try_new(cx, rs_obj.organization_id).or_throw(cx)?;
+    js_obj.set(cx, "organizationId", js_organization_id)?;
+    let js_user_id = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.user_id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "userId", js_user_id)?;
+    let js_created_on = JsNumber::new(cx, {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        match custom_to_rs_f64(rs_obj.created_on) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    });
+    js_obj.set(cx, "createdOn", js_created_on)?;
+    let js_revoked_on = JsNumber::new(cx, {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        match custom_to_rs_f64(rs_obj.revoked_on) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    });
+    js_obj.set(cx, "revokedOn", js_revoked_on)?;
+    let js_current_profile =
+        JsString::try_new(cx, enum_user_profile_rs_to_js(rs_obj.current_profile)).or_throw(cx)?;
+    js_obj.set(cx, "currentProfile", js_current_profile)?;
+    Ok(js_obj)
 }
 
 // AuthMethodInfo
@@ -4092,52 +4528,40 @@ fn variant_account_create_registration_device_error_rs_to_js<'a>(
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::AccountCreateRegistrationDeviceError::BadVaultKeyAccess { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorBadVaultKeyAccess")
-                    .or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::BadVaultKeyAccess{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorBadVaultKeyAccess").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorInternal")
-                .or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::CannotObtainOrganizationVaultStrategy{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorCannotObtainOrganizationVaultStrategy").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceDecryptionFailed { .. } => {
-            let js_tag = JsString::try_new(
-                cx,
-                "AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed",
-            )
-            .or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::Internal{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidData { .. } => {
-            let js_tag = JsString::try_new(
-                cx,
-                "AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData",
-            )
-            .or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceDecryptionFailed{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidPath { .. } => {
-            let js_tag = JsString::try_new(
-                cx,
-                "AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath",
-            )
-            .or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidData{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::Offline { .. } => {
-            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorOffline")
-                .or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidPath{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::TimestampOutOfBallpark { .. } => {
-            let js_tag = JsString::try_new(
-                cx,
-                "AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark",
-            )
-            .or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::NotAllowedByOrganizationVaultStrategy{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorNotAllowedByOrganizationVaultStrategy").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountCreateRegistrationDeviceError::Offline{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountCreateRegistrationDeviceError::TimestampOutOfBallpark{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -4471,6 +4895,31 @@ fn variant_account_list_invitations_error_rs_to_js<'a>(
         libparsec::AccountListInvitationsError::Offline { .. } => {
             let js_tag =
                 JsString::try_new(cx, "AccountListInvitationsErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// AccountListOrganizationsError
+
+#[allow(dead_code)]
+fn variant_account_list_organizations_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AccountListOrganizationsError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::AccountListOrganizationsError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "AccountListOrganizationsErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountListOrganizationsError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "AccountListOrganizationsErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -4825,9 +5274,29 @@ fn variant_account_upload_opaque_key_in_vault_error_rs_to_js<'a>(
                     .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::AccountUploadOpaqueKeyInVaultError::CannotObtainOrganizationVaultStrategy {
+            ..
+        } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "AccountUploadOpaqueKeyInVaultErrorCannotObtainOrganizationVaultStrategy",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::AccountUploadOpaqueKeyInVaultError::Internal { .. } => {
             let js_tag =
                 JsString::try_new(cx, "AccountUploadOpaqueKeyInVaultErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountUploadOpaqueKeyInVaultError::NotAllowedByOrganizationVaultStrategy {
+            ..
+        } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "AccountUploadOpaqueKeyInVaultErrorNotAllowedByOrganizationVaultStrategy",
+            )
+            .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::AccountUploadOpaqueKeyInVaultError::Offline { .. } => {
@@ -15678,6 +16147,57 @@ fn account_list_invitations(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// account_list_organizations
+fn account_list_organizations(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let account = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::account_list_organizations(account).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_account_organizations_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_account_list_organizations_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // account_list_registration_devices
 fn account_list_registration_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -16150,6 +16670,18 @@ fn account_upload_opaque_key_in_vault(mut cx: FunctionContext) -> JsResult<JsPro
             v
         }
     };
+    let organization_id = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
@@ -16158,6 +16690,7 @@ fn account_upload_opaque_key_in_vault(mut cx: FunctionContext) -> JsResult<JsPro
 
         let ret = libparsec::account_upload_opaque_key_in_vault(
             account,
+            organization_id,
         ).await;
 
         deferred.settle_with(&channel, move |mut cx| {
@@ -26214,6 +26747,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("accountGetInUseAuthMethod", account_get_in_use_auth_method)?;
     cx.export_function("accountListAuthMethods", account_list_auth_methods)?;
     cx.export_function("accountListInvitations", account_list_invitations)?;
+    cx.export_function("accountListOrganizations", account_list_organizations)?;
     cx.export_function(
         "accountListRegistrationDevices",
         account_list_registration_devices,

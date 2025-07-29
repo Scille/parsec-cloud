@@ -9,6 +9,16 @@ export type Result<T, E = Error> =
   | { ok: true; value: T }
   | { ok: false; error: E }
 
+export enum AccountOrganizationsAccountVaultStrategy {
+    Allowed = 'AccountOrganizationsAccountVaultStrategyAllowed',
+    Forbidden = 'AccountOrganizationsAccountVaultStrategyForbidden',
+}
+
+export enum AccountOrganizationsAllowedClientAgent {
+    NativeOnly = 'AccountOrganizationsAllowedClientAgentNativeOnly',
+    NativeOrWeb = 'AccountOrganizationsAllowedClientAgentNativeOrWeb',
+}
+
 export enum CancelledGreetingAttemptReason {
     AutomaticallyCancelled = 'CancelledGreetingAttemptReasonAutomaticallyCancelled',
     InconsistentPayload = 'CancelledGreetingAttemptReasonInconsistentPayload',
@@ -82,6 +92,40 @@ export enum UserProfile {
     Admin = 'UserProfileAdmin',
     Outsider = 'UserProfileOutsider',
     Standard = 'UserProfileStandard',
+}
+
+
+export interface AccountOrganizations {
+    active: Array<AccountOrganizationsActiveUser>
+    revoked: Array<AccountOrganizationsRevokedUser>
+}
+
+
+export interface AccountOrganizationsActiveUser {
+    organizationId: string
+    userId: string
+    createdOn: number
+    isFrozen: boolean
+    currentProfile: UserProfile
+    organizationConfig: AccountOrganizationsOrganizationConfig
+}
+
+
+export interface AccountOrganizationsOrganizationConfig {
+    isExpired: boolean
+    userProfileOutsiderAllowed: boolean
+    activeUsersLimit: ActiveUsersLimit
+    allowedClientAgent: AccountOrganizationsAllowedClientAgent
+    accountVaultStrategy: AccountOrganizationsAccountVaultStrategy
+}
+
+
+export interface AccountOrganizationsRevokedUser {
+    organizationId: string
+    userId: string
+    createdOn: number
+    revokedOn: number
+    currentProfile: UserProfile
 }
 
 
@@ -487,6 +531,10 @@ export interface AccountCreateRegistrationDeviceErrorBadVaultKeyAccess {
     tag: "BadVaultKeyAccess"
     error: string
 }
+export interface AccountCreateRegistrationDeviceErrorCannotObtainOrganizationVaultStrategy {
+    tag: "CannotObtainOrganizationVaultStrategy"
+    error: string
+}
 export interface AccountCreateRegistrationDeviceErrorInternal {
     tag: "Internal"
     error: string
@@ -503,6 +551,10 @@ export interface AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath {
     tag: "LoadDeviceInvalidPath"
     error: string
 }
+export interface AccountCreateRegistrationDeviceErrorNotAllowedByOrganizationVaultStrategy {
+    tag: "NotAllowedByOrganizationVaultStrategy"
+    error: string
+}
 export interface AccountCreateRegistrationDeviceErrorOffline {
     tag: "Offline"
     error: string
@@ -513,10 +565,12 @@ export interface AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark {
 }
 export type AccountCreateRegistrationDeviceError =
   | AccountCreateRegistrationDeviceErrorBadVaultKeyAccess
+  | AccountCreateRegistrationDeviceErrorCannotObtainOrganizationVaultStrategy
   | AccountCreateRegistrationDeviceErrorInternal
   | AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed
   | AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData
   | AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath
+  | AccountCreateRegistrationDeviceErrorNotAllowedByOrganizationVaultStrategy
   | AccountCreateRegistrationDeviceErrorOffline
   | AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark
 
@@ -709,6 +763,20 @@ export type AccountListInvitationsError =
   | AccountListInvitationsErrorOffline
 
 
+// AccountListOrganizationsError
+export interface AccountListOrganizationsErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface AccountListOrganizationsErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export type AccountListOrganizationsError =
+  | AccountListOrganizationsErrorInternal
+  | AccountListOrganizationsErrorOffline
+
+
 // AccountListRegistrationDevicesError
 export interface AccountListRegistrationDevicesErrorBadVaultKeyAccess {
     tag: "BadVaultKeyAccess"
@@ -874,8 +942,16 @@ export interface AccountUploadOpaqueKeyInVaultErrorBadVaultKeyAccess {
     tag: "BadVaultKeyAccess"
     error: string
 }
+export interface AccountUploadOpaqueKeyInVaultErrorCannotObtainOrganizationVaultStrategy {
+    tag: "CannotObtainOrganizationVaultStrategy"
+    error: string
+}
 export interface AccountUploadOpaqueKeyInVaultErrorInternal {
     tag: "Internal"
+    error: string
+}
+export interface AccountUploadOpaqueKeyInVaultErrorNotAllowedByOrganizationVaultStrategy {
+    tag: "NotAllowedByOrganizationVaultStrategy"
     error: string
 }
 export interface AccountUploadOpaqueKeyInVaultErrorOffline {
@@ -884,7 +960,9 @@ export interface AccountUploadOpaqueKeyInVaultErrorOffline {
 }
 export type AccountUploadOpaqueKeyInVaultError =
   | AccountUploadOpaqueKeyInVaultErrorBadVaultKeyAccess
+  | AccountUploadOpaqueKeyInVaultErrorCannotObtainOrganizationVaultStrategy
   | AccountUploadOpaqueKeyInVaultErrorInternal
+  | AccountUploadOpaqueKeyInVaultErrorNotAllowedByOrganizationVaultStrategy
   | AccountUploadOpaqueKeyInVaultErrorOffline
 
 
@@ -4076,6 +4154,9 @@ export function accountListAuthMethods(
 export function accountListInvitations(
     account: number
 ): Promise<Result<Array<[string, string, string, InvitationType]>, AccountListInvitationsError>>
+export function accountListOrganizations(
+    account: number
+): Promise<Result<AccountOrganizations, AccountListOrganizationsError>>
 export function accountListRegistrationDevices(
     account: number
 ): Promise<Result<Array<[string, string]>, AccountListRegistrationDevicesError>>
@@ -4107,7 +4188,8 @@ export function accountRegisterNewDevice(
     save_strategy: DeviceSaveStrategy
 ): Promise<Result<AvailableDevice, AccountRegisterNewDeviceError>>
 export function accountUploadOpaqueKeyInVault(
-    account: number
+    account: number,
+    organization_id: string
 ): Promise<Result<[string, Uint8Array], AccountUploadOpaqueKeyInVaultError>>
 export function archiveDevice(
     config_dir: string,
