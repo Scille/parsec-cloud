@@ -20,6 +20,7 @@ mod fetch_opaque_key_from_vault;
 mod fetch_vault_items;
 mod list_auth_methods;
 mod list_invitations;
+mod list_organizations;
 mod list_registration_devices;
 mod login;
 mod register_new_device;
@@ -36,6 +37,7 @@ pub use fetch_opaque_key_from_vault::*;
 pub use fetch_vault_items::*;
 pub use list_auth_methods::*;
 pub use list_invitations::*;
+pub use list_organizations::*;
 pub use list_registration_devices::*;
 pub use login::*;
 pub use register_new_device::*;
@@ -231,6 +233,14 @@ impl Account {
         account_list_invitations(self).await
     }
 
+    /// Fetch from the server all organizations the account's email is part of.
+    /// This includes both valid and revoked organizations.
+    pub async fn list_organizations(
+        &self,
+    ) -> Result<AccountOrganizations, AccountListOrganizationsError> {
+        account_list_organizations(self).await
+    }
+
     /// Fetch the account vault items from the server and return the opaque
     /// key matching the ID.
     ///
@@ -248,10 +258,16 @@ impl Account {
     ///
     /// This key is then typically supposed to be used while saving a local device
     /// to encrypt the `ciphertext` field of a `DeviceFileAccountVault`.
+    ///
+    /// While the key can be used for any purpose, the organization it is planned
+    /// to be used with must be provided so that the organization's account vault
+    /// strategy can be retrieved and enforced client-side (note it would be pointless
+    /// to have this check done server-side since the uploaded data are encrypted).
     pub async fn upload_opaque_key_in_vault(
         &self,
+        organization_id: OrganizationID,
     ) -> Result<(AccountVaultItemOpaqueKeyID, SecretKey), AccountUploadOpaqueKeyInVaultError> {
-        account_upload_opaque_key_in_vault(self).await
+        account_upload_opaque_key_in_vault(self, organization_id).await
     }
 
     /// Fetch the account vault items from the server and return all available registration devices

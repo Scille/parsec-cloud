@@ -22,12 +22,12 @@ use crate::{
 
 #[parsec_test(testbed = "empty", with_server)]
 async fn ok(#[values("master_secret", "password")] kind: &str, env: &TestbedEnv) {
-    let (account_human_handle, auth_method_master_secret_key) =
+    let (account_human_handle, auth_method_master_secret) =
         test_new_account(&env.server_addr).await.unwrap();
     let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
-        &auth_method_master_secret_key,
+        &auth_method_master_secret,
         account_human_handle.clone(),
     )
     .await;
