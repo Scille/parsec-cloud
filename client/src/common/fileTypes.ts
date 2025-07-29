@@ -7,6 +7,8 @@ enum FileContentType {
   Image = 'image',
   Video = 'video',
   Audio = 'audio',
+  Presentation = 'presentation',
+  Diagram = 'diagram',
   Spreadsheet = 'spreadsheet',
   Document = 'document',
   Text = 'text',
@@ -20,8 +22,10 @@ interface DetectedFileType {
 }
 
 const IMAGES = ['png', 'webp', 'jpg', 'jpeg', 'svg', 'bmp', 'gif'];
-const SPREADSHEETS = ['xlsx', 'xls'];
-const DOCUMENTS = ['docx'];
+const SPREADSHEETS = ['xlsx', 'xls', 'ods'];
+const DOCUMENTS = ['docx', 'doc', 'odt'];
+const PRESENTATION = ['pptx', 'odp'];
+const DIAGRAMS = ['drawio', 'vsdx'];
 const PDF_DOCUMENTS = ['pdf'];
 const AUDIOS = ['wav', 'mp3', 'ogg'];
 const VIDEOS = ['mp4', 'mpeg', 'webm'];
@@ -29,6 +33,7 @@ const VIDEOS = ['mp4', 'mpeg', 'webm'];
 // For generic text/plain
 const TEXTS = [
   'xml',
+  'rtf',
   'json',
   'js',
   'html',
@@ -37,6 +42,7 @@ const TEXTS = [
   'sh',
   'csv',
   'css',
+  'scss',
   'py',
   'php',
   'sh',
@@ -103,6 +109,12 @@ async function detectFileContentType(name: EntryName): Promise<DetectedFileType 
   }
   if (TEXTS.includes(ext)) {
     return { type: FileContentType.Text, extension: ext };
+  }
+  if (PRESENTATION.includes(ext)) {
+    return { type: FileContentType.Presentation, extension: ext };
+  }
+  if (DIAGRAMS.includes(ext)) {
+    return { type: FileContentType.Diagram, extension: ext };
   }
   return { type: FileContentType.Unknown, extension: ext };
 }

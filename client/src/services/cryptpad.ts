@@ -8,6 +8,7 @@ export enum CryptpadDocumentType {
   Doc = 'doc',
   Presentation = 'presentation',
   Code = 'code',
+  Diagram = 'diagram',
   Unsupported = 'unsupported',
 }
 
@@ -17,6 +18,7 @@ export const ENABLED_DOCUMENT_TYPES = [
   CryptpadDocumentType.Doc,
   CryptpadDocumentType.Presentation,
   CryptpadDocumentType.Code,
+  CryptpadDocumentType.Diagram,
 ];
 
 export interface CryptpadConfig {
@@ -134,8 +136,10 @@ export function getDocumentTypeFromExtension(extension: string): CryptpadDocumen
       return CryptpadDocumentType.Pad;
     case 'csv':
     case 'xlsx':
+    case 'ods':
       return CryptpadDocumentType.Sheet;
     case 'docx':
+    case 'doc':
     case 'odt':
       return CryptpadDocumentType.Doc;
     case 'pptx':
@@ -146,6 +150,9 @@ export function getDocumentTypeFromExtension(extension: string): CryptpadDocumen
     case 'py':
     case 'md':
       return CryptpadDocumentType.Code;
+    case 'drawio':
+    case 'vsdx':
+      return CryptpadDocumentType.Diagram;
     default:
       return CryptpadDocumentType.Unsupported;
   }
