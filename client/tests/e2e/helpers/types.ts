@@ -8,6 +8,20 @@ export enum DisplaySize {
   Large = 'large',
 }
 
+export interface SetupOptions {
+  testbedPath?: string;
+  skipTestbed?: boolean;
+  location?: string;
+  skipGoto?: boolean;
+  withParsecAccount?: boolean;
+  parsecAccountAutoLogin?: boolean;
+  withCustomBranding?: boolean;
+  displaySize?: DisplaySize;
+  mockBrowser?: 'Chrome' | 'Firefox' | 'Safari' | 'Edge' | 'Brave' | 'Chromium';
+  trialServers?: string;
+  saasServers?: string;
+}
+
 export interface MsPage extends Page {
   userData: UserData;
   orgInfo: OrganizationInformation;
@@ -15,7 +29,7 @@ export interface MsPage extends Page {
   isReleased: boolean;
   skipTestbedRelease: boolean;
   getContext: () => MsContext;
-  openNewTab: () => Promise<MsPage>;
+  openNewTab: (opts?: SetupOptions) => Promise<MsPage>;
   isDebugEnabled: () => boolean;
   displaySize: DisplaySize;
   defaultLargeSize: [number, number];

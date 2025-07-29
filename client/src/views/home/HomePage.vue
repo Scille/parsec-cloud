@@ -38,7 +38,9 @@
                   @bootstrap-organization-with-link-click="openCreateOrganizationModal"
                   @recover-click="onForgottenPasswordClicked"
                   @create-or-join-organization-click="openCreateOrJoin"
+                  @invitation-click="onInvitationClicked"
                   :device-list="deviceList"
+                  :invitation-list="invitationList"
                   :querying="querying"
                 />
               </template>
@@ -100,6 +102,7 @@ import {
   login as parsecLogin,
   ParsecAccount,
   getOrganizationCreationDate,
+  AccountInvitation,
 } from '@/parsec';
 import { RouteBackup, Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, switchOrganization, watchRoute } from '@/router';
 import { EventData, EventDistributor, Events } from '@/services/eventDistributor';
@@ -161,6 +164,7 @@ const loginInProgress = ref(false);
 const queryInProgress = ref(false);
 const querying = ref(true);
 const deviceList: Ref<AvailableDevice[]> = ref([]);
+const invitationList = ref<Array<AccountInvitation>>([]);
 const activeTab = ref(AccountSettingsTabs.Settings);
 let eventCallbackId!: string;
 
@@ -215,9 +219,13 @@ onMounted(async () => {
   eventCallbackId = await injectionProvider
     .getDefault()
     .eventDistributor.registerCallback(
-      Events.ClientStarted | Events.ClientStopped,
-      async (_event: Events, _data?: EventData): Promise<void> => {
-        refreshDeviceList();
+      Events.ClientStarted | Events.ClientStopped | Events.InvitationUpdated,
+      async (event: Events, _data?: EventData): Promise<void> => {
+        if (event === Events.InvitationUpdated) {
+          refreshInvitationList();
+        } else {
+          refreshDeviceList();
+        }
       },
     );
 
@@ -225,6 +233,7 @@ onMounted(async () => {
 
   await handleQuery();
   await refreshDeviceList();
+  await refreshInvitationList();
 });
 
 onUnmounted(() => {
@@ -273,6 +282,18 @@ async function openCreateOrJoin(event: Event): Promise<void> {
     await openCreateOrganizationModal();
   } else if (result.data.action === HomePageAction.JoinOrganization) {
     await onJoinOrganizationClicked();
+  }
+}
+
+async function refreshInvitationList(): Promise<void> {
+  if (!ParsecAccount.isLoggedIn()) {
+    return;
+  }
+  const result = await ParsecAccount.listInvitations();
+  if (result.ok) {
+    invitationList.value = result.value;
+  } else {
+    invitationList.value = [];
   }
 }
 
@@ -347,6 +368,10 @@ async function handleQuery(): Promise<void> {
     await navigateTo(Routes.Home, { skipHandle: true });
   }
   queryInProgress.value = false;
+}
+
+async function onInvitationClicked(invitation: AccountInvitation): Promise<void> {
+  await openJoinByLinkModal(invitation.addr);
 }
 
 async function onJoinOrganizationClicked(): Promise<void> {
@@ -518,42 +543,46 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
 }
 
 async function handleRegistration(device: AvailableDevice, access: DeviceAccessStrategy): Promise<void> {
-  if (ParsecAccount.isLoggedIn()) {
-    // Check if the device is already among the registration devices
-    const isRegResult = await ParsecAccount.isDeviceRegistered(device);
-    if (isRegResult.ok && !isRegResult.value) {
-      // Ask the user if they want to create a registration device
-      const answer = await askQuestion('loginPage.storeAccountTitle', 'loginPage.storeAccountQuestion', {
-        yesText: 'loginPage.storeAccountYes',
-      });
-      if (answer === Answer.Yes) {
-        // Create the registration device
-        const createRegResult = await ParsecAccount.createRegistrationDevice(access);
-        if (createRegResult.ok) {
-          informationManager.present(
-            new Information({
-              message: 'loginPage.storeSuccess',
-              level: InformationLevel.Success,
-            }),
-            PresentationMode.Toast,
-          );
-          const regResult = await ParsecAccount.registerNewDevice({ organizationId: device.organizationId, userId: device.userId });
-          if (!regResult.ok) {
-            window.electronAPI.log('error', `Failed to register new device: ${regResult.error.tag} (${regResult.error.error})`);
-          }
-        } else {
-          window.electronAPI.log(
-            'error',
-            `Failed to create the registration device: ${createRegResult.error.tag} (${createRegResult.error.error})`,
-          );
-          informationManager.present(
-            new Information({
-              message: 'loginPage.storeFailed',
-              level: InformationLevel.Error,
-            }),
-            PresentationMode.Toast,
-          );
+  if (!ParsecAccount.isLoggedIn()) {
+    return;
+  }
+  if (device.serverUrl) {
+    return;
+  }
+  // Check if the device is already among the registration devices
+  const isRegResult = await ParsecAccount.isDeviceRegistered(device);
+  if (isRegResult.ok && !isRegResult.value) {
+    // Ask the user if they want to create a registration device
+    const answer = await askQuestion('loginPage.storeAccountTitle', 'loginPage.storeAccountQuestion', {
+      yesText: 'loginPage.storeAccountYes',
+    });
+    if (answer === Answer.Yes) {
+      // Create the registration device
+      const createRegResult = await ParsecAccount.createRegistrationDevice(access);
+      if (createRegResult.ok) {
+        informationManager.present(
+          new Information({
+            message: 'loginPage.storeSuccess',
+            level: InformationLevel.Success,
+          }),
+          PresentationMode.Toast,
+        );
+        const regResult = await ParsecAccount.registerNewDevice({ organizationId: device.organizationId, userId: device.userId });
+        if (!regResult.ok) {
+          window.electronAPI.log('error', `Failed to register new device: ${regResult.error.tag} (${regResult.error.error})`);
         }
+      } else {
+        window.electronAPI.log(
+          'error',
+          `Failed to create the registration device: ${createRegResult.error.tag} (${createRegResult.error.error})`,
+        );
+        informationManager.present(
+          new Information({
+            message: 'loginPage.storeFailed',
+            level: InformationLevel.Error,
+          }),
+          PresentationMode.Toast,
+        );
       }
     }
   }

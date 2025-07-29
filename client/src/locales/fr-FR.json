@@ -235,6 +235,10 @@
                 "generic": "Impossible de lister vos organisations."
             }
         },
+        "invitationList": {
+            "title": "Une invitation en attente | {count} invitations en attente",
+            "validation": "Validez l'invitation pour accéder à l'organisation"
+        },
         "noExistingOrganization": {
             "createOrJoin": "Créer ou rejoindre",
             "createOrganization": "Créer une organisation",

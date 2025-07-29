@@ -171,6 +171,7 @@ export const ParsecAccountAccess = {
 class _ParsecAccount {
   handle: AccountHandle | undefined = undefined;
   skipped: boolean = false;
+  server: string | undefined = undefined;
 
   async init(): Promise<void> {
     if (!Env.isAccountAutoLoginEnabled()) {
@@ -212,6 +213,10 @@ class _ParsecAccount {
 
   getHandle(): AccountHandle | undefined {
     return this.handle;
+  }
+
+  getServer(): string | undefined {
+    return this.server;
   }
 
   isLoggedIn(): boolean {
@@ -283,8 +288,8 @@ class _ParsecAccount {
     if (result.ok) {
       return {
         ok: true,
-        value: result.value.map(([_invitationAddr, organizationId, token, type]) => {
-          return { organizationId: organizationId, token: token, type: type };
+        value: result.value.map(([invitationAddr, organizationId, token, type]) => {
+          return { organizationId: organizationId, token: token, type: type, addr: invitationAddr };
         }),
       };
     }

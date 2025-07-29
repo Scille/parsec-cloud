@@ -306,6 +306,9 @@ async function goToLogin(): Promise<void> {
 }
 
 async function createAccount(): Promise<void> {
+  if (!validAuth.value) {
+    return;
+  }
   error.value = '';
   querying.value = true;
   try {

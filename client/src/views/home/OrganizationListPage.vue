@@ -2,6 +2,35 @@
 
 <template>
   <div class="organization">
+    <div
+      class="account-invitations"
+      v-if="invitationList.length > 0"
+    >
+      <ion-text class="title-h4 account-invitations__title">
+        {{
+          $msTranslate({
+            key: 'HomePage.invitationList.title',
+            data: { count: invitationList.length },
+          })
+        }}
+      </ion-text>
+      <div
+        class="account-invitation"
+        v-for="invitation in invitationList"
+        :key="invitation.token"
+        @click="$emit('invitationClick', invitation)"
+      >
+        <div class="account-invitation-text">
+          <ion-text class="account-invitation-text__title title-h4">{{ invitation.organizationId }}</ion-text>
+          <ion-text class="account-invitation-text__subtitle body">{{ $msTranslate('HomePage.invitationList.validation') }}</ion-text>
+        </div>
+        <ms-image
+          :image="MailUnreadGradient"
+          class="account-invitation-image"
+        />
+      </div>
+    </div>
+
     <template v-if="deviceList.length === 0 && !querying">
       <!-- No organization -->
       <div class="organization-content no-devices">
@@ -280,7 +309,7 @@ import {
   useWindowSize,
 } from 'megashark-lib';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
-import { AvailableDevice, getLoggedInDevices, LoggedInDeviceInfo } from '@/parsec';
+import { AccountInvitation, AvailableDevice, getLoggedInDevices, LoggedInDeviceInfo } from '@/parsec';
 import { Routes } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
@@ -289,6 +318,7 @@ import { addCircle, caretForward, chevronDown } from 'ionicons/icons';
 import { Env } from '@/services/environment';
 import { DateTime } from 'luxon';
 import { computed, inject, onMounted, onUnmounted, ref, watch, useTemplateRef } from 'vue';
+import MailUnreadGradient from '@/assets/images/mail-unread-gradient.svg?raw';
 
 const emits = defineEmits<{
   (e: 'organizationSelect', device: AvailableDevice): void;
@@ -298,10 +328,12 @@ const emits = defineEmits<{
   (e: 'bootstrapOrganizationWithLinkClick', link: string): void;
   (e: 'recoverClick'): void;
   (e: 'createOrJoinOrganizationClick', event: Event): void;
+  (e: 'invitationClick', invitation: AccountInvitation): void;
 }>();
 
 const props = defineProps<{
   deviceList: AvailableDevice[];
+  invitationList: AccountInvitation[];
   querying: boolean;
 }>();
 
@@ -334,7 +366,7 @@ interface OrganizationListSavedData {
   sortBy?: SortCriteria;
 }
 
-watch(
+const watchCancel = watch(
   () => props.deviceList,
   async () => {
     loggedInDevices.value = await getLoggedInDevices();
@@ -390,6 +422,7 @@ onUnmounted(async () => {
   if (hotkeys) {
     hotkeyManager.unregister(hotkeys);
   }
+  watchCancel();
 });
 
 async function onMsSorterChange(event: MsSorterChangeEvent): Promise<void> {
@@ -855,6 +888,59 @@ async function openDocumentation(): Promise<void> {
           color: var(--parsec-color-light-primary-600);
         }
       }
+    }
+  }
+}
+
+.account-invitations {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  border-radius: var(--parsec-radius-12);
+  padding: 2rem;
+  width: 100%;
+  max-width: 40rem;
+  background: var(--parsec-color-light-secondary-white);
+
+  &__title {
+    color: var(--parsec-color-light-secondary-text);
+    margin-left: auto;
+  }
+
+  .account-invitation {
+    padding: 0.825rem 1.25rem;
+    border: 1px solid var(--parsec-color-light-primary-200);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: var(--parsec-radius-12);
+    background: var(--parsec-color-light-secondary-background);
+    cursor: pointer;
+    color: var(--parsec-color-light-secondary-text);
+    transition: all 0.2s ease-in-out;
+
+    &:hover {
+      box-shadow: var(--parsec-shadow-light);
+      border: 1px solid var(--parsec-color-light-primary-600);
+    }
+
+    &-text {
+      display: flex;
+      flex-direction: column;
+      &__title {
+        color: var(--parsec-color-light-secondary-text);
+      }
+
+      &__subtitle {
+        color: var(--parsec-color-light-secondary-hard-grey);
+      }
+    }
+
+    &-image {
+      margin: 0.5rem;
+      width: 1.75rem;
+      height: 1.75rem;
+      flex-shrink: 0;
     }
   }
 }
