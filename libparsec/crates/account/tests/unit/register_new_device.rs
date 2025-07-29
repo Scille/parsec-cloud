@@ -16,32 +16,50 @@ use crate::{Account, AccountRegisterNewDeviceError};
 
 #[parsec_test(testbed = "minimal", with_server)]
 async fn ok_with_server(env: &TestbedEnv) {
-    let (account_human_handle, auth_method_master_secret_key) =
-        test_new_account(&env.server_addr).await.unwrap();
-    let alice = env.local_device("alice@dev1");
+    let org_id = env.organization_id.clone();
+    let org_user_id = UserID::default();
+    let (human_handle, auth_method_master_secret) =
+        libparsec_tests_fixtures::test_new_account(&env.server_addr)
+            .await
+            .unwrap();
+
+    // Register a new user in the organization with the account's email
+    let org_device1_id = env
+        .customize(|builder| {
+            builder
+                .new_user(org_user_id)
+                .customize(|e| {
+                    e.human_handle = human_handle.clone();
+                })
+                .map(|e| e.first_device_id)
+        })
+        .await;
+
+    let device1 = env.local_device(org_device1_id);
+
     let account = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
-        &auth_method_master_secret_key,
-        account_human_handle.clone(),
+        &auth_method_master_secret,
+        human_handle.clone(),
     )
     .await;
 
     // Must start by uploading the a registration device in the vault...
 
     let registration_device_id = account
-        .create_registration_device(alice.clone())
+        .create_registration_device(device1.clone())
         .await
         .unwrap();
-    p_assert_ne!(registration_device_id, alice.device_id); // Sanity check
+    p_assert_ne!(registration_device_id, device1.device_id); // Sanity check
 
     // ...then we can use the registration device to create a new device
 
     let new_device_label: DeviceLabel = "NewLabel".parse().unwrap();
     let available_device = account
         .register_new_device(
-            alice.organization_id().to_owned(),
-            alice.user_id,
+            org_id.clone(),
+            org_user_id,
             new_device_label.clone(),
             DeviceSaveStrategy::Password {
                 password: "P@ssw0rd.".to_owned().into(),
@@ -57,17 +75,17 @@ async fn ok_with_server(env: &TestbedEnv) {
             created_on: available_device.created_on,
             protected_on: available_device.created_on, // Protected and created should be the same
             server_url: env.server_addr.to_http_url(None).to_string(),
-            organization_id: alice.organization_id().to_owned(),
-            user_id: alice.user_id,
+            organization_id: org_id.clone(),
+            user_id: org_user_id,
             device_id: available_device.device_id,
-            human_handle: alice.human_handle.clone(),
+            human_handle: human_handle.clone(),
             device_label: new_device_label,
             ty: AvailableDeviceType::Password,
         }
     );
     // Make sure that an *actual* new device has been created
     p_assert_ne!(available_device.device_id, registration_device_id);
-    p_assert_ne!(available_device.device_id, alice.device_id);
+    p_assert_ne!(available_device.device_id, device1.device_id);
 
     // Try to use the new device
 
