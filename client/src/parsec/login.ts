@@ -289,8 +289,8 @@ export const SaveStrategy = {
       tag: DeviceSaveStrategyTag.Keyring,
     };
   },
-  async useAccountVault(): Promise<Result<DeviceSaveStrategyAccountVault, any>> {
-    const keyResult = await ParsecAccount.uploadKeyInVault();
+  async useAccountVault(organizationId: OrganizationID): Promise<Result<DeviceSaveStrategyAccountVault, any>> {
+    const keyResult = await ParsecAccount.uploadKeyInVault(organizationId);
     if (!keyResult.ok) {
       return keyResult;
     }

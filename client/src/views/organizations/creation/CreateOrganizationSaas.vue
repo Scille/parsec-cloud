@@ -107,6 +107,7 @@ import OrganizationCreatedPage from '@/views/organizations/creation/Organization
 import { wait } from '@/parsec/internals';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { Env } from '@/services/environment';
+import { libparsec } from '@/plugins/libparsec';
 
 enum Steps {
   BmsLogin,
@@ -170,6 +171,7 @@ async function onLoginSuccess(_token: AuthenticationToken, info: PersonalInforma
   if (props.bootstrapLink) {
     if (isWeb() && ParsecAccount.isLoggedIn() && ParsecAccount.addressMatchesAccountServer(props.bootstrapLink)) {
       // Create a new vault save strategy
+      // TODO: how to obtain OrganizationID here ? `libparsec.parseParsecAddr(props.bootstrapLink)` ?
       const result = await SaveStrategy.useAccountVault();
       if (result.ok) {
         // Skip the auth page
@@ -200,7 +202,7 @@ async function onOrganizationNameChosen(chosenOrganizationName: OrganizationID):
     ParsecAccount.isLoggedIn() &&
     Env.getSaasServers().some((addr) => ParsecAccount.addressMatchesAccountServer(`parsec3://${addr}`))
   ) {
-    const result = await SaveStrategy.useAccountVault();
+    const result = await SaveStrategy.useAccountVault(chosenOrganizationName);
     if (result.ok) {
       await onAuthenticationChosen(result.value);
     } else {
