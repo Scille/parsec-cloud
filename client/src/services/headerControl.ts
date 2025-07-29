@@ -2,29 +2,29 @@
 
 import { ref } from 'vue';
 
-const isHeaderVisible = ref<boolean>(true);
+const isVisible = ref<boolean>(true);
 
 export default function useHeaderControl(): any {
   function showHeader(): void {
-    isHeaderVisible.value = true;
+    isVisible.value = true;
   }
 
   function hideHeader(): void {
-    isHeaderVisible.value = false;
+    isVisible.value = false;
   }
 
   function toggleHeader(): void {
-    isHeaderVisible.value = !isHeaderVisible.value;
+    isVisible.value = !isVisible.value;
   }
 
-  function isVisible(): boolean {
-    return isHeaderVisible.value;
+  function isHeaderVisible(): boolean {
+    return isVisible.value;
   }
 
   return {
     showHeader,
     hideHeader,
     toggleHeader,
-    isVisible,
+    isHeaderVisible,
   };
 }

@@ -180,7 +180,7 @@ const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 let hotkeys: HotkeyGroup | null = null;
 const workspaceName = ref('');
 const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu, hide: hideSidebarMenu } = useSidebarMenu();
-const { isVisible: isHeaderVisible } = useHeaderControl();
+const { isHeaderVisible } = useHeaderControl();
 const userInfo: Ref<ClientInfo | null> = ref(null);
 const fullPath: Ref<RouterPathNode[]> = ref([]);
 const notificationPopoverIsVisible: Ref<boolean> = ref(false);
@@ -189,7 +189,7 @@ const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 const notificationCenterButtonRef = useTemplateRef('notificationCenterButton');
 const showHeader = computed(() => {
   // Override visibility for specific routes
-  if (currentRouteIs(Routes.Viewer)) {
+  if (currentRouteIs(Routes.Viewer) || currentRouteIs(Routes.Editor)) {
     return isHeaderVisible();
   }
   // Hide header on small displays for specific routes
