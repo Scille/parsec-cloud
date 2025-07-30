@@ -45,11 +45,14 @@
               class="folder-header__navigation"
               v-if="!resultFromSearch"
             >
-              <div ref="headerButtons">
+              <div
+                ref="headerButtons"
+                class="navigation-buttons"
+              >
                 <ion-button
                   fill="clear"
                   @click="back()"
-                  class="navigation-button"
+                  class="navigation-buttons__item"
                   id="navigation-back-button"
                   :disabled="backStack.length === 0"
                   :class="{ disabled: backStack.length === 0 }"
@@ -61,7 +64,7 @@
                   @click="forward()"
                   :disabled="forwardStack.length === 0"
                   :class="{ disabled: forwardStack.length === 0 }"
-                  class="navigation-button"
+                  class="navigation-buttons__item"
                   id="navigation-forward-button"
                 >
                   <ion-icon :icon="chevronForward" />
@@ -551,8 +554,14 @@ async function onRestoreClicked(): Promise<void> {
       display: flex;
       align-items: center;
       height: fit-content;
+    }
 
-      .navigation-button {
+    .navigation-buttons {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      &__item {
         min-height: 1rem;
 
         &::part(native) {

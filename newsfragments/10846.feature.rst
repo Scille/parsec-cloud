@@ -1,0 +1,1 @@
+Reorganization of the sidebar menu to improve comprehension and usability.

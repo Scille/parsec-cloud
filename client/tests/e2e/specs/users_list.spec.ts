@@ -739,7 +739,7 @@ msTest('Small display multiple users context menu', async ({ usersPage }) => {
 });
 
 msTest('No context menu with standard users and multiple selected', async ({ workspacesStandard }) => {
-  await workspacesStandard.locator('.sidebar').locator('#manageOrganization').click();
+  await workspacesStandard.locator('.sidebar').locator('.sidebar-content-organization-button').nth(0).click();
   await expect(workspacesStandard).toHavePageTitle('Users');
   await expect(workspacesStandard).toBeUserPage();
   const usersPage = workspacesStandard;

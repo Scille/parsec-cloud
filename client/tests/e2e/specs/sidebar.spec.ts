@@ -6,20 +6,10 @@ import { expect, msTest } from '@tests/e2e/helpers';
 msTest('Sidebar in organization management', async ({ organizationPage }) => {
   const sidebar = organizationPage.locator('.sidebar');
 
-  await expect(sidebar.locator('.back-button')).toBeVisible();
+  const mainButtons = sidebar.locator('.list-sidebar-header-text');
+  await expect(mainButtons).toHaveText(['Organization', 'My workspaces', 'Recent documents']);
 
-  const mainButtons = sidebar.locator('.organization-card-buttons').locator('.organization-card-buttons__item');
-  await expect(mainButtons).toHaveText(['Manage my organization', 'My workspaces']);
-  await expect(mainButtons.nth(0)).toHaveTheClass('active');
-  await expect(mainButtons.nth(1)).not.toHaveTheClass('active');
-
-  await expect(sidebar.locator('.file-workspaces')).toBeHidden();
-  await expect(sidebar.locator('.favorites')).toBeHidden();
-  await expect(sidebar.locator('.workspaces')).toBeHidden();
-
-  await expect(sidebar.locator('.manage-organization')).toBeVisible();
-  await expect(sidebar.locator('.manage-organization').locator('.list-sidebar-header')).toHaveText('Manage my organization');
-  const items = sidebar.locator('.manage-organization').locator('.organization-card-buttons').getByRole('listitem');
+  const items = sidebar.locator('.sidebar-content-organization').locator('.sidebar-content-organization-button__text');
   await expect(items).toHaveText(['Users', 'Information']);
 });
 
@@ -29,20 +19,45 @@ msTest('Sidebar in workspaces page', async ({ workspaces }) => {
   await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
   await workspaces.locator('#connected-header').locator('.topbar-left').locator('ion-breadcrumb').nth(0).click();
 
-  await expect(sidebar.locator('.back-button')).toBeHidden();
+  const mainButtons = sidebar.locator('.list-sidebar-header-text');
+  await expect(mainButtons).toHaveText(['Organization', 'My workspaces', 'Recent documents']);
 
-  const mainButtons = sidebar.locator('.organization-card-buttons').locator('.organization-card-buttons__item');
-  await expect(mainButtons).toHaveText(['Manage my organization', 'My workspaces']);
-  await expect(mainButtons.nth(0)).not.toHaveTheClass('active');
-  await expect(mainButtons.nth(1)).toHaveTheClass('active');
+  const recentWorkspaces = sidebar.locator('.sidebar-content-workspaces').nth(1);
+  await expect(recentWorkspaces.locator('.sidebar-content-workspaces--no-recent')).toBeHidden();
+  await expect(recentWorkspaces.locator('.sidebar-content-workspaces__title')).toHaveText('Recent');
+  await expect(recentWorkspaces.getByRole('listitem').nth(0)).toHaveText('wksp1');
+});
 
-  await expect(sidebar.locator('.file-workspaces')).toBeHidden();
-  await expect(sidebar.locator('.favorites')).toBeHidden();
-  await expect(sidebar.locator('.workspaces')).toBeVisible();
-  await expect(sidebar.locator('.workspaces').locator('.list-sidebar-header')).toHaveText('Recent workspaces');
-  await expect(sidebar.locator('.workspaces').getByRole('listitem').nth(0)).toHaveText('wksp1');
+msTest('Sidebar in connected page', async ({ workspaces }) => {
+  const sidebar = workspaces.locator('.sidebar');
 
-  await expect(sidebar.locator('.manage-organization')).toBeHidden();
+  const mainButtons = sidebar.locator('.list-sidebar-header-text');
+  await expect(mainButtons).toHaveText(['Organization', 'My workspaces', 'Recent documents']);
+
+  const organizationContent = sidebar.locator('#sidebar-organization');
+  const workspacesContent = sidebar.locator('#sidebar-workspaces');
+  const filesContent = sidebar.locator('#sidebar-files');
+  const recentWorkspaces = workspacesContent.locator('.sidebar-content-workspaces').nth(1);
+
+  async function checkSidebarToggleVisibility(content: Locator, title: string): Promise<void> {
+    await expect(content.locator('.list-sidebar-header-text')).toHaveText(title);
+    await expect(content.locator('.list-sidebar-content')).toBeVisible();
+    await content.locator('.list-sidebar-header__toggle').click();
+    await expect(content.locator('.list-sidebar-content')).toBeHidden();
+    await content.locator('.list-sidebar-header__toggle').click();
+    await expect(content.locator('.list-sidebar-content')).toBeVisible();
+  }
+
+  await checkSidebarToggleVisibility(organizationContent, 'Organization');
+  await checkSidebarToggleVisibility(workspacesContent, 'My workspaces');
+  await checkSidebarToggleVisibility(filesContent, 'Recent documents');
+
+  await expect(recentWorkspaces.locator('.sidebar-content-workspaces--no-recent')).toBeVisible();
+
+  await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
+  await workspaces.locator('#connected-header').locator('.topbar-left').locator('ion-breadcrumb').nth(0).click();
+
+  await expect(recentWorkspaces.locator('.sidebar-content-workspaces--no-recent')).toBeHidden();
 });
 
 msTest('Sidebar recommendations checklist', async ({ workspaces }) => {
@@ -66,7 +81,7 @@ msTest('Sidebar recommendations checklist', async ({ workspaces }) => {
   await expect(checklistPopover).toBeHidden();
   await expect(checklist).toBeVisible();
   await expect(checklist.locator('.checklist-text__title')).toHaveText('Security checklist');
-  await expect(checklist.locator('.checklist-text__description')).toHaveText('2 remaining');
+  await expect(checklist.locator('.checklist-text__description')).toHaveText('2 remaining tasks');
   await checklist.click();
   await expect(checklistPopover).toBeVisible();
   // Order may differ from what is seen on the page because the CSS property
@@ -88,7 +103,7 @@ msTest('Sidebar recommendations checklist', async ({ workspaces }) => {
   await workspaceSharingModal.locator('.closeBtn').click();
 
   await expect(checklist.locator('.checklist-text__title')).toHaveText('Security checklist');
-  await expect(checklist.locator('.checklist-text__description')).toHaveText('1 remaining');
+  await expect(checklist.locator('.checklist-text__description')).toHaveText('1 remaining task');
   await checklist.click();
   await expect(checklistPopover).toBeVisible();
   // Order may differ from what is seen on the page because the CSS property

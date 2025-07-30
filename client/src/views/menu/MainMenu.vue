@@ -23,7 +23,6 @@
             <ion-card-header
               class="organization-card-header organization-card-header-desktop"
               @click="openOrganizationChoice($event)"
-              v-show="!isManagement()"
             >
               <ion-avatar class="organization-avatar body-lg">
                 <span v-if="!isTrialOrg">{{ userInfo ? userInfo.organizationId.substring(0, 2) : '' }}</span>
@@ -44,62 +43,6 @@
                 class="header-icon"
               />
             </ion-card-header>
-
-            <div v-show="isManagement()">
-              <div
-                class="back-organization"
-                @click="navigateTo(Routes.Workspaces)"
-              >
-                <ion-button
-                  fill="clear"
-                  class="back-button"
-                >
-                  <ion-icon :icon="chevronBack" />
-                  {{ $msTranslate('SideMenu.back') }}
-                </ion-button>
-              </div>
-            </div>
-
-            <div
-              class="organization-card-buttons"
-              v-if="userInfo"
-            >
-              <ion-text
-                @click="navigateTo(Routes.Users)"
-                class="organization-card-buttons__item button-medium"
-                :class="currentRouteIsOrganizationManagementRoute() ? 'active' : ''"
-                id="manageOrganization"
-                v-show="userInfo.currentProfile != UserProfile.Outsider"
-                button
-              >
-                <ion-icon
-                  class="organization-card-buttons__icon"
-                  :icon="userInfo && userInfo.currentProfile === UserProfile.Admin ? cog : informationCircle"
-                />
-                <span class="organization-card-buttons__text">
-                  {{
-                    userInfo && userInfo.currentProfile === UserProfile.Admin
-                      ? $msTranslate('SideMenu.manageOrganization')
-                      : $msTranslate('SideMenu.organizationInfo')
-                  }}
-                </span>
-              </ion-text>
-              <ion-text
-                class="organization-card-buttons__item button-medium"
-                id="goHome"
-                button
-                :class="currentRouteIs(Routes.Workspaces) ? 'active' : ''"
-                @click="navigateTo(Routes.Workspaces)"
-              >
-                <ion-icon
-                  class="organization-card-buttons__icon"
-                  :icon="home"
-                />
-                <span class="organization-card-buttons__text">
-                  {{ $msTranslate('SideMenu.goToHome') }}
-                </span>
-              </ion-text>
-            </div>
           </ion-card>
           <!-- end of active organization -->
         </div>
@@ -158,58 +101,61 @@
           </ion-button>
         </div>
 
-        <div
-          class="list-sidebar-divider"
-          v-if="!isManagement() && (recentDocumentManager.getWorkspaces().length > 0 || favoritesWorkspaces.length > 0)"
-        />
-
-        <!-- workspaces -->
-        <div
-          v-show="!isManagement()"
-          class="organization-workspaces"
+        <!-- organisation content -->
+        <sidebar-menu-list
+          v-if="userInfo && userInfo.currentProfile != UserProfile.Outsider"
+          title="SideMenu.organization"
+          v-model:is-content-visible="menusVisible.organization"
+          @update:is-content-visible="onOrganizationMenuVisibilityChanged"
+          id="sidebar-organization"
         >
-          <!-- list of favorite workspaces -->
-          <!-- show only favorites -->
-          <sidebar-menu-list
-            v-show="favoritesWorkspaces.length > 0"
-            title="SideMenu.favorites"
-            :icon="star"
-            class="favorites"
-            v-model:is-content-visible="menusVisible.favorites"
-            @update:is-content-visible="onFavoritesMenuVisibilityChanged"
-          >
-            <sidebar-workspace-item
-              v-for="workspace in favoritesWorkspaces"
-              :key="workspace.id"
-              :workspace="workspace"
-              @workspace-clicked="goToWorkspace"
-              @context-menu-requested="
-                openWorkspaceContextMenu($event, workspace, favorites, eventDistributor, informationManager, storageManager, true)
-              "
-            />
-          </sidebar-menu-list>
+          <div class="sidebar-content-organization">
+            <!-- manage users -->
+            <ion-text
+              @click="navigateTo(Routes.Users)"
+              class="sidebar-content-organization-button button-medium"
+              :class="currentRouteIs(Routes.Users) ? 'active' : ''"
+              id="sidebar-users"
+              button
+            >
+              <ion-icon
+                class="sidebar-content-organization-button__icon"
+                :icon="people"
+              />
+              <span class="sidebar-content-organization-button__text">
+                {{ $msTranslate('SideMenu.users') }}
+              </span>
+            </ion-text>
+            <!-- organization information -->
+            <ion-text
+              @click="navigateTo(Routes.Organization)"
+              class="sidebar-content-organization-button button-medium"
+              :class="currentRouteIs(Routes.Organization) ? 'active' : ''"
+              id="sidebar-organization-information"
+              button
+            >
+              <ion-icon
+                class="sidebar-content-organization-button__icon"
+                :icon="informationCircle"
+              />
+              <span class="sidebar-content-organization-button__text">
+                {{ $msTranslate('SideMenu.information') }}
+              </span>
+            </ion-text>
+          </div>
+        </sidebar-menu-list>
 
-          <!-- list of workspaces -->
-          <sidebar-menu-list
-            v-if="recentDocumentManager.getWorkspaces().length > 0"
-            title="SideMenu.recentWorkspaces"
-            :icon="business"
-            class="workspaces"
-            v-model:is-content-visible="menusVisible.recentWorkspaces"
-            @update:is-content-visible="onWorkspacesMenuVisibilityChanged"
-          >
-            <sidebar-workspace-item
-              v-for="workspace in recentDocumentManager.getWorkspaces()"
-              :workspace="workspace"
-              :key="workspace.id"
-              @workspace-clicked="goToWorkspace"
-              @context-menu-requested="
-                openWorkspaceContextMenu($event, workspace, favorites, eventDistributor, informationManager, storageManager, true)
-              "
-            />
-          </sidebar-menu-list>
+        <!-- workspaces content -->
+        <sidebar-menu-list
+          title="SideMenu.workspaces"
+          v-model:is-content-visible="menusVisible.workspaces"
+          @update:is-content-visible="onWorkspacesMenuVisibilityChanged"
+          @header-clicked="navigateTo(Routes.Workspaces)"
+          :is-header-clickable="currentRouteIs(Routes.Workspaces) ? false : true"
+          id="sidebar-workspaces"
+        >
           <div
-            class="current-workspace"
+            class="sidebar-content-workspaces current-workspace"
             v-if="!menusVisible.recentWorkspaces && currentWorkspace"
           >
             <sidebar-workspace-item
@@ -220,25 +166,83 @@
               "
             />
           </div>
-        </div>
+          <div class="sidebar-content-workspaces-container">
+            <div
+              class="sidebar-content-workspaces"
+              id="sidebar-workspaces-favorites"
+            >
+              <ion-text
+                class="sidebar-content-workspaces__title subtitles-sm"
+                @click="onFavoritesMenuVisibilityChanged(!menusVisible.favorites)"
+                :class="{ open: menusVisible.favorites }"
+              >
+                <ion-icon :icon="caretForward" />
+                {{ $msTranslate('SideMenu.favorites') }}
+              </ion-text>
+              <ion-text
+                class="sidebar-content-workspaces--no-recent subtitles-sm"
+                v-if="menusVisible.favorites && favoritesWorkspaces.length === 0"
+              >
+                {{ $msTranslate('SideMenu.noFavorites') }}
+              </ion-text>
+              <sidebar-workspace-item
+                v-show="menusVisible.favorites"
+                v-for="workspace in favoritesWorkspaces"
+                :key="workspace.id"
+                :workspace="workspace"
+                @workspace-clicked="goToWorkspace"
+                @context-menu-requested="
+                  openWorkspaceContextMenu($event, workspace, favorites, eventDistributor, informationManager, storageManager, true)
+                "
+              />
+            </div>
+            <div class="sidebar-content-workspaces">
+              <ion-text
+                class="sidebar-content-workspaces__title subtitles-sm"
+                @click="onRecentWorkspacesMenuVisibilityChanged(!menusVisible.recentWorkspaces)"
+                :class="{ open: menusVisible.recentWorkspaces }"
+              >
+                <ion-icon :icon="caretForward" />
+                {{ $msTranslate('SideMenu.recentWorkspaces') }}
+              </ion-text>
+              <ion-text
+                class="sidebar-content-workspaces--no-recent subtitles-sm"
+                v-if="menusVisible.recentWorkspaces && recentDocumentManager.getWorkspaces().length === 0"
+              >
+                {{ $msTranslate('SideMenu.noRecentWorkspace') }}
+              </ion-text>
+              <sidebar-workspace-item
+                v-show="menusVisible.recentWorkspaces && recentDocumentManager.getWorkspaces().length > 0"
+                v-for="workspace in recentDocumentManager.getWorkspaces()"
+                :workspace="workspace"
+                :key="workspace.id"
+                @workspace-clicked="goToWorkspace"
+                @context-menu-requested="
+                  openWorkspaceContextMenu($event, workspace, favorites, eventDistributor, informationManager, storageManager, true)
+                "
+              />
+            </div>
+          </div>
+        </sidebar-menu-list>
 
-        <div
-          class="list-sidebar-divider"
-          v-if="recentDocumentManager.getFiles().length > 0 && !currentRouteIsOrganizationManagementRoute()"
-        />
-
-        <!-- last opened files -->
-        <div
-          class="file-workspaces"
-          v-if="!currentRouteIsOrganizationManagementRoute()"
+        <!-- last files content -->
+        <sidebar-menu-list
+          title="SideMenu.recentDocuments"
+          :icon="documentIcon"
+          v-model:is-content-visible="menusVisible.recentFiles"
+          @update:is-content-visible="onRecentFilesMenuVisibilityChanged"
+          id="sidebar-files"
         >
-          <sidebar-menu-list
-            title="SideMenu.recentDocuments"
-            :icon="documentIcon"
-            v-show="recentDocumentManager.getFiles().length > 0"
-            v-model:is-content-visible="menusVisible.recentFiles"
-            @update:is-content-visible="onRecentFilesMenuVisibilityChanged"
+          <div
+            class="sidebar-content-files"
+            v-if="menusVisible.recentFiles"
           >
+            <ion-text
+              class="sidebar-content-files--no-recent subtitles-sm"
+              v-if="recentDocumentManager.getFiles().length === 0"
+            >
+              {{ $msTranslate('SideMenu.noRecentDocuments') }}
+            </ion-text>
             <sidebar-recent-file-item
               v-for="file in recentDocumentManager.getFiles()"
               :file="file"
@@ -246,91 +250,18 @@
               @file-clicked="openRecentFile"
               @remove-clicked="removeRecentFile"
             />
-          </sidebar-menu-list>
-        </div>
-
-        <!-- manage organization -->
-        <ion-list
-          v-show="currentRouteIsOrganizationManagementRoute()"
-          class="list-sidebar manage-organization"
-        >
-          <ion-header
-            lines="none"
-            class="list-sidebar-header title-h4"
-          >
-            <ion-text class="list-sidebar-header__title">
-              {{
-                userInfo && userInfo.currentProfile === UserProfile.Admin
-                  ? $msTranslate('SideMenu.manageOrganization')
-                  : $msTranslate('SideMenu.organizationInfo')
-              }}
-            </ion-text>
-          </ion-header>
-          <!-- user actions -->
-          <div class="organization-card-buttons">
-            <!-- users -->
-            <ion-item
-              lines="none"
-              button
-              class="sidebar-item-manage button-medium users-title"
-              :class="currentRouteIsUserRoute() ? 'item-selected' : 'item-not-selected'"
-              @click="navigateTo(Routes.Users)"
-            >
-              <div class="sidebar-item-manage-content">
-                <ion-icon
-                  :icon="people"
-                  class="sidebar-item-manage__icon"
-                />
-                <ion-text class="sidebar-item-manage__label">{{ $msTranslate('SideMenu.users') }}</ion-text>
-              </div>
-            </ion-item>
-
-            <!-- storage -->
-            <ion-item
-              lines="none"
-              button
-              class="sidebar-item-manage button-medium storage-title"
-              :class="currentRouteIs(Routes.Storage) ? 'item-selected' : 'item-not-selected'"
-              @click="navigateTo(Routes.Storage)"
-              v-show="userInfo && userInfo.currentProfile === UserProfile.Admin && false"
-            >
-              <div class="sidebar-item-manage-content">
-                <ion-icon
-                  :icon="pieChart"
-                  class="sidebar-item-manage__icon"
-                />
-                <ion-text class="sidebar-item-manage__label">{{ $msTranslate('SideMenu.storage') }}</ion-text>
-              </div>
-            </ion-item>
-
-            <!-- org info -->
-            <ion-item
-              button
-              lines="none"
-              class="sidebar-item-manage button-medium organization-title"
-              :class="currentRouteIs(Routes.Organization) ? 'item-selected' : 'item-not-selected'"
-              @click="navigateTo(Routes.Organization)"
-            >
-              <div class="sidebar-item-manage-content">
-                <ion-icon
-                  :icon="informationCircle"
-                  class="sidebar-item-manage__icon"
-                />
-                <ion-text class="sidebar-item-manage__label">{{ $msTranslate('SideMenu.organizationInfo') }}</ion-text>
-              </div>
-            </ion-item>
           </div>
-        </ion-list>
+        </sidebar-menu-list>
 
         <!-- security checklist -->
-        <ion-list
-          class="list-sidebar organization-checklist ion-no-padding"
+        <div
+          class="organization-checklist"
           v-show="securityWarningsCount > 0"
         >
           <ion-item
             button
             lines="none"
-            class="sidebar-item-manage ion-no-padding item-selected checklist"
+            class="sidebar-item-manage item-selected checklist ion-no-padding"
             @click="openSecurityWarningsPopover"
           >
             <div class="checklist-text">
@@ -353,7 +284,7 @@
               />
             </div>
           </ion-item>
-        </ion-list>
+        </div>
       </ion-content>
     </ion-menu>
     <tab-bar-menu
@@ -380,7 +311,6 @@ import {
   IonHeader,
   IonIcon,
   IonItem,
-  IonList,
   IonMenu,
   IonRouterOutlet,
   IonSplitPane,
@@ -390,15 +320,9 @@ import {
 } from '@ionic/vue';
 import TabBarMenu from '@/views/menu/TabBarMenu.vue';
 import {
-  home,
-  business,
-  chevronBack,
-  cog,
   document as documentIcon,
   informationCircle,
   people,
-  pieChart,
-  star,
   snow,
   warning,
   cloudUpload,
@@ -406,14 +330,13 @@ import {
   addCircle,
   personAdd,
   chevronForward,
+  caretForward,
 } from 'ionicons/icons';
 import { SidebarWorkspaceItem, SidebarRecentFileItem, SidebarMenuList } from '@/components/sidebar';
 import {
   ProfilePages,
   Routes,
   currentRouteIs,
-  currentRouteIsOrganizationManagementRoute,
-  currentRouteIsUserRoute,
   currentRouteIsWorkspaceRoute,
   navigateTo,
   navigateToWorkspace,
@@ -473,7 +396,6 @@ const emits = defineEmits<{
 }>();
 
 const customTabBar = useCustomTabBar();
-const isManagement = currentRouteIsOrganizationManagementRoute;
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
@@ -486,7 +408,7 @@ const dividerWidthProperty = ref('');
 let eventDistributorCbId: string | null = null;
 const loggedInDevices = ref<LoggedInDeviceInfo[]>([]);
 const isExpired = ref(false);
-const menusVisible = ref({ favorites: true, recentWorkspaces: true, recentFiles: true });
+const menusVisible = ref({ organization: true, workspaces: true, recentFiles: true, recentWorkspaces: true, favorites: true });
 const expirationDuration = ref<Duration | undefined>(undefined);
 const isTrialOrg = ref(false);
 let timeoutId: number | undefined = undefined;
@@ -678,9 +600,11 @@ onMounted(async () => {
   }
   sidebarWidthProperty.value = `${computedWidth.value}px`;
   emits('sidebarWidthChanged', computedWidth.value);
+  menusVisible.value.organization = savedSidebarData.organizationVisible ?? true;
+  menusVisible.value.workspaces = savedSidebarData.workspacesVisible ?? true;
   menusVisible.value.favorites = savedSidebarData.favoritesVisible ?? true;
-  menusVisible.value.recentWorkspaces = savedSidebarData.workspacesVisible ?? true;
-  menusVisible.value.recentFiles = savedSidebarData.recentFilesVisible ?? true;
+  menusVisible.value.recentWorkspaces = savedSidebarData.recentWorkspacesVisible ?? true;
+  menusVisible.value.recentFiles = savedSidebarData.recentFilesVisible ?? false;
 
   const clientInfoResult = await getClientInfo();
   if (clientInfoResult.ok) {
@@ -789,6 +713,16 @@ async function removeRecentFile(file: RecentFile): Promise<void> {
   recentDocumentManager.removeFile(file);
 }
 
+async function onOrganizationMenuVisibilityChanged(visible: boolean): Promise<void> {
+  await storageManager.updateComponentData<SidebarSavedData>(
+    SIDEBAR_MENU_DATA_KEY,
+    {
+      organizationVisible: visible,
+    },
+    SidebarDefaultData,
+  );
+}
+
 async function onWorkspacesMenuVisibilityChanged(visible: boolean): Promise<void> {
   await storageManager.updateComponentData<SidebarSavedData>(
     SIDEBAR_MENU_DATA_KEY,
@@ -799,7 +733,18 @@ async function onWorkspacesMenuVisibilityChanged(visible: boolean): Promise<void
   );
 }
 
+async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<void> {
+  await storageManager.updateComponentData<SidebarSavedData>(
+    SIDEBAR_MENU_DATA_KEY,
+    {
+      recentFilesVisible: visible,
+    },
+    SidebarDefaultData,
+  );
+}
+
 async function onFavoritesMenuVisibilityChanged(visible: boolean): Promise<void> {
+  menusVisible.value.favorites = visible;
   await storageManager.updateComponentData<SidebarSavedData>(
     SIDEBAR_MENU_DATA_KEY,
     {
@@ -809,11 +754,12 @@ async function onFavoritesMenuVisibilityChanged(visible: boolean): Promise<void>
   );
 }
 
-async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<void> {
+async function onRecentWorkspacesMenuVisibilityChanged(visible: boolean): Promise<void> {
+  menusVisible.value.recentWorkspaces = visible;
   await storageManager.updateComponentData<SidebarSavedData>(
     SIDEBAR_MENU_DATA_KEY,
     {
-      recentFilesVisible: visible,
+      recentWorkspacesVisible: visible,
     },
     SidebarDefaultData,
   );
@@ -903,19 +849,6 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
       flex-direction: column;
     }
   }
-
-  .organization-workspaces,
-  .file-workspaces,
-  .organization-checklist {
-    display: flex;
-    flex-direction: column;
-    padding: 0 0.75rem;
-    background: transparent;
-  }
-
-  .organization-workspaces:has(.current-workspace) .workspaces {
-    margin: 0;
-  }
 }
 
 .organization-card {
@@ -925,6 +858,7 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
   flex-direction: column;
   margin: 0;
   border-radius: 0;
+  gap: 1rem;
 
   &-header {
     display: flex;
@@ -985,48 +919,43 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
       align-items: center;
       --fill-color: var(--parsec-color-light-secondary-inversed-contrast);
       margin-left: auto;
+      flex-shrink: 0;
     }
   }
+}
 
-  &-buttons {
+.sidebar-content-organization {
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+  gap: 0.5rem;
+  padding-inline: 0.25rem;
+
+  .sidebar-content-organization-button {
     display: flex;
-    flex-direction: column;
-    user-select: none;
-    gap: 0.75rem;
-    padding: 1rem 0 0;
-    margin-inline: 0.5rem;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    align-items: center;
+    color: var(--parsec-color-light-secondary-medium);
+    border-radius: var(--parsec-radius-8);
+    border: 1px solid transparent;
 
-    &__item {
-      display: flex;
-      gap: 0.5rem;
-      padding: 0.5rem 0.75rem;
-      cursor: pointer;
-      align-items: center;
-      color: var(--parsec-color-light-secondary-medium);
-      border-radius: var(--parsec-radius-8);
+    &.active {
+      background: var(--parsec-color-light-primary-30-opacity15);
+      cursor: default;
+    }
 
-      &:hover {
-        background: var(--parsec-color-light-primary-30-opacity15);
-      }
-
-      ion-text {
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-      }
-
-      &.active {
-        background: var(--parsec-color-light-primary-30-opacity15);
-        cursor: default;
-      }
+    &:hover:not(.active) {
+      border: 1px solid var(--parsec-color-light-primary-30-opacity15);
     }
 
     &__icon {
-      position: absolute;
+      color: var(--parsec-color-light-secondary-inversed-contrast);
+      flex-shrink: 0;
     }
 
     &__text {
-      margin-left: 1.4rem;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -1034,108 +963,64 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
   }
 }
 
+.sidebar-content-workspaces {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  &-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  &__title {
+    opacity: 0.6;
+    padding: 0.25rem 0.25rem;
+    color: var(--parsec-color-light-secondary-inversed-contrast);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    position: relative;
+
+    ion-icon {
+      transition: transform 0.15s ease-in-out;
+    }
+
+    &.open {
+      ion-icon {
+        transform: rotate(90deg);
+      }
+    }
+
+    &:hover {
+      cursor: pointer;
+      opacity: 0.8;
+    }
+  }
+}
+
+.sidebar-content-files {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-inline: 0.25rem;
+}
+
+.sidebar-content-files,
+.sidebar-content-workspaces {
+  &--no-recent {
+    color: var(--parsec-color-light-secondary-premiere);
+    opacity: 0.8;
+    padding: 0.375rem 0.5rem;
+  }
+}
+
 .current-workspace {
   margin-bottom: 1rem;
-}
-
-.back-organization {
-  display: flex;
-  align-items: center;
-  user-select: none;
-  align-self: stretch;
-  padding: 2.125rem 1rem 0.625rem;
-  border: 1px solid transparent;
-  color: var(--parsec-color-light-secondary-inversed-contrast);
-  gap: 1rem;
-
-  .back-button {
-    --background: none;
-    --background-hover: var(--parsec-color-light-primary-30-opacity15);
-    --color: var(--parsec-color-light-secondary-light);
-    --color-hover: var(--parsec-color-light-secondary-light);
-    &::part(native) {
-      padding: 0.5rem;
-    }
-
-    & > ion-icon {
-      font-size: 1.25em;
-      margin-inline-end: 0.75rem;
-    }
-  }
-
-  ion-icon {
-    color: var(--parsec-color-light-secondary-light);
-    font-size: 1.875rem;
-  }
-}
-
-.list-sidebar {
-  &-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    transition: border 0.2s ease-in-out;
-    padding: 1.5em 0 1em 0.5rem;
-
-    &__title {
-      color: var(--parsec-color-light-secondary-inversed-contrast);
-      display: flex;
-      align-items: center;
-    }
-  }
-
-  &-divider {
-    background: var(--parsec-color-light-primary-30-opacity15);
-    display: flex;
-    justify-content: center;
-    height: 1px;
-    width: 100%;
-    margin-bottom: 1.5rem;
-  }
-}
-
-// eslint-disable-next-line vue-scoped-css/no-unused-selector
-.sidebar-item-manage {
-  --background: none;
-  border-radius: var(--parsec-radius-8);
-  border: solid 1px transparent;
-  --min-height: 0;
-  --padding-start: 0.75rem;
-  --padding-end: 0.75rem;
-  --padding-bottom: 0.5rem;
-  --padding-top: 0.5rem;
-
-  &-content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-  }
-
-  &:active,
-  &.item-selected {
-    --background: var(--parsec-color-light-primary-30-opacity15);
-  }
-
-  &__icon {
-    color: var(--parsec-color-light-primary-100);
-    font-size: 1.25em;
-    margin: 0;
-    margin-inline-end: 12px;
-  }
-
-  &__label {
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;
-    color: var(--parsec-color-light-secondary-premiere);
-    width: 100%;
-  }
-
-  &:hover {
-    border-color: var(--parsec-color-light-primary-30-opacity15);
-    cursor: pointer;
-  }
 }
 
 .freeze-card {
@@ -1244,16 +1129,33 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
 }
 
 .organization-checklist {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem 0.5rem;
   margin-top: auto;
-  width: 100%;
+  --background: none;
 
   .checklist {
+    margin-top: auto;
     display: flex;
+    width: 100%;
+    border-radius: var(--parsec-radius-8);
+    --min-height: 0;
     border: 1px solid var(--parsec-color-light-primary-30-opacity15);
     --background: none;
+    box-shadow: none;
+    position: relative;
+    top: 0;
+    transition: all 0.15s ease-in-out;
 
     &::part(native) {
-      padding: 0.5rem 0.5rem 0.5rem 0.75rem;
+      padding: 0.75rem 0.5rem 0.75rem 0.75rem;
+    }
+
+    &:hover {
+      --background: var(--parsec-color-light-primary-30-opacity15);
+      box-shadow: var(--parsec-shadow-light);
+      top: -0.25rem;
     }
 
     & * {
@@ -1291,19 +1193,6 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
         font-size: 0.875rem;
       }
     }
-  }
-}
-
-.manage-organization {
-  display: flex;
-  flex-direction: column;
-  color: var(--parsec-color-light-secondary-inversed-contrast);
-  gap: 0.5rem;
-  background: transparent;
-
-  .title-h4 {
-    margin: 0 1.25rem;
-    padding: 1.5em 0 1em;
   }
 }
 </style>

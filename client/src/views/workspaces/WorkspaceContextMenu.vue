@@ -196,18 +196,20 @@ defineProps<{
   padding: 0.75rem 0.75rem;
   background-color: var(--parsec-color-light-secondary-premiere);
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   display: flex;
   align-items: center;
   justify-content: space-between;
 
   &__text {
     color: var(--parsec-color-light-secondary-soft-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .favorite {
     display: flex;
+    flex-shrink: 0;
     font-size: 1rem;
     color: var(--parsec-color-light-primary-600);
   }

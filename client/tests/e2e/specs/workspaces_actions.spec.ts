@@ -43,8 +43,7 @@ async function openContextMenu(page: Page, mode: Mode, method: OpenMenuMethod): 
     await page.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
     await page.locator('#connected-header').locator('.topbar-left').locator('ion-breadcrumb').nth(0).click();
     const sidebar = page.locator('.sidebar');
-    const a = sidebar.locator('.organization-workspaces').locator('.workspaces');
-    const wk = a.locator('.list-sidebar-content').locator('.sidebar-item-workspace').nth(0);
+    const wk = sidebar.locator('#sidebar-workspaces').locator('.sidebar-item').nth(0);
     if (method === OpenMenuMethod.Button) {
       await wk.hover();
       await wk.locator('.sidebar-item-workspace__option').click();
@@ -120,7 +119,7 @@ for (const mode of ['grid', 'list', 'sidebar']) {
     } else {
       await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
       await workspaces.locator('#connected-header').locator('.topbar-left').locator('ion-breadcrumb').nth(0).click();
-      await workspaces.locator('.sidebar').locator('.list-sidebar.workspaces').getByRole('listitem').nth(0).click();
+      await workspaces.locator('.sidebar').locator('#sidebar-workspaces').getByRole('listitem').nth(0).click();
     }
     await expect(workspaces).toHaveHeader(['wksp1'], true, true);
   });
@@ -154,8 +153,8 @@ for (const mode of ['grid', 'list', 'sidebar']) {
   });
 
   msTest(`Toggle workspace favorite ${mode}`, async ({ workspaces }) => {
-    const favorites = workspaces.locator('.sidebar').locator('.favorites');
-    await expect(favorites).toBeHidden();
+    const favorites = workspaces.locator('.sidebar').locator('#sidebar-workspaces-favorites');
+    await expect(favorites).toBeVisible();
     await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.Button);
     const popover = workspaces.locator('.workspace-context-menu');
     await popover.getByRole('listitem').nth(7).click();
@@ -171,7 +170,7 @@ for (const mode of ['grid', 'list', 'sidebar']) {
     }
     await expect(wk.locator('.workspace-favorite-icon')).toHaveTheClass('workspace-favorite-icon__on');
     await expect(favorites).toBeVisible();
-    await expect(favorites.locator('.list-sidebar-header')).toHaveText('Pinned');
+    await expect(favorites.locator('.sidebar-content-workspaces__title')).toHaveText('Pinned');
     await expect(favorites.getByRole('listitem').nth(0)).toHaveText('wksp1');
   });
 

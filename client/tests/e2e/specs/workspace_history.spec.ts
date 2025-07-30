@@ -132,7 +132,7 @@ msTest('Workspace history breadcrumbs', async ({ documents }) => {
   await navigateDown();
   await createFolder(documents, 'Subdir 3');
   await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(['Subdir 3']);
-  await documents.locator('.sidebar').locator('#goHome').click();
+  await documents.locator('.sidebar').locator('#sidebar-workspaces').locator('.list-sidebar-header-text').click();
   await expect(documents).toBeWorkspacePage();
   await expect(documents.locator('.workspace-card-item')).toHaveCount(1);
   await documents.locator('.workspace-card-item').nth(0).locator('.icon-option-container').nth(0).click();
@@ -198,7 +198,7 @@ msTest('Workspace history breadcrumbs', async ({ documents }) => {
 msTest('Workspace history select all', async ({ documents }) => {
   const entries = documents.locator('.folder-list-main').locator('.file-list-item');
   await expect(documents.locator('.workspace-card-item')).toHaveCount(1);
-  await documents.locator('.sidebar').locator('#goHome').click();
+  await documents.locator('.sidebar').locator('#sidebar-workspaces').locator('.list-sidebar-header-text').click();
   await expect(documents).toBeWorkspacePage();
   await documents.locator('.workspace-card-item').nth(0).locator('.icon-option-container').nth(0).click();
   const contextMenu = documents.locator('.workspace-context-menu');
