@@ -262,7 +262,7 @@ msTest('Back from files with back button', async ({ workspaces }) => {
 msTest('Back from files with side menu', async ({ workspaces }) => {
   await workspaces.locator('.workspace-card-item').nth(0).click();
   await expect(workspaces.locator('.topbar-left').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(1)).toHaveText('wksp1');
-  await workspaces.locator('.sidebar').locator('.sidebar-header').locator('#goHome').click();
+  await workspaces.locator('.sidebar').locator('#sidebar-workspaces').locator('.list-sidebar-header-text').click();
   await expect(workspaces.locator('.topbar-left').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(0)).toHaveText(
     'My workspaces',
   );

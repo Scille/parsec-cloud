@@ -176,11 +176,15 @@ async function onOptionsClick(event: Event): Promise<void> {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  overflow: hidden;
 
   &__title {
     color: var(--parsec-color-light-primary-900);
     font-size: 18px;
     text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 
     ion-text {
       width: 100%;
