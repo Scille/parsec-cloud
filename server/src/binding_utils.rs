@@ -3,30 +3,13 @@
 use pyo3::{
     exceptions::PyNotImplementedError,
     pyclass::CompareOp,
-    types::{PyAnyMethods, PyByteArray, PyByteArrayMethods, PyBytes, PyBytesMethods, PyTuple},
-    Bound, FromPyObject, IntoPyObject, PyAny, PyResult, Python,
+    types::{PyAnyMethods, PyByteArray, PyByteArrayMethods, PyBytes, PyBytesMethods},
+    Bound, FromPyObject, PyAny, PyResult,
 };
 use std::{
     collections::hash_map::DefaultHasher,
     hash::{Hash, Hasher},
 };
-
-#[derive(FromPyObject)]
-pub(crate) struct PathWrapper(pub std::path::PathBuf);
-
-impl<'py> IntoPyObject<'py> for PathWrapper {
-    type Target = pyo3::PyAny;
-    type Output = Bound<'py, Self::Target>;
-    type Error = pyo3::PyErr;
-
-    fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
-        // Pathlib is part of the standard library
-        let pathlib_module = py.import("pathlib")?;
-        let path_ctor = pathlib_module.getattr("Path")?;
-
-        path_ctor.call1(PyTuple::new(py, [self.0])?)
-    }
-}
 
 #[derive(FromPyObject)]
 pub enum BytesWrapper<'py> {
