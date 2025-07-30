@@ -72,6 +72,7 @@
           <ion-text class="item-header__title title-h3">{{ $msTranslate('HomePage.profile.authentication.title') }}</ion-text>
           <ion-text class="item-header__description body">{{ $msTranslate('HomePage.profile.authentication.description') }}</ion-text>
         </div>
+        <account-authentication-page />
       </div>
     </div>
   </div>
@@ -82,6 +83,7 @@ import SettingsList from '@/components/settings/SettingsList.vue';
 import { IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
 import { AccountSettingsTabs } from '@/views/account/types';
 import ManageAccountPage from '@/views/account/ManageAccountPage.vue';
+import AccountAuthenticationPage from '@/views/account/AccountAuthenticationPage.vue';
 
 defineProps<{
   activeTab: AccountSettingsTabs;

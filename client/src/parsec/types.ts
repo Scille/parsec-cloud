@@ -9,6 +9,7 @@ export {
   AccountDeleteSendValidationEmailErrorTag,
   AccountFetchOpaqueKeyFromVaultErrorTag,
   AccountGetHumanHandleErrorTag,
+  AccountListAuthMethodsErrorTag,
   AccountListInvitationsErrorTag,
   AccountListRegistrationDevicesErrorTag,
   AccountLoginErrorTag,
@@ -91,6 +92,7 @@ export {
 } from '@/plugins/libparsec';
 export type {
   AccountAuthMethodStrategy,
+  AccountCreateAuthMethodError,
   AccountCreateError,
   AccountCreateRegistrationDeviceError,
   AccountCreateSendValidationEmailError,
@@ -98,6 +100,7 @@ export type {
   AccountDeleteSendValidationEmailError,
   AccountFetchOpaqueKeyFromVaultError,
   AccountGetHumanHandleError,
+  AccountListAuthMethodsError,
   AccountListInvitationsError,
   AccountListRegistrationDevicesError,
   AccountLoginError,
@@ -239,6 +242,7 @@ import type {
   HumanHandle,
   InvitationToken,
   OrganizationID,
+  AuthMethodInfo as ParsecAuthMethodInfo,
   EntryStatFile as ParsecEntryStatFile,
   EntryStatFolder as ParsecEntryStatFolder,
   ParsecOrganizationAddr,
@@ -399,9 +403,14 @@ interface RegistrationDevice {
   userId: UserID;
 }
 
+interface AuthMethodInfo extends ParsecAuthMethodInfo {
+  current: boolean;
+}
+
 export {
   AccountHandle,
   AccountInvitation,
+  AuthMethodInfo,
   ConnectionHandle,
   DateTime,
   EntryID,

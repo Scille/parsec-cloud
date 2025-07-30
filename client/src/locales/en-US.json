@@ -167,7 +167,17 @@
             },
             "authentication": {
                 "title": "Authentication",
-                "description": "Manage your authentication methods"
+                "description": "You can change your authentication method at any time.",
+                "password": "Password",
+                "other": "Other",
+                "createdOn": "Created on:",
+                "changeMethod": "Change password",
+                "updateAuthMethod": {
+                    "title": "Update authentication method",
+                    "updatePassword": "Update password",
+                    "error": "An error occurred while updating the authentication method.",
+                    "success": "Your authentication method has been successfully updated."
+                }
             }
         },
         "topbar": {
