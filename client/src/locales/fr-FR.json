@@ -166,7 +166,17 @@
             },
             "authentication": {
                 "title": "Authentification",
-                "description": "Gérer vos méthodes d'authentification"
+                "description": "Vous pouvez à tout moment changer de méthode pour vous authentifier à votre compte Parsec.",
+                "password": "Mot de passe",
+                "other": "Autre",
+                "createdOn": "Créé le :",
+                "changeMethod": "Changer de mot de passe",
+                "updateAuthMethod": {
+                    "title": "Modifier la méthode d'authentification",
+                    "updatePassword": "Mettre à jour le mot de passe",
+                    "error": "Une erreur est survenue lors de la mise à jour de la méthode d'authentification.",
+                    "success": "Votre méthode d'authentification a été mise à jour avec succès."
+                }
             }
         },
         "topbar": {

@@ -4,6 +4,9 @@ import { getDefaultDeviceName } from '@/common/device';
 import { getClientConfig } from '@/parsec/internals';
 import { listAvailableDevices } from '@/parsec/login';
 import {
+  AccountAuthMethodStrategy,
+  AccountAuthMethodStrategyTag,
+  AccountCreateAuthMethodError,
   AccountCreateError,
   AccountCreateErrorTag,
   AccountCreateRegistrationDeviceError,
@@ -15,6 +18,7 @@ import {
   AccountGetHumanHandleError,
   AccountHandle,
   AccountInvitation,
+  AccountListAuthMethodsError,
   AccountListInvitationsError,
   AccountListRegistrationDevicesError,
   AccountLoginError,
@@ -25,6 +29,7 @@ import {
   AccountRecoverSendValidationEmailError,
   AccountRegisterNewDeviceError,
   AccountRegisterNewDeviceErrorTag,
+  AuthMethodInfo,
   AvailableDevice,
   AvailableDeviceTypeTag,
   DeviceAccessStrategy,
@@ -35,8 +40,9 @@ import {
   SecretKey,
 } from '@/parsec/types';
 import { generateNoHandleError } from '@/parsec/utils';
-import { AccountAuthMethodStrategy, AccountAuthMethodStrategyTag, libparsec } from '@/plugins/libparsec';
+import { libparsec } from '@/plugins/libparsec';
 import { Env } from '@/services/environment';
+import { DateTime } from 'luxon';
 
 function getAccountDefaultDeviceName(): string {
   return `Account_${getDefaultDeviceName()}`;
@@ -170,31 +176,38 @@ class _ParsecAccount {
     if (!Env.isAccountAutoLoginEnabled()) {
       return;
     }
+    const TEST_PASSWORD = 'P@ssw0rd.';
     console.log(`Using Parsec Account auto-login, server is '${Env.getAccountServer()}'`);
+    // Create test account
     const newAccountResult = await libparsec.testNewAccount(Env.getAccountServer());
     if (!newAccountResult.ok) {
       console.error(`No auto-login possible, testNewAccount failed: ${newAccountResult.error.tag} (${newAccountResult.error.error})`);
       return;
     }
+    // Login to the test account
     const loginResult = await this.login(ParsecAccountAccess.useMasterSecretForLogin(newAccountResult.value[1]), Env.getAccountServer());
     if (!loginResult.ok) {
       console.error(`Failed to login: ${loginResult.error.tag} (${loginResult.error.error})`);
+      return;
     }
-    // if (usesTestbed() && this.handle) {
-    //   const devices = await listAvailableDevices();
-    //   console.log(devices);
-    //   let device = devices.find((d) => d.humanHandle.label === 'Alicey McAliceFace' && d.deviceLabel.includes('dev2'));
-    //   if (!device) {
-    //     device = devices[0];
-    //     console.error(`Could not find Alice's device, using ${device.humanHandle.label}`);
-    //   }
-    //   const regDeviceResult = await libparsec.accountCreateRegistrationDevice(
-    //     this.handle, AccessStrategy.usePassword(device, 'P@ssw0rd.')
-    //   );
-    //   if (!regDeviceResult.ok) {
-    //     console.error(`Failed to register local device: ${regDeviceResult.error.tag} (${regDeviceResult.error.error})`);
-    //   }
-    // }
+    // Add a password authentication
+    console.log(`Setting new password to test Parsec Account: '${TEST_PASSWORD}'`);
+    const addAuthResult = await libparsec.accountCreateAuthMethod(loginResult.value, {
+      tag: AccountAuthMethodStrategyTag.Password,
+      password: TEST_PASSWORD,
+    });
+    if (!addAuthResult.ok) {
+      console.error(`Failed to add new password authentication: ${addAuthResult.error.tag} (${addAuthResult.error.error})`);
+      return;
+    }
+    await this.logout();
+    const login2Result = await this.login(
+      ParsecAccountAccess.usePasswordForLogin(newAccountResult.value[0].email, TEST_PASSWORD),
+      Env.getAccountServer(),
+    );
+    if (!login2Result.ok) {
+      console.error(`Failed to login with password: ${login2Result.error.tag} (${login2Result.error.error})`);
+    }
   }
 
   getHandle(): AccountHandle | undefined {
@@ -403,6 +416,31 @@ class _ParsecAccount {
 
   async sendRecoveryEmail(email: string, server: string): Promise<Result<null, AccountRecoverSendValidationEmailError>> {
     return await libparsec.accountRecover1SendValidationEmail(getClientConfig().configDir, server, email);
+  }
+
+  async listAuthenticationMethod(): Promise<Result<Array<AuthMethodInfo>, AccountListAuthMethodsError>> {
+    if (!this.handle) {
+      return generateNoHandleError<AccountListAuthMethodsError>();
+    }
+    const [currentResult, listResult] = await Promise.all([
+      libparsec.accountGetInUseAuthMethod(this.handle),
+      libparsec.accountListAuthMethods(this.handle),
+    ]);
+    if (listResult.ok) {
+      listResult.value = listResult.value.map((method) => {
+        (method as AuthMethodInfo).current = currentResult.ok && currentResult.value === method.authMethodId;
+        (method as AuthMethodInfo).createdOn = DateTime.fromSeconds(method.createdOn as any as number);
+        return method;
+      });
+    }
+    return listResult as Result<Array<AuthMethodInfo>, AccountListAuthMethodsError>;
+  }
+
+  async updatePassword(password: string): Promise<Result<null, AccountCreateAuthMethodError>> {
+    if (!this.handle) {
+      return generateNoHandleError<AccountCreateAuthMethodError>();
+    }
+    return libparsec.accountCreateAuthMethod(this.handle, { tag: AccountAuthMethodStrategyTag.Password, password: password });
   }
 }
 

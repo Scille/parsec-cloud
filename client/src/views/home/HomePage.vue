@@ -189,9 +189,12 @@ const stateWatchCancel = watch(state, (newState, oldState) => {
   }
 });
 
-const routeWatchCancel = watchRoute(async () => {
+const routeWatchCancel = watchRoute(async (newRoute, oldRoute) => {
   if (!currentRouteIs(Routes.Home)) {
     return;
+  }
+  if (newRoute.name !== oldRoute.name) {
+    state.value = HomePageState.OrganizationList;
   }
   accountLoggedIn.value = ParsecAccount.isLoggedIn();
   await handleQuery();

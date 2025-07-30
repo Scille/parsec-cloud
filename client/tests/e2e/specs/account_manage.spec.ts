@@ -20,7 +20,7 @@ msTest('Delete account', async ({ parsecAccountLoggedIn }) => {
   const popover = parsecAccountLoggedIn.locator('.profile-header-homepage-popover');
   await expect(popover).toBeVisible();
   await popover.locator('.main-list__item').nth(1).click();
-  const container = parsecAccountLoggedIn.locator('.manage-account-page-container ');
+  const container = parsecAccountLoggedIn.locator('.manage-account-page-container');
   await expect(container).toBeVisible();
   const email = await container.locator('ion-input').nth(1).locator('input').inputValue();
   await container.locator('.delete-account__button').click();
@@ -57,4 +57,37 @@ msTest('Delete account', async ({ parsecAccountLoggedIn }) => {
   await expect(modal).toBeHidden();
   await expect(parsecAccountLoggedIn).toShowToast('Your account has been successfully deleted.', 'Success');
   await expect(parsecAccountLoggedIn).toHaveURL(/.+\/account$/);
+});
+
+msTest('Update password', async ({ parsecAccountLoggedIn }) => {
+  await parsecAccountLoggedIn.locator('.profile-header-homepage').click();
+  const popover = parsecAccountLoggedIn.locator('.profile-header-homepage-popover');
+  await expect(popover).toBeVisible();
+  await popover.locator('.main-list__item').nth(2).click();
+  const container = parsecAccountLoggedIn.locator('.account-authentication-page-container');
+  await expect(container).toBeVisible();
+  const authItems = container.locator('.authentication-method-item');
+  await expect(authItems).toHaveCount(2);
+  await expect(authItems.nth(0).locator('.authentication-method-item-details__title')).toHaveText(/^Other$/);
+  await expect(authItems.nth(1).locator('.authentication-method-item-details__title')).toHaveText(/^Password$/);
+  await expect(authItems.nth(0).locator('.authentication-method-item-details__date ')).toHaveText(/^Created on:[a-zA-Z]{3} \d{2}, \d{4}$/);
+  await expect(authItems.nth(1).locator('.authentication-method-item-details__date ')).toHaveText(/^Created on:[a-zA-Z]{3} \d{2}, \d{4}$/);
+  const changeButton = container.locator('ion-button');
+  await expect(changeButton).toBeVisible();
+  await expect(changeButton).toHaveText('Change password');
+  const passwordModal = parsecAccountLoggedIn.locator('.account-update-authentication');
+  await expect(passwordModal).toBeHidden();
+  await changeButton.click();
+  await expect(passwordModal).toBeVisible();
+  const confirmButton = passwordModal.locator('#next-button');
+  await expect(confirmButton).toHaveText('Update password');
+  await expect(confirmButton).toBeTrulyDisabled();
+  const passwordInputs = passwordModal.locator('ion-input');
+  await fillIonInput(passwordInputs.nth(0), 'BigP@ssw0rd.');
+  await expect(confirmButton).toBeTrulyDisabled();
+  await fillIonInput(passwordInputs.nth(1), 'BigP@ssw0rd.');
+  await expect(confirmButton).toBeTrulyEnabled();
+  await confirmButton.click();
+  await expect(parsecAccountLoggedIn).toShowToast('Your authentication method has been successfully updated.', 'Success');
+  await expect(passwordModal).toBeHidden();
 });
