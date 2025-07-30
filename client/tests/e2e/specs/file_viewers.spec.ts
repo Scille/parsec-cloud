@@ -53,7 +53,7 @@ msTest('Quick access loads correct document', async ({ documents }) => {
   const doc2Name = (await documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text').textContent()) ?? '';
 
   const sidebar = documents.locator('.sidebar');
-  const recentDocs = sidebar.locator('.file-workspaces').locator('.list-sidebar-content').getByRole('listitem');
+  const recentDocs = sidebar.locator('#sidebar-files').locator('.list-sidebar-content').getByRole('listitem');
   await expect(recentDocs).toHaveCount(2);
   await expect(recentDocs.nth(0)).toHaveText(doc2Name);
   await expect(recentDocs.nth(1)).toHaveText(doc1Name);

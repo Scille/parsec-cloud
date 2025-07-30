@@ -349,10 +349,10 @@ for (const gridMode of [false, true]) {
 }
 
 msTest('Show recently opened files in sidebar', async ({ documents }) => {
-  const sidebarRecentList = documents.locator('.sidebar').locator('.file-workspaces').locator('ion-list');
-  await expect(sidebarRecentList.locator('.list-sidebar-header')).toHaveText('Recent documents');
+  const sidebarRecentFiles = documents.locator('#sidebar-files');
+  await expect(sidebarRecentFiles.locator('.list-sidebar-header-text')).toHaveText('Recent documents');
   // Two recently opened files by default in dev mode
-  await expect(sidebarRecentList.locator('.sidebar-item')).toHaveCount(0);
+  await expect(sidebarRecentFiles.locator('.sidebar-item')).toHaveCount(0);
 
   await expect(documents.locator('.information-modal')).toBeHidden();
   await expect(documents).toHaveHeader(['wksp1'], true, true);
@@ -364,5 +364,10 @@ msTest('Show recently opened files in sidebar', async ({ documents }) => {
   await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
   await expect(documents).toBeViewerPage();
   // One file added
-  await expect(sidebarRecentList.locator('.sidebar-item')).toHaveText([fileName ?? '']);
+  await expect(sidebarRecentFiles.locator('.sidebar-item')).toHaveText([fileName ?? '']);
+
+  await sidebarRecentFiles.locator('.list-sidebar-header__toggle').click();
+  await expect(sidebarRecentFiles.locator('.list-sidebar-content')).toBeHidden();
+  await sidebarRecentFiles.locator('.list-sidebar-header__toggle').click();
+  await expect(sidebarRecentFiles.locator('.list-sidebar-content')).toBeVisible();
 });

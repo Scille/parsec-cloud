@@ -4,12 +4,11 @@
   <div class="organization-info">
     <div class="card-header">
       <ion-title class="card-header__title title-h3">
-        {{ $msTranslate('OrganizationPage.title') }}
+        {{ $msTranslate('OrganizationPage.configuration.title') }}
       </ion-title>
     </div>
 
     <div class="card-content">
-      <ion-text class="info-title title-h5">{{ $msTranslate('OrganizationPage.configuration.title') }}</ion-text>
       <div class="info-list">
         <!-- Outsider profile -->
         <div class="info-list-item">
@@ -136,10 +135,6 @@ async function copyAddress(address: string): Promise<void> {
     border-radius: var(--parsec-radius-8);
     width: 100%;
     gap: 1rem;
-  }
-
-  .info-title {
-    color: var(--parsec-color-light-secondary-soft-text);
   }
 
   .info-list {

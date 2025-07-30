@@ -49,11 +49,7 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
       await usersPage.locator('.question-modal').locator('ion-button').nth(1).click();
       await expect(usersPage).toShowToast('Boby McBobFace has been revoked. They can no longer access this organization.', 'Success');
     } else {
-      const sidebarButtons = usersPage
-        .locator('.sidebar')
-        .locator('.manage-organization')
-        .locator('.organization-card-buttons')
-        .getByRole('listitem');
+      const sidebarOrganizationButtons = usersPage.locator('.sidebar').locator('.sidebar-content-organization-button');
 
       const user = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
       await user.hover();
@@ -61,7 +57,7 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
       await usersPage.locator('.user-context-menu').getByRole('listitem').nth(1).click();
       await answerQuestion(usersPage, true);
       await expect(usersPage).toShowToast('Boby McBobFace has been revoked. They can no longer access this organization.', 'Success');
-      await sidebarButtons.nth(1).click();
+      await sidebarOrganizationButtons.nth(1).click();
     }
 
     const container = usersPage.locator('.organization-page');
