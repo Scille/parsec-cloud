@@ -38,6 +38,3 @@ futures = { workspace = true, features = ["std", "async-await", "executor"] }
 rmp-serde = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 chrono = { workspace = true }
-
-[build-dependencies]
-glob = { workspace = true }

@@ -142,7 +142,6 @@ fuser = { version = "0.15.1", default-features = false }
 futures = { version = "0.3.31", default-features = false }
 generic-array = { version = "0.14.7", default-features = false }
 getrandom = { package = "getrandom", version = "0.2.15", default-features = false }
-glob = { version = "0.3.2", default-features = false }
 gloo-timers = { version = "0.3.0", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 hex-literal = { version = "0.4.1", default-features = false }

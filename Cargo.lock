@@ -2296,7 +2296,6 @@ version = "3.4.1-a.0+dev"
 dependencies = [
  "bytes",
  "futures",
- "glob",
  "hex",
  "libparsec_serialization_format",
  "libparsec_tests_fixtures",
@@ -2397,7 +2396,6 @@ dependencies = [
  "data-encoding",
  "email-address-parser",
  "fnmatch-regex",
- "glob",
  "hex",
  "hex-literal",
  "lazy_static",
@@ -2912,7 +2910,6 @@ version = "3.4.1-a.0+dev"
 dependencies = [
  "chrono",
  "futures",
- "glob",
  "lazy_static",
  "libparsec_crypto",
  "libparsec_protocol",
