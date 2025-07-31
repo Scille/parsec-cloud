@@ -326,6 +326,7 @@
         "saas": "Parsec SaaS",
         "customServer": "Serveur personnel",
         "keyringChoice": "Authentification du système",
+        "accountChoice": "Parsec Account",
         "passwordChoice": "Mot de passe",
         "acceptTOS": {
             "label": "En utilisant Parsec, j'accepte les",

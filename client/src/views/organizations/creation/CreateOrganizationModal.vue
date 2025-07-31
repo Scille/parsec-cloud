@@ -45,6 +45,7 @@ import {
   DeviceSaveStrategyTag,
   AccessStrategy,
   DeviceSaveStrategyPassword,
+  DeviceAccessStrategy,
 } from '@/parsec';
 import { InformationManager } from '@/services/informationManager';
 import { onMounted, ref } from 'vue';
@@ -100,10 +101,18 @@ async function onOrganizationCreated(
   device: AvailableDevice,
   saveStrategy: DeviceSaveStrategy,
 ): Promise<void> {
-  const accessStrategy =
-    saveStrategy.tag === DeviceSaveStrategyTag.Keyring
-      ? AccessStrategy.useKeyring(device)
-      : AccessStrategy.usePassword(device, (saveStrategy as DeviceSaveStrategyPassword).password);
+  let accessStrategy: DeviceAccessStrategy;
+
+  if (saveStrategy.tag === DeviceSaveStrategyTag.Keyring) {
+    accessStrategy = AccessStrategy.useKeyring(device);
+  } else if (saveStrategy.tag === DeviceSaveStrategyTag.AccountVault) {
+    accessStrategy = await AccessStrategy.useAccountVault(device);
+  } else if (saveStrategy.tag === DeviceSaveStrategyTag.Password) {
+    accessStrategy = AccessStrategy.usePassword(device, (saveStrategy as DeviceSaveStrategyPassword).password);
+  } else {
+    window.electronAPI.log('error', `Unhandled save strategy '${saveStrategy.tag}'`);
+    return;
+  }
   await modalController.dismiss({ device: device, access: accessStrategy }, MsModalResult.Confirm);
 }
 
