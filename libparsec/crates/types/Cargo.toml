@@ -60,6 +60,3 @@ libparsec_tests_lite = { workspace = true }
 
 serde_test = { workspace = true }
 rstest_reuse = { workspace = true }
-
-[build-dependencies]
-glob = { workspace = true }
