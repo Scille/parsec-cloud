@@ -48,7 +48,7 @@
       :can-edit-name="false"
       :can-edit-organization-name="bootstrapLink === undefined"
       :can-edit-server-address="false"
-      :can-edit-save-strategy="true"
+      :can-edit-save-strategy="saveStrategy.tag !== DeviceSaveStrategyTag.AccountVault"
       @create-clicked="onCreateClicked"
       @update-save-strategy-clicked="onUpdateSaveStrategyClicked"
       @update-organization-name-clicked="onUpdateOrganizationNameClicked"
@@ -90,9 +90,13 @@ import {
   bootstrapOrganization,
   BootstrapOrganizationErrorTag,
   DeviceSaveStrategy,
+  isWeb,
   OrganizationID,
+  ParsecAccount,
   ParsedParsecAddrTag,
   parseParsecAddr,
+  SaveStrategy,
+  DeviceSaveStrategyTag,
 } from '@/parsec';
 import { Translatable } from 'megashark-lib';
 import OrganizationAuthenticationPage from '@/views/organizations/creation/OrganizationAuthenticationPage.vue';
@@ -102,6 +106,7 @@ import OrganizationCreationPage from '@/views/organizations/creation/Organizatio
 import OrganizationCreatedPage from '@/views/organizations/creation/OrganizationCreatedPage.vue';
 import { wait } from '@/parsec/internals';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { Env } from '@/services/environment';
 
 enum Steps {
   BmsLogin,
@@ -163,7 +168,19 @@ async function onLoginSuccess(_token: AuthenticationToken, info: PersonalInforma
   personalInformation.value = info;
 
   if (props.bootstrapLink) {
-    step.value = Steps.Authentication;
+    if (isWeb() && ParsecAccount.isLoggedIn() && ParsecAccount.addressMatchesAccountServer(props.bootstrapLink)) {
+      // Create a new vault save strategy
+      const result = await SaveStrategy.useAccountVault();
+      if (result.ok) {
+        // Skip the auth page
+        await onAuthenticationChosen(result.value);
+      } else {
+        // We failed to generate a save strategy, we'll ask for password normally. A new device can be created later if needed.
+        step.value = Steps.Authentication;
+      }
+    } else {
+      step.value = Steps.Authentication;
+    }
   } else {
     step.value = Steps.OrganizationName;
   }
@@ -178,7 +195,20 @@ async function onOrganizationNameChosen(chosenOrganizationName: OrganizationID):
     return;
   }
   organizationName.value = chosenOrganizationName;
-  step.value = Steps.Authentication;
+  if (
+    isWeb() &&
+    ParsecAccount.isLoggedIn() &&
+    Env.getSaasServers().some((addr) => ParsecAccount.addressMatchesAccountServer(`parsec3://${addr}`))
+  ) {
+    const result = await SaveStrategy.useAccountVault();
+    if (result.ok) {
+      await onAuthenticationChosen(result.value);
+    } else {
+      step.value = Steps.Authentication;
+    }
+  } else {
+    step.value = Steps.Authentication;
+  }
 }
 
 async function onAuthenticationChosen(chosenSaveStrategy: DeviceSaveStrategy): Promise<void> {

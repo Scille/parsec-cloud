@@ -109,6 +109,8 @@ export type {
   AccountRecoverProceedError,
   AccountRecoverSendValidationEmailError,
   AccountRegisterNewDeviceError,
+  AccountUploadOpaqueKeyInVaultError,
+  AccountVaultItemOpaqueKeyID,
   AnyClaimRetrievedInfoDevice,
   AnyClaimRetrievedInfoUser,
   ApiVersion,

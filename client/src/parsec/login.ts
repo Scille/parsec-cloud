@@ -4,6 +4,7 @@ import {
   AvailableDeviceTypeTag,
   DeviceAccessStrategyAccountVault,
   DeviceAccessStrategyKeyring,
+  DeviceSaveStrategyAccountVault,
   DeviceSaveStrategyKeyring,
   DeviceSaveStrategyPassword,
   libparsec,
@@ -286,6 +287,20 @@ export const SaveStrategy = {
   useKeyring(): DeviceSaveStrategyKeyring {
     return {
       tag: DeviceSaveStrategyTag.Keyring,
+    };
+  },
+  async useAccountVault(): Promise<Result<DeviceSaveStrategyAccountVault, any>> {
+    const keyResult = await ParsecAccount.uploadKeyInVault();
+    if (!keyResult.ok) {
+      return keyResult;
+    }
+    return {
+      ok: true,
+      value: {
+        tag: DeviceSaveStrategyTag.AccountVault,
+        ciphertextKeyId: keyResult.value[0],
+        ciphertextKey: keyResult.value[1],
+      },
     };
   },
 };

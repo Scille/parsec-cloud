@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { expect, fillInputModal, login, msTest, setWriteClipboardPermission } from '@tests/e2e/helpers';
+import { expect, fillInputModal, login, msTest } from '@tests/e2e/helpers';
 
-msTest('Manage account state', async ({ parsecAccountLoggedIn }) => {
+msTest('Display account invitations', async ({ parsecAccountLoggedIn }) => {
   // Get the account email, check that we don't have an invitation
   await parsecAccountLoggedIn.locator('.profile-header-homepage').click();
   await expect(parsecAccountLoggedIn.locator('.profile-header-homepage-popover')).toBeVisible();
@@ -26,13 +26,15 @@ msTest('Manage account state', async ({ parsecAccountLoggedIn }) => {
   await expect(noAccountPage).toShowToast(`An invitation to join the organization has been sent to ${email}.`, 'Success');
   await noAccountPage.locator('.topbar').locator('#invitations-button').click();
   const popover = noAccountPage.locator('.invitations-list-popover');
-  await setWriteClipboardPermission(noAccountPage.context(), true);
   const inv = popover.locator('.invitation-list-item').nth(1);
   await inv.locator('.invitation-header__greet-button').click();
   const greetModal = noAccountPage.locator('.greet-organization-modal');
   await expect(greetModal).toBeVisible();
+  await noAccountPage.release();
 
   // Account tab, check if the invitation appeared
+  await parsecAccountLoggedIn.waitForTimeout(500);
+  await expect(parsecAccountLoggedIn.locator('.account-invitations__title')).toHaveText('One invitation pending');
   await expect(invitations).toHaveCount(1);
   await invitations.nth(0).click();
   const joinModal = parsecAccountLoggedIn.locator('.join-organization-modal');

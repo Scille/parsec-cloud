@@ -39,11 +39,11 @@
       :save-strategy="saveStrategy.tag"
       :organization-name="organizationName"
       :server-type="ServerType.Custom"
-      :can-edit-email="true"
-      :can-edit-name="true"
+      :can-edit-email="saveStrategy.tag !== DeviceSaveStrategyTag.AccountVault"
+      :can-edit-name="saveStrategy.tag !== DeviceSaveStrategyTag.AccountVault"
       :can-edit-organization-name="props.bootstrapLink === undefined"
       :can-edit-server-address="props.bootstrapLink === undefined"
-      :can-edit-save-strategy="true"
+      :can-edit-save-strategy="saveStrategy.tag !== DeviceSaveStrategyTag.AccountVault"
       @create-clicked="onCreateClicked"
       @update-email-clicked="onUpdatePersonalInformationClicked"
       @update-name-clicked="onUpdatePersonalInformationClicked"
@@ -82,6 +82,10 @@ import {
   AvailableDevice,
   BootstrapOrganizationError,
   BootstrapOrganizationErrorTag,
+  ParsecAccount,
+  isWeb,
+  SaveStrategy,
+  DeviceSaveStrategyTag,
 } from '@/parsec';
 import OrganizationUserInformationPage from '@/views/organizations/creation/OrganizationUserInformationPage.vue';
 import OrganizationAuthenticationPage from '@/views/organizations/creation/OrganizationAuthenticationPage.vue';
@@ -139,8 +143,30 @@ async function onOrganizationNameAndServerChosen(chosenOrganizationName: Organiz
     organizationName.value = chosenOrganizationName;
     serverAddr.value = chosenServerAddr;
   }
-
-  step.value = Steps.PersonalInformation;
+  if (ParsecAccount.isLoggedIn() && ParsecAccount.addressMatchesAccountServer(serverAddr.value as string)) {
+    const infoResult = await ParsecAccount.getInfo();
+    if (infoResult.ok) {
+      email.value = infoResult.value.email;
+      name.value = infoResult.value.label;
+      if (isWeb()) {
+        // Create a new vault save strategy
+        const result = await SaveStrategy.useAccountVault();
+        if (result.ok) {
+          // Skip the auth page
+          await onAuthenticationChosen(result.value);
+        } else {
+          // We failed to generate a save strategy, we'll ask for password normally. A new device can be created later if needed.
+          step.value = Steps.Authentication;
+        }
+      } else {
+        step.value = Steps.Authentication;
+      }
+    } else {
+      step.value = Steps.PersonalInformation;
+    }
+  } else {
+    step.value = Steps.PersonalInformation;
+  }
 }
 
 async function onUserInformationFilled(chosenName: string, chosenEmail: string): Promise<void> {
