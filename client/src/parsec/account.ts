@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { getDefaultDeviceName } from '@/common/device';
+import { isWeb } from '@/parsec/environment';
 import { getClientConfig } from '@/parsec/internals';
 import { listAvailableDevices } from '@/parsec/login';
 import {
@@ -21,6 +22,7 @@ import {
   AccountListAuthMethodsError,
   AccountListInvitationsError,
   AccountListRegistrationDevicesError,
+  AccountListRegistrationDevicesErrorTag,
   AccountLoginError,
   AccountLoginStrategy,
   AccountLoginStrategyTag,
@@ -29,12 +31,16 @@ import {
   AccountRecoverSendValidationEmailError,
   AccountRegisterNewDeviceError,
   AccountRegisterNewDeviceErrorTag,
+  AccountUploadOpaqueKeyInVaultError,
+  AccountVaultItemOpaqueKeyID,
   AuthMethodInfo,
   AvailableDevice,
   AvailableDeviceTypeTag,
   DeviceAccessStrategy,
+  DeviceSaveStrategy,
   DeviceSaveStrategyTag,
   HumanHandle,
+  ParsecAddr,
   RegistrationDevice,
   Result,
   SecretKey,
@@ -171,7 +177,7 @@ export const ParsecAccountAccess = {
 class _ParsecAccount {
   handle: AccountHandle | undefined = undefined;
   skipped: boolean = false;
-  server: string | undefined = undefined;
+  server: ParsecAddr | undefined = undefined;
 
   async init(): Promise<void> {
     if (!Env.isAccountAutoLoginEnabled()) {
@@ -237,6 +243,7 @@ class _ParsecAccount {
       return result;
     }
     this.handle = result.value;
+    this.server = server;
     await this.registerAllDevices();
     return result;
   }
@@ -250,11 +257,6 @@ class _ParsecAccount {
       console.error(`Failed to list registration devices: ${listResult.error.tag} (${listResult.error.error})`);
       return;
     }
-    const keyResult = await libparsec.accountUploadOpaqueKeyInVault(this.handle);
-    if (!keyResult.ok) {
-      console.error(`Failed to upload opaque key: ${keyResult.error.tag} (${keyResult.error.error})`);
-      return;
-    }
     const availableDevices = await listAvailableDevices(false);
 
     for (const regDevice of listResult.value) {
@@ -262,17 +264,29 @@ class _ParsecAccount {
         (ad) =>
           ad.organizationId === regDevice.organizationId &&
           ad.userId === regDevice.userId &&
-          ad.ty.tag === AvailableDeviceTypeTag.AccountVault,
+          (ad.ty.tag === AvailableDeviceTypeTag.AccountVault || ad.ty.tag === AvailableDeviceTypeTag.Keyring),
       );
       if (existingDevice !== undefined) {
         continue;
       }
+      let saveStrategy!: DeviceSaveStrategy;
+      if (isWeb()) {
+        const keyResult = await libparsec.accountUploadOpaqueKeyInVault(this.handle);
+        if (!keyResult.ok) {
+          console.error(`Failed to upload opaque key: ${keyResult.error.tag} (${keyResult.error.error})`);
+          return;
+        }
+        saveStrategy = { tag: DeviceSaveStrategyTag.AccountVault, ciphertextKeyId: keyResult.value[0], ciphertextKey: keyResult.value[1] };
+      } else {
+        saveStrategy = { tag: DeviceSaveStrategyTag.Keyring };
+      }
+
       const regResult = await libparsec.accountRegisterNewDevice(
         this.handle,
         regDevice.organizationId,
         regDevice.userId,
         getAccountDefaultDeviceName(),
-        { tag: DeviceSaveStrategyTag.AccountVault, ciphertextKeyId: keyResult.value[0], ciphertextKey: keyResult.value[1] },
+        saveStrategy,
       );
       if (!regResult.ok) {
         console.error(`Failed to register new device: ${regResult.error.tag} (${regResult.error.error}`);
@@ -319,11 +333,6 @@ class _ParsecAccount {
     if (!this.handle) {
       return generateNoHandleError<AccountRegisterNewDeviceError>();
     }
-    const keyResult = await libparsec.accountUploadOpaqueKeyInVault(this.handle);
-    if (!keyResult.ok) {
-      console.error(`Failed to upload opaque key: ${keyResult.error.tag} (${keyResult.error.error})`);
-      return { ok: false, error: { tag: AccountRegisterNewDeviceErrorTag.BadVaultKeyAccess, error: 'failed to get key' } };
-    }
     const availableDevices = await listAvailableDevices(false);
     const existingDevice = availableDevices.find(
       (ad) =>
@@ -333,6 +342,11 @@ class _ParsecAccount {
     );
     if (existingDevice !== undefined) {
       return { ok: true, value: existingDevice };
+    }
+    const keyResult = await libparsec.accountUploadOpaqueKeyInVault(this.handle);
+    if (!keyResult.ok) {
+      console.error(`Failed to upload opaque key: ${keyResult.error.tag} (${keyResult.error.error})`);
+      return { ok: false, error: { tag: AccountRegisterNewDeviceErrorTag.BadVaultKeyAccess, error: 'failed to get key' } };
     }
     const regResult = await libparsec.accountRegisterNewDevice(
       this.handle,
@@ -351,15 +365,37 @@ class _ParsecAccount {
     return await libparsec.accountCreateRegistrationDevice(this.handle, accessStrategy);
   }
 
-  async isDeviceRegistered(device: AvailableDevice): Promise<Result<boolean, AccountListRegistrationDevicesError>> {
-    const result = await this.listRegistrationDevices();
-    if (!result.ok) {
-      return result;
+  addressMatchesAccountServer(addr: string): boolean {
+    if (!this.server) {
+      return false;
     }
-    return {
-      ok: true,
-      value: result.value.find((rd) => rd.organizationId === device.organizationId && rd.userId === device.userId) !== undefined,
-    };
+    try {
+      const addrUrl = new URL(addr);
+      const accountUrl = new URL(this.server);
+      return addrUrl.host === accountUrl.host && addrUrl.port === accountUrl.port;
+    } catch (e: any) {
+      window.electronAPI.log('error', `Failed to compare device address with server address: ${e.toString()}`);
+      return false;
+    }
+  }
+
+  async isDeviceRegistered(device: AvailableDevice): Promise<Result<boolean, AccountListRegistrationDevicesError>> {
+    if (!this.addressMatchesAccountServer(device.serverUrl)) {
+      return { ok: false, error: { tag: AccountListRegistrationDevicesErrorTag.Internal, error: 'no-server-match' } };
+    }
+    try {
+      const result = await this.listRegistrationDevices();
+      if (!result.ok) {
+        return result;
+      }
+      return {
+        ok: true,
+        value: result.value.find((rd) => rd.organizationId === device.organizationId && rd.userId === device.userId) !== undefined,
+      };
+    } catch (e: any) {
+      window.electronAPI.log('error', `Failed to compare device address with server address: ${e.toString()}`);
+      return { ok: false, error: { tag: AccountListRegistrationDevicesErrorTag.Internal, error: e.toString() } };
+    }
   }
 
   async getInfo(): Promise<Result<HumanHandle, AccountGetHumanHandleError>> {
@@ -376,6 +412,7 @@ class _ParsecAccount {
     const result = await libparsec.accountLogout(this.handle);
     if (result.ok) {
       this.handle = undefined;
+      this.server = undefined;
     }
     return result;
   }
@@ -404,6 +441,14 @@ class _ParsecAccount {
       return generateNoHandleError<AccountFetchOpaqueKeyFromVaultError>();
     }
     return await libparsec.accountFetchOpaqueKeyFromVault(this.handle, cipherKeyId);
+  }
+
+  async uploadKeyInVault(): Promise<Result<[AccountVaultItemOpaqueKeyID, SecretKey], AccountUploadOpaqueKeyInVaultError>> {
+    if (!this.handle) {
+      return generateNoHandleError<AccountUploadOpaqueKeyInVaultError>();
+    }
+    const keyResult = await libparsec.accountUploadOpaqueKeyInVault(this.handle);
+    return keyResult;
   }
 
   async recoveryRequest(email: string, server: string): Promise<Result<null, AccountRecoverSendValidationEmailError>> {

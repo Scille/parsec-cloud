@@ -103,12 +103,23 @@
           <ion-text class="summary-item__label subtitles-sm">
             {{ $msTranslate('CreateOrganization.overview.authentication') }}
           </ion-text>
-          <ion-text class="summary-item__text body-lg">
-            {{
-              saveStrategy === DeviceSaveStrategyTag.Keyring
-                ? $msTranslate('CreateOrganization.keyringChoice')
-                : $msTranslate('CreateOrganization.passwordChoice')
-            }}
+          <ion-text
+            class="summary-item__text body-lg"
+            v-if="saveStrategy === DeviceSaveStrategyTag.Keyring"
+          >
+            {{ $msTranslate('CreateOrganization.keyringChoice') }}
+          </ion-text>
+          <ion-text
+            class="summary-item__text body-lg"
+            v-if="saveStrategy === DeviceSaveStrategyTag.Password"
+          >
+            {{ $msTranslate('CreateOrganization.passwordChoice') }}
+          </ion-text>
+          <ion-text
+            class="summary-item__text body-lg"
+            v-if="saveStrategy === DeviceSaveStrategyTag.AccountVault"
+          >
+            {{ $msTranslate('CreateOrganization.accountChoice') }}
           </ion-text>
           <ion-button
             fill="clear"

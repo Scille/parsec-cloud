@@ -103,6 +103,7 @@ import {
   ParsecAccount,
   getOrganizationCreationDate,
   AccountInvitation,
+  DeviceAccessStrategyTag,
 } from '@/parsec';
 import { RouteBackup, Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, switchOrganization, watchRoute } from '@/router';
 import { EventData, EventDistributor, Events } from '@/services/eventDistributor';
@@ -417,7 +418,11 @@ async function openCreateOrganizationModal(bootstrapLink?: string, defaultServer
   await modal.dismiss();
 
   if (role === MsModalResult.Confirm) {
-    await login(data.device, data.access);
+    const creationData = data as { device: AvailableDevice; access: DeviceAccessStrategy };
+    if (creationData.access.tag === DeviceAccessStrategyTag.AccountVault && ParsecAccount.isLoggedIn()) {
+      await ParsecAccount.createRegistrationDevice(data.access);
+    }
+    await login(creationData.device, creationData.access);
   }
 }
 
@@ -543,46 +548,45 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
 }
 
 async function handleRegistration(device: AvailableDevice, access: DeviceAccessStrategy): Promise<void> {
-  if (!ParsecAccount.isLoggedIn()) {
-    return;
-  }
-  if (device.serverUrl) {
-    return;
-  }
-  // Check if the device is already among the registration devices
-  const isRegResult = await ParsecAccount.isDeviceRegistered(device);
-  if (isRegResult.ok && !isRegResult.value) {
-    // Ask the user if they want to create a registration device
-    const answer = await askQuestion('loginPage.storeAccountTitle', 'loginPage.storeAccountQuestion', {
-      yesText: 'loginPage.storeAccountYes',
-    });
-    if (answer === Answer.Yes) {
-      // Create the registration device
-      const createRegResult = await ParsecAccount.createRegistrationDevice(access);
-      if (createRegResult.ok) {
-        informationManager.present(
-          new Information({
-            message: 'loginPage.storeSuccess',
-            level: InformationLevel.Success,
-          }),
-          PresentationMode.Toast,
-        );
-        const regResult = await ParsecAccount.registerNewDevice({ organizationId: device.organizationId, userId: device.userId });
-        if (!regResult.ok) {
-          window.electronAPI.log('error', `Failed to register new device: ${regResult.error.tag} (${regResult.error.error})`);
+  if (ParsecAccount.isLoggedIn()) {
+    // Check if the device is already among the registration devices and has the right server
+    const isRegResult = await ParsecAccount.isDeviceRegistered(device);
+    if (isRegResult.ok && !isRegResult.value) {
+      // Ask the user if they want to create a registration device
+      const answer = await askQuestion('loginPage.storeAccountTitle', 'loginPage.storeAccountQuestion', {
+        yesText: 'loginPage.storeAccountYes',
+      });
+      if (answer === Answer.Yes) {
+        // Create the registration device
+        const createRegResult = await ParsecAccount.createRegistrationDevice(access);
+        if (createRegResult.ok) {
+          informationManager.present(
+            new Information({
+              message: 'loginPage.storeSuccess',
+              level: InformationLevel.Success,
+            }),
+            PresentationMode.Toast,
+          );
+          // On web, if the existing device uses a password, replace it with a vault authentication
+          if (isWeb() && device.ty.tag === AvailableDeviceTypeTag.Password) {
+            const regResult = await ParsecAccount.registerNewDevice({ organizationId: device.organizationId, userId: device.userId });
+            if (!regResult.ok) {
+              window.electronAPI.log('error', `Failed to register new device: ${regResult.error.tag} (${regResult.error.error})`);
+            }
+          }
+        } else {
+          window.electronAPI.log(
+            'error',
+            `Failed to create the registration device: ${createRegResult.error.tag} (${createRegResult.error.error})`,
+          );
+          informationManager.present(
+            new Information({
+              message: 'loginPage.storeFailed',
+              level: InformationLevel.Error,
+            }),
+            PresentationMode.Toast,
+          );
         }
-      } else {
-        window.electronAPI.log(
-          'error',
-          `Failed to create the registration device: ${createRegResult.error.tag} (${createRegResult.error.error})`,
-        );
-        informationManager.present(
-          new Information({
-            message: 'loginPage.storeFailed',
-            level: InformationLevel.Error,
-          }),
-          PresentationMode.Toast,
-        );
       }
     }
   }
