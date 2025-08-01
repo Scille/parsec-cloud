@@ -69,8 +69,8 @@ SELECT
     bootstrap_token,
     root_verify_key,
     is_expired,
-    _bootstrapped_on as bootstrapped_on,
-    _created_on as created_on,
+    _bootstrapped_on AS bootstrapped_on,
+    _created_on AS created_on,
     active_users_limit,
     user_profile_outsider_allowed,
     sequester_authority_certificate,
@@ -81,24 +81,21 @@ SELECT
     allowed_client_agent,
     account_vault_strategy
 FROM organization
-WHERE organization_id = $organization_id
-{"FOR UPDATE" if for_update else ""}
+WHERE organization_id = $organization_id{''' FOR UPDATE''' if for_update else ""}
 """)
 
 
 _q_get_organization = _make_q_get_organization()
 _q_get_organization_for_update = _make_q_get_organization(for_update=True)
 
-_q_get_enabled_service_certificates_for_organization = Q(
-    f"""
-    SELECT service_certificate
-    FROM sequester_service
-    WHERE
-        organization={q_organization_internal_id("$organization_id")}
-        AND disabled_on IS NULL
-    ORDER BY _id
-    """
-)
+_q_get_enabled_service_certificates_for_organization = Q(f"""
+SELECT service_certificate
+FROM sequester_service
+WHERE
+    organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT14
+    AND disabled_on IS NULL
+ORDER BY _id
+""")
 
 
 class PGOrganizationComponent(BaseOrganizationComponent):

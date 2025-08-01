@@ -46,37 +46,42 @@ WITH new_organization AS (
         FALSE,
         NULL,
         $minimum_archiving_period,
-        CASE WHEN $tos_per_locale_urls::JSON IS NULL
-            THEN NULL::TIMESTAMPTZ
+        CASE
+            WHEN $tos_per_locale_urls::JSON IS NULL
+                THEN NULL::TIMESTAMPTZ
             ELSE $created_on
-            END,
+        END,
         $tos_per_locale_urls,
         $allowed_client_agent,
         $account_vault_strategy
     )
     -- If the organization exists but hasn't been bootstrapped yet, we can
     -- simply overwrite it.
-    ON CONFLICT (organization_id) DO
-        UPDATE SET
-            bootstrap_token = EXCLUDED.bootstrap_token,
-            active_users_limit = EXCLUDED.active_users_limit,
-            user_profile_outsider_allowed = EXCLUDED.user_profile_outsider_allowed,
-            _created_on = EXCLUDED._created_on,
-            is_expired = EXCLUDED.is_expired,
-            _expired_on = EXCLUDED._expired_on,
-            minimum_archiving_period = EXCLUDED.minimum_archiving_period,
-            tos_updated_on = EXCLUDED.tos_updated_on,
-            tos_per_locale_urls = EXCLUDED.tos_per_locale_urls,
-            allowed_client_agent = EXCLUDED.allowed_client_agent,
-            account_vault_strategy = EXCLUDED.account_vault_strategy
+    ON CONFLICT (organization_id) DO UPDATE
+        SET
+            bootstrap_token = excluded.bootstrap_token,
+            active_users_limit = excluded.active_users_limit,
+            user_profile_outsider_allowed = excluded.user_profile_outsider_allowed,
+            _created_on = excluded._created_on,
+            is_expired = excluded.is_expired,
+            _expired_on = excluded._expired_on,
+            minimum_archiving_period = excluded.minimum_archiving_period,
+            tos_updated_on = excluded.tos_updated_on,
+            tos_per_locale_urls = excluded.tos_per_locale_urls,
+            allowed_client_agent = excluded.allowed_client_agent,
+            account_vault_strategy = excluded.account_vault_strategy
         WHERE organization.root_verify_key IS NULL
     RETURNING _id
 ),
-new_common_topic AS (
+
+new_common_topic AS (  -- noqa: ST03
     -- New organization's `common` topic must be added in the database since it is locked
     -- during organization bootstrap to handle concurrency.
-    INSERT INTO common_topic (organization, last_timestamp)
-    -- Note the EPOCH (i.e. 1970-01-01T00:00:00Z) here !
+    INSERT INTO common_topic (
+        organization,
+        last_timestamp
+    )
+    -- Note the EPOCH (i.e. 1970-01-01T00:00:00Z) here!
     -- This is because the `common` topic currently has no certificates
     -- Notes:
     -- - We don't use `NULL` here given this situation is very temporary (i.e. until the
@@ -84,10 +89,15 @@ new_common_topic AS (
     -- - We don't use `$created_on` here since a created-but-not-bootstrapped organization
     --   can be overwritten, and in this case the `common` topic would also have to be
     --   updated (which is not the case when using EPOCH).
-    SELECT _id, 'epoch' FROM new_organization
+    SELECT
+        _id AS organization,
+        'epoch' AS last_timestamp
+    FROM new_organization
     ON CONFLICT (organization) DO NOTHING
 )
-SELECT _id FROM new_organization
+
+SELECT new_organization._id
+FROM new_organization
 """
 )
 

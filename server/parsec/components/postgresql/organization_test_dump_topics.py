@@ -25,39 +25,39 @@ WITH my_organization AS (
 my_common AS (
     SELECT
         'common' AS topic,
-        NULL::text AS discriminant,
+        NULL::TEXT AS discriminant,
         last_timestamp
     FROM common_topic
-    WHERE organization = (SELECT _id FROM my_organization)
+    WHERE organization = (SELECT my_organization._id FROM my_organization)
     LIMIT 1
 ),
 
 my_sequester AS (
     SELECT
         'sequester' AS topic,
-        NULL::text AS discriminant,
+        NULL::TEXT AS discriminant,
         last_timestamp
     FROM sequester_topic
-    WHERE organization = (SELECT _id FROM my_organization)
+    WHERE organization = (SELECT my_organization._id FROM my_organization)
     LIMIT 1
 ),
 
 my_realms AS (
     SELECT
         'realm' AS topic,
-        {q_realm(select="realm_id", _id="realm_topic.realm")}::text AS discriminant,
+        {q_realm(select="realm_id", _id="realm_topic.realm")}::TEXT AS discriminant,  -- noqa: LT14
         last_timestamp
     FROM realm_topic
-    WHERE organization = (SELECT _id FROM my_organization)
+    WHERE organization = (SELECT my_organization._id FROM my_organization)
 ),
 
 my_shamir_recovery AS (
     SELECT
         'shamir_recovery' AS topic,
-        NULL::text AS discriminant,
+        NULL::TEXT AS discriminant,
         last_timestamp
     FROM shamir_recovery_topic
-    WHERE organization = (SELECT _id FROM my_organization)
+    WHERE organization = (SELECT my_organization._id FROM my_organization)
     LIMIT 1
 )
 
