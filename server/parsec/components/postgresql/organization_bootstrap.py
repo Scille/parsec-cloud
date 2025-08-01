@@ -39,7 +39,7 @@ WITH my_organization AS (
 my_locked_common_topic AS (
     SELECT last_timestamp
     FROM common_topic
-    WHERE organization = (SELECT _id FROM my_organization)
+    WHERE organization = (SELECT my_organization._id FROM my_organization)
     LIMIT 1
     FOR UPDATE
 )
@@ -48,7 +48,10 @@ SELECT
     (SELECT _id FROM my_organization) AS organization_internal_id,
     (SELECT is_expired FROM my_organization) AS organization_expired,
     (SELECT already_bootstrapped FROM my_organization) AS organization_already_bootstrapped,
-    (SELECT invalid_bootstrap_token FROM my_organization) AS organization_invalid_bootstrap_token
+    (SELECT invalid_bootstrap_token FROM my_organization) AS organization_invalid_bootstrap_token,
+    -- Ensure my_locked_common_topic is used here (even if last_common_certificate_timestamp is
+    -- not needed in the result), otherwise PostgreSQL will not execute it no row will be locked!
+    (SELECT last_timestamp FROM my_locked_common_topic) AS last_common_certificate_timestamp
 """)
 
 _q_update_organization = Q("""
@@ -88,7 +91,7 @@ new_user AS (
     RETURNING _id
 ),
 
-new_device AS (
+new_device AS (  -- noqa: ST03
     INSERT INTO device (
         organization,
         user_,
@@ -102,15 +105,15 @@ new_device AS (
     )
     (
         SELECT
-            $organization_internal_id,
-            new_user._id,
-            $device_id,
-            $device_label,
-            $verify_key,
-            $device_certificate,
-            $redacted_device_certificate,
-            NULL,
-            $bootstrapped_on
+            $organization_internal_id AS organization,
+            new_user._id AS user_,
+            $device_id AS device_id,
+            $device_label AS device_label,
+            $verify_key AS verify_key,
+            $device_certificate AS device_certificate,
+            $redacted_device_certificate AS redacted_device_certificate,
+            NULL AS device_certifier,
+            $bootstrapped_on AS created_on
         FROM new_user
     )
     RETURNING _id
@@ -120,8 +123,8 @@ updated_organization AS (
     UPDATE organization
     SET
         root_verify_key = $root_verify_key,
-        sequester_authority_certificate=$sequester_authority_certificate,
-        sequester_authority_verify_key_der=$sequester_authority_verify_key_der,
+        sequester_authority_certificate = $sequester_authority_certificate,
+        sequester_authority_verify_key_der = $sequester_authority_verify_key_der,
         _bootstrapped_on = $bootstrapped_on
     WHERE
         _id = $organization_internal_id
@@ -142,7 +145,6 @@ SELECT
     COALESCE((SELECT * FROM updated_organization), FALSE) AS update_organization_ok,
     COALESCE((SELECT * FROM updated_common_topic), FALSE) AS update_common_topic_ok
 """)
-
 
 _q_create_sequester_topic = Q("""
 INSERT INTO sequester_topic (organization, last_timestamp)

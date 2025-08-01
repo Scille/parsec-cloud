@@ -21,7 +21,6 @@ _q_get_organizations = Q("""
 SELECT
     organization_id,
     bootstrap_token,
-    (root_verify_key IS NOT NULL) AS is_bootstrapped,
     is_expired,
     active_users_limit,
     user_profile_outsider_allowed,
@@ -29,7 +28,8 @@ SELECT
     tos_updated_on,
     tos_per_locale_urls,
     allowed_client_agent,
-    account_vault_strategy
+    account_vault_strategy,
+    (root_verify_key IS NOT NULL) AS is_bootstrapped
 FROM organization
 ORDER BY organization_id
 """)
