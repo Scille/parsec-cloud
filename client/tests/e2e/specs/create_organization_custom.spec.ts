@@ -206,6 +206,8 @@ msTest('Go through custom org creation process', async ({ home }) => {
   await expect(modal.locator('.created-page').locator('.closeBtn')).toBeHidden();
   await modal.locator('.created-page-footer').locator('ion-button').click();
   await expect(modal).toBeHidden();
+  await home.waitForTimeout(1000);
+  await expect(home).toBeWorkspacePage();
 });
 
 msTest('Go through custom org creation process from bootstrap link', async ({ context }) => {
@@ -215,7 +217,8 @@ msTest('Go through custom org creation process from bootstrap link', async ({ co
 
   await page.locator('#create-organization-button').click();
   await page.locator('.popover-viewport').getByRole('listitem').nth(1).click();
-  await fillInputModal(page, getTestbedBootstrapAddr(page.orgInfo.name));
+  const uniqueOrgName = `${page.orgInfo.name}-${randomInt(2 ** 47)}`;
+  await fillInputModal(page, getTestbedBootstrapAddr(uniqueOrgName));
   const modal = page.locator('.create-organization-modal');
 
   const orgServerContainer = modal.locator('.organization-name-and-server-page');
@@ -226,7 +229,7 @@ msTest('Go through custom org creation process from bootstrap link', async ({ co
   await expect(orgNext).toNotHaveDisabledAttribute();
 
   await expect(orgServerContainer.locator('ion-input').nth(0)).toHaveTheClass('input-disabled');
-  await expect(orgServerContainer.locator('ion-input').nth(0).locator('input')).toHaveValue(page.orgInfo.name);
+  await expect(orgServerContainer.locator('ion-input').nth(0).locator('input')).toHaveValue(uniqueOrgName);
   await expect(orgServerContainer.locator('ion-input').nth(1)).toHaveTheClass('input-disabled');
   await expect(orgServerContainer.locator('ion-input').nth(1).locator('input')).toHaveValue(
     `parsec3://${new URL(page.orgInfo.serverAddr).host}`,
@@ -294,12 +297,19 @@ msTest('Go through custom org creation process from bootstrap link', async ({ co
     'Authentication method',
   ]);
   await expect(summaryContainer.locator('.summary-item__text')).toHaveText([
-    page.orgInfo.name,
+    uniqueOrgName,
     DEFAULT_USER_INFORMATION.name,
     DEFAULT_USER_INFORMATION.email,
     'Custom Server',
     'Password',
   ]);
   await summaryNext.click();
+  await page.waitForTimeout(1000);
+  await expect(summaryContainer).toBeHidden();
+  await expect(modal.locator('.created-page')).toBeVisible();
+  await expect(modal.locator('.created-page-footer').locator('ion-button')).toHaveText('Access to your organization');
+  await modal.locator('.created-page-footer').locator('ion-button').click();
+  await page.waitForTimeout(1000);
+  await expect(page).toBeWorkspacePage();
   await page.release();
 });

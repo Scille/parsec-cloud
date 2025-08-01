@@ -172,6 +172,8 @@ msTest('Go through saas org creation process', async ({ home }) => {
   await expect(modal.locator('.created-page').locator('.closeBtn')).toBeHidden();
   await modal.locator('.created-page-footer').locator('ion-button').click();
   await expect(modal).toBeHidden();
+  await home.waitForTimeout(1000);
+  await expect(home).toBeWorkspacePage();
 });
 
 for (const testInfo of [
@@ -333,7 +335,8 @@ msTest('Go through saas org creation process from bootstrap link', async ({ cont
   await expect(modal.locator('.created-page').locator('.closeBtn')).toBeHidden();
   await modal.locator('.created-page-footer').locator('ion-button').click();
   await expect(modal).toBeHidden();
-
+  await page.waitForTimeout(1000);
+  await expect(page).toBeWorkspacePage();
   await page.release();
 });
 

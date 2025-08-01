@@ -11,6 +11,7 @@ import {
   msTest,
   setupNewPage,
 } from '@tests/e2e/helpers';
+import { randomInt } from 'crypto';
 
 async function openCreateOrganizationModal(page: Page): Promise<Locator> {
   await page.locator('#create-organization-button').click();
@@ -127,6 +128,8 @@ msTest('Go through trial org creation process', async ({ home }) => {
   await expect(modal.locator('.created-page').locator('.closeBtn')).toBeHidden();
   await modal.locator('.created-page-footer').locator('ion-button').click();
   await expect(modal).toBeHidden();
+  await home.waitForTimeout(1000);
+  await expect(home).toBeWorkspacePage();
 });
 
 msTest('Go through trial org creation process from bootstrap link', async ({ context }) => {
@@ -137,7 +140,8 @@ msTest('Go through trial org creation process from bootstrap link', async ({ con
 
   await page.locator('#create-organization-button').click();
   await page.locator('.popover-viewport').getByRole('listitem').nth(1).click();
-  const bootstrapAddr = getTestbedBootstrapAddr('CustomOrg');
+  const uniqueOrgName = `${page.orgInfo.name}-${randomInt(2 ** 47)}`;
+  const bootstrapAddr = getTestbedBootstrapAddr(uniqueOrgName);
   await fillInputModal(page, bootstrapAddr);
   const modal = page.locator('.create-organization-modal');
 
@@ -182,5 +186,7 @@ msTest('Go through trial org creation process from bootstrap link', async ({ con
   await expect(modal.locator('.creation-page')).toBeHidden();
   await modal.locator('.created-page-footer').locator('ion-button').click();
   await expect(modal).toBeHidden();
+  await page.waitForTimeout(1000);
+  await expect(page).toBeWorkspacePage();
   await page.release();
 });
