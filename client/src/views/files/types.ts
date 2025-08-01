@@ -24,15 +24,15 @@ enum FileAction {
   SeeInExplorer = 'file-see-in-explorer',
 }
 
-enum ViewersAction {
+enum FileHandlerAction {
   Details = 'details',
   CopyPath = 'copyPath',
   Download = 'download',
   OpenWithSystem = 'openWithSystem',
 }
 
-function isViewersAction(value: any): value is ViewersAction {
-  return Object.values(ViewersAction).includes(value);
+function isFileHandlerAction(value: any): value is FileHandlerAction {
+  return Object.values(FileHandlerAction).includes(value);
 }
 
 function isFileAction(value: any): value is FileAction {
@@ -43,4 +43,4 @@ function isFolderGlobalAction(value: any): value is FolderGlobalAction {
   return Object.values(FolderGlobalAction).includes(value);
 }
 
-export { FileAction, FolderGlobalAction, ViewersAction, isFileAction, isFolderGlobalAction, isViewersAction };
+export { FileAction, FileHandlerAction, FolderGlobalAction, isFileAction, isFileHandlerAction, isFolderGlobalAction };

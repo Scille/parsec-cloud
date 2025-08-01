@@ -21,11 +21,16 @@ export default function useSidebarMenu(): any {
     computedWidth.value = hiddenWidth;
   }
 
+  function show(): void {
+    computedWidth.value = storedWidth.value;
+  }
+
   return {
     computedWidth,
     storedWidth,
     isVisible,
     reset,
     hide,
+    show,
   };
 }

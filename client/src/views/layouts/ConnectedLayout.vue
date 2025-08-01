@@ -2,7 +2,10 @@
 
 <template>
   <!-- Don't load children components before we inject everything -->
-  <ion-page v-if="initialized">
+  <ion-page
+    v-if="initialized"
+    class="connected-layout"
+  >
     <ion-router-outlet />
   </ion-page>
 </template>

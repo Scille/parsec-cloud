@@ -192,7 +192,7 @@ import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { DateTime } from 'luxon';
 import { getFileIcon } from '@/common/file';
 import { copyPathLinkToClipboard } from '@/components/files';
-import { askDownloadConfirmation, downloadEntry, FileDetailsModal, ViewersAction } from '@/views/files';
+import { askDownloadConfirmation, downloadEntry, FileDetailsModal, FileHandlerAction } from '@/views/files';
 import useHeaderControl from '@/services/headerControl';
 import { Env } from '@/services/environment';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
@@ -588,18 +588,18 @@ async function openSmallDisplayActionMenu(): Promise<void> {
   const { data } = await modal.onDidDismiss();
   if (data !== undefined) {
     switch (data.action) {
-      case ViewersAction.Details:
+      case FileHandlerAction.Details:
         await showDetails();
         break;
-      case ViewersAction.CopyPath:
+      case FileHandlerAction.CopyPath:
         if (contentInfo.value) {
           await copyPath(contentInfo.value.path);
         }
         break;
-      case ViewersAction.Download:
+      case FileHandlerAction.Download:
         await downloadFile();
         break;
-      case ViewersAction.OpenWithSystem:
+      case FileHandlerAction.OpenWithSystem:
         if (contentInfo.value) {
           await openWithSystem(contentInfo.value.path);
         }
