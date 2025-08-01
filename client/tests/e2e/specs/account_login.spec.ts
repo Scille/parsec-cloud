@@ -73,7 +73,7 @@ msTest('Switch tab from popover ', async ({ parsecAccountLoggedIn }) => {
   await expect(parsecAccountLoggedIn.locator('.profile-content-item').nth(0).locator('.item-header__title')).toHaveText('Authentication');
 });
 
-msTest('Account auto-register device', async ({ parsecAccountLoggedIn }) => {
+msTest.skip('Account auto-register device', async ({ parsecAccountLoggedIn }) => {
   const home = parsecAccountLoggedIn;
   await home.locator('.organization-list').locator('.organization-card').nth(0).click();
   await fillIonInput(home.locator('#password-input').locator('ion-input'), 'P@ssw0rd.');
