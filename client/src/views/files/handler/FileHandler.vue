@@ -56,7 +56,7 @@
             >
               <ion-button
                 class="file-handler-topbar-buttons__item"
-                id="file-viewers-details"
+                id="file-handler-details"
                 @click="showDetails"
                 v-if="isDesktop()"
                 :disabled="!handlerReadyRef"
@@ -69,7 +69,7 @@
               </ion-button>
               <ion-button
                 class="file-handler-topbar-buttons__item"
-                id="file-viewers-copy-link"
+                id="file-handler-copy-link"
                 @click="copyPath(contentInfo.path)"
                 v-if="isWeb()"
                 :disabled="!handlerReadyRef"
@@ -82,10 +82,14 @@
               </ion-button>
               <ion-button
                 class="file-handler-topbar-buttons__item"
+                id="file-handler-open-editor"
                 @click="openEditor(contentInfo.path)"
                 v-if="!atDateTime && handlerMode === FileHandlerMode.View"
               >
-                <ion-icon :icon="create" />
+                <ion-icon
+                  :icon="create"
+                  class="item-icon"
+                />
                 {{ $msTranslate('fileViewers.openInEditor') }}
               </ion-button>
               <ion-button
@@ -102,7 +106,7 @@
               </ion-button>
               <ion-button
                 class="file-handler-topbar-buttons__item"
-                id="file-viewers-open-with-system"
+                id="file-handler-open-with-system"
                 @click="openWithSystem(contentInfo.path)"
                 v-show="isDesktop() && !atDateTime"
                 :disabled="!handlerReadyRef"
@@ -182,7 +186,7 @@ import {
 } from 'megashark-lib';
 import { ref, Ref, inject, onMounted, onUnmounted, type Component, shallowRef } from 'vue';
 import { IonPage, IonContent, IonButton, IonText, IonIcon, modalController } from '@ionic/vue';
-import { link, informationCircle, open, chevronUp, chevronDown, ellipsisHorizontal } from 'ionicons/icons';
+import { link, informationCircle, open, chevronUp, chevronDown, ellipsisHorizontal, create } from 'ionicons/icons';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import {
   currentRouteIs,
@@ -200,7 +204,7 @@ import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { DateTime } from 'luxon';
 import { getFileIcon } from '@/common/file';
 import { copyPathLinkToClipboard } from '@/components/files';
-import { downloadEntry, FileDetailsModal, openDownloadConfirmationModal, ViewersAction } from '@/views/files';
+import { downloadEntry, FileDetailsModal, FileHandlerAction, openDownloadConfirmationModal } from '@/views/files';
 import useHeaderControl from '@/services/headerControl';
 import { Env } from '@/services/environment';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
@@ -224,6 +228,7 @@ const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu, hide: hideSide
 const handlerReadyRef = ref(false);
 const handlerComponent: Ref<Component | null> = shallowRef(null);
 const handlerMode = ref<FileHandlerMode | undefined>(undefined);
+const sidebarMenuVisibleOnMounted = ref(false);
 
 const cancelRouteWatch = watchRoute(async () => {
   if (!currentRouteIs(Routes.FileHandler)) {
@@ -438,20 +443,24 @@ function loadComponent(): void {
     throw new Error(`No component for file with extension '${detectedFileType.value!.extension}'`);
   }
 }
-
 onMounted(async () => {
   handlerMode.value = getFileHandlerMode();
   await loadFile();
   // Set header hidden by default when entering handler
   hideHeader();
-  hideSidebarMenu();
+  if (isSidebarMenuVisible()) {
+    hideSidebarMenu();
+    sidebarMenuVisibleOnMounted.value = true;
+  }
 });
 
 onUnmounted(async () => {
   cancelRouteWatch();
   // Ensure header is visible when leaving handler
   showHeader();
-  showSidebarMenu();
+  if (sidebarMenuVisibleOnMounted.value) {
+    showSidebarMenu();
+  }
 });
 
 async function openWithSystem(path: FsPath): Promise<boolean> {
@@ -602,18 +611,18 @@ async function openSmallDisplayActionMenu(): Promise<void> {
   const { data } = await modal.onDidDismiss();
   if (data !== undefined) {
     switch (data.action) {
-      case ViewersAction.Details:
+      case FileHandlerAction.Details:
         await showDetails();
         break;
-      case ViewersAction.CopyPath:
+      case FileHandlerAction.CopyPath:
         if (contentInfo.value) {
           await copyPath(contentInfo.value.path);
         }
         break;
-      case ViewersAction.Download:
+      case FileHandlerAction.Download:
         await downloadFile();
         break;
-      case ViewersAction.OpenWithSystem:
+      case FileHandlerAction.OpenWithSystem:
         if (contentInfo.value) {
           await openWithSystem(contentInfo.value.path);
         }
@@ -645,6 +654,7 @@ async function openSmallDisplayActionMenu(): Promise<void> {
       background: var(--parsec-color-light-secondary-white);
 
       #trigger-toggle-menu-button {
+        flex-shrink: 0;
         --fill-color: var(--parsec-color-light-secondary-grey);
         padding: 0.625rem;
         border-radius: var(--parsec-radius-12);
@@ -696,6 +706,7 @@ async function openSmallDisplayActionMenu(): Promise<void> {
         margin-left: auto;
         display: flex;
         gap: 0.5rem;
+        flex-shrink: 0;
 
         &:hover {
           border-color: var(--parsec-color-light-primary-100);

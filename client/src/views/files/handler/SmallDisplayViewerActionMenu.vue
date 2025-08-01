@@ -6,9 +6,8 @@
       <ion-list class="menu-list menu-list-small list-group">
         <ion-item
           button
-          @click="onClick(ViewersAction.Details)"
+          @click="onClick(FileHandlerAction.Details)"
           class="ion-no-padding list-group-item"
-          v-if="isDesktop()"
         >
           <ion-icon
             class="list-group-item__icon"
@@ -20,9 +19,8 @@
         </ion-item>
         <ion-item
           button
-          @click="onClick(ViewersAction.CopyPath)"
+          @click="onClick(FileHandlerAction.CopyPath)"
           class="ion-no-padding list-group-item"
-          v-if="isWeb()"
         >
           <ion-icon
             class="list-group-item__icon"
@@ -34,7 +32,7 @@
         </ion-item>
         <ion-item
           button
-          @click="onClick(ViewersAction.Download)"
+          @click="onClick(FileHandlerAction.Download)"
           class="ion-no-padding list-group-item"
           v-if="isWeb()"
         >
@@ -48,7 +46,7 @@
         </ion-item>
         <ion-item
           button
-          @click="onClick(ViewersAction.OpenWithSystem)"
+          @click="onClick(FileHandlerAction.OpenWithSystem)"
           class="ion-no-padding list-group-item"
           v-show="isDesktop() && !atDateTime"
         >
@@ -72,11 +70,11 @@ import { DateTime } from '@/parsec';
 import { ref, Ref } from 'vue';
 import { IonContent, IonIcon, IonItem, IonText, IonList, IonPage, modalController } from '@ionic/vue';
 import { informationCircle, link, open } from 'ionicons/icons';
-import { ViewersAction } from '@/views/files';
+import { FileHandlerAction } from '@/views/files';
 
 const atDateTime: Ref<DateTime | undefined> = ref(undefined);
 
-function onClick(action: ViewersAction): Promise<boolean> {
+function onClick(action: FileHandlerAction): Promise<boolean> {
   return modalController.dismiss({ action: action });
 }
 </script>
