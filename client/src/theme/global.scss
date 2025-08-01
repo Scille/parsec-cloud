@@ -6,6 +6,10 @@
 
 /**** Global CSS overloads ****/
 // scroll behavior: user(revoked, active, invitation)/folder/workspace
+.connected-layout {
+  background: var(--parsec-color-light-secondary-inversed-contrast);
+}
+
 .content-scroll {
   --overflow: hidden;
 
