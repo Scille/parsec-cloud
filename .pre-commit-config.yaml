@@ -190,7 +190,6 @@ repos:
         # TODO: currently SQL embedded in Python server code is dirty, so we ignore it
         exclude: |
             (?x)^(
-                server/parsec/components/postgresql/invite.py|
                 server/parsec/components/postgresql/organization.*|
                 server/parsec/components/postgresql/pki.py|
                 server/parsec/components/postgresql/queries.*|
