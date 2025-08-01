@@ -12,6 +12,7 @@ msTest('File viewer page default state', async ({ documents }) => {
   await expect(documents).toBeViewerPage();
   await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_.-]+$/);
   await expect(documents.locator('#connected-header .topbar')).toBeHidden();
+  await expect(documents.locator('.sidebar')).toBeHidden();
 });
 
 msTest('File viewer page details', async ({ documents }) => {
@@ -24,7 +25,7 @@ msTest('File viewer page details', async ({ documents }) => {
   await expect(documents).toBeViewerPage();
   await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_.-]+$/);
   const buttons = documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-button');
-  await expect(buttons).toHaveCount(5);
+  await expect(buttons).toHaveCount(6);
 });
 
 for (const displaySize of ['small', 'large']) {
@@ -53,7 +54,7 @@ for (const displaySize of ['small', 'large']) {
       await expect(fileViewerToggleMenuButton).toBeHidden();
     }
 
-    await documents.locator('.topbar-left').locator('.back-button').click();
+    await documents.locator('.topbar-left-content').locator('.back-button').click();
     await entries.nth(3).dblclick();
     await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
     await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
@@ -61,23 +62,25 @@ for (const displaySize of ['small', 'large']) {
     await expect(documents).toBeViewerPage();
     const doc2Name = (await documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text').textContent()) ?? '';
 
-    const sidebar = documents.locator('.sidebar');
-    const recentDocs = sidebar.locator('#sidebar-files').locator('.list-sidebar-content').getByRole('listitem');
-    await expect(recentDocs).toHaveCount(2);
-    await expect(recentDocs.nth(0)).toHaveText(doc2Name);
-    await expect(recentDocs.nth(1)).toHaveText(doc1Name);
-
-    await recentDocs.nth(1).click();
-    await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
-    await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
-    await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
-    await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(doc1Name);
-
-    await recentDocs.nth(1).click();
-    await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
-    await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
-    await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
-    await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(doc2Name);
+    if (displaySize === 'large') {
+      const sidebar = documents.locator('.sidebar');
+      const recentDocs = sidebar.locator('#sidebar-files').locator('.list-sidebar-content').getByRole('listitem');
+      await expect(recentDocs).toHaveCount(2);
+      await expect(recentDocs.nth(0)).toHaveText(doc2Name);
+      await expect(recentDocs.nth(1)).toHaveText(doc1Name);
+      const toggleSidebarButton = documents.locator('.file-handler-topbar').locator('#trigger-toggle-menu-button');
+      await toggleSidebarButton.click();
+      await recentDocs.nth(1).click();
+      await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
+      await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
+      await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
+      await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(doc1Name);
+      await recentDocs.nth(1).click();
+      await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
+      await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
+      await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
+      await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(doc2Name);
+    }
   });
 
   msTest(`File viewer download ${displaySize} display`, async ({ documents }) => {
@@ -90,6 +93,8 @@ for (const displaySize of ['small', 'large']) {
       /^[A-Za-z0-9_-]+\.pdf$/,
     );
 
+    const modal = documents.locator('.download-warning-modal');
+
     // showSaveFilePicker is not yet supported by Playwright: https://github.com/microsoft/playwright/issues/31162
     if (displaySize === 'small') {
       const actionMenuButton = documents.locator('.file-handler-topbar-buttons__item.action-menu');
@@ -99,23 +104,17 @@ for (const displaySize of ['small', 'large']) {
       await expect(documents.locator('.file-handler-topbar-buttons')).toBeHidden();
       await actionMenuButton.click();
 
-      await expect(documents.locator('.list-group-item__label-small').nth(1)).toBeVisible();
-      await documents.locator('.list-group-item__label-small').nth(1).click();
-      const modalDownload = documents.locator('.download-warning-modal');
+      await expect(documents.locator('.list-group-item__label-small').nth(2)).toBeVisible();
+      await documents.locator('.list-group-item__label-small').nth(2).click();
 
       await expect(actionMenuModal).toBeVisible();
-      await modalDownload.locator('#next-button').click();
-      await expect(modalDownload).toBeHidden();
+      await modal.locator('#next-button').click();
     } else {
-      await documents.locator('.file-handler-topbar-buttons').locator('ion-button').nth(1).click();
+      await documents.locator('.file-handler-topbar-buttons__item').nth(2).click();
+      await modal.locator('#next-button').click();
     }
 
-    const modal = documents.locator('.download-warning-modal');
-
-    await expect(modal).toBeVisible();
-    await modal.locator('#next-button').click();
     await expect(modal).toBeHidden();
-
     await documents.waitForTimeout(1000);
 
     const uploadMenu = documents.locator('.upload-menu');
@@ -149,14 +148,17 @@ msTest('File viewer header control functionality', async ({ documents }) => {
   await expect(documents.locator('#connected-header .topbar')).toBeHidden();
 
   const toggleButton = documents.locator('.file-handler-topbar-buttons__item.toggle-menu');
+  const toggleSidebarButton = documents.locator('.file-handler-topbar').locator('#trigger-toggle-menu-button');
   await expect(toggleButton).toBeVisible();
   await expect(toggleButton).toContainText('Show menu');
 
   await toggleButton.click();
+  await expect(toggleSidebarButton).toBeHidden();
   await expect(documents.locator('#connected-header .topbar')).toBeVisible();
   await expect(toggleButton).toContainText('Hide menu');
 
   await toggleButton.click();
+  await expect(toggleSidebarButton).toBeVisible();
   await expect(documents.locator('#connected-header .topbar')).toBeHidden();
   await expect(toggleButton).toContainText('Show menu');
 
@@ -168,46 +170,17 @@ msTest('File viewer header control functionality', async ({ documents }) => {
   await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
   await expect(documents.locator('#connected-header .topbar')).toBeHidden();
 
+  await toggleSidebarButton.click();
+  await expect(documents.locator('.sidebar')).toBeVisible();
+  await toggleSidebarButton.click();
+  await expect(documents.locator('.sidebar')).toBeHidden();
+
   // Test leaving file viewer restores header
-  await documents.goBack();
+  const backButton = documents.locator('.file-handler-topbar').locator('.back-button');
+  await expect(backButton).toBeVisible();
+  await backButton.click();
   await expect(documents.locator('#connected-header .topbar')).toBeVisible();
-});
-
-msTest('File viewer download', async ({ documents }) => {
-  await openFileType(documents, 'pdf');
-  await expect(documents).toBeViewerPage();
-  await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.pdf$/);
-
-  // showSaveFilePicker is not yet supported by Playwright: https://github.com/microsoft/playwright/issues/31162
-  await documents.locator('.file-handler-topbar-buttons').locator('ion-button').nth(2).click();
-
-  const modal = documents.locator('.download-warning-modal');
-
-  await expect(modal).toBeVisible();
-  await modal.locator('#next-button').click();
-  await expect(modal).toBeHidden();
-
-  await documents.waitForTimeout(1000);
-
-  const uploadMenu = documents.locator('.upload-menu');
-  await expect(uploadMenu).toBeVisible();
-  const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
-  await expect(tabs.locator('.text-counter')).toHaveText(['0', '9', '0']);
-  await expect(tabs.nth(0)).not.toHaveTheClass('active');
-  await expect(tabs.nth(1)).toHaveTheClass('active');
-  await expect(tabs.nth(2)).not.toHaveTheClass('active');
-
-  const container = uploadMenu.locator('.element-container');
-  const elements = container.locator('.element');
-  await expect(elements).toHaveCount(9);
-  await expect(elements.nth(0).locator('.element-details__name')).toHaveText(/^[A-Za-z0-9_-]+\.pdf$/);
-  await expect(elements.nth(0).locator('.element-details-info__size')).toHaveText('76.9 KB');
-
-  const content = await getDownloadedFile(documents);
-  expect(content).toBeTruthy();
-  if (content) {
-    expect(content.length).toEqual(78731);
-  }
+  await expect(documents.locator('.sidebar')).toBeVisible();
 });
 
 msTest('Audio viewer', async ({ documents }) => {

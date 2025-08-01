@@ -110,12 +110,7 @@ msTest('Test files options tab menu', async ({ documents, context }) => {
   await expect(documents.locator('.file-handler-topbar').locator('.file-handler-topbar__title')).toHaveText('audio.mp3');
 
   // Ensure the main header is visible
-  const isTopbarVisible = await documents.locator('#connected-header .topbar').isVisible();
-  const fileViewerButton = documents.locator('.file-handler-topbar-buttons__item.toggle-menu');
-  if (!isTopbarVisible && fileViewerButton) {
-    await fileViewerButton.click();
-  }
-  await documents.locator('#connected-header').locator('.topbar-left').locator('.back-button-container').click();
+  await documents.locator('.file-handler-topbar').locator('.topbar-left-content').locator('.back-button').click();
   await expect(documents).toBeDocumentPage();
 
   // `Copy` button

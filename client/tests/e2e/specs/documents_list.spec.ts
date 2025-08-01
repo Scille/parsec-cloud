@@ -366,6 +366,7 @@ msTest('Show recently opened files in sidebar', async ({ documents }) => {
   // One file added
   await expect(sidebarRecentFiles.locator('.sidebar-item')).toHaveText([fileName ?? '']);
 
+  await documents.locator('.file-handler-topbar').locator('#trigger-toggle-menu-button').click();
   await sidebarRecentFiles.locator('.list-sidebar-header__toggle').click();
   await expect(sidebarRecentFiles.locator('.list-sidebar-content')).toBeHidden();
   await sidebarRecentFiles.locator('.list-sidebar-header__toggle').click();
