@@ -20,14 +20,14 @@ _q_get_all_block_meta = Q(
     f"""
 SELECT
     block_id,
-    {q_realm(_id="realm", select="realm.realm_id")} AS realm_id,
-    {q_device(_id="author", select="device_id")} AS author,
     size,
     created_on,
-    key_index
+    key_index,
+    {q_realm(_id="block.realm", select="realm_id")} AS realm_id,  -- noqa: LT02,LT14
+    {q_device(_id="block.author", select="device_id")} AS author  -- noqa: LT02,LT14
 FROM block
 WHERE
-    organization = {q_organization_internal_id("$organization_id")}
+    organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT14
 """
 )
 
