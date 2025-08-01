@@ -12,7 +12,7 @@ const enum CanvasStates {
 msTest('PDF viewer: content', async ({ documents }) => {
   await openFileType(documents, 'pdf');
   await expect(documents).toBeViewerPage();
-  await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.pdf$/);
+  await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.pdf$/);
 
   const wrapper = documents.locator('.file-viewer-wrapper');
   const pages = wrapper.locator('.pdf-container').locator('canvas');

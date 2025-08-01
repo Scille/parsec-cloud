@@ -5,22 +5,40 @@
     <ion-content :fullscreen="true">
       <div class="container">
         <ms-spinner
-          class="file-viewer"
+          class="file-handler"
           title="fileViewers.retrievingFileContent"
           v-show="!loaded"
         />
         <div
-          v-if="loaded && viewerComponent && contentInfo"
+          v-if="loaded && contentInfo"
           @click.prevent="onClick"
-          class="file-viewer"
+          class="file-handler"
         >
-          <!-- file-viewer topbar -->
-          <div class="file-viewer-topbar">
+          <!-- file-handler topbar -->
+          <div class="file-handler-topbar">
+            <!-- icon visible when menu is hidden -->
+            <ms-image
+              v-if="!isMobile() && isLargeDisplay && !isHeaderVisible()"
+              slot="start"
+              id="trigger-toggle-menu-button"
+              :image="SidebarToggle"
+              @click="isSidebarMenuVisible() ? hideSidebarMenu() : resetSidebarMenu()"
+            />
+            <div
+              class="topbar-left-content"
+              ref="backBlock"
+              v-if="!isHeaderVisible()"
+            >
+              <header-back-button
+                :short="true"
+                class="file-handler-topbar__back-button"
+              />
+            </div>
             <ms-image
               :image="getFileIcon(contentInfo.fileName)"
               class="file-icon"
             />
-            <div class="file-viewer-topbar__title">
+            <div class="file-handler-topbar__title">
               <ion-text class="title-h3">
                 {{ contentInfo.fileName }}
               </ion-text>
@@ -32,9 +50,9 @@
               </ion-text>
             </div>
             <!-- Here we could put the file action buttons -->
-            <ion-buttons class="file-viewer-topbar-buttons">
+            <ion-buttons class="file-handler-topbar-buttons">
               <ion-button
-                class="file-viewer-topbar-buttons__item"
+                class="file-handler-topbar-buttons__item"
                 @click="showDetails"
                 v-if="isDesktop()"
               >
@@ -42,7 +60,7 @@
                 {{ $msTranslate('fileViewers.details') }}
               </ion-button>
               <ion-button
-                class="file-viewer-topbar-buttons__item"
+                class="file-handler-topbar-buttons__item"
                 @click="copyPath(contentInfo.path)"
                 v-if="isWeb()"
               >
@@ -50,8 +68,8 @@
                 {{ $msTranslate('fileViewers.copyLink') }}
               </ion-button>
               <ion-button
-                class="file-viewer-topbar-buttons__item"
-                @click="downloadFile"
+                class="file-handler-topbar-buttons__item"
+                @click="downloadFile(contentInfo.path)"
                 v-if="isWeb()"
               >
                 <ms-image
@@ -61,7 +79,7 @@
                 {{ $msTranslate('fileViewers.download') }}
               </ion-button>
               <ion-button
-                class="file-viewer-topbar-buttons__item"
+                class="file-handler-topbar-buttons__item"
                 @click="openWithSystem(contentInfo.path)"
                 v-show="isDesktop() && !atDateTime"
               >
@@ -69,20 +87,18 @@
                 {{ $msTranslate('fileViewers.openWithDefault') }}
               </ion-button>
               <ion-button
-                class="file-viewer-topbar-buttons__item toggle-menu"
-                @click="toggleHeader"
+                class="file-handler-topbar-buttons__item toggle-menu"
+                @click="toggleMainHeader"
+                :class="{ 'header-visible': isHeaderVisible() }"
               >
-                <ion-icon :icon="isHeaderVisible() ? chevronUp : chevronDown" />
                 {{ $msTranslate(isHeaderVisible() ? 'fileViewers.hideMenu' : 'fileViewers.showMenu') }}
+                <ion-icon :icon="isHeaderVisible() ? chevronUp : chevronDown" />
               </ion-button>
             </ion-buttons>
           </div>
 
-          <!-- file-viewer component -->
-          <component
-            :is="viewerComponent"
-            :content-info="contentInfo"
-          />
+          <!-- file-handler sub-component -->
+          <slot @handlerReady="handlerReady = true" />
         </div>
       </div>
     </ion-content>
@@ -99,6 +115,7 @@ import {
   Path,
   readFile,
   getSystemPath,
+  createReadStream,
   isDesktop,
   isWeb,
   WorkspaceHistory,
@@ -106,38 +123,45 @@ import {
   WorkspaceHandle,
   EntryName,
   getWorkspaceInfo,
+  isMobile,
   WorkspaceHistoryEntryStatFile,
 } from '@/parsec';
+import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import { IonPage, IonContent, IonButton, IonText, IonIcon, IonButtons, modalController } from '@ionic/vue';
-import { link, informationCircle, open, chevronUp, chevronDown } from 'ionicons/icons';
-import { Base64, MsSpinner, MsImage, I18n, DownloadIcon, askQuestion, Answer, MsModalResult } from 'megashark-lib';
-import { ref, Ref, type Component, inject, onMounted, shallowRef, onUnmounted } from 'vue';
-import { ImageViewer, VideoViewer, SpreadsheetViewer, DocumentViewer, AudioViewer, TextViewer, PdfViewer } from '@/views/viewers';
+import { link, informationCircle, open, chevronDown, chevronUp } from 'ionicons/icons';
+import { Base64, MsSpinner, MsImage, I18n, DownloadIcon, askQuestion, Answer, SidebarToggle, useWindowSize } from 'megashark-lib';
+import { ref, Ref, inject, onMounted, onUnmounted } from 'vue';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, Routes, watchRoute } from '@/router';
-import { DetectedFileType, FileContentType } from '@/common/fileTypes';
-import { FileContentInfo } from '@/views/viewers/utils';
-import { Env } from '@/services/environment';
+import { DetectedFileType } from '@/common/fileTypes';
+import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { DateTime } from 'luxon';
 import { getFileIcon } from '@/common/file';
 import { copyPathLinkToClipboard } from '@/components/files';
-import { askDownloadConfirmation, downloadEntry, FileDetailsModal } from '@/views/files';
+import { FileDetailsModal } from '@/views/files';
+import { showSaveFilePicker } from 'native-file-system-adapter';
 import useHeaderControl from '@/services/headerControl';
-import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
-import { StorageManagerKey, StorageManager } from '@/services/storageManager';
+import { Env } from '@/services/environment';
+import useSidebarMenu from '@/services/sidebarMenu';
 
-const storageManager: StorageManager = inject(StorageManagerKey)!;
-const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
+const { isLargeDisplay } = useWindowSize();
 const informationManager: InformationManager = inject(InformationManagerKey)!;
-const viewerComponent: Ref<Component | null> = shallowRef(null);
 const contentInfo: Ref<FileContentInfo | undefined> = ref(undefined);
 const detectedFileType = ref<DetectedFileType | null>(null);
 const loaded = ref(false);
 const atDateTime: Ref<DateTime | undefined> = ref(undefined);
-const { isVisible: isHeaderVisible, toggleHeader, hideHeader, showHeader } = useHeaderControl();
+const fileInfoId = ref<string | undefined>(undefined);
+const { isHeaderVisible, toggleHeader: toggleMainHeader, showHeader, hideHeader } = useHeaderControl();
+const handlerReady = ref(false);
+const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu, hide: hideSidebarMenu, show: showSidebarMenu } = useSidebarMenu();
+
+const emits = defineEmits<{
+  (e: 'fileLoaded', contentInfo: FileContentInfo, fileInfo: DetectedFileType, fileInfoId: string): void;
+}>();
 
 const cancelRouteWatch = watchRoute(async () => {
-  if (!currentRouteIs(Routes.Viewer)) {
+  console.log('FileHandler: route changed, reloading file');
+  if (!currentRouteIs(Routes.Editor) && !currentRouteIs(Routes.Viewer)) {
     return;
   }
 
@@ -146,6 +170,7 @@ const cancelRouteWatch = watchRoute(async () => {
 
   // Same file, no need to reload
   if (contentInfo.value && contentInfo.value.path === getDocumentPath() && atDateTime.value?.toMillis() === timestamp) {
+    console.log('FileHandler: no need to reload, same file and timestamp');
     return;
   }
   await loadFile();
@@ -197,6 +222,7 @@ async function _getFileInfoAt(
         }
         offset += readResult.value.byteLength;
       }
+      fileInfoId.value = statsResult.value.id;
       return info;
     } catch (e: any) {
       window.electronAPI.log('error', `Can't view the file: ${e.toString()}`);
@@ -232,6 +258,7 @@ async function _getFileInfo(
     fileName: fileName,
     path: path,
   };
+
   const fd = openResult.value;
   try {
     let loop = true;
@@ -248,6 +275,7 @@ async function _getFileInfo(
       }
       offset += readResult.value.byteLength;
     }
+    fileInfoId.value = statsResult.value.id;
     return info;
   } catch (e: any) {
     window.electronAPI.log('error', `Can't view the file: ${e.toString()}`);
@@ -261,7 +289,7 @@ async function loadFile(): Promise<void> {
   contentInfo.value = undefined;
   detectedFileType.value = null;
   atDateTime.value = undefined;
-  viewerComponent.value = null;
+  handlerReady.value = false;
   const workspaceHandle = getWorkspaceHandle();
   if (!workspaceHandle) {
     window.electronAPI.log('error', 'Failed to retrieve workspace handle');
@@ -296,7 +324,7 @@ async function loadFile(): Promise<void> {
 
   if (!info) {
     contentInfo.value = undefined;
-    viewerComponent.value = null;
+    handlerReady.value = false;
     informationManager.present(
       new Information({
         message: 'fileViewers.genericError',
@@ -311,54 +339,28 @@ async function loadFile(): Promise<void> {
     return;
   }
 
-  const component = await getComponent(fileInfo);
-  if (!component) {
-    window.electronAPI.log('error', `No component for file with extension '${fileInfo.extension}'`);
-    informationManager.present(
-      new Information({
-        message: 'fileViewers.genericError',
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-    return;
-  }
+  // Here call sub component on load event
   contentInfo.value = info;
+  emits('fileLoaded', info, fileInfo, fileInfoId.value ?? '');
   if (timestamp) {
     atDateTime.value = DateTime.fromMillis(timestamp);
   }
-  viewerComponent.value = component;
   loaded.value = true;
 }
 
 onMounted(async () => {
-  hideHeader();
   await loadFile();
+  // Set header hidden by default when entering handler
+  hideHeader();
+  hideSidebarMenu();
 });
 
 onUnmounted(async () => {
   cancelRouteWatch();
+  // Ensure header is visible when leaving handler
   showHeader();
+  showSidebarMenu();
 });
-
-async function getComponent(fileInfo: DetectedFileType): Promise<Component | undefined> {
-  switch (fileInfo.type) {
-    case FileContentType.Image:
-      return ImageViewer;
-    case FileContentType.Video:
-      return VideoViewer;
-    case FileContentType.Spreadsheet:
-      return SpreadsheetViewer;
-    case FileContentType.Audio:
-      return AudioViewer;
-    case FileContentType.Document:
-      return DocumentViewer;
-    case FileContentType.Text:
-      return TextViewer;
-    case FileContentType.PdfDocument:
-      return PdfViewer;
-  }
-}
 
 async function openWithSystem(path: FsPath): Promise<boolean> {
   if (!isDesktop()) {
@@ -452,18 +454,10 @@ async function onClick(event: MouseEvent): Promise<void> {
   }
 }
 
-async function downloadFile(): Promise<void> {
+async function downloadFile(path: FsPath): Promise<void> {
   const workspaceHandle = getWorkspaceHandle();
   if (!workspaceHandle) {
     window.electronAPI.log('error', 'Failed to retrieve workspace handle');
-    return;
-  }
-  const workspaceInfoResult = await getWorkspaceInfo(workspaceHandle);
-  if (!workspaceInfoResult.ok) {
-    window.electronAPI.log(
-      'error',
-      `Failed to retrieve workspace info: ${workspaceInfoResult.error.tag} (${workspaceInfoResult.error.error})`,
-    );
     return;
   }
 
@@ -472,26 +466,17 @@ async function downloadFile(): Promise<void> {
     return;
   }
 
-  const config = await storageManager.retrieveConfig();
-  if (!config.disableDownloadWarning) {
-    const { result, noReminder } = await askDownloadConfirmation();
+  try {
+    const saveHandle = await showSaveFilePicker({
+      _preferPolyfill: false,
+      suggestedName: contentInfo.value.fileName,
+    });
 
-    if (noReminder) {
-      config.disableDownloadWarning = true;
-      await storageManager.storeConfig(config);
-    }
-    if (result !== MsModalResult.Confirm) {
-      return;
-    }
+    const stream = await createReadStream(workspaceHandle, path);
+    await stream.pipeTo(await saveHandle.createWritable());
+  } catch (e: any) {
+    window.electronAPI.log('error', `Failed to download file: ${e.toString()}`);
   }
-  await downloadEntry({
-    name: contentInfo.value.fileName,
-    workspaceHandle: workspaceHandle,
-    workspaceId: workspaceInfoResult.value.id,
-    path: contentInfo.value.path,
-    informationManager: informationManager,
-    fileOperationManager: fileOperationManager,
-  });
 }
 </script>
 
@@ -500,9 +485,8 @@ async function downloadFile(): Promise<void> {
   height: 100%;
   background-color: var(--parsec-color-light-secondary-premiere);
 
-  .file-viewer {
+  .file-handler {
     display: flex;
-    gap: 1rem;
     flex-direction: column;
     height: 100%;
     justify-content: center;
@@ -514,6 +498,17 @@ async function downloadFile(): Promise<void> {
       padding: 1rem 2rem;
       border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
       background: var(--parsec-color-light-secondary-white);
+
+      #trigger-toggle-menu-button {
+        --fill-color: var(--parsec-color-light-secondary-grey);
+        padding: 0.625rem;
+        border-radius: var(--parsec-radius-12);
+        cursor: pointer;
+        &:hover {
+          background: var(--parsec-color-light-secondary-premiere);
+          --fill-color: var(--parsec-color-light-secondary-hard-grey);
+        }
+      }
 
       .file-icon {
         width: 2rem;
@@ -574,13 +569,23 @@ async function downloadFile(): Promise<void> {
 
         .toggle-menu {
           position: relative;
-          margin-left: 0.5rem;
+          margin-left: 1.5rem;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+          &::part(native) {
+            --background-hover: none;
+            padding: 0;
+          }
+
+          ion-icon {
+            margin-inline: 0.5rem 0;
+          }
 
           &::before {
             content: '';
             position: absolute;
             top: 50%;
-            left: -0.5rem;
+            left: -1.5rem;
             transform: translateY(-50%);
             width: 1px;
             height: 1.5rem;
@@ -590,8 +595,8 @@ async function downloadFile(): Promise<void> {
           &::after {
             content: '';
             position: absolute;
-            left: 1.125rem;
-            bottom: 0.25rem;
+            left: 0;
+            bottom: -0.25rem;
             width: 0;
             height: 1px;
             background: var(--parsec-color-light-secondary-text);
@@ -603,7 +608,7 @@ async function downloadFile(): Promise<void> {
 
             &::after {
               background: var(--parsec-color-light-secondary-text);
-              width: calc(100% - 2.25rem);
+              width: calc(100% - 1.5rem);
             }
           }
         }

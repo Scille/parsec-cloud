@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import FolderSelectionModal from '@/components/files/FolderSelectionModal.vue';
+import FolderSelectionModal from '@/components/files/explorer/FolderSelectionModal.vue';
 import { SortProperty } from '@/components/files/types';
 import { FsPath, Path, WorkspaceHandle, getPathLink } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
