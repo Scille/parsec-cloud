@@ -23,60 +23,63 @@ _q_get_stats = Q(
     f"""
 SELECT
     (
-        SELECT COALESCE(_created_on <= $at, false)
+        SELECT COALESCE(_created_on <= $at, FALSE)
         FROM organization
         WHERE organization_id = $organization_id
-    ) AS found,
+    ) AS organization_found,
     (
         SELECT ARRAY(
             SELECT (
                 revoked_on,
-                COALESCE (
+                COALESCE(
                     (
-                        SELECT profile.profile::text
+                        SELECT profile.profile::TEXT
                         FROM profile
                         WHERE profile.user_ = user_._id
                         ORDER BY profile.certified_on DESC LIMIT 1
                     ),
-                    user_.initial_profile::text
+                    initial_profile::TEXT
                 )
             )
             FROM user_
-            WHERE organization = {q_organization_internal_id("$organization_id")}
-            AND created_on <= $at
+            WHERE
+                organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT05,LT14
+                AND created_on <= $at
         )
-    ) AS users,
+    ) AS organization_users,
     (
-        SELECT COUNT(DISTINCT(realm._id))
+        SELECT COUNT(DISTINCT realm._id)
         FROM realm
-        LEFT JOIN realm_user_role
-        ON realm_user_role.realm = realm._id
-        WHERE realm.organization = {q_organization_internal_id("$organization_id")}
-        AND realm_user_role.certified_on <= $at
-    ) AS realms,
-    (
-        SELECT COALESCE(SUM(size), 0)
-        FROM vlob_atom
-        LEFT JOIN realm
-        ON vlob_atom.realm = realm._id
+        LEFT JOIN realm_user_role ON realm._id = realm_user_role.realm
         WHERE
-            realm.organization = {q_organization_internal_id("$organization_id")}
+            realm.organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT05,LT14
+            AND realm_user_role.certified_on <= $at
+    ) AS organization_realms,
+    (
+        SELECT COALESCE(SUM(vlob_atom.size), 0)
+        FROM vlob_atom
+        LEFT JOIN realm ON vlob_atom.realm = realm._id
+        WHERE
+            realm.organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT05,LT14
             AND vlob_atom.created_on <= $at
             AND (vlob_atom.deleted_on IS NULL OR vlob_atom.deleted_on > $at)
-    ) AS metadata_size,
+    ) AS organization_metadata_size,
     (
         SELECT COALESCE(SUM(size), 0)
         FROM block
         WHERE
-            organization = {q_organization_internal_id("$organization_id")}
+            organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT05,LT14
             AND created_on <= $at
             AND (deleted_on IS NULL OR deleted_on > $at)
-    ) AS data_size
+    ) AS organization_data_size
 """
 )
 
-
-_q_get_organizations = Q("SELECT organization_id AS id FROM organization ORDER BY id")
+_q_get_organizations = Q("""
+SELECT organization_id AS id
+FROM organization
+ORDER BY id
+""")
 
 
 async def _get_organization_stats(
@@ -88,7 +91,7 @@ async def _get_organization_stats(
     row = await connection.fetchrow(*_q_get_stats(organization_id=organization.str, at=at))
     assert row is not None
 
-    match row["found"]:
+    match row["organization_found"]:
         case True:
             pass
         # `None` if the orga doesn't exist, `False` if the orga exists but is too recent
@@ -100,7 +103,7 @@ async def _get_organization_stats(
     users = 0
     active_users = 0
     users_per_profile = {profile: {"active": 0, "revoked": 0} for profile in UserProfile.VALUES}
-    match row["users"]:
+    match row["organization_users"]:
         case list() as raw_users:
             pass
         case _:
@@ -121,19 +124,19 @@ async def _get_organization_stats(
         for profile, data in users_per_profile.items()
     )
 
-    match row["data_size"]:
+    match row["organization_data_size"]:
         case int() as data_size:
             pass
         case _:
             assert False, row
 
-    match row["metadata_size"]:
+    match row["organization_metadata_size"]:
         case int() as metadata_size:
             pass
         case _:
             assert False, row
 
-    match row["realms"]:
+    match row["organization_realms"]:
         case int() as realms:
             pass
         case _:
