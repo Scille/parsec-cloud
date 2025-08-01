@@ -16,6 +16,25 @@
         >
           <!-- file-handler topbar -->
           <div class="file-handler-topbar">
+            <!-- icon visible when menu is hidden -->
+            <ms-image
+              v-if="!isMobile() && isLargeDisplay && !isHeaderVisible()"
+              slot="start"
+              id="trigger-toggle-menu-button"
+              :image="SidebarToggle"
+              @click="isSidebarMenuVisible() ? hideSidebarMenu() : resetSidebarMenu()"
+            />
+            <div
+              class="topbar-left-content"
+              ref="backBlock"
+              v-if="!isHeaderVisible()"
+            >
+              <header-back-button
+                :short="true"
+                class="file-handler-topbar__back-button"
+              />
+            </div>
+
             <ms-image
               :image="getFileIcon(contentInfo.fileName)"
               class="file-icon"
@@ -77,8 +96,8 @@
                 @click="toggleMainHeader"
                 :class="{ 'header-visible': isHeaderVisible() }"
               >
-                <ion-icon :icon="isHeaderVisible() ? chevronUp : chevronDown" />
                 {{ $msTranslate(isHeaderVisible() ? 'fileViewers.hideMenu' : 'fileViewers.showMenu') }}
+                <ion-icon :icon="isHeaderVisible() ? chevronUp : chevronDown" />
               </ion-button>
             </ion-buttons>
           </div>
@@ -113,11 +132,24 @@ import {
   WorkspaceHandle,
   EntryName,
   getWorkspaceInfo,
+  isMobile,
   WorkspaceHistoryEntryStatFile,
 } from '@/parsec';
+import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import { IonPage, IonContent, IonButton, IonText, IonIcon, IonButtons, modalController } from '@ionic/vue';
 import { link, informationCircle, open, chevronDown, chevronUp } from 'ionicons/icons';
-import { Base64, MsSpinner, MsImage, I18n, DownloadIcon, askQuestion, Answer, MsModalResult } from 'megashark-lib';
+import {
+  Base64,
+  MsSpinner,
+  MsImage,
+  I18n,
+  DownloadIcon,
+  askQuestion,
+  Answer,
+  MsModalResult,
+  useWindowSize,
+  SidebarToggle,
+} from 'megashark-lib';
 import { ref, Ref, inject, onMounted, onUnmounted, type Component, shallowRef } from 'vue';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import {
@@ -133,6 +165,7 @@ import {
 import { DetectedFileType } from '@/common/fileTypes';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { DateTime } from 'luxon';
+import useSidebarMenu from '@/services/sidebarMenu';
 import { getFileIcon } from '@/common/file';
 import { copyPathLinkToClipboard } from '@/components/files';
 import { askDownloadConfirmation, downloadEntry, FileDetailsModal } from '@/views/files';
@@ -146,6 +179,7 @@ import { FileHandlerMode } from '@/views/files/handler';
 
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
+const { isLargeDisplay } = useWindowSize();
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const contentInfo: Ref<FileContentInfo | undefined> = ref(undefined);
 const detectedFileType = ref<DetectedFileType | null>(null);
@@ -154,6 +188,7 @@ const atDateTime: Ref<DateTime | undefined> = ref(undefined);
 const { isHeaderVisible, toggleHeader: toggleMainHeader, showHeader, hideHeader } = useHeaderControl();
 const handlerReadyRef = ref(false);
 const handlerComponent: Ref<Component | null> = shallowRef(null);
+const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu, hide: hideSidebarMenu } = useSidebarMenu();
 
 const cancelRouteWatch = watchRoute(async () => {
   if (!currentRouteIs(Routes.FileHandler)) {
@@ -370,11 +405,13 @@ onMounted(async () => {
   loadComponent();
   // Set header hidden by default when entering handler
   hideHeader();
+  hideSidebarMenu();
 });
 
 onUnmounted(async () => {
   cancelRouteWatch();
   // Ensure header is visible when leaving handler
+  resetSidebarMenu();
   showHeader();
 });
 
@@ -532,6 +569,18 @@ async function downloadFile(): Promise<void> {
       border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
       background: var(--parsec-color-light-secondary-white);
 
+      #trigger-toggle-menu-button {
+        --fill-color: var(--parsec-color-light-secondary-grey);
+        padding: 0.625rem;
+        border-radius: var(--parsec-radius-12);
+        cursor: pointer;
+
+        &:hover {
+          background: var(--parsec-color-light-secondary-premiere);
+          --fill-color: var(--parsec-color-light-secondary-hard-grey);
+        }
+      }
+
       .file-icon {
         width: 2rem;
         height: 2rem;
@@ -593,11 +642,20 @@ async function downloadFile(): Promise<void> {
           position: relative;
           margin-left: 0.5rem;
 
+          &::part(native) {
+            --background-hover: none;
+            padding: 0;
+          }
+
+          ion-icon {
+            margin-inline: 0.5rem 0;
+          }
+
           &::before {
             content: '';
             position: absolute;
             top: 50%;
-            left: -0.5rem;
+            left: -1.5rem;
             transform: translateY(-50%);
             width: 1px;
             height: 1.5rem;
@@ -607,8 +665,8 @@ async function downloadFile(): Promise<void> {
           &::after {
             content: '';
             position: absolute;
-            left: 1.125rem;
-            bottom: 0.25rem;
+            left: 0;
+            bottom: -0.25rem;
             width: 0;
             height: 1px;
             background: var(--parsec-color-light-secondary-text);
@@ -620,7 +678,7 @@ async function downloadFile(): Promise<void> {
 
             &::after {
               background: var(--parsec-color-light-secondary-text);
-              width: calc(100% - 2.25rem);
+              width: calc(100% - 1.5rem);
             }
           }
         }
