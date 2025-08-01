@@ -8,6 +8,16 @@ export type Result<T, E = Error> =
   | { ok: true; value: T }
   | { ok: false; error: E }
 
+export enum AccountOrganizationsAccountVaultStrategy {
+    Allowed = 'AccountOrganizationsAccountVaultStrategyAllowed',
+    Forbidden = 'AccountOrganizationsAccountVaultStrategyForbidden',
+}
+
+export enum AccountOrganizationsAllowedClientAgent {
+    NativeOnly = 'AccountOrganizationsAllowedClientAgentNativeOnly',
+    NativeOrWeb = 'AccountOrganizationsAllowedClientAgentNativeOrWeb',
+}
+
 export enum CancelledGreetingAttemptReason {
     AutomaticallyCancelled = 'CancelledGreetingAttemptReasonAutomaticallyCancelled',
     InconsistentPayload = 'CancelledGreetingAttemptReasonInconsistentPayload',
@@ -122,6 +132,36 @@ export type I64 = bigint
 export type IndexInt = bigint
 export type SizeInt = bigint
 export type U64 = bigint
+
+export interface AccountOrganizations {
+    active: Array<AccountOrganizationsActiveUser>
+    revoked: Array<AccountOrganizationsRevokedUser>
+}
+
+export interface AccountOrganizationsActiveUser {
+    organizationId: OrganizationID
+    userId: UserID
+    createdOn: DateTime
+    isFrozen: boolean
+    currentProfile: UserProfile
+    organizationConfig: AccountOrganizationsOrganizationConfig
+}
+
+export interface AccountOrganizationsOrganizationConfig {
+    isExpired: boolean
+    userProfileOutsiderAllowed: boolean
+    activeUsersLimit: ActiveUsersLimit
+    allowedClientAgent: AccountOrganizationsAllowedClientAgent
+    accountVaultStrategy: AccountOrganizationsAccountVaultStrategy
+}
+
+export interface AccountOrganizationsRevokedUser {
+    organizationId: OrganizationID
+    userId: UserID
+    createdOn: DateTime
+    revokedOn: DateTime
+    currentProfile: UserProfile
+}
 
 export interface AuthMethodInfo {
     authMethodId: AccountAuthMethodID
@@ -490,16 +530,22 @@ export type AccountCreateError =
 // AccountCreateRegistrationDeviceError
 export enum AccountCreateRegistrationDeviceErrorTag {
     BadVaultKeyAccess = 'AccountCreateRegistrationDeviceErrorBadVaultKeyAccess',
+    CannotObtainOrganizationVaultStrategy = 'AccountCreateRegistrationDeviceErrorCannotObtainOrganizationVaultStrategy',
     Internal = 'AccountCreateRegistrationDeviceErrorInternal',
     LoadDeviceDecryptionFailed = 'AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed',
     LoadDeviceInvalidData = 'AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData',
     LoadDeviceInvalidPath = 'AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath',
+    NotAllowedByOrganizationVaultStrategy = 'AccountCreateRegistrationDeviceErrorNotAllowedByOrganizationVaultStrategy',
     Offline = 'AccountCreateRegistrationDeviceErrorOffline',
     TimestampOutOfBallpark = 'AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark',
 }
 
 export interface AccountCreateRegistrationDeviceErrorBadVaultKeyAccess {
     tag: AccountCreateRegistrationDeviceErrorTag.BadVaultKeyAccess
+    error: string
+}
+export interface AccountCreateRegistrationDeviceErrorCannotObtainOrganizationVaultStrategy {
+    tag: AccountCreateRegistrationDeviceErrorTag.CannotObtainOrganizationVaultStrategy
     error: string
 }
 export interface AccountCreateRegistrationDeviceErrorInternal {
@@ -518,6 +564,10 @@ export interface AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath {
     tag: AccountCreateRegistrationDeviceErrorTag.LoadDeviceInvalidPath
     error: string
 }
+export interface AccountCreateRegistrationDeviceErrorNotAllowedByOrganizationVaultStrategy {
+    tag: AccountCreateRegistrationDeviceErrorTag.NotAllowedByOrganizationVaultStrategy
+    error: string
+}
 export interface AccountCreateRegistrationDeviceErrorOffline {
     tag: AccountCreateRegistrationDeviceErrorTag.Offline
     error: string
@@ -528,10 +578,12 @@ export interface AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark {
 }
 export type AccountCreateRegistrationDeviceError =
   | AccountCreateRegistrationDeviceErrorBadVaultKeyAccess
+  | AccountCreateRegistrationDeviceErrorCannotObtainOrganizationVaultStrategy
   | AccountCreateRegistrationDeviceErrorInternal
   | AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed
   | AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData
   | AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath
+  | AccountCreateRegistrationDeviceErrorNotAllowedByOrganizationVaultStrategy
   | AccountCreateRegistrationDeviceErrorOffline
   | AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark
 
@@ -771,6 +823,24 @@ export type AccountListInvitationsError =
   | AccountListInvitationsErrorInternal
   | AccountListInvitationsErrorOffline
 
+// AccountListOrganizationsError
+export enum AccountListOrganizationsErrorTag {
+    Internal = 'AccountListOrganizationsErrorInternal',
+    Offline = 'AccountListOrganizationsErrorOffline',
+}
+
+export interface AccountListOrganizationsErrorInternal {
+    tag: AccountListOrganizationsErrorTag.Internal
+    error: string
+}
+export interface AccountListOrganizationsErrorOffline {
+    tag: AccountListOrganizationsErrorTag.Offline
+    error: string
+}
+export type AccountListOrganizationsError =
+  | AccountListOrganizationsErrorInternal
+  | AccountListOrganizationsErrorOffline
+
 // AccountListRegistrationDevicesError
 export enum AccountListRegistrationDevicesErrorTag {
     BadVaultKeyAccess = 'AccountListRegistrationDevicesErrorBadVaultKeyAccess',
@@ -974,7 +1044,9 @@ export type AccountRegisterNewDeviceError =
 // AccountUploadOpaqueKeyInVaultError
 export enum AccountUploadOpaqueKeyInVaultErrorTag {
     BadVaultKeyAccess = 'AccountUploadOpaqueKeyInVaultErrorBadVaultKeyAccess',
+    CannotObtainOrganizationVaultStrategy = 'AccountUploadOpaqueKeyInVaultErrorCannotObtainOrganizationVaultStrategy',
     Internal = 'AccountUploadOpaqueKeyInVaultErrorInternal',
+    NotAllowedByOrganizationVaultStrategy = 'AccountUploadOpaqueKeyInVaultErrorNotAllowedByOrganizationVaultStrategy',
     Offline = 'AccountUploadOpaqueKeyInVaultErrorOffline',
 }
 
@@ -982,8 +1054,16 @@ export interface AccountUploadOpaqueKeyInVaultErrorBadVaultKeyAccess {
     tag: AccountUploadOpaqueKeyInVaultErrorTag.BadVaultKeyAccess
     error: string
 }
+export interface AccountUploadOpaqueKeyInVaultErrorCannotObtainOrganizationVaultStrategy {
+    tag: AccountUploadOpaqueKeyInVaultErrorTag.CannotObtainOrganizationVaultStrategy
+    error: string
+}
 export interface AccountUploadOpaqueKeyInVaultErrorInternal {
     tag: AccountUploadOpaqueKeyInVaultErrorTag.Internal
+    error: string
+}
+export interface AccountUploadOpaqueKeyInVaultErrorNotAllowedByOrganizationVaultStrategy {
+    tag: AccountUploadOpaqueKeyInVaultErrorTag.NotAllowedByOrganizationVaultStrategy
     error: string
 }
 export interface AccountUploadOpaqueKeyInVaultErrorOffline {
@@ -992,7 +1072,9 @@ export interface AccountUploadOpaqueKeyInVaultErrorOffline {
 }
 export type AccountUploadOpaqueKeyInVaultError =
   | AccountUploadOpaqueKeyInVaultErrorBadVaultKeyAccess
+  | AccountUploadOpaqueKeyInVaultErrorCannotObtainOrganizationVaultStrategy
   | AccountUploadOpaqueKeyInVaultErrorInternal
+  | AccountUploadOpaqueKeyInVaultErrorNotAllowedByOrganizationVaultStrategy
   | AccountUploadOpaqueKeyInVaultErrorOffline
 
 // ActiveUsersLimit
@@ -4899,6 +4981,9 @@ export interface LibParsecPlugin {
     accountListInvitations(
         account: Handle
     ): Promise<Result<Array<[ParsecInvitationAddr, OrganizationID, InvitationToken, InvitationType]>, AccountListInvitationsError>>
+    accountListOrganizations(
+        account: Handle
+    ): Promise<Result<AccountOrganizations, AccountListOrganizationsError>>
     accountListRegistrationDevices(
         account: Handle
     ): Promise<Result<Array<[OrganizationID, UserID]>, AccountListRegistrationDevicesError>>
@@ -4930,7 +5015,8 @@ export interface LibParsecPlugin {
         save_strategy: DeviceSaveStrategy
     ): Promise<Result<AvailableDevice, AccountRegisterNewDeviceError>>
     accountUploadOpaqueKeyInVault(
-        account: Handle
+        account: Handle,
+        organization_id: OrganizationID
     ): Promise<Result<[AccountVaultItemOpaqueKeyID, SecretKey], AccountUploadOpaqueKeyInVaultError>>
     archiveDevice(
         config_dir: Path,
