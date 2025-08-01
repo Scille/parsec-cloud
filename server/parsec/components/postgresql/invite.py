@@ -379,33 +379,35 @@ SELECT shamir_recovery_setup._id AS shamir_recovery_setup_internal_id
 FROM shamir_recovery_setup
 INNER JOIN organization ON shamir_recovery_setup.organization = organization._id
 INNER JOIN user_ ON shamir_recovery_setup.user_ = user_._id
-WHERE organization.organization_id = $organization_id
-AND user_.user_id = $user_id
-AND deleted_on IS NULL
+WHERE
+    organization.organization_id = $organization_id
+    AND user_.user_id = $user_id
+    AND shamir_recovery_setup.deleted_on IS NULL
 """
 )
 
 _q_retrieve_shamir_recovery_ciphered_data = Q(
     """
 SELECT
-    ciphered_data,
-    reveal_token,
-    deleted_on
+    shamir_recovery_setup.ciphered_data,
+    shamir_recovery_setup.reveal_token,
+    shamir_recovery_setup.deleted_on
 FROM shamir_recovery_setup
 INNER JOIN organization ON shamir_recovery_setup.organization = organization._id
-WHERE organization.organization_id = $organization_id
-AND shamir_recovery_setup._id = $shamir_recovery_setup_internal_id
+WHERE
+    organization.organization_id = $organization_id
+    AND shamir_recovery_setup._id = $shamir_recovery_setup_internal_id
 """
 )
-
 
 _q_is_greeter_in_recipients = Q(
     """
 SELECT shamir_recovery_share._id
 FROM shamir_recovery_share
 INNER JOIN user_ ON shamir_recovery_share.recipient = user_._id
-WHERE shamir_recovery_share.shamir_recovery = $shamir_recovery_setup_internal_id
-AND user_.user_id = $greeter_id
+WHERE
+    shamir_recovery_share.shamir_recovery = $shamir_recovery_setup_internal_id
+    AND user_.user_id = $greeter_id
 """
 )
 
@@ -416,7 +418,7 @@ SELECT
     human.label
 FROM human LEFT JOIN user_ ON human._id = user_.human
 WHERE
-    human.organization = {q_organization_internal_id("$organization_id")}
+    human.organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT05,LT14
     AND user_.user_id = $user_id
 LIMIT 1
 """
@@ -424,42 +426,39 @@ LIMIT 1
 
 _q_retrieve_compatible_user_invitation = Q(
     """
-SELECT
-    token
+SELECT invitation.token
 FROM invitation
 INNER JOIN organization ON invitation.organization = organization._id
 WHERE
     organization.organization_id = $organization_id
-    AND type = 'USER'
-    AND user_invitation_claimer_email = $user_invitation_claimer_email
-    AND deleted_on IS NULL
+    AND invitation.type = 'USER'
+    AND invitation.user_invitation_claimer_email = $user_invitation_claimer_email
+    AND invitation.deleted_on IS NULL
 LIMIT 1
 """
 )
 
 _q_retrieve_compatible_device_invitation = Q(
     """
-SELECT
-    token
+SELECT invitation.token
 FROM invitation
 LEFT JOIN organization ON invitation.organization = organization._id
 INNER JOIN user_ ON invitation.device_invitation_claimer = user_._id
 WHERE
     organization.organization_id = $organization_id
-    AND type = 'DEVICE'
+    AND invitation.type = 'DEVICE'
+    AND invitation.deleted_on IS NULL
     AND user_.user_id = $device_invitation_claimer_user_id
-    AND deleted_on IS NULL
 LIMIT 1
 """
 )
 
 _q_retrieve_compatible_shamir_recovery_invitation = Q(
     f"""
-SELECT
-    token
+SELECT token
 FROM invitation
 WHERE
-    invitation.organization = {q_organization_internal_id("$organization_id")}
+    organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT14
     AND type = 'SHAMIR_RECOVERY'
     AND shamir_recovery = $shamir_recovery_setup
     AND deleted_on IS NULL
@@ -477,7 +476,7 @@ SELECT
     shamir_recovery_share.shares
 FROM shamir_recovery_share
 INNER JOIN user_ ON shamir_recovery_share.recipient = user_._id
-INNER JOIN human ON human._id = user_.human
+INNER JOIN human ON user_.human = human._id
 WHERE
     shamir_recovery_share.shamir_recovery = $internal_shamir_recovery_setup_id
 """
@@ -486,7 +485,7 @@ WHERE
 
 _q_insert_invitation = Q(
     f"""
-INSERT INTO invitation(
+INSERT INTO invitation (
     organization,
     token,
     type,
@@ -497,13 +496,13 @@ INSERT INTO invitation(
     created_on
 )
 VALUES (
-    {q_organization_internal_id("$organization_id")},
+    {q_organization_internal_id("$organization_id")},  -- noqa: LT14
     $token,
     $type,
     $user_invitation_claimer_email,
-    {q_user_internal_id(organization_id="$organization_id", user_id="$device_invitation_claimer_user_id")},
+    {q_user_internal_id(organization_id="$organization_id", user_id="$device_invitation_claimer_user_id")},  -- noqa: LT05,LT14
     $shamir_recovery_setup,
-    {q_device_internal_id(organization_id="$organization_id", device_id="$created_by")},
+    {q_device_internal_id(organization_id="$organization_id", device_id="$created_by")},  -- noqa: LT05,LT14
     $created_on
 )
 RETURNING _id, created_by_device
@@ -523,9 +522,9 @@ WHERE
 
 _q_list_invitations = Q(
     f"""
-SELECT
-    -- Use DISTINCT to avoid duplicates due to multiple shamir_recovery_share rows
-    DISTINCT invitation._id AS invitation_internal_id,
+-- Use DISTINCT to avoid duplicates due to multiple shamir_recovery_share rows
+SELECT DISTINCT
+    invitation._id AS invitation_internal_id,
     invitation.token,
     invitation.type,
     created_by_user.user_id AS created_by_user_id,
@@ -549,23 +548,25 @@ SELECT
 FROM invitation
 LEFT JOIN device AS created_by_device ON invitation.created_by_device = created_by_device._id
 LEFT JOIN user_ AS created_by_user ON created_by_device.user_ = created_by_user._id
-LEFT JOIN human AS created_by_human ON created_by_human._id = created_by_user.human
+LEFT JOIN human AS created_by_human ON created_by_user.human = created_by_human._id
 LEFT JOIN user_ AS device_invitation_claimer ON invitation.device_invitation_claimer = device_invitation_claimer._id
-LEFT JOIN human AS device_invitation_claimer_human ON device_invitation_claimer.human = device_invitation_claimer_human._id
+LEFT JOIN
+    human AS device_invitation_claimer_human
+    ON device_invitation_claimer.human = device_invitation_claimer_human._id
 LEFT JOIN shamir_recovery_setup ON invitation.shamir_recovery = shamir_recovery_setup._id
 LEFT JOIN user_ AS shamir_recovery_user ON shamir_recovery_setup.user_ = shamir_recovery_user._id
 LEFT JOIN human AS shamir_recovery_human ON shamir_recovery_user.human = shamir_recovery_human._id
-LEFT JOIN shamir_recovery_share ON shamir_recovery_share.shamir_recovery = shamir_recovery_setup._id
+LEFT JOIN shamir_recovery_share ON shamir_recovery_setup._id = shamir_recovery_share.shamir_recovery
 LEFT JOIN user_ AS recipient_user_ ON shamir_recovery_share.recipient = recipient_user_._id
 WHERE
-    invitation.organization = {q_organization_internal_id("$organization_id")}
+    invitation.organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT05,LT14
     -- Different invitation types have different filtering rules
     AND (
         (invitation.type = 'USER' AND $is_admin)
         OR (invitation.type = 'DEVICE' AND device_invitation_claimer.user_id = $user_id)
         OR (invitation.type = 'SHAMIR_RECOVERY' AND recipient_user_.user_id = $user_id)
     )
-ORDER BY created_on
+ORDER BY invitation.created_on
 """
 )
 
@@ -596,15 +597,17 @@ SELECT
 FROM invitation
 LEFT JOIN device AS created_by_device ON invitation.created_by_device = created_by_device._id
 LEFT JOIN user_ AS created_by_user ON created_by_device.user_ = created_by_user._id
-LEFT JOIN human AS created_by_human ON created_by_human._id = created_by_user.human
+LEFT JOIN human AS created_by_human ON created_by_user.human = created_by_human._id
 LEFT JOIN user_ AS device_invitation_claimer ON invitation.device_invitation_claimer = device_invitation_claimer._id
-LEFT JOIN human AS device_invitation_claimer_human ON device_invitation_claimer.human = device_invitation_claimer_human._id
+LEFT JOIN
+    human AS device_invitation_claimer_human
+    ON device_invitation_claimer.human = device_invitation_claimer_human._id
 LEFT JOIN shamir_recovery_setup ON invitation.shamir_recovery = shamir_recovery_setup._id
 LEFT JOIN user_ AS shamir_recovery_user ON shamir_recovery_setup.user_ = shamir_recovery_user._id
 LEFT JOIN human AS shamir_recovery_human ON shamir_recovery_user.human = shamir_recovery_human._id
 WHERE
-    invitation.organization = {q_organization_internal_id("$organization_id")}
-ORDER BY created_on
+    invitation.organization = {q_organization_internal_id("$organization_id")}   -- noqa: LT05,LT14
+ORDER BY invitation.created_on
 """
 )
 
@@ -617,59 +620,67 @@ def make_q_info_invitation(
 
     if from_greeting_attempt_id:
         select_invitation = f"""
-            SELECT invitation._id AS invitation_internal_id
-            FROM greeting_attempt
-            INNER JOIN greeting_session ON greeting_attempt.greeting_session = greeting_session._id
-            INNER JOIN invitation ON greeting_session.invitation = invitation._id
-            INNER JOIN organization ON invitation.organization = organization._id
-            WHERE organization.organization_id = $organization_id
-            AND greeting_attempt.greeting_attempt_id = $greeting_attempt_id
-            FOR {share_or_update} OF invitation
-            """
+    SELECT invitation._id AS invitation_internal_id
+    FROM greeting_attempt
+    INNER JOIN greeting_session ON greeting_attempt.greeting_session = greeting_session._id
+    INNER JOIN invitation ON greeting_session.invitation = invitation._id
+    INNER JOIN organization ON invitation.organization = organization._id
+    WHERE
+        organization.organization_id = $organization_id
+        AND greeting_attempt.greeting_attempt_id = $greeting_attempt_id
+    FOR {share_or_update} OF invitation
+"""
     else:
         select_invitation = f"""
-            SELECT invitation._id AS invitation_internal_id
-            FROM invitation
-            INNER JOIN organization ON invitation.organization = organization._id
-            WHERE organization.organization_id = $organization_id
-            AND token = $token
-            FOR {share_or_update} OF invitation
-            """
-    return Q(f"""
-        WITH selected_invitation AS ({select_invitation})
-        SELECT
-            invitation._id AS invitation_internal_id,
-            invitation.token,
-            invitation.type,
-            created_by_user.user_id AS created_by_user_id,
-            created_by_human.email AS created_by_email,
-            created_by_human.label AS created_by_label,
-            invitation.created_by_service_label,
-            invitation.user_invitation_claimer_email,
-            device_invitation_claimer.user_id AS device_invitation_claimer_user_id,
-            device_invitation_claimer_human.email AS device_invitation_claimer_human_email,
-            device_invitation_claimer_human.label AS device_invitation_claimer_human_label,
-            invitation.shamir_recovery AS shamir_recovery_internal_id,
-            shamir_recovery_user.user_id AS shamir_recovery_user_id,
-            shamir_recovery_human.email AS shamir_recovery_human_email,
-            shamir_recovery_human.label AS shamir_recovery_human_label,
-            shamir_recovery_setup.threshold AS shamir_recovery_threshold,
-            shamir_recovery_setup.created_on AS shamir_recovery_created_on,
-            shamir_recovery_setup.deleted_on AS shamir_recovery_deleted_on,
-            invitation.created_on,
-            invitation.deleted_on,
-            invitation.deleted_reason
-        FROM invitation
-        INNER JOIN selected_invitation ON invitation._id = selected_invitation.invitation_internal_id
-        LEFT JOIN device AS created_by_device ON invitation.created_by_device = created_by_device._id
-        LEFT JOIN user_ AS created_by_user ON created_by_device.user_ = created_by_user._id
-        LEFT JOIN human AS created_by_human ON created_by_human._id = created_by_user.human
-        LEFT JOIN user_ AS device_invitation_claimer ON invitation.device_invitation_claimer = device_invitation_claimer._id
-        LEFT JOIN human AS device_invitation_claimer_human ON device_invitation_claimer.human = device_invitation_claimer_human._id
-        LEFT JOIN shamir_recovery_setup ON invitation.shamir_recovery = shamir_recovery_setup._id
-        LEFT JOIN user_ AS shamir_recovery_user ON shamir_recovery_setup.user_ = shamir_recovery_user._id
-        LEFT JOIN human AS shamir_recovery_human ON shamir_recovery_user.human = shamir_recovery_human._id
-        """)
+    SELECT invitation._id AS invitation_internal_id
+    FROM invitation
+    INNER JOIN organization ON invitation.organization = organization._id
+    WHERE
+        organization.organization_id = $organization_id
+        AND invitation.token = $token
+    FOR {share_or_update} OF invitation
+"""
+
+    return Q(
+        f"""
+WITH selected_invitation AS ({select_invitation})
+
+SELECT
+    invitation._id AS invitation_internal_id,
+    invitation.token,
+    invitation.type,
+    created_by_user.user_id AS created_by_user_id,
+    created_by_human.email AS created_by_email,
+    created_by_human.label AS created_by_label,
+    invitation.created_by_service_label,
+    invitation.user_invitation_claimer_email,
+    device_invitation_claimer.user_id AS device_invitation_claimer_user_id,
+    device_invitation_claimer_human.email AS device_invitation_claimer_human_email,
+    device_invitation_claimer_human.label AS device_invitation_claimer_human_label,
+    invitation.shamir_recovery AS shamir_recovery_internal_id,
+    shamir_recovery_user.user_id AS shamir_recovery_user_id,
+    shamir_recovery_human.email AS shamir_recovery_human_email,
+    shamir_recovery_human.label AS shamir_recovery_human_label,
+    shamir_recovery_setup.threshold AS shamir_recovery_threshold,
+    shamir_recovery_setup.created_on AS shamir_recovery_created_on,
+    shamir_recovery_setup.deleted_on AS shamir_recovery_deleted_on,
+    invitation.created_on,
+    invitation.deleted_on,
+    invitation.deleted_reason
+FROM invitation
+INNER JOIN selected_invitation ON invitation._id = selected_invitation.invitation_internal_id
+LEFT JOIN device AS created_by_device ON invitation.created_by_device = created_by_device._id
+LEFT JOIN user_ AS created_by_user ON created_by_device.user_ = created_by_user._id
+LEFT JOIN human AS created_by_human ON created_by_user.human = created_by_human._id
+LEFT JOIN user_ AS device_invitation_claimer ON invitation.device_invitation_claimer = device_invitation_claimer._id
+LEFT JOIN
+    human AS device_invitation_claimer_human
+    ON device_invitation_claimer.human = device_invitation_claimer_human._id
+LEFT JOIN shamir_recovery_setup ON invitation.shamir_recovery = shamir_recovery_setup._id
+LEFT JOIN user_ AS shamir_recovery_user ON shamir_recovery_setup.user_ = shamir_recovery_user._id
+LEFT JOIN human AS shamir_recovery_human ON shamir_recovery_user.human = shamir_recovery_human._id
+"""
+    )
 
 
 _q_info_invitation_for_share = make_q_info_invitation(for_share=True)
@@ -677,7 +688,6 @@ _q_info_invitation_for_update = make_q_info_invitation(for_update=True)
 _q_info_invitation_for_update_from_greeting_attempt_id = make_q_info_invitation(
     for_update=True, from_greeting_attempt_id=True
 )
-
 
 _q_greeting_attempt_info = Q(
     """
@@ -695,19 +705,20 @@ INNER JOIN greeting_session ON greeting_attempt.greeting_session = greeting_sess
 INNER JOIN invitation ON greeting_session.invitation = invitation._id
 INNER JOIN user_ ON greeting_session.greeter = user_._id
 INNER JOIN organization ON invitation.organization = organization._id
-WHERE organization.organization_id = $organization_id
-AND greeting_attempt.greeting_attempt_id = $greeting_attempt_id
-AND invitation.token = $token
+WHERE
+    organization.organization_id = $organization_id
+    AND greeting_attempt.greeting_attempt_id = $greeting_attempt_id
+    AND invitation.token = $token
 """
 )
 
 _q_retrieve_active_human_by_email = Q(
     f"""
-SELECT
-    user_.user_id
-FROM user_ LEFT JOIN human ON user_.human = human._id
+SELECT user_.user_id
+FROM user_
+LEFT JOIN human ON user_.human = human._id
 WHERE
-    user_.organization = {q_organization_internal_id("$organization_id")}
+    user_.organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT05,LT14
     AND human.email = $email
     AND (user_.revoked_on IS NULL OR user_.revoked_on > $now)
 LIMIT 1
@@ -719,7 +730,11 @@ _q_lock = Q(
     # (note this is not strictly needed right now given there is no other
     # advisory lock in the application, but may avoid weird error if we
     # introduce a new advisory lock while forgetting about this one)
-    "SELECT pg_advisory_xact_lock(66, _id) FROM organization WHERE organization_id = $organization_id"
+    """
+SELECT PG_ADVISORY_XACT_LOCK(66, _id)
+FROM organization
+WHERE organization_id = $organization_id
+"""
 )
 
 
@@ -744,19 +759,21 @@ async def q_take_invitation_create_write_lock(
 _q_get_or_create_greeting_session = Q(
     f"""
 WITH result AS (
-    INSERT INTO greeting_session(invitation, greeter)
+    INSERT INTO greeting_session (invitation, greeter)
     VALUES (
         $invitation_internal_id,
-        {q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id")}
+        {q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id")}  -- noqa: LT05,LT14
     )
     ON CONFLICT DO NOTHING
     RETURNING greeting_session._id
 )
+
 SELECT _id FROM result
-UNION ALL SELECT _id
-FROM greeting_session
-WHERE invitation = $invitation_internal_id
-AND greeter = {q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id")}
+UNION ALL
+SELECT _id FROM greeting_session
+WHERE
+    invitation = $invitation_internal_id
+    AND greeter = {q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id")}  -- noqa: LT05,LT14
 LIMIT 1
 """
 )
@@ -764,13 +781,13 @@ LIMIT 1
 _q_get_or_create_active_attempt = Q(
     f"""
 WITH result AS (
-    INSERT INTO greeting_attempt(
+    INSERT INTO greeting_attempt (
         organization,
         greeting_attempt_id,
         greeting_session
     )
     VALUES (
-        {q_organization_internal_id("$organization_id")},
+        {q_organization_internal_id("$organization_id")},  -- noqa: LT14
         $new_greeting_attempt_id,
         $greeting_session_id
     )
@@ -778,11 +795,19 @@ WITH result AS (
     ON CONFLICT DO NOTHING
     RETURNING greeting_attempt._id, greeting_attempt_id
 )
-SELECT _id, greeting_attempt_id FROM result
-UNION ALL SELECT _id, greeting_attempt_id
+
+SELECT
+    _id,
+    greeting_attempt_id
+FROM result
+UNION ALL
+SELECT
+    _id,
+    greeting_attempt_id
 FROM greeting_attempt
-WHERE greeting_session = $greeting_session_id
-AND cancelled_on IS NULL
+WHERE
+    greeting_session = $greeting_session_id
+    AND cancelled_on IS NULL
 LIMIT 1
 """
 )
@@ -791,22 +816,22 @@ _q_greeter_join_or_cancel = Q(
     """
 UPDATE greeting_attempt
 SET
-    greeter_joined = CASE WHEN greeter_joined IS NULL
-        THEN $now
-        ELSE greeter_joined
-        END,
-    cancelled_reason = CASE WHEN greeter_joined IS NULL
-        THEN cancelled_reason
+    greeter_joined = COALESCE(greeter_joined, $now),
+    cancelled_reason = CASE
+        WHEN greeter_joined IS NULL
+            THEN cancelled_reason
         ELSE 'AUTOMATICALLY_CANCELLED'
-        END,
-    cancelled_on = CASE WHEN greeter_joined IS NULL
-        THEN cancelled_on
+    END,
+    cancelled_on = CASE
+        WHEN greeter_joined IS NULL
+            THEN cancelled_on
         ELSE $now
-        END,
-    cancelled_by = CASE WHEN greeter_joined IS NULL
-        THEN cancelled_by
+    END,
+    cancelled_by = CASE
+        WHEN greeter_joined IS NULL
+            THEN cancelled_by
         ELSE 'GREETER'
-        END
+    END
 WHERE
     _id = $greeting_attempt_internal_id
 RETURNING cancelled_on
@@ -817,22 +842,22 @@ _q_claimer_join_or_cancel = Q(
     """
 UPDATE greeting_attempt
 SET
-    claimer_joined = CASE WHEN claimer_joined IS NULL
-        THEN $now
-        ELSE claimer_joined
-        END,
-    cancelled_reason = CASE WHEN claimer_joined IS NULL
-        THEN cancelled_reason
+    claimer_joined = COALESCE(claimer_joined, $now),
+    cancelled_reason = CASE
+        WHEN claimer_joined IS NULL
+            THEN cancelled_reason
         ELSE 'AUTOMATICALLY_CANCELLED'
-        END,
-    cancelled_on = CASE WHEN claimer_joined IS NULL
-        THEN cancelled_on
+    END,
+    cancelled_on = CASE
+        WHEN claimer_joined IS NULL
+            THEN cancelled_on
         ELSE $now
-        END,
-    cancelled_by = CASE WHEN claimer_joined IS NULL
-        THEN cancelled_by
+    END,
+    cancelled_by = CASE
+        WHEN claimer_joined IS NULL
+            THEN cancelled_by
         ELSE 'CLAIMER'
-        END
+    END
 WHERE
     _id = $greeting_attempt_internal_id
 RETURNING cancelled_on
@@ -853,10 +878,9 @@ WHERE
 
 _q_step_check_too_advanced = Q(
     """
-SELECT coalesce(
+SELECT COALESCE(
     (
-        SELECT
-            claimer_data IS NULL or greeter_data IS NULL
+        SELECT claimer_data IS NULL OR greeter_data IS NULL
         FROM greeting_step
         WHERE
             greeting_attempt = $greeting_attempt_internal_id
@@ -869,10 +893,9 @@ SELECT coalesce(
 
 _q_greeter_step_check_mismatch = Q(
     """
-SELECT coalesce(
+SELECT COALESCE(
     (
-        SELECT
-            greeter_data IS NOT NULL AND greeter_data != $greeter_data
+        SELECT greeter_data IS NOT NULL AND greeter_data != $greeter_data
         FROM greeting_step
         WHERE
             greeting_attempt = $greeting_attempt_internal_id
@@ -885,10 +908,9 @@ SELECT coalesce(
 
 _q_claimer_step_check_mismatch = Q(
     """
-SELECT coalesce(
+SELECT COALESCE(
     (
-        SELECT
-            claimer_data IS NOT NULL AND claimer_data != $claimer_data
+        SELECT claimer_data IS NOT NULL AND claimer_data != $claimer_data
         FROM greeting_step
         WHERE
             greeting_attempt = $greeting_attempt_internal_id
@@ -901,7 +923,7 @@ SELECT coalesce(
 
 _q_greeter_step = Q(
     """
-INSERT INTO greeting_step(
+INSERT INTO greeting_step (
     greeting_attempt,
     step,
     greeter_data
@@ -912,7 +934,7 @@ VALUES (
     $greeter_data
 )
 ON CONFLICT (greeting_attempt, step) DO UPDATE
-SET greeter_data = $greeter_data
+    SET greeter_data = $greeter_data
 RETURNING claimer_data
 """
 )
@@ -920,7 +942,7 @@ RETURNING claimer_data
 
 _q_claimer_step = Q(
     """
-INSERT INTO greeting_step(
+INSERT INTO greeting_step (
     greeting_attempt,
     step,
     claimer_data
@@ -931,15 +953,14 @@ VALUES (
     $claimer_data
 )
 ON CONFLICT (greeting_attempt, step) DO UPDATE
-SET claimer_data = $claimer_data
+    SET claimer_data = $claimer_data
 RETURNING greeter_data
 """
 )
 
 _q_list_administrators = Q(
     """
-SELECT
-    user_id
+SELECT user_.user_id
 FROM user_
 INNER JOIN organization ON user_.organization = organization._id
 WHERE
@@ -951,8 +972,7 @@ WHERE
 
 _q_list_non_revoked_recipient = Q(
     """
-SELECT
-    user_.user_id
+SELECT user_.user_id
 FROM shamir_recovery_share
 INNER JOIN user_ ON shamir_recovery_share.recipient = user_._id
 INNER JOIN organization ON user_.organization = organization._id
