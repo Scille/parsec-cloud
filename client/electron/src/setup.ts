@@ -417,6 +417,7 @@ export class ElectronCapacitorApp {
       webPreferences: {
         nodeIntegration: true,
         contextIsolation: true,
+        webSecurity: true,
         // Use preload to inject the electron variant overrides for capacitor plugins.
         // preload: join(app.getAppPath(), "node_modules", "@capacitor-community", "electron", "dist", "runtime", "electron-rt.js"),
         preload: preloadPath,
@@ -551,15 +552,14 @@ export class ElectronCapacitorApp {
 // Set a CSP up for our application based on the custom scheme
 export function setupContentSecurityPolicy(customScheme: string): void {
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-    callback({
-      responseHeaders: {
-        ...details.responseHeaders,
-        'Content-Security-Policy': [
-          electronIsDev
-            ? `default-src ${customScheme}://* 'unsafe-inline' devtools://* 'unsafe-eval' https://* 'unsafe-eval' data: blob:`
-            : `default-src ${customScheme}://* 'unsafe-inline' 'unsafe-eval' https://* 'unsafe-eval' data: blob:`,
-        ],
-      },
-    });
+    const responseHeaders = { ...details.responseHeaders };
+
+    responseHeaders['Content-Security-Policy'] = [[
+      `default-src ${customScheme}://* 'unsafe-inline' 'unsafe-eval' https://* data: blob:${electronIsDev ? ' devtools://*' : ''}`,
+      `frame-src ${customScheme}://* https://* data: blob:`,
+      `connect-src ${customScheme}://* https://* wss://* ws://* data: blob:`,
+    ].join('; ')];
+
+    callback({ responseHeaders });
   });
 }
