@@ -70,8 +70,12 @@ msTest('Update password', async ({ parsecAccountLoggedIn }) => {
   await expect(authItems).toHaveCount(2);
   await expect(authItems.nth(0).locator('.authentication-method-item-details__title')).toHaveText(/^Other$/);
   await expect(authItems.nth(1).locator('.authentication-method-item-details__title')).toHaveText(/^Password$/);
-  await expect(authItems.nth(0).locator('.authentication-method-item-details__date ')).toHaveText(/^Created on:[a-zA-Z]{3} \d{2}, \d{4}$/);
-  await expect(authItems.nth(1).locator('.authentication-method-item-details__date ')).toHaveText(/^Created on:[a-zA-Z]{3} \d{2}, \d{4}$/);
+  await expect(authItems.nth(0).locator('.authentication-method-item-details__date ')).toHaveText(
+    /^Created on:[a-zA-Z]{3} \d{1,2}, \d{4}$/,
+  );
+  await expect(authItems.nth(1).locator('.authentication-method-item-details__date ')).toHaveText(
+    /^Created on:[a-zA-Z]{3} \d{1,2}, \d{4}$/,
+  );
   const changeButton = container.locator('ion-button');
   await expect(changeButton).toBeVisible();
   await expect(changeButton).toHaveText('Change password');
