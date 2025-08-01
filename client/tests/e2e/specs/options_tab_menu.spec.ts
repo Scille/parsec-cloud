@@ -106,12 +106,12 @@ msTest('Test files options tab menu', async ({ documents, context }) => {
   await expect(optionsTabModal).toBeHidden();
   await documents.waitForTimeout(1000);
   await expect(documents).toBeViewerPage();
-  await expect(documents.locator('.file-viewer-topbar')).toBeVisible();
-  await expect(documents.locator('.file-viewer-topbar').locator('.file-viewer-topbar__title')).toHaveText('audio.mp3');
+  await expect(documents.locator('.file-handler-topbar')).toBeVisible();
+  await expect(documents.locator('.file-handler-topbar').locator('.file-handler-topbar__title')).toHaveText('audio.mp3');
 
   // Ensure the main header is visible
   const isTopbarVisible = await documents.locator('#connected-header .topbar').isVisible();
-  const fileViewerButton = documents.locator('.file-viewer-topbar-buttons__item.toggle-menu');
+  const fileViewerButton = documents.locator('.file-handler-topbar-buttons__item.toggle-menu');
   if (!isTopbarVisible && fileViewerButton) {
     await fileViewerButton.click();
   }

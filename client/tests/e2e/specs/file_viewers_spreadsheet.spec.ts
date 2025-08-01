@@ -5,7 +5,7 @@ import { expect, msTest, openFileType, testFileViewerZoomLevel } from '@tests/e2
 msTest('Spreadsheet viewer', async ({ documents }) => {
   await openFileType(documents, 'xlsx');
   await expect(documents).toBeViewerPage();
-  await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.xlsx$/);
+  await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.xlsx$/);
   const spinner = documents.locator('#spreadsheet-spinner');
   await expect(spinner).toBeVisible();
   const bottomBar = documents.locator('.file-viewer-bottombar');
@@ -45,7 +45,7 @@ msTest('Spreadsheet viewer', async ({ documents }) => {
 msTest('Spreadsheet viewer zoom', async ({ documents }) => {
   await openFileType(documents, 'xlsx');
   await expect(documents).toBeViewerPage();
-  await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.xlsx$/);
+  await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.xlsx$/);
   const bottomBar = documents.locator('.file-viewer-bottombar');
   const wrapper = documents.locator('.file-viewer-wrapper');
   const spreadsheet = wrapper.locator('.inner-content-table').nth(1).locator('.content-wrapper');
