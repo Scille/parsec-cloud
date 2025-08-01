@@ -263,7 +263,7 @@ new_users AS (
         revoked_user_certifier,
         (
             SELECT _id FROM new_human_ids
-            WHERE email = {q_human(_id="user_.human", select="human.email")}
+            WHERE email = {q_human(_id="user_.human", select="email")}
         ),
         redacted_user_certificate,
         current_profile,

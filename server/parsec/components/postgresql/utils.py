@@ -180,7 +180,7 @@ def q_organization(
         condition = f"organization._id = {_id}"
     else:
         condition = f"organization.organization_id = {organization_id}"
-    return f"(SELECT {select} FROM organization WHERE {condition})"
+    return f"(SELECT organization.{select} FROM organization WHERE {condition})"
 
 
 def q_organization_internal_id(organization_id: str, **kwargs: Any) -> str:
@@ -188,7 +188,9 @@ def q_organization_internal_id(organization_id: str, **kwargs: Any) -> str:
     Query the organization's internal ID for the given organization public ID
 
     ```sql
-    SELECT _id FROM organization WHERE organization.organization_id = {organization_id}
+    SELECT organization._id
+    FROM organization
+    WHERE organization.organization_id = {organization_id}
     ```
     """
     return q_organization(organization_id=organization_id, select="_id", **kwargs)
@@ -254,8 +256,8 @@ def _table_q_factory(
             condition = f"{filter1} AND {filter2}"
 
         assert not kwargs
-        suffix = suffix or ""
-        return f"(SELECT {select} FROM {from_table} WHERE {condition} {suffix})"
+        suffix = f" {suffix}" if suffix else ""
+        return f"(SELECT {select_table}.{select} FROM {from_table} WHERE {condition}{suffix})"
 
     def _q_internal_id(**kwargs: Any) -> str:
         return _q(select="_id", **kwargs)
