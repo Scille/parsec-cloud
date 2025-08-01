@@ -359,23 +359,15 @@ export const msTest = debugTest.extend<{
   },
 
   usersPage: async ({ connected }, use) => {
-    await connected.locator('.sidebar').locator('#manageOrganization').click();
+    await connected.locator('.sidebar').locator('#sidebar-users').click();
     await expect(connected).toHavePageTitle('Users');
     await expect(connected).toBeUserPage();
     use(connected);
   },
 
   organizationPage: async ({ connected }, use) => {
-    await connected.locator('.sidebar').locator('#manageOrganization').click();
-    const sidebarItem = connected
-      .locator('.sidebar')
-      .locator('.manage-organization')
-      .locator('.organization-card-buttons')
-      .locator('.organization-title');
-    await expect(sidebarItem).toHaveTheClass('item-not-selected');
-    await sidebarItem.click();
+    await connected.locator('.sidebar').locator('#sidebar-organization-information').click();
     await expect(connected).toHavePageTitle('Information');
-    await expect(sidebarItem).toHaveTheClass('item-selected');
     await expect(connected).toBeOrganizationPage();
     use(connected);
   },

@@ -18,7 +18,7 @@ msTest('Manage account state', async ({ parsecAccountLoggedIn }) => {
   const noAccountPage = await parsecAccountLoggedIn.openNewTab({ withParsecAccount: false });
   await expect(noAccountPage.locator('.organization-card')).toHaveCount(3);
   await login(noAccountPage, 'Alicey McAliceFace');
-  await noAccountPage.locator('.sidebar').locator('#manageOrganization').click();
+  await noAccountPage.locator('.sidebar').locator('#sidebar-users').click();
   await expect(noAccountPage).toHavePageTitle('Users');
   await expect(noAccountPage).toBeUserPage();
   await noAccountPage.locator('#activate-users-ms-action-bar').getByText('Invite a user').click();
