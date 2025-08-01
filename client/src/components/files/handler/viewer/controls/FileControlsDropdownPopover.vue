@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import { FileControlsDropdownItem, FileControlsDropdownItemContent } from '@/components/viewers';
+import { FileControlsDropdownItem, FileControlsDropdownItemContent } from '@/components/files/handler/viewer';
 import { IonIcon, IonList, IonText, popoverController } from '@ionic/vue';
 import { nextTick, ref, watch, useTemplateRef } from 'vue';
 import { chevronBack } from 'ionicons/icons';

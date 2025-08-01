@@ -5,7 +5,7 @@ import { getDefaultProvideConfig, mockLibParsec } from '@tests/component/support
 mockLibParsec();
 
 import { FileModel, FolderModel } from '@/components/files';
-import FileListItem from '@/components/files/FileListItem.vue';
+import FileListItem from '@/components/files/explorer/FileListItem.vue';
 import { FileType, UserInfo } from '@/parsec';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';

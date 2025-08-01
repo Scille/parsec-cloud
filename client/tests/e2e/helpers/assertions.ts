@@ -319,7 +319,7 @@ export const expect = baseExpect.extend({
       if ((await page.getDisplaySize()) === DisplaySize.Large) {
         // Ensure header is visible before checking title
         const isTopbarVisible = await page.locator('#connected-header .topbar').isVisible();
-        const fileViewerButton = page.locator('.file-viewer-topbar-buttons__item.toggle-menu');
+        const fileViewerButton = page.locator('.file-handler-topbar-buttons__item.toggle-menu');
         let topbarToggled = false;
         if (!isTopbarVisible && fileViewerButton) {
           await fileViewerButton.click();

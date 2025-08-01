@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { FileModel, FolderModel } from '@/components/files';
-import FileCard from '@/components/files/FileCard.vue';
+import FileCard from '@/components/files/explorer/FileCard.vue';
 import { FileType, UserInfo } from '@/parsec';
 import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { mount } from '@vue/test-utils';
