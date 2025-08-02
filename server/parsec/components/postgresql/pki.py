@@ -33,182 +33,154 @@ class PkiEnrollmentStatus(Enum):
     CANCELLED = "CANCELLED"
 
 
-_q_get_last_pki_enrollment_from_certificate_sha1_for_update = Q(
-    f"""
-    SELECT
-        enrollment_id,
-        enrollment_state,
-        submitted_on,
-        submitter_accepted_device,
-        accepter
-    FROM
-        pki_enrollment
-    WHERE (
-        organization = {q_organization_internal_id("$organization_id")}
-        AND submitter_der_x509_certificate_sha1=$submitter_der_x509_certificate_sha1
+_q_get_last_pki_enrollment_from_certificate_sha1_for_update = Q(f"""
+SELECT
+    enrollment_id,
+    enrollment_state,
+    submitted_on,
+    submitter_accepted_device,
+    accepter
+FROM
+    pki_enrollment
+WHERE
+    organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT14
+    AND submitter_der_x509_certificate_sha1 = $submitter_der_x509_certificate_sha1
+ORDER BY _id DESC
+LIMIT 1
+FOR UPDATE
+""")
+
+_q_get_pki_enrollment_from_enrollment_id = Q(f"""
+SELECT
+    enrollment_id,
+    enrollment_state,
+    submitted_on,
+    info_cancelled,
+    info_accepted,
+    info_rejected
+FROM
+    pki_enrollment
+WHERE
+    organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT14
+    AND enrollment_id = $enrollment_id
+""")
+
+_q_get_pki_enrollment_for_update = Q(f"""
+SELECT
+    enrollment_id,
+    enrollment_state,
+    submitted_on,
+    accepter,
+    submitter_accepted_device
+FROM
+    pki_enrollment
+WHERE
+    organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT14
+    AND enrollment_id = $enrollment_id
+FOR UPDATE
+""")
+
+_q_get_pki_enrollment_from_state = Q(f"""
+SELECT
+    enrollment_id,
+    submitted_on,
+    submitter_der_x509_certificate,
+    submit_payload_signature,
+    submit_payload
+FROM
+    pki_enrollment
+WHERE
+    organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT14
+    AND enrollment_state = $state
+ORDER BY _id ASC
+""")
+
+_q_submit_pki_enrollment = Q(f"""
+INSERT INTO pki_enrollment (
+    organization,
+    enrollment_id,
+    submitter_der_x509_certificate,
+    submitter_der_x509_certificate_sha1,
+    submit_payload_signature,
+    submit_payload,
+    enrollment_state,
+    submitted_on
+)
+VALUES (
+    {q_organization_internal_id("$organization_id")},  -- noqa: LT14
+    $enrollment_id,
+    $submitter_der_x509_certificate,
+    $submitter_der_x509_certificate_sha1,
+    $submit_payload_signature,
+    $submit_payload,
+    $enrollment_state,
+    $submitted_on
+)
+""")
+
+_q_cancel_pki_enrollment = Q(f"""
+UPDATE pki_enrollment
+SET
+    enrollment_state = $enrollment_state,
+    info_cancelled.cancelled_on = $cancelled_on
+WHERE
+    organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT14
+    AND enrollment_id = $enrollment_id
+""")
+
+
+_q_reject_pki_enrollment = Q(f"""
+UPDATE pki_enrollment
+SET
+    enrollment_state = $enrollment_state,
+    info_rejected.rejected_on = $rejected_on
+WHERE
+    organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT14
+    AND enrollment_id = $enrollment_id
+""")
+
+
+_q_accept_pki_enrollment = Q(f"""
+UPDATE pki_enrollment
+SET
+    enrollment_state = $enrollment_state,
+    info_accepted.accepted_on = $accepted_on,
+    info_accepted.accepter_der_x509_certificate = $accepter_der_x509_certificate,
+    info_accepted.accept_payload_signature = $accept_payload_signature,
+    info_accepted.accept_payload = $accept_payload,
+    accepter = {q_device_internal_id(organization_id="$organization_id", device_id="$accepter")},  -- noqa: LT05,LT14
+    submitter_accepted_device = {q_device_internal_id(organization_id="$organization_id", device_id="$accepted")}  -- noqa: LT05,LT14
+WHERE
+    organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT14
+    AND enrollment_id = $enrollment_id
+""")
+
+_q_get_user_from_device_id = Q(f"""
+SELECT revoked_on
+FROM user_
+WHERE
+    organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT05,LT14
+    AND _id = (
+        SELECT device.user_
+        FROM device
+        WHERE
+            device._id = $device_id
+            AND device.organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT05,LT14
     )
-    ORDER BY _id DESC LIMIT 1
-    FOR UPDATE
-    """
-)
+LIMIT 1
+FOR UPDATE
+""")
 
-_q_get_pki_enrollment_from_enrollment_id = Q(
-    f"""
-    SELECT
-        enrollment_id,
-        enrollment_state,
-        submitted_on,
-        info_cancelled,
-        info_accepted,
-        info_rejected
-    FROM
-        pki_enrollment
-    WHERE (
-        organization = {q_organization_internal_id("$organization_id")}
-        AND enrollment_id=$enrollment_id
-    )
-    """
-)
-
-_q_get_pki_enrollment_for_update = Q(
-    f"""
-    SELECT
-        enrollment_id,
-        enrollment_state,
-        submitted_on,
-        accepter,
-        submitter_accepted_device
-    FROM
-        pki_enrollment
-    WHERE (
-        organization = {q_organization_internal_id("$organization_id")}
-        AND enrollment_id=$enrollment_id
-    )
-    FOR UPDATE
-    """
-)
-
-_q_get_pki_enrollment_from_state = Q(
-    f"""
-    SELECT
-        enrollment_id,
-        submitted_on,
-        submitter_der_x509_certificate,
-        submit_payload_signature,
-        submit_payload
-    FROM
-        pki_enrollment
-    WHERE (
-        organization = {q_organization_internal_id("$organization_id")}
-        AND enrollment_state=$state
-    )
-    ORDER BY _id ASC
-    """
-)
-
-
-_q_submit_pki_enrollment = Q(
-    f"""
-    INSERT INTO pki_enrollment(
-        organization,
-        enrollment_id,
-        submitter_der_x509_certificate,
-        submitter_der_x509_certificate_sha1,
-        submit_payload_signature,
-        submit_payload,
-        enrollment_state,
-        submitted_on
-    )
-    VALUES(
-        {q_organization_internal_id("$organization_id")},
-        $enrollment_id,
-        $submitter_der_x509_certificate,
-        $submitter_der_x509_certificate_sha1,
-        $submit_payload_signature,
-        $submit_payload,
-        $enrollment_state,
-        $submitted_on
-    )
-
-    """
-)
-
-_q_cancel_pki_enrollment = Q(
-    f"""
-    UPDATE pki_enrollment
-    SET
-        enrollment_state=$enrollment_state,
-        info_cancelled.cancelled_on=$cancelled_on
-    WHERE (
-        organization = {q_organization_internal_id("$organization_id")}
-        AND enrollment_id=$enrollment_id
-    )
-    """
-)
-
-
-_q_reject_pki_enrollment = Q(
-    f"""
-    UPDATE pki_enrollment
-    SET
-        enrollment_state=$enrollment_state,
-        info_rejected.rejected_on=$rejected_on
-    WHERE (
-        organization = {q_organization_internal_id("$organization_id")}
-        AND enrollment_id=$enrollment_id
-    )
-    """
-)
-
-
-_q_accept_pki_enrollment = Q(
-    f"""
-    UPDATE pki_enrollment
-    SET
-        enrollment_state=$enrollment_state,
-        info_accepted.accepted_on=$accepted_on,
-        info_accepted.accepter_der_x509_certificate=$accepter_der_x509_certificate,
-        info_accepted.accept_payload_signature=$accept_payload_signature,
-        info_accepted.accept_payload=$accept_payload,
-        accepter={q_device_internal_id(organization_id="$organization_id", device_id="$accepter")},
-        submitter_accepted_device={q_device_internal_id(organization_id="$organization_id", device_id="$accepted")}
-    WHERE (
-        organization = {q_organization_internal_id("$organization_id")}
-        AND enrollment_id=$enrollment_id
-    )
-    """
-)
-
-
-_q_get_user_from_device_id = Q(
-    f"""
-    SELECT *
-    FROM user_
-    WHERE
-        user_.organization = {q_organization_internal_id("$organization_id")}
-        AND user_._id=(
-            SELECT user_
-            FROM device
-            WHERE device._id=$device_id
-            AND device.organization = {q_organization_internal_id("$organization_id")}
-        )
-    FOR UPDATE
-    LIMIT 1
-    """
-)
-_q_retrieve_active_human_by_email_for_update = Q(
-    f"""
-    SELECT
-        user_.user_id
-    FROM user_ LEFT JOIN human ON user_.human=human._id
-    WHERE
-        user_.organization = {q_organization_internal_id("$organization_id")}
-        AND human.email = $email
-        AND user_.revoked_on IS NULL
-    FOR UPDATE
-    LIMIT 1
-"""
-)
+_q_retrieve_active_human_by_email_for_update = Q(f"""
+SELECT user_.user_id
+FROM user_ LEFT JOIN human ON user_.human = human._id
+WHERE
+    user_.organization = {q_organization_internal_id("$organization_id")}   -- noqa: LT05,LT14
+    AND human.email = $email
+    AND user_.revoked_on IS NULL
+LIMIT 1
+FOR UPDATE
+""")
 
 
 def _build_enrollment_info(entry: dict[str, Any]) -> PkiEnrollmentInfo:
