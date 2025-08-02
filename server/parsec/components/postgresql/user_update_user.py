@@ -45,7 +45,8 @@ LIMIT 1
 
 _q_update_user = Q(
     """
-WITH new_profile AS (
+WITH
+new_profile AS (  -- noqa: ST03
     INSERT INTO profile (
         user_,
         profile,
@@ -62,7 +63,7 @@ WITH new_profile AS (
     )
 ),
 
-updated_user AS (
+updated_user AS (  -- noqa: ST03
     UPDATE user_
     SET current_profile = $profile
     WHERE

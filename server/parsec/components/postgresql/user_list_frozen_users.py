@@ -15,9 +15,7 @@ from parsec.components.user import (
 
 _q_get_organization_frozen_users = Q(
     """
-SELECT
-    user_.user_id
-
+SELECT user_.user_id
 FROM user_
 WHERE
     user_.organization = $internal_organization_id

@@ -191,8 +191,6 @@ repos:
         exclude: |
             (?x)^(
                 server/parsec/components/postgresql/test_queries.*|
-                server/parsec/components/postgresql/user.*|
-                server/parsec/components/postgresql/utils.*|
                 server/parsec/components/postgresql/vlob.*
             )$
         require_serial: true

@@ -29,9 +29,9 @@ SELECT
     human.email AS human_email,
     human.label AS human_label
 FROM user_
-INNER JOIN human ON human._id = user_.human
+INNER JOIN human ON user_.human = human._id
 WHERE
-    user_.organization = {q_organization_internal_id("$organization_id")}
+    user_.organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT05,LT14
 """
 )
 
@@ -42,9 +42,9 @@ SELECT
     device.device_id,
     device.created_on
 FROM device
-INNER JOIN user_ ON user_._id = device.user_
+INNER JOIN user_ ON device.user_ = user_._id
 WHERE
-    device.organization = {q_organization_internal_id("$organization_id")}
+    device.organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT05,LT14
 ORDER BY device.created_on
 """
 )
@@ -56,9 +56,9 @@ SELECT
     profile.profile,
     profile.certified_on
 FROM profile
-LEFT JOIN user_ ON user_._id = profile.user_
+LEFT JOIN user_ ON profile.user_ = user_._id
 WHERE
-    user_.organization = {q_organization_internal_id("$organization_id")}
+    user_.organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT05,LT14
 ORDER BY profile.certified_on
 """
 )

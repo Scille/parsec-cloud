@@ -40,12 +40,20 @@ updated_user AS (
     UPDATE user_ SET
         frozen = $frozen
     WHERE
-        organization = (SELECT _id FROM my_organization)
+        organization = (SELECT my_organization._id FROM my_organization)
         AND user_id = $user_id
     RETURNING
         user_.user_id,
-        (SELECT human.email FROM human WHERE human._id = user_.human),
-        (SELECT human.label FROM human WHERE human._id = user_.human)
+        (
+            SELECT human.email
+            FROM human
+            WHERE human._id = user_.human
+        ),
+        (
+            SELECT human.label
+            FROM human
+            WHERE human._id = user_.human
+        )
 )
 
 SELECT
@@ -81,7 +89,7 @@ my_human AS (
         label
     FROM human
     WHERE
-        organization = (SELECT _id FROM my_organization)
+        organization = (SELECT my_organization._id FROM my_organization)
         AND email = $user_email
 ),
 
