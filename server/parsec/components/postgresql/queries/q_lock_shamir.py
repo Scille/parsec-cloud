@@ -16,20 +16,22 @@ _q_lock_shamir_topic_write = Q(
 WITH my_locked_shamir_recovery_topic AS (
     SELECT last_timestamp
     FROM shamir_recovery_topic
-    WHERE organization = $organization_internal_id
+    WHERE
+        organization = $organization_internal_id
     LIMIT 1
     FOR SHARE
 ),
 
 my_last_shamir_recovery AS (
     SELECT
-        shamir_recovery_setup._id,
-        shamir_recovery_setup.created_on,
-        shamir_recovery_setup.deleted_on
+        _id,
+        created_on,
+        deleted_on
     FROM shamir_recovery_setup
-    WHERE user_ = $user_internal_id
-    AND organization = $organization_internal_id
-    ORDER BY shamir_recovery_setup.created_on DESC
+    WHERE
+        user_ = $user_internal_id
+        AND organization = $organization_internal_id
+    ORDER BY created_on DESC
     LIMIT 1
 )
 

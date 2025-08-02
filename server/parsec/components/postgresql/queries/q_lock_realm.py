@@ -51,7 +51,7 @@ FROM realm
 INNER JOIN realm_topic ON realm._id = realm_topic.realm
 WHERE
     realm.organization = $organization_internal_id
-    AND realm_id = $realm_id
+    AND realm.realm_id = $realm_id
 {row_lock} OF realm_topic
 """
 
@@ -59,8 +59,7 @@ _q_lock_realm_write = Q(_Q_LOCK_REALM_TEMPLATE.format(row_lock="FOR UPDATE"))
 _q_lock_realm_read = Q(_Q_LOCK_REALM_TEMPLATE.format(row_lock="FOR SHARE"))
 
 
-_q_realm_info_after_lock = Q(
-    """
+_q_realm_info_after_lock = Q("""
 WITH my_realm_user_role AS (
     SELECT role
     FROM realm_user_role
@@ -73,15 +72,14 @@ WITH my_realm_user_role AS (
 
 SELECT
     realm_topic.last_timestamp AS last_realm_certificate_timestamp,
-    key_index AS realm_key_index,
-    (SELECT role FROM my_realm_user_role) AS realm_user_current_role
+    realm.key_index AS realm_key_index,
+    (SELECT my_realm_user_role.role FROM my_realm_user_role) AS realm_user_current_role
 FROM realm
 INNER JOIN realm_topic ON realm._id = realm_topic.realm
 WHERE
     realm.organization = $organization_internal_id
     AND realm._id = $realm_internal_id
-"""
-)
+""")
 
 
 async def lock_realm_write(
