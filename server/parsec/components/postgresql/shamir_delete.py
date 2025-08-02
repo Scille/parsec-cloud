@@ -34,17 +34,19 @@ _q_check_recipients = Q(
     """
 SELECT user_.user_id
 FROM shamir_recovery_setup
-INNER JOIN shamir_recovery_share ON shamir_recovery_share.shamir_recovery = shamir_recovery_setup._id
-INNER JOIN user_ ON user_._id = shamir_recovery_share.recipient
-WHERE shamir_recovery_setup.organization = $organization_internal_id
-AND shamir_recovery_setup.user_ = $author_user_internal_id
-AND shamir_recovery_setup.created_on = $timestamp
+INNER JOIN shamir_recovery_share ON shamir_recovery_setup._id = shamir_recovery_share.shamir_recovery
+INNER JOIN user_ ON shamir_recovery_share.recipient = user_._id
+WHERE
+    shamir_recovery_setup.organization = $organization_internal_id
+    AND shamir_recovery_setup.user_ = $author_user_internal_id
+    AND shamir_recovery_setup.created_on = $timestamp
 """
 )
 
 _q_mark_shamir_recovery_setup_as_deleted = Q(
     """
-WITH shamir_recovery_topic_update AS (
+WITH
+shamir_recovery_topic_update AS (  -- noqa: ST03
     INSERT INTO shamir_recovery_topic (
         organization,
         last_timestamp
@@ -52,12 +54,11 @@ WITH shamir_recovery_topic_update AS (
         $organization_internal_id,
         $deleted_on
     )
-    ON CONFLICT (organization)
-    DO UPDATE SET
-        last_timestamp = EXCLUDED.last_timestamp
-    WHERE
+    ON CONFLICT (organization) DO UPDATE
+        SET
+            last_timestamp = excluded.last_timestamp
         -- Sanity check
-        shamir_recovery_topic.last_timestamp < EXCLUDED.last_timestamp
+        WHERE shamir_recovery_topic.last_timestamp < excluded.last_timestamp
     RETURNING TRUE
 )
 
@@ -66,10 +67,11 @@ UPDATE shamir_recovery_setup SET
     deletion_certificate = $deletion_certificate,
     -- Remove the ciphered data, the device keys should now be unrecoverable
     ciphered_data = NULL
-WHERE organization = $organization_internal_id
-AND _id = $shamir_recovery_setup_internal_id
--- Sanity check
-AND deleted_on IS NULL
+WHERE
+    organization = $organization_internal_id
+    AND _id = $shamir_recovery_setup_internal_id
+    -- Sanity check
+    AND deleted_on IS NULL
 RETURNING TRUE
 """
 )

@@ -39,15 +39,16 @@ SELECT
     _id AS recipient_internal_id,
     (revoked_on IS NOT NULL) AS revoked
 FROM user_
-WHERE organization = $organization_internal_id
-AND user_id = $recipient_id
+WHERE
+    organization = $organization_internal_id
+    AND user_id = $recipient_id
 LIMIT 1
 """
 )
 
 _q_insert_shamir_recovery_setup = Q(
     """
-WITH shamir_recovery_topic_update AS (
+WITH shamir_recovery_topic_update AS (  -- noqa: ST03
     INSERT INTO shamir_recovery_topic (
         organization,
         last_timestamp
@@ -55,12 +56,11 @@ WITH shamir_recovery_topic_update AS (
         $organization_internal_id,
         $created_on
     )
-    ON CONFLICT (organization)
-    DO UPDATE SET
-        last_timestamp = EXCLUDED.last_timestamp
-    WHERE
+    ON CONFLICT (organization) DO UPDATE
+        SET
+            last_timestamp = excluded.last_timestamp
         -- Sanity check
-        shamir_recovery_topic.last_timestamp < EXCLUDED.last_timestamp
+        WHERE shamir_recovery_topic.last_timestamp < excluded.last_timestamp
     RETURNING TRUE
 )
 
