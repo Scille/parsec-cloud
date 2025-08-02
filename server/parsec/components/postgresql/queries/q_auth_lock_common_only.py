@@ -49,9 +49,9 @@ WITH my_organization AS (
 my_locked_common_topic AS (
     SELECT last_timestamp
     FROM common_topic
-    WHERE organization = (SELECT _id FROM my_organization)
+    WHERE organization = (SELECT my_organization._id FROM my_organization)
     LIMIT 1
-    -- Read or write lock ?
+    -- Read or write lock?
     {common_row_lock}
 ),
 
@@ -61,7 +61,7 @@ my_device AS (
         user_
     FROM device
     WHERE
-        organization = (SELECT _id FROM my_organization)
+        organization = (SELECT my_organization._id FROM my_organization)
         AND device_id = $device_id
     LIMIT 1
 ),
@@ -69,11 +69,11 @@ my_device AS (
 my_user AS (
     SELECT
         _id,
-        (revoked_on IS NOT NULL) AS revoked,
         user_id,
-        current_profile
+        current_profile,
+        (revoked_on IS NOT NULL) AS revoked
     FROM user_
-    WHERE _id = (SELECT user_ FROM my_device)
+    WHERE _id = (SELECT my_device.user_ FROM my_device)
     LIMIT 1
 )
 

@@ -47,7 +47,7 @@ my_device AS (
         user_
     FROM device
     WHERE
-        organization = (SELECT _id FROM my_organization)
+        organization = (SELECT my_organization._id FROM my_organization)
         AND device_id = $device_id
     LIMIT 1
 ),
@@ -55,11 +55,11 @@ my_device AS (
 my_user AS (
     SELECT
         _id,
-        (revoked_on IS NOT NULL) AS revoked,
         user_id,
-        current_profile
+        current_profile,
+        (revoked_on IS NOT NULL) AS revoked
     FROM user_
-    WHERE _id = (SELECT user_ FROM my_device)
+    WHERE _id = (SELECT my_device.user_ FROM my_device)
     LIMIT 1
 )
 
