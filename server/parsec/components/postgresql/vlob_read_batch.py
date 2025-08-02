@@ -37,7 +37,7 @@ my_device AS (
         user_
     FROM device
     WHERE
-        organization = (SELECT _id FROM my_organization)
+        organization = (SELECT my_organization._id FROM my_organization)
         AND device_id = $device_id
     LIMIT 1
 ),
@@ -47,7 +47,7 @@ my_user AS (
         _id,
         (revoked_on IS NOT NULL) AS revoked
     FROM user_
-    WHERE _id = (SELECT user_ FROM my_device)
+    WHERE _id = (SELECT my_device.user_ FROM my_device)
     LIMIT 1
 ),
 
@@ -56,7 +56,7 @@ my_realm AS (
     FROM realm
     WHERE
         realm_id = $realm_id
-        AND organization = (SELECT _id FROM my_organization)
+        AND organization = (SELECT my_organization._id FROM my_organization)
     LIMIT 1
 )
 
@@ -68,29 +68,30 @@ SELECT
     (
         SELECT last_timestamp
         FROM common_topic
-        WHERE organization = (SELECT _id FROM my_organization)
+        WHERE organization = (SELECT my_organization._id FROM my_organization)
         LIMIT 1
-    ) as last_common_certificate_timestamp,
-    (SELECT _id FROM my_realm) AS realm_internal_id,
+    ) AS last_common_certificate_timestamp,
+    (
+        SELECT my_realm._id
+        FROM my_realm
+    ) AS realm_internal_id,
     (
         SELECT last_timestamp
         FROM realm_topic
-        WHERE
-            realm = (SELECT _id FROM my_realm)
+        WHERE realm = (SELECT my_realm._id FROM my_realm)
         LIMIT 1
     ) AS last_realm_certificate_timestamp,
     COALESCE(
         (
-            SELECT
-                realm_user_role.role IS NOT NULL
+            SELECT role IS NOT NULL
             FROM realm_user_role
             WHERE
-                realm_user_role.user_ = (SELECT _id FROM my_user)
-                AND realm_user_role.realm = (SELECT _id FROM my_realm)
+                user_ = (SELECT my_user._id FROM my_user)
+                AND realm = (SELECT my_realm._id FROM my_realm)
             ORDER BY certified_on DESC
             LIMIT 1
         ),
-        False
+        FALSE
     ) AS user_can_read
 """
 )
@@ -100,10 +101,10 @@ _q_get_latest_vlob = Q(
     f"""
 SELECT
     key_index,
-    {q_device(select="device_id", _id="author")} AS author,
     version,
     created_on,
-    blob
+    blob,
+    {q_device(select="device_id", _id="vlob_atom.author")} AS author  -- noqa: LT14
 FROM vlob_atom
 WHERE
     realm = $realm_internal_id
@@ -118,10 +119,10 @@ _q_get_vlob_at_timestamp = Q(
     f"""
 SELECT
     key_index,
-    {q_device(select="device_id", _id="author")} AS author,
     version,
     created_on,
-    blob
+    blob,
+    {q_device(select="device_id", _id="vlob_atom.author")} AS author  -- noqa: LT14
 FROM vlob_atom
 WHERE
     realm = $realm_internal_id

@@ -191,7 +191,6 @@ repos:
         exclude: |
             (?x)^(
                 server/parsec/components/postgresql/test_queries.*|
-                server/parsec/components/postgresql/vlob.*
             )$
         require_serial: true
         language: system

@@ -41,13 +41,16 @@ from parsec.webhooks import WebhooksComponent
 
 _q_get_vlob_info = Q(
     """
-SELECT realm_id, version
+SELECT
+    vlob_atom.realm_id,
+    vlob_atom.version
 FROM vlob_atom
 INNER JOIN realm ON vlob_atom.realm = realm._id
 INNER JOIN organization ON realm.organization = organization._id
-WHERE organization_id = $organization_id
-AND vlob_id = $vlob_id
-ORDER BY version DESC
+WHERE
+    organization.organization_id = $organization_id
+    AND vlob_atom.vlob_id = $vlob_id
+ORDER BY vlob_atom.version DESC
 LIMIT 1
 """
 )

@@ -17,15 +17,15 @@ from parsec.components.vlob import (
 _q_poll_changes = Q(
     """
 SELECT
-    index,
-    vlob_id,
+    realm_vlob_update.index,
+    vlob_atom.vlob_id,
     vlob_atom.version
 FROM realm_vlob_update
 LEFT JOIN vlob_atom ON realm_vlob_update.vlob_atom = vlob_atom._id
 WHERE
     vlob_atom.realm = $realm_internal_id
-    AND index > $checkpoint
-ORDER BY index ASC
+    AND realm_vlob_update.index > $checkpoint
+ORDER BY realm_vlob_update.index ASC
 """
 )
 
@@ -50,7 +50,7 @@ my_device AS (
         user_
     FROM device
     WHERE
-        organization = (SELECT _id FROM my_organization)
+        organization = (SELECT my_organization._id FROM my_organization)
         AND device_id = $device_id
     LIMIT 1
 ),
@@ -60,7 +60,7 @@ my_user AS (
         _id,
         (revoked_on IS NOT NULL) AS revoked
     FROM user_
-    WHERE _id = (SELECT user_ FROM my_device)
+    WHERE _id = (SELECT my_device.user_ FROM my_device)
     LIMIT 1
 ),
 
@@ -69,7 +69,7 @@ my_realm AS (
     FROM realm
     WHERE
         realm_id = $realm_id
-        AND organization = (SELECT _id FROM my_organization)
+        AND organization = (SELECT my_organization._id FROM my_organization)
     LIMIT 1
 )
 
@@ -81,29 +81,30 @@ SELECT
     (
         SELECT last_timestamp
         FROM common_topic
-        WHERE organization = (SELECT _id FROM my_organization)
+        WHERE organization = (SELECT my_organization._id FROM my_organization)
         LIMIT 1
-    ) as last_common_certificate_timestamp,
-    (SELECT _id FROM my_realm) AS realm_internal_id,
+    ) AS last_common_certificate_timestamp,
+    (
+        SELECT my_realm._id FROM my_realm
+    ) AS realm_internal_id,
     (
         SELECT last_timestamp
         FROM realm_topic
         WHERE
-            realm = (SELECT _id FROM my_realm)
+            realm = (SELECT my_realm._id FROM my_realm)
         LIMIT 1
     ) AS last_realm_certificate_timestamp,
     COALESCE(
         (
-            SELECT
-                realm_user_role.role IS NOT NULL
+            SELECT realm_user_role.role IS NOT NULL
             FROM realm_user_role
             WHERE
-                realm_user_role.user_ = (SELECT _id FROM my_user)
-                AND realm_user_role.realm = (SELECT _id FROM my_realm)
-            ORDER BY certified_on DESC
+                realm_user_role.user_ = (SELECT my_user._id FROM my_user)
+                AND realm_user_role.realm = (SELECT my_realm._id FROM my_realm)
+            ORDER BY realm_user_role.certified_on DESC
             LIMIT 1
         ),
-        False
+        FALSE
     ) AS user_can_read
 """
 )

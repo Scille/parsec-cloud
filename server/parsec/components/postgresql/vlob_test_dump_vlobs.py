@@ -18,15 +18,13 @@ _q_dump_vlobs = Q(
 SELECT
     vlob_atom.vlob_id,
     realm.realm_id,
-    {q_device(_id="vlob_atom.author", select="device_id")} AS author,
     vlob_atom.created_on,
-    vlob_atom.blob
+    vlob_atom.blob,
+    {q_device(_id="vlob_atom.author", select="device_id")} AS author  -- noqa: LT14
 FROM vlob_atom
-INNER JOIN realm
-ON realm._id = vlob_atom.realm
-INNER JOIN organization
-ON organization._id = realm.organization
-WHERE organization_id = $organization_id
+INNER JOIN realm ON vlob_atom.realm = realm._id
+INNER JOIN organization ON realm.organization = organization._id
+WHERE organization.organization_id = $organization_id
 """
 )
 
