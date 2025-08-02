@@ -16,8 +16,7 @@ from parsec.components.realm import (
     RealmGetCurrentRealmsForUserBadOutcome,
 )
 
-_q_get_org_and_user = Q(
-    """
+_q_get_org_and_user = Q("""
 WITH my_organization AS (
     SELECT _id
     FROM organization
@@ -32,7 +31,7 @@ my_user AS (
     SELECT _id
     FROM user_
     WHERE
-        organization = (SELECT _id FROM my_organization)
+        organization = (SELECT my_organization._id FROM my_organization)
         AND user_id = $user_id
     LIMIT 1
 )
@@ -40,21 +39,19 @@ my_user AS (
 SELECT
     (SELECT _id FROM my_user) AS user_internal_id,
     (SELECT _id FROM my_organization) AS organization_internal_id
-"""
-)
+""")
 
-
-_q_get_realms_for_user = Q(
-    f"""
+_q_get_realms_for_user = Q(f"""
 SELECT DISTINCT ON (realm)
-    {q_realm(_id="realm_user_role.realm", select="realm_id")} AS realm_id,
     role,
-    certified_on
+    certified_on,
+    {q_realm(_id="realm_user_role.realm", select="realm_id")} AS realm_id  -- noqa: LT14
 FROM realm_user_role
 WHERE user_ = $user_internal_id
-ORDER BY realm, certified_on DESC
-"""
-)
+ORDER BY
+    realm ASC,
+    certified_on DESC
+""")
 
 
 async def realm_get_current_realms_for_user(

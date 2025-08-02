@@ -16,8 +16,7 @@ from parsec.components.realm import (
     RealmExportDoBlocksBatchMetadataBadOutcome,
 )
 
-_q_get_org_and_realm = Q(
-    """
+_q_get_org_and_realm = Q("""
 WITH my_organization AS (
     SELECT _id
     FROM organization
@@ -32,7 +31,7 @@ my_realm AS (
     SELECT _id
     FROM realm
     WHERE
-        organization = (SELECT _id FROM my_organization)
+        organization = (SELECT my_organization._id FROM my_organization)
         AND realm_id = $realm_id
     LIMIT 1
 )
@@ -40,17 +39,16 @@ my_realm AS (
 SELECT
     (SELECT _id FROM my_organization) AS organization_internal_id,
     (SELECT _id FROM my_realm) AS realm_internal_id
-"""
-)
+""")
 
 
 _q_get_blocks_metadata_batch = Q(f"""
 SELECT
-    _id as block_internal_id,
+    _id AS block_internal_id,
     block_id,
-    {q_device(_id="author", select="device_id")} AS author,
     key_index,
-    size
+    size,
+    {q_device(_id="block.author", select="device_id")} AS author  -- noqa: LT14
 FROM block
 WHERE
     realm = $realm_internal_id

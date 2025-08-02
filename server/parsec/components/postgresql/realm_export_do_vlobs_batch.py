@@ -16,8 +16,7 @@ from parsec.components.realm import (
     RealmExportVlobsBatchItem,
 )
 
-_q_get_org_and_realm = Q(
-    """
+_q_get_org_and_realm = Q("""
 WITH my_organization AS (
     SELECT _id
     FROM organization
@@ -32,7 +31,7 @@ my_realm AS (
     SELECT _id
     FROM realm
     WHERE
-        organization = (SELECT _id FROM my_organization)
+        organization = (SELECT my_organization._id FROM my_organization)
         AND realm_id = $realm_id
     LIMIT 1
 )
@@ -40,28 +39,25 @@ my_realm AS (
 SELECT
     (SELECT _id FROM my_organization) AS organization_internal_id,
     (SELECT _id FROM my_realm) AS realm_internal_id
-"""
-)
+""")
 
 
-_q_get_vlobs_batch = Q(
-    f"""
+_q_get_vlobs_batch = Q(f"""
 SELECT
-    _id as vlob_atom_internal_id,
+    _id AS vlob_atom_internal_id,
     vlob_id,
     version,
     key_index,
     blob,
-    {q_device(_id="author", select="device_id")} AS author,
-    created_on
+    created_on,
+    {q_device(_id="vlob_atom.author", select="device_id")} AS author  -- noqa: LT14
 FROM vlob_atom
 WHERE
     realm = $realm_internal_id
     AND _id > $batch_offset_marker
 ORDER BY _id
 LIMIT $batch_size
-"""
-)
+""")
 
 
 async def realm_export_do_vlobs_batch(

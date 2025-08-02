@@ -39,21 +39,22 @@ from parsec.components.realm import (
 from parsec.components.sequester import RejectedBySequesterService, SequesterServiceUnavailable
 from parsec.events import EventRealmCertificate
 
-_q_get_realm_current_participants = Q(
-    f"""
+_q_get_realm_current_participants = Q(f"""
 WITH per_user_last_role AS (
-    SELECT DISTINCT ON(user_)
-        {q_user(_id="realm_user_role.user_", select="user_id")} AS user_id,
-        role
-    FROM  realm_user_role
+    SELECT DISTINCT ON (user_)
+        role,
+        {q_user(_id="realm_user_role.user_", select="user_id")} AS user_id  -- noqa: LT14
+    FROM realm_user_role
     WHERE realm = $realm_internal_id
-    ORDER BY user_, certified_on DESC
+    ORDER BY
+        user_ ASC,
+        certified_on DESC
 )
 
-SELECT user_id FROM per_user_last_role WHERE role IS NOT NULL
-"""
-)
-
+SELECT user_id
+FROM per_user_last_role
+WHERE role IS NOT NULL
+""")
 
 _q_lock_sequester_read_and_get_active_services = Q("""
 -- Sequester topic read lock
@@ -65,6 +66,7 @@ WITH my_locked_sequester_topic AS (
     LIMIT 1
     FOR SHARE
 ),
+
 my_active_sequester_services AS (
     SELECT
         _id,
@@ -90,18 +92,16 @@ UNION ALL -- Using UNION ALL is import to avoid sorting !
 
 SELECT
     -- First row only: sequester topic info column
-    NULL,
+    NULL AS last_sequester_certificate_timestamp,
 
     -- Non-first rows only: service info columns
-    _id,
+    _id AS service_internal_id,
     service_id,
-    webhook_url
+    webhook_url AS service_webhook_url
 FROM my_active_sequester_services
 """)
 
-
-_q_insert_keys_bundle = Q(
-    """
+_q_insert_keys_bundle = Q("""
 WITH new_realm_keys_bundle AS (
     INSERT INTO realm_keys_bundle (
         realm,
@@ -123,7 +123,7 @@ WITH new_realm_keys_bundle AS (
     RETURNING _id
 ),
 
-updated_realm_key_index AS (
+updated_realm_key_index AS (  -- noqa: ST03
     UPDATE realm
     SET key_index = $key_index
     WHERE _id = $realm_internal_id
@@ -142,12 +142,9 @@ updated_realm_topic AS (
 SELECT
     COALESCE((SELECT * FROM updated_realm_topic), FALSE) AS update_realm_topic_ok,
     (SELECT _id FROM new_realm_keys_bundle) AS keys_bundle_internal_id
-"""
-)
+""")
 
-
-_q_insert_participants_keys_bundle_access = Q(
-    f"""
+_q_insert_participants_keys_bundle_access = Q(f"""
 INSERT INTO realm_keys_bundle_access (
     realm,
     user_,
@@ -156,17 +153,14 @@ INSERT INTO realm_keys_bundle_access (
     from_sharing
 ) VALUES (
     $realm_internal_id,
-    {q_user_internal_id(organization="$organization_internal_id", user_id="$user_id")},
+    {q_user_internal_id(organization="$organization_internal_id", user_id="$user_id")},  -- noqa: LT14
     $realm_keys_bundle_internal_id,
     $access,
     NULL
 )
-"""
-)
+""")
 
-
-_q_insert_sequester_services_keys_bundle_access = Q(
-    f"""
+_q_insert_sequester_services_keys_bundle_access = Q(f"""
 INSERT INTO realm_sequester_keys_bundle_access (
     realm,
     sequester_service,
@@ -174,12 +168,11 @@ INSERT INTO realm_sequester_keys_bundle_access (
     access
 ) VALUES (
     $realm_internal_id,
-    {q_sequester_service_internal_id(organization="$organization_internal_id", service_id="$service_id")},
+    {q_sequester_service_internal_id(organization="$organization_internal_id", service_id="$service_id")},  -- noqa: LT05,LT14
     $realm_keys_bundle_internal_id,
     $access
 )
-"""
-)
+""")
 
 
 async def realm_rotate_key(

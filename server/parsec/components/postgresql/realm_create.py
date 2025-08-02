@@ -65,12 +65,12 @@ RETURNING _id
 
 _q_get_last_realm_certificate_timestamp = Q(
     """
-SELECT last_timestamp
+SELECT realm_topic.last_timestamp
 FROM realm_topic
-INNER JOIN realm ON realm._id = realm_topic.realm
+INNER JOIN realm ON realm_topic.realm = realm._id
 WHERE
     realm.organization = $organization_internal_id
-    AND realm_id = $realm_id
+    AND realm.realm_id = $realm_id
 """
 )
 
@@ -86,10 +86,10 @@ WITH new_realm_user_role AS (
         certified_on
     ) VALUES (
         $realm_internal_id,
-        {q_user_internal_id(organization="$organization_internal_id", user_id="$user_id")},
+        {q_user_internal_id(organization="$organization_internal_id", user_id="$user_id")},  -- noqa: LT14
         'OWNER',
         $certificate,
-        {q_device_internal_id(organization="$organization_internal_id", device_id="$certified_by")},
+        {q_device_internal_id(organization="$organization_internal_id", device_id="$certified_by")},  -- noqa: LT14
         $timestamp
     )
     RETURNING TRUE AS success

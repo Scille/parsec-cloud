@@ -36,7 +36,7 @@ my_realm AS (
     SELECT _id
     FROM realm
     WHERE
-        organization = (SELECT _id FROM my_organization)
+        organization = (SELECT my_organization._id FROM my_organization)
         AND realm_id = $realm_id
     LIMIT 1
 )
@@ -47,35 +47,37 @@ SELECT
 """
 )
 
-
 _q_get_certificates = Q(f"""
 WITH
-    -- Note those fragments contain `$organization_internal_id` & `$redacted`
-    all_common_certificates AS ({sql_fragment_all_common_certificates}),
-    all_sequester_certificates AS ({sql_fragment_all_sequester_certificates}),
-    all_realm_certificates AS ({sql_fragment_all_realm_certificates}),
+-- Note those fragments contain `$organization_internal_id` & `$redacted`
+
+all_common_certificates AS ({sql_fragment_all_common_certificates}),
+
+all_sequester_certificates AS ({sql_fragment_all_sequester_certificates}),
+
+all_realm_certificates AS ({sql_fragment_all_realm_certificates}),
 
 my_all_certificates AS (
     (
         SELECT
             'common' AS topic,
             priority,
-            timestamp,
+            certificate_timestamp,
             certificate
         FROM all_common_certificates
-        WHERE timestamp <= $common_certificate_timestamp_upper_bound
+        WHERE certificate_timestamp <= $common_certificate_timestamp_upper_bound
     )
 
     UNION ALL
 
-        (
+    (
         SELECT
             'sequester' AS topic,
             0 AS priority,
-            timestamp,
+            certificate_timestamp,
             certificate
         FROM all_sequester_certificates
-        WHERE timestamp <= $sequester_certificate_timestamp_upper_bound
+        WHERE certificate_timestamp <= $sequester_certificate_timestamp_upper_bound
     )
 
     UNION ALL
@@ -84,12 +86,12 @@ my_all_certificates AS (
         SELECT
             'realm' AS topic,
             0 AS priority,
-            timestamp,
+            certificate_timestamp,
             certificate
         FROM all_realm_certificates
         WHERE
             realm = $realm_internal_id
-            AND timestamp <= $realm_certificate_timestamp_upper_bound
+            AND certificate_timestamp <= $realm_certificate_timestamp_upper_bound
     )
 )
 
@@ -98,7 +100,9 @@ SELECT
     certificate
 FROM my_all_certificates
 -- ORDER BY must be done here given there is no guarantee on rows order after UNION
-ORDER BY timestamp ASC, priority ASC
+ORDER BY
+    certificate_timestamp ASC,
+    priority ASC
 """)
 
 
@@ -115,12 +119,9 @@ WHERE
 
 _q_get_realm_keys_bundle_user_accesses = Q(f"""
 SELECT
-    {q_user(_id="realm_keys_bundle_access.user_", select="user_id")} AS user_id,
     realm_keys_bundle.key_index,
     realm_keys_bundle_access.access,
-    realm_user_role.certified_on,
-    realm_keys_bundle.certified_on,
-    COALESCE(realm_user_role.certified_on, realm_keys_bundle.certified_on) AS foo
+    {q_user(_id="realm_keys_bundle_access.user_", select="user_id")} AS user_id  -- noqa: LT14
 FROM realm_keys_bundle_access
 LEFT JOIN realm_keys_bundle ON realm_keys_bundle_access.realm_keys_bundle = realm_keys_bundle._id
 LEFT JOIN realm_user_role ON realm_keys_bundle_access.from_sharing = realm_user_role._id
@@ -137,7 +138,7 @@ SELECT
     realm_sequester_keys_bundle_access.access
 FROM realm_sequester_keys_bundle_access
 LEFT JOIN realm_keys_bundle ON realm_sequester_keys_bundle_access.realm_keys_bundle = realm_keys_bundle._id
-LEFT JOIN sequester_service ON sequester_service._id = realm_sequester_keys_bundle_access.sequester_service
+LEFT JOIN sequester_service ON realm_sequester_keys_bundle_access.sequester_service = sequester_service._id
 WHERE
     realm_sequester_keys_bundle_access.realm = $realm_internal_id
     AND realm_keys_bundle.certified_on <= $realm_certificate_timestamp_upper_bound
