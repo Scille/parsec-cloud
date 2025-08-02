@@ -45,18 +45,18 @@ WITH my_organization AS (
 my_locked_common_topic AS (
     SELECT last_timestamp
     FROM common_topic
-    WHERE organization = (SELECT _id FROM my_organization)
+    WHERE organization = (SELECT my_organization._id FROM my_organization)
     LIMIT 1
     FOR SHARE
 ),
 
 my_realm AS (
     SELECT
-        realm._id,
+        _id,
         key_index
     FROM realm
     WHERE
-        organization = (SELECT _id FROM my_organization)
+        organization = (SELECT my_organization._id FROM my_organization)
         AND realm_id = $realm_id
     LIMIT 1
 ),
@@ -65,7 +65,7 @@ my_realm AS (
 my_locked_realm_topic AS (
     SELECT last_timestamp
     FROM realm_topic
-    WHERE realm = (SELECT _id FROM my_realm)
+    WHERE realm = (SELECT my_realm._id FROM my_realm)
     LIMIT 1
     FOR SHARE
 ),
@@ -74,7 +74,7 @@ my_last_vlob_atom AS (
     SELECT version
     FROM vlob_atom
     WHERE
-        realm = (SELECT _id FROM my_realm)
+        realm = (SELECT my_realm._id FROM my_realm)
         AND vlob_id = $vlob_id
     ORDER BY version DESC
     LIMIT 1
@@ -113,14 +113,14 @@ SELECT
             SELECT role IN ('CONTRIBUTOR', 'MANAGER', 'OWNER')
             FROM realm_user_role
             WHERE
-                realm_user_role.user_ = (SELECT _id FROM my_user)
-                AND realm_user_role.realm = (SELECT _id FROM my_realm)
+                user_ = (SELECT my_user._id FROM my_user)
+                AND realm = (SELECT my_realm._id FROM my_realm)
             ORDER BY certified_on DESC
             LIMIT 1
         ),
-        False
+        FALSE
     ) AS user_can_write,
-    (SELECT version FROM my_last_vlob_atom) as vlob_current_version
+    (SELECT version FROM my_last_vlob_atom) AS vlob_current_version
 """
 )
 
@@ -297,9 +297,9 @@ async def vlob_update(
         case _:
             assert False, row
 
-    match row["new_checkpoint"]:
-        case int() as new_checkpoint:
-            assert new_checkpoint >= 1, new_checkpoint
+    match row["new_index_checkpoint"]:
+        case int() as new_index_checkpoint:
+            assert new_index_checkpoint >= 1, new_index_checkpoint
         case None:
             # An unrelated vlob update in the realm has updated the current checkpoint
             # right between our `SELECT` that found the next checkpoint and our

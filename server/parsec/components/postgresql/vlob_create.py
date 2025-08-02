@@ -44,7 +44,7 @@ WITH my_organization AS (
 my_locked_common_topic AS (
     SELECT last_timestamp
     FROM common_topic
-    WHERE organization = (SELECT _id FROM my_organization)
+    WHERE organization = (SELECT my_organization._id FROM my_organization)
     LIMIT 1
     FOR SHARE
 ),
@@ -52,10 +52,10 @@ my_locked_common_topic AS (
 my_realm AS (
     SELECT
         realm._id,
-        key_index
+        realm.key_index
     FROM realm
     INNER JOIN my_organization ON realm.organization = my_organization._id
-    WHERE realm_id = $realm_id
+    WHERE realm.realm_id = $realm_id
     LIMIT 1
 ),
 
@@ -64,8 +64,8 @@ my_locked_realm_topic AS (
     SELECT last_timestamp
     FROM realm_topic
     WHERE
-        organization = (SELECT _id FROM my_organization)
-        AND realm = (SELECT _id FROM my_realm)
+        organization = (SELECT my_organization._id FROM my_organization)
+        AND realm = (SELECT my_realm._id FROM my_realm)
     LIMIT 1
     FOR SHARE
 ),
@@ -103,18 +103,18 @@ SELECT
             SELECT role IN ('CONTRIBUTOR', 'MANAGER', 'OWNER')
             FROM realm_user_role
             WHERE
-                realm_user_role.user_ = (SELECT _id FROM my_user)
-                AND realm_user_role.realm = (SELECT _id FROM my_realm)
+                user_ = (SELECT my_user._id FROM my_user)
+                AND realm = (SELECT my_realm._id FROM my_realm)
             ORDER BY certified_on DESC
             LIMIT 1
         ),
-        False
+        FALSE
     ) AS user_can_write,
     EXISTS(
-        SELECT True
+        SELECT TRUE
         FROM vlob_atom
         WHERE
-            vlob_atom.realm = (SELECT _id FROM my_realm)
+            vlob_atom.realm = (SELECT my_realm._id FROM my_realm)
             AND vlob_atom.vlob_id = $vlob_id
         LIMIT 1
     ) AS vlob_already_exists
@@ -136,14 +136,14 @@ WITH new_vlob AS (
         created_on
     )
     SELECT
-        $realm_internal_id,
-        $key_index,
-        $vlob_id,
-        $version,
-        $blob,
-        $blob_len,
-        $author_internal_id,
-        $timestamp
+        $realm_internal_id AS realm,
+        $key_index AS key_index,
+        $vlob_id AS vlob_id,
+        $version AS vlob_version,
+        $blob AS blob,
+        $blob_len AS size,
+        $author_internal_id AS author,
+        $timestamp AS created_on
     ON CONFLICT (realm, vlob_id, version) DO NOTHING
     RETURNING _id, realm
 ),
@@ -157,10 +157,10 @@ new_realm_vlob_update AS (
         SELECT
             realm,
             (
-                SELECT COALESCE(MAX(index), 0) + 1 AS checkpoint
+                SELECT COALESCE(MAX(realm_vlob_update.index), 0) + 1 AS index_checkpoint
                 FROM realm_vlob_update
                 WHERE realm_vlob_update.realm = new_vlob.realm
-            ),
+            ) AS new_index,
             _id
         FROM new_vlob
     )
@@ -170,7 +170,7 @@ new_realm_vlob_update AS (
 
 SELECT
     (SELECT _id FROM new_vlob) AS new_vlob_internal_id,
-    (SELECT index FROM new_realm_vlob_update) AS new_checkpoint
+    (SELECT index FROM new_realm_vlob_update) AS new_index_checkpoint
 """
 )
 
@@ -332,9 +332,9 @@ async def vlob_create(
         case _:
             assert False, row
 
-    match row["new_checkpoint"]:
-        case int() as new_checkpoint:
-            assert new_checkpoint >= 1, new_checkpoint
+    match row["new_index_checkpoint"]:
+        case int() as new_index_checkpoint:
+            assert new_index_checkpoint >= 1, new_index_checkpoint
         case None:
             # An unrelated vlob update in the realm has updated the current checkpoint
             # right between our `SELECT` that found the next checkpoint and our
