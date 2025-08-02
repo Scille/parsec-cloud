@@ -20,8 +20,7 @@ from parsec.components.realm import (
     RealmGetKeysBundleBadOutcome,
 )
 
-_g_get_last_keys_bundle_and_access = Q(
-    """
+_g_get_last_keys_bundle_and_access = Q("""
 WITH my_realm AS (
     SELECT
         realm._id,
@@ -42,18 +41,18 @@ my_keys_bundle AS (
         key_index,
         keys_bundle
     FROM realm_keys_bundle
-    WHERE realm = (SELECT _id FROM my_realm)
+    WHERE realm = (SELECT my_realm._id FROM my_realm)
     ORDER BY certified_on DESC
     LIMIT 1
 ),
 
 my_keys_bundle_access AS (
-    SELECT access
+    SELECT realm_keys_bundle_access.access
     FROM realm_keys_bundle_access
     LEFT JOIN realm_keys_bundle ON realm_keys_bundle_access.realm_keys_bundle = realm_keys_bundle._id
     LEFT JOIN realm_user_role ON realm_keys_bundle_access.from_sharing = realm_user_role._id
     WHERE
-        realm_keys_bundle._id = (SELECT _id FROM my_keys_bundle)
+        realm_keys_bundle._id = (SELECT my_keys_bundle._id FROM my_keys_bundle)
         AND realm_keys_bundle_access.user_ = $user_internal_id
     ORDER BY COALESCE(realm_user_role.certified_on, realm_keys_bundle.certified_on) DESC
     LIMIT 1
@@ -65,12 +64,9 @@ SELECT
     (SELECT key_index FROM my_keys_bundle) AS key_index,
     (SELECT keys_bundle FROM my_keys_bundle) AS keys_bundle,
     (SELECT access FROM my_keys_bundle_access) AS keys_bundle_access
-"""
-)
+""")
 
-
-_g_get_keys_bundle_and_access = Q(
-    """
+_g_get_keys_bundle_and_access = Q("""
 WITH my_realm AS (
     SELECT
         realm._id,
@@ -92,18 +88,18 @@ my_keys_bundle AS (
         keys_bundle
     FROM realm_keys_bundle
     WHERE
-        realm = (SELECT _id FROM my_realm)
+        realm = (SELECT my_realm._id FROM my_realm)
         AND key_index = $key_index
     LIMIT 1
 ),
 
 my_keys_bundle_access AS (
-    SELECT access
+    SELECT realm_keys_bundle_access.access
     FROM realm_keys_bundle_access
     LEFT JOIN realm_keys_bundle ON realm_keys_bundle_access.realm_keys_bundle = realm_keys_bundle._id
     LEFT JOIN realm_user_role ON realm_keys_bundle_access.from_sharing = realm_user_role._id
     WHERE
-        realm_keys_bundle._id = (SELECT _id FROM my_keys_bundle)
+        realm_keys_bundle._id = (SELECT my_keys_bundle._id FROM my_keys_bundle)
         AND realm_keys_bundle_access.user_ = $user_internal_id
     ORDER BY COALESCE(realm_user_role.certified_on, realm_keys_bundle.certified_on) DESC
     LIMIT 1
@@ -115,8 +111,7 @@ SELECT
     (SELECT key_index FROM my_keys_bundle) AS key_index,
     (SELECT keys_bundle FROM my_keys_bundle) AS keys_bundle,
     (SELECT access FROM my_keys_bundle_access) AS keys_bundle_access
-"""
-)
+""")
 
 
 async def realm_get_keys_bundle(

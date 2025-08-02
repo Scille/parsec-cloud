@@ -45,29 +45,30 @@ my_realm_role AS (
     SELECT role
     FROM realm_user_role
     WHERE
-        user_ = (SELECT _id FROM my_user)
+        user_ = (SELECT my_user._id FROM my_user)
         AND realm = $realm_internal_id
     ORDER BY certified_on DESC
     LIMIT 1
 ),
 
 my_last_vlob_timestamp AS (
-    SELECT MAX(created_on) AS timestamp
+    SELECT MAX(created_on) AS last_vlob_timestamp
     FROM vlob_atom
     WHERE realm = $realm_internal_id
 )
 
 SELECT
     (SELECT _id FROM my_user) AS user_internal_id,
-    (SELECT role FROM my_realm_role) AS current_role,
-    (SELECT timestamp FROM my_last_vlob_timestamp) AS last_vlob_timestamp
+    -- note: user_current_role because CURRENT_ROLE is a reserved keyword in SQL/PostgreSQL :/
+    (SELECT role FROM my_realm_role) AS user_current_role,
+    (SELECT last_vlob_timestamp FROM my_last_vlob_timestamp) AS last_vlob_timestamp
 """
 )
 
 
 _q_unshare = Q(
     """
-WITH new_realm_user_role AS (
+WITH new_realm_user_role AS (  -- noqa: ST03
     INSERT INTO realm_user_role (
         realm,
         user_,
@@ -95,8 +96,7 @@ updated_realm_topic AS (
     RETURNING TRUE
 )
 
-SELECT
-    COALESCE((SELECT * FROM updated_realm_topic), FALSE) AS update_realm_topic_ok
+SELECT COALESCE((SELECT * FROM updated_realm_topic), FALSE) AS update_realm_topic_ok
 """
 )
 
@@ -186,7 +186,7 @@ async def realm_unshare(
 
     # 4.2) Check author is allowed to unshare recipient
 
-    match row["current_role"]:
+    match row["user_current_role"]:
         case str() as raw_recipient_current_role:
             recipient_current_role = RealmRole.from_str(raw_recipient_current_role)
         case None as recipient_current_role:

@@ -50,7 +50,7 @@ my_recipient_realm_role AS (
     SELECT role
     FROM realm_user_role
     WHERE
-        user_ = (SELECT _id FROM my_recipient_user)
+        user_ = (SELECT my_recipient_user._id FROM my_recipient_user)
         AND realm = $realm_internal_id
     ORDER BY certified_on DESC
     LIMIT 1
@@ -67,7 +67,7 @@ my_last_keys_bundle AS (
 ),
 
 my_last_vlob_timestamp AS (
-    SELECT MAX(created_on) AS timestamp
+    SELECT MAX(created_on) AS last_vlob_timestamp
     FROM vlob_atom
     WHERE realm = $realm_internal_id
 )
@@ -79,7 +79,7 @@ SELECT
     (SELECT role FROM my_recipient_realm_role) AS recipient_current_role,
     (SELECT _id FROM my_last_keys_bundle) AS last_keys_bundle_internal_id,
     (SELECT key_index FROM my_last_keys_bundle) AS last_key_index,
-    (SELECT timestamp FROM my_last_vlob_timestamp) AS last_vlob_timestamp
+    (SELECT last_vlob_timestamp FROM my_last_vlob_timestamp) AS last_vlob_timestamp
 """
 )
 
@@ -105,7 +105,7 @@ WITH new_realm_user_role AS (
     RETURNING _id
 ),
 
-new_realm_keys_bundle_access AS (
+new_realm_keys_bundle_access AS (  -- noqa: ST03
     INSERT INTO realm_keys_bundle_access (
         realm,
         user_,
@@ -131,8 +131,7 @@ updated_realm_topic AS (
     RETURNING TRUE
 )
 
-SELECT
-    COALESCE((SELECT * FROM updated_realm_topic), FALSE) AS update_realm_topic_ok
+SELECT COALESCE((SELECT * FROM updated_realm_topic), FALSE) AS update_realm_topic_ok
 """
 )
 

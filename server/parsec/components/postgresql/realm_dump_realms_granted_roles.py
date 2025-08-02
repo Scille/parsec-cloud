@@ -22,7 +22,7 @@ from parsec.components.realm import (
 
 _q_get_org = Q(
     """
-SELECT _id as organization_internal_id
+SELECT _id AS organization_internal_id
 FROM organization
 WHERE
     organization_id = $organization_id
@@ -37,14 +37,18 @@ _q_get_realm_roles = Q(
     f"""
 SELECT
     realm.realm_id,
-    certificate,
-    {q_user(_id="realm_user_role.user_", select="user_id")} AS user_id,
-    role,
-    {q_device(_id="realm_user_role.certified_by", select="device_id")} AS certified_by,
-    certified_on
-FROM realm_user_role LEFT JOIN realm ON realm_user_role.realm = realm._id
-WHERE realm.organization = $organization_internal_id
-ORDER BY realm, certified_on DESC
+    realm_user_role.role,
+    realm_user_role.certificate,
+    realm_user_role.certified_on,
+    {q_user(_id="realm_user_role.user_", select="user_id")} AS user_id,  -- noqa: LT14
+    {q_device(_id="realm_user_role.certified_by", select="device_id")} AS certified_by  -- noqa: LT14
+FROM realm_user_role
+LEFT JOIN realm ON realm_user_role.realm = realm._id
+WHERE
+    realm.organization = $organization_internal_id
+ORDER BY
+    realm_user_role.realm ASC,
+    realm_user_role.certified_on DESC
 """
 )
 

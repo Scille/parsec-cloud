@@ -21,8 +21,7 @@ from parsec.components.realm import (
     RealmExportDoBaseInfoBadOutcome,
 )
 
-_q_get_org_and_realm = Q(
-    """
+_q_get_org_and_realm = Q("""
 WITH my_organization AS (
     SELECT
         _id,
@@ -39,26 +38,27 @@ my_realm AS (
     SELECT _id
     FROM realm
     WHERE
-        organization = (SELECT _id FROM my_organization)
+        organization = (SELECT my_organization._id FROM my_organization)
         AND realm_id = $realm_id
     LIMIT 1
 )
 
 SELECT
     (SELECT _id FROM my_organization) AS organization_internal_id,
-    (SELECT root_verify_key FROM my_organization),
+    (SELECT root_verify_key FROM my_organization) AS root_verify_key,
     (SELECT _id FROM my_realm) AS realm_internal_id
-"""
-)
+""")
 
 
-_q_get_base_info = Q(
-    f"""
+_q_get_base_info = Q(f"""
 WITH
-    -- Note those fragments contain `$organization_internal_id` & `$redacted`
-    all_common_certificates AS ({sql_fragment_all_common_certificates}),
-    all_sequester_certificates AS ({sql_fragment_all_sequester_certificates}),
-    all_realm_certificates AS ({sql_fragment_all_realm_certificates}),
+-- Note those fragments contain `$organization_internal_id` & `$redacted`
+
+all_common_certificates AS ({sql_fragment_all_common_certificates}),
+
+all_sequester_certificates AS ({sql_fragment_all_sequester_certificates}),
+
+all_realm_certificates AS ({sql_fragment_all_realm_certificates}),
 
 my_vlobs AS (
     SELECT
@@ -98,20 +98,25 @@ SELECT
         0
     ) AS blocks_total_bytes,
     (
-        SELECT MAX(timestamp)
+        SELECT MAX(certificate_timestamp)
         FROM all_realm_certificates
         WHERE
             realm = $realm_internal_id
-            AND timestamp <= $snapshot_timestamp
+            AND certificate_timestamp <= $snapshot_timestamp
     ) AS realm_certificate_timestamp_upper_bound,
     (
-        SELECT MAX(timestamp) FROM all_common_certificates WHERE timestamp <= $snapshot_timestamp
+        SELECT MAX(certificate_timestamp)
+        FROM all_common_certificates
+        WHERE
+            certificate_timestamp <= $snapshot_timestamp
     ) AS common_certificate_timestamp_upper_bound,
     (
-        SELECT MAX(timestamp) FROM all_sequester_certificates WHERE timestamp <= $snapshot_timestamp
+        SELECT MAX(certificate_timestamp)
+        FROM all_sequester_certificates
+        WHERE
+            certificate_timestamp <= $snapshot_timestamp
     ) AS sequester_certificate_timestamp_upper_bound
-"""
-)
+""")
 
 
 async def realm_export_do_base_info(

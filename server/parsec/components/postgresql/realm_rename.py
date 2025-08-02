@@ -46,9 +46,8 @@ SELECT COALESCE(
 )
 
 
-_q_rename_realm = Q(
-    """
-WITH new_realm_name AS (
+_q_rename_realm = Q("""
+WITH new_realm_name AS (  -- noqa: ST03
     INSERT INTO realm_name (
         realm,
         realm_name_certificate,
@@ -72,10 +71,8 @@ update_realm_topic AS (
     RETURNING TRUE
 )
 
-SELECT
-    COALESCE((SELECT * FROM update_realm_topic), FALSE) AS update_realm_topic_ok
-"""
-)
+SELECT COALESCE((SELECT * FROM update_realm_topic), FALSE) AS update_realm_topic_ok
+""")
 
 
 async def realm_rename(
