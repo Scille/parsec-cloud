@@ -67,10 +67,9 @@ SELECT
     user_.user_id,
     device.verify_key
 FROM device
-INNER JOIN user_
-ON user_._id = device.user_
+INNER JOIN user_ ON device.user_ = user_._id
 WHERE
-    device.organization = {q_organization_internal_id("$organization_id")}
+    device.organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT05,LT14
     AND device.device_id = $device_id
 """
 )
@@ -78,11 +77,11 @@ WHERE
 _q_get_profile_for_user = Q(
     f"""
 SELECT
-    COALESCE(user_.current_profile, user_.initial_profile) AS profile,
-    user_.revoked_on
+    revoked_on,
+    COALESCE(current_profile, initial_profile) AS profile
 FROM user_
 WHERE
-    organization = {q_organization_internal_id("$organization_id")}
+    organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT05,LT14
     AND user_id = $user_id
 """
 )
@@ -92,10 +91,10 @@ def _make_q_lock_common_topic(for_update: bool = False, for_share=False) -> Q:
     assert for_update ^ for_share
     share_or_update = "SHARE" if for_share else "UPDATE"
     return Q(f"""
-SELECT last_timestamp
+SELECT common_topic.last_timestamp
 FROM common_topic
-JOIN organization ON common_topic.organization = organization._id
-WHERE organization_id = $organization_id
+INNER JOIN organization ON common_topic.organization = organization._id
+WHERE organization.organization_id = $organization_id
 FOR {share_or_update}
 """)
 

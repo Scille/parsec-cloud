@@ -155,8 +155,8 @@ all_realm_certificates AS ({sql_fragment_all_realm_certificates}),
 my_realms_last_roles AS (
     SELECT DISTINCT ON (realm)
         realm,
-        (role IS NOT NULL) AS currently_have_access,
-        certified_on
+        certified_on,
+        (role IS NOT NULL) AS currently_have_access
     FROM realm_user_role
     WHERE user_ = $user_internal_id
     ORDER BY realm ASC, certified_on DESC
@@ -164,9 +164,13 @@ my_realms_last_roles AS (
 
 my_realm_certificates AS (
     SELECT
-        (SELECT realm_id FROM realm WHERE _id = all_realm_certificates.realm) AS realm_id,
         all_realm_certificates.certificate,
-        all_realm_certificates.certificate_timestamp
+        all_realm_certificates.certificate_timestamp,
+        (
+            SELECT realm.realm_id
+            FROM realm
+            WHERE realm._id = all_realm_certificates.realm
+        ) AS realm_id
     FROM all_realm_certificates
     INNER JOIN my_realms_last_roles ON all_realm_certificates.realm = my_realms_last_roles.realm
     WHERE
@@ -178,8 +182,8 @@ my_realm_certificates AS (
 
 realm_after AS (
     SELECT
-        UNNEST ($realm_after_ids::UUID[]) as realm_id,
-        UNNEST ($realm_after_timestamps::TIMESTAMPTZ[]) as after
+        UNNEST($realm_after_ids::UUID []) AS realm_id,
+        UNNEST($realm_after_timestamps::TIMESTAMPTZ []) AS realm_after
 ),
 
 my_all_certificates AS (
@@ -206,9 +210,8 @@ my_all_certificates AS (
             my_realm_certificates.certificate
         FROM my_realm_certificates
         LEFT JOIN realm_after ON my_realm_certificates.realm_id = realm_after.realm_id
-        WHERE COALESCE(my_realm_certificates.certificate_timestamp > realm_after.after, TRUE)
+        WHERE COALESCE(my_realm_certificates.certificate_timestamp > realm_after.realm_after, TRUE)
     )
-
 
     UNION ALL
 
@@ -218,52 +221,59 @@ my_all_certificates AS (
         SELECT DISTINCT ON (shamir_recovery_setup._id)
             'shamir_recovery' AS topic,
             NULL::TEXT AS discriminant,
-            0,
-            created_on,
-            brief_certificate
+            0 AS priority,
+            shamir_recovery_setup.created_on,
+            shamir_recovery_setup.brief_certificate
         FROM shamir_recovery_setup
         INNER JOIN shamir_recovery_share ON shamir_recovery_setup._id = shamir_recovery_share.shamir_recovery
-        WHERE shamir_recovery_setup.organization = $organization_internal_id
-        AND (user_ = $user_internal_id OR recipient = $user_internal_id)
-        AND COALESCE(created_on > $shamir_recovery_after, TRUE)
+        WHERE
+            shamir_recovery_setup.organization = $organization_internal_id
+            AND (
+                shamir_recovery_setup.user_ = $user_internal_id
+                OR shamir_recovery_share.recipient = $user_internal_id
+            )
+            AND COALESCE(shamir_recovery_setup.created_on > $shamir_recovery_after, TRUE)
     )
 
     UNION ALL
 
     -- Shamir recovery deletion certificates
-
     (
         SELECT DISTINCT ON (shamir_recovery_setup._id)
             'shamir_recovery' AS topic,
             NULL::TEXT AS discriminant,
-            0,
-            deleted_on,
-            deletion_certificate
+            0 AS priority,
+            shamir_recovery_setup.deleted_on,
+            shamir_recovery_setup.deletion_certificate
         FROM shamir_recovery_setup
         INNER JOIN shamir_recovery_share ON shamir_recovery_setup._id = shamir_recovery_share.shamir_recovery
-        WHERE shamir_recovery_setup.organization = $organization_internal_id
-        AND (user_ = $user_internal_id OR recipient = $user_internal_id)
-        AND deleted_on IS NOT NULL
-        AND deletion_certificate IS NOT NULL
-        AND COALESCE(deleted_on > $shamir_recovery_after, TRUE)
+        WHERE
+            shamir_recovery_setup.organization = $organization_internal_id
+            AND (
+                shamir_recovery_setup.user_ = $user_internal_id
+                OR shamir_recovery_share.recipient = $user_internal_id
+            )
+            AND shamir_recovery_setup.deleted_on IS NOT NULL
+            AND shamir_recovery_setup.deletion_certificate IS NOT NULL
+            AND COALESCE(shamir_recovery_setup.deleted_on > $shamir_recovery_after, TRUE)
     )
 
     UNION ALL
 
     -- Shamir recovery share certificates
-
     (
         SELECT
             'shamir_recovery' AS topic,
             NULL::TEXT AS discriminant,
-            1, -- This must come after the corresponding brief certificate
-            created_on,
-            share_certificate
+            1 AS priority, -- This must come after the corresponding brief certificate
+            shamir_recovery_setup.created_on,
+            shamir_recovery_share.share_certificate
         FROM shamir_recovery_setup
         INNER JOIN shamir_recovery_share ON shamir_recovery_setup._id = shamir_recovery_share.shamir_recovery
-        WHERE shamir_recovery_setup.organization = $organization_internal_id
-        AND recipient = $user_internal_id
-        AND COALESCE(created_on > $shamir_recovery_after, TRUE)
+        WHERE
+            shamir_recovery_setup.organization = $organization_internal_id
+            AND shamir_recovery_share.recipient = $user_internal_id
+            AND COALESCE(shamir_recovery_setup.created_on > $shamir_recovery_after, TRUE)
     )
 
     UNION ALL

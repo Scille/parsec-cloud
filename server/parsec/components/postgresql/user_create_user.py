@@ -44,12 +44,15 @@ my_human AS (
     SELECT
         COALESCE(
             (SELECT _id FROM new_human),
-            ({q_human_internal_id(organization="$organization_internal_id", email="$email")})
+            ({q_human_internal_id(organization="$organization_internal_id", email="$email")})  -- noqa: LT14
         ) AS _id
 ),
 
 my_organization AS (
-    SELECT active_users_limit FROM organization WHERE _id = $organization_internal_id LIMIT 1
+    SELECT active_users_limit
+    FROM organization
+    WHERE _id = $organization_internal_id
+    LIMIT 1
 ),
 
 my_checks AS (
@@ -59,7 +62,7 @@ my_checks AS (
                 SELECT TRUE
                 FROM user_
                 WHERE
-                    human = (SELECT _id FROM my_human)
+                    human = (SELECT my_human._id FROM my_human)
                     AND revoked_on IS NULL
                 LIMIT 1
             ),
@@ -67,18 +70,19 @@ my_checks AS (
         ) AS human_already_taken,
 
         (
-            CASE WHEN (SELECT active_users_limit FROM my_organization) IS NULL
-            THEN FALSE
-            ELSE
-                (
-                    SELECT active_users_limit FROM my_organization
-                ) <= (
-                    SELECT COUNT(*)
-                    FROM user_
-                    WHERE
-                        organization = $organization_internal_id
-                        AND revoked_on IS NULL
-                )
+            CASE
+                WHEN (SELECT active_users_limit FROM my_organization) IS NULL
+                    THEN FALSE
+                ELSE
+                    (
+                        SELECT active_users_limit FROM my_organization
+                    ) <= (
+                        SELECT COUNT(*)
+                        FROM user_
+                        WHERE
+                            organization = $organization_internal_id
+                            AND revoked_on IS NULL
+                    )
             END
         ) AS active_users_limit_reached
 ),
@@ -124,15 +128,15 @@ new_device AS (
     )
     (
         SELECT
-            $organization_internal_id,
-            new_user._id,
-            $device_id,
-            $device_label,
-            $verify_key,
-            $device_certificate,
-            $redacted_device_certificate,
-            $author_internal_id,
-            $created_on
+            $organization_internal_id AS organization,
+            new_user._id AS user_,
+            $device_id AS device_id,
+            $device_label AS device_label,
+            $verify_key AS verify_key,
+            $device_certificate AS device_certificate,
+            $redacted_device_certificate AS redacted_device_certificate,
+            $author_internal_id AS device_certifier,
+            $created_on AS created_on
         FROM new_user
     )
     ON CONFLICT DO NOTHING

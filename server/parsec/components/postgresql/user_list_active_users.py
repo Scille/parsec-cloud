@@ -22,9 +22,9 @@ SELECT
     human.email AS human_email,
     human.label AS human_label
 FROM user_
-INNER JOIN human ON human._id = user_.human
+INNER JOIN human ON user_.human = human._id
 WHERE
-    user_.organization = {q_organization_internal_id("$organization_id")}
+    user_.organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT05,LT14
     AND user_.revoked_on IS NULL
 ORDER BY user_.created_on
 """

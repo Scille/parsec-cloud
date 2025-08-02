@@ -62,7 +62,7 @@ my_realms AS (
 my_locked_realms_topics AS (
     SELECT last_timestamp
     FROM realm_topic
-    WHERE realm IN (SELECT * FROM my_realms)
+    WHERE realm IN (SELECT my_realms.* FROM my_realms)
     -- Read lock
     FOR SHARE
 ),
@@ -78,15 +78,14 @@ my_locked_realms_topics AS (
 -- if its timestamp is within a ballpark, then we can deduce from the last inserted
 -- vlob atom the further early and late timestamp than can concurrently occur.
 my_vlobs_last_timestamp AS (
-    SELECT
-        MAX(created_on) AS last_timestamp
+    SELECT MAX(created_on) AS last_timestamp
     FROM vlob_atom
-    WHERE realm IN (SELECT * FROM my_realms)
+    WHERE realm IN (SELECT my_realms.* FROM my_realms)
 )
 
 SELECT
     (SELECT _id FROM my_user) AS recipient_internal_id,
-    (SELECT recipient_is_revoked FROM my_user),
+    (SELECT recipient_is_revoked FROM my_user) AS recipient_is_revoked,
     (SELECT MAX(last_timestamp) FROM my_locked_realms_topics) AS realms_topics_last_timestamp,
     (SELECT last_timestamp FROM my_vlobs_last_timestamp) AS vlobs_last_timestamp
 """)
