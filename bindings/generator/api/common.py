@@ -276,13 +276,6 @@ class InvitationToken(StrBasedType):
     )
 
 
-class ValidationCode(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<libparsec::ValidationCode, _> { libparsec::ValidationCode::from_str(&s).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = (
-        "|x: libparsec::ValidationCode| -> Result<String, &'static str> { Ok(x.into()) }"
-    )
-
-
 class GreetingAttemptID(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<libparsec::GreetingAttemptID, _> { libparsec::GreetingAttemptID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
     custom_to_rs_string = (
