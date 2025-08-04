@@ -14928,15 +14928,7 @@ fn account_create_2_check_validation_code(mut cx: FunctionContext) -> JsResult<J
     };
     let validation_code = {
         let js_val = cx.argument::<JsString>(2)?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::ValidationCode, _> {
-                libparsec::ValidationCode::from_str(&s).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
+        js_val.value(&mut cx)
     };
     let email = {
         let js_val = cx.argument::<JsString>(3)?;
@@ -14961,7 +14953,7 @@ fn account_create_2_check_validation_code(mut cx: FunctionContext) -> JsResult<J
             let ret = libparsec::account_create_2_check_validation_code(
                 &config_dir,
                 addr,
-                validation_code,
+                &validation_code,
                 email,
             )
             .await;
@@ -15024,15 +15016,7 @@ fn account_create_3_proceed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     };
     let validation_code = {
         let js_val = cx.argument::<JsString>(2)?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::ValidationCode, _> {
-                libparsec::ValidationCode::from_str(&s).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
+        js_val.value(&mut cx)
     };
     let human_handle = {
         let js_val = cx.argument::<JsObject>(3)?;
@@ -15053,7 +15037,7 @@ fn account_create_3_proceed(mut cx: FunctionContext) -> JsResult<JsPromise> {
             let ret = libparsec::account_create_3_proceed(
                 &config_dir,
                 addr,
-                validation_code,
+                &validation_code,
                 human_handle,
                 auth_method_strategy,
             )
@@ -15284,15 +15268,7 @@ fn account_delete_2_proceed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     };
     let validation_code = {
         let js_val = cx.argument::<JsString>(1)?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::ValidationCode, _> {
-                libparsec::ValidationCode::from_str(&s).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
+        js_val.value(&mut cx)
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -15302,7 +15278,7 @@ fn account_delete_2_proceed(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::account_delete_2_proceed(account, validation_code).await;
+            let ret = libparsec::account_delete_2_proceed(account, &validation_code).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -15997,15 +15973,7 @@ fn account_recover_2_proceed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     };
     let validation_code = {
         let js_val = cx.argument::<JsString>(2)?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::ValidationCode, _> {
-                libparsec::ValidationCode::from_str(&s).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
+        js_val.value(&mut cx)
     };
     let email = {
         let js_val = cx.argument::<JsString>(3)?;
@@ -16034,7 +16002,7 @@ fn account_recover_2_proceed(mut cx: FunctionContext) -> JsResult<JsPromise> {
             let ret = libparsec::account_recover_2_proceed(
                 &config_dir,
                 addr,
-                validation_code,
+                &validation_code,
                 email,
                 auth_method_strategy,
             )

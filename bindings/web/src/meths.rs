@@ -16436,12 +16436,7 @@ pub fn accountCreate2CheckValidationCode(
             };
             custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-        let validation_code = {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::ValidationCode, _> {
-                libparsec::ValidationCode::from_str(&s).map_err(|e| e.to_string())
-            };
-            custom_from_rs_string(validation_code).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
+
         let email = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
@@ -16451,7 +16446,7 @@ pub fn accountCreate2CheckValidationCode(
         let ret = libparsec::account_create_2_check_validation_code(
             &config_dir,
             addr,
-            validation_code,
+            &validation_code,
             email,
         )
         .await;
@@ -16500,12 +16495,7 @@ pub fn accountCreate3Proceed(
             };
             custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-        let validation_code = {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::ValidationCode, _> {
-                libparsec::ValidationCode::from_str(&s).map_err(|e| e.to_string())
-            };
-            custom_from_rs_string(validation_code).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
+
         let human_handle = human_handle.into();
         let human_handle = struct_human_handle_js_to_rs(human_handle)?;
 
@@ -16516,7 +16506,7 @@ pub fn accountCreate3Proceed(
         let ret = libparsec::account_create_3_proceed(
             &config_dir,
             addr,
-            validation_code,
+            &validation_code,
             human_handle,
             auth_method_strategy,
         )
@@ -16645,13 +16635,7 @@ pub fn accountDelete1SendValidationEmail(account: u32) -> Promise {
 #[wasm_bindgen]
 pub fn accountDelete2Proceed(account: u32, validation_code: String) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
-        let validation_code = {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::ValidationCode, _> {
-                libparsec::ValidationCode::from_str(&s).map_err(|e| e.to_string())
-            };
-            custom_from_rs_string(validation_code).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-        let ret = libparsec::account_delete_2_proceed(account, validation_code).await;
+        let ret = libparsec::account_delete_2_proceed(account, &validation_code).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -17093,12 +17077,7 @@ pub fn accountRecover2Proceed(
             };
             custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-        let validation_code = {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::ValidationCode, _> {
-                libparsec::ValidationCode::from_str(&s).map_err(|e| e.to_string())
-            };
-            custom_from_rs_string(validation_code).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
+
         let email = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
@@ -17112,7 +17091,7 @@ pub fn accountRecover2Proceed(
         let ret = libparsec::account_recover_2_proceed(
             &config_dir,
             addr,
-            validation_code,
+            &validation_code,
             email,
             auth_method_strategy,
         )
