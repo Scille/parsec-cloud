@@ -170,7 +170,7 @@ jobs:
       - name: Install python deps
         shell: bash -ex {0}
         run: |
-          ${{ env.PROJECT_VENV }}/bin/poetry env use ${{ env.PROJECT_VENV }}/bin/python
+          ${{ env.PROJECT_VENV }}/bin/poetry --project ./server env use ${{ env.PROJECT_VENV }}/bin/python
           ${{ env.PROJECT_VENV }}/bin/poetry --directory ./server env info
           if ${{ env.SKIP_EXT_BUILD }}; then export POETRY_LIBPARSEC_BUILD_STRATEGY=no_build; fi
           ${{ env.PROJECT_VENV }}/bin/python make.py python-ci-install
