@@ -47,6 +47,8 @@ jobs:
     # All linux jobs must run the same ubuntu version to avoid Rust caching issues !
     # 20.04 is required to install PostgreSQL 12
     runs-on: ubuntu-22.04
+    env:
+      PROJECT_VENV: /opt/parsec-poetry
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
         timeout-minutes: 5
@@ -103,11 +105,11 @@ jobs:
       #       postgresql-${{ env.postgresql-version }}
       #   timeout-minutes: 5
 
-      - uses: ./.github/actions/setup-python-poetry
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # pin v5.6.0
         id: setup-python
         with:
-          poetry-version: ${{ env.poetry-version }}
-          project-path: ./server
+          python-version-file: ./server/pyproject.toml
+          cache: poetry
         timeout-minutes: 10
 
       # libparsec is slow to compile, so we save it in cache and skip the
@@ -152,12 +154,22 @@ jobs:
           key: ${{ steps.runner-specs.outputs.os }}-${{ steps.runner-specs.outputs.release }}
         timeout-minutes: 5
 
+      # We manually create the virtual env over letting poetry do it because even tho we have use `poetry env use {{expected-python}}`,
+      # it will still use the python provided by the system
+      - name: Create project virtual env
+        run: ${{ steps.setup-python-poetry.outputs.python-path }} -m venv ${{ env.PROJECT_VENV }}
+        timeout-minutes: 1
+
+      - name: Install poetry
+        run: ${{ env.PROJECT_VENV }}/bin/pip install poetry==${{ env.poetry-version }}
+        timeout-minutes: 2
+
       - name: Install python deps
         shell: bash -ex {0}
         run: |
-          poetry --directory ./server env info
+          ${{ env.PROJECT_VENV }}/bin/poetry --directory ./server env info
           if ${{ env.SKIP_EXT_BUILD }}; then export POETRY_LIBPARSEC_BUILD_STRATEGY=no_build; fi
-          poetry --project ./server run make.py python-ci-install
+          ${{ env.PROJECT_VENV }}/bin/python make.py python-ci-install
 
           # Make sure POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES=false worked
           if [ -d "./server/parsec.libs" ] && [ -n "$(ls -A ./server/parsec.libs)" ];
@@ -181,7 +193,7 @@ jobs:
         shell: bash -eux {0}
         run: |
           for step in ruff-format ruff pyright ${{ !inputs.style-only && 'sqlfluff sqlfluff-in-python' || '' }}; do
-            python \
+            ${{ env.PROJECT_VENV }}/bin/python \
               ${{ steps.pre-commit.outputs.install-path }} \
               run \
               $step \
@@ -210,7 +222,7 @@ jobs:
 
       - name: Basic tests
         if: (!inputs.style-only)
-        run: poetry run pytest ${{ env.pytest-base-args }} tests -n auto
+        run: ${{ env.PROJECT_VENV }}/bin/poetry run pytest ${{ env.pytest-base-args }} tests -n auto
         timeout-minutes: 10
         working-directory: server
 
@@ -218,6 +230,6 @@ jobs:
         if: (!inputs.style-only)
         env:
           PGINSTALLATION: /usr/lib/postgresql/${{ env.postgresql-version }}/bin
-        run: poetry run pytest ${{ env.pytest-base-args }} tests -n auto --postgresql
+        run: ${{ env.PROJECT_VENV }}/bin/poetry run pytest ${{ env.pytest-base-args }} tests -n auto --postgresql
         timeout-minutes: 10
         working-directory: server
