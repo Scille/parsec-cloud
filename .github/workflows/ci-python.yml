@@ -186,6 +186,7 @@ jobs:
           SKIP_EXT_BUILD: ${{ steps.cache-libparsec.outputs.cache-hit == 'true' || inputs.style-only }}
           # No need to bundle given we compile and run on the same machine
           POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES: false
+          VIRTUAL_ENV: ${{ env.PROJECT_VENV }}
         timeout-minutes: 20
 
       - name: Install pre-commit
