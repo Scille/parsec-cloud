@@ -10,6 +10,14 @@ inputs:
     description: Path to the directory containing the pyproject.toml
     required: true
 
+outputs:
+  python-path:
+    description: Absolute path to the python executable
+    value: ${{ steps.setup-python.outputs.python-path }}
+  python-version:
+    description: The precise python version that was installed
+    value: ${{ steps.setup-python.outputs.python-version }}
+
 runs:
   using: composite
   steps:
