@@ -89,9 +89,19 @@ pub async fn account_create_1_send_validation_email(
 pub async fn account_create_2_check_validation_code(
     config_dir: &Path,
     addr: ParsecAddr,
-    validation_code: ValidationCode,
+    // Note we do the validation code parsing directly within the function. This is because:
+    // - The validation code is expected to be provided by the user, so having an incorrect
+    //  validation code is a to-be-expected error.
+    // - Using a `ValidationCode` as parameter would mean the parsing is done in the bindings,
+    //  where a Javascript type error is thrown, however this behavior is only supposed to
+    //  occur for unexpected errors (e.g. passing a dummy value as DeviceID, since the GUI
+    //  is only supposed to pass a DevicesID that have previously been obtained from libparsec).
+    validation_code: &str,
     email: EmailAddress,
 ) -> Result<(), AccountCreateError> {
+    let validation_code: ValidationCode = validation_code
+        .parse()
+        .map_err(|_| AccountCreateError::InvalidValidationCode)?;
     let cmds = AnonymousAccountCmds::new(config_dir, addr, ProxyConfig::default())?;
     libparsec_account::Account::create_2_check_validation_code(&cmds, validation_code, email).await
 }
@@ -99,10 +109,20 @@ pub async fn account_create_2_check_validation_code(
 pub async fn account_create_3_proceed(
     config_dir: &Path,
     addr: ParsecAddr,
-    validation_code: ValidationCode,
+    // Note we do the validation code parsing directly within the function. This is because:
+    // - The validation code is expected to be provided by the user, so having an incorrect
+    //  validation code is a to-be-expected error.
+    // - Using a `ValidationCode` as parameter would mean the parsing is done in the bindings,
+    //  where a Javascript type error is thrown, however this behavior is only supposed to
+    //  occur for unexpected errors (e.g. passing a dummy value as DeviceID, since the GUI
+    //  is only supposed to pass a DevicesID that have previously been obtained from libparsec).
+    validation_code: &str,
     human_handle: HumanHandle,
     auth_method_strategy: AccountAuthMethodStrategy,
 ) -> Result<(), AccountCreateError> {
+    let validation_code: ValidationCode = validation_code
+        .parse()
+        .map_err(|_| AccountCreateError::InvalidValidationCode)?;
     let cmds = AnonymousAccountCmds::new(config_dir, addr, ProxyConfig::default())?;
     libparsec_account::Account::create_3_proceed(
         &cmds,
@@ -310,11 +330,21 @@ pub async fn account_delete_1_send_validation_email(
 
 pub async fn account_delete_2_proceed(
     account: Handle,
-    validation_code: ValidationCode,
+    // Note we do the validation code parsing directly within the function. This is because:
+    // - The validation code is expected to be provided by the user, so having an incorrect
+    //  validation code is a to-be-expected error.
+    // - Using a `ValidationCode` as parameter would mean the parsing is done in the bindings,
+    //  where a Javascript type error is thrown, however this behavior is only supposed to
+    //  occur for unexpected errors (e.g. passing a dummy value as DeviceID, since the GUI
+    //  is only supposed to pass a DevicesID that have previously been obtained from libparsec).
+    validation_code: &str,
 ) -> Result<(), AccountDeleteProceedError> {
     let account_handle = account;
     let account = borrow_account(account_handle)?;
 
+    let validation_code: ValidationCode = validation_code
+        .parse()
+        .map_err(|_| AccountDeleteProceedError::InvalidValidationCode)?;
     account.delete_2_proceed(validation_code).await
 }
 
@@ -397,10 +427,20 @@ pub async fn account_recover_1_send_validation_email(
 pub async fn account_recover_2_proceed(
     config_dir: &Path,
     addr: ParsecAddr,
-    validation_code: ValidationCode,
+    // Note we do the validation code parsing directly within the function. This is because:
+    // - The validation code is expected to be provided by the user, so having an incorrect
+    //  validation code is a to-be-expected error.
+    // - Using a `ValidationCode` as parameter would mean the parsing is done in the bindings,
+    //  where a Javascript type error is thrown, however this behavior is only supposed to
+    //  occur for unexpected errors (e.g. passing a dummy value as DeviceID, since the GUI
+    //  is only supposed to pass a DevicesID that have previously been obtained from libparsec).
+    validation_code: &str,
     email: EmailAddress,
     auth_method_strategy: AccountAuthMethodStrategy,
 ) -> Result<(), AccountRecoverProceedError> {
+    let validation_code: ValidationCode = validation_code
+        .parse()
+        .map_err(|_| AccountRecoverProceedError::InvalidValidationCode)?;
     let cmds = AnonymousAccountCmds::new(config_dir, addr, ProxyConfig::default())?;
     libparsec_account::Account::recover_2_proceed(
         &cmds,
