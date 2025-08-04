@@ -4854,13 +4854,13 @@ export interface LibParsecPlugin {
     accountCreate2CheckValidationCode(
         config_dir: Path,
         addr: ParsecAddr,
-        validation_code: ValidationCode,
+        validation_code: string,
         email: EmailAddress
     ): Promise<Result<null, AccountCreateError>>
     accountCreate3Proceed(
         config_dir: Path,
         addr: ParsecAddr,
-        validation_code: ValidationCode,
+        validation_code: string,
         human_handle: HumanHandle,
         auth_method_strategy: AccountAuthMethodStrategy
     ): Promise<Result<null, AccountCreateError>>
@@ -4877,7 +4877,7 @@ export interface LibParsecPlugin {
     ): Promise<Result<null, AccountDeleteSendValidationEmailError>>
     accountDelete2Proceed(
         account: Handle,
-        validation_code: ValidationCode
+        validation_code: string
     ): Promise<Result<null, AccountDeleteProceedError>>
     accountDisableAuthMethod(
         account: Handle,
@@ -4918,7 +4918,7 @@ export interface LibParsecPlugin {
     accountRecover2Proceed(
         config_dir: Path,
         addr: ParsecAddr,
-        validation_code: ValidationCode,
+        validation_code: string,
         email: EmailAddress,
         auth_method_strategy: AccountAuthMethodStrategy
     ): Promise<Result<null, AccountRecoverProceedError>>
