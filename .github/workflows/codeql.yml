@@ -83,7 +83,7 @@ jobs:
           poetry run sh -c 'echo "CODEQL_PYTHON=$(which python)"' >> $GITHUB_ENV
         working-directory: server
         env:
-          POETRY_LIBPARSEC_BUILD_STRATEGY: no_build
+          UV_LIBPARSEC_BUILD_STRATEGY: no_build
 
       - name: Perform CodeQL Analysis
         if: steps.should-run-python-analysis.outputs.run == 'true'

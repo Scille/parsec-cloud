@@ -33,8 +33,8 @@ pip install -r ./requirements.txt
 # ...and our project
 # Compile in release mode
 # Also don't bundle OpenSSL shared library (it is already in the Docker image !)
-POETRY_LIBPARSEC_BUILD_PROFILE=release \
-POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES=false \
+UV_LIBPARSEC_BUILD_PROFILE=release \
+UV_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES=false \
 pip install ./server
 
 # Basic check to see if the wheel looks like it's well built.

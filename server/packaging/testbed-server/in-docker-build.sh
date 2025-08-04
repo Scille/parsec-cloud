@@ -34,8 +34,8 @@ pip install -r ./requirements.txt
 # ...and our project
 # Compile in CI mode to reduce size while still retain `test-utils` feature
 # Also don't bundle OpenSSL shared library (it is already in the Docker image !)
-POETRY_LIBPARSEC_BUILD_PROFILE=ci \
-POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES=false \
+UV_LIBPARSEC_BUILD_PROFILE=ci \
+UV_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES=false \
 pip install ./server
 
 # Boto3/Botocore are pretty big dependencies and won't be used (given the testbed

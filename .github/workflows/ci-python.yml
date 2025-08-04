@@ -129,7 +129,7 @@ jobs:
             server/parsec/_parsec.*.pyd
             server/parsec/_parsec.*.so
             # Note `server/parsec.libs/` is not included since we are going to build
-            # with POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES=false (see below)
+            # with UV_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES=false (see below)
         timeout-minutes: 2
 
       - name: Setup Rust toolchain
@@ -156,10 +156,10 @@ jobs:
         shell: bash -ex {0}
         run: |
           poetry --directory ./server env info
-          if ${{ env.SKIP_EXT_BUILD }}; then export POETRY_LIBPARSEC_BUILD_STRATEGY=no_build; fi
+          if ${{ env.SKIP_EXT_BUILD }}; then export UV_LIBPARSEC_BUILD_STRATEGY=no_build; fi
           python make.py python-ci-install
 
-          # Make sure POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES=false worked
+          # Make sure UV_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES=false worked
           if [ -d "./server/parsec.libs" ] && [ -n "$(ls -A ./server/parsec.libs)" ];
           then
             echo "::error title=Directory './server/parsec.libs' is not empty::Extra libs disabled but './server/parsec.libs/' is not empty: " ./server/parsec.libs/*
@@ -168,7 +168,7 @@ jobs:
         env:
           SKIP_EXT_BUILD: ${{ steps.cache-libparsec.outputs.cache-hit == 'true' || inputs.style-only }}
           # No need to bundle given we compile and run on the same machine
-          POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES: false
+          UV_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES: false
         timeout-minutes: 20
 
       - name: Install pre-commit
