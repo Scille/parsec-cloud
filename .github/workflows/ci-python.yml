@@ -160,7 +160,7 @@ jobs:
       # We manually create the virtual env over letting poetry do it because even tho we have use `poetry env use {{expected-python}}`,
       # it will still use the python provided by the system
       - name: Create project virtual env
-        run: ${{ steps.setup-python-poetry.outputs.python-path }} -m venv ${{ env.PROJECT_VENV }}
+        run: ${{ steps.setup-python.outputs.python-path }} -m venv ${{ env.PROJECT_VENV }}
         timeout-minutes: 1
 
       - name: Install poetry
