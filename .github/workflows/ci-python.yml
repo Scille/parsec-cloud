@@ -157,7 +157,7 @@ jobs:
         run: |
           poetry --directory ./server env info
           if ${{ env.SKIP_EXT_BUILD }}; then export POETRY_LIBPARSEC_BUILD_STRATEGY=no_build; fi
-          python make.py python-ci-install
+          poetry --project ./server run python make.py python-ci-install
 
           # Make sure POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES=false worked
           if [ -d "./server/parsec.libs" ] && [ -n "$(ls -A ./server/parsec.libs)" ];
