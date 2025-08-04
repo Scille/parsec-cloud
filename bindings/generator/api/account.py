@@ -11,7 +11,6 @@ from .common import (
     Result,
     EmailAddress,
     ErrorVariant,
-    ValidationCode,
     Handle,
     OrganizationID,
     UserID,
@@ -70,7 +69,7 @@ class AccountCreateError(ErrorVariant):
 async def account_create_2_check_validation_code(
     config_dir: Ref[Path],
     addr: ParsecAddr,
-    validation_code: ValidationCode,
+    validation_code: Ref[str],
     email: EmailAddress,
 ) -> Result[None, AccountCreateError]:
     raise NotImplementedError
@@ -87,7 +86,7 @@ class AccountAuthMethodStrategy(Variant):
 async def account_create_3_proceed(
     config_dir: Ref[Path],
     addr: ParsecAddr,
-    validation_code: ValidationCode,
+    validation_code: Ref[str],
     human_handle: HumanHandle,
     auth_method_strategy: AccountAuthMethodStrategy,
 ) -> Result[None, AccountCreateError]:
@@ -392,7 +391,7 @@ class AccountDeleteProceedError(ErrorVariant):
 
 async def account_delete_2_proceed(
     account: Handle,
-    validation_code: ValidationCode,
+    validation_code: Ref[str],
 ) -> Result[None, AccountDeleteProceedError]:
     raise NotImplementedError
 
@@ -439,7 +438,7 @@ class AccountRecoverProceedError(ErrorVariant):
 async def account_recover_2_proceed(
     config_dir: Ref[Path],
     addr: ParsecAddr,
-    validation_code: ValidationCode,
+    validation_code: Ref[str],
     email: EmailAddress,
     auth_method_strategy: AccountAuthMethodStrategy,
 ) -> Result[None, AccountRecoverProceedError]:
