@@ -49,6 +49,7 @@ jobs:
     runs-on: ubuntu-22.04
     env:
       PROJECT_VENV: /opt/parsec-poetry
+      POETRY_HOME: /opt/parsec-poetry
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
         timeout-minutes: 5
