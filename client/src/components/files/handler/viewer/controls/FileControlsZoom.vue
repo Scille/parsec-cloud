@@ -126,6 +126,10 @@ async function validateZoomLevel(value: string): Promise<string> {
 <style scoped lang="scss">
 .zoom-level-input {
   width: 4.5rem;
+
+  @include ms.responsive-breakpoint('xs') {
+    display: none;
+  }
 }
 
 .zoom-controls {

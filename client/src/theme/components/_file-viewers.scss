@@ -33,6 +33,21 @@
       font-size: 1rem !important;
       width: 1rem !important;
       height: 1rem !important;
+
+      @include ms.responsive-breakpoint('xs') {
+        display: none;
+      }
+    }
+
+    .file-controls-button-label {
+      max-width: 9rem;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+
+      @include ms.responsive-breakpoint('sm') {
+        max-width: 6rem;
+      }
     }
 
     &:is(.dropdown-active) {
@@ -67,6 +82,32 @@
     background: var(--parsec-color-light-secondary-text) !important;
     outline: 2px solid var(--parsec-color-light-secondary-inversed-contrast);
     box-shadow: var(--parsec-shadow-toggle) !important;
+  }
+}
+
+.file-controls:has(.file-controls-flux-container) {
+  @include ms.responsive-breakpoint('md') {
+    flex-wrap: wrap;
+  }
+
+  .file-controls-flux-container {
+    @include ms.responsive-breakpoint('md') {
+      max-width: 35rem;
+      flex-shrink: 0;
+      flex-basis: 100%;
+      flex-grow: 1;
+    }
+    &::after {
+      @include ms.responsive-breakpoint('md') {
+        content: none !important;
+      }
+    }
+  }
+}
+
+.file-controls-volume {
+  @include ms.responsive-breakpoint('xs') {
+    display: none;
   }
 }
 
