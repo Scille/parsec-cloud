@@ -2286,6 +2286,7 @@
         "download": "Télécharger",
         "hideMenu": "Cacher le menu",
         "showMenu": "Afficher le menu",
+        "menu": "Menu",
         "openingFile": "Ouverture du fichier...",
         "fileTooBig": "Le fichier est trop large pour être ouvert avec un visualiseur.",
         "unknownFileType": "Impossible de prévisualiser ce type de fichier.",
