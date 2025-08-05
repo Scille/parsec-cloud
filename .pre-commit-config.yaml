@@ -138,7 +138,7 @@ repos:
         #
         # Fortunately Ruff is (as cool kids say) blazingly fast, so it's no big
         # deal to check everything on each run.
-        entry: uv --directory ./server run ruff check --fix "./parsec" "./tests" "../docs" "../make.py" "../misc"
+        entry: uv --directory ./server run --only-dev ruff check --fix "./parsec" "./tests" "../docs" "../make.py" "../misc"
         require_serial: true
         pass_filenames: false
         language: system
@@ -146,7 +146,7 @@ repos:
 
       - id: ruff-format
         name: ruff format (using `uv`)
-        entry: uv --project ./server run ruff format
+        entry: uv --project ./server run --only-dev ruff format
         require_serial: true
         language: system
         types_or: [python, pyi]
@@ -154,7 +154,7 @@ repos:
 
       - id: pyright
         name: pyright (using `uv`)
-        entry: uv --project ./server run pyright
+        entry: uv --project ./server run --only-dev pyright
         require_serial: true
         language: system
         types_or: [python, pyi]
@@ -162,7 +162,7 @@ repos:
 
       - id: deptry
         name: deptry (using `uv`)
-        entry: uv --project ./server run deptry server --config=server/pyproject.toml
+        entry: uv --project ./server run --only-dev deptry server --config=server/pyproject.toml
         files: ^server/
         types_or: [python, pyproj]
         pass_filenames: false  # deptry expects only the root directory to scan
@@ -171,7 +171,7 @@ repos:
 
       - id: sqlfluff
         name: SQLFluff (using `uv`)
-        entry: uv --project ./server run ./misc/lint_sql.py --fix
+        entry: uv --project ./server run --only-dev ./misc/lint_sql.py --fix
         types_or: [sql]
         files: |
             (?x)^(
@@ -184,7 +184,7 @@ repos:
 
       - id: sqlfluff-in-python
         name: SQLFluff in Python server components (using `uv`)
-        entry: uv --project ./server run ./misc/lint_sql.py --non-sql-file-print-fix
+        entry: uv --project ./server run --only-dev ./misc/lint_sql.py --non-sql-file-print-fix
         types_or: [python]
         files: ^(server/parsec/components/postgresql/)
         # TODO: currently SQL embedded in Python server code is dirty, so we ignore it
@@ -211,7 +211,7 @@ repos:
       # - powrap is called via "make wrap" (see ./docs/Makefile)
       - id: powrap
         name: powrap (using `uv`)
-        entry: uv --directory ./docs run make wrap
+        entry: uv --directory ./docs run --only-dev make wrap
         pass_filenames: false
         types: [pofile]
         require_serial: true
