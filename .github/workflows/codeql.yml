@@ -31,7 +31,7 @@ jobs:
     name: 🐍 Python static code Analysis
     runs-on: ubuntu-22.04
     env:
-      poetry-version: 2.1.1
+      uv-version: 0.8.4
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
@@ -69,18 +69,17 @@ jobs:
           # Details on CodeQL's query packs refer to : https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
           # queries: security-extended,security-and-quality
 
-      - uses: ./.github/actions/setup-python-poetry
-        if: steps.should-run-python-analysis.outputs.run == 'true'
-        id: setup-python
+      - name: Install uv
+        uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc # pin v6.4.3
         with:
-          poetry-version: ${{ env.poetry-version }}
-          project-path: ./server
+          version: ${{ env.uv-version }}
+          working-directory: ./server
 
       - name: Install python deps
         if: steps.should-run-python-analysis.outputs.run == 'true'
         run: |
-          poetry install
-          poetry run sh -c 'echo "CODEQL_PYTHON=$(which python)"' >> $GITHUB_ENV
+          uv sync --dev
+          uv run sh -c 'echo "CODEQL_PYTHON=$(which python)"' >> $GITHUB_ENV
         working-directory: server
         env:
           UV_LIBPARSEC_BUILD_STRATEGY: no_build
