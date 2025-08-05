@@ -2,7 +2,7 @@
 name = "parsec-cloud"
 version = "3.4.1-a.0+dev"
 description = "Secure file sharing in the cloud"
-authors = [{name = "Scille SAS", email = "contact@scille.fr"}]
+authors = [{ name = "Scille SAS", email = "contact@scille.fr" }]
 license = "BUSL-1.1"
 keywords = ["parsec", "cryptography", "sharing", "encryption"]
 classifiers = [
@@ -18,26 +18,26 @@ requires-python = "~=3.12.0"
 
 dependencies = [
     # Base requirements
-    "anyio>=3.7.1",
-    "click>=8.0",
-    "httpx>=0.28.1",
-    "pbr>=6.1.1",
-    "pydantic>=2.10.6",
-    "pydantic-core>=2.27.2",
-    "sentry-sdk>=2.30.0",
-    "starlette>=0.47.2",
-    "structlog>=25.4.0",
+    "anyio~=3.7.1",
+    "click~=8.0",
+    "httpx~=0.28.1",
+    "pbr~=6.1.1",
+    "pydantic~=2.10.6",
+    "pydantic-core~=2.27.2",
+    "sentry-sdk~=2.30.0",
+    "starlette~=0.47.2",
+    "structlog~=25.4.0",
     # ASGI server
-    "fastapi>=0.116.1",
-    "uvicorn>=0.35.0",
-    "jinja2>=3.0",
+    "fastapi~=0.116.1",
+    "uvicorn~=0.35.0",
+    "jinja2~=3.0",
     # PostgreSQL
-    "asyncpg>=0.29.0",
+    "asyncpg~=0.29.0",
     # S3
-    "boto3>=1.38",
-    "botocore>=1.38",
+    "boto3~=1.38",
+    "botocore~=1.38",
     # Swift
-    "python-swiftclient>=4.8.0",
+    "python-swiftclient~=4.8.0",
 ]
 
 [project.urls]
@@ -49,32 +49,30 @@ parsec = "parsec.cli:cli"
 
 [dependency-groups]
 dev = [
-    "asyncpg-stubs>=0.29.0",
-    "Babel>=2.10",
-    "boto3-stubs>=1.38",
-    "cibuildwheel>=3.0.0",
-    "deptry>=0.23.0",
-    "editorconfig-checker>=3.2.1",
-    "httpx-sse>=0.4.0",
-    "maturin>=1.8.7",
-    "patchelf>=0.17.2.1; platform_system=='Linux'",
-    "psutil>=7.0.0",
-    "pyright>=1.1.353",
-    "pytest>=8.4.0",
-    "pytest-asyncio>=1.0.0",
-    "pytest-cov>=6.2.1",
-    "pytest-rerunfailures>=15.1",
-    "pytest-timeout>=2.2.0",
-    "pytest-xdist>=3.1",
-    "ruff>=0.12.0",
-    "setuptools>=80.9.0",
-    "trustme>=1.2.1",
-    "types-requests>=2.28",
-    "sqlfluff>=3.1.1",
+    "asyncpg-stubs~=0.29.0",
+    "Babel~=2.10",
+    "boto3-stubs~=1.38",
+    "cibuildwheel~=3.0.0",
+    "deptry~=0.23.0",
+    "editorconfig-checker~=3.2.1",
+    "httpx-sse~=0.4.0",
+    "maturin~=1.8.7",
+    "patchelf~=0.17.2.1; platform_system=='Linux'",
+    "psutil~=7.0.0",
+    "pyright~=1.1.353",
+    "pytest~=8.4.0",
+    "pytest-asyncio~=1.0.0",
+    "pytest-cov~=6.2.1",
+    "pytest-rerunfailures~=15.1",
+    "pytest-timeout~=2.2.0",
+    "pytest-xdist~=3.1",
+    "ruff~=0.12.0",
+    "setuptools~=80.9.0",
+    "trustme~=1.2.1",
+    "types-requests~=2.28",
+    "sqlfluff~=3.1.1",
 ]
-testbed-server = [
-    "psutil>=7.0.0",
-]
+testbed-server = ["psutil~=7.0.0"]
 
 
 [tool.cibuildwheel]
