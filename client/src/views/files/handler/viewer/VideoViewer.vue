@@ -41,6 +41,7 @@
         <file-controls-volume
           v-model="volume"
           :muted="muted"
+          class="file-controls-volume"
         />
         <file-controls-group>
           <file-controls-dropdown

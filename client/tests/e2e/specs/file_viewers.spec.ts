@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { expect, expectMedia, getDownloadedFile, Media, msTest, openFileType, sliderClick } from '@tests/e2e/helpers';
+import { DisplaySize, expect, expectMedia, getDownloadedFile, Media, msTest, openFileType, sliderClick } from '@tests/e2e/helpers';
 
 msTest('File viewer page default state', async ({ documents }) => {
   const entries = documents.locator('.folder-container').locator('.file-list-item');
@@ -27,49 +27,118 @@ msTest('File viewer page details', async ({ documents }) => {
   await expect(buttons).toHaveCount(5);
 });
 
-msTest('Quick access loads correct document', async ({ documents }) => {
-  const entries = documents.locator('.folder-container').locator('.file-list-item');
+for (const displaySize of ['small', 'large']) {
+  msTest(`Quick access loads correct document ${displaySize} display`, async ({ documents }) => {
+    const entries = documents.locator('.folder-container').locator('.file-list-item');
 
-  await entries.nth(2).dblclick();
-  await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
-  await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
-  await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
-  await expect(documents).toBeViewerPage();
-  const doc1Name = (await documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text').textContent()) ?? '';
+    if (displaySize === 'small') {
+      await documents.setDisplaySize(DisplaySize.Small);
+    }
 
-  // Ensure the main header is visible
-  const isTopbarVisible = await documents.locator('#connected-header .topbar').isVisible();
-  const fileViewerButton = documents.locator('.file-handler-topbar-buttons__item.toggle-menu');
-  if (!isTopbarVisible && fileViewerButton) {
-    await fileViewerButton.click();
-  }
+    await entries.nth(2).dblclick();
+    await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
+    await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
+    await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
+    await expect(documents).toBeViewerPage();
+    const doc1Name = (await documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text').textContent()) ?? '';
 
-  await documents.locator('.topbar-left').locator('.back-button').click();
-  await entries.nth(3).dblclick();
-  await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
-  await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
-  await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
-  await expect(documents).toBeViewerPage();
-  const doc2Name = (await documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text').textContent()) ?? '';
+    // Ensure the main header is visible
+    const isTopbarVisible = await documents.locator('#connected-header .topbar').isVisible();
+    const fileViewerToggleMenuButton = documents.locator('.file-handler-topbar-buttons__item.toggle-menu');
+    if (!isTopbarVisible && fileViewerToggleMenuButton && displaySize === 'large') {
+      await fileViewerToggleMenuButton.click();
+    }
 
-  const sidebar = documents.locator('.sidebar');
-  const recentDocs = sidebar.locator('#sidebar-files').locator('.list-sidebar-content').getByRole('listitem');
-  await expect(recentDocs).toHaveCount(2);
-  await expect(recentDocs.nth(0)).toHaveText(doc2Name);
-  await expect(recentDocs.nth(1)).toHaveText(doc1Name);
+    if (displaySize === 'small') {
+      await expect(fileViewerToggleMenuButton).toBeHidden();
+    }
 
-  await recentDocs.nth(1).click();
-  await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
-  await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
-  await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
-  await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(doc1Name);
+    await documents.locator('.topbar-left').locator('.back-button').click();
+    await entries.nth(3).dblclick();
+    await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
+    await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
+    await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
+    await expect(documents).toBeViewerPage();
+    const doc2Name = (await documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text').textContent()) ?? '';
 
-  await recentDocs.nth(1).click();
-  await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
-  await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
-  await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
-  await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(doc2Name);
-});
+    const sidebar = documents.locator('.sidebar');
+    const recentDocs = sidebar.locator('#sidebar-files').locator('.list-sidebar-content').getByRole('listitem');
+    await expect(recentDocs).toHaveCount(2);
+    await expect(recentDocs.nth(0)).toHaveText(doc2Name);
+    await expect(recentDocs.nth(1)).toHaveText(doc1Name);
+
+    await recentDocs.nth(1).click();
+    await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
+    await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
+    await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
+    await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(doc1Name);
+
+    await recentDocs.nth(1).click();
+    await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
+    await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
+    await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
+    await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(doc2Name);
+  });
+
+  msTest(`File viewer download ${displaySize} display`, async ({ documents }) => {
+    if (displaySize === 'small') {
+      await documents.setDisplaySize(DisplaySize.Small);
+    }
+    await openFileType(documents, 'pdf');
+    await expect(documents).toBeViewerPage();
+    await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(
+      /^[A-Za-z0-9_-]+\.pdf$/,
+    );
+
+    // showSaveFilePicker is not yet supported by Playwright: https://github.com/microsoft/playwright/issues/31162
+    if (displaySize === 'small') {
+      const actionMenuButton = documents.locator('.file-handler-topbar-buttons__item.action-menu');
+      const actionMenuModal = documents.locator('.viewer-action-menu-modal');
+      await expect(actionMenuModal).toBeHidden();
+      await expect(actionMenuButton).toBeVisible();
+      await expect(documents.locator('.file-handler-topbar-buttons')).toBeHidden();
+      await actionMenuButton.click();
+
+      await expect(documents.locator('.list-group-item__label-small').nth(1)).toBeVisible();
+      await documents.locator('.list-group-item__label-small').nth(1).click();
+      const modalDownload = documents.locator('.download-warning-modal');
+
+      await expect(actionMenuModal).toBeVisible();
+      await modalDownload.locator('#next-button').click();
+      await expect(modalDownload).toBeHidden();
+    } else {
+      await documents.locator('.file-handler-topbar-buttons').locator('ion-button').nth(1).click();
+    }
+
+    const modal = documents.locator('.download-warning-modal');
+
+    await expect(modal).toBeVisible();
+    await modal.locator('#next-button').click();
+    await expect(modal).toBeHidden();
+
+    await documents.waitForTimeout(1000);
+
+    const uploadMenu = documents.locator('.upload-menu');
+    await expect(uploadMenu).toBeVisible();
+    const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
+    await expect(tabs.locator('.text-counter')).toHaveText(['0', '9', '0']);
+    await expect(tabs.nth(0)).not.toHaveTheClass('active');
+    await expect(tabs.nth(1)).toHaveTheClass('active');
+    await expect(tabs.nth(2)).not.toHaveTheClass('active');
+
+    const container = uploadMenu.locator('.element-container');
+    const elements = container.locator('.element');
+    await expect(elements).toHaveCount(9);
+    await expect(elements.nth(0).locator('.element-details__name')).toHaveText(/^[A-Za-z0-9_-]+\.pdf$/);
+    await expect(elements.nth(0).locator('.element-details-info__size')).toHaveText('76.9 KB');
+
+    const content = await getDownloadedFile(documents);
+    expect(content).toBeTruthy();
+    if (content) {
+      expect(content.length).toEqual(78731);
+    }
+  });
+}
 
 msTest('File viewer header control functionality', async ({ documents }) => {
   const entries = documents.locator('.folder-container').locator('.file-list-item');
