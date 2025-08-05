@@ -95,12 +95,12 @@ To start hacking, follow the basic steps detailed below:
           pyenv install 3.12.0
           ```
 
-    5. [`poetry >=2.1.1`](https://python-poetry.org/docs/#installation)
+    5. [`poetry >=2.1.4`](https://python-poetry.org/docs/#installation)
 
        Install Poetry (Does not require a specific version of Python)
 
        ```shell
-       curl --proto '=https' --tlsv1.2 -sSL https://install.python-poetry.org/ | python - --version=2.1.1
+       curl --proto '=https' --tlsv1.2 -sSL https://install.python-poetry.org/ | python - --version=2.1.4
        ```
 
        To verify the installation of `poetry` run

@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  poetry-version: 2.1.1
+  poetry-version: 2.1.4
   # Convert sphinx warning into errors.
   SPHINXOPTS: --fail-on-warning --verbose
 

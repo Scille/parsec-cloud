@@ -8,7 +8,7 @@ export PATH="/root/.cargo/bin:$PATH"
 cargo --version
 
 # Install Poetry
-curl -sSL https://install.python-poetry.org | python - --version=2.1.1
+curl -sSL https://install.python-poetry.org | python - --version=2.1.4
 export PATH="/root/.local/bin:$PATH"
 poetry --version
 # Install plugin for poetry export

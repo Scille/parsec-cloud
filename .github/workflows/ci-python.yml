@@ -26,7 +26,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  poetry-version: 2.1.1
+  poetry-version: 2.1.4
   pytest-base-args: >-
     --log-level=DEBUG
     --durations=10
