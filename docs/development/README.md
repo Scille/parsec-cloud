@@ -75,7 +75,7 @@ To start hacking, follow the basic steps detailed below:
        uv --version
        ```
 
-      From then on, you can use `uv run python` to start a Python interperter with
+      From then on, you can use `uv run python` to start a Python interpreter with
       the correct version of Python and with the project virtual environment activated.
 
 ## Hacking Parsec Server
