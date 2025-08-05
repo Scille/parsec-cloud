@@ -16,32 +16,22 @@ runs:
     # We need to install poetry before the correct version of python
     # Because we configured the action `setup-python` to use `poetry` as the cache system
     # And the action will failed if it can't find `poetry` or `poetry.lock`
-    - name: (*Nix) Install poetry-${{ inputs.poetry-version }}
-      shell: bash
-      if: runner.os != 'Windows'
-      run: |
-        set -eux
-        set -o pipefail
-        export POETRY_HOME="$HOME/.poetry"
-        mkdir -p "$POETRY_HOME"
-        if ! curl -sSL https://install.python-poetry.org | python3 - --version=${{ inputs.poetry-version }}; then
-          tail -n +0 ${{ github.workspace }}/poetry-installer*.log
-          exit 3
-        fi
-        echo "$POETRY_HOME/bin" >> "$GITHUB_PATH"
+    - name: Install poetry
+      shell: bash -eux {0}
+      run: pipx install 'poetry==${{ inputs.poetry-version }}'
 
-    - name: (Windows) Install poetry-${{ inputs.poetry-version }}
-      shell: bash
+    - name: (*Nix) Add local/bin to path
+      shell: bash -eux {0}
+      if: runner.os != 'Windows'
+      run: echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+    - name: (Windows) Add local/bin to path
+      shell: bash -eux {0}
       if: runner.os == 'Windows'
-      run: |
-        set -eux
-        export POETRY_HOME=${APPDATA}/.poetry
-        curl -sSL https://install.python-poetry.org \
-          | python3 - --version=${{ inputs.poetry-version }}
-        echo "${APPDATA}\.poetry\bin" >> "$GITHUB_PATH"
+      run: echo "${USERPROFILE}\.local\bin" >> "$GITHUB_PATH"
 
     - name: Install poetry-plugin-export
-      shell: bash
+      shell: bash -eux {0}
       run: poetry self add poetry-plugin-export
 
     - name: Install python
@@ -50,6 +40,11 @@ runs:
       with:
         python-version-file: ${{ inputs.project-path }}/pyproject.toml
         cache: poetry
+
+    # FIXME: Remove me once poetry support `virtualenv@20.33.0`
+    - name: Ensure poetry use correct virtualenv
+      shell: bash -eux {0}
+      run: pipx inject --force poetry 'virtualenv<20.33.0'
 
     - name: (*Nix) Configure poetry to use the installed python
       shell: ${{ runner.os != 'Windows' && 'bash' || 'pwsh' }}
