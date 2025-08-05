@@ -113,6 +113,10 @@ onUnmounted(() => {
     opacity: 1;
     width: 5rem;
     display: flex;
+
+    @include ms.responsive-breakpoint('sm') {
+      margin-right: 0;
+    }
   }
 }
 </style>

@@ -14,5 +14,9 @@
   justify-content: center;
   align-items: center;
   gap: 1.5rem;
+
+  @include ms.responsive-breakpoint('sm') {
+    gap: 1rem;
+  }
 }
 </style>

@@ -289,7 +289,7 @@
     </ion-menu>
     <tab-bar-menu
       class="tab-bar-menu"
-      v-if="isSmallDisplay && !customTabBar.isVisible.value && !currentRouteIs(Routes.History)"
+      v-if="isSmallDisplay && !customTabBar.isVisible.value && !currentRouteIs(Routes.History) && !currentRouteIs(Routes.FileHandler)"
       :user-info="userInfo"
       @action-clicked="onActionClicked"
       :actions="actions"
