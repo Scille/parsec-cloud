@@ -1,7 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { TestInfo } from '@playwright/test';
-import { answerQuestion, dragAndDropFile, expect, getDownloadedFile, MsPage, msTest, openExternalLink } from '@tests/e2e/helpers';
+import {
+  answerQuestion,
+  createFolder,
+  dragAndDropFile,
+  expect,
+  getDownloadedFile,
+  MsPage,
+  msTest,
+  openExternalLink,
+  renameDocument,
+} from '@tests/e2e/helpers';
 import AdmZip from 'adm-zip';
 import path from 'path';
 
@@ -183,4 +193,133 @@ msTest('Download warning', async ({ documents }) => {
   await documents.waitForTimeout(1000);
   await expect(tabs.locator('.text-counter')).toHaveText(['0', '10', '0']);
   await expect(elements).toHaveCount(10);
+});
+
+msTest.describe(() => {
+  msTest.use({
+    documentsOptions: {
+      empty: true,
+    },
+  });
+  msTest('Download archive filenames from different alphabets', async ({ documents }, testInfo: TestInfo) => {
+    msTest.setTimeout(45_000);
+    const entries = documents.locator('.folder-container').locator('.file-list-item');
+    const actionBar = documents.locator('#folders-ms-action-bar');
+
+    // Sort by size to make the renaming easier
+    const sorterPopoverButton = actionBar.locator('#select-popover-button');
+    await expect(sorterPopoverButton).toHaveText('Name');
+    await sorterPopoverButton.click();
+    const sorterPopover = documents.locator('.sorter-popover');
+    await expect(sorterPopover).toBeVisible();
+    await expect(sorterPopover.getByRole('listitem').nth(4)).toHaveText('Size');
+    await sorterPopover.getByRole('listitem').nth(4).click();
+    await expect(sorterPopover).toBeHidden();
+
+    await createFolder(documents, 'Folder');
+    await entries.nth(0).dblclick();
+    const dropZone = documents.locator('.folder-container').locator('.drop-zone').nth(0);
+    await dragAndDropFile(documents, dropZone, [
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'image.png'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'hell_yeah.png'),
+    ]);
+    await documents.waitForTimeout(1000);
+    const uploadMenu = documents.locator('.upload-menu');
+    await expect(uploadMenu).toBeVisible();
+    const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
+    await expect(tabs.locator('.text-counter')).toHaveText(['0', '2', '0']);
+    await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
+    await expect(documents.locator('.folder-container').locator('.no-files-content')).toBeHidden();
+    // cspell:disable-next-line
+    await renameDocument(documents, entries.nth(0), '文件名.png');
+    // cspell:disable-next-line
+    await renameDocument(documents, entries.nth(1), 'Имя файла.png');
+    // cspell:disable-next-line
+    await expect(entries.nth(0).locator('.file-name').locator('.file-name__label')).toHaveText('文件名.png');
+    // cspell:disable-next-line
+    await expect(entries.nth(1).locator('.file-name').locator('.file-name__label')).toHaveText('Имя файла.png');
+
+    await documents.locator('#connected-header').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(1).click();
+    await expect(documents).toHaveHeader(['wksp1'], true, true);
+    await expect(entries).toHaveCount(1);
+
+    await entries.nth(0).hover();
+    await entries.nth(0).locator('ion-checkbox').click();
+    await expect(entries.nth(0).locator('ion-checkbox')).toHaveTheClass('checkbox-checked');
+
+    await expect(actionBar.locator('.counter')).toHaveText('1 selected item');
+    await expect(actionBar.locator('.ms-action-bar-button')).toHaveCount(7);
+    await expect(actionBar.locator('.ms-action-bar-button').nth(4)).toHaveText('Download');
+    await actionBar.locator('.ms-action-bar-button').nth(4).click();
+    await confirmDownload(documents, true);
+    await answerQuestion(documents, true);
+
+    await documents.waitForTimeout(1000);
+
+    await expect(uploadMenu).toBeVisible();
+    await expect(tabs.locator('.text-counter')).toHaveText(['0', '3', '0']);
+
+    const container = uploadMenu.locator('.element-container');
+    const elements = container.locator('.element');
+    await expect(elements).toHaveCount(3);
+
+    await expect(elements.nth(0).locator('.element-details__name')).toHaveText('wksp1_ROOT.zip');
+    await expect(elements.nth(0).locator('.element-details-info__size')).toHaveText('244 KB');
+
+    const zipContent = await getDownloadedFile(documents);
+    expect(zipContent).toBeTruthy();
+    if (!zipContent) {
+      throw new Error('No downloaded file');
+    }
+    expect(zipContent.length).toEqual(249394);
+    const zip = new AdmZip(Buffer.from(zipContent));
+    const zipEntries = zip.getEntries().sort();
+    expect(zipEntries.length).toBe(2);
+    // cspell:disable-next-line
+    expect(zipEntries.at(0)?.entryName).toBe('Folder/Имя файла.png');
+    expect(zipEntries.at(0)?.header.size).toBe(243871);
+    // cspell:disable-next-line
+    expect(zipEntries.at(1)?.entryName).toBe('Folder/文件名.png');
+    expect(zipEntries.at(1)?.header.size).toBe(6335);
+  });
+
+  msTest('Download archive too many recursion', async ({ documents }, testInfo: TestInfo) => {
+    msTest.setTimeout(45_000);
+    const entries = documents.locator('.folder-container').locator('.file-list-item');
+
+    for (let i = 0; i < 15; i++) {
+      await createFolder(documents, `Folder${i}`);
+      await expect(entries.nth(0).locator('.file-name').locator('.file-name__label')).toHaveText(`Folder${i}`);
+      await expect(documents.locator('.folder-container').locator('.no-files')).toBeHidden();
+      await entries.nth(0).dblclick();
+      await expect(documents.locator('.folder-container').locator('.no-files')).toBeVisible();
+    }
+    const dropZone = documents.locator('.folder-container').locator('.drop-zone').nth(0);
+    await dragAndDropFile(documents, dropZone, [path.join(testInfo.config.rootDir, 'data', 'imports', 'hell_yeah.png')]);
+    await documents.waitForTimeout(1000);
+    const uploadMenu = documents.locator('.upload-menu');
+    await expect(uploadMenu).toBeVisible();
+    const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
+    await expect(tabs.locator('.text-counter')).toHaveText(['0', '1', '0']);
+    await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
+    await expect(entries.nth(0).locator('.file-name').locator('.file-name__label')).toHaveText('hell_yeah.png');
+
+    await documents.locator('#connected-header').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(1).click();
+    await documents.waitForTimeout(500);
+    await expect(documents).toHaveHeader(['wksp1'], true, true);
+    await expect(entries).toHaveCount(1);
+
+    await entries.nth(0).hover();
+    await entries.nth(0).locator('ion-checkbox').click();
+    await expect(entries.nth(0).locator('ion-checkbox')).toHaveTheClass('checkbox-checked');
+
+    const actionBar = documents.locator('#folders-ms-action-bar');
+    await expect(actionBar.locator('.counter')).toHaveText('1 selected item');
+    await expect(actionBar.locator('.ms-action-bar-button')).toHaveCount(7);
+    await documents.waitForTimeout(100);
+    await expect(actionBar.locator('.ms-action-bar-button').nth(4)).toHaveText('Download');
+    await actionBar.locator('.ms-action-bar-button').nth(4).click();
+    await confirmDownload(documents, true);
+    await expect(documents).toShowToast('Maximum subfolder depth reached, cannot download', 'Error');
+  });
 });

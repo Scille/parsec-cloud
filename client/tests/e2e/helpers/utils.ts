@@ -367,3 +367,26 @@ export async function importDefaultFiles(documentsPage: MsPage, testInfo: TestIn
   await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
   await expect(documentsPage.locator('.folder-container').locator('.no-files-content')).toBeHidden();
 }
+
+export async function renameDocument(documentsPage: MsPage, entry: Locator, newName: string, gridMode = false): Promise<void> {
+  if (gridMode) {
+    await entry.locator('.card-option').click();
+  } else {
+    await entry.hover();
+    await entry.locator('.options-button').click();
+  }
+
+  const smallDisplay = (await documentsPage.getDisplaySize()) === DisplaySize.Small;
+  let popover!: Locator;
+  if (smallDisplay) {
+    await expandSheetModal(documentsPage, documentsPage.locator('.file-context-sheet-modal'));
+    popover = documentsPage.locator('.file-context-sheet-modal');
+  } else {
+    popover = documentsPage.locator('.file-context-menu');
+  }
+
+  await popover.getByRole('listitem').filter({ hasText: 'Rename' }).click();
+  await fillInputModal(documentsPage, newName, true);
+  // Can't check if the entry's been renamed, since the renaming may change the sort order and therefore,
+  // what element the entry points to.
+}
