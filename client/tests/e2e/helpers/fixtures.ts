@@ -216,6 +216,7 @@ export const msTest = debugTest.extend<{
   connected: MsPage;
   workspacesStandard: MsPage;
   workspaces: MsPage;
+  documentsOptions: any;
   documents: MsPage;
   documentsReadOnly: MsPage;
   usersPage: MsPage;
@@ -291,11 +292,22 @@ export const msTest = debugTest.extend<{
     use(connected);
   },
 
-  documents: async ({ workspaces }, use, testInfo: TestInfo) => {
+  documentsOptions: [
+    // eslint-disable-next-line no-empty-pattern
+    async ({}, use: any): Promise<void> => {
+      await use({ empty: false });
+    },
+    { option: true },
+  ],
+
+  documents: async ({ workspaces, documentsOptions }, use, testInfo: TestInfo) => {
     await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
     await expect(workspaces).toHaveHeader(['wksp1'], true, true);
     await expect(workspaces.locator('.folder-container').locator('.no-files')).toBeVisible();
-    await importDefaultFiles(workspaces, testInfo);
+    if (!documentsOptions.empty) {
+      await importDefaultFiles(workspaces, testInfo);
+      await expect(workspaces.locator('.folder-container').locator('.no-files')).toBeHidden();
+    }
     use(workspaces);
   },
 
