@@ -45,15 +45,13 @@ def build() -> None:
     else:
         libparsec_path = "parsec/_parsec.cpython-312-x86_64-linux-gnu.so"
 
-    build_strategy = (
-        os.environ.get("POETRY_LIBPARSEC_BUILD_STRATEGY", "always_build").strip().lower()
-    )
+    build_strategy = os.environ.get("UV_LIBPARSEC_BUILD_STRATEGY", "always_build").strip().lower()
     if build_strategy == "no_build":
-        display("Skipping maturin build: POETRY_LIBPARSEC_BUILD_STRATEGY set to `no_build`")
+        display("Skipping maturin build: UV_LIBPARSEC_BUILD_STRATEGY set to `no_build`")
         return
     elif build_strategy == "build_if_missing" and (BASEDIR / libparsec_path).exists():
         display(
-            f"Skipping maturin build: POETRY_LIBPARSEC_BUILD_STRATEGY set to `build_if_missing` and {libparsec_path} already exists"
+            f"Skipping maturin build: UV_LIBPARSEC_BUILD_STRATEGY set to `build_if_missing` and {libparsec_path} already exists"
         )
         return
 
@@ -61,7 +59,7 @@ def build() -> None:
     # The idea here is to have the per-profile options centralized at the same place
     # (i.e. within `make.py`) to have a readable single source of truth (including
     # when compiling bindings unrelated to Python) on this sensible piece of configuration.
-    build_profile = os.environ.get("POETRY_LIBPARSEC_BUILD_PROFILE", DEFAULT_BUILD_PROFILE)
+    build_profile = os.environ.get("UV_LIBPARSEC_BUILD_PROFILE", DEFAULT_BUILD_PROFILE)
     ret = run(
         f"{PYTHON_EXECUTABLE_PATH} {BASEDIR.parent}/make.py --quiet python-{build_profile}-libparsec-cargo-flags",
         stdout=subprocess.PIPE,
@@ -81,7 +79,7 @@ def build() -> None:
     # We also want to disable this on CI given we build and run on the same machine
     # (so bundling increases needlessly the cache size).
     bundle_extra_so = (
-        os.environ.get("POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES", "true").lower() == "true"
+        os.environ.get("UV_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES", "true").lower() == "true"
     )
 
     # Maturin provides two commands to compile the Rust code as a Python native module:
@@ -118,5 +116,5 @@ def build() -> None:
 
 
 if __name__ == "__main__":
-    display("Launching poetry build.py script")
+    display("Launching build.py script")
     build()

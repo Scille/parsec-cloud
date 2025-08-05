@@ -103,10 +103,10 @@ repos:
   # Long story short we cannot use pre-commit isolated environments for the
   # tools below because they require access to the project dependencies.
   #
-  # So instead, we run these tools with `poetry run`, thus reusing project
+  # So instead, we run these tools with `uv run`, thus reusing project
   # configuration and virtual env:
-  # - `poetry run` will stick to the shell current virtual env
-  # - if the shell is not into a virtual env, poetry will create one and install Parsec&deps
+  # - `uv run` will stick to the shell current virtual env
+  # - if the shell is not into a virtual env, uv will create one and install Parsec&deps
   # - lastly, the tools are executed
   #
   # This approach requires the tools to be listed as dev dependencies but in
@@ -115,7 +115,7 @@ repos:
   #
   # This approach has the following benefits:
   # - It prevents going out of sync in tools version between pre-commit config
-  #   and poetry.lock
+  #   and uv.lock
   # - It saves time on initial run because we don't have to create isolated
   #   virtualenv for those tools
   # - Pre-commit hook are really simple, so it's no big deal to inline them.
@@ -123,8 +123,8 @@ repos:
   #   handling .pyi), it's more readable then to have all the config here.
   - repo: local
     hooks:
-      - id: ruff
-        name: ruff check (using `poetry`)
+      - id: ruff-check
+        name: ruff check (using `uv`)
         # Wow this looks ugly ! But there is a reason why:
         # - Ruff's `extend-exclude` doesn't work if it is not run from it config's folder
         # - Pre-commit only run script from the repo root directory
@@ -138,31 +138,31 @@ repos:
         #
         # Fortunately Ruff is (as cool kids say) blazingly fast, so it's no big
         # deal to check everything on each run.
-        entry: poetry --directory ./server run ruff check --fix "./parsec" "./tests" "../docs" "../make.py" "../misc"
+        entry: uv --directory ./server run --only-dev ruff check --fix "./parsec" "./tests" "../docs" "../make.py" "../misc"
         require_serial: true
         pass_filenames: false
         language: system
         types_or: [python, pyi]
 
       - id: ruff-format
-        name: ruff format (using `poetry`)
-        entry: poetry --project ./server run ruff format
+        name: ruff format (using `uv`)
+        entry: uv --project ./server run --only-dev ruff format
         require_serial: true
         language: system
         types_or: [python, pyi]
         args: [--config=server/pyproject.toml]
 
       - id: pyright
-        name: pyright (using `poetry`)
-        entry: poetry --project ./server run pyright
+        name: pyright (using `uv`)
+        entry: uv --project ./server run --only-dev pyright
         require_serial: true
         language: system
         types_or: [python, pyi]
         args: [--project=server/]
 
       - id: deptry
-        name: deptry (using `poetry`)
-        entry: poetry --project ./server run deptry server --config=server/pyproject.toml
+        name: deptry (using `uv`)
+        entry: uv --project ./server run --only-dev deptry server --config=server/pyproject.toml
         files: ^server/
         types_or: [python, pyproj]
         pass_filenames: false  # deptry expects only the root directory to scan
@@ -170,8 +170,8 @@ repos:
         language: system
 
       - id: sqlfluff
-        name: SQLFluff (using `poetry`)
-        entry: poetry --project ./server run ./misc/lint_sql.py --fix
+        name: SQLFluff (using `uv`)
+        entry: uv --project ./server run --only-dev ./misc/lint_sql.py --fix
         types_or: [sql]
         files: |
             (?x)^(
@@ -183,8 +183,8 @@ repos:
         language: system
 
       - id: sqlfluff-in-python
-        name: SQLFluff in Python server components (using `poetry`)
-        entry: poetry --project ./server run ./misc/lint_sql.py --non-sql-file-print-fix
+        name: SQLFluff in Python server components (using `uv`)
+        entry: uv --project ./server run --only-dev ./misc/lint_sql.py --non-sql-file-print-fix
         types_or: [python]
         files: ^(server/parsec/components/postgresql/)
         # TODO: currently SQL embedded in Python server code is dirty, so we ignore it
@@ -207,11 +207,11 @@ repos:
 
       # powrap, script to fix indentation of .po files.
       #
-      # - running with poetry in order to reuse environment from ./docs
+      # - running with uv in order to reuse environment from ./docs
       # - powrap is called via "make wrap" (see ./docs/Makefile)
       - id: powrap
-        name: powrap (using `poetry`)
-        entry: poetry --directory ./docs run make wrap
+        name: powrap (using `uv`)
+        entry: uv --directory ./docs run --only-dev make wrap
         pass_filenames: false
         types: [pofile]
         require_serial: true

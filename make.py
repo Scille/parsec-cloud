@@ -230,20 +230,20 @@ COMMANDS: dict[tuple[str, ...], Op | tuple[Op, ...]] = {
         # (note only the first `maturin develop` is impacted, as all maturin
         # develop uses the same default virtualenv)
         Cmd(
-            cmd="poetry install --with=testbed-server",
-            extra_env={"POETRY_LIBPARSEC_BUILD_STRATEGY": "no_build"},
+            cmd="uv sync --dev --group testbed-server",
+            extra_env={"UV_LIBPARSEC_BUILD_STRATEGY": "no_build"},
         ),
         Cmd(f"poetry run maturin develop --locked {PYTHON_DEV_CARGO_FLAGS}"),
     ),
     ("python-dev-rebuild", "r"): (
         Cwd(SERVER_DIR),
-        Cmd(f"poetry run maturin develop --locked {PYTHON_DEV_CARGO_FLAGS}"),
+        Cmd(f"uv run maturin develop --locked {PYTHON_DEV_CARGO_FLAGS}"),
     ),
     ("python-ci-install",): (
         Cwd(SERVER_DIR),
         Cmd(
-            cmd="poetry install",
-            extra_env={"POETRY_LIBPARSEC_BUILD_PROFILE": "ci"},
+            cmd="uv sync",
+            extra_env={"UV_LIBPARSEC_BUILD_PROFILE": "ci"},
         ),
     ),
     # Flags used in poetry's `server/build.py` when command is `python-ci-build`

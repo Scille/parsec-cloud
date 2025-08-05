@@ -55,7 +55,7 @@ def only_major_version(template: str, separator: str = ".") -> Callable[[str], s
     return _only_major_version
 
 
-POETRY_GA_VERSION = ReplaceRegex(r"poetry-version: [0-9.]+", "poetry-version: {version}")
+UV_GA_VERSION = ReplaceRegex(r"uv-version: [0-9.]+", "uv-version: {version}")
 PYTHON_GA_VERSION = ReplaceRegex(
     r"python-version: [0-9.]+", hide_patch_version("python-version: {version}")
 )
@@ -63,6 +63,9 @@ NODE_GA_VERSION = ReplaceRegex(r"node-version: [0-9.]+", "node-version: {version
 WASM_PACK_GA_VERSION = ReplaceRegex(r"wasm-pack-version: [0-9.]+", "wasm-pack-version: {version}")
 PYTHON_DOCKER_VERSION = ReplaceRegex(r"python:\d.\d+", hide_patch_version("python:{version}"))
 PYTHON_SMALL_VERSION = ReplaceRegex(r"python\d.\d+", hide_patch_version("python{version}"))
+PYPROJECT_PYTHON_VERSION = ReplaceRegex(
+    r'requires-python = "~=.*"', 'requires-python = "~={version}"'
+)
 TOML_LICENSE_FIELD = ReplaceRegex(r'license = ".*"', 'license = "{version}"')
 TOML_VERSION_FIELD = ReplaceRegex(r'version = ".*"', 'version = "{version}"')
 JSON_LICENSE_FIELD = ReplaceRegex(r'"license": ".*"', '"license": "{version}"')
@@ -91,7 +94,7 @@ class Tool(enum.Enum):
     Nextest = "nextest"
     Node = "node"
     Parsec = "parsec"
-    Poetry = "poetry"
+    Uv = "uv"
     PostgreSQL = "postgres"
     PreCommit = "pre-commit"
     Python = "python"
@@ -218,10 +221,10 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
     },
     ROOT_DIR / ".github/workflows/_releaser_nightly_build.yml": {Tool.Python: [PYTHON_GA_VERSION]},
     ROOT_DIR / ".github/workflows/ci-docs.yml": {
-        Tool.Poetry: [POETRY_GA_VERSION],
+        Tool.Uv: [UV_GA_VERSION],
     },
     ROOT_DIR / ".github/workflows/ci-python.yml": {
-        Tool.Poetry: [POETRY_GA_VERSION],
+        Tool.Uv: [UV_GA_VERSION],
         Tool.PostgreSQL: [
             ReplaceRegex(
                 r"postgresql-version: \d+",
@@ -248,7 +251,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         Tool.Python: [PYTHON_GA_VERSION],
     },
     ROOT_DIR / ".github/workflows/codeql.yml": {
-        Tool.Poetry: [POETRY_GA_VERSION],
+        Tool.Uv: [UV_GA_VERSION],
     },
     ROOT_DIR / ".github/workflows/docker-server.yml": {
         Tool.Python: [PYTHON_GA_VERSION],
@@ -257,7 +260,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         Tool.Python: [PYTHON_GA_VERSION],
     },
     ROOT_DIR / ".github/workflows/package-server.yml": {
-        Tool.Poetry: [POETRY_GA_VERSION],
+        Tool.Uv: [UV_GA_VERSION],
         Tool.Node: [NODE_GA_VERSION],
     },
     ROOT_DIR / ".github/workflows/package-cli.yml": {
@@ -326,16 +329,11 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
             ReplaceRegex(r"Rust v[0-9.]+", "Rust v{version}"),
             RUSTUP_INSTALL,
         ],
-        Tool.Python: [
-            ReplaceRegex(r"python v[0-9.]+", hide_patch_version("python v{version}")),
-            ReplaceRegex(r"pyenv install [0-9.]+", "pyenv install {version}"),
-            ReplaceRegex(r"pyenv prefix [0-9.]+", "pyenv prefix {version}"),
-        ],
-        Tool.Poetry: [
-            ReplaceRegex(r"poetry >=[0-9.]+", "poetry >={version}"),
+        Tool.Uv: [
+            ReplaceRegex(r"uv >=[0-9.]+", "uv >={version}"),
             ReplaceRegex(
-                r"https://install.python-poetry.org/ \| python - --version=.*",
-                "https://install.python-poetry.org/ | python - --version={version}",
+                r"https://astral\.sh/uv/.*/install\.sh",
+                "https://astral.sh/uv/{version}/install.sh",
             ),
         ],
         Tool.Node: [
@@ -399,9 +397,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
     ROOT_DIR / "docs/conf.py": {
         Tool.Parsec: [ReplaceRegex(r'version = ".*"', 'version = "{version}"')]
     },
-    ROOT_DIR / "docs/pyproject.toml": {
-        Tool.Python: [ReplaceRegex(r'^python = "\^[0-9.]+"$', 'python = "^{version}"')]
-    },
+    ROOT_DIR / "docs/pyproject.toml": {Tool.Python: [PYPROJECT_PYTHON_VERSION]},
     ROOT_DIR / "libparsec/version": {Tool.Parsec: [ReplaceRegex(r"^.*$", "{version}")]},
     ROOT_DIR / "LICENSE": {
         Tool.Parsec: [
@@ -417,10 +413,10 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
     },
     ROOT_DIR / "server/packaging/server/in-docker-build.sh": {
         Tool.Rust: [RUSTUP_INSTALL],
-        Tool.Poetry: [
+        Tool.Uv: [
             ReplaceRegex(
-                r"curl -sSL https://install.python-poetry.org \| python - --version=[0-9.]+",
-                "curl -sSL https://install.python-poetry.org | python - --version={version}",
+                r"https://astral\.sh/uv/.*/install\.sh",
+                "https://astral.sh/uv/{version}/install.sh",
             )
         ],
     },
@@ -428,10 +424,10 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
     ROOT_DIR / "server/packaging/testbed-server/in-docker-build.sh": {
         Tool.Rust: [RUSTUP_INSTALL],
         Tool.Python: [PYTHON_SMALL_VERSION],
-        Tool.Poetry: [
+        Tool.Uv: [
             ReplaceRegex(
-                r"curl -sSL https://install.python-poetry.org \| python - --version=[0-9.]+",
-                "curl -sSL https://install.python-poetry.org | python - --version={version}",
+                r"https://astral\.sh/uv/.*/install\.sh",
+                "https://astral.sh/uv/{version}/install.sh",
             )
         ],
     },
@@ -450,7 +446,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
                 r'"Programming Language :: Python :: .*"',
                 hide_patch_version('"Programming Language :: Python :: {version}"'),
             ),
-            ReplaceRegex(r'python = "~.*"', 'python = "~{version}"'),
+            PYPROJECT_PYTHON_VERSION,
             ReplaceRegex(
                 r'build = "cp\d+-{manylinux,macos,win}\*"',
                 hide_patch_version('build = "cp{version}-{{manylinux,macos,win}}*"', separator=""),

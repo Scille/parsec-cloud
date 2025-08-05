@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  poetry-version: 2.1.1
+  uv-version: 0.8.4
   # Convert sphinx warning into errors.
   SPHINXOPTS: --fail-on-warning --verbose
 
@@ -42,12 +42,11 @@ jobs:
         with:
           tool: ripgrep
 
-      - uses: ./.github/actions/setup-python-poetry
-        id: setup-python
+      - name: Install uv
+        uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc # pin v6.4.3
         with:
-          poetry-version: ${{ env.poetry-version }}
-          project-path: ./docs
-        timeout-minutes: 10
+          version: ${{ env.uv-version }}
+          working-directory: ./docs
 
       - name: Install gettext (required by powrap)
         run: |
@@ -56,18 +55,15 @@ jobs:
         timeout-minutes: 5
 
       - name: Install docs deps
-        run: |
-          poetry env info
-          poetry install
-          poetry show
+        run: uv sync
         timeout-minutes: 5
 
       - name: Update translation
-        run: poetry run make --environment-overrides intl-fr
+        run: uv run make --environment-overrides intl-fr
         timeout-minutes: 2
 
       - name: Wrap `*.po` files
-        run: poetry run make --environment-overrides wrap
+        run: uv run make --environment-overrides wrap
         timeout-minutes: 1
 
       - name: No fuzzy translation
@@ -87,5 +83,5 @@ jobs:
           fi
 
       - name: Build html documentation
-        run: poetry run make --environment-overrides html
+        run: uv run make --environment-overrides html
         timeout-minutes: 2

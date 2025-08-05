@@ -26,7 +26,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  poetry-version: 2.1.1
+  uv-version: 0.8.4
   pytest-base-args: >-
     --log-level=DEBUG
     --durations=10
@@ -103,12 +103,11 @@ jobs:
       #       postgresql-${{ env.postgresql-version }}
       #   timeout-minutes: 5
 
-      - uses: ./.github/actions/setup-python-poetry
-        id: setup-python
+      - name: Install uv
+        uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc # pin v6.4.3
         with:
-          poetry-version: ${{ env.poetry-version }}
-          project-path: ./server
-        timeout-minutes: 10
+          version: ${{ env.uv-version }}
+          working-directory: ./server
 
       # libparsec is slow to compile, so we save it in cache and skip the
       # compilation entirely if the Rust code hasn't changed !
@@ -129,7 +128,7 @@ jobs:
             server/parsec/_parsec.*.pyd
             server/parsec/_parsec.*.so
             # Note `server/parsec.libs/` is not included since we are going to build
-            # with POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES=false (see below)
+            # with UV_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES=false (see below)
         timeout-minutes: 2
 
       - name: Setup Rust toolchain
@@ -155,11 +154,10 @@ jobs:
       - name: Install python deps
         shell: bash -ex {0}
         run: |
-          poetry --directory ./server env info
-          if ${{ env.SKIP_EXT_BUILD }}; then export POETRY_LIBPARSEC_BUILD_STRATEGY=no_build; fi
+          if ${{ env.SKIP_EXT_BUILD }}; then export UV_LIBPARSEC_BUILD_STRATEGY=no_build; fi
           python make.py python-ci-install
 
-          # Make sure POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES=false worked
+          # Make sure UV_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES=false worked
           if [ -d "./server/parsec.libs" ] && [ -n "$(ls -A ./server/parsec.libs)" ];
           then
             echo "::error title=Directory './server/parsec.libs' is not empty::Extra libs disabled but './server/parsec.libs/' is not empty: " ./server/parsec.libs/*
@@ -168,7 +166,7 @@ jobs:
         env:
           SKIP_EXT_BUILD: ${{ steps.cache-libparsec.outputs.cache-hit == 'true' || inputs.style-only }}
           # No need to bundle given we compile and run on the same machine
-          POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES: false
+          UV_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES: false
         timeout-minutes: 20
 
       - name: Install pre-commit
@@ -180,7 +178,7 @@ jobs:
       - name: Check python code style
         shell: bash -eux {0}
         run: |
-          for step in ruff-format ruff pyright ${{ !inputs.style-only && 'sqlfluff sqlfluff-in-python' || '' }}; do
+          for step in ruff-format ruff-check pyright ${{ !inputs.style-only && 'sqlfluff sqlfluff-in-python' || '' }}; do
             python \
               ${{ steps.pre-commit.outputs.install-path }} \
               run \
@@ -210,7 +208,7 @@ jobs:
 
       - name: Basic tests
         if: (!inputs.style-only)
-        run: poetry run pytest ${{ env.pytest-base-args }} tests -n auto
+        run: uv run pytest ${{ env.pytest-base-args }} tests -n auto
         timeout-minutes: 10
         working-directory: server
 
@@ -218,6 +216,6 @@ jobs:
         if: (!inputs.style-only)
         env:
           PGINSTALLATION: /usr/lib/postgresql/${{ env.postgresql-version }}/bin
-        run: poetry run pytest ${{ env.pytest-base-args }} tests -n auto --postgresql
+        run: uv run pytest ${{ env.pytest-base-args }} tests -n auto --postgresql
         timeout-minutes: 10
         working-directory: server

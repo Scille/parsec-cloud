@@ -1,12 +1,9 @@
-[tool.poetry]
+[project]
 name = "parsec-cloud"
 version = "3.4.1-a.0+dev"
 description = "Secure file sharing in the cloud"
-authors = ["Scille SAS <contact@scille.fr>"]
+authors = [{ name = "Scille SAS", email = "contact@scille.fr" }]
 license = "BUSL-1.1"
-readme = "../README.rst"
-homepage = "https://github.com/Scille/parsec-cloud"
-documentation = "https://docs.parsec.cloud"
 keywords = ["parsec", "cryptography", "sharing", "encryption"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -17,77 +14,66 @@ classifiers = [
     "Natural Language :: English",
     "Programming Language :: Python :: 3.12",
 ]
-packages = [{ include = "parsec" }]
-exclude = []
-include = [
-    { path = "parsec/_parsec*.so", format = "wheel" },  # Rust lib for Linux & MacOS
-    { path = "parsec/_parsec*.pyd", format = "wheel" }, # Rust lib for Windows
+requires-python = "~=3.12.0"
+
+dependencies = [
+    # Base requirements
+    "anyio~=3.7.1",
+    "click~=8.0",
+    "httpx~=0.28.1",
+    "pbr~=6.1.1",
+    "pydantic~=2.10.6",
+    "pydantic-core~=2.27.2",
+    "sentry-sdk~=2.30.0",
+    "starlette~=0.47.2",
+    "structlog~=25.4.0",
+    # ASGI server
+    "fastapi~=0.116.1",
+    "uvicorn~=0.35.0",
+    "jinja2~=3.0",
+    # PostgreSQL
+    "asyncpg~=0.29.0",
+    # S3
+    "boto3~=1.38",
+    "botocore~=1.38",
+    # Swift
+    "python-swiftclient~=4.8.0",
 ]
 
-[tool.poetry.scripts]
+[project.urls]
+Homepage = "https://github.com/Scille/parsec-cloud"
+Documentation = "https://docs.parsec.cloud"
+
+[project.scripts]
 parsec = "parsec.cli:cli"
 
-[tool.poetry.dependencies]
-python = "~3.12.0"
-# Base requirements
-anyio = "^3.7.1"
-click = "^8.0"
-httpx = "^0.28.1"
-pbr = "^6.1.1"
-pydantic = "^2.10.6"
-pydantic-core = "^2.27.2"
-sentry-sdk = "^2.30.0"
-starlette = "^0.47.2"
-structlog = "^25.4.0"
-# ASGI server
-fastapi = "^0.116.1"
-uvicorn = "^0.35.0"
-jinja2 = "^3.0"
-# PostgreSQL
-asyncpg = "^0.29.0"
-# S3
-boto3 = "^1.38"
-botocore = "^1.38"
-# Swift
-python-swiftclient = "^4.8.0"
+[dependency-groups]
+dev = [
+    "asyncpg-stubs~=0.29.0",
+    "Babel~=2.10",
+    "boto3-stubs~=1.38",
+    "cibuildwheel~=3.0.0",
+    "deptry~=0.23.0",
+    "editorconfig-checker~=3.2.1",
+    "httpx-sse~=0.4.0",
+    "maturin~=1.8.7",
+    "patchelf~=0.17.2.1; platform_system=='Linux'",
+    "psutil~=7.0.0",
+    "pyright~=1.1.353",
+    "pytest~=8.4.0",
+    "pytest-asyncio~=1.0.0",
+    "pytest-cov~=6.2.1",
+    "pytest-rerunfailures~=15.1",
+    "pytest-timeout~=2.2.0",
+    "pytest-xdist~=3.1",
+    "ruff~=0.12.0",
+    "setuptools~=80.9.0",
+    "trustme~=1.2.1",
+    "types-requests~=2.28",
+    "sqlfluff~=3.1.1",
+]
+testbed-server = ["psutil~=7.0.0"]
 
-[tool.poetry.group.dev.dependencies]
-asyncpg-stubs = "^0.29.0"
-Babel = "^2.10"
-boto3-stubs = "^1.38"
-cibuildwheel = "^3.0.0"
-deptry = "^0.23.0"
-editorconfig-checker = "^3.2.1"
-httpx-sse = "^0.4.0"
-maturin = "^1.8.7"
-patchelf = { version = "^0.17.2.1", markers = "platform_system=='Linux'" }
-poetry-lock-package = "^0.5.2"
-psutil = "^7.0.0"
-pyright = "^1.1.353"
-pytest = "^8.4.0"
-pytest-asyncio = "^1.0.0"
-pytest-cov = "^6.2.1"
-pytest-rerunfailures = "^15.1"
-pytest-timeout = "^2.2.0"
-pytest-xdist = "^3.1"
-ruff = "^0.12.0"
-setuptools = "^80.9.0"
-trustme = "^1.2.1"
-types-requests = "^2.28"
-sqlfluff = "^3.1.1"
-
-[tool.poetry.group.testbed-server]
-optional = true
-
-[tool.poetry.group.testbed-server.dependencies]
-psutil = "^7.0.0"
-
-[tool.poetry.build]
-generate-setup-file = false
-script = "build.py"
-
-[tool.poetry.requires-plugins]
-poetry-plugin-export = "1.8" # provides poetry export
 
 [tool.cibuildwheel]
 build = "cp312-{manylinux,macos,win}*"
@@ -194,13 +180,10 @@ reportSelfClsParameterName = true
 reportMissingTypeArgument = true
 
 [build-system]
-# Be careful `build-system` entry works out of poetry,
-# hence those dependencies are not resolved & pinned into `poetry.lock`
 requires = [
-    "poetry-core>=1.0.0",
-    "setuptools",
+    "setuptools>=61.0",
+    "wheel",
     "maturin==1.8.7",
-    "maturin[patchelf]==1.8.7; platform_system=='Linux'",
     "patchelf~=0.17.2.1; platform_system=='Linux'",
 ]
-build-backend = "poetry.core.masonry.api"
+build-backend = "setuptools.build_meta"
