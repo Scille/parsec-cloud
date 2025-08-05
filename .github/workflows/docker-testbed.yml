@@ -121,7 +121,10 @@ jobs:
         timeout-minutes: 1
 
       - name: Stop docker test container
-        run: docker container stop ${{ steps.test-container.outputs.id }}
+        if: always()
+        run: |
+          docker logs ${{ steps.test-container.outputs.id }}
+          docker container stop ${{ steps.test-container.outputs.id }}
         timeout-minutes: 1
 
       - name: Image to be published
