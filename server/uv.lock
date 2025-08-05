@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = "==3.12.*"
 
 [[package]]
@@ -569,7 +569,7 @@ dependencies = [
     { name = "uvicorn" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "asyncpg-stubs" },
     { name = "babel" },
@@ -602,45 +602,48 @@ testbed-server = [
 requires-dist = [
     { name = "anyio", specifier = ">=3.7.1" },
     { name = "asyncpg", specifier = ">=0.29.0" },
-    { name = "asyncpg-stubs", marker = "extra == 'dev'", specifier = ">=0.29.0" },
-    { name = "babel", marker = "extra == 'dev'", specifier = ">=2.10" },
     { name = "boto3", specifier = ">=1.38" },
-    { name = "boto3-stubs", marker = "extra == 'dev'", specifier = ">=1.38" },
     { name = "botocore", specifier = ">=1.38" },
-    { name = "cibuildwheel", marker = "extra == 'dev'", specifier = ">=3.0.0" },
     { name = "click", specifier = ">=8.0" },
-    { name = "deptry", marker = "extra == 'dev'", specifier = ">=0.23.0" },
-    { name = "editorconfig-checker", marker = "extra == 'dev'", specifier = ">=3.2.1" },
     { name = "fastapi", specifier = ">=0.116.1" },
     { name = "httpx", specifier = ">=0.28.1" },
-    { name = "httpx-sse", marker = "extra == 'dev'", specifier = ">=0.4.0" },
     { name = "jinja2", specifier = ">=3.0" },
-    { name = "maturin", marker = "extra == 'dev'", specifier = ">=1.8.7" },
-    { name = "patchelf", marker = "sys_platform == 'linux' and extra == 'dev'", specifier = ">=0.17.2.1" },
     { name = "pbr", specifier = ">=6.1.1" },
-    { name = "psutil", marker = "extra == 'dev'", specifier = ">=7.0.0" },
-    { name = "psutil", marker = "extra == 'testbed-server'", specifier = ">=7.0.0" },
     { name = "pydantic", specifier = ">=2.10.6" },
     { name = "pydantic-core", specifier = ">=2.27.2" },
-    { name = "pyright", marker = "extra == 'dev'", specifier = ">=1.1.353" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4.0" },
-    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=1.0.0" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6.2.1" },
-    { name = "pytest-rerunfailures", marker = "extra == 'dev'", specifier = ">=15.1" },
-    { name = "pytest-timeout", marker = "extra == 'dev'", specifier = ">=2.2.0" },
-    { name = "pytest-xdist", marker = "extra == 'dev'", specifier = ">=3.1" },
     { name = "python-swiftclient", specifier = ">=4.8.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.12.0" },
     { name = "sentry-sdk", specifier = ">=2.30.0" },
-    { name = "setuptools", marker = "extra == 'dev'", specifier = ">=80.9.0" },
-    { name = "sqlfluff", marker = "extra == 'dev'", specifier = ">=3.1.1" },
     { name = "starlette", specifier = ">=0.47.2" },
     { name = "structlog", specifier = ">=25.4.0" },
-    { name = "trustme", marker = "extra == 'dev'", specifier = ">=1.2.1" },
-    { name = "types-requests", marker = "extra == 'dev'", specifier = ">=2.28" },
     { name = "uvicorn", specifier = ">=0.35.0" },
 ]
-provides-extras = ["dev", "testbed-server"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "asyncpg-stubs", specifier = ">=0.29.0" },
+    { name = "babel", specifier = ">=2.10" },
+    { name = "boto3-stubs", specifier = ">=1.38" },
+    { name = "cibuildwheel", specifier = ">=3.0.0" },
+    { name = "deptry", specifier = ">=0.23.0" },
+    { name = "editorconfig-checker", specifier = ">=3.2.1" },
+    { name = "httpx-sse", specifier = ">=0.4.0" },
+    { name = "maturin", specifier = ">=1.8.7" },
+    { name = "patchelf", marker = "sys_platform == 'linux'", specifier = ">=0.17.2.1" },
+    { name = "psutil", specifier = ">=7.0.0" },
+    { name = "pyright", specifier = ">=1.1.353" },
+    { name = "pytest", specifier = ">=8.4.0" },
+    { name = "pytest-asyncio", specifier = ">=1.0.0" },
+    { name = "pytest-cov", specifier = ">=6.2.1" },
+    { name = "pytest-rerunfailures", specifier = ">=15.1" },
+    { name = "pytest-timeout", specifier = ">=2.2.0" },
+    { name = "pytest-xdist", specifier = ">=3.1" },
+    { name = "ruff", specifier = ">=0.12.0" },
+    { name = "setuptools", specifier = ">=80.9.0" },
+    { name = "sqlfluff", specifier = ">=3.1.1" },
+    { name = "trustme", specifier = ">=1.2.1" },
+    { name = "types-requests", specifier = ">=2.28" },
+]
+testbed-server = [{ name = "psutil", specifier = ">=7.0.0" }]
 
 [[package]]
 name = "patchelf"

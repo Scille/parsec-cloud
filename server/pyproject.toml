@@ -47,7 +47,7 @@ Documentation = "https://docs.parsec.cloud"
 [project.scripts]
 parsec = "parsec.cli:cli"
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "asyncpg-stubs>=0.29.0",
     "Babel>=2.10",
