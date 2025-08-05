@@ -1,21 +1,24 @@
-[tool.poetry]
+[project]
 name = "parsec-docs"
 version = "0.0.0"
 description = "Parsec documentation"
-authors = ["Scille SAS <contact@scille.fr>"]
+authors = [{ name = "Scille SAS", email = "contact@scille.fr" }]
 license = "BUSL-1.1"
-packages = [{ include = "conf.py" }]
+requires-python = "~=3.12.0"
 
-[tool.poetry.dependencies]
-python = "^3.12.0"
-sphinx = "<9.0.0"
-sphinx-copybutton = "^0.5.2"
-sphinx-intl = "^2.3.1"
-sphinx-rtd-theme = "^3.0.2"
-sphinx-tabs = "^3.4.7"
-docutils = "0.21.2"
-powrap = "^1.0.2"
+dependencies = [
+    "sphinx<9.0.0",
+    "sphinx-copybutton~=0.5.2",
+    "sphinx-intl~=2.3.1",
+    "sphinx-rtd-theme~=3.0.2",
+    "sphinx-tabs~=3.4.7",
+    "docutils==0.21.2",
+    "powrap~=1.0.2",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["conf.py"]
