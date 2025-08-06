@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.0.0-rc.1+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-16 12:02+0200\n"
+"POT-Creation-Date: 2025-08-07 08:04+0000\n"
 "PO-Revision-Date: 2024-09-18 18:36+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
 "Language: fr\n"
@@ -30,29 +30,40 @@ msgid "Parsec graphical user interface overview"
 msgstr "Aperçu de l'interface utilisateur de Parsec"
 
 #: ../../userguide/first_steps.rst:14
+msgid "**Organization section**: select your organization."
+msgstr "**Section organisation** : sélectionnez votre organisation"
+
+#: ../../userguide/first_steps.rst:15
 msgid ""
-"\\1. **Organization section**: select your organization and access your "
-"organization details (if allowed by your profile)."
+"**Organization details**: access your organization details (if allowed by "
+"your profile)."
 msgstr ""
-"\\1. **Section organisation** : sélectionnez votre organisation et accédez "
-"aux détails de votre organisation (si votre profil le permet)."
+"**Détails de l'organisation**: accéder aux détails de l'organisation (si "
+"votre profil le permet)."
 
 #: ../../userguide/first_steps.rst:16
 msgid ""
-"\\2. **Recent workspaces and documents**: list of workspaces and documents "
+"**Workspace selection**: list of workspaces you added to favorite and those "
 "you have accessed recently."
 msgstr ""
-"\\2. **Espaces et documents récents** : une liste des espaces de travail et "
-"des documents auxquels vous avez accédés récemment."
+"**Espaces de travail** : liste de vos espaces de travail définis en tant que "
+"favoris ainsi que ceux auxquels vous avez accédés récemment."
+
+#: ../../userguide/first_steps.rst:17
+msgid "**Recent documents**: list of documents you have accessed recently."
+msgstr ""
+"**Documents récents** : liste de vos documents auxquels vous avez  accédés "
+"récemment."
 
 #: ../../userguide/first_steps.rst:18
-msgid "\\3. **Main menu**: access application settings and your user profile."
+msgid "**Main menu**: access application settings and your user profile."
 msgstr ""
-"\\3. **Menu principal** : accès aux paramètres de l'application et à votre "
-"profil d'utilisateur."
+"**Menu principal** : accès aux paramètres de l'application et à votre profil "
+"d'utilisateur."
 
-#: ../../userguide/first_steps.rst:20
-msgid "\\4. **Workspace section**: access a workspace and its documents."
+#: ../../userguide/first_steps.rst:19
+msgid ""
+"**Workspace and document section**: access a workspace and its documents."
 msgstr ""
-"\\4. **Section espace de travail** : accès à un espace de travail et à ses "
-"documents."
+"**Section espace de travail et documents** : accès à un espace de travail et "
+"à ses documents."

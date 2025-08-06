@@ -17,10 +17,10 @@ connected to the Parsec server at the same time.
 Invite a user
 -------------
 
-1. Go to ``Manage my organization``
+1. In the sidebar, go to ``Users``
 2. Click ``Invite a user`` and enter its email address to send an **invitation link**
 
-  - A yellow button will appear at the top, informing you that you have an
+  - A blue button will appear at the top, informing you that you have an
     invitation waiting to be validated.
 
   .. image:: screens/new_user_invitation_sent.png
@@ -45,7 +45,7 @@ specially required when:
 - the user device has been compromised or lost
 - the user is no longer part of the organization
 
-1. Go to ``Manage my organization``
+1. In the sidebar, go to ``Users``
 2. Select ``Revoke this user``.
 3. Click ``Revoke`` to confirm (**this action cannot be undone**)
 
@@ -105,7 +105,7 @@ This profile allows a user to:
 Change the profile
 ------------------
 
-If you need to change the profile of a user, go to ``Manage my organization`` in the upper-left corner. Either select the user or right-click on them and select ``Change profile``.
+If you need to change the profile of a user, go to ``Users`` (in the sidebar) in the upper-left corner. Either select the user or right-click on them and select ``Change profile``.
 
 .. image:: screens/change_profile.png
     :align: center
