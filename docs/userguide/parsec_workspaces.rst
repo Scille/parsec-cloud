@@ -146,7 +146,7 @@ Copy user roles to another user
 
 You can assign the same roles to multiple users by copying roles from one user to another.
 
-As an example, Mallory is an intern in your company with whom you have shared 4 workspaces: 2 as a `Reader`, 2 as a `Contributor`. Bob is a newly hired intern, and you want to share the same workspaces (and roles) you shared with Mallory. Instead of sharing each workspace one by one, go to ``Manage my organization`` in the top left corner and access the list of users. Right-click on Mallory, and select ``Copy workspace roles to...``.
+As an example, Mallory is an intern in your company with whom you have shared 4 workspaces: 2 as a `Reader`, 2 as a `Contributor`. Bob is a newly hired intern, and you want to share the same workspaces (and roles) you shared with Mallory. Instead of sharing each workspace one by one, go to ``User`` (in the sidebar) in the top left corner and access the list of users. Right-click on Mallory, and select ``Copy workspace roles to...``.
 
 .. image:: screens/batch_workspace_context_menu.png
     :align: center

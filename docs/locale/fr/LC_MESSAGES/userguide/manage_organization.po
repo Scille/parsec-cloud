@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.0.0-rc.1+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-06 13:07+0100\n"
+"POT-Creation-Date: 2025-08-06 13:15+0200\n"
 "PO-Revision-Date: 2024-09-18 19:58+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
 "Language: fr\n"
@@ -51,8 +51,8 @@ msgstr "Inviter un utilisateur"
 
 #: ../../userguide/manage_organization.rst:20
 #: ../../userguide/manage_organization.rst:48
-msgid "Go to ``Manage my organization``"
-msgstr "Aller à ``Gérer de mon organisation``"
+msgid "In the sidebar, go to ``Users``"
+msgstr "Dans la barre latérale, rendez vous dans ``Utilisateurs``"
 
 #: ../../userguide/manage_organization.rst:21
 msgid ""
@@ -64,11 +64,11 @@ msgstr ""
 
 #: ../../userguide/manage_organization.rst:23
 msgid ""
-"A yellow button will appear at the top, informing you that you have an "
+"A blue button will appear at the top, informing you that you have an "
 "invitation waiting to be validated."
 msgstr ""
-"Un bouton jaune apparaît en haut, vous informant que vous avez une "
-"invitation qui attend d'être validée."
+"Un bouton bleu apparaît en haut, vous informant que vous avez une invitation "
+"qui attend d'être validée."
 
 #: ../../userguide/manage_organization.rst:26
 msgid "Pending invitations"
@@ -235,14 +235,13 @@ msgstr "Modifier le profil"
 
 #: ../../userguide/manage_organization.rst:108
 msgid ""
-"If you need to change the profile of a user, go to ``Manage my "
-"organization`` in the upper-left corner. Either select the user or right-"
-"click on them and select ``Change profile``."
+"If you need to change the profile of a user, go to ``Users`` (in the "
+"sidebar) in the upper-left corner. Either select the user or right-click on "
+"them and select ``Change profile``."
 msgstr ""
-"Pour changer le profil d'un utilisateur, rendez vous dans ``Gérer mon "
-"organisation`` dans le coin supérieur gauche. Vous pouvez soit sélectionner "
-"l'utilisateur, ou faire un clic droit dessus et sélectionner ``Modifier le "
-"profil``."
+"Pour changer le profil d'un utilisateur, rendez vous dans ``Utilisateurs "
+"dans le coin supérieur gauche. Vous pouvez soit sélectionner l'utilisateur, "
+"ou faire un clic droit dessus et sélectionner ``Modifier le profil``."
 
 #: ../../userguide/manage_organization.rst:110
 msgid "change profile screenshot"
