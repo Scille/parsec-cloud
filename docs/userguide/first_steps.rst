@@ -11,10 +11,14 @@ Welcome to Parsec! Here's a brief overview of the user interface.
     :align: center
     :alt: Parsec graphical user interface overview
 
-\1. **Organization section**: select your organization and access your organization details (if allowed by your profile).
+1. **Organization section**: select your organization.
 
-\2. **Recent workspaces and documents**: list of workspaces and documents you have accessed recently.
+2. **Organization details**: access your organization details (if allowed by your profile).
 
-\3. **Main menu**: access application settings and your user profile.
+3. **Workspace selection**: list of workspaces you added to favorite and those you have accessed recently.
 
-\4. **Workspace section**: access a workspace and its documents.
+4. **Recent documents**: list of documents you have accessed recently.
+
+5. **Main menu**: access application settings and your user profile.
+
+6. **Workspace and document section**: access a workspace and its documents.

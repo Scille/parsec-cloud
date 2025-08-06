@@ -166,7 +166,7 @@ Parsec preview can be disabled in the desktop application settings.
 .. image:: screens/files/disable_viewers.png
     :align: center
     :alt: Disable viewers screenshot
-    :width: 400
+    :width: 800
 
 Recent documents
 ^^^^^^^^^^^^^^^^
