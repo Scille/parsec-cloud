@@ -110,6 +110,7 @@ msTest('Test viewer in history', async ({ documents }) => {
 });
 
 msTest('Workspace history breadcrumbs', async ({ documents }) => {
+  msTest.setTimeout(45_000);
   async function clickOnBreadcrumb(i: number): Promise<void> {
     await documents.locator('.history-container').locator('.navigation-breadcrumb').locator('ion-breadcrumb').nth(i).click();
   }

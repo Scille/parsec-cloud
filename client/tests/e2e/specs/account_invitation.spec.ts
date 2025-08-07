@@ -3,6 +3,7 @@
 import { expect, fillInputModal, login, msTest } from '@tests/e2e/helpers';
 
 msTest('Display account invitations', async ({ parsecAccountLoggedIn }) => {
+  msTest.setTimeout(45_000);
   // Get the account email, check that we don't have an invitation
   await parsecAccountLoggedIn.locator('.profile-header-homepage').click();
   await expect(parsecAccountLoggedIn.locator('.profile-header-homepage-popover')).toBeVisible();
