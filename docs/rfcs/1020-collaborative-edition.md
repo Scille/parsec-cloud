@@ -29,7 +29,7 @@ to manage storage and access rights / sharing keys.
 Editing sessions are identified via a *session key*. Users who want to edit the same document would use the same
 session key and they will end up in the same session (the first user will create the session, the others will join).
 
-Session keys must be rotated when when someone's access to a document has been revoked. This will guarantee they won't
+Session keys must be rotated when someone's access to a document has been revoked. This will guarantee they won't
 be able to use the session key to extract the document content from CryptPad directly.
 
 CryptPad will automatically destroy the document content after each collaborative session but as long as you know the
