@@ -189,11 +189,6 @@ const routes: Array<RouteRecordRaw> = [
                     name: Routes.MyProfile,
                     component: () => import('@/views/users/MyProfilePage.vue'),
                   },
-                  {
-                    path: `/:handle(\\d+)/${Routes.Editor}`,
-                    name: Routes.Editor,
-                    component: () => import('@/views/files/handler/editor/FileEditor.vue'),
-                  },
                 ],
               },
             ],
