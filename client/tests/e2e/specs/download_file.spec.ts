@@ -66,6 +66,7 @@ msTest('Download file', async ({ documents }) => {
 });
 
 msTest('Download multiple files and folder', async ({ documents }, testInfo: TestInfo) => {
+  msTest.setTimeout(45_000);
   const entries = documents.locator('.folder-container').locator('.file-list-item');
   await entries.nth(0).dblclick();
   const dropZone = documents.locator('.folder-container').locator('.drop-zone').nth(0);

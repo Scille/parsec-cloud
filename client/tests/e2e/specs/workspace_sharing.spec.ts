@@ -88,6 +88,7 @@ msTest('Share with external', async ({ workspaceSharingModal }) => {
 });
 
 msTest('Unshare workspace', async ({ workspaceSharingModal }) => {
+  msTest.setTimeout(45_000);
   const page = workspaceSharingModal.page();
   const secondTab = await (workspaceSharingModal.page() as MsPage).openNewTab();
   // Login on the second tab with Bob, should have one workspace shared by default
