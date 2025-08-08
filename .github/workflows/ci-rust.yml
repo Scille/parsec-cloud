@@ -127,13 +127,13 @@ jobs:
       # By default `libparsec_crypto` uses RustCrypto, so here we test the sodiumoxide
       # implementation and it compatibility with the rest of the project
       - name: Test sodiumoxide rust crypto
-        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package libparsec_crypto --features use-sodiumoxide
+        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package libparsec_crypto --features use-libsodium
         env:
           RUST_LOG: debug
         timeout-minutes: 10
 
       - name: Check agnostic & platform crates using sodium crypto features
-        run: cargo check ${{ env.CARGO_CI_FLAGS }} ${{ steps.crates.outputs.agnostic }} ${{ steps.crates.outputs.platform }} --features use-sodiumoxide
+        run: cargo check ${{ env.CARGO_CI_FLAGS }} ${{ steps.crates.outputs.agnostic }} ${{ steps.crates.outputs.platform }} --features use-libsodium
         timeout-minutes: 10
         env:
           RUST_LOG: ${{ env.TEST_RUST_LOG }}
@@ -145,7 +145,7 @@ jobs:
       # platform independent and 2) it is what is going to be used in release
       - name: Test platform crates using sodium crypto features (🐧 Linux specific)
         shell: bash
-        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} ${{ steps.crates.outputs.platform }} --features libparsec_crypto/use-sodiumoxide
+        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} ${{ steps.crates.outputs.platform }} --features libparsec_crypto/use-libsodium
         timeout-minutes: 30
         env:
           RUST_LOG: ${{ env.TEST_RUST_LOG }}
@@ -291,7 +291,7 @@ jobs:
         shell: bash -ex {0}
         run: |
           NON_BINDINGS_CRATES=`python3 misc/libparsec_crates_flags.py agnostic platform`
-          cargo check ${{ env.CARGO_CI_FLAGS }} $NON_BINDINGS_CRATES --features use-sodiumoxide
+          cargo check ${{ env.CARGO_CI_FLAGS }} $NON_BINDINGS_CRATES --features use-libsodium
         timeout-minutes: 15 # It can be very slow if cache has missed
         env:
           RUST_LOG: debug
@@ -299,7 +299,7 @@ jobs:
       # By default `libparsec_crypto` uses RustCrypto, so here we test the sodiumoxide
       # implementation and its compatibility with the rest of the project
       - name: Test rust crypto crate with sodium
-        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package libparsec_crypto --features use-sodiumoxide
+        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package libparsec_crypto --features use-libsodium
         timeout-minutes: 10
 
       - name: Test Rust platform codebase with sodium
@@ -311,5 +311,5 @@ jobs:
             # that required the installation of a kernel extension that require a restart.
             PLATFORM_CRATES=`echo $PLATFORM_CRATES | sed -e 's/-p libparsec_platform_mountpoint//'`
           fi
-          cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} $PLATFORM_CRATES --features libparsec_crypto/use-sodiumoxide
+          cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} $PLATFORM_CRATES --features libparsec_crypto/use-libsodium
         timeout-minutes: 10

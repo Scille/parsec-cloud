@@ -77,7 +77,7 @@ impl SequesterPrivateKeyDer {
     }
 
     pub fn size_in_bytes(&self) -> usize {
-        self.0.size() as usize
+        self.0.size()
     }
 
     pub fn dump(&self) -> Zeroizing<Vec<u8>> {
@@ -187,7 +187,7 @@ impl SequesterPublicKeyDer {
     const ALGORITHM: &'static str = "RSAES-OAEP-SHA256-XSALSA20-POLY1305";
 
     pub fn size_in_bytes(&self) -> usize {
-        self.0.size() as usize
+        self.0.size()
     }
 
     pub fn dump(&self) -> Vec<u8> {
@@ -212,7 +212,7 @@ impl SequesterPublicKeyDer {
     pub fn encrypt(&self, data: &[u8]) -> Vec<u8> {
         let secret_key = SecretKey::generate();
 
-        let mut encrypted_secret_key = vec![0; self.0.size() as usize];
+        let mut encrypted_secret_key = vec![0; self.0.size()];
 
         let mut encrypter =
             openssl::encrypt::Encrypter::new(&self.0).expect("Cannot create encrypter");
