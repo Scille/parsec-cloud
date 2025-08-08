@@ -12,6 +12,7 @@ msTest('File viewer page default state', async ({ documents }) => {
   await expect(documents).toBeViewerPage();
   await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_.-]+$/);
   await expect(documents.locator('#connected-header .topbar')).toBeHidden();
+  await expect(documents.locator('.sidebar')).toBeHidden();
 });
 
 msTest('File viewer page details', async ({ documents }) => {
@@ -24,7 +25,7 @@ msTest('File viewer page details', async ({ documents }) => {
   await expect(documents).toBeViewerPage();
   await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_.-]+$/);
   const buttons = documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-button');
-  await expect(buttons).toHaveCount(4);
+  await expect(buttons).toHaveCount(5);
 });
 
 msTest('Quick access loads correct document', async ({ documents }) => {
@@ -58,6 +59,8 @@ msTest('Quick access loads correct document', async ({ documents }) => {
   await expect(recentDocs.nth(0)).toHaveText(doc2Name);
   await expect(recentDocs.nth(1)).toHaveText(doc1Name);
 
+  const toggleSidebarButton = documents.locator('.file-handler-topbar').locator('#trigger-toggle-menu-button');
+  await toggleSidebarButton.click();
   await recentDocs.nth(1).click();
   await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
   await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
@@ -80,14 +83,17 @@ msTest('File viewer header control functionality', async ({ documents }) => {
   await expect(documents.locator('#connected-header .topbar')).toBeHidden();
 
   const toggleButton = documents.locator('.file-handler-topbar-buttons__item.toggle-menu');
+  const toggleSidebarButton = documents.locator('.file-handler-topbar').locator('#trigger-toggle-menu-button');
   await expect(toggleButton).toBeVisible();
   await expect(toggleButton).toContainText('Show menu');
 
   await toggleButton.click();
+  await expect(toggleSidebarButton).toBeHidden();
   await expect(documents.locator('#connected-header .topbar')).toBeVisible();
   await expect(toggleButton).toContainText('Hide menu');
 
   await toggleButton.click();
+  await expect(toggleSidebarButton).toBeVisible();
   await expect(documents.locator('#connected-header .topbar')).toBeHidden();
   await expect(toggleButton).toContainText('Show menu');
 
@@ -99,9 +105,17 @@ msTest('File viewer header control functionality', async ({ documents }) => {
   await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
   await expect(documents.locator('#connected-header .topbar')).toBeHidden();
 
+  await toggleSidebarButton.click();
+  await expect(documents.locator('.sidebar')).toBeVisible();
+  await toggleSidebarButton.click();
+  await expect(documents.locator('.sidebar')).toBeHidden();
+
   // Test leaving file viewer restores header
-  await documents.goBack();
+  const backButton = documents.locator('.file-handler-topbar').locator('.back-button');
+  await expect(backButton).toBeVisible();
+  await backButton.click();
   await expect(documents.locator('#connected-header .topbar')).toBeVisible();
+  await expect(documents.locator('.sidebar')).toBeVisible();
 });
 
 msTest('File viewer download', async ({ documents }) => {
@@ -110,7 +124,9 @@ msTest('File viewer download', async ({ documents }) => {
   await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.pdf$/);
 
   // showSaveFilePicker is not yet supported by Playwright: https://github.com/microsoft/playwright/issues/31162
-  await documents.locator('.file-handler-topbar-buttons').locator('ion-button').nth(1).click();
+  await expect(documents.locator('#file-viewers-download')).toBeVisible();
+  await expect(documents.locator('#file-viewers-download')).toHaveText('Download');
+  await documents.locator('#file-viewers-download').click();
 
   const modal = documents.locator('.download-warning-modal');
 
