@@ -2,7 +2,7 @@
 name = "parsec-cloud"
 version = "3.4.1-a.0+dev"
 description = "Secure file sharing in the cloud"
-authors = ["Scille SAS <contact@scille.fr>"]
+authors = [{ name = "Scille SAS", email = "contact@scille.fr" }]
 license = "BUSL-1.1"
 readme = "../README.rst"
 homepage = "https://github.com/Scille/parsec-cloud"
@@ -197,7 +197,7 @@ reportMissingTypeArgument = true
 # Be careful `build-system` entry works out of poetry,
 # hence those dependencies are not resolved & pinned into `poetry.lock`
 requires = [
-    "poetry-core>=1.0.0",
+    "poetry-core>=1.2.0",
     "setuptools",
     "maturin==1.8.7",
     "maturin[patchelf]==1.8.7; platform_system=='Linux'",
