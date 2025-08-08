@@ -16,12 +16,30 @@
         >
           <!-- file-handler topbar -->
           <div class="file-handler-topbar">
+            <!-- icon visible when menu is hidden -->
+            <ms-image
+              v-if="!isMobile() && isLargeDisplay && !isHeaderVisible()"
+              slot="start"
+              id="trigger-toggle-menu-button"
+              :image="SidebarToggle"
+              @click="isSidebarMenuVisible() ? hideSidebarMenu() : resetSidebarMenu()"
+            />
+            <div
+              class="topbar-left-content"
+              ref="backBlock"
+              v-if="!isHeaderVisible()"
+            >
+              <header-back-button
+                :short="true"
+                class="file-handler-topbar__back-button"
+              />
+            </div>
             <ms-image
               :image="getFileIcon(contentInfo.fileName)"
               class="file-icon"
             />
             <div class="file-handler-topbar__title">
-              <ion-text class="title-h3">
+              <ion-text class="subtitles-normal">
                 {{ contentInfo.fileName }}
               </ion-text>
               <ion-text
@@ -32,23 +50,34 @@
               </ion-text>
             </div>
             <!-- Here we could put the file action buttons -->
-            <ion-buttons class="file-handler-topbar-buttons">
+            <div
+              class="file-handler-topbar-buttons"
+              v-if="isLargeDisplay"
+            >
               <ion-button
                 class="file-handler-topbar-buttons__item"
+                id="file-viewers-details"
                 @click="showDetails"
                 v-if="isDesktop()"
                 :disabled="!handlerReadyRef"
               >
-                <ion-icon :icon="informationCircle" />
+                <ion-icon
+                  :icon="informationCircle"
+                  class="item-icon"
+                />
                 {{ $msTranslate('fileViewers.details') }}
               </ion-button>
               <ion-button
                 class="file-handler-topbar-buttons__item"
+                id="file-viewers-copy-link"
                 @click="copyPath(contentInfo.path)"
                 v-if="isWeb()"
                 :disabled="!handlerReadyRef"
               >
-                <ion-icon :icon="link" />
+                <ion-icon
+                  :icon="link"
+                  class="item-icon"
+                />
                 {{ $msTranslate('fileViewers.copyLink') }}
               </ion-button>
               <ion-button
@@ -59,17 +88,21 @@
               >
                 <ms-image
                   :image="DownloadIcon"
-                  class="download-icon"
+                  class="item-icon"
                 />
                 {{ $msTranslate('fileViewers.download') }}
               </ion-button>
               <ion-button
                 class="file-handler-topbar-buttons__item"
+                id="file-viewers-open-with-system"
                 @click="openWithSystem(contentInfo.path)"
                 v-show="isDesktop() && !atDateTime"
                 :disabled="!handlerReadyRef"
               >
-                <ion-icon :icon="open" />
+                <ion-icon
+                  :icon="open"
+                  class="item-icon"
+                />
                 {{ $msTranslate('fileViewers.openWithDefault') }}
               </ion-button>
               <ion-button
@@ -78,9 +111,18 @@
                 :class="{ 'header-visible': isHeaderVisible() }"
               >
                 <ion-icon :icon="isHeaderVisible() ? chevronUp : chevronDown" />
-                {{ $msTranslate(isHeaderVisible() ? 'fileViewers.hideMenu' : 'fileViewers.showMenu') }}
+                <span v-if="windowWidth > WindowSizeBreakpoints.MD">
+                  {{ $msTranslate(isHeaderVisible() ? 'fileViewers.hideMenu' : 'fileViewers.showMenu') }}
+                </span>
               </ion-button>
-            </ion-buttons>
+            </div>
+            <ion-button
+              class="file-handler-topbar-buttons__item action-menu"
+              @click="openSmallDisplayActionMenu"
+              v-else
+            >
+              <ion-icon :icon="ellipsisHorizontal" />
+            </ion-button>
           </div>
 
           <!-- file-handler sub-component -->
@@ -113,12 +155,26 @@ import {
   WorkspaceHandle,
   EntryName,
   getWorkspaceInfo,
+  isMobile,
   WorkspaceHistoryEntryStatFile,
 } from '@/parsec';
-import { IonPage, IonContent, IonButton, IonText, IonIcon, IonButtons, modalController } from '@ionic/vue';
-import { link, informationCircle, open, chevronDown, chevronUp } from 'ionicons/icons';
-import { Base64, MsSpinner, MsImage, I18n, DownloadIcon, askQuestion, Answer, MsModalResult } from 'megashark-lib';
+import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
+import {
+  Base64,
+  MsSpinner,
+  MsImage,
+  I18n,
+  DownloadIcon,
+  askQuestion,
+  Answer,
+  MsModalResult,
+  useWindowSize,
+  SidebarToggle,
+  WindowSizeBreakpoints,
+} from 'megashark-lib';
 import { ref, Ref, inject, onMounted, onUnmounted, type Component, shallowRef } from 'vue';
+import { IonPage, IonContent, IonButton, IonText, IonIcon, modalController } from '@ionic/vue';
+import { link, informationCircle, open, chevronUp, chevronDown, ellipsisHorizontal } from 'ionicons/icons';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import {
   currentRouteIs,
@@ -131,19 +187,22 @@ import {
   watchRoute,
 } from '@/router';
 import { DetectedFileType } from '@/common/fileTypes';
+import SmallDisplayViewerActionMenu from '@/views/files/handler/SmallDisplayViewerActionMenu.vue';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { DateTime } from 'luxon';
 import { getFileIcon } from '@/common/file';
 import { copyPathLinkToClipboard } from '@/components/files';
-import { askDownloadConfirmation, downloadEntry, FileDetailsModal } from '@/views/files';
+import { askDownloadConfirmation, downloadEntry, FileDetailsModal, FileHandlerAction } from '@/views/files';
 import useHeaderControl from '@/services/headerControl';
 import { Env } from '@/services/environment';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
 import FileEditor from '@/views/files/handler/editor/FileEditor.vue';
 import FileViewer from '@/views/files/handler/viewer/FileViewer.vue';
+import useSidebarMenu from '@/services/sidebarMenu';
 import { FileHandlerMode } from '@/views/files/handler';
 
+const { isLargeDisplay, windowWidth } = useWindowSize();
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
 const informationManager: InformationManager = inject(InformationManagerKey)!;
@@ -152,6 +211,7 @@ const detectedFileType = ref<DetectedFileType | null>(null);
 const loaded = ref(false);
 const atDateTime: Ref<DateTime | undefined> = ref(undefined);
 const { isHeaderVisible, toggleHeader: toggleMainHeader, showHeader, hideHeader } = useHeaderControl();
+const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu, hide: hideSidebarMenu, show: showSidebarMenu } = useSidebarMenu();
 const handlerReadyRef = ref(false);
 const handlerComponent: Ref<Component | null> = shallowRef(null);
 
@@ -370,12 +430,14 @@ onMounted(async () => {
   loadComponent();
   // Set header hidden by default when entering handler
   hideHeader();
+  hideSidebarMenu();
 });
 
 onUnmounted(async () => {
   cancelRouteWatch();
   // Ensure header is visible when leaving handler
   showHeader();
+  showSidebarMenu();
 });
 
 async function openWithSystem(path: FsPath): Promise<boolean> {
@@ -511,6 +573,42 @@ async function downloadFile(): Promise<void> {
     fileOperationManager: fileOperationManager,
   });
 }
+
+async function openSmallDisplayActionMenu(): Promise<void> {
+  const modal = await modalController.create({
+    component: SmallDisplayViewerActionMenu,
+    cssClass: 'viewer-action-menu-modal',
+    showBackdrop: true,
+    breakpoints: [0, 0.5, 1],
+    expandToScroll: false,
+    initialBreakpoint: 0.5,
+    componentProps: {},
+  });
+  await modal.present();
+  const { data } = await modal.onDidDismiss();
+  if (data !== undefined) {
+    switch (data.action) {
+      case FileHandlerAction.Details:
+        await showDetails();
+        break;
+      case FileHandlerAction.CopyPath:
+        if (contentInfo.value) {
+          await copyPath(contentInfo.value.path);
+        }
+        break;
+      case FileHandlerAction.Download:
+        await downloadFile();
+        break;
+      case FileHandlerAction.OpenWithSystem:
+        if (contentInfo.value) {
+          await openWithSystem(contentInfo.value.path);
+        }
+        break;
+      default:
+        console.warn('No ViewerAction match found');
+    }
+  }
+}
 </script>
 
 <style scoped lang="scss">
@@ -532,12 +630,34 @@ async function downloadFile(): Promise<void> {
       border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
       background: var(--parsec-color-light-secondary-white);
 
+      #trigger-toggle-menu-button {
+        --fill-color: var(--parsec-color-light-secondary-grey);
+        padding: 0.625rem;
+        border-radius: var(--parsec-radius-12);
+        cursor: pointer;
+        &:hover {
+          background: var(--parsec-color-light-secondary-premiere);
+          --fill-color: var(--parsec-color-light-secondary-hard-grey);
+        }
+      }
+
+      @include ms.responsive-breakpoint('sm') {
+        padding: 0.75rem 1rem;
+      }
+
       .file-icon {
         width: 2rem;
         height: 2rem;
         min-width: 2rem;
         min-height: 2rem;
         margin-left: 0.5rem;
+
+        @include ms.responsive-breakpoint('sm') {
+          width: 1.75rem;
+          height: 1.75rem;
+          min-width: 1.75rem;
+          min-height: 1.75rem;
+        }
       }
 
       &__title {
@@ -546,7 +666,7 @@ async function downloadFile(): Promise<void> {
         gap: 0.25rem;
         overflow: hidden;
 
-        .title-h3 {
+        ion-text {
           color: var(--parsec-color-light-secondary-text);
           overflow: hidden;
           text-overflow: ellipsis;
@@ -567,15 +687,19 @@ async function downloadFile(): Promise<void> {
           border-color: var(--parsec-color-light-primary-100);
         }
 
-        &__item {
-          background: none;
+        &__item:not(.toggle-menu) {
           color: var(--parsec-color-light-secondary-text);
           border-radius: var(--parsec-radius-8);
           transition: all 150ms linear;
 
           &::part(native) {
+            --background: none;
             --background-hover: none;
-            padding: 0.75rem 1.125rem;
+            padding: 0.625rem 1rem;
+
+            @include ms.responsive-breakpoint('sm') {
+              padding: 0.5rem;
+            }
           }
 
           &:hover {
@@ -583,15 +707,64 @@ async function downloadFile(): Promise<void> {
             color: var(--parsec-color-light-secondary-text);
           }
 
-          ion-icon {
+          .item-icon {
+            width: 1rem;
             font-size: 1rem;
             margin-right: 0.5rem;
+            --fill-color: var(--parsec-color-light-secondary-text);
+
+            @include ms.responsive-breakpoint('sm') {
+              min-width: 1.125rem;
+              width: 1.125rem;
+              font-size: 1.125rem;
+              margin-right: 0;
+            }
+          }
+        }
+
+        .action-menu {
+          font-size: 1.125rem;
+          margin-right: 0;
+
+          @include ms.responsive-breakpoint('sm') {
+            font-size: 1.25rem;
           }
         }
 
         .toggle-menu {
+          margin-right: 0.5rem;
           position: relative;
           margin-left: 0.5rem;
+          --background: none;
+          color: var(--parsec-color-light-secondary-hard-grey);
+
+          &::part(native) {
+            --background: none;
+            --background-hover: none;
+          }
+
+          ion-icon {
+            font-size: 1rem;
+            margin-right: 0.5rem;
+            color: var(--parsec-color-light-secondary-hard-grey);
+
+            @include ms.responsive-breakpoint('md') {
+              margin-right: 0;
+            }
+          }
+
+          @include ms.responsive-breakpoint('sm') {
+            font-size: 1.125rem;
+            margin-right: 0;
+          }
+
+          &:hover {
+            color: var(--parsec-color-light-secondary-soft-text);
+
+            ion-icon {
+              color: var(--parsec-color-light-secondary-soft-text);
+            }
+          }
 
           &::before {
             content: '';
@@ -602,26 +775,6 @@ async function downloadFile(): Promise<void> {
             width: 1px;
             height: 1.5rem;
             background: var(--parsec-color-light-secondary-disabled);
-          }
-
-          &::after {
-            content: '';
-            position: absolute;
-            left: 1.125rem;
-            bottom: 0.25rem;
-            width: 0;
-            height: 1px;
-            background: var(--parsec-color-light-secondary-text);
-            transition: all 150ms linear;
-          }
-
-          &:hover {
-            background: none;
-
-            &::after {
-              background: var(--parsec-color-light-secondary-text);
-              width: calc(100% - 2.25rem);
-            }
           }
         }
       }

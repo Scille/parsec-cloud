@@ -156,8 +156,7 @@ async function toggleFullScreen(): Promise<void> {
 
 <style scoped lang="scss">
 .text-container {
-  padding: 2rem;
-  border-radius: var(--parsec-radius-8);
+  padding: 1rem;
   box-shadow: var(--parsec-shadow-light);
   width: 100%;
   height: 100%;
