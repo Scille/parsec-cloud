@@ -1,1 +1,0 @@
-Improved web homepage to better guide existing Parsec users on how to start using the web app
