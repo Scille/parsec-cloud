@@ -1,21 +1,26 @@
-[tool.poetry]
+[project]
 name = "parsec-docs"
 version = "0.0.0"
 description = "Parsec documentation"
-authors = ["Scille SAS <contact@scille.fr>"]
-license = "BUSL-1.1"
+authors = [{ name = "Scille SAS", email = "contact@scille.fr" }]
+# TODO: switch to PEP 639 when poetry support for PEP 639 is released:
+# https://github.com/python-poetry/poetry/pull/10413
+# https://github.com/python-poetry/poetry-core/pull/870
+license = { text = "BUSL-1.1" }
+requires-python = "~=3.12.0"
+dependencies = [
+    "sphinx<9.0.0",
+    "sphinx-copybutton>=0.5.2, <0.6",
+    "sphinx-intl>=2.3.1, <3",
+    "sphinx-rtd-theme>=3.0.2, <4",
+    "sphinx-tabs>=3.4.7, <4",
+    "docutils==0.21.2",
+    "powrap>=1.0.2, <2",
+]
+
+[tool.poetry]
 packages = [{ include = "conf.py" }]
 
-[tool.poetry.dependencies]
-python = "^3.12.0"
-sphinx = "<9.0.0"
-sphinx-copybutton = "^0.5.2"
-sphinx-intl = "^2.3.1"
-sphinx-rtd-theme = "^3.0.2"
-sphinx-tabs = "^3.4.7"
-docutils = "0.21.2"
-powrap = "^1.0.2"
-
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=2.0"]
 build-backend = "poetry.core.masonry.api"
