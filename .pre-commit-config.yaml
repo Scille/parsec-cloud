@@ -123,7 +123,7 @@ repos:
   #   handling .pyi), it's more readable then to have all the config here.
   - repo: local
     hooks:
-      - id: ruff
+      - id: ruff-check
         name: ruff check (using `poetry`)
         # Wow this looks ugly ! But there is a reason why:
         # - Ruff's `extend-exclude` doesn't work if it is not run from it config's folder
