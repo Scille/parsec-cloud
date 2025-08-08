@@ -2,7 +2,7 @@
 name = "parsec-docs"
 version = "0.0.0"
 description = "Parsec documentation"
-authors = ["Scille SAS <contact@scille.fr>"]
+authors = [{ name = "Scille SAS", email = "contact@scille.fr" }]
 license = "BUSL-1.1"
 packages = [{ include = "conf.py" }]
 
@@ -17,5 +17,5 @@ docutils = "0.21.2"
 powrap = "^1.0.2"
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=1.2.0"]
 build-backend = "poetry.core.masonry.api"
