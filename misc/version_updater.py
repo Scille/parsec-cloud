@@ -63,7 +63,6 @@ NODE_GA_VERSION = ReplaceRegex(r"node-version: [0-9.]+", "node-version: {version
 WASM_PACK_GA_VERSION = ReplaceRegex(r"wasm-pack-version: [0-9.]+", "wasm-pack-version: {version}")
 PYTHON_DOCKER_VERSION = ReplaceRegex(r"python:\d.\d+", hide_patch_version("python:{version}"))
 PYTHON_SMALL_VERSION = ReplaceRegex(r"python\d.\d+", hide_patch_version("python{version}"))
-TOML_LICENSE_FIELD = ReplaceRegex(r'license = ".*"', 'license = "{version}"')
 TOML_VERSION_FIELD = ReplaceRegex(r'version = ".*"', 'version = "{version}"')
 JSON_LICENSE_FIELD = ReplaceRegex(r'"license": ".*"', '"license": "{version}"')
 JSON_VERSION_FIELD = ReplaceRegex(r'"version": ".*"', '"version": "{version}"')
@@ -400,7 +399,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         Tool.Parsec: [ReplaceRegex(r'version = ".*"', 'version = "{version}"')]
     },
     ROOT_DIR / "docs/pyproject.toml": {
-        Tool.Python: [ReplaceRegex(r'^python = "\^[0-9.]+"$', 'python = "^{version}"')]
+        Tool.Python: [ReplaceRegex(r'^requires-python = "~=.*"', 'requires-python = "~={version}"')]
     },
     ROOT_DIR / "libparsec/version": {Tool.Parsec: [ReplaceRegex(r"^.*$", "{version}")]},
     ROOT_DIR / "LICENSE": {
@@ -450,15 +449,16 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
                 r'"Programming Language :: Python :: .*"',
                 hide_patch_version('"Programming Language :: Python :: {version}"'),
             ),
-            ReplaceRegex(r'python = "~.*"', 'python = "~{version}"'),
+            ReplaceRegex(r'requires-python = "~=.*"', 'requires-python = "~={version}"'),
             ReplaceRegex(
                 r'build = "cp\d+-{manylinux,macos,win}\*"',
                 hide_patch_version('build = "cp{version}-{{manylinux,macos,win}}*"', separator=""),
             ),
-            ReplaceRegex(r"py\d+", hide_patch_version("py{version}", separator="")),
         ],
         Tool.Parsec: [ReplaceRegex(r'^version = ".*"$', 'version = "{version}"')],
-        Tool.License: [TOML_LICENSE_FIELD],
+        Tool.License: [
+            ReplaceRegex(r'license = { *text *= *".*" *}', 'license = {{ text = "{version}" }}')
+        ],
     },
     ROOT_DIR / ".pre-commit-config.yaml": {
         Tool.Rust: [ReplaceRegex(r"rust: [0-9.]+", "rust: {version}")],
@@ -472,7 +472,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         Tool.License: [ReplaceRegex(r"license.workspace = true", "license.workspace = true")]
     },
     ROOT_DIR / "Cargo.toml": {
-        Tool.License: [TOML_LICENSE_FIELD],
+        Tool.License: [ReplaceRegex(r'license = ".*"', 'license = "{version}"')],
         Tool.Parsec: [
             ReplaceRegex(
                 r'^version = ".*" # __PARSEC_VERSION__$',
