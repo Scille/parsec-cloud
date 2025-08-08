@@ -4,6 +4,70 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.5.0-a.3 (2025-08-08)
+------------------------------
+
+Features
+~~~~~~~~
+
+* Display total data size in the organization information page
+  (`#10284 <https://github.com/Scille/parsec-cloud/issues/10284>`__)
+
+* Files and folders can now be filtered by creation date.
+  (`#10454 <https://github.com/Scille/parsec-cloud/issues/10454>`__)
+
+* Allows opening links in Word Document viewer and ask for confirmation before
+  opening them
+  (`#10466 <https://github.com/Scille/parsec-cloud/issues/10466>`__)
+
+* Added sort and filter by role options to the workspaces page
+  (`#10182 <https://github.com/Scille/parsec-cloud/issues/10182>`__)
+
+* Added custom branding options for web and desktop clients
+  (`#5903 <https://github.com/Scille/parsec-cloud/issues/5903>`__)
+
+* Added a checklist of security recommendations
+  (`#7142 <https://github.com/Scille/parsec-cloud/issues/7142>`__)
+
+* Display the user who last updated a file/folder
+  (`#8333 <https://github.com/Scille/parsec-cloud/issues/8333>`__)
+
+* Display a warning message at startup if long paths support is not enabled on
+  Windows.
+  (`#10131 <https://github.com/Scille/parsec-cloud/issues/10131>`__)
+
+* Improved web homepage to better guide existing Parsec users on how to start
+  using the web app
+  (`#10643 <https://github.com/Scille/parsec-cloud/issues/10643>`__)
+
+* File sorting option and order are now persistent
+  (`#10693 <https://github.com/Scille/parsec-cloud/issues/10693>`__)
+
+* Reorganization of the sidebar menu to improve comprehension and usability.
+  (`#10846 <https://github.com/Scille/parsec-cloud/issues/10846>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Fixed generic error when trying to open a file while offline.
+  (`#10296 <https://github.com/Scille/parsec-cloud/issues/10296>`__)
+
+* Fixed recent documents not updated if renamed or deleted
+  (`#10722 <https://github.com/Scille/parsec-cloud/issues/10722>`__)
+
+* Fixed wrong remaining trial days
+  (`#8405 <https://github.com/Scille/parsec-cloud/issues/8405>`__)
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+* Add "Security best practices" section to the User Guide
+  (`#10537 <https://github.com/Scille/parsec-cloud/issues/10537>`__)
+
+
+
 Parsec v3.4.0 (2025-06-11)
 --------------------------
 
