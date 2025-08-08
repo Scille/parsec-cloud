@@ -63,7 +63,7 @@ new_profile AS (  -- noqa: ST03
     )
 ),
 
-updated_user AS (  -- noqa: ST03
+updated_user AS (
     UPDATE user_
     SET current_profile = $profile
     WHERE
@@ -82,7 +82,7 @@ updated_common_topic AS (
 )
 
 SELECT
-    COALESCE((SELECT * FROM updated_common_topic), FALSE) AS update_user_ok,
+    COALESCE((SELECT * FROM updated_user), FALSE) AS update_user_ok,
     COALESCE((SELECT * FROM updated_common_topic), FALSE) AS update_common_topic_ok
 """
 )
