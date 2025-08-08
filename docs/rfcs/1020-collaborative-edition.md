@@ -71,33 +71,14 @@ We have 2 approach to generate the secret:
   This is a deterministic approach, as everyone (who can write) can generate the session key with information that it already know
   and does not require an additional system to handle concurrency (as it's handle by the realm key rotation system).
 
-- When a user is the first to open a CryptPad session.
+- Randomly generated when a user is the first to open a CryptPad session.
 
-  This system provide random session key that are unique to each session,
+  This system provides random session key that are unique to each session,
   it cannot be determined by other users so we need to add a system to share the keys among them.
 
-  Given that we need to shared something, we need to do it securely, so we need to encrypt it.
-  The encryption secret could be the realm key, but that would require the server to perform some access check on the data.
+  Given that we need to shared something only to a subgroup of the workspace, we need to do it securely.
+  So we need to encrypt it: If encryption secret is the realm key, it would require the server to perform some access check on the data.
   Or we use a dedicated secret, but we fall back to the first approach.
-
-##### Deterministic key derivation approach
-
-A simple approach can be to generate the key in a deterministic manner, that key would be generated from:
-
-- The ID of the document to be edited.
-- A secret only knows to users who have write permission on the workspace.
-
-  We have the *realm key* that is pretty similar, but it's also shared with read-only users.
-
-##### Random generated session keys
-
-A second approach would be to generate the session key using a CSPRNG that would then be shared among write users that want to edit the file.
-
-Currently, we do not have a system to share data with a subgroup of a workspace.
-
-> [!NOTE]
-> A common approach of both method is that we need to shared a secret to only user who have write access to the workspace.
-> Both
 
 #### Key rotation
 
@@ -172,7 +153,13 @@ TODO
 
 ## Remarks & open questions
 
-- CryptPad seems to have a system to handle [file access to be read-only](https://docs.cryptpad.org/en/user_guide/share_and_access.html#access).
-  From there [Cryptpad encryption] paragraph, reader only have access to the symmetric key but cannot sign modification with the asymmetric signing key that only editor have access to.
+- Internally, CryptPad uses 2 kind of keys:
 
-[Cryptpad encryption]: https://docs.cryptpad.org/en/dev_guide/general.html#encryption
+  - A symmetric encryption key, used to encrypt and decrypt the document data.
+  - An asymmetric signing key, only used by user who have write access to sign there modifications. The public part is know to everyone in the session.
+
+  > From [CryptPad encryption]
+
+  That explain how CryptPad is able to provide [read-only permission](https://docs.cryptpad.org/en/user_guide/share_and_access.html#access) on a file. But can we do the same?
+
+[CryptPad encryption]: https://docs.cryptpad.org/en/dev_guide/general.html#encryption
