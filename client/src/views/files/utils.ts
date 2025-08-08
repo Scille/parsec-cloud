@@ -6,6 +6,7 @@ import { SmallDisplayCategoryFileContextMenu, SmallDisplayFileContextMenu } from
 import { EntryName, EntryStat, EntryStatFile, EntryTree, FsPath, listTree, WorkspaceHandle, WorkspaceID, WorkspaceRole } from '@/parsec';
 import { FileOperationManager } from '@/services/fileOperationManager';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { StorageManager } from '@/services/storageManager';
 import { FileAction, FileContextMenu, FolderGlobalAction, FolderGlobalContextMenu } from '@/views/files';
 import DownloadWarningModal from '@/views/files/DownloadWarningModal.vue';
 import { modalController, popoverController } from '@ionic/vue';
@@ -124,6 +125,23 @@ export async function askDownloadConfirmation(): Promise<{ result: MsModalResult
   const { data, role } = await modal.onDidDismiss();
   await modal.dismiss();
   return { result: role ? (role as MsModalResult) : MsModalResult.Cancel, noReminder: data?.noReminder };
+}
+
+export async function openDownloadConfirmationModal(storageManager: StorageManager): Promise<MsModalResult> {
+  console.log('openDownloadConfirmationModal called');
+  const config = await storageManager.retrieveConfig();
+  if (!config.disableDownloadWarning) {
+    const { result, noReminder } = await askDownloadConfirmation();
+
+    if (noReminder) {
+      config.disableDownloadWarning = true;
+      await storageManager.storeConfig(config);
+    }
+    if (result !== MsModalResult.Confirm) {
+      return MsModalResult.Cancel;
+    }
+  }
+  return MsModalResult.Confirm;
 }
 
 interface DownloadOptions {

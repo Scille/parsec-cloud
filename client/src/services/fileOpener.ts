@@ -1,6 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { detectFileContentType, FileContentType } from '@/common/fileTypes';
+import { DetectedFileType, detectFileContentType, FileContentType } from '@/common/fileTypes';
+import { OpenFallbackChoice } from '@/components/files';
+import FileOpenFallbackChoice from '@/components/files/FileOpenFallbackChoice.vue';
 import {
   entryStat,
   EntryStat,
@@ -16,9 +18,14 @@ import {
   WorkspaceHistoryEntryStat,
 } from '@/parsec';
 import { currentRouteIs, getDocumentPath, navigateTo, Routes } from '@/router';
+import { isEnabledCryptpadDocumentType } from '@/services/cryptpad';
+import { Env } from '@/services/environment';
+import { FileOperationManager } from '@/services/fileOperationManager';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { recentDocumentManager } from '@/services/recentDocuments';
+import { downloadEntry } from '@/views/files';
 import { FileHandlerMode } from '@/views/files/handler';
+import { modalController } from '@ionic/vue';
 import { DateTime } from 'luxon';
 import { Base64, openSpinnerModal } from 'megashark-lib';
 
@@ -26,6 +33,7 @@ interface OpenPathOptions {
   skipViewers?: boolean;
   onlyViewers?: boolean;
   atTime?: DateTime;
+  useEditor?: boolean;
 }
 
 // Uncomment here to enable file viewers on desktop; should be removed when all file viewers are implemented
@@ -86,19 +94,21 @@ async function showInExplorer(workspaceHandle: WorkspaceHandle, path: FsPath, in
   }
 }
 
-async function openPath(
+async function getEntryStat(
   workspaceHandle: WorkspaceHandle,
   path: FsPath,
   informationManager: InformationManager,
   options: OpenPathOptions,
-): Promise<void> {
+): Promise<EntryStat | WorkspaceHistoryEntryStat | void> {
   let statsResult;
+
   if (options.atTime) {
-    const infoResult = await getWorkspaceInfo(workspaceHandle);
-    if (!infoResult.ok) {
+    const workspaceInfoResult = await getWorkspaceInfo(workspaceHandle);
+    if (!workspaceInfoResult.ok) {
       return;
     }
-    const history = new WorkspaceHistory(infoResult.value.id);
+    const workspaceId = workspaceInfoResult.value.id;
+    const history = new WorkspaceHistory(workspaceId);
     await history.start(options.atTime);
     statsResult = await history.entryStat(path);
     await history.stop();
@@ -115,8 +125,176 @@ async function openPath(
     );
     return;
   }
+  return statsResult.value;
+}
 
-  const entry = statsResult.value;
+async function openFileOpenFallbackModal(
+  entry: EntryStat | WorkspaceHistoryEntryStat,
+  workspaceHandle: WorkspaceHandle,
+  path: FsPath,
+  informationManager: InformationManager,
+  fileOperationManager: FileOperationManager,
+  options: OpenPathOptions,
+): Promise<void> {
+  const modal = await modalController.create({
+    component: FileOpenFallbackChoice,
+    cssClass: 'file-open-fallback-choice',
+    componentProps: {
+      viewerOption: !currentRouteIs(Routes.FileHandler),
+    },
+  });
+  await modal.present();
+  const result = await modal.onWillDismiss();
+  await modal.dismiss();
+
+  switch (result.data) {
+    case OpenFallbackChoice.View:
+      await openPath(workspaceHandle, path, informationManager, fileOperationManager, {
+        skipViewers: options.skipViewers,
+        onlyViewers: options.onlyViewers,
+        atTime: options.atTime,
+        useEditor: false,
+      });
+      break;
+    case OpenFallbackChoice.Download: {
+      const workspaceInfoResult = await getWorkspaceInfo(workspaceHandle);
+      if (!workspaceInfoResult.ok) {
+        return;
+      }
+      const workspaceId = workspaceInfoResult.value.id;
+      await downloadEntry({
+        name: entry.name,
+        workspaceHandle: workspaceHandle,
+        workspaceId: workspaceId,
+        path: path,
+        informationManager: informationManager,
+        fileOperationManager: fileOperationManager,
+      });
+      break;
+    }
+    case OpenFallbackChoice.Open:
+      await openWithSystem(workspaceHandle, entry, informationManager);
+      break;
+  }
+}
+
+async function openInEditor(
+  entry: EntryStat | WorkspaceHistoryEntryStat,
+  path: FsPath,
+  workspaceHandle: WorkspaceHandle,
+  options: OpenPathOptions,
+  informationManager: InformationManager,
+  fileOperationManager: FileOperationManager,
+  contentType?: DetectedFileType,
+): Promise<void> {
+  try {
+    if (!Env.isEditicsEnabled()) {
+      window.electronAPI.log('warn', 'FileOpener: Editics is not enabled, skipping editor opening');
+      throw new Error('Editics is not enabled');
+    }
+    if (contentType && contentType.type !== FileContentType.Unknown && isEnabledCryptpadDocumentType(contentType.extension)) {
+      // Handle Cryptpad supported document types
+      if ((entry as any).size <= OPEN_FILE_SIZE_LIMIT) {
+        if (!options.atTime) {
+          recentDocumentManager.addFile({
+            entryId: entry.id,
+            path: entry.path,
+            workspaceHandle: workspaceHandle,
+            name: entry.name,
+            contentType: contentType,
+          });
+        }
+        await navigateTo(Routes.FileHandler, {
+          query: {
+            workspaceHandle: workspaceHandle,
+            documentPath: entry.path,
+            timestamp: options.atTime?.toMillis().toString(),
+            fileTypeInfo: Base64.fromObject(contentType),
+          },
+          params: {
+            mode: FileHandlerMode.Edit,
+          },
+        });
+      } else {
+        window.electronAPI.log(
+          'warn',
+          `FileOpener: File too large for editor (${(entry as any).size} bytes > ${OPEN_FILE_SIZE_LIMIT}): ${entry.name}`,
+        );
+        throw new Error('File too large for editor');
+      }
+    } else {
+      if (!contentType) {
+        window.electronAPI.log('warn', `FileOpener: No content type detected for file: ${entry.name}`);
+      } else if (contentType.type === FileContentType.Unknown) {
+        window.electronAPI.log('warn', `FileOpener: Unknown file type for editor: ${entry.name} (${contentType.extension})`);
+      } else if (!isEnabledCryptpadDocumentType(contentType.extension)) {
+        window.electronAPI.log(
+          'warn',
+          `FileOpener: File type not supported by editor: ${entry.name} (${contentType.type}, ${contentType.extension})`,
+        );
+      }
+      throw new Error('File type not supported by editor');
+    }
+  } catch {
+    await openFileOpenFallbackModal(entry, workspaceHandle, path, informationManager, fileOperationManager, options);
+  }
+}
+
+async function openInViewer(
+  entry: EntryStat | WorkspaceHistoryEntryStat,
+  workspaceHandle: WorkspaceHandle,
+  options: OpenPathOptions,
+  informationManager: InformationManager,
+  contentType: DetectedFileType,
+): Promise<void> {
+  if ((entry as any).size > OPEN_FILE_SIZE_LIMIT) {
+    informationManager.present(
+      new Information({
+        message: 'fileViewers.fileTooBig',
+        level: InformationLevel.Warning,
+      }),
+      PresentationMode.Toast,
+    );
+    if (!isWeb() && !options.onlyViewers) {
+      await openWithSystem(workspaceHandle, entry, informationManager);
+    }
+    return;
+  }
+  if (!options.atTime) {
+    recentDocumentManager.addFile({
+      entryId: entry.id,
+      path: entry.path,
+      workspaceHandle: workspaceHandle,
+      name: entry.name,
+      contentType: contentType,
+    });
+  }
+
+  await navigateTo(Routes.FileHandler, {
+    query: {
+      workspaceHandle: workspaceHandle,
+      documentPath: entry.path,
+      timestamp: options.atTime?.toMillis().toString(),
+      fileTypeInfo: Base64.fromObject(contentType),
+    },
+    params: {
+      mode: FileHandlerMode.View,
+    },
+  });
+}
+
+async function openPath(
+  workspaceHandle: WorkspaceHandle,
+  path: FsPath,
+  informationManager: InformationManager,
+  fileOperationManager: FileOperationManager,
+  options: OpenPathOptions,
+): Promise<void> {
+  const entry = await getEntryStat(workspaceHandle, path, informationManager, options);
+
+  if (!entry) {
+    return;
+  }
 
   if (!entry.isFile()) {
     if (!options.onlyViewers) {
@@ -151,14 +329,18 @@ async function openPath(
     return;
   }
 
-  if (currentRouteIs(Routes.FileHandler) && getDocumentPath() === path) {
+  if (currentRouteIs(Routes.FileHandler) && getDocumentPath() === path && !options.useEditor) {
     return;
   }
 
   const modal = await openSpinnerModal('fileViewers.openingFile');
   const contentType = await detectFileContentType(entry.name);
-
   try {
+    if (options.useEditor) {
+      return await openInEditor(entry, path, workspaceHandle, options, informationManager, fileOperationManager, contentType);
+    }
+
+    // eslint-disable-next-line max-len
     if (!contentType || contentType.type === FileContentType.Unknown || (isDesktop() && !ENABLED_FILE_VIEWERS.includes(contentType.type))) {
       if (!isWeb() && !options.onlyViewers) {
         await openWithSystem(workspaceHandle, entry, informationManager);
@@ -174,41 +356,10 @@ async function openPath(
         );
       }
     } else {
-      if ((entry as any).size > OPEN_FILE_SIZE_LIMIT) {
-        informationManager.present(
-          new Information({
-            message: 'fileViewers.fileTooBig',
-            level: InformationLevel.Warning,
-          }),
-          PresentationMode.Toast,
-        );
-        if (!isWeb() && !options.onlyViewers) {
-          await openWithSystem(workspaceHandle, entry, informationManager);
-        }
-        return;
-      }
-      if (!options.atTime) {
-        recentDocumentManager.addFile({
-          entryId: entry.id,
-          path: entry.path,
-          workspaceHandle: workspaceHandle,
-          name: entry.name,
-          contentType: contentType,
-        });
-      }
-
-      await navigateTo(Routes.FileHandler, {
-        query: {
-          workspaceHandle: workspaceHandle,
-          documentPath: entry.path,
-          timestamp: options.atTime?.toMillis().toString(),
-          fileTypeInfo: Base64.fromObject(contentType),
-        },
-        params: {
-          mode: FileHandlerMode.View, // TODO: Add switch to Edit when editing is implemented
-        },
-      });
+      await openInViewer(entry, workspaceHandle, options, informationManager, contentType);
     }
+  } catch (e: any) {
+    console.warn(`Error while opening file: ${e}`);
   } finally {
     await modal.dismiss();
   }
