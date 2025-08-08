@@ -81,7 +81,8 @@ jobs:
     needs: version
     runs-on: ubuntu-22.04
     # Always run the job if `version` job is skipped otherwise only if `version` job was successful.
-    if: inputs.version_patch_run_id != '' && always() || success()
+    # if: inputs.version_patch_run_id != '' && always() || success()
+    if: false
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
         with:
@@ -186,40 +187,127 @@ jobs:
         include:
           - name: 🏁 Windows
             platform: windows
-            os: windows-2022
+            os: windows-2025
             raw_latest_file: latest.yml
             extensions: exe
             os_alias: win
             artifact_tag: windows-exe
-          - name: 🍎 macOS x86
-            platform: macos
-            os: macos-13
-            raw_latest_file: latest-mac.yml
-            extensions: dmg zip
-            os_alias: mac
-            artifact_tag: macos-dmg
-          - name: 🍎 macOS ARM
-            platform: macos
-            os: macos-15
-            raw_latest_file: latest-mac.yml
-            extensions: dmg zip
-            os_alias: mac
-            artifact_tag: macos-dmg
-          - name: 🐧 AppImage 4 Linux
-            platform: linux-gnu
-            os: ubuntu-22.04
-            raw_latest_file: latest-linux.yml
-            os_alias: linux
-            extensions: AppImage
-            artifact_tag: linux-appimage
+          # - name: 🍎 macOS x86
+          #   platform: macos
+          #   os: macos-13
+          #   raw_latest_file: latest-mac.yml
+          #   extensions: dmg zip
+          #   os_alias: mac
+          #   artifact_tag: macos-dmg
+          # - name: 🍎 macOS ARM
+          #   platform: macos
+          #   os: macos-15
+          #   raw_latest_file: latest-mac.yml
+          #   extensions: dmg zip
+          #   os_alias: mac
+          #   artifact_tag: macos-dmg
+          # - name: 🐧 AppImage 4 Linux
+          #   platform: linux-gnu
+          #   os: ubuntu-22.04
+          #   raw_latest_file: latest-linux.yml
+          #   os_alias: linux
+          #   extensions: AppImage
+          #   artifact_tag: linux-appimage
     name: "${{ matrix.name }}: ⚡ Package electron"
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
+      - name: Create Dev Drive using ReFS
+        if: matrix.platform == 'windows'
+        run: |
+          function Get-Permissions ($folder) {
+            (get-acl $folder).access | select `
+              @{Label="Identity";           Expression={$_.IdentityReference}}, `
+              @{Label="Owner";              Expression={$_.Owner}}, `
+              @{Label="Right";              Expression={$_.FileSystemRights}}, `
+              @{Label="Access";             Expression={$_.AccessControlType}}, `
+              @{Label="Inherited";          Expression={$_.IsInherited}}, `
+              @{Label="Inheritance Flags";  Expression={$_.InheritanceFlags}}, `
+              @{Label="Propagation Flags";  Expression={$_.PropagationFlags}} `
+              | ft -auto
+          }
+
+          Get-Permissions ${{ github.workspace }}
+
+          $VHDPath = 'D:\parsec_cloud_dev_drive.vhdx'
+
+          $Volume = New-VHD -Path $VHDPath -SizeBytes 40GB |
+                    Mount-VHD -Passthru |
+                    Initialize-Disk -Passthru |
+                    New-Partition -DriveLetter K -UseMaximumSize |
+                    Format-Volume -FileSystem ReFS -Confirm:$false -Force
+
+          # Return all volumes
+          Get-Volume
+
+          $Drive = "$($Volume.DriveLetter):"
+          # Trust drive
+          fsutil devdrv trust $Drive
+          # Disable anti virus
+          fsutil devdrv enable /disallowAv
+
+          # Remount for the change to take effect
+          Dismount-VHD -Path $VHDPath
+          Mount-VHD -Path $VHDPath
+
+          fsutil devdrv query $Drive
+
+          # Replace `github.workspace` dir with a created volume because `actions/checkout` do not allow checkin-out of `github.workspace`
+          $NewWorkspace = "$Drive\parsec-cloud"
+          Remove-Item -Path ${{ github.workspace }}
+          New-Item -Path $NewWorkspace -ItemType Directory
+          New-Item -Path ${{ github.workspace }} -ItemType SymbolicLink -Value $NewWorkspace
+
+          Get-Permissions $NewWorkspace
+
+          Write-Output "Hello World" >> $NewWorkspace\foo.txt
+
+          git config --global --add safe.directory $NewWorkspace
+          # git init "$($Volume.DriveLetter):\"
+          # git init $NewWorkspace
+
+          Write-Output "DEV_DRIVE=$($Volume.DriveLetter):" >> $env:GITHUB_ENV
+          Write-Output "GITHUB_WORKSPACE=$NewWorkspace" >> $env:GITHUB_ENV
+        working-directory: C:\
+        timeout-minutes: 2
+
+      - if: matrix.platform == 'windows'
+        working-directory: C:\
+        run: |
+          echo '${{ github.workspace }}'
+          echo K:\parsec-cloud
+
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
         with:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
+
+      -
+        working-directory: C:\
+        run: |
+          function Get-Permissions ($folder) {
+            (get-acl $folder).access | select `
+              @{Label="Identity";           Expression={$_.IdentityReference}}, `
+              @{Label="Owner";              Expression={$_.Owner}}, `
+              @{Label="Right";              Expression={$_.FileSystemRights}}, `
+              @{Label="Access";             Expression={$_.AccessControlType}}, `
+              @{Label="Inherited";          Expression={$_.IsInherited}}, `
+              @{Label="Inheritance Flags";  Expression={$_.InheritanceFlags}}, `
+              @{Label="Propagation Flags";  Expression={$_.PropagationFlags}} `
+              | ft -auto
+          }
+
+          Get-Item ${{ github.workspace }}
+          Get-Permissions ${{ github.workspace }}
+
+          Get-Item K:\parsec-cloud
+          Get-Permissions K:\parsec-cloud
+
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # pin v4.4.0
         with:
@@ -295,6 +383,8 @@ jobs:
         run: npm clean-install --ignore-scripts --verbose
         working-directory: client
         timeout-minutes: 30
+
+      - run: Get-ChildItem -Path K:\parsec-cloud -Recurse -Directory
 
       - name: Install electron dependencies
         run: npm clean-install --verbose
