@@ -66,7 +66,8 @@ process.once('loaded', async () => {
         const fullPath = path.join(CUSTOM_BRANDING_FOLDER, file);
         try {
           const data = fs.readFileSync(fullPath);
-          resolve(data);
+          const buffer = data.buffer;
+          resolve(buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer);
         } catch (e) {
           resolve(undefined);
         }
