@@ -114,11 +114,11 @@ anyhow = { version = "1.0.98", default-features = false }
 argon2 = { version = "0.5.3", default-features = false }
 assert_cmd = { version = "2.0.17", default-features = false }
 async-broadcast = { version = "0.5.1", default-features = false }
-async-lock = { version = "3.4.0", default-features = false }
+async-lock = { version = "3.4.1", default-features = false }
 blake2 = { version = "0.10.6", default-features = false }
 bytes = { version = "1.10.1", default-features = false }
 chrono = { version = "0.4.41", default-features = false }
-clap = { version = "4.5.41", default-features = false }
+clap = { version = "4.5.43", default-features = false }
 console_error_panic_hook = { version = "=0.1.6", default-features = false }
 console_log = { version = "1.0.0", default-features = false }
 crc32fast = { version = "1.5.0", default-features = false }
@@ -134,7 +134,7 @@ ed25519-dalek = { version = "2.2.0", default-features = false }
 email-address-parser = { version = "2.0.0", default-features = false }
 env_logger = { version = "0.11.8", default-features = false }
 error_set = { version = "0.8.5", default-features = false }
-event-listener = { version = "5.4.0", default-features = false }
+event-listener = { version = "5.4.1", default-features = false }
 eventsource-stream = { version = "0.2.3", default-features = false }
 flume = { version = "0.11.1", default-features = false }
 fnmatch-regex = { version = "0.2.1", default-features = false }
@@ -149,7 +149,7 @@ indexed-db = { version = "0.5.0-alpha.1", default-features = false }
 itertools = { version = "0.12.1", default-features = false }
 jni = { version = "0.21.1", default-features = false }
 js-sys = { version = "0.3.70", default-features = false }
-keyring = { version = "3.6.2", default-features = false }
+keyring = { version = "3.6.3", default-features = false }
 lazy_static = { version = "1.5.0", default-features = false }
 libc = { version = "0.2.174", default-features = false }
 libsodium-sys = { version = "0.2.7", default-features = false }
@@ -166,7 +166,7 @@ pin-project = { version = "1.1.10", default-features = false }
 pkg-config = { version = "0.3.32", default-features = false }
 predicates = { version = "3.1.3", default-features = false }
 pretty_assertions = { version = "1.4.1", default-features = false }
-proc-macro2 = { version = "1.0.95", default-features = false }
+proc-macro2 = { version = "1.0.96", default-features = false }
 proptest = { version = "1.7.0", default-features = false }
 proptest-state-machine = { version = "0.3.1", default-features = false }
 pyo3 = { version = "0.25.1", default-features = false }
@@ -187,7 +187,7 @@ sentry-log = { version = "0.34.0", default-features = false }
 serde = { version = "1.0.219", default-features = false }
 serde-wasm-bindgen = { version = "0.6.4", default-features = false }
 serde_bytes = { version = "0.11.17", default-features = false }
-serde_json = { version = "1.0.140", default-features = false }
+serde_json = { version = "1.0.142", default-features = false }
 serde_test = { version = "1.0.177", default-features = false }
 serde_with = { version = "3.14.0", default-features = false }
 sha1 = { version = "0.10.6", default-features = false }
@@ -199,7 +199,7 @@ spinners = { version = "4.1.1", default-features = false }
 sqlx = { version = "0.8.6", default-features = false }
 syn = { version = "2.0.104", default-features = false }
 thiserror = { version = "2.0.12", default-features = false }
-tokio = { version = "1.46.1", default-features = false }
+tokio = { version = "1.47.1", default-features = false }
 unicode-normalization = { version = "0.1.24", default-features = false }
 url = { version = "2.5.4", default-features = false }
 uuid = { version = "1.17.0", default-features = false }
@@ -209,7 +209,7 @@ wasm-bindgen-test = { version = "0.3.47", default-features = false, features = [
 web-sys = { version = "0.3.77", default-features = false }
 web-time = { version = "1.1.0", default-features = false }
 widestring = { version = "1.2.0", default-features = false }
-windows-sys = { version = "0.59.0", default-features = false }
+windows-sys = { version = "0.60.2", default-features = false }
 winfsp_wrs = { version = "0.4.0", default-features = false }
 winfsp_wrs_build = { version = "0.4.0", default-features = false }
 x25519-dalek = { version = "2.0.1", default-features = false }
