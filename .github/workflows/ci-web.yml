@@ -100,7 +100,7 @@ jobs:
 
       - name: Restore libparsec if Rust hasn't been modified
         id: cache-libparsec
-        uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684 # pin v4.2.3
+        uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # pin v4.2.4
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
@@ -130,7 +130,7 @@ jobs:
         timeout-minutes: 5
 
       # Install wasm-pack command
-      - uses: taiki-e/install-action@a416ddeedbd372e614cc1386e8b642692f66865e # pin v2.57.1
+      - uses: taiki-e/install-action@5f6f3e0538d249cb0b47f8d5b636c120babeb082 # pin v2.58.6
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           tool: wasm-pack@${{ env.wasm-pack-version }}
@@ -143,7 +143,7 @@ jobs:
 
       - name: Save libparsec to be reuse later
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
-        uses: actions/cache/save@5a3ec84eff668545956fd18022155c47e93e2684 # pin v4.2.3
+        uses: actions/cache/save@0400d5f644dc74513175e3cd8d07132dd4860809 # pin v4.2.4
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
@@ -197,7 +197,7 @@ jobs:
 
       - name: Restore libparsec if Rust hasn't been modified
         id: cache-libparsec
-        uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684 # pin v4.2.3
+        uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # pin v4.2.4
         with:
           # We use the cache setup by `test-web-app`
           fail-on-cache-miss: true
@@ -263,7 +263,7 @@ jobs:
         timeout-minutes: 2
 
       - name: Download blob reports from GitHub Actions Artifacts
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # pin v4.3.0
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # pin v5.0.0
         with:
           path: client/all-blob-reports
           pattern: blob-report-*
