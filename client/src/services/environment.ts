@@ -113,6 +113,9 @@ function getAccountServer(): string {
   if (import.meta.env[ACCOUNT_SERVER_ENV_VARIABLE]) {
     return import.meta.env[ACCOUNT_SERVER_ENV_VARIABLE];
   }
+  if (document.location.hostname.endsWith('.parsec.cloud')) {
+    return document.location.hostname;
+  }
   return ACCOUNT_DEFAULT_SERVER;
 }
 
