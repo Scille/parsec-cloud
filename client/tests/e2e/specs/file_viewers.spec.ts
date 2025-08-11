@@ -25,7 +25,7 @@ msTest('File viewer page details', async ({ documents }) => {
   await expect(documents).toBeViewerPage();
   await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_.-]+$/);
   const buttons = documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-button');
-  await expect(buttons).toHaveCount(6);
+  await expect(buttons).toHaveCount(5);
 });
 
 for (const displaySize of ['small', 'large']) {

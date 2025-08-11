@@ -11,7 +11,7 @@
         </ion-item>
         <ion-item
           button
-          v-if="!multipleFiles && role !== WorkspaceRole.Reader"
+          v-if="!multipleFiles && role !== WorkspaceRole.Reader && Env.isEditicsEnabled()"
           @click="onClick(FileAction.Edit)"
           class="ion-no-padding list-group-item"
         >
@@ -186,6 +186,7 @@
 </template>
 
 <script setup lang="ts">
+import { Env } from '@/services/environment';
 import { isDesktop, WorkspaceRole } from '@/parsec';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonList, IonText, popoverController } from '@ionic/vue';
 import { arrowRedo, copy, create, download, informationCircle, link, open, pencil, time, trashBin } from 'ionicons/icons';

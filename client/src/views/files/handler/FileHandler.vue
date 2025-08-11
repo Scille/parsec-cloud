@@ -84,7 +84,7 @@
                 class="file-handler-topbar-buttons__item"
                 id="file-handler-open-editor"
                 @click="openEditor(contentInfo.path)"
-                v-if="!atDateTime && handlerMode === FileHandlerMode.View"
+                v-if="!atDateTime && handlerMode === FileHandlerMode.View && Env.isEditicsEnabled()"
               >
                 <ion-icon
                   :icon="create"
