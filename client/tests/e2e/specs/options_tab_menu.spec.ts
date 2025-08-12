@@ -51,8 +51,16 @@ msTest('Files options tab menu display', async ({ documents }) => {
   await optionsTab.locator('.tab-bar-menu-button').nth(3).click();
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveText(['Rename', 'Move', 'Delete', 'Less']);
   await expect(optionsTabModal).toBeVisible();
-  await expect(optionsTabModal.locator('.tab-bar-menu-button')).toHaveCount(6);
-  await expect(optionsTabModal.locator('.tab-bar-menu-button')).toHaveText(['Open', 'Download', 'Copy', 'Copy link', 'History', 'Details']);
+  await expect(optionsTabModal.locator('.tab-bar-menu-button')).toHaveCount(7);
+  await expect(optionsTabModal.locator('.tab-bar-menu-button')).toHaveText([
+    'Preview',
+    'Edit',
+    'Download',
+    'Copy',
+    'Copy link',
+    'History',
+    'Details',
+  ]);
 
   // Nothing selected, menu goes away
   await optionsTab.locator('.tab-bar-menu-button').nth(3).click();
@@ -82,6 +90,7 @@ msTest('Test files options tab menu', async ({ documents, context }) => {
   await expect(documents.locator('.text-input-modal').locator('ion-text')).toHaveText('Rename a file');
   await documents.locator('.text-input-modal').locator('.closeBtn').click();
   await expect(documents.locator('.text-input-modal')).toBeHidden();
+  await expect(documents).toBeDocumentPage();
 
   // `Move` button
   await tabItem.nth(1).click();
@@ -98,10 +107,10 @@ msTest('Test files options tab menu', async ({ documents, context }) => {
   await tabItem.nth(3).click();
   await expect(optionsTabModal).toBeVisible();
   const tabModalItem = optionsTabModal.locator('.tab-bar-menu-button');
-  await expect(tabModalItem).toHaveCount(6);
-  await expect(tabModalItem).toHaveText(['Open', 'Download', 'Copy', 'Copy link', 'History', 'Details']);
+  await expect(tabModalItem).toHaveCount(7);
+  await expect(tabModalItem).toHaveText(['Preview', 'Edit', 'Download', 'Copy', 'Copy link', 'History', 'Details']);
 
-  // `Open` button
+  // `Preview` button
   await tabModalItem.nth(0).click();
   await expect(optionsTabModal).toBeHidden();
   await documents.waitForTimeout(1000);
@@ -123,7 +132,7 @@ msTest('Test files options tab menu', async ({ documents, context }) => {
   await entryFile.locator('ion-checkbox').click();
   await tabItem.nth(3).click();
   await expect(optionsTabModal).toBeVisible();
-  await tabModalItem.nth(2).click();
+  await tabModalItem.nth(3).click();
   await expect(optionsTabModal).toBeHidden();
   await expect(documents.locator('.folder-selection-modal')).toBeVisible();
   await expect(documents.locator('.folder-selection-modal').locator('.ms-modal-header__title')).toHaveText('Copy one item');
@@ -133,7 +142,7 @@ msTest('Test files options tab menu', async ({ documents, context }) => {
   // `Copy link` button
   await tabItem.nth(3).click();
   await expect(optionsTabModal).toBeVisible();
-  await tabModalItem.nth(3).click();
+  await tabModalItem.nth(4).click();
   await expect(optionsTabModal).toBeHidden();
   await expect(documents).toShowToast('Link has been copied to clipboard.', 'Info');
   const filePath = await documents.evaluate(() => navigator.clipboard.readText());
@@ -142,7 +151,7 @@ msTest('Test files options tab menu', async ({ documents, context }) => {
   // `History` button
   await tabItem.nth(3).click();
   await expect(optionsTabModal).toBeVisible();
-  await tabModalItem.nth(4).click();
+  await tabModalItem.nth(5).click();
   await expect(optionsTabModal).toBeVisible();
   await expect(documents).toBeWorkspaceHistoryPage();
   await expect(documents.locator('.history-container')).toBeVisible();
@@ -155,7 +164,7 @@ msTest('Test files options tab menu', async ({ documents, context }) => {
   await entryFile.locator('ion-checkbox').click();
   await tabItem.nth(3).click();
   await expect(optionsTabModal).toBeVisible();
-  await tabModalItem.nth(5).click();
+  await tabModalItem.nth(6).click();
   await expect(optionsTabModal).toBeHidden();
   await expect(documents.locator('.file-details-modal')).toBeVisible();
   await expect(documents.locator('.file-details-modal').locator('.ms-modal-header__title')).toHaveText('Details on audio.mp3');

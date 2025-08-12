@@ -63,6 +63,7 @@ for (const gridMode of [false, true]) {
     await expect(popover.getByRole('group')).toHaveCount(2);
     await expect(popover.getByRole('listitem')).toHaveText([
       'Manage file',
+      'Preview',
       'Edit',
       'Rename',
       'Move to',
@@ -92,8 +93,7 @@ for (const gridMode of [false, true]) {
     const popover = documents.locator('.file-context-menu');
     await expect(popover.getByRole('group')).toHaveCount(2);
     await expect(popover.getByRole('listitem')).toHaveText([
-      'Manage file',
-      'Edit',
+      'Manage folder',
       'Rename',
       'Move to',
       'Make a copy',
@@ -120,6 +120,7 @@ for (const gridMode of [false, true]) {
     await expect(popover.getByRole('group')).toHaveCount(2);
     await expect(popover.getByRole('listitem')).toHaveText([
       'Manage file',
+      'Preview',
       'Edit',
       'Rename',
       'Move to',
@@ -147,8 +148,7 @@ for (const gridMode of [false, true]) {
     const popover = documents.locator('.file-context-menu');
     await expect(popover.getByRole('group')).toHaveCount(2);
     await expect(popover.getByRole('listitem')).toHaveText([
-      'Manage file',
-      'Edit',
+      'Manage folder',
       'Rename',
       'Move to',
       'Make a copy',
@@ -173,8 +173,9 @@ for (const gridMode of [false, true]) {
 
     for (const entry of await entries.all()) {
       await entry.hover();
-      await entry.locator('ion-checkbox').click();
-      await expect(entry.locator('ion-checkbox')).toHaveState('checked');
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      await entry.locator('.checkbox').click();
+      await expect(entry.locator('.checkbox')).toHaveState('checked');
     }
     // Unselect the folder
     entries.nth(0).locator('ion-checkbox').click();
@@ -207,7 +208,7 @@ for (const gridMode of [false, true]) {
     await expect(documents.locator('.file-context-menu')).toBeVisible();
     const popover = documents.locator('.file-context-menu');
     await expect(popover.getByRole('group')).toHaveCount(1);
-    await expect(popover.getByRole('listitem')).toHaveText(['Manage file', 'Move to', 'Make a copy', 'Delete']);
+    await expect(popover.getByRole('listitem')).toHaveText(['Manage folder', 'Move to', 'Make a copy', 'Delete']);
   });
 
   msTest(`Popover with right click on empty space in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
@@ -310,7 +311,7 @@ for (const gridMode of [false, true]) {
     await expect(documentsReadOnly.locator('.file-context-menu')).toBeVisible();
     const popover = documentsReadOnly.locator('.file-context-menu');
     await expect(popover.getByRole('group')).toHaveCount(2);
-    await expect(popover.getByRole('listitem')).toHaveText(['Manage file', 'Details', 'Collaboration', 'Copy link']);
+    await expect(popover.getByRole('listitem')).toHaveText(['Manage folder', 'Details', 'Collaboration', 'Copy link']);
   });
 
   msTest(`File actions default state in a read only workspace in ${gridMode ? 'grid' : 'list'} mode`, async ({ documentsReadOnly }) => {
@@ -369,6 +370,7 @@ for (const gridMode of [false, true]) {
     const modal = documents.locator('.file-context-sheet-modal');
     await expect(modal.getByRole('group')).toHaveCount(2);
     await expect(modal.getByRole('listitem')).toHaveText([
+      'Preview',
       'Edit',
       'Rename',
       'Move to',
@@ -397,16 +399,7 @@ for (const gridMode of [false, true]) {
     await expect(documents.locator('.file-context-sheet-modal')).toBeVisible();
     const modal = documents.locator('.file-context-sheet-modal');
     await expect(modal.getByRole('group')).toHaveCount(2);
-    await expect(modal.getByRole('listitem')).toHaveText([
-      'Edit',
-      'Rename',
-      'Move to',
-      'Make a copy',
-      'History',
-      'Copy link',
-      'Details',
-      'Delete',
-    ]);
+    await expect(modal.getByRole('listitem')).toHaveText(['Rename', 'Move to', 'Make a copy', 'History', 'Copy link', 'Details', 'Delete']);
   });
 
   msTest(`Small display document popover on right click in ${gridMode ? 'grid' : 'list'} mode for file`, async ({ documents }) => {
@@ -424,6 +417,7 @@ for (const gridMode of [false, true]) {
     const modal = documents.locator('.file-context-sheet-modal');
     await expect(modal.getByRole('group')).toHaveCount(2);
     await expect(modal.getByRole('listitem')).toHaveText([
+      'Preview',
       'Edit',
       'Rename',
       'Move to',
@@ -450,16 +444,7 @@ for (const gridMode of [false, true]) {
     await expect(documents.locator('.file-context-sheet-modal')).toBeVisible();
     const modal = documents.locator('.file-context-sheet-modal');
     await expect(modal.getByRole('group')).toHaveCount(2);
-    await expect(modal.getByRole('listitem')).toHaveText([
-      'Edit',
-      'Rename',
-      'Move to',
-      'Make a copy',
-      'History',
-      'Copy link',
-      'Details',
-      'Delete',
-    ]);
+    await expect(modal.getByRole('listitem')).toHaveText(['Rename', 'Move to', 'Make a copy', 'History', 'Copy link', 'Details', 'Delete']);
   });
 
   msTest(`Small display popover with right click on empty space in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
@@ -669,7 +654,7 @@ for (const gridMode of [false, true]) {
       await expect(documentsReadOnly.locator('.file-context-sheet-modal')).toBeVisible();
       const modal = documentsReadOnly.locator('.file-context-sheet-modal');
       await expect(modal.getByRole('group')).toHaveCount(1);
-      await expect(modal.getByRole('listitem')).toHaveText(['Download', 'Copy link', 'Details']);
+      await expect(modal.getByRole('listitem')).toHaveText(['Preview', 'Download', 'Copy link', 'Details']);
     },
   );
 

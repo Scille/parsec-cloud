@@ -661,13 +661,14 @@
             "moving": "Déplacement..."
         },
         "fileContextMenu": {
-            "titleManage": "Gestion du fichier",
+            "titleManageFile": "Gestion du fichier",
+            "titleManageFolder": "Gestion du dossier",
             "titleCollaboration": "Collaboration",
             "actionRename": "Renommer",
             "actionEdit": "Éditer",
             "actionMoveTo": "Déplacer vers",
             "actionMakeACopy": "Dupliquer vers",
-            "actionOpen": "Ouvrir",
+            "actionPreview": "Aperçu",
             "actionHistory": "Historique de versions",
             "actionDownload": "Télécharger",
             "actionDetails": "Détails",
@@ -839,8 +840,9 @@
             "download": "Télécharger",
             "copyLink": "Copier le lien",
             "history": "Historique",
-            "open": "Ouvrir",
-            "details": "Détails"
+            "preview": "Aperçu",
+            "details": "Détails",
+            "edit": "Modifier"
         }
     },
     "FileDetails": {

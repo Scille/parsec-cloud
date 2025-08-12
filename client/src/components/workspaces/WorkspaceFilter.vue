@@ -7,7 +7,10 @@
     id="select-filter-popover-button"
     class="filter-button button-small"
   >
-    <ion-icon :icon="filter" />
+    <ion-icon
+      :icon="filter"
+      class="filter-button__icon"
+    />
     <span :class="{ 'missing-filters': missingFilters }">{{ $msTranslate('WorkspacesPage.filter.title') }}</span>
   </ion-button>
 </template>
@@ -53,8 +56,9 @@ async function openPopover(event: Event): Promise<void> {
 #select-filter-popover-button {
   position: relative;
   --background: transparent;
-  --color: var(--parsec-color-light-secondary-text);
-  --background-hover: transparent;
+  --color: var(--parsec-color-light-secondary-hard-grey);
+  --color-hover: var(--parsec-color-light-secondary-text);
+  --background-hover: none;
   border-radius: var(--parsec-radius-8);
 
   &::part(native) {
@@ -63,12 +67,17 @@ async function openPopover(event: Event): Promise<void> {
   }
 
   &:hover {
-    --background: var(--parsec-color-light-secondary-medium);
+    background: var(--parsec-color-light-secondary-medium);
   }
 
-  ion-icon {
-    color: var(--parsec-color-light-secondary-grey);
+  .filter-button__icon {
+    color: var(--parsec-color-light-secondary-hard-grey);
     margin-right: 0.5rem;
+    font-size: 1rem;
+  }
+
+  &:hover .filter-button__icon {
+    color: var(--parsec-color-light-secondary-text);
   }
 
   &:hover ion-icon {
