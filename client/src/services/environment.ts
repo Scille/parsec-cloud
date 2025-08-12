@@ -206,7 +206,7 @@ const CRYPTPAD_SERVER_VARIABLE = 'PARSEC_APP_DEFAULT_CRYPTPAD_SERVER';
 const DEFAULT_CRYPTPAD_SERVER = 'https://centakina.ddns.net';
 
 function isEditicsEnabled(): boolean {
-  return import.meta.env[ENABLE_EDITICS_VARIABLE] === 'true';
+  return import.meta.env[ENABLE_EDITICS_VARIABLE] === 'true' || (window as any).TESTING_ENABLE_EDITICS === true;
 }
 
 function getDefaultCryptpadServer(): string {
