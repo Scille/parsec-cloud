@@ -508,7 +508,7 @@ async function showDetails(): Promise<void> {
     if (!entry.ok) {
       await informationManager.present(
         new Information({
-          message: 'fileViewers.statsFailed',
+          message: 'fileViewers.errors.statsFailed',
           level: InformationLevel.Error,
         }),
         PresentationMode.Modal,

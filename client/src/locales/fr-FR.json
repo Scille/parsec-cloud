@@ -2288,13 +2288,22 @@
         "showMenu": "Afficher le menu",
         "menu": "Menu",
         "openingFile": "Ouverture du fichier...",
-        "fileTooBig": "Le fichier est trop large pour être ouvert avec un visualiseur.",
-        "unknownFileType": "Impossible de prévisualiser ce type de fichier.",
-        "noFolderPreview": "Impossible de prévisualiser les dossiers.",
-        "genericError": "Impossible d'ouvrir le fichier.",
-        "mediaNotSupported": "Ce média ne peut pas être joué.",
+        "errors": {
+            "titles": {
+                "fileTooBig": "Fichier trop volumineux",
+                "impossibleToOpen": "Impossible d'éditer ce fichier",
+                "genericError": "Impossible d'ouvrir ce fichier",
+                "unSupportedFileType": "Type de fichier non pris en charge par Parsec"
+            },
+            "informationEditDownload": "Si vous souhaitez modifier ce fichier, vous pouvez le télécharger et l'ouvrir localement sur votre appareil.",
+            "informationPreviewDownload": "Si vous souhaitez prévisualiser ce fichier, vous pouvez le faire dans Parsec ou le télécharger pour l'ouvrir localement sur votre appareil.",
+            "unknownFileExtension": "L'extension de ce fichier n'a pas pu être reconnue. Veuillez vérifier qu'elle est correctement écrite (.txt, .pdf, .doc, etc.).",
+            "noContentFileType": "Impossible d'ouvrir ce fichier, son type n'ayant pas pu être reconnu dans l'éditeur de Parsec.",
+            "noFolderPreview": "Impossible d'afficher l'aperçu d'un dossier.",
+            "mediaNotSupported": "Ce média ne peut pas être joué.",
+            "statsFailed": "Impossible de récupérer les informations du fichier."
+        },
         "retrievingFileContent": "Récupération du contenu du fichier...",
-        "statsFailed": "Impossible de récupérer les informations du fichier.",
         "openLink": {
             "title": "Ouvrir un lien externe",
             "question": "Ce lien sera ouvert en dehors de l'application. Voulez-vous continuer ?",
@@ -2343,8 +2352,9 @@
         }
     },
     "openFallback": {
-        "title": "L'éditeur de fichier n'est pas disponible",
-        "subtitle": "Veuillez choisir une action pour ce fichier.",
+        "title": "Parsec Edition n'est pas disponible",
+        "subtitleDownload": "Si vous souhaitez modifier ce fichier, vous pouvez le télécharger et l'ouvrir localement sur votre appareil.",
+        "subtitlePreviewDownload": "Si vous souhaitez prévisualiser ce fichier, vous pouvez le faire dans Parsec ou le télécharger pour l'ouvrir localement sur votre appareil.",
         "actions": {
             "viewer": "Ouvrir dans le visualiseur",
             "download": "Télécharger le fichier",

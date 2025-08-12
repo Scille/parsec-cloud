@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { DetectedFileType, detectFileContentType, FileContentType } from '@/common/fileTypes';
-import { OpenFallbackChoice } from '@/components/files';
+import { FallbackCustomParams, OpenFallbackChoice } from '@/components/files';
 import FileOpenFallbackChoice from '@/components/files/FileOpenFallbackChoice.vue';
 import {
   entryStat,
@@ -135,12 +135,15 @@ async function openFileOpenFallbackModal(
   informationManager: InformationManager,
   fileOperationManager: FileOperationManager,
   options: OpenPathOptions,
+  fallbackCustomParams?: FallbackCustomParams,
 ): Promise<void> {
   const modal = await modalController.create({
     component: FileOpenFallbackChoice,
     cssClass: 'file-open-fallback-choice',
     componentProps: {
-      viewerOption: !currentRouteIs(Routes.FileHandler),
+      viewerOption: !currentRouteIs(Routes.FileHandler) && fallbackCustomParams?.viewerOption !== false,
+      title: fallbackCustomParams?.title,
+      subtitle: fallbackCustomParams?.subtitle,
     },
   });
   await modal.present();
@@ -190,9 +193,8 @@ async function openInEditor(
   try {
     if (!Env.isEditicsEnabled()) {
       window.electronAPI.log('warn', 'FileOpener: Editics is not enabled, skipping editor opening');
-      throw new Error('Editics is not enabled');
-    }
-    if (contentType && contentType.type !== FileContentType.Unknown && isEnabledCryptpadDocumentType(contentType.extension)) {
+      openFileOpenFallbackModal(entry, workspaceHandle, path, informationManager, fileOperationManager, options);
+    } else if (contentType && contentType.type !== FileContentType.Unknown && isEnabledCryptpadDocumentType(contentType.extension)) {
       // Handle Cryptpad supported document types
       if ((entry as any).size <= OPEN_FILE_SIZE_LIMIT) {
         if (!options.atTime) {
@@ -216,24 +218,48 @@ async function openInEditor(
           },
         });
       } else {
+        await openFileOpenFallbackModal(entry, workspaceHandle, path, informationManager, fileOperationManager, options, {
+          title: 'fileViewers.errors.titles.fileTooBig',
+          subtitle: 'fileViewers.errors.informationEditDownload',
+          viewerOption: false,
+        });
         window.electronAPI.log(
           'warn',
           `FileOpener: File too large for editor (${(entry as any).size} bytes > ${OPEN_FILE_SIZE_LIMIT}): ${entry.name}`,
         );
-        throw new Error('File too large for editor');
       }
     } else {
       if (!contentType) {
         window.electronAPI.log('warn', `FileOpener: No content type detected for file: ${entry.name}`);
+        await informationManager.present(
+          new Information({
+            title: 'fileViewers.errors.titles.impossibleToOpen',
+            message: 'fileViewers.errors.noContentFileType',
+            level: InformationLevel.Warning,
+          }),
+          PresentationMode.Modal,
+        );
       } else if (contentType.type === FileContentType.Unknown) {
         window.electronAPI.log('warn', `FileOpener: Unknown file type for editor: ${entry.name} (${contentType.extension})`);
+        await openFileOpenFallbackModal(entry, workspaceHandle, path, informationManager, fileOperationManager, options, {
+          title: 'fileViewers.errors.titles.unSupportedFileType',
+          subtitle: 'fileViewers.errors.informationEditDownload',
+          viewerOption: false,
+        });
       } else if (!isEnabledCryptpadDocumentType(contentType.extension)) {
         window.electronAPI.log(
           'warn',
           `FileOpener: File type not supported by editor: ${entry.name} (${contentType.type}, ${contentType.extension})`,
         );
+        await informationManager.present(
+          new Information({
+            title: 'fileViewers.errors.titles.unSupportedFileType',
+            message: 'fileViewers.errors.unknownFileExtension',
+            level: InformationLevel.Warning,
+          }),
+          PresentationMode.Modal,
+        );
       }
-      throw new Error('File type not supported by editor');
     }
   } catch {
     await openFileOpenFallbackModal(entry, workspaceHandle, path, informationManager, fileOperationManager, options);
@@ -250,10 +276,11 @@ async function openInViewer(
   if ((entry as any).size > OPEN_FILE_SIZE_LIMIT) {
     informationManager.present(
       new Information({
-        message: 'fileViewers.fileTooBig',
+        title: 'fileViewers.errors.titles.fileTooBig',
+        message: 'fileViewers.errors.informationPreviewDownload',
         level: InformationLevel.Warning,
       }),
-      PresentationMode.Toast,
+      PresentationMode.Modal,
     );
     if (!isWeb() && !options.onlyViewers) {
       await openWithSystem(workspaceHandle, entry, informationManager);
@@ -302,7 +329,7 @@ async function openPath(
     } else {
       await informationManager.present(
         new Information({
-          message: 'FoldersPage.open.noFolderPreview',
+          message: 'fileViewers.errors.noFolderPreview',
           level: InformationLevel.Error,
         }),
         PresentationMode.Modal,

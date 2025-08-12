@@ -2289,13 +2289,22 @@
         "showMenu": "Show menu",
         "menu": "Menu",
         "openingFile": "Opening file...",
-        "fileTooBig": "File is too big to be opened using a viewer.",
-        "unknownFileType": "Cannot preview this file type.",
-        "noFolderPreview": "Cannot preview folders.",
-        "genericError": "Failed to open the file.",
-        "mediaNotSupported": "This media is not supported.",
+        "errors": {
+            "titles": {
+                "fileTooBig": "File size is too big",
+                "impossibleToOpen": "Cannot edit this file",
+                "genericError": "Failed to open the file",
+                "unSupportedFileType": "File not supported by Parsec"
+            },
+            "informationEditDownload": "If you want to edit this file, you can download it and open it locally on your device.",
+            "informationPreviewDownload": "If you want to preview this file, you can download it and open it locally on your device.",
+            "unknownFileExtension": "This file type extension could not be identified. Please check that it's correctly written (.txt, .pdf, .doc, etc.).",
+            "noContentFileType": "Could not open this file in the Parsec editor as its type could not be identified.",
+            "noFolderPreview": "Cannot preview folders.",
+            "mediaNotSupported": "This media is not supported.",
+            "statsFailed": "Cannot get file information."
+        },
         "retrievingFileContent": "Retrieving the file content...",
-        "statsFailed": "Can not get file information.",
         "openLink": {
             "title": "Open an external link",
             "question": "This will open the link outside of the application. Do you want to continue?",
@@ -2344,11 +2353,14 @@
         }
     },
     "openFallback": {
-        "title": "File editor is not available",
-        "subtitle": "Please choose an action for this file.",
+        "title": "Parsec Edition not available",
+        "subtitle": {
+            "download": "If you want to edit this file, you can download it and open it locally on your device.",
+            "previewDownload": "If you want to preview this file, you can do so in Parsec or download it to open it locally on your device."
+        },
         "actions": {
-            "viewer": "Open in viewer",
-            "download": "Download file",
+            "viewer": "Preview (in Parsec)",
+            "download": "Download",
             "open": "Open in explorer",
             "cancel": "Cancel"
         }

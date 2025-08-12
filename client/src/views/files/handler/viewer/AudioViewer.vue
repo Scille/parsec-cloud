@@ -139,7 +139,7 @@ onUnmounted(() => {
 
 async function onError(): Promise<void> {
   loading.value = false;
-  error.value = 'fileViewers.mediaNotSupported';
+  error.value = 'fileViewers.errors.mediaNotSupported';
 }
 
 function onTimeUpdate(): void {
