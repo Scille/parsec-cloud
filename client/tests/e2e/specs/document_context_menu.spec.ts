@@ -62,14 +62,15 @@ for (const gridMode of [false, true]) {
     const popover = documents.locator('.file-context-menu');
     await expect(popover.getByRole('group')).toHaveCount(2);
     await expect(popover.getByRole('listitem')).toHaveText([
-      'Manage file',
+      'File management',
+      'Preview',
       'Rename',
       'Move to',
       'Make a copy',
-      'Delete',
       'History',
       'Download',
       'Details',
+      'Delete',
       'Collaboration',
       'Copy link',
     ]);
@@ -91,13 +92,13 @@ for (const gridMode of [false, true]) {
     const popover = documents.locator('.file-context-menu');
     await expect(popover.getByRole('group')).toHaveCount(2);
     await expect(popover.getByRole('listitem')).toHaveText([
-      'Manage file',
+      'Folder management',
       'Rename',
       'Move to',
       'Make a copy',
-      'Delete',
       'History',
       'Details',
+      'Delete',
       'Collaboration',
       'Copy link',
     ]);
@@ -117,14 +118,15 @@ for (const gridMode of [false, true]) {
     const popover = documents.locator('.file-context-menu');
     await expect(popover.getByRole('group')).toHaveCount(2);
     await expect(popover.getByRole('listitem')).toHaveText([
-      'Manage file',
+      'File management',
+      'Preview',
       'Rename',
       'Move to',
       'Make a copy',
-      'Delete',
       'History',
       'Download',
       'Details',
+      'Delete',
       'Collaboration',
       'Copy link',
     ]);
@@ -144,13 +146,13 @@ for (const gridMode of [false, true]) {
     const popover = documents.locator('.file-context-menu');
     await expect(popover.getByRole('group')).toHaveCount(2);
     await expect(popover.getByRole('listitem')).toHaveText([
-      'Manage file',
+      'Folder management',
       'Rename',
       'Move to',
       'Make a copy',
-      'Delete',
       'History',
       'Details',
+      'Delete',
       'Collaboration',
       'Copy link',
     ]);
@@ -169,8 +171,9 @@ for (const gridMode of [false, true]) {
 
     for (const entry of await entries.all()) {
       await entry.hover();
-      await entry.locator('ion-checkbox').click();
-      await expect(entry.locator('ion-checkbox')).toHaveState('checked');
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      await entry.locator('.checkbox').click();
+      await expect(entry.locator('.checkbox')).toHaveState('checked');
     }
     // Unselect the folder
     entries.nth(0).locator('ion-checkbox').click();
@@ -179,7 +182,7 @@ for (const gridMode of [false, true]) {
     await expect(documents.locator('.file-context-menu')).toBeVisible();
     const popover = documents.locator('.file-context-menu');
     await expect(popover.getByRole('group')).toHaveCount(1);
-    await expect(popover.getByRole('listitem')).toHaveText(['Manage file', 'Move to', 'Make a copy', 'Delete', 'Download']);
+    await expect(popover.getByRole('listitem')).toHaveText(['File management', 'Move to', 'Make a copy', 'Download', 'Delete']);
   });
 
   msTest(`Document popover on right click on multiple files in ${gridMode ? 'grid' : 'list'} with a folder`, async ({ documents }) => {
@@ -203,7 +206,7 @@ for (const gridMode of [false, true]) {
     await expect(documents.locator('.file-context-menu')).toBeVisible();
     const popover = documents.locator('.file-context-menu');
     await expect(popover.getByRole('group')).toHaveCount(1);
-    await expect(popover.getByRole('listitem')).toHaveText(['Manage file', 'Move to', 'Make a copy', 'Delete']);
+    await expect(popover.getByRole('listitem')).toHaveText(['Folder management', 'Move to', 'Make a copy', 'Delete']);
   });
 
   msTest(`Popover with right click on empty space in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
@@ -306,7 +309,7 @@ for (const gridMode of [false, true]) {
     await expect(documentsReadOnly.locator('.file-context-menu')).toBeVisible();
     const popover = documentsReadOnly.locator('.file-context-menu');
     await expect(popover.getByRole('group')).toHaveCount(2);
-    await expect(popover.getByRole('listitem')).toHaveText(['Manage file', 'Details', 'Collaboration', 'Copy link']);
+    await expect(popover.getByRole('listitem')).toHaveText(['Folder management', 'Details', 'Collaboration', 'Copy link']);
   });
 
   msTest(`File actions default state in a read only workspace in ${gridMode ? 'grid' : 'list'} mode`, async ({ documentsReadOnly }) => {
@@ -324,7 +327,14 @@ for (const gridMode of [false, true]) {
     await expect(documentsReadOnly.locator('.file-context-menu')).toBeVisible();
     const popover = documentsReadOnly.locator('.file-context-menu');
     await expect(popover.getByRole('group')).toHaveCount(2);
-    await expect(popover.getByRole('listitem')).toHaveText(['Manage file', 'Download', 'Details', 'Collaboration', 'Copy link']);
+    await expect(popover.getByRole('listitem')).toHaveText([
+      'File management',
+      'Preview',
+      'Download',
+      'Details',
+      'Collaboration',
+      'Copy link',
+    ]);
   });
 
   msTest(`Move document in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
@@ -365,6 +375,7 @@ for (const gridMode of [false, true]) {
     const modal = documents.locator('.file-context-sheet-modal');
     await expect(modal.getByRole('group')).toHaveCount(2);
     await expect(modal.getByRole('listitem')).toHaveText([
+      'Preview',
       'Rename',
       'Move to',
       'Make a copy',
@@ -410,6 +421,7 @@ for (const gridMode of [false, true]) {
     const modal = documents.locator('.file-context-sheet-modal');
     await expect(modal.getByRole('group')).toHaveCount(2);
     await expect(modal.getByRole('listitem')).toHaveText([
+      'Preview',
       'Rename',
       'Move to',
       'Make a copy',
@@ -645,7 +657,7 @@ for (const gridMode of [false, true]) {
       await expect(documentsReadOnly.locator('.file-context-sheet-modal')).toBeVisible();
       const modal = documentsReadOnly.locator('.file-context-sheet-modal');
       await expect(modal.getByRole('group')).toHaveCount(1);
-      await expect(modal.getByRole('listitem')).toHaveText(['Download', 'Copy link', 'Details']);
+      await expect(modal.getByRole('listitem')).toHaveText(['Preview', 'Download', 'Copy link', 'Details']);
     },
   );
 

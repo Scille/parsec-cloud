@@ -188,6 +188,8 @@ import {
   MsSpinner,
   I18n,
   useWindowSize,
+  RenameIcon,
+  EyeOpenIcon,
 } from 'megashark-lib';
 import * as parsec from '@/parsec';
 
@@ -255,25 +257,13 @@ import {
   openDownloadConfirmationModal,
 } from '@/views/files';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
-import {
-  arrowRedo,
-  copy,
-  folderOpen,
-  informationCircle,
-  link,
-  open,
-  pencil,
-  trashBin,
-  download,
-  create,
-  time,
-  duplicate,
-} from 'ionicons/icons';
+import { arrowRedo, folderOpen, informationCircle, link, open, trashBin, download, create, time, duplicate, eye } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, nextTick, watch, useTemplateRef } from 'vue';
 import { EntrySyncData, EventData, EventDistributor, EventDistributorKey, Events, MenuActionData } from '@/services/eventDistributor';
 import { openPath, showInExplorer } from '@/services/fileOpener';
 import { WorkspaceTagRole } from '@/components/workspaces';
 import { MenuAction, TabBarOptions, useCustomTabBar } from '@/views/menu';
+import { Env } from '@/services/environment';
 
 const customTabBar = useCustomTabBar();
 
@@ -297,7 +287,11 @@ const tabBarActions = computed(() => {
   const actions: MenuAction[] = [];
   if (!isReadOnly) {
     if (selectedEntries.length === 1) {
-      actions.push({ label: 'FoldersPage.tabbar.rename', action: async () => await renameEntries(getSelectedEntries()), icon: create });
+      actions.push({
+        label: 'FoldersPage.tabbar.rename',
+        action: async () => await renameEntries(getSelectedEntries()),
+        image: RenameIcon,
+      });
     } else {
       actions.push({ label: 'FoldersPage.tabbar.duplicate', action: async () => await copyEntries(getSelectedEntries()), icon: duplicate });
     }
@@ -310,12 +304,33 @@ const tabBarActions = computed(() => {
     });
   }
   if (selectedEntries.length === 1 && selectedEntries[0].isFile()) {
-    actions.push({ label: 'FoldersPage.tabbar.open', action: async () => await openEntries(getSelectedEntries()), icon: open });
+    actions.push({ label: 'FoldersPage.tabbar.preview', action: async () => await viewEntries(getSelectedEntries()), icon: eye });
+    if (Env.isEditicsEnabled() && !isReadOnly) {
+      actions.push({
+        label: 'FoldersPage.tabbar.edit',
+        action: async () => await editEntries(getSelectedEntries()),
+        icon: create,
+      });
+    }
   }
   if (selectedEntries.length > folders.value.getSelectedEntries().length && isWeb()) {
     actions.push({ label: 'FoldersPage.tabbar.download', action: async () => await downloadEntries(getSelectedEntries()), icon: download });
   }
   if (selectedEntries.length === 1) {
+    if (isDesktop()) {
+      if (selectedEntries[0].isFile()) {
+        actions.push({
+          label: 'FoldersPage.tabbar.seeInExplorer',
+          action: async () => await seeInExplorer(getSelectedEntries()),
+          image: EyeOpenIcon,
+        });
+      }
+      actions.push({
+        label: 'FoldersPage.tabbar.openWithDefault',
+        action: async () => await openEntries(getSelectedEntries()),
+        icon: open,
+      });
+    }
     if (isReadOnly) {
       actions.push(
         { label: 'FoldersPage.tabbar.copyLink', action: async () => await copyLink(getSelectedEntries()), icon: link },
@@ -1331,6 +1346,18 @@ async function showHistory(entries: EntryModel[]): Promise<void> {
   selectionEnabled.value = false;
 }
 
+async function viewEntries(entries: EntryModel[]): Promise<void> {
+  if (entries.length !== 1 || !workspaceInfo.value || !entries[0].isFile()) {
+    return;
+  }
+
+  const entry = entries[0] as EntryStatFile;
+  const workspaceHandle = workspaceInfo.value.handle;
+
+  await openPath(workspaceHandle, entry.path, informationManager, fileOperationManager, { skipViewers: false });
+  selectionEnabled.value = false;
+}
+
 async function openEntries(entries: EntryModel[]): Promise<void> {
   if (entries.length !== 1 || !workspaceInfo.value || !entries[0].isFile()) {
     return;
@@ -1339,9 +1366,7 @@ async function openEntries(entries: EntryModel[]): Promise<void> {
   const entry = entries[0] as EntryStatFile;
   const workspaceHandle = workspaceInfo.value.handle;
 
-  const config = await storageManager.retrieveConfig();
-
-  await openPath(workspaceHandle, entry.path, informationManager, fileOperationManager, { skipViewers: config.skipViewers });
+  await openPath(workspaceHandle, entry.path, informationManager, fileOperationManager, { skipViewers: true });
   selectionEnabled.value = false;
 }
 
@@ -1393,6 +1418,7 @@ async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?
   }
 
   const actions = new Map<FileAction, (file: EntryModel[]) => Promise<void>>([
+    [FileAction.Preview, viewEntries],
     [FileAction.Rename, renameEntries],
     [FileAction.Edit, editEntries],
     [FileAction.MoveTo, moveEntriesTo],
@@ -1472,6 +1498,7 @@ async function onDropAsReader(): Promise<void> {
 
 const actionBarOptionsFoldersPage = computed(() => {
   const actionArray = [];
+  const selectedEntries = getSelectedEntries();
 
   if (selectedFilesCount.value === 0 && ownRole.value !== parsec.WorkspaceRole.Reader) {
     actionArray.push(
@@ -1492,11 +1519,29 @@ const actionBarOptionsFoldersPage = computed(() => {
     );
   }
   if (selectedFilesCount.value === 1) {
+    if (selectedEntries[0].isFile()) {
+      actionArray.push({
+        label: 'FoldersPage.fileContextMenu.actionPreview',
+        icon: eye,
+        onClick: async () => {
+          await viewEntries(getSelectedEntries());
+        },
+      });
+    }
+    if (selectedEntries[0].isFile() && ownRole.value !== parsec.WorkspaceRole.Reader && Env.isEditicsEnabled()) {
+      actionArray.push({
+        label: 'FoldersPage.fileContextMenu.actionEdit',
+        icon: create,
+        onClick: async () => {
+          await editEntries(getSelectedEntries());
+        },
+      });
+    }
     if (ownRole.value !== parsec.WorkspaceRole.Reader) {
       actionArray.push(
         {
           label: 'FoldersPage.fileContextMenu.actionRename',
-          icon: pencil,
+          image: RenameIcon,
           onClick: async () => {
             await renameEntries(getSelectedEntries());
           },
@@ -1510,7 +1555,7 @@ const actionBarOptionsFoldersPage = computed(() => {
         },
         {
           label: 'FoldersPage.fileContextMenu.actionMakeACopy',
-          icon: copy,
+          icon: duplicate,
           onClick: async () => {
             await copyEntries(getSelectedEntries());
           },
@@ -1562,7 +1607,7 @@ const actionBarOptionsFoldersPage = computed(() => {
         },
         {
           label: 'FoldersPage.fileContextMenu.actionMakeACopy',
-          icon: copy,
+          icon: duplicate,
           onClick: async () => {
             await copyEntries(getSelectedEntries());
           },

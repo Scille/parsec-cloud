@@ -66,7 +66,7 @@
 
 <script setup lang="ts">
 import { getFileIcon } from '@/common/file';
-import { Folder, formatTimeSince, MsImage, MsCheckbox, useWindowSize } from 'megashark-lib';
+import { Folder, formatTimeSince, MsImage, MsCheckbox } from 'megashark-lib';
 import FileDropZone from '@/components/files/explorer/FileDropZone.vue';
 import { EntryModel } from '@/components/files/types';
 import { FileImportTuple } from '@/components/files/utils';
@@ -78,7 +78,6 @@ import { Ref, onMounted, ref } from 'vue';
 const isHovered = ref(false);
 const menuOpened = ref(false);
 
-const { isSmallDisplay } = useWindowSize();
 const currentPath: Ref<FsPath> = ref('/');
 
 onMounted(async () => {
@@ -110,7 +109,7 @@ defineExpose({
 });
 
 async function onCardClick(): Promise<void> {
-  if (isSmallDisplay.value && props.showCheckbox) {
+  if (props.showCheckbox) {
     emits('update:modelValue', !props.entry.isSelected);
   }
 }
@@ -150,7 +149,6 @@ async function onOptionsClick(event: Event): Promise<void> {
 
 .card-checkbox {
   left: 0.5rem;
-  top: 0.5rem;
 }
 
 .card-option {

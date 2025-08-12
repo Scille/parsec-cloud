@@ -7,7 +7,21 @@
         <ion-item-group class="list-group">
           <ion-item
             button
-            v-if="!multipleFiles && role !== WorkspaceRole.Reader && Env.isEditicsEnabled()"
+            v-if="!multipleFiles && isFile"
+            @click="onClick(FileAction.Preview)"
+            class="ion-no-padding list-group-item"
+          >
+            <ion-icon
+              class="list-group-item__icon"
+              :icon="eye"
+            />
+            <ion-text class="button-large list-group-item__label-small">
+              {{ $msTranslate('FoldersPage.fileContextMenu.actionPreview') }}
+            </ion-text>
+          </ion-item>
+          <ion-item
+            button
+            v-if="!multipleFiles && role !== WorkspaceRole.Reader && Env.isEditicsEnabled() && isFile"
             @click="onClick(FileAction.Edit)"
             class="ion-no-padding list-group-item"
           >
@@ -25,9 +39,9 @@
             @click="onClick(FileAction.Rename)"
             class="ion-no-padding list-group-item"
           >
-            <ion-icon
+            <ms-image
               class="list-group-item__icon"
-              :icon="pencil"
+              :image="RenameIcon"
             />
             <ion-text class="button-large list-group-item__label-small">
               {{ $msTranslate('FoldersPage.fileContextMenu.actionRename') }}
@@ -65,13 +79,13 @@
 
           <ion-item
             button
-            v-show="!multipleFiles && isFile && isDesktop()"
+            v-if="!multipleFiles && isFile && isDesktop()"
             @click="onClick(FileAction.Open)"
             class="ion-no-padding list-group-item"
           >
-            <ion-icon
+            <ms-image
               class="list-group-item__icon"
-              :icon="open"
+              :image="EyeOpenIcon"
             />
             <ion-text class="button-large list-group-item__label-small">
               {{ $msTranslate('FoldersPage.fileContextMenu.actionOpen') }}
@@ -179,9 +193,10 @@
 <script setup lang="ts">
 import { isDesktop, WorkspaceRole } from '@/parsec';
 import { IonContent, IonPage, IonIcon, IonItem, IonItemGroup, IonText, IonList, modalController } from '@ionic/vue';
-import { arrowRedo, copy, create, download, informationCircle, link, open, pencil, time, trashBin } from 'ionicons/icons';
+import { arrowRedo, copy, create, download, eye, informationCircle, link, open, time, trashBin } from 'ionicons/icons';
 import { FileAction } from '@/views/files/types';
 import { Env } from '@/services/environment';
+import { RenameIcon, EyeOpenIcon, MsImage } from 'megashark-lib';
 
 defineProps<{
   role: WorkspaceRole;

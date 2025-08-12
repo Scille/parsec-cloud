@@ -15,8 +15,14 @@
         :class="action.danger ? 'tab-bar-menu-button-danger' : ''"
       >
         <ion-icon
+          v-if="action.icon && !action.image"
           class="tab-bar-menu-button__icon"
           :icon="action.icon"
+        />
+        <ms-image
+          class="tab-bar-menu-button__icon"
+          v-if="!action.icon && action.image"
+          :image="action.image"
         />
         <ion-text class="tab-bar-menu-button__text button-medium">
           {{ $msTranslate(action.label) }}
@@ -29,7 +35,7 @@
 <script setup lang="ts">
 import { IonIcon, IonText, modalController } from '@ionic/vue';
 import { MenuAction } from '@/views/menu';
-import { MsModalResult } from 'megashark-lib';
+import { MsModalResult, MsImage } from 'megashark-lib';
 
 defineProps<{
   actions: MenuAction[];
@@ -70,6 +76,9 @@ async function onActionClicked(action: MenuAction): Promise<void> {
 
     &__icon {
       font-size: 1.5rem;
+      width: 1.5rem;
+      height: 1.5rem;
+      --fill-color: var(--parsec-color-light-secondary-text);
     }
 
     &__text {

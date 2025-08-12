@@ -27,7 +27,7 @@
         <ion-text class="element-details__name body">
           {{ shortenFileName(entryName, { suffixLength: 4, maxLength: 42 }) }}
         </ion-text>
-        <ion-label class="element-details-info body-sm">
+        <ion-text class="element-details-info body-sm">
           <span
             v-if="entrySize"
             class="default-state element-details-info__size"
@@ -46,7 +46,7 @@
           >
             {{ $msTranslate('FoldersPage.ImportFile.browse') }}
           </span>
-        </ion-label>
+        </ion-text>
       </div>
 
       <!-- waiting -->
@@ -136,7 +136,7 @@ import { getFileIcon, shortenFileName, formatFileSize } from '@/common/file';
 import { MsImage, MsInformationTooltip, MsProgress, MsProgressAppearance } from 'megashark-lib';
 import { EntryName, entryStat, EntryStatFile, getWorkspaceName } from '@/parsec';
 import { FileOperationState, StateData, OperationProgressStateData, DownloadData } from '@/services/fileOperationManager';
-import { IonButton, IonIcon, IonItem, IonLabel, IonText } from '@ionic/vue';
+import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
 import { arrowForward, checkmarkCircle, closeCircle } from 'ionicons/icons';
 import { onMounted, Ref, ref } from 'vue';
 

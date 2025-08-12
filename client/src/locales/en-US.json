@@ -662,19 +662,21 @@
             "moving": "Moving..."
         },
         "fileContextMenu": {
-            "titleManage": "Manage file",
+            "titleManageFile": "File management",
+            "titleManageFolder": "Folder management",
             "titleCollaboration": "Collaboration",
             "actionRename": "Rename",
             "actionEdit": "Edit",
             "actionMoveTo": "Move to",
             "actionMakeACopy": "Make a copy",
-            "actionOpen": "Open",
+            "actionPreview": "Preview",
+            "actionOpen": "Open with default app",
             "actionHistory": "History",
             "actionDownload": "Download",
             "actionDetails": "Details",
             "actionCopyLink": "Copy link",
             "actionDelete": "Delete",
-            "actionSeeInExplorer": "See in explorer",
+            "actionSeeInExplorer": "Show in explorer",
             "actionSelect": "Selection",
             "actionSelectAll": "Select all",
             "actionUnselectAll": "Unselect all",
@@ -840,8 +842,11 @@
             "download": "Download",
             "copyLink": "Copy link",
             "history": "History",
-            "open": "Open",
-            "details": "Details"
+            "preview": "Preview",
+            "openWithDefault": "Open with default app",
+            "seeInExplorer": "Show in explorer",
+            "details": "Details",
+            "edit": "Edit"
         }
     },
     "FileDetails": {
@@ -2282,7 +2287,7 @@
         "date": "Preview date:"
     },
     "fileViewers": {
-        "openWithDefault": "Open",
+        "openWithDefault": "Open with default app",
         "details": "Details",
         "copyLink": "Copy link",
         "openInEditor": "Edit",
@@ -2363,7 +2368,7 @@
         "actions": {
             "viewer": "Preview (in Parsec)",
             "download": "Download",
-            "open": "Open in explorer",
+            "open": "Show in explorer",
             "cancel": "Cancel"
         }
     }

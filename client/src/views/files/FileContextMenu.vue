@@ -6,12 +6,27 @@
       <ion-item-group class="list-group">
         <ion-item class="list-group-title button-small">
           <ion-text class="list-group-title__label">
-            {{ $msTranslate('FoldersPage.fileContextMenu.titleManage') }}
+            <span v-if="isFile">{{ $msTranslate('FoldersPage.fileContextMenu.titleManageFile') }}</span>
+            <span v-else>{{ $msTranslate('FoldersPage.fileContextMenu.titleManageFolder') }}</span>
           </ion-text>
         </ion-item>
         <ion-item
           button
-          v-if="!multipleFiles && role !== WorkspaceRole.Reader && Env.isEditicsEnabled()"
+          v-if="!multipleFiles && isFile"
+          @click="onClick(FileAction.Preview)"
+          class="ion-no-padding list-group-item"
+        >
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="eye"
+          />
+          <ion-text class="body list-group-item__label">
+            {{ $msTranslate('FoldersPage.fileContextMenu.actionPreview') }}
+          </ion-text>
+        </ion-item>
+        <ion-item
+          button
+          v-if="!multipleFiles && isFile && role !== WorkspaceRole.Reader && Env.isEditicsEnabled()"
           @click="onClick(FileAction.Edit)"
           class="ion-no-padding list-group-item"
         >
@@ -29,9 +44,9 @@
           @click="onClick(FileAction.Rename)"
           class="ion-no-padding list-group-item"
         >
-          <ion-icon
+          <ms-image
             class="list-group-item__icon"
-            :icon="pencil"
+            :image="RenameIcon"
           />
           <ion-text class="body list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionRename') }}
@@ -60,7 +75,7 @@
         >
           <ion-icon
             class="list-group-item__icon"
-            :icon="copy"
+            :icon="duplicate"
           />
           <ion-text class="body list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionMakeACopy') }}
@@ -69,28 +84,13 @@
 
         <ion-item
           button
-          v-if="role !== WorkspaceRole.Reader"
-          @click="onClick(FileAction.Delete)"
-          class="ion-no-padding list-group-item"
-        >
-          <ion-icon
-            class="list-group-item__icon"
-            :icon="trashBin"
-          />
-          <ion-text class="body list-group-item__label">
-            {{ $msTranslate('FoldersPage.fileContextMenu.actionDelete') }}
-          </ion-text>
-        </ion-item>
-
-        <ion-item
-          button
-          v-show="!multipleFiles && isFile && isDesktop()"
+          v-if="!multipleFiles && isFile && isDesktop()"
           @click="onClick(FileAction.Open)"
           class="ion-no-padding list-group-item"
         >
-          <ion-icon
+          <ms-image
             class="list-group-item__icon"
-            :icon="open"
+            :image="EyeOpenIcon"
           />
           <ion-text class="body list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionOpen') }}
@@ -156,6 +156,21 @@
             {{ $msTranslate('FoldersPage.fileContextMenu.actionDetails') }}
           </ion-text>
         </ion-item>
+
+        <ion-item
+          button
+          v-if="role !== WorkspaceRole.Reader"
+          @click="onClick(FileAction.Delete)"
+          class="ion-no-padding list-group-item"
+        >
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="trashBin"
+          />
+          <ion-text class="body list-group-item__label">
+            {{ $msTranslate('FoldersPage.fileContextMenu.actionDelete') }}
+          </ion-text>
+        </ion-item>
       </ion-item-group>
       <ion-item-group
         class="list-group"
@@ -189,8 +204,9 @@
 import { Env } from '@/services/environment';
 import { isDesktop, WorkspaceRole } from '@/parsec';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonList, IonText, popoverController } from '@ionic/vue';
-import { arrowRedo, copy, create, download, informationCircle, link, open, pencil, time, trashBin } from 'ionicons/icons';
+import { arrowRedo, create, download, duplicate, eye, informationCircle, link, open, time, trashBin } from 'ionicons/icons';
 import { FileAction } from '@/views/files/types';
+import { RenameIcon, MsImage, EyeOpenIcon } from 'megashark-lib';
 
 defineProps<{
   role: WorkspaceRole;
