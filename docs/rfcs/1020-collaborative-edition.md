@@ -146,6 +146,24 @@ Cons:
 
 #### Replace the encryption&signature of CryptPad with Parsec
 
+Parsec already have access to symmetric encryption key (realm key) & signature key (user signature key).
+If we could use them for the CryptPad session everything would already be handled.
+
+But how to connect to session?
+
+If we only need an identifier, we could use the `EntryID` of the file.
+
+##### Parsec cryptographic system in CryptPad Pros&Cons
+
+Pros:
+
+- No new keys, we use the realm key & user signature key
+
+Cons:
+
+- Need to integrate into CryptPad logic (if possible)
+
+
 ### Document Save
 
 CryptPad dispatch `onSave` event, it's apparently the last user who made a change that will receive the event.
