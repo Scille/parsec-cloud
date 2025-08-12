@@ -52,7 +52,14 @@ msTest('Files options tab menu display', async ({ documents }) => {
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveText(['Rename', 'Move', 'Delete', 'Less']);
   await expect(optionsTabModal).toBeVisible();
   await expect(optionsTabModal.locator('.tab-bar-menu-button')).toHaveCount(6);
-  await expect(optionsTabModal.locator('.tab-bar-menu-button')).toHaveText(['Open', 'Download', 'Copy', 'Copy link', 'History', 'Details']);
+  await expect(optionsTabModal.locator('.tab-bar-menu-button')).toHaveText([
+    'Preview',
+    'Download',
+    'Copy',
+    'Copy link',
+    'History',
+    'Details',
+  ]);
 
   // Nothing selected, menu goes away
   await optionsTab.locator('.tab-bar-menu-button').nth(3).click();
@@ -82,6 +89,7 @@ msTest('Test files options tab menu', async ({ documents, context }) => {
   await expect(documents.locator('.text-input-modal').locator('ion-text')).toHaveText('Rename a file');
   await documents.locator('.text-input-modal').locator('.closeBtn').click();
   await expect(documents.locator('.text-input-modal')).toBeHidden();
+  await expect(documents).toBeDocumentPage();
 
   // `Move` button
   await tabItem.nth(1).click();
@@ -99,9 +107,9 @@ msTest('Test files options tab menu', async ({ documents, context }) => {
   await expect(optionsTabModal).toBeVisible();
   const tabModalItem = optionsTabModal.locator('.tab-bar-menu-button');
   await expect(tabModalItem).toHaveCount(6);
-  await expect(tabModalItem).toHaveText(['Open', 'Download', 'Copy', 'Copy link', 'History', 'Details']);
+  await expect(tabModalItem).toHaveText(['Preview', 'Download', 'Copy', 'Copy link', 'History', 'Details']);
 
-  // `Open` button
+  // `Preview` button
   await tabModalItem.nth(0).click();
   await expect(optionsTabModal).toBeHidden();
   await documents.waitForTimeout(1000);

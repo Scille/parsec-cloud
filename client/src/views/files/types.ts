@@ -12,6 +12,7 @@ enum FolderGlobalAction {
 }
 
 enum FileAction {
+  Preview = 'file-preview',
   Rename = 'file-rename',
   MoveTo = 'file-move-to',
   MakeACopy = 'file-copy-to',

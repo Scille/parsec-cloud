@@ -33,9 +33,9 @@
             @click="onClick(WorkspaceAction.Rename)"
             class="ion-no-padding list-group-item"
           >
-            <ion-icon
+            <ms-image
               class="list-group-item__icon"
-              :icon="pencil"
+              :image="RenameIcon"
             />
             <ion-text class="button-large list-group-item__label-small">
               {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionRename') }}
@@ -143,7 +143,8 @@
 <script setup lang="ts">
 import { UserProfile, WorkspaceName, WorkspaceRole, isDesktop } from '@/parsec';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonText, IonList, IonPage, modalController } from '@ionic/vue';
-import { cloudy, informationCircle, link, open, pencil, shareSocial, star, time } from 'ionicons/icons';
+import { cloudy, informationCircle, link, open, shareSocial, star, time } from 'ionicons/icons';
+import { RenameIcon, MsImage } from 'megashark-lib';
 import { WorkspaceAction } from '@/views/workspaces/types';
 
 function onClick(action: WorkspaceAction): Promise<boolean> {

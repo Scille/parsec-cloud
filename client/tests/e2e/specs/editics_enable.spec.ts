@@ -8,7 +8,7 @@ msTest('Default URL with editics enabled', async ({ parsecEditics }) => {
   await entry.hover();
   await entry.locator('.options-button').click();
   const popover = parsecEditics.locator('.file-context-menu');
-  await expect(popover.getByRole('listitem').nth(1)).toHaveText('Edit');
+  await expect(popover.getByRole('listitem').nth(2)).toHaveText('Edit');
 });
 
 msTest('Default URL with editics disabled', async ({ documents }) => {
@@ -18,14 +18,15 @@ msTest('Default URL with editics disabled', async ({ documents }) => {
   await entry.locator('.options-button').click();
   const popover = documents.locator('.file-context-menu');
   await expect(popover.getByRole('listitem')).toHaveText([
-    'Manage file',
+    'File management',
+    'Preview',
     'Rename',
     'Move to',
     'Make a copy',
-    'Delete',
     'History',
     'Download',
     'Details',
+    'Delete',
     'Collaboration',
     'Copy link',
   ]);

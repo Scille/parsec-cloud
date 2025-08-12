@@ -661,19 +661,21 @@
             "moving": "Déplacement..."
         },
         "fileContextMenu": {
-            "titleManage": "Gestion du fichier",
+            "titleManageFile": "Gestion du fichier",
+            "titleManageFolder": "Gestion du dossier",
             "titleCollaboration": "Collaboration",
             "actionRename": "Renommer",
             "actionEdit": "Éditer",
             "actionMoveTo": "Déplacer vers",
             "actionMakeACopy": "Dupliquer vers",
-            "actionOpen": "Ouvrir",
+            "actionPreview": "Aperçu",
+            "actionOpen": "Ouvrir avec l'app par défaut",
             "actionHistory": "Historique de versions",
             "actionDownload": "Télécharger",
             "actionDetails": "Détails",
             "actionCopyLink": "Copier le lien",
             "actionDelete": "Supprimer",
-            "actionSeeInExplorer": "Voir dans l'explorateur",
+            "actionSeeInExplorer": "Afficher dans l'explorateur",
             "actionSelect": "Sélection",
             "actionSelectAll": "Tout sélectionner",
             "actionUnselectAll": "Tout désélectionner",
@@ -839,8 +841,11 @@
             "download": "Télécharger",
             "copyLink": "Copier le lien",
             "history": "Historique",
-            "open": "Ouvrir",
-            "details": "Détails"
+            "preview": "Aperçu",
+            "openWithDefault": "Ouvrir avec l'app par défaut",
+            "seeInExplorer": "Afficher dans l'explorateur",
+            "details": "Détails",
+            "edit": "Éditer"
         }
     },
     "FileDetails": {
@@ -2281,7 +2286,7 @@
         "date": "Date de prévisualisation :"
     },
     "fileViewers": {
-        "openWithDefault": "Ouvrir",
+        "openWithDefault": "Ouvrir avec l'app par défaut",
         "details": "Détails",
         "copyLink": "Copier le lien",
         "openInEditor": "Éditer",
@@ -2360,7 +2365,7 @@
         "actions": {
             "viewer": "Ouvrir dans le visualiseur",
             "download": "Télécharger le fichier",
-            "open": "Ouvrir dans l'explorateur",
+            "open": "Afficher dans l'explorateur",
             "cancel": "Annuler"
         }
     }

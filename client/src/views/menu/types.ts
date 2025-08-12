@@ -4,6 +4,7 @@ import { Translatable } from 'megashark-lib';
 
 interface MenuAction {
   icon?: string;
+  image?: string;
   label: Translatable;
   action: any;
   danger?: boolean;

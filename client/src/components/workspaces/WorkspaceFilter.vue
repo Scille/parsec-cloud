@@ -7,7 +7,10 @@
     id="select-filter-popover-button"
     class="filter-button button-small"
   >
-    <ion-icon :icon="filter" />
+    <ion-icon
+      :icon="filter"
+      class="filter-button__icon"
+    />
     <span :class="{ 'missing-filters': missingFilters }">{{ $msTranslate('WorkspacesPage.filter.title') }}</span>
   </ion-button>
 </template>
@@ -49,45 +52,4 @@ async function openPopover(event: Event): Promise<void> {
 }
 </script>
 
-<style lang="scss" scoped>
-#select-filter-popover-button {
-  position: relative;
-  --background: transparent;
-  --color: var(--parsec-color-light-secondary-text);
-  --background-hover: transparent;
-  border-radius: var(--parsec-radius-8);
-
-  &::part(native) {
-    padding: 0.375rem 0.625rem;
-    overflow: visible;
-  }
-
-  &:hover {
-    --background: var(--parsec-color-light-secondary-medium);
-  }
-
-  ion-icon {
-    color: var(--parsec-color-light-secondary-grey);
-    margin-right: 0.5rem;
-  }
-
-  &:hover ion-icon {
-    color: var(--parsec-color-light-primary-700);
-  }
-
-  &:has(.missing-filters) {
-    --background: var(--parsec-color-light-secondary-medium);
-  }
-}
-
-.missing-filters::after {
-  content: '';
-  position: absolute;
-  right: -11px;
-  top: -7px;
-  width: 0.625rem;
-  height: 0.625rem;
-  background: var(--parsec-color-light-primary-500);
-  border-radius: var(--parsec-radius-8);
-}
-</style>
+<style lang="scss" scoped></style>

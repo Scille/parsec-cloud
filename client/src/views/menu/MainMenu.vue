@@ -1086,7 +1086,7 @@ async function onRecentWorkspacesMenuVisibilityChanged(visible: boolean): Promis
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  padding: 1.5rem 1rem;
+  padding: 0 1rem 1.5rem 1rem;
 
   &__tag {
     color: var(--parsec-color-light-secondary-white);
