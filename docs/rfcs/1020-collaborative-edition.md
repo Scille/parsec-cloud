@@ -142,7 +142,9 @@ Pros:
 Cons:
 
 - Cannot be extended to include a reader session key later on
-- Need to add a now key rotation system
+- Need to add a new key rotation system
+
+#### Replace the encryption&signature of CryptPad with Parsec
 
 ### Document Save
 
@@ -152,6 +154,8 @@ CryptPad dispatch `onSave` event, it's apparently the last user who made a chang
 
 During the `onSave` event, CryptPad provide the full document up-to-date to save.
 For that reason would be best to introduce a differential saving (e.i: compare old vs new to only save changed block, or not save at all if identical)
+
+> The comparison could be on the whole file or block per block if we want more granularity on the uploaded blocks.
 
 In the bindings, we likely want to expose a function to do that:
 
