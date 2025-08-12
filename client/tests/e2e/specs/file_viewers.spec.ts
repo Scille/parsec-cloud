@@ -110,7 +110,7 @@ for (const displaySize of ['small', 'large']) {
       await expect(actionMenuModal).toBeVisible();
       await modal.locator('#next-button').click();
     } else {
-      await documents.locator('.file-handler-topbar-buttons__item').nth(2).click();
+      await documents.locator('.file-handler-topbar-buttons__item').nth(1).click();
       await modal.locator('#next-button').click();
     }
 
