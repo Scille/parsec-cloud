@@ -8,6 +8,7 @@ export * from '@/components/files/utils';
 export { EntryCollection, ImportType, OpenFallbackChoice, SortProperty, WorkspaceHistoryEntryCollection } from '@/components/files/types';
 export type {
   EntryModel,
+  FallbackCustomParams,
   FileModel,
   FileOperationProgress,
   FolderModel,

@@ -2,12 +2,13 @@
 
 <template>
   <ms-modal
-    title="openFallback.title"
-    subtitle="openFallback.subtitle"
-    :class="viewerOption ? 'has-viewer-option' : ''"
+    :title="title ?? 'openFallback.title'"
+    :subtitle="subtitle ?? 'openFallback.subtitleDownload'"
+    :close-button="{ visible: true }"
   >
     <div class="open-fallback-buttons">
       <ion-button
+        v-if="!viewerOption"
         @click="onClose"
         fill="clear"
         class="button-default open-fallback-buttons__item"
@@ -44,13 +45,15 @@
 import { IonButton, modalController } from '@ionic/vue';
 import { isDesktop, isWeb } from '@/parsec';
 import { OpenFallbackChoice } from '@/components/files';
-import { MsModal, MsModalResult } from 'megashark-lib';
+import { MsModal, MsModalResult, Translatable } from 'megashark-lib';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { inject } from 'vue';
 import { openDownloadConfirmationModal } from '@/views/files';
 
 defineProps<{
   viewerOption?: boolean;
+  title?: Translatable;
+  subtitle?: Translatable;
 }>();
 
 const storageManager: StorageManager = inject(StorageManagerKey)!;

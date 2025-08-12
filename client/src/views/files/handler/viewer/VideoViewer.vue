@@ -156,7 +156,7 @@ onUnmounted(() => {
 });
 
 async function onError(): Promise<void> {
-  error.value = 'fileViewers.mediaNotSupported';
+  error.value = 'fileViewers.errors.mediaNotSupported';
 }
 
 function onTimeUpdate(): void {
@@ -216,7 +216,7 @@ function updateMediaData(event: Event): void {
   // trying to update the media data, we check if the `duration`
   // is set or not.
   if (Number.isNaN((event.target as HTMLVideoElement).duration)) {
-    error.value = 'fileViewers.mediaNotSupported';
+    error.value = 'fileViewers.errors.mediaNotSupported';
   } else {
     volume.value = Math.floor((event.target as HTMLAudioElement).volume * 100);
     muted.value = (event.target as HTMLAudioElement).muted;
