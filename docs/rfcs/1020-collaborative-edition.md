@@ -23,7 +23,7 @@ Only the latter is acceptable for Parsec (as CryptPad is not connected to the RB
 
 CryptPad only provides a collaborative session that multiple users can join to edit the same document.
 
-The data is end-to-end encrypted on the CryptPad side but doesn't persist. The integrating service (Parsec) is expected
+The data is end-to-end encrypted on CryptPad's side but doesn't persist. The integrating service (Parsec) is expected
 to manage storage and access rights / sharing keys.
 
 Editing sessions are identified via a *session key*. Users who want to edit the same document would use the same
@@ -48,7 +48,7 @@ The goal is to describe:
 - how to manage document saves
 
 > [!IMPORTANT]
-> We only cater to users who have write access as do lack experience on how CryptPad work with read-only access and how we can generate a session key with that restriction. (See open questions)
+> We only cater to users who have write access as we do lack experience on how CryptPad work with read-only access and how we can generate a session key with that restriction. (See open questions)
 
 ## Design
 
@@ -92,8 +92,8 @@ other_fields:
 
 When the writers list change (added or removed) or the creation of the manifest is `< now() - CRYPTPAD_SESSION_TIMEOUT * 0.9`, we need to rotate the session key.
 
-> `CRYPTPAD_SESSION_TIMEOUT` is configured on the CryptPad server side, it defines how long a session is keep alive once the last user quit the session.
-> That value should be know by the client (the value should be provided by the server as it's can change depending on the CryptPad server)
+> `CRYPTPAD_SESSION_TIMEOUT` is configured on the CryptPad server side, it defines how long a session is kept alive once the last user quit the session.
+> That value should be know by the client (the value should be provided by the server as it can change depending on the CryptPad server)
 
 The rotation is performed by the users currently using the session (and writers wanting to join), everyone will try to generate and shared a new manifest key,
 but everyone will have a random jitter (between 100ms-1000ms), the last author will not have such jitter.
@@ -171,7 +171,7 @@ CryptPad dispatch `onSave` event, it's apparently the last user who made a chang
 > We consider that only a single user will receive such event, and we will not have to handle concurrent save.
 
 During the `onSave` event, CryptPad provide the full document up-to-date to save.
-For that reason would be best to introduce a differential saving (e.i: compare old vs new to only save changed block, or not save at all if identical)
+For that reason would be best to introduce a differential saving (i.e.: compare old vs new to only save changed block, or not save at all if identical)
 
 > The comparison could be on the whole file or block per block if we want more granularity on the uploaded blocks.
 
@@ -179,7 +179,7 @@ In the bindings, we likely want to expose a function to do that:
 
 ```rust
 /// Compare `new_content` with current content of file at `path` and only register the modified block if any.
-/// It always compare against the latest known version of the file.
+/// It always compares against the latest known version of the file.
 fn workspace_differential_save(workspace_id: WorkspaceID, path: &Path, new_content: &[u8]) {}
 ```
 
@@ -190,7 +190,7 @@ fn workspace_differential_save(workspace_id: WorkspaceID, path: &Path, new_conte
 
 ## Risks
 
-- CryptPad provide a system to share a document and the deployed server MUST have that feature disabled
+- CryptPad provides a system to share a document and the deployed server MUST have that feature disabled
 - CryptPad instances do not forbid users to connect directly to them. This needs further analysis
   since security measures applied by Parsec could be easily by-passed.
 - A user saving a document may not be the one who made the modification.
