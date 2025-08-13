@@ -643,13 +643,13 @@
         "listDisplayTitles": {
             "name": "Name",
             "updatedBy": "Updated By",
-            "lastUpdate": "Last Updated",
+            "lastUpdate": "Last updated",
             "creation": "Creation date",
             "size": "Size"
         },
         "sort": {
             "byName": "Name",
-            "byLastUpdate": "Last update",
+            "byLastUpdate": "Last updated",
             "byCreation": "Creation date",
             "bySize": "Size",
             "asc": "Ascending",
@@ -848,7 +848,7 @@
         "title": "Details on {name}",
         "stats": {
             "generalInfo": "General information",
-            "lastUpdate": "Last update",
+            "lastUpdate": "Last updated",
             "editor": "Editor",
             "file": "File",
             "folder": "Folder",
