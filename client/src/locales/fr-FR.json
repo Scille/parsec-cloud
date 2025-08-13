@@ -648,7 +648,7 @@
         },
         "sort": {
             "byName": "Nom",
-            "byLastUpdate": "Dernière mise à jour",
+            "byLastUpdate": "Dernière modification",
             "byCreation": "Date de création",
             "bySize": "Taille",
             "asc": "Croissant",
@@ -847,7 +847,7 @@
         "title": "Détails de {name}",
         "stats": {
             "generalInfo": "Informations générales",
-            "lastUpdate": "Dernière mise à jour",
+            "lastUpdate": "Dernière modification",
             "editor": "Éditeur",
             "file": "Fichier",
             "folder": "Dossier",

@@ -30,20 +30,52 @@
               :indeterminate="someSelected && !allSelected"
             />
           </ion-label>
-          <ion-text class="folder-list-header__label cell-title ion-text-nowrap label-name">
+          <ion-text
+            class="folder-list-header__label cell-title ion-text-nowrap label-name"
+            @click="onHeaderSortChange(SortProperty.Name)"
+            :class="{ 'label-name-sorted': currentSortProperty === SortProperty.Name }"
+          >
             {{ $msTranslate('FoldersPage.listDisplayTitles.name') }}
+            <ion-icon
+              :icon="currentSortOrder ? arrowUp : arrowDown"
+              class="label-name__sort-icon"
+            />
           </ion-text>
           <ion-text class="folder-list-header__label cell-title ion-text-nowrap label-updatedBy">
             {{ $msTranslate('FoldersPage.listDisplayTitles.updatedBy') }}
           </ion-text>
-          <ion-text class="folder-list-header__label cell-title ion-text-nowrap label-lastUpdate">
+          <ion-text
+            class="folder-list-header__label cell-title ion-text-nowrap label-lastUpdate"
+            @click="onHeaderSortChange(SortProperty.LastUpdate)"
+            :class="{ 'label-lastUpdate-sorted': currentSortProperty === SortProperty.LastUpdate }"
+          >
             {{ $msTranslate('FoldersPage.listDisplayTitles.lastUpdate') }}
+            <ion-icon
+              :icon="currentSortOrder ? arrowUp : arrowDown"
+              class="label-lastUpdate__sort-icon"
+            />
           </ion-text>
-          <ion-text class="folder-list-header__label cell-title ion-text-nowrap label-creationDate">
+          <ion-text
+            class="folder-list-header__label cell-title ion-text-nowrap label-creationDate"
+            @click="onHeaderSortChange(SortProperty.CreationDate)"
+            :class="{ 'label-creationDate-sorted': currentSortProperty === SortProperty.CreationDate }"
+          >
             {{ $msTranslate('FoldersPage.listDisplayTitles.creation') }}
+            <ion-icon
+              :icon="currentSortOrder ? arrowUp : arrowDown"
+              class="label-creationDate__sort-icon"
+            />
           </ion-text>
-          <ion-text class="folder-list-header__label cell-title ion-text-nowrap label-size">
+          <ion-text
+            class="folder-list-header__label cell-title ion-text-nowrap label-size"
+            @click="onHeaderSortChange(SortProperty.Size)"
+            :class="{ 'label-size-sorted': currentSortProperty === SortProperty.Size }"
+          >
             {{ $msTranslate('FoldersPage.listDisplayTitles.size') }}
+            <ion-icon
+              :icon="currentSortOrder ? arrowUp : arrowDown"
+              class="label-size__sort-icon"
+            />
           </ion-text>
           <ion-text class="folder-list-header__label cell-title ion-text-nowrap label-space" />
         </ion-list-header>
@@ -90,11 +122,13 @@ import FileDropZone from '@/components/files/explorer/FileDropZone.vue';
 import FileListItem from '@/components/files/explorer/FileListItem.vue';
 import FileListItemProcessing from '@/components/files/explorer/FileListItemProcessing.vue';
 import { EntryCollection, EntryModel, FileOperationProgress, FileModel, FolderModel } from '@/components/files/types';
+import { SortProperty } from '@/components/files';
 import { FileImportTuple } from '@/components/files/utils';
 import { FsPath, WorkspaceRole } from '@/parsec';
-import { IonText, IonList, IonLabel, IonListHeader } from '@ionic/vue';
+import { IonText, IonList, IonLabel, IonListHeader, IonIcon } from '@ionic/vue';
+import { arrowUp, arrowDown } from 'ionicons/icons';
 import { computed, useTemplateRef } from 'vue';
-import { MsCheckbox, useWindowSize } from 'megashark-lib';
+import { MsCheckbox, useWindowSize, MsSorterChangeEvent } from 'megashark-lib';
 
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 const props = defineProps<{
@@ -104,10 +138,13 @@ const props = defineProps<{
   currentPath: FsPath;
   ownRole: WorkspaceRole;
   selectionEnabled?: boolean;
+  currentSortProperty: SortProperty;
+  currentSortOrder?: boolean;
 }>();
 
 const emits = defineEmits<{
   (e: 'click', entry: EntryModel, event: Event): void;
+  (e: 'sortChange', event: MsSorterChangeEvent): void;
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
   (e: 'globalMenuClick', event: Event): void;
   (e: 'filesAdded', imports: FileImportTuple[]): void;
@@ -151,6 +188,17 @@ function onFilesAdded(imports: FileImportTuple[]): void {
 async function selectAll(selected: boolean): Promise<void> {
   props.files.selectAll(selected);
   props.folders.selectAll(selected);
+}
+
+async function onHeaderSortChange(property: SortProperty): Promise<void> {
+  const newSortOrder = props.currentSortProperty === property ? !props.currentSortOrder : props.currentSortOrder;
+
+  const sortEvent: MsSorterChangeEvent = {
+    option: { key: property, label: '' },
+    sortByAsc: newSortOrder,
+  };
+
+  emits('sortChange', sortEvent);
 }
 
 async function scrollToSelected(): Promise<void> {
@@ -197,6 +245,7 @@ async function scrollToSelected(): Promise<void> {
   &__label {
     padding: 0.75rem 1rem;
   }
+
   .label-selected {
     display: flex;
     align-items: center;

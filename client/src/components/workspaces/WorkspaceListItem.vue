@@ -253,11 +253,6 @@ async function onOptionsClick(event: Event): Promise<void> {
   }
 }
 
-.label-size,
-.label-last-update {
-  color: var(--parsec-color-light-secondary-grey);
-}
-
 .workspace-favorite-icon {
   display: flex;
   align-items: center;
