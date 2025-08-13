@@ -162,7 +162,7 @@ Store a registration device (see [RFC 1015](1015-registration-device)):
 ```json5
 {
     "label": "AccountVaultItemRegistrationDevice",
-    "type": "account_vault_item_auto_enrollment_device",
+    "type": "account_vault_item_registration_device",
     "other_fields": [
         {
             "name": "organization_id",
