@@ -364,6 +364,7 @@ for any given email address).
     "--email-sender",
     envvar="PARSEC_EMAIL_SENDER",
     show_envvar=True,
+    type=EmailAddress,
     metavar="EMAIL",
     help="Sender address used in sent emails",
 )
