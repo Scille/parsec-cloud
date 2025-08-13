@@ -22,7 +22,8 @@
           :key="folder.id"
           :entry="folder"
           :show-checkbox="hasSelected() || selectionEnabled === true"
-          @click="$emit('click', folder, $event)"
+          @open-item="$emit('openItem', folder, $event)"
+          @open-item.stop
           @menu-click="onMenuClick"
           @files-added="onFilesAdded"
           :is-workspace-reader="ownRole === WorkspaceRole.Reader"
@@ -37,7 +38,8 @@
           :key="file.id"
           :entry="file"
           :show-checkbox="hasSelected() || selectionEnabled === true"
-          @click="$emit('click', file, $event)"
+          @open-item="$emit('openItem', file, $event)"
+          @open-item.stop
           @menu-click="onMenuClick"
           @files-added="onFilesAdded"
           @drop-as-reader="$emit('dropAsReader')"
@@ -80,7 +82,7 @@ const fileItemsRef = useTemplateRef<Array<typeof FileCard>>('fileItems');
 const folderItemsRef = useTemplateRef<Array<typeof FileCard>>('folderItems');
 
 const emits = defineEmits<{
-  (e: 'click', entry: EntryModel, event: Event): void;
+  (e: 'openItem', entry: EntryModel, event: Event): void;
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
   (e: 'globalMenuClick', event: Event): void;
   (e: 'checkboxClick'): void;

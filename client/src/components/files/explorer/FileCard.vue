@@ -7,11 +7,11 @@
       selected: entry.isSelected,
       'file-hovered': !entry.isSelected && (menuOpened || isHovered),
     }"
-    @dblclick="$emit('click', $event, entry)"
+    @dblclick="$emit('openItem', $event, entry)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
     @contextmenu="onOptionsClick"
-    @click="onCardClick"
+    @click="$emit('update:modelValue', !props.entry.isSelected)"
   >
     <file-drop-zone
       :disabled="entry.isFile()"
@@ -52,7 +52,10 @@
           />
         </div>
 
-        <ion-text class="file-card__title body">
+        <ion-text
+          class="file-card__title cell"
+          @click="$emit('openItem', $event, entry)"
+        >
           {{ entry.name }}
         </ion-text>
 
@@ -66,7 +69,7 @@
 
 <script setup lang="ts">
 import { getFileIcon } from '@/common/file';
-import { Folder, formatTimeSince, MsImage, MsCheckbox, useWindowSize } from 'megashark-lib';
+import { Folder, formatTimeSince, MsImage, MsCheckbox } from 'megashark-lib';
 import FileDropZone from '@/components/files/explorer/FileDropZone.vue';
 import { EntryModel } from '@/components/files/types';
 import { FileImportTuple } from '@/components/files/utils';
@@ -78,7 +81,6 @@ import { Ref, onMounted, ref } from 'vue';
 const isHovered = ref(false);
 const menuOpened = ref(false);
 
-const { isSmallDisplay } = useWindowSize();
 const currentPath: Ref<FsPath> = ref('/');
 
 onMounted(async () => {
@@ -97,7 +99,7 @@ const props = defineProps<{
 }>();
 
 const emits = defineEmits<{
-  (e: 'click', event: Event, entry: EntryModel): void;
+  (e: 'openItem', event: Event, entry: EntryModel): void;
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
   (e: 'filesAdded', imports: FileImportTuple[]): void;
   (e: 'dropAsReader'): void;
@@ -108,12 +110,6 @@ const emits = defineEmits<{
 defineExpose({
   props,
 });
-
-async function onCardClick(): Promise<void> {
-  if (isSmallDisplay.value && props.showCheckbox) {
-    emits('update:modelValue', !props.entry.isSelected);
-  }
-}
 
 function isFileSynced(): boolean {
   return !props.entry.needSync;
@@ -150,7 +146,6 @@ async function onOptionsClick(event: Event): Promise<void> {
 
 .card-checkbox {
   left: 0.5rem;
-  top: 0.5rem;
 }
 
 .card-option {
@@ -212,6 +207,11 @@ async function onOptionsClick(event: Event): Promise<void> {
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
+
+    &:hover {
+      text-decoration: underline;
+      cursor: pointer !important;
+    }
   }
 
   &-last-update {
