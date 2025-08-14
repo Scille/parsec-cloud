@@ -64,7 +64,7 @@ for (const testData of TEST_DATA) {
 
     const updateDetails = modal.locator('.file-info-details-content').nth(1);
     const updateDetailsItem = updateDetails.locator('.file-info-details-item');
-    await expect(updateDetails.locator('.file-info-details-content__title')).toHaveText('Last update');
+    await expect(updateDetails.locator('.file-info-details-content__title')).toHaveText('Last updated');
     await expect(updateDetailsItem).toHaveCount(2);
     await expect(updateDetailsItem.nth(0).locator('.file-info-details-item__title')).toHaveText('Updated');
     await expect(updateDetailsItem.nth(0).locator('.file-info-details-item__value')).toHaveText(/^[A-Za-z]{3} \d{1,2}, 20[0-9]{2}$/);

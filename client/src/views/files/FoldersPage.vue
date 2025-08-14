@@ -135,6 +135,9 @@
               :own-role="ownRole"
               @drop-as-reader="onDropAsReader"
               :selection-enabled="selectionEnabled && isSmallDisplay"
+              @sort-change="onSortChange"
+              :current-sort-order="currentSortOrder"
+              :current-sort-property="currentSortProperty"
             />
           </div>
           <div v-if="displayView === DisplayState.Grid">

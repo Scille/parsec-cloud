@@ -110,6 +110,39 @@ msTest('Sort document by creation date', async ({ documents }) => {
   expect(lastEntryAfter).toBe(firstEntryBefore);
 });
 
+msTest('Sort document with header title', async ({ documents }) => {
+  const actionBar = documents.locator('#folders-ms-action-bar');
+  const entries = documents.locator('.folder-container').locator('.file-list-item');
+  const sorterPopoverButton = actionBar.locator('#select-popover-button');
+
+  // Sorting only Name (1), Last Updated (3), Creation date (4) and Size (5)
+  const headerSortByIndex = [1, 3, 4, 5];
+  const headerNames = ['Name', 'Last updated', 'Creation date', 'Size'];
+
+  for (let i = 0; i < headerSortByIndex.length; i++) {
+    const headerIndex = headerSortByIndex[i];
+
+    const headerLabel = documents.locator('.folder-list-header__label').nth(headerIndex);
+    await expect(headerLabel).toBeVisible();
+    await expect(headerLabel).toHaveText(headerNames[i]);
+    await headerLabel.click();
+
+    await expect(sorterPopoverButton).toHaveText(headerNames[i]);
+
+    const firstEntryAfterFirstSort = await entries.nth(1).locator('.file-name__label').textContent();
+    const lastEntryAfterFirstSort = await entries.nth(8).locator('.file-name__label').textContent();
+
+    // Revert the order
+    await headerLabel.click();
+
+    const firstEntryAfterSecondSort = await entries.nth(1).locator('.file-name__label').textContent();
+    const lastEntryAfterSecondSort = await entries.nth(8).locator('.file-name__label').textContent();
+
+    expect(firstEntryAfterSecondSort).toBe(lastEntryAfterFirstSort);
+    expect(lastEntryAfterSecondSort).toBe(firstEntryAfterFirstSort);
+  }
+});
+
 msTest('Select all documents', async ({ documents }) => {
   const globalCheckbox = documents.locator('.folder-container').locator('.folder-list-header').locator('ion-checkbox');
   await expect(globalCheckbox).toHaveState('unchecked');
