@@ -94,7 +94,9 @@
           </ion-label>
           <div class="file-info-path-value">
             <ion-text class="file-info-path-value__text body">
-              {{ shortenFileName(entry.path, { maxLength: 60, prefixLength: 20, suffixLength: 30 }) }}
+              <span>
+                {{ showFullPath ? entry.path : shortenFileName(entry.path, { maxLength: 60, prefixLength: 20, suffixLength: 30 }) }}
+              </span>
             </ion-text>
             <template v-if="isDesktop()">
               <ion-button
@@ -123,6 +125,13 @@
               </ion-text>
             </template>
           </div>
+          <ion-text
+            class="file-info-path__full button-small"
+            @click="showFullPath = !showFullPath"
+            v-if="entry.path.length > 60"
+          >
+            <span>{{ $msTranslate(showFullPath ? 'FileDetails.stats.hideFullPath' : 'FileDetails.stats.showFullPath') }}</span>
+          </ion-text>
         </div>
       </div>
     </ms-modal>
@@ -149,6 +158,7 @@ const props = defineProps<{
   workspaceHandle: WorkspaceHandle;
 }>();
 
+const showFullPath = ref(false);
 const copyStatus = ref(CopyStatus.NotCopied);
 
 function getSyncString(): string {
@@ -273,7 +283,18 @@ async function copyPath(): Promise<void> {
     gap: 0.5rem;
 
     &__title {
+      color: var(--parsec-color-light-secondary-text);
+    }
+
+    &__full {
+      cursor: pointer;
+      width: fit-content;
       color: var(--parsec-color-light-secondary-grey);
+
+      &:hover {
+        color: var(--parsec-color-light-secondary-hard-grey);
+        text-decoration: underline;
+      }
     }
 
     &-value {
@@ -283,6 +304,7 @@ async function copyPath(): Promise<void> {
       padding: 0.5rem 1rem;
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 0.5rem;
       overflow: hidden;
       width: 100%;
@@ -290,7 +312,6 @@ async function copyPath(): Promise<void> {
       &__text {
         padding: 0.25rem 0;
         text-overflow: ellipsis;
-        white-space: nowrap;
         overflow: hidden;
       }
 
@@ -306,7 +327,7 @@ async function copyPath(): Promise<void> {
 }
 
 #copy-link-btn {
-  color: var(--parsec-color-light-secondary-text);
+  color: var(--parsec-color-light-secondary-hard-grey);
   margin: 0;
 
   &::part(native) {
