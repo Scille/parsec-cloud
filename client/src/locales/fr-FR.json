@@ -857,6 +857,8 @@
             "size": "Taille",
             "path": "Emplacement",
             "linkCopied": "Copié",
+            "showFullPath": "Voir le chemin complet",
+            "hideFullPath": "Masquer le chemin complet",
             "failedToCopy": "Impossible de copier"
         },
         "fileSyncOk": "Ce fichier est synchronisé avec le serveur.",
