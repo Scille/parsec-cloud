@@ -15,7 +15,12 @@ from typing import (
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.security import (
+    HTTPAuthorizationCredentials,
+    HTTPBasic,
+    HTTPBasicCredentials,
+    HTTPBearer,
+)
 from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt
 
 from parsec._parsec import (
@@ -74,11 +79,37 @@ administration_router = APIRouter(tags=["administration"])
 security = HTTPBearer()
 
 
-def check_administration_auth(
+def check_administration_token(
     request: Request, credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]
-) -> None:
+) -> bool:
     if request.app.state.backend.config.administration_token != credentials.credentials:
         raise HTTPException(status_code=403, detail="Bad authorization token")
+    return True
+
+
+security_basic = HTTPBasic()
+
+
+def check_fake_admin_user(
+    request: Request, credentials: Annotated[HTTPBasicCredentials, Depends(security_basic)]
+) -> bool:
+    import secrets
+
+    correct_username = secrets.compare_digest(credentials.username, "admin")
+    correct_password = secrets.compare_digest(credentials.password, "ImReall!4nAdmin")
+
+    if not (correct_username and correct_password):
+        raise HTTPException(status_code=403, detail="Invalid basic credentials")
+
+    return True
+
+
+def check_admin_auth(
+    admin_token: Annotated[bool, Depends(check_administration_token)],
+    admin_user: Annotated[bool, Depends(check_fake_admin_user)],
+):
+    if not (admin_token or admin_user):
+        raise HTTPException(status_code=403, detail="Not authenticated")
 
 
 # This function is a workaround for FastAPI's broken custom type in query parameters
@@ -160,7 +191,7 @@ def log_request[**P, T: BaseModel | Response](
 async def administration_create_organizations(
     request: Request,
     body: CreateOrganizationIn,
-    auth: Annotated[None, Depends(check_administration_auth)],
+    auth: Annotated[None, Depends(check_administration_token)],
 ) -> CreateOrganizationOut:
     backend: Backend = request.app.state.backend
 
@@ -217,7 +248,7 @@ class GetOrganizationOut(BaseModel):
 async def administration_get_organization(
     raw_organization_id: str,
     request: Request,
-    auth: Annotated[None, Depends(check_administration_auth)],
+    auth: Annotated[None, Depends(check_administration_token)],
 ) -> GetOrganizationOut:
     backend: Backend = request.app.state.backend
 
@@ -272,7 +303,7 @@ async def administration_patch_organization(
     raw_organization_id: str,
     body: PatchOrganizationIn,
     request: Request,
-    auth: Annotated[None, Depends(check_administration_auth)],
+    auth: Annotated[None, Depends(check_administration_token)],
 ) -> PatchOrganizationOut:
     backend: Backend = request.app.state.backend
 
@@ -302,7 +333,7 @@ async def administration_patch_organization(
 @log_request
 async def administration_organization_stat(
     raw_organization_id: str,
-    auth: Annotated[None, Depends(check_administration_auth)],
+    auth: Annotated[None, Depends(check_administration_token)],
     request: Request,
 ) -> Response:
     backend: Backend = request.app.state.backend
@@ -386,7 +417,7 @@ class StatsFormat(str, Enum):
 async def administration_server_stats(
     request: Request,
     response: Response,
-    auth: Annotated[None, Depends(check_administration_auth)],
+    auth: Annotated[None, Depends(check_administration_token)],
     format: StatsFormat = StatsFormat.JSON,
     at: str | None = None,
 ) -> Response:
@@ -441,7 +472,7 @@ async def administration_server_stats(
 @log_request
 async def administration_organization_users(
     raw_organization_id: str,
-    auth: Annotated[None, Depends(check_administration_auth)],
+    auth: Annotated[None, Depends(check_administration_token)],
     request: Request,
 ) -> Response:
     backend: Backend = request.app.state.backend
@@ -482,7 +513,7 @@ class UserFreezeIn(BaseModel):
 @log_request
 async def administration_organization_users_freeze(
     raw_organization_id: str,
-    auth: Annotated[None, Depends(check_administration_auth)],
+    auth: Annotated[None, Depends(check_administration_token)],
     body: UserFreezeIn,
     request: Request,
 ) -> Response:
@@ -524,7 +555,7 @@ async def administration_organization_users_freeze(
 @log_request
 async def administration_organization_sequester_services(
     raw_organization_id: str,
-    auth: Annotated[None, Depends(check_administration_auth)],
+    auth: Annotated[None, Depends(check_administration_token)],
     request: Request,
 ) -> Response:
     backend: Backend = request.app.state.backend
@@ -600,7 +631,7 @@ class SequesterServiceCreateIn(BaseModel):
 async def administration_organization_sequester_service_create(
     raw_organization_id: str,
     body: SequesterServiceCreateIn,
-    auth: Annotated[None, Depends(check_administration_auth)],
+    auth: Annotated[None, Depends(check_administration_token)],
     request: Request,
 ) -> Response:
     backend: Backend = request.app.state.backend
@@ -651,7 +682,7 @@ class SequesterServiceRevokeIn(BaseModel):
 async def administration_organization_sequester_service_revoke(
     raw_organization_id: str,
     body: SequesterServiceRevokeIn,
-    auth: Annotated[None, Depends(check_administration_auth)],
+    auth: Annotated[None, Depends(check_administration_token)],
     request: Request,
 ) -> Response:
     backend: Backend = request.app.state.backend
@@ -704,7 +735,7 @@ class SequesterServiceUpdateConfigIn(BaseModel):
 async def administration_organization_sequester_service_update_config(
     raw_organization_id: str,
     body: SequesterServiceUpdateConfigIn,
-    auth: Annotated[None, Depends(check_administration_auth)],
+    auth: Annotated[None, Depends(check_administration_token)],
     request: Request,
 ) -> Response:
     backend: Backend = request.app.state.backend

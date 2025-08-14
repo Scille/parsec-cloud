@@ -51,6 +51,10 @@ async def test_organization_stats_auth(
     response = await client.get(url, auth=AdministrationTokenAuth("BADTOKEN"))
     assert response.status_code == 403, response.content
 
+    # Invalid basic auth
+    response = await client.get(url, auth=httpx.BasicAuth(username="foo", password="bar"))
+    assert response.status_code == 403, response.content
+
 
 @pytest.mark.parametrize(
     "route", ("/administration/stats", "/administration/organizations/{organization_id}/stats")
@@ -63,6 +67,11 @@ async def test_bad_method(
 ) -> None:
     url = "http://parsec.invalid" + route.format(organization_id=coolorg.organization_id.str)
     response = await client.post(url, auth=administration_token_auth)
+    assert response.status_code == 405, response.content
+
+    response = await client.post(
+        url, auth=httpx.BasicAuth(username="admin", password="ImReall!4nAdmin")
+    )
     assert response.status_code == 405, response.content
 
 
