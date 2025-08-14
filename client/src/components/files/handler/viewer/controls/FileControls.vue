@@ -27,6 +27,13 @@
   min-height: 3.75rem;
   transition: all 0.2s ease-in-out;
 
+  @include ms.responsive-breakpoint('lg') {
+    margin: 0;
+    padding: 0.75rem 1rem 1.5rem;
+    border-radius: var(--parsec-radius-8) var(--parsec-radius-8) 0 0;
+    gap: 1rem;
+  }
+
   & > *:not(:last-child)::after {
     content: '';
     display: block;
