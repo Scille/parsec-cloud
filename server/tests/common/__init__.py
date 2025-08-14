@@ -7,6 +7,7 @@ from parsec.cli.testbed import next_organization_id
 
 # ruff: noqa: F403
 from .account import *
+from .administration import *
 from .backend import *
 from .client import *
 from .data import *
