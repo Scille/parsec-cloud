@@ -857,6 +857,7 @@
             "version": "Version",
             "size": "Size",
             "path": "Path",
+            "fullPath": "Show full path",
             "linkCopied": "Copied",
             "failedToCopy": "Failed to copy"
         },
