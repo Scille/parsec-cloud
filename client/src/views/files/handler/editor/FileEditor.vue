@@ -25,7 +25,7 @@
           </ion-button>
           <ion-button
             class="error-content-buttons__item button-default"
-            @click="console.log('Réessayer')"
+            @click="console.log('Reload')"
           >
             {{ $msTranslate('fileEditors.actions.retry') }}
           </ion-button>
