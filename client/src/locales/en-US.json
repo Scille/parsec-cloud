@@ -2342,6 +2342,27 @@
             "loop": "Loop"
         }
     },
+    "fileEditors": {
+        "globalTitle": "Cannot open the file",
+        "errors": {
+            "contentInfoMissing": "The file content information is empty or missing.",
+            "fileExtensionMissing": "The file type (extension) is missing or empty.",
+            "fileNameMissing": "The file name is empty or missing.",
+            "fileIdMissing": "The file ID is missing or empty.",
+            "fileDataMissing": "The file data is missing or empty."
+        },
+        "advices": {
+            "title": "Some tips that may resolve this issue",
+            "advice1": "Reload the page (if the issue persists, try the following points).",
+            "advice2": "Check that the file can be opened from an external application.",
+            "advice3": "Re-import the file (check versions).",
+            "advice4": "If the file opened before, try restoring a previous version (via file history)"
+        },
+        "actions": {
+            "backToFiles": "Back to files",
+            "retry": "Reload the page"
+        }
+    },
     "openFallback": {
         "title": "File editor is not available",
         "subtitle": "Please choose an action for this file.",

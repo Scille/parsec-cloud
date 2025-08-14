@@ -1,6 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Env } from '@/services/environment';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { inject } from 'vue';
+const informationManager: InformationManager = inject(InformationManagerKey)!;
 
 export enum CryptpadDocumentType {
   Pad = 'pad',
@@ -46,7 +49,7 @@ export class Cryptpad {
 
   constructor(containerElement: HTMLElement, serverUrl: string) {
     this.containerElement = containerElement;
-    if (!Env.isEditicsEnabled()) {
+    if (Env.isEditicsEnabled()) {
       throw new Error('Editics is not enabled. Cannot initialize CryptPad.');
     }
 
@@ -91,7 +94,17 @@ export class Cryptpad {
         };
       });
     } else {
+      // for this case, a simple information modal "Failed to open document"
       window.electronAPI.log('info', 'CryptPad API script already loaded, reusing.');
+      await informationManager.present(
+        new Information({
+          title: 'FoldersPage.open.fileFailedGeneric',
+          message: 'FoldersPage.open.fileFailedGeneric',
+          level: InformationLevel.Info,
+        }),
+        PresentationMode.Modal,
+      );
+      return;
     }
 
     this.instanceInitialized = true;
@@ -100,15 +113,45 @@ export class Cryptpad {
   async open(config: CryptpadConfig): Promise<void> {
     await this.init();
 
+    // for this case, I think the most appropriate action is to open the FallbackModal
     if (!ENABLED_DOCUMENT_TYPES.includes(config.documentType)) {
-      throw new Error(`CryptPad edition for document type ${config.documentType} is not enabled.`);
+      window.electronAPI.log('error', `CryptPad edition for document type ${config.documentType} is not enabled.`);
+      await informationManager.present(
+        new Information({
+          title: 'FoldersPage.open.fileFailedGeneric',
+          message: 'FoldersPage.open.fileFailedGeneric',
+          level: InformationLevel.Info,
+        }),
+        PresentationMode.Modal,
+      );
+      return;
     }
 
+    // for this case, a simple information modal "Failed to open document"
     if (!this.containerElement) {
-      throw new Error('Container element is not initialized. Please call init() before open().');
+      window.electronAPI.log('error', 'Container element is not initialized. Please call init() before open().');
+      await informationManager.present(
+        new Information({
+          title: 'FoldersPage.open.fileFailedGeneric',
+          message: 'FoldersPage.open.fileFailedGeneric',
+          level: InformationLevel.Info,
+        }),
+        PresentationMode.Modal,
+      );
+      return;
     }
+
+    // for this case, a simple information modal "Failed to open document"
     if (!this.instanceInitialized) {
-      throw new Error('CryptPad instance is not initialized yet. Please wait for it to initialize before calling open().');
+      await informationManager.present(
+        new Information({
+          title: 'FoldersPage.open.fileFailedGeneric',
+          message: 'FoldersPage.open.fileFailedGeneric',
+          level: InformationLevel.Info,
+        }),
+        PresentationMode.Modal,
+      );
+      window.electronAPI.log('error', 'CryptPad instance is not initialized yet. Please wait for it to initialize before calling open().');
     }
 
     (window as any).CryptPadAPI(this.containerElement.id, { ...config });
