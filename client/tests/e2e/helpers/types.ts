@@ -14,6 +14,7 @@ export interface SetupOptions {
   location?: string;
   skipGoto?: boolean;
   withParsecAccount?: boolean;
+  withEditics?: boolean;
   parsecAccountAutoLogin?: boolean;
   withCustomBranding?: boolean;
   displaySize?: DisplaySize;

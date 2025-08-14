@@ -54,7 +54,7 @@
               <ion-button
                 class="file-handler-topbar-buttons__item"
                 @click="openEditor(contentInfo.path)"
-                v-if="!atDateTime && handlerMode === FileHandlerMode.View"
+                v-if="!atDateTime && handlerMode === FileHandlerMode.View && !Env.isEditicsEnabled()"
               >
                 <ion-icon :icon="create" />
                 {{ $msTranslate('fileViewers.openInEditor') }}
