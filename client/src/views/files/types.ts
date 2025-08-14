@@ -16,7 +16,7 @@ enum FileAction {
   MoveTo = 'file-move-to',
   MakeACopy = 'file-copy-to',
   Delete = 'file-delete',
-  Open = 'file-open',
+  Preview = 'file-preview',
   Edit = 'file-edit',
   ShowHistory = 'file-show-history',
   Download = 'file-download',

@@ -662,13 +662,14 @@
             "moving": "Moving..."
         },
         "fileContextMenu": {
-            "titleManage": "Manage file",
+            "titleManageFile": "Manage file",
+            "titleManageFolder": "Manage folder",
             "titleCollaboration": "Collaboration",
             "actionRename": "Rename",
             "actionEdit": "Edit",
             "actionMoveTo": "Move to",
             "actionMakeACopy": "Make a copy",
-            "actionOpen": "Open",
+            "actionPreview": "Preview",
             "actionHistory": "History",
             "actionDownload": "Download",
             "actionDetails": "Details",
@@ -840,8 +841,9 @@
             "download": "Download",
             "copyLink": "Copy link",
             "history": "History",
-            "open": "Open",
-            "details": "Details"
+            "preview": "Preview",
+            "details": "Details",
+            "edit": "Edit"
         }
     },
     "FileDetails": {

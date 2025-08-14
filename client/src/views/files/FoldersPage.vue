@@ -185,6 +185,7 @@ import {
   MsSpinner,
   I18n,
   useWindowSize,
+  RenameIcon,
 } from 'megashark-lib';
 import * as parsec from '@/parsec';
 
@@ -252,20 +253,7 @@ import {
   openDownloadConfirmationModal,
 } from '@/views/files';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
-import {
-  arrowRedo,
-  copy,
-  folderOpen,
-  informationCircle,
-  link,
-  open,
-  pencil,
-  trashBin,
-  download,
-  create,
-  time,
-  duplicate,
-} from 'ionicons/icons';
+import { arrowRedo, folderOpen, informationCircle, link, trashBin, download, create, time, duplicate, eye } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, nextTick, watch, useTemplateRef } from 'vue';
 import { EntrySyncData, EventData, EventDistributor, EventDistributorKey, Events, MenuActionData } from '@/services/eventDistributor';
 import { openPath, showInExplorer } from '@/services/fileOpener';
@@ -307,7 +295,10 @@ const tabBarActions = computed(() => {
     });
   }
   if (selectedEntries.length === 1 && selectedEntries[0].isFile()) {
-    actions.push({ label: 'FoldersPage.tabbar.open', action: async () => await openEntries(getSelectedEntries()), icon: open });
+    actions.push(
+      { label: 'FoldersPage.tabbar.preview', action: async () => await openEntries(getSelectedEntries()), icon: eye },
+      { label: 'FoldersPage.tabbar.edit', action: async () => await editEntries(getSelectedEntries()), icon: create },
+    );
   }
   if (selectedEntries.length > folders.value.getSelectedEntries().length && isWeb()) {
     actions.push({ label: 'FoldersPage.tabbar.download', action: async () => await downloadEntries(getSelectedEntries()), icon: download });
@@ -316,6 +307,7 @@ const tabBarActions = computed(() => {
     if (isReadOnly) {
       actions.push(
         { label: 'FoldersPage.tabbar.copyLink', action: async () => await copyLink(getSelectedEntries()), icon: link },
+        { label: 'FoldersPage.tabbar.edit', action: async () => await copyLink(getSelectedEntries()), icon: create },
         { label: 'FoldersPage.tabbar.details', action: async () => await showDetails(getSelectedEntries()), icon: informationCircle },
       );
     } else {
@@ -1394,7 +1386,7 @@ async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?
     [FileAction.Edit, editEntries],
     [FileAction.MoveTo, moveEntriesTo],
     [FileAction.MakeACopy, copyEntries],
-    [FileAction.Open, openEntries],
+    [FileAction.Preview, openEntries],
     [FileAction.ShowHistory, showHistory],
     [FileAction.Download, downloadEntries],
     [FileAction.ShowDetails, showDetails],
@@ -1469,6 +1461,7 @@ async function onDropAsReader(): Promise<void> {
 
 const actionBarOptionsFoldersPage = computed(() => {
   const actionArray = [];
+  const selectedEntries = getSelectedEntries();
 
   if (selectedFilesCount.value === 0 && ownRole.value !== parsec.WorkspaceRole.Reader) {
     actionArray.push(
@@ -1489,11 +1482,29 @@ const actionBarOptionsFoldersPage = computed(() => {
     );
   }
   if (selectedFilesCount.value === 1) {
+    if (selectedEntries[0].isFile()) {
+      actionArray.push({
+        label: 'FoldersPage.fileContextMenu.actionPreview',
+        icon: eye,
+        onClick: async () => {
+          await openEntries(getSelectedEntries());
+        },
+      });
+    }
+    if (selectedEntries[0].isFile() && ownRole.value !== parsec.WorkspaceRole.Reader) {
+      actionArray.push({
+        label: 'FoldersPage.fileContextMenu.actionEdit',
+        icon: create,
+        onClick: async () => {
+          await editEntries(getSelectedEntries());
+        },
+      });
+    }
     if (ownRole.value !== parsec.WorkspaceRole.Reader) {
       actionArray.push(
         {
           label: 'FoldersPage.fileContextMenu.actionRename',
-          icon: pencil,
+          image: RenameIcon,
           onClick: async () => {
             await renameEntries(getSelectedEntries());
           },
@@ -1507,7 +1518,7 @@ const actionBarOptionsFoldersPage = computed(() => {
         },
         {
           label: 'FoldersPage.fileContextMenu.actionMakeACopy',
-          icon: copy,
+          icon: duplicate,
           onClick: async () => {
             await copyEntries(getSelectedEntries());
           },
@@ -1559,7 +1570,7 @@ const actionBarOptionsFoldersPage = computed(() => {
         },
         {
           label: 'FoldersPage.fileContextMenu.actionMakeACopy',
-          icon: copy,
+          icon: duplicate,
           onClick: async () => {
             await copyEntries(getSelectedEntries());
           },
