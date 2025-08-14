@@ -2,6 +2,14 @@
 
 import { expect, msTest, openFileType } from '@tests/e2e/helpers';
 
+msTest('Open file viewer with single click', async ({ documents }) => {
+  const entries = documents.locator('.folder-container').locator('.file-list-item');
+  await entries.nth(0).locator('.file-name__label').click();
+  await documents.locator('.topbar-left-content').locator('.back-button').click();
+  await entries.nth(1).locator('.file-name__label').click();
+  await expect(documents).toBeViewerPage();
+});
+
 msTest('Document viewer: content', async ({ documents }) => {
   await openFileType(documents, 'docx');
   await expect(documents).toBeViewerPage();

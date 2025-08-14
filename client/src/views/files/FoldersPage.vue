@@ -128,13 +128,14 @@
               :folders="folders"
               :operations-in-progress="fileOperationsCurrentDir"
               :current-path="currentPath"
-              @click="onEntryClick"
+              :own-role="ownRole"
+              :selection-enabled="selectionEnabled && isSmallDisplay"
+              @open-item="onEntryClick"
               @menu-click="openEntryContextMenu"
               @files-added="startImportFiles"
+              @checkbox-click="selectionEnabled = true"
               @global-menu-click="openGlobalContextMenu"
-              :own-role="ownRole"
               @drop-as-reader="onDropAsReader"
-              :selection-enabled="selectionEnabled && isSmallDisplay"
             />
           </div>
           <div v-if="displayView === DisplayState.Grid">
@@ -144,14 +145,14 @@
               :folders="folders"
               :operations-in-progress="fileOperationsCurrentDir"
               :current-path="currentPath"
-              @click="onEntryClick"
+              :own-role="ownRole"
+              :selection-enabled="selectionEnabled && isSmallDisplay"
+              @open-item="onEntryClick"
               @menu-click="openEntryContextMenu"
               @files-added="startImportFiles"
-              @global-menu-click="openGlobalContextMenu"
-              :own-role="ownRole"
-              @drop-as-reader="onDropAsReader"
-              :selection-enabled="selectionEnabled && isSmallDisplay"
               @checkbox-click="selectionEnabled = true"
+              @global-menu-click="openGlobalContextMenu"
+              @drop-as-reader="onDropAsReader"
             />
           </div>
         </div>
