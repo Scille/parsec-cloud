@@ -46,7 +46,7 @@ export class Cryptpad {
 
   constructor(containerElement: HTMLElement, serverUrl: string) {
     this.containerElement = containerElement;
-    if (!Env.isEditicsEnabled()) {
+    if (Env.isEditicsEnabled()) {
       throw new Error('Editics is not enabled. Cannot initialize CryptPad.');
     }
 

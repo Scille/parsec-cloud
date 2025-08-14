@@ -536,7 +536,6 @@ async function downloadFile(): Promise<void> {
     display: flex;
     flex-direction: column;
     height: 100%;
-    justify-content: center;
 
     &-topbar {
       display: flex;
