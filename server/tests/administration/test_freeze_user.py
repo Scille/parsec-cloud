@@ -8,39 +8,28 @@ import pytest
 
 from parsec._parsec import authenticated_cmds
 from parsec.events import EventUserRevokedOrFrozen, EventUserUnfrozen
-from tests.common import Backend, CoolorgRpcClients, RpcTransportError
+from tests.common import AdminUnauthErrorsTester, Backend, CoolorgRpcClients, RpcTransportError
 
 
 async def test_bad_auth(
-    client: httpx.AsyncClient, backend: Backend, coolorg: CoolorgRpcClients
+    coolorg: CoolorgRpcClients,
+    administration_route_unauth_errors_tester: AdminUnauthErrorsTester,
 ) -> None:
     url = f"http://parsec.invalid/administration/organizations/{coolorg.organization_id.str}/users/freeze"
-    # No Authorization header
-    response = await client.post(url)
-    assert response.status_code == 403, response.content
-    # Invalid Authorization header
-    response = await client.post(
-        url,
-        headers={
-            "Authorization": "DUMMY",
-        },
-    )
-    assert response.status_code == 403, response.content
-    # Bad bearer token
-    response = await client.post(
-        url,
-        headers={
-            "Authorization": "Bearer BADTOKEN",
-        },
-    )
-    assert response.status_code == 403, response.content
+
+    async def do(client: httpx.AsyncClient):
+        return await client.post(url)
+
+    await administration_route_unauth_errors_tester(do)
 
 
 @pytest.mark.parametrize(
     "kind", ("invalid_json", "bad_type_user_id", "bad_value_user_id", "bad_type_frozen")
 )
 async def test_bad_data(
-    client: httpx.AsyncClient, backend: Backend, coolorg: CoolorgRpcClients, kind: str
+    administration_client: httpx.AsyncClient,
+    coolorg: CoolorgRpcClients,
+    kind: str,
 ) -> None:
     url = f"http://parsec.invalid/administration/organizations/{coolorg.organization_id.str}/users/freeze"
 
@@ -61,32 +50,28 @@ async def test_bad_data(
         case unknown:
             assert False, unknown
 
-    response = await client.post(
+    response = await administration_client.post(
         url,
-        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
         **body_args,
     )
     assert response.status_code == 422, response.content
 
 
 async def test_bad_method(
-    client: httpx.AsyncClient,
-    backend: Backend,
+    administration_client: httpx.AsyncClient,
     coolorg: CoolorgRpcClients,
 ) -> None:
     url = f"http://parsec.invalid/administration/organizations/{coolorg.organization_id.str}/users/freeze"
 
-    response = await client.patch(
+    response = await administration_client.patch(
         url,
-        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
         json={"user_id": coolorg.alice.user_id.hex, "frozen": True},
     )
     assert response.status_code == 405, response.content
 
 
 async def test_disconnect_sse(
-    client: httpx.AsyncClient,
-    backend: Backend,
+    administration_client: httpx.AsyncClient,
     coolorg: CoolorgRpcClients,
 ) -> None:
     url = f"http://parsec.invalid/administration/organizations/{coolorg.organization_id.str}/users/freeze"
@@ -94,9 +79,8 @@ async def test_disconnect_sse(
     async with coolorg.alice.events_listen() as alice_sse:
         _ = await alice_sse.next_event()  # Server always starts by returning a `ServerConfig` event
 
-        response = await client.post(
+        response = await administration_client.post(
             url,
-            headers={"Authorization": f"Bearer {backend.config.administration_token}"},
             json={"user_id": coolorg.alice.user_id.hex, "frozen": True},
         )
         assert response.status_code == 200, response.content
@@ -116,7 +100,7 @@ async def test_disconnect_sse(
 
 
 async def test_ok(
-    client: httpx.AsyncClient,
+    administration_client: httpx.AsyncClient,
     backend: Backend,
     coolorg: CoolorgRpcClients,
 ) -> None:
@@ -126,9 +110,8 @@ async def test_ok(
 
     for _ in range(2):  # Re-freeze is idempotent
         with backend.event_bus.spy() as spy:
-            response = await client.post(
+            response = await administration_client.post(
                 url,
-                headers={"Authorization": f"Bearer {backend.config.administration_token}"},
                 json={"user_id": coolorg.alice.user_id.hex, "frozen": True},
             )
             assert response.status_code == 200, response.content
@@ -156,9 +139,8 @@ async def test_ok(
 
     for _ in range(2):
         with backend.event_bus.spy() as spy:
-            response = await client.post(
+            response = await administration_client.post(
                 url,
-                headers={"Authorization": f"Bearer {backend.config.administration_token}"},
                 json={"user_email": str(coolorg.alice.human_handle.email), "frozen": False},
             )
             assert response.status_code == 200, response.content
@@ -183,42 +165,36 @@ async def test_ok(
 
 
 async def test_unknown_organization(
-    client: httpx.AsyncClient,
-    backend: Backend,
+    administration_client: httpx.AsyncClient,
     coolorg: CoolorgRpcClients,
 ) -> None:
     url = "http://parsec.invalid/administration/organizations/DummyOrg/users/freeze"
-    response = await client.post(
+    response = await administration_client.post(
         url,
-        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
         json={"user_id": coolorg.alice.user_id.hex, "frozen": True},
     )
     assert response.status_code == 404, response.content
 
 
 async def test_unknown_user_id(
-    client: httpx.AsyncClient,
-    backend: Backend,
+    administration_client: httpx.AsyncClient,
     coolorg: CoolorgRpcClients,
 ) -> None:
     url = f"http://parsec.invalid/administration/organizations/{coolorg.organization_id.str}/users/freeze"
-    response = await client.post(
+    response = await administration_client.post(
         url,
-        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
         json={"user_id": "d51589e233c0451e9d2fa1c7b9a8b08b", "frozen": True},
     )
     assert response.status_code == 404, response.content
 
 
 async def test_unknown_email(
-    client: httpx.AsyncClient,
-    backend: Backend,
+    administration_client: httpx.AsyncClient,
     coolorg: CoolorgRpcClients,
 ) -> None:
     url = f"http://parsec.invalid/administration/organizations/{coolorg.organization_id.str}/users/freeze"
-    response = await client.post(
+    response = await administration_client.post(
         url,
-        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
         json={"user_email": "dummy@example.invalid", "frozen": True},
     )
     assert response.status_code == 404, response.content

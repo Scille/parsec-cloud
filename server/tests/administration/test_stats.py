@@ -15,7 +15,14 @@ from parsec._parsec import (
     UserUpdateCertificate,
     VlobID,
 )
-from tests.common import Backend, CoolorgRpcClients, MinimalorgRpcClients, next_organization_id
+from tests.common import (
+    AdministrationTokenAuth,
+    AdminUnauthErrorsTester,
+    Backend,
+    CoolorgRpcClients,
+    MinimalorgRpcClients,
+    next_organization_id,
+)
 
 
 def _strip_other_orgs(stats: dict[str, Any], allowed: Collection[OrganizationID]) -> dict[str, Any]:
@@ -27,48 +34,34 @@ def _strip_other_orgs(stats: dict[str, Any], allowed: Collection[OrganizationID]
     "route", ("/administration/stats", "/administration/organizations/{organization_id}/stats")
 )
 async def test_organization_stats_auth(
-    route: str, client: httpx.AsyncClient, coolorg: CoolorgRpcClients
+    route: str,
+    coolorg: CoolorgRpcClients,
+    administration_route_unauth_errors_tester: AdminUnauthErrorsTester,
 ) -> None:
     url = "http://parsec.invalid" + route.format(organization_id=coolorg.organization_id.str)
-    # No Authorization header
-    response = await client.get(url)
-    assert response.status_code == 403, response.content
-    # Invalid Authorization header
-    response = await client.get(
-        url,
-        headers={
-            "Authorization": "DUMMY",
-        },
-    )
-    assert response.status_code == 403, response.content
-    # Bad bearer token
-    response = await client.get(
-        url,
-        headers={
-            "Authorization": "Bearer BADTOKEN",
-        },
-    )
-    assert response.status_code == 403, response.content
+
+    async def do(client: httpx.AsyncClient) -> httpx.Response:
+        return await client.get(url)
+
+    await administration_route_unauth_errors_tester(do)
 
 
 @pytest.mark.parametrize(
     "route", ("/administration/stats", "/administration/organizations/{organization_id}/stats")
 )
 async def test_bad_method(
-    route: str, client: httpx.AsyncClient, backend: Backend, coolorg: CoolorgRpcClients
+    route: str,
+    client: httpx.AsyncClient,
+    coolorg: CoolorgRpcClients,
+    administration_token_auth: AdministrationTokenAuth,
 ) -> None:
     url = "http://parsec.invalid" + route.format(organization_id=coolorg.organization_id.str)
-    response = await client.post(
-        url,
-        headers={
-            "Authorization": f"Bearer {backend.config.administration_token}",
-        },
-    )
+    response = await client.post(url, auth=administration_token_auth)
     assert response.status_code == 405, response.content
 
 
 async def test_ok(
-    client: httpx.AsyncClient,
+    administration_client: httpx.AsyncClient,
     backend: Backend,
     coolorg: CoolorgRpcClients,
     minimalorg: MinimalorgRpcClients,
@@ -80,11 +73,8 @@ async def test_ok(
     )
 
     async def server_stats():
-        response = await client.get(
+        response = await administration_client.get(
             "http://parsec.invalid/administration/stats",
-            headers={
-                "Authorization": f"Bearer {backend.config.administration_token}",
-            },
         )
         assert response.status_code == 200, response.content
         return _strip_other_orgs(
@@ -93,11 +83,8 @@ async def test_ok(
         )
 
     async def org_stats(organization_id: OrganizationID):
-        response = await client.get(
+        response = await administration_client.get(
             f"http://parsec.invalid/administration/organizations/{organization_id.str}/stats",
-            headers={
-                "Authorization": f"Bearer {backend.config.administration_token}",
-            },
         )
         assert response.status_code == 200, response.content
         return response.json()
@@ -253,16 +240,12 @@ async def test_ok(
 
 
 async def test_server_stats_format(
-    client: httpx.AsyncClient,
-    backend: Backend,
+    administration_client: httpx.AsyncClient,
     minimalorg: MinimalorgRpcClients,
 ) -> None:
     async def server_stats(format: str):
-        response = await client.get(
+        response = await administration_client.get(
             f"http://parsec.invalid/administration/stats?format={format}",
-            headers={
-                "Authorization": f"Bearer {backend.config.administration_token}",
-            },
         )
         assert response.status_code == 200, response.content
         return response
@@ -302,14 +285,12 @@ async def test_server_stats_format(
 
 
 async def test_server_stats_at(
-    client: httpx.AsyncClient, backend: Backend, minimalorg: MinimalorgRpcClients
+    administration_client: httpx.AsyncClient,
+    minimalorg: MinimalorgRpcClients,
 ) -> None:
     async def server_stats(at: str):
-        response = await client.get(
+        response = await administration_client.get(
             f"http://parsec.invalid/administration/stats?format=json&at={at}",
-            headers={
-                "Authorization": f"Bearer {backend.config.administration_token}",
-            },
         )
         assert response.status_code == 200, response.content
         return _strip_other_orgs(response.json(), allowed=(minimalorg.organization_id,))

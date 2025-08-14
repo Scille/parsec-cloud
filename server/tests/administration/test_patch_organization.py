@@ -10,32 +10,20 @@ from parsec._parsec import ActiveUsersLimit
 from parsec.components.organization import OrganizationDump, TermsOfService, TosLocale, TosUrl
 from parsec.config import AccountVaultStrategy, AllowedClientAgent
 from parsec.events import EventOrganizationExpired, EventOrganizationTosUpdated
-from tests.common import Backend, CoolorgRpcClients
+from tests.common import AdminUnauthErrorsTester, Backend, CoolorgRpcClients
 
 
-async def test_get_organization_auth(client: httpx.AsyncClient, coolorg: CoolorgRpcClients) -> None:
+async def test_get_organization_auth(
+    client: httpx.AsyncClient,
+    coolorg: CoolorgRpcClients,
+    administration_route_unauth_errors_tester: AdminUnauthErrorsTester,
+) -> None:
     url = f"http://parsec.invalid/administration/organizations/{coolorg.organization_id.str}"
-    # No Authorization header
-    response = await client.patch(url, json={"is_expired": True})
-    assert response.status_code == 403, response.content
-    # Invalid Authorization header
-    response = await client.patch(
-        url,
-        headers={
-            "Authorization": "DUMMY",
-        },
-        json={"is_expired": True},
-    )
-    assert response.status_code == 403, response.content
-    # Bad bearer token
-    response = await client.patch(
-        url,
-        headers={
-            "Authorization": "Bearer BADTOKEN",
-        },
-        json={"is_expired": True},
-    )
-    assert response.status_code == 403, response.content
+
+    async def do(client: httpx.AsyncClient) -> httpx.Response:
+        return await client.patch(url, json={"is_expired": True})
+
+    await administration_route_unauth_errors_tester(do)
 
 
 @pytest.mark.parametrize(
@@ -57,7 +45,9 @@ async def test_get_organization_auth(client: httpx.AsyncClient, coolorg: Coolorg
     ),
 )
 async def test_bad_data(
-    client: httpx.AsyncClient, backend: Backend, coolorg: CoolorgRpcClients, kind: str
+    coolorg: CoolorgRpcClients,
+    kind: str,
+    administration_client: httpx.AsyncClient,
 ) -> None:
     url = f"http://parsec.invalid/administration/organizations/{coolorg.organization_id.str}"
 
@@ -92,23 +82,20 @@ async def test_bad_data(
         case unknown:
             assert False, unknown
 
-    response = await client.patch(
+    response = await administration_client.patch(
         url,
-        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
         **body_args,
     )
     assert response.status_code == 422, response.content
 
 
 async def test_bad_method(
-    client: httpx.AsyncClient,
-    backend: Backend,
+    administration_client: httpx.AsyncClient,
     coolorg: CoolorgRpcClients,
 ) -> None:
     url = f"http://parsec.invalid/administration/organizations/{coolorg.organization_id.str}"
-    response = await client.post(
+    response = await administration_client.post(
         url,
-        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
         json={},
     )
     assert response.status_code == 405, response.content
@@ -142,14 +129,13 @@ class PatchOrganizationParams(TypedDict):
 )
 async def test_ok(
     params: PatchOrganizationParams,
-    client: httpx.AsyncClient,
+    administration_client: httpx.AsyncClient,
     backend: Backend,
     coolorg: CoolorgRpcClients,
 ) -> None:
     url = f"http://parsec.invalid/administration/organizations/{coolorg.organization_id.str}"
-    response = await client.patch(
+    response = await administration_client.patch(
         url,
-        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
         json=params,
     )
     assert response.status_code == 200, response.content
@@ -177,7 +163,7 @@ async def test_ok(
 
 
 async def test_expire_and_cancel_expire(
-    client: httpx.AsyncClient,
+    administration_client: httpx.AsyncClient,
     backend: Backend,
     coolorg: CoolorgRpcClients,
 ):
@@ -186,9 +172,8 @@ async def test_expire_and_cancel_expire(
     with backend.event_bus.spy() as spy:
         # Expire
 
-        response = await client.patch(
+        response = await administration_client.patch(
             url,
-            headers={"Authorization": f"Bearer {backend.config.administration_token}"},
             json={"is_expired": True},
         )
         assert response.status_code == 200, response.content
@@ -203,9 +188,8 @@ async def test_expire_and_cancel_expire(
 
         # Re-expire, should be a no-op
 
-        response = await client.patch(
+        response = await administration_client.patch(
             url,
-            headers={"Authorization": f"Bearer {backend.config.administration_token}"},
             json={"is_expired": True},
         )
         assert response.status_code == 200, response.content
@@ -222,9 +206,8 @@ async def test_expire_and_cancel_expire(
 
         # Cancel expiration
 
-        response = await client.patch(
+        response = await administration_client.patch(
             url,
-            headers={"Authorization": f"Bearer {backend.config.administration_token}"},
             json={"is_expired": False},
         )
         assert response.status_code == 200, response.content
@@ -237,9 +220,8 @@ async def test_expire_and_cancel_expire(
 
         # Re-cancel expiration, should be a no-op
 
-        response = await client.patch(
+        response = await administration_client.patch(
             url,
-            headers={"Authorization": f"Bearer {backend.config.administration_token}"},
             json={"is_expired": False},
         )
         assert response.status_code == 200, response.content
@@ -252,7 +234,7 @@ async def test_expire_and_cancel_expire(
 
 
 async def test_set_unset_tos(
-    client: httpx.AsyncClient,
+    administration_client: httpx.AsyncClient,
     backend: Backend,
     coolorg: CoolorgRpcClients,
 ):
@@ -261,9 +243,8 @@ async def test_set_unset_tos(
     # Set
 
     with backend.event_bus.spy() as spy:
-        response = await client.patch(
+        response = await administration_client.patch(
             url,
-            headers={"Authorization": f"Bearer {backend.config.administration_token}"},
             json={"tos": {"fr_CA": "https://parsec.invalid/tos_fr1"}},
         )
         assert response.status_code == 200, response.content
@@ -280,9 +261,8 @@ async def test_set_unset_tos(
 
         # Update
 
-        response = await client.patch(
+        response = await administration_client.patch(
             url,
-            headers={"Authorization": f"Bearer {backend.config.administration_token}"},
             json={
                 "tos": {
                     "fr_CA": "https://parsec.invalid/tos_fr2",
@@ -308,9 +288,8 @@ async def test_set_unset_tos(
 
         # Unset
 
-        response = await client.patch(
+        response = await administration_client.patch(
             url,
-            headers={"Authorization": f"Bearer {backend.config.administration_token}"},
             json={"tos": None},
         )
         assert response.status_code == 200, response.content
@@ -325,13 +304,12 @@ async def test_set_unset_tos(
 
 
 async def test_404(
-    client: httpx.AsyncClient,
+    administration_client: httpx.AsyncClient,
     backend: Backend,
 ) -> None:
     url = "http://parsec.invalid/administration/organizations/Dummy"
-    response = await client.patch(
+    response = await administration_client.patch(
         url,
-        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
         json={"is_expired": True},
     )
     assert response.status_code == 404, response.content
