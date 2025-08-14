@@ -16,7 +16,6 @@ from parsec._parsec import (
     VlobID,
 )
 from tests.common import (
-    AdministrationTokenAuth,
     AdminUnauthErrorsTester,
     Backend,
     CoolorgRpcClients,
@@ -51,12 +50,11 @@ async def test_organization_stats_auth(
 )
 async def test_bad_method(
     route: str,
-    client: httpx.AsyncClient,
+    administration_client: httpx.AsyncClient,
     coolorg: CoolorgRpcClients,
-    administration_token_auth: AdministrationTokenAuth,
 ) -> None:
     url = "http://parsec.invalid" + route.format(organization_id=coolorg.organization_id.str)
-    response = await client.post(url, auth=administration_token_auth)
+    response = await administration_client.post(url)
     assert response.status_code == 405, response.content
 
 
