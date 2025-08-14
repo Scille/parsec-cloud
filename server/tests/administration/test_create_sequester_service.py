@@ -20,54 +20,43 @@ from parsec.components.sequester import (
     StorageSequesterService,
     WebhookSequesterService,
 )
-from tests.common import Backend, CoolorgRpcClients, SequesteredOrgRpcClients
+from tests.common import (
+    AdminUnauthErrorsTester,
+    Backend,
+    CoolorgRpcClients,
+    SequesteredOrgRpcClients,
+)
 
 
 async def test_bad_auth(
-    client: httpx.AsyncClient, sequestered_org: SequesteredOrgRpcClients
+    sequestered_org: SequesteredOrgRpcClients,
+    administration_route_unauth_errors_tester: AdminUnauthErrorsTester,
 ) -> None:
     url = f"http://parsec.invalid/administration/organizations/{sequestered_org.organization_id.str}/sequester/services"
-    # No Authorization header
-    response = await client.post(url)
-    assert response.status_code == 403, response.content
-    # Invalid Authorization header
-    response = await client.post(
-        url,
-        headers={
-            "Authorization": "DUMMY",
-        },
-    )
-    assert response.status_code == 403, response.content
-    # Bad bearer token
-    response = await client.post(
-        url,
-        headers={
-            "Authorization": "Bearer BADTOKEN",
-        },
-    )
-    assert response.status_code == 403, response.content
+
+    async def do(client: httpx.AsyncClient):
+        return await client.post(url)
+
+    await administration_route_unauth_errors_tester(do)
 
 
 async def test_bad_method(
-    client: httpx.AsyncClient, backend: Backend, sequestered_org: SequesteredOrgRpcClients
+    administration_client: httpx.AsyncClient, sequestered_org: SequesteredOrgRpcClients
 ) -> None:
     url = f"http://parsec.invalid/administration/organizations/{sequestered_org.organization_id.str}/sequester/services"
-    response = await client.patch(
+    response = await administration_client.patch(
         url,
-        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
         json={"service_certificate": "ZHVtbXk=", "config": {"type": "storage"}},
     )
     assert response.status_code == 405, response.content
 
 
 async def test_unknown_organization(
-    client: httpx.AsyncClient,
-    backend: Backend,
+    administration_client: httpx.AsyncClient,
 ) -> None:
     url = "http://parsec.invalid/administration/organizations/Dummy/sequester/services"
-    response = await client.post(
+    response = await administration_client.post(
         url,
-        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
         json={"service_certificate": "ZHVtbXk=", "config": {"type": "storage"}},
     )
     assert response.status_code == 404, response.content
@@ -76,7 +65,7 @@ async def test_unknown_organization(
 
 @pytest.mark.parametrize("kind", ("storage", "webhook"))
 async def test_ok(
-    client: httpx.AsyncClient,
+    administration_client: httpx.AsyncClient,
     backend: Backend,
     sequestered_org: SequesteredOrgRpcClients,
     kind: str,
@@ -115,9 +104,8 @@ async def test_ok(
             assert False, unknown
 
     url = f"http://parsec.invalid/administration/organizations/{sequestered_org.organization_id.str}/sequester/services"
-    response = await client.post(
+    response = await administration_client.post(
         url,
-        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
         json={
             "service_certificate": b64encode(certif_signed).decode(),
             "config": config,
@@ -151,8 +139,7 @@ async def test_ok(
 
 @pytest.mark.parametrize("kind", ("serialization", "signature"))
 async def test_invalid_certificate(
-    client: httpx.AsyncClient,
-    backend: Backend,
+    administration_client: httpx.AsyncClient,
     sequestered_org: SequesteredOrgRpcClients,
     kind: str,
 ) -> None:
@@ -171,9 +158,8 @@ async def test_invalid_certificate(
             assert False, unknown
 
     url = f"http://parsec.invalid/administration/organizations/{sequestered_org.organization_id.str}/sequester/services"
-    response = await client.post(
+    response = await administration_client.post(
         url,
-        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
         json={
             "service_certificate": b64encode(certif_signed).decode(),
             "config": {"type": "storage"},
@@ -184,8 +170,7 @@ async def test_invalid_certificate(
 
 
 async def test_not_sequestered_organization(
-    client: httpx.AsyncClient,
-    backend: Backend,
+    administration_client: httpx.AsyncClient,
     sequestered_org: SequesteredOrgRpcClients,
     coolorg: CoolorgRpcClients,
 ) -> None:
@@ -196,9 +181,8 @@ async def test_not_sequestered_organization(
     )
 
     url = f"http://parsec.invalid/administration/organizations/{coolorg.organization_id.str}/sequester/services"
-    response = await client.post(
+    response = await administration_client.post(
         url,
-        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
         json={
             "service_certificate": b64encode(
                 other_org_new_sequester_service_event.raw_certificate
@@ -211,8 +195,7 @@ async def test_not_sequestered_organization(
 
 
 async def test_sequestered_service_already_exists(
-    client: httpx.AsyncClient,
-    backend: Backend,
+    administration_client: httpx.AsyncClient,
     sequestered_org: SequesteredOrgRpcClients,
 ) -> None:
     certif = SequesterServiceCertificate(
@@ -224,9 +207,8 @@ async def test_sequestered_service_already_exists(
     certif_signed = sequestered_org.sequester_authority_signing_key.sign(certif.dump())
 
     url = f"http://parsec.invalid/administration/organizations/{sequestered_org.organization_id.str}/sequester/services"
-    response = await client.post(
+    response = await administration_client.post(
         url,
-        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
         json={
             "service_certificate": b64encode(certif_signed).decode(),
             "config": {"type": "storage"},
@@ -237,8 +219,7 @@ async def test_sequestered_service_already_exists(
 
 
 async def test_require_greater_timestamp(
-    client: httpx.AsyncClient,
-    backend: Backend,
+    administration_client: httpx.AsyncClient,
     sequestered_org: SequesteredOrgRpcClients,
 ) -> None:
     last_sequester_event = next(
@@ -255,9 +236,8 @@ async def test_require_greater_timestamp(
     certif_signed = sequestered_org.sequester_authority_signing_key.sign(certif.dump())
 
     url = f"http://parsec.invalid/administration/organizations/{sequestered_org.organization_id.str}/sequester/services"
-    response = await client.post(
+    response = await administration_client.post(
         url,
-        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
         json={
             "service_certificate": b64encode(certif_signed).decode(),
             "config": {"type": "storage"},

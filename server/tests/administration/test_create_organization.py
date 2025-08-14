@@ -20,30 +20,23 @@ from parsec.components.organization import (
     UnsetType,
 )
 from parsec.config import AccountVaultStrategy, AllowedClientAgent
-from tests.common import Backend, MinimalorgRpcClients, next_organization_id
+from tests.common import (
+    AdminUnauthErrorsTester,
+    Backend,
+    MinimalorgRpcClients,
+    next_organization_id,
+)
 
 
-async def test_create_organization_auth(client: httpx.AsyncClient) -> None:
+async def test_create_organization_auth(
+    administration_route_unauth_errors_tester: AdminUnauthErrorsTester,
+) -> None:
     url = "http://parsec.invalid/administration/organizations"
-    # No Authorization header
-    response = await client.post(url)
-    assert response.status_code == 403, response.content
-    # Invalid Authorization header
-    response = await client.post(
-        url,
-        headers={
-            "Authorization": "DUMMY",
-        },
-    )
-    assert response.status_code == 403, response.content
-    # Bad bearer token
-    response = await client.post(
-        url,
-        headers={
-            "Authorization": "Bearer BADTOKEN",
-        },
-    )
-    assert response.status_code == 403, response.content
+
+    async def do(client: httpx.AsyncClient):
+        return await client.post(url)
+
+    await administration_route_unauth_errors_tester(do)
 
 
 @pytest.mark.parametrize(
@@ -65,7 +58,7 @@ async def test_create_organization_auth(client: httpx.AsyncClient) -> None:
         "bad_value_account_vault_strategy",
     ),
 )
-async def test_bad_data(client: httpx.AsyncClient, backend: Backend, kind: str) -> None:
+async def test_bad_data(administration_client: httpx.AsyncClient, kind: str) -> None:
     url = "http://parsec.invalid/administration/organizations"
 
     body_args: dict[str, Any]
@@ -101,21 +94,17 @@ async def test_bad_data(client: httpx.AsyncClient, backend: Backend, kind: str) 
         case unknown:
             assert False, unknown
 
-    response = await client.post(
-        url, headers={"Authorization": f"Bearer {backend.config.administration_token}"}, **body_args
-    )
+    response = await administration_client.post(url, **body_args)
     assert response.status_code == 422, response.content
 
 
 async def test_bad_method(
-    client: httpx.AsyncClient,
-    backend: Backend,
+    administration_client: httpx.AsyncClient,
 ) -> None:
     url = "http://parsec.invalid/administration/organizations"
     org_id = OrganizationID("MyNewOrg")
-    response = await client.patch(
+    response = await administration_client.patch(
         url,
-        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
         json={
             "organization_id": org_id.str,
         },
@@ -173,16 +162,15 @@ def organization_initial_params(backend: Backend, request) -> Iterator[None]:
     ),
 )
 async def test_ok(
-    client: httpx.AsyncClient,
+    administration_client: httpx.AsyncClient,
     backend: Backend,
     args: CreateOrganizationParams,
     organization_initial_params: None,
 ) -> None:
     url = "http://parsec.invalid/administration/organizations"
     org_id = next_organization_id(prefix="MyNewOrg")
-    response = await client.post(
+    response = await administration_client.post(
         url,
-        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
         json={
             "organization_id": org_id.str,
             **args,
@@ -256,7 +244,7 @@ async def test_ok(
 
 
 async def test_overwrite_existing(
-    client: httpx.AsyncClient,
+    administration_client: httpx.AsyncClient,
     backend: Backend,
 ) -> None:
     org_id = next_organization_id(prefix="MyNewOrg")
@@ -294,9 +282,8 @@ async def test_overwrite_existing(
     )
 
     url = "http://parsec.invalid/administration/organizations"
-    response = await client.post(
+    response = await administration_client.post(
         url,
-        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
         json={
             "organization_id": org_id.str,
             "active_user_limit": None,
@@ -331,14 +318,12 @@ async def test_overwrite_existing(
 
 
 async def test_organization_already_bootstrapped(
-    client: httpx.AsyncClient,
-    backend: Backend,
+    administration_client: httpx.AsyncClient,
     minimalorg: MinimalorgRpcClients,
 ) -> None:
     url = "http://parsec.invalid/administration/organizations"
-    response = await client.post(
+    response = await administration_client.post(
         url,
-        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
         json={"organization_id": minimalorg.organization_id.str},
     )
     assert response.status_code == 400, response.content

@@ -13,41 +13,33 @@ from parsec.components.sequester import (
     StorageSequesterService,
     WebhookSequesterService,
 )
-from tests.common import Backend, CoolorgRpcClients, SequesteredOrgRpcClients
+from tests.common import (
+    AdminUnauthErrorsTester,
+    Backend,
+    CoolorgRpcClients,
+    SequesteredOrgRpcClients,
+)
 
 
 async def test_bad_auth(
-    client: httpx.AsyncClient, sequestered_org: SequesteredOrgRpcClients
+    sequestered_org: SequesteredOrgRpcClients,
+    administration_route_unauth_errors_tester: AdminUnauthErrorsTester,
 ) -> None:
     url = f"http://parsec.invalid/administration/organizations/{sequestered_org.organization_id.str}/sequester/services/config"
-    # No Authorization header
-    response = await client.put(url)
-    assert response.status_code == 403, response.content
-    # Invalid Authorization header
-    response = await client.put(
-        url,
-        headers={
-            "Authorization": "DUMMY",
-        },
-    )
-    assert response.status_code == 403, response.content
-    # Bad bearer token
-    response = await client.put(
-        url,
-        headers={
-            "Authorization": "Bearer BADTOKEN",
-        },
-    )
-    assert response.status_code == 403, response.content
+
+    async def do(client: httpx.AsyncClient):
+        return await client.put(url)
+
+    await administration_route_unauth_errors_tester(do)
 
 
 async def test_bad_method(
-    client: httpx.AsyncClient, backend: Backend, sequestered_org: SequesteredOrgRpcClients
+    administration_client: httpx.AsyncClient,
+    sequestered_org: SequesteredOrgRpcClients,
 ) -> None:
     url = f"http://parsec.invalid/administration/organizations/{sequestered_org.organization_id.str}/sequester/services/config"
-    response = await client.patch(
+    response = await administration_client.patch(
         url,
-        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
         json={
             "service_id": "460369bc70914615bf73ba30f896957e",
             "config": {"type": "webhook", "webhook_url": "https://parsec.invalid/webhook"},
@@ -57,13 +49,11 @@ async def test_bad_method(
 
 
 async def test_unknown_organization(
-    client: httpx.AsyncClient,
-    backend: Backend,
+    administration_client: httpx.AsyncClient,
 ) -> None:
     url = "http://parsec.invalid/administration/organizations/Dummy/sequester/services/config"
-    response = await client.put(
+    response = await administration_client.put(
         url,
-        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
         json={
             "service_id": "460369bc70914615bf73ba30f896957e",
             "config": {"type": "webhook", "webhook_url": "https://parsec.invalid/webhook"},
@@ -73,14 +63,12 @@ async def test_unknown_organization(
 
 
 async def test_unknown_service(
-    client: httpx.AsyncClient,
-    backend: Backend,
+    administration_client: httpx.AsyncClient,
     sequestered_org: SequesteredOrgRpcClients,
 ) -> None:
     url = f"http://parsec.invalid/administration/organizations/{sequestered_org.organization_id.str}/sequester/services/config"
-    response = await client.put(
+    response = await administration_client.put(
         url,
-        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
         json={
             "service_id": "460369bc70914615bf73ba30f896957e",
             "config": {"type": "webhook", "webhook_url": "https://parsec.invalid/webhook"},
@@ -91,15 +79,13 @@ async def test_unknown_service(
 
 
 async def test_not_sequestered_organization(
-    client: httpx.AsyncClient,
-    backend: Backend,
+    administration_client: httpx.AsyncClient,
     sequestered_org: SequesteredOrgRpcClients,
     coolorg: CoolorgRpcClients,
 ) -> None:
     url = f"http://parsec.invalid/administration/organizations/{coolorg.organization_id.str}/sequester/services/config"
-    response = await client.put(
+    response = await administration_client.put(
         url,
-        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
         json={
             "service_id": sequestered_org.sequester_service_2_id.hex,
             "config": {"type": "webhook", "webhook_url": "https://parsec.invalid/webhook"},
@@ -111,7 +97,7 @@ async def test_not_sequestered_organization(
 
 @pytest.mark.parametrize("kind", ("active", "revoked"))
 async def test_ok(
-    client: httpx.AsyncClient,
+    administration_client: httpx.AsyncClient,
     backend: Backend,
     sequestered_org: SequesteredOrgRpcClients,
     kind: str,
@@ -157,9 +143,8 @@ async def test_ok(
             assert False, unknown
 
     url = f"http://parsec.invalid/administration/organizations/{sequestered_org.organization_id.str}/sequester/services/config"
-    response = await client.put(
+    response = await administration_client.put(
         url,
-        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
         json={
             "service_id": service_id.hex,
             "config": {"type": "webhook", "webhook_url": "https://parsec.invalid/webhook"},
