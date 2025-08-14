@@ -105,6 +105,8 @@ export interface InformationOptions {
   data?: InformationData;
   unique?: boolean;
   title?: Translatable;
+  customConfirmAction?: () => Promise<boolean>;
+  customConfirmActionLabel?: Translatable;
 }
 
 export class Information {

@@ -2,6 +2,7 @@
 
 import { EntryID, EntryStatFile, EntryStatFolder, WorkspaceHistoryEntryStatFile, WorkspaceHistoryEntryStatFolder } from '@/parsec';
 import { FileOperationData } from '@/services/fileOperationManager';
+import { Translatable } from 'megashark-lib';
 
 export enum SortProperty {
   Name,
@@ -21,6 +22,11 @@ export enum OpenFallbackChoice {
   View,
 }
 
+export interface FallbackCustomParams {
+  title: Translatable;
+  subtitle: Translatable;
+  viewerOption: boolean;
+}
 export interface FileOperationProgress {
   data: FileOperationData;
   progress: number;

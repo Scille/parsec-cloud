@@ -2288,9 +2288,13 @@
         "hideMenu": "Hide menu",
         "showMenu": "Show menu",
         "openingFile": "Opening file...",
-        "fileTooBig": "File is too big to be opened using a viewer.",
-        "unknownFileType": "Cannot preview this file type.",
+        "fileTooBig": "The file is too big",
+        "informationDownload": "If you really want to edit this file, you can download it and open it in your local file explorer.",
+        "noContentFileType": "The file type is not defined. Please make sure the type is correct.",
+        "unknownFileType": "The file type is unknown",
+        "unSupportedFileType": "File not supported by Parsec",
         "noFolderPreview": "Cannot preview folders.",
+        "impossibleToOpen": "Impossible to edit this file",
         "genericError": "Failed to open the file.",
         "mediaNotSupported": "This media is not supported.",
         "retrievingFileContent": "Retrieving the file content...",
@@ -2343,11 +2347,12 @@
         }
     },
     "openFallback": {
-        "title": "File editor is not available",
-        "subtitle": "Please choose an action for this file.",
+        "title": "Parsec Edition is not available",
+        "subtitleDownload": "If you really want to edit this file, you can download it and open it in your local file explorer.",
+        "subtitlePreviewDownload": "If you want to preview this file, you can do so in Parsec or download it to open it in your local file explorer.",
         "actions": {
-            "viewer": "Open in viewer",
-            "download": "Download file",
+            "viewer": "Preview (in Parsec)",
+            "download": "Download",
             "open": "Open in explorer",
             "cancel": "Cancel"
         }

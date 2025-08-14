@@ -2287,9 +2287,13 @@
         "hideMenu": "Cacher le menu",
         "showMenu": "Afficher le menu",
         "openingFile": "Ouverture du fichier...",
-        "fileTooBig": "Le fichier est trop large pour être ouvert avec un visualiseur.",
-        "unknownFileType": "Impossible de prévisualiser ce type de fichier.",
+        "fileTooBig": "Le fichier est trop volumineux pour être ouvert.",
+        "informationDownload": "Si vous souhaitez vraiment modifier ce fichier, vous pouvez le télécharger et l'ouvrir dans votre explorateur de fichiers local.",
+        "noContentFileType": "Le type de fichier n'est pas défini. Veuillez vous assurer que le type est correct.",
+        "unknownFileType": "Le type de fichier est inconnu.",
+        "unSupportedFileType": "Fichier non modifiable depuis Parsec",
         "noFolderPreview": "Impossible de prévisualiser les dossiers.",
+        "impossibleToOpen": "Impossible d'ouvrir ce fichier",
         "genericError": "Impossible d'ouvrir le fichier.",
         "mediaNotSupported": "Ce média ne peut pas être joué.",
         "retrievingFileContent": "Récupération du contenu du fichier...",
@@ -2342,8 +2346,9 @@
         }
     },
     "openFallback": {
-        "title": "L'éditeur de fichier n'est pas disponible",
-        "subtitle": "Veuillez choisir une action pour ce fichier.",
+        "title": "Parsec Edition n'est pas disponible",
+        "subtitleDownload": "Si vous souhaitez vraiment modifier ce fichier, vous pouvez le télécharger et l'ouvrir dans votre explorateur de fichiers local.",
+        "subtitlePreviewDownload": "Si vous souhaitez prévisualiser ce fichier, vous pouvez le faire dans Parsec ou le télécharger pour l'ouvrir dans votre explorateur de fichiers local.",
         "actions": {
             "viewer": "Ouvrir dans le visualiseur",
             "download": "Télécharger le fichier",
