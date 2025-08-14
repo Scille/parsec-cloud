@@ -5,12 +5,13 @@ from pytest import LogCaptureFixture as VanillaLogCaptureFixture
 
 from parsec.cli.testbed import next_organization_id
 
-from .account import *  # noqa
-from .backend import *  # noqa
-from .client import *  # noqa
-from .data import *  # noqa
-from .letter_box import *  # noqa
-from .postgresql import *  # noqa
+# ruff: noqa: F403
+from .account import *
+from .backend import *
+from .client import *
+from .data import *
+from .letter_box import *
+from .postgresql import *
 
 next_organization_id = next_organization_id  # Re-export for convenience
 
