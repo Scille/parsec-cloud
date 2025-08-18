@@ -19,7 +19,7 @@ Recently, some changes came to disrupt this stability:
   which introduced some regressions because:
   - the new implementation was not identical to the previous one
   - the tests needed migration too, so edge-cases could have been missed
-  - the 3rd party libraries changed, new issues were detected (particularily on
+  - the 3rd party libraries changed, new issues were detected (particularly on
     macOS)
 
 - **Mountpoint strategy**: Parsec workspaces can be mounted either as *Drive* (only on Windows) or

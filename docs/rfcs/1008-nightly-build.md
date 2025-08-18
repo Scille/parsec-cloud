@@ -53,7 +53,7 @@ The [`releaser.yml`] workflow creates a [GitHub release] in draft mode. Creating
 
 We could [override the assets] of the previous nightly release (instead of recreating a new one). The problem with this approach is that GitHub sort the releases by creation date: nightly release will be put behind newer releases.
 
-So the idea is to _remove_ the previous nigthly release and recreate a new one. In order to do so, the API to [delete a release] requires a `release_id`.
+So the idea is to _remove_ the previous nightly release and recreate a new one. In order to do so, the API to [delete a release] requires a `release_id`.
 
 [override the assets]: https://stackoverflow.com/questions/62934246/github-update-overwrite-existing-asset-of-a-release
 [GitHub release]: https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases

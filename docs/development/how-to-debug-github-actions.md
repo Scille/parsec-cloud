@@ -4,7 +4,7 @@
 
 ## How to connect remotely to GitHub action for debugging
 
-To debug a GitHub Action's Job, you need to pre-emptively configure the said job with one of the following methods:
+To debug a GitHub Action's Job, you need to preemptively configure the said job with one of the following methods:
 
 - [With Upterm](#via-upterm)
 - [With Ngrok](#via-ngrok)
