@@ -110,7 +110,7 @@ libparsec_zstd = { path = "libparsec/crates/zstd", default-features = false }
 
 # Third parties
 android_logger = { version = "0.15", default-features = false }
-anyhow = { version = "1.0.98", default-features = false }
+anyhow = { version = "1.0.99", default-features = false }
 argon2 = { version = "0.5.3", default-features = false }
 assert_cmd = { version = "2.0.17", default-features = false }
 async-broadcast = { version = "0.5.1", default-features = false }
@@ -118,7 +118,7 @@ async-lock = { version = "3.4.1", default-features = false }
 blake2 = { version = "0.10.6", default-features = false }
 bytes = { version = "1.10.1", default-features = false }
 chrono = { version = "0.4.41", default-features = false }
-clap = { version = "4.5.43", default-features = false }
+clap = { version = "4.5.45", default-features = false }
 console_error_panic_hook = { version = "=0.1.6", default-features = false }
 console_log = { version = "1.0.0", default-features = false }
 crc32fast = { version = "1.5.0", default-features = false }
@@ -151,7 +151,7 @@ jni = { version = "0.21.1", default-features = false }
 js-sys = { version = "0.3.70", default-features = false }
 keyring = { version = "3.6.3", default-features = false }
 lazy_static = { version = "1.5.0", default-features = false }
-libc = { version = "0.2.174", default-features = false }
+libc = { version = "0.2.175", default-features = false }
 libsodium-sys = { version = "0.2.7", default-features = false }
 libsqlite3-sys = { version = "0.30.1", default-features = false }
 log = { version = "0.4.27", default-features = false }
@@ -166,7 +166,7 @@ pin-project = { version = "1.1.10", default-features = false }
 pkg-config = { version = "0.3.32", default-features = false }
 predicates = { version = "3.1.3", default-features = false }
 pretty_assertions = { version = "1.4.1", default-features = false }
-proc-macro2 = { version = "1.0.96", default-features = false }
+proc-macro2 = { version = "1.0.101", default-features = false }
 proptest = { version = "1.7.0", default-features = false }
 proptest-state-machine = { version = "0.3.1", default-features = false }
 pyo3 = { version = "0.25.1", default-features = false }
@@ -174,7 +174,7 @@ quote = { version = "1.0.40", default-features = false }
 rand = { version = "0.8.5", default-features = false }
 regex = { version = "1.11.1", default-features = false }
 regex-syntax = { version = "0.8.4", default-features = false }
-reqwest = { version = "0.12.22", default-features = false }
+reqwest = { version = "0.12.23", default-features = false }
 rexpect = "0.6.2"
 rmp-serde = { version = "1.3.0", default-features = false }
 rpassword = { version = "7.4.0", default-features = false }
@@ -197,12 +197,12 @@ smallvec = { version = "1.15.1", default-features = false }
 sodiumoxide = { version = "0.2.7", default-features = false }
 spinners = { version = "4.1.1", default-features = false }
 sqlx = { version = "0.8.6", default-features = false }
-syn = { version = "2.0.104", default-features = false }
-thiserror = { version = "2.0.12", default-features = false }
+syn = { version = "2.0.106", default-features = false }
+thiserror = { version = "2.0.15", default-features = false }
 tokio = { version = "1.47.1", default-features = false }
 unicode-normalization = { version = "0.1.24", default-features = false }
 url = { version = "2.5.4", default-features = false }
-uuid = { version = "1.17.0", default-features = false }
+uuid = { version = "1.18.0", default-features = false }
 wasm-bindgen = { version = "0.2.97", default-features = false }
 wasm-bindgen-futures = { version = "0.4.47", default-features = false }
 wasm-bindgen-test = { version = "0.3.47", default-features = false, features = ["std"] }
