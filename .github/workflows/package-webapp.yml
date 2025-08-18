@@ -68,7 +68,7 @@ jobs:
     runs-on: ubuntu-22.04
     name: ⚡ Package web app
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # pin v5.0.0
         with:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
@@ -79,7 +79,7 @@ jobs:
         timeout-minutes: 2
 
       - name: Download version.patch artifact
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # pin v4.3.0
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # pin v5.0.0
         with:
           name: version.patch
           path: ${{ runner.temp }}/version.patch
@@ -99,7 +99,7 @@ jobs:
         working-directory: client
 
       # Install syft
-      - uses: taiki-e/install-action@a416ddeedbd372e614cc1386e8b642692f66865e # pin v2.57.1
+      - uses: taiki-e/install-action@ad95d4e02e061d4390c4b66ef5ed56c7fee3d2ce # pin v2.58.17
         with:
           tool: syft@0.84.0, wasm-pack@${{ env.wasm-pack-version }}
 
