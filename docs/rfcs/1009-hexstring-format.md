@@ -4,7 +4,7 @@
 
 ## Overview
 
-This RFC discus how we should format a hexstring present in our codebase.
+This RFC discusses how we should format a hexstring present in our codebase.
 
 ## Background & Motivation
 

@@ -139,7 +139,7 @@ SMTP configuration
 
 Create the file ``parsec-smtp.env`` to configure the access to the SMTP server (``mailhog`` in this case).
 
-We need to set the connection informations, the sender information, in which the default language the emails are sent:
+We need to set the connection information, the sender information, the default language the emails are sent in:
 
 .. literalinclude:: parsec-smtp.env
   :language: ini
@@ -466,7 +466,7 @@ We provide 3 options to configure the TLS connection:
 
   .. note::
 
-    You are not require to provide the ciphers list as we use a default list that was recommended by the `French Cybersecurity Agency (ANSSI) <https://cyber.gouv.fr/en>`__ in `Recommandations de sécurité relatives à TLS <anssi-reco-tls_>`_
+    You are not required to provide the ciphers list as we use a default list that was recommended by the `French Cybersecurity Agency (ANSSI) <https://cyber.gouv.fr/en>`__ in `Recommandations de sécurité relatives à TLS <anssi-reco-tls_>`_
 
 .. _anssi-reco-tls: https://cyber.gouv.fr/sites/default/files/2017/07/anssi-guide-recommandations_de_securite_relatives_a_tls-v1.2.pdf
 

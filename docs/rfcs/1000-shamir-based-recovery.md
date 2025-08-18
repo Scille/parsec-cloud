@@ -119,7 +119,7 @@ Authenticated API:
                     // It contains the threshold for the quorum and the shares recipients.
                     // This field has a certain level of duplication with the "shares" below,
                     // but they are used for different things (each encrypted share is
-                    // only provided to its recipient, so the shamir recovery author wont't
+                    // only provided to its recipient, so the shamir recovery author won't
                     // get any).
                     "name": "shamir_recovery_brief_certificate",
                     "type": "Bytes"
@@ -580,7 +580,7 @@ Authenticated API for creating the invitation:
 
             // TODO: A specific reps is needed for when the target user has not Shamir recovery available
             // `not_available` seems like the obvious name, but it is already used for an unrelated
-            // situation, so not sure if we should re-use (and rename the status for the unrelated
+            // situation, so not sure if we should reuse (and rename the status for the unrelated
             // situation ? this is the right time do to if we do a major version bump !) or create
             // another one...
             {

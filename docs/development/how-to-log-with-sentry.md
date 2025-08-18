@@ -13,7 +13,7 @@ The full details are available in [Sentry Developer Docs].
 - An *event* is one instance of sending data to Sentry (generally an error or exception).
 - An *issue* is a grouping of similar events.
 - All events have a *fingerprint*. Events with the same fingerprint are *grouped together* into an issue
-  - Sentry's grouping behaviour can be customized by either tunning the fingerprint at code-level via [SDK Fingerprinting] or adapting [Fingerprint Rules] at project-level.
+  - Sentry's grouping behaviour can be customized by either tuning the fingerprint at code-level via [SDK Fingerprinting] or adapting [Fingerprint Rules] at project-level.
 
 ### Events
 
