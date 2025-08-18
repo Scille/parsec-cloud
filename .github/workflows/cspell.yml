@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout the repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # pin v5.0.0
         timeout-minutes: 5
 
       - name: Generate cspell cache key
@@ -54,7 +54,7 @@ jobs:
 
       - name: Restore cspell cache
         id: cache
-        uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684 # pin v4.2.3
+        uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # pin v4.2.4
         with:
           path: |
             package-lock.json
@@ -93,7 +93,7 @@ jobs:
         if: >-
           steps.installation.outputs.previous-cache-hash != hashFiles('.cspellcache')
           && contains(github.ref, 'gh-readonly-queue') != 'true'
-        uses: actions/cache/save@5a3ec84eff668545956fd18022155c47e93e2684 # pin v4.2.3
+        uses: actions/cache/save@0400d5f644dc74513175e3cd8d07132dd4860809 # pin v4.2.4
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |

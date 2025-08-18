@@ -48,7 +48,7 @@ jobs:
     # 20.04 is required to install PostgreSQL 12
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # pin v5.0.0
         timeout-minutes: 5
 
       - name: Retrieve runner specs
@@ -130,7 +130,7 @@ jobs:
 
       - name: Restore libparsec if Rust hasn't been modified
         id: cache-libparsec
-        uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684 # pin v4.2.3
+        uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # pin v4.2.4
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
@@ -208,7 +208,7 @@ jobs:
           (!inputs.style-only)
           && steps.cache-libparsec.outputs.cache-hit != 'true'
           && !contains(github.ref, 'gh-readonly-queue')
-        uses: actions/cache/save@5a3ec84eff668545956fd18022155c47e93e2684 # pin v4.2.3
+        uses: actions/cache/save@0400d5f644dc74513175e3cd8d07132dd4860809 # pin v4.2.4
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
