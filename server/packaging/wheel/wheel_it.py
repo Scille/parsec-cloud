@@ -48,9 +48,10 @@ def main(program_source: Path, output_dir: Path, skip_wheel: bool = False) -> No
 
     # Unlike requirements, constraint file cannot have extras
     # See https://github.com/pypa/pip/issues/8210
-    constraints_data = []
-    for line in dev_requirements.read_text(encoding="utf8").splitlines():
-        constraints_data.append(re.sub(r"\[.*\]", "", line))
+    constraints_data = [
+        re.sub(r"\[.*\]", "", line)
+        for line in dev_requirements.read_text(encoding="utf8").splitlines()
+    ]
     constraints.write_text("\n".join(constraints_data), encoding="utf8")
 
     if not skip_wheel:
