@@ -29,7 +29,7 @@
         </ion-text>
 
         <ion-button
-          class="button-normal restore-password-button"
+          class="button-normal button-default restore-password-button"
           @click="goToExportRecoveryDevice()"
           fill="clear"
         >

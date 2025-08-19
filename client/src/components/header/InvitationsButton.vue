@@ -26,6 +26,13 @@
         {{ $msTranslate({ key: 'HeaderPage.invitations.smallDisplayTitle', data: { count: invitations.length } }) }}
       </span>
     </ion-text>
+    <span
+      class="unread-count"
+      :class="{ 'unread-count--more': invitations.length > 99 }"
+      v-if="invitations.length > 0 && !isGradientButton && windowWidth < WindowSizeBreakpoints.LG"
+    >
+      {{ invitations.length > 99 ? '99+' : invitations.length }}
+    </span>
     <ion-icon
       v-if="!isGradientButton"
       :icon="mail"
@@ -39,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { Answer, MsModalResult, askQuestion, useWindowSize } from 'megashark-lib';
+import { Answer, MsModalResult, WindowSizeBreakpoints, askQuestion, useWindowSize } from 'megashark-lib';
 import { InvitationAction } from '@/components/users';
 import InvitationsListPopover from '@/components/users/InvitationsListPopover.vue';
 import InvitationsListModal from '@/components/users/InvitationsListModal.vue';
@@ -56,7 +63,7 @@ const informationManager: InformationManager = inject(InformationManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 let eventCbId: string | null = null;
 const invitations: Ref<UserInvitation[]> = ref([]);
-const { isLargeDisplay } = useWindowSize();
+const { isLargeDisplay, windowWidth } = useWindowSize();
 
 defineProps<{
   isGradientButton?: boolean;
@@ -249,6 +256,37 @@ async function greetUser(invitation: UserInvitation): Promise<void> {
       background: var(--parsec-color-light-danger-500);
       border: 2px solid var(--parsec-color-light-primary-50);
       border-radius: var(--parsec-radius-12);
+    }
+
+    @include ms.responsive-breakpoint('lg') {
+      &::after {
+        content: none;
+      }
+    }
+
+    .unread-count {
+      position: absolute;
+      right: -8px;
+      top: -8px;
+      padding-inline: 2px;
+      min-width: 1.125rem;
+      width: fit-content;
+      height: 1.125rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--parsec-color-light-secondary-white);
+      background: var(--parsec-color-light-danger-500);
+      border: 2px solid var(--parsec-color-light-primary-50);
+      border-radius: var(--parsec-radius-12);
+      z-index: 2;
+
+      &--more {
+        font-size: 10px;
+        right: -10px;
+      }
     }
   }
 }

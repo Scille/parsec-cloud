@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Locator } from '@playwright/test';
-import { expect, msTest } from '@tests/e2e/helpers';
+import { DisplaySize, expect, msTest } from '@tests/e2e/helpers';
 
 msTest('Sidebar in organization management', async ({ organizationPage }) => {
   const sidebar = organizationPage.locator('.sidebar');
@@ -60,7 +60,7 @@ msTest('Sidebar in connected page', async ({ workspaces }) => {
   await expect(recentWorkspaces.locator('.sidebar-content-workspaces--no-recent')).toBeHidden();
 });
 
-msTest('Sidebar recommendations checklist', async ({ workspaces }) => {
+msTest('Sidebar recommendations checklist in large display', async ({ workspaces }) => {
   async function checkChecklist(popover: Locator, states: Array<{ text: string; checked: boolean }>): Promise<void> {
     const items = popover.locator('.checklist-list-item');
 
@@ -132,4 +132,81 @@ msTest('Sidebar recommendations checklist', async ({ workspaces }) => {
   await recoveryItems.nth(0).locator('.recovery-item-download').locator('ion-button').click();
   await recoveryItems.nth(1).locator('.recovery-item-download').locator('ion-button').click();
   await expect(checklist).toBeHidden();
+});
+
+msTest('Sidebar recommendations checklist in small display', async ({ workspaces }) => {
+  async function checkChecklist(modal: Locator, states: Array<{ text: string; checked: boolean }>): Promise<void> {
+    const items = modal.locator('.checklist-list-item');
+
+    for (const [index, state] of states.entries()) {
+      await expect(items.nth(index).locator('.checklist-list-item__text')).toHaveText(state.text);
+      if (state.checked) {
+        await expect(items.nth(index)).toHaveTheClass('done');
+      } else {
+        await expect(items.nth(index)).not.toHaveTheClass('done');
+      }
+    }
+  }
+
+  await workspaces.setDisplaySize(DisplaySize.Small);
+
+  const checklistModal = workspaces.locator('.small-display-recommendation-checklist');
+  const checklistButton = workspaces.locator('#trigger-checklist-button');
+
+  await expect(checklistModal).toBeHidden();
+  await expect(checklistButton).toBeVisible();
+
+  await checklistButton.click();
+  await expect(checklistModal).toBeVisible();
+  // Order may differ from what is seen on the page because the CSS property
+  // `order` only re-orders the items visually, not in the DOM.
+  await checkChecklist(checklistModal, [
+    { text: 'Add an Owner to the workspace wksp1', checked: false },
+    { text: 'Add second device', checked: true },
+    { text: 'Create a recovery file', checked: false },
+  ]);
+  await checklistModal.locator('ion-backdrop').click();
+  await expect(checklistModal).toBeHidden();
+
+  // Add an owner on the workspace
+  await workspaces.locator('.workspace-card-item').nth(0).locator('.icon-share-container').nth(0).click();
+  const workspaceSharingModal = workspaces.locator('.workspace-sharing-modal');
+  await expect(workspaceSharingModal).toBeVisible();
+  const roleDropdown = workspaceSharingModal.page().locator('.sheet-modal');
+  const roles = roleDropdown.getByRole('listitem');
+  const users = workspaceSharingModal.locator('.ms-modal-content').locator('.user-member-item');
+
+  await users.nth(1).locator('.dropdown-button').click();
+  await expect(roles.locator('.option-text__label')).toHaveText(['Owner', 'Manager', 'Contributor', 'Reader', 'Not shared']);
+  // Set contributor
+  await roles.nth(0).click();
+  await workspaces.locator('.sheet-modal').locator('.button-solid').nth(1).click();
+  await expect(users.nth(1).locator('#dropdown-popover-button').locator('.input-text')).toHaveText('Owner');
+  await workspaceSharingModal.locator('.closeBtn').click();
+
+  await expect(checklistButton).toHaveTheClass('unread');
+
+  await checklistButton.click();
+  await expect(checklistModal).toBeVisible();
+  // `order` only re-orders the items visually, not in the DOM.
+  await checkChecklist(checklistModal, [
+    { text: 'Add a second Owner to the workspaces you own', checked: true },
+    { text: 'Add second device', checked: true },
+    { text: 'Create a recovery file', checked: false },
+  ]);
+  await checklistModal.locator('ion-backdrop').click();
+  await expect(checklistModal).toBeHidden();
+  await workspaces.locator('.toast-container').locator('.toast-button').click();
+
+  // Create a recovery file
+  await workspaces.locator('#tab-bar').locator('.tab-bar-menu-button').nth(3).click();
+  workspaces.locator('.menu-list__item').nth(3).click();
+  const profilePage = workspaces;
+  await expect(profilePage.locator('.menu-list__item').nth(3)).toHaveText('Recovery files');
+  await profilePage.locator('.restore-password-button').click();
+
+  await workspaces.locator('.recovery-item-download').locator('ion-button').nth(0).click();
+  await workspaces.locator('.recovery-item-download').locator('ion-button').nth(1).click();
+  await workspaces.locator('#tab-bar').locator('.tab-bar-menu-button').nth(1).click();
+  await expect(checklistModal).toBeHidden();
 });

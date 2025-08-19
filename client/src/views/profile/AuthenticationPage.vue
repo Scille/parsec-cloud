@@ -18,7 +18,7 @@
         />
         <ion-button
           id="change-authentication-button"
-          class="update-auth-button"
+          class="update-auth-button button-default"
           fill="clear"
           @click="openChangeAuthentication()"
         >

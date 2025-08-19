@@ -4,7 +4,7 @@
   <div class="devices-container">
     <ion-button
       id="add-device-button"
-      class="button-normal"
+      class="button-normal button-default"
       fill="clear"
       @click="onAddDeviceClick()"
     >

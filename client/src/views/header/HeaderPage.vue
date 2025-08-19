@@ -94,6 +94,27 @@
                 :icon="search"
               />
             </ion-button>
+            <div
+              v-if="!isMobile() && securityWarningsCount > 0 && securityWarnings && isSmallDisplay"
+              id="trigger-checklist-button"
+              class="topbar-right-button__item unread"
+              @click="openSecurityWarningsModal()"
+              ref="checklistSecurityButton"
+            >
+              <ion-icon :icon="checkmarkCircle" />
+              <div class="checklist-security-levels">
+                <span
+                  v-if="securityWarnings?.isWorkspaceOwner"
+                  class="security-level"
+                  :class="{ 'security-level--done': securityWarningsCount < 3 }"
+                />
+                <span
+                  class="security-level"
+                  :class="{ 'security-level--done': securityWarningsCount < 2 }"
+                />
+                <span class="security-level" />
+              </div>
+            </div>
             <ion-button
               v-if="!isMobile()"
               slot="icon-only"
@@ -133,8 +154,9 @@ import { pxToRem } from '@/common/utils';
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import InvitationsButton from '@/components/header/InvitationsButton.vue';
-import { ClientInfo, Path, UserProfile, getClientInfo, isMobile, getWorkspaceName } from '@/parsec';
+import { ClientInfo, Path, UserProfile, getClientInfo, isMobile, getWorkspaceName, WorkspaceRole } from '@/parsec';
 import {
+  ProfilePages,
   Routes,
   currentRouteIs,
   currentRouteIsFileRoute,
@@ -152,10 +174,11 @@ import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } fr
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import useSidebarMenu from '@/services/sidebarMenu';
 import useHeaderControl from '@/services/headerControl';
-import { Translatable, MsImage, SidebarToggle, useWindowSize } from 'megashark-lib';
+import { Translatable, MsImage, SidebarToggle, useWindowSize, MsModalResult } from 'megashark-lib';
 import NotificationCenterPopover from '@/views/header/NotificationCenterPopover.vue';
 import NotificationCenterModal from '@/views/header/NotificationCenterModal.vue';
 import ProfileHeaderOrganization from '@/views/header/ProfileHeaderOrganization.vue';
+import RecommendationChecklistPopoverModal from '@/components/misc/RecommendationChecklistPopoverModal.vue';
 import { openSettingsModal } from '@/views/settings';
 import {
   IonButton,
@@ -171,13 +194,15 @@ import {
   popoverController,
   modalController,
 } from '@ionic/vue';
-import { home, notifications, search } from 'ionicons/icons';
+import { getSecurityWarnings, RecommendationAction, SecurityWarnings } from '@/components/misc';
+import { EventData, EventDistributor, EventDistributorKey, Events, WorkspaceRoleUpdateData } from '@/services/eventDistributor';
+import { checkmarkCircle, home, notifications, search } from 'ionicons/icons';
 import { Ref, inject, onMounted, onUnmounted, ref, computed, watch, useTemplateRef } from 'vue';
-import { EventDistributor, EventDistributorKey } from '@/services/eventDistributor';
 
 const { windowWidth, isLargeDisplay, isSmallDisplay } = useWindowSize();
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 let hotkeys: HotkeyGroup | null = null;
+let eventDistributorCbId: string | null = null;
 const workspaceName = ref('');
 const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu, hide: hideSidebarMenu } = useSidebarMenu();
 const { isHeaderVisible } = useHeaderControl();
@@ -187,6 +212,18 @@ const notificationPopoverIsVisible: Ref<boolean> = ref(false);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 const notificationCenterButtonRef = useTemplateRef('notificationCenterButton');
+const securityWarnings = ref<SecurityWarnings | undefined>();
+const securityWarningsCount = computed(() => {
+  if (!securityWarnings.value) {
+    return 0;
+  }
+  return (
+    (securityWarnings.value.hasRecoveryDevice ? 0 : 1) +
+    (securityWarnings.value.hasMultipleDevices ? 0 : 1) +
+    (securityWarnings.value.soloOwnerWorkspaces.length === 0 ? 0 : 1)
+  );
+});
+
 const showHeader = computed(() => {
   // Override visibility for specific routes
   if (currentRouteIs(Routes.FileHandler)) {
@@ -303,11 +340,36 @@ onMounted(async () => {
     window.electronAPI.log('error', `Failed to retrieve user info ${JSON.stringify(result.error)}`);
   }
   await updateRoute();
+
+  eventDistributorCbId = await eventDistributor.registerCallback(
+    Events.WorkspaceCreated | Events.MenuAction | Events.WorkspaceRoleUpdate | Events.DeviceCreated,
+    async (event: Events, data?: EventData) => {
+      if (event === Events.WorkspaceCreated) {
+        securityWarnings.value = await getSecurityWarnings();
+      } else if (event === Events.DeviceCreated) {
+        if (!securityWarnings.value || !securityWarnings.value.hasMultipleDevices || !securityWarnings.value.hasRecoveryDevice) {
+          securityWarnings.value = await getSecurityWarnings();
+        }
+      } else if (event === Events.WorkspaceRoleUpdate) {
+        const updateData = data as WorkspaceRoleUpdateData;
+
+        if (updateData.newRole === null || updateData.newRole === WorkspaceRole.Owner) {
+          securityWarnings.value = await getSecurityWarnings();
+        }
+      } else if (event === Events.Online) {
+        securityWarnings.value = await getSecurityWarnings();
+      }
+    },
+  );
+  securityWarnings.value = await getSecurityWarnings();
 });
 
 onUnmounted(async () => {
   if (hotkeys) {
     hotkeyManager.unregister(hotkeys);
+  }
+  if (eventDistributorCbId) {
+    eventDistributor.removeCallback(eventDistributorCbId);
   }
   routeWatchCancel();
   topbarWidthWatchCancel();
@@ -374,6 +436,37 @@ async function openNotificationCenter(event: Event): Promise<void> {
     await modal.dismiss();
   }
   notificationPopoverIsVisible.value = false;
+}
+
+async function openSecurityWarningsModal(): Promise<void> {
+  if (!securityWarnings.value) {
+    return;
+  }
+  const modal = await modalController.create({
+    component: RecommendationChecklistPopoverModal,
+    cssClass: 'small-display-recommendation-checklist',
+    showBackdrop: true,
+    handle: true,
+    backdropDismiss: true,
+    expandToScroll: false,
+    initialBreakpoint: isLargeDisplay.value ? undefined : 1,
+    componentProps: {
+      securityWarnings: securityWarnings.value,
+      isModal: true,
+    },
+  });
+  await modal.present();
+  const { data, role } = await modal.onWillDismiss();
+  await modal.dismiss();
+  if (role === MsModalResult.Confirm && data.action) {
+    if (data.action === RecommendationAction.AddDevice) {
+      await navigateTo(Routes.MyProfile, { query: { profilePage: ProfilePages.Devices } });
+    } else if (data.action === RecommendationAction.CreateRecoveryFiles) {
+      await navigateTo(Routes.MyProfile, { query: { profilePage: ProfilePages.Recovery } });
+    } else if (data.action === RecommendationAction.AddWorkspaceOwner) {
+      await navigateTo(Routes.Workspaces);
+    }
+  }
 }
 </script>
 
@@ -474,13 +567,52 @@ async function openNotificationCenter(event: Event): Promise<void> {
         &::after {
           content: '';
           position: absolute;
+          background: var(--parsec-color-light-danger-500);
           right: 0.45rem;
           top: 0.35rem;
           width: 0.625rem;
           height: 0.625rem;
-          background: var(--parsec-color-light-danger-500);
           border: 2px solid var(--parsec-color-light-secondary-inversed-contrast);
           border-radius: var(--parsec-radius-12);
+        }
+      }
+    }
+  }
+
+  #trigger-checklist-button {
+    padding: 0.625rem;
+    border-radius: var(--parsec-radius-12);
+    cursor: pointer;
+    position: relative;
+    display: flex;
+
+    &:hover {
+      background: var(--parsec-color-light-secondary-premiere);
+    }
+
+    .checklist-security-levels {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      transform: translateY(15%);
+      justify-content: center;
+      align-items: center;
+      gap: 0.15rem;
+      height: fit-content;
+
+      .security-level {
+        width: 0.5rem;
+        height: 0.5rem;
+        background: var(--parsec-color-light-primary-500);
+        opacity: 0.3;
+        border-radius: var(--parsec-radius-2);
+
+        &--done {
+          opacity: 1;
+          background: var(--parsec-color-light-primary-400);
         }
       }
     }
