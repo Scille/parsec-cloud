@@ -72,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-import { popoverController, IonText, IonIcon } from '@ionic/vue';
+import { popoverController, IonText, IonIcon, modalController } from '@ionic/vue';
 import { checkmarkCircle, chevronForward, radioButtonOff } from 'ionicons/icons';
 import { MsModalResult } from 'megashark-lib';
 import { RecommendationAction, SecurityWarnings } from '@/components/misc/securityRecommendations';
@@ -81,6 +81,7 @@ import { computed } from 'vue';
 
 const props = defineProps<{
   securityWarnings: SecurityWarnings;
+  isModal?: boolean;
 }>();
 
 const workspaceWarningClickable = computed(() => {
@@ -88,7 +89,11 @@ const workspaceWarningClickable = computed(() => {
 });
 
 async function onClick(action: RecommendationAction): Promise<void> {
-  await popoverController.dismiss({ action: action }, MsModalResult.Confirm);
+  if (props.isModal) {
+    await modalController.dismiss({ action: action }, MsModalResult.Confirm);
+  } else {
+    await popoverController.dismiss({ action: action }, MsModalResult.Confirm);
+  }
 }
 </script>
 
@@ -132,7 +137,8 @@ async function onClick(action: RecommendationAction): Promise<void> {
     padding: 0.625rem 0.5rem;
     align-items: center;
     text-wrap: wrap;
-    background-color: var(--parsec-color-light-secondary-background);
+    box-shadow: var(--parsec-shadow-soft);
+    background-color: var(--parsec-color-light-secondary-white);
     border-radius: var(--parsec-radius-8);
     transition: all 0.2s ease-in-out;
 
@@ -173,10 +179,10 @@ async function onClick(action: RecommendationAction): Promise<void> {
     }
 
     &.done {
-      background-color: var(--parsec-color-light-secondary-white);
       color: var(--parsec-color-light-secondary-text);
+      background-color: var(--parsec-color-light-secondary-background);
+      box-shadow: none;
       cursor: default;
-      box-shadow: var(--parsec-shadow-soft);
       order: 0;
 
       .icon-left {

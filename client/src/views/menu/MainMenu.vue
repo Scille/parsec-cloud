@@ -384,7 +384,7 @@ import { WorkspaceAction } from '@/views/workspaces';
 import { isUserAction, UserAction } from '@/views/users';
 import { useCustomTabBar } from '@/views/menu/utils';
 import { getSecurityWarnings, RecommendationAction, SecurityWarnings } from '@/components/misc';
-import RecommendationChecklistPopover from '@/components/misc/RecommendationChecklistPopover.vue';
+import RecommendationChecklistPopoverModal from '@/components/misc/RecommendationChecklistPopoverModal.vue';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
 
@@ -658,7 +658,7 @@ async function openSecurityWarningsPopover(event: MouseEvent): Promise<void> {
     return;
   }
   const popover = await popoverController.create({
-    component: RecommendationChecklistPopover,
+    component: RecommendationChecklistPopoverModal,
     cssClass: 'recommendation-checklist',
     event: event,
     side: 'right',
