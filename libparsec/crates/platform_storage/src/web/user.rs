@@ -104,7 +104,7 @@ impl PlatformUserStorage {
                     )?;
 
                 if checkpoint_or_undefined.is_undefined() {
-                    return Ok(0);
+                    Ok(0)
                 } else {
                     js_to_rs_u64(checkpoint_or_undefined)
                         .with_context(|| format!("Invalid entry, got {singleton:?}"))
@@ -128,7 +128,7 @@ impl PlatformUserStorage {
 
                 let singleton = get_singleton_object(&store)
                     .await?
-                    .unwrap_or_else(|| js_sys::Object::new());
+                    .unwrap_or_else(js_sys::Object::new);
 
                 // Update checkpoint field
 
@@ -184,7 +184,7 @@ impl PlatformUserStorage {
 
                 let singleton = get_singleton_object(&store)
                     .await?
-                    .unwrap_or_else(|| js_sys::Object::new());
+                    .unwrap_or_else(js_sys::Object::new);
 
                 let blob_or_undefined =
                     js_sys::Reflect::get(&singleton, &SINGLETON_BLOB_FIELD.into()).map_err(
@@ -220,7 +220,7 @@ impl PlatformUserStorage {
 
                 let singleton = get_singleton_object(&store)
                     .await?
-                    .unwrap_or_else(|| js_sys::Object::new());
+                    .unwrap_or_else(js_sys::Object::new);
 
                 // Update base version fields
 
@@ -261,7 +261,7 @@ impl PlatformUserStorage {
                 js_sys::Reflect::set(
                     &singleton,
                     &SINGLETON_BLOB_FIELD.into(),
-                    &js_sys::Uint8Array::from(encrypted.as_ref()).into(),
+                    &js_sys::Uint8Array::from(encrypted).into(),
                 )
                 .expect("target is an object");
 
@@ -291,7 +291,7 @@ impl PlatformUserStorage {
                 let checkpoint = match &maybe_singleton {
                     Some(singleton) => {
                         let checkpoint_or_undefined =
-                            js_sys::Reflect::get(&singleton, &SINGLETON_CHECKPOINT_FIELD.into())
+                            js_sys::Reflect::get(singleton, &SINGLETON_CHECKPOINT_FIELD.into())
                                 .map_err(|e| {
                                     anyhow::anyhow!("Invalid entry, got {singleton:?}: error {e:?}")
                                 })?;
@@ -311,7 +311,7 @@ impl PlatformUserStorage {
                 let vlobs = match &maybe_singleton {
                     Some(singleton) => {
                         let need_sync_js =
-                            js_sys::Reflect::get(&singleton, &SINGLETON_NEED_SYNC_FIELD.into())
+                            js_sys::Reflect::get(singleton, &SINGLETON_NEED_SYNC_FIELD.into())
                                 .map_err(|e| {
                                     anyhow::anyhow!("Invalid entry, got {singleton:?}: error {e:?}")
                                 })?;
@@ -320,19 +320,17 @@ impl PlatformUserStorage {
                         })?;
 
                         let base_version_js =
-                            js_sys::Reflect::get(&singleton, &SINGLETON_BASE_VERSION_FIELD.into())
+                            js_sys::Reflect::get(singleton, &SINGLETON_BASE_VERSION_FIELD.into())
+                                .map_err(|e| {
+                                anyhow::anyhow!("Invalid entry, got {singleton:?}: error {e:?}")
+                            })?;
+                        let base_version = js_to_rs_u64(base_version_js)?;
+
+                        let remote_version_js =
+                            js_sys::Reflect::get(singleton, &SINGLETON_REMOTE_VERSION_FIELD.into())
                                 .map_err(|e| {
                                     anyhow::anyhow!("Invalid entry, got {singleton:?}: error {e:?}")
                                 })?;
-                        let base_version = js_to_rs_u64(base_version_js)?;
-
-                        let remote_version_js = js_sys::Reflect::get(
-                            &singleton,
-                            &SINGLETON_REMOTE_VERSION_FIELD.into(),
-                        )
-                        .map_err(|e| {
-                            anyhow::anyhow!("Invalid entry, got {singleton:?}: error {e:?}")
-                        })?;
                         let remote_version = js_to_rs_u64(remote_version_js)?;
 
                         vec![(self.realm_id, need_sync, base_version, remote_version)]
