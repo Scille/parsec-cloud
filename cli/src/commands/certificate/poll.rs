@@ -14,8 +14,7 @@ pub async fn poll(_args: Args, client: &StartedClient) -> anyhow::Result<()> {
     let mut spinner = start_spinner("Poll server for new certificates".into());
     let new_certificates = client.poll_server_for_new_certificates().await?;
     spinner.stop_with_message(format!(
-        "Added {} new certificates {}",
-        new_certificates, GREEN_CHECKMARK
+        "Added {new_certificates} new certificates {GREEN_CHECKMARK}"
     ));
     Ok(())
 }

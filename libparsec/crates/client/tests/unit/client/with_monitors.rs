@@ -342,13 +342,13 @@ async fn multi_devices_with_confinement(env: &TestbedEnv) {
         .create_folder("/foo".parse().unwrap())
         .await
         .unwrap();
-    eprintln!("Foo id: {:?}", foo_id);
+    eprintln!("Foo id: {foo_id:?}");
     let foo_bar_txt_path: FsPath = "/foo/bar.txt".parse().unwrap();
     let bar_id = alice1_workspace
         .create_file(foo_bar_txt_path.clone())
         .await
         .unwrap();
-    eprintln!("Bar id: {:?}", bar_id);
+    eprintln!("Bar id: {bar_id:?}");
     let fd = alice1_workspace
         .open_file(foo_bar_txt_path.clone(), OpenOptions::read_write())
         .await
@@ -440,7 +440,7 @@ async fn multi_devices_with_confinement(env: &TestbedEnv) {
                 libparsec_platform_async::sleep(std::time::Duration::from_millis(50)).await;
                 continue;
             }
-            Err(err) => panic!("Unexpected error: {:?}", err),
+            Err(err) => panic!("Unexpected error: {err:?}"),
         };
         let mut result = vec![];
         alice2_workspace
@@ -643,7 +643,7 @@ async fn multi_devices_with_move_out_of_confinement(env: &TestbedEnv) {
                 libparsec_platform_async::sleep(std::time::Duration::from_millis(50)).await;
                 continue;
             }
-            Err(err) => panic!("Unexpected error: {:?}", err),
+            Err(err) => panic!("Unexpected error: {err:?}"),
         };
         let mut result = vec![];
         alice2_workspace

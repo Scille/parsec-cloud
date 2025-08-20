@@ -318,10 +318,7 @@ async fn non_placeholder(
         .unwrap()
     {
         ArcLocalChildManifest::File(m) => m,
-        m => panic!(
-            "Invalid manifest type for `/bar.txt`, expecting file and got: {:?}",
-            m
-        ),
+        m => panic!("Invalid manifest type for `/bar.txt`, expecting file and got: {m:?}"),
     };
 
     // 4) Check the outcome
@@ -349,7 +346,7 @@ async fn non_placeholder(
         p_assert_ne!(conflicted_id, wksp1_bar_txt_id);
         let conflicted_manifest = match wksp1_ops.store.get_manifest(conflicted_id).await.unwrap() {
             ArcLocalChildManifest::File(manifest) => manifest,
-            ArcLocalChildManifest::Folder(manifest) => panic!("Expected file, got {:?}", manifest),
+            ArcLocalChildManifest::Folder(manifest) => panic!("Expected file, got {manifest:?}"),
         };
 
         let LocalFileManifest {
@@ -406,7 +403,7 @@ async fn non_placeholder(
         p_assert_ne!(conflicted_id, wksp1_bar2_txt_id);
         let conflicted_manifest = match wksp1_ops.store.get_manifest(conflicted_id).await.unwrap() {
             ArcLocalChildManifest::File(manifest) => manifest,
-            ArcLocalChildManifest::Folder(manifest) => panic!("Expected file, got {:?}", manifest),
+            ArcLocalChildManifest::Folder(manifest) => panic!("Expected file, got {manifest:?}"),
         };
 
         let LocalFileManifest {
@@ -570,7 +567,7 @@ async fn entry_busy(
                 },
             );
         }
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     }
 
     p_assert_matches!(

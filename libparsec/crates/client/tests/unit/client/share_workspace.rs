@@ -22,7 +22,7 @@ async fn ok_with_author_having_changed_its_role(
             "unshared_then_shared_again" => {
                 builder.share_realm(wksp1_id, "bob", None);
             }
-            unknown => panic!("Unknown kind: {}", unknown),
+            unknown => panic!("Unknown kind: {unknown}"),
         }
 
         // ...but then he gets promoted to Manager
@@ -61,7 +61,7 @@ async fn ok(#[values("author_is_owner", "author_is_manager")] kind: &str, env: &
                 "author_is_manager" => {
                     builder.share_realm(wksp1_id, "bob", RealmRole::Manager);
                 }
-                unknown => panic!("Unknown kind: {}", unknown),
+                unknown => panic!("Unknown kind: {unknown}"),
             }
             builder.certificates_storage_fetch_certificates("bob@dev1");
             builder
@@ -276,7 +276,7 @@ async fn can_unshare_with_revoked_recipient(
             })
             .await;
         }
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     }
 
     let alice = env.local_device("alice@dev1");
@@ -314,7 +314,7 @@ async fn author_not_allowed(#[values("from_client", "from_server")] kind: &str, 
             })
             .await;
         }
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     };
 
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");

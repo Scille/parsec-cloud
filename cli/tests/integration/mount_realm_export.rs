@@ -141,10 +141,7 @@ async fn sequester_decryptor(tmp_path: TmpPath) {
                 match children.len() {
                     0 => None,
                     1 => Some(children[0].path()),
-                    _ => panic!(
-                        "Too many entries in the base mountpoint directory: {:?}",
-                        children
-                    ),
+                    _ => panic!("Too many entries in the base mountpoint directory: {children:?}"),
                 }
             });
 

@@ -18,7 +18,7 @@ pub async fn workspace_sync(args: Args, client: &StartedClient) -> anyhow::Resul
     let workspace = client.start_workspace(wid).await?;
 
     let (name, role) = workspace.get_current_name_and_self_role();
-    let mut handle = start_spinner(format!("Syncing workspace {}", name));
+    let mut handle = start_spinner(format!("Syncing workspace {name}"));
 
     log::debug!("Refreshing realm checkpoint");
     workspace.refresh_realm_checkpoint().await?;
@@ -31,7 +31,7 @@ pub async fn workspace_sync(args: Args, client: &StartedClient) -> anyhow::Resul
             log::debug!("No more entries to inbound sync");
             break;
         }
-        log::debug!("Entries to inbound sync: {:?}", entries_to_sync);
+        log::debug!("Entries to inbound sync: {entries_to_sync:?}");
         for entry in entries_to_sync {
             workspace.inbound_sync(entry).await?;
         }
@@ -45,14 +45,14 @@ pub async fn workspace_sync(args: Args, client: &StartedClient) -> anyhow::Resul
                 log::debug!("No more entries to outbound sync");
                 break;
             }
-            log::debug!("Entries to outbound sync: {:?}", entries_to_sync);
+            log::debug!("Entries to outbound sync: {entries_to_sync:?}");
             for entry in entries_to_sync {
                 workspace.outbound_sync(entry).await?;
             }
         }
     }
 
-    handle.stop_with_message(format!("Workspace {} has been synced", name));
+    handle.stop_with_message(format!("Workspace {name} has been synced"));
 
     drop(workspace);
     client.stop_workspace(wid).await;

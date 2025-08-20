@@ -60,7 +60,7 @@ async fn file(
                     p_assert_matches!(err.kind(), std::io::ErrorKind::NotFound);
                 }
 
-                unknown => panic!("Unknown kind: {}", unknown),
+                unknown => panic!("Unknown kind: {unknown}"),
             };
         }
     );

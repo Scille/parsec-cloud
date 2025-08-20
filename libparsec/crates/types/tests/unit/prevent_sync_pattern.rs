@@ -30,14 +30,13 @@ fn load_default_pattern_file() {
         "desktop.ini",
         "shortcut.lnk",
     ] {
-        assert!(pattern.is_match(candidate), "{:?} should match", candidate);
+        assert!(pattern.is_match(candidate), "{candidate:?} should match");
     }
 
     for candidate in &["secrets.txt", "a.docx", "picture.png"] {
         assert!(
             !pattern.is_match(candidate),
-            "{:?} should not match",
-            candidate
+            "{candidate:?} should not match"
         );
     }
 }

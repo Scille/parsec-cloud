@@ -42,7 +42,7 @@ async fn already_exists(
             let target_name = match kind {
                 "exist_as_file" => "bar.txt",
                 "exist_as_folder" => "foo",
-                unknown => panic!("Unknown kind: {}", unknown),
+                unknown => panic!("Unknown kind: {unknown}"),
             };
             let new_dir = mountpoint_path.join(target_name);
 
@@ -54,7 +54,7 @@ async fn already_exists(
                 {
                     let mut guard = crate::LOOKUP_HOOK.lock().unwrap();
                     *guard = Some(Box::new(move |path| {
-                        if path == &format!("/{}", target_name).parse().unwrap() {
+                        if path == &format!("/{target_name}").parse().unwrap() {
                             Some(Err(
                                 libparsec_client::workspace::WorkspaceStatEntryError::EntryNotFound,
                             ))
@@ -66,7 +66,7 @@ async fn already_exists(
                 }
 
                 let entries = tokio::fs::read_dir(mountpoint_path.clone()).await.unwrap();
-                println!("Entries: {:?}", entries);
+                println!("Entries: {entries:?}");
 
                 let err = tokio::fs::create_dir(&new_dir).await.unwrap_err();
                 p_assert_matches!(err.kind(), std::io::ErrorKind::AlreadyExists);

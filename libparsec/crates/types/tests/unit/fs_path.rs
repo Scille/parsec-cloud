@@ -15,7 +15,7 @@ fn entry_name_too_long() {
     p_assert_matches!(bad.parse::<EntryName>(), Err(EntryNameError::NameTooLong));
 
     // Same for FsPath
-    let bad = format!("/{}", bad);
+    let bad = format!("/{bad}");
     p_assert_matches!(
         bad.parse::<FsPath>(),
         Err(FsPathError::InvalidEntry(EntryNameError::NameTooLong))

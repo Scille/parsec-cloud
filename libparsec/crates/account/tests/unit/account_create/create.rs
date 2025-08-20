@@ -47,7 +47,7 @@ async fn ok(#[values("master_secret", "password")] kind: &str, env: &TestbedEnv)
                 password: &password,
             },
         ),
-        _ => panic!("Unknown kind: {}", kind),
+        _ => panic!("Unknown kind: {kind}"),
     };
 
     let retrieved_stuff = Arc::new(Mutex::new(None));
@@ -202,7 +202,7 @@ async fn unknown_status(env: &TestbedEnv) {
         .await
         .unwrap_err(),
         AccountCreateError::Internal(err)
-        if format!("{}", err) == "Unexpected server response: UnknownStatus { unknown_status: \"unknown\", reason: None }"
+        if format!("{err}") == "Unexpected server response: UnknownStatus { unknown_status: \"unknown\", reason: None }"
     );
 }
 
@@ -300,6 +300,6 @@ async fn auth_method_id_already_exists(env: &TestbedEnv) {
             .await
             .unwrap_err(),
         AccountCreateError::Internal(err)
-        if format!("{}", err) == "Unexpected server response: AuthMethodIdAlreadyExists"
+        if format!("{err}") == "Unexpected server response: AuthMethodIdAlreadyExists"
     );
 }

@@ -86,7 +86,7 @@ fn task_future_factory(
                         CertifPollServerError::InvalidCertificate(_) => (),
                         CertifPollServerError::Internal(err) => {
                             // Unexpected error occurred, better stop the monitor
-                            log::error!("Certificate monitor has crashed: {}", err);
+                            log::error!("Certificate monitor has crashed: {err}");
                             let event = EventMonitorCrashed {
                                 monitor: CERTIF_POLL_MONITOR_NAME,
                                 workspace_id: None,

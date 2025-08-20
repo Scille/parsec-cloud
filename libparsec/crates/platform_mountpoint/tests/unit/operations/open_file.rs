@@ -54,7 +54,7 @@ async fn ok_first_open(
                     open_options.create_new(true);
                     ("new.txt", 0)
                 }
-                unknown => panic!("Unknown kind: {}", unknown),
+                unknown => panic!("Unknown kind: {unknown}"),
             };
 
             // Do file open + close in it own dedicated thread. This is needed
@@ -67,7 +67,7 @@ async fn ok_first_open(
             .unwrap();
 
             let stat = wksp1_ops
-                .stat_entry(&format!("/{}", name).parse().unwrap())
+                .stat_entry(&format!("/{name}").parse().unwrap())
                 .await
                 .unwrap();
             p_assert_matches!(stat, EntryStat::File { size, .. } if size == expected_size);
@@ -101,7 +101,7 @@ async fn ok_already_opened(
                     open_options.create(true);
                     ("bar.txt", 11)
                 }
-                unknown => panic!("Unknown kind: {}", unknown),
+                unknown => panic!("Unknown kind: {unknown}"),
             };
 
             // Do file open + close in it own dedicated thread. This is needed
@@ -119,7 +119,7 @@ async fn ok_already_opened(
             .unwrap();
 
             let stat = wksp1_ops
-                .stat_entry(&format!("/{}", name).parse().unwrap())
+                .stat_entry(&format!("/{name}").parse().unwrap())
                 .await
                 .unwrap();
             p_assert_matches!(stat, EntryStat::File { size, .. } if size == expected_size);
@@ -223,7 +223,7 @@ async fn stopped(
                 "create_open" => {
                     open_options.write(true).create(true);
                 }
-                unknown => panic!("Unknown kind: {}", unknown),
+                unknown => panic!("Unknown kind: {unknown}"),
             }
 
             let err = open_options
@@ -282,7 +282,7 @@ async fn offline(
                 "create_open" => {
                     open_options.write(true).create(true);
                 }
-                unknown => panic!("Unknown kind: {}", unknown),
+                unknown => panic!("Unknown kind: {unknown}"),
             }
             let err = open_options
                 .open(mountpoint_path.join("bar.txt"))
@@ -353,7 +353,7 @@ async fn read_only_realm(
             "open_for_read_write" => { open_options.read(true).write(true); (false, "bar.txt") },
             "create_append" => { open_options.append(true).create(true); (false, "new.txt") },
             "create_new_write" => { open_options.write(true).create_new(true); (false, "new.txt") },
-            unknown => panic!("Unknown kind: {}", unknown),
+            unknown => panic!("Unknown kind: {unknown}"),
         };
 
         let path = mountpoint_path.join(name);

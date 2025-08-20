@@ -61,7 +61,7 @@ async fn ok(
                 options.truncate = true;
                 (options, "/bar.txt", 0, b"new".as_ref())
             }
-            unknown => panic!("Unknown kind: {}", unknown),
+            unknown => panic!("Unknown kind: {unknown}"),
         }
     };
     let (fd1, file_id) = ops
@@ -262,7 +262,7 @@ async fn write_zero(
             let written = ops.fd_write_start_eof(fd, b"").await.unwrap();
             p_assert_eq!(written, 0);
         }
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     }
 
     ops.fd_close(fd).await.unwrap();
@@ -342,7 +342,7 @@ async fn write_data(
             // cspell:disable-next-line
             b"hello worldabcdef".as_ref()
         }
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     };
 
     ops.fd_close(fd).await.unwrap();

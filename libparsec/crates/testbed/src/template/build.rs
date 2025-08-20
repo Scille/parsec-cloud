@@ -264,15 +264,11 @@ pub(super) fn get_stuff<T>(
     let (_, value_any) = stuff.iter().find(|(k, _)| *k == key).unwrap_or_else(|| {
         let available_stuff: Vec<_> = stuff.iter().map(|(k, _)| k).collect();
         panic!(
-            "Key `{}` is not among the stuff (available keys: {:?}) (caller: {})",
-            key, available_stuff, caller
+            "Key `{key}` is not among the stuff (available keys: {available_stuff:?}) (caller: {caller})"
         );
     });
     value_any.downcast_ref::<T>().unwrap_or_else(|| {
-        panic!(
-            "Key `{}` is among the stuff, but you got its type wrong :'( (caller: {})",
-            key, caller
-        );
+        panic!("Key `{key}` is among the stuff, but you got its type wrong :'( (caller: {caller})");
     })
 }
 
@@ -318,8 +314,7 @@ impl TestbedTemplateBuilder {
         let boxed = Box::new(obj.to_owned());
         assert!(
             self.stuff.iter().all(|(k, _)| *k != key),
-            "Key `{}` is already part of stuff",
-            key
+            "Key `{key}` is already part of stuff"
         );
         // It's no big deal to leak the data here: the template is kept until the end
         // of the program anyway (and the amount of leak is insignificant).

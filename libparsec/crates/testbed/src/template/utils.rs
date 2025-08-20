@@ -229,7 +229,7 @@ pub(super) fn assert_realm_member_has_read_access(
         .unwrap_or(false);
 
     if !has_read_access {
-        panic!("User {} has no read access to realm {}", user, realm);
+        panic!("User {user} has no read access to realm {realm}");
     }
 }
 
@@ -255,7 +255,7 @@ pub(super) fn assert_realm_member_has_write_access(
         .unwrap_or(false);
 
     if !has_write_access {
-        panic!("User {} has no write access to realm {}", user, realm);
+        panic!("User {user} has no write access to realm {realm}");
     }
 }
 
@@ -289,12 +289,12 @@ pub(super) fn assert_device_exists_and_not_revoked(
                 ..
             }) if *candidate == device => return e,
             TestbedEvent::RevokeUser(x) if x.user == user_id => {
-                panic!("User {} already revoked !", user_id)
+                panic!("User {user_id} already revoked !")
             }
             _ => (),
         }
     }
-    panic!("Device {} doesn't exist", device);
+    panic!("Device {device} doesn't exist");
 }
 
 pub(super) fn assert_user_exists_and_not_revoked(
@@ -317,7 +317,7 @@ pub(super) fn assert_user_exists_and_not_revoked(
             _ => (),
         }
     }
-    creation_event.unwrap_or_else(|| panic!("User {} doesn't exist", user))
+    creation_event.unwrap_or_else(|| panic!("User {user} doesn't exist"))
 }
 
 pub(super) fn assert_device_exists(
@@ -340,7 +340,7 @@ pub(super) fn assert_device_exists(
                 if *candidate == device
             )
         })
-        .unwrap_or_else(|| panic!("Device {} doesn't exist", device))
+        .unwrap_or_else(|| panic!("Device {device} doesn't exist"))
 }
 
 pub(super) fn assert_user_exists(events: &'_ [TestbedEvent], user: UserID) -> &'_ TestbedEvent {
@@ -358,7 +358,7 @@ pub(super) fn assert_user_exists(events: &'_ [TestbedEvent], user: UserID) -> &'
                 }) if *candidate == user
             )
         })
-        .unwrap_or_else(|| panic!("User {} doesn't exist", user))
+        .unwrap_or_else(|| panic!("User {user} doesn't exist"))
 }
 
 pub(super) fn assert_realm_exists(events: &[TestbedEvent], realm: VlobID) {
@@ -366,7 +366,7 @@ pub(super) fn assert_realm_exists(events: &[TestbedEvent], realm: VlobID) {
         .iter()
         .rev()
         .find(|e| matches!(e, TestbedEvent::NewRealm(x) if x.realm_id == realm))
-        .unwrap_or_else(|| panic!("Realm {} doesn't exist", realm));
+        .unwrap_or_else(|| panic!("Realm {realm} doesn't exist"));
 }
 
 pub(super) fn assert_user_has_non_deleted_shamir_recovery(
@@ -379,11 +379,11 @@ pub(super) fn assert_user_has_non_deleted_shamir_recovery(
         .find(|e| match e {
             TestbedEvent::NewShamirRecovery(x) if x.user_id == user => true,
             TestbedEvent::DeleteShamirRecovery(x) if x.setup_to_delete_user_id == user => {
-                panic!("User {}'s Shamir recovery is deleted !", user)
+                panic!("User {user}'s Shamir recovery is deleted !")
             }
             _ => false,
         })
-        .unwrap_or_else(|| panic!("User {} doesn't have any Shamir recovery", user))
+        .unwrap_or_else(|| panic!("User {user} doesn't have any Shamir recovery"))
 }
 
 pub(super) fn get_user_current_profile(events: &'_ [TestbedEvent], user: UserID) -> UserProfile {
@@ -412,5 +412,5 @@ pub(super) fn get_user_current_profile(events: &'_ [TestbedEvent], user: UserID)
             _ => (),
         }
     }
-    panic!("User {} doesn't exist", user);
+    panic!("User {user} doesn't exist");
 }

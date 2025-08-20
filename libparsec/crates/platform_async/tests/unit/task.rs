@@ -105,7 +105,7 @@ pub async fn panicking() {
 
     let err = handle.await.unwrap_err();
     assert!(err.is_panic());
-    let err_as_str = format!("{}", err);
+    let err_as_str = format!("{err}");
     assert!(
         err_as_str.ends_with("panicked with message \"D'oh!\""),
         "{}",
@@ -130,7 +130,7 @@ pub async fn aborted_by_handle() {
     let err = handle.as_mut().await.unwrap_err();
     assert!(err.is_cancelled());
 
-    let err_as_str = format!("{}", err);
+    let err_as_str = format!("{err}");
     assert!(err_as_str.ends_with("cancelled"), "{}", err_as_str);
 
     p_assert_eq!(handle.is_finished(), true);
