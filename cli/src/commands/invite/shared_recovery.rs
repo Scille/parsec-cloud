@@ -61,19 +61,13 @@ pub async fn invite_shared_recovery(args: Args, client: &StartedClient) -> anyho
     if send_email {
         match email_sent_status {
             InvitationEmailSentStatus::Success => {
-                println!("Invitation email sent to {}", email);
+                println!("Invitation email sent to {email}");
             }
             InvitationEmailSentStatus::RecipientRefused => {
-                println!(
-                    "Invitation email not sent to {} because the recipient was refused",
-                    email
-                );
+                println!("Invitation email not sent to {email} because the recipient was refused");
             }
             InvitationEmailSentStatus::ServerUnavailable => {
-                println!(
-                    "Invitation email not sent to {} because the server is unavailable",
-                    email
-                );
+                println!("Invitation email not sent to {email} because the server is unavailable");
             }
         }
     }

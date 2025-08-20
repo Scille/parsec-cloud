@@ -135,7 +135,7 @@ fn quote_cmd(family: &GenCmdsFamily, version: u32, cmd: &GenCmd) -> (TokenStream
         GenCmdSpec::ReusedFromVersion {
             version: reused_version,
         } => {
-            let reused_version_name = format!("v{}", reused_version);
+            let reused_version_name = format!("v{reused_version}");
             let reused_version_mod = format_ident!("{}", &reused_version_name);
 
             let populate_code = quote! {

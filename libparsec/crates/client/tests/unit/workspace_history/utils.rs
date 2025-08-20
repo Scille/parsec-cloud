@@ -82,8 +82,7 @@ pub(crate) async fn workspace_history_ops_with_realm_export_access_factory(
     let original_export_db_path = loop {
         path = match path.parent() {
             None => panic!(
-                "Cannot find `{:?}` while crawling up from `{:?}`",
-                relative_original_export_db_path, exe
+                "Cannot find `{relative_original_export_db_path:?}` while crawling up from `{exe:?}`"
             ),
             Some(path) => path,
         };
@@ -136,8 +135,7 @@ pub(crate) async fn workspace_history_ops_with_realm_export_access_factory(
             }
 
             panic!(
-                "Invalid decryptor `{}` (expected e.g. `alice@dev1` or `sequester_service_1`)",
-                decryptor
+                "Invalid decryptor `{decryptor}` (expected e.g. `alice@dev1` or `sequester_service_1`)"
             );
         })
         .collect();

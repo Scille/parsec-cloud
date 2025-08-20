@@ -239,26 +239,20 @@ fn start_testbed_server() -> (std::process::Child, u16) {
                             std::thread::sleep(std::time::Duration::new(0, 10000));
                             sleep_wait_count -= 1;
                         } else {
-                            panic!(
-                                "Timeout to retrieve port of testbed server, stderr: {}",
-                                str_buf
-                            );
+                            panic!("Timeout to retrieve port of testbed server, stderr: {str_buf}");
                         }
                     }
                 }
                 if total == buf.len() {
                     // In theory we should increase buf size, but if we are here it
                     // is most likely something went wrong anyway
-                    panic!(
-                        "Cannot retrieve port of testbed server, stderr: {}",
-                        str_buf
-                    );
+                    panic!("Cannot retrieve port of testbed server, stderr: {str_buf}");
                 }
             }
         })
         .expect("unreachable");
 
-    log::info!("Testbed server running on 127.0.0.1:{}", port);
+    log::info!("Testbed server running on 127.0.0.1:{port}");
 
     (process, port)
 }

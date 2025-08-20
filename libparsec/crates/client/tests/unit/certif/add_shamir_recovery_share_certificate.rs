@@ -122,7 +122,7 @@ async fn missing_brief(
                         )
                         .map(|e| e.timestamp)
                 }
-                unknown => panic!("Unknown kind: {}", unknown),
+                unknown => panic!("Unknown kind: {unknown}"),
             };
 
             builder.certificates_storage_fetch_certificates("alice@dev1");

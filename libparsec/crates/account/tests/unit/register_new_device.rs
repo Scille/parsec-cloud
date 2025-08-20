@@ -252,7 +252,7 @@ async fn offline(
             );
         }
 
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     }
 
     p_assert_matches!(
@@ -310,7 +310,7 @@ async fn unknown_server_response(
             );
         }
 
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     }
 
     p_assert_matches!(
@@ -321,7 +321,7 @@ async fn unknown_server_response(
             DeviceSaveStrategy::Keyring,
         ).await,
         Err(AccountRegisterNewDeviceError::Internal(err))
-        if format!("{}", err) == "Unexpected server response: UnknownStatus { unknown_status: \"unknown\", reason: None }"
+        if format!("{err}") == "Unexpected server response: UnknownStatus { unknown_status: \"unknown\", reason: None }"
     );
 }
 

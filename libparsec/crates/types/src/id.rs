@@ -377,8 +377,7 @@ mod user_device_ids {
                 "mike" => Ok(fixtures::MIKE_USER_ID),
                 "philip" => Ok(fixtures::PHILIP_USER_ID),
                 _ => Err(format!(
-                    "Invalid nickname `{}`, only a few are allowed (e.g. `alice`)",
-                    nickname
+                    "Invalid nickname `{nickname}`, only a few are allowed (e.g. `alice`)"
                 )),
             }
         }
@@ -446,8 +445,7 @@ mod user_device_ids {
                 "mike@dev1" => Ok(fixtures::MIKE_DEV1_DEVICE_ID),
                 "philip@dev1" => Ok(fixtures::PHILIP_DEV1_DEVICE_ID),
                 _ => Err(format!(
-                    "Invalid nickname `{}`, only a few are allowed (e.g. `alice@dev1`)",
-                    nickname
+                    "Invalid nickname `{nickname}`, only a few are allowed (e.g. `alice@dev1`)"
                 )),
             }
         }

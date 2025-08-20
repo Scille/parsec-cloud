@@ -84,7 +84,7 @@ async fn no_remote_change(
                 access: None,
             });
         }
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     }
 
     let outcome = merge_local_file_manifest(local_author, timestamp, &local, remote);
@@ -241,7 +241,7 @@ async fn remote_only_change(
                 access: Some(remote.blocks[0].clone()),
             }]);
         }
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     }
 
     let outcome = merge_local_file_manifest(local_author, timestamp, &local, remote);
@@ -536,7 +536,7 @@ async fn local_and_remote_changes(
 
             MergeLocalFileManifestOutcome::Conflict(remote.clone())
         }
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     };
 
     let outcome = merge_local_file_manifest(local_author, timestamp, &local, remote);

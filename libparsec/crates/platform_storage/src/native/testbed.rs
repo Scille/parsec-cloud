@@ -79,10 +79,7 @@ pub(super) async fn maybe_open_sqlite_in_memory(
                     // benefit at connecting multiple times to a database).
                     // This is most likely in a bug (typically trying to start two
                     // clients with the same device).
-                    panic!(
-                        "Trying to open already opened in memory database {:?}",
-                        path_info
-                    )
+                    panic!("Trying to open already opened in memory database {path_info:?}")
                     // In theory here we should reset the entry state (given we set
                     // it before doing the check), however in the current case both
                     // states have the same `Opened` value so all is already good ;-)

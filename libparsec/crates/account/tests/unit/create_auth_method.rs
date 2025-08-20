@@ -50,7 +50,7 @@ async fn ok(#[values("master_secret", "password")] kind: &str, env: &TestbedEnv)
                 password: &new_password,
             },
         ),
-        _ => panic!("Unknown kind: {}", kind),
+        _ => panic!("Unknown kind: {kind}"),
     };
 
     account
@@ -100,7 +100,7 @@ async fn ok_mocked(#[values("master_secret", "password")] kind: &str, env: &Test
                 password: &new_password,
             },
         ),
-        _ => panic!("Unknown kind: {}", kind),
+        _ => panic!("Unknown kind: {kind}"),
     };
 
     let retrieved_stuff = Arc::new(Mutex::new(None));
@@ -201,7 +201,7 @@ async fn auth_method_id_already_exists(env: &TestbedEnv) {
         .await;
 
     p_assert_matches!(result, Err(AccountCreateAuthMethodError::Internal(err))
-        if format!("{}", err) == "Unexpected server response: AuthMethodIdAlreadyExists"
+        if format!("{err}") == "Unexpected server response: AuthMethodIdAlreadyExists"
     );
 }
 
@@ -251,6 +251,6 @@ async fn unknown_server_response(env: &TestbedEnv) {
     p_assert_matches!(
         account.create_auth_method(AccountAuthMethodStrategy::MasterSecret(&master_secret)).await,
         Err(AccountCreateAuthMethodError::Internal(err))
-        if format!("{}", err) == "Unexpected server response: UnknownStatus { unknown_status: \"unknown\", reason: None }"
+        if format!("{err}") == "Unexpected server response: UnknownStatus { unknown_status: \"unknown\", reason: None }"
     );
 }

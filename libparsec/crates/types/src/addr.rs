@@ -386,7 +386,7 @@ fn extract_param_and_expect_value<'a>(
     if value != expected_value {
         return Err(AddrError::InvalidParamValue {
             param,
-            help: format!("Expected `{}={}`", param, expected_value),
+            help: format!("Expected `{param}={expected_value}`"),
         });
     }
     Ok(value)
@@ -852,13 +852,7 @@ impl ParsecInvitationAddr {
                 return Err(AddrError::InvalidParamValue {
                     param: PARSEC_PARAM_ACTION,
                     help: format!(
-                        "Expected `{}={}`, `{}={}` or `{}={}`",
-                        PARSEC_PARAM_ACTION,
-                        PARSEC_ACTION_CLAIM_USER,
-                        PARSEC_PARAM_ACTION,
-                        PARSEC_ACTION_CLAIM_DEVICE,
-                        PARSEC_PARAM_ACTION,
-                        PARSEC_ACTION_CLAIM_SHAMIR_RECOVERY
+                        "Expected `{PARSEC_PARAM_ACTION}={PARSEC_ACTION_CLAIM_USER}`, `{PARSEC_PARAM_ACTION}={PARSEC_ACTION_CLAIM_DEVICE}` or `{PARSEC_PARAM_ACTION}={PARSEC_ACTION_CLAIM_SHAMIR_RECOVERY}`"
                     ),
                 })
             }
@@ -1021,7 +1015,7 @@ impl ParsecAnonymousAddr {
             base,
             organization_id,
         })) = self;
-        base.to_http_url(Some(&format!("/anonymous/{}", organization_id)))
+        base.to_http_url(Some(&format!("/anonymous/{organization_id}")))
     }
 }
 

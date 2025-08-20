@@ -49,13 +49,11 @@ async fn ok(tmp_path: TmpPath) {
     .to_http_url(None);
     assert!(
         buf.contains(&format!("Current server URL: {YELLOW}{old_server_url}")),
-        "stdout: {}",
-        buf
+        "stdout: {buf}"
     );
     assert!(
         buf.contains(&format!("New server URL: {YELLOW}https://new.invalid:123/")),
-        "stdout: {}",
-        buf
+        "stdout: {buf}"
     );
 
     stdin.write_all(b"y\n").unwrap();

@@ -42,7 +42,7 @@ async fn rpc_ok(env: &TestbedEnv, mocked: bool) {
             let request = request_builder.build().unwrap();
             p_assert_eq!(request.url().path(), "/authenticated/OfflineOrg");
             let headers = request.headers();
-            println!("headers: {:?}", headers);
+            println!("headers: {headers:?}");
             p_assert_eq!(
                 headers.get("Content-Type"),
                 Some(&HeaderValue::from_static("application/msgpack"))
@@ -97,7 +97,7 @@ async fn rpc_ok_tos_family(env: &TestbedEnv, mocked: bool) {
             let request = request_builder.build().unwrap();
             p_assert_eq!(request.url().path(), "/authenticated/OfflineOrg/tos");
             let headers = request.headers();
-            println!("headers: {:?}", headers);
+            println!("headers: {headers:?}");
             p_assert_eq!(
                 headers.get("Content-Type"),
                 Some(&HeaderValue::from_static("application/msgpack"))

@@ -1099,7 +1099,7 @@ async fn add_and_get_certificate(
     let commit = match kind {
         "commit" => true,
         "rollback" => false,
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     };
 
     // 0) The database starts empty

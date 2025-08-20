@@ -57,7 +57,7 @@ pub(super) async fn fetch_vault_items(
         .filter_map(|(_, raw_item)| match AccountVaultItem::load(&raw_item) {
             Ok(item) => Some(item),
             Err(err) => {
-                log::warn!("Cannot deserialize account vault item: {}", err);
+                log::warn!("Cannot deserialize account vault item: {err}");
                 None
             }
         })

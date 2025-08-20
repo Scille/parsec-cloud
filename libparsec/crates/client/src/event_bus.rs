@@ -811,7 +811,7 @@ mod spy {
                 // Event available, but is it the expected one ?
                 Some(any_event) => {
                     match E::try_from_any_spied_event(any_event) {
-                        None => panic!("Unexpected event: {:?}", any_event),
+                        None => panic!("Unexpected event: {any_event:?}"),
                         // callback is expected to panic if unhappy with the event
                         Some(event) => check(event),
                     }
@@ -856,8 +856,7 @@ mod spy {
             let not_acknowledged = &guard.events[self.acknowledged_offset..];
             if !not_acknowledged.is_empty() {
                 panic!(
-                    "Event spy expect context hasn't acknowledge all events: {:#?}",
-                    not_acknowledged
+                    "Event spy expect context hasn't acknowledge all events: {not_acknowledged:#?}"
                 )
             }
         }
@@ -871,8 +870,7 @@ mod spy {
                 let not_acknowledged = &guard.events[self.acknowledged_offset..];
                 if !not_acknowledged.is_empty() {
                     panic!(
-                        "Event spy expect context hasn't acknowledge all events: {:#?}",
-                        not_acknowledged
+                        "Event spy expect context hasn't acknowledge all events: {not_acknowledged:#?}"
                     )
                 }
             }
@@ -909,7 +907,7 @@ impl EventBus {
         {
             self.spy.add(event.to_any_spied_event());
         }
-        log::debug!("Sending event: {:?}", event);
+        log::debug!("Sending event: {event:?}");
         event.send(&self.internal);
     }
 

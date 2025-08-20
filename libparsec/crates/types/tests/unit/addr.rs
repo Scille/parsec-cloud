@@ -294,7 +294,7 @@ fn good_addr_with_noise_trimmed_by_url_parser(testbed: &dyn Testbed) {
 fn addr_with_bad_port(testbed: &dyn Testbed, #[values("NaN", "999999")] bad_port: &str) {
     let url = testbed
         .url()
-        .replace(DOMAIN, &format!("{}:{}", DOMAIN, bad_port));
+        .replace(DOMAIN, &format!("{DOMAIN}:{bad_port}"));
     testbed.assert_addr_err(&url, AddrError::InvalidUrl(url::ParseError::InvalidPort));
 }
 
@@ -317,7 +317,7 @@ fn addr_with_no_hostname(testbed: &dyn Testbed, #[values("", ":4242")] bad_domai
     let (url, expected_error) = if bad_domain.is_empty() {
         // `http:///foo` is a valid url, so we also have to remove the path
         let url = match testbed.url().split('?').nth(1) {
-            Some(extra) => format!("parsec3://?{}", extra),
+            Some(extra) => format!("parsec3://?{extra}"),
             None => "parsec3://".to_string(),
         };
         let expected_error = AddrError::InvalidUrl(url::ParseError::EmptyHost);
@@ -370,10 +370,9 @@ fn addr_with_bad_unicode_organization_id(testbed: &dyn Testbed) {
 
 #[apply(addr_with_org)]
 fn addr_with_missing_organization_id(testbed: &dyn Testbed, #[values("/", "")] bad_path: &str) {
-    let url = testbed.url().replace(
-        &format!("{}/{}", DOMAIN, ORG),
-        &format!("{}{}", DOMAIN, bad_path),
-    );
+    let url = testbed
+        .url()
+        .replace(&format!("{DOMAIN}/{ORG}"), &format!("{DOMAIN}{bad_path}"));
     testbed.assert_addr_err(&url, AddrError::InvalidOrganizationID);
 }
 
@@ -523,9 +522,7 @@ fn invitation_addr_bad_type(
         }
         None => {
             // Type param not present in the url
-            let url = testbed
-                .url()
-                .replace(&format!("a={}&", INVITATION_TYPE), "");
+            let url = testbed.url().replace(&format!("a={INVITATION_TYPE}&"), "");
             testbed.assert_addr_err(&url, AddrError::MissingParam("a"));
         }
     }
@@ -592,7 +589,7 @@ fn invitation_addr_to_redirection(#[values("http", "https")] redirection_scheme:
     let expected_redirection_url = testbed
         .url()
         .replacen(PARSEC_SCHEME, redirection_scheme, 1)
-        .replace(ORG, &format!("redirect/{}", ORG));
+        .replace(ORG, &format!("redirect/{ORG}"));
     p_assert_eq!(redirection_url, expected_redirection_url);
 
     let addr2 = ParsecInvitationAddr::from_http_redirection(&redirection_url).unwrap();
@@ -616,7 +613,7 @@ fn addr_to_redirection(testbed: &dyn Testbed, #[values("http", "https")] redirec
     let expected_redirection_url = testbed
         .url()
         .replacen(PARSEC_SCHEME, redirection_scheme, 1)
-        .replace(DOMAIN, &format!("{}/redirect", DOMAIN));
+        .replace(DOMAIN, &format!("{DOMAIN}/redirect"));
     p_assert_eq!(redirection_url, expected_redirection_url);
 
     testbed.assert_redirection_addr_ok(&redirection_url, &url);

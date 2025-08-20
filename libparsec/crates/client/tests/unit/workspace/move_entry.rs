@@ -86,7 +86,7 @@ async fn ok_same_parent(
                 ],
             )
         }
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     };
 
     ops.move_entry(
@@ -157,7 +157,7 @@ async fn ok_different_parents(
                 ("spam", wksp1_bar_txt_id),
             ],
         ),
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     };
 
     ops.move_entry(
@@ -215,7 +215,7 @@ async fn src_not_found(
     let (dst_path, dst_parent_id) = match kind {
         "same_parents" => ("/dummy2", src_parent_id),
         "different_parents" => ("/foo/dummy2", wksp1_foo_id),
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     };
 
     let err = ops
@@ -287,7 +287,7 @@ async fn exchange_but_dst_not_found(
     let (dst_path, dst_parent_id) = match kind {
         "same_parents" => ("/dummy2.txt", src_parent_id),
         "different_parents" => ("/foo/dummy2.txt", wksp1_foo_id),
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     };
 
     let err = ops

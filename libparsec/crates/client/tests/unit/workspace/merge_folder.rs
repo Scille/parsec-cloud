@@ -81,7 +81,7 @@ async fn no_remote_change(
                 .insert("child.tmp".parse().unwrap(), child_id);
             local.remote_confinement_points.insert(child_id);
         }
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     }
 
     let outcome = merge_local_folder_manifest(
@@ -172,7 +172,7 @@ async fn no_remote_change_but_local_uses_outdated_prevent_sync_pattern(
                 .children
                 .insert("child.tmp".parse().unwrap(), child_id);
         }
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     }
 
     let new_prevent_sync_pattern = PreventSyncPattern::from_glob("*.tmp").unwrap();
@@ -504,7 +504,7 @@ async fn remote_only_change(
                 .children
                 .insert("confined.tmp~".parse().unwrap(), confined_id);
         }
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     }
 
     let outcome = merge_local_folder_manifest(
@@ -2276,7 +2276,7 @@ async fn local_and_remote_changes(
             expected.need_sync = true;
             expected.updated = merge_timestamp;
         }
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     }
 
     let outcome = merge_local_folder_manifest(

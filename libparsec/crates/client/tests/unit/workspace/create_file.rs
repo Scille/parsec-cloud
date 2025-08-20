@@ -151,7 +151,7 @@ async fn already_exists_in_child(#[values("file", "folder")] kind: &str, env: &T
             let wksp1_foo_spam_id: VlobID = *env.template.get_stuff("wksp1_foo_spam_id");
             (path, wksp1_foo_spam_id)
         }
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     };
     let err = ops.create_file(path).await.unwrap_err();
     p_assert_matches!(err, WorkspaceCreateFileError::EntryExists { entry_id } if entry_id == already_exists_id);

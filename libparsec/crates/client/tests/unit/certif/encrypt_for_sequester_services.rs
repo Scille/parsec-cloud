@@ -18,7 +18,7 @@ async fn empty(#[values("always_empty", "with_revoked_service")] kind: &str, env
                 let sequester_service_id = builder.new_sequester_service().map(|e| e.id);
                 builder.revoke_sequester_service(sequester_service_id);
             }
-            unknown => panic!("Unknown kind: {}", unknown),
+            unknown => panic!("Unknown kind: {unknown}"),
         }
         builder.certificates_storage_fetch_certificates("alice@dev1");
     })

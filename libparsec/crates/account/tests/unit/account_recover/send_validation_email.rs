@@ -230,6 +230,6 @@ async fn unknown_status(env: &TestbedEnv) {
         .await
         .unwrap_err(),
         AccountRecoverSendValidationEmailError::Internal(err)
-        if format!("{}", err) == "Unexpected server response: UnknownStatus { unknown_status: \"unknown\", reason: None }"
+        if format!("{err}") == "Unexpected server response: UnknownStatus { unknown_status: \"unknown\", reason: None }"
     );
 }

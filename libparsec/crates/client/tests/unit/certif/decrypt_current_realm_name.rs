@@ -30,7 +30,7 @@ async fn ok(#[values("last_key_index", "old_key_index")] kind: &str, env: &Testb
                     builder.rotate_key_realm(realm_id);
                 }
                 "last_key_index" => (),
-                unknown => panic!("Unknown kind: {}", unknown),
+                unknown => panic!("Unknown kind: {unknown}"),
             }
 
             builder.certificates_storage_fetch_certificates("alice@dev1");

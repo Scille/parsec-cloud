@@ -341,10 +341,7 @@ async fn cancel_greeting_attempt_and_warn_on_error(
             return;
         }
         log::warn!(
-            "Greeter failed to cancel greeting attempt {:?} with reason {:?}: {:?}",
-            greeting_attempt,
-            reason,
-            err
+            "Greeter failed to cancel greeting attempt {greeting_attempt:?} with reason {reason:?}: {err:?}"
         );
     }
 }

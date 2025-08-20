@@ -41,7 +41,7 @@ async fn decrypt_with(
                 ["sequester_service_2", "alice@dev1"].as_ref(),
             )
         }
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     };
 
     let (ops, _tmp_path) = workspace_history_ops_with_realm_export_access_factory(

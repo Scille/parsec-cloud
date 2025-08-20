@@ -193,7 +193,7 @@ impl fuser::Filesystem for Filesystem {
         name: &std::ffi::OsStr,
         reply: fuser::ReplyEntry,
     ) {
-        log::debug!("[FUSE] lookup(parent: {:#x?}, name: {:?})", parent, name);
+        log::debug!("[FUSE] lookup(parent: {parent:#x?}, name: {name:?})");
         let reply = reply_on_drop_guard!(reply, fuser::ReplyEntry);
 
         let uid = req.uid();
@@ -265,7 +265,7 @@ impl fuser::Filesystem for Filesystem {
                     | WorkspaceHistoryStatEntryError::InvalidManifest(_)
                     | WorkspaceHistoryStatEntryError::InvalidHistory(_)
                     | WorkspaceHistoryStatEntryError::Internal(_) => {
-                        log::warn!("FUSE `lookup` operation cannot complete: {:?}", err);
+                        log::warn!("FUSE `lookup` operation cannot complete: {err:?}");
                         reply.manual().error(libc::EIO)
                     }
                 },
@@ -281,7 +281,7 @@ impl fuser::Filesystem for Filesystem {
     }
 
     fn statfs(&mut self, _req: &fuser::Request<'_>, ino: u64, reply: fuser::ReplyStatfs) {
-        log::debug!("[FUSE] statfs(ino: {:#x?})", ino);
+        log::debug!("[FUSE] statfs(ino: {ino:#x?})");
 
         // We have currently no way of easily getting the size of workspace
         // Also, the total size of a workspace is not limited
@@ -305,7 +305,7 @@ impl fuser::Filesystem for Filesystem {
         _fh: Option<u64>,
         reply: fuser::ReplyAttr,
     ) {
-        log::debug!("[FUSE] getattr(ino: {:#x?})", ino);
+        log::debug!("[FUSE] getattr(ino: {ino:#x?})");
         let reply = reply_on_drop_guard!(reply, fuser::ReplyAttr);
 
         let uid = req.uid();
@@ -318,7 +318,7 @@ impl fuser::Filesystem for Filesystem {
         let ops = self.ops.clone();
         self.tokio_handle.spawn(async move {
             let outcome = ops.stat_entry(&path).await;
-            log::debug!("[FUSE] getattr(ino: {:#x?}) -> {:?}", ino, outcome);
+            log::debug!("[FUSE] getattr(ino: {ino:#x?}) -> {outcome:?}");
             match outcome {
                 Ok(stat) => reply
                     .manual()
@@ -339,7 +339,7 @@ impl fuser::Filesystem for Filesystem {
                     | WorkspaceHistoryStatEntryError::InvalidManifest(_)
                     | WorkspaceHistoryStatEntryError::InvalidHistory(_)
                     | WorkspaceHistoryStatEntryError::Internal(_) => {
-                        log::warn!("FUSE `getattr` operation cannot complete: {:?}", err);
+                        log::warn!("FUSE `getattr` operation cannot complete: {err:?}");
                         reply.manual().error(libc::EIO)
                     }
                 },
@@ -349,7 +349,7 @@ impl fuser::Filesystem for Filesystem {
 
     // Note flags doesn't contains O_CREAT, O_EXCL, O_NOCTTY and O_TRUNC
     fn open(&mut self, _req: &fuser::Request<'_>, ino: u64, flags: i32, reply: fuser::ReplyOpen) {
-        log::debug!("[FUSE] open(ino: {:#x?}, flags: {:#x?})", ino, flags);
+        log::debug!("[FUSE] open(ino: {ino:#x?}, flags: {flags:#x?})");
         let reply = reply_on_drop_guard!(reply, fuser::ReplyOpen);
 
         let path = {
@@ -395,7 +395,7 @@ impl fuser::Filesystem for Filesystem {
                         | WorkspaceHistoryOpenFileError::InvalidManifest(_)
                         | WorkspaceHistoryOpenFileError::InvalidHistory(_)
                         | WorkspaceHistoryOpenFileError::Internal(_) => {
-                            log::warn!("FUSE `open` operation cannot complete: {:?}", err);
+                            log::warn!("FUSE `open` operation cannot complete: {err:?}");
                             reply.manual().error(libc::EIO)
                         }
                     }
@@ -419,13 +419,7 @@ impl fuser::Filesystem for Filesystem {
         _lock_owner: Option<u64>,
         reply: fuser::ReplyData,
     ) {
-        log::debug!(
-            "[FUSE] read(ino: {:#x?}, fh: {}, offset: {}, size: {})",
-            ino,
-            fh,
-            offset,
-            size,
-        );
+        log::debug!("[FUSE] read(ino: {ino:#x?}, fh: {fh}, offset: {offset}, size: {size})",);
         let reply = reply_on_drop_guard!(reply, fuser::ReplyData);
 
         let ops = self.ops.clone();
@@ -450,7 +444,7 @@ impl fuser::Filesystem for Filesystem {
                     | WorkspaceHistoryFdReadError::BadFileDescriptor
                     | WorkspaceHistoryFdReadError::Internal(_)
                     => {
-                        log::warn!("FUSE `read` operation cannot complete: {:?}", err);
+                        log::warn!("FUSE `read` operation cannot complete: {err:?}");
                         reply.manual().error(libc::EIO)
                     }
                 },
@@ -469,12 +463,7 @@ impl fuser::Filesystem for Filesystem {
         reply: fuser::ReplyEmpty,
     ) {
         log::debug!(
-            "[FUSE] release(ino: {:#x?}, fh: {}, flags: {:#x?}, lock_owner: {:?}, flush: {})",
-            ino,
-            fh,
-            flags,
-            lock_owner,
-            flush
+            "[FUSE] release(ino: {ino:#x?}, fh: {fh}, flags: {flags:#x?}, lock_owner: {lock_owner:?}, flush: {flush})"
         );
         let reply = reply_on_drop_guard!(reply, fuser::ReplyEmpty);
 
@@ -489,7 +478,7 @@ impl fuser::Filesystem for Filesystem {
                     // Unexpected: FUSE is supposed to only give us valid file descriptors !
                     WorkspaceHistoryFdCloseError::BadFileDescriptor
                     | WorkspaceHistoryFdCloseError::Internal(_) => {
-                        log::warn!("FUSE `release` operation cannot complete: {:?}", err);
+                        log::warn!("FUSE `release` operation cannot complete: {err:?}");
                         reply.manual().error(libc::EIO)
                     }
                 },
@@ -520,7 +509,7 @@ impl fuser::Filesystem for Filesystem {
         flags: i32,
         reply: fuser::ReplyOpen,
     ) {
-        log::debug!("[FUSE] opendir(ino: {:#x?}, flags: {:#x?})", ino, flags);
+        log::debug!("[FUSE] opendir(ino: {ino:#x?}, flags: {flags:#x?})");
         let reply = reply_on_drop_guard!(reply, fuser::ReplyOpen);
 
         let path = {
@@ -552,7 +541,7 @@ impl fuser::Filesystem for Filesystem {
                         | WorkspaceHistoryOpenFolderReaderError::InvalidManifest(_)
                         | WorkspaceHistoryOpenFolderReaderError::InvalidHistory(_)
                         | WorkspaceHistoryOpenFolderReaderError::Internal(_) => {
-                            log::warn!("FUSE `opendir` operation cannot complete: {:?}", err);
+                            log::warn!("FUSE `opendir` operation cannot complete: {err:?}");
                             reply.manual().error(libc::EIO)
                         }
                     }
@@ -577,12 +566,7 @@ impl fuser::Filesystem for Filesystem {
         offset: i64,
         reply: fuser::ReplyDirectoryPlus,
     ) {
-        log::debug!(
-            "[FUSE] readdirplus(ino: {:#x?}, fh: {}, offset: {})",
-            ino,
-            fh,
-            offset
-        );
+        log::debug!("[FUSE] readdirplus(ino: {ino:#x?}, fh: {fh}, offset: {offset})");
         let mut reply = reply_on_drop_guard!(reply, fuser::ReplyDirectoryPlus);
 
         let boxed_path_and_folder_reader = {
@@ -630,10 +614,7 @@ impl fuser::Filesystem for Filesystem {
                             | WorkspaceHistoryFolderReaderStatEntryError::InvalidManifest(_)
                             | WorkspaceHistoryFolderReaderStatEntryError::InvalidHistory(_)
                             | WorkspaceHistoryFolderReaderStatEntryError::Internal(_) => {
-                                log::warn!(
-                                    "FUSE `readdirplus` operation cannot complete: {:?}",
-                                    err
-                                );
+                                log::warn!("FUSE `readdirplus` operation cannot complete: {err:?}");
                                 reply.manual().error(libc::EIO)
                             }
                         }
@@ -684,12 +665,7 @@ impl fuser::Filesystem for Filesystem {
         offset: i64,
         reply: fuser::ReplyDirectory,
     ) {
-        log::debug!(
-            "[FUSE] readdir(ino: {:#x?}, fh: {}, offset: {})",
-            ino,
-            fh,
-            offset
-        );
+        log::debug!("[FUSE] readdir(ino: {ino:#x?}, fh: {fh}, offset: {offset})");
         let mut reply = reply_on_drop_guard!(reply, fuser::ReplyDirectory);
 
         let boxed_path_and_folder_reader = {
@@ -735,7 +711,7 @@ impl fuser::Filesystem for Filesystem {
                             | WorkspaceHistoryFolderReaderStatEntryError::InvalidManifest(_)
                             | WorkspaceHistoryFolderReaderStatEntryError::InvalidHistory(_)
                             | WorkspaceHistoryFolderReaderStatEntryError::Internal(_) => {
-                                log::warn!("FUSE `readdir` operation cannot complete: {:?}", err);
+                                log::warn!("FUSE `readdir` operation cannot complete: {err:?}");
                                 reply.manual().error(libc::EIO)
                             }
                         }
@@ -780,12 +756,7 @@ impl fuser::Filesystem for Filesystem {
         flags: i32,
         reply: fuser::ReplyEmpty,
     ) {
-        log::debug!(
-            "[FUSE] releasedir(ino: {:#x?}, fh: {}, flags: {:#x?})",
-            ino,
-            fh,
-            flags
-        );
+        log::debug!("[FUSE] releasedir(ino: {ino:#x?}, fh: {fh}, flags: {flags:#x?})");
         let reply = reply_on_drop_guard!(reply, fuser::ReplyEmpty);
 
         {

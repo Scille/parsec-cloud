@@ -226,7 +226,7 @@ async fn revoked(env: &TestbedEnv) {
         TestbedEvent::CreateOrUpdateUserManifestVlob(e) => {
             (e.encrypted(&env.template), e.manifest.timestamp)
         }
-        e => panic!("Unexpected event {:?}", e),
+        e => panic!("Unexpected event {e:?}"),
     };
 
     let err = ops

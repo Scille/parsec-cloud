@@ -1415,8 +1415,7 @@ impl TestbedEventShareRealm {
                         UserProfile::Admin | UserProfile::Standard => (),
                         UserProfile::Outsider => {
                             panic!(
-                                "User {} is Outsider, realm cannot be shared with him as {:?}",
-                                user, role
+                                "User {user} is Outsider, realm cannot be shared with him as {role:?}"
                             );
                         }
                     }
@@ -2041,7 +2040,7 @@ impl TestbedEventNewShamirRecovery {
             for event in builder.events.iter().rev() {
                 match event {
                     TestbedEvent::NewShamirRecovery(x) if x.user_id == user => {
-                        panic!("User `{}` already has a shamir recovery", user);
+                        panic!("User `{user}` already has a shamir recovery");
                     }
                     TestbedEvent::DeleteShamirRecovery(x) if x.setup_to_delete_user_id == user => {
                         break
@@ -2380,11 +2379,11 @@ impl TestbedEventDeleteShamirRecovery {
                 TestbedEvent::DeleteShamirRecovery(x)
                     if x.setup_to_delete_user_id == user && builder.check_consistency =>
                 {
-                    panic!("User `{}`'s last shamir recovery is already deleted", user);
+                    panic!("User `{user}`'s last shamir recovery is already deleted");
                 }
                 _ => None,
             })
-            .unwrap_or_else(|| panic!("User `{}` has no shamir recovery", user));
+            .unwrap_or_else(|| panic!("User `{user}` has no shamir recovery"));
 
         // 2) Actual creation
 
@@ -2528,10 +2527,7 @@ impl TestbedEventNewShamirRecoveryInvitation {
                 )
             })
             .unwrap_or_else(|| {
-                panic!(
-                    "All recipients ({:?}) appear to be revoked or missing",
-                    recipients
-                )
+                panic!("All recipients ({recipients:?}) appear to be revoked or missing")
             });
 
         // 2) Actual creation
@@ -2745,7 +2741,7 @@ impl TestbedEventCreateOrUpdateFolderManifestVlob {
                     assert_eq!(realm, x.realm, "VlobID {} is part of realm {}, not {}", vlob, x.realm, realm);
                     let parent = match parent {
                         Some(parent) => parent,
-                        None => panic!("Cannot determine parent of vlob {}, given it previous version is opaque !", vlob)
+                        None => panic!("Cannot determine parent of vlob {vlob}, given it previous version is opaque !")
                     };
                     // Cannot read opaque vlob, so use default values instead
                     Some((parent, x.version + 1, HashMap::new()))
@@ -2753,7 +2749,7 @@ impl TestbedEventCreateOrUpdateFolderManifestVlob {
                 // Try to detect common mistake in testbed env definition
                 TestbedEvent::CreateOrUpdateFileManifestVlob(x)
                     if x.manifest.id == vlob
-                => panic!("Expected vlob {} to be a folder, but it previous version contains file manifest !", vlob),
+                => panic!("Expected vlob {vlob} to be a folder, but it previous version contains file manifest !"),
                 _ => None,
             })
             // Manifest doesn't exist yet, we create it then !
@@ -2894,7 +2890,7 @@ impl TestbedEventCreateOrUpdateFileManifestVlob {
                     assert_eq!(realm, x.realm, "VlobID {} is part of realm {}, not {}", vlob, x.realm, realm);
                     let parent = match parent {
                         Some(parent) => parent,
-                        None => panic!("Cannot determine parent of vlob {}, given it previous version is opaque !", vlob)
+                        None => panic!("Cannot determine parent of vlob {vlob}, given it previous version is opaque !")
                     };
                     // Cannot read opaque vlob, so use default values instead
                     Some((
@@ -2908,7 +2904,7 @@ impl TestbedEventCreateOrUpdateFileManifestVlob {
                 // Try to detect common mistake in testbed env definition
                 TestbedEvent::CreateOrUpdateFolderManifestVlob(x)
                     if x.manifest.id == vlob
-                => panic!("Expected vlob {} to be a file, but it previous version contains folder manifest !", vlob),
+                => panic!("Expected vlob {vlob} to be a file, but it previous version contains folder manifest !"),
                 _ => None,
             })
             // Manifest doesn't exist yet, we create it then !
@@ -3280,10 +3276,10 @@ impl TestbedEventUserStorageFetchUserVlob {
                 }
             }
             TestbedEvent::CreateOrUpdateOpaqueVlob(x) if x.realm == user_realm_id && x.vlob_id == user_realm_id => {
-                panic!("Last user vlob create/update for user {} is opaque, cannot deduce what to put in the local user storage !", user_id);
+                panic!("Last user vlob create/update for user {user_id} is opaque, cannot deduce what to put in the local user storage !");
             }
             _ => None,
-        }).unwrap_or_else( || panic!("User manifest has never been synced for user {}", user_id) );
+        }).unwrap_or_else( || panic!("User manifest has never been synced for user {user_id}") );
 
         // 2) Actual creation
 
@@ -3502,14 +3498,14 @@ impl TestbedEventWorkspaceDataStorageFetchFolderVlob {
             }
             TestbedEvent::CreateOrUpdateOpaqueVlob(x)
                 if x.realm == realm && x.vlob_id == vlob => {
-                panic!("Last Folder vlob create/update for realm {} is opaque, cannot deduce what to put in the local user storage !", realm);
+                panic!("Last Folder vlob create/update for realm {realm} is opaque, cannot deduce what to put in the local user storage !");
             }
             TestbedEvent::CreateOrUpdateFileManifestVlob(x)
                 if x.realm == realm && x.manifest.id == vlob => {
-                panic!("Try to fetch realm {} vlob {} as folder, but it is a file !", realm, vlob);
+                panic!("Try to fetch realm {realm} vlob {vlob} as folder, but it is a file !");
             }
             _ => None,
-        }).unwrap_or_else( || panic!("Folder manifest has never been synced for realm {} vlob {}", realm, vlob) );
+        }).unwrap_or_else( || panic!("Folder manifest has never been synced for realm {realm} vlob {vlob}") );
 
         // 2) Actual creation
 
@@ -3569,14 +3565,14 @@ impl TestbedEventWorkspaceDataStorageFetchFileVlob {
             }
             TestbedEvent::CreateOrUpdateOpaqueVlob(x)
                 if x.realm == realm && x.vlob_id == vlob => {
-                panic!("Last File vlob create/update for realm {} is opaque, cannot deduce what to put in the local user storage !", realm);
+                panic!("Last File vlob create/update for realm {realm} is opaque, cannot deduce what to put in the local user storage !");
             }
             TestbedEvent::CreateOrUpdateFolderManifestVlob(x)
                 if x.realm == realm && x.manifest.id == vlob => {
-                panic!("Try to fetch realm {} vlob {} as file, but it is a folder !", realm, vlob);
+                panic!("Try to fetch realm {realm} vlob {vlob} as file, but it is a folder !");
             }
             _ => None,
-        }).unwrap_or_else( || panic!("File manifest has never been synced for realm {} vlob {}", realm, vlob) );
+        }).unwrap_or_else( || panic!("File manifest has never been synced for realm {realm} vlob {vlob}") );
 
         // 2) Actual creation
 
@@ -3755,13 +3751,13 @@ impl TestbedEventWorkspaceCacheStorageFetchBlock {
 
         let cleartext = builder.events.iter().rev().find_map(|e| match e {
             TestbedEvent::CreateOpaqueBlock(x) if x.realm == realm && x.block_id == block => {
-                panic!("Block {} is opaque, cannot deduce what to put in the local workspace data storage !", block);
+                panic!("Block {block} is opaque, cannot deduce what to put in the local workspace data storage !");
             }
             TestbedEvent::CreateBlock(x) if x.realm == realm && x.block_id == block => {
                 Some(x.cleartext.clone())
             }
             _ => None,
-        }).unwrap_or_else( || panic!("Block {} doesn't exist", block));
+        }).unwrap_or_else( || panic!("Block {block} doesn't exist"));
 
         // 2) Actual creation
 

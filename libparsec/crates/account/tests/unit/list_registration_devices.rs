@@ -114,6 +114,6 @@ async fn unknown_server_response(env: &TestbedEnv) {
     p_assert_matches!(
         account.list_registration_devices().await,
         Err(AccountListRegistrationDevicesError::Internal(err))
-        if format!("{}", err) == "Unexpected server response: UnknownStatus { unknown_status: \"unknown\", reason: None }"
+        if format!("{err}") == "Unexpected server response: UnknownStatus { unknown_status: \"unknown\", reason: None }"
     );
 }

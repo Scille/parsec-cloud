@@ -56,7 +56,7 @@ async fn ok_with_existing_certificates(
                 "reader" => {
                     builder.share_realm(wksp1_id, "alice", RealmRole::Reader);
                 }
-                unknown => panic!("Unknown kind: {}", unknown),
+                unknown => panic!("Unknown kind: {unknown}"),
             }
 
             // Finally Bob changes one last time Alice's role, which is the certificate
@@ -69,7 +69,7 @@ async fn ok_with_existing_certificates(
                 "owner" => {
                     builder.share_realm(wksp1_id, "alice", RealmRole::Owner);
                 }
-                unknown => panic!("Unknown kind: {}", unknown),
+                unknown => panic!("Unknown kind: {unknown}"),
             }
 
             wksp1_id
@@ -281,7 +281,7 @@ async fn cannot_share_with_revoked(
             "update_role" => {
                 builder.share_realm(wksp_id, "bob", RealmRole::Reader);
             }
-            unknown => panic!("Unknown kind: {}", unknown),
+            unknown => panic!("Unknown kind: {unknown}"),
         }
         builder.revoke_user("bob");
         builder.with_check_consistency_disabled(|builder| {

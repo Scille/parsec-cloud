@@ -84,7 +84,7 @@ async fn read_only(
                     open_options.create_new(true);
                     ("new.txt", false)
                 }
-                unknown => panic!("Unknown kind: {}", unknown),
+                unknown => panic!("Unknown kind: {unknown}"),
             };
 
             if bar_is_fetched {
