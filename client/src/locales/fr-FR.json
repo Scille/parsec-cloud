@@ -2307,7 +2307,8 @@
                 "fileTooBig": "Fichier trop volumineux",
                 "impossibleToOpen": "Impossible d'éditer ce fichier",
                 "genericError": "Impossible d'ouvrir ce fichier",
-                "unSupportedFileType": "Type de fichier non pris en charge par Parsec"
+                "unSupportedFileType": "Type de fichier non pris en charge par Parsec",
+                "editionNotAvailable": "Parsec Edition indisponible"
             },
             "informationEditDownload": "Si vous souhaitez modifier ce fichier, vous pouvez le télécharger et l'ouvrir localement sur votre appareil.",
             "informationPreviewDownload": "Si vous souhaitez prévisualiser ce fichier, vous pouvez le faire dans Parsec ou le télécharger pour l'ouvrir localement sur votre appareil.",
@@ -2363,6 +2364,26 @@
             },
             "pip": "Picture in Picture",
             "loop": "Lecture en boucle"
+        }
+    },
+    "fileEditors": {
+        "globalTitle": "Impossible d'ouvrir le fichier",
+        "errors": {
+            "contentInfoMissing": "Les informations sur le contenu du fichier sont vides ou manquantes.",
+            "fileExtensionMissing": "Le type de fichier (extension) est manquant ou vide.",
+            "fileNameMissing": "Le nom du fichier est vide ou manquant.",
+            "fileIdMissing": "L'identifiant du fichier est vide ou manquant.",
+            "fileDataMissing": "Les données du fichier sont vides ou manquantes."
+        },
+        "advices": {
+            "title": "Quelques conseils pouvant résoudre ce problème",
+            "advice1": "Vérifier que le fichier puisse être ouvert depuis un logiciel externe.",
+            "advice2": "Ré-importer le fichier (vérifier les versions).",
+            "advice3": "Si le fichier s'ouvrait avant, essayer de restaurer une version antérieure (via l'historique du fichier)"
+        },
+        "actions": {
+            "backToFiles": "Retour aux fichiers",
+            "retry": "Recharger la page"
         }
     },
     "openFallback": {
