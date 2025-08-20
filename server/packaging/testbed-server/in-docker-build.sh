@@ -3,7 +3,7 @@
 set -xe
 
 # Install Rust (actual toolchain is going to be installed by maturin according to `rust-toolchain.toml`)
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.88.0
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.89.0
 export PATH="/root/.cargo/bin:$PATH"
 cargo --version
 

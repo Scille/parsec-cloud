@@ -380,7 +380,7 @@ pub(crate) enum ReshapeBlockOperation<'a> {
 }
 
 impl ReshapeBlockOperation<'_> {
-    pub fn try_reshape(chunk_views: &mut Vec<ChunkView>) -> Option<ReshapeBlockOperation> {
+    pub fn try_reshape(chunk_views: &mut Vec<ChunkView>) -> Option<ReshapeBlockOperation<'_>> {
         // All zeroes or already a valid block
         if chunk_views.is_empty() || chunk_views.len() == 1 && chunk_views[0].is_block() {
             None
@@ -478,7 +478,7 @@ impl ReshapeBlockOperation<'_> {
 /// - a `HashSet` of chunk IDs that must cleaned up from the storage
 pub fn prepare_reshape(
     manifest: &mut LocalFileManifest,
-) -> impl Iterator<Item = ReshapeBlockOperation> + '_ {
+) -> impl Iterator<Item = ReshapeBlockOperation<'_>> + '_ {
     // Loop over blocks
     manifest
         .blocks

@@ -538,7 +538,7 @@ impl WorkspaceStore {
     pub async fn for_update_sync_local_only(
         &self,
         entry_id: VlobID,
-    ) -> Result<(SyncUpdater, Option<ArcLocalChildManifest>), ForUpdateSyncLocalOnlyError> {
+    ) -> Result<(SyncUpdater<'_>, Option<ArcLocalChildManifest>), ForUpdateSyncLocalOnlyError> {
         sync_updater::for_update_sync_local_only(self, entry_id).await
     }
 
@@ -554,7 +554,7 @@ impl WorkspaceStore {
         &self,
         entry_id: VlobID,
         wait: bool,
-    ) -> Result<(SyncUpdater, RetrievePathFromIDEntry), ForUpdateSyncError> {
+    ) -> Result<(SyncUpdater<'_>, RetrievePathFromIDEntry), ForUpdateSyncError> {
         sync_updater::for_update_sync(self, entry_id, wait).await
     }
 

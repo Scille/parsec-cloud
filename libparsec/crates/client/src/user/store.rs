@@ -95,7 +95,7 @@ impl UserStore {
     ///
     /// This method (and the related updater structure) make sure both requirements
     /// are met before providing the method to actually update the manifest.
-    pub async fn for_update(&self) -> (UserStoreUpdater, Arc<LocalUserManifest>) {
+    pub async fn for_update(&self) -> (UserStoreUpdater<'_>, Arc<LocalUserManifest>) {
         let guard = self.lock_update_user_manifest.lock().await;
 
         let manifest = self.get_user_manifest();
@@ -109,7 +109,7 @@ impl UserStore {
 
     /// As its name implies, local cache is never synchronized. Hence this method that
     /// won't update the `need_sync` and `updated` fields of the local user manifest.
-    pub async fn for_update_local_workspaces(&self) -> UserForUpdateLocalWorkspacesUpdater {
+    pub async fn for_update_local_workspaces(&self) -> UserForUpdateLocalWorkspacesUpdater<'_> {
         let guard = self.lock_update_user_manifest.lock().await;
 
         let manifest = self.get_user_manifest();

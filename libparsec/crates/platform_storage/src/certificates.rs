@@ -129,7 +129,7 @@ pub trait StorableCertificate {
     /// is purely for simplicity as the two are totally decorrelated.
     const TYPE: &'static str;
 
-    fn filters(&self) -> (FilterKind, FilterKind);
+    fn filters(&self) -> (FilterKind<'_>, FilterKind<'_>);
     fn timestamp(&self) -> DateTime;
 }
 
@@ -219,7 +219,7 @@ impl_storable_certificate_topic!(
 
 impl StorableCertificate for UserCertificate {
     const TYPE: &'static str = "user_certificate";
-    fn filters(&self) -> (FilterKind, FilterKind) {
+    fn filters(&self) -> (FilterKind<'_>, FilterKind<'_>) {
         let filter1 = FilterKind::Bytes(self.user_id.as_bytes());
         let filter2 = FilterKind::Null;
         (filter1, filter2)
@@ -231,7 +231,7 @@ impl StorableCertificate for UserCertificate {
 
 impl StorableCertificate for DeviceCertificate {
     const TYPE: &'static str = "device_certificate";
-    fn filters(&self) -> (FilterKind, FilterKind) {
+    fn filters(&self) -> (FilterKind<'_>, FilterKind<'_>) {
         let filter1 = FilterKind::Bytes(self.device_id.as_bytes());
         let filter2 = FilterKind::Bytes(self.user_id.as_bytes());
         (filter1, filter2)
@@ -243,7 +243,7 @@ impl StorableCertificate for DeviceCertificate {
 
 impl StorableCertificate for RevokedUserCertificate {
     const TYPE: &'static str = "revoked_user_certificate";
-    fn filters(&self) -> (FilterKind, FilterKind) {
+    fn filters(&self) -> (FilterKind<'_>, FilterKind<'_>) {
         let filter1 = FilterKind::Bytes(self.user_id.as_bytes());
         let filter2 = FilterKind::Null;
         (filter1, filter2)
@@ -255,7 +255,7 @@ impl StorableCertificate for RevokedUserCertificate {
 
 impl StorableCertificate for UserUpdateCertificate {
     const TYPE: &'static str = "user_update_certificate";
-    fn filters(&self) -> (FilterKind, FilterKind) {
+    fn filters(&self) -> (FilterKind<'_>, FilterKind<'_>) {
         let filter1 = FilterKind::Bytes(self.user_id.as_bytes());
         let filter2 = FilterKind::Null;
         (filter1, filter2)
@@ -267,7 +267,7 @@ impl StorableCertificate for UserUpdateCertificate {
 
 impl StorableCertificate for RealmRoleCertificate {
     const TYPE: &'static str = "realm_role_certificate";
-    fn filters(&self) -> (FilterKind, FilterKind) {
+    fn filters(&self) -> (FilterKind<'_>, FilterKind<'_>) {
         let filter1 = FilterKind::Bytes(self.realm_id.as_bytes());
         let filter2 = FilterKind::Bytes(self.user_id.as_bytes());
         (filter1, filter2)
@@ -279,7 +279,7 @@ impl StorableCertificate for RealmRoleCertificate {
 
 impl StorableCertificate for RealmNameCertificate {
     const TYPE: &'static str = "realm_name_certificate";
-    fn filters(&self) -> (FilterKind, FilterKind) {
+    fn filters(&self) -> (FilterKind<'_>, FilterKind<'_>) {
         let filter1 = FilterKind::Bytes(self.realm_id.as_bytes());
         let filter2 = FilterKind::Null;
         (filter1, filter2)
@@ -291,7 +291,7 @@ impl StorableCertificate for RealmNameCertificate {
 
 impl StorableCertificate for RealmKeyRotationCertificate {
     const TYPE: &'static str = "realm_key_rotation_certificate";
-    fn filters(&self) -> (FilterKind, FilterKind) {
+    fn filters(&self) -> (FilterKind<'_>, FilterKind<'_>) {
         let filter1 = FilterKind::Bytes(self.realm_id.as_bytes());
         let filter2 = FilterKind::from_u64(self.key_index);
         (filter1, filter2)
@@ -303,7 +303,7 @@ impl StorableCertificate for RealmKeyRotationCertificate {
 
 impl StorableCertificate for RealmArchivingCertificate {
     const TYPE: &'static str = "realm_archiving_certificate";
-    fn filters(&self) -> (FilterKind, FilterKind) {
+    fn filters(&self) -> (FilterKind<'_>, FilterKind<'_>) {
         let filter1 = FilterKind::Bytes(self.realm_id.as_bytes());
         let filter2 = FilterKind::Null;
         (filter1, filter2)
@@ -315,7 +315,7 @@ impl StorableCertificate for RealmArchivingCertificate {
 
 impl StorableCertificate for SequesterAuthorityCertificate {
     const TYPE: &'static str = "sequester_authority_certificate";
-    fn filters(&self) -> (FilterKind, FilterKind) {
+    fn filters(&self) -> (FilterKind<'_>, FilterKind<'_>) {
         // No filter is needed as there is a most one authority certificate
         let filter1 = FilterKind::Null;
         let filter2 = FilterKind::Null;
@@ -328,7 +328,7 @@ impl StorableCertificate for SequesterAuthorityCertificate {
 
 impl StorableCertificate for SequesterServiceCertificate {
     const TYPE: &'static str = "sequester_service_certificate";
-    fn filters(&self) -> (FilterKind, FilterKind) {
+    fn filters(&self) -> (FilterKind<'_>, FilterKind<'_>) {
         let filter1 = FilterKind::Bytes(self.service_id.as_bytes());
         let filter2 = FilterKind::Null;
         (filter1, filter2)
@@ -340,7 +340,7 @@ impl StorableCertificate for SequesterServiceCertificate {
 
 impl StorableCertificate for SequesterRevokedServiceCertificate {
     const TYPE: &'static str = "sequester_revoked_service_certificate";
-    fn filters(&self) -> (FilterKind, FilterKind) {
+    fn filters(&self) -> (FilterKind<'_>, FilterKind<'_>) {
         let filter1 = FilterKind::Bytes(self.service_id.as_bytes());
         let filter2 = FilterKind::Null;
         (filter1, filter2)
@@ -352,7 +352,7 @@ impl StorableCertificate for SequesterRevokedServiceCertificate {
 
 impl StorableCertificate for ShamirRecoveryBriefCertificate {
     const TYPE: &'static str = "shamir_recovery_brief_certificate";
-    fn filters(&self) -> (FilterKind, FilterKind) {
+    fn filters(&self) -> (FilterKind<'_>, FilterKind<'_>) {
         let filter1 = FilterKind::Bytes(self.user_id.as_bytes());
         let filter2 = FilterKind::Null;
         (filter1, filter2)
@@ -364,7 +364,7 @@ impl StorableCertificate for ShamirRecoveryBriefCertificate {
 
 impl StorableCertificate for ShamirRecoveryShareCertificate {
     const TYPE: &'static str = "shamir_recovery_share_certificate";
-    fn filters(&self) -> (FilterKind, FilterKind) {
+    fn filters(&self) -> (FilterKind<'_>, FilterKind<'_>) {
         let filter1 = FilterKind::Bytes(self.user_id.as_bytes());
         let filter2 = FilterKind::Bytes(self.recipient.as_bytes());
         (filter1, filter2)
@@ -376,7 +376,7 @@ impl StorableCertificate for ShamirRecoveryShareCertificate {
 
 impl StorableCertificate for ShamirRecoveryDeletionCertificate {
     const TYPE: &'static str = "shamir_recovery_deletion_certificate";
-    fn filters(&self) -> (FilterKind, FilterKind) {
+    fn filters(&self) -> (FilterKind<'_>, FilterKind<'_>) {
         let filter1 = FilterKind::Bytes(self.setup_to_delete_user_id.as_bytes());
         let filter2 = FilterKind::Null;
         (filter1, filter2)
