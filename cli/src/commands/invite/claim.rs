@@ -47,7 +47,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
         password_stdin,
         use_keyring,
     } = args;
-    log::trace!("Claiming invitation (addr={})", addr);
+    log::trace!("Claiming invitation (addr={addr})");
     let save_mode = if use_keyring {
         SaveMode::Keyring
     } else {

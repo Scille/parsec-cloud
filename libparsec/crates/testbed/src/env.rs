@@ -327,9 +327,9 @@ impl TestbedEnv {
                 .body(customization)
                 .send()
                 .await
-                .unwrap_or_else(|e| panic!("Cannot communicate with testbed server: {}", e));
+                .unwrap_or_else(|e| panic!("Cannot communicate with testbed server: {e}"));
             if response.status() != StatusCode::OK {
-                panic!("Bad response status from testbed server: {:?}", response);
+                panic!("Bad response status from testbed server: {response:?}");
             }
         }
 
@@ -1114,7 +1114,7 @@ where
         };
 
         component_store.downcast::<T>().unwrap_or_else(|_| {
-            panic!("Unexpected component storage type for `{}`", component_key);
+            panic!("Unexpected component storage type for `{component_key}`");
         })
     })
 }
@@ -1168,7 +1168,7 @@ pub async fn test_check_mailbox(
     server_addr: &ParsecAddr,
     email: &EmailAddress,
 ) -> anyhow::Result<Vec<(EmailAddress, DateTime, String)>> {
-    let url = server_addr.to_http_url(Some(&format!("/testbed/mailbox/{}", email)));
+    let url = server_addr.to_http_url(Some(&format!("/testbed/mailbox/{email}")));
     let response = HTTP_CLIENT
         .get(url)
         .send()

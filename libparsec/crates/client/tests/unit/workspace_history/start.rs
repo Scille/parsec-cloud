@@ -42,8 +42,7 @@ async fn ok(
 
     assert!(
         timestamp_higher_bound >= "2001-01-30T00:00:00Z".parse().unwrap(),
-        "{:?}",
-        timestamp_higher_bound
+        "{timestamp_higher_bound:?}"
     );
 
     p_assert_eq!(ops.timestamp_of_interest(), timestamp_lower_bound,);

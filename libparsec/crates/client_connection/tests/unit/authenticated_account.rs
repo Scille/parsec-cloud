@@ -49,7 +49,7 @@ async fn ok(env: &TestbedEnv, mocked: bool) {
         test_register_low_level_send_hook(&env.discriminant_dir, |request_builder| async {
             let request = request_builder.build().unwrap();
             let headers = request.headers();
-            println!("headers: {:?}", headers);
+            println!("headers: {headers:?}");
             p_assert_eq!(
                 headers.get("Content-Type"),
                 Some(&HeaderValue::from_static("application/msgpack"))

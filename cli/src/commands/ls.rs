@@ -23,7 +23,7 @@ pub async fn ls(args: Args, client: &StartedClient) -> anyhow::Result<()> {
     let entries = workspace.stat_folder_children(&path).await?;
 
     for (entry, _stat) in entries {
-        println!("{}", entry);
+        println!("{entry}");
     }
 
     Ok(())

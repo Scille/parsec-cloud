@@ -321,7 +321,7 @@ impl KeepaliveTracking {
                     // In case of a timeout, return a `ConnectionError::NoResponse`
                     // to get the same behavior as if the server was unreachable.
                     _ = sleep(timeout) => {
-                        log::info!("Keepalive timeout after {:?}", timeout);
+                        log::info!("Keepalive timeout after {timeout:?}");
                         Some(Err(ConnectionError::NoResponse(None)))
                     }
                 )
@@ -424,8 +424,7 @@ async fn task_future_factory(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus) 
                                 // Unexpected error status
                                 rep => {
                                     log::warn!(
-                                        "`events_listen` unexpected error response: {:?}",
-                                        rep
+                                        "`events_listen` unexpected error response: {rep:?}"
                                     );
                                 }
                             };

@@ -98,7 +98,7 @@ async fn ok_with_changes(
 
                     expected_workspaces[0].current_name = "wksp1-renamed".parse().unwrap();
                 }
-                unknown => panic!("Unknown kind: {}", unknown),
+                unknown => panic!("Unknown kind: {unknown}"),
             }
             builder.certificates_storage_fetch_certificates("alice@dev1");
 

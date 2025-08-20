@@ -291,7 +291,7 @@ async fn inconsistent_path_recursive_by_children(
             "/foo".parse().unwrap(),
             vec![wksp1_id, wksp1_foo_id],
         ),
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     };
 
     env.customize(|builder| {

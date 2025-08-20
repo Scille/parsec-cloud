@@ -532,7 +532,7 @@ async fn write_open_but_no_modification(
         "need_sync_non_empty_then_open_for_write" => {
             customize_need_sync_non_empty = true;
         }
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     }
 
     if customize_synced_empty {

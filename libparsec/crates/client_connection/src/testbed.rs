@@ -173,7 +173,7 @@ impl SendHookConfig {
     where
         T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
     {
-        println!("[Testbed] Client connection -> {:?}", request);
+        println!("[Testbed] Client connection -> {request:?}");
 
         // Given mutex is synchronous, we must release it before any await
         let custom_hook_future = {
@@ -191,7 +191,7 @@ impl SendHookConfig {
                     // The request type wasn't what the hook expected
                     HighLevelSendHookFnCallResult::TypeCastError(request) => {
                         let request: Box<T> = request.downcast().expect("Type is known");
-                        panic!("Hook got an unexpected request type: {:?}", request)
+                        panic!("Hook got an unexpected request type: {request:?}")
                     }
                 }
             } else {
@@ -206,7 +206,7 @@ impl SendHookConfig {
             .downcast()
             .expect("Wrong type returned for response !");
 
-        println!("[Testbed] Client connection <- {:?}", rep);
+        println!("[Testbed] Client connection <- {rep:?}");
 
         HighLevelSendResult::Resolved(Ok(*rep))
     }

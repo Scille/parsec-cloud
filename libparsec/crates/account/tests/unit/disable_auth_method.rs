@@ -169,6 +169,6 @@ async fn unknown_server_response(env: &TestbedEnv) {
     p_assert_matches!(
     account.disable_auth_method(auth_method_id).await,
         Err(AccountDisableAuthMethodError::Internal(err))
-        if format!("{}", err) == "Unexpected server response: UnknownStatus { unknown_status: \"unknown\", reason: None }"
+        if format!("{err}") == "Unexpected server response: UnknownStatus { unknown_status: \"unknown\", reason: None }"
     );
 }

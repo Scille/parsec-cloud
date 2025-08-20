@@ -573,7 +573,7 @@ fn check_stat_with_caller(
                 ..
             },
         ) => (id, need_sync, confinement_point),
-        _ => panic!("Expected a {} (caller: {})", entry_type, caller),
+        _ => panic!("Expected a {entry_type} (caller: {caller})"),
     };
     p_assert_eq!(got_id, &id, "Invalid id in EntryStat (caller: {})", caller);
     p_assert_eq!(
@@ -754,8 +754,7 @@ async fn rename_a_entry_to_be_confined(
     };
     assert!(
         folder.local_confinement_points.contains(&child_id),
-        "The child {} should be in the confinement points list",
-        child_id
+        "The child {child_id} should be in the confinement points list"
     );
 
     ops_outbound_sync(&ops).await;
@@ -778,8 +777,7 @@ async fn rename_a_entry_to_be_confined(
     };
     assert!(
         dbg!(&folder.children).is_empty(),
-        "{} should have been removed with the rename",
-        not_confined_entry_name
+        "{not_confined_entry_name} should have been removed with the rename"
     );
 }
 
@@ -892,8 +890,7 @@ async fn rename_a_confined_entry_to_not_be_confined(
     };
     assert!(
         folder.local_confinement_points.is_empty(),
-        "The child {} should not be in the confinement points list",
-        child_id
+        "The child {child_id} should not be in the confinement points list"
     );
 
     ops_outbound_sync(&ops).await;
@@ -916,8 +913,7 @@ async fn rename_a_confined_entry_to_not_be_confined(
     };
     assert_eq!(
         folder.children[&not_confined_entry_name], child_id,
-        "{} should be present in the folder",
-        not_confined_entry_name
+        "{not_confined_entry_name} should be present in the folder"
     );
 
     // Ensure that the child is present in the remote
@@ -1024,8 +1020,7 @@ async fn rename_a_entry_to_be_confined_with_different_parent(
     };
     assert!(
         folder.local_confinement_points.contains(&child_id),
-        "The child {} should be in the confinement points list",
-        child_id
+        "The child {child_id} should be in the confinement points list"
     );
 
     ops_outbound_sync(&ops).await;
@@ -1049,9 +1044,7 @@ async fn rename_a_entry_to_be_confined_with_different_parent(
     assert_eq!(
         dbg!(&folder.children).len(),
         1,
-        "Should only have {}, {} should have been removed with the rename",
-        different_parent_id,
-        not_confined_entry_name
+        "Should only have {different_parent_id}, {not_confined_entry_name} should have been removed with the rename"
     );
     assert_eq!(folder.children[&different_parent_name], different_parent_id);
     // The different parent should also be empty since the renamed file match the prevent sync pattern.
@@ -1065,8 +1058,7 @@ async fn rename_a_entry_to_be_confined_with_different_parent(
     };
     assert!(
         dbg!(&folder.children).is_empty(),
-        "{} should have been removed with the rename",
-        not_confined_entry_name
+        "{not_confined_entry_name} should have been removed with the rename"
     );
 }
 
@@ -1169,8 +1161,7 @@ async fn rename_a_confined_entry_to_not_be_confined_with_different_parent(
     };
     assert!(
         folder.local_confinement_points.is_empty(),
-        "The child {} should not be in the confinement points list",
-        child_id
+        "The child {child_id} should not be in the confinement points list"
     );
 
     ops_outbound_sync(&ops).await;
@@ -1196,8 +1187,7 @@ async fn rename_a_confined_entry_to_not_be_confined_with_different_parent(
     };
     assert_eq!(
         folder.children[&not_confined_entry_name], child_id,
-        "{} should be present in the folder",
-        not_confined_entry_name
+        "{not_confined_entry_name} should be present in the folder"
     );
     // But should have been removed from the parent
     let ArcLocalChildManifest::Folder(folder) =
@@ -1208,9 +1198,7 @@ async fn rename_a_confined_entry_to_not_be_confined_with_different_parent(
     assert_eq!(
         dbg!(&folder.children).len(),
         1,
-        "{} Should only contain {}",
-        parent_id,
-        different_parent_id
+        "{parent_id} Should only contain {different_parent_id}"
     );
     assert_eq!(folder.children[&different_parent_name], different_parent_id);
 

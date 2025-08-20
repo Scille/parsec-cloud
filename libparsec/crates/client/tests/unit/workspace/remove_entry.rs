@@ -46,7 +46,7 @@ async fn not_found(#[values("unknown", "parent_is_file")] kind: &str, env: &Test
     let path = match kind {
         "unknown" => "/dummy",
         "parent_is_file" => "/bar.txt/dummy",
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     };
 
     let err = ops.remove_folder(path.parse().unwrap()).await.unwrap_err();
@@ -266,7 +266,7 @@ async fn remove_folder_with_local_changes(
             .await
             .unwrap();
         }
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     }
 
     p_assert_eq!(

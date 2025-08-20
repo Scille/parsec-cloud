@@ -191,7 +191,7 @@ async fn inconsistent_path_parent_mismatch(
                 .into(),
             ),
         ),
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     };
     env.customize(|builder| {
         builder
@@ -238,7 +238,7 @@ async fn inconsistent_path_recursive(#[values("root", "child")] kind: &str, env:
         let recursive_target_id = match kind {
             "root" => wksp1_id,
             "child" => wksp1_foo_id,
-            unknown => panic!("Unknown kind: {}", unknown),
+            unknown => panic!("Unknown kind: {unknown}"),
         };
         builder
             .workspace_data_storage_local_folder_manifest_create_or_update(

@@ -65,8 +65,7 @@ impl From<ClientConfig> for libparsec_client::ClientConfig {
                 .unwrap_or_else(|err| {
                     // Fall back to default pattern if the custom pattern is invalid
                     log::warn!(
-                        "Invalid custom prevent sync pattern, falling back to default: {}",
-                        err
+                        "Invalid custom prevent sync pattern, falling back to default: {err}"
                     );
                     PreventSyncPattern::default()
                 }),

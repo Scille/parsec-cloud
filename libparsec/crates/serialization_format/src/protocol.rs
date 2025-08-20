@@ -414,9 +414,7 @@ impl GenCmdsFamily {
 
                 assert!(
                     version_cmd_couples.insert((major_version, cmd_name.to_owned())),
-                    "APIv{:?} has multiple implementations of {:?} !",
-                    major_version,
-                    cmd_name
+                    "APIv{major_version:?} has multiple implementations of {cmd_name:?} !"
                 );
                 gen_versions.entry(major_version).or_default().push(gen_cmd);
             }

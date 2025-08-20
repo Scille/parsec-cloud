@@ -91,12 +91,12 @@ fn task_future_factory(event_bus: EventBus, client: Arc<Client>) -> impl Future<
                             ..
                         }
                         | ClientProcessWorkspacesNeedsError::InvalidCertificate(_)) => {
-                            log::error!("Stopping workspaces process needs monitor due to unexpected outcome: {}", err);
+                            log::error!("Stopping workspaces process needs monitor due to unexpected outcome: {err}");
                             return;
                         }
                         ClientProcessWorkspacesNeedsError::Internal(err) => {
                             // Unexpected error occurred, better stop the monitor
-                            log::error!("Workspaces bootstrap monitor has crashed: {}", err);
+                            log::error!("Workspaces bootstrap monitor has crashed: {err}");
                             let event = EventMonitorCrashed {
                                 monitor: WORKSPACES_PROCESS_NEEDS_MONITOR_NAME,
                                 workspace_id: None,

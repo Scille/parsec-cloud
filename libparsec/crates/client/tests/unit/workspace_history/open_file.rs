@@ -56,7 +56,7 @@ async fn ok(
                 Ok((fd, entry_id)) if fd.0 == 1 && entry_id == wksp1_bar_txt_id
             )
         }
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     }
 }
 
@@ -75,7 +75,7 @@ async fn server_only_offline(#[values("open", "open_and_get_id")] kind: &str, en
             .open_file_and_get_id("/bar.txt".parse().unwrap())
             .await
             .unwrap_err(),
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     };
     p_assert_matches!(outcome, WorkspaceHistoryOpenFileError::Offline(_));
 }
@@ -106,7 +106,7 @@ async fn stopped(#[values("open", "open_and_get_id")] kind: &str, env: &TestbedE
             .open_file_and_get_id("/bar.txt".parse().unwrap())
             .await
             .unwrap_err(),
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     };
     p_assert_matches!(outcome, WorkspaceHistoryOpenFileError::Stopped);
 }
@@ -137,7 +137,7 @@ async fn server_only_no_realm_access(
             .open_file_and_get_id("/bar.txt".parse().unwrap())
             .await
             .unwrap_err(),
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     };
     p_assert_matches!(outcome, WorkspaceHistoryOpenFileError::NoRealmAccess);
 }
@@ -167,7 +167,7 @@ async fn entry_not_found(
             .open_file_and_get_id("/dummy.txt".parse().unwrap())
             .await
             .unwrap_err(),
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     };
     p_assert_matches!(outcome, WorkspaceHistoryOpenFileError::EntryNotFound);
 }
@@ -206,7 +206,7 @@ async fn entry_not_a_file(
             .open_file_and_get_id("/foo".parse().unwrap())
             .await
             .unwrap_err(),
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     };
     p_assert_matches!(
         outcome,

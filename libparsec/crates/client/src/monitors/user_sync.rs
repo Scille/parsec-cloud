@@ -112,18 +112,18 @@ fn task_future_factory(user_ops: Arc<UserOps>, event_bus: EventBus) -> impl Futu
                         UserSyncError::InvalidCertificate(error) => {
                             // Note `UserOps` is responsible for sending the
                             // invalid certificate event on the event bus
-                            log::warn!("Invalid certificate detected: {}", error);
+                            log::warn!("Invalid certificate detected: {error}");
                             break;
                         }
                         error @ UserSyncError::TimestampOutOfBallpark { .. } => {
                             // Note `UserOps` is responsible for sending the
                             // bad timestamp event on the event bus
-                            log::warn!("Client/server clock drift detected: {:?}", error);
+                            log::warn!("Client/server clock drift detected: {error:?}");
                             break;
                         }
                         UserSyncError::Internal(err) => {
                             // Unexpected error occurred, better stop the monitor
-                            log::error!("Certificate monitor has crashed: {}", err);
+                            log::error!("Certificate monitor has crashed: {err}");
                             let event = EventMonitorCrashed {
                                 monitor: USER_SYNC_MONITOR_NAME,
                                 workspace_id: None,

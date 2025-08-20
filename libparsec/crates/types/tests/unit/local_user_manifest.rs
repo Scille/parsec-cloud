@@ -230,7 +230,7 @@ fn local_user_manifest_new(
     let expected_speculative = match kind {
         "non_speculative" => false,
         "speculative" => true,
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     };
     let expected_author = DeviceID::default();
     let expected_id = VlobID::default();
@@ -320,7 +320,7 @@ fn local_user_manifest_to_remote(#[values("with_v1_base", "placeholder")] kind: 
                 lum.base.timestamp = "2000-01-30T00:00:00Z".parse().unwrap();
                 lum.base.updated = "2000-01-05T00:00:00Z".parse().unwrap();
             }
-            unknown => panic!("Unknown kind: {}", unknown),
+            unknown => panic!("Unknown kind: {unknown}"),
         }
 
         lum

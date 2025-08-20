@@ -39,7 +39,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
 
     let rep = stats_organization_req(&organization, &addr, &token).await?;
 
-    println!("{:#}", rep);
+    println!("{rep:#}");
 
     Ok(())
 }
