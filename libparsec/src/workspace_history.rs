@@ -206,12 +206,12 @@ pub enum WorkspaceHistoryInternalOnlyError {
 pub fn workspace_history_stop(
     workspace_history: Handle,
 ) -> Result<(), WorkspaceHistoryInternalOnlyError> {
-    take_and_close_handle(workspace_history, |x| match x {
+    take_and_close_handle(workspace_history, |x| match *x {
         HandleItem::WorkspaceHistory { .. } => {
             // `WorkspaceHistoryOps` has no stop method, dropping it is enough
             Ok(())
         }
-        invalid => Err(invalid),
+        _ => Err(x),
     })
     .map_err(|err| err.into())
 }
