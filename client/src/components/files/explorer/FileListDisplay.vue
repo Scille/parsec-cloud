@@ -83,25 +83,27 @@
           <file-list-item
             v-for="folder in folders.getEntries()"
             ref="folderItems"
+            v-model="folder.isSelected"
             :key="folder.id"
             :entry="folder"
             :show-checkbox="someSelected || selectionEnabled === true"
-            @click="$emit('click', folder, $event)"
-            @menu-click="onMenuClick"
-            @selected-change="onSelectedChange"
-            @files-added="onFilesAdded"
             :is-workspace-reader="ownRole === WorkspaceRole.Reader"
+            @open-item="$emit('openItem', folder, $event)"
+            @open-item.stop
+            @menu-click="onMenuClick"
+            @files-added="onFilesAdded"
             @drop-as-reader="$emit('dropAsReader')"
           />
           <file-list-item
             v-for="file in files.getEntries()"
             ref="fileItems"
+            v-model="file.isSelected"
             :key="file.id"
             :entry="file"
             :show-checkbox="someSelected || selectionEnabled === true"
-            @click="$emit('click', file, $event)"
+            @open-item="$emit('openItem', file, $event)"
+            @open-item.stop
             @menu-click="onMenuClick"
-            @selected-change="onSelectedChange"
             @files-added="onFilesAdded"
             @drop-as-reader="$emit('dropAsReader')"
           />
@@ -143,7 +145,7 @@ const props = defineProps<{
 }>();
 
 const emits = defineEmits<{
-  (e: 'click', entry: EntryModel, event: Event): void;
+  (e: 'openItem', entry: EntryModel, event: Event): void;
   (e: 'sortChange', event: MsSorterChangeEvent): void;
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
   (e: 'globalMenuClick', event: Event): void;
@@ -177,8 +179,6 @@ async function onContextMenu(event: Event): Promise<void> {
 async function onMenuClick(event: Event, entry: EntryModel, onFinished: () => void): Promise<void> {
   emits('menuClick', event, entry, onFinished);
 }
-
-async function onSelectedChange(_entry: EntryModel, _checked: boolean): Promise<void> {}
 
 function onFilesAdded(imports: FileImportTuple[]): void {
   fileDropZoneRef.value?.reset();

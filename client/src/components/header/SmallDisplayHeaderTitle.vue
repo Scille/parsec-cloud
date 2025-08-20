@@ -117,6 +117,7 @@ defineEmits<{
 
 .title__button {
   padding: 0.8rem;
+  flex-shrink: 0;
 
   &:hover {
     cursor: pointer;

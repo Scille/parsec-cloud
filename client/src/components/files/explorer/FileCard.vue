@@ -7,11 +7,11 @@
       selected: entry.isSelected,
       'file-hovered': !entry.isSelected && (menuOpened || isHovered),
     }"
-    @dblclick="$emit('click', $event, entry)"
+    @dblclick="$emit('openItem', $event, entry)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
     @contextmenu="onOptionsClick"
-    @click="onCardClick"
+    @click="$emit('update:modelValue', !props.entry.isSelected)"
   >
     <file-drop-zone
       :disabled="entry.isFile()"
@@ -25,7 +25,6 @@
         <ms-checkbox
           v-model="entry.isSelected"
           v-show="entry.isSelected || isHovered || showCheckbox"
-          @ion-change="$emit('select')"
           @click.stop
           @dblclick.stop
         />
@@ -52,7 +51,10 @@
           />
         </div>
 
-        <ion-text class="file-card__title body">
+        <ion-text
+          class="file-card__title cell"
+          @click="$emit('openItem', $event, entry)"
+        >
           {{ entry.name }}
         </ion-text>
 
@@ -92,27 +94,20 @@ const props = defineProps<{
   entry: EntryModel;
   showCheckbox: boolean;
   isWorkspaceReader?: boolean;
-  modelValue?: boolean;
+  modelValue: boolean;
 }>();
 
 const emits = defineEmits<{
-  (e: 'click', event: Event, entry: EntryModel): void;
+  (e: 'openItem', event: Event, entry: EntryModel): void;
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
   (e: 'filesAdded', imports: FileImportTuple[]): void;
   (e: 'dropAsReader'): void;
-  (e: 'select'): void;
   (e: 'update:modelValue', value: boolean): void;
 }>();
 
 defineExpose({
   props,
 });
-
-async function onCardClick(): Promise<void> {
-  if (props.showCheckbox) {
-    emits('update:modelValue', !props.entry.isSelected);
-  }
-}
 
 function isFileSynced(): boolean {
   return !props.entry.needSync;
@@ -210,6 +205,11 @@ async function onOptionsClick(event: Event): Promise<void> {
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
+
+    &:hover {
+      text-decoration: underline;
+      cursor: pointer !important;
+    }
   }
 
   &-last-update {
