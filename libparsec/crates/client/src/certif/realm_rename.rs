@@ -179,7 +179,7 @@ async fn rename_realm_internal(
                     ballpark_client_late_offset,
                 })
             }
-            bad_rep @ (Rep::InvalidCertificate { .. } | Rep::UnknownStatus { .. }) => {
+            bad_rep @ (Rep::InvalidCertificate | Rep::UnknownStatus { .. }) => {
                 Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
             }
         };

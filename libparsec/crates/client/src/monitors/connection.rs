@@ -119,7 +119,7 @@ fn dispatch_api_event(event: APIEvent, event_bus: &EventBus) {
             };
             event_bus.send(&event);
         }
-        APIEvent::PkiEnrollment {} => {
+        APIEvent::PkiEnrollment => {
             let event = EventPkiEnrollmentUpdated {};
             event_bus.send(&event);
         }

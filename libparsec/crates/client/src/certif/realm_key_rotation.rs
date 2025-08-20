@@ -174,7 +174,7 @@ pub(super) async fn rotate_realm_key_idempotent(
 
             // Unexpected errors :(
             bad_rep @ (
-                Rep::InvalidCertificate { .. }
+                Rep::InvalidCertificate
                 // We only encrypt for sequester services when the realm is sequestered
                 | Rep::OrganizationNotSequestered
                 | Rep::UnknownStatus { .. }

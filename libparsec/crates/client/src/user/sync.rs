@@ -102,7 +102,7 @@ async fn upload_manifest(
             let rep = ops.cmds.send(req).await?;
             match rep {
                 Rep::Ok => Ok(UploadManifestOutcome::Success(to_sync_um)),
-                Rep::VlobAlreadyExists { .. } => Ok(UploadManifestOutcome::VersionConflict),
+                Rep::VlobAlreadyExists => Ok(UploadManifestOutcome::VersionConflict),
                 Rep::RequireGreaterTimestamp {
                     strictly_greater_than,
                 } => {
@@ -456,7 +456,7 @@ async fn fetch_last_remote_user_manifest(
             // User never loses access to its user manifest's workspace
             Rep::AuthorNotAllowed |
             // User manifest's vlob is supposed to exist !
-            Rep::RealmNotFound { .. } |
+            Rep::RealmNotFound |
             // Don't know what to do with this status :/
             Rep::UnknownStatus { .. }
         ) => {
@@ -522,7 +522,7 @@ async fn fetch_old_remote_user_manifest(
             // User never loses access to its user manifest's workspace
             Rep::AuthorNotAllowed |
             // User manifest's vlob is supposed to exist !
-            Rep::RealmNotFound { .. } |
+            Rep::RealmNotFound |
             // Don't know what to do with this status :/
             Rep::UnknownStatus { .. }
         ) => {
