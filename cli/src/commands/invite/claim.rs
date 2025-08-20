@@ -148,7 +148,7 @@ async fn step0(
 }
 
 enum UserClaimAdministratorPick {
-    Single(UserClaimInitialCtx),
+    Single(Box<UserClaimInitialCtx>),
     Multiple(Vec<UserClaimInitialCtx>),
 }
 
@@ -160,7 +160,10 @@ fn user_pick_admin(
     // Only one admin, no need to choose
     if ctxs.len() == 1 {
         return Ok(UserClaimAdministratorPick::Single(
-            ctxs.into_iter().next().expect("ctxs is non-empty"),
+            ctxs.into_iter()
+                .next()
+                .map(Box::new)
+                .expect("ctxs is non-empty"),
         ));
     }
     let mut humans: Vec<_> = ctxs
@@ -179,6 +182,7 @@ fn user_pick_admin(
     Ok(UserClaimAdministratorPick::Single(
         ctxs.into_iter()
             .nth(selection)
+            .map(Box::new)
             .expect("selection should correspond to a ctx"),
     ))
 }

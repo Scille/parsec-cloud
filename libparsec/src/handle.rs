@@ -10,7 +10,7 @@ pub type Handle = u32;
 const INVALID_HANDLE_ERROR_MSG: &str = "Invalid Handle";
 
 enum RegisteredHandleItem {
-    Open(HandleItem),
+    Open(Box<HandleItem>),
     Closed,
 }
 
@@ -192,7 +192,7 @@ pub(crate) fn register_handle_with_init<E>(
     }
 
     let handle = guard.len() as Handle;
-    guard.push(RegisteredHandleItem::Open(initializing));
+    guard.push(RegisteredHandleItem::Open(Box::new(initializing)));
     Ok(InitializingGuard {
         handle,
         started: false,
@@ -203,7 +203,7 @@ pub(crate) fn register_handle(item: HandleItem) -> Handle {
     let mut guard = get_handles();
 
     let handle = guard.len();
-    guard.push(RegisteredHandleItem::Open(item));
+    guard.push(RegisteredHandleItem::Open(Box::new(item)));
     handle as Handle
 }
 
@@ -239,7 +239,7 @@ pub(crate) fn iter_opened_handles(mut callback: impl FnMut(Handle, &HandleItem))
 
 pub(crate) fn take_and_close_handle<T>(
     handle: Handle,
-    mut mapper: impl FnMut(HandleItem) -> Result<T, HandleItem>,
+    mut mapper: impl FnMut(Box<HandleItem>) -> Result<T, Box<HandleItem>>,
 ) -> anyhow::Result<T> {
     let mut guard = get_handles();
 
