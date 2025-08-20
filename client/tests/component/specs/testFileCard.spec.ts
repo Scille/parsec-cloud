@@ -43,6 +43,7 @@ describe('File Card Item', () => {
       props: {
         entry: FILE,
         showCheckbox: true,
+        modelValue: true,
       },
       global: {
         provide: getDefaultProvideConfig(),
@@ -83,6 +84,7 @@ describe('File Card Item', () => {
       props: {
         entry: FOLDER,
         showCheckbox: true,
+        modelValue: true,
       },
       global: {
         provide: getDefaultProvideConfig(),

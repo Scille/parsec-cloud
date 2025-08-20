@@ -46,6 +46,7 @@ describe('File List Item', () => {
       props: {
         entry: FILE,
         showCheckbox: false,
+        modelValue: true,
       },
       global: {
         provide: getDefaultProvideConfig(),
@@ -88,6 +89,7 @@ describe('File List Item', () => {
       props: {
         entry: FOLDER,
         showCheckbox: false,
+        modelValue: true,
       },
       global: {
         provide: getDefaultProvideConfig(),

@@ -19,7 +19,8 @@
         'file-hovered': !entry.isSelected && (menuOpened || isHovered),
         'file-list-item-mobile': isSmallDisplay,
       }"
-      @dblclick="$emit('click', $event, entry)"
+      @dblclick="$emit('openItem', $event, entry)"
+      @click="$emit('update:modelValue', !props.entry.isSelected)"
       @mouseenter="isHovered = true"
       @mouseleave="isHovered = false"
       @contextmenu="onOptionsClick"
@@ -32,7 +33,6 @@
         <ms-checkbox
           v-model="entry.isSelected"
           v-show="entry.isSelected || isHovered || showCheckbox"
-          @change="$emit('selectedChange', entry, $event)"
           @click.stop
           @dblclick.stop
         />
@@ -48,7 +48,10 @@
           class="file-icon"
         />
         <div class="file-mobile-text">
-          <ion-text class="file-name__label cell">
+          <ion-text
+            class="file-name__label cell"
+            @click="$emit('openItem', $event, entry)"
+          >
             {{ entry.name }}
           </ion-text>
           <ion-text
@@ -148,14 +151,16 @@ const props = defineProps<{
   showCheckbox: boolean;
   isWorkspaceReader?: boolean;
   disableDrop?: boolean;
+  modelValue: boolean;
 }>();
 
 const emits = defineEmits<{
   (e: 'click', event: Event, entry: EntryModel): void;
+  (e: 'openItem', event: Event, entry: EntryModel): void;
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
-  (e: 'selectedChange', entry: EntryModel, checked: boolean): void;
   (e: 'filesAdded', imports: FileImportTuple[]): void;
   (e: 'dropAsReader'): void;
+  (e: 'update:modelValue', value: boolean): void;
 }>();
 
 defineExpose({
@@ -207,6 +212,13 @@ async function onOptionsClick(event: PointerEvent): Promise<void> {
     overflow: hidden;
     text-overflow: ellipsis;
     text-wrap: nowrap;
+    width: fit-content;
+
+    &:hover {
+      border-top: 1px solid transparent;
+      border-bottom: 1px solid var(--parsec-color-light-secondary-grey);
+      cursor: pointer !important;
+    }
   }
 
   .cloud-overlay {

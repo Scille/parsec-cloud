@@ -315,7 +315,7 @@ msTest('Import context menu', async ({ documents }) => {
   await expect(popover.getByRole('listitem')).toHaveText(['Import files', 'Import a folder']);
 });
 
-msTest('Selection in grid mode', async ({ documents }) => {
+msTest('Selection in grid mode by by clicking on the checkbox', async ({ documents }) => {
   await documents.locator('.folder-container').locator('.folder-list-header').locator('ion-checkbox').click();
   await toggleViewMode(documents);
   const entries = documents.locator('.folder-container').locator('.file-card-item');
@@ -334,6 +334,29 @@ msTest('Selection in grid mode', async ({ documents }) => {
   await expect(entries.nth(2).locator('ion-checkbox')).toHaveState('checked');
   await expect(entries.nth(3).locator('ion-checkbox')).toHaveState('unchecked');
 });
+
+for (const gridMode of [false, true]) {
+  msTest(`Selection in ${gridMode ? 'grid' : 'list'} mode by clicking on the item`, async ({ documents }) => {
+    if (gridMode) {
+      await toggleViewMode(documents);
+    }
+
+    const entries = documents.locator('.folder-container').locator(gridMode ? '.file-card-item' : '.file-list-item');
+    const actionBar = documents.locator('#folders-ms-action-bar');
+    const entriesCount = await entries.count();
+
+    for (let i = 0; i < entriesCount; i++) {
+      await entries.nth(i).click();
+
+      for (let j = 0; j <= i; j++) {
+        await expect(entries.nth(j).locator('ion-checkbox')).toHaveState('checked');
+      }
+
+      const counterText = i === 0 ? '1 selected item' : `${i + 1} selected items`;
+      await expect(actionBar.locator('.counter')).toHaveText(counterText, { useInnerText: true });
+    }
+  });
+}
 
 for (const gridMode of [false, true]) {
   msTest(`Open file in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {

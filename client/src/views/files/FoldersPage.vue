@@ -128,16 +128,16 @@
               :folders="folders"
               :operations-in-progress="fileOperationsCurrentDir"
               :current-path="currentPath"
-              @click="onEntryClick"
+              :own-role="ownRole"
+              :selection-enabled="selectionEnabled && isSmallDisplay"
+              :current-sort-order="currentSortOrder"
+              :current-sort-property="currentSortProperty"
+              @open-item="onEntryClick"
               @menu-click="openEntryContextMenu"
               @files-added="startImportFiles"
               @global-menu-click="openGlobalContextMenu"
-              :own-role="ownRole"
               @drop-as-reader="onDropAsReader"
-              :selection-enabled="selectionEnabled && isSmallDisplay"
               @sort-change="onSortChange"
-              :current-sort-order="currentSortOrder"
-              :current-sort-property="currentSortProperty"
             />
           </div>
           <div v-if="displayView === DisplayState.Grid">
@@ -147,14 +147,13 @@
               :folders="folders"
               :operations-in-progress="fileOperationsCurrentDir"
               :current-path="currentPath"
-              @click="onEntryClick"
+              :own-role="ownRole"
+              :selection-enabled="selectionEnabled && isSmallDisplay"
+              @open-item="onEntryClick"
               @menu-click="openEntryContextMenu"
               @files-added="startImportFiles"
               @global-menu-click="openGlobalContextMenu"
-              :own-role="ownRole"
               @drop-as-reader="onDropAsReader"
-              :selection-enabled="selectionEnabled && isSmallDisplay"
-              @checkbox-click="selectionEnabled = true"
             />
           </div>
         </div>
@@ -409,6 +408,7 @@ const selectedFilesCount = computed(() => {
   return files.value.selectedCount() + folders.value.selectedCount();
 });
 const selectionEnabled = ref<boolean>(false);
+const manualSelection = ref<boolean>(false);
 
 let hotkeys: HotkeyGroup | null = null;
 let callbackId: string | null = null;
@@ -429,6 +429,10 @@ const tabBarWatchCancel = watch([isSmallDisplay, selectedFilesCount], () => {
   } else {
     customTabBar.hide();
   }
+});
+
+const selectedCountWatchCancel = watch([selectedFilesCount, manualSelection], () => {
+  selectionEnabled.value = selectedFilesCount.value > 0 || manualSelection.value === true;
 });
 
 async function defineShortcuts(): Promise<void> {
@@ -591,6 +595,7 @@ onUnmounted(async () => {
   selectionEnabled.value = false;
   routeWatchCancel();
   tabBarWatchCancel();
+  selectedCountWatchCancel();
   if (eventCbId) {
     eventDistributor.removeCallback(eventCbId);
   }
@@ -1448,22 +1453,26 @@ async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?
 async function toggleSelection(): Promise<void> {
   selectionEnabled.value = !selectionEnabled.value;
   if (selectionEnabled.value === false) {
+    manualSelection.value = false;
     await unselectAll();
+  } else {
+    manualSelection.value = true;
   }
 }
 
 async function onSelectionCancel(): Promise<void> {
   await unselectAll();
-  selectionEnabled.value = false;
+  manualSelection.value = false;
 }
 
 async function selectAll(): Promise<void> {
-  selectionEnabled.value = true;
+  manualSelection.value = true;
   folders.value.selectAll(true);
   files.value.selectAll(true);
 }
 
 async function unselectAll(): Promise<void> {
+  manualSelection.value = true;
   folders.value.selectAll(false);
   files.value.selectAll(false);
 }
