@@ -5,15 +5,64 @@
     class="file-editor"
     id="file-editor"
     ref="fileEditor"
-  />
+  >
+    <div
+      v-if="error"
+      class="file-editor-error"
+    >
+      <div class="error-content">
+        <div class="error-content-text">
+          <ion-text class="error-content-text__title title-h3">{{ $msTranslate('fileEditors.globalTitle') }}</ion-text>
+          <ion-text class="error-content-text__message body-lg">{{ $msTranslate(error) }}</ion-text>
+        </div>
+        <div class="error-content-buttons">
+          <ion-button
+            class="error-content-buttons__item button-default"
+            @click="routerGoBack()"
+          >
+            {{ $msTranslate('fileEditors.actions.backToFiles') }}
+          </ion-button>
+        </div>
+      </div>
+
+      <div class="error-advices">
+        <ion-text class="error-advices__title title-h4">{{ $msTranslate('fileEditors.advices.title') }}</ion-text>
+        <ion-list class="error-advices-list ion-no-padding">
+          <ion-item class="error-advices-list__item ion-no-padding body">
+            <ion-icon
+              class="item-icon"
+              :icon="checkmarkCircle"
+            />
+            {{ $msTranslate('fileEditors.advices.advice1') }}
+          </ion-item>
+          <ion-item class="error-advices-list__item ion-no-padding body">
+            <ion-icon
+              class="item-icon"
+              :icon="checkmarkCircle"
+            />
+            {{ $msTranslate('fileEditors.advices.advice2') }}
+          </ion-item>
+          <ion-item class="error-advices-list__item ion-no-padding body">
+            <ion-icon
+              class="item-icon"
+              :icon="checkmarkCircle"
+            />
+            {{ $msTranslate('fileEditors.advices.advice3') }}
+          </ion-item>
+        </ion-list>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
+import { IonButton, IonIcon, IonList, IonItem, IonText } from '@ionic/vue';
+import { checkmarkCircle } from 'ionicons/icons';
 import { closeFile, FsPath, openFile, writeFile } from '@/parsec';
 import { I18n } from 'megashark-lib';
 import { ref, Ref, inject, useTemplateRef, onMounted, onUnmounted } from 'vue';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import { getDocumentPath, getWorkspaceHandle } from '@/router';
+import { getDocumentPath, getWorkspaceHandle, routerGoBack } from '@/router';
 import { DetectedFileType } from '@/common/fileTypes';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { Env } from '@/services/environment';
@@ -28,6 +77,7 @@ const workspaceHandleRef = ref<number | undefined>(undefined);
 const documentPathRef = ref<FsPath>();
 const cryptpadInstance = ref<Cryptpad | null>(null);
 const fileUrl = ref<string | null>(null);
+const error = ref('');
 
 const { contentInfo, fileInfo } = defineProps<{
   contentInfo: FileContentInfo;
@@ -103,7 +153,7 @@ async function openFileWithCryptpad(): Promise<void> {
   const workspaceHandle = workspaceHandleRef.value as number;
   const documentPath = documentPathRef.value as FsPath;
 
-  fileUrl.value = URL.createObjectURL(new Blob([contentInfo.data], { type: 'application/octet-stream' }));
+  fileUrl.value = URL.createObjectURL(new Blob([contentInfo.data] as Uint8Array<ArrayBuffer>[], { type: 'application/octet-stream' }));
 
   const cryptpadConfig = {
     document: {
@@ -147,23 +197,23 @@ async function openFileWithCryptpad(): Promise<void> {
 
 function validateContentInfo(contentInfo: FileContentInfo | undefined): void {
   if (!contentInfo) {
-    throw new Error('Content info is not available');
-  }
+    error.value = 'fileEditors.errors.contentInfoMissing';
+  } else {
+    if (!contentInfo.extension || contentInfo.extension.trim() === '') {
+      error.value = 'fileEditors.errors.fileExtensionMissing';
+    }
 
-  if (!contentInfo.extension || contentInfo.extension.trim() === '') {
-    throw new Error('File extension is missing or empty');
-  }
+    if (!contentInfo.fileName || contentInfo.fileName.trim() === '') {
+      error.value = 'fileEditors.errors.fileNameMissing';
+    }
 
-  if (!contentInfo.fileName || contentInfo.fileName.trim() === '') {
-    throw new Error('File name is missing or empty');
-  }
+    if (!contentInfo.fileId || contentInfo.fileId.trim() === '') {
+      error.value = 'fileEditors.errors.fileIdMissing';
+    }
 
-  if (!contentInfo.fileId || contentInfo.fileId.trim() === '') {
-    throw new Error('File ID is missing or empty');
-  }
-
-  if (!contentInfo.data || contentInfo.data.length === 0) {
-    throw new Error('File data is missing or empty');
+    if (!contentInfo.data || contentInfo.data.length === 0) {
+      error.value = 'fileEditors.errors.fileDataMissing';
+    }
   }
 }
 
@@ -171,7 +221,7 @@ function throwError(message: string): never {
   window.electronAPI.log('error', message);
   informationManager.present(
     new Information({
-      message: 'fileViewers.genericError',
+      message: 'fileViewers.errors.titles.genericError',
       level: InformationLevel.Error,
     }),
     PresentationMode.Toast,
@@ -180,4 +230,102 @@ function throwError(message: string): never {
 }
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.file-editor {
+  height: 100%;
+  background: var(--parsec-color-light-secondary-premiere);
+}
+
+.file-editor-error {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 32rem;
+  margin: auto;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+.error-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 1.5rem;
+  background: var(--parsec-color-light-secondary-white);
+  padding: 1.5rem;
+  border-radius: var(--parsec-radius-12);
+  box-shadow: var(--parsec-shadow-light);
+
+  &-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    &__title {
+      color: var(--parsec-color-light-secondary-text);
+    }
+
+    &__message {
+      color: var(--parsec-color-light-secondary-hard-grey);
+    }
+  }
+
+  &-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+
+    &__item {
+      &:first-child {
+        --background: none;
+        --color: var(--parsec-color-light-secondary-text);
+        --border-color: var(--parsec-color-light-secondary-text);
+        --color-hover: var(--parsec-color-light-secondary-text);
+        --background-hover: var(--parsec-color-light-secondary-medium);
+      }
+
+      &:last-child {
+        --color: var(--parsec-color-light-secondary-white);
+        --background: var(--parsec-color-light-secondary-text);
+        --background-hover: var(--parsec-color-light-secondary-contrast);
+      }
+    }
+  }
+}
+
+.error-advices {
+  border-top: 1px solid var(--parsec-color-light-secondary-disabled);
+  padding: 2rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  &__title {
+    color: var(--parsec-color-light-secondary-text);
+  }
+
+  &-list {
+    padding-left: 0.5rem;
+    list-style-type: circle;
+    background: none;
+
+    &__item {
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--parsec-color-light-secondary-soft-text);
+      --background: none;
+      font-size: 0.9375rem;
+
+      .item-icon {
+        color: var(--parsec-color-light-secondary-grey);
+        flex-shrink: 0;
+        margin-right: 0.5rem;
+        font-size: 1rem;
+      }
+    }
+  }
+}
+</style>

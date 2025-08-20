@@ -2308,7 +2308,8 @@
                 "fileTooBig": "File size is too big",
                 "impossibleToOpen": "Cannot edit this file",
                 "genericError": "Failed to open the file",
-                "unSupportedFileType": "File not supported by Parsec"
+                "unSupportedFileType": "File not supported by Parsec",
+                "editionNotAvailable": "Parsec Edition unavailable"
             },
             "informationEditDownload": "If you want to edit this file, you can download it and open it locally on your device.",
             "informationPreviewDownload": "If you want to preview this file, you can download it and open it locally on your device.",
@@ -2364,6 +2365,26 @@
             },
             "pip": "Picture in Picture",
             "loop": "Loop"
+        }
+    },
+    "fileEditors": {
+        "globalTitle": "Cannot open the file",
+        "errors": {
+            "contentInfoMissing": "The file content information is empty or missing.",
+            "fileExtensionMissing": "The file type (extension) is missing or empty.",
+            "fileNameMissing": "The file name is empty or missing.",
+            "fileIdMissing": "The file ID is missing or empty.",
+            "fileDataMissing": "The file data is missing or empty."
+        },
+        "advices": {
+            "title": "Some tips that may resolve this issue",
+            "advice1": "Check that the file can be opened from an external application.",
+            "advice2": "Re-import the file (check versions).",
+            "advice3": "If the file opened before, try restoring a previous version (via file history)"
+        },
+        "actions": {
+            "backToFiles": "Back to files",
+            "retry": "Reload the page"
         }
     },
     "openFallback": {

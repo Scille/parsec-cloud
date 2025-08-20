@@ -5,7 +5,7 @@
     <ion-content :fullscreen="true">
       <div class="container">
         <ms-spinner
-          class="file-handler"
+          class="file-handler--loading"
           title="fileViewers.retrievingFileContent"
           v-show="!loaded"
         />
@@ -403,7 +403,7 @@ async function loadFile(): Promise<void> {
     handlerReadyRef.value = false;
     informationManager.present(
       new Information({
-        message: 'fileViewers.genericError',
+        message: 'fileViewers.errors.titles.genericError',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -643,7 +643,11 @@ async function openSmallDisplayActionMenu(): Promise<void> {
     display: flex;
     flex-direction: column;
     height: 100%;
-    justify-content: center;
+
+    &--loading {
+      justify-content: center;
+      flex-direction: column;
+    }
 
     &-topbar {
       display: flex;

@@ -2,6 +2,7 @@
 
 import { Cryptpad, CryptpadDocumentType, getDocumentTypeFromExtension, isEnabledCryptpadDocumentType } from '@/services/cryptpad';
 import { Env } from '@/services/environment';
+import { InformationManager, PresentationMode } from '@/services/informationManager';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mocks
@@ -10,6 +11,7 @@ vi.mock('@/services/environment', () => ({
     isEditicsEnabled: vi.fn(),
   },
 }));
+
 const mockElectronAPI = {
   log: vi.fn(),
 };
@@ -18,6 +20,7 @@ const mockCryptPadAPI = vi.fn() as any;
 describe('CryptPad Service', () => {
   let containerElement: HTMLElement;
   let mockScript: HTMLScriptElement;
+  let mockInformationManager: InformationManager;
 
   beforeEach(() => {
     // Reset all mocks
@@ -35,6 +38,10 @@ describe('CryptPad Service', () => {
       electronAPI: mockElectronAPI,
       CryptPadAPI: undefined,
     };
+
+    mockInformationManager = {
+      present: vi.fn(),
+    } as any;
 
     // Mock createElement to return a controllable script element
     mockScript = document.createElement('script');
@@ -269,7 +276,10 @@ describe('CryptPad Service', () => {
         },
       };
 
-      await expect(cryptpad.open(config)).rejects.toThrow('Container element is not initialized. Please call init() before open().');
+      await cryptpad.open(config);
+
+      expect(mockElectronAPI.log).toHaveBeenCalledWith('error', 'Container element is not initialized. Please call init() before open().');
+      expect(mockInformationManager.present).toHaveBeenCalledWith(expect.any(Object), PresentationMode.Modal);
       expect(mockCryptPadAPI).not.toHaveBeenCalled();
     });
   });
