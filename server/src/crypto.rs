@@ -513,7 +513,7 @@ impl SequesterVerifyKeyDer {
 }
 
 #[pyfunction]
-pub(crate) fn generate_sas_code_nonce(py: Python) -> Bound<'_, PyBytes> {
+pub(crate) fn generate_sas_code_nonce(py: Python<'_>) -> Bound<'_, PyBytes> {
     PyBytes::new(py, &libparsec_crypto::generate_sas_code_nonce())
 }
 
@@ -528,7 +528,7 @@ crate::binding_utils::gen_proto!(UntrustedPasswordAlgorithm, __richcmp__, eq);
 
 impl UntrustedPasswordAlgorithm {
     pub fn convert(
-        py: Python,
+        py: Python<'_>,
         item: libparsec_types::UntrustedPasswordAlgorithm,
     ) -> PyResult<Bound<'_, PyAny>> {
         let init = PyClassInitializer::from(UntrustedPasswordAlgorithm(item));

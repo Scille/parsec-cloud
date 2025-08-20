@@ -99,7 +99,7 @@ impl FolderReader {
         &self,
         ops: &WorkspaceOps,
         index: usize,
-    ) -> Result<FolderReaderStatNextOutcome, FolderReaderStatEntryError> {
+    ) -> Result<FolderReaderStatNextOutcome<'_>, FolderReaderStatEntryError> {
         let expected_parent_id = self.manifest.base.id;
 
         let (child_name, child_id) = match self.manifest.children.iter().nth(index) {

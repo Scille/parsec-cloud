@@ -55,7 +55,9 @@ impl UserOps {
     /// As its name implies, local cache is never synchronized. Hence this method that
     /// won't update the `need_sync` and `updated` fields of the local user manifest,
     /// nor will trigger a synchronization events.
-    pub(crate) async fn for_update_local_workspaces(&self) -> UserForUpdateLocalWorkspacesUpdater {
+    pub(crate) async fn for_update_local_workspaces(
+        &self,
+    ) -> UserForUpdateLocalWorkspacesUpdater<'_> {
         self.store.for_update_local_workspaces().await
     }
 
