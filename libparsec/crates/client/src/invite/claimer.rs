@@ -147,10 +147,7 @@ async fn cancel_greeting_attempt_and_warn_on_error(
             return;
         }
         log::warn!(
-            "Claimer failed to cancel greeting attempt {:?} with reason {:?}: {:?}",
-            greeting_attempt,
-            reason,
-            err
+            "Claimer failed to cancel greeting attempt {greeting_attempt:?} with reason {reason:?}: {err:?}"
         );
     }
 }
@@ -1868,7 +1865,7 @@ impl ShamirRecoveryClaimFinalizeCtx {
             ) {
                 Ok(cmds) => cmds,
                 Err(e) => {
-                    log::error!("Error while creating authenticated commands: {:?}", e);
+                    log::error!("Error while creating authenticated commands: {e:?}");
                     break 'mark_invitation_as_completed;
                 }
             };
@@ -1877,13 +1874,12 @@ impl ShamirRecoveryClaimFinalizeCtx {
                 Ok(Rep::Ok) => (),
                 Ok(rep) => {
                     log::error!(
-                        "Unexpected reply while marking the invitation as completed: {:?}",
-                        rep
+                        "Unexpected reply while marking the invitation as completed: {rep:?}"
                     );
                     break 'mark_invitation_as_completed;
                 }
                 Err(e) => {
-                    log::error!("Error while marking the invitation as completed: {:?}", e);
+                    log::error!("Error while marking the invitation as completed: {e:?}");
                     break 'mark_invitation_as_completed;
                 }
             };

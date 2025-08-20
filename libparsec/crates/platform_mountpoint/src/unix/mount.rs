@@ -333,8 +333,7 @@ fn create_suitable_mountpoint_dir(
         // `Some(...)` means the path is a relative one with a single component, (while
         // `None` would have meant the path is an absolute one with a single component).
         Path::new(workspace_name.as_ref()).parent() == Some(Path::new("")),
-        "Workspace name `{:?}` cannot form a valid path item",
-        workspace_name
+        "Workspace name `{workspace_name:?}` cannot form a valid path item"
     );
 
     for attempt in 1.. {

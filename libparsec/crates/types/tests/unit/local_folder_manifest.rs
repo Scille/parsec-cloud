@@ -560,7 +560,7 @@ fn to_remote(
             lfm.remote_confinement_points.insert(remote_confined_id);
             expected_children.insert("remote_confined.tmp".parse().unwrap(), remote_confined_id);
         }
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     }
 
     let fm = lfm.to_remote(expected_author, t4);
@@ -1429,7 +1429,7 @@ fn apply_prevent_sync_pattern_on_renamed_entry(
             expected_local_confinement_points.insert(child_id);
             (remote_name, local_name, t2)
         }
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     };
 
     let fm = FolderManifest {

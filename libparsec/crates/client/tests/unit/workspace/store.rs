@@ -72,7 +72,7 @@ async fn populate_with_concurrency(
                 "concurrent_populates_locally_modified_version" => {
                     (wksp1_new_txt_id, wksp1_new_txt_v2_timestamp, true, 2)
                 }
-                unknown => panic!("Unknown kind: {}", unknown),
+                unknown => panic!("Unknown kind: {unknown}"),
             }
         })
         .await;

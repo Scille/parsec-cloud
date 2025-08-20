@@ -84,7 +84,7 @@ async fn create_with_existing_invalid_child(
                 "unknown_child" => VlobID::default(),
                 "child_with_different_parent" => wksp1_id,
                 "self_reference" => wksp1_foo_id,
-                uknown => panic!("Unknown kind: {}", uknown),
+                uknown => panic!("Unknown kind: {uknown}"),
             };
             builder
                 .workspace_data_storage_local_folder_manifest_create_or_update(
@@ -245,7 +245,7 @@ async fn invalid_path(
                 "/foo/invalid/new_folder"
             }
             "file_in_path" => "/foo/egg.txt/new_folder",
-            unknown => panic!("Unknown kind: {}", unknown),
+            unknown => panic!("Unknown kind: {unknown}"),
         })
         .await;
 

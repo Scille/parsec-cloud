@@ -209,7 +209,7 @@ async fn cleartext_corrupted(
             };
             manifest.dump_sign_and_encrypt(&alice.signing_key, &key)
         }
-        unknown => panic!("Unknown kind {}", unknown),
+        unknown => panic!("Unknown kind {unknown}"),
     };
 
     let ops = certificates_ops_factory(env, &alice).await;
@@ -261,7 +261,7 @@ async fn author_no_access_to_realm(env: &TestbedEnv) {
         TestbedEvent::CreateOrUpdateFolderManifestVlob(e) if e.manifest.id == realm_id => {
             (e.encrypted(&env.template), e.manifest.timestamp)
         }
-        e => panic!("Unexpected event {:?}", e),
+        e => panic!("Unexpected event {e:?}"),
     };
 
     let alice = env.local_device("alice@dev1");
@@ -322,7 +322,7 @@ async fn revoked(env: &TestbedEnv) {
         TestbedEvent::CreateOrUpdateFolderManifestVlob(e) if e.manifest.id == realm_id => {
             (e.encrypted(&env.template), e.manifest.timestamp)
         }
-        e => panic!("Unexpected event {:?}", e),
+        e => panic!("Unexpected event {e:?}"),
     };
 
     test_register_send_hook(
@@ -395,7 +395,7 @@ async fn cannot_write(env: &TestbedEnv) {
         TestbedEvent::CreateOrUpdateFolderManifestVlob(e) if e.manifest.id == shared_realm_id => {
             (e.encrypted(&env.template), e.manifest.timestamp)
         }
-        e => panic!("Unexpected event {:?}", e),
+        e => panic!("Unexpected event {e:?}"),
     };
 
     test_register_send_hook(

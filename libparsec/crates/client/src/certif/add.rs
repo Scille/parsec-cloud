@@ -279,8 +279,8 @@ pub(super) async fn add_certificates_batch(
                 expect_next_certif = NextShamirCertifExpect::Anything;
             }
             (NextShamirCertifExpect::Share { brief }, unexpected_cooked) => {
-                let hint = format!("{:?}", unexpected_cooked);
-                let brief_hint = format!("{:?}", brief);
+                let hint = format!("{unexpected_cooked:?}");
+                let brief_hint = format!("{brief:?}");
                 let what = Box::new(InvalidCertificateError::ShamirRecoveryMissingShare {
                     hint,
                     brief_hint,
@@ -297,7 +297,7 @@ pub(super) async fn add_certificates_batch(
     }
     if let NextShamirCertifExpect::Share { brief } = expect_next_certif {
         let hint = "<no more certificates>".to_string();
-        let brief_hint = format!("{:?}", brief);
+        let brief_hint = format!("{brief:?}");
         let what = Box::new(InvalidCertificateError::ShamirRecoveryMissingShare {
             hint,
             brief_hint,
@@ -567,7 +567,7 @@ async fn validate_realm_certificate(
 
             // 3) Ensure the certificate corresponds to the considered realm
             if cooked.realm_id != realm_id {
-                let hint = format!("{:?}", cooked);
+                let hint = format!("{cooked:?}");
                 let error = DataError::UnexpectedRealmID {
                     expected: realm_id,
                     got: cooked.realm_id,
@@ -587,7 +587,7 @@ async fn validate_realm_certificate(
 
             // 3) Ensure the certificate corresponds to the considered realm
             if cooked.realm_id != realm_id {
-                let hint = format!("{:?}", cooked);
+                let hint = format!("{cooked:?}");
                 let error = DataError::UnexpectedRealmID {
                     expected: realm_id,
                     got: cooked.realm_id,
@@ -607,7 +607,7 @@ async fn validate_realm_certificate(
 
             // 3) Ensure the certificate corresponds to the considered realm
             if cooked.realm_id != realm_id {
-                let hint = format!("{:?}", cooked);
+                let hint = format!("{cooked:?}");
                 let error = DataError::UnexpectedRealmID {
                     expected: realm_id,
                     got: cooked.realm_id,
@@ -628,7 +628,7 @@ async fn validate_realm_certificate(
 
             // 3) Ensure the certificate corresponds to the considered realm
             if cooked.realm_id != realm_id {
-                let hint = format!("{:?}", cooked);
+                let hint = format!("{cooked:?}");
                 let error = DataError::UnexpectedRealmID {
                     expected: realm_id,
                     got: cooked.realm_id,
@@ -1005,7 +1005,7 @@ async fn check_user_certificate_consistency(
     cooked: &UserCertificate,
     author_user_id: Option<UserID>,
 ) -> Result<(), CertifAddCertificatesBatchError> {
-    let mk_hint = || format!("{:?}", cooked);
+    let mk_hint = || format!("{cooked:?}");
 
     // 1) Certificate must be the newest among the ones in common topic.
     //
@@ -1127,7 +1127,7 @@ async fn check_device_certificate_consistency(
     cooked: &DeviceCertificate,
     author_user_id: Option<UserID>,
 ) -> Result<(), CertifAddCertificatesBatchError> {
-    let mk_hint = || format!("{:?}", cooked);
+    let mk_hint = || format!("{cooked:?}");
     let user_id = cooked.user_id;
 
     let is_first_user_device = match author_user_id {
@@ -1281,7 +1281,7 @@ async fn check_user_update_certificate_consistency(
     cooked: &UserUpdateCertificate,
     author_user_id: UserID,
 ) -> Result<(), CertifAddCertificatesBatchError> {
-    let mk_hint = || format!("{:?}", cooked);
+    let mk_hint = || format!("{cooked:?}");
 
     // 1) Certificate must be the newest among the ones in common topic.
     // Note we also reject same timestamp given revoked user certificates is
@@ -1361,7 +1361,7 @@ async fn check_revoked_user_certificate_consistency(
     cooked: &RevokedUserCertificate,
     author_user_id: UserID,
 ) -> Result<(), CertifAddCertificatesBatchError> {
-    let mk_hint = || format!("{:?}", cooked);
+    let mk_hint = || format!("{cooked:?}");
 
     // 1) Certificate must be the newest among the ones in common topic.
     // Note we also reject same timestamp given revoked user certificates is
@@ -1418,7 +1418,7 @@ async fn check_realm_role_certificate_consistency(
     cooked: &RealmRoleCertificate,
     author_user_id: UserID,
 ) -> Result<(), CertifAddCertificatesBatchError> {
-    let mk_hint = || format!("{:?}", cooked);
+    let mk_hint = || format!("{cooked:?}");
 
     // 1) Certificate must be the newest among the ones in it realm's topic.
     // Note we also reject same timestamp given realm role certificate is always
@@ -1586,7 +1586,7 @@ async fn check_realm_name_certificate_consistency(
     cooked: &RealmNameCertificate,
     author_user_id: UserID,
 ) -> Result<(), CertifAddCertificatesBatchError> {
-    let mk_hint = || format!("{:?}", cooked);
+    let mk_hint = || format!("{cooked:?}");
 
     // 1) Certificate must be the newest among the ones in it realm's topic.
     // Note we also reject same timestamp given realm role certificate is always
@@ -1673,7 +1673,7 @@ async fn check_realm_key_rotation_certificate_consistency(
     cooked: &RealmKeyRotationCertificate,
     author_user_id: UserID,
 ) -> Result<(), CertifAddCertificatesBatchError> {
-    let mk_hint = || format!("{:?}", cooked);
+    let mk_hint = || format!("{cooked:?}");
 
     // 1) Certificate must be the newest among the ones in it realm's topic.
     // Note we also reject same timestamp given realm role certificate is always
@@ -1760,7 +1760,7 @@ async fn check_realm_archiving_certificate_consistency(
     cooked: &RealmArchivingCertificate,
     author_user_id: UserID,
 ) -> Result<(), CertifAddCertificatesBatchError> {
-    let mk_hint = || format!("{:?}", cooked);
+    let mk_hint = || format!("{cooked:?}");
 
     // 1) Certificate must be the newest among the ones in it realm's topic.
     // Note we also reject same timestamp given realm role certificate is always
@@ -1847,7 +1847,7 @@ async fn check_shamir_recovery_brief_certificate_consistency(
     cooked: &ShamirRecoveryBriefCertificate,
     author_user_id: UserID,
 ) -> Result<(), CertifAddCertificatesBatchError> {
-    let mk_hint = || format!("{:?}", cooked);
+    let mk_hint = || format!("{cooked:?}");
 
     // 1) Certificate must be the newest among the ones in shamir recovery topic.
     // Note we also reject same timestamp given, while shamir recovery brief
@@ -1939,7 +1939,7 @@ async fn check_shamir_recovery_share_certificate_consistency(
     cooked: &ShamirRecoveryShareCertificate,
     author_user_id: UserID,
 ) -> Result<(), CertifAddCertificatesBatchError> {
-    let mk_hint = || format!("{:?}", cooked);
+    let mk_hint = || format!("{cooked:?}");
 
     // 1) Shamir recovery share is always created together with a shamir recovery
     // brief.
@@ -2053,7 +2053,7 @@ async fn check_shamir_recovery_deletion_certificate_consistency(
     cooked: &ShamirRecoveryDeletionCertificate,
     author_user_id: UserID,
 ) -> Result<(), CertifAddCertificatesBatchError> {
-    let mk_hint = || format!("{:?}", cooked);
+    let mk_hint = || format!("{cooked:?}");
 
     // 1) Certificate must be the newest among the ones in shamir recovery topic.
 
@@ -2167,7 +2167,7 @@ async fn check_sequester_authority_certificate_consistency(
     let stored_last_timestamps = store.get_last_timestamps().await?;
 
     if !stored_last_timestamps.is_empty() {
-        let hint = format!("{:?}", cooked);
+        let hint = format!("{cooked:?}");
         let what = Box::new(InvalidCertificateError::SequesterAuthorityMustBeFirst { hint });
         return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
     }
@@ -2180,7 +2180,7 @@ async fn check_sequester_service_certificate_consistency(
     last_stored_sequester_timestamp: DateTime,
     cooked: &SequesterServiceCertificate,
 ) -> Result<(), CertifAddCertificatesBatchError> {
-    let mk_hint = || format!("{:?}", cooked);
+    let mk_hint = || format!("{cooked:?}");
 
     // 1) Certificate must be the newest among the ones in sequester topic.
     // Note we also reject same timestamp given sequester server certificates
@@ -2204,7 +2204,7 @@ async fn check_sequester_service_certificate_consistency(
         .await?;
     for existing_service in existing_services {
         if existing_service.service_id == cooked.service_id {
-            let hint = format!("{:?}", cooked);
+            let hint = format!("{cooked:?}");
             let what = Box::new(InvalidCertificateError::ContentAlreadyExists { hint });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
@@ -2218,7 +2218,7 @@ async fn check_sequester_revoked_service_certificate_consistency(
     last_stored_sequester_timestamp: DateTime,
     cooked: &SequesterRevokedServiceCertificate,
 ) -> Result<(), CertifAddCertificatesBatchError> {
-    let mk_hint = || format!("{:?}", cooked);
+    let mk_hint = || format!("{cooked:?}");
 
     // 1) Certificate must be the newest among the ones in sequester topic.
     // Note we also reject same timestamp given sequester server certificates

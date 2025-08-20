@@ -19,7 +19,7 @@ async fn share_workspace(tmp_path: TmpPath) {
             .create_workspace("new-workspace".parse().unwrap())
             .await
             .unwrap();
-        log::trace!("Workspace ID: {}", wid);
+        log::trace!("Workspace ID: {wid}");
 
         alice_client.ensure_workspaces_bootstrapped().await.unwrap();
 

@@ -135,7 +135,7 @@ pub(super) async fn stop_workspace_internal(
             Some(workspace_monitor) => {
                 if let Err(error) = workspace_monitor.stop().await {
                     // TODO: use event bug to log here !
-                    log::warn!("Cannot properly stop workspace monitor: {}", error);
+                    log::warn!("Cannot properly stop workspace monitor: {error}");
                 }
             }
             // All cleared !
@@ -147,6 +147,6 @@ pub(super) async fn stop_workspace_internal(
 
     if let Err(error) = workspace_ops.stop().await {
         // TODO: use event bug to log here !
-        log::warn!("Cannot properly stop workspace ops: {}", error);
+        log::warn!("Cannot properly stop workspace ops: {error}");
     }
 }

@@ -83,7 +83,7 @@ async fn unknown_status(env: &TestbedEnv) {
     p_assert_matches!(
         account.delete_2_proceed(validation_code).await.unwrap_err(),
         AccountDeleteProceedError::Internal(err)
-        if format!("{}", err) == "Unexpected server response: UnknownStatus { unknown_status: \"unknown\", reason: None }"
+        if format!("{err}") == "Unexpected server response: UnknownStatus { unknown_status: \"unknown\", reason: None }"
     );
 }
 

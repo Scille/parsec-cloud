@@ -120,6 +120,6 @@ async fn unknown_server_response(env: &TestbedEnv) {
     p_assert_matches!(
         account.fetch_opaque_key_from_vault(opaque_key_id).await,
         Err(AccountFetchOpaqueKeyFromVaultError::Internal(err))
-        if format!("{}", err) == "Unexpected server response: UnknownStatus { unknown_status: \"unknown\", reason: None }"
+        if format!("{err}") == "Unexpected server response: UnknownStatus { unknown_status: \"unknown\", reason: None }"
     );
 }

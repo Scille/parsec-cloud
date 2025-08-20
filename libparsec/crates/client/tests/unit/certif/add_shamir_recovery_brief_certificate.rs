@@ -40,7 +40,7 @@ async fn ok_as_only_recipient(
                 );
                 builder.delete_shamir_recovery("bob");
             }
-            unknown => panic!("Unknown kind: {}", unknown),
+            unknown => panic!("Unknown kind: {unknown}"),
         }
 
         builder.certificates_storage_fetch_certificates("alice@dev1");

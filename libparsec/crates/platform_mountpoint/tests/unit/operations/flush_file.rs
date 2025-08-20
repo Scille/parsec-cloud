@@ -30,7 +30,7 @@ async fn ok(
                     open_options.write(true);
                     (true, "123123world".len() as u64)
                 }
-                unknown => panic!("Unknown kind: {}", unknown),
+                unknown => panic!("Unknown kind: {unknown}"),
             };
 
             // Using `tokio::fs::File::sync_data` cause a deadlock if the tokio runtime

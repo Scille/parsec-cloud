@@ -194,7 +194,7 @@ async fn recipient_revoked(#[values("on_local", "on_server")] kind: &str, env: &
                 builder.certificates_storage_fetch_certificates("alice@dev1");
             }
             "on_server" => (),
-            unknown => panic!("Unknown kind: {}", unknown),
+            unknown => panic!("Unknown kind: {unknown}"),
         }
     })
     .await;
@@ -234,7 +234,7 @@ async fn shamir_recovery_already_exists(
                 builder.certificates_storage_fetch_certificates("alice@dev1");
             }
             "on_server" => (),
-            unknown => panic!("Unknown kind: {}", unknown),
+            unknown => panic!("Unknown kind: {unknown}"),
         }
     })
     .await;

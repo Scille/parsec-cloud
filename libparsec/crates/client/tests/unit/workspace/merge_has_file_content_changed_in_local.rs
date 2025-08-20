@@ -333,7 +333,7 @@ fn non_empty_base_local_block_access_fields_mismatch(
                 "b3a656e061934ca59d2f34ed5d1bae80e45c3b6f7d6d4ef1be5d5667fd7dbc0d"
             ));
         }
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     }
 
     let local_size = base_size;

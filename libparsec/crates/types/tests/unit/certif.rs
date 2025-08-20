@@ -192,7 +192,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
         ]),
     };
     assert!(
-        format!("{:?}", shamir_recovery_brief_certificate).starts_with(
+        format!("{shamir_recovery_brief_certificate:?}").starts_with(
             // Ignore `per_recipient_shares` as, as a HashMap, it output is not stable across runs
             concat!(
                 "ShamirRecoveryBriefCertificate {",
@@ -651,7 +651,7 @@ fn serde_device_certificate(
             (data, expected)
         }
 
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     };
     let data = Bytes::from_static(data);
     println!(
@@ -917,7 +917,7 @@ fn serde_device_certificate_redacted(
             (data, expected)
         }
 
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     };
     let data = Bytes::from_static(data);
     println!(

@@ -28,7 +28,7 @@ async fn nothing(
             })
             .await;
         }
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     }
 
     let alice = env.local_device("alice@dev1");
@@ -92,7 +92,7 @@ async fn key_rotation_only(
                 builder.share_realm(wksp1_id, "bob", None);
                 // Now that Bob is no longer part of the realm, we don't care that it has been revoked.
             }
-            unknown => panic!("Unknown kind: {}", unknown),
+            unknown => panic!("Unknown kind: {unknown}"),
         }
         builder.certificates_storage_fetch_certificates("alice@dev1");
     })
@@ -134,7 +134,7 @@ async fn sequestered_key_rotation_only(
                 let sequester_service3_id = builder.new_sequester_service().map(|e| e.id);
                 builder.revoke_sequester_service(sequester_service3_id);
             }
-            unknown => panic!("Unknown kind: {}", unknown),
+            unknown => panic!("Unknown kind: {unknown}"),
         }
         builder.certificates_storage_fetch_certificates("alice@dev1");
     })
@@ -179,7 +179,7 @@ async fn unshare_then_key_rotation(
                 builder.revoke_user("mallory");
                 expected_revoked_users = vec!["mallory".parse().unwrap(), "bob".parse().unwrap()];
             }
-            unknown => panic!("Unknown kind: {}", unknown),
+            unknown => panic!("Unknown kind: {unknown}"),
         }
         builder.certificates_storage_fetch_certificates("alice@dev1");
     })

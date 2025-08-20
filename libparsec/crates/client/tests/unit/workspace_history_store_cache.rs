@@ -261,9 +261,9 @@ impl std::str::FromStr for Outcome {
 #[case(vec!["t2:v2@t2"], "t3:v3@t1", "Ko=>AlreadyKnownToHaveMoreRecentSmallerVersion")]
 #[case(vec!["t2:v2@t2"], "t3:v1@t1", "Ko=>AlreadyKnownToHaveMoreRecentSmallerVersion")]
 fn brute_force(#[case] existing: Vec<&str>, #[case] new: &str, #[case] expected_outcome: &str) {
-    println!("existing: {:?}", existing);
-    println!("new: {:?}", new);
-    println!("expected_outcome: {:?}", expected_outcome);
+    println!("existing: {existing:?}");
+    println!("new: {new:?}");
+    println!("expected_outcome: {expected_outcome:?}");
 
     let existing = existing
         .into_iter()
@@ -303,7 +303,7 @@ fn brute_force(#[case] existing: Vec<&str>, #[case] new: &str, #[case] expected_
         Outcome::Ko { check_error } => match outcome {
             Err(CachePopulateManifestAtError::InvalidHistory(err)) => check_error(&err),
             outcome => {
-                panic!("Expected error, got {:?}", outcome);
+                panic!("Expected error, got {outcome:?}");
             }
         },
     }

@@ -14,13 +14,13 @@ use crate::workspace::{
 fn expect_entry(stat: FolderReaderStatNextOutcome<'_>) -> (&EntryName, EntryStat) {
     match stat {
         FolderReaderStatNextOutcome::Entry { name, stat } => (name, stat),
-        _ => panic!("Expected an entry, got {:?}", stat),
+        _ => panic!("Expected an entry, got {stat:?}"),
     }
 }
 
 fn expect_no_more_entries(stat: FolderReaderStatNextOutcome<'_>) {
     if !matches!(stat, FolderReaderStatNextOutcome::NoMoreEntries) {
-        panic!("Expected no more entries, got {:?}", stat);
+        panic!("Expected no more entries, got {stat:?}");
     }
 }
 
@@ -556,7 +556,7 @@ async fn read_folder_containing_under_modification_file(
             ops.fd_resize(fd, 5, true).await.unwrap();
             5
         }
-        unknown => panic!("Unknown kind {}", unknown),
+        unknown => panic!("Unknown kind {unknown}"),
     };
 
     alice.time_provider.unmock_time();

@@ -31,7 +31,7 @@ async fn ok(
             })
             .await;
         }
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     }
 
     mount_and_test!(
@@ -86,7 +86,7 @@ async fn ok_lot_of_entries(tmp_path: TmpPath, env: &TestbedEnv) {
         &tmp_path,
         |_client: Arc<Client>, wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
             for i in 0..1000 {
-                let path = format!("/foo/spam/{}", i).parse().unwrap();
+                let path = format!("/foo/spam/{i}").parse().unwrap();
                 wksp1_ops.create_file(path).await.unwrap();
             }
 

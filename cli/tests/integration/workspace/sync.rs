@@ -22,7 +22,7 @@ async fn setup_workspace(alice: Arc<LocalDevice>, bob: Arc<LocalDevice>) -> Setu
         .create_workspace("new-workspace".parse().unwrap())
         .await
         .unwrap();
-    log::trace!("Workspace ID: {}", wid);
+    log::trace!("Workspace ID: {wid}");
 
     alice_client.ensure_workspaces_bootstrapped().await.unwrap();
     log::debug!("Share the workspace with bob as a contributor");

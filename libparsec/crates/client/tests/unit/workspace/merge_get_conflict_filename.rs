@@ -71,7 +71,7 @@ fn name_size_limit() {
     // EntryName is max 255 bytes long
     let expected_suffix = " (Parsec - name conflict)";
     let name: EntryName = "a".repeat(255 - expected_suffix.len()).parse().unwrap();
-    let expected: EntryName = format!("{}{}", name, expected_suffix).parse().unwrap();
+    let expected: EntryName = format!("{name}{expected_suffix}").parse().unwrap();
     p_assert_eq!(expected.as_ref().len(), 255); // Sanity check
     let result = get_conflict_filename(&name, FILENAME_CONFLICT_SUFFIX, |_entry_name| false);
     p_assert_eq!(result, expected)
@@ -84,7 +84,7 @@ fn name_size_limit_with_leading_dot() {
     let name: EntryName = format!(".{}", "a".repeat(254 - expected_suffix.len()))
         .parse()
         .unwrap();
-    let expected: EntryName = format!("{}{}", name, expected_suffix).parse().unwrap();
+    let expected: EntryName = format!("{name}{expected_suffix}").parse().unwrap();
     p_assert_eq!(expected.as_ref().len(), 255); // Sanity check
     let result = get_conflict_filename(&name, FILENAME_CONFLICT_SUFFIX, |_entry_name| false);
     p_assert_eq!(result, expected)
@@ -222,7 +222,7 @@ fn one_extension_too_long() {
     // So the only solution is to remove the extension altogether.
     let name: EntryName = format!("a.{}", "x".repeat(253)).parse().unwrap();
     p_assert_eq!(name.as_ref().len(), 255); // Sanity check
-    let expected: EntryName = format!("a{}", expected_suffix).parse().unwrap();
+    let expected: EntryName = format!("a{expected_suffix}").parse().unwrap();
 
     let result = get_conflict_filename(&name, FILENAME_CONFLICT_SUFFIX, |_entry_name| false);
     p_assert_eq!(result, expected)

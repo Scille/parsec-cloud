@@ -12,7 +12,7 @@ fn assert_http_proxy_eq(proxy: &ProxyConfig, expected: Option<&str>) {
         Some(proxy) => {
             let expected = expected.unwrap();
             assert_eq!(
-                format!("{:?}", proxy),
+                format!("{proxy:?}"),
                 format!("{:?}", reqwest::Proxy::http(expected).unwrap())
             )
         }
@@ -25,7 +25,7 @@ fn assert_https_proxy_eq(proxy: &ProxyConfig, expected: Option<&str>) {
         Some(proxy) => {
             let expected = expected.unwrap();
             assert_eq!(
-                format!("{:?}", proxy),
+                format!("{proxy:?}"),
                 format!("{:?}", reqwest::Proxy::https(expected).unwrap())
             )
         }

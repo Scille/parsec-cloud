@@ -192,7 +192,7 @@ async fn offline(
             );
         }
 
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     }
 
     p_assert_matches!(
@@ -232,7 +232,7 @@ async fn fingerprint_already_exists(env: &TestbedEnv) {
     p_assert_matches!(
         account.create_registration_device(alice.clone()).await,
         Err(AccountCreateRegistrationDeviceError::Internal(err))
-        if format!("{}", err) == "Unexpected server response: FingerprintAlreadyExists"
+        if format!("{err}") == "Unexpected server response: FingerprintAlreadyExists"
     );
 }
 
@@ -381,12 +381,12 @@ async fn unknown_server_response(
             );
         }
 
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown}"),
     }
 
     p_assert_matches!(
         account.create_registration_device(alice.clone()).await,
         Err(AccountCreateRegistrationDeviceError::Internal(err))
-        if format!("{}", err) == "Unexpected server response: UnknownStatus { unknown_status: \"unknown\", reason: None }"
+        if format!("{err}") == "Unexpected server response: UnknownStatus { unknown_status: \"unknown\", reason: None }"
     );
 }

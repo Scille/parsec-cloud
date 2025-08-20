@@ -234,7 +234,7 @@ async fn cleartext_corrupted(
                 },
             )
         }
-        unknown => panic!("Unknown kind {}", unknown),
+        unknown => panic!("Unknown kind {unknown}"),
     };
 
     let ops = certificates_ops_factory(env, &alice).await;
@@ -294,7 +294,7 @@ async fn author_no_access_to_realm(env: &TestbedEnv) {
         TestbedEvent::CreateOrUpdateFileManifestVlob(e) => {
             (e.encrypted(&env.template), e.manifest.timestamp)
         }
-        e => panic!("Unexpected event {:?}", e),
+        e => panic!("Unexpected event {e:?}"),
     };
 
     let alice = env.local_device("alice@dev1");
@@ -363,7 +363,7 @@ async fn revoked(env: &TestbedEnv) {
         TestbedEvent::CreateOrUpdateFileManifestVlob(e) => {
             (e.encrypted(&env.template), e.manifest.timestamp)
         }
-        e => panic!("Unexpected event {:?}", e),
+        e => panic!("Unexpected event {e:?}"),
     };
 
     test_register_send_hook(
@@ -444,7 +444,7 @@ async fn cannot_write(env: &TestbedEnv) {
         TestbedEvent::CreateOrUpdateFileManifestVlob(e) => {
             (e.encrypted(&env.template), e.manifest.timestamp)
         }
-        e => panic!("Unexpected event {:?}", e),
+        e => panic!("Unexpected event {e:?}"),
     };
 
     test_register_send_hook(

@@ -261,7 +261,7 @@ impl Client {
             let outcome = monitor.stop().await;
             if let Err(error) = outcome {
                 // TODO: use event bug to log here !
-                log::warn!("Cannot properly stop monitor: {}", error);
+                log::warn!("Cannot properly stop monitor: {error}");
             }
         }
 
@@ -269,14 +269,14 @@ impl Client {
 
         if let Err(error) = self.user_ops.stop().await {
             // TODO: use event bug to log here !
-            log::warn!("Cannot properly stop user ops: {}", error);
+            log::warn!("Cannot properly stop user ops: {error}");
         }
 
         // 5) ...and finally the certificates ops as it is the one everything is based on
 
         if let Err(error) = self.certificates_ops.stop().await {
             // TODO: use event bug to log here !
-            log::warn!("Cannot properly stop certificates ops: {}", error);
+            log::warn!("Cannot properly stop certificates ops: {error}");
         }
     }
 

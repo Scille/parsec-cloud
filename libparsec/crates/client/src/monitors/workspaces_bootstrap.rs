@@ -90,21 +90,21 @@ fn task_future_factory(event_bus: EventBus, client: Arc<Client>) -> impl Future<
                     ) => {
                         // Note ops components are responsible for sending the
                         // bad timestamp event on the event bus
-                        log::warn!("Client/server clock drift detected: {:?}", error);
+                        log::warn!("Client/server clock drift detected: {error:?}");
                     }
                     Err(ClientEnsureWorkspacesBootstrappedError::InvalidKeysBundle(error)) => {
                         // Note ops components are responsible for sending the
                         // invalid certificate event on the event bus
-                        log::warn!("Invalid keys bundle detected: {}", error);
+                        log::warn!("Invalid keys bundle detected: {error}");
                     }
                     Err(ClientEnsureWorkspacesBootstrappedError::InvalidCertificate(error)) => {
                         // Note ops components are responsible for sending the
                         // invalid certificate event on the event bus
-                        log::warn!("Invalid certificate detected: {}", error);
+                        log::warn!("Invalid certificate detected: {error}");
                     }
                     Err(ClientEnsureWorkspacesBootstrappedError::Internal(err)) => {
                         // Unexpected error occurred, better stop the monitor
-                        log::error!("Workspaces bootstrap monitor has crashed: {}", err);
+                        log::error!("Workspaces bootstrap monitor has crashed: {err}");
                         let event = EventMonitorCrashed {
                             monitor: WORKSPACES_BOOTSTRAP_MONITOR_NAME,
                             workspace_id: None,

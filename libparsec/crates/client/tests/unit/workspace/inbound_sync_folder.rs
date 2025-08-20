@@ -306,10 +306,7 @@ async fn non_placeholder(
 
     let foo_manifest = match wksp1_ops.store.get_manifest(wksp1_foo_id).await.unwrap() {
         ArcLocalChildManifest::Folder(m) => m,
-        m => panic!(
-            "Invalid manifest type for `/foo`, expecting folder and got: {:?}",
-            m
-        ),
+        m => panic!("Invalid manifest type for `/foo`, expecting folder and got: {m:?}"),
     };
 
     // 4) Check the outcome

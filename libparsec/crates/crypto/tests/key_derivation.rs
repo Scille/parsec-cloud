@@ -45,7 +45,7 @@ fn derive_uuid_from_uuid_spec() {
     let id = uuid::uuid!("cadc3f583b8647f2a3227400fc02e096");
     let gen_id = kd.derive_uuid_from_uuid(id);
 
-    println!("gen_id: {:X?}", gen_id);
+    println!("gen_id: {gen_id:X?}");
 
     let expected_gen_id = uuid::uuid!("6e4e1d47d0eb03670695f081d678f0da");
     assert_eq!(gen_id, expected_gen_id);

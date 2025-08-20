@@ -57,7 +57,7 @@ async fn workspace_import_file(tmp_path: TmpPath) {
     workspace.refresh_realm_checkpoint().await.unwrap();
     loop {
         let entries_to_sync = workspace.get_need_inbound_sync(32).await.unwrap();
-        log::debug!("Entries to inbound sync: {:?}", entries_to_sync);
+        log::debug!("Entries to inbound sync: {entries_to_sync:?}");
         if entries_to_sync.is_empty() {
             break;
         }

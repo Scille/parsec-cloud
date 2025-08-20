@@ -47,7 +47,7 @@ async fn assert_file(
 ) -> Arc<LocalFileManifest> {
     let manifest = match ops.store.get_manifest(entry_id).await.unwrap() {
         ArcLocalChildManifest::File(m) => m,
-        ArcLocalChildManifest::Folder(m) => panic!("Expected file, got {:?}", m),
+        ArcLocalChildManifest::Folder(m) => panic!("Expected file, got {m:?}"),
     };
 
     p_assert_eq!(manifest.need_sync, expected_need_sync);

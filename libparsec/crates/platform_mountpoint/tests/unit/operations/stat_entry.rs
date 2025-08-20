@@ -80,7 +80,7 @@ async fn file(
                         std::fs::rename(mountpoint_path.join("bar.txt"), &path).unwrap();
                         (path, 11, 0o700)
                     }
-                    unknown => panic!("Unknown kind: {}", unknown),
+                    unknown => panic!("Unknown kind: {unknown}"),
                 };
                 let stat = std::fs::metadata(file_path).unwrap();
                 assert!(stat.is_file());
@@ -142,7 +142,7 @@ async fn folder(
                         std::fs::rename(mountpoint_path.join("foo"), &path).unwrap();
                         path
                     }
-                    unknown => panic!("Unknown kind: {}", unknown),
+                    unknown => panic!("Unknown kind: {unknown}"),
                 };
                 let stat = std::fs::metadata(folder_path).unwrap();
                 assert!(stat.is_dir());

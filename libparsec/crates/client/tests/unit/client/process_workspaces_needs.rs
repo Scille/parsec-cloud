@@ -92,7 +92,7 @@ async fn need_key_rotation_only(
                         vec![],
                     )
                 }
-                unknown => panic!("Unknown kind: {}", unknown),
+                unknown => panic!("Unknown kind: {unknown}"),
             };
             expected_participants.sort();
             expected_sequester_services.sort();

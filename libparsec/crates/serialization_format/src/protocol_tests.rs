@@ -64,7 +64,7 @@ fn quote_cmd_tests(_cmd_version: u32, cmd: &GenCmd) -> TokenStream {
             }
         }
         // Command specs should not be reused for test generation
-        _ => panic! {"Should not reuse command spec for: {}", module_name},
+        _ => panic! {"Should not reuse command spec for: {module_name}"},
     }
 }
 

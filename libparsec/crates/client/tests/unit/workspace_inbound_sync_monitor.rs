@@ -296,10 +296,7 @@ async fn run_testcase(
             panic!("Expected monitor to be cancelled, but it has returned !")
         }
         (Err(err), TestcaseRunOutcome::MonitorHasStopped) => {
-            panic!(
-                "Expected monitor to return, but it has been cancelled ({:?}) !",
-                err
-            )
+            panic!("Expected monitor to return, but it has been cancelled ({err:?}) !")
         }
         _ => (),
     }
@@ -397,12 +394,12 @@ impl InboundSyncManagerIO for MockedInboundSyncManagerIO {
                 }
                 outcome
             }
-            expected => panic!("The unexpected occurred! Expected {:?}", expected),
+            expected => panic!("The unexpected occurred! Expected {expected:?}"),
         }
     }
 
     async fn retry_later_busy_entry(&mut self, entry_id: VlobID) {
-        println!(">>> retry_later_busy_entry({:?})", entry_id);
+        println!(">>> retry_later_busy_entry({entry_id:?})");
         let next_expected_events = self.pop_next_expected_event().await;
         match next_expected_events {
             InboundSyncMonitorEvent::RetryLaterBusyEntry {
@@ -414,7 +411,7 @@ impl InboundSyncManagerIO for MockedInboundSyncManagerIO {
                     side_effect(entry_id, &mut ());
                 }
             }
-            expected => panic!("The unexpected occurred! Expected {:?}", expected),
+            expected => panic!("The unexpected occurred! Expected {expected:?}"),
         }
     }
     async fn event_bus_wait_server_reconnect(&self) {
@@ -426,18 +423,18 @@ impl InboundSyncManagerIO for MockedInboundSyncManagerIO {
                     side_effect(&mut ());
                 }
             }
-            expected => panic!("The unexpected occurred! Expected {:?}", expected),
+            expected => panic!("The unexpected occurred! Expected {expected:?}"),
         }
     }
 
     async fn event_bus_send(&self, event: &impl crate::Broadcastable) {
-        println!(">>> event_bus_send({:?})", event);
+        println!(">>> event_bus_send({event:?})");
         let next_expected_events = self.pop_next_expected_event().await;
         match next_expected_events {
             InboundSyncMonitorEvent::EventBusSend { assert_event } => {
                 assert_event(event.to_any_spied_event());
             }
-            expected => panic!("The unexpected occurred! Expected {:?}", expected),
+            expected => panic!("The unexpected occurred! Expected {expected:?}"),
         }
     }
 
@@ -454,7 +451,7 @@ impl InboundSyncManagerIO for MockedInboundSyncManagerIO {
                 }
                 outcome
             }
-            expected => panic!("The unexpected occurred! Expected {:?}", expected),
+            expected => panic!("The unexpected occurred! Expected {expected:?}"),
         }
     }
 
@@ -475,7 +472,7 @@ impl InboundSyncManagerIO for MockedInboundSyncManagerIO {
                 }
                 outcome
             }
-            expected => panic!("The unexpected occurred! Expected {:?}", expected),
+            expected => panic!("The unexpected occurred! Expected {expected:?}"),
         }
     }
 
@@ -483,7 +480,7 @@ impl InboundSyncManagerIO for MockedInboundSyncManagerIO {
         &self,
         entry_id: VlobID,
     ) -> Result<InboundSyncOutcome, WorkspaceSyncError> {
-        println!(">>> workspace_ops_inbound_sync({:?})", entry_id);
+        println!(">>> workspace_ops_inbound_sync({entry_id:?})");
         let next_expected_events = self.pop_next_expected_event().await;
         match next_expected_events {
             InboundSyncMonitorEvent::WorkspaceOpsInboundSync {
@@ -497,7 +494,7 @@ impl InboundSyncManagerIO for MockedInboundSyncManagerIO {
                 }
                 outcome
             }
-            expected => panic!("The unexpected occurred! Expected {:?}", expected),
+            expected => panic!("The unexpected occurred! Expected {expected:?}"),
         }
     }
 }

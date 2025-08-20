@@ -537,7 +537,7 @@ fn get_conflict_filename(
     let mut new_filename = rename_with_suffix(filename, suffix);
     while is_reserved(&new_filename) {
         count += 1;
-        let suffix_with_count = format!("{} {}", suffix, count);
+        let suffix_with_count = format!("{suffix} {count}");
         new_filename = rename_with_suffix(filename, &suffix_with_count);
     }
     new_filename
@@ -564,11 +564,11 @@ fn rename_with_suffix(name: &EntryName, suffix: &str) -> EntryName {
     loop {
         // Convert to EntryName
         let raw = match (extension, has_leading_dot) {
-            (Some(extension), false) => format!("{} ({}).{}", base_name, suffix, extension),
-            (None, false) => format!("{} ({})", base_name, suffix),
+            (Some(extension), false) => format!("{base_name} ({suffix}).{extension}"),
+            (None, false) => format!("{base_name} ({suffix})"),
             // Leading dot cases
-            (Some(extension), true) => format!(".{} ({}).{}", base_name, suffix, extension),
-            (None, true) => format!(".{} ({})", base_name, suffix),
+            (Some(extension), true) => format!(".{base_name} ({suffix}).{extension}"),
+            (None, true) => format!(".{base_name} ({suffix})"),
         };
         match raw.parse::<EntryName>() {
             Ok(name) => return name,

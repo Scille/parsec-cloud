@@ -158,7 +158,7 @@ async fn stat_entry_by_id_helper(
                 Some(new_id),
             )
         }
-        _ => panic!("Unexpected kind {}", kind),
+        _ => panic!("Unexpected kind {kind}"),
     }
 }
 
@@ -606,7 +606,7 @@ async fn stat_entry_on_under_modification_file(
             ops.fd_resize(fd, 5, true).await.unwrap();
             5
         }
-        unknown => panic!("Unknown kind {}", unknown),
+        unknown => panic!("Unknown kind {unknown}"),
     };
 
     alice.time_provider.unmock_time();

@@ -201,8 +201,7 @@ async fn load_device_verify_keys(
                 Some(key) => key,
                 None => {
                     log::warn!(
-                        "Ignoring device certificate signed by unknown device: {:?}",
-                        unsecure
+                        "Ignoring device certificate signed by unknown device: {unsecure:?}"
                     );
                     continue;
                 }
@@ -213,10 +212,7 @@ async fn load_device_verify_keys(
         let certificate = match unsecure.verify_signature(author_verify_key) {
             Ok((certificate, _)) => certificate,
             Err((unsecure, _)) => {
-                log::warn!(
-                    "Ignoring device certificate with invalid signature: {:?}",
-                    unsecure
-                );
+                log::warn!("Ignoring device certificate with invalid signature: {unsecure:?}");
                 continue;
             }
         };
@@ -251,8 +247,7 @@ async fn load_realm_keys(
             Some(key) => key,
             None => {
                 log::warn!(
-                    "Ignoring key rotation certificate signed by unknown device: {:?}",
-                    unsecure
+                    "Ignoring key rotation certificate signed by unknown device: {unsecure:?}"
                 );
                 continue;
             }
@@ -262,8 +257,7 @@ async fn load_realm_keys(
             Ok((certificate, _)) => certificate,
             Err((unsecure, _)) => {
                 log::warn!(
-                    "Ignoring key rotation certificate with invalid signature: {:?}",
-                    unsecure
+                    "Ignoring key rotation certificate with invalid signature: {unsecure:?}"
                 );
                 continue;
             }
