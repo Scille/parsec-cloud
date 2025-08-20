@@ -16,7 +16,7 @@ pub enum ProtocolFamily {
     Family,
 }
 
-#[allow(dead_code)]
+#[expect(dead_code)]
 pub trait ProtocolRequest<const V: u32> {
     const FAMILY: ProtocolFamily;
     type Response: for<'de> Deserialize<'de>;
@@ -27,6 +27,7 @@ pub trait ProtocolRequest<const V: u32> {
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[expect(dead_code)]
 pub struct ApiVersion {
     pub version: u32,
     pub revision: u32,
