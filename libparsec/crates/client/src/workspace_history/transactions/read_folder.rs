@@ -99,7 +99,7 @@ impl WorkspaceHistoryFolderReader {
         ops: &WorkspaceHistoryOps,
         index: usize,
     ) -> Result<
-        WorkspaceHistoryFolderReaderStatNextOutcome,
+        WorkspaceHistoryFolderReaderStatNextOutcome<'_>,
         WorkspaceHistoryFolderReaderStatEntryError,
     > {
         let expected_parent_id = self.manifest.id;
