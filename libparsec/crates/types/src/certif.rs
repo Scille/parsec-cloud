@@ -108,6 +108,13 @@ macro_rules! impl_unsecure_load {
                 pub fn hint(&self) -> String {
                     format!("{:?}", self.unsecure)
                 }
+
+                /// Convert to its verified variant by check its signature
+                ///
+                /// # Errors
+                ///
+                /// We return the original unsecure object
+                #[allow(clippy::result_large_err)]
                 pub fn verify_signature(self, author_verify_key: &VerifyKey) -> Result<($name, Bytes), (Self, DataError)> {
                     match author_verify_key.verify(self.signed.as_ref()) {
                         // Unsecure is now secure \o/

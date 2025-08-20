@@ -207,9 +207,9 @@ pub enum AccountLogoutError {
 pub fn account_logout(account: Handle) -> Result<(), AccountLogoutError> {
     let account_handle = account;
 
-    let account = take_and_close_handle(account_handle, |x| match x {
+    let account = take_and_close_handle(account_handle, |x| match *x {
         HandleItem::Account(account) => Ok(account),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
 
     // Note that account is ref counted, so its destructor is not guaranteed to

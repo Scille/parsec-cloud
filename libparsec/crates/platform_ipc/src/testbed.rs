@@ -71,10 +71,7 @@ pub(crate) fn maybe_try_lock_device_for_use(
         .map(|store| {
             {
                 let mut devices_in_use = store.devices_in_use.lock().expect("Mutex is poisoned");
-                if devices_in_use
-                    .iter()
-                    .any(|candidate| *candidate == device_id)
-                {
+                if devices_in_use.contains(&device_id) {
                     return Err(TryLockDeviceForUseError::AlreadyInUse);
                 } else {
                     devices_in_use.push(device_id);
@@ -108,10 +105,7 @@ fn lock_or_get_event(
         .map(|store| {
             {
                 let mut devices_in_use = store.devices_in_use.lock().expect("Mutex is poisoned");
-                if devices_in_use
-                    .iter()
-                    .any(|candidate| *candidate == device_id)
-                {
+                if devices_in_use.contains(&device_id) {
                     return Err(store.device_released_event.listen());
                 } else {
                     devices_in_use.push(device_id);
