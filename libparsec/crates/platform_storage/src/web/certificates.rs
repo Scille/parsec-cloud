@@ -36,16 +36,16 @@ const DB_VERSION: u32 = 1;
 //   certificate_timestamp: number,
 //   certificate: Uint8Array
 // }
-const STORE: &'static str = "certificates";
-const FIELD_CERTIFICATE_TYPE: &'static str = "certificate_type";
-const FIELD_FILTER1: &'static str = "filter1";
-const FIELD_FILTER2: &'static str = "filter2";
-const FIELD_CERTIFICATE_TIMESTAMP: &'static str = "certificate_timestamp";
-const FIELD_CERTIFICATE: &'static str = "certificate";
-const INDEX_CERTIFICATE_TYPE: &'static str = "_idx_certificate_type";
-const INDEX_FILTER1: &'static str = "_idx_filter1";
-const INDEX_FILTER2: &'static str = "_idx_filter2";
-const INDEX_FILTERS: &'static str = "_idx_filters";
+const STORE: &str = "certificates";
+const FIELD_CERTIFICATE_TYPE: &str = "certificate_type";
+const FIELD_FILTER1: &str = "filter1";
+const FIELD_FILTER2: &str = "filter2";
+const FIELD_CERTIFICATE_TIMESTAMP: &str = "certificate_timestamp";
+const FIELD_CERTIFICATE: &str = "certificate";
+const INDEX_CERTIFICATE_TYPE: &str = "_idx_certificate_type";
+const INDEX_FILTER1: &str = "_idx_filter1";
+const INDEX_FILTER2: &str = "_idx_filter2";
+const INDEX_FILTERS: &str = "_idx_filters";
 
 async fn initialize_database(
     evt: &indexed_db::VersionChangeEvent<Infallible>,
@@ -115,24 +115,24 @@ fn extract_bytes_field(obj: &JsValue, field: &str) -> anyhow::Result<Vec<u8>> {
     js_to_rs_bytes(raw_js)
 }
 
-impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
-    pub async fn get_certificate_encrypted<'b>(
+impl PlatformCertificatesStorageForUpdateGuard<'_> {
+    pub async fn get_certificate_encrypted(
         &mut self,
-        query: GetCertificateQuery<'b>,
+        query: GetCertificateQuery<'_>,
         up_to: UpTo,
     ) -> Result<(DateTime, Vec<u8>), GetCertificateError> {
-        get_certificate_encrypted(&self.transaction, query, up_to).await
+        get_certificate_encrypted(self.transaction, query, up_to).await
     }
 
     /// Certificates are returned ordered by timestamp in increasing order (i.e. oldest first)
-    pub async fn get_multiple_certificates_encrypted<'b>(
+    pub async fn get_multiple_certificates_encrypted(
         &mut self,
-        query: GetCertificateQuery<'b>,
+        query: GetCertificateQuery<'_>,
         up_to: UpTo,
         offset: Option<u32>,
         limit: Option<u32>,
     ) -> anyhow::Result<Vec<(DateTime, Vec<u8>)>> {
-        get_multiple_certificates_encrypted(&self.transaction, query, up_to, offset, limit).await
+        get_multiple_certificates_encrypted(self.transaction, query, up_to, offset, limit).await
     }
 
     pub async fn forget_all_certificates(&mut self) -> anyhow::Result<()> {
@@ -194,13 +194,13 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
     }
 
     pub async fn get_last_timestamps(&mut self) -> anyhow::Result<PerTopicLastTimestamps> {
-        get_last_timestamps(&self.transaction).await
+        get_last_timestamps(self.transaction).await
     }
 
     /// Only used for debugging tests
     #[cfg(any(test, feature = "expose-test-methods"))]
     pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
-        debug_dump(&self.transaction).await
+        debug_dump(self.transaction).await
     }
 }
 
@@ -228,7 +228,7 @@ async fn get_last_timestamps(
     let mut sequester_last_timestamp = None;
 
     let mut cursor = store
-        .index(&INDEX_FILTER1)
+        .index(INDEX_FILTER1)
         .map_err(|e| anyhow::anyhow!(e))?
         .cursor()
         .open_key()
@@ -359,6 +359,7 @@ macro_rules! configure_cursor_range {
     };
 }
 
+#[expect(clippy::too_many_arguments)]
 async fn cursor_factory_fx_eq_fy_where_fz(
     store: &indexed_db::ObjectStore<CustomErrMarker>,
     up_to: UpTo,
@@ -403,7 +404,7 @@ async fn cursor_factory_fx_eq_fy_where_fz(
 
     // Now the main query
 
-    let index = store.index(&query_index).map_err(|e| anyhow::anyhow!(e))?;
+    let index = store.index(query_index).map_err(|e| anyhow::anyhow!(e))?;
 
     let cursor = configure_cursor_range!(
         up_to,
@@ -414,9 +415,9 @@ async fn cursor_factory_fx_eq_fy_where_fz(
     Ok(Some(cursor))
 }
 
-async fn cursor_builder_factory<'a>(
+async fn cursor_builder_factory(
     transaction: &Transaction<CustomErrMarker>,
-    query: &GetCertificateQuery<'a>,
+    query: &GetCertificateQuery<'_>,
     up_to: UpTo,
 ) -> anyhow::Result<Option<indexed_db::CursorBuilder<CustomErrMarker>>> {
     let store = transaction
@@ -426,7 +427,7 @@ async fn cursor_builder_factory<'a>(
     let cursor_builder = match query {
         GetCertificateQuery::NoFilter { certificate_type } => {
             let index = store
-                .index(&INDEX_CERTIFICATE_TYPE)
+                .index(INDEX_CERTIFICATE_TYPE)
                 .map_err(|e| anyhow::anyhow!(e))?;
 
             configure_cursor_range!(up_to, index.cursor(), [*certificate_type],)
@@ -436,9 +437,7 @@ async fn cursor_builder_factory<'a>(
             certificate_type,
             filter1,
         } => {
-            let index = store
-                .index(&INDEX_FILTER1)
-                .map_err(|e| anyhow::anyhow!(e))?;
+            let index = store.index(INDEX_FILTER1).map_err(|e| anyhow::anyhow!(e))?;
 
             configure_cursor_range!(
                 up_to,
@@ -451,9 +450,7 @@ async fn cursor_builder_factory<'a>(
             certificate_type,
             filter2,
         } => {
-            let index = store
-                .index(&INDEX_FILTER2)
-                .map_err(|e| anyhow::anyhow!(e))?;
+            let index = store.index(INDEX_FILTER2).map_err(|e| anyhow::anyhow!(e))?;
 
             configure_cursor_range!(
                 up_to,
@@ -467,9 +464,7 @@ async fn cursor_builder_factory<'a>(
             filter1,
             filter2,
         } => {
-            let index = store
-                .index(&INDEX_FILTERS)
-                .map_err(|e| anyhow::anyhow!(e))?;
+            let index = store.index(INDEX_FILTERS).map_err(|e| anyhow::anyhow!(e))?;
 
             configure_cursor_range!(
                 up_to,
@@ -493,7 +488,7 @@ async fn cursor_builder_factory<'a>(
                 up_to,
                 certificate_type,
                 INDEX_FILTER1,
-                &subquery_certificate_type,
+                subquery_certificate_type,
                 INDEX_FILTER1,
                 filter1,
                 FIELD_FILTER2,
@@ -516,7 +511,7 @@ async fn cursor_builder_factory<'a>(
                 up_to,
                 certificate_type,
                 INDEX_FILTER1,
-                &subquery_certificate_type,
+                subquery_certificate_type,
                 INDEX_FILTER2,
                 filter2,
                 FIELD_FILTER1,
@@ -539,7 +534,7 @@ async fn cursor_builder_factory<'a>(
                 up_to,
                 certificate_type,
                 INDEX_FILTER2,
-                &subquery_certificate_type,
+                subquery_certificate_type,
                 INDEX_FILTER2,
                 filter2,
                 FIELD_FILTER1,
@@ -562,7 +557,7 @@ async fn cursor_builder_factory<'a>(
                 up_to,
                 certificate_type,
                 INDEX_FILTER2,
-                &subquery_certificate_type,
+                subquery_certificate_type,
                 INDEX_FILTER1,
                 filter1,
                 FIELD_FILTER2,
@@ -578,9 +573,9 @@ async fn cursor_builder_factory<'a>(
     Ok(Some(cursor_builder))
 }
 
-async fn get_certificate_encrypted<'a>(
+async fn get_certificate_encrypted(
     transaction: &Transaction<CustomErrMarker>,
-    query: GetCertificateQuery<'a>,
+    query: GetCertificateQuery<'_>,
     up_to: UpTo,
 ) -> Result<(DateTime, Vec<u8>), GetCertificateError> {
     // Handling `up_to` with a timestamp is a bit tricky:
@@ -666,9 +661,9 @@ async fn get_certificate_encrypted<'a>(
     }
 }
 
-async fn get_multiple_certificates_encrypted<'a>(
+async fn get_multiple_certificates_encrypted(
     transaction: &Transaction<CustomErrMarker>,
-    query: GetCertificateQuery<'a>,
+    query: GetCertificateQuery<'_>,
     up_to: UpTo,
     offset: Option<u32>,
     limit: Option<u32>,
@@ -805,9 +800,9 @@ impl PlatformCertificatesStorage {
         .await?
     }
 
-    pub async fn get_certificate_encrypted<'a>(
+    pub async fn get_certificate_encrypted(
         &mut self,
-        query: GetCertificateQuery<'a>,
+        query: GetCertificateQuery<'_>,
         up_to: UpTo,
     ) -> Result<(DateTime, Vec<u8>), GetCertificateError> {
         with_transaction!(&self.conn, &[STORE], false, async move |transaction| {
@@ -816,9 +811,9 @@ impl PlatformCertificatesStorage {
         .await?
     }
 
-    pub async fn get_multiple_certificates_encrypted<'a>(
+    pub async fn get_multiple_certificates_encrypted(
         &mut self,
-        query: GetCertificateQuery<'a>,
+        query: GetCertificateQuery<'_>,
         up_to: UpTo,
         offset: Option<u32>,
         limit: Option<u32>,

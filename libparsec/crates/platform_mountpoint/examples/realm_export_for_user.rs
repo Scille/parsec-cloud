@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 #![allow(clippy::unwrap_used)]
+#![cfg(not(target_family = "wasm"))]
 
 use std::{
     path::{Path, PathBuf},
