@@ -1421,14 +1421,14 @@ impl UserGreetInProgress4Ctx {
                         );
                         continue;
                     }
-                    Rep::ActiveUsersLimitReached { .. } => {
+                    Rep::ActiveUsersLimitReached => {
                         Err(GreetInProgressError::ActiveUsersLimitReached)
                     }
                     Rep::HumanHandleAlreadyTaken => {
                         Err(GreetInProgressError::HumanHandleAlreadyTaken)
                     }
-                    Rep::UserAlreadyExists { .. } => Err(GreetInProgressError::UserAlreadyExists),
-                    Rep::AuthorNotAllowed { .. } => Err(GreetInProgressError::UserCreateNotAllowed),
+                    Rep::UserAlreadyExists => Err(GreetInProgressError::UserAlreadyExists),
+                    Rep::AuthorNotAllowed => Err(GreetInProgressError::UserCreateNotAllowed),
                     Rep::TimestampOutOfBallpark {
                         server_timestamp,
                         client_timestamp,
@@ -1450,7 +1450,7 @@ impl UserGreetInProgress4Ctx {
                             ballpark_client_late_offset,
                         })
                     }
-                    bad_rep @ (Rep::UnknownStatus { .. } | Rep::InvalidCertificate { .. }) => {
+                    bad_rep @ (Rep::UnknownStatus { .. } | Rep::InvalidCertificate) => {
                         Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
                     }
                 }?;
@@ -1572,9 +1572,7 @@ impl DeviceGreetInProgress4Ctx {
                         );
                         continue;
                     }
-                    Rep::DeviceAlreadyExists { .. } => {
-                        Err(GreetInProgressError::DeviceAlreadyExists)
-                    }
+                    Rep::DeviceAlreadyExists => Err(GreetInProgressError::DeviceAlreadyExists),
                     Rep::TimestampOutOfBallpark {
                         server_timestamp,
                         client_timestamp,
@@ -1586,7 +1584,7 @@ impl DeviceGreetInProgress4Ctx {
                         ballpark_client_early_offset,
                         ballpark_client_late_offset,
                     }),
-                    bad_rep @ (Rep::UnknownStatus { .. } | Rep::InvalidCertificate { .. }) => {
+                    bad_rep @ (Rep::UnknownStatus { .. } | Rep::InvalidCertificate) => {
                         Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
                     }
                 }?;
