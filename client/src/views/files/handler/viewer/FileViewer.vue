@@ -79,7 +79,7 @@ function throwError(message: string): never {
   window.electronAPI.log('error', message);
   informationManager.present(
     new Information({
-      message: 'fileViewers.genericError',
+      message: 'fileViewers.errors.titles.genericError',
       level: InformationLevel.Error,
     }),
     PresentationMode.Toast,

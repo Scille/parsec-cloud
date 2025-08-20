@@ -92,6 +92,15 @@ export class Cryptpad {
       });
     } else {
       window.electronAPI.log('info', 'CryptPad API script already loaded, reusing.');
+      // await this.informationManager.present(
+      //   new Information({
+      //     title: 'FoldersPage.open.fileFailedGeneric',
+      //     message: 'FoldersPage.open.fileFailedGeneric',
+      //     level: InformationLevel.Info,
+      //   }),
+      //   PresentationMode.Modal,
+      // );
+      return;
     }
 
     this.instanceInitialized = true;
@@ -101,14 +110,42 @@ export class Cryptpad {
     await this.init();
 
     if (!ENABLED_DOCUMENT_TYPES.includes(config.documentType)) {
-      throw new Error(`CryptPad edition for document type ${config.documentType} is not enabled.`);
+      window.electronAPI.log('error', `CryptPad edition for document type ${config.documentType} is not enabled.`);
+      // await this.informationManager.present(
+      //   new Information({
+      //     title: 'fileViewers.errors.titles.editionNotAvailable',
+      //     message: 'fileViewers.errors.informationEditDownload',
+      //     level: InformationLevel.Info,
+      //   }),
+      //   PresentationMode.Modal,
+      // );
+      return;
     }
 
     if (!this.containerElement) {
-      throw new Error('Container element is not initialized. Please call init() before open().');
+      window.electronAPI.log('error', 'Container element is not initialized. Please call init() before open().');
+      // await this.informationManager.present(
+      //   new Information({
+      //     title: 'fileViewers.errors.titles.genericError',
+      //     message: 'fileViewers.errors.messages.informationEditDownload',
+      //     level: InformationLevel.Info,
+      //   }),
+      //   PresentationMode.Modal,
+      // );
+      return;
     }
+
+    // for this case, a simple information modal "Failed to open document"
     if (!this.instanceInitialized) {
-      throw new Error('CryptPad instance is not initialized yet. Please wait for it to initialize before calling open().');
+      // await this.informationManager.present(
+      //   new Information({
+      //     title: 'fileViewers.errors.titles.genericError',
+      //     message: 'fileViewers.errors.messages.informationEditDownload',
+      //     level: InformationLevel.Info,
+      //   }),
+      //   PresentationMode.Modal,
+      // );
+      window.electronAPI.log('error', 'CryptPad instance is not initialized yet. Please wait for it to initialize before calling open().');
     }
 
     (window as any).CryptPadAPI(this.containerElement.id, { ...config });
