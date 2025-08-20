@@ -216,7 +216,7 @@ async fn check_against_local_certificates(
 
 #[derive(Debug)]
 enum CreateShamirRecoveryDeviceOutcome {
-    Done(LocalDevice),
+    Done(Box<LocalDevice>),
     RequireGreaterTimestamp(DateTime),
 }
 
@@ -261,7 +261,9 @@ async fn create_shamir_recovery_device(
         })
         .await?
     {
-        Rep::Ok => Ok(CreateShamirRecoveryDeviceOutcome::Done(recovery_device)),
+        Rep::Ok => Ok(CreateShamirRecoveryDeviceOutcome::Done(Box::new(
+            recovery_device,
+        ))),
         Rep::RequireGreaterTimestamp {
             strictly_greater_than,
         } =>

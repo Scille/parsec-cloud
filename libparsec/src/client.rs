@@ -259,7 +259,7 @@ pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
 
     // 2. Cleanup the handles related to the client
 
-    let (on_event, device_in_use_guard) = take_and_close_handle(client_handle, |x| match x {
+    let (on_event, device_in_use_guard) = take_and_close_handle(client_handle, |x| match *x {
         HandleItem::Client {
             on_event,
             #[cfg(not(target_arch = "wasm32"))]
@@ -275,7 +275,7 @@ pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
         // has never been yet provided to the caller in the first place !
         // On top of that it simplifies the start logic (given it guarantees nothing will
         // concurrently close the handle)
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
 
     // Wait until after the client is closed to disconnect the event bus to ensure

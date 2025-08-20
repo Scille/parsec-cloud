@@ -210,7 +210,7 @@ enum EitherCancellerCtx {
 pub async fn claimer_greeter_abort_operation(
     handle: Handle,
 ) -> Result<(), ClaimerGreeterAbortOperationError> {
-    let result = take_and_close_handle(handle, |x| match x {
+    let result = take_and_close_handle(handle, |x| match *x {
         HandleItem::ShamirRecoveryClaimPickRecipient(_) => Ok(None),
         HandleItem::ShamirRecoveryClaimShare(_) => Ok(None),
         HandleItem::ShamirRecoveryClaimRecoverDevice(_) => Ok(None),
@@ -285,7 +285,7 @@ pub async fn claimer_greeter_abort_operation(
         HandleItem::DeviceGreetInProgress4(x) => Ok(Some(EitherCancellerCtx::GreetCancellerCtx(
             x.canceller_ctx(),
         ))),
-        invalid => Err(invalid),
+        _ => Err(x),
     });
     match result {
         Ok(None) => Ok(()),
@@ -336,9 +336,9 @@ pub async fn claimer_user_wait_all_peers(
     canceller: Handle,
     handle: Handle,
 ) -> Result<UserClaimInProgress1Info, ClaimInProgressError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::UserClaimListAdministrators(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
     let initial_ctxs = ctx.list_initial_ctxs();
 
@@ -374,9 +374,9 @@ pub enum UserClaimListInitialInfosError {
 pub fn claimer_user_list_initial_info(
     handle: Handle,
 ) -> Result<Vec<UserClaimInitialInfo>, UserClaimListInitialInfosError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::UserClaimListAdministrators(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
     Ok(ctx
         .list_initial_ctxs()
@@ -427,9 +427,9 @@ pub async fn claimer_user_initial_do_wait_peer(
     canceller: Handle,
     handle: Handle,
 ) -> Result<UserClaimInProgress1Info, ClaimInProgressError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::UserClaimInitial(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
 
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
@@ -456,9 +456,9 @@ pub async fn claimer_device_initial_do_wait_peer(
     canceller: Handle,
     handle: Handle,
 ) -> Result<DeviceClaimInProgress1Info, ClaimInProgressError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::DeviceClaimInitial(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
     let ctx = ctx
@@ -484,9 +484,9 @@ pub async fn claimer_shamir_recovery_initial_do_wait_peer(
     canceller: Handle,
     handle: Handle,
 ) -> Result<ShamirRecoveryClaimInProgress1Info, ClaimInProgressError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::ShamirRecoveryClaimInitial(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
     let ctx = ctx
@@ -513,9 +513,9 @@ pub async fn claimer_user_in_progress_1_do_deny_trust(
     handle: Handle,
 ) -> Result<(), ClaimInProgressError> {
     let work = async {
-        let ctx = take_and_close_handle(handle, |x| match x {
+        let ctx = take_and_close_handle(handle, |x| match *x {
             HandleItem::UserClaimInProgress1(ctx) => Ok(ctx),
-            invalid => Err(invalid),
+            _ => Err(x),
         })?;
 
         ctx.do_deny_trust().await?;
@@ -534,9 +534,9 @@ pub async fn claimer_device_in_progress_1_do_deny_trust(
     handle: Handle,
 ) -> Result<(), ClaimInProgressError> {
     let work = async {
-        let ctx = take_and_close_handle(handle, |x| match x {
+        let ctx = take_and_close_handle(handle, |x| match *x {
             HandleItem::DeviceClaimInProgress1(ctx) => Ok(ctx),
-            invalid => Err(invalid),
+            _ => Err(x),
         })?;
 
         ctx.do_deny_trust().await?;
@@ -555,9 +555,9 @@ pub async fn claimer_shamir_recovery_in_progress_1_do_deny_trust(
     handle: Handle,
 ) -> Result<(), ClaimInProgressError> {
     let work = async {
-        let ctx = take_and_close_handle(handle, |x| match x {
+        let ctx = take_and_close_handle(handle, |x| match *x {
             HandleItem::ShamirRecoveryClaimInProgress1(ctx) => Ok(ctx),
-            invalid => Err(invalid),
+            _ => Err(x),
         })?;
 
         ctx.do_deny_trust().await?;
@@ -597,9 +597,9 @@ pub async fn claimer_user_in_progress_1_do_signify_trust(
     canceller: Handle,
     handle: Handle,
 ) -> Result<UserClaimInProgress2Info, ClaimInProgressError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::UserClaimInProgress1(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
     let canceller_ctx = ctx.canceller_ctx();
 
@@ -629,9 +629,9 @@ pub async fn claimer_device_in_progress_1_do_signify_trust(
     canceller: Handle,
     handle: Handle,
 ) -> Result<DeviceClaimInProgress2Info, ClaimInProgressError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::DeviceClaimInProgress1(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
     let canceller_ctx = ctx.canceller_ctx();
 
@@ -661,9 +661,9 @@ pub async fn claimer_shamir_recovery_in_progress_1_do_signify_trust(
     canceller: Handle,
     handle: Handle,
 ) -> Result<ShamirRecoveryClaimInProgress2Info, ClaimInProgressError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::ShamirRecoveryClaimInProgress1(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
     let canceller_ctx = ctx.canceller_ctx();
 
@@ -706,9 +706,9 @@ pub async fn claimer_user_in_progress_2_do_wait_peer_trust(
     canceller: Handle,
     handle: Handle,
 ) -> Result<UserClaimInProgress3Info, ClaimInProgressError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::UserClaimInProgress2(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
     let canceller_ctx = ctx.canceller_ctx();
 
@@ -734,9 +734,9 @@ pub async fn claimer_device_in_progress_2_do_wait_peer_trust(
     canceller: Handle,
     handle: Handle,
 ) -> Result<DeviceClaimInProgress3Info, ClaimInProgressError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::DeviceClaimInProgress2(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
     let canceller_ctx = ctx.canceller_ctx();
 
@@ -762,9 +762,9 @@ pub async fn claimer_shamir_recovery_in_progress_2_do_wait_peer_trust(
     canceller: Handle,
     handle: Handle,
 ) -> Result<ShamirRecoveryClaimInProgress3Info, ClaimInProgressError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::ShamirRecoveryClaimInProgress2(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
     let canceller_ctx = ctx.canceller_ctx();
 
@@ -802,9 +802,9 @@ pub async fn claimer_user_in_progress_3_do_claim(
     requested_device_label: DeviceLabel,
     requested_human_handle: HumanHandle,
 ) -> Result<UserClaimFinalizeInfo, ClaimInProgressError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::UserClaimInProgress3(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
     let canceller_ctx = ctx.canceller_ctx();
 
@@ -833,9 +833,9 @@ pub async fn claimer_device_in_progress_3_do_claim(
     handle: Handle,
     requested_device_label: DeviceLabel,
 ) -> Result<DeviceClaimFinalizeInfo, ClaimInProgressError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::DeviceClaimInProgress3(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
     let canceller_ctx = ctx.canceller_ctx();
 
@@ -861,9 +861,9 @@ pub async fn claimer_shamir_recovery_in_progress_3_do_claim(
     canceller: Handle,
     handle: Handle,
 ) -> Result<ShamirRecoveryClaimShareInfo, ClaimInProgressError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::ShamirRecoveryClaimInProgress3(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
     let canceller_ctx = ctx.canceller_ctx();
 
@@ -923,13 +923,13 @@ pub fn claimer_shamir_recovery_add_share(
     pick_recipient_handle: Handle,
     share_handle: Handle,
 ) -> Result<ShamirRecoveryClaimMaybeRecoverDeviceInfo, ShamirRecoveryClaimAddShareError> {
-    let ctx = take_and_close_handle(pick_recipient_handle, |x| match x {
+    let ctx = take_and_close_handle(pick_recipient_handle, |x| match *x {
         HandleItem::ShamirRecoveryClaimPickRecipient(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
-    let share = take_and_close_handle(share_handle, |x| match x {
+    let share = take_and_close_handle(share_handle, |x| match *x {
         HandleItem::ShamirRecoveryClaimShare(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
 
     match ctx.add_share(share)? {
@@ -970,9 +970,9 @@ pub async fn claimer_shamir_recovery_recover_device(
     handle: Handle,
     requested_device_label: DeviceLabel,
 ) -> Result<ShamirRecoveryClaimMaybeFinalizeInfo, ShamirRecoveryClaimRecoverDeviceError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::ShamirRecoveryClaimRecoverDevice(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
 
     match ctx.recover_device(requested_device_label).await? {
@@ -991,9 +991,9 @@ pub async fn claimer_user_finalize_save_local_device(
     handle: Handle,
     save_strategy: DeviceSaveStrategy,
 ) -> Result<AvailableDevice, ClaimInProgressError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::UserClaimFinalize(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
 
     let access = {
@@ -1010,9 +1010,9 @@ pub async fn claimer_device_finalize_save_local_device(
     handle: Handle,
     save_strategy: DeviceSaveStrategy,
 ) -> Result<AvailableDevice, ClaimInProgressError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::DeviceClaimFinalize(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
 
     let access = {
@@ -1029,9 +1029,9 @@ pub async fn claimer_shamir_recovery_finalize_save_local_device(
     handle: Handle,
     save_strategy: DeviceSaveStrategy,
 ) -> Result<AvailableDevice, ClaimInProgressError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::ShamirRecoveryClaimFinalize(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
 
     let access = {
@@ -1327,9 +1327,9 @@ pub async fn greeter_user_initial_do_wait_peer(
     handle: Handle,
 ) -> Result<UserGreetInProgress1Info, GreetInProgressError> {
     let work = async {
-        let ctx = take_and_close_handle(handle, |x| match x {
+        let ctx = take_and_close_handle(handle, |x| match *x {
             HandleItem::UserGreetInitial(ctx) => Ok(ctx),
-            invalid => Err(invalid),
+            _ => Err(x),
         })?;
 
         let ctx = ctx.do_wait_peer().await?;
@@ -1355,9 +1355,9 @@ pub async fn greeter_device_initial_do_wait_peer(
     handle: Handle,
 ) -> Result<DeviceGreetInProgress1Info, GreetInProgressError> {
     let work = async {
-        let ctx = take_and_close_handle(handle, |x| match x {
+        let ctx = take_and_close_handle(handle, |x| match *x {
             HandleItem::DeviceGreetInitial(ctx) => Ok(ctx),
-            invalid => Err(invalid),
+            _ => Err(x),
         })?;
 
         let ctx = ctx.do_wait_peer().await?;
@@ -1383,9 +1383,9 @@ pub async fn greeter_shamir_recovery_initial_do_wait_peer(
     handle: Handle,
 ) -> Result<ShamirRecoveryGreetInProgress1Info, GreetInProgressError> {
     let work = async {
-        let ctx = take_and_close_handle(handle, |x| match x {
+        let ctx = take_and_close_handle(handle, |x| match *x {
             HandleItem::ShamirRecoveryGreetInitial(ctx) => Ok(ctx),
-            invalid => Err(invalid),
+            _ => Err(x),
         })?;
 
         let ctx = ctx.do_wait_peer().await?;
@@ -1425,9 +1425,9 @@ pub async fn greeter_user_in_progress_1_do_wait_peer_trust(
     canceller: Handle,
     handle: Handle,
 ) -> Result<UserGreetInProgress2Info, GreetInProgressError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::UserGreetInProgress1(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
     let canceller_ctx = ctx.canceller_ctx();
 
@@ -1459,9 +1459,9 @@ pub async fn greeter_device_in_progress_1_do_wait_peer_trust(
     canceller: Handle,
     handle: Handle,
 ) -> Result<DeviceGreetInProgress2Info, GreetInProgressError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::DeviceGreetInProgress1(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
     let canceller_ctx = ctx.canceller_ctx();
 
@@ -1493,9 +1493,9 @@ pub async fn greeter_shamir_recovery_in_progress_1_do_wait_peer_trust(
     canceller: Handle,
     handle: Handle,
 ) -> Result<ShamirRecoveryGreetInProgress2Info, GreetInProgressError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::ShamirRecoveryGreetInProgress1(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
     let canceller_ctx = ctx.canceller_ctx();
 
@@ -1528,9 +1528,9 @@ pub async fn greeter_user_in_progress_2_do_deny_trust(
     handle: Handle,
 ) -> Result<(), GreetInProgressError> {
     let work = async {
-        let ctx = take_and_close_handle(handle, |x| match x {
+        let ctx = take_and_close_handle(handle, |x| match *x {
             HandleItem::UserGreetInProgress2(ctx) => Ok(ctx),
-            invalid => Err(invalid),
+            _ => Err(x),
         })?;
 
         ctx.do_deny_trust().await?;
@@ -1549,9 +1549,9 @@ pub async fn greeter_device_in_progress_2_do_deny_trust(
     handle: Handle,
 ) -> Result<(), GreetInProgressError> {
     let work = async {
-        let ctx = take_and_close_handle(handle, |x| match x {
+        let ctx = take_and_close_handle(handle, |x| match *x {
             HandleItem::DeviceGreetInProgress2(ctx) => Ok(ctx),
-            invalid => Err(invalid),
+            _ => Err(x),
         })?;
 
         ctx.do_deny_trust().await?;
@@ -1570,9 +1570,9 @@ pub async fn greeter_shamir_recovery_in_progress_2_do_deny_trust(
     handle: Handle,
 ) -> Result<(), GreetInProgressError> {
     let work = async {
-        let ctx = take_and_close_handle(handle, |x| match x {
+        let ctx = take_and_close_handle(handle, |x| match *x {
             HandleItem::ShamirRecoveryGreetInProgress2(ctx) => Ok(ctx),
-            invalid => Err(invalid),
+            _ => Err(x),
         })?;
 
         ctx.do_deny_trust().await?;
@@ -1608,9 +1608,9 @@ pub async fn greeter_user_in_progress_2_do_signify_trust(
     canceller: Handle,
     handle: Handle,
 ) -> Result<UserGreetInProgress3Info, GreetInProgressError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::UserGreetInProgress2(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
     let canceller_ctx = ctx.canceller_ctx();
 
@@ -1636,9 +1636,9 @@ pub async fn greeter_device_in_progress_2_do_signify_trust(
     canceller: Handle,
     handle: Handle,
 ) -> Result<DeviceGreetInProgress3Info, GreetInProgressError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::DeviceGreetInProgress2(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
     let canceller_ctx = ctx.canceller_ctx();
 
@@ -1664,9 +1664,9 @@ pub async fn greeter_shamir_recovery_in_progress_2_do_signify_trust(
     canceller: Handle,
     handle: Handle,
 ) -> Result<ShamirRecoveryGreetInProgress3Info, GreetInProgressError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::ShamirRecoveryGreetInProgress2(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
     let canceller_ctx = ctx.canceller_ctx();
 
@@ -1704,9 +1704,9 @@ pub async fn greeter_user_in_progress_3_do_get_claim_requests(
     canceller: Handle,
     handle: Handle,
 ) -> Result<UserGreetInProgress4Info, GreetInProgressError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::UserGreetInProgress3(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
     let canceller_ctx = ctx.canceller_ctx();
 
@@ -1738,9 +1738,9 @@ pub async fn greeter_device_in_progress_3_do_get_claim_requests(
     canceller: Handle,
     handle: Handle,
 ) -> Result<DeviceGreetInProgress4Info, GreetInProgressError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::DeviceGreetInProgress3(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
     let canceller_ctx = ctx.canceller_ctx();
 
@@ -1770,9 +1770,9 @@ pub async fn greeter_shamir_recovery_in_progress_3_do_get_claim_requests(
     canceller: Handle,
     handle: Handle,
 ) -> Result<(), GreetInProgressError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::ShamirRecoveryGreetInProgress3(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
     let canceller_ctx = ctx.canceller_ctx();
 
@@ -1809,9 +1809,9 @@ pub async fn greeter_user_in_progress_4_do_create(
     device_label: DeviceLabel,
     profile: UserProfile,
 ) -> Result<(), GreetInProgressError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::UserGreetInProgress4(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
     let canceller_ctx = ctx.canceller_ctx();
 
@@ -1837,9 +1837,9 @@ pub async fn greeter_device_in_progress_4_do_create(
     handle: Handle,
     device_label: DeviceLabel,
 ) -> Result<(), GreetInProgressError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
+    let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::DeviceGreetInProgress4(ctx) => Ok(ctx),
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
     let canceller_ctx = ctx.canceller_ctx();
 

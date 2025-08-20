@@ -141,6 +141,7 @@ macro_rules! single_certificate_event {
  */
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[expect(clippy::large_enum_variant)]
 pub enum TestbedEvent {
     // 1) Client/server interaction events producing certificates
     BootstrapOrganization(TestbedEventBootstrapOrganization),

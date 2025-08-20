@@ -148,7 +148,7 @@ pub enum WorkspaceStopError {
 pub async fn workspace_stop(workspace: Handle) -> Result<(), WorkspaceStopError> {
     let workspace_handle = workspace;
 
-    let (client_handle, realm_id) = take_and_close_handle(workspace_handle, |x| match x {
+    let (client_handle, realm_id) = take_and_close_handle(workspace_handle, |x| match *x {
         HandleItem::Workspace {
             client,
             workspace_ops,
@@ -159,7 +159,7 @@ pub async fn workspace_stop(workspace: Handle) -> Result<(), WorkspaceStopError>
         // has never been yet provided to the caller in the first place !
         // On top of that it simplifies the start logic (given it guarantees nothing will
         // concurrently close the handle)
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
 
     let client = borrow_from_handle(client_handle, |x| match x {
@@ -407,14 +407,14 @@ pub async fn mountpoint_unmount(_mountpoint: Handle) -> Result<(), MountpointUnm
 
 #[cfg(not(target_arch = "wasm32"))]
 pub async fn mountpoint_unmount(mountpoint: Handle) -> Result<(), MountpointUnmountError> {
-    let mountpoint = take_and_close_handle(mountpoint, |x| match x {
+    let mountpoint = take_and_close_handle(mountpoint, |x| match *x {
         HandleItem::Mountpoint { mountpoint, .. } => Ok(mountpoint),
         // Note we consider an error if the handle is in `HandleItem::StartingMountpoint` state
         // this is because at that point this is not a legit use of the handle given it
         // has never been yet provided to the caller in the first place !
         // On top of that it simplifies the start logic (given it guarantees nothing will
         // concurrently close the handle)
-        invalid => Err(invalid),
+        _ => Err(x),
     })?;
 
     mountpoint
