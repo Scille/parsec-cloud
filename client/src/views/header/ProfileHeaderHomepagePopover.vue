@@ -8,6 +8,10 @@
       </ion-text>
     </div>
     <div class="main-list">
+      <download-parsec
+        v-if="!isMobile() && isWeb() && !hideParsecDownloadContent"
+        @hide-parsec-download="hideParsecDownload"
+      />
       <ion-item
         class="main-list__item"
         @click="onOptionClick(ProfilePopoverHomepageOption.Settings)"
@@ -76,6 +80,13 @@
       >
         <ion-text class="body-sm version"> {{ $msTranslate('MenuPage.about') }} (v{{ APP_VERSION }}) </ion-text>
       </ion-item>
+      <ion-item
+        class="footer-list__item"
+        @click="Env.Links.openDownloadParsecLink"
+        v-if="hideParsecDownloadContent"
+      >
+        <ion-text class="body-sm version"> {{ $msTranslate('MenuPage.downloadParsec') }} </ion-text>
+      </ion-item>
     </div>
   </ion-list>
 </template>
@@ -97,13 +108,21 @@ import { APP_VERSION } from '@/services/environment';
 import { popoverController } from '@ionic/core';
 import { IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
 import { ParsecAccount } from '@/parsec/account';
+import { isMobile, isWeb } from '@/parsec';
 import { AccountSettingsTabs } from '@/views/account/types';
 import { navigateTo, Routes } from '@/router';
 import { cog, fingerPrint, logOut, person } from 'ionicons/icons';
+import DownloadParsec from '@/components/misc/DownloadParsec.vue';
+import { ref, inject, onMounted } from 'vue';
+import { StorageManager, StorageManagerKey } from '@/services/storageManager';
+import { Env } from '@/services/environment';
 
 defineProps<{
   email: string;
 }>();
+
+const storageManager: StorageManager = inject(StorageManagerKey)!;
+const hideParsecDownloadContent = ref(false);
 
 async function onOptionClick(option: ProfilePopoverHomepageOption): Promise<void> {
   let tab = null;
@@ -120,11 +139,23 @@ async function onOptionClick(option: ProfilePopoverHomepageOption): Promise<void
   });
 }
 
+async function hideParsecDownload(): Promise<void> {
+  const config = await storageManager.retrieveConfig();
+  await storageManager.updateConfig({ hideParsecDownload: true });
+  hideParsecDownloadContent.value = config.hideParsecDownload;
+  await storageManager.storeConfig(config);
+}
+
 async function logOutParsecAccount(): Promise<void> {
   await popoverController.dismiss();
   await ParsecAccount.logout();
   await navigateTo(Routes.Account, { skipHandle: true });
 }
+
+onMounted(async () => {
+  const config = await storageManager.retrieveConfig();
+  hideParsecDownloadContent.value = config.hideParsecDownload;
+});
 </script>
 
 <style lang="scss" scoped>

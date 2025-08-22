@@ -31,6 +31,7 @@ export interface Config {
   defaultAccountServer?: string;
   skipLongPathsSupportWarning: boolean;
   disableDownloadWarning: boolean;
+  hideParsecDownload: boolean;
 }
 
 export class StorageManager {
@@ -54,6 +55,7 @@ export class StorageManager {
       defaultAccountServer: undefined,
       skipLongPathsSupportWarning: false,
       disableDownloadWarning: false,
+      hideParsecDownload: false,
     };
   }
 
@@ -165,6 +167,7 @@ export class StorageManager {
       defaultAccountServer: data.defaultAccountServer,
       skipLongPathsSupportWarning: data.skipLongPathsSupportWarning,
       disableDownloadWarning: data.disableDownloadWarning,
+      hideParsecDownload: data.hideParsecDownload,
     });
     window.electronAPI.sendConfig(data);
   }
@@ -193,6 +196,7 @@ export class StorageManager {
       defaultAccountServer: data.defaultAccountServer ?? StorageManager.DEFAULT_CONFIG.defaultAccountServer,
       skipLongPathsSupportWarning: data.skipLongPathsSupportWarning ?? StorageManager.DEFAULT_CONFIG.skipLongPathsSupportWarning,
       disableDownloadWarning: data.disableDownloadWarning ?? StorageManager.DEFAULT_CONFIG.disableDownloadWarning,
+      hideParsecDownload: data.hideParsecDownload ?? StorageManager.DEFAULT_CONFIG.hideParsecDownload,
     };
     return config;
   }
