@@ -209,7 +209,8 @@
             "changelog": "Voir les nouveautés",
             "currentVersion": "Votre version actuelle : ",
             "updateAvailable": "Mise à jour disponible",
-            "newVersionAvailable": "Nouvelle version disponible"
+            "newVersionAvailable": "Nouvelle version disponible",
+            "downloadParsec": "Télécharger l'application de bureau"
         },
         "organizationList": {
             "title": "Accéder à vos organisations",
@@ -433,10 +434,12 @@
         "documentation": "Documentation",
         "doc": "Doc.",
         "settings": "Paramètres",
+        "downloadParsec": "Télécharger l'application de bureau",
         "helpLink": "{signUrl}/contact",
         "contactLink": "{signUrl}/contact",
         "documentationLink": "https://docs.parsec.cloud/fr/{version}",
         "documentationGuideLink": "https://docs.parsec.cloud/fr/{version}/userguide/{page}.html#{anchor}",
+        "downloadParsecLink": "https://parsec.cloud/demarrer-parsec/",
         "reportBug": "Signaler un bug"
     },
     "bugReport": {
