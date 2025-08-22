@@ -210,7 +210,8 @@
             "changelog": "What's new?",
             "currentVersion": "Current version: ",
             "updateAvailable": "Update available",
-            "newVersionAvailable": "New update available"
+            "newVersionAvailable": "New update available",
+            "downloadParsec": "Download desktop app"
         },
         "organizationList": {
             "title": "Access your organizations",
@@ -434,10 +435,12 @@
         "documentation": "Documentation",
         "doc": "Doc.",
         "settings": "Settings",
+        "downloadParsec": "Download desktop app",
         "helpLink": "{signUrl}/contact",
         "contactLink": "{signUrl}/contact",
         "documentationLink": "https://docs.parsec.cloud/en/{version}",
         "documentationGuideLink": "https://docs.parsec.cloud/en/{version}/userguide/{page}.html#{anchor}",
+        "downloadParsecLink": "https://parsec.cloud/en/start-parsec/",
         "reportBug": "Report a bug"
     },
     "bugReport": {

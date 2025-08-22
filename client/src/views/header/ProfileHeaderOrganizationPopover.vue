@@ -9,13 +9,17 @@
       <tag-profile :profile="profile" />
     </div>
     <div class="main-list">
+      <download-parsec
+        v-if="!isMobile() && isWeb() && !hideParsecDownloadContent"
+        @hide-parsec-download="hideParsecDownload"
+      />
       <div
         button
         class="main-list__item update-item"
         @click="onOptionClick(ProfilePopoverOption.Update)"
         v-show="updateAvailability.updateAvailable"
       >
-        <ion-text class="update-item-text subtitles-normal">
+        <ion-text class="update-item-text button-medium">
           {{ $msTranslate('HomePage.topbar.newVersionAvailable') }}
         </ion-text>
         <ion-text class="update-item-version body">
@@ -30,6 +34,7 @@
         <ion-icon
           :icon="cog"
           slot="start"
+          class="item-icon"
         />
         <ion-text class="body item-label">
           {{ $msTranslate('HomePage.topbar.settings') }}
@@ -42,6 +47,7 @@
         <ion-icon
           :icon="phonePortrait"
           slot="start"
+          class="item-icon"
         />
         <ion-text class="body item-label">
           {{ $msTranslate('HomePage.topbar.devices') }}
@@ -54,6 +60,7 @@
         <ion-icon
           :icon="fingerPrint"
           slot="start"
+          class="item-icon"
         />
         <ion-text class="body item-label">
           {{ $msTranslate('HomePage.topbar.authentication') }}
@@ -66,6 +73,7 @@
         <ion-icon
           :icon="idCard"
           slot="start"
+          class="item-icon"
         />
         <ion-text class="body item-label">
           {{ $msTranslate('HomePage.topbar.recovery') }}
@@ -78,6 +86,7 @@
         <ion-icon
           :icon="logOut"
           slot="start"
+          class="item-icon"
         />
         <ion-text class="body item-label">
           {{ $msTranslate('HomePage.topbar.logout') }}
@@ -105,6 +114,13 @@
       </ion-item>
       <ion-item
         class="footer-list__item"
+        @click="Env.Links.openDownloadParsecLink"
+        v-if="hideParsecDownloadContent"
+      >
+        <ion-text class="body-sm version"> {{ $msTranslate('MenuPage.downloadParsec') }} </ion-text>
+      </ion-item>
+      <ion-item
+        class="footer-list__item"
         @click="onOptionClick(ProfilePopoverOption.ReportBug)"
         v-show="showBugReport"
       >
@@ -126,18 +142,22 @@ export enum ProfilePopoverOption {
   About = 7,
   Update = 8,
   ReportBug = 9,
+  DownloadParsec = 10,
 }
 </script>
 
 <script setup lang="ts">
 import { APP_VERSION } from '@/services/environment';
 import TagProfile from '@/components/users/TagProfile.vue';
-import { UserProfile } from '@/parsec';
+import { isMobile, isWeb, UserProfile } from '@/parsec';
 import { UpdateAvailabilityData } from '@/services/eventDistributor';
 import { popoverController } from '@ionic/core';
 import { IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
 import { cog, fingerPrint, idCard, logOut, phonePortrait } from 'ionicons/icons';
-import { ref } from 'vue';
+import DownloadParsec from '@/components/misc/DownloadParsec.vue';
+import { ref, inject, onMounted } from 'vue';
+import { StorageManager, StorageManagerKey } from '@/services/storageManager';
+import { Env } from '@/services/environment';
 
 defineProps<{
   email: string;
@@ -146,12 +166,24 @@ defineProps<{
 }>();
 
 const showBugReport = ref(window.isTesting() || window.usesTestbed());
+const storageManager: StorageManager = inject(StorageManagerKey)!;
+const hideParsecDownloadContent = ref(false);
+
+async function hideParsecDownload(): Promise<void> {
+  hideParsecDownloadContent.value = true;
+  await storageManager.updateConfig({ hideParsecDownload: true });
+}
 
 async function onOptionClick(option: ProfilePopoverOption): Promise<void> {
   await popoverController.dismiss({
     option: option,
   });
 }
+
+onMounted(async () => {
+  const config = await storageManager.retrieveConfig();
+  hideParsecDownloadContent.value = config.hideParsecDownload;
+});
 </script>
 
 <style lang="scss" scoped>
@@ -195,7 +227,7 @@ async function onOptionClick(option: ProfilePopoverOption): Promise<void> {
       margin: 0;
     }
 
-    ion-icon {
+    .item-icon {
       color: var(--parsec-color-light-secondary-text);
       margin: 0;
       margin-inline-end: 0.5rem;
@@ -227,7 +259,7 @@ async function onOptionClick(option: ProfilePopoverOption): Promise<void> {
       background: var(--parsec-color-light-primary-30);
       color: var(--parsec-color-light-primary-700);
 
-      ion-icon {
+      .item-icon {
         color: var(--parsec-color-light-primary-700);
       }
     }

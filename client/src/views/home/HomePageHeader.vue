@@ -482,10 +482,6 @@ const emits = defineEmits<{
   }
 }
 
-.homepage-menu-secondary {
-  justify-content: flex-end;
-}
-
 .login-button {
   border-radius: var(--parsec-radius-12);
   border: 1px solid transparent;

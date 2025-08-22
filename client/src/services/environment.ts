@@ -184,6 +184,10 @@ async function openDocumentationLink(): Promise<void> {
   await openUrl(I18n.translate({ key: 'MenuPage.documentationLink', data: { version: APP_VERSION_PREFIX } }));
 }
 
+async function openDownloadParsecLink(): Promise<void> {
+  await openUrl(I18n.translate({ key: 'MenuPage.downloadParsecLink' }));
+}
+
 async function openContactLink(): Promise<void> {
   await openUrl(I18n.translate({ key: 'MenuPage.contactLink', data: { signUrl: getSignUrl() } }));
 }
@@ -242,6 +246,7 @@ export const Env = {
   Links: {
     openDocumentationLink,
     openDocumentationUserGuideLink,
+    openDownloadParsecLink,
     openContactLink,
     openLicenseLink,
     openChangelogLink,

@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { expect, msTest } from '@tests/e2e/helpers';
+import { expect, msTest, openExternalLink } from '@tests/e2e/helpers';
 
 msTest('Profile popover default state', async ({ connected }) => {
   await expect(connected.locator('.profile-header-organization-popover')).toBeHidden();
@@ -61,4 +61,28 @@ msTest('Profile popover go to settings', async ({ connected }) => {
     'Display',
     'Configuration',
   ]);
+});
+
+msTest('Profile popover go to download app page', async ({ connected }) => {
+  await connected.locator('.topbar').locator('.profile-header').click();
+  const popover = connected.locator('.profile-header-organization-popover');
+  const downloadButton = popover.locator('.download-parsec-content');
+  await downloadButton.isVisible();
+  await downloadButton.click();
+  await connected.waitForLoadState();
+  await openExternalLink(connected, downloadButton, new RegExp('https://parsec.cloud/en/start-parsec'));
+});
+
+msTest('Profile popover hide download app bloc', async ({ connected }) => {
+  await connected.locator('.topbar').locator('.profile-header').click();
+  const popover = connected.locator('.profile-header-organization-popover');
+  const downloadButton = popover.locator('.download-parsec');
+  const downloadButtonPopoverFooter = popover.locator('.footer-list').locator('ion-item').nth(3);
+  await downloadButtonPopoverFooter.isHidden();
+  await downloadButton.hover();
+  await downloadButton.locator('.download-parsec-close').isVisible();
+  await downloadButton.locator('.download-parsec-close').click();
+  await downloadButton.isHidden();
+  await downloadButtonPopoverFooter.isVisible();
+  expect(downloadButtonPopoverFooter).toHaveText('Download desktop app');
 });
