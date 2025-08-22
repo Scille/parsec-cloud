@@ -8,6 +8,8 @@ struct FutureForceSendWrapper<F: std::future::Future> {
     not_send_future: F,
 }
 
+// SAFETY: Web being run in a single thread fashion, the value can only be updated at one place at
+// a time.
 unsafe impl<F: std::future::Future> Send for FutureForceSendWrapper<F> {}
 impl<F: std::future::Future> std::future::Future for FutureForceSendWrapper<F> {
     type Output = F::Output;
@@ -57,6 +59,8 @@ struct StreamForceSendWrapper<S: futures::stream::Stream> {
     not_send_stream: S,
 }
 
+// SAFETY: Web being run in a single thread fashion, the value can only be updated at one place at
+// a time.
 unsafe impl<S: futures::stream::Stream> Send for StreamForceSendWrapper<S> {}
 impl<S: futures::stream::Stream> futures::stream::Stream for StreamForceSendWrapper<S> {
     type Item = S::Item;
