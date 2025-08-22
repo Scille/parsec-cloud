@@ -78,7 +78,7 @@ The platform crates:
 - `platform_device_loader`: Loads the device keys file from disk.
 - `platform_http_proxy`: Handles HTTP proxy.
 - `platform_ipc`: Allows communication between processes to ensure a device is not
-                  concurrently used.
+  concurrently used.
 - `platform_mountpoint`: FUSE/WinFSP to expose the workspaces as a OS drive.
 - `platform_storage`: Database to store on disk manifest/block/certificates etc.
 

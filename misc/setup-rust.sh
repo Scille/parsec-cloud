@@ -13,6 +13,6 @@ set -o pipefail
 if command -v rustup; then
     echo "rust already installed"
 else
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.85.0 --profile minimal
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.86.0 --profile minimal
     echo "Successfully installed rust"
 fi
