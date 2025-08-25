@@ -40,6 +40,7 @@ import {
   DeviceSaveStrategy,
   DeviceSaveStrategyTag,
   HumanHandle,
+  OrganizationID,
   ParsecAddr,
   RegistrationDevice,
   Result,
@@ -271,7 +272,7 @@ class _ParsecAccount {
       }
       let saveStrategy!: DeviceSaveStrategy;
       if (isWeb()) {
-        const keyResult = await libparsec.accountUploadOpaqueKeyInVault(this.handle);
+        const keyResult = await libparsec.accountUploadOpaqueKeyInVault(this.handle, regDevice.organizationId);
         if (!keyResult.ok) {
           console.error(`Failed to upload opaque key: ${keyResult.error.tag} (${keyResult.error.error})`);
           return;
@@ -343,7 +344,7 @@ class _ParsecAccount {
     if (existingDevice !== undefined) {
       return { ok: true, value: existingDevice };
     }
-    const keyResult = await libparsec.accountUploadOpaqueKeyInVault(this.handle);
+    const keyResult = await libparsec.accountUploadOpaqueKeyInVault(this.handle, registrationDevice.organizationId);
     if (!keyResult.ok) {
       console.error(`Failed to upload opaque key: ${keyResult.error.tag} (${keyResult.error.error})`);
       return { ok: false, error: { tag: AccountRegisterNewDeviceErrorTag.BadVaultKeyAccess, error: 'failed to get key' } };
@@ -443,11 +444,13 @@ class _ParsecAccount {
     return await libparsec.accountFetchOpaqueKeyFromVault(this.handle, cipherKeyId);
   }
 
-  async uploadKeyInVault(): Promise<Result<[AccountVaultItemOpaqueKeyID, SecretKey], AccountUploadOpaqueKeyInVaultError>> {
+  async uploadKeyInVault(
+    organizationId: OrganizationID,
+  ): Promise<Result<[AccountVaultItemOpaqueKeyID, SecretKey], AccountUploadOpaqueKeyInVaultError>> {
     if (!this.handle) {
       return generateNoHandleError<AccountUploadOpaqueKeyInVaultError>();
     }
-    const keyResult = await libparsec.accountUploadOpaqueKeyInVault(this.handle);
+    const keyResult = await libparsec.accountUploadOpaqueKeyInVault(this.handle, organizationId);
     return keyResult;
   }
 

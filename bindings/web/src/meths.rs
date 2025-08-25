@@ -13,6 +13,78 @@ use wasm_bindgen::JsCast;
 #[allow(unused_imports)]
 use wasm_bindgen_futures::*;
 
+// AccountOrganizationsAccountVaultStrategy
+
+#[allow(dead_code)]
+fn enum_account_organizations_account_vault_strategy_js_to_rs(
+    raw_value: &str,
+) -> Result<libparsec::AccountOrganizationsAccountVaultStrategy, JsValue> {
+    match raw_value {
+        "AccountOrganizationsAccountVaultStrategyAllowed" => {
+            Ok(libparsec::AccountOrganizationsAccountVaultStrategy::Allowed)
+        }
+        "AccountOrganizationsAccountVaultStrategyForbidden" => {
+            Ok(libparsec::AccountOrganizationsAccountVaultStrategy::Forbidden)
+        }
+        _ => {
+            let range_error =
+                RangeError::new("Invalid value for enum AccountOrganizationsAccountVaultStrategy");
+            range_error.set_cause(&JsValue::from(raw_value));
+            Err(JsValue::from(range_error))
+        }
+    }
+}
+
+#[allow(dead_code)]
+fn enum_account_organizations_account_vault_strategy_rs_to_js(
+    value: libparsec::AccountOrganizationsAccountVaultStrategy,
+) -> &'static str {
+    match value {
+        libparsec::AccountOrganizationsAccountVaultStrategy::Allowed => {
+            "AccountOrganizationsAccountVaultStrategyAllowed"
+        }
+        libparsec::AccountOrganizationsAccountVaultStrategy::Forbidden => {
+            "AccountOrganizationsAccountVaultStrategyForbidden"
+        }
+    }
+}
+
+// AccountOrganizationsAllowedClientAgent
+
+#[allow(dead_code)]
+fn enum_account_organizations_allowed_client_agent_js_to_rs(
+    raw_value: &str,
+) -> Result<libparsec::AccountOrganizationsAllowedClientAgent, JsValue> {
+    match raw_value {
+        "AccountOrganizationsAllowedClientAgentNativeOnly" => {
+            Ok(libparsec::AccountOrganizationsAllowedClientAgent::NativeOnly)
+        }
+        "AccountOrganizationsAllowedClientAgentNativeOrWeb" => {
+            Ok(libparsec::AccountOrganizationsAllowedClientAgent::NativeOrWeb)
+        }
+        _ => {
+            let range_error =
+                RangeError::new("Invalid value for enum AccountOrganizationsAllowedClientAgent");
+            range_error.set_cause(&JsValue::from(raw_value));
+            Err(JsValue::from(range_error))
+        }
+    }
+}
+
+#[allow(dead_code)]
+fn enum_account_organizations_allowed_client_agent_rs_to_js(
+    value: libparsec::AccountOrganizationsAllowedClientAgent,
+) -> &'static str {
+    match value {
+        libparsec::AccountOrganizationsAllowedClientAgent::NativeOnly => {
+            "AccountOrganizationsAllowedClientAgentNativeOnly"
+        }
+        libparsec::AccountOrganizationsAllowedClientAgent::NativeOrWeb => {
+            "AccountOrganizationsAllowedClientAgentNativeOrWeb"
+        }
+    }
+}
+
 // CancelledGreetingAttemptReason
 
 #[allow(dead_code)]
@@ -355,6 +427,402 @@ fn enum_user_profile_rs_to_js(value: libparsec::UserProfile) -> &'static str {
         libparsec::UserProfile::Outsider => "UserProfileOutsider",
         libparsec::UserProfile::Standard => "UserProfileStandard",
     }
+}
+
+// AccountOrganizations
+
+#[allow(dead_code)]
+fn struct_account_organizations_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::AccountOrganizations, JsValue> {
+    let active = {
+        let js_val = Reflect::get(&obj, &"active".into())?;
+        {
+            let js_val = js_val
+                .dyn_into::<Array>()
+                .map_err(|_| TypeError::new("Not an array"))?;
+            let mut converted = Vec::with_capacity(js_val.length() as usize);
+            for x in js_val.iter() {
+                let x_converted = struct_account_organizations_active_user_js_to_rs(x)?;
+                converted.push(x_converted);
+            }
+            converted
+        }
+    };
+    let revoked = {
+        let js_val = Reflect::get(&obj, &"revoked".into())?;
+        {
+            let js_val = js_val
+                .dyn_into::<Array>()
+                .map_err(|_| TypeError::new("Not an array"))?;
+            let mut converted = Vec::with_capacity(js_val.length() as usize);
+            for x in js_val.iter() {
+                let x_converted = struct_account_organizations_revoked_user_js_to_rs(x)?;
+                converted.push(x_converted);
+            }
+            converted
+        }
+    };
+    Ok(libparsec::AccountOrganizations { active, revoked })
+}
+
+#[allow(dead_code)]
+fn struct_account_organizations_rs_to_js(
+    rs_obj: libparsec::AccountOrganizations,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_active = {
+        // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+        let js_array = Array::new_with_length(rs_obj.active.len() as u32);
+        for (i, elem) in rs_obj.active.into_iter().enumerate() {
+            let js_elem = struct_account_organizations_active_user_rs_to_js(elem)?;
+            js_array.set(i as u32, js_elem);
+        }
+        js_array.into()
+    };
+    Reflect::set(&js_obj, &"active".into(), &js_active)?;
+    let js_revoked = {
+        // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+        let js_array = Array::new_with_length(rs_obj.revoked.len() as u32);
+        for (i, elem) in rs_obj.revoked.into_iter().enumerate() {
+            let js_elem = struct_account_organizations_revoked_user_rs_to_js(elem)?;
+            js_array.set(i as u32, js_elem);
+        }
+        js_array.into()
+    };
+    Reflect::set(&js_obj, &"revoked".into(), &js_revoked)?;
+    Ok(js_obj)
+}
+
+// AccountOrganizationsActiveUser
+
+#[allow(dead_code)]
+fn struct_account_organizations_active_user_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::AccountOrganizationsActiveUser, JsValue> {
+    let organization_id = {
+        let js_val = Reflect::get(&obj, &"organizationId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let user_id = {
+        let js_val = Reflect::get(&obj, &"userId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                    libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let created_on = {
+        let js_val = Reflect::get(&obj, &"createdOn".into())?;
+        {
+            let v = js_val.dyn_into::<Number>()?.value_of();
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            v
+        }
+    };
+    let is_frozen = {
+        let js_val = Reflect::get(&obj, &"isFrozen".into())?;
+        js_val
+            .dyn_into::<Boolean>()
+            .map_err(|_| TypeError::new("Not a boolean"))?
+            .value_of()
+    };
+    let current_profile = {
+        let js_val = Reflect::get(&obj, &"currentProfile".into())?;
+        {
+            let raw_string = js_val.as_string().ok_or_else(|| {
+                let type_error = TypeError::new("value is not a string");
+                type_error.set_cause(&js_val);
+                JsValue::from(type_error)
+            })?;
+            enum_user_profile_js_to_rs(raw_string.as_str())
+        }?
+    };
+    let organization_config = {
+        let js_val = Reflect::get(&obj, &"organizationConfig".into())?;
+        struct_account_organizations_organization_config_js_to_rs(js_val)?
+    };
+    Ok(libparsec::AccountOrganizationsActiveUser {
+        organization_id,
+        user_id,
+        created_on,
+        is_frozen,
+        current_profile,
+        organization_config,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_account_organizations_active_user_rs_to_js(
+    rs_obj: libparsec::AccountOrganizationsActiveUser,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_organization_id = JsValue::from_str(rs_obj.organization_id.as_ref());
+    Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
+    let js_user_id = JsValue::from_str({
+        let custom_to_rs_string =
+            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.user_id) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
+    let js_created_on = {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        let v = match custom_to_rs_f64(rs_obj.created_on) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        };
+        JsValue::from(v)
+    };
+    Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
+    let js_is_frozen = rs_obj.is_frozen.into();
+    Reflect::set(&js_obj, &"isFrozen".into(), &js_is_frozen)?;
+    let js_current_profile = JsValue::from_str(enum_user_profile_rs_to_js(rs_obj.current_profile));
+    Reflect::set(&js_obj, &"currentProfile".into(), &js_current_profile)?;
+    let js_organization_config =
+        struct_account_organizations_organization_config_rs_to_js(rs_obj.organization_config)?;
+    Reflect::set(
+        &js_obj,
+        &"organizationConfig".into(),
+        &js_organization_config,
+    )?;
+    Ok(js_obj)
+}
+
+// AccountOrganizationsOrganizationConfig
+
+#[allow(dead_code)]
+fn struct_account_organizations_organization_config_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::AccountOrganizationsOrganizationConfig, JsValue> {
+    let is_expired = {
+        let js_val = Reflect::get(&obj, &"isExpired".into())?;
+        js_val
+            .dyn_into::<Boolean>()
+            .map_err(|_| TypeError::new("Not a boolean"))?
+            .value_of()
+    };
+    let user_profile_outsider_allowed = {
+        let js_val = Reflect::get(&obj, &"userProfileOutsiderAllowed".into())?;
+        js_val
+            .dyn_into::<Boolean>()
+            .map_err(|_| TypeError::new("Not a boolean"))?
+            .value_of()
+    };
+    let active_users_limit = {
+        let js_val = Reflect::get(&obj, &"activeUsersLimit".into())?;
+        variant_active_users_limit_js_to_rs(js_val)?
+    };
+    let allowed_client_agent = {
+        let js_val = Reflect::get(&obj, &"allowedClientAgent".into())?;
+        {
+            let raw_string = js_val.as_string().ok_or_else(|| {
+                let type_error = TypeError::new("value is not a string");
+                type_error.set_cause(&js_val);
+                JsValue::from(type_error)
+            })?;
+            enum_account_organizations_allowed_client_agent_js_to_rs(raw_string.as_str())
+        }?
+    };
+    let account_vault_strategy = {
+        let js_val = Reflect::get(&obj, &"accountVaultStrategy".into())?;
+        {
+            let raw_string = js_val.as_string().ok_or_else(|| {
+                let type_error = TypeError::new("value is not a string");
+                type_error.set_cause(&js_val);
+                JsValue::from(type_error)
+            })?;
+            enum_account_organizations_account_vault_strategy_js_to_rs(raw_string.as_str())
+        }?
+    };
+    Ok(libparsec::AccountOrganizationsOrganizationConfig {
+        is_expired,
+        user_profile_outsider_allowed,
+        active_users_limit,
+        allowed_client_agent,
+        account_vault_strategy,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_account_organizations_organization_config_rs_to_js(
+    rs_obj: libparsec::AccountOrganizationsOrganizationConfig,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_is_expired = rs_obj.is_expired.into();
+    Reflect::set(&js_obj, &"isExpired".into(), &js_is_expired)?;
+    let js_user_profile_outsider_allowed = rs_obj.user_profile_outsider_allowed.into();
+    Reflect::set(
+        &js_obj,
+        &"userProfileOutsiderAllowed".into(),
+        &js_user_profile_outsider_allowed,
+    )?;
+    let js_active_users_limit = variant_active_users_limit_rs_to_js(rs_obj.active_users_limit)?;
+    Reflect::set(&js_obj, &"activeUsersLimit".into(), &js_active_users_limit)?;
+    let js_allowed_client_agent = JsValue::from_str(
+        enum_account_organizations_allowed_client_agent_rs_to_js(rs_obj.allowed_client_agent),
+    );
+    Reflect::set(
+        &js_obj,
+        &"allowedClientAgent".into(),
+        &js_allowed_client_agent,
+    )?;
+    let js_account_vault_strategy = JsValue::from_str(
+        enum_account_organizations_account_vault_strategy_rs_to_js(rs_obj.account_vault_strategy),
+    );
+    Reflect::set(
+        &js_obj,
+        &"accountVaultStrategy".into(),
+        &js_account_vault_strategy,
+    )?;
+    Ok(js_obj)
+}
+
+// AccountOrganizationsRevokedUser
+
+#[allow(dead_code)]
+fn struct_account_organizations_revoked_user_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::AccountOrganizationsRevokedUser, JsValue> {
+    let organization_id = {
+        let js_val = Reflect::get(&obj, &"organizationId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let user_id = {
+        let js_val = Reflect::get(&obj, &"userId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                    libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let created_on = {
+        let js_val = Reflect::get(&obj, &"createdOn".into())?;
+        {
+            let v = js_val.dyn_into::<Number>()?.value_of();
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            v
+        }
+    };
+    let revoked_on = {
+        let js_val = Reflect::get(&obj, &"revokedOn".into())?;
+        {
+            let v = js_val.dyn_into::<Number>()?.value_of();
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            v
+        }
+    };
+    let current_profile = {
+        let js_val = Reflect::get(&obj, &"currentProfile".into())?;
+        {
+            let raw_string = js_val.as_string().ok_or_else(|| {
+                let type_error = TypeError::new("value is not a string");
+                type_error.set_cause(&js_val);
+                JsValue::from(type_error)
+            })?;
+            enum_user_profile_js_to_rs(raw_string.as_str())
+        }?
+    };
+    Ok(libparsec::AccountOrganizationsRevokedUser {
+        organization_id,
+        user_id,
+        created_on,
+        revoked_on,
+        current_profile,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_account_organizations_revoked_user_rs_to_js(
+    rs_obj: libparsec::AccountOrganizationsRevokedUser,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_organization_id = JsValue::from_str(rs_obj.organization_id.as_ref());
+    Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
+    let js_user_id = JsValue::from_str({
+        let custom_to_rs_string =
+            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.user_id) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
+    let js_created_on = {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        let v = match custom_to_rs_f64(rs_obj.created_on) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        };
+        JsValue::from(v)
+    };
+    Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
+    let js_revoked_on = {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        let v = match custom_to_rs_f64(rs_obj.revoked_on) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        };
+        JsValue::from(v)
+    };
+    Reflect::set(&js_obj, &"revokedOn".into(), &js_revoked_on)?;
+    let js_current_profile = JsValue::from_str(enum_user_profile_rs_to_js(rs_obj.current_profile));
+    Reflect::set(&js_obj, &"currentProfile".into(), &js_current_profile)?;
+    Ok(js_obj)
 }
 
 // AuthMethodInfo
@@ -4319,54 +4787,32 @@ fn variant_account_create_registration_device_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::AccountCreateRegistrationDeviceError::BadVaultKeyAccess { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountCreateRegistrationDeviceErrorBadVaultKeyAccess".into(),
-            )?;
+        libparsec::AccountCreateRegistrationDeviceError::BadVaultKeyAccess{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorBadVaultKeyAccess".into())?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::Internal { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountCreateRegistrationDeviceErrorInternal".into(),
-            )?;
+        libparsec::AccountCreateRegistrationDeviceError::CannotObtainOrganizationVaultStrategy{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorCannotObtainOrganizationVaultStrategy".into())?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceDecryptionFailed { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed".into(),
-            )?;
+        libparsec::AccountCreateRegistrationDeviceError::Internal{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorInternal".into())?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidData { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData".into(),
-            )?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceDecryptionFailed{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed".into())?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidPath { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath".into(),
-            )?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidData{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData".into())?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::Offline { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountCreateRegistrationDeviceErrorOffline".into(),
-            )?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidPath{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath".into())?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::TimestampOutOfBallpark { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark".into(),
-            )?;
+        libparsec::AccountCreateRegistrationDeviceError::NotAllowedByOrganizationVaultStrategy{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorNotAllowedByOrganizationVaultStrategy".into())?;
+        }
+        libparsec::AccountCreateRegistrationDeviceError::Offline{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorOffline".into())?;
+        }
+        libparsec::AccountCreateRegistrationDeviceError::TimestampOutOfBallpark{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark".into())?;
         }
     }
     Ok(js_obj)
@@ -4730,6 +5176,34 @@ fn variant_account_list_invitations_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"AccountListInvitationsErrorOffline".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// AccountListOrganizationsError
+
+#[allow(dead_code)]
+fn variant_account_list_organizations_error_rs_to_js(
+    rs_obj: libparsec::AccountListOrganizationsError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::AccountListOrganizationsError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountListOrganizationsErrorInternal".into(),
+            )?;
+        }
+        libparsec::AccountListOrganizationsError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountListOrganizationsErrorOffline".into(),
             )?;
         }
     }
@@ -5109,11 +5583,29 @@ fn variant_account_upload_opaque_key_in_vault_error_rs_to_js(
                 &"AccountUploadOpaqueKeyInVaultErrorBadVaultKeyAccess".into(),
             )?;
         }
+        libparsec::AccountUploadOpaqueKeyInVaultError::CannotObtainOrganizationVaultStrategy {
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountUploadOpaqueKeyInVaultErrorCannotObtainOrganizationVaultStrategy".into(),
+            )?;
+        }
         libparsec::AccountUploadOpaqueKeyInVaultError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
                 &"AccountUploadOpaqueKeyInVaultErrorInternal".into(),
+            )?;
+        }
+        libparsec::AccountUploadOpaqueKeyInVaultError::NotAllowedByOrganizationVaultStrategy {
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountUploadOpaqueKeyInVaultErrorNotAllowedByOrganizationVaultStrategy".into(),
             )?;
         }
         libparsec::AccountUploadOpaqueKeyInVaultError::Offline { .. } => {
@@ -16882,6 +17374,31 @@ pub fn accountListInvitations(account: u32) -> Promise {
     }))
 }
 
+// account_list_organizations
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn accountListOrganizations(account: u32) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::account_list_organizations(account).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_account_organizations_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_account_list_organizations_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
 // account_list_registration_devices
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -17180,9 +17697,15 @@ pub fn accountRegisterNewDevice(
 // account_upload_opaque_key_in_vault
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn accountUploadOpaqueKeyInVault(account: u32) -> Promise {
+pub fn accountUploadOpaqueKeyInVault(account: u32, organization_id: String) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
-        let ret = libparsec::account_upload_opaque_key_in_vault(account).await;
+        let organization_id = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(organization_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::account_upload_opaque_key_in_vault(account, organization_id).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();

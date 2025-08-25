@@ -168,18 +168,16 @@ async function onLoginSuccess(_token: AuthenticationToken, info: PersonalInforma
   personalInformation.value = info;
 
   if (props.bootstrapLink) {
+    step.value = Steps.Authentication;
     if (isWeb() && ParsecAccount.isLoggedIn() && ParsecAccount.addressMatchesAccountServer(props.bootstrapLink)) {
-      // Create a new vault save strategy
-      const result = await SaveStrategy.useAccountVault();
-      if (result.ok) {
-        // Skip the auth page
-        await onAuthenticationChosen(result.value);
-      } else {
-        // We failed to generate a save strategy, we'll ask for password normally. A new device can be created later if needed.
-        step.value = Steps.Authentication;
+      const parseResult = await parseParsecAddr(props.bootstrapLink);
+      if (parseResult.ok && parseResult.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
+        const result = await SaveStrategy.useAccountVault(parseResult.value.organizationId);
+        if (result.ok) {
+          // Skip the auth page
+          await onAuthenticationChosen(result.value);
+        }
       }
-    } else {
-      step.value = Steps.Authentication;
     }
   } else {
     step.value = Steps.OrganizationName;
@@ -200,7 +198,7 @@ async function onOrganizationNameChosen(chosenOrganizationName: OrganizationID):
     ParsecAccount.isLoggedIn() &&
     Env.getSaasServers().some((addr) => ParsecAccount.addressMatchesAccountServer(`parsec3://${addr}`))
   ) {
-    const result = await SaveStrategy.useAccountVault();
+    const result = await SaveStrategy.useAccountVault(chosenOrganizationName);
     if (result.ok) {
       await onAuthenticationChosen(result.value);
     } else {

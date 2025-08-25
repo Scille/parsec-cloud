@@ -150,7 +150,7 @@ async function onOrganizationNameAndServerChosen(chosenOrganizationName: Organiz
       name.value = infoResult.value.label;
       if (isWeb()) {
         // Create a new vault save strategy
-        const result = await SaveStrategy.useAccountVault();
+        const result = await SaveStrategy.useAccountVault(chosenOrganizationName);
         if (result.ok) {
           // Skip the auth page
           await onAuthenticationChosen(result.value);

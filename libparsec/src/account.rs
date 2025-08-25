@@ -10,9 +10,13 @@ pub use libparsec_account::{
     AccountCreateAuthMethodError, AccountCreateError, AccountCreateSendValidationEmailError,
     AccountDeleteProceedError, AccountDeleteSendValidationEmailError,
     AccountDisableAuthMethodError, AccountFetchOpaqueKeyFromVaultError,
-    AccountListAuthMethodsError, AccountListInvitationsError, AccountListRegistrationDevicesError,
-    AccountLoginError, AccountRecoverProceedError, AccountRecoverSendValidationEmailError,
-    AccountRegisterNewDeviceError, AccountUploadOpaqueKeyInVaultError, AuthMethodInfo,
+    AccountListAuthMethodsError, AccountListInvitationsError, AccountListOrganizationsError,
+    AccountListRegistrationDevicesError, AccountLoginError, AccountOrganizations,
+    AccountOrganizationsAccountVaultStrategy, AccountOrganizationsActiveUser,
+    AccountOrganizationsAllowedClientAgent, AccountOrganizationsOrganizationConfig,
+    AccountOrganizationsRevokedUser, AccountRecoverProceedError,
+    AccountRecoverSendValidationEmailError, AccountRegisterNewDeviceError,
+    AccountUploadOpaqueKeyInVaultError, AuthMethodInfo,
 };
 use libparsec_client_connection::{AnonymousAccountCmds, ConnectionError, ProxyConfig};
 use libparsec_types::prelude::*;
@@ -256,6 +260,14 @@ pub async fn account_list_invitations(
         .collect())
 }
 
+pub async fn account_list_organizations(
+    account: Handle,
+) -> Result<AccountOrganizations, AccountListOrganizationsError> {
+    let account_handle = account;
+    let account = borrow_account(account_handle)?;
+    account.list_organizations().await
+}
+
 pub async fn account_fetch_opaque_key_from_vault(
     account: Handle,
     key_id: AccountVaultItemOpaqueKeyID,
@@ -268,11 +280,12 @@ pub async fn account_fetch_opaque_key_from_vault(
 
 pub async fn account_upload_opaque_key_in_vault(
     account: Handle,
+    organization_id: OrganizationID,
 ) -> Result<(AccountVaultItemOpaqueKeyID, SecretKey), AccountUploadOpaqueKeyInVaultError> {
     let account_handle = account;
     let account = borrow_account(account_handle)?;
 
-    account.upload_opaque_key_in_vault().await
+    account.upload_opaque_key_in_vault(organization_id).await
 }
 
 pub async fn account_list_registration_devices(
@@ -356,6 +369,12 @@ pub enum AccountCreateRegistrationDeviceError {
     LoadDeviceInvalidData,
     #[error("Cannot load device file: decryption failed")]
     LoadDeviceDecryptionFailed,
+    #[error(
+        "The organization's configuration does not allow uploading sensitive data in the vault"
+    )]
+    NotAllowedByOrganizationVaultStrategy,
+    #[error("The organization's configuration cannot be obtained (organization doesn't exist, or user not part of it ?")]
+    CannotObtainOrganizationVaultStrategy,
     #[error("Cannot decrypt the vault key access return by the server: {0}")]
     BadVaultKeyAccess(DataError),
     #[error("Cannot communicate with the server: {0}")]
@@ -391,6 +410,12 @@ impl From<libparsec_account::AccountCreateRegistrationDeviceError>
 {
     fn from(value: libparsec_account::AccountCreateRegistrationDeviceError) -> Self {
         match value {
+            libparsec_account::AccountCreateRegistrationDeviceError::NotAllowedByOrganizationVaultStrategy => {
+                AccountCreateRegistrationDeviceError::NotAllowedByOrganizationVaultStrategy
+            }
+            libparsec_account::AccountCreateRegistrationDeviceError::CannotObtainOrganizationVaultStrategy => {
+                AccountCreateRegistrationDeviceError::CannotObtainOrganizationVaultStrategy
+            }
             libparsec_account::AccountCreateRegistrationDeviceError::BadVaultKeyAccess(err) => {
                 AccountCreateRegistrationDeviceError::BadVaultKeyAccess(err)
             }
