@@ -107,7 +107,6 @@ import OrganizationCreatedPage from '@/views/organizations/creation/Organization
 import { wait } from '@/parsec/internals';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { Env } from '@/services/environment';
-import { libparsec } from '@/plugins/libparsec';
 
 enum Steps {
   BmsLogin,
@@ -169,19 +168,16 @@ async function onLoginSuccess(_token: AuthenticationToken, info: PersonalInforma
   personalInformation.value = info;
 
   if (props.bootstrapLink) {
+    step.value = Steps.Authentication;
     if (isWeb() && ParsecAccount.isLoggedIn() && ParsecAccount.addressMatchesAccountServer(props.bootstrapLink)) {
-      // Create a new vault save strategy
-      // TODO: how to obtain OrganizationID here ? `libparsec.parseParsecAddr(props.bootstrapLink)` ?
-      const result = await SaveStrategy.useAccountVault();
-      if (result.ok) {
-        // Skip the auth page
-        await onAuthenticationChosen(result.value);
-      } else {
-        // We failed to generate a save strategy, we'll ask for password normally. A new device can be created later if needed.
-        step.value = Steps.Authentication;
+      const parseResult = await parseParsecAddr(props.bootstrapLink);
+      if (parseResult.ok && parseResult.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
+        const result = await SaveStrategy.useAccountVault(parseResult.value.organizationId);
+        if (result.ok) {
+          // Skip the auth page
+          await onAuthenticationChosen(result.value);
+        }
       }
-    } else {
-      step.value = Steps.Authentication;
     }
   } else {
     step.value = Steps.OrganizationName;
