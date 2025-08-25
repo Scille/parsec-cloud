@@ -12,9 +12,9 @@ interface MockCryptpadOptions {
 
 export async function mockCryptpadServer(page: MsPage, opts?: MockCryptpadOptions): Promise<void> {
   await page.route(`https://${CRYPTPAD_SERVER}/**`, async (route) => {
-    if (opts && opts.timeout) {
+    if (opts?.timeout) {
       await route.abort('timedout');
-    } else if (opts && opts.httpErrorCode) {
+    } else if (opts?.httpErrorCode) {
       await route.fulfill({ status: opts.httpErrorCode });
     } else {
       await route.continue();

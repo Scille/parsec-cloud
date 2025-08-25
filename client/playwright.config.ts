@@ -28,17 +28,17 @@ export default defineConfig({
   reporter: IN_CI ? 'blob' : 'list',
   webServer: {
     command: 'npm run dev -- --port 8080',
-    url: IN_CI ? 'http://localhost:8080' : 'https://localhost:8080',
-    ignoreHTTPSErrors: IN_CI ? false : true,
+    url: 'https://localhost:8080',
+    ignoreHTTPSErrors: true,
     reuseExistingServer: true,
   },
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: IN_CI ? 'http://localhost:8080' : 'https://localhost:8080',
+    baseURL: 'https://localhost:8080',
 
     /* Ignore HTTPS errors for self-signed certificates */
-    ignoreHTTPSErrors: IN_CI ? false : true,
+    ignoreHTTPSErrors: true,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -53,6 +53,12 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         // We use chrome over chromium because we need some media codec during e2e test for the file viewer feature.
         channel: 'chrome',
+        // Allow mixed content for testbed communication in CI
+        ...(IN_CI && {
+          launchOptions: {
+            args: ['--disable-web-security', '--allow-running-insecure-content'],
+          },
+        }),
       },
     },
 
