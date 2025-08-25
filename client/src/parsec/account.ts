@@ -40,11 +40,11 @@ import {
   DeviceSaveStrategy,
   DeviceSaveStrategyTag,
   HumanHandle,
+  OrganizationID,
   ParsecAddr,
   RegistrationDevice,
   Result,
   SecretKey,
-  OrganizationID,
 } from '@/parsec/types';
 import { generateNoHandleError } from '@/parsec/utils';
 import { libparsec } from '@/plugins/libparsec';
@@ -444,7 +444,9 @@ class _ParsecAccount {
     return await libparsec.accountFetchOpaqueKeyFromVault(this.handle, cipherKeyId);
   }
 
-  async uploadKeyInVault(organizationId: OrganizationID): Promise<Result<[AccountVaultItemOpaqueKeyID, SecretKey], AccountUploadOpaqueKeyInVaultError>> {
+  async uploadKeyInVault(
+    organizationId: OrganizationID,
+  ): Promise<Result<[AccountVaultItemOpaqueKeyID, SecretKey], AccountUploadOpaqueKeyInVaultError>> {
     if (!this.handle) {
       return generateNoHandleError<AccountUploadOpaqueKeyInVaultError>();
     }
