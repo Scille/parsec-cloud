@@ -105,14 +105,20 @@ async def test_migrations(
         print(f"run: {' '.join(cmd)}")
         process = await asyncio.create_subprocess_exec(*cmd, stdout=asyncio.subprocess.PIPE)
         stdout, _stderr = await process.communicate()
-        return stdout.decode()
+        # Since PostgreSQL 14.19, `pg_dump` add non-deterministic headers&footer
+        # (i.e. `\(un)restrict <UUID>`) that we must filter out.
+        # (see https://www.postgresql.org/docs/release/14.19/)
+        return re.sub(r"\\restrict.*|\\unrestrict.*", "", stdout.decode())
 
     async def dump_data() -> str:
         cmd = [pg_dump, "--schema=public", "--data-only", pg_cluster_url]
         print(f"run: {' '.join(cmd)}")
         process = await asyncio.create_subprocess_exec(*cmd, stdout=asyncio.subprocess.PIPE)
         stdout, _stderr = await process.communicate()
-        return stdout.decode()
+        # Since PostgreSQL 14.19, `pg_dump` add non-deterministic headers&footer
+        # (i.e. `\(un)restrict <UUID>`) that we must filter out.
+        # (see https://www.postgresql.org/docs/release/14.19/)
+        return re.sub(r"\\restrict.*|\\unrestrict.*", "", stdout.decode())
 
     async def restore_data(data: str) -> None:
         cmd = [pg_psql, "--no-psqlrc", "--set", "ON_ERROR_STOP=on", pg_cluster_url]
