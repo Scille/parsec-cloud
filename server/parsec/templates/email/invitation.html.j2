@@ -10,7 +10,7 @@ Invitation to join the organization {{ organization_id}}
 {% endblock %}
 
 {% block description %}
-<p style="line-height: 28.9px; color: #51517B; font-size: 14px;">
+<p style="line-height: 28.9px; color: #51517B; font-size: 16px;">
 {% if is_user_invitation %}
 You have received an invitation from <b>{{ greeter }}</b> to join the <b>{{ organization_id }}</b> organization on Parsec.
 {% elif is_device_invitation %}
@@ -28,19 +28,19 @@ organization on Parsec.
 {{
   gen_contents([
     namespace(
-      title="Download Parsec application",
-      text="Make sure to download and install Parsec:",
-      extras=[
-        render_link("https://parsec.cloud/en/start-parsec", "Download Parsec", extra_class="button-secondary"),
-        render_fallback_link("https://parsec.cloud/en/start-parsec")
-      ]
-    ),
-    namespace(
       title="Join the organization",
       text= ("To join the organization please accept the invitation and follow the steps with <b>%s</b>." | format(greeter)) if greeter else "Start the invitation process from a device already part of the organization, then follow the steps on Parsec.",
       extras=[
         render_link(invitation_url, "Accept invitation"),
         render_fallback_link(invitation_url)
+      ]
+    ),
+    namespace(
+      title="Download Parsec application",
+      text="If you don't already have it, you can download the Parsec application:",
+      extras=[
+        render_link("https://parsec.cloud/en/start-parsec", "Download Parsec", extra_class="button-secondary"),
+        render_fallback_link("https://parsec.cloud/en/start-parsec")
       ]
     )
   ])
