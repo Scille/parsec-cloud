@@ -21,6 +21,8 @@ export interface SetupOptions {
   mockBrowser?: 'Chrome' | 'Firefox' | 'Safari' | 'Edge' | 'Brave' | 'Chromium';
   trialServers?: string;
   saasServers?: string;
+  cryptpadServer?: string;
+  expectTimeout?: number;
 }
 
 export interface MsPage extends Page {

@@ -15,6 +15,39 @@ msTest('File viewer page default state', async ({ documents }) => {
   await expect(documents.locator('.sidebar')).toBeHidden();
 });
 
+msTest('Open viewer with header option', async ({ documents }) => {
+  const entries = documents.locator('.folder-container').locator('.file-list-item');
+
+  await entries.nth(2).click();
+  const actionBar = documents.locator('#folders-ms-action-bar');
+  await expect(actionBar.locator('ion-button').nth(0)).toHaveText('Preview');
+  await actionBar.locator('ion-button').nth(0).click();
+  await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
+  await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
+  await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
+  await expect(documents).toBeViewerPage();
+  await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_.-]+$/);
+  await expect(documents.locator('#connected-header .topbar')).toBeHidden();
+  await expect(documents.locator('.sidebar')).toBeHidden();
+});
+
+msTest('Open viewer with contextual menu', async ({ documents }) => {
+  const entries = documents.locator('.folder-container').locator('.file-list-item');
+
+  await entries.nth(2).click({ button: 'right' });
+  const menu = documents.locator('#file-context-menu');
+  await expect(menu).toBeVisible();
+  await expect(menu.getByRole('listitem').nth(1)).toHaveText('Preview');
+  await menu.getByRole('listitem').nth(1).click();
+  await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
+  await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
+  await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
+  await expect(documents).toBeViewerPage();
+  await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_.-]+$/);
+  await expect(documents.locator('#connected-header .topbar')).toBeHidden();
+  await expect(documents.locator('.sidebar')).toBeHidden();
+});
+
 msTest('File viewer back to documents page', async ({ documents }) => {
   const entries = documents.locator('.folder-container').locator('.file-list-item');
 

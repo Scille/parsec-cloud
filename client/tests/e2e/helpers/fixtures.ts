@@ -11,12 +11,15 @@ import { DisplaySize, MsContext, MsPage, SetupOptions } from '@tests/e2e/helpers
 import { createWorkspace, fillInputModal, fillIonInput, importDefaultFiles, logout } from '@tests/e2e/helpers/utils';
 
 const DEV_TOOLS_OFFSET = 400;
+const DEFAULT_INIT_TIMEOUT = 5000;
 
 export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promise<void> {
   const TESTBED_SERVER = process.env.TESTBED_SERVER;
   if (TESTBED_SERVER === undefined) {
     throw new Error('Environ variable `TESTBED_SERVER` must be defined to use testbed');
   }
+
+  const expectTimeout = opts.expectTimeout ?? DEFAULT_INIT_TIMEOUT;
 
   page.on('console', (msg) => console.log('> ', msg.text()));
 
@@ -70,7 +73,8 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
       }
       if (options.withEditics) {
         (window as any).TESTING_ENABLE_EDITICS = true;
-        (window as any).TESTING_CRYPTPAD_SERVER = `https://${CRYPTPAD_SERVER}`;
+        (window as any).TESTING_CRYPTPAD_SERVER = `https://${options.cryptpadServer}`;
+        (window as any).TESTING_EDITICS_SAVE_TIMEOUT = 1;
       }
       if (options.withCustomBranding) {
         (window as any).TESTING_ENABLE_CUSTOM_BRANDING = true;
@@ -136,7 +140,8 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
   }
   await page.waitForLoadState('domcontentloaded');
 
-  await expect(page.locator('#app')).toHaveAttribute('app-state', 'initializing');
+  // Wait for app to initialize with longer timeout for CI stability
+  await expect(page.locator('#app')).toHaveAttribute('app-state', 'initializing', { timeout: expectTimeout });
 
   let testbed: string | undefined;
   if (!opts.skipTestbed) {
@@ -565,7 +570,13 @@ export const msTest = debugTest.extend<{
 
   parsecEditics: async ({ context, documentsOptions }, use, testInfo: TestInfo) => {
     const page = (await context.newPage()) as MsPage;
-    await setupNewPage(page, { withParsecAccount: false, withEditics: true, location: '/home' });
+    await setupNewPage(page, {
+      withParsecAccount: false,
+      withEditics: true,
+      location: '/home',
+      cryptpadServer: CRYPTPAD_SERVER,
+      expectTimeout: 15000,
+    });
     await page.locator('.organization-card').first().click();
     await expect(page.locator('#password-input')).toBeVisible();
 
