@@ -15,7 +15,7 @@ async function toggleViewMode(page: Page): Promise<void> {
   }
 }
 
-msTest('Files options tab menu display', async ({ documents }) => {
+msTest('Files options tab menu read-write display', async ({ documents }) => {
   await toggleViewMode(documents);
   await documents.setDisplaySize(DisplaySize.Small);
   const optionsTab = documents.locator('#tab-bar-options');
@@ -51,15 +51,48 @@ msTest('Files options tab menu display', async ({ documents }) => {
   await optionsTab.locator('.tab-bar-menu-button').nth(3).click();
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveText(['Rename', 'Move', 'Delete', 'Less']);
   await expect(optionsTabModal).toBeVisible();
-  await expect(optionsTabModal.locator('.tab-bar-menu-button')).toHaveCount(6);
+  await expect(optionsTabModal.locator('.tab-bar-menu-button')).toHaveCount(7);
   await expect(optionsTabModal.locator('.tab-bar-menu-button')).toHaveText([
     'Preview',
+    'Edit',
     'Download',
     'Copy',
     'Copy link',
     'History',
     'Details',
   ]);
+
+  // Nothing selected, menu goes away
+  await optionsTab.locator('.tab-bar-menu-button').nth(3).click();
+  await expect(optionsTabModal).not.toBeVisible();
+});
+
+msTest('Files options tab menu read-only display', async ({ documentsReadOnly }) => {
+  await toggleViewMode(documentsReadOnly);
+  await documentsReadOnly.setDisplaySize(DisplaySize.Small);
+  const optionsTab = documentsReadOnly.locator('#tab-bar-options');
+  const optionsTabModal = documentsReadOnly.locator('#tab-bar-options-modal');
+  await expect(optionsTab).not.toBeVisible();
+  await expect(optionsTabModal).not.toBeVisible();
+  const entryFolder = documentsReadOnly.locator('.folder-container').locator('.folder-grid-item').nth(0);
+  const entryFile = documentsReadOnly.locator('.folder-container').locator('.folder-grid-item').nth(1);
+
+  // With 1 folder selected
+  await entryFolder.hover();
+  await entryFolder.locator('ion-checkbox').click();
+  await expect(optionsTab).toBeVisible();
+  await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveCount(2);
+  await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveText(['Copy link', 'Details']);
+
+  // With file + folder selected
+  await entryFile.locator('ion-checkbox').click();
+  await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveCount(1);
+  await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveText('Download');
+
+  // With 1 file selected
+  await entryFolder.locator('ion-checkbox').click();
+  await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveCount(4);
+  await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveText(['Preview', 'Download', 'Copy link', 'Details']);
 
   // Nothing selected, menu goes away
   await optionsTab.locator('.tab-bar-menu-button').nth(3).click();

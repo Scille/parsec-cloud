@@ -64,6 +64,7 @@ for (const gridMode of [false, true]) {
     await expect(popover.getByRole('listitem')).toHaveText([
       'File management',
       'Preview',
+      'Edit',
       'Rename',
       'Move to',
       'Make a copy',
@@ -120,6 +121,7 @@ for (const gridMode of [false, true]) {
     await expect(popover.getByRole('listitem')).toHaveText([
       'File management',
       'Preview',
+      'Edit',
       'Rename',
       'Move to',
       'Make a copy',
@@ -376,6 +378,7 @@ for (const gridMode of [false, true]) {
     await expect(modal.getByRole('group')).toHaveCount(2);
     await expect(modal.getByRole('listitem')).toHaveText([
       'Preview',
+      'Edit',
       'Rename',
       'Move to',
       'Make a copy',
@@ -422,6 +425,7 @@ for (const gridMode of [false, true]) {
     await expect(modal.getByRole('group')).toHaveCount(2);
     await expect(modal.getByRole('listitem')).toHaveText([
       'Preview',
+      'Edit',
       'Rename',
       'Move to',
       'Make a copy',
