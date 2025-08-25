@@ -59,14 +59,14 @@
 import { IonButton, IonIcon, IonList, IonItem, IonText } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
 import { closeFile, FsPath, openFile, writeFile } from '@/parsec';
-import { I18n } from 'megashark-lib';
+import { I18n, Translatable } from 'megashark-lib';
 import { ref, Ref, inject, useTemplateRef, onMounted, onUnmounted } from 'vue';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { getDocumentPath, getWorkspaceHandle, routerGoBack } from '@/router';
 import { DetectedFileType } from '@/common/fileTypes';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { Env } from '@/services/environment';
-import { CryptpadDocumentType, Cryptpad, getDocumentTypeFromExtension } from '@/services/cryptpad';
+import { CryptpadDocumentType, Cryptpad, getDocumentTypeFromExtension, CryptpadError, CryptpadErrorCode } from '@/services/cryptpad';
 import { longLocaleCodeToShort } from '@/services/translation';
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;
@@ -133,7 +133,7 @@ async function onFileLoaded(contentInfo: FileContentInfo, fileInfo: DetectedFile
   }
 }
 
-function loadCryptpad(): void {
+async function loadCryptpad(): Promise<void> {
   try {
     // Clear the DOM element before creating a new instance
     if (fileEditorRef.value) {
@@ -142,8 +142,36 @@ function loadCryptpad(): void {
 
     // Always create a new instance for each document to avoid conflicts
     cryptpadInstance.value = new Cryptpad(fileEditorRef.value as HTMLDivElement, Env.getDefaultCryptpadServer());
-  } catch (error) {
-    throwError(`Failed to load CryptPad editor: ${error}`);
+    await cryptpadInstance.value.init();
+  } catch (e: unknown) {
+    if (e instanceof CryptpadError) {
+      let title: Translatable = 'fileViewers.errors.titles.genericError';
+      let message: Translatable = 'fileViewers.errors.informationEditDownload';
+      const level: InformationLevel = InformationLevel.Info;
+
+      switch (e.code) {
+        case CryptpadErrorCode.NotEnabled:
+          title = 'fileViewers.errors.titles.editionNotAvailable';
+          message = 'fileViewers.errors.informationEditDownload';
+          break;
+        case CryptpadErrorCode.ScriptElementCreationFailed:
+          title = 'fileViewers.errors.titles.genericError';
+          message = 'fileViewers.errors.informationEditDownload';
+          break;
+        case CryptpadErrorCode.InitFailed:
+          title = 'fileViewers.errors.titles.genericError';
+          message = 'fileViewers.errors.informationEditDownload';
+      }
+
+      await informationManager.present(
+        new Information({
+          title,
+          message,
+          level,
+        }),
+        PresentationMode.Modal,
+      );
+    }
   }
 }
 
@@ -190,8 +218,31 @@ async function openFileWithCryptpad(): Promise<void> {
   try {
     await cryptpadApi.open(cryptpadConfig);
     window.electronAPI.log('info', 'CryptPad editor initialized successfully');
-  } catch (error) {
-    throwError(`Failed to open CryptPad editor: ${error}`);
+  } catch (e: unknown) {
+    if (e instanceof CryptpadError) {
+      let title: Translatable = 'fileViewers.errors.titles.genericError';
+      let message: Translatable = 'fileViewers.errors.informationEditDownload';
+      const level: InformationLevel = InformationLevel.Info;
+
+      switch (e.code) {
+        case CryptpadErrorCode.NotInitialized:
+          title = 'fileViewers.errors.titles.genericError';
+          message = 'fileViewers.errors.informationEditDownload';
+          break;
+        case CryptpadErrorCode.DocumentTypeNotEnabled:
+          title = 'fileViewers.errors.titles.editionNotAvailable';
+          message = 'fileViewers.errors.informationEditDownload';
+      }
+
+      await informationManager.present(
+        new Information({
+          title,
+          message,
+          level,
+        }),
+        PresentationMode.Modal,
+      );
+    }
   }
 }
 

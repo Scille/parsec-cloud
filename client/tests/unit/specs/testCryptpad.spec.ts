@@ -87,7 +87,7 @@ describe('CryptPad Service', () => {
 
       expect(() => {
         new Cryptpad(containerElement, 'https://cryptpad.example.com');
-      }).toThrow('Editics is not enabled. Cannot initialize CryptPad.');
+      }).toThrow('Failed to initialize CryptPad: not-enabled');
     });
 
     it('should reuse existing script element if already present', () => {
@@ -116,7 +116,7 @@ describe('CryptPad Service', () => {
 
       expect(() => {
         new Cryptpad(containerElement, 'https://cryptpad.example.com');
-      }).toThrow('Failed to create script element for CryptPad API.');
+      }).toThrow('Failed to initialize CryptPad: script-element-creation-failed');
     });
   });
 
@@ -163,7 +163,7 @@ describe('CryptPad Service', () => {
       // Simulate script load but without CryptPadAPI being available
       mockScript.onload?.({} as Event);
 
-      await expect(initPromise).rejects.toThrow('CryptPad API script loaded but CryptPadAPI function is not available.');
+      await expect(initPromise).rejects.toThrow('Cryptpad error: init-failed');
       expect(mockElectronAPI.log).toHaveBeenCalledWith('error', 'CryptPad API script loaded but CryptPadAPI function is not available.');
     });
 
@@ -243,7 +243,9 @@ describe('CryptPad Service', () => {
       mockScript.onload?.({} as Event);
       await initPromise;
 
-      await expect(cryptpad.open(config)).rejects.toThrow('CryptPad edition for document type unsupported is not enabled.');
+      await expect(cryptpad.open(config)).rejects.toThrow(
+        "Failed to open document type 'unsupported' with Cryptpad: document-type-not-enabled",
+      );
       expect(mockCryptPadAPI).not.toHaveBeenCalled();
     });
 
