@@ -71,6 +71,7 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
       if (options.withEditics) {
         (window as any).TESTING_ENABLE_EDITICS = true;
         (window as any).TESTING_CRYPTPAD_SERVER = `https://${CRYPTPAD_SERVER}`;
+        (window as any).TESTING_EDITICS_SAVE_TIMEOUT = 1;
       }
       if (options.withCustomBranding) {
         (window as any).TESTING_ENABLE_CUSTOM_BRANDING = true;

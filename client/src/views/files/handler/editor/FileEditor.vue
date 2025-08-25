@@ -2,6 +2,12 @@
 
 <template>
   <div
+    id="unsaved-changes"
+    v-show="hasUnsavedChanges"
+  >
+    NOT SAVED
+  </div>
+  <div
     class="file-editor"
     id="file-editor"
     ref="fileEditor"
@@ -188,7 +194,7 @@ async function openFileWithCryptpad(): Promise<boolean> {
     editorConfig: {
       lang: longLocaleCodeToShort(I18n.getLocale()),
     },
-    autosave: 10,
+    autosave: (window as any).TESTING_EDITICS_SAVE_TIMEOUT ?? 10,
     events: {
       onSave: async (file: Blob, callback: () => void): Promise<void> => {
         isSaving.value = true;
