@@ -15,7 +15,7 @@
             {{ $msTranslate(TITLES[step].title) }}
           </ion-text>
           <ion-text
-            class="recover-account-text__subtitle body"
+            class="recover-account-text__subtitle body-lg"
             v-if="TITLES[step].subtitle"
           >
             {{ $msTranslate(TITLES[step].subtitle) }}
@@ -58,7 +58,7 @@
             :validator="emailValidator"
           />
           <ion-button
-            class="recover-account-step__button button-medium"
+            class="recover-account-step__button button-default button-large"
             @click="sendCode"
             :disabled="emailInputRef?.validity !== Validity.Valid || serverInputRef?.validity !== Validity.Valid || querying"
           >
@@ -79,7 +79,7 @@
           <ion-button
             @click="codeEntered"
             :disabled="code.length !== 6 || querying"
-            class="recover-account-step__button button-medium"
+            class="recover-account-step__button button-default button-large"
           >
             {{ $msTranslate('loginPage.recoverAccount.step2.nextButton') }}
           </ion-button>
@@ -102,7 +102,7 @@
             @on-enter-keyup="onPasswordChosen"
           />
           <ion-button
-            class="recover-account-step__button button-medium"
+            class="recover-account-step__button button-default button-large"
             @click="onPasswordChosen"
             :disabled="!validAuth || querying"
           >
@@ -121,7 +121,7 @@
         >
           <ion-text class="recover-account-step__text body">{{ $msTranslate('loginPage.recoverAccount.step4.description') }}</ion-text>
           <ion-button
-            class="recover-account-step__button button-medium"
+            class="recover-account-step__button button-default button-large"
             @click="login"
             :disabled="querying"
           >
@@ -386,7 +386,7 @@ async function backToLogin(): Promise<void> {
   display: flex;
   flex-direction: column;
   width: 100%;
-  gap: 0.5rem;
+  gap: 0.75rem;
 
   &__title {
     background: var(--parsec-color-light-gradient-background);

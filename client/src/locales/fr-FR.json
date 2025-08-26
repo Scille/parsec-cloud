@@ -1673,6 +1673,7 @@
             "alreadyHaveAnAccount": "Vous avez déjà un compte ?",
             "loginButton": "Se connecter",
             "nextButton": "Suivant",
+            "sendCode": "Envoyer un code de validation",
             "resendCode": "Renvoyer un code",
             "welcome": "Bienvenue sur Parsec",
             "welcomeDescription": "Votre compte Parsec Share a bien été créé. Vous avez désormais accès à Parsec.",
