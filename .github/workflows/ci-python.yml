@@ -44,8 +44,7 @@ jobs:
     name: "(🐧 Linux only): 🐍 Python server tests"
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
     timeout-minutes: 60
-    # All linux jobs must run the same ubuntu version to avoid Rust caching issues !
-    # 20.04 is required to install PostgreSQL 12
+    # All linux jobs must run the same ubuntu version to avoid Rust caching issues!
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # pin v5.0.0
@@ -97,19 +96,21 @@ jobs:
           sudo apt-get update
         timeout-minutes: 5
 
-      # TODO: Postgresql implementation is currently broken
-      # - name: Install PostgreSQL-${{ env.postgresql-version }}
-      #   run: |
-      #     # Retry the command until it succeed.
-      #     # We retry because sometime the APT repo configured
-      #     # by the runner seems drop the connection causing the command to fail.
-      #     until sudo apt-get -y install ${{ env.PACKAGE_TO_INSTALL }}; do
-      #       echo "Fail to install APT package retrying ...";
-      #     done
-      #   env:
-      #     PACKAGE_TO_INSTALL: >-
-      #       postgresql-${{ env.postgresql-version }}
-      #   timeout-minutes: 5
+      # Note that ubuntu-22.04 runner already comes with PostgreSQL v14.x installed (minor versions can be updated).
+      # See https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2204-Readme.md#databases
+      - name: Install PostgreSQL-${{ env.postgresql-version }}
+        if: (!inputs.style-only)
+        run: |
+          # Retry the command until it succeed.
+          # We retry because sometime the APT repo configured
+          # by the runner seems drop the connection causing the command to fail.
+          until sudo apt-get -y install ${{ env.POSTGRESQL_PACKAGE }}; do
+            echo "Failed to install APT package, retrying...";
+          done
+        env:
+          POSTGRESQL_PACKAGE: >-
+            postgresql-${{ env.postgresql-version }}
+        timeout-minutes: 5
 
       - uses: ./.github/actions/setup-python-poetry
         id: setup-python
