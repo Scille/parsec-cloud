@@ -478,7 +478,7 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
         yesIsDangerous: true,
         yesText: 'HomePage.expiredDevice.questionYes',
         noText: 'HomePage.expiredDevice.questionNo',
-        backdropDismiss: false,
+        backdropDismiss: true,
       });
       if (answer === Answer.Yes) {
         const result = await archiveDevice(device);

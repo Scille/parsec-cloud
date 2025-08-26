@@ -206,11 +206,8 @@
           <div
             v-if="myProfileTab === ProfilePages.Settings || (isLargeDisplay && myProfileTab === undefined)"
             class="profile-content-item"
+            id="settings-profile-content"
           >
-            <div class="item-header">
-              <ion-text class="item-header__title title-h3">{{ $msTranslate('SettingsModal.pageTitle') }}</ion-text>
-              <ion-text class="item-header__description body">{{ $msTranslate('SettingsModal.description') }}</ion-text>
-            </div>
             <settings-list />
           </div>
           <!-- devices tab -->
@@ -410,9 +407,11 @@ onUnmounted(async () => {
   transition: all 0.2s ease-in-out;
 }
 
-.profile-page-content::part(scroll) {
-  display: flex;
-  flex-direction: column;
+.profile-page-content {
+  &::part(scroll) {
+    display: flex;
+    flex-direction: column;
+  }
 }
 
 .profile-page-header {
@@ -513,13 +512,16 @@ onUnmounted(async () => {
     &-item {
       display: flex;
       flex-direction: column;
-      background: var(--parsec-color-light-secondary-white);
       max-width: 37.5rem;
       height: fit-content;
-      padding: 2rem;
       gap: 1.5rem;
       border-radius: var(--parsec-radius-8);
       position: relative;
+
+      &:not(#settings-profile-content) {
+        padding: 2rem;
+        background: var(--parsec-color-light-secondary-white);
+      }
 
       @include ms.responsive-breakpoint('sm') {
         max-width: 100%;

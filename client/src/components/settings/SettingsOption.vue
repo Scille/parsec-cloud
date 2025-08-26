@@ -3,7 +3,7 @@
 <template>
   <div class="settings-option">
     <div class="settings-option__content">
-      <ion-text class="body title">
+      <ion-text class="button-medium title">
         {{ $msTranslate(title) }}
       </ion-text>
       <ion-text class="body-sm description">
@@ -29,8 +29,7 @@ defineProps<{
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 1rem 0.75rem 0;
-  border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
+  padding: 0.75rem 0 0.75rem 0;
   gap: 1.5rem;
 
   &__content {
@@ -40,7 +39,7 @@ defineProps<{
     gap: 0.25rem;
 
     .title {
-      color: var(--parsec-color-light-primary-700);
+      color: var(--parsec-color-light-secondary-text);
     }
 
     .description {

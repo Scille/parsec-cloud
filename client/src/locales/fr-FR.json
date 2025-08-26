@@ -502,6 +502,12 @@
         "description": "Accédez à l'ensemble des paramètres de langue, de thème et de confidentialité de l'application.",
         "general": "Général",
         "advanced": "Avancé",
+        "titles": {
+            "display": "Affichage",
+            "config": "Configuration",
+            "account": "Compte",
+            "file": "Gestion des documents"
+        },
         "enableTelemetry": {
             "label": "Envoyer les rapports d'erreur",
             "description": "Les rapports d'erreur aident à améliorer Parsec"

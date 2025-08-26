@@ -419,6 +419,19 @@
     height: 100%;
     overflow: auto;
   }
+
+  .settings-list {
+    gap: 0.5rem !important;
+
+    &-group__title {
+      padding: 0 !important;
+      font-size: 1rem !important;
+    }
+
+    .settings-list__item {
+      padding: 1.25rem 1.5rem 1.25rem 0.5rem !important;
+    }
+  }
 }
 
 .greet-organization-modal {
