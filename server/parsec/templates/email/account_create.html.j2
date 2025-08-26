@@ -3,25 +3,25 @@
 
 {% block preheader %}Please confirm your email address to get started with your Parsec Account.{% endblock %}
 
-{% block title %}To confirm your Parsec Account creation:{% endblock %}
+{% block title %}Confirm your email address{% endblock %}
 
 {% block main_content %}
 {% from "email/macros.html.j2" import gen_contents, render_link, render_fallback_link, render_code %}
 {{
   gen_contents([
     namespace(
-      title="Download Parsec application",
-      text="Make sure to download and install Parsec:",
-      extras=[
-        render_link("https://parsec.cloud/en/start-parsec", "Download Parsec", extra_class="button-secondary"),
-        render_fallback_link("https://parsec.cloud/en/start-parsec")
-      ]
-    ),
-    namespace(
       title="Use validation code",
       text="To confirm your email address, use the following code:",
       extras=[
         render_code(validation_code)
+      ]
+    ),
+    namespace(
+      title="Download Parsec application",
+      text="If you don't already have it, you can download the Parsec application:",
+      extras=[
+        render_link("https://parsec.cloud/en/start-parsec", "Download Parsec", extra_class="button-secondary"),
+        render_fallback_link("https://parsec.cloud/en/start-parsec")
       ]
     ),
   ])
