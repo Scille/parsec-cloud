@@ -15,6 +15,23 @@ msTest('File viewer page default state', async ({ documents }) => {
   await expect(documents.locator('.sidebar')).toBeHidden();
 });
 
+msTest('File viewer back to documents page', async ({ documents }) => {
+  const entries = documents.locator('.folder-container').locator('.file-list-item');
+
+  await entries.nth(2).dblclick();
+  await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
+  await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
+  await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
+  await expect(documents).toBeViewerPage();
+  await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_.-]+$/);
+  await expect(documents.locator('#connected-header .topbar')).toBeHidden();
+  await expect(documents.locator('.sidebar')).toBeHidden();
+  await expect(documents.locator('.file-handler-topbar')).toBeVisible();
+  await documents.locator('.file-handler-topbar').locator('.back-button').click();
+  await expect(documents.locator('#connected-header .topbar')).toBeVisible();
+  await expect(documents).toBeDocumentPage();
+});
+
 msTest('File viewer page details', async ({ documents }) => {
   const entries = documents.locator('.folder-container').locator('.file-list-item');
 

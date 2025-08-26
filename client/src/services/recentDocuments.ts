@@ -127,6 +127,14 @@ class RecentDocumentManager {
     Object.assign(existingFile, update);
   }
 
+  updateWorkspace(id: EntryID, update: Partial<RecentWorkspace>): void {
+    const existingWorkspace = this.workspaces.value.find((item) => item.id === id);
+    if (!existingWorkspace) {
+      return;
+    }
+    Object.assign(existingWorkspace, update);
+  }
+
   removeWorkspace(workspace: RecentWorkspace): void {
     const index = this.workspaces.value.findIndex((item) => item.id === workspace.id);
     if (index !== -1) {
