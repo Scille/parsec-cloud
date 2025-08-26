@@ -503,6 +503,12 @@
         "description": "Access language, theme and privacy settings for the application.",
         "general": "General",
         "advanced": "Advanced",
+        "titles": {
+            "display": "Display",
+            "config": "Configuration",
+            "account": "Account",
+            "file": "Documents management"
+        },
         "enableTelemetry": {
             "label": "Send error reports",
             "description": "Error reports help us improve Parsec"

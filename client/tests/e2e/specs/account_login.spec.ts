@@ -52,7 +52,11 @@ msTest('Open settings from header (secondary menu) ', async ({ parsecAccountLogg
   const settingsButton = parsecAccountLoggedIn.locator('.menu-secondary').locator('#trigger-settings-button');
   await expect(settingsButton).toBeVisible();
   await settingsButton.click();
-  await expect(parsecAccountLoggedIn.locator('.profile-content-item').nth(0).locator('.item-header__title')).toHaveText('Settings');
+  await expect(parsecAccountLoggedIn.locator('.profile-content-item').nth(0).locator('.settings-list-group__title')).toHaveText([
+    'Display',
+    'Configuration',
+    'Account',
+  ]);
 });
 
 msTest('Switch tab from popover ', async ({ parsecAccountLoggedIn }) => {

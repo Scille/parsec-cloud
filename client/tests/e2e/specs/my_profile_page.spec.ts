@@ -38,7 +38,7 @@ msTest('Check if each tab is displayed', async ({ myProfilePage }) => {
   await expect(myProfilePage.locator('.menu-content__title').nth(0)).toHaveText('My account');
   await expect(myProfilePage.locator('.menu-content__title').nth(1)).toHaveText('Support');
 
-  await checkMenuItem(myProfilePage, 0, 'Settings', 'Settings', 'settings');
+  await checkMenuItem(myProfilePage, 0, 'Settings');
   await checkMenuItem(myProfilePage, 1, 'My devices', 'My devices', 'devices');
   await checkMenuItem(myProfilePage, 2, 'Authentication', 'Authentication', 'authentication');
   await checkMenuItem(myProfilePage, 3, 'Recovery files', 'Organization recovery files', 'recovery');
@@ -137,7 +137,11 @@ msTest('Change password', async ({ myProfilePage }) => {
 });
 
 msTest('Check settings section', async ({ myProfilePage }) => {
-  await checkMenuItem(myProfilePage, 0, 'Settings', 'Settings');
+  await checkMenuItem(myProfilePage, 0, 'Settings');
+  await expect(myProfilePage.locator('.profile-content-item').nth(0).locator('.settings-list-group__title')).toHaveText([
+    'Display',
+    'Configuration',
+  ]);
   const settings = myProfilePage.locator('.settings-list-container');
   const options = settings.locator('.settings-option');
   await expect(options).toHaveCount(4);
@@ -152,6 +156,10 @@ msTest('Check settings section', async ({ myProfilePage }) => {
   await expect(lang.locator('.dropdown-container').locator('.input-text')).toHaveText('Français');
   const theme = options.nth(1);
   // Now we're in French
+  await expect(myProfilePage.locator('.profile-content-item').nth(0).locator('.settings-list-group__title')).toHaveText([
+    'Affichage',
+    'Configuration',
+  ]);
   await expect(theme.locator('.settings-option__content').locator('.title')).toHaveText('Thème');
   await expect(theme.locator('.settings-option__content').locator('.description')).toHaveText("Choisir l'apparence de l'application");
   await expect(theme.locator('.dropdown-container')).toHaveText('Clair');

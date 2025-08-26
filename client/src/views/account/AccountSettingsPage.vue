@@ -9,7 +9,7 @@
           <ion-radio
             :value="AccountSettingsTabs.Settings"
             :class="{ 'radio-checked': activeTab === AccountSettingsTabs.Settings }"
-            class="menu-list-item"
+            class="menu-list-item button-medium"
             @click="$emit('tabChange', AccountSettingsTabs.Settings)"
           >
             <ion-text class="menu-list-item__title button-medium">
@@ -46,11 +46,8 @@
       <div
         v-if="activeTab === AccountSettingsTabs.Settings"
         class="profile-content-item"
+        id="settings-profile-content"
       >
-        <div class="item-header">
-          <ion-text class="item-header__title title-h3">{{ $msTranslate('HomePage.profile.settings.title') }}</ion-text>
-          <ion-text class="item-header__description body">{{ $msTranslate('HomePage.profile.settings.description') }}</ion-text>
-        </div>
         <settings-list />
       </div>
       <!-- account tab -->
@@ -126,12 +123,8 @@ defineEmits<{
 }
 
 .menu-content {
-  gap: 0.75rem;
-  padding: 0 2rem;
-
   .menu-list {
     display: flex;
-    gap: 1.5rem;
     width: 100%;
 
     @include ms.responsive-breakpoint('sm') {
@@ -145,12 +138,13 @@ defineEmits<{
       color: var(--parsec-color-light-secondary-hard-grey);
       cursor: pointer;
       position: relative;
-      border-bottom: 1px solid transparent;
+      border-bottom: 2px solid transparent;
       display: flex;
       align-items: center;
       gap: 0.375rem;
       width: fit-content;
       overflow: hidden;
+      padding-inline: 1rem;
 
       &__title {
         flex: 1;
@@ -176,16 +170,21 @@ defineEmits<{
       }
 
       &:hover {
-        border-color: var(--parsec-color-light-secondary-grey);
+        border-color: var(--parsec-color-light-secondary-disabled);
       }
     }
   }
 }
 
 .profile-content {
-  padding: 2rem;
-  background: var(--parsec-color-light-secondary-white);
   border-radius: var(--parsec-radius-12);
+  overflow: auto;
+  padding-bottom: 2rem;
+
+  &:not(:has(#settings-profile-content)) {
+    padding: 2rem;
+    background: var(--parsec-color-light-secondary-white);
+  }
 
   &-item {
     display: flex;

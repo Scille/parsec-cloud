@@ -34,7 +34,7 @@
     </ion-menu>
 
     <home-page-secondary-menu
-      v-if="isLargeDisplay"
+      v-if="isLargeDisplay && showSecondaryMenu"
       class="homepage-menu-secondary"
       @customer-area-click="$emit('customerAreaClick')"
       @settings-click="openSettings"

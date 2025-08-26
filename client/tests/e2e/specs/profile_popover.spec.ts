@@ -57,5 +57,8 @@ msTest('Profile popover go to settings', async ({ connected }) => {
   await connected.locator('.topbar').locator('.profile-header').click();
   const popover = connected.locator('.profile-header-organization-popover');
   await popover.locator('.main-list').getByRole('listitem').nth(0).click();
-  await expect(connected.locator('.profile-content-item').locator('.item-header__title')).toHaveText('Settings');
+  await expect(connected.locator('.profile-content-item').nth(0).locator('.settings-list-group__title')).toHaveText([
+    'Display',
+    'Configuration',
+  ]);
 });
