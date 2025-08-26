@@ -196,7 +196,10 @@
                 "
               />
             </div>
-            <div class="sidebar-content-workspaces">
+            <div
+              class="sidebar-content-workspaces"
+              id="sidebar-workspaces-recent"
+            >
               <ion-text
                 class="sidebar-content-workspaces__title subtitles-sm"
                 @click="onRecentWorkspacesMenuVisibilityChanged(!menusVisible.recentWorkspaces)"

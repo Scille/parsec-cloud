@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Locator } from '@playwright/test';
-import { DisplaySize, expect, msTest } from '@tests/e2e/helpers';
+import { DisplaySize, expect, fillInputModal, msTest } from '@tests/e2e/helpers';
 
 msTest('Sidebar in organization management', async ({ organizationPage }) => {
   const sidebar = organizationPage.locator('.sidebar');
@@ -209,4 +209,94 @@ msTest('Sidebar recommendations checklist in small display', async ({ workspaces
   await workspaces.locator('.recovery-item-download').locator('ion-button').nth(1).click();
   await workspaces.locator('#tab-bar').locator('.tab-bar-menu-button').nth(1).click();
   await expect(checklistModal).toBeHidden();
+});
+
+msTest('Show recently opened files in sidebar', async ({ documents }) => {
+  const sidebarRecentFiles = documents.locator('#sidebar-files');
+  await expect(sidebarRecentFiles.locator('.list-sidebar-header-text')).toHaveText('Recent documents');
+  await expect(sidebarRecentFiles.locator('.sidebar-item')).toHaveCount(0);
+
+  await expect(documents.locator('.information-modal')).toBeHidden();
+  await expect(documents).toHaveHeader(['wksp1'], true, true);
+  const fileItem = documents.locator('.folder-container').getByRole('listitem').nth(2);
+  const fileName = await fileItem.locator('.file-name').textContent();
+  await fileItem.dblclick();
+  await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
+  await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
+  await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
+  await expect(documents).toBeViewerPage();
+  // One file added
+  await expect(sidebarRecentFiles.locator('.sidebar-item')).toHaveText([fileName ?? '']);
+
+  await documents.locator('.file-handler-topbar').locator('#trigger-toggle-menu-button').click();
+  await sidebarRecentFiles.locator('.list-sidebar-header__toggle').click();
+  await expect(sidebarRecentFiles.locator('.list-sidebar-content')).toBeHidden();
+  await sidebarRecentFiles.locator('.list-sidebar-header__toggle').click();
+  await expect(sidebarRecentFiles.locator('.list-sidebar-content')).toBeVisible();
+});
+
+msTest('Recent document updates when file is renamed', async ({ documents }) => {
+  const sidebarRecentFiles = documents.locator('#sidebar-files');
+  await expect(sidebarRecentFiles.locator('.list-sidebar-header-text')).toHaveText('Recent documents');
+  await expect(sidebarRecentFiles.locator('.sidebar-item')).toHaveCount(0);
+
+  await expect(documents.locator('.information-modal')).toBeHidden();
+  await expect(documents).toHaveHeader(['wksp1'], true, true);
+  const fileItem = documents.locator('.folder-container').getByRole('listitem').nth(2);
+  const fileName = await fileItem.locator('.file-name').textContent();
+  await fileItem.dblclick();
+  await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
+  await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
+  await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
+  await expect(documents).toBeViewerPage();
+  // One file added
+  await expect(sidebarRecentFiles.locator('.sidebar-item')).toHaveText([fileName!]);
+  await documents.locator('.file-handler-topbar').locator('.back-button').click();
+  await expect(documents.locator('#connected-header .topbar')).toBeVisible();
+  await expect(documents).toBeDocumentPage();
+
+  await fileItem.click({ button: 'right' });
+  const popover = documents.locator('.file-context-menu');
+  await popover.getByRole('listitem').filter({ hasText: 'Rename' }).click();
+  await fillInputModal(documents, `New-${fileName}`, true);
+  await expect(fileItem.locator('.file-name').locator('.file-name__label')).toHaveText(`New-${fileName}`);
+  await expect(sidebarRecentFiles.locator('.sidebar-item')).toHaveText([`New-${fileName}`]);
+});
+
+msTest('Recent workspaces displayed in sidebar', async ({ workspaces }) => {
+  const sidebarRecentWorkspaces = workspaces.locator('#sidebar-workspaces-recent');
+  await expect(sidebarRecentWorkspaces.locator('.sidebar-content-workspaces__title ')).toHaveText('Recent');
+  await expect(sidebarRecentWorkspaces.locator('.sidebar-item')).toHaveCount(0);
+  await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
+  await expect(workspaces).toBeDocumentPage();
+  await expect(sidebarRecentWorkspaces.locator('.sidebar-item')).toHaveCount(1);
+  await expect(sidebarRecentWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0)).toHaveText('wksp1');
+});
+
+msTest('Recent and pinned workspaces are updated when workspace is renamed', async ({ workspaces }) => {
+  const sidebarRecentWorkspaces = workspaces.locator('#sidebar-workspaces-recent');
+  const sidebarFavoriteWorkspaces = workspaces.locator('#sidebar-workspaces-favorites');
+  await expect(sidebarRecentWorkspaces.locator('.sidebar-content-workspaces__title ')).toHaveText('Recent');
+  await expect(sidebarRecentWorkspaces.locator('.sidebar-item')).toHaveCount(0);
+  await expect(sidebarFavoriteWorkspaces.locator('.sidebar-item')).toHaveCount(0);
+
+  const card = workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
+  await card.locator('.workspace-favorite-icon').click();
+  await card.click();
+
+  await expect(workspaces).toBeDocumentPage();
+  await expect(sidebarRecentWorkspaces.locator('.sidebar-item')).toHaveCount(1);
+  await expect(sidebarFavoriteWorkspaces.locator('.sidebar-item')).toHaveCount(1);
+  await expect(sidebarRecentWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0)).toHaveText('wksp1');
+  await expect(sidebarFavoriteWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0)).toHaveText('wksp1');
+  await workspaces.locator('#connected-header').locator('.back-button').click();
+  await expect(workspaces).toBeWorkspacePage();
+  await card.click({ button: 'right' });
+  const popover = workspaces.locator('.workspace-context-menu');
+  await popover.getByRole('listitem').nth(1).click();
+  await fillInputModal(workspaces, 'New-wksp1', true);
+  await expect(workspaces).toShowToast('Workspace has been successfully renamed to New-wksp1.', 'Success');
+
+  await expect(sidebarRecentWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0)).toHaveText('New-wksp1');
+  await expect(sidebarFavoriteWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0)).toHaveText('New-wksp1');
 });

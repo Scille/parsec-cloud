@@ -16,6 +16,7 @@ import {
 import { Routes, navigateTo } from '@/router';
 import { EventDistributor, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { recentDocumentManager } from '@/services/recentDocuments';
 import { StorageManager } from '@/services/storageManager';
 import SmallDisplayWorkspaceContextMenu from '@/views/workspaces/SmallDisplayWorkspaceContextMenu.vue';
 import { WorkspaceAction } from '@/views/workspaces/types';
@@ -233,6 +234,7 @@ async function renameWorkspace(workspace: WorkspaceInfo, newName: WorkspaceName,
       }),
       PresentationMode.Toast,
     );
+    recentDocumentManager.updateWorkspace(workspace.id, { currentName: newName });
   } else {
     let message: Translatable = '';
     switch (result.error.tag) {
