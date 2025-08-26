@@ -45,7 +45,6 @@ body {
   font-size: 22px;
   margin: 0;
   margin-top: 32px;
-  margin-bottom: 24px;
   color: #0058CC;
   font-weight: 600;
 }
@@ -73,12 +72,14 @@ text-align: left;}
   border-radius: 8px;
   padding: 32px;
   line-height: 28.9px;
+  display: block;
 }
 
 .content-wrapper .content-title {
   padding: 4px 0 4px 8px;
   color: #004299;
   font-weight: 500;
+  font-size: 18px;
   margin: 0;
 }
 
@@ -93,6 +94,7 @@ text-align: left;}
 
 .content-wrapper .content-section-text {
   line-height: 28.9px;
+  font-size: 16px;
   color: #51517B;
 }
 
@@ -144,9 +146,10 @@ text-align: left;}
 }
 
 .content-wrapper .button-secondary {
-  border: 1px solid #4092FF;
-  color: #4092FF;
+  border: 1px solid #3D3D5C;
+  color: #3D3D5C;
   background-color: #F9F9FB;
+  font-weight: 500;
 }
 
 .content-wrapper .download-link {
@@ -162,6 +165,13 @@ text-align: left;}
 
 .content-wrapper .note a {
   text-decoration: underline;
+}
+
+.content-wrapper #code {
+  font-size: 28px;
+  font-weight: 500;
+  color: #3D3D5C;
+  letter-spacing: 1;
 }
 
 .footer-section>td {
@@ -196,6 +206,8 @@ text-align: left;}
 
 .footer-section .top-section td.closing-message-section p {
   margin-top: 0;
+  font-size: 14px;
+  color: #51517B;
 }
 
 .footer-section .top-section td.closing-message-section img {
