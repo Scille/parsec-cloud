@@ -2,6 +2,13 @@
 
 <template>
   <div>
+    <!-- error -->
+    <ms-report-text
+      v-show="error"
+      :theme="MsReportTheme.Error"
+    >
+      {{ $msTranslate(error) }}
+    </ms-report-text>
     <div class="account-login-content-list">
       <ms-input
         class="account-login-content__input"
@@ -42,14 +49,12 @@
         @click="submit"
         :disabled="querying || !validInfo"
       >
-        {{ $msTranslate('loginPage.createAccount.nextButton') }}
+        {{ $msTranslate('loginPage.createAccount.sendCode') }}
         <ms-spinner
           class="account-login-content-button__spinner"
           v-show="querying"
         />
       </ion-button>
-      <!-- error -->
-      <ms-informative-text v-show="error"> {{ $msTranslate(error) }} </ms-informative-text>
     </div>
   </div>
 </template>
@@ -59,7 +64,7 @@ import { Env } from '@/services/environment';
 import { IonButton } from '@ionic/vue';
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
 import { parsecAddrValidator, emailValidator } from '@/common/validators';
-import { MsInput, Validity, MsInformativeText, MsSpinner } from 'megashark-lib';
+import { MsInput, Validity, MsReportText, MsReportTheme, MsSpinner } from 'megashark-lib';
 import { AccountCreationStepper, AccountCreateSendValidationEmailErrorTag } from '@/parsec';
 
 const props = defineProps<{

@@ -21,10 +21,16 @@
             class="create-account-page-header__title title-h1"
             v-if="TITLES[step].title"
           >
+            <ion-icon
+              class="create-account-page-header__icon"
+              :icon="arrowBack"
+              @click="back()"
+              v-if="step === Steps.UserInformation || step === Steps.Code || step === Steps.Authentication"
+            />
             {{ $msTranslate(TITLES[step].title) }}
           </ion-text>
           <ion-text
-            class="create-account-page-header__subtitle body"
+            class="create-account-page-header__subtitle body-lg"
             v-if="TITLES[step].subtitle"
           >
             {{ $msTranslate(TITLES[step].subtitle) }}
@@ -145,15 +151,14 @@
           <div class="created-step-welcome-login">
             <ion-button
               v-if="!error"
-              class="created-step-welcome-login__button"
+              class="created-step-welcome-login__button button-large button-default"
               @click="goToHome"
             >
               {{ $msTranslate('loginPage.createAccount.accessToOrganizationButton') }}
             </ion-button>
             <ion-button
               v-if="error"
-              class="created-step-welcome-login__button"
-              size="large"
+              class="created-step-welcome-login__button button-default"
               @click="goToLogin"
             >
               {{ $msTranslate('loginPage.login') }}
@@ -172,7 +177,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonContent, IonButton, IonText } from '@ionic/vue';
+import { IonPage, IonContent, IonButton, IonText, IonIcon } from '@ionic/vue';
 import {
   asyncComputed,
   MsCodeValidationInput,
@@ -183,6 +188,7 @@ import {
   MsChoosePasswordInput,
   AllowedInput,
 } from 'megashark-lib';
+import { arrowBack } from 'ionicons/icons';
 import { onUnmounted, ref, useTemplateRef } from 'vue';
 import AccountUserInformation from '@/components/account/AccountUserInformation.vue';
 import { AccountCreateErrorTag, AccountCreationStepper, ParsecAccount, ParsecAccountAccess } from '@/parsec';
@@ -245,6 +251,15 @@ const watchRouteCancel = watchRoute(async (newRoute: RouteLocationNormalizedLoad
 onUnmounted(async () => {
   watchRouteCancel();
 });
+
+async function back(): Promise<void> {
+  if (step.value === Steps.UserInformation) {
+    await goToLogin();
+  } else if (step.value === Steps.Code || step.value === Steps.Authentication) {
+    await codeValidationInputRef.value?.clear();
+    step.value = Steps.UserInformation;
+  }
+}
 
 async function onCreationStarted(): Promise<void> {
   step.value = Steps.Code;
@@ -379,7 +394,7 @@ async function createAccount(): Promise<void> {
   &-header {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.75rem;
     width: 100%;
     padding-inline: 2rem;
     max-width: calc(28rem + 4rem);
@@ -390,6 +405,25 @@ async function createAccount(): Promise<void> {
       background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      position: relative;
+    }
+
+    &__icon {
+      position: absolute;
+      top: 3px;
+      left: -2.75rem;
+      color: var(--parsec-color-light-secondary-soft-grey);
+      font-size: 1.125rem;
+      border-radius: var(--parsec-radius-circle);
+      padding: 0.25rem;
+      background-color: var(--parsec-color-light-secondary-premiere);
+      transition: all 150ms linear;
+      cursor: pointer;
+
+      &:hover {
+        background: var(--parsec-color-light-secondary-disabled);
+        color: var(--parsec-color-light-secondary-grey);
+      }
     }
 
     &__subtitle {
@@ -404,7 +438,7 @@ async function createAccount(): Promise<void> {
   }
 
   &:has(.creating-step) {
-    gap: 1rem;
+    gap: 1.5rem;
   }
 }
 
@@ -554,7 +588,7 @@ async function createAccount(): Promise<void> {
 .created-step {
   display: flex;
   flex-direction: column;
-  gap: 2.5rem;
+  gap: 2rem;
 
   &-welcome {
     display: flex;
@@ -583,6 +617,9 @@ async function createAccount(): Promise<void> {
 
       &__button {
         width: 100%;
+        max-width: 17rem;
+        margin: auto;
+        --box-shadow: var(--parsec-shadow-light);
       }
     }
   }
