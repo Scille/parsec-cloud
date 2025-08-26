@@ -52,7 +52,10 @@ pub(super) async fn account_upload_opaque_key_in_vault(
 
     // 2. Check the organization's account vault strategy
 
-    {
+    // TODO: Ugly temporary hack used by the GUI during organization bootstrap,
+    // since this code needs a profound refactoring to be able to provide the
+    // organization ID to this function...
+    if organization_id.as_ref() != "__no_check__" {
         use libparsec_protocol::authenticated_account_cmds::latest::organization_self_list::{
             AccountVaultStrategy, Rep, Req,
         };
