@@ -371,8 +371,8 @@ class _ParsecAccount {
       return false;
     }
     try {
-      const addrUrl = new URL(addr);
-      const accountUrl = new URL(this.server);
+      const addrUrl = new URL(addr.replace('parsec3:', 'https:'));
+      const accountUrl = new URL(this.server.replace('parsec3:', 'https:'));
       return addrUrl.host === accountUrl.host && addrUrl.port === accountUrl.port;
     } catch (e: any) {
       window.electronAPI.log('error', `Failed to compare device address with server address: ${e.toString()}`);
