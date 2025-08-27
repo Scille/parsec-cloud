@@ -162,13 +162,6 @@ function preventRightClick(): void {
   });
 }
 
-function warnRefresh(): void {
-  window.addEventListener('beforeunload', async (event) => {
-    event.preventDefault();
-    event.returnValue = true;
-  });
-}
-
 const injectionProvider = new InjectionProvider();
 
 async function setupApp(): Promise<void> {
@@ -449,9 +442,8 @@ async function setupApp(): Promise<void> {
           await storageManager.storeConfig(config);
         }
       });
-
-      window.electronAPI.pageIsInitialized();
     }
+    window.electronAPI.pageIsInitialized();
     preventRightClick();
   };
 
@@ -545,9 +537,6 @@ function setupMockElectronAPI(injectionProvider: InjectionProvider): void {
     },
     pageIsInitialized: (): void => {
       window.isDev = (): boolean => Boolean(import.meta.env.PARSEC_APP_TESTBED_SERVER);
-      if (!window.isDev()) {
-        warnRefresh();
-      }
     },
     initError: (error?: string): void => {
       console.error('Error at initialization', error);
