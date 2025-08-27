@@ -37,6 +37,13 @@ let callbackId: string | null = null;
 const lastAccepted: Ref<DateTime | null> = ref(null);
 const { setInformationManager } = useSmallDisplayWarning();
 
+function warnRefresh(): void {
+  window.addEventListener('beforeunload', async (event) => {
+    event.preventDefault();
+    event.returnValue = true;
+  });
+}
+
 onMounted(async () => {
   const handle = getConnectionHandle();
 
@@ -96,6 +103,9 @@ onMounted(async () => {
 
   if (clientInfoResult.value.mustAcceptTos) {
     await showTOSModal();
+  }
+  if (!window.isDev()) {
+    warnRefresh();
   }
 });
 
