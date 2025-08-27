@@ -1697,6 +1697,8 @@
             }
         },
         "inputFields": {
+            "edit": "Edit",
+            "cancel": "Cancel",
             "server": "Server address",
             "firstname": "First name",
             "lastname": "Last name",

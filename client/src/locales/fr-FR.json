@@ -1696,6 +1696,8 @@
             }
         },
         "inputFields": {
+            "edit": "Modifier",
+            "cancel": "Annuler",
             "server": "Adresse du serveur",
             "firstname": "Prénom",
             "lastname": "Nom de famille",

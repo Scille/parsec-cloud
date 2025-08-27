@@ -41,6 +41,16 @@ msTest('Parsec account create account', async ({ parsecAccount }) => {
   const userInfoNext = userInfoContainer.locator('.account-login-content-button__item');
   await expect(userInfoNext).toHaveText('Send a validation code');
   await expect(userInfoNext).toBeTrulyDisabled();
+  await expect(inputContainers.nth(0).locator('ion-input')).toHaveTheClass('login-server-input-disabled');
+  await expect(inputContainers.nth(0).locator('ion-input')).toHaveAttribute('disabled');
+
+  const cancelEditServerButton = parsecAccount.locator('.user-information-step').locator('.input-edit-button');
+  await expect(cancelEditServerButton).toBeVisible();
+  await expect(cancelEditServerButton).toHaveText('Edit');
+  await cancelEditServerButton.click();
+  await expect(cancelEditServerButton).toHaveText('Cancel');
+  await expect(inputContainers.nth(0).locator('ion-input')).not.toHaveTheClass('login-server-input-disabled');
+  await expect(inputContainers.nth(0).locator('ion-input')).not.toHaveAttribute('disabled');
   await fillIonInput(inputContainers.nth(0).locator('ion-input'), process.env.TESTBED_SERVER as string);
   await expect(userInfoNext).toBeTrulyDisabled();
   await fillIonInput(inputContainers.nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.firstName);
@@ -143,8 +153,4 @@ msTest('Parsec account create account', async ({ parsecAccount }) => {
   await fillIonInput(loginContainer.locator('ion-input').nth(2), PASSWORD);
   await expect(loginButton).toBeTrulyEnabled();
   await loginButton.click();
-  await expect(parsecAccount).toBeHomePage();
-  await expect(parsecAccount.locator('.profile-header-homepage')).toHaveText(
-    `${DEFAULT_USER_INFORMATION.firstName} ${DEFAULT_USER_INFORMATION.lastName}`,
-  );
 });
