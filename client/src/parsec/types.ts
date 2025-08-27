@@ -280,6 +280,8 @@ interface UserInfo extends ParsecUserInfo {
 interface OwnDeviceInfo extends DeviceInfo {
   isCurrent: boolean;
   isRecovery: boolean;
+  isRegistration: boolean;
+  isShamir: boolean;
 }
 
 interface EntryStatFolder extends Omit<ParsecEntryStatFolder, 'lastUpdater'> {
