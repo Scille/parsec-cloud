@@ -73,7 +73,7 @@ onUnmounted(async () => {
 async function refreshDevicesList(): Promise<void> {
   const result = await listOwnDevices();
   if (result.ok) {
-    devices.value = result.value.filter((d) => !d.isRecovery).sort((d) => (d.isCurrent ? -1 : 1));
+    devices.value = result.value.filter((d) => !d.isRecovery && !d.isShamir && !d.isRegistration).sort((d) => (d.isCurrent ? -1 : 1));
   } else {
     informationManager.present(
       new Information({

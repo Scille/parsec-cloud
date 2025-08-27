@@ -65,6 +65,8 @@ export async function listOwnDevices(): Promise<Result<Array<OwnDeviceInfo>, Cli
           (device as OwnDeviceInfo).isCurrent = device.id === clientResult.value.deviceId;
           (device as OwnDeviceInfo).isRecovery =
             device.deviceLabel.startsWith(RECOVERY_DEVICE_PREFIX) || device.purpose === DevicePurpose.PassphraseRecovery;
+          (device as OwnDeviceInfo).isRegistration = device.purpose === DevicePurpose.Registration;
+          (device as OwnDeviceInfo).isShamir = device.purpose === DevicePurpose.ShamirRecovery;
           return device;
         });
       }
