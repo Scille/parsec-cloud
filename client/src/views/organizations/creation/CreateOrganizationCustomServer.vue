@@ -150,7 +150,8 @@ async function onOrganizationNameAndServerChosen(chosenOrganizationName: Organiz
       name.value = infoResult.value.label;
       if (isWeb()) {
         // Create a new vault save strategy
-        const result = await SaveStrategy.useAccountVault(chosenOrganizationName);
+        // Little hack to be able to create the save strategy before creating the org
+        const result = await SaveStrategy.useAccountVault('__no_check__');
         if (result.ok) {
           // Skip the auth page
           await onAuthenticationChosen(result.value);

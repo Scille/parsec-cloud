@@ -198,12 +198,9 @@ async function onOrganizationNameChosen(chosenOrganizationName: OrganizationID):
     ParsecAccount.isLoggedIn() &&
     Env.getSaasServers().some((addr) => ParsecAccount.addressMatchesAccountServer(`parsec3://${addr}`))
   ) {
-    const result = await SaveStrategy.useAccountVault(chosenOrganizationName);
-    if (result.ok) {
-      await onAuthenticationChosen(result.value);
-    } else {
-      step.value = Steps.Authentication;
-    }
+    // Fake one, will get overwritten later
+    saveStrategy.value = { tag: DeviceSaveStrategyTag.AccountVault, ciphertextKey: new Uint8Array(), ciphertextKeyId: '' };
+    step.value = Steps.Summary;
   } else {
     step.value = Steps.Authentication;
   }
@@ -228,7 +225,7 @@ async function onCreationError(startTime: number): Promise<void> {
 }
 
 async function onCreateClicked(): Promise<void> {
-  if (!organizationName.value || !personalInformation.value || !saveStrategy.value) {
+  if (!organizationName.value || !personalInformation.value) {
     window.electronAPI.log('error', 'OrganizationCreation: missing data at the creation step, should not happen');
     return;
   }
@@ -268,11 +265,26 @@ async function onCreateClicked(): Promise<void> {
       return;
     } else {
       bootstrapLink = response.data.bootstrapLink;
+      if (isWeb() && ParsecAccount.isLoggedIn() && ParsecAccount.addressMatchesAccountServer(bootstrapLink)) {
+        // Don't like it, but we can't create the organization from the tests
+        const result = await SaveStrategy.useAccountVault(window.isTesting() ? '__no_check__' : organizationName.value);
+        if (result.ok) {
+          saveStrategy.value = result.value;
+        } else {
+          window.electronAPI.log('error', `Failed to create a save strategy using account: ${result.error.tag} (${result.error.error})`);
+          // No idea what to do here. Going back to auth choice, but it's not ideal
+          step.value = Steps.Authentication;
+          return;
+        }
+      }
     }
   }
   if (!bootstrapLink) {
     currentError.value = { key: 'CreateOrganization.errors.generic', data: { reason: 'NoBootstrapLink' } };
     await onCreationError(startTime);
+    return;
+  }
+  if (!saveStrategy.value) {
     return;
   }
   const result = await bootstrapOrganization(
