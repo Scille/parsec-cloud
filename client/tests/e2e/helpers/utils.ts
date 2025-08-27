@@ -336,7 +336,7 @@ export async function login(homePage: Page, name: string): Promise<void> {
 }
 
 export async function logout(page: MsPage): Promise<void> {
-  await page.locator('.topbar').locator('.profile-header').click();
+  await page.locator('#connected-header').locator('#profile-button').click();
   const buttons = page.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem');
   await buttons.nth(4).click();
   await answerQuestion(page, true);
