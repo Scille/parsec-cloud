@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { answerQuestion, expect, fillIonInput, logout, msTest } from '@tests/e2e/helpers';
+import { addUser, answerQuestion, expect, fillIonInput, logout, msTest } from '@tests/e2e/helpers';
 
 msTest('Parsec account login initial page', async ({ parsecAccount }) => {
   const container = parsecAccount.locator('.homepage-content');
@@ -40,7 +40,7 @@ msTest('Open settings in profile homepage popover ', async ({ parsecAccountLogge
   await accountNameButton.click();
   await expect(parsecAccountLoggedIn.locator('.profile-header-homepage-popover')).toBeVisible();
   const popover = parsecAccountLoggedIn.locator('.profile-header-homepage-popover');
-  const header = parsecAccountLoggedIn.locator('.header-list');
+  const header = popover.locator('.header-list');
   await expect(header.locator('.header-list-email')).toHaveText(/^agent\d+@example.com$/);
 
   const buttons = popover.locator('.main-list').getByRole('listitem');
@@ -74,9 +74,45 @@ msTest('Switch tab from popover ', async ({ parsecAccountLoggedIn }) => {
 });
 
 msTest('Account create registration device and replace current', async ({ parsecAccountLoggedIn }) => {
+  msTest.setTimeout(120_000);
+
   const home = parsecAccountLoggedIn;
+
+  const accountNameButton = parsecAccountLoggedIn.locator('.profile-header-homepage');
+  await expect(accountNameButton).toBeVisible();
+  await expect(accountNameButton).toHaveText(/^Agent\d+$/);
+  await accountNameButton.click();
+  const popover = parsecAccountLoggedIn.locator('.profile-header-homepage-popover');
+  await expect(popover).toBeVisible();
+  const header = popover.locator('.header-list');
+  const email = (await header.locator('.header-list-email').textContent()) ?? 'incorrect';
+  await popover.locator('ion-backdrop').click();
+
   await home.locator('.organization-list').locator('.organization-card').nth(0).click();
   await fillIonInput(home.locator('#password-input').locator('ion-input'), 'P@ssw0rd.');
+  await home.locator('.login-card-footer').locator('.login-button').click();
+  await answerQuestion(home, false, {
+    expectedNegativeText: 'No',
+    expectedPositiveText: 'Store to Parsec Account',
+    expectedQuestionText: "This device is not stored in Parsec Account. Do you want to store it so that it'll be available everywhere?",
+    expectedTitleText: 'Store this device to Parsec Account',
+  });
+  await expect(home).toBeWorkspacePage();
+  await home.locator('.sidebar').locator('#sidebar-users').click();
+  await expect(home).toHavePageTitle('Users');
+  await expect(home).toBeUserPage();
+
+  const secondTab = await home.openNewTab();
+
+  await addUser(home, secondTab, 'UserName', email, 'admin');
+
+  await secondTab.release();
+
+  await logout(home);
+  await expect(home.locator('.organization-list').locator('.organization-card')).toHaveCount(4);
+
+  await home.locator('.organization-list').locator('.organization-card').nth(3).click();
+  await fillIonInput(home.locator('#password-input').locator('ion-input'), 'AVeryL0ngP@ssw0rd');
   await home.locator('.login-card-footer').locator('.login-button').click();
   await answerQuestion(home, true, {
     expectedNegativeText: 'No',
@@ -86,32 +122,60 @@ msTest('Account create registration device and replace current', async ({ parsec
   });
   await expect(home).toBeWorkspacePage();
   await logout(home);
-  await home.locator('.organization-list').locator('.organization-card').nth(0).click();
-  // Doesn't ask for the password, using parsec account to authenticate
+  await home.locator('.organization-list').locator('.organization-card').nth(3).click();
   await expect(home).toBeWorkspacePage();
 });
 
 msTest('Account create registration device and auto-register', async ({ parsecAccountLoggedIn }) => {
-  const page = parsecAccountLoggedIn;
-  await page.locator('.profile-header-homepage').click();
-  await expect(page.locator('.profile-header-homepage-popover')).toBeVisible();
-  const email = (await page.locator('.profile-header-homepage-popover').locator('.header-list-email').textContent()) as string;
-  console.log(email);
-  await page.locator('.profile-header-homepage-popover').locator('ion-backdrop').click();
-  await page.locator('.organization-list').locator('.organization-card').nth(0).click();
-  await fillIonInput(page.locator('#password-input').locator('ion-input'), 'P@ssw0rd.');
-  await page.locator('.login-card-footer').locator('.login-button').click();
-  await answerQuestion(page, true, {
+  msTest.setTimeout(120_000);
+
+  const home = parsecAccountLoggedIn;
+
+  const accountNameButton = parsecAccountLoggedIn.locator('.profile-header-homepage');
+  await expect(accountNameButton).toBeVisible();
+  await expect(accountNameButton).toHaveText(/^Agent\d+$/);
+  await accountNameButton.click();
+  const popover = parsecAccountLoggedIn.locator('.profile-header-homepage-popover');
+  await expect(popover).toBeVisible();
+  const header = popover.locator('.header-list');
+  const email = (await header.locator('.header-list-email').textContent()) ?? 'incorrect';
+  await popover.locator('ion-backdrop').click();
+
+  await home.locator('.organization-list').locator('.organization-card').nth(0).click();
+  await fillIonInput(home.locator('#password-input').locator('ion-input'), 'P@ssw0rd.');
+  await home.locator('.login-card-footer').locator('.login-button').click();
+  await answerQuestion(home, false, {
     expectedNegativeText: 'No',
     expectedPositiveText: 'Store to Parsec Account',
     expectedQuestionText: "This device is not stored in Parsec Account. Do you want to store it so that it'll be available everywhere?",
     expectedTitleText: 'Store this device to Parsec Account',
   });
-  await expect(page).toBeWorkspacePage();
-  await logout(page);
+  await expect(home).toBeWorkspacePage();
+  await home.locator('.sidebar').locator('#sidebar-users').click();
+  await expect(home).toHavePageTitle('Users');
+  await expect(home).toBeUserPage();
+
+  const secondTab = await home.openNewTab();
+
+  await addUser(home, secondTab, 'UserName', email, 'admin');
+
+  await secondTab.release();
+  await logout(home);
+
+  await home.locator('.organization-list').locator('.organization-card').nth(3).click();
+  await fillIonInput(home.locator('#password-input').locator('ion-input'), 'AVeryL0ngP@ssw0rd');
+  await home.locator('.login-card-footer').locator('.login-button').click();
+  await answerQuestion(home, true, {
+    expectedNegativeText: 'No',
+    expectedPositiveText: 'Store to Parsec Account',
+    expectedQuestionText: "This device is not stored in Parsec Account. Do you want to store it so that it'll be available everywhere?",
+    expectedTitleText: 'Store this device to Parsec Account',
+  });
+  await expect(home).toBeWorkspacePage();
+  await logout(home);
 
   // Opening a second tab with the same account, device should be present
-  const newTab = await page.openNewTab({ skipTestbed: true, location: '/account', withParsecAccount: true });
+  const newTab = await home.openNewTab({ skipTestbed: true, location: '/account', withParsecAccount: true });
 
   const loginContainer = newTab.locator('.account-login-container');
   const loginButton = loginContainer.locator('.account-login-button').locator('ion-button');
