@@ -452,7 +452,7 @@ async function createAccount(): Promise<void> {
   margin: 0 auto;
 
   @include ms.responsive-breakpoint('lg') {
-    padding: 2rem 0;
+    padding: 0 0 2rem;
   }
 
   @include ms.responsive-breakpoint('sm') {
