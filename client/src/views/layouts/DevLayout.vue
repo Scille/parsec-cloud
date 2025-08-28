@@ -22,11 +22,14 @@ const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const initialized = ref(false);
 
+const DEFAULT_HANDLE = 1;
+const DEFAULT_HANDLE_WITH_PARSEC_ACCOUNT = 3;
+
 function getDevDefaultHandle(): parsec.ConnectionHandle {
   if (parsec.ParsecAccount.isLoggedIn()) {
-    return 2;
+    return DEFAULT_HANDLE_WITH_PARSEC_ACCOUNT;
   }
-  return 1;
+  return DEFAULT_HANDLE;
 }
 
 onMounted(async () => {
@@ -51,12 +54,15 @@ onMounted(async () => {
   // When in dev mode, we often open directly a connected page,
   // so a few states are not properly set.
   if (parsec.ParsecAccount.isLoggedIn()) {
-    window.electronAPI.log('info', 'Parsec Account logged in, default handle should be "2"');
+    window.electronAPI.log('info', `Parsec Account logged in, default handle should be "${DEFAULT_HANDLE_WITH_PARSEC_ACCOUNT}"`);
   }
   if (handle !== getDevDefaultHandle()) {
     window.electronAPI.log('error', `In dev mode, you should use "${getDevDefaultHandle()}" as the default handle`);
     // eslint-disable-next-line no-alert
-    alert('Use "1" or "2" (if using ParsecAccount) as the default handle when not connecting properly');
+    alert(
+      `Use "${DEFAULT_HANDLE}" or "${DEFAULT_HANDLE_WITH_PARSEC_ACCOUNT}" (if using ParsecAccount)
+as the default handle when not connecting properly`,
+    );
     return;
   }
   window.electronAPI.log('info', 'Page was refreshed, login in a default device');
