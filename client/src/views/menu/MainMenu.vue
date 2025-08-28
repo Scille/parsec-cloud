@@ -14,7 +14,7 @@
       <div
         class="resize-divider"
         ref="divider"
-        v-show="isVisible()"
+        v-show="isSidebarVisible"
       />
       <ion-header class="sidebar-header">
         <div>
@@ -407,7 +407,7 @@ const storageManager: StorageManager = inject(StorageManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 const workspaces: Ref<Array<WorkspaceInfo>> = ref([]);
 const favorites: Ref<WorkspaceID[]> = ref([]);
-const { computedWidth: computedWidth, storedWidth: storedWidth, isVisible: isVisible } = useSidebarMenu();
+const { width: sidebarWidth, isVisible: isSidebarVisible, setWidth: setSidebarWidth } = useSidebarMenu();
 const sidebarWidthProperty = ref('');
 const dividerRef = useTemplateRef('divider');
 const dividerWidthProperty = ref('');
@@ -417,7 +417,7 @@ const isExpired = ref(false);
 const menusVisible = ref({ organization: true, workspaces: true, recentFiles: true, recentWorkspaces: true, favorites: true });
 const expirationDuration = ref<Duration | undefined>(undefined);
 const isTrialOrg = ref(false);
-let timeoutId: number | undefined = undefined;
+
 const securityWarnings = ref<SecurityWarnings | undefined>();
 const securityWarningsCount = computed(() => {
   if (!securityWarnings.value) {
@@ -436,25 +436,12 @@ const actions = ref<Array<Array<MenuAction>>>([]);
 const MIN_WIDTH = 150;
 const MAX_WIDTH = 370;
 const MAX_WIDTH_SHOWING_SIDEBAR = 768;
+const RESIZE_DEBOUNCE_MS = 100;
 
-const watchSidebarWidthCancel = watch(computedWidth, async (value: number) => {
+let resizeTimeout: number | undefined = undefined;
+
+const watchSidebarWidthCancel = watch(sidebarWidth, async (value: number) => {
   sidebarWidthProperty.value = `${value}px`;
-
-  if (timeoutId !== undefined) {
-    clearTimeout(timeoutId);
-  }
-  timeoutId = window.setTimeout(async () => {
-    await storageManager.updateComponentData<SidebarSavedData>(
-      SIDEBAR_MENU_DATA_KEY,
-      {
-        width: value < MIN_WIDTH ? storedWidth.value : computedWidth.value,
-        hidden: value < MIN_WIDTH,
-      },
-      SidebarDefaultData,
-    );
-    timeoutId = undefined;
-  }, 2000);
-
   updateDividerPosition(value);
   emits('sidebarWidthChanged', value);
 });
@@ -504,22 +491,35 @@ const favoritesWorkspaces = computed(() => {
 });
 
 function onMove(detail: GestureDetail): void {
+  let width: number;
   if (detail.currentX < MIN_WIDTH) {
-    computedWidth.value = MIN_WIDTH;
+    width = MIN_WIDTH;
   } else if (detail.currentX > MAX_WIDTH) {
-    computedWidth.value = MAX_WIDTH;
+    width = MAX_WIDTH;
   } else {
-    computedWidth.value = detail.currentX;
+    width = detail.currentX;
   }
-  emits('sidebarWidthChanged', computedWidth.value);
+
+  // Update UI immediately without persisting
+  setSidebarWidth(width, false);
+  emits('sidebarWidthChanged', sidebarWidth.value);
+
+  // Debounce the persistence - only save after user stops dragging
+  if (resizeTimeout !== undefined) {
+    clearTimeout(resizeTimeout);
+  }
+  resizeTimeout = window.setTimeout(() => {
+    setSidebarWidth(width, true); // Persist the final width
+    resizeTimeout = undefined;
+  }, RESIZE_DEBOUNCE_MS);
 }
 
 async function updateDividerPosition(value?: number): Promise<void> {
-  if (window.innerWidth > MAX_WIDTH_SHOWING_SIDEBAR && computedWidth.value >= window.innerWidth * 0.28) {
-    value = computedWidth.value - (computedWidth.value - window.innerWidth * 0.28);
+  if (window.innerWidth > MAX_WIDTH_SHOWING_SIDEBAR && sidebarWidth.value >= window.innerWidth * 0.28) {
+    value = sidebarWidth.value - (sidebarWidth.value - window.innerWidth * 0.28);
     dividerWidthProperty.value = `${value}px`;
   } else {
-    dividerWidthProperty.value = `${computedWidth.value}px`;
+    dividerWidthProperty.value = `${sidebarWidth.value}px`;
   }
 }
 
@@ -600,16 +600,11 @@ onMounted(async () => {
 
   setActions();
 
-  const savedSidebarData = await storageManager.retrieveComponentData<SidebarSavedData>(SIDEBAR_MENU_DATA_KEY, SidebarDefaultData);
+  sidebarWidthProperty.value = `${sidebarWidth.value}px`;
+  emits('sidebarWidthChanged', sidebarWidth.value);
 
-  if (savedSidebarData.hidden) {
-    computedWidth.value = 2;
-    storedWidth.value = savedSidebarData.width;
-  } else {
-    computedWidth.value = savedSidebarData.width;
-  }
-  sidebarWidthProperty.value = `${computedWidth.value}px`;
-  emits('sidebarWidthChanged', computedWidth.value);
+  // Load menu visibility settings separately
+  const savedSidebarData = await storageManager.retrieveComponentData<SidebarSavedData>(SIDEBAR_MENU_DATA_KEY, SidebarDefaultData);
   menusVisible.value.organization = savedSidebarData.organizationVisible ?? true;
   menusVisible.value.workspaces = savedSidebarData.workspacesVisible ?? true;
   menusVisible.value.favorites = savedSidebarData.favoritesVisible ?? true;
@@ -641,9 +636,13 @@ onUnmounted(async () => {
   if (eventDistributorCbId) {
     eventDistributor.removeCallback(eventDistributorCbId);
   }
-  if (timeoutId !== undefined) {
-    clearTimeout(timeoutId);
+
+  // Clean up any pending resize timeout
+  if (resizeTimeout !== undefined) {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = undefined;
   }
+
   watchSidebarWidthCancel();
   watchRouteCancel();
   watchWindowWidthCancel();
