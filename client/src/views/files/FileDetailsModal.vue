@@ -74,7 +74,7 @@
             <!-- Editor -->
             <div
               class="file-info-details-item"
-              v-if="entry.lastUpdater"
+              v-if="entry.lastUpdater && ownProfile !== UserProfile.Outsider"
             >
               <ion-label class="file-info-details-item__title subtitles-sm">
                 {{ $msTranslate('FileDetails.stats.editor') }}
@@ -141,7 +141,7 @@
 <script setup lang="ts">
 import { formatFileSize, getFileIcon, shortenFileName } from '@/common/file';
 import { Clipboard, Folder, MsImage, MsModal, openTooltip, I18n } from 'megashark-lib';
-import { EntryStat, EntryStatFile, isDesktop, getSystemPath, WorkspaceHandle } from '@/parsec';
+import { EntryStat, EntryStatFile, isDesktop, getSystemPath, WorkspaceHandle, UserProfile } from '@/parsec';
 import { IonButton, IonIcon, IonLabel, IonPage, IonText } from '@ionic/vue';
 import { cloudDone, cloudOffline, copy } from 'ionicons/icons';
 import { ref } from 'vue';
@@ -156,6 +156,7 @@ enum CopyStatus {
 const props = defineProps<{
   entry: EntryStat;
   workspaceHandle: WorkspaceHandle;
+  ownProfile: UserProfile;
 }>();
 
 const showFullPath = ref(false);

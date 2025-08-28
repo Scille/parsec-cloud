@@ -41,7 +41,10 @@
               class="label-name__sort-icon"
             />
           </ion-text>
-          <ion-text class="folder-list-header__label cell-title ion-text-nowrap label-updatedBy">
+          <ion-text
+            class="folder-list-header__label cell-title ion-text-nowrap label-updatedBy"
+            v-if="ownProfile !== UserProfile.Outsider"
+          >
             {{ $msTranslate('FoldersPage.listDisplayTitles.updatedBy') }}
           </ion-text>
           <ion-text
@@ -86,6 +89,7 @@
             v-model="folder.isSelected"
             :key="folder.id"
             :entry="folder"
+            :own-profile="ownProfile"
             :show-checkbox="someSelected || selectionEnabled === true"
             :is-workspace-reader="ownRole === WorkspaceRole.Reader"
             @open-item="$emit('openItem', folder, $event)"
@@ -100,6 +104,7 @@
             v-model="file.isSelected"
             :key="file.id"
             :entry="file"
+            :own-profile="ownProfile"
             :show-checkbox="someSelected || selectionEnabled === true"
             @open-item="$emit('openItem', file, $event)"
             @open-item.stop
@@ -126,7 +131,7 @@ import FileListItemProcessing from '@/components/files/explorer/FileListItemProc
 import { EntryCollection, EntryModel, FileOperationProgress, FileModel, FolderModel } from '@/components/files/types';
 import { SortProperty } from '@/components/files';
 import { FileImportTuple } from '@/components/files/utils';
-import { FsPath, WorkspaceRole } from '@/parsec';
+import { FsPath, WorkspaceRole, UserProfile } from '@/parsec';
 import { IonText, IonList, IonLabel, IonListHeader, IonIcon } from '@ionic/vue';
 import { arrowUp, arrowDown } from 'ionicons/icons';
 import { computed, useTemplateRef } from 'vue';
@@ -134,6 +139,7 @@ import { MsCheckbox, useWindowSize, MsSorterChangeEvent } from 'megashark-lib';
 
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 const props = defineProps<{
+  ownProfile: UserProfile;
   operationsInProgress: Array<FileOperationProgress>;
   files: EntryCollection<FileModel>;
   folders: EntryCollection<FolderModel>;

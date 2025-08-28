@@ -6,7 +6,7 @@ mockLibParsec();
 
 import { FileModel, FolderModel } from '@/components/files';
 import FileListItem from '@/components/files/explorer/FileListItem.vue';
-import { FileType, UserInfo } from '@/parsec';
+import { FileType, UserInfo, UserProfile } from '@/parsec';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -47,6 +47,7 @@ describe('File List Item', () => {
         entry: FILE,
         showCheckbox: false,
         modelValue: true,
+        ownProfile: UserProfile.Admin,
       },
       global: {
         provide: getDefaultProvideConfig(),
@@ -90,6 +91,7 @@ describe('File List Item', () => {
         entry: FOLDER,
         showCheckbox: false,
         modelValue: true,
+        ownProfile: UserProfile.Admin,
       },
       global: {
         provide: getDefaultProvideConfig(),
