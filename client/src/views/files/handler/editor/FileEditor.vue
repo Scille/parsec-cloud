@@ -5,52 +5,52 @@
     class="file-editor"
     id="file-editor"
     ref="fileEditor"
+    v-if="!error"
+  />
+  <div
+    v-if="error"
+    class="file-editor-error"
   >
-    <div
-      v-if="error"
-      class="file-editor-error"
-    >
-      <div class="error-content">
-        <div class="error-content-text">
-          <ion-text class="error-content-text__title title-h3">{{ $msTranslate('fileEditors.globalTitle') }}</ion-text>
-          <ion-text class="error-content-text__message body-lg">{{ $msTranslate(error) }}</ion-text>
-        </div>
-        <div class="error-content-buttons">
-          <ion-button
-            class="error-content-buttons__item button-default"
-            @click="routerGoBack()"
-          >
-            {{ $msTranslate('fileEditors.actions.backToFiles') }}
-          </ion-button>
-        </div>
+    <div class="error-content">
+      <div class="error-content-text">
+        <ion-text class="error-content-text__title title-h3">{{ $msTranslate('fileEditors.globalTitle') }}</ion-text>
+        <ion-text class="error-content-text__message body-lg">{{ $msTranslate(error) }}</ion-text>
       </div>
+      <div class="error-content-buttons">
+        <ion-button
+          class="error-content-buttons__item button-default"
+          @click="routerGoBack()"
+        >
+          {{ $msTranslate('fileEditors.actions.backToFiles') }}
+        </ion-button>
+      </div>
+    </div>
 
-      <div class="error-advices">
-        <ion-text class="error-advices__title title-h4">{{ $msTranslate('fileEditors.advices.title') }}</ion-text>
-        <ion-list class="error-advices-list ion-no-padding">
-          <ion-item class="error-advices-list__item ion-no-padding body">
-            <ion-icon
-              class="item-icon"
-              :icon="checkmarkCircle"
-            />
-            {{ $msTranslate('fileEditors.advices.advice1') }}
-          </ion-item>
-          <ion-item class="error-advices-list__item ion-no-padding body">
-            <ion-icon
-              class="item-icon"
-              :icon="checkmarkCircle"
-            />
-            {{ $msTranslate('fileEditors.advices.advice2') }}
-          </ion-item>
-          <ion-item class="error-advices-list__item ion-no-padding body">
-            <ion-icon
-              class="item-icon"
-              :icon="checkmarkCircle"
-            />
-            {{ $msTranslate('fileEditors.advices.advice3') }}
-          </ion-item>
-        </ion-list>
-      </div>
+    <div class="error-advices">
+      <ion-text class="error-advices__title title-h4">{{ $msTranslate('fileEditors.advices.title') }}</ion-text>
+      <ion-list class="error-advices-list ion-no-padding">
+        <ion-item class="error-advices-list__item ion-no-padding body">
+          <ion-icon
+            class="item-icon"
+            :icon="checkmarkCircle"
+          />
+          {{ $msTranslate('fileEditors.advices.advice1') }}
+        </ion-item>
+        <ion-item class="error-advices-list__item ion-no-padding body">
+          <ion-icon
+            class="item-icon"
+            :icon="checkmarkCircle"
+          />
+          {{ $msTranslate('fileEditors.advices.advice2') }}
+        </ion-item>
+        <ion-item class="error-advices-list__item ion-no-padding body">
+          <ion-icon
+            class="item-icon"
+            :icon="checkmarkCircle"
+          />
+          {{ $msTranslate('fileEditors.advices.advice3') }}
+        </ion-item>
+      </ion-list>
     </div>
   </div>
 </template>
@@ -58,11 +58,11 @@
 <script setup lang="ts">
 import { IonButton, IonIcon, IonList, IonItem, IonText } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
-import { closeFile, FsPath, openFile, writeFile } from '@/parsec';
+import { closeFile, openFile, writeFile } from '@/parsec';
 import { I18n, Translatable } from 'megashark-lib';
-import { ref, Ref, inject, useTemplateRef, onMounted, onUnmounted } from 'vue';
+import { ref, inject, useTemplateRef, onMounted, onUnmounted } from 'vue';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import { getDocumentPath, getWorkspaceHandle, routerGoBack } from '@/router';
+import { getWorkspaceHandle, routerGoBack } from '@/router';
 import { DetectedFileType } from '@/common/fileTypes';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { Env } from '@/services/environment';
@@ -70,11 +70,8 @@ import { CryptpadDocumentType, Cryptpad, getDocumentTypeFromExtension, CryptpadE
 import { longLocaleCodeToShort } from '@/services/translation';
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;
-const contentInfoRef: Ref<FileContentInfo | undefined> = ref(undefined);
 const fileEditorRef = useTemplateRef('fileEditor');
 const documentType = ref<CryptpadDocumentType | null>(null);
-const workspaceHandleRef = ref<number | undefined>(undefined);
-const documentPathRef = ref<FsPath>();
 const cryptpadInstance = ref<Cryptpad | null>(null);
 const fileUrl = ref<string | null>(null);
 const error = ref('');
@@ -86,54 +83,42 @@ const { contentInfo, fileInfo } = defineProps<{
 
 const emits = defineEmits<{
   (event: 'fileLoaded'): void;
+  (event: 'fileError'): void;
 }>();
 
 onMounted(async () => {
-  try {
-    await onFileLoaded(contentInfo, fileInfo);
-    loadCryptpad();
-    await openFileWithCryptpad();
+  documentType.value = getDocumentTypeFromExtension(fileInfo.extension);
+
+  if (documentType.value === CryptpadDocumentType.Unsupported) {
+    error.value = 'fileViewers.errors.titles.unsupportedFileType';
+    await informationManager.present(
+      new Information({
+        title: 'fileViewers.errors.titles.unsupportedFileType',
+        message: 'fileViewers.errors.informationEditDownload',
+        level: InformationLevel.Info,
+      }),
+      PresentationMode.Modal,
+    );
+    return;
+  }
+  if (!(await loadCryptpad())) {
+    return;
+  }
+  if (await openFileWithCryptpad()) {
     emits('fileLoaded');
-  } catch (error) {
-    console.error('Error during file editor initialization:', error);
-    throw error;
+  } else {
+    emits('fileError');
   }
 });
 
 onUnmounted(() => {
-  contentInfoRef.value = undefined;
   cryptpadInstance.value = null;
-  documentType.value = null;
-  workspaceHandleRef.value = undefined;
-  documentPathRef.value = undefined;
   if (fileUrl.value) {
     URL.revokeObjectURL(fileUrl.value);
-    fileUrl.value = null;
   }
 });
 
-async function onFileLoaded(contentInfo: FileContentInfo, fileInfo: DetectedFileType): Promise<void> {
-  contentInfoRef.value = contentInfo;
-  documentType.value = getDocumentTypeFromExtension(fileInfo.extension);
-  workspaceHandleRef.value = getWorkspaceHandle();
-  documentPathRef.value = getDocumentPath();
-
-  if (!workspaceHandleRef.value) {
-    throwError('Cannot initialize Cryptpad editor: missing workspace handle');
-  }
-
-  try {
-    validateContentInfo(contentInfoRef.value);
-  } catch (error) {
-    return;
-  }
-
-  if (!documentType.value) {
-    throwError(`No document type for file with extension '${fileInfo.extension}'`);
-  }
-}
-
-async function loadCryptpad(): Promise<void> {
+async function loadCryptpad(): Promise<boolean> {
   try {
     // Clear the DOM element before creating a new instance
     if (fileEditorRef.value) {
@@ -143,6 +128,7 @@ async function loadCryptpad(): Promise<void> {
     // Always create a new instance for each document to avoid conflicts
     cryptpadInstance.value = new Cryptpad(fileEditorRef.value as HTMLDivElement, Env.getDefaultCryptpadServer());
     await cryptpadInstance.value.init();
+    return true;
   } catch (e: unknown) {
     let title: Translatable = 'fileViewers.errors.titles.genericError';
     const message: Translatable = 'fileViewers.errors.informationEditDownload';
@@ -157,34 +143,35 @@ async function loadCryptpad(): Promise<void> {
         case CryptpadErrorCode.InitFailed:
           title = 'fileViewers.errors.titles.genericError';
       }
-
-      await informationManager.present(
-        new Information({
-          title,
-          message,
-          level,
-        }),
-        PresentationMode.Modal,
-      );
-    } else {
-      await informationManager.present(
-        new Information({
-          title,
-          message,
-          level,
-        }),
-        PresentationMode.Modal,
-      );
     }
+    await informationManager.present(
+      new Information({
+        title,
+        message,
+        level,
+      }),
+      PresentationMode.Modal,
+    );
+    return false;
   }
 }
 
-async function openFileWithCryptpad(): Promise<void> {
+async function openFileWithCryptpad(): Promise<boolean> {
   const cryptpadApi = cryptpadInstance.value as Cryptpad;
-  const contentInfo = contentInfoRef.value as FileContentInfo;
-  const workspaceHandle = workspaceHandleRef.value as number;
-  const documentPath = documentPathRef.value as FsPath;
+  const workspaceHandle = getWorkspaceHandle();
+  const documentPath = contentInfo.path;
 
+  if (!workspaceHandle) {
+    error.value = 'fileViewers.errors.genericError';
+    await informationManager.present(
+      new Information({
+        message: 'fileViewers.errors.titles.genericError',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+    return false;
+  }
   fileUrl.value = URL.createObjectURL(new Blob([contentInfo.data as Uint8Array<ArrayBuffer>], { type: 'application/octet-stream' }));
 
   const cryptpadConfig = {
@@ -222,6 +209,7 @@ async function openFileWithCryptpad(): Promise<void> {
   try {
     await cryptpadApi.open(cryptpadConfig);
     window.electronAPI.log('info', 'CryptPad editor initialized successfully');
+    return true;
   } catch (e: unknown) {
     let title: Translatable = 'fileViewers.errors.titles.genericError';
     const message: Translatable = 'fileViewers.errors.informationEditDownload';
@@ -245,46 +233,8 @@ async function openFileWithCryptpad(): Promise<void> {
       }),
       PresentationMode.Modal,
     );
+    return false;
   }
-}
-
-function validateContentInfo(contentInfo: FileContentInfo | undefined): void {
-  if (!contentInfo) {
-    error.value = 'fileEditors.errors.contentInfoMissing';
-    throw new Error('Content info is undefined');
-  }
-
-  if (!contentInfo.extension || contentInfo.extension.trim() === '') {
-    error.value = 'fileEditors.errors.fileExtensionMissing';
-    throw new Error('File extension is missing');
-  }
-
-  if (!contentInfo.fileName || contentInfo.fileName.trim() === '') {
-    error.value = 'fileEditors.errors.fileNameMissing';
-    throw new Error('File name is missing');
-  }
-
-  if (!contentInfo.fileId || contentInfo.fileId.trim() === '') {
-    error.value = 'fileEditors.errors.fileIdMissing';
-    throw new Error('File ID is missing');
-  }
-
-  if (!contentInfo.data || contentInfo.data.length === 0) {
-    error.value = 'fileEditors.errors.fileDataMissing';
-    throw new Error('File data is missing');
-  }
-}
-
-function throwError(message: string): never {
-  window.electronAPI.log('error', message);
-  informationManager.present(
-    new Information({
-      message: 'fileViewers.errors.titles.genericError',
-      level: InformationLevel.Error,
-    }),
-    PresentationMode.Toast,
-  );
-  throw new Error(message);
 }
 </script>
 

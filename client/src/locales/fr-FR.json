@@ -2376,8 +2376,8 @@
             "fileDataMissing": "Les données du fichier sont vides ou manquantes."
         },
         "advices": {
-            "title": "Quelques conseils pouvant résoudre ce problème",
-            "advice1": "Vérifier que le fichier puisse être ouvert depuis un logiciel externe.",
+            "title": "Quelques conseils pour résoudre ce problème",
+            "advice1": "Vérifier que le fichier s'ouvre correctement depuis un logiciel externe.",
             "advice2": "Ré-importer le fichier (vérifier les versions).",
             "advice3": "Si le fichier s'ouvrait avant, essayer de restaurer une version antérieure (via l'historique du fichier)"
         },
