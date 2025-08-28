@@ -295,7 +295,8 @@ defineEmits<{
   }
 
   &__label {
-    min-width: 8rem;
+    max-width: 9rem;
+    width: 100%;
     background: var(--parsec-color-light-secondary-premiere);
     color: var(--parsec-color-light-secondary-grey);
     align-items: center;
