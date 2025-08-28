@@ -108,9 +108,10 @@ msTest('Document viewer: pagination', async ({ documents }) => {
   const pagination = bottomBar.locator('.file-controls-pagination');
   await expect(pagination).toHaveCount(1);
   const paginationElement = pagination.locator('.file-controls-input');
+  await expect(pagination.locator('.file-controls-input-prefix')).toHaveText('Page');
 
   async function expectPage(pageNumber: number): Promise<void> {
-    await expect(paginationElement).toHaveText(`Page ${pageNumber} / 3`);
+    await expect(paginationElement).toHaveText(`${pageNumber} / 3`);
     for (const [index, page] of (await pages.all()).entries()) {
       index === pageNumber - 1 ? await expect(page).toBeInViewport() : await expect(page).not.toBeInViewport();
     }
@@ -186,19 +187,19 @@ msTest('Document viewer: scroll', async ({ documents }) => {
   await expect(firstPage).not.toBeInViewport();
   await expect(secondPage).not.toBeInViewport();
   await expect(thirdPage).toBeInViewport();
-  await expect(paginationElement).toHaveText('Page 3 / 3');
+  await expect(paginationElement).toHaveText('3 / 3');
 
   await secondPage.scrollIntoViewIfNeeded();
   await expect(firstPage).not.toBeInViewport();
   await expect(secondPage).toBeInViewport();
   await expect(thirdPage).not.toBeInViewport();
-  await expect(paginationElement).toHaveText('Page 2 / 3');
+  await expect(paginationElement).toHaveText('2 / 3');
 
   await firstPage.scrollIntoViewIfNeeded();
   await expect(firstPage).toBeInViewport();
   await expect(secondPage).not.toBeInViewport();
   await expect(thirdPage).not.toBeInViewport();
-  await expect(paginationElement).toHaveText('Page 1 / 3');
+  await expect(paginationElement).toHaveText('1 / 3');
 });
 
 msTest('Document viewer: zoom', async ({ documents }) => {

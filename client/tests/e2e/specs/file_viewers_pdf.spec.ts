@@ -28,9 +28,10 @@ msTest('PDF viewer: pagination', async ({ documents }) => {
   const pagination = bottomBar.locator('.file-controls-pagination');
   await expect(pagination).toHaveCount(1);
   const paginationElement = pagination.locator('.file-controls-input');
+  await expect(pagination.locator('.file-controls-input-prefix')).toHaveText('Page');
 
   async function expectPage(pageNumber: number): Promise<void> {
-    await expect(paginationElement).toHaveText(`Page ${pageNumber} / 4`);
+    await expect(paginationElement).toHaveText(`${pageNumber} / 4`);
     for (const [index, page] of (await pages.all()).entries()) {
       index === pageNumber - 1 ? await expect(page).toBeInViewport() : await expect(page).not.toBeInViewport();
     }
@@ -109,28 +110,28 @@ msTest('PDF viewer: scroll', async ({ documents }) => {
   await expect(fourthPage).toBeInViewport();
   // Depending on the viewport size, the last canvas may not take enough of the page
   // to arrive at 4/4.
-  await expect(paginationElement).toHaveText(/^Page (3|4) \/ 4$/);
+  await expect(paginationElement).toHaveText(/^(3|4) \/ 4$/);
 
   await thirdPage.scrollIntoViewIfNeeded();
   await expect(firstPage).not.toBeInViewport();
   await expect(secondPage).not.toBeInViewport();
   await expect(thirdPage).toBeInViewport();
   await expect(fourthPage).not.toBeInViewport();
-  await expect(paginationElement).toHaveText('Page 3 / 4');
+  await expect(paginationElement).toHaveText('3 / 4');
 
   await secondPage.scrollIntoViewIfNeeded();
   await expect(firstPage).not.toBeInViewport();
   await expect(secondPage).toBeInViewport();
   await expect(thirdPage).not.toBeInViewport();
   await expect(fourthPage).not.toBeInViewport();
-  await expect(paginationElement).toHaveText('Page 2 / 4');
+  await expect(paginationElement).toHaveText('2 / 4');
 
   await firstPage.scrollIntoViewIfNeeded();
   await expect(firstPage).toBeInViewport();
   await expect(secondPage).not.toBeInViewport();
   await expect(thirdPage).not.toBeInViewport();
   await expect(fourthPage).not.toBeInViewport();
-  await expect(paginationElement).toHaveText('Page 1 / 4');
+  await expect(paginationElement).toHaveText('1 / 4');
 });
 
 msTest('PDF viewer: zoom', async ({ documents }) => {
