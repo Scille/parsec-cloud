@@ -78,15 +78,26 @@ export class CryptpadOpenError extends CryptpadError {
 export class Cryptpad {
   private scriptId = 'cryptpad-api-js';
   private containerElement: HTMLElement;
-  private script: HTMLScriptElement;
-  private instanceInitialized = false;
+  private script?: HTMLScriptElement;
+  private serverUrl: string;
 
   constructor(containerElement: HTMLElement, serverUrl: string) {
     this.containerElement = containerElement;
+    this.serverUrl = serverUrl;
+  }
+
+  async init(): Promise<void> {
     if (!Env.isEditicsEnabled()) {
       throw new CryptpadInitError(CryptpadErrorCode.NotEnabled);
     }
 
+    // Script is already set for this instance (init() called multiple times)
+    if (this.script) {
+      window.electronAPI.log('info', 'CryptPad API script already loaded.');
+      return;
+    }
+
+    // Check if the script exist in the DOM, maybe created by another instance
     let script = document.getElementById(this.scriptId) as HTMLScriptElement | null;
     if (!script) {
       script = document.createElement('script');
@@ -94,22 +105,12 @@ export class Cryptpad {
         throw new CryptpadInitError(CryptpadErrorCode.ScriptElementCreationFailed);
       }
       script.id = this.scriptId;
-      script.src = `${serverUrl}/cryptpad-api.js`;
+      script.src = `${this.serverUrl}/cryptpad-api.js`;
       script.async = true;
       document.head.appendChild(script);
-    }
-    this.script = script;
-  }
 
-  async init(): Promise<void> {
-    if (this.instanceInitialized) return;
-
-    // Check if script is already loaded globally
-    const isScriptAlreadyLoaded = document.getElementById(this.scriptId) && typeof (window as any).CryptPadAPI === 'function';
-
-    if (!isScriptAlreadyLoaded) {
       await new Promise<void>((resolve, reject) => {
-        this.script.onload = (): void => {
+        (script as HTMLScriptElement).onload = (): void => {
           if (typeof (window as any).CryptPadAPI === 'function') {
             window.electronAPI.log('info', 'CryptPad API script loaded successfully.');
             resolve();
@@ -121,63 +122,35 @@ export class Cryptpad {
         };
 
         // Add error handling for HTTPS/security issues
-        this.script.onerror = (error): void => {
+        (script as HTMLScriptElement).onerror = (error): void => {
           window.electronAPI.log('error', `Failed to load CryptPad script: ${error.toString()}`);
           window.electronAPI.log('error', 'This might be due to HTTPS requirements. Check if CryptPad server requires secure context.');
           reject(new CryptpadInitError(CryptpadErrorCode.InitFailed, error.toString()));
         };
       });
     } else {
-      window.electronAPI.log('info', 'CryptPad API script already loaded, reusing.');
-      return;
+      window.electronAPI.log('info', 'CryptPad API script previously loaded, reusing');
     }
-
-    this.instanceInitialized = true;
+    this.script = script;
   }
 
   async open(config: CryptpadConfig): Promise<void> {
     await this.init();
 
-    if (!ENABLED_DOCUMENT_TYPES.includes(config.documentType)) {
-      window.electronAPI.log('error', `CryptPad edition for document type ${config.documentType} is not enabled.`);
-      throw new CryptpadOpenError(CryptpadErrorCode.DocumentTypeNotEnabled, config.documentType);
-      // await this.informationManager.present(
-      //   new Information({
-      //     title: 'fileViewers.errors.titles.editionNotAvailable',
-      //     message: 'fileViewers.errors.informationEditDownload',
-      //     level: InformationLevel.Info,
-      //   }),
-      //   PresentationMode.Modal,
-      // );
-      return;
-    }
-
     if (!this.containerElement) {
       window.electronAPI.log('error', 'Container element is not initialized. Please call init() before open().');
       throw new CryptpadOpenError(CryptpadErrorCode.NotInitialized, config.documentType);
-      // await this.informationManager.present(
-      //   new Information({
-      //     title: 'fileViewers.errors.titles.genericError',
-      //     message: 'fileViewers.errors.messages.informationEditDownload',
-      //     level: InformationLevel.Info,
-      //   }),
-      //   PresentationMode.Modal,
-      // );
-      return;
     }
 
     // for this case, a simple information modal "Failed to open document"
-    if (!this.instanceInitialized) {
+    if (!this.script) {
       window.electronAPI.log('error', 'CryptPad instance is not initialized yet. Please wait for it to initialize before calling open().');
       throw new CryptpadOpenError(CryptpadErrorCode.NotInitialized, config.documentType);
-      // await this.informationManager.present(
-      //   new Information({
-      //     title: 'fileViewers.errors.titles.genericError',
-      //     message: 'fileViewers.errors.messages.informationEditDownload',
-      //     level: InformationLevel.Info,
-      //   }),
-      //   PresentationMode.Modal,
-      // );
+    }
+
+    if (!ENABLED_DOCUMENT_TYPES.includes(config.documentType)) {
+      window.electronAPI.log('error', `CryptPad edition for document type ${config.documentType} is not enabled.`);
+      throw new CryptpadOpenError(CryptpadErrorCode.DocumentTypeNotEnabled, config.documentType);
     }
 
     (window as any).CryptPadAPI(this.containerElement.id, { ...config });
