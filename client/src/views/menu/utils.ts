@@ -4,7 +4,7 @@ import { Ref, ref } from 'vue';
 
 export interface SidebarSavedData {
   width?: number;
-  hidden?: boolean;
+  visible?: boolean;
   organizationVisible?: boolean;
   workspacesVisible?: boolean;
   favoritesVisible?: boolean;
@@ -16,7 +16,7 @@ export const SIDEBAR_MENU_DATA_KEY = 'SidebarMenu';
 
 export const SidebarDefaultData: Required<SidebarSavedData> = {
   width: 300,
-  hidden: false,
+  visible: true,
   organizationVisible: true,
   workspacesVisible: true,
   favoritesVisible: true,
