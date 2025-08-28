@@ -78,7 +78,7 @@
       <!-- updated by -->
       <div
         class="file-updatedBy"
-        v-if="entry.lastUpdater && isLargeDisplay"
+        v-if="entry.lastUpdater && isLargeDisplay && ownProfile !== UserProfile.Outsider"
       >
         <user-avatar-name
           :user-avatar="entry.lastUpdater.humanHandle.label"
@@ -137,7 +137,7 @@ import FileDropZone from '@/components/files/explorer/FileDropZone.vue';
 import { EntryModel, FileModel } from '@/components/files/types';
 import { FileImportTuple } from '@/components/files/utils';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
-import { FsPath, Path } from '@/parsec';
+import { FsPath, Path, UserProfile } from '@/parsec';
 import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
 import { cloudDone, cloudOffline, ellipsisHorizontal } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
@@ -147,6 +147,7 @@ const menuOpened = ref(false);
 const { isSmallDisplay, isLargeDisplay } = useWindowSize();
 
 const props = defineProps<{
+  ownProfile: UserProfile;
   entry: EntryModel;
   showCheckbox: boolean;
   isWorkspaceReader?: boolean;

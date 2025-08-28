@@ -169,6 +169,8 @@ import {
   getWorkspaceInfo,
   isMobile,
   WorkspaceHistoryEntryStatFile,
+  ClientInfo,
+  getClientInfo,
 } from '@/parsec';
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import {
@@ -229,6 +231,7 @@ const handlerReadyRef = ref(false);
 const handlerComponent: Ref<Component | null> = shallowRef(null);
 const handlerMode = ref<FileHandlerMode | undefined>(undefined);
 const sidebarMenuVisibleOnMounted = ref(false);
+const userInfo: Ref<ClientInfo | null> = ref(null);
 
 const cancelRouteWatch = watchRoute(async () => {
   if (!currentRouteIs(Routes.FileHandler)) {
@@ -452,6 +455,13 @@ onMounted(async () => {
     hideSidebarMenu();
     sidebarMenuVisibleOnMounted.value = true;
   }
+
+  const clientInfoResult = await getClientInfo();
+  if (clientInfoResult.ok) {
+    userInfo.value = clientInfoResult.value;
+  } else {
+    window.electronAPI.log('error', `Failed to retrieve user info ${JSON.stringify(clientInfoResult.error)}`);
+  }
 });
 
 onUnmounted(async () => {
@@ -521,6 +531,7 @@ async function showDetails(): Promise<void> {
       componentProps: {
         entry: entry.value,
         workspaceHandle: workspaceHandle,
+        ownProfile: userInfo.value ? userInfo.value.currentProfile : undefined,
       },
     });
     await modal.present();

@@ -121,11 +121,12 @@
           </file-drop-zone>
         </div>
         <div v-else-if="!querying">
-          <div v-if="displayView === DisplayState.List">
+          <div v-if="displayView === DisplayState.List && userInfo">
             <file-list-display
               ref="fileListDisplay"
               :files="files"
               :folders="folders"
+              :own-profile="userInfo.currentProfile"
               :operations-in-progress="fileOperationsCurrentDir"
               :current-path="currentPath"
               :own-role="ownRole"
@@ -226,6 +227,8 @@ import {
   EntryName,
   isDesktop,
   isWeb,
+  ClientInfo,
+  getClientInfo,
 } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, watchRoute } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
@@ -388,6 +391,7 @@ const FOLDERS_PAGE_DATA_KEY = 'FoldersPage';
 const currentSortProperty = ref<SortProperty>(SortProperty.Name);
 const currentSortOrder = ref(true);
 
+const userInfo: Ref<ClientInfo | null> = ref(null);
 const fileOperations: Ref<Array<FileOperationProgress>> = ref([]);
 const currentPath = ref('/');
 const currentFolder: Ref<EntryName> = ref('/');
@@ -578,6 +582,14 @@ onMounted(async () => {
       workspaceInfo.value = infoResult.value;
     }
   }
+
+  const clientInfoResult = await getClientInfo();
+  if (clientInfoResult.ok) {
+    userInfo.value = clientInfoResult.value;
+  } else {
+    window.electronAPI.log('error', `Failed to retrieve user info ${JSON.stringify(clientInfoResult.error)}`);
+  }
+
   callbackId = await fileOperationManager.registerCallback(onFileOperationState);
   currentPath.value = getDocumentPath();
   const query = getCurrentRouteQuery();
@@ -1258,6 +1270,7 @@ async function showDetails(entries: EntryModel[]): Promise<void> {
     cssClass: 'file-details-modal',
     componentProps: {
       entry: entry,
+      ownProfile: userInfo.value ? userInfo.value.currentProfile : undefined,
       workspaceHandle: workspaceInfo.value.handle,
     },
   });

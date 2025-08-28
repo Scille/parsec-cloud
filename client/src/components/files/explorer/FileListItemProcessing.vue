@@ -34,7 +34,10 @@
     </div>
 
     <!-- last update -->
-    <div class="file-creationDate">
+    <div
+      v-if="clientInfo?.currentProfile !== UserProfile.Outsider"
+      class="file-creationDate"
+    >
       <ion-text class="label-last-update cell" />
     </div>
 
@@ -64,7 +67,7 @@
 import { formatFileSize, getFileIcon } from '@/common/file';
 import { MsImage, Translatable } from 'megashark-lib';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
-import { ClientInfo, EntryName, getClientInfo, Path } from '@/parsec';
+import { ClientInfo, EntryName, getClientInfo, Path, UserProfile } from '@/parsec';
 import { CopyData, FileOperationData, FileOperationDataType, ImportData } from '@/services/fileOperationManager';
 import { IonItem, IonText } from '@ionic/vue';
 import { Ref, onMounted, ref } from 'vue';
