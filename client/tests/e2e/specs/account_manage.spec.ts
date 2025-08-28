@@ -60,8 +60,26 @@ msTest('Delete account', async ({ parsecAccountLoggedIn }) => {
 });
 
 msTest('Update password', async ({ parsecAccountLoggedIn }) => {
+  // Log out first to log back in with the password
+
   await parsecAccountLoggedIn.locator('.profile-header-homepage').click();
   const popover = parsecAccountLoggedIn.locator('.profile-header-homepage-popover');
+  await expect(popover).toBeVisible();
+  const email = (await popover.locator('.header-list').locator('.header-list-email').textContent()) ?? 'incorrect';
+  await popover.locator('.main-list__item').nth(3).click();
+  await expect(popover).toBeHidden();
+  await expect(parsecAccountLoggedIn).toHaveURL(/.+\/account$/);
+  await expect(parsecAccountLoggedIn.locator('.account-login-content')).toBeVisible();
+  const loginButton = parsecAccountLoggedIn.locator('.account-login-content').locator('.account-login-button__item');
+  await expect(loginButton).toBeTrulyDisabled();
+  await fillIonInput(parsecAccountLoggedIn.locator('.account-login-content').locator('ion-input').nth(1), email);
+  await fillIonInput(parsecAccountLoggedIn.locator('.account-login-content').locator('ion-input').nth(2), 'P@ssw0rd.');
+  await loginButton.click();
+  await expect(parsecAccountLoggedIn).toBeHomePage();
+  const accountNameButton = parsecAccountLoggedIn.locator('.profile-header-homepage');
+  await expect(accountNameButton).toBeVisible();
+  await expect(accountNameButton).toHaveText(/^Agent\d+$/);
+  await parsecAccountLoggedIn.locator('.profile-header-homepage').click();
   await expect(popover).toBeVisible();
   await popover.locator('.main-list__item').nth(2).click();
   const container = parsecAccountLoggedIn.locator('.account-authentication-page-container');

@@ -23,7 +23,7 @@ const storageManager: StorageManager = inject(StorageManagerKey)!;
 const initialized = ref(false);
 
 const DEFAULT_HANDLE = 1;
-const DEFAULT_HANDLE_WITH_PARSEC_ACCOUNT = 3;
+const DEFAULT_HANDLE_WITH_PARSEC_ACCOUNT = 2;
 
 function getDevDefaultHandle(): parsec.ConnectionHandle {
   if (parsec.ParsecAccount.isLoggedIn()) {
