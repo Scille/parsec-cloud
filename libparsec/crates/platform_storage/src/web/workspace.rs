@@ -746,7 +746,7 @@ impl PlatformWorkspaceStorage {
                 // 1) Update manifest
 
                 let store = transaction.object_store(VLOBS_STORE)?;
-                Self::update_manifest_internal(&store, &manifest).await?;
+                Self::update_manifest_internal(&store, manifest).await?;
 
                 // 2) Update chunks
 

@@ -25,7 +25,7 @@ impl std::fmt::Display for CustomErrMarker {
 
 pub(super) fn rs_to_js_filter(filter: &FilterKind<'_>) -> JsValue {
     match filter {
-        FilterKind::Bytes(x) => js_sys::Uint8Array::from(x.as_ref()).into(),
+        FilterKind::Bytes(x) => js_sys::Uint8Array::from(*x).into(),
         FilterKind::U64(x) => js_sys::Uint8Array::from(x.as_ref()).into(),
         // We don't use a Javascript `null` here since it doesn't work with
         // IndexedDb's index (e.g. any item containing a `null` will be skipped
@@ -227,7 +227,7 @@ pub(super) async fn with_transaction_internal<R, E>(
                     "{file}:{line} IndexedDb error (stores={stores:?}, rw={rw}): {err}"
                 );
                 // log::debug!("{file}:{line} IndexedDb transaction stores={stores:?} internal error: {err:?}");
-                Err(err.into())
+                Err(err)
             }
         },
     }
