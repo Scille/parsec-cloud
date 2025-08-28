@@ -2368,7 +2368,7 @@
         }
     },
     "fileEditors": {
-        "globalTitle": "Cannot open the file",
+        "globalTitle": "Cannot open file",
         "errors": {
             "contentInfoMissing": "The file content information is empty or missing.",
             "fileExtensionMissing": "The file type (extension) is missing or empty.",
@@ -2377,14 +2377,14 @@
             "fileDataMissing": "The file data is missing or empty."
         },
         "advices": {
-            "title": "Some tips that may resolve this issue",
+            "title": "Some tips to help resolve this issue",
             "advice1": "Check that the file can be opened from an external application.",
             "advice2": "Re-import the file (check versions).",
-            "advice3": "If the file opened before, try restoring a previous version (via file history)"
+            "advice3": "If the file used to open properly, try restoring a previous version (through file history)"
         },
         "actions": {
             "backToFiles": "Back to files",
-            "retry": "Reload the page"
+            "retry": "Reload page"
         }
     },
     "openFallback": {
