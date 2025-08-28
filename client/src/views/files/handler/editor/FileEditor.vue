@@ -125,7 +125,7 @@ async function onFileLoaded(contentInfo: FileContentInfo, fileInfo: DetectedFile
   try {
     validateContentInfo(contentInfoRef.value);
   } catch (error) {
-    throwError(`Cannot initialize Cryptpad editor: failed to validate content info: ${error}`);
+    return;
   }
 
   if (!documentType.value) {
@@ -144,25 +144,29 @@ async function loadCryptpad(): Promise<void> {
     cryptpadInstance.value = new Cryptpad(fileEditorRef.value as HTMLDivElement, Env.getDefaultCryptpadServer());
     await cryptpadInstance.value.init();
   } catch (e: unknown) {
-    if (e instanceof CryptpadError) {
-      let title: Translatable = 'fileViewers.errors.titles.genericError';
-      let message: Translatable = 'fileViewers.errors.informationEditDownload';
-      const level: InformationLevel = InformationLevel.Info;
+    let title: Translatable = 'fileViewers.errors.titles.genericError';
+    const message: Translatable = 'fileViewers.errors.informationEditDownload';
+    const level: InformationLevel = InformationLevel.Info;
 
+    if (e instanceof CryptpadError) {
       switch (e.code) {
         case CryptpadErrorCode.NotEnabled:
           title = 'fileViewers.errors.titles.editionNotAvailable';
-          message = 'fileViewers.errors.informationEditDownload';
           break;
         case CryptpadErrorCode.ScriptElementCreationFailed:
-          title = 'fileViewers.errors.titles.genericError';
-          message = 'fileViewers.errors.informationEditDownload';
-          break;
         case CryptpadErrorCode.InitFailed:
           title = 'fileViewers.errors.titles.genericError';
-          message = 'fileViewers.errors.informationEditDownload';
       }
 
+      await informationManager.present(
+        new Information({
+          title,
+          message,
+          level,
+        }),
+        PresentationMode.Modal,
+      );
+    } else {
       await informationManager.present(
         new Information({
           title,
@@ -181,7 +185,7 @@ async function openFileWithCryptpad(): Promise<void> {
   const workspaceHandle = workspaceHandleRef.value as number;
   const documentPath = documentPathRef.value as FsPath;
 
-  fileUrl.value = URL.createObjectURL(new Blob([contentInfo.data] as Uint8Array<ArrayBuffer>[], { type: 'application/octet-stream' }));
+  fileUrl.value = URL.createObjectURL(new Blob([contentInfo.data as Uint8Array<ArrayBuffer>], { type: 'application/octet-stream' }));
 
   const cryptpadConfig = {
     document: {
@@ -219,52 +223,55 @@ async function openFileWithCryptpad(): Promise<void> {
     await cryptpadApi.open(cryptpadConfig);
     window.electronAPI.log('info', 'CryptPad editor initialized successfully');
   } catch (e: unknown) {
-    if (e instanceof CryptpadError) {
-      let title: Translatable = 'fileViewers.errors.titles.genericError';
-      let message: Translatable = 'fileViewers.errors.informationEditDownload';
-      const level: InformationLevel = InformationLevel.Info;
+    let title: Translatable = 'fileViewers.errors.titles.genericError';
+    const message: Translatable = 'fileViewers.errors.informationEditDownload';
+    const level: InformationLevel = InformationLevel.Info;
 
+    if (e instanceof CryptpadError) {
       switch (e.code) {
         case CryptpadErrorCode.NotInitialized:
           title = 'fileViewers.errors.titles.genericError';
-          message = 'fileViewers.errors.informationEditDownload';
           break;
         case CryptpadErrorCode.DocumentTypeNotEnabled:
           title = 'fileViewers.errors.titles.editionNotAvailable';
-          message = 'fileViewers.errors.informationEditDownload';
       }
-
-      await informationManager.present(
-        new Information({
-          title,
-          message,
-          level,
-        }),
-        PresentationMode.Modal,
-      );
     }
+
+    await informationManager.present(
+      new Information({
+        title,
+        message,
+        level,
+      }),
+      PresentationMode.Modal,
+    );
   }
 }
 
 function validateContentInfo(contentInfo: FileContentInfo | undefined): void {
   if (!contentInfo) {
     error.value = 'fileEditors.errors.contentInfoMissing';
-  } else {
-    if (!contentInfo.extension || contentInfo.extension.trim() === '') {
-      error.value = 'fileEditors.errors.fileExtensionMissing';
-    }
+    throw new Error('Content info is undefined');
+  }
 
-    if (!contentInfo.fileName || contentInfo.fileName.trim() === '') {
-      error.value = 'fileEditors.errors.fileNameMissing';
-    }
+  if (!contentInfo.extension || contentInfo.extension.trim() === '') {
+    error.value = 'fileEditors.errors.fileExtensionMissing';
+    throw new Error('File extension is missing');
+  }
 
-    if (!contentInfo.fileId || contentInfo.fileId.trim() === '') {
-      error.value = 'fileEditors.errors.fileIdMissing';
-    }
+  if (!contentInfo.fileName || contentInfo.fileName.trim() === '') {
+    error.value = 'fileEditors.errors.fileNameMissing';
+    throw new Error('File name is missing');
+  }
 
-    if (!contentInfo.data || contentInfo.data.length === 0) {
-      error.value = 'fileEditors.errors.fileDataMissing';
-    }
+  if (!contentInfo.fileId || contentInfo.fileId.trim() === '') {
+    error.value = 'fileEditors.errors.fileIdMissing';
+    throw new Error('File ID is missing');
+  }
+
+  if (!contentInfo.data || contentInfo.data.length === 0) {
+    error.value = 'fileEditors.errors.fileDataMissing';
+    throw new Error('File data is missing');
   }
 }
 

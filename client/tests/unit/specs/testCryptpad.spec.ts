@@ -2,8 +2,9 @@
 
 import { Cryptpad, CryptpadDocumentType, getDocumentTypeFromExtension, isEnabledCryptpadDocumentType } from '@/services/cryptpad';
 import { Env } from '@/services/environment';
-import { InformationManager, PresentationMode } from '@/services/informationManager';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+const SERVER_URL = 'serverurl';
 
 // Mocks
 vi.mock('@/services/environment', () => ({
@@ -20,7 +21,6 @@ const mockCryptPadAPI = vi.fn() as any;
 describe('CryptPad Service', () => {
   let containerElement: HTMLElement;
   let mockScript: HTMLScriptElement;
-  let mockInformationManager: InformationManager;
 
   beforeEach(() => {
     // Reset all mocks
@@ -38,10 +38,6 @@ describe('CryptPad Service', () => {
       electronAPI: mockElectronAPI,
       CryptPadAPI: undefined,
     };
-
-    mockInformationManager = {
-      present: vi.fn(),
-    } as any;
 
     // Mock createElement to return a controllable script element
     mockScript = document.createElement('script');
@@ -64,49 +60,27 @@ describe('CryptPad Service', () => {
   });
 
   afterEach(() => {
-    document.body.innerHTML = '';
-    document.head.innerHTML = '';
     vi.restoreAllMocks();
   });
 
-  describe('Constructor', () => {
-    it('should create Cryptpad instance when Editics is enabled', () => {
-      vi.mocked(Env.isEditicsEnabled).mockReturnValue(true);
+  describe('init()', () => {
+    let cryptpad: Cryptpad;
 
-      const cryptpad = new Cryptpad(containerElement, 'https://cryptpad.example.com');
-
-      expect(cryptpad).toBeInstanceOf(Cryptpad);
-      // Check that the script was created and configured correctly
-      expect(mockScript.async).toBe(true);
-      expect(mockScript.id).toBe('cryptpad-api-js');
-      expect(document.createElement).toHaveBeenCalledWith('script');
+    beforeEach(() => {
+      cryptpad = new Cryptpad(containerElement, SERVER_URL);
     });
 
-    it('should throw error when Editics is not enabled', () => {
+    afterEach(() => {
+      (global as any).window.CryptPadAPI = undefined;
+    });
+
+    it('should throw error when Editics is not enabled', async () => {
       vi.mocked(Env.isEditicsEnabled).mockReturnValue(false);
 
-      expect(() => {
-        new Cryptpad(containerElement, 'https://cryptpad.example.com');
-      }).toThrow('Failed to initialize CryptPad: not-enabled');
+      await expect(cryptpad.init()).rejects.toThrow('Failed to initialize CryptPad: not-enabled');
     });
 
-    it('should reuse existing script element if already present', () => {
-      const existingScript = document.createElement('script');
-      existingScript.id = 'cryptpad-api-js';
-      existingScript.src = 'https://existing.com/cryptpad-api.js';
-      document.head.appendChild(existingScript);
-
-      // Clear the mock since we've already called createElement
-      vi.clearAllMocks();
-
-      const cryptpad = new Cryptpad(containerElement, 'https://cryptpad.example.com');
-
-      expect(cryptpad).toBeInstanceOf(Cryptpad);
-      // Should not call createElement for script since it already exists
-      expect(document.createElement).not.toHaveBeenCalledWith('script');
-    });
-
-    it('should throw error if script element creation fails', () => {
+    it('should throw error if script element creation fails', async () => {
       vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
         if (tagName === 'script') {
           return null as any;
@@ -114,30 +88,33 @@ describe('CryptPad Service', () => {
         return document.createElement(tagName);
       });
 
-      expect(() => {
-        new Cryptpad(containerElement, 'https://cryptpad.example.com');
-      }).toThrow('Failed to initialize CryptPad: script-element-creation-failed');
-    });
-  });
-
-  describe('init()', () => {
-    let cryptpad: Cryptpad;
-
-    beforeEach(() => {
-      cryptpad = new Cryptpad(containerElement, 'https://cryptpad.example.com');
+      await expect(cryptpad.init()).rejects.toThrow('Failed to initialize CryptPad: script-element-creation-failed');
     });
 
     it('should initialize successfully when script loads', async () => {
-      (global as any).window.CryptPadAPI = mockCryptPadAPI;
-
       const initPromise = cryptpad.init();
-
-      // Simulate successful script load
+      (global as any).window.CryptPadAPI = mockCryptPadAPI;
       mockScript.onload?.({} as Event);
-
       await initPromise;
 
-      expect(mockElectronAPI.log).toHaveBeenCalledWith('info', 'CryptPad API script already loaded, reusing.');
+      expect(mockElectronAPI.log).toHaveBeenCalledWith('info', 'CryptPad API script loaded successfully.');
+    });
+
+    it('should reuse global script if new instance', async () => {
+      const initPromise = cryptpad.init();
+      (global as any).window.CryptPadAPI = mockCryptPadAPI;
+      mockScript.onload?.({} as Event);
+      await initPromise;
+
+      // Clear the log mock to test second init
+      vi.clearAllMocks();
+
+      const cryptpad2 = new Cryptpad(containerElement, SERVER_URL);
+      const initPromise2 = cryptpad2.init();
+      mockScript.onload?.({} as Event);
+      await initPromise2;
+
+      expect(mockElectronAPI.log).toHaveBeenCalledWith('info', 'CryptPad API script previously loaded, reusing');
     });
 
     it('should handle script loading errors', async () => {
@@ -170,10 +147,10 @@ describe('CryptPad Service', () => {
     it('should not reinitialize if already loaded', async () => {
       (global as any).window.CryptPadAPI = mockCryptPadAPI;
 
-      // First initialization
-      const firstInitPromise = cryptpad.init();
+      const initPromise = cryptpad.init();
+      (global as any).window.CryptPadAPI = mockCryptPadAPI;
       mockScript.onload?.({} as Event);
-      await firstInitPromise;
+      await initPromise;
 
       // Clear the log mock to test second init
       vi.clearAllMocks();
@@ -181,16 +158,19 @@ describe('CryptPad Service', () => {
       // Second initialization should return immediately
       await cryptpad.init();
 
-      expect(mockElectronAPI.log).not.toHaveBeenCalled();
+      expect(mockElectronAPI.log).toHaveBeenCalledWith('info', 'CryptPad API script already loaded.');
     });
   });
 
   describe('open()', () => {
     let cryptpad: Cryptpad;
 
-    beforeEach(() => {
-      cryptpad = new Cryptpad(containerElement, 'https://cryptpad.example.com');
+    beforeEach(async () => {
+      cryptpad = new Cryptpad(containerElement, SERVER_URL);
+      const initPromise = cryptpad.init();
       (global as any).window.CryptPadAPI = mockCryptPadAPI;
+      mockScript.onload?.({} as Event);
+      await initPromise;
     });
 
     it('should open document with valid config', async () => {
@@ -210,11 +190,6 @@ describe('CryptPad Service', () => {
           onSave: vi.fn(),
         },
       };
-
-      // Initialize first
-      const initPromise = cryptpad.init();
-      mockScript.onload?.({} as Event);
-      await initPromise;
 
       await cryptpad.open(config);
 
@@ -238,11 +213,6 @@ describe('CryptPad Service', () => {
         },
       };
 
-      // Initialize first
-      const initPromise = cryptpad.init();
-      mockScript.onload?.({} as Event);
-      await initPromise;
-
       await expect(cryptpad.open(config)).rejects.toThrow(
         "Failed to open document type 'unsupported' with Cryptpad: document-type-not-enabled",
       );
@@ -250,15 +220,6 @@ describe('CryptPad Service', () => {
     });
 
     it('should throw error if container element is not available', async () => {
-      // Create cryptpad and initialize it first
-      const cryptpad = new Cryptpad(containerElement, 'https://cryptpad.example.com');
-      (global as any).window.CryptPadAPI = mockCryptPadAPI;
-
-      // Initialize the script first
-      const initPromise = cryptpad.init();
-      mockScript.onload?.({} as Event);
-      await initPromise;
-
       // Now set container to null to test the error
       (cryptpad as any).containerElement = null;
 
@@ -278,10 +239,8 @@ describe('CryptPad Service', () => {
         },
       };
 
-      await cryptpad.open(config);
-
+      await expect(cryptpad.open(config)).rejects.toThrow("Failed to open document type 'pad' with Cryptpad: not-initialized");
       expect(mockElectronAPI.log).toHaveBeenCalledWith('error', 'Container element is not initialized. Please call init() before open().');
-      expect(mockInformationManager.present).toHaveBeenCalledWith(expect.any(Object), PresentationMode.Modal);
       expect(mockCryptPadAPI).not.toHaveBeenCalled();
     });
   });
