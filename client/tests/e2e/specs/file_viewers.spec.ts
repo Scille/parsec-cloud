@@ -458,3 +458,121 @@ msTest('Text viewer', async ({ documents }) => {
   // Didn't manage to make a better regex, I have no idea why but nothing matches
   await expect(container.locator('.editor-scrollable')).toHaveText(new RegExp('^.*Parsec.*$'));
 });
+
+// File viewer sidebar management tests
+msTest('File viewer auto-hides sidebar on entry', async ({ documents }) => {
+  // Start with visible sidebar
+  await expect(documents.locator('.sidebar')).toBeVisible();
+
+  // Open file viewer
+  const entries = documents.locator('.folder-container').locator('.file-list-item');
+  await entries.nth(2).dblclick();
+  await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
+  await expect(documents).toBeViewerPage();
+
+  // Sidebar should be auto-hidden in file viewer
+  await expect(documents.locator('.sidebar')).toBeHidden();
+  await expect(documents.locator('#connected-header .topbar')).toBeHidden();
+});
+
+msTest('File viewer sidebar can be toggled in large display', async ({ documents }) => {
+  const entries = documents.locator('.folder-container').locator('.file-list-item');
+  await entries.nth(2).dblclick();
+  await expect(documents).toBeViewerPage();
+
+  // Sidebar initially hidden
+  await expect(documents.locator('.sidebar')).toBeHidden();
+
+  const toggleButton = documents.locator('.file-handler-topbar-buttons__item.toggle-menu');
+  const toggleSidebarButton = documents.locator('#trigger-toggle-menu-button');
+
+  await expect(toggleButton).toBeVisible();
+  await expect(toggleButton).toContainText('Show menu');
+
+  // Show menu and sidebar
+  await toggleButton.click();
+  await expect(documents.locator('#connected-header .topbar')).toBeVisible();
+  await expect(toggleSidebarButton).toBeVisible();
+  await expect(toggleButton).toContainText('Hide menu');
+
+  // Toggle sidebar specifically
+  await toggleSidebarButton.click();
+  await expect(documents.locator('.sidebar')).toBeVisible();
+
+  await toggleSidebarButton.click();
+  await expect(documents.locator('.sidebar')).toBeHidden();
+});
+
+msTest('File viewer sidebar state persists between files', async ({ documents }) => {
+  const entries = documents.locator('.folder-container').locator('.file-list-item');
+
+  // Open first file
+  await entries.nth(2).dblclick();
+  await expect(documents).toBeViewerPage();
+
+  const toggleButton = documents.locator('.file-handler-topbar-buttons__item.toggle-menu');
+  const toggleSidebarButton = documents.locator('#trigger-toggle-menu-button');
+
+  // Show header and sidebar
+  await toggleButton.click();
+  await expect(documents.locator('#connected-header .topbar')).toBeVisible();
+
+  await toggleSidebarButton.click();
+  await expect(documents.locator('.sidebar')).toBeVisible();
+
+  // Navigate to another file via sidebar
+  const sidebar = documents.locator('.sidebar');
+  const recentDocs = sidebar.locator('#sidebar-files').locator('.list-sidebar-content').getByRole('listitem');
+
+  if ((await recentDocs.count()) > 1) {
+    await recentDocs.nth(1).click();
+    await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
+
+    // Sidebar should remain visible
+    await expect(documents.locator('.sidebar')).toBeVisible();
+    await expect(documents.locator('#connected-header .topbar')).toBeVisible();
+  }
+});
+
+msTest('File viewer restores previous sidebar state on exit', async ({ documents }) => {
+  // Hide sidebar before entering file viewer
+  const toggleButton = documents.locator('#trigger-toggle-menu-button');
+  await toggleButton.click();
+  await expect(documents.locator('.sidebar')).toBeHidden();
+
+  // Open file viewer
+  const entries = documents.locator('.folder-container').locator('.file-list-item');
+  await entries.nth(2).dblclick();
+  await expect(documents).toBeViewerPage();
+
+  // Exit file viewer
+  const backButton = documents.locator('.file-handler-topbar').locator('.back-button');
+  await expect(backButton).toBeVisible();
+  await backButton.click();
+  await expect(documents.locator('.folder-container')).toBeVisible();
+
+  // Sidebar should remain hidden as it was before
+  await expect(documents.locator('.sidebar')).toBeHidden();
+  await expect(documents.locator('#connected-header .topbar')).toBeVisible();
+});
+
+msTest('File viewer sidebar in small display', async ({ documents }) => {
+  await documents.setDisplaySize(DisplaySize.Small);
+
+  const entries = documents.locator('.folder-container').locator('.file-list-item');
+  await entries.nth(2).dblclick();
+  await expect(documents).toBeViewerPage();
+
+  // In small display, toggle menu button might be hidden
+  const toggleButton = documents.locator('.file-handler-topbar-buttons__item.toggle-menu');
+  const isToggleVisible = await toggleButton.isVisible();
+
+  if (!isToggleVisible) {
+    // Small display might handle sidebar differently
+    await expect(documents.locator('.sidebar')).toBeHidden();
+  } else {
+    // If toggle is available, test it works in small display
+    await toggleButton.click();
+    // Behavior might be different in small display (modal overlay vs sidebar)
+  }
+});

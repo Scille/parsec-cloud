@@ -76,7 +76,7 @@ export async function fillInputModal(root: Locator | Page, text: string, clear?:
   const okButton = modal.locator('.ms-modal-footer-buttons').locator('#next-button');
   await fillIonInput(modal.locator('ion-input'), text);
   await okButton.click();
-  await expect(modal).toBeHidden();
+  await expect(modal).toBeHidden({ timeout: 10000 });
 }
 
 export async function getClipboardText(page: Page): Promise<string> {

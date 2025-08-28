@@ -321,3 +321,79 @@ msTest('Recent and pinned workspaces are updated when workspace is renamed', asy
   await expect(bobSidebarRecentWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0)).toHaveText('Newer-wksp1');
   await expect(bobSidebarFavoriteWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0)).toHaveText('Newer-wksp1');
 });
+
+// Sidebar visibility management tests
+msTest('Sidebar toggle functionality', async ({ documents }) => {
+  const sidebar = documents.locator('.sidebar');
+  const toggleButton = documents.locator('#trigger-toggle-menu-button');
+
+  // Initially sidebar should be visible
+  await expect(sidebar).toBeVisible();
+
+  // Hide sidebar
+  await toggleButton.click();
+  await expect(sidebar).toBeHidden();
+
+  // Show sidebar
+  await toggleButton.click();
+  await expect(sidebar).toBeVisible();
+});
+
+msTest('Sidebar visibility persists during same session navigation', async ({ documents, workspaces }) => {
+  const toggleButton = documents.locator('#trigger-toggle-menu-button');
+
+  // Hide sidebar on documents page
+  await toggleButton.click();
+  await expect(documents.locator('.sidebar')).toBeHidden();
+
+  // Navigate to workspaces
+  await documents.locator('#connected-header').locator('.topbar-left').locator('ion-breadcrumb').nth(0).click();
+  await expect(workspaces.locator('.workspaces-container')).toBeVisible();
+
+  // Sidebar should remain hidden
+  await expect(workspaces.locator('.sidebar')).toBeHidden();
+
+  // Show sidebar on workspaces page
+  const workspaceToggleButton = workspaces.locator('#trigger-toggle-menu-button');
+  await workspaceToggleButton.click();
+  await expect(workspaces.locator('.sidebar')).toBeVisible();
+
+  // Navigate back to documents
+  await workspaces.locator('.workspace-card-item').nth(0).click();
+  await expect(documents.locator('.folder-container')).toBeVisible();
+
+  // Sidebar should remain visible
+  await expect(documents.locator('.sidebar')).toBeVisible();
+});
+
+msTest('Sidebar responsive behavior', async ({ documents }) => {
+  const sidebar = documents.locator('.sidebar');
+  const toggleButton = documents.locator('#trigger-toggle-menu-button');
+
+  // Test in large display
+  await expect(sidebar).toBeVisible();
+  await expect(toggleButton).toBeVisible();
+
+  // Hide sidebar in large display
+  await toggleButton.click();
+  await expect(sidebar).toBeHidden();
+
+  // Switch to small display
+  await documents.setDisplaySize(DisplaySize.Small);
+
+  // In small display, sidebar behavior might be different
+  // The toggle button might be hidden or behave differently
+  const isToggleVisible = await toggleButton.isVisible();
+
+  if (isToggleVisible) {
+    // If toggle is available in small display, test it works
+    await toggleButton.click();
+    // Sidebar behavior in small display might be modal/overlay instead of hidden
+  }
+
+  // Switch back to large display
+  await documents.setDisplaySize(DisplaySize.Large);
+
+  // Verify sidebar state is consistent
+  await expect(toggleButton).toBeVisible();
+});

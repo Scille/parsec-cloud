@@ -14,7 +14,7 @@
           slot="start"
           id="trigger-toggle-menu-button"
           class="topbar-button__item"
-          @click="isSidebarMenuVisible() ? hideSidebarMenu() : resetSidebarMenu()"
+          @click="isSidebarMenuVisible ? hideSidebarMenu() : resetSidebarMenu()"
           :image="SidebarToggle"
         />
         <div
