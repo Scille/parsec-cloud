@@ -206,15 +206,6 @@ class _ParsecAccount {
     });
     if (!addAuthResult.ok) {
       console.error(`Failed to add new password authentication: ${addAuthResult.error.tag} (${addAuthResult.error.error})`);
-      return;
-    }
-    await this.logout();
-    const login2Result = await this.login(
-      ParsecAccountAccess.usePasswordForLogin(newAccountResult.value[0].email, TEST_PASSWORD),
-      Env.getAccountServer(),
-    );
-    if (!login2Result.ok) {
-      console.error(`Failed to login with password: ${login2Result.error.tag} (${login2Result.error.error})`);
     }
   }
 
@@ -275,7 +266,7 @@ class _ParsecAccount {
         const keyResult = await libparsec.accountUploadOpaqueKeyInVault(this.handle, regDevice.organizationId);
         if (!keyResult.ok) {
           console.error(`Failed to upload opaque key: ${keyResult.error.tag} (${keyResult.error.error})`);
-          return;
+          continue;
         }
         saveStrategy = { tag: DeviceSaveStrategyTag.AccountVault, ciphertextKeyId: keyResult.value[0], ciphertextKey: keyResult.value[1] };
       } else {
