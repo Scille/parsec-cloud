@@ -54,8 +54,8 @@ msTest('Spreadsheet viewer zoom', async ({ documents }) => {
   const zoomReset = bottomBar.locator('#reset-zoom');
   const zoomOut = zoom.locator('.file-controls-button-container').nth(0);
   const zoomIn = zoom.locator('.file-controls-button-container').nth(1);
-  const zoomLevel = zoom.locator('ion-text.zoom-level-input');
-  const zoomLevelInput = zoom.locator('ion-input.zoom-level-input');
+  const zoomLevel = zoom.locator('ion-text.file-controls-input');
+  const zoomLevelInput = zoom.locator('ion-input.file-controls-input');
 
   await expect(zoomLevelInput).toBeHidden();
 

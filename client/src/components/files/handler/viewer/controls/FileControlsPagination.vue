@@ -41,7 +41,7 @@ defineExpose({
 const inputRef = useTemplateRef<InstanceType<typeof FileControlsInput>>('input');
 const currentPage = ref('1');
 const inputLengthStyle = computed(() => {
-  return `${5 + props.length.toString().length * 1}rem`;
+  return `${6 + props.length.toString().length * 1}rem`;
 });
 
 const pageWatchCancel = watch(

@@ -1,43 +1,43 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-text
-    v-if="!editing"
-    class="file-controls-input text-only subtitles-normal"
-    @click="onTextClick"
-  >
-    <span v-if="prefix">{{ $msTranslate(prefix) }}</span>
-    {{ modelValue }}
-    <span v-if="suffix">{{ $msTranslate(suffix) }}</span>
-  </ion-text>
-  <ion-input
-    v-else
-    class="file-controls-input editing-input"
-    fill="outline"
-    ref="input"
-    :value="modelValue"
-    @ion-blur="onFocusChanged(false)"
-    @ion-focus="onFocusChanged(true)"
-    @ion-input="onChange($event.detail.value || '')"
-    @keyup.enter="blur"
-    @keyup.esc="blur"
-    :disabled="$props.disabled"
-  >
+  <div class="file-controls-input-container">
     <span
-      class="file-controls-input-prefix"
-      slot="start"
+      class="file-controls-input-prefix subtitles-sm"
       v-if="prefix"
     >
       {{ $msTranslate(prefix) }}
     </span>
-    <span
-      class="file-controls-input-suffix"
-      slot="end"
-      v-if="suffix"
+    <ion-text
+      v-if="!editing"
+      class="file-controls-input text-only subtitles-normal"
+      @click="onTextClick"
     >
-      {{ $msTranslate(suffix) }}
-    </span>
-  </ion-input>
+      {{ modelValue }}
+      <span v-if="suffix">{{ $msTranslate(suffix) }}</span>
+    </ion-text>
+    <ion-input
+      v-else
+      class="file-controls-input editing-input"
+      fill="outline"
+      ref="input"
+      :value="modelValue"
+      @ion-blur="onFocusChanged(false)"
+      @ion-focus="onFocusChanged(true)"
+      @ion-input="onChange($event.detail.value || '')"
+      @keyup.enter="blur"
+      @keyup.esc="blur"
+      :disabled="$props.disabled"
+    >
+      <span
+        class="file-controls-input-suffix"
+        slot="end"
+        v-if="suffix"
+      >
+        {{ $msTranslate(suffix) }}
+      </span>
+    </ion-input>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -125,6 +125,13 @@ async function blur(): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
+.file-controls-input-container {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 0.5rem;
+}
+
 .file-controls-input {
   margin-inline: 0px;
   margin-top: 0px;
@@ -158,6 +165,8 @@ async function blur(): Promise<void> {
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
+    min-width: 4rem;
+    width: 100%;
   }
 
   &:hover {
@@ -165,11 +174,11 @@ async function blur(): Promise<void> {
   }
 
   &-prefix {
-    margin-inline-end: 0.25rem;
+    color: var(--parsec-color-light-secondary-soft-text);
   }
 
   &-suffix {
-    margin-inline-start: 0.25rem;
+    margin-inline-start: 0.25rem !important;
   }
 }
 </style>
