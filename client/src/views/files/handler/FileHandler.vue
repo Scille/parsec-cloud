@@ -22,7 +22,7 @@
               slot="start"
               id="trigger-toggle-menu-button"
               :image="SidebarToggle"
-              @click="isSidebarMenuVisible() ? hideSidebarMenu() : resetSidebarMenu()"
+              @click="isSidebarMenuVisible() ? hideSidebarMenu() : showSidebarMenu()"
             />
             <div
               class="topbar-left-content"
@@ -210,6 +210,7 @@ import { downloadEntry, FileDetailsModal, FileHandlerAction, openDownloadConfirm
 import useHeaderControl from '@/services/headerControl';
 import { Env } from '@/services/environment';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
+import { SIDEBAR_MENU_DATA_KEY, SidebarDefaultData, SidebarSavedData } from '@/views/menu';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
 import FileEditor from '@/views/files/handler/editor/FileEditor.vue';
 import FileViewer from '@/views/files/handler/viewer/FileViewer.vue';
@@ -226,7 +227,7 @@ const detectedFileType = ref<DetectedFileType | null>(null);
 const loaded = ref(false);
 const atDateTime: Ref<DateTime | undefined> = ref(undefined);
 const { isHeaderVisible, toggleHeader: toggleMainHeader, showHeader, hideHeader } = useHeaderControl();
-const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu, hide: hideSidebarMenu, show: showSidebarMenu } = useSidebarMenu();
+const { isVisible: isSidebarMenuVisible, hide: hideSidebarMenu, show: showSidebarMenu } = useSidebarMenu();
 const handlerReadyRef = ref(false);
 const handlerComponent: Ref<Component | null> = shallowRef(null);
 const handlerMode = ref<FileHandlerMode | undefined>(undefined);
@@ -450,8 +451,13 @@ onMounted(async () => {
   handlerMode.value = getFileHandlerMode();
   await loadFile();
   // Set header hidden by default when entering handler
+
+  const savedSidebarData = await storageManager.retrieveComponentData<SidebarSavedData>(SIDEBAR_MENU_DATA_KEY, SidebarDefaultData);
+
+  console.log('savedSidebarData on handler mount', savedSidebarData);
+
   hideHeader();
-  if (isSidebarMenuVisible()) {
+  if (!savedSidebarData.hidden) {
     hideSidebarMenu();
     sidebarMenuVisibleOnMounted.value = true;
   }
