@@ -16,9 +16,15 @@ export default function useSidebarMenu(): any {
     computedWidth.value = storedWidth.value;
   }
 
-  function hide(): void {
+  function hideAndStore(): void {
     if (isVisible()) {
       storedWidth.value = computedWidth.value;
+      computedWidth.value = hiddenWidth;
+    }
+  }
+
+  function hideWithoutStoring(): void {
+    if (isVisible()) {
       computedWidth.value = hiddenWidth;
     }
   }
@@ -32,7 +38,8 @@ export default function useSidebarMenu(): any {
     storedWidth,
     isVisible,
     reset,
-    hide,
+    hideAndStore,
+    hideWithoutStoring,
     show,
   };
 }

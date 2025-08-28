@@ -224,7 +224,12 @@ const detectedFileType = ref<DetectedFileType | null>(null);
 const loaded = ref(false);
 const atDateTime: Ref<DateTime | undefined> = ref(undefined);
 const { isHeaderVisible, toggleHeader: toggleMainHeader, showHeader, hideHeader } = useHeaderControl();
-const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu, hide: hideSidebarMenu, show: showSidebarMenu } = useSidebarMenu();
+const {
+  isVisible: isSidebarMenuVisible,
+  reset: resetSidebarMenu,
+  hideWithoutStoring: hideSidebarMenu,
+  show: showSidebarMenu,
+} = useSidebarMenu();
 const handlerReadyRef = ref(false);
 const handlerComponent: Ref<Component | null> = shallowRef(null);
 const handlerMode = ref<FileHandlerMode | undefined>(undefined);
