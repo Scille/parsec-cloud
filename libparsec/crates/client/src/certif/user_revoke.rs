@@ -130,7 +130,7 @@ async fn do_server_command(
                 strictly_greater_than,
             ))
         }
-        Rep::AuthorNotAllowed { .. } => Err(CertifRevokeUserError::AuthorNotAllowed),
+        Rep::AuthorNotAllowed => Err(CertifRevokeUserError::AuthorNotAllowed),
         Rep::TimestampOutOfBallpark {
             server_timestamp,
             client_timestamp,
@@ -156,8 +156,8 @@ async fn do_server_command(
         // Unlike for the sharing, we didn't have retrieved the user on our side,
         // so this error can actually occur (this is only theoretical though, as the
         // user ID is supposed to have been obtained from certificates).
-        Rep::UserNotFound { .. } => Err(CertifRevokeUserError::UserNotFound),
-        bad_rep @ (Rep::InvalidCertificate { .. } | Rep::UnknownStatus { .. }) => {
+        Rep::UserNotFound => Err(CertifRevokeUserError::UserNotFound),
+        bad_rep @ (Rep::InvalidCertificate | Rep::UnknownStatus { .. }) => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
         }
     }

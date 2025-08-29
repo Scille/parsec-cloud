@@ -40,40 +40,41 @@
 ///
 /// The strategy to apply for each situation is:
 /// - A1: This is the by-the-book case of a sync conflict. A new file is created in
-///       `local`'s parent to store the conflicting local data, and `local` is
-///       overwritten by `remote`.
+///   `local`'s parent to store the conflicting local data, and `local` is
+///   overwritten by `remote`.
 /// - A2: A folder cannot be copied without modifying its children (otherwise the
-///       children's parent field would still refer to the original folder). On top
-///       of that a folder is not supposed to end up in conflict unless it type has change
-///       (i.e. `local` is a `folder`, but remote is a `file`), which is something the clients
-///        are never supposed to do.
-///        Hence we consider this as an unlikely corner-case and just overwrite `local` by
-///        `remote` (losing in the process any newly created child that hasn't been synchronized).
+///   children's parent field would still refer to the original folder). On top
+///   of that a folder is not supposed to end up in conflict unless it type has change
+///   (i.e. `local` is a `folder`, but remote is a `file`), which is something the clients
+///   are never supposed to do.
+///   Hence we consider this as an unlikely corner-case and just overwrite `local` by
+///   `remote` (losing in the process any newly created child that hasn't been synchronized).
 /// - B1: The entry being locked for update is a indicator it might have subsequent changes,
-///       hence now is not a good time to try to synchronize it. Instead we return a special
-///       status to tell the caller to retry later.
+///   hence now is not a good time to try to synchronize it. Instead we return a special
+///   status to tell the caller to retry later.
 /// - B2: In theory we could wait to acquire the parent update lock (folders are locked for a
-///       short time, unlike files which are locked for the whole time the file is opened).
-///       But may lead to unexpected behavior with the entry-change-type corner-case, so
-///       instead we follow a "sync operations never wait for update lock" strategy and
-///       just tell the caller to retry later.
+///   short time, unlike files which are locked for the whole time the file is opened).
+///   But may lead to unexpected behavior with the entry-change-type corner-case, so
+///   instead we follow a "sync operations never wait for update lock" strategy and
+///   just tell the caller to retry later.
 /// - C1/C2/C3: In all those case we can pretend we tried to access a bit earlier and hit
-///       the update lock being held, hence falling into the B1 case.
+///   the update lock being held, hence falling into the B1 case.
 /// - D1: This is a corner case, as a child is not accessible unless its parent is (otherwise
-///       how the child would have been modified in the first place ?).
-///       So we just settle the conflict by overwriting `local` with `remote`.
+///   how the child would have been modified in the first place ?).
+///   So we just settle the conflict by overwriting `local` with `remote`.
 /// - D2: This is also a corner case (as an entry is not supposed to have its type changed).
-///       Again, we take the easy route and just overwrite `local` with `remote`.
+///   Again, we take the easy route and just overwrite `local` with `remote`.
 /// - D3: This case is not possible (we are going to explain why), but seems plausible when
-//        a file child is moved to another parent while also having its content changed o_O.
-///       The trick is to consider how local changes are made:
-///       - Removing a locally modified file won't lead to this: this is because the
-///         remove operation also clears non-synced changes of the removed
-///         item (i.e. it doesn't just update the parent manifest's children).
-///       - Moving a file in local is an atomic operation (i.e. old parent, new parent and
-///         child are all modified at once) so the file always has a valid parent.
-///       From this we can deduce that we should always be able to get the name of the
-///       file in conflict from its parent \o/
+//    a file child is moved to another parent while also having its content changed o_O.
+///   The trick is to consider how local changes are made:
+///   - Removing a locally modified file won't lead to this: this is because the
+///     remove operation also clears non-synced changes of the removed
+///     item (i.e. it doesn't just update the parent manifest's children).
+///   - Moving a file in local is an atomic operation (i.e. old parent, new parent and
+///     child are all modified at once) so the file always has a valid parent.
+///
+///   From this we can deduce that we should always be able to get the name of the
+///   file in conflict from its parent \o/
 use std::sync::Arc;
 
 use libparsec_client_connection::{protocol::authenticated_cmds, ConnectionError};
@@ -158,7 +159,7 @@ pub async fn refresh_realm_checkpoint(ops: &WorkspaceOps) -> Result<(), Workspac
             } => (changes, current_checkpoint),
             // TODO: error handling !
             Rep::AuthorNotAllowed => return Err(WorkspaceSyncError::NotAllowed),
-            Rep::RealmNotFound { .. } => return Err(WorkspaceSyncError::NoRealm),
+            Rep::RealmNotFound => return Err(WorkspaceSyncError::NoRealm),
             bad_rep @ Rep::UnknownStatus { .. } => {
                 return Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
             }
@@ -974,7 +975,7 @@ async fn fetch_remote_manifest_last_version<M: RemoteManifest>(
             if items.len() != 1 || items[0].0 != entry_id {
                 return Err(anyhow::anyhow!("Unexpected server response: return ok status but with invalid items").into());
             }
-            let (_, key_index, author, version, timestamp, encrypted) =  items.into_iter().last().expect("already checked");
+            let (_, key_index, author, version, timestamp, encrypted) =  items.into_iter().next_back().expect("already checked");
 
             (needed_realm_certificate_timestamp, needed_common_certificate_timestamp, key_index, author, version, timestamp, encrypted)
         },
@@ -1052,7 +1053,7 @@ async fn fetch_remote_manifest_version<M: RemoteManifest>(
             if items.len() != 1 || items[0].0 != entry_id {
                 return Err(anyhow::anyhow!("Unexpected server response: return ok status but with invalid items").into());
             }
-            let (_, key_index, author, version, timestamp, encrypted) =  items.into_iter().last().expect("already checked");
+            let (_, key_index, author, version, timestamp, encrypted) =  items.into_iter().next_back().expect("already checked");
 
             (needed_realm_certificate_timestamp, needed_common_certificate_timestamp, key_index, author, version, timestamp, encrypted)
         },

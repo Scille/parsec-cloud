@@ -136,7 +136,7 @@ async fn create_realm_idempotent(
                     ballpark_client_late_offset,
                 })
             }
-            bad_rep @ (Rep::InvalidCertificate { .. } | Rep::UnknownStatus { .. }) => {
+            bad_rep @ (Rep::InvalidCertificate | Rep::UnknownStatus { .. }) => {
                 Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
             }
         };

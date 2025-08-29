@@ -142,7 +142,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
             let greeter_nonce = greeter_nonce.clone();
             move |req: protocol::invited_cmds::latest::invite_claimer_step::Req| {
                 match req.claimer_step {
-                    ClaimerStep::Number2GetNonce {} => {}
+                    ClaimerStep::Number2GetNonce => {}
                     e => panic!("Expected step 2 get nonce, found step {e:?}"),
                 };
 
@@ -204,7 +204,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
         // 4) `invite_claimer_step` signify trust
         |req: protocol::invited_cmds::latest::invite_claimer_step::Req| {
             match req.claimer_step {
-                ClaimerStep::Number4SignifyTrust {} => {}
+                ClaimerStep::Number4SignifyTrust => {}
                 e => panic!("Expected step 4 signify trust, found step {e:?}"),
             };
 
@@ -225,7 +225,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
         // 5) `invite_claimer_step` wait peer trust
         |req: protocol::invited_cmds::latest::invite_claimer_step::Req| {
             match req.claimer_step {
-                ClaimerStep::Number5WaitPeerTrust {} => {}
+                ClaimerStep::Number5WaitPeerTrust => {}
                 e => panic!("Expected step 5 wait peer trust, found step {e:?}"),
             };
 
@@ -279,7 +279,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
             let human_handle = human_handle.clone();
             move |req: protocol::invited_cmds::latest::invite_claimer_step::Req| {
                 match req.claimer_step {
-                    ClaimerStep::Number7GetPayload {} => {}
+                    ClaimerStep::Number7GetPayload => {}
                     e => panic!("Expected step 7 get payload, found step {e:?}"),
                 };
 
@@ -303,7 +303,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
         {
             move |req: protocol::invited_cmds::latest::invite_claimer_step::Req| {
                 match req.claimer_step {
-                    ClaimerStep::Number8Acknowledge {} => {}
+                    ClaimerStep::Number8Acknowledge => {}
                     e => panic!("Expected step 8 acknowledge, found step {e:?}"),
                 };
 

@@ -188,7 +188,7 @@ async fn unshare_do_server_command(
                 strictly_greater_than,
             ))
         }
-        Rep::AuthorNotAllowed { .. } => Err(CertifShareRealmError::AuthorNotAllowed),
+        Rep::AuthorNotAllowed => Err(CertifShareRealmError::AuthorNotAllowed),
         Rep::TimestampOutOfBallpark {
             server_timestamp,
             client_timestamp,
@@ -211,12 +211,12 @@ async fn unshare_do_server_command(
                 ballpark_client_late_offset,
             })
         }
-        Rep::RealmNotFound { .. } => Err(CertifShareRealmError::RealmNotFound),
+        Rep::RealmNotFound => Err(CertifShareRealmError::RealmNotFound),
         // Unlike for the sharing, we didn't have retrieved the user on our side,
         // so this error can actually occur (this is only theoretical though, as the
         // user ID is supposed to have been obtained from certificates).
-        Rep::RecipientNotFound { .. } => Err(CertifShareRealmError::RecipientNotFound),
-        bad_rep @ (Rep::InvalidCertificate { .. } | Rep::UnknownStatus { .. }) => {
+        Rep::RecipientNotFound => Err(CertifShareRealmError::RecipientNotFound),
+        bad_rep @ (Rep::InvalidCertificate | Rep::UnknownStatus { .. }) => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
         }
     }
@@ -318,8 +318,8 @@ async fn share_do_server_command(
                 last_realm_certificate_timestamp,
             ))
         }
-        Rep::AuthorNotAllowed { .. } => Err(CertifShareRealmError::AuthorNotAllowed),
-        Rep::RoleIncompatibleWithOutsider { .. } => {
+        Rep::AuthorNotAllowed => Err(CertifShareRealmError::AuthorNotAllowed),
+        Rep::RoleIncompatibleWithOutsider => {
             Err(CertifShareRealmError::RoleIncompatibleWithOutsider)
         }
         Rep::RecipientRevoked => Err(CertifShareRealmError::RecipientRevoked),
@@ -347,11 +347,11 @@ async fn share_do_server_command(
         }
         // Note this error should never occur in practice given we have already
         // made sure the workspace exists in the server.
-        Rep::RealmNotFound { .. } => Err(CertifShareRealmError::RealmNotFound),
+        Rep::RealmNotFound => Err(CertifShareRealmError::RealmNotFound),
         // Note this error should never occur in practice given we have already
         // retrieve the user on our side.
-        Rep::RecipientNotFound { .. } => Err(CertifShareRealmError::RecipientNotFound),
-        bad_rep @ (Rep::InvalidCertificate { .. } | Rep::UnknownStatus { .. }) => {
+        Rep::RecipientNotFound => Err(CertifShareRealmError::RecipientNotFound),
+        bad_rep @ (Rep::InvalidCertificate | Rep::UnknownStatus { .. }) => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
         }
     }

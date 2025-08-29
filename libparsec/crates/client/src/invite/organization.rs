@@ -172,7 +172,7 @@ pub async fn bootstrap_organization(
                 ballpark_client_late_offset,
             })
         }
-        rep @ Rep::InvalidCertificate { .. } => {
+        rep @ Rep::InvalidCertificate => {
             // TODO: log error
             Err(anyhow::anyhow!(
                 "Unexpected server response: {:?} (we sent invalid data ?)",
