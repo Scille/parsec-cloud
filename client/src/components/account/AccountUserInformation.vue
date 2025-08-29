@@ -22,6 +22,7 @@
       <ms-input
         class="account-login-content__input"
         v-model="firstName"
+        ref="firstNameInput"
         label="loginPage.inputFields.firstname"
         @on-enter-keyup="submit"
         :disabled="querying"
@@ -81,6 +82,7 @@ const lastName = ref<string>('');
 const firstName = ref<string>('');
 const emailInputRef = useTemplateRef<InstanceType<typeof MsInput>>('emailInput');
 const serverInputRef = useTemplateRef<InstanceType<typeof MsInput>>('serverInput');
+const firstNameInputRef = useTemplateRef<InstanceType<typeof MsInput>>('firstNameInput');
 const querying = ref(false);
 const error = ref<string>('');
 
@@ -98,9 +100,9 @@ const validInfo = computed(() => {
 });
 
 onMounted(async () => {
-  if (serverInputRef.value) {
-    await serverInputRef.value.validate(server.value);
-  }
+  await serverInputRef.value?.setFocus();
+  await serverInputRef.value?.validate(server.value);
+  await firstNameInputRef.value?.setFocus();
 });
 
 async function submit(): Promise<void> {

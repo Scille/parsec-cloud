@@ -114,6 +114,7 @@ const validInfo = computed(() => {
 onMounted(async () => {
   querying.value = false;
 
+  await serverInputRef.value?.setFocus();
   if (email.value.length > 0) {
     await emailInputRef.value?.validate(email.value);
     await passwordInputRef.value?.setFocus();
