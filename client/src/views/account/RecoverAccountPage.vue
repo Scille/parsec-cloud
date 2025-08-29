@@ -239,8 +239,10 @@ async function reset(): Promise<void> {
   error.value = '';
   resendDisabled.value = false;
   querying.value = false;
+  await serverInputRef.value?.setFocus();
   await serverInputRef.value?.validate(server.value);
   await emailInputRef.value?.validate(email.value);
+  await emailInputRef.value?.setFocus();
   await codeInputRef.value?.clear();
   await passwordInputRef.value?.clear();
 }

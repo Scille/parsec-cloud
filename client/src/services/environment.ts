@@ -107,16 +107,25 @@ const ENABLE_ACCOUNT_ENV_VARIABLE = 'PARSEC_APP_ENABLE_ACCOUNT';
 const ENABLE_ACCOUNT_AUTO_LOGIN_ENV_VARIABLE = 'PARSEC_APP_ENABLE_ACCOUNT_AUTO_LOGIN';
 
 function getAccountServer(): string {
+  let addr = ACCOUNT_DEFAULT_SERVER;
+
   if ((window as any).TESTING_ACCOUNT_SERVER) {
-    return (window as any).TESTING_ACCOUNT_SERVER;
-  }
-  if (import.meta.env[ACCOUNT_SERVER_ENV_VARIABLE]) {
-    return import.meta.env[ACCOUNT_SERVER_ENV_VARIABLE];
-  }
-  if (document.location.hostname.endsWith('.parsec.cloud')) {
+    addr = (window as any).TESTING_ACCOUNT_SERVER;
+  } else if (import.meta.env[ACCOUNT_SERVER_ENV_VARIABLE]) {
+    addr = import.meta.env[ACCOUNT_SERVER_ENV_VARIABLE];
+  } else if (document.location.hostname.endsWith('.parsec.cloud')) {
     return document.location.hostname;
+  } else {
+    addr = ACCOUNT_DEFAULT_SERVER;
   }
-  return ACCOUNT_DEFAULT_SERVER;
+  // replace whatever scheme with parsec3
+  addr = addr.replace(/^([a-z][a-z0-9\-.+]*:\/\/)/i, 'parsec3://');
+  // if it doesn't start with a scheme, we add parsec3://
+  if (!/^[a-z][a-z0-9-.+]*:\/\//i.test(addr)) {
+    addr = `parsec3://${addr}`;
+  }
+
+  return addr;
 }
 
 function isAccountEnabled(): boolean {
