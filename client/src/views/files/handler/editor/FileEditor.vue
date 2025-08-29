@@ -2,6 +2,12 @@
 
 <template>
   <div
+    id="unsaved-changes"
+    v-show="hasUnsavedChanges"
+  >
+    NOT SAVED
+  </div>
+  <div
     class="file-editor"
     id="file-editor"
     ref="fileEditor"
@@ -75,6 +81,7 @@ const documentType = ref<CryptpadDocumentType | null>(null);
 const cryptpadInstance = ref<Cryptpad | null>(null);
 const fileUrl = ref<string | null>(null);
 const error = ref('');
+const hasUnsavedChanges = ref(false);
 
 const { contentInfo, fileInfo } = defineProps<{
   contentInfo: FileContentInfo;
@@ -185,7 +192,7 @@ async function openFileWithCryptpad(): Promise<boolean> {
     editorConfig: {
       lang: longLocaleCodeToShort(I18n.getLocale()),
     },
-    autosave: 10,
+    autosave: (window as any).TESTING_EDITICS_SAVE_TIMEOUT ?? 10,
     events: {
       onSave: async (file: Blob, callback: () => void): Promise<void> => {
         // Handle save logic here
@@ -201,7 +208,7 @@ async function openFileWithCryptpad(): Promise<boolean> {
         callback();
       },
       onHasUnsavedChanges: (unsaved: boolean): void => {
-        console.log('Cryptpad unsaved changes:', unsaved);
+        hasUnsavedChanges.value = unsaved;
       },
     },
   };
