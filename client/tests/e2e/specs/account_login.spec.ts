@@ -133,6 +133,7 @@ msTest('Account create registration device and replace current', async ({ parsec
 msTest('Account create registration device and auto-register', async ({ parsecAccountLoggedIn }) => {
   msTest.setTimeout(180_000);
 
+  // Home is logged to a test account with the master secret
   const home = parsecAccountLoggedIn;
 
   const accountNameButton = parsecAccountLoggedIn.locator('.profile-header-homepage');
@@ -159,31 +160,35 @@ msTest('Account create registration device and auto-register', async ({ parsecAc
   await expect(home).toHavePageTitle('Users');
   await expect(home).toBeUserPage();
 
-  const secondTab = await home.openNewTab({ withParsecAccount: true, location: '/account', parsecAccountAutoLogin: false });
-  const loginContainer1 = secondTab.locator('.account-login-container');
-  const loginButton1 = loginContainer1.locator('.account-login-button').locator('ion-button');
-  await fillIonInput(loginContainer1.locator('ion-input').nth(1), email);
-  await fillIonInput(loginContainer1.locator('ion-input').nth(2), 'P@ssw0rd.');
-  await expect(loginButton1).toBeTrulyEnabled();
-  await loginButton1.click();
+  const secondTab = await home.openNewTab({ withParsecAccount: false });
   await expect(secondTab).toBeHomePage();
 
+  // The whole invitation process
   await addUser(home, secondTab, 'UserName', email, 'admin');
-  await secondTab.locator('.join-organization-modal').locator('#next-button').click();
 
-  await answerQuestion(secondTab, true, {
+  await logout(home);
+  await secondTab.release();
+
+  // List of devices properly updated with the new user
+  await expect(home.locator('.organization-list').locator('.organization-card')).toHaveCount(4);
+  await expect(home.locator('.organization-list').locator('.organization-card').nth(3).locator('.login-name')).toHaveText('UserName');
+  // Click on the new user
+  await home.locator('.organization-list').locator('.organization-card').nth(3).click();
+  await home.locator('#password-input').locator('input').fill('AVeryL0ngP@ssw0rd');
+  await home.locator('.login-button').click();
+  // Ask if we want to create the registration device, answer Yes
+  await answerQuestion(home, true, {
     expectedNegativeText: 'No',
     expectedPositiveText: 'Store to Parsec Account',
     expectedQuestionText: "This device is not stored in Parsec Account. Do you want to store it so that it'll be available everywhere?",
     expectedTitleText: 'Store this device to Parsec Account',
   });
-  await expect(secondTab).toBeWorkspacePage();
-  await expect(secondTab).toShowToast('The device has been stored in Parsec Account.', 'Success');
-
-  await secondTab.release();
+  await expect(home).toBeWorkspacePage();
+  // Confirmation that we indeed created the registration device
+  await expect(home).toShowToast('The device has been stored in Parsec Account.', 'Success');
   await logout(home);
 
-  // Opening a second tab with the same account, device should be present
+  // Opening a second tab with the same account, no testbed
   const newTab = await home.openNewTab({ skipTestbed: true, location: '/account', withParsecAccount: true, parsecAccountAutoLogin: false });
 
   const loginContainer = newTab.locator('.account-login-container');
@@ -194,6 +199,7 @@ msTest('Account create registration device and auto-register', async ({ parsecAc
   await loginButton.click();
   await expect(newTab).toBeHomePage();
 
+  // The device should have been created automatically from the registration device
   await expect(newTab.locator('.organization-list').locator('.organization-card')).toHaveCount(1);
   await expect(newTab.locator('.organization-list').locator('.organization-card').nth(0).locator('.login-name')).toHaveText('UserName');
   await newTab.locator('.organization-list').locator('.organization-card').nth(0).click();
