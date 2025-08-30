@@ -10,14 +10,32 @@
       {{ $msTranslate(error) }}
     </ms-report-text>
     <div class="account-login-content-list">
+      <ion-text
+        button
+        class="input-edit-button button-small"
+        :class="{ 'input-edit-button--active': isEditingServer }"
+        @click="toggleEditServer()"
+        :disabled="isEditingServer"
+      >
+        {{ isEditingServer ? $msTranslate('loginPage.inputFields.cancel') : $msTranslate('loginPage.inputFields.edit') }}
+      </ion-text>
       <ms-input
-        class="account-login-content__input"
+        v-show="!isServerParsec || isEditingServer"
+        class="login-server-input account-login-content__input"
+        :class="{ 'login-server-input-disabled': !isEditingServer }"
         ref="serverInput"
         v-model="server"
         label="loginPage.inputFields.server"
         @on-enter-keyup="submit"
         :validator="parsecAddrValidator"
-        :disabled="querying"
+        :disabled="!isEditingServer || querying"
+      />
+      <ms-input
+        v-if="!isEditingServer && isServerParsec"
+        class="login-server-input account-login-content__input login-server-input-disabled"
+        v-model="serverSimplified"
+        label="loginPage.inputFields.server"
+        :disabled="true"
       />
       <ms-input
         class="account-login-content__input"
@@ -62,7 +80,7 @@
 
 <script setup lang="ts">
 import { Env } from '@/services/environment';
-import { IonButton } from '@ionic/vue';
+import { IonButton, IonText } from '@ionic/vue';
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
 import { parsecAddrValidator, emailValidator } from '@/common/validators';
 import { MsInput, Validity, MsReportText, MsReportTheme, MsSpinner } from 'megashark-lib';
@@ -77,6 +95,12 @@ const emits = defineEmits<{
 }>();
 
 const server = ref<string>(Env.getAccountServer());
+const initialServerValue = ref<string>(Env.getAccountServer());
+const serverSimplified = ref<string>('saas-v3.parsec.cloud');
+const isServerParsec = computed(() => {
+  return server.value.includes('saas-v3.parsec.cloud');
+});
+const isEditingServer = ref(false);
 const email = ref<string>('');
 const lastName = ref<string>('');
 const firstName = ref<string>('');
@@ -104,6 +128,18 @@ onMounted(async () => {
   await serverInputRef.value?.validate(server.value);
   await firstNameInputRef.value?.setFocus();
 });
+
+async function toggleEditServer(): Promise<void> {
+  isEditingServer.value = !isEditingServer.value;
+  if (isEditingServer.value) {
+    isEditingServer.value = true;
+    serverInputRef.value?.setFocus();
+  } else {
+    server.value = initialServerValue.value;
+    isEditingServer.value = false;
+  }
+  await serverInputRef.value?.validate(server.value);
+}
 
 async function submit(): Promise<void> {
   querying.value = true;
@@ -138,7 +174,9 @@ async function submit(): Promise<void> {
   flex-direction: column;
   gap: 1rem;
   width: 100%;
+  position: relative;
 }
+
 .account-login-content-button {
   width: 100%;
   display: flex;

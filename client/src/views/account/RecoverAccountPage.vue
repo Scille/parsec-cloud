@@ -45,11 +45,31 @@
           v-show="step === Steps.Email"
           class="recover-account-step"
         >
+          <ion-text
+            button
+            class="input-edit-button button-small"
+            :class="{ 'input-edit-button--active': isEditingServer }"
+            @click="toggleEditServer()"
+            :disabled="isEditingServer"
+          >
+            {{ isEditingServer ? $msTranslate('loginPage.inputFields.cancel') : $msTranslate('loginPage.inputFields.edit') }}
+          </ion-text>
           <ms-input
+            v-show="!isServerParsec || isEditingServer"
+            class="login-server-input"
+            :class="{ 'login-server-input-disabled': !isEditingServer }"
             label="loginPage.inputFields.server"
             v-model="server"
             ref="serverInput"
+            :disabled="!isEditingServer"
             :validator="parsecAddrValidator"
+          />
+          <ms-input
+            v-if="!isEditingServer && isServerParsec"
+            class="login-server-input account-login-content__input login-server-input-disabled"
+            v-model="serverSimplified"
+            label="loginPage.inputFields.server"
+            :disabled="true"
           />
           <ms-input
             label="loginPage.inputFields.email"
@@ -147,7 +167,7 @@
 <script setup lang="ts">
 import { IonPage, IonContent, IonButton, IonIcon, IonText } from '@ionic/vue';
 import { home } from 'ionicons/icons';
-import { onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
+import { onMounted, onUnmounted, ref, useTemplateRef, computed } from 'vue';
 import { emailValidator, parsecAddrValidator } from '@/common/validators';
 import {
   MsInput,
@@ -177,6 +197,12 @@ const email = ref('');
 const code = ref<Array<string>>([]);
 const password = ref('');
 const server = ref(Env.getAccountServer());
+const initialServerValue = ref<string>(Env.getAccountServer());
+const serverSimplified = ref<string>('saas-v3.parsec.cloud');
+const isServerParsec = computed(() => {
+  return server.value.includes('saas-v3.parsec.cloud');
+});
+const isEditingServer = ref(false);
 const error = ref('');
 const resendDisabled = ref(false);
 const querying = ref(false);
@@ -204,6 +230,18 @@ const TITLES: Array<{ title?: Translatable; subtitle?: Translatable }> = [
   },
   {},
 ];
+
+async function toggleEditServer(): Promise<void> {
+  isEditingServer.value = !isEditingServer.value;
+  if (isEditingServer.value) {
+    isEditingServer.value = true;
+    serverInputRef.value?.setFocus();
+  } else {
+    server.value = initialServerValue.value;
+    isEditingServer.value = false;
+  }
+  await serverInputRef.value?.validate(server.value);
+}
 
 // Should be updated
 async function resendCode(): Promise<void> {
@@ -438,6 +476,11 @@ async function backToLogin(): Promise<void> {
   box-shadow: var(--parsec-shadow-soft);
   padding: 2rem;
   gap: 1rem;
+  position: relative;
+
+  .input-edit-button {
+    right: 2.25rem;
+  }
 
   &__text {
     width: 100%;

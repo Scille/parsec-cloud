@@ -6,13 +6,33 @@
     <div class="account-login-container">
       <div class="account-login-content">
         <div class="account-login-content-list">
+          <ion-text
+            button
+            class="input-edit-button button-small"
+            :class="{ 'input-edit-button--active': isEditingServer }"
+            @click="toggleEditServer()"
+            :disabled="isEditingServer"
+          >
+            {{ isEditingServer ? $msTranslate('loginPage.inputFields.cancel') : $msTranslate('loginPage.inputFields.edit') }}
+          </ion-text>
+
           <ms-input
-            class="account-login-content__input"
+            v-show="!isServerParsec || isEditingServer"
+            class="login-server-input account-login-content__input"
+            :class="{ 'login-server-input-disabled': !isEditingServer }"
             ref="serverInput"
             v-model="server"
             label="loginPage.inputFields.server"
             @on-enter-keyup="onLoginClicked()"
+            :disabled="!isEditingServer"
             :validator="parsecAddrValidator"
+          />
+          <ms-input
+            v-if="!isEditingServer && isServerParsec"
+            class="login-server-input account-login-content__input login-server-input-disabled"
+            v-model="serverSimplified"
+            label="loginPage.inputFields.server"
+            :disabled="true"
           />
           <!-- email -->
           <ms-input
@@ -93,6 +113,12 @@ const emits = defineEmits<{
 const email = ref<string>('');
 const password = ref<string>('');
 const server = ref<string>(Env.getAccountServer());
+const initialServerValue = ref<string>(Env.getAccountServer());
+const serverSimplified = ref<string>('saas-v3.parsec.cloud');
+const isServerParsec = computed(() => {
+  return server.value.includes('saas-v3.parsec.cloud');
+});
+const isEditingServer = ref(false);
 const emailInputRef = useTemplateRef<InstanceType<typeof MsInput>>('emailInput');
 const passwordInputRef = useTemplateRef<InstanceType<typeof MsPasswordInput>>('passwordInput');
 const serverInputRef = useTemplateRef<InstanceType<typeof MsInput>>('serverInput');
@@ -123,6 +149,18 @@ onMounted(async () => {
   }
   await serverInputRef.value?.validate(server.value);
 });
+
+async function toggleEditServer(): Promise<void> {
+  isEditingServer.value = !isEditingServer.value;
+  if (isEditingServer.value) {
+    isEditingServer.value = true;
+    serverInputRef.value?.setFocus();
+  } else {
+    server.value = initialServerValue.value;
+    isEditingServer.value = false;
+  }
+  await serverInputRef.value?.validate(server.value);
+}
 
 async function recoverAccount(): Promise<void> {
   await navigateTo(Routes.RecoverAccount, { skipHandle: true });
@@ -194,6 +232,7 @@ async function onLoginClicked(): Promise<void> {
       flex-direction: column;
       align-items: center;
       gap: 1.25rem;
+      position: relative;
     }
 
     &__input {

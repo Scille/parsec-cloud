@@ -67,3 +67,36 @@
 .create-account-page .code-input-list {
   gap: 0.5rem;
 }
+
+.account-login,
+.recover-account,
+.create-account-page {
+  .form-input-disabled.input-valid,
+  .form-input-disabled.input-default {
+    border: none !important;
+  }
+
+  .login-server-input {
+    position: relative;
+    z-index: 1;
+  }
+
+  .login-server-input .form-input-disabled {
+    height: 1.875rem;
+  }
+
+  .input-edit-button {
+    position: absolute;
+    right: 0.25rem;
+    z-index: 10;
+    width: fit-content;
+    text-align: right;
+    color: var(--parsec-color-light-primary-500);
+    padding: 0.125rem 0;
+
+    &:hover {
+      cursor: pointer;
+      text-decoration: underline;
+    }
+  }
+}
