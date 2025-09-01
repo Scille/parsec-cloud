@@ -223,6 +223,9 @@ function isEditicsEnabled(): boolean {
 }
 
 function getDefaultCryptpadServer(): string {
+  if ((window as any).TESTING_CRYPTPAD_SERVER) {
+    return (window as any).TESTING_CRYPTPAD_SERVER;
+  }
   if (import.meta.env[CRYPTPAD_SERVER_VARIABLE]) {
     return import.meta.env[CRYPTPAD_SERVER_VARIABLE];
   }
