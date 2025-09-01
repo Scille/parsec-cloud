@@ -1,6 +1,6 @@
 [project]
 name = "parsec-cloud"
-version = "3.5.0-a.6+dev"
+version = "3.5.0-a.6"
 description = "Secure file sharing in the cloud"
 authors = [{ name = "Scille SAS", email = "contact@scille.fr" }]
 # TODO: switch to PEP 639 when poetry support for PEP 639 is released:
