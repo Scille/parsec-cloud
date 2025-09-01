@@ -2276,7 +2276,6 @@ dependencies = [
  "hex-literal",
  "lazy_static",
  "libsodium-rs",
- "libsodium-sys-stable",
  "openssl",
  "pretty_assertions",
  "rand 0.8.5",

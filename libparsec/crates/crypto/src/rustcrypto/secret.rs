@@ -5,10 +5,7 @@ use crypto_box::aead::Aead;
 use crypto_secretbox::{AeadCore, Key, XSalsa20Poly1305};
 use digest::{KeyInit, Mac};
 use generic_array::{
-    typenum::{
-        consts::{U5, U64},
-        IsLessOrEqual, LeEq, NonZero,
-    },
+    typenum::{consts::U64, IsLessOrEqual, LeEq, NonZero},
     ArrayLength, GenericArray,
 };
 use rand::rngs::OsRng;
@@ -70,10 +67,6 @@ impl SecretKey {
 
     pub fn mac_512(&self, data: &[u8]) -> [u8; 64] {
         self.mac::<U64>(data).into()
-    }
-
-    pub fn sas_code(&self, data: &[u8]) -> [u8; 5] {
-        self.mac::<U5>(data).into()
     }
 }
 

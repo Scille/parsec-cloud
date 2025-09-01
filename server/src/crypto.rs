@@ -217,10 +217,6 @@ impl SecretKey {
         PyBytes::new(py, &self.0.mac_512(data))
     }
 
-    fn sas_code<'py>(&self, py: Python<'py>, data: &[u8]) -> Bound<'py, PyBytes> {
-        PyBytes::new(py, &self.0.sas_code(data))
-    }
-
     #[classmethod]
     fn generate_recovery_passphrase(_cls: Bound<'_, PyType>) -> (String, Self) {
         let (passphrase, key) = libparsec_crypto::SecretKey::generate_recovery_passphrase();
