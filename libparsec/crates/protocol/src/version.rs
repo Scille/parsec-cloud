@@ -23,6 +23,11 @@ use libparsec_types::prelude::*;
 // - v5.1 (Parsec 3.5+):
 //   * Add `allowed_client_agent` field to `events_listen` response
 //   * Add `account_vault_strategy` field to `events_listen` response
+// - v5.2 (Parsec 3.6+):
+//   * Incompatible change in SASCode algorithm and shared secret key. This doesn't actually
+//     impact the protocol (as SASCode and shared secret key are computed client-side),
+//     however a server supporting API 5.2 will reject any `(invite|greeter)_claimer_step`
+//     made by clients with API < 5.2.
 pub const API_V1_VERSION: &ApiVersion = &ApiVersion {
     version: 1,
     revision: 3,
@@ -41,7 +46,7 @@ pub const API_V4_VERSION: &ApiVersion = &ApiVersion {
 };
 pub const API_V5_VERSION: &ApiVersion = &ApiVersion {
     version: 5,
-    revision: 0,
+    revision: 2,
 };
 pub const API_LATEST_VERSION: &ApiVersion = API_V5_VERSION;
 
