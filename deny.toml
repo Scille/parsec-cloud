@@ -280,7 +280,8 @@ allow-git = ["https://github.com/FirelightFlagboy/wasm-bindgen.git"]
 
 [sources.allow-org]
 # 1 or more github.com organizations to allow git sources for
-github = ["Scille"]
+# cspell:words jedisct1
+github = ["Scille", "jedisct1"]
 # 1 or more gitlab.com organizations to allow git sources for
 gitlab = []
 # 1 or more bitbucket.org organizations to allow git sources for

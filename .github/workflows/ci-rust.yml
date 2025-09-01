@@ -207,7 +207,7 @@ jobs:
           echo "::add-matcher::.github/custom-problem-matchers/cargo-deny.json"
           # cargo-deny outputs the report on stderr and it needs to be redirected to stdout for the problem matcher to work.
           # Need to run with `all-features` else it will not scan optional dependencies enabled by features
-          cargo deny --color=never check --hide-inclusion-graph --show-stats --all-features 2>&1
+          cargo deny --all-features --color=never check --hide-inclusion-graph --show-stats 2>&1
           echo "::remove-matcher owner=cargo-deny::"
         timeout-minutes: 2
 
