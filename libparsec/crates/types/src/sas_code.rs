@@ -133,7 +133,12 @@ impl SASCode {
         // Digest size of 5 bytes so we can split it between two 20bits SAS
         // Note we have to store is as a 8bytes array to be able to convert it into u64
         let mut combined_hmac = [0; 8];
-        combined_hmac[3..8].copy_from_slice(&shared_secret_key.sas_code(&combined_nonce));
+        // Blake2b is technically able to produce a digest of any size between 1 and 64 bytes,
+        // however libsodium only allows a minimum of 16 bytes.
+        // We need only 5 bytes here, but it's perfectly safe to truncate a larger digest.
+        // Hence we just compute a 64 bytes digest (most convenient size since it is already
+        // used elsewhere in the codebase).
+        combined_hmac[3..8].copy_from_slice(&shared_secret_key.mac_512(&combined_nonce)[..5]);
         let hmac_as_int = u64::from_be_bytes(combined_hmac);
 
         let claimer_part_as_int = (hmac_as_int & SAS_CODE_MASK as u64) as u32;

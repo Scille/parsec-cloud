@@ -64,16 +64,6 @@ test_msgpack_serialization!(
 );
 
 #[test]
-fn sas_code() {
-    let sk = SecretKey::from(hex!(
-        "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
-    ));
-    let data = b"all your base are belong to us";
-    let hmac = sk.sas_code(data);
-    assert_eq!(hmac, hex!("a0f507f4be"));
-}
-
-#[test]
 fn mac_512() {
     let sk = SecretKey::from(hex!(
         "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
