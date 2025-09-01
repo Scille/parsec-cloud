@@ -16,12 +16,14 @@ from parsec._parsec import (
     authenticated_cmds,
     invited_cmds,
 )
+from parsec.asgi.rpc import CustomHttpStatus
 from parsec.components.invite import NotReady
 from parsec.events import EventGreetingAttemptReady
 from tests.common import (
     Backend,
     CoolorgRpcClients,
     HttpCommonErrorsTester,
+    RpcTransportError,
     ShamirOrgRpcClients,
     bob_becomes_admin_and_changes_alice,
 )
@@ -73,7 +75,6 @@ async def greeter_wait_peer_public_key(
 
 async def test_invited_invite_claimer_step_ok(
     coolorg: CoolorgRpcClients,
-    backend: Backend,
     greeting_attempt: GreetingAttemptID,
     greeter_wait_peer_public_key: PublicKey,
 ) -> None:
@@ -336,3 +337,31 @@ async def test_invited_invite_claimer_step_http_common_errors(
         )
 
     await invited_http_common_errors_tester(do)
+
+
+async def test_invited_invite_claimer_client_uses_legacy_sas_code_algorithm(
+    coolorg: CoolorgRpcClients,
+    greeting_attempt: GreetingAttemptID,
+    greeter_wait_peer_public_key: PublicKey,
+) -> None:
+    claimer_key = PrivateKey.generate()
+    claimer_step = invited_cmds.latest.invite_claimer_step.ClaimerStepNumber0WaitPeer(
+        public_key=claimer_key.public_key
+    )
+    expected_greeter_step = invited_cmds.latest.invite_claimer_step.GreeterStepNumber0WaitPeer(
+        public_key=greeter_wait_peer_public_key
+    )
+
+    coolorg.invited_alice_dev3.headers["Api-Version"] = "5.1"
+    with pytest.raises(RpcTransportError) as ctx:
+        rep = await coolorg.invited_alice_dev3.invite_claimer_step(
+            greeting_attempt=greeting_attempt, claimer_step=claimer_step
+        )
+    (response,) = ctx.value.args
+    assert response.status_code == CustomHttpStatus.UnsupportedApiVersion.value
+
+    coolorg.invited_alice_dev3.headers["Api-Version"] = "5.2"
+    rep = await coolorg.invited_alice_dev3.invite_claimer_step(
+        greeting_attempt=greeting_attempt, claimer_step=claimer_step
+    )
+    assert rep == invited_cmds.latest.invite_claimer_step.RepOk(greeter_step=expected_greeter_step)

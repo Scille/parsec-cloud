@@ -14,12 +14,14 @@ from parsec._parsec import (
     authenticated_cmds,
     invited_cmds,
 )
+from parsec.asgi.rpc import CustomHttpStatus
 from parsec.components.invite import NotReady
 from parsec.events import EventGreetingAttemptJoined
 from tests.common import (
     Backend,
     CoolorgRpcClients,
     HttpCommonErrorsTester,
+    RpcTransportError,
     ShamirOrgRpcClients,
     bob_becomes_admin,
     bob_becomes_admin_and_changes_alice,
@@ -349,3 +351,35 @@ async def test_authenticated_invite_greeter_step_http_common_errors(
         )
 
     await authenticated_http_common_errors_tester(do)
+
+
+async def test_authenticated_invite_greeter_client_uses_legacy_sas_code_algorithm(
+    coolorg: CoolorgRpcClients,
+    greeting_attempt: GreetingAttemptID,
+    claimer_wait_peer_public_key: PublicKey,
+) -> None:
+    greeter_key = PrivateKey.generate()
+    greeter_step = authenticated_cmds.latest.invite_greeter_step.GreeterStepNumber0WaitPeer(
+        public_key=greeter_key.public_key
+    )
+    expected_claimer_step = (
+        authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber0WaitPeer(
+            public_key=claimer_wait_peer_public_key
+        )
+    )
+
+    coolorg.alice.headers["Api-Version"] = "5.1"
+    with pytest.raises(RpcTransportError) as ctx:
+        rep = await coolorg.alice.invite_greeter_step(
+            greeting_attempt=greeting_attempt, greeter_step=greeter_step
+        )
+    (response,) = ctx.value.args
+    assert response.status_code == CustomHttpStatus.UnsupportedApiVersion.value
+
+    coolorg.alice.headers["Api-Version"] = "5.2"
+    rep = await coolorg.alice.invite_greeter_step(
+        greeting_attempt=greeting_attempt, greeter_step=greeter_step
+    )
+    assert rep == authenticated_cmds.latest.invite_greeter_step.RepOk(
+        claimer_step=expected_claimer_step
+    )
