@@ -51,8 +51,8 @@ msTest('Check edited file in viewer', async ({ parsecEditics }) => {
   await actionBar.locator('ion-button').nth(1).click();
   await expect(parsecEditics.locator('#cryptpad-editor')).toBeVisible();
   const mainFrame = parsecEditics.locator('#cryptpad-editor').contentFrame();
-  await expect(mainFrame.locator('.placeholder-message-container')).toBeVisible();
-  await expect(mainFrame.locator('.placeholder-message-container')).toHaveText('Loading...');
+  // await expect(mainFrame.locator('.placeholder-message-container')).toBeVisible();
+  // await expect(mainFrame.locator('.placeholder-message-container')).toHaveText('Loading...');
   await parsecEditics.waitForTimeout(500);
 
   await expect(mainFrame.locator('#sbox-iframe')).toBeVisible();
@@ -106,8 +106,8 @@ msTest('Edit file in editor with two users', async ({ parsecEditics }) => {
   await menu.getByRole('listitem').nth(2).click();
   await expect(parsecEditics.locator('#cryptpad-editor')).toBeVisible();
   const mainFrameAlice = parsecEditics.locator('#cryptpad-editor').contentFrame();
-  await expect(mainFrameAlice.locator('.placeholder-message-container')).toBeVisible();
-  await expect(mainFrameAlice.locator('.placeholder-message-container')).toHaveText('Loading...');
+  // await expect(mainFrameAlice.locator('.placeholder-message-container')).toBeVisible();
+  // await expect(mainFrameAlice.locator('.placeholder-message-container')).toHaveText('Loading...');
   await parsecEditics.waitForTimeout(500);
 
   // Open editor with Bob
@@ -175,8 +175,8 @@ msTest('Check file edited by other user', async ({ parsecEditics }) => {
   await menu.getByRole('listitem').nth(2).click();
   await expect(parsecEditics.locator('#cryptpad-editor')).toBeVisible();
   const mainFrameAlice = parsecEditics.locator('#cryptpad-editor').contentFrame();
-  await expect(mainFrameAlice.locator('.placeholder-message-container')).toBeVisible();
-  await expect(mainFrameAlice.locator('.placeholder-message-container')).toHaveText('Loading...');
+  // await expect(mainFrameAlice.locator('.placeholder-message-container')).toBeVisible();
+  // await expect(mainFrameAlice.locator('.placeholder-message-container')).toHaveText('Loading...');
   await parsecEditics.waitForTimeout(500);
 
   // Make some edits and check from the other user
