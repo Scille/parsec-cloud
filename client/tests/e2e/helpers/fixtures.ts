@@ -3,6 +3,7 @@
 import { Locator, TestInfo, test as base } from '@playwright/test';
 import { expect } from '@tests/e2e/helpers/assertions';
 import { MockBms, MockClientAreaOverload, MockRouteOptions } from '@tests/e2e/helpers/bms';
+import { CRYPTPAD_SERVER } from '@tests/e2e/helpers/cryptpad';
 import { DEFAULT_USER_INFORMATION, generateDefaultOrganizationInformation, generateDefaultUserData } from '@tests/e2e/helpers/data';
 import { mockExternalWebsites } from '@tests/e2e/helpers/externalWebsites';
 import { dropTestbed, initTestBed } from '@tests/e2e/helpers/testbed';
@@ -69,6 +70,7 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
       }
       if (options.withEditics) {
         (window as any).TESTING_ENABLE_EDITICS = true;
+        (window as any).TESTING_CRYPTPAD_SERVER = `https://${CRYPTPAD_SERVER}`;
       }
       if (options.withCustomBranding) {
         (window as any).TESTING_ENABLE_CUSTOM_BRANDING = true;
