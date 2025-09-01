@@ -162,7 +162,6 @@ export function getDocumentTypeFromExtension(extension: string): CryptpadDocumen
     case 'txt':
     case 'rtf':
       return CryptpadDocumentType.Pad;
-    case 'csv':
     case 'xlsx':
       return CryptpadDocumentType.Sheet;
     case 'docx':

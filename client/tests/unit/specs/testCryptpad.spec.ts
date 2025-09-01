@@ -257,7 +257,6 @@ describe('CryptPad Service', () => {
     });
 
     it('should return correct document type for spreadsheet files', () => {
-      expectExtensionToGiveDocumentType('csv', CryptpadDocumentType.Sheet);
       expectExtensionToGiveDocumentType('xlsx', CryptpadDocumentType.Sheet);
       expectExtensionToGiveDocumentType('XLSX', CryptpadDocumentType.Sheet);
     });
@@ -300,7 +299,6 @@ describe('CryptPad Service', () => {
 
     it('should return true for enabled document types', () => {
       expectDocumentTypeToBeEnabled('txt', true);
-      expectDocumentTypeToBeEnabled('csv', true);
       expectDocumentTypeToBeEnabled('docx', true);
       expectDocumentTypeToBeEnabled('pptx', true);
       expectDocumentTypeToBeEnabled('js', true);
