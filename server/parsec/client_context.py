@@ -112,6 +112,11 @@ class InvitedClientContext:
             api_version=self.settled_api_version,
         )
 
+    def unsupported_api_version_abort(self) -> NoReturn:
+        from parsec.asgi.rpc import _handshake_abort_unsupported_api_version
+
+        _handshake_abort_unsupported_api_version()
+
 
 @dataclass(slots=True)
 class AuthenticatedClientContext:
@@ -168,6 +173,11 @@ class AuthenticatedClientContext:
             CustomHttpStatus.UserRevoked,
             api_version=self.settled_api_version,
         )
+
+    def unsupported_api_version_abort(self) -> NoReturn:
+        from parsec.asgi.rpc import _handshake_abort_unsupported_api_version
+
+        _handshake_abort_unsupported_api_version()
 
 
 @dataclass(slots=True)

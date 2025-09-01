@@ -284,6 +284,14 @@ def _handshake_abort_bad_content(api_version: ApiVersion) -> NoReturn:
     _handshake_abort(CustomHttpStatus.BadContentTypeOrInvalidBodyOrUnknownCommand, api_version)
 
 
+def _handshake_abort_unsupported_api_version() -> NoReturn:
+    supported_api_versions = ";".join(str(api_version) for api_version in SUPPORTED_API_VERSIONS)
+    raise HTTPException(
+        status_code=CustomHttpStatus.UnsupportedApiVersion.value,
+        headers={"Supported-Api-Versions": supported_api_versions},
+    )
+
+
 @dataclass
 class ParsedAuthHeaders:
     organization_id: OrganizationID
@@ -317,13 +325,7 @@ def _parse_auth_headers_or_abort(
             SUPPORTED_API_VERSIONS, [client_api_version]
         )
     except (ValueError, IncompatibleAPIVersionsError):
-        supported_api_versions = ";".join(
-            str(api_version) for api_version in SUPPORTED_API_VERSIONS
-        )
-        raise HTTPException(
-            status_code=CustomHttpStatus.UnsupportedApiVersion.value,
-            headers={"Supported-Api-Versions": supported_api_versions},
-        )
+        _handshake_abort_unsupported_api_version()
 
     # From now on the version is settled, our reply must have the `Api-Version` header
 

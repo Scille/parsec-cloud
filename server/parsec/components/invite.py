@@ -12,6 +12,7 @@ from enum import auto
 from jinja2 import Environment
 
 from parsec._parsec import (
+    ApiVersion,
     CancelledGreetingAttemptReason,
     DateTime,
     DeviceID,
@@ -44,6 +45,9 @@ UserOnlineStatus = invited_cmds.latest.invite_info.UserOnlineStatus
 UserGreetingAdministrator = invited_cmds.latest.invite_info.UserGreetingAdministrator
 InviteInfoInvitationCreatedBy = invited_cmds.latest.invite_info.InvitationCreatedBy
 InviteListInvitationCreatedBy = authenticated_cmds.latest.invite_list.InvitationCreatedBy
+
+
+NEW_SAS_CODE_ALGORITHM_INTRODUCED_IN_VERSION = ApiVersion(version=5, revision=2)
 
 
 @dataclass(slots=True)
@@ -1166,6 +1170,9 @@ class BaseInviteComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.invite_greeter_step.Req,
     ) -> authenticated_cmds.latest.invite_greeter_step.Rep:
+        if client_ctx.client_api_version < NEW_SAS_CODE_ALGORITHM_INTRODUCED_IN_VERSION:
+            client_ctx.unsupported_api_version_abort()
+
         step_index, greeter_data, load_claimer_data = process_greeter_step(req.greeter_step)
         outcome = await self.greeter_step(
             now=DateTime.now(),
@@ -1233,6 +1240,9 @@ class BaseInviteComponent:
         client_ctx: InvitedClientContext,
         req: invited_cmds.latest.invite_claimer_step.Req,
     ) -> invited_cmds.latest.invite_claimer_step.Rep:
+        if client_ctx.client_api_version < NEW_SAS_CODE_ALGORITHM_INTRODUCED_IN_VERSION:
+            client_ctx.unsupported_api_version_abort()
+
         step_index, claimer_data, load_greeter_data = process_claimer_step(req.claimer_step)
         outcome = await self.claimer_step(
             now=DateTime.now(),
