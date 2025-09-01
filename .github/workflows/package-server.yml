@@ -103,7 +103,7 @@ jobs:
         timeout-minutes: 3
 
       - name: Build wheel
-        uses: pypa/cibuildwheel@352e01339f0a173aa2a3eb57f01492e341e83865  # pin v3.1.3
+        uses: pypa/cibuildwheel@c923d83ad9c1bc00211c5041d0c3f73294ff88f6  # pin v3.1.4
         with:
           package-dir: server
           output-dir: dist
@@ -121,7 +121,7 @@ jobs:
           yq --null-input ".${{ matrix.platform }}.$(uname -m).server = \"$(cd dist; ls *.whl | head -n 1)\"" | tee dist/artifacts.yml
 
       # Install syft
-      - uses: taiki-e/install-action@ad95d4e02e061d4390c4b66ef5ed56c7fee3d2ce # pin v2.58.17
+      - uses: taiki-e/install-action@14083e64ac8cf1f5e54356df00b9779b23e192a1 # pin v2.58.29
         with:
           tool: syft@0.84.0
 
