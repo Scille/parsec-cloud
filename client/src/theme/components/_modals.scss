@@ -298,6 +298,15 @@
     }
   }
 
+  &:has(.sequester-container)::part(content) {
+    min-width: 33.125rem !important;
+
+    @include ms.responsive-breakpoint('sm') {
+      min-width: 100%;
+      max-width: 100%;
+    }
+  }
+
   .page-modal-container {
     padding: 2rem;
     display: flex;
@@ -367,11 +376,16 @@
   .created-page-footer {
     display: flex;
     justify-content: flex-end;
-    margin-top: 2.5rem;
+    align-items: center;
+    margin-top: 2rem;
 
     .modal-footer-buttons {
       display: flex;
       gap: 1rem;
+    }
+
+    ion-icon {
+      font-size: 1rem !important;
     }
   }
 
