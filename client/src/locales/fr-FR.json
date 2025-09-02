@@ -2389,6 +2389,13 @@
         "actions": {
             "backToFiles": "Retour aux fichiers",
             "retry": "Recharger la page"
+        },
+        "saving": {
+            "unsaved": "Modifications non sauvegardées",
+            "saving": "Enregistrement...",
+            "saved": "Fichier sauvegardé",
+            "tooltipSaved": "Ce fichier est synchronisé avec le serveur.",
+            "tooltipUnsaved": "Les modifications ne sont pas encore synchronisées sur le serveur."
         }
     },
     "openFallback": {

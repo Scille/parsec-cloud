@@ -68,6 +68,7 @@ import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { Env } from '@/services/environment';
 import { CryptpadDocumentType, Cryptpad, getDocumentTypeFromExtension, CryptpadError, CryptpadErrorCode } from '@/services/cryptpad';
 import { longLocaleCodeToShort } from '@/services/translation';
+import { SaveState } from '@/views/files/handler/editor';
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const fileEditorRef = useTemplateRef('fileEditor');
@@ -75,6 +76,7 @@ const documentType = ref<CryptpadDocumentType | null>(null);
 const cryptpadInstance = ref<Cryptpad | null>(null);
 const fileUrl = ref<string | null>(null);
 const error = ref('');
+const isSaving = ref(false);
 
 const { contentInfo, fileInfo } = defineProps<{
   contentInfo: FileContentInfo;
@@ -84,6 +86,7 @@ const { contentInfo, fileInfo } = defineProps<{
 const emits = defineEmits<{
   (event: 'fileLoaded'): void;
   (event: 'fileError'): void;
+  (event: 'onSaveStateChange', saveState: SaveState): void;
 }>();
 
 onMounted(async () => {
@@ -188,6 +191,8 @@ async function openFileWithCryptpad(): Promise<boolean> {
     autosave: 10,
     events: {
       onSave: async (file: Blob, callback: () => void): Promise<void> => {
+        isSaving.value = true;
+        emits('onSaveStateChange', SaveState.saving);
         // Handle save logic here
         const openResult = await openFile(workspaceHandle, documentPath, { write: true, truncate: true });
 
@@ -199,9 +204,18 @@ async function openFileWithCryptpad(): Promise<boolean> {
         await writeFile(workspaceHandle, fd, 0, new Uint8Array(arrayBuffer));
         await closeFile(workspaceHandle, fd);
         callback();
+        setTimeout(() => {
+          if (isSaving.value === true) {
+            isSaving.value = false;
+            emits('onSaveStateChange', SaveState.saved);
+          }
+        }, 1000);
       },
       onHasUnsavedChanges: (unsaved: boolean): void => {
-        console.log('Cryptpad unsaved changes:', unsaved);
+        if (unsaved) {
+          isSaving.value = false;
+          emits('onSaveStateChange', SaveState.unsaved);
+        }
       },
     },
   };
