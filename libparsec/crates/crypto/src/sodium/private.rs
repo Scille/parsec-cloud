@@ -47,10 +47,18 @@ impl PrivateKey {
         open_sealed_box(ciphered, &pk, &sk).map_err(|_| CryptoError::Decryption)
     }
 
-    pub fn generate_shared_secret_key(&self, peer_public_key: &PublicKey) -> SecretKey {
+    pub fn generate_shared_secret_key(
+        &self,
+        peer_public_key: &PublicKey,
+    ) -> Result<SecretKey, CryptoError> {
+        // libsodium_rs::crypto_kx::server_session_keys(server_pk, server_sk, client_pk)
+        // let curve25519::scalarmult(self.0.as_bytes(), peer_public_key.0.as_bytes())
+        //     .map(SecretKey::from)
+        //     .expect("Failed to compute shared key");
+
         curve25519::scalarmult(self.0.as_bytes(), peer_public_key.0.as_bytes())
             .map(SecretKey::from)
-            .expect("Failed to compute shared key")
+            .map_err(|e| CryptoError::SharedSecretKey(e.to_string()))
     }
 
     pub fn to_bytes(&self) -> [u8; Self::SIZE] {

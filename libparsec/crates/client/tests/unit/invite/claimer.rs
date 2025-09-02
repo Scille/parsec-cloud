@@ -188,8 +188,11 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
 
     p_assert_eq!(HashDigest::from_data(&claimer_nonce), claimer_hashed_nonce);
 
-    let shared_secret_key =
-        Arc::new(greeter_private_key.generate_shared_secret_key(&claimer_public_key));
+    let shared_secret_key = Arc::new(
+        greeter_private_key
+            .generate_shared_secret_key(&claimer_public_key)
+            .unwrap(),
+    );
     let (expected_claimer_sas, expected_greeter_sas) =
         SASCode::generate_sas_codes(&claimer_nonce, &greeter_nonce, &shared_secret_key);
 

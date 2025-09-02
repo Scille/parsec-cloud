@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use hex_literal::hex;
-use pretty_assertions::assert_eq;
+use pretty_assertions::{assert_eq, assert_matches};
 use serde_test::{assert_tokens, Token};
 
 use super::{
@@ -46,16 +46,33 @@ fn generate_shared_secret_key() {
         "0cfa61afc1ce40d7e44f512d5c718ec2d4a9caa6aaaa1ea43b96db57ac61612d"
     ));
 
-    let shared_key = privkey1.generate_shared_secret_key(&privkey2.public_key());
+    let shared_key = privkey1
+        .generate_shared_secret_key(&privkey2.public_key())
+        .unwrap();
     assert_eq!(shared_key, expected_shared_key);
 
-    let inv_shared_key = privkey2.generate_shared_secret_key(&privkey1.public_key());
+    let inv_shared_key = privkey2
+        .generate_shared_secret_key(&privkey1.public_key())
+        .unwrap();
     assert_eq!(inv_shared_key, expected_shared_key);
 
     // Make sure the shared key works as intended
     let encrypted = shared_key.encrypt(b"Hello, world !");
     let decrypted = inv_shared_key.decrypt(&encrypted).unwrap();
     assert_eq!(&decrypted, b"Hello, world !");
+
+    // Shared secret key generation is based on libsodium's `crypto_scalarmult`,
+    // which itself uses `x25519` Diffie-Hellman, in which an all-zero key cause
+    // issue with "contributory" behavior (aka that each party contributed a public
+    // value which increased the security of the resulting shared secret).
+    // See https://vnhacker.blogspot.com/2015/09/why-not-validating-curve25519-public.html
+    let bad_pub_key = PublicKey::from(hex!(
+        "0000000000000000000000000000000000000000000000000000000000000000"
+    ));
+    assert_matches!(
+        privkey1.generate_shared_secret_key(&bad_pub_key),
+        Err(CryptoError::SharedSecretKey(_)),
+    );
 }
 
 #[platform::test]

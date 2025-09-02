@@ -134,6 +134,7 @@ x25519-dalek = { workspace = true, features = [
     "alloc",
     "zeroize",
     "precomputed-tables",
+    "static_secrets",
 ] } # Optional rustcrypto dep
 crypto_secretbox = { workspace = true, features = [
     "alloc",

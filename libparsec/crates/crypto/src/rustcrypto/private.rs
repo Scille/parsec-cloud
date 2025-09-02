@@ -97,7 +97,7 @@ use crypto_box::KEY_SIZE;
 use rand::rngs::OsRng;
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
-use x25519_dalek::x25519;
+use x25519_dalek::StaticSecret;
 
 use crate::{CryptoError, SecretKey};
 
@@ -135,8 +135,19 @@ impl PrivateKey {
         sealed_box::open(ciphered, &self.0).ok_or(CryptoError::Decryption)
     }
 
-    pub fn generate_shared_secret_key(&self, peer_public_key: &PublicKey) -> SecretKey {
-        SecretKey::from(x25519(self.0.to_bytes(), peer_public_key.0.to_bytes()))
+    pub fn generate_shared_secret_key(
+        &self,
+        peer_public_key: &PublicKey,
+    ) -> Result<SecretKey, CryptoError> {
+        let static_secret: StaticSecret = self.0.to_bytes().into();
+        let shared_secret = static_secret.diffie_hellman(&peer_public_key.0.to_bytes().into());
+        if !shared_secret.was_contributory() {
+            // Error message taken from libsodium-rs
+            return Err(CryptoError::SharedSecretKey(
+                "curve25519 scalarmult failed (result may be all zeros)".to_string(),
+            ));
+        }
+        Ok(SecretKey::from(shared_secret.to_bytes()))
     }
 
     pub fn to_bytes(&self) -> [u8; KEY_SIZE] {

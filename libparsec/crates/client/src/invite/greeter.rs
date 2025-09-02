@@ -269,6 +269,8 @@ pub enum GreetInProgressError {
         timestamp: DateTime,
     },
     #[error(transparent)]
+    CorruptedSharedSecretKey(CryptoError),
+    #[error(transparent)]
     CorruptedInviteUserData(DataError),
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
     TimestampOutOfBallpark {
@@ -543,7 +545,9 @@ impl BaseGreetInitialCtx {
             result?
         };
 
-        let shared_secret_key = greeter_private_key.generate_shared_secret_key(&claimer_public_key);
+        let shared_secret_key = greeter_private_key
+            .generate_shared_secret_key(&claimer_public_key)
+            .map_err(GreetInProgressError::CorruptedSharedSecretKey)?;
         let greeter_nonce: Bytes = generate_sas_code_nonce().into();
 
         let claimer_hashed_nonce = {

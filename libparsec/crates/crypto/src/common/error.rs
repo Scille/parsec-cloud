@@ -22,6 +22,8 @@ pub enum CryptoError {
     SequesterPrivateKeyDer(String),
     #[error("Invalid SequesterPublicKeyDer {0}")]
     SequesterPublicKeyDer(String),
+    #[error("Invalid shared secret key: {0}")]
+    SharedSecretKey(String),
 }
 
 pub type CryptoResult<T> = Result<T, CryptoError>;

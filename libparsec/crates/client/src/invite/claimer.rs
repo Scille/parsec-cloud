@@ -72,6 +72,8 @@ pub enum ClaimInProgressError {
         timestamp: DateTime,
     },
     #[error(transparent)]
+    CorruptedSharedSecretKey(CryptoError),
+    #[error(transparent)]
     CorruptedConfirmation(DataError),
     #[error("Operation cancelled")]
     Cancelled,
@@ -855,7 +857,9 @@ impl BaseClaimInitialCtx {
 
         let claimer_nonce = generate_sas_code_nonce();
         let hashed_nonce = HashDigest::from_data(&claimer_nonce);
-        let shared_secret_key = claimer_private_key.generate_shared_secret_key(&greeter_public_key);
+        let shared_secret_key = claimer_private_key
+            .generate_shared_secret_key(&greeter_public_key)
+            .map_err(ClaimInProgressError::CorruptedSharedSecretKey)?;
         {
             let greeter_step = run_claimer_step_until_ready(
                 &self.cmds,
