@@ -53,6 +53,8 @@ JsString
 {{ js_val }}.as_slice()
 {%- elif type.kind == "ref" and type.elem.kind == "set" -%}
 {{ js_val }}.as_ref()
+{%- elif type.kind == "optional" and type.elem.kind == "ref" and type.elem.elem.kind == "str" -%}{# needed for Option<String> -> Option<&str> #}
+{{ js_val }}.as_deref()
 {%- elif type.kind == "optional" and type.elem.kind == "ref" -%}
 {{ js_val }}.as_ref()
 {%- elif type.kind == "ref" -%}
