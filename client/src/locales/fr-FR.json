@@ -372,7 +372,8 @@
             "fullname": "Nom complet",
             "email": "Email",
             "server": "Choix du serveur",
-            "authentication": "Méthode d'authentification"
+            "authentication": "Méthode d'authentification",
+            "sequester": "Clé de séquestre"
         },
         "button": {
             "next": "Suivant",
@@ -380,7 +381,8 @@
             "create": "Créer l'organisation",
             "done": "Accéder à mon organisation",
             "modify": "Modifier",
-            "continue": "Continuer"
+            "continue": "Continuer",
+            "advancedSettings": "Paramètres avancés"
         },
         "server": {
             "saas": "Créer mon organisation sur Parsec",
@@ -399,12 +401,22 @@
             "generic": "Impossible de créer l'organisation (raison: {reason}).",
             "customOrderNotAuthorized": "Les clients en contrat sur mesure ne sont pas autorisés à créer une organisation directement. Si vous avez besoin d'une organisation supplémentaire, veuillez remplir une demande depuis votre espace client.",
             "notClientAccount": "Votre compte n'est pas un compte client.",
-            "incompatibleServer": "Votre version de Parsec n'est pas compatible avec le serveur. Veuillez mettre à jour votre application ou contacter un administrateur."
+            "incompatibleServer": "Votre version de Parsec n'est pas compatible avec le serveur. Veuillez mettre à jour votre application ou contacter un administrateur.",
+            "invalidSequesterKey": "La clé de séquestre fournie n'est pas valide."
         },
         "cancelConfirm": "Annulation",
         "cancelConfirmSubtitle": "Êtes-vous sûr(e) de vouloir annuler le processus de création ? Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le début.",
         "cancelYes": "Annuler le processus",
-        "cancelNo": "Reprendre"
+        "cancelNo": "Reprendre",
+        "sequester": {
+            "link": "https://docs.parsec.cloud/fr/{version}/hosting/sequester/",
+            "title": "Séquestre des données",
+            "addVerificationKey": "Ajouter la clé de vérification",
+            "update": "Modifier",
+            "info": "Ce service (disponible uniquement à la création) permet de récupérer toutes les données d'une organisation, par exemple en cas d'inspection.",
+            "more": "En savoir plus",
+            "keyAdded": "Clé ajoutée"
+        }
     },
     "JoinByLinkModal": {
         "pageTitle": "Rejoindre une organisation",

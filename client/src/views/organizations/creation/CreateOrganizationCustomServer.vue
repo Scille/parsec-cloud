@@ -44,6 +44,7 @@
       :can-edit-organization-name="props.bootstrapLink === undefined"
       :can-edit-server-address="props.bootstrapLink === undefined"
       :can-edit-save-strategy="saveStrategy.tag !== DeviceSaveStrategyTag.AccountVault"
+      :use-sequester-key="sequesterKey !== undefined"
       @create-clicked="onCreateClicked"
       @update-email-clicked="onUpdatePersonalInformationClicked"
       @update-name-clicked="onUpdatePersonalInformationClicked"
@@ -126,6 +127,7 @@ const saveStrategy = ref<DeviceSaveStrategy | undefined>(undefined);
 const currentError = ref<Translatable | undefined>(undefined);
 const availableDevice = ref<AvailableDevice | undefined>(undefined);
 const initialized = ref(false);
+const sequesterKey = ref<string | undefined>(undefined);
 
 onMounted(async () => {
   if (bootstrapLink.value) {
@@ -138,11 +140,16 @@ onMounted(async () => {
   initialized.value = true;
 });
 
-async function onOrganizationNameAndServerChosen(chosenOrganizationName: OrganizationID, chosenServerAddr: string): Promise<void> {
+async function onOrganizationNameAndServerChosen(
+  chosenOrganizationName: OrganizationID,
+  chosenServerAddr: string,
+  seqKey: string | undefined,
+): Promise<void> {
   if (!props.bootstrapLink) {
     organizationName.value = chosenOrganizationName;
     serverAddr.value = chosenServerAddr;
   }
+  sequesterKey.value = seqKey;
   if (ParsecAccount.isLoggedIn() && ParsecAccount.addressMatchesAccountServer(serverAddr.value as string)) {
     const infoResult = await ParsecAccount.getInfo();
     if (infoResult.ok) {
@@ -194,6 +201,7 @@ async function createOrganization(): Promise<Result<AvailableDevice, BootstrapOr
     email.value,
     getDefaultDeviceName(),
     isProxy(saveStrategy.value) ? toRaw(saveStrategy.value) : saveStrategy.value,
+    sequesterKey.value,
   );
   return result;
 }
@@ -208,6 +216,7 @@ async function bootstrapOrganization(): Promise<Result<AvailableDevice, Bootstra
     email.value,
     getDefaultDeviceName(),
     isProxy(saveStrategy.value) ? toRaw(saveStrategy.value) : saveStrategy.value,
+    sequesterKey.value,
   );
   return result;
 }
@@ -241,6 +250,8 @@ async function onCreateClicked(): Promise<void> {
       currentError.value = 'CreateOrganization.errors.customOffline';
     } else if (result.error.tag === BootstrapOrganizationErrorTag.Internal && result.error.error.includes('Unsupported API version')) {
       currentError.value = 'CreateOrganization.errors.incompatibleServer';
+    } else if (result.error.tag === BootstrapOrganizationErrorTag.InvalidSequesterAuthorityVerifyKey) {
+      currentError.value = 'CreateOrganization.errors.invalidSequesterKey';
     } else {
       currentError.value = { key: 'CreateOrganization.errors.generic', data: { reason: result.error.tag } };
     }
