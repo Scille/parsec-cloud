@@ -36,6 +36,8 @@ pub enum BootstrapOrganizationError {
     InvalidToken,
     #[error("Bootstrap token already used")]
     AlreadyUsedToken,
+    #[error("Invalid sequester authority verify key: {0}")]
+    InvalidSequesterAuthorityVerifyKey(anyhow::Error),
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
@@ -88,8 +90,26 @@ pub async fn bootstrap_organization(
     save_strategy: DeviceSaveStrategy,
     human_handle: HumanHandle,
     device_label: DeviceLabel,
-    sequester_authority_verify_key: Option<SequesterVerifyKeyDer>,
+    // Note we do the validation code parsing directly within the function. This is because:
+    // - The authority key is expected to come from an arbitrary file provided by the user,
+    //   so having incorrect data is a to-be-expected error.
+    // - Using a `SequesterVerifyKeyDer` as parameter would mean the parsing is done in the
+    //   bindings, where a Javascript type error is thrown, however this behavior is only
+    //   supposed to occur for unexpected errors (e.g. passing a dummy value as DeviceID,
+    //   since the GUI is only supposed to pass a DevicesID that have previously been
+    //   obtained from libparsec).
+    sequester_authority_verify_key_pem: Option<&str>,
 ) -> Result<AvailableDevice, BootstrapOrganizationError> {
+    let sequester_authority_verify_key = match sequester_authority_verify_key_pem {
+        None => None,
+        Some(raw) => {
+            let key = SequesterVerifyKeyDer::load_pem(raw).map_err(|e| {
+                BootstrapOrganizationError::InvalidSequesterAuthorityVerifyKey(e.into())
+            })?;
+            Some(key)
+        }
+    };
+
     let config: Arc<libparsec_client::ClientConfig> = config.into();
     let on_event_callback = super::get_on_event_callback();
     let events_plugged = OnEventCallbackPlugged::new(

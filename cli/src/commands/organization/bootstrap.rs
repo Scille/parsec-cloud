@@ -4,7 +4,7 @@ use std::{path::PathBuf, sync::Arc};
 
 use libparsec::{
     AvailableDevice, ClientConfig, DeviceLabel, DeviceSaveStrategy, EmailAddress, HumanHandle,
-    ParsecOrganizationBootstrapAddr, Password, SequesterVerifyKeyDer,
+    ParsecOrganizationBootstrapAddr, Password,
 };
 
 use crate::utils::*;
@@ -38,7 +38,7 @@ pub async fn bootstrap_organization_req(
     device_label: DeviceLabel,
     human_handle: HumanHandle,
     password: Password,
-    sequester_key: Option<SequesterVerifyKeyDer>,
+    sequester_authority_verify_key_pem: Option<&str>,
 ) -> anyhow::Result<AvailableDevice> {
     log::trace!(
         "Bootstrapping organization (confdir={}, datadir={})",
@@ -53,7 +53,7 @@ pub async fn bootstrap_organization_req(
         DeviceSaveStrategy::Password { password },
         human_handle,
         device_label,
-        sequester_key,
+        sequester_authority_verify_key_pem,
     )
     .await
     .map_err(anyhow::Error::from)
@@ -81,10 +81,9 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
         }
     })?;
 
-    let sequester_verify_key = if let Some(path) = sequester_key {
+    let sequester_authority_verify_key_pem = if let Some(path) = sequester_key {
         let raw = tokio::fs::read_to_string(path).await?;
-        let key = SequesterVerifyKeyDer::load_pem(&raw)?;
-        Some(key)
+        Some(raw)
     } else {
         None
     };
@@ -97,7 +96,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
         device_label.clone(),
         human_handle.clone(),
         password,
-        sequester_verify_key,
+        sequester_authority_verify_key_pem.as_deref(),
     )
     .await?;
 
