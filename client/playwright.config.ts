@@ -28,8 +28,8 @@ export default defineConfig({
   reporter: IN_CI ? 'blob' : 'list',
   webServer: {
     command: 'npm run dev -- --port 8080',
-    url: IN_CI ? 'http://localhost:8080' : 'https://localhost:8080',
-    ignoreHTTPSErrors: IN_CI ? false : true,
+    url: 'https://localhost:8080',
+    ignoreHTTPSErrors: true,
     reuseExistingServer: true,
   },
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
