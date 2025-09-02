@@ -5812,6 +5812,14 @@ fn variant_bootstrap_organization_error_rs_to_js<'a>(
                 JsString::try_new(cx, "BootstrapOrganizationErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::BootstrapOrganizationError::InvalidSequesterAuthorityVerifyKey { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "BootstrapOrganizationErrorInvalidSequesterAuthorityVerifyKey",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::BootstrapOrganizationError::InvalidToken { .. } => {
             let js_tag =
                 JsString::try_new(cx, "BootstrapOrganizationErrorInvalidToken").or_throw(cx)?;
@@ -16845,23 +16853,11 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
             }
         }
     };
-    let sequester_authority_verify_key = match cx.argument_opt(5) {
-        Some(v) => {
-            match v.downcast::<JsTypedArray<u8>, _>(&mut cx) {
-                Ok(js_val) => {
-                    Some({
-                        #[allow(clippy::unnecessary_mut_passed)]
-                        match js_val.as_slice(&mut cx).try_into() {
-                            Ok(val) => val,
-                            // err can't infer type in some case, because of the previous `try_into`
-                            #[allow(clippy::useless_format)]
-                            Err(err) => return cx.throw_type_error(format!("{}", err)),
-                        }
-                    })
-                }
-                Err(_) => None,
-            }
-        }
+    let sequester_authority_verify_key_pem = match cx.argument_opt(5) {
+        Some(v) => match v.downcast::<JsString, _>(&mut cx) {
+            Ok(js_val) => Some(js_val.value(&mut cx)),
+            Err(_) => None,
+        },
         None => None,
     };
     let channel = cx.channel();
@@ -16878,7 +16874,7 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
                 save_strategy,
                 human_handle,
                 device_label,
-                sequester_authority_verify_key,
+                sequester_authority_verify_key_pem.as_deref(),
             )
             .await;
 
