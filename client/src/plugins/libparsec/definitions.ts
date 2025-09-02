@@ -114,7 +114,6 @@ export type Path = string
 export type SASCode = string
 export type SequesterServiceID = string
 export type UserID = string
-export type ValidationCode = string
 export type VlobID = string
 export type KeyDerivation = Uint8Array
 export type SecretKey = Uint8Array
@@ -1185,6 +1184,7 @@ export type AvailableDeviceType =
 export enum BootstrapOrganizationErrorTag {
     AlreadyUsedToken = 'BootstrapOrganizationErrorAlreadyUsedToken',
     Internal = 'BootstrapOrganizationErrorInternal',
+    InvalidSequesterAuthorityVerifyKey = 'BootstrapOrganizationErrorInvalidSequesterAuthorityVerifyKey',
     InvalidToken = 'BootstrapOrganizationErrorInvalidToken',
     Offline = 'BootstrapOrganizationErrorOffline',
     OrganizationExpired = 'BootstrapOrganizationErrorOrganizationExpired',
@@ -1198,6 +1198,10 @@ export interface BootstrapOrganizationErrorAlreadyUsedToken {
 }
 export interface BootstrapOrganizationErrorInternal {
     tag: BootstrapOrganizationErrorTag.Internal
+    error: string
+}
+export interface BootstrapOrganizationErrorInvalidSequesterAuthorityVerifyKey {
+    tag: BootstrapOrganizationErrorTag.InvalidSequesterAuthorityVerifyKey
     error: string
 }
 export interface BootstrapOrganizationErrorInvalidToken {
@@ -1227,6 +1231,7 @@ export interface BootstrapOrganizationErrorTimestampOutOfBallpark {
 export type BootstrapOrganizationError =
   | BootstrapOrganizationErrorAlreadyUsedToken
   | BootstrapOrganizationErrorInternal
+  | BootstrapOrganizationErrorInvalidSequesterAuthorityVerifyKey
   | BootstrapOrganizationErrorInvalidToken
   | BootstrapOrganizationErrorOffline
   | BootstrapOrganizationErrorOrganizationExpired
@@ -5028,7 +5033,7 @@ export interface LibParsecPlugin {
         save_strategy: DeviceSaveStrategy,
         human_handle: HumanHandle,
         device_label: DeviceLabel,
-        sequester_authority_verify_key: SequesterVerifyKeyDer | null
+        sequester_authority_verify_key_pem: string | null
     ): Promise<Result<AvailableDevice, BootstrapOrganizationError>>
     buildParsecOrganizationBootstrapAddr(
         addr: ParsecAddr,

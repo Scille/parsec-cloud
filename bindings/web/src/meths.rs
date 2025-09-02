@@ -6187,6 +6187,13 @@ fn variant_bootstrap_organization_error_rs_to_js(
                 &"BootstrapOrganizationErrorInternal".into(),
             )?;
         }
+        libparsec::BootstrapOrganizationError::InvalidSequesterAuthorityVerifyKey { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"BootstrapOrganizationErrorInvalidSequesterAuthorityVerifyKey".into(),
+            )?;
+        }
         libparsec::BootstrapOrganizationError::InvalidToken { .. } => {
             Reflect::set(
                 &js_obj,
@@ -17790,7 +17797,7 @@ pub fn bootstrapOrganization(
     save_strategy: Object,
     human_handle: Object,
     device_label: String,
-    sequester_authority_verify_key: Option<Uint8Array>,
+    sequester_authority_verify_key_pem: Option<String>,
 ) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let config = config.into();
@@ -17815,18 +17822,8 @@ pub fn bootstrapOrganization(
             };
             custom_from_rs_string(device_label).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-        let sequester_authority_verify_key = match sequester_authority_verify_key {
-            Some(sequester_authority_verify_key) => {
-                let sequester_authority_verify_key = sequester_authority_verify_key
-                    .to_vec()
-                    .as_slice()
-                    .try_into()
-                    .map_err(|_| {
-                        JsValue::from(TypeError::new("Not a valid SequesterVerifyKeyDer"))
-                    })?;
-
-                Some(sequester_authority_verify_key)
-            }
+        let sequester_authority_verify_key_pem = match sequester_authority_verify_key_pem {
+            Some(sequester_authority_verify_key_pem) => Some(sequester_authority_verify_key_pem),
             None => None,
         };
 
@@ -17836,7 +17833,7 @@ pub fn bootstrapOrganization(
             save_strategy,
             human_handle,
             device_label,
-            sequester_authority_verify_key,
+            sequester_authority_verify_key_pem.as_deref(),
         )
         .await;
         Ok(match ret {

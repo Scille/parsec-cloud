@@ -1059,6 +1059,10 @@ export interface BootstrapOrganizationErrorInternal {
     tag: "Internal"
     error: string
 }
+export interface BootstrapOrganizationErrorInvalidSequesterAuthorityVerifyKey {
+    tag: "InvalidSequesterAuthorityVerifyKey"
+    error: string
+}
 export interface BootstrapOrganizationErrorInvalidToken {
     tag: "InvalidToken"
     error: string
@@ -1086,6 +1090,7 @@ export interface BootstrapOrganizationErrorTimestampOutOfBallpark {
 export type BootstrapOrganizationError =
   | BootstrapOrganizationErrorAlreadyUsedToken
   | BootstrapOrganizationErrorInternal
+  | BootstrapOrganizationErrorInvalidSequesterAuthorityVerifyKey
   | BootstrapOrganizationErrorInvalidToken
   | BootstrapOrganizationErrorOffline
   | BootstrapOrganizationErrorOrganizationExpired
@@ -4201,7 +4206,7 @@ export function bootstrapOrganization(
     save_strategy: DeviceSaveStrategy,
     human_handle: HumanHandle,
     device_label: string,
-    sequester_authority_verify_key: Uint8Array | null
+    sequester_authority_verify_key_pem: string | null
 ): Promise<Result<AvailableDevice, BootstrapOrganizationError>>
 export function buildParsecOrganizationBootstrapAddr(
     addr: string,
