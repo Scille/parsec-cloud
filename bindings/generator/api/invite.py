@@ -20,7 +20,7 @@ from .common import (
     NonZeroU8,
     Result,
     SASCode,
-    SequesterVerifyKeyDer,
+    Ref,
     Structure,
     UserID,
     UserProfile,
@@ -59,6 +59,9 @@ class BootstrapOrganizationError(ErrorVariant):
     class AlreadyUsedToken:
         pass
 
+    class InvalidSequesterAuthorityVerifyKey:
+        pass
+
     class TimestampOutOfBallpark:
         server_timestamp: DateTime
         client_timestamp: DateTime
@@ -78,7 +81,7 @@ async def bootstrap_organization(
     save_strategy: DeviceSaveStrategy,
     human_handle: HumanHandle,
     device_label: DeviceLabel,
-    sequester_authority_verify_key: Optional[SequesterVerifyKeyDer],
+    sequester_authority_verify_key_pem: Optional[Ref[str]],
 ) -> Result[AvailableDevice, BootstrapOrganizationError]:
     raise NotImplementedError
 
