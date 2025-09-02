@@ -2390,6 +2390,13 @@
         "actions": {
             "backToFiles": "Back to files",
             "retry": "Reload page"
+        },
+        "saving": {
+            "unsaved": "Changes unsaved",
+            "saving": "Saving...",
+            "saved": "File saved",
+            "tooltipSaved": "This file is synchronised with the server.",
+            "tooltipUnsaved": "Changes aren't synchronized with the server yet."
         }
     },
     "openFallback": {

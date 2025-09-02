@@ -49,6 +49,34 @@
                 {{ $msTranslate(I18n.formatDate(atDateTime)) }}
               </ion-text>
             </div>
+            <div
+              v-if="isComponentEditor()"
+              class="save-info"
+            >
+              <ion-icon
+                v-show="saveState === SaveState.saved"
+                class="save-info-icon save-info-icon-ok"
+                ref="savedIcon"
+                :icon="cloudDone"
+              />
+              <ms-spinner
+                v-show="saveState === SaveState.saving"
+                class="save-info-spinner"
+              />
+              <ion-icon
+                v-show="saveState === SaveState.unsaved"
+                class="save-info-icon save-info-icon-ko"
+                ref="unsavedIcon"
+                :icon="cloudOffline"
+              />
+              <ion-text
+                v-show="saveState && showSaveStateText && isLargeDisplay"
+                class="save-info-text button-small"
+                :class="saveState === SaveState.saved ? 'save-info-text-fade-out' : 'save-info-text-fade-in'"
+              >
+                {{ $msTranslate(saveStateText) }}
+              </ion-text>
+            </div>
             <!-- Here we could put the file action buttons -->
             <div
               class="file-handler-topbar-buttons"
@@ -143,6 +171,7 @@
             :content-info="contentInfo"
             :file-info="detectedFileType"
             @file-loaded="handlerReadyRef = true"
+            v-on="isComponentEditor() ? { onSaveStateChange: onSaveStateChange } : {}"
           />
         </div>
       </div>
@@ -185,10 +214,11 @@ import {
   useWindowSize,
   SidebarToggle,
   WindowSizeBreakpoints,
+  attachMouseOverTooltip,
 } from 'megashark-lib';
-import { ref, Ref, inject, onMounted, onUnmounted, type Component, shallowRef } from 'vue';
+import { ref, Ref, inject, onMounted, onUnmounted, type Component, shallowRef, computed, useTemplateRef } from 'vue';
 import { IonPage, IonContent, IonButton, IonText, IonIcon, modalController } from '@ionic/vue';
-import { link, informationCircle, open, chevronUp, chevronDown, ellipsisHorizontal, create } from 'ionicons/icons';
+import { link, informationCircle, open, chevronUp, chevronDown, ellipsisHorizontal, create, cloudDone, cloudOffline } from 'ionicons/icons';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import {
   currentRouteIs,
@@ -211,8 +241,8 @@ import useHeaderControl from '@/services/headerControl';
 import { Env } from '@/services/environment';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
-import FileEditor from '@/views/files/handler/editor/FileEditor.vue';
-import FileViewer from '@/views/files/handler/viewer/FileViewer.vue';
+import { FileEditor, SaveState } from '@/views/files/handler/editor';
+import { FileViewer } from '@/views/files/handler/viewer';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { openPath } from '@/services/fileOpener';
 import { FileHandlerMode } from '@/views/files/handler';
@@ -232,6 +262,10 @@ const handlerComponent: Ref<Component | null> = shallowRef(null);
 const handlerMode = ref<FileHandlerMode | undefined>(undefined);
 const sidebarMenuVisibleOnMounted = ref(false);
 const userInfo: Ref<ClientInfo | null> = ref(null);
+const saveState = ref<SaveState | undefined>(undefined);
+const savedIconRef = useTemplateRef<InstanceType<typeof IonButton>>('savedIcon');
+const unsavedIconRef = useTemplateRef<InstanceType<typeof IonButton>>('unsavedIcon');
+const showSaveStateText = ref(true);
 
 const cancelRouteWatch = watchRoute(async () => {
   if (!currentRouteIs(Routes.FileHandler)) {
@@ -252,6 +286,21 @@ const cancelRouteWatch = watchRoute(async () => {
 
   await loadFile();
 });
+
+const saveStateText = computed(() => {
+  switch (saveState.value) {
+    case SaveState.saved:
+      return 'fileEditors.saving.saved';
+    case SaveState.saving:
+      return 'fileEditors.saving.saving';
+    default:
+      return 'fileEditors.saving.unsaved';
+  }
+});
+
+function isComponentEditor(): boolean {
+  return handlerComponent.value === FileEditor;
+}
 
 async function _getFileInfoAt(
   workspaceHandle: WorkspaceHandle,
@@ -446,6 +495,7 @@ function loadComponent(): void {
     throw new Error(`No component for file with extension '${detectedFileType.value!.extension}'`);
   }
 }
+
 onMounted(async () => {
   handlerMode.value = getFileHandlerMode();
   await loadFile();
@@ -462,6 +512,8 @@ onMounted(async () => {
   } else {
     window.electronAPI.log('error', `Failed to retrieve user info ${JSON.stringify(clientInfoResult.error)}`);
   }
+  attachMouseOverTooltip(savedIconRef.value?.$el, 'fileEditors.saving.tooltipSaved');
+  attachMouseOverTooltip(unsavedIconRef.value?.$el, 'fileEditors.saving.tooltipUnsaved');
 });
 
 onUnmounted(async () => {
@@ -606,6 +658,19 @@ async function downloadFile(): Promise<void> {
     informationManager: informationManager,
     fileOperationManager: fileOperationManager,
   });
+}
+
+async function onSaveStateChange(newState: SaveState): Promise<void> {
+  if (newState !== SaveState.saved) {
+    showSaveStateText.value = true;
+  } else {
+    setTimeout(() => {
+      if (saveState.value === SaveState.saved) {
+        showSaveStateText.value = false;
+      }
+    }, 3000);
+  }
+  saveState.value = newState;
 }
 
 async function openSmallDisplayActionMenu(): Promise<void> {
@@ -815,6 +880,56 @@ async function openSmallDisplayActionMenu(): Promise<void> {
             width: 1px;
             height: 1.5rem;
             background: var(--parsec-color-light-secondary-disabled);
+          }
+        }
+      }
+
+      .save-info {
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        gap: 0.5rem;
+
+        @include ms.responsive-breakpoint('sm') {
+          min-width: 1.125rem;
+          width: 1.125rem;
+          font-size: 1.125rem;
+          margin-right: 0;
+        }
+
+        &-text {
+          text-overflow: ellipsis;
+          color: var(--parsec-color-light-secondary-hard-grey);
+
+          &-fade-in {
+            visibility: visible;
+            opacity: 1;
+            transition: opacity 0.5s linear;
+          }
+
+          &-fade-out {
+            visibility: hidden;
+            opacity: 0;
+            transition:
+              visibility 0s 3s,
+              opacity 3s ease-in;
+          }
+        }
+
+        &-spinner {
+          height: 1.125rem;
+          width: 1.125rem;
+          background: none;
+        }
+
+        &-icon {
+          font-size: 1.125rem;
+
+          &-ok {
+            color: var(--parsec-color-light-primary-500);
+          }
+          &-ko {
+            color: var(--parsec-color-light-secondary-grey);
           }
         }
       }
