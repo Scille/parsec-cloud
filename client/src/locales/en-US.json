@@ -373,7 +373,8 @@
             "fullname": "Full name",
             "email": "Email",
             "server": "Server choice",
-            "authentication": "Authentication method"
+            "authentication": "Authentication method",
+            "sequester": "Sequester key"
         },
         "button": {
             "next": "Next",
@@ -381,7 +382,8 @@
             "create": "Create organization",
             "done": "Access to your organization",
             "modify": "Edit",
-            "continue": "Continue"
+            "continue": "Continue",
+            "advancedSettings": "Advanced Settings"
         },
         "server": {
             "saas": "Create my organization on Parsec",
@@ -400,12 +402,22 @@
             "generic": "Failed to create the organization (reason: {reason}).",
             "customOrderNotAuthorized": "Clients with a custom contract are not allowed to directly create organizations. If you need another organization, please make a request from your customer area.",
             "notClientAccount": "Your account is not a client account.",
-            "incompatibleServer": "Your version of Parsec is incompatible with the server. Please update the application or contact an administrator."
+            "incompatibleServer": "Your version of Parsec is incompatible with the server. Please update the application or contact an administrator.",
+            "invalidSequesterKey": "The provided sequester key is not valid."
         },
         "cancelConfirm": "Cancel organization creation",
         "cancelConfirmSubtitle": "Are you sure you want to cancel the process? Information will not be saved, you will have to restart.",
         "cancelYes": "Cancel process",
-        "cancelNo": "Resume"
+        "cancelNo": "Resume",
+        "sequester": {
+            "link": "https://docs.parsec.cloud/en/{version}/hosting/sequester/",
+            "title": "Data Sequester",
+            "addVerificationKey": "Add verification key",
+            "update": "Update",
+            "info": "This service (only available at creation) enables you to recover all the data of an organization, for example in the event of an inspection.",
+            "more": "More details",
+            "keyAdded": "Key added"
+        }
     },
     "JoinByLinkModal": {
         "pageTitle": "Join an organization",

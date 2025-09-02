@@ -184,6 +184,10 @@ async function openDocumentationLink(): Promise<void> {
   await openUrl(I18n.translate({ key: 'MenuPage.documentationLink', data: { version: APP_VERSION_PREFIX } }));
 }
 
+async function openSequesterDocumentationLink(): Promise<void> {
+  await openUrl(I18n.translate({ key: 'CreateOrganization.sequester.link', data: { version: APP_VERSION_PREFIX } }));
+}
+
 async function openDownloadParsecLink(): Promise<void> {
   await openUrl(I18n.translate({ key: 'MenuPage.downloadParsecLink' }));
 }
@@ -257,5 +261,6 @@ export const Env = {
     openDeveloperLink,
     openTOS,
     openUrl,
+    openSequesterDocumentationLink,
   },
 };

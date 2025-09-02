@@ -39,6 +39,7 @@ export async function createOrganization(
   email: string,
   deviceLabel: string,
   saveStrategy: DeviceSaveStrategy,
+  sequesterKey: string | undefined = undefined,
 ): Promise<Result<AvailableDevice, BootstrapOrganizationError>> {
   const bootstrapAddr = await libparsec.buildParsecOrganizationBootstrapAddr(serverAddr, orgName);
 
@@ -57,7 +58,7 @@ export async function createOrganization(
     saveStrategy,
     { label: userName, email: email },
     deviceLabel,
-    null,
+    sequesterKey ?? null,
   );
   if (!result.ok && result.error.tag === BootstrapOrganizationErrorTag.TimestampOutOfBallpark) {
     result.error.clientTimestamp = DateTime.fromSeconds(result.error.clientTimestamp as any as number);
@@ -75,6 +76,7 @@ export async function bootstrapOrganization(
   email: string,
   deviceLabel: string,
   saveStrategy: DeviceSaveStrategy,
+  sequesterKey: string | undefined = undefined,
 ): Promise<Result<AvailableDevice, BootstrapOrganizationError>> {
   const config: ClientConfig = {
     configDir: window.getConfigDir(),
@@ -91,7 +93,7 @@ export async function bootstrapOrganization(
     saveStrategy,
     { label: userName, email: email },
     deviceLabel,
-    null,
+    sequesterKey ?? null,
   );
   if (!result.ok && result.error.tag === BootstrapOrganizationErrorTag.TimestampOutOfBallpark) {
     result.error.clientTimestamp = DateTime.fromSeconds(result.error.clientTimestamp as any as number);

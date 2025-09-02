@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { DEFAULT_USER_INFORMATION, MockBms, expect, fillIonInput, msTest } from '@tests/e2e/helpers';
+import { DEFAULT_USER_INFORMATION, MockBms, expect, fillIonInput, msTest, openExternalLink } from '@tests/e2e/helpers';
 
 msTest('Opens the create organization modal', async ({ home }) => {
   await expect(home.locator('#create-organization-button')).toHaveText('Create or join');
@@ -79,4 +79,28 @@ msTest('Return to server selection after selecting server type', async ({ home }
   await expect(modal.locator('.organization-name-and-server-page')).toBeVisible();
   await modal.locator('.organization-name-and-server-page').locator('#previous-button').click();
   await expect(modal.locator('.server-page')).toBeVisible();
+});
+
+msTest('Opens sequester documentation from create organization modal', async ({ home }) => {
+  await expect(home.locator('#create-organization-button')).toHaveText('Create or join');
+  await expect(home.locator('.homepage-popover')).toBeHidden();
+  await home.locator('#create-organization-button').click();
+  await expect(home.locator('.homepage-popover')).toBeVisible();
+  await expect(home.locator('.create-organization-modal')).toBeHidden();
+  const createButton = home.locator('.homepage-popover').getByRole('listitem').nth(0);
+  await createButton.click();
+  const modal = home.locator('.create-organization-modal');
+  await modal.locator('.server-page-footer').locator('ion-button').nth(0).click();
+
+  const orgServerContainer = modal.locator('.organization-name-and-server-page');
+  await orgServerContainer.locator('.advanced-settings').click();
+  await expect(orgServerContainer.locator('.sequester-container').locator('.sequester-toggle__title')).toHaveText('Data Sequester');
+  await expect(orgServerContainer.locator('.sequester-container').locator('.sequester-info__text')).toHaveText(
+    `This service (only available at creation) enables you to recover all the data of
+ an organization, for example in the event of an inspection.`,
+  );
+  const openDocBtn = orgServerContainer.locator('.sequester-container').locator('.sequester-info__button');
+  await expect(openDocBtn).toHaveText('More details');
+  // Open the link to the doc, the word "sequester" should probably appear somewhere
+  await openExternalLink(home, openDocBtn, /^https:\/\/docs\.parsec\.cloud\/.*\/sequester.*$/);
 });

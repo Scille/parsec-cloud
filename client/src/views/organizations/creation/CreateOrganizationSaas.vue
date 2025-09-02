@@ -19,6 +19,7 @@
     <organization-name-page
       :class="step === Steps.OrganizationName ? 'active' : ''"
       v-show="step === Steps.OrganizationName"
+      :disable-organization-name-field="bootstrapLink !== undefined"
       :organization-name="organizationName ?? ''"
       @organization-name-chosen="onOrganizationNameChosen"
       :error="currentError"
@@ -49,6 +50,7 @@
       :can-edit-organization-name="bootstrapLink === undefined"
       :can-edit-server-address="false"
       :can-edit-save-strategy="saveStrategy.tag !== DeviceSaveStrategyTag.AccountVault"
+      :use-sequester-key="sequesterKey !== undefined"
       @create-clicked="onCreateClicked"
       @update-save-strategy-clicked="onUpdateSaveStrategyClicked"
       @update-organization-name-clicked="onUpdateOrganizationNameClicked"
@@ -135,6 +137,7 @@ const personalInformation = ref<PersonalInformationResultData | undefined>(undef
 const currentError = ref<Translatable | undefined>(undefined);
 const saveStrategy = ref<DeviceSaveStrategy | undefined>(undefined);
 const availableDevice = ref<AvailableDevice | undefined>(undefined);
+const sequesterKey = ref<string | undefined>(undefined);
 
 onMounted(async () => {
   if (props.bootstrapLink) {
@@ -167,8 +170,8 @@ async function onLoginSuccess(_token: AuthenticationToken, info: PersonalInforma
   }
   personalInformation.value = info;
 
+  step.value = Steps.OrganizationName;
   if (props.bootstrapLink) {
-    step.value = Steps.Authentication;
     if (isWeb() && ParsecAccount.isLoggedIn() && ParsecAccount.addressMatchesAccountServer(props.bootstrapLink)) {
       const parseResult = await parseParsecAddr(props.bootstrapLink);
       if (parseResult.ok && parseResult.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
@@ -179,12 +182,10 @@ async function onLoginSuccess(_token: AuthenticationToken, info: PersonalInforma
         }
       }
     }
-  } else {
-    step.value = Steps.OrganizationName;
   }
 }
 
-async function onOrganizationNameChosen(chosenOrganizationName: OrganizationID): Promise<void> {
+async function onOrganizationNameChosen(chosenOrganizationName: OrganizationID, seqKey: string | undefined): Promise<void> {
   if (!personalInformation.value) {
     window.electronAPI.log(
       'error',
@@ -193,6 +194,7 @@ async function onOrganizationNameChosen(chosenOrganizationName: OrganizationID):
     return;
   }
   organizationName.value = chosenOrganizationName;
+  sequesterKey.value = seqKey;
   if (
     isWeb() &&
     ParsecAccount.isLoggedIn() &&
@@ -293,6 +295,7 @@ async function onCreateClicked(): Promise<void> {
     personalInformation.value.email,
     getDefaultDeviceName(),
     isProxy(saveStrategy.value) ? toRaw(saveStrategy.value) : saveStrategy.value,
+    sequesterKey.value,
   );
 
   if (!result.ok) {
@@ -302,6 +305,8 @@ async function onCreateClicked(): Promise<void> {
       currentError.value = 'CreateOrganization.errors.offline';
     } else if (result.error.tag === BootstrapOrganizationErrorTag.Internal && result.error.error.includes('Unsupported')) {
       currentError.value = 'CreateOrganization.errors.incompatibleServer';
+    } else if (result.error.tag === BootstrapOrganizationErrorTag.InvalidSequesterAuthorityVerifyKey) {
+      currentError.value = 'CreateOrganization.errors.invalidSequesterKey';
     } else {
       currentError.value = { key: 'CreateOrganization.errors.generic', data: { reason: result.error.tag } };
     }

@@ -10,20 +10,25 @@
     />
     <div class="organization-name-page-content">
       <ms-input
-        :label="'CreateOrganization.organizationName'"
-        :placeholder="'CreateOrganization.organizationNamePlaceholder'"
+        label="CreateOrganization.organizationName"
+        placeholder="CreateOrganization.organizationNamePlaceholder"
         name="organization"
         id="org-name-input"
         v-model="organizationName"
         :disabled="disableOrganizationNameField"
         ref="organizationNameInput"
-        @on-enter-keyup="$emit('organizationNameChosen', organizationName)"
+        @on-enter-keyup="!isNextDisabled && $emit('organizationNameChosen', organizationName, sequesterKeyInputRef?.getKey())"
         :validator="organizationValidator"
       />
 
       <ion-text class="body org-name-criteria">
         {{ $msTranslate('CreateOrganization.organizationNameCriteria') }}
       </ion-text>
+
+      <sequester-key-input
+        ref="sequesterKeyInput"
+        v-if="advancedSettings"
+      />
 
       <!-- error -->
       <ion-text
@@ -38,6 +43,14 @@
     </div>
 
     <ion-footer class="organization-name-page-footer">
+      <ion-text
+        button
+        class="advanced-settings button-medium"
+        @click="advancedSettings = !advancedSettings"
+      >
+        <ion-icon :icon="advancedSettings ? remove : add" />
+        {{ $msTranslate('CreateOrganization.button.advancedSettings') }}
+      </ion-text>
       <div class="modal-footer-buttons">
         <ion-button
           fill="clear"
@@ -57,8 +70,8 @@
         <ion-button
           fill="solid"
           size="default"
-          @click="$emit('organizationNameChosen', organizationName)"
-          :disabled="!organizationNameInputRef || organizationNameInputRef.validity !== Validity.Valid"
+          @click="$emit('organizationNameChosen', organizationName, sequesterKeyInputRef?.getKey())"
+          :disabled="isNextDisabled"
         >
           <span>
             {{ $msTranslate('CreateOrganization.button.next') }}
@@ -77,12 +90,12 @@
 <script setup lang="ts">
 import { OrganizationID } from '@/parsec';
 import { IonPage, IonButton, IonText, IonFooter, IonIcon } from '@ionic/vue';
-import { onMounted, ref, useTemplateRef } from 'vue';
-import { chevronBack, chevronForward } from 'ionicons/icons';
+import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
+import { add, chevronBack, chevronForward, warning, remove } from 'ionicons/icons';
 import { organizationValidator } from '@/common/validators';
 import { Translatable, Validity, MsInput } from 'megashark-lib';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
-import { warning } from 'ionicons/icons';
+import SequesterKeyInput from '@/components/organizations/SequesterKeyInput.vue';
 
 const props = defineProps<{
   organizationName?: OrganizationID;
@@ -92,18 +105,44 @@ const props = defineProps<{
 }>();
 
 defineEmits<{
-  (e: 'organizationNameChosen', name: OrganizationID): void;
+  (e: 'organizationNameChosen', name: OrganizationID, sequesterKey: string | undefined): void;
   (e: 'goBackRequested'): void;
   (e: 'closeRequested'): void;
 }>();
 
 const organizationNameInputRef = useTemplateRef<InstanceType<typeof MsInput>>('organizationNameInput');
+const sequesterKeyInputRef = useTemplateRef<InstanceType<typeof SequesterKeyInput>>('sequesterKeyInput');
 const organizationName = ref<OrganizationID>(props.organizationName ?? '');
+const advancedSettings = ref<boolean>(false);
+
+const cancelWatch = watch(
+  () => props.organizationName,
+  (newName?: OrganizationID) => {
+    if (newName) {
+      organizationName.value = newName;
+    }
+    organizationNameInputRef.value?.validate(organizationName.value);
+  },
+);
+
+const isNextDisabled = computed(() => {
+  if (organizationNameInputRef.value?.validity !== Validity.Valid) {
+    return true;
+  }
+  if (sequesterKeyInputRef.value?.isAddKeyToggled && !sequesterKeyInputRef.value?.getKey()) {
+    return true;
+  }
+  return false;
+});
 
 onMounted(async () => {
   if (organizationNameInputRef.value && organizationName.value) {
     await organizationNameInputRef.value.validate(organizationName.value);
   }
+});
+
+onUnmounted(() => {
+  cancelWatch();
 });
 </script>
 
@@ -125,5 +164,13 @@ onMounted(async () => {
 
 .org-name-criteria {
   color: var(--parsec-color-light-secondary-hard-grey);
+}
+
+.advanced-settings {
+  display: flex;
+  gap: 0.5rem;
+  margin-right: auto;
+  color: var(--parsec-color-light-secondary-hard-grey);
+  cursor: pointer;
 }
 </style>

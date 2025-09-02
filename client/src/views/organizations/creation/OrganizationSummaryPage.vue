@@ -31,6 +31,30 @@
 
       <hr class="summary-item-divider" />
 
+      <!-- use sequester key -->
+      <ion-item
+        class="summary-item-container ion-no-padding"
+        v-if="useSequesterKey"
+      >
+        <div class="summary-item">
+          <ion-text class="summary-item__label subtitles-sm">
+            {{ $msTranslate('CreateOrganization.overview.sequester') }}
+          </ion-text>
+          <ion-text class="summary-item__text body-lg">
+            {{ $msTranslate('CreateOrganization.sequester.keyAdded') }}
+          </ion-text>
+          <ion-button
+            fill="clear"
+            class="summary-item__button"
+            @click="$emit('updateOrganizationNameClicked')"
+          >
+            {{ $msTranslate('CreateOrganization.button.modify') }}
+          </ion-button>
+        </div>
+      </ion-item>
+
+      <hr class="summary-item-divider" />
+
       <!-- full name -->
       <ion-item class="summary-item-container ion-no-padding">
         <div class="summary-item">
@@ -224,6 +248,7 @@ defineProps<{
   canEditEmail?: boolean;
   canEditName?: boolean;
   canEditSaveStrategy?: boolean;
+  useSequesterKey?: boolean;
   error?: Translatable;
   showTos?: boolean;
 }>();
