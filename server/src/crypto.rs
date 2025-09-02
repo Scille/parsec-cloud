@@ -273,10 +273,6 @@ impl PrivateKey {
     fn encode<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
         PyBytes::new(py, &self.0.to_bytes())
     }
-
-    fn generate_shared_secret_key(&self, peer_public_key: &PublicKey) -> SecretKey {
-        SecretKey(self.0.generate_shared_secret_key(&peer_public_key.0))
-    }
 }
 
 crate::binding_utils::gen_py_wrapper_class!(
