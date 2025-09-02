@@ -93,17 +93,25 @@ mod sealed_box {
     }
 }
 
+use blake2::Blake2b512;
 use crypto_box::KEY_SIZE;
+use digest::Digest;
 use rand::rngs::OsRng;
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
-use x25519_dalek::StaticSecret;
+use zeroize::Zeroizing;
 
 use crate::{CryptoError, SecretKey};
 
 /*
  * PrivateKey
  */
+
+#[derive(Debug)]
+pub enum SharedSecretKeyRole {
+    Claimer,
+    Greeter,
+}
 
 #[derive(Clone, Deserialize)]
 #[serde(try_from = "&Bytes")]
@@ -138,16 +146,57 @@ impl PrivateKey {
     pub fn generate_shared_secret_key(
         &self,
         peer_public_key: &PublicKey,
+        role: SharedSecretKeyRole,
     ) -> Result<SecretKey, CryptoError> {
-        let static_secret: StaticSecret = self.0.to_bytes().into();
-        let shared_secret = static_secret.diffie_hellman(&peer_public_key.0.to_bytes().into());
+        // Re-implementation of libsodium's `crypto_kx_XXX_session_keys`:
+        // 1. x25519 Diffie-Hellman.
+        // 2. Blake2b hash (with a 512 bits output) of the output of step 1.
+        // 3. Output of step 2 can be splitted into two 256 bits keys.
+        // see https://github.com/jedisct1/libsodium/blob/85ddc5c2c6c7b8f7c99f9af6039e18f1f2ca0daa/src/libsodium/crypto_kx/crypto_kx.c#L54-L63
+
+        let self_public_key: x25519_dalek::PublicKey = self.public_key().0.to_bytes().into();
+        let peer_public_key: x25519_dalek::PublicKey = peer_public_key.0.to_bytes().into();
+
+        let self_static_secret: x25519_dalek::StaticSecret = self.0.to_bytes().into();
+        let shared_secret = self_static_secret.diffie_hellman(&peer_public_key);
         if !shared_secret.was_contributory() {
             // Error message taken from libsodium-rs
             return Err(CryptoError::SharedSecretKey(
                 "curve25519 scalarmult failed (result may be all zeros)".to_string(),
             ));
         }
-        Ok(SecretKey::from(shared_secret.to_bytes()))
+        let mut hasher = Blake2b512::new();
+        hasher.update(shared_secret.as_bytes());
+
+        // Always hash claimer first then greeter second
+        match role {
+            SharedSecretKeyRole::Claimer => {
+                hasher.update(self_public_key);
+                hasher.update(peer_public_key);
+            }
+            SharedSecretKeyRole::Greeter => {
+                hasher.update(peer_public_key);
+                hasher.update(self_public_key);
+            }
+        }
+
+        let raw_512 = Zeroizing::new(hasher.finalize_reset());
+
+        // Under the hood, `crypto_kx` splits a 512 bits hash into two
+        // 256 bits keys.
+        // The idea is to have each peer doing encryption with a different
+        // key so that:
+        // 1. Each peer can use a counter as nonce without the need for
+        //   synchronization with the other peer.
+        // 2. To avoid reflection attacks.
+        //
+        // However 1 is not needed since we use XSalsa20 for encryption (that
+        // uses a random nonce) and we are safe from 2 given we never use the
+        // shared secret key for mutual authentication (but only for transmitting
+        // data between clients).
+        //
+        // Hence why we only keep a single key here.
+        Ok(SecretKey::try_from(&raw_512[..Self::SIZE]).expect("valid size"))
     }
 
     pub fn to_bytes(&self) -> [u8; KEY_SIZE] {

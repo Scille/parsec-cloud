@@ -4,6 +4,7 @@ use libsodium_rs::{
     crypto_box::{
         self, curve25519xsalsa20poly1305, open_sealed_box, seal_box, PUBLICKEYBYTES, SECRETKEYBYTES,
     },
+    crypto_kx,
     crypto_scalarmult::curve25519,
 };
 use serde::{Deserialize, Serialize};
@@ -14,6 +15,12 @@ use crate::{CryptoError, SecretKey};
 /*
  * PrivateKey
  */
+
+#[derive(Debug)]
+pub enum SharedSecretKeyRole {
+    Claimer,
+    Greeter,
+}
 
 #[derive(Clone, PartialEq, Eq, Deserialize)]
 #[serde(try_from = "&Bytes")]
@@ -50,15 +57,57 @@ impl PrivateKey {
     pub fn generate_shared_secret_key(
         &self,
         peer_public_key: &PublicKey,
+        role: SharedSecretKeyRole,
     ) -> Result<SecretKey, CryptoError> {
-        // libsodium_rs::crypto_kx::server_session_keys(server_pk, server_sk, client_pk)
-        // let curve25519::scalarmult(self.0.as_bytes(), peer_public_key.0.as_bytes())
-        //     .map(SecretKey::from)
-        //     .expect("Failed to compute shared key");
+        let shared_secret = curve25519::scalarmult(self.0.as_bytes(), peer_public_key.0.as_bytes())
+            .map_err(|e| CryptoError::SharedSecretKey(e.to_string()))?;
 
-        curve25519::scalarmult(self.0.as_bytes(), peer_public_key.0.as_bytes())
-            .map(SecretKey::from)
-            .map_err(|e| CryptoError::SharedSecretKey(e.to_string()))
+        let self_public_key =
+            crypto_kx::PublicKey::from_bytes(self.public_key().as_ref()).expect("valid size");
+        let self_secret_key =
+            crypto_kx::SecretKey::from_bytes(self.0.as_bytes()).expect("valid size");
+        let peer_public_key =
+            crypto_kx::PublicKey::from_bytes(peer_public_key.as_ref()).expect("valid size");
+
+        // Consider Parsec claimer is libsodium client and Parsec greeter is libsodium server
+        let key: SecretKey = match role {
+            SharedSecretKeyRole::Claimer => {
+                let keys = crypto_kx::client_session_keys(
+                    &self_public_key,
+                    &self_secret_key,
+                    &peer_public_key,
+                )
+                .map_err(|e| CryptoError::SharedSecretKey(e.to_string()))?;
+
+                // Under the hood, `crypto_kx` splits a 512 bits hash into two
+                // 256 bits keys.
+                // The idea is to have each peer doing encryption with a different
+                // key so that:
+                // 1. Each peer can use a counter as nonce without the need for
+                //   synchronization with the other peer.
+                // 2. To avoid reflection attacks.
+                //
+                // However 1 is not needed since we use XSalsa20 for encryption (that
+                // uses a random nonce) and we are safe from 2 given we never use the
+                // shared secret key for mutual authentication (but only for transmitting
+                // data between clients).
+                //
+                // Hence why we only keep a single key here.
+                keys.rx.into()
+            }
+            SharedSecretKeyRole::Greeter => {
+                let keys = crypto_kx::server_session_keys(
+                    &self_public_key,
+                    &self_secret_key,
+                    &peer_public_key,
+                )
+                .map_err(|e| CryptoError::SharedSecretKey(e.to_string()))?;
+
+                keys.tx.into()
+            }
+        };
+
+        Ok(key)
     }
 
     pub fn to_bytes(&self) -> [u8; Self::SIZE] {

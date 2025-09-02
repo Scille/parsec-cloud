@@ -190,7 +190,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
 
     let shared_secret_key = Arc::new(
         greeter_private_key
-            .generate_shared_secret_key(&claimer_public_key)
+            .generate_shared_secret_key(&claimer_public_key, SharedSecretKeyRole::Claimer)
             .unwrap(),
     );
     let (expected_claimer_sas, expected_greeter_sas) =

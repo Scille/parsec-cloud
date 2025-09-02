@@ -546,7 +546,7 @@ impl BaseGreetInitialCtx {
         };
 
         let shared_secret_key = greeter_private_key
-            .generate_shared_secret_key(&claimer_public_key)
+            .generate_shared_secret_key(&claimer_public_key, SharedSecretKeyRole::Greeter)
             .map_err(GreetInProgressError::CorruptedSharedSecretKey)?;
         let greeter_nonce: Bytes = generate_sas_code_nonce().into();
 

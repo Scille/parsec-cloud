@@ -8,7 +8,7 @@ use super::{
     platform,
     utils::{test_msgpack_serialization, test_serde},
 };
-use crate::{CryptoError, PrivateKey, PublicKey, SecretKey};
+use crate::{CryptoError, PrivateKey, PublicKey, SecretKey, SharedSecretKeyRole};
 
 #[platform::test]
 fn consts() {
@@ -43,22 +43,22 @@ fn generate_shared_secret_key() {
         "1e41b6450e2862452c2c40f5b1b6298d8a2433b3131ac8291a4840e5057c313b"
     ));
     let expected_shared_key = SecretKey::from(hex!(
-        "0cfa61afc1ce40d7e44f512d5c718ec2d4a9caa6aaaa1ea43b96db57ac61612d"
+        "4883290bad8fb20dee068de4967e5df149bda8c3702864bc7cb5d59c098a642f"
     ));
 
-    let shared_key = privkey1
-        .generate_shared_secret_key(&privkey2.public_key())
+    let claimer_shared_key = privkey1
+        .generate_shared_secret_key(&privkey2.public_key(), SharedSecretKeyRole::Claimer)
         .unwrap();
-    assert_eq!(shared_key, expected_shared_key);
+    assert_eq!(claimer_shared_key, expected_shared_key);
 
-    let inv_shared_key = privkey2
-        .generate_shared_secret_key(&privkey1.public_key())
+    let greeter_shared_key = privkey2
+        .generate_shared_secret_key(&privkey1.public_key(), SharedSecretKeyRole::Greeter)
         .unwrap();
-    assert_eq!(inv_shared_key, expected_shared_key);
+    assert_eq!(greeter_shared_key, expected_shared_key);
 
     // Make sure the shared key works as intended
-    let encrypted = shared_key.encrypt(b"Hello, world !");
-    let decrypted = inv_shared_key.decrypt(&encrypted).unwrap();
+    let encrypted = claimer_shared_key.encrypt(b"Hello, world !");
+    let decrypted = greeter_shared_key.decrypt(&encrypted).unwrap();
     assert_eq!(&decrypted, b"Hello, world !");
 
     // Shared secret key generation is based on libsodium's `crypto_scalarmult`,
@@ -70,7 +70,7 @@ fn generate_shared_secret_key() {
         "0000000000000000000000000000000000000000000000000000000000000000"
     ));
     assert_matches!(
-        privkey1.generate_shared_secret_key(&bad_pub_key),
+        privkey1.generate_shared_secret_key(&bad_pub_key, SharedSecretKeyRole::Claimer),
         Err(CryptoError::SharedSecretKey(_)),
     );
 }
