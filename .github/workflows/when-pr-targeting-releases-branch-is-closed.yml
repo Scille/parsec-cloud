@@ -61,7 +61,7 @@ jobs:
           echo "Closing issues linked to PR #${PR_NUMBER} named '${PR_TITLE}'"
           for issue in $(jq '.closingIssuesReferences.nodes[].number' "${{ env.PR_INFO }}"); do
             echo "Closing issue #${issue}"
-            gh issue close "${issue}" --reason complete --comment "Fixed by #${PR_NUMBER}"
+            gh issue close "${issue}" --reason completed --comment "Fixed by #${PR_NUMBER}"
           done
         env:
           GH_TOKEN: ${{ github.token }}
