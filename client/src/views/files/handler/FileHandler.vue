@@ -56,6 +56,7 @@
               <ion-icon
                 v-show="saveState === SaveState.saved"
                 class="save-info-icon save-info-icon-ok"
+                id="saved-changes"
                 ref="savedIcon"
                 :icon="cloudDone"
               />
@@ -66,6 +67,7 @@
               <ion-icon
                 v-show="saveState === SaveState.unsaved"
                 class="save-info-icon save-info-icon-ko"
+                id="unsaved-changes"
                 ref="unsavedIcon"
                 :icon="cloudOffline"
               />

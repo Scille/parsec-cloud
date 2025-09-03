@@ -76,6 +76,7 @@ msTest('Check edited file in viewer', async ({ parsecEditics }) => {
   await expect(parsecEditics.locator('#unsaved-changes')).toBeVisible();
   await parsecEditics.waitForTimeout(500);
   await expect(parsecEditics.locator('#unsaved-changes')).toBeHidden();
+  await expect(parsecEditics.locator('#saved-changes')).toBeVisible();
 
   await parsecEditics.locator('.file-handler-topbar').locator('.back-button').click();
   await entries.nth(2).dblclick();

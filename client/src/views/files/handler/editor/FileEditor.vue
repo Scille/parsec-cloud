@@ -2,12 +2,6 @@
 
 <template>
   <div
-    id="unsaved-changes"
-    v-show="hasUnsavedChanges"
-  >
-    NOT SAVED
-  </div>
-  <div
     class="file-editor"
     id="file-editor"
     ref="fileEditor"
