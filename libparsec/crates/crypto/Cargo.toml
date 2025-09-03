@@ -129,7 +129,6 @@ rsa = { workspace = true, features = ["std", "pem"] } # Optional rustcrypto dep
 sha2 = { workspace = true, features = ["std"] } # Optional rustcrypto dep
 # This is exceptionally allowed since no significant changes
 # were made from the last stable version to this major pre-release version.
-# TODO: bump to a stable version.
 x25519-dalek = { workspace = true, features = [
     "alloc",
     "zeroize",
