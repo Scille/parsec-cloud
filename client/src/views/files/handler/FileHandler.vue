@@ -239,16 +239,20 @@ const cancelRouteWatch = watchRoute(async () => {
   }
 
   const query = getCurrentRouteQuery();
+
   const timestamp = Number.isNaN(Number(query.timestamp)) ? undefined : Number(query.timestamp);
+  const fileHandlerMode = getFileHandlerMode();
 
   // Same file, no need to reload
-  if (contentInfo.value && contentInfo.value.path === getDocumentPath() && atDateTime.value?.toMillis() === timestamp) {
-    const fileHandlerMode = getFileHandlerMode();
-    if (fileHandlerMode === handlerMode.value) {
-      return;
-    }
-    handlerMode.value = getFileHandlerMode();
+  if (
+    contentInfo.value &&
+    contentInfo.value.path === getDocumentPath() &&
+    atDateTime.value?.toMillis() === timestamp &&
+    fileHandlerMode === handlerMode.value
+  ) {
+    return;
   }
+  handlerMode.value = fileHandlerMode;
 
   await loadFile();
 });
