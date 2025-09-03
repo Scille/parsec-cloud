@@ -114,7 +114,7 @@ function getAccountServer(): string {
   } else if (import.meta.env[ACCOUNT_SERVER_ENV_VARIABLE]) {
     addr = import.meta.env[ACCOUNT_SERVER_ENV_VARIABLE];
   } else if (document.location.hostname.endsWith('.parsec.cloud')) {
-    return document.location.hostname;
+    addr = document.location.hostname;
   } else {
     addr = ACCOUNT_DEFAULT_SERVER;
   }
