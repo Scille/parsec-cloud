@@ -42,6 +42,8 @@ msTest('Open editor from viewer', async ({ parsecEditics }) => {
 });
 
 msTest('Check edited file in viewer', async ({ parsecEditics }) => {
+  msTest.setTimeout(60_000);
+
   const entries = parsecEditics.locator('.folder-container').locator('.file-list-item');
 
   await entries.nth(2).hover();
@@ -51,9 +53,9 @@ msTest('Check edited file in viewer', async ({ parsecEditics }) => {
   await actionBar.locator('ion-button').nth(1).click();
   await expect(parsecEditics.locator('#cryptpad-editor')).toBeVisible();
   const mainFrame = parsecEditics.locator('#cryptpad-editor').contentFrame();
-  // await expect(mainFrame.locator('.placeholder-message-container')).toBeVisible();
-  // await expect(mainFrame.locator('.placeholder-message-container')).toHaveText('Loading...');
-  await parsecEditics.waitForTimeout(500);
+  await expect(mainFrame.locator('.placeholder-message-container')).toBeVisible();
+  await expect(mainFrame.locator('.placeholder-message-container')).toHaveText('Loading...');
+  await parsecEditics.waitForTimeout(4000);
 
   await expect(mainFrame.locator('#sbox-iframe')).toBeVisible();
   const editor = parsecEditics
