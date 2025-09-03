@@ -55,7 +55,8 @@ msTest('Check edited file in viewer', async ({ parsecEditics }) => {
   const mainFrame = parsecEditics.locator('#cryptpad-editor').contentFrame();
   await expect(mainFrame.locator('.placeholder-message-container')).toBeVisible();
   await expect(mainFrame.locator('.placeholder-message-container')).toHaveText('Loading...');
-  await parsecEditics.waitForTimeout(4000);
+  // Takes an incredibly long time to load on the CI
+  await parsecEditics.waitForTimeout(10000);
 
   await expect(mainFrame.locator('#sbox-iframe')).toBeVisible();
   const editor = parsecEditics
@@ -87,6 +88,7 @@ msTest('Check edited file in viewer', async ({ parsecEditics }) => {
 });
 
 msTest('Edit file in editor with two users', async ({ parsecEditics }) => {
+  msTest.setTimeout(60_000);
   const entries = parsecEditics.locator('.folder-container').locator('.file-list-item');
 
   // Promote Bob
@@ -108,9 +110,10 @@ msTest('Edit file in editor with two users', async ({ parsecEditics }) => {
   await menu.getByRole('listitem').nth(2).click();
   await expect(parsecEditics.locator('#cryptpad-editor')).toBeVisible();
   const mainFrameAlice = parsecEditics.locator('#cryptpad-editor').contentFrame();
-  // await expect(mainFrameAlice.locator('.placeholder-message-container')).toBeVisible();
-  // await expect(mainFrameAlice.locator('.placeholder-message-container')).toHaveText('Loading...');
-  await parsecEditics.waitForTimeout(500);
+  await expect(mainFrameAlice.locator('.placeholder-message-container')).toBeVisible();
+  await expect(mainFrameAlice.locator('.placeholder-message-container')).toHaveText('Loading...');
+  // Takes an incredibly long time to load on the CI
+  await parsecEditics.waitForTimeout(10000);
 
   // Open editor with Bob
   const secondTab = await parsecEditics.openNewTab();
@@ -123,6 +126,11 @@ msTest('Edit file in editor with two users', async ({ parsecEditics }) => {
   await expect(actionBar.locator('ion-button').nth(1)).toHaveText('Edit');
   await actionBar.locator('ion-button').nth(1).click();
   await expect(secondTab.locator('#cryptpad-editor')).toBeVisible();
+  const mainFrameBob = secondTab.locator('#cryptpad-editor').contentFrame();
+  await expect(mainFrameBob.locator('.placeholder-message-container')).toBeVisible();
+  await expect(mainFrameBob.locator('.placeholder-message-container')).toHaveText('Loading...');
+  // Takes an incredibly long time to load on the CI
+  await secondTab.waitForTimeout(10000);
 
   // Make some edits and check from the other user
   await expect(mainFrameAlice.locator('#sbox-iframe')).toBeVisible();
@@ -156,6 +164,7 @@ msTest('Edit file in editor with two users', async ({ parsecEditics }) => {
 });
 
 msTest('Check file edited by other user', async ({ parsecEditics }) => {
+  msTest.setTimeout(60_000);
   const entries = parsecEditics.locator('.folder-container').locator('.file-list-item');
 
   // Promote Bob
@@ -177,9 +186,10 @@ msTest('Check file edited by other user', async ({ parsecEditics }) => {
   await menu.getByRole('listitem').nth(2).click();
   await expect(parsecEditics.locator('#cryptpad-editor')).toBeVisible();
   const mainFrameAlice = parsecEditics.locator('#cryptpad-editor').contentFrame();
-  // await expect(mainFrameAlice.locator('.placeholder-message-container')).toBeVisible();
-  // await expect(mainFrameAlice.locator('.placeholder-message-container')).toHaveText('Loading...');
-  await parsecEditics.waitForTimeout(500);
+  await expect(mainFrameAlice.locator('.placeholder-message-container')).toBeVisible();
+  await expect(mainFrameAlice.locator('.placeholder-message-container')).toHaveText('Loading...');
+  // Takes an incredibly long time to load on the CI
+  await parsecEditics.waitForTimeout(10000);
 
   // Make some edits and check from the other user
   await expect(mainFrameAlice.locator('#sbox-iframe')).toBeVisible();
@@ -206,6 +216,12 @@ msTest('Check file edited by other user', async ({ parsecEditics }) => {
   await expect(actionBar.locator('ion-button').nth(1)).toHaveText('Edit');
   await actionBar.locator('ion-button').nth(1).click();
   await expect(secondTab.locator('#cryptpad-editor')).toBeVisible();
+
+  const mainFrameBob = secondTab.locator('#cryptpad-editor').contentFrame();
+  await expect(mainFrameBob.locator('.placeholder-message-container')).toBeVisible();
+  await expect(mainFrameBob.locator('.placeholder-message-container')).toHaveText('Loading...');
+  // Takes an incredibly long time to load on the CI
+  await secondTab.waitForTimeout(10000);
 
   // Check modified text
   const editorBob = secondTab
