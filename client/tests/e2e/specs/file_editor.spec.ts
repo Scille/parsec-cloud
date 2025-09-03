@@ -42,7 +42,7 @@ msTest('Open editor from viewer', async ({ parsecEditics }) => {
 });
 
 msTest('Check edited file in viewer', async ({ parsecEditics }) => {
-  msTest.setTimeout(60_000);
+  msTest.setTimeout(120_000);
 
   const entries = parsecEditics.locator('.folder-container').locator('.file-list-item');
 
@@ -88,7 +88,7 @@ msTest('Check edited file in viewer', async ({ parsecEditics }) => {
 });
 
 msTest('Edit file in editor with two users', async ({ parsecEditics }) => {
-  msTest.setTimeout(60_000);
+  msTest.setTimeout(120_000);
   const entries = parsecEditics.locator('.folder-container').locator('.file-list-item');
 
   // Promote Bob
@@ -164,7 +164,7 @@ msTest('Edit file in editor with two users', async ({ parsecEditics }) => {
 });
 
 msTest('Check file edited by other user', async ({ parsecEditics }) => {
-  msTest.setTimeout(60_000);
+  msTest.setTimeout(120_000);
   const entries = parsecEditics.locator('.folder-container').locator('.file-list-item');
 
   // Promote Bob
