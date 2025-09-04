@@ -24,11 +24,11 @@ fn generate() {
     let (claimer_sas, greeter_sas) =
         SASCode::generate_sas_codes(&claimer_nonce, &greeter_nonce, &shared_secret_key);
 
-    p_assert_eq!(claimer_sas.as_ref(), "25PA");
-    p_assert_eq!(greeter_sas.as_ref(), "KBWM");
+    p_assert_eq!(claimer_sas.as_ref(), "4BKE");
+    p_assert_eq!(greeter_sas.as_ref(), "QR2Q");
 
-    p_assert_eq!(claimer_sas, "25PA".parse().unwrap());
-    p_assert_eq!(greeter_sas, "KBWM".parse().unwrap());
+    p_assert_eq!(claimer_sas, "4BKE".parse().unwrap());
+    p_assert_eq!(greeter_sas, "QR2Q".parse().unwrap());
 }
 
 #[rstest]

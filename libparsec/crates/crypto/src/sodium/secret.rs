@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use digest::{
-    consts::{U5, U64},
+    consts::U64,
     typenum::{IsLessOrEqual, LeEq, NonZero},
 };
 use generic_array::{ArrayLength, GenericArray};
@@ -58,36 +58,15 @@ impl SecretKey {
         Size: ArrayLength<u8> + IsLessOrEqual<U64>,
         LeEq<Size, U64>: NonZero,
     {
-        let mut out = GenericArray::<u8, Size>::default();
         let raw_key = self.0.as_bytes();
-        // SAFETY: We provide valid pointers to `crypto_generichash_blake2b`
-        // The lib call to check that `outlen` is of correct size for cryptography purpose (at
-        // min `crypto_generichash_BYTES_MIN`).
-        // `outlen` will be smaller than that when generating SAS code.
-        // https://doc.libsodium.org/hashing/generic_hashing#usage
-        let res = unsafe {
-            libsodium_sys::crypto_generichash_blake2b(
-                out.as_mut_ptr(),
-                out.len(),
-                data.as_ptr(),
-                data.len() as u64,
-                raw_key.as_ptr(),
-                raw_key.len(),
-            )
-        };
-        if res != 0 {
-            panic!("Error while generating MAC");
-        } else {
-            out
-        }
+        let out =
+            libsodium_rs::crypto_generichash::blake2b::hash_with_key(data, raw_key, Size::USIZE);
+        // TODO: use `GenericArray::try_from_vec` once we upgrade to `generic-array` >= 1.0
+        GenericArray::<u8, Size>::clone_from_slice(&out)
     }
 
     pub fn mac_512(&self, data: &[u8]) -> [u8; 64] {
         self.mac::<U64>(data).into()
-    }
-
-    pub fn sas_code(&self, data: &[u8]) -> [u8; 5] {
-        self.mac::<U5>(data).into()
     }
 
     pub fn generate_salt() -> Vec<u8> {
