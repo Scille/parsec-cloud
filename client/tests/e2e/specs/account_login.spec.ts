@@ -169,8 +169,8 @@ msTest('Account create registration device and auto-register', async ({ browser,
   });
   const loginContainer1 = secondTab.locator('.account-login-container');
   const loginButton1 = loginContainer1.locator('.account-login-button').locator('ion-button');
-  await fillIonInput(loginContainer1.locator('ion-input').nth(1), email);
-  await fillIonInput(loginContainer1.locator('ion-input').nth(2), 'P@ssw0rd.');
+  await fillIonInput(loginContainer1.locator('ion-input').nth(2), email);
+  await fillIonInput(loginContainer1.locator('ion-input').nth(3), 'P@ssw0rd.');
   await expect(loginButton1).toBeTrulyEnabled();
   await loginButton1.click();
   await expect(secondTab).toBeHomePage();
@@ -194,7 +194,12 @@ msTest('Account create registration device and auto-register', async ({ browser,
   // Opening a second tab with the same account, device should be present
   const newTab = await home.openNewTab({ location: '/home', withParsecAccount: true, parsecAccountAutoLogin: false });
 
-  // Main context, so we are automatically logged in
+  const loginContainer = newTab.locator('.account-login-container');
+  const loginButton = loginContainer.locator('.account-login-button').locator('ion-button');
+  await fillIonInput(loginContainer.locator('ion-input').nth(2), email);
+  await fillIonInput(loginContainer.locator('ion-input').nth(3), 'P@ssw0rd.');
+  await expect(loginButton).toBeTrulyEnabled();
+  await loginButton.click();
   await expect(newTab).toBeHomePage();
 
   await expect(newTab.locator('.organization-list').locator('.organization-card')).toHaveCount(4);
