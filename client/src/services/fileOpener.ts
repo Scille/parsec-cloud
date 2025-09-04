@@ -392,4 +392,4 @@ async function openPath(
   }
 }
 
-export { openPath, showInExplorer };
+export { openPath, OpenPathOptions, showInExplorer };

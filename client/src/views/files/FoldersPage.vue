@@ -262,7 +262,7 @@ import { IonContent, IonPage, IonText, modalController, popoverController } from
 import { arrowRedo, folderOpen, informationCircle, link, open, trashBin, download, create, time, duplicate, eye } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, nextTick, watch, useTemplateRef } from 'vue';
 import { EntrySyncData, EventData, EventDistributor, EventDistributorKey, Events, MenuActionData } from '@/services/eventDistributor';
-import { openPath, showInExplorer } from '@/services/fileOpener';
+import { openPath, OpenPathOptions, showInExplorer } from '@/services/fileOpener';
 import { WorkspaceTagRole } from '@/components/workspaces';
 import { MenuAction, TabBarOptions, useCustomTabBar } from '@/views/menu';
 import { Env } from '@/services/environment';
@@ -306,11 +306,15 @@ const tabBarActions = computed(() => {
     });
   }
   if (selectedEntries.length === 1 && selectedEntries[0].isFile()) {
-    actions.push({ label: 'FoldersPage.tabbar.preview', action: async () => await viewEntries(getSelectedEntries()), icon: eye });
+    actions.push({
+      label: 'FoldersPage.tabbar.preview',
+      action: async () => await openEntries(getSelectedEntries(), { skipViewers: false }),
+      icon: eye,
+    });
     if (Env.isEditicsEnabled() && !isReadOnly) {
       actions.push({
         label: 'FoldersPage.tabbar.edit',
-        action: async () => await editEntries(getSelectedEntries()),
+        action: async () => await openEntries(getSelectedEntries(), { useEditor: true }),
         icon: create,
       });
     }
@@ -329,7 +333,7 @@ const tabBarActions = computed(() => {
       }
       actions.push({
         label: 'FoldersPage.tabbar.openWithDefault',
-        action: async () => await openEntries(getSelectedEntries()),
+        action: async () => await openEntries(getSelectedEntries(), { skipViewers: true }),
         icon: open,
       });
     }
@@ -955,7 +959,8 @@ async function onEntryClick(entry: EntryModel, _event: Event): Promise<void> {
       query: { documentPath: newPath, workspaceHandle: workspaceInfo.value?.handle },
     });
   } else {
-    await openEntries([entry]);
+    const config = await storageManager.retrieveConfig();
+    await openEntries([entry], { skipViewers: config.skipViewers });
   }
 }
 
@@ -1171,14 +1176,6 @@ async function renameEntries(entries: EntryModel[]): Promise<void> {
   await onSelectionCancel();
 }
 
-async function editEntries(entries: EntryModel[]): Promise<void> {
-  const workspaceHandle = getWorkspaceHandle();
-  if (entries.length !== 1 || !workspaceInfo.value || !workspaceHandle) {
-    return;
-  }
-  await openPath(workspaceHandle, entries[0].path, informationManager, fileOperationManager, { useEditor: true });
-}
-
 async function copyLink(entries: EntryModel[]): Promise<void> {
   if (entries.length !== 1 || !workspaceInfo.value) {
     return;
@@ -1364,7 +1361,7 @@ async function showHistory(entries: EntryModel[]): Promise<void> {
   selectionEnabled.value = false;
 }
 
-async function viewEntries(entries: EntryModel[]): Promise<void> {
+async function openEntries(entries: EntryModel[], options: OpenPathOptions): Promise<void> {
   if (entries.length !== 1 || !workspaceInfo.value || !entries[0].isFile()) {
     return;
   }
@@ -1372,19 +1369,7 @@ async function viewEntries(entries: EntryModel[]): Promise<void> {
   const entry = entries[0] as EntryStatFile;
   const workspaceHandle = workspaceInfo.value.handle;
 
-  await openPath(workspaceHandle, entry.path, informationManager, fileOperationManager, { skipViewers: false });
-  selectionEnabled.value = false;
-}
-
-async function openEntries(entries: EntryModel[]): Promise<void> {
-  if (entries.length !== 1 || !workspaceInfo.value || !entries[0].isFile()) {
-    return;
-  }
-
-  const entry = entries[0] as EntryStatFile;
-  const workspaceHandle = workspaceInfo.value.handle;
-
-  await openPath(workspaceHandle, entry.path, informationManager, fileOperationManager, { skipViewers: true });
+  await openPath(workspaceHandle, entry.path, informationManager, fileOperationManager, options);
   selectionEnabled.value = false;
 }
 
@@ -1436,12 +1421,12 @@ async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?
   }
 
   const actions = new Map<FileAction, (file: EntryModel[]) => Promise<void>>([
-    [FileAction.Preview, viewEntries],
+    [FileAction.Preview, async (entries: EntryModel[]): Promise<void> => await openEntries(entries, { skipViewers: false })],
     [FileAction.Rename, renameEntries],
-    [FileAction.Edit, editEntries],
+    [FileAction.Edit, async (entries: EntryModel[]): Promise<void> => await openEntries(entries, { useEditor: true })],
     [FileAction.MoveTo, moveEntriesTo],
     [FileAction.MakeACopy, copyEntries],
-    [FileAction.Open, openEntries],
+    [FileAction.Open, async (entries: EntryModel[]): Promise<void> => await openEntries(entries, { skipViewers: true })],
     [FileAction.ShowHistory, showHistory],
     [FileAction.Download, downloadEntries],
     [FileAction.ShowDetails, showDetails],
@@ -1546,7 +1531,7 @@ const actionBarOptionsFoldersPage = computed(() => {
         label: 'FoldersPage.fileContextMenu.actionPreview',
         icon: eye,
         onClick: async () => {
-          await viewEntries(getSelectedEntries());
+          await openEntries(getSelectedEntries(), { skipViewers: false });
         },
       });
     }
@@ -1555,7 +1540,7 @@ const actionBarOptionsFoldersPage = computed(() => {
         label: 'FoldersPage.fileContextMenu.actionEdit',
         icon: create,
         onClick: async () => {
-          await editEntries(getSelectedEntries());
+          await openEntries(getSelectedEntries(), { useEditor: true });
         },
       });
     }
