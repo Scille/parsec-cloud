@@ -185,7 +185,7 @@ fn untrusted_validate() {
     );
 }
 
-#[platform::test]
+#[test]
 fn untrusted_serialization() {
     // Generated from Parsec 3.4.1-a.0+dev
     // Content:
