@@ -11,7 +11,7 @@
 </template>
 
 <script lang="ts" setup>
-import { getTOS, logout as parsecLogout, acceptTOS, getClientInfo, listStartedClients } from '@/parsec';
+import { getTOS, logout as parsecLogout, acceptTOS, getClientInfo, listStartedClients, isWeb } from '@/parsec';
 import { getConnectionHandle, navigateTo, Routes } from '@/router';
 import { EntryDeletedData, EntryRenamedData, EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { FileOperationManagerKey } from '@/services/fileOperationManager';
@@ -104,7 +104,7 @@ onMounted(async () => {
   if (clientInfoResult.value.mustAcceptTos) {
     await showTOSModal();
   }
-  if (!window.isDev()) {
+  if (!window.isDev() && isWeb()) {
     warnRefresh();
   }
 });
