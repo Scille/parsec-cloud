@@ -76,36 +76,80 @@ export class CryptpadOpenError extends CryptpadError {
 }
 
 export class Cryptpad {
-  private scriptId = 'cryptpad-api-js';
+  private static SCRIPT_ID = 'cryptpad-api-js';
   private containerElement: HTMLElement;
   private script?: HTMLScriptElement;
   private serverUrl: string;
 
-  constructor(containerElement: HTMLElement, serverUrl: string) {
+  constructor(containerElement: HTMLElement, serverUrl: string = Env.getDefaultCryptpadServer()) {
     this.containerElement = containerElement;
     this.serverUrl = serverUrl;
   }
 
-  async init(): Promise<void> {
+  private static async loadFakeDocument(): Promise<void> {
+    // Open a dummy docx to make things load in cache
+    const docEl = document.createElement('div');
+    docEl.id = 'cryptpad-fake-doc';
+    docEl.innerHTML = '';
+    docEl.style.visibility = 'hidden';
+    document.body.appendChild(docEl);
+
+    const data = (await import('@/parsec/mock_files/docx')).default;
+
+    const config = {
+      document: {
+        url: URL.createObjectURL(new Blob([data as Uint8Array<ArrayBuffer>], { type: 'application/octet-stream' })),
+        fileType: 'docx',
+        title: window.crypto.randomUUID(),
+        key: window.crypto.randomUUID(),
+      },
+      documentType: CryptpadDocumentType.Doc,
+      editorConfig: {
+        lang: 'en',
+      },
+      autosave: 10000,
+      events: {
+        onSave: async (_file: Blob, callback: () => void): Promise<void> => {
+          callback();
+        },
+        onHasUnsavedChanges: (_unsaved: boolean): void => {},
+      },
+    };
+
+    // Watch for the creation of the iframe
+    const observer = new MutationObserver((mutationsList, obs) => {
+      for (const mutation of mutationsList) {
+        for (const node of mutation.addedNodes) {
+          if (node instanceof HTMLElement && (node as HTMLElement).id === 'cryptpad-editor') {
+            // Hide it immediately
+            node.style.display = 'none';
+            // Delete it later and remove the observer
+            setTimeout(() => {
+              node.remove();
+              obs.disconnect();
+            }, 10000);
+          }
+        }
+      }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: false });
+    (window as any).CryptPadAPI(docEl.id, { ...config });
+  }
+
+  static async preload(serverUrl: string = Env.getDefaultCryptpadServer()): Promise<HTMLScriptElement> {
     if (!Env.isEditicsEnabled()) {
       throw new CryptpadInitError(CryptpadErrorCode.NotEnabled);
     }
-
-    // Script is already set for this instance (init() called multiple times)
-    if (this.script) {
-      window.electronAPI.log('info', 'CryptPad API script already loaded.');
-      return;
-    }
-
     // Check if the script exist in the DOM, maybe created by another instance
-    let script = document.getElementById(this.scriptId) as HTMLScriptElement | null;
+    let script = document.getElementById(Cryptpad.SCRIPT_ID) as HTMLScriptElement | null;
     if (!script) {
       script = document.createElement('script');
       if (!script) {
         throw new CryptpadInitError(CryptpadErrorCode.ScriptElementCreationFailed);
       }
-      script.id = this.scriptId;
-      script.src = `${this.serverUrl}/cryptpad-api.js`;
+      script.id = Cryptpad.SCRIPT_ID;
+      script.src = `${serverUrl}/cryptpad-api.js`;
       script.async = true;
       document.head.appendChild(script);
 
@@ -113,7 +157,13 @@ export class Cryptpad {
         (script as HTMLScriptElement).onload = (): void => {
           if (typeof (window as any).CryptPadAPI === 'function') {
             window.electronAPI.log('info', 'CryptPad API script loaded successfully.');
-            resolve();
+            Cryptpad.loadFakeDocument()
+              .then(() => {
+                resolve();
+              })
+              .catch(() => {
+                reject(new CryptpadError(CryptpadErrorCode.InitFailed));
+              });
           } else {
             const errorMessage = 'CryptPad API script loaded but CryptPadAPI function is not available.';
             window.electronAPI.log('error', errorMessage);
@@ -129,14 +179,16 @@ export class Cryptpad {
         };
       });
     } else {
-      window.electronAPI.log('info', 'CryptPad API script previously loaded, reusing');
+      window.electronAPI.log('info', 'CryptPad API script already loaded');
     }
-    this.script = script;
+    return script;
+  }
+
+  async init(): Promise<void> {
+    this.script = await Cryptpad.preload(this.serverUrl);
   }
 
   async open(config: CryptpadConfig): Promise<void> {
-    await this.init();
-
     if (!this.containerElement) {
       window.electronAPI.log('error', 'Container element is not initialized. Please call init() before open().');
       throw new CryptpadOpenError(CryptpadErrorCode.NotInitialized, config.documentType);

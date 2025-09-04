@@ -54,6 +54,7 @@ import { LogLevel, WebLogger } from '@/services/webLogger';
 import LongPathsSupportModal from '@/views/about/LongPathsSupportModal.vue';
 import IncompatibleEnvironmentModal from '@/views/home/IncompatibleEnvironmentModal.vue';
 import { Answer, Base64, I18n, Locale, MegaSharkPlugin, Obj, StripeConfig, ThemeManager, Validity, askQuestion } from 'megashark-lib';
+import { Cryptpad } from '@/services/cryptpad';
 
 enum AppState {
   Ready = 'ready',
@@ -253,6 +254,9 @@ async function setupApp(): Promise<void> {
   app.provide(HotkeyManagerKey, hotkeyManager);
 
   await initViewers();
+  Cryptpad.preload(Env.getDefaultCryptpadServer()).catch((e: any) => {
+    console.error(`Cryptpad preloading failed: ${e.toString()}`);
+  });
 
   // We get the app element
   const appElem = window.document.getElementById('app');
