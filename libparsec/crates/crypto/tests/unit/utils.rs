@@ -2,7 +2,7 @@
 
 macro_rules! test_serde {
     ($name:ident, $cls:ident) => {
-        #[test]
+        #[platform::test]
         fn $name() {
             const RAW_KEY: [u8; $cls::SIZE] = [42; $cls::SIZE];
             let key = $cls::try_from(&RAW_KEY[..]).unwrap();
@@ -10,10 +10,11 @@ macro_rules! test_serde {
         }
     };
 }
+pub(crate) use test_serde;
 
 macro_rules! test_msgpack_serialization {
     ($name:ident, $cls:ident, $data:expr, $serialized:expr) => {
-        #[test]
+        #[platform::test]
         fn $name() {
             let raw_data = $data;
             let expected_obj = $cls::try_from(raw_data.as_ref()).expect(concat!(
@@ -44,3 +45,4 @@ macro_rules! test_msgpack_serialization {
         }
     };
 }
+pub(crate) use test_msgpack_serialization;

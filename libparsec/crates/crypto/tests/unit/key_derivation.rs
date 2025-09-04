@@ -1,19 +1,16 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-// `allow-unwrap-in-test` don't behave as expected, see:
-// https://github.com/rust-lang/rust-clippy/issues/11119
-#![allow(clippy::unwrap_used)]
-
 use hex_literal::hex;
 use pretty_assertions::assert_eq;
 use serde_test::{assert_tokens, Token};
 
-use libparsec_crypto::{KeyDerivation, SecretKey};
+use super::{
+    platform,
+    utils::{test_msgpack_serialization, test_serde},
+};
+use crate::{KeyDerivation, SecretKey};
 
-#[macro_use]
-mod common;
-
-#[test]
+#[platform::test]
 fn consts() {
     assert_eq!(KeyDerivation::ALGORITHM, "blake2b");
     assert_eq!(KeyDerivation::SIZE, 32);
@@ -21,7 +18,7 @@ fn consts() {
 
 test_serde!(serde, KeyDerivation);
 
-#[test]
+#[platform::test]
 fn derive_uuid_from_uuid_stability() {
     let id = uuid::uuid!("cadc3f583b8647f2a3227400fc02e096");
 
@@ -37,7 +34,7 @@ fn derive_uuid_from_uuid_stability() {
     assert_eq!(gen_id_bis, gen_id);
 }
 
-#[test]
+#[platform::test]
 fn derive_uuid_from_uuid_spec() {
     let kd = KeyDerivation::from(hex!(
         "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
@@ -51,7 +48,7 @@ fn derive_uuid_from_uuid_spec() {
     assert_eq!(gen_id, expected_gen_id);
 }
 
-#[test]
+#[platform::test]
 fn derive_secret_key_from_uuid_stability() {
     let id = uuid::uuid!("cadc3f583b8647f2a3227400fc02e096");
 
@@ -67,7 +64,7 @@ fn derive_secret_key_from_uuid_stability() {
     assert_eq!(sk1_bis, sk1);
 }
 
-#[test]
+#[platform::test]
 fn derive_secret_key_from_uuid_spec() {
     let kd = KeyDerivation::from(hex!(
         "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
@@ -90,7 +87,7 @@ test_msgpack_serialization!(
     hex!("c420856785fb1f72d3e2fdace29f02fbf8da9161cc84baec9669870f5c69fa5dc7e6")
 );
 
-#[test]
+#[platform::test]
 fn hash() {
     let kd1 = KeyDerivation::from(hex!(
         "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"

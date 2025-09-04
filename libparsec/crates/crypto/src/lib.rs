@@ -17,3 +17,10 @@ pub mod prelude {
 }
 
 pub use prelude::*;
+
+#[cfg(test)]
+#[path = "../tests/unit/mod.rs"]
+// `allow-unwrap-in-test` don't behave as expected, see:
+// https://github.com/rust-lang/rust-clippy/issues/11119
+#[allow(clippy::unwrap_used)]
+mod tests;

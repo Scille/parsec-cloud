@@ -1,21 +1,18 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-// `allow-unwrap-in-test` don't behave as expected, see:
-// https://github.com/rust-lang/rust-clippy/issues/11119
-#![allow(clippy::unwrap_used)]
-
 use std::convert::TryFrom;
 
 use hex_literal::hex;
 use pretty_assertions::{assert_eq, assert_matches};
 use serde_test::{assert_tokens, Token};
 
-use libparsec_crypto::{CryptoError, SigningKey, VerifyKey};
+use super::{
+    platform,
+    utils::{test_msgpack_serialization, test_serde},
+};
+use crate::{CryptoError, SigningKey, VerifyKey};
 
-#[macro_use]
-mod common;
-
-#[test]
+#[platform::test]
 fn consts() {
     assert_eq!(SigningKey::ALGORITHM, "ed25519");
     assert_eq!(VerifyKey::ALGORITHM, "ed25519");
@@ -27,7 +24,7 @@ fn consts() {
 test_serde!(signing_serde, SigningKey);
 test_serde!(verify_serde, VerifyKey);
 
-#[test]
+#[platform::test]
 fn round_trip() {
     let sk = SigningKey::generate();
 
@@ -46,7 +43,7 @@ fn round_trip() {
     assert_eq!(message, expected_message);
 }
 
-#[test]
+#[platform::test]
 fn signature_verification_spec() {
     let vk = VerifyKey::try_from(hex!(
         "78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537"
@@ -67,7 +64,7 @@ fn signature_verification_spec() {
     assert_eq!(signature, &signed_text[..64]);
 }
 
-#[test]
+#[platform::test]
 fn signature_only() {
     let sk = SigningKey::generate();
 
@@ -104,7 +101,7 @@ test_msgpack_serialization!(
     hex!("c42078958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537")
 );
 
-#[test]
+#[platform::test]
 fn signing_key_should_verify_length_when_deserialize() {
     let data = hex!("c40564756d6d79");
     assert_eq!(
@@ -115,7 +112,7 @@ fn signing_key_should_verify_length_when_deserialize() {
     );
 }
 
-#[test]
+#[platform::test]
 fn verify_key_should_verify_length_when_deserialize() {
     let data = hex!("c40564756d6d79");
     assert_eq!(
@@ -126,7 +123,7 @@ fn verify_key_should_verify_length_when_deserialize() {
     );
 }
 
-#[test]
+#[platform::test]
 fn verify_key_bad_point_decompression() {
     // This is a weird case :/
     //
@@ -158,7 +155,7 @@ fn verify_key_bad_point_decompression() {
     }
 }
 
-#[test]
+#[platform::test]
 fn signed_too_small() {
     let too_small = b"dummy";
 
@@ -174,7 +171,7 @@ fn signed_too_small() {
     assert_matches!(vk.verify(too_small), Err(CryptoError::Signature));
 }
 
-#[test]
+#[platform::test]
 fn verifykey_hash() {
     let vk1 = VerifyKey::try_from(hex!(
         "78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537"
@@ -198,7 +195,7 @@ fn verifykey_hash() {
     assert_ne!(hash(&vk1), hash(&vk2));
 }
 
-#[test]
+#[platform::test]
 fn signing_key_from() {
     let raw = hex!("78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537");
     let key = SigningKey::from(raw);
@@ -206,7 +203,7 @@ fn signing_key_from() {
     assert_eq!(key.to_bytes(), raw);
 }
 
-#[test]
+#[platform::test]
 fn signing_key_try_from_array_of_u8() {
     let raw = hex!("78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537");
     let key = SigningKey::try_from(raw.as_ref()).unwrap();
@@ -218,7 +215,7 @@ fn signing_key_try_from_array_of_u8() {
     assert_eq!(outcome, Err(CryptoError::DataSize));
 }
 
-#[test]
+#[platform::test]
 fn signing_key_try_from_serde_bytes() {
     let raw = hex!("78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537");
     let key = SigningKey::try_from(serde_bytes::Bytes::new(&raw)).unwrap();
@@ -230,7 +227,7 @@ fn signing_key_try_from_serde_bytes() {
     assert_eq!(outcome, Err(CryptoError::DataSize));
 }
 
-#[test]
+#[platform::test]
 fn verifykey_key_try_from_static_array_of_u8() {
     let raw = hex!("78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537");
     let key = VerifyKey::try_from(raw).unwrap();
@@ -238,7 +235,7 @@ fn verifykey_key_try_from_static_array_of_u8() {
     assert_eq!(key.as_ref(), raw);
 }
 
-#[test]
+#[platform::test]
 fn verifykey_key_try_from_array_of_u8() {
     let raw = hex!("78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537");
     let key = VerifyKey::try_from(raw.as_ref()).unwrap();
@@ -250,7 +247,7 @@ fn verifykey_key_try_from_array_of_u8() {
     assert_eq!(outcome, Err(CryptoError::DataSize));
 }
 
-#[test]
+#[platform::test]
 fn verifykey_key_try_from_serde_bytes() {
     let raw = hex!("78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537");
     let key = VerifyKey::try_from(serde_bytes::Bytes::new(&raw)).unwrap();
