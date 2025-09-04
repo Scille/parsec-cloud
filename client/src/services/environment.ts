@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { isWeb } from '@/parsec';
 import { EnvironmentType, I18n } from 'megashark-lib';
 
 export const APP_VERSION = __APP_VERSION__;
@@ -113,7 +114,7 @@ function getAccountServer(): string {
     addr = (window as any).TESTING_ACCOUNT_SERVER;
   } else if (import.meta.env[ACCOUNT_SERVER_ENV_VARIABLE]) {
     addr = import.meta.env[ACCOUNT_SERVER_ENV_VARIABLE];
-  } else if (document.location.hostname.endsWith('.parsec.cloud')) {
+  } else if (isWeb()) {
     addr = document.location.hostname;
   } else {
     addr = ACCOUNT_DEFAULT_SERVER;
