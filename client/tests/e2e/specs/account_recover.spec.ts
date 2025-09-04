@@ -23,7 +23,7 @@ msTest('Parsec account recover account', async ({ parsecAccountLoggedIn }) => {
   }
   await expect(steps.nth(0).locator('ion-button')).toHaveText('Validate');
   await expect(steps.nth(0).locator('ion-button')).toBeTrulyDisabled();
-  await fillIonInput(steps.nth(0).locator('ion-input').nth(1), email);
+  await fillIonInput(steps.nth(0).locator('ion-input').nth(2), email);
   await expect(steps.nth(0).locator('ion-button')).toBeTrulyEnabled();
   await steps.nth(0).locator('ion-button').click();
   for (const [index, step] of (await steps.all()).entries()) {
@@ -83,7 +83,7 @@ msTest('Parsec account recover account back to login', async ({ parsecAccountLog
     index === 0 ? await expect(step).toBeVisible() : await expect(step).toBeHidden();
   }
   await expect(steps.nth(0).locator('ion-button')).toBeTrulyDisabled();
-  await fillIonInput(steps.nth(0).locator('ion-input').nth(1), email);
+  await fillIonInput(steps.nth(0).locator('ion-input').nth(2), email);
   await steps.nth(0).locator('ion-button').click();
   for (const [index, step] of (await steps.all()).entries()) {
     index === 1 ? await expect(step).toBeVisible() : await expect(step).toBeHidden();
@@ -94,7 +94,7 @@ msTest('Parsec account recover account back to login', async ({ parsecAccountLog
   await expect(page).toHaveURL(/.+\/recoverAccount$/);
   // Check that it resets properly
   await expect(title).toHaveText('Recover your account');
-  await expect(steps.nth(0).locator('ion-input').nth(1).locator('input')).toHaveValue('');
+  await expect(steps.nth(0).locator('ion-input').nth(2).locator('input')).toHaveValue('');
 });
 
 msTest('Parsec account recover account wrong code', async ({ parsecAccountLoggedIn }) => {
@@ -115,7 +115,7 @@ msTest('Parsec account recover account wrong code', async ({ parsecAccountLogged
   }
   await expect(steps.nth(0).locator('ion-button')).toHaveText('Validate');
   await expect(steps.nth(0).locator('ion-button')).toBeTrulyDisabled();
-  await fillIonInput(steps.nth(0).locator('ion-input').nth(1), email);
+  await fillIonInput(steps.nth(0).locator('ion-input').nth(2), email);
   await expect(steps.nth(0).locator('ion-button')).toBeTrulyEnabled();
   await steps.nth(0).locator('ion-button').click();
   for (const [index, step] of (await steps.all()).entries()) {

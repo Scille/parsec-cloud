@@ -37,7 +37,13 @@ msTest('Parsec account create account', async ({ parsecAccount }) => {
   await checkVisible(containers, 0);
   await expect(title).toHaveText('Create an account');
   const inputContainers = userInfoContainer.locator('div.account-login-content__input');
-  await expect(inputContainers.locator('.form-label')).toHaveText(['Server address', 'First name', 'Last name', 'Email address']);
+  await expect(inputContainers.locator('.form-label')).toHaveText([
+    'Server address',
+    'Server address',
+    'First name',
+    'Last name',
+    'Email address',
+  ]);
   const userInfoNext = userInfoContainer.locator('.account-login-content-button__item');
   await expect(userInfoNext).toHaveText('Send a validation code');
   await expect(userInfoNext).toBeTrulyDisabled();
@@ -148,9 +154,9 @@ msTest('Parsec account create account', async ({ parsecAccount }) => {
   const loginContainer = parsecAccount.locator('.account-login-container');
   const loginButton = loginContainer.locator('.account-login-button').locator('ion-button');
   await expect(loginButton).toBeTrulyDisabled();
-  await fillIonInput(loginContainer.locator('ion-input').nth(1), NEW_EMAIL);
+  await fillIonInput(loginContainer.locator('ion-input').nth(2), NEW_EMAIL);
   await expect(loginButton).toBeTrulyDisabled();
-  await fillIonInput(loginContainer.locator('ion-input').nth(2), PASSWORD);
+  await fillIonInput(loginContainer.locator('ion-input').nth(3), PASSWORD);
   await expect(loginButton).toBeTrulyEnabled();
   await loginButton.click();
 });
