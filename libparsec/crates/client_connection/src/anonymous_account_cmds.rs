@@ -45,7 +45,7 @@ impl AnonymousAccountCmds {
     }
 
     pub fn from_client(client: Client, _config_dir: &Path, addr: ParsecAddr) -> Self {
-        let url = addr.to_http_url(Some("/anonymous_account/"));
+        let url = addr.to_anonymous_account_url();
 
         #[cfg(feature = "test-with-testbed")]
         let send_hook = get_send_hook(_config_dir);
