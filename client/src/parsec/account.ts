@@ -375,6 +375,11 @@ class _ParsecAccount {
     if (!this.addressMatchesAccountServer(device.serverUrl)) {
       return { ok: false, error: { tag: AccountListRegistrationDevicesErrorTag.Internal, error: 'no-server-match' } };
     }
+    const infoResult = await this.getInfo();
+    if (!infoResult.ok || device.humanHandle.email !== infoResult.value.email) {
+      return { ok: false, error: { tag: AccountListRegistrationDevicesErrorTag.Internal, error: 'no-email-match' } };
+    }
+
     try {
       const result = await this.listRegistrationDevices();
       if (!result.ok) {
