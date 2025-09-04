@@ -71,10 +71,12 @@ where
     Size: ArrayLength<u8> + IsLessOrEqual<U64>,
     LeEq<Size, U64>: NonZero,
 {
-    let mut state = libsodium_rs::crypto_generichash::blake2b::State::new(None, Size::USIZE)
-        .expect("Cannot initialize blake2b state");
-    data.for_each(|blob| state.update(blob));
-    let raw_hash = state.finalize();
+    let mut hasher = libsodium_rs::crypto_generichash::blake2b::State::new(None, Size::USIZE)
+        .expect("valid config");
+    for part in data {
+        hasher.update(part);
+    }
+    let raw_hash = hasher.finalize();
     // TODO: replace `from_exact_iter` by `from_array` once generic-array is updated to v1.0+
     GenericArray::<u8, Size>::from_exact_iter(raw_hash).expect("correct iterator size")
 }
