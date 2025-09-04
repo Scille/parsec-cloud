@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use blake2::Blake2bMac;
-use digest::Mac;
+use blake2::{Blake2b, Digest};
 use generic_array::{
     typenum::{consts::U64, IsLessOrEqual, LeEq, NonZero},
     ArrayLength, GenericArray,
@@ -17,10 +16,9 @@ where
     Size: ArrayLength<u8> + IsLessOrEqual<U64>,
     LeEq<Size, U64>: NonZero,
 {
-    let mut hasher = Blake2bMac::new_with_salt_and_personal(b"", b"", b"").expect("valid params");
+    let mut hasher = Blake2b::<Size>::new();
     for part in data {
         hasher.update(part);
     }
-    let res = hasher.finalize();
-    res.into_bytes()
+    hasher.finalize()
 }
