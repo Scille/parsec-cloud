@@ -1,19 +1,16 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-// `allow-unwrap-in-test` don't behave as expected, see:
-// https://github.com/rust-lang/rust-clippy/issues/11119
-#![allow(clippy::unwrap_used)]
-
 use hex_literal::hex;
 use pretty_assertions::assert_eq;
 use serde_test::{assert_tokens, Token};
 
-use libparsec_crypto::{CryptoError, PrivateKey, PublicKey, SecretKey};
+use super::{
+    platform,
+    utils::{test_msgpack_serialization, test_serde},
+};
+use crate::{CryptoError, PrivateKey, PublicKey, SecretKey};
 
-#[macro_use]
-mod common;
-
-#[test]
+#[platform::test]
 fn consts() {
     assert_eq!(PrivateKey::ALGORITHM, "curve25519blake2bxsalsa20poly1305");
     assert_eq!(PublicKey::ALGORITHM, "curve25519blake2bxsalsa20poly1305");
@@ -25,7 +22,7 @@ fn consts() {
 test_serde!(private_serde, PrivateKey);
 test_serde!(public_serde, PublicKey);
 
-#[test]
+#[platform::test]
 fn round_trip() {
     let privkey = PrivateKey::generate();
     let pubkey = privkey.public_key();
@@ -37,7 +34,7 @@ fn round_trip() {
     assert_eq!(data2, data);
 }
 
-#[test]
+#[platform::test]
 fn generate_shared_secret_key() {
     let privkey1 = PrivateKey::from(hex!(
         "7d406ac1e4df6c16d656290350499345432e8f75260c2809302ba8c4500548c2"
@@ -61,7 +58,7 @@ fn generate_shared_secret_key() {
     assert_eq!(&decrypted, b"Hello, world !");
 }
 
-#[test]
+#[platform::test]
 fn decrypt_existing() {
     let privkey = PrivateKey::from(hex!(
         "7e771d03da8ed86aaea5b82f2b3754984cb49023e9c51297b99c5c4fd0d2dc54"
@@ -89,7 +86,7 @@ test_msgpack_serialization!(
     hex!("c420397120b8638d42d15c2280d580010b010546d5f4c9d2d6ea8bf80baed7f28f11")
 );
 
-#[test]
+#[platform::test]
 fn private_key_should_verify_length_when_deserialize() {
     let data = hex!("c40564756d6d79");
     assert_eq!(
@@ -100,7 +97,7 @@ fn private_key_should_verify_length_when_deserialize() {
     );
 }
 
-#[test]
+#[platform::test]
 fn public_key_should_verify_length_when_deserialize() {
     let data = hex!("c40564756d6d79");
     assert_eq!(
@@ -111,7 +108,7 @@ fn public_key_should_verify_length_when_deserialize() {
     );
 }
 
-#[test]
+#[platform::test]
 fn privkey_from_too_small_data() {
     assert!(matches!(
         PrivateKey::try_from(b"dummy".as_ref()),
@@ -119,7 +116,7 @@ fn privkey_from_too_small_data() {
     ))
 }
 
-#[test]
+#[platform::test]
 fn pubkey_from_too_small_data() {
     assert!(matches!(
         PublicKey::try_from(b"dummy".as_ref()),
@@ -127,7 +124,7 @@ fn pubkey_from_too_small_data() {
     ))
 }
 
-#[test]
+#[platform::test]
 fn encrypted_too_small() {
     let too_small = b"dummy";
 
@@ -140,7 +137,7 @@ fn encrypted_too_small() {
     ));
 }
 
-#[test]
+#[platform::test]
 fn pubkey_hash() {
     let vk1 = PublicKey::from(hex!(
         "78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537"

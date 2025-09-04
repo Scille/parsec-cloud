@@ -1,20 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-// `allow-unwrap-in-test` don't behave as expected, see:
-// https://github.com/rust-lang/rust-clippy/issues/11119
-#![allow(clippy::unwrap_used)]
-
 use hex_literal::hex;
 use pretty_assertions::assert_eq;
 use rstest::rstest;
 use serde_test::{assert_tokens, Token};
 
-use libparsec_crypto::{CryptoError, SecretKey, SecretKeyPassphrase};
+use super::{
+    platform,
+    utils::{test_msgpack_serialization, test_serde},
+};
+use crate::{CryptoError, SecretKey, SecretKeyPassphrase};
 
-#[macro_use]
-mod common;
-
-#[test]
+#[platform::test]
 fn consts() {
     assert_eq!(SecretKey::ALGORITHM, "xsalsa20poly1305");
     assert_eq!(SecretKey::SIZE, 32);
@@ -22,7 +19,7 @@ fn consts() {
 
 test_serde!(serde, SecretKey);
 
-#[test]
+#[platform::test]
 fn round_trip() {
     let sk = SecretKey::generate();
 
@@ -33,7 +30,7 @@ fn round_trip() {
     assert_eq!(data2, data);
 }
 
-#[test]
+#[platform::test]
 fn bad_decrypt() {
     let sk = SecretKey::generate();
 
@@ -42,7 +39,7 @@ fn bad_decrypt() {
     assert_eq!(sk.decrypt(&[0; 64]), Err(CryptoError::Decryption));
 }
 
-#[test]
+#[platform::test]
 fn data_decrypt_spec() {
     let sk = SecretKey::from(hex!(
         "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
@@ -63,7 +60,7 @@ test_msgpack_serialization!(
     hex!("c420856785fb1f72d3e2fdace29f02fbf8da9161cc84baec9669870f5c69fa5dc7e6")
 );
 
-#[test]
+#[platform::test]
 fn sas_code() {
     let sk = SecretKey::from(hex!(
         "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
@@ -73,7 +70,7 @@ fn sas_code() {
     assert_eq!(hmac, hex!("a0f507f4be"));
 }
 
-#[test]
+#[platform::test]
 fn mac_512() {
     let sk = SecretKey::from(hex!(
         "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
@@ -83,7 +80,7 @@ fn mac_512() {
     assert_eq!(hmac, hex!("37e763810a922d4ff377f648d2a92fbabc3dc1271fd343fc961b387a2817b493788eb928a8550bf2ba2512fac822046b9365c525e0627455de89c74758880066"));
 }
 
-#[test]
+#[platform::test]
 fn secret_key_should_verify_length_when_deserialize() {
     let data = hex!("c40564756d6d79");
     assert_eq!(
@@ -98,6 +95,7 @@ fn secret_key_should_verify_length_when_deserialize() {
 #[case::without_padding(0)]
 #[case::with_half_padding(3)]
 #[case::with_padding(6)]
+#[cfg_attr(target_arch = "wasm32", platform::test)] // Must be kept last!
 fn recovery_passphrase(#[case] padding: usize) {
     let (passphrase, key) = SecretKey::generate_recovery_passphrase();
 
@@ -121,6 +119,7 @@ fn recovery_passphrase(#[case] padding: usize) {
     "D5VR-53YO-QYJW-VJ4A-4DQR-4LVC-W425-3CXN-F3AQ-J6X2-YVPZ-XBAO-NU4Q-NU4Q",
     35
 )]
+#[cfg_attr(target_arch = "wasm32", platform::test)] // Must be kept last!
 fn invalid_passphrase(#[case] bad_passphrase: &str, #[case] key_length: usize) {
     assert_eq!(
         SecretKey::from_recovery_passphrase(bad_passphrase.to_owned().into()).unwrap_err(),
@@ -131,7 +130,7 @@ fn invalid_passphrase(#[case] bad_passphrase: &str, #[case] key_length: usize) {
     );
 }
 
-#[test]
+#[platform::test]
 fn secretkey_from_too_small_data() {
     assert!(matches!(
         SecretKey::try_from(b"dummy".as_ref()),
@@ -139,7 +138,7 @@ fn secretkey_from_too_small_data() {
     ))
 }
 
-#[test]
+#[platform::test]
 fn encrypted_too_small() {
     let too_small = b"dummy";
     let sk = SecretKey::from(hex!(
@@ -149,7 +148,7 @@ fn encrypted_too_small() {
     assert!(matches!(sk.decrypt(too_small), Err(CryptoError::Nonce)));
 }
 
-#[test]
+#[platform::test]
 fn hash() {
     let sk1 = SecretKey::from(hex!(
         "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"

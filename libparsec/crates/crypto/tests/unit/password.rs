@@ -1,32 +1,25 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-// `allow-unwrap-in-test` don't behave as expected, see:
-// https://github.com/rust-lang/rust-clippy/issues/11119
-#![allow(clippy::unwrap_used)]
-
 use hex_literal::hex;
 use pretty_assertions::{assert_eq as p_assert_eq, assert_matches as p_assert_matches};
 use rstest::rstest;
 
-use libparsec_crypto::{
-    CryptoError, KeyDerivation, PasswordAlgorithm, SecretKey, TrustedPasswordAlgorithm,
-    UntrustedPasswordAlgorithm,
+use super::platform;
+use crate::{
+    CryptoError, KeyDerivation, PasswordAlgorithm, PasswordAlgorithmSaltStrategy, SecretKey,
+    TrustedPasswordAlgorithm, UntrustedPasswordAlgorithm,
 };
 
 /*
  * PasswordAlgorithm
  */
 
-#[test]
+#[platform::test]
 fn argon2id_random_salt() {
-    let algo = PasswordAlgorithm::generate_argon2id(
-        libparsec_crypto::PasswordAlgorithmSaltStrategy::Random,
-    );
+    let algo = PasswordAlgorithm::generate_argon2id(PasswordAlgorithmSaltStrategy::Random);
     p_assert_matches!(algo, PasswordAlgorithm::Argon2id { .. });
 
-    let algo2 = PasswordAlgorithm::generate_argon2id(
-        libparsec_crypto::PasswordAlgorithmSaltStrategy::Random,
-    );
+    let algo2 = PasswordAlgorithm::generate_argon2id(PasswordAlgorithmSaltStrategy::Random);
     match (algo, algo2) {
         (
             PasswordAlgorithm::Argon2id { salt, .. },
@@ -35,20 +28,18 @@ fn argon2id_random_salt() {
     }
 }
 
-#[test]
+#[platform::test]
 fn argon2id_salt_from_email() {
-    let algo = PasswordAlgorithm::generate_argon2id(
-        libparsec_crypto::PasswordAlgorithmSaltStrategy::DerivedFromEmail {
+    let algo =
+        PasswordAlgorithm::generate_argon2id(PasswordAlgorithmSaltStrategy::DerivedFromEmail {
             email: "alice@example.com",
-        },
-    );
+        });
     p_assert_matches!(algo, PasswordAlgorithm::Argon2id { .. });
 
-    let algo2 = PasswordAlgorithm::generate_argon2id(
-        libparsec_crypto::PasswordAlgorithmSaltStrategy::DerivedFromEmail {
+    let algo2 =
+        PasswordAlgorithm::generate_argon2id(PasswordAlgorithmSaltStrategy::DerivedFromEmail {
             email: "alice@example.com",
-        },
-    );
+        });
     match (algo.clone(), algo2) {
         (
             PasswordAlgorithm::Argon2id { salt, .. },
@@ -56,11 +47,10 @@ fn argon2id_salt_from_email() {
         ) => p_assert_eq!(salt, salt2),
     }
 
-    let algo3 = PasswordAlgorithm::generate_argon2id(
-        libparsec_crypto::PasswordAlgorithmSaltStrategy::DerivedFromEmail {
+    let algo3 =
+        PasswordAlgorithm::generate_argon2id(PasswordAlgorithmSaltStrategy::DerivedFromEmail {
             email: "bob@example.com",
-        },
-    );
+        });
     match (algo, algo3) {
         (
             PasswordAlgorithm::Argon2id { salt, .. },
@@ -74,7 +64,7 @@ macro_rules! compute_test {
         mod $name {
             use super::*;
 
-            #[test]
+            #[platform::test]
             fn ok() {
                 let algo = PasswordAlgorithm::Argon2id {
                     salt: hex!("cffcc16d78cbc0e773aa5ee7b2210159"),
@@ -110,6 +100,7 @@ macro_rules! compute_test {
                                                 memlimit_kb: 8,
                                                 parallelism: 0,
                                             })]
+            #[cfg_attr(target_arch = "wasm32", platform::test)]  // Must be kept last!
             fn ko(#[case] algo: PasswordAlgorithm) {
                 p_assert_matches!(
                     algo.$name(&"Passw0rd".to_owned().into()),
@@ -127,7 +118,7 @@ compute_test!(compute_key_derivation, KeyDerivation);
  * TrustedPasswordAlgorithm
  */
 
-#[test]
+#[platform::test]
 fn trusted_serialization() {
     // Generated from Parsec 3.4.1-a.0+dev
     // Content:
@@ -168,7 +159,7 @@ fn trusted_serialization() {
  * UntrustedPasswordAlgorithm
  */
 
-#[test]
+#[platform::test]
 fn untrusted_serialization() {
     // Generated from Parsec 3.4.1-a.0+dev
     // Content:
@@ -202,7 +193,7 @@ fn untrusted_serialization() {
     assert_eq!(data2, expected);
 }
 
-#[test]
+#[platform::test]
 fn untrusted_generate_fake_from_seed() {
     let seed1 = SecretKey::from([1u8; 32]);
 
@@ -213,11 +204,10 @@ fn untrusted_generate_fake_from_seed() {
 
     assert_eq!(alice_algo1, alice_algo1_retried);
 
-    let legit = PasswordAlgorithm::generate_argon2id(
-        libparsec_crypto::PasswordAlgorithmSaltStrategy::DerivedFromEmail {
+    let legit =
+        PasswordAlgorithm::generate_argon2id(PasswordAlgorithmSaltStrategy::DerivedFromEmail {
             email: "zack@example.com",
-        },
-    );
+        });
     match (&alice_algo1, &legit) {
         (
             UntrustedPasswordAlgorithm::Argon2id {
@@ -261,6 +251,7 @@ fn untrusted_generate_fake_from_seed() {
         parallelism: 1 - 1,
     }
 )]
+#[cfg_attr(target_arch = "wasm32", platform::test)] // Must be kept last!
 fn untrusted_validate_config_too_weak(#[case] algo: UntrustedPasswordAlgorithm) {
     p_assert_eq!(
         algo.validate("bob@example.com"),

@@ -1,19 +1,16 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-// `allow-unwrap-in-test` don't behave as expected, see:
-// https://github.com/rust-lang/rust-clippy/issues/11119
-#![allow(clippy::unwrap_used)]
-
 use hex_literal::hex;
 use pretty_assertions::{assert_eq, assert_matches};
 use serde_test::{assert_tokens, Token};
 
-use libparsec_crypto::{CryptoError, HashDigest};
+use super::{
+    platform,
+    utils::{test_msgpack_serialization, test_serde},
+};
+use crate::{CryptoError, HashDigest};
 
-#[macro_use]
-mod common;
-
-#[test]
+#[platform::test]
 fn consts() {
     assert_eq!(HashDigest::ALGORITHM, "sha256");
     assert_eq!(HashDigest::SIZE, 32);
@@ -21,7 +18,7 @@ fn consts() {
 
 test_serde!(hash_serde, HashDigest);
 
-#[test]
+#[platform::test]
 fn hash_spec() {
     let digest = HashDigest::from_data(b"Hello, World !");
     assert_eq!(
@@ -45,7 +42,7 @@ test_msgpack_serialization!(
     hex!("c4207d486915b914332bb5730fd772223e8b276919e51edca2de0f82c5fc1bce7eb5")
 );
 
-#[test]
+#[platform::test]
 fn hashdigest_should_verify_length_when_deserialize() {
     let data = hex!("c40564756d6d79");
     assert_eq!(
@@ -56,7 +53,7 @@ fn hashdigest_should_verify_length_when_deserialize() {
     );
 }
 
-#[test]
+#[platform::test]
 fn from() {
     let raw = hex!("7d486915b914332bb5730fd772223e8b276919e51edca2de0f82c5fc1bce7eb5");
     let digest = HashDigest::from(raw);
@@ -64,7 +61,7 @@ fn from() {
     assert_eq!(digest.as_ref(), raw,);
 }
 
-#[test]
+#[platform::test]
 fn try_from() {
     let raw = hex!("7d486915b914332bb5730fd772223e8b276919e51edca2de0f82c5fc1bce7eb5");
     let digest = HashDigest::try_from(raw.as_ref()).unwrap();
@@ -75,7 +72,7 @@ fn try_from() {
     assert_matches!(err, Err(CryptoError::DataSize))
 }
 
-#[test]
+#[platform::test]
 fn debug() {
     let raw = hex!("7d486915b914332bb5730fd772223e8b276919e51edca2de0f82c5fc1bce7eb5");
     let digest = HashDigest::try_from(raw.as_ref()).unwrap();

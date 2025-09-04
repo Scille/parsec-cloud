@@ -1,13 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-// `allow-unwrap-in-test` don't behave as expected, see:
-// https://github.com/rust-lang/rust-clippy/issues/11119
-#![allow(clippy::unwrap_used)]
-
 use hex_literal::hex;
 use rstest::rstest;
 
-use libparsec_crypto::{
+use super::platform;
+use crate::{
     CryptoError, SequesterKeySize, SequesterPrivateKeyDer, SequesterPublicKeyDer,
     SequesterSigningKeyDer, SequesterVerifyKeyDer,
 };
@@ -165,7 +162,7 @@ const PUBLIC_KEY_DER_2048: &[u8] = &hex!(
     "5e4b24f2dd200897310203010001"
 );
 
-#[test]
+#[platform::test]
 fn only_rsa_is_supported() {
     let unsupported_key: &[u8] = &hex!(
         "308201b73082012b06072a8648ce3804013082011e02818100f8df308877a3bcf66db7"
@@ -190,6 +187,7 @@ fn only_rsa_is_supported() {
 #[rstest]
 #[case(PUBLIC_KEY_DER_1024)]
 #[case(PUBLIC_KEY_DER_2048)]
+#[cfg_attr(target_arch = "wasm32", platform::test)] // Must be kept last!
 fn key_equality(#[case] raw_pub_key: &[u8]) {
     let pub_key = SequesterPublicKeyDer::try_from(raw_pub_key).unwrap();
     let pub_key2 = SequesterPublicKeyDer::try_from(raw_pub_key).unwrap();
@@ -200,6 +198,7 @@ fn key_equality(#[case] raw_pub_key: &[u8]) {
 #[rstest]
 #[case(SequesterKeySize::_1024Bits)]
 #[case(SequesterKeySize::_2048Bits)]
+#[cfg_attr(target_arch = "wasm32", platform::test)] // Must be kept last!
 fn size(#[case] size_in_bits: SequesterKeySize) {
     let (priv_key, pub_key) = SequesterPrivateKeyDer::generate_pair(size_in_bits);
     let (signing_key, verify_key) = SequesterSigningKeyDer::generate_pair(size_in_bits);
@@ -212,6 +211,7 @@ fn size(#[case] size_in_bits: SequesterKeySize) {
 #[rstest]
 #[case(SequesterKeySize::_1024Bits)]
 #[case(SequesterKeySize::_2048Bits)]
+#[cfg_attr(target_arch = "wasm32", platform::test)] // Must be kept last!
 fn encrypt_decrypt(#[case] size_in_bits: SequesterKeySize) {
     let (priv_key, pub_key) = SequesterPrivateKeyDer::generate_pair(size_in_bits);
 
@@ -223,6 +223,7 @@ fn encrypt_decrypt(#[case] size_in_bits: SequesterKeySize) {
 #[rstest]
 #[case(SequesterKeySize::_1024Bits)]
 #[case(SequesterKeySize::_2048Bits)]
+#[cfg_attr(target_arch = "wasm32", platform::test)] // Must be kept last!
 fn sign_verify(#[case] size_in_bits: SequesterKeySize) {
     let (signing_key, verify_key) = SequesterSigningKeyDer::generate_pair(size_in_bits);
 
@@ -244,6 +245,7 @@ fn sign_verify(#[case] size_in_bits: SequesterKeySize) {
     PUBLIC_KEY_PEM_2048,
     PUBLIC_KEY_DER_2048
 )]
+#[cfg_attr(target_arch = "wasm32", platform::test)] // Must be kept last!
 fn import_export(
     #[case] private_key_pem: &str,
     #[case] private_key_der: &[u8],
@@ -303,7 +305,7 @@ fn import_export(
     );
 }
 
-#[test]
+#[platform::test]
 fn sign_compat() {
     let verify_key = SequesterVerifyKeyDer::try_from(PUBLIC_KEY_DER_1024).unwrap();
 
@@ -318,7 +320,7 @@ fn sign_compat() {
     assert_eq!(verify_key.verify(&signed).unwrap(), b"Hello world");
 }
 
-#[test]
+#[platform::test]
 fn encrypt_compat() {
     let priv_key = SequesterPrivateKeyDer::try_from(PRIVATE_KEY_DER_1024).unwrap();
 
@@ -348,7 +350,7 @@ fn encrypt_compat() {
     assert_eq!(priv_key.decrypt(&encrypted).unwrap(), b"Hello world");
 }
 
-#[test]
+#[platform::test]
 fn verify_with_different_salt_len() {
     let verify_key = SequesterVerifyKeyDer::try_from(PUBLIC_KEY_DER_1024).unwrap();
     let ciphered_salt32 = hex!(
@@ -390,6 +392,7 @@ fn verify_with_different_salt_len() {
 #[case::signature_too_small(b"RSASSA-PSS-SHA256:\0", CryptoError::DataSize)]
 #[case::missing_separator(b"RSASSA-PSS-SHA256", CryptoError::Decryption)]
 #[case::unknown_algorithm(b"ALGORITHM:", CryptoError::Algorithm("ALGORITHM".into()))]
+#[cfg_attr(target_arch = "wasm32", platform::test)] // Must be kept last!
 fn invalid_signature(#[case] signed: &[u8], #[case] err: CryptoError) {
     let verify_key = SequesterVerifyKeyDer::try_from(PUBLIC_KEY_DER_1024).unwrap();
 
