@@ -42,31 +42,37 @@ fn argon2id_salt_from_email() {
             email: "alice@example.com",
         },
     );
-    p_assert_matches!(algo, PasswordAlgorithm::Argon2id { .. });
+    p_assert_eq!(
+        algo,
+        PasswordAlgorithm::Argon2id {
+            memlimit_kb: 131072,
+            opslimit: 3,
+            parallelism: 1,
+            salt: hex!("58403066db4ea4b72f2527ea4e5977b2")
+        }
+    );
 
     let algo2 = PasswordAlgorithm::generate_argon2id(
         libparsec_crypto::PasswordAlgorithmSaltStrategy::DerivedFromEmail {
             email: "alice@example.com",
         },
     );
-    match (algo.clone(), algo2) {
-        (
-            PasswordAlgorithm::Argon2id { salt, .. },
-            PasswordAlgorithm::Argon2id { salt: salt2, .. },
-        ) => p_assert_eq!(salt, salt2),
-    }
+    p_assert_eq!(algo2, algo);
 
     let algo3 = PasswordAlgorithm::generate_argon2id(
         libparsec_crypto::PasswordAlgorithmSaltStrategy::DerivedFromEmail {
             email: "bob@example.com",
         },
     );
-    match (algo, algo3) {
-        (
-            PasswordAlgorithm::Argon2id { salt, .. },
-            PasswordAlgorithm::Argon2id { salt: salt3, .. },
-        ) => assert_ne!(salt, salt3),
-    }
+    p_assert_eq!(
+        algo3,
+        PasswordAlgorithm::Argon2id {
+            memlimit_kb: 131072,
+            opslimit: 3,
+            parallelism: 1,
+            salt: hex!("faa5b11d445a9bd35cb291e7c344e5bf")
+        }
+    );
 }
 
 macro_rules! compute_test {
@@ -167,6 +173,26 @@ fn trusted_serialization() {
 /*
  * UntrustedPasswordAlgorithm
  */
+
+#[test]
+fn untrusted_validate() {
+    let untrusted = UntrustedPasswordAlgorithm::Argon2id {
+        memlimit_kb: 131072,
+        opslimit: 3,
+        parallelism: 1,
+    };
+    let trusted = untrusted.validate("alice@example.com").unwrap();
+
+    p_assert_eq!(
+        trusted,
+        PasswordAlgorithm::Argon2id {
+            memlimit_kb: 131072,
+            opslimit: 3,
+            parallelism: 1,
+            salt: hex!("58403066db4ea4b72f2527ea4e5977b2")
+        }
+    );
+}
 
 #[test]
 fn untrusted_serialization() {
