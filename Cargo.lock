@@ -2387,6 +2387,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "libparsec_platform_pki"
+version = "3.5.0-a.6+dev"
+dependencies = [
+ "anyhow",
+ "bytes",
+ "clap",
+ "hex",
+ "schannel",
+ "thiserror 2.0.16",
+ "windows-sys 0.61.0",
+]
+
+[[package]]
 name = "libparsec_platform_realm_export"
 version = "3.5.0-a.6+dev"
 dependencies = [
@@ -2774,11 +2787,10 @@ dependencies = [
 
 [[package]]
 name = "native-tls"
-version = "0.2.11"
+version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07226173c32f2926027b63cce4bcd8076c3552846cbe7925f3aaffeac0a3b92e"
+checksum = "87de3442987e9dbec73158d5c715e7ad9072fda936bb03d19d7fa10e00520f0e"
 dependencies = [
- "lazy_static",
  "libc",
  "log",
  "openssl",
@@ -3954,11 +3966,11 @@ dependencies = [
 
 [[package]]
 name = "schannel"
-version = "0.1.23"
+version = "0.1.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fbc91545643bcf3a0bbb6569265615222618bdf33ce4ffbbd13c4bbd4c093534"
+checksum = "1f29ebaa345f945cec9fbbc532eb307f0fdad8161f281b6369539c8d84876b3d"
 dependencies = [
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]

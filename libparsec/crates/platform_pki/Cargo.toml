@@ -1,0 +1,27 @@
+[package]
+name = "libparsec_platform_pki"
+publish.workspace = true
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+version.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+thiserror = { workspace = true }
+bytes = { workspace = true }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+schannel = { workspace = true }
+windows-sys = { workspace = true, features = ["Win32_Security_Cryptography_UI"] }
+
+[dev-dependencies]
+# We use clap to provide a CLI for examples.
+clap = { workspace = true, default-features = true, features = ["env", "derive"] }
+# We use some hex encoding in the crate's examples
+hex = { workspace = true, default-features = true }
+anyhow = { workspace = true }
