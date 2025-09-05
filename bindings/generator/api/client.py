@@ -796,3 +796,17 @@ async def client_get_organization_bootstrap_date(
     client_handle: Handle,
 ) -> Result[DateTime, ClientGetOrganizationBootstrapDateError]:
     raise NotImplementedError
+
+
+class ClientEditicsGetSessionKeyError(ErrorVariant):
+    class Internal:
+        pass
+
+    class Offline:
+        pass
+
+
+async def client_editics_get_session_key(
+    client_handle: Handle, workspace_id: VlobID, file_id: VlobID
+) -> Result[bytes, ClientEditicsGetSessionKeyError]:
+    raise NotImplementedError

@@ -13,6 +13,7 @@ from parsec.components.memory.account import MemoryAccountComponent
 from parsec.components.memory.auth import MemoryAuthComponent
 from parsec.components.memory.block import MemoryBlockComponent
 from parsec.components.memory.datamodel import MemoryDatamodel
+from parsec.components.memory.editics import MemoryEditicsComponent
 from parsec.components.memory.events import MemoryEventsComponent, event_bus_factory
 from parsec.components.memory.invite import MemoryInviteComponent
 from parsec.components.memory.organization import MemoryOrganizationComponent
@@ -52,6 +53,7 @@ async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, 
             block = MemoryBlockComponent(data, blockstore)
             events = MemoryEventsComponent(data, config, event_bus)
             account = MemoryAccountComponent(data, config, event_bus)
+            editics = MemoryEditicsComponent(data, config, event_bus)
 
             components = {
                 "mocked_data": data,
@@ -71,6 +73,7 @@ async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, 
                 "blockstore": blockstore,
                 "shamir": shamir,
                 "account": account,
+                "editics": editics,
             }
 
             yield components

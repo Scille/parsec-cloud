@@ -2,6 +2,7 @@
 
 #![allow(dead_code)]
 
+mod editics;
 mod list_frozen_users;
 mod organization_info;
 mod recovery_device;
@@ -56,6 +57,7 @@ use crate::{
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
 
+pub use editics::ClientEditicsGetSessionKeyError;
 use libparsec_types::prelude::*;
 pub use organization_info::{
     ClientGetOrganizationBootstrapDateError, ClientOrganizationInfoError, OrganizationInfo,
@@ -673,6 +675,13 @@ impl Client {
         &self,
     ) -> Result<DateTime, ClientGetOrganizationBootstrapDateError> {
         organization_info::get_organization_bootstrap_date(self).await
+    }
+    pub async fn editics_get_session_key(
+        &self,
+        workspace_id: VlobID,
+        file_id: VlobID,
+    ) -> Result<Bytes, ClientEditicsGetSessionKeyError> {
+        editics::join_session(self, workspace_id, file_id).await
     }
 }
 

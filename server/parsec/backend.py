@@ -29,6 +29,7 @@ from parsec.components.account import BaseAccountComponent
 from parsec.components.auth import BaseAuthComponent
 from parsec.components.block import BaseBlockComponent
 from parsec.components.blockstore import BaseBlockStoreComponent
+from parsec.components.editics import BaseEditicsComponent
 from parsec.components.events import BaseEventsComponent, EventBus
 from parsec.components.invite import BaseInviteComponent
 from parsec.components.memory import components_factory as mocked_components_factory
@@ -88,6 +89,7 @@ async def backend_factory(config: BackendConfig) -> AsyncGenerator[Backend, None
             events=components["events"],
             shamir=components["shamir"],
             account=components["account"],
+            editics=components["editics"],
         )
 
 
@@ -113,6 +115,7 @@ class Backend:
     events: BaseEventsComponent
     shamir: BaseShamirComponent
     account: BaseAccountComponent
+    editics: BaseEditicsComponent
 
     # Only available if `config.db_config.type == "MOCKED"`
     mocked_data: MemoryDatamodel | None = None
@@ -133,6 +136,7 @@ class Backend:
             self.events,
             self.shamir,
             self.account,
+            self.editics,
             # Ping command is only used in tests
             include_ping=self.config.debug,
         )
