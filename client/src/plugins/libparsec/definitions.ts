@@ -132,6 +132,12 @@ export type IndexInt = bigint
 export type SizeInt = bigint
 export type U64 = bigint
 
+export interface AccountInfo {
+    serverAddr: ParsecAddr
+    inUseAuthMethod: AccountAuthMethodID
+    humanHandle: HumanHandle
+}
+
 export interface AccountOrganizations {
     active: Array<AccountOrganizationsActiveUser>
     revoked: Array<AccountOrganizationsRevokedUser>
@@ -762,29 +768,17 @@ export type AccountFetchOpaqueKeyFromVaultError =
   | AccountFetchOpaqueKeyFromVaultErrorOffline
   | AccountFetchOpaqueKeyFromVaultErrorUnknownOpaqueKey
 
-// AccountGetHumanHandleError
-export enum AccountGetHumanHandleErrorTag {
-    Internal = 'AccountGetHumanHandleErrorInternal',
+// AccountInfoError
+export enum AccountInfoErrorTag {
+    Internal = 'AccountInfoErrorInternal',
 }
 
-export interface AccountGetHumanHandleErrorInternal {
-    tag: AccountGetHumanHandleErrorTag.Internal
+export interface AccountInfoErrorInternal {
+    tag: AccountInfoErrorTag.Internal
     error: string
 }
-export type AccountGetHumanHandleError =
-  | AccountGetHumanHandleErrorInternal
-
-// AccountGetInUseAuthMethodError
-export enum AccountGetInUseAuthMethodErrorTag {
-    Internal = 'AccountGetInUseAuthMethodErrorInternal',
-}
-
-export interface AccountGetInUseAuthMethodErrorInternal {
-    tag: AccountGetInUseAuthMethodErrorTag.Internal
-    error: string
-}
-export type AccountGetInUseAuthMethodError =
-  | AccountGetInUseAuthMethodErrorInternal
+export type AccountInfoError =
+  | AccountInfoErrorInternal
 
 // AccountListAuthMethodsError
 export enum AccountListAuthMethodsErrorTag {
@@ -4974,12 +4968,9 @@ export interface LibParsecPlugin {
         account: Handle,
         key_id: AccountVaultItemOpaqueKeyID
     ): Promise<Result<SecretKey, AccountFetchOpaqueKeyFromVaultError>>
-    accountGetHumanHandle(
+    accountInfo(
         account: Handle
-    ): Promise<Result<HumanHandle, AccountGetHumanHandleError>>
-    accountGetInUseAuthMethod(
-        account: Handle
-    ): Promise<Result<AccountAuthMethodID, AccountGetInUseAuthMethodError>>
+    ): Promise<Result<AccountInfo, AccountInfoError>>
     accountListAuthMethods(
         account: Handle
     ): Promise<Result<Array<AuthMethodInfo>, AccountListAuthMethodsError>>
@@ -5376,6 +5367,8 @@ export interface LibParsecPlugin {
     listAvailableDevices(
         path: Path
     ): Promise<Result<Array<AvailableDevice>, ListAvailableDeviceError>>
+    listStartedAccounts(
+    ): Promise<Array<Handle>>
     listStartedClients(
     ): Promise<Array<[Handle, DeviceID]>>
     mountpointToOsPath(

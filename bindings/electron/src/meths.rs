@@ -415,6 +415,80 @@ fn enum_user_profile_rs_to_js(value: libparsec::UserProfile) -> &'static str {
     }
 }
 
+// AccountInfo
+
+#[allow(dead_code)]
+fn struct_account_info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::AccountInfo> {
+    let server_addr = {
+        let js_val: Handle<JsString> = obj.get(cx, "serverAddr")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let in_use_auth_method = {
+        let js_val: Handle<JsString> = obj.get(cx, "inUseAuthMethod")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::AccountAuthMethodID, _> {
+                libparsec::AccountAuthMethodID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let human_handle = {
+        let js_val: Handle<JsObject> = obj.get(cx, "humanHandle")?;
+        struct_human_handle_js_to_rs(cx, js_val)?
+    };
+    Ok(libparsec::AccountInfo {
+        server_addr,
+        in_use_auth_method,
+        human_handle,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_account_info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AccountInfo,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_server_addr = JsString::try_new(cx, {
+        let custom_to_rs_string = |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
+            Ok(addr.to_url().into())
+        };
+        match custom_to_rs_string(rs_obj.server_addr) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "serverAddr", js_server_addr)?;
+    let js_in_use_auth_method = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::AccountAuthMethodID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.in_use_auth_method) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "inUseAuthMethod", js_in_use_auth_method)?;
+    let js_human_handle = struct_human_handle_rs_to_js(cx, rs_obj.human_handle)?;
+    js_obj.set(cx, "humanHandle", js_human_handle)?;
+    Ok(js_obj)
+}
+
 // AccountOrganizations
 
 #[allow(dead_code)]
@@ -4811,40 +4885,19 @@ fn variant_account_fetch_opaque_key_from_vault_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// AccountGetHumanHandleError
+// AccountInfoError
 
 #[allow(dead_code)]
-fn variant_account_get_human_handle_error_rs_to_js<'a>(
+fn variant_account_info_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::AccountGetHumanHandleError,
+    rs_obj: libparsec::AccountInfoError,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::AccountGetHumanHandleError::Internal { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "AccountGetHumanHandleErrorInternal").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// AccountGetInUseAuthMethodError
-
-#[allow(dead_code)]
-fn variant_account_get_in_use_auth_method_error_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::AccountGetInUseAuthMethodError,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
-    js_obj.set(cx, "error", js_display)?;
-    match rs_obj {
-        libparsec::AccountGetInUseAuthMethodError::Internal { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "AccountGetInUseAuthMethodErrorInternal").or_throw(cx)?;
+        libparsec::AccountInfoError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "AccountInfoErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -15928,8 +15981,8 @@ fn account_fetch_opaque_key_from_vault(mut cx: FunctionContext) -> JsResult<JsPr
     Ok(promise)
 }
 
-// account_get_human_handle
-fn account_get_human_handle(mut cx: FunctionContext) -> JsResult<JsPromise> {
+// account_info
+fn account_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
     let account = {
         let js_val = cx.argument::<JsNumber>(0)?;
@@ -15942,13 +15995,13 @@ fn account_get_human_handle(mut cx: FunctionContext) -> JsResult<JsPromise> {
             v
         }
     };
-    let ret = libparsec::account_get_human_handle(account);
+    let ret = libparsec::account_info(account);
     let js_ret = match ret {
         Ok(ok) => {
             let js_obj = JsObject::new(&mut cx);
             let js_tag = JsBoolean::new(&mut cx, true);
             js_obj.set(&mut cx, "ok", js_tag)?;
-            let js_value = struct_human_handle_rs_to_js(&mut cx, ok)?;
+            let js_value = struct_account_info_rs_to_js(&mut cx, ok)?;
             js_obj.set(&mut cx, "value", js_value)?;
             js_obj
         }
@@ -15956,55 +16009,7 @@ fn account_get_human_handle(mut cx: FunctionContext) -> JsResult<JsPromise> {
             let js_obj = cx.empty_object();
             let js_tag = JsBoolean::new(&mut cx, false);
             js_obj.set(&mut cx, "ok", js_tag)?;
-            let js_err = variant_account_get_human_handle_error_rs_to_js(&mut cx, err)?;
-            js_obj.set(&mut cx, "error", js_err)?;
-            js_obj
-        }
-    };
-    let (deferred, promise) = cx.promise();
-    deferred.resolve(&mut cx, js_ret);
-    Ok(promise)
-}
-
-// account_get_in_use_auth_method
-fn account_get_in_use_auth_method(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    crate::init_sentry();
-    let account = {
-        let js_val = cx.argument::<JsNumber>(0)?;
-        {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            v
-        }
-    };
-    let ret = libparsec::account_get_in_use_auth_method(account);
-    let js_ret = match ret {
-        Ok(ok) => {
-            let js_obj = JsObject::new(&mut cx);
-            let js_tag = JsBoolean::new(&mut cx, true);
-            js_obj.set(&mut cx, "ok", js_tag)?;
-            let js_value = JsString::try_new(&mut cx, {
-                let custom_to_rs_string =
-                    |x: libparsec::AccountAuthMethodID| -> Result<String, &'static str> {
-                        Ok(x.hex())
-                    };
-                match custom_to_rs_string(ok) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            })
-            .or_throw(&mut cx)?;
-            js_obj.set(&mut cx, "value", js_value)?;
-            js_obj
-        }
-        Err(err) => {
-            let js_obj = cx.empty_object();
-            let js_tag = JsBoolean::new(&mut cx, false);
-            js_obj.set(&mut cx, "ok", js_tag)?;
-            let js_err = variant_account_get_in_use_auth_method_error_rs_to_js(&mut cx, err)?;
+            let js_err = variant_account_info_error_rs_to_js(&mut cx, err)?;
             js_obj.set(&mut cx, "error", js_err)?;
             js_obj
         }
@@ -22276,6 +22281,24 @@ fn list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// list_started_accounts
+fn list_started_accounts(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let ret = libparsec::list_started_accounts();
+    let js_ret = {
+        // JsArray::new allocates with `undefined` value, that's why we `set` value
+        let js_array = JsArray::new(&mut cx, ret.len());
+        for (i, elem) in ret.into_iter().enumerate() {
+            let js_elem = JsNumber::new(&mut cx, elem as f64);
+            js_array.set(&mut cx, i as u32, js_elem)?;
+        }
+        js_array
+    };
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
 // list_started_clients
 fn list_started_clients(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -26739,8 +26762,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         "accountFetchOpaqueKeyFromVault",
         account_fetch_opaque_key_from_vault,
     )?;
-    cx.export_function("accountGetHumanHandle", account_get_human_handle)?;
-    cx.export_function("accountGetInUseAuthMethod", account_get_in_use_auth_method)?;
+    cx.export_function("accountInfo", account_info)?;
     cx.export_function("accountListAuthMethods", account_list_auth_methods)?;
     cx.export_function("accountListInvitations", account_list_invitations)?;
     cx.export_function("accountListOrganizations", account_list_organizations)?;
@@ -27006,6 +27028,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         libparsec_init_set_on_event_callback,
     )?;
     cx.export_function("listAvailableDevices", list_available_devices)?;
+    cx.export_function("listStartedAccounts", list_started_accounts)?;
     cx.export_function("listStartedClients", list_started_clients)?;
     cx.export_function("mountpointToOsPath", mountpoint_to_os_path)?;
     cx.export_function("mountpointUnmount", mountpoint_unmount)?;
