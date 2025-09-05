@@ -1733,6 +1733,20 @@ export type ClientDeleteShamirRecoveryError =
   | ClientDeleteShamirRecoveryErrorTimestampOutOfBallpark
 
 
+// ClientEditicsGetSessionKeyError
+export interface ClientEditicsGetSessionKeyErrorInternal {
+    tag: "ClientEditicsGetSessionKeyErrorInternal"
+    error: string
+}
+export interface ClientEditicsGetSessionKeyErrorOffline {
+    tag: "ClientEditicsGetSessionKeyErrorOffline"
+    error: string
+}
+export type ClientEditicsGetSessionKeyError =
+  | ClientEditicsGetSessionKeyErrorInternal
+  | ClientEditicsGetSessionKeyErrorOffline
+
+
 // ClientEvent
 export interface ClientEventAsyncEnrollmentUpdated {
     tag: "ClientEventAsyncEnrollmentUpdated"
@@ -5679,6 +5693,11 @@ export function clientCreateWorkspace(
 export function clientDeleteShamirRecovery(
     client_handle: number
 ): Promise<Result<null, ClientDeleteShamirRecoveryError>>
+export function clientEditicsGetSessionKey(
+    client_handle: number,
+    workspace_id: string,
+    file_id: string
+): Promise<Result<Uint8Array, ClientEditicsGetSessionKeyError>>
 export function clientExportRecoveryDevice(
     client_handle: number,
     device_label: string

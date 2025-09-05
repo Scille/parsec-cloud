@@ -25,6 +25,8 @@ pub enum EncryptionUsage {
     Vlob(VlobID),
     /// Encrypted block.
     Block(BlockID),
+    /// Encrypted file.
+    File(VlobID),
 }
 
 impl EncryptionUsage {
@@ -35,6 +37,7 @@ impl EncryptionUsage {
             EncryptionUsage::PathUrl => PATH_URL_KEY_DERIVATION_UUID,
             EncryptionUsage::Vlob(id) => **id,
             EncryptionUsage::Block(id) => **id,
+            EncryptionUsage::File(id) => **id,
         }
     }
 }

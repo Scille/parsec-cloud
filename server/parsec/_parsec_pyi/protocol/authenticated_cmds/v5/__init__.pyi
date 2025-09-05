@@ -12,6 +12,7 @@ from . import (
     block_read,
     certificate_get,
     device_create,
+    editics_join_session,
     events_listen,
     invite_cancel,
     invite_complete,
@@ -60,6 +61,7 @@ class AnyCmdReq:
         | block_read.Req
         | certificate_get.Req
         | device_create.Req
+        | editics_join_session.Req
         | events_listen.Req
         | invite_cancel.Req
         | invite_complete.Req
@@ -105,6 +107,7 @@ __all__ = [
     "block_read",
     "certificate_get",
     "device_create",
+    "editics_join_session",
     "events_listen",
     "invite_cancel",
     "invite_complete",
