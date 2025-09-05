@@ -84,6 +84,7 @@
         <!-- synchro wifi -->
         <settings-option
           v-if="false"
+          class="settings-list__item"
           title="SettingsModal.meteredConnection.label"
           description="SettingsModal.meteredConnection.description"
         >
@@ -131,6 +132,7 @@
         <!-- display unsync files -->
         <settings-option
           v-if="false"
+          class="settings-list__item"
           title="SettingsModal.unsyncFiles.label"
           description="SettingsModal.unsyncFiles.description"
         >
@@ -139,6 +141,7 @@
         <!-- skip file viewers -->
         <settings-option
           v-if="isDesktop()"
+          class="settings-list__item"
           title="SettingsModal.skipViewers.label"
           description="SettingsModal.skipViewers.description"
         >
@@ -239,6 +242,7 @@ onUnmounted(async (): Promise<void> => {
 .settings-list {
   display: flex;
   flex-direction: column;
+  background: none;
   padding-top: 0px;
   padding-bottom: 0px;
   gap: 2rem;
