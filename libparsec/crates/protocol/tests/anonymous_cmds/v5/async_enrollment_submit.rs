@@ -216,9 +216,8 @@ pub fn rep_invalid_submit_payload() {
     // Generated from Parsec 3.7.1-a.0+dev
     // Content:
     //   status: 'invalid_submit_payload'
-    let raw: &[u8] = hex!(
-        "81a6737461747573b6696e76616c69645f7375626d69745f7061796c6f6164"
-    ).as_ref();
+    let raw: &[u8] =
+        hex!("81a6737461747573b6696e76616c69645f7375626d69745f7061796c6f6164").as_ref();
     let expected = anonymous_cmds::async_enrollment_submit::Rep::InvalidSubmitPayload;
     println!("***expected: {:?}", expected.dump().unwrap());
 
@@ -232,7 +231,8 @@ pub fn rep_invalid_submit_payload_signature() {
     let raw: &[u8] = hex!(
         "81a6737461747573d920696e76616c69645f7375626d69745f7061796c6f61645f7369"
         "676e6174757265"
-    ).as_ref();
+    )
+    .as_ref();
     let expected = anonymous_cmds::async_enrollment_submit::Rep::InvalidSubmitPayloadSignature;
     println!("***expected: {:?}", expected.dump().unwrap());
 
@@ -246,7 +246,8 @@ pub fn rep_invalid_der_x509_certificate() {
     let raw: &[u8] = hex!(
         "81a6737461747573bc696e76616c69645f6465725f783530395f636572746966696361"
         "7465"
-    ).as_ref();
+    )
+    .as_ref();
     let expected = anonymous_cmds::async_enrollment_submit::Rep::InvalidDerX509Certificate;
     println!("***expected: {:?}", expected.dump().unwrap());
 
@@ -257,9 +258,8 @@ pub fn rep_invalid_x509_trustchain() {
     // Generated from Parsec 3.7.1-a.0+dev
     // Content:
     //   status: 'invalid_x509_trustchain'
-    let raw: &[u8] = hex!(
-        "81a6737461747573b7696e76616c69645f783530395f7472757374636861696e"
-    ).as_ref();
+    let raw: &[u8] =
+        hex!("81a6737461747573b7696e76616c69645f783530395f7472757374636861696e").as_ref();
     let expected = anonymous_cmds::async_enrollment_submit::Rep::InvalidX509Trustchain;
     println!("***expected: {:?}", expected.dump().unwrap());
 

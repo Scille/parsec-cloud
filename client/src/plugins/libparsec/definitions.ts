@@ -2028,6 +2028,24 @@ export type ClientDeleteShamirRecoveryError =
   | ClientDeleteShamirRecoveryErrorStopped
   | ClientDeleteShamirRecoveryErrorTimestampOutOfBallpark
 
+// ClientEditicsGetSessionKeyError
+export enum ClientEditicsGetSessionKeyErrorTag {
+    Internal = 'ClientEditicsGetSessionKeyErrorInternal',
+    Offline = 'ClientEditicsGetSessionKeyErrorOffline',
+}
+
+export interface ClientEditicsGetSessionKeyErrorInternal {
+    tag: ClientEditicsGetSessionKeyErrorTag.Internal
+    error: string
+}
+export interface ClientEditicsGetSessionKeyErrorOffline {
+    tag: ClientEditicsGetSessionKeyErrorTag.Offline
+    error: string
+}
+export type ClientEditicsGetSessionKeyError =
+  | ClientEditicsGetSessionKeyErrorInternal
+  | ClientEditicsGetSessionKeyErrorOffline
+
 // ClientEvent
 export enum ClientEventTag {
     AsyncEnrollmentUpdated = 'ClientEventAsyncEnrollmentUpdated',
@@ -6829,6 +6847,11 @@ export interface LibParsecPlugin {
     clientDeleteShamirRecovery(
         client_handle: Handle
     ): Promise<Result<null, ClientDeleteShamirRecoveryError>>
+    clientEditicsGetSessionKey(
+        client_handle: Handle,
+        workspace_id: VlobID,
+        file_id: VlobID
+    ): Promise<Result<Uint8Array, ClientEditicsGetSessionKeyError>>
     clientExportRecoveryDevice(
         client_handle: Handle,
         device_label: DeviceLabel
