@@ -20,7 +20,7 @@ test('Use libparsec in a browser without SharedWorker support', async ({ page })
   await initTestBed(page);
 
   const devices = await page.evaluate(async () => {
-    const configDir = window.getConfigDir();
+    const configDir = window.TESTING_CONFIG_PATH;
     const result = await window.libparsec.listAvailableDevices(configDir);
     return result.ok ? result.value : [];
   });
