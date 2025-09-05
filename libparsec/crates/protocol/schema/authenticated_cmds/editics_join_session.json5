@@ -1,0 +1,48 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "editics_join_session",
+        "req": {
+            "fields": [
+                {
+                    // Session key encrypted by the workspace key
+                    // if there is no session for this file
+                    // a session will be created with that key
+                    // else that key will be ignored and
+                    // the current key session will be returned
+                    "name": "encrypted_session_key",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "file_id",
+                    "type": "VlobID"
+                },
+                {
+                    "name": "workspace_id",
+                    "type": "VlobID"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        // Key to use to connect to the session
+                        // May or may not be the provided key
+                        "name": "encrypted_session_key",
+                        "type": "Bytes"
+                    }
+                ]
+            },
+            {
+                "status": "workspace_not_found"
+            },
+            {
+                "status": "file_not_found"
+            }
+        ]
+    }
+]

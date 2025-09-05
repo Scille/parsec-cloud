@@ -1509,6 +1509,24 @@ export type ClientDeleteShamirRecoveryError =
   | ClientDeleteShamirRecoveryErrorStopped
   | ClientDeleteShamirRecoveryErrorTimestampOutOfBallpark
 
+// ClientEditicsJoinSessionError
+export enum ClientEditicsJoinSessionErrorTag {
+    Internal = 'ClientEditicsJoinSessionErrorInternal',
+    Offline = 'ClientEditicsJoinSessionErrorOffline',
+}
+
+export interface ClientEditicsJoinSessionErrorInternal {
+    tag: ClientEditicsJoinSessionErrorTag.Internal
+    error: string
+}
+export interface ClientEditicsJoinSessionErrorOffline {
+    tag: ClientEditicsJoinSessionErrorTag.Offline
+    error: string
+}
+export type ClientEditicsJoinSessionError =
+  | ClientEditicsJoinSessionErrorInternal
+  | ClientEditicsJoinSessionErrorOffline
+
 // ClientEvent
 export enum ClientEventTag {
     ClientErrorResponse = 'ClientEventClientErrorResponse',
@@ -5158,6 +5176,11 @@ export interface LibParsecPlugin {
     clientDeleteShamirRecovery(
         client_handle: Handle
     ): Promise<Result<null, ClientDeleteShamirRecoveryError>>
+    clientEditicsJoinSession(
+        client_handle: Handle,
+        workspace_id: VlobID,
+        file_id: VlobID
+    ): Promise<Result<Uint8Array, ClientEditicsJoinSessionError>>
     clientExportRecoveryDevice(
         client_handle: Handle,
         device_label: DeviceLabel

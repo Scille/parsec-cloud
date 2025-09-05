@@ -1317,6 +1317,20 @@ export type ClientDeleteShamirRecoveryError =
   | ClientDeleteShamirRecoveryErrorTimestampOutOfBallpark
 
 
+// ClientEditicsJoinSessionError
+export interface ClientEditicsJoinSessionErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClientEditicsJoinSessionErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export type ClientEditicsJoinSessionError =
+  | ClientEditicsJoinSessionErrorInternal
+  | ClientEditicsJoinSessionErrorOffline
+
+
 // ClientEvent
 export interface ClientEventClientErrorResponse {
     tag: "ClientErrorResponse"
@@ -4331,6 +4345,11 @@ export function clientCreateWorkspace(
 export function clientDeleteShamirRecovery(
     client_handle: number
 ): Promise<Result<null, ClientDeleteShamirRecoveryError>>
+export function clientEditicsJoinSession(
+    client_handle: number,
+    workspace_id: string,
+    file_id: string
+): Promise<Result<Uint8Array, ClientEditicsJoinSessionError>>
 export function clientExportRecoveryDevice(
     client_handle: number,
     device_label: string

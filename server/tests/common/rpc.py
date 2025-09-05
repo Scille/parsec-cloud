@@ -197,6 +197,15 @@ class BaseAuthenticatedRpcClient:
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.device_create.Rep.load(raw_rep)
 
+    async def editics_join_session(
+        self, encrypted_session_key: bytes, file_id: VlobID, workspace_id: VlobID
+    ) -> authenticated_cmds.latest.editics_join_session.Rep:
+        req = authenticated_cmds.latest.editics_join_session.Req(
+            encrypted_session_key=encrypted_session_key, file_id=file_id, workspace_id=workspace_id
+        )
+        raw_rep = await self._do_request(req.dump(), "authenticated")
+        return authenticated_cmds.latest.editics_join_session.Rep.load(raw_rep)
+
     async def events_listen(
         self,
     ) -> authenticated_cmds.latest.events_listen.Rep:
