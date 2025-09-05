@@ -82,3 +82,32 @@ fn debug() {
         "HashDigest(7d486915b914332bb5730fd772223e8b276919e51edca2de0f82c5fc1bce7eb5)"
     );
 }
+
+// `blake2b_hash` is purely internal stuff, but it's good to check it nevertheless
+#[platform::test]
+fn blake2b_hash() {
+    assert_eq!(
+        crate::blake2b_hash::<generic_array::typenum::U16>([].into_iter()).to_vec(),
+        hex!("cae66941d9efbd404e4d88758ea67670"),
+    );
+    for _ in 0..2 {
+        assert_eq!(
+            crate::blake2b_hash::<generic_array::typenum::U16>(
+                [b"hello world".as_ref()].into_iter()
+            )
+            .to_vec(),
+            hex!("e9a804b2e527fd3601d2ffc0bb023cd6"),
+        );
+    }
+    assert_eq!(
+        crate::blake2b_hash::<generic_array::typenum::U16>(
+            [b"hello".as_ref(), b" ".as_ref(), b"world".as_ref()].into_iter()
+        )
+        .to_vec(),
+        hex!("e9a804b2e527fd3601d2ffc0bb023cd6"),
+    );
+    assert_eq!(
+        crate::blake2b_hash::<generic_array::typenum::U64>([b"hello world".as_ref()].into_iter()).to_vec(),
+        hex!("021ced8799296ceca557832ab941a50b4a11f83478cf141f51f933f653ab9fbcc05a037cddbed06e309bf334942c4e58cdf1a46e237911ccd7fcf9787cbc7fd0"),
+    );
+}
