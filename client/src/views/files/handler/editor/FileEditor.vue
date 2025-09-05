@@ -58,17 +58,18 @@
 <script setup lang="ts">
 import { IonButton, IonIcon, IonList, IonItem, IonText } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
-import { closeFile, openFile, writeFile } from '@/parsec';
+import { closeFile, getWorkspaceInfo, openFile, writeFile } from '@/parsec';
 import { I18n, Translatable } from 'megashark-lib';
 import { ref, inject, useTemplateRef, onMounted, onUnmounted } from 'vue';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import { getWorkspaceHandle, routerGoBack } from '@/router';
+import { getConnectionHandle, getWorkspaceHandle, routerGoBack } from '@/router';
 import { DetectedFileType } from '@/common/fileTypes';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { Env } from '@/services/environment';
 import { CryptpadDocumentType, Cryptpad, getDocumentTypeFromExtension, CryptpadError, CryptpadErrorCode } from '@/services/cryptpad';
 import { longLocaleCodeToShort } from '@/services/translation';
 import { SaveState } from '@/views/files/handler/editor';
+import { libparsec } from '@/plugins/libparsec';
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const fileEditorRef = useTemplateRef('fileEditor');
@@ -176,13 +177,21 @@ async function openFileWithCryptpad(): Promise<boolean> {
     return false;
   }
   fileUrl.value = URL.createObjectURL(new Blob([contentInfo.data as Uint8Array<ArrayBuffer>], { type: 'application/octet-stream' }));
-
+  const connHandle = getConnectionHandle();
+  const wkResult = await getWorkspaceInfo(workspaceHandle);
+  if (!wkResult.ok || connHandle === null) {
+    return false;
+  }
+  const key_result = await libparsec.clientEditicsGetSessionKey(connHandle, wkResult.value.id, contentInfo.fileId);
+  if (!key_result.ok) {
+    return false;
+  }
   const cryptpadConfig = {
     document: {
       url: fileUrl.value,
       fileType: contentInfo.extension,
       title: contentInfo.fileName,
-      key: contentInfo.fileId,
+      key: String.fromCharCode(...key_result.value),
     },
     documentType: documentType.value as CryptpadDocumentType, // Safe since we checked for null earlier
     editorConfig: {
