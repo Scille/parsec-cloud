@@ -11,7 +11,7 @@
 </template>
 
 <script lang="ts" setup>
-import { getTOS, logout as parsecLogout, acceptTOS, getClientInfo, listStartedClients, isWeb } from '@/parsec';
+import { getTOS, logout as parsecLogout, acceptTOS, getClientInfo, listStartedClients, isWeb, getLoggedInDevices } from '@/parsec';
 import { getConnectionHandle, navigateTo, Routes } from '@/router';
 import { EntryDeletedData, EntryRenamedData, EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { FileOperationManagerKey } from '@/services/fileOperationManager';
@@ -37,11 +37,9 @@ let callbackId: string | null = null;
 const lastAccepted: Ref<DateTime | null> = ref(null);
 const { setInformationManager } = useSmallDisplayWarning();
 
-function warnRefresh(): void {
-  window.addEventListener('beforeunload', async (event) => {
-    event.preventDefault();
-    event.returnValue = true;
-  });
+function preventRefresh(event: Event): void {
+  event.preventDefault();
+  event.returnValue = true;
 }
 
 onMounted(async () => {
@@ -104,8 +102,8 @@ onMounted(async () => {
   if (clientInfoResult.value.mustAcceptTos) {
     await showTOSModal();
   }
-  if (!window.isDev() && isWeb()) {
-    warnRefresh();
+  if (window.isDev() && isWeb()) {
+    window.addEventListener('beforeunload', preventRefresh);
   }
 });
 
@@ -116,6 +114,10 @@ onUnmounted(async () => {
   }
   if (injections && callbackId !== null) {
     injections.eventDistributor.removeCallback(callbackId);
+  }
+  const loggedInDevices = await getLoggedInDevices();
+  if (loggedInDevices.length === 0 && !window.isDev() && isWeb()) {
+    window.removeEventListener('beforeunload', preventRefresh);
   }
 });
 
