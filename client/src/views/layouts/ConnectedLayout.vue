@@ -11,7 +11,7 @@
 </template>
 
 <script lang="ts" setup>
-import { getTOS, logout as parsecLogout, acceptTOS, getClientInfo, listStartedClients, isWeb } from '@/parsec';
+import { getTOS, logout as parsecLogout, acceptTOS, getClientInfo, listStartedClients } from '@/parsec';
 import { getConnectionHandle, navigateTo, Routes } from '@/router';
 import { EntryDeletedData, EntryRenamedData, EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { FileOperationManagerKey } from '@/services/fileOperationManager';
@@ -26,6 +26,7 @@ import { DateTime } from 'luxon';
 import { StorageManagerKey, StorageManager } from '@/services/storageManager';
 import { recentDocumentManager } from '@/services/recentDocuments';
 import { useSmallDisplayWarning } from '@/services/smallDisplayWarning';
+import useRefreshWarning from '@/services/refreshWarning';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
@@ -36,13 +37,7 @@ let timeoutId: number | null = null;
 let callbackId: string | null = null;
 const lastAccepted: Ref<DateTime | null> = ref(null);
 const { setInformationManager } = useSmallDisplayWarning();
-
-function warnRefresh(): void {
-  window.addEventListener('beforeunload', async (event) => {
-    event.preventDefault();
-    event.returnValue = true;
-  });
-}
+const refreshWarning = useRefreshWarning();
 
 onMounted(async () => {
   const handle = getConnectionHandle();
@@ -104,9 +99,7 @@ onMounted(async () => {
   if (clientInfoResult.value.mustAcceptTos) {
     await showTOSModal();
   }
-  if (!window.isDev() && isWeb()) {
-    warnRefresh();
-  }
+  refreshWarning.warnOnRefresh();
 });
 
 onUnmounted(async () => {
