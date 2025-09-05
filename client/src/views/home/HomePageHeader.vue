@@ -91,8 +91,8 @@
 
         <profile-header-homepage
           v-if="Env.isAccountEnabled() && accountLoggedIn && accountInfo"
-          :name="accountInfo.label"
-          :email="accountInfo.email"
+          :name="accountInfo.humanHandle.label"
+          :email="accountInfo.humanHandle.email"
           :is-online="true"
           class="profile-header-homepage"
           @change-tab="onChangeTab"
@@ -142,7 +142,7 @@ import { APP_VERSION } from '@/services/environment';
 import { openSettingsModal } from '@/views/settings';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { openAboutModal } from '@/views/about';
-import { ParsecAccount, HumanHandle } from '@/parsec';
+import { ParsecAccount, AccountInfo } from '@/parsec';
 import { AccountSettingsTabs } from '@/views/account/types';
 import { navigateTo, Routes, watchRoute } from '@/router';
 
@@ -155,7 +155,7 @@ const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 
 let hotkeys: HotkeyGroup | null = null;
 const accountLoggedIn = ref(false);
-const accountInfo = ref<HumanHandle | undefined>();
+const accountInfo = ref<AccountInfo | undefined>();
 const activeTab = ref<AccountSettingsTabs>(AccountSettingsTabs.Settings);
 
 const routeWatchCancel = watchRoute(async () => {
