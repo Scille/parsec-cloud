@@ -70,7 +70,8 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
       }
       if (options.withEditics) {
         (window as any).TESTING_ENABLE_EDITICS = true;
-        (window as any).TESTING_CRYPTPAD_SERVER = `https://${CRYPTPAD_SERVER}`;
+        (window as any).TESTING_CRYPTPAD_SERVER = `https://${options.cryptpadServer}`;
+        (window as any).TESTING_EDITICS_SAVE_TIMEOUT = 1;
       }
       if (options.withCustomBranding) {
         (window as any).TESTING_ENABLE_CUSTOM_BRANDING = true;
@@ -565,7 +566,7 @@ export const msTest = debugTest.extend<{
 
   parsecEditics: async ({ context, documentsOptions }, use, testInfo: TestInfo) => {
     const page = (await context.newPage()) as MsPage;
-    await setupNewPage(page, { withParsecAccount: false, withEditics: true, location: '/home' });
+    await setupNewPage(page, { withParsecAccount: false, withEditics: true, location: '/home', cryptpadServer: CRYPTPAD_SERVER });
     await page.locator('.organization-card').first().click();
     await expect(page.locator('#password-input')).toBeVisible();
 
