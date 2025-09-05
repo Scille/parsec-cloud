@@ -145,6 +145,8 @@ rsa = { version = "0.8.2", default-features = false }
 rstest = { version = "0.24.0", default-features = false }
 rstest_reuse = { version = "0.7.0", default-features = false }
 ruzstd = { version = "0.7.3", default-features = true }
+# Crate to interact with windows credential store, it's used notably in `native-tls` crate.
+schannel = { version = "0.1.27", default-features = false }
 sentry = { version = "0.34.0", default-features = false }
 sentry-log = { version = "0.34.0", default-features = false }
 serde = { version = "1.0.219", default-features = false }
