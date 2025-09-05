@@ -50,7 +50,8 @@
 <script setup lang="ts">
 import { onUnmounted, ref, watch } from 'vue';
 import { IonIcon, IonText, modalController } from '@ionic/vue';
-import { MenuAction, TabBarOptionsModal } from '@/views/menu';
+import { MenuAction } from '@/views/menu/types';
+import TabBarOptionsModal from '@/views/menu/TabBarOptionsModal.vue';
 import { ellipsisHorizontal } from 'ionicons/icons';
 import { MsModalResult, MsImage } from 'megashark-lib';
 

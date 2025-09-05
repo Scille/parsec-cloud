@@ -2,14 +2,6 @@
 
 export * from '@/router/checks';
 export * from '@/router/navigation';
-export {
-  getConnectionHandle,
-  getCurrentRouteName,
-  getCurrentRouteParams,
-  getCurrentRouteQuery,
-  getDocumentPath,
-  getRoutePath,
-  getWorkspaceHandle,
-} from '@/router/params';
+export * from '@/router/params';
 export * from '@/router/types';
-export { watchRoute } from '@/router/watchers';
+export * from '@/router/watchers';
