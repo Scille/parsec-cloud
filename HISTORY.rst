@@ -4,13 +4,7 @@ History
 .. towncrier release notes start
 
 
-Parsec v3.5.0-a.7 (2025-09-03)
-------------------------------
-
-No significant changes.
-
-
-Parsec v3.5.0-a.6 (2025-09-01)
+Parsec v3.5.0-a.8 (2025-09-05)
 ------------------------------
 
 Features
@@ -19,26 +13,6 @@ Features
 * On list view, add possibility to sort file/folder by Name, Last update,
   Creation date, and Size by clicking on the header label.
   (`#10921 <https://github.com/Scille/parsec-cloud/issues/10921>`__)
-
-
-
-Parsec v3.5.0-a.5 (2025-08-14)
-------------------------------
-
-No significant changes.
-
-
-Parsec v3.5.0-a.4 (2025-08-11)
-------------------------------
-
-No significant changes.
-
-
-Parsec v3.5.0-a.3 (2025-08-08)
-------------------------------
-
-Features
-~~~~~~~~
 
 * Display total data size in the organization information page
   (`#10284 <https://github.com/Scille/parsec-cloud/issues/10284>`__)
