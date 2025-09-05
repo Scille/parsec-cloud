@@ -6,7 +6,7 @@ pub use libparsec_client::{
     ClientAcceptTosError, ClientCreateWorkspaceError, ClientDeleteShamirRecoveryError,
     ClientForgetAllCertificatesError, ClientGetCurrentSelfProfileError,
     ClientGetOrganizationBootstrapDateError, ClientGetSelfShamirRecoveryError, ClientGetTosError,
-    ClientGetUserDeviceError, ClientGetUserInfoError, ClientListFrozenUsersError,
+    ClientGetUserDeviceError, ClientGetUserInfoError, ClientEditicsGetSessionKeyError, ClientListFrozenUsersError,
     ClientListShamirRecoveriesForOthersError, ClientListUserDevicesError, ClientListUsersError,
     ClientListWorkspaceUsersError, ClientOrganizationInfoError, ClientRenameWorkspaceError,
     ClientRevokeUserError, ClientSetupShamirRecoveryError, ClientShareWorkspaceError,
@@ -760,4 +760,13 @@ pub async fn client_pki_enrollment_accept(
             submit_payload,
         )
         .await
+}
+
+pub async fn client_editics_get_session_key(
+    client: Handle,
+    workspace_id: VlobID,
+    file_id: VlobID,
+) -> Result<Bytes, ClientEditicsGetSessionKeyError> {
+    let client = borrow_client(client)?;
+    client.editics_get_session_key(workspace_id, file_id).await
 }

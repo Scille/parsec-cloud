@@ -7016,6 +7016,31 @@ fn variant_client_delete_shamir_recovery_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// ClientEditicsGetSessionKeyError
+
+#[allow(dead_code)]
+fn variant_client_editics_get_session_key_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientEditicsGetSessionKeyError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientEditicsGetSessionKeyError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientEditicsGetSessionKeyErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientEditicsGetSessionKeyError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientEditicsGetSessionKeyErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientEvent
 
 #[allow(dead_code)]
@@ -20716,6 +20741,90 @@ fn client_delete_shamir_recovery(mut cx: FunctionContext) -> JsResult<JsPromise>
     Ok(promise)
 }
 
+// client_editics_get_session_key
+fn client_editics_get_session_key(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client_handle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let workspace_id = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let file_id = {
+        let js_val = cx.argument::<JsString>(2)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::client_editics_get_session_key(client_handle, workspace_id, file_id)
+                    .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            let mut js_buff = JsArrayBuffer::new(&mut cx, ok.len())?;
+                            let js_buff_slice = js_buff.as_mut_slice(&mut cx);
+                            for (i, c) in ok.iter().enumerate() {
+                                js_buff_slice[i] = *c;
+                            }
+                            js_buff
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_client_editics_get_session_key_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // client_export_recovery_device
 fn client_export_recovery_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -29607,6 +29716,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("clientCancelInvitation", client_cancel_invitation)?;
     cx.export_function("clientCreateWorkspace", client_create_workspace)?;
     cx.export_function("clientDeleteShamirRecovery", client_delete_shamir_recovery)?;
+    cx.export_function("clientEditicsGetSessionKey", client_editics_get_session_key)?;
     cx.export_function("clientExportRecoveryDevice", client_export_recovery_device)?;
     cx.export_function(
         "clientForgetAllCertificates",
