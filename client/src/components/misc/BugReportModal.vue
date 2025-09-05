@@ -96,7 +96,7 @@ onMounted(async () => {
   if (ParsecAccount.isLoggedIn()) {
     const info = await ParsecAccount.getInfo();
     if (info.ok) {
-      email.value = info.value.email;
+      email.value = info.value.humanHandle.email;
     }
   }
 });

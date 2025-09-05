@@ -16,8 +16,9 @@ import {
   AccountDeleteProceedError,
   AccountDeleteSendValidationEmailError,
   AccountFetchOpaqueKeyFromVaultError,
-  AccountGetHumanHandleError,
   AccountHandle,
+  AccountInfo,
+  AccountInfoError,
   AccountInvitation,
   AccountListAuthMethodsError,
   AccountListInvitationsError,
@@ -39,7 +40,6 @@ import {
   DeviceAccessStrategy,
   DeviceSaveStrategy,
   DeviceSaveStrategyTag,
-  HumanHandle,
   OrganizationID,
   ParsecAddr,
   RegistrationDevice,
@@ -390,11 +390,11 @@ class _ParsecAccount {
     }
   }
 
-  async getInfo(): Promise<Result<HumanHandle, AccountGetHumanHandleError>> {
+  async getInfo(): Promise<Result<AccountInfo, AccountInfoError>> {
     if (!this.handle) {
-      return generateNoHandleError<AccountGetHumanHandleError>();
+      return generateNoHandleError<AccountInfoError>();
     }
-    return await libparsec.accountGetHumanHandle(this.handle);
+    return await libparsec.accountInfo(this.handle);
   }
 
   async logout(): Promise<Result<null, AccountLogoutError>> {
@@ -466,13 +466,11 @@ class _ParsecAccount {
     if (!this.handle) {
       return generateNoHandleError<AccountListAuthMethodsError>();
     }
-    const [currentResult, listResult] = await Promise.all([
-      libparsec.accountGetInUseAuthMethod(this.handle),
-      libparsec.accountListAuthMethods(this.handle),
-    ]);
+    const accountInfoResult = await libparsec.accountInfo(this.handle);
+    const listResult = await libparsec.accountListAuthMethods(this.handle);
     if (listResult.ok) {
       listResult.value = listResult.value.map((method) => {
-        (method as AuthMethodInfo).current = currentResult.ok && currentResult.value === method.authMethodId;
+        (method as AuthMethodInfo).current = accountInfoResult.ok && accountInfoResult.value.inUseAuthMethod === method.authMethodId;
         (method as AuthMethodInfo).createdOn = DateTime.fromSeconds(method.createdOn as any as number);
         return method;
       });

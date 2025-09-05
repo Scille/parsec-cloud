@@ -429,6 +429,80 @@ fn enum_user_profile_rs_to_js(value: libparsec::UserProfile) -> &'static str {
     }
 }
 
+// AccountInfo
+
+#[allow(dead_code)]
+fn struct_account_info_js_to_rs(obj: JsValue) -> Result<libparsec::AccountInfo, JsValue> {
+    let server_addr = {
+        let js_val = Reflect::get(&obj, &"serverAddr".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let in_use_auth_method = {
+        let js_val = Reflect::get(&obj, &"inUseAuthMethod".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string =
+                    |s: String| -> Result<libparsec::AccountAuthMethodID, _> {
+                        libparsec::AccountAuthMethodID::from_hex(s.as_str())
+                            .map_err(|e| e.to_string())
+                    };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let human_handle = {
+        let js_val = Reflect::get(&obj, &"humanHandle".into())?;
+        struct_human_handle_js_to_rs(js_val)?
+    };
+    Ok(libparsec::AccountInfo {
+        server_addr,
+        in_use_auth_method,
+        human_handle,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_account_info_rs_to_js(rs_obj: libparsec::AccountInfo) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_server_addr = JsValue::from_str({
+        let custom_to_rs_string = |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
+            Ok(addr.to_url().into())
+        };
+        match custom_to_rs_string(rs_obj.server_addr) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"serverAddr".into(), &js_server_addr)?;
+    let js_in_use_auth_method = JsValue::from_str({
+        let custom_to_rs_string =
+            |x: libparsec::AccountAuthMethodID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.in_use_auth_method) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"inUseAuthMethod".into(), &js_in_use_auth_method)?;
+    let js_human_handle = struct_human_handle_rs_to_js(rs_obj.human_handle)?;
+    Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
+    Ok(js_obj)
+}
+
 // AccountOrganizations
 
 #[allow(dead_code)]
@@ -5084,43 +5158,18 @@ fn variant_account_fetch_opaque_key_from_vault_error_rs_to_js(
     Ok(js_obj)
 }
 
-// AccountGetHumanHandleError
+// AccountInfoError
 
 #[allow(dead_code)]
-fn variant_account_get_human_handle_error_rs_to_js(
-    rs_obj: libparsec::AccountGetHumanHandleError,
+fn variant_account_info_error_rs_to_js(
+    rs_obj: libparsec::AccountInfoError,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::AccountGetHumanHandleError::Internal { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountGetHumanHandleErrorInternal".into(),
-            )?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// AccountGetInUseAuthMethodError
-
-#[allow(dead_code)]
-fn variant_account_get_in_use_auth_method_error_rs_to_js(
-    rs_obj: libparsec::AccountGetInUseAuthMethodError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::AccountGetInUseAuthMethodError::Internal { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountGetInUseAuthMethodErrorInternal".into(),
-            )?;
+        libparsec::AccountInfoError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AccountInfoErrorInternal".into())?;
         }
     }
     Ok(js_obj)
@@ -17224,59 +17273,24 @@ pub fn accountFetchOpaqueKeyFromVault(account: u32, key_id: String) -> Promise {
     }))
 }
 
-// account_get_human_handle
+// account_info
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn accountGetHumanHandle(account: u32) -> Promise {
+pub fn accountInfo(account: u32) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
-        let ret = libparsec::account_get_human_handle(account);
+        let ret = libparsec::account_info(account);
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_human_handle_rs_to_js(value)?;
+                let js_value = struct_account_info_rs_to_js(value)?;
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_account_get_human_handle_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    }))
-}
-
-// account_get_in_use_auth_method
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn accountGetInUseAuthMethod(account: u32) -> Promise {
-    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
-        let ret = libparsec::account_get_in_use_auth_method(account);
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from_str({
-                    let custom_to_rs_string =
-                        |x: libparsec::AccountAuthMethodID| -> Result<String, &'static str> {
-                            Ok(x.hex())
-                        };
-                    match custom_to_rs_string(value) {
-                        Ok(ok) => ok,
-                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                    }
-                    .as_ref()
-                });
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_account_get_in_use_auth_method_error_rs_to_js(err)?;
+                let js_err = variant_account_info_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -20588,6 +20602,24 @@ pub fn listAvailableDevices(path: String) -> Promise {
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
+        })
+    }))
+}
+
+// list_started_accounts
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn listStartedAccounts() -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::list_started_accounts();
+        Ok({
+            // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+            let js_array = Array::new_with_length(ret.len() as u32);
+            for (i, elem) in ret.into_iter().enumerate() {
+                let js_elem = JsValue::from(elem);
+                js_array.set(i as u32, js_elem);
+            }
+            js_array.into()
         })
     }))
 }

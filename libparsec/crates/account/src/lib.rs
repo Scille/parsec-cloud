@@ -104,6 +104,18 @@ impl Account {
         self.auth_method_id
     }
 
+    pub fn server_addr(&self) -> &ParsecAddr {
+        self.cmds.addr()
+    }
+
+    pub fn human_handle(&self) -> &HumanHandle {
+        &self.human_handle
+    }
+
+    pub fn config_dir(&self) -> &Path {
+        &self.config_dir
+    }
+
     /// To create a new account, the user's email address must first be validated.
     /// This method ask the server to send an email containing a validation code.
     pub async fn create_1_send_validation_email(
@@ -206,14 +218,6 @@ impl Account {
         )
         .await
         .unwrap()
-    }
-
-    pub fn human_handle(&self) -> &HumanHandle {
-        &self.human_handle
-    }
-
-    pub fn config_dir(&self) -> &Path {
-        &self.config_dir
     }
 
     pub async fn login(

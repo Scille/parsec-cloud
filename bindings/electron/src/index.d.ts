@@ -95,6 +95,13 @@ export enum UserProfile {
 }
 
 
+export interface AccountInfo {
+    serverAddr: string
+    inUseAuthMethod: string
+    humanHandle: HumanHandle
+}
+
+
 export interface AccountOrganizations {
     active: Array<AccountOrganizationsActiveUser>
     revoked: Array<AccountOrganizationsRevokedUser>
@@ -717,22 +724,13 @@ export type AccountFetchOpaqueKeyFromVaultError =
   | AccountFetchOpaqueKeyFromVaultErrorUnknownOpaqueKey
 
 
-// AccountGetHumanHandleError
-export interface AccountGetHumanHandleErrorInternal {
+// AccountInfoError
+export interface AccountInfoErrorInternal {
     tag: "Internal"
     error: string
 }
-export type AccountGetHumanHandleError =
-  | AccountGetHumanHandleErrorInternal
-
-
-// AccountGetInUseAuthMethodError
-export interface AccountGetInUseAuthMethodErrorInternal {
-    tag: "Internal"
-    error: string
-}
-export type AccountGetInUseAuthMethodError =
-  | AccountGetInUseAuthMethodErrorInternal
+export type AccountInfoError =
+  | AccountInfoErrorInternal
 
 
 // AccountListAuthMethodsError
@@ -4147,12 +4145,9 @@ export function accountFetchOpaqueKeyFromVault(
     account: number,
     key_id: string
 ): Promise<Result<Uint8Array, AccountFetchOpaqueKeyFromVaultError>>
-export function accountGetHumanHandle(
+export function accountInfo(
     account: number
-): Promise<Result<HumanHandle, AccountGetHumanHandleError>>
-export function accountGetInUseAuthMethod(
-    account: number
-): Promise<Result<string, AccountGetInUseAuthMethodError>>
+): Promise<Result<AccountInfo, AccountInfoError>>
 export function accountListAuthMethods(
     account: number
 ): Promise<Result<Array<AuthMethodInfo>, AccountListAuthMethodsError>>
@@ -4549,6 +4544,8 @@ export function libparsecInitSetOnEventCallback(
 export function listAvailableDevices(
     path: string
 ): Promise<Result<Array<AvailableDevice>, ListAvailableDeviceError>>
+export function listStartedAccounts(
+): Promise<Array<number>>
 export function listStartedClients(
 ): Promise<Array<[number, string]>>
 export function mountpointToOsPath(

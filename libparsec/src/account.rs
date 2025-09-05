@@ -22,7 +22,8 @@ use libparsec_client_connection::{AnonymousAccountCmds, ConnectionError, ProxyCo
 use libparsec_types::prelude::*;
 
 use crate::handle::{
-    borrow_from_handle, register_handle, take_and_close_handle, Handle, HandleItem,
+    borrow_from_handle, iter_opened_handles, register_handle, take_and_close_handle, Handle,
+    HandleItem,
 };
 
 // TODO: must reimplement this structure since the bindings doesn't support
@@ -79,6 +80,17 @@ fn borrow_account(account: Handle) -> anyhow::Result<Arc<libparsec_account::Acco
         HandleItem::Account(account) => Some(account.clone()),
         _ => None,
     })
+}
+
+/// List started accounts by handle.
+pub fn list_started_accounts() -> Vec<Handle> {
+    let mut accounts = vec![];
+    iter_opened_handles(|handle, item| {
+        if let HandleItem::Account(_) = item {
+            accounts.push(handle);
+        }
+    });
+    accounts
 }
 
 pub async fn account_create_1_send_validation_email(
@@ -149,19 +161,27 @@ pub async fn account_create_auth_method(
         .await
 }
 
+pub struct AccountInfo {
+    pub server_addr: ParsecAddr,
+    pub in_use_auth_method: AccountAuthMethodID,
+    pub human_handle: HumanHandle,
+}
+
 #[derive(Debug, thiserror::Error)]
-pub enum AccountGetInUseAuthMethodError {
+pub enum AccountInfoError {
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
 
-pub fn account_get_in_use_auth_method(
-    account: Handle,
-) -> Result<AccountAuthMethodID, AccountGetInUseAuthMethodError> {
+pub fn account_info(account: Handle) -> Result<AccountInfo, AccountInfoError> {
     let account_handle = account;
     let account = borrow_account(account_handle)?;
 
-    Ok(account.auth_method_id())
+    Ok(AccountInfo {
+        server_addr: account.server_addr().to_owned(),
+        in_use_auth_method: account.auth_method_id(),
+        human_handle: account.human_handle().to_owned(),
+    })
 }
 
 pub async fn account_list_auth_methods(
@@ -218,21 +238,6 @@ pub fn account_logout(account: Handle) -> Result<(), AccountLogoutError> {
     drop(account);
 
     Ok(())
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum AccountGetHumanHandleError {
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
-}
-
-pub fn account_get_human_handle(
-    account: Handle,
-) -> Result<HumanHandle, AccountGetHumanHandleError> {
-    let account_handle = account;
-    let account = borrow_account(account_handle)?;
-
-    Ok(account.human_handle().to_owned())
 }
 
 pub async fn account_list_invitations(
