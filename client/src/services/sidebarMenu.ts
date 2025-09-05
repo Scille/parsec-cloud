@@ -13,7 +13,7 @@ export default function useSidebarMenu(): any {
   }
 
   function reset(): void {
-    computedWidth.value = storedWidth.value;
+    computedWidth.value = defaultWidth;
   }
 
   function hide(): void {
