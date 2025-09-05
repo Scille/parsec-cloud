@@ -31,6 +31,10 @@ from .device import DeviceAccessStrategy, DeviceSaveStrategy, AvailableDevice
 from .client import ActiveUsersLimit
 
 
+def list_started_accounts() -> list[Handle]:
+    raise NotImplementedError
+
+
 class AccountCreateSendValidationEmailError(ErrorVariant):
     class Offline:
         pass
@@ -112,14 +116,20 @@ async def account_create_auth_method(
     raise NotImplementedError
 
 
-class AccountGetInUseAuthMethodError(ErrorVariant):
+class AccountInfo(Structure):
+    server_addr: ParsecAddr
+    in_use_auth_method: AccountAuthMethodID
+    human_handle: HumanHandle
+
+
+class AccountInfoError(ErrorVariant):
     class Internal:
         pass
 
 
-def account_get_in_use_auth_method(
+def account_info(
     account: Handle,
-) -> Result[AccountAuthMethodID, AccountGetInUseAuthMethodError]:
+) -> Result[AccountInfo, AccountInfoError]:
     raise NotImplementedError
 
 
@@ -203,15 +213,6 @@ class AccountLogoutError(ErrorVariant):
 
 
 def account_logout(account: Handle) -> Result[None, AccountLogoutError]:
-    raise NotImplementedError
-
-
-class AccountGetHumanHandleError(ErrorVariant):
-    class Internal:
-        pass
-
-
-def account_get_human_handle(account: Handle) -> Result[HumanHandle, AccountGetHumanHandleError]:
     raise NotImplementedError
 
 
