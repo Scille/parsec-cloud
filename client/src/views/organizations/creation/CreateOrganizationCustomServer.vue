@@ -146,8 +146,8 @@ async function onOrganizationNameAndServerChosen(chosenOrganizationName: Organiz
   if (ParsecAccount.isLoggedIn() && ParsecAccount.addressMatchesAccountServer(serverAddr.value as string)) {
     const infoResult = await ParsecAccount.getInfo();
     if (infoResult.ok) {
-      email.value = infoResult.value.email;
-      name.value = infoResult.value.label;
+      email.value = infoResult.value.humanHandle.email;
+      name.value = infoResult.value.humanHandle.label;
       if (isWeb()) {
         // Create a new vault save strategy
         // Little hack to be able to create the save strategy before creating the org

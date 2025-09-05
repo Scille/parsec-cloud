@@ -14,12 +14,12 @@
         <ms-input
           label="HomePage.profile.account.personalData.name"
           :disabled="true"
-          v-model="accountInfo.label"
+          v-model="accountInfo.humanHandle.label"
         />
         <ms-input
           label="HomePage.profile.account.personalData.email"
           :disabled="true"
-          v-model="accountInfo.email"
+          v-model="accountInfo.humanHandle.email"
         />
       </div>
     </div>
@@ -43,7 +43,7 @@
 </template>
 
 <script setup lang="ts">
-import { ParsecAccount, HumanHandle } from '@/parsec';
+import { ParsecAccount, AccountInfo } from '@/parsec';
 import { IonButton, modalController, IonText, IonTitle } from '@ionic/vue';
 import { Answer, askQuestion, MsModalResult, MsInput } from 'megashark-lib';
 import { inject, onMounted, onUnmounted, ref } from 'vue';
@@ -54,7 +54,7 @@ import { getConnectionHandle, navigateTo, Routes, watchRoute } from '@/router';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const loading = ref(false);
-const accountInfo = ref<HumanHandle | undefined>();
+const accountInfo = ref<AccountInfo | undefined>();
 const accountLoggedIn = ref(false);
 
 async function deleteAccount(): Promise<void> {
