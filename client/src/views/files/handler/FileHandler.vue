@@ -65,6 +65,10 @@
                   :icon="informationCircle"
                   class="item-icon"
                 />
+                <ion-icon
+                  :icon="informationCircle"
+                  class="item-icon"
+                />
                 {{ $msTranslate('fileViewers.details') }}
               </ion-button>
               <ion-button
@@ -74,6 +78,10 @@
                 v-if="isWeb()"
                 :disabled="!handlerReadyRef"
               >
+                <ion-icon
+                  :icon="link"
+                  class="item-icon"
+                />
                 <ion-icon
                   :icon="link"
                   class="item-icon"
@@ -115,6 +123,10 @@
                   :icon="open"
                   class="item-icon"
                 />
+                <ion-icon
+                  :icon="open"
+                  class="item-icon"
+                />
                 {{ $msTranslate('fileViewers.openWithDefault') }}
               </ion-button>
               <ion-button
@@ -126,7 +138,18 @@
                 <span v-if="windowWidth > WindowSizeBreakpoints.MD">
                   {{ $msTranslate(isHeaderVisible() ? 'fileViewers.hideMenu' : 'fileViewers.showMenu') }}
                 </span>
+                <span v-if="windowWidth > WindowSizeBreakpoints.MD">
+                  {{ $msTranslate(isHeaderVisible() ? 'fileViewers.hideMenu' : 'fileViewers.showMenu') }}
+                </span>
               </ion-button>
+            </div>
+            <ion-button
+              class="file-handler-topbar-buttons__item action-menu"
+              @click="openSmallDisplayActionMenu"
+              v-else
+            >
+              <ion-icon :icon="ellipsisHorizontal" />
+            </ion-button>
             </div>
             <ion-button
               class="file-handler-topbar-buttons__item action-menu"
@@ -186,6 +209,20 @@ import {
   SidebarToggle,
   WindowSizeBreakpoints,
 } from 'megashark-lib';
+import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
+import {
+  Base64,
+  MsSpinner,
+  MsImage,
+  I18n,
+  DownloadIcon,
+  askQuestion,
+  Answer,
+  MsModalResult,
+  useWindowSize,
+  SidebarToggle,
+  WindowSizeBreakpoints,
+} from 'megashark-lib';
 import { ref, Ref, inject, onMounted, onUnmounted, type Component, shallowRef } from 'vue';
 import { IonPage, IonContent, IonButton, IonText, IonIcon, modalController } from '@ionic/vue';
 import { link, informationCircle, open, chevronUp, chevronDown, ellipsisHorizontal, create } from 'ionicons/icons';
@@ -202,6 +239,7 @@ import {
 } from '@/router';
 import { DetectedFileType } from '@/common/fileTypes';
 import SmallDisplayViewerActionMenu from '@/views/files/handler/SmallDisplayViewerActionMenu.vue';
+import SmallDisplayViewerActionMenu from '@/views/files/handler/SmallDisplayViewerActionMenu.vue';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { DateTime } from 'luxon';
 import { getFileIcon } from '@/common/file';
@@ -214,9 +252,11 @@ import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOp
 import FileEditor from '@/views/files/handler/editor/FileEditor.vue';
 import FileViewer from '@/views/files/handler/viewer/FileViewer.vue';
 import useSidebarMenu from '@/services/sidebarMenu';
+import useSidebarMenu from '@/services/sidebarMenu';
 import { openPath } from '@/services/fileOpener';
 import { FileHandlerMode } from '@/views/files/handler';
 
+const { isLargeDisplay, windowWidth } = useWindowSize();
 const { isLargeDisplay, windowWidth } = useWindowSize();
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
