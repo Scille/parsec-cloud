@@ -341,6 +341,7 @@ import {
   Routes,
   currentRouteIs,
   currentRouteIsWorkspaceRoute,
+  getConnectionHandle,
   navigateTo,
   navigateToWorkspace,
   switchOrganization,
@@ -468,6 +469,11 @@ const currentWorkspace = computed(() => {
 });
 
 async function loadAll(): Promise<void> {
+  const connectionHandle = getConnectionHandle();
+  if (connectionHandle) {
+    await recentDocumentManager.refreshWorkspaces(connectionHandle);
+  }
+
   favorites.value = (
     await storageManager.retrieveComponentData<WorkspacesPageSavedData>(WORKSPACES_PAGE_DATA_KEY, WorkspaceDefaultData)
   ).favoriteList;
