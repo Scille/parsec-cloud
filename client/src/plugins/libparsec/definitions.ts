@@ -486,10 +486,15 @@ export type AccountAuthMethodStrategy =
 
 // AccountCreateAuthMethodError
 export enum AccountCreateAuthMethodErrorTag {
+    BadVaultKeyAccess = 'AccountCreateAuthMethodErrorBadVaultKeyAccess',
     Internal = 'AccountCreateAuthMethodErrorInternal',
     Offline = 'AccountCreateAuthMethodErrorOffline',
 }
 
+export interface AccountCreateAuthMethodErrorBadVaultKeyAccess {
+    tag: AccountCreateAuthMethodErrorTag.BadVaultKeyAccess
+    error: string
+}
 export interface AccountCreateAuthMethodErrorInternal {
     tag: AccountCreateAuthMethodErrorTag.Internal
     error: string
@@ -499,6 +504,7 @@ export interface AccountCreateAuthMethodErrorOffline {
     error: string
 }
 export type AccountCreateAuthMethodError =
+  | AccountCreateAuthMethodErrorBadVaultKeyAccess
   | AccountCreateAuthMethodErrorInternal
   | AccountCreateAuthMethodErrorOffline
 

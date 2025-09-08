@@ -4544,6 +4544,11 @@ fn variant_account_create_auth_method_error_rs_to_js<'a>(
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
+        libparsec::AccountCreateAuthMethodError::BadVaultKeyAccess { .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateAuthMethodErrorBadVaultKeyAccess")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::AccountCreateAuthMethodError::Internal { .. } => {
             let js_tag =
                 JsString::try_new(cx, "AccountCreateAuthMethodErrorInternal").or_throw(cx)?;
