@@ -4,6 +4,7 @@
 mod windows;
 
 use bytes::Bytes;
+
 #[cfg(target_os = "windows")]
 pub(crate) use windows as platform;
 

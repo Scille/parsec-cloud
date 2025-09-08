@@ -19,6 +19,11 @@ bytes = { workspace = true }
 schannel = { workspace = true }
 windows-sys = { workspace = true, features = ["Win32_Security_Cryptography_UI"] }
 
+[target.'cfg(target_os = "linux")'.dev-dependencies]
+cryptoki = { workspace = true }
+percent-encoding = { workspace = true }
+sha2 = { workspace = true }
+
 [dev-dependencies]
 # We use clap to provide a CLI for examples.
 clap = { workspace = true, default-features = true, features = ["env", "derive"] }
