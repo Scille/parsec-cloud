@@ -11,7 +11,7 @@ use std::{
 
 use libparsec_client_connection::{
     protocol::{anonymous_account_cmds, authenticated_account_cmds},
-    test_register_sequence_of_send_hooks, ProxyConfig,
+    test_register_sequence_of_send_hooks, test_send_hook_vault_item_list, ProxyConfig,
 };
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -60,7 +60,7 @@ async fn ok(#[values("master_secret", "password")] kind: &str, env: &TestbedEnv)
 
     // Now try the connection
 
-    Account::login(
+    let account2 = Account::login(
         env.discriminant_dir.clone(),
         ProxyConfig::default(),
         env.server_addr.clone(),
@@ -68,12 +68,19 @@ async fn ok(#[values("master_secret", "password")] kind: &str, env: &TestbedEnv)
     )
     .await
     .unwrap();
+
+    // Also make sure both auth methods agree on the vault key
+
+    p_assert_eq!(
+        account.test_get_vault_key().await,
+        account2.test_get_vault_key().await,
+    );
 }
 
 #[parsec_test(testbed = "empty")]
 async fn ok_mocked(#[values("master_secret", "password")] kind: &str, env: &TestbedEnv) {
     let human_handle: HumanHandle = "Zack <zack@example.com>".parse().unwrap();
-    let account = Account::test_new(
+    let account1 = Account::test_new(
         env.discriminant_dir.clone(),
         env.server_addr.clone(),
         &KeyDerivation::from(hex!(
@@ -82,6 +89,8 @@ async fn ok_mocked(#[values("master_secret", "password")] kind: &str, env: &Test
         human_handle.clone(),
     )
     .await;
+
+    let vault_key = SecretKey::generate();
 
     let new_password: Password = "P@ssw0rd.".to_string().into();
     let new_master_secret = KeyDerivation::from(hex!(
@@ -96,7 +105,7 @@ async fn ok_mocked(#[values("master_secret", "password")] kind: &str, env: &Test
         "password" => (
             AccountAuthMethodStrategy::Password(&new_password),
             AccountLoginStrategy::Password {
-                email: account.human_handle.email(),
+                email: account1.human_handle.email(),
                 password: &new_password,
             },
         ),
@@ -105,29 +114,35 @@ async fn ok_mocked(#[values("master_secret", "password")] kind: &str, env: &Test
 
     let retrieved_stuff = Arc::new(Mutex::new(None));
 
-    test_register_sequence_of_send_hooks!(&env.discriminant_dir, {
-        let retrieved_stuff = retrieved_stuff.clone();
-        move |req: authenticated_account_cmds::latest::auth_method_create::Req| {
-            retrieved_stuff.lock().unwrap().replace((
-                req.auth_method_password_algorithm,
-                req.auth_method_id,
-                req.auth_method_mac_key,
-                req.vault_key_access,
-            ));
+    test_register_sequence_of_send_hooks!(
+        &env.discriminant_dir,
+        test_send_hook_vault_item_list!(env, &account1.auth_method_secret_key, &vault_key),
+        {
+            let retrieved_stuff = retrieved_stuff.clone();
+            move |req: authenticated_account_cmds::latest::auth_method_create::Req| {
+                retrieved_stuff.lock().unwrap().replace((
+                    req.auth_method_password_algorithm,
+                    req.auth_method_id,
+                    req.auth_method_mac_key,
+                    req.vault_key_access,
+                ));
 
-            authenticated_account_cmds::latest::auth_method_create::Rep::Ok
+                authenticated_account_cmds::latest::auth_method_create::Rep::Ok
+            }
         }
-    });
+    );
 
-    account
+    account1
         .create_auth_method(auth_method_strategy)
         .await
         .unwrap();
 
-    // Now try the connection
+    // Now try to use our new auth method !
 
     let (auth_method_password_algorithm, _auth_method_id, _auth_method_mac_key, vault_key_access) =
         retrieved_stuff.lock().unwrap().take().unwrap();
+
+    // Do a login...
 
     if kind == "password" {
         test_register_sequence_of_send_hooks!(
@@ -155,7 +170,7 @@ async fn ok_mocked(#[values("master_secret", "password")] kind: &str, env: &Test
         });
     }
 
-    let account = Account::login(
+    let account2 = Account::login(
         env.discriminant_dir.clone(),
         ProxyConfig::default(),
         env.server_addr.clone(),
@@ -163,6 +178,8 @@ async fn ok_mocked(#[values("master_secret", "password")] kind: &str, env: &Test
     )
     .await
     .unwrap();
+
+    // ... and check the vault key access uploaded by the new auth method.
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
@@ -174,7 +191,7 @@ async fn ok_mocked(#[values("master_secret", "password")] kind: &str, env: &Test
         }
     );
 
-    account.list_registration_devices().await.unwrap();
+    p_assert_eq!(account2.test_get_vault_key().await, vault_key,);
 }
 
 #[parsec_test(testbed = "empty")]
@@ -190,11 +207,15 @@ async fn auth_method_id_already_exists(env: &TestbedEnv) {
     )
     .await;
 
-    test_register_sequence_of_send_hooks!(&env.discriminant_dir, {
+    let vault_key = SecretKey::generate();
+
+    test_register_sequence_of_send_hooks!(
+        &env.discriminant_dir,
+        test_send_hook_vault_item_list!(env, &account.auth_method_secret_key, &vault_key),
         move |_req: authenticated_account_cmds::latest::auth_method_create::Req| {
             authenticated_account_cmds::latest::auth_method_create::Rep::AuthMethodIdAlreadyExists
         }
-    });
+    );
 
     let result = account
         .create_auth_method(AccountAuthMethodStrategy::MasterSecret(&master_secret))
@@ -227,7 +248,10 @@ async fn offline(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "empty")]
-async fn unknown_server_response(env: &TestbedEnv) {
+async fn unknown_server_response(
+    #[values("during_vault_item_list", "during_auth_method_create")] kind: &str,
+    env: &TestbedEnv,
+) {
     let master_secret = KeyDerivation::from(hex!(
         "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
     ));
@@ -239,14 +263,35 @@ async fn unknown_server_response(env: &TestbedEnv) {
     )
     .await;
 
-    test_register_sequence_of_send_hooks!(&env.discriminant_dir, {
-        move |_req: authenticated_account_cmds::latest::auth_method_create::Req| {
-            authenticated_account_cmds::latest::auth_method_create::Rep::UnknownStatus {
-                unknown_status: "unknown".to_string(),
-                reason: None,
-            }
+    let vault_key = SecretKey::generate();
+
+    match kind {
+        "during_vault_item_list" => {
+            test_register_sequence_of_send_hooks!(&env.discriminant_dir, {
+                move |_req: authenticated_account_cmds::latest::vault_item_list::Req| {
+                    authenticated_account_cmds::latest::vault_item_list::Rep::UnknownStatus {
+                        unknown_status: "unknown".to_string(),
+                        reason: None,
+                    }
+                }
+            });
         }
-    });
+
+        "during_auth_method_create" => {
+            test_register_sequence_of_send_hooks!(
+                &env.discriminant_dir,
+                test_send_hook_vault_item_list!(env, &account.auth_method_secret_key, &vault_key),
+                move |_req: authenticated_account_cmds::latest::auth_method_create::Req| {
+                    authenticated_account_cmds::latest::auth_method_create::Rep::UnknownStatus {
+                        unknown_status: "unknown".to_string(),
+                        reason: None,
+                    }
+                }
+            );
+        }
+
+        unknown => panic!("Unknown kind: {unknown}"),
+    }
 
     p_assert_matches!(
         account.create_auth_method(AccountAuthMethodStrategy::MasterSecret(&master_secret)).await,

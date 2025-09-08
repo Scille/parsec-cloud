@@ -102,6 +102,9 @@ async def account_create_3_proceed(
 
 
 class AccountCreateAuthMethodError(ErrorVariant):
+    class BadVaultKeyAccess:
+        pass
+
     class Offline:
         pass
 

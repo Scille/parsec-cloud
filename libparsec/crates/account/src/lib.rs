@@ -100,6 +100,15 @@ pub struct Account {
 }
 
 impl Account {
+    /// Helper for `create_auth_method` tests: we want to make sure all auth method
+    /// share the same vault key. Without this method this would mean uploading
+    /// something to the vault, then try to get it back from a different auth method.
+    #[cfg(test)]
+    async fn test_get_vault_key(&self) -> SecretKey {
+        let (vault_key, _) = fetch_vault_items(self).await.unwrap();
+        vault_key
+    }
+
     pub fn auth_method_id(&self) -> AccountAuthMethodID {
         self.auth_method_id
     }
