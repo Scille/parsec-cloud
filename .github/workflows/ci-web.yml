@@ -48,7 +48,7 @@ jobs:
         uses: ./.github/actions/system-info
         timeout-minutes: 1
 
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # pin v4.4.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444  # pin v5.0.0
         with:
           node-version: ${{ env.node-version }}
           cache: npm
@@ -109,7 +109,7 @@ jobs:
         timeout-minutes: 2
 
       - name: Setup Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@fb51252c7ba57d633bc668f941da052e410add48 # pin v1.13.0
+        uses: actions-rust-lang/setup-rust-toolchain@ac90e63697ac2784f4ecfe2964e1a285c304003a # pin v1.14.1
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           target: wasm32-unknown-unknown
@@ -130,7 +130,7 @@ jobs:
         timeout-minutes: 5
 
       # Install wasm-pack command
-      - uses: taiki-e/install-action@ad95d4e02e061d4390c4b66ef5ed56c7fee3d2ce # pin v2.58.17
+      - uses: taiki-e/install-action@57511bcdf8cdb0eab6448cb7fa632952d9f25742 # pin v2.59.1
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           tool: wasm-pack@${{ env.wasm-pack-version }}
@@ -177,7 +177,7 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # pin v5.0.0
         timeout-minutes: 2
 
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # pin v4.4.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # pin v5.0.0
         with:
           node-version: ${{ env.node-version }}
           cache: npm
@@ -255,7 +255,7 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # pin v5.0.0
         timeout-minutes: 2
 
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # pin v4.4.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444  # pin v5.0.0
         with:
           node-version: ${{ env.node-version }}
           cache: npm
