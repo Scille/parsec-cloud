@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { addUser, answerQuestion, expect, fillIonInput, logout, msTest } from '@tests/e2e/helpers';
+import { addUser, answerQuestion, expect, fillIonInput, logout, MsPage, msTest, setupNewPage } from '@tests/e2e/helpers';
 
 msTest('Parsec account login initial page', async ({ parsecAccount }) => {
   const container = parsecAccount.locator('.homepage-content');
@@ -130,7 +130,7 @@ msTest('Account create registration device and replace current', async ({ parsec
   await expect(home).toBeWorkspacePage();
 });
 
-msTest('Account create registration device and auto-register', async ({ parsecAccountLoggedIn }) => {
+msTest('Account create registration device and auto-register', async ({ browser, parsecAccountLoggedIn }) => {
   msTest.setTimeout(180_000);
 
   const home = parsecAccountLoggedIn;
@@ -159,7 +159,14 @@ msTest('Account create registration device and auto-register', async ({ parsecAc
   await expect(home).toHavePageTitle('Users');
   await expect(home).toBeUserPage();
 
-  const secondTab = await home.openNewTab({ withParsecAccount: true, location: '/account', parsecAccountAutoLogin: false });
+  // Opening a new context, else we'll be automatically logged into parsec account
+  const context2 = await browser.newContext();
+  const secondTab = (await context2.newPage()) as MsPage;
+  await setupNewPage(secondTab, {
+    withParsecAccount: true,
+    location: '/account',
+    parsecAccountAutoLogin: false,
+  });
   const loginContainer1 = secondTab.locator('.account-login-container');
   const loginButton1 = loginContainer1.locator('.account-login-button').locator('ion-button');
   await fillIonInput(loginContainer1.locator('ion-input').nth(1), email);
@@ -181,21 +188,31 @@ msTest('Account create registration device and auto-register', async ({ parsecAc
   await expect(secondTab).toShowToast('The device has been stored in Parsec Account.', 'Success');
 
   await secondTab.release();
+  await context2.close();
   await logout(home);
 
   // Opening a second tab with the same account, device should be present
-  const newTab = await home.openNewTab({ skipTestbed: true, location: '/account', withParsecAccount: true, parsecAccountAutoLogin: false });
+  const newTab = await home.openNewTab({ location: '/home', withParsecAccount: true, parsecAccountAutoLogin: false });
 
-  const loginContainer = newTab.locator('.account-login-container');
-  const loginButton = loginContainer.locator('.account-login-button').locator('ion-button');
-  await fillIonInput(loginContainer.locator('ion-input').nth(1), email);
-  await fillIonInput(loginContainer.locator('ion-input').nth(2), 'P@ssw0rd.');
-  await expect(loginButton).toBeTrulyEnabled();
-  await loginButton.click();
+  // Main context, so we are automatically logged in
   await expect(newTab).toBeHomePage();
 
-  await expect(newTab.locator('.organization-list').locator('.organization-card')).toHaveCount(1);
-  await expect(newTab.locator('.organization-list').locator('.organization-card').nth(0).locator('.login-name')).toHaveText('UserName');
-  await newTab.locator('.organization-list').locator('.organization-card').nth(0).click();
+  await expect(newTab.locator('.organization-list').locator('.organization-card')).toHaveCount(4);
+  await expect(newTab.locator('.organization-list').locator('.organization-card').nth(3).locator('.login-name')).toHaveText('UserName');
+  await newTab.locator('.organization-list').locator('.organization-card').nth(3).click();
   await expect(newTab).toBeWorkspacePage();
+});
+
+msTest('Account auto logged in on second tab', async ({ parsecAccountLoggedIn }) => {
+  const home = parsecAccountLoggedIn;
+
+  await expect(parsecAccountLoggedIn.locator('.profile-header-homepage')).toBeVisible();
+  await expect(parsecAccountLoggedIn.locator('.profile-header-homepage')).toHaveText(/^Agent\d+$/);
+
+  const secondTab = await home.openNewTab({ withParsecAccount: true, location: '/account', parsecAccountAutoLogin: false });
+  await expect(secondTab).toBeHomePage();
+  await expect(secondTab.locator('.profile-header-homepage')).toBeVisible();
+  await expect(secondTab.locator('.profile-header-homepage')).toHaveText(/^Agent\d+$/);
+
+  await secondTab.release();
 });
