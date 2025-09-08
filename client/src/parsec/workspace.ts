@@ -118,12 +118,15 @@ export async function getWorkspaceInfo(workspaceHandle: WorkspaceHandle): Promis
 
 const WORKSPACE_NAMES_CACHE = new DataCache<WorkspaceHandle, string>();
 
-export async function getWorkspaceName(workspaceHandle: WorkspaceHandle): Promise<string> {
-  const name = WORKSPACE_NAMES_CACHE.get(workspaceHandle);
+export async function getWorkspaceName(workspaceHandle: WorkspaceHandle, ignoreCache?: boolean): Promise<string> {
+  if (!ignoreCache) {
+    const name = WORKSPACE_NAMES_CACHE.get(workspaceHandle);
 
-  if (name) {
-    return name;
+    if (name) {
+      return name;
+    }
   }
+
   const result = await getWorkspaceInfo(workspaceHandle);
   if (!result.ok) {
     return '';

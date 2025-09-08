@@ -281,7 +281,7 @@ async function updateRoute(): Promise<void> {
   } else if (currentRouteIs(Routes.Documents)) {
     const workspaceHandle = getWorkspaceHandle();
     if (workspaceHandle) {
-      workspaceName.value = await getWorkspaceName(workspaceHandle);
+      workspaceName.value = await getWorkspaceName(workspaceHandle, true);
     }
 
     const finalPath: RouterPathNode[] = [];
@@ -342,7 +342,7 @@ onMounted(async () => {
   await updateRoute();
 
   eventDistributorCbId = await eventDistributor.registerCallback(
-    Events.WorkspaceCreated | Events.MenuAction | Events.WorkspaceRoleUpdate | Events.DeviceCreated,
+    Events.WorkspaceCreated | Events.MenuAction | Events.WorkspaceRoleUpdate | Events.DeviceCreated | Events.WorkspaceUpdated,
     async (event: Events, data?: EventData) => {
       if (event === Events.WorkspaceCreated) {
         securityWarnings.value = await getSecurityWarnings();
@@ -358,6 +358,8 @@ onMounted(async () => {
         }
       } else if (event === Events.Online) {
         securityWarnings.value = await getSecurityWarnings();
+      } else if (event === Events.WorkspaceUpdated) {
+        await updateRoute();
       }
     },
   );

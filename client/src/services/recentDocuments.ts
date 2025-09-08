@@ -83,6 +83,20 @@ class RecentDocumentManager {
     });
   }
 
+  async refreshWorkspaces(handle: ConnectionHandle): Promise<void> {
+    const workspacesResult = await listWorkspaces(handle);
+    if (!workspacesResult.ok) {
+      window.electronAPI.log('error', `Failed to load recent workspaces: ${JSON.stringify(workspacesResult.error)}`);
+      return;
+    }
+    this.workspaces.value.forEach((item, index) => {
+      const wk = workspacesResult.value.find((w) => w.id === item.id);
+      if (wk) {
+        this.workspaces.value[index] = wk;
+      }
+    });
+  }
+
   private _arrayMove(array: Array<any>, from: number, to: number): void {
     array.splice(to, 0, array.splice(from, 1)[0]);
   }
