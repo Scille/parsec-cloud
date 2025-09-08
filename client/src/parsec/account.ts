@@ -181,31 +181,53 @@ class _ParsecAccount {
   server: ParsecAddr | undefined = undefined;
 
   async init(): Promise<void> {
-    if (!Env.isAccountAutoLoginEnabled()) {
+    if (!Env.isAccountEnabled()) {
       return;
     }
-    const TEST_PASSWORD = 'P@ssw0rd.';
-    console.log(`Using Parsec Account auto-login, server is '${Env.getAccountServer()}'`);
-    // Create test account
-    const newAccountResult = await libparsec.testNewAccount(Env.getAccountServer());
-    if (!newAccountResult.ok) {
-      console.error(`No auto-login possible, testNewAccount failed: ${newAccountResult.error.tag} (${newAccountResult.error.error})`);
+    if (Env.isAccountAutoLoginEnabled()) {
+      const TEST_PASSWORD = 'P@ssw0rd.';
+      window.electronAPI.log('info', `Using Parsec Account auto-login, server is '${Env.getAccountServer()}'`);
+      // Create test account
+      const newAccountResult = await libparsec.testNewAccount(Env.getAccountServer());
+      if (!newAccountResult.ok) {
+        window.electronAPI.log(
+          'error',
+          `No auto-login possible, testNewAccount failed: ${newAccountResult.error.tag} (${newAccountResult.error.error})`,
+        );
+        return;
+      }
+      // Login to the test account
+      const loginResult = await this.login(ParsecAccountAccess.useMasterSecretForLogin(newAccountResult.value[1]), Env.getAccountServer());
+      if (!loginResult.ok) {
+        window.electronAPI.log('error', `Failed to login: ${loginResult.error.tag} (${loginResult.error.error})`);
+        return;
+      }
+      // Add a password authentication
+      window.electronAPI.log('info', `Setting new password to test Parsec Account: '${TEST_PASSWORD}'`);
+      const addAuthResult = await libparsec.accountCreateAuthMethod(loginResult.value, {
+        tag: AccountAuthMethodStrategyTag.Password,
+        password: TEST_PASSWORD,
+      });
+      if (!addAuthResult.ok) {
+        window.electronAPI.log(
+          'error',
+          `Failed to add new password authentication: ${addAuthResult.error.tag} (${addAuthResult.error.error})`,
+        );
+      }
       return;
     }
-    // Login to the test account
-    const loginResult = await this.login(ParsecAccountAccess.useMasterSecretForLogin(newAccountResult.value[1]), Env.getAccountServer());
-    if (!loginResult.ok) {
-      console.error(`Failed to login: ${loginResult.error.tag} (${loginResult.error.error})`);
-      return;
-    }
-    // Add a password authentication
-    console.log(`Setting new password to test Parsec Account: '${TEST_PASSWORD}'`);
-    const addAuthResult = await libparsec.accountCreateAuthMethod(loginResult.value, {
-      tag: AccountAuthMethodStrategyTag.Password,
-      password: TEST_PASSWORD,
-    });
-    if (!addAuthResult.ok) {
-      console.error(`Failed to add new password authentication: ${addAuthResult.error.tag} (${addAuthResult.error.error})`);
+
+    const startedAccounts = await libparsec.listStartedAccounts();
+    if (startedAccounts.length > 0) {
+      window.electronAPI.log('info', `${startedAccounts.length} account(s) already started, reusing if possible`);
+      const infoResult = await libparsec.accountInfo(startedAccounts[0]);
+      if (infoResult.ok) {
+        this.handle = startedAccounts[0];
+        this.server = infoResult.value.serverAddr;
+        await this.registerAllDevices();
+      } else {
+        window.electronAPI.log('error', `One account started but failed to get info: ${infoResult.error.tag} (${infoResult.error.error})`);
+      }
     }
   }
 
@@ -246,7 +268,7 @@ class _ParsecAccount {
     }
     const listResult = await this.listRegistrationDevices();
     if (!listResult.ok) {
-      console.error(`Failed to list registration devices: ${listResult.error.tag} (${listResult.error.error})`);
+      window.electronAPI.log('error', `Failed to list registration devices: ${listResult.error.tag} (${listResult.error.error})`);
       return;
     }
     const availableDevices = await listAvailableDevices(false);
@@ -265,7 +287,7 @@ class _ParsecAccount {
       if (isWeb()) {
         const keyResult = await libparsec.accountUploadOpaqueKeyInVault(this.handle, regDevice.organizationId);
         if (!keyResult.ok) {
-          console.error(`Failed to upload opaque key: ${keyResult.error.tag} (${keyResult.error.error})`);
+          window.electronAPI.log('error', `Failed to upload opaque key: ${keyResult.error.tag} (${keyResult.error.error})`);
           continue;
         }
         saveStrategy = { tag: DeviceSaveStrategyTag.AccountVault, ciphertextKeyId: keyResult.value[0], ciphertextKey: keyResult.value[1] };
@@ -281,7 +303,7 @@ class _ParsecAccount {
         saveStrategy,
       );
       if (!regResult.ok) {
-        console.error(`Failed to register new device: ${regResult.error.tag} (${regResult.error.error}`);
+        window.electronAPI.log('error', `Failed to register new device: ${regResult.error.tag} (${regResult.error.error})`);
       }
     }
   }
@@ -337,7 +359,7 @@ class _ParsecAccount {
     }
     const keyResult = await libparsec.accountUploadOpaqueKeyInVault(this.handle, registrationDevice.organizationId);
     if (!keyResult.ok) {
-      console.error(`Failed to upload opaque key: ${keyResult.error.tag} (${keyResult.error.error})`);
+      window.electronAPI.log('error', `Failed to upload opaque key: ${keyResult.error.tag} (${keyResult.error.error})`);
       return { ok: false, error: { tag: AccountRegisterNewDeviceErrorTag.BadVaultKeyAccess, error: 'failed to get key' } };
     }
     const regResult = await libparsec.accountRegisterNewDevice(

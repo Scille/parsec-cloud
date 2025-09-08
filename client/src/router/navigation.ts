@@ -16,14 +16,14 @@ export interface NavigationOptions {
 export async function navigateTo(routeName: Routes, options?: NavigationOptions): Promise<void> {
   const router = getRouter();
 
-  const params = options && options.params ? options.params : {};
+  const params = options?.params ?? {};
   // Handle is provided in params by login, and skipHandle is used for logged out navigation
-  if (!('handle' in params) && (!options || !options.skipHandle)) {
+  if (!('handle' in params) && !options?.skipHandle) {
     const currentHandle = getConnectionHandle();
     (params as any).handle = currentHandle;
   }
 
-  if (options && options.replace) {
+  if (options?.replace) {
     await router.replace({
       name: routeName,
       params: params as RouteParamsRaw,
