@@ -496,6 +496,10 @@ export type AccountAuthMethodStrategy =
 
 
 // AccountCreateAuthMethodError
+export interface AccountCreateAuthMethodErrorBadVaultKeyAccess {
+    tag: "BadVaultKeyAccess"
+    error: string
+}
 export interface AccountCreateAuthMethodErrorInternal {
     tag: "Internal"
     error: string
@@ -505,6 +509,7 @@ export interface AccountCreateAuthMethodErrorOffline {
     error: string
 }
 export type AccountCreateAuthMethodError =
+  | AccountCreateAuthMethodErrorBadVaultKeyAccess
   | AccountCreateAuthMethodErrorInternal
   | AccountCreateAuthMethodErrorOffline
 

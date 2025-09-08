@@ -4799,6 +4799,13 @@ fn variant_account_create_auth_method_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        libparsec::AccountCreateAuthMethodError::BadVaultKeyAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateAuthMethodErrorBadVaultKeyAccess".into(),
+            )?;
+        }
         libparsec::AccountCreateAuthMethodError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
