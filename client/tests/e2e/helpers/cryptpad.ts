@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { expect } from '@playwright/test';
 import { MsPage } from '@tests/e2e/helpers/types';
 
 // cspell:disable-next-line
@@ -20,4 +21,9 @@ export async function mockCryptpadServer(page: MsPage, opts?: MockCryptpadOption
       await route.continue();
     }
   });
+}
+
+export async function waitUntilSaved(page: MsPage, timeout = 10000): Promise<void> {
+  await expect(page.locator('#unsaved-changes')).toBeHidden();
+  await expect(page.locator('#saved-changes')).toBeVisible({ timeout: timeout });
 }

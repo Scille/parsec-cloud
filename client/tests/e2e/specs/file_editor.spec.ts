@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { expect, login, msTest } from '@tests/e2e/helpers';
+import { expect, login, msTest, waitUntilSaved } from '@tests/e2e/helpers';
 
 msTest('Open editor with header option', async ({ parsecEditics }) => {
   const entries = parsecEditics.locator('.folder-container').locator('.file-list-item');
@@ -75,8 +75,7 @@ msTest('Check edited file in viewer', async ({ parsecEditics }) => {
   await editor.blur();
   await expect(parsecEditics.locator('#unsaved-changes')).toBeVisible();
   await parsecEditics.waitForTimeout(500);
-  await expect(parsecEditics.locator('#unsaved-changes')).toBeHidden();
-  await expect(parsecEditics.locator('#saved-changes')).toBeVisible();
+  await waitUntilSaved(parsecEditics);
 
   await parsecEditics.locator('.file-handler-topbar').locator('.back-button').click();
   await entries.nth(2).dblclick();
@@ -158,10 +157,12 @@ msTest('Edit file in editor with two users', async ({ parsecEditics }) => {
 
   await editorAlice.fill('New first line!');
   await expect(editorAlice).toHaveText('New first line!');
+  await waitUntilSaved(parsecEditics);
   await expect(editorBob).toHaveText('New first line!');
   await editorBob.fill('New NEWER first line!');
-  await expect(editorAlice).toHaveText('New NEWER first line!');
   await expect(editorBob).toHaveText('New NEWER first line!');
+  await waitUntilSaved(secondTab);
+  await expect(editorAlice).toHaveText('New NEWER first line!');
 });
 
 msTest('Check file edited by other user', async ({ parsecEditics }) => {
@@ -205,6 +206,7 @@ msTest('Check file edited by other user', async ({ parsecEditics }) => {
     .nth(0);
   await expect(editorAlice).toHaveText('# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS');
   await editorAlice.fill('New first line!');
+  await waitUntilSaved(parsecEditics);
 
   // Open editor with Bob
   const secondTab = await parsecEditics.openNewTab();
