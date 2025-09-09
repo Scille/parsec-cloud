@@ -94,7 +94,7 @@ generate-setup-file = false
 script = "build.py"
 
 [tool.poetry.requires-plugins]
-poetry-plugin-export = "1.8" # provides poetry export
+poetry-plugin-export = "^1.8" # provides poetry export
 
 [tool.cibuildwheel]
 build = "cp312-{manylinux,macos,win}*"
