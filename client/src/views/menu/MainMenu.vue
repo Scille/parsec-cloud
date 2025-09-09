@@ -469,11 +469,6 @@ const currentWorkspace = computed(() => {
 });
 
 async function loadAll(): Promise<void> {
-  const connectionHandle = getConnectionHandle();
-  if (connectionHandle) {
-    await recentDocumentManager.refreshWorkspaces(connectionHandle);
-  }
-
   favorites.value = (
     await storageManager.retrieveComponentData<WorkspacesPageSavedData>(WORKSPACES_PAGE_DATA_KEY, WorkspaceDefaultData)
   ).favoriteList;
@@ -572,6 +567,10 @@ onMounted(async () => {
         await loadAll();
         securityWarnings.value = await getSecurityWarnings();
       } else if (event === Events.WorkspaceFavorite || event === Events.WorkspaceUpdated) {
+        const connectionHandle = getConnectionHandle();
+        if (connectionHandle) {
+          await recentDocumentManager.refreshWorkspaces(connectionHandle);
+        }
         await loadAll();
       } else if (event === Events.ExpiredOrganization) {
         isExpired.value = true;
