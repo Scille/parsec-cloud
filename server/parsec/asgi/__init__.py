@@ -49,7 +49,9 @@ class StaticFilesWithSPARedirect(StaticFiles):
     def lookup_path(self, path: str) -> tuple[str, os.stat_result | None]:
         match super().lookup_path(path):
             case (_, None):
-                if path.startswith("assets/"):
+                # The "assets" and "custom" folders should not be allowed to
+                # redirect to index.html
+                if path.startswith("assets/") or path.startswith("custom/"):
                     raise HTTPException(status_code=404)
                 else:
                     return super().lookup_path("index.html")
