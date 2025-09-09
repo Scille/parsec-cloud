@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { expect, fillInputModal, getClipboardText, msTest } from '@tests/e2e/helpers';
+import { expect, fillInputModal, getClipboardText, login, msTest } from '@tests/e2e/helpers';
 
 type Mode = 'grid' | 'list' | 'sidebar';
 
@@ -183,3 +183,23 @@ for (const mode of ['grid', 'list', 'sidebar']) {
     await expect(workspaces.locator('.workspace-sharing-modal').locator('.ms-modal-header__title')).toHaveText('wksp1');
   });
 }
+
+msTest('Check workspace rename in header breadcrumb', async ({ workspaces }) => {
+  await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
+  await expect(workspaces).toHaveHeader(['wksp1'], true, true);
+  const bobTab = await workspaces.openNewTab();
+  await login(bobTab, 'Boby McBobFace');
+  await bobTab.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
+  await expect(bobTab).toHaveHeader(['wksp1'], true, true);
+
+  // Rename workspace and check both headers
+  const sidebarRecentWorkspaces = workspaces.locator('#sidebar-workspaces-recent');
+  const sidebarWorkspaceButton = sidebarRecentWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0);
+  await expect(sidebarWorkspaceButton).toHaveText('wksp1');
+  await sidebarWorkspaceButton.click({ button: 'right' });
+  const popover = workspaces.locator('.workspace-context-menu');
+  await popover.getByRole('listitem').nth(1).click();
+  await fillInputModal(workspaces, 'New-wksp1', true);
+  await expect(workspaces).toHaveHeader(['New-wksp1'], true, true);
+  await expect(bobTab).toHaveHeader(['New-wksp1'], true, true);
+});

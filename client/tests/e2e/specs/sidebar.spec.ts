@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Locator } from '@playwright/test';
-import { DisplaySize, expect, fillInputModal, msTest } from '@tests/e2e/helpers';
+import { DisplaySize, expect, fillInputModal, login, msTest } from '@tests/e2e/helpers';
 
 msTest('Sidebar in organization management', async ({ organizationPage }) => {
   const sidebar = organizationPage.locator('.sidebar');
@@ -299,4 +299,25 @@ msTest('Recent and pinned workspaces are updated when workspace is renamed', asy
 
   await expect(sidebarRecentWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0)).toHaveText('New-wksp1');
   await expect(sidebarFavoriteWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0)).toHaveText('New-wksp1');
+
+  // Check update from other user point of view
+  const bobTab = await workspaces.openNewTab();
+  await login(bobTab, 'Boby McBobFace');
+  const bobSidebarRecentWorkspaces = bobTab.locator('#sidebar-workspaces-recent');
+  const bobSidebarFavoriteWorkspaces = bobTab.locator('#sidebar-workspaces-favorites');
+  const bobCard = bobTab.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
+  await bobCard.click();
+  await expect(bobSidebarRecentWorkspaces.locator('.sidebar-item')).toHaveCount(1);
+  await expect(bobSidebarFavoriteWorkspaces.locator('.sidebar-item')).toHaveCount(1);
+  await expect(bobSidebarRecentWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0)).toHaveText('New-wksp1');
+  await expect(bobSidebarFavoriteWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0)).toHaveText('New-wksp1');
+
+  await card.click({ button: 'right' });
+  await popover.getByRole('listitem').nth(1).click();
+  await fillInputModal(workspaces, 'Newer-wksp1', true);
+  await expect(workspaces).toShowToast('Workspace has been successfully renamed to Newer-wksp1.', 'Success');
+  await expect(sidebarRecentWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0)).toHaveText('Newer-wksp1');
+  await expect(sidebarFavoriteWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0)).toHaveText('Newer-wksp1');
+  await expect(bobSidebarRecentWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0)).toHaveText('Newer-wksp1');
+  await expect(bobSidebarFavoriteWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0)).toHaveText('Newer-wksp1');
 });
