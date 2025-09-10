@@ -77,7 +77,7 @@ deleted_vlob_atoms AS (  --noqa: ST03
 
 deleted_blocks AS (  --noqa: ST03
     DELETE FROM block
-    WHERE organization IN (SELECT * FROM deleted_organizations)
+    WHERE realm IN (SELECT * FROM deleted_realms)
     RETURNING _id, block_id
 ),
 
@@ -611,7 +611,6 @@ new_vlob_atoms AS (  -- noqa: ST03
 
 new_blocks AS (  -- noqa: ST03
     INSERT INTO block (
-        organization,
         block_id,
         realm,
         author,
@@ -621,26 +620,26 @@ new_blocks AS (  -- noqa: ST03
         key_index
     )
     SELECT
-        (SELECT new_organization_ids._id FROM new_organization_ids) AS organization,
-        block_id,
+        block.block_id,
         (
             SELECT new_realms._id
             FROM new_realms
-            WHERE new_realms.realm_id = {q_realm(_id="block.realm", select="realm_id")}  -- noqa: LT05,LT14
+            WHERE new_realms.realm_id = realm.realm_id
         ) AS realm,
         (
             SELECT new_devices._id
             FROM new_devices
             WHERE new_devices.device_id = {q_device(_id="block.author", select="device_id")}  -- noqa: LT05,LT14
         ) AS author,
-        size,
-        created_on,
-        deleted_on,
-        key_index
+        block.size,
+        block.created_on,
+        block.deleted_on,
+        block.key_index
     FROM block
-    WHERE organization = {q_organization_internal_id("$source_id")}  -- noqa: LT05,LT14
-    ORDER BY _id
-    RETURNING _id
+    INNER JOIN realm ON block.realm = realm._id
+    WHERE realm.organization = {q_organization_internal_id("$source_id")}  -- noqa: LT05,LT14
+    ORDER BY block._id
+    RETURNING block._id
 ),
 
 new_realm_keys_bundle AS (  -- noqa: ST03

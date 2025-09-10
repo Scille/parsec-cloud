@@ -25,9 +25,8 @@ from parsec.components.realm import BadKeyIndex
 
 _q_insert_block = Q(
     """
-INSERT INTO block (organization, block_id, realm, author, size, created_on, key_index)
+INSERT INTO block (block_id, realm, author, size, created_on, key_index)
 VALUES (
-    $organization_internal_id,
     $block_id,
     $realm_internal_id,
     $device_internal_id,
@@ -209,7 +208,7 @@ async def block_create(
     # 1.1) Check organization
 
     match row["organization_internal_id"]:
-        case int() as organization_internal_id:
+        case int():
             pass
         case None:
             return BlockCreateBadOutcome.ORGANIZATION_NOT_FOUND
@@ -312,7 +311,6 @@ async def block_create(
         try:
             ret = await conn.execute(
                 *_q_insert_block(
-                    organization_internal_id=organization_internal_id,
                     block_id=block_id,
                     realm_internal_id=realm_internal_id,
                     device_internal_id=device_internal_id,
