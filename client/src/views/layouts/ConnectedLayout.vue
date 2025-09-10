@@ -72,20 +72,16 @@ onMounted(async () => {
   }
 
   callbackId = await injections.eventDistributor.registerCallback(
-    Events.TOSAcceptRequired | Events.LogoutRequested | Events.EntryDeleted | Events.EntryRenamed,
-    async (event: Events, data?: EventData) => {
-      if (event === Events.LogoutRequested) {
-        await logout();
-      } else if (event === Events.TOSAcceptRequired) {
-        await tryOpeningTOSModal();
-      } else if (event === Events.EntryDeleted) {
-        const deleteData = data as EntryDeletedData;
-        recentDocumentManager.removeFileById(deleteData.entryId);
-      } else if (event === Events.EntryRenamed) {
-        const renameData = data as EntryRenamedData;
-        recentDocumentManager.updateFile(renameData.entryId, { name: renameData.newName, path: renameData.newPath });
-      }
-    },
+    Events.TOSAcceptRequired |
+      Events.LogoutRequested |
+      Events.EntryDeleted |
+      Events.EntryRenamed |
+      Events.OrganizationNotFound |
+      Events.IncompatibleServer |
+      Events.ExpiredOrganization |
+      Events.ClientRevoked |
+      Events.ClientFrozen,
+    eventCallback,
   );
 
   recentDocumentManager.resetHistory();
@@ -111,6 +107,92 @@ onUnmounted(async () => {
     injections.eventDistributor.removeCallback(callbackId);
   }
 });
+
+async function eventCallback(event: Events, data?: EventData): Promise<void> {
+  switch (event) {
+    case Events.LogoutRequested:
+      await logout();
+      break;
+    case Events.TOSAcceptRequired:
+      await tryOpeningTOSModal();
+      break;
+    case Events.EntryDeleted:
+      recentDocumentManager.removeFileById((data as EntryDeletedData).entryId);
+      break;
+    case Events.EntryRenamed:
+      recentDocumentManager.updateFile((data as EntryRenamedData).entryId, {
+        name: (data as EntryRenamedData).newName,
+        path: (data as EntryRenamedData).newPath,
+      });
+      break;
+    case Events.OrganizationNotFound:
+      await injections.informationManager.present(
+        new Information({
+          message: 'globalErrors.organizationNotFound',
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Modal,
+      );
+      break;
+    case Events.IncompatibleServer:
+      injections.informationManager.present(
+        new Information({
+          message: 'notification.incompatibleServer',
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Notification,
+      );
+      await injections.informationManager.present(
+        new Information({
+          message: 'globalErrors.incompatibleServer',
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Modal,
+      );
+      break;
+    case Events.ExpiredOrganization:
+      injections.informationManager.present(
+        new Information({
+          message: 'notification.expiredOrganization',
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Notification,
+      );
+      await injections.informationManager.present(
+        new Information({
+          message: 'globalErrors.expiredOrganization',
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Modal,
+      );
+      break;
+    case Events.ClientRevoked:
+      injections.informationManager.present(
+        new Information({
+          message: 'notification.clientRevoked',
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Notification,
+      );
+      await injections.informationManager.present(
+        new Information({
+          message: 'globalErrors.clientRevoked',
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Modal,
+      );
+      break;
+    case Events.ClientFrozen:
+      await injections.informationManager.present(
+        new Information({
+          message: 'globalErrors.clientFrozen',
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Modal,
+      );
+      break;
+  }
+}
 
 async function tryOpeningTOSModal(): Promise<void> {
   if (modalOpened.value) {

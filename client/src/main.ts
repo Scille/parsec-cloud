@@ -43,7 +43,7 @@ import {
 import { getClientConfig } from '@/parsec/internals';
 import { libparsec } from '@/plugins/libparsec';
 import { Env } from '@/services/environment';
-import { Events } from '@/services/eventDistributor';
+import { EventDistributor, Events } from '@/services/eventDistributor';
 import { HotkeyManager, HotkeyManagerKey } from '@/services/hotkeyManager';
 import { Information, InformationDataType, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
@@ -61,92 +61,105 @@ enum AppState {
 }
 
 async function parsecEventCallback(handle: ConnectionHandle, event: ClientEvent): Promise<void> {
-  const distributor = injectionProvider.getInjections(handle).eventDistributor;
-  switch (event.tag) {
-    case ClientEventTag.Online:
-      distributor.dispatchEvent(Events.Online);
-      break;
-    case ClientEventTag.Offline:
-      distributor.dispatchEvent(Events.Offline);
-      break;
-    case ClientEventTag.MustAcceptTos:
-      distributor.dispatchEvent(Events.TOSAcceptRequired, undefined, { delay: 2000 });
-      break;
-    case ClientEventTag.InvitationChanged:
-      distributor.dispatchEvent(Events.InvitationUpdated, {
-        token: (event as ClientEventInvitationChanged).token,
-        status: (event as ClientEventInvitationChanged).status,
-      });
-      break;
-    case ClientEventTag.GreetingAttemptReady:
-      distributor.dispatchEvent(Events.GreetingAttemptReady, {
-        token: (event as ClientEventGreetingAttemptReady).token,
-        greetingAttempt: (event as ClientEventGreetingAttemptReady).greetingAttempt,
-      });
-      break;
-    case ClientEventTag.GreetingAttemptCancelled:
-      distributor.dispatchEvent(Events.GreetingAttemptCancelled, {
-        token: (event as ClientEventGreetingAttemptCancelled).token,
-        greetingAttempt: (event as ClientEventGreetingAttemptCancelled).greetingAttempt,
-      });
-      break;
-    case ClientEventTag.GreetingAttemptJoined:
-      distributor.dispatchEvent(Events.GreetingAttemptJoined, {
-        token: (event as ClientEventGreetingAttemptJoined).token,
-        greetingAttempt: (event as ClientEventGreetingAttemptJoined).greetingAttempt,
-      });
-      break;
-    case ClientEventTag.IncompatibleServer:
-      window.electronAPI.log('warn', `IncompatibleServerEvent: ${JSON.stringify(event)}`);
-      distributor.dispatchEvent(
-        Events.IncompatibleServer,
-        { version: event.apiVersion, supportedVersions: event.supportedApiVersion },
-        { delay: 5000 },
-      );
-      break;
-    case ClientEventTag.RevokedSelfUser:
-      distributor.dispatchEvent(Events.ClientRevoked, undefined, { delay: 5000 });
-      break;
-    case ClientEventTag.ExpiredOrganization:
-      distributor.dispatchEvent(Events.ExpiredOrganization, undefined, { delay: 5000 });
-      break;
-    case ClientEventTag.WorkspaceLocallyCreated:
-      distributor.dispatchEvent(Events.WorkspaceCreated);
-      break;
-    case ClientEventTag.WorkspacesSelfListChanged:
-      distributor.dispatchEvent(Events.WorkspaceUpdated);
-      break;
-    case ClientEventTag.WorkspaceWatchedEntryChanged:
-      distributor.dispatchEvent(Events.EntryUpdated, undefined, { aggregateTime: 1000 });
-      break;
-    case ClientEventTag.WorkspaceOpsInboundSyncDone:
-      distributor.dispatchEvent(Events.EntrySynced, { workspaceId: event.realmId, entryId: event.entryId, way: 'inbound' });
-      break;
-    case ClientEventTag.WorkspaceOpsOutboundSyncDone:
-      distributor.dispatchEvent(Events.EntrySynced, { workspaceId: event.realmId, entryId: event.entryId, way: 'outbound' });
-      break;
-    case ClientEventTag.WorkspaceOpsOutboundSyncStarted:
-      distributor.dispatchEvent(Events.EntrySyncStarted, { workspaceId: event.realmId, entryId: event.entryId, way: 'outbound' });
-      break;
-    // Ignore those events for now
-    case ClientEventTag.WorkspaceOpsOutboundSyncProgress:
-    case ClientEventTag.ServerConfigChanged:
-      break;
-    case ClientEventTag.ClientStarted:
-      injectionProvider.getDefault().eventDistributor.dispatchEvent(Events.ClientStarted, { handle: handle });
-      break;
-    case ClientEventTag.ClientStopped:
-      injectionProvider.getDefault().eventDistributor.dispatchEvent(Events.ClientStopped, { handle: handle });
-      break;
-    case ClientEventTag.OrganizationNotFound:
-      distributor.dispatchEvent(Events.OrganizationNotFound, undefined, { delay: 5000 });
-      break;
-    case ClientEventTag.FrozenSelfUser:
-      distributor.dispatchEvent(Events.ClientFrozen, undefined, { delay: 5000 });
-      break;
-    default:
-      window.electronAPI.log('debug', `Unhandled event ${event.tag}`);
-      break;
+  const injections = injectionProvider.getInjections(handle);
+  // Event might fire a bit to fast, before we get a chance to create the injections for this handle
+  // If we get the default injection, we retry 5s later.
+  if (injections.isDefault) {
+    setTimeout(() => {
+      const inj = injectionProvider.getInjections(handle);
+      processEvent(inj.eventDistributor);
+    }, 5000);
+  } else {
+    processEvent(injections.eventDistributor);
+  }
+
+  async function processEvent(distributor: EventDistributor): Promise<void> {
+    switch (event.tag) {
+      case ClientEventTag.Online:
+        distributor.dispatchEvent(Events.Online);
+        break;
+      case ClientEventTag.Offline:
+        distributor.dispatchEvent(Events.Offline);
+        break;
+      case ClientEventTag.MustAcceptTos:
+        distributor.dispatchEvent(Events.TOSAcceptRequired, undefined, { delay: 2000 });
+        break;
+      case ClientEventTag.InvitationChanged:
+        distributor.dispatchEvent(Events.InvitationUpdated, {
+          token: (event as ClientEventInvitationChanged).token,
+          status: (event as ClientEventInvitationChanged).status,
+        });
+        break;
+      case ClientEventTag.GreetingAttemptReady:
+        distributor.dispatchEvent(Events.GreetingAttemptReady, {
+          token: (event as ClientEventGreetingAttemptReady).token,
+          greetingAttempt: (event as ClientEventGreetingAttemptReady).greetingAttempt,
+        });
+        break;
+      case ClientEventTag.GreetingAttemptCancelled:
+        distributor.dispatchEvent(Events.GreetingAttemptCancelled, {
+          token: (event as ClientEventGreetingAttemptCancelled).token,
+          greetingAttempt: (event as ClientEventGreetingAttemptCancelled).greetingAttempt,
+        });
+        break;
+      case ClientEventTag.GreetingAttemptJoined:
+        distributor.dispatchEvent(Events.GreetingAttemptJoined, {
+          token: (event as ClientEventGreetingAttemptJoined).token,
+          greetingAttempt: (event as ClientEventGreetingAttemptJoined).greetingAttempt,
+        });
+        break;
+      case ClientEventTag.IncompatibleServer:
+        window.electronAPI.log('warn', `IncompatibleServerEvent: ${JSON.stringify(event)}`);
+        distributor.dispatchEvent(
+          Events.IncompatibleServer,
+          { version: event.apiVersion, supportedVersions: event.supportedApiVersion },
+          { delay: 5000 },
+        );
+        break;
+      case ClientEventTag.RevokedSelfUser:
+        distributor.dispatchEvent(Events.ClientRevoked, undefined, { delay: 1000 });
+        break;
+      case ClientEventTag.ExpiredOrganization:
+        distributor.dispatchEvent(Events.ExpiredOrganization, undefined, { delay: 1000 });
+        break;
+      case ClientEventTag.WorkspaceLocallyCreated:
+        distributor.dispatchEvent(Events.WorkspaceCreated);
+        break;
+      case ClientEventTag.WorkspacesSelfListChanged:
+        distributor.dispatchEvent(Events.WorkspaceUpdated);
+        break;
+      case ClientEventTag.WorkspaceWatchedEntryChanged:
+        distributor.dispatchEvent(Events.EntryUpdated, undefined, { aggregateTime: 1000 });
+        break;
+      case ClientEventTag.WorkspaceOpsInboundSyncDone:
+        distributor.dispatchEvent(Events.EntrySynced, { workspaceId: event.realmId, entryId: event.entryId, way: 'inbound' });
+        break;
+      case ClientEventTag.WorkspaceOpsOutboundSyncDone:
+        distributor.dispatchEvent(Events.EntrySynced, { workspaceId: event.realmId, entryId: event.entryId, way: 'outbound' });
+        break;
+      case ClientEventTag.WorkspaceOpsOutboundSyncStarted:
+        distributor.dispatchEvent(Events.EntrySyncStarted, { workspaceId: event.realmId, entryId: event.entryId, way: 'outbound' });
+        break;
+      // Ignore those events for now
+      case ClientEventTag.WorkspaceOpsOutboundSyncProgress:
+      case ClientEventTag.ServerConfigChanged:
+        break;
+      case ClientEventTag.ClientStarted:
+        injectionProvider.getDefault().eventDistributor.dispatchEvent(Events.ClientStarted, { handle: handle });
+        break;
+      case ClientEventTag.ClientStopped:
+        injectionProvider.getDefault().eventDistributor.dispatchEvent(Events.ClientStopped, { handle: handle });
+        break;
+      case ClientEventTag.OrganizationNotFound:
+        distributor.dispatchEvent(Events.OrganizationNotFound, undefined, { delay: 1000 });
+        break;
+      case ClientEventTag.FrozenSelfUser:
+        distributor.dispatchEvent(Events.ClientFrozen, undefined, { delay: 1000 });
+        break;
+      default:
+        window.electronAPI.log('info', `Unhandled event ${event.tag}`);
+        break;
+    }
   }
 }
 
