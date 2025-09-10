@@ -79,8 +79,7 @@ my_block AS (
         key_index
     FROM block
     WHERE
-        organization = (SELECT my_organization._id FROM my_organization)
-        AND realm = (SELECT my_realm._id FROM my_realm)
+        realm = (SELECT my_realm._id FROM my_realm)
         AND block_id = $block_id
     LIMIT 1
 )

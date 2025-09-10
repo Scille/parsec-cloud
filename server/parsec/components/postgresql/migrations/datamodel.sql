@@ -649,7 +649,6 @@ CREATE TABLE realm_vlob_update (
 
 CREATE TABLE block (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
     block_id UUID NOT NULL,
     realm INTEGER REFERENCES realm (_id) NOT NULL,
     author INTEGER REFERENCES device (_id) NOT NULL,
@@ -659,7 +658,7 @@ CREATE TABLE block (
     deleted_on TIMESTAMPTZ,
     key_index INTEGER NOT NULL,
 
-    UNIQUE (organization, block_id)
+    UNIQUE (realm, block_id)
 );
 
 

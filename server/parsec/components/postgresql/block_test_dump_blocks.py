@@ -13,21 +13,21 @@ from parsec.components.postgresql.utils import (
     Q,
     q_device,
     q_organization_internal_id,
-    q_realm,
 )
 
 _q_get_all_block_meta = Q(
     f"""
 SELECT
-    block_id,
-    size,
-    created_on,
-    key_index,
-    {q_realm(_id="block.realm", select="realm_id")} AS realm_id,  -- noqa: LT02,LT14
+    block.block_id,
+    block.size,
+    block.created_on,
+    block.key_index,
+    realm.realm_id,
     {q_device(_id="block.author", select="device_id")} AS author  -- noqa: LT02,LT14
 FROM block
+LEFT JOIN realm ON block.realm = realm._id
 WHERE
-    organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT14
+    realm.organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT05,LT14
 """
 )
 
