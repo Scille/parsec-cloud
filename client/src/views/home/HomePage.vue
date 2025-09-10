@@ -506,7 +506,19 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
     if (device.ty.tag === AvailableDeviceTypeTag.Keyring) {
       await login(device, AccessStrategy.useKeyring(device));
     } else if (device.ty.tag === AvailableDeviceTypeTag.AccountVault) {
-      await login(device, await AccessStrategy.useAccountVault(device));
+      try {
+        const strategy = await AccessStrategy.useAccountVault(device);
+        await login(device, strategy);
+      } catch (e: any) {
+        window.electronAPI.log('error', `Failed to log in with vault: ${e.toString()}`);
+        informationManager.present(
+          new Information({
+            message: 'HomePage.loginErrors.vaultFailed',
+            level: InformationLevel.Error,
+          }),
+          PresentationMode.Toast,
+        );
+      }
     } else {
       selectedDevice.value = device;
       state.value = HomePageState.Login;

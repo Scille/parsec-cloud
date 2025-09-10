@@ -278,7 +278,8 @@
             "keyringFailedTitle": "Login failed",
             "keyringFailedQuestion": "Could not login using the system authentication. Would you like to use a recovery file?",
             "keyringFailedUsedRecovery": "Use a recovery file",
-            "keyringFailedAbort": "No"
+            "keyringFailedAbort": "No",
+            "vaultFailed": "Could not log in using Parsec Account."
         },
         "bmsOrganizationNotFound": "Could not find the organization {organization} on this device.",
         "noDevices": {
