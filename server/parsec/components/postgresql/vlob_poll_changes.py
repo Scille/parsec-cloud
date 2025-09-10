@@ -21,9 +21,9 @@ SELECT
     vlob_atom.vlob_id,
     vlob_atom.version
 FROM realm_vlob_update
-LEFT JOIN vlob_atom ON realm_vlob_update.vlob_atom = vlob_atom._id
+INNER JOIN vlob_atom ON realm_vlob_update.vlob_atom = vlob_atom._id
 WHERE
-    vlob_atom.realm = $realm_internal_id
+    realm_vlob_update.realm = $realm_internal_id
     AND realm_vlob_update.index > $checkpoint
 ORDER BY realm_vlob_update.index ASC
 """
