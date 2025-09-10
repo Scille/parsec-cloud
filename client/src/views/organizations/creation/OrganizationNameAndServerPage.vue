@@ -184,5 +184,9 @@ onMounted(async () => {
   margin-right: auto;
   color: var(--parsec-color-light-secondary-hard-grey);
   cursor: pointer;
+
+  @include ms.responsive-breakpoint('sm') {
+    margin: auto;
+  }
 }
 </style>
