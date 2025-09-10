@@ -96,7 +96,7 @@ msTest('Opens sequester documentation from create organization modal', async ({ 
   await orgServerContainer.locator('.advanced-settings').click();
   await expect(orgServerContainer.locator('.sequester-container').locator('.sequester-toggle__title')).toHaveText('Data Sequester');
   await expect(orgServerContainer.locator('.sequester-container').locator('.sequester-info__text')).toHaveText(
-    `This service (only available at creation) enables you to recover all the data of
+    `This service (only available at creation) allows to recover all the data of
  an organization, for example in the event of an inspection.`,
   );
   const openDocBtn = orgServerContainer.locator('.sequester-container').locator('.sequester-info__button');

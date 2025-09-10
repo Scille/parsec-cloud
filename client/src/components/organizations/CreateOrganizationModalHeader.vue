@@ -39,7 +39,7 @@
         :icon="icon"
         class="modal-header-title__icon"
       />
-      <ion-text class="modal-header-title__text title-h2">
+      <ion-text class="modal-header-title__text title-h3">
         {{ $msTranslate(title) }}
       </ion-text>
     </div>
@@ -100,6 +100,10 @@ defineEmits<{
 
     &__text {
       color: var(--parsec-color-light-primary-800);
+
+      @include ms.responsive-breakpoint('sm') {
+        margin-right: 2rem;
+      }
     }
   }
 
@@ -114,13 +118,13 @@ defineEmits<{
 
 .closeBtn--small-display {
   position: absolute;
-  top: 3rem;
+  top: 2.75rem;
   right: 1rem;
   padding: 0.25rem;
 }
 
 .modal-header--small-display {
-  padding: 0 0 1.5rem;
+  padding: 0 0 0.5rem;
 
   .small-display-stepper {
     background: var(--parsec-color-light-primary-50);
@@ -142,7 +146,7 @@ defineEmits<{
   }
 
   .modal-header-title {
-    padding: 0.5rem 2rem 0;
+    padding: 0.5rem 2rem 1rem;
   }
 }
 </style>
