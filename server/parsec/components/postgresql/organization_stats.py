@@ -65,12 +65,13 @@ SELECT
             AND (vlob_atom.deleted_on IS NULL OR vlob_atom.deleted_on > $at)
     ) AS organization_metadata_size,
     (
-        SELECT COALESCE(SUM(size), 0)
+        SELECT COALESCE(SUM(block.size), 0)
         FROM block
+        LEFT JOIN realm ON block.realm = realm._id
         WHERE
-            organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT05,LT14
-            AND created_on <= $at
-            AND (deleted_on IS NULL OR deleted_on > $at)
+            realm.organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT05,LT14
+            AND block.created_on <= $at
+            AND (block.deleted_on IS NULL OR block.deleted_on > $at)
     ) AS organization_data_size
 """
 )
