@@ -619,8 +619,6 @@ async function login(device: AvailableDevice, access: DeviceAccessStrategy): Pro
     };
     if (!injectionProvider.hasInjections(result.value)) {
       injectionProvider.createNewInjections(result.value, eventDistributor);
-      const injections = injectionProvider.getInjections(result.value);
-      await associateDefaultEvents(injections.eventDistributor, injections.informationManager);
     }
     await navigateTo(Routes.Loading, { skipHandle: true, replace: true, query: { loginInfo: Base64.fromObject(routeData) } });
     state.value = HomePageState.OrganizationList;
@@ -629,120 +627,6 @@ async function login(device: AvailableDevice, access: DeviceAccessStrategy): Pro
     await handleLoginError(device, result.error);
     loginInProgress.value = false;
   }
-}
-
-async function associateDefaultEvents(eventDistributor: EventDistributor, informationManager: InformationManager): Promise<void> {
-  let ignoreOnlineEvent = true;
-
-  // Since this is going to be alive the whole time, we don't need to remember the id to clear it later
-  await eventDistributor.registerCallback(
-    Events.Offline |
-      Events.Online |
-      Events.IncompatibleServer |
-      Events.ExpiredOrganization |
-      Events.ClientRevoked |
-      Events.ClientFrozen |
-      Events.OrganizationNotFound,
-    async (event: Events, _data?: EventData) => {
-      switch (event) {
-        case Events.Offline: {
-          informationManager.present(
-            new Information({
-              message: 'notification.serverOffline',
-              level: InformationLevel.Warning,
-            }),
-            PresentationMode.Notification,
-          );
-          break;
-        }
-        case Events.Online: {
-          if (ignoreOnlineEvent) {
-            ignoreOnlineEvent = false;
-            return;
-          }
-          informationManager.present(
-            new Information({
-              message: 'notification.serverOnline',
-              level: InformationLevel.Info,
-            }),
-            PresentationMode.Notification,
-          );
-          break;
-        }
-        case Events.IncompatibleServer: {
-          informationManager.present(
-            new Information({
-              message: 'notification.incompatibleServer',
-              level: InformationLevel.Error,
-            }),
-            PresentationMode.Notification,
-          );
-          await informationManager.present(
-            new Information({
-              message: 'globalErrors.incompatibleServer',
-              level: InformationLevel.Error,
-            }),
-            PresentationMode.Modal,
-          );
-          break;
-        }
-        case Events.ExpiredOrganization: {
-          informationManager.present(
-            new Information({
-              message: 'notification.expiredOrganization',
-              level: InformationLevel.Error,
-            }),
-            PresentationMode.Notification,
-          );
-          await informationManager.present(
-            new Information({
-              message: 'globalErrors.expiredOrganization',
-              level: InformationLevel.Error,
-            }),
-            PresentationMode.Modal,
-          );
-          break;
-        }
-        case Events.ClientRevoked: {
-          informationManager.present(
-            new Information({
-              message: 'notification.clientRevoked',
-              level: InformationLevel.Error,
-            }),
-            PresentationMode.Notification,
-          );
-          await informationManager.present(
-            new Information({
-              message: 'globalErrors.clientRevoked',
-              level: InformationLevel.Error,
-            }),
-            PresentationMode.Modal,
-          );
-          break;
-        }
-        case Events.OrganizationNotFound: {
-          await informationManager.present(
-            new Information({
-              message: 'globalErrors.organizationNotFound',
-              level: InformationLevel.Error,
-            }),
-            PresentationMode.Modal,
-          );
-          break;
-        }
-        case Events.ClientFrozen: {
-          await informationManager.present(
-            new Information({
-              message: 'globalErrors.clientFrozen',
-              level: InformationLevel.Error,
-            }),
-            PresentationMode.Modal,
-          );
-          break;
-        }
-      }
-    },
-  );
 }
 
 async function backToPreviousPage(): Promise<void> {
