@@ -278,7 +278,7 @@
             "keyringFailedQuestion": "La connexion en utilisant l'authentification du système a échoué. Souhaitez-vous utiliser un fichier de récupération ?",
             "keyringFailedUsedRecovery": "Utiliser un fichier de récupération",
             "keyringFailedAbort": "Non",
-            "vaultFailed": "Impossible de se connecter avec Parsec account."
+            "vaultFailed": "Impossible de se connecter avec Parsec Account."
         },
         "bmsOrganizationNotFound": "Impossible de trouver l'organisation {organization} sur cet appareil.",
         "noDevices": {
