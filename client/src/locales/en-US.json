@@ -375,7 +375,7 @@
             "email": "Email",
             "server": "Server choice",
             "authentication": "Authentication method",
-            "sequester": "Sequester key"
+            "sequester": "Data sequester"
         },
         "button": {
             "next": "Next",
@@ -404,7 +404,7 @@
             "customOrderNotAuthorized": "Clients with a custom contract are not allowed to directly create organizations. If you need another organization, please make a request from your customer area.",
             "notClientAccount": "Your account is not a client account.",
             "incompatibleServer": "Your version of Parsec is incompatible with the server. Please update the application or contact an administrator.",
-            "invalidSequesterKey": "The provided sequester key is not valid."
+            "invalidSequesterKey": "The provided authority key is not valid."
         },
         "cancelConfirm": "Cancel organization creation",
         "cancelConfirmSubtitle": "Are you sure you want to cancel the process? Information will not be saved, you will have to restart.",
@@ -413,11 +413,11 @@
         "sequester": {
             "link": "https://docs.parsec.cloud/en/{version}/hosting/sequester/",
             "title": "Data Sequester",
-            "addVerificationKey": "Add verification key",
+            "addAuthorityKey": "Add authority key",
             "update": "Update",
-            "info": "This service (only available at creation) enables you to recover all the data of an organization, for example in the event of an inspection.",
+            "info": "This service (only available at creation) allows to recover all the data of an organization, for example in the event of an inspection.",
             "more": "More details",
-            "keyAdded": "Key added"
+            "authorityKey": "Authority key added"
         }
     },
     "JoinByLinkModal": {

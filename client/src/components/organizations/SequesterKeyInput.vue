@@ -32,7 +32,7 @@
           class="upload-key__button-icon"
           :icon="documentOutline"
         />
-        {{ $msTranslate('CreateOrganization.sequester.addVerificationKey') }}
+        {{ $msTranslate('CreateOrganization.sequester.addAuthorityKey') }}
       </ion-button>
       <div
         v-if="key"
@@ -119,6 +119,11 @@ async function onUploadKeyClicked(): Promise<void> {
   flex-direction: column;
   gap: 0.75rem;
   border-radius: var(--parsec-radius-8);
+
+  @include ms.responsive-breakpoint('sm') {
+    padding: 1rem;
+    margin-top: 1rem;
+  }
 }
 
 .sequester-toggle__title {
@@ -131,6 +136,11 @@ async function onUploadKeyClicked(): Promise<void> {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+
+  @include ms.responsive-breakpoint('sm') {
+    flex-direction: column;
+    align-items: start;
+  }
 
   &__button {
     height: fit-content;
@@ -168,6 +178,7 @@ async function onUploadKeyClicked(): Promise<void> {
     color: var(--parsec-color-light-secondary-text);
     border: 1px dashed var(--parsec-color-light-secondary-light);
     border-radius: var(--parsec-radius-8);
+    overflow: auto;
 
     &::part(native) {
       --background: var(--parsec-color-light-secondary-white);
