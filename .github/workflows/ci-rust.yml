@@ -141,6 +141,11 @@ jobs:
       - name: unlock keyring
         uses: t1m0thyj/unlock-keyring@728cc718a07b5e7b62c269fc89295e248b24cba7 # pin v1.1.0
 
+      # The default value is 1000, we increase it to not be limited when executing our mountpoint tests.
+      - name: Configure fuse options
+        run: echo 'mount_max = 8192' | sudo tee /etc/fuse.conf
+        continue-on-error: true
+
       # Use sodiumoxide here given 1) it is composed of C code, so not totally
       # platform independent and 2) it is what is going to be used in release
       - name: Test platform crates using sodium crypto features (🐧 Linux specific)
