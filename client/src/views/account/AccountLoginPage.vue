@@ -217,6 +217,10 @@ async function onLoginClicked(): Promise<void> {
     flex-direction: column;
     align-items: center;
     gap: 1.5rem;
+
+    @include ms.responsive-breakpoint('sm') {
+      padding: 1.5rem;
+    }
   }
 
   &-content {

@@ -17,15 +17,54 @@
             'create-account-page-header--creating': step === Steps.Creating,
           }"
         >
+          <div class="header-menu">
+            <ion-icon
+              class="back-button header-menu__back"
+              :icon="arrowBack"
+              @click="back()"
+              v-if="showBackButton() && windowWidth < WindowSizeBreakpoints.SM"
+            />
+
+            <ion-menu
+              side="end"
+              content-id="id-content"
+              class="menu-secondary-collapse"
+              v-if="(windowWidth < WindowSizeBreakpoints.MD || windowHeight < 900) && !onLeavePage"
+            >
+              <home-page-secondary-menu-collapse
+                :show-customer-area-button="false"
+                @settings-click="openSettingsModal"
+              />
+            </ion-menu>
+
+            <home-page-secondary-menu
+              v-else-if="!onLeavePage"
+              class="homepage-menu-secondary"
+              @settings-click="openSettingsModal"
+            />
+
+            <ion-menu-button
+              v-if="windowWidth < WindowSizeBreakpoints.MD || windowHeight < 900"
+              slot="end"
+              id="id-content"
+              class="header-menu-button"
+            >
+              <ion-icon
+                :icon="menu"
+                class="header-menu-button__icon"
+              />
+            </ion-menu-button>
+          </div>
+
           <ion-text
             class="create-account-page-header__title title-h1"
             v-if="TITLES[step].title"
           >
             <ion-icon
-              class="create-account-page-header__icon"
+              class="back-button create-account-page-header__back"
               :icon="arrowBack"
               @click="back()"
-              v-if="step === Steps.UserInformation || step === Steps.Code || step === Steps.Authentication"
+              v-if="showBackButton() && windowWidth >= WindowSizeBreakpoints.SM"
             />
             {{ $msTranslate(TITLES[step].title) }}
           </ion-text>
@@ -43,6 +82,7 @@
             {{ $msTranslate(error) }}
           </ms-report-text>
         </div>
+
         <!-- User Information Step -->
         <div
           v-show="step === Steps.UserInformation"
@@ -177,7 +217,20 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonContent, IonButton, IonText, IonIcon, onIonViewWillEnter } from '@ionic/vue';
+import {
+  IonPage,
+  IonContent,
+  IonButton,
+  IonText,
+  IonIcon,
+  IonMenu,
+  IonMenuButton,
+  onIonViewWillEnter,
+  onIonViewWillLeave,
+} from '@ionic/vue';
+import { openSettingsModal } from '@/views/settings';
+import HomePageSecondaryMenu from '@/components/header/HomePageSecondaryMenu.vue';
+import HomePageSecondaryMenuCollapse from '@/components/header/HomePageSecondaryMenuCollapse.vue';
 import {
   asyncComputed,
   MsCodeValidationInput,
@@ -187,8 +240,10 @@ import {
   MsReportTheme,
   MsChoosePasswordInput,
   AllowedInput,
+  useWindowSize,
+  WindowSizeBreakpoints,
 } from 'megashark-lib';
-import { arrowBack } from 'ionicons/icons';
+import { arrowBack, menu } from 'ionicons/icons';
 import { ref, useTemplateRef } from 'vue';
 import AccountUserInformation from '@/components/account/AccountUserInformation.vue';
 import { AccountCreateErrorTag, AccountCreationStepper, ParsecAccount, ParsecAccountAccess } from '@/parsec';
@@ -204,6 +259,7 @@ enum Steps {
   Created = 4,
 }
 
+const { windowHeight, windowWidth } = useWindowSize();
 const step = ref<Steps>(Steps.UserInformation);
 const codeValidationInputRef = useTemplateRef<InstanceType<typeof MsCodeValidationInput>>('codeValidationInput');
 const creationStepper = new AccountCreationStepper();
@@ -212,6 +268,11 @@ const querying = ref(false);
 const choosePasswordRef = useTemplateRef<InstanceType<typeof MsChoosePasswordInput>>('choosePassword');
 const refreshKey = ref(0);
 const code = ref<Array<string>>([]);
+
+// We are encountering an issue when opening the menu from LoginPage or CreateAccountPage.
+// If we open from one of these pages and move to the other page, clicking on the menu button opens the menu on the previous page.
+// To avoid this, we set a variable to track when leaving the page.
+const onLeavePage = ref(false);
 
 const TITLES: Array<{ title?: Translatable; subtitle?: Translatable }> = [
   {
@@ -237,6 +298,7 @@ const validAuth = asyncComputed(async () => {
 });
 
 onIonViewWillEnter(async () => {
+  onLeavePage.value = false;
   step.value = Steps.UserInformation;
   await creationStepper.reset();
   error.value = '';
@@ -244,12 +306,21 @@ onIonViewWillEnter(async () => {
   refreshKey.value += 1;
 });
 
+onIonViewWillLeave(async () => {
+  onLeavePage.value = true;
+});
+
+function showBackButton(): boolean {
+  return step.value === Steps.UserInformation || step.value === Steps.Code || step.value === Steps.Authentication;
+}
+
 async function back(): Promise<void> {
   if (step.value === Steps.UserInformation) {
     await goToLogin();
   } else if (step.value === Steps.Code || step.value === Steps.Authentication) {
     await codeValidationInputRef.value?.clear();
     step.value = Steps.UserInformation;
+    error.value = '';
   }
 }
 
@@ -392,6 +463,57 @@ async function createAccount(): Promise<void> {
     max-width: calc(28rem + 4rem);
     margin: 0 auto;
 
+    .back-button {
+      color: var(--parsec-color-light-secondary-grey);
+      font-size: 1.125rem;
+      border-radius: var(--parsec-radius-circle);
+      padding: 0.25rem;
+      background-color: var(--parsec-color-light-secondary-white);
+      border: 1px solid var(--parsec-color-light-secondary-premiere);
+      box-shadow: var(--parsec-shadow-soft);
+      cursor: pointer;
+      transition: all 150ms linear;
+
+      &:hover {
+        background: var(--parsec-color-light-secondary-disabled);
+        color: var(--parsec-color-light-secondary-grey);
+      }
+    }
+
+    .header-menu {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .homepage-menu-secondary {
+        position: absolute;
+        top: 2rem;
+        right: 2rem;
+
+        @include ms.responsive-breakpoint('sm') {
+          position: relative;
+          right: -0.5rem;
+          top: auto;
+        }
+      }
+
+      &-button {
+        position: absolute;
+        top: 2rem;
+        right: 2rem;
+        color: var(--parsec-color-light-secondary-text);
+        height: 2.5rem;
+        width: 2.5rem;
+        cursor: pointer;
+
+        @include ms.responsive-breakpoint('sm') {
+          position: relative;
+          right: -0.5rem;
+          top: auto;
+        }
+      }
+    }
+
     &__title {
       background: var(--parsec-color-light-gradient-background);
       background-clip: text;
@@ -400,22 +522,11 @@ async function createAccount(): Promise<void> {
       position: relative;
     }
 
-    &__icon {
+    &__back {
       position: absolute;
-      top: 3px;
-      left: -2.75rem;
-      color: var(--parsec-color-light-secondary-soft-grey);
-      font-size: 1.125rem;
-      border-radius: var(--parsec-radius-circle);
-      padding: 0.25rem;
-      background-color: var(--parsec-color-light-secondary-premiere);
-      transition: all 150ms linear;
-      cursor: pointer;
-
-      &:hover {
-        background: var(--parsec-color-light-secondary-disabled);
-        color: var(--parsec-color-light-secondary-grey);
-      }
+      left: -2.5rem;
+      top: 50%;
+      transform: translateY(-50%);
     }
 
     &__subtitle {
@@ -452,7 +563,7 @@ async function createAccount(): Promise<void> {
   }
 
   @include ms.responsive-breakpoint('xs') {
-    padding: 1.5rem 1.5rem 0;
+    padding: 0 1.5rem;
     max-width: 100%;
   }
 
@@ -469,6 +580,10 @@ async function createAccount(): Promise<void> {
     flex-direction: column;
     align-items: center;
     gap: 2rem;
+
+    @include ms.responsive-breakpoint('sm') {
+      padding: 1.5rem;
+    }
   }
 
   .primary-button {
