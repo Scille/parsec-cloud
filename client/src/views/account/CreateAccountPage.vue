@@ -177,7 +177,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonContent, IonButton, IonText, IonIcon } from '@ionic/vue';
+import { IonPage, IonContent, IonButton, IonText, IonIcon, onIonViewWillEnter } from '@ionic/vue';
 import {
   asyncComputed,
   MsCodeValidationInput,
@@ -189,13 +189,12 @@ import {
   AllowedInput,
 } from 'megashark-lib';
 import { arrowBack } from 'ionicons/icons';
-import { onUnmounted, ref, useTemplateRef } from 'vue';
+import { ref, useTemplateRef } from 'vue';
 import AccountUserInformation from '@/components/account/AccountUserInformation.vue';
 import { AccountCreateErrorTag, AccountCreationStepper, ParsecAccount, ParsecAccountAccess } from '@/parsec';
 import { wait } from '@/parsec/internals';
-import { getCurrentRouteParams, getCurrentRouteQuery, navigateTo, Routes, watchRoute } from '@/router';
+import { getCurrentRouteParams, getCurrentRouteQuery, navigateTo, Routes } from '@/router';
 import { DateTime } from 'luxon';
-import { RouteLocationNormalizedLoaded } from 'vue-router';
 
 enum Steps {
   UserInformation = 0,
@@ -237,19 +236,12 @@ const validAuth = asyncComputed(async () => {
   return step.value === Steps.Authentication && choosePasswordRef.value && (await choosePasswordRef.value.areFieldsCorrect());
 });
 
-// As always with Vue, you cannot trust mounted/on mounted
-const watchRouteCancel = watchRoute(async (newRoute: RouteLocationNormalizedLoaded, oldRoute: RouteLocationNormalizedLoaded) => {
-  if (newRoute.name === Routes.CreateAccount && oldRoute.name !== Routes.CreateAccount) {
-    step.value = Steps.UserInformation;
-    await creationStepper.reset();
-    error.value = '';
-    querying.value = false;
-    refreshKey.value += 1;
-  }
-});
-
-onUnmounted(async () => {
-  watchRouteCancel();
+onIonViewWillEnter(async () => {
+  step.value = Steps.UserInformation;
+  await creationStepper.reset();
+  error.value = '';
+  querying.value = false;
+  refreshKey.value += 1;
 });
 
 async function back(): Promise<void> {
