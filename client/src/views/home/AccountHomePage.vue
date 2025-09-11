@@ -13,7 +13,7 @@
               side="end"
               content-id="main-content"
               class="menu-secondary-collapse"
-              v-if="windowWidth < WindowSizeBreakpoints.MD || windowHeight < 900"
+              v-if="(windowWidth < WindowSizeBreakpoints.MD || windowHeight < 900) && !onLeavePage"
             >
               <home-page-secondary-menu-collapse
                 :show-customer-area-button="true"
@@ -23,7 +23,7 @@
             </ion-menu>
 
             <home-page-secondary-menu
-              v-else
+              v-else-if="!onLeavePage"
               class="homepage-menu-secondary"
               @customer-area-click="goToCustomerArea"
               @settings-click="openSettingsModal"
@@ -109,22 +109,38 @@ import AccountLoginPage from '@/views/account/AccountLoginPage.vue';
 import HomePageSecondaryMenuCollapse from '@/components/header/HomePageSecondaryMenuCollapse.vue';
 import { getCurrentRouteParams, getCurrentRouteQuery, navigateTo, Routes } from '@/router';
 import { chevronForward, menu } from 'ionicons/icons';
-import { IonContent, IonPage, IonButton, IonIcon, IonText, IonMenuButton, IonMenu, onIonViewWillEnter } from '@ionic/vue';
+import {
+  IonContent,
+  IonPage,
+  IonButton,
+  IonIcon,
+  IonText,
+  IonMenuButton,
+  IonMenu,
+  onIonViewWillEnter,
+  onIonViewWillLeave,
+} from '@ionic/vue';
 import { ParsecAccount } from '@/parsec';
-import { ref } from 'vue';
 import { useWindowSize, WindowSizeBreakpoints } from 'megashark-lib';
 import { openSettingsModal } from '@/views/settings';
+import { ref } from 'vue';
 
 const disableGoTo = ref(false);
 const refreshKey = ref(0);
 const { windowHeight, windowWidth } = useWindowSize();
+const onLeavePage = ref(false);
 
 onIonViewWillEnter(async () => {
+  onLeavePage.value = false;
   if (ParsecAccount.isLoggedIn()) {
     await onLoginSuccess();
   }
   refreshKey.value += 1;
   disableGoTo.value = false;
+});
+
+onIonViewWillLeave(async () => {
+  onLeavePage.value = true;
 });
 
 async function onLoginSuccess(): Promise<void> {

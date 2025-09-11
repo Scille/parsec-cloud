@@ -11,9 +11,9 @@
         slot="start"
       />
       <div class="text-content">
-        <ion-label class="body">
+        <ion-text class="body">
           {{ $msTranslate('HomePage.noExistingOrganization.createOrganizationTitle') }}
-        </ion-label>
+        </ion-text>
         <ion-text class="body-sm sub-text">
           {{ $msTranslate('HomePage.noExistingOrganization.createOrganizationSubtitle') }}
         </ion-text>
@@ -28,9 +28,9 @@
         slot="start"
       />
       <div class="text-content">
-        <ion-label class="body">
+        <ion-text class="body">
           {{ $msTranslate('HomePage.noExistingOrganization.joinOrganizationTitle') }}
-        </ion-label>
+        </ion-text>
         <ion-text class="body-sm sub-text">
           {{ $msTranslate('HomePage.noExistingOrganization.joinOrganizationSubtitle') }}
         </ion-text>
@@ -47,7 +47,7 @@ export enum HomePageAction {
 </script>
 
 <script setup lang="ts">
-import { IonIcon, IonItem, IonLabel, IonList, IonText, popoverController } from '@ionic/vue';
+import { IonIcon, IonItem, IonList, IonText, popoverController } from '@ionic/vue';
 import { addCircle, mail } from 'ionicons/icons';
 import { MsModalResult } from 'megashark-lib';
 
