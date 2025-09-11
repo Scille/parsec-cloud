@@ -109,9 +109,9 @@ import AccountLoginPage from '@/views/account/AccountLoginPage.vue';
 import HomePageSecondaryMenuCollapse from '@/components/header/HomePageSecondaryMenuCollapse.vue';
 import { getCurrentRouteParams, getCurrentRouteQuery, navigateTo, Routes } from '@/router';
 import { chevronForward, menu } from 'ionicons/icons';
-import { IonContent, IonPage, IonButton, IonIcon, IonText, IonMenuButton, IonMenu } from '@ionic/vue';
+import { IonContent, IonPage, IonButton, IonIcon, IonText, IonMenuButton, IonMenu, onIonViewWillEnter } from '@ionic/vue';
 import { ParsecAccount } from '@/parsec';
-import { onMounted, ref } from 'vue';
+import { ref } from 'vue';
 import { useWindowSize, WindowSizeBreakpoints } from 'megashark-lib';
 import { openSettingsModal } from '@/views/settings';
 
@@ -119,25 +119,22 @@ const disableGoTo = ref(false);
 const refreshKey = ref(0);
 const { windowHeight, windowWidth } = useWindowSize();
 
-onMounted(async () => {
+onIonViewWillEnter(async () => {
   if (ParsecAccount.isLoggedIn()) {
     await onLoginSuccess();
   }
+  refreshKey.value += 1;
   disableGoTo.value = false;
 });
 
 async function onLoginSuccess(): Promise<void> {
   disableGoTo.value = true;
   await navigateTo(Routes.Home, { skipHandle: true, params: getCurrentRouteParams(), query: getCurrentRouteQuery() });
-  refreshKey.value += 1;
-  disableGoTo.value = false;
 }
 
 async function onSkipClicked(): Promise<void> {
   disableGoTo.value = true;
   await navigateTo(Routes.Home, { skipHandle: true, params: getCurrentRouteParams(), query: getCurrentRouteQuery() });
-  refreshKey.value += 1;
-  disableGoTo.value = false;
 }
 
 async function goToCreateAccount(): Promise<void> {
@@ -149,7 +146,6 @@ async function goToCustomerArea(): Promise<void> {
   const query = getCurrentRouteQuery();
   query.bmsLogin = true;
   await navigateTo(Routes.Home, { skipHandle: true, params: getCurrentRouteParams(), query: query });
-  disableGoTo.value = false;
 }
 </script>
 
