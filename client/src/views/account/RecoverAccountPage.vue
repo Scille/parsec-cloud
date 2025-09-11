@@ -165,9 +165,9 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonContent, IonButton, IonIcon, IonText } from '@ionic/vue';
+import { IonPage, IonContent, IonButton, IonIcon, IonText, onIonViewWillEnter } from '@ionic/vue';
 import { home } from 'ionicons/icons';
-import { onMounted, onUnmounted, ref, useTemplateRef, computed } from 'vue';
+import { ref, useTemplateRef, computed } from 'vue';
 import { emailValidator, parsecAddrValidator } from '@/common/validators';
 import {
   MsInput,
@@ -183,7 +183,7 @@ import {
 } from 'megashark-lib';
 import { AccountRecoverProceedErrorTag, AccountRecoverSendValidationEmailErrorTag, ParsecAccount, ParsecAccountAccess } from '@/parsec';
 import { Env } from '@/services/environment';
-import { getCurrentRouteParams, getCurrentRouteQuery, navigateTo, Routes, watchRoute } from '@/router';
+import { getCurrentRouteParams, getCurrentRouteQuery, navigateTo, Routes } from '@/router';
 
 enum Steps {
   Email = 0,
@@ -262,12 +262,6 @@ const validAuth = asyncComputed(async () => {
   return step.value === Steps.NewAuthentication && passwordInputRef.value && (await passwordInputRef.value.areFieldsCorrect());
 });
 
-const watchCancel = watchRoute(async (newRoute, oldRoute) => {
-  if (oldRoute.name !== newRoute.name) {
-    await reset();
-  }
-});
-
 async function reset(): Promise<void> {
   step.value = Steps.Email;
   email.value = '';
@@ -285,12 +279,8 @@ async function reset(): Promise<void> {
   await passwordInputRef.value?.clear();
 }
 
-onMounted(async () => {
+onIonViewWillEnter(async () => {
   await reset();
-});
-
-onUnmounted(() => {
-  watchCancel();
 });
 
 function onFocusEmailInput(): void {
