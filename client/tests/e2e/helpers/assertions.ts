@@ -449,4 +449,23 @@ export const expect = baseExpect.extend({
       pass: pass,
     };
   },
+
+  async toHaveNotification(page: MsPage, expectedText): Promise<AssertReturnType> {
+    const header = page.locator('#connected-header');
+    const notifButton = header.locator('#trigger-notifications-button');
+    await baseExpect(header).toBeVisible();
+    await baseExpect(notifButton).toBeVisible();
+    const classList = await notifButton.evaluate((node) => Array.from(node.classList.values()));
+    baseExpect(classList).toContain('unread');
+    await notifButton.click();
+    const notifCenter = page.locator('.notification-center-popover');
+    await baseExpect(notifCenter).toBeVisible();
+    const items = notifCenter.locator('.notification-container');
+    const messages = await items.locator('.notification-details__message').allInnerTexts();
+    baseExpect(messages.some((m) => m === expectedText)).toBeTruthy();
+    return {
+      message: () => '',
+      pass: true,
+    };
+  },
 });

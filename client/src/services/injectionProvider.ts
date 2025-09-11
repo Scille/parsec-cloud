@@ -9,6 +9,7 @@ export interface Injections {
   fileOperationManager: FileOperationManager;
   eventDistributor: EventDistributor;
   informationManager: InformationManager;
+  isDefault: boolean;
 }
 
 export const InjectionProviderKey = 'InjectionProvider';
@@ -23,6 +24,7 @@ export class InjectionProvider {
       fileOperationManager: new FileOperationManager(),
       eventDistributor: new EventDistributor(),
       informationManager: new InformationManager(),
+      isDefault: true,
     };
   }
 
@@ -37,6 +39,7 @@ export class InjectionProvider {
       fileOperationManager: new FileOperationManager(),
       eventDistributor: eventDistributor,
       informationManager: new InformationManager(handle),
+      isDefault: false,
     });
   }
 
