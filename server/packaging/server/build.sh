@@ -9,7 +9,7 @@ SCRIPTDIR=${SCRIPTDIR:=$(dirname "$(realpath -s "$0")")}
 # Allow the user to overwrite `ROOTDIR` by exporting it beforehand.
 ROOTDIR=${ROOTDIR:=$(realpath -s "$SCRIPTDIR/../../..")}
 
-UNIQ_TAG=$(python $ROOTDIR/misc/releaser.py version --uniq-dev | sed -n 's/docker=\(.*\)$/\1/p')
+UNIQ_TAG=$(python "$ROOTDIR"/misc/releaser.py version --uniq-dev | sed -n 's/docker=\(.*\)$/\1/p')
 # We use Github package repository to store our docker's container.
 PREFIX=ghcr.io/scille/parsec-cloud
 IMAGE_NAME=parsec-server
@@ -22,10 +22,10 @@ echo "On top of that the image will use the following prefix \`$PREFIX\`"
 echo
 
 DOCKER_BUILDKIT=1 docker build \
-    -f $SCRIPTDIR/server.dockerfile \
+    -f "$SCRIPTDIR"/server.dockerfile \
     -t $PREFIX/$IMAGE_NAME:latest \
-    -t $PREFIX/$IMAGE_NAME:$UNIQ_TAG \
-    $ROOTDIR "$@"
+    -t $PREFIX/$IMAGE_NAME:"$UNIQ_TAG" \
+    "$ROOTDIR" "$@"
 
 echo
 echo "You can now test/use the docker image with:"

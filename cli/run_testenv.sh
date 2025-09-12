@@ -29,6 +29,7 @@ SOURCE_FILE=$(python -c "import tempfile; print(tempfile.mkstemp()[1])")
 
 echo ">>> cargo run --package parsec-cli --features testenv run-testenv --main-process-id $$ --source-file \"$SOURCE_FILE\" $*"
 cargo run --package parsec-cli --features testenv run-testenv --main-process-id $$ --source-file "$SOURCE_FILE" "$@" || return $?
+# shellcheck source=/dev/null   # see: https://www.shellcheck.net/wiki/SC1090
 source "$SOURCE_FILE"
 
 # Clean up
