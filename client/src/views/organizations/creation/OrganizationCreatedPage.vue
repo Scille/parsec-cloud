@@ -2,20 +2,12 @@
 
 <template>
   <ion-page class="created-page page-modal-container">
-    <ms-informative-text v-if="!isSmallDisplay">
-      {{ $msTranslate('CreateOrganization.organizationCreated') }}
-    </ms-informative-text>
-
     <!-- prettier-ignore -->
     <ms-image
-      v-if="isSmallDisplay"
       :image="(ResourcesManager.instance().get(Resources.LogoIcon, LogoIconWhite) as string)"
       class="created-page__logo"
     />
-    <ion-text
-      v-if="isSmallDisplay"
-      class="created-page__title subtitles-normal"
-    >
+    <ion-text class="created-page__title subtitles-lg">
       {{ $msTranslate('CreateOrganization.organizationCreated') }}
     </ion-text>
 
@@ -34,14 +26,7 @@
           @click="$emit('goClicked')"
           class="footer-button"
         >
-          <span>
-            {{ $msTranslate('CreateOrganization.button.done') }}
-          </span>
-          <ion-icon
-            slot="start"
-            :icon="chevronForward"
-            size="small"
-          />
+          {{ $msTranslate('CreateOrganization.button.done') }}
         </ion-button>
       </div>
     </ion-footer>
@@ -50,9 +35,8 @@
 
 <script setup lang="ts">
 import { OrganizationID } from '@/parsec';
-import { MsInformativeText, useWindowSize, LogoIconWhite, MsImage } from 'megashark-lib';
-import { chevronForward } from 'ionicons/icons';
-import { IonPage, IonText, IonButton, IonFooter, IonIcon } from '@ionic/vue';
+import { useWindowSize, LogoIconWhite, MsImage } from 'megashark-lib';
+import { IonPage, IonText, IonButton, IonFooter } from '@ionic/vue';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
 
 const { isSmallDisplay } = useWindowSize();
@@ -69,18 +53,14 @@ defineEmits<{
 <style scoped lang="scss">
 .created-page {
   flex-direction: column;
-
   position: relative;
-
-  @include ms.responsive-breakpoint('sm') {
-    gap: 1.5rem;
-    align-items: center;
-    text-align: center;
-    justify-content: center;
-    padding: 2rem 0 6rem;
-    height: 100vh;
-    background: var(--parsec-color-light-gradient-background);
-  }
+  gap: 1.5rem;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+  padding: 4rem 0 4rem;
+  height: 100vh;
+  background: var(--parsec-color-light-gradient-background);
 
   &::after {
     content: '';
@@ -112,42 +92,29 @@ defineEmits<{
   &__title {
     color: var(--parsec-color-light-secondary-white);
     text-align: center;
-    margin-bottom: 2rem;
     line-height: 1.7rem;
     max-width: 18rem;
   }
 
   &__organization {
     color: var(--parsec-color-light-primary-700);
-
-    @include ms.responsive-breakpoint('sm') {
-      color: var(--parsec-color-light-secondary-white);
-    }
+    color: var(--parsec-color-light-secondary-white);
   }
 
   &-footer {
-    @include ms.responsive-breakpoint('sm') {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-    }
-
     .footer-button {
+      width: auto;
+
       @include ms.responsive-breakpoint('sm') {
         width: 100%;
       }
 
       &::part(native) {
         border-radius: var(--parsec-radius-8);
-
-        @include ms.responsive-breakpoint('sm') {
-          --background-hover: var(--parsec-color-light-secondary-premiere);
-          font-size: 1rem;
-          color: var(--parsec-color-light-primary-600);
-          padding: 0.75rem 0;
-          background: var(--parsec-color-light-secondary-white);
-        }
+        --background-hover: var(--parsec-color-light-secondary-premiere);
+        font-size: 1rem;
+        color: var(--parsec-color-light-primary-600);
+        background: var(--parsec-color-light-secondary-white);
       }
     }
   }

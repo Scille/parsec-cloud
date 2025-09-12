@@ -112,7 +112,7 @@
           <ion-text
             v-show="showBackButton"
             :disabled="querying"
-            class="button-medium custom-button custom-button-ghost saas-login-button__item"
+            class="button-medium custom-button saas-login-button__item"
             button
             @click="$emit('goBackRequested')"
           >
@@ -277,7 +277,10 @@ async function onLoginClicked(): Promise<void> {
   background: var(--parsec-color-light-primary-50);
   position: relative;
   padding: 2rem;
-  min-height: 28em;
+
+  @include ms.responsive-breakpoint('md') {
+    padding: 1.5rem;
+  }
 
   &::before {
     content: url('@/assets/images/background/background-shapes.svg');
@@ -291,6 +294,10 @@ async function onLoginClicked(): Promise<void> {
   &__title {
     color: var(--parsec-color-light-primary-800);
     margin-bottom: 2rem;
+
+    @include ms.responsive-breakpoint('md') {
+      padding: 1rem;
+    }
   }
 
   &-container {
@@ -395,6 +402,7 @@ async function onLoginClicked(): Promise<void> {
       .custom-button {
         flex-shrink: 0;
         width: fit-content;
+        color: var(--parsec-color-light-secondary-soft-text);
 
         &__icon {
           font-size: 1rem;

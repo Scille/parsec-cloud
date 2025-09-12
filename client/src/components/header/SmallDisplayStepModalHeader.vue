@@ -126,7 +126,7 @@ defineEmits<{
 
 .closeBtn-stepper {
   position: absolute;
-  top: 3rem;
+  top: 2.75rem;
   right: 1rem;
   padding: 0.25rem;
 }

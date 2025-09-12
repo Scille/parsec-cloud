@@ -6,7 +6,17 @@
       @close-clicked="$emit('closeRequested')"
       title="CreateOrganization.title.overview"
       subtitle="CreateOrganization.subtitle.overview"
+      :small-display-stepper="true"
     />
+
+    <!-- error -->
+    <ms-report-text
+      class="form-error"
+      v-show="error"
+      :theme="MsReportTheme.Error"
+    >
+      {{ $msTranslate(error) }}
+    </ms-report-text>
 
     <ion-list class="summary-list">
       <!-- organization name -->
@@ -183,17 +193,6 @@
       </ion-text>
     </div>
 
-    <!-- error -->
-    <ion-text
-      class="form-error body login-button-error"
-      v-show="error"
-    >
-      <ion-icon
-        class="form-error-icon"
-        :icon="warning"
-      />{{ $msTranslate(error) }}
-    </ion-text>
-
     <ion-footer class="summary-page-footer">
       <div class="modal-footer-buttons">
         <ion-button
@@ -232,10 +231,10 @@
 <script setup lang="ts">
 import { DeviceSaveStrategyTag, OrganizationID } from '@/parsec';
 import { ServerType } from '@/services/parsecServers';
-import { chevronForward, chevronBack, warning } from 'ionicons/icons';
+import { chevronForward, chevronBack } from 'ionicons/icons';
 import { IonPage, IonItem, IonButton, IonText, IonIcon, IonFooter, IonList } from '@ionic/vue';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
-import { Translatable } from 'megashark-lib';
+import { Translatable, MsReportText, MsReportTheme } from 'megashark-lib';
 
 defineProps<{
   serverType: ServerType;
@@ -274,7 +273,7 @@ defineEmits<{
   border: 1px solid var(--parsec-color-light-secondary-medium);
 
   @include ms.responsive-breakpoint('sm') {
-    margin: 0.5rem 2rem;
+    margin: 0 2rem;
     border: none;
     border-radius: 0;
     gap: 0.75rem;
@@ -287,6 +286,7 @@ defineEmits<{
 
 .summary-item-container {
   --inner-padding-end: 0px;
+  flex-shrink: 0;
 }
 
 .summary-item {
@@ -323,12 +323,13 @@ defineEmits<{
     max-width: 9rem;
     width: 100%;
     background: var(--parsec-color-light-secondary-premiere);
-    color: var(--parsec-color-light-secondary-grey);
+    color: var(--parsec-color-light-secondary-hard-grey);
     align-items: center;
     padding: 0 0.5rem;
     display: flex;
 
     @include ms.responsive-breakpoint('sm') {
+      max-width: 100%;
       padding: 0.125rem 0.75rem;
     }
   }
@@ -357,8 +358,8 @@ defineEmits<{
 
     @include ms.responsive-breakpoint('sm') {
       position: absolute;
-      right: 0;
-      top: 1.75rem;
+      right: 0.5rem;
+      top: 2rem;
       height: fit-content;
       font-size: 0.875rem;
       color: var(--parsec-color-light-primary-500);
@@ -381,6 +382,10 @@ defineEmits<{
 
   @include ms.responsive-breakpoint('sm') {
     padding: 0.5rem 2rem;
+    height: fit-content;
   }
+}
+.form-error {
+  margin-bottom: 1rem;
 }
 </style>
