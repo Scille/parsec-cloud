@@ -109,7 +109,7 @@ import AccountLoginPage from '@/views/account/AccountLoginPage.vue';
 import HomePageSecondaryMenuCollapse from '@/components/header/HomePageSecondaryMenuCollapse.vue';
 import { getCurrentRouteParams, getCurrentRouteQuery, navigateTo, Routes } from '@/router';
 import { chevronForward, menu } from 'ionicons/icons';
-import { IonContent, IonPage, IonButton, IonIcon, IonText, IonMenuButton, IonMenu } from '@ionic/vue';
+import { IonContent, IonPage, IonButton, IonIcon, IonText, IonMenuButton, IonMenu, menuController } from '@ionic/vue';
 import { ParsecAccount } from '@/parsec';
 import { onMounted, ref } from 'vue';
 import { useWindowSize, WindowSizeBreakpoints } from 'megashark-lib';
@@ -141,10 +141,13 @@ async function onSkipClicked(): Promise<void> {
 }
 
 async function goToCreateAccount(): Promise<void> {
+  console.log(menuController);
+  await menuController.close();
   await navigateTo(Routes.CreateAccount, { skipHandle: true });
 }
 
 async function goToCustomerArea(): Promise<void> {
+  await menuController.close();
   disableGoTo.value = true;
   const query = getCurrentRouteQuery();
   query.bmsLogin = true;
