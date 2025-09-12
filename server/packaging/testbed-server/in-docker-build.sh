@@ -16,6 +16,7 @@ poetry self add poetry-plugin-export
 
 # Install parsec in virtual env
 python -m venv venv
+# shellcheck source=/dev/null  # see: https://www.shellcheck.net/wiki/SC1091
 . ./venv/bin/activate
 
 # Installing the Python project is a bit tricky:

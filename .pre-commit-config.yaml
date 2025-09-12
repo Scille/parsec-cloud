@@ -86,16 +86,20 @@ repos:
   #
   # We do not use the official pre-commit hook [0] because it requires
   # docker executable (see [1]).
-  # To learn more about a specific error or warning, take a look at
-  # shellcheck's wiki (e.g. for SC1090 directive, see [2]).
   # [0] https://github.com/koalaman/shellcheck-precommit
   # [1] https://github.com/koalaman/shellcheck/issues/2495
-  # [2] https://www.shellcheck.net/wiki/SC1090
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.11.0.1
     hooks:
       - id: shellcheck
-        args: [--exclude=SC1090, --severity=warning]
+        args: [
+          --severity=info,
+          # Follow source statements to check source'd files.
+          # Otherwise, shellcheck will only check input files (i.e. .sh files that has been changed)
+          --external-sources,
+          # Specify paths to search for sourced files (useful for SC1090 & SC1091)
+          --source-path=SCRIPTDIR
+        ]
 
   ########
   # Python
