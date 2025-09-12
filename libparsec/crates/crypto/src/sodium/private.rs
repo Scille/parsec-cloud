@@ -42,8 +42,8 @@ impl PrivateKey {
     }
 
     pub fn decrypt_from_self(&self, ciphered: &[u8]) -> Result<Vec<u8>, CryptoError> {
-        let pk = crypto_box::PublicKey::from_array(self.public_key().to_bytes());
-        let sk = crypto_box::SecretKey::from_array(self.to_bytes());
+        let pk = crypto_box::PublicKey::from_bytes_exact(self.public_key().to_bytes());
+        let sk = crypto_box::SecretKey::from_bytes_exact(self.to_bytes());
         open_sealed_box(ciphered, &pk, &sk).map_err(|_| CryptoError::Decryption)
     }
 
@@ -54,10 +54,7 @@ impl PrivateKey {
     }
 
     pub fn to_bytes(&self) -> [u8; Self::SIZE] {
-        self.0
-            .as_bytes()
-            .try_into()
-            .expect("Underlying bytes is of correct size")
+        self.0.as_bytes().to_owned()
     }
 }
 
@@ -94,10 +91,7 @@ impl PublicKey {
     }
 
     pub fn to_bytes(&self) -> [u8; Self::SIZE] {
-        self.0
-            .as_bytes()
-            .try_into()
-            .expect("Underlying bytes is of correct size")
+        self.0.as_bytes().to_owned()
     }
 }
 
