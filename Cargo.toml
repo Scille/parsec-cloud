@@ -152,6 +152,7 @@ js-sys = { version = "0.3.78", default-features = false }
 keyring = { version = "3.6.3", default-features = false }
 lazy_static = { version = "1.5.0", default-features = false }
 libc = { version = "0.2.175", default-features = false }
+libsodium-rs = { version = "0.2.0", default-features = false }
 # We use the version on which depends `libsodium-rs`
 libsodium-sys-stable = { version = "*", default-features = false }
 libsqlite3-sys = { version = "0.30.1", default-features = false }
@@ -215,13 +216,6 @@ winfsp_wrs_build = { version = "0.4.0", default-features = false }
 x25519-dalek = { version = "2.0.1", default-features = false }
 zeroize = { version = "1.8.1", default-features = false }
 zstd = { version = "0.13.3", default-features = false }
-
-[workspace.dependencies.libsodium-rs]
-version = "0.1.1"
-default-features = false
-# Waiting for new release
-rev = "a414f88ca3edd3c278491a561bd38f4bf292d935"
-git = "https://github.com/jedisct1/libsodium-rs.git"
 
 [workspace.dependencies.criterion]
 default-features = false
