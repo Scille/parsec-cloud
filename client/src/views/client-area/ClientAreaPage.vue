@@ -8,7 +8,7 @@
     <div
       class="resize-divider"
       ref="divider"
-      v-show="isVisible()"
+      v-show="isSidebarVisible"
     />
     <ion-split-pane
       when="xs"
@@ -161,7 +161,7 @@ import { useSmallDisplayWarning } from '@/services/smallDisplayWarning';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const informationManager: InformationManager = injectionProvider.getDefault().informationManager;
-const { computedWidth: computedWidth, isVisible: isVisible } = useSidebarMenu();
+const { width: sidebarWidth, isVisible: isSidebarVisible } = useSidebarMenu();
 const organizations = ref<Array<BmsOrganization>>([]);
 const dividerRef = useTemplateRef<HTMLDivElement>('divider');
 const currentPage = ref<ClientAreaPages>(ClientAreaPages.Dashboard);
@@ -173,7 +173,7 @@ const querying = ref(true);
 
 useSmallDisplayWarning(informationManager);
 
-const watchSidebarWidthCancel = watch(computedWidth, (value: number) => {
+const watchSidebarWidthCancel = watch(sidebarWidth, (value: number) => {
   sidebarWidthProperty.value = `${value}px`;
   // set toast offset
   setToastOffset(value);
@@ -195,9 +195,9 @@ async function _isCustomOrderProvisioned(organization: BmsOrganization): Promise
 
 onMounted(async () => {
   // Set the sidebar width property for the layout
-  sidebarWidthProperty.value = `${computedWidth.value}px`;
+  sidebarWidthProperty.value = `${sidebarWidth.value}px`;
   // Set the toast offset for the sidebar
-  setToastOffset(computedWidth.value);
+  setToastOffset(sidebarWidth.value);
 
   // Enable the gesture for resizing the sidebar
   if (dividerRef.value) {
@@ -290,11 +290,11 @@ async function switchPage(page: ClientAreaPages): Promise<void> {
 function onMove(detail: GestureDetail): void {
   requestAnimationFrame(() => {
     if (detail.currentX < 250) {
-      computedWidth.value = 250;
+      sidebarWidth.value = 250;
     } else if (detail.currentX > 370) {
-      computedWidth.value = 370;
+      sidebarWidth.value = 370;
     } else {
-      computedWidth.value = detail.currentX;
+      sidebarWidth.value = detail.currentX;
     }
   });
 }

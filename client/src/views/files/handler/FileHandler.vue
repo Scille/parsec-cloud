@@ -22,7 +22,7 @@
               slot="start"
               id="trigger-toggle-menu-button"
               :image="SidebarToggle"
-              @click="isSidebarMenuVisible() ? hideSidebarMenu() : resetSidebarMenu()"
+              @click="isSidebarMenuVisible ? hideSidebarMenu() : showSidebarMenu()"
             />
             <div
               class="topbar-left-content"
@@ -259,7 +259,7 @@ const detectedFileType = ref<DetectedFileType | null>(null);
 const loaded = ref(false);
 const atDateTime: Ref<DateTime | undefined> = ref(undefined);
 const { isHeaderVisible, toggleHeader: toggleMainHeader, showHeader, hideHeader } = useHeaderControl();
-const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu, hide: hideSidebarMenu, show: showSidebarMenu } = useSidebarMenu();
+const { isVisible: isSidebarMenuVisible, hide: hideSidebarMenu, show: showSidebarMenu } = useSidebarMenu();
 const handlerReadyRef = ref(false);
 const handlerComponent: Ref<Component | null> = shallowRef(null);
 const handlerMode = ref<FileHandlerMode | undefined>(undefined);
@@ -506,11 +506,16 @@ function loadComponent(): void {
 onMounted(async () => {
   handlerMode.value = getFileHandlerMode();
   await loadFile();
-  // Set header hidden by default when entering handler
+
   hideHeader();
-  if (isSidebarMenuVisible()) {
-    hideSidebarMenu();
+
+  // For FileHandler, we want to hide the sidebar but remember if it was visible
+  // so we can restore it when leaving
+  if (isSidebarMenuVisible.value) {
+    hideSidebarMenu(false); // Don't persist - this is temporary
     sidebarMenuVisibleOnMounted.value = true;
+  } else {
+    sidebarMenuVisibleOnMounted.value = false;
   }
 
   const clientInfoResult = await getClientInfo();
@@ -527,8 +532,10 @@ onUnmounted(async () => {
   cancelRouteWatch();
   // Ensure header is visible when leaving handler
   showHeader();
+
+  // Restore sidebar menu visibility if it was visible when we hide it
   if (sidebarMenuVisibleOnMounted.value) {
-    showSidebarMenu();
+    showSidebarMenu(false); // Don't persist - just restore the temporary state
   }
 });
 
