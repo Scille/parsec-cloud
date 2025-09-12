@@ -4,6 +4,26 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.5.0-a.6.dev.20343+301a50b (2025-09-12)
+------------------------------------------------
+
+Features
+~~~~~~~~
+
+* On list view, add possibility to sort file/folder by Name, Last update,
+  Creation date, and Size by clicking on the header label.
+  (`#10921 <https://github.com/Scille/parsec-cloud/issues/10921>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Fixed an issue where workspaces name would not be updated in header and
+  sidebar when renamed.
+  (`#11056 <https://github.com/Scille/parsec-cloud/issues/11056>`__)
+
+
+
 Parsec v3.5.0-a.5 (2025-08-14)
 ------------------------------
 
