@@ -52,7 +52,7 @@
         "@sentry/vue": "^9.5.0",
         "@types/luxon": "^3.3.4",
         "@zip.js/zip.js": "^2.7.68",
-        "axios": "^1.8.3",
+        "axios": "^1.12.1",
         "detectincognitojs": "^1.5.0",
         "docx-preview": "^0.3.4",
         "file-type": "^20.4.1",
