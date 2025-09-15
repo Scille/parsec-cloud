@@ -133,8 +133,7 @@ async function openInvitationsMenu(event: Event): Promise<void> {
     } else if (result.data.action === InvitationAction.Cancel && result.data.invitation) {
       await cancelUserInvitation(result.data.invitation);
     } else if (result.data.action === InvitationAction.Invite) {
-      await navigateTo(Routes.Users, { query: { openInvite: true } });
-      await updateInvitations();
+      await navigateTo(Routes.Invitations, { query: { openInvite: true } });
     }
   }
 }
