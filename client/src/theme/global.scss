@@ -232,3 +232,11 @@ svg {
     display: none;
   }
 }
+
+.choose-auth-page {
+  .radio-group-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
