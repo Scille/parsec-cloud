@@ -120,9 +120,9 @@
         <ion-text class="body-sm version"> {{ $msTranslate('MenuPage.downloadParsec') }} </ion-text>
       </ion-item>
       <ion-item
+        v-if="!Env.isStripeDisabled()"
         class="footer-list__item"
         @click="onOptionClick(ProfilePopoverOption.ReportBug)"
-        v-show="showBugReport"
       >
         <ion-text class="body-sm version"> {{ $msTranslate('MenuPage.reportBug') }} </ion-text>
       </ion-item>
@@ -165,7 +165,6 @@ defineProps<{
   updateAvailability: UpdateAvailabilityData;
 }>();
 
-const showBugReport = ref(window.isTesting() || window.usesTestbed());
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const hideParsecDownloadContent = ref(false);
 

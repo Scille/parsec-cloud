@@ -78,6 +78,7 @@ import { BmsApi, FileData } from '@/services/bms';
 import { openLogDisplayModal } from '@/components/misc';
 import { modalController, IonToggle, IonButton, IonText } from '@ionic/vue';
 import { formatLogEntry, LogEntry, WebLogger } from '@/services/webLogger';
+import { getMimeTypeFromBuffer } from '@/common/fileTypes';
 
 const emailInputRef = useTemplateRef<InstanceType<typeof MsInput>>('emailInput');
 const email = ref('');
@@ -135,10 +136,12 @@ async function sendBugReport(): Promise<boolean> {
   sendingReport.value = true;
   const files: Array<FileData> = [];
   for (const f of listInputRef.value?.getFiles() as Array<File>) {
+    const fileData = await readFile(f);
+    const mimeType = (await getMimeTypeFromBuffer(fileData.slice(0, 4096))) ?? 'application/octet-stream';
     files.push({
       name: f.name,
-      data: await readFile(f),
-      mimeType: 'application/octet-stream',
+      data: fileData,
+      mimeType: mimeType,
     });
   }
   const response = await BmsApi.reportBug(
@@ -154,7 +157,7 @@ async function sendBugReport(): Promise<boolean> {
   sendingReport.value = false;
   if (response.isError) {
     sendError.value = 'bugReport.failed';
-    return true;
+    return false;
   } else {
     return await modalController.dismiss({}, MsModalResult.Confirm);
   }

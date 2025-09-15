@@ -762,7 +762,7 @@ async function mockGetCustomOrderInvoices(
 }
 
 async function mockReportBug(page: MsPage, options?: MockRouteOptions): Promise<void> {
-  await mockRoute(page, '**/feedback', options, {
+  await mockRoute(page, '**/api/bug-report', options, {
     POST: async (route) => {
       await route.fulfill({ status: 200 });
     },

@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { getDefaultDeviceName } from '@/common/device';
+import { isWeb } from '@/parsec';
 import {
   AddPaymentMethodQueryData,
   AuthenticationToken,
@@ -746,20 +746,22 @@ interface BugReportOptions {
 async function reportBug(query: BugReportQueryData, opts?: BugReportOptions): Promise<BmsResponse> {
   return wrapQuery(async () => {
     const formData = new FormData();
-    const json = {
-      type: 'bug_report',
-      // See if this can be made more precise (OS Version, browser, ...)
-      platform: getDefaultDeviceName(),
-      name: query.name ?? query.email,
-      email: query.email,
-      title: 'Bug Report',
-      description: query.description,
-      version: APP_VERSION,
-      timestamp: DateTime.now().toISO(),
-      logs: opts?.logs,
-    };
-    formData.append('data', new Blob([JSON.stringify(json)], { type: 'application/json' }));
-
+    let platform!: string;
+    if (isWeb()) {
+      platform = `${window.getPlatform()} - ${navigator.userAgent}`;
+    } else {
+      platform = window.getPlatform();
+    }
+    formData.append('type', 'bug_report');
+    formData.append('platform', platform);
+    formData.append('name', query.name ?? query.email);
+    formData.append('email', query.email);
+    formData.append('title', 'Bug Report');
+    formData.append('description', query.description);
+    formData.append('version', APP_VERSION);
+    if (opts?.logs) {
+      formData.append('logs', new Blob([JSON.stringify(opts?.logs)], { type: 'application/json' }), 'logs');
+    }
     // For later
     // if (opts.includeScreenshot) {
     //   const screenshot = takeScreenshot();
@@ -768,11 +770,10 @@ async function reportBug(query: BugReportQueryData, opts?: BugReportOptions): Pr
 
     for (const fileData of opts?.files ?? []) {
       const blob = new Blob([fileData.data], { type: fileData.mimeType });
-      formData.append(fileData.name, blob);
+      formData.append(fileData.name, blob, fileData.name);
     }
 
-    // Update with new route
-    const axiosResponse = await http.getInstance().post('/feedback', formData, {
+    const axiosResponse = await http.getInstance().post('/api/bug-report', formData, {
       validateStatus: (status) => status === 200,
       timeout: 30000,
     });
