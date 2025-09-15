@@ -1,38 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+mod utils;
 
-use std::{fmt::Debug, str::FromStr};
+use std::fmt::Debug;
 
 use anyhow::Context;
 use clap::Parser;
 use libparsec_platform_pki::{get_der_encoded_certificate, CertificateHash, CertificateReference};
 
-#[derive(Debug, Clone)]
-struct CertificateHashArg(CertificateHash);
-
-impl FromStr for CertificateHashArg {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (hash_ty, hex_data) = s
-            .split_once(':')
-            .ok_or_else(|| anyhow::anyhow!("Missing `:` delimiter"))?;
-        let raw_data = hex::decode(hex_data)?;
-        if hash_ty.eq_ignore_ascii_case("sha256") {
-            Ok(CertificateHashArg(CertificateHash::SHA256(
-                raw_data
-                    .try_into()
-                    .map_err(|_| anyhow::anyhow!("Invalid data size"))?,
-            )))
-        } else {
-            Err(anyhow::anyhow!("Unsupported hash type `{hash_ty}`"))
-        }
-    }
-}
-
 #[derive(Debug, Parser)]
 struct Args {
     /// Hash of the certificate to get content of.
-    certificate_hash: Option<CertificateHashArg>,
+    #[arg(value_parser = utils::CertificateSRIHashParser)]
+    certificate_hash: Option<CertificateHash>,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -40,7 +19,7 @@ fn main() -> anyhow::Result<()> {
     println!("args={args:?}");
 
     let cert_ref: CertificateReference = match args.certificate_hash {
-        Some(hash) => CertificateReference::Hash(hash.0),
+        Some(hash) => CertificateReference::Hash(hash),
         #[cfg(target_os = "windows")]
         None => {
             let cert_ref = libparsec_platform_pki::show_certificate_selection_dialog()
@@ -61,9 +40,16 @@ fn main() -> anyhow::Result<()> {
 
     let cert = get_der_encoded_certificate(&cert_ref).context("Get certificate")?;
 
-    println!("id: {}", hex::encode(cert.cert_ref.id));
-    println!("fingerprint: {}", hex::encode(cert.cert_ref.hash));
-    println!("content: {}", hex::encode(cert.der_content));
+    println!(
+        "id: {}",
+        data_encoding::BASE64.encode_display(&cert.cert_ref.id)
+    );
+    #[cfg(feature = "hash-sri-display")]
+    println!("fingerprint: {}", cert.cert_ref.hash);
+    println!(
+        "content: {}",
+        data_encoding::BASE64.encode_display(&cert.der_content)
+    );
 
     Ok(())
 }

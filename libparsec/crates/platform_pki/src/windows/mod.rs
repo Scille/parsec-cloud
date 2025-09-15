@@ -4,13 +4,20 @@ use std::ffi::c_void;
 
 use crate::{
     CertificateDer, CertificateHash, CertificateReference, CertificateReferenceIdOrHash,
-    GetDerEncodedCertificateError,
+    GetDerEncodedCertificateError, SignMessageError, SignedMessage,
 };
 use bytes::Bytes;
-use schannel::{cert_context::CertContext, cert_context::HashAlgorithm, cert_store::CertStore};
+use schannel::{
+    cert_context::{CertContext, HashAlgorithm, PrivateKey},
+    cert_store::CertStore,
+    ncrypt_key::NcryptKey,
+    RawPointer,
+};
+use sha2::Digest as _;
 use windows_sys::Win32::Security::Cryptography::{
-    CertGetCertificateContextProperty, CERT_CONTEXT, CERT_KEY_PROV_INFO_PROP_ID, HCERTSTORE,
-    UI::CryptUIDlgSelectCertificateFromStore,
+    CertGetCertificateContextProperty, NCryptSignHash, BCRYPT_PSS_PADDING_INFO, CERT_CONTEXT,
+    CERT_KEY_PROV_INFO_PROP_ID, HCERTSTORE, NCRYPT_KEY_HANDLE, NCRYPT_PAD_PSS_FLAG,
+    NCRYPT_SHA256_ALGORITHM, UI::CryptUIDlgSelectCertificateFromStore,
 };
 
 fn open_store() -> std::io::Result<CertStore> {
@@ -77,7 +84,7 @@ fn get_certificate_id(cert_context: &CertContext) -> std::io::Result<Vec<u8>> {
     // SAFETY: We use `CertGetCertificateContextProperty` by using a correct windows pointer and
     // first getting the required size to allocate a buffer.
     unsafe {
-        let raw_context = schannel::RawPointer::as_ptr(cert_context) as *const CERT_CONTEXT;
+        let raw_context = RawPointer::as_ptr(cert_context) as *const CERT_CONTEXT;
         // 1. Get size of cert id
         let mut len = 0u32;
         // Documentation can be found here:
@@ -160,7 +167,7 @@ fn ask_user_to_select_certificate(store: &CertStore) -> Option<CertContext> {
     // SAFETY: Ideally we would use `schannel::Inner::as_inner` to get the already typed type, but it's a
     // private trait.
     // Instead, the following that require to cast to the correct type.
-    let raw_store = unsafe { schannel::RawPointer::as_ptr(store) } as HCERTSTORE;
+    let raw_store = unsafe { RawPointer::as_ptr(store) } as HCERTSTORE;
 
     // SAFETY: We use `CryptUIDlgSelectCertificateFromStore` by providing it with a correct pointer
     // that come from windows, and use default value (NULL) as detailed by the documentation.
@@ -186,5 +193,99 @@ fn ask_user_to_select_certificate(store: &CertStore) -> Option<CertContext> {
                 raw_cert_context as *mut std::os::raw::c_void,
             ))
         }
+    }
+}
+
+pub fn sign_message(
+    message: &[u8],
+    certificate_ref: &CertificateReference,
+) -> Result<SignedMessage, SignMessageError> {
+    let store = open_store().map_err(SignMessageError::CannotOpenStore)?;
+    let cert_context =
+        find_certificate(&store, certificate_ref).ok_or(SignMessageError::NotFound)?;
+    let reference = get_id_and_hash_from_cert_context(&cert_context)
+        .map_err(SignMessageError::CannotGetCertificateInfo)?;
+    let mut acq_keypair = cert_context.private_key();
+    let keypair = acq_keypair
+        // Ensure private key correspond to the certificate public key.
+        .compare_key(true)
+        .acquire()
+        .map_err(SignMessageError::CannotAcquireKeypair)?;
+    let signed_message = match keypair {
+        // We do not support a CryptoAPI provider as its API is marked for depreciation by windows.
+        PrivateKey::CryptProv(..) => {
+            todo!("Use CryptGetUserKey to get the keypair")
+        }
+        // Handle to a CryptoGraphy Next Generation (CNG) API
+        PrivateKey::NcryptKey(handle) => ncrypt_sign_message(message, &handle).map(Into::into),
+    }
+    .map_err(SignMessageError::CannotSign)?;
+
+    Ok(SignedMessage {
+        signed_message,
+        cert_ref: reference,
+    })
+}
+
+fn ncrypt_sign_message(message: &[u8], handle: &NcryptKey) -> std::io::Result<Vec<u8>> {
+    let hash = sha2::Sha256::digest(message);
+    // SAFETY: NcryptKey is obtain from an NCRYPT_KEY_HANDLE, here we retrieve the underlying
+    // handle.
+    let raw_handle = unsafe { RawPointer::as_ptr(handle) } as NCRYPT_KEY_HANDLE;
+
+    // SAFETY: We follow the windows documentation by correctly passing the correct flags according
+    // to padding_info type, and the other pointer are either coming from allocated buffer or null
+    // pointer with their correct associated sizes.
+    //
+    // Documentation of the below function:
+    // https://learn.microsoft.com/en-us/windows/win32/api/ncrypt/nf-ncrypt-ncryptsignhash
+    // Rust doc:
+    // https://docs.rs/windows-sys/latest/windows_sys/Win32/Security/Cryptography/fn.NCryptSignHash.html
+    unsafe {
+        // We sign the hash using RSA_PSS_SHA256 algo.
+        let flags = NCRYPT_PAD_PSS_FLAG;
+        // https://learn.microsoft.com/en-us/windows/win32/api/bcrypt/ns-bcrypt-bcrypt_pss_padding_info
+        let padding_info = BCRYPT_PSS_PADDING_INFO {
+            pszAlgId: NCRYPT_SHA256_ALGORITHM,
+            // This determine the size of the random salt, from WolfSSL it's the convention to use
+            // a salt of the same size of the hash.
+            cbSalt: hash.len() as u32,
+        };
+        let padding_info_ptr = (&raw const padding_info) as *const std::os::raw::c_void;
+        let mut len = 0_u32;
+
+        // 1. Get the size of the resulting signature
+        let res = NCryptSignHash(
+            raw_handle,
+            padding_info_ptr,
+            hash.as_ptr(),
+            hash.len() as u32,
+            std::ptr::null_mut(),
+            0,
+            &mut len,
+            flags,
+        );
+
+        if res != 0 {
+            return Err(std::io::Error::last_os_error());
+        }
+
+        // 2. Fill the actual signature in a buffer
+        let mut buff = vec![0_u8; len as usize];
+        let res = NCryptSignHash(
+            raw_handle,
+            padding_info_ptr,
+            hash.as_ptr(),
+            hash.len() as u32,
+            buff.as_mut_ptr(),
+            buff.len() as u32,
+            &mut len,
+            flags,
+        );
+
+        if res != 0 {
+            return Err(std::io::Error::last_os_error());
+        }
+        Ok(buff)
     }
 }

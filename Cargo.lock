@@ -2417,7 +2417,7 @@ dependencies = [
  "bytes",
  "clap",
  "cryptoki",
- "hex",
+ "data-encoding",
  "percent-encoding",
  "schannel",
  "sha2",
