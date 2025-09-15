@@ -148,7 +148,7 @@ hex-literal = { version = "0.4.1", default-features = false }
 indexed-db = { version = "0.5.0-alpha.1", default-features = false }
 itertools = { version = "0.12.1", default-features = false }
 jni = { version = "0.21.1", default-features = false }
-js-sys = { version = "0.3.70", default-features = false }
+js-sys = { version = "0.3.78", default-features = false }
 keyring = { version = "3.6.3", default-features = false }
 lazy_static = { version = "1.5.0", default-features = false }
 libc = { version = "0.2.175", default-features = false }
@@ -203,10 +203,10 @@ tokio = { version = "1.47.1", default-features = false }
 unicode-normalization = { version = "0.1.24", default-features = false }
 url = { version = "2.5.4", default-features = false }
 uuid = { version = "1.18.0", default-features = false }
-wasm-bindgen = { version = "0.2.97", default-features = false }
-wasm-bindgen-futures = { version = "0.4.47", default-features = false }
-wasm-bindgen-test = { version = "0.3.47", default-features = false, features = ["std"] }
-web-sys = { version = "0.3.77", default-features = false }
+wasm-bindgen = { version = "0.2.101", default-features = false }
+wasm-bindgen-futures = { version = "0.4.51", default-features = false }
+wasm-bindgen-test = { version = "0.3.51", default-features = false, features = ["std"] }
+web-sys = { version = "0.3.78", default-features = false }
 web-time = { version = "1.1.0", default-features = false }
 widestring = { version = "1.2.0", default-features = false }
 windows-sys = { version = "0.60.2", default-features = false }
@@ -222,14 +222,6 @@ default-features = false
 # Waiting for new release
 rev = "a414f88ca3edd3c278491a561bd38f4bf292d935"
 git = "https://github.com/jedisct1/libsodium-rs.git"
-
-[patch.crates-io]
-# Patch web-sys for `Blob.bytes`
-# FIXME: Remove me once https://github.com/rustwasm/wasm-bindgen/pull/4506 is merged and released
-web-sys = { git = "https://github.com/FirelightFlagboy/wasm-bindgen.git", rev = "9402ae3bd1eea6d4a8c0d6b62dd62efa4c536d6e" }
-wasm-bindgen = { git = "https://github.com/FirelightFlagboy/wasm-bindgen.git", rev = "9402ae3bd1eea6d4a8c0d6b62dd62efa4c536d6e" }
-js-sys = { git = "https://github.com/FirelightFlagboy/wasm-bindgen.git", rev = "9402ae3bd1eea6d4a8c0d6b62dd62efa4c536d6e" }
-# End patch web-sys for `Blob.bytes`
 
 [workspace.dependencies.criterion]
 default-features = false
