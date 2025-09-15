@@ -15,10 +15,9 @@
       >
         {{ device.organizationId?.substring(0, 2) }}
       </ion-text>
-      <!-- prettier-ignore -->
       <ms-image
         v-else
-        :image="(ResourcesManager.instance().get(Resources.LogoIcon, LogoIconWhite) as string)"
+        :image="ResourcesManager.instance().get(Resources.LogoIcon, LogoIconWhite) as string"
         class="organization-card-header__logo"
       />
     </div>

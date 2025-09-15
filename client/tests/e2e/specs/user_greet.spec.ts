@@ -100,12 +100,18 @@ msTest('Greet user whole process in small display', async ({ usersPage }) => {
     'Malloryy McMalloryFace',
   ]);
 
+  const methodChosen = joinData.modal.locator('.method-chosen');
+  await expect(methodChosen).toBeVisible();
+  await expect(methodChosen.locator('.authentication-card-text__title')).toHaveText('Password');
+  await methodChosen.locator('.authentication-card__update-button').click();
+
   // Joiner sets password
   const authRadio = joinData.content.locator('.choose-auth-page').locator('.radio-list-item');
   await expect(authRadio).toHaveCount(2);
   await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-  await expect(authRadio.nth(0).locator('.item-radio__label')).toHaveText('System Authentication');
+  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
   await expect(authRadio.nth(1)).toHaveText('Password');
+  await authRadio.nth(1).click();
   const passwordChoice = joinData.content.locator('#get-password').locator('.choose-password');
   await passwordChoice.scrollIntoViewIfNeeded();
   await fillIonInput(passwordChoice.locator('ion-input').nth(0), 'AVeryL0ngP@ssw0rd');
@@ -222,12 +228,18 @@ msTest('Greet user whole process in large display', async ({ usersPage }) => {
     'Malloryy McMalloryFace',
   ]);
 
+  const methodChosen = joinData.modal.locator('.method-chosen');
+  await expect(methodChosen).toBeVisible();
+  await expect(methodChosen.locator('.authentication-card-text__title')).toHaveText('Password');
+  await methodChosen.locator('.authentication-card__update-button').click();
+
   // Joiner sets password
   const authRadio = joinData.content.locator('.choose-auth-page').locator('.radio-list-item');
   await expect(authRadio).toHaveCount(2);
   await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-  await expect(authRadio.nth(0).locator('.item-radio__label')).toHaveText('System Authentication');
+  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
   await expect(authRadio.nth(1)).toHaveText('Password');
+  await authRadio.nth(1).click();
   const passwordChoice = joinData.content.locator('#get-password').locator('.choose-password');
   await passwordChoice.scrollIntoViewIfNeeded();
   await fillIonInput(passwordChoice.locator('ion-input').nth(0), 'AVeryL0ngP@ssw0rd');

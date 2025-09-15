@@ -127,7 +127,7 @@ const emits = defineEmits<{
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    padding-inline: 1.5rem;
+    padding-inline: 1rem;
   }
 }
 </style>
