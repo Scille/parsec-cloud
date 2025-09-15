@@ -24,7 +24,10 @@ msTest('Display account invitations', async ({ parsecAccountLoggedIn }) => {
   await expect(noAccountPage).toBeUserPage();
   await noAccountPage.locator('#activate-users-ms-action-bar').getByText('Invite a user').click();
   await fillInputModal(noAccountPage, email);
+  await expect(noAccountPage).toBeInvitationPage();
   await expect(noAccountPage).toShowToast(`An invitation to join the organization has been sent to ${email}.`, 'Success');
+  await noAccountPage.locator('.topbar .back-button').click();
+  await expect(noAccountPage).toBeUserPage();
   await noAccountPage.locator('.topbar').locator('#invitations-button').click();
   const popover = noAccountPage.locator('.invitations-list-popover');
   const inv = popover.locator('.invitation-list-item').nth(1);

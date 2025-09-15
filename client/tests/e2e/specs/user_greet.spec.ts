@@ -252,9 +252,8 @@ msTest('Host selects invalid SAS code', async ({ usersPage }) => {
   // Very slow test since it syncs the greet and join
   msTest.setTimeout(120_000);
 
-  const secondTab = await usersPage.openNewTab();
-
-  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm');
+  const guestPage = await usersPage.openNewTab();
+  const [greetData, joinData] = await initGreetUserModals(usersPage, guestPage, 'gordon.freeman@blackmesa.nm');
   // Check the provide code page from the host and retrieve the code
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
   await expect(greetData.title).toHaveText('Share your code');
@@ -281,7 +280,7 @@ msTest('Host selects invalid SAS code', async ({ usersPage }) => {
   await expect(greetData.content.locator('.button-choice')).toHaveCount(4);
   await greetData.modal.locator('.button-choice').filter({ hasNotText: joinCode }).nth(0).click();
 
-  await expect(secondTab).toShowToast('The host has selected the wrong code.', 'Error');
+  await expect(guestPage).toShowToast('The host has selected the wrong code.', 'Error');
   await expect(usersPage).toShowToast('You did not select the correct code. Please restart the onboarding process.', 'Error');
 
   // Back to the beginning

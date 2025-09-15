@@ -255,8 +255,8 @@ async function openMenuModal(): Promise<void> {
     }
 
     .fab-button {
-      width: 2.75rem;
-      height: 2.75rem;
+      width: 2.5rem;
+      height: 2.5rem;
       --background: var(--parsec-color-light-gradient-background);
       --background-focused: var(--parsec-color-light-primary-700);
       --background-activated: var(--parsec-color-light-secondary-white);

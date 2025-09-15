@@ -80,7 +80,7 @@
             class="topbar-right-button"
             v-if="!currentRouteIs(Routes.History) && !currentRouteIs(Routes.MyProfile)"
           >
-            <invitations-button />
+            <invitations-button v-if="!currentRouteIs(Routes.Invitations)" />
 
             <ion-button
               v-show="false"
@@ -95,7 +95,7 @@
               />
             </ion-button>
             <div
-              v-if="!isMobile() && securityWarningsCount > 0 && securityWarnings && isSmallDisplay"
+              v-if="!isMobile() && securityWarningsCount > 0 && securityWarnings && isSmallDisplay && !currentRouteIs(Routes.Invitations)"
               id="trigger-checklist-button"
               class="topbar-right-button__item unread"
               @click="openSecurityWarningsModal()"
@@ -381,6 +381,8 @@ function getTitleForRoute(): Translatable {
   switch (getCurrentRouteName()) {
     case Routes.Users:
       return 'HeaderPage.titles.users';
+    case Routes.Invitations:
+      return 'HeaderPage.titles.invitations';
     case Routes.Storage:
       return 'HeaderPage.titles.organization.storage';
     case Routes.Organization:
@@ -647,7 +649,7 @@ async function openSecurityWarningsModal(): Promise<void> {
 
   &-text {
     width: 100%;
-    color: var(--parsec-color-light-primary-600);
+    color: var(--parsec-color-light-primary-800);
     text-align: center;
 
     .align-left {

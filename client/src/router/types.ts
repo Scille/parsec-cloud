@@ -25,6 +25,7 @@ export enum Routes {
   History = 'history',
   RecoverAccount = 'recoverAccount',
   FileHandler = 'fileHandler',
+  Invitations = 'invitations',
 }
 
 const routes: Array<RouteRecordRaw> = [
@@ -168,6 +169,11 @@ const routes: Array<RouteRecordRaw> = [
                     path: `/:handle(\\d+)/${Routes.Users}`,
                     name: Routes.Users,
                     component: () => import('@/views/users/UsersPage.vue'),
+                  },
+                  {
+                    path: `/:handle(\\d+)/${Routes.Invitations}`,
+                    name: Routes.Invitations,
+                    component: () => import('@/views/invitations/InvitationsPage.vue'),
                   },
                   {
                     path: `/:handle(\\d+)/${Routes.Storage}`,

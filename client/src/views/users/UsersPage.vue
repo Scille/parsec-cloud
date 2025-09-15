@@ -140,12 +140,10 @@
 </template>
 
 <script setup lang="ts">
-import { emailValidator } from '@/common/validators';
 import {
   Answer,
   MsOptions,
   askQuestion,
-  getTextFromUser,
   MsImage,
   NoActiveUser,
   DisplayState,
@@ -154,7 +152,6 @@ import {
   MsSearchInput,
   MsSorter,
   MsSorterChangeEvent,
-  Translatable,
   MsModalResult,
   useWindowSize,
 } from 'megashark-lib';
@@ -162,21 +159,19 @@ import SmallDisplayHeaderTitle from '@/components/header/SmallDisplayHeaderTitle
 import { SortProperty, UserCollection, UserFilter, UserFilterLabels, UserModel } from '@/components/users';
 import {
   ClientInfo,
-  ClientNewUserInvitationErrorTag,
-  InvitationEmailSentStatus,
   UserID,
   UserInfo,
   UserProfile,
   getClientInfo as parsecGetClientInfo,
-  inviteUser as parsecInviteUser,
   listUsers as parsecListUsers,
   revokeUser as parsecRevokeUser,
   InvitationStatus,
   updateProfile as parsecUpdateProfile,
   ClientUserUpdateProfileError,
   ClientUserUpdateProfileErrorTag,
+  getPkiJoinOrganizationLink,
 } from '@/parsec';
-import { Routes, getCurrentRouteQuery, watchRoute, currentRouteIsUserRoute, navigateTo } from '@/router';
+import { Routes, watchRoute, currentRouteIsUserRoute, navigateTo } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
@@ -185,13 +180,14 @@ import UserDetailsModal from '@/views/users/UserDetailsModal.vue';
 import UserGridDisplay from '@/views/users/UserGridDisplay.vue';
 import UserListDisplay from '@/views/users/UserListDisplay.vue';
 import { IonContent, IonPage, IonText, modalController } from '@ionic/vue';
-import { informationCircle, personAdd, personRemove, repeat, returnUpForward } from 'ionicons/icons';
+import { informationCircle, link, personAdd, personRemove, repeat, returnUpForward } from 'ionicons/icons';
 import { Ref, inject, onMounted, onUnmounted, ref, toRaw, computed, watch } from 'vue';
 import BulkRoleAssignmentModal from '@/views/users/BulkRoleAssignmentModal.vue';
 import { EventData, EventDistributor, EventDistributorKey, Events, InvitationUpdatedData } from '@/services/eventDistributor';
 import UpdateProfileModal from '@/views/users/UpdateProfileModal.vue';
 import { openUserContextMenu as _openUserContextMenu, openGlobalUserContextMenu as _openGlobalUserContextMenu } from '@/views/users/utils';
 import { MenuAction, TabBarOptions, useCustomTabBar } from '@/views/menu';
+import { copyToClipboard } from '@/common/clipboard';
 
 const displayView = ref(DisplayState.List);
 const isAdmin = ref(false);
@@ -598,81 +594,6 @@ async function assignWorkspaceRoles(user: UserInfo): Promise<void> {
   }
 }
 
-async function inviteUser(): Promise<void> {
-  const email = await getTextFromUser(
-    {
-      title: 'UsersPage.CreateUserInvitationModal.pageTitle',
-      trim: true,
-      validator: emailValidator,
-      inputLabel: 'UsersPage.CreateUserInvitationModal.label',
-      placeholder: 'UsersPage.CreateUserInvitationModal.placeholder',
-      okButtonText: 'UsersPage.CreateUserInvitationModal.create',
-    },
-    isLargeDisplay.value,
-  );
-  if (!email) {
-    return;
-  }
-  const result = await parsecInviteUser(email);
-  if (result.ok) {
-    if (result.value.emailSentStatus === InvitationEmailSentStatus.Success) {
-      informationManager.present(
-        new Information({
-          message: {
-            key: 'UsersPage.invitation.inviteSuccessMailSent',
-            data: {
-              email: email,
-            },
-          },
-          level: InformationLevel.Success,
-        }),
-        PresentationMode.Toast,
-      );
-    } else {
-      informationManager.present(
-        new Information({
-          message: {
-            key: 'UsersPage.invitation.inviteSuccessNoMail',
-            data: {
-              email: email,
-            },
-          },
-          level: InformationLevel.Success,
-        }),
-        PresentationMode.Toast,
-      );
-    }
-  } else {
-    let message: Translatable = '';
-    switch (result.error.tag) {
-      case ClientNewUserInvitationErrorTag.AlreadyMember:
-        message = { key: 'UsersPage.invitation.inviteFailedAlreadyMember', data: { email: email } };
-        break;
-      case ClientNewUserInvitationErrorTag.Offline:
-        message = 'UsersPage.invitation.inviteFailedOffline';
-        break;
-      case ClientNewUserInvitationErrorTag.NotAllowed:
-        message = 'UsersPage.invitation.inviteFailedNotAllowed';
-        break;
-      default:
-        message = {
-          key: 'UsersPage.invitation.inviteFailedUnknown',
-          data: {
-            reason: result.error.tag,
-          },
-        };
-        break;
-    }
-    informationManager.present(
-      new Information({
-        message,
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-  }
-}
-
 async function refreshUserList(): Promise<void> {
   const result = await parsecListUsers(false);
   const newUsers: UserModel[] = [];
@@ -709,11 +630,6 @@ const routeWatchCancel = watchRoute(async () => {
   if (!currentRouteIsUserRoute()) {
     return;
   }
-  const query = getCurrentRouteQuery();
-  if (query.openInvite) {
-    await inviteUser();
-    await navigateTo(Routes.Users, { replace: true, query: {} });
-  }
   await refreshUserList();
 });
 
@@ -745,11 +661,6 @@ onMounted(async (): Promise<void> => {
     isAdmin.value = clientInfo.value.currentProfile === UserProfile.Admin;
   }
   await refreshUserList();
-  const query = getCurrentRouteQuery();
-  if (query.openInvite) {
-    await inviteUser();
-    await navigateTo(Routes.Users, { replace: true, query: {} });
-  }
 });
 
 onUnmounted(async () => {
@@ -769,13 +680,30 @@ const actionBarOptionsUsersPage = computed(() => {
   const actionArray = [];
 
   if (users.value.selectedCount() === 0 && isAdmin.value) {
-    actionArray.push({
-      label: 'UsersPage.inviteUser',
-      icon: personAdd,
-      onClick: async (): Promise<void> => {
-        await inviteUser();
+    actionArray.push(
+      {
+        label: 'UsersPage.inviteUser',
+        icon: personAdd,
+        onClick: async (): Promise<void> => {
+          await navigateTo(Routes.Invitations, { query: { openInvite: true } });
+        },
       },
-    });
+      {
+        label: 'InvitationsPage.pkiRequests.copyLink',
+        icon: link,
+        onClick: async (): Promise<void> => {
+          const result = await getPkiJoinOrganizationLink();
+          if (result.ok) {
+            await copyToClipboard(
+              result.value,
+              informationManager,
+              'InvitationsPage.pkiRequests.linkCopiedToClipboard.success',
+              'InvitationsPage.pkiRequests.linkCopiedToClipboard.failed',
+            );
+          }
+        },
+      },
+    );
   }
 
   if (users.value.selectedCount() >= 1 && isAdmin.value) {

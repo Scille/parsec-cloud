@@ -711,7 +711,7 @@
   }
 
   .ms-modal-header {
-    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
   }
 
   .ms-small-display-modal-footer-buttons {
@@ -968,5 +968,15 @@
     &::part(content) {
       max-width: var(--parsec-modal-width-md);
     }
+  }
+}
+
+.invitation-switch-modal {
+  &::part(handle) {
+    top: 0.5rem;
+  }
+
+  &::part(content) {
+    max-width: var(--parsec-modal-width-sm);
   }
 }

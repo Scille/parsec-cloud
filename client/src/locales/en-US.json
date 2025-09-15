@@ -464,6 +464,7 @@
         "titles": {
             "workspaces": "My workspaces",
             "about": "About",
+            "invitations": "Invitations",
             "users": "Users",
             "organization": {
                 "storage": "Storage",
@@ -960,6 +961,7 @@
         "noWorkspace": "No workspaces",
         "noRecentWorkspace": "No recent workspaces",
         "users": "Users",
+        "invitations": "Invitations",
         "storage": "Storage",
         "information": "Information",
         "goToHome": "My workspaces",
@@ -1468,6 +1470,89 @@
             "revoke": "Revoke",
             "roles": "Roles"
         }
+    },
+    "InvitationsPage": {
+        "emailInvitation": {
+            "tab": "Email invitation",
+            "tabShort": "Email",
+            "emptyState": "No pending email invitations.",
+            "inviteUser": "Invite a user",
+            "listDisplayTitles": {
+                "email": "Email",
+                "sentOn": "Sent on"
+            },
+            "greet": "Greet",
+            "tooltips": {
+                "delete": "Delete invitation",
+                "resend": "Resend email",
+                "copyLink": "Copy link"
+            }
+        },
+        "pkiRequests": {
+            "tab": "PKI requests",
+            "tabShort": "PKI",
+            "emptyState": "No pending PKI requests.",
+            "copyLink": "Copy link (PKI)",
+            "pkiFeature": "The PKI feature required a PKI infrastructure to be used.",
+            "listDisplayTitles": {
+                "name": "Name",
+                "email": "Email",
+                "createdOn": "Request date",
+                "certificate": "Certificate"
+            },
+            "accept": "Accept",
+            "certificate": {
+                "valid": "Valid certificate",
+                "invalid": "Invalid certificate",
+                "unknown": "Unknown certificate"
+            },
+            "rootCertificate": {
+                "missingCertificateTitle": "Missing root certificate",
+                "missingCertificateDescription": "A root certificate is required to validate requests received by PKI. For security reasons, the certificate must be provided each time the organization is reopened.",
+                "setRootCertificate": "Set root certificate",
+                "updateRootCertificate": "Update root certificate"
+            },
+            "validationModal": {
+                "error": {
+                    "unknown": {
+                        "title": "Adding a user with an unknown certificate",
+                        "description": "You are about to add a user with an unknown certificate. Their identity cannot be verified. Are you sure you want to proceed?"
+                    },
+                    "notValid": {
+                        "title": "Adding a user with an invalid certificate",
+                        "description": "The certificate provided by the user does not match the root certificate. Are you sure you want to add this user?"
+                    }
+                },
+                "button": {
+                    "cancel": "Cancel",
+                    "confirm": "Confirm adding user"
+                },
+                "acceptedFailed": "Failed to accept this request",
+                "acceptedSuccess": "This request has been accepted",
+                "rejectedFailed": "Failed to reject this request",
+                "rejectedSuccess": "This request has been rejected"
+            },
+            "linkCopiedToClipboard": {
+                "success": "PKI link has been copied to clipboard.",
+                "failed": "Failed to copy the PKI link. Your browser or device does not seem to support copy/paste."
+            },
+            "selectProfileModal": {
+                "title": "Complete user information",
+                "profileLabel": "User profile",
+                "profilePlaceholder": "Select a profile",
+                "actions": {
+                    "confirm": "Validate request",
+                    "cancel": "Cancel"
+                },
+                "errors": {
+                    "noProfile": "You must select a profile."
+                }
+            },
+            "tooltips": {
+                "reject": "Reject request"
+            }
+        },
+        "confirm": "Confirm"
     },
     "AboutPage": {
         "title": "About",
