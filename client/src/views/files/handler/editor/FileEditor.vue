@@ -182,7 +182,9 @@ async function openFileWithCryptpad(): Promise<boolean> {
       url: fileUrl.value,
       fileType: contentInfo.extension,
       title: contentInfo.fileName,
-      key: contentInfo.fileId,
+      // TODO: replace UUID with collaborative session key
+      // key: contentInfo.fileId,
+      key: crypto.randomUUID(),
     },
     documentType: documentType.value as CryptpadDocumentType, // Safe since we checked for null earlier
     editorConfig: {
