@@ -5,6 +5,19 @@
 @use 'megashark-lib/theme' as ms;
 
 /* ------- Workspaces, Files, Users ------- */
+.user-list-header,
+.workspace-list-header,
+.folder-list-header,
+.invitations-list-header,
+.pkiRequests-list-header {
+  color: var(--parsec-color-light-secondary-grey);
+  padding-inline-start: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--parsec-color-light-secondary-opacity30);
+  backdrop-filter: blur(10px);
+}
 
 .workspace-list-item,
 .file-list-item,
@@ -415,5 +428,198 @@
   .tag {
     background: var(--parsec-color-light-secondary-disabled) !important;
     color: var(--parsec-color-light-secondary-grey) !important;
+  }
+}
+
+// ------- Invitation emails + PKI -------
+.invitations-container-list,
+.pkiRequests-container-list {
+  padding: 0 !important;
+
+  @include ms.responsive-breakpoint('sm') {
+    padding: 1rem !important;
+  }
+
+  .invitation-actions,
+  .pkiRequest-actions {
+    display: flex;
+    gap: 1.25rem;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+
+    .primary-button {
+      --background: var(--parsec-color-light-secondary-text);
+      --background-hover: var(--parsec-color-light-secondary-contrast);
+      color: var(--parsec-color-light-secondary-white);
+
+      &::part(native) {
+        padding: 0.7rem 1rem;
+      }
+    }
+
+    &-secondary {
+      display: flex;
+      gap: 0.75rem;
+
+      &__button {
+        --background: transparent;
+        color: var(--parsec-color-light-secondary-soft-text);
+
+        &::part(native) {
+          border: 1px solid var(--parsec-color-light-secondary-medium);
+          box-shadow: var(--parsec-shadow-input);
+          padding: 0.5rem;
+        }
+
+        .button-icon {
+          flex-shrink: 0;
+          font-size: 1.25rem;
+        }
+
+        &:hover {
+          color: var(--parsec-color-light-secondary-text);
+          --background-hover: var(--parsec-color-light-secondary-medium);
+        }
+      }
+    }
+  }
+
+  .invitations-list-header,
+  .pkiRequests-list-header {
+    display: flex;
+    align-items: center;
+    padding: 0 1rem 0 2rem;
+  }
+
+  .invitation-list-item,
+  .pkiRequest-list-item {
+    display: flex;
+    width: 100%;
+    padding: 0;
+    --background-hover: var(--parsec-color-light-secondary-background);
+    --background-hover-opacity: 1;
+
+    &::part(native) {
+      padding: 0.625rem 1rem 0.625rem 2rem;
+      cursor: default;
+
+      @include ms.responsive-breakpoint('sm') {
+        flex-direction: column;
+        padding: 0;
+        border-radius: var(--parsec-radius-12);
+        border: 1px solid var(--parsec-color-light-secondary-medium);
+      }
+    }
+
+    @include ms.responsive-breakpoint('sm') {
+      margin-bottom: 1rem;
+    }
+  }
+}
+
+// ------- Invitations only -------
+.invitations-container-list {
+  .label-email,
+  .invitation-email {
+    width: 100%;
+    min-width: 11.25rem;
+    max-width: 25rem;
+    white-space: nowrap;
+    overflow: hidden;
+
+    @include ms.responsive-breakpoint('sm') {
+      max-width: 100%;
+    }
+  }
+
+  .label-sentOn,
+  .invitation-sentOn {
+    min-width: 11.25rem;
+    flex-grow: 0;
+  }
+
+  .label-space,
+  .invitation-actions {
+    min-width: 15.625rem;
+    margin-left: auto;
+    flex-grow: 0;
+  }
+
+  .invitation-actions-secondary__button {
+    &:last-of-type {
+      position: relative;
+      display: flex;
+      align-items: center;
+
+      &::before {
+        content: '';
+        position: relative;
+        display: block;
+        width: 2px;
+        height: calc(100% - 0.825rem);
+        background: var(--parsec-color-light-secondary-medium);
+        margin-right: 0.75rem;
+      }
+    }
+  }
+}
+
+// ------- PKI Requests only -------
+.pkiRequests-container-list {
+  .label-name,
+  .pkiRequest-name {
+    width: 100%;
+    min-width: 11.25rem;
+    max-width: 25rem;
+    white-space: nowrap;
+    overflow: hidden;
+
+    @include ms.responsive-breakpoint('sm') {
+      max-width: 100%;
+    }
+  }
+
+  .label-email,
+  .pkiRequest-email {
+    min-width: 16rem;
+    max-width: 18rem;
+    flex-grow: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+
+    @include ms.responsive-breakpoint('lg') {
+      display: none;
+    }
+
+    &__label {
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+  }
+
+  .label-createdOn,
+  .pkiRequest-createdOn {
+    min-width: 11.25rem;
+    flex-grow: 0;
+
+    @include ms.responsive-breakpoint('xl') {
+      display: none;
+    }
+  }
+
+  .label-certificate,
+  .pkiRequest-certificate {
+    flex: 0 0 12rem;
+  }
+
+  .label-space,
+  .pkiRequest-actions {
+    min-height: 1rem;
+    min-width: 10rem;
+    margin-left: auto;
+    flex-grow: 0;
   }
 }

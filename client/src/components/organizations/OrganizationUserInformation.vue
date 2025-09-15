@@ -114,7 +114,7 @@ defineProps<{
 }>();
 
 async function inviteUser(): Promise<void> {
-  await navigateTo(Routes.Users, { query: { openInvite: true } });
+  await navigateTo(Routes.Invitations, { query: { openInvite: true } });
 }
 </script>
 
