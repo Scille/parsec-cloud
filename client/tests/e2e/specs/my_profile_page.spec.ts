@@ -94,8 +94,13 @@ msTest('Change password', async ({ myProfilePage }) => {
   await fillIonInput(currentPasswordContainer.locator('ion-input'), 'P@ssw0rd.');
   await changePasswordModal.locator('#next-button').click();
 
-  await expect(changePasswordModal.locator('.modal-header')).toHaveText('Choose your new authentication method');
+  await expect(changePasswordModal.locator('.modal-header')).toHaveText('Change authentication method');
   await expect(changePasswordModal.locator('#next-button')).toHaveDisabledAttribute();
+
+  await expect(changePasswordModal.locator('.method-chosen').locator('.authentication-card__update-button')).toHaveText('Update');
+  await changePasswordModal.locator('.method-chosen').locator('.authentication-card__update-button').click();
+  await expect(changePasswordModal.locator('.method-chosen')).toBeHidden();
+  await changePasswordModal.locator('.authentication-card').nth(1).click();
   const passwordInputs = changePasswordModal.locator('.input-container').locator('ion-input');
   await fillIonInput(passwordInputs.nth(1), newPassword);
   await fillIonInput(passwordInputs.nth(2), 'no match');

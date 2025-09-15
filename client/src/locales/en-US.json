@@ -1096,12 +1096,21 @@
         "keyringInfo": "Authentication will be handled through your system, so you do not have to remember an additional password. Just do not forget to lock your session when you are not in front of your computer!",
         "method": {
             "system": "System authentication",
-            "password": "Password"
+            "password": "Password",
+            "smartcard": {
+                "title": "Smartcard",
+                "description": "The smartcard should be plugged in and ready to use."
+            },
+            "ssoProConnect": "SSO (ProConnect)"
         },
+        "methodChosen": "Method chosen:",
+        "active": "Active method",
+        "update": "Update",
         "changeAuthenticationButton": "Change method",
         "changePasswordButton": "Change password",
         "useKeyring": "System Authentication",
         "usePassword": "Password",
+        "useSsoProConnect": "SSO (ProConnect)",
         "label": "Authentication method",
         "keyringUnavailableOnSystem": "Unavailable on your system",
         "keyringUnavailableOnWeb": "Unavailable on web"
@@ -1645,7 +1654,7 @@
     },
     "MyProfilePage": {
         "titleActualPassword": "Enter your current password",
-        "titleNewAuthentication": "Choose your new authentication method",
+        "titleNewAuthentication": "Change authentication method",
         "password": "Password",
         "systemAuthentication": "This session is handled with the authentication of your system.",
         "cancelButton": "Cancel",

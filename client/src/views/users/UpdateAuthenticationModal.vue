@@ -104,7 +104,7 @@ import { close } from 'ionicons/icons';
 import { Ref, onMounted, ref, useTemplateRef } from 'vue';
 import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
 import SmallDisplayModalHeader from '@/components/header/SmallDisplayModalHeader.vue';
-import { DeviceAccessStrategyKeyring } from '@/plugins/libparsec';
+import { DeviceAccessStrategyKeyring, DeviceAccessStrategySmartcard } from '@/plugins/libparsec';
 
 enum ChangeAuthenticationStep {
   Undefined,
@@ -166,19 +166,35 @@ const canGoForward = asyncComputed(async () => {
 });
 
 async function changeAuthentication(): Promise<void> {
-  let accessStrategy: DeviceAccessStrategyKeyring | DeviceAccessStrategyPassword;
+  let accessStrategy: DeviceAccessStrategyKeyring | DeviceAccessStrategyPassword | DeviceAccessStrategySmartcard;
 
   if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.Keyring) {
     accessStrategy = {
       tag: DeviceAccessStrategyTag.Keyring,
       keyFile: props.currentDevice.keyFilePath,
     };
-  } else {
+  } else if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.Password) {
     accessStrategy = {
       tag: DeviceAccessStrategyTag.Password,
       keyFile: props.currentDevice.keyFilePath,
       password: currentPassword.value,
     };
+  } else if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.Smartcard) {
+    accessStrategy = {
+      tag: DeviceAccessStrategyTag.Smartcard,
+      keyFile: props.currentDevice.keyFilePath,
+    };
+  } else {
+    // Should not happen
+    window.electronAPI.log('error', `Unhandled authentication type for this device: ${props.currentDevice.ty.tag}`);
+    props.informationManager.present(
+      new Information({
+        message: 'MyProfilePage.errors.cannotChangeAuthentication',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+    return;
   }
 
   const saveStrategy = chooseAuthRef.value?.getSaveStrategy();
@@ -247,4 +263,8 @@ function getNextButtonText(): string {
 }
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.modal-header__title {
+  margin-right: 1.5rem;
+}
+</style>

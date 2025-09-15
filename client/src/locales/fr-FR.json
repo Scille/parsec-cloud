@@ -1095,12 +1095,21 @@
         "keyringInfo": "L'authentification sera gérée par votre système. Vous n'avez pas à retenir un mot de passe supplémentaire. N'oubliez pas de verrouiller votre session quand vous n'utilisez pas votre ordinateur !",
         "method": {
             "system": "Authentification du système",
-            "password": "Mot de passe"
+            "password": "Mot de passe",
+            "smartcard": {
+                "title": "Carte à puce",
+                "description": "La carte à puce doit être insérée et prête à l'emploi."
+            },
+            "ssoProConnect": "SSO (ProConnect)"
         },
+        "methodChosen": "Méthode choisie :",
+        "active": "Méthode active",
+        "update": "Modifier",
         "changeAuthenticationButton": "Changer de méthode",
         "changePasswordButton": "Modifier le mot de passe",
         "useKeyring": "Authentification du système",
         "usePassword": "Mot de passe",
+        "useSsoProConnect": "SSO (ProConnect)",
         "label": "Méthode d'authentification",
         "keyringUnavailableOnSystem": "Indisponible sur votre système",
         "keyringUnavailableOnWeb": "Indisponible sur le web"
@@ -1644,7 +1653,7 @@
     },
     "MyProfilePage": {
         "titleActualPassword": "Saisissez votre mot de passe",
-        "titleNewAuthentication": "Choisissez votre nouveau mode d'authentification",
+        "titleNewAuthentication": "Changer de méthode d'authentification",
         "password": "Mot de passe",
         "systemAuthentication": "Votre session est gérée avec l'authentification votre appareil.",
         "cancelButton": "Annuler",
