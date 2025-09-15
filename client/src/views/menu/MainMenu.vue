@@ -126,6 +126,25 @@
                 {{ $msTranslate('SideMenu.users') }}
               </span>
             </ion-text>
+
+            <!-- invitations -->
+            <ion-text
+              v-if="userInfo?.currentProfile === UserProfile.Admin"
+              @click="navigateTo(Routes.Invitations)"
+              class="sidebar-content-organization-button button-medium"
+              :class="currentRouteIs(Routes.Invitations) ? 'active' : ''"
+              id="sidebar-invitations"
+              button
+            >
+              <ion-icon
+                class="sidebar-content-organization-button__icon"
+                :icon="people"
+              />
+              <span class="sidebar-content-organization-button__text">
+                {{ $msTranslate('INVITATIONS') }}
+              </span>
+            </ion-text>
+
             <!-- organization information -->
             <ion-text
               @click="navigateTo(Routes.Organization)"
