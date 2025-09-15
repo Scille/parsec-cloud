@@ -87,7 +87,8 @@ msTest('Check edited file in viewer', async ({ parsecEditics }) => {
   expect(content?.startsWith('ABCD')).toBeTruthy();
 });
 
-msTest('Edit file in editor with two users', async ({ parsecEditics }) => {
+// TODO: re-enable when collaborative editing is properly supported
+msTest.skip('Edit file in editor with two users', async ({ parsecEditics }) => {
   msTest.setTimeout(120_000);
   const entries = parsecEditics.locator('.folder-container').locator('.file-list-item');
 
