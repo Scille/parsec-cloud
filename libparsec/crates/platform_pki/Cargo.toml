@@ -11,13 +11,19 @@ repository.workspace = true
 [lints]
 workspace = true
 
+[features]
+default = ["hash-sri-display"]
+hash-sri-display = ["dep:data-encoding"]
+
 [dependencies]
 thiserror = { workspace = true }
 bytes = { workspace = true }
+data-encoding = { workspace = true, optional = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 schannel = { workspace = true }
 windows-sys = { workspace = true, features = ["Win32_Security_Cryptography_UI"] }
+sha2 = { workspace = true }
 
 [target.'cfg(target_os = "linux")'.dev-dependencies]
 cryptoki = { workspace = true }
@@ -28,5 +34,5 @@ sha2 = { workspace = true }
 # We use clap to provide a CLI for examples.
 clap = { workspace = true, default-features = true, features = ["env", "derive"] }
 # We use some hex encoding in the crate's examples
-hex = { workspace = true, default-features = true }
+data-encoding = { workspace = true, default-features = true }
 anyhow = { workspace = true }

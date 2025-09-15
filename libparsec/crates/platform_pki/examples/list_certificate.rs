@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 #[cfg(target_os = "linux")]
 mod unix_only {
-
     use core::panic;
     use std::{
         collections::HashMap,
@@ -16,6 +15,7 @@ mod unix_only {
         object::{Attribute, AttributeInfo, AttributeType, ObjectClass},
         types::AuthPin,
     };
+    use libparsec_platform_pki::CertificateHash;
     use percent_encoding::{percent_encode, utf8_percent_encode, AsciiSet, NON_ALPHANUMERIC};
     use sha2::Digest;
 
@@ -204,12 +204,14 @@ mod unix_only {
                 );
 
                 println!("    URI: {pkcs11_uri}");
+                #[cfg(feature = "hash-sri-display")]
                 if *class == ObjectClass::CERTIFICATE {
                     let Attribute::Value(value) = &attrs[&Value] else {
                         panic!("Invalid attribute `value`");
                     };
                     let digest = sha2::Sha256::digest(value);
-                    println!("    fingerprint-sha256: {}", hex::encode(digest))
+                    let hash = CertificateHash::SHA256(Box::new(digest.into()));
+                    println!("    fingerprint-sha256: {hash}")
                 }
             }
 
@@ -242,7 +244,7 @@ mod unix_only {
                     .unwrap_or_else(|_| Debug::fmt(raw, f)),
                 // bool
                 Private(b) | Sign(b) | Verify(b) | Encrypt(b) | Decrypt(b) => Display::fmt(b, f),
-                // hex formatting
+                // base64 formatting
                 SerialNumber(raw)
                 | Id(raw)
                 | Value(raw)
@@ -255,7 +257,7 @@ mod unix_only {
                     if raw.is_empty() {
                         f.write_str("<empty>")
                     } else {
-                        f.write_str(&hex::encode(raw))
+                        data_encoding::BASE64.encode_write(raw.as_ref(), f)
                     }
                 }
                 CertificateType(cert_type) => Display::fmt(cert_type, f),

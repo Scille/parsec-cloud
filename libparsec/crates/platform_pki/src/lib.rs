@@ -13,11 +13,17 @@ pub enum CertificateHash {
     SHA256(Box<[u8; 32]>),
 }
 
-impl AsRef<[u8]> for CertificateHash {
-    fn as_ref(&self) -> &[u8] {
-        match self {
-            CertificateHash::SHA256(items) => items.as_ref(),
-        }
+#[cfg(feature = "hash-sri-display")]
+impl std::fmt::Display for CertificateHash {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let (hash_str, data) = match self {
+            CertificateHash::SHA256(data) => ("sha256", data.as_ref()),
+        };
+        write!(
+            f,
+            "{hash_str}-{}",
+            ::data_encoding::BASE64.encode_display(data)
+        )
     }
 }
 
@@ -44,10 +50,23 @@ pub use windows::show_certificate_selection_dialog;
 // Mock module for unsupported platform
 #[cfg(not(target_os = "windows"))]
 mod platform {
-    use crate::{CertificateDer, CertificateReference, GetDerEncodedCertificateError};
+    use crate::{
+        CertificateDer, CertificateReference, GetDerEncodedCertificateError, SignMessageError,
+        SignedMessage,
+    };
+
     pub fn get_der_encoded_certificate(
         certificate_ref: &CertificateReference,
     ) -> Result<CertificateDer, GetDerEncodedCertificateError> {
+        let _ = certificate_ref;
+        unimplemented!("platform not supported")
+    }
+
+    pub fn sign_message(
+        message: &[u8],
+        certificate_ref: &CertificateReference,
+    ) -> Result<SignedMessage, SignMessageError> {
+        let _ = message;
         let _ = certificate_ref;
         unimplemented!("platform not supported")
     }
@@ -57,7 +76,7 @@ mod platform {
 pub enum GetDerEncodedCertificateError {
     #[error("Cannot open certificate store: {}", .0)]
     CannotOpenStore(std::io::Error),
-    #[error("Cannot found certificate")]
+    #[error("Cannot find certificate")]
     NotFound,
     #[error("Cannot get certificate info: {}", .0)]
     CannotGetCertificateInfo(std::io::Error),
@@ -69,3 +88,24 @@ pub struct CertificateDer {
     pub cert_ref: CertificateReferenceIdOrHash,
     pub der_content: Bytes,
 }
+
+#[derive(Debug, thiserror::Error)]
+pub enum SignMessageError {
+    #[error("Cannot open certificate store: {}", .0)]
+    CannotOpenStore(std::io::Error),
+    #[error("Cannot find certificate")]
+    NotFound,
+    #[error("Cannot get certificate info: {}", .0)]
+    CannotGetCertificateInfo(std::io::Error),
+    #[error("Cannot acquire keypair related to certificate: {}", .0)]
+    CannotAcquireKeypair(std::io::Error),
+    #[error("Cannot sign message: {}", .0)]
+    CannotSign(std::io::Error),
+}
+
+pub struct SignedMessage {
+    pub cert_ref: CertificateReferenceIdOrHash,
+    pub signed_message: Bytes,
+}
+
+pub use platform::sign_message;
