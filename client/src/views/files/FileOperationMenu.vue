@@ -369,6 +369,7 @@ function updateImportState(data: FileOperationData, state: FileOperationState, s
         FileOperationState.CreateFailed,
         FileOperationState.MoveFailed,
         FileOperationState.CopyFailed,
+        FileOperationState.ImportFailed,
         FileOperationState.Cancelled,
         FileOperationState.RestoreFailed,
         FileOperationState.DownloadFailed,
@@ -508,6 +509,7 @@ async function onFileOperationEvent(
     case FileOperationState.CreateFailed:
     case FileOperationState.MoveFailed:
     case FileOperationState.CopyFailed:
+    case FileOperationState.ImportFailed:
     case FileOperationState.RestoreFailed:
     case FileOperationState.DownloadFailed:
     case FileOperationState.DownloadArchiveFailed:

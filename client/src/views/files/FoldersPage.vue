@@ -724,6 +724,7 @@ async function onFileOperationState(state: FileOperationState, operationData?: F
       FileOperationState.WriteError,
       FileOperationState.MoveFailed,
       FileOperationState.CopyFailed,
+      FileOperationState.ImportFailed,
     ].includes(state) &&
     operationData
   ) {
