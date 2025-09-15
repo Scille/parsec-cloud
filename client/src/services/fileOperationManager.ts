@@ -27,6 +27,7 @@ import {
   moveEntry,
   openFile,
   readFile,
+  rename,
   resizeFile,
   writeFile,
 } from '@/parsec';
@@ -50,6 +51,7 @@ enum FileOperationState {
   MoveAdded,
   CopyAdded,
   ImportStarted,
+  ImportFailed,
   MoveStarted,
   CopyStarted,
   CreateFailed,
@@ -951,8 +953,9 @@ class FileOperationManager {
 
   private async doImport(data: ImportData): Promise<void> {
     await this.sendState(FileOperationState.ImportStarted, data);
+    const tmpFileName = `._${crypto.randomUUID()}`;
     const reader = data.file.stream().getReader();
-    const filePath = await Path.join(data.path, data.file.name);
+    const tmpFilePath = await Path.join(data.path, tmpFileName);
 
     if (data.path !== '/') {
       const result = await createFolder(data.workspaceHandle, data.path);
@@ -967,7 +970,7 @@ class FileOperationManager {
 
     const start = DateTime.now();
 
-    const openResult = await openFile(data.workspaceHandle, filePath, { write: true, truncate: true, create: true });
+    const openResult = await openFile(data.workspaceHandle, tmpFilePath, { write: true, truncate: true, create: true });
 
     if (!openResult.ok) {
       await this.sendState(FileOperationState.CreateFailed, data, { error: openResult.error.tag });
@@ -979,7 +982,7 @@ class FileOperationManager {
     const resizeResult = await resizeFile(data.workspaceHandle, fd, data.file.size);
     if (!resizeResult.ok) {
       await closeFile(data.workspaceHandle, fd);
-      await deleteFile(data.workspaceHandle, filePath);
+      await deleteFile(data.workspaceHandle, tmpFilePath);
       await this.sendState(FileOperationState.WriteError, data, { error: resizeResult.error.tag as unknown as WorkspaceFdWriteErrorTag });
       return;
     }
@@ -1006,7 +1009,7 @@ class FileOperationManager {
         // Close the file
         await closeFile(data.workspaceHandle, fd);
         // Delete the file
-        await deleteFile(data.workspaceHandle, filePath);
+        await deleteFile(data.workspaceHandle, tmpFilePath);
         // Inform about the cancellation
         await this.sendState(FileOperationState.Cancelled, data);
         return;
@@ -1019,7 +1022,7 @@ class FileOperationManager {
 
         if (!writeResult.ok) {
           await closeFile(data.workspaceHandle, fd);
-          await deleteFile(data.workspaceHandle, filePath);
+          await deleteFile(data.workspaceHandle, tmpFilePath);
           await this.sendState(FileOperationState.WriteError, data, { error: writeResult.error.tag });
           return;
         } else {
@@ -1032,6 +1035,14 @@ class FileOperationManager {
       }
     }
     await closeFile(data.workspaceHandle, fd);
+
+    // Rename tmp file to expected name
+    const result = await rename(data.workspaceHandle, tmpFilePath, data.file.name, true);
+    if (!result.ok) {
+      await deleteFile(data.workspaceHandle, tmpFilePath);
+      await this.sendState(FileOperationState.ImportFailed, data, { error: result.error.tag });
+      return;
+    }
 
     const end = DateTime.now();
     const diff = end.toMillis() - start.toMillis();

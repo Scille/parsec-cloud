@@ -55,9 +55,12 @@ export async function rename(
   workspaceHandle: WorkspaceHandle,
   path: FsPath,
   newName: EntryName,
+  canReplace = false,
 ): Promise<Result<FsPath, WorkspaceMoveEntryError>> {
   const newPath = await Path.join(await Path.parent(path), newName);
-  const result = await libparsec.workspaceMoveEntry(workspaceHandle, path, newPath, { tag: MoveEntryModeTag.NoReplace });
+  const result = await libparsec.workspaceMoveEntry(workspaceHandle, path, newPath, {
+    tag: canReplace ? MoveEntryModeTag.CanReplace : MoveEntryModeTag.NoReplace,
+  });
   if (result.ok) {
     return { ok: true, value: newPath };
   }
