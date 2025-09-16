@@ -71,10 +71,10 @@
         {{ $msTranslate('HomePage.organizationList.loggedIn') }}
       </span>
     </ion-text>
-    <img
-      src="@/assets/images/arrow-forward-circle.svg"
-      class="organization-card-icon"
+    <ms-image
       v-if="!orgNameOnly && !(isTrialOrg && isSmallDisplay) && !loggedIn"
+      class="organization-card-icon"
+      :image="ArrowForwardCircleGradient"
     />
   </div>
 </template>
@@ -88,6 +88,7 @@ import { MsImage, formatTimeSince, I18n, LogoIconWhite, useWindowSize } from 'me
 import { formatExpirationTime, isTrialOrganizationDevice, getDurationBeforeExpiration } from '@/common/organization';
 import { Duration, DateTime } from 'luxon';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
+import ArrowForwardCircleGradient from '@/assets/images/arrow-forward-circle.svg?raw';
 
 const { isSmallDisplay, isLargeDisplay } = useWindowSize();
 const isTrialOrg = ref(false);

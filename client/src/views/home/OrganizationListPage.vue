@@ -31,7 +31,7 @@
       </div>
     </div>
 
-    <template v-if="deviceList.length === 0 && !querying">
+    <template v-if="deviceList.length === 0 && pkiRequestList.length === 0 && !querying">
       <!-- No organization -->
       <div class="organization-content no-devices">
         <div class="create-organization">
@@ -233,7 +233,7 @@
         <div class="organization-filter">
           <!-- No use in showing the sort/filter options for less than one device -->
           <ms-search-input
-            :placeholder="'HomePage.organizationList.search'"
+            placeholder="HomePage.organizationList.search"
             v-model="searchQuery"
             id="search-input-organization"
             ref="searchInput"
@@ -242,7 +242,7 @@
             v-if="confLoaded"
             v-show="deviceList.length > 1"
             id="organization-filter-select"
-            :label="'HomePage.organizationList.labelSortBy'"
+            label="HomePage.organizationList.labelSortBy"
             :options="msSorterOptions"
             :default-option="sortBy"
             :sort-by-asc="sortByAsc"
@@ -262,12 +262,21 @@
           </ion-button>
         </div>
         <div class="organization-list">
+          <organization-pki-request
+            v-for="pkiRequest in pkiRequestList"
+            :key="pkiRequest.certificate"
+            :request="pkiRequest"
+            @join-organization="$emit('pkiRequestClick', $event)"
+            @delete-request="$emit('pkiRequestClick', $event)"
+          />
+
           <ion-text
             class="no-match-result body"
             v-show="searchQuery.length > 0 && filteredDevices.length === 0 && deviceList.length > 0"
           >
             {{ $msTranslate({ key: 'HomePage.organizationList.noMatch', data: { query: searchQuery } }) }}
           </ion-text>
+
           <organization-card
             v-for="device in filteredDevices"
             :key="device.deviceId"
@@ -309,7 +318,8 @@ import {
   useWindowSize,
 } from 'megashark-lib';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
-import { AccountInvitation, AvailableDevice, getLoggedInDevices, LoggedInDeviceInfo } from '@/parsec';
+import OrganizationPkiRequest from '@/components/organizations/OrganizationPkiRequest.vue';
+import { AccountInvitation, AvailableDevice, getLoggedInDevices, LocalJoinRequest, LoggedInDeviceInfo } from '@/parsec';
 import { Routes } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
@@ -329,11 +339,13 @@ const emits = defineEmits<{
   (e: 'recoverClick'): void;
   (e: 'createOrJoinOrganizationClick', event: Event): void;
   (e: 'invitationClick', invitation: AccountInvitation): void;
+  (e: 'pkiRequestClick', pkiRequest: LocalJoinRequest): void;
 }>();
 
 const props = defineProps<{
   deviceList: AvailableDevice[];
   invitationList: AccountInvitation[];
+  pkiRequestList: LocalJoinRequest[];
   querying: boolean;
 }>();
 

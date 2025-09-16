@@ -311,7 +311,36 @@
             "more": "En savoir plus"
         },
         "lostDevice": "Vous avez perdu votre accès ?",
-        "recoverDevice": "Récupérer ma session"
+        "recoverDevice": "Récupérer ma session",
+        "organizationRequest": {
+            "status": {
+                "pending": "En attente",
+                "rejected": "Rejetée"
+            },
+            "requestSent": {
+                "success": "Votre demande pour rejoindre l'organisation a été envoyée.",
+                "failure": "Échec de l'envoi de la demande. Veuillez réessayer plus tard."
+            },
+            "requestCancelled": "Votre demande pour rejoindre l'organisation a bien été annulée.",
+            "requestDeleted": "Votre demande pour rejoindre l'organisation a bien été supprimée.",
+            "joinButton": "Rejoindre",
+            "pending": {
+                "title": "Demande d'organisation en attente",
+                "message": "Votre demande pour rejoindre l'organisation est toujours en attente. Êtes-vous sûr de vouloir l'annuler ?",
+                "yes": "Annuler la demande",
+                "no": "Non, attendre la validation"
+            },
+            "rejected": {
+                "title": "Demande d'organisation rejetée",
+                "message": "Votre demande pour rejoindre l'organisation a été rejetée par un administrateur. Voulez-vous la supprimer ?",
+                "yes": "Supprimer la demande",
+                "no": "Conserver la demande"
+            },
+            "accepted": {
+                "joinSuccess": "Vous avez rejoint l'organisation avec succès.",
+                "joinFailure": "Échec de l'adhésion à l'organisation. Veuillez réessayer plus tard."
+            }
+        }
     },
     "CreateOrganization": {
         "fullname": "Nom complet",

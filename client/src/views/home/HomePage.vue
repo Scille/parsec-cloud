@@ -39,8 +39,10 @@
                   @recover-click="onForgottenPasswordClicked"
                   @create-or-join-organization-click="openCreateOrJoin"
                   @invitation-click="onInvitationClicked"
+                  @pki-request-click="onPkiRequestClicked"
                   :device-list="deviceList"
                   :invitation-list="invitationList"
+                  :pki-request-list="pkiRequestList"
                   :querying="querying"
                 />
               </template>
@@ -84,6 +86,7 @@ import {
   claimAndBootstrapLinkValidator,
   claimDeviceLinkValidator,
   claimUserLinkValidator,
+  pkiLinkValidator,
 } from '@/common/validators';
 import {
   AccessStrategy,
@@ -104,6 +107,12 @@ import {
   getOrganizationCreationDate,
   AccountInvitation,
   DeviceAccessStrategyTag,
+  requestJoinOrganization,
+  LocalJoinRequest,
+  listLocalJoinRequests,
+  JoinRequestStatus,
+  cancelLocalJoinRequest,
+  confirmLocalJoinRequest,
 } from '@/parsec';
 import { RouteBackup, Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, switchOrganization, watchRoute } from '@/router';
 import { EventData, EventDistributor, Events } from '@/services/eventDistributor';
@@ -165,6 +174,7 @@ const loginInProgress = ref(false);
 const queryInProgress = ref(false);
 const querying = ref(true);
 const deviceList: Ref<AvailableDevice[]> = ref([]);
+const pkiRequestList: Ref<LocalJoinRequest[]> = ref([]);
 const invitationList = ref<Array<AccountInvitation>>([]);
 const activeTab = ref(AccountSettingsTabs.Settings);
 let eventCallbackId!: string;
@@ -233,8 +243,7 @@ onMounted(async () => {
   storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
 
   await handleQuery();
-  await refreshDeviceList();
-  await refreshInvitationList();
+  await Promise.allSettled([refreshDeviceList(), refreshInvitationList(), refreshPkiRequestsList()]);
 });
 
 onUnmounted(() => {
@@ -323,6 +332,17 @@ async function refreshDeviceList(): Promise<void> {
   querying.value = false;
 }
 
+async function refreshPkiRequestsList(): Promise<void> {
+  queryInProgress.value = true;
+  const result = await listLocalJoinRequests();
+  if (result.ok) {
+    pkiRequestList.value = result.value;
+  } else {
+    pkiRequestList.value = [];
+  }
+  queryInProgress.value = false;
+}
+
 async function handleQuery(): Promise<void> {
   if (queryInProgress.value === true) {
     return;
@@ -392,10 +412,92 @@ async function onJoinOrganizationClicked(): Promise<void> {
   if (link) {
     if ((await bootstrapLinkValidator(link)).validity === Validity.Valid) {
       await openCreateOrganizationModal(link);
+    } else if ((await pkiLinkValidator(link)).validity === Validity.Valid) {
+      await handleJoinByPki(link);
     } else {
       await openJoinByLinkModal(link);
     }
   }
+}
+
+async function handleJoinByPki(link: string): Promise<void> {
+  const result = await requestJoinOrganization(link);
+
+  if (result.ok) {
+    await refreshPkiRequestsList();
+    informationManager.present(
+      new Information({
+        message: 'HomePage.organizationRequest.requestSent.success',
+        level: InformationLevel.Success,
+      }),
+      PresentationMode.Toast,
+    );
+  } else {
+    informationManager.present(
+      new Information({
+        message: 'HomePage.organizationRequest.requestSent.failure',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+  }
+}
+
+async function onPkiRequestClicked(pkiRequest: LocalJoinRequest): Promise<void> {
+  if (pkiRequest.status === JoinRequestStatus.Pending) {
+    const answer = await askQuestion('HomePage.organizationRequest.pending.title', 'HomePage.organizationRequest.pending.message', {
+      yesText: 'HomePage.organizationRequest.pending.yes',
+      noText: 'HomePage.organizationRequest.pending.no',
+    });
+    if (answer === Answer.Yes) {
+      await cancelLocalJoinRequest(pkiRequest);
+      informationManager.present(
+        new Information({
+          message: 'HomePage.organizationRequest.requestCancelled',
+          level: InformationLevel.Success,
+        }),
+        PresentationMode.Toast,
+      );
+    }
+  } else if (pkiRequest.status === JoinRequestStatus.Rejected) {
+    const answer = await askQuestion('HomePage.organizationRequest.rejected.title', 'HomePage.organizationRequest.rejected.message', {
+      yesText: 'HomePage.organizationRequest.rejected.yes',
+      noText: 'HomePage.organizationRequest.rejected.no',
+    });
+    if (answer === Answer.Yes) {
+      await cancelLocalJoinRequest(pkiRequest);
+      informationManager.present(
+        new Information({
+          message: 'HomePage.organizationRequest.requestDeleted',
+          level: InformationLevel.Success,
+        }),
+        PresentationMode.Toast,
+      );
+    }
+  } else if (pkiRequest.status === JoinRequestStatus.Accepted) {
+    const result = await confirmLocalJoinRequest(pkiRequest);
+    if (result.ok) {
+      informationManager.present(
+        new Information({
+          message: 'HomePage.organizationRequest.accepted.joinSuccess',
+          level: InformationLevel.Success,
+        }),
+        PresentationMode.Toast,
+      );
+      await refreshDeviceList();
+      // TODO: automatically login with the new device
+      // await login(result.value, AccessStrategy.useSmartcard(result.value));
+    } else {
+      informationManager.present(
+        new Information({
+          message: 'HomePage.organizationRequest.accepted.joinFailure',
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Toast,
+      );
+    }
+  }
+  await refreshPkiRequestsList();
 }
 
 async function openCreateOrganizationModal(bootstrapLink?: string, defaultServerChoice?: ServerType): Promise<void> {
@@ -505,6 +607,8 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
     }
     if (device.ty.tag === AvailableDeviceTypeTag.Keyring) {
       await login(device, AccessStrategy.useKeyring(device));
+    } else if (device.ty.tag === AvailableDeviceTypeTag.Smartcard) {
+      await login(device, AccessStrategy.useSmartcard(device));
     } else if (device.ty.tag === AvailableDeviceTypeTag.AccountVault) {
       try {
         const strategy = await AccessStrategy.useAccountVault(device);
