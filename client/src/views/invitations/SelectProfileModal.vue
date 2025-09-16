@@ -2,33 +2,35 @@
 
 <template>
   <ms-modal
-    title="SELECT PROFILE"
+    title="InvitationsPage.pkiRequests.selectProfileModal.title"
     :close-button="{ visible: true }"
     :confirm-button="{
       disabled: selectedProfile === undefined,
-      label: 'SELECT PROFILE',
+      label: 'InvitationsPage.pkiRequests.selectProfileModal.actions.confirm',
       onClick: validateProfile,
     }"
     :cancel-button="{
-      label: 'CANCEL',
+      label: 'InvitationsPage.pkiRequests.selectProfileModal.actions.cancel',
       disabled: false,
       onClick: dismissModal,
     }"
   >
-    <user-information
-      class="user-details"
-      :default-email="email"
-      :default-name="name"
-      :email-enabled="false"
-      :name-enabled="false"
-    />
-    <ms-dropdown
-      class="dropdown"
-      title="PROFILE DROPDOWN"
-      label="PROFILE DROPDOWN PLACEHOLDER"
-      :options="profileOptions"
-      @change="selectedProfile = $event.option.key"
-    />
+    <div class="select-profile-modal-container">
+      <user-information
+        class="user-details"
+        :default-email="email"
+        :default-name="name"
+        :email-enabled="false"
+        :name-enabled="false"
+      />
+      <ms-dropdown
+        class="dropdown"
+        title="InvitationsPage.pkiRequests.selectProfileModal.profileLabel"
+        label="InvitationsPage.pkiRequests.selectProfileModal.profilePlaceholder"
+        :options="profileOptions"
+        @change="selectedProfile = $event.option.key"
+      />
+    </div>
   </ms-modal>
 </template>
 
@@ -76,4 +78,16 @@ async function dismissModal(): Promise<boolean> {
 }
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.select-profile-modal-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.dropdown,
+.user-details {
+  width: 100%;
+}
+</style>

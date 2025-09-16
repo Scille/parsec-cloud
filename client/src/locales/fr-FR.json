@@ -1478,7 +1478,12 @@
                 "email": "Adresse email",
                 "sentOn": "Envoyée le"
             },
-            "greet": "Accueillir"
+            "greet": "Accueillir",
+            "tooltips": {
+                "delete": "Supprimer l'invitation",
+                "resend": "Renvoyer l'email",
+                "copyLink": "Copier le lien"
+            }
         },
         "pkiRequests": {
             "tab": "Demandes par carte à puces",
@@ -1517,6 +1522,25 @@
                 "acceptedSuccess": "Cette demande a été acceptée",
                 "rejectedFailed": "Impossible de rejeter cette demande",
                 "rejectedSuccess": "Cette demande a été rejetée"
+            },
+            "linkCopiedToClipboard": {
+                "success": "Le lien PKI a été copié dans le presse-papiers.",
+                "failed": "Échec de la copie du lien PKI. Votre navigateur ou appareil ne semble pas prendre en charge le copier/coller."
+            },
+            "selectProfileModal": {
+                "title": "Compléter les informations de l'utilisateur",
+                "profileLabel": "Profil de l'utilisateur",
+                "profilePlaceholder": "Sélectionner un profil",
+                "actions": {
+                    "confirm": "Valider la demande",
+                    "cancel": "Annuler"
+                },
+                "errors": {
+                    "noProfile": "Vous devez sélectionner un profil."
+                }
+            },
+            "tooltips": {
+                "delete": "Supprimer la demande"
             }
         }
     },

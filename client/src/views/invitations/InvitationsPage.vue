@@ -373,8 +373,8 @@ async function onAcceptPkiRequestClicked(req: OrganizationJoinRequest): Promise<
     }
   } else if (req.validity === JoinRequestValidity.Invalid) {
     const answer = await askQuestion(
-      'InvitationsPage.pkiRequests.validationModal.error.invalid.title',
-      'InvitationsPage.pkiRequests.validationModal.error.invalid.description',
+      'InvitationsPage.pkiRequests.validationModal.error.notValid.title',
+      'InvitationsPage.pkiRequests.validationModal.error.notValid.description',
     );
     if (answer !== Answer.Yes) {
       return;
@@ -545,8 +545,6 @@ async function refreshAll(): Promise<void> {
   }
 
   #copy-link-pki-request-button {
-    --padding-vertical: 0.5rem;
-    --padding-horizontal: 1rem;
     --background: var(--parsec-color-light-secondary-inversed-contrast);
     --background-hover: var(--parsec-color-light-secondary-medium);
     color: var(--parsec-color-light-secondary-soft-text);
@@ -554,7 +552,7 @@ async function refreshAll(): Promise<void> {
 
     &::part(native) {
       border: 1px solid var(--parsec-color-light-secondary-medium);
-      padding: 0.625rem 1rem;
+      padding: 0.5rem 1rem;
     }
 
     &:last-of-type .button-icon {

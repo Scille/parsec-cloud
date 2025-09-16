@@ -1479,7 +1479,12 @@
                 "email": "Email",
                 "sentOn": "Sent on"
             },
-            "greet": "Greet"
+            "greet": "Greet",
+            "tooltips": {
+                "delete": "Delete invitation",
+                "resend": "Resend email",
+                "copyLink": "Copy link"
+            }
         },
         "pkiRequests": {
             "tab": "PKI requests",
@@ -1514,12 +1519,29 @@
                         "description": "The certificate provided by the user does not match the root certificate. Are you sure you want to confirm adding this user?"
                     }
                 },
-                "failed": "Cannot accept this request",
-                "success": "This request has been accepted"
+                "acceptedFailed": "Cannot accept this request",
+                "acceptedSuccess": "This request has been accepted",
+                "rejectedFailed": "Cannot reject this request",
+                "rejectedSuccess": "This request has been rejected"
             },
             "linkCopiedToClipboard": {
                 "success": "PKI link has been copied to clipboard.",
                 "failed": "Failed to copy the pki link. Your browser or device does not seem to support copy/paste."
+            },
+            "selectProfileModal": {
+                "title": "Complete user information",
+                "profileLabel": "User profile",
+                "profilePlaceholder": "Select a profile",
+                "actions": {
+                    "confirm": "Validate the request",
+                    "cancel": "Cancel"
+                },
+                "errors": {
+                    "noProfile": "You must select a profile."
+                }
+            },
+            "tooltips": {
+                "delete": "Delete request"
             }
         }
     },
