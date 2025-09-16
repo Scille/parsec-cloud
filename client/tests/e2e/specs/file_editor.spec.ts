@@ -66,6 +66,7 @@ msTest('Check edited file in viewer', async ({ parsecEditics }) => {
     .contentFrame()
     .locator('#cp-app-code-editor')
     .locator('.CodeMirror-code');
+  await expect(editor).toBeVisible();
   await expect(editor.locator('pre').nth(0)).toHaveText(
     '# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS',
   );
@@ -205,6 +206,7 @@ msTest('Check file edited by other user', async ({ parsecEditics }) => {
     .locator('.CodeMirror-code')
     .locator('pre')
     .nth(0);
+  await expect(editorAlice).toBeVisible();
   await expect(editorAlice).toHaveText('# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS');
   await editorAlice.fill('New first line!');
   await waitUntilSaved(parsecEditics);
@@ -237,5 +239,6 @@ msTest('Check file edited by other user', async ({ parsecEditics }) => {
     .locator('.CodeMirror-code')
     .locator('pre')
     .nth(0);
+  await expect(editorBob).toBeVisible();
   await expect(editorBob).toHaveText('New first line!');
 });

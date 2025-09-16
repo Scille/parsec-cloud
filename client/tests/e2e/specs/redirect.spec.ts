@@ -47,3 +47,9 @@ msTest('Navigate to an unknown logged in URL with a valid handle', async ({ conn
   await expect(connected).toBeHomePage();
   await expect(connected).toHaveURL(new RegExp('/home$'));
 });
+
+msTest('Reload page while logged in', async ({ connected }) => {
+  await connected.reload();
+  await setupNewPage(connected, { skipGoto: true });
+  await expect(connected).toBeHomePage();
+});
