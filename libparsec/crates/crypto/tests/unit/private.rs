@@ -35,7 +35,7 @@ fn round_trip() {
 }
 
 #[platform::test]
-fn generate_shared_secret_key() {
+fn generate_shared_secret_key_ok() {
     let privkey1 = PrivateKey::from(hex!(
         "7d406ac1e4df6c16d656290350499345432e8f75260c2809302ba8c4500548c2"
     ));
@@ -60,19 +60,30 @@ fn generate_shared_secret_key() {
     let encrypted = claimer_shared_key.encrypt(b"Hello, world !");
     let decrypted = greeter_shared_key.decrypt(&encrypted).unwrap();
     assert_eq!(&decrypted, b"Hello, world !");
+}
 
+#[platform::test]
+fn generate_shared_secret_key_non_contributory() {
     // Shared secret key generation is based on libsodium's `crypto_scalarmult`,
     // which itself uses `x25519` Diffie-Hellman, in which an all-zero key cause
     // issue with "contributory" behavior (aka that each party contributed a public
     // value which increased the security of the resulting shared secret).
+    //
     // See https://vnhacker.blogspot.com/2015/09/why-not-validating-curve25519-public.html
-    let bad_pub_key = PublicKey::from(hex!(
-        "0000000000000000000000000000000000000000000000000000000000000000"
-    ));
-    assert_matches!(
-        privkey1.generate_shared_secret_key(&bad_pub_key, SharedSecretKeyRole::Claimer),
-        Err(CryptoError::SharedSecretKey(_)),
-    );
+    //
+    // Last but not least, there is multiple ways to end up with a all-zero, and we test
+    // all of them using the `EIGHT_TORSION` list.
+    for small_order_ed_point in curve25519_dalek::constants::EIGHT_TORSION {
+        let montgomery_point = small_order_ed_point.to_montgomery();
+        let raw_point = montgomery_point.to_bytes();
+        let invalid_pk = PublicKey::from(raw_point);
+        let sk = PrivateKey::generate();
+
+        assert_matches!(
+            sk.generate_shared_secret_key(&invalid_pk, SharedSecretKeyRole::Claimer),
+            Err(CryptoError::SharedSecretKey(_)),
+        );
+    }
 }
 
 #[platform::test]

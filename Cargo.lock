@@ -2306,6 +2306,7 @@ dependencies = [
  "blake2",
  "crypto_box",
  "crypto_secretbox",
+ "curve25519-dalek",
  "data-encoding",
  "digest",
  "ed25519-dalek",
