@@ -381,6 +381,8 @@ function getTitleForRoute(): Translatable {
   switch (getCurrentRouteName()) {
     case Routes.Users:
       return 'HeaderPage.titles.users';
+    case Routes.Invitations:
+      return 'HeaderPage.titles.invitations';
     case Routes.Storage:
       return 'HeaderPage.titles.organization.storage';
     case Routes.Organization:

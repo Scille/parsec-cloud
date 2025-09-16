@@ -138,10 +138,10 @@
             >
               <ion-icon
                 class="sidebar-content-organization-button__icon"
-                :icon="people"
+                :icon="mailUnread"
               />
               <span class="sidebar-content-organization-button__text">
-                {{ $msTranslate('INVITATIONS') }}
+                {{ $msTranslate('SideMenu.invitations') }}
               </span>
             </ion-text>
 
@@ -353,6 +353,7 @@ import {
   personAdd,
   chevronForward,
   caretForward,
+  mailUnread,
 } from 'ionicons/icons';
 import { SidebarWorkspaceItem, SidebarRecentFileItem, SidebarMenuList } from '@/components/sidebar';
 import {

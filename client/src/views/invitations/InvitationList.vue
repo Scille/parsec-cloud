@@ -1,25 +1,98 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div>
+  <ion-list class="list invitations-container-list">
+    <ion-list-header
+      class="invitations-list-header"
+      lines="full"
+      v-if="isLargeDisplay"
+    >
+      <ion-text class="invitations-list-header__label cell-title label-email">
+        {{ $msTranslate('InvitationsPage.emailInvitation.listDisplayTitles.email') }}
+      </ion-text>
+      <ion-text class="invitations-list-header__label cell-title label-sentOn">
+        {{ $msTranslate('InvitationsPage.emailInvitation.listDisplayTitles.sentOn') }}
+      </ion-text>
+      <ion-text class="invitations-list-header__label cell-title label-space" />
+    </ion-list-header>
     <div
       class="invitation"
       v-for="invitation in invitations"
       :key="invitation.token"
     >
-      {{ invitation.claimerEmail }} {{ I18n.formatDate(invitation.createdOn, 'long') }}
-      <ion-button @click="$emit('greetClick', invitation)">GREET</ion-button>
-      <ion-button @click="$emit('copyLinkClick', invitation)">COPY LINK</ion-button>
-      <ion-button @click="$emit('sendEmailClick', invitation)">RESEND EMAIL</ion-button>
-      <ion-button @click="$emit('deleteClick', invitation)">DELETE</ion-button>
+      <ion-item
+        button
+        class="invitation-list-item"
+        lines="full"
+      >
+        <!-- invitation mail -->
+        <div class="invitation-email">
+          <ion-text class="invitation-email__label cell">
+            {{ invitation.claimerEmail }}
+          </ion-text>
+        </div>
+
+        <!-- invitation created on -->
+        <div class="invitation-sentOn">
+          <ion-text class="invitation-sentOn__label cell">
+            {{ $msTranslate(formatTimeSince(invitation.createdOn, '--', 'short')) }}
+          </ion-text>
+        </div>
+
+        <!-- actions -->
+        <div class="invitation-actions">
+          <ion-button
+            @click="$emit('greetClick', invitation)"
+            class="primary-button button-medium button-default"
+            size="default"
+          >
+            {{ $msTranslate('InvitationsPage.emailInvitation.greet') }}
+          </ion-button>
+          <div class="invitation-actions-secondary">
+            <ion-button
+              @click="$emit('copyLinkClick', invitation)"
+              class="invitation-actions-secondary__button"
+              fill="clear"
+            >
+              <ion-icon
+                :icon="copy"
+                class="button-icon"
+              />
+            </ion-button>
+            <ion-button
+              @click="$emit('sendEmailClick', invitation)"
+              class="invitation-actions-secondary__button"
+              fill="clear"
+            >
+              <ion-icon
+                :icon="mail"
+                class="button-icon"
+              />
+            </ion-button>
+            <ion-button
+              @click="$emit('deleteClick', invitation)"
+              class="invitation-actions-secondary__button"
+              fill="clear"
+            >
+              <ion-icon
+                :icon="trash"
+                class="button-icon"
+              />
+            </ion-button>
+          </div>
+        </div>
+      </ion-item>
     </div>
-  </div>
+  </ion-list>
 </template>
 
 <script setup lang="ts">
 import { UserInvitation } from '@/parsec';
-import { IonButton } from '@ionic/vue';
-import { I18n } from 'megashark-lib';
+import { IonButton, IonList, IonText, IonIcon, IonItem, IonListHeader } from '@ionic/vue';
+import { copy, mail, trash } from 'ionicons/icons';
+import { formatTimeSince, useWindowSize } from 'megashark-lib';
+
+const { isLargeDisplay } = useWindowSize();
 
 defineProps<{
   invitations: Array<UserInvitation>;
@@ -34,39 +107,25 @@ defineEmits<{
 </script>
 
 <style scoped lang="scss">
-.invitation {
-  font-size: 150%;
-  text-shadow:
-    5px 5px 0 red,
-    -10px -10px 0 lime,
-    20px 20px 50px cyan,
-    -20px -20px 50px magenta;
+.invitations-container-list {
+  padding: 0;
 }
 
-.invitation {
-  background: linear-gradient(90deg, hotpink, chartreuse, deepskyblue, orange, hotpink);
-  background-size: 200% 200%;
-  animation: gradientScroll 3s infinite linear;
-}
-@keyframes gradientScroll {
-  0% {
-    background-position: 0% 50%;
-  }
-  100% {
-    background-position: 100% 50%;
-  }
-}
+.invitation-list-item {
+  --background-hover: var(--parsec-color-light-secondary-background);
+  --background-hover-opacity: 1;
 
-.invitation {
-  display: inline-block;
-  animation: wobble 0.5s infinite ease-in-out alternate;
-}
-@keyframes wobble {
-  from {
-    transform: rotate(-10deg) scale(0.9);
+  &::part(native) {
+    padding: 0.625rem 1rem 0.625rem 2rem;
+    cursor: default;
   }
-  to {
-    transform: rotate(10deg) scale(1.1);
+
+  .invitation-email {
+    color: var(--parsec-color-light-secondary-text);
+  }
+
+  .invitation-sentOn {
+    color: var(--parsec-color-light-secondary-grey);
   }
 }
 </style>

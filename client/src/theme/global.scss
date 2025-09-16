@@ -61,19 +61,6 @@ svg {
   }
 }
 
-.user-list-header,
-.workspace-list-header,
-.folder-list-header,
-.invitation-list-header {
-  color: var(--parsec-color-light-secondary-grey);
-  padding-inline-start: 0;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: var(--parsec-color-light-secondary-opacity30);
-  backdrop-filter: blur(10px);
-}
-
 /* ----- item counter ------ */
 .counter {
   color: var(--parsec-color-light-secondary-text);

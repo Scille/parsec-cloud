@@ -464,6 +464,7 @@
             "workspaces": "Mes espaces",
             "about": "À propos",
             "users": "Utilisateurs",
+            "invitations": "Invitations",
             "organization": {
                 "storage": "Stockage",
                 "information": "Informations"
@@ -959,6 +960,7 @@
         "noWorkspace": "Aucun espace de travail",
         "noRecentWorkspace": "Aucun espace de travail récent",
         "users": "Utilisateurs",
+        "invitations": "Invitations",
         "storage": "Stockage",
         "information": "Informations",
         "goToHome": "Mes espaces",
@@ -1466,6 +1468,56 @@
             "update": "Profil",
             "revoke": "Révoquer",
             "roles": "Rôles"
+        }
+    },
+    "InvitationsPage": {
+        "emailInvitation": {
+            "tab": "Invitation par adresse mail",
+            "emptyState": "Aucune invitation par email en attente.",
+            "listDisplayTitles": {
+                "email": "Adresse email",
+                "sentOn": "Envoyée le"
+            },
+            "greet": "Accueillir"
+        },
+        "pkiRequests": {
+            "tab": "Demandes par carte à puces",
+            "emptyState": "Aucune demande PKI en attente.",
+            "copyLink": "Copier le lien (PKI)",
+            "listDisplayTitles": {
+                "name": "Nom",
+                "email": "Email",
+                "createdOn": "Date de la demande",
+                "certificate": "Certificat"
+            },
+            "accept": "Accepter",
+            "certificate": {
+                "valid": "Certificat valide",
+                "invalid": "Certificat invalide",
+                "unknown": "Certificat inconnu"
+            },
+            "rootCertificate": {
+                "missingCertificateTitle": "Certificat racine requis",
+                "missingCertificateDescription": "Un certificat racine est nécessaire pour valider les demandes reçues par PKI. Le certificat sera réinitialisé à chaque réouverture de l'organisation.",
+                "setRootCertificate": "Ajouter le certificat racine",
+                "updateRootCertificate": "Mettre à jour le certificat racine"
+            },
+            "validationModal": {
+                "error": {
+                    "unknown": {
+                        "title": "Ajout d'un utilisateur avec certificat inconnu",
+                        "description": "Vous êtes sur le point d'ajouter un utilisateur possédant un certificat inconnu. Nous ne pouvons vérifier son identité. Êtes-vous sûr de confirmer l'ajout de cet utilisateur ?"
+                    },
+                    "notValid": {
+                        "title": "Ajout d'un utilisateur avec certificat non valide",
+                        "description": "Le certificat fourni par l'utilisateur ne correspond pas au certificat racine. Êtes-vous sûr de confirmer l'ajout de cet utilisateur ?"
+                    }
+                },
+                "acceptedFailed": "Impossible d'accepter cette demande",
+                "acceptedSuccess": "Cette demande a été acceptée",
+                "rejectedFailed": "Impossible de rejeter cette demande",
+                "rejectedSuccess": "Cette demande a été rejetée"
+            }
         }
     },
     "AboutPage": {
