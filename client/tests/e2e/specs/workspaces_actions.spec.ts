@@ -190,16 +190,21 @@ msTest('Check workspace rename in header breadcrumb', async ({ workspaces }) => 
   const bobTab = await workspaces.openNewTab();
   await login(bobTab, 'Boby McBobFace');
   await bobTab.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
+  await expect(bobTab).toBeDocumentPage();
   await expect(bobTab).toHaveHeader(['wksp1'], true, true);
 
   // Rename workspace and check both headers
   const sidebarRecentWorkspaces = workspaces.locator('#sidebar-workspaces-recent');
   const sidebarWorkspaceButton = sidebarRecentWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0);
   await expect(sidebarWorkspaceButton).toHaveText('wksp1');
-  await sidebarWorkspaceButton.click({ button: 'right' });
   const popover = workspaces.locator('.workspace-context-menu');
+  await expect(popover).toBeHidden();
+  await sidebarWorkspaceButton.click({ button: 'right' });
+  await expect(popover).toBeVisible();
+  await expect(popover.getByRole('listitem').nth(1)).toHaveText('Rename');
   await popover.getByRole('listitem').nth(1).click();
   await fillInputModal(workspaces, 'New-wksp1', true);
+  await expect(workspaces).toShowToast('Workspace has been successfully renamed to New-wksp1.', 'Success');
   await expect(workspaces).toHaveHeader(['New-wksp1'], true, true);
   await expect(bobTab).toHaveHeader(['New-wksp1'], true, true);
 });
