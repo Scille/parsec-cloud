@@ -131,7 +131,12 @@ export const claimAndBootstrapLinkValidator: IValidator = async function (value:
   if (value.length === 0) {
     return { validity: Validity.Intermediate };
   }
+  // TODO: REPLACE WHEN LIBPARSEC HANDLES PKI LINKS
+  if (value.includes('a=pki_join')) {
+    return { validity: Validity.Valid };
+  }
   const result = await parseParsecAddr(value);
+
   if (
     result.ok &&
     (result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap ||
@@ -233,4 +238,16 @@ export const secretKeyValidator: IValidator = async function (value: string) {
     return { validity: Validity.Intermediate };
   }
   return { validity: /^([A-Z0-9]{4}-){12}[A-Z0-9]{4}$/.test(value) ? Validity.Valid : Validity.Invalid };
+};
+
+export const pkiLinkValidator: IValidator = async function (value: string) {
+  value = value.trim();
+  if (value.length === 0) {
+    return { validity: Validity.Intermediate };
+  }
+  // TODO: REPLACE WHEN LIBPARSEC HANDLES PKI LINKS
+  if (value.includes('a=pki_join')) {
+    return { validity: Validity.Valid };
+  }
+  return { validity: Validity.Invalid };
 };
