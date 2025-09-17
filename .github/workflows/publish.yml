@@ -30,7 +30,8 @@ on:
         required: true
   release:
     types:
-      - published
+      # triggered when a draft release is published 
+      # and also if the release is edited later on
       - edited
   pull_request:
     paths:
