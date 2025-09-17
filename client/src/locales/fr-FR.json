@@ -1474,6 +1474,7 @@
         "emailInvitation": {
             "tab": "Invitation par adresse mail",
             "emptyState": "Aucune invitation par email en attente.",
+            "inviteUser": "Inviter un utilisateur",
             "listDisplayTitles": {
                 "email": "Adresse email",
                 "sentOn": "Envoyée le"
@@ -1515,7 +1516,9 @@
                     },
                     "notValid": {
                         "title": "Ajout d'un utilisateur avec certificat non valide",
-                        "description": "Le certificat fourni par l'utilisateur ne correspond pas au certificat racine. Êtes-vous sûr de confirmer l'ajout de cet utilisateur ?"
+                        "description": "Le certificat fourni par l'utilisateur ne correspond pas au certificat racine. Êtes-vous sûr de confirmer l'ajout de cet utilisateur ?",
+                        "no": "Annuler",
+                        "yes": "Confirmer l'ajout"
                     }
                 },
                 "acceptedFailed": "Impossible d'accepter cette demande",
@@ -1542,7 +1545,8 @@
             "tooltips": {
                 "delete": "Supprimer la demande"
             }
-        }
+        },
+        "confirm": "Confirmer"
     },
     "AboutPage": {
         "title": "À propos",

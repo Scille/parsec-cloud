@@ -78,7 +78,7 @@
         >
           <div
             class="topbar-right-button"
-            v-if="!currentRouteIs(Routes.History) && !currentRouteIs(Routes.MyProfile)"
+            v-if="!currentRouteIs(Routes.History) && !currentRouteIs(Routes.MyProfile) && !currentRouteIs(Routes.Invitations)"
           >
             <invitations-button />
 
@@ -649,7 +649,7 @@ async function openSecurityWarningsModal(): Promise<void> {
 
   &-text {
     width: 100%;
-    color: var(--parsec-color-light-primary-600);
+    color: var(--parsec-color-light-primary-800);
     text-align: center;
 
     .align-left {

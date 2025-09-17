@@ -2,18 +2,57 @@
 
 <template>
   <ion-page class="invitations-page">
+    <div
+      v-if="!isLargeDisplay"
+      class="switch-view"
+      @click="openInvitationSwitchModal"
+    >
+      <ion-button
+        v-if="view === InvitationUserView.EmailInvitation"
+        class="switch-view-button email-button"
+      >
+        <ion-icon
+          :icon="mailUnread"
+          class="switch-view-button__icon"
+        />
+        {{ $msTranslate('InvitationsPage.emailInvitation.tab') }}
+        <span class="switch-view-button__count">{{ invitations.length }}</span>
+        <ion-icon
+          :icon="chevronDown"
+          class="switch-view-button__chevron"
+        />
+      </ion-button>
+
+      <ion-button
+        v-else
+        class="switch-view-button pki-button"
+      >
+        <ion-icon
+          :icon="idCard"
+          class="switch-view-button__icon"
+        />
+        {{ $msTranslate('InvitationsPage.pkiRequests.tab') }}
+        <span class="switch-view-button__count button-small">{{ pkIRequests.length }}</span>
+        <ion-icon
+          :icon="chevronDown"
+          class="switch-view-button__chevron"
+        />
+      </ion-button>
+    </div>
+
     <ion-content class="content-scroll">
       <div class="toggle-view-container">
         <div
           class="toggle-view"
           role="tablist"
           aria-label="Invitation view toggle"
+          v-if="isLargeDisplay"
         >
           <ion-button
             class="toggle-view-button email-button"
-            :class="{ active: view === Views.EmailInvitations }"
-            @click="view = Views.EmailInvitations"
-            :disabled="view === Views.EmailInvitations"
+            :class="{ active: view === InvitationUserView.EmailInvitation }"
+            @click="view = InvitationUserView.EmailInvitation"
+            :disabled="view === InvitationUserView.EmailInvitation"
           >
             <ion-icon
               :icon="mailUnread"
@@ -24,9 +63,9 @@
           </ion-button>
           <ion-button
             class="toggle-view-button pki-button"
-            :class="{ active: view === Views.PkiRequests }"
-            @click="view = Views.PkiRequests"
-            :disabled="view === Views.PkiRequests"
+            :class="{ active: view === InvitationUserView.PkiRequest }"
+            @click="view = InvitationUserView.PkiRequest"
+            :disabled="view === InvitationUserView.PkiRequest"
           >
             <ion-icon
               :icon="idCard"
@@ -38,7 +77,7 @@
         </div>
 
         <ion-button
-          v-if="view === Views.PkiRequests && rootCertificate"
+          v-if="view === InvitationUserView.PkiRequest && rootCertificate"
           @click="selectRootCertificate"
           id="update-root-certificate-button"
           class="button-medium button-default certificate-button"
@@ -55,7 +94,7 @@
         </ion-button>
 
         <ion-button
-          v-if="view === Views.PkiRequests"
+          v-if="view === InvitationUserView.PkiRequest"
           @click="onCopyJoinLinkClicked"
           id="copy-link-pki-request-button"
           class="button-medium button-default"
@@ -64,20 +103,36 @@
             :icon="link"
             class="button-icon"
           />
-          {{ $msTranslate('InvitationsPage.pkiRequests.copyLink') }}
+          <span v-if="isLargeDisplay">{{ $msTranslate('InvitationsPage.pkiRequests.copyLink') }}</span>
+        </ion-button>
+
+        <ion-button
+          v-if="view === InvitationUserView.EmailInvitation"
+          @click="onInviteClick"
+          id="invite-user-button"
+          class="button-medium button-default"
+        >
+          <ion-icon
+            :icon="personAdd"
+            class="button-icon"
+          />
+          <span v-if="isLargeDisplay">{{ $msTranslate('InvitationsPage.emailInvitation.inviteUser') }}</span>
         </ion-button>
       </div>
 
       <div
         class="invitations-container scroll"
-        v-if="view === Views.EmailInvitations"
+        v-if="view === InvitationUserView.EmailInvitation"
       >
         <div
           v-show="invitations.length === 0"
           class="no-active body-lg"
         >
           <div class="no-active-content">
-            <ms-image :image="NoInvitation" />
+            <ms-image
+              :image="NoInvitation"
+              class="no-active__image"
+            />
             <ion-text>
               {{ $msTranslate('InvitationsPage.emailInvitation.emptyState') }}
             </ion-text>
@@ -95,7 +150,7 @@
       </div>
       <div
         class="invitations-container scroll"
-        v-if="view === Views.PkiRequests"
+        v-if="view === InvitationUserView.PkiRequest"
       >
         <div
           class="root-certificate"
@@ -161,9 +216,11 @@ import CertificateIcon from '@/assets/images/certificate-icon.svg?raw';
 import { IonButton } from '@ionic/vue';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { IonContent, IonPage, IonText, modalController, IonIcon } from '@ionic/vue';
-import { document, idCard, link, mailUnread } from 'ionicons/icons';
+import { chevronDown, document, idCard, link, mailUnread, personAdd } from 'ionicons/icons';
 import { inject, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
+import { InvitationUserView } from '@/views/invitations/types';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
+import InvitationSwitchModal from '@/views/invitations/InvitationSwitchModal.vue';
 import {
   acceptOrganizationJoinRequest,
   cancelInvitation,
@@ -184,14 +241,10 @@ import PkiRequestList from '@/views/invitations/PkiRequestList.vue';
 import { copyToClipboard } from '@/common/clipboard';
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
 import SelectProfileModal from '@/views/invitations/SelectProfileModal.vue';
-
-enum Views {
-  EmailInvitations = 'email-invitation',
-  PkiRequests = 'pki-request',
-}
+import { navigateTo, Routes } from '@/router';
 
 const { isLargeDisplay } = useWindowSize();
-const view = ref(Views.EmailInvitations);
+const view = ref(InvitationUserView.EmailInvitation);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 
@@ -209,6 +262,7 @@ onMounted(async (): Promise<void> => {
     }
   });
   await refreshAll();
+  console.log('view', view.value);
 });
 
 onUnmounted(async () => {
@@ -216,6 +270,37 @@ onUnmounted(async () => {
     await eventDistributor.removeCallback(eventCbId);
   }
 });
+
+async function onInviteClick(): Promise<void> {
+  await navigateTo(Routes.Users, { query: { openInvite: true } });
+}
+
+async function openInvitationSwitchModal(): Promise<void> {
+  const modal = await modalController.create({
+    component: InvitationSwitchModal,
+    canDismiss: true,
+    backdropDismiss: true,
+    cssClass: 'invitation-switch-modal',
+    showBackdrop: true,
+    handle: true,
+    breakpoints: [1],
+    expandToScroll: false,
+    componentProps: {
+      invitationsCount: invitations.value.length,
+      pkIRequestsCount: pkIRequests.value.length,
+    },
+    initialBreakpoint: isLargeDisplay.value ? undefined : 1,
+  });
+
+  await modal.present();
+  const { data, role } = await modal.onWillDismiss();
+  await modal.dismiss();
+  console.log(data, role);
+  console.log('view2', view.value);
+  if (role === MsModalResult.Confirm && data) {
+    view.value = data;
+  }
+}
 
 async function onInvitationGreetClicked(inv: UserInvitation): Promise<void> {
   const modal = await modalController.create({
@@ -375,6 +460,10 @@ async function onAcceptPkiRequestClicked(req: OrganizationJoinRequest): Promise<
     const answer = await askQuestion(
       'InvitationsPage.pkiRequests.validationModal.error.notValid.title',
       'InvitationsPage.pkiRequests.validationModal.error.notValid.description',
+      {
+        noText: 'InvitationsPage.pkiRequests.validationModal.notValid.no',
+        yesText: 'InvitationsPage.pkiRequests.validationModal.notValid.yes',
+      },
     );
     if (answer !== Answer.Yes) {
       return;
@@ -400,7 +489,7 @@ async function onAcceptPkiRequestClicked(req: OrganizationJoinRequest): Promise<
   if (result.ok) {
     informationManager.present(
       new Information({
-        message: 'InvitationsPage.pkiRequests.validationModal.successFailed',
+        message: 'InvitationsPage.pkiRequests.validationModal.acceptedSuccess',
         level: InformationLevel.Success,
       }),
       PresentationMode.Toast,
@@ -479,11 +568,20 @@ async function refreshAll(): Promise<void> {
   padding: 1.5rem;
   background: var(--parsec-color-light-secondary-background);
 
+  @include ms.responsive-breakpoint('sm') {
+    padding: 0;
+  }
+
   .content-scroll {
     display: flex;
     border-radius: var(--parsec-radius-12);
     overflow: hidden;
     box-shadow: var(--parsec-shadow-soft);
+
+    @include ms.responsive-breakpoint('sm') {
+      box-shadow: var(--parsec-shadow-strong);
+      border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
+    }
   }
 }
 
@@ -493,6 +591,10 @@ async function refreshAll(): Promise<void> {
   display: flex;
   justify-content: space-between;
   align-items: center;
+
+  @include ms.responsive-breakpoint('sm') {
+    padding: 0.75rem 1rem;
+  }
 
   .toggle-view {
     display: flex;
@@ -523,7 +625,6 @@ async function refreshAll(): Promise<void> {
         color: var(--parsec-color-light-primary-500);
         border-radius: var(--parsec-radius-8);
         padding: 0.1rem 0.35rem;
-        font-size: 0.75rem;
         margin-left: 0.5rem;
       }
 
@@ -544,7 +645,8 @@ async function refreshAll(): Promise<void> {
     }
   }
 
-  #copy-link-pki-request-button {
+  #copy-link-pki-request-button,
+  #invite-user-button {
     --background: var(--parsec-color-light-secondary-inversed-contrast);
     --background-hover: var(--parsec-color-light-secondary-medium);
     color: var(--parsec-color-light-secondary-soft-text);
@@ -553,11 +655,26 @@ async function refreshAll(): Promise<void> {
     &::part(native) {
       border: 1px solid var(--parsec-color-light-secondary-medium);
       padding: 0.5rem 1rem;
+
+      @include ms.responsive-breakpoint('sm') {
+        padding: 0.5rem;
+      }
     }
 
-    &:last-of-type .button-icon {
+    .button-icon {
       font-size: 1.125rem;
       margin-right: 0.5rem;
+
+      @include ms.responsive-breakpoint('sm') {
+        font-size: 1.25rem;
+        margin-right: 0;
+      }
+    }
+  }
+
+  #invite-user-button {
+    @include ms.responsive-breakpoint('sm') {
+      margin-left: auto;
     }
   }
 
@@ -599,6 +716,12 @@ async function refreshAll(): Promise<void> {
   display: flex;
   margin: auto;
   align-items: center;
+
+  &__image {
+    @include ms.responsive-breakpoint('sm') {
+      max-width: 5rem;
+    }
+  }
 
   &-content {
     border-radius: var(--parsec-radius-8);
@@ -664,6 +787,43 @@ async function refreshAll(): Promise<void> {
       --fill-color: var(--parsec-color-light-secondary-white);
       width: 1.125rem;
       margin-right: 0.5rem;
+    }
+  }
+}
+
+.switch-view {
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 1rem 1.5rem;
+
+  .switch-view-button {
+    width: 100%;
+    --background: var(--parsec-color-light-secondary-white);
+    --background-hover: var(--parsec-color-light-secondary-medium);
+    --color: var(--parsec-color-light-secondary-hard-grey);
+    box-shadow: var(--parsec-shadow-input);
+    border-radius: var(--parsec-radius-8);
+
+    &::part(native) {
+      border: 1px solid var(--parsec-color-light-secondary-medium);
+    }
+
+    &__icon {
+      font-size: 1.125rem;
+      margin-right: 0.5rem;
+    }
+
+    &__count {
+      background: var(--parsec-color-light-primary-50);
+      color: var(--parsec-color-light-primary-500);
+      border-radius: var(--parsec-radius-8);
+      padding: 0.1rem 0.35rem;
+      margin-left: 0.5rem;
+    }
+
+    &__chevron {
+      font-size: 1.125rem;
+      margin-left: auto;
     }
   }
 }

@@ -48,8 +48,4 @@ defineEmits<{
 }>();
 </script>
 
-<style scoped lang="scss">
-.invitations-container-list {
-  padding: 0;
-}
-</style>
+<style scoped lang="scss"></style>

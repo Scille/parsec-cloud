@@ -434,6 +434,12 @@
 // ------- Invitation emails + PKI -------
 .invitations-container-list,
 .pkiRequests-container-list {
+  padding: 0 !important;
+
+  @include ms.responsive-breakpoint('sm') {
+    padding: 1rem !important;
+  }
+
   .invitation-actions,
   .pkiRequest-actions {
     display: flex;
@@ -486,11 +492,29 @@
     padding: 0 1rem 0 2rem;
   }
 
-  .invitations-list-item,
-  .pkiRequests-list-item {
+  .invitation-list-item,
+  .pkiRequest-list-item {
     display: flex;
     width: 100%;
-    padding: 0 1rem;
+    padding: 0;
+    --background-hover: var(--parsec-color-light-secondary-background);
+    --background-hover-opacity: 1;
+
+    &::part(native) {
+      padding: 0.625rem 1rem 0.625rem 2rem;
+      cursor: default;
+
+      @include ms.responsive-breakpoint('sm') {
+        flex-direction: column;
+        padding: 0;
+        border-radius: var(--parsec-radius-12);
+        border: 1px solid var(--parsec-color-light-secondary-medium);
+      }
+    }
+
+    @include ms.responsive-breakpoint('sm') {
+      margin-bottom: 1rem;
+    }
   }
 }
 
@@ -581,9 +605,9 @@
     min-width: 11.25rem;
     flex-grow: 0;
 
-    // @include ms.responsive-breakpoint('xl') {
-    //   display: none;
-    // }
+    @include ms.responsive-breakpoint('xl') {
+      display: none;
+    }
   }
 
   .label-certificate,

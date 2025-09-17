@@ -6,15 +6,35 @@
     class="invitation-list-item"
     lines="full"
   >
+    <div
+      class="invitation-mobile"
+      v-if="isSmallDisplay"
+    >
+      <div class="invitation-mobile-header">
+        <ion-text class="invitation-mobile-header__email subtitles-normal">{{ invitation.claimerEmail }}</ion-text>
+      </div>
+      <div class="invitation-mobile-content">
+        <ion-text class="invitation-mobile-content__createdOn body-sm">
+          {{ $msTranslate(formatTimeSince(invitation.createdOn, '--', 'short')) }}
+        </ion-text>
+      </div>
+    </div>
+
     <!-- invitation mail -->
-    <div class="invitation-email">
+    <div
+      class="invitation-email"
+      v-if="isLargeDisplay"
+    >
       <ion-text class="invitation-email__label cell">
         {{ invitation.claimerEmail }}
       </ion-text>
     </div>
 
     <!-- invitation created on -->
-    <div class="invitation-sentOn">
+    <div
+      class="invitation-sentOn"
+      v-if="isLargeDisplay"
+    >
       <ion-text class="invitation-sentOn__label cell">
         {{ $msTranslate(formatTimeSince(invitation.createdOn, '--', 'short')) }}
       </ion-text>
@@ -72,8 +92,10 @@
 import { UserInvitation } from '@/parsec';
 import { IonButton, IonText, IonIcon, IonItem } from '@ionic/vue';
 import { link, mail, trash } from 'ionicons/icons';
-import { attachMouseOverTooltip, formatTimeSince } from 'megashark-lib';
+import { attachMouseOverTooltip, formatTimeSince, useWindowSize } from 'megashark-lib';
 import { onMounted, useTemplateRef } from 'vue';
+
+const { isSmallDisplay, isLargeDisplay } = useWindowSize();
 
 defineProps<{
   invitation: UserInvitation;
@@ -98,26 +120,59 @@ defineEmits<{
 </script>
 
 <style scoped lang="scss">
-.invitation-list-item {
-  --background-hover: var(--parsec-color-light-secondary-background);
-  --background-hover-opacity: 1;
+.invitation-email {
+  color: var(--parsec-color-light-secondary-text);
+}
 
-  &::part(native) {
-    padding: 0.625rem 1rem 0.625rem 2rem;
-    cursor: default;
+.invitation-sentOn {
+  color: var(--parsec-color-light-secondary-grey);
+}
+
+.invitation-actions {
+  position: sticky;
+  right: 0;
+  z-index: 10;
+
+  @include ms.responsive-breakpoint('sm') {
+    position: initial;
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+    background: var(--parsec-color-light-secondary-background);
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+.invitation-mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  gap: 1rem;
+  padding: 1rem 0.75rem;
+
+  &-header {
+    display: flex;
+    overflow: hidden;
+
+    &__email {
+      color: var(--parsec-color-light-secondary-text);
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+    }
   }
 
-  .invitation-email {
-    color: var(--parsec-color-light-secondary-text);
-  }
+  &-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 
-  .invitation-sentOn {
-    color: var(--parsec-color-light-secondary-grey);
-  }
-
-  .invitation-actions {
-    position: relative;
-    z-index: 10000;
+    &__createdOn {
+      color: var(--parsec-color-light-secondary-grey);
+    }
   }
 }
 </style>

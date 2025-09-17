@@ -6,6 +6,32 @@
     class="pkiRequest-list-item"
     lines="full"
   >
+    <!-- request - mobile version -->
+    <div
+      class="pkiRequest-mobile"
+      v-if="isSmallDisplay"
+    >
+      <div class="pkiRequest-mobile-header">
+        <ion-text class="pkiRequest-mobile-header__name subtitles-normal">{{ request.humanHandle.label }}</ion-text>
+        <ion-text class="pkiRequest-mobile-header__email button-medium">{{ request.humanHandle.email }}</ion-text>
+      </div>
+      <div class="pkiRequest-mobile-content">
+        <ion-text class="pkiRequest-mobile-content__createdOn body-sm">
+          {{ $msTranslate(formatTimeSince(request.createdOn, '--', 'short')) }}
+        </ion-text>
+        <div
+          class="certificate button-small"
+          :class="`certificate-${request.validity}`"
+        >
+          <ion-icon
+            :icon="certificateValidity(request.validity).icon"
+            class="certificate-icon"
+          />
+          {{ $msTranslate(certificateValidity(request.validity).text) }}
+        </div>
+      </div>
+    </div>
+
     <!-- request avatar -->
     <div
       class="pkiRequest-name"
@@ -20,25 +46,34 @@
     </div>
 
     <!-- request mail -->
-    <div class="pkiRequest-email">
+    <div
+      class="pkiRequest-email"
+      v-if="isLargeDisplay"
+    >
       <ion-text class="pkiRequest-email__label cell">
         {{ request.humanHandle.email }}
       </ion-text>
     </div>
 
     <!-- request created on -->
-    <div class="pkiRequest-createdOn">
+    <div
+      class="pkiRequest-createdOn"
+      v-if="isLargeDisplay"
+    >
       <ion-text class="pkiRequest-createdOn__label cell">
         {{ $msTranslate(formatTimeSince(request.createdOn, '--', 'short')) }}
       </ion-text>
     </div>
 
     <!-- request certificate -->
-    <div class="pkiRequest-certificate">
+    <div
+      class="pkiRequest-certificate"
+      v-if="isLargeDisplay"
+    >
       <ion-text class="pkiRequest-certificate__label cell">
         <div
           class="certificate button-small"
-          :class="'certificate-' + request.validity"
+          :class="`certificate-${request.validity}`"
         >
           <ion-icon
             :icon="certificateValidity(request.validity).icon"
@@ -83,7 +118,7 @@ import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { attachMouseOverTooltip, formatTimeSince, Translatable, useWindowSize } from 'megashark-lib';
 import { onMounted, useTemplateRef } from 'vue';
 
-const { isLargeDisplay } = useWindowSize();
+const { isSmallDisplay, isLargeDisplay } = useWindowSize();
 const rejectButtonRef = useTemplateRef<InstanceType<typeof IonButton>>('rejectButton');
 
 defineProps<{
@@ -118,47 +153,95 @@ function certificateValidity(certificate: JoinRequestValidity): Certificate {
 </script>
 
 <style lang="scss" scoped>
-.pkiRequest-list-item {
-  --background-hover: var(--parsec-color-light-secondary-background);
-  --background-hover-opacity: 1;
+.pkiRequest-name {
+  color: var(--parsec-color-light-secondary-text);
+}
 
-  &::part(native) {
-    padding: 0.625rem 1rem 0.625rem 2rem;
-    cursor: default;
-  }
+.pkiRequest-email,
+.pkiRequest-createdOn {
+  color: var(--parsec-color-light-secondary-grey);
+}
 
-  .pkiRequest-name {
-    color: var(--parsec-color-light-secondary-text);
-  }
+.certificate {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: var(--parsec-color-light-success-50);
+  color: var(--parsec-color-light-success-700);
+  border-radius: var(--parsec-radius-12);
+  padding: 0.125rem 0.5rem;
+  width: fit-content;
+  flex-shrink: 0;
 
-  .pkiRequest-email,
-  .pkiRequest-createdOn {
-    color: var(--parsec-color-light-secondary-grey);
-  }
-
-  .certificate {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
+  &-valid {
     background: var(--parsec-color-light-success-50);
     color: var(--parsec-color-light-success-700);
-    border-radius: var(--parsec-radius-12);
-    padding: 0.125rem 0.5rem;
-    width: fit-content;
+  }
 
-    &-valid {
-      background: var(--parsec-color-light-success-50);
-      color: var(--parsec-color-light-success-700);
+  &-invalid {
+    background: var(--parsec-color-light-danger-50);
+    color: var(--parsec-color-light-danger-700);
+  }
+
+  &-unknown {
+    background: var(--parsec-color-light-warning-50);
+    color: var(--parsec-color-light-warning-700);
+  }
+}
+
+.pkiRequest-actions {
+  position: sticky;
+  z-index: 10;
+  right: 0;
+
+  @include ms.responsive-breakpoint('sm') {
+    position: initial;
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+    background: var(--parsec-color-light-secondary-background);
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+.pkiRequest-mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  gap: 1rem;
+  padding: 1rem 0.75rem;
+
+  &-header {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+
+    &__name {
+      color: var(--parsec-color-light-secondary-text);
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
     }
 
-    &-invalid {
-      background: var(--parsec-color-light-danger-50);
-      color: var(--parsec-color-light-danger-700);
+    &__email {
+      color: var(--parsec-color-light-secondary-grey);
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
     }
+  }
 
-    &-unknown {
-      background: var(--parsec-color-light-warning-50);
-      color: var(--parsec-color-light-warning-700);
+  &-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    &__createdOn {
+      color: var(--parsec-color-light-secondary-grey);
     }
   }
 }

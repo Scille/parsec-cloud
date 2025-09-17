@@ -1475,6 +1475,7 @@
         "emailInvitation": {
             "tab": "Invitation by email",
             "emptyState": "No pending email invitations.",
+            "inviteUser": "Invite a user",
             "listDisplayTitles": {
                 "email": "Email",
                 "sentOn": "Sent on"
@@ -1516,7 +1517,9 @@
                     },
                     "notValid": {
                         "title": "Adding a user with an invalid certificate",
-                        "description": "The certificate provided by the user does not match the root certificate. Are you sure you want to confirm adding this user?"
+                        "description": "The certificate provided by the user does not match the root certificate. Are you sure you want to confirm adding this user?",
+                        "no": "Cancel",
+                        "yes": "Confirm adding user"
                     }
                 },
                 "acceptedFailed": "Cannot accept this request",
@@ -1543,7 +1546,8 @@
             "tooltips": {
                 "delete": "Delete request"
             }
-        }
+        },
+        "confirm": "Confirm"
     },
     "AboutPage": {
         "title": "About",

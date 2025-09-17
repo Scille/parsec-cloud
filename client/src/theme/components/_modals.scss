@@ -970,3 +970,13 @@
     }
   }
 }
+
+.invitation-switch-modal {
+  &::part(handle) {
+    top: 0.5rem;
+  }
+
+  &::part(content) {
+    max-width: var(--parsec-modal-width-sm);
+  }
+}

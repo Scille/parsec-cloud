@@ -354,6 +354,7 @@ import {
   chevronForward,
   caretForward,
   mailUnread,
+  link,
 } from 'ionicons/icons';
 import { SidebarWorkspaceItem, SidebarRecentFileItem, SidebarMenuList } from '@/components/sidebar';
 import {
@@ -379,6 +380,7 @@ import {
   getClientInfo,
   WorkspaceRole,
   getOrganizationCreationDate,
+  getPkiJoinOrganizationLink,
 } from '@/parsec';
 import { ChevronExpand, MsImage, LogoIconGradient, I18n, MsModalResult, useWindowSize } from 'megashark-lib';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, watch, useTemplateRef } from 'vue';
@@ -411,6 +413,7 @@ import { getSecurityWarnings, RecommendationAction, SecurityWarnings } from '@/c
 import RecommendationChecklistPopoverModal from '@/components/misc/RecommendationChecklistPopoverModal.vue';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
+import { copyToClipboard } from '@/common/clipboard';
 
 defineProps<{
   userInfo: ClientInfo;
@@ -558,8 +561,16 @@ function setActions(): void {
       [{ action: WorkspaceAction.CreateWorkspace, label: 'WorkspacesPage.createWorkspace', icon: addCircle }],
       [{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }],
     ];
-  } else if (currentRouteIs(Routes.Users) || currentRouteIs(Routes.MyProfile) || currentRouteIs(Routes.Organization)) {
-    actions.value = [[{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }]];
+  } else if (
+    currentRouteIs(Routes.Users) ||
+    currentRouteIs(Routes.MyProfile) ||
+    currentRouteIs(Routes.Organization) ||
+    currentRouteIs(Routes.Invitations)
+  ) {
+    actions.value = [
+      [{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }],
+      [{ action: UserAction.CopyPkiLink, label: 'InvitationsPage.pkiRequests.copyLink', icon: link }],
+    ];
   } else {
     actions.value = [];
   }
@@ -599,6 +610,16 @@ onMounted(async () => {
           const userAction = (data as MenuActionData).action.action as UserAction;
           if (userAction === UserAction.Invite) {
             await navigateTo(Routes.Users, { query: { openInvite: true } });
+          } else if (userAction === UserAction.CopyPkiLink) {
+            const result = await getPkiJoinOrganizationLink();
+            if (result.ok) {
+              await copyToClipboard(
+                result.value,
+                informationManager,
+                'InvitationsPage.pkiRequests.linkCopiedToClipboard.success',
+                'InvitationsPage.pkiRequests.linkCopiedToClipboard.failed',
+              );
+            }
           }
         }
       } else if (event === Events.DeviceCreated) {

@@ -175,6 +175,7 @@ import {
   updateProfile as parsecUpdateProfile,
   ClientUserUpdateProfileError,
   ClientUserUpdateProfileErrorTag,
+  getPkiJoinOrganizationLink,
 } from '@/parsec';
 import { Routes, getCurrentRouteQuery, watchRoute, currentRouteIsUserRoute, navigateTo } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
@@ -185,13 +186,14 @@ import UserDetailsModal from '@/views/users/UserDetailsModal.vue';
 import UserGridDisplay from '@/views/users/UserGridDisplay.vue';
 import UserListDisplay from '@/views/users/UserListDisplay.vue';
 import { IonContent, IonPage, IonText, modalController } from '@ionic/vue';
-import { informationCircle, personAdd, personRemove, repeat, returnUpForward } from 'ionicons/icons';
+import { informationCircle, link, personAdd, personRemove, repeat, returnUpForward } from 'ionicons/icons';
 import { Ref, inject, onMounted, onUnmounted, ref, toRaw, computed, watch } from 'vue';
 import BulkRoleAssignmentModal from '@/views/users/BulkRoleAssignmentModal.vue';
 import { EventData, EventDistributor, EventDistributorKey, Events, InvitationUpdatedData } from '@/services/eventDistributor';
 import UpdateProfileModal from '@/views/users/UpdateProfileModal.vue';
 import { openUserContextMenu as _openUserContextMenu, openGlobalUserContextMenu as _openGlobalUserContextMenu } from '@/views/users/utils';
 import { MenuAction, TabBarOptions, useCustomTabBar } from '@/views/menu';
+import { copyToClipboard } from '@/common/clipboard';
 
 const displayView = ref(DisplayState.List);
 const isAdmin = ref(false);
@@ -769,13 +771,30 @@ const actionBarOptionsUsersPage = computed(() => {
   const actionArray = [];
 
   if (users.value.selectedCount() === 0 && isAdmin.value) {
-    actionArray.push({
-      label: 'UsersPage.inviteUser',
-      icon: personAdd,
-      onClick: async (): Promise<void> => {
-        await inviteUser();
+    actionArray.push(
+      {
+        label: 'UsersPage.inviteUser',
+        icon: personAdd,
+        onClick: async (): Promise<void> => {
+          await inviteUser();
+        },
       },
-    });
+      {
+        label: 'InvitationsPage.pkiRequests.copyLink',
+        icon: link,
+        onClick: async (): Promise<void> => {
+          const result = await getPkiJoinOrganizationLink();
+          if (result.ok) {
+            await copyToClipboard(
+              result.value,
+              informationManager,
+              'InvitationsPage.pkiRequests.linkCopiedToClipboard.success',
+              'InvitationsPage.pkiRequests.linkCopiedToClipboard.failed',
+            );
+          }
+        },
+      },
+    );
   }
 
   if (users.value.selectedCount() >= 1 && isAdmin.value) {
