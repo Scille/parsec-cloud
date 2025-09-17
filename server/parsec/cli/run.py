@@ -129,6 +129,13 @@ For instance:
 )
 @db_server_options
 @click.option(
+    "--skip-database-migrations-check",
+    is_flag=True,
+    envvar="PARSEC_SKIP_DATABASE_MIGRATIONS_CHECK",
+    show_envvar=True,
+    help="Skip the check at startup ensuring the database's datamodel is up to date",
+)
+@click.option(
     "--maximum-database-connection-attempts",
     default=10,
     show_default=True,
@@ -462,7 +469,7 @@ def run_cmd(
     db: BaseDatabaseConfig,
     db_min_connections: int,
     db_max_connections: int,
-    sse_keepalive: int | None,
+    skip_database_migrations_check: bool,
     maximum_database_connection_attempts: int,
     pause_before_retry_database_connection: float,
     blockstore: BaseBlockStoreConfig,
@@ -495,6 +502,7 @@ def run_cmd(
     log_file: str | None,
     sentry_dsn: str | None,
     sentry_environment: str,
+    sse_keepalive: int | None,
     with_client_web_app: Path | None,
     cors_allow_origins: list[str],
     debug: bool,
@@ -503,6 +511,9 @@ def run_cmd(
     # Start a local server
 
     with cli_exception_handler(debug):
+        if not skip_database_migrations_check:
+            _check_database_migrations_applied(db)
+
         email_config: EmailConfig
         if email_host == "MOCKED":
             if email_sender:
@@ -665,3 +676,19 @@ async def _run_backend(
                 f"Database connection lost ({exc}), retrying in {retry_policy.pause_before_retry} seconds"
             )
             await retry_policy.pause()
+
+
+def _check_database_migrations_applied(db_config: BaseDatabaseConfig) -> None:
+    if db_config.is_mocked():
+        return
+
+    from parsec.components.postgresql import apply_migrations, retrieve_migrations
+    from parsec.config import PostgreSQLDatabaseConfig
+
+    migrations = retrieve_migrations()
+    assert isinstance(db_config, PostgreSQLDatabaseConfig)
+    result = asyncio.run(apply_migrations(db_config.url, migrations, dry_run=True))
+    if result.new_apply:
+        raise SystemExit(
+            f"Database requires {len(result.new_apply)} migration(s). Run `parsec migrate` to apply them."
+        )
