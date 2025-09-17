@@ -30,7 +30,6 @@ on:
         required: true
   release:
     types:
-      - published
       - edited
   pull_request:
     paths:
