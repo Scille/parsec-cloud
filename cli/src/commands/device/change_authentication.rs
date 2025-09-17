@@ -53,9 +53,13 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
             }
         }
 
-        AvailableDeviceType::Smartcard => DeviceAccessStrategy::Smartcard {
-            key_file: device.key_file_path.clone(),
-        },
+        AvailableDeviceType::Smartcard => {
+            todo!("read smartcard");
+            DeviceAccessStrategy::Smartcard {
+                certificate_reference: todo!(),
+                key_file: device.key_file_path.clone(),
+            }
+        }
 
         AvailableDeviceType::Keyring => DeviceAccessStrategy::Keyring {
             key_file: device.key_file_path.clone(),

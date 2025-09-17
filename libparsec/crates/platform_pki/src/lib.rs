@@ -11,11 +11,18 @@ use bytes::Bytes;
 #[cfg(target_os = "windows")]
 pub(crate) use windows as platform;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CertificateHash {
     SHA256(Box<[u8; 32]>),
 }
 
+impl AsRef<[u8]> for CertificateHash {
+    fn as_ref(&self) -> &[u8] {
+        match self {
+            CertificateHash::SHA256(data) => data.as_ref(),
+        }
+    }
+}
 #[cfg(feature = "hash-sri-display")]
 impl std::fmt::Display for CertificateHash {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -30,6 +37,7 @@ impl std::fmt::Display for CertificateHash {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub enum CertificateReference {
     Id(Bytes),
     Hash(CertificateHash),
@@ -42,6 +50,7 @@ impl From<CertificateReferenceIdOrHash> for CertificateReference {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct CertificateReferenceIdOrHash {
     pub id: Bytes,
     pub hash: CertificateHash,

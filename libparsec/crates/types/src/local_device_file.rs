@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
 use libparsec_crypto::{Password, SecretKey};
+use libparsec_platform_pki::CertificateReference;
 use libparsec_serialization_format::parsec_data;
 
 use crate::{self as libparsec_types};
@@ -120,8 +121,8 @@ pub struct DeviceFileSmartcard {
     pub device_id: DeviceID,
     pub human_handle: HumanHandle,
     pub device_label: DeviceLabel,
-    pub certificate_id: String,
-    pub certificate_sha1: Option<Bytes>,
+    pub certificate_id: Bytes,
+    pub certificate_sha1: Bytes,
     pub encrypted_key: Bytes,
     pub ciphertext: Bytes,
 }
@@ -226,7 +227,9 @@ pub enum DeviceSaveStrategy {
     Password {
         password: Password,
     },
-    Smartcard,
+    Smartcard {
+        certificate_reference: CertificateReference,
+    },
     AccountVault {
         /// This key is the one stored in the account vault.
         ///
@@ -244,7 +247,12 @@ impl DeviceSaveStrategy {
             DeviceSaveStrategy::Password { password } => {
                 DeviceAccessStrategy::Password { key_file, password }
             }
-            DeviceSaveStrategy::Smartcard => DeviceAccessStrategy::Smartcard { key_file },
+            DeviceSaveStrategy::Smartcard {
+                certificate_reference,
+            } => DeviceAccessStrategy::Smartcard {
+                key_file,
+                certificate_reference,
+            },
             DeviceSaveStrategy::AccountVault {
                 ciphertext_key_id,
                 ciphertext_key,
@@ -269,6 +277,7 @@ pub enum DeviceAccessStrategy {
     },
     Smartcard {
         key_file: PathBuf,
+        certificate_reference: CertificateReference,
     },
     AccountVault {
         key_file: PathBuf,
@@ -286,7 +295,7 @@ impl DeviceAccessStrategy {
         match self {
             Self::Keyring { key_file } => key_file,
             Self::Password { key_file, .. } => key_file,
-            Self::Smartcard { key_file } => key_file,
+            Self::Smartcard { key_file, .. } => key_file,
             Self::AccountVault { key_file, .. } => key_file,
         }
     }
