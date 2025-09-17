@@ -3,12 +3,14 @@
 #[cfg(target_os = "windows")]
 mod windows;
 
+pub use platform::{decrypt_secret_key, encrypt_secret_key};
+
 use bytes::Bytes;
 
 #[cfg(target_os = "windows")]
 pub(crate) use windows as platform;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CertificateHash {
     SHA256(Box<[u8; 32]>),
 }
@@ -21,6 +23,7 @@ impl AsRef<[u8]> for CertificateHash {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub enum CertificateReference {
     Id(Bytes),
     Hash(CertificateHash),
@@ -33,6 +36,7 @@ impl From<CertificateReferenceIdOrHash> for CertificateReference {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct CertificateReferenceIdOrHash {
     pub id: Bytes,
     pub hash: CertificateHash,
@@ -44,12 +48,38 @@ pub use windows::show_certificate_selection_dialog;
 // Mock module for unsupported platform
 #[cfg(not(target_os = "windows"))]
 mod platform {
-    use crate::{CertificateDer, CertificateReference, GetDerEncodedCertificateError};
+    use bytes::Bytes;
+    use libparsec_crypto::SecretKey;
+
+    use crate::{
+        CertificateDer, CertificateHash, CertificateReference, DecryptSecretKeyError,
+        EncryptSecretKeyError, GetDerEncodedCertificateError,
+    };
     pub fn get_der_encoded_certificate(
         certificate_ref: &CertificateReference,
     ) -> Result<CertificateDer, GetDerEncodedCertificateError> {
         let _ = certificate_ref;
         unimplemented!("platform not supported")
+    }
+
+    /// returns encrypted key, certificated id and certificate hash
+    pub fn encrypt_secret_key(
+        key: &SecretKey,
+        certificate_ref: &CertificateReference,
+    ) -> Result<(Bytes, Bytes, CertificateHash), EncryptSecretKeyError> {
+        let _ = certificate_ref;
+        let _ = key;
+
+        unimplemented!()
+    }
+
+    pub fn decrypt_secret_key(
+        encrypted_key: &Bytes,
+        certificate_ref: &CertificateReference,
+    ) -> Result<SecretKey, DecryptSecretKeyError> {
+        let _ = certificate_ref;
+        let _ = encrypted_key;
+        unimplemented!()
     }
 }
 
@@ -69,3 +99,9 @@ pub struct CertificateDer {
     pub cert_ref: CertificateReferenceIdOrHash,
     pub der_content: Bytes,
 }
+
+#[derive(Debug, thiserror::Error)]
+pub enum EncryptSecretKeyError {}
+
+#[derive(Debug, thiserror::Error)]
+pub enum DecryptSecretKeyError {}

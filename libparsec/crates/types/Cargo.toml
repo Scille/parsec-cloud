@@ -19,6 +19,7 @@ test-fixtures = ["dep:hex-literal", "dep:rstest"]
 libparsec_crypto = { workspace = true }
 libparsec_serialization_format = { workspace = true }
 libparsec_platform_async = { workspace = true }
+libparsec_platform_pki = { workspace = true }
 libparsec_zstd = { workspace = true }
 
 serde = { workspace = true, features = ["derive"] }
