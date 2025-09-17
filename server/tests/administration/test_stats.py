@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 from collections.abc import Collection
-from typing import Any
+from typing import Any, cast
 
 import httpx
 import pytest
@@ -119,33 +119,41 @@ async def test_ok(
     stats = await org_stats(minimalorg.organization_id)
     assert stats == expected_minimal_stats
 
-    expected_server_stats = {
-        "stats": [
-            {
-                "organization_id": not_bootstrapped_org_id.str,
-                "users": 0,
-                "active_users": 0,
-                "data_size": 0,
-                "metadata_size": 0,
-                "realms": 0,
-                "users_per_profile_detail": {
-                    "ADMIN": {"active": 0, "revoked": 0},
-                    "OUTSIDER": {"active": 0, "revoked": 0},
-                    "STANDARD": {"active": 0, "revoked": 0},
+    expected_server_stats: dict[str, Any] = {
+        # CoolOrg & MinimalOrg organization ID depends on the order they are
+        # created (which varies depending on the subset of tests being run...).
+        "stats": sorted(
+            [
+                {
+                    "organization_id": not_bootstrapped_org_id.str,
+                    "users": 0,
+                    "active_users": 0,
+                    "data_size": 0,
+                    "metadata_size": 0,
+                    "realms": 0,
+                    "users_per_profile_detail": {
+                        "ADMIN": {"active": 0, "revoked": 0},
+                        "OUTSIDER": {"active": 0, "revoked": 0},
+                        "STANDARD": {"active": 0, "revoked": 0},
+                    },
                 },
-            },
-            {
-                **expected_coolorg_stats,
-                "organization_id": coolorg.organization_id.str,
-            },
-            {
-                **expected_minimal_stats,
-                "organization_id": minimalorg.organization_id.str,
-            },
-        ]
+                {
+                    **expected_coolorg_stats,
+                    "organization_id": coolorg.organization_id.str,
+                },
+                {
+                    **expected_minimal_stats,
+                    "organization_id": minimalorg.organization_id.str,
+                },
+            ],
+            key=lambda x: cast(str, x["organization_id"]),
+        )
     }
-    expected_coolorg_server_stats = expected_server_stats["stats"][1]
-    assert expected_coolorg_server_stats["organization_id"] == coolorg.organization_id.str
+    expected_coolorg_server_stats = next(
+        s
+        for s in expected_server_stats["stats"]
+        if s["organization_id"] == coolorg.organization_id.str
+    )
 
     stats = await server_stats()
     assert stats == expected_server_stats
@@ -195,19 +203,20 @@ async def test_ok(
     )
     expected_coolorg_stats["data_size"] += 30
     expected_coolorg_server_stats["data_size"] += 30
-    certif = UserUpdateCertificate(
-        author=coolorg.alice.device_id,
-        new_profile=UserProfile.ADMIN,
-        user_id=coolorg.bob.user_id,
-        timestamp=DateTime.now(),
-    )
-    await backend.user.update_user(
-        now=DateTime.now(),
-        organization_id=coolorg.organization_id,
-        author=coolorg.alice.device_id,
-        author_verify_key=coolorg.alice.signing_key.verify_key,
-        user_update_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
-    )
+    for profile in (UserProfile.OUTSIDER, UserProfile.ADMIN):
+        certif = UserUpdateCertificate(
+            author=coolorg.alice.device_id,
+            new_profile=profile,
+            user_id=coolorg.bob.user_id,
+            timestamp=DateTime.now(),
+        )
+        await backend.user.update_user(
+            now=DateTime.now(),
+            organization_id=coolorg.organization_id,
+            author=coolorg.alice.device_id,
+            author_verify_key=coolorg.alice.signing_key.verify_key,
+            user_update_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
+        )
     expected_coolorg_stats["users_per_profile_detail"]["STANDARD"]["active"] -= 1
     expected_coolorg_stats["users_per_profile_detail"]["ADMIN"]["active"] += 1
 
