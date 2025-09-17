@@ -7,7 +7,7 @@ authors = [{ name = "Scille SAS", email = "contact@scille.fr" }]
 # https://github.com/python-poetry/poetry/pull/10413
 # https://github.com/python-poetry/poetry-core/pull/870
 license = { text = "BUSL-1.1" }
-readme = "../README.rst"
+readme = "./pypi-readme.md"
 keywords = ["parsec", "cryptography", "sharing", "encryption"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
