@@ -14,65 +14,88 @@ from parsec.components.organization import (
 from parsec.components.postgresql import AsyncpgConnection
 from parsec.components.postgresql.utils import (
     Q,
-    q_organization_internal_id,
 )
 
 # Note the `profile::text` casting here, this is a limitation of asyncpg which doesn't support
 # enum within an anonymous record (see https://github.com/MagicStack/asyncpg/issues/360)
 _q_get_stats = Q(
-    f"""
+    """
+WITH my_org AS (
+    SELECT
+        _id,
+        COALESCE(_created_on <= $at, FALSE) AS found
+    FROM organization
+    WHERE organization_id = $organization_id
+),
+
+-- We cannot use `current_profile` column from `user_` since in this query we
+-- want the last profile that is *older* than `$at`.
+-- Hence this CTE that computes what `current_profile` was back when `$at`
+-- was the current time.
+my_users_last_profile_update AS (
+    SELECT DISTINCT ON (user_)
+        user_,
+        profile
+    FROM profile
+    WHERE certified_on <= $at
+    ORDER BY user_ ASC, certified_on DESC
+),
+
+my_realms AS (
+    SELECT realm._id
+    FROM realm
+    INNER JOIN my_org
+        ON realm.organization = my_org._id
+    WHERE realm.created_on <= $at
+)
+
 SELECT
-    (
-        SELECT COALESCE(_created_on <= $at, FALSE)
-        FROM organization
-        WHERE organization_id = $organization_id
-    ) AS organization_found,
-    (
+    my_org.found AS organization_found,
+    my_users.organization_users,
+    my_vlob_atoms.organization_metadata_size,
+    my_blocks.organization_data_size,
+    (SELECT COUNT(*) FROM my_realms) AS organization_realms
+
+FROM
+    my_org,
+
+    LATERAL (
         SELECT ARRAY(
-            SELECT (
-                revoked_on,
-                COALESCE(
-                    (
-                        SELECT profile.profile::TEXT
-                        FROM profile
-                        WHERE profile.user_ = user_._id
-                        ORDER BY profile.certified_on DESC LIMIT 1
-                    ),
-                    initial_profile::TEXT
+            SELECT
+                ROW(
+                    user_.revoked_on,
+                    COALESCE(my_last_profile_update.profile_text, user_.initial_profile::TEXT)
                 )
-            )
             FROM user_
+            LEFT JOIN LATERAL (
+                SELECT my_users_last_profile_update.profile::TEXT AS profile_text
+                FROM my_users_last_profile_update
+                WHERE my_users_last_profile_update.user_ = user_._id
+                LIMIT 1
+            ) AS my_last_profile_update ON TRUE
             WHERE
-                organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT05,LT14
-                AND created_on <= $at
-        )
-    ) AS organization_users,
-    (
-        SELECT COUNT(DISTINCT realm._id)
-        FROM realm
-        LEFT JOIN realm_user_role ON realm._id = realm_user_role.realm
-        WHERE
-            realm.organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT05,LT14
-            AND realm_user_role.certified_on <= $at
-    ) AS organization_realms,
-    (
-        SELECT COALESCE(SUM(vlob_atom.size), 0)
+                user_.organization = my_org._id
+                AND user_.created_on <= $at
+        ) AS organization_users
+    ) AS my_users,
+
+    LATERAL (
+        SELECT COALESCE(SUM(vlob_atom.size), 0) AS organization_metadata_size
         FROM vlob_atom
-        LEFT JOIN realm ON vlob_atom.realm = realm._id
+        INNER JOIN my_realms ON vlob_atom.realm = my_realms._id
         WHERE
-            realm.organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT05,LT14
-            AND vlob_atom.created_on <= $at
+            vlob_atom.created_on <= $at
             AND (vlob_atom.deleted_on IS NULL OR vlob_atom.deleted_on > $at)
-    ) AS organization_metadata_size,
-    (
-        SELECT COALESCE(SUM(block.size), 0)
+    ) AS my_vlob_atoms,
+
+    LATERAL (
+        SELECT COALESCE(SUM(block.size), 0) AS organization_data_size
         FROM block
-        LEFT JOIN realm ON block.realm = realm._id
+        INNER JOIN my_realms ON block.realm = my_realms._id
         WHERE
-            realm.organization = {q_organization_internal_id("$organization_id")}  -- noqa: LT05,LT14
-            AND block.created_on <= $at
+            block.created_on <= $at
             AND (block.deleted_on IS NULL OR block.deleted_on > $at)
-    ) AS organization_data_size
+    ) AS my_blocks
 """
 )
 
