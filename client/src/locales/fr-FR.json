@@ -902,8 +902,12 @@
             "activeUsers": "Actif | Actifs",
             "frozenUsers": "Suspendu | Suspendus",
             "title": "Utilisateurs",
-            "seeUsers": "Voir les utilisateurs",
-            "addUser": "Ajouter un utilisateur"
+            "seeUsers": "Voir tous les utilisateurs",
+            "addUser": "Ajouter un utilisateur",
+            "invitations": {
+                "emailInvitations": "Invitations par e-mail",
+                "pkiRequests": "Demandes PKI"
+            }
         },
         "size": {
             "information": "Ce stockage comprend les espaces de travail de tous les utilisateurs ainsi que l'historique des changements de fichiers/dossiers.",
