@@ -506,65 +506,79 @@ msTest('File viewer sidebar can be toggled in large display', async ({ documents
 msTest('File viewer sidebar state persists between files', async ({ documents }) => {
   const entries = documents.locator('.folder-container').locator('.file-list-item');
 
+  const sidebar = documents.locator('.sidebar');
+  const header = documents.locator('#connected-header');
+  await expect(sidebar).toBeVisible();
+  await expect(header).toBeVisible();
+
   // Open first file and ensure it's loaded
-  await entries.nth(2).dblclick();
+  await entries.nth(2).locator('.file-name .file-mobile-text .file-name__label').click();
   await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
   await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
   await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
   await expect(documents).toBeViewerPage();
+  await expect(documents.locator('.file-handler-topbar .file-handler-topbar__title')).toHaveText('code.py');
+
+  await expect(sidebar).toBeHidden();
+  await expect(header).toBeHidden();
 
   const toggleButton = documents.locator('.file-handler-topbar-buttons__item.toggle-menu');
   const toggleSidebarButton = documents.locator('#trigger-toggle-menu-button');
 
   // Show header and sidebar
   await toggleButton.click();
-  await expect(documents.locator('#connected-header .topbar')).toBeVisible();
+  await expect(header).toBeVisible();
 
   await toggleSidebarButton.click();
-  await expect(documents.locator('.sidebar')).toBeVisible();
+  await expect(sidebar).toBeVisible();
 
   // Go back to documents page and open a second file to ensure we have 2 recent files
   const backButton = documents.locator('.topbar-left-content').locator('.back-button');
 
   await backButton.click();
+  await expect(documents).toBeDocumentPage();
   await expect(documents.locator('.folder-container')).toBeVisible();
 
-  // Wait for the first file to be registered in recent documents
-  await toggleSidebarButton.click();
-  await expect(documents.locator('.sidebar')).toBeVisible();
+  await expect(sidebar).toBeVisible();
 
-  const sidebar = documents.locator('.sidebar');
   const recentDocs = sidebar.locator('#sidebar-files').locator('.list-sidebar-content').getByRole('listitem');
   await expect(recentDocs).toHaveCount(1);
+  await expect(recentDocs).toHaveText(['code.py']);
 
   // Hide sidebar again before opening second file
   await toggleSidebarButton.click();
-  await expect(documents.locator('.sidebar')).toBeHidden();
+  await expect(sidebar).toBeHidden();
 
   // Open second file
-  await entries.nth(3).dblclick();
-  await expect(documents).toBeViewerPage();
+  await entries.nth(4).locator('.file-name .file-mobile-text .file-name__label').click();
+  await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
+  await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
   await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
+  await expect(documents.locator('.file-handler-topbar .file-handler-topbar__title')).toHaveText('image.png');
+  await expect(documents).toBeViewerPage();
+
+  await expect(header).toBeHidden();
+  await expect(sidebar).toBeHidden();
 
   // Show header and sidebar again
   await toggleButton.click();
-  await expect(documents.locator('#connected-header .topbar')).toBeVisible();
+  await expect(header).toBeVisible();
 
   await toggleSidebarButton.click();
-  await expect(documents.locator('.sidebar')).toBeVisible();
+  await expect(sidebar).toBeVisible();
 
   // Now we should have 2 recent files
   await expect(recentDocs).toHaveCount(2);
-  await expect(recentDocs.nth(0)).toBeVisible();
-  await expect(recentDocs.nth(1)).toBeVisible();
+  await expect(recentDocs).toHaveText(['image.png', 'code.py']);
 
   // Navigate via sidebar to the previous file
   await recentDocs.nth(1).click();
-  await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
+  await expect(documents).toBeViewerPage();
+  await expect(documents.locator('.file-handler-topbar .file-handler-topbar__title')).toHaveText('code.py');
 
   // Sidebar should remain visible
-  await expect(documents.locator('.sidebar')).toBeVisible();
-  await expect(documents.locator('#connected-header .topbar')).toBeVisible();
+  await expect(sidebar).toBeVisible();
+  await expect(header).toBeVisible();
 });
 
 msTest('File viewer restores sidebar state on exit', async ({ documents }) => {
@@ -576,8 +590,9 @@ msTest('File viewer restores sidebar state on exit', async ({ documents }) => {
   await expect(documents.locator('#connected-header .topbar')).toBeVisible();
 
   // Open file viewer
-  await entries.nth(2).dblclick();
+  await entries.nth(2).locator('.file-name .file-mobile-text .file-name__label').click();
   await expect(documents).toBeViewerPage();
+  await expect(documents.locator('.file-handler-topbar .file-handler-topbar__title')).toHaveText('code.py');
 
   // Sidebar should be hidden in file viewer
   await expect(documents.locator('.sidebar')).toBeHidden();
@@ -587,6 +602,8 @@ msTest('File viewer restores sidebar state on exit', async ({ documents }) => {
   const backButton = documents.locator('.file-handler-topbar').locator('.back-button');
   await expect(backButton).toBeVisible();
   await backButton.click();
+  await expect(documents).toBeDocumentPage();
+  await expect(entries).toHaveCount(9);
   await expect(documents.locator('.folder-container')).toBeVisible();
 
   // Sidebar should be restored to visible as it was before
@@ -598,13 +615,19 @@ msTest('File viewer restores sidebar state on exit', async ({ documents }) => {
   await expect(documents.locator('.sidebar')).toBeHidden();
 
   // Open file viewer again
-  await entries.nth(3).dblclick();
+  await entries.nth(4).locator('.file-name .file-mobile-text .file-name__label').click();
+  await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
+  await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
+  await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
   await expect(documents).toBeViewerPage();
+  await expect(documents.locator('.file-handler-topbar .file-handler-topbar__title')).toHaveText('image.png');
 
   // Exit file viewer
   const backButton2 = documents.locator('.file-handler-topbar').locator('.back-button');
   await expect(backButton2).toBeVisible();
   await backButton2.click();
+  await expect(documents).toBeDocumentPage();
+  await expect(entries).toHaveCount(9);
   await expect(documents.locator('.folder-container')).toBeVisible();
 
   // Sidebar should remain hidden as it was before

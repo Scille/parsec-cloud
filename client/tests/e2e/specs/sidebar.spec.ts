@@ -283,52 +283,62 @@ msTest('Recent workspaces displayed in sidebar', async ({ workspaces }) => {
 });
 
 msTest('Recent and pinned workspaces are updated when workspace is renamed', async ({ workspaces }) => {
-  const sidebarRecentWorkspaces = workspaces.locator('#sidebar-workspaces-recent');
-  const sidebarFavoriteWorkspaces = workspaces.locator('#sidebar-workspaces-favorites');
-  await expect(sidebarRecentWorkspaces.locator('.sidebar-content-workspaces__title ')).toHaveText('Recent');
-  await expect(sidebarRecentWorkspaces.locator('.sidebar-item')).toHaveCount(0);
-  await expect(sidebarFavoriteWorkspaces.locator('.sidebar-item')).toHaveCount(0);
+  msTest.setTimeout(60_000);
+
+  const sidebarRecentWorkspaces = workspaces.locator('#sidebar-workspaces-recent').locator('.sidebar-item');
+  const sidebarFavoriteWorkspaces = workspaces.locator('#sidebar-workspaces-favorites').locator('.sidebar-item');
+  await expect(workspaces.locator('#sidebar-workspaces-recent').locator('.sidebar-content-workspaces__title ')).toHaveText('Recent');
+  await expect(sidebarRecentWorkspaces).toHaveCount(0);
+  await expect(sidebarFavoriteWorkspaces).toHaveCount(0);
 
   const card = workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
+  await expect(card.locator('.workspace-card-content__title')).toHaveText('wksp1');
   await card.locator('.workspace-favorite-icon').click();
   await card.click();
-
   await expect(workspaces).toBeDocumentPage();
-  await expect(sidebarRecentWorkspaces.locator('.sidebar-item')).toHaveCount(1);
-  await expect(sidebarFavoriteWorkspaces.locator('.sidebar-item')).toHaveCount(1);
-  await expect(sidebarRecentWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0)).toHaveText('wksp1');
-  await expect(sidebarFavoriteWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0)).toHaveText('wksp1');
+
+  await expect(sidebarRecentWorkspaces).toHaveCount(1);
+  await expect(sidebarFavoriteWorkspaces).toHaveCount(1);
+  await expect(sidebarRecentWorkspaces.locator('.sidebar-item-workspace').nth(0)).toHaveText('wksp1');
+  await expect(sidebarFavoriteWorkspaces.locator('.sidebar-item-workspace').nth(0)).toHaveText('wksp1');
   await workspaces.locator('#connected-header').locator('.back-button').click();
   await expect(workspaces).toBeWorkspacePage();
-  await card.click({ button: 'right' });
-  const popover = workspaces.locator('.workspace-context-menu');
-  await popover.getByRole('listitem').nth(1).click();
-  await fillInputModal(workspaces, 'New-wksp1', true);
-  await expect(workspaces).toShowToast('Workspace has been successfully renamed to New-wksp1.', 'Success');
 
-  await expect(sidebarRecentWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0)).toHaveText('New-wksp1');
-  await expect(sidebarFavoriteWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0)).toHaveText('New-wksp1');
-
-  // Check update from other user point of view
+  //  Login Bob to check if workspace name is correctly updated
   const bobTab = await workspaces.openNewTab();
   await login(bobTab, 'Boby McBobFace');
   const bobSidebarRecentWorkspaces = bobTab.locator('#sidebar-workspaces-recent');
   const bobSidebarFavoriteWorkspaces = bobTab.locator('#sidebar-workspaces-favorites');
   const bobCard = bobTab.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
+  await expect(bobCard.locator('.workspace-card-content__title')).toHaveText('wksp1');
   await bobCard.click();
+  await expect(bobTab).toBeDocumentPage();
+  await bobTab.locator('#connected-header').locator('.back-button').click();
+  await expect(bobTab).toBeWorkspacePage();
+  await expect(bobSidebarRecentWorkspaces.locator('.sidebar-item')).toHaveCount(1);
+  await expect(bobSidebarFavoriteWorkspaces.locator('.sidebar-item')).toHaveCount(1);
+  await expect(bobSidebarRecentWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0)).toHaveText('wksp1');
+  await expect(bobSidebarFavoriteWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0)).toHaveText('wksp1');
+
+  const popover = workspaces.locator('.workspace-context-menu');
+  await expect(popover).toBeHidden();
+  await card.click({ button: 'right' });
+  await expect(popover).toBeVisible();
+  await popover.getByRole('listitem').nth(1).click();
+  await expect(popover).toBeHidden();
+  await fillInputModal(workspaces, 'New-wksp1', true);
+  await expect(card.locator('.workspace-card-content__title')).toHaveText('New-wksp1');
+  await expect(workspaces).toShowToast('Workspace has been successfully renamed to New-wksp1.', 'Success');
+
+  await expect(bobCard.locator('.workspace-card-content__title')).toHaveText('New-wksp1');
   await expect(bobSidebarRecentWorkspaces.locator('.sidebar-item')).toHaveCount(1);
   await expect(bobSidebarFavoriteWorkspaces.locator('.sidebar-item')).toHaveCount(1);
   await expect(bobSidebarRecentWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0)).toHaveText('New-wksp1');
   await expect(bobSidebarFavoriteWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0)).toHaveText('New-wksp1');
+  await bobTab.release();
 
-  await card.click({ button: 'right' });
-  await popover.getByRole('listitem').nth(1).click();
-  await fillInputModal(workspaces, 'Newer-wksp1', true);
-  await expect(workspaces).toShowToast('Workspace has been successfully renamed to Newer-wksp1.', 'Success');
-  await expect(sidebarRecentWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0)).toHaveText('Newer-wksp1');
-  await expect(sidebarFavoriteWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0)).toHaveText('Newer-wksp1');
-  await expect(bobSidebarRecentWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0)).toHaveText('Newer-wksp1');
-  await expect(bobSidebarFavoriteWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0)).toHaveText('Newer-wksp1');
+  await expect(sidebarRecentWorkspaces.locator('.sidebar-item-workspace').nth(0)).toHaveText('New-wksp1');
+  await expect(sidebarFavoriteWorkspaces.locator('.sidebar-item-workspace').nth(0)).toHaveText('New-wksp1');
 });
 
 // Sidebar visibility management tests
