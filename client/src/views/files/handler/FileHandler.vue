@@ -58,18 +58,18 @@
                 class="save-info-icon save-info-icon-ok"
                 id="saved-changes"
                 ref="savedIcon"
-                :icon="cloudDone"
+                :icon="save"
               />
               <ms-spinner
                 v-show="saveState === SaveState.saving"
                 class="save-info-spinner"
               />
-              <ion-icon
+              <ms-image
                 v-show="saveState === SaveState.unsaved"
                 class="save-info-icon save-info-icon-ko"
                 id="unsaved-changes"
                 ref="unsavedIcon"
-                :icon="cloudOffline"
+                :image="UnsavedIcon"
               />
               <ion-text
                 v-show="saveState && showSaveStateText && isLargeDisplay"
@@ -217,10 +217,11 @@ import {
   SidebarToggle,
   WindowSizeBreakpoints,
   attachMouseOverTooltip,
+  UnsavedIcon,
 } from 'megashark-lib';
 import { ref, Ref, inject, onMounted, onUnmounted, type Component, shallowRef, computed, useTemplateRef } from 'vue';
 import { IonPage, IonContent, IonButton, IonText, IonIcon, modalController } from '@ionic/vue';
-import { link, informationCircle, open, chevronUp, chevronDown, ellipsisHorizontal, create, cloudDone, cloudOffline } from 'ionicons/icons';
+import { link, informationCircle, open, chevronUp, chevronDown, ellipsisHorizontal, create, save } from 'ionicons/icons';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import {
   currentRouteIs,
@@ -939,12 +940,13 @@ async function openSmallDisplayActionMenu(): Promise<void> {
 
         &-icon {
           font-size: 1.125rem;
+          width: 1.125rem;
 
           &-ok {
-            color: var(--parsec-color-light-primary-500);
+            color: var(--parsec-color-light-primary-600);
           }
           &-ko {
-            color: var(--parsec-color-light-secondary-grey);
+            --fill-color: var(--parsec-color-light-secondary-grey);
           }
         }
       }

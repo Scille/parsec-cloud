@@ -2408,8 +2408,8 @@
             "unsaved": "Changes unsaved",
             "saving": "Saving...",
             "saved": "File saved",
-            "tooltipSaved": "This file is synchronised with the server.",
-            "tooltipUnsaved": "Changes aren't synchronized with the server yet."
+            "tooltipSaved": "Changes have been saved.",
+            "tooltipUnsaved": "Changes haven't been saved yet."
         }
     },
     "openFallback": {
