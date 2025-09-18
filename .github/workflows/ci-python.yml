@@ -33,7 +33,10 @@ env:
     --timeout=10
     -vv
     -x
-  postgresql-version: 14
+  # Note that ubuntu-24.04 runner comes with PostgreSQL v16.x installed (minor versions can be updated).
+  # The only thing we have to do is to start the PostgreSQL service using `systemctl`.
+  # See https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2204-Readme.md#postgresql
+  postgresql-version: 16
 
 permissions:
   contents: read
@@ -45,7 +48,7 @@ jobs:
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
     timeout-minutes: 60
     # All linux jobs must run the same ubuntu version to avoid Rust caching issues!
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # pin v5.0.0
         timeout-minutes: 5
@@ -79,38 +82,14 @@ jobs:
         # Just continue if we cannot set APT repo
         continue-on-error: true
 
-      - name: Configure PostgreSQL APT repository
+      - name: Start PostgreSQL
         if: (!inputs.style-only)
-        env:
-          POSTGRES_APT_KEY_SHA_512: df557805862cd279f40819834af14e1723b18044df9dc22bea710b6980c98cc8ed39e75ed5c9adaa1932992710f1180f0491dc9437bfd485b4aa2b75776407d4  /usr/share/keyrings/postgresql-keyring.gpg
-        shell: bash -ex -o pipefail {0}
+        shell: bash -eux {0}
         run: |
-          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc \
-            | sudo gpg --dearmor --output /usr/share/keyrings/postgresql-keyring.gpg
-
-          printenv POSTGRES_APT_KEY_SHA_512 | sha512sum --strict -c -
-
-          echo "deb [signed-by=/usr/share/keyrings/postgresql-keyring.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
-            | sudo tee /etc/apt/sources.list.d/postgresql.list
-
-          sudo apt-get update
-        timeout-minutes: 5
-
-      # Note that ubuntu-22.04 runner already comes with PostgreSQL v14.x installed (minor versions can be updated).
-      # See https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2204-Readme.md#databases
-      - name: Install PostgreSQL-${{ env.postgresql-version }}
-        if: (!inputs.style-only)
-        run: |
-          # Retry the command until it succeed.
-          # We retry because sometime the APT repo configured
-          # by the runner seems drop the connection causing the command to fail.
-          until sudo apt-get -y install ${{ env.POSTGRESQL_PACKAGE }}; do
-            echo "Failed to install APT package, retrying...";
-          done
-        env:
-          POSTGRESQL_PACKAGE: >-
-            postgresql-${{ env.postgresql-version }}
-        timeout-minutes: 5
+          sudo systemctl start postgresql.service
+          # Ensure we run the expected major version
+          pg_config --version | grep -q "PostgreSQL ${{ env.postgresql-version }}."
+        timeout-minutes: 1
 
       - uses: ./.github/actions/setup-python-poetry
         id: setup-python
