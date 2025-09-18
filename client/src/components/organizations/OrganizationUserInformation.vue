@@ -9,15 +9,22 @@
 
       <ion-button
         fill="clear"
-        class="card-header__button"
-        @click="navigateTo(Routes.Users)"
+        class="card-header__button user-invite-button"
+        @click="inviteUser"
       >
-        {{ $msTranslate('OrganizationPage.users.seeUsers') }}
+        <ion-icon
+          :icon="personAdd"
+          class="user-invite-button__icon"
+        />
       </ion-button>
     </div>
 
     <div class="card-content">
-      <div class="users-list">
+      <div
+        button
+        class="users-list"
+        @click="navigateTo(Routes.Users)"
+      >
         <!-- Active users -->
         <div class="users-list-item">
           <ion-text class="users-list-item__title title-h2">
@@ -49,69 +56,124 @@
         </div>
       </div>
 
-      <div class="user-active-list">
-        <!-- Admin -->
-        <div class="user-active-list-item">
-          <tag-profile :profile="UserProfile.Admin" />
-          <ion-text class="user-active-list-item__value title-h4">
-            {{ orgInfo.users.admins }}
-          </ion-text>
+      <div class="user-active">
+        <div class="user-active-list">
+          <!-- Admin -->
+          <div class="user-active-list-item">
+            <tag-profile :profile="UserProfile.Admin" />
+            <ion-text class="user-active-list-item__value title-h4">
+              {{ orgInfo.users.admins }}
+            </ion-text>
+          </div>
+          <!-- Standard -->
+          <div class="user-active-list-item">
+            <tag-profile :profile="UserProfile.Standard" />
+            <ion-text class="user-active-list-item__value title-h4">
+              {{ orgInfo.users.standards }}
+            </ion-text>
+          </div>
+          <!-- Outsiders if allowed -->
+          <div
+            v-if="orgInfo.outsidersAllowed"
+            class="user-active-list-item"
+          >
+            <tag-profile :profile="UserProfile.Outsider" />
+            <ion-text class="user-active-list-item__value title-h4">
+              {{ orgInfo.users.outsiders }}
+            </ion-text>
+          </div>
         </div>
-        <!-- Standard -->
-        <div class="user-active-list-item">
-          <tag-profile :profile="UserProfile.Standard" />
-          <ion-text class="user-active-list-item__value title-h4">
-            {{ orgInfo.users.standards }}
-          </ion-text>
-        </div>
-        <!-- Outsiders if allowed -->
-        <div
-          v-if="orgInfo.outsidersAllowed"
-          class="user-active-list-item"
+
+        <ion-button
+          fill="clear"
+          class="user-active__button"
+          @click="navigateTo(Routes.Users)"
         >
-          <tag-profile :profile="UserProfile.Outsider" />
-          <ion-text class="user-active-list-item__value title-h4">
-            {{ orgInfo.users.outsiders }}
-          </ion-text>
-        </div>
+          {{ $msTranslate('OrganizationPage.users.seeUsers') }}
+        </ion-button>
       </div>
 
-      <invitations-button
-        v-if="isSmallDisplay"
-        :is-gradient-button="true"
-      />
+      <div class="invitation-card-list">
+        <div
+          button
+          class="invitation-card-list-item"
+          @click="goToInvitations(InvitationView.EmailInvitation)"
+        >
+          <ion-text class="invitation-card-list-item__number title-h1">{{ invitationCount }}</ion-text>
+          <ion-text class="invitation-card-list-item__title button-large">
+            {{ $msTranslate('OrganizationPage.users.invitations.emailInvitations') }}
+          </ion-text>
+          <ion-icon
+            class="invitation-card-list-item__icon"
+            :icon="mailUnread"
+          />
+        </div>
 
-      <ion-button
-        fill="clear"
-        class="user-invite-button"
-        @click="inviteUser"
-        v-if="isSmallDisplay"
-      >
-        <ion-icon
-          :icon="personAdd"
-          class="user-invite-button__icon"
-        />
-        {{ $msTranslate('OrganizationPage.users.addUser') }}
-      </ion-button>
+        <div
+          button
+          class="invitation-card-list-item"
+          @click="goToInvitations(InvitationView.PkiRequest)"
+        >
+          <ion-text class="invitation-card-list-item__number title-h1">{{ pkiRequestCount }}</ion-text>
+          <ion-text class="invitation-card-list-item__title button-large">
+            {{ $msTranslate('OrganizationPage.users.invitations.pkiRequests') }}
+          </ion-text>
+          <ion-icon
+            class="invitation-card-list-item__icon"
+            :icon="idCard"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import TagProfile from '@/components/users/TagProfile.vue';
-import { UserProfile, OrganizationInfo, ClientInfo } from '@/parsec';
-import { personAdd } from 'ionicons/icons';
-import InvitationsButton from '@/components/header/InvitationsButton.vue';
+import { UserProfile, OrganizationInfo, ClientInfo, listUserInvitations, listOrganizationJoinRequests } from '@/parsec';
+import { idCard, mailUnread, personAdd } from 'ionicons/icons';
 import { navigateTo, Routes } from '@/router';
-import { useWindowSize } from 'megashark-lib';
 import { IonButton, IonIcon, IonText, IonTitle } from '@ionic/vue';
-
-const { isSmallDisplay } = useWindowSize();
+import { InvitationView } from '@/views/invitations/types';
+import { inject, onMounted, onUnmounted, ref } from 'vue';
+import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 
 defineProps<{
   userInfo: ClientInfo;
   orgInfo: OrganizationInfo;
 }>();
+
+const invitationCount = ref(0);
+const pkiRequestCount = ref(0);
+const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+let cbId: string | undefined = undefined;
+
+onMounted(async () => {
+  cbId = await eventDistributor.registerCallback(Events.InvitationUpdated, async (event: Events, _data?: EventData) => {
+    if (event === Events.InvitationUpdated) {
+      await refresh();
+    }
+  });
+  await refresh();
+});
+
+onUnmounted(async () => {
+  if (cbId) {
+    await eventDistributor.removeCallback(cbId);
+    cbId = undefined;
+  }
+});
+
+async function refresh(): Promise<void> {
+  const invResult = await listUserInvitations();
+  invitationCount.value = invResult.ok ? invResult.value.length : 0;
+  const pkiResult = await listOrganizationJoinRequests();
+  pkiRequestCount.value = pkiResult.ok ? pkiResult.value.length : 0;
+}
+
+async function goToInvitations(view: InvitationView): Promise<void> {
+  await navigateTo(Routes.Invitations, { replace: false, query: { invitationView: view } });
+}
 
 async function inviteUser(): Promise<void> {
   await navigateTo(Routes.Invitations, { query: { openInvite: true } });
@@ -121,6 +183,9 @@ async function inviteUser(): Promise<void> {
 <style scoped lang="scss">
 .organization-users {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
   width: 100%;
   max-width: 30rem;
   align-items: center;
@@ -139,10 +204,16 @@ async function inviteUser(): Promise<void> {
   }
 
   &__button {
-    margin-left: auto;
-    color: var(--parsec-color-light-secondary-text);
+    align-self: stretch;
+    color: var(--parsec-color-light-secondary-soft-text);
+    border-radius: var(--parsec-radius-8);
+    border: 1px solid var(--parsec-color-light-secondary-medium);
     --background-hover: var(--parsec-color-light-secondary-background);
-    font-weight: 500;
+    box-shadow: var(--parsec-shadow-input);
+
+    &::part(native) {
+      padding: 0.625rem 1rem;
+    }
   }
 }
 
@@ -154,6 +225,53 @@ async function inviteUser(): Promise<void> {
   border-radius: var(--parsec-radius-8);
   width: 100%;
   gap: 1rem;
+}
+
+.invitation-card-list {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  gap: 1rem;
+
+  &-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0.25rem;
+    position: relative;
+    padding: 1rem 0.75rem;
+    background: var(--parsec-color-light-secondary-text);
+    border-radius: var(--parsec-radius-8);
+    width: 100%;
+    cursor: pointer;
+    box-shadow: none;
+    transition:
+      background 0.2s,
+      box-shadow 0.2s;
+
+    &:hover {
+      background: var(--parsec-color-light-secondary-contrast);
+      box-shadow: var(--parsec-shadow-soft);
+    }
+
+    &__number {
+      color: var(--parsec-color-light-secondary-white);
+    }
+
+    &__title {
+      color: var(--parsec-color-light-secondary-white);
+      opacity: 0.9;
+    }
+
+    &__icon {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      font-size: 2rem;
+      color: var(--parsec-color-light-secondary-white);
+      opacity: 0.2;
+    }
+  }
 }
 
 .organization-users {
@@ -168,6 +286,7 @@ async function inviteUser(): Promise<void> {
     &-item {
       display: flex;
       gap: 0.25rem;
+      width: 100%;
       flex-direction: column;
       align-items: center;
 
@@ -185,35 +304,58 @@ async function inviteUser(): Promise<void> {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: var(--parsec-color-light-secondary-white);
-    --background-hover: var(--parsec-color-light-secondary-contrast);
+    color: var(--parsec-color-light-secondary-soft-text);
+    --background-hover: var(--parsec-color-light-secondary-background);
+    border: 1px solid var(--parsec-color-light-secondary-medium);
+    box-shadow: var(--parsec-shadow-input);
+    border-radius: var(--parsec-radius-8);
 
     &::part(native) {
-      padding: 0.75rem 1rem;
-      border-radius: var(--parsec-radius-8);
-      background: var(--parsec-color-light-secondary-text);
+      padding: 0.625rem 0.75rem;
     }
 
     &__icon {
-      color: var(--parsec-color-light-secondary-white);
+      color: var(--parsec-color-light-secondary-soft-text);
       font-size: 1rem;
-      margin-right: 0.625rem;
     }
   }
 
-  .user-active-list {
+  .user-active {
     display: flex;
-    gap: 1rem;
-    justify-content: space-around;
+    flex-direction: column;
+    width: 100%;
     background: var(--parsec-color-light-secondary-background);
-    padding: 1.5rem 0.5rem 1rem;
+    padding: 1.5rem 1rem 1rem;
     border-radius: var(--parsec-radius-6);
+    gap: 1rem;
+    align-items: center;
 
-    &-item {
+    &-list {
       display: flex;
-      align-items: center;
-      flex-direction: column;
       gap: 0.25rem;
+      width: 100%;
+
+      &-item {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+    }
+
+    &__button {
+      color: var(--parsec-color-light-secondary-soft-text);
+      --background: var(--parsec-color-light-secondary-white);
+      --background-hover: var(--parsec-color-light-secondary-background);
+      border: 1px solid var(--parsec-color-light-secondary-medium);
+      box-shadow: var(--parsec-shadow-input);
+      border-radius: var(--parsec-radius-8);
+      width: 100%;
+
+      &::part(native) {
+        padding: 0.625rem 1rem;
+      }
     }
   }
 }

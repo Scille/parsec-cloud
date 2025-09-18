@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-enum InvitationUserView {
+enum InvitationView {
   EmailInvitation = 'email-invitation',
   PkiRequest = 'pki-request',
 }
 
-export { InvitationUserView };
+export { InvitationView };
