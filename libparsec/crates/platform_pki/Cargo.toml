@@ -16,9 +16,9 @@ default = ["hash-sri-display"]
 hash-sri-display = ["dep:data-encoding"]
 
 [dependencies]
-thiserror = { workspace = true }
 bytes = { workspace = true }
 data-encoding = { workspace = true, optional = true }
+error_set = { workspace = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 schannel = { workspace = true }

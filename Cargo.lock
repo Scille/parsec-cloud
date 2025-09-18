@@ -2414,10 +2414,10 @@ dependencies = [
  "clap",
  "cryptoki",
  "data-encoding",
+ "error_set",
  "percent-encoding",
  "schannel",
  "sha2",
- "thiserror 2.0.16",
  "windows-sys 0.61.0",
 ]
 

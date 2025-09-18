@@ -4,7 +4,8 @@ use std::ffi::c_void;
 
 use crate::{
     CertificateDer, CertificateHash, CertificateReference, CertificateReferenceIdOrHash,
-    GetDerEncodedCertificateError, SignMessageError, SignedMessage,
+    EncryptMessageError, EncryptedMessage, GetDerEncodedCertificateError, SignMessageError,
+    SignedMessage,
 };
 use bytes::Bytes;
 use schannel::{
@@ -15,9 +16,10 @@ use schannel::{
 };
 use sha2::Digest as _;
 use windows_sys::Win32::Security::Cryptography::{
-    CertGetCertificateContextProperty, NCryptSignHash, BCRYPT_PSS_PADDING_INFO, CERT_CONTEXT,
-    CERT_KEY_PROV_INFO_PROP_ID, HCERTSTORE, NCRYPT_KEY_HANDLE, NCRYPT_PAD_PSS_FLAG,
-    NCRYPT_SHA256_ALGORITHM, UI::CryptUIDlgSelectCertificateFromStore,
+    CertGetCertificateContextProperty, NCryptEncrypt, NCryptSignHash, BCRYPT_OAEP_PADDING_INFO,
+    BCRYPT_PSS_PADDING_INFO, CERT_CONTEXT, CERT_KEY_PROV_INFO_PROP_ID, HCERTSTORE,
+    NCRYPT_KEY_HANDLE, NCRYPT_PAD_OAEP_FLAG, NCRYPT_PAD_PSS_FLAG, NCRYPT_SHA256_ALGORITHM,
+    UI::CryptUIDlgSelectCertificateFromStore,
 };
 
 fn open_store() -> std::io::Result<CertStore> {
@@ -142,13 +144,26 @@ fn get_id_and_hash_from_cert_context(
     Ok(CertificateReferenceIdOrHash { id, hash })
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug)]
 pub enum ShowCertificateSelectionDialogError {
-    #[error("Cannot open certificate store: {}", .0)]
     CannotOpenStore(std::io::Error),
-    #[error("Cannot get certificate info: {}", .0)]
     CannotGetCertificateInfo(std::io::Error),
 }
+
+impl std::fmt::Display for ShowCertificateSelectionDialogError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ShowCertificateSelectionDialogError::CannotOpenStore(e) => {
+                write!(f, "Cannot open certificate store: {e}")
+            }
+            ShowCertificateSelectionDialogError::CannotGetCertificateInfo(e) => {
+                write!(f, "Cannot get certificate info: {e}")
+            }
+        }
+    }
+}
+
+impl std::error::Error for ShowCertificateSelectionDialogError {}
 
 // TODO: This is specific to windows, it cannot be replicated on other platform.
 // Instead, we likely need to go the manual way and show a custom dialog on the client side with a
@@ -205,12 +220,7 @@ pub fn sign_message(
         find_certificate(&store, certificate_ref).ok_or(SignMessageError::NotFound)?;
     let reference = get_id_and_hash_from_cert_context(&cert_context)
         .map_err(SignMessageError::CannotGetCertificateInfo)?;
-    let mut acq_keypair = cert_context.private_key();
-    let keypair = acq_keypair
-        // Ensure private key correspond to the certificate public key.
-        .compare_key(true)
-        .acquire()
-        .map_err(SignMessageError::CannotAcquireKeypair)?;
+    let keypair = get_keypair(&cert_context)?;
     let signed_message = match keypair {
         // We do not support a CryptoAPI provider as its API is marked for depreciation by windows.
         PrivateKey::CryptProv(..) => {
@@ -225,6 +235,15 @@ pub fn sign_message(
         signed_message,
         cert_ref: reference,
     })
+}
+
+fn get_keypair(context: &CertContext) -> Result<PrivateKey, crate::errors::BaseKeyPairError> {
+    let mut acq_keypair = context.private_key();
+    acq_keypair
+        // Ensure private key correspond to the certificate public key.
+        .compare_key(true)
+        .acquire()
+        .map_err(crate::errors::BaseKeyPairError::CannotAcquireKeypair)
 }
 
 fn ncrypt_sign_message(message: &[u8], handle: &NcryptKey) -> std::io::Result<Vec<u8>> {
@@ -283,6 +302,91 @@ fn ncrypt_sign_message(message: &[u8], handle: &NcryptKey) -> std::io::Result<Ve
             flags,
         );
 
+        if res != 0 {
+            return Err(std::io::Error::last_os_error());
+        }
+        Ok(buff)
+    }
+}
+
+pub fn encrypt_message(
+    message: &[u8],
+    certificate_ref: &CertificateReference,
+) -> Result<EncryptedMessage, EncryptMessageError> {
+    let store = open_store().map_err(EncryptMessageError::CannotOpenStore)?;
+    let cert_context =
+        find_certificate(&store, certificate_ref).ok_or(EncryptMessageError::NotFound)?;
+    let reference = get_id_and_hash_from_cert_context(&cert_context)
+        .map_err(EncryptMessageError::CannotGetCertificateInfo)?;
+    let keypair = get_keypair(&cert_context)?;
+    let ciphered = match keypair {
+        // We do not support a CryptoAPI provider as its API is marked for depreciation by windows.
+        PrivateKey::CryptProv(..) => {
+            todo!("Use CryptGetUserKey to get the keypair")
+        }
+        // Handle to a CryptoGraphy Next Generation (CNG) API
+        PrivateKey::NcryptKey(handle) => ncrypt_encrypt_message(message, &handle).map(Into::into),
+    }
+    .map_err(EncryptMessageError::CannotEncrypt)?;
+
+    Ok(EncryptedMessage {
+        ciphered,
+        cert_ref: reference,
+    })
+}
+
+fn ncrypt_encrypt_message(message: &[u8], handle: &NcryptKey) -> std::io::Result<Vec<u8>> {
+    // SAFETY: NcryptKey is obtain from an NCRYPT_KEY_HANDLE, here we retrieve the underlying
+    // handle.
+    let raw_handle = unsafe { RawPointer::as_ptr(handle) } as NCRYPT_KEY_HANDLE;
+
+    // SAFETY: We follow the windows documentation by correctly passing the correct flags according
+    // to padding_info type, and the other pointer are either coming from allocated buffer or null
+    // pointer with their correct associated sizes.
+    //
+    // Documentation of the below function:
+    // https://learn.microsoft.com/en-us/windows/win32/api/ncrypt/nf-ncrypt-ncryptencrypt
+    // Rust doc:
+    // https://docs.rs/windows-sys/latest/windows_sys/Win32/Security/Cryptography/fn.NCryptEncrypt.html
+    unsafe {
+        // We pad the ciphered data using OAEP.
+        let flags = NCRYPT_PAD_OAEP_FLAG;
+        // https://learn.microsoft.com/en-us/windows/win32/api/bcrypt/ns-bcrypt-bcrypt_oaep_padding_info
+        let padding_info = BCRYPT_OAEP_PADDING_INFO {
+            pszAlgId: NCRYPT_SHA256_ALGORITHM,
+            pbLabel: std::ptr::null_mut(),
+            cbLabel: 0,
+        };
+        let padding_info_ptr = (&raw const padding_info) as *const std::os::raw::c_void;
+        let mut len = 0_u32;
+
+        // 1. Get size of the resulting ciphered data.
+        let res = NCryptEncrypt(
+            raw_handle,
+            message.as_ptr(),
+            message.len() as u32,
+            padding_info_ptr,
+            std::ptr::null_mut(),
+            0,
+            &mut len,
+            flags,
+        );
+        if res != 0 {
+            return Err(std::io::Error::last_os_error());
+        }
+
+        // 2. Actually perform the encryption.
+        let mut buff = vec![0_u8; len as usize];
+        let res = NCryptEncrypt(
+            raw_handle,
+            message.as_ptr(),
+            message.len() as u32,
+            padding_info_ptr,
+            buff.as_mut_ptr(),
+            buff.len() as u32,
+            &mut len,
+            flags,
+        );
         if res != 0 {
             return Err(std::io::Error::last_os_error());
         }
