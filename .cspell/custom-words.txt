@@ -12,6 +12,7 @@ arrowup
 asgi
 asynchronousness
 asyncness
+autohiding
 baka
 Bardock
 beafy

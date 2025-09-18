@@ -10,7 +10,6 @@
     @drop-as-reader="$emit('dropAsReader')"
   >
     <div
-      class="scroll"
       ref="containerScroll"
       @contextmenu="onContextMenu"
     >
@@ -238,11 +237,6 @@ async function scrollToSelected(): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-.scroll {
-  padding: 0;
-  margin-bottom: 0;
-}
-
 .file-list-mobile {
   padding-top: 1rem;
 }

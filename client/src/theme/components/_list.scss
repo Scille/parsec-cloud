@@ -131,6 +131,15 @@
   }
 }
 
+.user-selected {
+  .checkbox {
+    @include ms.responsive-breakpoint('sm') {
+      max-width: 100%;
+      width: 100%;
+    }
+  }
+}
+
 // Allow to keep hover when context menu is open
 .file-hovered,
 .user-hovered:not(.revoked) {
@@ -387,7 +396,7 @@
   }
 
   .checkbox-mobile {
-    --size: 1.75rem;
+    --size: 1.875rem;
 
     &::part(container) {
       border: 2px solid var(--parsec-color-light-secondary-light);
