@@ -2407,8 +2407,8 @@
             "unsaved": "Modifications non sauvegardées",
             "saving": "Enregistrement...",
             "saved": "Fichier sauvegardé",
-            "tooltipSaved": "Ce fichier est synchronisé avec le serveur.",
-            "tooltipUnsaved": "Les modifications ne sont pas encore synchronisées sur le serveur."
+            "tooltipSaved": "Les modifications ont été sauvegardées.",
+            "tooltipUnsaved": "Les modifications ne sont pas encore sauvegardées."
         }
     },
     "openFallback": {
