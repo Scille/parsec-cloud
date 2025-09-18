@@ -7,9 +7,9 @@
     >
       <ion-radio
         class="switch-item"
-        :value="InvitationUserView.EmailInvitation"
+        :value="InvitationView.EmailInvitation"
         @click="$event.preventDefault()"
-        :class="{ 'radio-checked': invitationView === InvitationUserView.EmailInvitation }"
+        :class="{ 'radio-checked': invitationView === InvitationView.EmailInvitation }"
       >
         <ion-icon
           :icon="mailUnread"
@@ -19,7 +19,7 @@
         <span class="switch-item__count button-small">{{ invitationsCount }}</span>
 
         <ion-icon
-          v-if="invitationView === InvitationUserView.EmailInvitation"
+          v-if="invitationView === InvitationView.EmailInvitation"
           :icon="checkmarkCircle"
           class="switch-item__check-icon"
         />
@@ -27,9 +27,9 @@
 
       <ion-radio
         class="switch-item"
-        :value="InvitationUserView.PkiRequest"
+        :value="InvitationView.PkiRequest"
         @click="$event.preventDefault()"
-        :class="{ 'radio-checked': invitationView === InvitationUserView.PkiRequest }"
+        :class="{ 'radio-checked': invitationView === InvitationView.PkiRequest }"
       >
         <ion-icon
           :icon="idCard"
@@ -39,7 +39,7 @@
         <span class="switch-item__count button-small">{{ pkiRequestsCount }}</span>
 
         <ion-icon
-          v-if="invitationView === InvitationUserView.PkiRequest"
+          v-if="invitationView === InvitationView.PkiRequest"
           :icon="checkmarkCircle"
           class="switch-item__check-icon"
         />
@@ -60,17 +60,17 @@
 <script setup lang="ts">
 import { IonText, IonIcon, IonRadio, IonRadioGroup, IonButton, modalController } from '@ionic/vue';
 import { mailUnread, idCard, checkmarkCircle } from 'ionicons/icons';
-import { InvitationUserView } from '@/views/invitations/types';
+import { InvitationView } from '@/views/invitations/types';
 import { ref } from 'vue';
 import { MsModalResult } from 'megashark-lib';
 
 const props = defineProps<{
   invitationsCount: number;
   pkiRequestsCount: number;
-  defaultView: InvitationUserView;
+  defaultView: InvitationView;
 }>();
 
-const invitationView = ref<InvitationUserView>(props.defaultView);
+const invitationView = ref<InvitationView>(props.defaultView);
 
 async function validate(): Promise<void> {
   modalController.dismiss(invitationView.value, MsModalResult.Confirm);

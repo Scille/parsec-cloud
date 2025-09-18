@@ -931,8 +931,12 @@
             "activeUsers": "Actif | Actifs",
             "frozenUsers": "Suspendu | Suspendus",
             "title": "Utilisateurs",
-            "seeUsers": "Voir les utilisateurs",
-            "addUser": "Ajouter un utilisateur"
+            "seeUsers": "Voir tous les utilisateurs",
+            "addUser": "Ajouter un utilisateur",
+            "invitations": {
+                "emailInvitations": "Invitations par e-mail",
+                "pkiRequests": "Demandes PKI"
+            }
         },
         "size": {
             "information": "Ce stockage comprend les espaces de travail de tous les utilisateurs ainsi que l'historique des changements de fichiers/dossiers.",
@@ -1557,7 +1561,9 @@
                     },
                     "notValid": {
                         "title": "Ajout d'un utilisateur avec certificat non valide",
-                        "description": "Le certificat fourni par l'utilisateur ne correspond pas au certificat racine. Êtes-vous sûr de confirmer l'ajout de cet utilisateur ?"
+                        "description": "Le certificat fourni par l'utilisateur ne correspond pas au certificat racine. Êtes-vous sûr de confirmer l'ajout de cet utilisateur ?",
+                        "no": "Annuler",
+                        "yes": "Confirmer l'ajout"
                     }
                 },
                 "button": {

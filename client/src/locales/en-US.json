@@ -932,8 +932,12 @@
             "activeUsers": "Active | Active",
             "frozenUsers": "Frozen | Frozen",
             "title": "Users",
-            "seeUsers": "See users",
-            "addUser": "Add a user"
+            "seeUsers": "See all users",
+            "addUser": "Add a user",
+            "invitations": {
+                "emailInvitations": "Email invitations",
+                "pkiRequests": "PKI requests"
+            }
         },
         "size": {
             "information": "This storage includes the workspaces of all users as well as the history of file/folder changes.",

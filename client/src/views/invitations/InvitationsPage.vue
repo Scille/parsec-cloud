@@ -7,7 +7,7 @@
       class="switch-view"
     >
       <ion-button
-        v-if="view === InvitationUserView.EmailInvitation"
+        v-if="view === InvitationView.EmailInvitation"
         class="switch-view-button email-button"
         @click="openInvitationSwitchModal"
       >
@@ -51,9 +51,9 @@
         >
           <ion-button
             class="toggle-view-button email-button"
-            :class="{ active: view === InvitationUserView.EmailInvitation }"
-            @click="view = InvitationUserView.EmailInvitation"
-            :disabled="view === InvitationUserView.EmailInvitation"
+            :class="{ active: view === InvitationView.EmailInvitation }"
+            @click="switchView(InvitationView.EmailInvitation)"
+            :disabled="view === InvitationView.EmailInvitation"
           >
             <ion-icon
               :icon="mailUnread"
@@ -67,9 +67,9 @@
           </ion-button>
           <ion-button
             class="toggle-view-button pki-button"
-            :class="{ active: view === InvitationUserView.PkiRequest }"
-            @click="view = InvitationUserView.PkiRequest"
-            :disabled="view === InvitationUserView.PkiRequest"
+            :class="{ active: view === InvitationView.PkiRequest }"
+            @click="switchView(InvitationView.PkiRequest)"
+            :disabled="view === InvitationView.PkiRequest"
           >
             <ion-icon
               :icon="idCard"
@@ -84,7 +84,7 @@
         </div>
 
         <ion-button
-          v-if="view === InvitationUserView.PkiRequest && rootCertificate"
+          v-if="view === InvitationView.PkiRequest && rootCertificate"
           @click="selectRootCertificate"
           id="update-root-certificate-button"
           class="button-medium button-default certificate-button"
@@ -102,7 +102,7 @@
         </ion-button>
 
         <ion-button
-          v-if="view === InvitationUserView.PkiRequest"
+          v-if="view === InvitationView.PkiRequest"
           @click="onCopyJoinLinkClicked"
           id="copy-link-pki-request-button"
           class="button-medium button-default"
@@ -115,7 +115,7 @@
         </ion-button>
 
         <ion-button
-          v-if="view === InvitationUserView.EmailInvitation"
+          v-if="view === InvitationView.EmailInvitation"
           @click="inviteUser"
           id="invite-user-button"
           class="button-medium button-default"
@@ -130,7 +130,7 @@
 
       <div
         class="invitations-container scroll"
-        v-if="view === InvitationUserView.EmailInvitation"
+        v-if="view === InvitationView.EmailInvitation"
       >
         <div
           v-show="invitations.length === 0"
@@ -158,7 +158,7 @@
       </div>
       <div
         class="invitations-container scroll"
-        v-if="view === InvitationUserView.PkiRequest"
+        v-if="view === InvitationView.PkiRequest"
       >
         <input
           type="file"
@@ -171,12 +171,6 @@
           v-if="!rootCertificate"
         >
           <div class="root-certificate-content">
-            <ms-report-text
-              class="root-certificate-text__report"
-              :theme="MsReportTheme.Warning"
-            >
-              {{ $msTranslate('InvitationsPage.pkiRequests.pkiFeature') }}
-            </ms-report-text>
             <ms-image
               :image="CertificateIcon"
               class="root-certificate__icon"
@@ -189,6 +183,12 @@
                 {{ $msTranslate('InvitationsPage.pkiRequests.rootCertificate.missingCertificateDescription') }}
               </ion-text>
             </div>
+            <ms-report-text
+              class="root-certificate-text__report"
+              :theme="MsReportTheme.Warning"
+            >
+              {{ $msTranslate('InvitationsPage.pkiRequests.pkiFeature') }}
+            </ms-report-text>
             <ion-button
               class="button-large button-default"
               @click="selectRootCertificate"
@@ -212,7 +212,7 @@
             </ion-text>
           </div>
         </div>
-        <div v-show="invitations.length > 0">
+        <div v-show="(invitations.length > 0 && isLargeDisplay) || (rootCertificate && pkiRequests.length > 0)">
           <pki-request-list
             :requests="pkiRequests"
             @accept-click="onAcceptPkiRequestClicked"
@@ -245,7 +245,7 @@ import { Information, InformationLevel, InformationManager, InformationManagerKe
 import { IonContent, IonPage, IonText, modalController, IonIcon, IonButton } from '@ionic/vue';
 import { caretDown, document, idCard, link, mailUnread, personAdd } from 'ionicons/icons';
 import { inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
-import { InvitationUserView } from '@/views/invitations/types';
+import { InvitationView } from '@/views/invitations/types';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import InvitationSwitchModal from '@/views/invitations/InvitationSwitchModal.vue';
 import {
@@ -272,7 +272,7 @@ import { currentRouteIs, getCurrentRouteQuery, navigateTo, Routes, watchRoute } 
 import { emailValidator } from '@/common/validators';
 
 const { isLargeDisplay, isSmallDisplay, windowWidth } = useWindowSize();
-const view = ref(InvitationUserView.EmailInvitation);
+const view = ref(InvitationView.EmailInvitation);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 
@@ -289,9 +289,15 @@ const routeWatchCancel = watchRoute(async () => {
     return;
   }
   const query = getCurrentRouteQuery();
+
+  if (query.invitationView && Object.values(InvitationView).includes(query.invitationView)) {
+    view.value = query.invitationView;
+  }
+
   if (query.openInvite) {
+    view.value = InvitationView.EmailInvitation;
     await inviteUser();
-    await navigateTo(Routes.Invitations, { replace: true, query: {} });
+    await navigateTo(Routes.Invitations, { replace: true, query: { invitationView: InvitationView.EmailInvitation } });
   }
   await refreshAll();
 });
@@ -304,9 +310,15 @@ onMounted(async (): Promise<void> => {
   });
   await refreshAll();
   const query = getCurrentRouteQuery();
+
+  if (query.invitationView && Object.values(InvitationView).includes(query.invitationView)) {
+    view.value = query.invitationView;
+  }
+
   if (query.openInvite) {
+    view.value = InvitationView.EmailInvitation;
     await inviteUser();
-    await navigateTo(Routes.Invitations, { replace: true, query: {} });
+    await navigateTo(Routes.Invitations, { replace: true, query: { invitationView: InvitationView.EmailInvitation } });
   }
 });
 
@@ -322,6 +334,13 @@ onUnmounted(async () => {
   }
   routeWatchCancel();
 });
+
+async function switchView(newView: InvitationView): Promise<void> {
+  if (newView === view.value) {
+    return;
+  }
+  await navigateTo(Routes.Invitations, { replace: true, query: { invitationView: newView } });
+}
 
 async function inviteUser(): Promise<void> {
   const email = await getTextFromUser(
@@ -420,7 +439,7 @@ async function openInvitationSwitchModal(): Promise<void> {
   const { data, role } = await modal.onWillDismiss();
   await modal.dismiss();
   if (role === MsModalResult.Confirm && data) {
-    view.value = data;
+    switchView(data);
   }
 }
 
@@ -818,12 +837,6 @@ async function refreshAll(): Promise<void> {
     }
   }
 
-  #invite-user-button {
-    @include ms.responsive-breakpoint('sm') {
-      margin-left: auto;
-    }
-  }
-
   .certificate-button {
     display: flex;
     margin-left: auto;
@@ -898,6 +911,13 @@ async function refreshAll(): Promise<void> {
   align-items: center;
   justify-content: center;
 
+  @include ms.responsive-breakpoint('sm') {
+    padding: 0;
+    background: var(--parsec-color-light-secondary-white);
+    align-items: flex-start;
+    height: -webkit-fill-available;
+  }
+
   &-content {
     background: var(--parsec-color-light-secondary-white);
     padding: 2rem;
@@ -908,9 +928,22 @@ async function refreshAll(): Promise<void> {
     border-radius: var(--parsec-radius-12);
     box-shadow: var(--parsec-shadow-soft);
 
+    @include ms.responsive-breakpoint('sm') {
+      border-radius: 0;
+      padding: 2rem 1.5rem;
+      box-shadow: none;
+    }
+
     .root-certificate__icon {
       width: 2.5rem;
       margin: 0 auto;
+
+      @include ms.responsive-breakpoint('sm') {
+        margin: 0;
+        width: 1.5rem;
+        position: absolute;
+        top: 1.875rem;
+      }
     }
 
     .root-certificate-text {
@@ -919,8 +952,16 @@ async function refreshAll(): Promise<void> {
       gap: 0.5rem;
       text-align: center;
 
+      @include ms.responsive-breakpoint('sm') {
+        text-align: left;
+      }
+
       &__title {
         color: var(--parsec-color-light-secondary-text);
+
+        @include ms.responsive-breakpoint('sm') {
+          margin-left: 2rem;
+        }
       }
 
       &__description {

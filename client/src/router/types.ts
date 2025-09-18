@@ -5,6 +5,7 @@ import { DeviceID, OrganizationID } from '@/plugins/libparsec';
 import { Env } from '@/services/environment';
 import { ServerType } from '@/services/parsecServers';
 import { FileHandlerMode } from '@/views/files/handler';
+import { InvitationView } from '@/views/invitations/types';
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { Ref } from 'vue';
 import { RouteLocationNormalizedLoaded, RouteRecordRaw, Router } from 'vue-router';
@@ -290,6 +291,7 @@ export interface Query {
   selectFile?: EntryName;
   loginInfo?: string;
   workspaceHandle?: WorkspaceHandle;
+  invitationView?: InvitationView;
   bmsOrganizationId?: OrganizationID;
   createOrg?: ServerType;
   fileTypeInfo?: string;
