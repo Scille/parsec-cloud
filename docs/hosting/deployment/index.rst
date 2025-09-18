@@ -284,7 +284,7 @@ Requirements
 
 - Python v3.12 with ``pip`` and ``venv`` modules
 - A S3 like object storage endpoint.
-- A postgres-14 database endpoint.
+- A postgres-16 database endpoint.
 - A TLS certificate & key for the server.
 
 Configure the environment

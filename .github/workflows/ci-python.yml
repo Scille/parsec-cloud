@@ -33,7 +33,7 @@ env:
     --timeout=10
     -vv
     -x
-  postgresql-version: 14
+  postgresql-version: 16
 
 permissions:
   contents: read
