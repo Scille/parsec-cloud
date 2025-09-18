@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+pub mod errors;
 #[cfg(target_os = "windows")]
 mod windows;
 
@@ -51,8 +52,8 @@ pub use windows::show_certificate_selection_dialog;
 #[cfg(not(target_os = "windows"))]
 mod platform {
     use crate::{
-        CertificateDer, CertificateReference, GetDerEncodedCertificateError, SignMessageError,
-        SignedMessage,
+        CertificateDer, CertificateReference, EncryptMessageError, EncryptedMessage,
+        GetDerEncodedCertificateError, SignMessageError, SignedMessage,
     };
 
     pub fn get_der_encoded_certificate(
@@ -70,18 +71,17 @@ mod platform {
         let _ = certificate_ref;
         unimplemented!("platform not supported")
     }
+
+    pub fn encrypt_message(
+        message: &[u8],
+        certificate_ref: &CertificateReference,
+    ) -> Result<EncryptedMessage, EncryptMessageError> {
+        let _ = (message, certificate_ref);
+        unimplemented!("platform not supported")
+    }
 }
 
-#[derive(Debug, thiserror::Error)]
-pub enum GetDerEncodedCertificateError {
-    #[error("Cannot open certificate store: {}", .0)]
-    CannotOpenStore(std::io::Error),
-    #[error("Cannot find certificate")]
-    NotFound,
-    #[error("Cannot get certificate info: {}", .0)]
-    CannotGetCertificateInfo(std::io::Error),
-}
-
+pub use errors::GetDerEncodedCertificateError;
 pub use platform::get_der_encoded_certificate;
 
 pub struct CertificateDer {
@@ -89,23 +89,18 @@ pub struct CertificateDer {
     pub der_content: Bytes,
 }
 
-#[derive(Debug, thiserror::Error)]
-pub enum SignMessageError {
-    #[error("Cannot open certificate store: {}", .0)]
-    CannotOpenStore(std::io::Error),
-    #[error("Cannot find certificate")]
-    NotFound,
-    #[error("Cannot get certificate info: {}", .0)]
-    CannotGetCertificateInfo(std::io::Error),
-    #[error("Cannot acquire keypair related to certificate: {}", .0)]
-    CannotAcquireKeypair(std::io::Error),
-    #[error("Cannot sign message: {}", .0)]
-    CannotSign(std::io::Error),
-}
-
 pub struct SignedMessage {
     pub cert_ref: CertificateReferenceIdOrHash,
     pub signed_message: Bytes,
 }
 
+pub use errors::SignMessageError;
 pub use platform::sign_message;
+
+pub struct EncryptedMessage {
+    pub cert_ref: CertificateReferenceIdOrHash,
+    pub ciphered: Bytes,
+}
+
+pub use errors::EncryptMessageError;
+pub use platform::encrypt_message;
