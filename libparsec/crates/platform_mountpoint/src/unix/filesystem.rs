@@ -258,7 +258,7 @@ pub(crate) static LOOKUP_HOOK: Mutex<
 macro_rules! add_capabilities {
     ($config:expr, $capability:ident) => {
         $config
-            .add_capabilities(fuser::consts::$capability)
+            .add_capabilities(fuser::consts::$capability as u64)
             .expect(concat!("Capability available: ", stringify!($capability)));
     };
 
