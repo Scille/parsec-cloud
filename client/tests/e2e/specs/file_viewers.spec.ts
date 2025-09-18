@@ -510,6 +510,7 @@ msTest('File viewer sidebar state persists between files', async ({ documents })
   const header = documents.locator('#connected-header');
   await expect(sidebar).toBeVisible();
   await expect(header).toBeVisible();
+  await documents.locator('.label-name').click();
 
   // Open first file and ensure it's loaded
   await entries.nth(2).locator('.file-name .file-mobile-text .file-name__label').click();
@@ -584,6 +585,7 @@ msTest('File viewer sidebar state persists between files', async ({ documents })
 msTest('File viewer restores sidebar state on exit', async ({ documents }) => {
   const entries = documents.locator('.folder-container').locator('.file-list-item');
   const toggleButton = documents.locator('#trigger-toggle-menu-button');
+  await documents.locator('.label-name').click();
 
   // Sidebar starts visible (default state)
   await expect(documents.locator('.sidebar')).toBeVisible();

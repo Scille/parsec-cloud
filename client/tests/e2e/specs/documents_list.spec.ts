@@ -225,8 +225,8 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     await expect(entries).toHaveCount(10);
     // Don't ask.
     await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText([
-      ...NAME_MATCHER_ARRAY.slice(0, 1),
       'My folder',
+      ...NAME_MATCHER_ARRAY.slice(0, 1),
       ...NAME_MATCHER_ARRAY.slice(1),
     ]);
   });
