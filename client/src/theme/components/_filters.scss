@@ -48,13 +48,37 @@
 }
 
 // --------- Small display style --------- //
-
 .mobile-filters {
   display: flex;
   gap: 1rem;
-  margin: 1rem 0 0;
+  margin: 0.75rem 0 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-direction: row-reverse;
+  height: auto;
+
+  @include ms.responsive-breakpoint('xs') {
+    flex-wrap: wrap;
+    flex-direction: row;
+    padding-bottom: 0;
+    margin: 0;
+  }
+
+  &-buttons {
+    display: flex;
+    gap: 0.5rem;
+
+    @include ms.responsive-breakpoint('xs') {
+      padding: 0.5rem 0.5rem;
+      width: 100%;
+      justify-content: flex-end;
+      border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+    }
+  }
 
   &__search {
+    margin: 0 1rem;
     flex-grow: 1;
     border-color: var(--parsec-color-light-secondary-medium) !important;
     padding: 0 0 0 1rem !important;
@@ -62,7 +86,10 @@
     height: 2.5rem;
 
     @include ms.responsive-breakpoint('xs') {
+      width: 100%;
+      justify-content: flex-end;
       max-width: 100% !important;
+      border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
     }
 
     input::placeholder {

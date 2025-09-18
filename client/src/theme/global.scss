@@ -40,12 +40,8 @@ svg {
   }
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 0 1.5rem;
+    padding: 0;
     margin-bottom: 0;
-  }
-
-  @include ms.responsive-breakpoint('xs') {
-    padding: 0 1rem;
   }
 
   .list,

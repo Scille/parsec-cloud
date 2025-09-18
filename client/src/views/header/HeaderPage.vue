@@ -39,6 +39,7 @@
             <ion-label
               class="topbar-left-text__title title-h2"
               :class="hasHistory() ? 'align-center' : 'align-left'"
+              v-if="(!currentRouteIs(Routes.Users) && isSmallDisplay) || isLargeDisplay"
             >
               {{ $msTranslate(getTitleForRoute()) }}
             </ion-label>
@@ -78,7 +79,7 @@
         >
           <div
             class="topbar-right-button"
-            v-if="!currentRouteIs(Routes.History) && !currentRouteIs(Routes.MyProfile)"
+            v-if="!currentRouteIs(Routes.History) && !currentRouteIs(Routes.MyProfile) && !currentRouteIs(Routes.Invitations)"
           >
             <invitations-button v-if="!currentRouteIs(Routes.Invitations)" />
 
@@ -489,6 +490,7 @@ async function openSecurityWarningsModal(): Promise<void> {
 
   @include ms.responsive-breakpoint('sm') {
     padding: 1.5rem 1.5rem 1rem;
+    --background: var(--parsec-color-light-secondary-background);
   }
 
   #trigger-toggle-menu-button {

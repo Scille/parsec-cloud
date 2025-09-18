@@ -106,9 +106,9 @@ for (const displaySize of ['small', 'large']) {
 
     await documents.locator('.topbar-left-content').locator('.back-button').click();
     await entries.nth(3).dblclick();
-    await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
-    await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
-    await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
+    await expect(documents.locator('.ms-spinner-modal').nth(0)).toBeVisible();
+    await expect(documents.locator('.ms-spinner-modal').nth(0).locator('.spinner-label__text')).toHaveText('Opening file...');
+    await expect(documents.locator('.ms-spinner-modal').nth(0)).toBeHidden();
     await expect(documents).toBeViewerPage();
     const doc2Name = (await documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text').textContent()) ?? '';
 

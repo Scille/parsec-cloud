@@ -8,14 +8,15 @@
     :show-drop-message="true"
     :is-reader="ownRole === WorkspaceRole.Reader"
     @drop-as-reader="$emit('dropAsReader')"
+    class="file-drop-zone"
   >
     <div
-      class="scroll"
+      class="container-scroll"
       ref="containerScroll"
       @contextmenu="onContextMenu"
     >
       <ion-list
-        class="list files-container-list"
+        class="files-container-list"
         :class="{ 'file-list-mobile': isSmallDisplay }"
       >
         <ion-list-header
@@ -238,9 +239,15 @@ async function scrollToSelected(): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-.scroll {
-  padding: 0;
-  margin-bottom: 0;
+.file-drop-zone {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.container-scroll {
+  flex-grow: 1;
+  overflow: auto;
 }
 
 .header-label-selected {

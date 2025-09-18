@@ -412,6 +412,12 @@ onUnmounted(async () => {
     display: flex;
     flex-direction: column;
   }
+
+  &::part(background) {
+    @include ms.responsive-breakpoint('sm') {
+      background: var(--parsec-color-light-secondary-background);
+    }
+  }
 }
 
 .profile-page-header {
@@ -420,7 +426,11 @@ onUnmounted(async () => {
   align-items: center;
   padding: 2rem 1rem 1.5rem;
   background: var(--parsec-color-light-secondary-background);
-  border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+  z-index: 1;
+
+  @include ms.responsive-breakpoint('sm') {
+    background: transparent;
+  }
 
   .header-selected-item {
     display: flex;
@@ -458,10 +468,15 @@ onUnmounted(async () => {
   display: flex;
   width: 100%;
   height: 100%;
+  position: relative;
+  z-index: 10;
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 0;
-    height: -webkit-fill-available;
+    height: auto;
+    position: sticky;
+    background: var(--parsec-color-light-secondary-white);
+    box-shadow: var(--parsec-shadow-strong);
+    border-radius: var(--parsec-radius-18) var(--parsec-radius-18) 0 0;
   }
 
   .profile-menu {

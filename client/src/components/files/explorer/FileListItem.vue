@@ -245,18 +245,22 @@ async function onOptionsClick(event: PointerEvent): Promise<void> {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  margin: 0 0.5rem;
+  border-radius: var(--parsec-radius-8);
 
   .file-mobile-content {
     gap: 1rem;
     width: 100%;
+  }
+
+  .file-selected {
+    max-width: 2.5rem;
   }
 }
 
 .file-mobile-text {
   flex-grow: 1;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   color: var(--parsec-color-light-secondary-grey);
   display: flex;
   gap: 0.125rem;
@@ -265,6 +269,15 @@ async function onOptionsClick(event: PointerEvent): Promise<void> {
   &__data {
     display: flex;
     gap: 0.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 }
 </style>
