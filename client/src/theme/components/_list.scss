@@ -131,6 +131,15 @@
   }
 }
 
+.user-selected {
+  .checkbox {
+    @include ms.responsive-breakpoint('sm') {
+      max-width: 100%;
+      width: 100%;
+    }
+  }
+}
+
 // Allow to keep hover when context menu is open
 .file-hovered,
 .user-hovered:not(.revoked) {
@@ -315,6 +324,15 @@
     position: sticky;
     right: 0;
   }
+
+  // Set special drop zone style when dragging elements on folder
+  .files-container-list .drop-zone-active .drop-zone-dashed {
+    left: 0.5rem !important;
+    top: 0.25rem !important;
+    right: 0.5rem !important;
+    bottom: 0.25rem !important;
+    background: hsla(214, 100%, 60%, 0.3);
+  }
 }
 
 // ------- Users only -------
@@ -438,7 +456,7 @@
   }
 
   .checkbox-mobile {
-    --size: 1.75rem;
+    --size: 1.875rem;
 
     &::part(container) {
       border: 2px solid var(--parsec-color-light-secondary-light);

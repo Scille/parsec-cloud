@@ -47,24 +47,26 @@
           class="mobile-filters"
           v-if="isSmallDisplay"
         >
+          <div class="mobile-filters-buttons">
+            <workspace-filter
+              :filters="workspaceFilters"
+              @change="onFilterUpdate"
+              class="mobile-filters-buttons__filter"
+            />
+            <ms-sorter
+              id="workspace-filter-select"
+              :options="msSorterOptions"
+              default-option="name"
+              :sorter-labels="msSorterLabels"
+              @change="onMsSorterChange($event)"
+              class="mobile-filters-buttons__sorter"
+            />
+          </div>
           <ms-search-input
             v-model="searchFilterContent"
             placeholder="WorkspacesPage.filterPlaceholder"
             id="search-input-workspace"
             class="mobile-filters__search"
-          />
-          <workspace-filter
-            :filters="workspaceFilters"
-            @change="onFilterUpdate"
-            class="mobile-filters__filter"
-          />
-          <ms-sorter
-            id="workspace-filter-select"
-            :options="msSorterOptions"
-            default-option="name"
-            :sorter-labels="msSorterLabels"
-            @change="onMsSorterChange($event)"
-            class="mobile-filters__sorter"
           />
         </div>
         <div
@@ -623,6 +625,20 @@ async function onFilterUpdate(): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
+.content-scroll {
+  &::part(background) {
+    @include ms.responsive-breakpoint('sm') {
+      background: var(--parsec-color-light-secondary-background);
+    }
+  }
+
+  &::part(scroll) {
+    @include ms.responsive-breakpoint('sm') {
+      padding-top: 1rem;
+    }
+  }
+}
+
 .no-workspaces {
   max-width: 30rem;
   color: var(--parsec-color-light-secondary-grey);
@@ -651,6 +667,16 @@ async function onFilterUpdate(): Promise<void> {
         margin-right: 0.375rem;
       }
     }
+  }
+}
+
+.workspaces-container {
+  @include ms.responsive-breakpoint('sm') {
+    position: sticky;
+    z-index: 10;
+    background: var(--parsec-color-light-secondary-white);
+    box-shadow: var(--parsec-shadow-strong);
+    border-radius: var(--parsec-radius-18) var(--parsec-radius-18) 0 0;
   }
 }
 
@@ -705,6 +731,7 @@ async function onFilterUpdate(): Promise<void> {
   padding: 2rem 0;
 
   @include ms.responsive-breakpoint('sm') {
+    padding: 1.5rem 1rem;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
   }

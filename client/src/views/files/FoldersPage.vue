@@ -65,25 +65,6 @@
         :selection-enabled="selectionEnabled"
         :some-selected="selectedFilesCount > 0"
       />
-      <div
-        v-if="isSmallDisplay"
-        class="action-bar-mobile-filter"
-      >
-        <ms-sorter
-          :key="`${currentSortProperty}-${currentSortOrder}`"
-          label="FoldersPage.sort.byName"
-          :options="msSorterOptions"
-          :default-option="currentSortProperty"
-          :sorter-labels="msSorterLabels"
-          :sort-by-asc="currentSortOrder"
-          @change="onSortChange"
-        />
-
-        <ms-grid-list-toggle
-          v-model="displayView"
-          @update:model-value="onDisplayStateChange"
-        />
-      </div>
       <div class="folder-container scroll">
         <file-inputs
           ref="fileInputs"
@@ -99,6 +80,28 @@
             <ion-text>
               {{ $msTranslate('FoldersPage.loading') }}
             </ion-text>
+          </div>
+        </div>
+
+        <div
+          v-if="isSmallDisplay"
+          class="mobile-filters"
+        >
+          <div class="mobile-filters-buttons">
+            <ms-sorter
+              :key="`${currentSortProperty}-${currentSortOrder}`"
+              :label="'FoldersPage.sort.byName'"
+              :options="msSorterOptions"
+              :default-option="currentSortProperty"
+              :sorter-labels="msSorterLabels"
+              :sort-by-asc="currentSortOrder"
+              @change="onSortChange"
+            />
+
+            <ms-grid-list-toggle
+              v-model="displayView"
+              @update:model-value="onDisplayStateChange"
+            />
           </div>
         </div>
 
@@ -121,7 +124,10 @@
             </div>
           </file-drop-zone>
         </div>
-        <div v-else-if="!querying">
+        <div
+          v-else-if="!querying"
+          class="grid-list-container"
+        >
           <div v-if="displayView === DisplayState.List && userInfo">
             <file-list-display
               ref="fileListDisplay"
@@ -1646,8 +1652,57 @@ const actionBarOptionsFoldersPage = computed(() => {
 </script>
 
 <style scoped lang="scss">
+.grid-list-container {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.content-scroll {
+  &::part(scroll) {
+    -ms-overflow-style: -ms-autohiding-scrollbar;
+  }
+
+  &::part(background) {
+    @include ms.responsive-breakpoint('sm') {
+      background: var(--parsec-color-light-secondary-background);
+    }
+  }
+}
+
+.folder-container {
+  display: flex;
+  flex-direction: column;
+
+  @include ms.responsive-breakpoint('sm') {
+    position: sticky;
+    z-index: 10;
+    background: var(--parsec-color-light-secondary-white);
+    box-shadow: var(--parsec-shadow-strong);
+    border-radius: var(--parsec-radius-18) var(--parsec-radius-18) 0 0;
+  }
+}
+
 .folder-container div:not(.no-files-content div) {
   height: 100%;
+}
+
+.mobile-filters {
+  @include ms.responsive-breakpoint('sm') {
+    margin-top: 0 !important;
+    height: auto !important;
+  }
+
+  &-buttons {
+    @include ms.responsive-breakpoint('sm') {
+      padding: 0.5rem 0.75rem;
+      width: 100%;
+      justify-content: flex-end;
+      border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+    }
+  }
 }
 
 .workspace-tag-role {
@@ -1657,30 +1712,25 @@ const actionBarOptionsFoldersPage = computed(() => {
   border: 1px solid var(--parsec-color-light-secondary-disabled);
 }
 
-.action-bar-mobile-filter {
-  display: flex;
-  justify-content: flex-end;
-  background: var(--parsec-color-light-secondary-inversed-contrast);
-  border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
-  padding: 0.5rem 1.5rem;
-  gap: 1rem;
-}
-
-.no-files-content {
+.no-files {
   width: 100%;
-  height: 100%;
-  margin: auto;
-  color: var(--parsec-color-light-secondary-grey);
-  border-radius: var(--parsec-radius-8);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 2rem 1rem;
 
-  .ms-spinner {
-    height: 1.5rem;
+  &-content {
+    width: 100%;
+    height: 100%;
+    margin: auto;
+    color: var(--parsec-color-light-secondary-grey);
+    border-radius: var(--parsec-radius-8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 2rem 1rem;
+
+    .ms-spinner {
+      height: 1.5rem;
+    }
   }
 }
 </style>

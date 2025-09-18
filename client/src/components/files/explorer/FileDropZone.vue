@@ -23,9 +23,9 @@
         :image="DocumentImport"
         class="restore-password-header-img"
       />
-      <ion-label class="subtitles-sm">
+      <ion-text class="subtitles-sm">
         {{ $msTranslate('FoldersPage.ImportFile.dropInstructions') }}
-      </ion-label>
+      </ion-text>
     </div>
   </div>
 </template>
@@ -34,7 +34,7 @@
 import { DocumentImport, MsImage } from 'megashark-lib';
 import { FileImportTuple, getFilesFromDrop } from '@/components/files/utils';
 import { FsPath } from '@/parsec';
-import { IonLabel } from '@ionic/vue';
+import { IonText } from '@ionic/vue';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 defineExpose({
@@ -131,12 +131,15 @@ function reset(): void {
   position: relative;
 
   &-dashed {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 0;
     pointer-events: none;
     position: absolute;
-    left: -0.5rem;
-    right: -0.5rem;
-    top: 1rem;
-    bottom: 1.5rem;
+    left: 0.125rem;
+    right: 1rem;
+    top: 0.5rem;
+    bottom: 0.5rem;
     z-index: 1100;
 
     @include ms.responsive-breakpoint('sm') {
@@ -145,7 +148,7 @@ function reset(): void {
     }
 
     &.drop-active {
-      outline: 2px dashed var(--parsec-color-light-primary-400);
+      outline: 1px dashed var(--parsec-color-light-primary-400);
       border-radius: var(--parsec-radius-8);
     }
   }

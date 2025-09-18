@@ -67,33 +67,6 @@
         :some-selected="users.hasSelected()"
         :options-disabled="users.selectableUsersCount() === 0"
       />
-      <div
-        class="mobile-filters"
-        v-if="isSmallDisplay"
-      >
-        <ms-search-input
-          :placeholder="'HomePage.organizationList.search'"
-          v-model="users.searchFilter"
-          @change="users.unselectHiddenUsers()"
-          id="search-input-users"
-          class="mobile-filters__search"
-        />
-        <user-filter
-          :users="users as UserCollection"
-          @change="onFilterUpdated"
-          class="mobile-filters__filter"
-        />
-        <ms-sorter
-          :key="`${currentSortProperty}-${currentSortOrder}`"
-          :label="'UsersPage.sort.byName'"
-          :options="msSorterOptions"
-          :default-option="currentSortProperty"
-          :sorter-labels="msSorterLabels"
-          :sort-by-asc="currentSortOrder"
-          @change="onSortChange"
-          class="mobile-filters__sorter"
-        />
-      </div>
       <!-- users -->
       <div class="users-container scroll">
         <div
@@ -108,6 +81,35 @@
           </div>
         </div>
         <div v-show="users.totalUsersCount() > 0">
+          <div
+            class="mobile-filters"
+            v-if="isSmallDisplay"
+          >
+            <div class="mobile-filters-buttons">
+              <user-filter
+                :users="users as UserCollection"
+                @change="onFilterUpdated"
+                class="mobile-filters-buttons__filter"
+              />
+              <ms-sorter
+                :key="`${currentSortProperty}-${currentSortOrder}`"
+                :label="'UsersPage.sort.byName'"
+                :options="msSorterOptions"
+                :default-option="currentSortProperty"
+                :sorter-labels="msSorterLabels"
+                :sort-by-asc="currentSortOrder"
+                @change="onSortChange"
+                class="mobile-filterss-buttons__sorter"
+              />
+            </div>
+            <ms-search-input
+              :placeholder="'HomePage.organizationList.search'"
+              v-model="users.searchFilter"
+              @change="users.unselectHiddenUsers()"
+              id="search-input-users"
+              class="mobile-filters__search"
+            />
+          </div>
           <div v-if="displayView === DisplayState.List">
             <!-- prettier-ignore -->
             <user-list-display
@@ -745,14 +747,15 @@ const actionBarOptionsUsersPage = computed(() => {
 </script>
 
 <style scoped lang="scss">
-.mobile-filters {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0 1rem;
+.users-page {
+  @include ms.responsive-breakpoint('sm') {
+    --background: var(--parsec-color-light-secondary-background);
+  }
 
-  &__filter {
-    margin-left: auto;
+  .content-scroll::part(background) {
+    @include ms.responsive-breakpoint('sm') {
+      background: var(--parsec-color-light-secondary-background);
+    }
   }
 }
 
@@ -774,6 +777,16 @@ const actionBarOptionsUsersPage = computed(() => {
     gap: 1rem;
     align-items: center;
     padding: 2rem 1rem;
+  }
+}
+
+.users-container {
+  @include ms.responsive-breakpoint('sm') {
+    position: sticky;
+    z-index: 10;
+    background: var(--parsec-color-light-secondary-white);
+    box-shadow: var(--parsec-shadow-strong);
+    border-radius: var(--parsec-radius-18) var(--parsec-radius-18) 0 0;
   }
 }
 

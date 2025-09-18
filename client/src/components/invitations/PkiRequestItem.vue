@@ -212,6 +212,7 @@ onMounted(async () => {
     flex-direction: column;
     justify-content: space-between;
     overflow: hidden;
+    gap: 0.25rem;
 
     &__name {
       color: var(--parsec-color-light-secondary-text);

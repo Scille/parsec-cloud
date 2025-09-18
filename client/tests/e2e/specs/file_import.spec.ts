@@ -133,6 +133,8 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     const importPath = path.join(testInfo.config.rootDir, 'data', 'imports');
     await fileChooser.setFiles([importPath]);
     await checkFilesUploaded(documents, 10);
+    await documents.locator('.upload-menu').locator('.menu-header-icons').locator('ion-icon').nth(1).click();
+    await expect(documents.locator('.upload-menu')).toBeHidden();
     await documents.locator('.folder-container').locator('.file-list-item').nth(0).dblclick();
     await expect(workspaces).toHaveHeader(['New_Workspace', 'imports'], true, true);
     await expect(documents.locator('.folder-container').locator('.file-list-item')).toHaveCount(fs.readdirSync(importPath).length);

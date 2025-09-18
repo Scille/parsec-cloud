@@ -10,7 +10,6 @@
     @drop-as-reader="$emit('dropAsReader')"
   >
     <div
-      class="scroll"
       ref="containerScroll"
       @contextmenu="onContextMenu"
     >
@@ -138,11 +137,6 @@ async function scrollToSelected(): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-.scroll {
-  padding: 0;
-  margin-bottom: 0;
-}
-
 .folders-container-grid {
   display: flex;
   flex-wrap: wrap;
@@ -150,7 +144,7 @@ async function scrollToSelected(): Promise<void> {
   overflow-y: auto;
 
   @include ms.responsive-breakpoint('sm') {
-    padding-top: 1.5rem;
+    padding: 1.5rem 1rem 0;
     gap: 1.5rem;
   }
 

@@ -7,7 +7,7 @@ async function isInGridMode(page: MsPage): Promise<boolean> {
   const smallDisplay = (await page.getDisplaySize()) === DisplaySize.Small;
   return (
     (await page
-      .locator(smallDisplay ? '.action-bar-mobile-filter' : '#folders-ms-action-bar')
+      .locator(smallDisplay ? '.mobile-filters' : '#folders-ms-action-bar')
       .locator('#grid-view')
       .getAttribute('disabled')) !== null
   );
@@ -15,7 +15,7 @@ async function isInGridMode(page: MsPage): Promise<boolean> {
 
 async function toggleViewMode(page: MsPage): Promise<void> {
   const smallDisplay = (await page.getDisplaySize()) === DisplaySize.Small;
-  const locator = smallDisplay ? '.action-bar-mobile-filter' : '#folders-ms-action-bar';
+  const locator = smallDisplay ? '.mobile-filters' : '#folders-ms-action-bar';
   if (await isInGridMode(page)) {
     await page.locator(locator).locator('#list-view').click();
   } else {
@@ -514,7 +514,7 @@ for (const gridMode of [false, true]) {
     if (gridMode) {
       await toggleViewMode(documents);
     }
-    await documents.locator('.folder-container').click({ button: 'right', position: { x: 100, y: 10 } });
+    await documents.locator('.folder-content').locator('.small-display-header-title .title__icon').click();
     await expect(documents.locator('.file-context-sheet-modal')).toBeVisible();
     const modal = documents.locator('.file-context-sheet-modal');
     await expandSheetModal(documents, modal);
@@ -551,7 +551,7 @@ for (const gridMode of [false, true]) {
         await toggleViewMode(documents);
         entries = documents.locator('.folder-container').locator('.file-card-item');
       }
-      await documents.locator('.folder-container').click({ button: 'right', position: { x: 100, y: 10 } });
+      await documents.locator('.folder-content').locator('.small-display-header-title .title__icon').click();
       await expandSheetModal(documents, documents.locator('.file-context-sheet-modal'));
       await documents.locator('.file-context-sheet-modal').locator('.list-group-item').nth(0).click();
       await documents.waitForTimeout(500);
@@ -583,7 +583,7 @@ for (const gridMode of [false, true]) {
         await toggleViewMode(documents);
         entries = documents.locator('.folder-container').locator('.file-card-item');
       }
-      await documents.locator('.folder-container').click({ button: 'right', position: { x: 100, y: 10 } });
+      await documents.locator('.folder-content').locator('.small-display-header-title .title__icon').click();
       await expandSheetModal(documents, documents.locator('.file-context-sheet-modal'));
       await documents.locator('.file-context-sheet-modal').locator('.list-group-item').nth(0).click();
       await documents.waitForTimeout(500);
