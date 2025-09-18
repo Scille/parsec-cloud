@@ -52,8 +52,9 @@ pub use windows::show_certificate_selection_dialog;
 #[cfg(not(target_os = "windows"))]
 mod platform {
     use crate::{
-        CertificateDer, CertificateReference, EncryptMessageError, EncryptedMessage,
-        GetDerEncodedCertificateError, SignMessageError, SignedMessage,
+        CertificateDer, CertificateReference, DecryptMessageError, DecryptedMessage,
+        EncryptMessageError, EncryptedMessage, GetDerEncodedCertificateError, SignMessageError,
+        SignedMessage,
     };
 
     pub fn get_der_encoded_certificate(
@@ -77,6 +78,14 @@ mod platform {
         certificate_ref: &CertificateReference,
     ) -> Result<EncryptedMessage, EncryptMessageError> {
         let _ = (message, certificate_ref);
+        unimplemented!("platform not supported")
+    }
+
+    pub fn decrypt_message(
+        encrypted_message: &[u8],
+        certificate_ref: &CertificateReference,
+    ) -> Result<DecryptedMessage, DecryptMessageError> {
+        let _ = (encrypted_message, certificate_ref);
         unimplemented!("platform not supported")
     }
 }
@@ -104,3 +113,11 @@ pub struct EncryptedMessage {
 
 pub use errors::EncryptMessageError;
 pub use platform::encrypt_message;
+
+pub struct DecryptedMessage {
+    pub cert_ref: CertificateReferenceIdOrHash,
+    pub data: Bytes,
+}
+
+pub use errors::DecryptMessageError;
+pub use platform::decrypt_message;
