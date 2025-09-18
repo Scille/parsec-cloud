@@ -1,30 +1,29 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import {
-  AvailableDeviceTypeTag,
-  DeviceAccessStrategyAccountVault,
-  DeviceAccessStrategyKeyring,
-  DeviceSaveStrategyAccountVault,
-  DeviceSaveStrategyKeyring,
-  DeviceSaveStrategyPassword,
-  libparsec,
-} from '@/plugins/libparsec';
+import { libparsec } from '@/plugins/libparsec';
 
 import { ParsecAccount } from '@/parsec/account';
 import { getClientConfig } from '@/parsec/internals';
 import { parseParsecAddr } from '@/parsec/organization';
 import {
   AvailableDevice,
+  AvailableDeviceTypeTag,
   ClientInfo,
   ClientInfoError,
   ClientStartError,
   ClientStopError,
   ConnectionHandle,
   DeviceAccessStrategy,
+  DeviceAccessStrategyAccountVault,
+  DeviceAccessStrategyKeyring,
   DeviceAccessStrategyPassword,
+  DeviceAccessStrategySmartcard,
   DeviceAccessStrategyTag,
   DeviceID,
   DeviceSaveStrategy,
+  DeviceSaveStrategyAccountVault,
+  DeviceSaveStrategyKeyring,
+  DeviceSaveStrategyPassword,
   DeviceSaveStrategyTag,
   ListAvailableDeviceError,
   OrganizationID,
@@ -257,6 +256,12 @@ export const AccessStrategy = {
   useKeyring(device: AvailableDevice): DeviceAccessStrategyKeyring {
     return {
       tag: DeviceAccessStrategyTag.Keyring,
+      keyFile: device.keyFilePath,
+    };
+  },
+  useSmartcard(device: AvailableDevice): DeviceAccessStrategySmartcard {
+    return {
+      tag: DeviceAccessStrategyTag.Smartcard,
       keyFile: device.keyFilePath,
     };
   },

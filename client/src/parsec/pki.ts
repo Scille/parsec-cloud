@@ -7,10 +7,10 @@ import {
   AvailableDevice,
   AvailableDeviceTypeTag,
   ConnectionHandle,
-  DeviceSaveStrategy,
   HumanHandle,
   OrganizationID,
   ParsecAddr,
+  ParsecOrganizationAddr,
   Result,
   UserProfile,
 } from '@/parsec/types';
@@ -33,6 +33,15 @@ export interface LocalJoinRequest {
   organization: OrganizationID;
   server: ParsecAddr;
   certificate: string;
+}
+
+export enum RequestJoinOrganizationErrorTag {
+  Internal = 'internal',
+}
+
+export interface RequestJoinOrganizationError {
+  tag: RequestJoinOrganizationErrorTag;
+  error: string;
 }
 
 export interface OrganizationJoinRequest {
@@ -222,17 +231,32 @@ const ORGANIZATION_JOIN_REQUESTS: Array<OrganizationJoinRequest> = LOCAL_JOIN_RE
   };
 });
 
+export async function requestJoinOrganization(
+  link: ParsecOrganizationAddr,
+): Promise<Result<LocalJoinRequest, RequestJoinOrganizationError>> {
+  // Will be prompted for the certificate
+  const newRequest: LocalJoinRequest = {
+    status: JoinRequestStatus.Pending,
+    humanHandle: {
+      label: 'Isaac Kleiner',
+      email: 'isaac.kleiner@blackmesa.nm',
+    },
+    organization: 'Black Mesa',
+    server: link,
+    certificate: TMP_ROOT_CERTIFICATE,
+  };
+  LOCAL_JOIN_REQUESTS.push(newRequest);
+  return { ok: true, value: newRequest };
+}
+
 export async function listLocalJoinRequests(error = false): Promise<Result<Array<LocalJoinRequest>, ListLocalJoinRequestError>> {
   if (error) {
     return { ok: false, error: { tag: ListLocalJoinRequestErrorTag.Internal, error: 'generic error' } };
   }
-  return { ok: true, value: LOCAL_JOIN_REQUESTS };
+  return { ok: true, value: [...LOCAL_JOIN_REQUESTS] };
 }
 
-export async function confirmLocalJoinRequest(
-  request: LocalJoinRequest,
-  _saveStrategy: DeviceSaveStrategy,
-): Promise<Result<AvailableDevice, UpdateLocalJoinStatusError>> {
+export async function confirmLocalJoinRequest(request: LocalJoinRequest): Promise<Result<AvailableDevice, UpdateLocalJoinStatusError>> {
   if (request.status !== JoinRequestStatus.Accepted) {
     return { ok: false, error: { tag: UpdateLocalJoinStatusErrorTag.InvalidStatus, error: 'request not accepted' } };
   }
@@ -269,6 +293,7 @@ export async function cancelLocalJoinRequest(request: LocalJoinRequest): Promise
     return { ok: false, error: { tag: UpdateLocalJoinStatusErrorTag.NotFound, error: 'request does not exist' } };
   }
   LOCAL_JOIN_REQUESTS.splice(idx, 1);
+
   return { ok: true, value: null };
 }
 
@@ -323,5 +348,5 @@ export async function getPkiJoinOrganizationLink(): Promise<Result<string, GetPk
   if (!result.ok) {
     return { ok: false, error: { tag: GetPkiJoinOrganizationLinkErrorTag.Internal, error: 'failed to get organization info' } };
   }
-  return { ok: true, value: `${result.value.organizationAddr}?a=request_join` };
+  return { ok: true, value: `${result.value.organizationAddr}?a=pki_join` };
 }
