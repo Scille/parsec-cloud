@@ -50,6 +50,8 @@
           <organization-user-information
             :org-info="orgInfo"
             :user-info="userInfo"
+            :invitations-count="invitations.length"
+            :pki-requests-count="pkiRequests.length"
           />
           <!-- ------------- Information ------------- -->
           <organization-configuration-information :org-info="orgInfo" />
@@ -105,11 +107,15 @@ import {
   getOrganizationInfo,
   getClientInfo as parsecGetClientInfo,
   getCurrentAvailableDevice,
+  OrganizationJoinRequest,
+  UserInvitation,
+  listUserInvitations,
+  listOrganizationJoinRequests,
 } from '@/parsec';
 import { IonContent, IonPage, IonText, IonAvatar, popoverController, IonSkeletonText } from '@ionic/vue';
 import { currentRouteIs, Routes, switchOrganization, watchRoute } from '@/router';
 import { ChevronExpand, MsImage, LogoIconGradient, MsModalResult, MsReportText, MsReportTheme } from 'megashark-lib';
-import { Ref, onMounted, onUnmounted, ref } from 'vue';
+import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 import useUploadMenu from '@/services/fileUploadMenu';
 import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
 import OrganizationUserInformation from '@/components/organizations/OrganizationUserInformation.vue';
@@ -118,13 +124,18 @@ import OrganizationStorageInformation from '@/components/organizations/Organizat
 import { isTrialOrganizationDevice } from '@/common/organization';
 import { useWindowSize } from 'megashark-lib';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
+import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 
 const { isSmallDisplay } = useWindowSize();
 
 const orgInfo: Ref<OrganizationInfo | null> = ref(null);
 const userInfo: Ref<ClientInfo | null> = ref(null);
+const invitations = ref<Array<UserInvitation>>([]);
+const pkiRequests = ref<Array<OrganizationJoinRequest>>([]);
 const isTrialOrg = ref(false);
 const error = ref('');
+const rootCertificate = ref<string>('');
+const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 
 const watchRouteCancel = watchRoute(async () => {
   if (currentRouteIs(Routes.Organization)) {
@@ -160,6 +171,10 @@ async function updateInformation(): Promise<void> {
   });
 }
 
+async function refreshAll(): Promise<void> {
+  await Promise.allSettled([refreshInvitationList(), refreshPkiRequestList()]);
+}
+
 async function openOrganizationChoice(event: Event): Promise<void> {
   const popover = await popoverController.create({
     component: OrganizationSwitchPopover,
@@ -178,12 +193,44 @@ async function openOrganizationChoice(event: Event): Promise<void> {
   }
 }
 
+async function refreshInvitationList(): Promise<void> {
+  const result = await listUserInvitations();
+  if (result.ok) {
+    invitations.value = result.value;
+  } else {
+    window.electronAPI.log('error', `Failed to list invitations: ${result.error.tag} (${result.error.error})`);
+  }
+}
+
+async function refreshPkiRequestList(): Promise<void> {
+  const result = await listOrganizationJoinRequests(rootCertificate.value);
+  console.log(result);
+  if (result.ok) {
+    pkiRequests.value = result.value;
+  } else {
+    window.electronAPI.log('error', `Failed to list pki join requests: ${result.error.tag} (${result.error.error})`);
+  }
+}
+
+let eventCbId: string | null = null;
+
 onMounted(async () => {
+  eventCbId = await eventDistributor.registerCallback(Events.InvitationUpdated, async (event: Events, data?: EventData) => {
+    if (event === Events.InvitationUpdated && data) {
+      await refreshInvitationList();
+    }
+  });
+  await refreshAll();
+
   await updateInformation();
 });
 
 onUnmounted(() => {
   watchRouteCancel();
+
+  if (eventCbId) {
+    eventDistributor.removeCallback(eventCbId);
+  }
 });
 </script>
 

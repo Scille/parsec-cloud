@@ -464,6 +464,7 @@
             "workspaces": "Mes espaces",
             "about": "À propos",
             "users": "Utilisateurs",
+            "invitations": "Invitations",
             "organization": {
                 "storage": "Stockage",
                 "information": "Informations"
@@ -901,8 +902,12 @@
             "activeUsers": "Actif | Actifs",
             "frozenUsers": "Suspendu | Suspendus",
             "title": "Utilisateurs",
-            "seeUsers": "Voir les utilisateurs",
-            "addUser": "Ajouter un utilisateur"
+            "seeUsers": "Voir tous les utilisateurs",
+            "addUser": "Ajouter un utilisateur",
+            "invitations": {
+                "emailInvitations": "Invitations par e-mail",
+                "pkiRequests": "Demandes PKI"
+            }
         },
         "size": {
             "information": "Ce stockage comprend les espaces de travail de tous les utilisateurs ainsi que l'historique des changements de fichiers/dossiers.",
@@ -959,6 +964,7 @@
         "noWorkspace": "Aucun espace de travail",
         "noRecentWorkspace": "Aucun espace de travail récent",
         "users": "Utilisateurs",
+        "invitations": "Invitations",
         "storage": "Stockage",
         "information": "Informations",
         "goToHome": "Mes espaces",
@@ -1467,6 +1473,84 @@
             "revoke": "Révoquer",
             "roles": "Rôles"
         }
+    },
+    "InvitationsPage": {
+        "emailInvitation": {
+            "tab": "Invitation par adresse mail",
+            "emptyState": "Aucune invitation par email en attente.",
+            "inviteUser": "Inviter un utilisateur",
+            "listDisplayTitles": {
+                "email": "Adresse email",
+                "sentOn": "Envoyée le"
+            },
+            "greet": "Accueillir",
+            "tooltips": {
+                "delete": "Supprimer l'invitation",
+                "resend": "Renvoyer l'email",
+                "copyLink": "Copier le lien"
+            }
+        },
+        "pkiRequests": {
+            "tab": "Demandes par carte à puces",
+            "emptyState": "Aucune demande PKI en attente.",
+            "copyLink": "Copier le lien (PKI)",
+            "listDisplayTitles": {
+                "name": "Nom",
+                "email": "Email",
+                "createdOn": "Date de la demande",
+                "certificate": "Certificat"
+            },
+            "accept": "Accepter",
+            "certificate": {
+                "valid": "Certificat valide",
+                "invalid": "Certificat invalide",
+                "unknown": "Certificat inconnu"
+            },
+            "rootCertificate": {
+                "missingCertificateTitle": "Certificat racine requis",
+                "missingCertificateDescription": "Un certificat racine est nécessaire pour valider les demandes reçues par PKI. Le certificat sera réinitialisé à chaque réouverture de l'organisation.",
+                "setRootCertificate": "Ajouter le certificat racine",
+                "updateRootCertificate": "Mettre à jour le certificat racine"
+            },
+            "validationModal": {
+                "error": {
+                    "unknown": {
+                        "title": "Ajout d'un utilisateur avec certificat inconnu",
+                        "description": "Vous êtes sur le point d'ajouter un utilisateur possédant un certificat inconnu. Nous ne pouvons vérifier son identité. Êtes-vous sûr de confirmer l'ajout de cet utilisateur ?"
+                    },
+                    "notValid": {
+                        "title": "Ajout d'un utilisateur avec certificat non valide",
+                        "description": "Le certificat fourni par l'utilisateur ne correspond pas au certificat racine. Êtes-vous sûr de confirmer l'ajout de cet utilisateur ?",
+                        "no": "Annuler",
+                        "yes": "Confirmer l'ajout"
+                    }
+                },
+                "acceptedFailed": "Impossible d'accepter cette demande",
+                "acceptedSuccess": "Cette demande a été acceptée",
+                "rejectedFailed": "Impossible de rejeter cette demande",
+                "rejectedSuccess": "Cette demande a été rejetée"
+            },
+            "linkCopiedToClipboard": {
+                "success": "Le lien PKI a été copié dans le presse-papiers.",
+                "failed": "Échec de la copie du lien PKI. Votre navigateur ou appareil ne semble pas prendre en charge le copier/coller."
+            },
+            "selectProfileModal": {
+                "title": "Compléter les informations de l'utilisateur",
+                "profileLabel": "Profil de l'utilisateur",
+                "profilePlaceholder": "Sélectionner un profil",
+                "actions": {
+                    "confirm": "Valider la demande",
+                    "cancel": "Annuler"
+                },
+                "errors": {
+                    "noProfile": "Vous devez sélectionner un profil."
+                }
+            },
+            "tooltips": {
+                "delete": "Supprimer la demande"
+            }
+        },
+        "confirm": "Confirmer"
     },
     "AboutPage": {
         "title": "À propos",
