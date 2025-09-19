@@ -80,11 +80,13 @@ msTest('Invite new user', async ({ connected }) => {
   await connected.locator('.topbar').locator('#invitations-button').click();
   const popover = connected.locator('.invitations-list-popover');
   await popover.locator('.invitations-list-header__button').click();
-  await expect(connected).toBeUserPage();
+  await expect(connected).toBeInvitationPage();
   // cspell:disable-next-line
   await fillInputModal(connected, 'zana@wraeclast');
   // cspell:disable-next-line
   await expect(connected).toShowToast('An invitation to join the organization has been sent to zana@wraeclast.', 'Success');
+  await connected.locator('.topbar .back-button').click();
+  await expect(connected).toBeWorkspacePage();
   await expect(connected.locator('.topbar').locator('#invitations-button')).toHaveText('2 invitations');
 
   await expect(connected.locator('.invitations-list-popover')).toBeHidden();
@@ -103,7 +105,7 @@ msTest('Invite user with already existing email', async ({ connected }) => {
   await connected.locator('.topbar').locator('#invitations-button').click();
   const popover = connected.locator('.invitations-list-popover');
   await popover.locator('.invitations-list-header__button').click();
-  await expect(connected).toBeUserPage();
+  await expect(connected).toBeInvitationPage();
   // cspell:disable-next-line
   await fillInputModal(connected, 'bob@example.com');
   // cspell:disable-next-line
