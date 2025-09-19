@@ -689,16 +689,35 @@
 
 .change-authentication-modal {
   &::part(content) {
-    max-width: var(--parsec-modal-width-md);
+    max-width: var(--parsec-modal-width-sm);
   }
 
   &:has(.NewPassword)::part(content) {
-    min-width: var(--parsec-modal-width-md);
+    min-width: var(--parsec-modal-width-sm);
   }
 
-  &:has(.ChooseNewAuthMethod)::part(content) {
-    --width: 100%;
-    max-width: var(--parsec-modal-width-lg);
+  &:has(.ChooseNewAuthMethod) {
+    &::part(content) {
+      --width: 100%;
+      max-width: var(--parsec-modal-width-sm);
+    }
+
+    .inputs-container {
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .inputs-container {
+      gap: 1rem;
+    }
+
+    .password-criteria {
+      gap: 0.5rem;
+    }
+
+    .info {
+      display: none;
+    }
   }
 }
 

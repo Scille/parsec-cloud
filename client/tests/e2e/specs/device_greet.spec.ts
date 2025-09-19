@@ -144,11 +144,17 @@ msTest('Greet device whole process on small display', async ({ myProfilePage }) 
   await expect(joinData.nextButton).toHaveText('Confirm');
   await expect(joinData.nextButton).toHaveDisabledAttribute();
 
+  const methodChosen = joinData.modal.locator('.method-chosen');
+  await expect(methodChosen).toBeVisible();
+  await expect(methodChosen.locator('.authentication-card-text__title')).toHaveText('Password');
+  await methodChosen.locator('.authentication-card__update-button').click();
+
   const authRadio = joinData.content.locator('.choose-auth-page').locator('.radio-list-item');
   await expect(authRadio).toHaveCount(2);
   await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-  await expect(authRadio.nth(0).locator('.item-radio__label')).toHaveText('System Authentication');
+  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
   await expect(authRadio.nth(1)).toHaveText('Password');
+  await authRadio.nth(1).click();
   const passwordChoice = joinData.content.locator('#get-password').locator('.choose-password');
   await passwordChoice.scrollIntoViewIfNeeded();
   await fillIonInput(passwordChoice.locator('ion-input').nth(0), 'AVeryL0ngP@ssw0rd');
@@ -235,14 +241,20 @@ msTest('Greet device whole process on large display', async ({ myProfilePage }) 
   await expect(joinData.title).toHaveText('Authentication');
   await expect(joinData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Authentication'], 2);
 
+  const methodChosen = joinData.modal.locator('.method-chosen');
+  await expect(methodChosen).toBeVisible();
+  await expect(methodChosen.locator('.authentication-card-text__title')).toHaveText('Password');
+  await methodChosen.locator('.authentication-card__update-button').click();
+
   await expect(joinData.nextButton).toHaveText('Confirm');
   await expect(joinData.nextButton).toHaveDisabledAttribute();
 
   const authRadio = joinData.content.locator('.choose-auth-page').locator('.radio-list-item');
   await expect(authRadio).toHaveCount(2);
   await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-  await expect(authRadio.nth(0).locator('.item-radio__label')).toHaveText('System Authentication');
+  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
   await expect(authRadio.nth(1)).toHaveText('Password');
+  await authRadio.nth(1).click();
   const passwordChoice = joinData.content.locator('#get-password').locator('.choose-password');
   await passwordChoice.scrollIntoViewIfNeeded();
   await fillIonInput(passwordChoice.locator('ion-input').nth(0), 'AVeryL0ngP@ssw0rd');
@@ -485,7 +497,7 @@ msTest('Guest selects no SAS code', async ({ myProfilePage }) => {
   await expect(joinData.title).toHaveText('Get host code');
   await expect(joinData.subtitle).toHaveText('Click on the code you see on the main device.');
   await expect(joinData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Authentication'], 0);
-  await joinData.content.locator('.button-clear').click();
+  await joinData.content.locator('.button-clear').nth(0).click();
 
   await expect(secondTab).toShowToast(
     'If you did not see the correct code, this could be a sign of a security issue during the onboarding. Please restart the process.',

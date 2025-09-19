@@ -115,7 +115,6 @@ ion-button {
 .button-choice {
   background-color: var(--parsec-color-light-secondary-premiere);
   overflow: hidden;
-  margin: 0.75rem;
   color: var(--parsec-color-light-primary-600);
   transition: all 0.2s ease;
   --background-focused: none;

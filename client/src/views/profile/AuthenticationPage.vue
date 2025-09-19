@@ -5,15 +5,13 @@
     <template v-if="currentDevice">
       <div class="authentication-content">
         <authentication-card
-          :image-src="keypadGradient"
-          image-alt="keypad icon"
-          method-name="Authentication.method.system"
+          :auth-method="DeviceSaveStrategyTag.Keyring"
+          :state="AuthenticationCardState.Active"
           v-show="currentDevice && currentDevice.ty.tag === AvailableDeviceTypeTag.Keyring"
         />
         <authentication-card
-          :image-src="ellipsisGradient"
-          image-alt="ellipsis icon"
-          method-name="Authentication.method.password"
+          :auth-method="DeviceSaveStrategyTag.Password"
+          :state="AuthenticationCardState.Active"
           v-show="currentDevice && currentDevice.ty.tag === AvailableDeviceTypeTag.Password"
         />
         <ion-button
@@ -42,14 +40,13 @@
 
 <script setup lang="ts">
 import { MsModalResult } from 'megashark-lib';
-import { AvailableDevice, AvailableDeviceTypeTag, getCurrentAvailableDevice, isWeb } from '@/parsec';
+import { AvailableDevice, AvailableDeviceTypeTag, DeviceSaveStrategyTag, getCurrentAvailableDevice, isWeb } from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import UpdateAuthenticationModal from '@/views/users/UpdateAuthenticationModal.vue';
-import keypadGradient from '@/assets/images/keypad-gradient.svg';
-import ellipsisGradient from '@/assets/images/keypad-gradient.svg';
 import authenticationCard from '@/components/profile/AuthenticationCard.vue';
 import { IonButton, IonIcon, IonText, modalController, IonLabel } from '@ionic/vue';
 import { warning } from 'ionicons/icons';
+import { AuthenticationCardState } from '@/components/profile/types';
 import { Ref, inject, onMounted, ref } from 'vue';
 
 const currentDevice: Ref<AvailableDevice | null> = ref(null);
