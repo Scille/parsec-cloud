@@ -34,7 +34,7 @@ use-libsodium = ["dep:libsodium-rs", "dep:openssl"]
 # ]
 
 [dependencies]
-serde = { workspace = true, features = ["derive"] }
+serde = { workspace = true, features = ["derive", "std"] }
 serde_bytes = { workspace = true, features = ["std"] }
 hex = { workspace = true, features = ["std"] }
 thiserror = { workspace = true }
