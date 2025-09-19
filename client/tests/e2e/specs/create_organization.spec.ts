@@ -9,8 +9,8 @@ msTest('Opens the create organization modal', async ({ home }) => {
   await expect(home.locator('.homepage-popover')).toBeVisible();
   await expect(home.locator('.create-organization-modal')).toBeHidden();
   const createButton = home.locator('.homepage-popover').getByRole('listitem').nth(0);
-  await expect(createButton.locator('ion-label')).toHaveText('Create');
-  await expect(createButton.locator('ion-text')).toHaveText('I want to create an organization');
+  await expect(createButton.locator('ion-text').nth(0)).toHaveText('Create');
+  await expect(createButton.locator('ion-text').nth(1)).toHaveText('I want to create an organization');
   await createButton.click();
   const modal = home.locator('.create-organization-modal');
   await expect(modal).toBeVisible();

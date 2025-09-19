@@ -468,6 +468,10 @@ async function backToLogin(): Promise<void> {
   gap: 1rem;
   position: relative;
 
+  @include ms.responsive-breakpoint('sm') {
+    padding: 1.5rem;
+  }
+
   .input-edit-button {
     right: 2.25rem;
   }

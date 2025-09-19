@@ -31,7 +31,7 @@ msTest('Parsec account create account', async ({ parsecAccount }) => {
   const creatingContainer = parsecAccount.locator('.creating-step');
   const createdContainer = parsecAccount.locator('.created-step');
   const title = parsecAccount.locator('.create-account-page').locator('.create-account-page-header__title');
-  const backButton = parsecAccount.locator('.create-account-page-header__icon');
+  const backButton = parsecAccount.locator('.back-button');
 
   const containers = [userInfoContainer, validationContainer, passwordContainer, creatingContainer, createdContainer];
   await checkVisible(containers, 0);
