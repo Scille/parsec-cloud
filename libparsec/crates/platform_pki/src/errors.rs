@@ -22,4 +22,8 @@ error_set::error_set! {
         #[display("Cannot encrypt message: {0}")]
         CannotEncrypt(std::io::Error),
     };
+    DecryptMessageError = BaseCertStoreError || BaseKeyPairError || {
+        #[display("Cannot decrypt message: {0}")]
+        CannotDecrypt(std::io::Error),
+    };
 }
