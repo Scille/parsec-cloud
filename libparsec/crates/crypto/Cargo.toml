@@ -144,6 +144,8 @@ crypto_secretbox = { workspace = true, features = [
 # `getrandom` is a dependency of `rand`, we specify it here in order  to configure its `wasm-unknown-unknown` web support (see [target] part).
 getrandom = { workspace = true }                           # Optional rustcrypto dep
 rand = { workspace = true, features = ["std", "std_rng"] } # Optional rustcrypto dep
+# Need to list previous version of `getrandom@0.2` to be able to enable the `js` feature
+_getrandom_02 = { package = "getrandom", version = "0.2", features = ["js"] }
 
 [dev-dependencies]
 pretty_assertions = { workspace = true, features = ["std", "unstable"] }
@@ -163,7 +165,7 @@ uuid = { workspace = true, features = ["js"] }
 # RustCrypto stuff
 #
 
-getrandom = { workspace = true, features = ["js"] } # Optional rustcrypto dep
+getrandom = { workspace = true, features = ["wasm_js"] } # Optional rustcrypto dep
 
 [target.'cfg(target_os = "macos")'.dependencies]
 openssl = { workspace = true, optional = true, features = ["vendored"] }
