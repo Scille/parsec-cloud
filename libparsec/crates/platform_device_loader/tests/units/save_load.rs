@@ -11,6 +11,7 @@ use libparsec_types::prelude::*;
 #[case("password")]
 #[cfg_attr(not(target_arch = "wasm32"), case("keyring"))]
 #[case("account_vault")]
+#[cfg_attr(target_os = "windows", case("smartcard"))]
 async fn save_load(#[case] kind: &str, tmp_path: TmpPath) {
     use crate::tests::utils::key_present_in_system;
 
@@ -96,6 +97,28 @@ async fn save_load(#[case] kind: &str, tmp_path: TmpPath) {
                 human_handle: device.human_handle.clone(),
                 device_label: device.device_label.clone(),
                 ty: AvailableDeviceType::AccountVault { ciphertext_key_id },
+            };
+            (access, expected_available_device)
+        }
+
+        "smartcard" => {
+            let access = DeviceAccessStrategy::Smartcard {
+                key_file: key_file.clone(),
+                certificate_reference: libparsec_platform_pki::CertificateReference::Id(
+                    Bytes::copy_from_slice(b"smartcard certificate"),
+                ),
+            };
+            let expected_available_device = AvailableDevice {
+                key_file_path: key_file.clone(),
+                created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
+                protected_on: "2000-01-01T00:00:00Z".parse().unwrap(),
+                server_url: "http://test.invalid/".to_string(),
+                organization_id: device.organization_id().to_owned(),
+                user_id: device.user_id,
+                device_id: device.device_id,
+                human_handle: device.human_handle.clone(),
+                device_label: device.device_label.clone(),
+                ty: AvailableDeviceType::Smartcard,
             };
             (access, expected_available_device)
         }

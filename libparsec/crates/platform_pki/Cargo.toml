@@ -15,6 +15,9 @@ workspace = true
 thiserror = { workspace = true }
 bytes = { workspace = true }
 
+libparsec_crypto = { workspace = true }
+
+
 [target.'cfg(target_os = "windows")'.dependencies]
 schannel = { workspace = true }
 windows-sys = { workspace = true, features = ["Win32_Security_Cryptography_UI"] }

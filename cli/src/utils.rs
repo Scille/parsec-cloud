@@ -248,6 +248,7 @@ pub async fn load_and_unlock_device(
         }
         AvailableDeviceType::Smartcard => DeviceAccessStrategy::Smartcard {
             key_file: device.key_file_path.clone(),
+            certificate_reference: todo!("read smartcard"),
         },
         AvailableDeviceType::Keyring => DeviceAccessStrategy::Keyring {
             key_file: device.key_file_path.clone(),
