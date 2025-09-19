@@ -2,8 +2,10 @@
 # RUST #
 ########
 
-libparsec-rust-file: &libparsec-rust-file libparsec/**/*.rs
+# Every non platform rust source files.
+libparsec-rust-not-platform: &libparsec-rust-not-platform libparsec/crates/!(platform_*)/src/**
 
+# We consider a schema to be ending with `.json5` suffix in libparsec folder.
 libparsec-schema-file: &libparsec-schema-file libparsec/**/*.json5
 
 # Only list root Cargo files,
@@ -17,30 +19,43 @@ rust-dependencies-workspace: &rust-dependencies-workspace
   - Cargo.toml
   - Cargo.lock
 
+# We run `cargo-deny` on dependencies changes or configuration change.
 rust-cargo-deny: &rust-cargo-deny
   - deny.toml
   - *rust-dependencies-workspace
 
 rust-toolchain: &rust-toolchain rust-toolchain.toml
 
+# Rust code used to defined the python extension.
 rust-python-binding: &rust-python-binding
   - server/src/**/*.rs
   - server/Cargo.toml
 
+# Rust code used to defined the wasm module.
 rust-web-binding: &rust-web-binding bindings/web/**/*.rs
 
-rust-platform-crates: &rust-platform-crates libparsec/crates/platform_*/**/*.rs
+# Web specific rust code, this include every rust file in platform crates that are not in the `windows`, `unix` or `native` module.
+rust-platform-crates-web: &rust-platform-crates-web
+  - libparsec/crates/platform_*/src/!(windows|unix|native)/*.rs
+  - libparsec/crates/platform_*/src/!(windows|unix|native).rs
 
+# Rust code of the CLI application.
 rust-cli: &rust-cli cli/**/*.rs
 
+# We run the rust wasm tests only when:
+# - Rust web specific code or shared code is modified
+# - When platform tests are edited
+# - When toolchain or dependencies have changed
 rust-test-wasm: &rust-test-wasm
-  - *rust-platform-crates
+  - *rust-platform-crates-web
+  - libparsec/crates/platform_*/tests/**.rs
   - *rust-toolchain
   - *rust-dependencies-workspace
 
+# What we consider a rust changes is anything related to rust have changed (code, dependencies, tests, cargo-deny)
 rust-changes: &rust-changes
   - *rust-dependencies-workspace
-  - *libparsec-rust-file
+  - libparsec/**/*.rs
   - *libparsec-schema-file
   - *rust-toolchain
   - *rust-python-binding
@@ -95,7 +110,7 @@ python-jobs:
   - .github/actions/**
   - *python-changes
   - *rust-dependencies-workspace
-  - *libparsec-rust-file
+  - *libparsec-rust-not-platform
   - *libparsec-schema-file
   - *rust-toolchain
   - *rust-python-binding
@@ -137,6 +152,7 @@ new-client-dependencies-project: &new-client-dependencies-project
 # - The rust has changed
 #   - The dependencies
 #   - The pure code has changed
+#   - Platform code specific to the web interface
 # - The rust web binding has changed
 # - The Web code / test has changed
 # - The web dependencies has changed
@@ -145,7 +161,8 @@ new-client-dependencies-project: &new-client-dependencies-project
 web-jobs:
   - .github/workflows/ci-web.yml
   - *rust-dependencies-workspace
-  - *libparsec-rust-file
+  - *libparsec-rust-not-platform
+  - *rust-platform-crates-web
   - *libparsec-schema-file
   - *rust-toolchain
   - *rust-web-binding
