@@ -4,6 +4,42 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.5.0-a.6.dev.20350+61ca42c (2025-09-19)
+------------------------------------------------
+
+Features
+~~~~~~~~
+
+* The database's datamodel is now checked during server startup to ensure all
+  migrations have been applied.
+  (`#8709 <https://github.com/Scille/parsec-cloud/issues/8709>`__)
+
+* Added a bug report feature directly in the app
+  (`#10135 <https://github.com/Scille/parsec-cloud/issues/10135>`__)
+
+* On list view, add possibility to sort file/folder by Name, Last update,
+  Creation date, and Size by clicking on the header label.
+  (`#10921 <https://github.com/Scille/parsec-cloud/issues/10921>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Breaking change: Slightly change the SASCode algorithm to increase security
+  during user enrollment.
+  (`#11015 <https://github.com/Scille/parsec-cloud/issues/11015>`__)
+
+* Breaking change: server rejects any invitation enrollment attempt from a
+  client using Parsec < 3.6. This is to avoid SAS codes appearing as different
+  when doing an enrollment with a client using Parsec >= 3.6.
+  (`#11017 <https://github.com/Scille/parsec-cloud/issues/11017>`__)
+
+* Fixed an issue where workspaces name would not be updated in header and
+  sidebar when renamed.
+  (`#11056 <https://github.com/Scille/parsec-cloud/issues/11056>`__)
+
+
+
 Parsec v3.5.0-a.5 (2025-08-14)
 ------------------------------
 

@@ -61,7 +61,7 @@ copyright = "2016-present, Scille SAS"
 # the built documents.
 #
 # The short X.Y version.
-version = "3.5.0-a.6+dev"
+version = "3.5.0-a.6.dev.20350+61ca42c"
 # The full version, including alpha/beta/rc tags.
 release = version
 

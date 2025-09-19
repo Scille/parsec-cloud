@@ -1,1 +1,0 @@
-Fixed an issue where workspaces name would not be updated in header and sidebar when renamed.
