@@ -12,6 +12,7 @@ import {
 } from '@tests/e2e/helpers';
 
 interface GreetUserModalData {
+  page: MsPage;
   modal: Locator;
   nextButton: Locator;
   title: Locator;
@@ -33,10 +34,16 @@ export async function initGreetUserModals(
   } else {
     await hostPage.locator('#activate-users-ms-action-bar').getByText('Invite a user').click();
   }
+  await expect(hostPage).toBeInvitationPage();
   await fillInputModal(hostPage, email);
   await expect(hostPage).toShowToast(`An invitation to join the organization has been sent to ${email}.`, 'Success');
+  // Back to users page
+  await hostPage.locator('.topbar .back-button').click();
+  await expect(hostPage).toBeUserPage();
+
   await hostPage.locator('.topbar').locator('#invitations-button').click();
   const popover = hostPage.locator(displaySize === DisplaySize.Small ? '.invitations-list-modal' : '.invitations-list-popover');
+
   await setWriteClipboardPermission(hostPage.context(), true);
 
   const inv = popover.locator('.invitation-list-item').nth(1);
@@ -44,7 +51,6 @@ export async function initGreetUserModals(
   await expect(hostPage).toShowToast('Invitation link has been copied to clipboard.', 'Info');
   const invitationLink = await getClipboardText(hostPage);
 
-  // Use the invitation link in the second tab
   await guestPage.locator('#create-organization-button').click();
   if (displaySize === DisplaySize.Small) {
     await expect(guestPage.locator('.create-join-modal')).toBeVisible();
@@ -63,6 +69,7 @@ export async function initGreetUserModals(
   const greetModal = hostPage.locator('.greet-organization-modal');
 
   const greetData = {
+    page: hostPage,
     modal: greetModal,
     nextButton: greetModal.locator('#next-button'),
     title: greetModal.locator('.modal-header__title'),
@@ -75,6 +82,7 @@ export async function initGreetUserModals(
   await greetData.nextButton.click();
 
   const joinData = {
+    page: guestPage,
     modal: joinModal,
     nextButton: joinModal.locator('#next-button'),
     title: joinModal.locator('.modal-header__title'),
