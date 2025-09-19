@@ -49,15 +49,14 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
       await usersPage.locator('.question-modal').locator('ion-button').nth(1).click();
       await expect(usersPage).toShowToast('Boby McBobFace has been revoked. They can no longer access this organization.', 'Success');
     } else {
-      const sidebarOrganizationButtons = usersPage.locator('.sidebar').locator('.sidebar-content-organization-button');
-
       const user = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
       await user.hover();
       await user.locator('.options-button').click();
       await usersPage.locator('.user-context-menu').getByRole('listitem').nth(1).click();
       await answerQuestion(usersPage, true);
       await expect(usersPage).toShowToast('Boby McBobFace has been revoked. They can no longer access this organization.', 'Success');
-      await sidebarOrganizationButtons.nth(1).click();
+      await usersPage.locator('.sidebar').locator('#sidebar-organization-information').click();
+      await expect(usersPage).toBeOrganizationPage();
     }
 
     const container = usersPage.locator('.organization-page');

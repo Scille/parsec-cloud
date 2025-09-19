@@ -6,7 +6,6 @@ import { getOrganizationInfo } from '@/parsec/organization';
 import {
   AvailableDevice,
   AvailableDeviceTypeTag,
-  ConnectionHandle,
   DeviceSaveStrategy,
   HumanHandle,
   OrganizationID,
@@ -27,6 +26,12 @@ export enum JoinRequestStatus {
   Cancelled = 'cancelled',
 }
 
+export enum JoinRequestValidity {
+  Unknown = 'unknown',
+  Valid = 'valid',
+  Invalid = 'invalid',
+}
+
 export interface LocalJoinRequest {
   status: JoinRequestStatus;
   humanHandle: HumanHandle;
@@ -38,7 +43,8 @@ export interface LocalJoinRequest {
 export interface OrganizationJoinRequest {
   humanHandle: HumanHandle;
   certificate: string;
-  status: JoinRequestStatus;
+  createdOn: DateTime;
+  validity: JoinRequestValidity;
 }
 
 export enum ListLocalJoinRequestErrorTag {
@@ -218,7 +224,8 @@ const ORGANIZATION_JOIN_REQUESTS: Array<OrganizationJoinRequest> = LOCAL_JOIN_RE
   return {
     humanHandle: ljr.humanHandle,
     certificate: ljr.certificate,
-    status: ljr.status,
+    validity: JoinRequestValidity.Unknown,
+    createdOn: DateTime.utc(),
   };
 });
 
@@ -272,17 +279,30 @@ export async function cancelLocalJoinRequest(request: LocalJoinRequest): Promise
   return { ok: true, value: null };
 }
 
-export async function listOrganizationJoinRequest(
+export async function listOrganizationJoinRequests(
+  rootCertificate?: string,
   error = false,
 ): Promise<Result<Array<OrganizationJoinRequest>, ListOrganizationJoinRequestError>> {
   if (error) {
     return { ok: false, error: { tag: ListOrganizationJoinRequestErrorTag.Internal, error: 'generic error' } };
   }
-  return { ok: true, value: ORGANIZATION_JOIN_REQUESTS };
+  if (!rootCertificate) {
+    return { ok: true, value: ORGANIZATION_JOIN_REQUESTS };
+  } else {
+    const updated: Array<OrganizationJoinRequest> = [];
+    for (const jr of ORGANIZATION_JOIN_REQUESTS) {
+      const result = await isValidOrganizationJoinRequest(rootCertificate, jr);
+      if (result.ok) {
+        updated.push({ ...jr, validity: result.value ? JoinRequestValidity.Valid : JoinRequestValidity.Invalid });
+      }
+    }
+    return { ok: true, value: updated };
+  }
 }
 
 export async function acceptOrganizationJoinRequest(
   request: OrganizationJoinRequest,
+  _profile: UserProfile,
 ): Promise<Result<null, UpdateOrganizationJoinStatusError>> {
   const idx = LOCAL_JOIN_REQUESTS.findIndex((jr) => jr.certificate === request.certificate);
   if (idx === -1) {
@@ -297,7 +317,6 @@ export async function acceptOrganizationJoinRequest(
 }
 
 export async function rejectOrganizationJoinRequest(
-  handle: ConnectionHandle,
   request: OrganizationJoinRequest,
 ): Promise<Result<null, UpdateOrganizationJoinStatusError>> {
   const idx = LOCAL_JOIN_REQUESTS.findIndex((jr) => jr.certificate === request.certificate);
@@ -315,7 +334,7 @@ export async function isValidOrganizationJoinRequest(
   rootCertificate: string,
   request: OrganizationJoinRequest,
 ): Promise<Result<boolean, ValidateOrganizationJoinRequestError>> {
-  return { ok: true, value: rootCertificate === request.certificate };
+  return { ok: true, value: rootCertificate.trim() === request.certificate.trim() };
 }
 
 export async function getPkiJoinOrganizationLink(): Promise<Result<string, GetPkiJoinOrganizationLinkError>> {

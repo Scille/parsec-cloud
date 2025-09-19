@@ -307,6 +307,21 @@ export const expect = baseExpect.extend({
     };
   },
 
+  async toBeInvitationPage(page: Page): Promise<AssertReturnType> {
+    try {
+      await expect(page).toHaveURL(/\/\d+\/invitations\??.*$/);
+    } catch (error: any) {
+      return {
+        message: () => `Page is not invitations page (url is '${error.matcherResult.actual}')`,
+        pass: false,
+      };
+    }
+    return {
+      message: () => '',
+      pass: true,
+    };
+  },
+
   async toBeMyProfilePage(page: Page): Promise<AssertReturnType> {
     try {
       await expect(page).toHaveURL(/\/\d+\/myProfile\??.*$/);

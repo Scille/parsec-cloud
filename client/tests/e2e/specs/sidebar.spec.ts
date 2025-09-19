@@ -19,7 +19,7 @@ msTest('Sidebar in organization management', async ({ organizationPage }) => {
   await expect(mainButtons).toHaveText(['Organization', 'My workspaces', 'Recent documents']);
 
   const items = sidebar.locator('.sidebar-content-organization').locator('.sidebar-content-organization-button__text');
-  await expect(items).toHaveText(['Users', 'Information']);
+  await expect(items).toHaveText(['Users', 'Invitations', 'Information']);
 });
 
 msTest('Sidebar in workspaces page', async ({ workspaces }) => {
