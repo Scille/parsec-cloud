@@ -114,11 +114,7 @@
       </ion-text>
     </div>
     <ion-card class="recovery-card">
-      <choose-authentication
-        ref="chooseAuth"
-        class="authentication-content"
-        :class="isWeb() ? 'web-authentication' : ''"
-      />
+      <choose-authentication ref="chooseAuth" />
       <ion-button
         id="validate-password-btn"
         class="validate-button"

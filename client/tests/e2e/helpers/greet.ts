@@ -151,6 +151,13 @@ export async function addUser(
   await expect(usersPage.locator('#users-page-user-list').getByRole('listitem')).toHaveCount(currentUserCount + 1);
 
   // Joiner sets password
+  const authRadio = joinData.content.locator('.choose-auth-page').locator('.radio-list-item');
+  await expect(authRadio).toHaveCount(2);
+  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
+  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
+  await expect(authRadio.nth(1)).toHaveText('Password');
+  await authRadio.nth(1).click();
+
   const passwordChoice = joinData.content.locator('#get-password').locator('.choose-password');
   await passwordChoice.scrollIntoViewIfNeeded();
   await fillIonInput(passwordChoice.locator('ion-input').nth(0), 'AVeryL0ngP@ssw0rd');
