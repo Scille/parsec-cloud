@@ -2,7 +2,7 @@
 <template>
   <div
     class="authentication-card"
-    :class="state ? `authentication-card--${state}` : ''"
+    :class="disabled ? 'authentication-card--disabled' : `authentication-card--${state}`"
   >
     <img
       :src="config.imageSrc"
@@ -13,9 +13,15 @@
       <ion-text class="authentication-card-text__title body-lg">{{ $msTranslate(config.methodName) }}</ion-text>
       <ion-text
         class="authentication-card-text__description body"
-        v-if="config.description && state !== AuthenticationCardState.Disabled"
+        v-if="config.description && state !== AuthenticationCardState.Unavailable"
       >
         {{ $msTranslate(config.description) }}
+      </ion-text>
+      <ion-text
+        class="authentication-card-text__description body"
+        v-if="config.unavailableExplanation && state === AuthenticationCardState.Unavailable"
+      >
+        {{ $msTranslate(config.unavailableExplanation) }}
       </ion-text>
     </div>
     <ion-icon
@@ -55,6 +61,7 @@ import { computed, onMounted, ref } from 'vue';
 const props = defineProps<{
   state: AuthenticationCardState;
   authMethod: DeviceSaveStrategyTag;
+  disabled?: boolean;
 }>();
 
 const keyringAvailable = ref(false);
@@ -73,13 +80,14 @@ const methodConfig: Record<
     imageAlt: string;
     methodName: Translatable;
     description?: Translatable;
+    unavailableExplanation?: Translatable;
   }
 > = {
   [DeviceSaveStrategyTag.Keyring]: {
     imageSrc: EllipsisGradient,
     imageAlt: 'Keyring',
     methodName: 'Authentication.method.system',
-    description: keyringUnavailableMessage(),
+    unavailableExplanation: keyringUnavailableMessage(),
   },
   [DeviceSaveStrategyTag.Password]: {
     imageSrc: KeypadGradient,

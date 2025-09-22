@@ -27,11 +27,12 @@
           justify="start"
           :value="DeviceSaveStrategyTag.Keyring"
           @click="$event.preventDefault()"
-          :disabled="!keyringAvailable || disableKeyring"
+          :disabled="!keyringAvailable"
         >
           <authentication-card
             :auth-method="DeviceSaveStrategyTag.Keyring"
-            :state="disableKeyring || !keyringAvailable ? AuthenticationCardState.Unavailable : AuthenticationCardState.Default"
+            :state="!keyringAvailable ? AuthenticationCardState.Unavailable : AuthenticationCardState.Default"
+            :disabled="!keyringAvailable"
           />
         </ion-radio>
         <ion-radio
@@ -166,14 +167,8 @@ defineEmits<{
 }>();
 
 onMounted(async () => {
-  keyringAvailable.value = await isKeyringAvailable();
-
-  if (!keyringAvailable.value || props.disableKeyring) {
-    authentication.value = DeviceSaveStrategyTag.Password;
-  } else if (keyringAvailable.value && !props.disableKeyring) {
-    authentication.value = DeviceSaveStrategyTag.Keyring;
-  } else {
-    authentication.value = undefined;
+  if (!props.disableKeyring) {
+    keyringAvailable.value = await isKeyringAvailable();
   }
 });
 

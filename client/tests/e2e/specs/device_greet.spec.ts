@@ -144,11 +144,6 @@ msTest('Greet device whole process on small display', async ({ myProfilePage }) 
   await expect(joinData.nextButton).toHaveText('Confirm');
   await expect(joinData.nextButton).toHaveDisabledAttribute();
 
-  const methodChosen = joinData.modal.locator('.method-chosen');
-  await expect(methodChosen).toBeVisible();
-  await expect(methodChosen.locator('.authentication-card-text__title')).toHaveText('Password');
-  await methodChosen.locator('.authentication-card__update-button').click();
-
   const authRadio = joinData.content.locator('.choose-auth-page').locator('.radio-list-item');
   await expect(authRadio).toHaveCount(2);
   await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
@@ -240,11 +235,6 @@ msTest('Greet device whole process on large display', async ({ myProfilePage }) 
   // Guest choose auth
   await expect(joinData.title).toHaveText('Authentication');
   await expect(joinData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Authentication'], 2);
-
-  const methodChosen = joinData.modal.locator('.method-chosen');
-  await expect(methodChosen).toBeVisible();
-  await expect(methodChosen.locator('.authentication-card-text__title')).toHaveText('Password');
-  await methodChosen.locator('.authentication-card__update-button').click();
 
   await expect(joinData.nextButton).toHaveText('Confirm');
   await expect(joinData.nextButton).toHaveDisabledAttribute();
