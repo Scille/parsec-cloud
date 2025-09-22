@@ -602,6 +602,7 @@ async function onAcceptPkiRequestClicked(req: OrganizationJoinRequest): Promise<
       email: req.humanHandle.email,
       name: req.humanHandle.label,
     },
+    cssClass: 'select-profile-modal',
   });
   await modal.present();
   const { role, data } = await modal.onWillDismiss();

@@ -231,6 +231,7 @@ export const msTest = debugTest.extend<{
   documentsReadOnly: MsPage;
   usersPage: MsPage;
   organizationPage: MsPage;
+  invitationsPage: MsPage;
   myProfilePage: MsPage;
   userJoinModal: Locator;
   userGreetModal: Locator;
@@ -392,6 +393,13 @@ export const msTest = debugTest.extend<{
     await connected.locator('.sidebar').locator('#sidebar-organization-information').click();
     await expect(connected).toHavePageTitle('Information');
     await expect(connected).toBeOrganizationPage();
+    use(connected);
+  },
+
+  invitationsPage: async ({ connected }, use) => {
+    await connected.locator('.sidebar').locator('#sidebar-invitations').click();
+    await expect(connected).toHavePageTitle('Invitations');
+    await expect(connected).toBeInvitationPage();
     use(connected);
   },
 
