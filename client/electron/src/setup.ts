@@ -9,9 +9,12 @@ import log from 'electron-log/main';
 import electronServe from 'electron-serve';
 import windowStateKeeper from 'electron-window-state';
 import fs from 'fs';
+import os from 'os';
 import { join } from 'path';
+import sharp from 'sharp';
 import { WindowToPageChannel } from './communicationChannels';
 import { Env } from './envVariables';
+import { ImageFilters } from './image';
 import { SplashScreen } from './splashscreen';
 import AppUpdater, { UpdaterState, createAppUpdater } from './updater';
 import { electronIsDev } from './utils';
@@ -237,9 +240,16 @@ export class ElectronCapacitorApp {
     this.setAppMenu(locale);
   }
 
-  updateMountpoint(path: string): void {
-    fs.mkdirSync(path, { recursive: true });
-    this.winRegistry.addMountpointToQuickAccess(path, this.getIconPaths().tray);
+  updateMountpoint(mpPath: string): void {
+    fs.mkdirSync(mpPath, { recursive: true });
+    const iconPath = join(os.tmpdir(), 'parsec-icon.png');
+    this.getIcons()
+      .app.png()
+      .toBuffer()
+      .then((buffer) => {
+        fs.writeFileSync(iconPath, buffer);
+      });
+    this.winRegistry.addMountpointToQuickAccess(mpPath, iconPath);
   }
 
   isTrayEnabled(): boolean {
@@ -267,20 +277,30 @@ export class ElectronCapacitorApp {
     }
   }
 
-  getIconPaths(): { app: string; tray: string } {
+  applyImageFilter(image: sharp.Sharp): void {
+    if (electronIsDev) {
+      ImageFilters.makeDev(image);
+    } else if (this.updater?.nightly) {
+      ImageFilters.makeNightly(image);
+    } else if (this.updater?.updater.currentVersion.raw.includes('rc')) {
+      ImageFilters.makeRC(image);
+    }
+  }
+
+  getIcons(): { app: sharp.Sharp; tray: sharp.Sharp } {
     let appIconName: string;
     let trayIconName: string;
-    let customAppIconPath: string | undefined = undefined;
-    let customTrayIconPath: string | undefined = undefined;
+    let customAppIcon: sharp.Sharp | undefined = undefined;
+    let customTrayIcon: sharp.Sharp | undefined = undefined;
 
     if (Env.ENABLE_CUSTOM_BRANDING) {
       const customFolder = join(app.getPath('userData'), 'custom');
 
       if (fs.existsSync(join(customFolder, 'app_icon.png'))) {
-        customAppIconPath = join(customFolder, 'app_icon.png');
+        customAppIcon = sharp(join(customFolder, 'app_icon.png'));
       }
       if (fs.existsSync(join(customFolder, 'tray_icon.png'))) {
-        customTrayIconPath = join(customFolder, 'tray_icon.png');
+        customTrayIcon = sharp(join(customFolder, 'tray_icon.png'));
       }
     }
 
@@ -297,9 +317,16 @@ export class ElectronCapacitorApp {
         appIconName = 'icon.png';
         trayIconName = 'trayIcon.png';
     }
+
+    const appIcon = sharp(join(app.getAppPath(), 'assets', appIconName));
+    const trayIcon = sharp(join(app.getAppPath(), 'assets', trayIconName));
+
+    this.applyImageFilter(appIcon);
+    this.applyImageFilter(trayIcon);
+
     return {
-      app: customAppIconPath ?? join(app.getAppPath(), 'assets', appIconName),
-      tray: customTrayIconPath ?? join(app.getAppPath(), 'assets', trayIconName),
+      app: customAppIcon ?? appIcon,
+      tray: customTrayIcon ?? trayIcon,
     };
   }
 
@@ -394,9 +421,9 @@ export class ElectronCapacitorApp {
   }
 
   async init(): Promise<void> {
-    const iconPaths = this.getIconPaths();
-    const appIcon = nativeImage.createFromPath(iconPaths.app);
-    const trayIcon = nativeImage.createFromPath(iconPaths.tray);
+    const icons = this.getIcons();
+    const appIcon = nativeImage.createFromBuffer(await icons.app.png().toBuffer());
+    const trayIcon = nativeImage.createFromBuffer(await icons.tray.png().toBuffer());
 
     this.mainWindowState = windowStateKeeper({
       defaultWidth: 1000,
@@ -429,15 +456,16 @@ export class ElectronCapacitorApp {
 
     if (this.CapacitorFileConfig.electron.splashScreenEnabled) {
       this.splash = new SplashScreen({ width: 624, height: 424 });
-      let splashPath = join(app.getAppPath(), 'assets', 'splash-screen.png');
+      let splashImg = sharp(join(app.getAppPath(), 'assets', 'splash-screen.png'));
+      this.applyImageFilter(splashImg);
 
       if (Env.ENABLE_CUSTOM_BRANDING) {
         const customSplashPath = join(app.getPath('userData'), 'custom', 'splash.png');
         if (fs.existsSync(customSplashPath)) {
-          splashPath = customSplashPath;
+          splashImg = sharp(customSplashPath);
         }
       }
-      await this.splash.load(splashPath);
+      await this.splash.load(splashImg);
     }
 
     if (this.CapacitorFileConfig.backgroundColor) {

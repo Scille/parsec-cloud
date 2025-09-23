@@ -33,7 +33,8 @@
         "electron-unhandled": "~4.0.1",
         "electron-updater": "6.3.9",
         "electron-window-state": "~5.0.3",
-        "regedit": "^5.1.4"
+        "regedit": "^5.1.4",
+        "sharp": "^0.34.4"
     },
     "devDependencies": {
         "@electron/notarize": "^2.5.0",

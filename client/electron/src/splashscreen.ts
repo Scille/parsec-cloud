@@ -2,7 +2,7 @@
 
 import { BrowserWindow } from 'electron';
 import log from 'electron-log/main';
-import * as fs from 'fs';
+import sharp from 'sharp';
 
 export class SplashScreen {
   splash: BrowserWindow;
@@ -60,20 +60,11 @@ export class SplashScreen {
     });
   }
 
-  async load(imagePath: string): Promise<void> {
+  async load(image: sharp.Sharp): Promise<void> {
     try {
-      const image = fs.readFileSync(imagePath).toString('base64');
-      let format = '';
-
-      const lowerCase = imagePath.toLocaleLowerCase();
-      if (lowerCase.endsWith('.svg')) {
-        format = 'image/svg+xml';
-      } else if (lowerCase.endsWith('.png')) {
-        format = 'image/png';
-      } else {
-        console.log(`Unknown image format for splashscreen: ${imagePath}`);
-      }
-      const imageData = `data:${format};base64,${image}`;
+      const imageB64 = (await image.png().toBuffer()).toString('base64');
+      const format = 'image/png';
+      const imageData = `data:${format};base64,${imageB64}`;
 
       const html = `
 <!DOCTYPE html>

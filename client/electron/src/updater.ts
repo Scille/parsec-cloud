@@ -353,7 +353,8 @@ export type ListenerSignature = {
 };
 
 export default class AppUpdater {
-  private updater: BaseUpdater;
+  public nightly: boolean;
+  public updater: BaseUpdater;
   private state: UpdaterState = UpdaterState.Idle;
   private lastUpdateInfo: UpdateInfo | undefined = undefined;
   private lastError: Error | undefined = undefined;
@@ -391,6 +392,7 @@ export default class AppUpdater {
     this.updater.logger = require('electron-log/node');
 
     publishOption.nightlyBuild = (process.env.FORCE_NIGHTLY || '0') === '1' || publishOption.nightlyBuild;
+    this.nightly = publishOption.nightlyBuild;
 
     this.updater.setFeedURL(publishOption);
     this.updater.autoDownload = true;
