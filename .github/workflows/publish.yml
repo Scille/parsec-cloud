@@ -30,7 +30,7 @@ on:
         required: true
   release:
     types:
-      # triggered when a draft release is published 
+      # triggered when a draft release is published
       # and also if the release is edited later on
       - edited
   pull_request:
@@ -43,10 +43,6 @@ on:
 concurrency:
   group: publish-package-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
-
-env:
-  RELEASE_TAG: ${{ (github.event_name == 'release' && github.ref_name) || (github.event_name == 'pull_request' && 'nightly') || inputs.release_tag }}
 
 jobs:
   publish:
@@ -62,6 +58,33 @@ jobs:
           sparse-checkout: |
             misc
         timeout-minutes: 5
+
+      - name: Determine release tag to use
+        shell: bash -eux -o pipefail {0}
+        run: |
+          case '${{ github.event_name }}' in
+            # In the conext of a release event, `ref_name` is set to the tag of the release.
+            release)
+              tag='${{ github.ref_name }}'
+              ;;
+            # For testing purpose, we use the nightly tag on pull_request impacting this workflow
+            pull_request)
+              tag='nightly'
+              ;;
+            # For workflow_call or dispatch, we use the provided release_tag
+            workflow_call)
+              ;& # fallthrough
+            workflow_dispatch)
+              tag='${{ inputs.release_tag }}'
+              ;;
+          esac
+
+          if [ -z "$tag" ]; then
+            echo 'Failed to determine tag from event' >&2
+            exit 1
+          fi
+
+          echo "RELEASE_TAG=$tag" | tee -a "$GITHUB_ENV"
 
       - name: Get tag version
         id: version
