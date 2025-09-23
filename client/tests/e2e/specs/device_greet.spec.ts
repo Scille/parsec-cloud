@@ -24,7 +24,7 @@ interface ModalData {
 
 async function initModals(hostPage: MsPage, guestPage: MsPage): Promise<[ModalData, ModalData]> {
   const displaySize = await hostPage.getDisplaySize();
-  if (displaySize === 'small') {
+  if (displaySize === DisplaySize.Small) {
     await hostPage.locator('.header-selected-item__back').click();
   }
   await expect(hostPage.locator('.menu-list__item').nth(1)).toHaveText('My devices');
@@ -41,7 +41,7 @@ async function initModals(hostPage: MsPage, guestPage: MsPage): Promise<[ModalDa
 
   await setWriteClipboardPermission(hostPage.context(), true);
 
-  if (displaySize === 'small') {
+  if (displaySize === DisplaySize.Small) {
     await greetModal.locator('#copy-link-btn-small').click();
   } else {
     await greetModal.locator('#copy-link-btn').click();
@@ -52,7 +52,7 @@ async function initModals(hostPage: MsPage, guestPage: MsPage): Promise<[ModalDa
   // Use the invitation link in the second tab
   await guestPage.locator('#create-organization-button').click();
 
-  if (displaySize === 'small') {
+  if (displaySize === DisplaySize.Small) {
     await expect(guestPage.locator('.create-join-modal')).toBeVisible();
     await guestPage.locator('.create-join-modal-list__item').nth(1).click();
   } else {

@@ -238,12 +238,26 @@ const ORGANIZATION_JOIN_REQUESTS: Array<OrganizationJoinRequest> = LOCAL_JOIN_RE
   };
 });
 
+interface _Request {
+  humanHandle: HumanHandle;
+  certificate: string;
+  validity: JoinRequestValidity;
+  createdOn: DateTime;
+  organization: OrganizationID;
+  server: string;
+  status: JoinRequestStatus;
+}
+
+const REQUESTS: Array<_Request> = [];
+
 export async function requestJoinOrganization(
   link: ParsecOrganizationAddr,
 ): Promise<Result<LocalJoinRequest, RequestJoinOrganizationError>> {
   // Will be prompted for the certificate
-  const newRequest: LocalJoinRequest = {
+  const newRequest: _Request = {
     status: JoinRequestStatus.Pending,
+    validity: JoinRequestValidity.Unknown,
+    createdOn: DateTime.utc(),
     humanHandle: {
       // cspell:disable-next-line
       label: 'Isaac Kleiner',
@@ -254,34 +268,53 @@ export async function requestJoinOrganization(
     server: link,
     certificate: TMP_ROOT_CERTIFICATE,
   };
-  LOCAL_JOIN_REQUESTS.push(newRequest);
-  return { ok: true, value: newRequest };
+  REQUESTS.push(newRequest);
+  return {
+    ok: true,
+    value: {
+      humanHandle: newRequest.humanHandle,
+      status: newRequest.status,
+      organization: newRequest.organization,
+      server: newRequest.server,
+      certificate: newRequest.certificate,
+    },
+  };
 }
 
 export async function listLocalJoinRequests(error = false): Promise<Result<Array<LocalJoinRequest>, ListLocalJoinRequestError>> {
   if (error) {
     return { ok: false, error: { tag: ListLocalJoinRequestErrorTag.Internal, error: 'generic error' } };
   }
-  // return { ok: true, value: [...LOCAL_JOIN_REQUESTS] };
-  return { ok: true, value: [] };
+  return {
+    ok: true,
+    value: REQUESTS.map((r) => {
+      return {
+        humanHandle: r.humanHandle,
+        status: r.status,
+        organization: r.organization,
+        server: r.server,
+        certificate: r.certificate,
+      };
+    }),
+  };
 }
 
 export async function confirmLocalJoinRequest(request: LocalJoinRequest): Promise<Result<AvailableDevice, UpdateLocalJoinStatusError>> {
   if (request.status !== JoinRequestStatus.Accepted) {
     return { ok: false, error: { tag: UpdateLocalJoinStatusErrorTag.InvalidStatus, error: 'request not accepted' } };
   }
-  const idx = LOCAL_JOIN_REQUESTS.findIndex((ljr) => ljr.certificate === request.certificate);
+  const idx = REQUESTS.findIndex((r) => r.certificate === request.certificate);
   if (idx === -1) {
     return { ok: false, error: { tag: UpdateLocalJoinStatusErrorTag.NotFound, error: 'request does not exist' } };
   }
-  LOCAL_JOIN_REQUESTS.splice(idx, 1);
+  REQUESTS.splice(idx, 1);
   return {
     ok: true,
     value: {
       keyFilePath: '/',
       createdOn: DateTime.utc(),
       protectedOn: DateTime.utc(),
-      serverUrl: 'parsec3://localhost:6770?no_ssl=true',
+      serverUrl: request.server,
       organizationId: request.organization,
       userId: 'user_id',
       deviceId: 'device_id',
@@ -298,11 +331,11 @@ export async function confirmLocalJoinRequest(request: LocalJoinRequest): Promis
 }
 
 export async function cancelLocalJoinRequest(request: LocalJoinRequest): Promise<Result<null, UpdateLocalJoinStatusError>> {
-  const idx = LOCAL_JOIN_REQUESTS.findIndex((jr) => jr.certificate === request.certificate);
+  const idx = REQUESTS.findIndex((r) => r.certificate === request.certificate);
   if (idx === -1) {
     return { ok: false, error: { tag: UpdateLocalJoinStatusErrorTag.NotFound, error: 'request does not exist' } };
   }
-  LOCAL_JOIN_REQUESTS.splice(idx, 1);
+  REQUESTS.splice(idx, 1);
 
   return { ok: true, value: null };
 }
@@ -332,7 +365,7 @@ export async function acceptOrganizationJoinRequest(
   request: OrganizationJoinRequest,
   _profile: UserProfile,
 ): Promise<Result<null, UpdateOrganizationJoinStatusError>> {
-  const idx = LOCAL_JOIN_REQUESTS.findIndex((jr) => jr.certificate === request.certificate);
+  const idx = ORGANIZATION_JOIN_REQUESTS.findIndex((r) => r.certificate === request.certificate);
   if (idx === -1) {
     return { ok: false, error: { tag: UpdateOrganizationJoinStatusErrorTag.NotFound, error: 'request does not exist' } };
   }
@@ -340,14 +373,14 @@ export async function acceptOrganizationJoinRequest(
   if (!result.ok || result.value.currentProfile !== UserProfile.Admin) {
     return { ok: false, error: { tag: UpdateOrganizationJoinStatusErrorTag.InsufficientPermissions, error: 'not admin' } };
   }
-  LOCAL_JOIN_REQUESTS.splice(idx, 1);
+  ORGANIZATION_JOIN_REQUESTS.splice(idx, 1);
   return { ok: true, value: null };
 }
 
 export async function rejectOrganizationJoinRequest(
   request: OrganizationJoinRequest,
 ): Promise<Result<null, UpdateOrganizationJoinStatusError>> {
-  const idx = LOCAL_JOIN_REQUESTS.findIndex((jr) => jr.certificate === request.certificate);
+  const idx = ORGANIZATION_JOIN_REQUESTS.findIndex((r) => r.certificate === request.certificate);
   if (idx === -1) {
     return { ok: false, error: { tag: UpdateOrganizationJoinStatusErrorTag.NotFound, error: 'request does not exist' } };
   }
@@ -369,6 +402,9 @@ export async function getPkiJoinOrganizationLink(): Promise<Result<string, GetPk
   const result = await getOrganizationInfo();
   if (!result.ok) {
     return { ok: false, error: { tag: GetPkiJoinOrganizationLinkErrorTag.Internal, error: 'failed to get organization info' } };
+  }
+  if (result.value.organizationAddr.includes('?')) {
+    return { ok: true, value: `${result.value.organizationAddr}&a=pki_join` };
   }
   return { ok: true, value: `${result.value.organizationAddr}?a=pki_join` };
 }
