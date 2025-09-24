@@ -582,19 +582,6 @@ export function setupContentSecurityPolicy(customScheme: string): void {
       ],
     },
     {
-      domain: 'https://centakina.ddns.net',
-      directives: [
-        CspDirective.DefaultSrc,
-        CspDirective.ScriptSrc,
-        CspDirective.ConnectSrc,
-        CspDirective.ImgSrc,
-        CspDirective.StyleSrc,
-        CspDirective.FontSrc,
-        CspDirective.FrameSrc,
-        CspDirective.WorkerSrc,
-      ],
-    },
-    {
       domain: 'https://*.stripe.com',
       directives: [
         CspDirective.DefaultSrc,
