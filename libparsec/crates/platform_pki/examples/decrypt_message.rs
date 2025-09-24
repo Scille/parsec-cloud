@@ -5,7 +5,9 @@ use std::path::PathBuf;
 
 use anyhow::Context;
 use clap::Parser;
-use libparsec_platform_pki::{decrypt_message, CertificateHash, CertificateReference};
+use libparsec_platform_pki::{
+    decrypt_message, CertificateHash, CertificateReference, EncryptionAlgorithm,
+};
 
 #[derive(Debug, Parser)]
 struct Args {
@@ -14,6 +16,9 @@ struct Args {
     certificate_hash: CertificateHash,
     #[command(flatten)]
     content: ContentOpts,
+    /// The algorithm used to encrypt the content.
+    #[arg(long, default_value_t = EncryptionAlgorithm::RsaesOaepSha256)]
+    algorithm: EncryptionAlgorithm,
 }
 
 #[derive(Debug, Clone, clap::Args)]
@@ -39,11 +44,13 @@ fn main() -> anyhow::Result<()> {
         .decode(&b64_data)
         .context("Failed to decode hex encoded data")?;
 
-    let res = decrypt_message(&data, &cert_ref).context("Failed to decrypt message")?;
+    let res =
+        decrypt_message(args.algorithm, &data, &cert_ref).context("Failed to decrypt message")?;
 
     println!(
-        "Decrypted by cert with id: {}",
-        data_encoding::BASE64.encode_display(&res.cert_ref.id)
+        "Decrypted by cert with id {{{}}} with algo {}",
+        data_encoding::BASE64.encode_display(&res.cert_ref.id),
+        args.algorithm
     );
     #[cfg(feature = "hash-sri-display")]
     println!("Decrypted by cert with fingerprint: {}", res.cert_ref.hash);

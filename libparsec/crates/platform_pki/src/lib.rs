@@ -4,6 +4,8 @@ pub mod errors;
 #[cfg(target_os = "windows")]
 mod windows;
 
+use std::{fmt::Display, str::FromStr};
+
 use bytes::Bytes;
 
 #[cfg(target_os = "windows")]
@@ -53,8 +55,8 @@ pub use windows::show_certificate_selection_dialog;
 mod platform {
     use crate::{
         CertificateDer, CertificateReference, DecryptMessageError, DecryptedMessage,
-        EncryptMessageError, EncryptedMessage, GetDerEncodedCertificateError, SignMessageError,
-        SignedMessage,
+        EncryptMessageError, EncryptedMessage, EncryptionAlgorithm, GetDerEncodedCertificateError,
+        SignMessageError, SignedMessage,
     };
 
     pub fn get_der_encoded_certificate(
@@ -82,10 +84,11 @@ mod platform {
     }
 
     pub fn decrypt_message(
+        algo: EncryptionAlgorithm,
         encrypted_message: &[u8],
         certificate_ref: &CertificateReference,
     ) -> Result<DecryptedMessage, DecryptMessageError> {
-        let _ = (encrypted_message, certificate_ref);
+        let _ = (algo, encrypted_message, certificate_ref);
         unimplemented!("platform not supported")
     }
 }
@@ -98,7 +101,38 @@ pub struct CertificateDer {
     pub der_content: Bytes,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SignatureAlgorithm {
+    RsassaPssSha256,
+}
+
+impl From<SignatureAlgorithm> for &'static str {
+    fn from(value: SignatureAlgorithm) -> Self {
+        match value {
+            SignatureAlgorithm::RsassaPssSha256 => "RSASSA-PSS-SHA256",
+        }
+    }
+}
+
+impl Display for SignatureAlgorithm {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str((*self).into())
+    }
+}
+
+impl FromStr for SignatureAlgorithm {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "RSASSA-PSS-SHA256" => Ok(Self::RsassaPssSha256),
+            _ => Err("Unknown signature algorithm"),
+        }
+    }
+}
+
 pub struct SignedMessage {
+    pub algo: SignatureAlgorithm,
     pub cert_ref: CertificateReferenceIdOrHash,
     pub signed_message: Bytes,
 }
@@ -106,7 +140,38 @@ pub struct SignedMessage {
 pub use errors::SignMessageError;
 pub use platform::sign_message;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EncryptionAlgorithm {
+    RsaesOaepSha256,
+}
+
+impl From<EncryptionAlgorithm> for &'static str {
+    fn from(value: EncryptionAlgorithm) -> Self {
+        match value {
+            EncryptionAlgorithm::RsaesOaepSha256 => "RSAES-OAEP-SHA256",
+        }
+    }
+}
+
+impl FromStr for EncryptionAlgorithm {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "RSAES-OAEP-SHA256" => Ok(Self::RsaesOaepSha256),
+            _ => Err("Unknown encryption algorithm"),
+        }
+    }
+}
+
+impl Display for EncryptionAlgorithm {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str((*self).into())
+    }
+}
+
 pub struct EncryptedMessage {
+    pub algo: EncryptionAlgorithm,
     pub cert_ref: CertificateReferenceIdOrHash,
     pub ciphered: Bytes,
 }

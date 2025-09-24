@@ -5,7 +5,8 @@ use std::ffi::c_void;
 use crate::{
     CertificateDer, CertificateHash, CertificateReference, CertificateReferenceIdOrHash,
     DecryptMessageError, DecryptedMessage, EncryptMessageError, EncryptedMessage,
-    GetDerEncodedCertificateError, SignMessageError, SignedMessage,
+    EncryptionAlgorithm, GetDerEncodedCertificateError, SignMessageError, SignatureAlgorithm,
+    SignedMessage,
 };
 use bytes::Bytes;
 use schannel::{
@@ -221,18 +222,19 @@ pub fn sign_message(
     let reference = get_id_and_hash_from_cert_context(&cert_context)
         .map_err(SignMessageError::CannotGetCertificateInfo)?;
     let keypair = get_keypair(&cert_context)?;
-    let signed_message = match keypair {
+    let (algo, signed_message) = match keypair {
         // We do not support a CryptoAPI provider as its API is marked for depreciation by windows.
         PrivateKey::CryptProv(..) => {
             todo!("Use CryptGetUserKey to get the keypair")
         }
         // Handle to a CryptoGraphy Next Generation (CNG) API
-        PrivateKey::NcryptKey(handle) => ncrypt_sign_message(message, &handle).map(Into::into),
+        PrivateKey::NcryptKey(handle) => ncrypt_sign_message_with_rsa(message, &handle),
     }
     .map_err(SignMessageError::CannotSign)?;
 
     Ok(SignedMessage {
-        signed_message,
+        algo,
+        signed_message: signed_message.into(),
         cert_ref: reference,
     })
 }
@@ -246,7 +248,11 @@ fn get_keypair(context: &CertContext) -> Result<PrivateKey, crate::errors::BaseK
         .map_err(crate::errors::BaseKeyPairError::CannotAcquireKeypair)
 }
 
-fn ncrypt_sign_message(message: &[u8], handle: &NcryptKey) -> std::io::Result<Vec<u8>> {
+fn ncrypt_sign_message_with_rsa(
+    message: &[u8],
+    handle: &NcryptKey,
+) -> std::io::Result<(SignatureAlgorithm, Vec<u8>)> {
+    const ALGO: SignatureAlgorithm = SignatureAlgorithm::RsassaPssSha256;
     let hash = sha2::Sha256::digest(message);
     // SAFETY: NcryptKey is obtain from an NCRYPT_KEY_HANDLE, here we retrieve the underlying
     // handle.
@@ -305,7 +311,7 @@ fn ncrypt_sign_message(message: &[u8], handle: &NcryptKey) -> std::io::Result<Ve
         if res != 0 {
             return Err(std::io::Error::last_os_error());
         }
-        Ok(buff)
+        Ok((ALGO, buff))
     }
 }
 
@@ -319,23 +325,28 @@ pub fn encrypt_message(
     let reference = get_id_and_hash_from_cert_context(&cert_context)
         .map_err(EncryptMessageError::CannotGetCertificateInfo)?;
     let keypair = get_keypair(&cert_context)?;
-    let ciphered = match keypair {
+    let (algo, ciphered) = match keypair {
         // We do not support a CryptoAPI provider as its API is marked for depreciation by windows.
         PrivateKey::CryptProv(..) => {
             todo!("Use CryptGetUserKey to get the keypair")
         }
         // Handle to a CryptoGraphy Next Generation (CNG) API
-        PrivateKey::NcryptKey(handle) => ncrypt_encrypt_message(message, &handle).map(Into::into),
+        PrivateKey::NcryptKey(handle) => ncrypt_encrypt_message_with_rsa(message, &handle),
     }
     .map_err(EncryptMessageError::CannotEncrypt)?;
 
     Ok(EncryptedMessage {
-        ciphered,
+        algo,
+        ciphered: ciphered.into(),
         cert_ref: reference,
     })
 }
 
-fn ncrypt_encrypt_message(message: &[u8], handle: &NcryptKey) -> std::io::Result<Vec<u8>> {
+fn ncrypt_encrypt_message_with_rsa(
+    message: &[u8],
+    handle: &NcryptKey,
+) -> std::io::Result<(EncryptionAlgorithm, Vec<u8>)> {
+    const ALGO: EncryptionAlgorithm = EncryptionAlgorithm::RsaesOaepSha256;
     // SAFETY: NcryptKey is obtain from an NCRYPT_KEY_HANDLE, here we retrieve the underlying
     // handle.
     let raw_handle = unsafe { RawPointer::as_ptr(handle) } as NCRYPT_KEY_HANDLE;
@@ -390,11 +401,12 @@ fn ncrypt_encrypt_message(message: &[u8], handle: &NcryptKey) -> std::io::Result
         if res != 0 {
             return Err(std::io::Error::last_os_error());
         }
-        Ok(buff)
+        Ok((ALGO, buff))
     }
 }
 
 pub fn decrypt_message(
+    algo: EncryptionAlgorithm,
     encrypted_message: &[u8],
     certificate_ref: &CertificateReference,
 ) -> Result<DecryptedMessage, DecryptMessageError> {
@@ -411,7 +423,10 @@ pub fn decrypt_message(
         }
         // Handle to a CryptoGraphy Next Generation (CNG) API
         PrivateKey::NcryptKey(handle) => {
-            ncrypt_decrypt_message(encrypted_message, &handle).map(Into::into)
+            if algo != EncryptionAlgorithm::RsaesOaepSha256 {
+                todo!("Unsupported encryption algo '{algo}'");
+            }
+            ncrypt_decrypt_message_with_rsa(encrypted_message, &handle).map(Into::into)
         }
     }
     .map_err(DecryptMessageError::CannotDecrypt)?;
@@ -422,7 +437,7 @@ pub fn decrypt_message(
     })
 }
 
-fn ncrypt_decrypt_message(
+fn ncrypt_decrypt_message_with_rsa(
     encrypted_message: &[u8],
     handle: &NcryptKey,
 ) -> std::io::Result<Vec<u8>> {

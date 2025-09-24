@@ -39,8 +39,9 @@ fn main() -> anyhow::Result<()> {
     let res = encrypt_message(&data, &cert_ref).context("Failed to encrypt message")?;
 
     println!(
-        "Encrypted by cert with id: {}",
-        data_encoding::BASE64.encode_display(&res.cert_ref.id)
+        "Encrypted by cert with id {{{}}} using the algorithm {}",
+        data_encoding::BASE64.encode_display(&res.cert_ref.id),
+        res.algo
     );
     #[cfg(feature = "hash-sri-display")]
     println!("Encrypted by cert with fingerprint: {}", res.cert_ref.hash);
