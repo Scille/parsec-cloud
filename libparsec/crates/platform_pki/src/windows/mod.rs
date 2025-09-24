@@ -6,7 +6,7 @@ use crate::{
     CertificateDer, CertificateHash, CertificateReference, CertificateReferenceIdOrHash,
     DecryptMessageError, DecryptedMessage, EncryptMessageError, EncryptedMessage,
     EncryptionAlgorithm, GetDerEncodedCertificateError, SignMessageError, SignatureAlgorithm,
-    SignedMessage,
+    SignedMessageFromPki,
 };
 use bytes::Bytes;
 use schannel::{
@@ -215,14 +215,14 @@ fn ask_user_to_select_certificate(store: &CertStore) -> Option<CertContext> {
 pub fn sign_message(
     message: &[u8],
     certificate_ref: &CertificateReference,
-) -> Result<SignedMessage, SignMessageError> {
+) -> Result<SignedMessageFromPki, SignMessageError> {
     let store = open_store().map_err(SignMessageError::CannotOpenStore)?;
     let cert_context =
         find_certificate(&store, certificate_ref).ok_or(SignMessageError::NotFound)?;
     let reference = get_id_and_hash_from_cert_context(&cert_context)
         .map_err(SignMessageError::CannotGetCertificateInfo)?;
     let keypair = get_keypair(&cert_context)?;
-    let (algo, signed_message) = match keypair {
+    let (algo, signature) = match keypair {
         // We do not support a CryptoAPI provider as its API is marked for depreciation by windows.
         PrivateKey::CryptProv(..) => {
             todo!("Use CryptGetUserKey to get the keypair")
@@ -232,9 +232,9 @@ pub fn sign_message(
     }
     .map_err(SignMessageError::CannotSign)?;
 
-    Ok(SignedMessage {
+    Ok(SignedMessageFromPki {
         algo,
-        signed_message: signed_message.into(),
+        signature: signature.into(),
         cert_ref: reference,
     })
 }

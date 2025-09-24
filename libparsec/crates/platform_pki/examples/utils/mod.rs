@@ -1,5 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::path::PathBuf;
+
+use anyhow::Context;
 use clap::{
     builder::{NonEmptyStringValueParser, TypedValueParser},
     error::{Error, ErrorKind},
@@ -35,6 +38,29 @@ impl TypedValueParser for CertificateSRIHashParser {
                 ErrorKind::InvalidValue,
                 format!("Unsupported hash type `{hash_ty}`"),
             ))
+        }
+    }
+}
+
+#[derive(Debug, Clone, clap::Args)]
+#[group(required = true, multiple = false)]
+pub struct ContentOpts {
+    /// The content to use.
+    #[arg(long)]
+    pub content: Option<String>,
+    /// Read content from a file
+    #[arg(long)]
+    pub content_file: Option<PathBuf>,
+}
+
+impl ContentOpts {
+    // Not all examples uses `ContentOpts` so `into_bytes` is not always used.
+    #[allow(dead_code)]
+    pub fn into_bytes(self) -> anyhow::Result<Vec<u8>> {
+        match (self.content, self.content_file) {
+            (Some(content), None) => Ok(content.into()),
+            (None, Some(filepath)) => std::fs::read(filepath).context("Failed to read file"),
+            (Some(_), Some(_)) | (None, None) => unreachable!("Handled by clap"),
         }
     }
 }
