@@ -74,7 +74,7 @@ msTest('Files options tab menu display with editics', async ({ parsecEditics }) 
   await expect(optionsTab).not.toBeVisible();
   await expect(optionsTabModal).not.toBeVisible();
   const entryFolder = parsecEditics.locator('.folder-container').locator('.folder-grid-item').nth(0);
-  const entryFile = parsecEditics.locator('.folder-container').locator('.folder-grid-item').nth(1);
+  const entryFile = parsecEditics.locator('.folder-container').locator('.folder-grid-item').nth(2);
 
   // With 1 folder selected
   await entryFolder.hover();
@@ -106,6 +106,57 @@ msTest('Files options tab menu display with editics', async ({ parsecEditics }) 
   await expect(optionsTabModal.locator('.tab-bar-menu-button')).toHaveText([
     'Preview',
     'Edit',
+    'Download',
+    'Copy',
+    'Copy link',
+    'History',
+    'Details',
+  ]);
+
+  // Nothing selected, menu goes away
+  await optionsTab.locator('.tab-bar-menu-button').nth(3).click();
+  await expect(optionsTabModal).not.toBeVisible();
+});
+
+msTest('Files options tab menu display with editics on non-editable file', async ({ parsecEditics }) => {
+  await toggleViewMode(parsecEditics);
+  await parsecEditics.setDisplaySize(DisplaySize.Small);
+  const optionsTab = parsecEditics.locator('#tab-bar-options');
+  const optionsTabModal = parsecEditics.locator('#tab-bar-options-modal');
+  await expect(optionsTab).not.toBeVisible();
+  await expect(optionsTabModal).not.toBeVisible();
+  const entryFolder = parsecEditics.locator('.folder-container').locator('.folder-grid-item').nth(0);
+  const entryFile = parsecEditics.locator('.folder-container').locator('.folder-grid-item').nth(1);
+
+  // With 1 folder selected
+  await entryFolder.hover();
+  await entryFolder.locator('ion-checkbox').click();
+  await expect(optionsTab).toBeVisible();
+  await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveCount(4);
+  await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveText(['Rename', 'Move', 'Delete', 'More']);
+  await optionsTab.locator('.tab-bar-menu-button').nth(3).click();
+  await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveText(['Rename', 'Move', 'Delete', 'Less']);
+  await expect(optionsTabModal).toBeVisible();
+  await expect(optionsTabModal.locator('.tab-bar-menu-button')).toHaveCount(4);
+  await expect(optionsTabModal.locator('.tab-bar-menu-button')).toHaveText(['Copy', 'Copy link', 'History', 'Details']);
+  await optionsTab.locator('.tab-bar-menu-button').nth(3).click();
+  await expect(optionsTabModal).not.toBeVisible();
+
+  // With file + folder selected
+  await entryFile.locator('ion-checkbox').click();
+  await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveCount(4);
+  await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveText(['Copy', 'Move', 'Delete', 'Download']);
+
+  // With 1 file selected
+  await entryFolder.locator('ion-checkbox').click();
+  await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveCount(4);
+  await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveText(['Rename', 'Move', 'Delete', 'More']);
+  await optionsTab.locator('.tab-bar-menu-button').nth(3).click();
+  await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveText(['Rename', 'Move', 'Delete', 'Less']);
+  await expect(optionsTabModal).toBeVisible();
+  await expect(optionsTabModal.locator('.tab-bar-menu-button')).toHaveCount(6);
+  await expect(optionsTabModal.locator('.tab-bar-menu-button')).toHaveText([
+    'Preview',
     'Download',
     'Copy',
     'Copy link',

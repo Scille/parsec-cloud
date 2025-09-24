@@ -80,7 +80,7 @@ async function getMimeTypeFromBuffer(data: Uint8Array): Promise<string | undefin
   }
 }
 
-async function detectFileContentType(name: EntryName): Promise<DetectedFileType | undefined> {
+function detectFileContentType(name: EntryName): DetectedFileType | undefined {
   const ext = Path.getFileExtension(name);
 
   if (IMAGES.includes(ext)) {

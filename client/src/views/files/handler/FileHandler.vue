@@ -114,7 +114,7 @@
                 class="file-handler-topbar-buttons__item"
                 id="file-handler-open-editor"
                 @click="openEditor(contentInfo.path)"
-                v-if="!atDateTime && handlerMode === FileHandlerMode.View && Env.isEditicsEnabled()"
+                v-if="!atDateTime && handlerMode === FileHandlerMode.View && isFileEditable(contentInfo.fileName)"
               >
                 <ion-icon
                   :icon="create"
@@ -250,6 +250,7 @@ import { FileViewer } from '@/views/files/handler/viewer';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { openPath } from '@/services/fileOpener';
 import { FileHandlerMode } from '@/views/files/handler';
+import { isFileEditable } from '@/services/cryptpad';
 
 const { isLargeDisplay, windowWidth } = useWindowSize();
 const storageManager: StorageManager = inject(StorageManagerKey)!;

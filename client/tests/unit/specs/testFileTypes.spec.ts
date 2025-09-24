@@ -18,7 +18,7 @@ describe('File types detection', async () => {
     ['mp4', FileContentType.Video],
   ])('Detect file content type %s', async (extension, expectedFileType) => {
     const entryName = `example.${extension}`;
-    const detected = await detectFileContentType(entryName);
+    const detected = detectFileContentType(entryName);
 
     expect(detected).to.not.equal(undefined);
     if (detected !== undefined) {
