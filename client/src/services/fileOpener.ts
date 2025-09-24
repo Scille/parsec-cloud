@@ -194,7 +194,7 @@ async function openInEditor(
     if (!Env.isEditicsEnabled()) {
       window.electronAPI.log('warn', 'FileOpener: Editics is not enabled, skipping editor opening');
       openFileOpenFallbackModal(entry, workspaceHandle, path, informationManager, fileOperationManager, options);
-    } else if (contentType && contentType.type !== FileContentType.Unknown && isEnabledCryptpadDocumentType(contentType.extension)) {
+    } else if (contentType && contentType.type !== FileContentType.Unknown && isEnabledCryptpadDocumentType(contentType.type)) {
       // Handle Cryptpad supported document types
       if ((entry as any).size <= OPEN_FILE_SIZE_LIMIT) {
         if (!options.atTime) {
@@ -246,7 +246,7 @@ async function openInEditor(
           subtitle: 'fileViewers.errors.informationEditDownload',
           viewerOption: false,
         });
-      } else if (!isEnabledCryptpadDocumentType(contentType.extension)) {
+      } else if (!isEnabledCryptpadDocumentType(contentType.type)) {
         window.electronAPI.log(
           'warn',
           `FileOpener: File type not supported by editor: ${entry.name} (${contentType.type}, ${contentType.extension})`,
@@ -361,7 +361,7 @@ async function openPath(
   }
 
   const modal = await openSpinnerModal('fileViewers.openingFile');
-  const contentType = await detectFileContentType(entry.name);
+  const contentType = detectFileContentType(entry.name);
   try {
     if (options.useEditor) {
       return await openInEditor(entry, path, workspaceHandle, options, informationManager, fileOperationManager, contentType);

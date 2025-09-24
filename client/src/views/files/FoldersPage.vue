@@ -272,7 +272,7 @@ import { EntrySyncData, EventData, EventDistributor, EventDistributorKey, Events
 import { openPath, OpenPathOptions, showInExplorer } from '@/services/fileOpener';
 import { WorkspaceTagRole } from '@/components/workspaces';
 import { MenuAction, TabBarOptions, useCustomTabBar } from '@/views/menu';
-import { Env } from '@/services/environment';
+import { isFileEditable } from '@/services/cryptpad';
 
 const customTabBar = useCustomTabBar();
 
@@ -318,7 +318,7 @@ const tabBarActions = computed(() => {
       action: async () => await openEntries(getSelectedEntries(), { skipViewers: false }),
       icon: eye,
     });
-    if (Env.isEditicsEnabled() && !isReadOnly) {
+    if (isFileEditable(selectedEntries[0].name) && !isReadOnly) {
       actions.push({
         label: 'FoldersPage.tabbar.edit',
         action: async () => await openEntries(getSelectedEntries(), { useEditor: true }),
@@ -1543,7 +1543,7 @@ const actionBarOptionsFoldersPage = computed(() => {
         },
       });
     }
-    if (selectedEntries[0].isFile() && ownRole.value !== parsec.WorkspaceRole.Reader && Env.isEditicsEnabled()) {
+    if (selectedEntries[0].isFile() && ownRole.value !== parsec.WorkspaceRole.Reader && isFileEditable(selectedEntries[0].name)) {
       actionArray.push({
         label: 'FoldersPage.fileContextMenu.actionEdit',
         icon: create,

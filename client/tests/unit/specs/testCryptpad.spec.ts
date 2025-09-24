@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { Cryptpad, CryptpadDocumentType, getDocumentTypeFromExtension, isEnabledCryptpadDocumentType } from '@/services/cryptpad';
+import { FileContentType } from '@/common/fileTypes';
+import { Cryptpad, CryptpadDocumentType, getCryptpadDocumentType, isEnabledCryptpadDocumentType } from '@/services/cryptpad';
 import { Env } from '@/services/environment';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -245,74 +246,43 @@ describe('CryptPad Service', () => {
     });
   });
 
-  describe('getDocumentTypeFromExtension()', () => {
-    function expectExtensionToGiveDocumentType(extension: string, type: CryptpadDocumentType): void {
-      expect(getDocumentTypeFromExtension(extension)).toBe(type);
+  describe('getCryptpadDocumentType()', () => {
+    function expectExtensionToGiveDocumentType(filetype: FileContentType, type: CryptpadDocumentType): void {
+      expect(getCryptpadDocumentType(filetype)).toBe(type);
     }
 
-    it('should return correct document type for text files', () => {
-      expectExtensionToGiveDocumentType('txt', CryptpadDocumentType.Pad);
-      expectExtensionToGiveDocumentType('TXT', CryptpadDocumentType.Pad);
-      expectExtensionToGiveDocumentType('rtf', CryptpadDocumentType.Pad);
+    it('should return correct document types for each supported file content type', () => {
+      expectExtensionToGiveDocumentType(FileContentType.Text, CryptpadDocumentType.Code);
+      expectExtensionToGiveDocumentType(FileContentType.Document, CryptpadDocumentType.Doc);
+      expectExtensionToGiveDocumentType(FileContentType.Spreadsheet, CryptpadDocumentType.Sheet);
     });
 
-    it('should return correct document type for spreadsheet files', () => {
-      expectExtensionToGiveDocumentType('xlsx', CryptpadDocumentType.Sheet);
-      expectExtensionToGiveDocumentType('XLSX', CryptpadDocumentType.Sheet);
-    });
-
-    it('should return correct document type for document files', () => {
-      expectExtensionToGiveDocumentType('docx', CryptpadDocumentType.Doc);
-      expectExtensionToGiveDocumentType('odt', CryptpadDocumentType.Doc);
-    });
-
-    it('should return correct document type for presentation files', () => {
-      expectExtensionToGiveDocumentType('pptx', CryptpadDocumentType.Presentation);
-      expectExtensionToGiveDocumentType('odp', CryptpadDocumentType.Presentation);
-    });
-
-    it('should return correct document type for code files', () => {
-      expectExtensionToGiveDocumentType('js', CryptpadDocumentType.Code);
-      expectExtensionToGiveDocumentType('ts', CryptpadDocumentType.Code);
-      expectExtensionToGiveDocumentType('py', CryptpadDocumentType.Code);
-      expectExtensionToGiveDocumentType('md', CryptpadDocumentType.Code);
-    });
-
-    it('should return unsupported for unknown extensions', () => {
-      expectExtensionToGiveDocumentType('unknown', CryptpadDocumentType.Unsupported);
-      expectExtensionToGiveDocumentType('xyz', CryptpadDocumentType.Unsupported);
-      expectExtensionToGiveDocumentType('', CryptpadDocumentType.Unsupported);
-    });
-
-    it('should handle case insensitivity', () => {
-      expectExtensionToGiveDocumentType('JS', CryptpadDocumentType.Code);
-      expectExtensionToGiveDocumentType('TXT', CryptpadDocumentType.Pad);
-      expectExtensionToGiveDocumentType('DOCX', CryptpadDocumentType.Doc);
-      expectExtensionToGiveDocumentType('PY', CryptpadDocumentType.Code);
+    it('should return unsupported type for each unsupported file content type', () => {
+      expectExtensionToGiveDocumentType(FileContentType.Audio, CryptpadDocumentType.Unsupported);
+      expectExtensionToGiveDocumentType(FileContentType.Video, CryptpadDocumentType.Unsupported);
+      expectExtensionToGiveDocumentType(FileContentType.Image, CryptpadDocumentType.Unsupported);
+      expectExtensionToGiveDocumentType(FileContentType.PdfDocument, CryptpadDocumentType.Unsupported);
+      expectExtensionToGiveDocumentType(FileContentType.Unknown, CryptpadDocumentType.Unsupported);
     });
   });
 
   describe('isEnabledCryptpadDocumentType()', () => {
-    function expectDocumentTypeToBeEnabled(extension: string, expected: boolean): void {
-      expect(isEnabledCryptpadDocumentType(extension)).toBe(expected);
+    function expectDocumentTypeToBeEnabled(fileType: FileContentType, expected: boolean): void {
+      expect(isEnabledCryptpadDocumentType(fileType)).toBe(expected);
     }
 
     it('should return true for enabled document types', () => {
-      expectDocumentTypeToBeEnabled('txt', true);
-      expectDocumentTypeToBeEnabled('docx', true);
-      expectDocumentTypeToBeEnabled('pptx', true);
-      expectDocumentTypeToBeEnabled('js', true);
+      expectDocumentTypeToBeEnabled(FileContentType.Text, true);
+      expectDocumentTypeToBeEnabled(FileContentType.Document, true);
+      expectDocumentTypeToBeEnabled(FileContentType.Spreadsheet, true);
     });
 
     it('should return false for unsupported document types', () => {
-      expectDocumentTypeToBeEnabled('unknown', false);
-      expectDocumentTypeToBeEnabled('xyz', false);
-      expectDocumentTypeToBeEnabled('', false);
-    });
-
-    it('should handle case insensitivity', () => {
-      expectDocumentTypeToBeEnabled('TXT', true);
-      expectDocumentTypeToBeEnabled('UNKNOWN', false);
+      expectDocumentTypeToBeEnabled(FileContentType.Audio, false);
+      expectDocumentTypeToBeEnabled(FileContentType.Video, false);
+      expectDocumentTypeToBeEnabled(FileContentType.Image, false);
+      expectDocumentTypeToBeEnabled(FileContentType.PdfDocument, false);
+      expectDocumentTypeToBeEnabled(FileContentType.Unknown, false);
     });
   });
 });

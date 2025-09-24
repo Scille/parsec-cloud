@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { detectFileContentType, FileContentType } from '@/common/fileTypes';
 import { Env } from '@/services/environment';
 
 export enum CryptpadDocumentType {
@@ -157,29 +158,32 @@ export class Cryptpad {
   }
 }
 
-export function getDocumentTypeFromExtension(extension: string): CryptpadDocumentType {
-  switch (extension.toLowerCase()) {
-    case 'txt':
-    case 'rtf':
-      return CryptpadDocumentType.Pad;
-    case 'xlsx':
-      return CryptpadDocumentType.Sheet;
-    case 'docx':
-    case 'odt':
-      return CryptpadDocumentType.Doc;
-    case 'pptx':
-    case 'odp':
-      return CryptpadDocumentType.Presentation;
-    case 'js':
-    case 'ts':
-    case 'py':
-    case 'md':
+export function getCryptpadDocumentType(contentType: FileContentType): CryptpadDocumentType {
+  // CryptpadDocumentType.Pad adds html content to text files, avoiding using it for now
+  // CryptpadDocumentType.Presentation works with .pptx, but is disabled as long as there's no viewer for it
+  switch (contentType) {
+    case FileContentType.Text:
       return CryptpadDocumentType.Code;
+    case FileContentType.Spreadsheet:
+      return CryptpadDocumentType.Sheet;
+    case FileContentType.Document:
+      return CryptpadDocumentType.Doc;
     default:
       return CryptpadDocumentType.Unsupported;
   }
 }
 
-export function isEnabledCryptpadDocumentType(extension: string): boolean {
-  return ENABLED_DOCUMENT_TYPES.includes(getDocumentTypeFromExtension(extension));
+export function isEnabledCryptpadDocumentType(contentType: FileContentType): boolean {
+  return ENABLED_DOCUMENT_TYPES.includes(getCryptpadDocumentType(contentType));
+}
+
+export function isFileEditable(name: string): boolean {
+  if (!Env.isEditicsEnabled()) {
+    return false;
+  }
+  const fileContentType = detectFileContentType(name);
+  if (!fileContentType) {
+    return false;
+  }
+  return isEnabledCryptpadDocumentType(fileContentType.type);
 }

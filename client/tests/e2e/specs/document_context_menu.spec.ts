@@ -161,11 +161,11 @@ for (const gridMode of [false, true]) {
   msTest(`Document popover on right click in ${gridMode ? 'grid' : 'list'} mode for file with editics`, async ({ parsecEditics }) => {
     await expect(parsecEditics.locator('.file-context-menu')).toBeHidden();
     if (!gridMode) {
-      const entry = parsecEditics.locator('.folder-container').locator('.file-list-item').nth(1);
+      const entry = parsecEditics.locator('.folder-container').locator('.file-list-item').nth(2);
       await entry.click({ button: 'right' });
     } else {
       await toggleViewMode(parsecEditics);
-      const entry = parsecEditics.locator('.folder-container').locator('.file-card-item').nth(1);
+      const entry = parsecEditics.locator('.folder-container').locator('.file-card-item').nth(2);
       await entry.click({ button: 'right' });
     }
     await expect(parsecEditics.locator('.file-context-menu')).toBeVisible();
@@ -186,6 +186,37 @@ for (const gridMode of [false, true]) {
       'Copy link',
     ]);
   });
+
+  msTest(
+    `Document popover on right click in ${gridMode ? 'grid' : 'list'} mode for file with editics on non-editable file`,
+    async ({ parsecEditics }) => {
+      await expect(parsecEditics.locator('.file-context-menu')).toBeHidden();
+      if (!gridMode) {
+        const entry = parsecEditics.locator('.folder-container').locator('.file-list-item').nth(1);
+        await entry.click({ button: 'right' });
+      } else {
+        await toggleViewMode(parsecEditics);
+        const entry = parsecEditics.locator('.folder-container').locator('.file-card-item').nth(1);
+        await entry.click({ button: 'right' });
+      }
+      await expect(parsecEditics.locator('.file-context-menu')).toBeVisible();
+      const popover = parsecEditics.locator('.file-context-menu');
+      await expect(popover.getByRole('group')).toHaveCount(2);
+      await expect(popover.getByRole('listitem')).toHaveText([
+        'File management',
+        'Preview',
+        'Rename',
+        'Move to',
+        'Make a copy',
+        'History',
+        'Download',
+        'Details',
+        'Delete',
+        'Collaboration',
+        'Copy link',
+      ]);
+    },
+  );
 
   msTest(`Document popover on right click on multiple files in ${gridMode ? 'grid' : 'list'} only files`, async ({ documents }) => {
     await expect(documents.locator('.file-context-menu')).toBeHidden();
@@ -483,11 +514,11 @@ for (const gridMode of [false, true]) {
     await parsecEditics.setDisplaySize(DisplaySize.Small);
     await expect(parsecEditics.locator('.file-context-menu')).toBeHidden();
     if (!gridMode) {
-      const entry = parsecEditics.locator('.folder-container').locator('.file-list-item').nth(1);
+      const entry = parsecEditics.locator('.folder-container').locator('.file-list-item').nth(2);
       await entry.click({ button: 'right' });
     } else {
       await toggleViewMode(parsecEditics);
-      const entry = parsecEditics.locator('.folder-container').locator('.file-card-item').nth(1);
+      const entry = parsecEditics.locator('.folder-container').locator('.file-card-item').nth(2);
       await entry.click({ button: 'right' });
     }
     await expect(parsecEditics.locator('.file-context-sheet-modal')).toBeVisible();
@@ -506,6 +537,36 @@ for (const gridMode of [false, true]) {
       'Delete',
     ]);
   });
+
+  msTest(
+    `Small display popover on right click in ${gridMode ? 'grid' : 'list'} mode for file with editics on non-editable file`,
+    async ({ parsecEditics }) => {
+      await parsecEditics.setDisplaySize(DisplaySize.Small);
+      await expect(parsecEditics.locator('.file-context-menu')).toBeHidden();
+      if (!gridMode) {
+        const entry = parsecEditics.locator('.folder-container').locator('.file-list-item').nth(1);
+        await entry.click({ button: 'right' });
+      } else {
+        await toggleViewMode(parsecEditics);
+        const entry = parsecEditics.locator('.folder-container').locator('.file-card-item').nth(1);
+        await entry.click({ button: 'right' });
+      }
+      await expect(parsecEditics.locator('.file-context-sheet-modal')).toBeVisible();
+      const modal = parsecEditics.locator('.file-context-sheet-modal');
+      await expect(modal.getByRole('group')).toHaveCount(2);
+      await expect(modal.getByRole('listitem')).toHaveText([
+        'Preview',
+        'Rename',
+        'Move to',
+        'Make a copy',
+        'History',
+        'Download',
+        'Copy link',
+        'Details',
+        'Delete',
+      ]);
+    },
+  );
 
   msTest(`Small display popover with right click on empty space in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
     await documents.setDisplaySize(DisplaySize.Small);

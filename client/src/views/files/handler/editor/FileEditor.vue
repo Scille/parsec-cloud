@@ -66,7 +66,7 @@ import { getWorkspaceHandle, routerGoBack } from '@/router';
 import { DetectedFileType } from '@/common/fileTypes';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { Env } from '@/services/environment';
-import { CryptpadDocumentType, Cryptpad, getDocumentTypeFromExtension, CryptpadError, CryptpadErrorCode } from '@/services/cryptpad';
+import { CryptpadDocumentType, Cryptpad, getCryptpadDocumentType, CryptpadError, CryptpadErrorCode } from '@/services/cryptpad';
 import { longLocaleCodeToShort } from '@/services/translation';
 import { SaveState } from '@/views/files/handler/editor';
 
@@ -90,7 +90,7 @@ const emits = defineEmits<{
 }>();
 
 onMounted(async () => {
-  documentType.value = getDocumentTypeFromExtension(fileInfo.extension);
+  documentType.value = getCryptpadDocumentType(fileInfo.type);
 
   if (documentType.value === CryptpadDocumentType.Unsupported) {
     error.value = 'fileViewers.errors.titles.unsupportedFileType';
