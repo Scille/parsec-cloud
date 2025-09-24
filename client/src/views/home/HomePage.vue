@@ -148,7 +148,6 @@ import { getServerTypeFromAddress, ServerType } from '@/services/parsecServers';
 import { getDurationBeforeExpiration, isExpired, isTrialOrganizationDevice } from '@/common/organization';
 import HomePageButtons, { HomePageAction } from '@/views/home/HomePageButtons.vue';
 import { SmallDisplayCreateJoinModal } from '@/components/small-display';
-import { useSmallDisplayWarning } from '@/services/smallDisplayWarning';
 import ClientAreaLoginPage from '@/views/client-area/ClientAreaLoginPage.vue';
 
 enum HomePageState {
@@ -178,8 +177,6 @@ const pkiRequestList: Ref<LocalJoinRequest[]> = ref([]);
 const invitationList = ref<Array<AccountInvitation>>([]);
 const activeTab = ref(AccountSettingsTabs.Settings);
 let eventCallbackId!: string;
-
-useSmallDisplayWarning(informationManager);
 
 const slidePositions = ref({ appearFrom: Position.Left, disappearTo: Position.Right });
 const showBackButton = computed(() => {
