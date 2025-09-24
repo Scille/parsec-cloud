@@ -220,7 +220,7 @@ async function openTOS(tosLink: string): Promise<void> {
 
 const ENABLE_EDITICS_VARIABLE = 'PARSEC_APP_ENABLE_EDITICS';
 const CRYPTPAD_SERVER_VARIABLE = 'PARSEC_APP_DEFAULT_CRYPTPAD_SERVER';
-const DEFAULT_CRYPTPAD_SERVER = 'https://centakina.ddns.net';
+const DEFAULT_CRYPTPAD_SERVER = 'https://cryptpad-dev.parsec.cloud';
 
 function isEditicsEnabled(): boolean {
   return import.meta.env[ENABLE_EDITICS_VARIABLE] === 'true' || (window as any).TESTING_ENABLE_EDITICS === true;
