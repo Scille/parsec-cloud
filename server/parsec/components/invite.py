@@ -90,6 +90,10 @@ class UserInvitation:
 
     # User-specific fields
     claimer_email: EmailAddress
+    # List of users with profile ADMIN that can greet the user for this invitation
+    # NOTE: Currently, this field is only computed for the `invite_info` command.
+    #       When using `invite_list` to retrieve a the invitation list of a given
+    #       user, this field is set to an empty list for performance issues.
     administrators: list[UserGreetingAdministrator]
 
 

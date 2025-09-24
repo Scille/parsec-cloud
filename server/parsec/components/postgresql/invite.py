@@ -1743,12 +1743,16 @@ class PGInviteComponent(BaseInviteComponent):
             invitation: Invitation
             match invitation_info:
                 case UserInvitationInfo():
-                    # Note that the `administrators` field is actually not used in the context of the `invite_list` command.
+                    # NOTE(1): the `administrators` field is actually not used in the context of the `invite_list` command.
                     # Still, we compute it here for consistency. In order to save this unnecessary query to the database,
                     # we could update the invite API to take this difference into account.
-                    administrators = await self._get_user_greeting_administrators(
-                        conn, organization_id, invitation_info.token
-                    )
+                    # administrators = await self._get_user_greeting_administrators(
+                    #    conn, organization_id, invitation_info.token
+                    # )
+                    # NOTE(2): Computing the administrator field here lead to performance issues (N+1 Query)
+                    # because the field was computed multiple times (once for each invitation).
+                    # Instead of modifying the invite API, we choose to disable it until it is really needed.
+                    administrators = []
                     invitation = UserInvitation(
                         created_by=invitation_info.created_by,
                         claimer_email=invitation_info.claimer_email,
