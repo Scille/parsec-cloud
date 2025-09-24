@@ -42,6 +42,7 @@
         "commander": "^13.1.0",
         "electron": "^38.1.2",
         "electron-builder": "~25.1.8",
+        "sharp": "^0.34.4",
         "typescript": "~5.8.2"
     },
     "keywords": [

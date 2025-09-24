@@ -2,6 +2,9 @@
 
 const builder = require('electron-builder');
 const os = require('node:os');
+const sharp = require('sharp');
+const path = require('path');
+const fs = require('fs');
 
 const PARSEC_SCHEME = 'parsec3';
 
@@ -40,6 +43,27 @@ function cli() {
   };
 }
 
+async function processImageAssets(inputDir, filter) {
+  for (const entry of fs.readdirSync(inputDir, { withFileTypes: true })) {
+    if (entry.isFile() && entry.name.toLocaleLowerCase().endsWith('.png')) {
+      const fullPath = path.join(inputDir, entry.name);
+      console.log(`Processing image '${entry.name}'`);
+      const tmp = `${fullPath}.tmp`;
+      const img = sharp(fullPath);
+      if (filter === 'gray') {
+        img.grayscale(true);
+      } else if (filter === 'light') {
+        img.modulate({ light: 0.7, saturation: 0.7 });
+      } else if (filter === 'tint') {
+        img.tint('#FA7A0F');
+      }
+      img.png().toFile(tmp);
+      fs.renameSync(tmp, fullPath);
+      fs.unlinkSync(tmp);
+    }
+  }
+}
+
 /**
  * @param {string} platform
  * @param {string[]} targets
@@ -59,162 +83,173 @@ function getBuildTargets(platform, targets) {
       throw new Error(`Unknown platform: ${platform}`);
   }
 }
-const OPTS = cli();
-console.warn(OPTS);
 
-const BUILD_TARGETS = getBuildTargets(OPTS.platform, OPTS.targets);
-console.warn('BUILD_TARGETS', BUILD_TARGETS);
+async function main() {
+  const OPTS = cli();
+  console.warn(OPTS);
 
-// The machine arch the electron-builder is running on.
-process.env.BUILD_MACHINE_ARCH = os.machine();
+  const BUILD_TARGETS = getBuildTargets(OPTS.platform, OPTS.targets);
+  console.warn('BUILD_TARGETS', BUILD_TARGETS);
 
-/** @type {import('./assets/publishConfig').CustomPublishOptions} */
-const publishConfig = {
-  provider: 'custom',
-  owner: 'Scille',
-  repo: 'parsec-cloud',
-  buildMachineArch: process.env.BUILD_MACHINE_ARCH,
-  nightlyBuild: OPTS.nightly,
-};
+  // The machine arch the electron-builder is running on.
+  process.env.BUILD_MACHINE_ARCH = os.machine();
 
-const fs = require('node:fs');
+  /** @type {import('./assets/publishConfig').CustomPublishOptions} */
+  const publishConfig = {
+    provider: 'custom',
+    owner: 'Scille',
+    repo: 'parsec-cloud',
+    buildMachineArch: process.env.BUILD_MACHINE_ARCH,
+    nightlyBuild: OPTS.nightly,
+  };
 
-fs.mkdirSync('build/assets', { recursive: true });
-fs.writeFileSync('build/assets/publishConfig.json', JSON.stringify(publishConfig));
+  const fs = require('node:fs');
 
-/**
- * @type {Partial<import('app-builder-lib').WindowsConfiguration>}
- */
-const WIN_SIGN_OPTIONS = {
-  signtoolOptions: {
-    certificateSubjectName: 'Scille',
-    certificateSha1: '4505A81975EF724601813DF296AB74A07ECFA991',
-    timeStampServer: 'http://time.certum.pl',
-    rfc3161TimeStampServer: 'http://time.certum.pl',
-    signingHashAlgorithms: ['sha256'],
-  },
-};
+  fs.mkdirSync('build/assets', { recursive: true });
+  fs.writeFileSync('build/assets/publishConfig.json', JSON.stringify(publishConfig));
 
-/**
- * @type {Partial<import('app-builder-lib').MacConfiguration>}
- */
-const MACOS_SIGN_OPTIONS = {
-  notarize: {
-    teamId: process.env.APPLE_TEAM_ID,
-  },
-};
+  if (OPTS.nightly) {
+    await processImageAssets('assets', 'tint');
+  } else if (OPTS.mode === 'test') {
+    await processImageAssets('assets', 'gray');
+  }
 
-const UNSIGNED_ARTIFACT_NAME =
-  OPTS.sign || OPTS.platform === 'linux'
-    ? 'Parsec_${buildVersion}_${os}_${env.BUILD_MACHINE_ARCH}.${ext}'
-    : 'Parsec_${buildVersion}_${os}_${env.BUILD_MACHINE_ARCH}.unsigned.${ext}';
-
-/**
- * @type {import('electron-builder').Configuration}
- * @see https://www.electron.build/configuration/configuration
- */
-const options = {
-  /* eslint-disable max-len */
-  /*
-   * Doc mentions that it's used as a CFBundleIdentifier on MacOS, and as an Application User Model ID on Windows
-   * (https://www.electron.build/configuration/configuration.html#configuration)
-   * The doc for CFBundleIdentifier specifies that this should be in reverse-dns format
-   *   https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070
-   * The doc for Application User Model ID specifies that it should be in the `CompanyName.ProductName.SubProduct.VersionInformation` format
-   *   https://learn.microsoft.com/en-us/windows/win32/shell/appids?redirectedfrom=MSDN
-   * Since this is what determines the name of the app in the installer on Windows but it doesn't seem to have any visible effect
-   * on MacOS, we decided to prioritize the Windows format.
+  /**
+   * @type {Partial<import('app-builder-lib').WindowsConfiguration>}
    */
-  /* eslint-enable max-len */
-  appId: 'ParsecCloud.Parsec.Parsec.3',
-  productName: 'Parsec',
-  artifactName: UNSIGNED_ARTIFACT_NAME,
-  buildVersion: '3.5.0-a.6+dev',
-  protocols: {
-    name: 'Parsec-v3',
-    schemes: [PARSEC_SCHEME],
-  },
-
-  compression: OPTS.mode === 'test' ? 'store' : 'normal',
-
-  directories: {
-    buildResources: 'assets',
-  },
-
-  files: ['assets/**/*', '!assets/installer.nsh', 'build/**/*', '!build/**/*.js.map', '!build/**/*.msi', 'app/**/*'],
-
-  publish: publishConfig,
-
-  // Asar is the electron archive format to bundle all the resources together.
-  // Node files are shared library, hence keeping them unpacked avoid weird trick
-  // when they must be loaded by the OS.
-  // This is especially important on Snap given there the shared library rpath
-  // gets patched to load it dependencies (e.g. the libssl bundled in the snap,
-  // not the one on the host system).
-  asarUnpack: ['**/*.node'],
-
-  win: {
-    target: 'nsis',
-    ...(OPTS.sign ? WIN_SIGN_OPTIONS : {}),
-    extraResources: [
-      {
-        from: 'node_modules/regedit/vbs',
-        to: 'vbs',
-        filter: ['**/*'],
-      },
-    ],
-  },
-
-  nsis: {
-    allowElevation: true,
-    oneClick: false,
-    allowToChangeInstallationDirectory: true,
-    include: 'assets/installer.nsh',
-    guid: '2f56a772-db54-4a32-b264-28c42970f684',
-  },
-
-  afterSign: OPTS.sign === false || OPTS.platform !== 'darwin' ? undefined : 'scripts/after-sign.js',
-
-  mac: {
-    target: 'default',
-    category: 'public.app-category.productivity',
-    hardenedRuntime: true,
-    entitlements: './macOS/entitlements.plist',
-    entitlementsInherit: './macOS/entitlements.plist',
-    ...(OPTS.sign ? MACOS_SIGN_OPTIONS : {}),
-    // https://www.electron.build/mac#binaries
-    binaries: ['build/src/libparsec.node'],
-  },
-
-  linux: {
-    synopsis: 'Secure cloud framework',
-    description: 'Parsec is an open-source cloud-based application that allows simple yet cryptographically secure file hosting.',
-    category: 'Office Network FileTransfer FileSystem Security',
-    desktop: {
-      MimeType: `x-scheme-handler/${PARSEC_SCHEME}`,
+  const WIN_SIGN_OPTIONS = {
+    signtoolOptions: {
+      certificateSubjectName: 'Scille',
+      certificateSha1: '4505A81975EF724601813DF296AB74A07ECFA991',
+      timeStampServer: 'http://time.certum.pl',
+      rfc3161TimeStampServer: 'http://time.certum.pl',
+      signingHashAlgorithms: ['sha256'],
     },
-    target: 'snap',
-  },
+  };
 
-  snap: {
-    base: 'core22',
-    grade: 'devel',
-    allowNativeWayland: true,
-    stagePackages: ['default', 'fuse3', 'libssl3'],
-    confinement: 'classic',
-  },
+  /**
+   * @type {Partial<import('app-builder-lib').MacConfiguration>}
+   */
+  const MACOS_SIGN_OPTIONS = {
+    notarize: {
+      teamId: process.env.APPLE_TEAM_ID,
+    },
+  };
 
-  beforePack: './scripts/before-pack.js',
+  const UNSIGNED_ARTIFACT_NAME =
+    OPTS.sign || OPTS.platform === 'linux'
+      ? 'Parsec_${buildVersion}_${os}_${env.BUILD_MACHINE_ARCH}.${ext}'
+      : 'Parsec_${buildVersion}_${os}_${env.BUILD_MACHINE_ARCH}.unsigned.${ext}';
 
-  extends: null,
-};
+  /**
+   * @type {import('electron-builder').Configuration}
+   * @see https://www.electron.build/configuration/configuration
+   */
+  const options = {
+    /* eslint-disable max-len */
+    /*
+    * Doc mentions that it's used as a CFBundleIdentifier on MacOS, and as an Application User Model ID on Windows
+    * (https://www.electron.build/configuration/configuration.html#configuration)
+    * The doc for CFBundleIdentifier specifies that this should be in reverse-dns format
+    *   https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070
+    * The doc for Application User Model ID specifies that it should be in the `CompanyName.ProductName.SubProduct.VersionInformation` format
+    *   https://learn.microsoft.com/en-us/windows/win32/shell/appids?redirectedfrom=MSDN
+    * Since this is what determines the name of the app in the installer on Windows but it doesn't seem to have any visible effect
+    * on MacOS, we decided to prioritize the Windows format.
+    */
+    /* eslint-enable max-len */
+    appId: 'ParsecCloud.Parsec.Parsec.3',
+    productName: 'Parsec',
+    artifactName: UNSIGNED_ARTIFACT_NAME,
+    buildVersion: '3.5.0-a.6+dev',
+    protocols: {
+      name: 'Parsec-v3',
+      schemes: [PARSEC_SCHEME],
+    },
 
-if (OPTS.export) {
-  console.log(JSON.stringify(options, null, 2));
-} else {
-  builder.build({
-    targets: BUILD_TARGETS,
-    publish: 'never',
-    config: options,
-  });
+    compression: OPTS.mode === 'test' ? 'store' : 'normal',
+
+    directories: {
+      buildResources: 'assets',
+    },
+
+    files: ['assets/**/*', '!assets/installer.nsh', 'build/**/*', '!build/**/*.js.map', '!build/**/*.msi', 'app/**/*'],
+
+    publish: publishConfig,
+
+    // Asar is the electron archive format to bundle all the resources together.
+    // Node files are shared library, hence keeping them unpacked avoid weird trick
+    // when they must be loaded by the OS.
+    // This is especially important on Snap given there the shared library rpath
+    // gets patched to load it dependencies (e.g. the libssl bundled in the snap,
+    // not the one on the host system).
+    asarUnpack: ['**/*.node'],
+
+    win: {
+      target: 'nsis',
+      ...(OPTS.sign ? WIN_SIGN_OPTIONS : {}),
+      extraResources: [
+        {
+          from: 'node_modules/regedit/vbs',
+          to: 'vbs',
+          filter: ['**/*'],
+        },
+      ],
+    },
+
+    nsis: {
+      allowElevation: true,
+      oneClick: false,
+      allowToChangeInstallationDirectory: true,
+      include: 'assets/installer.nsh',
+      guid: '2f56a772-db54-4a32-b264-28c42970f684',
+    },
+
+    afterSign: OPTS.sign === false || OPTS.platform !== 'darwin' ? undefined : 'scripts/after-sign.js',
+
+    mac: {
+      target: 'default',
+      category: 'public.app-category.productivity',
+      hardenedRuntime: true,
+      entitlements: './macOS/entitlements.plist',
+      entitlementsInherit: './macOS/entitlements.plist',
+      ...(OPTS.sign ? MACOS_SIGN_OPTIONS : {}),
+      // https://www.electron.build/mac#binaries
+      binaries: ['build/src/libparsec.node'],
+    },
+
+    linux: {
+      synopsis: 'Secure cloud framework',
+      description: 'Parsec is an open-source cloud-based application that allows simple yet cryptographically secure file hosting.',
+      category: 'Office Network FileTransfer FileSystem Security',
+      desktop: {
+        MimeType: `x-scheme-handler/${PARSEC_SCHEME}`,
+      },
+      target: 'snap',
+    },
+
+    snap: {
+      base: 'core22',
+      grade: 'devel',
+      allowNativeWayland: true,
+      stagePackages: ['default', 'fuse3', 'libssl3'],
+      confinement: 'classic',
+    },
+
+    beforePack: './scripts/before-pack.js',
+
+    extends: null,
+  };
+
+  if (OPTS.export) {
+    console.log(JSON.stringify(options, null, 2));
+  } else {
+    builder.build({
+      targets: BUILD_TARGETS,
+      publish: 'never',
+      config: options,
+    });
+  }
 }
+
+main();
