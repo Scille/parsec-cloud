@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { DetectedFileType, detectFileContentType, FileContentType } from '@/common/fileTypes';
+import { DetectedFileType, detectFileContentType, FileContentType, isEditorOnly } from '@/common/fileTypes';
 import { FallbackCustomParams, OpenFallbackChoice } from '@/components/files';
 import FileOpenFallbackChoice from '@/components/files/FileOpenFallbackChoice.vue';
 import {
@@ -368,7 +368,12 @@ async function openPath(
     }
 
     // eslint-disable-next-line max-len
-    if (!contentType || contentType.type === FileContentType.Unknown || (isDesktop() && !ENABLED_FILE_VIEWERS.includes(contentType.type))) {
+    if (
+      !contentType ||
+      contentType.type === FileContentType.Unknown ||
+      (isDesktop() && !ENABLED_FILE_VIEWERS.includes(contentType.type)) ||
+      isEditorOnly(entry.name)
+    ) {
       if (!isWeb() && !options.onlyViewers) {
         await openWithSystem(workspaceHandle, entry, informationManager);
       } else {

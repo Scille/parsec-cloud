@@ -159,22 +159,23 @@ export class Cryptpad {
 
 export function getDocumentTypeFromExtension(extension: string): CryptpadDocumentType {
   switch (extension.toLowerCase()) {
+    // CryptpadDocumentType.Pad adds html content to text files, avoiding using it for now
+    case 'js':
+    case 'ts':
+    case 'py':
+    case 'md':
     case 'txt':
-    case 'rtf':
-      return CryptpadDocumentType.Pad;
+      return CryptpadDocumentType.Code;
     case 'xlsx':
+    case 'xls':
       return CryptpadDocumentType.Sheet;
     case 'docx':
     case 'odt':
       return CryptpadDocumentType.Doc;
     case 'pptx':
-    case 'odp':
+      // case 'ppt': // ppt raises a warning suggesting using pptx
+      // case 'odp': // odp does not open in editor
       return CryptpadDocumentType.Presentation;
-    case 'js':
-    case 'ts':
-    case 'py':
-    case 'md':
-      return CryptpadDocumentType.Code;
     default:
       return CryptpadDocumentType.Unsupported;
   }
