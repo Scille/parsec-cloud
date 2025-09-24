@@ -26,4 +26,18 @@ error_set::error_set! {
         #[display("Cannot decrypt message: {0}")]
         CannotDecrypt(std::io::Error),
     };
+    InvalidCertificateDer = {
+        #[display("Invalid certificate: {0}")]
+        InvalidCertificateDer(webpki::Error),
+    };
+    VerifySignatureError = InvalidCertificateDer || {
+        #[display("Invalid signature for the given message and certificate")]
+        InvalidSignature,
+        #[display("Unexpected signature will verifying signature of a message: {0}")]
+        UnexpectedError(webpki::Error)
+    };
+    InvalidPemContent = {
+        #[display("Invalid PEM content: {0}")]
+        InvalidPemContent(rustls_pki_types::pem::Error)
+    };
 }

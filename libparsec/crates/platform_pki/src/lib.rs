@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 pub mod errors;
+mod shared;
 #[cfg(target_os = "windows")]
 mod windows;
 
@@ -11,7 +12,8 @@ use bytes::Bytes;
 #[cfg(target_os = "windows")]
 pub(crate) use windows as platform;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
+#[cfg_attr(not(feature = "hash-sri-display"), derive(Debug))]
 pub enum CertificateHash {
     SHA256(Box<[u8; 32]>),
 }
@@ -27,6 +29,13 @@ impl std::fmt::Display for CertificateHash {
             "{hash_str}-{}",
             ::data_encoding::BASE64.encode_display(data)
         )
+    }
+}
+
+#[cfg(feature = "hash-sri-display")]
+impl std::fmt::Debug for CertificateHash {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Display::fmt(self, f)
     }
 }
 
@@ -56,7 +65,7 @@ mod platform {
     use crate::{
         CertificateDer, CertificateReference, DecryptMessageError, DecryptedMessage,
         EncryptMessageError, EncryptedMessage, EncryptionAlgorithm, GetDerEncodedCertificateError,
-        SignMessageError, SignedMessage,
+        SignMessageError, SignedMessageFromPki,
     };
 
     pub fn get_der_encoded_certificate(
@@ -69,7 +78,7 @@ mod platform {
     pub fn sign_message(
         message: &[u8],
         certificate_ref: &CertificateReference,
-    ) -> Result<SignedMessage, SignMessageError> {
+    ) -> Result<SignedMessageFromPki, SignMessageError> {
         let _ = message;
         let _ = certificate_ref;
         unimplemented!("platform not supported")
@@ -131,14 +140,16 @@ impl FromStr for SignatureAlgorithm {
     }
 }
 
-pub struct SignedMessage {
+pub struct SignedMessageFromPki {
     pub algo: SignatureAlgorithm,
     pub cert_ref: CertificateReferenceIdOrHash,
-    pub signed_message: Bytes,
+    pub signature: Bytes,
 }
 
 pub use errors::SignMessageError;
 pub use platform::sign_message;
+
+pub use shared::{verify_message, Certificate, SignedMessage};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EncryptionAlgorithm {

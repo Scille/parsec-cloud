@@ -19,16 +19,18 @@ hash-sri-display = ["dep:data-encoding"]
 bytes = { workspace = true }
 data-encoding = { workspace = true, optional = true }
 error_set = { workspace = true }
+rustls-webpki = { workspace = true, features = ["std"] }
+rustls-pki-types = { workspace = true }
+rsa = { workspace = true }
+sha2 = { workspace = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 schannel = { workspace = true }
 windows-sys = { workspace = true, features = ["Win32_Security_Cryptography_UI"] }
-sha2 = { workspace = true }
 
 [target.'cfg(target_os = "linux")'.dev-dependencies]
 cryptoki = { workspace = true }
 percent-encoding = { workspace = true }
-sha2 = { workspace = true }
 
 [dev-dependencies]
 # We use clap to provide a CLI for examples.
