@@ -121,7 +121,7 @@ msTest('Files options tab menu display with editics', async ({ parsecEditics }) 
 msTest('Test files options tab menu', async ({ documents, context }) => {
   msTest.setTimeout(45_000);
 
-  await documents.locator('.label-name').click();
+  await documents.locator('.header-label-name').click();
   await toggleViewMode(documents);
   await documents.setDisplaySize(DisplaySize.Small);
   await context.grantPermissions(['clipboard-write']);

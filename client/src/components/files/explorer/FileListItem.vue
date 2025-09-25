@@ -25,106 +25,109 @@
       @mouseleave="isHovered = false"
       @contextmenu="onOptionsClick"
     >
-      <div
-        class="file-selected"
-        v-if="isLargeDisplay || entry.isSelected || showCheckbox"
-      >
-        <!-- eslint-disable vue/no-mutating-props -->
-        <ms-checkbox
-          v-model="entry.isSelected"
-          v-show="entry.isSelected || isHovered || showCheckbox"
-          @click.stop
-          @dblclick.stop
-        />
-        <!-- eslint-enable vue/no-mutating-props -->
-      </div>
-      <!-- file name -->
-      <div
-        class="file-name"
-        :class="{ 'file-mobile-content': isSmallDisplay }"
-      >
-        <ms-image
-          :image="entry.isFile() ? getFileIcon(entry.name) : Folder"
-          class="file-icon"
-        />
-        <div class="file-mobile-text">
-          <ion-text
-            class="file-name__label cell"
-            @click="$emit('openItem', $event, entry)"
-          >
-            {{ entry.name }}
-          </ion-text>
-          <ion-text
-            v-if="isSmallDisplay"
-            class="file-mobile-text__data body-sm"
-          >
-            <span class="data-date">{{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}</span>
-            <span v-if="entry.isFile()"> &bull; </span>
-            <span
-              class="data-size"
-              v-if="entry.isFile()"
+      <div class="list-item-container">
+        <div
+          class="file-selected"
+          v-if="isLargeDisplay || entry.isSelected || showCheckbox"
+        >
+          <!-- eslint-disable vue/no-mutating-props -->
+          <ms-checkbox
+            v-model="entry.isSelected"
+            v-show="entry.isSelected || isHovered || showCheckbox"
+            @click.stop
+            @dblclick.stop
+          />
+          <!-- eslint-enable vue/no-mutating-props -->
+        </div>
+
+        <!-- file name -->
+        <div
+          class="file-name"
+          :class="{ 'file-mobile-content': isSmallDisplay }"
+        >
+          <ms-image
+            :image="entry.isFile() ? getFileIcon(entry.name) : Folder"
+            class="file-icon"
+          />
+          <div class="file-mobile-text">
+            <ion-text
+              class="label-name cell"
+              @click="$emit('openItem', $event, entry)"
             >
-              {{ $msTranslate(formatFileSize((entry as FileModel).size)) }}
-            </span>
+              {{ entry.name }}
+            </ion-text>
+            <ion-text
+              v-if="isSmallDisplay"
+              class="file-mobile-text__data body-sm"
+            >
+              <span class="data-date">{{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}</span>
+              <span v-if="entry.isFile()"> &bull; </span>
+              <span
+                class="data-size"
+                v-if="entry.isFile()"
+              >
+                {{ $msTranslate(formatFileSize((entry as FileModel).size)) }}
+              </span>
+            </ion-text>
+          </div>
+          <ion-icon
+            class="cloud-overlay"
+            :class="isFileSynced() ? 'cloud-overlay-ok' : 'cloud-overlay-ko'"
+            :icon="isFileSynced() ? cloudDone : cloudOffline"
+          />
+        </div>
+
+        <!-- updated by -->
+        <div
+          class="file-updated-by"
+          v-if="entry.lastUpdater && isLargeDisplay && ownProfile !== UserProfile.Outsider"
+        >
+          <user-avatar-name
+            :user-avatar="entry.lastUpdater.humanHandle.label"
+            :user-name="entry.lastUpdater.humanHandle.label"
+          />
+        </div>
+
+        <!-- last update -->
+        <div class="file-last-update">
+          <ion-text class="label-last-update cell">
+            {{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}
           </ion-text>
         </div>
-        <ion-icon
-          class="cloud-overlay"
-          :class="isFileSynced() ? 'cloud-overlay-ok' : 'cloud-overlay-ko'"
-          :icon="isFileSynced() ? cloudDone : cloudOffline"
-        />
-      </div>
 
-      <!-- updated by -->
-      <div
-        class="file-updatedBy"
-        v-if="entry.lastUpdater && isLargeDisplay && ownProfile !== UserProfile.Outsider"
-      >
-        <user-avatar-name
-          :user-avatar="entry.lastUpdater.humanHandle.label"
-          :user-name="entry.lastUpdater.humanHandle.label"
-        />
-      </div>
+        <!-- creation date -->
+        <div class="file-creation-date">
+          <ion-text class="label-creation-date cell">
+            {{ $msTranslate(formatTimeSince(entry.created, '--', 'short')) }}
+          </ion-text>
+        </div>
 
-      <!-- last update -->
-      <div class="file-lastUpdate">
-        <ion-text class="label-last-update cell">
-          {{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}
-        </ion-text>
-      </div>
+        <!-- file size -->
+        <div class="file-size">
+          <ion-text
+            v-if="entry.isFile()"
+            class="label-size cell"
+          >
+            {{ $msTranslate(formatFileSize((entry as FileModel).size)) }}
+          </ion-text>
+        </div>
 
-      <!-- last update -->
-      <div class="file-creationDate">
-        <ion-text class="label-last-update cell">
-          {{ $msTranslate(formatTimeSince(entry.created, '--', 'short')) }}
-        </ion-text>
-      </div>
-
-      <!-- file size -->
-      <div class="file-size">
-        <ion-text
-          v-if="entry.isFile()"
-          class="label-size cell"
-        >
-          {{ $msTranslate(formatFileSize((entry as FileModel).size)) }}
-        </ion-text>
-      </div>
-
-      <!-- options -->
-      <div class="file-options ion-item-child-clickable">
-        <ion-button
-          fill="clear"
-          v-show="isHovered || menuOpened || isSmallDisplay"
-          class="options-button"
-          @click.stop="onOptionsClick($event)"
-          @dblclick.stop
-        >
-          <ion-icon
-            :icon="ellipsisHorizontal"
-            slot="icon-only"
-            class="options-button__icon"
-          />
-        </ion-button>
+        <!-- options -->
+        <div class="file-options ion-item-child-clickable">
+          <ion-button
+            fill="clear"
+            v-show="isHovered || menuOpened || isSmallDisplay"
+            class="options-button"
+            @click.stop="onOptionsClick($event)"
+            @dblclick.stop
+          >
+            <ion-icon
+              :icon="ellipsisHorizontal"
+              slot="icon-only"
+              class="options-button__icon"
+            />
+          </ion-button>
+        </div>
       </div>
     </ion-item>
   </file-drop-zone>
@@ -208,16 +211,11 @@ async function onOptionsClick(event: PointerEvent): Promise<void> {
     flex-shrink: 0;
   }
 
-  &__label {
+  .label-name {
     color: var(--parsec-color-light-secondary-text);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    text-wrap: nowrap;
-    width: fit-content;
 
     &:hover {
-      border-top: 1px solid transparent;
-      border-bottom: 1px solid var(--parsec-color-light-secondary-grey);
+      text-decoration: underline;
       cursor: pointer !important;
     }
   }
@@ -250,6 +248,7 @@ async function onOptionsClick(event: PointerEvent): Promise<void> {
 
   .file-mobile-content {
     gap: 1rem;
+    width: 100%;
   }
 }
 

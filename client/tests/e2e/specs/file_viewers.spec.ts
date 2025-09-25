@@ -510,10 +510,10 @@ msTest('File viewer sidebar state persists between files', async ({ documents })
   const header = documents.locator('#connected-header');
   await expect(sidebar).toBeVisible();
   await expect(header).toBeVisible();
-  await documents.locator('.label-name').click();
+  await documents.locator('.header-label-name').click();
 
   // Open first file and ensure it's loaded
-  await entries.nth(2).locator('.file-name .file-mobile-text .file-name__label').click();
+  await entries.nth(2).locator('.file-name .file-mobile-text .label-name').click();
   await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
   await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
   await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
@@ -551,7 +551,7 @@ msTest('File viewer sidebar state persists between files', async ({ documents })
   await expect(sidebar).toBeHidden();
 
   // Open second file
-  await entries.nth(4).locator('.file-name .file-mobile-text .file-name__label').click();
+  await entries.nth(4).locator('.file-name .file-mobile-text .label-name').click();
   await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
   await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
   await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
@@ -585,14 +585,14 @@ msTest('File viewer sidebar state persists between files', async ({ documents })
 msTest('File viewer restores sidebar state on exit', async ({ documents }) => {
   const entries = documents.locator('.folder-container').locator('.file-list-item');
   const toggleButton = documents.locator('#trigger-toggle-menu-button');
-  await documents.locator('.label-name').click();
+  await documents.locator('.header-label-name').click();
 
   // Sidebar starts visible (default state)
   await expect(documents.locator('.sidebar')).toBeVisible();
   await expect(documents.locator('#connected-header .topbar')).toBeVisible();
 
   // Open file viewer
-  await entries.nth(2).locator('.file-name .file-mobile-text .file-name__label').click();
+  await entries.nth(2).locator('.file-name .file-mobile-text .label-name').click();
   await expect(documents).toBeViewerPage();
   await expect(documents.locator('.file-handler-topbar .file-handler-topbar__title')).toHaveText('code.py');
 
@@ -617,7 +617,7 @@ msTest('File viewer restores sidebar state on exit', async ({ documents }) => {
   await expect(documents.locator('.sidebar')).toBeHidden();
 
   // Open file viewer again
-  await entries.nth(4).locator('.file-name .file-mobile-text .file-name__label').click();
+  await entries.nth(4).locator('.file-name .file-mobile-text .label-name').click();
   await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
   await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
   await expect(documents.locator('.ms-spinner-modal')).toBeHidden();

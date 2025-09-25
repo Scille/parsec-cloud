@@ -282,7 +282,7 @@ for (const gridMode of [false, true]) {
     await clickAction(await openPopover(documents, 1), 'Rename');
     await fillInputModal(documents, 'New Name', true);
     if (!gridMode) {
-      await expect(entry.locator('.file-name').locator('.file-name__label')).toHaveText('New Name');
+      await expect(entry.locator('.file-name').locator('.label-name')).toHaveText('New Name');
     } else {
       await expect(entry.locator('.file-card__title')).toHaveText('New Name');
     }
@@ -303,7 +303,7 @@ for (const gridMode of [false, true]) {
         .locator('.file-list-item')
         .nth(2)
         .locator('.file-name')
-        .locator('.file-name__label')
+        .locator('.label-name')
         .textContent();
       count = await documents.locator('.folder-container').locator('.file-list-item').count();
     }
@@ -632,7 +632,7 @@ for (const gridMode of [false, true]) {
     await clickAction(await openPopover(documents, 1), 'Rename');
     await fillInputModal(documents, 'New Name', true);
     if (!gridMode) {
-      await expect(entry.locator('.file-name').locator('.file-name__label')).toHaveText('New Name');
+      await expect(entry.locator('.file-name').locator('.label-name')).toHaveText('New Name');
     } else {
       await expect(entry.locator('.file-card__title')).toHaveText('New Name');
     }
@@ -654,7 +654,7 @@ for (const gridMode of [false, true]) {
         .locator('.file-list-item')
         .nth(2)
         .locator('.file-name')
-        .locator('.file-name__label')
+        .locator('.label-name')
         .textContent();
       count = await documents.locator('.folder-container').locator('.file-list-item').count();
     }

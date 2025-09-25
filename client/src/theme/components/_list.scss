@@ -89,7 +89,7 @@
 }
 
 .workspace-list-item > [class^='workspace-'],
-.file-list-item > [class^='file-'],
+.list-item-container > [class^='file-'],
 .user-list-item > [class^='user-'] {
   padding: 0 1rem;
   display: flex;
@@ -150,22 +150,34 @@
 
 // ------- Files/folders only -------
 .folder-container {
-  .file-list-item {
+  .list-item-container {
     display: flex;
     width: 100%;
+    padding: 0;
   }
 
-  .label-name,
-  .label-lastUpdate,
-  .label-creationDate,
-  .label-size {
+  .header-label-selected,
+  .header-label-name,
+  .header-label-last-update,
+  .header-label-creation-date,
+  .header-label-size {
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 0.375rem;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+
+    &__text {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
 
     &__sort-icon {
       display: none;
+      flex-shrink: 0;
       font-size: 0.875rem;
     }
 
@@ -186,83 +198,122 @@
     }
   }
 
-  .label-selected,
+  .label-name,
+  .label-last-update,
+  .label-creation-date,
+  .label-size {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    width: 100%;
+  }
+
+  // Define the width of each cell
+  --width-cell-selected: 4rem;
+  --width-cell-name: calc(40% - var(--width-cell-selected) - var(--width-cell-options));
+  --width-cell-updated-by: 20%;
+  --width-cell-last-update: 15%;
+  --width-cell-creation-date: 15%;
+  --width-cell-size: 10%;
+  --width-cell-options: 4rem;
+
+  @include ms.responsive-breakpoint('xl') {
+    --width-cell-name: calc(45% - var(--width-cell-selected) - var(--width-cell-options));
+    --width-cell-updated-by: 25%;
+    --width-cell-last-update: 20%;
+    --width-cell-creation-date: 0;
+    --width-cell-size: 10%;
+  }
+
+  @include ms.responsive-breakpoint('lg') {
+    --width-cell-name: calc(60% - var(--width-cell-selected) - var(--width-cell-options));
+    --width-cell-updated-by: 0;
+    --width-cell-last-update: 20%;
+    --width-cell-size: 20%;
+  }
+
+  @include ms.responsive-breakpoint('md') {
+    --width-cell-name: calc(70% - var(--width-cell-selected) - var(--width-cell-options));
+    --width-cell-last-update: 15%;
+    --width-cell-size: 15%;
+  }
+
+  @include ms.responsive-breakpoint('sm') {
+    --width-cell-name: calc(100% - var(--width-cell-selected));
+    --width-cell-last-update: 0;
+    --width-cell-size: 0;
+  }
+
+  .header-label-selected,
   .file-selected,
   .file-loading {
-    min-width: 4rem;
-    width: 4rem;
-    max-width: 4rem;
+    flex-basis: var(--width-cell-selected);
+    max-width: var(--width-cell-selected);
     justify-content: end;
 
     @include ms.responsive-breakpoint('sm') {
-      min-width: 1rem;
-      width: 3rem;
       padding: 0;
     }
   }
 
-  .label-name,
+  .header-label-name,
   .file-name {
-    min-width: 16.25rem;
-    width: 100%;
+    flex-basis: var(--width-cell-name);
     padding: 0.5rem 1rem;
 
     @include ms.responsive-breakpoint('sm') {
-      min-width: 10rem;
       padding: 0.75rem 1rem;
     }
   }
 
-  .label-updatedBy,
-  .file-updatedBy {
-    min-width: 14rem;
-    max-width: 15%;
-    flex-grow: 2;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+  .header-label-updated-by,
+  .file-updated-by {
+    flex-basis: var(--width-cell-updated-by);
+
+    @include ms.responsive-breakpoint('lg') {
+      display: none;
+    }
   }
 
-  .label-lastUpdate,
-  .file-lastUpdate {
-    min-width: 11.25rem;
-    flex-shrink: 1;
+  .header-label-last-update,
+  .file-last-update {
+    flex-basis: var(--width-cell-last-update);
 
     @include ms.responsive-breakpoint('sm') {
       display: none;
     }
   }
 
-  .label-creationDate,
-  .file-creationDate {
-    min-width: 11.25rem;
-    flex-shrink: 1;
+  .header-label-creation-date,
+  .file-creation-date {
+    flex-basis: var(--width-cell-creation-date);
 
     @include ms.responsive-breakpoint('xl') {
       display: none;
     }
   }
 
-  .label-size,
+  .header-label-size,
   .file-size {
-    min-width: 8.25rem;
-    flex-shrink: 1;
+    flex-basis: var(--width-cell-size);
 
-    @include ms.responsive-breakpoint('md') {
+    @include ms.responsive-breakpoint('sm') {
       display: none;
     }
   }
 
   .label-size:is(.cell),
+  .label-creation-date:is(.cell),
   .label-last-update:is(.cell) {
-    color: var(--parsec-color-light-secondary-grey);
+    color: var(--parsec-color-light-secondary-hard-grey);
   }
 
-  .label-space,
+  .header-label-space,
   .file-options,
   .file-empty {
-    min-width: 4rem;
-    flex-shrink: 0;
-    margin-left: auto;
+    flex-basis: var(--width-cell-options);
+    position: sticky;
+    right: 0;
   }
 }
 

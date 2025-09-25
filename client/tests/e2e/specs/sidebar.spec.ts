@@ -268,7 +268,7 @@ msTest('Recent document updates when file is renamed', async ({ documents }) => 
   const popover = documents.locator('.file-context-menu');
   await popover.getByRole('listitem').filter({ hasText: 'Rename' }).click();
   await fillInputModal(documents, `New-${fileName}`, true);
-  await expect(fileItem.locator('.file-name').locator('.file-name__label')).toHaveText(`New-${fileName}`);
+  await expect(fileItem.locator('.file-name').locator('.label-name')).toHaveText(`New-${fileName}`);
   await expect(sidebarRecentFiles.locator('.sidebar-item')).toHaveText([`New-${fileName}`]);
 });
 

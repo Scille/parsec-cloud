@@ -14,46 +14,49 @@
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
   >
-    <div class="file-selected">
-      <!-- eslint-disable vue/no-mutating-props -->
-      <ms-checkbox
-        v-model="entry.isSelected"
-        v-show="entry.isSelected || isHovered || showCheckbox"
-        @change="$emit('selectedChange', entry, $event)"
-        @click.stop
-        @dblclick.stop
-      />
-      <!-- eslint-enable vue/no-mutating-props -->
-    </div>
-    <!-- file name -->
-    <div class="file-name">
-      <ms-image
-        :image="entry.isFile() ? getFileIcon(entry.name) : Folder"
-        class="file-icon"
-      />
-      <ion-label class="file-name__label cell">
-        {{ entry.name }}
-      </ion-label>
-    </div>
+    <div class="list-item-container">
+      <div class="file-selected">
+        <!-- eslint-disable vue/no-mutating-props -->
+        <ms-checkbox
+          v-model="entry.isSelected"
+          v-show="entry.isSelected || isHovered || showCheckbox"
+          @change="$emit('selectedChange', entry, $event)"
+          @click.stop
+          @dblclick.stop
+        />
+        <!-- eslint-enable vue/no-mutating-props -->
+      </div>
 
-    <!-- last update -->
-    <div class="file-lastUpdate">
-      <ion-label class="label-last-update cell">
-        {{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}
-      </ion-label>
-    </div>
+      <!-- file name -->
+      <div class="file-name">
+        <ms-image
+          :image="entry.isFile() ? getFileIcon(entry.name) : Folder"
+          class="file-icon"
+        />
+        <ion-label class="label-name cell">
+          {{ entry.name }}
+        </ion-label>
+      </div>
 
-    <!-- file size -->
-    <div class="file-size">
-      <ion-label
-        v-if="entry.isFile()"
-        class="label-size cell"
-      >
-        {{ $msTranslate(formatFileSize((entry as WorkspaceHistoryFileModel).size)) }}
-      </ion-label>
-    </div>
+      <!-- last update -->
+      <div class="file-last-update">
+        <ion-label class="label-last-update cell">
+          {{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}
+        </ion-label>
+      </div>
 
-    <div class="label-space" />
+      <!-- file size -->
+      <div class="file-size">
+        <ion-label
+          v-if="entry.isFile()"
+          class="label-size cell"
+        >
+          {{ $msTranslate(formatFileSize((entry as WorkspaceHistoryFileModel).size)) }}
+        </ion-label>
+      </div>
+
+      <div class="label-space" />
+    </div>
   </ion-item>
 </template>
 
@@ -101,6 +104,10 @@ onMounted(async () => {
 }
 
 .file-name {
+  position: relative;
+  display: flex;
+  gap: 1rem;
+
   .file-icon {
     width: 2rem;
     height: 2rem;
@@ -112,12 +119,9 @@ onMounted(async () => {
     }
   }
 
-  &__label {
+  .label-name {
     color: var(--parsec-color-light-secondary-text);
     margin-left: 1em;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    text-wrap: nowrap;
   }
 }
 </style>
