@@ -32,7 +32,7 @@ msTest('Download file', async ({ documents }) => {
   let entryName = '';
 
   for (const entry of await entries.all()) {
-    entryName = (await entry.locator('.file-name').locator('.file-name__label').textContent()) ?? '';
+    entryName = (await entry.locator('.file-name').locator('.label-name').textContent()) ?? '';
     if (entryName.endsWith('.mp3')) {
       await entry.hover();
       await entry.locator('.options-button').click();
@@ -88,7 +88,7 @@ msTest('Download multiple files and folder', async ({ documents }, testInfo: Tes
   await documents.waitForTimeout(1000);
 
   for (const entry of await entries.all()) {
-    const entryName = (await entry.locator('.file-name').locator('.file-name__label').textContent()) ?? '';
+    const entryName = (await entry.locator('.file-name').locator('.label-name').textContent()) ?? '';
     if (entryName.endsWith('.mp3') || entryName.endsWith('.xlsx') || entryName.endsWith('.pdf') || entryName === 'Dir_Folder') {
       await entry.hover();
       await entry.locator('ion-checkbox').click();
@@ -144,7 +144,7 @@ msTest('Download warning', async ({ documents }) => {
   const entries = documents.locator('.folder-container').locator('.file-list-item');
 
   for (const entry of await entries.all()) {
-    const entryName = (await entry.locator('.file-name').locator('.file-name__label').textContent()) ?? '';
+    const entryName = (await entry.locator('.file-name').locator('.label-name').textContent()) ?? '';
     if (entryName.endsWith('.mp3')) {
       await entry.hover();
       await entry.locator('.options-button').click();
@@ -187,7 +187,7 @@ msTest('Download warning', async ({ documents }) => {
   }
 
   for (const entry of await entries.all()) {
-    const entryName = (await entry.locator('.file-name').locator('.file-name__label').textContent()) ?? '';
+    const entryName = (await entry.locator('.file-name').locator('.label-name').textContent()) ?? '';
     if (entryName.endsWith('.py')) {
       await entry.hover();
       await entry.locator('.options-button').click();
@@ -242,9 +242,9 @@ msTest.describe(() => {
     // cspell:disable-next-line
     await renameDocument(documents, entries.nth(1), 'Имя файла.png');
     // cspell:disable-next-line
-    await expect(entries.nth(0).locator('.file-name').locator('.file-name__label')).toHaveText('文件名.png');
+    await expect(entries.nth(0).locator('.file-name').locator('.label-name')).toHaveText('文件名.png');
     // cspell:disable-next-line
-    await expect(entries.nth(1).locator('.file-name').locator('.file-name__label')).toHaveText('Имя файла.png');
+    await expect(entries.nth(1).locator('.file-name').locator('.label-name')).toHaveText('Имя файла.png');
 
     await documents.locator('#connected-header').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(1).click();
     await expect(documents).toHaveHeader(['wksp1'], true, true);
@@ -296,7 +296,7 @@ msTest.describe(() => {
 
     for (let i = 0; i < 15; i++) {
       await createFolder(documents, `Folder${i}`);
-      await expect(entries.nth(0).locator('.file-name').locator('.file-name__label')).toHaveText(`Folder${i}`);
+      await expect(entries.nth(0).locator('.file-name').locator('.label-name')).toHaveText(`Folder${i}`);
       await expect(documents.locator('.folder-container').locator('.no-files')).toBeHidden();
       await entries.nth(0).dblclick();
       await expect(documents.locator('.folder-container').locator('.no-files')).toBeVisible();
@@ -309,7 +309,7 @@ msTest.describe(() => {
     const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
     await expect(tabs.locator('.text-counter')).toHaveText(['0', '1', '0']);
     await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
-    await expect(entries.nth(0).locator('.file-name').locator('.file-name__label')).toHaveText('hell_yeah.png');
+    await expect(entries.nth(0).locator('.file-name').locator('.label-name')).toHaveText('hell_yeah.png');
 
     await documents.locator('#connected-header').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(1).click();
     await documents.waitForTimeout(500);

@@ -14,7 +14,7 @@ msTest('Switch back and forth', async ({ connected }) => {
   await expect(connected).toBeDocumentPage();
   await expect(connected.locator('.folder-container').locator('.no-files')).toBeVisible();
   await createFolder(connected, 'Folder');
-  const entryNames = connected.locator('.folder-container').locator('.file-list-item').locator('.file-name').locator('.file-name__label');
+  const entryNames = connected.locator('.folder-container').locator('.file-list-item').locator('.file-name').locator('.label-name');
   await expect(entryNames).toHaveText(['Folder']);
   await connected.locator('.topbar-left').locator('.back-button').click();
 

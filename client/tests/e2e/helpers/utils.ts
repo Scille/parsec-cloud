@@ -163,7 +163,7 @@ export async function openFileType(
   const entries = documentsPage.locator('.folder-container').locator('.file-list-item');
 
   for (const entry of await entries.all()) {
-    const entryName = (await entry.locator('.file-name').locator('.file-name__label').textContent()) ?? '';
+    const entryName = (await entry.locator('.file-name').locator('.label-name').textContent()) ?? '';
     if (entryName.endsWith(`.${type}`)) {
       await entry.dblclick();
       await expect(documentsPage.locator('.ms-spinner-modal')).toBeVisible();

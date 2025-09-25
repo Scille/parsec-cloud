@@ -94,7 +94,7 @@
           </ion-label>
           <!-- last update -->
           <div
-            class="file-lastUpdate"
+            class="file-last-update"
             v-if="isLargeDisplay"
           >
             <ion-label class="label-last-update cell">

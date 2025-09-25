@@ -43,7 +43,7 @@ msTest('Open editor from viewer', async ({ parsecEditics }) => {
 
 msTest('Check edited file in viewer', async ({ parsecEditics }) => {
   msTest.setTimeout(120_000);
-  await parsecEditics.locator('.label-name').click();
+  await parsecEditics.locator('.header-label-name').click();
 
   const entries = parsecEditics.locator('.folder-container').locator('.file-list-item');
 
@@ -170,7 +170,7 @@ msTest.skip('Edit file in editor with two users', async ({ parsecEditics }) => {
 
 msTest('Check file edited by other user', async ({ parsecEditics }) => {
   msTest.setTimeout(120_000);
-  await parsecEditics.locator('.label-name').click();
+  await parsecEditics.locator('.header-label-name').click();
   const entries = parsecEditics.locator('.folder-container').locator('.file-list-item');
 
   // Promote Bob

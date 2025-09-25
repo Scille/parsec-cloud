@@ -70,7 +70,7 @@
 
     <!-- last update -->
     <div
-      class="workspace-lastUpdate"
+      class="workspace-last-update"
       v-show="false"
     >
       <ion-label class="label-last-update cell">
@@ -220,7 +220,7 @@ async function onOptionsClick(event: Event): Promise<void> {
   }
 }
 
-.workspace-lastUpdate {
+.workspace-last-update {
   min-width: 11.25rem;
   flex-grow: 0;
 }

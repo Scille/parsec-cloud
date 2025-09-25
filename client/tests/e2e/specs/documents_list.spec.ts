@@ -29,7 +29,7 @@ for (const displaySize of ['small', 'large']) {
     const entries = documents.locator('.folder-container').locator('.file-list-item');
     if (displaySize === DisplaySize.Small) {
       await documents.setDisplaySize(DisplaySize.Small);
-      await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(NAME_MATCHER_ARRAY);
+      await expect(entries.locator('.file-name').locator('.label-name')).toHaveText(NAME_MATCHER_ARRAY);
       await expect(entries.locator('.data-date')).toHaveText(TIME_MATCHER_ARRAY);
       await expect(entries.locator('.data-size')).toHaveText(SIZE_MATCHER_ARRAY.slice(1));
       for (let i = 0; i < (await entries.count()); i++) {
@@ -44,8 +44,8 @@ for (const displaySize of ['small', 'large']) {
       await expect(actionBar.locator('#grid-view')).toNotHaveDisabledAttribute();
       await expect(actionBar.locator('#list-view')).toHaveDisabledAttribute();
       await expect(entries).toHaveCount(9);
-      await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(NAME_MATCHER_ARRAY);
-      await expect(entries.locator('.file-lastUpdate')).toHaveText(TIME_MATCHER_ARRAY);
+      await expect(entries.locator('.file-name').locator('.label-name')).toHaveText(NAME_MATCHER_ARRAY);
+      await expect(entries.locator('.file-last-update')).toHaveText(TIME_MATCHER_ARRAY);
       await expect(entries.locator('.file-size')).toHaveText(SIZE_MATCHER_ARRAY);
     }
   });
@@ -69,9 +69,9 @@ msTest('Documents page default state in a read only workspace', async ({ documen
   await expect(actionBar.locator('#list-view')).toHaveDisabledAttribute();
   const entries = documentsReadOnly.locator('.folder-container').locator('.file-list-item');
   await expect(entries).toHaveCount(9);
-  await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(NAME_MATCHER_ARRAY);
-  await expect(entries.locator('.file-lastUpdate')).toHaveText(TIME_MATCHER_ARRAY);
-  await expect(entries.locator('.file-creationDate')).toHaveText(TIME_MATCHER_ARRAY);
+  await expect(entries.locator('.file-name').locator('.label-name')).toHaveText(NAME_MATCHER_ARRAY);
+  await expect(entries.locator('.file-last-update')).toHaveText(TIME_MATCHER_ARRAY);
+  await expect(entries.locator('.file-creation-date')).toHaveText(TIME_MATCHER_ARRAY);
   await expect(entries.locator('.file-size')).toHaveText(SIZE_MATCHER_ARRAY);
   // Useless click just to move the mouse
   await documentsReadOnly.locator('.folder-list-header__label').nth(1).click();
@@ -95,16 +95,16 @@ msTest('Sort document by creation date', async ({ documents }) => {
   await sorterPopover.getByRole('listitem').nth(3).click();
   await expect(sorterPopover).toBeHidden();
 
-  const firstEntryBefore = await entries.nth(1).locator('.file-name__label').textContent();
-  const lastEntryBefore = await entries.nth(8).locator('.file-name__label').textContent();
+  const firstEntryBefore = await entries.nth(1).locator('.label-name').textContent();
+  const lastEntryBefore = await entries.nth(8).locator('.label-name').textContent();
 
   await sorterPopoverButton.click();
   await expect(sorterPopover).toBeVisible();
   await sorterPopover.locator('.order-button').click();
   await expect(sorterPopover).toBeHidden();
 
-  const firstEntryAfter = await entries.nth(1).locator('.file-name__label').textContent();
-  const lastEntryAfter = await entries.nth(8).locator('.file-name__label').textContent();
+  const firstEntryAfter = await entries.nth(1).locator('.label-name').textContent();
+  const lastEntryAfter = await entries.nth(8).locator('.label-name').textContent();
 
   expect(firstEntryAfter).toBe(lastEntryBefore);
   expect(lastEntryAfter).toBe(firstEntryBefore);
@@ -132,10 +132,10 @@ msTest('Sort document with header title', async ({ documents }) => {
     await expect(sorterPopoverButton).toHaveAttribute('sort-ascending', ['false', 'true'][Number(sortOrder)]);
 
     // Folder should stay at the top
-    await expect(entries.nth(0).locator('.file-name__label')).toHaveText('Dir_Folder');
+    await expect(entries.nth(0).locator('.label-name')).toHaveText('Dir_Folder');
 
-    const firstEntryName = await entries.nth(1).locator('.file-name__label').textContent();
-    const lastEntryName = await entries.nth(8).locator('.file-name__label').textContent();
+    const firstEntryName = await entries.nth(1).locator('.label-name').textContent();
+    const lastEntryName = await entries.nth(8).locator('.label-name').textContent();
 
     expect(firstEntryName).not.toBeNull();
     expect(lastEntryName).not.toBeNull();
@@ -145,9 +145,9 @@ msTest('Sort document with header title', async ({ documents }) => {
     sortOrder = !sortOrder;
     await expect(sorterPopoverButton).toHaveAttribute('sort-ascending', ['false', 'true'][Number(sortOrder)]);
     // Folder should stay at the top
-    await expect(entries.nth(0).locator('.file-name__label')).toHaveText('Dir_Folder');
-    await expect(entries.nth(1).locator('.file-name__label')).toHaveText(lastEntryName as string);
-    await expect(entries.nth(8).locator('.file-name__label')).toHaveText(firstEntryName as string);
+    await expect(entries.nth(0).locator('.label-name')).toHaveText('Dir_Folder');
+    await expect(entries.nth(1).locator('.label-name')).toHaveText(lastEntryName as string);
+    await expect(entries.nth(8).locator('.label-name')).toHaveText(firstEntryName as string);
   }
 });
 
@@ -216,7 +216,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
 
     const entries = documents.locator('.folder-container').locator('.file-list-item');
     await expect(entries).toHaveCount(9);
-    await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(NAME_MATCHER_ARRAY);
+    await expect(entries.locator('.file-name').locator('.label-name')).toHaveText(NAME_MATCHER_ARRAY);
 
     if (displaySize === DisplaySize.Small) {
       const addButton = documents.locator('.tab-bar-menu').locator('#add-menu-fab-button');
@@ -234,7 +234,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
 
     await expect(entries).toHaveCount(10);
     // Don't ask.
-    await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText([
+    await expect(entries.locator('.file-name').locator('.label-name')).toHaveText([
       'My folder',
       ...NAME_MATCHER_ARRAY.slice(0, 1),
       ...NAME_MATCHER_ARRAY.slice(1),

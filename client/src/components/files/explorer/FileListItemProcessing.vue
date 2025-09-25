@@ -6,60 +6,63 @@
     lines="full"
     class="ion-no-padding file-list-item"
   >
-    <!-- file name -->
-    <div class="file-name">
+    <div class="list-item-container">
       <div class="file-loading">
         <ms-spinner class="file-loading__spinner" />
       </div>
-      <ms-image
-        v-if="isLargeDisplay"
-        :image="getFileIcon(fileName)"
-        class="file-icon"
-      />
 
-      <ion-text class="file-name__label cell">
-        {{ fileName }}
-      </ion-text>
+      <!-- file name -->
+      <div class="file-name">
+        <ms-image
+          v-if="isLargeDisplay"
+          :image="getFileIcon(fileName)"
+          class="file-icon"
+        />
+
+        <ion-text class="label-name cell">
+          {{ fileName }}
+        </ion-text>
+      </div>
+
+      <!-- updated by -->
+      <div
+        class="file-updated-by"
+        v-if="clientInfo && isLargeDisplay"
+      >
+        <user-avatar-name
+          :user-avatar="clientInfo.humanHandle.label"
+          :user-name="clientInfo.humanHandle.label"
+        />
+      </div>
+
+      <!-- last update -->
+      <div
+        v-if="clientInfo?.currentProfile !== UserProfile.Outsider"
+        class="file-last-update"
+      >
+        <ion-text class="label-last-update cell" />
+      </div>
+
+      <!-- creation date -->
+      <div class="file-creation-date">
+        <ion-text class="label-creation-date cell">
+          {{ $msTranslate(getFileOperationLabel()) }}
+        </ion-text>
+      </div>
+
+      <!-- file size -->
+      <div
+        class="file-size"
+        v-if="data.getDataType() === FileOperationDataType.Import && isLargeDisplay"
+      >
+        <ion-text class="label-size cell">
+          {{ $msTranslate(formatFileSize((data as ImportData).file.size)) }}
+        </ion-text>
+      </div>
+
+      <!-- options -->
+      <div class="file-empty ion-item-child-clickable" />
     </div>
-
-    <!-- updated by -->
-    <div
-      class="file-updatedBy"
-      v-if="clientInfo && isLargeDisplay"
-    >
-      <user-avatar-name
-        :user-avatar="clientInfo.humanHandle.label"
-        :user-name="clientInfo.humanHandle.label"
-      />
-    </div>
-
-    <!-- last update -->
-    <div
-      v-if="clientInfo?.currentProfile !== UserProfile.Outsider"
-      class="file-creationDate"
-    >
-      <ion-text class="label-last-update cell" />
-    </div>
-
-    <!-- last update -->
-    <div class="file-lastUpdate">
-      <ion-text class="label-last-update cell">
-        {{ $msTranslate(getFileOperationLabel()) }}
-      </ion-text>
-    </div>
-
-    <!-- file size -->
-    <div
-      class="file-size"
-      v-if="data.getDataType() === FileOperationDataType.Import && isLargeDisplay"
-    >
-      <ion-text class="label-size cell">
-        {{ $msTranslate(formatFileSize((data as ImportData).file.size)) }}
-      </ion-text>
-    </div>
-
-    <!-- options -->
-    <div class="file-empty ion-item-child-clickable" />
   </ion-item>
 </template>
 
@@ -108,11 +111,10 @@ function getFileOperationLabel(): Translatable {
 
 <style lang="scss" scoped>
 .file-loading {
-  width: 2rem;
-  height: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @include ms.responsive-breakpoint('sm') {
+    max-width: 3rem;
+    min-width: 3rem;
+  }
 
   &__spinner {
     width: 1.25rem;
@@ -121,14 +123,17 @@ function getFileOperationLabel(): Translatable {
 }
 
 .file-name {
+  position: relative;
+  display: flex;
+  gap: 1rem;
+
   .file-icon {
-    width: 2rem;
+    min-width: 2rem;
     height: 2rem;
   }
 
-  &__label {
+  .label-name {
     color: var(--parsec-color-light-secondary-text);
-    margin-left: 1em;
   }
 }
 </style>

@@ -19,8 +19,8 @@ for (const testData of TEST_DATA) {
     await expect(documents.locator('.topbar-left__breadcrumb')).toContainText('wksp1');
     const files = documents.locator('.folder-container').getByRole('listitem');
     await expect(files).toHaveCount(9);
-    await expect(files.nth(testData.index).locator('.file-name').locator('.file-name__label')).toHaveText(new RegExp(`^${nameMatcher}$`));
-    await expect(files.nth(testData.index).locator('.file-lastUpdate')).toHaveText(/^((?:one|\d{1,2}) minutes? ago|< 1 minute|now)$/);
+    await expect(files.nth(testData.index).locator('.file-name').locator('.label-name')).toHaveText(new RegExp(`^${nameMatcher}$`));
+    await expect(files.nth(testData.index).locator('.file-last-update')).toHaveText(/^((?:one|\d{1,2}) minutes? ago|< 1 minute|now)$/);
     expect(documents.locator('.file-context-menu')).toBeHidden();
     expect(documents.locator('.file-details-modal')).toBeHidden();
 

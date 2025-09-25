@@ -94,7 +94,7 @@ msTest('Test viewer in history', async ({ documents }) => {
   await expect(folderList.locator('.file-list-item')).toHaveCount(9);
 
   for (const entry of await folderList.locator('.file-list-item').all()) {
-    const entryName = (await entry.locator('.file-name').locator('.file-name__label').textContent()) ?? '';
+    const entryName = (await entry.locator('.file-name').locator('.label-name').textContent()) ?? '';
     if (entryName.endsWith('.txt')) {
       await entry.dblclick();
       break;
@@ -128,13 +128,13 @@ msTest('Workspace history breadcrumbs', async ({ documents }) => {
   const entries = documents.locator('.folder-container').locator('.file-list-item');
   await navigateDown();
   await createFolder(documents, 'Subdir 1');
-  await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(['Subdir 1']);
+  await expect(entries.locator('.file-name').locator('.label-name')).toHaveText(['Subdir 1']);
   await navigateDown();
   await createFolder(documents, 'Subdir 2');
-  await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(['Subdir 2']);
+  await expect(entries.locator('.file-name').locator('.label-name')).toHaveText(['Subdir 2']);
   await navigateDown();
   await createFolder(documents, 'Subdir 3');
-  await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(['Subdir 3']);
+  await expect(entries.locator('.file-name').locator('.label-name')).toHaveText(['Subdir 3']);
   await documents.locator('.sidebar').locator('#sidebar-workspaces').locator('.list-sidebar-header-text').click();
   await expect(documents).toBeWorkspacePage();
   await expect(documents.locator('.workspace-card-item')).toHaveCount(1);

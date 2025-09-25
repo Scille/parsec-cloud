@@ -23,7 +23,7 @@
           lines="full"
           v-if="isLargeDisplay"
         >
-          <ion-label class="folder-list-header__label ion-text-nowrap label-selected">
+          <ion-label class="folder-list-header__label ion-text-nowrap header-label-selected">
             <ms-checkbox
               @change="selectAll"
               :checked="allSelected"
@@ -31,56 +31,56 @@
             />
           </ion-label>
           <ion-text
-            class="folder-list-header__label cell-title ion-text-nowrap label-name"
+            class="folder-list-header__label cell-title ion-text-nowrap header-label-name"
             @click="onHeaderSortChange(SortProperty.Name)"
-            :class="{ 'label-name-sorted': currentSortProperty === SortProperty.Name }"
+            :class="{ 'header-label-name-sorted': currentSortProperty === SortProperty.Name }"
           >
-            {{ $msTranslate('FoldersPage.listDisplayTitles.name') }}
+            <span class="header-label-name__text">{{ $msTranslate('FoldersPage.listDisplayTitles.name') }}</span>
             <ion-icon
               :icon="currentSortOrder ? arrowUp : arrowDown"
-              class="label-name__sort-icon"
+              class="header-label-name__sort-icon"
             />
           </ion-text>
           <ion-text
-            class="folder-list-header__label cell-title ion-text-nowrap label-updatedBy"
+            class="folder-list-header__label cell-title ion-text-nowrap header-label-updated-by"
             v-if="ownProfile !== UserProfile.Outsider"
           >
             {{ $msTranslate('FoldersPage.listDisplayTitles.updatedBy') }}
           </ion-text>
           <ion-text
-            class="folder-list-header__label cell-title ion-text-nowrap label-lastUpdate"
+            class="folder-list-header__label cell-title ion-text-nowrap header-label-last-update"
             @click="onHeaderSortChange(SortProperty.LastUpdate)"
-            :class="{ 'label-lastUpdate-sorted': currentSortProperty === SortProperty.LastUpdate }"
+            :class="{ 'header-label-last-update-sorted': currentSortProperty === SortProperty.LastUpdate }"
           >
-            {{ $msTranslate('FoldersPage.listDisplayTitles.lastUpdate') }}
+            <span class="header-label-last-update__text">{{ $msTranslate('FoldersPage.listDisplayTitles.lastUpdate') }}</span>
             <ion-icon
               :icon="currentSortOrder ? arrowUp : arrowDown"
-              class="label-lastUpdate__sort-icon"
+              class="header-label-last-update__sort-icon"
             />
           </ion-text>
           <ion-text
-            class="folder-list-header__label cell-title ion-text-nowrap label-creationDate"
+            class="folder-list-header__label cell-title ion-text-nowrap header-label-creation-date"
             @click="onHeaderSortChange(SortProperty.CreationDate)"
-            :class="{ 'label-creationDate-sorted': currentSortProperty === SortProperty.CreationDate }"
+            :class="{ 'header-label-creation-date-sorted': currentSortProperty === SortProperty.CreationDate }"
           >
-            {{ $msTranslate('FoldersPage.listDisplayTitles.creation') }}
+            <span class="header-label-creation-date__text">{{ $msTranslate('FoldersPage.listDisplayTitles.creation') }}</span>
             <ion-icon
               :icon="currentSortOrder ? arrowUp : arrowDown"
-              class="label-creationDate__sort-icon"
+              class="header-label-creation-date__sort-icon"
             />
           </ion-text>
           <ion-text
-            class="folder-list-header__label cell-title ion-text-nowrap label-size"
+            class="folder-list-header__label cell-title ion-text-nowrap header-label-size"
             @click="onHeaderSortChange(SortProperty.Size)"
-            :class="{ 'label-size-sorted': currentSortProperty === SortProperty.Size }"
+            :class="{ 'header-label-size-sorted': currentSortProperty === SortProperty.Size }"
           >
-            {{ $msTranslate('FoldersPage.listDisplayTitles.size') }}
+            <span class="header-label-size__text">{{ $msTranslate('FoldersPage.listDisplayTitles.size') }}</span>
             <ion-icon
               :icon="currentSortOrder ? arrowUp : arrowDown"
-              class="label-size__sort-icon"
+              class="header-label-size__sort-icon"
             />
           </ion-text>
-          <ion-text class="folder-list-header__label cell-title ion-text-nowrap label-space" />
+          <ion-text class="folder-list-header__label cell-title ion-text-nowrap header-label-space" />
         </ion-list-header>
         <div>
           <file-list-item
@@ -243,24 +243,15 @@ async function scrollToSelected(): Promise<void> {
   margin-bottom: 0;
 }
 
+.header-label-selected {
+  justify-content: flex-end;
+}
+
 .file-list-mobile {
   padding-top: 1rem;
 }
 
-.folder-list-header {
-  &__label {
-    padding: 0.75rem 1rem;
-  }
-
-  .label-selected {
-    display: flex;
-    align-items: center;
-  }
-
-  .label-space {
-    min-width: 4rem;
-    flex-grow: 0;
-    margin-left: auto;
-  }
+.folder-list-header__label {
+  padding: 0.75rem 1rem;
 }
 </style>
