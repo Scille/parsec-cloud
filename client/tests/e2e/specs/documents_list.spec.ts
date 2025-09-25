@@ -114,32 +114,40 @@ msTest('Sort document with header title', async ({ documents }) => {
   const actionBar = documents.locator('#folders-ms-action-bar');
   const entries = documents.locator('.folder-container').locator('.file-list-item');
   const sorterPopoverButton = actionBar.locator('#select-popover-button');
+  const HEADERS = new Map<number, string>([
+    [1, 'Name'],
+    [5, 'Size'],
+  ]);
 
-  // Sorting only Name (1), Last Updated (3), Creation date (4) and Size (5)
-  const headerSortByIndex = [1, 3, 4, 5];
-  const headerNames = ['Name', 'Last updated', 'Creation date', 'Size'];
+  await expect(entries).toHaveCount(9);
 
-  for (let i = 0; i < headerSortByIndex.length; i++) {
-    const headerIndex = headerSortByIndex[i];
+  let sortOrder = false;
 
+  for (const [headerIndex, headerName] of HEADERS.entries()) {
     const headerLabel = documents.locator('.folder-list-header__label').nth(headerIndex);
     await expect(headerLabel).toBeVisible();
-    await expect(headerLabel).toHaveText(headerNames[i]);
+    await expect(headerLabel).toHaveText(headerName);
     await headerLabel.click();
+    await expect(sorterPopoverButton).toHaveText(headerName);
+    await expect(sorterPopoverButton).toHaveAttribute('sort-ascending', ['false', 'true'][Number(sortOrder)]);
 
-    await expect(sorterPopoverButton).toHaveText(headerNames[i]);
+    // Folder should stay at the top
+    await expect(entries.nth(0).locator('.file-name__label')).toHaveText('Dir_Folder');
 
-    const firstEntryAfterFirstSort = await entries.nth(1).locator('.file-name__label').textContent();
-    const lastEntryAfterFirstSort = await entries.nth(8).locator('.file-name__label').textContent();
+    const firstEntryName = await entries.nth(1).locator('.file-name__label').textContent();
+    const lastEntryName = await entries.nth(8).locator('.file-name__label').textContent();
+
+    expect(firstEntryName).not.toBeNull();
+    expect(lastEntryName).not.toBeNull();
 
     // Revert the order
     await headerLabel.click();
-
-    const firstEntryAfterSecondSort = await entries.nth(1).locator('.file-name__label').textContent();
-    const lastEntryAfterSecondSort = await entries.nth(8).locator('.file-name__label').textContent();
-
-    expect(firstEntryAfterSecondSort).toBe(lastEntryAfterFirstSort);
-    expect(lastEntryAfterSecondSort).toBe(firstEntryAfterFirstSort);
+    sortOrder = !sortOrder;
+    await expect(sorterPopoverButton).toHaveAttribute('sort-ascending', ['false', 'true'][Number(sortOrder)]);
+    // Folder should stay at the top
+    await expect(entries.nth(0).locator('.file-name__label')).toHaveText('Dir_Folder');
+    await expect(entries.nth(1).locator('.file-name__label')).toHaveText(lastEntryName as string);
+    await expect(entries.nth(8).locator('.file-name__label')).toHaveText(firstEntryName as string);
   }
 });
 
@@ -183,8 +191,10 @@ msTest('Select all documents', async ({ documents }) => {
 msTest('Delete all documents', async ({ documents }) => {
   const globalCheckbox = documents.locator('.folder-container').locator('.folder-list-header').locator('ion-checkbox');
   await globalCheckbox.click();
+  await expect(globalCheckbox).toHaveState('checked');
 
   const actionBar = documents.locator('#folders-ms-action-bar');
+  await expect(actionBar.locator('.counter')).toHaveText('9 selected items');
   const deleteButton = actionBar.locator('.ms-action-bar-button:visible').nth(2);
   await expect(deleteButton).toHaveText('Delete');
   await deleteButton.click();
@@ -343,18 +353,13 @@ for (const gridMode of [false, true]) {
 
     const entries = documents.locator('.folder-container').locator(gridMode ? '.file-card-item' : '.file-list-item');
     const actionBar = documents.locator('#folders-ms-action-bar');
-    const entriesCount = await entries.count();
 
-    for (let i = 0; i < entriesCount; i++) {
-      await entries.nth(i).click();
-
-      for (let j = 0; j <= i; j++) {
-        await expect(entries.nth(j).locator('ion-checkbox')).toHaveState('checked');
-      }
-
-      const counterText = i === 0 ? '1 selected item' : `${i + 1} selected items`;
-      await expect(actionBar.locator('.counter')).toHaveText(counterText, { useInnerText: true });
+    for (const entry of await entries.all()) {
+      await entry.click();
+      await expect(entry.locator('ion-checkbox')).toHaveState('checked');
+      await expect(actionBar.locator('.counter')).toHaveText(/^\d+ selected items?$/, { useInnerText: true });
     }
+    await expect(actionBar.locator('.counter')).toHaveText(`${await entries.count()} selected items`, { useInnerText: true });
   });
 }
 

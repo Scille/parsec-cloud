@@ -1130,16 +1130,20 @@ class FileOperationManager {
           continue;
         }
         this.operationJobs.push([elem.id, job]);
-        job.then(async () => {
-          const index = this.operationJobs.findIndex((item) => item[1] === job);
-          if (index !== -1) {
-            this.operationJobs.splice(index, 1);
-          }
-          if (this.operationJobs.length === 0 && this.fileOperationData.length === 0) {
-            await this.sendState(FileOperationState.OperationAllFinished);
-            importStarted = false;
-          }
-        });
+        job
+          .catch((reason: any) => {
+            window.electronAPI.log('error', `File operation unexpected failure: ${reason}`);
+          })
+          .finally(async () => {
+            const index = this.operationJobs.findIndex((item) => item[1] === job);
+            if (index !== -1) {
+              this.operationJobs.splice(index, 1);
+            }
+            if (this.operationJobs.length === 0 && this.fileOperationData.length === 0) {
+              await this.sendState(FileOperationState.OperationAllFinished);
+              importStarted = false;
+            }
+          });
       } else {
         await wait(500);
       }
