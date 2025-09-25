@@ -353,12 +353,15 @@ impl fuser::Filesystem for Filesystem {
             .set_time_granularity(Duration::from_micros(1))
             .expect("Valid granularity");
 
+        log::info!("Initializing filesystem for realm: {}", self.ops.realm_id());
         Ok(())
     }
 
     // TODO: Make sure opened files are automatically closed on umount, otherwise
     //       we would have some cleanup job do to here !
-    fn destroy(&mut self) {}
+    fn destroy(&mut self) {
+        log::info!("Destroying filesystem for realm: {}", self.ops.realm_id());
+    }
 
     /// `lookup` is called everytime Fuse meets a new ressource it doesn't know about.
     /// The lookup transforms the path name to an `inode`.
