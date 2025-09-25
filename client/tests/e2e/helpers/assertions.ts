@@ -190,24 +190,15 @@ export const expect = baseExpect.extend({
   },
 
   async toHaveState(checkbox: Locator, state: 'indeterminate' | 'unchecked' | 'checked'): Promise<AssertReturnType> {
-    try {
-      if (state === 'indeterminate') {
-        await expect(checkbox).toHaveTheClass('checkbox-indeterminate');
-      } else if (state === 'checked') {
-        await expect(checkbox).toHaveTheClass('checkbox-checked');
-      } else {
-        await expect(checkbox).not.toHaveTheClass('checkbox-checked');
-        await expect(checkbox).not.toHaveTheClass('checkbox-indeterminate');
-      }
-    } catch (error: any) {
-      return {
-        message: () => `Checkbox is not '${state}'`,
-        pass: false,
-      };
-    }
+    const STATUSES: Record<string, string> = {
+      indeterminate: 'mixed',
+      checked: 'true',
+      unchecked: 'false',
+    };
+    await baseExpect(checkbox).toHaveAttribute('aria-checked', STATUSES[state]);
     return {
-      message: () => '',
       pass: true,
+      message: () => '',
     };
   },
 

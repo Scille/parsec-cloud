@@ -39,8 +39,9 @@
           </div>
 
           <ms-sorter
+            :sort-ascending="currentSortOrder"
             :key="`${currentSortProperty}-${currentSortOrder}`"
-            :label="'FoldersPage.sort.byName'"
+            label="FoldersPage.sort.byName"
             :options="msSorterOptions"
             :default-option="currentSortProperty"
             :sorter-labels="msSorterLabels"
@@ -70,7 +71,7 @@
       >
         <ms-sorter
           :key="`${currentSortProperty}-${currentSortOrder}`"
-          :label="'FoldersPage.sort.byName'"
+          label="FoldersPage.sort.byName"
           :options="msSorterOptions"
           :default-option="currentSortProperty"
           :sorter-labels="msSorterLabels"

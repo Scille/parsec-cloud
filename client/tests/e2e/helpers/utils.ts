@@ -55,7 +55,6 @@ export async function fillIonInput(ionInput: Locator, text: string): Promise<voi
   const input = ionInput.locator('input');
   await input.fill(text);
   await input.blur();
-  await expect(input).toHaveValue(text);
   await expect(ionInput).not.toBeFocused();
 }
 

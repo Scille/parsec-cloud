@@ -491,7 +491,7 @@ export const msTest = debugTest.extend<{
     await expect(saasContainer).toBeVisible();
     await expect(saasContainer.locator('.saas-login__title')).toHaveText('Log in to your customer account');
     const loginButton = saasContainer.locator('.saas-login-button').locator('ion-button');
-    await expect(loginButton).toHaveAttribute('disabled');
+    await expect(loginButton).toBeTrulyDisabled();
     await fillIonInput(saasContainer.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
     await fillIonInput(saasContainer.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
     await expect(loginButton).toHaveText('Log in');
@@ -501,13 +501,15 @@ export const msTest = debugTest.extend<{
 
     // Switch to first org
     const orgSwitchButton = home.locator('.sidebar-header').locator('.card-header-title');
-    await orgSwitchButton.click();
+    await expect(orgSwitchButton).toBeVisible();
     const popover = home.locator('.popover-switch');
+    await expect(popover).toBeHidden();
+    await orgSwitchButton.click();
     await expect(popover).toBeVisible();
     const orgs = popover.locator('.organization-list').getByRole('listitem');
     await orgs.nth(0).click();
-    await expect(orgSwitchButton).toHaveText(home.orgInfo.name);
     await expect(popover).toBeHidden();
+    await expect(orgSwitchButton).toHaveText(home.orgInfo.name);
 
     await use(home);
   },
@@ -542,10 +544,11 @@ export const msTest = debugTest.extend<{
     await expect(saasContainer).toBeVisible();
     await expect(saasContainer.locator('.saas-login__title')).toHaveText('Log in to your customer account');
     const loginButton = saasContainer.locator('.saas-login-button').locator('ion-button');
-    await expect(loginButton).toHaveAttribute('disabled');
+    await expect(loginButton).toBeTrulyDisabled();
     await fillIonInput(saasContainer.locator('.saas-login-content').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
     await fillIonInput(saasContainer.locator('.saas-login-content').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
-    await expect(loginButton).not.toHaveAttribute('disabled');
+    await expect(loginButton).toHaveText('Log in');
+    await expect(loginButton).toBeTrulyEnabled();
     await loginButton.click();
     await expect(home).toHaveURL(/.+\/clientArea$/);
 

@@ -397,9 +397,14 @@ msTest('Fail to login to BMS', async ({ home }) => {
   await MockBms.mockLogin(home, { POST: { errors: { status: 401 } } });
 
   const bmsContainer = modal.locator('.saas-login');
+  await expect(bmsContainer.locator('.modal-header-title__text')).toHaveText('Link your customer account to your new organization');
   const bmsNext = bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item').nth(1);
+  await expect(bmsNext).toBeTrulyDisabled();
   await fillIonInput(bmsContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
+  await expect(bmsNext).toBeTrulyDisabled();
   await fillIonInput(bmsContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
+  await expect(bmsNext).toBeTrulyEnabled();
+  await expect(bmsNext).toHaveText('Log in');
   await bmsNext.click();
 
   await expect(bmsContainer.locator('.login-button-error')).toBeVisible();
@@ -411,9 +416,14 @@ msTest('Cannot reach the BMS', async ({ home }) => {
   const modal = await openCreateOrganizationModal(home);
 
   const bmsContainer = modal.locator('.saas-login');
+  await expect(bmsContainer.locator('.modal-header-title__text')).toHaveText('Link your customer account to your new organization');
   const bmsNext = bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item').nth(1);
+  await expect(bmsNext).toBeTrulyDisabled();
   await fillIonInput(bmsContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
+  await expect(bmsNext).toBeTrulyDisabled();
   await fillIonInput(bmsContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
+  await expect(bmsNext).toBeTrulyEnabled();
+  await expect(bmsNext).toHaveText('Log in');
   await bmsNext.click();
 
   await expect(bmsContainer.locator('.login-button-error')).toBeVisible();
@@ -430,19 +440,26 @@ msTest('Edit from summary', async ({ home }) => {
   await MockBms.mockCreateOrganization(home, getTestbedBootstrapAddr(home.orgInfo.name));
 
   const bmsContainer = modal.locator('.saas-login');
+  await expect(bmsContainer.locator('.modal-header-title__text')).toHaveText('Link your customer account to your new organization');
   const bmsNext = bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item').nth(1);
+  await expect(bmsNext).toBeTrulyDisabled();
   await fillIonInput(bmsContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
+  await expect(bmsNext).toBeTrulyDisabled();
   await fillIonInput(bmsContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
+  await expect(bmsNext).toBeTrulyEnabled();
   await bmsNext.click();
 
   const orgNameContainer = modal.locator('.organization-name-page');
+  await expect(orgNameContainer).toBeVisible();
   const orgNameNext = modal.locator('.organization-name-page-footer').locator('ion-button').nth(1);
   await fillIonInput(orgNameContainer.locator('ion-input'), home.orgInfo.name);
+  await expect(orgNameNext).toBeTrulyEnabled();
   await orgNameNext.click();
 
   const authContainer = modal.locator('.authentication-page');
   const authNext = modal.locator('.authentication-page-footer').locator('ion-button').nth(1);
 
+  await expect(authContainer).toBeVisible();
   const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item');
   await expect(authRadio).toHaveCount(2);
   await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
@@ -450,12 +467,15 @@ msTest('Edit from summary', async ({ home }) => {
   await expect(authRadio.nth(1)).toHaveText('Password');
   await authRadio.nth(1).click();
 
+  await expect(authNext).toBeTrulyDisabled();
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
+  await expect(authNext).toBeTrulyEnabled();
   await authNext.click();
 
   const summaryContainer = modal.locator('.summary-page');
   const summaryNext = modal.locator('.summary-page-footer').locator('ion-button').nth(1);
+  await expect(summaryContainer).toBeVisible();
 
   await expect(summaryContainer.locator('.summary-item__label')).toHaveText([
     'Organization',

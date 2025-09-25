@@ -63,6 +63,7 @@ msTest('Update personal information', async ({ clientArea }) => {
   await expect(okButton).toBeTrulyEnabled();
   await okButton.click();
   await expect(modal).toBeHidden();
+  await expect(clientArea).toShowToast('Personal information has been updated.', 'Success');
   await expect(dataContainer.locator('.ms-summary-card-item__text')).toHaveText(['Gregory', 'House', 'Not defined']);
 
   // Reopen to add a phone number now
@@ -75,6 +76,7 @@ msTest('Update personal information', async ({ clientArea }) => {
   await expect(okButton).toBeTrulyEnabled();
   await okButton.click();
   await expect(modal).toBeHidden();
+  await expect(clientArea).toShowToast('Personal information has been updated.', 'Success');
   await expect(dataContainer.locator('.ms-summary-card-item__text')).toHaveText(['Gregory', 'House', '+1 609-258-3000']);
 
   await MockBms.mockUserRoute(clientArea, {}, { PATCH: { errors: { status: 401, attribute: 'client.phone' } } });
