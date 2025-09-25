@@ -66,7 +66,6 @@ parts:
     stage:
       - libparsec.d.ts
       - libparsec.node
-      - bin/fusermount* # include fusermount bin
       - lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libfuse3* # include libfuse3
     prime:
       - -libparsec.d.ts
