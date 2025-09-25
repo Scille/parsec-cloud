@@ -6,7 +6,7 @@ use std::os::macos::fs::MetadataExt;
 #[cfg(target_os = "linux")]
 use std::os::linux::fs::MetadataExt;
 
-use std::{path::Path, sync::Arc, thread::JoinHandle};
+use std::{ops::ControlFlow, path::Path, process::Command, sync::Arc, thread::JoinHandle};
 
 use libparsec_client::MountpointMountStrategy;
 use libparsec_types::prelude::*;
@@ -240,15 +240,7 @@ pub async fn clean_base_mountpoint_dir(
                     // (e.g. Parsec crashed without properly unmounting).
                     // The only way to remove it is to manually force unmount.
                     log::debug!("Base home dir cleanup, unmounting: {}", entry_path.display());
-                    if let Err(err) = std::process::Command::new("fusermount")
-                        .arg("-u")
-                        .arg(&entry_path)
-                        .status()
-                    {
-                        log::warn!(
-                            "Base home dir cleanup, failed to unmount: {} ({err})",
-                            entry_path.display()
-                        );
+                    if try_unmount_path(&entry_path).is_break() {
                         continue;
                     }
 
@@ -367,4 +359,35 @@ fn create_suitable_mountpoint_dir(
     }
 
     unreachable!()
+}
+
+fn try_unmount_path(path: &Path) -> ControlFlow<()> {
+    try_unmount_path_using_command("fusermount", &["-u"], path)
+        .or_else(|| try_unmount_path_using_command("umount", &[], path))
+        // Successfully unmount, should report as such that we can continue the cleanup process
+        // for the given path.
+        .map(ControlFlow::Continue)
+        // Otherwise, the caller should stop the cleanup process for the given path.
+        .unwrap_or(ControlFlow::Break(()))
+}
+
+fn try_unmount_path_using_command(command: &str, prefix_args: &[&str], path: &Path) -> Option<()> {
+    let display_path = path.display();
+    log::debug!("Try unmount {display_path} using `{command}`");
+    match Command::new(command).args(prefix_args).arg(path).status() {
+        Ok(status) => {
+            if status.success() {
+                log::debug!("Unmount of {display_path} successful using `{command}`");
+                return Some(());
+            } else {
+                log::warn!(
+                    "Bad exit status when trying to unmount {display_path} with `{command}`: {status}",
+                )
+            }
+        }
+        Err(err) => {
+            log::warn!("Failed to unmount {display_path} using `{command}` with error: {err}",);
+        }
+    }
+    None
 }
