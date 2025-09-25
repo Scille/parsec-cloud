@@ -55,7 +55,7 @@
             {{ isEditingServer ? $msTranslate('loginPage.inputFields.cancel') : $msTranslate('loginPage.inputFields.edit') }}
           </ion-text>
           <ms-input
-            v-show="!isServerParsec || isEditingServer"
+            v-show="isEditingServer"
             class="login-server-input"
             :class="{ 'login-server-input-disabled': !isEditingServer }"
             label="loginPage.inputFields.server"
@@ -65,9 +65,9 @@
             :validator="parsecAddrValidator"
           />
           <ms-input
-            v-if="!isEditingServer && isServerParsec"
+            v-if="!isEditingServer"
             class="login-server-input account-login-content__input login-server-input-disabled"
-            v-model="serverSimplified"
+            :value="server.replace('parsec3://', '')"
             label="loginPage.inputFields.server"
             :disabled="true"
           />
@@ -165,9 +165,9 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonContent, IonButton, IonIcon, IonText, onIonViewWillEnter } from '@ionic/vue';
+import { IonPage, IonContent, IonButton, IonIcon, IonText } from '@ionic/vue';
 import { home } from 'ionicons/icons';
-import { ref, useTemplateRef, computed } from 'vue';
+import { onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 import { emailValidator, parsecAddrValidator } from '@/common/validators';
 import {
   MsInput,
@@ -183,7 +183,7 @@ import {
 } from 'megashark-lib';
 import { AccountRecoverProceedErrorTag, AccountRecoverSendValidationEmailErrorTag, ParsecAccount, ParsecAccountAccess } from '@/parsec';
 import { Env } from '@/services/environment';
-import { getCurrentRouteParams, getCurrentRouteQuery, navigateTo, Routes } from '@/router';
+import { getCurrentRouteParams, getCurrentRouteQuery, navigateTo, Routes, watchRoute } from '@/router';
 
 enum Steps {
   Email = 0,
@@ -197,11 +197,6 @@ const email = ref('');
 const code = ref<Array<string>>([]);
 const password = ref('');
 const server = ref(Env.getAccountServer());
-const initialServerValue = ref<string>(Env.getAccountServer());
-const serverSimplified = ref<string>('saas-v3.parsec.cloud');
-const isServerParsec = computed(() => {
-  return server.value.includes('saas-v3.parsec.cloud');
-});
 const isEditingServer = ref(false);
 const error = ref('');
 const resendDisabled = ref(false);
@@ -234,11 +229,7 @@ const TITLES: Array<{ title?: Translatable; subtitle?: Translatable }> = [
 async function toggleEditServer(): Promise<void> {
   isEditingServer.value = !isEditingServer.value;
   if (isEditingServer.value) {
-    isEditingServer.value = true;
     serverInputRef.value?.setFocus();
-  } else {
-    server.value = initialServerValue.value;
-    isEditingServer.value = false;
   }
   await serverInputRef.value?.validate(server.value);
 }
@@ -262,6 +253,12 @@ const validAuth = asyncComputed(async () => {
   return step.value === Steps.NewAuthentication && passwordInputRef.value && (await passwordInputRef.value.areFieldsCorrect());
 });
 
+const watchCancel = watchRoute(async (newRoute, oldRoute) => {
+  if (oldRoute.name !== newRoute.name) {
+    await reset();
+  }
+});
+
 async function reset(): Promise<void> {
   step.value = Steps.Email;
   email.value = '';
@@ -279,8 +276,12 @@ async function reset(): Promise<void> {
   await passwordInputRef.value?.clear();
 }
 
-onIonViewWillEnter(async () => {
+onMounted(async () => {
   await reset();
+});
+
+onUnmounted(() => {
+  watchCancel();
 });
 
 function onFocusEmailInput(): void {
@@ -467,10 +468,6 @@ async function backToLogin(): Promise<void> {
   padding: 2rem;
   gap: 1rem;
   position: relative;
-
-  @include ms.responsive-breakpoint('sm') {
-    padding: 1.5rem;
-  }
 
   .input-edit-button {
     right: 2.25rem;

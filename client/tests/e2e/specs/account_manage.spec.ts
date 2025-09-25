@@ -72,8 +72,8 @@ msTest('Update password', async ({ parsecAccountLoggedIn }) => {
   await expect(parsecAccountLoggedIn.locator('.account-login-content')).toBeVisible();
   const loginButton = parsecAccountLoggedIn.locator('.account-login-content').locator('.account-login-button__item');
   await expect(loginButton).toBeTrulyDisabled();
-  await fillIonInput(parsecAccountLoggedIn.locator('.account-login-content').locator('ion-input').nth(1), email);
-  await fillIonInput(parsecAccountLoggedIn.locator('.account-login-content').locator('ion-input').nth(2), 'P@ssw0rd.');
+  await fillIonInput(parsecAccountLoggedIn.locator('.account-login-content').locator('ion-input').nth(2), email);
+  await fillIonInput(parsecAccountLoggedIn.locator('.account-login-content').locator('ion-input').nth(3), 'P@ssw0rd.');
   await loginButton.click();
   await expect(parsecAccountLoggedIn).toBeHomePage();
   const accountNameButton = parsecAccountLoggedIn.locator('.profile-header-homepage');

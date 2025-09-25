@@ -17,7 +17,7 @@
           </ion-text>
 
           <ms-input
-            v-show="!isServerParsec || isEditingServer"
+            v-show="isEditingServer"
             class="login-server-input account-login-content__input"
             :class="{ 'login-server-input-disabled': !isEditingServer }"
             ref="serverInput"
@@ -28,9 +28,9 @@
             :validator="parsecAddrValidator"
           />
           <ms-input
-            v-if="!isEditingServer && isServerParsec"
+            v-if="!isEditingServer"
             class="login-server-input account-login-content__input login-server-input-disabled"
-            v-model="serverSimplified"
+            :value="server.replace('parsec3://', '')"
             label="loginPage.inputFields.server"
             :disabled="true"
           />
@@ -113,11 +113,6 @@ const emits = defineEmits<{
 const email = ref<string>('');
 const password = ref<string>('');
 const server = ref<string>(Env.getAccountServer());
-const initialServerValue = ref<string>(Env.getAccountServer());
-const serverSimplified = ref<string>('saas-v3.parsec.cloud');
-const isServerParsec = computed(() => {
-  return server.value.includes('saas-v3.parsec.cloud');
-});
 const isEditingServer = ref(false);
 const emailInputRef = useTemplateRef<InstanceType<typeof MsInput>>('emailInput');
 const passwordInputRef = useTemplateRef<InstanceType<typeof MsPasswordInput>>('passwordInput');
@@ -153,11 +148,7 @@ onMounted(async () => {
 async function toggleEditServer(): Promise<void> {
   isEditingServer.value = !isEditingServer.value;
   if (isEditingServer.value) {
-    isEditingServer.value = true;
     serverInputRef.value?.setFocus();
-  } else {
-    server.value = initialServerValue.value;
-    isEditingServer.value = false;
   }
   await serverInputRef.value?.validate(server.value);
 }
