@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { Path } from '@/parsec';
 import { Env } from '@/services/environment';
 
 export enum CryptpadDocumentType {
@@ -158,24 +159,51 @@ export class Cryptpad {
 }
 
 export function getDocumentTypeFromExtension(extension: string): CryptpadDocumentType {
+  // CryptpadDocumentType.Pad adds html content to text files, avoiding using it for now
+  // CryptpadDocumentType.Presentation works with .pptx, but is disabled as long as there's no viewer for it
   switch (extension.toLowerCase()) {
-    // CryptpadDocumentType.Pad adds html content to text files, avoiding using it for now
+    case 'xml':
+    case 'json':
     case 'js':
-    case 'ts':
+    case 'html':
+    case 'htm':
+    case 'xhtml':
+    case 'csv':
+    case 'css':
     case 'py':
-    case 'md':
+    case 'php':
+    case 'sh':
+    case 'tex':
     case 'txt':
+    case 'h':
+    case 'hpp':
+    case 'c':
+    case 'cpp':
+    case 'rs':
+    case 'java':
+    case 'ts':
+    case 'ini':
+    case 'cs':
+    case 'vb':
+    case 'swift':
+    case 'lua':
+    case 'rb':
+    case 'vbs':
+    case 'md':
+    case 'log':
+    case 'rst':
+    case 'toml':
+    case 'po':
+    case 'vue':
+    case 'kt':
+    case 'yml':
+    case 'yaml':
       return CryptpadDocumentType.Code;
     case 'xlsx':
     case 'xls':
       return CryptpadDocumentType.Sheet;
     case 'docx':
-    case 'odt':
       return CryptpadDocumentType.Doc;
-    case 'pptx':
-      // case 'ppt': // ppt raises a warning suggesting using pptx
-      // case 'odp': // odp does not open in editor
-      return CryptpadDocumentType.Presentation;
     default:
       return CryptpadDocumentType.Unsupported;
   }
@@ -183,4 +211,8 @@ export function getDocumentTypeFromExtension(extension: string): CryptpadDocumen
 
 export function isEnabledCryptpadDocumentType(extension: string): boolean {
   return ENABLED_DOCUMENT_TYPES.includes(getDocumentTypeFromExtension(extension));
+}
+
+export function isFileEditable(name: string): boolean {
+  return Env.isEditicsEnabled() && isEnabledCryptpadDocumentType(Path.getFileExtension(name));
 }

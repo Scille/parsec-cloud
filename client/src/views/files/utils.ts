@@ -4,6 +4,7 @@ import { formatFileSize } from '@/common/file';
 import { EntryModel } from '@/components/files';
 import { SmallDisplayCategoryFileContextMenu, SmallDisplayFileContextMenu } from '@/components/small-display';
 import { EntryName, EntryStat, EntryStatFile, EntryTree, FsPath, listTree, WorkspaceHandle, WorkspaceID, WorkspaceRole } from '@/parsec';
+import { isFileEditable } from '@/services/cryptpad';
 import { FileOperationManager } from '@/services/fileOperationManager';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { StorageManager } from '@/services/storageManager';
@@ -86,6 +87,7 @@ export async function openEntryContextMenu(
         role: ownRole,
         multipleFiles: selectedEntries.length > 1 && selectedEntries.includes(entry),
         isFile: entry.isFile(),
+        isEditable: isFileEditable(entry.name),
       },
     });
 
@@ -104,6 +106,7 @@ export async function openEntryContextMenu(
         role: ownRole,
         multipleFiles: selectedEntries.length > 1 && selectedEntries.includes(entry),
         isFile: entry.isFile(),
+        isEditable: isFileEditable(entry.name),
       },
     });
 

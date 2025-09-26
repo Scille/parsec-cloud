@@ -11,7 +11,6 @@ enum FileContentType {
   Document = 'document',
   Text = 'text',
   PdfDocument = 'pdf-document',
-  Presentation = 'presentation',
   Unknown = 'unknown',
 }
 
@@ -22,11 +21,10 @@ interface DetectedFileType {
 
 const IMAGES = ['png', 'webp', 'jpg', 'jpeg', 'svg', 'bmp', 'gif'];
 const SPREADSHEETS = ['xlsx', 'xls'];
-const DOCUMENTS = ['docx', 'odt'];
+const DOCUMENTS = ['docx'];
 const PDF_DOCUMENTS = ['pdf'];
 const AUDIOS = ['wav', 'mp3', 'ogg'];
 const VIDEOS = ['mp4', 'mpeg', 'webm'];
-const PRESENTATIONS = ['pptx'];
 
 // For generic text/plain
 const TEXTS = [
@@ -69,8 +67,6 @@ const TEXTS = [
   'yaml',
 ];
 
-const EDITOR_ONLY = ['odt', 'pptx'];
-
 async function getMimeTypeFromBuffer(data: Uint8Array): Promise<string | undefined> {
   try {
     const result = await fileTypeFromBuffer(data);
@@ -108,15 +104,7 @@ async function detectFileContentType(name: EntryName): Promise<DetectedFileType 
   if (TEXTS.includes(ext)) {
     return { type: FileContentType.Text, extension: ext };
   }
-  if (PRESENTATIONS.includes(ext)) {
-    return { type: FileContentType.Presentation, extension: ext };
-  }
   return { type: FileContentType.Unknown, extension: ext };
 }
 
-function isEditorOnly(name: EntryName): boolean {
-  const ext = Path.getFileExtension(name);
-  return EDITOR_ONLY.includes(ext);
-}
-
-export { DetectedFileType, detectFileContentType, FileContentType, getMimeTypeFromBuffer, isEditorOnly };
+export { DetectedFileType, detectFileContentType, FileContentType, getMimeTypeFromBuffer };
