@@ -4,7 +4,7 @@ import { expect } from '@playwright/test';
 import { MsPage } from '@tests/e2e/helpers/types';
 
 // cspell:disable-next-line
-export const CRYPTPAD_SERVER = 'centakina.ddns.net';
+export const CRYPTPAD_SERVER = 'cryptpad-dev.parsec.cloud';
 
 interface MockCryptpadOptions {
   timeout?: boolean;
