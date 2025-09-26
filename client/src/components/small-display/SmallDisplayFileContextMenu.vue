@@ -21,7 +21,7 @@
           </ion-item>
           <ion-item
             button
-            v-if="!multipleFiles && role !== WorkspaceRole.Reader && Env.isEditicsEnabled() && isFile"
+            v-if="!multipleFiles && role !== WorkspaceRole.Reader && isEditable && isFile"
             @click="onClick(FileAction.Edit)"
             class="ion-no-padding list-group-item"
           >
@@ -195,13 +195,13 @@ import { isDesktop, WorkspaceRole } from '@/parsec';
 import { IonContent, IonPage, IonIcon, IonItem, IonItemGroup, IonText, IonList, modalController } from '@ionic/vue';
 import { arrowRedo, copy, create, download, eye, informationCircle, link, open, time, trashBin } from 'ionicons/icons';
 import { FileAction } from '@/views/files/types';
-import { Env } from '@/services/environment';
 import { RenameIcon, EyeOpenIcon, MsImage } from 'megashark-lib';
 
 defineProps<{
   role: WorkspaceRole;
   multipleFiles?: boolean;
   isFile: boolean;
+  isEditable?: boolean;
 }>();
 
 async function onClick(action: FileAction): Promise<boolean> {
