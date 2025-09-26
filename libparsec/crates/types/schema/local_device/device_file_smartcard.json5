@@ -43,13 +43,13 @@
             // Certificate here refers to the X509 certificate that describes what is
             // in the smartcard.
             "name": "certificate_id",
-            "type": "String"
+            "type": "Bytes"
         },
         {
             // Certificate here refers to the X509 certificate that describes what is
             // in the smartcard.
             "name": "certificate_sha1",
-            "type": "RequiredOption<Bytes>"
+            "type": "Bytes"
         },
         {
             // `SecretKey` encrypted by asymmetric key from the smartcard.

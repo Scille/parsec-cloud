@@ -165,12 +165,10 @@ async fn list_devices(tmp_path: TmpPath) {
             .parse()
             .unwrap(),
         device_label: "PC1".parse().unwrap(),
-        certificate_id: "Mallory's certificate".to_string(),
-        certificate_sha1: Some(
-            hex!("4682e01bc3e22fdfff1c33b551dfad8e49295005")
-                .as_ref()
-                .into(),
-        ),
+        certificate_id: "Mallory's certificate".into(),
+        certificate_sha1: hex!("4682e01bc3e22fdfff1c33b551dfad8e49295005")
+            .as_ref()
+            .into(),
         encrypted_key: hex!("de5c59cfcc0c52bf997594e0fdd2c24ffee9465b6f25e30bac9238c2f83fd19a")
             .as_ref()
             .into(),
