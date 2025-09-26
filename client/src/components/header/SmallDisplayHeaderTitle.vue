@@ -70,13 +70,13 @@ defineEmits<{
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 0 1rem;
-  padding: 0.125rem 1rem;
-  min-height: 3rem;
+  padding: 0.125rem 2rem 1rem;
+  min-height: 3.75rem;
   gap: 0.5rem;
+  background: var(--parsec-color-light-secondary-background);
 
   &--selection {
-    padding: 0.125rem 0.25rem;
+    padding: 0.125rem 0.25rem 1rem;
   }
 }
 

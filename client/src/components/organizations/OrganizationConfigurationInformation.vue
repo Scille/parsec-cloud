@@ -110,16 +110,19 @@ async function copyAddress(address: string): Promise<void> {
 .organization-info {
   display: flex;
   flex-direction: column;
+  background: var(--parsec-color-light-secondary-white);
   align-items: center;
   gap: 1rem;
   width: 100%;
   max-width: 30rem;
+  border-radius: var(--parsec-radius-12);
   height: fit-content;
+  box-shadow: var(--parsec-shadow-input);
+  padding: 1.5rem;
 
   .card-header {
     display: flex;
     align-items: center;
-    margin-left: 1rem;
     width: 100%;
 
     &__title {
@@ -130,9 +133,6 @@ async function copyAddress(address: string): Promise<void> {
   .card-content {
     display: flex;
     flex-direction: column;
-    background: var(--parsec-color-light-secondary-white);
-    padding: 1.5rem;
-    border-radius: var(--parsec-radius-8);
     width: 100%;
     gap: 1rem;
   }

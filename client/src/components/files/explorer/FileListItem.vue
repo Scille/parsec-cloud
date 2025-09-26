@@ -216,8 +216,7 @@ async function onOptionsClick(event: PointerEvent): Promise<void> {
     width: fit-content;
 
     &:hover {
-      border-top: 1px solid transparent;
-      border-bottom: 1px solid var(--parsec-color-light-secondary-grey);
+      text-decoration: underline;
       cursor: pointer !important;
     }
   }

@@ -90,5 +90,6 @@ async function onMenuClick(event: Event, user: UserModel, onFinished: () => void
 <style scoped lang="scss">
 .user-list-mobile {
   padding-top: 1rem;
+  padding: 1rem 1rem 0;
 }
 </style>
