@@ -215,6 +215,7 @@
         },
         "organizationList": {
             "title": "Access your organizations",
+            "subtitle": "Your organizations",
             "sortOrderAsc": "Ascending",
             "sortOrderDesc": "Descending",
             "sortByOrganization": "Organization name",
@@ -314,6 +315,7 @@
         "lostDevice": "Lost your access?",
         "recoverDevice": "Recover my session",
         "organizationRequest": {
+            "title": "Pending requests",
             "status": {
                 "pending": "Pending",
                 "rejected": "Rejected"
@@ -329,13 +331,15 @@
                 "title": "Organization request pending",
                 "message": "Your request to join the organization is still pending. Are you sure you want to cancel it?",
                 "yes": "Cancel request",
-                "no": "No, wait for validation"
+                "no": "No, wait for validation",
+                "tooltip": "Your request to join this organization is awaiting approval from an Administrator."
             },
             "rejected": {
                 "title": "Organization request rejected",
                 "message": "Your request to join the organization has been rejected by an administrator. Do you want to delete it?",
                 "yes": "Delete request",
-                "no": "Keep request"
+                "no": "Keep request",
+                "tooltip": "Your request to join this organization has been rejected by an Administrator."
             },
             "accepted": {
                 "joinSuccess": "You successfully joined the organization.",
@@ -1548,9 +1552,9 @@
             },
             "accept": "Accept",
             "certificate": {
-                "valid": "Valid certificate",
-                "invalid": "Invalid certificate",
-                "unknown": "Unknown certificate"
+                "valid": "Valid",
+                "invalid": "Invalid",
+                "unknown": "Unknown"
             },
             "rootCertificate": {
                 "missingCertificateTitle": "Missing root certificate",

@@ -214,6 +214,7 @@
         },
         "organizationList": {
             "title": "Accéder à vos organisations",
+            "subtitle": "Vos organisations",
             "sortOrderAsc": "Croissant",
             "sortOrderDesc": "Décroissant",
             "sortByOrganization": "Nom de l'organisation",
@@ -313,6 +314,7 @@
         "lostDevice": "Vous avez perdu votre accès ?",
         "recoverDevice": "Récupérer ma session",
         "organizationRequest": {
+            "title": "Demandes en attente",
             "status": {
                 "pending": "En attente",
                 "rejected": "Rejetée"
@@ -328,13 +330,15 @@
                 "title": "Demande d'organisation en attente",
                 "message": "Votre demande pour rejoindre l'organisation est toujours en attente. Êtes-vous sûr de vouloir l'annuler ?",
                 "yes": "Annuler la demande",
-                "no": "Non, attendre la validation"
+                "no": "Non, attendre la validation",
+                "tooltip": "Votre demande pour rejoindre cette organisation est en attente d'approbation par un administrateur."
             },
             "rejected": {
                 "title": "Demande d'organisation rejetée",
                 "message": "Votre demande pour rejoindre l'organisation a été rejetée par un administrateur. Voulez-vous la supprimer ?",
                 "yes": "Supprimer la demande",
-                "no": "Conserver la demande"
+                "no": "Conserver la demande",
+                "tooltip": "Votre demande pour rejoindre cette organisation a été rejetée par un administrateur."
             },
             "accepted": {
                 "joinSuccess": "Vous avez rejoint l'organisation avec succès.",
@@ -1547,9 +1551,9 @@
             },
             "accept": "Accepter",
             "certificate": {
-                "valid": "Certificat valide",
-                "invalid": "Certificat invalide",
-                "unknown": "Certificat inconnu"
+                "valid": "Valide",
+                "invalid": "Invalide",
+                "unknown": "Inconnu"
             },
             "rootCertificate": {
                 "missingCertificateTitle": "Certificat racine requis",
