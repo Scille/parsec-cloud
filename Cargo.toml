@@ -155,11 +155,11 @@ jni = { version = "0.21.1", default-features = false }
 js-sys = { version = "0.3.78", default-features = false }
 keyring = { version = "3.6.3", default-features = false }
 lazy_static = { version = "1.5.0", default-features = false }
-libc = { version = "0.2.175", default-features = false }
+libc = { version = "0.2.176", default-features = false }
 libsodium-rs = { version = "0.2.0", default-features = false }
 libsqlite3-sys = { version = "0.30.1", default-features = false }
 log = { version = "0.4.28", default-features = false }
-miniserde = { version = "0.1.42", default-features = false }
+miniserde = { version = "0.1.43", default-features = false }
 neon = { version = "1.0.0", default-features = false }
 once_cell = { version = "1.21.3", default-features = false }
 openssl = { version = "0.10.73", default-features = false }
@@ -174,9 +174,9 @@ proc-macro2 = { version = "1.0.101", default-features = false }
 proptest = { version = "1.8.0", default-features = false }
 proptest-state-machine = { version = "0.3.1", default-features = false }
 pyo3 = { version = "0.25.1", default-features = false }
-quote = { version = "1.0.40", default-features = false }
+quote = { version = "1.0.41", default-features = false }
 rand = { version = "0.8.5", default-features = false }
-regex = { version = "1.11.2", default-features = false }
+regex = { version = "1.11.3", default-features = false }
 regex-syntax = { version = "0.8.6", default-features = false }
 reqwest = { version = "0.12.23", default-features = false }
 rexpect = "0.6.2"
@@ -190,7 +190,7 @@ ruzstd = { version = "0.7.3", default-features = true }
 schannel = { version = "0.1.28", default-features = false }
 sentry = { version = "0.34.0", default-features = false }
 sentry-log = { version = "0.34.0", default-features = false }
-serde = { version = "1.0.226", default-features = false }
+serde = { version = "1.0.228", default-features = false }
 serde-wasm-bindgen = { version = "0.6.4", default-features = false }
 serde_bytes = { version = "0.11.19", default-features = false }
 serde_json = { version = "1.0.145", default-features = false }
@@ -202,18 +202,18 @@ smallvec = { version = "1.15.1", default-features = false }
 spinners = { version = "4.1.1", default-features = false }
 sqlx = { version = "0.8.6", default-features = false }
 syn = { version = "2.0.106", default-features = false }
-thiserror = { version = "2.0.16", default-features = false }
+thiserror = { version = "2.0.17", default-features = false }
 tokio = { version = "1.47.1", default-features = false }
 unicode-normalization = { version = "0.1.24", default-features = false }
 url = { version = "2.5.7", default-features = false }
 uuid = { version = "1.18.1", default-features = false }
 wasm-bindgen = { version = "0.2.101", default-features = false }
 wasm-bindgen-futures = { version = "0.4.51", default-features = false }
-wasm-bindgen-test = { version = "0.3.53", default-features = false, features = ["std"] }
+wasm-bindgen-test = { version = "0.3.54", default-features = false, features = ["std"] }
 web-sys = { version = "0.3.78", default-features = false }
 web-time = { version = "1.1.0", default-features = false }
 widestring = { version = "1.2.0", default-features = false }
-windows-sys = { version = "0.61.0", default-features = false }
+windows-sys = { version = "0.61.1", default-features = false }
 winfsp_wrs = { version = "0.4.0", default-features = false }
 winfsp_wrs_build = { version = "0.4.0", default-features = false }
 x25519-dalek = { version = "2.0.1", default-features = false }
