@@ -15,6 +15,7 @@ function getPkiJoinLink(orgName: string): string {
 msTest('Create new pki request', async ({ home }) => {
   const requests = home.locator('.organization-list').locator('.organization-request');
   await expect(requests).toHaveCount(0);
+  await expect(home.locator('.organization-list__title').nth(0)).toBeHidden();
 
   await home.locator('#create-organization-button').click();
 
@@ -31,6 +32,8 @@ msTest('Create new pki request', async ({ home }) => {
   await expect(requests.nth(0).locator('.organization-request-username')).toHaveText('Isaac Kleiner');
   await expect(requests.nth(0).locator('.organization-request-status')).toHaveText('Pending');
   await expect(requests.nth(0).locator('.organization-request-status')).toHaveTheClass('status-pending');
+  await expect(home.locator('.organization-list__title').nth(0)).toHaveText('Pending requests');
+  await expect(home.locator('.organization-list__title').nth(1)).toHaveText('Your organizations');
 });
 
 for (const answer of [true, false]) {
