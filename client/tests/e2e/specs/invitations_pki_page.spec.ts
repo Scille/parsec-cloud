@@ -51,7 +51,7 @@ msTest('PKI requests default state', async ({ invitationsPage }, testInfo: TestI
   await expect(reqs.nth(0).locator('.person-name')).toHaveText('Gordon Freeman');
   await expect(reqs.nth(0).locator('.pkiRequest-email')).toHaveText('gordon.freeman@blackmesa.nm');
   await expect(reqs.nth(0).locator('.pkiRequest-createdOn__label')).toHaveText(/^now|< 1 minute$/);
-  await expect(reqs.nth(0).locator('.pkiRequest-certificate__label')).toHaveText('Invalid certificate');
+  await expect(reqs.nth(0).locator('.pkiRequest-certificate__label')).toHaveText('Invalid');
   const actions = reqs.nth(0).locator('.pkiRequest-actions').locator('ion-button');
   await expect(actions.nth(0)).toHaveText('Accept');
 

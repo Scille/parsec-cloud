@@ -14,6 +14,7 @@
         <ion-text
           class="organization-request-status button-small"
           :class="`status-${request.status}`"
+          ref="statusText"
         >
           <span v-if="statusText">{{ $msTranslate(statusText) }}</span>
         </ion-text>
@@ -44,11 +45,33 @@
 import { JoinRequestStatus, LocalJoinRequest } from '@/parsec';
 import { IonCardContent, IonIcon, IonText, IonButton } from '@ionic/vue';
 import { arrowForward, closeCircle } from 'ionicons/icons';
-import { computed } from 'vue';
+import { attachMouseOverTooltip } from 'megashark-lib';
+import { computed, onMounted, useTemplateRef, watch } from 'vue';
+
+const statusTextRef = useTemplateRef<InstanceType<typeof IonText>>('statusText');
 
 const props = defineProps<{
   request: LocalJoinRequest;
 }>();
+
+onMounted(async () => {
+  if (statusTextRef.value && props.request.status === JoinRequestStatus.Pending) {
+    attachMouseOverTooltip(statusTextRef.value.$el, 'HomePage.organizationRequest.pending.tooltip');
+  } else if (statusTextRef.value && props.request.status === JoinRequestStatus.Rejected) {
+    attachMouseOverTooltip(statusTextRef.value.$el, 'HomePage.organizationRequest.rejected.tooltip');
+  }
+});
+
+watch(
+  () => props.request.status,
+  (newStatus) => {
+    if (statusTextRef.value && newStatus === JoinRequestStatus.Pending) {
+      attachMouseOverTooltip(statusTextRef.value.$el, 'HomePage.organizationRequest.pending.tooltip');
+    } else if (statusTextRef.value && newStatus === JoinRequestStatus.Rejected) {
+      attachMouseOverTooltip(statusTextRef.value.$el, 'HomePage.organizationRequest.rejected.tooltip');
+    }
+  },
+);
 
 defineEmits<{
   (e: 'joinOrganization', request: LocalJoinRequest): void;
