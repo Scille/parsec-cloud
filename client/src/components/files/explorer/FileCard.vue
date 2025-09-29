@@ -53,7 +53,7 @@
 
         <ion-text
           class="file-card__title cell"
-          @click="$emit('openItem', $event, entry)"
+          @click="!($event.metaKey || $event.ctrlKey) && $emit('openItem', $event, entry)"
         >
           {{ entry.name }}
         </ion-text>

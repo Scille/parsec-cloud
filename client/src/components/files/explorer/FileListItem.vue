@@ -52,7 +52,7 @@
           <div class="file-mobile-text">
             <ion-text
               class="label-name cell"
-              @click="$emit('openItem', $event, entry)"
+              @click="!($event.metaKey || $event.ctrlKey) && $emit('openItem', $event, entry)"
             >
               {{ entry.name }}
             </ion-text>
