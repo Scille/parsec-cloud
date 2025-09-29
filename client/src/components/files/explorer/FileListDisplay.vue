@@ -93,8 +93,7 @@
             :own-profile="ownProfile"
             :show-checkbox="someSelected || selectionEnabled === true"
             :is-workspace-reader="ownRole === WorkspaceRole.Reader"
-            @open-item="$emit('openItem', folder, $event)"
-            @open-item.stop
+            @open-item.stop="$emit('openItem', folder, $event)"
             @menu-click="onMenuClick"
             @files-added="onFilesAdded"
             @drop-as-reader="$emit('dropAsReader')"
@@ -107,8 +106,7 @@
             :entry="file"
             :own-profile="ownProfile"
             :show-checkbox="someSelected || selectionEnabled === true"
-            @open-item="$emit('openItem', file, $event)"
-            @open-item.stop
+            @open-item.stop="$emit('openItem', file, $event)"
             @menu-click="onMenuClick"
             @files-added="onFilesAdded"
             @drop-as-reader="$emit('dropAsReader')"
