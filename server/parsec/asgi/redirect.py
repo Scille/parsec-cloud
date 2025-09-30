@@ -11,6 +11,8 @@ from fastapi.responses import RedirectResponse
 if TYPE_CHECKING:
     from parsec.backend import Backend
 
+WEB_APP_BASE_URL = "client/webRedirect"
+
 
 def get_server_addr_split(request: Request) -> SplitResult | None:
     try:
@@ -54,5 +56,35 @@ def redirect_parsec_url(
     location_url = urlunsplit(
         (server_addr_split.scheme, server_addr_split.netloc, path, location_url_query, None)
     )
+
+    try:
+        with_client_web_app: bool = request.app.state.with_client_web_app
+    except AttributeError:
+        with_client_web_app = False
+
+    # If web app is available, redirect to a page hosted in the client that will
+    # ask the user if they want to open the link in desktop app or in the browser.
+    # The original `location_url` is therefore passed as a `redirection_url` to
+    # the client that will handle it in the redirection page.
+    #
+    # If web app is not available, the standard redirection is performed to
+    # `location_url`, which will be opened in the desktop app if available.
+
+    if with_client_web_app:
+        redirection_url = quote_plus(
+            location_url,
+            safe="/",
+            encoding="utf8",
+            errors="strict",
+        )
+        location_url = urlunsplit(
+            (
+                request.base_url.scheme,
+                request.base_url.netloc,
+                WEB_APP_BASE_URL,
+                f"webRedirectUrl={redirection_url}",
+                None,
+            )
+        )
 
     return RedirectResponse(url=location_url, status_code=302)

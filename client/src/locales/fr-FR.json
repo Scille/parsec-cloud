@@ -342,6 +342,14 @@
             }
         }
     },
+    "WebRedirectPage": {
+        "title": "Lancement de l'application Parsec",
+        "subtitle": "Vous pouvez choisir d'ouvrir ce lien dans l'application Parsec ou dans votre navigateur web.",
+        "desktop": "Ouvrir dans l'application Parsec",
+        "web": "Continuer dans votre navigateur web",
+        "downloadText": "Vous n'avez pas encore l'application Parsec ?",
+        "downloadLink": "Télécharger Parsec"
+    },
     "CreateOrganization": {
         "fullname": "Nom complet",
         "fullnamePlaceholder": "Jean Martin",
