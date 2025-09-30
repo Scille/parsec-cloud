@@ -22,7 +22,10 @@
           id="ms-input"
           :disabled="true"
         />
-        <div class="login-card-content__password">
+        <div
+          class="login-card-content__password"
+          v-if="!device.deviceLabel.startsWith('sso_')"
+        >
           <ms-password-input
             :label="'HomePage.organizationLogin.passwordLabel'"
             ref="passwordInput"
@@ -45,6 +48,7 @@
       </ion-card-content>
       <ion-footer class="login-card-footer">
         <ion-button
+          v-if="!device.deviceLabel.startsWith('sso_')"
           @click="onLoginClick()"
           size="large"
           :disabled="password.length == 0 || loginInProgress === true"
@@ -57,6 +61,11 @@
             :speed="2"
           />
         </ion-button>
+        <sso-provider-card
+          v-else
+          :provider="SSOProvider.ProConnect"
+          @click="onLoginSSOClick()"
+        />
       </ion-footer>
     </ion-card>
     <!-- end of login -->
@@ -69,6 +78,8 @@ import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AccessStrategy, AvailableDevice, ClientStartError, ClientStartErrorTag, DeviceAccessStrategyPassword } from '@/parsec';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonFooter, IonText } from '@ionic/vue';
 import { onMounted, ref, useTemplateRef } from 'vue';
+import { useOpenBao } from '@/services/openBao';
+import { SsoProviderCard, SSOProvider } from '@/components/devices';
 
 const props = defineProps<{
   device: AvailableDevice;
@@ -85,10 +96,26 @@ const password = ref('');
 const errorMessage = ref('');
 const passwordIsInvalid = ref(false);
 const email = props.device.humanHandle.email;
+const { openBaoConnect } = useOpenBao();
 
 onMounted(async () => {
   await passwordInputRef.value?.setFocus();
 });
+
+async function onLoginSSOClick(): Promise<void> {
+  const connResult = await openBaoConnect();
+
+  if (!connResult.ok) {
+    console.error('Failed to log in to openbao');
+    return;
+  }
+  const retrieveResult = await connResult.value.retrieve(props.device.deviceLabel);
+  if (!retrieveResult.ok) {
+    console.error('Failed to retrieve');
+    return;
+  }
+  emits('loginClick', props.device, AccessStrategy.usePassword(props.device, retrieveResult.value.passKey));
+}
 
 async function onLoginClick(): Promise<void> {
   if (!props.loginInProgress) {

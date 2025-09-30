@@ -150,6 +150,15 @@ function isCustomBrandingEnabled(): boolean {
   return import.meta.env[CUSTOM_BRANDING_ENV_VARIABLE] === 'true' || (window as any).TESTING_ENABLE_CUSTOM_BRANDING === true;
 }
 
+const OPEN_BAO_SERVER_ENV_VARIABLE = 'PARSEC_APP_OPEN_BAO_SERVER';
+
+function getOpenBaoServer(): string | undefined {
+  if ((window as any).TESTING_OPEN_BAO_SERVER) {
+    return (window as any).TESTING_OPEN_BAO_SERVER;
+  }
+  return import.meta.env[OPEN_BAO_SERVER_ENV_VARIABLE];
+}
+
 /*
  Links
 */
@@ -246,6 +255,7 @@ export const Env = {
   isStripeDisabled,
   isSentryDisabled,
   getAccountServer,
+  getOpenBaoServer,
   isAccountEnabled,
   isEditicsEnabled,
   getDefaultCryptpadServer,

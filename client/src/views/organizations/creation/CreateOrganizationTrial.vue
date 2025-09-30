@@ -52,6 +52,9 @@ import {
   OrganizationID,
   parseParsecAddr,
   ParsedParsecAddrTag,
+  SaveStrategy,
+  DeviceSaveStrategySSO,
+  CustomDeviceSaveStrategyTag,
 } from '@/parsec';
 import { getTrialServerAddress } from '@/services/parsecServers';
 import { getDefaultDeviceName } from '@/common/device';
@@ -59,6 +62,7 @@ import { generateTrialOrganizationName } from '@/common/organization';
 import { Translatable, I18n, MsModalResult } from 'megashark-lib';
 import { wait } from '@/parsec/internals';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { useOpenBao } from '@/services/openBao';
 
 enum Steps {
   PersonalInformation,
@@ -81,10 +85,11 @@ const emits = defineEmits<{
 const step = ref<Steps>(Steps.PersonalInformation);
 const email = ref<string | undefined>(undefined);
 const name = ref<string | undefined>(undefined);
-const saveStrategy = ref<DeviceSaveStrategy | undefined>(undefined);
+const saveStrategy = ref<DeviceSaveStrategy | DeviceSaveStrategySSO | undefined>(undefined);
 const availableDevice = ref<AvailableDevice | undefined>(undefined);
 const currentError = ref<Translatable | undefined>(undefined);
 const organizationName = ref<OrganizationID | undefined>(undefined);
+const { getOpenBaoClient, isOpenBaoAvailable } = useOpenBao();
 
 onMounted(async () => {
   if (props.bootstrapLink) {
@@ -106,6 +111,22 @@ async function createOrganization(): Promise<Result<AvailableDevice, BootstrapOr
     return { ok: false, error: { tag: BootstrapOrganizationErrorTag.Internal, error: 'Missing data' } };
   }
 
+  let deviceName = getDefaultDeviceName();
+  if (isOpenBaoAvailable() && saveStrategy.value.tag === CustomDeviceSaveStrategyTag.SSO) {
+    const client = getOpenBaoClient();
+    if (!client) {
+      window.electronAPI.log('error', 'OpenBAO not logged in');
+      return { ok: false, error: { tag: BootstrapOrganizationErrorTag.Internal, error: 'open bao not logged in' } };
+    }
+    deviceName = `sso_${crypto.randomUUID().slice(0, 24)}`;
+    const passKey = crypto.randomUUID();
+    saveStrategy.value = SaveStrategy.usePassword(passKey);
+    const result = await client.store(deviceName, { passKey: passKey });
+    if (!result.ok) {
+      window.electronAPI.log('error', `Failed to store passkey: ${result.error.errors}`);
+    }
+  }
+
   let retry = 0;
 
   while (retry < 2) {
@@ -115,8 +136,8 @@ async function createOrganization(): Promise<Result<AvailableDevice, BootstrapOr
       orgName,
       name.value,
       email.value,
-      getDefaultDeviceName(),
-      isProxy(saveStrategy.value) ? toRaw(saveStrategy.value) : saveStrategy.value,
+      deviceName,
+      (isProxy(saveStrategy.value) ? toRaw(saveStrategy.value) : saveStrategy.value) as DeviceSaveStrategy,
     );
     if (result.ok) {
       organizationName.value = orgName;
@@ -146,12 +167,12 @@ async function bootstrapOrganization(): Promise<Result<AvailableDevice, Bootstra
     name.value,
     email.value,
     getDefaultDeviceName(),
-    isProxy(saveStrategy.value) ? toRaw(saveStrategy.value) : saveStrategy.value,
+    (isProxy(saveStrategy.value) ? toRaw(saveStrategy.value) : saveStrategy.value) as DeviceSaveStrategy,
   );
   return result;
 }
 
-async function onAuthenticationChosen(strategy: DeviceSaveStrategy): Promise<void> {
+async function onAuthenticationChosen(strategy: DeviceSaveStrategy | DeviceSaveStrategySSO): Promise<void> {
   if (!name.value || !email.value) {
     window.electronAPI.log('error', 'Missing data on org creation step, should not happen');
     return;
@@ -230,7 +251,7 @@ async function onGoClicked(): Promise<void> {
     window.electronAPI.log('error', 'OrganizationCreation: missing data at the end step, should not happen');
     return;
   }
-  emits('organizationCreated', organizationName.value, availableDevice.value, saveStrategy.value);
+  emits('organizationCreated', organizationName.value, availableDevice.value, saveStrategy.value as DeviceSaveStrategy);
 }
 
 async function onGoBackRequested(): Promise<void> {

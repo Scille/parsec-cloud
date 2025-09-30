@@ -84,6 +84,10 @@ const routes: Array<RouteRecordRaw> = [
     },
   },
   {
+    path: '/oidc/callback',
+    component: () => import('@/views/oidc/RedirectCallback.vue'),
+  },
+  {
     path: '/:unknown(.*)*',
     redirect: (): any => {
       return { path: '/', query: {} };

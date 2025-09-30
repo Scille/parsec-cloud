@@ -4,7 +4,7 @@ import type { CapacitorElectronConfig } from '@capacitor-community/electron';
 import { getCapacitorElectronConfig, setupElectronDeepLinking } from '@capacitor-community/electron';
 import * as Sentry from '@sentry/electron/main';
 import type { MenuItemConstructorOptions } from 'electron';
-import { MenuItem, app, dialog, ipcMain, shell } from 'electron';
+import { BrowserWindow, MenuItem, app, dialog, ipcMain, shell } from 'electron';
 import log from 'electron-log/main';
 import unhandled from 'electron-unhandled';
 import { electronIsDev } from './utils';
@@ -295,4 +295,40 @@ ipcMain.on(PageToWindowChannel.GetLogs, async () => {
       .filter((record) => record !== undefined);
   });
   myCapacitorApp.sendEvent(WindowToPageChannel.LogRecords, logs);
+});
+
+ipcMain.on(PageToWindowChannel.OpenPopup, async (_event, url: string) => {
+  const popup = new BrowserWindow({
+    width: 600,
+    height: 800,
+    transparent: false,
+    frame: true,
+    alwaysOnTop: true,
+    resizable: false,
+    parent: myCapacitorApp.getMainWindow(),
+    show: false,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true,
+      javascript: true,
+    },
+  });
+  popup.setMenu(null);
+  popup.webContents.setWindowOpenHandler(() => {
+    return { action: 'deny' };
+  });
+  popup.webContents.on('will-redirect', (_event, url) => {
+    // When the redirect URL is called, check that it contains code & state, and if so,
+    // close the popup and send the infos
+    const parsed = new URL(url);
+    const params = parsed.searchParams;
+    if ((parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') && params.get('code') && params.get('state')) {
+      myCapacitorApp.sendEvent(WindowToPageChannel.SSOComplete, params.get('code'), params.get('state'));
+      popup.hide();
+      popup.destroy();
+    }
+  });
+  popup.show();
+  await popup.loadURL(url);
 });

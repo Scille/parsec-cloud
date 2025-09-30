@@ -615,6 +615,10 @@ export function setupContentSecurityPolicy(customScheme: string): void {
       domain: 'https://*.hcaptcha.com',
       directives: [CspDirective.ConnectSrc, CspDirective.FrameSrc],
     },
+    {
+      domain: 'https://*',
+      directives: [CspDirective.ImgSrc, CspDirective.StyleSrc],
+    },
   ];
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     const responseHeaders = { ...details.responseHeaders };

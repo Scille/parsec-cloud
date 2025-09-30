@@ -146,6 +146,7 @@ NSPHINXOPTS
 ntics
 ntns
 nvlobs
+openbao
 opses
 orga
 orgname
