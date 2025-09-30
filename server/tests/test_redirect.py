@@ -1,5 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+from urllib.parse import quote_plus
+
 import httpx
 import pytest
 
@@ -10,7 +12,7 @@ from parsec._parsec import (
     ParsecAddr,
     ParsecInvitationAddr,
 )
-from tests.common import Backend
+from tests.common import AsgiApp, Backend
 
 
 async def test_get_redirect(client: httpx.AsyncClient, backend: Backend):
@@ -63,3 +65,25 @@ async def test_get_redirect_invitation(use_ssl: bool, client: httpx.AsyncClient,
     assert rep.status_code == 302
     location_addr = ParsecInvitationAddr.from_url(rep.headers["location"])
     assert location_addr == invitation_addr
+
+
+@pytest.mark.parametrize("use_ssl", (False, True))
+async def test_get_redirect_when_client_web_app_available(
+    use_ssl: bool, client: httpx.AsyncClient, app: AsgiApp
+):
+    app.state.with_client_web_app = True
+    expected_redirect_url = quote_plus(
+        "parsec3://parsec.invalid/foo/bar?a=1&b=2",
+        safe="/",
+        encoding="utf8",
+        errors="strict",
+    )
+
+    rep = await client.get(
+        f"http{'s' if use_ssl else ''}://parsec.invalid/redirect/foo/bar?a=1&b=2"
+    )
+    assert rep.status_code == 302
+    assert (
+        rep.headers["location"]
+        == f"http{'s' if use_ssl else ''}://parsec.invalid/client/webRedirect?webRedirectUrl={expected_redirect_url}"
+    )

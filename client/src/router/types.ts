@@ -27,6 +27,7 @@ export enum Routes {
   RecoverAccount = 'recoverAccount',
   FileHandler = 'fileHandler',
   Invitations = 'invitations',
+  WebRedirect = 'webRedirect',
 }
 
 const routes: Array<RouteRecordRaw> = [
@@ -102,6 +103,11 @@ const routes: Array<RouteRecordRaw> = [
     path: `/${Routes.ClientArea}`,
     name: Routes.ClientArea,
     component: () => import('@/views/client-area/ClientAreaLayout.vue'),
+  },
+  {
+    path: `/${Routes.WebRedirect}`,
+    name: Routes.WebRedirect,
+    component: () => import('@/views/home/WebRedirectPage.vue'),
   },
   {
     // DevLayout is used to login a default device in case the page was
@@ -303,6 +309,7 @@ export interface Query {
   profilePage?: ProfilePages;
   bmsLogin?: true;
   readOnly?: boolean;
+  webRedirectUrl?: string;
 }
 
 export interface ClientAreaQuery {
