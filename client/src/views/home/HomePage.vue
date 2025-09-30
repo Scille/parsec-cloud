@@ -149,6 +149,7 @@ import { getDurationBeforeExpiration, isExpired, isTrialOrganizationDevice } fro
 import HomePageButtons, { HomePageAction } from '@/views/home/HomePageButtons.vue';
 import { SmallDisplayCreateJoinModal } from '@/components/small-display';
 import ClientAreaLoginPage from '@/views/client-area/ClientAreaLoginPage.vue';
+import { handleParsecLink } from '@/services/linkHandling';
 
 enum HomePageState {
   OrganizationList = 'organization-list',
@@ -346,6 +347,11 @@ async function handleQuery(): Promise<void> {
   }
   queryInProgress.value = true;
   const query = getCurrentRouteQuery();
+  if (isWeb() && query.webRedirectUrl) {
+    handleParsecLink(query.webRedirectUrl, informationManager);
+    queryInProgress.value = false;
+    return;
+  }
   if (query.claimLink) {
     await openJoinByLinkModal(query.claimLink);
   } else if (query.bootstrapLink) {

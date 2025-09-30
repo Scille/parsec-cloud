@@ -299,6 +299,7 @@ export interface Query {
   profilePage?: ProfilePages;
   bmsLogin?: true;
   readOnly?: true;
+  webRedirectUrl?: string;
 }
 
 export interface ClientAreaQuery {

@@ -7,6 +7,7 @@ from urllib.parse import SplitResult, parse_qs, quote_plus, urlencode, urlsplit,
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
+from fastapi.templating import Jinja2Templates
 
 if TYPE_CHECKING:
     from parsec.backend import Backend
@@ -55,4 +56,34 @@ def redirect_parsec_url(
         (server_addr_split.scheme, server_addr_split.netloc, path, location_url_query, None)
     )
 
-    return RedirectResponse(url=location_url, status_code=302)
+    with_client_web_app: bool = request.app.state.with_client_web_app
+    query = quote_plus(
+        location_url_query,
+        safe="/",
+        encoding="utf8",
+        errors="strict",
+    )
+    if with_client_web_app:
+        web_location_url = urlunsplit((
+            'http',
+            server_addr_split.netloc,
+            f'client/home?webRedirectUrl={server_addr_split.scheme}://{server_addr_split.netloc}/{path}',
+            query,
+            None
+        ))
+        templates: Jinja2Templates = request.app.state.templates
+        return templates.TemplateResponse(
+            context={
+                # Used for direct 302 redirection when the user wants to open the native app
+                "location_url": location_url,
+                # Used to create an url pointing to the web client with `web_location_url`
+                # passed as URL param.
+                "web_location_url": web_location_url,
+            },
+            request=request,
+            name="redirect.html",
+            status_code=302,
+        )  # TOOD: 301 ? 302 ?
+
+    else:
+        return RedirectResponse(url=location_url, status_code=302)

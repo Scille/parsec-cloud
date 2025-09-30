@@ -10,7 +10,7 @@ from parsec._parsec import (
     ParsecAddr,
     ParsecInvitationAddr,
 )
-from tests.common import Backend
+from tests.common import AsgiApp, Backend
 
 
 async def test_get_redirect(client: httpx.AsyncClient, backend: Backend):
@@ -63,3 +63,15 @@ async def test_get_redirect_invitation(use_ssl: bool, client: httpx.AsyncClient,
     assert rep.status_code == 302
     location_addr = ParsecInvitationAddr.from_url(rep.headers["location"])
     assert location_addr == invitation_addr
+
+
+# TODO: test redirect with OrganizationID containing unicode
+
+
+async def test_get_redirect_when_client_web_app_available(client: httpx.AsyncClient, app: AsgiApp):
+    app.state.with_client_web_app = True
+
+    rep = await client.get("https://parsec.invalid/redirect/spam?a=1&b=2&no_ssl=true")
+    assert rep.status_code == 200
+    assert "<div>parsec3://parsec.invalid/spam?a=1&b=2</div>" in rep.text
+    # TODO...
