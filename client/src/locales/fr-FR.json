@@ -1433,13 +1433,15 @@
             "sendEmailMessage": "L'utilisateur devrait déjà avoir reçu un email contenant le lien. Êtes-vous sûr(e) de vouloir en envoyer un autre ?",
             "sendEmail": "Renvoyer l'email",
             "sendEmailFailed": "L'email n'a pas pu être envoyé. Vous pouvez réessayer ou transmettre le lien d'invitation manuellement.",
-            "inviteSuccessMailSent": "Une invitation a été envoyée à {email}.",
-            "inviteSuccessNoMail": "L'invitation a été créée mais l'email n'a pas pu être envoyé à {email}. Veuillez transmettre le lien d'invitation manuellement.",
-            "inviteFailedAlreadyMember": "L'email {email} est déjà utilisé par un autre utilisateur dans cette organisation.",
+            "inviteSuccessMailSent": "Une invitation à rejoindre l'organisation a été envoyée à {email}. | Les invitations à rejoindre l'organisation ont été envoyées à {count} emails.",
+            "inviteSuccessNoMail": "L'invitation a été créée mais l'email n'a pas pu être envoyé à {email}. Veuillez transmettre le lien d'invitation manuellement. | Les invitations ont été créées mais certains emails n'ont pas pu être envoyés. Veuillez transmettre les liens d'invitation manuellement.",
+            "inviteFailedAlreadyMember": "L'email {email} est déjà utilisé par un autre utilisateur dans cette organisation. | Les invitations ont été envoyées avec succès, mais une ou plusieurs adresses appartiennent déjà à des membres de cette organisation.",
             "inviteFailedAlreadyInvited": "Une invitation a déjà été créée par un autre administrateur pour l'email {email}.",
             "inviteFailedOffline": "Impossible de contacter le serveur. Veuillez vérifier votre connexion internet.",
             "inviteFailedNotAllowed": "Seuls les administrateurs peuvent inviter de nouvelles personnes à rejoindre l'organisation.",
             "inviteFailedUnknown": "Une erreur imprévue est survenue (raison : {reason}).",
+            "inviteFailedAll": "Une erreur imprévue est survenue. Veuillez réessayer.",
+            "inviteFailedSome": "Certaines invitations n'ont pas pu être créées.",
             "cancelSuccess": "L'invitation a été supprimée.",
             "cancelFailed": "Impossible d'annuler l'invitation",
             "linkCopiedToClipboard": "Le lien a été copié dans le presse-papier.",
@@ -1466,9 +1468,12 @@
         },
         "CreateUserInvitationModal": {
             "pageTitle": "Inviter un nouvel utilisateur",
+            "subtitle": "Vous pouvez envoyer plusieurs invitations simultanément en séparant les emails par ';'",
             "label": "Email de l'utilisateur",
             "placeholder": "jean.martin{'@'}exemple.com",
-            "create": "Inviter"
+            "create": "Envoyer l'invitation | Envoyer l'invitation | Envoyer {count} invitations",
+            "emailsList": "Liste des adresses email",
+            "cancel": "Annuler"
         },
         "UserDetailsModal": {
             "title": "Détails de l'utilisateur",

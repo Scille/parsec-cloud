@@ -1434,13 +1434,15 @@
             "sendEmailMessage": "The user should already have received an email with the link. Are you sure you want to send another one?",
             "sendEmail": "Resend email",
             "sendEmailFailed": "The email could not be sent. You can try again or send the link yourself.",
-            "inviteSuccessMailSent": "An invitation to join the organization has been sent to {email}.",
-            "inviteSuccessNoMail": "The invitation was successfully created but we failed to send an email to {email}. Please send the invitation link yourself or try again.",
-            "inviteFailedAlreadyMember": "The email {email} is already used by someone in this organization.",
+            "inviteSuccessMailSent": "An invitation to join the organization has been sent to {email}. | Invitations to join the organization have been sent to {count} emails.",
+            "inviteSuccessNoMail": "The invitation was successfully created but we failed to send an email to {email}. Please send the invitation link yourself or try again. | The invitations were successfully created but we failed to send emails to some or all of them. Please send the invitation link yourself or try again.",
+            "inviteFailedAlreadyMember": "The email {email} is already used by someone in this organization. | The invitations have successfully been sent, however one or more addresses already belong to members in this organization.",
             "inviteFailedAlreadyInvited": "An invitation has already been created by another administrator for the email {email}.",
             "inviteFailedOffline": "Failed to connect to the server. Please make sure you are online.",
             "inviteFailedNotAllowed": "Only administrators can invite new users into the organization.",
-            "inviteFailedUnknown": "An unexpected error occurred, please try again (reason: {reason}).",
+            "inviteFailedUnknown": "An unexpected error occurred (reason : {reason}).",
+            "inviteFailedAll": "An unexpected error occurred, please try again.",
+            "inviteFailedSome": "Some invitations could not be created.",
             "cancelSuccess": "Invitation has been cancelled.",
             "cancelFailed": "Failed to cancel invitation",
             "linkCopiedToClipboard": "Invitation link has been copied to clipboard.",
@@ -1467,9 +1469,12 @@
         },
         "CreateUserInvitationModal": {
             "pageTitle": "Invite a new user",
+            "subtitle": "You can send multiple invitations by separating the email addresses with ';'",
             "label": "User's email",
             "placeholder": "john.smith{'@'}example.com",
-            "create": "Invite"
+            "create": "Send invitation | Send invitation | Send {count} invitations",
+            "emailsList": "List of email addresses",
+            "cancel": "Cancel"
         },
         "UserDetailsModal": {
             "title": "User details",

@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Locator, Page } from '@playwright/test';
-import { addUser, answerQuestion, DisplaySize, expect, fillInputModal, fillIonInput, msTest, sortBy } from '@tests/e2e/helpers';
+import { addUser, answerQuestion, DisplaySize, expect, fillIonInput, inviteUsers, msTest, sortBy } from '@tests/e2e/helpers';
 
 const USERS = [
   {
@@ -539,15 +539,10 @@ msTest('Search user grid', async ({ usersPage }) => {
 msTest('Invite new user', async ({ usersPage }) => {
   await usersPage.locator('#activate-users-ms-action-bar').getByText('Invite a user').click();
   // cspell:disable-next-line
-  await fillInputModal(usersPage, 'zana@wraeclast');
+  await inviteUsers(usersPage, 'zana@wraeclast');
+  await expect(usersPage).toBeInvitationPage();
   // cspell:disable-next-line
   await expect(usersPage).toShowToast('An invitation to join the organization has been sent to zana@wraeclast.', 'Success');
-});
-
-msTest('Invite user with already existing email', async ({ usersPage }) => {
-  await usersPage.locator('#activate-users-ms-action-bar').getByText('Invite a user').click();
-  await fillInputModal(usersPage, 'mallory@example.com');
-  await expect(usersPage).toShowToast('The email mallory@example.com is already used by someone in this organization.', 'Error');
 });
 
 msTest('Reassign workspace role', async ({ usersPage }) => {

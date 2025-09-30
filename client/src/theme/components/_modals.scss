@@ -1012,3 +1012,17 @@
     contain: inline-size;
   }
 }
+
+.invite-modal:has(.has-multiple-emails) {
+  .ms-modal {
+    overflow: auto;
+  }
+
+  &::part(content) {
+    max-width: var(--parsec-modal-width-md);
+    @media only screen and (max-height: 600px) {
+      --height: 90vh;
+      height: 90vh;
+    }
+  }
+}
