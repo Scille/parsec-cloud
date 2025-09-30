@@ -48,6 +48,7 @@ enum Events {
   WorkspaceRoleUpdate = 1 << 24,
   EntryRenamed = 1 << 25,
   EntryDeleted = 1 << 26,
+  EntrySyncProgress = 1 << 27,
 }
 
 interface WorkspaceCreatedData {

@@ -32,12 +32,21 @@ export interface FileOperationProgress {
   progress: number;
 }
 
+export enum EntrySyncStatus {
+  NotSynced = 'not-synced',
+  Uploading = 'uploading',
+  Downloading = 'downloading',
+  Synced = 'synced',
+}
+
 export interface FileModel extends EntryStatFile {
   isSelected: boolean;
+  syncStatus?: EntrySyncStatus;
 }
 
 export interface FolderModel extends EntryStatFolder {
   isSelected: boolean;
+  syncStatus?: EntrySyncStatus;
 }
 
 export type EntryModel = FileModel | FolderModel;
@@ -127,12 +136,18 @@ export class EntryCollection<Model extends EntryModel> {
         existing.tag = entry.tag;
         existing.updated = entry.updated;
         existing.path = entry.path;
+        if (entry.syncStatus) {
+          existing.syncStatus = entry.syncStatus;
+        }
         if (existing.isFile()) {
           (existing as FileModel).size = (entry as FileModel).size;
         }
         updated.push(existing.id);
       } else {
         // entry is not yet listed, mark it as to be added
+        if (!entry.syncStatus) {
+          entry.syncStatus = entry.needSync ? EntrySyncStatus.NotSynced : EntrySyncStatus.Synced;
+        }
         toAdd.push(entry);
       }
     }

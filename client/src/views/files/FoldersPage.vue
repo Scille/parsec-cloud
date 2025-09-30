@@ -273,6 +273,7 @@ import { openPath, OpenPathOptions, showInExplorer } from '@/services/fileOpener
 import { WorkspaceTagRole } from '@/components/workspaces';
 import { MenuAction, TabBarOptions, useCustomTabBar } from '@/views/menu';
 import { isFileEditable } from '@/services/cryptpad';
+import { EntrySyncStatus } from '@/components/files/types';
 
 const customTabBar = useCustomTabBar();
 
@@ -528,7 +529,7 @@ async function handleEvents(event: Events, data?: EventData): Promise<void> {
     await listFolder({ sameFolder: true });
   } else if (event === Events.WorkspaceUpdated && workspaceInfo.value) {
     await updateWorkspaceInfo(workspaceInfo.value.id);
-  } else if (event === Events.EntrySynced || event === Events.EntrySyncStarted) {
+  } else if (event === Events.EntrySynced || event === Events.EntrySyncStarted || event === Events.EntrySyncProgress) {
     const syncedData = data as EntrySyncData;
     if (!workspaceInfo.value || workspaceInfo.value.id !== syncedData.workspaceId) {
       return;
@@ -541,12 +542,12 @@ async function handleEvents(event: Events, data?: EventData): Promise<void> {
         entry = folders.value.getEntries().find((e) => e.id === syncedData.entryId);
       }
       if (entry && workspaceInfo.value) {
-        const statResult = await parsec.entryStat(workspaceInfo.value.handle, entry.path);
-        if (statResult.ok) {
-          entry.needSync = statResult.value.needSync;
-          if (statResult.value.isFile() && entry.isFile()) {
-            (entry as FileModel).size = (statResult.value as EntryStatFile).size;
-          }
+        if (event === Events.EntrySynced) {
+          entry.needSync = false;
+          entry.syncStatus = EntrySyncStatus.Synced;
+        } else if (event === Events.EntrySyncProgress || event === Events.EntrySyncStarted) {
+          entry.needSync = true;
+          entry.syncStatus = EntrySyncStatus.Uploading;
         }
       }
     }
@@ -582,7 +583,12 @@ onMounted(async () => {
   await defineShortcuts();
 
   eventCbId = await eventDistributor.registerCallback(
-    Events.EntryUpdated | Events.WorkspaceUpdated | Events.EntrySynced | Events.EntrySyncStarted | Events.MenuAction,
+    Events.EntryUpdated |
+      Events.WorkspaceUpdated |
+      Events.EntrySynced |
+      Events.EntrySyncStarted |
+      Events.MenuAction |
+      Events.EntrySyncProgress,
     handleEvents,
   );
 
@@ -752,11 +758,13 @@ async function onFileOperationState(state: FileOperationState, operationData?: F
         const existing = files.value.getEntries().find((entry) => entry.id === statResult.value.id);
         if (!existing) {
           (statResult.value as FileModel).isSelected = false;
+          (statResult.value as FileModel).syncStatus = statResult.value.needSync ? EntrySyncStatus.NotSynced : EntrySyncStatus.Synced;
           files.value.append(statResult.value as FileModel);
         } else {
           existing.name = statResult.value.name;
           existing.size = (statResult.value as parsec.EntryStatFile).size;
           existing.needSync = statResult.value.needSync;
+          existing.syncStatus = statResult.value.needSync ? EntrySyncStatus.NotSynced : EntrySyncStatus.Synced;
           existing.updated = statResult.value.updated;
           existing.isSelected = false;
         }
@@ -916,9 +924,11 @@ async function listFolder(options?: { selectFile?: EntryName; sameFolder?: boole
       if (!foundInFileOps) {
         if (childStat.isFile()) {
           (childStat as FileModel).isSelected = Boolean(options && options.selectFile && options.selectFile === childName);
+          (childStat as FileModel).syncStatus = !childStat.needSync ? EntrySyncStatus.Synced : undefined;
           newFiles.push(childStat as FileModel);
         } else {
           (childStat as FolderModel).isSelected = false;
+          (childStat as FolderModel).syncStatus = !childStat.needSync ? EntrySyncStatus.Synced : undefined;
           newFolders.push(childStat as FolderModel);
         }
       }

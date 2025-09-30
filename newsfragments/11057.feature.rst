@@ -1,0 +1,1 @@
+Shows a specific icon when a file is being uploaded
