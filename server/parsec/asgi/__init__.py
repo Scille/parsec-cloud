@@ -76,8 +76,9 @@ def app_factory(
         allow_headers=["api-version", "authorization", "user-agent"],
     )
     app.state.backend = backend
-
+    app.state.with_client_web_app = with_client_web_app
     templates = Jinja2Templates(env=backend.config.jinja_env)
+    app.state.templates = templates
 
     if with_client_web_app:
 
