@@ -116,3 +116,17 @@ for (const answer of [true, false]) {
     }
   });
 }
+
+msTest('Email invitations multiple invites', async ({ invitationsPage }) => {
+  const viewToggle = invitationsPage.locator('.toggle-view-container');
+  const invites = invitationsPage.locator('.invitations-container-list').locator('.invitation-list-item');
+  await expect(invites).toHaveCount(1);
+  await viewToggle.locator('#invite-user-button').click();
+  await fillInputModal(invitationsPage, 'gordon.freeman@blackmesa.nm');
+  await expect(invitationsPage).toShowToast(
+    'An invitation to join the organization has been sent to gordon.freeman@blackmesa.nm.',
+    'Success',
+  );
+  await expect(invites).toHaveCount(2);
+  await expect(invites.nth(1).locator('.invitation-email')).toHaveText('gordon.freeman@blackmesa.nm');
+});

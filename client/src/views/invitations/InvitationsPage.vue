@@ -262,6 +262,7 @@ import {
   OrganizationJoinRequest,
   rejectOrganizationJoinRequest,
   UserInvitation,
+  ClientNewUserInvitationError,
 } from '@/parsec';
 import InvitationList from '@/views/invitations/InvitationList.vue';
 import PkiRequestList from '@/views/invitations/PkiRequestList.vue';
@@ -269,7 +270,7 @@ import { copyToClipboard } from '@/common/clipboard';
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
 import SelectProfileModal from '@/views/invitations/SelectProfileModal.vue';
 import { currentRouteIs, getCurrentRouteQuery, navigateTo, Routes, watchRoute } from '@/router';
-import { emailValidator } from '@/common/validators';
+import InviteModal from '@/components/invitations/InviteModal.vue';
 
 const { isLargeDisplay, isSmallDisplay, windowWidth } = useWindowSize();
 const view = ref(InvitationView.EmailInvitation);
@@ -343,29 +344,40 @@ async function switchView(newView: InvitationView): Promise<void> {
 }
 
 async function inviteUser(): Promise<void> {
-  const email = await getTextFromUser(
-    {
-      title: 'UsersPage.CreateUserInvitationModal.pageTitle',
-      trim: true,
-      validator: emailValidator,
-      inputLabel: 'UsersPage.CreateUserInvitationModal.label',
-      placeholder: 'UsersPage.CreateUserInvitationModal.placeholder',
-      okButtonText: 'UsersPage.CreateUserInvitationModal.create',
-    },
-    isLargeDisplay.value,
-  );
-  if (!email) {
+  const modal = await modalController.create({
+    component: InviteModal,
+    cssClass: 'invite-modal',
+  });
+  await modal.present();
+  const { data, role } = await modal.onDidDismiss();
+  await modal.dismiss();
+
+  if (role !== MsModalResult.Confirm || !data.emails) {
     return;
   }
-  const result = await parsecInviteUser(email);
-  if (result.ok) {
-    if (result.value.emailSentStatus === InvitationEmailSentStatus.Success) {
+
+  let noEmailCount = 0;
+  let errorCount = 0;
+  let lastError: ClientNewUserInvitationError | undefined = undefined;
+  for (const email of data.emails) {
+    const result = await parsecInviteUser(email);
+    if (result.ok && result.value.emailSentStatus !== InvitationEmailSentStatus.Success) {
+      noEmailCount += 1;
+    }
+    if (!result.ok) {
+      lastError = result.error;
+      errorCount += 1;
+    }
+  }
+  // Everything went according to plan
+  if (!lastError) {
+    if (noEmailCount === 0) {
       informationManager.present(
         new Information({
           message: {
-            key: 'UsersPage.invitation.inviteSuccessMailSent',
+            key: data.emails.length == 1 ? 'UsersPage.invitation.inviteSuccessMailSent' : 'MAIL INVITE SUCCESS MAIL SENT',
             data: {
-              email: email,
+              email: data.emails[0],
             },
           },
           level: InformationLevel.Success,
@@ -376,9 +388,9 @@ async function inviteUser(): Promise<void> {
       informationManager.present(
         new Information({
           message: {
-            key: 'UsersPage.invitation.inviteSuccessNoMail',
+            key: data.emails.length === 1 ? 'UsersPage.invitation.inviteSuccessNoMail' : 'MULTIPLE INVITE SUCCESS NO MAIL SENT',
             data: {
-              email: email,
+              email: data.emails[0],
             },
           },
           level: InformationLevel.Success,
@@ -388,24 +400,16 @@ async function inviteUser(): Promise<void> {
     }
   } else {
     let message: Translatable = '';
-    switch (result.error.tag) {
-      case ClientNewUserInvitationErrorTag.AlreadyMember:
-        message = { key: 'UsersPage.invitation.inviteFailedAlreadyMember', data: { email: email } };
-        break;
-      case ClientNewUserInvitationErrorTag.Offline:
-        message = 'UsersPage.invitation.inviteFailedOffline';
-        break;
-      case ClientNewUserInvitationErrorTag.NotAllowed:
-        message = 'UsersPage.invitation.inviteFailedNotAllowed';
-        break;
-      default:
-        message = {
-          key: 'UsersPage.invitation.inviteFailedUnknown',
-          data: {
-            reason: result.error.tag,
-          },
-        };
-        break;
+    if (lastError.tag === ClientNewUserInvitationErrorTag.AlreadyMember && data.emails.length === 1) {
+      message = { key: 'UsersPage.invitation.inviteFailedAlreadyMember', data: { email: data.emails[0] } };
+    } else if (lastError.tag === ClientNewUserInvitationErrorTag.Offline) {
+      message = 'UsersPage.invitation.inviteFailedOffline';
+    } else if (lastError.tag === ClientNewUserInvitationErrorTag.NotAllowed) {
+      message = 'UsersPage.invitation.inviteFailedNotAllowed';
+    } else if (errorCount === data.emails.length) {
+      message = 'ALL FAILED UNKNOWN';
+    } else {
+      message = 'SOME FAILED UNKNOWN';
     }
     informationManager.present(
       new Information({
