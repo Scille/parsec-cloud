@@ -526,8 +526,12 @@ onMounted(async () => {
   } else {
     window.electronAPI.log('error', `Failed to retrieve user info ${JSON.stringify(clientInfoResult.error)}`);
   }
-  attachMouseOverTooltip(savedIconRef.value?.$el, 'fileEditors.saving.tooltipSaved');
-  attachMouseOverTooltip(unsavedIconRef.value?.$el, 'fileEditors.saving.tooltipUnsaved');
+  if (savedIconRef.value) {
+    attachMouseOverTooltip(savedIconRef.value.$el, 'fileEditors.saving.tooltipSaved');
+  }
+  if (unsavedIconRef.value) {
+    attachMouseOverTooltip(unsavedIconRef.value.$el, 'fileEditors.saving.tooltipUnsaved');
+  }
 });
 
 onUnmounted(async () => {

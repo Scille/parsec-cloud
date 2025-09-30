@@ -82,7 +82,7 @@ for (const displaySize of ['small', 'large']) {
   msTest(`Quick access loads correct document ${displaySize} display`, async ({ documents }) => {
     const entries = documents.locator('.folder-container').locator('.file-list-item');
 
-    if (displaySize === 'small') {
+    if (displaySize === DisplaySize.Small) {
       await documents.setDisplaySize(DisplaySize.Small);
     }
 
@@ -90,25 +90,27 @@ for (const displaySize of ['small', 'large']) {
     await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
     await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
     await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
+    await expect(documents.locator('.ms-spinner-modal')).toHaveCount(0);
     await expect(documents).toBeViewerPage();
     const doc1Name = (await documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text').textContent()) ?? '';
 
     // Ensure the main header is visible
     const isTopbarVisible = await documents.locator('#connected-header .topbar').isVisible();
     const fileViewerToggleMenuButton = documents.locator('.file-handler-topbar-buttons__item.toggle-menu');
-    if (!isTopbarVisible && fileViewerToggleMenuButton && displaySize === 'large') {
+    if (!isTopbarVisible && fileViewerToggleMenuButton && displaySize === DisplaySize.Large) {
       await fileViewerToggleMenuButton.click();
     }
 
-    if (displaySize === 'small') {
+    if (displaySize === DisplaySize.Small) {
       await expect(fileViewerToggleMenuButton).toBeHidden();
     }
 
     await documents.locator('.topbar-left-content').locator('.back-button').click();
     await entries.nth(3).dblclick();
-    await expect(documents.locator('.ms-spinner-modal').nth(0)).toBeVisible();
-    await expect(documents.locator('.ms-spinner-modal').nth(0).locator('.spinner-label__text')).toHaveText('Opening file...');
-    await expect(documents.locator('.ms-spinner-modal').nth(0)).toBeHidden();
+    await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
+    await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
+    await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
+    await expect(documents.locator('.ms-spinner-modal')).toHaveCount(0);
     await expect(documents).toBeViewerPage();
     const doc2Name = (await documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text').textContent()) ?? '';
 
