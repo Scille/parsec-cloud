@@ -73,8 +73,8 @@
           </div>
           <ion-icon
             class="cloud-overlay"
-            :class="isFileSynced() ? 'cloud-overlay-ok' : 'cloud-overlay-ko'"
-            :icon="isFileSynced() ? cloudDone : cloudOffline"
+            :class="syncStatus.class"
+            :icon="syncStatus.icon"
           />
         </div>
 
@@ -138,13 +138,13 @@
 import { formatFileSize, getFileIcon } from '@/common/file';
 import { Folder, formatTimeSince, MsImage, MsCheckbox, useWindowSize } from 'megashark-lib';
 import FileDropZone from '@/components/files/explorer/FileDropZone.vue';
-import { EntryModel, FileModel } from '@/components/files/types';
+import { EntryModel, EntrySyncStatus, FileModel } from '@/components/files/types';
 import { FileImportTuple } from '@/components/files/utils';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { FsPath, Path, UserProfile } from '@/parsec';
 import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
-import { cloudDone, cloudOffline, ellipsisHorizontal } from 'ionicons/icons';
-import { Ref, onMounted, ref } from 'vue';
+import { cloudDone, cloudOffline, ellipsisHorizontal, cloudUpload } from 'ionicons/icons';
+import { Ref, computed, onMounted, ref } from 'vue';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);
@@ -174,6 +174,16 @@ defineExpose({
 });
 
 const currentPath: Ref<FsPath> = ref('/');
+const syncStatus = computed(() => {
+  switch (props.entry.syncStatus) {
+    case EntrySyncStatus.Synced:
+      return { class: 'cloud-overlay-ok', icon: cloudDone };
+    case EntrySyncStatus.Uploading:
+      return { class: 'cloud-overlay-ko', icon: cloudUpload };
+    default:
+      return { class: 'cloud-overlay-ko', icon: cloudOffline };
+  }
+});
 
 onMounted(async () => {
   if (props.entry.isFile()) {
@@ -182,10 +192,6 @@ onMounted(async () => {
     currentPath.value = props.entry.path;
   }
 });
-
-function isFileSynced(): boolean {
-  return !props.entry.needSync;
-}
 
 async function onOptionsClick(event: PointerEvent): Promise<void> {
   event.preventDefault();

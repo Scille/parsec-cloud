@@ -142,9 +142,8 @@ async function parsecEventCallback(handle: ConnectionHandle, event: ClientEvent)
       case ClientEventTag.WorkspaceOpsOutboundSyncStarted:
         distributor.dispatchEvent(Events.EntrySyncStarted, { workspaceId: event.realmId, entryId: event.entryId, way: 'outbound' });
         break;
-      // Ignore those events for now
       case ClientEventTag.WorkspaceOpsOutboundSyncProgress:
-      case ClientEventTag.ServerConfigChanged:
+        distributor.dispatchEvent(Events.EntrySyncProgress, { workspaceId: event.realmId, entryId: event.entryId, way: 'outbound' });
         break;
       case ClientEventTag.ClientStarted:
         injectionProvider.getDefault().eventDistributor.dispatchEvent(Events.ClientStarted, { handle: handle });
@@ -157,6 +156,9 @@ async function parsecEventCallback(handle: ConnectionHandle, event: ClientEvent)
         break;
       case ClientEventTag.FrozenSelfUser:
         distributor.dispatchEvent(Events.ClientFrozen, undefined, { delay: 1000 });
+        break;
+      // Ignore this for now;
+      case ClientEventTag.ServerConfigChanged:
         break;
       default:
         window.electronAPI.log('info', `Unhandled event ${event.tag}`);

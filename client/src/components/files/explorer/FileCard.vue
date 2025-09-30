@@ -46,8 +46,8 @@
           />
           <ion-icon
             class="cloud-overlay"
-            :class="isFileSynced() ? 'cloud-overlay-ok' : 'cloud-overlay-ko'"
-            :icon="isFileSynced() ? cloudDone : cloudOffline"
+            :class="syncStatus.class"
+            :icon="syncStatus.icon"
           />
         </div>
 
@@ -71,12 +71,12 @@
 import { getFileIcon } from '@/common/file';
 import { Folder, formatTimeSince, MsImage, MsCheckbox } from 'megashark-lib';
 import FileDropZone from '@/components/files/explorer/FileDropZone.vue';
-import { EntryModel } from '@/components/files/types';
+import { EntryModel, EntrySyncStatus } from '@/components/files/types';
 import { FileImportTuple } from '@/components/files/utils';
 import { FsPath, Path } from '@/parsec';
 import { IonIcon, IonItem, IonText } from '@ionic/vue';
-import { cloudDone, cloudOffline, ellipsisHorizontal } from 'ionicons/icons';
-import { Ref, onMounted, ref } from 'vue';
+import { cloudDone, cloudOffline, cloudUpload, ellipsisHorizontal } from 'ionicons/icons';
+import { Ref, computed, onMounted, ref } from 'vue';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);
@@ -110,9 +110,16 @@ defineExpose({
   props,
 });
 
-function isFileSynced(): boolean {
-  return !props.entry.needSync;
-}
+const syncStatus = computed(() => {
+  switch (props.entry.syncStatus) {
+    case EntrySyncStatus.Synced:
+      return { class: 'cloud-overlay-ok', icon: cloudDone };
+    case EntrySyncStatus.Uploading:
+      return { class: 'cloud-overlay-ko', icon: cloudUpload };
+    default:
+      return { class: 'cloud-overlay-ko', icon: cloudOffline };
+  }
+});
 
 async function onOptionsClick(event: Event): Promise<void> {
   event.preventDefault();
