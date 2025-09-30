@@ -59,6 +59,10 @@ process.once('loaded', async () => {
     getLogs: () => {
       ipcRenderer.send(PageToWindowChannel.GetLogs);
     },
+    openPopup: (url: string) => {
+      ipcRenderer.send(PageToWindowChannel.OpenPopup, url);
+      return true;
+    },
     readCustomFile: (file: string): Promise<ArrayBuffer> => {
       return new Promise((resolve, _reject) => {
         // make sure that it's only a file name to avoid path injections

@@ -62,20 +62,19 @@
           />
         </ion-radio> -->
 
-        <!-- TO DO: uncomment for SSO -->
-        <!-- <ion-radio
-          v-if="false"
+        <ion-radio
+          v-if="isOpenBaoAvailable()"
           class="item-radio radio-list-item"
           label-placement="end"
-          :value="DeviceSaveStrategyTag.Sso"
+          :value="CustomDeviceSaveStrategyTag.SSO"
           justify="start"
         >
           <authentication-card
             :state="AuthenticationCardState.Default"
-            @click="onMethodSelected(DeviceSaveStrategyTag.Sso)"
-            :auth-method="DeviceSaveStrategyTag.Sso"
+            @click="onMethodSelected(CustomDeviceSaveStrategyTag.SSO)"
+            :auth-method="CustomDeviceSaveStrategyTag.SSO"
           />
-        </ion-radio> -->
+        </ion-radio>
       </ion-radio-group>
     </ion-list>
 
@@ -123,17 +122,20 @@
         </div>
       </div> -->
 
-      <!-- TO DO: uncomment for SSO -->
-      <!-- <div v-if="authentication === DeviceSaveStrategyTag.Sso">
+      <div v-if="authentication === CustomDeviceSaveStrategyTag.SSO">
         <div class="method-chosen">
           <ion-text class="method-chosen__title subtitles-sm">{{ $msTranslate('Authentication.methodChosen') }}</ion-text>
           <authentication-card
-            :auth-method="DeviceSaveStrategyTag.Sso"
+            :auth-method="CustomDeviceSaveStrategyTag.SSO"
             :state="AuthenticationCardState.Update"
             @update-clicked="changeAuthenticationMethod()"
           />
         </div>
-      </div> -->
+        <sso-provider-card
+          :provider="SSOProvider.ProConnect"
+          @click="onSSOLoginClicked(SSOProvider.ProConnect)"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -141,15 +143,20 @@
 <script setup lang="ts">
 import { MsChoosePasswordInput } from 'megashark-lib';
 import KeyringInformation from '@/components/devices/KeyringInformation.vue';
-import { DeviceSaveStrategy, DeviceSaveStrategyTag, SaveStrategy, isKeyringAvailable, isWeb } from '@/parsec';
+import { CustomDeviceSaveStrategyTag, DeviceSaveStrategy, DeviceSaveStrategyTag, SaveStrategy, isKeyringAvailable, isWeb } from '@/parsec';
 import { IonList, IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
 import { onMounted, ref, useTemplateRef } from 'vue';
 import authenticationCard from '@/components/profile/AuthenticationCard.vue';
 import { AuthenticationCardState } from '@/components/profile/types';
+import { useOpenBao } from '@/services/openBao';
+import { SSOProvider } from '@/components/devices/types';
+import SsoProviderCard from '@/components/devices/SsoProviderCard.vue';
 
-const authentication = ref<DeviceSaveStrategyTag | undefined>(undefined);
+const authentication = ref<DeviceSaveStrategyTag | CustomDeviceSaveStrategyTag | undefined>(undefined);
 const keyringAvailable = ref(false);
 const choosePasswordRef = useTemplateRef<InstanceType<typeof MsChoosePasswordInput>>('choosePassword');
+const { openBaoConnect, isOpenBaoAvailable } = useOpenBao();
+const openBaoLoggedIn = ref(false);
 
 const props = defineProps<{
   showTitle?: boolean;
@@ -178,7 +185,7 @@ async function onChange(_value: any): Promise<void> {
   }
 }
 
-async function onMethodSelected(method: DeviceSaveStrategyTag): Promise<void> {
+async function onMethodSelected(method: DeviceSaveStrategyTag | CustomDeviceSaveStrategyTag): Promise<void> {
   authentication.value = method;
 }
 
@@ -189,6 +196,8 @@ async function changeAuthenticationMethod(): Promise<void> {
 function getSaveStrategy(): DeviceSaveStrategy {
   if (authentication.value === DeviceSaveStrategyTag.Keyring) {
     return SaveStrategy.useKeyring();
+  } else if (authentication.value === CustomDeviceSaveStrategyTag.SSO) {
+    return SaveStrategy.useSSO() as any as DeviceSaveStrategy;
   }
   return SaveStrategy.usePassword(choosePasswordRef.value?.password || '');
 }
@@ -198,8 +207,19 @@ async function areFieldsCorrect(): Promise<boolean> {
     return true;
   } else if (authentication.value === DeviceSaveStrategyTag.Password && choosePasswordRef.value) {
     return await choosePasswordRef.value.areFieldsCorrect();
+  } else if (authentication.value === CustomDeviceSaveStrategyTag.SSO && openBaoLoggedIn.value) {
+    return true;
   }
   return false;
+}
+
+async function onSSOLoginClicked(_provider: SSOProvider): Promise<void> {
+  const result = await openBaoConnect();
+  if (!result.ok) {
+    window.electronAPI.log('error', `Error while connecting with SSO: ${(result.error.errors as Array<string>)[0]}`);
+  } else {
+    openBaoLoggedIn.value = true;
+  }
 }
 </script>
 

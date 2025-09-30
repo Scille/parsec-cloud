@@ -13,6 +13,7 @@ import {
   ClientStartError,
   ClientStopError,
   ConnectionHandle,
+  CustomDeviceSaveStrategyTag,
   DeviceAccessStrategy,
   DeviceAccessStrategyAccountVault,
   DeviceAccessStrategyKeyring,
@@ -24,6 +25,7 @@ import {
   DeviceSaveStrategyAccountVault,
   DeviceSaveStrategyKeyring,
   DeviceSaveStrategyPassword,
+  DeviceSaveStrategySSO,
   DeviceSaveStrategyTag,
   ListAvailableDeviceError,
   OrganizationID,
@@ -306,6 +308,11 @@ export const SaveStrategy = {
         ciphertextKeyId: keyResult.value[0],
         ciphertextKey: keyResult.value[1],
       },
+    };
+  },
+  useSSO(): DeviceSaveStrategySSO {
+    return {
+      tag: CustomDeviceSaveStrategyTag.SSO,
     };
   },
 };

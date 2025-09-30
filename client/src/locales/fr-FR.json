@@ -1133,7 +1133,10 @@
                 "title": "Carte à puce",
                 "description": "La carte à puce doit être insérée et prête à l'emploi."
             },
-            "ssoProConnect": "SSO (ProConnect)"
+            "sso": {
+                "title": "Authentification unique (SSO)",
+                "description": "S'authentifier avec un compte externe"
+            }
         },
         "methodChosen": "Méthode choisie :",
         "active": "Méthode active",
@@ -1142,7 +1145,7 @@
         "changePasswordButton": "Modifier le mot de passe",
         "useKeyring": "Authentification du système",
         "usePassword": "Mot de passe",
-        "useSsoProConnect": "SSO (ProConnect)",
+        "useSso": "Authentification unique (SSO)",
         "label": "Méthode d'authentification",
         "keyringUnavailableOnSystem": "Indisponible sur votre système",
         "keyringUnavailableOnWeb": "Indisponible sur le web"
@@ -2554,5 +2557,10 @@
             "open": "Afficher dans l'explorateur",
             "cancel": "Annuler"
         }
+    },
+    "proConnect": {
+        "title": "S'identifier avec ProConnect",
+        "description": "Qu'est-ce que ProConnect ?",
+        "link": "https://www.proconnect.gouv.fr/"
     }
 }

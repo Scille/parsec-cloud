@@ -1134,7 +1134,10 @@
                 "title": "Smartcard",
                 "description": "The smartcard should be plugged in and ready to use."
             },
-            "ssoProConnect": "SSO (ProConnect)"
+            "sso": {
+                "title": "Single Sign-On",
+                "description": "Login with an external account"
+            }
         },
         "methodChosen": "Method chosen:",
         "active": "Active method",
@@ -1143,7 +1146,7 @@
         "changePasswordButton": "Change password",
         "useKeyring": "System Authentication",
         "usePassword": "Password",
-        "useSsoProConnect": "SSO (ProConnect)",
+        "useSso": "Single Sign-On",
         "label": "Authentication method",
         "keyringUnavailableOnSystem": "Unavailable on your system",
         "keyringUnavailableOnWeb": "Unavailable on web"
@@ -2555,5 +2558,10 @@
             "open": "Show in explorer",
             "cancel": "Cancel"
         }
+    },
+    "proConnect": {
+        "title": "Authenticate with ProConnect",
+        "description": "What's ProConnect?",
+        "link": "https://www.proconnect.gouv.fr/"
     }
 }

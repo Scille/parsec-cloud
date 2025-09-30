@@ -50,17 +50,17 @@
 import { IonText, IonIcon, IonButton } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
 import { AuthenticationCardState } from '@/components/profile/types';
-import { DeviceSaveStrategyTag, isDesktop, isKeyringAvailable, isWeb } from '@/parsec';
+import { CustomDeviceSaveStrategyTag, DeviceSaveStrategyTag, isDesktop, isKeyringAvailable, isWeb } from '@/parsec';
 import KeypadGradient from '@/assets/images/keypad-gradient.svg';
 import EllipsisGradient from '@/assets/images/ellipsis-gradient.svg';
 import idCardGradient from '@/assets/images/id-card-gradient.svg';
-// import personCircleGradient from '@/assets/images/person-circle-gradient.svg';
+import personCircleGradient from '@/assets/images/person-circle-gradient.svg';
 import { Translatable } from 'megashark-lib';
 import { computed, onMounted, ref } from 'vue';
 
 const props = defineProps<{
   state: AuthenticationCardState;
-  authMethod: DeviceSaveStrategyTag;
+  authMethod: DeviceSaveStrategyTag | CustomDeviceSaveStrategyTag;
   disabled?: boolean;
 }>();
 
@@ -74,7 +74,7 @@ defineEmits<{
 }>();
 
 const methodConfig: Record<
-  DeviceSaveStrategyTag,
+  DeviceSaveStrategyTag | CustomDeviceSaveStrategyTag,
   {
     imageSrc: string;
     imageAlt: string;
@@ -106,14 +106,12 @@ const methodConfig: Record<
     methodName: '',
     description: '',
   },
-
-  // TO DO: Add SSO method when available
-  // [DeviceSaveStrategyTag.Sso]: {
-  //   imageSrc: personCircleGradient,
-  //   imageAlt: 'Smartcard',
-  //   methodName: 'Authentication.method.ssoProConnect',
-  //   description: 'Authentication.method.ssoProConnect.description',
-  // },
+  [CustomDeviceSaveStrategyTag.SSO]: {
+    imageSrc: personCircleGradient,
+    imageAlt: 'Smartcard',
+    methodName: 'Authentication.method.sso.title',
+    description: 'Authentication.method.sso.description',
+  },
 };
 
 function keyringUnavailableMessage(): Translatable {

@@ -201,7 +201,7 @@ async function setupApp(): Promise<void> {
   window.isTesting = (): boolean => 'TESTING' in window && (window.TESTING as boolean);
 
   if (!isElectron()) {
-    setupMockElectronAPI(injectionProvider);
+    setupWebElectronAPI(injectionProvider);
   }
   await ResourcesManager.instance().loadAll();
 
@@ -511,7 +511,7 @@ async function setupApp(): Promise<void> {
   }
 }
 
-function setupMockElectronAPI(injectionProvider: InjectionProvider): void {
+function setupWebElectronAPI(injectionProvider: InjectionProvider): void {
   window.electronAPI = {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     sendConfig: (_config: Config): void => {},
@@ -572,6 +572,18 @@ function setupMockElectronAPI(injectionProvider: InjectionProvider): void {
       return new Promise((resolve, _reject) => {
         resolve(undefined);
       });
+    },
+    openPopup: (url: string): boolean => {
+      const width = 600;
+      const height = 800;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+      const popup = window.open(url, 'Login', `width=${width},height=${height},left=${left},top=${top}`);
+
+      if (!popup) {
+        return false;
+      }
+      return true;
     },
   };
 }
@@ -711,6 +723,7 @@ declare global {
       getLogs: () => void;
       initError: (error?: string) => void;
       readCustomFile: (file: string) => Promise<ArrayBuffer | undefined>;
+      openPopup: (url: string) => boolean;
     };
   }
 }
