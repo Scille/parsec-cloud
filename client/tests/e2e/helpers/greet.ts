@@ -7,6 +7,7 @@ import {
   fillInputModal,
   fillIonInput,
   getClipboardText,
+  inviteUsers,
   MsPage,
   setWriteClipboardPermission,
 } from '@tests/e2e/helpers';
@@ -35,7 +36,7 @@ export async function initGreetUserModals(
     await hostPage.locator('#activate-users-ms-action-bar').getByText('Invite a user').click();
   }
   await expect(hostPage).toBeInvitationPage();
-  await fillInputModal(hostPage, email);
+  await inviteUsers(hostPage, email);
   await expect(hostPage).toShowToast(`An invitation to join the organization has been sent to ${email}.`, 'Success');
   // Back to users page
   await hostPage.locator('.topbar .back-button').click();

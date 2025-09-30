@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { expect, fillInputModal, login, msTest } from '@tests/e2e/helpers';
+import { expect, inviteUsers, login, msTest } from '@tests/e2e/helpers';
 
 msTest('Display account invitations', async ({ parsecAccountLoggedIn }) => {
   msTest.setTimeout(45_000);
@@ -23,7 +23,7 @@ msTest('Display account invitations', async ({ parsecAccountLoggedIn }) => {
   await expect(noAccountPage).toHavePageTitle('Users');
   await expect(noAccountPage).toBeUserPage();
   await noAccountPage.locator('#activate-users-ms-action-bar').getByText('Invite a user').click();
-  await fillInputModal(noAccountPage, email);
+  await inviteUsers(noAccountPage, email);
   await expect(noAccountPage).toBeInvitationPage();
   await expect(noAccountPage).toShowToast(`An invitation to join the organization has been sent to ${email}.`, 'Success');
   await noAccountPage.locator('.topbar .back-button').click();

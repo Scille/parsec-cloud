@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { answerQuestion, expect, fillInputModal, getClipboardText, msTest, setWriteClipboardPermission } from '@tests/e2e/helpers';
+import { answerQuestion, expect, getClipboardText, inviteUsers, msTest, setWriteClipboardPermission } from '@tests/e2e/helpers';
 
 msTest('Profile popover default state', async ({ connected }) => {
   await expect(connected.locator('.topbar').locator('#invitations-button')).toHaveText('One invitation');
@@ -82,7 +82,7 @@ msTest('Invite new user', async ({ connected }) => {
   await popover.locator('.invitations-list-header__button').click();
   await expect(connected).toBeInvitationPage();
   // cspell:disable-next-line
-  await fillInputModal(connected, 'zana@wraeclast');
+  await inviteUsers(connected, 'zana@wraeclast');
   // cspell:disable-next-line
   await expect(connected).toShowToast('An invitation to join the organization has been sent to zana@wraeclast.', 'Success');
   await connected.locator('.topbar .back-button').click();
@@ -106,8 +106,6 @@ msTest('Invite user with already existing email', async ({ connected }) => {
   const popover = connected.locator('.invitations-list-popover');
   await popover.locator('.invitations-list-header__button').click();
   await expect(connected).toBeInvitationPage();
-  // cspell:disable-next-line
-  await fillInputModal(connected, 'bob@example.com');
-  // cspell:disable-next-line
-  await expect(connected).toShowToast('The email bob@example.com is already used by someone in this organization.', 'Error');
+  await inviteUsers(connected, 'bob@example.com');
+  await expect(connected).toShowToast('The email bob@example.com is already used by someone in this organization.', 'Warning');
 });

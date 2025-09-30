@@ -78,6 +78,17 @@ export async function fillInputModal(root: Locator | Page, text: string, clear?:
   await expect(modal).toBeHidden();
 }
 
+export async function inviteUsers(page: MsPage, emails: Array<string> | string): Promise<void> {
+  const modal = page.locator('.invite-modal');
+  await expect(modal).toBeVisible();
+  const okButton = modal.locator('#next-button');
+  await expect(okButton).toBeTrulyDisabled();
+  await fillIonInput(modal.locator('ion-input'), Array.isArray(emails) ? emails.join(';') : emails);
+  await expect(okButton).toBeTrulyEnabled();
+  await okButton.click();
+  await expect(modal).toBeHidden();
+}
+
 export async function getClipboardText(page: Page): Promise<string> {
   return await page.evaluate(() => navigator.clipboard.readText());
 }

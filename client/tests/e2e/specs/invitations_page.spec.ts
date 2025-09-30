@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { answerQuestion, expect, fillInputModal, getClipboardText, msTest, setWriteClipboardPermission } from '@tests/e2e/helpers';
+import { answerQuestion, expect, fillIonInput, getClipboardText, msTest, setWriteClipboardPermission } from '@tests/e2e/helpers';
 
 msTest('Email invitations default state', async ({ invitationsPage }) => {
   const viewToggle = invitationsPage.locator('.toggle-view-container');
@@ -41,20 +41,6 @@ msTest('Email invitations default state', async ({ invitationsPage }) => {
   await expect(tooltip).toBeVisible();
   await expect(tooltip).toHaveText('Delete invitation');
   await invites.nth(0).locator('.invitation-email').hover();
-});
-
-msTest('Email invitations new invite', async ({ invitationsPage }) => {
-  const viewToggle = invitationsPage.locator('.toggle-view-container');
-  const invites = invitationsPage.locator('.invitations-container-list').locator('.invitation-list-item');
-  await expect(invites).toHaveCount(1);
-  await viewToggle.locator('#invite-user-button').click();
-  await fillInputModal(invitationsPage, 'gordon.freeman@blackmesa.nm');
-  await expect(invitationsPage).toShowToast(
-    'An invitation to join the organization has been sent to gordon.freeman@blackmesa.nm.',
-    'Success',
-  );
-  await expect(invites).toHaveCount(2);
-  await expect(invites.nth(1).locator('.invitation-email')).toHaveText('gordon.freeman@blackmesa.nm');
 });
 
 msTest('Email invitations start greet', async ({ invitationsPage }) => {
@@ -114,5 +100,100 @@ for (const answer of [true, false]) {
     } else {
       await expect(invites).toHaveCount(1);
     }
+  });
+}
+
+interface InvitationParam {
+  description: string;
+  emails: Array<string>;
+  used: Array<string>;
+  expectedToast: {
+    level: 'Info' | 'Success' | 'Error' | 'Warning';
+    message: string;
+  };
+  expectedInvitations: Array<string>;
+}
+
+const INVITATION_PARAMS: Array<InvitationParam> = [
+  {
+    description: 'Normal invitation',
+    emails: ['gordon.freeman@blackmesa.nm'],
+    used: ['gordon.freeman@blackmesa.nm'],
+    expectedToast: {
+      level: 'Success',
+      message: 'An invitation to join the organization has been sent to gordon.freeman@blackmesa.nm.',
+    },
+    expectedInvitations: ['gordon.freeman@blackmesa.nm'],
+  },
+  {
+    description: 'Already used email',
+    emails: ['bob@example.com'],
+    used: ['bob@example.com'],
+    expectedToast: {
+      level: 'Warning',
+      message: 'The email bob@example.com is already used by someone in this organization.',
+    },
+    expectedInvitations: [],
+  },
+  {
+    description: 'Multiple invitations with one invalid',
+    emails: ['a@b.c', '  d@e.f    ', 'invalid'],
+    used: ['a@b.c', 'd@e.f'],
+    expectedToast: {
+      level: 'Success',
+      message: 'Invitations to join the organization have been sent to 2 emails.',
+    },
+    expectedInvitations: ['a@b.c', 'd@e.f'],
+  },
+  {
+    description: 'Multiple invitations with one already used email',
+    emails: ['bob@example.com', 'a@b.c'],
+    used: ['bob@example.com', 'a@b.c'],
+    expectedToast: {
+      level: 'Warning',
+      message: 'The invitations have successfully been sent, however one or more addresses already belong to members in this organization.',
+    },
+    expectedInvitations: ['a@b.c'],
+  },
+  {
+    description: 'Same email multiple times',
+    emails: ['a@b.c', 'd@e.f', 'a@b.c', 'g@h.i', 'a@b.c'],
+    used: ['a@b.c', 'd@e.f', 'g@h.i'],
+    expectedToast: {
+      level: 'Success',
+      message: 'Invitations to join the organization have been sent to 3 emails.',
+    },
+    expectedInvitations: ['a@b.c', 'd@e.f', 'g@h.i'],
+  },
+];
+
+for (const params of INVITATION_PARAMS) {
+  msTest(`Invite new email: ${params.description}`, async ({ invitationsPage }) => {
+    const viewToggle = invitationsPage.locator('.toggle-view-container');
+    const invites = invitationsPage.locator('.invitations-container-list').locator('.invitation-list-item');
+    await expect(invites).toHaveCount(1);
+    await viewToggle.locator('#invite-user-button').click();
+    const modal = invitationsPage.locator('.invite-modal');
+    await expect(modal).toBeVisible();
+    const okButton = modal.locator('#next-button');
+    await expect(okButton).toBeTrulyDisabled();
+    await fillIonInput(modal.locator('ion-input'), params.emails.join(';'));
+    if (params.emails.length <= 1) {
+      await expect(okButton).toHaveText('Send invitation');
+      await expect(modal.locator('.email-list-container')).toBeHidden();
+    } else {
+      await expect(okButton).toHaveText(`Send ${params.used.length} invitations`);
+      await expect(modal.locator('.email-list-container')).toBeVisible();
+      await expect(modal.locator('.email-list-container').locator('.email-list__title')).toHaveText(
+        `List of email addresses (${params.used.length})`,
+      );
+      await expect(modal.locator('.email-list-container').locator('.email-list__item')).toHaveText(params.used);
+    }
+    await expect(okButton).toBeTrulyEnabled();
+    await okButton.click();
+    await expect(modal).toBeHidden();
+    await expect(invitationsPage).toShowToast(params.expectedToast.message, params.expectedToast.level);
+    await expect(invites).toHaveCount(params.expectedInvitations.length + 1);
+    await expect(invites.locator('.invitation-email')).toHaveText(['zack@example.invalid', ...params.expectedInvitations]);
   });
 }
