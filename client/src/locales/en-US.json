@@ -1500,6 +1500,7 @@
             "assignAllFailed": "Could not transfer the roles.",
             "processing": "Processing the changes to be made...",
             "noRoles": "No new roles to transfer to {user}.",
+            "externalLimitation": "{user} is an External user and cannot be assigned a role beyond Contributor.",
             "copyFrom": "Copy role from: | Copy roles from:",
             "copyTo": "To:",
             "workspacesList": "For the workspace: | For the workspaces:",
