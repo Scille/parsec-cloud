@@ -262,6 +262,12 @@
           </ion-button>
         </div>
         <div class="organization-list">
+          <ion-text
+            class="organization-list__title title-h5"
+            v-if="pkiRequestList.length > 0"
+          >
+            {{ $msTranslate('HomePage.organizationRequest.title') }}
+          </ion-text>
           <organization-pki-request
             v-for="pkiRequest in pkiRequestList"
             :key="pkiRequest.certificate"
@@ -277,6 +283,12 @@
             {{ $msTranslate({ key: 'HomePage.organizationList.noMatch', data: { query: searchQuery } }) }}
           </ion-text>
 
+          <ion-text
+            class="organization-list__title title-h5"
+            v-if="pkiRequestList.length > 0"
+          >
+            {{ $msTranslate('HomePage.organizationList.subtitle') }}
+          </ion-text>
           <organization-card
             v-for="device in filteredDevices"
             :key="device.deviceId"
@@ -597,6 +609,11 @@ async function openDocumentation(): Promise<void> {
 
     @include ms.responsive-breakpoint('md') {
       width: 100%;
+    }
+
+    &__title {
+      margin-top: 0.5rem;
+      color: var(--parsec-color-light-secondary-grey);
     }
   }
 }
