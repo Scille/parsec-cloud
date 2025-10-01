@@ -110,7 +110,7 @@ function onRoleChanged(user: UserTuple, newRoleOption: MsOption, oldRoleOption?:
   gap: 0.5rem;
 
   &__you {
-    color: var(--parsec-color-light-primary-600);
+    color: var(--parsec-color-light-secondary-grey);
   }
 }
 </style>

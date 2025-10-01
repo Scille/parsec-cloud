@@ -274,9 +274,18 @@ const filteredUserRoles = computed(() => {
 });
 
 const filteredSharedUserRoles = computed(() => {
+  const roleOrder = [WorkspaceRole.Owner, WorkspaceRole.Manager, WorkspaceRole.Contributor, WorkspaceRole.Reader];
   return filteredUserRoles.value
     .filter((userRole: UserRole) => userRole.role !== null)
-    .sort((item1, item2) => item1.user.humanHandle.label.localeCompare(item2.user.humanHandle.label));
+    .sort((item1, item2) => {
+      const roleCompare = roleOrder.indexOf(item1.role!) - roleOrder.indexOf(item2.role!);
+
+      if (roleCompare === 0) {
+        return item1.user.humanHandle.label.localeCompare(item2.user.humanHandle.label);
+      }
+
+      return roleCompare;
+    });
 });
 
 const filteredNotSharedUserRoles = computed(() => {
