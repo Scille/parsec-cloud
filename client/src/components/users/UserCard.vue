@@ -42,7 +42,10 @@
         :user-avatar="user.humanHandle.label"
       />
       <div class="user-card-info">
-        <ion-text class="user-card-info__name body">
+        <ion-text
+          class="user-card-info__name body"
+          :title="user.humanHandle.label"
+        >
           <span>{{ user.humanHandle.label }}</span>
           <span
             v-if="user.isCurrent"
@@ -51,7 +54,10 @@
             {{ $msTranslate('UsersPage.currentUser') }}
           </span>
         </ion-text>
-        <ion-text class="user-card-info__email body-sm">
+        <ion-text
+          class="user-card-info__email body-sm"
+          :title="user.humanHandle.email"
+        >
           {{ user.humanHandle.email }}
         </ion-text>
       </div>

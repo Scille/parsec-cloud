@@ -25,7 +25,10 @@
           :icon="workspace.availableOffline ? cloudDone : cloudOffline"
         />
       </div>
-      <ion-label class="workspace-name__label cell">
+      <ion-label
+        class="workspace-name__label cell"
+        :title="workspace.currentName"
+      >
         {{ workspace.currentName }}
       </ion-label>
 

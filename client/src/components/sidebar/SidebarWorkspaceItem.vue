@@ -10,7 +10,12 @@
     @contextmenu="onContextMenu"
   >
     <div class="sidebar-item-workspace">
-      <ion-text class="sidebar-item-workspace__label">{{ workspace.currentName }}</ion-text>
+      <ion-text
+        class="sidebar-item-workspace__label"
+        :title="workspace.currentName"
+      >
+        {{ workspace.currentName }}
+      </ion-text>
       <div
         class="sidebar-item-workspace__option"
         @click.stop="$emit('contextMenuRequested', $event)"
