@@ -96,7 +96,10 @@
 
     <!-- user mail -->
     <div class="user-email">
-      <ion-text class="user-email__label cell">
+      <ion-text
+        class="user-email__label cell"
+        :title="user.humanHandle.email"
+      >
         {{ user.humanHandle.email }}
       </ion-text>
     </div>

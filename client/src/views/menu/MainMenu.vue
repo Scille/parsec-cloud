@@ -34,7 +34,10 @@
                 />
               </ion-avatar>
               <div class="organization-text">
-                <ion-card-title class="title-h3">
+                <ion-card-title
+                  class="title-h3"
+                  :title="userInfo?.organizationId"
+                >
                   {{ userInfo?.organizationId }}
                 </ion-card-title>
               </div>

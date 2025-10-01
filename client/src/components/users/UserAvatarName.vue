@@ -11,6 +11,7 @@
     <ion-text
       class="person-name body"
       v-if="userName"
+      :title="userName"
     >
       {{ userName }}
     </ion-text>

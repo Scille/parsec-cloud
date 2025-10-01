@@ -21,7 +21,10 @@
         <ion-icon :icon="star" />
       </div>
 
-      <ion-text class="workspace-card-content__title subtitles-sm">
+      <ion-text
+        class="workspace-card-content__title subtitles-sm"
+        :title="workspace.currentName"
+      >
         {{ workspace.currentName }}
       </ion-text>
 
