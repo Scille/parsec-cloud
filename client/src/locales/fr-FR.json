@@ -1499,6 +1499,7 @@
             "assignAllFailed": "Impossible de transférer les rôles.",
             "processing": "Calcul des changements...",
             "noRoles": "Aucun nouveau rôle à transférer à {user}",
+            "externalLimitation": "{user} est un utilisateur Externe et ne peut pas se voir assigner de rôle au-delà de Contributeur.",
             "copyFrom": "Copier le rôle de : | Copier les rôles de :",
             "copyTo": "À :",
             "workspacesList": "Pour l'espace de travail :| Pour les espaces de travail :",

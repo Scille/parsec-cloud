@@ -106,8 +106,16 @@
           >
             {{ $msTranslate({ key: 'UsersPage.assignRoles.noRoles', data: { user: targetUser.humanHandle.label } }) }}
           </ms-report-text>
-
-          <ion-text class="workspace-title subtitles-sm">
+          <ms-report-text
+            v-show="externalLimitationWarning"
+            :theme="MsReportTheme.Info"
+          >
+            {{ $msTranslate({ key: 'UsersPage.assignRoles.externalLimitation', data: { user: targetUser.humanHandle.label } }) }}
+          </ms-report-text>
+          <ion-text
+            v-show="roleUpdates.length > 0"
+            class="workspace-title subtitles-sm"
+          >
             {{ $msTranslate({ key: 'UsersPage.assignRoles.workspacesList', data: { count: roleUpdates.length } }) }}
           </ion-text>
           <ion-list class="workspace-list">
@@ -205,6 +213,7 @@ const targetUser: Ref<UserInfo | undefined> = ref();
 const currentPage: Ref<Steps> = ref(Steps.SelectUser);
 const roleUpdates: Ref<WorkspaceRoleUpdate[]> = ref([]);
 const finished = ref(false);
+const externalLimitationWarning = ref(false);
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 
 const props = defineProps<{
@@ -253,6 +262,7 @@ async function findWorkspaces(): Promise<void> {
       targetUser.value.currentProfile === UserProfile.Outsider &&
       (update.newRole === WorkspaceRole.Manager || update.newRole === WorkspaceRole.Owner)
     ) {
+      externalLimitationWarning.value = true;
       update.newRole = WorkspaceRole.Contributor;
     }
     // Manager can't promote, we downgrade
@@ -279,6 +289,7 @@ async function findWorkspaces(): Promise<void> {
 }
 
 async function assignNewRoles(): Promise<void> {
+  externalLimitationWarning.value = false;
   if (!targetUser.value) {
     return;
   }
