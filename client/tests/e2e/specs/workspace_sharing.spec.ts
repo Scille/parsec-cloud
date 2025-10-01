@@ -84,7 +84,15 @@ msTest('Share with external', async ({ workspaceSharingModal }) => {
   await expect(workspaceSharingModal.page()).toShowToast("Malloryy McMalloryFace's role has been updated to Contributor.", 'Success');
   await expect(users).toHaveCount(3);
   await expect(suggestions).toHaveCount(0);
-  await expect(users.nth(2).locator('.dropdown-button')).toHaveText('Contributor');
+  await expect(users.nth(1).locator('.dropdown-button')).toHaveText('Contributor');
+
+  // Set reader, should be the last user now
+  await users.nth(1).locator('.dropdown-button').click();
+  await roles.nth(3).click();
+  await expect(workspaceSharingModal.page()).toShowToast("Malloryy McMalloryFace's role has been updated to Reader.", 'Success');
+  await expect(users).toHaveCount(3);
+  await expect(suggestions).toHaveCount(0);
+  await expect(users.nth(2).locator('.dropdown-button')).toHaveText('Reader');
 });
 
 msTest('Unshare workspace', async ({ workspaceSharingModal }) => {

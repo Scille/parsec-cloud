@@ -171,7 +171,7 @@ async function onOptionsClick(event: Event): Promise<void> {
       gap: 0.5rem;
 
       .name-you {
-        color: var(--parsec-color-light-primary-600);
+        color: var(--parsec-color-light-secondary-grey);
       }
     }
 
