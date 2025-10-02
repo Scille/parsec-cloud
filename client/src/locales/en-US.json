@@ -2536,8 +2536,11 @@
             "unsaved": "Changes unsaved",
             "saving": "Saving...",
             "saved": "File saved",
+            "error": "Error while saving",
             "tooltipSaved": "Changes have been saved.",
-            "tooltipUnsaved": "Changes haven't been saved yet."
+            "tooltipUnsaved": "Changes haven't been saved yet.",
+            "tooltipError": "Failed to save the changes.",
+            "readOnly": "Read only document"
         }
     },
     "openFallback": {

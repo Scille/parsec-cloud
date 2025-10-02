@@ -58,7 +58,7 @@
 <script setup lang="ts">
 import { IonButton, IonIcon, IonList, IonItem, IonText } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
-import { closeFile, openFile, writeFile } from '@/parsec';
+import { closeFile, FileDescriptor, openFile, writeFile } from '@/parsec';
 import { I18n, Translatable } from 'megashark-lib';
 import { ref, inject, useTemplateRef, onMounted, onUnmounted } from 'vue';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
@@ -76,11 +76,11 @@ const documentType = ref<CryptpadDocumentType | null>(null);
 const cryptpadInstance = ref<Cryptpad | null>(null);
 const fileUrl = ref<string | null>(null);
 const error = ref('');
-const isSaving = ref(false);
 
-const { contentInfo, fileInfo } = defineProps<{
+const { contentInfo, fileInfo, readOnly } = defineProps<{
   contentInfo: FileContentInfo;
   fileInfo: DetectedFileType;
+  readOnly?: boolean;
 }>();
 
 const emits = defineEmits<{
@@ -176,6 +176,7 @@ async function openFileWithCryptpad(): Promise<boolean> {
     return false;
   }
   fileUrl.value = URL.createObjectURL(new Blob([contentInfo.data as Uint8Array<ArrayBuffer>], { type: 'application/octet-stream' }));
+  let isSaving = false;
 
   const cryptpadConfig = {
     document: {
@@ -193,30 +194,58 @@ async function openFileWithCryptpad(): Promise<boolean> {
     autosave: (window as any).TESTING_EDITICS_SAVE_TIMEOUT ?? 10,
     events: {
       onSave: async (file: Blob, callback: () => void): Promise<void> => {
-        isSaving.value = true;
-        emits('onSaveStateChange', SaveState.saving);
-        // Handle save logic here
-        const openResult = await openFile(workspaceHandle, documentPath, { write: true, truncate: true });
-
-        if (!openResult.ok) {
-          return undefined;
-        }
-        const fd = openResult.value;
-        const arrayBuffer = await file.arrayBuffer();
-        await writeFile(workspaceHandle, fd, 0, new Uint8Array(arrayBuffer));
-        await closeFile(workspaceHandle, fd);
-        callback();
-        setTimeout(() => {
-          if (isSaving.value === true) {
-            isSaving.value = false;
-            emits('onSaveStateChange', SaveState.saved);
+        let hasError = false;
+        let fd: FileDescriptor | undefined = undefined;
+        const start = Date.now();
+        try {
+          if (readOnly) {
+            return;
           }
-        }, 1000);
+          isSaving = true;
+          emits('onSaveStateChange', SaveState.Saving);
+          // Handle save logic here
+          const openResult = await openFile(workspaceHandle, documentPath, { write: true, truncate: true });
+
+          if (!openResult.ok) {
+            window.electronAPI.log('error', `Failed to open file: ${openResult.error.tag} (${openResult.error.error})`);
+            hasError = true;
+            return;
+          }
+          fd = openResult.value;
+          const arrayBuffer = await file.arrayBuffer();
+          const writeResult = await writeFile(workspaceHandle, fd, 0, new Uint8Array(arrayBuffer));
+          if (!writeResult.ok) {
+            hasError = true;
+            window.electronAPI.log('error', `Failed to write file: ${writeResult.error.tag} (${writeResult.error.error})`);
+          }
+        } catch (e: any) {
+          window.electronAPI.log('error', `Failed to save file: ${e.toString()}`);
+          hasError = true;
+        } finally {
+          if (fd) {
+            await closeFile(workspaceHandle, fd);
+          }
+          callback();
+          const end = Date.now();
+          setTimeout(
+            () => {
+              if (isSaving === true) {
+                isSaving = false;
+                if (!hasError) {
+                  emits('onSaveStateChange', SaveState.Saved);
+                } else {
+                  emits('onSaveStateChange', SaveState.Error);
+                }
+              }
+            },
+            Math.max(1000 - (end - start), 0),
+          );
+        }
       },
       onHasUnsavedChanges: (unsaved: boolean): void => {
         if (unsaved) {
-          isSaving.value = false;
-          emits('onSaveStateChange', SaveState.unsaved);
+          isSaving = false;
+          emits('onSaveStateChange', SaveState.Unsaved);
         }
       },
     },
