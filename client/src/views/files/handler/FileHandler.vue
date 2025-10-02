@@ -50,31 +50,48 @@
               </ion-text>
             </div>
             <div
-              v-if="isComponentEditor()"
+              v-if="isComponentEditor() && readOnly"
+              class="save-info"
+            >
+              {{ $msTranslate('fileEditors.saving.readOnly') }}
+            </div>
+            <div
+              v-if="isComponentEditor() && !readOnly"
               class="save-info"
             >
               <ion-icon
-                v-show="saveState === SaveState.saved"
+                v-show="saveState === SaveState.Error"
+                class="save-info-icon save-info-icon-error"
+                ref="errorIcon"
+                :icon="alert"
+              />
+              <ion-icon
+                v-show="saveState === SaveState.Saved"
                 class="save-info-icon save-info-icon-ok"
                 id="saved-changes"
                 ref="savedIcon"
                 :icon="save"
               />
               <ms-spinner
-                v-show="saveState === SaveState.saving"
+                v-show="saveState === SaveState.Saving"
                 class="save-info-spinner"
               />
               <ms-image
-                v-show="saveState === SaveState.unsaved"
+                v-show="saveState === SaveState.Unsaved"
                 class="save-info-icon save-info-icon-ko"
                 id="unsaved-changes"
                 ref="unsavedIcon"
                 :image="UnsavedIcon"
               />
               <ion-text
-                v-show="saveState && showSaveStateText && isLargeDisplay"
+                v-show="saveState !== SaveState.None && showSaveStateText && isLargeDisplay"
                 class="save-info-text button-small"
-                :class="saveState === SaveState.saved ? 'save-info-text-fade-out' : 'save-info-text-fade-in'"
+                :class="{
+                  'save-info-text-fade-out': saveState === SaveState.Saved || saveState === SaveState.Error,
+                  'save-info-text-fade-in': saveState !== SaveState.Saved && saveState !== SaveState.Error,
+                  'save-info-text-ok': saveState !== SaveState.Error,
+                  'save-info-text-ko': saveState === SaveState.Error,
+                }"
               >
                 {{ $msTranslate(saveStateText) }}
               </ion-text>
@@ -169,9 +186,11 @@
 
           <!-- file-handler sub-component -->
           <component
+            v-if="detectedFileType"
             :is="handlerComponent"
             :content-info="contentInfo"
             :file-info="detectedFileType"
+            :read-only="readOnly"
             @file-loaded="handlerReadyRef = true"
             v-on="isComponentEditor() ? { onSaveStateChange: onSaveStateChange } : {}"
           />
@@ -219,9 +238,9 @@ import {
   attachMouseOverTooltip,
   UnsavedIcon,
 } from 'megashark-lib';
-import { ref, Ref, inject, onMounted, onUnmounted, type Component, shallowRef, computed, useTemplateRef } from 'vue';
+import { ref, Ref, inject, onMounted, onUnmounted, shallowRef, computed, useTemplateRef } from 'vue';
 import { IonPage, IonContent, IonButton, IonText, IonIcon, modalController } from '@ionic/vue';
-import { link, informationCircle, open, chevronUp, chevronDown, ellipsisHorizontal, create, save } from 'ionicons/icons';
+import { link, informationCircle, open, chevronUp, chevronDown, ellipsisHorizontal, create, save, alert } from 'ionicons/icons';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import {
   currentRouteIs,
@@ -263,14 +282,16 @@ const atDateTime: Ref<DateTime | undefined> = ref(undefined);
 const { isHeaderVisible, toggleHeader: toggleMainHeader, showHeader, hideHeader } = useHeaderControl();
 const { isVisible: isSidebarMenuVisible, hide: hideSidebarMenu, show: showSidebarMenu } = useSidebarMenu();
 const handlerReadyRef = ref(false);
-const handlerComponent: Ref<Component | null> = shallowRef(null);
+const handlerComponent: Ref<typeof FileEditor | typeof FileViewer | null> = shallowRef(null);
 const handlerMode = ref<FileHandlerMode | undefined>(undefined);
 const sidebarMenuVisibleOnMounted = ref(false);
 const userInfo: Ref<ClientInfo | null> = ref(null);
-const saveState = ref<SaveState | undefined>(undefined);
-const savedIconRef = useTemplateRef<InstanceType<typeof IonButton>>('savedIcon');
-const unsavedIconRef = useTemplateRef<InstanceType<typeof IonButton>>('unsavedIcon');
+const saveState = ref<SaveState>(SaveState.None);
+const savedIconRef = useTemplateRef<InstanceType<typeof IonIcon>>('savedIcon');
+const unsavedIconRef = useTemplateRef<InstanceType<typeof MsImage>>('unsavedIcon');
+const errorIconRef = useTemplateRef<InstanceType<typeof IonIcon>>('errorIcon');
 const showSaveStateText = ref(true);
+const readOnly = ref(false);
 
 const cancelRouteWatch = watchRoute(async () => {
   if (!currentRouteIs(Routes.FileHandler)) {
@@ -287,21 +308,27 @@ const cancelRouteWatch = watchRoute(async () => {
     contentInfo.value &&
     contentInfo.value.path === getDocumentPath() &&
     atDateTime.value?.toMillis() === timestamp &&
-    fileHandlerMode === handlerMode.value
+    fileHandlerMode === handlerMode.value &&
+    Boolean(query.readOnly) === readOnly.value
   ) {
     return;
   }
   handlerMode.value = fileHandlerMode;
+  readOnly.value = Boolean(query.readOnly);
 
   await loadFile();
 });
 
 const saveStateText = computed(() => {
   switch (saveState.value) {
-    case SaveState.saved:
+    case SaveState.Saved:
       return 'fileEditors.saving.saved';
-    case SaveState.saving:
+    case SaveState.Saving:
       return 'fileEditors.saving.saving';
+    case SaveState.None:
+      return '';
+    case SaveState.Error:
+      return 'fileEditors.saving.error';
     default:
       return 'fileEditors.saving.unsaved';
   }
@@ -507,6 +534,8 @@ function loadComponent(): void {
 
 onMounted(async () => {
   handlerMode.value = getFileHandlerMode();
+  const query = getCurrentRouteQuery();
+  readOnly.value = Boolean(query.readOnly);
   await loadFile();
 
   hideHeader();
@@ -531,6 +560,9 @@ onMounted(async () => {
   }
   if (unsavedIconRef.value) {
     attachMouseOverTooltip(unsavedIconRef.value.$el, 'fileEditors.saving.tooltipUnsaved');
+  }
+  if (errorIconRef.value) {
+    attachMouseOverTooltip(errorIconRef.value.$el, 'fileEditors.saving.tooltipError');
   }
 });
 
@@ -682,11 +714,11 @@ async function downloadFile(): Promise<void> {
 }
 
 async function onSaveStateChange(newState: SaveState): Promise<void> {
-  if (newState !== SaveState.saved) {
+  if (newState !== SaveState.Saved) {
     showSaveStateText.value = true;
   } else {
     setTimeout(() => {
-      if (saveState.value === SaveState.saved) {
+      if (saveState.value === SaveState.Saved) {
         showSaveStateText.value = false;
       }
     }, 3000);
@@ -920,7 +952,6 @@ async function openSmallDisplayActionMenu(): Promise<void> {
 
         &-text {
           text-overflow: ellipsis;
-          color: var(--parsec-color-light-secondary-hard-grey);
 
           &-fade-in {
             visibility: visible;
@@ -934,6 +965,14 @@ async function openSmallDisplayActionMenu(): Promise<void> {
             transition:
               visibility 0s 3s,
               opacity 3s ease-in;
+          }
+
+          &-ok {
+            color: var(--parsec-color-light-secondary-hard-grey);
+          }
+
+          &-ko {
+            color: var(--parsec-color-light-danger-500);
           }
         }
 

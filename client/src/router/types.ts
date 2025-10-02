@@ -298,6 +298,7 @@ export interface Query {
   timestamp?: string;
   profilePage?: ProfilePages;
   bmsLogin?: true;
+  readOnly?: true;
 }
 
 export interface ClientAreaQuery {

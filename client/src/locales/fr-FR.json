@@ -2537,8 +2537,11 @@
             "unsaved": "Modifications non sauvegardées",
             "saving": "Enregistrement...",
             "saved": "Fichier sauvegardé",
+            "error": "Erreur lors de la sauvegarde",
             "tooltipSaved": "Les modifications ont été sauvegardées.",
-            "tooltipUnsaved": "Les modifications ne sont pas encore sauvegardées."
+            "tooltipUnsaved": "Les modifications ne sont pas encore sauvegardées.",
+            "tooltipError": "Les modifications n'ont pas été sauvegardées.",
+            "readOnly": "Document en lecture seule"
         }
     },
     "openFallback": {
