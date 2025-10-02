@@ -616,16 +616,53 @@ export function setupContentSecurityPolicy(customScheme: string): void {
       directives: [CspDirective.ConnectSrc, CspDirective.FrameSrc],
     },
   ];
+
+  if(electronIsDev) {
+    const cryptpadDirectives = [
+      CspDirective.DefaultSrc,
+      CspDirective.ScriptSrc,
+      CspDirective.ConnectSrc,
+      CspDirective.ImgSrc,
+      CspDirective.StyleSrc,
+      CspDirective.FontSrc,
+      CspDirective.FrameSrc,
+      CspDirective.WorkerSrc,
+    ];
+
+    authorizedDomains.push({
+      domain: 'http://localhost:3000',
+      directives: cryptpadDirectives,
+    });
+
+    authorizedDomains.push({
+      domain: 'http://safe.localhost:3000',
+      directives: cryptpadDirectives,
+    });
+  }
+
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     const responseHeaders = { ...details.responseHeaders };
 
+    // Detect if this is a CryptPad document editor page that needs 'unsafe-eval'
+    // CryptPad uses different CSP policies for different types of pages
+    const cryptpadDocumentTypes = [
+      '/pad/', '/sheet/', '/doc/', '/presentation/', '/code/', '/kanban/', '/form/', '/whiteboard/', '/slide/',
+    ];
+    const isCryptPadDocumentEditor = cryptpadDocumentTypes.some((type) => details.url.includes(type));
+
+    // Apply conditional CSP based on whether it's a document editor or not
+    const unsafeEvalPolicy = isCryptPadDocumentEditor ? ' \'unsafe-eval\'' : '';
+    const scriptSrcPolicy = `script-src ${customScheme}://* 'unsafe-inline'${unsafeEvalPolicy}`;
+    const devToolsPolicy = electronIsDev ? ' devtools://*' : '';
+    const defaultSrcPolicy = `default-src ${customScheme}://* 'unsafe-inline'${unsafeEvalPolicy} data: blob:${devToolsPolicy}`;
+
     responseHeaders['Content-Security-Policy'] = [
       [
-        `default-src ${customScheme}://* 'unsafe-inline' 'unsafe-eval' data: blob:${electronIsDev ? ' devtools://*' : ''}`,
+        defaultSrcPolicy,
         `frame-src ${customScheme}://* data: blob:`,
         `connect-src ${customScheme}://* wss://* ws://* data: blob:`,
         `img-src ${customScheme}://* data: blob:`,
-        `script-src ${customScheme}://* 'unsafe-inline' 'unsafe-eval'`,
+        scriptSrcPolicy,
         `style-src ${customScheme}://* 'unsafe-inline'`,
         `font-src ${customScheme}://* data:`,
         `worker-src ${customScheme}://* blob:`,
