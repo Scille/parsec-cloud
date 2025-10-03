@@ -67,14 +67,13 @@ jobs:
             release)
               tag='${{ github.ref_name }}'
               ;;
-            # For testing purpose, we use the nightly tag on pull_request impacting this workflow
-            pull_request)
+            # When the workflow was scheduled or when we test modification on the workflow during a pull request,
+            # we use the nightly tag.
+            schedule | pull_request)
               tag='nightly'
               ;;
-            # For workflow_call or dispatch, we use the provided release_tag
-            workflow_call)
-              ;& # fallthrough
-            workflow_dispatch)
+            # For workflow_call or dispatch, we use the provided release_tag.
+            workflow_call | workflow_dispatch)
               tag='${{ inputs.release_tag }}'
               ;;
           esac
