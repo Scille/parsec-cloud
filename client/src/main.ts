@@ -38,6 +38,8 @@ import {
   getOrganizationHandle,
   isElectron,
   listAvailableDevices,
+  listStartedClients,
+  logout,
   parseFileLink,
 } from '@/parsec';
 import { getClientConfig } from '@/parsec/internals';
@@ -356,7 +358,7 @@ async function setupApp(): Promise<void> {
           quit = answer === Answer.Yes;
         }
         if (quit) {
-          await cleanBeforeQuitting(injectionProvider);
+          await cleanBeforeQuitting(injectionProvider, true);
           window.electronAPI.closeApp();
         }
       });
@@ -415,7 +417,7 @@ async function setupApp(): Promise<void> {
         }
       });
       window.electronAPI.receive('parsec-clean-up-before-update', async () => {
-        await cleanBeforeQuitting(injectionProvider);
+        await cleanBeforeQuitting(injectionProvider, true);
         window.electronAPI.updateApp();
       });
       window.electronAPI.receive('parsec-is-dev-mode', async (devMode) => {
@@ -572,8 +574,16 @@ function setupMockElectronAPI(injectionProvider: InjectionProvider): void {
   };
 }
 
-async function cleanBeforeQuitting(injectionProvider: InjectionProvider): Promise<void> {
+async function cleanBeforeQuitting(injectionProvider: InjectionProvider, stopClients = false): Promise<void> {
   await injectionProvider.cleanAll();
+  if (stopClients) {
+    const started = await listStartedClients();
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    for (const [handle, _device] of started) {
+      await logout(handle);
+    }
+  }
 }
 
 function getCurrentInformationManager(injectionProvider: InjectionProvider): InformationManager {
