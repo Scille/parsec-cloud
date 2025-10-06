@@ -65,9 +65,27 @@ updates:
   ##########
 
   - package-ecosystem: pip
-    directories:
-      - /server
-      - /docs
+    directory: /docs
+    versioning-strategy: increase-if-necessary
+    pull-request-branch-name:
+      separator: "-"
+    labels:
+      - I-Dependency
+      - I-Python
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:20"
+      timezone: Europe/Paris
+    groups:
+      docs:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 5
+    rebase-strategy: disabled
+
+  - package-ecosystem: pip
+    directory: /server
     versioning-strategy: increase-if-necessary
     ignore:
       - dependency-name: typing-extensions
@@ -84,47 +102,44 @@ updates:
       day: monday
       time: "04:20"
       timezone: Europe/Paris
+    # Note these groups correspond more or less to the [dependency-groups] in server/pyproject.toml
     groups:
-      pytest:
+      server-dev-test:
+        dependency-type: development
         patterns:
-          - hypothesis
+          - httpx-sse
           - pytest*
-      pytools:
+          - trustme
+      server-dev-lint:
+        dependency-type: development
         patterns:
-          - cibuildwheel
           - deptry
           - editorconfig-checker
-          - maturin
-          - patchelf
           - pyright
           - ruff
-          - setuptools
-      pydocs:
+          - sqlfluff
+      server-dev-types:
+        dependency-type: development
         patterns:
-          - docutils
-          - poutils
-          - sphinx*
-      pydeps:
+          - asyncpg-stubs
+          - boto3-stubs
+          - types-requests
+      server-dev-build:
+        dependency-type: development
+        patterns:
+          - cibuildwheel
+          - maturin
+          - patchelf
+          - setuptools
+      server-dev-deps:
+        dependency-type: development
         patterns:
           - "*"
-        exclude-patterns:
-          # pytest
-          - hypothesis
-          - pytest*
-          # pydocs
-          - docutils
-          - poutils
-          - sphinx*
-          # pytools
-          - cibuildwheel
-          - deptry
-          - editorconfig-checker
-          - maturin
-          - patchelf
-          - pyright
-          - ruff
-          - setuptools
-    open-pull-requests-limit: 5
+      server-prod-deps:
+        dependency-type: production
+        patterns:
+          - "*"
+    open-pull-requests-limit: 10
     rebase-strategy: disabled
 
   ##############
@@ -144,46 +159,40 @@ updates:
       time: "04:20"
       timezone: Europe/Paris
     groups:
-      ionic-client:
+      client-prod-ionic:
+        # Disabled dependency-type because @ionic/cli is a dev dependency
+        # dependency-type: production
         patterns:
           - "@ionic/*"
-      capacitor-client:
+      client-prod-capacitor:
+        # Disable dependency-type because @capacitor/cli is a dev dependency
+        # dependency-type: production
         patterns:
           - "@capacitor/*"
           - "@capacitor-community/*"
-      client-linter:
+      client-dev-linter:
+        dependency-type: development
         patterns:
           - eslint*
           - "@intlify/eslint*"
           - prettier*
           - "@typescript-eslint*"
           - "@vue/eslint*"
-      vite:
+      client-dev-vite:
+        dependency-type: development
         patterns:
           - "@vitejs/*"
           - vite*
           - vitest
-      client-dependencies:
+      client-prod-deps:
+        dependency-type: production
         patterns:
           - "*"
-        exclude-patterns:
-          # ionic deps
-          - "@ionic/*"
-          # capacitor deps
-          - "@capacitor/*"
-          - "@capacitor-community/*"
-          # client-linter deps
-          - eslint*
-          - "@intlify/eslint*"
-          - prettier*
-          - "@typescript-eslint*"
-          - "@vue/eslint*"
-          # vite deps
-          - "@vitejs/*"
-          - vite*
-          - vitest
-
-    open-pull-requests-limit: 5
+      client-dev-deps:
+        dependency-type: development
+        patterns:
+          - "*"
+    open-pull-requests-limit: 10
     rebase-strategy: disabled
 
   - package-ecosystem: npm
@@ -204,7 +213,7 @@ updates:
       timezone: Europe/Paris
     open-pull-requests-limit: 5
     groups:
-      desktop-updates:
+      desktop:
         patterns:
           - "*"
         exclude-patterns:
@@ -216,6 +225,7 @@ updates:
     pull-request-branch-name:
       separator: "-"
     labels:
+      - I-Bindings
       - I-Dependency
       - I-Javascript
     schedule:
@@ -231,6 +241,7 @@ updates:
     pull-request-branch-name:
       separator: "-"
     labels:
+      - I-Bindings
       - I-Dependency
       - I-Javascript
     schedule:
