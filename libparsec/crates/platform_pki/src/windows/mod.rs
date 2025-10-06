@@ -5,8 +5,8 @@ use std::ffi::c_void;
 use crate::{
     CertificateDer, CertificateHash, CertificateReference, CertificateReferenceIdOrHash,
     DecryptMessageError, DecryptedMessage, EncryptMessageError, EncryptedMessage,
-    EncryptionAlgorithm, GetDerEncodedCertificateError, SignMessageError, SignatureAlgorithm,
-    SignedMessageFromPki,
+    EncryptionAlgorithm, GetDerEncodedCertificateError, ShowCertificateSelectionDialogError,
+    SignMessageError, SignatureAlgorithm, SignedMessageFromPki,
 };
 use bytes::Bytes;
 use schannel::{
@@ -145,30 +145,6 @@ fn get_id_and_hash_from_cert_context(
     Ok(CertificateReferenceIdOrHash { id, hash })
 }
 
-#[derive(Debug)]
-pub enum ShowCertificateSelectionDialogError {
-    CannotOpenStore(std::io::Error),
-    CannotGetCertificateInfo(std::io::Error),
-}
-
-impl std::fmt::Display for ShowCertificateSelectionDialogError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ShowCertificateSelectionDialogError::CannotOpenStore(e) => {
-                write!(f, "Cannot open certificate store: {e}")
-            }
-            ShowCertificateSelectionDialogError::CannotGetCertificateInfo(e) => {
-                write!(f, "Cannot get certificate info: {e}")
-            }
-        }
-    }
-}
-
-impl std::error::Error for ShowCertificateSelectionDialogError {}
-
-// TODO: This is specific to windows, it cannot be replicated on other platform.
-// Instead, we likely need to go the manual way and show a custom dialog on the client side with a
-// list of certificate that we retrieve from the platform certstore.
 pub fn show_certificate_selection_dialog(
 ) -> Result<Option<CertificateReferenceIdOrHash>, ShowCertificateSelectionDialogError> {
     let store = open_store().map_err(ShowCertificateSelectionDialogError::CannotOpenStore)?;

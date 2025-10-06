@@ -56,16 +56,14 @@ pub struct CertificateReferenceIdOrHash {
     pub hash: CertificateHash,
 }
 
-#[cfg(target_os = "windows")]
-pub use windows::show_certificate_selection_dialog;
-
 // Mock module for unsupported platform
 #[cfg(not(target_os = "windows"))]
 mod platform {
     use crate::{
-        CertificateDer, CertificateReference, DecryptMessageError, DecryptedMessage,
-        EncryptMessageError, EncryptedMessage, EncryptionAlgorithm, GetDerEncodedCertificateError,
-        SignMessageError, SignedMessageFromPki,
+        CertificateDer, CertificateReference, CertificateReferenceIdOrHash, DecryptMessageError,
+        DecryptedMessage, EncryptMessageError, EncryptedMessage, EncryptionAlgorithm,
+        GetDerEncodedCertificateError, ShowCertificateSelectionDialogError, SignMessageError,
+        SignedMessageFromPki,
     };
 
     pub fn get_der_encoded_certificate(
@@ -100,7 +98,39 @@ mod platform {
         let _ = (algo, encrypted_message, certificate_ref);
         unimplemented!("platform not supported")
     }
+
+    pub fn show_certificate_selection_dialog(
+    ) -> Result<Option<CertificateReferenceIdOrHash>, ShowCertificateSelectionDialogError> {
+        unimplemented!("platform not supported")
+    }
 }
+
+#[derive(Debug)]
+pub enum ShowCertificateSelectionDialogError {
+    CannotOpenStore(std::io::Error),
+    CannotGetCertificateInfo(std::io::Error),
+}
+
+impl std::fmt::Display for ShowCertificateSelectionDialogError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ShowCertificateSelectionDialogError::CannotOpenStore(e) => {
+                write!(f, "Cannot open certificate store: {e}")
+            }
+            ShowCertificateSelectionDialogError::CannotGetCertificateInfo(e) => {
+                write!(f, "Cannot get certificate info: {e}")
+            }
+        }
+    }
+}
+
+impl std::error::Error for ShowCertificateSelectionDialogError {}
+
+// TODO: https://github.com/Scille/parsec-cloud/issues/11215
+// This is specific to windows, it cannot be replicated on other platform.
+// Instead, we likely need to go the manual way and show a custom dialog on the client side with a
+// list of certificate that we retrieve from the platform certstore.
+pub use platform::show_certificate_selection_dialog;
 
 pub use errors::GetDerEncodedCertificateError;
 pub use platform::get_der_encoded_certificate;
