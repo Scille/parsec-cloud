@@ -3,10 +3,7 @@ name = "parsec-cloud"
 version = "3.5.1-a.0+dev"
 description = "Secure file sharing in the cloud"
 authors = [{ name = "Scille SAS", email = "contact@scille.fr" }]
-# TODO: switch to PEP 639 when poetry support for PEP 639 is released:
-# https://github.com/python-poetry/poetry/pull/10413
-# https://github.com/python-poetry/poetry-core/pull/870
-license = { text = "BUSL-1.1" }
+license = "BUSL-1.1"
 readme = "./pypi-readme.md"
 keywords = ["parsec", "cryptography", "sharing", "encryption"]
 classifiers = [

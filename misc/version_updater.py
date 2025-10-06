@@ -399,7 +399,10 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         Tool.Parsec: [ReplaceRegex(r'version = ".*"', 'version = "{version}"')]
     },
     ROOT_DIR / "docs/pyproject.toml": {
-        Tool.Python: [ReplaceRegex(r'^requires-python = "~=.*"', 'requires-python = "~={version}"')]
+        Tool.Python: [
+            ReplaceRegex(r'^requires-python = "~=.*"', 'requires-python = "~={version}"')
+        ],
+        Tool.License: [ReplaceRegex(r'^license = *".*"', 'license = "{version}"')],
     },
     ROOT_DIR / "libparsec/version": {Tool.Parsec: [ReplaceRegex(r"^.*$", "{version}")]},
     ROOT_DIR / "LICENSE": {
@@ -456,9 +459,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
             ),
         ],
         Tool.Parsec: [ReplaceRegex(r'^version = ".*"$', 'version = "{version}"')],
-        Tool.License: [
-            ReplaceRegex(r'license = { *text *= *".*" *}', 'license = {{ text = "{version}" }}')
-        ],
+        Tool.License: [ReplaceRegex(r'^license = *".*"', 'license = "{version}"')],
     },
     ROOT_DIR / ".pre-commit-config.yaml": {
         Tool.Rust: [ReplaceRegex(r"rust: [0-9.]+", "rust: {version}")],
