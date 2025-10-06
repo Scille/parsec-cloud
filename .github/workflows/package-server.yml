@@ -43,7 +43,7 @@ concurrency:
 
 env:
   node-version: 22.14.0
-  poetry-version: 2.1.4
+  poetry-version: 2.2.1
 
 permissions:
   contents: read
