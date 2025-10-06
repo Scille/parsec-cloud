@@ -87,6 +87,7 @@ class DevOption(click.Option):
                 ("blockstore", ("MOCKED",)),
                 ("administration_token", "s3cr3t"),
                 ("fake_account_password_algorithm_seed", "F4k3"),
+                ("cors_allow_origins", ("*",)),
             ):
                 if key not in opts:
                     opts[key] = value
@@ -458,7 +459,9 @@ for any given email address).
         " --blockstore=MOCKED --administration-token=s3cr3t"
         " --email-sender=no-reply@parsec.com --email-host=MOCKED"
         " --fake-account-password-algorithm-seed=F4k3"
-        " --server-addr=parsec3://localhost:<port>(?no_ssl=False if ssl is not set)`"
+        " --server-addr=parsec3://localhost:<port>(?no_ssl=False if ssl is not set)"
+        " --cors-allow-origins=*"
+        "`"
     ),
 )
 # Add --debug & --version

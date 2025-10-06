@@ -75,6 +75,7 @@ def app_factory(
         allow_methods=["OPTIONS", "GET", "POST", "PATCH"],
         allow_headers=["api-version", "authorization", "user-agent"],
     )
+    logger.debug(f"Allowed origins: {cors_allow_origins}")
     app.state.backend = backend
 
     templates = Jinja2Templates(env=backend.config.jinja_env)
