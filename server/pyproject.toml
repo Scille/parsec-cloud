@@ -55,36 +55,51 @@ include = [
     { path = "parsec/_parsec*.pyd", format = "wheel" }, # Rust lib for Windows
 ]
 
-[tool.poetry.group.dev.dependencies]
-asyncpg-stubs = "^0.29.0"
-Babel = "^2.10"
-boto3-stubs = "^1.38"
-cibuildwheel = "^3.0.0"
-deptry = "^0.23.0"
-editorconfig-checker = "^3.2.1"
-httpx-sse = "^0.4.0"
-maturin = "^1.8.7"
-patchelf = { version = "^0.17.2.1", markers = "platform_system=='Linux'" }
-poetry-lock-package = "^0.5.2"
-psutil = "^7.0.0"
-pyright = "^1.1.353"
-pytest = "^8.4.0"
-pytest-asyncio = "^1.0.0"
-pytest-cov = "^7.0.0"
-pytest-rerunfailures = "^16.0"
-pytest-timeout = "^2.2.0"
-pytest-xdist = "^3.1"
-ruff = "^0.13.0"
-setuptools = "^80.9.0"
-trustme = "^1.2.1"
-types-requests = "^2.28"
-sqlfluff = "^3.1.1"
+# Dependencies needed for the development process (build, lint, ...).
+#
+# Note that the groups are simply a way to organize the dependencies logically.
+# Groups that are not marked optional (below) are installed together with project main dependencies,
+# i.e. "poetry install" will include 'build', 'lint', and so on.
+# Use --without to exclude a group: `poetry install --without build,test`
+# Use --with to include an optional group: `poetry install --with testbed-server`
+[dependency-groups]
+build = [
+    "cibuildwheel>=3.0.0, <4.0.0",
+    "maturin>=1.8.7, <2.0.0",
+    "patchelf~=0.17.2.2; platform_system=='Linux'",
+    "setuptools>=80.9.0, <81.0.0",
+]
+lint = [
+    "deptry>=0.23.0, <1.0.0",
+    "editorconfig-checker>=3.2.1, <4.0.0",
+    "pyright>=1.1.353, <2.0.0",
+    "ruff>=0.13.0, <1.0.0",
+    "sqlfluff>=3.1.1, <4.0.0",
+]
+test = [
+    "httpx-sse>=0, <4.0",
+    "pytest-asyncio>=1.0.0, <2.0.0",
+    "pytest-cov>=7.0.0, <8.0.0",
+    "pytest-rerunfailures>=16.0, <17.0",
+    "pytest-timeout>=2.2.0, <3.0.0",
+    "pytest-xdist>=3.1, <4.0",
+    "pytest>=8.4.0, <9.0.0",
+    "trustme>=1.2.1, <2.0.0",
+]
+testbed-server = ["psutil>=7.0.0, <8.0.0"]
+type-stubs = ["asyncpg-stubs>=0.29.0, <1.0.0", "boto3-stubs>=1.38", "types-requests>=2.28, <3.0"]
+dev = [
+    { include-group = "build" },
+    { include-group = "lint" },
+    { include-group = "test" },
+    { include-group = "testbed-server" },
+    { include-group = "type-stubs" },
+    "Babel>=2.10, <3.0",                  # TODO: unused?
+    "poetry-lock-package>=0.5.2, <0.6.0", # TODO: unused?
+]
 
 [tool.poetry.group.testbed-server]
 optional = true
-
-[tool.poetry.group.testbed-server.dependencies]
-psutil = "^7.0.0"
 
 [tool.poetry.build]
 generate-setup-file = false
