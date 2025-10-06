@@ -475,3 +475,29 @@ export const expect = baseExpect.extend({
     };
   },
 });
+
+// Type declarations for custom matchers
+/* eslint-disable @typescript-eslint/no-namespace */
+declare global {
+  namespace PlaywrightTest {
+    interface Matchers<R> {
+      toHaveDisabledAttribute(): R;
+      toNotHaveDisabledAttribute(): R;
+      toHaveTheClass(className: string): R;
+      toShowToast(message: string, theme: 'Success' | 'Warning' | 'Error' | 'Info'): R;
+      toBeHomePage(): R;
+      toBeDocumentsPage(): R;
+      toBeManageOrganizationPage(): R;
+      toBeOrganizationPage(): R;
+      toBeViewerPage(): R;
+      toBeEditorPage(): R;
+      toBeFileHandlerPage(mode?: 'view' | 'edit'): R;
+      toBeClientAreaPage(): R;
+      toBeTrulyDisabled(): R;
+      toBeTrulyEnabled(): R;
+      toShowInformationModal(message: string, theme: 'Success' | 'Warning' | 'Error' | 'Info'): R;
+      toHaveNotification(expectedText: any): R;
+    }
+  }
+}
+/* eslint-enable @typescript-eslint/no-namespace */
