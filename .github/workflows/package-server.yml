@@ -121,7 +121,7 @@ jobs:
           yq --null-input ".${{ matrix.platform }}.$(uname -m).server = \"$(cd dist; ls *.whl | head -n 1)\"" | tee dist/artifacts.yml
 
       # Install syft
-      - uses: taiki-e/install-action@5ab30948b991e8d6aa5a6c1e33c6aea130c6de65 # pin v2.62.12
+      - uses: taiki-e/install-action@f33d3f211b0303ea71864a2677724fed135b8e99 # pin v2.62.22
         with:
           tool: syft@0.84.0
 
