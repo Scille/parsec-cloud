@@ -55,45 +55,36 @@ include = [
     { path = "parsec/_parsec*.pyd", format = "wheel" }, # Rust lib for Windows
 ]
 
-# Dependencies needed for the development process (build, lint, ...).
-#
-# Note that the groups are simply a way to organize the dependencies logically and that they are not
-# optional, i.e. "poetry install" will include 'build', 'lint', and so on.
-# Use --without to exclude a group: `poetry install --without build,test`
-[dependency-groups]
-build = [
-    "cibuildwheel>=3.0.0, <4.0.0",
-    "maturin>=1.8.7, <2.0.0",
-    "patchelf~=0.17.2.2; platform_system=='Linux'",
-    "setuptools>=80.9.0, <81.0.0",
-]
-lint = [
-    "deptry>=0.23.0, <1.0.0",
-    "editorconfig-checker>=3.2.1, <4.0.0",
-    "pyright>=1.1.353, <2.0.0",
-    "ruff>=0.13.0, <1.0.0",
-    "sqlfluff>=3.1.1, <4.0.0",
-]
-test = [
-    "httpx-sse>=0, <4.0",
-    "pytest-asyncio>=1.0.0, <2.0.0",
-    "pytest-cov>=7.0.0, <8.0.0",
-    "pytest-rerunfailures>=16.0, <17.0",
-    "pytest-timeout>=2.2.0, <3.0.0",
-    "pytest-xdist>=3.1, <4.0",
-    "pytest>=8.4.0, <9.0.0",
-    "trustme>=1.2.1, <2.0.0",
-]
-type-stubs = ["asyncpg-stubs>=0.29.0, <1.0.0", "boto3-stubs>=1.38", "types-requests>=2.28, <3.0"]
-dev = [
-    { include-group = "build" },
-    { include-group = "lint" },
-    { include-group = "test" },
-    { include-group = "testbed-server" },
-    { include-group = "type-stubs" },
-    "Babel>=2.10, <3.0",                  # TODO: unused?
-    "poetry-lock-package>=0.5.2, <0.6.0", # TODO: unused?
-]
+# NOTE: poetry 2.2.0 supports [dependency-groups] (PEP 735) but it is not yet supported by
+#       dependabot. See https://github.com/dependabot/dependabot-core/issues/10847
+[tool.poetry.group.dev.dependencies]
+# build
+cibuildwheel = "^3.0.0"
+maturin = "^1.9.5"
+patchelf = { version = "^0.17.2.4", markers = "platform_system=='Linux'" }
+setuptools = "^80.9.0"
+# lint
+deptry = "^0.23.0"
+editorconfig-checker = "^3.2.1"
+pyright = "^1.1.353"
+ruff = "^0.13.0"
+sqlfluff = "^3.1.1"
+# test
+httpx-sse = "^0.4.1"
+pytest = "^8.4.0"
+pytest-asyncio = "^1.0.0"
+pytest-cov = "^7.0.0"
+pytest-rerunfailures = "^16.0"
+pytest-timeout = "^2.2.0"
+pytest-xdist = "^3.1"
+trustme = "^1.2.1"
+# type-stubs
+asyncpg-stubs = "^0.29.1"
+boto3-stubs = "^1.40.45"
+types-requests = "^2.32.4"
+# other dependencies
+Babel = "^2.10"                # TODO: unused?
+poetry-lock-package = "^0.5.2"
 
 [tool.poetry.group.testbed-server]
 optional = true
