@@ -219,6 +219,7 @@ windows-sys = { version = "0.61.2", default-features = false }
 winfsp_wrs = { version = "0.4.0", default-features = false }
 winfsp_wrs_build = { version = "0.4.0", default-features = false }
 x25519-dalek = { version = "2.0.1", default-features = false }
+x509-cert = { version = "0.2.5", default-features = false }
 zeroize = { version = "1.8.2", default-features = false }
 zstd = { version = "0.13.3", default-features = false }
 
