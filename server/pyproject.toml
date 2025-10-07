@@ -57,11 +57,9 @@ include = [
 
 # Dependencies needed for the development process (build, lint, ...).
 #
-# Note that the groups are simply a way to organize the dependencies logically.
-# Groups that are not marked optional (below) are installed together with project main dependencies,
-# i.e. "poetry install" will include 'build', 'lint', and so on.
+# Note that the groups are simply a way to organize the dependencies logically and that they are not
+# optional, i.e. "poetry install" will include 'build', 'lint', and so on.
 # Use --without to exclude a group: `poetry install --without build,test`
-# Use --with to include an optional group: `poetry install --with testbed-server`
 [dependency-groups]
 build = [
     "cibuildwheel>=3.0.0, <4.0.0",
@@ -86,7 +84,6 @@ test = [
     "pytest>=8.4.0, <9.0.0",
     "trustme>=1.2.1, <2.0.0",
 ]
-testbed-server = ["psutil>=7.0.0, <8.0.0"]
 type-stubs = ["asyncpg-stubs>=0.29.0, <1.0.0", "boto3-stubs>=1.38", "types-requests>=2.28, <3.0"]
 dev = [
     { include-group = "build" },
@@ -100,6 +97,9 @@ dev = [
 
 [tool.poetry.group.testbed-server]
 optional = true
+
+[tool.poetry.group.testbed-server.dependencies]
+psutil = "^7.0.0"
 
 [tool.poetry.build]
 generate-setup-file = false
