@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use serde::{Deserialize, Serialize};
-use serde_with::*;
 use thiserror::Error;
 use unicode_normalization::UnicodeNormalization;
 
