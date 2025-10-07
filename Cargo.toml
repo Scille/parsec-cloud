@@ -156,7 +156,7 @@ js-sys = { version = "0.3.78", default-features = false }
 keyring = { version = "3.6.3", default-features = false }
 lazy_static = { version = "1.5.0", default-features = false }
 libc = { version = "0.2.176", default-features = false }
-libsodium-rs = { version = "0.2.0", default-features = false }
+libsodium-rs = { version = "0.2.1", default-features = false }
 libsqlite3-sys = { version = "0.30.1", default-features = false }
 log = { version = "0.4.28", default-features = false }
 miniserde = { version = "0.1.43", default-features = false }
@@ -186,7 +186,7 @@ rsa = { version = "0.8.2", default-features = false }
 rstest = { version = "0.24.0", default-features = false }
 rstest_reuse = { version = "0.7.0", default-features = false }
 ruzstd = { version = "0.7.3", default-features = true }
-rustls-webpki = { version = "0.103.6", default-features = false }
+rustls-webpki = { version = "0.103.7", default-features = false }
 rustls-pki-types = { version = "1.12.0", default-features = false }
 # Crate to interact with windows credential store, it's used notably in `native-tls` crate.
 schannel = { version = "0.1.28", default-features = false }
@@ -197,7 +197,7 @@ serde-wasm-bindgen = { version = "0.6.4", default-features = false }
 serde_bytes = { version = "0.11.19", default-features = false }
 serde_json = { version = "1.0.145", default-features = false }
 serde_test = { version = "1.0.177", default-features = false }
-serde_with = { version = "3.14.1", default-features = false }
+serde_with = { version = "3.15.0", default-features = false }
 sha2 = { version = "0.10.9", default-features = false }
 blahaj = "0.6.0"
 smallvec = { version = "1.15.1", default-features = false }
@@ -215,11 +215,11 @@ wasm-bindgen-test = { version = "0.3.54", default-features = false, features = [
 web-sys = { version = "0.3.78", default-features = false }
 web-time = { version = "1.1.0", default-features = false }
 widestring = { version = "1.2.0", default-features = false }
-windows-sys = { version = "0.61.1", default-features = false }
+windows-sys = { version = "0.61.2", default-features = false }
 winfsp_wrs = { version = "0.4.0", default-features = false }
 winfsp_wrs_build = { version = "0.4.0", default-features = false }
 x25519-dalek = { version = "2.0.1", default-features = false }
-zeroize = { version = "1.8.1", default-features = false }
+zeroize = { version = "1.8.2", default-features = false }
 zstd = { version = "0.13.3", default-features = false }
 
 [workspace.dependencies.criterion]
