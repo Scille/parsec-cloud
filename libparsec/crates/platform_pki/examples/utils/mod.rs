@@ -7,6 +7,7 @@ use clap::{
     builder::{NonEmptyStringValueParser, TypedValueParser},
     error::{Error, ErrorKind},
 };
+use libparsec_platform_pki::Certificate;
 use libparsec_types::CertificateHash;
 
 #[derive(Debug, Clone)]
@@ -64,5 +65,54 @@ impl ContentOpts {
             (None, Some(filepath)) => std::fs::read(filepath).context("Failed to read file"),
             (Some(_), Some(_)) | (None, None) => unreachable!("Handled by clap"),
         }
+    }
+}
+
+#[derive(Debug, Clone, clap::Args)]
+#[group(required = true, multiple = false)]
+pub struct CertificateOrRef {
+    /// Hash of the certificate from the store to use to verify the signature.
+    #[arg(long, value_parser = CertificateSRIHashParser)]
+    certificate_hash: Option<CertificateHash>,
+    /// Path to a file containing the certificate in DER format.
+    #[arg(long)]
+    der_file: Option<PathBuf>,
+    /// Path to a file containing the certificate in PEM format.
+    #[arg(long)]
+    pem_file: Option<PathBuf>,
+    /// Certificate in PEM format but without headers.
+    #[arg(long)]
+    pem: Option<String>,
+}
+
+impl CertificateOrRef {
+    // Not all examples uses `CertificateOrRef` so `get_certificate` is not always used.
+    #[allow(dead_code)]
+    pub fn get_certificate(&self) -> anyhow::Result<Certificate<'static>> {
+        let cert = if let Some(hash) = self.certificate_hash.clone() {
+            let res = libparsec_platform_pki::get_der_encoded_certificate(
+                &libparsec_types::CertificateReference::Hash { hash },
+            )?;
+            println!(
+                "Will verify signature using cert with id {{{}}}",
+                data_encoding::BASE64.encode_display(&res.cert_ref.id)
+            );
+            Certificate::from_der_owned(res.der_content.into())
+        } else if let Some(der_file) = &self.der_file {
+            let raw = std::fs::read(der_file).context("Failed to read file")?;
+            Certificate::from_der_owned(raw)
+        } else if let Some(pem_file) = &self.pem_file {
+            let raw = std::fs::read(pem_file).context("Failed to read file")?;
+            Certificate::try_from_pem(&r#raw)?.into_owned()
+        } else if let Some(pem) = self.pem.as_deref() {
+            let raw = data_encoding::BASE64
+                .decode(pem.as_bytes())
+                .context("Invalid pem base64")?;
+            Certificate::from_der_owned(raw)
+        } else {
+            unreachable!("Should be handle by clap")
+        };
+
+        Ok(cert)
     }
 }

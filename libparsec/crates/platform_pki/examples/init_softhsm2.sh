@@ -39,10 +39,18 @@ users+=(bob)
 
 for user in "${users[@]}"; do
     echo "Creating $user Certificate Signature Request"
-    openssl req -new -nodes -newkey rsa:3096 -keyout "$WORKDIR/$user.key" -out "$WORKDIR/$user.csr" -subj "/CN=${user} Parsec Test/emailAddress=${user}@example.com"
+    email="${user}@example.com"
+    openssl req -new -nodes -newkey rsa:3096 \
+        -keyout "$WORKDIR/$user.key" -out "$WORKDIR/$user.csr" \
+        -subj "/CN=${user} Parsec Test/emailAddress=${email}" \
+        -addext "subjectAltName=email:san+${email}"
 
     echo "Signing $user CSR"
-    openssl x509 -req -days 365 -in "$WORKDIR/$user.csr" -CA "$WORKDIR/ca.pem" -CAkey "$WORKDIR/ca.key" -CAcreateserial -out "$WORKDIR/$user.crt" -extfile "$WORKDIR/openssl.conf"
+    openssl x509 -req -days 365 \
+        -in "$WORKDIR/$user.csr" \
+        -CA "$WORKDIR/ca.pem" -CAkey "$WORKDIR/ca.key" -CAcreateserial \
+        -out "$WORKDIR/$user.crt" -extfile "$WORKDIR/openssl.conf" \
+        -copy_extensions copyall # Copy every extensions, notably the SAN email attr
 
     echo "Export $user RSA privkey into DER format"
     openssl rsa -in "$WORKDIR/$user.key" -outform DER -out "$WORKDIR/$user-key.der"

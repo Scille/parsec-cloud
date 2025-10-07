@@ -4,6 +4,11 @@ pub mod errors;
 mod shared;
 #[cfg(target_os = "windows")]
 mod windows;
+pub mod x509;
+
+#[cfg(test)]
+#[path = "../tests/units/mod.rs"]
+mod test;
 
 use libparsec_types::{CertificateReferenceIdOrHash, EncryptionAlgorithm};
 use std::{fmt::Display, str::FromStr};
