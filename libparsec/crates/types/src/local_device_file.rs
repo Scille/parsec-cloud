@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use libparsec_crypto::{Password, SecretKey};
 use libparsec_serialization_format::parsec_data;
 
-use crate::{self as libparsec_types};
+use crate::{self as libparsec_types, CertificateReference, DataError, EncryptionAlgorithm};
 use crate::{
     impl_transparent_data_format_conversion, AccountVaultItemOpaqueKeyID, DateTime, DeviceID,
     DeviceLabel, HumanHandle, OrganizationID, PasswordAlgorithm, UserID,
@@ -110,7 +110,7 @@ impl_transparent_data_format_conversion!(
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "DeviceFileSmartcardData", from = "DeviceFileSmartcardData")]
+#[serde(into = "DeviceFileSmartcardData", try_from = "DeviceFileSmartcardData")]
 pub struct DeviceFileSmartcard {
     pub created_on: DateTime,
     pub protected_on: DateTime,
@@ -120,30 +120,65 @@ pub struct DeviceFileSmartcard {
     pub device_id: DeviceID,
     pub human_handle: HumanHandle,
     pub device_label: DeviceLabel,
-    pub certificate_id: String,
-    pub certificate_sha1: Option<Bytes>,
+    pub certificate_ref: CertificateReference,
+    pub algorithm_for_encrypted_key: EncryptionAlgorithm,
     pub encrypted_key: Bytes,
     pub ciphertext: Bytes,
 }
 
 parsec_data!("schema/local_device/device_file_smartcard.json5");
 
-impl_transparent_data_format_conversion!(
-    DeviceFileSmartcard,
-    DeviceFileSmartcardData,
-    created_on,
-    protected_on,
-    server_url,
-    organization_id,
-    user_id,
-    device_id,
-    human_handle,
-    device_label,
-    certificate_id,
-    certificate_sha1,
-    encrypted_key,
-    ciphertext,
-);
+impl TryFrom<DeviceFileSmartcardData> for DeviceFileSmartcard {
+    type Error = DataError;
+
+    fn try_from(value: DeviceFileSmartcardData) -> Result<Self, Self::Error> {
+        let certificate_ref = value.certificate_ref.try_into()?;
+        let algorithm_for_encrypted_key =
+            value
+                .algorithm_for_encrypted_key
+                .parse()
+                .map_err(|_| DataError::DataIntegrity {
+                    data_type: "algorithm for encrypted key",
+                    invariant: "unknown algorithm",
+                })?;
+        Ok(DeviceFileSmartcard {
+            created_on: value.created_on,
+            protected_on: value.protected_on,
+            server_url: value.server_url,
+            organization_id: value.organization_id,
+            user_id: value.user_id,
+            device_id: value.device_id,
+            human_handle: value.human_handle,
+            device_label: value.device_label,
+            certificate_ref,
+            algorithm_for_encrypted_key,
+            encrypted_key: value.encrypted_key,
+            ciphertext: value.ciphertext,
+        })
+    }
+}
+
+impl From<DeviceFileSmartcard> for DeviceFileSmartcardData {
+    fn from(value: DeviceFileSmartcard) -> Self {
+        let certificate_ref = value.certificate_ref.into();
+        let algorithm_for_encrypted_key = value.algorithm_for_encrypted_key.to_string();
+        DeviceFileSmartcardData {
+            created_on: value.created_on,
+            protected_on: value.protected_on,
+            server_url: value.server_url,
+            organization_id: value.organization_id,
+            user_id: value.user_id,
+            device_id: value.device_id,
+            human_handle: value.human_handle,
+            device_label: value.device_label,
+            certificate_ref,
+            algorithm_for_encrypted_key,
+            encrypted_key: value.encrypted_key,
+            ciphertext: value.ciphertext,
+            ty: DeviceFileSmartcardDataType,
+        }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(

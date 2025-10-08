@@ -16,9 +16,9 @@ use libparsec_serialization_format::parsec_data;
 use crate::{
     self as libparsec_types, impl_transparent_data_format_conversion,
     serialization::{format_v0_dump, format_vx_load},
-    DataResult, DateTime, DeviceID, DeviceLabel, EnrollmentID, HumanHandle, ParsecAddr,
-    ParsecPkiEnrollmentAddr, PkiEnrollmentLocalPendingError, PkiEnrollmentLocalPendingResult,
-    UserID, UserProfile,
+    CertificateReferenceData, DataError, DataResult, DateTime, DeviceID, DeviceLabel, EnrollmentID,
+    HumanHandle, ParsecAddr, ParsecPkiEnrollmentAddr, PkiEnrollmentLocalPendingError,
+    PkiEnrollmentLocalPendingResult, UserID, UserProfile,
 };
 
 /*
@@ -293,6 +293,38 @@ impl std::fmt::Display for CertificateHash {
     }
 }
 
+impl FromStr for CertificateHash {
+    type Err = DataError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (hash_ty, b64_hash) = s.split_once('-').ok_or(DataError::BadSerialization {
+            format: None,
+            step: "Missing `-` delimiter",
+        })?;
+        let raw_data = data_encoding::BASE64
+            .decode(b64_hash.as_bytes())
+            .map_err(|_| DataError::BadSerialization {
+                format: None,
+                step: "error decoding hash",
+            })?;
+        if hash_ty.eq_ignore_ascii_case("sha256") {
+            Ok(CertificateHash::SHA256 {
+                data: raw_data
+                    .try_into()
+                    .map_err(|_| DataError::BadSerialization {
+                        format: None,
+                        step: "Invalid data size",
+                    })?,
+            })
+        } else {
+            Err(DataError::BadSerialization {
+                format: None,
+                step: "Unsupported hash type ",
+            })
+        }
+    }
+}
+
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum CertificateReference {
     Id {
@@ -304,6 +336,63 @@ pub enum CertificateReference {
     IdOrHash {
         id_or_hash: CertificateReferenceIdOrHash,
     },
+}
+
+impl TryFrom<CertificateReferenceData> for CertificateReference {
+    type Error = DataError;
+
+    fn try_from(value: CertificateReferenceData) -> Result<Self, Self::Error> {
+        match value {
+            CertificateReferenceData {
+                certificate_hash: None,
+                certificate_id: None,
+            } => Err(DataError::DataIntegrity {
+                data_type: "Certificate reference",
+                invariant: "id or hash must be provided",
+            }),
+            CertificateReferenceData {
+                certificate_hash: Some(hash),
+                certificate_id: None,
+            } => Ok(CertificateReference::Hash {
+                hash: hash.parse()?,
+            }),
+            CertificateReferenceData {
+                certificate_hash: None,
+                certificate_id: Some(id),
+            } => Ok(CertificateReference::Id { id }),
+            CertificateReferenceData {
+                certificate_hash: Some(hash),
+                certificate_id: Some(id),
+            } => Ok(CertificateReference::IdOrHash {
+                id_or_hash: CertificateReferenceIdOrHash {
+                    id,
+                    hash: hash.parse()?,
+                },
+            }),
+        }
+    }
+}
+
+impl From<CertificateReference> for CertificateReferenceData {
+    fn from(value: CertificateReference) -> Self {
+        match value {
+            CertificateReference::Id { id } => CertificateReferenceData {
+                certificate_hash: None,
+                certificate_id: Some(id),
+            },
+            CertificateReference::Hash { hash } => CertificateReferenceData {
+                certificate_hash: Some(hash.to_string()),
+                certificate_id: None,
+            },
+            CertificateReference::IdOrHash { id_or_hash } => {
+                let CertificateReferenceIdOrHash { id, hash } = id_or_hash;
+                CertificateReferenceData {
+                    certificate_hash: Some(hash.to_string()),
+                    certificate_id: Some(id),
+                }
+            }
+        }
+    }
 }
 
 impl From<CertificateReferenceIdOrHash> for CertificateReference {
