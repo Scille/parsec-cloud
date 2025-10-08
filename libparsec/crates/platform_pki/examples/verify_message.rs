@@ -5,9 +5,9 @@ use std::path::PathBuf;
 use anyhow::Context;
 use clap::Parser;
 use libparsec_platform_pki::{
-    get_der_encoded_certificate, verify_message, Certificate, CertificateHash, SignatureAlgorithm,
-    SignedMessage,
+    get_der_encoded_certificate, verify_message, Certificate, SignatureAlgorithm, SignedMessage,
 };
+use libparsec_types::CertificateHash;
 use sha2::Digest;
 
 mod utils;
@@ -52,7 +52,7 @@ fn main() -> anyhow::Result<()> {
 
     let cert = if let Some(hash) = args.cert.certificate_hash {
         let res =
-            get_der_encoded_certificate(&libparsec_platform_pki::CertificateReference::Hash(hash))?;
+            get_der_encoded_certificate(&libparsec_types::CertificateReference::Hash { hash })?;
         println!(
             "Will verify signature using cert with id {{{}}}",
             data_encoding::BASE64.encode_display(&res.cert_ref.id)
@@ -73,10 +73,10 @@ fn main() -> anyhow::Result<()> {
         unreachable!("Should be handle by clap")
     };
 
-    #[cfg(feature = "hash-sri-display")]
     {
-        let fingerprint =
-            CertificateHash::SHA256(Box::new(sha2::Sha256::digest(cert.as_ref()).into()));
+        let fingerprint = CertificateHash::SHA256 {
+            data: Box::new(sha2::Sha256::digest(cert.as_ref()).into()),
+        };
         println!("Certificate fingerprint: {fingerprint}");
     }
 
