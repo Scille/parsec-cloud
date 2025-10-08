@@ -165,12 +165,10 @@ async fn list_devices(tmp_path: TmpPath) {
             .parse()
             .unwrap(),
         device_label: "PC1".parse().unwrap(),
-        certificate_id: "Mallory's certificate".to_string(),
-        certificate_sha1: Some(
-            hex!("4682e01bc3e22fdfff1c33b551dfad8e49295005")
-                .as_ref()
-                .into(),
-        ),
+        certificate_ref: CertificateReference::Id {
+            id: Bytes::copy_from_slice(b"Mallory's certificate"),
+        },
+        algorithm_for_encrypted_key: EncryptionAlgorithm::RsaesOaepSha256,
         encrypted_key: hex!("de5c59cfcc0c52bf997594e0fdd2c24ffee9465b6f25e30bac9238c2f83fd19a")
             .as_ref()
             .into(),
@@ -180,8 +178,7 @@ async fn list_devices(tmp_path: TmpPath) {
         "***expected: {:?}",
         DeviceFile::Smartcard(smartcard_expected.clone()).dump()
     );
-
-    // Generated from Parsec 3.3.0-rc.12+dev
+    // Generated from Parsec 3.5.1-a.0+dev
     // Content:
     //   type: 'smartcard'
     //   created_on: ext(1, 946684800000000) i.e. 2000-01-01T01:00:00Z
@@ -192,8 +189,11 @@ async fn list_devices(tmp_path: TmpPath) {
     //   device_id: ext(2, 0xde103a11031c00100000000000000000)
     //   human_handle: [ 'mallory@parsec.invalid', 'Mallory McMalloryFace', ]
     //   device_label: 'PC1'
-    //   certificate_id: "Mallory's certificate"
-    //   certificate_sha1: 0x4682e01bc3e22fdfff1c33b551dfad8e49295005
+    //   certificate_ref: {
+    //     certificate_hash: None,
+    //     certificate_id: 0x4d616c6c6f72792773206365727469666963617465,
+    //   }
+    //   algorithm_for_encrypted_key: 'RSAES-OAEP-SHA256'
     //   encrypted_key: 0xde5c59cfcc0c52bf997594e0fdd2c24ffee9465b6f25e30bac9238c2f83fd19a
     //   ciphertext: 0x3c636970686572746578743e
     let smartcard_raw: &[u8] = hex!(
@@ -204,11 +204,12 @@ async fn list_devices(tmp_path: TmpPath) {
         "00000000a96465766963655f6964d802de103a11031c00100000000000000000ac6875"
         "6d616e5f68616e646c6592b66d616c6c6f7279407061727365632e696e76616c6964b5"
         "4d616c6c6f7279204d634d616c6c6f727946616365ac6465766963655f6c6162656ca3"
-        "504331ae63657274696669636174655f6964b54d616c6c6f7279277320636572746966"
-        "6963617465b063657274696669636174655f73686131c4144682e01bc3e22fdfff1c33"
-        "b551dfad8e49295005ad656e637279707465645f6b6579c420de5c59cfcc0c52bf9975"
-        "94e0fdd2c24ffee9465b6f25e30bac9238c2f83fd19aaa63697068657274657874c40c"
-        "3c636970686572746578743e"
+        "504331af63657274696669636174655f72656682b063657274696669636174655f6861"
+        "7368c0ae63657274696669636174655f6964c4154d616c6c6f72792773206365727469"
+        "666963617465bb616c676f726974686d5f666f725f656e637279707465645f6b6579b1"
+        "52534145532d4f4145502d534841323536ad656e637279707465645f6b6579c420de5c"
+        "59cfcc0c52bf997594e0fdd2c24ffee9465b6f25e30bac9238c2f83fd19aaa63697068"
+        "657274657874c40c3c636970686572746578743e"
     )
     .as_ref();
 

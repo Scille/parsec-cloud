@@ -255,58 +255,71 @@ fn recovery_device_file(alice: &Device) {
 #[rstest]
 
 fn smartcard_device_file(alice: &Device) {
-    // Generated from Parsec v3.0.0-b.11+dev
+    // Generated from Parsec 3.5.1-a.0+dev
     // Content:
-    //   type: "smartcard"
-    //   certificate_id: "foo"
-    //   certificate_sha1: hex!("666f6f")
-    //   ciphertext: hex!(
-    //     "a73aff77a2aa692b4393e094bfd2c2ccad4b0a8d010960caf27165b787fb412ed2aeeb99f492a870"
-    //     "63e368cebe38dc1f20c65273cb3254480cc9e4b519a53241205b531b41edfa749419b83aeb0fb46c"
-    //     "c2e21ae25782a1ab8fd3a32ca3b8fca4a0ffc8a301b62aca6612d87e7f34a89b6e747ec82d38734d"
-    //     "7943e17009d091d699871aaf964b8426292d0a405ea3e868dca65028dae317a0311af3a958f86541"
-    //     "edaef33d49e05056ccb038cc9f7dae40a336dd207eea4341229ba7efa39aa0df28d0d33d91fba49d"
-    //     "d63f3814c162fff9083674acd6cc8b621b869c801d0a527474e7da6cd51053803529542d39c9e679"
-    //     "4353be278c39ec06cb20560a01e80db86a20df80808f2115ff28afdc2cf9da5099218d4c873dfcbf"
-    //     "78e88e4e63ddfcf883de5527b4b234ca63c286a7aa12de2fc6337dd1709f6f5922e3d9f1029ce2b6"
-    //     "6d2fb856edb1c701f32c33fa4ca5d0789f52ce2091c48270324f5f631000f6ded1f0c5e1ae94831f"
-    //     "488faeff93d8e0c2e26411b499dea920a14733fbea42dd95a8ec13726f33c45f0c19f6e6b9b37add"
-    //     "e46ce49465ebad63bfd8106e2d1fb7bc2ff3fea5c86d713226e098aca0ea48fe4180e801eac583e9"
-    //     "6fd9fae329358f54f57d46c22f845e3d083f6d6deaf09d821eaaadbbd945ac6f8131b70427794db0"
-    //     "dedba44fcb6224654859605a2bbeb979e7d73f233724ab4846b38c94ce603de796f866d0d90fb0ba"
-    //     "dd037a135cca4d018e"
-    //   )
-    //   device_id: ext(2, de10a11cec0010000000000000000000)
-    //   device_label: "My dev1 machine"
-    //   encrypted_key: hex!("666f6f")
-    //   human_handle: ["alice@example.com", "Alicey McAliceFace"]
-    //   organization_id: "CoolOrg"
-    let raw = hex!(
-        "9da9736d61727463617264d70100047c0f0d84c000d70100047cc41a172000b6687474"
-        "70733a2f2f7061727365632e696e76616c6964a7436f6f6c4f7267d802a11cec001000"
-        "00000000000000000000d802de10a11cec001000000000000000000092b1616c696365"
-        "406578616d706c652e636f6db2416c69636579204d63416c69636546616365af4d7920"
-        "64657631206d616368696e65a3666f6fc403666f6fc403666f6fc50211a73aff77a2aa"
-        "692b4393e094bfd2c2ccad4b0a8d010960caf27165b787fb412ed2aeeb99f492a87063"
-        "e368cebe38dc1f20c65273cb3254480cc9e4b519a53241205b531b41edfa749419b83a"
-        "eb0fb46cc2e21ae25782a1ab8fd3a32ca3b8fca4a0ffc8a301b62aca6612d87e7f34a8"
-        "9b6e747ec82d38734d7943e17009d091d699871aaf964b8426292d0a405ea3e868dca6"
-        "5028dae317a0311af3a958f86541edaef33d49e05056ccb038cc9f7dae40a336dd207e"
-        "ea4341229ba7efa39aa0df28d0d33d91fba49dd63f3814c162fff9083674acd6cc8b62"
-        "1b869c801d0a527474e7da6cd51053803529542d39c9e6794353be278c39ec06cb2056"
-        "0a01e80db86a20df80808f2115ff28afdc2cf9da5099218d4c873dfcbf78e88e4e63dd"
-        "fcf883de5527b4b234ca63c286a7aa12de2fc6337dd1709f6f5922e3d9f1029ce2b66d"
-        "2fb856edb1c701f32c33fa4ca5d0789f52ce2091c48270324f5f631000f6ded1f0c5e1"
-        "ae94831f488faeff93d8e0c2e26411b499dea920a14733fbea42dd95a8ec13726f33c4"
-        "5f0c19f6e6b9b37adde46ce49465ebad63bfd8106e2d1fb7bc2ff3fea5c86d713226e0"
-        "98aca0ea48fe4180e801eac583e96fd9fae329358f54f57d46c22f845e3d083f6d6dea"
-        "f09d821eaaadbbd945ac6f8131b70427794db0dedba44fcb6224654859605a2bbeb979"
-        "e7d73f233724ab4846b38c94ce603de796f866d0d90fb0badd037a135cca4d018e"
-    );
+    //   type: 'smartcard'
+    //   created_on: ext(1, 1262304000000000) i.e. 2010-01-01T01:00:00Z
+    //   protected_on: ext(1, 1263081600000000) i.e. 2010-01-10T01:00:00Z
+    //   server_url: 'https://parsec.invalid'
+    //   organization_id: 'CoolOrg'
+    //   user_id: ext(2, 0xa11cec00100000000000000000000000)
+    //   device_id: ext(2, 0xde10a11cec0010000000000000000000)
+    //   human_handle: [ 'alice@example.com', 'Alicey McAliceFace', ]
+    //   device_label: 'My dev1 machine'
+    //   certificate_ref: { certificate_hash: None, certificate_id: 0x666f6f, }
+    //   algorithm_for_encrypted_key: 'RSAES-OAEP-SHA256'
+    //   encrypted_key: 0x666f6f
+    //   ciphertext:
+    //     0xa73aff77a2aa692b4393e094bfd2c2ccad4b0a8d010960caf27165b787fb412ed2aeeb99f492a8
+    //     7063e368cebe38dc1f20c65273cb3254480cc9e4b519a53241205b531b41edfa749419b83aeb0fb4
+    //     6cc2e21ae25782a1ab8fd3a32ca3b8fca4a0ffc8a301b62aca6612d87e7f34a89b6e747ec82d3873
+    //     4d7943e17009d091d699871aaf964b8426292d0a405ea3e868dca65028dae317a0311af3a958f865
+    //     41edaef33d49e05056ccb038cc9f7dae40a336dd207eea4341229ba7efa39aa0df28d0d33d91fba4
+    //     9dd63f3814c162fff9083674acd6cc8b621b869c801d0a527474e7da6cd51053803529542d39c9e6
+    //     794353be278c39ec06cb20560a01e80db86a20df80808f2115ff28afdc2cf9da5099218d4c873dfc
+    //     bf78e88e4e63ddfcf883de5527b4b234ca63c286a7aa12de2fc6337dd1709f6f5922e3d9f1029ce2
+    //     b66d2fb856edb1c701f32c33fa4ca5d0789f52ce2091c48270324f5f631000f6ded1f0c5e1ae9483
+    //     1f488faeff93d8e0c2e26411b499dea920a14733fbea42dd95a8ec13726f33c45f0c19f6e6b9b37a
+    //     dde46ce49465ebad63bfd8106e2d1fb7bc2ff3fea5c86d713226e098aca0ea48fe4180e801eac583
+    //     e96fd9fae329358f54f57d46c22f845e3d083f6d6deaf09d821eaaadbbd945ac6f8131b70427794d
+    //     b0dedba44fcb6224654859605a2bbeb979e7d73f233724ab4846b38c94ce603de796f866d0d90fb0
+    //     badd037a135cca4d018e
+    let raw: &[u8] = hex!(
+        "8da474797065a9736d61727463617264aa637265617465645f6f6ed70100047c0f0d84"
+        "c000ac70726f7465637465645f6f6ed70100047cc41a172000aa7365727665725f7572"
+        "6cb668747470733a2f2f7061727365632e696e76616c6964af6f7267616e697a617469"
+        "6f6e5f6964a7436f6f6c4f7267a7757365725f6964d802a11cec001000000000000000"
+        "00000000a96465766963655f6964d802de10a11cec0010000000000000000000ac6875"
+        "6d616e5f68616e646c6592b1616c696365406578616d706c652e636f6db2416c696365"
+        "79204d63416c69636546616365ac6465766963655f6c6162656caf4d79206465763120"
+        "6d616368696e65af63657274696669636174655f72656682b063657274696669636174"
+        "655f68617368c0ae63657274696669636174655f6964c403666f6fbb616c676f726974"
+        "686d5f666f725f656e637279707465645f6b6579b152534145532d4f4145502d534841"
+        "323536ad656e637279707465645f6b6579c403666f6faa63697068657274657874c502"
+        "11a73aff77a2aa692b4393e094bfd2c2ccad4b0a8d010960caf27165b787fb412ed2ae"
+        "eb99f492a87063e368cebe38dc1f20c65273cb3254480cc9e4b519a53241205b531b41"
+        "edfa749419b83aeb0fb46cc2e21ae25782a1ab8fd3a32ca3b8fca4a0ffc8a301b62aca"
+        "6612d87e7f34a89b6e747ec82d38734d7943e17009d091d699871aaf964b8426292d0a"
+        "405ea3e868dca65028dae317a0311af3a958f86541edaef33d49e05056ccb038cc9f7d"
+        "ae40a336dd207eea4341229ba7efa39aa0df28d0d33d91fba49dd63f3814c162fff908"
+        "3674acd6cc8b621b869c801d0a527474e7da6cd51053803529542d39c9e6794353be27"
+        "8c39ec06cb20560a01e80db86a20df80808f2115ff28afdc2cf9da5099218d4c873dfc"
+        "bf78e88e4e63ddfcf883de5527b4b234ca63c286a7aa12de2fc6337dd1709f6f5922e3"
+        "d9f1029ce2b66d2fb856edb1c701f32c33fa4ca5d0789f52ce2091c48270324f5f6310"
+        "00f6ded1f0c5e1ae94831f488faeff93d8e0c2e26411b499dea920a14733fbea42dd95"
+        "a8ec13726f33c45f0c19f6e6b9b37adde46ce49465ebad63bfd8106e2d1fb7bc2ff3fe"
+        "a5c86d713226e098aca0ea48fe4180e801eac583e96fd9fae329358f54f57d46c22f84"
+        "5e3d083f6d6deaf09d821eaaadbbd945ac6f8131b70427794db0dedba44fcb62246548"
+        "59605a2bbeb979e7d73f233724ab4846b38c94ce603de796f866d0d90fb0badd037a13"
+        "5cca4d018e"
+    )
+    .as_ref();
     let expected = DeviceFile::Smartcard(DeviceFileSmartcard {
         encrypted_key: b"foo".as_ref().into(),
-        certificate_id: "foo".into(),
-        certificate_sha1: Some("foo".into()),
+        certificate_ref: CertificateReference::Id {
+            id: Bytes::copy_from_slice(b"foo"),
+        },
+        algorithm_for_encrypted_key: EncryptionAlgorithm::RsaesOaepSha256,
         ciphertext: hex!(
             "a73aff77a2aa692b4393e094bfd2c2ccad4b0a8d010960caf27165b787fb412ed2aeeb"
             "99f492a87063e368cebe38dc1f20c65273cb3254480cc9e4b519a53241205b531b41ed"
@@ -338,7 +351,7 @@ fn smartcard_device_file(alice: &Device) {
     });
     println!("***expected: {:?}", expected.dump());
 
-    let device = DeviceFile::load(&raw).unwrap();
+    let device = DeviceFile::load(raw).unwrap();
     p_assert_eq!(device, expected);
 
     // Also test roundtrip
