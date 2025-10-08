@@ -7,7 +7,7 @@ use clap::{
     builder::{NonEmptyStringValueParser, TypedValueParser},
     error::{Error, ErrorKind},
 };
-use libparsec_platform_pki::CertificateHash;
+use libparsec_types::CertificateHash;
 
 #[derive(Debug, Clone)]
 pub struct CertificateSRIHashParser;
@@ -30,9 +30,11 @@ impl TypedValueParser for CertificateSRIHashParser {
             .decode(b64_hash.as_bytes())
             .map_err(|e| Error::raw(ErrorKind::InvalidValue, e))?;
         if hash_ty.eq_ignore_ascii_case("sha256") {
-            Ok(CertificateHash::SHA256(raw_data.try_into().map_err(
-                |_| Error::raw(ErrorKind::InvalidValue, "Invalid data size"),
-            )?))
+            Ok(CertificateHash::SHA256 {
+                data: raw_data
+                    .try_into()
+                    .map_err(|_| Error::raw(ErrorKind::InvalidValue, "Invalid data size"))?,
+            })
         } else {
             Err(Error::raw(
                 ErrorKind::InvalidValue,

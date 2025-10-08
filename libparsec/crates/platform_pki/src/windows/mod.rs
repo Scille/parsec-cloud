@@ -3,12 +3,12 @@
 use std::ffi::c_void;
 
 use crate::{
-    CertificateDer, CertificateHash, CertificateReference, CertificateReferenceIdOrHash,
-    DecryptMessageError, DecryptedMessage, EncryptMessageError, EncryptedMessage,
+    CertificateDer, DecryptMessageError, DecryptedMessage, EncryptMessageError, EncryptedMessage,
     EncryptionAlgorithm, GetDerEncodedCertificateError, ShowCertificateSelectionDialogError,
     SignMessageError, SignatureAlgorithm, SignedMessageFromPki,
 };
 use bytes::Bytes;
+use libparsec_types::{CertificateHash, CertificateReference, CertificateReferenceIdOrHash};
 use schannel::{
     cert_context::{CertContext, HashAlgorithm, PrivateKey},
     cert_store::CertStore,
@@ -27,36 +27,30 @@ fn open_store() -> std::io::Result<CertStore> {
     CertStore::open_current_user("My")
 }
 
-impl CertificateHash {
-    fn get_hash_algo(&self) -> HashAlgorithm {
-        match self {
-            CertificateHash::SHA256(..) => HashAlgorithm::sha256(),
-        }
+fn get_hash_algo(hash: &CertificateHash) -> HashAlgorithm {
+    match hash {
+        CertificateHash::SHA256 { .. } => HashAlgorithm::sha256(),
     }
 }
 
-impl PartialEq<CertContext> for CertificateHash {
-    fn eq(&self, other: &CertContext) -> bool {
-        let Ok(cert_hash) = other.fingerprint(self.get_hash_algo()) else {
-            return false;
-        };
-        match self {
-            CertificateHash::SHA256(expected) => expected.as_ref() == cert_hash.as_slice(),
-        }
+fn cert_cmp_hash(hash: &CertificateHash, other: &CertContext) -> bool {
+    let Ok(cert_hash) = other.fingerprint(get_hash_algo(hash)) else {
+        return false;
+    };
+    match hash {
+        CertificateHash::SHA256 { data } => data.as_ref() == cert_hash.as_slice(),
     }
 }
 
-impl CertificateHash {
-    fn from_certificate_context(context: &CertContext) -> std::io::Result<Self> {
-        context
-            .fingerprint(HashAlgorithm::sha256())
-            .and_then(|buf| {
-                buf.try_into().map_err(|_| {
-                    std::io::Error::new(std::io::ErrorKind::InvalidData, "Not a sha256 hash")
-                })
+fn hash_from_certificate_context(context: &CertContext) -> std::io::Result<CertificateHash> {
+    context
+        .fingerprint(HashAlgorithm::sha256())
+        .and_then(|buf| {
+            buf.try_into().map_err(|_| {
+                std::io::Error::new(std::io::ErrorKind::InvalidData, "Not a sha256 hash")
             })
-            .map(Self::SHA256)
-    }
+        })
+        .map(|data| CertificateHash::SHA256 { data })
 }
 
 fn find_certificate(
@@ -64,16 +58,18 @@ fn find_certificate(
     certificate_ref: &CertificateReference,
 ) -> Option<CertContext> {
     let matcher: Box<dyn Fn(&CertContext) -> bool> = match certificate_ref {
-        CertificateReference::Id(id) => Box::new(|candidate: &CertContext| {
+        CertificateReference::Id { id } => Box::new(|candidate: &CertContext| {
             cert_cmp_id(candidate, id.as_ref()).unwrap_or_default()
         }),
-        CertificateReference::Hash(hash) => {
-            Box::new(move |candidate: &CertContext| hash == candidate)
+        CertificateReference::Hash { hash } => {
+            Box::new(move |candidate: &CertContext| cert_cmp_hash(hash, candidate))
         }
-        CertificateReference::IdOrHash(id_or_hash) => Box::new(move |candidate: &CertContext| {
-            cert_cmp_id(candidate, id_or_hash.id.as_ref()).unwrap_or_default()
-                || &id_or_hash.hash == candidate
-        }),
+        CertificateReference::IdOrHash { id_or_hash } => {
+            Box::new(move |candidate: &CertContext| {
+                cert_cmp_id(candidate, id_or_hash.id.as_ref()).unwrap_or_default()
+                    || cert_cmp_hash(&id_or_hash.hash, candidate)
+            })
+        }
     };
 
     store.certs().find(matcher)
@@ -140,7 +136,7 @@ fn get_id_and_hash_from_cert_context(
     context: &CertContext,
 ) -> std::io::Result<CertificateReferenceIdOrHash> {
     let id = get_certificate_id(context)?.into();
-    let hash = CertificateHash::from_certificate_context(context)?;
+    let hash = hash_from_certificate_context(context)?;
 
     Ok(CertificateReferenceIdOrHash { id, hash })
 }

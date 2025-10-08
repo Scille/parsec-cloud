@@ -2415,6 +2415,7 @@ dependencies = [
  "cryptoki",
  "data-encoding",
  "error_set",
+ "libparsec_types",
  "percent-encoding",
  "rsa",
  "rustls-pki-types",

@@ -5,7 +5,8 @@ use std::fmt::Debug;
 
 use anyhow::Context;
 use clap::Parser;
-use libparsec_platform_pki::{get_der_encoded_certificate, CertificateHash, CertificateReference};
+use libparsec_platform_pki::get_der_encoded_certificate;
+use libparsec_types::{CertificateHash, CertificateReference};
 
 #[derive(Debug, Parser)]
 struct Args {
@@ -19,7 +20,7 @@ fn main() -> anyhow::Result<()> {
     println!("args={args:?}");
 
     let cert_ref: CertificateReference = match args.certificate_hash {
-        Some(hash) => CertificateReference::Hash(hash),
+        Some(hash) => CertificateReference::Hash { hash },
         #[cfg(target_os = "windows")]
         None => {
             let cert_ref = libparsec_platform_pki::show_certificate_selection_dialog()
@@ -44,7 +45,6 @@ fn main() -> anyhow::Result<()> {
         "id: {}",
         data_encoding::BASE64.encode_display(&cert.cert_ref.id)
     );
-    #[cfg(feature = "hash-sri-display")]
     println!("fingerprint: {}", cert.cert_ref.hash);
     println!(
         "content: {}",

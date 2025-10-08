@@ -11,18 +11,15 @@ repository.workspace = true
 [lints]
 workspace = true
 
-[features]
-default = ["hash-sri-display"]
-hash-sri-display = ["dep:data-encoding"]
 
 [dependencies]
 bytes = { workspace = true }
-data-encoding = { workspace = true, optional = true }
 error_set = { workspace = true }
 rustls-webpki = { workspace = true, features = ["std"] }
 rustls-pki-types = { workspace = true }
 rsa = { workspace = true }
 sha2 = { workspace = true }
+libparsec_types = { workspace = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 schannel = { workspace = true }

@@ -5,6 +5,7 @@ mod shared;
 #[cfg(target_os = "windows")]
 mod windows;
 
+use libparsec_types::{CertificateReferenceIdOrHash, EncryptionAlgorithm};
 use std::{fmt::Display, str::FromStr};
 
 use bytes::Bytes;
@@ -12,58 +13,16 @@ use bytes::Bytes;
 #[cfg(target_os = "windows")]
 pub(crate) use windows as platform;
 
-#[derive(Clone)]
-#[cfg_attr(not(feature = "hash-sri-display"), derive(Debug))]
-pub enum CertificateHash {
-    SHA256(Box<[u8; 32]>),
-}
-
-#[cfg(feature = "hash-sri-display")]
-impl std::fmt::Display for CertificateHash {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let (hash_str, data) = match self {
-            CertificateHash::SHA256(data) => ("sha256", data.as_ref()),
-        };
-        write!(
-            f,
-            "{hash_str}-{}",
-            ::data_encoding::BASE64.encode_display(data)
-        )
-    }
-}
-
-#[cfg(feature = "hash-sri-display")]
-impl std::fmt::Debug for CertificateHash {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::fmt::Display::fmt(self, f)
-    }
-}
-
-pub enum CertificateReference {
-    Id(Bytes),
-    Hash(CertificateHash),
-    IdOrHash(CertificateReferenceIdOrHash),
-}
-
-impl From<CertificateReferenceIdOrHash> for CertificateReference {
-    fn from(value: CertificateReferenceIdOrHash) -> Self {
-        Self::IdOrHash(value)
-    }
-}
-
-pub struct CertificateReferenceIdOrHash {
-    pub id: Bytes,
-    pub hash: CertificateHash,
-}
-
 // Mock module for unsupported platform
 #[cfg(not(target_os = "windows"))]
 mod platform {
     use crate::{
-        CertificateDer, CertificateReference, CertificateReferenceIdOrHash, DecryptMessageError,
-        DecryptedMessage, EncryptMessageError, EncryptedMessage, EncryptionAlgorithm,
-        GetDerEncodedCertificateError, ShowCertificateSelectionDialogError, SignMessageError,
-        SignedMessageFromPki,
+        CertificateDer, DecryptMessageError, DecryptedMessage, EncryptMessageError,
+        EncryptedMessage, GetDerEncodedCertificateError, ShowCertificateSelectionDialogError,
+        SignMessageError, SignedMessageFromPki,
+    };
+    use libparsec_types::{
+        CertificateReference, CertificateReferenceIdOrHash, EncryptionAlgorithm,
     };
 
     pub fn get_der_encoded_certificate(
@@ -180,36 +139,6 @@ pub use errors::SignMessageError;
 pub use platform::sign_message;
 
 pub use shared::{verify_message, Certificate, SignedMessage};
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum EncryptionAlgorithm {
-    RsaesOaepSha256,
-}
-
-impl From<EncryptionAlgorithm> for &'static str {
-    fn from(value: EncryptionAlgorithm) -> Self {
-        match value {
-            EncryptionAlgorithm::RsaesOaepSha256 => "RSAES-OAEP-SHA256",
-        }
-    }
-}
-
-impl FromStr for EncryptionAlgorithm {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "RSAES-OAEP-SHA256" => Ok(Self::RsaesOaepSha256),
-            _ => Err("Unknown encryption algorithm"),
-        }
-    }
-}
-
-impl Display for EncryptionAlgorithm {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str((*self).into())
-    }
-}
 
 pub struct EncryptedMessage {
     pub algo: EncryptionAlgorithm,

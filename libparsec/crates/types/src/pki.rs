@@ -2,7 +2,9 @@
 
 use std::{
     collections::HashMap,
+    fmt::Display,
     path::{Path, PathBuf},
+    str::FromStr,
 };
 
 use bytes::Bytes;
@@ -270,6 +272,79 @@ impl From<LocalPendingEnrollment> for LocalPendingEnrollmentData {
             encrypted_key: obj.encrypted_key,
             ciphertext: obj.ciphertext,
         }
+    }
+}
+
+#[derive(Clone, Eq, PartialEq, Serialize, Deserialize, Debug)]
+pub enum CertificateHash {
+    SHA256 { data: Box<[u8; 32]> },
+}
+
+impl std::fmt::Display for CertificateHash {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let (hash_str, data) = match self {
+            CertificateHash::SHA256 { data } => ("sha256", data.as_ref()),
+        };
+        write!(
+            f,
+            "{hash_str}-{}",
+            ::data_encoding::BASE64.encode_display(data)
+        )
+    }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub enum CertificateReference {
+    Id {
+        id: Bytes,
+    },
+    Hash {
+        hash: CertificateHash,
+    },
+    IdOrHash {
+        id_or_hash: CertificateReferenceIdOrHash,
+    },
+}
+
+impl From<CertificateReferenceIdOrHash> for CertificateReference {
+    fn from(value: CertificateReferenceIdOrHash) -> Self {
+        Self::IdOrHash { id_or_hash: value }
+    }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub struct CertificateReferenceIdOrHash {
+    pub id: Bytes,
+    pub hash: CertificateHash,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EncryptionAlgorithm {
+    RsaesOaepSha256,
+}
+
+impl From<EncryptionAlgorithm> for &'static str {
+    fn from(value: EncryptionAlgorithm) -> Self {
+        match value {
+            EncryptionAlgorithm::RsaesOaepSha256 => "RSAES-OAEP-SHA256",
+        }
+    }
+}
+
+impl FromStr for EncryptionAlgorithm {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "RSAES-OAEP-SHA256" => Ok(Self::RsaesOaepSha256),
+            _ => Err("Unknown encryption algorithm"),
+        }
+    }
+}
+
+impl Display for EncryptionAlgorithm {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str((*self).into())
     }
 }
 
