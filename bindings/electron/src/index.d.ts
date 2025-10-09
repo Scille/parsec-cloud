@@ -159,6 +159,12 @@ export interface AvailableDevice {
 }
 
 
+export interface CertificateReferenceIdOrHash {
+    id: Uint8Array
+    hash: CertificateHash
+}
+
+
 export interface ClientConfig {
     configDir: string
     dataBaseDir: string
@@ -1113,6 +1119,34 @@ export interface CancelErrorNotBound {
 export type CancelError =
   | CancelErrorInternal
   | CancelErrorNotBound
+
+
+// CertificateHash
+export interface CertificateHashSHA256 {
+    tag: "SHA256"
+    data: Uint8Array
+}
+export type CertificateHash =
+  | CertificateHashSHA256
+
+
+// CertificateReference
+export interface CertificateReferenceHash {
+    tag: "Hash"
+    hash: CertificateHash
+}
+export interface CertificateReferenceId {
+    tag: "Id"
+    id: Uint8Array
+}
+export interface CertificateReferenceIdOrHash {
+    tag: "IdOrHash"
+    id_or_hash: CertificateReferenceIdOrHash
+}
+export type CertificateReference =
+  | CertificateReferenceHash
+  | CertificateReferenceId
+  | CertificateReferenceIdOrHash
 
 
 // ClaimInProgressError
@@ -2221,6 +2255,7 @@ export interface DeviceAccessStrategyPassword {
 export interface DeviceAccessStrategySmartcard {
     tag: "Smartcard"
     key_file: string
+    certificate_reference: CertificateReference
 }
 export type DeviceAccessStrategy =
   | DeviceAccessStrategyAccountVault
@@ -2244,6 +2279,7 @@ export interface DeviceSaveStrategyPassword {
 }
 export interface DeviceSaveStrategySmartcard {
     tag: "Smartcard"
+    certificate_reference: CertificateReference
 }
 export type DeviceSaveStrategy =
   | DeviceSaveStrategyAccountVault

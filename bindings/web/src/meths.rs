@@ -1200,6 +1200,43 @@ fn struct_available_device_rs_to_js(
     Ok(js_obj)
 }
 
+// CertificateReferenceIdOrHash
+
+#[allow(dead_code)]
+fn struct_certificate_reference_id_or_hash_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::CertificateReferenceIdOrHash, JsValue> {
+    let id = {
+        let js_val = Reflect::get(&obj, &"id".into())?;
+        js_val
+            .dyn_into::<Uint8Array>()
+            .map(|x| x.to_vec())
+            .map_err(|_| TypeError::new("Not a Uint8Array"))
+            .and_then(|x| {
+                let custom_from_rs_bytes =
+                    |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+                custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let hash = {
+        let js_val = Reflect::get(&obj, &"hash".into())?;
+        variant_certificate_hash_js_to_rs(js_val)?
+    };
+    Ok(libparsec::CertificateReferenceIdOrHash { id, hash })
+}
+
+#[allow(dead_code)]
+fn struct_certificate_reference_id_or_hash_rs_to_js(
+    rs_obj: libparsec::CertificateReferenceIdOrHash,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_id = JsValue::from(Uint8Array::from(rs_obj.id.as_ref()));
+    Reflect::set(&js_obj, &"id".into(), &js_id)?;
+    let js_hash = variant_certificate_hash_rs_to_js(rs_obj.hash)?;
+    Reflect::set(&js_obj, &"hash".into(), &js_hash)?;
+    Ok(js_obj)
+}
+
 // ClientConfig
 
 #[allow(dead_code)]
@@ -6347,6 +6384,138 @@ fn variant_cancel_error_rs_to_js(rs_obj: libparsec::CancelError) -> Result<JsVal
     Ok(js_obj)
 }
 
+// CertificateHash
+
+#[allow(dead_code)]
+fn variant_certificate_hash_js_to_rs(obj: JsValue) -> Result<libparsec::CertificateHash, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "CertificateHashSHA256" => {
+            let data = {
+                let js_val = Reflect::get(&obj, &"data".into())?;
+                js_val
+                    .dyn_into::<Uint8Array>()
+                    .map(|x| x.to_vec())
+                    .map_err(|_| TypeError::new("Not a Uint8Array"))
+                    .and_then(|x| {
+                        let custom_from_rs_bytes = |v: &[u8]| -> Result<Box<[u8; 32]>, String> {
+                            Ok(Box::from(
+                                <[u8; 32]>::try_from(v).map_err(|_| "invalid value length")?,
+                            ))
+                        };
+                        custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            };
+            Ok(libparsec::CertificateHash::SHA256 { data })
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a CertificateHash",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_certificate_hash_rs_to_js(
+    rs_obj: libparsec::CertificateHash,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::CertificateHash::SHA256 { data, .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"CertificateHashSHA256".into())?;
+            let js_data = JsValue::from(Uint8Array::from({
+                let custom_to_rs_bytes =
+                    |v: Box<[u8; 32]>| -> Result<Vec<u8>, String> { Ok((*v).into()) };
+                match custom_to_rs_bytes(data) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            }));
+            Reflect::set(&js_obj, &"data".into(), &js_data)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// CertificateReference
+
+#[allow(dead_code)]
+fn variant_certificate_reference_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::CertificateReference, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "CertificateReferenceHash" => {
+            let hash = {
+                let js_val = Reflect::get(&obj, &"hash".into())?;
+                variant_certificate_hash_js_to_rs(js_val)?
+            };
+            Ok(libparsec::CertificateReference::Hash { hash })
+        }
+        "CertificateReferenceId" => {
+            let id = {
+                let js_val = Reflect::get(&obj, &"id".into())?;
+                js_val
+                    .dyn_into::<Uint8Array>()
+                    .map(|x| x.to_vec())
+                    .map_err(|_| TypeError::new("Not a Uint8Array"))
+                    .and_then(|x| {
+                        let custom_from_rs_bytes = |v: &[u8]| -> Result<libparsec::Bytes, String> {
+                            Ok(v.to_vec().into())
+                        };
+                        custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            };
+            Ok(libparsec::CertificateReference::Id { id })
+        }
+        "CertificateReferenceIdOrHash" => {
+            let id_or_hash = {
+                let js_val = Reflect::get(&obj, &"idOrHash".into())?;
+                struct_certificate_reference_id_or_hash_js_to_rs(js_val)?
+            };
+            Ok(libparsec::CertificateReference::IdOrHash { id_or_hash })
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a CertificateReference",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_certificate_reference_rs_to_js(
+    rs_obj: libparsec::CertificateReference,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::CertificateReference::Hash { hash, .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"CertificateReferenceHash".into())?;
+            let js_hash = variant_certificate_hash_rs_to_js(hash)?;
+            Reflect::set(&js_obj, &"hash".into(), &js_hash)?;
+        }
+        libparsec::CertificateReference::Id { id, .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"CertificateReferenceId".into())?;
+            let js_id = JsValue::from(Uint8Array::from(id.as_ref()));
+            Reflect::set(&js_obj, &"id".into(), &js_id)?;
+        }
+        libparsec::CertificateReference::IdOrHash { id_or_hash, .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"CertificateReferenceIdOrHash".into(),
+            )?;
+            let js_id_or_hash = struct_certificate_reference_id_or_hash_rs_to_js(id_or_hash)?;
+            Reflect::set(&js_obj, &"idOrHash".into(), &js_id_or_hash)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClaimInProgressError
 
 #[allow(dead_code)]
@@ -9313,7 +9482,14 @@ fn variant_device_access_strategy_js_to_rs(
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
                     })?
             };
-            Ok(libparsec::DeviceAccessStrategy::Smartcard { key_file })
+            let certificate_reference = {
+                let js_val = Reflect::get(&obj, &"certificateReference".into())?;
+                variant_certificate_reference_js_to_rs(js_val)?
+            };
+            Ok(libparsec::DeviceAccessStrategy::Smartcard {
+                key_file,
+                certificate_reference,
+            })
         }
         _ => Err(JsValue::from(TypeError::new(
             "Object is not a DeviceAccessStrategy",
@@ -9410,7 +9586,11 @@ fn variant_device_access_strategy_rs_to_js(
             });
             Reflect::set(&js_obj, &"keyFile".into(), &js_key_file)?;
         }
-        libparsec::DeviceAccessStrategy::Smartcard { key_file, .. } => {
+        libparsec::DeviceAccessStrategy::Smartcard {
+            key_file,
+            certificate_reference,
+            ..
+        } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
@@ -9429,6 +9609,13 @@ fn variant_device_access_strategy_rs_to_js(
                 .as_ref()
             });
             Reflect::set(&js_obj, &"keyFile".into(), &js_key_file)?;
+            let js_certificate_reference =
+                variant_certificate_reference_rs_to_js(certificate_reference)?;
+            Reflect::set(
+                &js_obj,
+                &"certificateReference".into(),
+                &js_certificate_reference,
+            )?;
         }
     }
     Ok(js_obj)
@@ -9496,7 +9683,15 @@ fn variant_device_save_strategy_js_to_rs(
             };
             Ok(libparsec::DeviceSaveStrategy::Password { password })
         }
-        "DeviceSaveStrategySmartcard" => Ok(libparsec::DeviceSaveStrategy::Smartcard {}),
+        "DeviceSaveStrategySmartcard" => {
+            let certificate_reference = {
+                let js_val = Reflect::get(&obj, &"certificateReference".into())?;
+                variant_certificate_reference_js_to_rs(js_val)?
+            };
+            Ok(libparsec::DeviceSaveStrategy::Smartcard {
+                certificate_reference,
+            })
+        }
         _ => Err(JsValue::from(TypeError::new(
             "Object is not a DeviceSaveStrategy",
         ))),
@@ -9542,11 +9737,21 @@ fn variant_device_save_strategy_rs_to_js(
             let js_password = JsValue::from_str(password.as_ref());
             Reflect::set(&js_obj, &"password".into(), &js_password)?;
         }
-        libparsec::DeviceSaveStrategy::Smartcard { .. } => {
+        libparsec::DeviceSaveStrategy::Smartcard {
+            certificate_reference,
+            ..
+        } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
                 &"DeviceSaveStrategySmartcard".into(),
+            )?;
+            let js_certificate_reference =
+                variant_certificate_reference_rs_to_js(certificate_reference)?;
+            Reflect::set(
+                &js_obj,
+                &"certificateReference".into(),
+                &js_certificate_reference,
             )?;
         }
     }
