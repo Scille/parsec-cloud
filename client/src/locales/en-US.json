@@ -343,6 +343,14 @@
             }
         }
     },
+    "WebRedirectPage": {
+        "title": "Launching Parsec App",
+        "subtitle": "You can choose wether to open this link in the Parsec desktop app or in this browser.",
+        "desktop": "Open in desktop app",
+        "web": "Continue in browser",
+        "downloadText": "Don't have the app yet?",
+        "downloadLink": "Download Parsec"
+    },
     "CreateOrganization": {
         "fullname": "Full name",
         "fullnamePlaceholder": "John Smith",
