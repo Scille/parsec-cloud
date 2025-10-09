@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 from .common import (
+    Bytes,
     DateTime,
     DeviceID,
     DeviceLabel,
@@ -17,6 +18,7 @@ from .common import (
     SecretKey,
     VariantItemUnit,
     AccountVaultItemOpaqueKeyID,
+    Sha256BoxData,
 )
 from .addr import ParsecAddr
 
@@ -31,6 +33,27 @@ class AvailableDeviceType(Variant):
         ciphertext_key_id: AccountVaultItemOpaqueKeyID
 
 
+class CertificateHash(Variant):
+    class SHA256:
+        data: Sha256BoxData
+
+
+class CertificateReferenceIdOrHash(Structure):
+    id: Bytes
+    hash: CertificateHash
+
+
+class CertificateReference(Variant):
+    class Id:
+        id: Bytes
+
+    class Hash:
+        hash: CertificateHash
+
+    class IdOrHash:
+        id_or_hash: CertificateReferenceIdOrHash
+
+
 class DeviceSaveStrategy(Variant):
     class Keyring:
         pass
@@ -39,7 +62,7 @@ class DeviceSaveStrategy(Variant):
         password: Password
 
     class Smartcard:
-        pass
+        certificate_reference: CertificateReference
 
     class AccountVault:
         ciphertext_key_id: AccountVaultItemOpaqueKeyID

@@ -255,13 +255,16 @@ impl DeviceFile {
     }
 }
 
+/// Represent how (not where) to save a device file
 #[derive(Debug, Clone)]
 pub enum DeviceSaveStrategy {
     Keyring,
     Password {
         password: Password,
     },
-    Smartcard,
+    Smartcard {
+        certificate_reference: CertificateReference,
+    },
     AccountVault {
         /// This key is the one stored in the account vault.
         ///
@@ -279,7 +282,7 @@ impl DeviceSaveStrategy {
             DeviceSaveStrategy::Password { password } => {
                 DeviceAccessStrategy::Password { key_file, password }
             }
-            DeviceSaveStrategy::Smartcard => DeviceAccessStrategy::Smartcard { key_file },
+            DeviceSaveStrategy::Smartcard { .. } => DeviceAccessStrategy::Smartcard { key_file },
             DeviceSaveStrategy::AccountVault {
                 ciphertext_key_id,
                 ciphertext_key,
@@ -305,7 +308,7 @@ impl DeviceSaveStrategy {
     }
 }
 
-/// Represent how to load/save a device file
+/// Represent how to load a device file
 #[derive(Debug, Clone, PartialEq)]
 pub enum DeviceAccessStrategy {
     Keyring {
@@ -334,7 +337,7 @@ impl DeviceAccessStrategy {
         match self {
             Self::Keyring { key_file } => key_file,
             Self::Password { key_file, .. } => key_file,
-            Self::Smartcard { key_file } => key_file,
+            Self::Smartcard { key_file, .. } => key_file,
             Self::AccountVault { key_file, .. } => key_file,
         }
     }

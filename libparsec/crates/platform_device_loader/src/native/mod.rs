@@ -304,7 +304,7 @@ pub(super) async fn save_device(
             save_content(&key_file, &file_content).await?;
         }
 
-        DeviceSaveStrategy::Smartcard => {
+        DeviceSaveStrategy::Smartcard { .. } => {
             todo!("Save smartcard device")
         }
 

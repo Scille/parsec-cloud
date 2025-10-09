@@ -115,9 +115,11 @@ export type SASCode = string
 export type SequesterServiceID = string
 export type UserID = string
 export type VlobID = string
+export type Bytes = Uint8Array
 export type KeyDerivation = Uint8Array
 export type SecretKey = Uint8Array
 export type SequesterVerifyKeyDer = Uint8Array
+export type Sha256BoxData = Uint8Array
 export type NonZeroU8 = number
 export type U8 = number
 export type I32 = number
@@ -187,6 +189,11 @@ export interface AvailableDevice {
     humanHandle: HumanHandle
     deviceLabel: DeviceLabel
     ty: AvailableDeviceType
+}
+
+export interface CertificateReferenceIdOrHash {
+    id: Bytes
+    hash: CertificateHash
 }
 
 export interface ClientConfig {
@@ -1255,6 +1262,42 @@ export interface CancelErrorNotBound {
 export type CancelError =
   | CancelErrorInternal
   | CancelErrorNotBound
+
+// CertificateHash
+export enum CertificateHashTag {
+    SHA256 = 'CertificateHashSHA256',
+}
+
+export interface CertificateHashSHA256 {
+    tag: CertificateHashTag.SHA256
+    data: Sha256BoxData
+}
+export type CertificateHash =
+  | CertificateHashSHA256
+
+// CertificateReference
+export enum CertificateReferenceTag {
+    Hash = 'CertificateReferenceHash',
+    Id = 'CertificateReferenceId',
+    IdOrHash = 'CertificateReferenceIdOrHash',
+}
+
+export interface CertificateReferenceHash {
+    tag: CertificateReferenceTag.Hash
+    hash: CertificateHash
+}
+export interface CertificateReferenceId {
+    tag: CertificateReferenceTag.Id
+    id: Bytes
+}
+export interface CertificateReferenceIdOrHash {
+    tag: CertificateReferenceTag.IdOrHash
+    idOrHash: CertificateReferenceIdOrHash
+}
+export type CertificateReference =
+  | CertificateReferenceHash
+  | CertificateReferenceId
+  | CertificateReferenceIdOrHash
 
 // ClaimInProgressError
 export enum ClaimInProgressErrorTag {
@@ -2653,6 +2696,7 @@ export interface DeviceSaveStrategyPassword {
 }
 export interface DeviceSaveStrategySmartcard {
     tag: DeviceSaveStrategyTag.Smartcard
+    certificateReference: CertificateReference
 }
 export type DeviceSaveStrategy =
   | DeviceSaveStrategyAccountVault
