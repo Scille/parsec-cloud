@@ -147,6 +147,7 @@ jobs:
         with:
           # We setup the cache by hand, see below
           cache: false
+          rustflags: "" # Set value to prevent default which deny cargo check warnings.
         timeout-minutes: 5
 
       - name: Retrieve Rust cache
