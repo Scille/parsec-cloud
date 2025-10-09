@@ -35,7 +35,14 @@ async fn ok(tmp_path: TmpPath) {
         key_file: key_file.clone(),
         password: "P@ssw0rd.".to_owned().into(),
     };
-    save_device(Path::new(""), &access, &device).await.unwrap();
+    save_device(
+        Path::new(""),
+        &access.clone().into_save_strategy(),
+        &device,
+        key_file,
+    )
+    .await
+    .unwrap();
 
     let new_server_addr: ParsecAddr = "parsec3://new.invalid".parse().unwrap();
 

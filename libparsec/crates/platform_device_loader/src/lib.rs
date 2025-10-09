@@ -246,16 +246,18 @@ pub enum SaveDeviceError {
 /// Note `config_dir` is only used as discriminant for the testbed here
 pub async fn save_device(
     #[cfg_attr(not(feature = "test-with-testbed"), expect(unused_variables))] config_dir: &Path,
-    access: &DeviceAccessStrategy,
+    strategy: &DeviceSaveStrategy,
     device: &LocalDevice,
+    key_file: PathBuf,
 ) -> Result<AvailableDevice, SaveDeviceError> {
-    log::debug!("Saving device at {}", access.key_file().display());
+    log::debug!("Saving device at {}", key_file.display());
     #[cfg(feature = "test-with-testbed")]
-    if let Some(result) = testbed::maybe_save_device(config_dir, access, device) {
+    if let Some(result) = testbed::maybe_save_device(config_dir, strategy, device, key_file.clone())
+    {
         return result;
     }
 
-    platform::save_device(access, device, device.now()).await
+    platform::save_device(strategy, device, device.now(), key_file).await
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -276,10 +278,12 @@ pub enum UpdateDeviceError {
 pub async fn update_device_change_authentication(
     #[cfg_attr(not(feature = "test-with-testbed"), expect(unused_variables))] config_dir: &Path,
     current_access: &DeviceAccessStrategy,
-    new_access: &DeviceAccessStrategy,
+    new_strategy: &DeviceSaveStrategy,
+    new_key_file: &Path,
 ) -> Result<AvailableDevice, UpdateDeviceError> {
     #[cfg(feature = "test-with-testbed")]
-    if let Some(result) = testbed::maybe_update_device(config_dir, current_access, new_access, None)
+    if let Some(result) =
+        testbed::maybe_update_device(config_dir, current_access, new_strategy, new_key_file, None)
     {
         return result.map(|(available_device, _)| available_device);
     }
@@ -314,7 +318,8 @@ pub async fn update_device_change_authentication(
         &device,
         device_file.created_on(),
         current_key_file,
-        new_access,
+        new_strategy,
+        new_key_file,
     )
     .await
 }
@@ -324,21 +329,23 @@ pub async fn update_device_change_authentication(
 /// Returns the old server address
 pub async fn update_device_overwrite_server_addr(
     #[cfg_attr(not(feature = "test-with-testbed"), expect(unused_variables))] config_dir: &Path,
-    access: &DeviceAccessStrategy,
+    strategy: &DeviceAccessStrategy,
     new_server_addr: ParsecAddr,
 ) -> Result<ParsecAddr, UpdateDeviceError> {
     #[cfg(feature = "test-with-testbed")]
-    if let Some(result) =
-        testbed::maybe_update_device(config_dir, access, access, Some(new_server_addr.clone()))
-    {
+    if let Some(result) = testbed::maybe_update_device(
+        config_dir,
+        strategy,
+        &strategy.clone().into_save_strategy(),
+        strategy.key_file(),
+        Some(new_server_addr.clone()),
+    ) {
         return result.map(|(_, old_server_addr)| old_server_addr);
     }
 
-    let key_file = access.key_file();
-
     // 1. Load the current device keys file...
 
-    let file_content = platform::read_file(key_file)
+    let file_content = platform::read_file(strategy.key_file())
         .await
         .map_err(|err| match err {
             ReadFileError::StorageNotAvailable => UpdateDeviceError::StorageNotAvailable,
@@ -346,7 +353,7 @@ pub async fn update_device_overwrite_server_addr(
         })?;
     let device_file =
         DeviceFile::load(&file_content).map_err(|_| UpdateDeviceError::InvalidData)?;
-    let ciphertext_key = platform::load_ciphertext_key(access, &device_file)
+    let ciphertext_key = platform::load_ciphertext_key(strategy, &device_file)
         .await
         .map_err(|err| match err {
             LoadCiphertextKeyError::InvalidData => UpdateDeviceError::InvalidData,
@@ -372,7 +379,14 @@ pub async fn update_device_overwrite_server_addr(
 
     // 2. ...and ask to overwrite it
 
-    platform::update_device(&device, device_file.created_on(), key_file, access).await?;
+    platform::update_device(
+        &device,
+        device_file.created_on(),
+        strategy.key_file(),
+        &strategy.clone().into_save_strategy(),
+        strategy.key_file(),
+    )
+    .await?;
 
     Ok(old_server_addr)
 }

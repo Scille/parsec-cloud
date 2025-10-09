@@ -20,7 +20,14 @@ async fn remove_ok(tmp_path: TmpPath, env: &TestbedEnv) {
         key_file: key_file.clone(),
         password: "FooBar".to_owned().into(),
     };
-    save_device(&tmp_path, &access, &device).await.unwrap();
+    save_device(
+        &tmp_path,
+        &access.into_save_strategy(),
+        &device,
+        key_file.clone(),
+    )
+    .await
+    .unwrap();
 
     // 2. Remove the device.
     remove_device(&tmp_path, &key_file).await.unwrap();

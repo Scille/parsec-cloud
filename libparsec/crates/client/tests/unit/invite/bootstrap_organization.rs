@@ -95,8 +95,8 @@ async fn ok(#[case] sequestered: bool, env: &TestbedEnv) {
 #[parsec_test(testbed = "minimal")]
 async fn finalize(tmp_path: TmpPath, env: &TestbedEnv) {
     let config = make_config(env);
-    let access = DeviceAccessStrategy::Password {
-        key_file: tmp_path.join("alice.keys"),
+    let key_file = tmp_path.join("alice.keys");
+    let save_strategy = DeviceSaveStrategy::Password {
         password: "P@ssw0rd.".to_owned().into(),
     };
 
@@ -105,8 +105,11 @@ async fn finalize(tmp_path: TmpPath, env: &TestbedEnv) {
         env.local_device("alice@dev1"),
     );
     let device = finalize_ctx.new_local_device.clone();
-    finalize_ctx.save_local_device(&access).await.unwrap();
-
+    finalize_ctx
+        .save_local_device(&save_strategy.clone(), &key_file)
+        .await
+        .unwrap();
+    let access = save_strategy.into_access(key_file.clone());
     // Round-trip check
     let reloaded = libparsec_platform_device_loader::load_device(&config.config_dir, &access)
         .await
@@ -133,10 +136,10 @@ async fn bad_finalize(tmp_path: TmpPath, #[case] kind: BadFinalizeKind, env: &Te
         p.data_base_dir = tmp_path.join("data");
         config
     };
-    let access = DeviceAccessStrategy::Password {
-        key_file: config.config_dir.join("alice.keys"),
+    let save_strategy = DeviceSaveStrategy::Password {
         password: "P@ssw0rd.".to_owned().into(),
     };
+    let key_file = config.config_dir.join("alice.keys");
 
     // Simple way to make the folder unwritable
     match kind {
@@ -150,7 +153,9 @@ async fn bad_finalize(tmp_path: TmpPath, #[case] kind: BadFinalizeKind, env: &Te
 
     let finalize_ctx = test_organization_bootstrap_finalize_ctx_factory(config, device);
     p_assert_matches!(
-        finalize_ctx.save_local_device(&access).await,
+        finalize_ctx
+            .save_local_device(&save_strategy, &key_file)
+            .await,
         Err(anyhow::Error { .. })
     );
 }

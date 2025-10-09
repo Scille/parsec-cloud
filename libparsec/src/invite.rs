@@ -134,16 +134,13 @@ pub async fn bootstrap_organization(
         .inspect_err(|e| log::error!("Failed to bootstrap organization {org_id}: {e}"))
     }?;
 
-    let access = {
-        let key_file = libparsec_platform_device_loader::get_default_key_file(
-            &config.config_dir,
-            finalize_ctx.new_local_device.device_id,
-        );
-        save_strategy.into_access(key_file)
-    };
+    let key_file = libparsec_platform_device_loader::get_default_key_file(
+        &config.config_dir,
+        finalize_ctx.new_local_device.device_id,
+    );
 
     let available_device = finalize_ctx
-        .save_local_device(&access)
+        .save_local_device(&save_strategy, &key_file)
         .await
         .inspect_err(|e| log::error!("Error while saving device: {e}"))
         .map_err(BootstrapOrganizationError::SaveDeviceError)?;
@@ -1016,12 +1013,9 @@ pub async fn claimer_user_finalize_save_local_device(
         _ => Err(x),
     })?;
 
-    let access = {
-        let key_file = ctx.get_default_key_file();
-        save_strategy.into_access(key_file)
-    };
+    let key_file = ctx.get_default_key_file();
 
-    let available_device = ctx.save_local_device(&access).await?;
+    let available_device = ctx.save_local_device(&save_strategy, &key_file).await?;
 
     Ok(available_device)
 }
@@ -1035,12 +1029,9 @@ pub async fn claimer_device_finalize_save_local_device(
         _ => Err(x),
     })?;
 
-    let access = {
-        let key_file = ctx.get_default_key_file();
-        save_strategy.into_access(key_file)
-    };
+    let key_file = ctx.get_default_key_file();
 
-    let available_device = ctx.save_local_device(&access).await?;
+    let available_device = ctx.save_local_device(&save_strategy, &key_file).await?;
 
     Ok(available_device)
 }
@@ -1054,12 +1045,9 @@ pub async fn claimer_shamir_recovery_finalize_save_local_device(
         _ => Err(x),
     })?;
 
-    let access = {
-        let key_file = ctx.get_default_key_file();
-        save_strategy.into_access(key_file)
-    };
+    let key_file = ctx.get_default_key_file();
 
-    let available_device = ctx.save_local_device(&access).await?;
+    let available_device = ctx.save_local_device(&save_strategy, &key_file).await?;
 
     Ok(available_device)
 }

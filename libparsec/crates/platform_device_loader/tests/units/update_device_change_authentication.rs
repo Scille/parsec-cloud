@@ -40,7 +40,14 @@ async fn same_key_file(tmp_path: TmpPath) {
     assert!(!key_present_in_system(&key_file).await);
 
     TimeProvider::root_provider().mock_time_frozen("2000-01-01T00:00:00Z".parse().unwrap());
-    let available1 = save_device(Path::new(""), &access, &device).await.unwrap();
+    let available1 = save_device(
+        Path::new(""),
+        &access.clone().into_save_strategy(),
+        &device,
+        key_file.clone(),
+    )
+    .await
+    .unwrap();
     TimeProvider::root_provider().unmock_time();
 
     // Sanity check
@@ -59,9 +66,14 @@ async fn same_key_file(tmp_path: TmpPath) {
         password: "P@ssw0rd1.".to_owned().into(),
     };
     TimeProvider::root_provider().mock_time_frozen("2000-01-02T00:00:00Z".parse().unwrap());
-    let available2 = update_device_change_authentication(Path::new(""), &access, &new_access)
-        .await
-        .unwrap();
+    let available2 = update_device_change_authentication(
+        Path::new(""),
+        &access,
+        &new_access.clone().into_save_strategy(),
+        &key_file,
+    )
+    .await
+    .unwrap();
     TimeProvider::root_provider().unmock_time();
 
     // Sanity check
@@ -110,7 +122,14 @@ async fn different_key_file(tmp_path: TmpPath) {
     // Sanity check
     assert!(!key_present_in_system(&key_file).await);
 
-    save_device(Path::new(""), &access, &device).await.unwrap();
+    save_device(
+        Path::new(""),
+        &access.clone().into_save_strategy(),
+        &device,
+        key_file.clone(),
+    )
+    .await
+    .unwrap();
 
     // Sanity check
     assert!(key_present_in_system(&key_file).await);
@@ -121,9 +140,14 @@ async fn different_key_file(tmp_path: TmpPath) {
         password: "P@ssw0rd.".to_owned().into(),
     };
 
-    update_device_change_authentication(Path::new(""), &access, &new_access)
-        .await
-        .unwrap();
+    update_device_change_authentication(
+        Path::new(""),
+        &access,
+        &new_access.clone().into_save_strategy(),
+        &new_key_file,
+    )
+    .await
+    .unwrap();
 
     // Sanity check
     assert!(!key_present_in_system(&key_file).await);
@@ -151,12 +175,17 @@ async fn testbed_same_key_file(env: &TestbedEnv) {
     };
 
     let new_access = DeviceAccessStrategy::Password {
-        key_file,
+        key_file: key_file.clone(),
         password: "P@ssw0rd1.".to_owned().into(),
     };
-    update_device_change_authentication(&env.discriminant_dir, &current_access, &new_access)
-        .await
-        .unwrap();
+    update_device_change_authentication(
+        &env.discriminant_dir,
+        &current_access,
+        &new_access.clone().into_save_strategy(),
+        &key_file,
+    )
+    .await
+    .unwrap();
 
     load_device(&env.discriminant_dir, &new_access)
         .await
@@ -181,12 +210,17 @@ async fn testbed_different_key_file(env: &TestbedEnv) {
     };
 
     let new_access = DeviceAccessStrategy::Password {
-        key_file: new_key_file,
+        key_file: new_key_file.clone(),
         password: "P@ssw0rd.".to_owned().into(),
     };
-    update_device_change_authentication(&env.discriminant_dir, &current_access, &new_access)
-        .await
-        .unwrap();
+    update_device_change_authentication(
+        &env.discriminant_dir,
+        &current_access,
+        &new_access.clone().into_save_strategy(),
+        &new_key_file,
+    )
+    .await
+    .unwrap();
 
     load_device(&env.discriminant_dir, &new_access)
         .await

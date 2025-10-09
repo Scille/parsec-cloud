@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{path::PathBuf, sync::Arc};
+use std::sync::Arc;
 
 use anyhow::anyhow;
 use libparsec::{
@@ -15,7 +15,7 @@ use libparsec::{
         UserClaimInProgress1Ctx, UserClaimInProgress2Ctx, UserClaimInProgress3Ctx,
         UserClaimInitialCtx, UserClaimListAdministratorsCtx,
     },
-    ClientConfig, DeviceAccessStrategy, ParsecInvitationAddr,
+    ClientConfig, DeviceSaveStrategy, ParsecInvitationAddr,
 };
 use libparsec_client::ShamirRecoveryClaimFinalizeCtx;
 
@@ -436,10 +436,7 @@ async fn step5_shamir(
     Ok(ctx)
 }
 
-fn get_access_strategy(
-    key_file: PathBuf,
-    save_mode: SaveMode,
-) -> anyhow::Result<DeviceAccessStrategy> {
+fn get_save_strategy(save_mode: SaveMode) -> anyhow::Result<DeviceSaveStrategy> {
     match save_mode {
         SaveMode::Password { read_from_stdin } => {
             let password = choose_password(if read_from_stdin {
@@ -449,16 +446,16 @@ fn get_access_strategy(
                     prompt: "Enter password for the new device:",
                 }
             })?;
-            Ok(DeviceAccessStrategy::Password { key_file, password })
+            Ok(DeviceSaveStrategy::Password { password })
         }
-        SaveMode::Keyring => Ok(DeviceAccessStrategy::Keyring { key_file }),
+        SaveMode::Keyring => Ok(DeviceSaveStrategy::Keyring),
     }
 }
 
 async fn save_user(ctx: UserClaimFinalizeCtx, save_mode: SaveMode) -> anyhow::Result<()> {
     let key_file = ctx.get_default_key_file();
-    let access = get_access_strategy(key_file, save_mode)?;
-    let new_device = ctx.save_local_device(&access).await?;
+    let save_strategy = get_save_strategy(save_mode)?;
+    let new_device = ctx.save_local_device(&save_strategy, &key_file).await?;
 
     println!("New device created:");
     println!("{}", &format_single_device(&new_device));
@@ -468,8 +465,8 @@ async fn save_user(ctx: UserClaimFinalizeCtx, save_mode: SaveMode) -> anyhow::Re
 
 async fn save_device(ctx: DeviceClaimFinalizeCtx, save_mode: SaveMode) -> anyhow::Result<()> {
     let key_file = ctx.get_default_key_file();
-    let access = get_access_strategy(key_file, save_mode)?;
-    let new_device = ctx.save_local_device(&access).await?;
+    let save_strategy = get_save_strategy(save_mode)?;
+    let new_device = ctx.save_local_device(&save_strategy, &key_file).await?;
 
     println!("New device created:");
     println!("{}", &format_single_device(&new_device));
@@ -482,8 +479,8 @@ async fn save_shamir_recovery(
     save_mode: SaveMode,
 ) -> anyhow::Result<()> {
     let key_file = ctx.get_default_key_file();
-    let access_strategy = get_access_strategy(key_file, save_mode)?;
-    let new_device = ctx.save_local_device(&access_strategy).await?;
+    let save_strategy = get_save_strategy(save_mode)?;
+    let new_device = ctx.save_local_device(&save_strategy, &key_file).await?;
 
     println!("New device created:");
     println!("{}", &format_single_device(&new_device));

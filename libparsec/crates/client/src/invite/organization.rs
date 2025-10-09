@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::sync::Arc;
+use std::{path::Path, sync::Arc};
 
 use libparsec_client_connection::{protocol::anonymous_cmds, AnonymousCmds, ConnectionError};
 use libparsec_types::prelude::*;
@@ -210,7 +210,8 @@ pub fn test_organization_bootstrap_finalize_ctx_factory(
 impl OrganizationBootstrapFinalizeCtx {
     pub async fn save_local_device(
         self,
-        access: &DeviceAccessStrategy,
+        strategy: &DeviceSaveStrategy,
+        key_file: &Path,
     ) -> Result<AvailableDevice, anyhow::Error> {
         // The organization is brand new, of course there is no existing
         // remote user manifest, hence our placeholder is non-speculative.
@@ -226,8 +227,9 @@ impl OrganizationBootstrapFinalizeCtx {
 
         libparsec_platform_device_loader::save_device(
             &self.config.config_dir,
-            access,
+            strategy,
             &self.new_local_device,
+            key_file.to_path_buf(),
         )
         .await
         .map_err(|e| {

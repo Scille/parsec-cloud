@@ -108,7 +108,14 @@ async fn save_load(#[case] kind: &str, tmp_path: TmpPath) {
     device
         .time_provider
         .mock_time_frozen("2000-01-01T00:00:00Z".parse().unwrap());
-    let available_device = save_device(&tmp_path, &access, &device).await.unwrap();
+    let available_device = save_device(
+        &tmp_path,
+        &access.clone().into_save_strategy(),
+        &device,
+        key_file.clone(),
+    )
+    .await
+    .unwrap();
     device.time_provider.unmock_time();
 
     p_assert_eq!(available_device, expected_available_device);

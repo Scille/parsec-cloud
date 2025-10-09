@@ -4,7 +4,7 @@ pub(crate) mod error;
 pub(crate) mod internal;
 pub(crate) mod wrapper;
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use libparsec_types::prelude::*;
 
@@ -81,9 +81,10 @@ pub(super) async fn load_ciphertext_key(
 }
 
 pub(super) async fn save_device(
-    access: &DeviceAccessStrategy,
+    strategy: &DeviceSaveStrategy,
     device: &LocalDevice,
     created_on: DateTime,
+    key_file: PathBuf,
 ) -> Result<AvailableDevice, SaveDeviceError> {
     let Ok(storage) = Storage::new().await.inspect_err(|e| {
         log::error!("Failed to access storage: {e}");
@@ -91,7 +92,7 @@ pub(super) async fn save_device(
         return Err(SaveDeviceError::StorageNotAvailable);
     };
     storage
-        .save_device(access, device, created_on)
+        .save_device(strategy, key_file, device, created_on)
         .await
         .map_err(Into::into)
 }
@@ -100,7 +101,8 @@ pub(super) async fn update_device(
     device: &LocalDevice,
     created_on: DateTime,
     current_key_file: &Path,
-    new_access: &DeviceAccessStrategy,
+    new_strategy: &DeviceSaveStrategy,
+    new_key_file: &Path,
 ) -> Result<AvailableDevice, UpdateDeviceError> {
     let Ok(storage) = Storage::new().await.inspect_err(|e| {
         log::error!("Failed to access storage: {e}");
@@ -108,9 +110,14 @@ pub(super) async fn update_device(
         return Err(UpdateDeviceError::StorageNotAvailable);
     };
 
-    let available_device = storage.save_device(new_access, &device, created_on).await?;
-
-    let new_key_file = new_access.key_file();
+    let available_device = storage
+        .save_device(
+            new_strategy,
+            new_key_file.to_path_buf(),
+            &device,
+            created_on,
+        )
+        .await?;
 
     if current_key_file != new_key_file {
         if let Err(err) = storage.remove_device(current_key_file).await {

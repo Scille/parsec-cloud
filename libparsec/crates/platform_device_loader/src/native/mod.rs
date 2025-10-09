@@ -224,15 +224,16 @@ async fn generate_keyring_user(
 }
 
 pub(super) async fn save_device(
-    access: &DeviceAccessStrategy,
+    strategy: &DeviceSaveStrategy,
     device: &LocalDevice,
     created_on: DateTime,
+    key_file: PathBuf,
 ) -> Result<AvailableDevice, SaveDeviceError> {
     let protected_on = device.now();
     let server_url = super::server_url_from_device(device);
 
-    match access {
-        DeviceAccessStrategy::Keyring { key_file } => {
+    match strategy {
+        DeviceSaveStrategy::Keyring => {
             let keyring_user_path = crate::get_default_data_base_dir().join("keyring_user.txt");
 
             let keyring_info = tokio::fs::read_to_string(&keyring_user_path)
@@ -273,10 +274,10 @@ pub(super) async fn save_device(
 
             let file_content = file_content.dump();
 
-            save_content(key_file, &file_content).await?;
+            save_content(&key_file, &file_content).await?;
         }
 
-        DeviceAccessStrategy::Password { key_file, password } => {
+        DeviceSaveStrategy::Password { password } => {
             let key_algo =
                 PasswordAlgorithm::generate_argon2id(PasswordAlgorithmSaltStrategy::Random);
             let key = key_algo
@@ -300,15 +301,14 @@ pub(super) async fn save_device(
 
             let file_content = file_content.dump();
 
-            save_content(key_file, &file_content).await?;
+            save_content(&key_file, &file_content).await?;
         }
 
-        DeviceAccessStrategy::Smartcard { .. } => {
+        DeviceSaveStrategy::Smartcard => {
             todo!("Save smartcard device")
         }
 
-        DeviceAccessStrategy::AccountVault {
-            key_file,
+        DeviceSaveStrategy::AccountVault {
             ciphertext_key_id,
             ciphertext_key,
         } => {
@@ -329,12 +329,12 @@ pub(super) async fn save_device(
 
             let file_content = file_content.dump();
 
-            save_content(key_file, &file_content).await?;
+            save_content(&key_file, &file_content).await?;
         }
     }
 
     Ok(AvailableDevice {
-        key_file_path: access.key_file().to_owned(),
+        key_file_path: key_file,
         server_url,
         created_on,
         protected_on,
@@ -343,7 +343,7 @@ pub(super) async fn save_device(
         device_id: device.device_id,
         device_label: device.device_label.clone(),
         human_handle: device.human_handle.clone(),
-        ty: access.ty(),
+        ty: strategy.ty(),
     })
 }
 
@@ -351,17 +351,17 @@ pub(super) async fn update_device(
     device: &LocalDevice,
     created_on: DateTime,
     current_key_file: &Path,
-    new_access: &DeviceAccessStrategy,
+    new_strategy: &DeviceSaveStrategy,
+    new_key_file: &Path,
 ) -> Result<AvailableDevice, UpdateDeviceError> {
-    let available_device = save_device(new_access, device, created_on)
-        .await
-        .map_err(|err| match err {
-            SaveDeviceError::StorageNotAvailable => UpdateDeviceError::StorageNotAvailable,
-            SaveDeviceError::InvalidPath(err) => UpdateDeviceError::InvalidPath(err),
-            SaveDeviceError::Internal(err) => UpdateDeviceError::Internal(err),
-        })?;
-
-    let new_key_file = new_access.key_file();
+    let available_device =
+        save_device(new_strategy, device, created_on, new_key_file.to_path_buf())
+            .await
+            .map_err(|err| match err {
+                SaveDeviceError::StorageNotAvailable => UpdateDeviceError::StorageNotAvailable,
+                SaveDeviceError::InvalidPath(err) => UpdateDeviceError::InvalidPath(err),
+                SaveDeviceError::Internal(err) => UpdateDeviceError::Internal(err),
+            })?;
 
     if current_key_file != new_key_file {
         if let Err(err) = tokio::fs::remove_file(current_key_file).await {

@@ -340,8 +340,8 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
     let new_local_device = ctx.new_local_device.clone();
     let key_file = tmp_path.join("device.keys");
     let password: Password = "P@ssw0rd.".to_string().into();
-    let access = DeviceAccessStrategy::Password { key_file, password };
-    let available_device = ctx.save_local_device(&access).await.unwrap();
+    let strategy = DeviceSaveStrategy::Password { password };
+    let available_device = ctx.save_local_device(&strategy, &key_file).await.unwrap();
 
     p_assert_eq!(available_device.key_file_path, tmp_path.join("device.keys"));
     p_assert_eq!(
@@ -357,9 +357,11 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
     // created_on and protected_on date times not checked
 
     // Check device can be loaded
-    let reloaded_new_local_device =
-        libparsec_platform_device_loader::load_device(&env.discriminant_dir, &access)
-            .await
-            .unwrap();
+    let reloaded_new_local_device = libparsec_platform_device_loader::load_device(
+        &env.discriminant_dir,
+        &strategy.into_access(key_file),
+    )
+    .await
+    .unwrap();
     p_assert_eq!(reloaded_new_local_device, new_local_device);
 }

@@ -1,6 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{path::Path, rc::Rc};
+use std::{
+    path::{Path, PathBuf},
+    rc::Rc,
+};
 
 use libparsec_platform_async::{lock::Mutex, stream::StreamExt};
 use libparsec_types::prelude::*;
@@ -101,16 +104,16 @@ impl Storage {
 
     pub(crate) async fn save_device(
         &self,
-        access: &DeviceAccessStrategy,
+        strategy: &DeviceSaveStrategy,
+        key_file: PathBuf,
         device: &LocalDevice,
         created_on: DateTime,
     ) -> Result<AvailableDevice, SaveDeviceError> {
         let protected_on = device.now();
         let server_url = crate::server_url_from_device(device);
-        let key_file = access.key_file();
 
-        match access {
-            DeviceAccessStrategy::Password { password, .. } => {
+        match strategy {
+            DeviceSaveStrategy::Password { password, .. } => {
                 let key_algo =
                     PasswordAlgorithm::generate_argon2id(PasswordAlgorithmSaltStrategy::Random);
                 let key = key_algo
@@ -132,7 +135,7 @@ impl Storage {
 
                 self.save_device_file(&key_file, &file_data).await?;
             }
-            DeviceAccessStrategy::AccountVault {
+            DeviceSaveStrategy::AccountVault {
                 ciphertext_key_id,
                 ciphertext_key,
                 ..
@@ -153,8 +156,8 @@ impl Storage {
 
                 self.save_device_file(&key_file, &file_data).await?;
             }
-            DeviceAccessStrategy::Keyring { .. } => panic!("Keyring not supported on Web"),
-            DeviceAccessStrategy::Smartcard { .. } => panic!("Smartcard not supported on Web"),
+            DeviceSaveStrategy::Keyring { .. } => panic!("Keyring not supported on Web"),
+            DeviceSaveStrategy::Smartcard { .. } => panic!("Smartcard not supported on Web"),
         }
 
         Ok(AvailableDevice {
@@ -167,7 +170,7 @@ impl Storage {
             device_id: device.device_id,
             human_handle: device.human_handle.clone(),
             device_label: device.device_label.clone(),
-            ty: access.ty(),
+            ty: strategy.ty(),
         })
     }
 
