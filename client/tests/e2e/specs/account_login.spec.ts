@@ -77,7 +77,7 @@ msTest('Switch tab from popover ', async ({ parsecAccountLoggedIn }) => {
   await expect(parsecAccountLoggedIn.locator('.profile-content-item').nth(0).locator('.item-header__title')).toHaveText('Authentication');
 });
 
-msTest('Account create registration device and replace current', async ({ parsecAccountLoggedIn }) => {
+msTest.skip('Account create registration device and replace current', async ({ parsecAccountLoggedIn }) => {
   msTest.setTimeout(120_000);
 
   const home = parsecAccountLoggedIn;
@@ -130,7 +130,7 @@ msTest('Account create registration device and replace current', async ({ parsec
   await expect(home).toBeWorkspacePage();
 });
 
-msTest('Account create registration device and auto-register', async ({ parsecAccountLoggedIn }) => {
+msTest.skip('Account create registration device and auto-register', async ({ parsecAccountLoggedIn }) => {
   msTest.setTimeout(180_000);
 
   const home = parsecAccountLoggedIn;

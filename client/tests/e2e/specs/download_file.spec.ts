@@ -180,6 +180,12 @@ msTest('Download warning', async ({ documents }) => {
   const elements = uploadMenu.locator('.element-container').locator('.element');
   await expect(elements).toHaveCount(9);
 
+  const minimizeButton = documents.locator('.upload-menu .menu-header-icons__item').nth(0); // adjust selector if needed
+  if (await minimizeButton.isVisible()) {
+    await minimizeButton.click();
+    await expect(documents.locator('.upload-menu')).toHaveTheClass('minimize');
+  }
+
   for (const entry of await entries.all()) {
     const entryName = (await entry.locator('.file-name').locator('.file-name__label').textContent()) ?? '';
     if (entryName.endsWith('.py')) {

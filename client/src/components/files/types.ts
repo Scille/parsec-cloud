@@ -77,25 +77,22 @@ export class EntryCollection<Model extends EntryModel> {
 
   sort(property: SortProperty, ascending: boolean): void {
     this.entries.sort((item1, item2) => {
-      // Because the difference between item1 and item2 will always be -1, 0 or 1, by setting
-      // a folder with a score of 3 by default, we're ensuring that it will always be on top
-      // of the list.
-      const item1Score = item1.isFile() ? 3 : 0;
-      const item2Score = item2.isFile() ? 3 : 0;
-      let diff = 0;
+      if (item1.isFile() !== item2.isFile()) {
+        return Number(item1.isFile()) - Number(item2.isFile());
+      }
 
       if (property === SortProperty.Name) {
-        diff = ascending ? item2.name.localeCompare(item1.name) : item1.name.localeCompare(item2.name);
+        return ascending ? item2.name.localeCompare(item1.name) : item1.name.localeCompare(item2.name);
       } else if (property === SortProperty.LastUpdate) {
-        diff = ascending ? (item1.updated > item2.updated ? 1 : 0) : item2.updated > item1.updated ? 1 : 0;
+        return ascending ? item1.updated.diff(item2.updated).toMillis() : item2.updated.diff(item1.updated).toMillis();
       } else if (property === SortProperty.CreationDate) {
-        diff = ascending ? (item1.created > item2.created ? 1 : 0) : item2.created > item1.created ? 1 : 0;
+        return ascending ? item1.updated.diff(item2.updated).toMillis() : item2.updated.diff(item1.updated).toMillis();
       } else if (property === SortProperty.Size) {
         const size1 = item1.isFile() ? (item1 as FileModel).size : 0;
         const size2 = item1.isFile() ? (item2 as FileModel).size : 0;
-        diff = ascending ? (size1 < size2 ? 1 : 0) : size2 < size1 ? 1 : 0;
+        return ascending ? size1 - size2 : size2 - size1;
       }
-      return item1Score - item2Score - diff;
+      return 0;
     });
   }
 
