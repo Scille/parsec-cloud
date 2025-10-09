@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { libparsec } from '@/plugins/libparsec';
+import { CertificateReferenceTag, libparsec } from '@/plugins/libparsec';
 
 import { ParsecAccount } from '@/parsec/account';
 import { getClientConfig } from '@/parsec/internals';
@@ -263,6 +263,10 @@ export const AccessStrategy = {
     return {
       tag: DeviceAccessStrategyTag.Smartcard,
       keyFile: device.keyFilePath,
+      certificateReference: {
+        tag: CertificateReferenceTag.Id,
+        id: new Uint8Array(),
+      },
     };
   },
   async useAccountVault(device: AvailableDevice): Promise<DeviceAccessStrategyAccountVault> {

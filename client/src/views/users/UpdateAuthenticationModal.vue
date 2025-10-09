@@ -104,7 +104,7 @@ import { close } from 'ionicons/icons';
 import { Ref, onMounted, ref, useTemplateRef } from 'vue';
 import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
 import SmallDisplayModalHeader from '@/components/header/SmallDisplayModalHeader.vue';
-import { DeviceAccessStrategyKeyring, DeviceAccessStrategySmartcard } from '@/plugins/libparsec';
+import { CertificateReferenceTag, DeviceAccessStrategyKeyring, DeviceAccessStrategySmartcard } from '@/plugins/libparsec';
 
 enum ChangeAuthenticationStep {
   Undefined,
@@ -183,6 +183,10 @@ async function changeAuthentication(): Promise<void> {
     accessStrategy = {
       tag: DeviceAccessStrategyTag.Smartcard,
       keyFile: props.currentDevice.keyFilePath,
+      certificateReference: {
+        tag: CertificateReferenceTag.Id,
+        id: new Uint8Array(),
+      },
     };
   } else {
     // Should not happen

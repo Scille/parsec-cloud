@@ -261,7 +261,9 @@ pub enum DeviceSaveStrategy {
     Password {
         password: Password,
     },
-    Smartcard,
+    Smartcard {
+        certificate_reference: CertificateReference,
+    },
     AccountVault {
         /// This key is the one stored in the account vault.
         ///
@@ -279,7 +281,12 @@ impl DeviceSaveStrategy {
             DeviceSaveStrategy::Password { password } => {
                 DeviceAccessStrategy::Password { key_file, password }
             }
-            DeviceSaveStrategy::Smartcard => DeviceAccessStrategy::Smartcard { key_file },
+            DeviceSaveStrategy::Smartcard {
+                certificate_reference,
+            } => DeviceAccessStrategy::Smartcard {
+                key_file,
+                certificate_reference,
+            },
             DeviceSaveStrategy::AccountVault {
                 ciphertext_key_id,
                 ciphertext_key,
@@ -304,6 +311,7 @@ pub enum DeviceAccessStrategy {
     },
     Smartcard {
         key_file: PathBuf,
+        certificate_reference: CertificateReference,
     },
     AccountVault {
         key_file: PathBuf,
@@ -321,7 +329,7 @@ impl DeviceAccessStrategy {
         match self {
             Self::Keyring { key_file } => key_file,
             Self::Password { key_file, .. } => key_file,
-            Self::Smartcard { key_file } => key_file,
+            Self::Smartcard { key_file, .. } => key_file,
             Self::AccountVault { key_file, .. } => key_file,
         }
     }
