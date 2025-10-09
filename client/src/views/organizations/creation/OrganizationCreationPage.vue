@@ -4,7 +4,7 @@
   <ion-page class="creation-page page-modal-container">
     <!-- prettier-ignore -->
     <ms-image
-      :image="(ResourcesManager.instance().get(Resources.LogoIcon, isSmallDisplay ? LogoIconWhite : LogoIconGradient) as string)"
+      :image="(ResourcesManager.instance().get(Resources.LogoIcon, LogoIconWhite) as string)"
       class="creation-page__logo"
     />
     <ion-text
@@ -13,16 +13,21 @@
     >
       {{ $msTranslate('CreateOrganization.loading') }}
     </ion-text>
-    <ms-spinner
-      :title="isLargeDisplay ? 'CreateOrganization.loading' : ''"
-      class="creation-page__spinner"
-    />
+    <div class="creation-page__spinner-container">
+      <ion-text
+        v-if="isLargeDisplay"
+        class="subtitles-normal container-text"
+      >
+        {{ $msTranslate('CreateOrganization.loading') }}
+      </ion-text>
+      <ms-spinner class="creation-page__spinner" />
+    </div>
   </ion-page>
 </template>
 
 <script setup lang="ts">
 import { IonPage, IonText } from '@ionic/vue';
-import { MsImage, MsSpinner, LogoIconGradient, LogoIconWhite, useWindowSize } from 'megashark-lib';
+import { MsImage, MsSpinner, LogoIconWhite, useWindowSize } from 'megashark-lib';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
 
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
@@ -35,12 +40,12 @@ const { isLargeDisplay, isSmallDisplay } = useWindowSize();
   text-align: center;
   gap: 1.5rem;
   position: relative;
+  justify-content: center;
+  background: var(--parsec-color-light-gradient-background);
 
   @include ms.responsive-breakpoint('sm') {
-    justify-content: center;
     padding: 2rem 0 6rem;
     height: 100vh;
-    background: var(--parsec-color-light-gradient-background);
   }
 
   &::after {
@@ -81,12 +86,19 @@ const { isLargeDisplay, isSmallDisplay } = useWindowSize();
     max-width: 18rem;
   }
 
+  &__spinner-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--parsec-color-light-secondary-white);
+  }
+
   &__spinner {
     height: fit-content;
     background: var(--parsec-color-light-secondary-white);
     border-radius: var(--parsec-radius-circle);
     margin-inline: auto;
-    padding: 0.25rem;
+    padding: 0.125rem;
   }
 }
 </style>
