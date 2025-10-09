@@ -167,11 +167,20 @@ jobs:
       matrix:
         shard_index: [1, 2]
         shard_total: [2]
+    permissions:
+      packages: read
     services:
       parsec-testbed-server:
         image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.4.1-a.0.dev.20299.a9f26d7
         ports:
           - 6777:6777
+      cryptpad:
+        image: ghcr.io/scille/cryptpad-saas-deploy/cryptpad:68440e8
+        credentials:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        ports:
+          - 3000:3000
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # pin v5.0.0
@@ -214,6 +223,9 @@ jobs:
       - name: Check testbed server is running
         run: curl http://localhost:6777
 
+      - name: Check cryptpad server is running
+        run: curl http://localhost:3000
+
       - name: Get current uid:gid
         id: user
         run: echo "id=$(id -u):$(id -g)" | tee -a $GITHUB_OUTPUT
@@ -231,6 +243,7 @@ jobs:
         env:
           TESTBED_SERVER: parsec3://parsec-testbed-server:6777?no_ssl=true
           PARSEC_APP_TRIAL_SERVERS: parsec-testbed-server:6777?no_ssl=true
+          CRYPTPAD_SERVER: cryptpad:3000?no_ssl=true
         timeout-minutes: 20
 
       - name: Upload blob report to GitHub Actions Artifacts

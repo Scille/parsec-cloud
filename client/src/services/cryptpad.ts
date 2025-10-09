@@ -134,7 +134,7 @@ export class Cryptpad {
 
         // Add error handling for HTTPS/security issues
         (script as HTMLScriptElement).onerror = (error): void => {
-          window.electronAPI.log('error', `Failed to load CryptPad script: ${error.toString()}`);
+          window.electronAPI.log('error', `Failed to load CryptPad script: ${JSON.stringify(error)}`);
           window.electronAPI.log('error', 'This might be due to HTTPS requirements. Check if CryptPad server requires secure context.');
           reject(new CryptpadInitError(CryptpadErrorCode.InitFailed, error.toString()));
         };
