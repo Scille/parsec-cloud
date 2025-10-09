@@ -412,12 +412,12 @@ pub(crate) fn maybe_load_device(
 
 pub(crate) fn maybe_save_device(
     config_dir: &Path,
-    access: &DeviceAccessStrategy,
+    strategy: &DeviceSaveStrategy,
     device: &LocalDevice,
+    key_file: PathBuf,
 ) -> Option<Result<AvailableDevice, SaveDeviceError>> {
     test_get_testbed_component_store::<ComponentStore>(config_dir, STORE_ENTRY_KEY, store_factory)
         .map(|store| {
-            let key_file = access.key_file();
             // We don't try to resolve the path of `key_file` into an absolute one here !
             // This is because in practice the path is always provided absolute given it
             // is obtained in the first place by `list_available_devices`.
@@ -432,12 +432,12 @@ pub(crate) fn maybe_save_device(
             });
             // The device is newly created
             let created_on = device.now();
-            cache
-                .destroyed
-                .retain(|c_key_file| c_key_file != access.key_file());
-            cache
-                .available
-                .push((access.to_owned(), Arc::new(device.to_owned()), created_on));
+            cache.destroyed.retain(|c_key_file| *c_key_file != key_file);
+            cache.available.push((
+                strategy.clone().into_access(key_file.clone()),
+                Arc::new(device.to_owned()),
+                created_on,
+            ));
 
             let server_url = {
                 ParsecAddr::new(
@@ -450,7 +450,7 @@ pub(crate) fn maybe_save_device(
             };
 
             Ok(AvailableDevice {
-                key_file_path: access.key_file().to_owned(),
+                key_file_path: key_file,
                 server_url,
                 created_on,
                 protected_on: created_on,
@@ -459,7 +459,7 @@ pub(crate) fn maybe_save_device(
                 device_id: device.device_id,
                 device_label: device.device_label.clone(),
                 human_handle: device.human_handle.clone(),
-                ty: access.ty(),
+                ty: strategy.ty(),
             })
         })
 }
@@ -467,7 +467,8 @@ pub(crate) fn maybe_save_device(
 pub(crate) fn maybe_update_device(
     config_dir: &Path,
     current_access: &DeviceAccessStrategy,
-    new_access: &DeviceAccessStrategy,
+    new_strategy: &DeviceSaveStrategy,
+    new_key_file: &Path,
     overwrite_server_addr: Option<ParsecAddr>,
 ) -> Option<Result<(AvailableDevice, ParsecAddr), UpdateDeviceError>> {
     if let Some(result) = maybe_load_device(config_dir, current_access) {
@@ -497,8 +498,13 @@ pub(crate) fn maybe_update_device(
             );
         }
 
-        let available_device = match maybe_save_device(config_dir, new_access, &device)
-            .expect("testbed env already accessed")
+        let available_device = match maybe_save_device(
+            config_dir,
+            new_strategy,
+            &device,
+            new_key_file.to_path_buf(),
+        )
+        .expect("testbed env already accessed")
         {
             Ok(available_device) => available_device,
             Err(e) => {
@@ -511,7 +517,6 @@ pub(crate) fn maybe_update_device(
         };
 
         let key_file = current_access.key_file();
-        let new_key_file = new_access.key_file();
 
         if key_file != new_key_file {
             maybe_remove_device(config_dir, key_file)

@@ -6,11 +6,11 @@ use std::{
 };
 
 use libparsec::{
-    authenticated_cmds::{latest::device_create, latest::user_create},
+    authenticated_cmds::latest::{device_create, user_create},
     AuthenticatedCmds, Bytes, CertificateSigner, ClientConfig, DateTime, DeviceAccessStrategy,
-    DeviceCertificate, DeviceID, DeviceLabel, DevicePurpose, HumanHandle, LocalDevice,
-    MaybeRedacted, OrganizationID, ParsecAddr, PrivateKeyAlgorithm, ProxyConfig, SigningKey,
-    SigningKeyAlgorithm, UserCertificate, UserProfile, PARSEC_BASE_CONFIG_DIR,
+    DeviceCertificate, DeviceID, DeviceLabel, DevicePurpose, DeviceSaveStrategy, HumanHandle,
+    LocalDevice, MaybeRedacted, OrganizationID, ParsecAddr, PrivateKeyAlgorithm, ProxyConfig,
+    SigningKey, SigningKeyAlgorithm, UserCertificate, UserProfile, PARSEC_BASE_CONFIG_DIR,
     PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR, PARSEC_SCHEME,
 };
 
@@ -151,12 +151,11 @@ async fn register_new_device(
 
     let key_file = libparsec::get_default_key_file(&client_config.config_dir, new_device.device_id);
 
-    let access = DeviceAccessStrategy::Password {
-        key_file,
+    let save_strategy = DeviceSaveStrategy::Password {
         password: DEFAULT_DEVICE_PASSWORD.to_string().into(),
     };
 
-    libparsec::save_device(Path::new(""), &access, &new_device).await?;
+    libparsec::save_device(Path::new(""), &save_strategy, &new_device, key_file).await?;
 
     Ok(new_device)
 }
@@ -213,12 +212,11 @@ async fn register_new_user(
 
     let key_file = libparsec::get_default_key_file(&client_config.config_dir, new_device.device_id);
 
-    let access = DeviceAccessStrategy::Password {
-        key_file,
+    let save_strategy = DeviceSaveStrategy::Password {
         password: DEFAULT_DEVICE_PASSWORD.to_string().into(),
     };
 
-    libparsec::save_device(Path::new(""), &access, &new_device).await?;
+    libparsec::save_device(Path::new(""), &save_strategy, &new_device, key_file).await?;
 
     Ok(new_device)
 }

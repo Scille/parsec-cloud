@@ -237,14 +237,19 @@ async fn create_second_device(
     let key_file =
         libparsec::get_default_key_file(&client_config.config_dir, second_device.device_id);
 
-    let second_dev_access = libparsec::DeviceAccessStrategy::Password {
-        key_file,
+    let second_dev_access = libparsec::DeviceSaveStrategy::Password {
         password: crate::testenv_utils::DEFAULT_DEVICE_PASSWORD
             .to_string()
             .into(),
     };
 
-    libparsec::save_device(std::path::Path::new(""), &second_dev_access, &second_device).await?;
+    libparsec::save_device(
+        std::path::Path::new(""),
+        &second_dev_access,
+        &second_device,
+        key_file,
+    )
+    .await?;
 
     Ok(second_device)
 }

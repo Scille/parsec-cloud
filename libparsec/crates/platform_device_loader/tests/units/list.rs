@@ -480,8 +480,7 @@ async fn testbed(env: &TestbedEnv) {
     let zack_key_file = env.discriminant_dir.join("zack_new_device.keys");
     let zack = save_device(
         &env.discriminant_dir,
-        &DeviceAccessStrategy::AccountVault {
-            key_file: zack_key_file,
+        &DeviceSaveStrategy::AccountVault {
             ciphertext_key_id: zack_ciphertext_key_id,
             ciphertext_key: zack_ciphertext_key,
         },
@@ -498,6 +497,7 @@ async fn testbed(env: &TestbedEnv) {
             None,
             None,
         ),
+        zack_key_file,
     )
     .await
     .unwrap();
@@ -524,11 +524,11 @@ async fn testbed(env: &TestbedEnv) {
             key_file: bob2.key_file_path.clone(),
             password: "P@ssw0rd.".to_string().into(),
         },
-        &DeviceAccessStrategy::AccountVault {
-            key_file: bob2_new_key_file,
+        &DeviceSaveStrategy::AccountVault {
             ciphertext_key_id: bob2_ciphertext_key_id,
             ciphertext_key: bob2_ciphertext_key,
         },
+        &bob2_new_key_file,
     )
     .await
     .unwrap();

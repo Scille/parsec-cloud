@@ -31,7 +31,8 @@ pub async fn update_device_change_authentication(
     libparsec_platform_device_loader::update_device_change_authentication(
         config_dir,
         &current_auth,
-        &new_auth.into_access(key_file),
+        &new_auth,
+        &key_file,
     )
     .await
 }

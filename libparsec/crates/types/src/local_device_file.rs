@@ -290,6 +290,19 @@ impl DeviceSaveStrategy {
             },
         }
     }
+
+    pub fn ty(&self) -> AvailableDeviceType {
+        match self {
+            Self::Keyring { .. } => AvailableDeviceType::Keyring,
+            Self::Password { .. } => AvailableDeviceType::Password,
+            Self::Smartcard { .. } => AvailableDeviceType::Smartcard,
+            Self::AccountVault {
+                ciphertext_key_id, ..
+            } => AvailableDeviceType::AccountVault {
+                ciphertext_key_id: *ciphertext_key_id,
+            },
+        }
+    }
 }
 
 /// Represent how to load/save a device file
@@ -335,6 +348,24 @@ impl DeviceAccessStrategy {
                 ciphertext_key_id, ..
             } => AvailableDeviceType::AccountVault {
                 ciphertext_key_id: *ciphertext_key_id,
+            },
+        }
+    }
+
+    pub fn into_save_strategy(self) -> DeviceSaveStrategy {
+        match self {
+            DeviceAccessStrategy::Keyring { .. } => DeviceSaveStrategy::Keyring,
+            DeviceAccessStrategy::Password { password, .. } => {
+                DeviceSaveStrategy::Password { password }
+            }
+            DeviceAccessStrategy::Smartcard { .. } => todo!(),
+            DeviceAccessStrategy::AccountVault {
+                ciphertext_key_id,
+                ciphertext_key,
+                ..
+            } => DeviceSaveStrategy::AccountVault {
+                ciphertext_key_id,
+                ciphertext_key,
             },
         }
     }

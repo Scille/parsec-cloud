@@ -2,6 +2,7 @@
 
 use std::collections::HashMap;
 use std::num::NonZeroU8;
+use std::path::Path;
 use std::{path::PathBuf, sync::Arc};
 
 use invited_cmds::latest::invite_claimer_step;
@@ -1765,7 +1766,8 @@ impl UserClaimFinalizeCtx {
 
     pub async fn save_local_device(
         self,
-        access: &DeviceAccessStrategy,
+        strategy: &DeviceSaveStrategy,
+        key_file: &Path,
     ) -> Result<AvailableDevice, anyhow::Error> {
         // Claiming a user means we are it first device, hence we know there
         // is no existing user manifest (hence our placeholder is non-speculative)
@@ -1778,8 +1780,9 @@ impl UserClaimFinalizeCtx {
 
         libparsec_platform_device_loader::save_device(
             &self.config.config_dir,
-            access,
+            strategy,
             &self.new_local_device,
+            key_file.to_path_buf(),
         )
         .await
         .map_err(|e| anyhow::anyhow!("Error while saving the device file: {e}"))
@@ -1806,12 +1809,14 @@ impl DeviceClaimFinalizeCtx {
 
     pub async fn save_local_device(
         self,
-        access: &DeviceAccessStrategy,
+        strategy: &DeviceSaveStrategy,
+        key_file: &Path,
     ) -> Result<AvailableDevice, anyhow::Error> {
         libparsec_platform_device_loader::save_device(
             &self.config.config_dir,
-            access,
+            strategy,
             &self.new_local_device,
+            key_file.to_path_buf(),
         )
         .await
         .map_err(|e| anyhow::anyhow!("Error while saving the device file: {e}"))
@@ -1839,12 +1844,14 @@ impl ShamirRecoveryClaimFinalizeCtx {
 
     pub async fn save_local_device(
         self,
-        access: &DeviceAccessStrategy,
+        strategy: &DeviceSaveStrategy,
+        key_file: &Path,
     ) -> Result<AvailableDevice, anyhow::Error> {
         let available_device = libparsec_platform_device_loader::save_device(
             &self.config.config_dir,
-            access,
+            strategy,
             &self.new_local_device,
+            key_file.to_path_buf(),
         )
         .await
         .map_err(|e| anyhow::anyhow!("Error while saving the device file: {e}"))?;

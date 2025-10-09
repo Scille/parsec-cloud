@@ -123,21 +123,20 @@ pub(super) async fn account_register_new_device(
 
     // 4. Save the new device on disk
 
-    let access = {
-        let key_file = get_default_key_file(&account.config_dir, new_device.device_id);
-        save_strategy.into_access(key_file)
-    };
-    let new_available_device = save_device(&account.config_dir, &access, &new_device)
-        .await
-        .map_err(|err| match err {
-            SaveDeviceError::StorageNotAvailable => {
-                AccountRegisterNewDeviceError::StorageNotAvailable
-            }
-            SaveDeviceError::InvalidPath(error) => {
-                AccountRegisterNewDeviceError::InvalidPath(error)
-            }
-            SaveDeviceError::Internal(error) => AccountRegisterNewDeviceError::Internal(error),
-        })?;
+    let key_file = get_default_key_file(&account.config_dir, new_device.device_id);
+
+    let new_available_device =
+        save_device(&account.config_dir, &save_strategy, &new_device, key_file)
+            .await
+            .map_err(|err| match err {
+                SaveDeviceError::StorageNotAvailable => {
+                    AccountRegisterNewDeviceError::StorageNotAvailable
+                }
+                SaveDeviceError::InvalidPath(error) => {
+                    AccountRegisterNewDeviceError::InvalidPath(error)
+                }
+                SaveDeviceError::Internal(error) => AccountRegisterNewDeviceError::Internal(error),
+            })?;
 
     Ok(new_available_device)
 }

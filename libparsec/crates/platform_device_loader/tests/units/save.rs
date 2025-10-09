@@ -48,10 +48,10 @@ async fn bad_path(tmp_path: TmpPath, #[case] kind: BadPathKind, env: &TestbedEnv
 
     let device = env.local_device("alice@dev1");
     let access = DeviceAccessStrategy::Password {
-        key_file,
+        key_file: key_file.clone(),
         password: "P@ssw0rd.".to_owned().into(),
     };
-    let outcome = save_device(&tmp_path, &access, &device).await;
+    let outcome = save_device(&tmp_path, &access.into_save_strategy(), &device, key_file).await;
     p_assert_matches!(outcome, Err(SaveDeviceError::InvalidPath(_)));
 }
 
@@ -67,9 +67,14 @@ async fn ok_simple(tmp_path: TmpPath, env: &TestbedEnv) {
     alice_device
         .time_provider
         .mock_time_frozen("2000-01-01T00:00:00Z".parse().unwrap());
-    let outcome = save_device(&tmp_path, &access, &alice_device)
-        .await
-        .unwrap();
+    let outcome = save_device(
+        &tmp_path,
+        &access.clone().into_save_strategy(),
+        &alice_device,
+        key_file.clone(),
+    )
+    .await
+    .unwrap();
     p_assert_eq!(
         outcome,
         AvailableDevice {
@@ -132,9 +137,14 @@ async fn ok(tmp_path: TmpPath, #[case] kind: OkKind, env: &TestbedEnv) {
     alice_device
         .time_provider
         .mock_time_frozen("2000-01-01T00:00:00Z".parse().unwrap());
-    let outcome = save_device(&tmp_path, &access, &alice_device)
-        .await
-        .unwrap();
+    let outcome = save_device(
+        &tmp_path,
+        &access.clone().into_save_strategy(),
+        &alice_device,
+        key_file.clone(),
+    )
+    .await
+    .unwrap();
     p_assert_eq!(
         outcome,
         AvailableDevice {
@@ -181,9 +191,14 @@ async fn testbed(env: &TestbedEnv) {
         key_file: key_file.clone(),
         password: "N3wP@ssw0rd.".to_owned().into(),
     };
-    save_device(&env.discriminant_dir, &new_access, &device)
-        .await
-        .unwrap();
+    save_device(
+        &env.discriminant_dir,
+        &new_access.clone().into_save_strategy(),
+        &device,
+        key_file,
+    )
+    .await
+    .unwrap();
 
     // Finally roundtrip check
     p_assert_matches!(

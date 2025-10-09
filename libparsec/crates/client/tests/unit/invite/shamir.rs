@@ -245,8 +245,13 @@ async fn shamir_full_greeting(tmp_path: TmpPath, env: &TestbedEnv) {
     let new_local_device = alice_finalize_ctx.new_local_device.clone();
     let key_file = tmp_path.join("device.keys");
     let password: Password = "P@ssw0rd.".to_string().into();
-    let access = DeviceAccessStrategy::Password { key_file, password };
-    let available_device = alice_finalize_ctx.save_local_device(&access).await.unwrap();
+    let save_strategy = DeviceSaveStrategy::Password { password };
+    let available_device = alice_finalize_ctx
+        .save_local_device(&save_strategy.clone(), &key_file)
+        .await
+        .unwrap();
+
+    let access = save_strategy.into_access(key_file.clone());
     let expected_server_url = ParsecAddr::from(bob.organization_addr.clone())
         .to_http_url(None)
         .to_string();
