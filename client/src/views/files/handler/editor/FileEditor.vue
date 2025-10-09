@@ -58,7 +58,7 @@
 <script setup lang="ts">
 import { IonButton, IonIcon, IonList, IonItem, IonText } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
-import { closeFile, FileDescriptor, openFile, writeFile } from '@/parsec';
+import { ClientInfo, closeFile, FileDescriptor, openFile, writeFile } from '@/parsec';
 import { I18n, Translatable } from 'megashark-lib';
 import { ref, inject, useTemplateRef, onMounted, onUnmounted } from 'vue';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
@@ -66,7 +66,14 @@ import { getWorkspaceHandle, routerGoBack } from '@/router';
 import { DetectedFileType } from '@/common/fileTypes';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { Env } from '@/services/environment';
-import { CryptpadDocumentType, Cryptpad, getCryptpadDocumentType, CryptpadError, CryptpadErrorCode } from '@/services/cryptpad';
+import {
+  CryptpadDocumentType,
+  Cryptpad,
+  getCryptpadDocumentType,
+  CryptpadError,
+  CryptpadErrorCode,
+  CryptpadAppMode,
+} from '@/services/cryptpad';
 import { longLocaleCodeToShort } from '@/services/translation';
 import { SaveState } from '@/views/files/handler/editor';
 
@@ -77,10 +84,11 @@ const cryptpadInstance = ref<Cryptpad | null>(null);
 const fileUrl = ref<string | null>(null);
 const error = ref('');
 
-const { contentInfo, fileInfo, readOnly } = defineProps<{
+const { contentInfo, fileInfo, readOnly, userInfo } = defineProps<{
   contentInfo: FileContentInfo;
   fileInfo: DetectedFileType;
   readOnly?: boolean;
+  userInfo?: ClientInfo;
 }>();
 
 const emits = defineEmits<{
@@ -163,6 +171,7 @@ async function openFileWithCryptpad(): Promise<boolean> {
   const cryptpadApi = cryptpadInstance.value as Cryptpad;
   const workspaceHandle = getWorkspaceHandle();
   const documentPath = contentInfo.path;
+  const user = userInfo ? { name: userInfo.humanHandle.label, id: userInfo.userId } : undefined;
 
   if (!workspaceHandle) {
     error.value = 'fileViewers.errors.genericError';
@@ -190,8 +199,10 @@ async function openFileWithCryptpad(): Promise<boolean> {
     documentType: documentType.value as CryptpadDocumentType, // Safe since we checked for null earlier
     editorConfig: {
       lang: longLocaleCodeToShort(I18n.getLocale()),
+      user,
     },
     autosave: (window as any).TESTING_EDITICS_SAVE_TIMEOUT ?? 10,
+    mode: readOnly ? CryptpadAppMode.View : CryptpadAppMode.Edit,
     events: {
       onSave: async (file: Blob, callback: () => void): Promise<void> => {
         let hasError = false;

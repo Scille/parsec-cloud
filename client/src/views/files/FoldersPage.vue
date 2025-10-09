@@ -1441,7 +1441,11 @@ async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?
   const actions = new Map<FileAction, (file: EntryModel[]) => Promise<void>>([
     [FileAction.Preview, async (entries: EntryModel[]): Promise<void> => await openEntries(entries, { skipViewers: false })],
     [FileAction.Rename, renameEntries],
-    [FileAction.Edit, async (entries: EntryModel[]): Promise<void> => await openEntries(entries, { useEditor: true })],
+    [
+      FileAction.Edit,
+      async (entries: EntryModel[]): Promise<void> =>
+        await openEntries(entries, { useEditor: true, readOnly: ownRole.value === parsec.WorkspaceRole.Reader }),
+    ],
     [FileAction.MoveTo, moveEntriesTo],
     [FileAction.MakeACopy, copyEntries],
     [FileAction.Open, async (entries: EntryModel[]): Promise<void> => await openEntries(entries, { skipViewers: true })],

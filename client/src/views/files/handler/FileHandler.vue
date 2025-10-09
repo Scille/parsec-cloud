@@ -190,9 +190,9 @@
             :is="handlerComponent"
             :content-info="contentInfo"
             :file-info="detectedFileType"
-            :read-only="readOnly"
             @file-loaded="handlerReadyRef = true"
             v-on="isComponentEditor() ? { onSaveStateChange: onSaveStateChange } : {}"
+            v-bind="isComponentEditor() ? { userInfo: userInfo, readOnly: readOnly } : {}"
           />
         </div>
       </div>
@@ -285,7 +285,7 @@ const handlerReadyRef = ref(false);
 const handlerComponent: Ref<typeof FileEditor | typeof FileViewer | null> = shallowRef(null);
 const handlerMode = ref<FileHandlerMode | undefined>(undefined);
 const sidebarMenuVisibleOnMounted = ref(false);
-const userInfo: Ref<ClientInfo | null> = ref(null);
+const userInfo: Ref<ClientInfo | undefined> = ref(undefined);
 const saveState = ref<SaveState>(SaveState.None);
 const savedIconRef = useTemplateRef<InstanceType<typeof IonIcon>>('savedIcon');
 const unsavedIconRef = useTemplateRef<InstanceType<typeof MsImage>>('unsavedIcon');
@@ -536,6 +536,14 @@ onMounted(async () => {
   handlerMode.value = getFileHandlerMode();
   const query = getCurrentRouteQuery();
   readOnly.value = Boolean(query.readOnly);
+
+  const clientInfoResult = await getClientInfo();
+  if (clientInfoResult.ok) {
+    userInfo.value = clientInfoResult.value;
+  } else {
+    window.electronAPI.log('error', `Failed to retrieve user info ${JSON.stringify(clientInfoResult.error)}`);
+  }
+
   await loadFile();
 
   hideHeader();
@@ -549,12 +557,6 @@ onMounted(async () => {
     sidebarMenuVisibleOnMounted.value = false;
   }
 
-  const clientInfoResult = await getClientInfo();
-  if (clientInfoResult.ok) {
-    userInfo.value = clientInfoResult.value;
-  } else {
-    window.electronAPI.log('error', `Failed to retrieve user info ${JSON.stringify(clientInfoResult.error)}`);
-  }
   if (savedIconRef.value) {
     attachMouseOverTooltip(savedIconRef.value.$el, 'fileEditors.saving.tooltipSaved');
   }

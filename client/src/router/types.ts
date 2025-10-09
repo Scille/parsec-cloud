@@ -302,7 +302,7 @@ export interface Query {
   timestamp?: string;
   profilePage?: ProfilePages;
   bmsLogin?: true;
-  readOnly?: true;
+  readOnly?: boolean;
 }
 
 export interface ClientAreaQuery {
