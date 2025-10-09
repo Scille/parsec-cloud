@@ -410,7 +410,7 @@
             "next": "Next",
             "previous": "Previous",
             "create": "Create organization",
-            "done": "Access to your organization",
+            "done": "Access my organization",
             "modify": "Edit",
             "continue": "Continue",
             "advancedSettings": "Advanced Settings"
@@ -1402,7 +1402,7 @@
                     "default": "An error has occurred. The process has been cancelled."
                 }
             },
-            "success": "{user} can now access to the organization.",
+            "success": "{user} can now access the organization.",
             "cancelConfirm": "Cancel the onboarding",
             "cancelConfirmSubtitle": "Are you sure you want to cancel the onboarding process? Information will not be saved, you will have to restart.",
             "cancelYes": "Cancel process",
@@ -2273,7 +2273,7 @@
                 },
                 "organizationAvailable": {
                     "title": "Organization available",
-                    "description": "You can now access to your organization.",
+                    "description": "You can now access your organization.",
                     "tag": "Available"
                 },
                 "standby": {

@@ -106,7 +106,7 @@ for (const displaySize of ['small', 'large']) {
     }
 
     await documents.locator('.topbar-left-content').locator('.back-button').click();
-    await entries.nth(3).dblclick();
+    await entries.nth(3).locator('.label-name').click();
     await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
     await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
     await expect(documents.locator('.ms-spinner-modal')).toBeHidden();

@@ -92,7 +92,7 @@ msTest('Greet user whole process in small display', async ({ usersPage }) => {
   await expect(greetData.content.locator('.final-step').locator('.user-info__role').locator('.label-profile')).toHaveText('Member');
   await greetData.nextButton.click();
   await expect(greetData.modal).toBeHidden();
-  await expect(usersPage).toShowToast('Gordon Freeman can now access to the organization.', 'Success');
+  await expect(usersPage).toShowToast('Gordon Freeman can now access the organization.', 'Success');
   await expect(usersPage.locator('#users-page-user-list').getByRole('listitem').locator('.user-mobile-text__name')).toHaveText([
     'Alicey McAliceFace',
     'Boby McBobFace',
@@ -215,7 +215,7 @@ msTest('Greet user whole process in large display', async ({ usersPage }) => {
   await expect(greetData.content.locator('.final-step').locator('.user-info__role').locator('.label-profile')).toHaveText('Member');
   await greetData.nextButton.click();
   await expect(greetData.modal).toBeHidden();
-  await expect(usersPage).toShowToast('Gordon Freeman can now access to the organization.', 'Success');
+  await expect(usersPage).toShowToast('Gordon Freeman can now access the organization.', 'Success');
   await expect(usersPage.locator('#users-page-user-list').getByRole('listitem').locator('.person-name')).toHaveText([
     'Alicey McAliceFace',
     'Boby McBobFace',

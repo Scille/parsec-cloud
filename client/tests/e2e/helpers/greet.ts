@@ -147,7 +147,7 @@ export async function addUser(
   await expect(greetData.nextButton).not.toHaveDisabledAttribute();
   await greetData.nextButton.click();
   await expect(greetData.modal).toBeHidden();
-  await expect(usersPage).toShowToast(`${userName} can now access to the organization.`, 'Success');
+  await expect(usersPage).toShowToast(`${userName} can now access the organization.`, 'Success');
   await expect(usersPage.locator('#users-page-user-list').getByRole('listitem')).toHaveCount(currentUserCount + 1);
 
   // Joiner sets password

@@ -65,13 +65,16 @@ defineEmits<{
   &::after {
     content: '';
     position: absolute;
-    top: -3rem;
+    top: -4rem;
+    right: -3rem;
     background-image: url('@/assets/images/background/background-shapes-large.svg');
     background-size: cover;
     background-repeat: no-repeat;
     background-position: top left;
     z-index: -1;
     transition: all 0.3s ease-in-out;
+    width: 20rem;
+    height: 100%;
 
     @include ms.responsive-breakpoint('sm') {
       width: 40rem;

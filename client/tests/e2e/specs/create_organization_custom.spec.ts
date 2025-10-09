@@ -331,7 +331,7 @@ msTest('Go through custom org creation process from bootstrap link', async ({ co
   await page.waitForTimeout(1000);
   await expect(summaryContainer).toBeHidden();
   await expect(modal.locator('.created-page')).toBeVisible();
-  await expect(modal.locator('.created-page-footer').locator('ion-button')).toHaveText('Access to your organization');
+  await expect(modal.locator('.created-page-footer').locator('ion-button')).toHaveText('Access my organization');
   await modal.locator('.created-page-footer').locator('ion-button').click();
   await page.waitForTimeout(1000);
   await expect(page).toBeWorkspacePage();
@@ -710,7 +710,7 @@ for (const displaySize of ['small', 'large']) {
       await page.waitForTimeout(1000);
       await expect(summaryContainer).toBeHidden();
       await expect(modal.locator('.created-page')).toBeVisible();
-      await expect(modal.locator('.created-page-footer').locator('ion-button')).toHaveText('Access to your organization');
+      await expect(modal.locator('.created-page-footer').locator('ion-button')).toHaveText('Access my organization');
       await modal.locator('.created-page-footer').locator('ion-button').click();
       await page.waitForTimeout(1000);
       await expect(page).toBeWorkspacePage();
