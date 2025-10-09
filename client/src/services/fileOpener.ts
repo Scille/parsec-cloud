@@ -34,6 +34,7 @@ interface OpenPathOptions {
   onlyViewers?: boolean;
   atTime?: DateTime;
   useEditor?: boolean;
+  readOnly?: boolean;
 }
 
 // Uncomment here to enable file viewers on desktop; should be removed when all file viewers are implemented
@@ -206,12 +207,14 @@ async function openInEditor(
             contentType: contentType,
           });
         }
+
         await navigateTo(Routes.FileHandler, {
           query: {
             workspaceHandle: workspaceHandle,
             documentPath: entry.path,
             timestamp: options.atTime?.toMillis().toString(),
             fileTypeInfo: Base64.fromObject(contentType),
+            readOnly: options.readOnly,
           },
           params: {
             mode: FileHandlerMode.Edit,

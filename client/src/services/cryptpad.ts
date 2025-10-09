@@ -12,6 +12,11 @@ export enum CryptpadDocumentType {
   Unsupported = 'unsupported',
 }
 
+export enum CryptpadAppMode {
+  View = 'view',
+  Edit = 'edit',
+}
+
 export const ENABLED_DOCUMENT_TYPES = [
   CryptpadDocumentType.Pad,
   CryptpadDocumentType.Sheet,
@@ -30,8 +35,13 @@ interface CryptpadConfig {
   documentType: CryptpadDocumentType;
   editorConfig: {
     lang: string;
+    user?: {
+      name: string;
+      id: string;
+    };
   };
   autosave: number;
+  mode?: CryptpadAppMode;
   events: {
     onSave: (file: Blob, callback: () => void) => void;
     onNewKey?: (data: { new: string; old: string }, callback: (key: string) => void) => void;
