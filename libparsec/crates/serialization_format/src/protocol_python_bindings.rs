@@ -952,6 +952,7 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         FieldType::GreeterOrClaimer => quote_rs_to_py_class!(crate::enumerate::GreeterOrClaimer),
         FieldType::EmailAddress => quote_rs_to_py_class!(crate::ids::EmailAddress),
         FieldType::ValidationCode => quote_rs_to_py_class!(crate::misc::ValidationCode),
+        FieldType::CertificateReference => quote_rs_to_py_class!(CertificateReference),
     }
 }
 
@@ -1039,6 +1040,7 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         FieldType::UsersPerProfileDetailItem => quote! { crate::data::UsersPerProfileDetailItem },
         FieldType::PkiEnrollmentSubmitPayload => quote! { crate::data::PkiEnrollmentSubmitPayload },
         FieldType::X509Certificate => quote! { crate::data::X509Certificate },
+        FieldType::CertificateReference => quote! { CertificateReference },
         FieldType::ShamirRecoveryShareData => {
             quote! { crate::shamir::ShamirRecoveryShareData}
         }
