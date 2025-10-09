@@ -6,13 +6,13 @@ use libparsec_platform_async::future::FutureExt as _;
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
-use libparsec_types::prelude::*;
-
 use crate::{
-    get_device_archive_path, ArchiveDeviceError, ListAvailableDeviceError, LoadCiphertextKeyError,
-    LoadDeviceError, ReadFileError, RemoveDeviceError, SaveDeviceError, UpdateDeviceError,
-    DEVICE_FILE_EXT,
+    encrypt_device, get_device_archive_path, ArchiveDeviceError, ListAvailableDeviceError,
+    LoadCiphertextKeyError, LoadDeviceError, ReadFileError, RemoveDeviceError, SaveDeviceError,
+    UpdateDeviceError, DEVICE_FILE_EXT,
 };
+use libparsec_platform_pki::{decrypt_message, encrypt_message};
+use libparsec_types::prelude::*;
 
 const KEYRING_SERVICE: &str = "parsec";
 
@@ -152,9 +152,22 @@ pub(super) async fn load_ciphertext_key(
             Ok(key)
         }
 
-        (DeviceAccessStrategy::Smartcard { .. }, DeviceFile::Smartcard(_)) => {
-            todo!("Load smartcard device")
-        }
+        (
+            DeviceAccessStrategy::Smartcard {
+                certificate_reference,
+                ..
+            },
+            DeviceFile::Smartcard(device),
+        ) => Ok(decrypt_message(
+            device.algorithm_for_encrypted_key,
+            device.encrypted_key.as_ref(),
+            certificate_reference,
+        )
+        .map_err(|_| LoadCiphertextKeyError::InvalidData)?
+        .data
+        .as_ref()
+        .try_into()
+        .map_err(|_| LoadCiphertextKeyError::InvalidData)?),
 
         (
             DeviceAccessStrategy::AccountVault { ciphertext_key, .. },
@@ -303,8 +316,55 @@ pub(super) async fn save_device(
             save_content(key_file, &file_content).await?;
         }
 
-        DeviceAccessStrategy::Smartcard { .. } => {
-            todo!("Save smartcard device")
+        DeviceAccessStrategy::Smartcard {
+            key_file,
+            certificate_reference,
+        } => {
+            // Generate a random key
+            let secret_key = SecretKey::generate();
+
+            // Encrypt the key using the public key related to a certificate from the store
+
+            let encrypted_message = encrypt_message(secret_key.as_ref(), certificate_reference)
+                .map_err(|e| SaveDeviceError::Internal(e.into()))?;
+
+            // May check if we are able to decrypt the encrypted key from the previous step
+            assert_eq!(
+                decrypt_message(
+                    encrypted_message.algo,
+                    &encrypted_message.ciphered,
+                    certificate_reference,
+                )
+                .map_err(|e| SaveDeviceError::Internal(e.into()))?
+                .data
+                .as_ref(),
+                secret_key.as_ref()
+            );
+
+            // Use the generated key to encrypt the device content
+            let ciphertext = encrypt_device(device, &secret_key);
+
+            // Save
+            let file_content = DeviceFile::Smartcard(DeviceFileSmartcard {
+                created_on,
+                protected_on,
+                server_url: server_url.clone(),
+                organization_id: device.organization_id().to_owned(),
+                user_id: device.user_id,
+                device_id: device.device_id,
+                human_handle: device.human_handle.to_owned(),
+                device_label: device.device_label.to_owned(),
+                certificate_ref: CertificateReference::IdOrHash {
+                    id_or_hash: encrypted_message.cert_ref,
+                },
+                encrypted_key: encrypted_message.ciphered,
+                ciphertext,
+                algorithm_for_encrypted_key: encrypted_message.algo,
+            });
+
+            let file_content = file_content.dump();
+
+            save_content(key_file, &file_content).await?;
         }
 
         DeviceAccessStrategy::AccountVault {
