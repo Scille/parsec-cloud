@@ -246,9 +246,13 @@ pub async fn load_and_unlock_device(
                 password,
             }
         }
-        AvailableDeviceType::Smartcard => DeviceAccessStrategy::Smartcard {
-            key_file: device.key_file_path.clone(),
-        },
+        AvailableDeviceType::Smartcard => {
+            todo!("read smartcard #11270");
+            // DeviceAccessStrategy::Smartcard {
+            //     certificate_reference: todo!(),
+            //     key_file: device.key_file_path.clone(),
+            // }
+        }
         AvailableDeviceType::Keyring => DeviceAccessStrategy::Keyring {
             key_file: device.key_file_path.clone(),
         },

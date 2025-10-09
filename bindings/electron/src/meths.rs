@@ -1139,6 +1139,55 @@ fn struct_available_device_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// CertificateReferenceIdOrHash
+
+#[allow(dead_code)]
+fn struct_certificate_reference_id_or_hash_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::CertificateReferenceIdOrHash> {
+    let id = {
+        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "id")?;
+        {
+            let custom_from_rs_bytes =
+                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+            #[allow(clippy::unnecessary_mut_passed)]
+            match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                Ok(val) => val,
+                // err can't infer type in some case, because of the previous `try_into`
+                #[allow(clippy::useless_format)]
+                Err(err) => return cx.throw_type_error(format!("{}", err)),
+            }
+        }
+    };
+    let hash = {
+        let js_val: Handle<JsObject> = obj.get(cx, "hash")?;
+        variant_certificate_hash_js_to_rs(cx, js_val)?
+    };
+    Ok(libparsec::CertificateReferenceIdOrHash { id, hash })
+}
+
+#[allow(dead_code)]
+fn struct_certificate_reference_id_or_hash_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::CertificateReferenceIdOrHash,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_id = {
+        let rs_buff = { rs_obj.id.as_ref() };
+        let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
+        let js_buff_slice = js_buff.as_mut_slice(cx);
+        for (i, c) in rs_buff.iter().enumerate() {
+            js_buff_slice[i] = *c;
+        }
+        js_buff
+    };
+    js_obj.set(cx, "id", js_id)?;
+    let js_hash = variant_certificate_hash_rs_to_js(cx, rs_obj.hash)?;
+    js_obj.set(cx, "hash", js_hash)?;
+    Ok(js_obj)
+}
+
 // ClientConfig
 
 #[allow(dead_code)]
@@ -5967,6 +6016,152 @@ fn variant_cancel_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// CertificateHash
+
+#[allow(dead_code)]
+fn variant_certificate_hash_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::CertificateHash> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "CertificateHashSHA256" => {
+            let data = {
+                let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "data")?;
+                {
+                    let custom_from_rs_bytes = |v: &[u8]| -> Result<Box<[u8; 32]>, String> {
+                        Ok(Box::from(
+                            <[u8; 32]>::try_from(v).map_err(|_| "invalid value length")?,
+                        ))
+                    };
+                    #[allow(clippy::unnecessary_mut_passed)]
+                    match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                        Ok(val) => val,
+                        // err can't infer type in some case, because of the previous `try_into`
+                        #[allow(clippy::useless_format)]
+                        Err(err) => return cx.throw_type_error(format!("{}", err)),
+                    }
+                }
+            };
+            Ok(libparsec::CertificateHash::SHA256 { data })
+        }
+        _ => cx.throw_type_error("Object is not a CertificateHash"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_certificate_hash_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::CertificateHash,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::CertificateHash::SHA256 { data, .. } => {
+            let js_tag = JsString::try_new(cx, "CertificateHashSHA256").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_data = {
+                let rs_buff = {
+                    let custom_to_rs_bytes =
+                        |v: Box<[u8; 32]>| -> Result<Vec<u8>, String> { Ok((*v).into()) };
+                    match custom_to_rs_bytes(data) {
+                        Ok(ok) => ok,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                };
+                let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
+                let js_buff_slice = js_buff.as_mut_slice(cx);
+                for (i, c) in rs_buff.iter().enumerate() {
+                    js_buff_slice[i] = *c;
+                }
+                js_buff
+            };
+            js_obj.set(cx, "data", js_data)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// CertificateReference
+
+#[allow(dead_code)]
+fn variant_certificate_reference_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::CertificateReference> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "CertificateReferenceHash" => {
+            let hash = {
+                let js_val: Handle<JsObject> = obj.get(cx, "hash")?;
+                variant_certificate_hash_js_to_rs(cx, js_val)?
+            };
+            Ok(libparsec::CertificateReference::Hash { hash })
+        }
+        "CertificateReferenceId" => {
+            let id = {
+                let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "id")?;
+                {
+                    let custom_from_rs_bytes =
+                        |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+                    #[allow(clippy::unnecessary_mut_passed)]
+                    match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                        Ok(val) => val,
+                        // err can't infer type in some case, because of the previous `try_into`
+                        #[allow(clippy::useless_format)]
+                        Err(err) => return cx.throw_type_error(format!("{}", err)),
+                    }
+                }
+            };
+            Ok(libparsec::CertificateReference::Id { id })
+        }
+        "CertificateReferenceIdOrHash" => {
+            let id_or_hash = {
+                let js_val: Handle<JsObject> = obj.get(cx, "idOrHash")?;
+                struct_certificate_reference_id_or_hash_js_to_rs(cx, js_val)?
+            };
+            Ok(libparsec::CertificateReference::IdOrHash { id_or_hash })
+        }
+        _ => cx.throw_type_error("Object is not a CertificateReference"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_certificate_reference_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::CertificateReference,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::CertificateReference::Hash { hash, .. } => {
+            let js_tag = JsString::try_new(cx, "CertificateReferenceHash").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_hash = variant_certificate_hash_rs_to_js(cx, hash)?;
+            js_obj.set(cx, "hash", js_hash)?;
+        }
+        libparsec::CertificateReference::Id { id, .. } => {
+            let js_tag = JsString::try_new(cx, "CertificateReferenceId").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_id = {
+                let rs_buff = { id.as_ref() };
+                let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
+                let js_buff_slice = js_buff.as_mut_slice(cx);
+                for (i, c) in rs_buff.iter().enumerate() {
+                    js_buff_slice[i] = *c;
+                }
+                js_buff
+            };
+            js_obj.set(cx, "id", js_id)?;
+        }
+        libparsec::CertificateReference::IdOrHash { id_or_hash, .. } => {
+            let js_tag = JsString::try_new(cx, "CertificateReferenceIdOrHash").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_id_or_hash = struct_certificate_reference_id_or_hash_rs_to_js(cx, id_or_hash)?;
+            js_obj.set(cx, "idOrHash", js_id_or_hash)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClaimInProgressError
 
 #[allow(dead_code)]
@@ -8729,7 +8924,15 @@ fn variant_device_save_strategy_js_to_rs<'a>(
             };
             Ok(libparsec::DeviceSaveStrategy::Password { password })
         }
-        "DeviceSaveStrategySmartcard" => Ok(libparsec::DeviceSaveStrategy::Smartcard {}),
+        "DeviceSaveStrategySmartcard" => {
+            let certificate_reference = {
+                let js_val: Handle<JsObject> = obj.get(cx, "certificateReference")?;
+                variant_certificate_reference_js_to_rs(cx, js_val)?
+            };
+            Ok(libparsec::DeviceSaveStrategy::Smartcard {
+                certificate_reference,
+            })
+        }
         _ => cx.throw_type_error("Object is not a DeviceSaveStrategy"),
     }
 }
@@ -8781,9 +8984,15 @@ fn variant_device_save_strategy_rs_to_js<'a>(
             let js_password = JsString::try_new(cx, password).or_throw(cx)?;
             js_obj.set(cx, "password", js_password)?;
         }
-        libparsec::DeviceSaveStrategy::Smartcard { .. } => {
+        libparsec::DeviceSaveStrategy::Smartcard {
+            certificate_reference,
+            ..
+        } => {
             let js_tag = JsString::try_new(cx, "DeviceSaveStrategySmartcard").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
+            let js_certificate_reference =
+                variant_certificate_reference_rs_to_js(cx, certificate_reference)?;
+            js_obj.set(cx, "certificateReference", js_certificate_reference)?;
         }
     }
     Ok(js_obj)
