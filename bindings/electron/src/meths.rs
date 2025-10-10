@@ -6091,15 +6091,15 @@ fn variant_certificate_reference_js_to_rs<'a>(
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
         "CertificateReferenceHash" => {
-            let hash = {
-                let js_val: Handle<JsObject> = obj.get(cx, "hash")?;
+            let x0 = {
+                let js_val: Handle<JsObject> = obj.get(cx, "x0")?;
                 variant_certificate_hash_js_to_rs(cx, js_val)?
             };
-            Ok(libparsec::CertificateReference::Hash { hash })
+            Ok(libparsec::CertificateReference::Hash(x0))
         }
         "CertificateReferenceId" => {
-            let id = {
-                let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "id")?;
+            let x0 = {
+                let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "x0")?;
                 {
                     let custom_from_rs_bytes =
                         |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
@@ -6112,14 +6112,14 @@ fn variant_certificate_reference_js_to_rs<'a>(
                     }
                 }
             };
-            Ok(libparsec::CertificateReference::Id { id })
+            Ok(libparsec::CertificateReference::Id(x0))
         }
         "CertificateReferenceIdOrHash" => {
-            let id_or_hash = {
-                let js_val: Handle<JsObject> = obj.get(cx, "idOrHash")?;
+            let x0 = {
+                let js_val: Handle<JsObject> = obj.get(cx, "x0")?;
                 struct_certificate_reference_id_or_hash_js_to_rs(cx, js_val)?
             };
-            Ok(libparsec::CertificateReference::IdOrHash { id_or_hash })
+            Ok(libparsec::CertificateReference::IdOrHash(x0))
         }
         _ => cx.throw_type_error("Object is not a CertificateReference"),
     }
@@ -6132,17 +6132,17 @@ fn variant_certificate_reference_rs_to_js<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
-        libparsec::CertificateReference::Hash { hash, .. } => {
-            let js_tag = JsString::try_new(cx, "CertificateReferenceHash").or_throw(cx)?;
+        libparsec::CertificateReference::Hash(x0, ..) => {
+            let js_tag = JsString::try_new(cx, "Hash").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_hash = variant_certificate_hash_rs_to_js(cx, hash)?;
-            js_obj.set(cx, "hash", js_hash)?;
+            let js_x0 = variant_certificate_hash_rs_to_js(cx, x0)?;
+            js_obj.set(cx, "x0", js_x0)?;
         }
-        libparsec::CertificateReference::Id { id, .. } => {
-            let js_tag = JsString::try_new(cx, "CertificateReferenceId").or_throw(cx)?;
+        libparsec::CertificateReference::Id(x0, ..) => {
+            let js_tag = JsString::try_new(cx, "Id").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_id = {
-                let rs_buff = { id.as_ref() };
+            let js_x0 = {
+                let rs_buff = { x0.as_ref() };
                 let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
                 let js_buff_slice = js_buff.as_mut_slice(cx);
                 for (i, c) in rs_buff.iter().enumerate() {
@@ -6150,13 +6150,13 @@ fn variant_certificate_reference_rs_to_js<'a>(
                 }
                 js_buff
             };
-            js_obj.set(cx, "id", js_id)?;
+            js_obj.set(cx, "x0", js_x0)?;
         }
-        libparsec::CertificateReference::IdOrHash { id_or_hash, .. } => {
-            let js_tag = JsString::try_new(cx, "CertificateReferenceIdOrHash").or_throw(cx)?;
+        libparsec::CertificateReference::IdOrHash(x0, ..) => {
+            let js_tag = JsString::try_new(cx, "IdOrHash").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_id_or_hash = struct_certificate_reference_id_or_hash_rs_to_js(cx, id_or_hash)?;
-            js_obj.set(cx, "idOrHash", js_id_or_hash)?;
+            let js_x0 = struct_certificate_reference_id_or_hash_rs_to_js(cx, x0)?;
+            js_obj.set(cx, "x0", js_x0)?;
         }
     }
     Ok(js_obj)

@@ -1133,15 +1133,15 @@ export type CertificateHash =
 // CertificateReference
 export interface CertificateReferenceHash {
     tag: "Hash"
-    hash: CertificateHash
+    x1: CertificateHash
 }
 export interface CertificateReferenceId {
     tag: "Id"
-    id: Uint8Array
+    x1: Uint8Array
 }
 export interface CertificateReferenceIdOrHash {
     tag: "IdOrHash"
-    id_or_hash: CertificateReferenceIdOrHash
+    x1: CertificateReferenceIdOrHash
 }
 export type CertificateReference =
   | CertificateReferenceHash

@@ -58,18 +58,16 @@ fn find_certificate(
     certificate_ref: &CertificateReference,
 ) -> Option<CertContext> {
     let matcher: Box<dyn Fn(&CertContext) -> bool> = match certificate_ref {
-        CertificateReference::Id { id } => Box::new(|candidate: &CertContext| {
+        CertificateReference::Id(id) => Box::new(|candidate: &CertContext| {
             cert_cmp_id(candidate, id.as_ref()).unwrap_or_default()
         }),
-        CertificateReference::Hash { hash } => {
+        CertificateReference::Hash(hash) => {
             Box::new(move |candidate: &CertContext| cert_cmp_hash(hash, candidate))
         }
-        CertificateReference::IdOrHash { id_or_hash } => {
-            Box::new(move |candidate: &CertContext| {
-                cert_cmp_id(candidate, id_or_hash.id.as_ref()).unwrap_or_default()
-                    || cert_cmp_hash(&id_or_hash.hash, candidate)
-            })
-        }
+        CertificateReference::IdOrHash(id_or_hash) => Box::new(move |candidate: &CertContext| {
+            cert_cmp_id(candidate, id_or_hash.id.as_ref()).unwrap_or_default()
+                || cert_cmp_hash(&id_or_hash.hash, candidate)
+        }),
     };
 
     store.certs().find(matcher)

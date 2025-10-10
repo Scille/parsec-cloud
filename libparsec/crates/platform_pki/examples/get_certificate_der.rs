@@ -20,7 +20,7 @@ fn main() -> anyhow::Result<()> {
     println!("args={args:?}");
 
     let cert_ref: CertificateReference = match args.certificate_hash {
-        Some(hash) => CertificateReference::Hash { hash },
+        Some(hash) => CertificateReference::Hash(hash),
         #[cfg(target_os = "windows")]
         None => {
             let cert_ref = libparsec_platform_pki::show_certificate_selection_dialog()

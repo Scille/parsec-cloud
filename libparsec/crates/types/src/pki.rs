@@ -327,15 +327,9 @@ impl FromStr for CertificateHash {
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum CertificateReference {
-    Id {
-        id: Bytes,
-    },
-    Hash {
-        hash: CertificateHash,
-    },
-    IdOrHash {
-        id_or_hash: CertificateReferenceIdOrHash,
-    },
+    Id(Bytes),
+    Hash(CertificateHash),
+    IdOrHash(CertificateReferenceIdOrHash),
 }
 
 impl TryFrom<CertificateReferenceData> for CertificateReference {
@@ -353,22 +347,20 @@ impl TryFrom<CertificateReferenceData> for CertificateReference {
             CertificateReferenceData {
                 certificate_hash: Some(hash),
                 certificate_id: None,
-            } => Ok(CertificateReference::Hash {
-                hash: hash.parse()?,
-            }),
+            } => Ok(CertificateReference::Hash(hash.parse()?)),
             CertificateReferenceData {
                 certificate_hash: None,
                 certificate_id: Some(id),
-            } => Ok(CertificateReference::Id { id }),
+            } => Ok(CertificateReference::Id(id)),
             CertificateReferenceData {
                 certificate_hash: Some(hash),
                 certificate_id: Some(id),
-            } => Ok(CertificateReference::IdOrHash {
-                id_or_hash: CertificateReferenceIdOrHash {
+            } => Ok(CertificateReference::IdOrHash(
+                CertificateReferenceIdOrHash {
                     id,
                     hash: hash.parse()?,
                 },
-            }),
+            )),
         }
     }
 }
@@ -376,15 +368,15 @@ impl TryFrom<CertificateReferenceData> for CertificateReference {
 impl From<CertificateReference> for CertificateReferenceData {
     fn from(value: CertificateReference) -> Self {
         match value {
-            CertificateReference::Id { id } => CertificateReferenceData {
+            CertificateReference::Id(id) => CertificateReferenceData {
                 certificate_hash: None,
                 certificate_id: Some(id),
             },
-            CertificateReference::Hash { hash } => CertificateReferenceData {
+            CertificateReference::Hash(hash) => CertificateReferenceData {
                 certificate_hash: Some(hash.to_string()),
                 certificate_id: None,
             },
-            CertificateReference::IdOrHash { id_or_hash } => {
+            CertificateReference::IdOrHash(id_or_hash) => {
                 let CertificateReferenceIdOrHash { id, hash } = id_or_hash;
                 CertificateReferenceData {
                     certificate_hash: Some(hash.to_string()),
@@ -397,7 +389,7 @@ impl From<CertificateReference> for CertificateReferenceData {
 
 impl From<CertificateReferenceIdOrHash> for CertificateReference {
     fn from(value: CertificateReferenceIdOrHash) -> Self {
-        Self::IdOrHash { id_or_hash: value }
+        Self::IdOrHash(value)
     }
 }
 
