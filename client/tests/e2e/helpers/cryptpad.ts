@@ -4,7 +4,7 @@ import { expect } from '@playwright/test';
 import { MsPage } from '@tests/e2e/helpers/types';
 
 // cspell:disable-next-line
-export const CRYPTPAD_SERVER = process.env.CRYPTPAD_SERVER || 'cryptpad-dev.parsec.cloud';
+export const CRYPTPAD_SERVER = process.env.CRYPTPAD_SERVER || 'https://cryptpad-dev.parsec.cloud';
 
 interface MockCryptpadOptions {
   timeout?: boolean;
@@ -12,7 +12,7 @@ interface MockCryptpadOptions {
 }
 
 export async function mockCryptpadServer(page: MsPage, opts?: MockCryptpadOptions): Promise<void> {
-  await page.route(`https://${CRYPTPAD_SERVER}/**`, async (route) => {
+  await page.route(`${CRYPTPAD_SERVER}/**`, async (route) => {
     if (opts?.timeout) {
       await route.abort('timedout');
     } else if (opts?.httpErrorCode) {
