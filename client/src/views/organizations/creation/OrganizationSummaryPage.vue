@@ -63,7 +63,10 @@
         </div>
       </ion-item>
 
-      <hr class="summary-item-divider" />
+      <hr
+        class="summary-item-divider"
+        v-if="useSequesterKey"
+      />
 
       <!-- full name -->
       <ion-item class="summary-item-container ion-no-padding">

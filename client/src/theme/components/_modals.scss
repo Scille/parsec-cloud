@@ -389,16 +389,20 @@
 
   &:has(.creation-page.active),
   &:has(.created-page.active) {
-    @include ms.responsive-breakpoint('sm') {
-      .ion-page {
+    .ion-page {
+      min-height: 18.75rem;
+      max-height: fit-content;
+      --max-height: fit-content;
+
+      @include ms.responsive-breakpoint('sm') {
         max-height: 90vh;
         --max-height: 90vh;
         position: absolute;
       }
+    }
 
-      .modal-content {
-        height: 100%;
-      }
+    .modal-content {
+      height: 100%;
     }
   }
 
