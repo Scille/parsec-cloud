@@ -1,11 +1,16 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 mod distinguished_name;
+mod extensions;
 
 use distinguished_name::extract_dn_list_from_rnd_seq;
-use x509_cert::der::{Decode, Error as DERError, SliceReader};
+use x509_cert::{
+    der::{Decode, Error as DERError, SliceReader},
+    Version,
+};
 
 pub use distinguished_name::DistinguishedNameValue;
+pub use extensions::{Extensions, SubjectAltName};
 
 error_set::error_set! {
     X509LoadError = {
@@ -18,6 +23,7 @@ error_set::error_set! {
 pub struct Certificate {
     pub subject: Vec<DistinguishedNameValue>,
     pub issuer: Vec<DistinguishedNameValue>,
+    pub extensions: Extensions,
 }
 
 impl Certificate {
@@ -38,6 +44,21 @@ impl TryFrom<x509_cert::Certificate> for Certificate {
         let issuer = extract_dn_list_from_rnd_seq(value.tbs_certificate.issuer);
         log::trace!(issuer:?; "Collected issuer");
 
-        Ok(Certificate { subject, issuer })
+        // Extensions are only available on V3 certificate
+        let extensions: Extensions = if value.tbs_certificate.version == Version::V3 {
+            value
+                .tbs_certificate
+                .extensions
+                .unwrap_or_default()
+                .try_into()?
+        } else {
+            Default::default()
+        };
+
+        Ok(Certificate {
+            subject,
+            issuer,
+            extensions,
+        })
     }
 }

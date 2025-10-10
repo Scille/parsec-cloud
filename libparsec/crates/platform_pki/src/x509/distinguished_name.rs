@@ -7,8 +7,7 @@ use x509_cert::{
     der::{
         self, asn1,
         oid::db::{rfc3280::EMAIL_ADDRESS, rfc4519::COMMON_NAME},
-        Choice, Decode, DecodeValue, ErrorKind as DERErrorKind, Length, Reader,
-        Result as DERResult, Tag,
+        Choice, Decode, DecodeValue, ErrorKind as DERErrorKind, Reader, Result as DERResult, Tag,
     },
     name::RdnSequence,
 };
@@ -52,10 +51,7 @@ impl TryFrom<AttributeTypeAndValue> for DistinguishedNameValue {
                 .decode_as::<asn1::Ia5StringRef>()
                 .map(|v| v.to_string())
                 .map(Self::EmailAddress),
-            _ => Err(DERError::new(
-                DERErrorKind::OidUnknown { oid },
-                Length::ZERO,
-            )),
+            _ => Err(DERErrorKind::OidUnknown { oid }.into()),
         }
     }
 }
