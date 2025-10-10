@@ -246,6 +246,11 @@ jobs:
           CRYPTPAD_SERVER: http://cryptpad:3000
         timeout-minutes: 20
 
+      - name: Print CryptPad service logs on failure
+        if: failure()
+        run: |
+          docker logs ${{ job.services.cryptpad.id }}
+
       - name: Upload blob report to GitHub Actions Artifacts
         if: "!cancelled()" # We always upload the artifacts even in case of failure of playwright.
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # pin v4.6.2
