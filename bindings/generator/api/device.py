@@ -1,6 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+from .addr import ParsecAddr
 from .common import (
+    AccountVaultItemOpaqueKeyID,
     Bytes,
     DateTime,
     DeviceID,
@@ -12,15 +14,14 @@ from .common import (
     Path,
     Ref,
     Result,
+    SecretKey,
+    Sha256BoxData,
     Structure,
     UserID,
     Variant,
-    SecretKey,
+    VariantItemTuple,
     VariantItemUnit,
-    AccountVaultItemOpaqueKeyID,
-    Sha256BoxData,
 )
-from .addr import ParsecAddr
 
 
 class AvailableDeviceType(Variant):
@@ -44,14 +45,9 @@ class CertificateReferenceIdOrHash(Structure):
 
 
 class CertificateReference(Variant):
-    class Id:
-        id: Bytes
-
-    class Hash:
-        hash: CertificateHash
-
-    class IdOrHash:
-        id_or_hash: CertificateReferenceIdOrHash
+    Id = VariantItemTuple(Bytes)
+    Hash = VariantItemTuple(CertificateHash)
+    IdOrHash = VariantItemTuple(CertificateReferenceIdOrHash)
 
 
 class DeviceSaveStrategy(Variant):

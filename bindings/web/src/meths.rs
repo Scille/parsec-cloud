@@ -6452,15 +6452,15 @@ fn variant_certificate_reference_js_to_rs(
         .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
     match tag.as_str() {
         "CertificateReferenceHash" => {
-            let hash = {
-                let js_val = Reflect::get(&obj, &"hash".into())?;
+            let x1 = {
+                let js_val = Reflect::get(&obj, &"x1".into())?;
                 variant_certificate_hash_js_to_rs(js_val)?
             };
-            Ok(libparsec::CertificateReference::Hash { hash })
+            Ok(libparsec::CertificateReference::Hash(x1))
         }
         "CertificateReferenceId" => {
-            let id = {
-                let js_val = Reflect::get(&obj, &"id".into())?;
+            let x1 = {
+                let js_val = Reflect::get(&obj, &"x1".into())?;
                 js_val
                     .dyn_into::<Uint8Array>()
                     .map(|x| x.to_vec())
@@ -6472,14 +6472,14 @@ fn variant_certificate_reference_js_to_rs(
                         custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
                     })?
             };
-            Ok(libparsec::CertificateReference::Id { id })
+            Ok(libparsec::CertificateReference::Id(x1))
         }
         "CertificateReferenceIdOrHash" => {
-            let id_or_hash = {
-                let js_val = Reflect::get(&obj, &"idOrHash".into())?;
+            let x1 = {
+                let js_val = Reflect::get(&obj, &"x1".into())?;
                 struct_certificate_reference_id_or_hash_js_to_rs(js_val)?
             };
-            Ok(libparsec::CertificateReference::IdOrHash { id_or_hash })
+            Ok(libparsec::CertificateReference::IdOrHash(x1))
         }
         _ => Err(JsValue::from(TypeError::new(
             "Object is not a CertificateReference",
@@ -6493,24 +6493,20 @@ fn variant_certificate_reference_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
-        libparsec::CertificateReference::Hash { hash, .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"CertificateReferenceHash".into())?;
-            let js_hash = variant_certificate_hash_rs_to_js(hash)?;
-            Reflect::set(&js_obj, &"hash".into(), &js_hash)?;
+        libparsec::CertificateReference::Hash(x1, ..) => {
+            Reflect::set(&js_obj, &"tag".into(), &"Hash".into())?;
+            let js_x1 = variant_certificate_hash_rs_to_js(x1)?;
+            Reflect::set(&js_obj, &"x1".into(), &js_x1.into())?;
         }
-        libparsec::CertificateReference::Id { id, .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"CertificateReferenceId".into())?;
-            let js_id = JsValue::from(Uint8Array::from(id.as_ref()));
-            Reflect::set(&js_obj, &"id".into(), &js_id)?;
+        libparsec::CertificateReference::Id(x1, ..) => {
+            Reflect::set(&js_obj, &"tag".into(), &"Id".into())?;
+            let js_x1 = JsValue::from(Uint8Array::from(x1.as_ref()));
+            Reflect::set(&js_obj, &"x1".into(), &js_x1.into())?;
         }
-        libparsec::CertificateReference::IdOrHash { id_or_hash, .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"CertificateReferenceIdOrHash".into(),
-            )?;
-            let js_id_or_hash = struct_certificate_reference_id_or_hash_rs_to_js(id_or_hash)?;
-            Reflect::set(&js_obj, &"idOrHash".into(), &js_id_or_hash)?;
+        libparsec::CertificateReference::IdOrHash(x1, ..) => {
+            Reflect::set(&js_obj, &"tag".into(), &"IdOrHash".into())?;
+            let js_x1 = struct_certificate_reference_id_or_hash_rs_to_js(x1)?;
+            Reflect::set(&js_obj, &"x1".into(), &js_x1.into())?;
         }
     }
     Ok(js_obj)

@@ -1284,15 +1284,15 @@ export enum CertificateReferenceTag {
 
 export interface CertificateReferenceHash {
     tag: CertificateReferenceTag.Hash
-    hash: CertificateHash
+    x1: CertificateHash
 }
 export interface CertificateReferenceId {
     tag: CertificateReferenceTag.Id
-    id: Bytes
+    x1: Bytes
 }
 export interface CertificateReferenceIdOrHash {
     tag: CertificateReferenceTag.IdOrHash
-    idOrHash: CertificateReferenceIdOrHash
+    x1: CertificateReferenceIdOrHash
 }
 export type CertificateReference =
   | CertificateReferenceHash

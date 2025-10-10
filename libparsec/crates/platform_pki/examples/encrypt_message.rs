@@ -20,9 +20,7 @@ fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     println!("args={args:?}");
 
-    let cert_ref = CertificateReference::Hash {
-        hash: args.certificate_hash,
-    };
+    let cert_ref = CertificateReference::Hash(args.certificate_hash);
     let data = args.content.into_bytes()?;
 
     let res = encrypt_message(&data, &cert_ref).context("Failed to encrypt message")?;
