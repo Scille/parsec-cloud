@@ -2,7 +2,7 @@
 
 import { expect, login, msTest, waitUntilSaved } from '@tests/e2e/helpers';
 
-msTest.skip('Open editor with header option', async ({ parsecEditics }) => {
+msTest('Open editor with header option', async ({ parsecEditics }) => {
   const entries = parsecEditics.locator('.folder-container').locator('.file-list-item');
 
   await entries.nth(2).hover();
@@ -13,7 +13,7 @@ msTest.skip('Open editor with header option', async ({ parsecEditics }) => {
   await expect(parsecEditics.locator('#cryptpad-editor')).toBeVisible();
 });
 
-msTest.skip('Open editor with contextual menu', async ({ parsecEditics }) => {
+msTest('Open editor with contextual menu', async ({ parsecEditics }) => {
   const entries = parsecEditics.locator('.folder-container').locator('.file-list-item');
   await entries.nth(2).click({ button: 'right' });
   const menu = parsecEditics.locator('#file-context-menu');
@@ -23,7 +23,7 @@ msTest.skip('Open editor with contextual menu', async ({ parsecEditics }) => {
   await expect(parsecEditics.locator('#cryptpad-editor')).toBeVisible();
 });
 
-msTest.skip('Open editor from viewer', async ({ parsecEditics }) => {
+msTest('Open editor from viewer', async ({ parsecEditics }) => {
   const entries = parsecEditics.locator('.folder-container').locator('.file-list-item');
   await entries.nth(2).dblclick();
   await expect(parsecEditics.locator('.ms-spinner-modal')).toBeVisible();
@@ -41,7 +41,7 @@ msTest.skip('Open editor from viewer', async ({ parsecEditics }) => {
   await expect(parsecEditics.locator('#cryptpad-editor')).toBeVisible();
 });
 
-msTest.skip('Check edited file in viewer', async ({ parsecEditics }) => {
+msTest('Check edited file in viewer', async ({ parsecEditics }) => {
   msTest.setTimeout(120_000);
   await parsecEditics.locator('.header-label-name').click();
 
