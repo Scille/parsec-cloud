@@ -243,7 +243,7 @@ jobs:
         env:
           TESTBED_SERVER: parsec3://parsec-testbed-server:6777?no_ssl=true
           PARSEC_APP_TRIAL_SERVERS: parsec-testbed-server:6777?no_ssl=true
-          CRYPTPAD_SERVER: cryptpad:3000?no_ssl=true
+          CRYPTPAD_SERVER: http://localhost:3000
         timeout-minutes: 20
 
       - name: Upload blob report to GitHub Actions Artifacts
