@@ -1,1 +1,0 @@
-Fixed a bug on Firefox where files could only be sorted by name

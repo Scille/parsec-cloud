@@ -4,6 +4,23 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.5.1-rc.0 (2025-10-10)
+-------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Unix: improve cleanup workflow run at startup for orphan mountpoint
+  (`#10014 <https://github.com/Scille/parsec-cloud/issues/10014>`__)
+
+* Fixed a bug causing files to be incorrectly deleted when cancelling an import
+  (`#11107 <https://github.com/Scille/parsec-cloud/issues/11107>`__)
+
+* Fixed a bug on Firefox where files could only be sorted by name
+  (`#11155 <https://github.com/Scille/parsec-cloud/issues/11155>`__)
+
+
+
 Parsec v3.5.0 (2025-09-18)
 --------------------------
 
