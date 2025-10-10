@@ -4,6 +4,36 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.5.2 (2025-10-21)
+--------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Make application more resilient on corrupted certificate
+  (`#11331 <https://github.com/Scille/parsec-cloud/issues/11331>`__)
+
+
+
+Parsec v3.5.1 (2025-10-21)
+--------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Improve mountpoint cleanup at startup for orphan mountpoints (Linux/macOS)
+  (`#10014 <https://github.com/Scille/parsec-cloud/issues/10014>`__)
+
+* File replace hangs via drag & drop from Finder
+  (`#10054 <https://github.com/Scille/parsec-cloud/issues/10054>`__)
+
+* File replace incorrectly deletes original file if cancelled during import
+  (`#11107 <https://github.com/Scille/parsec-cloud/issues/11107>`__)
+
+* Sort files by other than filename does not work (Firefox)
+  (`#11155 <https://github.com/Scille/parsec-cloud/issues/11155>`__)
+
+
 Parsec v3.5.0 (2025-09-18)
 --------------------------
 
