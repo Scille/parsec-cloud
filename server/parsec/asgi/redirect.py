@@ -7,6 +7,7 @@ from urllib.parse import SplitResult, parse_qs, quote_plus, urlencode, urlsplit,
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
+from fastapi.templating import Jinja2Templates
 
 if TYPE_CHECKING:
     from parsec.backend import Backend
@@ -54,5 +55,17 @@ def redirect_parsec_url(
     location_url = urlunsplit(
         (server_addr_split.scheme, server_addr_split.netloc, path, location_url_query, None)
     )
+
+    with_client_web_app: bool = request.app.state.with_client_web_app
+
+    if with_client_web_app:
+        query = quote_plus(location_url_query, safe="/", encoding="utf8", errors="strict")
+        location_url = urlunsplit((
+            'http',
+            server_addr_split.netloc,
+            f'client/webRedirect?webRedirectUrl={server_addr_split.scheme}://{server_addr_split.netloc}/{path}',
+            query,
+            None
+        ))
 
     return RedirectResponse(url=location_url, status_code=302)
