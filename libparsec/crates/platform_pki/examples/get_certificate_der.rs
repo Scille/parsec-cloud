@@ -23,7 +23,7 @@ fn main() -> anyhow::Result<()> {
         Some(hash) => CertificateReference::Hash(hash),
         #[cfg(target_os = "windows")]
         None => {
-            let cert_ref = libparsec_platform_pki::show_certificate_selection_dialog()
+            let cert_ref = libparsec_platform_pki::show_certificate_selection_dialog_windows_only()
                 .map_err(anyhow::Error::from)
                 .and_then(|res| {
                     res.ok_or_else(|| anyhow::anyhow!("User did not select a certificate"))

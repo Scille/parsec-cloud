@@ -63,7 +63,7 @@ mod platform {
         unimplemented!("platform not supported")
     }
 
-    pub fn show_certificate_selection_dialog(
+    pub fn show_certificate_selection_dialog_windows_only(
     ) -> Result<Option<CertificateReferenceIdOrHash>, ShowCertificateSelectionDialogError> {
         unimplemented!("platform not supported")
     }
@@ -94,7 +94,7 @@ impl std::error::Error for ShowCertificateSelectionDialogError {}
 // This is specific to windows, it cannot be replicated on other platform.
 // Instead, we likely need to go the manual way and show a custom dialog on the client side with a
 // list of certificate that we retrieve from the platform certstore.
-pub use platform::show_certificate_selection_dialog;
+pub use platform::show_certificate_selection_dialog_windows_only;
 
 pub use errors::GetDerEncodedCertificateError;
 pub use platform::get_der_encoded_certificate;

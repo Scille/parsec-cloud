@@ -3,7 +3,6 @@
 from .addr import ParsecAddr
 from .common import (
     AccountVaultItemOpaqueKeyID,
-    Bytes,
     DateTime,
     DeviceID,
     DeviceLabel,
@@ -15,13 +14,12 @@ from .common import (
     Ref,
     Result,
     SecretKey,
-    Sha256BoxData,
     Structure,
     UserID,
     Variant,
-    VariantItemTuple,
     VariantItemUnit,
 )
+from .pki import CertificateReference
 
 
 class AvailableDeviceType(Variant):
@@ -32,22 +30,6 @@ class AvailableDeviceType(Variant):
 
     class AccountVault:
         ciphertext_key_id: AccountVaultItemOpaqueKeyID
-
-
-class CertificateHash(Variant):
-    class SHA256:
-        data: Sha256BoxData
-
-
-class CertificateReferenceIdOrHash(Structure):
-    id: Bytes
-    hash: CertificateHash
-
-
-class CertificateReference(Variant):
-    Id = VariantItemTuple(Bytes)
-    Hash = VariantItemTuple(CertificateHash)
-    IdOrHash = VariantItemTuple(CertificateReferenceIdOrHash)
 
 
 class DeviceSaveStrategy(Variant):

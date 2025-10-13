@@ -3447,6 +3447,24 @@ export type ShamirRecoveryClaimRecoverDeviceError =
   | ShamirRecoveryClaimRecoverDeviceErrorOrganizationExpired
   | ShamirRecoveryClaimRecoverDeviceErrorRegisterNewDeviceError
 
+// ShowCertificateSelectionDialogError
+export enum ShowCertificateSelectionDialogErrorTag {
+    CannotGetCertificateInfo = 'ShowCertificateSelectionDialogErrorCannotGetCertificateInfo',
+    CannotOpenStore = 'ShowCertificateSelectionDialogErrorCannotOpenStore',
+}
+
+export interface ShowCertificateSelectionDialogErrorCannotGetCertificateInfo {
+    tag: ShowCertificateSelectionDialogErrorTag.CannotGetCertificateInfo
+    error: string
+}
+export interface ShowCertificateSelectionDialogErrorCannotOpenStore {
+    tag: ShowCertificateSelectionDialogErrorTag.CannotOpenStore
+    error: string
+}
+export type ShowCertificateSelectionDialogError =
+  | ShowCertificateSelectionDialogErrorCannotGetCertificateInfo
+  | ShowCertificateSelectionDialogErrorCannotOpenStore
+
 // TestbedError
 export enum TestbedErrorTag {
     Disabled = 'TestbedErrorDisabled',
@@ -5449,6 +5467,8 @@ export interface LibParsecPlugin {
     pathSplit(
         path: FsPath
     ): Promise<Array<EntryName>>
+    showCertificateSelectionDialogWindowsOnly(
+    ): Promise<Result<CertificateReference | null, ShowCertificateSelectionDialogError>>
     testCheckMailbox(
         server_addr: ParsecAddr,
         email: EmailAddress
