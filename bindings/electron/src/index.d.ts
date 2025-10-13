@@ -2904,6 +2904,20 @@ export type ShamirRecoveryClaimRecoverDeviceError =
   | ShamirRecoveryClaimRecoverDeviceErrorRegisterNewDeviceError
 
 
+// ShowCertificateSelectionDialogError
+export interface ShowCertificateSelectionDialogErrorCannotGetCertificateInfo {
+    tag: "CannotGetCertificateInfo"
+    error: string
+}
+export interface ShowCertificateSelectionDialogErrorCannotOpenStore {
+    tag: "CannotOpenStore"
+    error: string
+}
+export type ShowCertificateSelectionDialogError =
+  | ShowCertificateSelectionDialogErrorCannotGetCertificateInfo
+  | ShowCertificateSelectionDialogErrorCannotOpenStore
+
+
 // TestbedError
 export interface TestbedErrorDisabled {
     tag: "Disabled"
@@ -4616,6 +4630,8 @@ export function pathParent(
 export function pathSplit(
     path: string
 ): Promise<Array<string>>
+export function showCertificateSelectionDialogWindowsOnly(
+): Promise<Result<CertificateReference | null, ShowCertificateSelectionDialogError>>
 export function testCheckMailbox(
     server_addr: string,
     email: string

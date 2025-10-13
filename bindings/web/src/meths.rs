@@ -14642,6 +14642,34 @@ fn variant_shamir_recovery_claim_recover_device_error_rs_to_js(
     Ok(js_obj)
 }
 
+// ShowCertificateSelectionDialogError
+
+#[allow(dead_code)]
+fn variant_show_certificate_selection_dialog_error_rs_to_js(
+    rs_obj: libparsec::ShowCertificateSelectionDialogError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ShowCertificateSelectionDialogError::CannotGetCertificateInfo { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ShowCertificateSelectionDialogErrorCannotGetCertificateInfo".into(),
+            )?;
+        }
+        libparsec::ShowCertificateSelectionDialogError::CannotOpenStore { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ShowCertificateSelectionDialogErrorCannotOpenStore".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // TestbedError
 
 #[allow(dead_code)]
@@ -21073,6 +21101,34 @@ pub fn pathSplit(path: String) -> Promise {
                 js_array.set(i as u32, js_elem);
             }
             js_array.into()
+        })
+    }))
+}
+
+// show_certificate_selection_dialog_windows_only
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn showCertificateSelectionDialogWindowsOnly() -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::show_certificate_selection_dialog_windows_only().await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = match value {
+                    Some(val) => variant_certificate_reference_rs_to_js(val)?,
+                    None => JsValue::NULL,
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_show_certificate_selection_dialog_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
         })
     }))
 }

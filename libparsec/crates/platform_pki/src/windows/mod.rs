@@ -139,7 +139,7 @@ fn get_id_and_hash_from_cert_context(
     Ok(CertificateReferenceIdOrHash { id, hash })
 }
 
-pub fn show_certificate_selection_dialog(
+pub fn show_certificate_selection_dialog_windows_only(
 ) -> Result<Option<CertificateReferenceIdOrHash>, ShowCertificateSelectionDialogError> {
     let store = open_store().map_err(ShowCertificateSelectionDialogError::CannotOpenStore)?;
     ask_user_to_select_certificate(&store)

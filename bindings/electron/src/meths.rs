@@ -13513,6 +13513,35 @@ fn variant_shamir_recovery_claim_recover_device_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// ShowCertificateSelectionDialogError
+
+#[allow(dead_code)]
+fn variant_show_certificate_selection_dialog_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ShowCertificateSelectionDialogError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ShowCertificateSelectionDialogError::CannotGetCertificateInfo { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ShowCertificateSelectionDialogErrorCannotGetCertificateInfo",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ShowCertificateSelectionDialogError::CannotOpenStore { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ShowCertificateSelectionDialogErrorCannotOpenStore")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // TestbedError
 
 #[allow(dead_code)]
@@ -22874,6 +22903,50 @@ fn path_split(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// show_certificate_selection_dialog_windows_only
+fn show_certificate_selection_dialog_windows_only(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::show_certificate_selection_dialog_windows_only().await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = match ok {
+                            Some(elem) => variant_certificate_reference_rs_to_js(&mut cx, elem)?
+                                .as_value(&mut cx),
+                            None => JsNull::new(&mut cx).as_value(&mut cx),
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_show_certificate_selection_dialog_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // test_check_mailbox
 fn test_check_mailbox(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -27253,6 +27326,10 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("pathNormalize", path_normalize)?;
     cx.export_function("pathParent", path_parent)?;
     cx.export_function("pathSplit", path_split)?;
+    cx.export_function(
+        "showCertificateSelectionDialogWindowsOnly",
+        show_certificate_selection_dialog_windows_only,
+    )?;
     cx.export_function("testCheckMailbox", test_check_mailbox)?;
     cx.export_function("testDropTestbed", test_drop_testbed)?;
     cx.export_function(

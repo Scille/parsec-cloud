@@ -1,0 +1,10 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
+pub use libparsec_platform_pki::ShowCertificateSelectionDialogError;
+use libparsec_types::CertificateReference;
+
+pub async fn show_certificate_selection_dialog_windows_only(
+) -> Result<Option<CertificateReference>, ShowCertificateSelectionDialogError> {
+    libparsec_platform_pki::show_certificate_selection_dialog_windows_only()
+        .map(|v| v.map(|v| v.into()))
+}
