@@ -116,3 +116,19 @@ fn device_label_ok(#[case] raw: &str) {
 fn device_label_ko(#[case] raw: &str) {
     p_assert_matches!(DeviceLabel::from_str(raw), Err(InvalidDeviceLabel));
 }
+
+#[rstest]
+#[case::simple("alice@example.com", None)]
+#[case::unicode_in_nfd(str::from_utf8(b"be\xcc\x81ta\xcc\x80@e\xcc\x81xa\xcc\x80mple.com").unwrap(), Some("bétà@éxàmple.com"))]
+#[case::unicode_local_part("bétà@example.com", None)]
+#[case::unicode_domain("alice@éxàmple.côm", None)]
+#[case::unicode_multiple_scripts("Αλέξανδρος@मकदूनिया.साम्राज्य", None)]
+fn email_address_ok(#[case] raw: &str, #[case] expected: Option<&str>) {
+    let expected = expected.unwrap_or(raw);
+    let addr: EmailAddress = raw.parse().unwrap();
+    p_assert_eq!(
+        format!("{}@{}", addr.get_local_part(), addr.get_domain()),
+        expected
+    );
+    p_assert_eq!(format!("{}", addr), expected);
+}
