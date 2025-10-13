@@ -133,9 +133,9 @@ class PkiEnrollmentInfoCancelled:
 class PkiEnrollmentListItem:
     enrollment_id: EnrollmentID
     submitted_on: DateTime
-    submitter_der_x509_certificate: bytes
-    submit_payload_signature: bytes
-    submit_payload: bytes
+    der_x509_certificate: bytes
+    payload_signature: bytes
+    payload: bytes
 
 
 PkiEnrollmentInfo = (
@@ -358,16 +358,16 @@ class BasePkiEnrollmentComponent:
                     enrollments=[
                         authenticated_cmds.latest.pki_enrollment_list.PkiEnrollmentListItem(
                             e.enrollment_id,
-                            e.submit_payload,
-                            e.submit_payload_signature,
                             e.submitted_on,
-                            e.submitter_der_x509_certificate,
+                            e.der_x509_certificate,
+                            e.payload_signature,
+                            e.payload,
                         )
                         for e in enrollments
                     ]
                 )
             case PkiEnrollmentListBadOutcome.AUTHOR_NOT_ALLOWED:
-                return authenticated_cmds.latest.pki_enrollment_list.RepAuthorNotAllowed()
+                return authenticated_cmds.latest.pki_enrollment_list.RepNotAllowed()
             case PkiEnrollmentListBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case PkiEnrollmentListBadOutcome.ORGANIZATION_EXPIRED:

@@ -16,7 +16,8 @@
                 ]
             },
             {
-                "status": "author_not_allowed"
+                // The command should only be used by admin users
+                "status": "not_allowed"
             }
         ],
         "nested_types": [
@@ -24,24 +25,30 @@
                 "name": "PkiEnrollmentListItem",
                 "fields": [
                     {
+                        // UUID of the request
                         "name": "enrollment_id",
                         "type": "EnrollmentID"
                     },
-                    // Signature should be checked before loading.
                     {
-                        "name": "submit_payload",
-                        "type": "Bytes"
-                    },
-                    {
-                        "name": "submit_payload_signature",
-                        "type": "Bytes"
-                    },
-                    {
+                        // When the request was made
                         "name": "submitted_on",
                         "type": "DateTime"
                     },
                     {
-                        "name": "submitter_der_x509_certificate",
+                        // The certificate used by the submitter to sign the request.
+                        // The server does not perform any validation on the certificate,
+                        // those verifications need to be made by the "accepter"
+                        "name": "der_x509_certificate",
+                        "type": "Bytes"
+                    },
+                    {
+                        // The signature of the payload
+                        "name": "payload_signature",
+                        "type": "Bytes"
+                    },
+                    {
+                        // The payload, it's a `PkiEnrollmentSubmitPayload` formatted in msgpack
+                        "name": "payload",
                         "type": "Bytes"
                     }
                 ]

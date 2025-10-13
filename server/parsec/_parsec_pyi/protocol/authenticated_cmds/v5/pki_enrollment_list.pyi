@@ -10,21 +10,21 @@ class PkiEnrollmentListItem:
     def __init__(
         self,
         enrollment_id: EnrollmentID,
-        submit_payload: bytes,
-        submit_payload_signature: bytes,
         submitted_on: DateTime,
-        submitter_der_x509_certificate: bytes,
+        der_x509_certificate: bytes,
+        payload_signature: bytes,
+        payload: bytes,
     ) -> None: ...
+    @property
+    def der_x509_certificate(self) -> bytes: ...
     @property
     def enrollment_id(self) -> EnrollmentID: ...
     @property
-    def submit_payload(self) -> bytes: ...
+    def payload(self) -> bytes: ...
     @property
-    def submit_payload_signature(self) -> bytes: ...
+    def payload_signature(self) -> bytes: ...
     @property
     def submitted_on(self) -> DateTime: ...
-    @property
-    def submitter_der_x509_certificate(self) -> bytes: ...
 
 class Req:
     def __init__(
@@ -49,7 +49,7 @@ class RepOk(Rep):
     @property
     def enrollments(self) -> list[PkiEnrollmentListItem]: ...
 
-class RepAuthorNotAllowed(Rep):
+class RepNotAllowed(Rep):
     def __init__(
         self,
     ) -> None: ...
