@@ -132,7 +132,6 @@ impl TryFrom<DeviceFileSmartcardData> for DeviceFileSmartcard {
     type Error = DataError;
 
     fn try_from(value: DeviceFileSmartcardData) -> Result<Self, Self::Error> {
-        let certificate_ref = value.certificate_ref.try_into()?;
         let algorithm_for_encrypted_key =
             value
                 .algorithm_for_encrypted_key
@@ -150,7 +149,7 @@ impl TryFrom<DeviceFileSmartcardData> for DeviceFileSmartcard {
             device_id: value.device_id,
             human_handle: value.human_handle,
             device_label: value.device_label,
-            certificate_ref,
+            certificate_ref: value.certificate_ref,
             algorithm_for_encrypted_key,
             encrypted_key: value.encrypted_key,
             ciphertext: value.ciphertext,
@@ -160,7 +159,6 @@ impl TryFrom<DeviceFileSmartcardData> for DeviceFileSmartcard {
 
 impl From<DeviceFileSmartcard> for DeviceFileSmartcardData {
     fn from(value: DeviceFileSmartcard) -> Self {
-        let certificate_ref = value.certificate_ref.into();
         let algorithm_for_encrypted_key = value.algorithm_for_encrypted_key.to_string();
         DeviceFileSmartcardData {
             created_on: value.created_on,
@@ -171,7 +169,7 @@ impl From<DeviceFileSmartcard> for DeviceFileSmartcardData {
             device_id: value.device_id,
             human_handle: value.human_handle,
             device_label: value.device_label,
-            certificate_ref,
+            certificate_ref: value.certificate_ref,
             algorithm_for_encrypted_key,
             encrypted_key: value.encrypted_key,
             ciphertext: value.ciphertext,

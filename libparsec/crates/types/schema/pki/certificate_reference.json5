@@ -1,0 +1,14 @@
+{
+    "label": "CertificateReference",
+    "type": "certificate_reference",
+    "other_fields": [
+        {
+            "name": "certificate_id",
+            "type": "RequiredOption<Bytes>"
+        },
+        {
+            "name": "certificate_hash",
+            "type": "RequiredOption<String>"
+        }
+    ]
+}
