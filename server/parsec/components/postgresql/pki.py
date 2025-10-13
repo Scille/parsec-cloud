@@ -372,9 +372,9 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 PkiEnrollmentListItem(
                     enrollment_id=EnrollmentID.from_hex(entry["enrollment_id"]),
                     submitted_on=entry["submitted_on"],
-                    submitter_der_x509_certificate=entry["submitter_der_x509_certificate"],
-                    submit_payload_signature=entry["submit_payload_signature"],
-                    submit_payload=entry["submit_payload"],
+                    der_x509_certificate=entry["submitter_der_x509_certificate"],
+                    payload_signature=entry["submit_payload_signature"],
+                    payload=entry["submit_payload"],
                 )
                 for entry in entries
             ]

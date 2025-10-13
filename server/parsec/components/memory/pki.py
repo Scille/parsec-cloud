@@ -232,10 +232,10 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         return [
             PkiEnrollmentListItem(
                 enrollment_id=enrollment.enrollment_id,
-                submit_payload=enrollment.submit_payload,
-                submit_payload_signature=enrollment.submit_payload_signature,
+                payload=enrollment.submit_payload,
+                payload_signature=enrollment.submit_payload_signature,
                 submitted_on=enrollment.submitted_on,
-                submitter_der_x509_certificate=enrollment.submitter_der_x509_certificate,
+                der_x509_certificate=enrollment.submitter_der_x509_certificate,
             )
             for enrollment in org.pki_enrollments.values()
         ]

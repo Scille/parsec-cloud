@@ -54,10 +54,10 @@ async def test_authenticated_pki_enrollment_list_ok(
             expected_enrollments = [
                 authenticated_cmds.latest.pki_enrollment_list.PkiEnrollmentListItem(
                     enrollment_id=enrollment_id,
-                    submit_payload=submit_payload,
-                    submit_payload_signature=b"<philip submit payload signature>",
                     submitted_on=submitted_on,
-                    submitter_der_x509_certificate=b"<philip der x509 certificate>",
+                    der_x509_certificate=b"<philip der x509 certificate>",
+                    payload_signature=b"<philip submit payload signature>",
+                    payload=submit_payload,
                 )
             ]
 
@@ -71,7 +71,7 @@ async def test_authenticated_pki_enrollment_list_ok(
 
 
 @pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
-async def test_authenticated_pki_enrollment_list_author_not_allowed(
+async def test_authenticated_pki_enrollment_list_not_allowed(
     coolorg: CoolorgRpcClients, backend: Backend, kind: str
 ) -> None:
     match kind:
@@ -88,7 +88,7 @@ async def test_authenticated_pki_enrollment_list_author_not_allowed(
             assert False, unknown
 
     rep = await author.pki_enrollment_list()
-    assert rep == authenticated_cmds.latest.pki_enrollment_list.RepAuthorNotAllowed()
+    assert rep == authenticated_cmds.latest.pki_enrollment_list.RepNotAllowed()
 
 
 async def test_authenticated_pki_enrollment_list_http_common_errors(

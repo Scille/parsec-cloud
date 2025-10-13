@@ -42,37 +42,35 @@ pub fn req() {
 pub fn rep_ok() {
     let raw_expected = [
         (
-            // Generated from Parsec v3.0.0-b.11+dev
+            // Generated from Parsec 3.5.1-a.0+dev
             // Content:
+            //   status: 'ok'
             //   enrollments: [
             //     {
-            //       enrollment_id: ext(2, hex!("e1fe88bd0f054261887a6c8039710b40"))
-            //       submit_payload: hex!("3c64756d6d793e")
-            //       submit_payload_signature: hex!("3c7369676e61747572653e")
-            //       submitted_on: ext(1, 1668594983.390001)
-            //       submitter_der_x509_certificate: hex!("3c78353039206365727469663e")
-            //     }
+            //       der_x509_certificate: 0x3c78353039206365727469663e,
+            //       enrollment_id: ext(2, 0xe1fe88bd0f054261887a6c8039710b40),
+            //       payload: 0x3c64756d6d793e,
+            //       payload_signature: 0x3c7369676e61747572653e,
+            //       submitted_on: ext(1, 1668594983390001) i.e. 2022-11-16T11:36:23.390001Z,
+            //     },
             //   ]
-            //   status: "ok"
-            &hex!(
-                "82a6737461747573a26f6bab656e726f6c6c6d656e74739185ad656e726f6c6c6d656e"
-                "745f6964d802e1fe88bd0f054261887a6c8039710b40ae7375626d69745f7061796c6f"
-                "6164c4073c64756d6d793eb87375626d69745f7061796c6f61645f7369676e61747572"
-                "65c40b3c7369676e61747572653eac7375626d69747465645f6f6ed7010005ed940b42"
-                "4b31be7375626d69747465725f6465725f783530395f6365727469666963617465c40d"
-                "3c78353039206365727469663e"
-            )[..],
+            hex!(
+                "82a6737461747573a26f6bab656e726f6c6c6d656e74739185b46465725f783530395f"
+                "6365727469666963617465c40d3c78353039206365727469663ead656e726f6c6c6d65"
+                "6e745f6964d802e1fe88bd0f054261887a6c8039710b40a77061796c6f6164c4073c64"
+                "756d6d793eb17061796c6f61645f7369676e6174757265c40b3c7369676e6174757265"
+                "3eac7375626d69747465645f6f6ed7010005ed940b424b31"
+            )
+            .as_ref(),
             authenticated_cmds::pki_enrollment_list::Rep::Ok {
                 enrollments: vec![
                     authenticated_cmds::pki_enrollment_list::PkiEnrollmentListItem {
                         enrollment_id: EnrollmentID::from_hex("e1fe88bd0f054261887a6c8039710b40")
                             .unwrap(),
-                        submit_payload: hex!("3c64756d6d793e").as_ref().into(),
-                        submit_payload_signature: hex!("3c7369676e61747572653e").as_ref().into(),
+                        payload: hex!("3c64756d6d793e").as_ref().into(),
+                        payload_signature: hex!("3c7369676e61747572653e").as_ref().into(),
                         submitted_on: DateTime::from_timestamp_micros(1668594983390001).unwrap(),
-                        submitter_der_x509_certificate: hex!("3c78353039206365727469663e")
-                            .as_ref()
-                            .into(),
+                        der_x509_certificate: hex!("3c78353039206365727469663e").as_ref().into(),
                     },
                 ],
             },
@@ -102,14 +100,14 @@ pub fn rep_ok() {
     }
 }
 
-pub fn rep_author_not_allowed() {
-    // Generated from Rust implementation (Parsec v3.0.0+dev)
+pub fn rep_not_allowed() {
+    // Generated from Parsec 3.5.1-a.0+dev
     // Content:
-    //   status: "author_not_allowed"
-    let raw = hex!("81a6737461747573b2617574686f725f6e6f745f616c6c6f776564");
-    let expected = authenticated_cmds::pki_enrollment_list::Rep::AuthorNotAllowed;
-
-    let data = authenticated_cmds::pki_enrollment_list::Rep::load(&raw).unwrap();
+    //   status: 'not_allowed'
+    let raw: &[u8] = hex!("81a6737461747573ab6e6f745f616c6c6f776564").as_ref();
+    let expected = authenticated_cmds::pki_enrollment_list::Rep::NotAllowed;
+    println!("***expected: {:?}", expected.dump().unwrap());
+    let data = authenticated_cmds::pki_enrollment_list::Rep::load(raw).unwrap();
 
     p_assert_eq!(data, expected);
 

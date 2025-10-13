@@ -229,13 +229,7 @@ To list the submitted request (i.e. the pending one), we use the command [`pki_e
     },
     {
       // The command should only be used by admin users
-      "status": "not_allowed",
-      "fields": [
-        {
-          "name": "reason",
-          "type": "NonRequiredOption<String>"
-        }
-      ]
+      "status": "not_allowed"
     }
   ],
   "nested_types": [
