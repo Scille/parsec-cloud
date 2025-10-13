@@ -351,7 +351,7 @@ impl EmailAddress {
     }
 
     #[getter]
-    fn str(&self) -> &str {
-        self.0.as_ref()
+    fn str(&self) -> String {
+        self.0.to_string()
     }
 }

@@ -38,7 +38,7 @@ pub(super) async fn retrieve_auth_method_master_secret_from_password(
     };
 
     let password_algorithm = untrusted_password_algorithm
-        .validate(email.as_ref())
+        .validate(&email.to_string())
         .map_err(RetrieveAuthMethodMasterSecretFromPasswordError::BadPasswordAlgorithm)?;
 
     let auth_method_master_secret = password_algorithm

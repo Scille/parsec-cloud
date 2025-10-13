@@ -62,7 +62,7 @@ impl AccountAuthMethodStrategy<'_> {
             AccountAuthMethodStrategy::Password(password) => {
                 let auth_method_password_algorithm = PasswordAlgorithm::generate_argon2id(
                     PasswordAlgorithmSaltStrategy::DerivedFromEmail {
-                        email: email.as_ref(),
+                        email: &email.to_string(),
                     },
                 );
                 let auth_method_master_secret = auth_method_password_algorithm
