@@ -118,17 +118,56 @@ fn device_label_ko(#[case] raw: &str) {
 }
 
 #[rstest]
-#[case::simple("alice@example.com", None)]
-#[case::unicode_in_nfd(str::from_utf8(b"be\xcc\x81ta\xcc\x80@e\xcc\x81xa\xcc\x80mple.com").unwrap(), Some("bétà@éxàmple.com"))]
-#[case::unicode_local_part("bétà@example.com", None)]
-#[case::unicode_domain("alice@éxàmple.côm", None)]
-#[case::unicode_multiple_scripts("Αλέξανδρος@मकदूनिया.साम्राज्य", None)]
-fn email_address_ok(#[case] raw: &str, #[case] expected: Option<&str>) {
-    let expected = expected.unwrap_or(raw);
+#[case::simple("alice@example.com")]
+#[case::minimal("a@e")]
+// cspell:disable-next-line
+#[case::punycode("hq1bm8jm9l@bcher-kva8445foa")] // i.e. `도메인@「bücher」`
+fn email_address_ok(#[case] raw: &str) {
+    let expected = raw;
     let addr: EmailAddress = raw.parse().unwrap();
     p_assert_eq!(
         format!("{}@{}", addr.get_local_part(), addr.get_domain()),
         expected
     );
     p_assert_eq!(format!("{}", addr), expected);
+}
+
+#[rstest]
+#[case::empty("")]
+#[case::invalid_char("alice<example.com")]
+fn email_address_ko_parse_error(#[case] raw: &str) {
+    p_assert_matches!(
+        raw.parse::<EmailAddress>(),
+        Err(EmailAddressParseError::ParseError(_))
+    );
+}
+
+#[rstest]
+fn email_address_ko_invalid_domain() {
+    p_assert_matches!(
+        "alice@redacted.invalid".parse::<EmailAddress>(),
+        Err(EmailAddressParseError::InvalidDomain),
+    );
+}
+
+#[rstest]
+// cspell:disable-next-line
+#[case::nfd_in_local_part(str::from_utf8(b"be\xcc\x81ta\xcc\x80@example.com").unwrap())]
+// cspell:disable-next-line
+#[case::nfd_in_domain(str::from_utf8(b"beta@e\xcc\x81xa\xcc\x80mple.com").unwrap())]
+// cspell:disable-next-line
+#[case::nfc_in_local_part("bétà@example.com")]
+// cspell:disable-next-line
+#[case::nfc_in_domain("alice@éxàmple.côm")]
+// cspell:disable-next-line
+#[case::exotic_in_local_part("Αλέξανδρος@c")]
+// cspell:disable-next-line
+#[case::exotic_in_domain("a@मकदूनिया.साम्राज्य")]
+// cspell:disable-next-line
+#[case::multiple_scripts("Αλέξανδρος@मकदूनिया.साम्राज्य")]
+fn email_address_ko_unicode_not_supported(#[case] raw: &str) {
+    p_assert_matches!(
+        raw.parse::<EmailAddress>(),
+        Err(EmailAddressParseError::UnicodeNotSupported)
+    );
 }
