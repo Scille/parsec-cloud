@@ -7,10 +7,8 @@
       ref="input"
       :label="label || 'UserSelect.defaultLabel'"
       :placeholder="placeholder || 'UserSelect.defaultPlaceholder'"
-      @change="onInput"
-      :model-value="selectedUser ? `${selectedUser.humanHandle.label} (${selectedUser.humanHandle.email})` : undefined"
-      :disabled="querying"
-      :debounce="800"
+      @input="onInputChange"
+      :model-value="inputValue"
     />
     <ion-text
       class="body form-helperText"
@@ -18,13 +16,20 @@
     >
       {{ $msTranslate(errorMessage) }}
     </ion-text>
+    <user-select-dropdown
+      class="user-select-dropdown-overlay"
+      v-if="matchingUsers.length > 0"
+      :users="matchingUsers"
+      :current-user="currentUser"
+      @select="onUserSelect"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { popoverController, IonText } from '@ionic/vue';
-import { onMounted, Ref, ref, useTemplateRef } from 'vue';
-import { MsInput, MsModalResult, Translatable } from 'megashark-lib';
+import { IonText } from '@ionic/vue';
+import { onMounted, Ref, ref, useTemplateRef, watch } from 'vue';
+import { MsInput, Translatable } from 'megashark-lib';
 import { listUsers, UserInfo } from '@/parsec';
 import UserSelectDropdown from '@/components/users/UserSelectDropdown.vue';
 
@@ -33,6 +38,7 @@ const props = defineProps<{
   placeholder?: Translatable;
   excludeUsers?: UserInfo[];
   modelValue?: UserInfo;
+  currentUser: UserInfo;
 }>();
 
 const emits = defineEmits<{
@@ -40,7 +46,9 @@ const emits = defineEmits<{
 }>();
 
 const querying = ref(false);
+const matchingUsers = ref<UserInfo[]>([]);
 const inputRef = useTemplateRef<InstanceType<typeof MsInput>>('input');
+const inputValue: Ref<string> = ref('');
 const selectedUser: Ref<UserInfo | undefined> = ref();
 let queryCount = 0;
 const errorMessage = ref('');
@@ -57,8 +65,11 @@ async function queryMatchingUsers(search: string): Promise<void> {
     result.value = result.value.filter((user) => props.excludeUsers?.find((item) => item.id === user.id) === undefined);
   }
 
+  querying.value = false;
+
   if (!result.ok || result.value.length === 0) {
-    querying.value = false;
+    matchingUsers.value = [];
+
     if (!result.ok) {
       errorMessage.value = 'UserSelect.queryFailed';
     } else if (result.value.length === 0) {
@@ -67,37 +78,41 @@ async function queryMatchingUsers(search: string): Promise<void> {
     return;
   }
 
-  const popover = await popoverController.create({
-    component: UserSelectDropdown,
-    cssClass: 'user-select-dropdown-popover',
-    componentProps: {
-      // Limit to the first five users at most, else the dropdown becomes too big
-      users: result.value.slice(0, 5),
-    },
-    trigger: 'select-user-input',
-    side: 'bottom',
-    alignment: 'start',
-    showBackdrop: false,
-  });
-  await popover.present();
-  const { role, data } = await popover.onDidDismiss();
-  await popover.dismiss();
-  if (role === MsModalResult.Confirm && data) {
-    selectedUser.value = data.user;
-    emits('update:modelValue', data.user);
-  }
-  querying.value = false;
+  matchingUsers.value = result.value;
+  errorMessage.value = '';
 }
 
-async function onInput(value: string): Promise<void> {
+function onInputChange(event: Event): void {
+  const target = event.target as HTMLInputElement;
+  inputValue.value = target?.value || '';
+}
+
+async function onUserSelect(user: UserInfo): Promise<void> {
+  selectedUser.value = user;
+  inputValue.value = `${user.humanHandle.label} (${user.humanHandle.email})`;
+  emits('update:modelValue', user);
+
+  queryCount = 0;
+  matchingUsers.value = [];
+  errorMessage.value = '';
+}
+
+watch(inputValue, async (newValue) => {
   if (selectedUser.value) {
-    selectedUser.value = undefined;
-    emits('update:modelValue', undefined);
+    const expectedValue = `${selectedUser.value.humanHandle.label} (${selectedUser.value.humanHandle.email})`;
+    if (newValue !== expectedValue) {
+      selectedUser.value = undefined;
+      emits('update:modelValue', undefined);
+    }
     return;
   }
-  if (!value) {
+
+  if (!newValue || newValue.trim().length === 0) {
+    matchingUsers.value = [];
+    errorMessage.value = '';
     return;
   }
+
   queryCount += 1;
   const backup = queryCount;
   errorMessage.value = '';
@@ -106,8 +121,8 @@ async function onInput(value: string): Promise<void> {
     return;
   }
 
-  await queryMatchingUsers(value);
-}
+  await queryMatchingUsers(newValue);
+});
 
 onMounted(async () => {
   await inputRef.value?.setFocus();
@@ -122,9 +137,23 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  position: relative;
+  margin-bottom: 1rem;
 }
 
 .form-helperText {
+  position: absolute;
+  bottom: -2rem;
   color: var(--parsec-color-light-secondary-soft-text);
+}
+
+.user-select-dropdown-overlay {
+  position: absolute;
+  box-shadow: var(--parsec-shadow-strong);
+  border-radius: var(--parsec-radius-8);
+  z-index: 100;
+  width: 100%;
+  top: 4.5rem;
+  background: var(--parsec-color-light-secondary-white);
 }
 </style>

@@ -56,7 +56,8 @@
           </i18n-t>
         </ion-text>
         <user-select
-          :exclude-users="[sourceUser, currentUser]"
+          :exclude-users="[sourceUser]"
+          :current-user="currentUser"
           v-model="targetUser"
         />
       </div>
@@ -156,7 +157,7 @@
 
       <ion-footer class="modal-footer">
         <div
-          v-show="currentPage !== Steps.Processing"
+          v-show="currentPage !== Steps.SelectUser && currentPage !== Steps.Processing"
           class="modal-footer-buttons"
         >
           <ion-button
@@ -186,7 +187,7 @@
 import { UserSelect } from '@/components/users';
 import { IonPage, IonButton, IonFooter, IonIcon, IonHeader, IonTitle, IonList, IonItem, modalController, IonText } from '@ionic/vue';
 import { getWorkspacesSharedWith, shareWorkspace, UserInfo, UserProfile, WorkspaceInfo, WorkspaceRole } from '@/parsec';
-import { ref, Ref } from 'vue';
+import { ref, Ref, watch } from 'vue';
 import { close, checkmarkCircle, closeCircle, arrowForward } from 'ionicons/icons';
 import { MsModalResult, MsSpinner, MsReportText, MsReportTheme, useWindowSize } from 'megashark-lib';
 import { compareWorkspaceRoles } from '@/components/workspaces/utils';
@@ -221,6 +222,14 @@ const props = defineProps<{
   currentUser: UserInfo;
   informationManager: InformationManager;
 }>();
+
+watch(targetUser, async (newUser) => {
+  if (newUser && currentPage.value === Steps.SelectUser) {
+    // Automatically move to Processing step
+    currentPage.value = Steps.Processing;
+    await findWorkspaces();
+  }
+});
 
 function canGoForward(): boolean {
   return targetUser.value !== undefined;
@@ -336,10 +345,6 @@ async function assignNewRoles(): Promise<void> {
 
 async function nextStep(): Promise<void> {
   switch (currentPage.value) {
-    case Steps.SelectUser:
-      currentPage.value = Steps.Processing;
-      await findWorkspaces();
-      break;
     case Steps.Summary:
       await assignNewRoles();
       if (roleUpdates.value.length === 0 || finished.value) {
@@ -409,7 +414,7 @@ function getNextButtonText(): string {
     gap: 0.5rem;
 
     &__text {
-      color: var(--parsec-color-light-secondary-grey);
+      color: var(--parsec-color-light-secondary-hard-grey);
     }
 
     &__info {
