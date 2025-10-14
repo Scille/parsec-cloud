@@ -22,6 +22,7 @@ export interface SetupOptions {
   trialServers?: string;
   saasServers?: string;
   cryptpadServer?: string;
+  openBaoServer?: string;
   expectTimeout?: number;
 }
 

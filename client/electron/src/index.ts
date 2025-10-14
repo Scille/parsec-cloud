@@ -318,13 +318,14 @@ ipcMain.on(PageToWindowChannel.OpenPopup, async (_event, url: string) => {
   popup.webContents.setWindowOpenHandler(() => {
     return { action: 'deny' };
   });
-  popup.webContents.on('will-redirect', (_event, url) => {
+  popup.webContents.on('will-redirect', (event, url) => {
     // When the redirect URL is called, check that it contains code & state, and if so,
     // close the popup and send the infos
     const parsed = new URL(url);
     const params = parsed.searchParams;
     if ((parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') && params.get('code') && params.get('state')) {
       myCapacitorApp.sendEvent(WindowToPageChannel.SSOComplete, params.get('code'), params.get('state'));
+      event.preventDefault();
       popup.hide();
       popup.destroy();
     }
