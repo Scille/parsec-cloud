@@ -681,22 +681,31 @@ impl From<HumanHandle> for (String, String) {
 
 crate::impl_from_maybe!(Option<HumanHandle>);
 
-#[derive(Clone, SerializeDisplay, DeserializeFromStr)]
+/// An email address, nothing fancy... or is it ?
+/// Email basically exists since the dawn of humanity,
+/// and hence it is not that well standardized.
+///
+/// In a nutshell it is surprisingly hard to validate an email
+/// address, and unicode support adds yet another layer of complexity :/
+///
+/// For instance:
+/// - Domain names are case insensitive.
+/// - Domain names support unicode with RFC5890.
+/// - Unicode domain names can also be encoded in a ASCII format using punycode RFC3492.
+/// - Local part of an email address (i.e. what is before the `@`) is left
+///   to the mail server, so it may or may not be case insensitive and/or
+///   support unicode and/or punycode.
+///
+/// However in practice:
+/// - Unicode in email address is mostly used for homoglyph attacks.
+/// - Actual people using unicode in their email address have learn to
+///   provide them in punycode since most 3rd party services (e.g. registering
+///   to a website) are very conservative when parsing email addresses (from my
+///   experience, a `+` sign in the local part is already asking too much...).
+///
+/// Hence we choose the simple way here: only allow ASCII in email address.
+#[derive(Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq, Hash)]
 pub struct EmailAddress(email_address_parser::EmailAddress);
-
-impl PartialEq for EmailAddress {
-    fn eq(&self, other: &Self) -> bool {
-        self.0 == other.0
-    }
-}
-
-impl Eq for EmailAddress {}
-
-impl Hash for EmailAddress {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.0.hash(state);
-    }
-}
 
 impl Deref for EmailAddress {
     type Target = email_address_parser::EmailAddress;
@@ -738,24 +747,18 @@ pub enum EmailAddressParseError {
     ParseError(#[from] ::core::fmt::Error),
     #[error("Invalid email domain")]
     InvalidDomain,
+    #[error("Unicode email are not supported, use Punycode instead")]
+    UnicodeNotSupported,
 }
 
 impl FromStr for EmailAddress {
     type Err = EmailAddressParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        // A word about `<string>.nfc()`
-        // In Unicode there may be multiple ways to represent the same character.
-        // The Unicode standard defines Normalization Forms (such as NFC and NFD)
-        // to be able to determine if two Unicode strings are equivalent.
-        // For example: the `small letter A with acute` (á) would be encoded in NFD
-        // as `small letter a + acute accent` and in NFC as `small letter a with acute`.
-        // See: https://www.unicode.org/reports/tr15/#Norm_Forms
-        //
-        // So we need to normalize the string to have consistent comparison later on.
-        let normalized = s.nfc().collect::<String>();
-        normalized
-            .parse::<email_address_parser::EmailAddress>()
+        // Note we don't use NFC normalization here, this is because any address
+        // containing unicode is going to be rejected anyway when passed to
+        // `EmailAddress::try_from`.
+        s.parse::<email_address_parser::EmailAddress>()
             .map_err(EmailAddressParseError::ParseError)
             .and_then(Self::try_from)
     }
@@ -773,11 +776,13 @@ impl TryFrom<email_address_parser::EmailAddress> for EmailAddress {
     type Error = EmailAddressParseError;
 
     fn try_from(value: email_address_parser::EmailAddress) -> Result<Self, Self::Error> {
-        if value.get_domain() == HUMAN_HANDLE_RESERVED_REDACTED_DOMAIN {
-            Err(EmailAddressParseError::InvalidDomain)
-        } else {
-            Ok(Self(value))
+        if !value.get_domain().is_ascii() || !value.get_local_part().is_ascii() {
+            return Err(EmailAddressParseError::UnicodeNotSupported);
         }
+        if value.get_domain() == HUMAN_HANDLE_RESERVED_REDACTED_DOMAIN {
+            return Err(EmailAddressParseError::InvalidDomain);
+        }
+        Ok(Self(value))
     }
 }
 

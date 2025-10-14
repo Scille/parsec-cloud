@@ -88,6 +88,7 @@ gradlew
 gsettings
 hasnt
 HKCR
+homoglyph
 htmlcov
 humantime
 ilbm
