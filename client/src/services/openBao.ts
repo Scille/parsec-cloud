@@ -36,7 +36,6 @@ class OpenBaoClient {
   }
 
   async store(key: string, data: object): Promise<OpenBaoResult<undefined>> {
-    this._client.get('/v1/auth/token/lookup-self');
     try {
       const path = `/v1/parsec-keys/data/${this._userId}/${key}`;
       await this._client.post(
