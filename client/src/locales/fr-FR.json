@@ -1350,7 +1350,8 @@
             "actionRevoke": "Révoquer cet utilisateur | Révoquer ces utilisateurs",
             "actionDetails": "Voir les détails",
             "titleAssignRoles": "Copie de rôles",
-            "actionAssignRoles": "Copier les rôles des espaces de travail à...",
+            "actionAssignRoles": "Copier les rôles des espaces de travail",
+            "cannotAssignRolesToSelf": "Impossible de copier les rôles à vous-même.",
             "subtitleAssignRoles": "Vous pouvez copier les rôles de {sourceUser} vers une autre personne. Les rôles des espaces de travail ne seront pas retirés.",
             "titleUpdateProfile": "Profil",
             "actionUpdateProfile": "Modifier le profil | Modifier les profils",
@@ -1800,7 +1801,7 @@
         }
     },
     "UserSelect": {
-        "defaultLabel": "Choisir une personne",
+        "defaultLabel": "Chercher un utilisateur",
         "defaultPlaceholder": "Nom ou email de la personne",
         "noMatch": "Aucun utilisateur trouvé",
         "queryFailed": "Une erreur empêche de trouver les utilisateurs."

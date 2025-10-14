@@ -1351,7 +1351,8 @@
             "actionRevoke": "Revoke this user | Revoke these users",
             "actionDetails": "View details",
             "titleAssignRoles": "Copy roles",
-            "actionAssignRoles": "Copy workspace roles to...",
+            "actionAssignRoles": "Copy workspace roles",
+            "cannotAssignRolesToSelf": "You cannot copy roles to yourself.",
             "subtitleAssignRoles": "You can copy {sourceUser} roles to another person. Workspace roles will not be removed.",
             "titleUpdateProfile": "Profile",
             "actionUpdateProfile": "Change profile | Change profiles",
@@ -1799,7 +1800,7 @@
         }
     },
     "UserSelect": {
-        "defaultLabel": "Choose a person",
+        "defaultLabel": "Lookup user",
         "defaultPlaceholder": "Name or email of the person",
         "noMatch": "No users found",
         "queryFailed": "An error prevents us from listing the users."

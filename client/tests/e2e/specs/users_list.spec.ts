@@ -116,7 +116,7 @@ msTest('Revoke one user with context menu and check context menu', async ({ user
     'User details',
     'View details',
     'Copy roles',
-    'Copy workspace roles to...',
+    'Copy workspace roles',
   ]);
 
   // Revoke the user
@@ -134,7 +134,7 @@ msTest('Revoke one user with context menu and check context menu', async ({ user
   await expect(menu).toBeHidden();
   await item.click({ button: 'right' });
   await expect(menu).toBeVisible();
-  await expect(menu.getByRole('listitem')).toHaveText(['User details', 'View details', 'Copy roles', 'Copy workspace roles to...']);
+  await expect(menu.getByRole('listitem')).toHaveText(['User details', 'View details', 'Copy roles', 'Copy workspace roles']);
 });
 
 msTest('Revoke one user with selection', async ({ usersPage }) => {
@@ -555,24 +555,20 @@ msTest('Reassign workspace role', async ({ usersPage }) => {
   await sourceUser.hover();
   await sourceUser.locator('.options-button').click();
   const menuButton = usersPage.locator('.user-context-menu').getByRole('group').nth(3).getByRole('listitem').nth(1);
-  await expect(menuButton).toHaveText('Copy workspace roles to...');
+  await expect(menuButton).toHaveText('Copy workspace roles');
   await menuButton.click();
   const modal = usersPage.locator('.role-assignment-modal');
   await expect(modal).toBeVisible();
   const nextButton = modal.locator('#next-button');
-  await expect(nextButton).toHaveText('Select');
-  await expect(nextButton).toHaveDisabledAttribute();
+  await expect(nextButton).toBeHidden();
   const input = modal.locator('#select-user-input').locator('ion-input');
   await fillIonInput(input, 'example');
-  const dropdown = usersPage.locator('.user-select-dropdown-popover');
-  await expect(dropdown.getByRole('listitem')).toHaveCount(1);
-  await expect(dropdown.getByRole('listitem').nth(0).locator('.option-text__label')).toHaveText('Malloryy McMalloryFace');
-  await dropdown.getByRole('listitem').nth(0).click();
-  // cspell:disable-next-line
-  await expect(input.locator('input')).toHaveValue('Malloryy McMalloryFace (mallory@example.com)');
-  await expect(nextButton).toNotHaveDisabledAttribute();
-  await nextButton.click();
-  await usersPage.waitForTimeout(1000);
+  const dropdown = usersPage.locator('.user-select-dropdown-overlay');
+  await expect(dropdown.getByRole('listitem')).toHaveCount(2);
+  await expect(dropdown.getByRole('listitem').nth(0).locator('.option-text__label')).toHaveText('Alicey McAliceFace');
+  await expect(dropdown.getByRole('listitem').nth(0).locator('.option-warning')).toContainText('You cannot copy roles to yourself.');
+  await expect(dropdown.getByRole('listitem').nth(1).locator('.option-text__label')).toHaveText('Malloryy McMalloryFace');
+  await dropdown.getByRole('listitem').nth(1).click();
   const newRoles = modal.locator('.workspace-list').getByRole('listitem');
   await expect(newRoles).toHaveCount(1);
   await expect(newRoles.locator('.workspace-item__name')).toHaveText('wksp1');
@@ -702,12 +698,7 @@ msTest('Small display member context menu', async ({ usersPage }) => {
   await user1.locator('.user-options').click();
   await expect(modal).toBeVisible();
   await expect(modal.getByRole('group')).toHaveCount(2);
-  await expect(modal.getByRole('listitem')).toHaveText([
-    'Revoke this user',
-    'Copy workspace roles to...',
-    'Change profile',
-    'View details',
-  ]);
+  await expect(modal.getByRole('listitem')).toHaveText(['Revoke this user', 'Copy workspace roles', 'Change profile', 'View details']);
 });
 
 msTest('Small display external context menu', async ({ usersPage }) => {
@@ -718,7 +709,7 @@ msTest('Small display external context menu', async ({ usersPage }) => {
   await user2.locator('.user-options').click();
   await expect(modal).toBeVisible();
   await expect(modal.getByRole('group')).toHaveCount(2);
-  await expect(modal.getByRole('listitem')).toHaveText(['Revoke this user', 'Copy workspace roles to...', 'View details']);
+  await expect(modal.getByRole('listitem')).toHaveText(['Revoke this user', 'Copy workspace roles', 'View details']);
 });
 
 msTest('Small display multiple users context menu', async ({ usersPage }) => {

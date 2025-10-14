@@ -65,7 +65,7 @@
       }
 
       &__text {
-        color: var(--parsec-color-light-secondary-grey);
+        color: var(--parsec-color-light-secondary-hard-grey);
       }
     }
 
@@ -1001,5 +1001,14 @@
 
   &::part(content) {
     max-width: var(--parsec-modal-width-sm);
+  }
+}
+
+.role-assignment-modal {
+  overflow: visible;
+  --overflow: visible;
+
+  .ion-page {
+    contain: inline-size;
   }
 }
