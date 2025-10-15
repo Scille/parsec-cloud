@@ -10,7 +10,7 @@ pub mod x509;
 #[path = "../tests/units/mod.rs"]
 mod test;
 
-use libparsec_types::{CertificateReferenceIdOrHash, EncryptionAlgorithm};
+use libparsec_types::{EncryptionAlgorithm, X509CertificateReferenceIdOrHash};
 use std::{fmt::Display, str::FromStr};
 
 use bytes::Bytes;
@@ -27,11 +27,11 @@ mod platform {
         SignMessageError, SignedMessageFromPki,
     };
     use libparsec_types::{
-        CertificateReference, CertificateReferenceIdOrHash, EncryptionAlgorithm,
+        EncryptionAlgorithm, X509CertificateReference, X509CertificateReferenceIdOrHash,
     };
 
     pub fn get_der_encoded_certificate(
-        certificate_ref: &CertificateReference,
+        certificate_ref: &X509CertificateReference,
     ) -> Result<CertificateDer, GetDerEncodedCertificateError> {
         let _ = certificate_ref;
         unimplemented!("platform not supported")
@@ -39,7 +39,7 @@ mod platform {
 
     pub fn sign_message(
         message: &[u8],
-        certificate_ref: &CertificateReference,
+        certificate_ref: &X509CertificateReference,
     ) -> Result<SignedMessageFromPki, SignMessageError> {
         let _ = message;
         let _ = certificate_ref;
@@ -48,7 +48,7 @@ mod platform {
 
     pub fn encrypt_message(
         message: &[u8],
-        certificate_ref: &CertificateReference,
+        certificate_ref: &X509CertificateReference,
     ) -> Result<EncryptedMessage, EncryptMessageError> {
         let _ = (message, certificate_ref);
         unimplemented!("platform not supported")
@@ -57,14 +57,14 @@ mod platform {
     pub fn decrypt_message(
         algo: EncryptionAlgorithm,
         encrypted_message: &[u8],
-        certificate_ref: &CertificateReference,
+        certificate_ref: &X509CertificateReference,
     ) -> Result<DecryptedMessage, DecryptMessageError> {
         let _ = (algo, encrypted_message, certificate_ref);
         unimplemented!("platform not supported")
     }
 
     pub fn show_certificate_selection_dialog_windows_only(
-    ) -> Result<Option<CertificateReferenceIdOrHash>, ShowCertificateSelectionDialogError> {
+    ) -> Result<Option<X509CertificateReferenceIdOrHash>, ShowCertificateSelectionDialogError> {
         unimplemented!("platform not supported")
     }
 }
@@ -100,7 +100,7 @@ pub use errors::GetDerEncodedCertificateError;
 pub use platform::get_der_encoded_certificate;
 
 pub struct CertificateDer {
-    pub cert_ref: CertificateReferenceIdOrHash,
+    pub cert_ref: X509CertificateReferenceIdOrHash,
     pub der_content: Bytes,
 }
 
@@ -136,7 +136,7 @@ impl FromStr for SignatureAlgorithm {
 
 pub struct SignedMessageFromPki {
     pub algo: SignatureAlgorithm,
-    pub cert_ref: CertificateReferenceIdOrHash,
+    pub cert_ref: X509CertificateReferenceIdOrHash,
     pub signature: Bytes,
 }
 
@@ -147,7 +147,7 @@ pub use shared::{verify_message, Certificate, SignedMessage};
 
 pub struct EncryptedMessage {
     pub algo: EncryptionAlgorithm,
-    pub cert_ref: CertificateReferenceIdOrHash,
+    pub cert_ref: X509CertificateReferenceIdOrHash,
     pub ciphered: Bytes,
 }
 
@@ -155,7 +155,7 @@ pub use errors::EncryptMessageError;
 pub use platform::encrypt_message;
 
 pub struct DecryptedMessage {
-    pub cert_ref: CertificateReferenceIdOrHash,
+    pub cert_ref: X509CertificateReferenceIdOrHash,
     pub data: Bytes,
 }
 

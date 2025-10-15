@@ -18,15 +18,15 @@ class CertificateHash(Variant):
         data: Sha256BoxData
 
 
-class CertificateReferenceIdOrHash(Structure):
+class X509CertificateReferenceIdOrHash(Structure):
     id: Bytes
     hash: CertificateHash
 
 
-class CertificateReference(Variant):
+class X509CertificateReference(Variant):
     Id = VariantItemTuple(Bytes)
     Hash = VariantItemTuple(CertificateHash)
-    IdOrHash = VariantItemTuple(CertificateReferenceIdOrHash)
+    IdOrHash = VariantItemTuple(X509CertificateReferenceIdOrHash)
 
 
 class ShowCertificateSelectionDialogError(ErrorVariant):
@@ -36,6 +36,6 @@ class ShowCertificateSelectionDialogError(ErrorVariant):
 
 
 async def show_certificate_selection_dialog_windows_only() -> Result[
-    Optional[CertificateReference], ShowCertificateSelectionDialogError
+    Optional[X509CertificateReference], ShowCertificateSelectionDialogError
 ]:
     raise NotImplementedError

@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use libparsec_crypto::{Password, SecretKey};
 use libparsec_serialization_format::parsec_data;
 
-use crate::{self as libparsec_types, CertificateReference, DataError, EncryptionAlgorithm};
+use crate::{self as libparsec_types, DataError, EncryptionAlgorithm, X509CertificateReference};
 use crate::{
     impl_transparent_data_format_conversion, AccountVaultItemOpaqueKeyID, DateTime, DeviceID,
     DeviceLabel, HumanHandle, OrganizationID, PasswordAlgorithm, UserID,
@@ -120,7 +120,7 @@ pub struct DeviceFileSmartcard {
     pub device_id: DeviceID,
     pub human_handle: HumanHandle,
     pub device_label: DeviceLabel,
-    pub certificate_ref: CertificateReference,
+    pub certificate_ref: X509CertificateReference,
     pub algorithm_for_encrypted_key: EncryptionAlgorithm,
     pub encrypted_key: Bytes,
     pub ciphertext: Bytes,
@@ -263,7 +263,7 @@ pub enum DeviceSaveStrategy {
         password: Password,
     },
     Smartcard {
-        certificate_reference: CertificateReference,
+        certificate_reference: X509CertificateReference,
     },
     AccountVault {
         /// This key is the one stored in the account vault.

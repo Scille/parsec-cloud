@@ -19,7 +19,7 @@ from .common import (
     Variant,
     VariantItemUnit,
 )
-from .pki import CertificateReference
+from .pki import X509CertificateReference
 
 
 class AvailableDeviceType(Variant):
@@ -40,7 +40,7 @@ class DeviceSaveStrategy(Variant):
         password: Password
 
     class Smartcard:
-        certificate_reference: CertificateReference
+        certificate_reference: X509CertificateReference
 
     class AccountVault:
         ciphertext_key_id: AccountVaultItemOpaqueKeyID

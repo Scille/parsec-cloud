@@ -16,9 +16,9 @@ use libparsec_serialization_format::parsec_data;
 use crate::{
     self as libparsec_types, impl_transparent_data_format_conversion,
     serialization::{format_v0_dump, format_vx_load},
-    CertificateReferenceData, DataError, DataResult, DateTime, DeviceID, DeviceLabel, EnrollmentID,
-    HumanHandle, ParsecAddr, ParsecPkiEnrollmentAddr, PkiEnrollmentLocalPendingError,
-    PkiEnrollmentLocalPendingResult, UserID, UserProfile,
+    DataError, DataResult, DateTime, DeviceID, DeviceLabel, EnrollmentID, HumanHandle, ParsecAddr,
+    ParsecPkiEnrollmentAddr, PkiEnrollmentLocalPendingError, PkiEnrollmentLocalPendingResult,
+    UserID, UserProfile, X509CertificateReferenceData,
 };
 
 /*
@@ -326,37 +326,37 @@ impl FromStr for CertificateHash {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
-pub enum CertificateReference {
+pub enum X509CertificateReference {
     Id(Bytes),
     Hash(CertificateHash),
-    IdOrHash(CertificateReferenceIdOrHash),
+    IdOrHash(X509CertificateReferenceIdOrHash),
 }
 
-impl TryFrom<CertificateReferenceData> for CertificateReference {
+impl TryFrom<X509CertificateReferenceData> for X509CertificateReference {
     type Error = DataError;
 
-    fn try_from(value: CertificateReferenceData) -> Result<Self, Self::Error> {
+    fn try_from(value: X509CertificateReferenceData) -> Result<Self, Self::Error> {
         match value {
-            CertificateReferenceData {
+            X509CertificateReferenceData {
                 certificate_hash: None,
                 certificate_id: None,
             } => Err(DataError::DataIntegrity {
                 data_type: "Certificate reference",
                 invariant: "id or hash must be provided",
             }),
-            CertificateReferenceData {
+            X509CertificateReferenceData {
                 certificate_hash: Some(hash),
                 certificate_id: None,
-            } => Ok(CertificateReference::Hash(hash.parse()?)),
-            CertificateReferenceData {
+            } => Ok(X509CertificateReference::Hash(hash.parse()?)),
+            X509CertificateReferenceData {
                 certificate_hash: None,
                 certificate_id: Some(id),
-            } => Ok(CertificateReference::Id(id)),
-            CertificateReferenceData {
+            } => Ok(X509CertificateReference::Id(id)),
+            X509CertificateReferenceData {
                 certificate_hash: Some(hash),
                 certificate_id: Some(id),
-            } => Ok(CertificateReference::IdOrHash(
-                CertificateReferenceIdOrHash {
+            } => Ok(X509CertificateReference::IdOrHash(
+                X509CertificateReferenceIdOrHash {
                     id,
                     hash: hash.parse()?,
                 },
@@ -365,20 +365,20 @@ impl TryFrom<CertificateReferenceData> for CertificateReference {
     }
 }
 
-impl From<CertificateReference> for CertificateReferenceData {
-    fn from(value: CertificateReference) -> Self {
+impl From<X509CertificateReference> for X509CertificateReferenceData {
+    fn from(value: X509CertificateReference) -> Self {
         match value {
-            CertificateReference::Id(id) => CertificateReferenceData {
+            X509CertificateReference::Id(id) => X509CertificateReferenceData {
                 certificate_hash: None,
                 certificate_id: Some(id),
             },
-            CertificateReference::Hash(hash) => CertificateReferenceData {
+            X509CertificateReference::Hash(hash) => X509CertificateReferenceData {
                 certificate_hash: Some(hash.to_string()),
                 certificate_id: None,
             },
-            CertificateReference::IdOrHash(id_or_hash) => {
-                let CertificateReferenceIdOrHash { id, hash } = id_or_hash;
-                CertificateReferenceData {
+            X509CertificateReference::IdOrHash(id_or_hash) => {
+                let X509CertificateReferenceIdOrHash { id, hash } = id_or_hash;
+                X509CertificateReferenceData {
                     certificate_hash: Some(hash.to_string()),
                     certificate_id: Some(id),
                 }
@@ -387,14 +387,14 @@ impl From<CertificateReference> for CertificateReferenceData {
     }
 }
 
-impl From<CertificateReferenceIdOrHash> for CertificateReference {
-    fn from(value: CertificateReferenceIdOrHash) -> Self {
+impl From<X509CertificateReferenceIdOrHash> for X509CertificateReference {
+    fn from(value: X509CertificateReferenceIdOrHash) -> Self {
         Self::IdOrHash(value)
     }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
-pub struct CertificateReferenceIdOrHash {
+pub struct X509CertificateReferenceIdOrHash {
     pub id: Bytes,
     pub hash: CertificateHash,
 }
