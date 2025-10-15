@@ -483,7 +483,7 @@ export interface WorkspaceUserAccessInfo {
 
 export interface X509CertificateReferenceIdOrHash {
     id: Uint8Array
-    hash: CertificateHash
+    hash: string
 }
 
 
@@ -1119,15 +1119,6 @@ export interface CancelErrorNotBound {
 export type CancelError =
   | CancelErrorInternal
   | CancelErrorNotBound
-
-
-// CertificateHash
-export interface CertificateHashSHA256 {
-    tag: "SHA256"
-    data: Uint8Array
-}
-export type CertificateHash =
-  | CertificateHashSHA256
 
 
 // ClaimInProgressError
@@ -4152,7 +4143,7 @@ export type WorkspaceWatchEntryOneShotError =
 // X509CertificateReference
 export interface X509CertificateReferenceHash {
     tag: "Hash"
-    x1: CertificateHash
+    x1: string
 }
 export interface X509CertificateReferenceId {
     tag: "Id"

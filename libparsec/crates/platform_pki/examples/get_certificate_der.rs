@@ -6,13 +6,13 @@ use std::fmt::Debug;
 use anyhow::Context;
 use clap::Parser;
 use libparsec_platform_pki::get_der_encoded_certificate;
-use libparsec_types::{CertificateHash, X509CertificateReference};
+use libparsec_types::{X509CertificateHash, X509CertificateReference};
 
 #[derive(Debug, Parser)]
 struct Args {
     /// Hash of the certificate to get content of.
     #[arg(value_parser = utils::CertificateSRIHashParser)]
-    certificate_hash: Option<CertificateHash>,
+    certificate_hash: Option<X509CertificateHash>,
 }
 
 fn main() -> anyhow::Result<()> {

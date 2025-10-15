@@ -15,7 +15,7 @@ mod unix_only {
         object::{Attribute, AttributeInfo, AttributeType, ObjectClass},
         types::AuthPin,
     };
-    use libparsec_types::CertificateHash;
+    use libparsec_types::X509CertificateHash;
     use percent_encoding::{percent_encode, utf8_percent_encode, AsciiSet, NON_ALPHANUMERIC};
     use sha2::Digest;
 
@@ -209,7 +209,7 @@ mod unix_only {
                         panic!("Invalid attribute `value`");
                     };
                     let digest = sha2::Sha256::digest(value);
-                    let hash = CertificateHash::SHA256{ data: Box::new(digest.into()) };
+                    let hash = X509CertificateHash::SHA256( Box::new(digest.into()) );
                     println!("    fingerprint-sha256: {hash}")
                 }
             }

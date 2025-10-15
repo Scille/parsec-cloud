@@ -4482,8 +4482,17 @@ fn struct_x509_certificate_reference_id_or_hash_js_to_rs<'a>(
         }
     };
     let hash = {
-        let js_val: Handle<JsObject> = obj.get(cx, "hash")?;
-        variant_certificate_hash_js_to_rs(cx, js_val)?
+        let js_val: Handle<JsString> = obj.get(cx, "hash")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                <libparsec::X509CertificateHash as std::str::FromStr>::from_str(s.as_str())
+                    .map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
     };
     Ok(libparsec::X509CertificateReferenceIdOrHash { id, hash })
 }
@@ -4504,7 +4513,15 @@ fn struct_x509_certificate_reference_id_or_hash_rs_to_js<'a>(
         js_buff
     };
     js_obj.set(cx, "id", js_id)?;
-    let js_hash = variant_certificate_hash_rs_to_js(cx, rs_obj.hash)?;
+    let js_hash = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::X509CertificateHash| -> Result<_, &'static str> { Ok(x.to_string()) };
+        match custom_to_rs_string(rs_obj.hash) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
     js_obj.set(cx, "hash", js_hash)?;
     Ok(js_obj)
 }
@@ -6011,71 +6028,6 @@ fn variant_cancel_error_rs_to_js<'a>(
         libparsec::CancelError::NotBound { .. } => {
             let js_tag = JsString::try_new(cx, "CancelErrorNotBound").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// CertificateHash
-
-#[allow(dead_code)]
-fn variant_certificate_hash_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::CertificateHash> {
-    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
-    match tag.as_str() {
-        "CertificateHashSHA256" => {
-            let data = {
-                let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "data")?;
-                {
-                    let custom_from_rs_bytes = |v: &[u8]| -> Result<Box<[u8; 32]>, String> {
-                        Ok(Box::from(
-                            <[u8; 32]>::try_from(v).map_err(|_| "invalid value length")?,
-                        ))
-                    };
-                    #[allow(clippy::unnecessary_mut_passed)]
-                    match custom_from_rs_bytes(js_val.as_slice(cx)) {
-                        Ok(val) => val,
-                        // err can't infer type in some case, because of the previous `try_into`
-                        #[allow(clippy::useless_format)]
-                        Err(err) => return cx.throw_type_error(format!("{}", err)),
-                    }
-                }
-            };
-            Ok(libparsec::CertificateHash::SHA256 { data })
-        }
-        _ => cx.throw_type_error("Object is not a CertificateHash"),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_certificate_hash_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::CertificateHash,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    match rs_obj {
-        libparsec::CertificateHash::SHA256 { data, .. } => {
-            let js_tag = JsString::try_new(cx, "CertificateHashSHA256").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_data = {
-                let rs_buff = {
-                    let custom_to_rs_bytes =
-                        |v: Box<[u8; 32]>| -> Result<Vec<u8>, String> { Ok((*v).into()) };
-                    match custom_to_rs_bytes(data) {
-                        Ok(ok) => ok,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                };
-                let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
-                let js_buff_slice = js_buff.as_mut_slice(cx);
-                for (i, c) in rs_buff.iter().enumerate() {
-                    js_buff_slice[i] = *c;
-                }
-                js_buff
-            };
-            js_obj.set(cx, "data", js_data)?;
         }
     }
     Ok(js_obj)
@@ -15532,8 +15484,17 @@ fn variant_x509_certificate_reference_js_to_rs<'a>(
     match tag.as_str() {
         "X509CertificateReferenceHash" => {
             let x0 = {
-                let js_val: Handle<JsObject> = obj.get(cx, "x0")?;
-                variant_certificate_hash_js_to_rs(cx, js_val)?
+                let js_val: Handle<JsString> = obj.get(cx, "x0")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        <libparsec::X509CertificateHash as std::str::FromStr>::from_str(s.as_str())
+                            .map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
             };
             Ok(libparsec::X509CertificateReference::Hash(x0))
         }
@@ -15575,7 +15536,17 @@ fn variant_x509_certificate_reference_rs_to_js<'a>(
         libparsec::X509CertificateReference::Hash(x0, ..) => {
             let js_tag = JsString::try_new(cx, "Hash").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_x0 = variant_certificate_hash_rs_to_js(cx, x0)?;
+            let js_x0 = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::X509CertificateHash| -> Result<_, &'static str> {
+                        Ok(x.to_string())
+                    };
+                match custom_to_rs_string(x0) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
             js_obj.set(cx, "x0", js_x0)?;
         }
         libparsec::X509CertificateReference::Id(x0, ..) => {

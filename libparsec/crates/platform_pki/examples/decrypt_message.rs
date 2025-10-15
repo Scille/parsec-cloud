@@ -5,13 +5,13 @@ mod utils;
 use anyhow::Context;
 use clap::Parser;
 use libparsec_platform_pki::decrypt_message;
-use libparsec_types::{CertificateHash, EncryptionAlgorithm, X509CertificateReference};
+use libparsec_types::{EncryptionAlgorithm, X509CertificateHash, X509CertificateReference};
 
 #[derive(Debug, Parser)]
 struct Args {
     /// Hash of the certificate to use for the encryption.
     #[arg(value_parser = utils::CertificateSRIHashParser)]
-    certificate_hash: CertificateHash,
+    certificate_hash: X509CertificateHash,
     #[command(flatten)]
     content: utils::ContentOpts,
     /// The algorithm used to encrypt the content.

@@ -6,26 +6,28 @@ from .common import (
     Bytes,
     ErrorVariant,
     Result,
-    Sha256BoxData,
+    StrBasedType,
     Structure,
     Variant,
     VariantItemTuple,
 )
 
 
-class CertificateHash(Variant):
-    class SHA256:
-        data: Sha256BoxData
+class X509CertificateHash(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<_, String> { <libparsec::X509CertificateHash as std::str::FromStr>::from_str(s.as_str()).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = (
+        "|x: libparsec::X509CertificateHash| -> Result<_, &'static str> { Ok(x.to_string()) }"
+    )
 
 
 class X509CertificateReferenceIdOrHash(Structure):
     id: Bytes
-    hash: CertificateHash
+    hash: X509CertificateHash
 
 
 class X509CertificateReference(Variant):
     Id = VariantItemTuple(Bytes)
-    Hash = VariantItemTuple(CertificateHash)
+    Hash = VariantItemTuple(X509CertificateHash)
     IdOrHash = VariantItemTuple(X509CertificateReferenceIdOrHash)
 
 

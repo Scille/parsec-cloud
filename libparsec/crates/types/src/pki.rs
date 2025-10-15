@@ -276,14 +276,14 @@ impl From<LocalPendingEnrollment> for LocalPendingEnrollmentData {
 }
 
 #[derive(Clone, Eq, PartialEq, Serialize, Deserialize, Debug)]
-pub enum CertificateHash {
-    SHA256 { data: Box<[u8; 32]> },
+pub enum X509CertificateHash {
+    SHA256(Box<[u8; 32]>),
 }
 
-impl std::fmt::Display for CertificateHash {
+impl std::fmt::Display for X509CertificateHash {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let (hash_str, data) = match self {
-            CertificateHash::SHA256 { data } => ("sha256", data.as_ref()),
+            X509CertificateHash::SHA256(data) => ("sha256", data.as_ref()),
         };
         write!(
             f,
@@ -293,7 +293,7 @@ impl std::fmt::Display for CertificateHash {
     }
 }
 
-impl FromStr for CertificateHash {
+impl FromStr for X509CertificateHash {
     type Err = DataError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -308,14 +308,12 @@ impl FromStr for CertificateHash {
                 step: "error decoding hash",
             })?;
         if hash_ty.eq_ignore_ascii_case("sha256") {
-            Ok(CertificateHash::SHA256 {
-                data: raw_data
-                    .try_into()
-                    .map_err(|_| DataError::BadSerialization {
-                        format: None,
-                        step: "Invalid data size",
-                    })?,
-            })
+            Ok(X509CertificateHash::SHA256(raw_data.try_into().map_err(
+                |_| DataError::BadSerialization {
+                    format: None,
+                    step: "Invalid data size",
+                },
+            )?))
         } else {
             Err(DataError::BadSerialization {
                 format: None,
@@ -328,7 +326,7 @@ impl FromStr for CertificateHash {
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum X509CertificateReference {
     Id(Bytes),
-    Hash(CertificateHash),
+    Hash(X509CertificateHash),
     IdOrHash(X509CertificateReferenceIdOrHash),
 }
 
@@ -396,7 +394,7 @@ impl From<X509CertificateReferenceIdOrHash> for X509CertificateReference {
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct X509CertificateReferenceIdOrHash {
     pub id: Bytes,
-    pub hash: CertificateHash,
+    pub hash: X509CertificateHash,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
