@@ -6111,6 +6111,11 @@ fn variant_claim_in_progress_error_rs_to_js<'a>(
                 JsString::try_new(cx, "ClaimInProgressErrorCorruptedConfirmation").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::ClaimInProgressError::CorruptedSharedSecretKey { .. } => {
+            let js_tag = JsString::try_new(cx, "ClaimInProgressErrorCorruptedSharedSecretKey")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::ClaimInProgressError::GreeterNotAllowed { .. } => {
             let js_tag =
                 JsString::try_new(cx, "ClaimInProgressErrorGreeterNotAllowed").or_throw(cx)?;
@@ -9385,6 +9390,11 @@ fn variant_greet_in_progress_error_rs_to_js<'a>(
         }
         libparsec::GreetInProgressError::CorruptedInviteUserData { .. } => {
             let js_tag = JsString::try_new(cx, "GreetInProgressErrorCorruptedInviteUserData")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::GreetInProgressError::CorruptedSharedSecretKey { .. } => {
+            let js_tag = JsString::try_new(cx, "GreetInProgressErrorCorruptedSharedSecretKey")
                 .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }

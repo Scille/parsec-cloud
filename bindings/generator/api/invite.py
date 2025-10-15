@@ -9,18 +9,18 @@ from .addr import (
 from .common import (
     DateTime,
     DeviceLabel,
+    EmailAddress,
     Enum,
     EnumItemUnit,
     ErrorVariant,
     Handle,
     HumanHandle,
-    EmailAddress,
     InvitationStatus,
     InvitationToken,
     NonZeroU8,
+    Ref,
     Result,
     SASCode,
-    Ref,
     Structure,
     UserID,
     UserProfile,
@@ -149,6 +149,9 @@ class ClaimInProgressError(ErrorVariant):
         origin: GreeterOrClaimer
         reason: CancelledGreetingAttemptReason
         timestamp: DateTime
+
+    class CorruptedSharedSecretKey:
+        pass
 
     class CorruptedConfirmation:
         pass
