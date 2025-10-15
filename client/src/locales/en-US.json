@@ -2558,9 +2558,9 @@
             "tooltipError": "Failed to save the changes.",
             "readOnly": "Read only document",
             "notSavedTitle": "Discard changes?",
-            "notSavedQuestion": "Some changes have not be saved yet. Do you want to discard them?",
-            "notSavedDiscard": "Discard the changes",
-            "notSavedStay": "Stay on the page"
+            "notSavedQuestion": "Some changes have not been saved yet. Do you want to discard them?",
+            "notSavedDiscard": "Discard changes",
+            "notSavedStay": "Stay on page"
         }
     },
     "openFallback": {
