@@ -47,6 +47,10 @@ InviteInfoInvitationCreatedBy = invited_cmds.latest.invite_info.InvitationCreate
 InviteListInvitationCreatedBy = authenticated_cmds.latest.invite_list.InvitationCreatedBy
 
 
+# Parsec < 3.6 computes the SASCode using Blake2b with a 5 bytes output, however
+# libsodium is supposed to output at least a 16 bytes output.
+# Hence this breaking change introduced in Parsec 3.6 on the SASCode algorithm.
+# see https://github.com/Scille/parsec-cloud/issues/11015
 NEW_SAS_CODE_ALGORITHM_INTRODUCED_IN_VERSION = ApiVersion(version=5, revision=2)
 
 
