@@ -214,6 +214,44 @@ impl_transparent_data_format_conversion!(
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(into = "DeviceFileOpenBaoData", from = "DeviceFileOpenBaoData")]
+pub struct DeviceFileOpenBao {
+    pub created_on: DateTime,
+    pub protected_on: DateTime,
+    pub server_url: String,
+    pub organization_id: OrganizationID,
+    pub user_id: UserID,
+    pub device_id: DeviceID,
+    pub human_handle: HumanHandle,
+    pub device_label: DeviceLabel,
+    pub openbao_url: String,
+    pub openbao_ciphertext_key_path: String,
+    pub openbao_auth_path: String,
+    pub openbao_auth_type: OpenBaoAuthType,
+    pub ciphertext: Bytes,
+}
+
+parsec_data!("schema/local_device/device_file_openbao.json5");
+
+impl_transparent_data_format_conversion!(
+    DeviceFileOpenBao,
+    DeviceFileOpenBaoData,
+    created_on,
+    protected_on,
+    server_url,
+    organization_id,
+    user_id,
+    device_id,
+    human_handle,
+    device_label,
+    openbao_url,
+    openbao_ciphertext_key_path,
+    openbao_auth_path,
+    openbao_auth_type,
+    ciphertext,
+);
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum DeviceFile {
     Keyring(DeviceFileKeyring),
@@ -221,6 +259,7 @@ pub enum DeviceFile {
     Recovery(DeviceFileRecovery),
     Smartcard(DeviceFileSmartcard),
     AccountVault(DeviceFileAccountVault),
+    OpenBao(DeviceFileOpenBao),
 }
 
 impl DeviceFile {
@@ -239,6 +278,7 @@ impl DeviceFile {
             DeviceFile::Recovery(device) => &device.ciphertext,
             DeviceFile::Smartcard(device) => &device.ciphertext,
             DeviceFile::AccountVault(device) => &device.ciphertext,
+            DeviceFile::OpenBao(device) => &device.ciphertext,
         }
     }
 
@@ -249,6 +289,7 @@ impl DeviceFile {
             DeviceFile::Recovery(device) => device.created_on,
             DeviceFile::Smartcard(device) => device.created_on,
             DeviceFile::AccountVault(device) => device.created_on,
+            DeviceFile::OpenBao(device) => device.created_on,
         }
     }
 }
@@ -271,6 +312,17 @@ pub enum DeviceSaveStrategy {
         ciphertext_key_id: AccountVaultItemOpaqueKeyID,
         ciphertext_key: SecretKey,
     },
+    OpenBao {
+        /// This key is the one stored in OpenBao.
+        ///
+        /// Note it is `libparsec_openbao`'s job to deal with interfacing with
+        /// the OpenBao service to fetch the the key.
+        openbao_url: String,
+        openbao_ciphertext_key_path: String,
+        openbao_auth_path: String,
+        openbao_auth_type: OpenBaoAuthType,
+        ciphertext_key: SecretKey,
+    },
 }
 
 impl DeviceSaveStrategy {
@@ -289,6 +341,20 @@ impl DeviceSaveStrategy {
                 ciphertext_key_id,
                 ciphertext_key,
             },
+            DeviceSaveStrategy::OpenBao {
+                openbao_url,
+                openbao_ciphertext_key_path,
+                openbao_auth_path,
+                openbao_auth_type,
+                ciphertext_key,
+            } => DeviceAccessStrategy::OpenBao {
+                key_file,
+                openbao_url,
+                openbao_ciphertext_key_path,
+                openbao_auth_path,
+                openbao_auth_type,
+                ciphertext_key,
+            },
         }
     }
 
@@ -301,6 +367,18 @@ impl DeviceSaveStrategy {
                 ciphertext_key_id, ..
             } => AvailableDeviceType::AccountVault {
                 ciphertext_key_id: *ciphertext_key_id,
+            },
+            Self::OpenBao {
+                openbao_url,
+                openbao_ciphertext_key_path,
+                openbao_auth_path,
+                openbao_auth_type,
+                ..
+            } => AvailableDeviceType::OpenBao {
+                openbao_url: openbao_url.clone(),
+                openbao_ciphertext_key_path: openbao_ciphertext_key_path.clone(),
+                openbao_auth_path: openbao_auth_path.clone(),
+                openbao_auth_type: *openbao_auth_type,
             },
         }
     }
@@ -328,6 +406,18 @@ pub enum DeviceAccessStrategy {
         ciphertext_key_id: AccountVaultItemOpaqueKeyID,
         ciphertext_key: SecretKey,
     },
+    OpenBao {
+        key_file: PathBuf,
+        /// This key is the one stored in OpenBao.
+        ///
+        /// Note it is `libparsec_openbao`'s job to deal with interfacing with
+        /// the OpenBao service to fetch the the key.
+        openbao_url: String,
+        openbao_ciphertext_key_path: String,
+        openbao_auth_path: String,
+        openbao_auth_type: OpenBaoAuthType,
+        ciphertext_key: SecretKey,
+    },
 }
 
 impl DeviceAccessStrategy {
@@ -337,6 +427,7 @@ impl DeviceAccessStrategy {
             Self::Password { key_file, .. } => key_file,
             Self::Smartcard { key_file, .. } => key_file,
             Self::AccountVault { key_file, .. } => key_file,
+            Self::OpenBao { key_file, .. } => key_file,
         }
     }
 
@@ -349,6 +440,18 @@ impl DeviceAccessStrategy {
                 ciphertext_key_id, ..
             } => AvailableDeviceType::AccountVault {
                 ciphertext_key_id: *ciphertext_key_id,
+            },
+            Self::OpenBao {
+                openbao_url,
+                openbao_ciphertext_key_path,
+                openbao_auth_path,
+                openbao_auth_type,
+                ..
+            } => AvailableDeviceType::OpenBao {
+                openbao_url: openbao_url.clone(),
+                openbao_ciphertext_key_path: openbao_ciphertext_key_path.clone(),
+                openbao_auth_path: openbao_auth_path.clone(),
+                openbao_auth_type: *openbao_auth_type,
             },
         }
     }
@@ -368,11 +471,25 @@ impl DeviceAccessStrategy {
                 ciphertext_key_id,
                 ciphertext_key,
             },
+            DeviceAccessStrategy::OpenBao {
+                openbao_url,
+                openbao_ciphertext_key_path,
+                openbao_auth_path,
+                openbao_auth_type,
+                ciphertext_key,
+                ..
+            } => DeviceSaveStrategy::OpenBao {
+                openbao_url,
+                openbao_ciphertext_key_path,
+                openbao_auth_path,
+                openbao_auth_type,
+                ciphertext_key,
+            },
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum AvailableDeviceType {
     Keyring,
     Password,
@@ -380,6 +497,12 @@ pub enum AvailableDeviceType {
     Smartcard,
     AccountVault {
         ciphertext_key_id: AccountVaultItemOpaqueKeyID,
+    },
+    OpenBao {
+        openbao_url: String,
+        openbao_ciphertext_key_path: String,
+        openbao_auth_path: String,
+        openbao_auth_type: OpenBaoAuthType,
     },
 }
 

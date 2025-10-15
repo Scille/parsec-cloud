@@ -1,0 +1,90 @@
+{
+    // ⚠️ Note the device file (i.e. the stuff defined by this schema!) is not
+    // stored on OpenBao.
+    // Instead it is encrypted by the ciphertext key that is itself stored on
+    // OpenBao.
+    // This way getting access to the device private keys require both exfiltrating
+    // the secret stored on OpenBao AND the device file stored on the end user's machine.
+    "label": "DeviceFileOpenBao",
+    "type": "sso",
+    "other_fields": [
+        {
+            // This refers to when the device file has been originally created.
+            "name": "created_on",
+            "type": "DateTime"
+        },
+        {
+            // This field gets updated every time the device file changes its protection.
+            "name": "protected_on",
+            "type": "DateTime"
+        },
+        {
+            // Url to the server in the format `https://parsec.example.com:443`.
+            // Note we don't use the `parsec3://` scheme here to avoid compatibility
+            // issue if we later decide to change the scheme.
+            "name": "server_url",
+            "type": "String"
+        },
+        {
+            "name": "organization_id",
+            "type": "OrganizationID"
+        },
+        {
+            "name": "user_id",
+            "type": "UserID"
+        },
+        {
+            "name": "device_id",
+            "type": "DeviceID"
+        },
+        {
+            "name": "human_handle",
+            "type": "HumanHandle"
+        },
+        {
+            "name": "device_label",
+            "type": "DeviceLabel"
+        },
+        {
+            // Base URL to communicate with the OpenBao service
+            // e.g. https://openbao-dev.parsec.cloud
+            "name": "openbao_url",
+            "type": "String"
+        },
+        {
+            // e.g. /v1/parsec-keys/data/{user.id}/{secret-id}
+            "name": "openbao_ciphertext_key_path",
+            "type": "String"
+        },
+        {
+            // e.g. /v1/auth/hexagone/oidc/auth_url
+            "name": "openbao_auth_path",
+            "type": "String"
+        },
+        {
+            "name": "openbao_auth_type",
+            "type": "OpenBaoAuthType"
+        },
+        {
+            // `LocalDevice` encrypted with a secret key which is itself stored
+            // as a passphrase in the OS keyring.
+            "name": "ciphertext",
+            "type": "Bytes"
+        }
+    ],
+    "nested_types": [
+        {
+            "name": "OpenBaoAuthType",
+            "variants": [
+                {
+                    "name": "Hexagone",
+                    "discriminant_value": "HEXAGONE"
+                },
+                {
+                    "name": "AgentConnect",
+                    "discriminant_value": "AGENT_CONNECT"
+                }
+            ]
+        }
+    ]
+}

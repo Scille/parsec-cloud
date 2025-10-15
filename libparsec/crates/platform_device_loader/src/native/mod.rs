@@ -383,6 +383,36 @@ pub(super) async fn save_device(
 
             save_content(&key_file, &file_content).await?;
         }
+
+        DeviceSaveStrategy::OpenBao {
+            openbao_url,
+            openbao_ciphertext_key_path,
+            openbao_auth_path,
+            openbao_auth_type,
+            ciphertext_key,
+        } => {
+            let ciphertext = super::encrypt_device(device, ciphertext_key);
+
+            let file_content = DeviceFile::OpenBao(DeviceFileOpenBao {
+                created_on,
+                protected_on,
+                server_url: server_url.clone(),
+                organization_id: device.organization_id().to_owned(),
+                user_id: device.user_id,
+                device_id: device.device_id,
+                human_handle: device.human_handle.to_owned(),
+                device_label: device.device_label.to_owned(),
+                openbao_url: openbao_url.clone(),
+                openbao_ciphertext_key_path: openbao_ciphertext_key_path.clone(),
+                openbao_auth_path: openbao_auth_path.clone(),
+                openbao_auth_type: *openbao_auth_type,
+                ciphertext,
+            });
+
+            let file_content = file_content.dump();
+
+            save_content(&key_file, &file_content).await?;
+        }
     }
 
     Ok(AvailableDevice {
