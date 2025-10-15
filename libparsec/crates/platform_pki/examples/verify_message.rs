@@ -3,7 +3,7 @@
 use anyhow::Context;
 use clap::Parser;
 use libparsec_platform_pki::{verify_message, SignatureAlgorithm, SignedMessage};
-use libparsec_types::CertificateHash;
+use libparsec_types::X509CertificateHash;
 use sha2::Digest;
 
 mod utils;
@@ -32,9 +32,8 @@ fn main() -> anyhow::Result<()> {
     let cert = args.cert.get_certificate()?;
 
     {
-        let fingerprint = CertificateHash::SHA256 {
-            data: Box::new(sha2::Sha256::digest(cert.as_ref()).into()),
-        };
+        let fingerprint =
+            X509CertificateHash::SHA256(Box::new(sha2::Sha256::digest(cert.as_ref()).into()));
         println!("Certificate fingerprint: {fingerprint}");
     }
 

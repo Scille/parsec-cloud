@@ -4733,7 +4733,18 @@ fn struct_x509_certificate_reference_id_or_hash_js_to_rs(
     };
     let hash = {
         let js_val = Reflect::get(&obj, &"hash".into())?;
-        variant_certificate_hash_js_to_rs(js_val)?
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    <libparsec::X509CertificateHash as std::str::FromStr>::from_str(s.as_str())
+                        .map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
     };
     Ok(libparsec::X509CertificateReferenceIdOrHash { id, hash })
 }
@@ -4745,7 +4756,15 @@ fn struct_x509_certificate_reference_id_or_hash_rs_to_js(
     let js_obj = Object::new().into();
     let js_id = JsValue::from(Uint8Array::from(rs_obj.id.as_ref()));
     Reflect::set(&js_obj, &"id".into(), &js_id)?;
-    let js_hash = variant_certificate_hash_rs_to_js(rs_obj.hash)?;
+    let js_hash = JsValue::from_str({
+        let custom_to_rs_string =
+            |x: libparsec::X509CertificateHash| -> Result<_, &'static str> { Ok(x.to_string()) };
+        match custom_to_rs_string(rs_obj.hash) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
     Reflect::set(&js_obj, &"hash".into(), &js_hash)?;
     Ok(js_obj)
 }
@@ -6379,62 +6398,6 @@ fn variant_cancel_error_rs_to_js(rs_obj: libparsec::CancelError) -> Result<JsVal
         }
         libparsec::CancelError::NotBound { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"CancelErrorNotBound".into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// CertificateHash
-
-#[allow(dead_code)]
-fn variant_certificate_hash_js_to_rs(obj: JsValue) -> Result<libparsec::CertificateHash, JsValue> {
-    let tag = Reflect::get(&obj, &"tag".into())?;
-    let tag = tag
-        .as_string()
-        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
-    match tag.as_str() {
-        "CertificateHashSHA256" => {
-            let data = {
-                let js_val = Reflect::get(&obj, &"data".into())?;
-                js_val
-                    .dyn_into::<Uint8Array>()
-                    .map(|x| x.to_vec())
-                    .map_err(|_| TypeError::new("Not a Uint8Array"))
-                    .and_then(|x| {
-                        let custom_from_rs_bytes = |v: &[u8]| -> Result<Box<[u8; 32]>, String> {
-                            Ok(Box::from(
-                                <[u8; 32]>::try_from(v).map_err(|_| "invalid value length")?,
-                            ))
-                        };
-                        custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
-                    })?
-            };
-            Ok(libparsec::CertificateHash::SHA256 { data })
-        }
-        _ => Err(JsValue::from(TypeError::new(
-            "Object is not a CertificateHash",
-        ))),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_certificate_hash_rs_to_js(
-    rs_obj: libparsec::CertificateHash,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    match rs_obj {
-        libparsec::CertificateHash::SHA256 { data, .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"CertificateHashSHA256".into())?;
-            let js_data = JsValue::from(Uint8Array::from({
-                let custom_to_rs_bytes =
-                    |v: Box<[u8; 32]>| -> Result<Vec<u8>, String> { Ok((*v).into()) };
-                match custom_to_rs_bytes(data) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            }));
-            Reflect::set(&js_obj, &"data".into(), &js_data)?;
         }
     }
     Ok(js_obj)
@@ -17086,7 +17049,20 @@ fn variant_x509_certificate_reference_js_to_rs(
         "X509CertificateReferenceHash" => {
             let x1 = {
                 let js_val = Reflect::get(&obj, &"x1".into())?;
-                variant_certificate_hash_js_to_rs(js_val)?
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            <libparsec::X509CertificateHash as std::str::FromStr>::from_str(
+                                s.as_str(),
+                            )
+                            .map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
             };
             Ok(libparsec::X509CertificateReference::Hash(x1))
         }
@@ -17127,7 +17103,17 @@ fn variant_x509_certificate_reference_rs_to_js(
     match rs_obj {
         libparsec::X509CertificateReference::Hash(x1, ..) => {
             Reflect::set(&js_obj, &"tag".into(), &"Hash".into())?;
-            let js_x1 = variant_certificate_hash_rs_to_js(x1)?;
+            let js_x1 = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::X509CertificateHash| -> Result<_, &'static str> {
+                        Ok(x.to_string())
+                    };
+                match custom_to_rs_string(x1) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
             Reflect::set(&js_obj, &"x1".into(), &js_x1.into())?;
         }
         libparsec::X509CertificateReference::Id(x1, ..) => {

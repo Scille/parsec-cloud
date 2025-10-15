@@ -9,7 +9,7 @@ use crate::{
 };
 use bytes::Bytes;
 use libparsec_types::{
-    CertificateHash, X509CertificateReference, X509CertificateReferenceIdOrHash,
+    X509CertificateHash, X509CertificateReference, X509CertificateReferenceIdOrHash,
 };
 use schannel::{
     cert_context::{CertContext, HashAlgorithm, PrivateKey},
@@ -29,22 +29,22 @@ fn open_store() -> std::io::Result<CertStore> {
     CertStore::open_current_user("My")
 }
 
-fn get_hash_algo(hash: &CertificateHash) -> HashAlgorithm {
+fn get_hash_algo(hash: &X509CertificateHash) -> HashAlgorithm {
     match hash {
-        CertificateHash::SHA256 { .. } => HashAlgorithm::sha256(),
+        X509CertificateHash::SHA256(..) => HashAlgorithm::sha256(),
     }
 }
 
-fn cert_cmp_hash(hash: &CertificateHash, other: &CertContext) -> bool {
+fn cert_cmp_hash(hash: &X509CertificateHash, other: &CertContext) -> bool {
     let Ok(cert_hash) = other.fingerprint(get_hash_algo(hash)) else {
         return false;
     };
     match hash {
-        CertificateHash::SHA256 { data } => data.as_ref() == cert_hash.as_slice(),
+        X509CertificateHash::SHA256(data) => data.as_ref() == cert_hash.as_slice(),
     }
 }
 
-fn hash_from_certificate_context(context: &CertContext) -> std::io::Result<CertificateHash> {
+fn hash_from_certificate_context(context: &CertContext) -> std::io::Result<X509CertificateHash> {
     context
         .fingerprint(HashAlgorithm::sha256())
         .and_then(|buf| {
@@ -52,7 +52,7 @@ fn hash_from_certificate_context(context: &CertContext) -> std::io::Result<Certi
                 std::io::Error::new(std::io::ErrorKind::InvalidData, "Not a sha256 hash")
             })
         })
-        .map(|data| CertificateHash::SHA256 { data })
+        .map(X509CertificateHash::SHA256)
 }
 
 fn find_certificate(

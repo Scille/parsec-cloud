@@ -115,6 +115,7 @@ export type SASCode = string
 export type SequesterServiceID = string
 export type UserID = string
 export type VlobID = string
+export type X509CertificateHash = string
 export type Bytes = Uint8Array
 export type KeyDerivation = Uint8Array
 export type SecretKey = Uint8Array
@@ -470,7 +471,7 @@ export interface WorkspaceUserAccessInfo {
 
 export interface X509CertificateReferenceIdOrHash {
     id: Bytes
-    hash: CertificateHash
+    hash: X509CertificateHash
 }
 
 // AccountAuthMethodStrategy
@@ -1262,18 +1263,6 @@ export interface CancelErrorNotBound {
 export type CancelError =
   | CancelErrorInternal
   | CancelErrorNotBound
-
-// CertificateHash
-export enum CertificateHashTag {
-    SHA256 = 'CertificateHashSHA256',
-}
-
-export interface CertificateHashSHA256 {
-    tag: CertificateHashTag.SHA256
-    data: Sha256BoxData
-}
-export type CertificateHash =
-  | CertificateHashSHA256
 
 // ClaimInProgressError
 export enum ClaimInProgressErrorTag {
@@ -4991,7 +4980,7 @@ export enum X509CertificateReferenceTag {
 
 export interface X509CertificateReferenceHash {
     tag: X509CertificateReferenceTag.Hash
-    x1: CertificateHash
+    x1: X509CertificateHash
 }
 export interface X509CertificateReferenceId {
     tag: X509CertificateReferenceTag.Id
