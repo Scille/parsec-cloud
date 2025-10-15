@@ -11,6 +11,7 @@
         fill="clear"
         class="card-header__button user-invite-button"
         @click="inviteUser"
+        v-show="userInfo.currentProfile === UserProfile.Admin"
       >
         <ion-icon
           :icon="personAdd"
@@ -93,7 +94,10 @@
         </ion-button>
       </div>
 
-      <div class="invitation-card-list">
+      <div
+        class="invitation-card-list"
+        v-show="userInfo.currentProfile === UserProfile.Admin"
+      >
         <div
           button
           class="invitation-card-list-item"

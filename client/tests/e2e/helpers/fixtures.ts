@@ -225,12 +225,14 @@ export const msTest = debugTest.extend<{
   secondTab: MsPage;
   connected: MsPage;
   workspacesStandard: MsPage;
+  workspacesExternal: MsPage;
   workspaces: MsPage;
   documentsOptions: any;
   documents: MsPage;
   documentsReadOnly: MsPage;
   usersPage: MsPage;
   organizationPage: MsPage;
+  organizationPageStandard: MsPage;
   invitationsPage: MsPage;
   myProfilePage: MsPage;
   userJoinModal: Locator;
@@ -295,6 +297,22 @@ export const msTest = debugTest.extend<{
     await home.locator('.login-button').click();
     await expect(home.locator('#connected-header')).toContainText('My workspaces');
     await expect(home.locator('.topbar-right').locator('.text-content-name')).toHaveText('Boby McBobFace');
+    await expect(home).toBeWorkspacePage();
+
+    await use(home);
+  },
+
+  workspacesExternal: async ({ home }, use) => {
+    await home.locator('.organization-card').nth(2).click();
+    await expect(home.locator('#password-input')).toBeVisible();
+
+    await expect(home.locator('.login-button')).toHaveDisabledAttribute();
+
+    await home.locator('#password-input').locator('input').fill('P@ssw0rd.');
+    await expect(home.locator('.login-button')).toBeEnabled();
+    await home.locator('.login-button').click();
+    await expect(home.locator('#connected-header')).toContainText('My workspaces');
+    await expect(home.locator('.topbar-right').locator('.text-content-name')).toHaveText('Malloryy McMalloryFace');
     await expect(home).toBeWorkspacePage();
 
     await use(home);
@@ -394,6 +412,13 @@ export const msTest = debugTest.extend<{
     await expect(connected).toHavePageTitle('Information');
     await expect(connected).toBeOrganizationPage();
     use(connected);
+  },
+
+  organizationPageStandard: async ({ workspacesStandard }, use) => {
+    await workspacesStandard.locator('.sidebar').locator('#sidebar-organization-information').click();
+    await expect(workspacesStandard).toHavePageTitle('Information');
+    await expect(workspacesStandard).toBeOrganizationPage();
+    use(workspacesStandard);
   },
 
   invitationsPage: async ({ connected }, use) => {

@@ -3,6 +3,11 @@
 <template>
   <div
     class="tab-bar-menu"
+    v-if="userInfo"
+    :class="{
+      'tab-bar-menu--outsider': userInfo.currentProfile === UserProfile.Outsider,
+      'tab-bar-menu--outsider-file': userInfo.currentProfile === UserProfile.Outsider && currentRouteIs(Routes.Documents),
+    }"
     id="tab-bar"
   >
     <div
@@ -37,9 +42,11 @@
       </ion-text>
     </div>
 
-    <div class="tab-bar-menu fab-button-container">
+    <div
+      class="tab-bar-menu fab-button-container"
+      v-show="actions.length > 0"
+    >
       <ion-fab
-        v-show="actions.length > 0"
         class="fab-content"
         size="small"
         id="add-menu-fab-button"
@@ -62,6 +69,7 @@
       class="tab-bar-menu-button"
       :class="currentRouteIs(Routes.Organization) ? 'active' : ''"
       @click="switchTab(Routes.Organization)"
+      v-show="userInfo && userInfo.currentProfile !== UserProfile.Outsider"
     >
       <ion-icon
         :icon="prism"
@@ -91,7 +99,7 @@
 import { IonFab, IonFabButton, IonIcon, IonText, modalController } from '@ionic/vue';
 import { folder, prism, personCircle, business } from 'ionicons/icons';
 import { hasVisited, Routes, navigateTo, currentRouteIs, getLastVisited } from '@/router';
-import { ClientInfo, getClientInfo as parsecGetClientInfo } from '@/parsec';
+import { ClientInfo, getClientInfo as parsecGetClientInfo, UserProfile } from '@/parsec';
 import { ref, Ref, onMounted } from 'vue';
 import { AddIcon, MsImage, MsModalResult } from 'megashark-lib';
 import TabBarMenuModal from '@/views/menu/TabBarMenuModal.vue';
@@ -193,6 +201,14 @@ async function openMenuModal(): Promise<void> {
   width: 100%;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
+
+  &--outsider {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  &--outsider-file {
+    grid-template-columns: repeat(4, 1fr);
+  }
 
   &-button {
     display: flex;

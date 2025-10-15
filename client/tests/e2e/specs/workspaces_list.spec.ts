@@ -267,3 +267,11 @@ msTest('Back from files with side menu', async ({ workspaces }) => {
     'My workspaces',
   );
 });
+
+msTest('Check no create workspace button as external', async ({ workspacesExternal }) => {
+  // Header button
+  await expect(workspacesExternal.locator('#workspaces-ms-action-bar').getByText('New workspace')).toBeHidden();
+  // Center button with no workspace
+  await expect(workspacesExternal.locator('.workspaces-container').locator('.workspace-list-item')).toHaveCount(0);
+  await expect(workspacesExternal.locator('#new-workspace')).toBeHidden();
+});

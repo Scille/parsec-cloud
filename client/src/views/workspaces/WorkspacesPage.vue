@@ -91,7 +91,7 @@
               }}
             </ion-text>
             <ion-button
-              v-show="clientProfile != UserProfile.Outsider"
+              v-show="clientProfile !== UserProfile.Outsider"
               id="new-workspace"
               fill="outline"
               @click="openCreateWorkspaceModal()"
@@ -510,6 +510,10 @@ function onMsSorterChange(event: MsSorterChangeEvent): void {
 }
 
 async function createWorkspace(name: WorkspaceName): Promise<void> {
+  // Externals shouldn't be able to access here, but putting this as safety
+  if (clientProfile.value === UserProfile.Outsider) {
+    return;
+  }
   const result = await parsecCreateWorkspace(name);
   if (result.ok) {
     informationManager.present(
@@ -595,14 +599,16 @@ async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event
 const actionBarOptionsWorkspacesPage = computed(() => {
   const actionsArray = [];
 
-  actionsArray.push({
-    id: 'button-new-workspace',
-    label: 'WorkspacesPage.createWorkspace',
-    icon: addCircle,
-    onClick: async (): Promise<void> => {
-      await openCreateWorkspaceModal();
-    },
-  });
+  if (clientProfile.value !== UserProfile.Outsider) {
+    actionsArray.push({
+      id: 'button-new-workspace',
+      label: 'WorkspacesPage.createWorkspace',
+      icon: addCircle,
+      onClick: async (): Promise<void> => {
+        await openCreateWorkspaceModal();
+      },
+    });
+  }
   return actionsArray;
 });
 
