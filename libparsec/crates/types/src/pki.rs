@@ -18,7 +18,7 @@ use crate::{
     serialization::{format_v0_dump, format_vx_load},
     DataError, DataResult, DateTime, DeviceID, DeviceLabel, EnrollmentID, HumanHandle, ParsecAddr,
     ParsecPkiEnrollmentAddr, PkiEnrollmentLocalPendingError, PkiEnrollmentLocalPendingResult,
-    UserID, UserProfile, X509CertificateReferenceData,
+    UserID, UserProfile,
 };
 
 /*
@@ -328,61 +328,6 @@ pub enum X509CertificateReference {
     Id(Bytes),
     Hash(X509CertificateHash),
     IdOrHash(X509CertificateReferenceIdOrHash),
-}
-
-impl TryFrom<X509CertificateReferenceData> for X509CertificateReference {
-    type Error = DataError;
-
-    fn try_from(value: X509CertificateReferenceData) -> Result<Self, Self::Error> {
-        match value {
-            X509CertificateReferenceData {
-                certificate_hash: None,
-                certificate_id: None,
-            } => Err(DataError::DataIntegrity {
-                data_type: "Certificate reference",
-                invariant: "id or hash must be provided",
-            }),
-            X509CertificateReferenceData {
-                certificate_hash: Some(hash),
-                certificate_id: None,
-            } => Ok(X509CertificateReference::Hash(hash.parse()?)),
-            X509CertificateReferenceData {
-                certificate_hash: None,
-                certificate_id: Some(id),
-            } => Ok(X509CertificateReference::Id(id)),
-            X509CertificateReferenceData {
-                certificate_hash: Some(hash),
-                certificate_id: Some(id),
-            } => Ok(X509CertificateReference::IdOrHash(
-                X509CertificateReferenceIdOrHash {
-                    id,
-                    hash: hash.parse()?,
-                },
-            )),
-        }
-    }
-}
-
-impl From<X509CertificateReference> for X509CertificateReferenceData {
-    fn from(value: X509CertificateReference) -> Self {
-        match value {
-            X509CertificateReference::Id(id) => X509CertificateReferenceData {
-                certificate_hash: None,
-                certificate_id: Some(id),
-            },
-            X509CertificateReference::Hash(hash) => X509CertificateReferenceData {
-                certificate_hash: Some(hash.to_string()),
-                certificate_id: None,
-            },
-            X509CertificateReference::IdOrHash(id_or_hash) => {
-                let X509CertificateReferenceIdOrHash { id, hash } = id_or_hash;
-                X509CertificateReferenceData {
-                    certificate_hash: Some(hash.to_string()),
-                    certificate_id: Some(id),
-                }
-            }
-        }
-    }
 }
 
 impl From<X509CertificateReferenceIdOrHash> for X509CertificateReference {
