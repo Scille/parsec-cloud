@@ -1147,6 +1147,10 @@ export interface ClaimInProgressErrorCorruptedConfirmation {
     tag: "CorruptedConfirmation"
     error: string
 }
+export interface ClaimInProgressErrorCorruptedSharedSecretKey {
+    tag: "CorruptedSharedSecretKey"
+    error: string
+}
 export interface ClaimInProgressErrorGreeterNotAllowed {
     tag: "GreeterNotAllowed"
     error: string
@@ -1183,6 +1187,7 @@ export type ClaimInProgressError =
   | ClaimInProgressErrorAlreadyUsedOrDeleted
   | ClaimInProgressErrorCancelled
   | ClaimInProgressErrorCorruptedConfirmation
+  | ClaimInProgressErrorCorruptedSharedSecretKey
   | ClaimInProgressErrorGreeterNotAllowed
   | ClaimInProgressErrorGreetingAttemptCancelled
   | ClaimInProgressErrorInternal
@@ -2316,6 +2321,10 @@ export interface GreetInProgressErrorCorruptedInviteUserData {
     tag: "CorruptedInviteUserData"
     error: string
 }
+export interface GreetInProgressErrorCorruptedSharedSecretKey {
+    tag: "CorruptedSharedSecretKey"
+    error: string
+}
 export interface GreetInProgressErrorDeviceAlreadyExists {
     tag: "DeviceAlreadyExists"
     error: string
@@ -2376,6 +2385,7 @@ export type GreetInProgressError =
   | GreetInProgressErrorAlreadyDeleted
   | GreetInProgressErrorCancelled
   | GreetInProgressErrorCorruptedInviteUserData
+  | GreetInProgressErrorCorruptedSharedSecretKey
   | GreetInProgressErrorDeviceAlreadyExists
   | GreetInProgressErrorGreeterNotAllowed
   | GreetInProgressErrorGreetingAttemptCancelled

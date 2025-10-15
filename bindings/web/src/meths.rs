@@ -6478,6 +6478,13 @@ fn variant_claim_in_progress_error_rs_to_js(
                 &"ClaimInProgressErrorCorruptedConfirmation".into(),
             )?;
         }
+        libparsec::ClaimInProgressError::CorruptedSharedSecretKey { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClaimInProgressErrorCorruptedSharedSecretKey".into(),
+            )?;
+        }
         libparsec::ClaimInProgressError::GreeterNotAllowed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10161,6 +10168,13 @@ fn variant_greet_in_progress_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"GreetInProgressErrorCorruptedInviteUserData".into(),
+            )?;
+        }
+        libparsec::GreetInProgressError::CorruptedSharedSecretKey { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"GreetInProgressErrorCorruptedSharedSecretKey".into(),
             )?;
         }
         libparsec::GreetInProgressError::DeviceAlreadyExists { .. } => {

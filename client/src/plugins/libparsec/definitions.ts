@@ -1281,6 +1281,7 @@ export enum ClaimInProgressErrorTag {
     AlreadyUsedOrDeleted = 'ClaimInProgressErrorAlreadyUsedOrDeleted',
     Cancelled = 'ClaimInProgressErrorCancelled',
     CorruptedConfirmation = 'ClaimInProgressErrorCorruptedConfirmation',
+    CorruptedSharedSecretKey = 'ClaimInProgressErrorCorruptedSharedSecretKey',
     GreeterNotAllowed = 'ClaimInProgressErrorGreeterNotAllowed',
     GreetingAttemptCancelled = 'ClaimInProgressErrorGreetingAttemptCancelled',
     Internal = 'ClaimInProgressErrorInternal',
@@ -1304,6 +1305,10 @@ export interface ClaimInProgressErrorCancelled {
 }
 export interface ClaimInProgressErrorCorruptedConfirmation {
     tag: ClaimInProgressErrorTag.CorruptedConfirmation
+    error: string
+}
+export interface ClaimInProgressErrorCorruptedSharedSecretKey {
+    tag: ClaimInProgressErrorTag.CorruptedSharedSecretKey
     error: string
 }
 export interface ClaimInProgressErrorGreeterNotAllowed {
@@ -1342,6 +1347,7 @@ export type ClaimInProgressError =
   | ClaimInProgressErrorAlreadyUsedOrDeleted
   | ClaimInProgressErrorCancelled
   | ClaimInProgressErrorCorruptedConfirmation
+  | ClaimInProgressErrorCorruptedSharedSecretKey
   | ClaimInProgressErrorGreeterNotAllowed
   | ClaimInProgressErrorGreetingAttemptCancelled
   | ClaimInProgressErrorInternal
@@ -2721,6 +2727,7 @@ export enum GreetInProgressErrorTag {
     AlreadyDeleted = 'GreetInProgressErrorAlreadyDeleted',
     Cancelled = 'GreetInProgressErrorCancelled',
     CorruptedInviteUserData = 'GreetInProgressErrorCorruptedInviteUserData',
+    CorruptedSharedSecretKey = 'GreetInProgressErrorCorruptedSharedSecretKey',
     DeviceAlreadyExists = 'GreetInProgressErrorDeviceAlreadyExists',
     GreeterNotAllowed = 'GreetInProgressErrorGreeterNotAllowed',
     GreetingAttemptCancelled = 'GreetInProgressErrorGreetingAttemptCancelled',
@@ -2749,6 +2756,10 @@ export interface GreetInProgressErrorCancelled {
 }
 export interface GreetInProgressErrorCorruptedInviteUserData {
     tag: GreetInProgressErrorTag.CorruptedInviteUserData
+    error: string
+}
+export interface GreetInProgressErrorCorruptedSharedSecretKey {
+    tag: GreetInProgressErrorTag.CorruptedSharedSecretKey
     error: string
 }
 export interface GreetInProgressErrorDeviceAlreadyExists {
@@ -2811,6 +2822,7 @@ export type GreetInProgressError =
   | GreetInProgressErrorAlreadyDeleted
   | GreetInProgressErrorCancelled
   | GreetInProgressErrorCorruptedInviteUserData
+  | GreetInProgressErrorCorruptedSharedSecretKey
   | GreetInProgressErrorDeviceAlreadyExists
   | GreetInProgressErrorGreeterNotAllowed
   | GreetInProgressErrorGreetingAttemptCancelled
