@@ -4,16 +4,15 @@
 
 ## Overview
 
-Add support to use Parsec with an externally managed PKI
+Add support to *join* and to *login* to an organization with an externally-managed PKI.
 
 ## Background & Motivation
 
-Some organizations manage their own PKI, and want Parsec to rely on that PKI.
+Some organizations manage their own PKI and would like to use it to join and to login to
+an organization in Parsec.
 
-That custom PKI come in the form of certificates with their private key often loaded in a dedicated device (a smartcard).
+That custom PKI comes in the form of certificates with their private keys often loaded in dedicated devices (smartcards).
 They would like to use their certificates to access Parsec, so the users do not have to use a password or rely on the keyring of the OS.
-
-There is also an opportunity to rely on that PKI to join an organization.
 
 Put in a simpler term access Parsec using a Smartcard.
 
@@ -28,6 +27,7 @@ Put in a simpler term access Parsec using a Smartcard.
 
 - **Submitter**: A user/device submitting a request to join an organization using the PKI feature.
 - **Accepter**: A user/device admin of an organization in charge of accepting or not the join request.
+- **Enrollment**: A request to join an organization, so sometimes used interchangeably with "join request".
 
 ## Goals and Non-Goals
 
@@ -292,19 +292,9 @@ Once the certificate validated, we can validate the payload signature against th
   "req": {
     "fields": [
       {
-        // ID of the accepted request
+        // The enrollment ID to be accepted
         "name": "enrollment_id",
         "type": "EnrollmentID"
-      },
-      {
-        // Certificate used to sign the payload by the "accepter"
-        "name": "der_x509_certificate",
-        "type": "Bytes"
-      },
-      {
-        // Signature of the payload
-        "name": "payload_signature",
-        "type": "Bytes"
       },
       {
         // `PkiEnrollmentAnswerPayload` in msgpack format
@@ -312,19 +302,33 @@ Once the certificate validated, we can validate the payload signature against th
         "type": "Bytes"
       },
       {
-        "name": "device_certificate",
+        // The payload signature, should be checked before loading
+        "name": "payload_signature",
         "type": "Bytes"
       },
       {
-        "name": "redacted_device_certificate",
+        // Certificate used by the accepter to sign the payload
+        "name": "accepter_der_x509_certificate",
         "type": "Bytes"
       },
       {
-        "name": "user_certificate",
+        // User certificate for the submitter (created by the accepter)
+        "name": "submitter_user_certificate",
         "type": "Bytes"
       },
       {
-        "name": "redacted_user_certificate",
+        // Device certificate for the submitter (created by the accepter)
+        "name": "submitter_device_certificate",
+        "type": "Bytes"
+      },
+      {
+        // Same certificate than `submitter_user_certificate` but expunged of `human_handle`
+        "name": "submitter_redacted_user_certificate",
+        "type": "Bytes"
+      },
+      {
+        // Same certificate than `submitter_device_certificate` but expunged of `device_label`
+        "name": "submitter_redacted_device_certificate",
         "type": "Bytes"
       }
     ]
@@ -334,28 +338,50 @@ Once the certificate validated, we can validate the payload signature against th
       "status": "ok"
     },
     {
-      // The user does not have the correct permission to perform that action
-      "status": "not_allowed"
+      // The user does not have the permission required to perform this action
+      "status": "author_not_allowed"
     },
     {
       // The payload is not correctly formatted
       "status": "invalid_payload_data"
     },
     {
-      // The provided certificate are not valid
+      // The provided certificate is not valid
       "status": "invalid_certification"
     },
     {
       // The server did not found a request for the provided ID
-      "status": "not_found"
+      "status": "enrollment_not_found"
     },
     {
       // The request is no longer in pending state (either accepted or rejected)
-      "status": "no_longer_available"
+      "status": "enrollment_no_longer_available"
     },
     {
-      // The "new" user already exist in the organization
+      // The organization has reached the maximum number of active users
+      "status": "active_users_limit_reached"
+    },
+    {
+      // The user already exist in the organization
       "status": "already_exists"
+    }
+    {
+      // The user's human handle is already taken
+      "status": "human_handle_already_taken"
+    },
+    {
+      // The timestamp in the certificate is too far away compared to server clock
+      "status": "timestamp_out_of_ballpark",
+      "fields": [
+        // ...
+      ]
+    },
+    {
+      // The timestamp is earlier or equal to an existing certificate in the server
+      "status": "require_greater_timestamp",
+      "fields": [
+        // ...
+      ]
     }
   ]
 }

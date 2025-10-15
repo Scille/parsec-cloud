@@ -279,7 +279,7 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
         author=coolorg.alice.device_id,
         author_verify_key=coolorg.alice.signing_key.verify_key,
         enrollment_id=existing_enrollment.enrollment_id,
-        accept_payload=PkiEnrollmentAnswerPayload(
+        payload=PkiEnrollmentAnswerPayload(
             user_id=u_certif.user_id,
             device_id=d_certif.device_id,
             human_handle=u_certif.human_handle,
@@ -287,12 +287,12 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
             device_label=d_certif.device_label,
             root_verify_key=coolorg.root_verify_key,
         ).dump(),
-        accept_payload_signature=b"<accept payload signature>",
+        payload_signature=b"<accept payload signature>",
         accepter_der_x509_certificate=b"<accepter der x509 certificate>",
-        user_certificate=user_certificate,
-        redacted_user_certificate=redacted_user_certificate,
-        device_certificate=device_certificate,
-        redacted_device_certificate=redacted_device_certificate,
+        submitter_user_certificate=user_certificate,
+        submitter_redacted_user_certificate=redacted_user_certificate,
+        submitter_device_certificate=device_certificate,
+        submitter_redacted_device_certificate=redacted_device_certificate,
     )
     assert isinstance(outcome, tuple)
 

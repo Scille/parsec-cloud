@@ -9,32 +9,32 @@ from parsec._parsec import DateTime, EnrollmentID
 class Req:
     def __init__(
         self,
-        accept_payload: bytes,
-        accept_payload_signature: bytes,
-        accepter_der_x509_certificate: bytes,
         enrollment_id: EnrollmentID,
-        device_certificate: bytes,
-        user_certificate: bytes,
-        redacted_device_certificate: bytes,
-        redacted_user_certificate: bytes,
+        payload: bytes,
+        payload_signature: bytes,
+        accepter_der_x509_certificate: bytes,
+        submitter_user_certificate: bytes,
+        submitter_device_certificate: bytes,
+        submitter_redacted_user_certificate: bytes,
+        submitter_redacted_device_certificate: bytes,
     ) -> None: ...
     def dump(self) -> bytes: ...
     @property
-    def accept_payload(self) -> bytes: ...
-    @property
-    def accept_payload_signature(self) -> bytes: ...
-    @property
     def accepter_der_x509_certificate(self) -> bytes: ...
-    @property
-    def device_certificate(self) -> bytes: ...
     @property
     def enrollment_id(self) -> EnrollmentID: ...
     @property
-    def redacted_device_certificate(self) -> bytes: ...
+    def payload(self) -> bytes: ...
     @property
-    def redacted_user_certificate(self) -> bytes: ...
+    def payload_signature(self) -> bytes: ...
     @property
-    def user_certificate(self) -> bytes: ...
+    def submitter_device_certificate(self) -> bytes: ...
+    @property
+    def submitter_redacted_device_certificate(self) -> bytes: ...
+    @property
+    def submitter_redacted_user_certificate(self) -> bytes: ...
+    @property
+    def submitter_user_certificate(self) -> bytes: ...
 
 class Rep:
     @staticmethod
@@ -53,7 +53,17 @@ class RepOk(Rep):
         self,
     ) -> None: ...
 
+class RepAuthorNotAllowed(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
 class RepInvalidPayloadData(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
+class RepInvalidCertificate(Rep):
     def __init__(
         self,
     ) -> None: ...
@@ -64,11 +74,6 @@ class RepEnrollmentNotFound(Rep):
     ) -> None: ...
 
 class RepEnrollmentNoLongerAvailable(Rep):
-    def __init__(
-        self,
-    ) -> None: ...
-
-class RepAuthorNotAllowed(Rep):
     def __init__(
         self,
     ) -> None: ...
@@ -84,11 +89,6 @@ class RepUserAlreadyExists(Rep):
     ) -> None: ...
 
 class RepHumanHandleAlreadyTaken(Rep):
-    def __init__(
-        self,
-    ) -> None: ...
-
-class RepInvalidCertificate(Rep):
     def __init__(
         self,
     ) -> None: ...

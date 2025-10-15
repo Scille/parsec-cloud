@@ -298,13 +298,13 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         author: DeviceID,
         author_verify_key: VerifyKey,
         enrollment_id: EnrollmentID,
-        accept_payload: bytes,
-        accept_payload_signature: bytes,
+        payload: bytes,
+        payload_signature: bytes,
         accepter_der_x509_certificate: bytes,
-        user_certificate: bytes,
-        redacted_user_certificate: bytes,
-        device_certificate: bytes,
-        redacted_device_certificate: bytes,
+        submitter_user_certificate: bytes,
+        submitter_redacted_user_certificate: bytes,
+        submitter_device_certificate: bytes,
+        submitter_redacted_device_certificate: bytes,
     ) -> (
         tuple[UserCertificate, DeviceCertificate]
         | PkiEnrollmentAcceptValidateBadOutcome
@@ -334,7 +334,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 return PkiEnrollmentAcceptStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
             try:
-                PkiEnrollmentAnswerPayload.load(accept_payload)
+                PkiEnrollmentAnswerPayload.load(payload)
             except ValueError:
                 return PkiEnrollmentAcceptStoreBadOutcome.INVALID_ACCEPT_PAYLOAD
 
@@ -342,10 +342,10 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 now=now,
                 expected_author=author,
                 author_verify_key=author_verify_key,
-                user_certificate=user_certificate,
-                device_certificate=device_certificate,
-                redacted_user_certificate=redacted_user_certificate,
-                redacted_device_certificate=redacted_device_certificate,
+                user_certificate=submitter_user_certificate,
+                device_certificate=submitter_device_certificate,
+                redacted_user_certificate=submitter_redacted_user_certificate,
+                redacted_device_certificate=submitter_redacted_device_certificate,
             ):
                 case (u_certif, d_certif):
                     pass
@@ -385,16 +385,16 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
 
             org.users[u_certif.user_id] = MemoryUser(
                 cooked=u_certif,
-                user_certificate=user_certificate,
-                redacted_user_certificate=redacted_user_certificate,
+                user_certificate=submitter_user_certificate,
+                redacted_user_certificate=submitter_redacted_user_certificate,
             )
 
             # Sanity check, should never occurs given user doesn't exist yet !
             assert d_certif.device_id not in org.devices
             org.devices[d_certif.device_id] = MemoryDevice(
                 cooked=d_certif,
-                device_certificate=device_certificate,
-                redacted_device_certificate=redacted_device_certificate,
+                device_certificate=submitter_device_certificate,
+                redacted_device_certificate=submitter_redacted_device_certificate,
             )
 
             enrollment.enrollment_state = MemoryPkiEnrollmentState.ACCEPTED
@@ -403,8 +403,8 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             enrollment.submitter_accepted_device_id = d_certif.device_id
             enrollment.info_accepted = MemoryPkiEnrollmentInfoAccepted(
                 accepted_on=now,
-                accept_payload=accept_payload,
-                accept_payload_signature=accept_payload_signature,
+                accept_payload=payload,
+                accept_payload_signature=payload_signature,
                 accepter_der_x509_certificate=accepter_der_x509_certificate,
             )
 

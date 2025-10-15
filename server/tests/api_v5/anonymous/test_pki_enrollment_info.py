@@ -82,13 +82,13 @@ async def test_anonymous_pki_enrollment_info_ok(
                 author=coolorg.alice.device_id,
                 author_verify_key=coolorg.alice.signing_key.verify_key,
                 enrollment_id=enrollment_id,
-                accept_payload=accept_payload,
-                accept_payload_signature=b"<alice accept payload signature>",
+                payload=accept_payload,
+                payload_signature=b"<alice accept payload signature>",
                 accepter_der_x509_certificate=b"<alice der x509 certificate>",
-                user_certificate=u_certif,
-                redacted_user_certificate=redacted_u_certif,
-                device_certificate=d_certif,
-                redacted_device_certificate=redacted_d_certif,
+                submitter_user_certificate=u_certif,
+                submitter_redacted_user_certificate=redacted_u_certif,
+                submitter_device_certificate=d_certif,
+                submitter_redacted_device_certificate=redacted_d_certif,
             )
             assert isinstance(outcome, tuple)
 

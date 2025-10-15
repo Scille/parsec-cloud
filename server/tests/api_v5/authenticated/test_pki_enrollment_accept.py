@@ -66,14 +66,13 @@ async def enrollment_id(
 
 class AcceptParams(TypedDict):
     enrollment_id: EnrollmentID
-    accept_payload: bytes
-    accept_payload_signature: bytes
+    payload: bytes
+    payload_signature: bytes
     accepter_der_x509_certificate: bytes
-    enrollment_id: EnrollmentID
-    device_certificate: bytes
-    user_certificate: bytes
-    redacted_device_certificate: bytes
-    redacted_user_certificate: bytes
+    submitter_device_certificate: bytes
+    submitter_user_certificate: bytes
+    submitter_redacted_device_certificate: bytes
+    submitter_redacted_user_certificate: bytes
 
 
 def generate_accept_params(
@@ -102,7 +101,7 @@ def generate_accept_params(
         device_id=device_id,
     )
 
-    accept_payload = PkiEnrollmentAnswerPayload(
+    payload = PkiEnrollmentAnswerPayload(
         user_id=user_id,
         device_id=device_id,
         device_label=device_label,
@@ -113,13 +112,13 @@ def generate_accept_params(
 
     return {
         "enrollment_id": enrollment_id,
-        "accept_payload": accept_payload,
-        "accept_payload_signature": b"<alice accept payload signature>",
+        "payload": payload,
+        "payload_signature": b"<alice accept payload signature>",
         "accepter_der_x509_certificate": b"<alice der x509 certificate>",
-        "user_certificate": u_certif,
-        "redacted_user_certificate": redacted_u_certif,
-        "device_certificate": d_certif,
-        "redacted_device_certificate": redacted_d_certif,
+        "submitter_user_certificate": u_certif,
+        "submitter_device_certificate": d_certif,
+        "submitter_redacted_user_certificate": redacted_u_certif,
+        "submitter_redacted_device_certificate": redacted_d_certif,
     }
 
 
@@ -217,7 +216,7 @@ async def test_authenticated_pki_enrollment_accept_invalid_certificate(
     enrollment_id: EnrollmentID,
 ) -> None:
     params = generate_accept_params(coolorg, enrollment_id)
-    params["user_certificate"] = b"<dummy>"
+    params["submitter_user_certificate"] = b"<dummy>"
     rep = await coolorg.alice.pki_enrollment_accept(**params)
     assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepInvalidCertificate()
 
@@ -227,7 +226,7 @@ async def test_authenticated_pki_enrollment_accept_invalid_payload_data(
     enrollment_id: EnrollmentID,
 ) -> None:
     params = generate_accept_params(coolorg, enrollment_id)
-    params["accept_payload"] = b"<dummy>"
+    params["payload"] = b"<dummy>"
     rep = await coolorg.alice.pki_enrollment_accept(**params)
     assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepInvalidPayloadData()
 
