@@ -43,7 +43,7 @@
             // Certificate here refers to the X509 certificate that describes what is
             // in the smartcard.
             "name": "certificate_ref",
-            "type": "X509CertificateReferenceData"
+            "type": "X509CertificateReference"
         },
         {
             // Used to encrypt the secret key
@@ -59,21 +59,6 @@
             // `LocalDevice` encrypted with the secret key from the `encrypted_key` field.
             "name": "ciphertext",
             "type": "Bytes"
-        }
-    ],
-    "nested_types": [
-        {
-            "name": "X509CertificateReferenceData",
-            "fields": [
-                {
-                    "name": "certificate_id",
-                    "type": "RequiredOption<Bytes>"
-                },
-                {
-                    "name": "certificate_hash",
-                    "type": "RequiredOption<String>"
-                }
-            ]
         }
     ]
 }
