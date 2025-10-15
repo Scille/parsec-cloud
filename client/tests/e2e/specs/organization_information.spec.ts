@@ -7,6 +7,7 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
     const container = organizationPage.locator('.organization-page-content');
     const configContainer = container.locator('.organization-info');
     const usersContainer = container.locator('.organization-users');
+    const inviteButton = usersContainer.locator('.user-invite-button');
     const storageContainer = container.locator('.organization-storage');
     const emailInvitationCard = usersContainer.locator('.invitation-card-list-item').nth(0);
     const PkiRequestCard = usersContainer.locator('.invitation-card-list-item').nth(1);
@@ -22,6 +23,7 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
     await expect(PkiRequestCard).toBeVisible();
     await expect(PkiRequestCard.locator('.invitation-card-list-item__title')).toContainText('PKI requests');
     await expect(PkiRequestCard.locator('.invitation-card-list-item__number')).toHaveText('3');
+    await expect(inviteButton).toBeVisible();
 
     if (displaySize === DisplaySize.Small) {
       await organizationPage.locator('.tab-bar-menu').locator('.tab-bar-menu-button').nth(2).click();
@@ -36,12 +38,58 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
     await expect(configContainer.locator('.info-list-item').nth(1).locator('.info-list-item__value')).toHaveText(['Unlimited']);
     await expect(configContainer.locator('.info-list-item').nth(2).locator('.server-address-value__text')).toHaveText(/^parsec3:\/\/.+$/);
 
-    await expect(usersContainer.locator('.users-list-item').nth(0).locator('.users-list-item__title')).toHaveText('3');
-    await expect(usersContainer.locator('.users-list-item').nth(0).locator('.users-list-item__description')).toHaveText('Active');
-    await expect(usersContainer.locator('.users-list-item').nth(1).locator('.users-list-item__title')).toHaveText('0');
-    await expect(usersContainer.locator('.users-list-item').nth(1).locator('.users-list-item__description')).toHaveText('Revoked');
-    await expect(usersContainer.locator('.users-list-item').nth(2).locator('.users-list-item__title')).toHaveText('0');
-    await expect(usersContainer.locator('.users-list-item').nth(2).locator('.users-list-item__description')).toHaveText('Frozen');
+    const userCategories = usersContainer.locator('.users-list-item');
+    await expect(userCategories.nth(0).locator('.users-list-item__title')).toHaveText('3');
+    await expect(userCategories.nth(0).locator('.users-list-item__description')).toHaveText('Active');
+    await expect(userCategories.nth(1).locator('.users-list-item__title')).toHaveText('0');
+    await expect(userCategories.nth(1).locator('.users-list-item__description')).toHaveText('Revoked');
+    await expect(userCategories.nth(2).locator('.users-list-item__title')).toHaveText('0');
+    await expect(userCategories.nth(2).locator('.users-list-item__description')).toHaveText('Frozen');
+    await expect(usersContainer.locator('.user-active-list').locator('.label-profile')).toHaveText(['Administrator', 'Member', 'External']);
+    await expect(usersContainer.locator('.user-active-list').locator('.user-active-list-item__value')).toHaveText(['1', '1', '1']);
+
+    await expect(storageContainer.locator('.storage-list-item__value').nth(0)).toHaveText(/^\d+(\.\d{2})? (B|KB|MB)$/);
+    await expect(storageContainer.locator('.storage-list-item__value').nth(1)).toHaveText(/^\d+(\.\d{2})? (B|KB|MB)$/);
+  });
+
+  msTest(`Org info default state on ${displaySize} display on standard user`, async ({ organizationPageStandard }) => {
+    const container = organizationPageStandard.locator('.organization-page-content');
+    const configContainer = container.locator('.organization-info');
+    const usersContainer = container.locator('.organization-users');
+    const inviteButton = usersContainer.locator('.user-invite-button');
+    const storageContainer = container.locator('.organization-storage');
+    const emailInvitationCard = usersContainer.locator('.invitation-card-list-item').nth(0);
+    const PkiRequestCard = usersContainer.locator('.invitation-card-list-item').nth(1);
+    await usersContainer.locator('#invitations-button').isVisible();
+
+    if (displaySize === DisplaySize.Small) {
+      await organizationPageStandard.setDisplaySize(DisplaySize.Small);
+    }
+
+    await expect(emailInvitationCard).toBeHidden();
+    await expect(PkiRequestCard).toBeHidden();
+    await expect(inviteButton).toBeHidden();
+
+    if (displaySize === DisplaySize.Small) {
+      await organizationPageStandard.locator('.tab-bar-menu').locator('.tab-bar-menu-button').nth(2).click();
+    }
+
+    await expect(configContainer.locator('.info-list-item').locator('.info-list-item__title')).toHaveText([
+      'External profile',
+      'User limit (excluding users with External profile)',
+      'Server address',
+    ]);
+    await expect(configContainer.locator('.info-list-item').nth(0).locator('.info-list-item__value')).toHaveText(['Enabled']);
+    await expect(configContainer.locator('.info-list-item').nth(1).locator('.info-list-item__value')).toHaveText(['Unlimited']);
+    await expect(configContainer.locator('.info-list-item').nth(2).locator('.server-address-value__text')).toHaveText(/^parsec3:\/\/.+$/);
+
+    const userCategories = usersContainer.locator('.users-list-item');
+    await expect(userCategories.nth(0).locator('.users-list-item__title')).toHaveText('3');
+    await expect(userCategories.nth(0).locator('.users-list-item__description')).toHaveText('Active');
+    await expect(userCategories.nth(1).locator('.users-list-item__title')).toHaveText('0');
+    await expect(userCategories.nth(1).locator('.users-list-item__description')).toHaveText('Revoked');
+    await expect(userCategories.nth(2).locator('.users-list-item__title')).toHaveText('0');
+    await expect(userCategories.nth(2).locator('.users-list-item__description')).toHaveText('Frozen');
     await expect(usersContainer.locator('.user-active-list').locator('.label-profile')).toHaveText(['Administrator', 'Member', 'External']);
     await expect(usersContainer.locator('.user-active-list').locator('.user-active-list-item__value')).toHaveText(['1', '1', '1']);
 
@@ -116,3 +164,11 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
     }
   });
 }
+
+msTest('No access to organization info as external', async ({ workspacesExternal }) => {
+  await expect(workspacesExternal.locator('.sidebar').locator('#sidebar-organization-information')).toBeHidden();
+  await workspacesExternal.setDisplaySize(DisplaySize.Small);
+  const tabBarButtons = workspacesExternal.locator('#tab-bar').locator('.tab-bar-menu-button');
+  await expect(tabBarButtons.nth(2)).toHaveText('Organization');
+  await expect(tabBarButtons.nth(2)).toBeHidden();
+});

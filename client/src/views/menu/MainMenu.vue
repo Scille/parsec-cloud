@@ -106,7 +106,7 @@
 
         <!-- organisation content -->
         <sidebar-menu-list
-          v-if="userInfo && userInfo.currentProfile != UserProfile.Outsider"
+          v-if="userInfo && userInfo.currentProfile !== UserProfile.Outsider"
           title="SideMenu.organization"
           v-model:is-content-visible="menusVisible.organization"
           @update:is-content-visible="onOrganizationMenuVisibilityChanged"
@@ -418,7 +418,7 @@ import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
 import { copyToClipboard } from '@/common/clipboard';
 
-defineProps<{
+const props = defineProps<{
   userInfo: ClientInfo;
 }>();
 
@@ -550,25 +550,28 @@ async function updateDividerPosition(value?: number): Promise<void> {
 }
 
 function setActions(): void {
-  if (currentRouteIs(Routes.Documents)) {
+  if (currentRouteIs(Routes.Documents) && currentWorkspace.value && currentWorkspace.value.currentSelfRole !== WorkspaceRole.Reader) {
     actions.value = [
       [{ action: FolderGlobalAction.CreateFolder, label: 'FoldersPage.createFolder', icon: folderOpen }],
       [
         { action: FolderGlobalAction.ImportFolder, label: 'FoldersPage.ImportFile.importFolderAction', icon: cloudUpload },
         { action: FolderGlobalAction.ImportFiles, label: 'FoldersPage.ImportFile.importFilesAction', icon: cloudUpload },
       ],
-      [{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }],
     ];
-  } else if (currentRouteIs(Routes.Workspaces)) {
-    actions.value = [
-      [{ action: WorkspaceAction.CreateWorkspace, label: 'WorkspacesPage.createWorkspace', icon: addCircle }],
-      [{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }],
-    ];
+    if (props.userInfo.currentProfile === UserProfile.Admin) {
+      actions.value.push([{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }]);
+    }
+  } else if (currentRouteIs(Routes.Workspaces) && props.userInfo.currentProfile !== UserProfile.Outsider) {
+    actions.value = [[{ action: WorkspaceAction.CreateWorkspace, label: 'WorkspacesPage.createWorkspace', icon: addCircle }]];
+    if (props.userInfo.currentProfile === UserProfile.Admin) {
+      actions.value.push([{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }]);
+    }
   } else if (
-    currentRouteIs(Routes.Users) ||
-    currentRouteIs(Routes.MyProfile) ||
-    currentRouteIs(Routes.Organization) ||
-    currentRouteIs(Routes.Invitations)
+    (currentRouteIs(Routes.Users) ||
+      currentRouteIs(Routes.MyProfile) ||
+      currentRouteIs(Routes.Organization) ||
+      currentRouteIs(Routes.Invitations)) &&
+    props.userInfo.currentProfile === UserProfile.Admin
   ) {
     actions.value = [
       [{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }],
