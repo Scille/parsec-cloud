@@ -6,6 +6,8 @@ from .common import (
     DateTime,
     DeviceID,
     DeviceLabel,
+    Enum,
+    EnumItemUnit,
     ErrorVariant,
     HumanHandle,
     OrganizationID,
@@ -22,6 +24,11 @@ from .common import (
 from .pki import X509CertificateReference
 
 
+class OpenBaoAuthType(Enum):
+    Hexagone = EnumItemUnit
+    AgentConnect = EnumItemUnit
+
+
 class AvailableDeviceType(Variant):
     Keyring = VariantItemUnit
     Password = VariantItemUnit
@@ -30,6 +37,12 @@ class AvailableDeviceType(Variant):
 
     class AccountVault:
         ciphertext_key_id: AccountVaultItemOpaqueKeyID
+
+    class OpenBao:
+        openbao_url: str
+        openbao_ciphertext_key_path: str
+        openbao_auth_path: str
+        openbao_auth_type: OpenBaoAuthType
 
 
 class DeviceSaveStrategy(Variant):
@@ -44,6 +57,13 @@ class DeviceSaveStrategy(Variant):
 
     class AccountVault:
         ciphertext_key_id: AccountVaultItemOpaqueKeyID
+        ciphertext_key: SecretKey
+
+    class OpenBao:
+        openbao_url: str
+        openbao_ciphertext_key_path: str
+        openbao_auth_path: str
+        openbao_auth_type: OpenBaoAuthType
         ciphertext_key: SecretKey
 
 
@@ -61,6 +81,14 @@ class DeviceAccessStrategy(Variant):
     class AccountVault:
         key_file: Path
         ciphertext_key_id: AccountVaultItemOpaqueKeyID
+        ciphertext_key: SecretKey
+
+    class OpenBao:
+        key_file: Path
+        openbao_url: str
+        openbao_ciphertext_key_path: str
+        openbao_auth_path: str
+        openbao_auth_type: OpenBaoAuthType
         ciphertext_key: SecretKey
 
 
