@@ -59,9 +59,6 @@ impl PrivateKey {
         peer_public_key: &PublicKey,
         role: SharedSecretKeyRole,
     ) -> Result<SecretKey, CryptoError> {
-        let shared_secret = curve25519::scalarmult(self.0.as_bytes(), peer_public_key.0.as_bytes())
-            .map_err(|e| CryptoError::SharedSecretKey(e.to_string()))?;
-
         let self_public_key =
             crypto_kx::PublicKey::from_bytes(self.public_key().as_ref()).expect("valid size");
         let self_secret_key =
