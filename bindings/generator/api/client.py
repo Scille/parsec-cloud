@@ -30,7 +30,7 @@ from .common import (
     VlobID,
 )
 from .config import ClientConfig
-from .device import DeviceAccessStrategy
+from .device import DeviceAccessStrategy, DeviceSaveStrategy, AvailableDevice
 from .invite import AvailableDevice, DeviceSaveStrategy
 from .pki import (
     ParsecPkiEnrollmentAddr,
