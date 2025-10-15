@@ -55,7 +55,10 @@ export function getCurrentRouteQuery<T = Query>(): T {
 
   const currentRoute = router.currentRoute.value;
   if (currentRoute) {
-    return currentRoute.query as T;
+    return {
+      ...(currentRoute.query as T),
+      readOnly: currentRoute.query.readOnly ? currentRoute.query.readOnly === 'true' : undefined,
+    };
   }
   return {} as object as T;
 }
