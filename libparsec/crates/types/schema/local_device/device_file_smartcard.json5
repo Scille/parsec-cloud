@@ -43,7 +43,7 @@
             // Certificate here refers to the X509 certificate that describes what is
             // in the smartcard.
             "name": "certificate_ref",
-            "type": "CertificateReferenceData"
+            "type": "X509CertificateReferenceData"
         },
         {
             // Used to encrypt the secret key
@@ -63,7 +63,7 @@
     ],
     "nested_types": [
         {
-            "name": "CertificateReferenceData",
+            "name": "X509CertificateReferenceData",
             "fields": [
                 {
                     "name": "certificate_id",

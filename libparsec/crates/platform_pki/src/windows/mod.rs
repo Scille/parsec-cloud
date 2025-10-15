@@ -8,7 +8,9 @@ use crate::{
     SignMessageError, SignatureAlgorithm, SignedMessageFromPki,
 };
 use bytes::Bytes;
-use libparsec_types::{CertificateHash, CertificateReference, CertificateReferenceIdOrHash};
+use libparsec_types::{
+    CertificateHash, X509CertificateReference, X509CertificateReferenceIdOrHash,
+};
 use schannel::{
     cert_context::{CertContext, HashAlgorithm, PrivateKey},
     cert_store::CertStore,
@@ -55,19 +57,21 @@ fn hash_from_certificate_context(context: &CertContext) -> std::io::Result<Certi
 
 fn find_certificate(
     store: &CertStore,
-    certificate_ref: &CertificateReference,
+    certificate_ref: &X509CertificateReference,
 ) -> Option<CertContext> {
     let matcher: Box<dyn Fn(&CertContext) -> bool> = match certificate_ref {
-        CertificateReference::Id(id) => Box::new(|candidate: &CertContext| {
+        X509CertificateReference::Id(id) => Box::new(|candidate: &CertContext| {
             cert_cmp_id(candidate, id.as_ref()).unwrap_or_default()
         }),
-        CertificateReference::Hash(hash) => {
+        X509CertificateReference::Hash(hash) => {
             Box::new(move |candidate: &CertContext| cert_cmp_hash(hash, candidate))
         }
-        CertificateReference::IdOrHash(id_or_hash) => Box::new(move |candidate: &CertContext| {
-            cert_cmp_id(candidate, id_or_hash.id.as_ref()).unwrap_or_default()
-                || cert_cmp_hash(&id_or_hash.hash, candidate)
-        }),
+        X509CertificateReference::IdOrHash(id_or_hash) => {
+            Box::new(move |candidate: &CertContext| {
+                cert_cmp_id(candidate, id_or_hash.id.as_ref()).unwrap_or_default()
+                    || cert_cmp_hash(&id_or_hash.hash, candidate)
+            })
+        }
     };
 
     store.certs().find(matcher)
@@ -114,7 +118,7 @@ fn get_certificate_id(cert_context: &CertContext) -> std::io::Result<Vec<u8>> {
 }
 
 pub fn get_der_encoded_certificate(
-    certificate_ref: &CertificateReference,
+    certificate_ref: &X509CertificateReference,
 ) -> Result<CertificateDer, GetDerEncodedCertificateError> {
     let store = open_store().map_err(GetDerEncodedCertificateError::CannotOpenStore)?;
     let cert_context =
@@ -132,15 +136,15 @@ pub fn get_der_encoded_certificate(
 
 fn get_id_and_hash_from_cert_context(
     context: &CertContext,
-) -> std::io::Result<CertificateReferenceIdOrHash> {
+) -> std::io::Result<X509CertificateReferenceIdOrHash> {
     let id = get_certificate_id(context)?.into();
     let hash = hash_from_certificate_context(context)?;
 
-    Ok(CertificateReferenceIdOrHash { id, hash })
+    Ok(X509CertificateReferenceIdOrHash { id, hash })
 }
 
 pub fn show_certificate_selection_dialog_windows_only(
-) -> Result<Option<CertificateReferenceIdOrHash>, ShowCertificateSelectionDialogError> {
+) -> Result<Option<X509CertificateReferenceIdOrHash>, ShowCertificateSelectionDialogError> {
     let store = open_store().map_err(ShowCertificateSelectionDialogError::CannotOpenStore)?;
     ask_user_to_select_certificate(&store)
         .as_ref()
@@ -184,7 +188,7 @@ fn ask_user_to_select_certificate(store: &CertStore) -> Option<CertContext> {
 
 pub fn sign_message(
     message: &[u8],
-    certificate_ref: &CertificateReference,
+    certificate_ref: &X509CertificateReference,
 ) -> Result<SignedMessageFromPki, SignMessageError> {
     let store = open_store().map_err(SignMessageError::CannotOpenStore)?;
     let cert_context =
@@ -287,7 +291,7 @@ fn ncrypt_sign_message_with_rsa(
 
 pub fn encrypt_message(
     message: &[u8],
-    certificate_ref: &CertificateReference,
+    certificate_ref: &X509CertificateReference,
 ) -> Result<EncryptedMessage, EncryptMessageError> {
     let store = open_store().map_err(EncryptMessageError::CannotOpenStore)?;
     let cert_context =
@@ -378,7 +382,7 @@ fn ncrypt_encrypt_message_with_rsa(
 pub fn decrypt_message(
     algo: EncryptionAlgorithm,
     encrypted_message: &[u8],
-    certificate_ref: &CertificateReference,
+    certificate_ref: &X509CertificateReference,
 ) -> Result<DecryptedMessage, DecryptMessageError> {
     let store = open_store().map_err(DecryptMessageError::CannotOpenStore)?;
     let cert_context =

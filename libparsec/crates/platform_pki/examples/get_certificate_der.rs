@@ -6,7 +6,7 @@ use std::fmt::Debug;
 use anyhow::Context;
 use clap::Parser;
 use libparsec_platform_pki::get_der_encoded_certificate;
-use libparsec_types::{CertificateHash, CertificateReference};
+use libparsec_types::{CertificateHash, X509CertificateReference};
 
 #[derive(Debug, Parser)]
 struct Args {
@@ -19,8 +19,8 @@ fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     println!("args={args:?}");
 
-    let cert_ref: CertificateReference = match args.certificate_hash {
-        Some(hash) => CertificateReference::Hash(hash),
+    let cert_ref: X509CertificateReference = match args.certificate_hash {
+        Some(hash) => X509CertificateReference::Hash(hash),
         #[cfg(target_os = "windows")]
         None => {
             let cert_ref = libparsec_platform_pki::show_certificate_selection_dialog_windows_only()
@@ -29,7 +29,7 @@ fn main() -> anyhow::Result<()> {
                     res.ok_or_else(|| anyhow::anyhow!("User did not select a certificate"))
                 })
                 .context("Failed to get certificate from user")?;
-            CertificateReference::from(cert_ref)
+            X509CertificateReference::from(cert_ref)
         }
         #[cfg(not(target_os = "windows"))]
         None => {

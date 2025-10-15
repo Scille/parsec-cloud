@@ -191,11 +191,6 @@ export interface AvailableDevice {
     ty: AvailableDeviceType
 }
 
-export interface CertificateReferenceIdOrHash {
-    id: Bytes
-    hash: CertificateHash
-}
-
 export interface ClientConfig {
     configDir: Path
     dataBaseDir: Path
@@ -471,6 +466,11 @@ export interface WorkspaceUserAccessInfo {
     humanHandle: HumanHandle
     currentProfile: UserProfile
     currentRole: RealmRole
+}
+
+export interface X509CertificateReferenceIdOrHash {
+    id: Bytes
+    hash: CertificateHash
 }
 
 // AccountAuthMethodStrategy
@@ -1274,30 +1274,6 @@ export interface CertificateHashSHA256 {
 }
 export type CertificateHash =
   | CertificateHashSHA256
-
-// CertificateReference
-export enum CertificateReferenceTag {
-    Hash = 'CertificateReferenceHash',
-    Id = 'CertificateReferenceId',
-    IdOrHash = 'CertificateReferenceIdOrHash',
-}
-
-export interface CertificateReferenceHash {
-    tag: CertificateReferenceTag.Hash
-    x1: CertificateHash
-}
-export interface CertificateReferenceId {
-    tag: CertificateReferenceTag.Id
-    x1: Bytes
-}
-export interface CertificateReferenceIdOrHash {
-    tag: CertificateReferenceTag.IdOrHash
-    x1: CertificateReferenceIdOrHash
-}
-export type CertificateReference =
-  | CertificateReferenceHash
-  | CertificateReferenceId
-  | CertificateReferenceIdOrHash
 
 // ClaimInProgressError
 export enum ClaimInProgressErrorTag {
@@ -2696,7 +2672,7 @@ export interface DeviceSaveStrategyPassword {
 }
 export interface DeviceSaveStrategySmartcard {
     tag: DeviceSaveStrategyTag.Smartcard
-    certificateReference: CertificateReference
+    certificateReference: X509CertificateReference
 }
 export type DeviceSaveStrategy =
   | DeviceSaveStrategyAccountVault
@@ -4994,6 +4970,30 @@ export type WorkspaceWatchEntryOneShotError =
   | WorkspaceWatchEntryOneShotErrorOffline
   | WorkspaceWatchEntryOneShotErrorStopped
 
+// X509CertificateReference
+export enum X509CertificateReferenceTag {
+    Hash = 'X509CertificateReferenceHash',
+    Id = 'X509CertificateReferenceId',
+    IdOrHash = 'X509CertificateReferenceIdOrHash',
+}
+
+export interface X509CertificateReferenceHash {
+    tag: X509CertificateReferenceTag.Hash
+    x1: CertificateHash
+}
+export interface X509CertificateReferenceId {
+    tag: X509CertificateReferenceTag.Id
+    x1: Bytes
+}
+export interface X509CertificateReferenceIdOrHash {
+    tag: X509CertificateReferenceTag.IdOrHash
+    x1: X509CertificateReferenceIdOrHash
+}
+export type X509CertificateReference =
+  | X509CertificateReferenceHash
+  | X509CertificateReferenceId
+  | X509CertificateReferenceIdOrHash
+
 export interface LibParsecPlugin {
     accountCreate1SendValidationEmail(
         config_dir: Path,
@@ -5468,7 +5468,7 @@ export interface LibParsecPlugin {
         path: FsPath
     ): Promise<Array<EntryName>>
     showCertificateSelectionDialogWindowsOnly(
-    ): Promise<Result<CertificateReference | null, ShowCertificateSelectionDialogError>>
+    ): Promise<Result<X509CertificateReference | null, ShowCertificateSelectionDialogError>>
     testCheckMailbox(
         server_addr: ParsecAddr,
         email: EmailAddress

@@ -316,7 +316,7 @@ fn smartcard_device_file(alice: &Device) {
     .as_ref();
     let expected = DeviceFile::Smartcard(DeviceFileSmartcard {
         encrypted_key: b"foo".as_ref().into(),
-        certificate_ref: CertificateReference::Id(Bytes::copy_from_slice(b"foo")),
+        certificate_ref: X509CertificateReference::Id(Bytes::copy_from_slice(b"foo")),
         algorithm_for_encrypted_key: EncryptionAlgorithm::RsaesOaepSha256,
         ciphertext: hex!(
             "a73aff77a2aa692b4393e094bfd2c2ccad4b0a8d010960caf27165b787fb412ed2aeeb"

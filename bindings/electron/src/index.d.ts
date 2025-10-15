@@ -159,12 +159,6 @@ export interface AvailableDevice {
 }
 
 
-export interface CertificateReferenceIdOrHash {
-    id: Uint8Array
-    hash: CertificateHash
-}
-
-
 export interface ClientConfig {
     configDir: string
     dataBaseDir: string
@@ -484,6 +478,12 @@ export interface WorkspaceUserAccessInfo {
     humanHandle: HumanHandle
     currentProfile: UserProfile
     currentRole: RealmRole
+}
+
+
+export interface X509CertificateReferenceIdOrHash {
+    id: Uint8Array
+    hash: CertificateHash
 }
 
 
@@ -1128,25 +1128,6 @@ export interface CertificateHashSHA256 {
 }
 export type CertificateHash =
   | CertificateHashSHA256
-
-
-// CertificateReference
-export interface CertificateReferenceHash {
-    tag: "Hash"
-    x1: CertificateHash
-}
-export interface CertificateReferenceId {
-    tag: "Id"
-    x1: Uint8Array
-}
-export interface CertificateReferenceIdOrHash {
-    tag: "IdOrHash"
-    x1: CertificateReferenceIdOrHash
-}
-export type CertificateReference =
-  | CertificateReferenceHash
-  | CertificateReferenceId
-  | CertificateReferenceIdOrHash
 
 
 // ClaimInProgressError
@@ -2278,7 +2259,7 @@ export interface DeviceSaveStrategyPassword {
 }
 export interface DeviceSaveStrategySmartcard {
     tag: "Smartcard"
-    certificate_reference: CertificateReference
+    certificate_reference: X509CertificateReference
 }
 export type DeviceSaveStrategy =
   | DeviceSaveStrategyAccountVault
@@ -4158,6 +4139,25 @@ export type WorkspaceWatchEntryOneShotError =
   | WorkspaceWatchEntryOneShotErrorStopped
 
 
+// X509CertificateReference
+export interface X509CertificateReferenceHash {
+    tag: "Hash"
+    x1: CertificateHash
+}
+export interface X509CertificateReferenceId {
+    tag: "Id"
+    x1: Uint8Array
+}
+export interface X509CertificateReferenceIdOrHash {
+    tag: "IdOrHash"
+    x1: X509CertificateReferenceIdOrHash
+}
+export type X509CertificateReference =
+  | X509CertificateReferenceHash
+  | X509CertificateReferenceId
+  | X509CertificateReferenceIdOrHash
+
+
 export function accountCreate1SendValidationEmail(
     config_dir: string,
     addr: string,
@@ -4631,7 +4631,7 @@ export function pathSplit(
     path: string
 ): Promise<Array<string>>
 export function showCertificateSelectionDialogWindowsOnly(
-): Promise<Result<CertificateReference | null, ShowCertificateSelectionDialogError>>
+): Promise<Result<X509CertificateReference | null, ShowCertificateSelectionDialogError>>
 export function testCheckMailbox(
     server_addr: string,
     email: string

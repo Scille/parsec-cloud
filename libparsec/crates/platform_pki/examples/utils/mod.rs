@@ -91,7 +91,7 @@ impl CertificateOrRef {
     pub fn get_certificate(&self) -> anyhow::Result<Certificate<'static>> {
         let cert = if let Some(hash) = self.certificate_hash.clone() {
             let res = libparsec_platform_pki::get_der_encoded_certificate(
-                &libparsec_types::CertificateReference::Hash(hash),
+                &libparsec_types::X509CertificateReference::Hash(hash),
             )?;
             println!(
                 "Will verify signature using cert with id {{{}}}",
