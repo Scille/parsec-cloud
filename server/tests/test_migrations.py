@@ -127,6 +127,49 @@ async def test_migrations(
         await process.communicate(data.encode())
         assert process.returncode == 0
 
+    # Special case for this migration: it is a sanity check to ensure there
+    # is no email address containing unicode...
+    # Hence here we inject invalid data to ensure the sanity check works as expected.
+    async def test_sanity_check_in_0015_drop_email_unicode_support(conn):
+        await conn.execute(
+            "UPDATE human SET email = 'alice@bücher.com' WHERE email = 'alice@example.com'"
+        )
+        result = await apply_migrations(pg_cluster_url, [migration], dry_run=False)
+        assert result.error
+        assert result.error[1] == (
+            "The database contains email addresses with non-ASCII characters which is no longer supported by Parsec..\n"
+            "You will need to perform a manual migration for the affected organizations.\n"
+            "In the meantime, you need to rollback to v3.5 to continue service.\n"
+            "Please contact us at: support@parsec.cloud\n"
+            "\n"
+            "Non-ASCII email(s) found in table `human`:\n"
+            "alice@bücher.com\n"
+            "alice@bücher.com"
+        )
+
+        await conn.execute(
+            "UPDATE human SET email = 'alice@example.com' WHERE email = 'alice@bücher.com'"
+        )
+
+        await conn.execute(
+            "UPDATE invitation SET user_invitation_claimer_email = 'zack@bücher.invalid' WHERE user_invitation_claimer_email = 'zack@example.invalid'"
+        )
+        result = await apply_migrations(pg_cluster_url, [migration], dry_run=False)
+        assert result.error
+        assert result.error[1] == (
+            "The database contains email addresses with non-ASCII characters which is no longer supported by Parsec..\n"
+            "You will need to perform a manual migration for the affected organizations.\n"
+            "In the meantime, you need to rollback to v3.5 to continue service.\n"
+            "Please contact us at: support@parsec.cloud\n"
+            "\n"
+            "Non-ASCII email(s) found in table `invitation`:\n"
+            "zack@bücher.invalid\n"
+            "zack@bücher.invalid"
+        )
+        await conn.execute(
+            "UPDATE invitation SET user_invitation_claimer_email = 'zack@example.invalid' WHERE user_invitation_claimer_email = 'zack@bücher.invalid'"
+        )
+
     # The schema may start with an automatic comment, something like:
     # `COMMENT ON SCHEMA public IS 'standard public schema';`
     # So we clean everything first
@@ -140,6 +183,9 @@ async def test_migrations(
         for migration in migrations:
             if sql := patches_before.get(migration.index):
                 await conn_for_patches.execute(sql)
+
+            if migration.file_name == "0015_drop_email_unicode_support.sql":
+                await test_sanity_check_in_0015_drop_email_unicode_support(conn_for_patches)
 
             result = await apply_migrations(pg_cluster_url, [migration], dry_run=False)
             assert not result.error

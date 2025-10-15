@@ -21,6 +21,7 @@ blahaj
 bottombar
 broadcastable
 browserslistrc
+bücher
 bxsalsa
 capacitorjs
 CAPELECTRON
