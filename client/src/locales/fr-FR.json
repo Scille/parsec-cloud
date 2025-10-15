@@ -2557,7 +2557,11 @@
             "tooltipSaved": "Les modifications ont été sauvegardées.",
             "tooltipUnsaved": "Les modifications ne sont pas encore sauvegardées.",
             "tooltipError": "Les modifications n'ont pas été sauvegardées.",
-            "readOnly": "Document en lecture seule"
+            "readOnly": "Document en lecture seule",
+            "notSavedTitle": "Abandonner les modifications ?",
+            "notSavedQuestion": "Certaines modifications n'ont pas encore été enregistrées. Voulez-vous abandonner les modifications ?",
+            "notSavedDiscard": "Abandonner les modifications",
+            "notSavedStay": "Rester sur la page"
         }
     },
     "openFallback": {

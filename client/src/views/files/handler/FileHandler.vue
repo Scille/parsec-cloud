@@ -270,6 +270,7 @@ import useSidebarMenu from '@/services/sidebarMenu';
 import { openPath } from '@/services/fileOpener';
 import { FileHandlerMode } from '@/views/files/handler';
 import { isFileEditable } from '@/services/cryptpad';
+import { onBeforeRouteLeave, onBeforeRouteUpdate } from 'vue-router';
 
 const { isLargeDisplay, windowWidth } = useWindowSize();
 const storageManager: StorageManager = inject(StorageManagerKey)!;
@@ -531,6 +532,27 @@ function loadComponent(): void {
     throw new Error(`No component for file with extension '${detectedFileType.value!.extension}'`);
   }
 }
+
+async function checkSaved(): Promise<boolean> {
+  if (saveState.value !== SaveState.Saved && saveState.value !== SaveState.None) {
+    const answer = await askQuestion('fileEditors.saving.notSavedTitle', 'fileEditors.saving.notSavedQuestion', {
+      yesText: 'fileEditors.saving.notSavedDiscard',
+      noText: 'fileEditors.saving.notSavedStay',
+    });
+    if (answer === Answer.No) {
+      return false;
+    }
+  }
+  return true;
+}
+
+onBeforeRouteLeave(async () => {
+  return await checkSaved();
+});
+
+onBeforeRouteUpdate(async () => {
+  return await checkSaved();
+});
 
 onMounted(async () => {
   handlerMode.value = getFileHandlerMode();
