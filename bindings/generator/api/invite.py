@@ -800,6 +800,9 @@ class GreetInProgressError(ErrorVariant):
         reason: CancelledGreetingAttemptReason
         timestamp: DateTime
 
+    class CorruptedSharedSecretKey:
+        pass
+
     class CorruptedInviteUserData:
         pass
 
