@@ -6,39 +6,44 @@
         "cmd": "pki_enrollment_accept",
         "req": {
             "fields": [
-                // Signature should be checked before loading.
                 {
-                    "name": "accept_payload",
-                    "type": "Bytes"
-                },
-                {
-                    "name": "accept_payload_signature",
-                    "type": "Bytes"
-                },
-                {
-                    "name": "accepter_der_x509_certificate",
-                    "type": "Bytes"
-                },
-                {
+                    // The enrollment ID to be accepted
                     "name": "enrollment_id",
                     "type": "EnrollmentID"
                 },
                 {
-                    "name": "device_certificate",
+                    // `PkiEnrollmentAnswerPayload` in msgpack format
+                    "name": "payload",
                     "type": "Bytes"
                 },
                 {
-                    "name": "user_certificate",
+                    // The payload signature, should be checked before loading
+                    "name": "payload_signature",
                     "type": "Bytes"
                 },
-                // Same certificate than `device_certificate` but expunged of `device_label`.
                 {
-                    "name": "redacted_device_certificate",
+                    // Certificate used by the accepter to sign the payload
+                    "name": "accepter_der_x509_certificate",
                     "type": "Bytes"
                 },
-                // Same certificate than `user_certificate` but expunged of `human_handle`.
                 {
-                    "name": "redacted_user_certificate",
+                    // User certificate for the submitter (created by the accepter)
+                    "name": "submitter_user_certificate",
+                    "type": "Bytes"
+                },
+                {
+                    // Device certificate for the submitter (created by the accepter)
+                    "name": "submitter_device_certificate",
+                    "type": "Bytes"
+                },
+                {
+                    // Same certificate than `submitter_user_certificate` but expunged of `human_handle`
+                    "name": "submitter_redacted_user_certificate",
+                    "type": "Bytes"
+                },
+                {
+                    // Same certificate than `submitter_device_certificate` but expunged of `device_label`
+                    "name": "submitter_redacted_device_certificate",
                     "type": "Bytes"
                 }
             ]
@@ -48,32 +53,39 @@
                 "status": "ok"
             },
             {
-                "status": "invalid_payload_data"
-            },
-            {
-                "status": "enrollment_not_found"
-            },
-            {
-                "status": "enrollment_no_longer_available"
-            },
-            {
+                // The user does not have the permission required to perform this action
                 "status": "author_not_allowed"
             },
             {
-                "status": "active_users_limit_reached"
+                // The payload is not correctly formatted
+                "status": "invalid_payload_data"
             },
             {
-                "status": "user_already_exists"
-            },
-            {
-                "status": "human_handle_already_taken"
-            },
-            {
+                // The provided certificate is not valid
                 "status": "invalid_certificate"
             },
             {
-                // Returned if the timestamp in the certificate is too far away compared
-                // to server clock.
+                // The server did not found a request for the provided ID
+                "status": "enrollment_not_found"
+            },
+            {
+                // The request is no longer in pending state (either accepted or rejected)
+                "status": "enrollment_no_longer_available"
+            },
+            {
+                // The organization has reached the maximum number of active users
+                "status": "active_users_limit_reached"
+            },
+            {
+                // The user already exist in the organization
+                "status": "user_already_exists"
+            },
+            {
+                // The user's human handle is already taken
+                "status": "human_handle_already_taken"
+            },
+            {
+                // The timestamp in the certificate is too far away compared to server clock
                 "status": "timestamp_out_of_ballpark",
                 "fields": [
                     {
@@ -95,8 +107,7 @@
                 ]
             },
             {
-                // Returned if another certificate in the server has a timestamp
-                // posterior or equal to our current one.
+                // The timestamp is earlier or equal to an existing certificate in the server
                 "status": "require_greater_timestamp",
                 "fields": [
                     {

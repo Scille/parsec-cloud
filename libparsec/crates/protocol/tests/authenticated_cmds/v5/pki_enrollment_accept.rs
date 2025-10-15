@@ -12,49 +12,48 @@ use super::authenticated_cmds;
 // Request
 
 pub fn req() {
-    // Generated from Python implementation (Parsec v2.14.0)
+    // Generated from Parsec 3.5.1-a.0+dev
     // Content:
-    //   accept_payload: hex!("3c64756d6d793e")
-    //   accept_payload_signature: hex!("3c7369676e61747572653e")
-    //   accepter_der_x509_certificate: hex!("3c61636365707465725f6465725f783530395f63657274696669636174653e")
-    //   cmd: "pki_enrollment_accept"
-    //   device_certificate: hex!("3c64756d6d793e")
-    //   enrollment_id: ext(2, hex!("e89621b91f8e4a7c8d3182ee513e380f"))
-    //   redacted_device_certificate: hex!("3c64756d6d793e")
-    //   redacted_user_certificate: hex!("3c64756d6d793e")
-    //   user_certificate: hex!("3c64756d6d793e")
-    //
+    //   cmd: 'pki_enrollment_accept'
+    //   enrollment_id: ext(2, 0x56f48ed307984f10830e197287399c22)
+    //   payload: 0x3c64756d6d793e
+    //   payload_signature: 0x3c7369676e61747572653e
+    //   accepter_der_x509_certificate: 0x3c61636365707465725f6465725f783530395f63657274696669636174653e
+    //   submitter_user_certificate: 0x3c64756d6d793e
+    //   submitter_device_certificate: 0x3c64756d6d793e
+    //   submitter_redacted_user_certificate: 0x3c64756d6d793e
+    //   submitter_redacted_device_certificate: 0x3c64756d6d793e
     let raw = hex!(
-        "89ae6163636570745f7061796c6f6164c4073c64756d6d793eb86163636570745f7061796c"
-        "6f61645f7369676e6174757265c40b3c7369676e61747572653ebd61636365707465725f64"
-        "65725f783530395f6365727469666963617465c41f3c61636365707465725f6465725f7835"
-        "30395f63657274696669636174653ea3636d64b5706b695f656e726f6c6c6d656e745f6163"
-        "63657074b26465766963655f6365727469666963617465c4073c64756d6d793ead656e726f"
-        "6c6c6d656e745f6964d80256f48ed307984f10830e197287399c22bb72656461637465645f"
-        "6465766963655f6365727469666963617465c4073c64756d6d793eb972656461637465645f"
-        "757365725f6365727469666963617465c4073c64756d6d793eb0757365725f636572746966"
-        "6963617465c4073c64756d6d793e"
+        "89a3636d64b5706b695f656e726f6c6c6d656e745f616363657074ad656e726f6c6c6d"
+        "656e745f6964d80256f48ed307984f10830e197287399c22a77061796c6f6164c4073c"
+        "64756d6d793eb17061796c6f61645f7369676e6174757265c40b3c7369676e61747572"
+        "653ebd61636365707465725f6465725f783530395f6365727469666963617465c41f3c"
+        "61636365707465725f6465725f783530395f63657274696669636174653eba7375626d"
+        "69747465725f757365725f6365727469666963617465c4073c64756d6d793ebc737562"
+        "6d69747465725f6465766963655f6365727469666963617465c4073c64756d6d793ed9"
+        "237375626d69747465725f72656461637465645f757365725f63657274696669636174"
+        "65c4073c64756d6d793ed9257375626d69747465725f72656461637465645f64657669"
+        "63655f6365727469666963617465c4073c64756d6d793e"
     );
 
-    let expected = authenticated_cmds::AnyCmdReq::PkiEnrollmentAccept(
-        authenticated_cmds::pki_enrollment_accept::Req {
-            accept_payload: hex!("3c64756d6d793e").as_ref().into(),
-            accept_payload_signature: hex!("3c7369676e61747572653e").as_ref().into(),
-            accepter_der_x509_certificate: hex!(
-                "3c61636365707465725f6465725f783530395f63657274696669636174653e"
-            )
-            .as_ref()
-            .into(),
-            device_certificate: hex!("3c64756d6d793e").as_ref().into(),
-            enrollment_id: EnrollmentID::from_hex("56f48ed307984f10830e197287399c22").unwrap(),
-            redacted_device_certificate: hex!("3c64756d6d793e").as_ref().into(),
-            redacted_user_certificate: hex!("3c64756d6d793e").as_ref().into(),
-            user_certificate: hex!("3c64756d6d793e").as_ref().into(),
-        },
-    );
+    let req = authenticated_cmds::pki_enrollment_accept::Req {
+        payload: hex!("3c64756d6d793e").as_ref().into(),
+        payload_signature: hex!("3c7369676e61747572653e").as_ref().into(),
+        accepter_der_x509_certificate: hex!(
+            "3c61636365707465725f6465725f783530395f63657274696669636174653e"
+        )
+        .as_ref()
+        .into(),
+        submitter_device_certificate: hex!("3c64756d6d793e").as_ref().into(),
+        enrollment_id: EnrollmentID::from_hex("56f48ed307984f10830e197287399c22").unwrap(),
+        submitter_redacted_device_certificate: hex!("3c64756d6d793e").as_ref().into(),
+        submitter_redacted_user_certificate: hex!("3c64756d6d793e").as_ref().into(),
+        submitter_user_certificate: hex!("3c64756d6d793e").as_ref().into(),
+    };
+    let expected = authenticated_cmds::AnyCmdReq::PkiEnrollmentAccept(req.clone());
+    println!("***expected: {:?}", req.dump().unwrap());
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
-
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip

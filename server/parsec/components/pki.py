@@ -243,13 +243,13 @@ class BasePkiEnrollmentComponent:
         author: DeviceID,
         author_verify_key: VerifyKey,
         enrollment_id: EnrollmentID,
-        accept_payload: bytes,
-        accept_payload_signature: bytes,
+        payload: bytes,
+        payload_signature: bytes,
         accepter_der_x509_certificate: bytes,
-        user_certificate: bytes,
-        redacted_user_certificate: bytes,
-        device_certificate: bytes,
-        redacted_device_certificate: bytes,
+        submitter_user_certificate: bytes,
+        submitter_redacted_user_certificate: bytes,
+        submitter_device_certificate: bytes,
+        submitter_redacted_device_certificate: bytes,
     ) -> (
         tuple[UserCertificate, DeviceCertificate]
         | PkiEnrollmentAcceptValidateBadOutcome
@@ -421,13 +421,13 @@ class BasePkiEnrollmentComponent:
             author=client_ctx.device_id,
             author_verify_key=client_ctx.device_verify_key,
             enrollment_id=req.enrollment_id,
-            accept_payload=req.accept_payload,
-            accept_payload_signature=req.accept_payload_signature,
+            payload=req.payload,
+            payload_signature=req.payload_signature,
             accepter_der_x509_certificate=req.accepter_der_x509_certificate,
-            device_certificate=req.device_certificate,
-            user_certificate=req.user_certificate,
-            redacted_device_certificate=req.redacted_device_certificate,
-            redacted_user_certificate=req.redacted_user_certificate,
+            submitter_device_certificate=req.submitter_device_certificate,
+            submitter_user_certificate=req.submitter_user_certificate,
+            submitter_redacted_device_certificate=req.submitter_redacted_device_certificate,
+            submitter_redacted_user_certificate=req.submitter_redacted_user_certificate,
         )
         match outcome:
             case (_, _):

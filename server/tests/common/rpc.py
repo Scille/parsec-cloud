@@ -298,24 +298,24 @@ class BaseAuthenticatedRpcClient:
 
     async def pki_enrollment_accept(
         self,
-        accept_payload: bytes,
-        accept_payload_signature: bytes,
-        accepter_der_x509_certificate: bytes,
         enrollment_id: EnrollmentID,
-        device_certificate: bytes,
-        user_certificate: bytes,
-        redacted_device_certificate: bytes,
-        redacted_user_certificate: bytes,
+        payload: bytes,
+        payload_signature: bytes,
+        accepter_der_x509_certificate: bytes,
+        submitter_user_certificate: bytes,
+        submitter_device_certificate: bytes,
+        submitter_redacted_user_certificate: bytes,
+        submitter_redacted_device_certificate: bytes,
     ) -> authenticated_cmds.latest.pki_enrollment_accept.Rep:
         req = authenticated_cmds.latest.pki_enrollment_accept.Req(
-            accept_payload=accept_payload,
-            accept_payload_signature=accept_payload_signature,
-            accepter_der_x509_certificate=accepter_der_x509_certificate,
             enrollment_id=enrollment_id,
-            device_certificate=device_certificate,
-            user_certificate=user_certificate,
-            redacted_device_certificate=redacted_device_certificate,
-            redacted_user_certificate=redacted_user_certificate,
+            payload=payload,
+            payload_signature=payload_signature,
+            accepter_der_x509_certificate=accepter_der_x509_certificate,
+            submitter_user_certificate=submitter_user_certificate,
+            submitter_device_certificate=submitter_device_certificate,
+            submitter_redacted_user_certificate=submitter_redacted_user_certificate,
+            submitter_redacted_device_certificate=submitter_redacted_device_certificate,
         )
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.pki_enrollment_accept.Rep.load(raw_rep)
