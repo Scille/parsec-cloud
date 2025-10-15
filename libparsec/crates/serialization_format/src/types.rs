@@ -231,7 +231,6 @@ generate_field_type_enum!(
     OrganizationID => libparsec_types::OrganizationID,
     UserID => libparsec_types::UserID,
     VlobID => libparsec_types::VlobID,
-    EnrollmentID => libparsec_types::EnrollmentID,
     SequesterServiceID => libparsec_types::SequesterServiceID,
     AccountAuthMethodID => libparsec_types::AccountAuthMethodID,
     AccountVaultItemOpaqueKeyID => libparsec_types::AccountVaultItemOpaqueKeyID,
@@ -254,8 +253,6 @@ generate_field_type_enum!(
     ActiveUsersLimit => libparsec_types::ActiveUsersLimit,
     ChunkView => libparsec_types::ChunkView,
     UsersPerProfileDetailItem => libparsec_types::UsersPerProfileDetailItem,
-    PkiEnrollmentSubmitPayload => PkiEnrollmentSubmitPayload,
-    X509Certificate => libparsec_types::X509Certificate,
     GreetingAttemptID => libparsec_types::GreetingAttemptID,
     GreeterOrClaimer => libparsec_types::GreeterOrClaimer,
     CancelledGreetingAttemptReason => libparsec_types::CancelledGreetingAttemptReason,
@@ -265,4 +262,9 @@ generate_field_type_enum!(
     // Used only in shamir
     ShamirRecoveryShareData => libparsec_types::ShamirRecoveryShareData,
     ShamirShare =>  libparsec_types::ShamirShare,
+    // PKI
+    EnrollmentID => libparsec_types::EnrollmentID,
+    PkiEnrollmentSubmitPayload => PkiEnrollmentSubmitPayload,
+    X509Certificate => libparsec_types::X509Certificate,
+    CertificateReference => libparsec_types::CertificateReference,
 );

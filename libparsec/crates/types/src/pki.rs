@@ -16,9 +16,9 @@ use libparsec_serialization_format::parsec_data;
 use crate::{
     self as libparsec_types, impl_transparent_data_format_conversion,
     serialization::{format_v0_dump, format_vx_load},
-    CertificateReferenceData, DataError, DataResult, DateTime, DeviceID, DeviceLabel, EnrollmentID,
-    HumanHandle, ParsecAddr, ParsecPkiEnrollmentAddr, PkiEnrollmentLocalPendingError,
-    PkiEnrollmentLocalPendingResult, UserID, UserProfile,
+    DataError, DataResult, DateTime, DeviceID, DeviceLabel, EnrollmentID, HumanHandle, ParsecAddr,
+    ParsecPkiEnrollmentAddr, PkiEnrollmentLocalPendingError, PkiEnrollmentLocalPendingResult,
+    UserID, UserProfile,
 };
 
 /*
@@ -326,36 +326,35 @@ impl FromStr for CertificateHash {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(
+    into = "CertificateReferenceData",
+    try_from = "CertificateReferenceData"
+)]
 pub enum CertificateReference {
     Id(Bytes),
     Hash(CertificateHash),
     IdOrHash(CertificateReferenceIdOrHash),
 }
 
+parsec_data!("schema/pki/certificate_reference.json5");
+
 impl TryFrom<CertificateReferenceData> for CertificateReference {
     type Error = DataError;
 
     fn try_from(value: CertificateReferenceData) -> Result<Self, Self::Error> {
-        match value {
-            CertificateReferenceData {
-                certificate_hash: None,
-                certificate_id: None,
-            } => Err(DataError::DataIntegrity {
+        let CertificateReferenceData {
+            certificate_hash,
+            certificate_id,
+            ty: _ty,
+        } = value;
+        match (certificate_hash, certificate_id) {
+            (None, None) => Err(DataError::DataIntegrity {
                 data_type: "Certificate reference",
                 invariant: "id or hash must be provided",
             }),
-            CertificateReferenceData {
-                certificate_hash: Some(hash),
-                certificate_id: None,
-            } => Ok(CertificateReference::Hash(hash.parse()?)),
-            CertificateReferenceData {
-                certificate_hash: None,
-                certificate_id: Some(id),
-            } => Ok(CertificateReference::Id(id)),
-            CertificateReferenceData {
-                certificate_hash: Some(hash),
-                certificate_id: Some(id),
-            } => Ok(CertificateReference::IdOrHash(
+            (Some(hash), None) => Ok(CertificateReference::Hash(hash.parse()?)),
+            (None, Some(id)) => Ok(CertificateReference::Id(id)),
+            (Some(hash), Some(id)) => Ok(CertificateReference::IdOrHash(
                 CertificateReferenceIdOrHash {
                     id,
                     hash: hash.parse()?,
@@ -367,22 +366,17 @@ impl TryFrom<CertificateReferenceData> for CertificateReference {
 
 impl From<CertificateReference> for CertificateReferenceData {
     fn from(value: CertificateReference) -> Self {
-        match value {
-            CertificateReference::Id(id) => CertificateReferenceData {
-                certificate_hash: None,
-                certificate_id: Some(id),
-            },
-            CertificateReference::Hash(hash) => CertificateReferenceData {
-                certificate_hash: Some(hash.to_string()),
-                certificate_id: None,
-            },
-            CertificateReference::IdOrHash(id_or_hash) => {
-                let CertificateReferenceIdOrHash { id, hash } = id_or_hash;
-                CertificateReferenceData {
-                    certificate_hash: Some(hash.to_string()),
-                    certificate_id: Some(id),
-                }
+        let (hash, id) = match value {
+            CertificateReference::Id(id) => (None, Some(id)),
+            CertificateReference::Hash(hash) => (Some(hash), None),
+            CertificateReference::IdOrHash(CertificateReferenceIdOrHash { id, hash }) => {
+                (Some(hash), Some(id))
             }
+        };
+        CertificateReferenceData {
+            ty: Default::default(),
+            certificate_hash: hash.map(|v| v.to_string()),
+            certificate_id: id,
         }
     }
 }
