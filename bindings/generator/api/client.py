@@ -29,8 +29,7 @@ from .common import (
     EnumItemUnit,
     NonZeroU8,
 )
-from .device import DeviceAccessStrategy
-from .invite import DeviceSaveStrategy, AvailableDevice
+from .device import DeviceAccessStrategy, DeviceSaveStrategy, AvailableDevice
 from .config import ClientConfig
 
 
