@@ -235,6 +235,16 @@ async function logout(): Promise<void> {
       await storageManager.storeDevicesData(storedDeviceDataDict);
     }
 
+    // If there's only one client started (the current one), it's safe
+    // to remove the warning. Things become a bit more complicated when there
+    // are multiple started client because we don't know if another tab is
+    // opened, and if that's not the case, refreshing the home page
+    // would also mean losing those clients, so we want to keep the
+    // warning.
+    if (startedClients.length === 1) {
+      refreshWarning.removeWarning();
+    }
+
     // Cleaning the injections will automatically cancel the imports
     await injectionProvider.clean(handle);
     const logoutResult = await parsecLogout();
