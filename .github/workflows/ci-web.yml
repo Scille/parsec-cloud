@@ -175,7 +175,7 @@ jobs:
         ports:
           - 6777:6777
       cryptpad:
-        image: ghcr.io/scille/cryptpad-saas-deploy/cryptpad:3f7a90a
+        image: ghcr.io/scille/cryptpad-saas-deploy/cryptpad:0d9c077
         credentials:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
