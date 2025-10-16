@@ -121,6 +121,7 @@ export type KeyDerivation = Uint8Array
 export type SecretKey = Uint8Array
 export type SequesterVerifyKeyDer = Uint8Array
 export type Sha256BoxData = Uint8Array
+export type X509WindowsCngURI = Uint8Array
 export type NonZeroU8 = number
 export type U8 = number
 export type I32 = number
@@ -470,8 +471,11 @@ export interface WorkspaceUserAccessInfo {
 }
 
 export interface X509CertificateReference {
-    uri: Bytes | null
+    uris: Array<X509URIFlavorValue>
     hash: X509CertificateHash
+}
+
+export interface X509Pkcs11URI {
 }
 
 // AccountAuthMethodStrategy
@@ -4970,6 +4974,24 @@ export type WorkspaceWatchEntryOneShotError =
   | WorkspaceWatchEntryOneShotErrorNoRealmAccess
   | WorkspaceWatchEntryOneShotErrorOffline
   | WorkspaceWatchEntryOneShotErrorStopped
+
+// X509URIFlavorValue
+export enum X509URIFlavorValueTag {
+    PKCS11 = 'X509URIFlavorValuePKCS11',
+    WindowsCNG = 'X509URIFlavorValueWindowsCNG',
+}
+
+export interface X509URIFlavorValuePKCS11 {
+    tag: X509URIFlavorValueTag.PKCS11
+    x1: X509Pkcs11URI
+}
+export interface X509URIFlavorValueWindowsCNG {
+    tag: X509URIFlavorValueTag.WindowsCNG
+    x1: X509WindowsCngURI
+}
+export type X509URIFlavorValue =
+  | X509URIFlavorValuePKCS11
+  | X509URIFlavorValueWindowsCNG
 
 export interface LibParsecPlugin {
     accountCreate1SendValidationEmail(

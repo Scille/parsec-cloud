@@ -3,7 +3,7 @@
 use std::{collections::HashMap, str::FromStr};
 
 use libparsec_tests_lite::prelude::*;
-use serde_test::Token;
+use serde_test::{Configure, Token};
 
 use crate::fixtures::{alice, Device};
 use crate::prelude::*;
@@ -19,6 +19,70 @@ use crate::prelude::*;
 )]
 fn serde_cert_hash(#[case] raw: &'static str, #[case] expected: X509CertificateHash) {
     serde_test::assert_tokens(&expected, &[Token::BorrowedStr(raw)]);
+}
+
+#[test]
+fn serde_cert_ref() {
+    let cert_ref = X509CertificateReference::from(X509CertificateHash::fake_sha256())
+        .add_or_replace_uri(X509WindowsCngURI::from(&b"DEADBEEF"[..]));
+    let expected_tokens = [
+        Token::Struct {
+            name: "X509CertificateReference",
+            len: 2,
+        },
+        Token::Str("uris"),
+        Token::Seq { len: Some(1) },
+        Token::NewtypeVariant {
+            name: "X509URIFlavorValue",
+            // cspell:disable-next-line
+            variant: "windowscng",
+        },
+        Token::NewtypeStruct {
+            name: "X509WindowsCngURI",
+        },
+        Token::Bytes(b"DEADBEEF"),
+        Token::SeqEnd,
+        Token::Str("hash"),
+        Token::BorrowedStr("sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="),
+        Token::StructEnd,
+    ];
+
+    // We test both readable and compact form, both should result in the same representation as we
+    // do not do any special treatment
+    serde_test::assert_tokens(&cert_ref.clone().readable(), &expected_tokens);
+    serde_test::assert_tokens(&cert_ref.compact(), &expected_tokens);
+}
+
+#[test]
+fn serde_cert_ref_skip_unknown_uris() {
+    let expected_cert_ref = X509CertificateReference::from(X509CertificateHash::fake_sha256());
+    let got_tokens = [
+        Token::Struct {
+            name: "X509CertificateReference",
+            len: 2,
+        },
+        Token::Str("uris"),
+        Token::Seq { len: Some(2) },
+        // Unknown variant of X509URIFlavorValue
+        Token::NewtypeVariant {
+            name: "X509URIFlavorValue",
+            variant: "a_unknown_uri_variant",
+        },
+        Token::Bytes(b"test"),
+        // Invalid windows cng variant, provided with 42u8 instead of a byte array.
+        Token::NewtypeVariant {
+            name: "X509URIFlavorValue",
+            // cspell:disable-next-line
+            variant: "windowscng",
+        },
+        Token::I8(42),
+        Token::SeqEnd,
+        Token::Str("hash"),
+        Token::BorrowedStr("sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="),
+        Token::StructEnd,
+    ];
+
+    serde_test::assert_de_tokens(&expected_cert_ref.compact(), &got_tokens);
 }
 
 #[test]

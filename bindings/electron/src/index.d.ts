@@ -482,8 +482,12 @@ export interface WorkspaceUserAccessInfo {
 
 
 export interface X509CertificateReference {
-    uri: Uint8Array | null
+    uris: Array<X509URIFlavorValue>
     hash: string
+}
+
+
+export interface X509Pkcs11URI {
 }
 
 
@@ -4138,6 +4142,20 @@ export type WorkspaceWatchEntryOneShotError =
   | WorkspaceWatchEntryOneShotErrorNoRealmAccess
   | WorkspaceWatchEntryOneShotErrorOffline
   | WorkspaceWatchEntryOneShotErrorStopped
+
+
+// X509URIFlavorValue
+export interface X509URIFlavorValuePKCS11 {
+    tag: "PKCS11"
+    x1: X509Pkcs11URI
+}
+export interface X509URIFlavorValueWindowsCNG {
+    tag: "WindowsCNG"
+    x1: Uint8Array
+}
+export type X509URIFlavorValue =
+  | X509URIFlavorValuePKCS11
+  | X509URIFlavorValueWindowsCNG
 
 
 export function accountCreate1SendValidationEmail(

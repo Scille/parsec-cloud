@@ -64,6 +64,10 @@ class Structure:
     pass
 
 
+class UnitStructure(Structure):
+    pass
+
+
 # Represent passing parameter in function by reference
 class Ref(Generic[REFERENCED]):
     pass

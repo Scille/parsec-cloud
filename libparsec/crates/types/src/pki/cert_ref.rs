@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::str::FromStr;
+use std::{fmt::Display, str::FromStr};
 
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
@@ -63,32 +63,175 @@ impl FromStr for X509CertificateHash {
     }
 }
 
+#[serde_with::serde_as]
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct X509CertificateReference {
-    pub uri: Option<Bytes>,
+    /// List of URI to reference a given certificate.
+    ///
+    /// Currently the field is private as we only allow for only one of each types of URIs in the list,
+    /// we use [`X509CertificateReference::add_or_replace_uri`] to enforce that constrain.
+    #[serde_as(as = "serde_with::VecSkipError<_>")]
+    uris: Vec<X509URIFlavorValue>,
     pub hash: X509CertificateHash,
 }
 
-impl From<X509CertificateHash> for X509CertificateReference {
-    fn from(hash: X509CertificateHash) -> Self {
-        Self { uri: None, hash }
-    }
-}
+use private::X509URIFlavor;
 
 impl X509CertificateReference {
     /// Add or replace a certificate URI.
     ///
     /// The list will only contain a single types of URI
-    pub fn add_or_replace_uri(mut self, uri: Bytes) -> Self {
-        let _ = self.uri.replace(uri);
+    pub fn add_or_replace_uri<Flavor: X509URIFlavor>(self, new_uri: Flavor) -> Self {
+        self.add_or_replace_uri_wrapped(new_uri.into())
+    }
+
+    pub fn add_or_replace_uri_wrapped(mut self, new_uri: X509URIFlavorValue) -> Self {
+        match self
+            .uris
+            .binary_search_by(|uri| uri.header().cmp(new_uri.header()))
+        {
+            // A URI already use that flavor, replacing it.
+            Ok(pos) => self.uris[pos] = new_uri,
+            // No URIs use that flavor, inserting so the list is keep sorted.
+            Err(pos) => self.uris.insert(pos, new_uri),
+        }
         self
     }
 
-    pub fn get_uri(&self) -> Option<&Bytes> {
-        self.uri.as_ref()
+    pub fn uris(&self) -> impl Iterator<Item = &X509URIFlavorValue> {
+        self.uris.iter()
     }
 
-    pub fn uris(&self) -> impl Iterator<Item = &Bytes> {
-        self.uri.iter()
+    pub fn get_uri<Flavor: X509URIFlavor>(&self) -> Option<&Flavor> {
+        self.uris.iter().find_map(|uri| Flavor::may_unwrap(uri))
+    }
+}
+
+mod private {
+    pub trait X509URIFlavor: Sized + Into<super::X509URIFlavorValue> {
+        const HEADER: &'static str;
+
+        fn header(&self) -> &'static str {
+            Self::HEADER
+        }
+
+        fn may_unwrap(wrapper: &super::X509URIFlavorValue) -> Option<&Self>;
+    }
+}
+
+impl From<X509CertificateHash> for X509CertificateReference {
+    fn from(hash: X509CertificateHash) -> Self {
+        Self {
+            uris: Vec::new(),
+            hash,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+pub struct X509WindowsCngURI(Bytes);
+
+impl From<Bytes> for X509WindowsCngURI {
+    fn from(value: Bytes) -> Self {
+        Self(value)
+    }
+}
+
+impl From<X509WindowsCngURI> for Vec<u8> {
+    fn from(value: X509WindowsCngURI) -> Self {
+        value.0.into()
+    }
+}
+
+impl From<&'static [u8]> for X509WindowsCngURI {
+    fn from(value: &'static [u8]) -> Self {
+        Self(Bytes::from_static(value))
+    }
+}
+
+impl X509URIFlavor for X509WindowsCngURI {
+    const HEADER: &'static str = "windows-cng";
+    fn may_unwrap(wrapper: &X509URIFlavorValue) -> Option<&Self> {
+        match wrapper {
+            X509URIFlavorValue::WindowsCNG(uri) => Some(uri),
+            _ => None,
+        }
+    }
+}
+
+impl Display for X509WindowsCngURI {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}:{}",
+            Self::HEADER,
+            data_encoding::BASE64.encode_display(&self.0)
+        )
+    }
+}
+
+impl AsRef<[u8]> for X509WindowsCngURI {
+    fn as_ref(&self) -> &[u8] {
+        &self.0
+    }
+}
+
+impl From<X509WindowsCngURI> for X509URIFlavorValue {
+    fn from(value: X509WindowsCngURI) -> Self {
+        Self::WindowsCNG(value)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+// TODO: See if we store raw pkcs11 attribute in a list
+// Or a string representing a valid pkcs11-URI (following RFC-7512)
+// Or something else
+pub struct X509Pkcs11URI;
+
+impl X509URIFlavor for X509Pkcs11URI {
+    const HEADER: &'static str = "pkcs11";
+
+    fn may_unwrap(wrapper: &X509URIFlavorValue) -> Option<&Self> {
+        match wrapper {
+            X509URIFlavorValue::PKCS11(uri) => Some(uri),
+            _ => None,
+        }
+    }
+}
+
+impl Display for X509Pkcs11URI {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}:", Self::HEADER)
+    }
+}
+
+impl From<X509Pkcs11URI> for X509URIFlavorValue {
+    fn from(value: X509Pkcs11URI) -> Self {
+        Self::PKCS11(value)
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+#[serde(rename_all = "lowercase")]
+pub enum X509URIFlavorValue {
+    WindowsCNG(X509WindowsCngURI),
+    PKCS11(X509Pkcs11URI),
+}
+
+impl X509URIFlavorValue {
+    fn header(&self) -> &'static str {
+        match self {
+            X509URIFlavorValue::WindowsCNG(uri) => uri.header(),
+            X509URIFlavorValue::PKCS11(uri) => uri.header(),
+        }
+    }
+}
+
+impl Display for X509URIFlavorValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::WindowsCNG(data) => data.fmt(f),
+            Self::PKCS11(data) => data.fmt(f),
+        }
     }
 }

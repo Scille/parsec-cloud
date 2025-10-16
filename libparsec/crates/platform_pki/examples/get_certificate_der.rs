@@ -38,10 +38,7 @@ fn main() -> anyhow::Result<()> {
 
     let cert = get_der_encoded_certificate(&cert_ref).context("Get certificate")?;
 
-    println!(
-        "id: {}",
-        data_encoding::BASE64.encode_display(cert.cert_ref.uris().next().unwrap())
-    );
+    println!("id: {}", &cert.cert_ref.uris().next().unwrap());
     println!("fingerprint: {}", cert.cert_ref.hash);
     println!(
         "content: {}",
