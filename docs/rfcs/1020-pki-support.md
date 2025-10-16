@@ -399,6 +399,7 @@ Once the certificate validated, we can validate the payload signature against th
   "req": {
     "fields": [
       {
+        // The enrollment ID for which information is requested
         "name": "enrollment_id",
         "type": "EnrollmentID"
       }
@@ -410,7 +411,8 @@ Once the certificate validated, we can validate the payload signature against th
       "unit": "PkiEnrollmentInfoStatus"
     },
     {
-      "status": "not_found"
+      // The server did not found a request for the provided ID
+      "status": "enrollment_not_found"
     }
   ]
 }
