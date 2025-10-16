@@ -227,6 +227,8 @@ class BasePkiEnrollmentComponent:
     ) -> list[PkiEnrollmentListItem] | PkiEnrollmentListBadOutcome:
         raise NotImplementedError
 
+
+
     async def reject(
         self,
         now: DateTime,
@@ -377,6 +379,7 @@ class BasePkiEnrollmentComponent:
             case PkiEnrollmentListBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
 
+    
     @api
     async def api_pki_enrollment_reject(
         self,
