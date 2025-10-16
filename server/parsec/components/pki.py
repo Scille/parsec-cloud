@@ -367,7 +367,7 @@ class BasePkiEnrollmentComponent:
                     ]
                 )
             case PkiEnrollmentListBadOutcome.AUTHOR_NOT_ALLOWED:
-                return authenticated_cmds.latest.pki_enrollment_list.RepNotAllowed()
+                return authenticated_cmds.latest.pki_enrollment_list.RepAuthorNotAllowed()
             case PkiEnrollmentListBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case PkiEnrollmentListBadOutcome.ORGANIZATION_EXPIRED:

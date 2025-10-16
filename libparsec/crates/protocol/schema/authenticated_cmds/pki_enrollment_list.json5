@@ -17,7 +17,7 @@
             },
             {
                 // The command should only be used by admin users
-                "status": "not_allowed"
+                "status": "author_not_allowed"
             }
         ],
         "nested_types": [

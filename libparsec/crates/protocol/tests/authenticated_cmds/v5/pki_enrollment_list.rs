@@ -100,12 +100,12 @@ pub fn rep_ok() {
     }
 }
 
-pub fn rep_not_allowed() {
+pub fn rep_author_not_allowed() {
     // Generated from Parsec 3.5.1-a.0+dev
     // Content:
-    //   status: 'not_allowed'
-    let raw: &[u8] = hex!("81a6737461747573ab6e6f745f616c6c6f776564").as_ref();
-    let expected = authenticated_cmds::pki_enrollment_list::Rep::NotAllowed;
+    //   status: 'author_not_allowed'
+    let raw: &[u8] = hex!("81a6737461747573b2617574686f725f6e6f745f616c6c6f776564").as_ref();
+    let expected = authenticated_cmds::pki_enrollment_list::Rep::AuthorNotAllowed;
     println!("***expected: {:?}", expected.dump().unwrap());
     let data = authenticated_cmds::pki_enrollment_list::Rep::load(raw).unwrap();
 
