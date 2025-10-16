@@ -4719,23 +4719,18 @@ fn struct_workspace_user_access_info_rs_to_js(
 fn struct_x509_certificate_reference_js_to_rs(
     obj: JsValue,
 ) -> Result<libparsec::X509CertificateReference, JsValue> {
-    let uri = {
-        let js_val = Reflect::get(&obj, &"uri".into())?;
-        if js_val.is_null() {
-            None
-        } else {
-            Some(
-                js_val
-                    .dyn_into::<Uint8Array>()
-                    .map(|x| x.to_vec())
-                    .map_err(|_| TypeError::new("Not a Uint8Array"))
-                    .and_then(|x| {
-                        let custom_from_rs_bytes = |v: &[u8]| -> Result<libparsec::Bytes, String> {
-                            Ok(v.to_vec().into())
-                        };
-                        custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
-                    })?,
-            )
+    let uris = {
+        let js_val = Reflect::get(&obj, &"uris".into())?;
+        {
+            let js_val = js_val
+                .dyn_into::<Array>()
+                .map_err(|_| TypeError::new("Not an array"))?;
+            let mut converted = Vec::with_capacity(js_val.length() as usize);
+            for x in js_val.iter() {
+                let x_converted = variant_x509_uri_flavor_value_js_to_rs(x)?;
+                converted.push(x_converted);
+            }
+            converted
         }
     };
     let hash = {
@@ -4753,7 +4748,18 @@ fn struct_x509_certificate_reference_js_to_rs(
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
             })?
     };
-    Ok(libparsec::X509CertificateReference { uri, hash })
+    {
+        let custom_init = |uris: Vec<libparsec::X509URIFlavorValue>,
+                           hash: libparsec::X509CertificateHash|
+         -> Result<_, String> {
+            let mut cert_ref = libparsec::X509CertificateReference::from(hash);
+            for uri in uris {
+                cert_ref = cert_ref.add_or_replace_uri_wrapped(uri);
+            }
+            Ok(cert_ref)
+        };
+        custom_init(uris, hash).map_err(|e| e.into())
+    }
 }
 
 #[allow(dead_code)]
@@ -4761,20 +4767,39 @@ fn struct_x509_certificate_reference_rs_to_js(
     rs_obj: libparsec::X509CertificateReference,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_uri = match rs_obj.uri {
-        Some(val) => JsValue::from(Uint8Array::from(val.as_ref())),
-        None => JsValue::NULL,
-    };
-    Reflect::set(&js_obj, &"uri".into(), &js_uri)?;
-    let js_hash = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::X509CertificateHash| -> Result<_, &'static str> { Ok(x.to_string()) };
-        match custom_to_rs_string(rs_obj.hash) {
-            Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+    let js_uris = {
+        let custom_getter =
+            |o: &libparsec::X509CertificateReference| -> Vec<libparsec::X509URIFlavorValue> {
+                o.uris().cloned().collect()
+            };
+        {
+            // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+            let js_array = Array::new_with_length(custom_getter(&rs_obj).len() as u32);
+            for (i, elem) in custom_getter(&rs_obj).into_iter().enumerate() {
+                let js_elem = variant_x509_uri_flavor_value_rs_to_js(elem)?;
+                js_array.set(i as u32, js_elem);
+            }
+            js_array.into()
         }
-        .as_ref()
-    });
+    };
+    Reflect::set(&js_obj, &"uris".into(), &js_uris)?;
+    let js_hash = {
+        let custom_getter =
+            |o: &libparsec::X509CertificateReference| -> libparsec::X509CertificateHash {
+                o.hash.clone()
+            };
+        JsValue::from_str({
+            let custom_to_rs_string =
+                |x: libparsec::X509CertificateHash| -> Result<_, &'static str> {
+                    Ok(x.to_string())
+                };
+            match custom_to_rs_string(custom_getter(&rs_obj)) {
+                Ok(ok) => ok,
+                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            }
+            .as_ref()
+        })
+    };
     Reflect::set(&js_obj, &"hash".into(), &js_hash)?;
     Ok(js_obj)
 }
@@ -17040,6 +17065,80 @@ fn variant_workspace_watch_entry_one_shot_error_rs_to_js(
                 &"tag".into(),
                 &"WorkspaceWatchEntryOneShotErrorStopped".into(),
             )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// X509URIFlavorValue
+
+#[allow(dead_code)]
+fn variant_x509_uri_flavor_value_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::X509URIFlavorValue, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "X509URIFlavorValuePKCS11" => {
+            let x1 = {
+                let js_val = Reflect::get(&obj, &"x1".into())?;
+                {
+                    let _ = js_val;
+                    libparsec::X509Pkcs11URI
+                }
+            };
+            Ok(libparsec::X509URIFlavorValue::PKCS11(x1))
+        }
+        "X509URIFlavorValueWindowsCNG" => {
+            let x1 = {
+                let js_val = Reflect::get(&obj, &"x1".into())?;
+                js_val
+                    .dyn_into::<Uint8Array>()
+                    .map(|x| x.to_vec())
+                    .map_err(|_| TypeError::new("Not a Uint8Array"))
+                    .and_then(|x| {
+                        let custom_from_rs_bytes = |v: &[u8]| -> Result<_, String> {
+                            Ok(libparsec::Bytes::copy_from_slice(v).into())
+                        };
+                        custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            };
+            Ok(libparsec::X509URIFlavorValue::WindowsCNG(x1))
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a X509URIFlavorValue",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_x509_uri_flavor_value_rs_to_js(
+    rs_obj: libparsec::X509URIFlavorValue,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::X509URIFlavorValue::PKCS11(x1, ..) => {
+            Reflect::set(&js_obj, &"tag".into(), &"PKCS11".into())?;
+            let js_x1 = {
+                let _ = x1;
+                JsValue::UNDEFINED
+            };
+            Reflect::set(&js_obj, &"x1".into(), &js_x1.into())?;
+        }
+        libparsec::X509URIFlavorValue::WindowsCNG(x1, ..) => {
+            Reflect::set(&js_obj, &"tag".into(), &"WindowsCNG".into())?;
+            let js_x1 = JsValue::from(Uint8Array::from({
+                let custom_to_rs_bytes =
+                    |v: libparsec::X509WindowsCngURI| -> Result<Vec<u8>, String> { Ok(v.into()) };
+                match custom_to_rs_bytes(x1) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            }));
+            Reflect::set(&js_obj, &"x1".into(), &js_x1.into())?;
         }
     }
     Ok(js_obj)

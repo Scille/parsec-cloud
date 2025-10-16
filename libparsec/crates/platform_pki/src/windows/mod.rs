@@ -8,7 +8,7 @@ use crate::{
     SignMessageError, SignatureAlgorithm, SignedMessageFromPki,
 };
 use bytes::Bytes;
-use libparsec_types::{X509CertificateHash, X509CertificateReference};
+use libparsec_types::{X509CertificateHash, X509CertificateReference, X509WindowsCngURI};
 use schannel::{
     cert_context::{CertContext, HashAlgorithm, PrivateKey},
     cert_store::CertStore,
@@ -57,21 +57,25 @@ fn find_certificate(
     store: &CertStore,
     certificate_ref: &X509CertificateReference,
 ) -> Option<CertContext> {
-    let matcher: Box<dyn Fn(&CertContext) -> bool> = match certificate_ref.get_uri() {
-        Some(uri) => Box::new(move |candidate: &CertContext| {
-            cert_cmp_id(candidate, uri.as_ref()).unwrap_or_default()
-                || cert_cmp_hash(&certificate_ref.hash, candidate)
-        }),
-        None => {
-            Box::new(move |candidate: &CertContext| cert_cmp_hash(&certificate_ref.hash, candidate))
-        }
-    };
+    let matcher: Box<dyn Fn(&CertContext) -> bool> =
+        match certificate_ref.get_uri::<X509WindowsCngURI>() {
+            None => Box::new(move |candidate: &CertContext| {
+                cert_cmp_hash(&certificate_ref.hash, candidate)
+            }),
+            Some(id) => Box::new(move |candidate: &CertContext| {
+                cert_cmp_id(candidate, id).unwrap_or_default()
+                    || cert_cmp_hash(&certificate_ref.hash, candidate)
+            }),
+        };
 
     store.certs().find(matcher)
 }
 
-fn cert_cmp_id(cert_context: &CertContext, expected_id: &[u8]) -> std::io::Result<bool> {
-    get_certificate_id(cert_context).map(|cert_id| cert_id == expected_id)
+fn cert_cmp_id(
+    cert_context: &CertContext,
+    expected_id: &X509WindowsCngURI,
+) -> std::io::Result<bool> {
+    get_certificate_id(cert_context).map(|cert_id| cert_id == expected_id.as_ref())
 }
 
 fn get_certificate_id(cert_context: &CertContext) -> std::io::Result<Vec<u8>> {
@@ -130,7 +134,7 @@ pub fn get_der_encoded_certificate(
 fn get_id_and_hash_from_cert_context(
     context: &CertContext,
 ) -> std::io::Result<X509CertificateReference> {
-    let id = get_certificate_id(context)?.into();
+    let id = X509WindowsCngURI::from(Bytes::from(get_certificate_id(context)?));
     let hash = hash_from_certificate_context(context)?;
 
     Ok(X509CertificateReference::from(hash).add_or_replace_uri(id))

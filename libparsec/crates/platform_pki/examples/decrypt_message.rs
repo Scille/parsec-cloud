@@ -35,7 +35,7 @@ fn main() -> anyhow::Result<()> {
 
     println!(
         "Decrypted by cert with id {{{}}} with algo {}",
-        data_encoding::BASE64.encode_display(res.cert_ref.uris().next().unwrap()),
+        &res.cert_ref.uris().next().unwrap(),
         args.algorithm
     );
     println!("Decrypted by cert with fingerprint: {}", res.cert_ref.hash);

@@ -22,7 +22,10 @@ use crate::{
     ParsecPkiEnrollmentAddr, PkiEnrollmentLocalPendingError, PkiEnrollmentLocalPendingResult,
     UserID, UserProfile,
 };
-pub use cert_ref::{X509CertificateHash, X509CertificateReference};
+pub use cert_ref::{
+    X509CertificateHash, X509CertificateReference, X509Pkcs11URI, X509URIFlavorValue,
+    X509WindowsCngURI,
+};
 
 /*
  * PkiEnrollmentAnswerPayload
