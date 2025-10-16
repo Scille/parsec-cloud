@@ -4,6 +4,7 @@
 
 mod list_frozen_users;
 mod organization_info;
+mod pki_enrollment_list;
 mod recovery_device;
 mod shamir_recovery_delete;
 mod shamir_recovery_list;
@@ -30,6 +31,8 @@ use std::{
 
 pub use self::{
     list_frozen_users::ClientListFrozenUsersError,
+    pki_enrollment_list::PkiEnrollmentListError,
+    pki_enrollment_list::PkiEnrollmentListItem,
     start_invitation_greet::ClientStartShamirRecoveryInvitationGreetError,
     tos::{ClientAcceptTosError, ClientGetTosError, Tos},
     workspace_bootstrap::ClientEnsureWorkspacesBootstrappedError,
@@ -673,6 +676,13 @@ impl Client {
         &self,
     ) -> Result<DateTime, ClientGetOrganizationBootstrapDateError> {
         organization_info::get_organization_bootstrap_date(self).await
+    }
+
+    /// List pending PKI enrollments (requests to join an organization)
+    pub async fn pki_list_enrollments(
+        &self,
+    ) -> Result<Vec<PkiEnrollmentListItem>, PkiEnrollmentListError> {
+        pki_enrollment_list::list_enrollments(&self.cmds).await
     }
 }
 
