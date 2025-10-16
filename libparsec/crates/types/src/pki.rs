@@ -333,8 +333,21 @@ impl FromStr for X509CertificateHash {
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct X509CertificateReference {
-    pub id: Option<Bytes>,
+    pub uri: Option<Bytes>,
     pub hash: X509CertificateHash,
+}
+
+impl X509CertificateReference {
+    pub fn with_uri(mut self, uri: Bytes) -> Self {
+        self.uri.replace(uri);
+        self
+    }
+}
+
+impl From<X509CertificateHash> for X509CertificateReference {
+    fn from(hash: X509CertificateHash) -> Self {
+        Self { uri: None, hash }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

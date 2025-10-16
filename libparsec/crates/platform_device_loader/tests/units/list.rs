@@ -165,10 +165,8 @@ async fn list_devices(tmp_path: TmpPath) {
             .parse()
             .unwrap(),
         device_label: "PC1".parse().unwrap(),
-        certificate_ref: X509CertificateReference {
-            id: Some(Bytes::from_static(b"Mallory's certificate")),
-            hash: X509CertificateHash::fake_sha256(),
-        },
+        certificate_ref: X509CertificateReference::from(X509CertificateHash::fake_sha256())
+            .with_uri(Bytes::from_static(b"Mallory's certificate")),
         algorithm_for_encrypted_key: EncryptionAlgorithm::RsaesOaepSha256,
         encrypted_key: hex!("de5c59cfcc0c52bf997594e0fdd2c24ffee9465b6f25e30bac9238c2f83fd19a")
             .as_ref()

@@ -57,7 +57,7 @@ fn find_certificate(
     store: &CertStore,
     certificate_ref: &X509CertificateReference,
 ) -> Option<CertContext> {
-    let matcher: Box<dyn Fn(&CertContext) -> bool> = match certificate_ref.id.as_ref() {
+    let matcher: Box<dyn Fn(&CertContext) -> bool> = match certificate_ref.uri.as_ref() {
         None => {
             Box::new(move |candidate: &CertContext| cert_cmp_hash(&certificate_ref.hash, candidate))
         }
@@ -133,7 +133,7 @@ fn get_id_and_hash_from_cert_context(
     let id = get_certificate_id(context)?.into();
     let hash = hash_from_certificate_context(context)?;
 
-    Ok(X509CertificateReference { id: Some(id), hash })
+    Ok(X509CertificateReference::from(hash).with_uri(id))
 }
 
 pub fn show_certificate_selection_dialog_windows_only(

@@ -6,7 +6,7 @@ mod utils;
 use anyhow::Context;
 use clap::Parser;
 use libparsec_platform_pki::sign_message;
-use libparsec_types::{X509CertificateHash, X509CertificateReference};
+use libparsec_types::X509CertificateHash;
 
 #[derive(Debug, Parser)]
 struct Args {
@@ -21,16 +21,13 @@ fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     println!("args={args:?}");
 
-    let cert_ref = X509CertificateReference {
-        id: None,
-        hash: args.certificate_hash,
-    };
+    let cert_ref = args.certificate_hash.into();
     let data: Vec<u8> = args.content.into_bytes()?;
     let res = sign_message(&data, &cert_ref).context("Failed to sign message")?;
 
     println!(
         "Signed by cert with id {{{}}} with algorithm {}",
-        data_encoding::BASE64.encode_display(&res.cert_ref.id.unwrap()),
+        data_encoding::BASE64.encode_display(&res.cert_ref.uri.unwrap()),
         res.algo
     );
     println!("Signed by cert with fingerprint: {}", res.cert_ref.hash);

@@ -6,7 +6,7 @@ mod utils;
 use anyhow::Context;
 use clap::Parser;
 use libparsec_platform_pki::decrypt_message;
-use libparsec_types::{EncryptionAlgorithm, X509CertificateHash, X509CertificateReference};
+use libparsec_types::{EncryptionAlgorithm, X509CertificateHash};
 
 #[derive(Debug, Parser)]
 struct Args {
@@ -24,10 +24,7 @@ fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     println!("args={args:?}");
 
-    let cert_ref = X509CertificateReference {
-        id: None,
-        hash: args.certificate_hash,
-    };
+    let cert_ref = args.certificate_hash.into();
     let b64_data = args.content.into_bytes()?;
     let data = data_encoding::BASE64
         .decode(&b64_data)
@@ -38,7 +35,7 @@ fn main() -> anyhow::Result<()> {
 
     println!(
         "Decrypted by cert with id {{{}}} with algo {}",
-        data_encoding::BASE64.encode_display(&res.cert_ref.id.unwrap()),
+        data_encoding::BASE64.encode_display(&res.cert_ref.uri.unwrap()),
         args.algorithm
     );
     println!("Decrypted by cert with fingerprint: {}", res.cert_ref.hash);

@@ -21,7 +21,7 @@ fn main() -> anyhow::Result<()> {
     println!("args={args:?}");
 
     let cert_ref: X509CertificateReference = match args.certificate_hash {
-        Some(hash) => X509CertificateReference { id: None, hash },
+        Some(hash) => hash.into(),
         #[cfg(target_os = "windows")]
         None => libparsec_platform_pki::show_certificate_selection_dialog_windows_only()
             .map_err(anyhow::Error::from)
@@ -39,7 +39,7 @@ fn main() -> anyhow::Result<()> {
 
     println!(
         "id: {}",
-        data_encoding::BASE64.encode_display(&cert.cert_ref.id.unwrap())
+        data_encoding::BASE64.encode_display(&cert.cert_ref.uri.unwrap())
     );
     println!("fingerprint: {}", cert.cert_ref.hash);
     println!(
