@@ -311,6 +311,30 @@ fn enum_log_level_rs_to_js(value: libparsec::LogLevel) -> &'static str {
     }
 }
 
+// OpenBaoAuthType
+
+#[allow(dead_code)]
+fn enum_open_bao_auth_type_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    raw_value: &str,
+) -> NeonResult<libparsec::OpenBaoAuthType> {
+    match raw_value {
+        "OpenBaoAuthTypeAgentConnect" => Ok(libparsec::OpenBaoAuthType::AgentConnect),
+        "OpenBaoAuthTypeHexagone" => Ok(libparsec::OpenBaoAuthType::Hexagone),
+        _ => cx.throw_range_error(format!(
+            "Invalid value `{raw_value}` for enum OpenBaoAuthType"
+        )),
+    }
+}
+
+#[allow(dead_code)]
+fn enum_open_bao_auth_type_rs_to_js(value: libparsec::OpenBaoAuthType) -> &'static str {
+    match value {
+        libparsec::OpenBaoAuthType::AgentConnect => "OpenBaoAuthTypeAgentConnect",
+        libparsec::OpenBaoAuthType::Hexagone => "OpenBaoAuthTypeHexagone",
+    }
+}
+
 // Platform
 
 #[allow(dead_code)]
@@ -5886,6 +5910,33 @@ fn variant_available_device_type_js_to_rs<'a>(
             Ok(libparsec::AvailableDeviceType::AccountVault { ciphertext_key_id })
         }
         "AvailableDeviceTypeKeyring" => Ok(libparsec::AvailableDeviceType::Keyring {}),
+        "AvailableDeviceTypeOpenBao" => {
+            let openbao_url = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoUrl")?;
+                js_val.value(cx)
+            };
+            let openbao_ciphertext_key_path = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoCiphertextKeyPath")?;
+                js_val.value(cx)
+            };
+            let openbao_auth_path = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoAuthPath")?;
+                js_val.value(cx)
+            };
+            let openbao_auth_type = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoAuthType")?;
+                {
+                    let js_string = js_val.value(cx);
+                    enum_open_bao_auth_type_js_to_rs(cx, js_string.as_str())?
+                }
+            };
+            Ok(libparsec::AvailableDeviceType::OpenBao {
+                openbao_url,
+                openbao_ciphertext_key_path,
+                openbao_auth_path,
+                openbao_auth_type,
+            })
+        }
         "AvailableDeviceTypePassword" => Ok(libparsec::AvailableDeviceType::Password {}),
         "AvailableDeviceTypeRecovery" => Ok(libparsec::AvailableDeviceType::Recovery {}),
         "AvailableDeviceTypeSmartcard" => Ok(libparsec::AvailableDeviceType::Smartcard {}),
@@ -5921,6 +5972,31 @@ fn variant_available_device_type_rs_to_js<'a>(
         libparsec::AvailableDeviceType::Keyring { .. } => {
             let js_tag = JsString::try_new(cx, "AvailableDeviceTypeKeyring").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AvailableDeviceType::OpenBao {
+            openbao_url,
+            openbao_ciphertext_key_path,
+            openbao_auth_path,
+            openbao_auth_type,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "AvailableDeviceTypeOpenBao").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_openbao_url = JsString::try_new(cx, openbao_url).or_throw(cx)?;
+            js_obj.set(cx, "openbaoUrl", js_openbao_url)?;
+            let js_openbao_ciphertext_key_path =
+                JsString::try_new(cx, openbao_ciphertext_key_path).or_throw(cx)?;
+            js_obj.set(
+                cx,
+                "openbaoCiphertextKeyPath",
+                js_openbao_ciphertext_key_path,
+            )?;
+            let js_openbao_auth_path = JsString::try_new(cx, openbao_auth_path).or_throw(cx)?;
+            js_obj.set(cx, "openbaoAuthPath", js_openbao_auth_path)?;
+            let js_openbao_auth_type =
+                JsString::try_new(cx, enum_open_bao_auth_type_rs_to_js(openbao_auth_type))
+                    .or_throw(cx)?;
+            js_obj.set(cx, "openbaoAuthType", js_openbao_auth_type)?;
         }
         libparsec::AvailableDeviceType::Password { .. } => {
             let js_tag = JsString::try_new(cx, "AvailableDeviceTypePassword").or_throw(cx)?;
@@ -8629,6 +8705,58 @@ fn variant_device_access_strategy_js_to_rs<'a>(
             };
             Ok(libparsec::DeviceAccessStrategy::Keyring { key_file })
         }
+        "DeviceAccessStrategyOpenBao" => {
+            let key_file = {
+                let js_val: Handle<JsString> = obj.get(cx, "keyFile")?;
+                {
+                    let custom_from_rs_string =
+                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let openbao_url = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoUrl")?;
+                js_val.value(cx)
+            };
+            let openbao_ciphertext_key_path = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoCiphertextKeyPath")?;
+                js_val.value(cx)
+            };
+            let openbao_auth_path = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoAuthPath")?;
+                js_val.value(cx)
+            };
+            let openbao_auth_type = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoAuthType")?;
+                {
+                    let js_string = js_val.value(cx);
+                    enum_open_bao_auth_type_js_to_rs(cx, js_string.as_str())?
+                }
+            };
+            let ciphertext_key = {
+                let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "ciphertextKey")?;
+                {
+                    #[allow(clippy::unnecessary_mut_passed)]
+                    match js_val.as_slice(cx).try_into() {
+                        Ok(val) => val,
+                        // err can't infer type in some case, because of the previous `try_into`
+                        #[allow(clippy::useless_format)]
+                        Err(err) => return cx.throw_type_error(format!("{}", err)),
+                    }
+                }
+            };
+            Ok(libparsec::DeviceAccessStrategy::OpenBao {
+                key_file,
+                openbao_url,
+                openbao_ciphertext_key_path,
+                openbao_auth_path,
+                openbao_auth_type,
+                ciphertext_key,
+            })
+        }
         "DeviceAccessStrategyPassword" => {
             let password = {
                 let js_val: Handle<JsString> = obj.get(cx, "password")?;
@@ -8739,6 +8867,56 @@ fn variant_device_access_strategy_rs_to_js<'a>(
             .or_throw(cx)?;
             js_obj.set(cx, "keyFile", js_key_file)?;
         }
+        libparsec::DeviceAccessStrategy::OpenBao {
+            key_file,
+            openbao_url,
+            openbao_ciphertext_key_path,
+            openbao_auth_path,
+            openbao_auth_type,
+            ciphertext_key,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "DeviceAccessStrategyOpenBao").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_key_file = JsString::try_new(cx, {
+                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                    path.into_os_string()
+                        .into_string()
+                        .map_err(|_| "Path contains non-utf8 characters")
+                };
+                match custom_to_rs_string(key_file) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "keyFile", js_key_file)?;
+            let js_openbao_url = JsString::try_new(cx, openbao_url).or_throw(cx)?;
+            js_obj.set(cx, "openbaoUrl", js_openbao_url)?;
+            let js_openbao_ciphertext_key_path =
+                JsString::try_new(cx, openbao_ciphertext_key_path).or_throw(cx)?;
+            js_obj.set(
+                cx,
+                "openbaoCiphertextKeyPath",
+                js_openbao_ciphertext_key_path,
+            )?;
+            let js_openbao_auth_path = JsString::try_new(cx, openbao_auth_path).or_throw(cx)?;
+            js_obj.set(cx, "openbaoAuthPath", js_openbao_auth_path)?;
+            let js_openbao_auth_type =
+                JsString::try_new(cx, enum_open_bao_auth_type_rs_to_js(openbao_auth_type))
+                    .or_throw(cx)?;
+            js_obj.set(cx, "openbaoAuthType", js_openbao_auth_type)?;
+            let js_ciphertext_key = {
+                let rs_buff = { ciphertext_key.as_ref() };
+                let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
+                let js_buff_slice = js_buff.as_mut_slice(cx);
+                for (i, c) in rs_buff.iter().enumerate() {
+                    js_buff_slice[i] = *c;
+                }
+                js_buff
+            };
+            js_obj.set(cx, "ciphertextKey", js_ciphertext_key)?;
+        }
         libparsec::DeviceAccessStrategy::Password {
             password, key_file, ..
         } => {
@@ -8823,6 +9001,46 @@ fn variant_device_save_strategy_js_to_rs<'a>(
             })
         }
         "DeviceSaveStrategyKeyring" => Ok(libparsec::DeviceSaveStrategy::Keyring {}),
+        "DeviceSaveStrategyOpenBao" => {
+            let openbao_url = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoUrl")?;
+                js_val.value(cx)
+            };
+            let openbao_ciphertext_key_path = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoCiphertextKeyPath")?;
+                js_val.value(cx)
+            };
+            let openbao_auth_path = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoAuthPath")?;
+                js_val.value(cx)
+            };
+            let openbao_auth_type = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoAuthType")?;
+                {
+                    let js_string = js_val.value(cx);
+                    enum_open_bao_auth_type_js_to_rs(cx, js_string.as_str())?
+                }
+            };
+            let ciphertext_key = {
+                let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "ciphertextKey")?;
+                {
+                    #[allow(clippy::unnecessary_mut_passed)]
+                    match js_val.as_slice(cx).try_into() {
+                        Ok(val) => val,
+                        // err can't infer type in some case, because of the previous `try_into`
+                        #[allow(clippy::useless_format)]
+                        Err(err) => return cx.throw_type_error(format!("{}", err)),
+                    }
+                }
+            };
+            Ok(libparsec::DeviceSaveStrategy::OpenBao {
+                openbao_url,
+                openbao_ciphertext_key_path,
+                openbao_auth_path,
+                openbao_auth_type,
+                ciphertext_key,
+            })
+        }
         "DeviceSaveStrategyPassword" => {
             let password = {
                 let js_val: Handle<JsString> = obj.get(cx, "password")?;
@@ -8889,6 +9107,42 @@ fn variant_device_save_strategy_rs_to_js<'a>(
         libparsec::DeviceSaveStrategy::Keyring { .. } => {
             let js_tag = JsString::try_new(cx, "DeviceSaveStrategyKeyring").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::DeviceSaveStrategy::OpenBao {
+            openbao_url,
+            openbao_ciphertext_key_path,
+            openbao_auth_path,
+            openbao_auth_type,
+            ciphertext_key,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "DeviceSaveStrategyOpenBao").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_openbao_url = JsString::try_new(cx, openbao_url).or_throw(cx)?;
+            js_obj.set(cx, "openbaoUrl", js_openbao_url)?;
+            let js_openbao_ciphertext_key_path =
+                JsString::try_new(cx, openbao_ciphertext_key_path).or_throw(cx)?;
+            js_obj.set(
+                cx,
+                "openbaoCiphertextKeyPath",
+                js_openbao_ciphertext_key_path,
+            )?;
+            let js_openbao_auth_path = JsString::try_new(cx, openbao_auth_path).or_throw(cx)?;
+            js_obj.set(cx, "openbaoAuthPath", js_openbao_auth_path)?;
+            let js_openbao_auth_type =
+                JsString::try_new(cx, enum_open_bao_auth_type_rs_to_js(openbao_auth_type))
+                    .or_throw(cx)?;
+            js_obj.set(cx, "openbaoAuthType", js_openbao_auth_type)?;
+            let js_ciphertext_key = {
+                let rs_buff = { ciphertext_key.as_ref() };
+                let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
+                let js_buff_slice = js_buff.as_mut_slice(cx);
+                for (i, c) in rs_buff.iter().enumerate() {
+                    js_buff_slice[i] = *c;
+                }
+                js_buff
+            };
+            js_obj.set(cx, "ciphertextKey", js_ciphertext_key)?;
         }
         libparsec::DeviceSaveStrategy::Password { password, .. } => {
             let js_tag = JsString::try_new(cx, "DeviceSaveStrategyPassword").or_throw(cx)?;

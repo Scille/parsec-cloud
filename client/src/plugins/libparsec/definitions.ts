@@ -66,6 +66,11 @@ export enum LogLevel {
     Warn = 'LogLevelWarn',
 }
 
+export enum OpenBaoAuthType {
+    AgentConnect = 'OpenBaoAuthTypeAgentConnect',
+    Hexagone = 'OpenBaoAuthTypeHexagone',
+}
+
 export enum Platform {
     Android = 'PlatformAndroid',
     Linux = 'PlatformLinux',
@@ -1164,6 +1169,7 @@ export type ArchiveDeviceError =
 export enum AvailableDeviceTypeTag {
     AccountVault = 'AvailableDeviceTypeAccountVault',
     Keyring = 'AvailableDeviceTypeKeyring',
+    OpenBao = 'AvailableDeviceTypeOpenBao',
     Password = 'AvailableDeviceTypePassword',
     Recovery = 'AvailableDeviceTypeRecovery',
     Smartcard = 'AvailableDeviceTypeSmartcard',
@@ -1175,6 +1181,13 @@ export interface AvailableDeviceTypeAccountVault {
 }
 export interface AvailableDeviceTypeKeyring {
     tag: AvailableDeviceTypeTag.Keyring
+}
+export interface AvailableDeviceTypeOpenBao {
+    tag: AvailableDeviceTypeTag.OpenBao
+    openbaoUrl: string
+    openbaoCiphertextKeyPath: string
+    openbaoAuthPath: string
+    openbaoAuthType: OpenBaoAuthType
 }
 export interface AvailableDeviceTypePassword {
     tag: AvailableDeviceTypeTag.Password
@@ -1188,6 +1201,7 @@ export interface AvailableDeviceTypeSmartcard {
 export type AvailableDeviceType =
   | AvailableDeviceTypeAccountVault
   | AvailableDeviceTypeKeyring
+  | AvailableDeviceTypeOpenBao
   | AvailableDeviceTypePassword
   | AvailableDeviceTypeRecovery
   | AvailableDeviceTypeSmartcard
@@ -2626,6 +2640,7 @@ export type ClientUserUpdateProfileError =
 export enum DeviceAccessStrategyTag {
     AccountVault = 'DeviceAccessStrategyAccountVault',
     Keyring = 'DeviceAccessStrategyKeyring',
+    OpenBao = 'DeviceAccessStrategyOpenBao',
     Password = 'DeviceAccessStrategyPassword',
     Smartcard = 'DeviceAccessStrategySmartcard',
 }
@@ -2640,6 +2655,15 @@ export interface DeviceAccessStrategyKeyring {
     tag: DeviceAccessStrategyTag.Keyring
     keyFile: Path
 }
+export interface DeviceAccessStrategyOpenBao {
+    tag: DeviceAccessStrategyTag.OpenBao
+    keyFile: Path
+    openbaoUrl: string
+    openbaoCiphertextKeyPath: string
+    openbaoAuthPath: string
+    openbaoAuthType: OpenBaoAuthType
+    ciphertextKey: SecretKey
+}
 export interface DeviceAccessStrategyPassword {
     tag: DeviceAccessStrategyTag.Password
     password: Password
@@ -2652,6 +2676,7 @@ export interface DeviceAccessStrategySmartcard {
 export type DeviceAccessStrategy =
   | DeviceAccessStrategyAccountVault
   | DeviceAccessStrategyKeyring
+  | DeviceAccessStrategyOpenBao
   | DeviceAccessStrategyPassword
   | DeviceAccessStrategySmartcard
 
@@ -2659,6 +2684,7 @@ export type DeviceAccessStrategy =
 export enum DeviceSaveStrategyTag {
     AccountVault = 'DeviceSaveStrategyAccountVault',
     Keyring = 'DeviceSaveStrategyKeyring',
+    OpenBao = 'DeviceSaveStrategyOpenBao',
     Password = 'DeviceSaveStrategyPassword',
     Smartcard = 'DeviceSaveStrategySmartcard',
 }
@@ -2671,6 +2697,14 @@ export interface DeviceSaveStrategyAccountVault {
 export interface DeviceSaveStrategyKeyring {
     tag: DeviceSaveStrategyTag.Keyring
 }
+export interface DeviceSaveStrategyOpenBao {
+    tag: DeviceSaveStrategyTag.OpenBao
+    openbaoUrl: string
+    openbaoCiphertextKeyPath: string
+    openbaoAuthPath: string
+    openbaoAuthType: OpenBaoAuthType
+    ciphertextKey: SecretKey
+}
 export interface DeviceSaveStrategyPassword {
     tag: DeviceSaveStrategyTag.Password
     password: Password
@@ -2682,6 +2716,7 @@ export interface DeviceSaveStrategySmartcard {
 export type DeviceSaveStrategy =
   | DeviceSaveStrategyAccountVault
   | DeviceSaveStrategyKeyring
+  | DeviceSaveStrategyOpenBao
   | DeviceSaveStrategyPassword
   | DeviceSaveStrategySmartcard
 

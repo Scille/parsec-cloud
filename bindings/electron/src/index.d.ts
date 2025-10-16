@@ -67,6 +67,11 @@ export enum LogLevel {
     Warn = 'LogLevelWarn',
 }
 
+export enum OpenBaoAuthType {
+    AgentConnect = 'OpenBaoAuthTypeAgentConnect',
+    Hexagone = 'OpenBaoAuthTypeHexagone',
+}
+
 export enum Platform {
     Android = 'PlatformAndroid',
     Linux = 'PlatformLinux',
@@ -1046,6 +1051,13 @@ export interface AvailableDeviceTypeAccountVault {
 export interface AvailableDeviceTypeKeyring {
     tag: "Keyring"
 }
+export interface AvailableDeviceTypeOpenBao {
+    tag: "OpenBao"
+    openbao_url: string
+    openbao_ciphertext_key_path: string
+    openbao_auth_path: string
+    openbao_auth_type: OpenBaoAuthType
+}
 export interface AvailableDeviceTypePassword {
     tag: "Password"
 }
@@ -1058,6 +1070,7 @@ export interface AvailableDeviceTypeSmartcard {
 export type AvailableDeviceType =
   | AvailableDeviceTypeAccountVault
   | AvailableDeviceTypeKeyring
+  | AvailableDeviceTypeOpenBao
   | AvailableDeviceTypePassword
   | AvailableDeviceTypeRecovery
   | AvailableDeviceTypeSmartcard
@@ -2233,6 +2246,15 @@ export interface DeviceAccessStrategyKeyring {
     tag: "Keyring"
     key_file: string
 }
+export interface DeviceAccessStrategyOpenBao {
+    tag: "OpenBao"
+    key_file: string
+    openbao_url: string
+    openbao_ciphertext_key_path: string
+    openbao_auth_path: string
+    openbao_auth_type: OpenBaoAuthType
+    ciphertext_key: Uint8Array
+}
 export interface DeviceAccessStrategyPassword {
     tag: "Password"
     password: string
@@ -2245,6 +2267,7 @@ export interface DeviceAccessStrategySmartcard {
 export type DeviceAccessStrategy =
   | DeviceAccessStrategyAccountVault
   | DeviceAccessStrategyKeyring
+  | DeviceAccessStrategyOpenBao
   | DeviceAccessStrategyPassword
   | DeviceAccessStrategySmartcard
 
@@ -2258,6 +2281,14 @@ export interface DeviceSaveStrategyAccountVault {
 export interface DeviceSaveStrategyKeyring {
     tag: "Keyring"
 }
+export interface DeviceSaveStrategyOpenBao {
+    tag: "OpenBao"
+    openbao_url: string
+    openbao_ciphertext_key_path: string
+    openbao_auth_path: string
+    openbao_auth_type: OpenBaoAuthType
+    ciphertext_key: Uint8Array
+}
 export interface DeviceSaveStrategyPassword {
     tag: "Password"
     password: string
@@ -2269,6 +2300,7 @@ export interface DeviceSaveStrategySmartcard {
 export type DeviceSaveStrategy =
   | DeviceSaveStrategyAccountVault
   | DeviceSaveStrategyKeyring
+  | DeviceSaveStrategyOpenBao
   | DeviceSaveStrategyPassword
   | DeviceSaveStrategySmartcard
 

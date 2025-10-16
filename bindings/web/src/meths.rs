@@ -321,6 +321,31 @@ fn enum_log_level_rs_to_js(value: libparsec::LogLevel) -> &'static str {
     }
 }
 
+// OpenBaoAuthType
+
+#[allow(dead_code)]
+fn enum_open_bao_auth_type_js_to_rs(
+    raw_value: &str,
+) -> Result<libparsec::OpenBaoAuthType, JsValue> {
+    match raw_value {
+        "OpenBaoAuthTypeAgentConnect" => Ok(libparsec::OpenBaoAuthType::AgentConnect),
+        "OpenBaoAuthTypeHexagone" => Ok(libparsec::OpenBaoAuthType::Hexagone),
+        _ => {
+            let range_error = RangeError::new("Invalid value for enum OpenBaoAuthType");
+            range_error.set_cause(&JsValue::from(raw_value));
+            Err(JsValue::from(range_error))
+        }
+    }
+}
+
+#[allow(dead_code)]
+fn enum_open_bao_auth_type_rs_to_js(value: libparsec::OpenBaoAuthType) -> &'static str {
+    match value {
+        libparsec::OpenBaoAuthType::AgentConnect => "OpenBaoAuthTypeAgentConnect",
+        libparsec::OpenBaoAuthType::Hexagone => "OpenBaoAuthTypeHexagone",
+    }
+}
+
 // Platform
 
 #[allow(dead_code)]
@@ -6246,6 +6271,49 @@ fn variant_available_device_type_js_to_rs(
             Ok(libparsec::AvailableDeviceType::AccountVault { ciphertext_key_id })
         }
         "AvailableDeviceTypeKeyring" => Ok(libparsec::AvailableDeviceType::Keyring {}),
+        "AvailableDeviceTypeOpenBao" => {
+            let openbao_url = {
+                let js_val = Reflect::get(&obj, &"openbaoUrl".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let openbao_ciphertext_key_path = {
+                let js_val = Reflect::get(&obj, &"openbaoCiphertextKeyPath".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let openbao_auth_path = {
+                let js_val = Reflect::get(&obj, &"openbaoAuthPath".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let openbao_auth_type = {
+                let js_val = Reflect::get(&obj, &"openbaoAuthType".into())?;
+                {
+                    let raw_string = js_val.as_string().ok_or_else(|| {
+                        let type_error = TypeError::new("value is not a string");
+                        type_error.set_cause(&js_val);
+                        JsValue::from(type_error)
+                    })?;
+                    enum_open_bao_auth_type_js_to_rs(raw_string.as_str())
+                }?
+            };
+            Ok(libparsec::AvailableDeviceType::OpenBao {
+                openbao_url,
+                openbao_ciphertext_key_path,
+                openbao_auth_path,
+                openbao_auth_type,
+            })
+        }
         "AvailableDeviceTypePassword" => Ok(libparsec::AvailableDeviceType::Password {}),
         "AvailableDeviceTypeRecovery" => Ok(libparsec::AvailableDeviceType::Recovery {}),
         "AvailableDeviceTypeSmartcard" => Ok(libparsec::AvailableDeviceType::Smartcard {}),
@@ -6284,6 +6352,28 @@ fn variant_available_device_type_rs_to_js(
         }
         libparsec::AvailableDeviceType::Keyring { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"AvailableDeviceTypeKeyring".into())?;
+        }
+        libparsec::AvailableDeviceType::OpenBao {
+            openbao_url,
+            openbao_ciphertext_key_path,
+            openbao_auth_path,
+            openbao_auth_type,
+            ..
+        } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AvailableDeviceTypeOpenBao".into())?;
+            let js_openbao_url = openbao_url.into();
+            Reflect::set(&js_obj, &"openbaoUrl".into(), &js_openbao_url)?;
+            let js_openbao_ciphertext_key_path = openbao_ciphertext_key_path.into();
+            Reflect::set(
+                &js_obj,
+                &"openbaoCiphertextKeyPath".into(),
+                &js_openbao_ciphertext_key_path,
+            )?;
+            let js_openbao_auth_path = openbao_auth_path.into();
+            Reflect::set(&js_obj, &"openbaoAuthPath".into(), &js_openbao_auth_path)?;
+            let js_openbao_auth_type =
+                JsValue::from_str(enum_open_bao_auth_type_rs_to_js(openbao_auth_type));
+            Reflect::set(&js_obj, &"openbaoAuthType".into(), &js_openbao_auth_type)?;
         }
         libparsec::AvailableDeviceType::Password { .. } => {
             Reflect::set(
@@ -9386,6 +9476,77 @@ fn variant_device_access_strategy_js_to_rs(
             };
             Ok(libparsec::DeviceAccessStrategy::Keyring { key_file })
         }
+        "DeviceAccessStrategyOpenBao" => {
+            let key_file = {
+                let js_val = Reflect::get(&obj, &"keyFile".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
+                            Ok(std::path::PathBuf::from(s))
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            };
+            let openbao_url = {
+                let js_val = Reflect::get(&obj, &"openbaoUrl".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let openbao_ciphertext_key_path = {
+                let js_val = Reflect::get(&obj, &"openbaoCiphertextKeyPath".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let openbao_auth_path = {
+                let js_val = Reflect::get(&obj, &"openbaoAuthPath".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let openbao_auth_type = {
+                let js_val = Reflect::get(&obj, &"openbaoAuthType".into())?;
+                {
+                    let raw_string = js_val.as_string().ok_or_else(|| {
+                        let type_error = TypeError::new("value is not a string");
+                        type_error.set_cause(&js_val);
+                        JsValue::from(type_error)
+                    })?;
+                    enum_open_bao_auth_type_js_to_rs(raw_string.as_str())
+                }?
+            };
+            let ciphertext_key = {
+                let js_val = Reflect::get(&obj, &"ciphertextKey".into())?;
+                js_val
+                    .dyn_into::<Uint8Array>()
+                    .map(|x| x.to_vec())
+                    .map_err(|_| TypeError::new("Not a Uint8Array"))
+                    .and_then(|x| {
+                        let xx: &[u8] = &x;
+                        xx.try_into()
+                            .map_err(|_| TypeError::new("Not a valid SecretKey"))
+                    })?
+            };
+            Ok(libparsec::DeviceAccessStrategy::OpenBao {
+                key_file,
+                openbao_url,
+                openbao_ciphertext_key_path,
+                openbao_auth_path,
+                openbao_auth_type,
+                ciphertext_key,
+            })
+        }
         "DeviceAccessStrategyPassword" => {
             let password = {
                 let js_val = Reflect::get(&obj, &"password".into())?;
@@ -9504,6 +9665,49 @@ fn variant_device_access_strategy_rs_to_js(
             });
             Reflect::set(&js_obj, &"keyFile".into(), &js_key_file)?;
         }
+        libparsec::DeviceAccessStrategy::OpenBao {
+            key_file,
+            openbao_url,
+            openbao_ciphertext_key_path,
+            openbao_auth_path,
+            openbao_auth_type,
+            ciphertext_key,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"DeviceAccessStrategyOpenBao".into(),
+            )?;
+            let js_key_file = JsValue::from_str({
+                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                    path.into_os_string()
+                        .into_string()
+                        .map_err(|_| "Path contains non-utf8 characters")
+                };
+                match custom_to_rs_string(key_file) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"keyFile".into(), &js_key_file)?;
+            let js_openbao_url = openbao_url.into();
+            Reflect::set(&js_obj, &"openbaoUrl".into(), &js_openbao_url)?;
+            let js_openbao_ciphertext_key_path = openbao_ciphertext_key_path.into();
+            Reflect::set(
+                &js_obj,
+                &"openbaoCiphertextKeyPath".into(),
+                &js_openbao_ciphertext_key_path,
+            )?;
+            let js_openbao_auth_path = openbao_auth_path.into();
+            Reflect::set(&js_obj, &"openbaoAuthPath".into(), &js_openbao_auth_path)?;
+            let js_openbao_auth_type =
+                JsValue::from_str(enum_open_bao_auth_type_rs_to_js(openbao_auth_type));
+            Reflect::set(&js_obj, &"openbaoAuthType".into(), &js_openbao_auth_type)?;
+            let js_ciphertext_key = JsValue::from(Uint8Array::from(ciphertext_key.as_ref()));
+            Reflect::set(&js_obj, &"ciphertextKey".into(), &js_ciphertext_key)?;
+        }
         libparsec::DeviceAccessStrategy::Password {
             password, key_file, ..
         } => {
@@ -9598,6 +9802,62 @@ fn variant_device_save_strategy_js_to_rs(
             })
         }
         "DeviceSaveStrategyKeyring" => Ok(libparsec::DeviceSaveStrategy::Keyring {}),
+        "DeviceSaveStrategyOpenBao" => {
+            let openbao_url = {
+                let js_val = Reflect::get(&obj, &"openbaoUrl".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let openbao_ciphertext_key_path = {
+                let js_val = Reflect::get(&obj, &"openbaoCiphertextKeyPath".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let openbao_auth_path = {
+                let js_val = Reflect::get(&obj, &"openbaoAuthPath".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let openbao_auth_type = {
+                let js_val = Reflect::get(&obj, &"openbaoAuthType".into())?;
+                {
+                    let raw_string = js_val.as_string().ok_or_else(|| {
+                        let type_error = TypeError::new("value is not a string");
+                        type_error.set_cause(&js_val);
+                        JsValue::from(type_error)
+                    })?;
+                    enum_open_bao_auth_type_js_to_rs(raw_string.as_str())
+                }?
+            };
+            let ciphertext_key = {
+                let js_val = Reflect::get(&obj, &"ciphertextKey".into())?;
+                js_val
+                    .dyn_into::<Uint8Array>()
+                    .map(|x| x.to_vec())
+                    .map_err(|_| TypeError::new("Not a Uint8Array"))
+                    .and_then(|x| {
+                        let xx: &[u8] = &x;
+                        xx.try_into()
+                            .map_err(|_| TypeError::new("Not a valid SecretKey"))
+                    })?
+            };
+            Ok(libparsec::DeviceSaveStrategy::OpenBao {
+                openbao_url,
+                openbao_ciphertext_key_path,
+                openbao_auth_path,
+                openbao_auth_type,
+                ciphertext_key,
+            })
+        }
         "DeviceSaveStrategyPassword" => {
             let password = {
                 let js_val = Reflect::get(&obj, &"password".into())?;
@@ -9662,6 +9922,31 @@ fn variant_device_save_strategy_rs_to_js(
         }
         libparsec::DeviceSaveStrategy::Keyring { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"DeviceSaveStrategyKeyring".into())?;
+        }
+        libparsec::DeviceSaveStrategy::OpenBao {
+            openbao_url,
+            openbao_ciphertext_key_path,
+            openbao_auth_path,
+            openbao_auth_type,
+            ciphertext_key,
+            ..
+        } => {
+            Reflect::set(&js_obj, &"tag".into(), &"DeviceSaveStrategyOpenBao".into())?;
+            let js_openbao_url = openbao_url.into();
+            Reflect::set(&js_obj, &"openbaoUrl".into(), &js_openbao_url)?;
+            let js_openbao_ciphertext_key_path = openbao_ciphertext_key_path.into();
+            Reflect::set(
+                &js_obj,
+                &"openbaoCiphertextKeyPath".into(),
+                &js_openbao_ciphertext_key_path,
+            )?;
+            let js_openbao_auth_path = openbao_auth_path.into();
+            Reflect::set(&js_obj, &"openbaoAuthPath".into(), &js_openbao_auth_path)?;
+            let js_openbao_auth_type =
+                JsValue::from_str(enum_open_bao_auth_type_rs_to_js(openbao_auth_type));
+            Reflect::set(&js_obj, &"openbaoAuthType".into(), &js_openbao_auth_type)?;
+            let js_ciphertext_key = JsValue::from(Uint8Array::from(ciphertext_key.as_ref()));
+            Reflect::set(&js_obj, &"ciphertextKey".into(), &js_ciphertext_key)?;
         }
         libparsec::DeviceSaveStrategy::Password { password, .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"DeviceSaveStrategyPassword".into())?;
