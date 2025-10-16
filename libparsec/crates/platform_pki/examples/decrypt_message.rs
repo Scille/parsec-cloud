@@ -1,4 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+#![allow(clippy::unwrap_used)]
 
 mod utils;
 
@@ -23,7 +24,10 @@ fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     println!("args={args:?}");
 
-    let cert_ref = X509CertificateReference::Hash(args.certificate_hash);
+    let cert_ref = X509CertificateReference {
+        id: None,
+        hash: args.certificate_hash,
+    };
     let b64_data = args.content.into_bytes()?;
     let data = data_encoding::BASE64
         .decode(&b64_data)
@@ -34,7 +38,7 @@ fn main() -> anyhow::Result<()> {
 
     println!(
         "Decrypted by cert with id {{{}}} with algo {}",
-        data_encoding::BASE64.encode_display(&res.cert_ref.id),
+        data_encoding::BASE64.encode_display(&res.cert_ref.id.unwrap()),
         args.algorithm
     );
     println!("Decrypted by cert with fingerprint: {}", res.cert_ref.hash);

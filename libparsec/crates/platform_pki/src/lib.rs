@@ -10,7 +10,7 @@ pub mod x509;
 #[path = "../tests/units/mod.rs"]
 mod test;
 
-use libparsec_types::{EncryptionAlgorithm, X509CertificateReferenceIdOrHash};
+use libparsec_types::{EncryptionAlgorithm, X509CertificateReference};
 use std::{fmt::Display, str::FromStr};
 
 use bytes::Bytes;
@@ -26,9 +26,7 @@ mod platform {
         EncryptedMessage, GetDerEncodedCertificateError, ShowCertificateSelectionDialogError,
         SignMessageError, SignedMessageFromPki,
     };
-    use libparsec_types::{
-        EncryptionAlgorithm, X509CertificateReference, X509CertificateReferenceIdOrHash,
-    };
+    use libparsec_types::{EncryptionAlgorithm, X509CertificateReference};
 
     pub fn get_der_encoded_certificate(
         certificate_ref: &X509CertificateReference,
@@ -64,7 +62,7 @@ mod platform {
     }
 
     pub fn show_certificate_selection_dialog_windows_only(
-    ) -> Result<Option<X509CertificateReferenceIdOrHash>, ShowCertificateSelectionDialogError> {
+    ) -> Result<Option<X509CertificateReference>, ShowCertificateSelectionDialogError> {
         unimplemented!("platform not supported")
     }
 }
@@ -100,7 +98,7 @@ pub use errors::GetDerEncodedCertificateError;
 pub use platform::get_der_encoded_certificate;
 
 pub struct CertificateDer {
-    pub cert_ref: X509CertificateReferenceIdOrHash,
+    pub cert_ref: X509CertificateReference,
     pub der_content: Bytes,
 }
 
@@ -136,7 +134,7 @@ impl FromStr for SignatureAlgorithm {
 
 pub struct SignedMessageFromPki {
     pub algo: SignatureAlgorithm,
-    pub cert_ref: X509CertificateReferenceIdOrHash,
+    pub cert_ref: X509CertificateReference,
     pub signature: Bytes,
 }
 
@@ -147,7 +145,7 @@ pub use shared::{verify_message, Certificate, SignedMessage};
 
 pub struct EncryptedMessage {
     pub algo: EncryptionAlgorithm,
-    pub cert_ref: X509CertificateReferenceIdOrHash,
+    pub cert_ref: X509CertificateReference,
     pub ciphered: Bytes,
 }
 
@@ -155,7 +153,7 @@ pub use errors::EncryptMessageError;
 pub use platform::encrypt_message;
 
 pub struct DecryptedMessage {
-    pub cert_ref: X509CertificateReferenceIdOrHash,
+    pub cert_ref: X509CertificateReference,
     pub data: Bytes,
 }
 

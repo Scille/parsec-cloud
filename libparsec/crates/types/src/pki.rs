@@ -275,9 +275,17 @@ impl From<LocalPendingEnrollment> for LocalPendingEnrollmentData {
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Serialize, Deserialize, Debug)]
+#[derive(
+    Clone, Eq, PartialEq, serde_with::DeserializeFromStr, serde_with::SerializeDisplay, Debug,
+)]
 pub enum X509CertificateHash {
     SHA256(Box<[u8; 32]>),
+}
+
+impl X509CertificateHash {
+    pub fn fake_sha256() -> Self {
+        Self::SHA256(Default::default())
+    }
 }
 
 impl std::fmt::Display for X509CertificateHash {
@@ -324,21 +332,8 @@ impl FromStr for X509CertificateHash {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
-pub enum X509CertificateReference {
-    Id(Bytes),
-    Hash(X509CertificateHash),
-    IdOrHash(X509CertificateReferenceIdOrHash),
-}
-
-impl From<X509CertificateReferenceIdOrHash> for X509CertificateReference {
-    fn from(value: X509CertificateReferenceIdOrHash) -> Self {
-        Self::IdOrHash(value)
-    }
-}
-
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
-pub struct X509CertificateReferenceIdOrHash {
-    pub id: Bytes,
+pub struct X509CertificateReference {
+    pub id: Option<Bytes>,
     pub hash: X509CertificateHash,
 }
 
