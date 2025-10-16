@@ -73,18 +73,16 @@ class BaseAnonymousRpcClient:
         self,
         enrollment_id: EnrollmentID,
         force: bool,
-        submitter_der_x509_certificate: bytes,
-        submitter_der_x509_certificate_email: EmailAddress,
-        submit_payload_signature: bytes,
-        submit_payload: bytes,
+        der_x509_certificate: bytes,
+        payload_signature: bytes,
+        payload: bytes,
     ) -> anonymous_cmds.latest.pki_enrollment_submit.Rep:
         req = anonymous_cmds.latest.pki_enrollment_submit.Req(
             enrollment_id=enrollment_id,
             force=force,
-            submitter_der_x509_certificate=submitter_der_x509_certificate,
-            submitter_der_x509_certificate_email=submitter_der_x509_certificate_email,
-            submit_payload_signature=submit_payload_signature,
-            submit_payload=submit_payload,
+            der_x509_certificate=der_x509_certificate,
+            payload_signature=payload_signature,
+            payload=payload,
         )
         raw_rep = await self._do_request(req.dump(), "anonymous")
         return anonymous_cmds.latest.pki_enrollment_submit.Rep.load(raw_rep)

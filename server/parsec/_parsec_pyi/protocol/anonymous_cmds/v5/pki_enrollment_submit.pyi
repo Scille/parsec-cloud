@@ -4,31 +4,28 @@
 
 from __future__ import annotations
 
-from parsec._parsec import DateTime, EmailAddress, EnrollmentID
+from parsec._parsec import DateTime, EnrollmentID
 
 class Req:
     def __init__(
         self,
         enrollment_id: EnrollmentID,
         force: bool,
-        submitter_der_x509_certificate: bytes,
-        submitter_der_x509_certificate_email: EmailAddress,
-        submit_payload_signature: bytes,
-        submit_payload: bytes,
+        der_x509_certificate: bytes,
+        payload_signature: bytes,
+        payload: bytes,
     ) -> None: ...
     def dump(self) -> bytes: ...
+    @property
+    def der_x509_certificate(self) -> bytes: ...
     @property
     def enrollment_id(self) -> EnrollmentID: ...
     @property
     def force(self) -> bool: ...
     @property
-    def submit_payload(self) -> bytes: ...
+    def payload(self) -> bytes: ...
     @property
-    def submit_payload_signature(self) -> bytes: ...
-    @property
-    def submitter_der_x509_certificate(self) -> bytes: ...
-    @property
-    def submitter_der_x509_certificate_email(self) -> EmailAddress: ...
+    def payload_signature(self) -> bytes: ...
 
 class Rep:
     @staticmethod
@@ -47,17 +44,17 @@ class RepOk(Rep):
     @property
     def submitted_on(self) -> DateTime: ...
 
-class RepX509CertificateAlreadySubmitted(Rep):
+class RepAlreadySubmitted(Rep):
     def __init__(self, submitted_on: DateTime) -> None: ...
     @property
     def submitted_on(self) -> DateTime: ...
 
-class RepEnrollmentIdAlreadyUsed(Rep):
+class RepIdAlreadyUsed(Rep):
     def __init__(
         self,
     ) -> None: ...
 
-class RepEmailAlreadyEnrolled(Rep):
+class RepEmailAlreadyUsed(Rep):
     def __init__(
         self,
     ) -> None: ...
@@ -67,7 +64,7 @@ class RepAlreadyEnrolled(Rep):
         self,
     ) -> None: ...
 
-class RepInvalidPayloadData(Rep):
+class RepInvalidPayload(Rep):
     def __init__(
         self,
     ) -> None: ...

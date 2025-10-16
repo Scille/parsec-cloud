@@ -8,7 +8,6 @@ from parsec._parsec import (
     DateTime,
     DeviceCertificate,
     DeviceID,
-    EmailAddress,
     EnrollmentID,
     OrganizationID,
     UserCertificate,
@@ -207,7 +206,6 @@ class BasePkiEnrollmentComponent:
         enrollment_id: EnrollmentID,
         force: bool,
         submitter_der_x509_certificate: bytes,
-        submitter_der_x509_certificate_email: EmailAddress,
         submit_payload_signature: bytes,
         submit_payload: bytes,
     ) -> None | PkiEnrollmentSubmitBadOutcome | PkiEnrollmentSubmitX509CertificateAlreadySubmitted:
@@ -313,10 +311,9 @@ class BasePkiEnrollmentComponent:
             organization_id=client_ctx.organization_id,
             enrollment_id=req.enrollment_id,
             force=req.force,
-            submitter_der_x509_certificate=req.submitter_der_x509_certificate,
-            submitter_der_x509_certificate_email=req.submitter_der_x509_certificate_email,
-            submit_payload_signature=req.submit_payload_signature,
-            submit_payload=req.submit_payload,
+            submitter_der_x509_certificate=req.der_x509_certificate,
+            submit_payload_signature=req.payload_signature,
+            submit_payload=req.payload,
         )
         match outcome:
             case None:
@@ -324,19 +321,17 @@ class BasePkiEnrollmentComponent:
             case PkiEnrollmentSubmitBadOutcome.ENROLLMENT_ALREADY_EXISTS:
                 return anonymous_cmds.latest.pki_enrollment_submit.RepAlreadyEnrolled()
             case PkiEnrollmentSubmitX509CertificateAlreadySubmitted() as error:
-                return (
-                    anonymous_cmds.latest.pki_enrollment_submit.RepX509CertificateAlreadySubmitted(
-                        submitted_on=error.submitted_on
-                    )
+                return anonymous_cmds.latest.pki_enrollment_submit.RepAlreadySubmitted(
+                    submitted_on=error.submitted_on
                 )
             case PkiEnrollmentSubmitBadOutcome.X509_CERTIFICATE_ALREADY_ENROLLED:
                 return anonymous_cmds.latest.pki_enrollment_submit.RepAlreadyEnrolled()
             case PkiEnrollmentSubmitBadOutcome.USER_EMAIL_ALREADY_ENROLLED:
-                return anonymous_cmds.latest.pki_enrollment_submit.RepEmailAlreadyEnrolled()
+                return anonymous_cmds.latest.pki_enrollment_submit.RepEmailAlreadyUsed()
             case PkiEnrollmentSubmitBadOutcome.ENROLLMENT_ID_ALREADY_USED:
-                return anonymous_cmds.latest.pki_enrollment_submit.RepEnrollmentIdAlreadyUsed()
+                return anonymous_cmds.latest.pki_enrollment_submit.RepIdAlreadyUsed()
             case PkiEnrollmentSubmitBadOutcome.INVALID_SUBMIT_PAYLOAD:
-                return anonymous_cmds.latest.pki_enrollment_submit.RepInvalidPayloadData()
+                return anonymous_cmds.latest.pki_enrollment_submit.RepInvalidPayload()
             case PkiEnrollmentSubmitBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case PkiEnrollmentSubmitBadOutcome.ORGANIZATION_EXPIRED:
