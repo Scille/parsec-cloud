@@ -334,6 +334,24 @@ class BaseAuthenticatedRpcClient:
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.pki_enrollment_reject.Rep.load(raw_rep)
 
+    async def pki_enrollment_submit(
+        self,
+        enrollment_id: EnrollmentID,
+        force: bool,
+        der_x509_certificate: bytes,
+        payload_signature: bytes,
+        payload: bytes,
+    ) -> authenticated_cmds.latest.pki_enrollment_submit.Rep:
+        req = authenticated_cmds.latest.pki_enrollment_submit.Req(
+            enrollment_id=enrollment_id,
+            force=force,
+            der_x509_certificate=der_x509_certificate,
+            payload_signature=payload_signature,
+            payload=payload,
+        )
+        raw_rep = await self._do_request(req.dump(), "authenticated")
+        return authenticated_cmds.latest.pki_enrollment_submit.Rep.load(raw_rep)
+
     async def realm_create(
         self, realm_role_certificate: bytes
     ) -> authenticated_cmds.latest.realm_create.Rep:

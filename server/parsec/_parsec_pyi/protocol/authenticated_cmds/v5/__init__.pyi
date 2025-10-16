@@ -25,6 +25,7 @@ from . import (
     pki_enrollment_accept,
     pki_enrollment_list,
     pki_enrollment_reject,
+    pki_enrollment_submit,
     realm_create,
     realm_get_keys_bundle,
     realm_rename,
@@ -68,6 +69,7 @@ class AnyCmdReq:
         | pki_enrollment_accept.Req
         | pki_enrollment_list.Req
         | pki_enrollment_reject.Req
+        | pki_enrollment_submit.Req
         | realm_create.Req
         | realm_get_keys_bundle.Req
         | realm_rename.Req
@@ -108,6 +110,7 @@ __all__ = [
     "pki_enrollment_accept",
     "pki_enrollment_list",
     "pki_enrollment_reject",
+    "pki_enrollment_submit",
     "realm_create",
     "realm_get_keys_bundle",
     "realm_rename",
