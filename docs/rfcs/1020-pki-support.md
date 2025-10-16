@@ -435,6 +435,7 @@ Once the certificate validated, we can validate the payload signature against th
   "req": {
     "fields": [
       {
+        // The enrollment ID to be rejected
         "name": "enrollment_id",
         "type": "EnrollmentID"
       }
@@ -445,16 +446,16 @@ Once the certificate validated, we can validate the payload signature against th
       "status": "ok"
     },
     {
-      // The user does not have the correct permission to perform that action
-      "status": "not_allowed"
+      // The user does not have the permission required to perform this action
+      "status": "author_not_allowed"
     },
     {
       // The server did not found a request for the provided ID
-      "status": "not_found"
+      "status": "enrollment_not_found"
     },
     {
       // The request is no longer in pending state (either accepted or rejected)
-      "status": "no_longer_available"
+      "status": "enrollment_no_longer_available"
     }
   ]
 }
