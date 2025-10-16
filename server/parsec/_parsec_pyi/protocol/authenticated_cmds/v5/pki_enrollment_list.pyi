@@ -49,7 +49,7 @@ class RepOk(Rep):
     @property
     def enrollments(self) -> list[PkiEnrollmentListItem]: ...
 
-class RepNotAllowed(Rep):
+class RepAuthorNotAllowed(Rep):
     def __init__(
         self,
     ) -> None: ...

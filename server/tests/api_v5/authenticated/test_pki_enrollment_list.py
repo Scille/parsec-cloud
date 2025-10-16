@@ -71,7 +71,7 @@ async def test_authenticated_pki_enrollment_list_ok(
 
 
 @pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
-async def test_authenticated_pki_enrollment_list_not_allowed(
+async def test_authenticated_pki_enrollment_list_author_not_allowed(
     coolorg: CoolorgRpcClients, backend: Backend, kind: str
 ) -> None:
     match kind:
@@ -88,7 +88,7 @@ async def test_authenticated_pki_enrollment_list_not_allowed(
             assert False, unknown
 
     rep = await author.pki_enrollment_list()
-    assert rep == authenticated_cmds.latest.pki_enrollment_list.RepNotAllowed()
+    assert rep == authenticated_cmds.latest.pki_enrollment_list.RepAuthorNotAllowed()
 
 
 async def test_authenticated_pki_enrollment_list_http_common_errors(
