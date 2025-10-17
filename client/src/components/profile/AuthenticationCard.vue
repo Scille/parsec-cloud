@@ -25,7 +25,7 @@
       </ion-text>
     </div>
     <ion-icon
-      v-if="state === AuthenticationCardState.Active || state === AuthenticationCardState.Default"
+      v-if="state === AuthenticationCardState.Active && !hideCheckmark"
       :icon="checkmarkCircle"
       class="authentication-card__icon"
     />
@@ -62,6 +62,7 @@ const props = defineProps<{
   state: AuthenticationCardState;
   authMethod: DeviceSaveStrategyTag | CustomDeviceSaveStrategyTag;
   disabled?: boolean;
+  hideCheckmark?: boolean;
 }>();
 
 const keyringAvailable = ref(false);
@@ -99,6 +100,7 @@ const methodConfig: Record<
     imageAlt: 'Smartcard',
     methodName: 'Authentication.method.smartcard.title',
     description: 'Authentication.method.smartcard.description',
+    unavailableExplanation: 'Authentication.keyringUnavailableOnWeb',
   },
   [DeviceSaveStrategyTag.AccountVault]: {
     imageSrc: '',
@@ -178,11 +180,15 @@ const config = computed(() => methodConfig[props.authMethod]);
   &--default {
     &:hover {
       border-color: var(--parsec-color-light-secondary-light);
+    }
+  }
 
-      .authentication-card__icon {
-        color: var(--parsec-color-light-secondary-light);
-        display: block;
-      }
+  &--active {
+    background: var(--parsec-color-light-secondary-premiere);
+
+    .authentication-card__icon {
+      color: var(--parsec-color-light-primary-400);
+      display: block;
     }
   }
 

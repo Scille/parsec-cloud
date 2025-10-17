@@ -56,7 +56,7 @@
         >
           <choose-authentication
             ref="chooseAuth"
-            :disable-keyring="currentDevice.ty.tag === AvailableDeviceTypeTag.Keyring"
+            :active-auth="currentDevice.ty.tag"
           />
         </div>
       </div>
