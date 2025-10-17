@@ -110,3 +110,7 @@ export async function createDeviceInvitation(sendEmail: boolean): Promise<Result
   }
   return generateNoHandleError<ClientNewDeviceInvitationError>();
 }
+
+export async function isSmartcardAvailable(): Promise<boolean> {
+  return false;
+}
