@@ -321,7 +321,7 @@ fn smartcard_device_file(alice: &Device) {
     let expected = DeviceFile::Smartcard(DeviceFileSmartcard {
         encrypted_key: b"foo".as_ref().into(),
         certificate_ref: X509CertificateReference::from(X509CertificateHash::fake_sha256())
-            .with_uri(X509URIFlavorValue::WindowsCNG(Bytes::from_static(b"foo"))),
+            .with_uri(X509WindowsCngURI::from(Bytes::from_static(b"foo"))),
         algorithm_for_encrypted_key: EncryptionAlgorithm::RsaesOaepSha256,
         ciphertext: hex!(
             "a73aff77a2aa692b4393e094bfd2c2ccad4b0a8d010960caf27165b787fb412ed2aeeb"

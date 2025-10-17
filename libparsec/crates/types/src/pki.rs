@@ -338,16 +338,18 @@ pub struct X509CertificateReference {
     pub hash: X509CertificateHash,
 }
 
+use private::X509URIFlavor;
+
 impl X509CertificateReference {
-    pub fn with_uri(mut self, new_uri: X509URIFlavorValue) -> Self {
+    pub fn with_uri<Flavor: X509URIFlavor>(mut self, new_uri: Flavor) -> Self {
         match self
             .uris
-            .binary_search_by(|uri| uri.flavor().cmp(&new_uri.flavor()))
+            .binary_search_by(|uri| uri.header().cmp(Flavor::HEADER))
         {
             // A URI already use that flavor, replacing it.
-            Ok(pos) => self.uris[pos] = new_uri,
+            Ok(pos) => self.uris[pos] = new_uri.into(),
             // No URIs use that flavor, inserting so the list is keep sorted.
-            Err(pos) => self.uris.insert(pos, new_uri),
+            Err(pos) => self.uris.insert(pos, new_uri.into()),
         }
 
         self
@@ -357,13 +359,21 @@ impl X509CertificateReference {
         self.uris.iter()
     }
 
-    pub fn get_uri<Flavor: X509URIFlavor>(&self, flavor: X509URIFlavor) -> Option<&Flavor> {
+    pub fn get_uri<Flavor: X509URIFlavor>(&self) -> Option<&Flavor> {
         self.uris.iter().find_map(|uri| Flavor::may_unwrap(uri))
     }
 }
 
-trait X509URIFlavor {
-    fn may_unwrap(wrapper: X509URIFlavorValue) -> Option<Self>;
+mod private {
+    pub trait X509URIFlavor: Sized + Into<super::X509URIFlavorValue> {
+        const HEADER: &'static str;
+
+        fn header(&self) -> &'static str {
+            Self::HEADER
+        }
+
+        fn may_unwrap(wrapper: &super::X509URIFlavorValue) -> Option<&Self>;
+    }
 }
 
 impl From<X509CertificateHash> for X509CertificateReference {
@@ -375,10 +385,18 @@ impl From<X509CertificateHash> for X509CertificateReference {
     }
 }
 
-pub struct X509WindowCngURI(Bytes);
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct X509WindowsCngURI(Bytes);
 
-impl X509URIFlavor for X509WindowCngURI {
-    fn may_unwrap(wrapper: X509URIFlavorValue) -> Option<Self> {
+impl From<Bytes> for X509WindowsCngURI {
+    fn from(value: Bytes) -> Self {
+        Self(value)
+    }
+}
+
+impl X509URIFlavor for X509WindowsCngURI {
+    const HEADER: &'static str = "windows-cng";
+    fn may_unwrap(wrapper: &X509URIFlavorValue) -> Option<&Self> {
         match wrapper {
             X509URIFlavorValue::WindowsCNG(uri) => Some(uri),
             _ => None,
@@ -386,20 +404,40 @@ impl X509URIFlavor for X509WindowCngURI {
     }
 }
 
-impl AsRef<[u8]> for X509WindowCngURI {
+impl Display for X509WindowsCngURI {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}:{}",
+            Self::HEADER,
+            data_encoding::BASE64.encode_display(&self.0)
+        )
+    }
+}
+
+impl AsRef<[u8]> for X509WindowsCngURI {
     fn as_ref(&self) -> &[u8] {
         &self.0
     }
 }
 
+impl From<X509WindowsCngURI> for X509URIFlavorValue {
+    fn from(value: X509WindowsCngURI) -> Self {
+        Self::WindowsCNG(value)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct X509Pkcs11URI(
-    // TODO: See if we store raw pkcs11 attribute in a list serialized in msgpack
+    // TDO: See if we store raw pkcs11 attribute in a list serialized in msgpack
     // Or a string representing a valid pkcs11-URI (following RFC-7512)
     Bytes,
 );
 
 impl X509URIFlavor for X509Pkcs11URI {
-    fn may_unwrap(wrapper: X509URIFlavorValue) -> Option<Self> {
+    const HEADER: &'static str = "pkcs11";
+
+    fn may_unwrap(wrapper: &X509URIFlavorValue) -> Option<&Self> {
         match wrapper {
             X509URIFlavorValue::PKCS11(uri) => Some(uri),
             _ => None,
@@ -407,22 +445,46 @@ impl X509URIFlavor for X509Pkcs11URI {
     }
 }
 
+impl Display for X509Pkcs11URI {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}:{}",
+            Self::HEADER,
+            data_encoding::BASE64.encode_display(&self.0)
+        )
+    }
+}
+
+impl From<X509Pkcs11URI> for X509URIFlavorValue {
+    fn from(value: X509Pkcs11URI) -> Self {
+        Self::PKCS11(value)
+    }
+}
+
 #[derive(
     Debug, serde_with::DeserializeFromStr, serde_with::SerializeDisplay, PartialEq, Eq, Clone,
 )]
 pub enum X509URIFlavorValue {
-    WindowsCNG(X509WindowCngURI),
+    WindowsCNG(X509WindowsCngURI),
     PKCS11(X509Pkcs11URI),
+}
+
+impl X509URIFlavorValue {
+    fn header(&self) -> &'static str {
+        match self {
+            X509URIFlavorValue::WindowsCNG(uri) => uri.header(),
+            X509URIFlavorValue::PKCS11(uri) => uri.header(),
+        }
+    }
 }
 
 impl Display for X509URIFlavorValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let encoder = data_encoding::BASE64;
-        let (header, value) = match self {
-            Self::WindowsCNG(data) => ("windows-cng", encoder.encode_display(data)),
-            Self::PKCS11(data) => ("pkcs11", encoder.encode_display(data)),
-        };
-        write!(f, "{header}:{value}")
+        match self {
+            Self::WindowsCNG(data) => data.fmt(f),
+            Self::PKCS11(data) => data.fmt(f),
+        }
     }
 }
 
@@ -447,12 +509,12 @@ impl FromStr for X509URIFlavorValue {
             let val = data_encoding::BASE64
                 .decode(value.as_bytes())
                 .context("Invalid pkcs11 value encoding")?;
-            Ok(Self::PKCS11(val.into()))
+            Ok(Self::PKCS11(X509Pkcs11URI(val.into())))
         } else if header.eq_ignore_ascii_case("windows-cng") {
             let val = data_encoding::BASE64
                 .decode(value.as_bytes())
                 .context("Invalid windows CNG value encoding")?;
-            Ok(Self::WindowsCNG(val.into()))
+            Ok(Self::WindowsCNG(X509WindowsCngURI(val.into())))
         } else {
             Err(X509URIFlavorValueParsingError::UnknownFlavor(
                 header.to_string(),

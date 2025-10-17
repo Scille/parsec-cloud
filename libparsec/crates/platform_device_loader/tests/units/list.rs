@@ -166,7 +166,7 @@ async fn list_devices(tmp_path: TmpPath) {
             .unwrap(),
         device_label: "PC1".parse().unwrap(),
         certificate_ref: X509CertificateReference::from(X509CertificateHash::fake_sha256())
-            .with_uri(X509URIFlavorValue::WindowsCNG(Bytes::from_static(
+            .with_uri(X509WindowsCngURI::from(Bytes::from_static(
                 b"Mallory's certificate",
             ))),
         algorithm_for_encrypted_key: EncryptionAlgorithm::RsaesOaepSha256,
