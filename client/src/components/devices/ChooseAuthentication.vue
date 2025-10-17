@@ -27,11 +27,11 @@
           justify="start"
           :value="DeviceSaveStrategyTag.Keyring"
           @click="$event.preventDefault()"
-          :disabled="!keyringAvailable"
+          :disabled="!keyringAvailable || activeAuth === AvailableDeviceTypeTag.Keyring"
         >
           <authentication-card
             :auth-method="DeviceSaveStrategyTag.Keyring"
-            :state="!keyringAvailable ? AuthenticationCardState.Unavailable : AuthenticationCardState.Default"
+            :state="getAuthCardState(AvailableDeviceTypeTag.Keyring)"
             :disabled="!keyringAvailable"
           />
         </ion-radio>
@@ -43,22 +43,25 @@
         >
           <authentication-card
             @click="onMethodSelected(DeviceSaveStrategyTag.Password)"
-            :state="AuthenticationCardState.Default"
+            :state="getAuthCardState(AvailableDeviceTypeTag.Password)"
             :auth-method="DeviceSaveStrategyTag.Password"
           />
         </ion-radio>
 
         <!-- TO DO: uncomment for Smartcard -->
         <!-- <ion-radio
-          v-if="false"
           class="item-radio radio-list-item"
           label-placement="end"
           justify="start"
+          :value="DeviceSaveStrategyTag.Smartcard"
+          @click="$event.preventDefault()"
+          :disabled="isWeb() || activeAuth === AvailableDeviceTypeTag.Smartcard"
         >
           <authentication-card
             @click="onMethodSelected(DeviceSaveStrategyTag.Smartcard)"
-            :state="AuthenticationCardState.Default"
+            :state="getAuthCardState(AvailableDeviceTypeTag.Smartcard)"
             :auth-method="DeviceSaveStrategyTag.Smartcard"
+            :disabled="isWeb()"
           />
         </ion-radio> -->
 
@@ -143,7 +146,15 @@
 <script setup lang="ts">
 import { MsChoosePasswordInput } from 'megashark-lib';
 import KeyringInformation from '@/components/devices/KeyringInformation.vue';
-import { CustomDeviceSaveStrategyTag, DeviceSaveStrategy, DeviceSaveStrategyTag, SaveStrategy, isKeyringAvailable, isWeb } from '@/parsec';
+import {
+  AvailableDeviceTypeTag,
+  CustomDeviceSaveStrategyTag,
+  DeviceSaveStrategy,
+  DeviceSaveStrategyTag,
+  SaveStrategy,
+  isKeyringAvailable,
+  isWeb,
+} from '@/parsec';
 import { IonList, IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
 import { onMounted, ref, useTemplateRef } from 'vue';
 import authenticationCard from '@/components/profile/AuthenticationCard.vue';
@@ -160,7 +171,7 @@ const openBaoLoggedIn = ref(false);
 
 const props = defineProps<{
   showTitle?: boolean;
-  disableKeyring?: boolean;
+  activeAuth?: AvailableDeviceTypeTag;
 }>();
 
 defineExpose({
@@ -174,14 +185,31 @@ defineEmits<{
 }>();
 
 onMounted(async () => {
-  if (!props.disableKeyring) {
-    keyringAvailable.value = await isKeyringAvailable();
-  }
+  keyringAvailable.value = props.activeAuth === AvailableDeviceTypeTag.Keyring ? true : await isKeyringAvailable();
 });
 
 async function onChange(_value: any): Promise<void> {
   if (authentication.value === DeviceSaveStrategyTag.Password && choosePasswordRef.value) {
     await choosePasswordRef.value.setFocus();
+  }
+}
+
+function getAuthCardState(auth: AvailableDeviceTypeTag): AuthenticationCardState {
+  switch (auth) {
+    case AvailableDeviceTypeTag.Password:
+      return AuthenticationCardState.Default;
+    case AvailableDeviceTypeTag.Keyring:
+      if (!keyringAvailable.value) {
+        return AuthenticationCardState.Unavailable;
+      }
+      return auth === props.activeAuth ? AuthenticationCardState.Active : AuthenticationCardState.Default;
+    case AvailableDeviceTypeTag.Smartcard:
+      if (isWeb()) {
+        return AuthenticationCardState.Unavailable;
+      }
+      return auth === props.activeAuth ? AuthenticationCardState.Active : AuthenticationCardState.Default;
+    default:
+      return AuthenticationCardState.Default;
   }
 }
 

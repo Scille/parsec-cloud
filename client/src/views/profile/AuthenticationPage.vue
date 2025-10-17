@@ -7,13 +7,22 @@
         <authentication-card
           :auth-method="DeviceSaveStrategyTag.Keyring"
           :state="AuthenticationCardState.Active"
+          :hide-checkmark="true"
           v-show="currentDevice && currentDevice.ty.tag === AvailableDeviceTypeTag.Keyring"
         />
         <authentication-card
           :auth-method="DeviceSaveStrategyTag.Password"
           :state="AuthenticationCardState.Active"
+          :hide-checkmark="true"
           v-show="currentDevice && currentDevice.ty.tag === AvailableDeviceTypeTag.Password"
         />
+        <!-- TO DO: uncomment for Smartcard -->
+        <!-- <authentication-card
+          :auth-method="DeviceSaveStrategyTag.Smartcard"
+          :state="AuthenticationCardState.Active"
+          :hide-checkmark="true"
+          v-show="currentDevice && currentDevice.ty.tag === AvailableDeviceTypeTag.Smartcard"
+        /> -->
         <ion-button
           id="change-authentication-button"
           class="update-auth-button button-default"
@@ -39,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { MsModalResult } from 'megashark-lib';
+import { Answer, askQuestion, MsModalResult } from 'megashark-lib';
 import { AvailableDevice, AvailableDeviceTypeTag, DeviceSaveStrategyTag, getCurrentAvailableDevice, isWeb } from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import UpdateAuthenticationModal from '@/views/users/UpdateAuthenticationModal.vue';
@@ -54,6 +63,17 @@ const informationManager: InformationManager = inject(InformationManagerKey)!;
 const error = ref('');
 
 async function openChangeAuthentication(): Promise<void> {
+  if (currentDevice.value && currentDevice.value.ty.tag === AvailableDeviceTypeTag.Smartcard) {
+    const answer = await askQuestion('Authentication.method.smartcard.warn.title', 'Authentication.method.smartcard.warn.subtitle', {
+      yesText: 'Authentication.method.smartcard.warn.yes',
+      noText: 'Authentication.method.smartcard.warn.no',
+    });
+
+    if (answer === Answer.No) {
+      return;
+    }
+  }
+
   const modal = await modalController.create({
     component: UpdateAuthenticationModal,
     cssClass: 'change-authentication-modal',
