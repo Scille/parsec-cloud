@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { FrameLocator } from '@playwright/test';
-import { MsPage } from '@tests/e2e/helpers/types';
 import { expect } from '@tests/e2e/helpers/assertions';
+import { MsPage } from '@tests/e2e/helpers/types';
 
 // cspell:disable-next-line
 export const CRYPTPAD_SERVER = process.env.CRYPTPAD_SERVER || 'https://cryptpad-dev.parsec.cloud';

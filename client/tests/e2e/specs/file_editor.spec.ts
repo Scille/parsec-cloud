@@ -12,13 +12,9 @@ msTest('Open editor with header option', async ({ parsecEditics }) => {
   await expect(actionBar.locator('ion-button').nth(1)).toHaveText('Edit');
   await actionBar.locator('ion-button').nth(1).click();
   const frame = await waitUntilLoaded(parsecEditics);
-  const editor = frame
-    .locator('#cp-app-code-editor')
-    .locator('.CodeMirror-code');
+  const editor = frame.locator('#cp-app-code-editor').locator('.CodeMirror-code');
   await expect(editor).toBeVisible();
-  await expect(editor.locator('pre').nth(0)).toHaveText(
-    'A simple text file', { timeout: 30000 },
-  );
+  await expect(editor.locator('pre').nth(0)).toHaveText('A simple text file', { timeout: 30000 });
 });
 
 msTest('Open editor with contextual menu', async ({ parsecEditics }) => {
@@ -30,13 +26,9 @@ msTest('Open editor with contextual menu', async ({ parsecEditics }) => {
   await expect(menu.getByRole('listitem').nth(2)).toHaveText('Edit');
   await menu.getByRole('listitem').nth(2).click();
   const frame = await waitUntilLoaded(parsecEditics);
-  const editor = frame
-    .locator('#cp-app-code-editor')
-    .locator('.CodeMirror-code');
+  const editor = frame.locator('#cp-app-code-editor').locator('.CodeMirror-code');
   await expect(editor).toBeVisible();
-  await expect(editor.locator('pre').nth(0)).toHaveText(
-    'A simple text file', { timeout: 30000 },
-  );
+  await expect(editor.locator('pre').nth(0)).toHaveText('A simple text file', { timeout: 30000 });
 });
 
 msTest('Open editor from viewer', async ({ parsecEditics }) => {
@@ -56,13 +48,9 @@ msTest('Open editor from viewer', async ({ parsecEditics }) => {
   await expect(topbarEditButton).toHaveText('Edit');
   await topbarEditButton.click();
   const frame = await waitUntilLoaded(parsecEditics);
-  const editor = frame
-    .locator('#cp-app-code-editor')
-    .locator('.CodeMirror-code');
+  const editor = frame.locator('#cp-app-code-editor').locator('.CodeMirror-code');
   await expect(editor).toBeVisible();
-  await expect(editor.locator('pre').nth(0)).toHaveText(
-    'A simple text file', { timeout: 30000 },
-  );
+  await expect(editor.locator('pre').nth(0)).toHaveText('A simple text file', { timeout: 30000 });
 });
 
 msTest('Check edited file in viewer', async ({ parsecEditics }) => {
@@ -77,12 +65,11 @@ msTest('Check edited file in viewer', async ({ parsecEditics }) => {
   await expect(actionBar.locator('ion-button').nth(1)).toHaveText('Edit');
   await actionBar.locator('ion-button').nth(1).click();
   const frame = await waitUntilLoaded(parsecEditics);
-  const editor = frame
-    .locator('#cp-app-code-editor')
-    .locator('.CodeMirror-code');
+  const editor = frame.locator('#cp-app-code-editor').locator('.CodeMirror-code');
   await expect(editor).toBeVisible();
   await expect(editor.locator('pre').nth(0)).toHaveText(
-    '# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS', { timeout: 30000 },
+    '# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS',
+    { timeout: 30000 },
   );
   await parsecEditics.waitForTimeout(200);
   await editor.locator('pre').nth(0).fill('ABCD');
