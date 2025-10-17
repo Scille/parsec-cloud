@@ -77,7 +77,7 @@ impl CertificateOrRef {
             let res = libparsec_platform_pki::get_der_encoded_certificate(&hash.into())?;
             println!(
                 "Using cert with id {{{}}}",
-                data_encoding::BASE64.encode_display(&res.cert_ref.uri.unwrap())
+                &res.cert_ref.uris().next().unwrap()
             );
             Certificate::from_der_owned(res.der_content.into())
         } else if let Some(der_file) = &self.der_file {

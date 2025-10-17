@@ -7,6 +7,7 @@ use std::{
     str::FromStr,
 };
 
+use anyhow::Context;
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 
@@ -333,20 +334,130 @@ impl FromStr for X509CertificateHash {
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct X509CertificateReference {
-    pub uri: Option<Bytes>,
+    uris: Vec<X509URIFlavorValue>,
     pub hash: X509CertificateHash,
 }
 
 impl X509CertificateReference {
-    pub fn with_uri(mut self, uri: Bytes) -> Self {
-        self.uri.replace(uri);
+    pub fn with_uri(mut self, new_uri: X509URIFlavorValue) -> Self {
+        match self
+            .uris
+            .binary_search_by(|uri| uri.flavor().cmp(&new_uri.flavor()))
+        {
+            // A URI already use that flavor, replacing it.
+            Ok(pos) => self.uris[pos] = new_uri,
+            // No URIs use that flavor, inserting so the list is keep sorted.
+            Err(pos) => self.uris.insert(pos, new_uri),
+        }
+
         self
     }
+
+    pub fn uris(&self) -> impl Iterator<Item = &X509URIFlavorValue> {
+        self.uris.iter()
+    }
+
+    pub fn get_uri<Flavor: X509URIFlavor>(&self, flavor: X509URIFlavor) -> Option<&Flavor> {
+        self.uris.iter().find_map(|uri| Flavor::may_unwrap(uri))
+    }
+}
+
+trait X509URIFlavor {
+    fn may_unwrap(wrapper: X509URIFlavorValue) -> Option<Self>;
 }
 
 impl From<X509CertificateHash> for X509CertificateReference {
     fn from(hash: X509CertificateHash) -> Self {
-        Self { uri: None, hash }
+        Self {
+            uris: Vec::new(),
+            hash,
+        }
+    }
+}
+
+pub struct X509WindowCngURI(Bytes);
+
+impl X509URIFlavor for X509WindowCngURI {
+    fn may_unwrap(wrapper: X509URIFlavorValue) -> Option<Self> {
+        match wrapper {
+            X509URIFlavorValue::WindowsCNG(uri) => Some(uri),
+            _ => None,
+        }
+    }
+}
+
+impl AsRef<[u8]> for X509WindowCngURI {
+    fn as_ref(&self) -> &[u8] {
+        &self.0
+    }
+}
+
+pub struct X509Pkcs11URI(
+    // TODO: See if we store raw pkcs11 attribute in a list serialized in msgpack
+    // Or a string representing a valid pkcs11-URI (following RFC-7512)
+    Bytes,
+);
+
+impl X509URIFlavor for X509Pkcs11URI {
+    fn may_unwrap(wrapper: X509URIFlavorValue) -> Option<Self> {
+        match wrapper {
+            X509URIFlavorValue::PKCS11(uri) => Some(uri),
+            _ => None,
+        }
+    }
+}
+
+#[derive(
+    Debug, serde_with::DeserializeFromStr, serde_with::SerializeDisplay, PartialEq, Eq, Clone,
+)]
+pub enum X509URIFlavorValue {
+    WindowsCNG(X509WindowCngURI),
+    PKCS11(X509Pkcs11URI),
+}
+
+impl Display for X509URIFlavorValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let encoder = data_encoding::BASE64;
+        let (header, value) = match self {
+            Self::WindowsCNG(data) => ("windows-cng", encoder.encode_display(data)),
+            Self::PKCS11(data) => ("pkcs11", encoder.encode_display(data)),
+        };
+        write!(f, "{header}:{value}")
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum X509URIFlavorValueParsingError {
+    #[error("missing delimiter")]
+    MissingDelimiter,
+    #[error("unknown flavor `{0}`")]
+    UnknownFlavor(String),
+    #[error("invalid encoding: {0}")]
+    InvalidEncoding(#[from] anyhow::Error),
+}
+
+impl FromStr for X509URIFlavorValue {
+    type Err = X509URIFlavorValueParsingError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let Some((header, value)) = s.split_once(':') else {
+            return Err(X509URIFlavorValueParsingError::MissingDelimiter);
+        };
+        if header.eq_ignore_ascii_case("pkcs11") {
+            let val = data_encoding::BASE64
+                .decode(value.as_bytes())
+                .context("Invalid pkcs11 value encoding")?;
+            Ok(Self::PKCS11(val.into()))
+        } else if header.eq_ignore_ascii_case("windows-cng") {
+            let val = data_encoding::BASE64
+                .decode(value.as_bytes())
+                .context("Invalid windows CNG value encoding")?;
+            Ok(Self::WindowsCNG(val.into()))
+        } else {
+            Err(X509URIFlavorValueParsingError::UnknownFlavor(
+                header.to_string(),
+            ))
+        }
     }
 }
 
