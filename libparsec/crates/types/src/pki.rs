@@ -7,6 +7,7 @@ use std::{
     str::FromStr,
 };
 
+use anyhow::Context;
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 
@@ -18,7 +19,7 @@ use crate::{
     serialization::{format_v0_dump, format_vx_load},
     DataError, DataResult, DateTime, DeviceID, DeviceLabel, EnrollmentID, HumanHandle, ParsecAddr,
     ParsecPkiEnrollmentAddr, PkiEnrollmentLocalPendingError, PkiEnrollmentLocalPendingResult,
-    UserID, UserProfile, X509CertificateReferenceData,
+    UserID, UserProfile,
 };
 
 /*
@@ -275,9 +276,17 @@ impl From<LocalPendingEnrollment> for LocalPendingEnrollmentData {
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Serialize, Deserialize, Debug)]
+#[derive(
+    Clone, Eq, PartialEq, serde_with::DeserializeFromStr, serde_with::SerializeDisplay, Debug,
+)]
 pub enum X509CertificateHash {
     SHA256(Box<[u8; 32]>),
+}
+
+impl X509CertificateHash {
+    pub fn fake_sha256() -> Self {
+        Self::SHA256(Default::default())
+    }
 }
 
 impl std::fmt::Display for X509CertificateHash {
@@ -324,77 +333,194 @@ impl FromStr for X509CertificateHash {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
-pub enum X509CertificateReference {
-    Id(Bytes),
-    Hash(X509CertificateHash),
-    IdOrHash(X509CertificateReferenceIdOrHash),
-}
-
-impl TryFrom<X509CertificateReferenceData> for X509CertificateReference {
-    type Error = DataError;
-
-    fn try_from(value: X509CertificateReferenceData) -> Result<Self, Self::Error> {
-        match value {
-            X509CertificateReferenceData {
-                certificate_hash: None,
-                certificate_id: None,
-            } => Err(DataError::DataIntegrity {
-                data_type: "Certificate reference",
-                invariant: "id or hash must be provided",
-            }),
-            X509CertificateReferenceData {
-                certificate_hash: Some(hash),
-                certificate_id: None,
-            } => Ok(X509CertificateReference::Hash(hash.parse()?)),
-            X509CertificateReferenceData {
-                certificate_hash: None,
-                certificate_id: Some(id),
-            } => Ok(X509CertificateReference::Id(id)),
-            X509CertificateReferenceData {
-                certificate_hash: Some(hash),
-                certificate_id: Some(id),
-            } => Ok(X509CertificateReference::IdOrHash(
-                X509CertificateReferenceIdOrHash {
-                    id,
-                    hash: hash.parse()?,
-                },
-            )),
-        }
-    }
-}
-
-impl From<X509CertificateReference> for X509CertificateReferenceData {
-    fn from(value: X509CertificateReference) -> Self {
-        match value {
-            X509CertificateReference::Id(id) => X509CertificateReferenceData {
-                certificate_hash: None,
-                certificate_id: Some(id),
-            },
-            X509CertificateReference::Hash(hash) => X509CertificateReferenceData {
-                certificate_hash: Some(hash.to_string()),
-                certificate_id: None,
-            },
-            X509CertificateReference::IdOrHash(id_or_hash) => {
-                let X509CertificateReferenceIdOrHash { id, hash } = id_or_hash;
-                X509CertificateReferenceData {
-                    certificate_hash: Some(hash.to_string()),
-                    certificate_id: Some(id),
-                }
-            }
-        }
-    }
-}
-
-impl From<X509CertificateReferenceIdOrHash> for X509CertificateReference {
-    fn from(value: X509CertificateReferenceIdOrHash) -> Self {
-        Self::IdOrHash(value)
-    }
-}
-
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
-pub struct X509CertificateReferenceIdOrHash {
-    pub id: Bytes,
+pub struct X509CertificateReference {
+    uris: Vec<X509URIFlavorValue>,
     pub hash: X509CertificateHash,
+}
+
+use private::X509URIFlavor;
+
+impl X509CertificateReference {
+    pub fn with_uri<Flavor: X509URIFlavor>(mut self, new_uri: Flavor) -> Self {
+        match self
+            .uris
+            .binary_search_by(|uri| uri.header().cmp(Flavor::HEADER))
+        {
+            // A URI already use that flavor, replacing it.
+            Ok(pos) => self.uris[pos] = new_uri.into(),
+            // No URIs use that flavor, inserting so the list is keep sorted.
+            Err(pos) => self.uris.insert(pos, new_uri.into()),
+        }
+
+        self
+    }
+
+    pub fn uris(&self) -> impl Iterator<Item = &X509URIFlavorValue> {
+        self.uris.iter()
+    }
+
+    pub fn get_uri<Flavor: X509URIFlavor>(&self) -> Option<&Flavor> {
+        self.uris.iter().find_map(|uri| Flavor::may_unwrap(uri))
+    }
+}
+
+mod private {
+    pub trait X509URIFlavor: Sized + Into<super::X509URIFlavorValue> {
+        const HEADER: &'static str;
+
+        fn header(&self) -> &'static str {
+            Self::HEADER
+        }
+
+        fn may_unwrap(wrapper: &super::X509URIFlavorValue) -> Option<&Self>;
+    }
+}
+
+impl From<X509CertificateHash> for X509CertificateReference {
+    fn from(hash: X509CertificateHash) -> Self {
+        Self {
+            uris: Vec::new(),
+            hash,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct X509WindowsCngURI(Bytes);
+
+impl From<Bytes> for X509WindowsCngURI {
+    fn from(value: Bytes) -> Self {
+        Self(value)
+    }
+}
+
+impl X509URIFlavor for X509WindowsCngURI {
+    const HEADER: &'static str = "windows-cng";
+    fn may_unwrap(wrapper: &X509URIFlavorValue) -> Option<&Self> {
+        match wrapper {
+            X509URIFlavorValue::WindowsCNG(uri) => Some(uri),
+            _ => None,
+        }
+    }
+}
+
+impl Display for X509WindowsCngURI {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}:{}",
+            Self::HEADER,
+            data_encoding::BASE64.encode_display(&self.0)
+        )
+    }
+}
+
+impl AsRef<[u8]> for X509WindowsCngURI {
+    fn as_ref(&self) -> &[u8] {
+        &self.0
+    }
+}
+
+impl From<X509WindowsCngURI> for X509URIFlavorValue {
+    fn from(value: X509WindowsCngURI) -> Self {
+        Self::WindowsCNG(value)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct X509Pkcs11URI(
+    // TDO: See if we store raw pkcs11 attribute in a list serialized in msgpack
+    // Or a string representing a valid pkcs11-URI (following RFC-7512)
+    Bytes,
+);
+
+impl X509URIFlavor for X509Pkcs11URI {
+    const HEADER: &'static str = "pkcs11";
+
+    fn may_unwrap(wrapper: &X509URIFlavorValue) -> Option<&Self> {
+        match wrapper {
+            X509URIFlavorValue::PKCS11(uri) => Some(uri),
+            _ => None,
+        }
+    }
+}
+
+impl Display for X509Pkcs11URI {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}:{}",
+            Self::HEADER,
+            data_encoding::BASE64.encode_display(&self.0)
+        )
+    }
+}
+
+impl From<X509Pkcs11URI> for X509URIFlavorValue {
+    fn from(value: X509Pkcs11URI) -> Self {
+        Self::PKCS11(value)
+    }
+}
+
+#[derive(
+    Debug, serde_with::DeserializeFromStr, serde_with::SerializeDisplay, PartialEq, Eq, Clone,
+)]
+pub enum X509URIFlavorValue {
+    WindowsCNG(X509WindowsCngURI),
+    PKCS11(X509Pkcs11URI),
+}
+
+impl X509URIFlavorValue {
+    fn header(&self) -> &'static str {
+        match self {
+            X509URIFlavorValue::WindowsCNG(uri) => uri.header(),
+            X509URIFlavorValue::PKCS11(uri) => uri.header(),
+        }
+    }
+}
+
+impl Display for X509URIFlavorValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::WindowsCNG(data) => data.fmt(f),
+            Self::PKCS11(data) => data.fmt(f),
+        }
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum X509URIFlavorValueParsingError {
+    #[error("missing delimiter")]
+    MissingDelimiter,
+    #[error("unknown flavor `{0}`")]
+    UnknownFlavor(String),
+    #[error("invalid encoding: {0}")]
+    InvalidEncoding(#[from] anyhow::Error),
+}
+
+impl FromStr for X509URIFlavorValue {
+    type Err = X509URIFlavorValueParsingError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let Some((header, value)) = s.split_once(':') else {
+            return Err(X509URIFlavorValueParsingError::MissingDelimiter);
+        };
+        if header.eq_ignore_ascii_case("pkcs11") {
+            let val = data_encoding::BASE64
+                .decode(value.as_bytes())
+                .context("Invalid pkcs11 value encoding")?;
+            Ok(Self::PKCS11(X509Pkcs11URI(val.into())))
+        } else if header.eq_ignore_ascii_case("windows-cng") {
+            let val = data_encoding::BASE64
+                .decode(value.as_bytes())
+                .context("Invalid windows CNG value encoding")?;
+            Ok(Self::WindowsCNG(X509WindowsCngURI(val.into())))
+        } else {
+            Err(X509URIFlavorValueParsingError::UnknownFlavor(
+                header.to_string(),
+            ))
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

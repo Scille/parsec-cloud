@@ -349,7 +349,7 @@ pub(super) async fn save_device(
                 device_id: device.device_id,
                 human_handle: device.human_handle.to_owned(),
                 device_label: device.device_label.to_owned(),
-                certificate_ref: X509CertificateReference::IdOrHash(encrypted_message.cert_ref),
+                certificate_ref: encrypted_message.cert_ref,
                 encrypted_key: encrypted_message.ciphered,
                 ciphertext,
                 algorithm_for_encrypted_key: encrypted_message.algo,
