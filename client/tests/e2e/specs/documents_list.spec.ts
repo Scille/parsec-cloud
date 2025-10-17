@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { answerQuestion, createFolder, DisplaySize, expect, fillInputModal, msTest } from '@tests/e2e/helpers';
+import { answerQuestion, createFolder, DisplaySize, expect, fillInputModal, msTest, resizePage } from '@tests/e2e/helpers';
 
 async function isInGridMode(page: Page): Promise<boolean> {
   return (await page.locator('#folders-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
@@ -343,6 +343,60 @@ msTest('Selection in grid mode by by clicking on the checkbox', async ({ documen
   await expect(entries.nth(1).locator('ion-checkbox')).toHaveState('unchecked');
   await expect(entries.nth(2).locator('ion-checkbox')).toHaveState('checked');
   await expect(entries.nth(3).locator('ion-checkbox')).toHaveState('unchecked');
+});
+
+msTest('Check in FoldersPage if action bar updates after resized', async ({ documents }) => {
+  const actionBar = documents.locator('#folders-ms-action-bar');
+  const actionsBarButtons = actionBar.locator('.ms-action-bar-button--visible');
+  const actionBarMoreButton = actionBar.locator('#action-bar-more-button');
+  const popover = documents.locator('.action-bar-more-popover');
+
+  await resizePage(documents, 1600);
+  await expect(actionBar).toBeVisible();
+  await expect(actionsBarButtons).toHaveCount(2);
+  await expect(actionsBarButtons).toHaveText(['New folder', 'Import']);
+  await expect(actionBarMoreButton).toBeHidden();
+
+  await resizePage(documents, 850);
+  await expect(actionsBarButtons).toHaveText(['New folder']);
+  await expect(actionBarMoreButton).toBeVisible();
+  await actionBarMoreButton.click();
+  await expect(documents.locator('.popover-viewport').getByRole('listitem').nth(0)).toHaveText('Import');
+  await documents.keyboard.press('Escape');
+  await expect(documents.locator('.popover-viewport')).toBeHidden();
+
+  await resizePage(documents, 2000);
+  const firstFileEntry = documents.locator('.folder-container').locator('.file-list-item').nth(1);
+  await firstFileEntry.hover();
+  await firstFileEntry.locator('ion-checkbox').click();
+  // All buttons should be visible
+  await expect(actionsBarButtons).toHaveText(['Preview', 'Rename', 'Move to', 'Make a copy', 'Delete', 'Download', 'Details', 'Copy link']);
+  await expect(actionBarMoreButton).toBeHidden();
+
+  // Resize to 1500px
+  await resizePage(documents, 1500);
+  await expect(actionsBarButtons).toHaveText(['Preview', 'Rename', 'Move to', 'Make a copy', 'Delete', 'Download']);
+  await expect(actionBarMoreButton).toBeVisible();
+  await actionBarMoreButton.click();
+  await expect(documents.locator('.popover-viewport').getByRole('listitem')).toHaveText(['Details', 'Copy link']);
+  await documents.keyboard.press('Escape');
+
+  // Resize to 1200px (to be sure the "more" button works)
+  await resizePage(documents, 1200);
+  await expect(actionsBarButtons).toHaveText(['Preview', 'Rename', 'Move to']);
+  await expect(actionBarMoreButton).toBeVisible();
+  await actionBarMoreButton.click();
+  await expect(popover.getByRole('listitem')).toHaveText(['Make a copy', 'Delete', 'Download', 'Details', 'Copy link']);
+  await documents.keyboard.press('Escape');
+
+  // Finally, check if action bar is checkable after toggling the sidebar menu
+  const topbarButton = documents.locator('#connected-header').locator('#trigger-toggle-menu-button');
+  await expect(topbarButton).toBeVisible();
+  await topbarButton.click();
+  await expect(actionsBarButtons).toHaveText(['Preview', 'Rename', 'Move to', 'Make a copy', 'Delete', 'Download']);
+  await expect(actionBarMoreButton).toBeVisible();
+  await actionBarMoreButton.click();
+  await expect(popover.getByRole('listitem')).toHaveText(['Details', 'Copy link']);
 });
 
 for (const gridMode of [false, true]) {

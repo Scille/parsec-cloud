@@ -399,3 +399,8 @@ export async function renameDocument(documentsPage: MsPage, entry: Locator, newN
   // Can't check if the entry's been renamed, since the renaming may change the sort order and therefore,
   // what element the entry points to.
 }
+
+export async function resizePage(page: Page, width: number, height?: number): Promise<void> {
+  await page.setViewportSize({ width, height: height ?? 900 });
+  await page.waitForTimeout(100);
+}

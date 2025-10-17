@@ -6,7 +6,7 @@ msTest('Fab button and menu as administrator and read/write', async ({ workspace
   await workspaces.setDisplaySize(DisplaySize.Small);
   const fabButton = workspaces.locator('#add-menu-fab-button');
   const tabBarButtons = workspaces.locator('#tab-bar').locator('.tab-bar-menu-button');
-  const fabModalOptions = workspaces.locator('#fab-modal').getByRole('listitem');
+  const fabModalOptions = workspaces.locator('#fab-modal').locator('.list-group-item');
 
   // WorkspacesPage
   await expect(fabButton).toBeVisible();
