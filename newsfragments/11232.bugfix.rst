@@ -1,1 +1,0 @@
-Fixed a bug where menus and headers would display actions not available for certain profiles and roles

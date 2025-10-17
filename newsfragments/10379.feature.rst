@@ -1,1 +1,0 @@
-Added a redirection page to handle Parsec links in both web and desktop mode
