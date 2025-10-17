@@ -206,7 +206,10 @@ async function sendRecoveryDeviceCreatedEvent(): Promise<void> {
 
 async function downloadRecoveryKey(): Promise<void> {
   disableKeyDownload.value = true;
-  await downloadFile(code, 'text/plain', { key: 'ExportRecoveryDevicePage.filenames.recoveryKey', data: { org: orgId.value } });
+  await downloadFile(new TextEncoder().encode(code), 'text/plain', {
+    key: 'ExportRecoveryDevicePage.filenames.recoveryKey',
+    data: { org: orgId.value },
+  });
   setTimeout(() => {
     disableKeyDownload.value = false;
     recoveryKeyDownloaded.value = true;
@@ -242,11 +245,11 @@ async function downloadRecoveryFile(): Promise<void> {
 }
 
 async function downloadFile(
-  data: Uint8Array | string,
+  data: Uint8Array,
   contentType: 'application/octet-stream' | 'text/plain',
   fileName: Translatable,
 ): Promise<void> {
-  const blob = new Blob([data], { type: contentType });
+  const blob = new Blob([data.buffer as ArrayBuffer], { type: contentType });
   const url = window.URL.createObjectURL(blob);
 
   downloadLinkRef.value?.setAttribute('href', url);

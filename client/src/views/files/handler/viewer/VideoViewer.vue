@@ -147,7 +147,7 @@ const dropdownItems = ref<FileControlsDropdownItemContent[]>([
 
 onMounted(async () => {
   mimeType.value = await getMimeTypeFromBuffer(props.contentInfo.data);
-  src.value = URL.createObjectURL(new Blob([props.contentInfo.data], { type: mimeType.value }));
+  src.value = URL.createObjectURL(new Blob([props.contentInfo.data.buffer as ArrayBuffer], { type: mimeType.value }));
 });
 
 onUnmounted(() => {
