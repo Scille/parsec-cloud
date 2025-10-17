@@ -43,7 +43,7 @@ const customLogo = ref(ResourcesManager.instance().get(Resources.LogoFull) !== u
 onMounted(() => {
   const sidebarImage = ResourcesManager.instance().get(Resources.HomeSidebar) as Uint8Array;
   if (sidebarImage) {
-    const blob = new Blob([sidebarImage], { type: 'image/png' });
+    const blob = new Blob([sidebarImage.buffer as ArrayBuffer], { type: 'image/png' });
     backgroundImage.value = `url("${window.URL.createObjectURL(blob)}")`;
   }
 });

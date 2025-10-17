@@ -104,7 +104,7 @@ function updateDraggingRestrictions(resetPosition = false): void {
 
 onMounted(async () => {
   const mimeType = await getMimeTypeFromBuffer(props.contentInfo.data);
-  src.value = URL.createObjectURL(new Blob([props.contentInfo.data], { type: mimeType }));
+  src.value = URL.createObjectURL(new Blob([props.contentInfo.data.buffer as ArrayBuffer], { type: mimeType }));
   zoomLevel.value = (zoomControlRef.value?.getZoom() ?? 100) / 100;
   window.addEventListener('resize', () => updateDraggingRestrictions(true));
 });

@@ -769,7 +769,7 @@ async function reportBug(query: BugReportQueryData, opts?: BugReportOptions): Pr
     // }
 
     for (const fileData of opts?.files ?? []) {
-      const blob = new Blob([fileData.data], { type: fileData.mimeType });
+      const blob = new Blob([fileData.data.buffer as ArrayBuffer], { type: fileData.mimeType });
       formData.append(fileData.name, blob, fileData.name);
     }
 
