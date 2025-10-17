@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { expect, fillInputModal, getClipboardText, login, msTest } from '@tests/e2e/helpers';
+import { expect, fillInputModal, getClipboardText, login, msTest, resizePage } from '@tests/e2e/helpers';
 
 type Mode = 'grid' | 'list' | 'sidebar';
 
@@ -218,4 +218,22 @@ msTest('Check workspace rename in header breadcrumb', async ({ workspaces }) => 
   await expect(workspaces).toShowToast('Workspace has been successfully renamed to New-wksp1.', 'Success');
   await expect(bobTab).toHaveHeader(['New-wksp1'], true, true);
   await expect(workspaces).toHaveHeader(['New-wksp1'], true, true);
+});
+
+msTest('Check if action bar updates when resizing the window', async ({ connected }) => {
+  const actionBar = connected.locator('#workspaces-ms-action-bar');
+  const actionsBarButtons = actionBar.locator('.ms-action-bar-button');
+  const actionBarMoreButton = actionBar.locator('#action-bar-more-button');
+  await expect(actionBar).toBeVisible();
+  await expect(actionsBarButtons).toBeVisible();
+  await expect(actionsBarButtons).toHaveCount(1);
+  await expect(actionsBarButtons.nth(0)).toHaveText('New workspace');
+  await resizePage(connected, 1100);
+  await expect(actionsBarButtons).toHaveCount(1);
+  await expect(actionsBarButtons.nth(0)).toBeHidden();
+  await expect(actionBarMoreButton).toBeVisible();
+  await actionBarMoreButton.click();
+  await expect(connected.locator('.popover-viewport').getByRole('listitem').nth(0)).toHaveText('New workspace');
+  await connected.keyboard.press('Escape');
+  await expect(connected.locator('.popover-viewport')).toBeHidden();
 });
