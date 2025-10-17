@@ -27,11 +27,11 @@
           justify="start"
           :value="DeviceSaveStrategyTag.Keyring"
           @click="$event.preventDefault()"
-          :disabled="!keyringAvailable"
+          :disabled="!keyringAvailable || activeAuth === AvailableDeviceTypeTag.Keyring"
         >
           <authentication-card
             :auth-method="DeviceSaveStrategyTag.Keyring"
-            :state="!keyringAvailable ? AuthenticationCardState.Unavailable : AuthenticationCardState.Default"
+            :state="getAuthCardState(AvailableDeviceTypeTag.Keyring)"
             :disabled="!keyringAvailable"
           />
         </ion-radio>
@@ -43,24 +43,27 @@
         >
           <authentication-card
             @click="onMethodSelected(DeviceSaveStrategyTag.Password)"
-            :state="AuthenticationCardState.Default"
+            :state="getAuthCardState(AvailableDeviceTypeTag.Password)"
             :auth-method="DeviceSaveStrategyTag.Password"
           />
         </ion-radio>
 
-        <!-- TO DO: uncomment for Smartcard -->
-        <!-- <ion-radio
-          v-if="false"
+        <ion-radio
+          v-if="smartcardAvailable"
           class="item-radio radio-list-item"
           label-placement="end"
           justify="start"
+          :value="DeviceSaveStrategyTag.Smartcard"
+          @click="$event.preventDefault()"
+          :disabled="!smartcardAvailable || activeAuth === AvailableDeviceTypeTag.Smartcard"
         >
           <authentication-card
             @click="onMethodSelected(DeviceSaveStrategyTag.Smartcard)"
-            :state="AuthenticationCardState.Default"
+            :state="getAuthCardState(AvailableDeviceTypeTag.Smartcard)"
             :auth-method="DeviceSaveStrategyTag.Smartcard"
+            :disabled="!smartcardAvailable"
           />
-        </ion-radio> -->
+        </ion-radio>
 
         <ion-radio
           v-if="isOpenBaoAvailable()"
@@ -110,8 +113,7 @@
         />
       </div>
 
-      <!-- TO DO: uncomment for Smartcard -->
-      <!-- <div v-if="authentication === DeviceSaveStrategyTag.Smartcard">
+      <div v-if="authentication === DeviceSaveStrategyTag.Smartcard">
         <div class="method-chosen">
           <ion-text class="method-chosen__title subtitles-sm">{{ $msTranslate('Authentication.methodChosen') }}</ion-text>
           <authentication-card
@@ -120,7 +122,7 @@
             @update-clicked="changeAuthenticationMethod"
           />
         </div>
-      </div> -->
+      </div>
 
       <div v-if="authentication === CustomDeviceSaveStrategyTag.SSO">
         <div class="method-chosen">
@@ -143,7 +145,16 @@
 <script setup lang="ts">
 import { MsChoosePasswordInput } from 'megashark-lib';
 import KeyringInformation from '@/components/devices/KeyringInformation.vue';
-import { CustomDeviceSaveStrategyTag, DeviceSaveStrategy, DeviceSaveStrategyTag, SaveStrategy, isKeyringAvailable, isWeb } from '@/parsec';
+import {
+  AvailableDeviceTypeTag,
+  CustomDeviceSaveStrategyTag,
+  DeviceSaveStrategy,
+  DeviceSaveStrategyTag,
+  SaveStrategy,
+  isKeyringAvailable,
+  isSmartcardAvailable,
+  isWeb,
+} from '@/parsec';
 import { IonList, IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
 import { onMounted, ref, useTemplateRef } from 'vue';
 import authenticationCard from '@/components/profile/AuthenticationCard.vue';
@@ -157,10 +168,11 @@ const keyringAvailable = ref(false);
 const choosePasswordRef = useTemplateRef<InstanceType<typeof MsChoosePasswordInput>>('choosePassword');
 const { openBaoConnect, isOpenBaoAvailable } = useOpenBao();
 const openBaoLoggedIn = ref(false);
+const smartcardAvailable = ref(false);
 
 const props = defineProps<{
   showTitle?: boolean;
-  disableKeyring?: boolean;
+  activeAuth?: AvailableDeviceTypeTag;
 }>();
 
 defineExpose({
@@ -174,14 +186,32 @@ defineEmits<{
 }>();
 
 onMounted(async () => {
-  if (!props.disableKeyring) {
-    keyringAvailable.value = await isKeyringAvailable();
-  }
+  keyringAvailable.value = props.activeAuth === AvailableDeviceTypeTag.Keyring ? true : await isKeyringAvailable();
+  smartcardAvailable.value = await isSmartcardAvailable();
 });
 
 async function onChange(_value: any): Promise<void> {
   if (authentication.value === DeviceSaveStrategyTag.Password && choosePasswordRef.value) {
     await choosePasswordRef.value.setFocus();
+  }
+}
+
+function getAuthCardState(auth: AvailableDeviceTypeTag): AuthenticationCardState {
+  switch (auth) {
+    case AvailableDeviceTypeTag.Password:
+      return AuthenticationCardState.Default;
+    case AvailableDeviceTypeTag.Keyring:
+      if (!keyringAvailable.value) {
+        return AuthenticationCardState.Unavailable;
+      }
+      return auth === props.activeAuth ? AuthenticationCardState.Active : AuthenticationCardState.Default;
+    case AvailableDeviceTypeTag.Smartcard:
+      if (!smartcardAvailable.value) {
+        return AuthenticationCardState.Unavailable;
+      }
+      return auth === props.activeAuth ? AuthenticationCardState.Active : AuthenticationCardState.Default;
+    default:
+      return AuthenticationCardState.Default;
   }
 }
 

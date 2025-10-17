@@ -1148,7 +1148,14 @@
             "password": "Mot de passe",
             "smartcard": {
                 "title": "Carte à puce",
-                "description": "La carte à puce doit être insérée et prête à l'emploi."
+                "description": "La carte à puce doit être insérée et prête à l'emploi.",
+                "unavailable": "L'authentification par carte à puce est indisponible.",
+                "warn": {
+                    "title": "Information de sécurité",
+                    "subtitle": "L'authentification par carte à puce est considérée comme la méthode la plus sécurisée pour se connecter. En procédant à ce changement, vous acceptez que la sécurité puisse être compromise.",
+                    "yes": "Continuer",
+                    "no": "Conserver la méthode actuelle"
+                }
             },
             "sso": {
                 "title": "Authentification unique (SSO)",

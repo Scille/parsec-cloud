@@ -13,7 +13,7 @@
       <ion-text class="authentication-card-text__title body-lg">{{ $msTranslate(config.methodName) }}</ion-text>
       <ion-text
         class="authentication-card-text__description body"
-        v-if="config.description && state !== AuthenticationCardState.Unavailable"
+        v-if="config.description && showDescription()"
       >
         {{ $msTranslate(config.description) }}
       </ion-text>
@@ -25,7 +25,7 @@
       </ion-text>
     </div>
     <ion-icon
-      v-if="state === AuthenticationCardState.Active || state === AuthenticationCardState.Default"
+      v-if="state === AuthenticationCardState.Active"
       :icon="checkmarkCircle"
       class="authentication-card__icon"
     />
@@ -99,6 +99,7 @@ const methodConfig: Record<
     imageAlt: 'Smartcard',
     methodName: 'Authentication.method.smartcard.title',
     description: 'Authentication.method.smartcard.description',
+    unavailableExplanation: 'Authentication.method.smartcard.unavailable',
   },
   [DeviceSaveStrategyTag.AccountVault]: {
     imageSrc: '',
@@ -122,6 +123,10 @@ function keyringUnavailableMessage(): Translatable {
   } else {
     return '';
   }
+}
+
+function showDescription(): boolean {
+  return ![AuthenticationCardState.Active, AuthenticationCardState.Current, AuthenticationCardState.Unavailable].includes(props.state);
 }
 
 const config = computed(() => methodConfig[props.authMethod]);
@@ -178,11 +183,22 @@ const config = computed(() => methodConfig[props.authMethod]);
   &--default {
     &:hover {
       border-color: var(--parsec-color-light-secondary-light);
+    }
+  }
 
-      .authentication-card__icon {
-        color: var(--parsec-color-light-secondary-light);
-        display: block;
-      }
+  &--current {
+    .authentication-card__icon {
+      color: var(--parsec-color-light-primary-400);
+      display: block;
+    }
+  }
+
+  &--active {
+    background: var(--parsec-color-light-secondary-premiere);
+
+    .authentication-card__icon {
+      color: var(--parsec-color-light-primary-400);
+      display: block;
     }
   }
 

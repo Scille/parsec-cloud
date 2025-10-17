@@ -3,6 +3,7 @@
 export enum AuthenticationCardState {
   Default = 'default',
   Selected = 'selected',
+  Current = 'current',
   Active = 'active',
   Update = 'update',
   Disabled = 'disabled',

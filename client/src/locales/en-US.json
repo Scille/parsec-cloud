@@ -1149,7 +1149,14 @@
             "password": "Password",
             "smartcard": {
                 "title": "Smartcard",
-                "description": "The smartcard should be plugged in and ready to use."
+                "description": "The smartcard should be plugged in and ready to use.",
+                "unavailable": "Smartcard authentication is unavailable.",
+                "warn": {
+                    "title": "Security information",
+                    "subtitle": "Smartcard authentication is considered the most secure method to log in. By changing your authentication method, be mindful that your device security might be compromised.",
+                    "yes": "Continue",
+                    "no": "Keep current method"
+                }
             },
             "sso": {
                 "title": "Single Sign-On",
