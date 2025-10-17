@@ -10,15 +10,17 @@ Parsec v3.5.1-rc.0 (2025-10-10)
 Bugfixes
 ~~~~~~~~
 
-* Unix: improve cleanup workflow run at startup for orphan mountpoint
+* Improve mountpoint cleanup at startup for orphan mountpoints (Linux/macOS)
   (`#10014 <https://github.com/Scille/parsec-cloud/issues/10014>`__)
 
-* Fixed a bug causing files to be incorrectly deleted when cancelling an import
+* File replace hangs via drag & drop from Finder
+  (`#10054 <https://github.com/Scille/parsec-cloud/issues/10054>`__)
+
+* File replace incorrectly deletes original file if cancelled during import
   (`#11107 <https://github.com/Scille/parsec-cloud/issues/11107>`__)
 
-* Fixed a bug on Firefox where files could only be sorted by name
+* Sort files by other than filename does not work (Firefox)
   (`#11155 <https://github.com/Scille/parsec-cloud/issues/11155>`__)
-
 
 
 Parsec v3.5.0 (2025-09-18)
