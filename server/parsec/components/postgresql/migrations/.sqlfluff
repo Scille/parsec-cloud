@@ -4,7 +4,8 @@
 # Or run 'sqlfluff dialects'
 dialect = postgres
 
-# Comma separated list of rules to exclude, or None
+# Comma-separated list of rules to exclude when checking SQL files in server.
+# NOTE: this is overriden in `misc/lint_sql.py` when checking SQL in python files.
 # See https://docs.sqlfluff.com/en/stable/configuration/rule_configuration.html
 # exclude_rules =
 

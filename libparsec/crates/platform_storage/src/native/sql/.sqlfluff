@@ -4,7 +4,7 @@
 # Or run 'sqlfluff dialects'
 dialect = sqlite
 
-# Comma separated list of rules to exclude, or None
+# Comma-separated list of rules to exclude when checking SQL files in libparsec.
 # See https://docs.sqlfluff.com/en/stable/configuration/rule_configuration.html
 # exclude_rules =
 

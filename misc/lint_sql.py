@@ -175,12 +175,14 @@ if __name__ == "__main__":
                 return
             file = f"{caller_frame.filename}:{caller_frame.lineno}"
 
-            # Exclude rule LT13 (aka "Files must not begin with newlines or whitespace.")
+            # Lint the sql string
             errors = sqlfluff.lint(
                 sql,
-                dialect="postgres",
                 config_path=POSTGRESQL_SQLFLUFF_CONFIG,
-                exclude_rules=["LT13"],
+                exclude_rules=[  # Note this overrides `exclude_rules` from config file
+                    "LT13",  # Exclude rule LT13 (aka "Files must not begin with newlines or whitespace")
+                    "AM09",  # Exclude rule AM09 temporarily (https://github.com/Scille/parsec-cloud/issues/11385)
+                ],
             )
 
             linted_files += 1
