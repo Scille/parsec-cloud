@@ -46,7 +46,7 @@ LIMIT 1
 _q_update_user = Q(
     """
 WITH
-new_profile AS (  -- noqa: ST03
+new_profile AS (
     INSERT INTO profile (
         user_,
         profile,

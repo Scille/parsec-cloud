@@ -123,7 +123,7 @@ WITH new_realm_keys_bundle AS (
     RETURNING _id
 ),
 
-updated_realm_key_index AS (  -- noqa: ST03
+updated_realm_key_index AS (
     UPDATE realm
     SET key_index = $key_index
     WHERE _id = $realm_internal_id

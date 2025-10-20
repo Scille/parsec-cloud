@@ -57,67 +57,67 @@ WITH to_remove_realm AS (
 
 -- Clean all tables that are related to the realm
 
-clean_realm_user_role AS ( -- noqa: ST03
+clean_realm_user_role AS (
     DELETE FROM realm_user_role
     USING to_remove_realm
     WHERE realm_user_role.realm = to_remove_realm.realm
 ),
 
-clean_realm_archiving AS ( -- noqa: ST03
+clean_realm_archiving AS (
     DELETE FROM realm_archiving
     USING to_remove_realm
     WHERE realm_archiving.realm = to_remove_realm.realm
 ),
 
-clean_realm_user_change AS ( -- noqa: ST03
+clean_realm_user_change AS (
     DELETE FROM realm_user_change
     USING to_remove_realm
     WHERE realm_user_change.realm = to_remove_realm.realm
 ),
 
-clean_realm_keys_bundle AS ( -- noqa: ST03
+clean_realm_keys_bundle AS (
     DELETE FROM realm_keys_bundle
     USING to_remove_realm
     WHERE realm_keys_bundle.realm = to_remove_realm.realm
 ),
 
-clean_realm_keys_bundle_access AS ( -- noqa: ST03
+clean_realm_keys_bundle_access AS (
     DELETE FROM realm_keys_bundle_access
     USING to_remove_realm
     WHERE realm_keys_bundle_access.realm = to_remove_realm.realm
 ),
 
-clean_realm_sequester_keys_bundle_access AS ( -- noqa: ST03
+clean_realm_sequester_keys_bundle_access AS (
     DELETE FROM realm_sequester_keys_bundle_access
     USING to_remove_realm
     WHERE realm_sequester_keys_bundle_access.realm = to_remove_realm.realm
 ),
 
-clean_realm_name AS ( -- noqa: ST03
+clean_realm_name AS (
     DELETE FROM realm_name
     USING to_remove_realm
     WHERE realm_name.realm = to_remove_realm.realm
 ),
 
-clean_vlob_atom AS ( -- noqa: ST03
+clean_vlob_atom AS (
     DELETE FROM vlob_atom
     USING to_remove_realm
     WHERE vlob_atom.realm = to_remove_realm.realm
 ),
 
-clean_realm_vlob_update AS ( -- noqa: ST03
+clean_realm_vlob_update AS (
     DELETE FROM realm_vlob_update
     USING to_remove_realm
     WHERE realm_vlob_update.realm = to_remove_realm.realm
 ),
 
-clean_block AS ( -- noqa: ST03
+clean_block AS (
     DELETE FROM block
     USING to_remove_realm
     WHERE block.realm = to_remove_realm.realm
 ),
 
-clean_realm_topic AS ( -- noqa: ST03
+clean_realm_topic AS (
     DELETE FROM realm_topic
     USING to_remove_realm
     WHERE realm_topic.realm = to_remove_realm.realm

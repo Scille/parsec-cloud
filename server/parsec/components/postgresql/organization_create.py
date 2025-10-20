@@ -74,7 +74,7 @@ WITH new_organization AS (
     RETURNING _id
 ),
 
-new_common_topic AS (  -- noqa: ST03
+new_common_topic AS (
     -- New organization's `common` topic must be added in the database since it is locked
     -- during organization bootstrap to handle concurrency.
     INSERT INTO common_topic (
