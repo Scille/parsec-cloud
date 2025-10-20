@@ -46,7 +46,7 @@ WHERE
 _q_mark_shamir_recovery_setup_as_deleted = Q(
     """
 WITH
-shamir_recovery_topic_update AS (  -- noqa: ST03
+shamir_recovery_topic_update AS (
     INSERT INTO shamir_recovery_topic (
         organization,
         last_timestamp

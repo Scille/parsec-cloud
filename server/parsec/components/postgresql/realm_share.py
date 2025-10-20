@@ -105,7 +105,7 @@ WITH new_realm_user_role AS (
     RETURNING _id
 ),
 
-new_realm_keys_bundle_access AS (  -- noqa: ST03
+new_realm_keys_bundle_access AS (
     INSERT INTO realm_keys_bundle_access (
         realm,
         user_,

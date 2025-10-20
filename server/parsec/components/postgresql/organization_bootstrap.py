@@ -91,7 +91,7 @@ new_user AS (
     RETURNING _id
 ),
 
-new_device AS (  -- noqa: ST03
+new_device AS (
     INSERT INTO device (
         organization,
         user_,

@@ -48,7 +48,7 @@ LIMIT 1
 
 _q_insert_shamir_recovery_setup = Q(
     """
-WITH shamir_recovery_topic_update AS (  -- noqa: ST03
+WITH shamir_recovery_topic_update AS (
     INSERT INTO shamir_recovery_topic (
         organization,
         last_timestamp

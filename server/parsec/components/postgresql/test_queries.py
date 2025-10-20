@@ -15,127 +15,127 @@ from parsec.components.postgresql.utils import (
 q_test_drop_organization = Q(
     """
 WITH
-deleted_organizations AS (  --noqa: ST03
+deleted_organizations AS (
     DELETE FROM organization
     WHERE organization_id = $organization_id
     RETURNING _id
 ),
 
-deleted_sequester_service AS (  --noqa: ST03
+deleted_sequester_service AS (
     DELETE FROM sequester_service
     WHERE organization IN (SELECT * FROM deleted_organizations)
     RETURNING _id
 ),
 
-deleted_human AS (  --noqa: ST03
+deleted_human AS (
     DELETE FROM human
     WHERE organization IN (SELECT * FROM deleted_organizations)
     RETURNING _id
 ),
 
-deleted_users AS (  --noqa: ST03
+deleted_users AS (
     DELETE FROM user_
     WHERE organization IN (SELECT * FROM deleted_organizations)
     RETURNING _id
 ),
 
-deleted_devices AS (  --noqa: ST03
+deleted_devices AS (
     DELETE FROM device
     WHERE organization IN (SELECT * FROM deleted_organizations)
     RETURNING _id
 ),
 
-deleted_profiles AS (  --noqa: ST03
+deleted_profiles AS (
     DELETE FROM profile
     WHERE user_ IN (SELECT * FROM deleted_users)
     RETURNING _id
 ),
 
-deleted_invitations AS (  --noqa: ST03
+deleted_invitations AS (
     DELETE FROM invitation
     WHERE organization IN (SELECT * FROM deleted_organizations)
     RETURNING _id
 ),
 
-deleted_realms AS (  --noqa: ST03
+deleted_realms AS (
     DELETE FROM realm
     WHERE organization IN (SELECT * FROM deleted_organizations)
     RETURNING _id
 ),
 
-deleted_realm_user_roles AS (  --noqa: ST03
+deleted_realm_user_roles AS (
     DELETE FROM realm_user_role
     WHERE realm IN (SELECT * FROM deleted_realms)
     RETURNING _id
 ),
 
-deleted_vlob_atoms AS (  --noqa: ST03
+deleted_vlob_atoms AS (
     DELETE FROM vlob_atom
     WHERE realm IN (SELECT * FROM deleted_realms)
     RETURNING _id
 ),
 
-deleted_blocks AS (  --noqa: ST03
+deleted_blocks AS (
     DELETE FROM block
     WHERE realm IN (SELECT * FROM deleted_realms)
     RETURNING _id, block_id
 ),
 
-deleted_realm_keys_bundle AS (  --noqa: ST03
+deleted_realm_keys_bundle AS (
     DELETE FROM realm_keys_bundle
     WHERE realm IN (SELECT * FROM deleted_realms)
     RETURNING _id
 ),
 
-deleted_realm_keys_bundle_access AS (  --noqa: ST03
+deleted_realm_keys_bundle_access AS (
     DELETE FROM realm_keys_bundle_access
     WHERE realm IN (SELECT * FROM deleted_realms)
     RETURNING _id
 ),
 
-deleted_realm_sequester_keys_bundle_access AS (  --noqa: ST03
+deleted_realm_sequester_keys_bundle_access AS (
     DELETE FROM realm_sequester_keys_bundle_access
     WHERE realm_keys_bundle IN (SELECT * FROM deleted_realm_keys_bundle)
     RETURNING _id
 ),
 
-deleted_realm_names AS (  --noqa: ST03
+deleted_realm_names AS (
     DELETE FROM realm_name
     WHERE realm IN (SELECT * FROM deleted_realms)
     RETURNING _id
 ),
 
-deleted_realm_vlob_updates AS (  --noqa: ST03
+deleted_realm_vlob_updates AS (
     DELETE FROM realm_vlob_update
     WHERE realm IN (SELECT * FROM deleted_realms)
     RETURNING _id
 ),
 
-deleted_block_datas AS (  --noqa: ST03
+deleted_block_datas AS (
     DELETE FROM block_data
     WHERE organization_id = $organization_id
     RETURNING _id
 ),
 
-deleted_topics_common AS (  --noqa: ST03
+deleted_topics_common AS (
     DELETE FROM common_topic
     WHERE organization IN (SELECT * FROM deleted_organizations)
     RETURNING _id
 ),
 
-deleted_topics_sequester AS (  --noqa: ST03
+deleted_topics_sequester AS (
     DELETE FROM sequester_topic
     WHERE organization IN (SELECT * FROM deleted_organizations)
     RETURNING _id
 ),
 
-deleted_topics_shamir_recovery AS (  --noqa: ST03
+deleted_topics_shamir_recovery AS (
     DELETE FROM shamir_recovery_topic
     WHERE organization IN (SELECT * FROM deleted_organizations)
     RETURNING _id
 ),
 
-deleted_topics_realm AS (  --noqa: ST03
+deleted_topics_realm AS (
     DELETE FROM realm_topic
     WHERE
         organization IN (SELECT * FROM deleted_organizations)
@@ -143,31 +143,31 @@ deleted_topics_realm AS (  --noqa: ST03
     RETURNING _id
 ),
 
-deleted_greeting_sessions AS (  --noqa: ST03
+deleted_greeting_sessions AS (
     DELETE FROM greeting_session
     WHERE invitation IN (SELECT * FROM deleted_invitations)
     RETURNING _id
 ),
 
-deleted_greeting_attempts AS (  --noqa: ST03
+deleted_greeting_attempts AS (
     DELETE FROM greeting_attempt
     WHERE organization IN (SELECT * FROM deleted_organizations)
     RETURNING _id
 ),
 
-deleted_greeting_steps AS (  --noqa: ST03
+deleted_greeting_steps AS (
     DELETE FROM greeting_step
     WHERE greeting_attempt IN (SELECT * FROM deleted_greeting_attempts)
     RETURNING _id
 ),
 
-deleted_shamir_recovery_setups AS (  --noqa: ST03
+deleted_shamir_recovery_setups AS (
     DELETE FROM shamir_recovery_setup
     WHERE organization IN (SELECT * FROM deleted_organizations)
     RETURNING _id
 ),
 
-deleted_shamir_recovery_shares AS (  --noqa: ST03
+deleted_shamir_recovery_shares AS (
     DELETE FROM shamir_recovery_share
     WHERE organization IN (SELECT * FROM deleted_organizations)
     RETURNING _id
@@ -181,7 +181,7 @@ SELECT 1
 q_test_duplicate_organization = Q(
     f"""
 WITH
-new_organization_ids AS (  -- noqa: ST03
+new_organization_ids AS (
     INSERT INTO organization (
         organization_id,
         bootstrap_token,
@@ -218,7 +218,7 @@ new_organization_ids AS (  -- noqa: ST03
     RETURNING _id
 ),
 
-new_sequester_services AS (  -- noqa: ST03
+new_sequester_services AS (
     INSERT INTO sequester_service (
         organization,
         service_id,
@@ -253,7 +253,7 @@ new_sequester_services AS (  -- noqa: ST03
     RETURNING _id, service_id
 ),
 
-new_human_ids AS (  -- noqa: ST03
+new_human_ids AS (
     INSERT INTO human (
         organization,
         email,
@@ -269,7 +269,7 @@ new_human_ids AS (  -- noqa: ST03
     RETURNING _id, email
 ),
 
-new_users AS (  -- noqa: ST03
+new_users AS (
     INSERT INTO user_ (
         organization,
         user_id,
@@ -306,7 +306,7 @@ new_users AS (  -- noqa: ST03
     RETURNING _id, user_id
 ),
 
-new_devices AS (  -- noqa: ST03
+new_devices AS (
     INSERT INTO device (
         organization,
         user_,
@@ -337,7 +337,7 @@ new_devices AS (  -- noqa: ST03
     RETURNING _id, device_id
 ),
 
-patched_user_certifiers AS (  -- noqa: ST03
+patched_user_certifiers AS (
     UPDATE user_
     SET
         user_certifier = (
@@ -351,7 +351,7 @@ patched_user_certifiers AS (  -- noqa: ST03
     RETURNING _id
 ),
 
-patched_revoked_user_certifiers AS (  -- noqa: ST03
+patched_revoked_user_certifiers AS (
     UPDATE user_
     SET
         revoked_user_certifier = (
@@ -365,7 +365,7 @@ patched_revoked_user_certifiers AS (  -- noqa: ST03
     RETURNING _id
 ),
 
-patched_device_certifiers AS (  -- noqa: ST03
+patched_device_certifiers AS (
     UPDATE device
     SET
         device_certifier = (
@@ -379,7 +379,7 @@ patched_device_certifiers AS (  -- noqa: ST03
     RETURNING _id
 ),
 
-new_profiles AS (  -- noqa: ST03
+new_profiles AS (
     INSERT INTO profile (
         user_,
         profile,
@@ -408,7 +408,7 @@ new_profiles AS (  -- noqa: ST03
     RETURNING _id
 ),
 
-new_shamir_recovery_setups AS (  -- noqa: ST03
+new_shamir_recovery_setups AS (
     INSERT INTO shamir_recovery_setup (
         organization,
         user_,
@@ -441,7 +441,7 @@ new_shamir_recovery_setups AS (  -- noqa: ST03
     RETURNING _id, reveal_token
 ),
 
-new_shamir_recovery_shares AS (  -- noqa: ST03
+new_shamir_recovery_shares AS (
     INSERT INTO shamir_recovery_share (
         organization,
         shamir_recovery,
@@ -473,7 +473,7 @@ new_shamir_recovery_shares AS (  -- noqa: ST03
     RETURNING _id
 ),
 
-new_invitations AS (  -- noqa: ST03
+new_invitations AS (
     INSERT INTO invitation (
         organization,
         token,
@@ -521,7 +521,7 @@ new_invitations AS (  -- noqa: ST03
     RETURNING _id, token
 ),
 
-new_realms AS (  -- noqa: ST03
+new_realms AS (
     INSERT INTO realm (
         organization,
         realm_id,
@@ -539,7 +539,7 @@ new_realms AS (  -- noqa: ST03
     RETURNING _id, realm_id
 ),
 
-new_realm_user_roles AS (  -- noqa: ST03
+new_realm_user_roles AS (
     INSERT INTO realm_user_role (
         realm,
         user_,
@@ -574,7 +574,7 @@ new_realm_user_roles AS (  -- noqa: ST03
     RETURNING _id
 ),
 
-new_vlob_atoms AS (  -- noqa: ST03
+new_vlob_atoms AS (
     INSERT INTO vlob_atom (
         realm,
         key_index,
@@ -609,7 +609,7 @@ new_vlob_atoms AS (  -- noqa: ST03
     RETURNING _id, vlob_id, version
 ),
 
-new_blocks AS (  -- noqa: ST03
+new_blocks AS (
     INSERT INTO block (
         block_id,
         realm,
@@ -642,7 +642,7 @@ new_blocks AS (  -- noqa: ST03
     RETURNING block._id
 ),
 
-new_realm_keys_bundle AS (  -- noqa: ST03
+new_realm_keys_bundle AS (
     INSERT INTO realm_keys_bundle (
         realm,
         key_index,
@@ -675,7 +675,7 @@ new_realm_keys_bundle AS (  -- noqa: ST03
     RETURNING _id, realm, key_index
 ),
 
-new_realm_keys_bundle_access AS (  -- noqa: ST03
+new_realm_keys_bundle_access AS (
     INSERT INTO realm_keys_bundle_access (
         realm,
         user_,
@@ -723,7 +723,7 @@ new_realm_keys_bundle_access AS (  -- noqa: ST03
     RETURNING _id
 ),
 
-new_realm_sequester_keys_bundle_access AS (  -- noqa: ST03
+new_realm_sequester_keys_bundle_access AS (
     INSERT INTO realm_sequester_keys_bundle_access (
         realm,
         sequester_service,
@@ -763,7 +763,7 @@ new_realm_sequester_keys_bundle_access AS (  -- noqa: ST03
     RETURNING _id
 ),
 
-new_realm_names AS (  -- noqa: ST03
+new_realm_names AS (
     INSERT INTO realm_name (
         realm,
         realm_name_certificate,
@@ -790,7 +790,7 @@ new_realm_names AS (  -- noqa: ST03
     RETURNING _id
 ),
 
-new_realm_vlob_updates AS (  -- noqa: ST03
+new_realm_vlob_updates AS (
     INSERT INTO realm_vlob_update (
         realm,
         index,
@@ -824,7 +824,7 @@ new_realm_vlob_updates AS (  -- noqa: ST03
     RETURNING _id
 ),
 
-new_block_data AS (  -- noqa: ST03
+new_block_data AS (
     INSERT INTO block_data (
         organization_id,
         block_id,
@@ -840,7 +840,7 @@ new_block_data AS (  -- noqa: ST03
     RETURNING _id
 ),
 
-new_topics_common AS (  -- noqa: ST03
+new_topics_common AS (
     INSERT INTO common_topic (
         organization,
         last_timestamp
@@ -854,7 +854,7 @@ new_topics_common AS (  -- noqa: ST03
     RETURNING _id
 ),
 
-new_topics_sequester AS (  -- noqa: ST03
+new_topics_sequester AS (
     INSERT INTO sequester_topic (
         organization,
         last_timestamp
@@ -868,7 +868,7 @@ new_topics_sequester AS (  -- noqa: ST03
     RETURNING _id
 ),
 
-new_topics_shamir_recovery AS (  -- noqa: ST03
+new_topics_shamir_recovery AS (
     INSERT INTO shamir_recovery_topic (
         organization,
         last_timestamp
@@ -882,7 +882,7 @@ new_topics_shamir_recovery AS (  -- noqa: ST03
     RETURNING _id
 ),
 
-new_topics_realm AS (  -- noqa: ST03
+new_topics_realm AS (
     INSERT INTO realm_topic (
         organization,
         realm,
@@ -902,7 +902,7 @@ new_topics_realm AS (  -- noqa: ST03
     RETURNING _id
 ),
 
-new_greeting_sessions AS (  -- noqa: ST03
+new_greeting_sessions AS (
     INSERT INTO greeting_session (
         invitation,
         greeter
@@ -925,7 +925,7 @@ new_greeting_sessions AS (  -- noqa: ST03
     RETURNING _id, invitation, greeter
 ),
 
-new_greeting_attempts AS (  -- noqa: ST03
+new_greeting_attempts AS (
     INSERT INTO greeting_attempt (
         organization,
         greeting_attempt_id,
@@ -960,7 +960,7 @@ new_greeting_attempts AS (  -- noqa: ST03
     RETURNING _id, greeting_attempt_id
 ),
 
-new_greeting_steps AS (  -- noqa: ST03
+new_greeting_steps AS (
     INSERT INTO greeting_step (
         greeting_attempt,
         step,

@@ -68,7 +68,7 @@ SELECT
 
 _q_unshare = Q(
     """
-WITH new_realm_user_role AS (  -- noqa: ST03
+WITH new_realm_user_role AS (
     INSERT INTO realm_user_role (
         realm,
         user_,

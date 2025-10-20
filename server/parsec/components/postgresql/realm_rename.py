@@ -47,7 +47,7 @@ SELECT COALESCE(
 
 
 _q_rename_realm = Q("""
-WITH new_realm_name AS (  -- noqa: ST03
+WITH new_realm_name AS (
     INSERT INTO realm_name (
         realm,
         realm_name_certificate,
