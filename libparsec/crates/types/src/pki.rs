@@ -275,9 +275,17 @@ impl From<LocalPendingEnrollment> for LocalPendingEnrollmentData {
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Serialize, Deserialize, Debug)]
+#[derive(
+    Clone, Eq, PartialEq, serde_with::SerializeDisplay, serde_with::DeserializeFromStr, Debug,
+)]
 pub enum X509CertificateHash {
     SHA256(Box<[u8; 32]>),
+}
+
+impl X509CertificateHash {
+    pub fn fake_sha256() -> Self {
+        Self::SHA256(Default::default())
+    }
 }
 
 impl std::fmt::Display for X509CertificateHash {

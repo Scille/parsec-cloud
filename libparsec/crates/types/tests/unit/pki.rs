@@ -3,9 +3,23 @@
 use std::{collections::HashMap, str::FromStr};
 
 use libparsec_tests_lite::prelude::*;
+use serde_test::Token;
 
 use crate::fixtures::{alice, Device};
 use crate::prelude::*;
+
+#[rstest]
+#[case::fake_sha256(
+    "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+    X509CertificateHash::fake_sha256()
+)]
+#[case::sha256(
+    "sha256-qNfTEzy56Dy76VIZhGzLeb6QiW40lDu1PS0HqoKBBOk=",
+    X509CertificateHash::SHA256(Box::new(hex!("a8d7d3133cb9e83cbbe95219846ccb79be90896e34943bb53d2d07aa828104e9")))
+)]
+fn serde_cert_hash(#[case] raw: &'static str, #[case] expected: X509CertificateHash) {
+    serde_test::assert_tokens(&expected, &[Token::BorrowedStr(raw)]);
+}
 
 #[test]
 fn serde_pki_enrollment_answer_payload() {
