@@ -8,8 +8,6 @@ from .common import (
     Result,
     StrBasedType,
     Structure,
-    Variant,
-    VariantItemTuple,
 )
 
 
@@ -20,15 +18,9 @@ class X509CertificateHash(StrBasedType):
     )
 
 
-class X509CertificateReferenceIdOrHash(Structure):
-    id: Bytes
+class X509CertificateReference(Structure):
+    uri: Optional[Bytes]
     hash: X509CertificateHash
-
-
-class X509CertificateReference(Variant):
-    Id = VariantItemTuple(Bytes)
-    Hash = VariantItemTuple(X509CertificateHash)
-    IdOrHash = VariantItemTuple(X509CertificateReferenceIdOrHash)
 
 
 class ShowCertificateSelectionDialogError(ErrorVariant):

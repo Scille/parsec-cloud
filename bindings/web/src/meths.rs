@@ -4713,23 +4713,30 @@ fn struct_workspace_user_access_info_rs_to_js(
     Ok(js_obj)
 }
 
-// X509CertificateReferenceIdOrHash
+// X509CertificateReference
 
 #[allow(dead_code)]
-fn struct_x509_certificate_reference_id_or_hash_js_to_rs(
+fn struct_x509_certificate_reference_js_to_rs(
     obj: JsValue,
-) -> Result<libparsec::X509CertificateReferenceIdOrHash, JsValue> {
-    let id = {
-        let js_val = Reflect::get(&obj, &"id".into())?;
-        js_val
-            .dyn_into::<Uint8Array>()
-            .map(|x| x.to_vec())
-            .map_err(|_| TypeError::new("Not a Uint8Array"))
-            .and_then(|x| {
-                let custom_from_rs_bytes =
-                    |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
-                custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
-            })?
+) -> Result<libparsec::X509CertificateReference, JsValue> {
+    let uri = {
+        let js_val = Reflect::get(&obj, &"uri".into())?;
+        if js_val.is_null() {
+            None
+        } else {
+            Some(
+                js_val
+                    .dyn_into::<Uint8Array>()
+                    .map(|x| x.to_vec())
+                    .map_err(|_| TypeError::new("Not a Uint8Array"))
+                    .and_then(|x| {
+                        let custom_from_rs_bytes = |v: &[u8]| -> Result<libparsec::Bytes, String> {
+                            Ok(v.to_vec().into())
+                        };
+                        custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?,
+            )
+        }
     };
     let hash = {
         let js_val = Reflect::get(&obj, &"hash".into())?;
@@ -4746,16 +4753,19 @@ fn struct_x509_certificate_reference_id_or_hash_js_to_rs(
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
             })?
     };
-    Ok(libparsec::X509CertificateReferenceIdOrHash { id, hash })
+    Ok(libparsec::X509CertificateReference { uri, hash })
 }
 
 #[allow(dead_code)]
-fn struct_x509_certificate_reference_id_or_hash_rs_to_js(
-    rs_obj: libparsec::X509CertificateReferenceIdOrHash,
+fn struct_x509_certificate_reference_rs_to_js(
+    rs_obj: libparsec::X509CertificateReference,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_id = JsValue::from(Uint8Array::from(rs_obj.id.as_ref()));
-    Reflect::set(&js_obj, &"id".into(), &js_id)?;
+    let js_uri = match rs_obj.uri {
+        Some(val) => JsValue::from(Uint8Array::from(val.as_ref())),
+        None => JsValue::NULL,
+    };
+    Reflect::set(&js_obj, &"uri".into(), &js_uri)?;
     let js_hash = JsValue::from_str({
         let custom_to_rs_string =
             |x: libparsec::X509CertificateHash| -> Result<_, &'static str> { Ok(x.to_string()) };
@@ -9562,7 +9572,7 @@ fn variant_device_save_strategy_js_to_rs(
         "DeviceSaveStrategySmartcard" => {
             let certificate_reference = {
                 let js_val = Reflect::get(&obj, &"certificateReference".into())?;
-                variant_x509_certificate_reference_js_to_rs(js_val)?
+                struct_x509_certificate_reference_js_to_rs(js_val)?
             };
             Ok(libparsec::DeviceSaveStrategy::Smartcard {
                 certificate_reference,
@@ -9623,7 +9633,7 @@ fn variant_device_save_strategy_rs_to_js(
                 &"DeviceSaveStrategySmartcard".into(),
             )?;
             let js_certificate_reference =
-                variant_x509_certificate_reference_rs_to_js(certificate_reference)?;
+                struct_x509_certificate_reference_rs_to_js(certificate_reference)?;
             Reflect::set(
                 &js_obj,
                 &"certificateReference".into(),
@@ -17035,101 +17045,6 @@ fn variant_workspace_watch_entry_one_shot_error_rs_to_js(
     Ok(js_obj)
 }
 
-// X509CertificateReference
-
-#[allow(dead_code)]
-fn variant_x509_certificate_reference_js_to_rs(
-    obj: JsValue,
-) -> Result<libparsec::X509CertificateReference, JsValue> {
-    let tag = Reflect::get(&obj, &"tag".into())?;
-    let tag = tag
-        .as_string()
-        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
-    match tag.as_str() {
-        "X509CertificateReferenceHash" => {
-            let x1 = {
-                let js_val = Reflect::get(&obj, &"x1".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, String> {
-                            <libparsec::X509CertificateHash as std::str::FromStr>::from_str(
-                                s.as_str(),
-                            )
-                            .map_err(|e| e.to_string())
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })?
-            };
-            Ok(libparsec::X509CertificateReference::Hash(x1))
-        }
-        "X509CertificateReferenceId" => {
-            let x1 = {
-                let js_val = Reflect::get(&obj, &"x1".into())?;
-                js_val
-                    .dyn_into::<Uint8Array>()
-                    .map(|x| x.to_vec())
-                    .map_err(|_| TypeError::new("Not a Uint8Array"))
-                    .and_then(|x| {
-                        let custom_from_rs_bytes = |v: &[u8]| -> Result<libparsec::Bytes, String> {
-                            Ok(v.to_vec().into())
-                        };
-                        custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
-                    })?
-            };
-            Ok(libparsec::X509CertificateReference::Id(x1))
-        }
-        "X509CertificateReferenceIdOrHash" => {
-            let x1 = {
-                let js_val = Reflect::get(&obj, &"x1".into())?;
-                struct_x509_certificate_reference_id_or_hash_js_to_rs(js_val)?
-            };
-            Ok(libparsec::X509CertificateReference::IdOrHash(x1))
-        }
-        _ => Err(JsValue::from(TypeError::new(
-            "Object is not a X509CertificateReference",
-        ))),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_x509_certificate_reference_rs_to_js(
-    rs_obj: libparsec::X509CertificateReference,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    match rs_obj {
-        libparsec::X509CertificateReference::Hash(x1, ..) => {
-            Reflect::set(&js_obj, &"tag".into(), &"Hash".into())?;
-            let js_x1 = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::X509CertificateHash| -> Result<_, &'static str> {
-                        Ok(x.to_string())
-                    };
-                match custom_to_rs_string(x1) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
-            Reflect::set(&js_obj, &"x1".into(), &js_x1.into())?;
-        }
-        libparsec::X509CertificateReference::Id(x1, ..) => {
-            Reflect::set(&js_obj, &"tag".into(), &"Id".into())?;
-            let js_x1 = JsValue::from(Uint8Array::from(x1.as_ref()));
-            Reflect::set(&js_obj, &"x1".into(), &js_x1.into())?;
-        }
-        libparsec::X509CertificateReference::IdOrHash(x1, ..) => {
-            Reflect::set(&js_obj, &"tag".into(), &"IdOrHash".into())?;
-            let js_x1 = struct_x509_certificate_reference_id_or_hash_rs_to_js(x1)?;
-            Reflect::set(&js_obj, &"x1".into(), &js_x1.into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
 // account_create_1_send_validation_email
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -21116,7 +21031,7 @@ pub fn showCertificateSelectionDialogWindowsOnly() -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = match value {
-                    Some(val) => variant_x509_certificate_reference_rs_to_js(val)?,
+                    Some(val) => struct_x509_certificate_reference_rs_to_js(val)?,
                     None => JsValue::NULL,
                 };
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;

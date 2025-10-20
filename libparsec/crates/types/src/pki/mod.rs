@@ -22,9 +22,7 @@ use crate::{
     ParsecPkiEnrollmentAddr, PkiEnrollmentLocalPendingError, PkiEnrollmentLocalPendingResult,
     UserID, UserProfile,
 };
-pub use cert_ref::{
-    X509CertificateHash, X509CertificateReference, X509CertificateReferenceIdOrHash,
-};
+pub use cert_ref::{X509CertificateHash, X509CertificateReference};
 
 /*
  * PkiEnrollmentAnswerPayload

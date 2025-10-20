@@ -469,8 +469,8 @@ export interface WorkspaceUserAccessInfo {
     currentRole: RealmRole
 }
 
-export interface X509CertificateReferenceIdOrHash {
-    id: Bytes
+export interface X509CertificateReference {
+    uri: Bytes | null
     hash: X509CertificateHash
 }
 
@@ -4970,30 +4970,6 @@ export type WorkspaceWatchEntryOneShotError =
   | WorkspaceWatchEntryOneShotErrorNoRealmAccess
   | WorkspaceWatchEntryOneShotErrorOffline
   | WorkspaceWatchEntryOneShotErrorStopped
-
-// X509CertificateReference
-export enum X509CertificateReferenceTag {
-    Hash = 'X509CertificateReferenceHash',
-    Id = 'X509CertificateReferenceId',
-    IdOrHash = 'X509CertificateReferenceIdOrHash',
-}
-
-export interface X509CertificateReferenceHash {
-    tag: X509CertificateReferenceTag.Hash
-    x1: X509CertificateHash
-}
-export interface X509CertificateReferenceId {
-    tag: X509CertificateReferenceTag.Id
-    x1: Bytes
-}
-export interface X509CertificateReferenceIdOrHash {
-    tag: X509CertificateReferenceTag.IdOrHash
-    x1: X509CertificateReferenceIdOrHash
-}
-export type X509CertificateReference =
-  | X509CertificateReferenceHash
-  | X509CertificateReferenceId
-  | X509CertificateReferenceIdOrHash
 
 export interface LibParsecPlugin {
     accountCreate1SendValidationEmail(
