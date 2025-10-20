@@ -59,7 +59,7 @@ updates:
       timezone: Europe/Paris
     groups:
       rust-crypto:
-        pattern:
+        patterns:
           - argon2
           - blahaj
           - blake2
@@ -76,7 +76,7 @@ updates:
           - x25519-dalek
           - x509-cert
       rust-test:
-        pattern:
+        patterns:
           - assert_cmd
           - predicates
           - pretty_assertions
@@ -84,7 +84,7 @@ updates:
           - rexpect
           - rstest*
       rust-js:
-        pattern:
+        patterns:
           - web-*
           - js-*
           - neon
@@ -93,11 +93,11 @@ updates:
           - console_log
           - gloo-timers
       rust-windows:
-        pattern:
+        patterns:
           - winfsp*
           - windows-*
       rust-android:
-        pattern:
+        patterns:
           - android_logger
           - jni
       rust-dependencies:
