@@ -358,6 +358,16 @@ repos:
         files: ^json_schema/
 
       - id: check-jsonschema
+        name: Validate dependabot config with jsonschema
+        alias: check-dependabot
+        files: .github/dependabot.yml
+        args:
+          [
+            --schemafile,
+            https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/dependabot-2.0.json,
+          ]
+
+      - id: check-jsonschema
         name: Validate Read the doc configuration files
         alias: check-readthedocs
         files: .readthedocs.yml
