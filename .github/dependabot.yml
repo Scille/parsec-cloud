@@ -48,12 +48,58 @@ updates:
       - dependency-name: rand
         versions:
           - ">=0.9"
+      # The crypto dependencies need to be updated to be compatible with generic-array@v1
+      - dependency-name: generic-array
+        versions:
+          - ">=1.0.0"
     schedule:
       interval: weekly
       day: monday
       time: "04:20"
       timezone: Europe/Paris
     groups:
+      rust-crypto:
+        pattern:
+          - argon2
+          - blahaj
+          - blake2
+          - crypto*
+          - ed25519-dalek
+          - generic-array
+          - getrandom
+          - libsodium-rs
+          - openssl
+          - rand
+          - rsa
+          - schannel
+          - sha2
+          - x25519-dalek
+          - x509-cert
+      rust-test:
+        pattern:
+          - assert_cmd
+          - predicates
+          - pretty_assertions
+          - protest*
+          - rexpect
+          - rstest*
+      rust-js:
+        pattern:
+          - web-*
+          - js-*
+          - neon
+          - wasm-bindgen*
+          - console_error_panic_hook
+          - console_log
+          - gloo-timers
+      rust-windows:
+        pattern:
+          - winfsp*
+          - windows-*
+      rust-android:
+        pattern:
+          - android_logger
+          - jni
       rust-dependencies:
         patterns:
           - "*"
