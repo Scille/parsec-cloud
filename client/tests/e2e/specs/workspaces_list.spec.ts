@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { createWorkspace, DisplaySize, expect, fillIonInput, msTest } from '@tests/e2e/helpers';
+import { answerQuestion, createWorkspace, DisplaySize, expect, fillInputModal, fillIonInput, msTest } from '@tests/e2e/helpers';
 
 async function isInGridMode(page: Page): Promise<boolean> {
   return (await page.locator('#workspaces-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
@@ -274,4 +274,32 @@ msTest('Check no create workspace button as external', async ({ workspacesExtern
   // Center button with no workspace
   await expect(workspacesExternal.locator('.workspaces-container').locator('.workspace-list-item')).toHaveCount(0);
   await expect(workspacesExternal.locator('#new-workspace')).toBeHidden();
+});
+
+msTest('Create new workspace with similar name', async ({ workspaces }) => {
+  await expect(workspaces.locator('.workspace-card-content__title')).toHaveText(['wksp1']);
+  await workspaces.locator('#workspaces-ms-action-bar').getByText('New workspace').click();
+  await fillInputModal(workspaces, 'Workspace');
+  await expect(workspaces).toShowToast("The workspace 'Workspace' has been created!", 'Success');
+  await expect(workspaces.locator('.workspace-card-content__title')).toHaveText(['wksp1', 'Workspace']);
+
+  const wkList = ['wksp1', 'Workspace'];
+  for (const newWorkspace of ['Workspace', 'workspace', 'Workspace 1', 'A Workspace']) {
+    await workspaces.locator('#workspaces-ms-action-bar').getByText('New workspace').click();
+    // Similar name, saying no, doesn't create the workspace
+    await fillInputModal(workspaces, newWorkspace);
+    await answerQuestion(workspaces, false, {
+      expectedNegativeText: 'Cancel',
+      expectedPositiveText: 'Create anyway',
+      expectedQuestionText: 'Another workspace already exists with the same or a similar name. Do you still want to create this workspace?',
+      expectedTitleText: 'Duplicate workspace name',
+    });
+    // Similar name, saying yes, does create the workspace
+    await fillInputModal(workspaces, newWorkspace);
+    await answerQuestion(workspaces, true);
+    await expect(workspaces).toShowToast(`The workspace '${newWorkspace}' has been created!`, 'Success');
+    wkList.push(newWorkspace);
+    wkList.sort((a, b) => a.localeCompare(b));
+    await expect(workspaces.locator('.workspace-card-content__title')).toHaveText(wkList);
+  }
 });
