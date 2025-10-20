@@ -481,8 +481,8 @@ export interface WorkspaceUserAccessInfo {
 }
 
 
-export interface X509CertificateReferenceIdOrHash {
-    id: Uint8Array
+export interface X509CertificateReference {
+    uri: Uint8Array | null
     hash: string
 }
 
@@ -4138,25 +4138,6 @@ export type WorkspaceWatchEntryOneShotError =
   | WorkspaceWatchEntryOneShotErrorNoRealmAccess
   | WorkspaceWatchEntryOneShotErrorOffline
   | WorkspaceWatchEntryOneShotErrorStopped
-
-
-// X509CertificateReference
-export interface X509CertificateReferenceHash {
-    tag: "Hash"
-    x1: string
-}
-export interface X509CertificateReferenceId {
-    tag: "Id"
-    x1: Uint8Array
-}
-export interface X509CertificateReferenceIdOrHash {
-    tag: "IdOrHash"
-    x1: X509CertificateReferenceIdOrHash
-}
-export type X509CertificateReference =
-  | X509CertificateReferenceHash
-  | X509CertificateReferenceId
-  | X509CertificateReferenceIdOrHash
 
 
 export function accountCreate1SendValidationEmail(

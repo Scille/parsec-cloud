@@ -165,9 +165,8 @@ async fn list_devices(tmp_path: TmpPath) {
             .parse()
             .unwrap(),
         device_label: "PC1".parse().unwrap(),
-        certificate_ref: X509CertificateReference::Id(Bytes::copy_from_slice(
-            b"Mallory's certificate",
-        )),
+        certificate_ref: X509CertificateReference::from(X509CertificateHash::fake_sha256())
+            .add_or_replace_uri(Bytes::from_static(b"Mallory's certificate")),
         algorithm_for_encrypted_key: EncryptionAlgorithm::RsaesOaepSha256,
         encrypted_key: hex!("de5c59cfcc0c52bf997594e0fdd2c24ffee9465b6f25e30bac9238c2f83fd19a")
             .as_ref()
@@ -189,7 +188,10 @@ async fn list_devices(tmp_path: TmpPath) {
     //   device_id: ext(2, 0xde103a11031c00100000000000000000)
     //   human_handle: [ 'mallory@parsec.invalid', 'Mallory McMalloryFace', ]
     //   device_label: 'PC1'
-    //   certificate_ref: { Id: 0x4d616c6c6f72792773206365727469666963617465, }
+    //   certificate_ref: {
+    //     uri: 0x4d616c6c6f72792773206365727469666963617465,
+    //     hash: 'sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
+    //   }
     //   algorithm_for_encrypted_key: 'RSAES-OAEP-SHA256'
     //   encrypted_key: 0xde5c59cfcc0c52bf997594e0fdd2c24ffee9465b6f25e30bac9238c2f83fd19a
     //   ciphertext: 0x3c636970686572746578743e
@@ -201,11 +203,13 @@ async fn list_devices(tmp_path: TmpPath) {
         "00000000a96465766963655f6964d802de103a11031c00100000000000000000ac6875"
         "6d616e5f68616e646c6592b66d616c6c6f7279407061727365632e696e76616c6964b5"
         "4d616c6c6f7279204d634d616c6c6f727946616365ac6465766963655f6c6162656ca3"
-        "504331af63657274696669636174655f72656681a24964c4154d616c6c6f7279277320"
-        "6365727469666963617465bb616c676f726974686d5f666f725f656e63727970746564"
-        "5f6b6579b152534145532d4f4145502d534841323536ad656e637279707465645f6b65"
-        "79c420de5c59cfcc0c52bf997594e0fdd2c24ffee9465b6f25e30bac9238c2f83fd19a"
-        "aa63697068657274657874c40c3c636970686572746578743e"
+        "504331af63657274696669636174655f72656682a3757269c4154d616c6c6f72792773"
+        "206365727469666963617465a468617368d9337368613235362d414141414141414141"
+        "414141414141414141414141414141414141414141414141414141414141414141413d"
+        "bb616c676f726974686d5f666f725f656e637279707465645f6b6579b152534145532d"
+        "4f4145502d534841323536ad656e637279707465645f6b6579c420de5c59cfcc0c52bf"
+        "997594e0fdd2c24ffee9465b6f25e30bac9238c2f83fd19aaa63697068657274657874"
+        "c40c3c636970686572746578743e"
     )
     .as_ref();
 

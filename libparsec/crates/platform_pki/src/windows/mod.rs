@@ -8,9 +8,7 @@ use crate::{
     SignMessageError, SignatureAlgorithm, SignedMessageFromPki,
 };
 use bytes::Bytes;
-use libparsec_types::{
-    X509CertificateHash, X509CertificateReference, X509CertificateReferenceIdOrHash,
-};
+use libparsec_types::{X509CertificateHash, X509CertificateReference};
 use schannel::{
     cert_context::{CertContext, HashAlgorithm, PrivateKey},
     cert_store::CertStore,
@@ -59,18 +57,13 @@ fn find_certificate(
     store: &CertStore,
     certificate_ref: &X509CertificateReference,
 ) -> Option<CertContext> {
-    let matcher: Box<dyn Fn(&CertContext) -> bool> = match certificate_ref {
-        X509CertificateReference::Id(id) => Box::new(|candidate: &CertContext| {
-            cert_cmp_id(candidate, id.as_ref()).unwrap_or_default()
+    let matcher: Box<dyn Fn(&CertContext) -> bool> = match certificate_ref.get_uri() {
+        Some(uri) => Box::new(move |candidate: &CertContext| {
+            cert_cmp_id(candidate, uri.as_ref()).unwrap_or_default()
+                || cert_cmp_hash(&certificate_ref.hash, candidate)
         }),
-        X509CertificateReference::Hash(hash) => {
-            Box::new(move |candidate: &CertContext| cert_cmp_hash(hash, candidate))
-        }
-        X509CertificateReference::IdOrHash(id_or_hash) => {
-            Box::new(move |candidate: &CertContext| {
-                cert_cmp_id(candidate, id_or_hash.id.as_ref()).unwrap_or_default()
-                    || cert_cmp_hash(&id_or_hash.hash, candidate)
-            })
+        None => {
+            Box::new(move |candidate: &CertContext| cert_cmp_hash(&certificate_ref.hash, candidate))
         }
     };
 
@@ -136,15 +129,15 @@ pub fn get_der_encoded_certificate(
 
 fn get_id_and_hash_from_cert_context(
     context: &CertContext,
-) -> std::io::Result<X509CertificateReferenceIdOrHash> {
+) -> std::io::Result<X509CertificateReference> {
     let id = get_certificate_id(context)?.into();
     let hash = hash_from_certificate_context(context)?;
 
-    Ok(X509CertificateReferenceIdOrHash { id, hash })
+    Ok(X509CertificateReference::from(hash).add_or_replace_uri(id))
 }
 
 pub fn show_certificate_selection_dialog_windows_only(
-) -> Result<Option<X509CertificateReferenceIdOrHash>, ShowCertificateSelectionDialogError> {
+) -> Result<Option<X509CertificateReference>, ShowCertificateSelectionDialogError> {
     let store = open_store().map_err(ShowCertificateSelectionDialogError::CannotOpenStore)?;
     ask_user_to_select_certificate(&store)
         .as_ref()

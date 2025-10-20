@@ -6,5 +6,4 @@ use libparsec_types::X509CertificateReference;
 pub async fn show_certificate_selection_dialog_windows_only(
 ) -> Result<Option<X509CertificateReference>, ShowCertificateSelectionDialogError> {
     libparsec_platform_pki::show_certificate_selection_dialog_windows_only()
-        .map(|v| v.map(|v| v.into()))
 }

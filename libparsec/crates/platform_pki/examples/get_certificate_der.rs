@@ -1,4 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+#![allow(clippy::unwrap_used)]
+
 mod utils;
 
 use std::fmt::Debug;
@@ -20,17 +22,12 @@ fn main() -> anyhow::Result<()> {
     println!("args={args:?}");
 
     let cert_ref: X509CertificateReference = match args.certificate_hash {
-        Some(hash) => X509CertificateReference::Hash(hash),
+        Some(hash) => hash.into(),
         #[cfg(target_os = "windows")]
-        None => {
-            let cert_ref = libparsec_platform_pki::show_certificate_selection_dialog_windows_only()
-                .map_err(anyhow::Error::from)
-                .and_then(|res| {
-                    res.ok_or_else(|| anyhow::anyhow!("User did not select a certificate"))
-                })
-                .context("Failed to get certificate from user")?;
-            X509CertificateReference::from(cert_ref)
-        }
+        None => libparsec_platform_pki::show_certificate_selection_dialog_windows_only()
+            .map_err(anyhow::Error::from)
+            .and_then(|res| res.ok_or_else(|| anyhow::anyhow!("User did not select a certificate")))
+            .context("Failed to get certificate from user")?,
         #[cfg(not(target_os = "windows"))]
         None => {
             return Err(anyhow::anyhow!(
@@ -43,7 +40,7 @@ fn main() -> anyhow::Result<()> {
 
     println!(
         "id: {}",
-        data_encoding::BASE64.encode_display(&cert.cert_ref.id)
+        data_encoding::BASE64.encode_display(cert.cert_ref.uris().next().unwrap())
     );
     println!("fingerprint: {}", cert.cert_ref.hash);
     println!(

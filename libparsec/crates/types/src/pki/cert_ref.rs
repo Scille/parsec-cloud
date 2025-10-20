@@ -62,21 +62,33 @@ impl FromStr for X509CertificateHash {
         }
     }
 }
+
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
-pub enum X509CertificateReference {
-    Id(Bytes),
-    Hash(X509CertificateHash),
-    IdOrHash(X509CertificateReferenceIdOrHash),
+pub struct X509CertificateReference {
+    pub uri: Option<Bytes>,
+    pub hash: X509CertificateHash,
 }
 
-impl From<X509CertificateReferenceIdOrHash> for X509CertificateReference {
-    fn from(value: X509CertificateReferenceIdOrHash) -> Self {
-        Self::IdOrHash(value)
+impl From<X509CertificateHash> for X509CertificateReference {
+    fn from(hash: X509CertificateHash) -> Self {
+        Self { uri: None, hash }
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
-pub struct X509CertificateReferenceIdOrHash {
-    pub id: Bytes,
-    pub hash: X509CertificateHash,
+impl X509CertificateReference {
+    /// Add or replace a certificate URI.
+    ///
+    /// The list will only contain a single types of URI
+    pub fn add_or_replace_uri(mut self, uri: Bytes) -> Self {
+        let _ = self.uri.replace(uri);
+        self
+    }
+
+    pub fn get_uri(&self) -> Option<&Bytes> {
+        self.uri.as_ref()
+    }
+
+    pub fn uris(&self) -> impl Iterator<Item = &Bytes> {
+        self.uri.iter()
+    }
 }
