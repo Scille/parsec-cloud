@@ -514,7 +514,8 @@
             "myProfile": "My profile",
             "recoveryExport": "Recovery file",
             "history": "History",
-            "viewer": "File viewer"
+            "viewer": "File viewer",
+            "editor": "File editor"
         },
         "previous": "Go back",
         "invitations": {

@@ -170,6 +170,7 @@ import {
   routerGoBack,
   watchRoute,
   currentRouteIsLoggedRoute,
+  getFileHandlerMode,
 } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
@@ -394,8 +395,10 @@ function getTitleForRoute(): Translatable {
       return 'HeaderPage.titles.myProfile';
     case Routes.History:
       return 'HeaderPage.titles.history';
-    case Routes.FileHandler:
-      return 'HeaderPage.titles.viewer';
+    case Routes.FileHandler: {
+      const mode = getFileHandlerMode();
+      return mode === 'edit' ? 'HeaderPage.titles.editor' : 'HeaderPage.titles.viewer';
+    }
     case null:
       return '';
   }

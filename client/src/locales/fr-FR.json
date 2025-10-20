@@ -513,7 +513,8 @@
             "myProfile": "Mon profil",
             "recoveryExport": "Fichier de récupération",
             "history": "Historique",
-            "viewer": "Aperçu du fichier"
+            "viewer": "Aperçu du fichier",
+            "editor": "Édition du fichier"
         },
         "previous": "Précédent",
         "invitations": {
