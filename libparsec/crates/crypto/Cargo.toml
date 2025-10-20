@@ -151,8 +151,7 @@ serde_test = { workspace = true }
 hex-literal = { workspace = true }
 rmp-serde = { workspace = true }
 rstest = { workspace = true, features = ["async-timeout"] }
-# Take whatever version ed25519-dalek relies on
-curve25519-dalek = { version = "*" }
+curve25519-dalek = { workspace = true }
 
 [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
 wasm-bindgen-test = { workspace = true }
