@@ -652,7 +652,11 @@
             "pageTitle": "Create a new workspace",
             "label": "Workspace name",
             "placeholder": "My space",
-            "create": "Create"
+            "create": "Create",
+            "sameNameExistsTitle": "Duplicate workspace name",
+            "sameNameExistsQuestion": "Another workspace already exists with the same or a similar name. Do you still want to create this workspace?",
+            "createAnyway": "Create anyway",
+            "cancel": "Cancel"
         },
         "RenameWorkspaceModal": {
             "pageTitle": "Rename workspace",

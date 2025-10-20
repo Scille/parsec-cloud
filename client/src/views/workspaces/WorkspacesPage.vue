@@ -183,6 +183,8 @@ import {
   MsSearchInput,
   MsSpinner,
   useWindowSize,
+  askQuestion,
+  Answer,
 } from 'megashark-lib';
 import {
   WORKSPACES_PAGE_DATA_KEY,
@@ -540,21 +542,57 @@ async function createWorkspace(name: WorkspaceName): Promise<void> {
 }
 
 async function openCreateWorkspaceModal(): Promise<void> {
-  const workspaceName = await getTextFromUser(
-    {
-      title: 'WorkspacesPage.CreateWorkspaceModal.pageTitle',
-      trim: true,
-      validator: workspaceNameValidator,
-      inputLabel: 'WorkspacesPage.CreateWorkspaceModal.label',
-      placeholder: 'WorkspacesPage.CreateWorkspaceModal.placeholder',
-      okButtonText: 'WorkspacesPage.CreateWorkspaceModal.create',
-    },
-    isLargeDisplay.value,
-  );
+  let workspaceName: string | null = null;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    workspaceName = await getTextFromUser(
+      {
+        title: 'WorkspacesPage.CreateWorkspaceModal.pageTitle',
+        trim: true,
+        validator: workspaceNameValidator,
+        inputLabel: 'WorkspacesPage.CreateWorkspaceModal.label',
+        placeholder: 'WorkspacesPage.CreateWorkspaceModal.placeholder',
+        okButtonText: 'WorkspacesPage.CreateWorkspaceModal.create',
+        defaultValue: workspaceName ?? undefined,
+      },
+      isLargeDisplay.value,
+    );
 
-  if (workspaceName) {
-    await createWorkspace(workspaceName);
+    if (!workspaceName) {
+      return;
+    }
+    const found = workspaceList.value.find((wi) => {
+      // eslint thinks workspaceName can be null here, no idea why
+      const newName = workspaceName!.toLocaleLowerCase();
+      const current = wi.currentName.toLocaleLowerCase();
+
+      // If we find a case-insensitive match or one name contains the other and the name is a bit longer that a few letters,
+      // both names are not too far off each other in length (3 characters difference at most)
+      // For example, we already have a 'Workspace', and we're trying to create 'Workspace 1'
+      if (newName === current) {
+        return true;
+      }
+      return (
+        newName.length > 6 && Math.abs(newName.length - current.length) <= 3 && (current.includes(newName) || newName.includes(current))
+      );
+    });
+    if (found) {
+      const answer = await askQuestion(
+        'WorkspacesPage.CreateWorkspaceModal.sameNameExistsTitle',
+        'WorkspacesPage.CreateWorkspaceModal.sameNameExistsQuestion',
+        {
+          yesText: 'WorkspacesPage.CreateWorkspaceModal.createAnyway',
+          noText: 'WorkspacesPage.CreateWorkspaceModal.cancel',
+        },
+      );
+      if (answer === Answer.Yes) {
+        break;
+      }
+    } else {
+      break;
+    }
   }
+  await createWorkspace(workspaceName);
 }
 
 async function onWorkspaceClick(workspace: WorkspaceInfo): Promise<void> {

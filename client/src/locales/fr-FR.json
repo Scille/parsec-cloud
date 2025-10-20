@@ -651,7 +651,11 @@
             "pageTitle": "Créer un nouvel espace de travail",
             "label": "Nom de l'espace de travail",
             "placeholder": "Mon espace",
-            "create": "Créer"
+            "create": "Créer",
+            "sameNameExistsTitle": "Nom d'espace dupliqué",
+            "sameNameExistsQuestion": "Un autre espace de travail existe avec ce nom ou un nom similaire. Souhaitez-vous créer cet espace?",
+            "createAnyway": "Créer",
+            "cancel": "Annuler"
         },
         "RenameWorkspaceModal": {
             "pageTitle": "Renommer l'espace de travail",

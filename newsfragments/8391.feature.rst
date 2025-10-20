@@ -1,0 +1,1 @@
+Warn the user if they are trying to create a workspace with a similar name to one that already exists
