@@ -52,7 +52,7 @@ export async function navigateToWorkspace(
 
 export async function routerGoBack(): Promise<void> {
   const router = getRouter();
-  router.go(-1);
+  router.back();
 }
 
 const routesBackup: Array<RouteBackup> = [];
