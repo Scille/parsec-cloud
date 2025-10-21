@@ -244,9 +244,11 @@ import { link, informationCircle, open, chevronUp, chevronDown, ellipsisHorizont
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import {
   currentRouteIs,
+  getCurrentRoute,
   getCurrentRouteQuery,
   getDocumentPath,
   getFileHandlerMode,
+  getRouter,
   getWorkspaceHandle,
   navigateTo,
   routerGoBack,
@@ -295,7 +297,9 @@ const showSaveStateText = ref(true);
 const readOnly = ref(false);
 
 const cancelRouteWatch = watchRoute(async () => {
+  console.log('[DEBUG]', '(cancelRouteWatch)', getCurrentRoute().value);
   if (!currentRouteIs(Routes.FileHandler)) {
+    console.log('[DEBUG]', '(cancelRouteWatch) not FileHandler route anymore');
     return;
   }
 
@@ -305,6 +309,11 @@ const cancelRouteWatch = watchRoute(async () => {
   const fileHandlerMode = getFileHandlerMode();
 
   // Same file, no need to reload
+  console.log('[DEBUG]', '(cancelRouteWatch) contentInfo:', contentInfo.value);
+  console.log('[DEBUG]', '(cancelRouteWatch) atDateTime:', atDateTime.value);
+  console.log('[DEBUG]', '(cancelRouteWatch) fileHandlerMode:', fileHandlerMode);
+  console.log('[DEBUG]', '(cancelRouteWatch) handlerMode:', handlerMode.value);
+  console.log('[DEBUG]', '(cancelRouteWatch) readOnly:', Boolean(query.readOnly), readOnly.value);
   if (
     contentInfo.value &&
     contentInfo.value.path === getDocumentPath() &&
@@ -448,6 +457,10 @@ async function _getFileInfo(
 }
 
 async function loadFile(): Promise<void> {
+  console.log('[DEBUG] loadFile called');
+  console.log('[DEBUG] loadFile - current route:', getCurrentRoute().value.fullPath);
+  console.log('[DEBUG] loadFile - handlerMode:', handlerMode.value);
+
   loaded.value = false;
   contentInfo.value = undefined;
   detectedFileType.value = null;
@@ -456,37 +469,48 @@ async function loadFile(): Promise<void> {
   handlerReadyRef.value = false;
   const workspaceHandle = getWorkspaceHandle();
   if (!workspaceHandle) {
+    console.log('[DEBUG] loadFile - no workspace handle');
     window.electronAPI.log('error', 'Failed to retrieve workspace handle');
     return;
   }
   const path = getDocumentPath();
   if (!path) {
+    console.log('[DEBUG] loadFile - no document path');
     window.electronAPI.log('error', 'Failed to retrieve document path');
   }
+  console.log('[DEBUG] loadFile - path:', path);
+
   const fileName = await Path.filename(path);
   if (!fileName) {
+    console.log('[DEBUG] loadFile - no file name');
     window.electronAPI.log('error', 'Failed to retrieve the file name');
     return;
   }
+  console.log('[DEBUG] loadFile - fileName:', fileName);
 
   const timestamp = Number(getCurrentRouteQuery().timestamp);
   if (!Number.isNaN(timestamp)) {
     atDateTime.value = DateTime.fromMillis(timestamp);
   }
+  console.log('[DEBUG] loadFile - timestamp:', timestamp, 'atDateTime:', atDateTime.value);
 
   const fileInfoSerialized = getCurrentRouteQuery().fileTypeInfo;
   if (!fileInfoSerialized) {
+    console.log('[DEBUG] loadFile - no file type info');
     window.electronAPI.log('error', 'Failed to retrieve file type info');
     return;
   }
   const fileInfo: DetectedFileType = Base64.toObject(fileInfoSerialized) as DetectedFileType;
   detectedFileType.value = fileInfo;
+  console.log('[DEBUG] loadFile - fileInfo:', fileInfo);
 
+  console.log('[DEBUG] loadFile - starting file read...');
   const info = timestamp
     ? await _getFileInfoAt(workspaceHandle, path, DateTime.fromMillis(timestamp), fileInfo, fileName)
     : await _getFileInfo(workspaceHandle, path, fileInfo, fileName);
 
   if (!info) {
+    console.log('[DEBUG] loadFile - failed to get file info');
     contentInfo.value = undefined;
     handlerComponent.value = null;
     handlerReadyRef.value = false;
@@ -504,15 +528,18 @@ async function loadFile(): Promise<void> {
     return;
   }
 
+  console.log('[DEBUG] loadFile - file info retrieved, size:', info.data.length);
   contentInfo.value = info;
   if (timestamp) {
     atDateTime.value = DateTime.fromMillis(timestamp);
   }
 
   // Load the appropriate component after file content is ready
+  console.log('[DEBUG] loadFile - loading component...');
   loadComponent();
 
   loaded.value = true;
+  console.log('[DEBUG] loadFile - complete, loaded:', loaded.value);
 }
 
 function loadComponent(): void {
@@ -546,15 +573,21 @@ async function checkSaved(): Promise<boolean> {
   return true;
 }
 
-onBeforeRouteLeave(async () => {
+onBeforeRouteLeave(async (to, from) => {
+  console.log('[DEBUG]', '(onBeforeRouteLeave)', 'from:', from.fullPath, 'to:', to.fullPath);
   return await checkSaved();
 });
 
-onBeforeRouteUpdate(async () => {
+onBeforeRouteUpdate(async (to, from) => {
+  console.log('[DEBUG]', '(onBeforeRouteUpdate)', 'from:', from.fullPath, 'to:', to.fullPath);
   return await checkSaved();
 });
 
 onMounted(async () => {
+  console.log('[DEBUG]', '(onMounted)');
+  getRouter().onError((err) => {
+    console.log('[DEBUG]', '(onError)', err);
+  });
   handlerMode.value = getFileHandlerMode();
   const query = getCurrentRouteQuery();
   readOnly.value = Boolean(query.readOnly);
