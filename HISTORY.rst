@@ -4,6 +4,17 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.5.2-rc.0 (2025-10-21)
+-------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Make application more resilient on corrupted certificate
+  (`#11331 <https://github.com/Scille/parsec-cloud/issues/11331>`__)
+
+
+
 Parsec v3.5.1 (2025-10-21)
 --------------------------
 
