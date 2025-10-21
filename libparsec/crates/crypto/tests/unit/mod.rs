@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 mod anti_leak;
+mod bad_keygen;
 mod hash;
 mod key_derivation;
 mod password;
