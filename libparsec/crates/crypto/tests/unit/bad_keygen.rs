@@ -19,7 +19,7 @@ fn bad_keygen() {
 
     #[cfg(feature = "use-libsodium")]
     {
-        const TOTAL: usize = 100_000;
+        const TOTAL: usize = 10_000_000;
         for i in 0..TOTAL {
             let sodium_privkey = libsodium_rs::crypto_sign::KeyPair::generate()
                 .expect("Cannot generate libsodium signing key")
