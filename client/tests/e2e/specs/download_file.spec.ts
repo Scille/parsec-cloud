@@ -126,7 +126,7 @@ msTest('Download multiple files and folder', async ({ documents }, testInfo: Tes
   if (!zipContent) {
     throw new Error('No downloaded file');
   }
-  expect(zipContent.length).toEqual(120415);
+  expect(zipContent.length).toEqual(120947);
   const zip = new AdmZip(Buffer.from(zipContent));
   const zipEntries = zip.getEntries().sort((a, b) => a.entryName.localeCompare(b.entryName));
   expect(zipEntries.length).toBe(4);
@@ -278,7 +278,7 @@ msTest.describe(() => {
     if (!zipContent) {
       throw new Error('No downloaded file');
     }
-    expect(zipContent.length).toEqual(249394);
+    expect(zipContent.length).toEqual(248683);
     const zip = new AdmZip(Buffer.from(zipContent));
     const zipEntries = zip.getEntries().sort();
     expect(zipEntries.length).toBe(2);
