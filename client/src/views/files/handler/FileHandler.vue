@@ -668,6 +668,10 @@ async function showDetails(): Promise<void> {
 }
 
 async function openEditor(path: FsPath): Promise<void> {
+  // Here we want to ensure the router goes back to documents page
+  // before opening the editor for routing purposes (history stack)
+  // Could probably be improved with better routing management
+  // maybe avoiding routing between viewer and editor by loading components directly
   await routerGoBack();
   const workspaceHandle = getWorkspaceHandle();
   if (workspaceHandle) {
