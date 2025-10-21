@@ -206,6 +206,7 @@ async function renderPage(pageNumber: number): Promise<void> {
     const outputScale = window.devicePixelRatio || 1;
     const context = canvasElement.getContext('2d', { willReadFrequently: true });
     const renderContext = {
+      canvas: canvasElement,
       canvasContext: context!,
       transform: outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : undefined,
       viewport: viewport,

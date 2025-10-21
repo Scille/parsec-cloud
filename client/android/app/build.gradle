@@ -3,7 +3,7 @@ apply plugin: 'com.android.application'
 android {
     namespace "com.scille.parsec"
 
-    compileSdkVersion rootProject.ext.compileSdkVersion
+    compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
         applicationId "com.scille.parsec"
         minSdkVersion rootProject.ext.minSdkVersion
