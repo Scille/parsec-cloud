@@ -51,7 +51,7 @@
         "@revolist/vue3-datagrid": "^4.13.4",
         "@sentry/vue": "^9.5.0",
         "@types/luxon": "^3.3.4",
-        "@zip.js/zip.js": "^2.7.68",
+        "@zip.js/zip.js": "^2.8.8",
         "axios": "^1.12.1",
         "detectincognitojs": "^1.5.0",
         "docx-preview": "^0.3.4",
@@ -70,7 +70,7 @@
         "xlsx": "file:vendor/xlsx-0.20.3.tgz"
     },
     "devDependencies": {
-        "@capacitor/cli": "^5.7.8",
+        "@capacitor/cli": "^7.4.4",
         "@intlify/eslint-plugin-vue-i18n": "^2.0.0",
         "@ionic/cli": "^7.2.1",
         "@playwright/test": "^1.56.1",

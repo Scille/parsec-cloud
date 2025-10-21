@@ -14,8 +14,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # We use the version 18.12 because the version >= 18.13 have some breaking changes on how they format the date.
-  # That would break our unit test if we don't update them.
   node-version: 22.14.0
   wasm-pack-version: 0.12.1
 
