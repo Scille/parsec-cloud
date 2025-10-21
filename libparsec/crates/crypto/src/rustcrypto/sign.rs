@@ -33,7 +33,7 @@ impl SigningKey {
     pub const SIGNATURE_SIZE: usize = ed25519_dalek::SIGNATURE_LENGTH;
 
     pub fn verify_key(&self) -> VerifyKey {
-        VerifyKey(self.0.verifying_key())
+        VerifyKey(self.0.verifying_key().to_bytes())
     }
 
     pub fn generate() -> Self {
@@ -96,7 +96,22 @@ impl Serialize for SigningKey {
 
 #[derive(Clone, PartialEq, Eq, Deserialize)]
 #[serde(try_from = "&Bytes")]
-pub struct VerifyKey(ed25519_dalek::VerifyingKey);
+// Why not wrapping `ed25519_dalek::VerifyingKey` instead of a raw buffer here ?
+//
+// RustCrypto's `ed25519_dalek::VerifyingKey::try_from()` returns an error if
+// the provided key doesn't correspond to an actual point on the curve (i.e. is
+// not a valid public key).
+//
+// However libsodium-rs doesn't do such check when the key object is constructed.
+// This is because, being a C library, libsodium's verify function takes the key
+// as a raw buffer and hence the key validation occurs within the verify function.
+//
+// It is important that both implementation have the same behavior (we must follow
+// libsodium behavior in RustCrypto), otherwise a client using RustCrypto will
+// fail to load (and refuse to continue working with the organization for security
+// reasons) a device certificate containing an invalid public key that has
+// otherwise been accepted by the Parsec server since it uses libsodium...
+pub struct VerifyKey([u8; VerifyKey::SIZE]);
 
 crate::impl_key_debug!(VerifyKey);
 
@@ -141,8 +156,10 @@ impl VerifyKey {
         raw_signature: &[u8; SigningKey::SIGNATURE_SIZE],
         message: &[u8],
     ) -> Result<(), CryptoError> {
+        let verify_key = ed25519_dalek::VerifyingKey::try_from(self.0.as_ref())
+            .map_err(|_| CryptoError::SignatureVerification)?;
         let signature = Signature::from_bytes(raw_signature);
-        self.0
+        verify_key
             .verify(message, &signature)
             .map_err(|_| CryptoError::SignatureVerification)?;
         Ok(())
@@ -152,23 +169,22 @@ impl VerifyKey {
 impl AsRef<[u8]> for VerifyKey {
     #[inline]
     fn as_ref(&self) -> &[u8] {
-        self.0.as_bytes()
+        &self.0
     }
 }
 
 impl TryFrom<&[u8]> for VerifyKey {
     type Error = CryptoError;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
-        ed25519_dalek::VerifyingKey::try_from(data)
+        <[u8; Self::SIZE]>::try_from(data)
             .map(Self)
-            .map_err(|_| Self::Error::DataSize)
+            .map_err(|_| CryptoError::DataSize)
     }
 }
 
-impl TryFrom<[u8; Self::SIZE]> for VerifyKey {
-    type Error = CryptoError;
-    fn try_from(data: [u8; Self::SIZE]) -> Result<Self, Self::Error> {
-        Self::try_from(data.as_ref())
+impl From<[u8; Self::SIZE]> for VerifyKey {
+    fn from(data: [u8; Self::SIZE]) -> Self {
+        Self(data)
     }
 }
 
