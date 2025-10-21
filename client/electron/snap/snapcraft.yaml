@@ -62,7 +62,7 @@ parts:
       # libdbus-1 is provided by core22
       - fuse3
     build-snaps:
-      - node/18/stable
+      - node/22/stable
     stage:
       - libparsec.d.ts
       - libparsec.node
@@ -99,7 +99,7 @@ parts:
   megashark-lib:
     plugin: nil
     build-snaps:
-      - node/18/stable
+      - node/22/stable
     source: client
     build-packages:
       - git
@@ -125,7 +125,7 @@ parts:
     plugin: nil
     source: client
     build-snaps:
-      - node/18/stable
+      - node/22/stable
     build-attributes:
       - enable-patchelf
     build-environment:
