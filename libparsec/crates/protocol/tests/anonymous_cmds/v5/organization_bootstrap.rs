@@ -95,10 +95,9 @@ pub fn req() {
             anonymous_cmds::AnyCmdReq::OrganizationBootstrap(
                 anonymous_cmds::organization_bootstrap::Req {
                     bootstrap_token: Some(bootstrap_token),
-                    root_verify_key: VerifyKey::try_from(hex!(
+                    root_verify_key: VerifyKey::from(hex!(
                         "be2976732cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbd"
-                    ))
-                    .unwrap(),
+                    )),
                     user_certificate: Bytes::from_static(&USER_CERTIF),
                     device_certificate: Bytes::from_static(&DEVICE_CERTIF),
                     redacted_user_certificate: Bytes::from_static(&REDACTED_USER_CERTIF),
@@ -187,10 +186,9 @@ pub fn req() {
             anonymous_cmds::AnyCmdReq::OrganizationBootstrap(
                 anonymous_cmds::organization_bootstrap::Req {
                     bootstrap_token: Some(bootstrap_token),
-                    root_verify_key: VerifyKey::try_from(hex!(
+                    root_verify_key: VerifyKey::from(hex!(
                         "be2976732cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbd"
-                    ))
-                    .unwrap(),
+                    )),
                     user_certificate: Bytes::from_static(&USER_CERTIF),
                     device_certificate: Bytes::from_static(&DEVICE_CERTIF),
                     redacted_user_certificate: Bytes::from_static(&REDACTED_USER_CERTIF),

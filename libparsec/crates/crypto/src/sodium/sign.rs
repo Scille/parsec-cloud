@@ -123,11 +123,9 @@ impl TryFrom<&[u8]> for VerifyKey {
     }
 }
 
-impl TryFrom<[u8; Self::SIZE]> for VerifyKey {
-    type Error = CryptoError;
-
-    fn try_from(key: [u8; Self::SIZE]) -> Result<Self, Self::Error> {
-        Ok(Self(PublicKey::from(key)))
+impl From<[u8; Self::SIZE]> for VerifyKey {
+    fn from(key: [u8; Self::SIZE]) -> Self {
+        Self(PublicKey::from(key))
     }
 }
 

@@ -35,10 +35,9 @@ fn serde_pki_enrollment_answer_payload() {
             .try_into()
             .unwrap(),
         profile: UserProfile::Admin,
-        root_verify_key: VerifyKey::try_from(hex!(
+        root_verify_key: VerifyKey::from(hex!(
             "be2976732cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbd"
-        ))
-        .unwrap(),
+        )),
     };
 
     let data = PkiEnrollmentAnswerPayload::load(raw).unwrap();
@@ -71,10 +70,9 @@ fn serde_pki_enrollment_submit_payload() {
             "e1b20b860a78ef778d0c776121c7027cd90ce04b4d2f1a291a48d911f145724d"
         )),
         requested_device_label: DeviceLabel::from_str("My dev1 machine").unwrap(),
-        verify_key: VerifyKey::try_from(hex!(
+        verify_key: VerifyKey::from(hex!(
             "845415cd821748005054dba8d456ac18ad3e71acdf980e19d6a925191362c9f9"
-        ))
-        .unwrap(),
+        )),
     };
 
     let data = PkiEnrollmentSubmitPayload::load(raw).unwrap();
