@@ -31,6 +31,8 @@ Put in a simpler term access Parsec using a Smartcard.
 
 ## Goals and Non-Goals
 
+Non-goal: Use anything else than the keys from the certificate data. (Eg. email and name are not checked nor pre filled in parsec)
+
 Some prior work was already done to add some primitives (sign, verify, encrypt, decrypt) to work with the windows certificate store under the `libparsec_platform_pki`.
 
 The goals are to define the higher elements to make the PKI work with Parsec for the invitation process, those higher elements are:
@@ -57,16 +59,16 @@ Here is a possible user flow of Alice (Submitter) joining the organization CoolO
 
  1. Alice wants to join CoolOrg organization by using the provided submission link to submit a request.
  2. Alice select the x509 certificate (from the smartcard) to use for the enrollment ([`pki_enrollment_select_certificate`])
-
-    > [!IMPORTANT]
-    > The certificate needs to have a `CommonName` ([oid-2.5.4.3](https://oid-base.com/get/2.5.4.3)) and a `EmailAddress` ([oid-1.2.840.113549.1.9.1](https://oid-base.com/get/1.2.840.113549.1.9.1)) attributes in the certificate's subject.
-
  3. Alice creates a user encryption key pair and a device signing key pair.
  4. Alice saves the private parts of the user & device keys pairs on the filesystem ([`pki_enrollment_create_local_pending`]). Those data are stored encrypted by the Smartcard's encryption key.
  5. Alice submits the request (authorized to re-submit later on with updated information) with: ([`pki_enrollment_submit`]):
 
     - The PKI certificate.
-    - A payload consisting of the public parts of the user & device keys pairs and the desired device label ([`PkiEnrollmentSubmitPayload`]) (signed using [`pki_enrollment_sign_payload`]).
+    - A payload ([`PkiEnrollmentSubmitPayload`]) (signed using [`pki_enrollment_sign_payload`]) consisting of
+      - the public parts of the user & device keys pairs
+      - the desired device label.
+      - their email
+      - their name
 
  6. Mallory (a CoolOrg admin which also has the PKI configured, this time the OS certificate store hold the private key and x509 certificate) sees the enrollment request from Alice ([`pki_enrollment_list`]).
  7. Mallory verifies the provided x509 certificate ([`pki_enrollment_load_peer_certificate`]) and provided data ([`pki_enrollment_load_submit_payload`]).
@@ -205,9 +207,36 @@ Part of the anonymous API [`pki_enrollment_submit`] allow a user to request join
 }
 ```
 
-[`PkiEnrollmentSubmitPayload`] is already defined on the main branch with the correct fields and don't need to be updated.
+[`PkiEnrollmentSubmitPayload`] need to have a HumanHandle added as we are not retrieving user name and email from the certificate.
 
 [`PkiEnrollmentSubmitPayload`]: https://github.com/Scille/parsec-cloud/blob/df7bc6891989830c4d93f0b88ddaac9ade6b620c/libparsec/crates/types/schema/pki/pki_enrollment_submit_payload.json5
+
+```jsonc
+{
+    "label": "PkiEnrollmentSubmitPayload",
+    "type": "pki_enrollment_submit_payload",
+    "other_fields": [
+        {
+            "name": "verify_key",
+            "type": "VerifyKey"
+        },
+        {
+            "name": "public_key",
+            "type": "PublicKey"
+        },
+        {
+            "name": "device_label",
+            "type": "DeviceLabel"
+        },
+        // HumanHandle is needed as we are not retrieving the
+        // user name and email from the certificate (yet)
+        {
+            "name": "human_handle",
+            "type": "HumanHandle"
+        }
+    ]
+}
+```
 
 ### List the pending request
 
@@ -462,3 +491,11 @@ Once the certificate validated, we can validate the payload signature against th
   ]
 }
 ```
+
+## Potential Evolutions
+
+### Use other data from the certificate
+
+For example we could use the following  attributes in the certificate's subject.:
+- `CommonName` ([oid-2.5.4.3](https://oid-base.com/get/2.5.4.3))
+- `EmailAddress` ([oid-1.2.840.113549.1.9.1](https://oid-base.com/get/1.2.840.113549.1.9.1)) and the potential emails in subject's alt name
