@@ -159,3 +159,6 @@ pub struct DecryptedMessage {
 
 pub use errors::DecryptMessageError;
 pub use platform::decrypt_message;
+
+pub use errors::CreateLocalPendingError;
+pub use shared::create_local_pending;
