@@ -5,12 +5,23 @@ from __future__ import annotations
 import argparse
 import subprocess
 from collections import OrderedDict, namedtuple
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from importlib import import_module
 from inspect import isclass, iscoroutinefunction, isfunction, signature
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Callable, Iterable, List, Set, Tuple, TypeVar, Union, get_args, Dict
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Set,
+    Tuple,
+    TypeVar,
+    Union,
+    get_args,
+)
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
@@ -34,6 +45,7 @@ META_TYPES = [
     "VariantItemUnit",
     "ErrorVariant",
     "Structure",
+    "UnitStructure",
     "OnClientEventCallback",
     "Enum",
 ]
@@ -86,6 +98,9 @@ class ErrorVariant: ...
 
 
 class Structure: ...
+
+
+class UnitStructure(Structure): ...
 
 
 class OnClientEventCallback: ...
@@ -349,6 +364,18 @@ class StructSpec(BaseTypeInUse):
 
 
 @dataclass
+class UnitStructSpec(StructSpec):
+    kind = "unit_struct"
+    name: str
+    attributes: OrderedDict[str, BaseTypeInUse] = field(default_factory=dict)  # type: ignore
+    custom_getters: dict[str, str] = field(default_factory=dict)
+    custom_init: str | None = None
+
+    def list_attributes(self) -> str:
+        return ""
+
+
+@dataclass
 class VariantItemSpec(BaseTypeInUse):
     name: str
     is_tuple: bool = False
@@ -607,17 +634,20 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
 
         elif isclass(item) and issubclass(item, Structure):
             placeholder = TYPES_DB[item]
-            annotations = getattr(item, "__annotations__", {})
-            struct = StructSpec(
-                name=item_name,
-                attributes=OrderedDict(
-                    (k, BaseTypeInUse.parse(v))
-                    for k, v in annotations.items()
-                    if k not in ("custom_getters", "custom_init")
-                ),
-                custom_getters=getattr(item, "custom_getters", {}),
-                custom_init=getattr(item, "custom_init", None),
-            )
+            if issubclass(item, UnitStructure):
+                struct = UnitStructSpec(name=item_name)
+            else:
+                annotations = getattr(item, "__annotations__", {})
+                struct = StructSpec(
+                    name=item_name,
+                    attributes=OrderedDict(
+                        (k, BaseTypeInUse.parse(v))
+                        for k, v in annotations.items()
+                        if k not in ("custom_getters", "custom_init")
+                    ),
+                    custom_getters=getattr(item, "custom_getters", {}),
+                    custom_init=getattr(item, "custom_init", None),
+                )
             # Modify placeholder instead of replacing it given it is referenced in the nested specs
             placeholder.__dict__ = struct.__dict__
             placeholder.__class__ = struct.__class__  # type: ignore[assignment]
