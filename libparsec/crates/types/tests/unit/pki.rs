@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{collections::HashMap, str::FromStr};
+use std::str::FromStr;
 
 use libparsec_tests_lite::prelude::*;
 use serde_test::{Configure, Token};
@@ -171,23 +171,19 @@ fn serde_pki_enrollment_submit_payload() {
 }
 
 #[rstest]
-#[case::full(
-       // Generated from Parsec 3.5.1-a.0+dev
+#[case::with_cert_uri(
+    // Generated from Parsec 3.5.3-a.0+dev
     // Content:
     //   type: 'local_pending_enrollment'
     //   server_url: 'https://parsec.example.com/'
     //   organization_id: 'my_org'
-    //   x509_certificate: {
-    //     type: 'x509_certificate',
-    //     issuer: { foo: 'bar', },
-    //     subject: { foo: 'bar', },
-    //     der_x509_certificate: 0x666f6f,
-    //     certificate_sha1: 0x666f6f,
-    //     certificate_id: 'foo',
+    //   x509_certificate_ref: {
+    //     uris: [ { windowscng: 0x666f6f, }, ],
+    //     hash: 'sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
     //   }
     //   submitted_on: ext(1, 946771200000000) i.e. 2000-01-02T01:00:00Z
     //   enrollment_id: ext(2, 0xd4e678ea63cc4025a0739c6c46476794)
-    //   submit_payload: {
+    //   payload: {
     //     type: 'pki_enrollment_submit_payload',
     //     verify_key: 0x845415cd821748005054dba8d456ac18ad3e71acdf980e19d6a925191362c9f9,
     //     public_key: 0xe1b20b860a78ef778d0c776121c7027cd90ce04b4d2f1a291a48d911f145724d,
@@ -195,65 +191,55 @@ fn serde_pki_enrollment_submit_payload() {
     //     human_handle: [ 'alice@example.com', 'Alicey McAliceFace', ],
     //   }
     //   encrypted_key: 0x666f6f
+    //   encrypted_key_algo: 'RSAES-OAEP-SHA256'
     //   ciphertext: 0x666f6f
-    hex!(
-        "0028b52ffd00583d0d00c6d85d421093d301002b4ae167f8a13c9214a418f9027e6b43"
-        "8239c64094eee610f85dd4b6544699e48a626eb2934c533554a8c764abcaea39d8daee"
-        "9d130f9e8407c375d22445004a005b00aec10206190c68bed3ae96e72ebed7d5e07141"
-        "f35f3ad7734943796dd625dc74aeec741c5059abe5024ecccd0ecda6a31afb82f0676c"
-        "078afe624b07971fb668a9d513200225a809128f0ce691ed90d9d878ee481a0f010b21"
-        "17260d801af1ddeb5afda230bafd57a2e72e266b5107f35f4d2537fbb1a8dc18288ca2"
-        "984b89fe2b1187d918a5dec2d275d92bafb3393328230a463a9f09394066366c6024d8"
-        "1590102b3db2002c026274b0430a93a31f31280322242a68880c208163cbf0808460ab"
-        "2093e2460a050dca810e3342523c704a5aab38adf2d9a1917315f9e2c3db87da4ae732"
-        "0224e10406ffd554aa59d7d996741efd57d3eb2ab5c9b149cd7bc21f8ed6ec10428ca7"
-        "d9e1ae10d1f0c5b55cdc0bb3b68e6ef15e1c93503f8ef679814d2d74cd1eeab77d6604"
-        "1f0502100003238a7551425dc61054c33e2a05ca464234e2d03a9a6fb339e09bd37488"
-        "e39215d2d02c4667da1b0bf80c"
-    ).as_ref(),
+    &hex!(
+        "0028b52ffd00588d0d00065a63441073d401002b4ae167b409d52316a1191dc6b53f2b"
+        "544a99238a0f92e9d925644b659452ae3fd3de3b8994b8e118bcc2aaafd5c5f1099b73"
+        "f168c129333f290e86851d12480052005d009faf47e86081876381dd0a3b0d857c48eb"
+        "e7d6f0b4b15b5b3a5a8d253eadd69c9744c7b76da7f300db9c3317f36ef07ae93af632"
+        "756dce7aa9438cbea46ee1ec58670bb75d3e81081e64d7d9b54d41029380324de01324"
+        "1f199107b7e32563433e44613e042e8460d06000d4a0154acff935d2863f0816e7c463"
+        "d2196eb0ca7067a75a2f8d0aa3119baaa46ff23888c07fb713cbe5177aeef8572dd349"
+        "3da1c72fb9fc4417e4a3c02a34a260a4239a900364b5210323419b4042987a70013e08"
+        "48e9883f499bf57ec4201910215941436440091c5f860828049f85171537545230a103"
+        "2c3342543a6c549dafc0eefaeb250fc25fb12f02b55e1a55e63c5fcfec47efc4636285"
+        "469c14904581330259a30a2e159b0d53b55e1ae9d976375247796c9428da741e7f5aa9"
+        "8fc79fed32c2a7a49d41dada967d4e3f8bad6d18945c6e3a510b0036a70dde29564389"
+        "6f454350e17d34cb15e3f2cd88067b5d4ab38d4c08a001"
+    )[..],
     Box::new(|alice: &Device| {
         LocalPendingEnrollment {
-            x509_certificate: X509Certificate {
-                issuer: HashMap::from([("foo".into(), "bar".into())]),
-                subject: HashMap::from([("foo".into(), "bar".into())]),
-                der_x509_certificate: b"foo".as_ref().into(),
-                certificate_sha1: b"foo".as_ref().into(),
-                certificate_id: Some("foo".into()),
-            },
+            cert_ref: X509CertificateReference::from(X509CertificateHash::fake_sha256())
+                .add_or_replace_uri(X509WindowsCngURI::from(&b"foo"[..])),
             addr: ParsecPkiEnrollmentAddr::from_str(
                 "parsec3://parsec.example.com/my_org?a=pki_enrollment",
             )
             .unwrap(),
             submitted_on: "2000-01-02T00:00:00Z".parse().unwrap(),
             enrollment_id: EnrollmentID::from_hex("d4e678ea63cc4025a0739c6c46476794").unwrap(),
-            submit_payload: PkiEnrollmentSubmitPayload {
+            payload: PkiEnrollmentSubmitPayload {
                 verify_key: alice.verify_key(),
                 public_key: alice.public_key(),
                 device_label: alice.device_label.clone(),
                 human_handle: alice.human_handle.clone()
             },
             encrypted_key: b"foo".as_ref().into(),
+            encrypted_key_algo: EncryptionAlgorithm::RsaesOaepSha256,
             ciphertext: b"foo".as_ref().into(),
         }
     })
 )]
-#[case::without(
-    // Generated from Parsec 3.5.1-a.0+dev
+#[case::without_cert_uri(
+    // Generated from Parsec 3.5.3-a.0+dev
     // Content:
     //   type: 'local_pending_enrollment'
     //   server_url: 'https://parsec.example.com/'
     //   organization_id: 'my_org'
-    //   x509_certificate: {
-    //     type: 'x509_certificate',
-    //     issuer: { foo: 'bar', },
-    //     subject: { foo: 'bar', },
-    //     der_x509_certificate: 0x666f6f,
-    //     certificate_sha1: 0x666f6f,
-    //     certificate_id: None,
-    //   }
+    //   x509_certificate_ref: { uris: [ ], hash: 'sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=', }
     //   submitted_on: ext(1, 946771200000000) i.e. 2000-01-02T01:00:00Z
     //   enrollment_id: ext(2, 0xd4e678ea63cc4025a0739c6c46476794)
-    //   submit_payload: {
+    //   payload: {
     //     type: 'pki_enrollment_submit_payload',
     //     verify_key: 0x845415cd821748005054dba8d456ac18ad3e71acdf980e19d6a925191362c9f9,
     //     public_key: 0xe1b20b860a78ef778d0c776121c7027cd90ce04b4d2f1a291a48d911f145724d,
@@ -261,44 +247,40 @@ fn serde_pki_enrollment_submit_payload() {
     //     human_handle: [ 'alice@example.com', 'Alicey McAliceFace', ],
     //   }
     //   encrypted_key: 0x666f6f
+    //   encrypted_key_algo: 'RSAES-OAEP-SHA256'
     //   ciphertext: 0x666f6f
-     hex!(
-        "0028b52ffd00582d0d0096585d422093d20180781b790cad92ee6292042ffbb7cd8e5f"
-        "c48d64212143e2fcec6e644b659449ae2da64d769269ea4dc739b6f630495a402b854c"
-        "ccee4293585a6f2d692445004c005b008e818205994c68bed3ae97e72ebed7cde07143"
-        "f3633cd7b34943796dd626dc74aef4781a5059abd5024ecccd16cda6a31afb82f0676c"
-        "178afe624b07971fb268a955131f02115020095aa2e4238379643b6838369e3bd2e633"
-        "a082888569035223be7b5dab5f1446b717cf614ed6a24ee6bf9a4a6ef65b51b92f5018"
-        "3d319772f9af5c36ccc628f59796aecb5e799dcd01107c10a849214940e20149c81152"
-        "a3810303c1b2848060e99101680930a3831d52981cfd884115182949416344c0081c1b"
-        "0607a4031b051a143754266c520c709821a2d2a153d27ac56995cf168d9caf48171ede"
-        "3ed4563a1811a1ffd554aa59d7d996741efd57d3eb2ab5c9b149cd8bc2a08ed6ecf0c1"
-        "cca7d9e1aa08d1f0c5b55cdc0bb3b68e6ef15e9d1351bf8e068a814d2d74cd2eeab781"
-        "66100003238a75512a5dc61054c33e2a45c9461234e2d03ada6cb30dc022a7e910c725"
-        "2ba4a1598cceb43716f019"
-    ).as_ref(),
+    &hex!(
+        "0028b52ffd00581d0d00f61860442073d30180781b790c580db836dcab18f4dfaf01ae"
+        "218c1d24ac0e81bafbdb96ca28a55cff25b97712395182dbbc13c11e86cfcbe0983fa7"
+        "26e0966dab4e8ad3fa25b22446004e005a00f03550f0d95460b73e2e3311ffd1fab933"
+        "3c6dec56174f5661894f9bf5e625d0f16debf138c03667c9625eed5d375dc7a84c3d9b"
+        "b35eea0fa31fa9db371bd6b9c22d974f1e026e42bdf72bb60587d875726d4f88c022a0"
+        "4c12b804090806d4b1e588d1d088ff5219d0000b211736998f19b4bee8397f56d270f7"
+        "c0ea9c7c4c5a62062b895b9e40e0bfdaa9e5f2fb3c37fcebf3f51e39dcc8657aa9e773"
+        "f8268fdde8867810588946128c7846126e80ac34685c206816900f2c3b36001d02a870"
+        "c09f25cda27abc2815102149214344c0081b1d0608a9035d8518143554523222032d31"
+        "4254367060385f79dcf537b55e1b98bc79be2eed43d4c9c7c412913a29216b428714b2"
+        "48145e2a36fba96abd36d1b3e52ea49e72d82870c4e11cfeb45420873ffb2584cf485b"
+        "3eda99263ba72f61679c05a60b0036a70dde295643696d454350e17d34cb15e3aecd88"
+        "75bbae9cd9062204d0"
+    )[..],
     Box::new(|alice: &Device| {
         LocalPendingEnrollment {
-            x509_certificate: X509Certificate {
-                issuer: HashMap::from([("foo".into(), "bar".into())]),
-                subject: HashMap::from([("foo".into(), "bar".into())]),
-                der_x509_certificate: b"foo".as_ref().into(),
-                certificate_sha1: b"foo".as_ref().into(),
-                certificate_id: None,
-            },
+            cert_ref: X509CertificateReference::from(X509CertificateHash::fake_sha256()),
             addr: ParsecPkiEnrollmentAddr::from_str(
                 "parsec3://parsec.example.com/my_org?a=pki_enrollment",
             )
             .unwrap(),
             submitted_on: "2000-01-02T00:00:00Z".parse().unwrap(),
             enrollment_id: EnrollmentID::from_hex("d4e678ea63cc4025a0739c6c46476794").unwrap(),
-            submit_payload: PkiEnrollmentSubmitPayload {
+            payload: PkiEnrollmentSubmitPayload {
                 verify_key: alice.verify_key(),
                 public_key: alice.public_key(),
                 device_label: alice.device_label.clone(),
                 human_handle: alice.human_handle.clone()
             },
             encrypted_key: b"foo".as_ref().into(),
+            encrypted_key_algo: EncryptionAlgorithm::RsaesOaepSha256,
             ciphertext: b"foo".as_ref().into(),
         }
     })
@@ -309,6 +291,7 @@ fn serde_local_pending_enrollment(
     #[case] generate_expected: Box<dyn FnOnce(&Device) -> LocalPendingEnrollment>,
 ) {
     let expected = generate_expected(alice);
+
     println!("***expected: {:?}", expected.dump());
     let data = LocalPendingEnrollment::load(raw).unwrap();
     p_assert_eq!(data, expected);
