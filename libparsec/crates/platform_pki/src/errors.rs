@@ -40,4 +40,5 @@ error_set::error_set! {
         #[display("Invalid PEM content: {0}")]
         InvalidPemContent(rustls_pki_types::pem::Error)
     };
+    CreateLocalPendingError = EncryptMessageError;
 }
