@@ -14,8 +14,8 @@
             "type": "OrganizationID"
         },
         {
-            "name": "x509_certificate",
-            "type": "X509Certificate"
+            "name": "x509_certificate_ref",
+            "type": "X509CertificateReference"
         },
         {
             "name": "submitted_on",
@@ -26,7 +26,7 @@
             "type": "EnrollmentID"
         },
         {
-            "name": "submit_payload",
+            "name": "payload",
             "type": "PkiEnrollmentSubmitPayload"
         },
         {
@@ -34,8 +34,28 @@
             "type": "Bytes"
         },
         {
+            "name": "encrypted_key_algo",
+            "type": "EncryptionAlgorithm"
+        },
+        {
             "name": "ciphertext",
+            // Correspond to `PrivateParts` that is serialized in msgpack format and encrypted with `encrypted_key`.
             "type": "Bytes"
+        }
+    ],
+    "nested_types": [
+        {
+            "name": "PrivateParts",
+            "fields": [
+                {
+                    "name": "signing_key",
+                    "type": "SigningKey"
+                },
+                {
+                    "name": "private_key",
+                    "type": "PrivateKey"
+                }
+            ]
         }
     ]
 }

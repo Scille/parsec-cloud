@@ -150,12 +150,13 @@ impl_transparent_data_format_conversion!(
     try_from = "LocalPendingEnrollmentData"
 )]
 pub struct LocalPendingEnrollment {
-    pub x509_certificate: X509Certificate,
+    pub cert_ref: X509CertificateReference,
     pub addr: ParsecPkiEnrollmentAddr,
     pub submitted_on: DateTime,
     pub enrollment_id: EnrollmentID,
-    pub submit_payload: PkiEnrollmentSubmitPayload,
+    pub payload: PkiEnrollmentSubmitPayload,
     pub encrypted_key: Bytes,
+    pub encrypted_key_algo: EncryptionAlgorithm,
     pub ciphertext: Bytes,
 }
 
@@ -249,11 +250,12 @@ impl TryFrom<LocalPendingEnrollmentData> for LocalPendingEnrollment {
         };
         Ok(Self {
             addr,
-            x509_certificate: data.x509_certificate,
+            cert_ref: data.x509_certificate_ref,
             submitted_on: data.submitted_on,
             enrollment_id: data.enrollment_id,
-            submit_payload: data.submit_payload,
+            payload: data.payload,
             encrypted_key: data.encrypted_key,
+            encrypted_key_algo: data.encrypted_key_algo,
             ciphertext: data.ciphertext,
         })
     }
@@ -273,17 +275,29 @@ impl From<LocalPendingEnrollment> for LocalPendingEnrollmentData {
             ty: Default::default(),
             server_url,
             organization_id: obj.addr.organization_id().clone(),
-            x509_certificate: obj.x509_certificate,
+            x509_certificate_ref: obj.cert_ref,
             submitted_on: obj.submitted_on,
             enrollment_id: obj.enrollment_id,
-            submit_payload: obj.submit_payload,
+            payload: obj.payload,
             encrypted_key: obj.encrypted_key,
+            encrypted_key_algo: obj.encrypted_key_algo,
             ciphertext: obj.ciphertext,
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+impl PrivateParts {
+    pub fn load(raw: &[u8]) -> DataResult<Self> {
+        format_vx_load(raw)
+    }
+    pub fn dump(&self) -> Vec<u8> {
+        format_v0_dump(&self)
+    }
+}
+
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, serde_with::DeserializeFromStr, serde_with::SerializeDisplay,
+)]
 pub enum EncryptionAlgorithm {
     RsaesOaepSha256,
 }
