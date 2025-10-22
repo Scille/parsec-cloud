@@ -8,7 +8,7 @@
 {{ render_type(t.elem) }} | null
 {%- elif t.kind == "result" -%}
 Result<{{ render_type(t.ok) }}, {{ render_type(t.err) }}>
-{%- elif t.kind == "struct" or t.kind == "variant" -%}
+{%- elif t.kind == "struct" or t.kind == "unit_struct" or t.kind == "variant" -%}
 {{ t.name }}
 {%- elif t.kind == "dict" -%}
 Map<{{ render_type(t.key) }}, {{ render_type(t.value) }}>

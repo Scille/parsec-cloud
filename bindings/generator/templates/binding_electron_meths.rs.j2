@@ -32,7 +32,7 @@ JsBigInt
 JsString
 {%- elif type.kind in ("bytes", "bytes_based") -%}
 JsTypedArray<u8>
-{%- elif type.kind == "struct" -%}
+{%- elif type.kind == "struct" or type.kind == "unit_struct" -%}
 JsObject
 {%- elif type.kind == "variant" -%}
 JsObject
@@ -284,6 +284,11 @@ JsString
 }
 {%- elif type.kind == "struct" -%}
 {{ struct_js_to_rs_function_name(type) }}({{ mut_cx_ref }}, {{ js_val }})?
+{%- elif type.kind == "unit_struct" -%}
+{
+    let _ = {{ js_val }};
+    libparsec::{{ type.name }}
+}
 {%- elif type.kind == "variant" -%}
 {{ variant_js_to_rs_function_name(type) }}({{ mut_cx_ref }}, {{ js_val }})?
 {%- elif type.kind == "OnClientEventCallback" -%}
@@ -566,6 +571,11 @@ JsString::try_new({{ mut_cx_ref }},
 {{ struct_rs_to_js_function_name(type) }}({{ mut_cx_ref }}, {{ rs_value }})?
 {%- elif type.kind == "variant" -%}
 {{ variant_rs_to_js_function_name(type) }}({{ mut_cx_ref }}, {{ rs_value }})?
+{%- elif type.kind == "unit_struct" -%}
+{
+    let _ = {{ rs_value }};
+    {{ mut_cx_ref }}.undefined()
+}
 {%- elif type.kind == "enum" %}
 JsString::try_new({{ mut_cx_ref }}, {{ enum_rs_to_js_function_name(type) }}({{ rs_value }})).or_throw({{ mut_cx_ref }})?
 {%- else -%}
@@ -887,7 +897,7 @@ use neon::{prelude::*, types::{buffer::TypedArray, JsBigInt}};
 
 {% endfor %}
 {# Structures #}
-{% for struct in api.structs %}
+{% for struct in api.structs if struct.kind != "unit_struct" %}
 
 // {{ struct.name }}
 

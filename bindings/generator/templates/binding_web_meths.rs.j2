@@ -413,6 +413,11 @@ if {{ js_val }}.is_null() {
 )
 {%- elif type.kind == "struct" -%}
 {{ struct_js_to_rs_function_name(type) }}({{ js_val }})?
+{%- elif type.kind == "unit_struct" -%}
+{
+    let _ = {{ js_val }};
+    libparsec::{{ type.name }}
+}
 {%- elif type.kind == "variant" -%}
 {{ variant_js_to_rs_function_name(type) }}({{ js_val }})?
 {%- elif type.kind == "result" -%}
@@ -629,6 +634,11 @@ match {{ rs_value }} {
 }
 {%- elif type.kind == "struct" -%}
 {{ struct_rs_to_js_function_name(type) }}({{ rs_value }})?
+{%- elif type.kind == "unit_struct" -%}
+{
+    let _ = {{ rs_value }};
+    JsValue::UNDEFINED
+}
 {%- elif type.kind == "variant" -%}
 {{ variant_rs_to_js_function_name(type) }}({{ rs_value }})?
 {%- elif type.kind == "enum" -%}
@@ -911,7 +921,7 @@ use wasm_bindgen_futures::*;
 
 {% endfor %}
 {# Structures #}
-{% for struct in api.structs %}
+{% for struct in api.structs if struct.kind != "unit_struct" %}
 
 // {{ struct.name }}
 
