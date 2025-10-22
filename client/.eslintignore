@@ -5,7 +5,10 @@ electron/build
 electron/app
 electron/src/
 electron/dist
+electron/capacitor.config.ts
 electron/node_modules
+electron/capacitor-electron
+electron/scripts/build-capacitor-electron.js
 src/views/testing/TestPage.vue
 bindings
 playwright.config.ts
