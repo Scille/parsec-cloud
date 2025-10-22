@@ -24,9 +24,9 @@
         "ios:copy": "npm run native:build && npx cap copy ios",
         "ios:copy:release": "npm run native:build && npx cap copy ios",
         "ios:open": "npm run ios:copy && npx cap open ios",
-        "electron:copy": "npm run native:build && npx cap copy @capacitor-community/electron",
-        "electron:copy:dev": "npm run native:build -- --mode development && npx cap copy @capacitor-community/electron",
-        "electron:open": "npm run electron:copy:dev && npx cap open @capacitor-community/electron",
+        "electron:copy": "npm run native:build && cd electron && npm run electron:copy",
+        "electron:copy:dev": "npm run native:build -- --mode development && cd electron && npm run electron:copy",
+        "electron:open": "npm run electron:copy:dev && cd electron && npm run electron:open",
         "electron:release": "npm run electron:copy && cd electron && npm run electron:release",
         "electron:release:dev": "npm run electron:copy:dev && cd electron && npm run electron:release",
         "electron:debug": "npm run electron:copy && cd electron && npm run electron:start",
@@ -36,7 +36,6 @@
         "megashark:local:stop": "npm unlink megashark-lib --no-save && npm install"
     },
     "dependencies": {
-        "@capacitor-community/electron": "github:Scille/capacitor-electron",
         "@capacitor/android": "^5.7.8",
         "@capacitor/app": "^5.0.8",
         "@capacitor/core": "^5.7.8",

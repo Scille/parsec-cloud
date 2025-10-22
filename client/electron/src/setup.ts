@@ -1,7 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import type { CapacitorElectronConfig } from '@capacitor-community/electron';
-import { CapElectronEventEmitter, setupCapacitorElectronPlugins } from '@capacitor-community/electron';
 import chokidar from 'chokidar';
 import type { MenuItemConstructorOptions } from 'electron';
 import { BrowserWindow, Menu, MenuItem, Tray, app, nativeImage, session, shell } from 'electron';
@@ -10,6 +8,8 @@ import electronServe from 'electron-serve';
 import windowStateKeeper from 'electron-window-state';
 import fs from 'fs';
 import { join } from 'path';
+import type { CapacitorElectronConfig } from './capacitor-electron';
+import { CapElectronEventEmitter, setupCapacitorElectronPlugins } from './capacitor-electron';
 import { WindowToPageChannel } from './communicationChannels';
 import { Env } from './envVariables';
 import { SplashScreen } from './splashscreen';

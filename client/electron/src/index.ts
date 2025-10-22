@@ -1,12 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import type { CapacitorElectronConfig } from '@capacitor-community/electron';
-import { getCapacitorElectronConfig, setupElectronDeepLinking } from '@capacitor-community/electron';
 import * as Sentry from '@sentry/electron/main';
 import type { MenuItemConstructorOptions } from 'electron';
 import { BrowserWindow, MenuItem, app, dialog, ipcMain, shell } from 'electron';
 import log from 'electron-log/main';
 import unhandled from 'electron-unhandled';
+import type { CapacitorElectronConfig } from './capacitor-electron';
+import { getCapacitorElectronConfig, setupElectronDeepLinking } from './capacitor-electron';
 import { electronIsDev } from './utils';
 
 import fs from 'fs';
