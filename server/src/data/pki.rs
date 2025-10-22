@@ -104,12 +104,14 @@ impl PkiEnrollmentSubmitPayload {
     fn new(
         verify_key: VerifyKey,
         public_key: PublicKey,
-        requested_device_label: DeviceLabel,
+        device_label: DeviceLabel,
+        human_handle: HumanHandle,
     ) -> Self {
         Self(libparsec_types::PkiEnrollmentSubmitPayload {
             verify_key: verify_key.0,
             public_key: public_key.0,
-            requested_device_label: requested_device_label.0,
+            device_label: device_label.0,
+            human_handle: human_handle.0,
         })
     }
 
@@ -124,8 +126,13 @@ impl PkiEnrollmentSubmitPayload {
     }
 
     #[getter]
-    fn requested_device_label(&self) -> DeviceLabel {
-        DeviceLabel(self.0.requested_device_label.clone())
+    fn device_label(&self) -> DeviceLabel {
+        DeviceLabel(self.0.device_label.clone())
+    }
+
+    #[getter]
+    fn human_handle(&self) -> HumanHandle {
+        HumanHandle(self.0.human_handle.clone())
     }
 
     #[classmethod]

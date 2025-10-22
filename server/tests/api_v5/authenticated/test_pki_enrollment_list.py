@@ -7,6 +7,7 @@ from parsec._parsec import (
     DeviceLabel,
     EmailAddress,
     EnrollmentID,
+    HumanHandle,
     PkiEnrollmentSubmitPayload,
     PrivateKey,
     SigningKey,
@@ -37,7 +38,10 @@ async def test_authenticated_pki_enrollment_list_ok(
             submit_payload = PkiEnrollmentSubmitPayload(
                 verify_key=SigningKey.generate().verify_key,
                 public_key=PrivateKey.generate().public_key,
-                requested_device_label=DeviceLabel("Dev1"),
+                device_label=DeviceLabel("Dev1"),
+                human_handle=HumanHandle(
+                    label="Alice", email=EmailAddress("alice@example.invalid")
+                ),
             ).dump()
             outcome = await backend.pki.submit(
                 now=submitted_on,
