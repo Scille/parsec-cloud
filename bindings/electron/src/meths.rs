@@ -6573,6 +6573,13 @@ fn variant_client_event_js_to_rs<'a>(
                 supported_api_version,
             })
         }
+        "ClientEventInvalidCertificate" => {
+            let detail = {
+                let js_val: Handle<JsString> = obj.get(cx, "detail")?;
+                js_val.value(cx)
+            };
+            Ok(libparsec::ClientEvent::InvalidCertificate { detail })
+        }
         "ClientEventInvitationAlreadyUsedOrDeleted" => {
             Ok(libparsec::ClientEvent::InvitationAlreadyUsedOrDeleted {})
         }
@@ -7060,6 +7067,12 @@ fn variant_client_event_rs_to_js<'a>(
                 js_array
             };
             js_obj.set(cx, "supportedApiVersion", js_supported_api_version)?;
+        }
+        libparsec::ClientEvent::InvalidCertificate { detail, .. } => {
+            let js_tag = JsString::try_new(cx, "ClientEventInvalidCertificate").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_detail = JsString::try_new(cx, detail).or_throw(cx)?;
+            js_obj.set(cx, "detail", js_detail)?;
         }
         libparsec::ClientEvent::InvitationAlreadyUsedOrDeleted { .. } => {
             let js_tag =
