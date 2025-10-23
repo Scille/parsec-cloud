@@ -125,10 +125,10 @@ class ClientEvent(Variant):
     class ServerInvalidResponseContent:
         protocol_decode_error: str
 
-    # class InvalidKeysBundle:
-    #     detail: str
+    class InvalidCertificate:
+        detail: str
 
-    # class InvalidCertificate:
+    # class InvalidKeysBundle:
     #     detail: str
 
     # class InvalidManifest:
