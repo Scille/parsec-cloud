@@ -22,16 +22,22 @@ pub(crate) use windows as platform;
 #[cfg(not(target_os = "windows"))]
 mod platform {
     use crate::{
-        CertificateDer, DecryptMessageError, DecryptedMessage, EncryptMessageError,
-        EncryptedMessage, GetDerEncodedCertificateError, ShowCertificateSelectionDialogError,
-        SignMessageError, SignedMessageFromPki,
+        errors::ListTrustedRootCertificatesError, CertificateDer, DecryptMessageError,
+        DecryptedMessage, EncryptMessageError, EncryptedMessage, GetDerEncodedCertificateError,
+        ShowCertificateSelectionDialogError, SignMessageError, SignedMessageFromPki,
     };
+    use bytes::Bytes;
     use libparsec_types::{EncryptionAlgorithm, X509CertificateReference};
 
     pub fn get_der_encoded_certificate(
         certificate_ref: &X509CertificateReference,
     ) -> Result<CertificateDer, GetDerEncodedCertificateError> {
         let _ = certificate_ref;
+        unimplemented!("platform not supported")
+    }
+
+    pub fn list_trusted_root_certificate_der(
+    ) -> Result<Vec<Bytes>, ListTrustedRootCertificatesError> {
         unimplemented!("platform not supported")
     }
 
@@ -101,6 +107,9 @@ pub struct CertificateDer {
     pub cert_ref: X509CertificateReference,
     pub der_content: Bytes,
 }
+
+pub use errors::ListTrustedRootCertificatesError;
+pub use platform::list_trusted_root_certificate_der;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SignatureAlgorithm {

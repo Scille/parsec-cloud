@@ -4,8 +4,9 @@ use std::ffi::c_void;
 
 use crate::{
     CertificateDer, DecryptMessageError, DecryptedMessage, EncryptMessageError, EncryptedMessage,
-    EncryptionAlgorithm, GetDerEncodedCertificateError, ShowCertificateSelectionDialogError,
-    SignMessageError, SignatureAlgorithm, SignedMessageFromPki,
+    EncryptionAlgorithm, GetDerEncodedCertificateError, ListTrustedRootCertificatesError,
+    ShowCertificateSelectionDialogError, SignMessageError, SignatureAlgorithm,
+    SignedMessageFromPki,
 };
 use bytes::Bytes;
 use libparsec_types::{X509CertificateHash, X509CertificateReference, X509WindowsCngURI};
@@ -138,6 +139,31 @@ fn get_id_and_hash_from_cert_context(
     let hash = hash_from_certificate_context(context)?;
 
     Ok(X509CertificateReference::from(hash).add_or_replace_uri(id))
+}
+
+pub fn list_trusted_root_certificate_der() -> Result<Vec<Bytes>, ListTrustedRootCertificatesError> {
+    let store = CertStore::open_current_user("Root")
+        .map_err(ListTrustedRootCertificatesError::CannotOpenStore)?;
+
+    let res = store
+        .certs()
+        // NOTE: We could filter the root certificate on their valid usages, but we could easily
+        // miss out the expected root certificate as the init script
+        // `../../examples/init_windows_credstore.ps1` generate a test CA cert with the type
+        // `SSLServerAuthentication` (the default value).
+        //
+        // .filter(|ctx| match ctx.valid_uses() {
+        //     Ok(ValidUses::All) => true,
+        //     Ok(ValidUses::Oids(oids)) => {
+        //         log::trace!(cert_name:?=ctx.friendly_name().ok(), oids:?; "Certificate valid uses");
+        //         false
+        //     }
+        //     Err(err) => { log::trace!(cert_name:?=ctx.friendly_name().ok(), err:?; "Certificate with no valid use, skipping"); false },
+        // })
+        .map(|ctx| Bytes::copy_from_slice(ctx.to_der()))
+        .collect();
+
+    Ok(res)
 }
 
 pub fn show_certificate_selection_dialog_windows_only(
