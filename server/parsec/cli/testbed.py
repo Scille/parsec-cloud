@@ -6,7 +6,7 @@ import asyncio
 from base64 import b64decode, b64encode
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import anyio
 import click
@@ -23,7 +23,12 @@ from parsec._parsec import (
     ParsecAddr,
     SecretKey,
     ValidationCode,
+    authenticated_cmds,
 )
+
+if TYPE_CHECKING:
+    from parsec.api import ApiFn
+from parsec.client_context import AuthenticatedClientContext
 from parsec.templates import get_environment
 
 try:
@@ -253,6 +258,100 @@ async def test_drop(raw_organization_id: str, request: Request) -> Response:
 
     # Dropping is idempotent, so no need for error handling
     await testbed.drop_organization(organization_id)
+
+    return Response(status_code=200, content=b"")
+
+
+class CorruptedCertificateGet:
+    """
+    Patch `certificate_get` API command to return an invalid certificate.
+    This is useful to test the client behavior when the server is buggy/malicious.
+    """
+
+    def __init__(
+        self,
+        testbed: TestbedBackend,
+        vanilla_api_certificate_get: ApiFn,  # pyright: ignore[reportMissingTypeArgument] Req/Rep are currently untyped
+    ):
+        self.testbed = testbed
+        self.vanilla_api_certificate_get = vanilla_api_certificate_get
+        self.organizations: set[OrganizationID] = set()
+
+    async def __call__(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.certificate_get.Req,
+    ):
+        rep = await self.vanilla_api_certificate_get(client_ctx, req)
+
+        if not isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk):
+            return rep
+
+        return authenticated_cmds.latest.certificate_get.RepOk(
+            common_certificates=[*rep.common_certificates, b"<dummy>"],
+            sequester_certificates=rep.sequester_certificates,
+            shamir_recovery_certificates=rep.shamir_recovery_certificates,
+            realm_certificates=rep.realm_certificates,
+        )
+
+    @classmethod
+    def get_or_install(cls, testbed: TestbedBackend) -> CorruptedCertificateGet:
+        target = testbed.backend.apis[authenticated_cmds.latest.certificate_get.Req]
+        if isinstance(target, cls):
+            return target
+
+        vanilla_api_certificate_get = target
+        corrupted = cls(testbed, vanilla_api_certificate_get)
+        testbed.backend.apis[authenticated_cmds.latest.certificate_get.Req] = corrupted
+        return corrupted
+
+    @staticmethod
+    def is_installed(testbed: TestbedBackend) -> bool:
+        target = testbed.backend.apis[authenticated_cmds.latest.certificate_get.Req]
+        return isinstance(target, CorruptedCertificateGet)
+
+    @staticmethod
+    def uninstall(testbed: TestbedBackend):
+        target = testbed.backend.apis[authenticated_cmds.latest.certificate_get.Req]
+        assert isinstance(target, CorruptedCertificateGet)
+        testbed.backend.apis[authenticated_cmds.latest.certificate_get.Req] = (
+            target.vanilla_api_certificate_get
+        )
+
+
+@testbed_router.post("/testbed/corrupt/{raw_organization_id}")
+async def test_corruption(raw_organization_id: str, request: Request) -> Response:
+    testbed: TestbedBackend = request.app.state.testbed
+
+    try:
+        organization_id = OrganizationID(raw_organization_id)
+    except ValueError:
+        return Response(status_code=400, content=b"")
+
+    req_body = await request.body()
+    for corruption in req_body.split(b"\n"):
+        match corruption:
+            case b"certificates:true":
+                corruption = CorruptedCertificateGet.get_or_install(testbed)
+                corruption.organizations.add(organization_id)
+
+            case b"certificates:false":
+                if CorruptedCertificateGet.is_installed(testbed):
+                    corruption = CorruptedCertificateGet.get_or_install(testbed)
+                    try:
+                        corruption.organizations.remove(organization_id)
+                    except KeyError:
+                        pass
+
+            case unknown:
+                return Response(
+                    status_code=400,
+                    content=(
+                        b"Unknown corruption `"
+                        + unknown
+                        + b"`, only `certificates:[true|false]` is allowed !"
+                    ),
+                )
 
     return Response(status_code=200, content=b"")
 
