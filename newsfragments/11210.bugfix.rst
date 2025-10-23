@@ -1,0 +1,1 @@
+Stops the mountpoint properly when closing the app
