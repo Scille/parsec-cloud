@@ -16,10 +16,10 @@ use rsa::{
     RsaPublicKey,
 };
 use rustls_pki_types::{
-    pem::PemObject, CertificateDer, InvalidSignature, SignatureVerificationAlgorithm,
+    pem::PemObject, CertificateDer, InvalidSignature, SignatureVerificationAlgorithm, TrustAnchor,
 };
 use sha2::Sha256;
-use webpki::{EndEntityCert, Error as WebPkiError};
+use webpki::{anchor_from_trusted_cert, EndEntityCert, Error as WebPkiError};
 
 pub struct Certificate<'a> {
     internal: CertificateDer<'a>,
@@ -54,6 +54,14 @@ impl Certificate<'static> {
 impl AsRef<[u8]> for Certificate<'_> {
     fn as_ref(&self) -> &[u8] {
         self.internal.as_ref()
+    }
+}
+
+impl<'a> TryFrom<&'a Certificate<'a>> for TrustAnchor<'a> {
+    type Error = WebPkiError;
+
+    fn try_from(value: &'a Certificate<'a>) -> Result<Self, Self::Error> {
+        anchor_from_trusted_cert(&value.internal)
     }
 }
 
