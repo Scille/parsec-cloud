@@ -2,13 +2,9 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
-from parsec._parsec_pyi.addrs import ParsecPkiEnrollmentAddr
 from parsec._parsec_pyi.crypto import PublicKey, VerifyKey
 from parsec._parsec_pyi.enumerate import UserProfile
-from parsec._parsec_pyi.ids import DeviceID, DeviceLabel, EnrollmentID, HumanHandle, UserID
-from parsec._parsec_pyi.time import DateTime
+from parsec._parsec_pyi.ids import DeviceID, DeviceLabel, HumanHandle, UserID
 
 class PkiEnrollmentAnswerPayload:
     def __init__(
@@ -82,49 +78,3 @@ class X509Certificate:
     def certificate_sha1(self) -> bytes: ...
     @property
     def certificate_id(self) -> str | None: ...
-
-class LocalPendingEnrollment:
-    def __init__(
-        self,
-        x509_certificate: X509Certificate,
-        addr: ParsecPkiEnrollmentAddr,
-        submitted_on: DateTime,
-        enrollment_id: EnrollmentID,
-        submit_payload: PkiEnrollmentSubmitPayload,
-        encrypted_key: bytes,
-        ciphertext: bytes,
-    ) -> None: ...
-    @classmethod
-    def load(cls, raw: bytes) -> LocalPendingEnrollment: ...
-    def dump(self) -> bytes: ...
-    def save(self, config_dir: Path) -> str: ...
-    @classmethod
-    def load_from_path(cls, path: Path) -> LocalPendingEnrollment: ...
-    @classmethod
-    def load_from_enrollment_id(
-        cls,
-        config_dir: Path,
-        enrollment_id: EnrollmentID,
-    ) -> LocalPendingEnrollment: ...
-    @classmethod
-    def remove_from_enrollment_id(
-        cls,
-        config_dir: Path,
-        enrollment_id: EnrollmentID,
-    ) -> None: ...
-    @classmethod
-    def list(cls, config_dir: Path) -> list[LocalPendingEnrollment]: ...
-    @property
-    def x509_certificate(self) -> X509Certificate: ...
-    @property
-    def addr(self) -> ParsecPkiEnrollmentAddr: ...
-    @property
-    def submitted_on(self) -> DateTime: ...
-    @property
-    def enrollment_id(self) -> EnrollmentID: ...
-    @property
-    def submit_payload(self) -> PkiEnrollmentSubmitPayload: ...
-    @property
-    def encrypted_key(self) -> bytes: ...
-    @property
-    def ciphertext(self) -> bytes: ...

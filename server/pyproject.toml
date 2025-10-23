@@ -178,7 +178,7 @@ bindings = "pyo3"
 [tool.pyright]
 pythonVersion = "3.12"
 include = ["parsec", "tests", "build.py", "../docs", "../misc", "../bindings/generator"]
-exclude = ["**/__pycache__"]
+exclude = ["**/__pycache__", "../**/.venv/"]
 ignore = [
     "parsec/components/postgresql/sequester.py",
     "parsec/components/postgresql/pki.py",

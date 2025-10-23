@@ -89,7 +89,6 @@ from parsec._parsec_pyi.manifest import (
 )
 from parsec._parsec_pyi.misc import ApiVersion, ValidationCode
 from parsec._parsec_pyi.pki import (
-    LocalPendingEnrollment,
     PkiEnrollmentAnswerPayload,
     PkiEnrollmentSubmitPayload,
     X509Certificate,
@@ -196,7 +195,6 @@ __all__ = [
     # Time
     "DateTime",
     # Pki
-    "LocalPendingEnrollment",
     "PkiEnrollmentAnswerPayload",
     "PkiEnrollmentSubmitPayload",
     "X509Certificate",
