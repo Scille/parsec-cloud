@@ -14,6 +14,9 @@ error_set::error_set! {
         CannotAcquireKeypair(std::io::Error),
     }
     GetDerEncodedCertificateError := BaseCertStoreError
+    ListTrustedRootCertificatesError := BaseCertStoreError || {
+       InvalidRootCertificate(webpki::Error)
+    }
     SignMessageError := BaseCertStoreError || BaseKeyPairError || {
         #[display("Cannot sign message: {0}")]
         CannotSign(std::io::Error),
