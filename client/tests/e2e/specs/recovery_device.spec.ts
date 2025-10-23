@@ -87,7 +87,7 @@ msTest('Export and use recovery files', async ({ myProfilePage }) => {
   const authNext = recoveryContainer.locator('.validate-button');
   await expect(authNext).toHaveText('Confirm');
 
-  const authRadio = authContainer.locator('.radio-list-item');
+  const authRadio = authContainer.locator('.radio-list-item:visible');
   await expect(authRadio).toHaveCount(2);
   await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
   await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
@@ -194,7 +194,7 @@ for (const error of ['invalid-passphrase', 'invalid-file']) {
     const authNext = recoveryContainer.locator('.validate-button');
     await expect(authNext).toHaveText('Confirm');
 
-    const authRadio = authContainer.locator('.radio-list-item');
+    const authRadio = authContainer.locator('.radio-list-item:visible');
     await expect(authRadio).toHaveCount(2);
     await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
     await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');

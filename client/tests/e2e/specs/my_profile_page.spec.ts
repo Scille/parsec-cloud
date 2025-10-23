@@ -97,7 +97,7 @@ msTest('Change password', async ({ myProfilePage }) => {
   await expect(changePasswordModal.locator('.modal-header')).toHaveText('Change authentication method');
   await expect(changePasswordModal.locator('#next-button')).toHaveDisabledAttribute();
 
-  const authRadio = changePasswordModal.locator('.radio-list-item');
+  const authRadio = changePasswordModal.locator('.radio-list-item:visible');
   await expect(authRadio).toHaveCount(2);
   await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
   await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
