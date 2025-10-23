@@ -1,8 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use crate::{
+    encrypt_message,
     errors::{InvalidPemContent, VerifySignatureError},
-    SignatureAlgorithm,
+    EncryptedMessage, SignatureAlgorithm,
+};
+use libparsec_types::{
+    DateTime, EnrollmentID, LocalPendingEnrollment, ParsecPkiEnrollmentAddr,
+    PkiEnrollmentSubmitPayload, PrivateParts, SecretKey, X509CertificateReference,
 };
 use rsa::{
     pkcs1,
@@ -117,4 +122,33 @@ impl SignatureVerificationAlgorithm for RsassaPssSha256SignatureVerifier {
     fn signature_alg_id(&self) -> rustls_pki_types::AlgorithmIdentifier {
         rustls_pki_types::alg_id::RSA_PSS_SHA256
     }
+}
+
+pub fn create_local_pending(
+    cert_ref: &X509CertificateReference,
+    addr: ParsecPkiEnrollmentAddr,
+    enrollment_id: EnrollmentID,
+    submitted_on: DateTime,
+    payload: PkiEnrollmentSubmitPayload,
+    private_parts: PrivateParts,
+) -> Result<LocalPendingEnrollment, crate::errors::CreateLocalPendingError> {
+    let key = SecretKey::generate();
+    let EncryptedMessage {
+        cert_ref,
+        algo,
+        ciphered: encrypted_key,
+    } = encrypt_message(key.as_ref(), cert_ref)?;
+    let ciphered_private_parts = key.encrypt(&private_parts.dump()).into();
+
+    let local_pending = LocalPendingEnrollment {
+        cert_ref,
+        addr,
+        submitted_on,
+        enrollment_id,
+        payload,
+        encrypted_key,
+        encrypted_key_algo: algo,
+        ciphertext: ciphered_private_parts,
+    };
+    Ok(local_pending)
 }
