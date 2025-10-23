@@ -13,7 +13,7 @@
       <ion-text class="authentication-card-text__title body-lg">{{ $msTranslate(config.methodName) }}</ion-text>
       <ion-text
         class="authentication-card-text__description body"
-        v-if="config.description && showDescription()"
+        v-if="config.description && showDescription"
       >
         {{ $msTranslate(config.description) }}
       </ion-text>
@@ -64,7 +64,14 @@ const props = defineProps<{
   disabled?: boolean;
 }>();
 
+const showDescription = computed(() => {
+  return ![AuthenticationCardState.Active, AuthenticationCardState.Current, AuthenticationCardState.Unavailable].includes(props.state);
+});
+
+const config = computed(() => methodConfig[props.authMethod]);
+
 const keyringAvailable = ref(false);
+
 onMounted(async () => {
   keyringAvailable.value = await isKeyringAvailable();
 });
@@ -124,12 +131,6 @@ function keyringUnavailableMessage(): Translatable {
     return '';
   }
 }
-
-function showDescription(): boolean {
-  return ![AuthenticationCardState.Active, AuthenticationCardState.Current, AuthenticationCardState.Unavailable].includes(props.state);
-}
-
-const config = computed(() => methodConfig[props.authMethod]);
 </script>
 
 <style scoped lang="scss">
