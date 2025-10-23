@@ -1374,6 +1374,10 @@ export interface ClientEventIncompatibleServer {
     api_version: string
     supported_api_version: Array<string>
 }
+export interface ClientEventInvalidCertificate {
+    tag: "InvalidCertificate"
+    detail: string
+}
 export interface ClientEventInvitationAlreadyUsedOrDeleted {
     tag: "InvitationAlreadyUsedOrDeleted"
 }
@@ -1471,6 +1475,7 @@ export type ClientEvent =
   | ClientEventGreetingAttemptJoined
   | ClientEventGreetingAttemptReady
   | ClientEventIncompatibleServer
+  | ClientEventInvalidCertificate
   | ClientEventInvitationAlreadyUsedOrDeleted
   | ClientEventInvitationChanged
   | ClientEventMustAcceptTos

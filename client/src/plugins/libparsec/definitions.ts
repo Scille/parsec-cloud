@@ -1538,6 +1538,7 @@ export enum ClientEventTag {
     GreetingAttemptJoined = 'ClientEventGreetingAttemptJoined',
     GreetingAttemptReady = 'ClientEventGreetingAttemptReady',
     IncompatibleServer = 'ClientEventIncompatibleServer',
+    InvalidCertificate = 'ClientEventInvalidCertificate',
     InvitationAlreadyUsedOrDeleted = 'ClientEventInvitationAlreadyUsedOrDeleted',
     InvitationChanged = 'ClientEventInvitationChanged',
     MustAcceptTos = 'ClientEventMustAcceptTos',
@@ -1598,6 +1599,10 @@ export interface ClientEventIncompatibleServer {
     tag: ClientEventTag.IncompatibleServer
     apiVersion: ApiVersion
     supportedApiVersion: Array<ApiVersion>
+}
+export interface ClientEventInvalidCertificate {
+    tag: ClientEventTag.InvalidCertificate
+    detail: string
 }
 export interface ClientEventInvitationAlreadyUsedOrDeleted {
     tag: ClientEventTag.InvitationAlreadyUsedOrDeleted
@@ -1696,6 +1701,7 @@ export type ClientEvent =
   | ClientEventGreetingAttemptJoined
   | ClientEventGreetingAttemptReady
   | ClientEventIncompatibleServer
+  | ClientEventInvalidCertificate
   | ClientEventInvitationAlreadyUsedOrDeleted
   | ClientEventInvitationChanged
   | ClientEventMustAcceptTos
