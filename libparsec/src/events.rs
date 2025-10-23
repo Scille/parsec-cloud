@@ -109,12 +109,11 @@ pub enum ClientEvent {
         ballpark_client_early_offset: Float,
         ballpark_client_late_offset: Float,
     },
+    InvalidCertificate {
+        detail: String,
+    },
     // TODO
     // InvalidKeysBundle {
-    //     detail: String,
-    // },
-    // TODO
-    // InvalidCertificate {
     //     detail: String,
     // },
     // TODO
@@ -171,8 +170,8 @@ pub(crate) struct OnEventCallbackPlugged {
         EventBusConnectionLifetime<libparsec_client::EventServerInvalidResponseContent>,
     _too_much_drift_with_server_clock:
         EventBusConnectionLifetime<libparsec_client::EventTooMuchDriftWithServerClock>,
+    _invalid_certificate: EventBusConnectionLifetime<libparsec_client::EventInvalidCertificate>,
     // _invalid_keys_bundle: EventBusConnectionLifetime<libparsec_client::EventInvalidKeysBundle>,
-    // _invalid_certificate: EventBusConnectionLifetime<libparsec_client::EventInvalidCertificate>,
     // _invalid_manifest: EventBusConnectionLifetime<libparsec_client::EventInvalidManifest>,
 }
 
@@ -476,18 +475,22 @@ impl OnEventCallbackPlugged {
             )
         };
 
+        let invalid_certificate = {
+            let on_event_callback = on_event_callback.clone();
+            event_bus.connect(move |e: &libparsec_client::EventInvalidCertificate| {
+                (on_event_callback)(
+                    handle,
+                    ClientEvent::InvalidCertificate {
+                        detail: e.0.to_string(),
+                    },
+                );
+            })
+        };
+
         // let invalid_keys_bundle = {
         //     let on_event_callback = on_event_callback.clone();
         //     event_bus.connect(move |e: &libparsec_client::EventInvalidKeysBundle| {
         //         (on_event_callback)(ClientEvent::InvalidKeysBundle);
-        //     })
-        // };
-        // let invalid_certificate = {
-        //     let on_event_callback = on_event_callback.clone();
-        //     event_bus.connect(move |e: &libparsec_client::EventInvalidCertificate| {
-        //         (on_event_callback)(ClientEvent::InvalidCertificate {
-        //             detail: e.0.to_string(),
-        //         });
         //     })
         // };
         // let invalid_manifest = {
@@ -527,8 +530,8 @@ impl OnEventCallbackPlugged {
             _client_error_response: client_error_response,
             _server_invalid_response_status: server_invalid_response_status,
             _server_invalid_response_content: server_invalid_response_content,
+            _invalid_certificate: invalid_certificate,
             // _invalid_keys_bundle: invalid_keys_bundle,
-            // _invalid_certificate: invalid_certificate,
             // _invalid_manifest: invalid_manifest,
         }
     }
