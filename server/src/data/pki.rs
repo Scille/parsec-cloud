@@ -3,18 +3,16 @@
 use pyo3::{
     exceptions::PyValueError,
     pyclass, pymethods,
-    types::{IntoPyDict, PyAnyMethods, PyBytes, PyDict, PyType},
-    Bound, PyAny, PyObject, PyResult, Python,
+    types::{IntoPyDict, PyBytes, PyDict, PyType},
+    Bound, PyObject, PyResult, Python,
 };
-use std::{collections::HashMap, path::Path};
+use std::collections::HashMap;
 
 use crate::{
-    addrs::ParsecPkiEnrollmentAddr,
     binding_utils::BytesWrapper,
     crypto::{PublicKey, VerifyKey},
     enumerate::UserProfile,
-    ids::{DeviceID, DeviceLabel, EnrollmentID, HumanHandle, UserID},
-    time::DateTime,
+    ids::{DeviceID, DeviceLabel, HumanHandle, UserID},
 };
 
 #[pyclass]
@@ -245,171 +243,5 @@ impl X509Certificate {
     #[getter]
     fn certificate_id(&self) -> Option<&String> {
         self.0.certificate_id.as_ref()
-    }
-}
-
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct LocalPendingEnrollment(pub libparsec_types::LocalPendingEnrollment);
-
-crate::binding_utils::gen_proto!(LocalPendingEnrollment, __repr__);
-crate::binding_utils::gen_proto!(LocalPendingEnrollment, __copy__);
-crate::binding_utils::gen_proto!(LocalPendingEnrollment, __deepcopy__);
-crate::binding_utils::gen_proto!(LocalPendingEnrollment, __richcmp__, eq);
-
-#[pymethods]
-impl LocalPendingEnrollment {
-    #[new]
-    fn new(
-        x509_certificate: X509Certificate,
-        addr: ParsecPkiEnrollmentAddr,
-        submitted_on: DateTime,
-        enrollment_id: EnrollmentID,
-        submit_payload: PkiEnrollmentSubmitPayload,
-        encrypted_key: BytesWrapper,
-        ciphertext: BytesWrapper,
-    ) -> Self {
-        crate::binding_utils::unwrap_bytes!(encrypted_key, ciphertext);
-        Self(libparsec_types::LocalPendingEnrollment {
-            x509_certificate: x509_certificate.0,
-            addr: addr.0,
-            submitted_on: submitted_on.0,
-            enrollment_id: enrollment_id.0,
-            submit_payload: submit_payload.0,
-            encrypted_key,
-            ciphertext,
-        })
-    }
-
-    #[classmethod]
-    fn load(_cls: Bound<'_, PyType>, raw: &[u8]) -> PyResult<Self> {
-        libparsec_types::LocalPendingEnrollment::load(raw)
-            .map_err(|e| PyValueError::new_err(e.to_string()))
-            .map(Self)
-    }
-
-    fn dump<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new(py, &self.0.dump())
-    }
-
-    fn save(&self, config_dir: Bound<'_, PyAny>) -> PyResult<String> {
-        let config_dir_pyobj = config_dir
-            .call_method0("__str__")
-            .expect("config_dir should be a Path");
-        let config_dir = config_dir_pyobj
-            .extract::<&str>()
-            .map(Path::new)
-            .expect("Unreachable");
-        let path = self
-            .0
-            .save(config_dir)
-            .map_err(|e| PyValueError::new_err(e.to_string()))?;
-        let path_str = path
-            .to_str()
-            .ok_or(PyValueError::new_err("Non UTF8 path"))?;
-        Ok(path_str.to_string())
-    }
-
-    #[classmethod]
-    fn load_from_path(_cls: Bound<'_, PyType>, path: Bound<'_, PyAny>) -> PyResult<Self> {
-        let path_pyobj = path.call_method0("__str__").expect("path should be a Path");
-        let path = path_pyobj
-            .extract::<&str>()
-            .map(Path::new)
-            .expect("Unreachable");
-        libparsec_types::LocalPendingEnrollment::load_from_path(path)
-            .map_err(|e| PyValueError::new_err(e.to_string()))
-            .map(Self)
-    }
-
-    #[classmethod]
-    fn load_from_enrollment_id(
-        _cls: Bound<'_, PyType>,
-        config_dir: Bound<'_, PyAny>,
-        enrollment_id: EnrollmentID,
-    ) -> PyResult<Self> {
-        let config_dir_pyobj = config_dir
-            .call_method0("__str__")
-            .expect("config_dir should be a Path");
-        let config_dir = config_dir_pyobj
-            .extract::<&str>()
-            .map(Path::new)
-            .expect("Unreachable");
-        libparsec_types::LocalPendingEnrollment::load_from_enrollment_id(
-            config_dir,
-            enrollment_id.0,
-        )
-        .map_err(|e| PyValueError::new_err(e.to_string()))
-        .map(Self)
-    }
-
-    #[classmethod]
-    fn remove_from_enrollment_id(
-        _cls: Bound<'_, PyType>,
-        config_dir: Bound<'_, PyAny>,
-        enrollment_id: EnrollmentID,
-    ) -> PyResult<()> {
-        let config_dir_pyobj = config_dir
-            .call_method0("__str__")
-            .expect("config_dir should be a Path");
-        let config_dir = config_dir_pyobj
-            .extract::<&str>()
-            .map(Path::new)
-            .expect("Unreachable");
-        libparsec_types::LocalPendingEnrollment::remove_from_enrollment_id(
-            config_dir,
-            enrollment_id.0,
-        )
-        .map_err(|e| PyValueError::new_err(e.to_string()))
-    }
-
-    #[classmethod]
-    fn list(_cls: Bound<'_, PyType>, config_dir: Bound<'_, PyAny>) -> Vec<Self> {
-        let config_dir_pyobj = config_dir
-            .call_method0("__str__")
-            .expect("config_dir should be a Path");
-        let config_dir = config_dir_pyobj
-            .extract::<&str>()
-            .map(Path::new)
-            .expect("Unreachable");
-        libparsec_types::LocalPendingEnrollment::list(config_dir)
-            .into_iter()
-            .map(Self)
-            .collect()
-    }
-
-    #[getter]
-    fn x509_certificate(&self) -> X509Certificate {
-        X509Certificate(self.0.x509_certificate.clone())
-    }
-
-    #[getter]
-    fn addr(&self) -> ParsecPkiEnrollmentAddr {
-        ParsecPkiEnrollmentAddr(self.0.addr.clone())
-    }
-
-    #[getter]
-    fn submitted_on(&self) -> DateTime {
-        DateTime(self.0.submitted_on)
-    }
-
-    #[getter]
-    fn enrollment_id(&self) -> EnrollmentID {
-        EnrollmentID(self.0.enrollment_id)
-    }
-
-    #[getter]
-    fn submit_payload(&self) -> PkiEnrollmentSubmitPayload {
-        PkiEnrollmentSubmitPayload(self.0.submit_payload.clone())
-    }
-
-    #[getter]
-    fn encrypted_key<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new(py, &self.0.encrypted_key)
-    }
-
-    #[getter]
-    fn ciphertext<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new(py, &self.0.ciphertext)
     }
 }
