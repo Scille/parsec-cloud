@@ -98,7 +98,7 @@ msTest('Go through saas org creation process', async ({ home }) => {
   await expect(authNext).toBeVisible();
   await expect(authNext).toHaveDisabledAttribute();
 
-  const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item');
+  const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
   await expect(authRadio).toHaveCount(2);
   await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
   await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
@@ -242,7 +242,7 @@ for (const testInfo of [
 
     const authContainer = modal.locator('.authentication-page');
 
-    const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item');
+    const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
     await expect(authRadio).toHaveCount(2);
     await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
     await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
@@ -311,7 +311,7 @@ msTest('Go through saas org creation process from bootstrap link', async ({ cont
   await expect(authNext).toBeVisible();
   await expect(authNext).toHaveDisabledAttribute();
 
-  const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item');
+  const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
   await expect(authRadio).toHaveCount(2);
   await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
   await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
@@ -460,7 +460,7 @@ msTest('Edit from summary', async ({ home }) => {
   const authNext = modal.locator('.authentication-page-footer').locator('ion-button').nth(1);
 
   await expect(authContainer).toBeVisible();
-  const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item');
+  const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
   await expect(authRadio).toHaveCount(2);
   await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
   await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
@@ -631,7 +631,7 @@ for (const displaySize of ['small', 'large']) {
     await expect(authNext).toBeVisible();
     await expect(authNext).toHaveDisabledAttribute();
 
-    const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item');
+    const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
     await expect(authRadio).toHaveCount(2);
     await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
     await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
@@ -769,7 +769,7 @@ for (const displaySize of ['small', 'large']) {
       await expect(authNext).toBeVisible();
       await expect(authNext).toHaveDisabledAttribute();
 
-      const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item');
+      const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
       await expect(authRadio).toHaveCount(2);
       await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
       await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
@@ -868,7 +868,7 @@ for (const displaySize of ['small', 'large']) {
       await expect(authNext).toBeVisible();
       await expect(authNext).toHaveDisabledAttribute();
 
-      const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item');
+      const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
       await expect(authRadio).toHaveCount(2);
       await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
       await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
