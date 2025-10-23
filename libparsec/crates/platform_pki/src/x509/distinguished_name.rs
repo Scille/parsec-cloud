@@ -19,7 +19,7 @@ pub enum DistinguishedNameValue {
     EmailAddress(String),
 }
 
-pub(super) fn extract_dn_list_from_rnd_seq(value: RdnSequence) -> Vec<DistinguishedNameValue> {
+pub fn extract_dn_list_from_rnd_seq(value: RdnSequence) -> Vec<DistinguishedNameValue> {
     value
         .0
         .into_iter()

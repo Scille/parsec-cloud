@@ -3,7 +3,7 @@
 mod distinguished_name;
 mod extensions;
 
-use distinguished_name::extract_dn_list_from_rnd_seq;
+pub use distinguished_name::extract_dn_list_from_rnd_seq;
 use x509_cert::{
     der::{Decode, Error as DERError, SliceReader},
     Version,

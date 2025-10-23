@@ -40,8 +40,13 @@ echo "Creating root certificate 'cert:\CurrentUser\CA\test_ca'"
 $CAParam = @{
     Subject = 'CN=Parsec Test CA'
     FriendlyName = 'CA Parsec Test'
+    KeyFriendlyName = 'CA Parsec Test key'
+    KeyUsageProperty = @(
+        [Microsoft.CertificateServices.Commands.KeyUsageProperty]::Sign
+    )
     KeyUsage = @(
         [Microsoft.CertificateServices.Commands.KeyUsage]::CertSign,
+        [Microsoft.CertificateServices.Commands.KeyUsage]::CRLSign,
         [Microsoft.CertificateServices.Commands.KeyUsage]::DigitalSignature
     )
     KeyAlgorithm = 'RSA'
@@ -62,7 +67,7 @@ $tempcert = Export-Certificate -Cert $test_ca -FilePath test_ca.crt
 
 # This is required to have our newly generated certificate marked as trusted.
 echo "Add Test CA to 'Root' cert. store"
-certutil.exe -addstore Root $tempcert
+certutil.exe -v -user -addstore Root $tempcert
 
 # Remove temporary file
 Remove-Item $tempcert
