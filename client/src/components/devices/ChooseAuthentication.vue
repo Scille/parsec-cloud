@@ -5,7 +5,7 @@
     class="choose-auth-page"
     :class="isWeb() ? 'choose-auth-page--web' : ''"
   >
-    <ion-list
+    <div
       class="choose-auth-list"
       v-if="authentication === undefined"
     >
@@ -26,7 +26,6 @@
           label-placement="end"
           justify="start"
           :value="DeviceSaveStrategyTag.Keyring"
-          @click="$event.preventDefault()"
           :disabled="!keyringAvailable || activeAuth === AvailableDeviceTypeTag.Keyring"
         >
           <authentication-card
@@ -49,24 +48,22 @@
         </ion-radio>
 
         <ion-radio
-          v-if="smartcardAvailable"
+          v-show="smartcardAvailable"
           class="item-radio radio-list-item"
           label-placement="end"
           justify="start"
           :value="DeviceSaveStrategyTag.Smartcard"
-          @click="$event.preventDefault()"
-          :disabled="!smartcardAvailable || activeAuth === AvailableDeviceTypeTag.Smartcard"
+          :disabled="activeAuth === AvailableDeviceTypeTag.Smartcard"
         >
           <authentication-card
             @click="onMethodSelected(DeviceSaveStrategyTag.Smartcard)"
             :state="getAuthCardState(AvailableDeviceTypeTag.Smartcard)"
             :auth-method="DeviceSaveStrategyTag.Smartcard"
-            :disabled="!smartcardAvailable"
           />
         </ion-radio>
 
         <ion-radio
-          v-if="isOpenBaoAvailable()"
+          v-show="isOpenBaoAvailable()"
           class="item-radio radio-list-item"
           label-placement="end"
           :value="CustomDeviceSaveStrategyTag.SSO"
@@ -79,7 +76,7 @@
           />
         </ion-radio>
       </ion-radio-group>
-    </ion-list>
+    </div>
 
     <div
       class="choose-auth-choice"
@@ -155,7 +152,7 @@ import {
   isSmartcardAvailable,
   isWeb,
 } from '@/parsec';
-import { IonList, IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
+import { IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
 import { onMounted, ref, useTemplateRef } from 'vue';
 import authenticationCard from '@/components/profile/AuthenticationCard.vue';
 import { AuthenticationCardState } from '@/components/profile/types';
