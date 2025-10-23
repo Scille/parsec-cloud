@@ -5,6 +5,7 @@
 mod list_frozen_users;
 mod organization_info;
 mod pki_enrollment_list;
+mod pki_enrollment_reject;
 mod recovery_device;
 mod shamir_recovery_delete;
 mod shamir_recovery_list;
@@ -46,6 +47,7 @@ pub use self::{
 };
 use crate::{
     certif::{CertifPollServerError, CertificateOps},
+    client::pki_enrollment_reject::ClientPkiEnrollmentRejectError,
     config::{ClientConfig, ServerConfig},
     event_bus::EventBus,
     monitors::{
@@ -683,6 +685,12 @@ impl Client {
         &self,
     ) -> Result<Vec<PkiEnrollmentListItem>, PkiEnrollmentListError> {
         pki_enrollment_list::list_enrollments(&self.cmds).await
+    }
+    pub async fn pki_enrollment_reject(
+        &self,
+        enrollment_id: EnrollmentID,
+    ) -> Result<(), ClientPkiEnrollmentRejectError> {
+        pki_enrollment_reject::reject(&self.cmds, enrollment_id).await
     }
 }
 
