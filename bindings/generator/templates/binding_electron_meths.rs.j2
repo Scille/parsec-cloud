@@ -650,7 +650,7 @@ fn {{ struct_rs_to_js_function_name(struct) }}<'a>(
 
 {%- macro variant_js_to_rs_function_name(variant) %}variant_{{ variant.name | pascal2snake }}_js_to_rs{% endmacro -%}
 {%- macro variant_rs_to_js_function_name(variant) %}variant_{{ variant.name | pascal2snake }}_rs_to_js{% endmacro -%}
-
+{%- macro variant_tag_name(variant, value) %}{{ variant.name }}{{ value.name }}{% endmacro %}
 
 {%- macro render_variant_js_to_rs(variant) %}
 #[allow(dead_code)]
@@ -661,7 +661,7 @@ fn {{ variant_js_to_rs_function_name(variant) }}<'a>(
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
 {% for value in variant.values %}
-        "{{ variant.name }}{{ value.name }}" => {
+        "{{ variant_tag_name(variant, value) }}" => {
 {% if value.is_struct %}
 {% for attr_name, attr_type in value.struct.attributes.items() %}
             let {{ attr_name }} = {
@@ -710,7 +710,7 @@ fn {{ variant_rs_to_js_function_name(variant) }}<'a>(
 {% for value in variant.values %}
 {% if value.is_struct %}
         libparsec::{{ variant.name }}::{{ value.name }}{ {{ value.struct.list_attributes() }} .. } => {
-            let js_tag = JsString::try_new(cx, "{{ variant.name }}{{ value.name }}").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "{{ variant_tag_name(variant, value) }}").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
 {% for attr_name, attr_type in value.struct.attributes.items() %}
         let js_{{ attr_name }} = {{ render_rs_to_js(attr_name, attr_type, mut_cx_ref="cx") }};
@@ -719,7 +719,7 @@ fn {{ variant_rs_to_js_function_name(variant) }}<'a>(
         }
 {% elif value.is_tuple %}
         libparsec::{{ variant.name }}::{{ value.name }}( {% for _ in value.tuple %}x{{ loop.index0 }},{% endfor %} .. ) => {
-            let js_tag = JsString::try_new(cx, "{{ value.name }}").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "{{ variant_tag_name(variant, value) }}").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
 {% for attr_type in value.tuple %}
             let js_x{{ loop.index0 }} = {{ render_rs_to_js("x%s" % loop.index0, attr_type, mut_cx_ref="cx") }};
@@ -728,7 +728,7 @@ fn {{ variant_rs_to_js_function_name(variant) }}<'a>(
         }
 {% else %}
         libparsec::{{ variant.name }}::{{ value.name }} => {
-            let js_tag = JsString::try_new(cx, "{{ value.name }}").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "{{ variant_tag_name(variant, value) }}").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
 {% endif %}

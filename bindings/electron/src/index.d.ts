@@ -493,11 +493,11 @@ export interface X509Pkcs11URI {
 
 // AccountAuthMethodStrategy
 export interface AccountAuthMethodStrategyMasterSecret {
-    tag: "MasterSecret"
+    tag: "AccountAuthMethodStrategyMasterSecret"
     master_secret: Uint8Array
 }
 export interface AccountAuthMethodStrategyPassword {
-    tag: "Password"
+    tag: "AccountAuthMethodStrategyPassword"
     password: string
 }
 export type AccountAuthMethodStrategy =
@@ -507,15 +507,15 @@ export type AccountAuthMethodStrategy =
 
 // AccountCreateAuthMethodError
 export interface AccountCreateAuthMethodErrorBadVaultKeyAccess {
-    tag: "BadVaultKeyAccess"
+    tag: "AccountCreateAuthMethodErrorBadVaultKeyAccess"
     error: string
 }
 export interface AccountCreateAuthMethodErrorInternal {
-    tag: "Internal"
+    tag: "AccountCreateAuthMethodErrorInternal"
     error: string
 }
 export interface AccountCreateAuthMethodErrorOffline {
-    tag: "Offline"
+    tag: "AccountCreateAuthMethodErrorOffline"
     error: string
 }
 export type AccountCreateAuthMethodError =
@@ -526,19 +526,19 @@ export type AccountCreateAuthMethodError =
 
 // AccountCreateError
 export interface AccountCreateErrorInternal {
-    tag: "Internal"
+    tag: "AccountCreateErrorInternal"
     error: string
 }
 export interface AccountCreateErrorInvalidValidationCode {
-    tag: "InvalidValidationCode"
+    tag: "AccountCreateErrorInvalidValidationCode"
     error: string
 }
 export interface AccountCreateErrorOffline {
-    tag: "Offline"
+    tag: "AccountCreateErrorOffline"
     error: string
 }
 export interface AccountCreateErrorSendValidationEmailRequired {
-    tag: "SendValidationEmailRequired"
+    tag: "AccountCreateErrorSendValidationEmailRequired"
     error: string
 }
 export type AccountCreateError =
@@ -550,39 +550,39 @@ export type AccountCreateError =
 
 // AccountCreateRegistrationDeviceError
 export interface AccountCreateRegistrationDeviceErrorBadVaultKeyAccess {
-    tag: "BadVaultKeyAccess"
+    tag: "AccountCreateRegistrationDeviceErrorBadVaultKeyAccess"
     error: string
 }
 export interface AccountCreateRegistrationDeviceErrorCannotObtainOrganizationVaultStrategy {
-    tag: "CannotObtainOrganizationVaultStrategy"
+    tag: "AccountCreateRegistrationDeviceErrorCannotObtainOrganizationVaultStrategy"
     error: string
 }
 export interface AccountCreateRegistrationDeviceErrorInternal {
-    tag: "Internal"
+    tag: "AccountCreateRegistrationDeviceErrorInternal"
     error: string
 }
 export interface AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed {
-    tag: "LoadDeviceDecryptionFailed"
+    tag: "AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed"
     error: string
 }
 export interface AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData {
-    tag: "LoadDeviceInvalidData"
+    tag: "AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData"
     error: string
 }
 export interface AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath {
-    tag: "LoadDeviceInvalidPath"
+    tag: "AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath"
     error: string
 }
 export interface AccountCreateRegistrationDeviceErrorNotAllowedByOrganizationVaultStrategy {
-    tag: "NotAllowedByOrganizationVaultStrategy"
+    tag: "AccountCreateRegistrationDeviceErrorNotAllowedByOrganizationVaultStrategy"
     error: string
 }
 export interface AccountCreateRegistrationDeviceErrorOffline {
-    tag: "Offline"
+    tag: "AccountCreateRegistrationDeviceErrorOffline"
     error: string
 }
 export interface AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark {
-    tag: "TimestampOutOfBallpark"
+    tag: "AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark"
     error: string
 }
 export type AccountCreateRegistrationDeviceError =
@@ -599,24 +599,24 @@ export type AccountCreateRegistrationDeviceError =
 
 // AccountCreateSendValidationEmailError
 export interface AccountCreateSendValidationEmailErrorEmailRecipientRefused {
-    tag: "EmailRecipientRefused"
+    tag: "AccountCreateSendValidationEmailErrorEmailRecipientRefused"
     error: string
 }
 export interface AccountCreateSendValidationEmailErrorEmailSendingRateLimited {
-    tag: "EmailSendingRateLimited"
+    tag: "AccountCreateSendValidationEmailErrorEmailSendingRateLimited"
     error: string
     wait_until: number
 }
 export interface AccountCreateSendValidationEmailErrorEmailServerUnavailable {
-    tag: "EmailServerUnavailable"
+    tag: "AccountCreateSendValidationEmailErrorEmailServerUnavailable"
     error: string
 }
 export interface AccountCreateSendValidationEmailErrorInternal {
-    tag: "Internal"
+    tag: "AccountCreateSendValidationEmailErrorInternal"
     error: string
 }
 export interface AccountCreateSendValidationEmailErrorOffline {
-    tag: "Offline"
+    tag: "AccountCreateSendValidationEmailErrorOffline"
     error: string
 }
 export type AccountCreateSendValidationEmailError =
@@ -629,19 +629,19 @@ export type AccountCreateSendValidationEmailError =
 
 // AccountDeleteProceedError
 export interface AccountDeleteProceedErrorInternal {
-    tag: "Internal"
+    tag: "AccountDeleteProceedErrorInternal"
     error: string
 }
 export interface AccountDeleteProceedErrorInvalidValidationCode {
-    tag: "InvalidValidationCode"
+    tag: "AccountDeleteProceedErrorInvalidValidationCode"
     error: string
 }
 export interface AccountDeleteProceedErrorOffline {
-    tag: "Offline"
+    tag: "AccountDeleteProceedErrorOffline"
     error: string
 }
 export interface AccountDeleteProceedErrorSendValidationEmailRequired {
-    tag: "SendValidationEmailRequired"
+    tag: "AccountDeleteProceedErrorSendValidationEmailRequired"
     error: string
 }
 export type AccountDeleteProceedError =
@@ -653,24 +653,24 @@ export type AccountDeleteProceedError =
 
 // AccountDeleteSendValidationEmailError
 export interface AccountDeleteSendValidationEmailErrorEmailRecipientRefused {
-    tag: "EmailRecipientRefused"
+    tag: "AccountDeleteSendValidationEmailErrorEmailRecipientRefused"
     error: string
 }
 export interface AccountDeleteSendValidationEmailErrorEmailSendingRateLimited {
-    tag: "EmailSendingRateLimited"
+    tag: "AccountDeleteSendValidationEmailErrorEmailSendingRateLimited"
     error: string
     wait_until: number
 }
 export interface AccountDeleteSendValidationEmailErrorEmailServerUnavailable {
-    tag: "EmailServerUnavailable"
+    tag: "AccountDeleteSendValidationEmailErrorEmailServerUnavailable"
     error: string
 }
 export interface AccountDeleteSendValidationEmailErrorInternal {
-    tag: "Internal"
+    tag: "AccountDeleteSendValidationEmailErrorInternal"
     error: string
 }
 export interface AccountDeleteSendValidationEmailErrorOffline {
-    tag: "Offline"
+    tag: "AccountDeleteSendValidationEmailErrorOffline"
     error: string
 }
 export type AccountDeleteSendValidationEmailError =
@@ -683,23 +683,23 @@ export type AccountDeleteSendValidationEmailError =
 
 // AccountDisableAuthMethodError
 export interface AccountDisableAuthMethodErrorAuthMethodAlreadyDisabled {
-    tag: "AuthMethodAlreadyDisabled"
+    tag: "AccountDisableAuthMethodErrorAuthMethodAlreadyDisabled"
     error: string
 }
 export interface AccountDisableAuthMethodErrorAuthMethodNotFound {
-    tag: "AuthMethodNotFound"
+    tag: "AccountDisableAuthMethodErrorAuthMethodNotFound"
     error: string
 }
 export interface AccountDisableAuthMethodErrorInternal {
-    tag: "Internal"
+    tag: "AccountDisableAuthMethodErrorInternal"
     error: string
 }
 export interface AccountDisableAuthMethodErrorOffline {
-    tag: "Offline"
+    tag: "AccountDisableAuthMethodErrorOffline"
     error: string
 }
 export interface AccountDisableAuthMethodErrorSelfDisableNotAllowed {
-    tag: "SelfDisableNotAllowed"
+    tag: "AccountDisableAuthMethodErrorSelfDisableNotAllowed"
     error: string
 }
 export type AccountDisableAuthMethodError =
@@ -712,23 +712,23 @@ export type AccountDisableAuthMethodError =
 
 // AccountFetchOpaqueKeyFromVaultError
 export interface AccountFetchOpaqueKeyFromVaultErrorBadVaultKeyAccess {
-    tag: "BadVaultKeyAccess"
+    tag: "AccountFetchOpaqueKeyFromVaultErrorBadVaultKeyAccess"
     error: string
 }
 export interface AccountFetchOpaqueKeyFromVaultErrorCorruptedOpaqueKey {
-    tag: "CorruptedOpaqueKey"
+    tag: "AccountFetchOpaqueKeyFromVaultErrorCorruptedOpaqueKey"
     error: string
 }
 export interface AccountFetchOpaqueKeyFromVaultErrorInternal {
-    tag: "Internal"
+    tag: "AccountFetchOpaqueKeyFromVaultErrorInternal"
     error: string
 }
 export interface AccountFetchOpaqueKeyFromVaultErrorOffline {
-    tag: "Offline"
+    tag: "AccountFetchOpaqueKeyFromVaultErrorOffline"
     error: string
 }
 export interface AccountFetchOpaqueKeyFromVaultErrorUnknownOpaqueKey {
-    tag: "UnknownOpaqueKey"
+    tag: "AccountFetchOpaqueKeyFromVaultErrorUnknownOpaqueKey"
     error: string
 }
 export type AccountFetchOpaqueKeyFromVaultError =
@@ -741,7 +741,7 @@ export type AccountFetchOpaqueKeyFromVaultError =
 
 // AccountInfoError
 export interface AccountInfoErrorInternal {
-    tag: "Internal"
+    tag: "AccountInfoErrorInternal"
     error: string
 }
 export type AccountInfoError =
@@ -750,11 +750,11 @@ export type AccountInfoError =
 
 // AccountListAuthMethodsError
 export interface AccountListAuthMethodsErrorInternal {
-    tag: "Internal"
+    tag: "AccountListAuthMethodsErrorInternal"
     error: string
 }
 export interface AccountListAuthMethodsErrorOffline {
-    tag: "Offline"
+    tag: "AccountListAuthMethodsErrorOffline"
     error: string
 }
 export type AccountListAuthMethodsError =
@@ -764,11 +764,11 @@ export type AccountListAuthMethodsError =
 
 // AccountListInvitationsError
 export interface AccountListInvitationsErrorInternal {
-    tag: "Internal"
+    tag: "AccountListInvitationsErrorInternal"
     error: string
 }
 export interface AccountListInvitationsErrorOffline {
-    tag: "Offline"
+    tag: "AccountListInvitationsErrorOffline"
     error: string
 }
 export type AccountListInvitationsError =
@@ -778,11 +778,11 @@ export type AccountListInvitationsError =
 
 // AccountListOrganizationsError
 export interface AccountListOrganizationsErrorInternal {
-    tag: "Internal"
+    tag: "AccountListOrganizationsErrorInternal"
     error: string
 }
 export interface AccountListOrganizationsErrorOffline {
-    tag: "Offline"
+    tag: "AccountListOrganizationsErrorOffline"
     error: string
 }
 export type AccountListOrganizationsError =
@@ -792,15 +792,15 @@ export type AccountListOrganizationsError =
 
 // AccountListRegistrationDevicesError
 export interface AccountListRegistrationDevicesErrorBadVaultKeyAccess {
-    tag: "BadVaultKeyAccess"
+    tag: "AccountListRegistrationDevicesErrorBadVaultKeyAccess"
     error: string
 }
 export interface AccountListRegistrationDevicesErrorInternal {
-    tag: "Internal"
+    tag: "AccountListRegistrationDevicesErrorInternal"
     error: string
 }
 export interface AccountListRegistrationDevicesErrorOffline {
-    tag: "Offline"
+    tag: "AccountListRegistrationDevicesErrorOffline"
     error: string
 }
 export type AccountListRegistrationDevicesError =
@@ -811,15 +811,15 @@ export type AccountListRegistrationDevicesError =
 
 // AccountLoginError
 export interface AccountLoginErrorBadPasswordAlgorithm {
-    tag: "BadPasswordAlgorithm"
+    tag: "AccountLoginErrorBadPasswordAlgorithm"
     error: string
 }
 export interface AccountLoginErrorInternal {
-    tag: "Internal"
+    tag: "AccountLoginErrorInternal"
     error: string
 }
 export interface AccountLoginErrorOffline {
-    tag: "Offline"
+    tag: "AccountLoginErrorOffline"
     error: string
 }
 export type AccountLoginError =
@@ -830,11 +830,11 @@ export type AccountLoginError =
 
 // AccountLoginStrategy
 export interface AccountLoginStrategyMasterSecret {
-    tag: "MasterSecret"
+    tag: "AccountLoginStrategyMasterSecret"
     master_secret: Uint8Array
 }
 export interface AccountLoginStrategyPassword {
-    tag: "Password"
+    tag: "AccountLoginStrategyPassword"
     email: string
     password: string
 }
@@ -845,7 +845,7 @@ export type AccountLoginStrategy =
 
 // AccountLogoutError
 export interface AccountLogoutErrorInternal {
-    tag: "Internal"
+    tag: "AccountLogoutErrorInternal"
     error: string
 }
 export type AccountLogoutError =
@@ -854,19 +854,19 @@ export type AccountLogoutError =
 
 // AccountRecoverProceedError
 export interface AccountRecoverProceedErrorInternal {
-    tag: "Internal"
+    tag: "AccountRecoverProceedErrorInternal"
     error: string
 }
 export interface AccountRecoverProceedErrorInvalidValidationCode {
-    tag: "InvalidValidationCode"
+    tag: "AccountRecoverProceedErrorInvalidValidationCode"
     error: string
 }
 export interface AccountRecoverProceedErrorOffline {
-    tag: "Offline"
+    tag: "AccountRecoverProceedErrorOffline"
     error: string
 }
 export interface AccountRecoverProceedErrorSendValidationEmailRequired {
-    tag: "SendValidationEmailRequired"
+    tag: "AccountRecoverProceedErrorSendValidationEmailRequired"
     error: string
 }
 export type AccountRecoverProceedError =
@@ -878,24 +878,24 @@ export type AccountRecoverProceedError =
 
 // AccountRecoverSendValidationEmailError
 export interface AccountRecoverSendValidationEmailErrorEmailRecipientRefused {
-    tag: "EmailRecipientRefused"
+    tag: "AccountRecoverSendValidationEmailErrorEmailRecipientRefused"
     error: string
 }
 export interface AccountRecoverSendValidationEmailErrorEmailSendingRateLimited {
-    tag: "EmailSendingRateLimited"
+    tag: "AccountRecoverSendValidationEmailErrorEmailSendingRateLimited"
     error: string
     wait_until: number
 }
 export interface AccountRecoverSendValidationEmailErrorEmailServerUnavailable {
-    tag: "EmailServerUnavailable"
+    tag: "AccountRecoverSendValidationEmailErrorEmailServerUnavailable"
     error: string
 }
 export interface AccountRecoverSendValidationEmailErrorInternal {
-    tag: "Internal"
+    tag: "AccountRecoverSendValidationEmailErrorInternal"
     error: string
 }
 export interface AccountRecoverSendValidationEmailErrorOffline {
-    tag: "Offline"
+    tag: "AccountRecoverSendValidationEmailErrorOffline"
     error: string
 }
 export type AccountRecoverSendValidationEmailError =
@@ -908,35 +908,35 @@ export type AccountRecoverSendValidationEmailError =
 
 // AccountRegisterNewDeviceError
 export interface AccountRegisterNewDeviceErrorBadVaultKeyAccess {
-    tag: "BadVaultKeyAccess"
+    tag: "AccountRegisterNewDeviceErrorBadVaultKeyAccess"
     error: string
 }
 export interface AccountRegisterNewDeviceErrorCorruptedRegistrationDevice {
-    tag: "CorruptedRegistrationDevice"
+    tag: "AccountRegisterNewDeviceErrorCorruptedRegistrationDevice"
     error: string
 }
 export interface AccountRegisterNewDeviceErrorInternal {
-    tag: "Internal"
+    tag: "AccountRegisterNewDeviceErrorInternal"
     error: string
 }
 export interface AccountRegisterNewDeviceErrorInvalidPath {
-    tag: "InvalidPath"
+    tag: "AccountRegisterNewDeviceErrorInvalidPath"
     error: string
 }
 export interface AccountRegisterNewDeviceErrorOffline {
-    tag: "Offline"
+    tag: "AccountRegisterNewDeviceErrorOffline"
     error: string
 }
 export interface AccountRegisterNewDeviceErrorStorageNotAvailable {
-    tag: "StorageNotAvailable"
+    tag: "AccountRegisterNewDeviceErrorStorageNotAvailable"
     error: string
 }
 export interface AccountRegisterNewDeviceErrorTimestampOutOfBallpark {
-    tag: "TimestampOutOfBallpark"
+    tag: "AccountRegisterNewDeviceErrorTimestampOutOfBallpark"
     error: string
 }
 export interface AccountRegisterNewDeviceErrorUnknownRegistrationDevice {
-    tag: "UnknownRegistrationDevice"
+    tag: "AccountRegisterNewDeviceErrorUnknownRegistrationDevice"
     error: string
 }
 export type AccountRegisterNewDeviceError =
@@ -952,23 +952,23 @@ export type AccountRegisterNewDeviceError =
 
 // AccountUploadOpaqueKeyInVaultError
 export interface AccountUploadOpaqueKeyInVaultErrorBadVaultKeyAccess {
-    tag: "BadVaultKeyAccess"
+    tag: "AccountUploadOpaqueKeyInVaultErrorBadVaultKeyAccess"
     error: string
 }
 export interface AccountUploadOpaqueKeyInVaultErrorCannotObtainOrganizationVaultStrategy {
-    tag: "CannotObtainOrganizationVaultStrategy"
+    tag: "AccountUploadOpaqueKeyInVaultErrorCannotObtainOrganizationVaultStrategy"
     error: string
 }
 export interface AccountUploadOpaqueKeyInVaultErrorInternal {
-    tag: "Internal"
+    tag: "AccountUploadOpaqueKeyInVaultErrorInternal"
     error: string
 }
 export interface AccountUploadOpaqueKeyInVaultErrorNotAllowedByOrganizationVaultStrategy {
-    tag: "NotAllowedByOrganizationVaultStrategy"
+    tag: "AccountUploadOpaqueKeyInVaultErrorNotAllowedByOrganizationVaultStrategy"
     error: string
 }
 export interface AccountUploadOpaqueKeyInVaultErrorOffline {
-    tag: "Offline"
+    tag: "AccountUploadOpaqueKeyInVaultErrorOffline"
     error: string
 }
 export type AccountUploadOpaqueKeyInVaultError =
@@ -981,11 +981,11 @@ export type AccountUploadOpaqueKeyInVaultError =
 
 // ActiveUsersLimit
 export interface ActiveUsersLimitLimitedTo {
-    tag: "LimitedTo"
+    tag: "ActiveUsersLimitLimitedTo"
     x1: number
 }
 export interface ActiveUsersLimitNoLimit {
-    tag: "NoLimit"
+    tag: "ActiveUsersLimitNoLimit"
 }
 export type ActiveUsersLimit =
   | ActiveUsersLimitLimitedTo
@@ -994,13 +994,13 @@ export type ActiveUsersLimit =
 
 // AnyClaimRetrievedInfo
 export interface AnyClaimRetrievedInfoDevice {
-    tag: "Device"
+    tag: "AnyClaimRetrievedInfoDevice"
     handle: number
     greeter_user_id: string
     greeter_human_handle: HumanHandle
 }
 export interface AnyClaimRetrievedInfoShamirRecovery {
-    tag: "ShamirRecovery"
+    tag: "AnyClaimRetrievedInfoShamirRecovery"
     handle: number
     claimer_user_id: string
     claimer_human_handle: HumanHandle
@@ -1011,7 +1011,7 @@ export interface AnyClaimRetrievedInfoShamirRecovery {
     is_recoverable: boolean
 }
 export interface AnyClaimRetrievedInfoUser {
-    tag: "User"
+    tag: "AnyClaimRetrievedInfoUser"
     handle: number
     claimer_email: string
     created_by: InviteInfoInvitationCreatedBy
@@ -1026,11 +1026,11 @@ export type AnyClaimRetrievedInfo =
 
 // ArchiveDeviceError
 export interface ArchiveDeviceErrorInternal {
-    tag: "Internal"
+    tag: "ArchiveDeviceErrorInternal"
     error: string
 }
 export interface ArchiveDeviceErrorStorageNotAvailable {
-    tag: "StorageNotAvailable"
+    tag: "ArchiveDeviceErrorStorageNotAvailable"
     error: string
 }
 export type ArchiveDeviceError =
@@ -1040,20 +1040,20 @@ export type ArchiveDeviceError =
 
 // AvailableDeviceType
 export interface AvailableDeviceTypeAccountVault {
-    tag: "AccountVault"
+    tag: "AvailableDeviceTypeAccountVault"
     ciphertext_key_id: string
 }
 export interface AvailableDeviceTypeKeyring {
-    tag: "Keyring"
+    tag: "AvailableDeviceTypeKeyring"
 }
 export interface AvailableDeviceTypePassword {
-    tag: "Password"
+    tag: "AvailableDeviceTypePassword"
 }
 export interface AvailableDeviceTypeRecovery {
-    tag: "Recovery"
+    tag: "AvailableDeviceTypeRecovery"
 }
 export interface AvailableDeviceTypeSmartcard {
-    tag: "Smartcard"
+    tag: "AvailableDeviceTypeSmartcard"
 }
 export type AvailableDeviceType =
   | AvailableDeviceTypeAccountVault
@@ -1065,35 +1065,35 @@ export type AvailableDeviceType =
 
 // BootstrapOrganizationError
 export interface BootstrapOrganizationErrorAlreadyUsedToken {
-    tag: "AlreadyUsedToken"
+    tag: "BootstrapOrganizationErrorAlreadyUsedToken"
     error: string
 }
 export interface BootstrapOrganizationErrorInternal {
-    tag: "Internal"
+    tag: "BootstrapOrganizationErrorInternal"
     error: string
 }
 export interface BootstrapOrganizationErrorInvalidSequesterAuthorityVerifyKey {
-    tag: "InvalidSequesterAuthorityVerifyKey"
+    tag: "BootstrapOrganizationErrorInvalidSequesterAuthorityVerifyKey"
     error: string
 }
 export interface BootstrapOrganizationErrorInvalidToken {
-    tag: "InvalidToken"
+    tag: "BootstrapOrganizationErrorInvalidToken"
     error: string
 }
 export interface BootstrapOrganizationErrorOffline {
-    tag: "Offline"
+    tag: "BootstrapOrganizationErrorOffline"
     error: string
 }
 export interface BootstrapOrganizationErrorOrganizationExpired {
-    tag: "OrganizationExpired"
+    tag: "BootstrapOrganizationErrorOrganizationExpired"
     error: string
 }
 export interface BootstrapOrganizationErrorSaveDeviceError {
-    tag: "SaveDeviceError"
+    tag: "BootstrapOrganizationErrorSaveDeviceError"
     error: string
 }
 export interface BootstrapOrganizationErrorTimestampOutOfBallpark {
-    tag: "TimestampOutOfBallpark"
+    tag: "BootstrapOrganizationErrorTimestampOutOfBallpark"
     error: string
     server_timestamp: number
     client_timestamp: number
@@ -1113,11 +1113,11 @@ export type BootstrapOrganizationError =
 
 // CancelError
 export interface CancelErrorInternal {
-    tag: "Internal"
+    tag: "CancelErrorInternal"
     error: string
 }
 export interface CancelErrorNotBound {
-    tag: "NotBound"
+    tag: "CancelErrorNotBound"
     error: string
 }
 export type CancelError =
@@ -1127,54 +1127,54 @@ export type CancelError =
 
 // ClaimInProgressError
 export interface ClaimInProgressErrorActiveUsersLimitReached {
-    tag: "ActiveUsersLimitReached"
+    tag: "ClaimInProgressErrorActiveUsersLimitReached"
     error: string
 }
 export interface ClaimInProgressErrorAlreadyUsedOrDeleted {
-    tag: "AlreadyUsedOrDeleted"
+    tag: "ClaimInProgressErrorAlreadyUsedOrDeleted"
     error: string
 }
 export interface ClaimInProgressErrorCancelled {
-    tag: "Cancelled"
+    tag: "ClaimInProgressErrorCancelled"
     error: string
 }
 export interface ClaimInProgressErrorCorruptedConfirmation {
-    tag: "CorruptedConfirmation"
+    tag: "ClaimInProgressErrorCorruptedConfirmation"
     error: string
 }
 export interface ClaimInProgressErrorCorruptedSharedSecretKey {
-    tag: "CorruptedSharedSecretKey"
+    tag: "ClaimInProgressErrorCorruptedSharedSecretKey"
     error: string
 }
 export interface ClaimInProgressErrorGreeterNotAllowed {
-    tag: "GreeterNotAllowed"
+    tag: "ClaimInProgressErrorGreeterNotAllowed"
     error: string
 }
 export interface ClaimInProgressErrorGreetingAttemptCancelled {
-    tag: "GreetingAttemptCancelled"
+    tag: "ClaimInProgressErrorGreetingAttemptCancelled"
     error: string
     origin: GreeterOrClaimer
     reason: CancelledGreetingAttemptReason
     timestamp: number
 }
 export interface ClaimInProgressErrorInternal {
-    tag: "Internal"
+    tag: "ClaimInProgressErrorInternal"
     error: string
 }
 export interface ClaimInProgressErrorNotFound {
-    tag: "NotFound"
+    tag: "ClaimInProgressErrorNotFound"
     error: string
 }
 export interface ClaimInProgressErrorOffline {
-    tag: "Offline"
+    tag: "ClaimInProgressErrorOffline"
     error: string
 }
 export interface ClaimInProgressErrorOrganizationExpired {
-    tag: "OrganizationExpired"
+    tag: "ClaimInProgressErrorOrganizationExpired"
     error: string
 }
 export interface ClaimInProgressErrorPeerReset {
-    tag: "PeerReset"
+    tag: "ClaimInProgressErrorPeerReset"
     error: string
 }
 export type ClaimInProgressError =
@@ -1194,7 +1194,7 @@ export type ClaimInProgressError =
 
 // ClaimerGreeterAbortOperationError
 export interface ClaimerGreeterAbortOperationErrorInternal {
-    tag: "Internal"
+    tag: "ClaimerGreeterAbortOperationErrorInternal"
     error: string
 }
 export type ClaimerGreeterAbortOperationError =
@@ -1203,23 +1203,23 @@ export type ClaimerGreeterAbortOperationError =
 
 // ClaimerRetrieveInfoError
 export interface ClaimerRetrieveInfoErrorAlreadyUsedOrDeleted {
-    tag: "AlreadyUsedOrDeleted"
+    tag: "ClaimerRetrieveInfoErrorAlreadyUsedOrDeleted"
     error: string
 }
 export interface ClaimerRetrieveInfoErrorInternal {
-    tag: "Internal"
+    tag: "ClaimerRetrieveInfoErrorInternal"
     error: string
 }
 export interface ClaimerRetrieveInfoErrorNotFound {
-    tag: "NotFound"
+    tag: "ClaimerRetrieveInfoErrorNotFound"
     error: string
 }
 export interface ClaimerRetrieveInfoErrorOffline {
-    tag: "Offline"
+    tag: "ClaimerRetrieveInfoErrorOffline"
     error: string
 }
 export interface ClaimerRetrieveInfoErrorOrganizationExpired {
-    tag: "OrganizationExpired"
+    tag: "ClaimerRetrieveInfoErrorOrganizationExpired"
     error: string
 }
 export type ClaimerRetrieveInfoError =
@@ -1232,19 +1232,19 @@ export type ClaimerRetrieveInfoError =
 
 // ClientAcceptTosError
 export interface ClientAcceptTosErrorInternal {
-    tag: "Internal"
+    tag: "ClientAcceptTosErrorInternal"
     error: string
 }
 export interface ClientAcceptTosErrorNoTos {
-    tag: "NoTos"
+    tag: "ClientAcceptTosErrorNoTos"
     error: string
 }
 export interface ClientAcceptTosErrorOffline {
-    tag: "Offline"
+    tag: "ClientAcceptTosErrorOffline"
     error: string
 }
 export interface ClientAcceptTosErrorTosMismatch {
-    tag: "TosMismatch"
+    tag: "ClientAcceptTosErrorTosMismatch"
     error: string
 }
 export type ClientAcceptTosError =
@@ -1256,27 +1256,27 @@ export type ClientAcceptTosError =
 
 // ClientCancelInvitationError
 export interface ClientCancelInvitationErrorAlreadyCancelled {
-    tag: "AlreadyCancelled"
+    tag: "ClientCancelInvitationErrorAlreadyCancelled"
     error: string
 }
 export interface ClientCancelInvitationErrorCompleted {
-    tag: "Completed"
+    tag: "ClientCancelInvitationErrorCompleted"
     error: string
 }
 export interface ClientCancelInvitationErrorInternal {
-    tag: "Internal"
+    tag: "ClientCancelInvitationErrorInternal"
     error: string
 }
 export interface ClientCancelInvitationErrorNotAllowed {
-    tag: "NotAllowed"
+    tag: "ClientCancelInvitationErrorNotAllowed"
     error: string
 }
 export interface ClientCancelInvitationErrorNotFound {
-    tag: "NotFound"
+    tag: "ClientCancelInvitationErrorNotFound"
     error: string
 }
 export interface ClientCancelInvitationErrorOffline {
-    tag: "Offline"
+    tag: "ClientCancelInvitationErrorOffline"
     error: string
 }
 export type ClientCancelInvitationError =
@@ -1290,11 +1290,11 @@ export type ClientCancelInvitationError =
 
 // ClientCreateWorkspaceError
 export interface ClientCreateWorkspaceErrorInternal {
-    tag: "Internal"
+    tag: "ClientCreateWorkspaceErrorInternal"
     error: string
 }
 export interface ClientCreateWorkspaceErrorStopped {
-    tag: "Stopped"
+    tag: "ClientCreateWorkspaceErrorStopped"
     error: string
 }
 export type ClientCreateWorkspaceError =
@@ -1304,23 +1304,23 @@ export type ClientCreateWorkspaceError =
 
 // ClientDeleteShamirRecoveryError
 export interface ClientDeleteShamirRecoveryErrorInternal {
-    tag: "Internal"
+    tag: "ClientDeleteShamirRecoveryErrorInternal"
     error: string
 }
 export interface ClientDeleteShamirRecoveryErrorInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "ClientDeleteShamirRecoveryErrorInvalidCertificate"
     error: string
 }
 export interface ClientDeleteShamirRecoveryErrorOffline {
-    tag: "Offline"
+    tag: "ClientDeleteShamirRecoveryErrorOffline"
     error: string
 }
 export interface ClientDeleteShamirRecoveryErrorStopped {
-    tag: "Stopped"
+    tag: "ClientDeleteShamirRecoveryErrorStopped"
     error: string
 }
 export interface ClientDeleteShamirRecoveryErrorTimestampOutOfBallpark {
-    tag: "TimestampOutOfBallpark"
+    tag: "ClientDeleteShamirRecoveryErrorTimestampOutOfBallpark"
     error: string
     server_timestamp: number
     client_timestamp: number
@@ -1337,40 +1337,40 @@ export type ClientDeleteShamirRecoveryError =
 
 // ClientEvent
 export interface ClientEventClientErrorResponse {
-    tag: "ClientErrorResponse"
+    tag: "ClientEventClientErrorResponse"
     error_type: string
 }
 export interface ClientEventClientStarted {
-    tag: "ClientStarted"
+    tag: "ClientEventClientStarted"
     device_id: string
 }
 export interface ClientEventClientStopped {
-    tag: "ClientStopped"
+    tag: "ClientEventClientStopped"
     device_id: string
 }
 export interface ClientEventExpiredOrganization {
-    tag: "ExpiredOrganization"
+    tag: "ClientEventExpiredOrganization"
 }
 export interface ClientEventFrozenSelfUser {
-    tag: "FrozenSelfUser"
+    tag: "ClientEventFrozenSelfUser"
 }
 export interface ClientEventGreetingAttemptCancelled {
-    tag: "GreetingAttemptCancelled"
+    tag: "ClientEventGreetingAttemptCancelled"
     token: string
     greeting_attempt: string
 }
 export interface ClientEventGreetingAttemptJoined {
-    tag: "GreetingAttemptJoined"
+    tag: "ClientEventGreetingAttemptJoined"
     token: string
     greeting_attempt: string
 }
 export interface ClientEventGreetingAttemptReady {
-    tag: "GreetingAttemptReady"
+    tag: "ClientEventGreetingAttemptReady"
     token: string
     greeting_attempt: string
 }
 export interface ClientEventIncompatibleServer {
-    tag: "IncompatibleServer"
+    tag: "ClientEventIncompatibleServer"
     api_version: string
     supported_api_version: Array<string>
 }
@@ -1379,73 +1379,73 @@ export interface ClientEventInvalidCertificate {
     detail: string
 }
 export interface ClientEventInvitationAlreadyUsedOrDeleted {
-    tag: "InvitationAlreadyUsedOrDeleted"
+    tag: "ClientEventInvitationAlreadyUsedOrDeleted"
 }
 export interface ClientEventInvitationChanged {
-    tag: "InvitationChanged"
+    tag: "ClientEventInvitationChanged"
     token: string
     status: InvitationStatus
 }
 export interface ClientEventMustAcceptTos {
-    tag: "MustAcceptTos"
+    tag: "ClientEventMustAcceptTos"
 }
 export interface ClientEventOffline {
-    tag: "Offline"
+    tag: "ClientEventOffline"
 }
 export interface ClientEventOnline {
-    tag: "Online"
+    tag: "ClientEventOnline"
 }
 export interface ClientEventOrganizationNotFound {
-    tag: "OrganizationNotFound"
+    tag: "ClientEventOrganizationNotFound"
 }
 export interface ClientEventPing {
-    tag: "Ping"
+    tag: "ClientEventPing"
     ping: string
 }
 export interface ClientEventRevokedSelfUser {
-    tag: "RevokedSelfUser"
+    tag: "ClientEventRevokedSelfUser"
 }
 export interface ClientEventServerConfigChanged {
-    tag: "ServerConfigChanged"
+    tag: "ClientEventServerConfigChanged"
 }
 export interface ClientEventServerInvalidResponseContent {
-    tag: "ServerInvalidResponseContent"
+    tag: "ClientEventServerInvalidResponseContent"
     protocol_decode_error: string
 }
 export interface ClientEventServerInvalidResponseStatus {
-    tag: "ServerInvalidResponseStatus"
+    tag: "ClientEventServerInvalidResponseStatus"
     status_code: string
 }
 export interface ClientEventTooMuchDriftWithServerClock {
-    tag: "TooMuchDriftWithServerClock"
+    tag: "ClientEventTooMuchDriftWithServerClock"
     server_timestamp: number
     client_timestamp: number
     ballpark_client_early_offset: number
     ballpark_client_late_offset: number
 }
 export interface ClientEventWebClientNotAllowedByOrganization {
-    tag: "WebClientNotAllowedByOrganization"
+    tag: "ClientEventWebClientNotAllowedByOrganization"
 }
 export interface ClientEventWorkspaceLocallyCreated {
-    tag: "WorkspaceLocallyCreated"
+    tag: "ClientEventWorkspaceLocallyCreated"
 }
 export interface ClientEventWorkspaceOpsInboundSyncDone {
-    tag: "WorkspaceOpsInboundSyncDone"
+    tag: "ClientEventWorkspaceOpsInboundSyncDone"
     realm_id: string
     entry_id: string
 }
 export interface ClientEventWorkspaceOpsOutboundSyncAborted {
-    tag: "WorkspaceOpsOutboundSyncAborted"
+    tag: "ClientEventWorkspaceOpsOutboundSyncAborted"
     realm_id: string
     entry_id: string
 }
 export interface ClientEventWorkspaceOpsOutboundSyncDone {
-    tag: "WorkspaceOpsOutboundSyncDone"
+    tag: "ClientEventWorkspaceOpsOutboundSyncDone"
     realm_id: string
     entry_id: string
 }
 export interface ClientEventWorkspaceOpsOutboundSyncProgress {
-    tag: "WorkspaceOpsOutboundSyncProgress"
+    tag: "ClientEventWorkspaceOpsOutboundSyncProgress"
     realm_id: string
     entry_id: string
     blocks: number
@@ -1453,17 +1453,17 @@ export interface ClientEventWorkspaceOpsOutboundSyncProgress {
     blocksize: number
 }
 export interface ClientEventWorkspaceOpsOutboundSyncStarted {
-    tag: "WorkspaceOpsOutboundSyncStarted"
+    tag: "ClientEventWorkspaceOpsOutboundSyncStarted"
     realm_id: string
     entry_id: string
 }
 export interface ClientEventWorkspaceWatchedEntryChanged {
-    tag: "WorkspaceWatchedEntryChanged"
+    tag: "ClientEventWorkspaceWatchedEntryChanged"
     realm_id: string
     entry_id: string
 }
 export interface ClientEventWorkspacesSelfListChanged {
-    tag: "WorkspacesSelfListChanged"
+    tag: "ClientEventWorkspacesSelfListChanged"
 }
 export type ClientEvent =
   | ClientEventClientErrorResponse
@@ -1501,23 +1501,23 @@ export type ClientEvent =
 
 // ClientExportRecoveryDeviceError
 export interface ClientExportRecoveryDeviceErrorInternal {
-    tag: "Internal"
+    tag: "ClientExportRecoveryDeviceErrorInternal"
     error: string
 }
 export interface ClientExportRecoveryDeviceErrorInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "ClientExportRecoveryDeviceErrorInvalidCertificate"
     error: string
 }
 export interface ClientExportRecoveryDeviceErrorOffline {
-    tag: "Offline"
+    tag: "ClientExportRecoveryDeviceErrorOffline"
     error: string
 }
 export interface ClientExportRecoveryDeviceErrorStopped {
-    tag: "Stopped"
+    tag: "ClientExportRecoveryDeviceErrorStopped"
     error: string
 }
 export interface ClientExportRecoveryDeviceErrorTimestampOutOfBallpark {
-    tag: "TimestampOutOfBallpark"
+    tag: "ClientExportRecoveryDeviceErrorTimestampOutOfBallpark"
     error: string
     server_timestamp: number
     client_timestamp: number
@@ -1534,11 +1534,11 @@ export type ClientExportRecoveryDeviceError =
 
 // ClientForgetAllCertificatesError
 export interface ClientForgetAllCertificatesErrorInternal {
-    tag: "Internal"
+    tag: "ClientForgetAllCertificatesErrorInternal"
     error: string
 }
 export interface ClientForgetAllCertificatesErrorStopped {
-    tag: "Stopped"
+    tag: "ClientForgetAllCertificatesErrorStopped"
     error: string
 }
 export type ClientForgetAllCertificatesError =
@@ -1548,23 +1548,23 @@ export type ClientForgetAllCertificatesError =
 
 // ClientGetOrganizationBootstrapDateError
 export interface ClientGetOrganizationBootstrapDateErrorBootstrapDateNotFound {
-    tag: "BootstrapDateNotFound"
+    tag: "ClientGetOrganizationBootstrapDateErrorBootstrapDateNotFound"
     error: string
 }
 export interface ClientGetOrganizationBootstrapDateErrorInternal {
-    tag: "Internal"
+    tag: "ClientGetOrganizationBootstrapDateErrorInternal"
     error: string
 }
 export interface ClientGetOrganizationBootstrapDateErrorInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "ClientGetOrganizationBootstrapDateErrorInvalidCertificate"
     error: string
 }
 export interface ClientGetOrganizationBootstrapDateErrorOffline {
-    tag: "Offline"
+    tag: "ClientGetOrganizationBootstrapDateErrorOffline"
     error: string
 }
 export interface ClientGetOrganizationBootstrapDateErrorStopped {
-    tag: "Stopped"
+    tag: "ClientGetOrganizationBootstrapDateErrorStopped"
     error: string
 }
 export type ClientGetOrganizationBootstrapDateError =
@@ -1577,11 +1577,11 @@ export type ClientGetOrganizationBootstrapDateError =
 
 // ClientGetSelfShamirRecoveryError
 export interface ClientGetSelfShamirRecoveryErrorInternal {
-    tag: "Internal"
+    tag: "ClientGetSelfShamirRecoveryErrorInternal"
     error: string
 }
 export interface ClientGetSelfShamirRecoveryErrorStopped {
-    tag: "Stopped"
+    tag: "ClientGetSelfShamirRecoveryErrorStopped"
     error: string
 }
 export type ClientGetSelfShamirRecoveryError =
@@ -1591,15 +1591,15 @@ export type ClientGetSelfShamirRecoveryError =
 
 // ClientGetTosError
 export interface ClientGetTosErrorInternal {
-    tag: "Internal"
+    tag: "ClientGetTosErrorInternal"
     error: string
 }
 export interface ClientGetTosErrorNoTos {
-    tag: "NoTos"
+    tag: "ClientGetTosErrorNoTos"
     error: string
 }
 export interface ClientGetTosErrorOffline {
-    tag: "Offline"
+    tag: "ClientGetTosErrorOffline"
     error: string
 }
 export type ClientGetTosError =
@@ -1610,15 +1610,15 @@ export type ClientGetTosError =
 
 // ClientGetUserDeviceError
 export interface ClientGetUserDeviceErrorInternal {
-    tag: "Internal"
+    tag: "ClientGetUserDeviceErrorInternal"
     error: string
 }
 export interface ClientGetUserDeviceErrorNonExisting {
-    tag: "NonExisting"
+    tag: "ClientGetUserDeviceErrorNonExisting"
     error: string
 }
 export interface ClientGetUserDeviceErrorStopped {
-    tag: "Stopped"
+    tag: "ClientGetUserDeviceErrorStopped"
     error: string
 }
 export type ClientGetUserDeviceError =
@@ -1629,15 +1629,15 @@ export type ClientGetUserDeviceError =
 
 // ClientGetUserInfoError
 export interface ClientGetUserInfoErrorInternal {
-    tag: "Internal"
+    tag: "ClientGetUserInfoErrorInternal"
     error: string
 }
 export interface ClientGetUserInfoErrorNonExisting {
-    tag: "NonExisting"
+    tag: "ClientGetUserInfoErrorNonExisting"
     error: string
 }
 export interface ClientGetUserInfoErrorStopped {
-    tag: "Stopped"
+    tag: "ClientGetUserInfoErrorStopped"
     error: string
 }
 export type ClientGetUserInfoError =
@@ -1648,11 +1648,11 @@ export type ClientGetUserInfoError =
 
 // ClientInfoError
 export interface ClientInfoErrorInternal {
-    tag: "Internal"
+    tag: "ClientInfoErrorInternal"
     error: string
 }
 export interface ClientInfoErrorStopped {
-    tag: "Stopped"
+    tag: "ClientInfoErrorStopped"
     error: string
 }
 export type ClientInfoError =
@@ -1662,15 +1662,15 @@ export type ClientInfoError =
 
 // ClientListFrozenUsersError
 export interface ClientListFrozenUsersErrorAuthorNotAllowed {
-    tag: "AuthorNotAllowed"
+    tag: "ClientListFrozenUsersErrorAuthorNotAllowed"
     error: string
 }
 export interface ClientListFrozenUsersErrorInternal {
-    tag: "Internal"
+    tag: "ClientListFrozenUsersErrorInternal"
     error: string
 }
 export interface ClientListFrozenUsersErrorOffline {
-    tag: "Offline"
+    tag: "ClientListFrozenUsersErrorOffline"
     error: string
 }
 export type ClientListFrozenUsersError =
@@ -1681,11 +1681,11 @@ export type ClientListFrozenUsersError =
 
 // ClientListShamirRecoveriesForOthersError
 export interface ClientListShamirRecoveriesForOthersErrorInternal {
-    tag: "Internal"
+    tag: "ClientListShamirRecoveriesForOthersErrorInternal"
     error: string
 }
 export interface ClientListShamirRecoveriesForOthersErrorStopped {
-    tag: "Stopped"
+    tag: "ClientListShamirRecoveriesForOthersErrorStopped"
     error: string
 }
 export type ClientListShamirRecoveriesForOthersError =
@@ -1695,11 +1695,11 @@ export type ClientListShamirRecoveriesForOthersError =
 
 // ClientListUserDevicesError
 export interface ClientListUserDevicesErrorInternal {
-    tag: "Internal"
+    tag: "ClientListUserDevicesErrorInternal"
     error: string
 }
 export interface ClientListUserDevicesErrorStopped {
-    tag: "Stopped"
+    tag: "ClientListUserDevicesErrorStopped"
     error: string
 }
 export type ClientListUserDevicesError =
@@ -1709,11 +1709,11 @@ export type ClientListUserDevicesError =
 
 // ClientListUsersError
 export interface ClientListUsersErrorInternal {
-    tag: "Internal"
+    tag: "ClientListUsersErrorInternal"
     error: string
 }
 export interface ClientListUsersErrorStopped {
-    tag: "Stopped"
+    tag: "ClientListUsersErrorStopped"
     error: string
 }
 export type ClientListUsersError =
@@ -1723,11 +1723,11 @@ export type ClientListUsersError =
 
 // ClientListWorkspaceUsersError
 export interface ClientListWorkspaceUsersErrorInternal {
-    tag: "Internal"
+    tag: "ClientListWorkspaceUsersErrorInternal"
     error: string
 }
 export interface ClientListWorkspaceUsersErrorStopped {
-    tag: "Stopped"
+    tag: "ClientListWorkspaceUsersErrorStopped"
     error: string
 }
 export type ClientListWorkspaceUsersError =
@@ -1737,7 +1737,7 @@ export type ClientListWorkspaceUsersError =
 
 // ClientListWorkspacesError
 export interface ClientListWorkspacesErrorInternal {
-    tag: "Internal"
+    tag: "ClientListWorkspacesErrorInternal"
     error: string
 }
 export type ClientListWorkspacesError =
@@ -1746,11 +1746,11 @@ export type ClientListWorkspacesError =
 
 // ClientNewDeviceInvitationError
 export interface ClientNewDeviceInvitationErrorInternal {
-    tag: "Internal"
+    tag: "ClientNewDeviceInvitationErrorInternal"
     error: string
 }
 export interface ClientNewDeviceInvitationErrorOffline {
-    tag: "Offline"
+    tag: "ClientNewDeviceInvitationErrorOffline"
     error: string
 }
 export type ClientNewDeviceInvitationError =
@@ -1760,19 +1760,19 @@ export type ClientNewDeviceInvitationError =
 
 // ClientNewShamirRecoveryInvitationError
 export interface ClientNewShamirRecoveryInvitationErrorInternal {
-    tag: "Internal"
+    tag: "ClientNewShamirRecoveryInvitationErrorInternal"
     error: string
 }
 export interface ClientNewShamirRecoveryInvitationErrorNotAllowed {
-    tag: "NotAllowed"
+    tag: "ClientNewShamirRecoveryInvitationErrorNotAllowed"
     error: string
 }
 export interface ClientNewShamirRecoveryInvitationErrorOffline {
-    tag: "Offline"
+    tag: "ClientNewShamirRecoveryInvitationErrorOffline"
     error: string
 }
 export interface ClientNewShamirRecoveryInvitationErrorUserNotFound {
-    tag: "UserNotFound"
+    tag: "ClientNewShamirRecoveryInvitationErrorUserNotFound"
     error: string
 }
 export type ClientNewShamirRecoveryInvitationError =
@@ -1784,19 +1784,19 @@ export type ClientNewShamirRecoveryInvitationError =
 
 // ClientNewUserInvitationError
 export interface ClientNewUserInvitationErrorAlreadyMember {
-    tag: "AlreadyMember"
+    tag: "ClientNewUserInvitationErrorAlreadyMember"
     error: string
 }
 export interface ClientNewUserInvitationErrorInternal {
-    tag: "Internal"
+    tag: "ClientNewUserInvitationErrorInternal"
     error: string
 }
 export interface ClientNewUserInvitationErrorNotAllowed {
-    tag: "NotAllowed"
+    tag: "ClientNewUserInvitationErrorNotAllowed"
     error: string
 }
 export interface ClientNewUserInvitationErrorOffline {
-    tag: "Offline"
+    tag: "ClientNewUserInvitationErrorOffline"
     error: string
 }
 export type ClientNewUserInvitationError =
@@ -1808,11 +1808,11 @@ export type ClientNewUserInvitationError =
 
 // ClientOrganizationInfoError
 export interface ClientOrganizationInfoErrorInternal {
-    tag: "Internal"
+    tag: "ClientOrganizationInfoErrorInternal"
     error: string
 }
 export interface ClientOrganizationInfoErrorOffline {
-    tag: "Offline"
+    tag: "ClientOrganizationInfoErrorOffline"
     error: string
 }
 export type ClientOrganizationInfoError =
@@ -1822,39 +1822,39 @@ export type ClientOrganizationInfoError =
 
 // ClientRenameWorkspaceError
 export interface ClientRenameWorkspaceErrorAuthorNotAllowed {
-    tag: "AuthorNotAllowed"
+    tag: "ClientRenameWorkspaceErrorAuthorNotAllowed"
     error: string
 }
 export interface ClientRenameWorkspaceErrorInternal {
-    tag: "Internal"
+    tag: "ClientRenameWorkspaceErrorInternal"
     error: string
 }
 export interface ClientRenameWorkspaceErrorInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "ClientRenameWorkspaceErrorInvalidCertificate"
     error: string
 }
 export interface ClientRenameWorkspaceErrorInvalidEncryptedRealmName {
-    tag: "InvalidEncryptedRealmName"
+    tag: "ClientRenameWorkspaceErrorInvalidEncryptedRealmName"
     error: string
 }
 export interface ClientRenameWorkspaceErrorInvalidKeysBundle {
-    tag: "InvalidKeysBundle"
+    tag: "ClientRenameWorkspaceErrorInvalidKeysBundle"
     error: string
 }
 export interface ClientRenameWorkspaceErrorNoKey {
-    tag: "NoKey"
+    tag: "ClientRenameWorkspaceErrorNoKey"
     error: string
 }
 export interface ClientRenameWorkspaceErrorOffline {
-    tag: "Offline"
+    tag: "ClientRenameWorkspaceErrorOffline"
     error: string
 }
 export interface ClientRenameWorkspaceErrorStopped {
-    tag: "Stopped"
+    tag: "ClientRenameWorkspaceErrorStopped"
     error: string
 }
 export interface ClientRenameWorkspaceErrorTimestampOutOfBallpark {
-    tag: "TimestampOutOfBallpark"
+    tag: "ClientRenameWorkspaceErrorTimestampOutOfBallpark"
     error: string
     server_timestamp: number
     client_timestamp: number
@@ -1862,7 +1862,7 @@ export interface ClientRenameWorkspaceErrorTimestampOutOfBallpark {
     ballpark_client_late_offset: number
 }
 export interface ClientRenameWorkspaceErrorWorkspaceNotFound {
-    tag: "WorkspaceNotFound"
+    tag: "ClientRenameWorkspaceErrorWorkspaceNotFound"
     error: string
 }
 export type ClientRenameWorkspaceError =
@@ -1880,43 +1880,43 @@ export type ClientRenameWorkspaceError =
 
 // ClientRevokeUserError
 export interface ClientRevokeUserErrorAuthorNotAllowed {
-    tag: "AuthorNotAllowed"
+    tag: "ClientRevokeUserErrorAuthorNotAllowed"
     error: string
 }
 export interface ClientRevokeUserErrorInternal {
-    tag: "Internal"
+    tag: "ClientRevokeUserErrorInternal"
     error: string
 }
 export interface ClientRevokeUserErrorInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "ClientRevokeUserErrorInvalidCertificate"
     error: string
 }
 export interface ClientRevokeUserErrorInvalidKeysBundle {
-    tag: "InvalidKeysBundle"
+    tag: "ClientRevokeUserErrorInvalidKeysBundle"
     error: string
 }
 export interface ClientRevokeUserErrorNoKey {
-    tag: "NoKey"
+    tag: "ClientRevokeUserErrorNoKey"
     error: string
 }
 export interface ClientRevokeUserErrorOffline {
-    tag: "Offline"
+    tag: "ClientRevokeUserErrorOffline"
     error: string
 }
 export interface ClientRevokeUserErrorStopped {
-    tag: "Stopped"
+    tag: "ClientRevokeUserErrorStopped"
     error: string
 }
 export interface ClientRevokeUserErrorTimestampOutOfBallpark {
-    tag: "TimestampOutOfBallpark"
+    tag: "ClientRevokeUserErrorTimestampOutOfBallpark"
     error: string
 }
 export interface ClientRevokeUserErrorUserIsSelf {
-    tag: "UserIsSelf"
+    tag: "ClientRevokeUserErrorUserIsSelf"
     error: string
 }
 export interface ClientRevokeUserErrorUserNotFound {
-    tag: "UserNotFound"
+    tag: "ClientRevokeUserErrorUserNotFound"
     error: string
 }
 export type ClientRevokeUserError =
@@ -1934,43 +1934,43 @@ export type ClientRevokeUserError =
 
 // ClientSetupShamirRecoveryError
 export interface ClientSetupShamirRecoveryErrorAuthorAmongRecipients {
-    tag: "AuthorAmongRecipients"
+    tag: "ClientSetupShamirRecoveryErrorAuthorAmongRecipients"
     error: string
 }
 export interface ClientSetupShamirRecoveryErrorInternal {
-    tag: "Internal"
+    tag: "ClientSetupShamirRecoveryErrorInternal"
     error: string
 }
 export interface ClientSetupShamirRecoveryErrorInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "ClientSetupShamirRecoveryErrorInvalidCertificate"
     error: string
 }
 export interface ClientSetupShamirRecoveryErrorOffline {
-    tag: "Offline"
+    tag: "ClientSetupShamirRecoveryErrorOffline"
     error: string
 }
 export interface ClientSetupShamirRecoveryErrorRecipientNotFound {
-    tag: "RecipientNotFound"
+    tag: "ClientSetupShamirRecoveryErrorRecipientNotFound"
     error: string
 }
 export interface ClientSetupShamirRecoveryErrorRecipientRevoked {
-    tag: "RecipientRevoked"
+    tag: "ClientSetupShamirRecoveryErrorRecipientRevoked"
     error: string
 }
 export interface ClientSetupShamirRecoveryErrorShamirRecoveryAlreadyExists {
-    tag: "ShamirRecoveryAlreadyExists"
+    tag: "ClientSetupShamirRecoveryErrorShamirRecoveryAlreadyExists"
     error: string
 }
 export interface ClientSetupShamirRecoveryErrorStopped {
-    tag: "Stopped"
+    tag: "ClientSetupShamirRecoveryErrorStopped"
     error: string
 }
 export interface ClientSetupShamirRecoveryErrorThresholdBiggerThanSumOfShares {
-    tag: "ThresholdBiggerThanSumOfShares"
+    tag: "ClientSetupShamirRecoveryErrorThresholdBiggerThanSumOfShares"
     error: string
 }
 export interface ClientSetupShamirRecoveryErrorTimestampOutOfBallpark {
-    tag: "TimestampOutOfBallpark"
+    tag: "ClientSetupShamirRecoveryErrorTimestampOutOfBallpark"
     error: string
     server_timestamp: number
     client_timestamp: number
@@ -1978,7 +1978,7 @@ export interface ClientSetupShamirRecoveryErrorTimestampOutOfBallpark {
     ballpark_client_late_offset: number
 }
 export interface ClientSetupShamirRecoveryErrorTooManyShares {
-    tag: "TooManyShares"
+    tag: "ClientSetupShamirRecoveryErrorTooManyShares"
     error: string
 }
 export type ClientSetupShamirRecoveryError =
@@ -1997,47 +1997,47 @@ export type ClientSetupShamirRecoveryError =
 
 // ClientShareWorkspaceError
 export interface ClientShareWorkspaceErrorAuthorNotAllowed {
-    tag: "AuthorNotAllowed"
+    tag: "ClientShareWorkspaceErrorAuthorNotAllowed"
     error: string
 }
 export interface ClientShareWorkspaceErrorInternal {
-    tag: "Internal"
+    tag: "ClientShareWorkspaceErrorInternal"
     error: string
 }
 export interface ClientShareWorkspaceErrorInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "ClientShareWorkspaceErrorInvalidCertificate"
     error: string
 }
 export interface ClientShareWorkspaceErrorInvalidKeysBundle {
-    tag: "InvalidKeysBundle"
+    tag: "ClientShareWorkspaceErrorInvalidKeysBundle"
     error: string
 }
 export interface ClientShareWorkspaceErrorOffline {
-    tag: "Offline"
+    tag: "ClientShareWorkspaceErrorOffline"
     error: string
 }
 export interface ClientShareWorkspaceErrorRecipientIsSelf {
-    tag: "RecipientIsSelf"
+    tag: "ClientShareWorkspaceErrorRecipientIsSelf"
     error: string
 }
 export interface ClientShareWorkspaceErrorRecipientNotFound {
-    tag: "RecipientNotFound"
+    tag: "ClientShareWorkspaceErrorRecipientNotFound"
     error: string
 }
 export interface ClientShareWorkspaceErrorRecipientRevoked {
-    tag: "RecipientRevoked"
+    tag: "ClientShareWorkspaceErrorRecipientRevoked"
     error: string
 }
 export interface ClientShareWorkspaceErrorRoleIncompatibleWithOutsider {
-    tag: "RoleIncompatibleWithOutsider"
+    tag: "ClientShareWorkspaceErrorRoleIncompatibleWithOutsider"
     error: string
 }
 export interface ClientShareWorkspaceErrorStopped {
-    tag: "Stopped"
+    tag: "ClientShareWorkspaceErrorStopped"
     error: string
 }
 export interface ClientShareWorkspaceErrorTimestampOutOfBallpark {
-    tag: "TimestampOutOfBallpark"
+    tag: "ClientShareWorkspaceErrorTimestampOutOfBallpark"
     error: string
     server_timestamp: number
     client_timestamp: number
@@ -2045,7 +2045,7 @@ export interface ClientShareWorkspaceErrorTimestampOutOfBallpark {
     ballpark_client_late_offset: number
 }
 export interface ClientShareWorkspaceErrorWorkspaceNotFound {
-    tag: "WorkspaceNotFound"
+    tag: "ClientShareWorkspaceErrorWorkspaceNotFound"
     error: string
 }
 export type ClientShareWorkspaceError =
@@ -2065,23 +2065,23 @@ export type ClientShareWorkspaceError =
 
 // ClientStartError
 export interface ClientStartErrorDeviceUsedByAnotherProcess {
-    tag: "DeviceUsedByAnotherProcess"
+    tag: "ClientStartErrorDeviceUsedByAnotherProcess"
     error: string
 }
 export interface ClientStartErrorInternal {
-    tag: "Internal"
+    tag: "ClientStartErrorInternal"
     error: string
 }
 export interface ClientStartErrorLoadDeviceDecryptionFailed {
-    tag: "LoadDeviceDecryptionFailed"
+    tag: "ClientStartErrorLoadDeviceDecryptionFailed"
     error: string
 }
 export interface ClientStartErrorLoadDeviceInvalidData {
-    tag: "LoadDeviceInvalidData"
+    tag: "ClientStartErrorLoadDeviceInvalidData"
     error: string
 }
 export interface ClientStartErrorLoadDeviceInvalidPath {
-    tag: "LoadDeviceInvalidPath"
+    tag: "ClientStartErrorLoadDeviceInvalidPath"
     error: string
 }
 export type ClientStartError =
@@ -2094,7 +2094,7 @@ export type ClientStartError =
 
 // ClientStartInvitationGreetError
 export interface ClientStartInvitationGreetErrorInternal {
-    tag: "Internal"
+    tag: "ClientStartInvitationGreetErrorInternal"
     error: string
 }
 export type ClientStartInvitationGreetError =
@@ -2103,39 +2103,39 @@ export type ClientStartInvitationGreetError =
 
 // ClientStartShamirRecoveryInvitationGreetError
 export interface ClientStartShamirRecoveryInvitationGreetErrorCorruptedShareData {
-    tag: "CorruptedShareData"
+    tag: "ClientStartShamirRecoveryInvitationGreetErrorCorruptedShareData"
     error: string
 }
 export interface ClientStartShamirRecoveryInvitationGreetErrorInternal {
-    tag: "Internal"
+    tag: "ClientStartShamirRecoveryInvitationGreetErrorInternal"
     error: string
 }
 export interface ClientStartShamirRecoveryInvitationGreetErrorInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "ClientStartShamirRecoveryInvitationGreetErrorInvalidCertificate"
     error: string
 }
 export interface ClientStartShamirRecoveryInvitationGreetErrorInvitationNotFound {
-    tag: "InvitationNotFound"
+    tag: "ClientStartShamirRecoveryInvitationGreetErrorInvitationNotFound"
     error: string
 }
 export interface ClientStartShamirRecoveryInvitationGreetErrorOffline {
-    tag: "Offline"
+    tag: "ClientStartShamirRecoveryInvitationGreetErrorOffline"
     error: string
 }
 export interface ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryDeleted {
-    tag: "ShamirRecoveryDeleted"
+    tag: "ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryDeleted"
     error: string
 }
 export interface ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryNotFound {
-    tag: "ShamirRecoveryNotFound"
+    tag: "ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryNotFound"
     error: string
 }
 export interface ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryUnusable {
-    tag: "ShamirRecoveryUnusable"
+    tag: "ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryUnusable"
     error: string
 }
 export interface ClientStartShamirRecoveryInvitationGreetErrorStopped {
-    tag: "Stopped"
+    tag: "ClientStartShamirRecoveryInvitationGreetErrorStopped"
     error: string
 }
 export type ClientStartShamirRecoveryInvitationGreetError =
@@ -2152,11 +2152,11 @@ export type ClientStartShamirRecoveryInvitationGreetError =
 
 // ClientStartWorkspaceError
 export interface ClientStartWorkspaceErrorInternal {
-    tag: "Internal"
+    tag: "ClientStartWorkspaceErrorInternal"
     error: string
 }
 export interface ClientStartWorkspaceErrorWorkspaceNotFound {
-    tag: "WorkspaceNotFound"
+    tag: "ClientStartWorkspaceErrorWorkspaceNotFound"
     error: string
 }
 export type ClientStartWorkspaceError =
@@ -2166,7 +2166,7 @@ export type ClientStartWorkspaceError =
 
 // ClientStopError
 export interface ClientStopErrorInternal {
-    tag: "Internal"
+    tag: "ClientStopErrorInternal"
     error: string
 }
 export type ClientStopError =
@@ -2175,39 +2175,39 @@ export type ClientStopError =
 
 // ClientUserUpdateProfileError
 export interface ClientUserUpdateProfileErrorAuthorNotAllowed {
-    tag: "AuthorNotAllowed"
+    tag: "ClientUserUpdateProfileErrorAuthorNotAllowed"
     error: string
 }
 export interface ClientUserUpdateProfileErrorInternal {
-    tag: "Internal"
+    tag: "ClientUserUpdateProfileErrorInternal"
     error: string
 }
 export interface ClientUserUpdateProfileErrorInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "ClientUserUpdateProfileErrorInvalidCertificate"
     error: string
 }
 export interface ClientUserUpdateProfileErrorOffline {
-    tag: "Offline"
+    tag: "ClientUserUpdateProfileErrorOffline"
     error: string
 }
 export interface ClientUserUpdateProfileErrorStopped {
-    tag: "Stopped"
+    tag: "ClientUserUpdateProfileErrorStopped"
     error: string
 }
 export interface ClientUserUpdateProfileErrorTimestampOutOfBallpark {
-    tag: "TimestampOutOfBallpark"
+    tag: "ClientUserUpdateProfileErrorTimestampOutOfBallpark"
     error: string
 }
 export interface ClientUserUpdateProfileErrorUserIsSelf {
-    tag: "UserIsSelf"
+    tag: "ClientUserUpdateProfileErrorUserIsSelf"
     error: string
 }
 export interface ClientUserUpdateProfileErrorUserNotFound {
-    tag: "UserNotFound"
+    tag: "ClientUserUpdateProfileErrorUserNotFound"
     error: string
 }
 export interface ClientUserUpdateProfileErrorUserRevoked {
-    tag: "UserRevoked"
+    tag: "ClientUserUpdateProfileErrorUserRevoked"
     error: string
 }
 export type ClientUserUpdateProfileError =
@@ -2224,22 +2224,22 @@ export type ClientUserUpdateProfileError =
 
 // DeviceAccessStrategy
 export interface DeviceAccessStrategyAccountVault {
-    tag: "AccountVault"
+    tag: "DeviceAccessStrategyAccountVault"
     key_file: string
     ciphertext_key_id: string
     ciphertext_key: Uint8Array
 }
 export interface DeviceAccessStrategyKeyring {
-    tag: "Keyring"
+    tag: "DeviceAccessStrategyKeyring"
     key_file: string
 }
 export interface DeviceAccessStrategyPassword {
-    tag: "Password"
+    tag: "DeviceAccessStrategyPassword"
     password: string
     key_file: string
 }
 export interface DeviceAccessStrategySmartcard {
-    tag: "Smartcard"
+    tag: "DeviceAccessStrategySmartcard"
     key_file: string
 }
 export type DeviceAccessStrategy =
@@ -2251,19 +2251,19 @@ export type DeviceAccessStrategy =
 
 // DeviceSaveStrategy
 export interface DeviceSaveStrategyAccountVault {
-    tag: "AccountVault"
+    tag: "DeviceSaveStrategyAccountVault"
     ciphertext_key_id: string
     ciphertext_key: Uint8Array
 }
 export interface DeviceSaveStrategyKeyring {
-    tag: "Keyring"
+    tag: "DeviceSaveStrategyKeyring"
 }
 export interface DeviceSaveStrategyPassword {
-    tag: "Password"
+    tag: "DeviceSaveStrategyPassword"
     password: string
 }
 export interface DeviceSaveStrategySmartcard {
-    tag: "Smartcard"
+    tag: "DeviceSaveStrategySmartcard"
     certificate_reference: X509CertificateReference
 }
 export type DeviceSaveStrategy =
@@ -2275,7 +2275,7 @@ export type DeviceSaveStrategy =
 
 // EntryStat
 export interface EntryStatFile {
-    tag: "File"
+    tag: "EntryStatFile"
     confinement_point: string | null
     id: string
     parent: string
@@ -2288,7 +2288,7 @@ export interface EntryStatFile {
     last_updater: string
 }
 export interface EntryStatFolder {
-    tag: "Folder"
+    tag: "EntryStatFolder"
     confinement_point: string | null
     id: string
     parent: string
@@ -2306,66 +2306,66 @@ export type EntryStat =
 
 // GreetInProgressError
 export interface GreetInProgressErrorActiveUsersLimitReached {
-    tag: "ActiveUsersLimitReached"
+    tag: "GreetInProgressErrorActiveUsersLimitReached"
     error: string
 }
 export interface GreetInProgressErrorAlreadyDeleted {
-    tag: "AlreadyDeleted"
+    tag: "GreetInProgressErrorAlreadyDeleted"
     error: string
 }
 export interface GreetInProgressErrorCancelled {
-    tag: "Cancelled"
+    tag: "GreetInProgressErrorCancelled"
     error: string
 }
 export interface GreetInProgressErrorCorruptedInviteUserData {
-    tag: "CorruptedInviteUserData"
+    tag: "GreetInProgressErrorCorruptedInviteUserData"
     error: string
 }
 export interface GreetInProgressErrorCorruptedSharedSecretKey {
-    tag: "CorruptedSharedSecretKey"
+    tag: "GreetInProgressErrorCorruptedSharedSecretKey"
     error: string
 }
 export interface GreetInProgressErrorDeviceAlreadyExists {
-    tag: "DeviceAlreadyExists"
+    tag: "GreetInProgressErrorDeviceAlreadyExists"
     error: string
 }
 export interface GreetInProgressErrorGreeterNotAllowed {
-    tag: "GreeterNotAllowed"
+    tag: "GreetInProgressErrorGreeterNotAllowed"
     error: string
 }
 export interface GreetInProgressErrorGreetingAttemptCancelled {
-    tag: "GreetingAttemptCancelled"
+    tag: "GreetInProgressErrorGreetingAttemptCancelled"
     error: string
     origin: GreeterOrClaimer
     reason: CancelledGreetingAttemptReason
     timestamp: number
 }
 export interface GreetInProgressErrorHumanHandleAlreadyTaken {
-    tag: "HumanHandleAlreadyTaken"
+    tag: "GreetInProgressErrorHumanHandleAlreadyTaken"
     error: string
 }
 export interface GreetInProgressErrorInternal {
-    tag: "Internal"
+    tag: "GreetInProgressErrorInternal"
     error: string
 }
 export interface GreetInProgressErrorNonceMismatch {
-    tag: "NonceMismatch"
+    tag: "GreetInProgressErrorNonceMismatch"
     error: string
 }
 export interface GreetInProgressErrorNotFound {
-    tag: "NotFound"
+    tag: "GreetInProgressErrorNotFound"
     error: string
 }
 export interface GreetInProgressErrorOffline {
-    tag: "Offline"
+    tag: "GreetInProgressErrorOffline"
     error: string
 }
 export interface GreetInProgressErrorPeerReset {
-    tag: "PeerReset"
+    tag: "GreetInProgressErrorPeerReset"
     error: string
 }
 export interface GreetInProgressErrorTimestampOutOfBallpark {
-    tag: "TimestampOutOfBallpark"
+    tag: "GreetInProgressErrorTimestampOutOfBallpark"
     error: string
     server_timestamp: number
     client_timestamp: number
@@ -2373,11 +2373,11 @@ export interface GreetInProgressErrorTimestampOutOfBallpark {
     ballpark_client_late_offset: number
 }
 export interface GreetInProgressErrorUserAlreadyExists {
-    tag: "UserAlreadyExists"
+    tag: "GreetInProgressErrorUserAlreadyExists"
     error: string
 }
 export interface GreetInProgressErrorUserCreateNotAllowed {
-    tag: "UserCreateNotAllowed"
+    tag: "GreetInProgressErrorUserCreateNotAllowed"
     error: string
 }
 export type GreetInProgressError =
@@ -2402,43 +2402,43 @@ export type GreetInProgressError =
 
 // ImportRecoveryDeviceError
 export interface ImportRecoveryDeviceErrorDecryptionFailed {
-    tag: "DecryptionFailed"
+    tag: "ImportRecoveryDeviceErrorDecryptionFailed"
     error: string
 }
 export interface ImportRecoveryDeviceErrorInternal {
-    tag: "Internal"
+    tag: "ImportRecoveryDeviceErrorInternal"
     error: string
 }
 export interface ImportRecoveryDeviceErrorInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "ImportRecoveryDeviceErrorInvalidCertificate"
     error: string
 }
 export interface ImportRecoveryDeviceErrorInvalidData {
-    tag: "InvalidData"
+    tag: "ImportRecoveryDeviceErrorInvalidData"
     error: string
 }
 export interface ImportRecoveryDeviceErrorInvalidPassphrase {
-    tag: "InvalidPassphrase"
+    tag: "ImportRecoveryDeviceErrorInvalidPassphrase"
     error: string
 }
 export interface ImportRecoveryDeviceErrorInvalidPath {
-    tag: "InvalidPath"
+    tag: "ImportRecoveryDeviceErrorInvalidPath"
     error: string
 }
 export interface ImportRecoveryDeviceErrorOffline {
-    tag: "Offline"
+    tag: "ImportRecoveryDeviceErrorOffline"
     error: string
 }
 export interface ImportRecoveryDeviceErrorStopped {
-    tag: "Stopped"
+    tag: "ImportRecoveryDeviceErrorStopped"
     error: string
 }
 export interface ImportRecoveryDeviceErrorStorageNotAvailable {
-    tag: "StorageNotAvailable"
+    tag: "ImportRecoveryDeviceErrorStorageNotAvailable"
     error: string
 }
 export interface ImportRecoveryDeviceErrorTimestampOutOfBallpark {
-    tag: "TimestampOutOfBallpark"
+    tag: "ImportRecoveryDeviceErrorTimestampOutOfBallpark"
     error: string
     server_timestamp: number
     client_timestamp: number
@@ -2460,11 +2460,11 @@ export type ImportRecoveryDeviceError =
 
 // InviteInfoInvitationCreatedBy
 export interface InviteInfoInvitationCreatedByExternalService {
-    tag: "ExternalService"
+    tag: "InviteInfoInvitationCreatedByExternalService"
     service_label: string
 }
 export interface InviteInfoInvitationCreatedByUser {
-    tag: "User"
+    tag: "InviteInfoInvitationCreatedByUser"
     user_id: string
     human_handle: HumanHandle
 }
@@ -2475,11 +2475,11 @@ export type InviteInfoInvitationCreatedBy =
 
 // InviteListInvitationCreatedBy
 export interface InviteListInvitationCreatedByExternalService {
-    tag: "ExternalService"
+    tag: "InviteListInvitationCreatedByExternalService"
     service_label: string
 }
 export interface InviteListInvitationCreatedByUser {
-    tag: "User"
+    tag: "InviteListInvitationCreatedByUser"
     user_id: string
     human_handle: HumanHandle
 }
@@ -2490,7 +2490,7 @@ export type InviteListInvitationCreatedBy =
 
 // InviteListItem
 export interface InviteListItemDevice {
-    tag: "Device"
+    tag: "InviteListItemDevice"
     addr: string
     token: string
     created_on: number
@@ -2498,7 +2498,7 @@ export interface InviteListItemDevice {
     status: InvitationStatus
 }
 export interface InviteListItemShamirRecovery {
-    tag: "ShamirRecovery"
+    tag: "InviteListItemShamirRecovery"
     addr: string
     token: string
     created_on: number
@@ -2508,7 +2508,7 @@ export interface InviteListItemShamirRecovery {
     status: InvitationStatus
 }
 export interface InviteListItemUser {
-    tag: "User"
+    tag: "InviteListItemUser"
     addr: string
     token: string
     created_on: number
@@ -2524,11 +2524,11 @@ export type InviteListItem =
 
 // ListAvailableDeviceError
 export interface ListAvailableDeviceErrorInternal {
-    tag: "Internal"
+    tag: "ListAvailableDeviceErrorInternal"
     error: string
 }
 export interface ListAvailableDeviceErrorStorageNotAvailable {
-    tag: "StorageNotAvailable"
+    tag: "ListAvailableDeviceErrorStorageNotAvailable"
     error: string
 }
 export type ListAvailableDeviceError =
@@ -2538,11 +2538,11 @@ export type ListAvailableDeviceError =
 
 // ListInvitationsError
 export interface ListInvitationsErrorInternal {
-    tag: "Internal"
+    tag: "ListInvitationsErrorInternal"
     error: string
 }
 export interface ListInvitationsErrorOffline {
-    tag: "Offline"
+    tag: "ListInvitationsErrorOffline"
     error: string
 }
 export type ListInvitationsError =
@@ -2552,14 +2552,14 @@ export type ListInvitationsError =
 
 // MountpointMountStrategy
 export interface MountpointMountStrategyDirectory {
-    tag: "Directory"
+    tag: "MountpointMountStrategyDirectory"
     base_dir: string
 }
 export interface MountpointMountStrategyDisabled {
-    tag: "Disabled"
+    tag: "MountpointMountStrategyDisabled"
 }
 export interface MountpointMountStrategyDriveLetter {
-    tag: "DriveLetter"
+    tag: "MountpointMountStrategyDriveLetter"
 }
 export type MountpointMountStrategy =
   | MountpointMountStrategyDirectory
@@ -2569,7 +2569,7 @@ export type MountpointMountStrategy =
 
 // MountpointToOsPathError
 export interface MountpointToOsPathErrorInternal {
-    tag: "Internal"
+    tag: "MountpointToOsPathErrorInternal"
     error: string
 }
 export type MountpointToOsPathError =
@@ -2578,7 +2578,7 @@ export type MountpointToOsPathError =
 
 // MountpointUnmountError
 export interface MountpointUnmountErrorInternal {
-    tag: "Internal"
+    tag: "MountpointUnmountErrorInternal"
     error: string
 }
 export type MountpointUnmountError =
@@ -2587,16 +2587,16 @@ export type MountpointUnmountError =
 
 // MoveEntryMode
 export interface MoveEntryModeCanReplace {
-    tag: "CanReplace"
+    tag: "MoveEntryModeCanReplace"
 }
 export interface MoveEntryModeCanReplaceFileOnly {
-    tag: "CanReplaceFileOnly"
+    tag: "MoveEntryModeCanReplaceFileOnly"
 }
 export interface MoveEntryModeExchange {
-    tag: "Exchange"
+    tag: "MoveEntryModeExchange"
 }
 export interface MoveEntryModeNoReplace {
-    tag: "NoReplace"
+    tag: "MoveEntryModeNoReplace"
 }
 export type MoveEntryMode =
   | MoveEntryModeCanReplace
@@ -2607,7 +2607,7 @@ export type MoveEntryMode =
 
 // OtherShamirRecoveryInfo
 export interface OtherShamirRecoveryInfoDeleted {
-    tag: "Deleted"
+    tag: "OtherShamirRecoveryInfoDeleted"
     user_id: string
     created_on: number
     created_by: string
@@ -2617,7 +2617,7 @@ export interface OtherShamirRecoveryInfoDeleted {
     deleted_by: string
 }
 export interface OtherShamirRecoveryInfoSetupAllValid {
-    tag: "SetupAllValid"
+    tag: "OtherShamirRecoveryInfoSetupAllValid"
     user_id: string
     created_on: number
     created_by: string
@@ -2625,7 +2625,7 @@ export interface OtherShamirRecoveryInfoSetupAllValid {
     per_recipient_shares: Map<string, number>
 }
 export interface OtherShamirRecoveryInfoSetupButUnusable {
-    tag: "SetupButUnusable"
+    tag: "OtherShamirRecoveryInfoSetupButUnusable"
     user_id: string
     created_on: number
     created_by: string
@@ -2634,7 +2634,7 @@ export interface OtherShamirRecoveryInfoSetupButUnusable {
     revoked_recipients: Array<string>
 }
 export interface OtherShamirRecoveryInfoSetupWithRevokedRecipients {
-    tag: "SetupWithRevokedRecipients"
+    tag: "OtherShamirRecoveryInfoSetupWithRevokedRecipients"
     user_id: string
     created_on: number
     created_by: string
@@ -2651,7 +2651,7 @@ export type OtherShamirRecoveryInfo =
 
 // ParseParsecAddrError
 export interface ParseParsecAddrErrorInvalidUrl {
-    tag: "InvalidUrl"
+    tag: "ParseParsecAddrErrorInvalidUrl"
     error: string
 }
 export type ParseParsecAddrError =
@@ -2660,7 +2660,7 @@ export type ParseParsecAddrError =
 
 // ParsedParsecAddr
 export interface ParsedParsecAddrInvitationDevice {
-    tag: "InvitationDevice"
+    tag: "ParsedParsecAddrInvitationDevice"
     hostname: string
     port: number
     use_ssl: boolean
@@ -2668,7 +2668,7 @@ export interface ParsedParsecAddrInvitationDevice {
     token: string
 }
 export interface ParsedParsecAddrInvitationShamirRecovery {
-    tag: "InvitationShamirRecovery"
+    tag: "ParsedParsecAddrInvitationShamirRecovery"
     hostname: string
     port: number
     use_ssl: boolean
@@ -2676,7 +2676,7 @@ export interface ParsedParsecAddrInvitationShamirRecovery {
     token: string
 }
 export interface ParsedParsecAddrInvitationUser {
-    tag: "InvitationUser"
+    tag: "ParsedParsecAddrInvitationUser"
     hostname: string
     port: number
     use_ssl: boolean
@@ -2684,14 +2684,14 @@ export interface ParsedParsecAddrInvitationUser {
     token: string
 }
 export interface ParsedParsecAddrOrganization {
-    tag: "Organization"
+    tag: "ParsedParsecAddrOrganization"
     hostname: string
     port: number
     use_ssl: boolean
     organization_id: string
 }
 export interface ParsedParsecAddrOrganizationBootstrap {
-    tag: "OrganizationBootstrap"
+    tag: "ParsedParsecAddrOrganizationBootstrap"
     hostname: string
     port: number
     use_ssl: boolean
@@ -2699,20 +2699,20 @@ export interface ParsedParsecAddrOrganizationBootstrap {
     token: string | null
 }
 export interface ParsedParsecAddrPkiEnrollment {
-    tag: "PkiEnrollment"
+    tag: "ParsedParsecAddrPkiEnrollment"
     hostname: string
     port: number
     use_ssl: boolean
     organization_id: string
 }
 export interface ParsedParsecAddrServer {
-    tag: "Server"
+    tag: "ParsedParsecAddrServer"
     hostname: string
     port: number
     use_ssl: boolean
 }
 export interface ParsedParsecAddrWorkspacePath {
-    tag: "WorkspacePath"
+    tag: "ParsedParsecAddrWorkspacePath"
     hostname: string
     port: number
     use_ssl: boolean
@@ -2734,7 +2734,7 @@ export type ParsedParsecAddr =
 
 // SelfShamirRecoveryInfo
 export interface SelfShamirRecoveryInfoDeleted {
-    tag: "Deleted"
+    tag: "SelfShamirRecoveryInfoDeleted"
     created_on: number
     created_by: string
     threshold: number
@@ -2743,17 +2743,17 @@ export interface SelfShamirRecoveryInfoDeleted {
     deleted_by: string
 }
 export interface SelfShamirRecoveryInfoNeverSetup {
-    tag: "NeverSetup"
+    tag: "SelfShamirRecoveryInfoNeverSetup"
 }
 export interface SelfShamirRecoveryInfoSetupAllValid {
-    tag: "SetupAllValid"
+    tag: "SelfShamirRecoveryInfoSetupAllValid"
     created_on: number
     created_by: string
     threshold: number
     per_recipient_shares: Map<string, number>
 }
 export interface SelfShamirRecoveryInfoSetupButUnusable {
-    tag: "SetupButUnusable"
+    tag: "SelfShamirRecoveryInfoSetupButUnusable"
     created_on: number
     created_by: string
     threshold: number
@@ -2761,7 +2761,7 @@ export interface SelfShamirRecoveryInfoSetupButUnusable {
     revoked_recipients: Array<string>
 }
 export interface SelfShamirRecoveryInfoSetupWithRevokedRecipients {
-    tag: "SetupWithRevokedRecipients"
+    tag: "SelfShamirRecoveryInfoSetupWithRevokedRecipients"
     created_on: number
     created_by: string
     threshold: number
@@ -2778,15 +2778,15 @@ export type SelfShamirRecoveryInfo =
 
 // ShamirRecoveryClaimAddShareError
 export interface ShamirRecoveryClaimAddShareErrorCorruptedSecret {
-    tag: "CorruptedSecret"
+    tag: "ShamirRecoveryClaimAddShareErrorCorruptedSecret"
     error: string
 }
 export interface ShamirRecoveryClaimAddShareErrorInternal {
-    tag: "Internal"
+    tag: "ShamirRecoveryClaimAddShareErrorInternal"
     error: string
 }
 export interface ShamirRecoveryClaimAddShareErrorRecipientNotFound {
-    tag: "RecipientNotFound"
+    tag: "ShamirRecoveryClaimAddShareErrorRecipientNotFound"
     error: string
 }
 export type ShamirRecoveryClaimAddShareError =
@@ -2797,11 +2797,11 @@ export type ShamirRecoveryClaimAddShareError =
 
 // ShamirRecoveryClaimMaybeFinalizeInfo
 export interface ShamirRecoveryClaimMaybeFinalizeInfoFinalize {
-    tag: "Finalize"
+    tag: "ShamirRecoveryClaimMaybeFinalizeInfoFinalize"
     handle: number
 }
 export interface ShamirRecoveryClaimMaybeFinalizeInfoOffline {
-    tag: "Offline"
+    tag: "ShamirRecoveryClaimMaybeFinalizeInfoOffline"
     handle: number
 }
 export type ShamirRecoveryClaimMaybeFinalizeInfo =
@@ -2811,7 +2811,7 @@ export type ShamirRecoveryClaimMaybeFinalizeInfo =
 
 // ShamirRecoveryClaimMaybeRecoverDeviceInfo
 export interface ShamirRecoveryClaimMaybeRecoverDeviceInfoPickRecipient {
-    tag: "PickRecipient"
+    tag: "ShamirRecoveryClaimMaybeRecoverDeviceInfoPickRecipient"
     handle: number
     claimer_user_id: string
     claimer_human_handle: HumanHandle
@@ -2822,7 +2822,7 @@ export interface ShamirRecoveryClaimMaybeRecoverDeviceInfoPickRecipient {
     is_recoverable: boolean
 }
 export interface ShamirRecoveryClaimMaybeRecoverDeviceInfoRecoverDevice {
-    tag: "RecoverDevice"
+    tag: "ShamirRecoveryClaimMaybeRecoverDeviceInfoRecoverDevice"
     handle: number
     claimer_user_id: string
     claimer_human_handle: HumanHandle
@@ -2834,19 +2834,19 @@ export type ShamirRecoveryClaimMaybeRecoverDeviceInfo =
 
 // ShamirRecoveryClaimPickRecipientError
 export interface ShamirRecoveryClaimPickRecipientErrorInternal {
-    tag: "Internal"
+    tag: "ShamirRecoveryClaimPickRecipientErrorInternal"
     error: string
 }
 export interface ShamirRecoveryClaimPickRecipientErrorRecipientAlreadyPicked {
-    tag: "RecipientAlreadyPicked"
+    tag: "ShamirRecoveryClaimPickRecipientErrorRecipientAlreadyPicked"
     error: string
 }
 export interface ShamirRecoveryClaimPickRecipientErrorRecipientNotFound {
-    tag: "RecipientNotFound"
+    tag: "ShamirRecoveryClaimPickRecipientErrorRecipientNotFound"
     error: string
 }
 export interface ShamirRecoveryClaimPickRecipientErrorRecipientRevoked {
-    tag: "RecipientRevoked"
+    tag: "ShamirRecoveryClaimPickRecipientErrorRecipientRevoked"
     error: string
 }
 export type ShamirRecoveryClaimPickRecipientError =
@@ -2858,31 +2858,31 @@ export type ShamirRecoveryClaimPickRecipientError =
 
 // ShamirRecoveryClaimRecoverDeviceError
 export interface ShamirRecoveryClaimRecoverDeviceErrorAlreadyUsed {
-    tag: "AlreadyUsed"
+    tag: "ShamirRecoveryClaimRecoverDeviceErrorAlreadyUsed"
     error: string
 }
 export interface ShamirRecoveryClaimRecoverDeviceErrorCipheredDataNotFound {
-    tag: "CipheredDataNotFound"
+    tag: "ShamirRecoveryClaimRecoverDeviceErrorCipheredDataNotFound"
     error: string
 }
 export interface ShamirRecoveryClaimRecoverDeviceErrorCorruptedCipheredData {
-    tag: "CorruptedCipheredData"
+    tag: "ShamirRecoveryClaimRecoverDeviceErrorCorruptedCipheredData"
     error: string
 }
 export interface ShamirRecoveryClaimRecoverDeviceErrorInternal {
-    tag: "Internal"
+    tag: "ShamirRecoveryClaimRecoverDeviceErrorInternal"
     error: string
 }
 export interface ShamirRecoveryClaimRecoverDeviceErrorNotFound {
-    tag: "NotFound"
+    tag: "ShamirRecoveryClaimRecoverDeviceErrorNotFound"
     error: string
 }
 export interface ShamirRecoveryClaimRecoverDeviceErrorOrganizationExpired {
-    tag: "OrganizationExpired"
+    tag: "ShamirRecoveryClaimRecoverDeviceErrorOrganizationExpired"
     error: string
 }
 export interface ShamirRecoveryClaimRecoverDeviceErrorRegisterNewDeviceError {
-    tag: "RegisterNewDeviceError"
+    tag: "ShamirRecoveryClaimRecoverDeviceErrorRegisterNewDeviceError"
     error: string
 }
 export type ShamirRecoveryClaimRecoverDeviceError =
@@ -2897,11 +2897,11 @@ export type ShamirRecoveryClaimRecoverDeviceError =
 
 // ShowCertificateSelectionDialogError
 export interface ShowCertificateSelectionDialogErrorCannotGetCertificateInfo {
-    tag: "CannotGetCertificateInfo"
+    tag: "ShowCertificateSelectionDialogErrorCannotGetCertificateInfo"
     error: string
 }
 export interface ShowCertificateSelectionDialogErrorCannotOpenStore {
-    tag: "CannotOpenStore"
+    tag: "ShowCertificateSelectionDialogErrorCannotOpenStore"
     error: string
 }
 export type ShowCertificateSelectionDialogError =
@@ -2911,11 +2911,11 @@ export type ShowCertificateSelectionDialogError =
 
 // TestbedError
 export interface TestbedErrorDisabled {
-    tag: "Disabled"
+    tag: "TestbedErrorDisabled"
     error: string
 }
 export interface TestbedErrorInternal {
-    tag: "Internal"
+    tag: "TestbedErrorInternal"
     error: string
 }
 export type TestbedError =
@@ -2925,23 +2925,23 @@ export type TestbedError =
 
 // UpdateDeviceError
 export interface UpdateDeviceErrorDecryptionFailed {
-    tag: "DecryptionFailed"
+    tag: "UpdateDeviceErrorDecryptionFailed"
     error: string
 }
 export interface UpdateDeviceErrorInternal {
-    tag: "Internal"
+    tag: "UpdateDeviceErrorInternal"
     error: string
 }
 export interface UpdateDeviceErrorInvalidData {
-    tag: "InvalidData"
+    tag: "UpdateDeviceErrorInvalidData"
     error: string
 }
 export interface UpdateDeviceErrorInvalidPath {
-    tag: "InvalidPath"
+    tag: "UpdateDeviceErrorInvalidPath"
     error: string
 }
 export interface UpdateDeviceErrorStorageNotAvailable {
-    tag: "StorageNotAvailable"
+    tag: "UpdateDeviceErrorStorageNotAvailable"
     error: string
 }
 export type UpdateDeviceError =
@@ -2954,7 +2954,7 @@ export type UpdateDeviceError =
 
 // UserClaimListInitialInfosError
 export interface UserClaimListInitialInfosErrorInternal {
-    tag: "Internal"
+    tag: "UserClaimListInitialInfosErrorInternal"
     error: string
 }
 export type UserClaimListInitialInfosError =
@@ -2963,7 +2963,7 @@ export type UserClaimListInitialInfosError =
 
 // WaitForDeviceAvailableError
 export interface WaitForDeviceAvailableErrorInternal {
-    tag: "Internal"
+    tag: "WaitForDeviceAvailableErrorInternal"
     error: string
 }
 export type WaitForDeviceAvailableError =
@@ -2972,47 +2972,47 @@ export type WaitForDeviceAvailableError =
 
 // WorkspaceCreateFileError
 export interface WorkspaceCreateFileErrorEntryExists {
-    tag: "EntryExists"
+    tag: "WorkspaceCreateFileErrorEntryExists"
     error: string
 }
 export interface WorkspaceCreateFileErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceCreateFileErrorInternal"
     error: string
 }
 export interface WorkspaceCreateFileErrorInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "WorkspaceCreateFileErrorInvalidCertificate"
     error: string
 }
 export interface WorkspaceCreateFileErrorInvalidKeysBundle {
-    tag: "InvalidKeysBundle"
+    tag: "WorkspaceCreateFileErrorInvalidKeysBundle"
     error: string
 }
 export interface WorkspaceCreateFileErrorInvalidManifest {
-    tag: "InvalidManifest"
+    tag: "WorkspaceCreateFileErrorInvalidManifest"
     error: string
 }
 export interface WorkspaceCreateFileErrorNoRealmAccess {
-    tag: "NoRealmAccess"
+    tag: "WorkspaceCreateFileErrorNoRealmAccess"
     error: string
 }
 export interface WorkspaceCreateFileErrorOffline {
-    tag: "Offline"
+    tag: "WorkspaceCreateFileErrorOffline"
     error: string
 }
 export interface WorkspaceCreateFileErrorParentNotAFolder {
-    tag: "ParentNotAFolder"
+    tag: "WorkspaceCreateFileErrorParentNotAFolder"
     error: string
 }
 export interface WorkspaceCreateFileErrorParentNotFound {
-    tag: "ParentNotFound"
+    tag: "WorkspaceCreateFileErrorParentNotFound"
     error: string
 }
 export interface WorkspaceCreateFileErrorReadOnlyRealm {
-    tag: "ReadOnlyRealm"
+    tag: "WorkspaceCreateFileErrorReadOnlyRealm"
     error: string
 }
 export interface WorkspaceCreateFileErrorStopped {
-    tag: "Stopped"
+    tag: "WorkspaceCreateFileErrorStopped"
     error: string
 }
 export type WorkspaceCreateFileError =
@@ -3031,47 +3031,47 @@ export type WorkspaceCreateFileError =
 
 // WorkspaceCreateFolderError
 export interface WorkspaceCreateFolderErrorEntryExists {
-    tag: "EntryExists"
+    tag: "WorkspaceCreateFolderErrorEntryExists"
     error: string
 }
 export interface WorkspaceCreateFolderErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceCreateFolderErrorInternal"
     error: string
 }
 export interface WorkspaceCreateFolderErrorInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "WorkspaceCreateFolderErrorInvalidCertificate"
     error: string
 }
 export interface WorkspaceCreateFolderErrorInvalidKeysBundle {
-    tag: "InvalidKeysBundle"
+    tag: "WorkspaceCreateFolderErrorInvalidKeysBundle"
     error: string
 }
 export interface WorkspaceCreateFolderErrorInvalidManifest {
-    tag: "InvalidManifest"
+    tag: "WorkspaceCreateFolderErrorInvalidManifest"
     error: string
 }
 export interface WorkspaceCreateFolderErrorNoRealmAccess {
-    tag: "NoRealmAccess"
+    tag: "WorkspaceCreateFolderErrorNoRealmAccess"
     error: string
 }
 export interface WorkspaceCreateFolderErrorOffline {
-    tag: "Offline"
+    tag: "WorkspaceCreateFolderErrorOffline"
     error: string
 }
 export interface WorkspaceCreateFolderErrorParentNotAFolder {
-    tag: "ParentNotAFolder"
+    tag: "WorkspaceCreateFolderErrorParentNotAFolder"
     error: string
 }
 export interface WorkspaceCreateFolderErrorParentNotFound {
-    tag: "ParentNotFound"
+    tag: "WorkspaceCreateFolderErrorParentNotFound"
     error: string
 }
 export interface WorkspaceCreateFolderErrorReadOnlyRealm {
-    tag: "ReadOnlyRealm"
+    tag: "WorkspaceCreateFolderErrorReadOnlyRealm"
     error: string
 }
 export interface WorkspaceCreateFolderErrorStopped {
-    tag: "Stopped"
+    tag: "WorkspaceCreateFolderErrorStopped"
     error: string
 }
 export type WorkspaceCreateFolderError =
@@ -3090,39 +3090,39 @@ export type WorkspaceCreateFolderError =
 
 // WorkspaceDecryptPathAddrError
 export interface WorkspaceDecryptPathAddrErrorCorruptedData {
-    tag: "CorruptedData"
+    tag: "WorkspaceDecryptPathAddrErrorCorruptedData"
     error: string
 }
 export interface WorkspaceDecryptPathAddrErrorCorruptedKey {
-    tag: "CorruptedKey"
+    tag: "WorkspaceDecryptPathAddrErrorCorruptedKey"
     error: string
 }
 export interface WorkspaceDecryptPathAddrErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceDecryptPathAddrErrorInternal"
     error: string
 }
 export interface WorkspaceDecryptPathAddrErrorInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "WorkspaceDecryptPathAddrErrorInvalidCertificate"
     error: string
 }
 export interface WorkspaceDecryptPathAddrErrorInvalidKeysBundle {
-    tag: "InvalidKeysBundle"
+    tag: "WorkspaceDecryptPathAddrErrorInvalidKeysBundle"
     error: string
 }
 export interface WorkspaceDecryptPathAddrErrorKeyNotFound {
-    tag: "KeyNotFound"
+    tag: "WorkspaceDecryptPathAddrErrorKeyNotFound"
     error: string
 }
 export interface WorkspaceDecryptPathAddrErrorNotAllowed {
-    tag: "NotAllowed"
+    tag: "WorkspaceDecryptPathAddrErrorNotAllowed"
     error: string
 }
 export interface WorkspaceDecryptPathAddrErrorOffline {
-    tag: "Offline"
+    tag: "WorkspaceDecryptPathAddrErrorOffline"
     error: string
 }
 export interface WorkspaceDecryptPathAddrErrorStopped {
-    tag: "Stopped"
+    tag: "WorkspaceDecryptPathAddrErrorStopped"
     error: string
 }
 export type WorkspaceDecryptPathAddrError =
@@ -3139,15 +3139,15 @@ export type WorkspaceDecryptPathAddrError =
 
 // WorkspaceFdCloseError
 export interface WorkspaceFdCloseErrorBadFileDescriptor {
-    tag: "BadFileDescriptor"
+    tag: "WorkspaceFdCloseErrorBadFileDescriptor"
     error: string
 }
 export interface WorkspaceFdCloseErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceFdCloseErrorInternal"
     error: string
 }
 export interface WorkspaceFdCloseErrorStopped {
-    tag: "Stopped"
+    tag: "WorkspaceFdCloseErrorStopped"
     error: string
 }
 export type WorkspaceFdCloseError =
@@ -3158,19 +3158,19 @@ export type WorkspaceFdCloseError =
 
 // WorkspaceFdFlushError
 export interface WorkspaceFdFlushErrorBadFileDescriptor {
-    tag: "BadFileDescriptor"
+    tag: "WorkspaceFdFlushErrorBadFileDescriptor"
     error: string
 }
 export interface WorkspaceFdFlushErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceFdFlushErrorInternal"
     error: string
 }
 export interface WorkspaceFdFlushErrorNotInWriteMode {
-    tag: "NotInWriteMode"
+    tag: "WorkspaceFdFlushErrorNotInWriteMode"
     error: string
 }
 export interface WorkspaceFdFlushErrorStopped {
-    tag: "Stopped"
+    tag: "WorkspaceFdFlushErrorStopped"
     error: string
 }
 export type WorkspaceFdFlushError =
@@ -3182,43 +3182,43 @@ export type WorkspaceFdFlushError =
 
 // WorkspaceFdReadError
 export interface WorkspaceFdReadErrorBadFileDescriptor {
-    tag: "BadFileDescriptor"
+    tag: "WorkspaceFdReadErrorBadFileDescriptor"
     error: string
 }
 export interface WorkspaceFdReadErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceFdReadErrorInternal"
     error: string
 }
 export interface WorkspaceFdReadErrorInvalidBlockAccess {
-    tag: "InvalidBlockAccess"
+    tag: "WorkspaceFdReadErrorInvalidBlockAccess"
     error: string
 }
 export interface WorkspaceFdReadErrorInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "WorkspaceFdReadErrorInvalidCertificate"
     error: string
 }
 export interface WorkspaceFdReadErrorInvalidKeysBundle {
-    tag: "InvalidKeysBundle"
+    tag: "WorkspaceFdReadErrorInvalidKeysBundle"
     error: string
 }
 export interface WorkspaceFdReadErrorNoRealmAccess {
-    tag: "NoRealmAccess"
+    tag: "WorkspaceFdReadErrorNoRealmAccess"
     error: string
 }
 export interface WorkspaceFdReadErrorNotInReadMode {
-    tag: "NotInReadMode"
+    tag: "WorkspaceFdReadErrorNotInReadMode"
     error: string
 }
 export interface WorkspaceFdReadErrorOffline {
-    tag: "Offline"
+    tag: "WorkspaceFdReadErrorOffline"
     error: string
 }
 export interface WorkspaceFdReadErrorServerBlockstoreUnavailable {
-    tag: "ServerBlockstoreUnavailable"
+    tag: "WorkspaceFdReadErrorServerBlockstoreUnavailable"
     error: string
 }
 export interface WorkspaceFdReadErrorStopped {
-    tag: "Stopped"
+    tag: "WorkspaceFdReadErrorStopped"
     error: string
 }
 export type WorkspaceFdReadError =
@@ -3236,15 +3236,15 @@ export type WorkspaceFdReadError =
 
 // WorkspaceFdResizeError
 export interface WorkspaceFdResizeErrorBadFileDescriptor {
-    tag: "BadFileDescriptor"
+    tag: "WorkspaceFdResizeErrorBadFileDescriptor"
     error: string
 }
 export interface WorkspaceFdResizeErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceFdResizeErrorInternal"
     error: string
 }
 export interface WorkspaceFdResizeErrorNotInWriteMode {
-    tag: "NotInWriteMode"
+    tag: "WorkspaceFdResizeErrorNotInWriteMode"
     error: string
 }
 export type WorkspaceFdResizeError =
@@ -3255,11 +3255,11 @@ export type WorkspaceFdResizeError =
 
 // WorkspaceFdStatError
 export interface WorkspaceFdStatErrorBadFileDescriptor {
-    tag: "BadFileDescriptor"
+    tag: "WorkspaceFdStatErrorBadFileDescriptor"
     error: string
 }
 export interface WorkspaceFdStatErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceFdStatErrorInternal"
     error: string
 }
 export type WorkspaceFdStatError =
@@ -3269,15 +3269,15 @@ export type WorkspaceFdStatError =
 
 // WorkspaceFdWriteError
 export interface WorkspaceFdWriteErrorBadFileDescriptor {
-    tag: "BadFileDescriptor"
+    tag: "WorkspaceFdWriteErrorBadFileDescriptor"
     error: string
 }
 export interface WorkspaceFdWriteErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceFdWriteErrorInternal"
     error: string
 }
 export interface WorkspaceFdWriteErrorNotInWriteMode {
-    tag: "NotInWriteMode"
+    tag: "WorkspaceFdWriteErrorNotInWriteMode"
     error: string
 }
 export type WorkspaceFdWriteError =
@@ -3288,27 +3288,27 @@ export type WorkspaceFdWriteError =
 
 // WorkspaceGeneratePathAddrError
 export interface WorkspaceGeneratePathAddrErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceGeneratePathAddrErrorInternal"
     error: string
 }
 export interface WorkspaceGeneratePathAddrErrorInvalidKeysBundle {
-    tag: "InvalidKeysBundle"
+    tag: "WorkspaceGeneratePathAddrErrorInvalidKeysBundle"
     error: string
 }
 export interface WorkspaceGeneratePathAddrErrorNoKey {
-    tag: "NoKey"
+    tag: "WorkspaceGeneratePathAddrErrorNoKey"
     error: string
 }
 export interface WorkspaceGeneratePathAddrErrorNotAllowed {
-    tag: "NotAllowed"
+    tag: "WorkspaceGeneratePathAddrErrorNotAllowed"
     error: string
 }
 export interface WorkspaceGeneratePathAddrErrorOffline {
-    tag: "Offline"
+    tag: "WorkspaceGeneratePathAddrErrorOffline"
     error: string
 }
 export interface WorkspaceGeneratePathAddrErrorStopped {
-    tag: "Stopped"
+    tag: "WorkspaceGeneratePathAddrErrorStopped"
     error: string
 }
 export type WorkspaceGeneratePathAddrError =
@@ -3322,7 +3322,7 @@ export type WorkspaceGeneratePathAddrError =
 
 // WorkspaceHistoryEntryStat
 export interface WorkspaceHistoryEntryStatFile {
-    tag: "File"
+    tag: "WorkspaceHistoryEntryStatFile"
     id: string
     parent: string
     created: number
@@ -3332,7 +3332,7 @@ export interface WorkspaceHistoryEntryStatFile {
     last_updater: string
 }
 export interface WorkspaceHistoryEntryStatFolder {
-    tag: "Folder"
+    tag: "WorkspaceHistoryEntryStatFolder"
     id: string
     parent: string
     created: number
@@ -3347,11 +3347,11 @@ export type WorkspaceHistoryEntryStat =
 
 // WorkspaceHistoryFdCloseError
 export interface WorkspaceHistoryFdCloseErrorBadFileDescriptor {
-    tag: "BadFileDescriptor"
+    tag: "WorkspaceHistoryFdCloseErrorBadFileDescriptor"
     error: string
 }
 export interface WorkspaceHistoryFdCloseErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceHistoryFdCloseErrorInternal"
     error: string
 }
 export type WorkspaceHistoryFdCloseError =
@@ -3361,39 +3361,39 @@ export type WorkspaceHistoryFdCloseError =
 
 // WorkspaceHistoryFdReadError
 export interface WorkspaceHistoryFdReadErrorBadFileDescriptor {
-    tag: "BadFileDescriptor"
+    tag: "WorkspaceHistoryFdReadErrorBadFileDescriptor"
     error: string
 }
 export interface WorkspaceHistoryFdReadErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceHistoryFdReadErrorInternal"
     error: string
 }
 export interface WorkspaceHistoryFdReadErrorInvalidBlockAccess {
-    tag: "InvalidBlockAccess"
+    tag: "WorkspaceHistoryFdReadErrorInvalidBlockAccess"
     error: string
 }
 export interface WorkspaceHistoryFdReadErrorInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "WorkspaceHistoryFdReadErrorInvalidCertificate"
     error: string
 }
 export interface WorkspaceHistoryFdReadErrorInvalidKeysBundle {
-    tag: "InvalidKeysBundle"
+    tag: "WorkspaceHistoryFdReadErrorInvalidKeysBundle"
     error: string
 }
 export interface WorkspaceHistoryFdReadErrorNoRealmAccess {
-    tag: "NoRealmAccess"
+    tag: "WorkspaceHistoryFdReadErrorNoRealmAccess"
     error: string
 }
 export interface WorkspaceHistoryFdReadErrorOffline {
-    tag: "Offline"
+    tag: "WorkspaceHistoryFdReadErrorOffline"
     error: string
 }
 export interface WorkspaceHistoryFdReadErrorServerBlockstoreUnavailable {
-    tag: "ServerBlockstoreUnavailable"
+    tag: "WorkspaceHistoryFdReadErrorServerBlockstoreUnavailable"
     error: string
 }
 export interface WorkspaceHistoryFdReadErrorStopped {
-    tag: "Stopped"
+    tag: "WorkspaceHistoryFdReadErrorStopped"
     error: string
 }
 export type WorkspaceHistoryFdReadError =
@@ -3410,11 +3410,11 @@ export type WorkspaceHistoryFdReadError =
 
 // WorkspaceHistoryFdStatError
 export interface WorkspaceHistoryFdStatErrorBadFileDescriptor {
-    tag: "BadFileDescriptor"
+    tag: "WorkspaceHistoryFdStatErrorBadFileDescriptor"
     error: string
 }
 export interface WorkspaceHistoryFdStatErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceHistoryFdStatErrorInternal"
     error: string
 }
 export type WorkspaceHistoryFdStatError =
@@ -3424,7 +3424,7 @@ export type WorkspaceHistoryFdStatError =
 
 // WorkspaceHistoryInternalOnlyError
 export interface WorkspaceHistoryInternalOnlyErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceHistoryInternalOnlyErrorInternal"
     error: string
 }
 export type WorkspaceHistoryInternalOnlyError =
@@ -3433,43 +3433,43 @@ export type WorkspaceHistoryInternalOnlyError =
 
 // WorkspaceHistoryOpenFileError
 export interface WorkspaceHistoryOpenFileErrorEntryNotAFile {
-    tag: "EntryNotAFile"
+    tag: "WorkspaceHistoryOpenFileErrorEntryNotAFile"
     error: string
 }
 export interface WorkspaceHistoryOpenFileErrorEntryNotFound {
-    tag: "EntryNotFound"
+    tag: "WorkspaceHistoryOpenFileErrorEntryNotFound"
     error: string
 }
 export interface WorkspaceHistoryOpenFileErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceHistoryOpenFileErrorInternal"
     error: string
 }
 export interface WorkspaceHistoryOpenFileErrorInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "WorkspaceHistoryOpenFileErrorInvalidCertificate"
     error: string
 }
 export interface WorkspaceHistoryOpenFileErrorInvalidHistory {
-    tag: "InvalidHistory"
+    tag: "WorkspaceHistoryOpenFileErrorInvalidHistory"
     error: string
 }
 export interface WorkspaceHistoryOpenFileErrorInvalidKeysBundle {
-    tag: "InvalidKeysBundle"
+    tag: "WorkspaceHistoryOpenFileErrorInvalidKeysBundle"
     error: string
 }
 export interface WorkspaceHistoryOpenFileErrorInvalidManifest {
-    tag: "InvalidManifest"
+    tag: "WorkspaceHistoryOpenFileErrorInvalidManifest"
     error: string
 }
 export interface WorkspaceHistoryOpenFileErrorNoRealmAccess {
-    tag: "NoRealmAccess"
+    tag: "WorkspaceHistoryOpenFileErrorNoRealmAccess"
     error: string
 }
 export interface WorkspaceHistoryOpenFileErrorOffline {
-    tag: "Offline"
+    tag: "WorkspaceHistoryOpenFileErrorOffline"
     error: string
 }
 export interface WorkspaceHistoryOpenFileErrorStopped {
-    tag: "Stopped"
+    tag: "WorkspaceHistoryOpenFileErrorStopped"
     error: string
 }
 export type WorkspaceHistoryOpenFileError =
@@ -3487,12 +3487,12 @@ export type WorkspaceHistoryOpenFileError =
 
 // WorkspaceHistoryRealmExportDecryptor
 export interface WorkspaceHistoryRealmExportDecryptorSequesterService {
-    tag: "SequesterService"
+    tag: "WorkspaceHistoryRealmExportDecryptorSequesterService"
     sequester_service_id: string
     private_key_pem_path: string
 }
 export interface WorkspaceHistoryRealmExportDecryptorUser {
-    tag: "User"
+    tag: "WorkspaceHistoryRealmExportDecryptorUser"
     access: DeviceAccessStrategy
 }
 export type WorkspaceHistoryRealmExportDecryptor =
@@ -3502,47 +3502,47 @@ export type WorkspaceHistoryRealmExportDecryptor =
 
 // WorkspaceHistorySetTimestampOfInterestError
 export interface WorkspaceHistorySetTimestampOfInterestErrorEntryNotFound {
-    tag: "EntryNotFound"
+    tag: "WorkspaceHistorySetTimestampOfInterestErrorEntryNotFound"
     error: string
 }
 export interface WorkspaceHistorySetTimestampOfInterestErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceHistorySetTimestampOfInterestErrorInternal"
     error: string
 }
 export interface WorkspaceHistorySetTimestampOfInterestErrorInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "WorkspaceHistorySetTimestampOfInterestErrorInvalidCertificate"
     error: string
 }
 export interface WorkspaceHistorySetTimestampOfInterestErrorInvalidHistory {
-    tag: "InvalidHistory"
+    tag: "WorkspaceHistorySetTimestampOfInterestErrorInvalidHistory"
     error: string
 }
 export interface WorkspaceHistorySetTimestampOfInterestErrorInvalidKeysBundle {
-    tag: "InvalidKeysBundle"
+    tag: "WorkspaceHistorySetTimestampOfInterestErrorInvalidKeysBundle"
     error: string
 }
 export interface WorkspaceHistorySetTimestampOfInterestErrorInvalidManifest {
-    tag: "InvalidManifest"
+    tag: "WorkspaceHistorySetTimestampOfInterestErrorInvalidManifest"
     error: string
 }
 export interface WorkspaceHistorySetTimestampOfInterestErrorNewerThanHigherBound {
-    tag: "NewerThanHigherBound"
+    tag: "WorkspaceHistorySetTimestampOfInterestErrorNewerThanHigherBound"
     error: string
 }
 export interface WorkspaceHistorySetTimestampOfInterestErrorNoRealmAccess {
-    tag: "NoRealmAccess"
+    tag: "WorkspaceHistorySetTimestampOfInterestErrorNoRealmAccess"
     error: string
 }
 export interface WorkspaceHistorySetTimestampOfInterestErrorOffline {
-    tag: "Offline"
+    tag: "WorkspaceHistorySetTimestampOfInterestErrorOffline"
     error: string
 }
 export interface WorkspaceHistorySetTimestampOfInterestErrorOlderThanLowerBound {
-    tag: "OlderThanLowerBound"
+    tag: "WorkspaceHistorySetTimestampOfInterestErrorOlderThanLowerBound"
     error: string
 }
 export interface WorkspaceHistorySetTimestampOfInterestErrorStopped {
-    tag: "Stopped"
+    tag: "WorkspaceHistorySetTimestampOfInterestErrorStopped"
     error: string
 }
 export type WorkspaceHistorySetTimestampOfInterestError =
@@ -3561,51 +3561,51 @@ export type WorkspaceHistorySetTimestampOfInterestError =
 
 // WorkspaceHistoryStartError
 export interface WorkspaceHistoryStartErrorCannotOpenRealmExportDatabase {
-    tag: "CannotOpenRealmExportDatabase"
+    tag: "WorkspaceHistoryStartErrorCannotOpenRealmExportDatabase"
     error: string
 }
 export interface WorkspaceHistoryStartErrorIncompleteRealmExportDatabase {
-    tag: "IncompleteRealmExportDatabase"
+    tag: "WorkspaceHistoryStartErrorIncompleteRealmExportDatabase"
     error: string
 }
 export interface WorkspaceHistoryStartErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceHistoryStartErrorInternal"
     error: string
 }
 export interface WorkspaceHistoryStartErrorInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "WorkspaceHistoryStartErrorInvalidCertificate"
     error: string
 }
 export interface WorkspaceHistoryStartErrorInvalidKeysBundle {
-    tag: "InvalidKeysBundle"
+    tag: "WorkspaceHistoryStartErrorInvalidKeysBundle"
     error: string
 }
 export interface WorkspaceHistoryStartErrorInvalidManifest {
-    tag: "InvalidManifest"
+    tag: "WorkspaceHistoryStartErrorInvalidManifest"
     error: string
 }
 export interface WorkspaceHistoryStartErrorInvalidRealmExportDatabase {
-    tag: "InvalidRealmExportDatabase"
+    tag: "WorkspaceHistoryStartErrorInvalidRealmExportDatabase"
     error: string
 }
 export interface WorkspaceHistoryStartErrorNoHistory {
-    tag: "NoHistory"
+    tag: "WorkspaceHistoryStartErrorNoHistory"
     error: string
 }
 export interface WorkspaceHistoryStartErrorNoRealmAccess {
-    tag: "NoRealmAccess"
+    tag: "WorkspaceHistoryStartErrorNoRealmAccess"
     error: string
 }
 export interface WorkspaceHistoryStartErrorOffline {
-    tag: "Offline"
+    tag: "WorkspaceHistoryStartErrorOffline"
     error: string
 }
 export interface WorkspaceHistoryStartErrorStopped {
-    tag: "Stopped"
+    tag: "WorkspaceHistoryStartErrorStopped"
     error: string
 }
 export interface WorkspaceHistoryStartErrorUnsupportedRealmExportDatabaseVersion {
-    tag: "UnsupportedRealmExportDatabaseVersion"
+    tag: "WorkspaceHistoryStartErrorUnsupportedRealmExportDatabaseVersion"
     error: string
 }
 export type WorkspaceHistoryStartError =
@@ -3625,39 +3625,39 @@ export type WorkspaceHistoryStartError =
 
 // WorkspaceHistoryStatEntryError
 export interface WorkspaceHistoryStatEntryErrorEntryNotFound {
-    tag: "EntryNotFound"
+    tag: "WorkspaceHistoryStatEntryErrorEntryNotFound"
     error: string
 }
 export interface WorkspaceHistoryStatEntryErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceHistoryStatEntryErrorInternal"
     error: string
 }
 export interface WorkspaceHistoryStatEntryErrorInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "WorkspaceHistoryStatEntryErrorInvalidCertificate"
     error: string
 }
 export interface WorkspaceHistoryStatEntryErrorInvalidHistory {
-    tag: "InvalidHistory"
+    tag: "WorkspaceHistoryStatEntryErrorInvalidHistory"
     error: string
 }
 export interface WorkspaceHistoryStatEntryErrorInvalidKeysBundle {
-    tag: "InvalidKeysBundle"
+    tag: "WorkspaceHistoryStatEntryErrorInvalidKeysBundle"
     error: string
 }
 export interface WorkspaceHistoryStatEntryErrorInvalidManifest {
-    tag: "InvalidManifest"
+    tag: "WorkspaceHistoryStatEntryErrorInvalidManifest"
     error: string
 }
 export interface WorkspaceHistoryStatEntryErrorNoRealmAccess {
-    tag: "NoRealmAccess"
+    tag: "WorkspaceHistoryStatEntryErrorNoRealmAccess"
     error: string
 }
 export interface WorkspaceHistoryStatEntryErrorOffline {
-    tag: "Offline"
+    tag: "WorkspaceHistoryStatEntryErrorOffline"
     error: string
 }
 export interface WorkspaceHistoryStatEntryErrorStopped {
-    tag: "Stopped"
+    tag: "WorkspaceHistoryStatEntryErrorStopped"
     error: string
 }
 export type WorkspaceHistoryStatEntryError =
@@ -3674,43 +3674,43 @@ export type WorkspaceHistoryStatEntryError =
 
 // WorkspaceHistoryStatFolderChildrenError
 export interface WorkspaceHistoryStatFolderChildrenErrorEntryIsFile {
-    tag: "EntryIsFile"
+    tag: "WorkspaceHistoryStatFolderChildrenErrorEntryIsFile"
     error: string
 }
 export interface WorkspaceHistoryStatFolderChildrenErrorEntryNotFound {
-    tag: "EntryNotFound"
+    tag: "WorkspaceHistoryStatFolderChildrenErrorEntryNotFound"
     error: string
 }
 export interface WorkspaceHistoryStatFolderChildrenErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceHistoryStatFolderChildrenErrorInternal"
     error: string
 }
 export interface WorkspaceHistoryStatFolderChildrenErrorInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "WorkspaceHistoryStatFolderChildrenErrorInvalidCertificate"
     error: string
 }
 export interface WorkspaceHistoryStatFolderChildrenErrorInvalidHistory {
-    tag: "InvalidHistory"
+    tag: "WorkspaceHistoryStatFolderChildrenErrorInvalidHistory"
     error: string
 }
 export interface WorkspaceHistoryStatFolderChildrenErrorInvalidKeysBundle {
-    tag: "InvalidKeysBundle"
+    tag: "WorkspaceHistoryStatFolderChildrenErrorInvalidKeysBundle"
     error: string
 }
 export interface WorkspaceHistoryStatFolderChildrenErrorInvalidManifest {
-    tag: "InvalidManifest"
+    tag: "WorkspaceHistoryStatFolderChildrenErrorInvalidManifest"
     error: string
 }
 export interface WorkspaceHistoryStatFolderChildrenErrorNoRealmAccess {
-    tag: "NoRealmAccess"
+    tag: "WorkspaceHistoryStatFolderChildrenErrorNoRealmAccess"
     error: string
 }
 export interface WorkspaceHistoryStatFolderChildrenErrorOffline {
-    tag: "Offline"
+    tag: "WorkspaceHistoryStatFolderChildrenErrorOffline"
     error: string
 }
 export interface WorkspaceHistoryStatFolderChildrenErrorStopped {
-    tag: "Stopped"
+    tag: "WorkspaceHistoryStatFolderChildrenErrorStopped"
     error: string
 }
 export type WorkspaceHistoryStatFolderChildrenError =
@@ -3728,7 +3728,7 @@ export type WorkspaceHistoryStatFolderChildrenError =
 
 // WorkspaceInfoError
 export interface WorkspaceInfoErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceInfoErrorInternal"
     error: string
 }
 export type WorkspaceInfoError =
@@ -3737,39 +3737,39 @@ export type WorkspaceInfoError =
 
 // WorkspaceIsFileContentLocalError
 export interface WorkspaceIsFileContentLocalErrorEntryNotFound {
-    tag: "EntryNotFound"
+    tag: "WorkspaceIsFileContentLocalErrorEntryNotFound"
     error: string
 }
 export interface WorkspaceIsFileContentLocalErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceIsFileContentLocalErrorInternal"
     error: string
 }
 export interface WorkspaceIsFileContentLocalErrorInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "WorkspaceIsFileContentLocalErrorInvalidCertificate"
     error: string
 }
 export interface WorkspaceIsFileContentLocalErrorInvalidKeysBundle {
-    tag: "InvalidKeysBundle"
+    tag: "WorkspaceIsFileContentLocalErrorInvalidKeysBundle"
     error: string
 }
 export interface WorkspaceIsFileContentLocalErrorInvalidManifest {
-    tag: "InvalidManifest"
+    tag: "WorkspaceIsFileContentLocalErrorInvalidManifest"
     error: string
 }
 export interface WorkspaceIsFileContentLocalErrorNoRealmAccess {
-    tag: "NoRealmAccess"
+    tag: "WorkspaceIsFileContentLocalErrorNoRealmAccess"
     error: string
 }
 export interface WorkspaceIsFileContentLocalErrorNotAFile {
-    tag: "NotAFile"
+    tag: "WorkspaceIsFileContentLocalErrorNotAFile"
     error: string
 }
 export interface WorkspaceIsFileContentLocalErrorOffline {
-    tag: "Offline"
+    tag: "WorkspaceIsFileContentLocalErrorOffline"
     error: string
 }
 export interface WorkspaceIsFileContentLocalErrorStopped {
-    tag: "Stopped"
+    tag: "WorkspaceIsFileContentLocalErrorStopped"
     error: string
 }
 export type WorkspaceIsFileContentLocalError =
@@ -3786,11 +3786,11 @@ export type WorkspaceIsFileContentLocalError =
 
 // WorkspaceMountError
 export interface WorkspaceMountErrorDisabled {
-    tag: "Disabled"
+    tag: "WorkspaceMountErrorDisabled"
     error: string
 }
 export interface WorkspaceMountErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceMountErrorInternal"
     error: string
 }
 export type WorkspaceMountError =
@@ -3800,51 +3800,51 @@ export type WorkspaceMountError =
 
 // WorkspaceMoveEntryError
 export interface WorkspaceMoveEntryErrorCannotMoveRoot {
-    tag: "CannotMoveRoot"
+    tag: "WorkspaceMoveEntryErrorCannotMoveRoot"
     error: string
 }
 export interface WorkspaceMoveEntryErrorDestinationExists {
-    tag: "DestinationExists"
+    tag: "WorkspaceMoveEntryErrorDestinationExists"
     error: string
 }
 export interface WorkspaceMoveEntryErrorDestinationNotFound {
-    tag: "DestinationNotFound"
+    tag: "WorkspaceMoveEntryErrorDestinationNotFound"
     error: string
 }
 export interface WorkspaceMoveEntryErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceMoveEntryErrorInternal"
     error: string
 }
 export interface WorkspaceMoveEntryErrorInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "WorkspaceMoveEntryErrorInvalidCertificate"
     error: string
 }
 export interface WorkspaceMoveEntryErrorInvalidKeysBundle {
-    tag: "InvalidKeysBundle"
+    tag: "WorkspaceMoveEntryErrorInvalidKeysBundle"
     error: string
 }
 export interface WorkspaceMoveEntryErrorInvalidManifest {
-    tag: "InvalidManifest"
+    tag: "WorkspaceMoveEntryErrorInvalidManifest"
     error: string
 }
 export interface WorkspaceMoveEntryErrorNoRealmAccess {
-    tag: "NoRealmAccess"
+    tag: "WorkspaceMoveEntryErrorNoRealmAccess"
     error: string
 }
 export interface WorkspaceMoveEntryErrorOffline {
-    tag: "Offline"
+    tag: "WorkspaceMoveEntryErrorOffline"
     error: string
 }
 export interface WorkspaceMoveEntryErrorReadOnlyRealm {
-    tag: "ReadOnlyRealm"
+    tag: "WorkspaceMoveEntryErrorReadOnlyRealm"
     error: string
 }
 export interface WorkspaceMoveEntryErrorSourceNotFound {
-    tag: "SourceNotFound"
+    tag: "WorkspaceMoveEntryErrorSourceNotFound"
     error: string
 }
 export interface WorkspaceMoveEntryErrorStopped {
-    tag: "Stopped"
+    tag: "WorkspaceMoveEntryErrorStopped"
     error: string
 }
 export type WorkspaceMoveEntryError =
@@ -3864,47 +3864,47 @@ export type WorkspaceMoveEntryError =
 
 // WorkspaceOpenFileError
 export interface WorkspaceOpenFileErrorEntryExistsInCreateNewMode {
-    tag: "EntryExistsInCreateNewMode"
+    tag: "WorkspaceOpenFileErrorEntryExistsInCreateNewMode"
     error: string
 }
 export interface WorkspaceOpenFileErrorEntryNotAFile {
-    tag: "EntryNotAFile"
+    tag: "WorkspaceOpenFileErrorEntryNotAFile"
     error: string
 }
 export interface WorkspaceOpenFileErrorEntryNotFound {
-    tag: "EntryNotFound"
+    tag: "WorkspaceOpenFileErrorEntryNotFound"
     error: string
 }
 export interface WorkspaceOpenFileErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceOpenFileErrorInternal"
     error: string
 }
 export interface WorkspaceOpenFileErrorInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "WorkspaceOpenFileErrorInvalidCertificate"
     error: string
 }
 export interface WorkspaceOpenFileErrorInvalidKeysBundle {
-    tag: "InvalidKeysBundle"
+    tag: "WorkspaceOpenFileErrorInvalidKeysBundle"
     error: string
 }
 export interface WorkspaceOpenFileErrorInvalidManifest {
-    tag: "InvalidManifest"
+    tag: "WorkspaceOpenFileErrorInvalidManifest"
     error: string
 }
 export interface WorkspaceOpenFileErrorNoRealmAccess {
-    tag: "NoRealmAccess"
+    tag: "WorkspaceOpenFileErrorNoRealmAccess"
     error: string
 }
 export interface WorkspaceOpenFileErrorOffline {
-    tag: "Offline"
+    tag: "WorkspaceOpenFileErrorOffline"
     error: string
 }
 export interface WorkspaceOpenFileErrorReadOnlyRealm {
-    tag: "ReadOnlyRealm"
+    tag: "WorkspaceOpenFileErrorReadOnlyRealm"
     error: string
 }
 export interface WorkspaceOpenFileErrorStopped {
-    tag: "Stopped"
+    tag: "WorkspaceOpenFileErrorStopped"
     error: string
 }
 export type WorkspaceOpenFileError =
@@ -3923,55 +3923,55 @@ export type WorkspaceOpenFileError =
 
 // WorkspaceRemoveEntryError
 export interface WorkspaceRemoveEntryErrorCannotRemoveRoot {
-    tag: "CannotRemoveRoot"
+    tag: "WorkspaceRemoveEntryErrorCannotRemoveRoot"
     error: string
 }
 export interface WorkspaceRemoveEntryErrorEntryIsFile {
-    tag: "EntryIsFile"
+    tag: "WorkspaceRemoveEntryErrorEntryIsFile"
     error: string
 }
 export interface WorkspaceRemoveEntryErrorEntryIsFolder {
-    tag: "EntryIsFolder"
+    tag: "WorkspaceRemoveEntryErrorEntryIsFolder"
     error: string
 }
 export interface WorkspaceRemoveEntryErrorEntryIsNonEmptyFolder {
-    tag: "EntryIsNonEmptyFolder"
+    tag: "WorkspaceRemoveEntryErrorEntryIsNonEmptyFolder"
     error: string
 }
 export interface WorkspaceRemoveEntryErrorEntryNotFound {
-    tag: "EntryNotFound"
+    tag: "WorkspaceRemoveEntryErrorEntryNotFound"
     error: string
 }
 export interface WorkspaceRemoveEntryErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceRemoveEntryErrorInternal"
     error: string
 }
 export interface WorkspaceRemoveEntryErrorInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "WorkspaceRemoveEntryErrorInvalidCertificate"
     error: string
 }
 export interface WorkspaceRemoveEntryErrorInvalidKeysBundle {
-    tag: "InvalidKeysBundle"
+    tag: "WorkspaceRemoveEntryErrorInvalidKeysBundle"
     error: string
 }
 export interface WorkspaceRemoveEntryErrorInvalidManifest {
-    tag: "InvalidManifest"
+    tag: "WorkspaceRemoveEntryErrorInvalidManifest"
     error: string
 }
 export interface WorkspaceRemoveEntryErrorNoRealmAccess {
-    tag: "NoRealmAccess"
+    tag: "WorkspaceRemoveEntryErrorNoRealmAccess"
     error: string
 }
 export interface WorkspaceRemoveEntryErrorOffline {
-    tag: "Offline"
+    tag: "WorkspaceRemoveEntryErrorOffline"
     error: string
 }
 export interface WorkspaceRemoveEntryErrorReadOnlyRealm {
-    tag: "ReadOnlyRealm"
+    tag: "WorkspaceRemoveEntryErrorReadOnlyRealm"
     error: string
 }
 export interface WorkspaceRemoveEntryErrorStopped {
-    tag: "Stopped"
+    tag: "WorkspaceRemoveEntryErrorStopped"
     error: string
 }
 export type WorkspaceRemoveEntryError =
@@ -3992,35 +3992,35 @@ export type WorkspaceRemoveEntryError =
 
 // WorkspaceStatEntryError
 export interface WorkspaceStatEntryErrorEntryNotFound {
-    tag: "EntryNotFound"
+    tag: "WorkspaceStatEntryErrorEntryNotFound"
     error: string
 }
 export interface WorkspaceStatEntryErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceStatEntryErrorInternal"
     error: string
 }
 export interface WorkspaceStatEntryErrorInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "WorkspaceStatEntryErrorInvalidCertificate"
     error: string
 }
 export interface WorkspaceStatEntryErrorInvalidKeysBundle {
-    tag: "InvalidKeysBundle"
+    tag: "WorkspaceStatEntryErrorInvalidKeysBundle"
     error: string
 }
 export interface WorkspaceStatEntryErrorInvalidManifest {
-    tag: "InvalidManifest"
+    tag: "WorkspaceStatEntryErrorInvalidManifest"
     error: string
 }
 export interface WorkspaceStatEntryErrorNoRealmAccess {
-    tag: "NoRealmAccess"
+    tag: "WorkspaceStatEntryErrorNoRealmAccess"
     error: string
 }
 export interface WorkspaceStatEntryErrorOffline {
-    tag: "Offline"
+    tag: "WorkspaceStatEntryErrorOffline"
     error: string
 }
 export interface WorkspaceStatEntryErrorStopped {
-    tag: "Stopped"
+    tag: "WorkspaceStatEntryErrorStopped"
     error: string
 }
 export type WorkspaceStatEntryError =
@@ -4036,39 +4036,39 @@ export type WorkspaceStatEntryError =
 
 // WorkspaceStatFolderChildrenError
 export interface WorkspaceStatFolderChildrenErrorEntryIsFile {
-    tag: "EntryIsFile"
+    tag: "WorkspaceStatFolderChildrenErrorEntryIsFile"
     error: string
 }
 export interface WorkspaceStatFolderChildrenErrorEntryNotFound {
-    tag: "EntryNotFound"
+    tag: "WorkspaceStatFolderChildrenErrorEntryNotFound"
     error: string
 }
 export interface WorkspaceStatFolderChildrenErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceStatFolderChildrenErrorInternal"
     error: string
 }
 export interface WorkspaceStatFolderChildrenErrorInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "WorkspaceStatFolderChildrenErrorInvalidCertificate"
     error: string
 }
 export interface WorkspaceStatFolderChildrenErrorInvalidKeysBundle {
-    tag: "InvalidKeysBundle"
+    tag: "WorkspaceStatFolderChildrenErrorInvalidKeysBundle"
     error: string
 }
 export interface WorkspaceStatFolderChildrenErrorInvalidManifest {
-    tag: "InvalidManifest"
+    tag: "WorkspaceStatFolderChildrenErrorInvalidManifest"
     error: string
 }
 export interface WorkspaceStatFolderChildrenErrorNoRealmAccess {
-    tag: "NoRealmAccess"
+    tag: "WorkspaceStatFolderChildrenErrorNoRealmAccess"
     error: string
 }
 export interface WorkspaceStatFolderChildrenErrorOffline {
-    tag: "Offline"
+    tag: "WorkspaceStatFolderChildrenErrorOffline"
     error: string
 }
 export interface WorkspaceStatFolderChildrenErrorStopped {
-    tag: "Stopped"
+    tag: "WorkspaceStatFolderChildrenErrorStopped"
     error: string
 }
 export type WorkspaceStatFolderChildrenError =
@@ -4085,7 +4085,7 @@ export type WorkspaceStatFolderChildrenError =
 
 // WorkspaceStopError
 export interface WorkspaceStopErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceStopErrorInternal"
     error: string
 }
 export type WorkspaceStopError =
@@ -4094,11 +4094,11 @@ export type WorkspaceStopError =
 
 // WorkspaceStorageCacheSize
 export interface WorkspaceStorageCacheSizeCustom {
-    tag: "Custom"
+    tag: "WorkspaceStorageCacheSizeCustom"
     size: number
 }
 export interface WorkspaceStorageCacheSizeDefault {
-    tag: "Default"
+    tag: "WorkspaceStorageCacheSizeDefault"
 }
 export type WorkspaceStorageCacheSize =
   | WorkspaceStorageCacheSizeCustom
@@ -4107,35 +4107,35 @@ export type WorkspaceStorageCacheSize =
 
 // WorkspaceWatchEntryOneShotError
 export interface WorkspaceWatchEntryOneShotErrorEntryNotFound {
-    tag: "EntryNotFound"
+    tag: "WorkspaceWatchEntryOneShotErrorEntryNotFound"
     error: string
 }
 export interface WorkspaceWatchEntryOneShotErrorInternal {
-    tag: "Internal"
+    tag: "WorkspaceWatchEntryOneShotErrorInternal"
     error: string
 }
 export interface WorkspaceWatchEntryOneShotErrorInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "WorkspaceWatchEntryOneShotErrorInvalidCertificate"
     error: string
 }
 export interface WorkspaceWatchEntryOneShotErrorInvalidKeysBundle {
-    tag: "InvalidKeysBundle"
+    tag: "WorkspaceWatchEntryOneShotErrorInvalidKeysBundle"
     error: string
 }
 export interface WorkspaceWatchEntryOneShotErrorInvalidManifest {
-    tag: "InvalidManifest"
+    tag: "WorkspaceWatchEntryOneShotErrorInvalidManifest"
     error: string
 }
 export interface WorkspaceWatchEntryOneShotErrorNoRealmAccess {
-    tag: "NoRealmAccess"
+    tag: "WorkspaceWatchEntryOneShotErrorNoRealmAccess"
     error: string
 }
 export interface WorkspaceWatchEntryOneShotErrorOffline {
-    tag: "Offline"
+    tag: "WorkspaceWatchEntryOneShotErrorOffline"
     error: string
 }
 export interface WorkspaceWatchEntryOneShotErrorStopped {
-    tag: "Stopped"
+    tag: "WorkspaceWatchEntryOneShotErrorStopped"
     error: string
 }
 export type WorkspaceWatchEntryOneShotError =
@@ -4151,11 +4151,11 @@ export type WorkspaceWatchEntryOneShotError =
 
 // X509URIFlavorValue
 export interface X509URIFlavorValuePKCS11 {
-    tag: "PKCS11"
+    tag: "X509URIFlavorValuePKCS11"
     x1: X509Pkcs11URI
 }
 export interface X509URIFlavorValueWindowsCNG {
-    tag: "WindowsCNG"
+    tag: "X509URIFlavorValueWindowsCNG"
     x1: Uint8Array
 }
 export type X509URIFlavorValue =

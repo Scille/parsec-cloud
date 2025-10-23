@@ -709,6 +709,7 @@ fn {{ struct_rs_to_js_function_name(struct) }}(rs_obj: libparsec::{{ struct.name
 
 {%- macro variant_js_to_rs_function_name(variant) %}variant_{{ variant.name | pascal2snake }}_js_to_rs{% endmacro -%}
 {%- macro variant_rs_to_js_function_name(variant) %}variant_{{ variant.name | pascal2snake }}_rs_to_js{% endmacro -%}
+{%- macro variant_tag_name(variant, value) %}{{ variant.name }}{{ value.name }}{% endmacro %}
 
 {%- macro render_variant_js_to_rs(variant) %}
 #[allow(dead_code)]
@@ -717,7 +718,7 @@ fn {{ variant_js_to_rs_function_name(variant) }}(obj: JsValue) -> Result<libpars
     let tag = tag.as_string().ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
     match tag.as_str() {
 {% for value in variant.values %}
-        "{{ variant.name }}{{ value.name }}" => {
+        "{{ variant_tag_name(variant, value) }}" => {
 {% if value.is_struct %}
 {% for attr_name, attr_type in value.struct.attributes.items() %}
             let {{ attr_name }} = {
@@ -765,7 +766,7 @@ fn {{ variant_rs_to_js_function_name(variant) }}(rs_obj: libparsec::{{ variant.n
 {% for value in variant.values %}
 {% if value.is_struct %}
         libparsec::{{ variant.name }}::{{ value.name }}{ {{ value.struct.attributes.keys() |join(',') }} {{ "," if value.struct.attributes else "" }} .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"{{ variant.name }}{{ value.name }}".into())?;
+            Reflect::set(&js_obj, &"tag".into(), &"{{ variant_tag_name(variant, value) }}".into())?;
 {% for attr_name, attr_type in value.struct.attributes.items() %}
             let js_{{ attr_name }} = {{ render_rs_to_js_value(attr_name, attr_type) }};
             Reflect::set(&js_obj, &"{{ attr_name | snake2camel }}".into(), &js_{{ attr_name }})?;
@@ -773,7 +774,7 @@ fn {{ variant_rs_to_js_function_name(variant) }}(rs_obj: libparsec::{{ variant.n
         }
 {% elif value.is_tuple %}
         libparsec::{{ variant.name }}::{{ value.name }}( {% for _ in value.tuple %}x{{ loop.index }},{% endfor %} .. ) => {
-            Reflect::set(&js_obj, &"tag".into(), &"{{ value.name }}".into())?;
+            Reflect::set(&js_obj, &"tag".into(), &"{{ variant_tag_name(variant, value) }}".into())?;
 {% for attr_type in value.tuple %}
             let js_x{{ loop.index }} = {{ render_rs_to_js_value("x%s" % loop.index, attr_type) }};
             Reflect::set(&js_obj, &"x{{ loop.index }}".into(), &js_x{{ loop.index }}.into())?;
@@ -781,7 +782,7 @@ fn {{ variant_rs_to_js_function_name(variant) }}(rs_obj: libparsec::{{ variant.n
         }
 {% else %}
         libparsec::{{ variant.name }}::{{ value.name }} => {
-            Reflect::set(&js_obj, &"tag".into(), &"{{ value.name }}".into())?;
+            Reflect::set(&js_obj, &"tag".into(), &"{{ variant_tag_name(variant, value) }}".into())?;
         }
 {% endif %}
 {% endfor %}

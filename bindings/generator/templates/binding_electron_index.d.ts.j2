@@ -81,7 +81,7 @@ export interface {{ struct.name }} {
 // {{ variant.name }}
 {% for variant_value in variant.values %}
 export interface {{ variant.name }}{{ variant_value.name }} {
-    tag: "{{ variant_value.name }}"
+    tag: "{{ variant.name }}{{ variant_value.name }}"
 {% if variant.is_error_variant %}
     error: string
 {% endif %}

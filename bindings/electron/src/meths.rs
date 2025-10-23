@@ -5489,7 +5489,7 @@ fn variant_active_users_limit_rs_to_js<'a>(
     let js_obj = cx.empty_object();
     match rs_obj {
         libparsec::ActiveUsersLimit::LimitedTo(x0, ..) => {
-            let js_tag = JsString::try_new(cx, "LimitedTo").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ActiveUsersLimitLimitedTo").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_x0 = JsBigInt::from_u64(cx, x0);
             js_obj.set(cx, "x0", js_x0)?;
@@ -10288,11 +10288,12 @@ fn variant_mountpoint_mount_strategy_rs_to_js<'a>(
             js_obj.set(cx, "baseDir", js_base_dir)?;
         }
         libparsec::MountpointMountStrategy::Disabled => {
-            let js_tag = JsString::try_new(cx, "Disabled").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "MountpointMountStrategyDisabled").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::MountpointMountStrategy::DriveLetter => {
-            let js_tag = JsString::try_new(cx, "DriveLetter").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "MountpointMountStrategyDriveLetter").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -10362,19 +10363,19 @@ fn variant_move_entry_mode_rs_to_js<'a>(
     let js_obj = cx.empty_object();
     match rs_obj {
         libparsec::MoveEntryMode::CanReplace => {
-            let js_tag = JsString::try_new(cx, "CanReplace").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "MoveEntryModeCanReplace").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::MoveEntryMode::CanReplaceFileOnly => {
-            let js_tag = JsString::try_new(cx, "CanReplaceFileOnly").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "MoveEntryModeCanReplaceFileOnly").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::MoveEntryMode::Exchange => {
-            let js_tag = JsString::try_new(cx, "Exchange").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "MoveEntryModeExchange").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::MoveEntryMode::NoReplace => {
-            let js_tag = JsString::try_new(cx, "NoReplace").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "MoveEntryModeNoReplace").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -15558,7 +15559,7 @@ fn variant_x509_uri_flavor_value_rs_to_js<'a>(
     let js_obj = cx.empty_object();
     match rs_obj {
         libparsec::X509URIFlavorValue::PKCS11(x0, ..) => {
-            let js_tag = JsString::try_new(cx, "PKCS11").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "X509URIFlavorValuePKCS11").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_x0 = {
                 let _ = x0;
@@ -15567,7 +15568,7 @@ fn variant_x509_uri_flavor_value_rs_to_js<'a>(
             js_obj.set(cx, "x0", js_x0)?;
         }
         libparsec::X509URIFlavorValue::WindowsCNG(x0, ..) => {
-            let js_tag = JsString::try_new(cx, "WindowsCNG").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "X509URIFlavorValueWindowsCNG").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_x0 = {
                 let rs_buff = {

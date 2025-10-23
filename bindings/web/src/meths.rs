@@ -5802,7 +5802,7 @@ fn variant_active_users_limit_rs_to_js(
     let js_obj = Object::new().into();
     match rs_obj {
         libparsec::ActiveUsersLimit::LimitedTo(x1, ..) => {
-            Reflect::set(&js_obj, &"tag".into(), &"LimitedTo".into())?;
+            Reflect::set(&js_obj, &"tag".into(), &"ActiveUsersLimitLimitedTo".into())?;
             let js_x1 = JsValue::from(x1);
             Reflect::set(&js_obj, &"x1".into(), &js_x1.into())?;
         }
@@ -11224,10 +11224,18 @@ fn variant_mountpoint_mount_strategy_rs_to_js(
             Reflect::set(&js_obj, &"baseDir".into(), &js_base_dir)?;
         }
         libparsec::MountpointMountStrategy::Disabled => {
-            Reflect::set(&js_obj, &"tag".into(), &"Disabled".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"MountpointMountStrategyDisabled".into(),
+            )?;
         }
         libparsec::MountpointMountStrategy::DriveLetter => {
-            Reflect::set(&js_obj, &"tag".into(), &"DriveLetter".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"MountpointMountStrategyDriveLetter".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -11299,16 +11307,20 @@ fn variant_move_entry_mode_rs_to_js(rs_obj: libparsec::MoveEntryMode) -> Result<
     let js_obj = Object::new().into();
     match rs_obj {
         libparsec::MoveEntryMode::CanReplace => {
-            Reflect::set(&js_obj, &"tag".into(), &"CanReplace".into())?;
+            Reflect::set(&js_obj, &"tag".into(), &"MoveEntryModeCanReplace".into())?;
         }
         libparsec::MoveEntryMode::CanReplaceFileOnly => {
-            Reflect::set(&js_obj, &"tag".into(), &"CanReplaceFileOnly".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"MoveEntryModeCanReplaceFileOnly".into(),
+            )?;
         }
         libparsec::MoveEntryMode::Exchange => {
-            Reflect::set(&js_obj, &"tag".into(), &"Exchange".into())?;
+            Reflect::set(&js_obj, &"tag".into(), &"MoveEntryModeExchange".into())?;
         }
         libparsec::MoveEntryMode::NoReplace => {
-            Reflect::set(&js_obj, &"tag".into(), &"NoReplace".into())?;
+            Reflect::set(&js_obj, &"tag".into(), &"MoveEntryModeNoReplace".into())?;
         }
     }
     Ok(js_obj)
@@ -17140,7 +17152,7 @@ fn variant_x509_uri_flavor_value_rs_to_js(
     let js_obj = Object::new().into();
     match rs_obj {
         libparsec::X509URIFlavorValue::PKCS11(x1, ..) => {
-            Reflect::set(&js_obj, &"tag".into(), &"PKCS11".into())?;
+            Reflect::set(&js_obj, &"tag".into(), &"X509URIFlavorValuePKCS11".into())?;
             let js_x1 = {
                 let _ = x1;
                 JsValue::UNDEFINED
@@ -17148,7 +17160,11 @@ fn variant_x509_uri_flavor_value_rs_to_js(
             Reflect::set(&js_obj, &"x1".into(), &js_x1.into())?;
         }
         libparsec::X509URIFlavorValue::WindowsCNG(x1, ..) => {
-            Reflect::set(&js_obj, &"tag".into(), &"WindowsCNG".into())?;
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"X509URIFlavorValueWindowsCNG".into(),
+            )?;
             let js_x1 = JsValue::from(Uint8Array::from({
                 let custom_to_rs_bytes =
                     |v: libparsec::X509WindowsCngURI| -> Result<Vec<u8>, String> { Ok(v.into()) };
