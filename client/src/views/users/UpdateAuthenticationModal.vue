@@ -78,8 +78,11 @@
             :disabled="!canGoForward || querying"
           >
             {{ $msTranslate(getNextButtonText()) }}
+            <ms-spinner
+              v-show="querying"
+              class="modal-footer-buttons-spinner"
+            />
           </ion-button>
-          <ms-spinner v-show="querying" />
         </div>
       </ion-footer>
     </div>
@@ -265,5 +268,11 @@ function getNextButtonText(): string {
 <style scoped lang="scss">
 .modal-header__title {
   margin-right: 1.5rem;
+}
+
+.modal-footer-buttons-spinner {
+  width: 1rem;
+  height: 1rem;
+  margin-left: 0.5rem;
 }
 </style>
