@@ -49,7 +49,6 @@ async def test_authenticated_pki_enrollment_list_ok(
                 enrollment_id=enrollment_id,
                 force=False,
                 submitter_der_x509_certificate=b"<philip der x509 certificate>",
-                submitter_der_x509_certificate_email=EmailAddress("philip@example.invalid"),
                 submit_payload_signature=b"<philip submit payload signature>",
                 submit_payload=submit_payload,
             )

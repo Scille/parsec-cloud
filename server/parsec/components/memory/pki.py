@@ -8,7 +8,6 @@ from parsec._parsec import (
     DateTime,
     DeviceCertificate,
     DeviceID,
-    EmailAddress,
     EnrollmentID,
     OrganizationID,
     PkiEnrollmentAnswerPayload,
@@ -62,7 +61,6 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         enrollment_id: EnrollmentID,
         force: bool,
         submitter_der_x509_certificate: bytes,
-        submitter_der_x509_certificate_email: EmailAddress,
         submit_payload_signature: bytes,
         submit_payload: bytes,
     ) -> None | PkiEnrollmentSubmitBadOutcome | PkiEnrollmentSubmitX509CertificateAlreadySubmitted:
@@ -78,9 +76,10 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 return PkiEnrollmentSubmitBadOutcome.ENROLLMENT_ID_ALREADY_USED
 
             try:
-                PkiEnrollmentSubmitPayload.load(submit_payload)
+                payload = PkiEnrollmentSubmitPayload.load(submit_payload)
             except ValueError:
                 return PkiEnrollmentSubmitBadOutcome.INVALID_SUBMIT_PAYLOAD
+            submitter_email = payload.human_handle.email
 
             # Try to retrieve the last attempt with this x509 certificate
             for enrollment in org.pki_enrollments.values():
@@ -125,10 +124,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                     break
 
             for user in org.users.values():
-                if (
-                    not user.is_revoked
-                    and user.cooked.human_handle.email == submitter_der_x509_certificate_email
-                ):
+                if not user.is_revoked and user.cooked.human_handle.email == submitter_email:
                     return PkiEnrollmentSubmitBadOutcome.USER_EMAIL_ALREADY_ENROLLED
 
             # All checks are good, now we do the actual insertion

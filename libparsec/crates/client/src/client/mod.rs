@@ -6,6 +6,7 @@ mod list_frozen_users;
 mod organization_info;
 mod pki_enrollment_list;
 mod pki_enrollment_reject;
+mod pki_enrollment_submit;
 mod recovery_device;
 mod shamir_recovery_delete;
 mod shamir_recovery_list;
@@ -70,6 +71,7 @@ pub use recovery_device::{
     ImportRecoveryDeviceError, RegisterNewDeviceError,
 };
 
+pub use pki_enrollment_submit::pki_enrollment_submit;
 // Re-exposed for public API
 pub use crate::certif::{
     CertifForgetAllCertificatesError as ClientForgetAllCertificatesError,
