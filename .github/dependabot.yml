@@ -204,11 +204,6 @@ updates:
       day: monday
       time: "04:20"
       timezone: Europe/Paris
-    ignore:
-      # TODO: https://github.com/Scille/parsec-cloud/issues/10610
-      - dependency-name: "@capacitor/*"
-        versions:
-          - ">=6.0.0"
     groups:
       client-prod-ionic:
         # Disabled dependency-type because @ionic/cli is a dev dependency
