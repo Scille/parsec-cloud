@@ -82,6 +82,9 @@ module.exports = {
     'brace-style': 'error',
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/non-nullable-type-assertion-style': 'off',
+    '@typescript-eslint/no-unsafe-argument': 'off',
+    '@typescript-eslint/prefer-return-this-type': 'off',
     'vue/html-indent': ['error', 2],
     'vue/no-deprecated-slot-attribute': 'off',
     'vue/component-name-in-template-casing': [
