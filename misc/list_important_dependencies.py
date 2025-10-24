@@ -9,10 +9,12 @@ from __future__ import annotations
 
 import argparse
 import csv
+import re
 import tomllib
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Generator, Sequence
 from enum import Enum, auto
+from os import environ
 from pathlib import Path
 from typing import BinaryIO, NamedTuple
 
@@ -42,6 +44,7 @@ class DependencyType(Enum):
     Rust = auto()
     Python = auto()
     Javascript = auto()
+    RustBindings = auto()
 
     def __str__(self) -> str:
         return self.name
@@ -285,7 +288,38 @@ def list_rust_deps(_versions: dict[str, str]) -> set[Dependency]:
         f"Some expected dependencies where not found in lock file {', '.join(deps_from_lock.not_found)}"
     )
 
+    extract_libsodium_version(deps)
+
     return deps
+
+
+def extract_libsodium_version(deps: set[Dependency]):
+    # Look for libsodium-sys-stable src dir
+    libsodium_sys_stable = next(dep for dep in deps if dep.name == "libsodium-sys-stable")
+    cargo_home = Path(environ.get("CARGO_HOME", Path.home() / ".cargo"))
+    registry_src = cargo_home / "registry/src"
+    libsodium_sys_stable_srcdir = next(
+        path
+        for path in map(
+            lambda dir: dir / f"{libsodium_sys_stable.name}-{libsodium_sys_stable.version}",
+            registry_src.iterdir(),
+        )
+        if path.exists()
+    )
+
+    # Search for the version constant defined in the bindings
+    version_line_re = re.compile(r"^pub const SODIUM_VERSION_STRING: &\[u8; \d+\] = b\"(.*)\\0\";")
+    with open(libsodium_sys_stable_srcdir / "src/sodium_bindings.rs") as f:
+        for line in f:
+            match = version_line_re.match(line)
+            if match:
+                version_line = match
+                break
+        else:
+            version_line = None
+    if version_line:
+        sodium_version = version_line.group(1)
+        deps.add(Dependency("libsodium", sodium_version, DependencyType.RustBindings))
 
 
 class CargoLock(Dependencies):
