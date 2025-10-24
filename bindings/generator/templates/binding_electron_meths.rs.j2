@@ -540,11 +540,7 @@ JsString::try_new({{ mut_cx_ref }},
 ).or_throw({{ mut_cx_ref }})?
 {%- elif type.kind == "bytes" -%}
 {
-    let mut js_buff = JsArrayBuffer::new({{ mut_cx_ref }}, {{ rs_value }}.len())?;
-    let js_buff_slice = js_buff.as_mut_slice({{ mut_cx_ref }});
-    for (i, c) in {{ rs_value }}.iter().enumerate() {
-        js_buff_slice[i] = *c;
-    }
+    let js_buff = JsTypedArray::from_slice({{ mut_cx_ref }}, {{ rs_value }}.as_ref())?;
     js_buff
 }
 {%- elif type.kind == "bytes_based" -%}
@@ -560,11 +556,7 @@ JsString::try_new({{ mut_cx_ref }},
         {{ rs_value }}.as_ref()
         {%- endif -%}
     };
-    let mut js_buff = JsArrayBuffer::new({{ mut_cx_ref }}, rs_buff.len())?;
-    let js_buff_slice = js_buff.as_mut_slice({{ mut_cx_ref }});
-    for (i, c) in rs_buff.iter().enumerate() {
-        js_buff_slice[i] = *c;
-    }
+    let js_buff = JsTypedArray::from_slice({{ mut_cx_ref }}, rs_buff.as_ref())?;
     js_buff
 }
 {%- elif type.kind == "struct" -%}
