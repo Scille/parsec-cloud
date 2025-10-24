@@ -1375,7 +1375,7 @@ export interface ClientEventIncompatibleServer {
     supported_api_version: Array<string>
 }
 export interface ClientEventInvalidCertificate {
-    tag: "InvalidCertificate"
+    tag: "ClientEventInvalidCertificate"
     detail: string
 }
 export interface ClientEventInvitationAlreadyUsedOrDeleted {

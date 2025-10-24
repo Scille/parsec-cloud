@@ -4603,11 +4603,7 @@ fn variant_account_auth_method_strategy_rs_to_js<'a>(
             js_obj.set(cx, "tag", js_tag)?;
             let js_master_secret = {
                 let rs_buff = { master_secret.as_ref() };
-                let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
-                let js_buff_slice = js_buff.as_mut_slice(cx);
-                for (i, c) in rs_buff.iter().enumerate() {
-                    js_buff_slice[i] = *c;
-                }
+                let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
                 js_buff
             };
             js_obj.set(cx, "masterSecret", js_master_secret)?;
@@ -5197,11 +5193,7 @@ fn variant_account_login_strategy_rs_to_js<'a>(
             js_obj.set(cx, "tag", js_tag)?;
             let js_master_secret = {
                 let rs_buff = { master_secret.as_ref() };
-                let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
-                let js_buff_slice = js_buff.as_mut_slice(cx);
-                for (i, c) in rs_buff.iter().enumerate() {
-                    js_buff_slice[i] = *c;
-                }
+                let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
                 js_buff
             };
             js_obj.set(cx, "masterSecret", js_master_secret)?;
@@ -8713,11 +8705,7 @@ fn variant_device_access_strategy_rs_to_js<'a>(
             js_obj.set(cx, "ciphertextKeyId", js_ciphertext_key_id)?;
             let js_ciphertext_key = {
                 let rs_buff = { ciphertext_key.as_ref() };
-                let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
-                let js_buff_slice = js_buff.as_mut_slice(cx);
-                for (i, c) in rs_buff.iter().enumerate() {
-                    js_buff_slice[i] = *c;
-                }
+                let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
                 js_buff
             };
             js_obj.set(cx, "ciphertextKey", js_ciphertext_key)?;
@@ -8877,11 +8865,7 @@ fn variant_device_save_strategy_rs_to_js<'a>(
             js_obj.set(cx, "ciphertextKeyId", js_ciphertext_key_id)?;
             let js_ciphertext_key = {
                 let rs_buff = { ciphertext_key.as_ref() };
-                let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
-                let js_buff_slice = js_buff.as_mut_slice(cx);
-                for (i, c) in rs_buff.iter().enumerate() {
-                    js_buff_slice[i] = *c;
-                }
+                let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
                 js_buff
             };
             js_obj.set(cx, "ciphertextKey", js_ciphertext_key)?;
@@ -11993,11 +11977,7 @@ fn variant_parsed_parsec_addr_rs_to_js<'a>(
             let js_key_index = JsBigInt::from_u64(cx, key_index);
             js_obj.set(cx, "keyIndex", js_key_index)?;
             let js_encrypted_path = {
-                let mut js_buff = JsArrayBuffer::new(cx, encrypted_path.len())?;
-                let js_buff_slice = js_buff.as_mut_slice(cx);
-                for (i, c) in encrypted_path.iter().enumerate() {
-                    js_buff_slice[i] = *c;
-                }
+                let js_buff = JsTypedArray::from_slice(cx, encrypted_path.as_ref())?;
                 js_buff
             };
             js_obj.set(cx, "encryptedPath", js_encrypted_path)?;
@@ -15581,11 +15561,7 @@ fn variant_x509_uri_flavor_value_rs_to_js<'a>(
                         Err(err) => return cx.throw_type_error(err),
                     }
                 };
-                let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
-                let js_buff_slice = js_buff.as_mut_slice(cx);
-                for (i, c) in rs_buff.iter().enumerate() {
-                    js_buff_slice[i] = *c;
-                }
+                let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
                 js_buff
             };
             js_obj.set(cx, "x0", js_x0)?;
@@ -16198,11 +16174,7 @@ fn account_fetch_opaque_key_from_vault(mut cx: FunctionContext) -> JsResult<JsPr
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_value = {
                             let rs_buff = { ok.as_ref() };
-                            let mut js_buff = JsArrayBuffer::new(&mut cx, rs_buff.len())?;
-                            let js_buff_slice = js_buff.as_mut_slice(&mut cx);
-                            for (i, c) in rs_buff.iter().enumerate() {
-                                js_buff_slice[i] = *c;
-                            }
+                            let js_buff = JsTypedArray::from_slice(&mut cx, rs_buff.as_ref())?;
                             js_buff
                         };
                         js_obj.set(&mut cx, "value", js_value)?;
@@ -16970,11 +16942,7 @@ fn account_upload_opaque_key_in_vault(mut cx: FunctionContext) -> JsResult<JsPro
     js_array.set(&mut cx, 0, js_value)?;
     let js_value = {
     let rs_buff = {x1.as_ref()};
-    let mut js_buff = JsArrayBuffer::new(&mut cx, rs_buff.len())?;
-    let js_buff_slice = js_buff.as_mut_slice(&mut cx);
-    for (i, c) in rs_buff.iter().enumerate() {
-        js_buff_slice[i] = *c;
-    }
+    let js_buff = JsTypedArray::from_slice(&mut cx, rs_buff.as_ref())?;
     js_buff
 };
     js_array.set(&mut cx, 1, js_value)?;
@@ -19095,11 +19063,7 @@ fn client_export_recovery_device(mut cx: FunctionContext) -> JsResult<JsPromise>
                             let js_value = JsString::try_new(&mut cx, x0).or_throw(&mut cx)?;
                             js_array.set(&mut cx, 0, js_value)?;
                             let js_value = {
-                                let mut js_buff = JsArrayBuffer::new(&mut cx, x1.len())?;
-                                let js_buff_slice = js_buff.as_mut_slice(&mut cx);
-                                for (i, c) in x1.iter().enumerate() {
-                                    js_buff_slice[i] = *c;
-                                }
+                                let js_buff = JsTypedArray::from_slice(&mut cx, x1.as_ref())?;
                                 js_buff
                             };
                             js_array.set(&mut cx, 1, js_value)?;
@@ -23229,11 +23193,7 @@ fn test_new_account(mut cx: FunctionContext) -> JsResult<JsPromise> {
                             js_array.set(&mut cx, 0, js_value)?;
                             let js_value = {
                                 let rs_buff = { x1.as_ref() };
-                                let mut js_buff = JsArrayBuffer::new(&mut cx, rs_buff.len())?;
-                                let js_buff_slice = js_buff.as_mut_slice(&mut cx);
-                                for (i, c) in rs_buff.iter().enumerate() {
-                                    js_buff_slice[i] = *c;
-                                }
+                                let js_buff = JsTypedArray::from_slice(&mut cx, rs_buff.as_ref())?;
                                 js_buff
                             };
                             js_array.set(&mut cx, 1, js_value)?;
@@ -24127,11 +24087,7 @@ fn workspace_fd_read(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_value = {
-                            let mut js_buff = JsArrayBuffer::new(&mut cx, ok.len())?;
-                            let js_buff_slice = js_buff.as_mut_slice(&mut cx);
-                            for (i, c) in ok.iter().enumerate() {
-                                js_buff_slice[i] = *c;
-                            }
+                            let js_buff = JsTypedArray::from_slice(&mut cx, ok.as_ref())?;
                             js_buff
                         };
                         js_obj.set(&mut cx, "value", js_value)?;
@@ -24724,11 +24680,7 @@ fn workspace_history_fd_read(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_value = {
-                            let mut js_buff = JsArrayBuffer::new(&mut cx, ok.len())?;
-                            let js_buff_slice = js_buff.as_mut_slice(&mut cx);
-                            for (i, c) in ok.iter().enumerate() {
-                                js_buff_slice[i] = *c;
-                            }
+                            let js_buff = JsTypedArray::from_slice(&mut cx, ok.as_ref())?;
                             js_buff
                         };
                         js_obj.set(&mut cx, "value", js_value)?;
