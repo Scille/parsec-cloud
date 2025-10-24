@@ -25,21 +25,46 @@ const _libparsec = registerPlugin<LibParsecPlugin>('LibParsec', {
   // In Android, capacitor already knows about the plugin given it has been registered from Java
 });
 
+function logError(level: 'warn' | 'error', message: string): void {
+  // may not be available right at the start
+  if (window.electronAPI && window.electronAPI.log) {
+    window.electronAPI.log(level, message);
+  } else {
+    console[level](message);
+  }
+}
+
+interface SkipData {
+  tag: string;
+  function: string;
+}
+
+const FUNCTIONS_TO_SKIP: Array<SkipData> = [
+  {
+    tag: 'WorkspaceStatEntryErrorEntryNotFound',
+    function: 'workspaceStatEntry',
+  },
+];
+
 class ParsecProxy {
   get(target: LibParsecPlugin, name: any) {
     return async (...args: any[]): Promise<any> => {
-      // @ts-expect-error Dont know how to fix the `...arg` properly so that the linter doesn't complain
-      const result = await target[name as keyof LibParsecPlugin](...args);
-      if (result && result.hasOwnProperty('ok') && !(result as { ok: boolean }).ok) {
-        const resultError = result as { ok: boolean; error: { tag: string; error: string } };
-        // electronAPI is not available right at the start
-        if (window.electronAPI && window.electronAPI.log) {
-          window.electronAPI.log('warn', `Error when calling ${name}: ${JSON.stringify(resultError.error)}`);
-        } else {
-          console.warn(`Error when calling ${name}: ${JSON.stringify(resultError.error)}`);
+      try {
+        // @ts-expect-error Dont know how to fix the `...arg` properly so that the linter doesn't complain
+        const result = await target[name as keyof LibParsecPlugin](...args);
+        if (
+          result &&
+          (result as any).ok === false &&
+          !FUNCTIONS_TO_SKIP.find((sd) => sd.function === name && (result as any).error && (result as any).error.tag === sd.tag)
+        ) {
+          const resultError = result as { ok: boolean; error: { tag: string; error: string } };
+          logError('warn', `Error when calling ${name}: ${JSON.stringify(resultError.error)}`);
         }
+        return result;
+      } catch (err: any) {
+        logError('error', `Exception when calling ${name}: ${String(err)}`);
+        return { ok: false, error: { tag: 'bindings-exception', error: String(err) } };
       }
-      return result;
     };
   }
 }
