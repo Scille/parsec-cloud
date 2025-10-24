@@ -49,9 +49,16 @@ updates:
         versions:
           - ">=0.9"
       # The crypto dependencies need to be updated to be compatible with generic-array@v1
+      # https://github.com/Scille/parsec-cloud/issues/11452
       - dependency-name: generic-array
         versions:
-          - ">=1.0.0"
+          - ">=0.14.7"
+      # In 0.9.x, RSA remove support for auto salt len when verifying a signature.
+      # That feature was then re-introduced in 0.10 (but as of writing currently in release-candidate)
+      # https://github.com/Scille/parsec-cloud/issues/11457
+      - dependency-name: rsa
+        versions:
+          - ">=0.9.0 < 0.10"
     schedule:
       interval: weekly
       day: monday

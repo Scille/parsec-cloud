@@ -164,7 +164,7 @@ log = { version = "0.4.28", default-features = false }
 miniserde = { version = "0.1.43", default-features = false }
 neon = { version = "1.0.0", default-features = false }
 once_cell = { version = "1.21.3", default-features = false }
-openssl = { version = "0.10.73", default-features = false }
+openssl = { version = "0.10.74", default-features = false }
 paste = { version = "1.0.15", default-features = false }
 percent-encoding = { version = "2.3.2", default-features = false }
 pin-project = { version = "1.1.10", default-features = false }
