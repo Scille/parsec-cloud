@@ -35,6 +35,7 @@ interface OpenPathOptions {
   atTime?: DateTime;
   useEditor?: boolean;
   readOnly?: boolean;
+  replaceHistory?: boolean; // #11344 Could be used replace history on routing
 }
 
 // Uncomment here to enable file viewers on desktop; should be removed when all file viewers are implemented
@@ -215,10 +216,12 @@ async function openInEditor(
             timestamp: options.atTime?.toMillis().toString(),
             fileTypeInfo: Base64.fromObject(contentType),
             readOnly: options.readOnly,
+            _t: Date.now(), // #11344 Cache buster to force routing to be unique
           },
           params: {
             mode: FileHandlerMode.Edit,
           },
+          replace: options.replaceHistory,
         });
       } else {
         await openFileOpenFallbackModal(entry, workspaceHandle, path, informationManager, fileOperationManager, options, {

@@ -4,7 +4,7 @@
   <div class="back-button-container">
     <ion-button
       fill="clear"
-      @click="routerGoBack()"
+      @click="onBackClick()"
       class="back-button"
     >
       <ion-icon
@@ -27,7 +27,8 @@
 </template>
 
 <script setup lang="ts">
-import { routerGoBack } from '@/router';
+import { Path } from '@/parsec';
+import { currentRouteIs, getDocumentPath, getWorkspaceHandle, navigateTo, routerGoBack, Routes } from '@/router';
 import { IonButton, IonIcon, IonLabel } from '@ionic/vue';
 import { chevronBack } from 'ionicons/icons';
 import { useWindowSize } from 'megashark-lib';
@@ -37,6 +38,29 @@ const { isLargeDisplay } = useWindowSize();
 defineProps<{
   short: boolean;
 }>();
+
+async function onBackClick(): Promise<void> {
+  console.log('[DEBUG] HeaderBackButton clicked');
+  routerGoBack();
+
+  // Possible fix for issue #11344
+  // if (!currentRouteIs(Routes.FileHandler)) {
+  //   routerGoBack();
+  // } else {
+  //   console.log('[DEBUG] FileHandler back navigation - navigating to documents');
+  //   const workspaceHandle = getWorkspaceHandle();
+  //   const path = getDocumentPath();
+  //   if (workspaceHandle && path) {
+  //     const parentPath = await Path.parent(path);
+  //     await navigateTo(Routes.Documents, {
+  //       query: {
+  //         workspaceHandle: workspaceHandle,
+  //         documentPath: parentPath,
+  //       },
+  //     });
+  //   }
+  // }
+}
 </script>
 
 <style scoped lang="scss">

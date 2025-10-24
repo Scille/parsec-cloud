@@ -259,6 +259,10 @@ router.beforeEach((to, from, next) => {
   next();
 });
 
+router.afterEach((to, from) => {
+  console.log('[DEBUG]', '(afterEach)', { from: from.fullPath, to: to.fullPath });
+});
+
 export function getRouter(): Router {
   return router;
 }
