@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { getDefaultDeviceName } from '@/common/device';
+import { isWindows } from '@/parsec/environment';
 import { getClientInfo } from '@/parsec/login';
 import { getOrganizationInfo } from '@/parsec/organization';
 import {
@@ -11,8 +12,12 @@ import {
   ParsecAddr,
   ParsecOrganizationAddr,
   Result,
+  ShowCertificateSelectionDialogError,
+  ShowCertificateSelectionDialogErrorTag,
   UserProfile,
+  X509CertificateReference,
 } from '@/parsec/types';
+import { libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
 /*
@@ -407,4 +412,16 @@ export async function getPkiJoinOrganizationLink(): Promise<Result<string, GetPk
     return { ok: true, value: `${result.value.organizationAddr}&a=pki_join` };
   }
   return { ok: true, value: `${result.value.organizationAddr}?a=pki_join` };
+}
+
+export async function selectCertificate(): Promise<Result<X509CertificateReference | null, ShowCertificateSelectionDialogError>> {
+  if (!isWindows()) {
+    return { ok: false, error: { tag: ShowCertificateSelectionDialogErrorTag.CannotOpenStore, error: 'only on windows' } };
+  }
+  return await libparsec.showCertificateSelectionDialogWindowsOnly();
+}
+
+export async function isSmartcardAvailable(): Promise<boolean> {
+  // return isWindows();
+  return false;
 }

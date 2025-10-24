@@ -372,6 +372,7 @@
         "keyringChoice": "System authentication",
         "accountChoice": "Parsec Account",
         "passwordChoice": "Password",
+        "smartcardChoice": "Certificate",
         "acceptTOS": {
             "label": "By using Parsec, I accept the ",
             "tos": "Terms and Conditions",
@@ -1156,7 +1157,11 @@
                     "subtitle": "Smartcard authentication is considered the most secure method to log in. By changing your authentication method, be mindful that your device security might be compromised.",
                     "yes": "Continue",
                     "no": "Keep current method"
-                }
+                },
+                "selectButton": "Choose a certificate",
+                "selectOther": "Update",
+                "selectInstructions": "A pop-up will open, prompting you to chose the certificate.",
+                "certificateSelected": "Certificate selected"
             },
             "sso": {
                 "title": "Single Sign-On",

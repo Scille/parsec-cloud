@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { libparsec } from '@/plugins/libparsec';
+import { libparsec, X509CertificateReference } from '@/plugins/libparsec';
 
 import { ParsecAccount } from '@/parsec/account';
 import { getClientConfig } from '@/parsec/internals';
@@ -25,6 +25,7 @@ import {
   DeviceSaveStrategyAccountVault,
   DeviceSaveStrategyKeyring,
   DeviceSaveStrategyPassword,
+  DeviceSaveStrategySmartcard,
   DeviceSaveStrategySSO,
   DeviceSaveStrategyTag,
   ListAvailableDeviceError,
@@ -281,6 +282,20 @@ export const AccessStrategy = {
       ciphertextKey: keyResult.value,
     };
   },
+  async fromSaveStrategy(device: AvailableDevice, saveStrategy: DeviceSaveStrategy): Promise<DeviceAccessStrategy> {
+    if (saveStrategy.tag === DeviceSaveStrategyTag.Keyring) {
+      return AccessStrategy.useKeyring(device);
+    } else if (saveStrategy.tag === DeviceSaveStrategyTag.AccountVault) {
+      return await AccessStrategy.useAccountVault(device);
+    } else if (saveStrategy.tag === DeviceSaveStrategyTag.Password) {
+      return AccessStrategy.usePassword(device, (saveStrategy as DeviceSaveStrategyPassword).password);
+    } else if (saveStrategy.tag === DeviceSaveStrategyTag.Smartcard) {
+      return AccessStrategy.useSmartcard(device);
+    } else {
+      window.electronAPI.log('error', `Unhandled save strategy '${(saveStrategy as any).tag}'`);
+      throw new Error('Unhandled save strategy');
+    }
+  },
 };
 
 export const SaveStrategy = {
@@ -312,6 +327,12 @@ export const SaveStrategy = {
   useSSO(): DeviceSaveStrategySSO {
     return {
       tag: CustomDeviceSaveStrategyTag.SSO,
+    };
+  },
+  useSmartCard(certificate: X509CertificateReference): DeviceSaveStrategySmartcard {
+    return {
+      tag: DeviceSaveStrategyTag.Smartcard,
+      certificateReference: certificate,
     };
   },
 };

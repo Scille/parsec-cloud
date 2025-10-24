@@ -53,7 +53,7 @@
           label-placement="end"
           justify="start"
           :value="DeviceSaveStrategyTag.Smartcard"
-          :disabled="activeAuth === AvailableDeviceTypeTag.Smartcard"
+          :disabled="!smartcardAvailable || activeAuth === AvailableDeviceTypeTag.Smartcard"
         >
           <authentication-card
             @click="onMethodSelected(DeviceSaveStrategyTag.Smartcard)"
@@ -119,6 +119,7 @@
             @update-clicked="changeAuthenticationMethod"
           />
         </div>
+        <choose-certificate ref="chooseCertificate" />
       </div>
 
       <div v-if="authentication === CustomDeviceSaveStrategyTag.SSO">
@@ -140,6 +141,7 @@
 </template>
 
 <script setup lang="ts">
+import ChooseCertificate from '@/components/devices/ChooseCertificate.vue';
 import KeyringInformation from '@/components/devices/KeyringInformation.vue';
 import SsoProviderCard from '@/components/devices/SsoProviderCard.vue';
 import { SSOProvider } from '@/components/devices/types';
@@ -151,6 +153,7 @@ import {
   DeviceSaveStrategy,
   DeviceSaveStrategyTag,
   SaveStrategy,
+  X509CertificateReference,
   isKeyringAvailable,
   isSmartcardAvailable,
   isWeb,
@@ -158,11 +161,12 @@ import {
 import { useOpenBao } from '@/services/openBao';
 import { IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
 import { MsChoosePasswordInput } from 'megashark-lib';
-import { onMounted, ref, useTemplateRef } from 'vue';
+import { onMounted, ref, toRaw, useTemplateRef } from 'vue';
 
 const authentication = ref<DeviceSaveStrategyTag | CustomDeviceSaveStrategyTag | undefined>(undefined);
 const keyringAvailable = ref(false);
 const choosePasswordRef = useTemplateRef<InstanceType<typeof MsChoosePasswordInput>>('choosePassword');
+const chooseCertificateRef = useTemplateRef<InstanceType<typeof ChooseCertificate>>('chooseCertificate');
 const { openBaoConnect, isOpenBaoAvailable } = useOpenBao();
 const openBaoLoggedIn = ref(false);
 const smartcardAvailable = ref(false);
@@ -220,13 +224,21 @@ async function changeAuthenticationMethod(): Promise<void> {
   authentication.value = undefined;
 }
 
-function getSaveStrategy(): DeviceSaveStrategy {
+function getSaveStrategy(): DeviceSaveStrategy | undefined {
   if (authentication.value === DeviceSaveStrategyTag.Keyring) {
     return SaveStrategy.useKeyring();
   } else if (authentication.value === CustomDeviceSaveStrategyTag.SSO) {
     return SaveStrategy.useSSO() as any as DeviceSaveStrategy;
+  } else if (authentication.value === DeviceSaveStrategyTag.Smartcard) {
+    if (chooseCertificateRef.value && chooseCertificateRef.value.getCertificate()) {
+      return SaveStrategy.useSmartCard(toRaw(chooseCertificateRef.value.getCertificate() as X509CertificateReference));
+    }
+    return undefined;
   }
-  return SaveStrategy.usePassword(choosePasswordRef.value?.password || '');
+  if (choosePasswordRef.value?.password) {
+    return SaveStrategy.usePassword(choosePasswordRef.value?.password);
+  }
+  return undefined;
 }
 
 async function areFieldsCorrect(): Promise<boolean> {
@@ -236,6 +248,8 @@ async function areFieldsCorrect(): Promise<boolean> {
     return await choosePasswordRef.value.areFieldsCorrect();
   } else if (authentication.value === CustomDeviceSaveStrategyTag.SSO && openBaoLoggedIn.value) {
     return true;
+  } else if (authentication.value === DeviceSaveStrategyTag.Smartcard && chooseCertificateRef.value) {
+    return chooseCertificateRef.value.getCertificate() !== undefined;
   }
   return false;
 }

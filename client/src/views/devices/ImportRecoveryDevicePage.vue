@@ -255,6 +255,9 @@ async function createNewDevice(): Promise<void> {
     return;
   }
   const saveStrategy = chooseAuthRef.value.getSaveStrategy();
+  if (!saveStrategy) {
+    return;
+  }
   const result = await importRecoveryDevice(
     props.device ? props.device.deviceLabel : getDefaultDeviceName(),
     content,

@@ -208,8 +208,6 @@ import {
   ClaimInProgressErrorTag,
   ClaimerRetrieveInfoErrorTag,
   DeviceSaveStrategy,
-  DeviceSaveStrategyPassword,
-  DeviceSaveStrategyTag,
   OrganizationID,
   ParsedParsecAddrTag,
   UserClaim,
@@ -433,10 +431,7 @@ async function nextStep(): Promise<void> {
     props.informationManager.present(notification, PresentationMode.Toast | PresentationMode.Console);
     const saveStrategy: DeviceSaveStrategy | undefined = authChoiceRef.value?.getSaveStrategy();
     if (!saveStrategy) return;
-    const accessStrategy =
-      saveStrategy.tag === DeviceSaveStrategyTag.Keyring
-        ? AccessStrategy.useKeyring(claimer.value.device)
-        : AccessStrategy.usePassword(claimer.value.device, (saveStrategy as DeviceSaveStrategyPassword).password);
+    const accessStrategy = await AccessStrategy.fromSaveStrategy(claimer.value.device, saveStrategy);
     await modalController.dismiss({ device: claimer.value.device, access: accessStrategy }, MsModalResult.Confirm);
     return;
   }

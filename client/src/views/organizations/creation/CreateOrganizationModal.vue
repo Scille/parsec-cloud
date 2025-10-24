@@ -36,17 +36,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  AccessStrategy,
-  AvailableDevice,
-  DeviceAccessStrategy,
-  DeviceSaveStrategy,
-  DeviceSaveStrategyPassword,
-  DeviceSaveStrategyTag,
-  OrganizationID,
-  ParsedParsecAddrTag,
-  parseParsecAddr,
-} from '@/parsec';
+import { AccessStrategy, AvailableDevice, DeviceSaveStrategy, OrganizationID, ParsedParsecAddrTag, parseParsecAddr } from '@/parsec';
 import { InformationManager } from '@/services/informationManager';
 import { getServerTypeFromHost, ServerType } from '@/services/parsecServers';
 import CreateOrganizationCustomServer from '@/views/organizations/creation/CreateOrganizationCustomServer.vue';
@@ -101,18 +91,7 @@ async function onOrganizationCreated(
   device: AvailableDevice,
   saveStrategy: DeviceSaveStrategy,
 ): Promise<void> {
-  let accessStrategy: DeviceAccessStrategy;
-
-  if (saveStrategy.tag === DeviceSaveStrategyTag.Keyring) {
-    accessStrategy = AccessStrategy.useKeyring(device);
-  } else if (saveStrategy.tag === DeviceSaveStrategyTag.AccountVault) {
-    accessStrategy = await AccessStrategy.useAccountVault(device);
-  } else if (saveStrategy.tag === DeviceSaveStrategyTag.Password) {
-    accessStrategy = AccessStrategy.usePassword(device, (saveStrategy as DeviceSaveStrategyPassword).password);
-  } else {
-    window.electronAPI.log('error', `Unhandled save strategy '${saveStrategy.tag}'`);
-    return;
-  }
+  const accessStrategy = await AccessStrategy.fromSaveStrategy(device, saveStrategy);
   await modalController.dismiss({ device: device, access: accessStrategy }, MsModalResult.Confirm);
 }
 

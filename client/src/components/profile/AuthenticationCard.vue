@@ -4,11 +4,13 @@
     class="authentication-card"
     :class="disabled ? 'authentication-card--disabled' : `authentication-card--${state}`"
   >
-    <img
-      :src="config.imageSrc"
-      :alt="config.imageAlt"
-      class="authentication-card__image"
-    />
+    <div class="image-container">
+      <img
+        :src="config.imageSrc"
+        :alt="config.imageAlt"
+        class="authentication-card__image"
+      />
+    </div>
     <div class="authentication-card-text">
       <ion-text class="authentication-card-text__title body-lg">{{ $msTranslate(config.methodName) }}</ion-text>
       <ion-text
@@ -148,15 +150,24 @@ function keyringUnavailableMessage(): Translatable {
   z-index: 3;
   transition: all 0.2s ease-in-out;
 
-  &__image {
-    padding: 1.25rem 1rem;
+  .image-container {
     background: var(--parsec-color-light-secondary-background);
+    padding: 1.25rem 1rem;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+  }
+
+  &__image {
+    min-width: 1.5rem;
+    object-fit: contain;
   }
 
   &-text {
     display: flex;
     flex-direction: column;
     width: 100%;
+    padding: 0.25rem 0;
 
     &__title {
       color: var(--parsec-color-light-primary-700);
