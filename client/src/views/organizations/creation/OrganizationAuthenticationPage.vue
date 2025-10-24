@@ -35,7 +35,7 @@
         <ion-button
           fill="solid"
           size="default"
-          @click="chooseAuthenticationRef?.getSaveStrategy() && $emit('authenticationChosen', chooseAuthenticationRef.getSaveStrategy())"
+          @click="authenticationChosen"
           :disabled="!valid"
         >
           <span>
@@ -66,7 +66,7 @@ defineProps<{
   isLastStep?: boolean;
 }>();
 
-defineEmits<{
+const emits = defineEmits<{
   (e: 'authenticationChosen', saveStrategy: DeviceSaveStrategy): void;
   (e: 'closeRequested'): void;
   (e: 'goBackRequested'): void;
@@ -79,6 +79,12 @@ const valid = asyncComputed(async () => {
   }
   return await chooseAuthenticationRef.value.areFieldsCorrect();
 });
+
+async function authenticationChosen(): Promise<void> {
+  if (chooseAuthenticationRef.value?.getSaveStrategy()) {
+    emits('authenticationChosen', chooseAuthenticationRef.value.getSaveStrategy() as DeviceSaveStrategy);
+  }
+}
 
 // TODO: Since valid is supposed to be read-only, we should check if this is really necessary
 async function onFieldUpdated(): Promise<void> {

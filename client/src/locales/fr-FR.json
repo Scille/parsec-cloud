@@ -371,6 +371,7 @@
         "keyringChoice": "Authentification du système",
         "accountChoice": "Parsec Account",
         "passwordChoice": "Mot de passe",
+        "smartcardChoice": "Certificat",
         "acceptTOS": {
             "label": "En utilisant Parsec, j'accepte les",
             "tos": "Conditions Générales de Vente et d'Utilisation",
@@ -1155,7 +1156,11 @@
                     "subtitle": "L'authentification par carte à puce est considérée comme la méthode la plus sécurisée pour se connecter. En procédant à ce changement, vous acceptez que la sécurité puisse être compromise.",
                     "yes": "Continuer",
                     "no": "Conserver la méthode actuelle"
-                }
+                },
+                "selectButton": "Choisir un certificat",
+                "selectOther": "Modifier",
+                "selectInstructions": "Une fenêtre va s'ouvrir pour vous demander de sélectionner le certificat.",
+                "certificateSelected": "Certificat sélectionné"
             },
             "sso": {
                 "title": "Authentification unique (SSO)",

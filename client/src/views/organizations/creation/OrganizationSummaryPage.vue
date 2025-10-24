@@ -158,6 +158,12 @@
           >
             {{ $msTranslate('CreateOrganization.accountChoice') }}
           </ion-text>
+          <ion-text
+            class="summary-item__text body-lg"
+            v-if="saveStrategy === DeviceSaveStrategyTag.Smartcard"
+          >
+            {{ $msTranslate('CreateOrganization.smartcardChoice') }}
+          </ion-text>
           <ion-button
             fill="clear"
             class="summary-item__button"

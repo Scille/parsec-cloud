@@ -62,6 +62,7 @@ export {
   ParsedParsecAddrTag,
   ParseParsecAddrErrorTag,
   Platform,
+  ShowCertificateSelectionDialogErrorTag,
   UpdateDeviceErrorTag,
   UserOnlineStatus,
   UserProfile,
@@ -174,6 +175,7 @@ export type {
   DeviceSaveStrategyAccountVault,
   DeviceSaveStrategyKeyring,
   DeviceSaveStrategyPassword,
+  DeviceSaveStrategySmartcard,
   EntryName,
   FileDescriptor,
   VlobID as FileID,
@@ -199,6 +201,7 @@ export type {
   Result,
   SASCode,
   SecretKey,
+  ShowCertificateSelectionDialogError,
   SizeInt,
   Tos,
   UpdateDeviceError,
@@ -238,6 +241,7 @@ export type {
   WorkspaceStatEntryError,
   WorkspaceStatFolderChildrenError,
   WorkspaceStopError,
+  X509CertificateReference,
 } from '@/plugins/libparsec';
 
 import type {
