@@ -27,11 +27,11 @@
 </template>
 
 <script setup lang="ts">
-import { IonText } from '@ionic/vue';
-import { onMounted, Ref, ref, useTemplateRef, watch } from 'vue';
-import { MsInput, Translatable } from 'megashark-lib';
-import { listUsers, UserInfo } from '@/parsec';
 import UserSelectDropdown from '@/components/users/UserSelectDropdown.vue';
+import { listUsers, UserInfo } from '@/parsec';
+import { IonText } from '@ionic/vue';
+import { MsInput, Translatable } from 'megashark-lib';
+import { onMounted, Ref, ref, useTemplateRef, watch } from 'vue';
 
 const props = defineProps<{
   label?: Translatable;

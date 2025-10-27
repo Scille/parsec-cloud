@@ -32,10 +32,9 @@
 </template>
 
 <script setup lang="ts">
-import { IonContent, IonIcon, IonItem, IonItemGroup, IonText, IonList, IonPage } from '@ionic/vue';
-import { FolderGlobalAction } from '@/views/files';
-import { modalController } from '@ionic/vue';
 import SmallDisplayContextMenuButtons from '@/components/small-display/SmallDisplayContextMenuButtons.vue';
+import { FolderGlobalAction } from '@/views/files';
+import { IonContent, IonIcon, IonItem, IonItemGroup, IonList, IonPage, IonText, modalController } from '@ionic/vue';
 import { checkbox, checkmarkCircle, shareSocial } from 'ionicons/icons';
 
 defineProps<{

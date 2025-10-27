@@ -142,54 +142,54 @@
 </template>
 
 <script setup lang="ts">
-import {
-  Answer,
-  MsOptions,
-  askQuestion,
-  MsImage,
-  NoActiveUser,
-  DisplayState,
-  MsActionBar,
-  MsGridListToggle,
-  MsSearchInput,
-  MsSorter,
-  MsSorterChangeEvent,
-  MsModalResult,
-  useWindowSize,
-} from 'megashark-lib';
+import { copyToClipboard } from '@/common/clipboard';
 import SmallDisplayHeaderTitle from '@/components/header/SmallDisplayHeaderTitle.vue';
 import { SortProperty, UserCollection, UserFilter, UserFilterLabels, UserModel } from '@/components/users';
 import {
   ClientInfo,
+  ClientUserUpdateProfileError,
+  ClientUserUpdateProfileErrorTag,
+  InvitationStatus,
   UserID,
   UserInfo,
   UserProfile,
+  getPkiJoinOrganizationLink,
   getClientInfo as parsecGetClientInfo,
   listUsers as parsecListUsers,
   revokeUser as parsecRevokeUser,
-  InvitationStatus,
   updateProfile as parsecUpdateProfile,
-  ClientUserUpdateProfileError,
-  ClientUserUpdateProfileErrorTag,
-  getPkiJoinOrganizationLink,
 } from '@/parsec';
-import { Routes, watchRoute, currentRouteIsUserRoute, navigateTo } from '@/router';
+import { Routes, currentRouteIsUserRoute, navigateTo, watchRoute } from '@/router';
+import { EventData, EventDistributor, EventDistributorKey, Events, InvitationUpdatedData } from '@/services/eventDistributor';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
+import { MenuAction, TabBarOptions, useCustomTabBar } from '@/views/menu';
+import BulkRoleAssignmentModal from '@/views/users/BulkRoleAssignmentModal.vue';
 import { UserAction } from '@/views/users/types';
+import UpdateProfileModal from '@/views/users/UpdateProfileModal.vue';
 import UserDetailsModal from '@/views/users/UserDetailsModal.vue';
 import UserGridDisplay from '@/views/users/UserGridDisplay.vue';
 import UserListDisplay from '@/views/users/UserListDisplay.vue';
+import { openGlobalUserContextMenu as _openGlobalUserContextMenu, openUserContextMenu as _openUserContextMenu } from '@/views/users/utils';
 import { IonContent, IonPage, IonText, modalController } from '@ionic/vue';
 import { informationCircle, link, personAdd, personRemove, repeat, returnUpForward } from 'ionicons/icons';
-import { Ref, inject, onMounted, onUnmounted, ref, toRaw, computed, watch } from 'vue';
-import BulkRoleAssignmentModal from '@/views/users/BulkRoleAssignmentModal.vue';
-import { EventData, EventDistributor, EventDistributorKey, Events, InvitationUpdatedData } from '@/services/eventDistributor';
-import UpdateProfileModal from '@/views/users/UpdateProfileModal.vue';
-import { openUserContextMenu as _openUserContextMenu, openGlobalUserContextMenu as _openGlobalUserContextMenu } from '@/views/users/utils';
-import { MenuAction, TabBarOptions, useCustomTabBar } from '@/views/menu';
-import { copyToClipboard } from '@/common/clipboard';
+import {
+  Answer,
+  DisplayState,
+  MsActionBar,
+  MsGridListToggle,
+  MsImage,
+  MsModalResult,
+  MsOptions,
+  MsSearchInput,
+  MsSorter,
+  MsSorterChangeEvent,
+  NoActiveUser,
+  askQuestion,
+  useWindowSize,
+} from 'megashark-lib';
+import { Ref, computed, inject, onMounted, onUnmounted, ref, toRaw, watch } from 'vue';
 
 const displayView = ref(DisplayState.List);
 const isAdmin = ref(false);

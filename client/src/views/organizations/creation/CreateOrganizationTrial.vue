@@ -35,34 +35,34 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, modalController } from '@ionic/vue';
-import { isProxy, onMounted, ref, toRaw } from 'vue';
-import OrganizationUserInformationPage from '@/views/organizations/creation/OrganizationUserInformationPage.vue';
-import OrganizationAuthenticationPage from '@/views/organizations/creation/OrganizationAuthenticationPage.vue';
-import OrganizationCreationPage from '@/views/organizations/creation/OrganizationCreationPage.vue';
-import OrganizationCreatedPage from '@/views/organizations/creation/OrganizationCreatedPage.vue';
-import {
-  AvailableDevice,
-  BootstrapOrganizationErrorTag,
-  createOrganization as parsecCreateOrganization,
-  bootstrapOrganization as parsecBootstrapOrganization,
-  DeviceSaveStrategy,
-  Result,
-  BootstrapOrganizationError,
-  OrganizationID,
-  parseParsecAddr,
-  ParsedParsecAddrTag,
-  SaveStrategy,
-  DeviceSaveStrategySSO,
-  CustomDeviceSaveStrategyTag,
-} from '@/parsec';
-import { getTrialServerAddress } from '@/services/parsecServers';
 import { getDefaultDeviceName } from '@/common/device';
 import { generateTrialOrganizationName } from '@/common/organization';
-import { Translatable, I18n, MsModalResult } from 'megashark-lib';
+import {
+  AvailableDevice,
+  BootstrapOrganizationError,
+  BootstrapOrganizationErrorTag,
+  CustomDeviceSaveStrategyTag,
+  DeviceSaveStrategy,
+  DeviceSaveStrategySSO,
+  OrganizationID,
+  bootstrapOrganization as parsecBootstrapOrganization,
+  createOrganization as parsecCreateOrganization,
+  ParsedParsecAddrTag,
+  parseParsecAddr,
+  Result,
+  SaveStrategy,
+} from '@/parsec';
 import { wait } from '@/parsec/internals';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { useOpenBao } from '@/services/openBao';
+import { getTrialServerAddress } from '@/services/parsecServers';
+import OrganizationAuthenticationPage from '@/views/organizations/creation/OrganizationAuthenticationPage.vue';
+import OrganizationCreatedPage from '@/views/organizations/creation/OrganizationCreatedPage.vue';
+import OrganizationCreationPage from '@/views/organizations/creation/OrganizationCreationPage.vue';
+import OrganizationUserInformationPage from '@/views/organizations/creation/OrganizationUserInformationPage.vue';
+import { IonPage, modalController } from '@ionic/vue';
+import { I18n, MsModalResult, Translatable } from 'megashark-lib';
+import { isProxy, onMounted, ref, toRaw } from 'vue';
 
 enum Steps {
   PersonalInformation,

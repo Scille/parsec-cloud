@@ -65,7 +65,6 @@ msTest('Test initial status for all orgs', async ({ clientAreaCustomOrder }) => 
 
   const orgChoice = container.locator('.organization-choice-title');
   await expect(orgChoice).toBeVisible();
-  // eslint-disable-next-line max-len
   await expect(orgChoice).toHaveText(
     'You have multiple organizations. Please select one from the top-left button or select it below in order to check the contract.',
   );

@@ -1,7 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-
 import type { ClientEvent, LibParsecPlugin } from '@/plugins/libparsec/definitions';
 
 // @ts-expect-error: `libparsec_bindings_web` is a wasm module with exotic loading

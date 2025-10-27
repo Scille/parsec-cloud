@@ -31,14 +31,14 @@
 </template>
 
 <script setup lang="ts">
-import { formatTimeSince } from 'megashark-lib';
 import NotificationItem from '@/components/notifications/NotificationItem.vue';
 import { Routes, currentRouteIsFileRoute, navigateTo } from '@/router';
+import { EventDistributor } from '@/services/eventDistributor';
 import useUploadMenu from '@/services/fileUploadMenu';
 import { Notification } from '@/services/notificationManager';
 import { IonIcon, IonText, popoverController } from '@ionic/vue';
 import { arrowForward, checkmarkCircle } from 'ionicons/icons';
-import { EventDistributor } from '@/services/eventDistributor';
+import { formatTimeSince } from 'megashark-lib';
 
 const menu = useUploadMenu();
 

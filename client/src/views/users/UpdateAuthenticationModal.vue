@@ -87,24 +87,23 @@
 </template>
 
 <script setup lang="ts">
-import { MsModalResult, MsPasswordInput, asyncComputed, MsSpinner } from 'megashark-lib';
+import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
+import SmallDisplayModalHeader from '@/components/header/SmallDisplayModalHeader.vue';
 import {
   AvailableDevice,
-  UpdateDeviceErrorTag,
-  updateDeviceChangeAuthentication,
   AvailableDeviceTypeTag,
   DeviceAccessStrategyPassword,
   DeviceAccessStrategyTag,
+  UpdateDeviceErrorTag,
   isAuthenticationValid,
+  updateDeviceChangeAuthentication,
 } from '@/parsec';
+import { DeviceAccessStrategyKeyring, DeviceAccessStrategySmartcard } from '@/plugins/libparsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { Translatable, useWindowSize } from 'megashark-lib';
 import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonTitle, modalController } from '@ionic/vue';
 import { close } from 'ionicons/icons';
+import { MsModalResult, MsPasswordInput, MsSpinner, Translatable, asyncComputed, useWindowSize } from 'megashark-lib';
 import { Ref, onMounted, ref, useTemplateRef } from 'vue';
-import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
-import SmallDisplayModalHeader from '@/components/header/SmallDisplayModalHeader.vue';
-import { DeviceAccessStrategyKeyring, DeviceAccessStrategySmartcard } from '@/plugins/libparsec';
 
 enum ChangeAuthenticationStep {
   Undefined,

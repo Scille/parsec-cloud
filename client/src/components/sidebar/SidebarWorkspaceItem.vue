@@ -27,10 +27,10 @@
 </template>
 
 <script setup lang="ts">
-import { IonItem, IonText, IonIcon } from '@ionic/vue';
 import { WorkspaceInfo } from '@/parsec';
-import { ellipsisHorizontal } from 'ionicons/icons';
 import { currentRouteIsWorkspaceRoute } from '@/router';
+import { IonIcon, IonItem, IonText } from '@ionic/vue';
+import { ellipsisHorizontal } from 'ionicons/icons';
 
 defineProps<{
   workspace: WorkspaceInfo;

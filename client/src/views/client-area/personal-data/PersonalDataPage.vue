@@ -35,6 +35,11 @@
 
 <script setup lang="ts">
 import { BillingSystem, BmsAccessInstance, BmsOrganization, PersonalInformationResultData } from '@/services/bms';
+import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import AuthenticationModal from '@/views/client-area/personal-data/AuthenticationModal.vue';
+import PersonalInfoModal from '@/views/client-area/personal-data/PersonalInfoModal.vue';
+import ProfessionalInfoModal from '@/views/client-area/personal-data/ProfessionalInfoModal.vue';
+import SecurityModal from '@/views/client-area/personal-data/SecurityModal.vue';
 import { modalController, ModalOptions } from '@ionic/vue';
 import {
   createSummaryCardItem,
@@ -46,11 +51,6 @@ import {
   Translatable,
 } from 'megashark-lib';
 import { computed, onMounted, ref } from 'vue';
-import AuthenticationModal from '@/views/client-area/personal-data/AuthenticationModal.vue';
-import SecurityModal from '@/views/client-area/personal-data/SecurityModal.vue';
-import PersonalInfoModal from '@/views/client-area/personal-data/PersonalInfoModal.vue';
-import ProfessionalInfoModal from '@/views/client-area/personal-data/ProfessionalInfoModal.vue';
-import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 
 const personalData = ref<PersonalInformationResultData | null>(null);
 const isRepresentingCompany = computed(() => !!personalData.value?.company && !!personalData.value?.job);

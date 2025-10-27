@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage } from '@ionic/vue';
 import { BmsAccessInstance } from '@/services/bms';
 import ClientAreaPage from '@/views/client-area/ClientAreaPage.vue';
+import { IonPage } from '@ionic/vue';
 </script>

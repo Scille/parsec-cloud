@@ -31,10 +31,10 @@
 </template>
 
 <script setup lang="ts">
-import { DocumentImport, MsImage } from 'megashark-lib';
 import { FileImportTuple, getFilesFromDrop } from '@/components/files/utils';
 import { FsPath } from '@/parsec';
 import { IonText } from '@ionic/vue';
+import { DocumentImport, MsImage } from 'megashark-lib';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 defineExpose({

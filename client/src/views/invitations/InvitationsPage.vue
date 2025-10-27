@@ -225,51 +225,51 @@
 </template>
 
 <script setup lang="ts">
-import {
-  Answer,
-  askQuestion,
-  DocumentImport,
-  MsImage,
-  MsModalResult,
-  NoInvitation,
-  Translatable,
-  useWindowSize,
-  WindowSizeBreakpoints,
-  MsReportText,
-  MsReportTheme,
-  attachMouseOverTooltip,
-} from 'megashark-lib';
 import CertificateIcon from '@/assets/images/certificate-icon.svg?raw';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import { IonContent, IonPage, IonText, modalController, IonIcon, IonButton } from '@ionic/vue';
-import { caretDown, document, idCard, link, mailUnread, personAdd } from 'ionicons/icons';
-import { inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
-import { InvitationView } from '@/views/invitations/types';
-import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
-import InvitationSwitchModal from '@/views/invitations/InvitationSwitchModal.vue';
+import { copyToClipboard } from '@/common/clipboard';
+import InviteModal from '@/components/invitations/InviteModal.vue';
 import {
   acceptOrganizationJoinRequest,
   cancelInvitation,
   ClientCancelInvitationErrorTag,
+  ClientNewUserInvitationError,
   ClientNewUserInvitationErrorTag,
   getPkiJoinOrganizationLink,
   InvitationEmailSentStatus,
-  inviteUser as parsecInviteUser,
   JoinRequestValidity,
   listOrganizationJoinRequests,
   listUserInvitations,
   OrganizationJoinRequest,
+  inviteUser as parsecInviteUser,
   rejectOrganizationJoinRequest,
   UserInvitation,
-  ClientNewUserInvitationError,
 } from '@/parsec';
-import InvitationList from '@/views/invitations/InvitationList.vue';
-import PkiRequestList from '@/views/invitations/PkiRequestList.vue';
-import { copyToClipboard } from '@/common/clipboard';
-import GreetUserModal from '@/views/users/GreetUserModal.vue';
-import SelectProfileModal from '@/views/invitations/SelectProfileModal.vue';
 import { currentRouteIs, getCurrentRouteQuery, navigateTo, Routes, watchRoute } from '@/router';
-import InviteModal from '@/components/invitations/InviteModal.vue';
+import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import InvitationList from '@/views/invitations/InvitationList.vue';
+import InvitationSwitchModal from '@/views/invitations/InvitationSwitchModal.vue';
+import PkiRequestList from '@/views/invitations/PkiRequestList.vue';
+import SelectProfileModal from '@/views/invitations/SelectProfileModal.vue';
+import { InvitationView } from '@/views/invitations/types';
+import GreetUserModal from '@/views/users/GreetUserModal.vue';
+import { IonButton, IonContent, IonIcon, IonPage, IonText, modalController } from '@ionic/vue';
+import { caretDown, document, idCard, link, mailUnread, personAdd } from 'ionicons/icons';
+import {
+  Answer,
+  askQuestion,
+  attachMouseOverTooltip,
+  DocumentImport,
+  MsImage,
+  MsModalResult,
+  MsReportText,
+  MsReportTheme,
+  NoInvitation,
+  Translatable,
+  useWindowSize,
+  WindowSizeBreakpoints,
+} from 'megashark-lib';
+import { inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const { isLargeDisplay, isSmallDisplay, windowWidth } = useWindowSize();
 const view = ref(InvitationView.EmailInvitation);

@@ -210,31 +210,31 @@
 </template>
 
 <script setup lang="ts">
-import { getInvoiceStatusTranslationKey } from '@/services/translation';
-import { IonTitle, IonText, IonList, IonItem, IonSkeletonText } from '@ionic/vue';
-import { ClientAreaPages, isDefaultOrganization } from '@/views/client-area/types';
+import { formatFileSize } from '@/common/file';
 import {
-  BmsAccessInstance,
-  DataType,
-  BmsOrganization,
-  OrganizationStatsResultData,
   BillingDetailsPaymentMethodCard,
+  BmsAccessInstance,
+  BmsOrganization,
+  DataType,
+  OrganizationStatsResultData,
   PaymentMethod,
   StripeInvoice,
 } from '@/services/bms';
+import { Env } from '@/services/environment';
+import { getInvoiceStatusTranslationKey } from '@/services/translation';
+import { ClientAreaPages, isDefaultOrganization } from '@/views/client-area/types';
+import { IonItem, IonList, IonSkeletonText, IonText, IonTitle } from '@ionic/vue';
+import { DateTime } from 'luxon';
 import {
-  MsInformationTooltip,
-  I18n,
-  MsStripeCardDetails,
-  PaymentMethod as MsPaymentMethod,
-  formatTimeSince,
   DownloadIcon,
+  I18n,
   MsImage,
+  MsInformationTooltip,
+  PaymentMethod as MsPaymentMethod,
+  MsStripeCardDetails,
+  formatTimeSince,
 } from 'megashark-lib';
 import { onMounted, ref } from 'vue';
-import { formatFileSize } from '@/common/file';
-import { DateTime } from 'luxon';
-import { Env } from '@/services/environment';
 
 const props = defineProps<{
   organization: BmsOrganization;

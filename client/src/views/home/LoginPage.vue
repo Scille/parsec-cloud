@@ -73,13 +73,13 @@
 </template>
 
 <script setup lang="ts">
-import { MsInput, MsPasswordInput, MsSpinner } from 'megashark-lib';
+import { SSOProvider, SsoProviderCard } from '@/components/devices';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AccessStrategy, AvailableDevice, ClientStartError, ClientStartErrorTag, DeviceAccessStrategyPassword } from '@/parsec';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonFooter, IonText } from '@ionic/vue';
-import { onMounted, ref, useTemplateRef } from 'vue';
 import { useOpenBao } from '@/services/openBao';
-import { SsoProviderCard, SSOProvider } from '@/components/devices';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonFooter, IonText } from '@ionic/vue';
+import { MsInput, MsPasswordInput, MsSpinner } from 'megashark-lib';
+import { onMounted, ref, useTemplateRef } from 'vue';
 
 const props = defineProps<{
   device: AvailableDevice;

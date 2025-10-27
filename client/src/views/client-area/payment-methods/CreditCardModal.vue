@@ -31,11 +31,11 @@
 </template>
 
 <script setup lang="ts">
-import { MsModal, MsModalResult, MsStripeCardForm, PaymentMethodResult, I18n, Translatable } from 'megashark-lib';
-import { IonToggle, modalController } from '@ionic/vue';
-import { ref, useTemplateRef } from 'vue';
 import { BmsAccessInstance } from '@/services/bms';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { IonToggle, modalController } from '@ionic/vue';
+import { I18n, MsModal, MsModalResult, MsStripeCardForm, PaymentMethodResult, Translatable } from 'megashark-lib';
+import { ref, useTemplateRef } from 'vue';
 
 const props = defineProps<{
   informationManager: InformationManager;

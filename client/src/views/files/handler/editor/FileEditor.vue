@@ -56,26 +56,26 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonIcon, IonList, IonItem, IonText } from '@ionic/vue';
-import { checkmarkCircle } from 'ionicons/icons';
-import { ClientInfo, closeFile, FileDescriptor, openFile, writeFile } from '@/parsec';
-import { I18n, Translatable } from 'megashark-lib';
-import { ref, inject, useTemplateRef, onMounted, onUnmounted } from 'vue';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import { getWorkspaceHandle, routerGoBack } from '@/router';
 import { DetectedFileType } from '@/common/fileTypes';
-import { FileContentInfo } from '@/views/files/handler/viewer/utils';
-import { Env } from '@/services/environment';
+import { ClientInfo, closeFile, FileDescriptor, openFile, writeFile } from '@/parsec';
+import { getWorkspaceHandle, routerGoBack } from '@/router';
 import {
-  CryptpadDocumentType,
   Cryptpad,
-  getCryptpadDocumentType,
+  CryptpadAppMode,
+  CryptpadDocumentType,
   CryptpadError,
   CryptpadErrorCode,
-  CryptpadAppMode,
+  getCryptpadDocumentType,
 } from '@/services/cryptpad';
+import { Env } from '@/services/environment';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { longLocaleCodeToShort } from '@/services/translation';
 import { SaveState } from '@/views/files/handler/editor';
+import { FileContentInfo } from '@/views/files/handler/viewer/utils';
+import { IonButton, IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
+import { checkmarkCircle } from 'ionicons/icons';
+import { I18n, Translatable } from 'megashark-lib';
+import { inject, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const fileEditorRef = useTemplateRef('fileEditor');
@@ -84,7 +84,12 @@ const cryptpadInstance = ref<Cryptpad | null>(null);
 const fileUrl = ref<string | null>(null);
 const error = ref('');
 
-const { contentInfo, fileInfo, readOnly, userInfo } = defineProps<{
+const {
+  contentInfo,
+  fileInfo,
+  readOnly,
+  userInfo = undefined,
+} = defineProps<{
   contentInfo: FileContentInfo;
   fileInfo: DetectedFileType;
   readOnly?: boolean;

@@ -27,8 +27,8 @@
 </template>
 
 <script setup lang="ts">
-import { MsImage, ImportMultipleFiles } from 'megashark-lib';
 import { IonItem, IonText } from '@ionic/vue';
+import { ImportMultipleFiles, MsImage } from 'megashark-lib';
 
 const props = defineProps<{
   amount: number;

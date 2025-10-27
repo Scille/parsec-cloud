@@ -57,10 +57,10 @@
 </template>
 
 <script setup lang="ts">
-import { MsModal, MsInput, MsPhoneNumberInput, MsModalResult, MsReportTheme, MsReportText } from 'megashark-lib';
-import { IonPage, modalController } from '@ionic/vue';
-import { onMounted, Ref, ref, useTemplateRef } from 'vue';
 import { BmsAccessInstance, BmsError } from '@/services/bms';
+import { IonPage, modalController } from '@ionic/vue';
+import { MsInput, MsModal, MsModalResult, MsPhoneNumberInput, MsReportText, MsReportTheme } from 'megashark-lib';
+import { onMounted, Ref, ref, useTemplateRef } from 'vue';
 
 const props = defineProps<{
   firstname: string;

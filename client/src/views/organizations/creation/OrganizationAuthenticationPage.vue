@@ -54,12 +54,12 @@
 
 <script setup lang="ts">
 import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
+import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
 import { DeviceSaveStrategy } from '@/parsec';
-import { chevronForward, chevronBack } from 'ionicons/icons';
-import { IonPage, IonButton, IonIcon, IonFooter } from '@ionic/vue';
+import { IonButton, IonFooter, IonIcon, IonPage } from '@ionic/vue';
+import { chevronBack, chevronForward } from 'ionicons/icons';
 import { asyncComputed } from 'megashark-lib';
 import { useTemplateRef } from 'vue';
-import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
 
 defineProps<{
   hideBackButton?: boolean;

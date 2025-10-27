@@ -49,11 +49,11 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonIcon } from '@ionic/vue';
-import { open } from 'ionicons/icons';
 import { Env } from '@/services/environment';
 import { openAboutModal } from '@/views/about';
 import { openSettingsModal } from '@/views/settings';
+import { IonButton, IonIcon } from '@ionic/vue';
+import { open } from 'ionicons/icons';
 
 async function openSettings(): Promise<void> {
   if (!Env.isAccountEnabled()) {

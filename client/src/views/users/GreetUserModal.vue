@@ -174,9 +174,8 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
-import SmallDisplayStepModalHeader from '@/components/header/SmallDisplayStepModalHeader.vue';
 import SmallDisplayModalHeader from '@/components/header/SmallDisplayModalHeader.vue';
+import SmallDisplayStepModalHeader from '@/components/header/SmallDisplayStepModalHeader.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import TagProfile from '@/components/users/TagProfile.vue';
@@ -184,20 +183,21 @@ import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import { CancelledGreetingAttemptReason, GreetInProgressErrorTag, UserGreet, UserInvitation, UserProfile } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
+import { close, personAdd } from 'ionicons/icons';
 import {
   Answer,
+  MsDropdown,
+  MsDropdownChangeEvent,
+  MsInformativeText,
   MsModalResult,
   MsOptions,
-  askQuestion,
-  MsDropdown,
-  MsInformativeText,
   MsSpinner,
   MsWizardStepper,
   Translatable,
-  MsDropdownChangeEvent,
+  askQuestion,
   useWindowSize,
 } from 'megashark-lib';
-import { close, personAdd } from 'ionicons/icons';
 import { Ref, computed, onMounted, ref, useTemplateRef } from 'vue';
 
 enum GreetUserStep {

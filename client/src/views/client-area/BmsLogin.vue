@@ -193,14 +193,14 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonText, IonFooter, IonIcon, IonSkeletonText } from '@ionic/vue';
-import { MsInput, MsPasswordInput, Translatable, Validity, MsSpinner, MsCheckbox } from 'megashark-lib';
 import { emailValidator } from '@/common/validators';
-import { warning, arrowForward, close, chevronBack } from 'ionicons/icons';
-import { computed, onMounted, ref, useTemplateRef } from 'vue';
-import { AuthenticationToken, BmsAccessInstance, PersonalInformationResultData } from '@/services/bms';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
+import { AuthenticationToken, BmsAccessInstance, PersonalInformationResultData } from '@/services/bms';
 import { Env } from '@/services/environment';
+import { IonButton, IonFooter, IonIcon, IonSkeletonText, IonText } from '@ionic/vue';
+import { arrowForward, chevronBack, close, warning } from 'ionicons/icons';
+import { MsCheckbox, MsInput, MsPasswordInput, MsSpinner, Translatable, Validity } from 'megashark-lib';
+import { computed, onMounted, ref, useTemplateRef } from 'vue';
 
 const props = defineProps<{
   email?: string;

@@ -10,8 +10,8 @@
 </template>
 
 <script setup lang="ts">
-import { MsModal } from 'megashark-lib';
 import AboutView from '@/views/about/AboutView.vue';
+import { MsModal } from 'megashark-lib';
 </script>
 
 <style lang="scss" scoped></style>

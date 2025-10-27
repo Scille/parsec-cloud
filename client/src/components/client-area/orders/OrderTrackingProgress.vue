@@ -64,11 +64,11 @@
 </template>
 
 <script setup lang="ts">
+import { getOrderStepTranslations, OrderStep } from '@/components/client-area/orders/utils';
 import { IonIcon, IonText } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
-import { ref, onMounted } from 'vue';
 import { MsReportText, MsReportTheme } from 'megashark-lib';
-import { getOrderStepTranslations, OrderStep } from '@/components/client-area/orders/utils';
+import { onMounted, ref } from 'vue';
 
 const customOrderIndex = ref<number>(0);
 

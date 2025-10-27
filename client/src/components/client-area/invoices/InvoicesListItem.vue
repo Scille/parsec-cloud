@@ -76,7 +76,7 @@ import { Invoice, InvoiceType, SellsyInvoice } from '@/services/bms';
 import { Env } from '@/services/environment';
 import { getInvoiceStatusTranslationKey } from '@/services/translation';
 import { IonItem, IonText } from '@ionic/vue';
-import { MsImage, DownloadIcon, I18n, Translatable } from 'megashark-lib';
+import { DownloadIcon, I18n, MsImage, Translatable } from 'megashark-lib';
 
 const props = defineProps<{
   invoice: Invoice;

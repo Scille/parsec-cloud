@@ -47,13 +47,13 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonText, IonIcon } from '@ionic/vue';
-import { MsInput, Translatable, Validity, MsSpinner, I18n } from 'megashark-lib';
 import { emailValidator } from '@/common/validators';
-import { warning, arrowBack } from 'ionicons/icons';
-import { onMounted, ref, useTemplateRef } from 'vue';
 import { BmsApi, BmsLang } from '@/services/bms';
 import { longLocaleCodeToShort } from '@/services/translation';
+import { IonButton, IonIcon, IonText } from '@ionic/vue';
+import { arrowBack, warning } from 'ionicons/icons';
+import { I18n, MsInput, MsSpinner, Translatable, Validity } from 'megashark-lib';
+import { onMounted, ref, useTemplateRef } from 'vue';
 
 const emits = defineEmits<{
   (e: 'cancel'): void;

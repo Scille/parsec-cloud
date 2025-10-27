@@ -176,104 +176,104 @@
 
 <script setup lang="ts">
 import { entryNameValidator } from '@/common/validators';
+import * as parsec from '@/parsec';
 import {
   Answer,
-  MsModalResult,
-  askQuestion,
-  getTextFromUser,
-  MsOptions,
-  EmptyFolder,
-  MsImage,
-  DocumentImport,
   DisplayState,
+  DocumentImport,
+  EmptyFolder,
+  EyeOpenIcon,
+  I18n,
   MsActionBar,
   MsGridListToggle,
+  MsImage,
+  MsModalResult,
+  MsOptions,
   MsSorter,
   MsSorterChangeEvent,
-  Translatable,
-  asyncComputed,
   MsSpinner,
-  I18n,
-  useWindowSize,
   RenameIcon,
-  EyeOpenIcon,
+  Translatable,
+  askQuestion,
+  asyncComputed,
+  getTextFromUser,
+  useWindowSize,
 } from 'megashark-lib';
-import * as parsec from '@/parsec';
 
 import {
   EntryCollection,
+  EntryModel,
   FileDropZone,
   FileGridDisplay,
   FileImportPopover,
-  FileOperationProgress,
   FileImportTuple,
   FileInputs,
   FileListDisplay,
   FileModel,
+  FileOperationProgress,
+  FolderDefaultData,
   FolderModel,
+  FoldersPageSavedData,
   ImportType,
   SortProperty,
-  selectFolder,
   copyPathLinkToClipboard,
-  EntryModel,
-  FolderDefaultData,
-  FoldersPageSavedData,
+  selectFolder,
 } from '@/components/files';
+import { EntrySyncStatus } from '@/components/files/types';
 import SmallDisplayHeaderTitle from '@/components/header/SmallDisplayHeaderTitle.vue';
+import { WorkspaceTagRole } from '@/components/workspaces';
 import {
+  ClientInfo,
+  EntryName,
+  EntryStat,
+  EntryStatFile,
+  FsPath,
   Path,
-  entryStat,
   WorkspaceCreateFolderErrorTag,
-  listWorkspaces,
   WorkspaceID,
   WorkspaceRole,
-  FsPath,
-  EntryStat,
   WorkspaceStatFolderChildrenErrorTag,
-  EntryStatFile,
-  EntryName,
+  entryStat,
+  getClientInfo,
   isDesktop,
   isWeb,
-  ClientInfo,
-  getClientInfo,
+  listWorkspaces,
 } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, watchRoute } from '@/router';
-import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
+import { isFileEditable } from '@/services/cryptpad';
+import { EntrySyncData, EventData, EventDistributor, EventDistributorKey, Events, MenuActionData } from '@/services/eventDistributor';
+import { OpenPathOptions, openPath, showInExplorer } from '@/services/fileOpener';
 import {
-  OperationProgressStateData,
-  FolderCreatedStateData,
-  ImportData,
-  MoveData,
+  CopyData,
   FileOperationData,
+  FileOperationDataType,
   FileOperationManager,
   FileOperationManagerKey,
   FileOperationState,
+  FolderCreatedStateData,
+  ImportData,
+  MoveData,
+  OperationProgressStateData,
   StateData,
-  FileOperationDataType,
-  CopyData,
 } from '@/services/fileOperationManager';
+import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import {
-  FileDetailsModal,
   FileAction,
+  FileDetailsModal,
   FolderGlobalAction,
   openEntryContextMenu as _openEntryContextMenu,
   openGlobalContextMenu as _openGlobalContextMenu,
-  isFolderGlobalAction,
-  downloadEntry,
   downloadArchive,
+  downloadEntry,
+  isFolderGlobalAction,
   openDownloadConfirmationModal,
 } from '@/views/files';
-import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
-import { arrowRedo, folderOpen, informationCircle, link, open, trashBin, download, create, time, duplicate, eye } from 'ionicons/icons';
-import { Ref, computed, inject, onMounted, onUnmounted, ref, nextTick, watch, useTemplateRef } from 'vue';
-import { EntrySyncData, EventData, EventDistributor, EventDistributorKey, Events, MenuActionData } from '@/services/eventDistributor';
-import { openPath, OpenPathOptions, showInExplorer } from '@/services/fileOpener';
-import { WorkspaceTagRole } from '@/components/workspaces';
 import { MenuAction, TabBarOptions, useCustomTabBar } from '@/views/menu';
-import { isFileEditable } from '@/services/cryptpad';
-import { EntrySyncStatus } from '@/components/files/types';
+import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
+import { arrowRedo, create, download, duplicate, eye, folderOpen, informationCircle, link, open, time, trashBin } from 'ionicons/icons';
+import { Ref, computed, inject, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const customTabBar = useCustomTabBar();
 

@@ -142,13 +142,13 @@
 </template>
 
 <script setup lang="ts">
-import { formatTimeSince, MsCheckbox, useWindowSize } from 'megashark-lib';
 import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import UserStatusTag from '@/components/users/UserStatusTag.vue';
 import { UserModel } from '@/components/users/types';
 import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
 import { ellipsisHorizontal } from 'ionicons/icons';
+import { formatTimeSince, MsCheckbox, useWindowSize } from 'megashark-lib';
 import { ref } from 'vue';
 
 const isHovered = ref(false);

@@ -108,18 +108,17 @@ export enum ProfilePopoverHomepageOption {
 </script>
 
 <script setup lang="ts">
-import { APP_VERSION } from '@/services/environment';
+import DownloadParsec from '@/components/misc/DownloadParsec.vue';
+import { isMobile, isWeb } from '@/parsec';
+import { ParsecAccount } from '@/parsec/account';
+import { navigateTo, Routes } from '@/router';
+import { APP_VERSION, Env } from '@/services/environment';
+import { StorageManager, StorageManagerKey } from '@/services/storageManager';
+import { AccountSettingsTabs } from '@/views/account/types';
 import { popoverController } from '@ionic/core';
 import { IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
-import { ParsecAccount } from '@/parsec/account';
-import { isMobile, isWeb } from '@/parsec';
-import { AccountSettingsTabs } from '@/views/account/types';
-import { navigateTo, Routes } from '@/router';
 import { cog, fingerPrint, logOut, person } from 'ionicons/icons';
-import DownloadParsec from '@/components/misc/DownloadParsec.vue';
-import { ref, inject, onMounted } from 'vue';
-import { StorageManager, StorageManagerKey } from '@/services/storageManager';
-import { Env } from '@/services/environment';
+import { inject, onMounted, ref } from 'vue';
 
 defineProps<{
   email: string;

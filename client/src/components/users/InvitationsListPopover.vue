@@ -46,13 +46,13 @@
 </template>
 
 <script setup lang="ts">
-import { MsModalResult } from 'megashark-lib';
 import InvitationPopoverItem from '@/components/users/InvitationPopoverItem.vue';
 import { InvitationAction } from '@/components/users/types';
 import { UserInvitation, listUserInvitations } from '@/parsec';
 import { InformationManager } from '@/services/informationManager';
 import { IonButton, IonIcon, IonList, IonText, popoverController } from '@ionic/vue';
 import { personAdd } from 'ionicons/icons';
+import { MsModalResult } from 'megashark-lib';
 import { Ref, onMounted, ref } from 'vue';
 
 defineProps<{

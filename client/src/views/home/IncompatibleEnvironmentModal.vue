@@ -26,10 +26,10 @@
 </template>
 
 <script setup lang="ts">
+import IncompatibleIcon from '@/assets/images/logo-incompatible.svg?raw';
+import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import { IonPage, IonText } from '@ionic/vue';
 import { MsImage, MsModal, MsReportTheme, Translatable } from 'megashark-lib';
-import { Resources, ResourcesManager } from '@/services/resourcesManager';
-import IncompatibleIcon from '@/assets/images/logo-incompatible.svg?raw';
 
 defineProps<{
   message: Translatable;

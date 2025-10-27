@@ -28,15 +28,15 @@
 </template>
 
 <script setup lang="ts">
-import { formatTimeSince } from 'megashark-lib';
 import NotificationItem from '@/components/notifications/NotificationItem.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { UserInfo, getUserInfo, getWorkspaceName } from '@/parsec';
+import { EventDistributor } from '@/services/eventDistributor';
 import { UserJoinWorkspaceData } from '@/services/informationManager';
 import { Notification } from '@/services/notificationManager';
 import { IonText } from '@ionic/vue';
+import { formatTimeSince } from 'megashark-lib';
 import { Ref, onMounted, ref } from 'vue';
-import { EventDistributor } from '@/services/eventDistributor';
 
 const userInfo: Ref<UserInfo | null> = ref(null);
 const workspaceName = ref('');

@@ -18,11 +18,11 @@
 </template>
 
 <script setup lang="ts">
-import { Base64, LogoIconGradient, MsImage, MsSpinner } from 'megashark-lib';
 import { RouteBackup, Routes, getCurrentRouteQuery, navigateTo } from '@/router';
-import { IonContent, IonPage } from '@ionic/vue';
-import { onMounted } from 'vue';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
+import { IonContent, IonPage } from '@ionic/vue';
+import { Base64, LogoIconGradient, MsImage, MsSpinner } from 'megashark-lib';
+import { onMounted } from 'vue';
 
 onMounted(async () => {
   // When trying to switch from one connected org to another,

@@ -108,15 +108,15 @@
 </template>
 
 <script setup lang="ts">
-import { IonText, IonIcon, popoverController } from '@ionic/vue';
-import { Invoice } from '@/services/bms';
-import { ref } from 'vue';
-import { chevronDown, calendar, close } from 'ionicons/icons';
-import { I18n, MsOptions, Translatable } from 'megashark-lib';
 import TimeFilterPopover from '@/components/client-area/TimeFilterPopover.vue';
 import YearInvoicesListItem from '@/components/client-area/invoices/YearInvoicesListItem.vue';
 import YearInvoicesListSkeleton from '@/components/client-area/invoices/YearInvoicesListSkeleton.vue';
+import { Invoice } from '@/services/bms';
+import { IonIcon, IonText, popoverController } from '@ionic/vue';
+import { calendar, chevronDown, close } from 'ionicons/icons';
 import { Info } from 'luxon';
+import { I18n, MsOptions, Translatable } from 'megashark-lib';
+import { ref } from 'vue';
 
 const props = defineProps<{
   invoices: Map<number, Array<Invoice>>;

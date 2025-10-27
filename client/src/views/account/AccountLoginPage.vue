@@ -93,14 +93,14 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonText, IonIcon } from '@ionic/vue';
-import { MsInput, MsPasswordInput, Translatable, Validity, MsSpinner } from 'megashark-lib';
 import { emailValidator, parsecAddrValidator } from '@/common/validators';
-import { navigateTo, Routes } from '@/router';
-import { warning } from 'ionicons/icons';
-import { computed, onMounted, ref, useTemplateRef } from 'vue';
-import { Env } from '@/services/environment';
 import { AccountHandle, ParsecAccount, ParsecAccountAccess } from '@/parsec';
+import { navigateTo, Routes } from '@/router';
+import { Env } from '@/services/environment';
+import { IonButton, IonIcon, IonText } from '@ionic/vue';
+import { warning } from 'ionicons/icons';
+import { MsInput, MsPasswordInput, MsSpinner, Translatable, Validity } from 'megashark-lib';
+import { computed, onMounted, ref, useTemplateRef } from 'vue';
 
 defineProps<{
   disabled?: boolean;

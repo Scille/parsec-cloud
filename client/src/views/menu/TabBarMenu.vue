@@ -96,14 +96,14 @@
 </template>
 
 <script setup lang="ts">
-import { IonFab, IonFabButton, IonIcon, IonText, modalController } from '@ionic/vue';
-import { folder, prism, personCircle, business } from 'ionicons/icons';
-import { hasVisited, Routes, navigateTo, currentRouteIs, getLastVisited } from '@/router';
 import { ClientInfo, getClientInfo as parsecGetClientInfo, UserProfile } from '@/parsec';
-import { ref, Ref, onMounted } from 'vue';
-import { AddIcon, MsImage, MsModalResult } from 'megashark-lib';
+import { currentRouteIs, getLastVisited, hasVisited, navigateTo, Routes } from '@/router';
 import TabBarMenuModal from '@/views/menu/TabBarMenuModal.vue';
 import { MenuAction } from '@/views/menu/types';
+import { IonFab, IonFabButton, IonIcon, IonText, modalController } from '@ionic/vue';
+import { business, folder, personCircle, prism } from 'ionicons/icons';
+import { AddIcon, MsImage, MsModalResult } from 'megashark-lib';
+import { onMounted, ref, Ref } from 'vue';
 
 const isMenuOpen = ref(false);
 const userInfo: Ref<ClientInfo | null> = ref(null);

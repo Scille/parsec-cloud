@@ -28,13 +28,13 @@
 </template>
 
 <script setup lang="ts">
-import { formatTimeSince } from 'megashark-lib';
 import NotificationItem from '@/components/notifications/NotificationItem.vue';
+import { EventDistributor } from '@/services/eventDistributor';
 import { InformationLevel } from '@/services/informationManager';
 import { Notification } from '@/services/notificationManager';
 import { IonIcon, IonLabel, IonText } from '@ionic/vue';
 import { alertCircle, checkmarkCircle, informationCircle, warning } from 'ionicons/icons';
-import { EventDistributor } from '@/services/eventDistributor';
+import { formatTimeSince } from 'megashark-lib';
 
 const props = defineProps<{
   notification: Notification;

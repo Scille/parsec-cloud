@@ -46,10 +46,10 @@
 </template>
 
 <script setup lang="ts">
-import { MsCodeValidationInput, MsModal, MsModalResult, AllowedInput, MsReportTheme } from 'megashark-lib';
-import { onMounted, ref } from 'vue';
-import { modalController, IonText } from '@ionic/vue';
 import { ParsecAccount } from '@/parsec';
+import { IonText, modalController } from '@ionic/vue';
+import { AllowedInput, MsCodeValidationInput, MsModal, MsModalResult, MsReportTheme } from 'megashark-lib';
+import { onMounted, ref } from 'vue';
 
 const error = ref('');
 const resendDisabled = ref(false);

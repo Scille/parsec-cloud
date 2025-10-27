@@ -350,30 +350,18 @@
 </template>
 
 <script setup lang="ts">
-import { askQuestion, Answer, ChevronExpand, MsImage, MsModalResult, MsInformationTooltip } from 'megashark-lib';
+import OrganizationSwitchClientPopover from '@/components/organizations/OrganizationSwitchClientPopover.vue';
+import { navigateTo, Routes } from '@/router';
 import {
-  arrowForward,
-  card,
-  chatbubbleEllipses,
-  home,
-  logOut,
-  podium,
-  grid,
-  idCard,
-  newspaper,
-  add,
-  cube,
-  albums,
-  person,
-} from 'ionicons/icons';
-import {
+  BillingSystem,
   BmsAccessInstance,
   BmsOrganization,
-  OrganizationStatusResultData,
-  BillingSystem,
-  DataType,
   CustomOrderStatus,
+  DataType,
+  OrganizationStatusResultData,
 } from '@/services/bms';
+import { ServerType } from '@/services/parsecServers';
+import { ClientAreaPages, isDefaultOrganization } from '@/views/client-area/types';
 import {
   IonAvatar,
   IonCard,
@@ -384,15 +372,27 @@ import {
   IonIcon,
   IonItem,
   IonList,
+  IonSkeletonText,
   IonText,
   popoverController,
-  IonSkeletonText,
 } from '@ionic/vue';
-import OrganizationSwitchClientPopover from '@/components/organizations/OrganizationSwitchClientPopover.vue';
-import { ClientAreaPages, isDefaultOrganization } from '@/views/client-area/types';
-import { navigateTo, Routes } from '@/router';
+import {
+  add,
+  albums,
+  arrowForward,
+  card,
+  chatbubbleEllipses,
+  cube,
+  grid,
+  home,
+  idCard,
+  logOut,
+  newspaper,
+  person,
+  podium,
+} from 'ionicons/icons';
+import { Answer, askQuestion, ChevronExpand, MsImage, MsInformationTooltip, MsModalResult } from 'megashark-lib';
 import { onMounted, ref } from 'vue';
-import { ServerType } from '@/services/parsecServers';
 
 const props = defineProps<{
   currentOrganization: BmsOrganization;

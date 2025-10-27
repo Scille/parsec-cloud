@@ -134,29 +134,29 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonContent, IonSkeletonText, IonSplitPane, IonMenu, GestureDetail, createGesture } from '@ionic/vue';
-import ClientAreaHeader from '@/views/client-area/ClientAreaHeader.vue';
-import ClientAreaSidebar from '@/views/client-area/ClientAreaSidebar.vue';
-import { BillingSystem, BmsAccessInstance, BmsOrganization, DataType, CustomOrderStatus } from '@/services/bms';
-import { inject, onMounted, onUnmounted, ref, watch, useTemplateRef } from 'vue';
-import { DefaultBmsOrganization, ClientAreaPages, isDefaultOrganization } from '@/views/client-area/types';
-import BillingDetailsPage from '@/views/client-area/billing-details/BillingDetailsPage.vue';
-import ContractsPage from '@/views/client-area/contracts/ContractsPage.vue';
-import DashboardPage from '@/views/client-area/dashboard/DashboardPage.vue';
-import InvoicesPage from '@/views/client-area/invoices/InvoicesPage.vue';
-import PaymentMethodsPage from '@/views/client-area/payment-methods/PaymentMethodsPage.vue';
-import PersonalDataPage from '@/views/client-area/personal-data/PersonalDataPage.vue';
-import StatisticsPage from '@/views/client-area/statistics/StatisticsPage.vue';
-import CustomOrderBillingDetailsPage from '@/views/client-area/billing-details/CustomOrderBillingDetailsPage.vue';
-import CustomOrderStatisticsPage from '@/views/client-area/statistics/CustomOrderStatisticsPage.vue';
-import OrdersPage from '@/views/client-area/orders/OrdersPage.vue';
-import useSidebarMenu from '@/services/sidebarMenu';
-import { Translatable } from 'megashark-lib';
 import { ClientAreaQuery, getCurrentRouteQuery, navigateTo, Routes } from '@/router';
+import { BillingSystem, BmsAccessInstance, BmsOrganization, CustomOrderStatus, DataType } from '@/services/bms';
 import { InformationManager } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
+import useSidebarMenu from '@/services/sidebarMenu';
+import BillingDetailsPage from '@/views/client-area/billing-details/BillingDetailsPage.vue';
+import CustomOrderBillingDetailsPage from '@/views/client-area/billing-details/CustomOrderBillingDetailsPage.vue';
+import ClientAreaHeader from '@/views/client-area/ClientAreaHeader.vue';
+import ClientAreaSidebar from '@/views/client-area/ClientAreaSidebar.vue';
+import ContractsPage from '@/views/client-area/contracts/ContractsPage.vue';
 import CustomOrderProcessingPage from '@/views/client-area/dashboard/CustomOrderProcessingPage.vue';
+import DashboardPage from '@/views/client-area/dashboard/DashboardPage.vue';
 import CustomOrderInvoicesPage from '@/views/client-area/invoices/CustomOrderInvoicesPage.vue';
+import InvoicesPage from '@/views/client-area/invoices/InvoicesPage.vue';
+import OrdersPage from '@/views/client-area/orders/OrdersPage.vue';
+import PaymentMethodsPage from '@/views/client-area/payment-methods/PaymentMethodsPage.vue';
+import PersonalDataPage from '@/views/client-area/personal-data/PersonalDataPage.vue';
+import CustomOrderStatisticsPage from '@/views/client-area/statistics/CustomOrderStatisticsPage.vue';
+import StatisticsPage from '@/views/client-area/statistics/StatisticsPage.vue';
+import { ClientAreaPages, DefaultBmsOrganization, isDefaultOrganization } from '@/views/client-area/types';
+import { createGesture, GestureDetail, IonContent, IonMenu, IonPage, IonSkeletonText, IonSplitPane } from '@ionic/vue';
+import { Translatable } from 'megashark-lib';
+import { inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const informationManager: InformationManager = injectionProvider.getDefault().informationManager;

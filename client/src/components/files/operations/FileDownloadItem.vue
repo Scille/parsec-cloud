@@ -132,12 +132,12 @@
 </template>
 
 <script setup lang="ts">
-import { getFileIcon, shortenFileName, formatFileSize } from '@/common/file';
-import { MsImage, MsInformationTooltip, MsProgress, MsProgressAppearance } from 'megashark-lib';
+import { formatFileSize, getFileIcon, shortenFileName } from '@/common/file';
 import { EntryName, entryStat, EntryStatFile, getWorkspaceName } from '@/parsec';
-import { FileOperationState, StateData, OperationProgressStateData, DownloadData } from '@/services/fileOperationManager';
+import { DownloadData, FileOperationState, OperationProgressStateData, StateData } from '@/services/fileOperationManager';
 import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
 import { arrowForward, checkmarkCircle, closeCircle } from 'ionicons/icons';
+import { MsImage, MsInformationTooltip, MsProgress, MsProgressAppearance } from 'megashark-lib';
 import { onMounted, Ref, ref } from 'vue';
 
 const props = defineProps<{

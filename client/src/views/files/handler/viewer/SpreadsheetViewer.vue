@@ -58,9 +58,6 @@
 </template>
 
 <script setup lang="ts">
-import { MsSpinner, I18n, Translatable, MsReportText, MsReportTheme } from 'megashark-lib';
-import { onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
-import XLSX from 'xlsx';
 import {
   FileControls,
   FileControlsButton,
@@ -71,8 +68,11 @@ import {
 } from '@/components/files/handler/viewer';
 import { FileViewerWrapper } from '@/views/files/handler/viewer';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
-import { chevronDown, scan } from 'ionicons/icons';
 import RevoGrid from '@revolist/vue3-datagrid';
+import { chevronDown, scan } from 'ionicons/icons';
+import { I18n, MsReportText, MsReportTheme, MsSpinner, Translatable } from 'megashark-lib';
+import { onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
+import XLSX from 'xlsx';
 
 const props = defineProps<{
   contentInfo: FileContentInfo;

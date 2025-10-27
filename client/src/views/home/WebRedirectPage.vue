@@ -56,7 +56,7 @@
 import { getCurrentRouteQuery } from '@/router';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import { handleParsecLink } from '@/services/linkHandler';
-import { IonPage, IonText, IonButton } from '@ionic/vue';
+import { IonButton, IonPage, IonText } from '@ionic/vue';
 import { LogoIconGradient, MsImage } from 'megashark-lib';
 import { inject } from 'vue';
 

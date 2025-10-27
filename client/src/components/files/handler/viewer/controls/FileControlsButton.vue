@@ -28,8 +28,8 @@
 </template>
 
 <script setup lang="ts">
-import { MsImage, Translatable } from 'megashark-lib';
 import { IonButton, IonIcon } from '@ionic/vue';
+import { MsImage, Translatable } from 'megashark-lib';
 
 defineProps<{
   label?: Translatable;

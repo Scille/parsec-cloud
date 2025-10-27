@@ -155,32 +155,33 @@ import { pxToRem } from '@/common/utils';
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import InvitationsButton from '@/components/header/InvitationsButton.vue';
-import { ClientInfo, Path, UserProfile, getClientInfo, isMobile, getWorkspaceName, WorkspaceRole } from '@/parsec';
+import { RecommendationAction, SecurityWarnings, getSecurityWarnings } from '@/components/misc';
+import RecommendationChecklistPopoverModal from '@/components/misc/RecommendationChecklistPopoverModal.vue';
+import { ClientInfo, Path, UserProfile, WorkspaceRole, getClientInfo, getWorkspaceName, isMobile } from '@/parsec';
 import {
   ProfilePages,
   Routes,
   currentRouteIs,
   currentRouteIsFileRoute,
+  currentRouteIsLoggedRoute,
   getCurrentRouteName,
   getCurrentRouteParams,
   getDocumentPath,
+  getFileHandlerMode,
   getWorkspaceHandle,
   hasHistory,
   navigateTo,
   routerGoBack,
   watchRoute,
-  currentRouteIsLoggedRoute,
-  getFileHandlerMode,
 } from '@/router';
+import { EventData, EventDistributor, EventDistributorKey, Events, WorkspaceRoleUpdateData } from '@/services/eventDistributor';
+import useHeaderControl from '@/services/headerControl';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import useSidebarMenu from '@/services/sidebarMenu';
-import useHeaderControl from '@/services/headerControl';
-import { Translatable, MsImage, SidebarToggle, useWindowSize, MsModalResult } from 'megashark-lib';
-import NotificationCenterPopover from '@/views/header/NotificationCenterPopover.vue';
 import NotificationCenterModal from '@/views/header/NotificationCenterModal.vue';
+import NotificationCenterPopover from '@/views/header/NotificationCenterPopover.vue';
 import ProfileHeaderOrganization from '@/views/header/ProfileHeaderOrganization.vue';
-import RecommendationChecklistPopoverModal from '@/components/misc/RecommendationChecklistPopoverModal.vue';
 import { openSettingsModal } from '@/views/settings';
 import {
   IonButton,
@@ -191,15 +192,14 @@ import {
   IonLabel,
   IonPage,
   IonRouterOutlet,
-  IonToolbar,
   IonText,
-  popoverController,
+  IonToolbar,
   modalController,
+  popoverController,
 } from '@ionic/vue';
-import { getSecurityWarnings, RecommendationAction, SecurityWarnings } from '@/components/misc';
-import { EventData, EventDistributor, EventDistributorKey, Events, WorkspaceRoleUpdateData } from '@/services/eventDistributor';
 import { checkmarkCircle, home, notifications, search } from 'ionicons/icons';
-import { Ref, inject, onMounted, onUnmounted, ref, computed, watch, useTemplateRef } from 'vue';
+import { MsImage, MsModalResult, SidebarToggle, Translatable, useWindowSize } from 'megashark-lib';
+import { Ref, computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const { windowWidth, isLargeDisplay, isSmallDisplay } = useWindowSize();
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;

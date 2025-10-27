@@ -35,7 +35,7 @@
 <script setup lang="ts">
 import PkiRequestItem from '@/components/invitations/PkiRequestItem.vue';
 import { OrganizationJoinRequest } from '@/parsec';
-import { IonText, IonList, IonListHeader } from '@ionic/vue';
+import { IonList, IonListHeader, IonText } from '@ionic/vue';
 import { useWindowSize } from 'megashark-lib';
 
 const { isLargeDisplay } = useWindowSize();

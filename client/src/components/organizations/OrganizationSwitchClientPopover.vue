@@ -79,12 +79,12 @@
 </template>
 
 <script setup lang="ts">
-import { IonAvatar, IonIcon, IonItem, IonLabel, IonList, IonTitle, popoverController } from '@ionic/vue';
-import { arrowForward, checkmark, addCircle } from 'ionicons/icons';
-import { onMounted, ref } from 'vue';
 import { BmsOrganization } from '@/services/bms';
-import { MsModalResult } from 'megashark-lib';
 import { DefaultBmsOrganization, isDefaultOrganization } from '@/views/client-area/types';
+import { IonAvatar, IonIcon, IonItem, IonLabel, IonList, IonTitle, popoverController } from '@ionic/vue';
+import { addCircle, arrowForward, checkmark } from 'ionicons/icons';
+import { MsModalResult } from 'megashark-lib';
+import { onMounted, ref } from 'vue';
 
 const props = defineProps<{
   currentOrganization: BmsOrganization;

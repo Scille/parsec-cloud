@@ -39,13 +39,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick, useTemplateRef } from 'vue';
+import { FileControls, FileControlsButton, FileControlsPagination, FileControlsZoom } from '@/components/files/handler/viewer';
 import { FileViewerWrapper } from '@/views/files/handler/viewer';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
-import { scan } from 'ionicons/icons';
-import { FileControls, FileControlsButton, FileControlsPagination, FileControlsZoom } from '@/components/files/handler/viewer';
 import { renderAsync } from 'docx-preview';
+import { scan } from 'ionicons/icons';
 import { MsSpinner } from 'megashark-lib';
+import { nextTick, onMounted, ref, useTemplateRef } from 'vue';
 
 const props = defineProps<{
   contentInfo: FileContentInfo;

@@ -43,14 +43,14 @@
 </template>
 
 <script setup lang="ts">
-import { ParsecAccount, AccountInfo } from '@/parsec';
-import { IonButton, modalController, IonText, IonTitle } from '@ionic/vue';
-import { Answer, askQuestion, MsModalResult, MsInput } from 'megashark-lib';
-import { inject, onMounted, onUnmounted, ref } from 'vue';
-import CodeValidationModal from '@/views/account/CodeValidationModal.vue';
+import { AccountInfo, ParsecAccount } from '@/parsec';
+import { getConnectionHandle, navigateTo, Routes, watchRoute } from '@/router';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
-import { getConnectionHandle, navigateTo, Routes, watchRoute } from '@/router';
+import CodeValidationModal from '@/views/account/CodeValidationModal.vue';
+import { IonButton, IonText, IonTitle, modalController } from '@ionic/vue';
+import { Answer, askQuestion, MsInput, MsModalResult } from 'megashark-lib';
+import { inject, onMounted, onUnmounted, ref } from 'vue';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const loading = ref(false);

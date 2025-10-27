@@ -30,7 +30,6 @@ class ParsecProxy {
     return async (...args: any[]): Promise<any> => {
       // @ts-expect-error Dont know how to fix the `...arg` properly so that the linter doesn't complain
       const result = await target[name as keyof LibParsecPlugin](...args);
-      // eslint-disable-next-line no-prototype-builtins
       if (result && result.hasOwnProperty('ok') && !(result as { ok: boolean }).ok) {
         const resultError = result as { ok: boolean; error: { tag: string; error: string } };
         // electronAPI is not available right at the start

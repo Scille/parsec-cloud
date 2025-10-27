@@ -20,11 +20,11 @@
 </template>
 
 <script setup lang="ts">
+import { navigateTo, Routes } from '@/router';
+import { AuthenticationToken, BmsAccessInstance, PersonalInformationResultData } from '@/services/bms';
 import BmsLogin from '@/views/client-area/BmsLogin.vue';
 import BmsForgotPassword from '@/views/client-area/forgot-password/BmsForgotPassword.vue';
-import { AuthenticationToken, BmsAccessInstance, PersonalInformationResultData } from '@/services/bms';
 import { onMounted, ref } from 'vue';
-import { navigateTo, Routes } from '@/router';
 
 const enum Sections {
   BmsLogin,

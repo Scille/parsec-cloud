@@ -68,13 +68,12 @@
 
 <script setup lang="ts">
 import { formatFileSize, getFileIcon } from '@/common/file';
-import { MsImage, Translatable } from 'megashark-lib';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { ClientInfo, EntryName, getClientInfo, Path, UserProfile } from '@/parsec';
 import { CopyData, FileOperationData, FileOperationDataType, ImportData } from '@/services/fileOperationManager';
 import { IonItem, IonText } from '@ionic/vue';
-import { Ref, onMounted, ref } from 'vue';
-import { MsSpinner, useWindowSize } from 'megashark-lib';
+import { MsImage, MsSpinner, Translatable, useWindowSize } from 'megashark-lib';
+import { onMounted, Ref, ref } from 'vue';
 
 const props = defineProps<{
   data: FileOperationData;

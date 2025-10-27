@@ -124,17 +124,17 @@
 </template>
 
 <script setup lang="ts">
+import { SortProperty } from '@/components/files';
 import FileDropZone from '@/components/files/explorer/FileDropZone.vue';
 import FileListItem from '@/components/files/explorer/FileListItem.vue';
 import FileListItemProcessing from '@/components/files/explorer/FileListItemProcessing.vue';
-import { EntryCollection, EntryModel, FileOperationProgress, FileModel, FolderModel } from '@/components/files/types';
-import { SortProperty } from '@/components/files';
+import { EntryCollection, EntryModel, FileModel, FileOperationProgress, FolderModel } from '@/components/files/types';
 import { FileImportTuple } from '@/components/files/utils';
-import { FsPath, WorkspaceRole, UserProfile } from '@/parsec';
-import { IonText, IonList, IonLabel, IonListHeader, IonIcon } from '@ionic/vue';
-import { arrowUp, arrowDown } from 'ionicons/icons';
+import { FsPath, UserProfile, WorkspaceRole } from '@/parsec';
+import { IonIcon, IonLabel, IonList, IonListHeader, IonText } from '@ionic/vue';
+import { arrowDown, arrowUp } from 'ionicons/icons';
+import { MsCheckbox, MsSorterChangeEvent, useWindowSize } from 'megashark-lib';
 import { computed, useTemplateRef } from 'vue';
-import { MsCheckbox, useWindowSize, MsSorterChangeEvent } from 'megashark-lib';
 
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 const props = defineProps<{

@@ -253,30 +253,30 @@
 <script setup lang="ts">
 import LogoIconGradient from '@/assets/images/logo-icon-gradient.svg';
 import DeviceCard from '@/components/devices/DeviceCard.vue';
-import SmallDisplayStepModalHeader from '@/components/header/SmallDisplayStepModalHeader.vue';
 import SmallDisplayModalHeader from '@/components/header/SmallDisplayModalHeader.vue';
+import SmallDisplayStepModalHeader from '@/components/header/SmallDisplayStepModalHeader.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
-import { DeviceGreet, GreetInProgressErrorTag, CancelledGreetingAttemptReason, DevicePurpose } from '@/parsec';
+import { CancelledGreetingAttemptReason, DeviceGreet, DevicePurpose, GreetInProgressErrorTag } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { Resources, ResourcesManager } from '@/services/resourcesManager';
+import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
+import { checkmarkCircle, close, copy, phonePortrait } from 'ionicons/icons';
+import { DateTime } from 'luxon';
 import {
   Answer,
   Clipboard,
-  MsModalResult,
-  askQuestion,
   MsInformativeText,
+  MsModalResult,
+  MsSpinner,
   MsWizardStepper,
   Translatable,
+  askQuestion,
   startCounter,
-  MsSpinner,
   useWindowSize,
 } from 'megashark-lib';
-import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
-import { checkmarkCircle, close, copy, phonePortrait } from 'ionicons/icons';
 import QRCodeVue3 from 'qrcode-vue3';
 import { computed, onMounted, ref } from 'vue';
-import { DateTime } from 'luxon';
-import { Resources, ResourcesManager } from '@/services/resourcesManager';
 
 enum GreetDeviceStep {
   WaitForGuest = 0,

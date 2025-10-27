@@ -48,10 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch, useTemplateRef } from 'vue';
-import { cog, infinite, musicalNotes, timer } from 'ionicons/icons';
-import { FileViewerWrapper } from '@/views/files/handler/viewer';
-import { FileContentInfo, PlaybackSpeed, PlaybackSpeeds } from '@/views/files/handler/viewer/utils';
+import { getMimeTypeFromBuffer } from '@/common/fileTypes';
 import {
   FileControls,
   FileControlsDropdown,
@@ -61,8 +58,11 @@ import {
   FileControlsVolume,
   FileViewerBackground,
 } from '@/components/files/handler/viewer';
+import { FileViewerWrapper } from '@/views/files/handler/viewer';
+import { FileContentInfo, PlaybackSpeed, PlaybackSpeeds } from '@/views/files/handler/viewer/utils';
+import { cog, infinite, musicalNotes, timer } from 'ionicons/icons';
 import { SliderState } from 'megashark-lib';
-import { getMimeTypeFromBuffer } from '@/common/fileTypes';
+import { onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const props = defineProps<{
   contentInfo: FileContentInfo;

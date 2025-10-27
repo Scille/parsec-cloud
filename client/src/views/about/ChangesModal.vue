@@ -118,8 +118,8 @@
 import { VersionChange, getChanges } from '@/common/mocks';
 import { IonIcon, IonItem, IonList, IonPage, IonText } from '@ionic/vue';
 import { construct, infinite, sparkles } from 'ionicons/icons';
-import { Ref, onMounted, ref } from 'vue';
 import { I18n, MsModal } from 'megashark-lib';
+import { Ref, onMounted, ref } from 'vue';
 
 const changes: Ref<VersionChange[]> = ref([]);
 

@@ -7,16 +7,16 @@
 </template>
 
 <script setup lang="ts">
-import { inject, onMounted, ref } from 'vue';
-import { IonPage, IonRouterOutlet } from '@ionic/vue';
-import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
-import { EventDistributor } from '@/services/eventDistributor';
 import * as parsec from '@/parsec';
+import { getClientInfo } from '@/parsec';
+import { getClientConfig } from '@/parsec/internals';
 import { libparsec } from '@/plugins/libparsec';
 import { getConnectionHandle, navigateTo, Routes } from '@/router';
-import { StorageManagerKey, StorageManager } from '@/services/storageManager';
-import { getClientConfig } from '@/parsec/internals';
-import { getClientInfo } from '@/parsec';
+import { EventDistributor } from '@/services/eventDistributor';
+import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
+import { StorageManager, StorageManagerKey } from '@/services/storageManager';
+import { IonPage, IonRouterOutlet } from '@ionic/vue';
+import { inject, onMounted, ref } from 'vue';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;

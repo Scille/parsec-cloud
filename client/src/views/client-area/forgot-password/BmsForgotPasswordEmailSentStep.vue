@@ -32,8 +32,8 @@
 </template>
 
 <script setup lang="ts">
-import { IonText, IonIcon } from '@ionic/vue';
-import { warning, arrowForward } from 'ionicons/icons';
+import { IonIcon, IonText } from '@ionic/vue';
+import { arrowForward, warning } from 'ionicons/icons';
 import { ref } from 'vue';
 
 defineProps<{

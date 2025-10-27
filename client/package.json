@@ -102,17 +102,21 @@
         "eslint-plugin-promise": "^7.2.1",
         "eslint-plugin-vue": "^10.5.1",
         "eslint-plugin-vue-scoped-css": "^2.5.1",
+        "globals": "^16.4.0",
         "happy-dom": "^20.0.7",
+        "jiti": "^2.6.1",
         "prettier": "3.6.2",
         "prettier-plugin-organize-imports": "^4.3.0",
         "sass": "^1.93.2",
         "sass-loader": "^16.0.5",
         "start-server-and-test": "^2.1.2",
         "typescript": "^5.9.3",
+        "typescript-eslint": "^8.46.2",
         "unique-names-generator": "^4.7.1",
         "vite": "^6.4.1",
         "vite-plugin-top-level-await": "^1.5.0",
         "vitest": "3.0.5",
+        "vue-eslint-parser": "^10.2.0",
         "vue-tsc": "^3.1.1"
     }
 }

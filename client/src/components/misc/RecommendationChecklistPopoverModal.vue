@@ -72,11 +72,11 @@
 </template>
 
 <script setup lang="ts">
-import { popoverController, IonText, IonIcon, modalController } from '@ionic/vue';
-import { checkmarkCircle, chevronForward, radioButtonOff } from 'ionicons/icons';
-import { MsModalResult } from 'megashark-lib';
 import { RecommendationAction, SecurityWarnings } from '@/components/misc/securityRecommendations';
 import { currentRouteIs, Routes } from '@/router';
+import { IonIcon, IonText, modalController, popoverController } from '@ionic/vue';
+import { checkmarkCircle, chevronForward, radioButtonOff } from 'ionicons/icons';
+import { MsModalResult } from 'megashark-lib';
 import { computed } from 'vue';
 
 const props = defineProps<{

@@ -40,13 +40,13 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonIcon } from '@ionic/vue';
-import { Translatable } from 'megashark-lib';
-import { close, keypad, mailUnread } from 'ionicons/icons';
-import { ref } from 'vue';
-import BmsForgotPasswordGetEmailStep from '@/views/client-area/forgot-password/BmsForgotPasswordGetEmailStep.vue';
-import BmsForgotPasswordEmailSentStep from '@/views/client-area/forgot-password/BmsForgotPasswordEmailSentStep.vue';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
+import BmsForgotPasswordEmailSentStep from '@/views/client-area/forgot-password/BmsForgotPasswordEmailSentStep.vue';
+import BmsForgotPasswordGetEmailStep from '@/views/client-area/forgot-password/BmsForgotPasswordGetEmailStep.vue';
+import { IonButton, IonIcon } from '@ionic/vue';
+import { close, keypad, mailUnread } from 'ionicons/icons';
+import { Translatable } from 'megashark-lib';
+import { ref } from 'vue';
 
 const enum Steps {
   GetEmail,

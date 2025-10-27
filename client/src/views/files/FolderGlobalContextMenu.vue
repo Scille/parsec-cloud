@@ -69,9 +69,9 @@
 
 <script setup lang="ts">
 import { WorkspaceRole, isDesktop } from '@/parsec';
-import { IonContent, IonIcon, IonItem, IonText, IonItemGroup, IonList, popoverController } from '@ionic/vue';
-import { folderOpen, cloudUpload, open } from 'ionicons/icons';
 import { FolderGlobalAction } from '@/views/files/types';
+import { IonContent, IonIcon, IonItem, IonItemGroup, IonList, IonText, popoverController } from '@ionic/vue';
+import { cloudUpload, folderOpen, open } from 'ionicons/icons';
 
 defineProps<{
   role: WorkspaceRole;

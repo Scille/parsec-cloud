@@ -324,9 +324,63 @@
 </template>
 
 <script setup lang="ts">
+import { copyToClipboard } from '@/common/clipboard';
+import { formatExpirationTime, getDurationBeforeExpiration, isTrialOrganizationDevice } from '@/common/organization';
+import { getSecurityWarnings, RecommendationAction, SecurityWarnings } from '@/components/misc';
+import RecommendationChecklistPopoverModal from '@/components/misc/RecommendationChecklistPopoverModal.vue';
+import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
+import { SidebarMenuList, SidebarRecentFileItem, SidebarWorkspaceItem } from '@/components/sidebar';
+import { openWorkspaceContextMenu, WorkspaceDefaultData, WORKSPACES_PAGE_DATA_KEY, WorkspacesPageSavedData } from '@/components/workspaces';
 import {
-  GestureDetail,
+  ClientInfo,
+  getClientInfo,
+  getCurrentAvailableDevice,
+  getLoggedInDevices,
+  getOrganizationCreationDate,
+  getPkiJoinOrganizationLink,
+  listWorkspaces,
+  LoggedInDeviceInfo,
+  UserProfile,
+  WorkspaceID,
+  WorkspaceInfo,
+  WorkspaceRole,
+} from '@/parsec';
+import {
+  currentRouteIs,
+  currentRouteIsWorkspaceRoute,
+  getConnectionHandle,
+  navigateTo,
+  navigateToWorkspace,
+  ProfilePages,
+  Routes,
+  switchOrganization,
+  watchRoute,
+} from '@/router';
+import {
+  EventData,
+  EventDistributor,
+  EventDistributorKey,
+  Events,
+  MenuActionData,
+  WorkspaceRoleUpdateData,
+} from '@/services/eventDistributor';
+import { openPath } from '@/services/fileOpener';
+import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
+import useUploadMenu from '@/services/fileUploadMenu';
+import { InformationManager, InformationManagerKey } from '@/services/informationManager';
+import { recentDocumentManager, RecentFile } from '@/services/recentDocuments';
+import { Resources, ResourcesManager } from '@/services/resourcesManager';
+import useSidebarMenu from '@/services/sidebarMenu';
+import { StorageManager, StorageManagerKey } from '@/services/storageManager';
+import { FolderGlobalAction } from '@/views/files';
+import { MenuAction, SIDEBAR_MENU_DATA_KEY, SidebarDefaultData, SidebarSavedData } from '@/views/menu';
+import TabBarMenu from '@/views/menu/TabBarMenu.vue';
+import { useCustomTabBar } from '@/views/menu/utils';
+import { isUserAction, UserAction } from '@/views/users';
+import { WorkspaceAction } from '@/views/workspaces';
+import {
   createGesture,
+  GestureDetail,
   IonAvatar,
   IonButton,
   IonCard,
@@ -343,80 +397,24 @@ import {
   menuController,
   popoverController,
 } from '@ionic/vue';
-import TabBarMenu from '@/views/menu/TabBarMenu.vue';
 import {
+  addCircle,
+  caretForward,
+  chevronForward,
+  cloudUpload,
   document as documentIcon,
+  folderOpen,
   informationCircle,
+  link,
+  mailUnread,
   people,
+  personAdd,
   snow,
   warning,
-  cloudUpload,
-  folderOpen,
-  addCircle,
-  personAdd,
-  chevronForward,
-  caretForward,
-  mailUnread,
-  link,
 } from 'ionicons/icons';
-import { SidebarWorkspaceItem, SidebarRecentFileItem, SidebarMenuList } from '@/components/sidebar';
-import {
-  ProfilePages,
-  Routes,
-  currentRouteIs,
-  currentRouteIsWorkspaceRoute,
-  getConnectionHandle,
-  navigateTo,
-  navigateToWorkspace,
-  switchOrganization,
-  watchRoute,
-} from '@/router';
-import {
-  ClientInfo,
-  LoggedInDeviceInfo,
-  WorkspaceID,
-  WorkspaceInfo,
-  UserProfile,
-  listWorkspaces,
-  getCurrentAvailableDevice,
-  getLoggedInDevices,
-  getClientInfo,
-  WorkspaceRole,
-  getOrganizationCreationDate,
-  getPkiJoinOrganizationLink,
-} from '@/parsec';
-import { ChevronExpand, MsImage, LogoIconGradient, I18n, MsModalResult, useWindowSize } from 'megashark-lib';
-import { Ref, computed, inject, onMounted, onUnmounted, ref, watch, useTemplateRef } from 'vue';
-import { recentDocumentManager, RecentFile } from '@/services/recentDocuments';
-import { openPath } from '@/services/fileOpener';
-import { InformationManager, InformationManagerKey } from '@/services/informationManager';
-import { StorageManagerKey, StorageManager } from '@/services/storageManager';
-import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
-import {
-  EventData,
-  EventDistributor,
-  EventDistributorKey,
-  Events,
-  MenuActionData,
-  WorkspaceRoleUpdateData,
-} from '@/services/eventDistributor';
-import { WorkspaceDefaultData, WORKSPACES_PAGE_DATA_KEY, WorkspacesPageSavedData } from '@/components/workspaces';
-import { getDurationBeforeExpiration, isTrialOrganizationDevice } from '@/common/organization';
 import { Duration } from 'luxon';
-import { openWorkspaceContextMenu } from '@/components/workspaces';
-import { formatExpirationTime } from '@/common/organization';
-import useSidebarMenu from '@/services/sidebarMenu';
-import useUploadMenu from '@/services/fileUploadMenu';
-import { MenuAction, SIDEBAR_MENU_DATA_KEY, SidebarDefaultData, SidebarSavedData } from '@/views/menu';
-import { FolderGlobalAction } from '@/views/files';
-import { WorkspaceAction } from '@/views/workspaces';
-import { isUserAction, UserAction } from '@/views/users';
-import { useCustomTabBar } from '@/views/menu/utils';
-import { getSecurityWarnings, RecommendationAction, SecurityWarnings } from '@/components/misc';
-import RecommendationChecklistPopoverModal from '@/components/misc/RecommendationChecklistPopoverModal.vue';
-import { Resources, ResourcesManager } from '@/services/resourcesManager';
-import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
-import { copyToClipboard } from '@/common/clipboard';
+import { ChevronExpand, I18n, LogoIconGradient, MsImage, MsModalResult, useWindowSize } from 'megashark-lib';
+import { computed, inject, onMounted, onUnmounted, Ref, ref, useTemplateRef, watch } from 'vue';
 
 const props = defineProps<{
   userInfo: ClientInfo;

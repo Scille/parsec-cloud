@@ -111,10 +111,10 @@
 </template>
 
 <script setup lang="ts">
-import { OrganizationJoinRequest, JoinRequestValidity } from '@/parsec';
-import { IonButton, IonText, IonIcon, IonItem } from '@ionic/vue';
-import { checkmarkCircle, closeCircle, warning } from 'ionicons/icons';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
+import { JoinRequestValidity, OrganizationJoinRequest } from '@/parsec';
+import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
+import { checkmarkCircle, closeCircle, warning } from 'ionicons/icons';
 import { attachMouseOverTooltip, formatTimeSince, useWindowSize } from 'megashark-lib';
 import { computed, onMounted, useTemplateRef } from 'vue';
 

@@ -90,8 +90,8 @@ import UserStatusTag from '@/components/users/UserStatusTag.vue';
 import { UserModel } from '@/components/users/types';
 import { IonIcon, IonItem, IonText } from '@ionic/vue';
 import { ellipsisHorizontal } from 'ionicons/icons';
-import { ref } from 'vue';
 import { MsCheckbox, formatTimeSince } from 'megashark-lib';
+import { ref } from 'vue';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);

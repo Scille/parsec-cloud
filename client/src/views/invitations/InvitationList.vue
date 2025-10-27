@@ -31,7 +31,7 @@
 <script setup lang="ts">
 import InvitationItem from '@/components/invitations/InvitationItem.vue';
 import { UserInvitation } from '@/parsec';
-import { IonList, IonText, IonListHeader } from '@ionic/vue';
+import { IonList, IonListHeader, IonText } from '@ionic/vue';
 import { useWindowSize } from 'megashark-lib';
 
 defineProps<{

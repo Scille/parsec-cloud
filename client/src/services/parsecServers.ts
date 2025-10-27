@@ -21,7 +21,7 @@ export function getServerTypeFromAddress(addr: string): ServerType {
   let url;
   try {
     url = new URL(addr);
-  } catch (e: any) {
+  } catch (_err: any) {
     return ServerType.Custom;
   }
 

@@ -317,7 +317,7 @@ export const SaveStrategy = {
   },
 };
 
-export async function isAuthenticationValid(device: AvailableDevice, accessStrategy: DeviceAccessStrategy): Promise<boolean> {
+export async function isAuthenticationValid(_device: AvailableDevice, accessStrategy: DeviceAccessStrategy): Promise<boolean> {
   const clientConfig = getClientConfig();
   const result = await libparsec.clientStart(clientConfig, accessStrategy);
   return result.ok;

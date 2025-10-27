@@ -42,13 +42,13 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, modalController } from '@ionic/vue';
-import { isDesktop, isWeb } from '@/parsec';
 import { OpenFallbackChoice } from '@/components/files';
-import { MsModal, MsModalResult, Translatable } from 'megashark-lib';
+import { isDesktop, isWeb } from '@/parsec';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
-import { inject } from 'vue';
 import { openDownloadConfirmationModal } from '@/views/files';
+import { IonButton, modalController } from '@ionic/vue';
+import { MsModal, MsModalResult, Translatable } from 'megashark-lib';
+import { inject } from 'vue';
 
 defineProps<{
   viewerOption?: boolean;

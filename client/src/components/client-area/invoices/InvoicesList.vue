@@ -38,9 +38,9 @@
 </template>
 
 <script setup lang="ts">
+import InvoicesListItem from '@/components/client-area/invoices/InvoicesListItem.vue';
 import { Invoice, InvoiceType } from '@/services/bms';
 import { IonItem, IonList, IonText } from '@ionic/vue';
-import InvoicesListItem from '@/components/client-area/invoices/InvoicesListItem.vue';
 
 defineProps<{
   invoices: Array<Invoice>;

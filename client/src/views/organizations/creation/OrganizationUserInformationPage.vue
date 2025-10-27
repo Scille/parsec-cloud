@@ -88,12 +88,12 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonButton, IonFooter, IonIcon, IonText } from '@ionic/vue';
-import { onMounted, ref, useTemplateRef } from 'vue';
-import { chevronForward, chevronBack } from 'ionicons/icons';
-import { MsCheckbox } from 'megashark-lib';
-import UserInformation from '@/components/users/UserInformation.vue';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
+import UserInformation from '@/components/users/UserInformation.vue';
+import { IonButton, IonFooter, IonIcon, IonPage, IonText } from '@ionic/vue';
+import { chevronBack, chevronForward } from 'ionicons/icons';
+import { MsCheckbox } from 'megashark-lib';
+import { onMounted, ref, useTemplateRef } from 'vue';
 
 const props = defineProps<{
   name?: string;

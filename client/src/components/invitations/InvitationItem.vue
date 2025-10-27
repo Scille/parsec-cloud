@@ -90,7 +90,7 @@
 
 <script setup lang="ts">
 import { UserInvitation } from '@/parsec';
-import { IonButton, IonText, IonIcon, IonItem } from '@ionic/vue';
+import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
 import { link, mail, trash } from 'ionicons/icons';
 import { attachMouseOverTooltip, formatTimeSince, useWindowSize } from 'megashark-lib';
 import { onMounted, useTemplateRef } from 'vue';

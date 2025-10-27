@@ -90,12 +90,12 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonTitle } from '@ionic/vue';
 import { BmsAccessInstance, BmsOrganization, DataType } from '@/services/bms';
-import { MsInput } from 'megashark-lib';
-import { onMounted, ref, computed, inject } from 'vue';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
+import { IonButton, IonTitle } from '@ionic/vue';
+import { MsInput } from 'megashark-lib';
+import { computed, inject, onMounted, ref } from 'vue';
 
 defineProps<{
   organization: BmsOrganization;

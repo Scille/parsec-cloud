@@ -15,7 +15,7 @@ export const expectMedia = baseExpect.extend({
         message: () => '',
         pass: true,
       };
-    } catch (error: any) {
+    } catch (_error: any) {
       return {
         message: () => 'Media is not paused',
         pass: false,
@@ -30,7 +30,7 @@ export const expectMedia = baseExpect.extend({
         message: () => '',
         pass: true,
       };
-    } catch (error: any) {
+    } catch (_error: any) {
       return {
         message: () => 'Media is paused',
         pass: false,
@@ -45,7 +45,7 @@ export const expectMedia = baseExpect.extend({
         message: () => '',
         pass: true,
       };
-    } catch (error: any) {
+    } catch (_error: any) {
       const actualDuration = await locator.evaluate((el) => {
         return (el as HTMLMediaElement).duration;
       });
@@ -63,7 +63,7 @@ export const expectMedia = baseExpect.extend({
         message: () => '',
         pass: true,
       };
-    } catch (error: any) {
+    } catch (_error: any) {
       return {
         message: () => 'Media is not muted',
         pass: false,
@@ -78,7 +78,7 @@ export const expectMedia = baseExpect.extend({
         message: () => '',
         pass: true,
       };
-    } catch (error: any) {
+    } catch (_error: any) {
       return {
         message: () => 'Media does not loop',
         pass: false,
@@ -93,7 +93,7 @@ export const expectMedia = baseExpect.extend({
         message: () => '',
         pass: true,
       };
-    } catch (error: any) {
+    } catch (_error: any) {
       const actualTime = await locator.evaluate((el) => {
         return (el as HTMLMediaElement).currentTime;
       });
@@ -111,7 +111,7 @@ export const expectMedia = baseExpect.extend({
         message: () => '',
         pass: true,
       };
-    } catch (error: any) {
+    } catch (_error: any) {
       const actualVolume = await locator.evaluate((el) => {
         return (el as HTMLMediaElement).volume;
       });

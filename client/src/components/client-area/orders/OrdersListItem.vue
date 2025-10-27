@@ -79,13 +79,13 @@
 </template>
 
 <script setup lang="ts">
-import { IonText, IonSkeletonText } from '@ionic/vue';
-import { BmsOrganization, BmsAccessInstance, CustomOrderRequest, DataType } from '@/services/bms';
-import { ref, onMounted } from 'vue';
 import OrderDetails from '@/components/client-area/orders/OrderDetails.vue';
 import OrderTrackingProgress from '@/components/client-area/orders/OrderTrackingProgress.vue';
-import { I18n } from 'megashark-lib';
 import { getOrderStep, getOrderStepTranslations, OrderStep } from '@/components/client-area/orders/utils';
+import { BmsAccessInstance, BmsOrganization, CustomOrderRequest, DataType } from '@/services/bms';
+import { IonSkeletonText, IonText } from '@ionic/vue';
+import { I18n } from 'megashark-lib';
+import { onMounted, ref } from 'vue';
 
 const error = ref<string>('');
 const querying = ref(true);

@@ -11,7 +11,7 @@
 <script setup lang="ts">
 import { WorkspaceRole } from '@/parsec';
 import { getWorkspaceRoleTranslationKey } from '@/services/translation';
-import { IonText, IonLabel } from '@ionic/vue';
+import { IonLabel, IonText } from '@ionic/vue';
 
 defineProps<{
   role: WorkspaceRole | null;

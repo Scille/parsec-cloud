@@ -189,13 +189,13 @@
 </template>
 
 <script setup lang="ts">
-import { IonText, IonIcon } from '@ionic/vue';
-import { chatbubbleEllipses, checkmark, people, pieChart, time, wallet } from 'ionicons/icons';
 import { formatFileSize } from '@/common/file';
-import { CustomOrderDetailsResultData, BmsOrganization, BmsAccessInstance, CustomOrderRequest, DataType } from '@/services/bms';
-import { ref, onMounted } from 'vue';
-import { Translatable, I18n } from 'megashark-lib';
 import { OrderStep } from '@/components/client-area/orders/utils';
+import { BmsAccessInstance, BmsOrganization, CustomOrderDetailsResultData, CustomOrderRequest, DataType } from '@/services/bms';
+import { IonIcon, IonText } from '@ionic/vue';
+import { chatbubbleEllipses, checkmark, people, pieChart, time, wallet } from 'ionicons/icons';
+import { I18n, Translatable } from 'megashark-lib';
+import { onMounted, ref } from 'vue';
 
 const error = ref<string>('');
 const querying = ref(true);

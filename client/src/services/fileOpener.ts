@@ -370,7 +370,6 @@ async function openPath(
       return await openInEditor(entry, path, workspaceHandle, options, informationManager, fileOperationManager, contentType);
     }
 
-    // eslint-disable-next-line max-len
     if (!contentType || contentType.type === FileContentType.Unknown || (isDesktop() && !ENABLED_FILE_VIEWERS.includes(contentType.type))) {
       if (!isWeb() && !options.onlyViewers) {
         await openWithSystem(workspaceHandle, entry, informationManager);

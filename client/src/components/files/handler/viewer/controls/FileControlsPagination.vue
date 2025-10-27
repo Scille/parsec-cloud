@@ -20,9 +20,9 @@
 </template>
 
 <script setup lang="ts">
-import { I18n } from 'megashark-lib';
-import { onUnmounted, ref, watch, computed, useTemplateRef } from 'vue';
 import { FileControlsGroup, FileControlsInput } from '@/components/files/handler/viewer';
+import { I18n } from 'megashark-lib';
+import { computed, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const props = defineProps<{
   length: number;

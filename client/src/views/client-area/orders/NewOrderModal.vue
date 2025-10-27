@@ -73,10 +73,10 @@
 </template>
 
 <script setup lang="ts">
-import { MsDropdown, MsOptions, MsModal, MsTextarea, MsModalResult, MsReportTheme, MsReportText } from 'megashark-lib';
-import { IonPage, IonText, modalController } from '@ionic/vue';
-import { computed, ref } from 'vue';
 import { BmsAccessInstance, CONNECTION_ERROR_STATUS } from '@/services/bms';
+import { IonPage, IonText, modalController } from '@ionic/vue';
+import { MsDropdown, MsModal, MsModalResult, MsOptions, MsReportText, MsReportTheme, MsTextarea } from 'megashark-lib';
+import { computed, ref } from 'vue';
 
 const userOptions: MsOptions = new MsOptions([
   {

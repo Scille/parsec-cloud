@@ -39,20 +39,19 @@
 </template>
 
 <script setup lang="ts">
-import { UserProfile, getClientInfo } from '@/parsec';
-import { Routes, navigateTo, ProfilePages } from '@/router';
+import { openBugReportModal } from '@/components/misc';
+import { getClientInfo, UserProfile } from '@/parsec';
+import { navigateTo, ProfilePages, Routes } from '@/router';
+import { APP_VERSION, Env } from '@/services/environment';
 import { EventData, EventDistributor, EventDistributorKey, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
-import { Answer, askQuestion, MsModalResult } from 'megashark-lib';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import UpdateAppModal from '@/views/about/UpdateAppModal.vue';
 import ProfileHeaderOrganizationPopover, { ProfilePopoverOption } from '@/views/header/ProfileHeaderOrganizationPopover.vue';
 import { IonIcon, IonItem, IonText, modalController, popoverController } from '@ionic/vue';
 import { chevronDown, personCircle } from 'ionicons/icons';
+import { Answer, askQuestion, MsModalResult } from 'megashark-lib';
 import { inject, onMounted, onUnmounted, ref, Ref } from 'vue';
-import { Env } from '@/services/environment';
-import UpdateAppModal from '@/views/about/UpdateAppModal.vue';
-import { APP_VERSION } from '@/services/environment';
-import { openBugReportModal } from '@/components/misc';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 
 const isOnline = ref(false);
 const isPopoverOpen = ref(false);

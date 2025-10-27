@@ -38,11 +38,11 @@
 </template>
 
 <script setup lang="ts">
-import { MsModalResult, MsImage, ImportMultipleFiles, Folder } from 'megashark-lib';
 import { ImportType } from '@/components/files/types';
 import { popoverController } from '@ionic/core';
-import { IonItem, IonText, IonList, IonIcon } from '@ionic/vue';
+import { IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
 import { arrowUp } from 'ionicons/icons';
+import { Folder, ImportMultipleFiles, MsImage, MsModalResult } from 'megashark-lib';
 
 async function onOptionClick(type: ImportType): Promise<void> {
   await popoverController.dismiss(

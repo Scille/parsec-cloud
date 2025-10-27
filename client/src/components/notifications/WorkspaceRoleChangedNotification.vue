@@ -32,16 +32,16 @@
 </template>
 
 <script setup lang="ts">
-import { formatTimeSince, LogoIconGradient, MsImage } from 'megashark-lib';
 import NotificationItem from '@/components/notifications/NotificationItem.vue';
 import { StartedWorkspaceInfo, getWorkspaceInfo } from '@/parsec';
+import { EventDistributor } from '@/services/eventDistributor';
 import { WorkspaceRoleChangedData } from '@/services/informationManager';
 import { Notification } from '@/services/notificationManager';
+import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import { getWorkspaceRoleTranslationKey } from '@/services/translation';
 import { IonText } from '@ionic/vue';
+import { LogoIconGradient, MsImage, formatTimeSince } from 'megashark-lib';
 import { Ref, onMounted, ref } from 'vue';
-import { EventDistributor } from '@/services/eventDistributor';
-import { ResourcesManager, Resources } from '@/services/resourcesManager';
 
 const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
 

@@ -127,24 +127,23 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonIcon, modalController, IonText, IonMenuButton, IonMenu } from '@ionic/vue';
-import { arrowBack, arrowForward, caretDown, menu, personCircle } from 'ionicons/icons';
-import ProfileHeaderHomepage from '@/views/header/ProfileHeaderHomePage.vue';
 import HomePageSecondaryMenu from '@/components/header/HomePageSecondaryMenu.vue';
 import HomePageSecondaryMenuCollapse from '@/components/header/HomePageSecondaryMenuCollapse.vue';
-import { EventData, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
-import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
-import { Translatable, MsModalResult, useWindowSize, WindowSizeBreakpoints } from 'megashark-lib';
-import { onMounted, onUnmounted, ref, inject, Ref } from 'vue';
-import { Env } from '@/services/environment';
-import UpdateAppModal from '@/views/about/UpdateAppModal.vue';
-import { APP_VERSION } from '@/services/environment';
-import { openSettingsModal } from '@/views/settings';
-import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
-import { openAboutModal } from '@/views/about';
-import { ParsecAccount, AccountInfo } from '@/parsec';
-import { AccountSettingsTabs } from '@/views/account/types';
+import { AccountInfo, ParsecAccount } from '@/parsec';
 import { navigateTo, Routes, watchRoute } from '@/router';
+import { APP_VERSION, Env } from '@/services/environment';
+import { EventData, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
+import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
+import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
+import { openAboutModal } from '@/views/about';
+import UpdateAppModal from '@/views/about/UpdateAppModal.vue';
+import { AccountSettingsTabs } from '@/views/account/types';
+import ProfileHeaderHomepage from '@/views/header/ProfileHeaderHomePage.vue';
+import { openSettingsModal } from '@/views/settings';
+import { IonButton, IonIcon, IonMenu, IonMenuButton, IonText, modalController } from '@ionic/vue';
+import { arrowBack, arrowForward, caretDown, menu, personCircle } from 'ionicons/icons';
+import { MsModalResult, Translatable, useWindowSize, WindowSizeBreakpoints } from 'megashark-lib';
+import { inject, onMounted, onUnmounted, ref, Ref } from 'vue';
 
 const { isSmallDisplay, isLargeDisplay, windowWidth } = useWindowSize();
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;

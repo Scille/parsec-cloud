@@ -103,26 +103,26 @@
 </template>
 
 <script setup lang="ts">
-import HomePageSidebar from '@/views/home/HomePageSidebar.vue';
 import HomePageSecondaryMenu from '@/components/header/HomePageSecondaryMenu.vue';
-import AccountLoginPage from '@/views/account/AccountLoginPage.vue';
 import HomePageSecondaryMenuCollapse from '@/components/header/HomePageSecondaryMenuCollapse.vue';
+import { ParsecAccount } from '@/parsec';
 import { getCurrentRouteParams, getCurrentRouteQuery, navigateTo, Routes } from '@/router';
-import { chevronForward, menu } from 'ionicons/icons';
+import AccountLoginPage from '@/views/account/AccountLoginPage.vue';
+import HomePageSidebar from '@/views/home/HomePageSidebar.vue';
+import { openSettingsModal } from '@/views/settings';
 import {
-  IonContent,
-  IonPage,
   IonButton,
+  IonContent,
   IonIcon,
-  IonText,
-  IonMenuButton,
   IonMenu,
+  IonMenuButton,
+  IonPage,
+  IonText,
   onIonViewWillEnter,
   onIonViewWillLeave,
 } from '@ionic/vue';
-import { ParsecAccount } from '@/parsec';
+import { chevronForward, menu } from 'ionicons/icons';
 import { useWindowSize, WindowSizeBreakpoints } from 'megashark-lib';
-import { openSettingsModal } from '@/views/settings';
 import { ref } from 'vue';
 
 const disableGoTo = ref(false);

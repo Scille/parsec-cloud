@@ -8,19 +8,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, Ref, type Component, inject, shallowRef, onMounted, onUnmounted } from 'vue';
-import {
-  ImageViewer,
-  VideoViewer,
-  SpreadsheetViewer,
-  DocumentViewer,
-  AudioViewer,
-  TextViewer,
-  PdfViewer,
-} from '@/views/files/handler/viewer';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { DetectedFileType, FileContentType } from '@/common/fileTypes';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import {
+  AudioViewer,
+  DocumentViewer,
+  ImageViewer,
+  PdfViewer,
+  SpreadsheetViewer,
+  TextViewer,
+  VideoViewer,
+} from '@/views/files/handler/viewer';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
+import { inject, onMounted, onUnmounted, ref, Ref, shallowRef, type Component } from 'vue';
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const viewerComponent: Ref<Component | null> = shallowRef(null);

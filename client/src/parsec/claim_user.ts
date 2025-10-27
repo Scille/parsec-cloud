@@ -89,7 +89,6 @@ export class UserClaim {
   async initialWaitAllAdministrators(): Promise<Result<UserClaimInProgress1Info, ClaimInProgressError>> {
     this._assertState(true, false);
     this.canceller = await libparsec.newCanceller();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const result = await libparsec.claimerUserWaitAllPeers(this.canceller, this.handle!);
     if (result.ok) {
       this.SASCodeChoices = result.value.greeterSasChoices;
@@ -104,7 +103,6 @@ export class UserClaim {
   async denyTrust(): Promise<Result<null, ClaimInProgressError>> {
     this._assertState(true, false);
     this.canceller = await libparsec.newCanceller();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const result = await libparsec.claimerUserInProgress1DoDenyTrust(this.canceller, this.handle!);
     this.handle = null;
     this.canceller = null;
@@ -114,7 +112,6 @@ export class UserClaim {
   async signifyTrust(): Promise<Result<UserClaimInProgress2Info, ClaimInProgressError>> {
     this._assertState(true, false);
     this.canceller = await libparsec.newCanceller();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const result = await libparsec.claimerUserInProgress1DoSignifyTrust(this.canceller, this.handle!);
     if (result.ok) {
       this.guestSASCode = result.value.claimerSas;
@@ -127,7 +124,6 @@ export class UserClaim {
   async waitHostTrust(): Promise<Result<UserClaimInProgress3Info, ClaimInProgressError>> {
     this._assertState(true, false);
     this.canceller = await libparsec.newCanceller();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const result = await libparsec.claimerUserInProgress2DoWaitPeerTrust(this.canceller, this.handle!);
     this.canceller = null;
     if (result.ok) {
@@ -139,13 +135,10 @@ export class UserClaim {
   async doClaim(deviceLabel: string, userName: string, email: string): Promise<Result<UserClaimFinalizeInfo, ClaimInProgressError>> {
     this._assertState(true, false);
     this.canceller = await libparsec.newCanceller();
-    const result = await libparsec.claimerUserInProgress3DoClaim(
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      this.canceller,
-      this.handle!,
-      deviceLabel,
-      { email: email, label: userName },
-    );
+    const result = await libparsec.claimerUserInProgress3DoClaim(this.canceller, this.handle!, deviceLabel, {
+      email: email,
+      label: userName,
+    });
     if (result.ok) {
       this.handle = result.value.handle;
     }
@@ -155,11 +148,7 @@ export class UserClaim {
 
   async finalize(saveStrategy: DeviceSaveStrategy): Promise<Result<AvailableDevice, ClaimInProgressError>> {
     this._assertState(true, false);
-    const result = await libparsec.claimerUserFinalizeSaveLocalDevice(
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      this.handle!,
-      saveStrategy,
-    );
+    const result = await libparsec.claimerUserFinalizeSaveLocalDevice(this.handle!, saveStrategy);
     if (result.ok) {
       result.value.createdOn = DateTime.fromSeconds(result.value.createdOn as any as number);
       result.value.protectedOn = DateTime.fromSeconds(result.value.protectedOn as any as number);

@@ -73,12 +73,12 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref } from 'vue';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import { Clipboard } from 'megashark-lib';
 import { OrganizationInfo } from '@/parsec';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonIcon, IonLabel, IonText, IonTitle } from '@ionic/vue';
 import { copy } from 'ionicons/icons';
+import { Clipboard } from 'megashark-lib';
+import { inject, ref } from 'vue';
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const addressCopiedToClipboard = ref(false);

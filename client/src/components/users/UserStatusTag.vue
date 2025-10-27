@@ -23,8 +23,8 @@
 </template>
 
 <script setup lang="ts">
-import { IonChip, IonLabel, IonIcon } from '@ionic/vue';
-import { closeCircle, checkmarkCircle, pauseCircle } from 'ionicons/icons';
+import { IonChip, IonIcon, IonLabel } from '@ionic/vue';
+import { checkmarkCircle, closeCircle, pauseCircle } from 'ionicons/icons';
 import { Translatable, openInformationTooltip } from 'megashark-lib';
 import { computed } from 'vue';
 

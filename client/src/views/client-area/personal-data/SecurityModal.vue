@@ -56,19 +56,19 @@
 </template>
 
 <script setup lang="ts">
+import { BmsAccessInstance } from '@/services/bms';
+import { IonPage, modalController } from '@ionic/vue';
 import {
+  MsChoosePasswordInput,
   MsModal,
   MsModalResult,
   MsPasswordInput,
-  MsReportTheme,
   MsReportText,
+  MsReportTheme,
   Translatable,
-  MsChoosePasswordInput,
   asyncComputed,
 } from 'megashark-lib';
-import { IonPage, modalController } from '@ionic/vue';
 import { onMounted, ref, useTemplateRef } from 'vue';
-import { BmsAccessInstance } from '@/services/bms';
 
 const enum UpdatePasswordStep {
   Password,

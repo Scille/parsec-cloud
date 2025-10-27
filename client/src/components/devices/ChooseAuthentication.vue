@@ -140,8 +140,11 @@
 </template>
 
 <script setup lang="ts">
-import { MsChoosePasswordInput } from 'megashark-lib';
 import KeyringInformation from '@/components/devices/KeyringInformation.vue';
+import SsoProviderCard from '@/components/devices/SsoProviderCard.vue';
+import { SSOProvider } from '@/components/devices/types';
+import authenticationCard from '@/components/profile/AuthenticationCard.vue';
+import { AuthenticationCardState } from '@/components/profile/types';
 import {
   AvailableDeviceTypeTag,
   CustomDeviceSaveStrategyTag,
@@ -152,13 +155,10 @@ import {
   isSmartcardAvailable,
   isWeb,
 } from '@/parsec';
-import { IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
-import { onMounted, ref, useTemplateRef } from 'vue';
-import authenticationCard from '@/components/profile/AuthenticationCard.vue';
-import { AuthenticationCardState } from '@/components/profile/types';
 import { useOpenBao } from '@/services/openBao';
-import { SSOProvider } from '@/components/devices/types';
-import SsoProviderCard from '@/components/devices/SsoProviderCard.vue';
+import { IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
+import { MsChoosePasswordInput } from 'megashark-lib';
+import { onMounted, ref, useTemplateRef } from 'vue';
 
 const authentication = ref<DeviceSaveStrategyTag | CustomDeviceSaveStrategyTag | undefined>(undefined);
 const keyringAvailable = ref(false);

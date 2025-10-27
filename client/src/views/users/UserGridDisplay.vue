@@ -22,8 +22,8 @@
 </template>
 
 <script setup lang="ts">
-import { IonText } from '@ionic/vue';
 import { UserCard, UserCollection, UserModel } from '@/components/users';
+import { IonText } from '@ionic/vue';
 import { computed, ref } from 'vue';
 
 defineProps<{

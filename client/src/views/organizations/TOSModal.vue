@@ -41,11 +41,11 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonIcon } from '@ionic/vue';
-import { onMounted, ref } from 'vue';
-import { MsReportTheme, MsModal, MsCheckbox, I18n } from 'megashark-lib';
-import { documentText } from 'ionicons/icons';
 import { Env } from '@/services/environment';
+import { IonButton, IonIcon } from '@ionic/vue';
+import { documentText } from 'ionicons/icons';
+import { I18n, MsCheckbox, MsModal, MsReportTheme } from 'megashark-lib';
+import { onMounted, ref } from 'vue';
 
 const props = defineProps<{
   tosLinks: Map<string, string>;

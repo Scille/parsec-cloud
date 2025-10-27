@@ -99,25 +99,24 @@
 </template>
 
 <script setup lang="ts">
+import { isTrialOrganizationDevice } from '@/common/organization';
+import OrganizationConfigurationInformation from '@/components/organizations/OrganizationConfigurationInformation.vue';
+import OrganizationStorageInformation from '@/components/organizations/OrganizationStorageInformation.vue';
+import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
+import OrganizationUserInformation from '@/components/organizations/OrganizationUserInformation.vue';
 import {
   ClientInfo,
   OrganizationInfo,
+  getCurrentAvailableDevice,
   getOrganizationInfo,
   getClientInfo as parsecGetClientInfo,
-  getCurrentAvailableDevice,
 } from '@/parsec';
-import { IonContent, IonPage, IonText, IonAvatar, popoverController, IonSkeletonText } from '@ionic/vue';
-import { currentRouteIs, Routes, switchOrganization, watchRoute } from '@/router';
-import { ChevronExpand, MsImage, LogoIconGradient, MsModalResult, MsReportText, MsReportTheme } from 'megashark-lib';
-import { Ref, onMounted, onUnmounted, ref } from 'vue';
+import { Routes, currentRouteIs, switchOrganization, watchRoute } from '@/router';
 import useUploadMenu from '@/services/fileUploadMenu';
-import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
-import OrganizationUserInformation from '@/components/organizations/OrganizationUserInformation.vue';
-import OrganizationConfigurationInformation from '@/components/organizations/OrganizationConfigurationInformation.vue';
-import OrganizationStorageInformation from '@/components/organizations/OrganizationStorageInformation.vue';
-import { isTrialOrganizationDevice } from '@/common/organization';
-import { useWindowSize } from 'megashark-lib';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
+import { IonAvatar, IonContent, IonPage, IonSkeletonText, IonText, popoverController } from '@ionic/vue';
+import { ChevronExpand, LogoIconGradient, MsImage, MsModalResult, MsReportText, MsReportTheme, useWindowSize } from 'megashark-lib';
+import { Ref, onMounted, onUnmounted, ref } from 'vue';
 
 const { isSmallDisplay } = useWindowSize();
 

@@ -20,9 +20,9 @@
 </template>
 
 <script setup lang="ts">
-import { IonItem, IonText, IonIcon } from '@ionic/vue';
-import { close } from 'ionicons/icons';
 import { RecentFile } from '@/services/recentDocuments';
+import { IonIcon, IonItem, IonText } from '@ionic/vue';
+import { close } from 'ionicons/icons';
 
 defineProps<{
   file: RecentFile;

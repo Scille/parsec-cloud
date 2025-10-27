@@ -88,14 +88,14 @@
 </template>
 
 <script setup lang="ts">
-import { OrganizationID } from '@/parsec';
-import { IonPage, IonButton, IonText, IonFooter, IonIcon } from '@ionic/vue';
-import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
-import { add, chevronBack, chevronForward, warning, remove } from 'ionicons/icons';
 import { organizationValidator } from '@/common/validators';
-import { Translatable, Validity, MsInput } from 'megashark-lib';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
 import SequesterKeyInput from '@/components/organizations/SequesterKeyInput.vue';
+import { OrganizationID } from '@/parsec';
+import { IonButton, IonFooter, IonIcon, IonPage, IonText } from '@ionic/vue';
+import { add, chevronBack, chevronForward, remove, warning } from 'ionicons/icons';
+import { MsInput, Translatable, Validity } from 'megashark-lib';
+import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const props = defineProps<{
   organizationName?: OrganizationID;

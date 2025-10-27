@@ -26,10 +26,10 @@
 </template>
 
 <script setup lang="ts">
-import { modalController } from '@ionic/vue';
-import { ref, useTemplateRef } from 'vue';
-import { asyncComputed, MsChoosePasswordInput, MsModalResult, MsModal, MsReportText, MsReportTheme } from 'megashark-lib';
 import { ParsecAccount } from '@/parsec';
+import { modalController } from '@ionic/vue';
+import { asyncComputed, MsChoosePasswordInput, MsModal, MsModalResult, MsReportText, MsReportTheme } from 'megashark-lib';
+import { ref, useTemplateRef } from 'vue';
 
 const error = ref('');
 const passwordInputRef = useTemplateRef<typeof MsChoosePasswordInput>('passwordInput');

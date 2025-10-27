@@ -304,13 +304,13 @@
 </template>
 
 <script setup lang="ts">
-import { BmsAccessInstance, DataType, BmsOrganization, OrganizationStatsResultData, CustomOrderDetailsResultData } from '@/services/bms';
-import { onMounted, ref, computed } from 'vue';
-import { IonCard, IonText, IonIcon, IonTitle, IonSkeletonText } from '@ionic/vue';
 import { formatFileSize } from '@/common/file';
-import { arrowForward } from 'ionicons/icons';
+import { BmsAccessInstance, BmsOrganization, CustomOrderDetailsResultData, DataType, OrganizationStatsResultData } from '@/services/bms';
 import { isDefaultOrganization } from '@/views/client-area/types';
-import { MsReportTheme, MsReportText } from 'megashark-lib';
+import { IonCard, IonIcon, IonSkeletonText, IonText, IonTitle } from '@ionic/vue';
+import { arrowForward } from 'ionicons/icons';
+import { MsReportText, MsReportTheme } from 'megashark-lib';
+import { computed, onMounted, ref } from 'vue';
 
 const props = defineProps<{
   currentOrganization: BmsOrganization;

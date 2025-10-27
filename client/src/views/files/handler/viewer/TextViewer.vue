@@ -38,13 +38,13 @@
 </template>
 
 <script setup lang="ts">
-import { MsSpinner, Translatable, MsReportText, MsReportTheme } from 'megashark-lib';
-import { onMounted, ref, useTemplateRef } from 'vue';
-import * as monaco from 'monaco-editor';
-import { scan } from 'ionicons/icons';
-import { FileContentInfo } from '@/views/files/handler/viewer/utils';
+import { FileControls, FileControlsButton, FileControlsGroup, FileControlsZoom } from '@/components/files/handler/viewer';
 import { FileViewerWrapper } from '@/views/files/handler/viewer';
-import { FileControls, FileControlsZoom, FileControlsGroup, FileControlsButton } from '@/components/files/handler/viewer';
+import { FileContentInfo } from '@/views/files/handler/viewer/utils';
+import { scan } from 'ionicons/icons';
+import { MsReportText, MsReportTheme, MsSpinner, Translatable } from 'megashark-lib';
+import * as monaco from 'monaco-editor';
+import { onMounted, ref, useTemplateRef } from 'vue';
 
 const props = defineProps<{
   contentInfo: FileContentInfo;
@@ -65,7 +65,7 @@ onMounted(async () => {
   try {
     const text = new TextDecoder().decode(props.contentInfo.data);
     createEditor(text);
-  } catch (e) {
+  } catch (_err: any) {
     error.value = 'fileViewers.text.loadDocumentError';
   } finally {
     loading.value = false;

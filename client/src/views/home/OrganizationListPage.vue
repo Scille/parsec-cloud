@@ -316,31 +316,31 @@
 </template>
 
 <script setup lang="ts">
-import { claimAndBootstrapLinkValidator, bootstrapLinkValidator } from '@/common/validators';
-import {
-  MsImage,
-  NoOrganization,
-  MsSorter,
-  MsOptions,
-  MsSorterChangeEvent,
-  MsSearchInput,
-  MsInput,
-  Validity,
-  AddIcon,
-  useWindowSize,
-} from 'megashark-lib';
+import MailUnreadGradient from '@/assets/images/mail-unread-gradient.svg?raw';
+import { bootstrapLinkValidator, claimAndBootstrapLinkValidator } from '@/common/validators';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import OrganizationPkiRequest from '@/components/organizations/OrganizationPkiRequest.vue';
 import { AccountInvitation, AvailableDevice, getLoggedInDevices, LocalJoinRequest, LoggedInDeviceInfo } from '@/parsec';
 import { Routes } from '@/router';
+import { Env } from '@/services/environment';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
 import { IonButton, IonIcon, IonText } from '@ionic/vue';
 import { addCircle, caretForward, chevronDown } from 'ionicons/icons';
-import { Env } from '@/services/environment';
 import { DateTime } from 'luxon';
-import { computed, inject, onMounted, onUnmounted, ref, watch, useTemplateRef } from 'vue';
-import MailUnreadGradient from '@/assets/images/mail-unread-gradient.svg?raw';
+import {
+  AddIcon,
+  MsImage,
+  MsInput,
+  MsOptions,
+  MsSearchInput,
+  MsSorter,
+  MsSorterChangeEvent,
+  NoOrganization,
+  useWindowSize,
+  Validity,
+} from 'megashark-lib';
+import { computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const emits = defineEmits<{
   (e: 'organizationSelect', device: AvailableDevice): void;

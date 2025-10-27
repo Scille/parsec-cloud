@@ -44,15 +44,15 @@
 </template>
 
 <script setup lang="ts">
-import { Answer, askQuestion, MsModalResult } from 'megashark-lib';
+import authenticationCard from '@/components/profile/AuthenticationCard.vue';
+import { AuthenticationCardState } from '@/components/profile/types';
 import { AvailableDevice, AvailableDeviceTypeTag, DeviceSaveStrategyTag, getCurrentAvailableDevice, isWeb } from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import UpdateAuthenticationModal from '@/views/users/UpdateAuthenticationModal.vue';
-import authenticationCard from '@/components/profile/AuthenticationCard.vue';
-import { IonButton, IonIcon, IonText, modalController, IonLabel } from '@ionic/vue';
+import { IonButton, IonIcon, IonLabel, IonText, modalController } from '@ionic/vue';
 import { warning } from 'ionicons/icons';
-import { AuthenticationCardState } from '@/components/profile/types';
-import { Ref, inject, onMounted, ref } from 'vue';
+import { Answer, askQuestion, MsModalResult } from 'megashark-lib';
+import { inject, onMounted, Ref, ref } from 'vue';
 
 const currentDevice: Ref<AvailableDevice | null> = ref(null);
 const informationManager: InformationManager = inject(InformationManagerKey)!;

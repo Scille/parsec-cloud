@@ -37,16 +37,16 @@
 </template>
 
 <script setup lang="ts">
-import { formatTimeSince } from 'megashark-lib';
 import NotificationItem from '@/components/notifications/NotificationItem.vue';
 import { getWorkspaceInfo, StartedWorkspaceInfo } from '@/parsec';
 import { currentRouteIsWorkspaceRoute, navigateToWorkspace } from '@/router';
+import { EventDistributor } from '@/services/eventDistributor';
 import { NewWorkspaceAccessData } from '@/services/informationManager';
 import { Notification } from '@/services/notificationManager';
 import { IonIcon, IonText, popoverController } from '@ionic/vue';
 import { arrowForward, business } from 'ionicons/icons';
+import { formatTimeSince } from 'megashark-lib';
 import { onMounted, ref, Ref } from 'vue';
-import { EventDistributor } from '@/services/eventDistributor';
 
 const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
 

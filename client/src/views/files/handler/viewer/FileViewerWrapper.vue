@@ -33,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import { MsReportTheme, MsReportText } from 'megashark-lib';
+import { MsReportText, MsReportTheme } from 'megashark-lib';
 
 defineProps<{
   error?: string;

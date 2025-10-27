@@ -140,12 +140,12 @@
 
 <script setup lang="ts">
 import { formatFileSize, getFileIcon, shortenFileName } from '@/common/file';
-import { Clipboard, Folder, MsImage, MsModal, openTooltip, I18n } from 'megashark-lib';
-import { EntryStat, EntryStatFile, isDesktop, getSystemPath, WorkspaceHandle, UserProfile } from '@/parsec';
+import { TechnicalId } from '@/components/misc';
+import { EntryStat, EntryStatFile, getSystemPath, isDesktop, UserProfile, WorkspaceHandle } from '@/parsec';
 import { IonButton, IonIcon, IonLabel, IonPage, IonText } from '@ionic/vue';
 import { cloudDone, cloudOffline, copy } from 'ionicons/icons';
+import { Clipboard, Folder, I18n, MsImage, MsModal, openTooltip } from 'megashark-lib';
 import { ref } from 'vue';
-import { TechnicalId } from '@/components/misc';
 
 enum CopyStatus {
   NotCopied,

@@ -184,17 +184,17 @@
 </template>
 
 <script setup lang="ts">
-import { UserSelect } from '@/components/users';
-import { IonPage, IonButton, IonFooter, IonIcon, IonHeader, IonTitle, IonList, IonItem, modalController, IonText } from '@ionic/vue';
-import { getWorkspacesSharedWith, shareWorkspace, UserInfo, UserProfile, WorkspaceInfo, WorkspaceRole } from '@/parsec';
-import { ref, Ref, watch } from 'vue';
-import { close, checkmarkCircle, closeCircle, arrowForward } from 'ionicons/icons';
-import { MsModalResult, MsSpinner, MsReportText, MsReportTheme, useWindowSize } from 'megashark-lib';
-import { compareWorkspaceRoles } from '@/components/workspaces/utils';
-import { getWorkspaceRoleTranslationKey } from '@/services/translation';
 import SmallDisplayModalHeader from '@/components/header/SmallDisplayModalHeader.vue';
+import { UserSelect } from '@/components/users';
+import { compareWorkspaceRoles } from '@/components/workspaces/utils';
+import { getWorkspacesSharedWith, shareWorkspace, UserInfo, UserProfile, WorkspaceInfo, WorkspaceRole } from '@/parsec';
 import { wait } from '@/parsec/internals';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { getWorkspaceRoleTranslationKey } from '@/services/translation';
+import { IonButton, IonFooter, IonHeader, IonIcon, IonItem, IonList, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
+import { arrowForward, checkmarkCircle, close, closeCircle } from 'ionicons/icons';
+import { MsModalResult, MsReportText, MsReportTheme, MsSpinner, useWindowSize } from 'megashark-lib';
+import { ref, Ref, watch } from 'vue';
 
 enum Steps {
   SelectUser,

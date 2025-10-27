@@ -43,7 +43,7 @@
 
 <script lang="ts" setup>
 import { JoinRequestStatus, LocalJoinRequest } from '@/parsec';
-import { IonCardContent, IonIcon, IonText, IonButton } from '@ionic/vue';
+import { IonButton, IonCardContent, IonIcon, IonText } from '@ionic/vue';
 import { arrowForward, closeCircle } from 'ionicons/icons';
 import { attachMouseOverTooltip } from 'megashark-lib';
 import { computed, onMounted, useTemplateRef, watch } from 'vue';

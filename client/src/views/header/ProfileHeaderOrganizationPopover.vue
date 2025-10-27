@@ -147,17 +147,16 @@ export enum ProfilePopoverOption {
 </script>
 
 <script setup lang="ts">
-import { APP_VERSION } from '@/services/environment';
+import DownloadParsec from '@/components/misc/DownloadParsec.vue';
 import TagProfile from '@/components/users/TagProfile.vue';
 import { isMobile, isWeb, UserProfile } from '@/parsec';
+import { APP_VERSION, Env } from '@/services/environment';
 import { UpdateAvailabilityData } from '@/services/eventDistributor';
+import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { popoverController } from '@ionic/core';
 import { IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
 import { cog, fingerPrint, idCard, logOut, phonePortrait } from 'ionicons/icons';
-import DownloadParsec from '@/components/misc/DownloadParsec.vue';
-import { ref, inject, onMounted } from 'vue';
-import { StorageManager, StorageManagerKey } from '@/services/storageManager';
-import { Env } from '@/services/environment';
+import { inject, onMounted, ref } from 'vue';
 
 defineProps<{
   email: string;

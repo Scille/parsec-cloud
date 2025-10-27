@@ -180,20 +180,19 @@
 
 <script setup lang="ts">
 import { pxToRem } from '@/common/utils';
-import { IonPage, IonList, IonIcon, IonButton, IonContent, IonText } from '@ionic/vue';
-import { computed, onBeforeUnmount, onMounted, ref, Ref, inject, onUnmounted, watch, useTemplateRef } from 'vue';
-import { FsPath, Path, getWorkspaceInfo, StartedWorkspaceInfo, WorkspaceHistory, EntryName } from '@/parsec';
-import { MsSpinner, MsSearchInput, askQuestion, Answer, MsDatetimePicker, I18n, useWindowSize, MsImage, Folder } from 'megashark-lib';
-import { DateTime } from 'luxon';
-import { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
-import HeaderBreadcrumbs from '@/components/header/HeaderBreadcrumbs.vue';
-import { WorkspaceHistoryEntryCollection, WorkspaceHistoryEntryModel, HistoryFileListItem } from '@/components/files';
-import { chevronBack, chevronForward, home, warning } from 'ionicons/icons';
-import { currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, Routes, watchRoute } from '@/router';
-import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
+import { HistoryFileListItem, WorkspaceHistoryEntryCollection, WorkspaceHistoryEntryModel } from '@/components/files';
+import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import { SortProperty } from '@/components/users';
-import { InformationManager, InformationManagerKey } from '@/services/informationManager';
+import { EntryName, FsPath, getWorkspaceInfo, Path, StartedWorkspaceInfo, WorkspaceHistory } from '@/parsec';
+import { currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, Routes, watchRoute } from '@/router';
 import { openPath } from '@/services/fileOpener';
+import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
+import { InformationManager, InformationManagerKey } from '@/services/informationManager';
+import { IonButton, IonContent, IonIcon, IonList, IonPage, IonText } from '@ionic/vue';
+import { chevronBack, chevronForward, home, warning } from 'ionicons/icons';
+import { DateTime } from 'luxon';
+import { Answer, askQuestion, Folder, I18n, MsDatetimePicker, MsImage, MsSearchInput, MsSpinner, useWindowSize } from 'megashark-lib';
+import { computed, inject, onBeforeUnmount, onMounted, onUnmounted, ref, Ref, useTemplateRef, watch } from 'vue';
 
 const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
 const informationManager: InformationManager = inject(InformationManagerKey)!;

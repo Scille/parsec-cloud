@@ -43,8 +43,8 @@
 </template>
 
 <script setup lang="ts">
-import { MsModal, MsCheckbox, MsModalResult } from 'megashark-lib';
 import { IonText, modalController } from '@ionic/vue';
+import { MsCheckbox, MsModal, MsModalResult } from 'megashark-lib';
 import { ref } from 'vue';
 
 const skipLongPathsSupportWarning = ref(false);

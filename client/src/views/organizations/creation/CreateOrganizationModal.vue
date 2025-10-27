@@ -37,25 +37,25 @@
 
 <script setup lang="ts">
 import {
-  parseParsecAddr,
-  ParsedParsecAddrTag,
-  OrganizationID,
-  AvailableDevice,
-  DeviceSaveStrategy,
-  DeviceSaveStrategyTag,
   AccessStrategy,
-  DeviceSaveStrategyPassword,
+  AvailableDevice,
   DeviceAccessStrategy,
+  DeviceSaveStrategy,
+  DeviceSaveStrategyPassword,
+  DeviceSaveStrategyTag,
+  OrganizationID,
+  ParsedParsecAddrTag,
+  parseParsecAddr,
 } from '@/parsec';
 import { InformationManager } from '@/services/informationManager';
-import { onMounted, ref } from 'vue';
-import ServerTypeChoice from '@/views/organizations/creation/ServerTypeChoice.vue';
-import { ServerType, getServerTypeFromHost } from '@/services/parsecServers';
-import { IonPage, modalController } from '@ionic/vue';
+import { getServerTypeFromHost, ServerType } from '@/services/parsecServers';
 import CreateOrganizationCustomServer from '@/views/organizations/creation/CreateOrganizationCustomServer.vue';
 import CreateOrganizationSaas from '@/views/organizations/creation/CreateOrganizationSaas.vue';
 import CreateOrganizationTrial from '@/views/organizations/creation/CreateOrganizationTrial.vue';
+import ServerTypeChoice from '@/views/organizations/creation/ServerTypeChoice.vue';
+import { IonPage, modalController } from '@ionic/vue';
 import { Answer, askQuestion, MsModalResult } from 'megashark-lib';
+import { onMounted, ref } from 'vue';
 
 const props = defineProps<{
   informationManager: InformationManager;

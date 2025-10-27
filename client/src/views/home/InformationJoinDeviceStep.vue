@@ -36,8 +36,8 @@
 </template>
 
 <script setup lang="ts">
-import { Device, MsImage, MsInformativeText, SwapArrows } from 'megashark-lib';
 import { IonText } from '@ionic/vue';
+import { Device, MsImage, MsInformativeText, SwapArrows } from 'megashark-lib';
 </script>
 
 <style scoped lang="scss">

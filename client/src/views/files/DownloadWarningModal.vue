@@ -49,11 +49,11 @@
 </template>
 
 <script setup lang="ts">
-import { modalController } from '@ionic/vue';
-import { onMounted, ref } from 'vue';
-import { MsReportTheme, MsModal, MsCheckbox, MsModalResult, MsReportText, MsImage } from 'megashark-lib';
-import { Env } from '@/services/environment';
 import DownloadWarningImage from '@/assets/images/warning-download.svg';
+import { Env } from '@/services/environment';
+import { modalController } from '@ionic/vue';
+import { MsCheckbox, MsImage, MsModal, MsModalResult, MsReportText, MsReportTheme } from 'megashark-lib';
+import { onMounted, ref } from 'vue';
 
 const noReminder = ref(false);
 

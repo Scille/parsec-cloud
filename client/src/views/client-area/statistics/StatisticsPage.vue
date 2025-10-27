@@ -314,13 +314,13 @@
 </template>
 
 <script setup lang="ts">
-import { BmsAccessInstance, DataType, BmsOrganization, OrganizationStatsResultData } from '@/services/bms';
-import { onMounted, ref } from 'vue';
-import { IonCard, IonText, IonIcon, IonTitle, IonSkeletonText } from '@ionic/vue';
 import { formatFileSize } from '@/common/file';
-import { arrowForward } from 'ionicons/icons';
-import { isDefaultOrganization } from '@/views/client-area/types';
 import ProgressCircle from '@/components/client-area/ProgressCircle.vue';
+import { BmsAccessInstance, BmsOrganization, DataType, OrganizationStatsResultData } from '@/services/bms';
+import { isDefaultOrganization } from '@/views/client-area/types';
+import { IonCard, IonIcon, IonSkeletonText, IonText, IonTitle } from '@ionic/vue';
+import { arrowForward } from 'ionicons/icons';
+import { onMounted, ref } from 'vue';
 
 interface CircleProgressData {
   amount: number;

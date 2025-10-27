@@ -213,29 +213,40 @@
 </template>
 
 <script setup lang="ts">
-import { MsAppearance, MsCheckbox, MsDropdown, MsModal, MsOption, MsOptions, MsSearchInput } from 'megashark-lib';
+import { canChangeRole } from '@/components/workspaces/utils';
 import WorkspaceUserRole from '@/components/workspaces/WorkspaceUserRole.vue';
 import {
   ClientInfo,
+  ClientShareWorkspaceError,
   UserProfile,
   UserTuple,
   WorkspaceID,
   WorkspaceName,
   WorkspaceRole,
-  getClientProfile,
   getClientInfo,
+  getClientProfile,
   getWorkspaceSharing,
   shareWorkspace,
-  ClientShareWorkspaceError,
 } from '@/parsec';
+import { EventDistributor, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { getWorkspaceRoleTranslationKey } from '@/services/translation';
-import { I18n, MsReportText, MsReportTheme, useWindowSize } from 'megashark-lib';
-import { IonList, IonPage, IonText, IonIcon } from '@ionic/vue';
+import { IonIcon, IonList, IonPage, IonText } from '@ionic/vue';
 import { checkmarkCircle, chevronDown } from 'ionicons/icons';
-import { Ref, onMounted, ref, computed, useTemplateRef } from 'vue';
-import { canChangeRole } from '@/components/workspaces/utils';
-import { EventDistributor, Events } from '@/services/eventDistributor';
+import {
+  I18n,
+  MsAppearance,
+  MsCheckbox,
+  MsDropdown,
+  MsModal,
+  MsOption,
+  MsOptions,
+  MsReportText,
+  MsReportTheme,
+  MsSearchInput,
+  useWindowSize,
+} from 'megashark-lib';
+import { Ref, computed, onMounted, ref, useTemplateRef } from 'vue';
 
 const search = ref('');
 let ownProfile = UserProfile.Outsider;

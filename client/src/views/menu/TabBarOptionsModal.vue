@@ -33,9 +33,9 @@
 </template>
 
 <script setup lang="ts">
-import { IonIcon, IonText, modalController } from '@ionic/vue';
 import { MenuAction } from '@/views/menu';
-import { MsModalResult, MsImage } from 'megashark-lib';
+import { IonIcon, IonText, modalController } from '@ionic/vue';
+import { MsImage, MsModalResult } from 'megashark-lib';
 
 defineProps<{
   actions: MenuAction[];

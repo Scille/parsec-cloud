@@ -171,22 +171,6 @@
 <script setup lang="ts">
 import { workspaceNameValidator } from '@/common/validators';
 import {
-  MsOptions,
-  getTextFromUser,
-  MsImage,
-  NoWorkspace,
-  DisplayState,
-  MsActionBar,
-  MsGridListToggle,
-  MsSorter,
-  MsSorterChangeEvent,
-  MsSearchInput,
-  MsSpinner,
-  useWindowSize,
-  askQuestion,
-  Answer,
-} from 'megashark-lib';
-import {
   WORKSPACES_PAGE_DATA_KEY,
   WorkspaceDefaultData,
   WorkspaceFilter,
@@ -195,11 +179,11 @@ import {
   toggleFavorite,
   workspaceShareClick,
 } from '@/components/workspaces';
+import { WorkspacesPageFilters, compareWorkspaceRoles } from '@/components/workspaces/utils';
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
 import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
 import {
   ClientInfo,
-  getClientInfo as parsecGetClientInfo,
   EntryName,
   ParsecWorkspacePathAddr,
   Path,
@@ -207,28 +191,44 @@ import {
   WorkspaceID,
   WorkspaceInfo,
   WorkspaceName,
+  WorkspaceRole,
   decryptFileLink,
   entryStat,
   getClientProfile,
   isDesktop,
   parseFileLink,
   createWorkspace as parsecCreateWorkspace,
+  getClientInfo as parsecGetClientInfo,
   getWorkspaceSharing as parsecGetWorkspaceSharing,
   listWorkspaces as parsecListWorkspaces,
   mountWorkspace as parsecMountWorkspace,
-  WorkspaceRole,
 } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, navigateToWorkspace, watchRoute } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events, MenuActionData } from '@/services/eventDistributor';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { recentDocumentManager } from '@/services/recentDocuments';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
+import { WorkspaceAction, isWorkspaceAction } from '@/views/workspaces/types';
 import { IonButton, IonContent, IonIcon, IonLabel, IonList, IonListHeader, IonPage, IonText } from '@ionic/vue';
 import { addCircle } from 'ionicons/icons';
+import {
+  Answer,
+  DisplayState,
+  MsActionBar,
+  MsGridListToggle,
+  MsImage,
+  MsOptions,
+  MsSearchInput,
+  MsSorter,
+  MsSorterChangeEvent,
+  MsSpinner,
+  NoWorkspace,
+  askQuestion,
+  getTextFromUser,
+  useWindowSize,
+} from 'megashark-lib';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
-import { recentDocumentManager } from '@/services/recentDocuments';
-import { isWorkspaceAction, WorkspaceAction } from '@/views/workspaces/types';
-import { compareWorkspaceRoles, WorkspacesPageFilters } from '@/components/workspaces/utils';
 
 enum SortWorkspaceBy {
   Name = 'name',
@@ -543,7 +543,6 @@ async function createWorkspace(name: WorkspaceName): Promise<void> {
 
 async function openCreateWorkspaceModal(): Promise<void> {
   let workspaceName: string | null = null;
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     workspaceName = await getTextFromUser(
       {

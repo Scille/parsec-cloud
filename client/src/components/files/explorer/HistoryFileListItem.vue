@@ -62,10 +62,10 @@
 
 <script setup lang="ts">
 import { formatFileSize, getFileIcon } from '@/common/file';
-import { Folder, MsImage, MsCheckbox, formatTimeSince } from 'megashark-lib';
 import { WorkspaceHistoryEntryModel, WorkspaceHistoryFileModel } from '@/components/files/types';
 import { FsPath, Path } from '@/parsec';
 import { IonItem, IonLabel } from '@ionic/vue';
+import { Folder, MsCheckbox, MsImage, formatTimeSince } from 'megashark-lib';
 import { Ref, onMounted, ref } from 'vue';
 
 const isHovered = ref(false);

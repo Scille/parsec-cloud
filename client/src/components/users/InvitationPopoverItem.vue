@@ -71,11 +71,11 @@
 </template>
 
 <script setup lang="ts">
-import { ClientNewUserInvitationErrorTag, InvitationEmailSentStatus, inviteUser, UserInvitation } from '@/parsec';
+import { ClientNewUserInvitationErrorTag, InvitationEmailSentStatus, UserInvitation, inviteUser } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { IonIcon, IonButton, IonItem, IonLabel, IonText } from '@ionic/vue';
-import { formatTimeSince, Clipboard, askQuestion, Answer, Translatable, attachMouseOverTooltip } from 'megashark-lib';
+import { IonButton, IonIcon, IonItem, IonLabel, IonText } from '@ionic/vue';
 import { checkmarkCircle, link, mail, trash } from 'ionicons/icons';
+import { Answer, Clipboard, Translatable, askQuestion, attachMouseOverTooltip, formatTimeSince } from 'megashark-lib';
 import { onMounted, ref, useTemplateRef } from 'vue';
 
 const props = defineProps<{
