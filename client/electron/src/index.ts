@@ -23,7 +23,10 @@ const INSTALL_GUIDE_URL_FR = 'https://docs.parsec.cloud/fr/latest/userguide/inst
 const INSTALL_GUIDE_URL_EN = 'https://docs.parsec.cloud/en/latest/userguide/installation.html';
 
 // Graceful handling of unhandled errors.
-unhandled();
+unhandled({
+  showDialog: false,
+  logger: log.error,
+});
 
 function initSentry(): void {
   // Sentry is initialized in

@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { BrowserWindow } from 'electron';
+import { BrowserWindow, NativeImage } from 'electron';
 import log from 'electron-log/main';
 import * as fs from 'fs';
 
@@ -8,7 +8,7 @@ export class SplashScreen {
   splash: BrowserWindow;
   loaded: boolean = false;
 
-  constructor(opts?: { width?: number; height?: number; x?: number; y?: number; mainWindow?: BrowserWindow }) {
+  constructor(opts?: { width?: number; height?: number; x?: number; y?: number; mainWindow?: BrowserWindow; icon: NativeImage }) {
     // Arbitrary default size
     let width = 800;
     let height = 600;
@@ -47,6 +47,7 @@ export class SplashScreen {
     }
 
     this.splash = new BrowserWindow({
+      icon: opts.icon,
       width: width,
       height: height,
       transparent: true,

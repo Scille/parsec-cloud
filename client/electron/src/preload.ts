@@ -9,6 +9,14 @@ import { contextBridge, ipcRenderer } from 'electron';
 import path from 'path';
 import { PageToWindowChannel } from './communicationChannels';
 
+import unhandled from 'electron-unhandled';
+
+// Graceful handling of unhandled errors.
+unhandled({
+  showDialog: false,
+  logger: (error: Error) => ipcRenderer.send(PageToWindowChannel.Log, 'error', `Unhandled error in renderer: ${String(error)}`),
+});
+
 let CUSTOM_BRANDING_FOLDER = './';
 
 ipcRenderer.on('parsec-custom-branding-folder', (_event, ...args: any[]) => {
