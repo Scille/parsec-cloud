@@ -87,7 +87,7 @@ jobs:
         timeout-minutes: 5
 
       - name: Download version.patch artifact
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # pin v5.0.0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # pin v6.0.0
         with:
           name: version.patch
           path: ${{ runner.temp }}/version.patch
@@ -157,14 +157,14 @@ jobs:
           yq --null-input ".linux-gnu.$ARCH.client.snap = \"$FINAL_ARTIFACT_NAME\"" | tee artifacts.yml
 
       # Install syft
-      - uses: taiki-e/install-action@e43a5023a747770bfcb71ae048541a681714b951 # pin v2.62.33
+      - uses: taiki-e/install-action@c5b1b6f479c32f356cc6f4ba672a47f63853b13b # pin v2.62.38
         with:
           tool: syft@0.84.0
 
       - name: Generate SBOM
         run: syft packages --config=.syft.yaml --output=spdx-json=Parsec-SBOM-Electron-linux-snap.spdx.json .
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # pin v4.6.2
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # pin v5.0.0
         with:
           name: linux-snap-${{ runner.arch }}-electron
           path: |
@@ -225,7 +225,7 @@ jobs:
         timeout-minutes: 2
 
       - name: Download version.patch artifact
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # pin v5.0.0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # pin v6.0.0
         with:
           name: version.patch
           path: ${{ runner.temp }}/version.patch
@@ -384,7 +384,7 @@ jobs:
         timeout-minutes: 1
 
       # Install syft
-      - uses: taiki-e/install-action@e43a5023a747770bfcb71ae048541a681714b951 # pin v2.62.33
+      - uses: taiki-e/install-action@c5b1b6f479c32f356cc6f4ba672a47f63853b13b # pin v2.62.38
         with:
           tool: syft@0.84.0
 
@@ -437,7 +437,7 @@ jobs:
           echo $EOF >> $GITHUB_OUTPUT
         working-directory: client/electron/dist
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # pin v4.6.2
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # pin v5.0.0
         with:
           name: ${{ matrix.artifact_tag }}-${{ runner.arch }}-electron
           path: |
@@ -446,7 +446,7 @@ jobs:
           if-no-files-found: error
         timeout-minutes: 10
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # pin v4.6.2
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # pin v5.0.0
         if: matrix.platform == 'windows'
         with:
           name: ${{ matrix.artifact_tag }}-${{ runner.arch }}-electron-pre-built
