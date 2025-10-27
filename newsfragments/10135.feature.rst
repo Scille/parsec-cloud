@@ -1,1 +1,0 @@
-Added a bug report feature directly in the app

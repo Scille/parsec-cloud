@@ -1,3 +1,0 @@
-Breaking change: server rejects any invitation enrollment attempt from a client using
-Parsec < 3.6. This is to avoid SAS codes appearing as different when doing an enrollment
-with a client using Parsec >= 3.6.

@@ -1,1 +1,0 @@
-The database's datamodel is now checked during server startup to ensure all migrations have been applied.
