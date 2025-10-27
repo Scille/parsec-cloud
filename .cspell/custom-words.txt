@@ -124,6 +124,8 @@ gloo
 gradlew
 gsettings
 hasnt
+hexagone
+HKCR
 homoglyph
 htmlcov
 humantime

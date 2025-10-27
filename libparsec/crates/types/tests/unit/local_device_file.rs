@@ -469,6 +469,121 @@ fn account_vault_protected_device_file(alice: &Device) {
     p_assert_eq!(device2, expected);
 }
 
+#[rstest]
+fn openbao_protected_device_file(alice: &Device) {
+    // Generated from Parsec 3.5.1-a.0+dev
+    // Content:
+    //   type: 'sso'
+    //   created_on: ext(1, 1262304000000000) i.e. 2010-01-01T01:00:00Z
+    //   protected_on: ext(1, 1263081600000000) i.e. 2010-01-10T01:00:00Z
+    //   server_url: 'https://parsec.invalid'
+    //   organization_id: 'CoolOrg'
+    //   user_id: ext(2, 0xa11cec00100000000000000000000000)
+    //   device_id: ext(2, 0xde10a11cec0010000000000000000000)
+    //   human_handle: [ 'alice@example.com', 'Alicey McAliceFace', ]
+    //   device_label: 'My dev1 machine'
+    //   openbao_url: 'https://openbao-dev.parsec.invalid/'
+    //   openbao_ciphertext_key_path: '/v1/parsec-keys/data/a11cec00100000000000000000000000/e89eb9b36b704ff292db320b553fcd32'
+    //   openbao_auth_path: '/v1/auth/hexagone/oidc/auth_url'
+    //   openbao_auth_type: 'AGENT_CONNECT'
+    //   ciphertext:
+    //     0x9743c0a4c62a016e8c1afd000197ecdc6a589ccbc5a97e323eb2a0ad4304f2e2a04dc56fcdda1b
+    //     f857ca6ef5c8a63c1485b65d333da166f59395ef12381016d5d7edc934d112b6404d113a0549d87b
+    //     86f673c970dc740e580150c6fafc155c217a8e2ab463f10d32c3a4ea20e500cd5ec88f4e0f20f877
+    //     2cf70b0ffb3d0a6fbd35d29d4676a012f08c9cf8f8c3e36b0af29fa9a7371d785ee06f6b5966567e
+    //     17cdb4c2a9789511b6f469b394668a56ca60b2ab3d4843007075d8cde834054db43751dc39e2dd39
+    //     36750a3244f53778645e7daeb3b1030e7edae8bea4a770ce2cfb465a5b59962fdc574859ba3d5989
+    //     b349501d5d0224f1388bb9a5f68e578319502c4b3b9d8f7f0c065018bc2b3368e3bb96d13cc53e22
+    //     848bee0b86b4f7daa497bdb308cd3d39daf09f198aceb93f385d4984c8ed36e225d0ef40c60431ec
+    //     1791e8082f0039eaaa7d8641af4e2dbc441a36c71f13d4e214440fcbc25374d370d8d5033f4a45c4
+    //     c9cb5fe7483d6eeba308b1efd9a4f335ef80b3e8353462088622afaf25916d495945065e1db44061
+    //     5986e0a1b4c0f8c29f8819c548603a76215e8301508504aa5dbd136233304c75ed6327a4706e9a50
+    //     74e76d9c693a58d0e411eb54a67a910b15e36894c83e8099f4b80027053faf46fde70a8469650d6f
+    //     91560a7dfe1b876d23f22c2668aaefb817cdc47be0f1f8d2a5500014920f51adb2f5a1d9a3e54301
+    //     2c3ed270ff12cd481df5
+    let raw: &[u8] = hex!(
+        "8ea474797065a373736faa637265617465645f6f6ed70100047c0f0d84c000ac70726f"
+        "7465637465645f6f6ed70100047cc41a172000aa7365727665725f75726cb668747470"
+        "733a2f2f7061727365632e696e76616c6964af6f7267616e697a6174696f6e5f6964a7"
+        "436f6f6c4f7267a7757365725f6964d802a11cec00100000000000000000000000a964"
+        "65766963655f6964d802de10a11cec0010000000000000000000ac68756d616e5f6861"
+        "6e646c6592b1616c696365406578616d706c652e636f6db2416c69636579204d63416c"
+        "69636546616365ac6465766963655f6c6162656caf4d792064657631206d616368696e"
+        "65ab6f70656e62616f5f75726cd92368747470733a2f2f6f70656e62616f2d6465762e"
+        "7061727365632e696e76616c69642fbb6f70656e62616f5f636970686572746578745f"
+        "6b65795f70617468d9562f76312f7061727365632d6b6579732f646174612f61313163"
+        "656330303130303030303030303030303030303030303030303030302f653839656239"
+        "6233366237303466663239326462333230623535336663643332b16f70656e62616f5f"
+        "617574685f70617468bf2f76312f617574682f68657861676f6e652f6f6964632f6175"
+        "74685f75726cb16f70656e62616f5f617574685f74797065ad4147454e545f434f4e4e"
+        "454354aa63697068657274657874c502119743c0a4c62a016e8c1afd000197ecdc6a58"
+        "9ccbc5a97e323eb2a0ad4304f2e2a04dc56fcdda1bf857ca6ef5c8a63c1485b65d333d"
+        "a166f59395ef12381016d5d7edc934d112b6404d113a0549d87b86f673c970dc740e58"
+        "0150c6fafc155c217a8e2ab463f10d32c3a4ea20e500cd5ec88f4e0f20f8772cf70b0f"
+        "fb3d0a6fbd35d29d4676a012f08c9cf8f8c3e36b0af29fa9a7371d785ee06f6b596656"
+        "7e17cdb4c2a9789511b6f469b394668a56ca60b2ab3d4843007075d8cde834054db437"
+        "51dc39e2dd3936750a3244f53778645e7daeb3b1030e7edae8bea4a770ce2cfb465a5b"
+        "59962fdc574859ba3d5989b349501d5d0224f1388bb9a5f68e578319502c4b3b9d8f7f"
+        "0c065018bc2b3368e3bb96d13cc53e22848bee0b86b4f7daa497bdb308cd3d39daf09f"
+        "198aceb93f385d4984c8ed36e225d0ef40c60431ec1791e8082f0039eaaa7d8641af4e"
+        "2dbc441a36c71f13d4e214440fcbc25374d370d8d5033f4a45c4c9cb5fe7483d6eeba3"
+        "08b1efd9a4f335ef80b3e8353462088622afaf25916d495945065e1db440615986e0a1"
+        "b4c0f8c29f8819c548603a76215e8301508504aa5dbd136233304c75ed6327a4706e9a"
+        "5074e76d9c693a58d0e411eb54a67a910b15e36894c83e8099f4b80027053faf46fde7"
+        "0a8469650d6f91560a7dfe1b876d23f22c2668aaefb817cdc47be0f1f8d2a550001492"
+        "0f51adb2f5a1d9a3e543012c3ed270ff12cd481df5"
+    )
+    .as_ref();
+
+    let expected = DeviceFile::OpenBao(DeviceFileOpenBao {
+        ciphertext: hex!(
+            "9743c0a4c62a016e8c1afd000197ecdc6a589ccbc5a97e323eb2a0ad4304f2e2a04dc5"
+            "6fcdda1bf857ca6ef5c8a63c1485b65d333da166f59395ef12381016d5d7edc934d112"
+            "b6404d113a0549d87b86f673c970dc740e580150c6fafc155c217a8e2ab463f10d32c3"
+            "a4ea20e500cd5ec88f4e0f20f8772cf70b0ffb3d0a6fbd35d29d4676a012f08c9cf8f8"
+            "c3e36b0af29fa9a7371d785ee06f6b5966567e17cdb4c2a9789511b6f469b394668a56"
+            "ca60b2ab3d4843007075d8cde834054db43751dc39e2dd3936750a3244f53778645e7d"
+            "aeb3b1030e7edae8bea4a770ce2cfb465a5b59962fdc574859ba3d5989b349501d5d02"
+            "24f1388bb9a5f68e578319502c4b3b9d8f7f0c065018bc2b3368e3bb96d13cc53e2284"
+            "8bee0b86b4f7daa497bdb308cd3d39daf09f198aceb93f385d4984c8ed36e225d0ef40"
+            "c60431ec1791e8082f0039eaaa7d8641af4e2dbc441a36c71f13d4e214440fcbc25374"
+            "d370d8d5033f4a45c4c9cb5fe7483d6eeba308b1efd9a4f335ef80b3e8353462088622"
+            "afaf25916d495945065e1db440615986e0a1b4c0f8c29f8819c548603a76215e830150"
+            "8504aa5dbd136233304c75ed6327a4706e9a5074e76d9c693a58d0e411eb54a67a910b"
+            "15e36894c83e8099f4b80027053faf46fde70a8469650d6f91560a7dfe1b876d23f22c"
+            "2668aaefb817cdc47be0f1f8d2a5500014920f51adb2f5a1d9a3e543012c3ed270ff12"
+            "cd481df5"
+        )
+        .as_ref()
+        .into(),
+        created_on: "2010-01-01T00:00:00Z".parse().unwrap(),
+        protected_on: "2010-01-10T00:00:00Z".parse().unwrap(),
+        server_url: "https://parsec.invalid".to_string(),
+        organization_id: alice.organization_id().to_owned(),
+        user_id: alice.user_id,
+        device_id: alice.device_id,
+        human_handle: alice.human_handle.clone(),
+        device_label: alice.device_label.clone(),
+        openbao_url: "https://openbao-dev.parsec.invalid/".to_string(),
+        openbao_ciphertext_key_path:
+            "/v1/parsec-keys/data/a11cec00100000000000000000000000/e89eb9b36b704ff292db320b553fcd32"
+                .to_string(),
+        openbao_auth_path: "/v1/auth/hexagone/oidc/auth_url".to_string(),
+        openbao_auth_type: OpenBaoAuthType::AgentConnect,
+    });
+    println!("***expected: {:?}", expected.dump());
+
+    let device = DeviceFile::load(raw).unwrap();
+    p_assert_eq!(device, expected);
+
+    // Also test roundtrip
+
+    let raw2 = device.dump();
+    let device2 = DeviceFile::load(&raw2).unwrap();
+
+    p_assert_eq!(device2, expected);
+}
+
 #[test]
 fn available_device() {
     let org: OrganizationID = "CoolOrg".parse().unwrap();

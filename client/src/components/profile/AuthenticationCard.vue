@@ -114,6 +114,13 @@ const methodConfig: Record<
     methodName: '',
     description: '',
   },
+  // TODO
+  [DeviceSaveStrategyTag.OpenBao]: {
+    imageSrc: '',
+    imageAlt: '',
+    methodName: '',
+    description: '',
+  },
   [CustomDeviceSaveStrategyTag.SSO]: {
     imageSrc: personCircleGradient,
     imageAlt: 'Smartcard',

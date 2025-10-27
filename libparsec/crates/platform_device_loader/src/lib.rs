@@ -604,6 +604,22 @@ fn load_available_device_from_blob(
             device.human_handle,
             device.device_label,
         ),
+        DeviceFile::OpenBao(device) => (
+            AvailableDeviceType::OpenBao {
+                openbao_url: device.openbao_url.clone(),
+                openbao_ciphertext_key_path: device.openbao_ciphertext_key_path.clone(),
+                openbao_auth_path: device.openbao_auth_path.clone(),
+                openbao_auth_type: device.openbao_auth_type,
+            },
+            device.created_on,
+            device.protected_on,
+            device.server_url,
+            device.organization_id,
+            device.user_id,
+            device.device_id,
+            device.human_handle,
+            device.device_label,
+        ),
     };
 
     Ok(AvailableDevice {
