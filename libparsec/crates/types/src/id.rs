@@ -590,7 +590,7 @@ impl HumanHandle {
         // We have 2 notable forms :_Normalization From canonical Decomposition_ (NFD) and _Normalization From canonical Composition_ (NFC)
         // For example: the `small letter A with acute` (á) would be encoded in NFD as `small letter a + acute accent` as for NFC `small letter a with acute`.
         //
-        // So we need to normalize the string to have consistant comparison latter on.
+        // So we need to normalize the string to have consistent comparison latter on.
         let label = label.nfc().collect::<String>();
         let display = format!("{label} <{email}>");
         if !Self::label_is_valid(label.as_str()) {
