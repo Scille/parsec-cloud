@@ -58,25 +58,34 @@ pub(super) async fn load_ciphertext_key(
     access: &DeviceAccessStrategy,
     device_file: &DeviceFile,
 ) -> Result<SecretKey, LoadCiphertextKeyError> {
-    match (access, &device_file) {
-        (DeviceAccessStrategy::Password { password, .. }, DeviceFile::Password(device)) => {
-            let key = device
-                .algorithm
-                .compute_secret_key(password)
-                .map_err(|_| LoadCiphertextKeyError::InvalidData)?;
+    // Don't do `match (access, device_file)` since we would end up with a catch-all
+    // `(_, _) => return <error>` condition that would prevent this code from breaking
+    // whenever a new variant is introduced (hence hiding the fact this code has
+    // to be updated).
+    match access {
+        DeviceAccessStrategy::Password { password, .. } => {
+            if let DeviceFile::Password(device) = device_file {
+                let key = device
+                    .algorithm
+                    .compute_secret_key(password)
+                    .map_err(|_| LoadCiphertextKeyError::InvalidData)?;
 
-            Ok(key)
+                Ok(key)
+            } else {
+                Err(LoadCiphertextKeyError::InvalidData)
+            }
         }
 
-        (
-            DeviceAccessStrategy::AccountVault { ciphertext_key, .. },
-            DeviceFile::AccountVault(_),
-        ) => Ok(ciphertext_key.clone()),
+        DeviceAccessStrategy::AccountVault { ciphertext_key, .. } => {
+            if let DeviceFile::AccountVault(_) = device_file {
+                Ok(ciphertext_key.clone())
+            } else {
+                Err(LoadCiphertextKeyError::InvalidData)
+            }
+        }
 
-        (DeviceAccessStrategy::Keyring { .. }, _) => panic!("Keyring not supported on Web"),
-        (DeviceAccessStrategy::Smartcard { .. }, _) => panic!("Smartcard not supported on Web"),
-
-        _ => Err(LoadCiphertextKeyError::InvalidData),
+        DeviceAccessStrategy::Keyring { .. } => panic!("Keyring not supported on Web"),
+        DeviceAccessStrategy::Smartcard { .. } => panic!("Smartcard not supported on Web"),
     }
 }
 

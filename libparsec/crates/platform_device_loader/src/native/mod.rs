@@ -121,56 +121,73 @@ pub(super) async fn load_ciphertext_key(
     access: &DeviceAccessStrategy,
     device_file: &DeviceFile,
 ) -> Result<SecretKey, LoadCiphertextKeyError> {
-    match (access, &device_file) {
-        (DeviceAccessStrategy::Keyring { .. }, DeviceFile::Keyring(device)) => {
-            let entry =
-                KeyringEntry::new(&device.keyring_service, &device.keyring_user).map_err(|e| {
-                    LoadCiphertextKeyError::Internal(anyhow::anyhow!("OS Keyring error: {e}"))
-                })?;
+    // Don't do `match (access, device_file)` since we would end up with a catch-all
+    // `(_, _) => return <error>` condition that would prevent this code from breaking
+    // whenever a new variant is introduced (hence hiding the fact this code has
+    // to be updated).
+    match access {
+        DeviceAccessStrategy::Keyring { .. } => {
+            if let DeviceFile::Keyring(device) = device_file {
+                let entry = KeyringEntry::new(&device.keyring_service, &device.keyring_user)
+                    .map_err(|e| {
+                        LoadCiphertextKeyError::Internal(anyhow::anyhow!("OS Keyring error: {e}"))
+                    })?;
 
-            let passphrase = entry
-                .get_password()
-                .map_err(|e| {
-                    LoadCiphertextKeyError::Internal(anyhow::anyhow!(
-                        "Cannot retrieve password from OS Keyring: {e}"
-                    ))
-                })?
-                .into();
+                let passphrase = entry
+                    .get_password()
+                    .map_err(|e| {
+                        LoadCiphertextKeyError::Internal(anyhow::anyhow!(
+                            "Cannot retrieve password from OS Keyring: {e}"
+                        ))
+                    })?
+                    .into();
 
-            let key = SecretKey::from_recovery_passphrase(passphrase)
-                .map_err(|_| LoadCiphertextKeyError::DecryptionFailed)?;
+                let key = SecretKey::from_recovery_passphrase(passphrase)
+                    .map_err(|_| LoadCiphertextKeyError::DecryptionFailed)?;
 
-            Ok(key)
+                Ok(key)
+            } else {
+                Err(LoadCiphertextKeyError::InvalidData)
+            }
         }
 
-        (DeviceAccessStrategy::Password { password, .. }, DeviceFile::Password(device)) => {
-            let key = device
-                .algorithm
-                .compute_secret_key(password)
-                .map_err(|_| LoadCiphertextKeyError::InvalidData)?;
+        DeviceAccessStrategy::Password { password, .. } => {
+            if let DeviceFile::Password(device) = device_file {
+                let key = device
+                    .algorithm
+                    .compute_secret_key(password)
+                    .map_err(|_| LoadCiphertextKeyError::InvalidData)?;
 
-            Ok(key)
+                Ok(key)
+            } else {
+                Err(LoadCiphertextKeyError::InvalidData)
+            }
         }
 
-        (DeviceAccessStrategy::Smartcard { .. }, DeviceFile::Smartcard(device)) => {
-            Ok(decrypt_message(
-                device.algorithm_for_encrypted_key,
-                device.encrypted_key.as_ref(),
-                &device.certificate_ref,
-            )
-            .map_err(|_| LoadCiphertextKeyError::InvalidData)?
-            .data
-            .as_ref()
-            .try_into()
-            .map_err(|_| LoadCiphertextKeyError::InvalidData)?)
+        DeviceAccessStrategy::Smartcard { .. } => {
+            if let DeviceFile::Smartcard(device) = device_file {
+                Ok(decrypt_message(
+                    device.algorithm_for_encrypted_key,
+                    device.encrypted_key.as_ref(),
+                    &device.certificate_ref,
+                )
+                .map_err(|_| LoadCiphertextKeyError::InvalidData)?
+                .data
+                .as_ref()
+                .try_into()
+                .map_err(|_| LoadCiphertextKeyError::InvalidData)?)
+            } else {
+                Err(LoadCiphertextKeyError::InvalidData)
+            }
         }
 
-        (
-            DeviceAccessStrategy::AccountVault { ciphertext_key, .. },
-            DeviceFile::AccountVault(_),
-        ) => Ok(ciphertext_key.clone()),
-
-        _ => Err(LoadCiphertextKeyError::InvalidData),
+        DeviceAccessStrategy::AccountVault { ciphertext_key, .. } => {
+            if let DeviceFile::AccountVault(_) = device_file {
+                Ok(ciphertext_key.clone())
+            } else {
+                Err(LoadCiphertextKeyError::InvalidData)
+            }
+        }
     }
 }
 
