@@ -278,7 +278,6 @@ export const AccessStrategy = {
     return {
       tag: DeviceAccessStrategyTag.AccountVault,
       keyFile: device.keyFilePath,
-      ciphertextKeyId: device.ty.ciphertextKeyId,
       ciphertextKey: keyResult.value,
     };
   },
