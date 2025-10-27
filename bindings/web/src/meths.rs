@@ -9335,22 +9335,6 @@ fn variant_device_access_strategy_js_to_rs(
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
                     })?
             };
-            let ciphertext_key_id = {
-                let js_val = Reflect::get(&obj, &"ciphertextKeyId".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string =
-                            |s: String| -> Result<libparsec::AccountVaultItemOpaqueKeyID, _> {
-                                libparsec::AccountVaultItemOpaqueKeyID::from_hex(s.as_str())
-                                    .map_err(|e| e.to_string())
-                            };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })?
-            };
             let ciphertext_key = {
                 let js_val = Reflect::get(&obj, &"ciphertextKey".into())?;
                 js_val
@@ -9365,7 +9349,6 @@ fn variant_device_access_strategy_js_to_rs(
             };
             Ok(libparsec::DeviceAccessStrategy::AccountVault {
                 key_file,
-                ciphertext_key_id,
                 ciphertext_key,
             })
         }
@@ -9447,7 +9430,6 @@ fn variant_device_access_strategy_rs_to_js(
     match rs_obj {
         libparsec::DeviceAccessStrategy::AccountVault {
             key_file,
-            ciphertext_key_id,
             ciphertext_key,
             ..
         } => {
@@ -9469,18 +9451,6 @@ fn variant_device_access_strategy_rs_to_js(
                 .as_ref()
             });
             Reflect::set(&js_obj, &"keyFile".into(), &js_key_file)?;
-            let js_ciphertext_key_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::AccountVaultItemOpaqueKeyID| -> Result<String, &'static str> {
-                        Ok(x.hex())
-                    };
-                match custom_to_rs_string(ciphertext_key_id) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
-            Reflect::set(&js_obj, &"ciphertextKeyId".into(), &js_ciphertext_key_id)?;
             let js_ciphertext_key = JsValue::from(Uint8Array::from(ciphertext_key.as_ref()));
             Reflect::set(&js_obj, &"ciphertextKey".into(), &js_ciphertext_key)?;
         }

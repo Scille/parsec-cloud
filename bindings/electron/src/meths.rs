@@ -8583,20 +8583,6 @@ fn variant_device_access_strategy_js_to_rs<'a>(
                     }
                 }
             };
-            let ciphertext_key_id = {
-                let js_val: Handle<JsString> = obj.get(cx, "ciphertextKeyId")?;
-                {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<libparsec::AccountVaultItemOpaqueKeyID, _> {
-                            libparsec::AccountVaultItemOpaqueKeyID::from_hex(s.as_str())
-                                .map_err(|e| e.to_string())
-                        };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
             let ciphertext_key = {
                 let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "ciphertextKey")?;
                 {
@@ -8611,7 +8597,6 @@ fn variant_device_access_strategy_js_to_rs<'a>(
             };
             Ok(libparsec::DeviceAccessStrategy::AccountVault {
                 key_file,
-                ciphertext_key_id,
                 ciphertext_key,
             })
         }
@@ -8680,7 +8665,6 @@ fn variant_device_access_strategy_rs_to_js<'a>(
     match rs_obj {
         libparsec::DeviceAccessStrategy::AccountVault {
             key_file,
-            ciphertext_key_id,
             ciphertext_key,
             ..
         } => {
@@ -8699,18 +8683,6 @@ fn variant_device_access_strategy_rs_to_js<'a>(
             })
             .or_throw(cx)?;
             js_obj.set(cx, "keyFile", js_key_file)?;
-            let js_ciphertext_key_id = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |x: libparsec::AccountVaultItemOpaqueKeyID| -> Result<String, &'static str> {
-                        Ok(x.hex())
-                    };
-                match custom_to_rs_string(ciphertext_key_id) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "ciphertextKeyId", js_ciphertext_key_id)?;
             let js_ciphertext_key = {
                 let rs_buff = { ciphertext_key.as_ref() };
                 let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;

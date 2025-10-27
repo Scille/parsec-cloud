@@ -2633,7 +2633,6 @@ export enum DeviceAccessStrategyTag {
 export interface DeviceAccessStrategyAccountVault {
     tag: DeviceAccessStrategyTag.AccountVault
     keyFile: Path
-    ciphertextKeyId: AccountVaultItemOpaqueKeyID
     ciphertextKey: SecretKey
 }
 export interface DeviceAccessStrategyKeyring {

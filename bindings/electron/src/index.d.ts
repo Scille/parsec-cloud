@@ -2226,7 +2226,6 @@ export type ClientUserUpdateProfileError =
 export interface DeviceAccessStrategyAccountVault {
     tag: "AccountVault"
     key_file: string
-    ciphertext_key_id: string
     ciphertext_key: Uint8Array
 }
 export interface DeviceAccessStrategyKeyring {
