@@ -4,6 +4,93 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.6.1 (2025-11-14)
+--------------------------
+
+Features
+~~~~~~~~
+
+* Shows tooltip on file, workspace and user name on mouse over
+  (`#10486 <https://github.com/Scille/parsec-cloud/issues/10486>`__)
+
+* Warn the user if they are trying to create a workspace with a similar name to
+  one that already exists
+  (`#8391 <https://github.com/Scille/parsec-cloud/issues/8391>`__)
+
+* The database's datamodel is now checked during server startup to ensure all
+  migrations have been applied.
+  (`#8709 <https://github.com/Scille/parsec-cloud/issues/8709>`__)
+
+* Remove support for Unicode in email addresses to avoid homoglyph attacks.
+  (`#11336 <https://github.com/Scille/parsec-cloud/issues/11336>`__)
+
+* Display invitations on a dedicated page
+  (`#11131 <https://github.com/Scille/parsec-cloud/issues/11131>`__)
+
+* Added a bug report feature directly in the app
+  (`#10135 <https://github.com/Scille/parsec-cloud/issues/10135>`__)
+
+* Shows a specific icon when a file is being uploaded
+  (`#11057 <https://github.com/Scille/parsec-cloud/issues/11057>`__)
+
+* Added a redirection page to handle Parsec links in both web and desktop mode
+  (`#10379 <https://github.com/Scille/parsec-cloud/issues/10379>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Fixed a bug where menus and headers would display actions not available for
+  certain profiles and roles
+  (`#11232 <https://github.com/Scille/parsec-cloud/issues/11232>`__)
+
+* Breaking change: server rejects any invitation enrollment attempt from a
+  client using Parsec < 3.6. This is to avoid SAS codes appearing as different
+  when doing an enrollment with a client using Parsec >= 3.6.
+  (`#11017 <https://github.com/Scille/parsec-cloud/issues/11017>`__)
+
+* Fixed an issue where workspaces name would not be updated in header and
+  sidebar when renamed.
+  (`#11056 <https://github.com/Scille/parsec-cloud/issues/11056>`__)
+
+* Breaking change: Slightly change the SASCode algorithm to increase security
+  during user enrollment.
+  (`#11015 <https://github.com/Scille/parsec-cloud/issues/11015>`__)
+
+* Stops the mountpoint properly when closing the app
+  (`#11210 <https://github.com/Scille/parsec-cloud/issues/11210>`__)
+
+* Simplified searching and selection of user in the "Copy workspace roles" modal
+  by replacing the custom input and dropdown.
+  (`#11328 <https://github.com/Scille/parsec-cloud/issues/11328>`__)
+
+* Linux: Fixed an issue that would prevent the application window from
+  displaying when installed with snap
+  (`#11529 <https://github.com/Scille/parsec-cloud/issues/11529>`__)
+
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Removed the warning for small displays shown when the window was made small
+  (`#11190 <https://github.com/Scille/parsec-cloud/issues/11190>`__)
+
+* Added an explanation text when trying to copy user workspace roles containing
+  Manager or Owner roles to an External user.
+  (`#9636 <https://github.com/Scille/parsec-cloud/issues/9636>`__)
+
+* Update megashark-lib dependency and PKI tooltips
+  (`#11228 <https://github.com/Scille/parsec-cloud/issues/11228>`__)
+
+* Removed Edit button in the Viewer header for read-only users
+  (`#11460 <https://github.com/Scille/parsec-cloud/issues/11460>`__)
+
+* Added information during the invitation sas code exchange to better guide
+  users
+  (`#11483 <https://github.com/Scille/parsec-cloud/issues/11483>`__)
+
+
+
 Parsec v3.5.2 (2025-10-21)
 --------------------------
 

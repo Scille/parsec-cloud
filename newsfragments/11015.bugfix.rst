@@ -1,1 +1,0 @@
-Breaking change: Slightly change the SASCode algorithm to increase security during user enrollment.
