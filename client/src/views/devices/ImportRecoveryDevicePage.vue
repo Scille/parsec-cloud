@@ -149,8 +149,8 @@
 </template>
 
 <script setup lang="ts">
+import { getDefaultDeviceName } from '@/common/device';
 import { secretKeyValidator } from '@/common/validators';
-import { MsInformativeText, MsReportText, MsReportTheme, MsInput, asyncComputed, Validity } from 'megashark-lib';
 import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import {
@@ -164,11 +164,11 @@ import {
   isWeb,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { IonButton, IonCard, IonCardContent, IonCardTitle, IonIcon, IonText } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
-import { Ref, inject, ref, useTemplateRef } from 'vue';
-import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
-import { getDefaultDeviceName } from '@/common/device';
+import { asyncComputed, MsInformativeText, MsInput, MsReportText, MsReportTheme, Validity } from 'megashark-lib';
+import { inject, Ref, ref, useTemplateRef } from 'vue';
 
 enum ImportDevicePageState {
   Start = 'start',

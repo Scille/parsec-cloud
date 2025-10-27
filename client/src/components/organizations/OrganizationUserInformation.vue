@@ -134,13 +134,13 @@
 
 <script setup lang="ts">
 import TagProfile from '@/components/users/TagProfile.vue';
-import { UserProfile, OrganizationInfo, ClientInfo, listUserInvitations, listOrganizationJoinRequests } from '@/parsec';
-import { idCard, mailUnread, personAdd } from 'ionicons/icons';
+import { ClientInfo, listOrganizationJoinRequests, listUserInvitations, OrganizationInfo, UserProfile } from '@/parsec';
 import { navigateTo, Routes } from '@/router';
-import { IonButton, IonIcon, IonText, IonTitle } from '@ionic/vue';
-import { InvitationView } from '@/views/invitations/types';
-import { inject, onMounted, onUnmounted, ref } from 'vue';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
+import { InvitationView } from '@/views/invitations/types';
+import { IonButton, IonIcon, IonText, IonTitle } from '@ionic/vue';
+import { idCard, mailUnread, personAdd } from 'ionicons/icons';
+import { inject, onMounted, onUnmounted, ref } from 'vue';
 
 defineProps<{
   userInfo: ClientInfo;

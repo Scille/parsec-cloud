@@ -82,7 +82,6 @@ export class UserGreet {
   async initialWaitGuest(): Promise<Result<UserGreetInProgress1Info, GreetInProgressError>> {
     this._assertState(true, false);
     this.canceller = await libparsec.newCanceller();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const result = await libparsec.greeterUserInitialDoWaitPeer(this.canceller, this.handle!);
     this.canceller = null;
     if (result.ok) {
@@ -95,7 +94,6 @@ export class UserGreet {
   async waitGuestTrust(): Promise<Result<UserGreetInProgress2Info, GreetInProgressError>> {
     this._assertState(true, false);
     this.canceller = await libparsec.newCanceller();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const result = await libparsec.greeterUserInProgress1DoWaitPeerTrust(this.canceller, this.handle!);
     if (result.ok) {
       this.handle = result.value.handle;
@@ -109,7 +107,6 @@ export class UserGreet {
   async denyTrust(): Promise<Result<null, GreetInProgressError>> {
     this._assertState(true, false);
     this.canceller = await libparsec.newCanceller();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const result = await libparsec.greeterUserInProgress2DoDenyTrust(this.canceller, this.handle!);
     this.handle = null;
     this.canceller = null;
@@ -119,7 +116,6 @@ export class UserGreet {
   async signifyTrust(): Promise<Result<UserGreetInProgress3Info, GreetInProgressError>> {
     this._assertState(true, false);
     this.canceller = await libparsec.newCanceller();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const result = await libparsec.greeterUserInProgress2DoSignifyTrust(this.canceller, this.handle!);
     if (result.ok) {
       this.handle = result.value.handle;
@@ -131,7 +127,6 @@ export class UserGreet {
   async getClaimRequests(): Promise<Result<UserGreetInProgress4Info, GreetInProgressError>> {
     this._assertState(true, false);
     this.canceller = await libparsec.newCanceller();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const result = await libparsec.greeterUserInProgress3DoGetClaimRequests(this.canceller, this.handle!);
     this.canceller = null;
     if (result.ok) {
@@ -147,7 +142,6 @@ export class UserGreet {
     this.canceller = await libparsec.newCanceller();
     const result = await libparsec.greeterUserInProgress4DoCreate(
       this.canceller,
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       this.handle!,
       humanHandle,
       this.requestedDeviceLabel,

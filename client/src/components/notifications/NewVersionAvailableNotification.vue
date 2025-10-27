@@ -33,15 +33,15 @@
 </template>
 
 <script setup lang="ts">
-import { formatTimeSince, MsModalResult } from 'megashark-lib';
 import NotificationItem from '@/components/notifications/NotificationItem.vue';
-import { Notification } from '@/services/notificationManager';
-import { NewVersionAvailableData } from '@/services/informationManager';
-import { IonIcon, IonText, modalController, popoverController } from '@ionic/vue';
-import { arrowForward, sparkles } from 'ionicons/icons';
-import UpdateAppModal from '@/views/about/UpdateAppModal.vue';
 import { APP_VERSION } from '@/services/environment';
 import { EventDistributor, Events } from '@/services/eventDistributor';
+import { NewVersionAvailableData } from '@/services/informationManager';
+import { Notification } from '@/services/notificationManager';
+import UpdateAppModal from '@/views/about/UpdateAppModal.vue';
+import { IonIcon, IonText, modalController, popoverController } from '@ionic/vue';
+import { arrowForward, sparkles } from 'ionicons/icons';
+import { formatTimeSince, MsModalResult } from 'megashark-lib';
 
 const props = defineProps<{
   notification: Notification;

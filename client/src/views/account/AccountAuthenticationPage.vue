@@ -50,17 +50,17 @@
 </template>
 
 <script setup lang="ts">
-import { modalController, IonButton, IonText, IonIcon } from '@ionic/vue';
-import { inject, onMounted, ref } from 'vue';
-import { ParsecAccount, AuthMethodInfo } from '@/parsec';
-import AccountUpdateAuthenticationModal from '@/views/account/AccountUpdateAuthenticationModal.vue';
-import { MsModalResult, MsImage, I18n } from 'megashark-lib';
-import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
-import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { getConnectionHandle } from '@/router';
-import { checkmarkCircle } from 'ionicons/icons';
-import KeypadGradient from '@/assets/images/keypad-gradient.svg';
 import EllipsisGradient from '@/assets/images/ellipsis-gradient.svg';
+import KeypadGradient from '@/assets/images/keypad-gradient.svg';
+import { AuthMethodInfo, ParsecAccount } from '@/parsec';
+import { getConnectionHandle } from '@/router';
+import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
+import AccountUpdateAuthenticationModal from '@/views/account/AccountUpdateAuthenticationModal.vue';
+import { IonButton, IonIcon, IonText, modalController } from '@ionic/vue';
+import { checkmarkCircle } from 'ionicons/icons';
+import { I18n, MsImage, MsModalResult } from 'megashark-lib';
+import { inject, onMounted, ref } from 'vue';
 
 const authMethods = ref<Array<AuthMethodInfo>>([]);
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;

@@ -59,8 +59,8 @@
 <script setup lang="ts">
 import { UserCollection, UserListItem, UserModel } from '@/components/users';
 import { IonLabel, IonList, IonListHeader, IonText } from '@ionic/vue';
-import { computed } from 'vue';
 import { MsCheckbox, useWindowSize } from 'megashark-lib';
+import { computed } from 'vue';
 
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 

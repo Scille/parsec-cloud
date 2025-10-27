@@ -153,15 +153,15 @@
 </template>
 
 <script setup lang="ts">
-import SettingsOption from '@/components/settings/SettingsOption.vue';
-import { isMacOS, isDesktop, usesTestbed } from '@/parsec/environment';
-import { Config, StorageManager, StorageManagerKey, ThemeManagerKey } from '@/services/storageManager';
-import { MsOptions, MsDropdown, Locale, I18n, ThemeManager, Theme, LocaleOptions } from 'megashark-lib';
-import { IonList, IonToggle, isPlatform, IonButton, IonText } from '@ionic/vue';
-import { inject, onMounted, onUnmounted, ref, toRaw, watch } from 'vue';
-import { Sentry } from '@/services/sentry';
-import { Env } from '@/services/environment';
 import { openLogDisplayModal } from '@/components/misc';
+import SettingsOption from '@/components/settings/SettingsOption.vue';
+import { isDesktop, isMacOS, usesTestbed } from '@/parsec/environment';
+import { Env } from '@/services/environment';
+import { Sentry } from '@/services/sentry';
+import { Config, StorageManager, StorageManagerKey, ThemeManagerKey } from '@/services/storageManager';
+import { IonButton, IonList, IonText, IonToggle, isPlatform } from '@ionic/vue';
+import { I18n, Locale, LocaleOptions, MsDropdown, MsOptions, Theme, ThemeManager } from 'megashark-lib';
+import { inject, onMounted, onUnmounted, ref, toRaw, watch } from 'vue';
 
 const themeManager: ThemeManager = inject(ThemeManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;

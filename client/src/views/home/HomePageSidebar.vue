@@ -31,11 +31,11 @@
 </template>
 
 <script setup lang="ts">
-import { MsImage, LogoRowWhite } from 'megashark-lib';
-import { IonText } from '@ionic/vue';
-import { ResourcesManager, Resources } from '@/services/resourcesManager';
-import { onMounted, ref } from 'vue';
 import { Env } from '@/services/environment';
+import { Resources, ResourcesManager } from '@/services/resourcesManager';
+import { IonText } from '@ionic/vue';
+import { LogoRowWhite, MsImage } from 'megashark-lib';
+import { onMounted, ref } from 'vue';
 
 const backgroundImage = ref();
 const customLogo = ref(ResourcesManager.instance().get(Resources.LogoFull) !== undefined);

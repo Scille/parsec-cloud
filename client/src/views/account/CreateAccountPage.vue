@@ -217,39 +217,39 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonPage,
-  IonContent,
-  IonButton,
-  IonText,
-  IonIcon,
-  IonMenu,
-  IonMenuButton,
-  onIonViewWillEnter,
-  onIonViewWillLeave,
-} from '@ionic/vue';
-import { openSettingsModal } from '@/views/settings';
+import AccountUserInformation from '@/components/account/AccountUserInformation.vue';
 import HomePageSecondaryMenu from '@/components/header/HomePageSecondaryMenu.vue';
 import HomePageSecondaryMenuCollapse from '@/components/header/HomePageSecondaryMenuCollapse.vue';
-import {
-  asyncComputed,
-  MsCodeValidationInput,
-  MsSpinner,
-  Translatable,
-  MsReportText,
-  MsReportTheme,
-  MsChoosePasswordInput,
-  AllowedInput,
-  useWindowSize,
-  WindowSizeBreakpoints,
-} from 'megashark-lib';
-import { arrowBack, menu } from 'ionicons/icons';
-import { ref, useTemplateRef } from 'vue';
-import AccountUserInformation from '@/components/account/AccountUserInformation.vue';
 import { AccountCreateErrorTag, AccountCreationStepper, ParsecAccount, ParsecAccountAccess } from '@/parsec';
 import { wait } from '@/parsec/internals';
 import { getCurrentRouteParams, getCurrentRouteQuery, navigateTo, Routes } from '@/router';
+import { openSettingsModal } from '@/views/settings';
+import {
+  IonButton,
+  IonContent,
+  IonIcon,
+  IonMenu,
+  IonMenuButton,
+  IonPage,
+  IonText,
+  onIonViewWillEnter,
+  onIonViewWillLeave,
+} from '@ionic/vue';
+import { arrowBack, menu } from 'ionicons/icons';
 import { DateTime } from 'luxon';
+import {
+  AllowedInput,
+  asyncComputed,
+  MsChoosePasswordInput,
+  MsCodeValidationInput,
+  MsReportText,
+  MsReportTheme,
+  MsSpinner,
+  Translatable,
+  useWindowSize,
+  WindowSizeBreakpoints,
+} from 'megashark-lib';
+import { ref, useTemplateRef } from 'vue';
 
 enum Steps {
   UserInformation = 0,

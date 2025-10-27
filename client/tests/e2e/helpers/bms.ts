@@ -361,7 +361,6 @@ async function mockOrganizationStats(page: Page, overload: MockOrganizationStats
 
   await mockRoute(
     page,
-    // eslint-disable-next-line max-len
     `*/**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations/*/stats`,
     options,
     {
@@ -641,7 +640,6 @@ async function mockCustomOrderDetails(
   overload.single = true;
   await mockRoute(
     page,
-    // eslint-disable-next-line max-len
     `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations/custom_order_details`,
     options,
     {

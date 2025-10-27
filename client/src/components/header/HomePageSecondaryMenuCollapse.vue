@@ -88,11 +88,11 @@
 </template>
 
 <script setup lang="ts">
-import { LogoIconGradient, MsImage } from 'megashark-lib';
 import { Env } from '@/services/environment';
 import { openAboutModal } from '@/views/about';
+import { IonButton, IonIcon, IonMenuToggle } from '@ionic/vue';
 import { chatbubble, close, cog, informationCircle, library, open } from 'ionicons/icons';
-import { IonButton, IonMenuToggle, IonIcon } from '@ionic/vue';
+import { LogoIconGradient, MsImage } from 'megashark-lib';
 
 defineEmits<{
   (e: 'settingsClick'): void;

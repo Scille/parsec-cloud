@@ -57,9 +57,9 @@
 </template>
 
 <script setup lang="ts">
-import { IonLabel, IonText, IonTitle } from '@ionic/vue';
 import { formatFileSize } from '@/common/file';
 import { OrganizationInfo } from '@/parsec';
+import { IonLabel, IonText, IonTitle } from '@ionic/vue';
 import { MsReportText, MsReportTheme } from 'megashark-lib';
 
 defineProps<{

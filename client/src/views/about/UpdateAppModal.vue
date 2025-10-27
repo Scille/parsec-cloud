@@ -54,9 +54,9 @@
 </template>
 
 <script setup lang="ts">
-import { MsModal, MsModalResult, MsImage, UpdateRocket } from 'megashark-lib';
-import { modalController, IonText, IonButton } from '@ionic/vue';
 import { APP_VERSION, Env } from '@/services/environment';
+import { IonButton, IonText, modalController } from '@ionic/vue';
+import { MsImage, MsModal, MsModalResult, UpdateRocket } from 'megashark-lib';
 
 const props = defineProps<{
   currentVersion?: string;

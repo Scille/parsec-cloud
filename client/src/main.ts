@@ -471,17 +471,12 @@ async function setupApp(): Promise<void> {
 
 function setupWebElectronAPI(injectionProvider: InjectionProvider): void {
   window.electronAPI = {
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
     sendConfig: (_config: Config): void => {},
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
     closeApp: (): void => {},
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
     receive: (_channel: string, _f: (...args: any[]) => Promise<void>): void => {},
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
     openFile: (_path: string): void => {
       console.log('OpenFile: Not available.');
     },
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
     sendMountpointFolder: (_path: string): void => {
       console.log('SetMountpointFolder: Not available.');
     },
@@ -551,7 +546,6 @@ async function cleanBeforeQuitting(injectionProvider: InjectionProvider, stopCli
   if (stopClients) {
     const started = await listStartedClients();
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const [handle, _device] of started) {
       await logout(handle);
     }

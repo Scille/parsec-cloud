@@ -33,11 +33,11 @@
 </template>
 
 <script setup lang="ts">
-import { MsAppearance, MsDropdown, MsOption, MsOptions } from 'megashark-lib';
 import { TagProfile, UserAvatarName } from '@/components/users';
 import { canChangeRole } from '@/components/workspaces/utils';
 import { UserProfile, UserTuple, WorkspaceRole } from '@/parsec';
 import { getWorkspaceRoleTranslationKey } from '@/services/translation';
+import { MsAppearance, MsDropdown, MsOption, MsOptions } from 'megashark-lib';
 import { computed, useTemplateRef } from 'vue';
 
 const props = defineProps<{

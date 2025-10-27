@@ -18,10 +18,10 @@
 </template>
 
 <script setup lang="ts">
-import { MsSlider, SliderState } from 'megashark-lib';
-import { onUnmounted, ref, watch } from 'vue';
 import { FileControlsButton, FileControlsGroup } from '@/components/files/handler/viewer';
 import { volumeHigh, volumeLow, volumeMedium, volumeMute, volumeOff } from 'ionicons/icons';
+import { MsSlider, SliderState } from 'megashark-lib';
+import { onUnmounted, ref, watch } from 'vue';
 
 const sliderState = ref<SliderState>({ progress: 100 });
 const storedVolume = ref<number>(0);

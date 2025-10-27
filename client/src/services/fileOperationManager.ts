@@ -566,7 +566,6 @@ class FileOperationManager {
         if (cancelled) {
           await deleteFile(data.workspaceHandle, dstPath);
           await this.sendState(FileOperationState.Cancelled, data);
-          // eslint-disable-next-line no-unsafe-finally
           return;
         }
         if (!copied) {
@@ -575,7 +574,6 @@ class FileOperationManager {
             await deleteFile(data.workspaceHandle, dstPath);
           }
           await this.sendState(FileOperationState.CopyFailed, data, { error: CopyFailedError.OneFailed });
-          // eslint-disable-next-line no-unsafe-finally
           return;
         }
       }
@@ -776,7 +774,6 @@ class FileOperationManager {
           if (cancelled) {
             await deleteFile(data.workspaceHandle, dstPath);
             await this.sendState(FileOperationState.Cancelled, data);
-            // eslint-disable-next-line no-unsafe-finally
             return;
           }
           if (!restored) {
@@ -785,7 +782,6 @@ class FileOperationManager {
               workspaceHandle: data.workspaceHandle,
               error: RestoreFailedError.OneFailed,
             });
-            // eslint-disable-next-line no-unsafe-finally
             return;
           }
         }
@@ -824,7 +820,6 @@ class FileOperationManager {
 
     try {
       const start = DateTime.now();
-      // eslint-disable-next-line no-constant-condition
       while (true) {
         // Check if the download has been cancelled
         let shouldCancel = false;
@@ -994,7 +989,6 @@ class FileOperationManager {
     // for await (const chunk of data.file.stream()) {}
     // instead but it's not available on streams.
 
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       // Check if the import has been cancelled
       let shouldCancel = false;
@@ -1069,7 +1063,6 @@ class FileOperationManager {
     this.running = true;
     let importStarted = false;
 
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       if (!this.running) {
         break;

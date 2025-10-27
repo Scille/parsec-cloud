@@ -46,10 +46,9 @@
 </template>
 
 <script setup lang="ts">
-import { Answer, MsModalResult, WindowSizeBreakpoints, askQuestion, useWindowSize } from 'megashark-lib';
 import { InvitationAction } from '@/components/users';
-import InvitationsListPopover from '@/components/users/InvitationsListPopover.vue';
 import InvitationsListModal from '@/components/users/InvitationsListModal.vue';
+import InvitationsListPopover from '@/components/users/InvitationsListPopover.vue';
 import { ClientCancelInvitationErrorTag, UserInvitation, cancelInvitation, listUserInvitations } from '@/parsec';
 import { Routes, navigateTo } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
@@ -57,6 +56,7 @@ import { Information, InformationLevel, InformationManager, InformationManagerKe
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
 import { IonButton, IonIcon, IonText, modalController, popoverController } from '@ionic/vue';
 import { mail, mailUnread } from 'ionicons/icons';
+import { Answer, MsModalResult, WindowSizeBreakpoints, askQuestion, useWindowSize } from 'megashark-lib';
 import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;

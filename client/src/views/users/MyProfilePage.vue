@@ -260,32 +260,32 @@
 </template>
 
 <script setup lang="ts">
-import { ClientInfo, getClientInfo, getCurrentAvailableDevice } from '@/parsec';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import DevicesPage from '@/views/devices/DevicesPage.vue';
+import ProfileInfoCard from '@/components/profile/ProfileInfoCard.vue';
 import SettingsList from '@/components/settings/SettingsList.vue';
+import { ClientInfo, getClientInfo, getCurrentAvailableDevice } from '@/parsec';
+import { getCurrentRouteName, getCurrentRouteQuery, navigateTo, ProfilePages, Routes, watchRoute } from '@/router';
+import { Env } from '@/services/environment';
+import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import AboutView from '@/views/about/AboutView.vue';
+import DevicesPage from '@/views/devices/DevicesPage.vue';
 import AuthenticationPage from '@/views/profile/AuthenticationPage.vue';
 import OrganizationRecoveryPage from '@/views/profile/OrganizationRecoveryPage.vue';
-import ProfileInfoCard from '@/components/profile/ProfileInfoCard.vue';
-import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
-import { IonContent, IonIcon, IonPage, IonRadio, IonHeader, IonRadioGroup, IonText, IonLabel } from '@ionic/vue';
+import { IonContent, IonHeader, IonIcon, IonLabel, IonPage, IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
 import {
-  phonePortrait,
+  chatbubbles,
+  chevronBack,
+  chevronForward,
   cog,
+  documentText,
   fingerPrint,
   idCard,
-  documentText,
   information,
-  chatbubbles,
-  chevronForward,
-  chevronBack,
   logOut,
+  phonePortrait,
 } from 'ionicons/icons';
-import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
-import { Env } from '@/services/environment';
-import { getCurrentRouteName, getCurrentRouteQuery, navigateTo, Routes, watchRoute, ProfilePages } from '@/router';
-import { Translatable, useWindowSize, askQuestion, Answer, OpenIcon, MsImage } from 'megashark-lib';
+import { Answer, askQuestion, MsImage, OpenIcon, Translatable, useWindowSize } from 'megashark-lib';
+import { inject, onMounted, onUnmounted, Ref, ref } from 'vue';
 
 const clientInfo: Ref<ClientInfo | null> = ref(null);
 const informationManager: InformationManager = inject(InformationManagerKey)!;

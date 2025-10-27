@@ -24,7 +24,7 @@
 
 <script setup lang="ts">
 import { IonText } from '@ionic/vue';
-import { MsImage, LogoRowGradient } from 'megashark-lib';
+import { LogoRowGradient, MsImage } from 'megashark-lib';
 </script>
 
 <style scoped lang="scss">

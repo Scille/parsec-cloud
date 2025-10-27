@@ -48,12 +48,12 @@
 </template>
 
 <script setup lang="ts">
-import { onUnmounted, ref, watch } from 'vue';
-import { IonIcon, IonText, modalController } from '@ionic/vue';
-import { MenuAction } from '@/views/menu/types';
 import TabBarOptionsModal from '@/views/menu/TabBarOptionsModal.vue';
+import { MenuAction } from '@/views/menu/types';
+import { IonIcon, IonText, modalController } from '@ionic/vue';
 import { ellipsisHorizontal } from 'ionicons/icons';
-import { MsModalResult, MsImage } from 'megashark-lib';
+import { MsImage, MsModalResult } from 'megashark-lib';
+import { onUnmounted, ref, watch } from 'vue';
 
 const props = defineProps<{
   actions: MenuAction[];

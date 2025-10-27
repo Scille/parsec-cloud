@@ -69,14 +69,14 @@
 
 <script setup lang="ts">
 import { getFileIcon } from '@/common/file';
-import { Folder, formatTimeSince, MsImage, MsCheckbox } from 'megashark-lib';
 import FileDropZone from '@/components/files/explorer/FileDropZone.vue';
 import { EntryModel, EntrySyncStatus } from '@/components/files/types';
 import { FileImportTuple } from '@/components/files/utils';
 import { FsPath, Path } from '@/parsec';
 import { IonIcon, IonItem, IonText } from '@ionic/vue';
 import { cloudDone, cloudOffline, cloudUpload, ellipsisHorizontal } from 'ionicons/icons';
-import { Ref, computed, onMounted, ref } from 'vue';
+import { Folder, formatTimeSince, MsCheckbox, MsImage } from 'megashark-lib';
+import { computed, onMounted, Ref, ref } from 'vue';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);

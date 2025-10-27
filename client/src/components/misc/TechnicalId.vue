@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import { FileID, UserID, WorkspaceID, DeviceID } from '@/parsec';
+import { DeviceID, FileID, UserID, WorkspaceID } from '@/parsec';
 import { IonText } from '@ionic/vue';
 
 defineProps<{

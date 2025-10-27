@@ -77,13 +77,13 @@
 </template>
 
 <script setup lang="ts">
-import { formatTimeSince } from 'megashark-lib';
 import { formatFileSize } from '@/common/file';
+import { WorkspaceTagRole } from '@/components/workspaces';
 import { UserProfile, WorkspaceInfo } from '@/parsec';
 import { IonIcon, IonText } from '@ionic/vue';
-import { cloudDone, cloudOffline, ellipsisHorizontal, star, shareSocial } from 'ionicons/icons';
+import { cloudDone, cloudOffline, ellipsisHorizontal, shareSocial, star } from 'ionicons/icons';
+import { formatTimeSince } from 'megashark-lib';
 import { ref } from 'vue';
-import { WorkspaceTagRole } from '@/components/workspaces';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);

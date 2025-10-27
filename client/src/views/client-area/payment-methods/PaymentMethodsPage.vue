@@ -157,29 +157,29 @@
 
 <script setup lang="ts">
 import {
-  BmsOrganization,
-  BmsAccessInstance,
-  DataType,
-  BillingDetailsResultData,
-  PaymentMethod,
   BillingDetailsPaymentMethodCard,
+  BillingDetailsResultData,
+  BmsAccessInstance,
+  BmsOrganization,
+  DataType,
+  PaymentMethod,
   PersonalInformationResultData,
 } from '@/services/bms';
-import { onMounted, ref, computed } from 'vue';
-import {
-  MsStripeCardDetails,
-  PaymentMethod as MsPaymentMethod,
-  MsModalResult,
-  askQuestion,
-  Answer,
-  MsImage,
-  VisaCardSmall,
-  MasterCardSmall,
-} from 'megashark-lib';
-import { IonButton, IonText, IonTitle, IonSkeletonText, modalController } from '@ionic/vue';
-import CreditCardModal from '@/views/client-area/payment-methods/CreditCardModal.vue';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import CreditCardModal from '@/views/client-area/payment-methods/CreditCardModal.vue';
 import { isDefaultOrganization } from '@/views/client-area/types';
+import { IonButton, IonSkeletonText, IonText, IonTitle, modalController } from '@ionic/vue';
+import {
+  Answer,
+  MasterCardSmall,
+  MsImage,
+  MsModalResult,
+  PaymentMethod as MsPaymentMethod,
+  MsStripeCardDetails,
+  VisaCardSmall,
+  askQuestion,
+} from 'megashark-lib';
+import { computed, onMounted, ref } from 'vue';
 
 const props = defineProps<{
   organization: BmsOrganization;

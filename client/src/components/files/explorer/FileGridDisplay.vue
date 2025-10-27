@@ -57,7 +57,7 @@
 import FileCard from '@/components/files/explorer/FileCard.vue';
 import FileCardProcessing from '@/components/files/explorer/FileCardProcessing.vue';
 import FileDropZone from '@/components/files/explorer/FileDropZone.vue';
-import { EntryCollection, EntryModel, FileOperationProgress, FileModel, FolderModel } from '@/components/files/types';
+import { EntryCollection, EntryModel, FileModel, FileOperationProgress, FolderModel } from '@/components/files/types';
 import { FileImportTuple } from '@/components/files/utils';
 import { FsPath, WorkspaceRole } from '@/parsec';
 import { useTemplateRef } from 'vue';

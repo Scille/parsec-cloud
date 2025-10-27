@@ -26,9 +26,9 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonText } from '@ionic/vue';
-import { MsImage, MsSpinner, LogoIconWhite, useWindowSize } from 'megashark-lib';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
+import { IonPage, IonText } from '@ionic/vue';
+import { LogoIconWhite, MsImage, MsSpinner, useWindowSize } from 'megashark-lib';
 
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 </script>

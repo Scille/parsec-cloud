@@ -26,11 +26,11 @@
 </template>
 
 <script setup lang="ts">
-import { Env } from '@/services/environment';
 import LogoParsecApp from '@/assets/images/logo-parsec-app.svg?raw';
+import { Env } from '@/services/environment';
 import { IonIcon, IonText } from '@ionic/vue';
-import { MsImage } from 'megashark-lib';
 import { close } from 'ionicons/icons';
+import { MsImage } from 'megashark-lib';
 
 defineEmits<{
   (e: 'hideParsecDownload'): void;

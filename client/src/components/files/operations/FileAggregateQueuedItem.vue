@@ -34,10 +34,10 @@
 </template>
 
 <script setup lang="ts">
-import { MsImage, Copy, ImportMultipleFiles, Move, MsSpinner } from 'megashark-lib';
+import { FileOperationDataType } from '@/services/fileOperationManager';
 import { IonIcon, IonItem, IonText } from '@ionic/vue';
 import { closeCircle } from 'ionicons/icons';
-import { FileOperationDataType } from '@/services/fileOperationManager';
+import { Copy, ImportMultipleFiles, Move, MsImage, MsSpinner } from 'megashark-lib';
 
 const props = defineProps<{
   amount: number;

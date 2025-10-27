@@ -166,7 +166,6 @@ export const Media = {
   },
 };
 
-// eslint-disable-next-line
 export async function openFileType(
   documentsPage: MsPage,
   type: 'xlsx' | 'docx' | 'png' | 'pdf' | 'mp3' | 'mp4' | 'txt' | 'py',

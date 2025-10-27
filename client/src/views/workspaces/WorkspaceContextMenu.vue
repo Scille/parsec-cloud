@@ -174,10 +174,10 @@
 
 <script setup lang="ts">
 import { UserProfile, WorkspaceName, WorkspaceRole, isDesktop } from '@/parsec';
-import { IonContent, IonIcon, IonItem, IonItemGroup, IonText, IonList, popoverController } from '@ionic/vue';
-import { cloudy, informationCircle, link, open, shareSocial, star, time } from 'ionicons/icons';
-import { RenameIcon, MsImage } from 'megashark-lib';
 import { WorkspaceAction } from '@/views/workspaces/types';
+import { IonContent, IonIcon, IonItem, IonItemGroup, IonList, IonText, popoverController } from '@ionic/vue';
+import { cloudy, informationCircle, link, open, shareSocial, star, time } from 'ionicons/icons';
+import { MsImage, RenameIcon } from 'megashark-lib';
 
 function onClick(action: WorkspaceAction): Promise<boolean> {
   return popoverController.dismiss({ action: action });

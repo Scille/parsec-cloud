@@ -53,11 +53,11 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonIcon, IonItem, IonLabel, IonList, IonText, modalController } from '@ionic/vue';
-import { addCircle, mailUnread } from 'ionicons/icons';
-import { HomePageAction } from '@/views/home/HomePageButtons.vue';
-import { MsModalResult } from 'megashark-lib';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
+import { HomePageAction } from '@/views/home/HomePageButtons.vue';
+import { IonIcon, IonItem, IonLabel, IonList, IonPage, IonText, modalController } from '@ionic/vue';
+import { addCircle, mailUnread } from 'ionicons/icons';
+import { MsModalResult } from 'megashark-lib';
 
 async function clicked(action: HomePageAction): Promise<void> {
   await modalController.dismiss({ action: action }, MsModalResult.Confirm);

@@ -149,36 +149,36 @@
 </template>
 
 <script setup lang="ts">
-import { MsImage, NoImportDone, NoImportError, NoImportInProgress } from 'megashark-lib';
+import { FIFO } from '@/common/queue';
 import {
   FileAggregateDoneItem,
   FileAggregateQueuedItem,
   FileCopyItem,
-  FileMoveItem,
-  FileUploadItem,
-  FileRestoreItem,
   FileDownloadItem,
+  FileMoveItem,
+  FileRestoreItem,
+  FileUploadItem,
 } from '@/components/files';
+import FileDownloadArchive from '@/components/files/FileDownloadArchive.vue';
 import { navigateToWorkspace } from '@/router';
-import useUploadMenu from '@/services/fileUploadMenu';
 import {
-  ImportData,
+  DownloadData,
+  FileOperationData,
+  FileOperationDataType,
   FileOperationManager,
   FileOperationManagerKey,
-  FileOperationData,
   FileOperationState,
+  ImportData,
   StateData,
-  FileOperationDataType,
-  DownloadData,
 } from '@/services/fileOperationManager';
+import useUploadMenu from '@/services/fileUploadMenu';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
 import { chevronDown, close } from 'ionicons/icons';
-import { inject, onMounted, onUnmounted, computed, ref } from 'vue';
-import type { Component } from 'vue';
 import { DateTime } from 'luxon';
-import { FIFO } from '@/common/queue';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import FileDownloadArchive from '@/components/files/FileDownloadArchive.vue';
+import { MsImage, NoImportDone, NoImportError, NoImportInProgress } from 'megashark-lib';
+import type { Component } from 'vue';
+import { computed, inject, onMounted, onUnmounted, ref } from 'vue';
 
 interface OperationItem {
   data: FileOperationData;
@@ -398,7 +398,7 @@ async function onOperationFinishedClick(operationData: FileOperationData, state:
       const url = URL.createObjectURL(file);
       window.open(url);
       menu.minimize();
-    } catch (e: any) {
+    } catch (_err: any) {
       informationManager.present(
         new Information({
           message: 'FoldersPage.DownloadFile.openFailed',

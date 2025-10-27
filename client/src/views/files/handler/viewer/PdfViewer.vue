@@ -50,14 +50,14 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, onMounted, ref, Ref, shallowRef, useTemplateRef } from 'vue';
-import { FileContentInfo } from '@/views/files/handler/viewer/utils';
-import { FileViewerWrapper } from '@/views/files/handler/viewer';
 import { FileControls, FileControlsButton, FileControlsPagination, FileControlsZoom } from '@/components/files/handler/viewer';
-import { MsSpinner, MsReportText, MsReportTheme, I18n } from 'megashark-lib';
-import * as pdfjs from 'pdfjs-dist';
-import { scan } from 'ionicons/icons';
 import { isWeb } from '@/parsec';
+import { FileViewerWrapper } from '@/views/files/handler/viewer';
+import { FileContentInfo } from '@/views/files/handler/viewer/utils';
+import { scan } from 'ionicons/icons';
+import { I18n, MsReportText, MsReportTheme, MsSpinner } from 'megashark-lib';
+import * as pdfjs from 'pdfjs-dist';
+import { nextTick, onMounted, ref, Ref, shallowRef, useTemplateRef } from 'vue';
 
 const props = defineProps<{
   contentInfo: FileContentInfo;

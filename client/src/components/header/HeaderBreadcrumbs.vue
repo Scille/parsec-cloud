@@ -90,12 +90,12 @@ export interface RouterPathNode {
 </script>
 
 <script setup lang="ts">
-import { Query, Routes } from '@/router';
-import { Translatable, useWindowSize } from 'megashark-lib';
-import { IonBreadcrumb, IonBreadcrumbs, IonButton, IonIcon, IonText, popoverController } from '@ionic/vue';
-import { onMounted, onUnmounted, ref, watch, useTemplateRef } from 'vue';
 import HeaderBreadcrumbPopover from '@/components/header/HeaderBreadcrumbPopover.vue';
+import { Query, Routes } from '@/router';
+import { IonBreadcrumb, IonBreadcrumbs, IonButton, IonIcon, IonText, popoverController } from '@ionic/vue';
 import { caretDown } from 'ionicons/icons';
+import { Translatable, useWindowSize } from 'megashark-lib';
+import { onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const props = withDefaults(
   defineProps<{

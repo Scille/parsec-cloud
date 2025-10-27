@@ -125,13 +125,13 @@
 </template>
 
 <script setup lang="ts">
-import { listOwnDevices, OwnDeviceInfo, getClientInfo, exportRecoveryDevice } from '@/parsec';
-import { IonButton, IonIcon, IonText } from '@ionic/vue';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import { I18n, Translatable, askQuestion, Answer, DownloadIcon, MsImage } from 'megashark-lib';
-import { checkmarkCircle, reload, informationCircle } from 'ionicons/icons';
-import { computed, inject, onMounted, ref, useTemplateRef } from 'vue';
+import { OwnDeviceInfo, exportRecoveryDevice, getClientInfo, listOwnDevices } from '@/parsec';
 import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { IonButton, IonIcon, IonText } from '@ionic/vue';
+import { checkmarkCircle, informationCircle, reload } from 'ionicons/icons';
+import { Answer, DownloadIcon, I18n, MsImage, Translatable, askQuestion } from 'megashark-lib';
+import { computed, inject, onMounted, ref, useTemplateRef } from 'vue';
 
 let code = '';
 let content: Uint8Array = new Uint8Array();

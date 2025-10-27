@@ -73,6 +73,21 @@
 </template>
 
 <script setup lang="ts">
+import { getDefaultDeviceName } from '@/common/device';
+import {
+  AvailableDevice,
+  bootstrapOrganization,
+  BootstrapOrganizationErrorTag,
+  DeviceSaveStrategy,
+  DeviceSaveStrategyTag,
+  isWeb,
+  OrganizationID,
+  ParsecAccount,
+  ParsedParsecAddrTag,
+  parseParsecAddr,
+  SaveStrategy,
+} from '@/parsec';
+import { wait } from '@/parsec/internals';
 import {
   AuthenticationToken,
   BillingSystem,
@@ -81,34 +96,19 @@ import {
   DataType,
   PersonalInformationResultData,
 } from '@/services/bms';
+import { Env } from '@/services/environment';
+import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { ServerType } from '@/services/parsecServers';
-import { IonPage } from '@ionic/vue';
-import { isProxy, onMounted, ref, toRaw } from 'vue';
 import BmsLogin from '@/views/client-area/BmsLogin.vue';
 import BmsForgotPassword from '@/views/client-area/forgot-password/BmsForgotPassword.vue';
-import OrganizationNamePage from '@/views/organizations/creation/OrganizationNamePage.vue';
-import {
-  AvailableDevice,
-  bootstrapOrganization,
-  BootstrapOrganizationErrorTag,
-  DeviceSaveStrategy,
-  isWeb,
-  OrganizationID,
-  ParsecAccount,
-  ParsedParsecAddrTag,
-  parseParsecAddr,
-  SaveStrategy,
-  DeviceSaveStrategyTag,
-} from '@/parsec';
-import { Translatable } from 'megashark-lib';
 import OrganizationAuthenticationPage from '@/views/organizations/creation/OrganizationAuthenticationPage.vue';
-import { getDefaultDeviceName } from '@/common/device';
-import OrganizationSummaryPage from '@/views/organizations/creation/OrganizationSummaryPage.vue';
-import OrganizationCreationPage from '@/views/organizations/creation/OrganizationCreationPage.vue';
 import OrganizationCreatedPage from '@/views/organizations/creation/OrganizationCreatedPage.vue';
-import { wait } from '@/parsec/internals';
-import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { Env } from '@/services/environment';
+import OrganizationCreationPage from '@/views/organizations/creation/OrganizationCreationPage.vue';
+import OrganizationNamePage from '@/views/organizations/creation/OrganizationNamePage.vue';
+import OrganizationSummaryPage from '@/views/organizations/creation/OrganizationSummaryPage.vue';
+import { IonPage } from '@ionic/vue';
+import { Translatable } from 'megashark-lib';
+import { isProxy, onMounted, ref, toRaw } from 'vue';
 
 enum Steps {
   BmsLogin,

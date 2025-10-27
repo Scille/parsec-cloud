@@ -18,8 +18,8 @@
 </template>
 
 <script setup lang="ts">
-import { refresh, play, pause, playForward, playBack } from 'ionicons/icons';
 import { FileControlsButton, FileControlsGroup } from '@/components/files/handler/viewer';
+import { pause, play, playBack, playForward, refresh } from 'ionicons/icons';
 import { computed } from 'vue';
 
 const props = defineProps<{

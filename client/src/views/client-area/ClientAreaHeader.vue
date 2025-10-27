@@ -32,14 +32,14 @@
 </template>
 
 <script setup lang="ts">
-import { BmsAccessInstance, PersonalInformationResultData } from '@/services/bms';
-import { IonText, IonTitle, IonIcon } from '@ionic/vue';
-import { Translatable } from 'megashark-lib';
-import { onMounted, ref } from 'vue';
-import { cog } from 'ionicons/icons';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
+import { BmsAccessInstance, PersonalInformationResultData } from '@/services/bms';
 import { ClientAreaPages } from '@/views/client-area/types';
 import { openSettingsModal } from '@/views/settings';
+import { IonIcon, IonText, IonTitle } from '@ionic/vue';
+import { cog } from 'ionicons/icons';
+import { Translatable } from 'megashark-lib';
+import { onMounted, ref } from 'vue';
 
 defineProps<{
   title: Translatable;

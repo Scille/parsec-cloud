@@ -54,10 +54,10 @@
 </template>
 
 <script setup lang="ts">
+import { formatFileSize } from '@/common/file';
 import { IonButton, IonIcon, IonText } from '@ionic/vue';
 import { documentOutline } from 'ionicons/icons';
 import { ref, useTemplateRef } from 'vue';
-import { formatFileSize } from '@/common/file';
 
 const MAX_FILE_SIZE = 3 * 1024 * 1024;
 

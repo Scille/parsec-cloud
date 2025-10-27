@@ -195,11 +195,10 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
-import SmallDisplayStepModalHeader from '@/components/header/SmallDisplayStepModalHeader.vue';
-import SmallDisplayModalHeader from '@/components/header/SmallDisplayModalHeader.vue';
 import { getDefaultDeviceName } from '@/common/device';
 import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
+import SmallDisplayModalHeader from '@/components/header/SmallDisplayModalHeader.vue';
+import SmallDisplayStepModalHeader from '@/components/header/SmallDisplayStepModalHeader.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
@@ -211,25 +210,26 @@ import {
   DeviceSaveStrategy,
   DeviceSaveStrategyPassword,
   DeviceSaveStrategyTag,
+  OrganizationID,
+  ParsedParsecAddrTag,
   UserClaim,
   parseParsecAddr,
-  ParsedParsecAddrTag,
-  OrganizationID,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
+import { close, personAdd } from 'ionicons/icons';
 import {
   Answer,
-  MsModalResult,
-  askQuestion,
   MsInformativeText,
+  MsModalResult,
   MsSpinner,
   MsWizardStepper,
   Translatable,
+  askQuestion,
   asyncComputed,
   useWindowSize,
 } from 'megashark-lib';
-import { close, personAdd } from 'ionicons/icons';
-import { computed, onMounted, ref, Ref, useTemplateRef } from 'vue';
+import { Ref, computed, onMounted, ref, useTemplateRef } from 'vue';
 
 enum UserJoinOrganizationStep {
   WaitForHost = 0,

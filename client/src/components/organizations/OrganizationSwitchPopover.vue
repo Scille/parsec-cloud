@@ -83,14 +83,14 @@
 </template>
 
 <script setup lang="ts">
+import { formatExpirationTime, getDurationBeforeExpiration, isTrialOrganizationDevice } from '@/common/organization';
 import { AvailableDevice, ConnectionHandle, OrganizationID, getLoggedInDevices } from '@/parsec';
 import { getConnectionHandle } from '@/router';
-import { repeat } from 'ionicons/icons';
-import { IonAvatar, IonItem, IonLabel, IonList, IonText, IonTitle, popoverController, IonIcon } from '@ionic/vue';
-import { Ref, onMounted, ref } from 'vue';
-import { isTrialOrganizationDevice, getDurationBeforeExpiration, formatExpirationTime } from '@/common/organization';
-import { MsImage, LogoIconGradient, MsModalResult } from 'megashark-lib';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
+import { IonAvatar, IonIcon, IonItem, IonLabel, IonList, IonText, IonTitle, popoverController } from '@ionic/vue';
+import { repeat } from 'ionicons/icons';
+import { LogoIconGradient, MsImage, MsModalResult } from 'megashark-lib';
+import { Ref, onMounted, ref } from 'vue';
 
 interface ConnectedOrganization {
   id: OrganizationID;

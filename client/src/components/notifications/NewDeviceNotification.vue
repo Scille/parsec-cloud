@@ -30,13 +30,13 @@
 </template>
 
 <script setup lang="ts">
-import { formatTimeSince } from 'megashark-lib';
 import NotificationItem from '@/components/notifications/NotificationItem.vue';
 import { Routes, navigateTo } from '@/router';
+import { EventDistributor } from '@/services/eventDistributor';
 import { Notification } from '@/services/notificationManager';
 import { IonIcon, IonText, popoverController } from '@ionic/vue';
 import { arrowForward, desktop } from 'ionicons/icons';
-import { EventDistributor } from '@/services/eventDistributor';
+import { formatTimeSince } from 'megashark-lib';
 
 defineProps<{
   notification: Notification;

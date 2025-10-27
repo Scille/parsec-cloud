@@ -75,9 +75,9 @@
 </template>
 
 <script setup lang="ts">
+import { WorkspacesPageFilters } from '@/components/workspaces/utils';
 import { IonContent, IonItem, IonItemGroup, IonList, IonText } from '@ionic/vue';
 import { MsCheckbox } from 'megashark-lib';
-import { WorkspacesPageFilters } from '@/components/workspaces/utils';
 
 defineProps<{
   filters: WorkspacesPageFilters;

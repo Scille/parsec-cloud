@@ -130,11 +130,11 @@
 
 <script setup lang="ts">
 import { formatFileSize, getFileIcon, shortenFileName } from '@/common/file';
-import { MsImage, MsInformationTooltip, MsProgress, MsProgressAppearance } from 'megashark-lib';
 import { getWorkspaceName } from '@/parsec';
-import { ImportData, FileOperationState, StateData, OperationProgressStateData } from '@/services/fileOperationManager';
+import { FileOperationState, ImportData, OperationProgressStateData, StateData } from '@/services/fileOperationManager';
 import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
 import { arrowForward, checkmarkCircle, closeCircle } from 'ionicons/icons';
+import { MsImage, MsInformationTooltip, MsProgress, MsProgressAppearance } from 'megashark-lib';
 import { onMounted, ref } from 'vue';
 
 const props = defineProps<{

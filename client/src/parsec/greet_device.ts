@@ -115,7 +115,6 @@ export class DeviceGreet {
   async initialWaitGuest(): Promise<Result<DeviceGreetInProgress1Info, GreetInProgressError>> {
     this._assertState(true, false);
     this.canceller = await libparsec.newCanceller();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const result = await libparsec.greeterDeviceInitialDoWaitPeer(this.canceller, this.handle!);
     this.canceller = null;
     if (result.ok) {
@@ -128,7 +127,6 @@ export class DeviceGreet {
   async waitGuestTrust(): Promise<Result<DeviceGreetInProgress2Info, GreetInProgressError>> {
     this._assertState(true, false);
     this.canceller = await libparsec.newCanceller();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const result = await libparsec.greeterDeviceInProgress1DoWaitPeerTrust(this.canceller, this.handle!);
     if (result.ok) {
       this.handle = result.value.handle;
@@ -142,7 +140,6 @@ export class DeviceGreet {
   async denyTrust(): Promise<Result<null, GreetInProgressError>> {
     this._assertState(true, false);
     this.canceller = await libparsec.newCanceller();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const result = await libparsec.greeterDeviceInProgress2DoDenyTrust(this.canceller, this.handle!);
     this.handle = null;
     this.canceller = null;
@@ -152,7 +149,6 @@ export class DeviceGreet {
   async signifyTrust(): Promise<Result<DeviceGreetInProgress3Info, GreetInProgressError>> {
     this._assertState(true, false);
     this.canceller = await libparsec.newCanceller();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const result = await libparsec.greeterDeviceInProgress2DoSignifyTrust(this.canceller, this.handle!);
     if (result.ok) {
       this.handle = result.value.handle;
@@ -164,7 +160,6 @@ export class DeviceGreet {
   async getClaimRequests(): Promise<Result<DeviceGreetInProgress4Info, GreetInProgressError>> {
     this._assertState(true, false);
     this.canceller = await libparsec.newCanceller();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const result = await libparsec.greeterDeviceInProgress3DoGetClaimRequests(this.canceller, this.handle!);
     this.canceller = null;
     if (result.ok) {
@@ -177,12 +172,7 @@ export class DeviceGreet {
   async createDevice(): Promise<Result<null, GreetInProgressError>> {
     this._assertState(true, false);
     this.canceller = await libparsec.newCanceller();
-    const result = await libparsec.greeterDeviceInProgress4DoCreate(
-      this.canceller,
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      this.handle!,
-      this.requestedDeviceLabel,
-    );
+    const result = await libparsec.greeterDeviceInProgress4DoCreate(this.canceller, this.handle!, this.requestedDeviceLabel);
     this.canceller = null;
     this.handle = null;
     return result;

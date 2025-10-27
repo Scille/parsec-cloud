@@ -202,10 +202,10 @@
 
 <script setup lang="ts">
 import { isDesktop, WorkspaceRole } from '@/parsec';
+import { FileAction } from '@/views/files/types';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonList, IonText, popoverController } from '@ionic/vue';
 import { arrowRedo, create, download, duplicate, eye, informationCircle, link, open, time, trashBin } from 'ionicons/icons';
-import { FileAction } from '@/views/files/types';
-import { RenameIcon, MsImage, EyeOpenIcon } from 'megashark-lib';
+import { EyeOpenIcon, MsImage, RenameIcon } from 'megashark-lib';
 
 defineProps<{
   role: WorkspaceRole;

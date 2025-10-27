@@ -15,8 +15,8 @@
 </template>
 
 <script setup lang="ts">
-import { Translatable } from 'megashark-lib';
 import { IonText } from '@ionic/vue';
+import { Translatable } from 'megashark-lib';
 
 defineProps<{
   title: Translatable;

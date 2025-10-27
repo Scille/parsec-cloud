@@ -35,9 +35,9 @@
 </template>
 
 <script setup lang="ts">
-import { IonList, IonHeader, IonIcon, IonText } from '@ionic/vue';
-import { Translatable, MsImage, OpenIcon } from 'megashark-lib';
+import { IonHeader, IonIcon, IonList, IonText } from '@ionic/vue';
 import { chevronDown, chevronForward } from 'ionicons/icons';
+import { MsImage, OpenIcon, Translatable } from 'megashark-lib';
 
 defineProps<{
   title: Translatable;

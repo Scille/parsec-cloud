@@ -68,10 +68,10 @@
 </template>
 
 <script setup lang="ts">
-import { IonToggle, IonButton, ToggleCustomEvent, IonText, IonIcon } from '@ionic/vue';
-import { ref, useTemplateRef } from 'vue';
-import { document, documentOutline } from 'ionicons/icons';
 import { Env } from '@/services/environment';
+import { IonButton, IonIcon, IonText, IonToggle, ToggleCustomEvent } from '@ionic/vue';
+import { document, documentOutline } from 'ionicons/icons';
+import { ref, useTemplateRef } from 'vue';
 
 const isAddKeyToggled = ref(false);
 const key = ref<string | undefined>(undefined);

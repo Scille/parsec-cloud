@@ -109,13 +109,13 @@
 </template>
 
 <script setup lang="ts">
-import { formatTimeSince } from 'megashark-lib';
 import { formatFileSize } from '@/common/file';
 import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
 import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
 import { UserProfile, WorkspaceInfo } from '@/parsec';
 import { IonButton, IonIcon, IonItem, IonLabel } from '@ionic/vue';
 import { business, cloudDone, cloudOffline, ellipsisHorizontal, star } from 'ionicons/icons';
+import { formatTimeSince } from 'megashark-lib';
 import { ref } from 'vue';
 
 const isHovered = ref(false);

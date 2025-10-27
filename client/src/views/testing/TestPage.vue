@@ -1,5 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
+<!-- eslint-disable vue/no-v-html -->
+<!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <!-- This page serve only for test purposes -->
 
 <template>
@@ -17,7 +19,6 @@
 import {
   BootstrapOrganizationErrorTag,
   ClientConfig,
-  ClientEvent,
   DeviceSaveStrategyTag,
   MountpointMountStrategyTag,
   WorkspaceStorageCacheSizeTag,

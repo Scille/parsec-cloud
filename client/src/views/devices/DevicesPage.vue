@@ -41,15 +41,15 @@
 </template>
 
 <script setup lang="ts">
-import { MsModalResult } from 'megashark-lib';
 import DeviceCard from '@/components/devices/DeviceCard.vue';
 import { OwnDeviceInfo, createDeviceInvitation, listOwnDevices } from '@/parsec';
-import { Routes, watchRoute, getCurrentRouteName } from '@/router';
+import { Routes, getCurrentRouteName, watchRoute } from '@/router';
+import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import GreetDeviceModal from '@/views/devices/GreetDeviceModal.vue';
 import { IonButton, IonItem, IonList, IonText, modalController } from '@ionic/vue';
-import { Ref, inject, onMounted, ref, onUnmounted } from 'vue';
-import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
+import { MsModalResult } from 'megashark-lib';
+import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;

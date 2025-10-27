@@ -73,9 +73,9 @@
 </template>
 
 <script setup lang="ts">
-import { IonContent, IonIcon, IonItem, IonItemGroup, IonText, IonList, IonPage, modalController } from '@ionic/vue';
-import { informationCircle, personRemove, returnUpForward, repeat } from 'ionicons/icons';
 import { UserAction } from '@/views/users/types';
+import { IonContent, IonIcon, IonItem, IonItemGroup, IonList, IonPage, IonText, modalController } from '@ionic/vue';
+import { informationCircle, personRemove, repeat, returnUpForward } from 'ionicons/icons';
 
 defineProps<{
   multipleSelected?: boolean;

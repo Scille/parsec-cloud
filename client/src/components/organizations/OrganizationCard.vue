@@ -79,15 +79,15 @@
 </template>
 
 <script setup lang="ts">
-import { AvailableDevice } from '@/parsec';
-import { IonText, IonIcon, IonCardContent } from '@ionic/vue';
-import { onMounted, ref } from 'vue';
-import { checkmarkCircle, person, time } from 'ionicons/icons';
-import { MsImage, formatTimeSince, I18n, LogoIconWhite, useWindowSize } from 'megashark-lib';
-import { formatExpirationTime, isTrialOrganizationDevice, getDurationBeforeExpiration } from '@/common/organization';
-import { Duration, DateTime } from 'luxon';
-import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import ArrowForwardCircleGradient from '@/assets/images/arrow-forward-circle.svg?raw';
+import { formatExpirationTime, getDurationBeforeExpiration, isTrialOrganizationDevice } from '@/common/organization';
+import { AvailableDevice } from '@/parsec';
+import { Resources, ResourcesManager } from '@/services/resourcesManager';
+import { IonCardContent, IonIcon, IonText } from '@ionic/vue';
+import { checkmarkCircle, person, time } from 'ionicons/icons';
+import { DateTime, Duration } from 'luxon';
+import { formatTimeSince, I18n, LogoIconWhite, MsImage, useWindowSize } from 'megashark-lib';
+import { onMounted, ref } from 'vue';
 
 const { isSmallDisplay, isLargeDisplay } = useWindowSize();
 const isTrialOrg = ref(false);

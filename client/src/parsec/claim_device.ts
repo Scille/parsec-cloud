@@ -88,7 +88,6 @@ export class DeviceClaim {
     this._assertState(true, false);
 
     this.canceller = await libparsec.newCanceller();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const result = await libparsec.claimerDeviceInitialDoWaitPeer(this.canceller, this.handle!);
     if (result.ok) {
       this.SASCodeChoices = result.value.greeterSasChoices;
@@ -102,7 +101,6 @@ export class DeviceClaim {
   async denyTrust(): Promise<Result<null, ClaimInProgressError>> {
     this._assertState(true, false);
     this.canceller = await libparsec.newCanceller();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const result = await libparsec.claimerDeviceInProgress1DoDenyTrust(this.canceller, this.handle!);
     this.handle = null;
     this.canceller = null;
@@ -112,7 +110,6 @@ export class DeviceClaim {
   async signifyTrust(): Promise<Result<DeviceClaimInProgress2Info, ClaimInProgressError>> {
     this._assertState(true, false);
     this.canceller = await libparsec.newCanceller();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const result = await libparsec.claimerDeviceInProgress1DoSignifyTrust(this.canceller, this.handle!);
     if (result.ok) {
       this.guestSASCode = result.value.claimerSas;
@@ -125,7 +122,6 @@ export class DeviceClaim {
   async waitHostTrust(): Promise<Result<DeviceClaimInProgress3Info, ClaimInProgressError>> {
     this._assertState(true, false);
     this.canceller = await libparsec.newCanceller();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const result = await libparsec.claimerDeviceInProgress2DoWaitPeerTrust(this.canceller, this.handle!);
     this.canceller = null;
     if (result.ok) {
@@ -137,12 +133,7 @@ export class DeviceClaim {
   async doClaim(deviceLabel: DeviceLabel): Promise<Result<DeviceClaimFinalizeInfo, ClaimInProgressError>> {
     this._assertState(true, false);
     this.canceller = await libparsec.newCanceller();
-    const result = await libparsec.claimerDeviceInProgress3DoClaim(
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      this.canceller,
-      this.handle!,
-      deviceLabel,
-    );
+    const result = await libparsec.claimerDeviceInProgress3DoClaim(this.canceller, this.handle!, deviceLabel);
     if (result.ok) {
       this.handle = result.value.handle;
     }
@@ -152,11 +143,7 @@ export class DeviceClaim {
 
   async finalize(saveStrategy: DeviceSaveStrategy): Promise<Result<AvailableDevice, ClaimInProgressError>> {
     this._assertState(true, false);
-    const result = await libparsec.claimerDeviceFinalizeSaveLocalDevice(
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      this.handle!,
-      saveStrategy,
-    );
+    const result = await libparsec.claimerDeviceFinalizeSaveLocalDevice(this.handle!, saveStrategy);
     if (result.ok) {
       result.value.createdOn = DateTime.fromSeconds(result.value.createdOn as any as number);
       result.value.protectedOn = DateTime.fromSeconds(result.value.protectedOn as any as number);

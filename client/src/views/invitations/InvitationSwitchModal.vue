@@ -58,11 +58,11 @@
 </template>
 
 <script setup lang="ts">
-import { IonText, IonIcon, IonRadio, IonRadioGroup, IonButton, modalController } from '@ionic/vue';
-import { mailUnread, idCard, checkmarkCircle } from 'ionicons/icons';
 import { InvitationView } from '@/views/invitations/types';
-import { ref } from 'vue';
+import { IonButton, IonIcon, IonRadio, IonRadioGroup, IonText, modalController } from '@ionic/vue';
+import { checkmarkCircle, idCard, mailUnread } from 'ionicons/icons';
 import { MsModalResult } from 'megashark-lib';
+import { ref } from 'vue';
 
 const props = defineProps<{
   invitationsCount: number;

@@ -35,9 +35,9 @@
 
 <script setup lang="ts">
 import { OrganizationID } from '@/parsec';
-import { useWindowSize, LogoIconWhite, MsImage } from 'megashark-lib';
-import { IonPage, IonText, IonButton, IonFooter } from '@ionic/vue';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
+import { IonButton, IonFooter, IonPage, IonText } from '@ionic/vue';
+import { LogoIconWhite, MsImage, useWindowSize } from 'megashark-lib';
 
 const { isSmallDisplay } = useWindowSize();
 

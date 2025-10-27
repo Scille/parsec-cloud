@@ -16,9 +16,9 @@
 </template>
 
 <script setup lang="ts">
-import { IonText } from '@ionic/vue';
 import TagProfile from '@/components/users/TagProfile.vue';
 import { UserProfile } from '@/parsec';
+import { IonText } from '@ionic/vue';
 
 defineProps<{
   label: string;

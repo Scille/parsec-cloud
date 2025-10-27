@@ -39,11 +39,11 @@
 </template>
 
 <script setup lang="ts">
+import { TechnicalId } from '@/components/misc';
 import { DeviceInfo } from '@/parsec';
-import { formatTimeSince } from 'megashark-lib';
 import { IonIcon, IonText } from '@ionic/vue';
 import { desktopOutline } from 'ionicons/icons';
-import { TechnicalId } from '@/components/misc';
+import { formatTimeSince } from 'megashark-lib';
 
 defineProps<{
   device: DeviceInfo;

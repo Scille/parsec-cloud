@@ -31,8 +31,8 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonIcon, IonItem, IonList, IonItemGroup, IonText, modalController } from '@ionic/vue';
 import { MenuAction } from '@/views/menu/types';
+import { IonIcon, IonItem, IonItemGroup, IonList, IonPage, IonText, modalController } from '@ionic/vue';
 import { MsModalResult } from 'megashark-lib';
 
 defineProps<{

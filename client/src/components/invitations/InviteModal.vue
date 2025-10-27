@@ -46,8 +46,8 @@
 
 <script setup lang="ts">
 import { emailValidator } from '@/common/validators';
-import { modalController, IonText } from '@ionic/vue';
-import { MsModalResult, MsInput, MsReportTheme, Validity, MsModal } from 'megashark-lib';
+import { IonText, modalController } from '@ionic/vue';
+import { MsInput, MsModal, MsModalResult, MsReportTheme, Validity } from 'megashark-lib';
 import { ref } from 'vue';
 
 const textModel = ref('');

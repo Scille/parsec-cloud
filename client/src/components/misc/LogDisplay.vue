@@ -39,7 +39,7 @@
 import { isWeb } from '@/parsec';
 import { LogEntry, WebLogger } from '@/services/webLogger';
 import { IonSkeletonText, IonText } from '@ionic/vue';
-import { MsReportTheme, MsReportText } from 'megashark-lib';
+import { MsReportText, MsReportTheme } from 'megashark-lib';
 import { onMounted, ref } from 'vue';
 
 const LevelThemeMapping = {

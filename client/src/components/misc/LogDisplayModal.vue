@@ -10,8 +10,8 @@
 </template>
 
 <script setup lang="ts">
-import { MsModal } from 'megashark-lib';
 import LogDisplay from '@/components/misc/LogDisplay.vue';
+import { MsModal } from 'megashark-lib';
 </script>
 
 <style scoped lang="scss"></style>

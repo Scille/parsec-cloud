@@ -81,6 +81,7 @@
 </template>
 
 <script setup lang="ts">
+import { getDurationBeforeExpiration, isExpired, isTrialOrganizationDevice } from '@/common/organization';
 import {
   bootstrapLinkValidator,
   claimAndBootstrapLinkValidator,
@@ -88,67 +89,66 @@ import {
   claimUserLinkValidator,
   pkiLinkValidator,
 } from '@/common/validators';
+import { SmallDisplayCreateJoinModal } from '@/components/small-display';
 import {
   AccessStrategy,
-  archiveDevice,
+  AccountInvitation,
   AvailableDevice,
+  AvailableDeviceTypeTag,
   ClientStartError,
   ClientStartErrorTag,
   DeviceAccessStrategy,
-  AvailableDeviceTypeTag,
-  getDeviceHandle,
-  isDeviceLoggedIn,
-  isWeb,
-  ListAvailableDeviceErrorTag,
-  listAvailableDevices,
-  listAvailableDevicesWithError,
-  login as parsecLogin,
-  ParsecAccount,
-  getOrganizationCreationDate,
-  AccountInvitation,
   DeviceAccessStrategyTag,
-  requestJoinOrganization,
-  LocalJoinRequest,
-  listLocalJoinRequests,
   JoinRequestStatus,
+  ListAvailableDeviceErrorTag,
+  LocalJoinRequest,
+  ParsecAccount,
+  archiveDevice,
   cancelLocalJoinRequest,
   confirmLocalJoinRequest,
+  getDeviceHandle,
+  getOrganizationCreationDate,
+  isDeviceLoggedIn,
+  isWeb,
+  listAvailableDevices,
+  listAvailableDevicesWithError,
+  listLocalJoinRequests,
+  login as parsecLogin,
+  requestJoinOrganization,
 } from '@/parsec';
 import { RouteBackup, Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, switchOrganization, watchRoute } from '@/router';
 import { EventData, EventDistributor, Events } from '@/services/eventDistributor';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
+import { ServerType, getServerTypeFromAddress } from '@/services/parsecServers';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
-import ImportRecoveryDevicePage from '@/views/devices/ImportRecoveryDevicePage.vue';
 import AccountSettingsPage from '@/views/account/AccountSettingsPage.vue';
-import CreateOrganizationModal from '@/views/organizations/creation/CreateOrganizationModal.vue';
+import { AccountSettingsTabs } from '@/views/account/types';
+import ClientAreaLoginPage from '@/views/client-area/ClientAreaLoginPage.vue';
+import ImportRecoveryDevicePage from '@/views/devices/ImportRecoveryDevicePage.vue';
 import DeviceJoinOrganizationModal from '@/views/home/DeviceJoinOrganizationModal.vue';
+import HomePageButtons, { HomePageAction } from '@/views/home/HomePageButtons.vue';
 import HomePageHeader from '@/views/home/HomePageHeader.vue';
 import HomePageSidebar from '@/views/home/HomePageSidebar.vue';
 import LoginPage from '@/views/home/LoginPage.vue';
 import OrganizationListPage from '@/views/home/OrganizationListPage.vue';
 import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vue';
+import CreateOrganizationModal from '@/views/organizations/creation/CreateOrganizationModal.vue';
 import { IonContent, IonPage, modalController, popoverController } from '@ionic/vue';
-import { AccountSettingsTabs } from '@/views/account/types';
 import { DateTime } from 'luxon';
 import {
+  Answer,
   Base64,
-  Validity,
   MsModalResult,
   Position,
   SlideHorizontal,
-  getTextFromUser,
+  Validity,
   askQuestion,
-  Answer,
+  getTextFromUser,
   useWindowSize,
 } from 'megashark-lib';
-import { Ref, inject, nextTick, onMounted, onUnmounted, ref, toRaw, watch, computed, useTemplateRef } from 'vue';
-import { getServerTypeFromAddress, ServerType } from '@/services/parsecServers';
-import { getDurationBeforeExpiration, isExpired, isTrialOrganizationDevice } from '@/common/organization';
-import HomePageButtons, { HomePageAction } from '@/views/home/HomePageButtons.vue';
-import { SmallDisplayCreateJoinModal } from '@/components/small-display';
-import ClientAreaLoginPage from '@/views/client-area/ClientAreaLoginPage.vue';
+import { Ref, computed, inject, nextTick, onMounted, onUnmounted, ref, toRaw, useTemplateRef, watch } from 'vue';
 
 enum HomePageState {
   OrganizationList = 'organization-list',

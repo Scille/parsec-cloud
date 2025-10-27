@@ -20,9 +20,9 @@
 </template>
 
 <script setup lang="ts">
-import { IonContent, IonIcon, IonItem, IonText, IonList, popoverController } from '@ionic/vue';
-import { returnDownForward } from 'ionicons/icons';
 import { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
+import { IonContent, IonIcon, IonItem, IonList, IonText, popoverController } from '@ionic/vue';
+import { returnDownForward } from 'ionicons/icons';
 
 const props = defineProps<{
   breadcrumbs: RouterPathNode[];

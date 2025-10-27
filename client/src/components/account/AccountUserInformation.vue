@@ -79,12 +79,12 @@
 </template>
 
 <script setup lang="ts">
+import { emailValidator, parsecAddrValidator } from '@/common/validators';
+import { AccountCreateSendValidationEmailErrorTag, AccountCreationStepper } from '@/parsec';
 import { Env } from '@/services/environment';
 import { IonButton, IonText } from '@ionic/vue';
+import { MsInput, MsReportText, MsReportTheme, MsSpinner, Validity } from 'megashark-lib';
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
-import { parsecAddrValidator, emailValidator } from '@/common/validators';
-import { MsInput, Validity, MsReportText, MsReportTheme, MsSpinner } from 'megashark-lib';
-import { AccountCreationStepper, AccountCreateSendValidationEmailErrorTag } from '@/parsec';
 
 const props = defineProps<{
   creationStepper: AccountCreationStepper;

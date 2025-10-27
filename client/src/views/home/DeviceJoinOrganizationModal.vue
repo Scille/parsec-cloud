@@ -137,11 +137,10 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
 import { getDefaultDeviceName } from '@/common/device';
+import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
 import SmallDisplayModalHeader from '@/components/header/SmallDisplayModalHeader.vue';
 import SmallDisplayStepModalHeader from '@/components/header/SmallDisplayStepModalHeader.vue';
-import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import {
@@ -158,19 +157,20 @@ import {
   parseParsecAddr,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
+import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
+import { checkmarkCircle, close, phonePortrait } from 'ionicons/icons';
 import {
   Answer,
-  MsModalResult,
   askQuestion,
+  asyncComputed,
   MsInformativeText,
+  MsModalResult,
   MsSpinner,
   MsWizardStepper,
   Translatable,
-  asyncComputed,
   useWindowSize,
 } from 'megashark-lib';
-import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
-import { checkmarkCircle, close, phonePortrait } from 'ionicons/icons';
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
 
 enum DeviceJoinOrganizationStep {

@@ -35,11 +35,11 @@
 </template>
 
 <script setup lang="ts">
-import { modalController } from '@ionic/vue';
-import { ref } from 'vue';
 import UserInformation from '@/components/users/UserInformation.vue';
-import { MsModalResult, MsOptions, MsModal, MsDropdown } from 'megashark-lib';
 import { UserProfile } from '@/parsec';
+import { modalController } from '@ionic/vue';
+import { MsDropdown, MsModal, MsModalResult, MsOptions } from 'megashark-lib';
+import { ref } from 'vue';
 
 defineProps<{
   name: string;

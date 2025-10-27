@@ -51,16 +51,16 @@
 
 <script setup lang="ts">
 import { formatFileSize, getFileIcon } from '@/common/file';
-import { formatTimeSince, Folder, MsImage } from 'megashark-lib';
 import NotificationItem from '@/components/notifications/NotificationItem.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { StartedWorkspaceInfo, UserInfo, getUserInfo, getWorkspaceInfo } from '@/parsec';
 import { navigateToWorkspace } from '@/router';
+import { EventDistributor } from '@/services/eventDistributor';
 import { UserSharedDocumentData } from '@/services/informationManager';
 import { Notification } from '@/services/notificationManager';
 import { IonText, popoverController } from '@ionic/vue';
+import { Folder, MsImage, formatTimeSince } from 'megashark-lib';
 import { Ref, onMounted, ref } from 'vue';
-import { EventDistributor } from '@/services/eventDistributor';
 
 const userInfo: Ref<UserInfo | null> = ref(null);
 const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);

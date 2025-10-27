@@ -201,47 +201,31 @@
 </template>
 
 <script setup lang="ts">
+import { getFileIcon } from '@/common/file';
+import { DetectedFileType } from '@/common/fileTypes';
+import { copyPathLinkToClipboard } from '@/components/files';
+import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import {
+  ClientInfo,
   closeFile,
+  DEFAULT_READ_SIZE,
+  EntryName,
   entryStat,
   EntryStatFile,
   FsPath,
+  getClientInfo,
+  getSystemPath,
+  getWorkspaceInfo,
+  isDesktop,
+  isMobile,
+  isWeb,
   openFile,
   Path,
   readFile,
-  getSystemPath,
-  isDesktop,
-  isWeb,
-  WorkspaceHistory,
-  DEFAULT_READ_SIZE,
   WorkspaceHandle,
-  EntryName,
-  getWorkspaceInfo,
-  isMobile,
+  WorkspaceHistory,
   WorkspaceHistoryEntryStatFile,
-  ClientInfo,
-  getClientInfo,
 } from '@/parsec';
-import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
-import {
-  Base64,
-  MsSpinner,
-  MsImage,
-  I18n,
-  DownloadIcon,
-  askQuestion,
-  Answer,
-  MsModalResult,
-  useWindowSize,
-  SidebarToggle,
-  WindowSizeBreakpoints,
-  attachMouseOverTooltip,
-  UnsavedIcon,
-} from 'megashark-lib';
-import { ref, Ref, inject, onMounted, onUnmounted, shallowRef, computed, useTemplateRef } from 'vue';
-import { IonPage, IonContent, IonButton, IonText, IonIcon, modalController } from '@ionic/vue';
-import { link, informationCircle, open, chevronUp, chevronDown, ellipsisHorizontal, create, save, alert } from 'ionicons/icons';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import {
   currentRouteIs,
   getCurrentRouteQuery,
@@ -253,23 +237,39 @@ import {
   Routes,
   watchRoute,
 } from '@/router';
-import { DetectedFileType } from '@/common/fileTypes';
-import SmallDisplayViewerActionMenu from '@/views/files/handler/SmallDisplayViewerActionMenu.vue';
-import { FileContentInfo } from '@/views/files/handler/viewer/utils';
-import { DateTime } from 'luxon';
-import { getFileIcon } from '@/common/file';
-import { copyPathLinkToClipboard } from '@/components/files';
-import { downloadEntry, FileDetailsModal, FileHandlerAction, openDownloadConfirmationModal } from '@/views/files';
-import useHeaderControl from '@/services/headerControl';
-import { Env } from '@/services/environment';
-import { StorageManager, StorageManagerKey } from '@/services/storageManager';
-import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
-import { FileEditor, SaveState } from '@/views/files/handler/editor';
-import { FileViewer } from '@/views/files/handler/viewer';
-import useSidebarMenu from '@/services/sidebarMenu';
-import { openPath } from '@/services/fileOpener';
-import { FileHandlerMode } from '@/views/files/handler';
 import { isFileEditable } from '@/services/cryptpad';
+import { Env } from '@/services/environment';
+import { openPath } from '@/services/fileOpener';
+import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
+import useHeaderControl from '@/services/headerControl';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import useSidebarMenu from '@/services/sidebarMenu';
+import { StorageManager, StorageManagerKey } from '@/services/storageManager';
+import { downloadEntry, FileDetailsModal, FileHandlerAction, openDownloadConfirmationModal } from '@/views/files';
+import { FileHandlerMode } from '@/views/files/handler';
+import { FileEditor, SaveState } from '@/views/files/handler/editor';
+import SmallDisplayViewerActionMenu from '@/views/files/handler/SmallDisplayViewerActionMenu.vue';
+import { FileViewer } from '@/views/files/handler/viewer';
+import { FileContentInfo } from '@/views/files/handler/viewer/utils';
+import { IonButton, IonContent, IonIcon, IonPage, IonText, modalController } from '@ionic/vue';
+import { alert, chevronDown, chevronUp, create, ellipsisHorizontal, informationCircle, link, open, save } from 'ionicons/icons';
+import { DateTime } from 'luxon';
+import {
+  Answer,
+  askQuestion,
+  attachMouseOverTooltip,
+  Base64,
+  DownloadIcon,
+  I18n,
+  MsImage,
+  MsModalResult,
+  MsSpinner,
+  SidebarToggle,
+  UnsavedIcon,
+  useWindowSize,
+  WindowSizeBreakpoints,
+} from 'megashark-lib';
+import { computed, inject, onMounted, onUnmounted, ref, Ref, shallowRef, useTemplateRef } from 'vue';
 import { onBeforeRouteLeave, onBeforeRouteUpdate } from 'vue-router';
 
 const { isLargeDisplay, windowWidth } = useWindowSize();

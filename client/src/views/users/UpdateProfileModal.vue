@@ -69,10 +69,10 @@
 </template>
 
 <script setup lang="ts">
-import { MsModal, MsOptions, MsModalResult, MsDropdown, MsDropdownChangeEvent, MsReportText, MsReportTheme } from 'megashark-lib';
-import { IonPage, modalController, IonText } from '@ionic/vue';
-import { Ref, onMounted, ref, computed } from 'vue';
 import { UserInfo, UserProfile } from '@/parsec';
+import { IonPage, IonText, modalController } from '@ionic/vue';
+import { MsDropdown, MsDropdownChangeEvent, MsModal, MsModalResult, MsOptions, MsReportText, MsReportTheme } from 'megashark-lib';
+import { Ref, computed, onMounted, ref } from 'vue';
 
 const profileOptions: Ref<MsOptions> = ref(new MsOptions([]));
 

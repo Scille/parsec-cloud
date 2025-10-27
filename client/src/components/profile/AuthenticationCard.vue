@@ -47,14 +47,14 @@
 </template>
 
 <script setup lang="ts">
-import { IonText, IonIcon, IonButton } from '@ionic/vue';
-import { checkmarkCircle } from 'ionicons/icons';
-import { AuthenticationCardState } from '@/components/profile/types';
-import { CustomDeviceSaveStrategyTag, DeviceSaveStrategyTag, isDesktop, isKeyringAvailable, isWeb } from '@/parsec';
-import KeypadGradient from '@/assets/images/keypad-gradient.svg';
 import EllipsisGradient from '@/assets/images/ellipsis-gradient.svg';
 import idCardGradient from '@/assets/images/id-card-gradient.svg';
+import KeypadGradient from '@/assets/images/keypad-gradient.svg';
 import personCircleGradient from '@/assets/images/person-circle-gradient.svg';
+import { AuthenticationCardState } from '@/components/profile/types';
+import { CustomDeviceSaveStrategyTag, DeviceSaveStrategyTag, isDesktop, isKeyringAvailable, isWeb } from '@/parsec';
+import { IonButton, IonIcon, IonText } from '@ionic/vue';
+import { checkmarkCircle } from 'ionicons/icons';
 import { Translatable } from 'megashark-lib';
 import { computed, onMounted, ref } from 'vue';
 

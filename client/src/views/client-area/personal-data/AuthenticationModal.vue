@@ -76,25 +76,25 @@
 </template>
 
 <script setup lang="ts">
-import {
-  MsModal,
-  MsInput,
-  MsModalResult,
-  MsPasswordInput,
-  I18n,
-  MsReportTheme,
-  MsReportText,
-  Validity,
-  IValidator,
-  asyncComputed,
-  MsCodeValidationInput,
-} from 'megashark-lib';
-import { IonPage, modalController, IonText, IonIcon } from '@ionic/vue';
-import { checkmark } from 'ionicons/icons';
-import { onMounted, Ref, ref, useTemplateRef } from 'vue';
+import { emailValidator } from '@/common/validators';
 import { BmsAccessInstance, BmsLang } from '@/services/bms';
 import { longLocaleCodeToShort } from '@/services/translation';
-import { emailValidator } from '@/common/validators';
+import { IonIcon, IonPage, IonText, modalController } from '@ionic/vue';
+import { checkmark } from 'ionicons/icons';
+import {
+  asyncComputed,
+  I18n,
+  IValidator,
+  MsCodeValidationInput,
+  MsInput,
+  MsModal,
+  MsModalResult,
+  MsPasswordInput,
+  MsReportText,
+  MsReportTheme,
+  Validity,
+} from 'megashark-lib';
+import { onMounted, Ref, ref, useTemplateRef } from 'vue';
 
 const props = defineProps<{
   email: string;

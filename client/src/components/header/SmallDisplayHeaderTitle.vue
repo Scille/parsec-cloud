@@ -46,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonText, IonIcon } from '@ionic/vue';
+import { IonIcon, IonText } from '@ionic/vue';
 import { ellipsisHorizontal } from 'ionicons/icons';
 import { Translatable } from 'megashark-lib';
 

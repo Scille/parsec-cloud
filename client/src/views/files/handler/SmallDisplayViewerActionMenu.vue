@@ -64,13 +64,12 @@
 </template>
 
 <script setup lang="ts">
-import { isDesktop, isWeb } from '@/parsec';
-import { DownloadIcon, MsImage } from 'megashark-lib';
-import { DateTime } from '@/parsec';
-import { ref, Ref } from 'vue';
-import { IonContent, IonIcon, IonItem, IonText, IonList, IonPage, modalController } from '@ionic/vue';
-import { informationCircle, link, open } from 'ionicons/icons';
+import { DateTime, isDesktop, isWeb } from '@/parsec';
 import { FileHandlerAction } from '@/views/files';
+import { IonContent, IonIcon, IonItem, IonList, IonPage, IonText, modalController } from '@ionic/vue';
+import { informationCircle, link, open } from 'ionicons/icons';
+import { DownloadIcon, MsImage } from 'megashark-lib';
+import { ref, Ref } from 'vue';
 
 const atDateTime: Ref<DateTime | undefined> = ref(undefined);
 

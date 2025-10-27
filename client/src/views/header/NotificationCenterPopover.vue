@@ -41,13 +41,13 @@
 </template>
 
 <script setup lang="ts">
-import { MsImage, NoNotification } from 'megashark-lib';
 import { Notifications } from '@/components/notifications';
+import { EventDistributor } from '@/services/eventDistributor';
 import { InformationDataType } from '@/services/informationManager';
 import { Notification, NotificationManager } from '@/services/notificationManager';
 import { IonList, IonText, IonToggle } from '@ionic/vue';
+import { MsImage, NoNotification } from 'megashark-lib';
 import { Ref, computed, ref, type Component } from 'vue';
-import { EventDistributor } from '@/services/eventDistributor';
 
 const props = defineProps<{
   notificationManager: NotificationManager;

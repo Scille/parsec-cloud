@@ -69,16 +69,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, useTemplateRef } from 'vue';
-import { MsModal, MsInput, MsTextarea, Validity, MsModalResult, MsReportTheme, MsReportText } from 'megashark-lib';
-import { isWeb, ParsecAccount } from '@/parsec';
-import { FileInputList } from '@/components/files';
-import { emailValidator } from '@/common/validators';
-import { BmsApi, FileData } from '@/services/bms';
-import { openLogDisplayModal } from '@/components/misc';
-import { modalController, IonToggle, IonButton, IonText } from '@ionic/vue';
-import { formatLogEntry, LogEntry, WebLogger } from '@/services/webLogger';
 import { getMimeTypeFromBuffer } from '@/common/fileTypes';
+import { emailValidator } from '@/common/validators';
+import { FileInputList } from '@/components/files';
+import { openLogDisplayModal } from '@/components/misc';
+import { isWeb, ParsecAccount } from '@/parsec';
+import { BmsApi, FileData } from '@/services/bms';
+import { formatLogEntry, LogEntry, WebLogger } from '@/services/webLogger';
+import { IonButton, IonText, IonToggle, modalController } from '@ionic/vue';
+import { MsInput, MsModal, MsModalResult, MsReportText, MsReportTheme, MsTextarea, Validity } from 'megashark-lib';
+import { computed, onMounted, ref, useTemplateRef } from 'vue';
 
 const emailInputRef = useTemplateRef<InstanceType<typeof MsInput>>('emailInput');
 const email = ref('');

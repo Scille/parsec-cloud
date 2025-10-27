@@ -33,13 +33,13 @@
 </template>
 
 <script setup lang="ts">
+import { Env } from '@/services/environment';
+import { openAboutModal } from '@/views/about';
+import { AccountSettingsTabs } from '@/views/account/types';
 import ProfileHeaderHomepagePopover, { ProfilePopoverHomepageOption } from '@/views/header/ProfileHeaderHomepagePopover.vue';
 import { IonIcon, IonItem, IonText, popoverController } from '@ionic/vue';
 import { chevronDown, personCircle } from 'ionicons/icons';
 import { ref, Ref } from 'vue';
-import { Env } from '@/services/environment';
-import { openAboutModal } from '@/views/about';
-import { AccountSettingsTabs } from '@/views/account/types';
 
 const isPopoverOpen = ref(false);
 

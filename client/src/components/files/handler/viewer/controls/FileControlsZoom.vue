@@ -37,9 +37,9 @@
 </template>
 
 <script setup lang="ts">
-import { AddIcon, RemoveIcon, FitToScreenIcon, I18n } from 'megashark-lib';
-import { ref } from 'vue';
 import { FileControlsButton, FileControlsGroup, FileControlsInput } from '@/components/files/handler/viewer';
+import { AddIcon, FitToScreenIcon, I18n, RemoveIcon } from 'megashark-lib';
+import { ref } from 'vue';
 
 const ZOOM_LEVELS = [
   '5',

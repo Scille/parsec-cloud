@@ -36,16 +36,16 @@
 </template>
 
 <script setup lang="ts">
-import { formatTimeSince } from 'megashark-lib';
 import MultipleUsersJoinPopover from '@/components/notifications/MultipleUsersJoinPopover.vue';
 import NotificationItem from '@/components/notifications/NotificationItem.vue';
 import { getWorkspaceName } from '@/parsec';
+import { EventDistributor } from '@/services/eventDistributor';
 import { MultipleUsersJoinWorkspaceData } from '@/services/informationManager';
 import { Notification } from '@/services/notificationManager';
 import { IonIcon, IonText, popoverController } from '@ionic/vue';
 import { people } from 'ionicons/icons';
+import { formatTimeSince } from 'megashark-lib';
 import { onMounted, ref } from 'vue';
-import { EventDistributor } from '@/services/eventDistributor';
 
 const workspaceName = ref('');
 

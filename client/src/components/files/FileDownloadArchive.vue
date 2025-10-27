@@ -121,11 +121,11 @@
 </template>
 
 <script setup lang="ts">
-import { shortenFileName, formatFileSize } from '@/common/file';
-import { MsImage, MsInformationTooltip, MsProgress, MsProgressAppearance, File } from 'megashark-lib';
-import { FileOperationState, StateData, DownloadOperationProgressStateData, DownloadArchiveData } from '@/services/fileOperationManager';
+import { formatFileSize, shortenFileName } from '@/common/file';
+import { DownloadArchiveData, DownloadOperationProgressStateData, FileOperationState, StateData } from '@/services/fileOperationManager';
 import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
 import { checkmarkCircle, closeCircle } from 'ionicons/icons';
+import { File, MsImage, MsInformationTooltip, MsProgress, MsProgressAppearance } from 'megashark-lib';
 import { computed } from 'vue';
 
 const props = defineProps<{

@@ -29,11 +29,11 @@
 </template>
 
 <script setup lang="ts">
-import { IonText, IonIcon } from '@ionic/vue';
-import { chevronDown } from 'ionicons/icons';
-import { Invoice } from '@/services/bms';
-import { Translatable } from 'megashark-lib';
 import InvoicesList from '@/components/client-area/invoices/InvoicesList.vue';
+import { Invoice } from '@/services/bms';
+import { IonIcon, IonText } from '@ionic/vue';
+import { chevronDown } from 'ionicons/icons';
+import { Translatable } from 'megashark-lib';
 import { ref } from 'vue';
 
 defineProps<{

@@ -11,21 +11,21 @@
 </template>
 
 <script lang="ts" setup>
-import { getTOS, logout as parsecLogout, acceptTOS, getClientInfo, listStartedClients } from '@/parsec';
+import { acceptTOS, getClientInfo, getTOS, listStartedClients, logout as parsecLogout } from '@/parsec';
 import { getConnectionHandle, navigateTo, Routes } from '@/router';
 import { EntryDeletedData, EntryRenamedData, EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { FileOperationManagerKey } from '@/services/fileOperationManager';
+import useUploadMenu from '@/services/fileUploadMenu';
 import { Information, InformationLevel, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey, Injections } from '@/services/injectionProvider';
-import { IonPage, IonRouterOutlet, modalController } from '@ionic/vue';
-import { inject, onMounted, onUnmounted, provide, Ref, ref } from 'vue';
-import TOSModal from '@/views/organizations/TOSModal.vue';
-import useUploadMenu from '@/services/fileUploadMenu';
-import { MsModalResult, openSpinnerModal } from 'megashark-lib';
-import { DateTime } from 'luxon';
-import { StorageManagerKey, StorageManager } from '@/services/storageManager';
 import { recentDocumentManager } from '@/services/recentDocuments';
 import useRefreshWarning from '@/services/refreshWarning';
+import { StorageManager, StorageManagerKey } from '@/services/storageManager';
+import TOSModal from '@/views/organizations/TOSModal.vue';
+import { IonPage, IonRouterOutlet, modalController } from '@ionic/vue';
+import { DateTime } from 'luxon';
+import { MsModalResult, openSpinnerModal } from 'megashark-lib';
+import { inject, onMounted, onUnmounted, provide, Ref, ref } from 'vue';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;

@@ -142,10 +142,10 @@
 
 <script setup lang="ts">
 import { UserProfile, WorkspaceName, WorkspaceRole, isDesktop } from '@/parsec';
-import { IonContent, IonIcon, IonItem, IonItemGroup, IonText, IonList, IonPage, modalController } from '@ionic/vue';
-import { cloudy, informationCircle, link, open, shareSocial, star, time } from 'ionicons/icons';
-import { RenameIcon, MsImage } from 'megashark-lib';
 import { WorkspaceAction } from '@/views/workspaces/types';
+import { IonContent, IonIcon, IonItem, IonItemGroup, IonList, IonPage, IonText, modalController } from '@ionic/vue';
+import { cloudy, informationCircle, link, open, shareSocial, star, time } from 'ionicons/icons';
+import { MsImage, RenameIcon } from 'megashark-lib';
 
 function onClick(action: WorkspaceAction): Promise<boolean> {
   return modalController.dismiss({ action: action });

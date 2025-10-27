@@ -103,15 +103,15 @@
 </template>
 
 <script setup lang="ts">
-import { MsModal, formatTimeSince, I18n } from 'megashark-lib';
-import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
+import { TechnicalId } from '@/components/misc';
 import UserStatusTag from '@/components/users/UserStatusTag.vue';
+import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
 import { SharedWithInfo, UserInfo, getWorkspacesSharedWith } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { IonCard, IonCardContent, IonIcon, IonList, IonPage, IonText } from '@ionic/vue';
 import { business, personAdd, personRemove } from 'ionicons/icons';
+import { I18n, MsModal, formatTimeSince } from 'megashark-lib';
 import { Ref, onMounted, ref } from 'vue';
-import { TechnicalId } from '@/components/misc';
 
 const sharedWorkspaces: Ref<Array<SharedWithInfo>> = ref([]);
 

@@ -232,12 +232,12 @@
 </template>
 
 <script setup lang="ts">
+import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
 import { DeviceSaveStrategyTag, OrganizationID } from '@/parsec';
 import { ServerType } from '@/services/parsecServers';
-import { chevronForward, chevronBack } from 'ionicons/icons';
-import { IonPage, IonItem, IonButton, IonText, IonIcon, IonFooter, IonList } from '@ionic/vue';
-import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
-import { Translatable, MsReportText, MsReportTheme } from 'megashark-lib';
+import { IonButton, IonFooter, IonIcon, IonItem, IonList, IonPage, IonText } from '@ionic/vue';
+import { chevronBack, chevronForward } from 'ionicons/icons';
+import { MsReportText, MsReportTheme, Translatable } from 'megashark-lib';
 
 defineProps<{
   serverType: ServerType;

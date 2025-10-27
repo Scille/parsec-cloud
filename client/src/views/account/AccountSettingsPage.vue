@@ -77,10 +77,10 @@
 
 <script setup lang="ts">
 import SettingsList from '@/components/settings/SettingsList.vue';
-import { IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
-import { AccountSettingsTabs } from '@/views/account/types';
-import ManageAccountPage from '@/views/account/ManageAccountPage.vue';
 import AccountAuthenticationPage from '@/views/account/AccountAuthenticationPage.vue';
+import ManageAccountPage from '@/views/account/ManageAccountPage.vue';
+import { AccountSettingsTabs } from '@/views/account/types';
+import { IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
 
 defineProps<{
   activeTab: AccountSettingsTabs;

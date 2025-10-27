@@ -392,22 +392,21 @@
 </template>
 
 <script setup lang="ts">
-import { IonText, IonIcon, IonTitle } from '@ionic/vue';
 import { formatFileSize } from '@/common/file';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { MsImage, File, I18n, MsSpinner, MsReportTheme, MsReportText } from 'megashark-lib';
-import { informationCircle, person, pieChart, arrowForward } from 'ionicons/icons';
 import {
   BmsAccessInstance,
   BmsOrganization,
-  CustomOrderStatus,
   CustomOrderDetailsResultData,
+  CustomOrderStatus,
   DataType,
   OrganizationStatsResultData,
 } from '@/services/bms';
-import { onMounted, ref, computed } from 'vue';
-import { isDefaultOrganization } from '@/views/client-area/types';
 import { Env } from '@/services/environment';
+import { isDefaultOrganization } from '@/views/client-area/types';
+import { IonIcon, IonText, IonTitle } from '@ionic/vue';
+import { arrowForward, informationCircle, person, pieChart } from 'ionicons/icons';
+import { File, I18n, MsImage, MsReportText, MsReportTheme, MsSpinner } from 'megashark-lib';
+import { computed, onMounted, ref } from 'vue';
 
 const props = defineProps<{
   currentOrganization: BmsOrganization;

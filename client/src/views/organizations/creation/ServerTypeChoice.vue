@@ -91,17 +91,17 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonButton, IonText, IonFooter, IonIcon } from '@ionic/vue';
-import { ref } from 'vue';
-import { ServerType } from '@/services/parsecServers';
-import { I18n, MsImage } from 'megashark-lib';
-import TrialUS from '@/assets/images/trial-US.svg';
+import AppIconParsec from '@/assets/images/app-icon-parsec.svg?raw';
 import TrialFR from '@/assets/images/trial-FR.svg';
-import { checkmarkCircle } from 'ionicons/icons';
+import TrialUS from '@/assets/images/trial-US.svg';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
 import { Env } from '@/services/environment';
-import { ResourcesManager, Resources } from '@/services/resourcesManager';
-import AppIconParsec from '@/assets/images/app-icon-parsec.svg?raw';
+import { ServerType } from '@/services/parsecServers';
+import { Resources, ResourcesManager } from '@/services/resourcesManager';
+import { IonButton, IonFooter, IonIcon, IonPage, IonText } from '@ionic/vue';
+import { checkmarkCircle } from 'ionicons/icons';
+import { I18n, MsImage } from 'megashark-lib';
+import { ref } from 'vue';
 
 const emits = defineEmits<{
   (e: 'serverChosen', serverType: ServerType): void;

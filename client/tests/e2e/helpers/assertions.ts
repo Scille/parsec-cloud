@@ -56,7 +56,7 @@ export const expect = baseExpect.extend({
         message: () => '',
         pass: true,
       };
-    } catch (error: any) {
+    } catch (_error: any) {
       return {
         message: () => 'Does not have disabled attribute',
         pass: false,
@@ -71,7 +71,7 @@ export const expect = baseExpect.extend({
         message: () => '',
         pass: true,
       };
-    } catch (error: any) {
+    } catch (_error: any) {
       return {
         message: () => 'Has disabled attribute',
         pass: false,
@@ -96,7 +96,7 @@ export const expect = baseExpect.extend({
 
     try {
       await expect(toast).toHaveCount(1);
-    } catch (error: any) {
+    } catch (_error: any) {
       isVisible = false;
       errorMessage = 'Toast is not visible';
       pass = false;
@@ -117,7 +117,7 @@ export const expect = baseExpect.extend({
         if (!pass) {
           errorMessage = `Toast does not have the theme '${theme}'`;
         }
-      } catch (error: any) {
+      } catch (_error: any) {
         errorMessage = `Toast does not have the theme '${theme}'.`;
         pass = false;
       }
@@ -150,7 +150,7 @@ export const expect = baseExpect.extend({
       } else {
         await baseExpect(backButton).toBeHidden();
       }
-    } catch (error: any) {
+    } catch (_error: any) {
       pass = false;
       errorMessage = `Back button is ${backButtonVisible ? 'hidden' : 'visible'}`;
     }
@@ -390,7 +390,7 @@ export const expect = baseExpect.extend({
     let pass = true;
     try {
       await baseExpect(locator).toHaveAttribute('aria-disabled');
-    } catch (error: any) {
+    } catch (_error: any) {
       errorMessage = "Element does not have a 'disabled' attribute.";
       pass = false;
     }
@@ -405,7 +405,7 @@ export const expect = baseExpect.extend({
     let pass = true;
     try {
       await baseExpect(locator).not.toHaveAttribute('aria-disabled');
-    } catch (error: any) {
+    } catch (_error: any) {
       errorMessage = "Element has a 'disabled' attribute.";
       pass = false;
     }
@@ -422,7 +422,7 @@ export const expect = baseExpect.extend({
 
     try {
       await baseExpect(modal).toBeVisible();
-    } catch (error: any) {
+    } catch (_error: any) {
       errorMessage = 'Modal is not visible';
       pass = false;
     }

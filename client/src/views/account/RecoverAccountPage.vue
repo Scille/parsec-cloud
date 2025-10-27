@@ -165,25 +165,25 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonContent, IonButton, IonIcon, IonText } from '@ionic/vue';
-import { home } from 'ionicons/icons';
-import { onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 import { emailValidator, parsecAddrValidator } from '@/common/validators';
+import { AccountRecoverProceedErrorTag, AccountRecoverSendValidationEmailErrorTag, ParsecAccount, ParsecAccountAccess } from '@/parsec';
+import { getCurrentRouteParams, getCurrentRouteQuery, navigateTo, Routes, watchRoute } from '@/router';
+import { Env } from '@/services/environment';
+import { IonButton, IonContent, IonIcon, IonPage, IonText } from '@ionic/vue';
+import { home } from 'ionicons/icons';
 import {
-  MsInput,
-  Validity,
-  MsCodeValidationInput,
   AllowedInput,
-  MsChoosePasswordInput,
   asyncComputed,
-  MsSpinner,
-  Translatable,
+  MsChoosePasswordInput,
+  MsCodeValidationInput,
+  MsInput,
   MsReportText,
   MsReportTheme,
+  MsSpinner,
+  Translatable,
+  Validity,
 } from 'megashark-lib';
-import { AccountRecoverProceedErrorTag, AccountRecoverSendValidationEmailErrorTag, ParsecAccount, ParsecAccountAccess } from '@/parsec';
-import { Env } from '@/services/environment';
-import { getCurrentRouteParams, getCurrentRouteQuery, navigateTo, Routes, watchRoute } from '@/router';
+import { onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 
 enum Steps {
   Email = 0,

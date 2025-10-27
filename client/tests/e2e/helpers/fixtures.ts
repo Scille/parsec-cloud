@@ -326,7 +326,6 @@ export const msTest = debugTest.extend<{
   },
 
   documentsOptions: [
-    // eslint-disable-next-line no-empty-pattern
     async ({}, use: any): Promise<void> => {
       await use({ empty: false });
     },
@@ -584,7 +583,6 @@ export const msTest = debugTest.extend<{
   },
 
   clientAreaCustomOrderInitialMocks: [
-    // eslint-disable-next-line no-empty-pattern
     async ({}, use): Promise<void> => {
       await use(undefined);
     },

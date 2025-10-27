@@ -12,10 +12,10 @@
 </template>
 
 <script setup lang="ts">
-import { BmsAccessInstance, BmsOrganization, BmsResponse, DataType, SellsyInvoice } from '@/services/bms';
 import { YearInvoicesList } from '@/components/client-area';
-import { ref, onMounted } from 'vue';
+import { BmsAccessInstance, BmsOrganization, BmsResponse, DataType, SellsyInvoice } from '@/services/bms';
 import { isDefaultOrganization } from '@/views/client-area/types';
+import { onMounted, ref } from 'vue';
 
 const props = defineProps<{
   currentOrganization: BmsOrganization;

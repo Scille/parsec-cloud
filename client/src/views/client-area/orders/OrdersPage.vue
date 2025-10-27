@@ -40,13 +40,13 @@
 </template>
 
 <script setup lang="ts">
-import { IonText, IonButton, modalController } from '@ionic/vue';
-import { BmsAccessInstance, DataType, CustomOrderRequest } from '@/services/bms';
-import NewOrderModal from '@/views/client-area/orders/NewOrderModal.vue';
 import { OrdersList } from '@/components/client-area';
-import { ref, onMounted } from 'vue';
-import { MsModalResult, MsSpinner } from 'megashark-lib';
+import { BmsAccessInstance, CustomOrderRequest, DataType } from '@/services/bms';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import NewOrderModal from '@/views/client-area/orders/NewOrderModal.vue';
+import { IonButton, IonText, modalController } from '@ionic/vue';
+import { MsModalResult, MsSpinner } from 'megashark-lib';
+import { onMounted, ref } from 'vue';
 
 const props = defineProps<{
   informationManager: InformationManager;

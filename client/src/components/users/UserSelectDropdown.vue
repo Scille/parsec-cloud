@@ -33,7 +33,7 @@
 
 <script setup lang="ts">
 import { UserInfo } from '@/parsec';
-import { IonList, IonItem, IonText, IonIcon } from '@ionic/vue';
+import { IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
 import { warning } from 'ionicons/icons';
 
 const props = defineProps<{

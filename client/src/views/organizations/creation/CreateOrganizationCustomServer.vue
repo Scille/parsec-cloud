@@ -69,34 +69,34 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage } from '@ionic/vue';
-import { ref, onMounted, isProxy, toRaw } from 'vue';
-import OrganizationNameAndServerPage from '@/views/organizations/creation/OrganizationNameAndServerPage.vue';
+import { getDefaultDeviceName } from '@/common/device';
 import {
-  DeviceSaveStrategy,
-  OrganizationID,
-  ParsedParsecAddrTag,
-  parseParsecAddr,
-  createOrganization as parsecCreateOrganization,
-  bootstrapOrganization as parsecBootstrapOrganization,
-  Result,
   AvailableDevice,
   BootstrapOrganizationError,
   BootstrapOrganizationErrorTag,
-  ParsecAccount,
-  isWeb,
-  SaveStrategy,
+  DeviceSaveStrategy,
   DeviceSaveStrategyTag,
+  isWeb,
+  OrganizationID,
+  ParsecAccount,
+  bootstrapOrganization as parsecBootstrapOrganization,
+  createOrganization as parsecCreateOrganization,
+  ParsedParsecAddrTag,
+  parseParsecAddr,
+  Result,
+  SaveStrategy,
 } from '@/parsec';
-import OrganizationUserInformationPage from '@/views/organizations/creation/OrganizationUserInformationPage.vue';
-import OrganizationAuthenticationPage from '@/views/organizations/creation/OrganizationAuthenticationPage.vue';
-import OrganizationSummaryPage from '@/views/organizations/creation/OrganizationSummaryPage.vue';
-import { ServerType } from '@/services/parsecServers';
-import { getDefaultDeviceName } from '@/common/device';
 import { wait } from '@/parsec/internals';
-import OrganizationCreationPage from '@/views/organizations/creation/OrganizationCreationPage.vue';
+import { ServerType } from '@/services/parsecServers';
+import OrganizationAuthenticationPage from '@/views/organizations/creation/OrganizationAuthenticationPage.vue';
 import OrganizationCreatedPage from '@/views/organizations/creation/OrganizationCreatedPage.vue';
+import OrganizationCreationPage from '@/views/organizations/creation/OrganizationCreationPage.vue';
+import OrganizationNameAndServerPage from '@/views/organizations/creation/OrganizationNameAndServerPage.vue';
+import OrganizationSummaryPage from '@/views/organizations/creation/OrganizationSummaryPage.vue';
+import OrganizationUserInformationPage from '@/views/organizations/creation/OrganizationUserInformationPage.vue';
+import { IonPage } from '@ionic/vue';
 import { Translatable } from 'megashark-lib';
+import { isProxy, onMounted, ref, toRaw } from 'vue';
 
 enum Steps {
   OrganizationNameAndServer,

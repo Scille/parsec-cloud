@@ -19,9 +19,9 @@
 </template>
 
 <script setup lang="ts">
-import { IonText } from '@ionic/vue';
-import { CustomOrderRequest } from '@/services/bms';
 import OrdersListItem from '@/components/client-area/orders/OrdersListItem.vue';
+import { CustomOrderRequest } from '@/services/bms';
+import { IonText } from '@ionic/vue';
 
 defineProps<{
   orders: CustomOrderRequest[];
