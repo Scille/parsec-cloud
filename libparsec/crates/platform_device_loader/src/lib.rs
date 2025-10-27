@@ -328,16 +328,31 @@ pub async fn update_device_change_authentication(
 ///
 /// Returns the old server address
 pub async fn update_device_overwrite_server_addr(
-    #[cfg_attr(not(feature = "test-with-testbed"), expect(unused_variables))] config_dir: &Path,
+    config_dir: &Path,
     strategy: &DeviceAccessStrategy,
     new_server_addr: ParsecAddr,
 ) -> Result<ParsecAddr, UpdateDeviceError> {
+    let key_file = strategy.key_file();
+    let available_device = load_available_device(config_dir, key_file.to_owned())
+        .await
+        .map_err(|err| match err {
+            LoadAvailableDeviceError::StorageNotAvailable => UpdateDeviceError::StorageNotAvailable,
+            LoadAvailableDeviceError::InvalidPath(err) => UpdateDeviceError::InvalidPath(err),
+            LoadAvailableDeviceError::InvalidData => UpdateDeviceError::InvalidData,
+            LoadAvailableDeviceError::Internal(err) => UpdateDeviceError::Internal(err),
+        })?;
+    let save_strategy = strategy
+        .clone()
+        .into_save_strategy(available_device.ty)
+        // Return error if the file exists but doesn't correspond to the save strategy
+        .ok_or(UpdateDeviceError::InvalidData)?;
+
     #[cfg(feature = "test-with-testbed")]
     if let Some(result) = testbed::maybe_update_device(
         config_dir,
         strategy,
-        &strategy.clone().into_save_strategy(),
-        strategy.key_file(),
+        &save_strategy,
+        key_file,
         Some(new_server_addr.clone()),
     ) {
         return result.map(|(_, old_server_addr)| old_server_addr);
@@ -345,7 +360,7 @@ pub async fn update_device_overwrite_server_addr(
 
     // 1. Load the current device keys file...
 
-    let file_content = platform::read_file(strategy.key_file())
+    let file_content = platform::read_file(key_file)
         .await
         .map_err(|err| match err {
             ReadFileError::StorageNotAvailable => UpdateDeviceError::StorageNotAvailable,
@@ -382,9 +397,9 @@ pub async fn update_device_overwrite_server_addr(
     platform::update_device(
         &device,
         device_file.created_on(),
-        strategy.key_file(),
-        &strategy.clone().into_save_strategy(),
-        strategy.key_file(),
+        key_file,
+        &save_strategy,
+        key_file,
     )
     .await?;
 

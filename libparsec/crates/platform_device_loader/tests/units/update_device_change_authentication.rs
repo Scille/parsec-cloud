@@ -13,10 +13,10 @@ use crate::tests::utils::key_present_in_system;
 #[parsec_test]
 async fn same_key_file(tmp_path: TmpPath) {
     let key_file = tmp_path.join("devices/alice@dev1.keys");
-    let access = DeviceAccessStrategy::Password {
-        key_file: key_file.clone(),
+    let save_strategy = DeviceSaveStrategy::Password {
         password: "P@ssw0rd.".to_owned().into(),
     };
+    let access_strategy = save_strategy.clone().into_access(key_file.clone());
     let url = ParsecOrganizationAddr::from_any(
         // cspell:disable-next-line
         "parsec3://test.invalid/Org?no_ssl=true&p=xCD7SjlysFv3d4mTkRu-ZddRjIZPGraSjUnoOHT9s8rmLA",
@@ -40,14 +40,9 @@ async fn same_key_file(tmp_path: TmpPath) {
     assert!(!key_present_in_system(&key_file).await);
 
     TimeProvider::root_provider().mock_time_frozen("2000-01-01T00:00:00Z".parse().unwrap());
-    let available1 = save_device(
-        Path::new(""),
-        &access.clone().into_save_strategy(),
-        &device,
-        key_file.clone(),
-    )
-    .await
-    .unwrap();
+    let available1 = save_device(Path::new(""), &save_strategy, &device, key_file.clone())
+        .await
+        .unwrap();
     TimeProvider::root_provider().unmock_time();
 
     // Sanity check
@@ -61,15 +56,15 @@ async fn same_key_file(tmp_path: TmpPath) {
         "2000-01-01T00:00:00Z".parse().unwrap()
     );
 
-    let new_access = DeviceAccessStrategy::Password {
-        key_file: key_file.clone(),
+    let new_save_strategy = DeviceSaveStrategy::Password {
         password: "P@ssw0rd1.".to_owned().into(),
     };
+    let new_access_strategy = new_save_strategy.clone().into_access(key_file.clone());
     TimeProvider::root_provider().mock_time_frozen("2000-01-02T00:00:00Z".parse().unwrap());
     let available2 = update_device_change_authentication(
         Path::new(""),
-        &access,
-        &new_access.clone().into_save_strategy(),
+        &access_strategy,
+        &new_save_strategy,
         &key_file,
     )
     .await
@@ -86,20 +81,25 @@ async fn same_key_file(tmp_path: TmpPath) {
     p_assert_eq!(available2, expected_available2);
 
     p_assert_eq!(
-        *load_device(Path::new(""), &new_access).await.unwrap(),
+        *load_device(Path::new(""), &new_access_strategy)
+            .await
+            .unwrap(),
         device
     );
 
-    load_device(Path::new(""), &access).await.unwrap_err();
+    load_device(Path::new(""), &access_strategy)
+        .await
+        .unwrap_err();
 }
 
 #[parsec_test]
 async fn different_key_file(tmp_path: TmpPath) {
     let key_file = tmp_path.join("devices/alice@dev1.keys");
-    let access = DeviceAccessStrategy::Password {
-        key_file: key_file.clone(),
+
+    let save_strategy = DeviceSaveStrategy::Password {
         password: "P@ssw0rd.".to_owned().into(),
     };
+    let access_strategy = save_strategy.clone().into_access(key_file.clone());
     let url = ParsecOrganizationAddr::from_any(
         // cspell:disable-next-line
         "parsec3://test.invalid/Org?no_ssl=true&p=xCD7SjlysFv3d4mTkRu-ZddRjIZPGraSjUnoOHT9s8rmLA",
@@ -122,28 +122,23 @@ async fn different_key_file(tmp_path: TmpPath) {
     // Sanity check
     assert!(!key_present_in_system(&key_file).await);
 
-    save_device(
-        Path::new(""),
-        &access.clone().into_save_strategy(),
-        &device,
-        key_file.clone(),
-    )
-    .await
-    .unwrap();
+    save_device(Path::new(""), &save_strategy, &device, key_file.clone())
+        .await
+        .unwrap();
 
     // Sanity check
     assert!(key_present_in_system(&key_file).await);
 
     let new_key_file = tmp_path.join("devices/alice@dev2.keys");
-    let new_access = DeviceAccessStrategy::Password {
-        key_file: new_key_file.clone(),
+    let new_save_strategy = DeviceSaveStrategy::Password {
         password: "P@ssw0rd.".to_owned().into(),
     };
+    let new_access_strategy = new_save_strategy.clone().into_access(new_key_file.clone());
 
     update_device_change_authentication(
         Path::new(""),
-        &access,
-        &new_access.clone().into_save_strategy(),
+        &access_strategy,
+        &new_save_strategy,
         &new_key_file,
     )
     .await
@@ -154,11 +149,15 @@ async fn different_key_file(tmp_path: TmpPath) {
     assert!(key_present_in_system(&new_key_file).await);
 
     p_assert_eq!(
-        *load_device(Path::new(""), &new_access).await.unwrap(),
+        *load_device(Path::new(""), &new_access_strategy)
+            .await
+            .unwrap(),
         device
     );
 
-    load_device(Path::new(""), &access).await.unwrap_err();
+    load_device(Path::new(""), &access_strategy)
+        .await
+        .unwrap_err();
 }
 
 #[parsec_test(testbed = "empty")]
@@ -174,20 +173,20 @@ async fn testbed_same_key_file(env: &TestbedEnv) {
         password: "P@ssw0rd.".to_owned().into(),
     };
 
-    let new_access = DeviceAccessStrategy::Password {
-        key_file: key_file.clone(),
+    let new_save_strategy = DeviceSaveStrategy::Password {
         password: "P@ssw0rd1.".to_owned().into(),
     };
+    let new_access_strategy = new_save_strategy.clone().into_access(key_file.clone());
     update_device_change_authentication(
         &env.discriminant_dir,
         &current_access,
-        &new_access.clone().into_save_strategy(),
+        &new_save_strategy,
         &key_file,
     )
     .await
     .unwrap();
 
-    load_device(&env.discriminant_dir, &new_access)
+    load_device(&env.discriminant_dir, &new_access_strategy)
         .await
         .unwrap();
     load_device(&env.discriminant_dir, &current_access)
@@ -209,20 +208,21 @@ async fn testbed_different_key_file(env: &TestbedEnv) {
         password: "P@ssw0rd.".to_owned().into(),
     };
 
-    let new_access = DeviceAccessStrategy::Password {
-        key_file: new_key_file.clone(),
+    let new_save_strategy = DeviceSaveStrategy::Password {
         password: "P@ssw0rd.".to_owned().into(),
     };
+    let new_access_strategy = new_save_strategy.clone().into_access(new_key_file.clone());
+
     update_device_change_authentication(
         &env.discriminant_dir,
         &current_access,
-        &new_access.clone().into_save_strategy(),
+        &new_save_strategy,
         &new_key_file,
     )
     .await
     .unwrap();
 
-    load_device(&env.discriminant_dir, &new_access)
+    load_device(&env.discriminant_dir, &new_access_strategy)
         .await
         .unwrap();
     load_device(&env.discriminant_dir, &current_access)

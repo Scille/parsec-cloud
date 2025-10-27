@@ -9,6 +9,8 @@ use libparsec_types::prelude::*;
 #[case("password")]
 #[cfg_attr(not(target_arch = "wasm32"), case("keyring"))]
 #[case("account_vault")]
+// TODO #11269
+// #[cfg_attr(target_os = "windows", case("smartcard"))]
 async fn save_list(#[case] kind: &str, tmp_path: TmpPath) {
     use crate::tests::utils::key_present_in_system;
 
@@ -33,11 +35,9 @@ async fn save_list(#[case] kind: &str, tmp_path: TmpPath) {
         None,
     );
 
-    let (access, expected_available_device) = match kind {
+    let (save_strategy, expected_available_device) = match kind {
         "keyring" => {
-            let access = DeviceAccessStrategy::Keyring {
-                key_file: key_file.clone(),
-            };
+            let save_strategy = DeviceSaveStrategy::Keyring;
             let expected_available_device = AvailableDevice {
                 key_file_path: key_file.clone(),
                 created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
@@ -48,14 +48,13 @@ async fn save_list(#[case] kind: &str, tmp_path: TmpPath) {
                 device_id: device.device_id,
                 human_handle: device.human_handle.clone(),
                 device_label: device.device_label.clone(),
-                ty: AvailableDeviceType::Keyring,
+                ty: save_strategy.ty(),
             };
-            (access, expected_available_device)
+            (save_strategy, expected_available_device)
         }
 
         "password" => {
-            let access = DeviceAccessStrategy::Password {
-                key_file: key_file.clone(),
+            let save_strategy = DeviceSaveStrategy::Password {
                 password: "P@ssw0rd.".to_string().into(),
             };
             let expected_available_device = AvailableDevice {
@@ -68,16 +67,15 @@ async fn save_list(#[case] kind: &str, tmp_path: TmpPath) {
                 device_id: device.device_id,
                 human_handle: device.human_handle.clone(),
                 device_label: device.device_label.clone(),
-                ty: AvailableDeviceType::Password,
+                ty: save_strategy.ty(),
             };
-            (access, expected_available_device)
+            (save_strategy, expected_available_device)
         }
 
         "account_vault" => {
             let ciphertext_key_id =
                 AccountVaultItemOpaqueKeyID::from_hex("4ce154500ce340bcaa4d44dcb9b841a1").unwrap();
-            let access = DeviceAccessStrategy::AccountVault {
-                key_file: key_file.clone(),
+            let save_strategy = DeviceSaveStrategy::AccountVault {
                 ciphertext_key_id,
                 ciphertext_key: hex!(
                     "2f64db9fae22c574ade28c44cd206c00f8119e9b49dacc131dad31c043ebe766"
@@ -94,10 +92,12 @@ async fn save_list(#[case] kind: &str, tmp_path: TmpPath) {
                 device_id: device.device_id,
                 human_handle: device.human_handle.clone(),
                 device_label: device.device_label.clone(),
-                ty: AvailableDeviceType::AccountVault { ciphertext_key_id },
+                ty: save_strategy.ty(),
             };
-            (access, expected_available_device)
+            (save_strategy, expected_available_device)
         }
+
+        "smartcard" => todo!(),
 
         unknown => panic!("Unknown kind: {unknown:?}"),
     };
@@ -107,14 +107,9 @@ async fn save_list(#[case] kind: &str, tmp_path: TmpPath) {
     device
         .time_provider
         .mock_time_frozen("2000-01-01T00:00:00Z".parse().unwrap());
-    let available_device = save_device(
-        &tmp_path,
-        &access.into_save_strategy(),
-        &device,
-        key_file.clone(),
-    )
-    .await
-    .unwrap();
+    let available_device = save_device(&tmp_path, &save_strategy, &device, key_file.clone())
+        .await
+        .unwrap();
     device.time_provider.unmock_time();
 
     p_assert_eq!(available_device, expected_available_device);

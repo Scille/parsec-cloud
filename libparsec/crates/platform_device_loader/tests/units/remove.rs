@@ -16,18 +16,12 @@ async fn remove_ok(tmp_path: TmpPath, env: &TestbedEnv) {
     // 1. Save device to filesystem.
     let device = env.local_device("alice@dev1");
     let key_file = tmp_path.join("alice.device");
-    let access = DeviceAccessStrategy::Password {
-        key_file: key_file.clone(),
+    let save_strategy = DeviceSaveStrategy::Password {
         password: "FooBar".to_owned().into(),
     };
-    save_device(
-        &tmp_path,
-        &access.into_save_strategy(),
-        &device,
-        key_file.clone(),
-    )
-    .await
-    .unwrap();
+    save_device(&tmp_path, &save_strategy, &device, key_file.clone())
+        .await
+        .unwrap();
 
     // 2. Remove the device.
     remove_device(&tmp_path, &key_file).await.unwrap();
