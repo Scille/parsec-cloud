@@ -59,6 +59,11 @@ updates:
       - dependency-name: rsa
         versions:
           - ">=0.9.0 < 0.10"
+      # Pyo3 often include breaking change that need to be resolved manually
+      # https://github.com/Scille/parsec-cloud/issues/11451
+      - dependency-name: pyo3
+        versions:
+          - ">=0.26.0"
     schedule:
       interval: weekly
       day: monday
