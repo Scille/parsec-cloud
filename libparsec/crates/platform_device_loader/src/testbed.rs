@@ -412,7 +412,10 @@ pub(crate) fn maybe_load_device(
                             }
                         }
                     };
-                    access.clone().into_save_strategy(extra_info).expect("valid variant")
+                    access
+                        .clone()
+                        .into_save_strategy(extra_info)
+                        .expect("valid variant")
                 };
                 cache.available.push((
                     access.key_file().to_owned(),
