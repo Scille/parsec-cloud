@@ -25,7 +25,7 @@ enum MaybePopulated<T> {
 
 #[derive(Default)]
 struct KeyFilesCache {
-    available: Vec<(DeviceAccessStrategy, Arc<LocalDevice>, DateTime)>,
+    available: Vec<(PathBuf, DeviceSaveStrategy, Arc<LocalDevice>, DateTime)>,
     destroyed: Vec<PathBuf>,
 }
 
@@ -236,11 +236,11 @@ pub(crate) fn maybe_list_available_devices(config_dir: &Path) -> Option<Vec<Avai
 
             // 1. Start with the devices we already know about
 
-            for (access, device, created_on) in already_accessed_key_files.available.iter() {
+            for (key_file, save_strategy, device, created_on) in
+                already_accessed_key_files.available.iter()
+            {
                 // Sanity check
-                assert!(!already_accessed_key_files
-                    .destroyed
-                    .contains(&access.key_file().to_owned()));
+                assert!(!already_accessed_key_files.destroyed.contains(key_file));
 
                 let server_url = {
                     ParsecAddr::new(
@@ -252,7 +252,7 @@ pub(crate) fn maybe_list_available_devices(config_dir: &Path) -> Option<Vec<Avai
                     .to_string()
                 };
                 available_devices.push(AvailableDevice {
-                    key_file_path: access.key_file().to_owned(),
+                    key_file_path: key_file.clone(),
                     server_url,
                     created_on: *created_on,
                     protected_on: *created_on,
@@ -261,7 +261,7 @@ pub(crate) fn maybe_list_available_devices(config_dir: &Path) -> Option<Vec<Avai
                     device_id: device.device_id,
                     device_label: device.device_label.clone(),
                     human_handle: device.human_handle.clone(),
-                    ty: access.ty(),
+                    ty: save_strategy.ty(),
                 })
             }
 
@@ -323,56 +323,53 @@ pub(crate) fn maybe_load_device(
                 .already_accessed_key_files
                 .lock()
                 .expect("Mutex is poisoned");
-            let found = cache.available.iter().find_map(|(c_access, c_device, _)| {
-                match (access, c_access) {
-                    (
-                        DeviceAccessStrategy::Password {
-                            key_file: kf,
-                            password: pwd,
-                        },
-                        DeviceAccessStrategy::Password {
-                            key_file: c_kf,
-                            password: c_pwd,
-                        },
-                    ) if c_kf == kf => {
-                        if c_pwd == pwd {
-                            Some(Ok(c_device.to_owned()))
-                        } else {
-                            Some(Err(LoadDeviceError::DecryptionFailed))
+            let found =
+                cache
+                    .available
+                    .iter()
+                    .find_map(|(c_key_file, c_save_strategy, c_device, _)| {
+                        if access.key_file() != c_key_file {
+                            return None;
                         }
-                    }
-                    (
-                        DeviceAccessStrategy::Smartcard { key_file: kf },
-                        DeviceAccessStrategy::Smartcard { key_file: c_kf },
-                    ) if c_kf == kf => Some(Ok(c_device.to_owned())),
-                    (
-                        DeviceAccessStrategy::Keyring { key_file: kf },
-                        DeviceAccessStrategy::Keyring { key_file: c_kf },
-                    ) if c_kf == kf => Some(Ok(c_device.to_owned())),
-                    (
-                        DeviceAccessStrategy::AccountVault {
-                            key_file: kf,
-                            ciphertext_key_id: _,
-                            ciphertext_key: ck,
-                        },
-                        DeviceAccessStrategy::AccountVault {
-                            key_file: c_kf,
-                            ciphertext_key_id: _,
-                            ciphertext_key: c_ck,
-                        },
-                    ) if c_kf == kf => {
-                        // Note `ciphertext_key_id` is not compared here, this is because
-                        // it has no use during the actual device load (instead it is used
-                        // earlier on to fetch `ciphertext_key` from the server).
-                        if ck == c_ck {
-                            Some(Ok(c_device.to_owned()))
-                        } else {
-                            Some(Err(LoadDeviceError::DecryptionFailed))
+                        match (access, c_save_strategy) {
+                            (
+                                DeviceAccessStrategy::Password { password: pwd, .. },
+                                DeviceSaveStrategy::Password { password: c_pwd },
+                            ) => {
+                                if c_pwd == pwd {
+                                    Some(Ok(c_device.to_owned()))
+                                } else {
+                                    Some(Err(LoadDeviceError::DecryptionFailed))
+                                }
+                            }
+                            (
+                                DeviceAccessStrategy::Smartcard { .. },
+                                DeviceSaveStrategy::Smartcard { .. },
+                            ) => Some(Ok(c_device.to_owned())),
+                            (DeviceAccessStrategy::Keyring { .. }, DeviceSaveStrategy::Keyring) => {
+                                Some(Ok(c_device.to_owned()))
+                            }
+                            (
+                                DeviceAccessStrategy::AccountVault {
+                                    ciphertext_key: ck, ..
+                                },
+                                DeviceSaveStrategy::AccountVault {
+                                    ciphertext_key: c_ck,
+                                    ..
+                                },
+                            ) => {
+                                // Note `ciphertext_key_id` is not compared here, this is because
+                                // it has no use during the actual device load (instead it is used
+                                // earlier on to fetch `ciphertext_key` from the server).
+                                if ck == c_ck {
+                                    Some(Ok(c_device.to_owned()))
+                                } else {
+                                    Some(Err(LoadDeviceError::DecryptionFailed))
+                                }
+                            }
+                            _ => None,
                         }
-                    }
-                    _ => None,
-                }
-            });
+                    });
 
             if found.is_some() {
                 return found;
@@ -399,9 +396,30 @@ pub(crate) fn maybe_load_device(
                 if !decryption_success {
                     return Some(Err(LoadDeviceError::DecryptionFailed));
                 }
-                cache
-                    .available
-                    .push((access.to_owned(), device.to_owned(), created_on));
+                // Save strategy contains more informations than access strategy, so we have
+                // to mock the missing stuff here.
+                let save_strategy = {
+                    let extra_info = match access {
+                        DeviceAccessStrategy::Keyring { .. } => AvailableDeviceType::Keyring,
+                        DeviceAccessStrategy::Password { .. } => AvailableDeviceType::Password,
+                        DeviceAccessStrategy::Smartcard { .. } => todo!(), // TODO #11269
+                        DeviceAccessStrategy::AccountVault { ciphertext_key, .. } => {
+                            AvailableDeviceType::AccountVault {
+                                ciphertext_key_id: AccountVaultItemOpaqueKeyID::try_from(
+                                    &ciphertext_key.as_ref()[0..16],
+                                )
+                                .expect("valid size"),
+                            }
+                        }
+                    };
+                    access.clone().into_save_strategy(extra_info).expect("valid variant")
+                };
+                cache.available.push((
+                    access.key_file().to_owned(),
+                    save_strategy,
+                    device.to_owned(),
+                    created_on,
+                ));
 
                 Some(Ok(device))
             } else {
@@ -426,15 +444,15 @@ pub(crate) fn maybe_save_device(
                 .already_accessed_key_files
                 .lock()
                 .expect("Mutex is poisoned");
-            cache.available.retain(|(c_access, _, _)| {
-                let c_key_file = c_access.key_file();
-                c_key_file != key_file
-            });
+            cache
+                .available
+                .retain(|(c_key_file, _, _, _)| *c_key_file != key_file);
             // The device is newly created
             let created_on = device.now();
             cache.destroyed.retain(|c_key_file| *c_key_file != key_file);
             cache.available.push((
-                strategy.clone().into_access(key_file.clone()),
+                key_file.clone(),
+                strategy.clone(),
                 Arc::new(device.to_owned()),
                 created_on,
             ));
@@ -544,10 +562,9 @@ pub(crate) fn maybe_remove_device(
                 .already_accessed_key_files
                 .lock()
                 .expect("Mutex is poisoned");
-            cache.available.retain(|(c_access, _, _)| {
-                let c_key_file = c_access.key_file();
-                c_key_file != key_file
-            });
+            cache
+                .available
+                .retain(|(c_key_file, _, _, _)| c_key_file != key_file);
             let key_file = key_file.to_owned();
             if !cache.destroyed.contains(&key_file) {
                 cache.destroyed.push(key_file);

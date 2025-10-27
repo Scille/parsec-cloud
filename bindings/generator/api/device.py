@@ -60,7 +60,6 @@ class DeviceAccessStrategy(Variant):
 
     class AccountVault:
         key_file: Path
-        ciphertext_key_id: AccountVaultItemOpaqueKeyID
         ciphertext_key: SecretKey
 
 

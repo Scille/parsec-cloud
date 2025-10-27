@@ -281,14 +281,12 @@ impl DeviceSaveStrategy {
                 DeviceAccessStrategy::Password { key_file, password }
             }
             DeviceSaveStrategy::Smartcard { .. } => DeviceAccessStrategy::Smartcard { key_file },
-            DeviceSaveStrategy::AccountVault {
-                ciphertext_key_id,
-                ciphertext_key,
-            } => DeviceAccessStrategy::AccountVault {
-                key_file,
-                ciphertext_key_id,
-                ciphertext_key,
-            },
+            DeviceSaveStrategy::AccountVault { ciphertext_key, .. } => {
+                DeviceAccessStrategy::AccountVault {
+                    key_file,
+                    ciphertext_key,
+                }
+            }
         }
     }
 
@@ -325,7 +323,6 @@ pub enum DeviceAccessStrategy {
         ///
         /// Note it is `libparsec_account`'s job to deal with fetching&decrypting
         /// the account vault item containing this key.
-        ciphertext_key_id: AccountVaultItemOpaqueKeyID,
         ciphertext_key: SecretKey,
     },
 }
@@ -340,34 +337,38 @@ impl DeviceAccessStrategy {
         }
     }
 
-    pub fn ty(&self) -> AvailableDeviceType {
+    /// Returns `None` if `extra_info`'s variant type doesn't match our strategy
+    pub fn into_save_strategy(self, extra_info: AvailableDeviceType) -> Option<DeviceSaveStrategy> {
+        // Don't do `match (self, extra_info)` since we would end up with a catch-all
+        // `(_, _) => return None` condition that would prevent this code from breaking
+        // whenever a new variant is introduced (hence hiding the fact this code has
+        // to be updated).
         match self {
-            Self::Keyring { .. } => AvailableDeviceType::Keyring,
-            Self::Password { .. } => AvailableDeviceType::Password,
-            Self::Smartcard { .. } => AvailableDeviceType::Smartcard,
-            Self::AccountVault {
-                ciphertext_key_id, ..
-            } => AvailableDeviceType::AccountVault {
-                ciphertext_key_id: *ciphertext_key_id,
-            },
-        }
-    }
-
-    pub fn into_save_strategy(self) -> DeviceSaveStrategy {
-        match self {
-            DeviceAccessStrategy::Keyring { .. } => DeviceSaveStrategy::Keyring,
+            DeviceAccessStrategy::Keyring { .. } => {
+                if matches!(extra_info, AvailableDeviceType::Keyring) {
+                    Some(DeviceSaveStrategy::Keyring)
+                } else {
+                    None
+                }
+            }
             DeviceAccessStrategy::Password { password, .. } => {
-                DeviceSaveStrategy::Password { password }
+                if matches!(extra_info, AvailableDeviceType::Password) {
+                    Some(DeviceSaveStrategy::Password { password })
+                } else {
+                    None
+                }
             }
             DeviceAccessStrategy::Smartcard { .. } => todo!(),
-            DeviceAccessStrategy::AccountVault {
-                ciphertext_key_id,
-                ciphertext_key,
-                ..
-            } => DeviceSaveStrategy::AccountVault {
-                ciphertext_key_id,
-                ciphertext_key,
-            },
+            DeviceAccessStrategy::AccountVault { ciphertext_key, .. } => {
+                if let AvailableDeviceType::AccountVault { ciphertext_key_id } = extra_info {
+                    Some(DeviceSaveStrategy::AccountVault {
+                        ciphertext_key_id,
+                        ciphertext_key,
+                    })
+                } else {
+                    None
+                }
+            }
         }
     }
 }

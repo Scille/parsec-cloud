@@ -30,23 +30,17 @@ async fn ok(tmp_path: TmpPath) {
         None,
         None,
     );
-
-    let access = DeviceAccessStrategy::Password {
-        key_file: key_file.clone(),
+    let save_strategy = DeviceSaveStrategy::Password {
         password: "P@ssw0rd.".to_owned().into(),
     };
-    save_device(
-        Path::new(""),
-        &access.clone().into_save_strategy(),
-        &device,
-        key_file,
-    )
-    .await
-    .unwrap();
+    let access_strategy = save_strategy.clone().into_access(key_file.clone());
+    save_device(Path::new(""), &save_strategy, &device, key_file)
+        .await
+        .unwrap();
 
     let new_server_addr: ParsecAddr = "parsec3://new.invalid".parse().unwrap();
 
-    update_device_overwrite_server_addr(Path::new(""), &access, new_server_addr)
+    update_device_overwrite_server_addr(Path::new(""), &access_strategy, new_server_addr)
         .await
         .unwrap();
 
@@ -60,13 +54,13 @@ async fn ok(tmp_path: TmpPath) {
     };
 
     p_assert_eq!(
-        *load_device(Path::new(""), &access).await.unwrap(),
+        *load_device(Path::new(""), &access_strategy).await.unwrap(),
         expected_device
     );
 
     let new_server_addr: ParsecAddr = "parsec3://new.invalid?no_ssl=true".parse().unwrap();
 
-    update_device_overwrite_server_addr(Path::new(""), &access, new_server_addr)
+    update_device_overwrite_server_addr(Path::new(""), &access_strategy, new_server_addr)
         .await
         .unwrap();
 
@@ -78,7 +72,7 @@ async fn ok(tmp_path: TmpPath) {
     };
 
     p_assert_eq!(
-        *load_device(Path::new(""), &access).await.unwrap(),
+        *load_device(Path::new(""), &access_strategy).await.unwrap(),
         expected_device
     );
 }
@@ -91,7 +85,9 @@ async fn testbed(env: &TestbedEnv) {
     .await;
     let alice = env.local_device("alice@dev1");
 
-    let key_file = env.discriminant_dir.join("devices/alice@dev1.keys");
+    let key_file = env
+        .discriminant_dir
+        .join("devices/de10a11cec0010000000000000000000.keys");
 
     let new_server_addr: ParsecAddr = "parsec3://new.invalid".parse().unwrap();
     let expected_new_organization_addr = ParsecOrganizationAddr::new(

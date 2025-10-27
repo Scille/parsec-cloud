@@ -47,11 +47,10 @@ async fn bad_path(tmp_path: TmpPath, #[case] kind: BadPathKind, env: &TestbedEnv
     };
 
     let device = env.local_device("alice@dev1");
-    let access = DeviceAccessStrategy::Password {
-        key_file: key_file.clone(),
+    let save_strategy = DeviceSaveStrategy::Password {
         password: "P@ssw0rd.".to_owned().into(),
     };
-    let outcome = save_device(&tmp_path, &access.into_save_strategy(), &device, key_file).await;
+    let outcome = save_device(&tmp_path, &save_strategy, &device, key_file).await;
     p_assert_matches!(outcome, Err(SaveDeviceError::InvalidPath(_)));
 }
 
@@ -59,22 +58,17 @@ async fn bad_path(tmp_path: TmpPath, #[case] kind: BadPathKind, env: &TestbedEnv
 async fn ok_simple(tmp_path: TmpPath, env: &TestbedEnv) {
     let key_file = tmp_path.join("a_devices.keys");
 
-    let access = DeviceAccessStrategy::Password {
-        key_file: key_file.clone(),
+    let save_strategy = DeviceSaveStrategy::Password {
         password: "P@ssw0rd.".to_owned().into(),
     };
+    let access_strategy = save_strategy.clone().into_access(key_file.clone());
     let alice_device = env.local_device("alice@dev1");
     alice_device
         .time_provider
         .mock_time_frozen("2000-01-01T00:00:00Z".parse().unwrap());
-    let outcome = save_device(
-        &tmp_path,
-        &access.clone().into_save_strategy(),
-        &alice_device,
-        key_file.clone(),
-    )
-    .await
-    .unwrap();
+    let outcome = save_device(&tmp_path, &save_strategy, &alice_device, key_file.clone())
+        .await
+        .unwrap();
     p_assert_eq!(
         outcome,
         AvailableDevice {
@@ -92,7 +86,7 @@ async fn ok_simple(tmp_path: TmpPath, env: &TestbedEnv) {
     );
 
     // Roundtrip check
-    let loaded = load_device(&tmp_path, &access).await.unwrap();
+    let loaded = load_device(&tmp_path, &access_strategy).await.unwrap();
     p_assert_eq!(*loaded, *alice_device);
 }
 
@@ -129,22 +123,17 @@ async fn ok(tmp_path: TmpPath, #[case] kind: OkKind, env: &TestbedEnv) {
         }
     };
 
-    let access = DeviceAccessStrategy::Password {
-        key_file: key_file.clone(),
+    let save_strategy = DeviceSaveStrategy::Password {
         password: "P@ssw0rd.".to_owned().into(),
     };
+    let access_strategy = save_strategy.clone().into_access(key_file.clone());
     let alice_device = env.local_device("alice@dev1");
     alice_device
         .time_provider
         .mock_time_frozen("2000-01-01T00:00:00Z".parse().unwrap());
-    let outcome = save_device(
-        &tmp_path,
-        &access.clone().into_save_strategy(),
-        &alice_device,
-        key_file.clone(),
-    )
-    .await
-    .unwrap();
+    let outcome = save_device(&tmp_path, &save_strategy, &alice_device, key_file.clone())
+        .await
+        .unwrap();
     p_assert_eq!(
         outcome,
         AvailableDevice {
@@ -162,7 +151,7 @@ async fn ok(tmp_path: TmpPath, #[case] kind: OkKind, env: &TestbedEnv) {
     );
 
     // Roundtrip check
-    let loaded = load_device(&tmp_path, &access).await.unwrap();
+    let loaded = load_device(&tmp_path, &access_strategy).await.unwrap();
     p_assert_eq!(*loaded, *alice_device);
 }
 
@@ -187,25 +176,20 @@ async fn testbed(env: &TestbedEnv) {
         .unwrap();
 
     // Now overwrite the key file in testbed
-    let new_access = DeviceAccessStrategy::Password {
-        key_file: key_file.clone(),
+    let new_save_strategy = DeviceSaveStrategy::Password {
         password: "N3wP@ssw0rd.".to_owned().into(),
     };
-    save_device(
-        &env.discriminant_dir,
-        &new_access.clone().into_save_strategy(),
-        &device,
-        key_file,
-    )
-    .await
-    .unwrap();
+    let new_access_strategy = new_save_strategy.clone().into_access(key_file.clone());
+    save_device(&env.discriminant_dir, &new_save_strategy, &device, key_file)
+        .await
+        .unwrap();
 
     // Finally roundtrip check
     p_assert_matches!(
         load_device(&env.discriminant_dir, &old_access).await,
         Err(LoadDeviceError::DecryptionFailed)
     );
-    let reloaded_device = load_device(&env.discriminant_dir, &new_access)
+    let reloaded_device = load_device(&env.discriminant_dir, &new_access_strategy)
         .await
         .unwrap();
     p_assert_eq!(reloaded_device, device);
