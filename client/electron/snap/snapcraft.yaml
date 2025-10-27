@@ -1,6 +1,6 @@
 name: parsec
 base: core22
-version: 3.6.0-rc.1
+version: 3.6.0-rc.2+dev
 summary: Secure file sharing in the cloud
 license: BUSL-1.1
 description: |
