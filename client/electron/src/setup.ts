@@ -428,7 +428,7 @@ export class ElectronCapacitorApp {
     this.MainWindow.hide();
 
     if (this.CapacitorFileConfig.electron.splashScreenEnabled) {
-      this.splash = new SplashScreen({ width: 624, height: 424 });
+      this.splash = new SplashScreen({ width: 624, height: 424, icon: appIcon });
       let splashPath = join(app.getAppPath(), 'assets', 'splash-screen.png');
 
       if (Env.ENABLE_CUSTOM_BRANDING) {
