@@ -12,7 +12,8 @@ use libparsec_testbed::{
 use libparsec_types::prelude::*;
 
 use crate::{
-    ArchiveDeviceError, LoadDeviceError, RemoveDeviceError, SaveDeviceError, UpdateDeviceError,
+    ArchiveDeviceError, AvailableDevice, AvailableDeviceType, DeviceAccessStrategy,
+    DeviceSaveStrategy, LoadDeviceError, RemoveDeviceError, SaveDeviceError, UpdateDeviceError,
 };
 
 const STORE_ENTRY_KEY: &str = "platform_device_loader";
@@ -350,18 +351,12 @@ pub(crate) fn maybe_load_device(
                                 Some(Ok(c_device.to_owned()))
                             }
                             (
-                                DeviceAccessStrategy::AccountVault {
-                                    ciphertext_key: ck, ..
-                                },
+                                DeviceAccessStrategy::AccountVault { operations, .. },
                                 DeviceSaveStrategy::AccountVault {
-                                    ciphertext_key: c_ck,
-                                    ..
+                                    operations: c_operations,
                                 },
                             ) => {
-                                // Note `ciphertext_key_id` is not compared here, this is because
-                                // it has no use during the actual device load (instead it is used
-                                // earlier on to fetch `ciphertext_key` from the server).
-                                if ck == c_ck {
+                                if operations.account_email() == c_operations.account_email() {
                                     Some(Ok(c_device.to_owned()))
                                 } else {
                                     Some(Err(LoadDeviceError::DecryptionFailed))
@@ -403,13 +398,8 @@ pub(crate) fn maybe_load_device(
                         DeviceAccessStrategy::Keyring { .. } => AvailableDeviceType::Keyring,
                         DeviceAccessStrategy::Password { .. } => AvailableDeviceType::Password,
                         DeviceAccessStrategy::Smartcard { .. } => todo!(), // TODO #11269
-                        DeviceAccessStrategy::AccountVault { ciphertext_key, .. } => {
-                            AvailableDeviceType::AccountVault {
-                                ciphertext_key_id: AccountVaultItemOpaqueKeyID::try_from(
-                                    &ciphertext_key.as_ref()[0..16],
-                                )
-                                .expect("valid size"),
-                            }
+                        DeviceAccessStrategy::AccountVault { .. } => {
+                            AvailableDeviceType::AccountVault
                         }
                     };
                     access
@@ -502,6 +492,12 @@ pub(crate) fn maybe_update_device(
                     LoadDeviceError::InvalidData => UpdateDeviceError::InvalidData,
                     LoadDeviceError::DecryptionFailed => UpdateDeviceError::DecryptionFailed,
                     LoadDeviceError::Internal(err) => UpdateDeviceError::Internal(err),
+                    LoadDeviceError::RemoteOpaqueKeyFetchOffline(err) => {
+                        UpdateDeviceError::RemoteOpaqueKeyOperationOffline(err)
+                    }
+                    LoadDeviceError::RemoteOpaqueKeyFetchFailed(err) => {
+                        UpdateDeviceError::RemoteOpaqueKeyOperationFailed(err)
+                    }
                 }))
             }
         };
@@ -533,6 +529,12 @@ pub(crate) fn maybe_update_device(
                     SaveDeviceError::StorageNotAvailable => UpdateDeviceError::StorageNotAvailable,
                     SaveDeviceError::InvalidPath(err) => UpdateDeviceError::InvalidPath(err),
                     SaveDeviceError::Internal(err) => UpdateDeviceError::Internal(err),
+                    SaveDeviceError::RemoteOpaqueKeyUploadOffline(err) => {
+                        UpdateDeviceError::RemoteOpaqueKeyOperationOffline(err)
+                    }
+                    SaveDeviceError::RemoteOpaqueKeyUploadFailed(err) => {
+                        UpdateDeviceError::RemoteOpaqueKeyOperationFailed(err)
+                    }
                 }))
             }
         };

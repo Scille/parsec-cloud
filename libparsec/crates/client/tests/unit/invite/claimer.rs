@@ -5,6 +5,7 @@ use std::sync::{Arc, Mutex};
 use libparsec_client_connection::{
     protocol, test_register_send_hook, test_register_sequence_of_send_hooks,
 };
+use libparsec_platform_device_loader::{AvailableDeviceType, DeviceSaveStrategy};
 use libparsec_protocol::invited_cmds::latest::invite_claimer_step::{ClaimerStep, GreeterStep};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;

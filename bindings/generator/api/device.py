@@ -2,7 +2,6 @@
 
 from .addr import ParsecAddr
 from .common import (
-    AccountVaultItemOpaqueKeyID,
     DateTime,
     DeviceID,
     DeviceLabel,
@@ -13,11 +12,11 @@ from .common import (
     Path,
     Ref,
     Result,
-    SecretKey,
     Structure,
     UserID,
     Variant,
     VariantItemUnit,
+    Handle,
 )
 from .pki import X509CertificateReference
 
@@ -27,9 +26,7 @@ class AvailableDeviceType(Variant):
     Password = VariantItemUnit
     Recovery = VariantItemUnit
     Smartcard = VariantItemUnit
-
-    class AccountVault:
-        ciphertext_key_id: AccountVaultItemOpaqueKeyID
+    AccountVault = VariantItemUnit
 
 
 class DeviceSaveStrategy(Variant):
@@ -43,8 +40,7 @@ class DeviceSaveStrategy(Variant):
         certificate_reference: X509CertificateReference
 
     class AccountVault:
-        ciphertext_key_id: AccountVaultItemOpaqueKeyID
-        ciphertext_key: SecretKey
+        account_handle: Handle
 
 
 class DeviceAccessStrategy(Variant):
@@ -60,7 +56,7 @@ class DeviceAccessStrategy(Variant):
 
     class AccountVault:
         key_file: Path
-        ciphertext_key: SecretKey
+        account_handle: Handle
 
 
 class AvailableDevice(Structure):
@@ -119,6 +115,12 @@ class UpdateDeviceError(ErrorVariant):
         pass
 
     class Internal:
+        pass
+
+    class RemoteOpaqueKeyOperationOffline:
+        pass
+
+    class RemoteOpaqueKeyOperationFailed:
         pass
 
 

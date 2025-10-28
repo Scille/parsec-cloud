@@ -3,6 +3,7 @@
 use std::sync::Arc;
 
 use libparsec_client_connection::ProxyConfig;
+use libparsec_platform_device_loader::DeviceSaveStrategy;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 

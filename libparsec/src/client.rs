@@ -15,6 +15,7 @@ pub use libparsec_client::{
     PkiEnrollmentListError, PkiEnrollmentListItem, PkiEnrollmentRejectError,
     SelfShamirRecoveryInfo, Tos, UserInfo, WorkspaceInfo, WorkspaceUserAccessInfo,
 };
+pub use libparsec_client_connection::ConnectionError;
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_types::prelude::*;
 pub use libparsec_types::RealmRole;
@@ -24,7 +25,7 @@ use crate::{
         borrow_from_handle, filter_close_handles, iter_opened_handles, register_handle_with_init,
         take_and_close_handle, FilterCloseHandle, Handle, HandleItem,
     },
-    ClientConfig, ClientEvent, OnEventCallbackPlugged,
+    ClientConfig, ClientEvent, DeviceAccessStrategy, OnEventCallbackPlugged,
 };
 
 fn borrow_client(client: Handle) -> anyhow::Result<Arc<libparsec_client::Client>> {
@@ -96,6 +97,19 @@ pub enum ClientStartError {
     LoadDeviceInvalidData,
     #[error("Cannot load device file: decryption failed")]
     LoadDeviceDecryptionFailed,
+    /// Client start is a fully offline operation, except for some device
+    /// access strategies (e.g. account vault), where the ciphertext key
+    /// protecting the device is itself encrypted by an opaque key that
+    /// must first be remotely fetched.
+    #[error(
+        "Cannot load device file: remote opaque key fetch failed: cannot communicate with the server: {0}"
+    )]
+    LoadDeviceRemoteOpaqueKeyFetchOffline(#[from] ConnectionError),
+    /// Note only a subset of load strategies requires server access to
+    /// fetch an opaque key that itself protects the ciphertext key
+    /// (e.g. account vault).
+    #[error("Cannot load device file: remote opaque key fetch failed: {0}")]
+    LoadDeviceRemoteOpaqueKeyFetchFailed(anyhow::Error),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -109,19 +123,27 @@ impl From<libparsec_platform_device_loader::LoadDeviceError> for ClientStartErro
             LoadDeviceError::InvalidData => Self::LoadDeviceInvalidData,
             LoadDeviceError::DecryptionFailed => Self::LoadDeviceDecryptionFailed,
             LoadDeviceError::Internal(e) => Self::Internal(e),
+            LoadDeviceError::RemoteOpaqueKeyFetchOffline(e) => {
+                Self::LoadDeviceRemoteOpaqueKeyFetchOffline(e)
+            }
+            LoadDeviceError::RemoteOpaqueKeyFetchFailed(e) => {
+                Self::LoadDeviceRemoteOpaqueKeyFetchFailed(e)
+            }
         }
     }
 }
 
 pub async fn client_start(
     config: ClientConfig,
-    access: &DeviceAccessStrategy,
+    access: DeviceAccessStrategy,
 ) -> Result<Handle, ClientStartError> {
+    let access = access.convert_with_side_effects()?;
+
     let config: Arc<libparsec_client::ClientConfig> = config.into();
 
     // 1) Load the device
 
-    let device = libparsec_platform_device_loader::load_device(&config.config_dir, access).await?;
+    let device = libparsec_platform_device_loader::load_device(&config.config_dir, &access).await?;
 
     // 2) Actually start the client
 

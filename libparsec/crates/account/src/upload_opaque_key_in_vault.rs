@@ -23,7 +23,7 @@ pub enum AccountUploadOpaqueKeyInVaultError {
 
 pub(super) async fn account_upload_opaque_key_in_vault(
     account: &Account,
-    organization_id: OrganizationID,
+    organization_id: &OrganizationID,
 ) -> Result<(AccountVaultItemOpaqueKeyID, SecretKey), AccountUploadOpaqueKeyInVaultError> {
     // 1. Load the vault key
 
@@ -67,7 +67,7 @@ pub(super) async fn account_upload_opaque_key_in_vault(
             Rep::Ok { active, .. } => {
                 let found = active
                     .into_iter()
-                    .find(|u| u.organization_id == organization_id);
+                    .find(|u| u.organization_id == *organization_id);
                 match found {
                     Some(user) => user,
                     // Multiple explanations here:

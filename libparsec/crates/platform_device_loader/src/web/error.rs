@@ -2,6 +2,7 @@
 
 use std::path::PathBuf;
 
+use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 use web_sys::wasm_bindgen::JsValue;
 
@@ -99,7 +100,11 @@ error_set::error_set! {
         GetFile(GetFileHandleError),
         ReadFile(ReadToEndError),
     }
-    SaveDeviceError := SaveDeviceFileError
+    SaveDeviceError := SaveDeviceFileError || {
+        RemoteOpaqueKeyUploadFailed(anyhow::Error),
+        RemoteOpaqueKeyUploadOffline(ConnectionError),
+        Internal(anyhow::Error),
+    }
     SaveDeviceFileError := GetFileHandleError || WriteAllError
     RemoveEntryError := NotFoundError || DomExceptionError || AwaitPromiseError || GetDirectoryHandleError
     ArchiveDeviceError := RemoveEntryError || {
@@ -108,7 +113,7 @@ error_set::error_set! {
         CreateArchiveDevice(GetFileHandleError),
         WriteArchiveDevice(WriteAllError),
     }
-    RemoveDeviceError := SaveDeviceError
+    RemoveDeviceError := SaveDeviceFileError
 }
 
 macro_rules! impl_from_new_storage_error {
@@ -145,6 +150,13 @@ impl From<SaveDeviceError> for crate::SaveDeviceError {
             SaveDeviceError::Cast { .. } => Self::Internal(anyhow::anyhow!("{value}")),
             SaveDeviceError::Promise { .. } => Self::Internal(anyhow::anyhow!("{value}")),
             SaveDeviceError::NoSpaceLeft { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            SaveDeviceError::RemoteOpaqueKeyUploadFailed(err) => {
+                Self::RemoteOpaqueKeyUploadFailed(err)
+            }
+            SaveDeviceError::RemoteOpaqueKeyUploadOffline(err) => {
+                Self::RemoteOpaqueKeyUploadOffline(err)
+            }
+            SaveDeviceError::Internal(err) => Self::Internal(err),
         }
     }
 }
@@ -163,6 +175,13 @@ impl From<SaveDeviceError> for crate::UpdateDeviceError {
             SaveDeviceError::Cast { .. } => Self::Internal(anyhow::anyhow!("{value}")),
             SaveDeviceError::Promise { .. } => Self::Internal(anyhow::anyhow!("{value}")),
             SaveDeviceError::NoSpaceLeft { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            SaveDeviceError::RemoteOpaqueKeyUploadFailed(err) => {
+                Self::RemoteOpaqueKeyOperationFailed(err)
+            }
+            SaveDeviceError::RemoteOpaqueKeyUploadOffline(err) => {
+                Self::RemoteOpaqueKeyOperationOffline(err)
+            }
+            SaveDeviceError::Internal(err) => Self::Internal(err),
         }
     }
 }

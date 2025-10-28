@@ -4,7 +4,8 @@ use std::path::Path;
 
 use libparsec_client_connection::{AuthenticatedCmds, ConnectionError, ProxyConfig};
 use libparsec_platform_device_loader::{
-    get_default_key_file, save_device, LoadRecoveryDeviceError, SaveDeviceError,
+    get_default_key_file, save_device, AvailableDevice, DeviceSaveStrategy,
+    LoadRecoveryDeviceError, SaveDeviceError,
 };
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_protocol::authenticated_cmds::latest::device_create;
@@ -133,6 +134,11 @@ pub enum ImportRecoveryDeviceError {
     DecryptionFailed,
     #[error(transparent)]
     InvalidPath(anyhow::Error),
+    /// Note only a subset of save strategies requires server access to
+    /// upload an opaque key that itself protects the ciphertext key
+    /// (e.g. account vault).
+    #[error("Remote opaque key upload failed: {0}")]
+    RemoteOpaqueKeyUploadFailed(anyhow::Error),
 }
 
 impl From<LoadRecoveryDeviceError> for ImportRecoveryDeviceError {
@@ -175,6 +181,12 @@ impl From<SaveDeviceError> for ImportRecoveryDeviceError {
             SaveDeviceError::StorageNotAvailable => ImportRecoveryDeviceError::StorageNotAvailable,
             SaveDeviceError::InvalidPath(error) => ImportRecoveryDeviceError::InvalidPath(error),
             SaveDeviceError::Internal(error) => ImportRecoveryDeviceError::Internal(error),
+            SaveDeviceError::RemoteOpaqueKeyUploadOffline(error) => {
+                ImportRecoveryDeviceError::Offline(error)
+            }
+            SaveDeviceError::RemoteOpaqueKeyUploadFailed(error) => {
+                ImportRecoveryDeviceError::RemoteOpaqueKeyUploadFailed(error)
+            }
         }
     }
 }

@@ -6,10 +6,14 @@
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::PathBuf;
+use std::sync::Arc;
 
-#[cfg(not(target_arch = "wasm32"))]
-use crate::SaveDeviceError;
-use crate::{load_device, save_device, LoadDeviceError};
+use crate::{
+    load_device, save_device, tests::utils::MockedAccountVaultOperations,
+    AccountVaultOperationsUploadOpaqueKeyError, AvailableDevice, AvailableDeviceType,
+    DeviceAccessStrategy, DeviceSaveStrategy, LoadDeviceError, SaveDeviceError,
+};
+use libparsec_client_connection::ConnectionError;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
@@ -153,6 +157,56 @@ async fn ok(tmp_path: TmpPath, #[case] kind: OkKind, env: &TestbedEnv) {
     // Roundtrip check
     let loaded = load_device(&tmp_path, &access_strategy).await.unwrap();
     p_assert_eq!(*loaded, *alice_device);
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn remote_error(
+    #[values("remote_opaque_key_upload_offline", "remote_opaque_key_upload_failed")] kind: &str,
+    tmp_path: TmpPath,
+    env: &TestbedEnv,
+) {
+    let alice_device = env.local_device("alice@dev1");
+    let key_file = tmp_path.join("devices/keyring_file.keys");
+
+    let account_vault_operations = Arc::new(MockedAccountVaultOperations::new(
+        alice_device.human_handle.email().to_owned(),
+    ));
+    let save_strategy = DeviceSaveStrategy::AccountVault {
+        operations: account_vault_operations.clone(),
+    };
+
+    match kind {
+        "remote_opaque_key_upload_offline" => {
+            account_vault_operations.inject_next_error_upload_opaque_key(
+                AccountVaultOperationsUploadOpaqueKeyError::Offline(ConnectionError::NoResponse(
+                    None,
+                )),
+            );
+
+            p_assert_matches!(
+                save_device(&tmp_path, &save_strategy, &alice_device, key_file.clone()).await,
+                Err(SaveDeviceError::RemoteOpaqueKeyUploadOffline(
+                    ConnectionError::NoResponse(None)
+                ))
+            );
+        }
+
+        "remote_opaque_key_upload_failed" => {
+            account_vault_operations.inject_next_error_upload_opaque_key(
+                AccountVaultOperationsUploadOpaqueKeyError::BadVaultKeyAccess(
+                    DataError::Decryption,
+                ),
+            );
+
+            p_assert_matches!(
+                save_device(&tmp_path, &save_strategy, &alice_device, key_file.clone()).await,
+                Err(SaveDeviceError::RemoteOpaqueKeyUploadFailed(err))
+                if err.to_string() == "Cannot decrypt the vault key access return by the server: Invalid encryption"
+            );
+        }
+
+        unknown => panic!("Unknown kind: {unknown}"),
+    }
 }
 
 #[parsec_test(testbed = "empty")]

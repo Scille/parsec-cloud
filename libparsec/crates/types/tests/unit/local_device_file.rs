@@ -468,25 +468,3 @@ fn account_vault_protected_device_file(alice: &Device) {
 
     p_assert_eq!(device2, expected);
 }
-
-#[test]
-fn available_device() {
-    let org: OrganizationID = "CoolOrg".parse().unwrap();
-
-    let available = AvailableDevice {
-        key_file_path: "/foo/bar".into(),
-        created_on: "2010-01-01T00:00:00Z".parse().unwrap(),
-        protected_on: "2010-01-10T00:00:00Z".parse().unwrap(),
-        server_url: "https://parsec.invalid".to_string(),
-        organization_id: org.clone(),
-        user_id: "alice".parse().unwrap(),
-        device_id: "alice@dev1".parse().unwrap(),
-        human_handle: HumanHandle::from_raw("john@example.com", "John Doe").unwrap(),
-        device_label: "MyPc".parse().unwrap(),
-        ty: AvailableDeviceType::Password,
-    };
-    p_assert_eq!(
-        available.device_id.hex(),
-        "de10a11cec0010000000000000000000"
-    );
-}

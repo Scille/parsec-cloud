@@ -2,7 +2,7 @@
 
 use crate::DeviceInfo;
 
-use libparsec_platform_device_loader::{get_default_key_file, load_device};
+use libparsec_platform_device_loader::{get_default_key_file, load_device, DeviceSaveStrategy};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 

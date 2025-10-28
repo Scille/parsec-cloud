@@ -15,9 +15,9 @@ use libparsec::{
         UserClaimInProgress1Ctx, UserClaimInProgress2Ctx, UserClaimInProgress3Ctx,
         UserClaimInitialCtx, UserClaimListAdministratorsCtx,
     },
-    ClientConfig, DeviceSaveStrategy, ParsecInvitationAddr,
+    ClientConfig, ParsecInvitationAddr,
 };
-use libparsec_client::ShamirRecoveryClaimFinalizeCtx;
+use libparsec_client::{DeviceSaveStrategy, ShamirRecoveryClaimFinalizeCtx};
 
 use crate::utils::*;
 use dialoguer::{FuzzySelect, Input};
