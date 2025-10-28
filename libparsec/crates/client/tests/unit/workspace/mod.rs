@@ -111,7 +111,7 @@ pub trait AsyncStateMachineTest {
 #[macro_export]
 macro_rules! impl_async_state_machine {
     ($t:ty) => {
-        impl StateMachineTest for $t {
+        impl ::proptest_state_machine::test_runner::StateMachineTest for $t {
             type SystemUnderTest = (
                 tokio::runtime::Runtime,
                 <Self as AsyncStateMachineTest>::SystemUnderTest,
@@ -119,7 +119,7 @@ macro_rules! impl_async_state_machine {
             type Reference = <Self as AsyncStateMachineTest>::Reference;
 
             fn init_test(
-                ref_state: &<Self::Reference as ReferenceStateMachine>::State,
+                ref_state: &<Self::Reference as ::proptest_state_machine::strategy::ReferenceStateMachine>::State,
             ) -> Self::SystemUnderTest {
                 let rt = tokio::runtime::Builder::new_current_thread()
                     .enable_all()
@@ -133,8 +133,8 @@ macro_rules! impl_async_state_machine {
 
             fn apply(
                 state: Self::SystemUnderTest,
-                ref_state: &<Self::Reference as ReferenceStateMachine>::State,
-                transition: <Self::Reference as ReferenceStateMachine>::Transition,
+                ref_state: &<Self::Reference as ::proptest_state_machine::strategy::ReferenceStateMachine>::State,
+                transition: <Self::Reference as ::proptest_state_machine::strategy::ReferenceStateMachine>::Transition,
             ) -> Self::SystemUnderTest {
                 let (rt, state) = state;
                 let state = rt.block_on(async {
@@ -145,7 +145,7 @@ macro_rules! impl_async_state_machine {
 
             fn check_invariants(
                 state: &Self::SystemUnderTest,
-                ref_state: &<Self::Reference as ReferenceStateMachine>::State,
+                ref_state: &<Self::Reference as ::proptest_state_machine::strategy::ReferenceStateMachine>::State,
             ) {
                 let (rt, state) = state;
                 rt.block_on(async {
@@ -153,7 +153,10 @@ macro_rules! impl_async_state_machine {
                 });
             }
 
-            fn teardown(state: Self::SystemUnderTest) {
+            fn teardown(
+                state: Self::SystemUnderTest,
+                _ref_state: <Self::Reference as ::proptest_state_machine::strategy::ReferenceStateMachine>::State,
+            ) {
                 let (rt, state) = state;
                 rt.block_on(async {
                     <Self as AsyncStateMachineTest>::teardown(state).await;

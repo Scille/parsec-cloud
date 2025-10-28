@@ -108,7 +108,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
                         let retry = FuzzySelect::new()
                             .default(0)
                             .with_prompt("Unable to join server, do you want to retry ?")
-                            .items(&["yes", "no"])
+                            .items(["yes", "no"])
                             .interact()?;
 
                         if retry == 0 {

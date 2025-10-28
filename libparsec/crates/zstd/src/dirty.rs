@@ -6,7 +6,7 @@ use std::io;
 ///
 /// The input data must be in the zstd frame format.
 pub fn decode_all<R: io::Read>(source: R) -> io::Result<Vec<u8>> {
-    let mut decoder = ruzstd::StreamingDecoder::new(source).map_err(io::Error::other)?;
+    let mut decoder = ruzstd::decoding::StreamingDecoder::new(source).map_err(io::Error::other)?;
     let mut result = Vec::new();
 
     use std::io::Read;

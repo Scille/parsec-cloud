@@ -42,7 +42,7 @@ spinners = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 url = { workspace = true, optional = true }
 uuid = { workspace = true }
-itertools = { workspace = true }
+itertools = { workspace = true, features = ["use_std"] }
 
 [dev-dependencies]
 libparsec = { workspace = true, features = ["cli-tests"] }

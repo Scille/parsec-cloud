@@ -6,103 +6,109 @@ use libparsec_types::prelude::*;
 use web_sys::wasm_bindgen::JsValue;
 
 error_set::error_set! {
-    DomExceptionError = {
+    DomExceptionError := {
+        #[display("DOM exception: {exception:?}")]
         DomException {
             exception: web_sys::DomException
         }
-    };
-    CastError = {
+    }
+    CastError := {
         #[display("Failed to cast to {ty} ({value:?}")]
         Cast {
             ty: &'static str,
             value: JsValue
         }
-    };
-    AwaitPromiseError = {
+    }
+    AwaitPromiseError := {
         #[display("Failed to await JS promise ({error:?})")]
         Promise {
             error: JsValue
         }
-    };
-    JsPromiseError = CastError || AwaitPromiseError;
-    NotFoundError = {
+    }
+    JsPromiseError := CastError || AwaitPromiseError
+    NotFoundError := {
         #[display("No such file or directory at {}", path.display())]
         NotFound {
             path: PathBuf,
         }
-    };
-    GetRootDirectoryError = AwaitPromiseError || CastError || DomExceptionError || {
-        #[display("Storage not available")]
+    }
+    GetRootDirectoryError := AwaitPromiseError || CastError || DomExceptionError || {
+        #[display("Storage not available ({exception:?})")]
         StorageNotAvailable { exception: web_sys::DomException }
-    };
-    GetDirectoryHandleError = CastError || AwaitPromiseError || DomExceptionError || NotFoundError || {
+    }
+    GetDirectoryHandleError := CastError || AwaitPromiseError || DomExceptionError || NotFoundError || {
         #[display("Item at {} is not a directory", path.display())]
         NotADirectory {
             path: PathBuf,
         },
-    };
-    GetFileHandleError = CastError || AwaitPromiseError || DomExceptionError || NotFoundError || GetDirectoryHandleError || {
+    }
+    GetFileHandleError := CastError || AwaitPromiseError || DomExceptionError || NotFoundError || GetDirectoryHandleError || {
         #[display("Item at {} is not a directory", path.display())]
         NotAFile {
             path: PathBuf
         }
-    };
-    ReadToEndError = DomExceptionError
+    }
+    ReadToEndError := DomExceptionError
         || NotFoundError
         || CastError
         || AwaitPromiseError
         || {
-        #[display("Failed to get file object")]
+        #[display("Failed to get file object ({error:?})")]
         GetFile { error: JsValue },
-    };
-    WriteAllError = CastError || NotFoundError || DomExceptionError || {
+    }
+    WriteAllError := CastError || NotFoundError || DomExceptionError || {
+        #[display("Failed to create writable stream ({error:?})")]
         CreateWritable { error: JsValue },
+        #[display("Cannot edit resource `{}` ({exception:?})", path.display())]
         CannotEdit {
             path: PathBuf,
             exception: web_sys::DomException
         },
+        #[display("No space left ({exception:?})")]
         NoSpaceLeft { exception: web_sys::DomException },
+        #[display("Write error ({error:?})")]
         Write {
             error: JsValue
         },
+        #[display("Close error ({error:?})")]
         Close {
             error: JsValue
         }
-    };
-    NewStorageError = GetRootDirectoryError;
-    ListAvailableDevicesError = GetDirectoryHandleError
+    }
+    NewStorageError := GetRootDirectoryError
+    ListAvailableDevicesError := GetDirectoryHandleError
         || AwaitPromiseError
         || {
             ReadToEnd(ReadToEndError)
-        };
-    DeviceMissingError = NotFoundError;
-    RmpDecodeError = {
+        }
+    DeviceMissingError := NotFoundError
+    RmpDecodeError := {
         RmpDecode(libparsec_types::RmpDecodeError)
-    };
-    LoadAvailableDeviceError = {
+    }
+    LoadAvailableDeviceError := {
         ReadToEnd(ReadToEndError),
         RmpDecode(libparsec_types::RmpDecodeError)
-    };
-    InvalidPathError = {
+    }
+    InvalidPathError := {
         #[display("Invalid path {}", path.display())]
         InvalidPath {
             path: PathBuf
         }
-    };
-    ReadFile = {
+    }
+    ReadFile := {
         GetFile(GetFileHandleError),
         ReadFile(ReadToEndError),
-    };
-    SaveDeviceError = SaveDeviceFileError;
-    SaveDeviceFileError = GetFileHandleError || WriteAllError;
-    RemoveEntryError = NotFoundError || DomExceptionError || AwaitPromiseError || GetDirectoryHandleError;
-    ArchiveDeviceError = RemoveEntryError || {
+    }
+    SaveDeviceError := SaveDeviceFileError
+    SaveDeviceFileError := GetFileHandleError || WriteAllError
+    RemoveEntryError := NotFoundError || DomExceptionError || AwaitPromiseError || GetDirectoryHandleError
+    ArchiveDeviceError := RemoveEntryError || {
         GetDeviceToArchive(GetFileHandleError),
         ReadDeviceToArchive(ReadToEndError),
         CreateArchiveDevice(GetFileHandleError),
         WriteArchiveDevice(WriteAllError),
-    };
-    RemoveDeviceError = SaveDeviceError;
+    }
+    RemoveDeviceError := SaveDeviceError
 }
 
 macro_rules! impl_from_new_storage_error {

@@ -13,10 +13,10 @@ pub use distinguished_name::DistinguishedNameValue;
 pub use extensions::{Extensions, SubjectAltName};
 
 error_set::error_set! {
-    X509LoadError = {
+    X509LoadError := {
         #[display("Invalid DER format: {0}")]
         DERError(DERError)
-    };
+    }
 }
 
 #[derive(Debug)]

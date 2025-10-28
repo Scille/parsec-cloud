@@ -450,7 +450,7 @@ pub fn choose_user_profile() -> anyhow::Result<UserProfile> {
     ];
     let selected_profile = FuzzySelect::new()
         .default(0)
-        .items(&profiles)
+        .items(profiles)
         .with_prompt("Which profile?")
         .interact()?;
     Ok(profiles[selected_profile])
