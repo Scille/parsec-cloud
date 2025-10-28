@@ -4,6 +4,7 @@
 
 mod list_frozen_users;
 mod organization_info;
+mod pki_enrollment_accept;
 mod pki_enrollment_list;
 mod pki_enrollment_reject;
 mod pki_enrollment_submit;
@@ -33,6 +34,7 @@ use std::{
 
 pub use self::{
     list_frozen_users::ClientListFrozenUsersError,
+    pki_enrollment_accept::PkiEnrollmentAcceptError,
     pki_enrollment_list::{PkiEnrollmentListError, PkiEnrollmentListItem},
     pki_enrollment_reject::PkiEnrollmentRejectError,
     pki_enrollment_submit::{pki_enrollment_submit, PkiEnrollmentSubmitError},
@@ -687,11 +689,31 @@ impl Client {
     ) -> Result<Vec<PkiEnrollmentListItem>, PkiEnrollmentListError> {
         pki_enrollment_list::list_enrollments(&self.cmds).await
     }
+
     pub async fn pki_enrollment_reject(
         &self,
         enrollment_id: EnrollmentID,
     ) -> Result<(), PkiEnrollmentRejectError> {
         pki_enrollment_reject::reject(&self.cmds, enrollment_id).await
+    }
+
+    pub async fn pki_enrollment_accept(
+        &self,
+        profile: UserProfile,
+        enrollment_id: EnrollmentID,
+        human_handle: &HumanHandle,
+        cert_ref: &X509CertificateReference,
+        submit_payload: &PkiEnrollmentSubmitPayload,
+    ) -> Result<(), PkiEnrollmentAcceptError> {
+        pki_enrollment_accept::accept(
+            self,
+            profile,
+            enrollment_id,
+            human_handle,
+            cert_ref,
+            submit_payload,
+        )
+        .await
     }
 }
 
