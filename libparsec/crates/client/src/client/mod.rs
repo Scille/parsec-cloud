@@ -4,6 +4,7 @@
 
 mod list_frozen_users;
 mod organization_info;
+mod pki_enrollment_accept;
 mod pki_enrollment_list;
 mod pki_enrollment_reject;
 mod pki_enrollment_submit;
@@ -48,6 +49,7 @@ pub use self::{
 };
 use crate::{
     certif::{CertifPollServerError, CertificateOps},
+    client::pki_enrollment_accept::ClientPkiEnrollmentAcceptError,
     client::pki_enrollment_reject::ClientPkiEnrollmentRejectError,
     config::{ClientConfig, ServerConfig},
     event_bus::EventBus,
@@ -688,11 +690,31 @@ impl Client {
     ) -> Result<Vec<PkiEnrollmentListItem>, PkiEnrollmentListError> {
         pki_enrollment_list::list_enrollments(&self.cmds).await
     }
+
     pub async fn pki_enrollment_reject(
         &self,
         enrollment_id: EnrollmentID,
     ) -> Result<(), ClientPkiEnrollmentRejectError> {
         pki_enrollment_reject::reject(&self.cmds, enrollment_id).await
+    }
+
+    pub async fn pki_enrollment_accept(
+        &self,
+        profile: UserProfile,
+        enrollment_id: EnrollmentID,
+        submit_payload: PkiEnrollmentSubmitPayload,
+        human_handle: &HumanHandle,
+        cert_ref: &X509CertificateReference,
+    ) -> Result<(), ClientPkiEnrollmentAcceptError> {
+        pki_enrollment_accept::accept(
+            self,
+            profile,
+            enrollment_id,
+            submit_payload,
+            human_handle,
+            cert_ref,
+        )
+        .await
     }
 }
 
