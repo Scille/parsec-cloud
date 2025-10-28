@@ -245,7 +245,7 @@ async function openInEditor(
       } else if (contentType.type === FileContentType.Unknown) {
         window.electronAPI.log('warn', `FileOpener: Unknown file type for editor: ${entry.name} (${contentType.extension})`);
         await openFileOpenFallbackModal(entry, workspaceHandle, path, informationManager, fileOperationManager, options, {
-          title: 'fileViewers.errors.titles.unSupportedFileType',
+          title: 'fileViewers.errors.titles.unsupportedFileType',
           subtitle: 'fileViewers.errors.informationEditDownload',
           viewerOption: false,
         });
@@ -256,7 +256,7 @@ async function openInEditor(
         );
         await informationManager.present(
           new Information({
-            title: 'fileViewers.errors.titles.unSupportedFileType',
+            title: 'fileViewers.errors.titles.unsupportedFileType',
             message: 'fileViewers.errors.unknownFileExtension',
             level: InformationLevel.Warning,
           }),
