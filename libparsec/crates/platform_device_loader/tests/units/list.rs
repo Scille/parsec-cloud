@@ -4,9 +4,13 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
+use std::sync::Arc;
+
 use crate::{
     archive_device, list_available_devices, load_available_device, load_device, remove_device,
-    save_device, update_device_change_authentication, update_device_overwrite_server_addr,
+    save_device, tests::utils::MockedAccountVaultOperations, update_device_change_authentication,
+    update_device_overwrite_server_addr, AvailableDevice, AvailableDeviceType,
+    DeviceAccessStrategy, DeviceSaveStrategy,
 };
 use libparsec_testbed::TestbedEnv;
 use libparsec_tests_fixtures::prelude::*;
@@ -387,9 +391,7 @@ async fn list_devices(tmp_path: TmpPath) {
             device_id: account_vault_expected.device_id,
             human_handle: account_vault_expected.human_handle,
             device_label: account_vault_expected.device_label,
-            ty: AvailableDeviceType::AccountVault {
-                ciphertext_key_id: account_vault_expected.ciphertext_key_id,
-            },
+            ty: AvailableDeviceType::AccountVault,
         },
     ]);
 
@@ -475,21 +477,19 @@ async fn testbed(env: &TestbedEnv) {
         .await
         .unwrap();
 
-    let zack_ciphertext_key_id =
-        AccountVaultItemOpaqueKeyID::from_hex("84cbb64f7fbf46cd98196343210df9b0").unwrap();
-    let zack_ciphertext_key =
-        hex!("f22f042ac3bc5c70d14dcae7f896d5b4f7ef032579b7589b767e66a74cc8ede3").into();
     let zack_key_file = env.discriminant_dir.join("zack_new_device.keys");
+    let zack_human_handle = HumanHandle::from_raw("zack@example.invalid", "Zack").unwrap();
     let zack = save_device(
         &env.discriminant_dir,
         &DeviceSaveStrategy::AccountVault {
-            ciphertext_key_id: zack_ciphertext_key_id,
-            ciphertext_key: zack_ciphertext_key,
+            operations: Arc::new(MockedAccountVaultOperations::new(
+                zack_human_handle.email().to_owned(),
+            )),
         },
         &LocalDevice::generate_new_device(
             organization_addr.clone(),
             UserProfile::Admin,
-            HumanHandle::from_raw("zack@dev1", "Zack").unwrap(),
+            zack_human_handle,
             "PC1".parse().unwrap(),
             None,
             None,
@@ -515,10 +515,6 @@ async fn testbed(env: &TestbedEnv) {
     .await
     .unwrap();
 
-    let bob2_ciphertext_key_id =
-        AccountVaultItemOpaqueKeyID::from_hex("4ce154500ce340bcaa4d44dcb9b841a1").unwrap();
-    let bob2_ciphertext_key =
-        hex!("a7fa4758e0e71fd58467194b50f657d1e717132b66419fae9b836c0ea39fb05b").into();
     let bob2_new_key_file = env.discriminant_dir.join("bob2_new_device.keys");
     update_device_change_authentication(
         &env.discriminant_dir,
@@ -527,8 +523,9 @@ async fn testbed(env: &TestbedEnv) {
             password: "P@ssw0rd.".to_string().into(),
         },
         &DeviceSaveStrategy::AccountVault {
-            ciphertext_key_id: bob2_ciphertext_key_id,
-            ciphertext_key: bob2_ciphertext_key,
+            operations: Arc::new(MockedAccountVaultOperations::new(
+                bob2.human_handle.email().to_owned(),
+            )),
         },
         &bob2_new_key_file,
     )
@@ -545,9 +542,7 @@ async fn testbed(env: &TestbedEnv) {
             (
                 bob2.device_id,
                 "https://noserver.example.com/".to_string(),
-                AvailableDeviceType::AccountVault {
-                    ciphertext_key_id: bob2_ciphertext_key_id
-                },
+                AvailableDeviceType::AccountVault,
             ),
             (
                 mallory.device_id,
@@ -562,9 +557,7 @@ async fn testbed(env: &TestbedEnv) {
             (
                 zack.device_id,
                 "https://noserver.example.com/".to_string(),
-                AvailableDeviceType::AccountVault {
-                    ciphertext_key_id: zack_ciphertext_key_id
-                },
+                AvailableDeviceType::AccountVault,
             ),
         ]
     );

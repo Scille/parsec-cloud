@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+mod strategy;
+pub use strategy::*;
 #[cfg(not(target_arch = "wasm32"))]
 mod native;
 #[cfg(target_arch = "wasm32")]
@@ -18,6 +20,7 @@ use std::{
 };
 use zeroize::Zeroizing;
 
+use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 #[cfg(not(target_arch = "wasm32"))]
 use native as platform;
@@ -42,12 +45,22 @@ enum ReadFileError {
 
 #[derive(Debug, thiserror::Error)]
 enum LoadCiphertextKeyError {
+    /// Typically returned if the access strategy doesn't match the device type
     #[error("Invalid data")]
     InvalidData,
     #[cfg_attr(target_arch = "wasm32", expect(dead_code))]
     #[error("Decryption failed")]
     DecryptionFailed,
-    #[cfg_attr(target_arch = "wasm32", expect(dead_code))]
+    /// Note only a subset of load strategies requires server access to
+    /// fetch an opaque key that itself protects the ciphertext key
+    /// (e.g. account vault).
+    #[error("Remote opaque key fetch failed: cannot communicate with the server: {0}")]
+    RemoteOpaqueKeyFetchOffline(#[from] ConnectionError),
+    /// Note only a subset of load strategies requires server access to
+    /// fetch an opaque key that itself protects the ciphertext key
+    /// (e.g. account vault).
+    #[error("Remote opaque key fetch failed: {0}")]
+    RemoteOpaqueKeyFetchFailed(anyhow::Error),
     #[error(transparent)]
     Internal(anyhow::Error),
 }
@@ -196,6 +209,16 @@ pub enum LoadDeviceError {
     InvalidData,
     #[error("Decryption failed")]
     DecryptionFailed,
+    /// Note only a subset of load strategies requires server access to
+    /// fetch an opaque key that itself protects the ciphertext key
+    /// (e.g. account vault).
+    #[error("Remote opaque key fetch failed: cannot communicate with the server: {0}")]
+    RemoteOpaqueKeyFetchOffline(#[from] ConnectionError),
+    /// Note only a subset of load strategies requires server access to
+    /// fetch an opaque key that itself protects the ciphertext key
+    /// (e.g. account vault).
+    #[error("Remote opaque key fetch failed: {0}")]
+    RemoteOpaqueKeyFetchFailed(anyhow::Error),
     #[error(transparent)]
     Internal(anyhow::Error),
 }
@@ -224,6 +247,12 @@ pub async fn load_device(
             LoadCiphertextKeyError::InvalidData => LoadDeviceError::InvalidData,
             LoadCiphertextKeyError::DecryptionFailed => LoadDeviceError::DecryptionFailed,
             LoadCiphertextKeyError::Internal(err) => LoadDeviceError::Internal(err),
+            LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline(err) => {
+                LoadDeviceError::RemoteOpaqueKeyFetchOffline(err)
+            }
+            LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed(err) => {
+                LoadDeviceError::RemoteOpaqueKeyFetchFailed(err)
+            }
         })?;
     let device = decrypt_device_file(&device_file, &ciphertext_key).map_err(|err| match err {
         DecryptDeviceFileError::Decrypt(_) => LoadDeviceError::DecryptionFailed,
@@ -239,6 +268,16 @@ pub enum SaveDeviceError {
     StorageNotAvailable,
     #[error(transparent)]
     InvalidPath(anyhow::Error),
+    /// Note only a subset of save strategies requires server access to
+    /// upload an opaque key that itself protects the ciphertext key
+    /// (e.g. account vault).
+    #[error("Remote opaque key upload failed: cannot communicate with the server: {0}")]
+    RemoteOpaqueKeyUploadOffline(#[from] ConnectionError),
+    /// Note only a subset of save strategies requires server access to
+    /// upload an opaque key that itself protects the ciphertext key
+    /// (e.g. account vault).
+    #[error("Remote opaque key upload failed: {0}")]
+    RemoteOpaqueKeyUploadFailed(anyhow::Error),
     #[error(transparent)]
     Internal(anyhow::Error),
 }
@@ -270,6 +309,16 @@ pub enum UpdateDeviceError {
     InvalidData,
     #[error("Failed to decrypt file content")]
     DecryptionFailed,
+    /// Note only a subset of load/save strategies requires server access to
+    /// fetch/upload an opaque key that itself protects the ciphertext key
+    /// (e.g. account vault).
+    #[error("Remote opaque key server operation failed: cannot communicate with the server: {0}")]
+    RemoteOpaqueKeyOperationOffline(#[from] ConnectionError),
+    /// Note only a subset of load/save strategies requires server access to
+    /// fetch/upload an opaque key that itself protects the ciphertext key
+    /// (e.g. account vault).
+    #[error("Remote opaque key server operation failed: {0}")]
+    RemoteOpaqueKeyOperationFailed(anyhow::Error),
     #[error(transparent)]
     Internal(anyhow::Error),
 }
@@ -306,6 +355,12 @@ pub async fn update_device_change_authentication(
             LoadCiphertextKeyError::InvalidData => UpdateDeviceError::InvalidData,
             LoadCiphertextKeyError::DecryptionFailed => UpdateDeviceError::DecryptionFailed,
             LoadCiphertextKeyError::Internal(err) => UpdateDeviceError::Internal(err),
+            LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline(err) => {
+                UpdateDeviceError::RemoteOpaqueKeyOperationOffline(err)
+            }
+            LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed(err) => {
+                UpdateDeviceError::RemoteOpaqueKeyOperationFailed(err)
+            }
         })?;
     let device = decrypt_device_file(&device_file, &ciphertext_key).map_err(|err| match err {
         DecryptDeviceFileError::Decrypt(_) => UpdateDeviceError::DecryptionFailed,
@@ -374,6 +429,12 @@ pub async fn update_device_overwrite_server_addr(
             LoadCiphertextKeyError::InvalidData => UpdateDeviceError::InvalidData,
             LoadCiphertextKeyError::DecryptionFailed => UpdateDeviceError::DecryptionFailed,
             LoadCiphertextKeyError::Internal(err) => UpdateDeviceError::Internal(err),
+            LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline(err) => {
+                UpdateDeviceError::RemoteOpaqueKeyOperationOffline(err)
+            }
+            LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed(err) => {
+                UpdateDeviceError::RemoteOpaqueKeyOperationFailed(err)
+            }
         })?;
     let mut device =
         decrypt_device_file(&device_file, &ciphertext_key).map_err(|err| match err {
@@ -607,9 +668,7 @@ fn load_available_device_from_blob(
             device.device_label,
         ),
         DeviceFile::AccountVault(device) => (
-            AvailableDeviceType::AccountVault {
-                ciphertext_key_id: device.ciphertext_key_id,
-            },
+            AvailableDeviceType::AccountVault,
             device.created_on,
             device.protected_on,
             device.server_url,

@@ -3,6 +3,7 @@
 use std::{path::Path, sync::Arc};
 
 use libparsec_client_connection::{protocol::anonymous_cmds, AnonymousCmds, ConnectionError};
+use libparsec_platform_device_loader::{AvailableDevice, DeviceSaveStrategy};
 use libparsec_types::prelude::*;
 
 use crate::{ClientConfig, EventBus, EventTooMuchDriftWithServerClock};

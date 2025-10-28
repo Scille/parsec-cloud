@@ -4,7 +4,9 @@ use std::sync::Arc;
 
 use libparsec_client::RegisterNewDeviceError;
 use libparsec_client_connection::{AuthenticatedCmds, ConnectionError};
-use libparsec_platform_device_loader::{get_default_key_file, save_device, SaveDeviceError};
+use libparsec_platform_device_loader::{
+    get_default_key_file, save_device, AvailableDevice, DeviceSaveStrategy, SaveDeviceError,
+};
 use libparsec_types::prelude::*;
 
 use super::{fetch_vault_items, Account, FetchVaultItemsError};
@@ -32,6 +34,11 @@ pub enum AccountRegisterNewDeviceError {
         ballpark_client_early_offset: f64,
         ballpark_client_late_offset: f64,
     },
+    /// Note only a subset of save strategies requires server access to
+    /// upload an opaque key that itself protects the ciphertext key
+    /// (e.g. account vault).
+    #[error("Remote opaque key upload failed: {0}")]
+    RemoteOpaqueKeyUploadFailed(anyhow::Error),
 }
 
 pub(super) async fn account_register_new_device(
@@ -136,6 +143,12 @@ pub(super) async fn account_register_new_device(
                     AccountRegisterNewDeviceError::InvalidPath(error)
                 }
                 SaveDeviceError::Internal(error) => AccountRegisterNewDeviceError::Internal(error),
+                SaveDeviceError::RemoteOpaqueKeyUploadOffline(error) => {
+                    AccountRegisterNewDeviceError::Offline(error)
+                }
+                SaveDeviceError::RemoteOpaqueKeyUploadFailed(error) => {
+                    AccountRegisterNewDeviceError::RemoteOpaqueKeyUploadFailed(error)
+                }
             })?;
 
     Ok(new_available_device)

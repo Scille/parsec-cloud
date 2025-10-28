@@ -5,7 +5,6 @@ from .addr import ParsecAddr, ParsecInvitationAddr
 from .client import ActiveUsersLimit
 from .common import (
     AccountAuthMethodID,
-    AccountVaultItemOpaqueKeyID,
     DateTime,
     DeviceLabel,
     EmailAddress,
@@ -22,7 +21,6 @@ from .common import (
     Path,
     Ref,
     Result,
-    SecretKey,
     Structure,
     UserID,
     UserProfile,
@@ -293,54 +291,6 @@ async def account_list_organizations(
     raise NotImplementedError
 
 
-class AccountFetchOpaqueKeyFromVaultError(ErrorVariant):
-    class BadVaultKeyAccess:
-        pass
-
-    class UnknownOpaqueKey:
-        pass
-
-    class CorruptedOpaqueKey:
-        pass
-
-    class Offline:
-        pass
-
-    class Internal:
-        pass
-
-
-async def account_fetch_opaque_key_from_vault(
-    account: Handle,
-    key_id: AccountVaultItemOpaqueKeyID,
-) -> Result[SecretKey, AccountFetchOpaqueKeyFromVaultError]:
-    raise NotImplementedError
-
-
-class AccountUploadOpaqueKeyInVaultError(ErrorVariant):
-    class NotAllowedByOrganizationVaultStrategy:
-        pass
-
-    class CannotObtainOrganizationVaultStrategy:
-        pass
-
-    class BadVaultKeyAccess:
-        pass
-
-    class Offline:
-        pass
-
-    class Internal:
-        pass
-
-
-async def account_upload_opaque_key_in_vault(
-    account: Handle,
-    organization_id: OrganizationID,
-) -> Result[tuple[AccountVaultItemOpaqueKeyID, SecretKey], AccountUploadOpaqueKeyInVaultError]:
-    raise NotImplementedError
-
-
 class AccountListRegistrationDevicesError(ErrorVariant):
     class BadVaultKeyAccess:
         pass
@@ -386,10 +336,13 @@ class AccountCreateRegistrationDeviceError(ErrorVariant):
     class TimestampOutOfBallpark:
         pass
 
+    class RemoteOpaqueKeyFetchFailed:
+        pass
+
 
 async def account_create_registration_device(
     account: Handle,
-    existing_local_device_access: Ref[DeviceAccessStrategy],
+    existing_local_device_access: DeviceAccessStrategy,
 ) -> Result[None, AccountCreateRegistrationDeviceError]:
     raise NotImplementedError
 
@@ -417,6 +370,9 @@ class AccountRegisterNewDeviceError(ErrorVariant):
         pass
 
     class TimestampOutOfBallpark:
+        pass
+
+    class RemoteOpaqueKeyUploadFailed:
         pass
 
 

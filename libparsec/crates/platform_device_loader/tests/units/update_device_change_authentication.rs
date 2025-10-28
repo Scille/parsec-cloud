@@ -2,7 +2,10 @@
 
 use std::path::Path;
 
-use crate::{load_device, save_device, update_device_change_authentication};
+use crate::{
+    load_device, save_device, update_device_change_authentication, DeviceAccessStrategy,
+    DeviceSaveStrategy,
+};
 use libparsec_testbed::TestbedEnv;
 use libparsec_tests_fixtures::{tmp_path, TmpPath};
 use libparsec_tests_lite::prelude::*;

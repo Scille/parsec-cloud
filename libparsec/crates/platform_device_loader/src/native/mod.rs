@@ -7,9 +7,11 @@ use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
 use crate::{
-    encrypt_device, get_device_archive_path, ArchiveDeviceError, ListAvailableDeviceError,
-    LoadCiphertextKeyError, LoadDeviceError, ReadFileError, RemoveDeviceError, SaveDeviceError,
-    UpdateDeviceError, DEVICE_FILE_EXT,
+    encrypt_device, get_device_archive_path, AccountVaultOperationsFetchOpaqueKeyError,
+    AccountVaultOperationsUploadOpaqueKeyError, ArchiveDeviceError, AvailableDevice,
+    DeviceAccessStrategy, DeviceSaveStrategy, ListAvailableDeviceError, LoadCiphertextKeyError,
+    LoadDeviceError, ReadFileError, RemoveDeviceError, SaveDeviceError, UpdateDeviceError,
+    DEVICE_FILE_EXT,
 };
 use libparsec_platform_pki::{decrypt_message, encrypt_message};
 use libparsec_types::prelude::*;
@@ -181,9 +183,25 @@ pub(super) async fn load_ciphertext_key(
             }
         }
 
-        DeviceAccessStrategy::AccountVault { ciphertext_key, .. } => {
-            if let DeviceFile::AccountVault(_) = device_file {
-                Ok(ciphertext_key.clone())
+        DeviceAccessStrategy::AccountVault { operations, .. } => {
+            if let DeviceFile::AccountVault(device) = device_file {
+                let ciphertext_key = operations
+                    .fetch_opaque_key(device.ciphertext_key_id)
+                    .await
+                    .map_err(|err| match err {
+                        AccountVaultOperationsFetchOpaqueKeyError::BadVaultKeyAccess(_)
+                        | AccountVaultOperationsFetchOpaqueKeyError::UnknownOpaqueKey
+                        | AccountVaultOperationsFetchOpaqueKeyError::CorruptedOpaqueKey => {
+                            LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed(err.into())
+                        }
+                        AccountVaultOperationsFetchOpaqueKeyError::Offline(err) => {
+                            LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline(err)
+                        }
+                        AccountVaultOperationsFetchOpaqueKeyError::Internal(err) => {
+                            LoadCiphertextKeyError::Internal(err)
+                        }
+                    })?;
+                Ok(ciphertext_key)
             } else {
                 Err(LoadCiphertextKeyError::InvalidData)
             }
@@ -377,11 +395,27 @@ pub(super) async fn save_device(
             save_content(&key_file, &file_content).await?;
         }
 
-        DeviceSaveStrategy::AccountVault {
-            ciphertext_key_id,
-            ciphertext_key,
-        } => {
-            let ciphertext = super::encrypt_device(device, ciphertext_key);
+        DeviceSaveStrategy::AccountVault { operations } => {
+            let (ciphertext_key_id, ciphertext_key) = operations
+                .upload_opaque_key(device.organization_id().to_owned())
+                .await
+                .map_err(|err| match err {
+                    err @ (
+                        AccountVaultOperationsUploadOpaqueKeyError::NotAllowedByOrganizationVaultStrategy
+                        | AccountVaultOperationsUploadOpaqueKeyError::CannotObtainOrganizationVaultStrategy
+                        | AccountVaultOperationsUploadOpaqueKeyError::BadVaultKeyAccess(_)
+                    ) => {
+                        SaveDeviceError::RemoteOpaqueKeyUploadFailed(err.into())
+                    }
+                    AccountVaultOperationsUploadOpaqueKeyError::Offline(err) => {
+                        SaveDeviceError::RemoteOpaqueKeyUploadOffline(err)
+                    }
+                    AccountVaultOperationsUploadOpaqueKeyError::Internal(err) => {
+                        SaveDeviceError::Internal(err)
+                    }
+                })?;
+
+            let ciphertext = super::encrypt_device(device, &ciphertext_key);
 
             let file_content = DeviceFile::AccountVault(DeviceFileAccountVault {
                 created_on,
@@ -392,7 +426,7 @@ pub(super) async fn save_device(
                 device_id: device.device_id,
                 human_handle: device.human_handle.to_owned(),
                 device_label: device.device_label.to_owned(),
-                ciphertext_key_id: *ciphertext_key_id,
+                ciphertext_key_id,
                 ciphertext,
             });
 
@@ -430,6 +464,12 @@ pub(super) async fn update_device(
                 SaveDeviceError::StorageNotAvailable => UpdateDeviceError::StorageNotAvailable,
                 SaveDeviceError::InvalidPath(err) => UpdateDeviceError::InvalidPath(err),
                 SaveDeviceError::Internal(err) => UpdateDeviceError::Internal(err),
+                SaveDeviceError::RemoteOpaqueKeyUploadOffline(err) => {
+                    UpdateDeviceError::RemoteOpaqueKeyOperationOffline(err)
+                }
+                SaveDeviceError::RemoteOpaqueKeyUploadFailed(err) => {
+                    UpdateDeviceError::RemoteOpaqueKeyOperationFailed(err)
+                }
             })?;
 
     if current_key_file != new_key_file {

@@ -12,6 +12,7 @@ use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_platform_async::future::{join_all, select_all};
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
 use libparsec_platform_async::{select2_biased, spawn};
+use libparsec_platform_device_loader::{AvailableDevice, DeviceSaveStrategy};
 use libparsec_protocol::authenticated_cmds;
 use libparsec_protocol::invited_cmds::latest::invite_info::{
     InvitationCreatedBy as InviteInfoInvitationCreatedBy, ShamirRecoveryRecipient,
