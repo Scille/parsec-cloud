@@ -64,10 +64,10 @@ class ClientStartError(ErrorVariant):
     class LoadDeviceDecryptionFailed:
         pass
 
-    class LoadDeviceOpaqueKeyFetchOffline:
+    class LoadDeviceRemoteOpaqueKeyFetchOffline:
         pass
 
-    class LoadDeviceOpaqueKeyFetchFailed:
+    class LoadDeviceRemoteOpaqueKeyFetchFailed:
         pass
 
     class Internal:

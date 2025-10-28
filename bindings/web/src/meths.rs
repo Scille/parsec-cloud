@@ -5100,6 +5100,9 @@ fn variant_account_create_registration_device_error_rs_to_js(
         libparsec::AccountCreateRegistrationDeviceError::Offline{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorOffline".into())?;
         }
+        libparsec::AccountCreateRegistrationDeviceError::RemoteOpaqueKeyFetchFailed{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchFailed".into())?;
+        }
         libparsec::AccountCreateRegistrationDeviceError::TimestampOutOfBallpark{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark".into())?;
         }
@@ -5318,55 +5321,6 @@ fn variant_account_disable_auth_method_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"AccountDisableAuthMethodErrorSelfDisableNotAllowed".into(),
-            )?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// AccountFetchOpaqueKeyFromVaultError
-
-#[allow(dead_code)]
-fn variant_account_fetch_opaque_key_from_vault_error_rs_to_js(
-    rs_obj: libparsec::AccountFetchOpaqueKeyFromVaultError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::AccountFetchOpaqueKeyFromVaultError::BadVaultKeyAccess { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountFetchOpaqueKeyFromVaultErrorBadVaultKeyAccess".into(),
-            )?;
-        }
-        libparsec::AccountFetchOpaqueKeyFromVaultError::CorruptedOpaqueKey { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountFetchOpaqueKeyFromVaultErrorCorruptedOpaqueKey".into(),
-            )?;
-        }
-        libparsec::AccountFetchOpaqueKeyFromVaultError::Internal { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountFetchOpaqueKeyFromVaultErrorInternal".into(),
-            )?;
-        }
-        libparsec::AccountFetchOpaqueKeyFromVaultError::Offline { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountFetchOpaqueKeyFromVaultErrorOffline".into(),
-            )?;
-        }
-        libparsec::AccountFetchOpaqueKeyFromVaultError::UnknownOpaqueKey { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountFetchOpaqueKeyFromVaultErrorUnknownOpaqueKey".into(),
             )?;
         }
     }
@@ -5805,6 +5759,13 @@ fn variant_account_register_new_device_error_rs_to_js(
                 &"AccountRegisterNewDeviceErrorOffline".into(),
             )?;
         }
+        libparsec::AccountRegisterNewDeviceError::RemoteOpaqueKeyUploadFailed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadFailed".into(),
+            )?;
+        }
         libparsec::AccountRegisterNewDeviceError::StorageNotAvailable { .. } => {
             Reflect::set(
                 &js_obj,
@@ -5824,59 +5785,6 @@ fn variant_account_register_new_device_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"AccountRegisterNewDeviceErrorUnknownRegistrationDevice".into(),
-            )?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// AccountUploadOpaqueKeyInVaultError
-
-#[allow(dead_code)]
-fn variant_account_upload_opaque_key_in_vault_error_rs_to_js(
-    rs_obj: libparsec::AccountUploadOpaqueKeyInVaultError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::AccountUploadOpaqueKeyInVaultError::BadVaultKeyAccess { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountUploadOpaqueKeyInVaultErrorBadVaultKeyAccess".into(),
-            )?;
-        }
-        libparsec::AccountUploadOpaqueKeyInVaultError::CannotObtainOrganizationVaultStrategy {
-            ..
-        } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountUploadOpaqueKeyInVaultErrorCannotObtainOrganizationVaultStrategy".into(),
-            )?;
-        }
-        libparsec::AccountUploadOpaqueKeyInVaultError::Internal { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountUploadOpaqueKeyInVaultErrorInternal".into(),
-            )?;
-        }
-        libparsec::AccountUploadOpaqueKeyInVaultError::NotAllowedByOrganizationVaultStrategy {
-            ..
-        } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountUploadOpaqueKeyInVaultErrorNotAllowedByOrganizationVaultStrategy".into(),
-            )?;
-        }
-        libparsec::AccountUploadOpaqueKeyInVaultError::Offline { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountUploadOpaqueKeyInVaultErrorOffline".into(),
             )?;
         }
     }
@@ -6343,25 +6251,7 @@ fn variant_available_device_type_js_to_rs(
         .as_string()
         .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
     match tag.as_str() {
-        "AvailableDeviceTypeAccountVault" => {
-            let ciphertext_key_id = {
-                let js_val = Reflect::get(&obj, &"ciphertextKeyId".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string =
-                            |s: String| -> Result<libparsec::AccountVaultItemOpaqueKeyID, _> {
-                                libparsec::AccountVaultItemOpaqueKeyID::from_hex(s.as_str())
-                                    .map_err(|e| e.to_string())
-                            };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })?
-            };
-            Ok(libparsec::AvailableDeviceType::AccountVault { ciphertext_key_id })
-        }
+        "AvailableDeviceTypeAccountVault" => Ok(libparsec::AvailableDeviceType::AccountVault {}),
         "AvailableDeviceTypeKeyring" => Ok(libparsec::AvailableDeviceType::Keyring {}),
         "AvailableDeviceTypePassword" => Ok(libparsec::AvailableDeviceType::Password {}),
         "AvailableDeviceTypeRecovery" => Ok(libparsec::AvailableDeviceType::Recovery {}),
@@ -6378,26 +6268,12 @@ fn variant_available_device_type_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
-        libparsec::AvailableDeviceType::AccountVault {
-            ciphertext_key_id, ..
-        } => {
+        libparsec::AvailableDeviceType::AccountVault { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
                 &"AvailableDeviceTypeAccountVault".into(),
             )?;
-            let js_ciphertext_key_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::AccountVaultItemOpaqueKeyID| -> Result<String, &'static str> {
-                        Ok(x.hex())
-                    };
-                match custom_to_rs_string(ciphertext_key_id) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
-            Reflect::set(&js_obj, &"ciphertextKeyId".into(), &js_ciphertext_key_id)?;
         }
         libparsec::AvailableDeviceType::Keyring { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"AvailableDeviceTypeKeyring".into())?;
@@ -6479,11 +6355,25 @@ fn variant_bootstrap_organization_error_rs_to_js(
                 &"BootstrapOrganizationErrorOrganizationExpired".into(),
             )?;
         }
-        libparsec::BootstrapOrganizationError::SaveDeviceError { .. } => {
+        libparsec::BootstrapOrganizationError::SaveDeviceInvalidPath { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"BootstrapOrganizationErrorSaveDeviceError".into(),
+                &"BootstrapOrganizationErrorSaveDeviceInvalidPath".into(),
+            )?;
+        }
+        libparsec::BootstrapOrganizationError::SaveDeviceRemoteOpaqueKeyUploadFailed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadFailed".into(),
+            )?;
+        }
+        libparsec::BootstrapOrganizationError::SaveDeviceStorageNotAvailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"BootstrapOrganizationErrorSaveDeviceStorageNotAvailable".into(),
             )?;
         }
         libparsec::BootstrapOrganizationError::TimestampOutOfBallpark {
@@ -6550,6 +6440,51 @@ fn variant_cancel_error_rs_to_js(rs_obj: libparsec::CancelError) -> Result<JsVal
         }
         libparsec::CancelError::NotBound { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"CancelErrorNotBound".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClaimFinalizeError
+
+#[allow(dead_code)]
+fn variant_claim_finalize_error_rs_to_js(
+    rs_obj: libparsec::ClaimFinalizeError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClaimFinalizeError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"ClaimFinalizeErrorInternal".into())?;
+        }
+        libparsec::ClaimFinalizeError::InvalidPath { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClaimFinalizeErrorInvalidPath".into(),
+            )?;
+        }
+        libparsec::ClaimFinalizeError::RemoteOpaqueKeyUploadFailed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClaimFinalizeErrorRemoteOpaqueKeyUploadFailed".into(),
+            )?;
+        }
+        libparsec::ClaimFinalizeError::RemoteOpaqueKeyUploadOffline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClaimFinalizeErrorRemoteOpaqueKeyUploadOffline".into(),
+            )?;
+        }
+        libparsec::ClaimFinalizeError::StorageNotAvailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClaimFinalizeErrorStorageNotAvailable".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -9196,6 +9131,20 @@ fn variant_client_start_error_rs_to_js(
                 &"ClientStartErrorLoadDeviceInvalidPath".into(),
             )?;
         }
+        libparsec::ClientStartError::LoadDeviceRemoteOpaqueKeyFetchFailed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchFailed".into(),
+            )?;
+        }
+        libparsec::ClientStartError::LoadDeviceRemoteOpaqueKeyFetchOffline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchOffline".into(),
+            )?;
+        }
     }
     Ok(js_obj)
 }
@@ -9452,21 +9401,23 @@ fn variant_device_access_strategy_js_to_rs(
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
                     })?
             };
-            let ciphertext_key = {
-                let js_val = Reflect::get(&obj, &"ciphertextKey".into())?;
-                js_val
-                    .dyn_into::<Uint8Array>()
-                    .map(|x| x.to_vec())
-                    .map_err(|_| TypeError::new("Not a Uint8Array"))
-                    .and_then(|x| {
-                        let xx: &[u8] = &x;
-                        xx.try_into()
-                            .map_err(|_| TypeError::new("Not a valid SecretKey"))
-                    })?
+            let account_handle = {
+                let js_val = Reflect::get(&obj, &"accountHandle".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
+                    }
+                    let v = v as u32;
+                    v
+                }
             };
             Ok(libparsec::DeviceAccessStrategy::AccountVault {
                 key_file,
-                ciphertext_key,
+                account_handle,
             })
         }
         "DeviceAccessStrategyKeyring" => {
@@ -9547,7 +9498,7 @@ fn variant_device_access_strategy_rs_to_js(
     match rs_obj {
         libparsec::DeviceAccessStrategy::AccountVault {
             key_file,
-            ciphertext_key,
+            account_handle,
             ..
         } => {
             Reflect::set(
@@ -9568,8 +9519,8 @@ fn variant_device_access_strategy_rs_to_js(
                 .as_ref()
             });
             Reflect::set(&js_obj, &"keyFile".into(), &js_key_file)?;
-            let js_ciphertext_key = JsValue::from(Uint8Array::from(ciphertext_key.as_ref()));
-            Reflect::set(&js_obj, &"ciphertextKey".into(), &js_ciphertext_key)?;
+            let js_account_handle = JsValue::from(account_handle);
+            Reflect::set(&js_obj, &"accountHandle".into(), &js_account_handle)?;
         }
         libparsec::DeviceAccessStrategy::Keyring { key_file, .. } => {
             Reflect::set(
@@ -9651,38 +9602,21 @@ fn variant_device_save_strategy_js_to_rs(
         .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
     match tag.as_str() {
         "DeviceSaveStrategyAccountVault" => {
-            let ciphertext_key_id = {
-                let js_val = Reflect::get(&obj, &"ciphertextKeyId".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string =
-                            |s: String| -> Result<libparsec::AccountVaultItemOpaqueKeyID, _> {
-                                libparsec::AccountVaultItemOpaqueKeyID::from_hex(s.as_str())
-                                    .map_err(|e| e.to_string())
-                            };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })?
+            let account_handle = {
+                let js_val = Reflect::get(&obj, &"accountHandle".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
+                    }
+                    let v = v as u32;
+                    v
+                }
             };
-            let ciphertext_key = {
-                let js_val = Reflect::get(&obj, &"ciphertextKey".into())?;
-                js_val
-                    .dyn_into::<Uint8Array>()
-                    .map(|x| x.to_vec())
-                    .map_err(|_| TypeError::new("Not a Uint8Array"))
-                    .and_then(|x| {
-                        let xx: &[u8] = &x;
-                        xx.try_into()
-                            .map_err(|_| TypeError::new("Not a valid SecretKey"))
-                    })?
-            };
-            Ok(libparsec::DeviceSaveStrategy::AccountVault {
-                ciphertext_key_id,
-                ciphertext_key,
-            })
+            Ok(libparsec::DeviceSaveStrategy::AccountVault { account_handle })
         }
         "DeviceSaveStrategyKeyring" => Ok(libparsec::DeviceSaveStrategy::Keyring {}),
         "DeviceSaveStrategyPassword" => {
@@ -9722,30 +9656,14 @@ fn variant_device_save_strategy_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
-        libparsec::DeviceSaveStrategy::AccountVault {
-            ciphertext_key_id,
-            ciphertext_key,
-            ..
-        } => {
+        libparsec::DeviceSaveStrategy::AccountVault { account_handle, .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
                 &"DeviceSaveStrategyAccountVault".into(),
             )?;
-            let js_ciphertext_key_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::AccountVaultItemOpaqueKeyID| -> Result<String, &'static str> {
-                        Ok(x.hex())
-                    };
-                match custom_to_rs_string(ciphertext_key_id) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
-            Reflect::set(&js_obj, &"ciphertextKeyId".into(), &js_ciphertext_key_id)?;
-            let js_ciphertext_key = JsValue::from(Uint8Array::from(ciphertext_key.as_ref()));
-            Reflect::set(&js_obj, &"ciphertextKey".into(), &js_ciphertext_key)?;
+            let js_account_handle = JsValue::from(account_handle);
+            Reflect::set(&js_obj, &"accountHandle".into(), &js_account_handle)?;
         }
         libparsec::DeviceSaveStrategy::Keyring { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"DeviceSaveStrategyKeyring".into())?;
@@ -10488,6 +10406,13 @@ fn variant_import_recovery_device_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ImportRecoveryDeviceErrorOffline".into(),
+            )?;
+        }
+        libparsec::ImportRecoveryDeviceError::RemoteOpaqueKeyUploadFailed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadFailed".into(),
             )?;
         }
         libparsec::ImportRecoveryDeviceError::Stopped { .. } => {
@@ -14865,6 +14790,20 @@ fn variant_update_device_error_rs_to_js(
                 &"UpdateDeviceErrorInvalidPath".into(),
             )?;
         }
+        libparsec::UpdateDeviceError::RemoteOpaqueKeyOperationFailed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"UpdateDeviceErrorRemoteOpaqueKeyOperationFailed".into(),
+            )?;
+        }
+        libparsec::UpdateDeviceError::RemoteOpaqueKeyOperationOffline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"UpdateDeviceErrorRemoteOpaqueKeyOperationOffline".into(),
+            )?;
+        }
         libparsec::UpdateDeviceError::StorageNotAvailable { .. } => {
             Reflect::set(
                 &js_obj,
@@ -17565,7 +17504,7 @@ pub fn accountCreateRegistrationDevice(
             variant_device_access_strategy_js_to_rs(existing_local_device_access)?;
 
         let ret =
-            libparsec::account_create_registration_device(account, &existing_local_device_access)
+            libparsec::account_create_registration_device(account, existing_local_device_access)
                 .await;
         Ok(match ret {
             Ok(value) => {
@@ -17672,39 +17611,6 @@ pub fn accountDisableAuthMethod(account: u32, auth_method_id: String) -> Promise
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_account_disable_auth_method_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    }))
-}
-
-// account_fetch_opaque_key_from_vault
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn accountFetchOpaqueKeyFromVault(account: u32, key_id: String) -> Promise {
-    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
-        let key_id = {
-            let custom_from_rs_string =
-                |s: String| -> Result<libparsec::AccountVaultItemOpaqueKeyID, _> {
-                    libparsec::AccountVaultItemOpaqueKeyID::from_hex(s.as_str())
-                        .map_err(|e| e.to_string())
-                };
-            custom_from_rs_string(key_id).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-        let ret = libparsec::account_fetch_opaque_key_from_vault(account, key_id).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from(Uint8Array::from(value.as_ref()));
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_account_fetch_opaque_key_from_vault_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -18154,53 +18060,6 @@ pub fn accountRegisterNewDevice(
     }))
 }
 
-// account_upload_opaque_key_in_vault
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn accountUploadOpaqueKeyInVault(account: u32, organization_id: String) -> Promise {
-    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
-        let organization_id = {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
-            };
-            custom_from_rs_string(organization_id).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-        let ret = libparsec::account_upload_opaque_key_in_vault(account, organization_id).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = {
-                    let (x1, x2) = value;
-                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
-                    let js_array = Array::new_with_length(2);
-                    let js_value = JsValue::from_str({
-                        let custom_to_rs_string = |x: libparsec::AccountVaultItemOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) };
-                        match custom_to_rs_string(x1) {
-                            Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                        }
-                        .as_ref()
-                    });
-                    js_array.set(0, js_value);
-                    let js_value = JsValue::from(Uint8Array::from(x2.as_ref()));
-                    js_array.set(1, js_value);
-                    js_array.into()
-                };
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_account_upload_opaque_key_in_vault_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    }))
-}
-
 // archive_device
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -18388,7 +18247,7 @@ pub fn claimerDeviceFinalizeSaveLocalDevice(handle: u32, save_strategy: Object) 
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_claim_in_progress_error_rs_to_js(err)?;
+                let js_err = variant_claim_finalize_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -18650,7 +18509,7 @@ pub fn claimerShamirRecoveryFinalizeSaveLocalDevice(handle: u32, save_strategy: 
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_claim_in_progress_error_rs_to_js(err)?;
+                let js_err = variant_claim_finalize_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -18875,7 +18734,7 @@ pub fn claimerUserFinalizeSaveLocalDevice(handle: u32, save_strategy: Object) ->
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_claim_in_progress_error_rs_to_js(err)?;
+                let js_err = variant_claim_finalize_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -20141,7 +20000,7 @@ pub fn clientStart(config: Object, access: Object) -> Promise {
         let access = access.into();
         let access = variant_device_access_strategy_js_to_rs(access)?;
 
-        let ret = libparsec::client_start(config, &access).await;
+        let ret = libparsec::client_start(config, access).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
