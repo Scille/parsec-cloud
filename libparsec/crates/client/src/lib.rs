@@ -11,6 +11,7 @@ mod invite;
 mod monitors;
 mod server_fetch;
 mod user;
+mod utils;
 
 // Workspaces can be started & accessed independently of each other, so we expose it directly
 pub mod workspace;

@@ -12,8 +12,9 @@ pub use libparsec_client::{
     ClientListWorkspaceUsersError, ClientOrganizationInfoError, ClientRenameWorkspaceError,
     ClientRevokeUserError, ClientSetupShamirRecoveryError, ClientShareWorkspaceError,
     ClientUserUpdateProfileError, DeviceInfo, OrganizationInfo, OtherShamirRecoveryInfo,
-    PkiEnrollmentListError, PkiEnrollmentListItem, PkiEnrollmentRejectError,
-    SelfShamirRecoveryInfo, Tos, UserInfo, WorkspaceInfo, WorkspaceUserAccessInfo,
+    PkiEnrollmentAcceptError, PkiEnrollmentListError, PkiEnrollmentListItem,
+    PkiEnrollmentRejectError, SelfShamirRecoveryInfo, Tos, UserInfo, WorkspaceInfo,
+    WorkspaceUserAccessInfo,
 };
 pub use libparsec_client_connection::ConnectionError;
 use libparsec_platform_async::event::{Event, EventListener};
@@ -700,4 +701,24 @@ pub async fn client_pki_enrollment_reject(
 ) -> Result<(), PkiEnrollmentRejectError> {
     let client = borrow_client(client)?;
     client.pki_enrollment_reject(enrollment_id).await
+}
+
+pub async fn client_pki_enrollment_accept(
+    client: Handle,
+    profile: UserProfile,
+    enrollment_id: EnrollmentID,
+    human_handle: &HumanHandle,
+    cert_ref: &X509CertificateReference,
+    submit_payload: &PkiEnrollmentSubmitPayload,
+) -> Result<(), PkiEnrollmentAcceptError> {
+    let client = borrow_client(client)?;
+    client
+        .pki_enrollment_accept(
+            profile,
+            enrollment_id,
+            human_handle,
+            cert_ref,
+            submit_payload,
+        )
+        .await
 }

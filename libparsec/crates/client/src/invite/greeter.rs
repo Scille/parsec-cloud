@@ -12,6 +12,7 @@ use libparsec_platform_async::select2_biased;
 use libparsec_types::prelude::*;
 
 use crate::invite::common::{Throttle, WAIT_PEER_MAX_ATTEMPTS};
+use crate::utils::create_user_and_device_certificates;
 use crate::{
     greater_timestamp, EventBus, EventTooMuchDriftWithServerClock, GreaterTimestampOffset,
 };
@@ -1241,57 +1242,22 @@ fn create_new_signed_user_certificates(
     verify_key: VerifyKey,
     timestamp: DateTime,
 ) -> (Bytes, Bytes, Bytes, Bytes, InviteUserConfirmation) {
-    let user_id = UserID::default();
-    let device_id = DeviceID::default();
-
-    let user_certificate = UserCertificate {
-        author: CertificateSigner::User(author.device_id),
-        timestamp,
-        user_id,
-        human_handle: MaybeRedacted::Real(human_handle.clone()),
-        public_key: public_key.clone(),
-        algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
-        profile,
-    };
-
-    let redacted_user_certificate = UserCertificate {
-        author: CertificateSigner::User(author.device_id),
-        timestamp,
-        user_id,
-        human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(user_id)),
-        public_key,
-        algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
-        profile,
-    };
-
-    let device_certificate = DeviceCertificate {
-        author: CertificateSigner::User(author.device_id),
-        timestamp,
-        purpose: DevicePurpose::Standard,
+    let (
         user_id,
         device_id,
-        device_label: MaybeRedacted::Real(device_label.clone()),
-        verify_key: verify_key.clone(),
-        algorithm: SigningKeyAlgorithm::Ed25519,
-    };
-
-    let redacted_device_certificate = DeviceCertificate {
-        author: CertificateSigner::User(author.device_id),
+        user_certificate_bytes,
+        redacted_user_certificate_bytes,
+        device_certificate_bytes,
+        redacted_device_certificate_bytes,
+    ) = create_user_and_device_certificates(
+        author,
+        &device_label,
+        &human_handle,
+        profile,
+        &public_key,
+        &verify_key,
         timestamp,
-        purpose: DevicePurpose::Standard,
-        user_id,
-        device_id,
-        device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(device_id)),
-        verify_key,
-        algorithm: SigningKeyAlgorithm::Ed25519,
-    };
-
-    let user_certificate_bytes = user_certificate.dump_and_sign(&author.signing_key);
-    let redacted_user_certificate_bytes =
-        redacted_user_certificate.dump_and_sign(&author.signing_key);
-    let device_certificate_bytes = device_certificate.dump_and_sign(&author.signing_key);
-    let redacted_device_certificate_bytes =
-        redacted_device_certificate.dump_and_sign(&author.signing_key);
+    );
 
     let invite_user_confirmation = InviteUserConfirmation {
         user_id,
@@ -1303,10 +1269,10 @@ fn create_new_signed_user_certificates(
     };
 
     (
-        user_certificate_bytes.into(),
-        redacted_user_certificate_bytes.into(),
-        device_certificate_bytes.into(),
-        redacted_device_certificate_bytes.into(),
+        user_certificate_bytes,
+        redacted_user_certificate_bytes,
+        device_certificate_bytes,
+        redacted_device_certificate_bytes,
         invite_user_confirmation,
     )
 }
