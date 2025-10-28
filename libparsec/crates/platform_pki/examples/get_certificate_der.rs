@@ -9,6 +9,7 @@ use anyhow::Context;
 use clap::Parser;
 use libparsec_platform_pki::get_der_encoded_certificate;
 use libparsec_types::{X509CertificateHash, X509CertificateReference};
+use sha2::Digest;
 
 #[derive(Debug, Parser)]
 struct Args {
@@ -40,6 +41,11 @@ fn main() -> anyhow::Result<()> {
 
     println!("id: {}", &cert.cert_ref.uris().next().unwrap());
     println!("fingerprint: {}", cert.cert_ref.hash);
+    {
+        let digest = sha2::Sha256::digest(&cert.der_content);
+        let hash = X509CertificateHash::SHA256(Box::new(digest.into()));
+        println!("Manually calculated fingerprint: {hash}");
+    }
     println!(
         "content: {}",
         data_encoding::BASE64.encode_display(&cert.der_content)
