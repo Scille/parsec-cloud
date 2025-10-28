@@ -4855,6 +4855,10 @@ fn variant_account_create_registration_device_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::AccountCreateRegistrationDeviceError::RemoteOpaqueKeyFetchFailed{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchFailed").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::AccountCreateRegistrationDeviceError::TimestampOutOfBallpark{  .. } => {
             let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -5056,49 +5060,6 @@ fn variant_account_disable_auth_method_error_rs_to_js<'a>(
         libparsec::AccountDisableAuthMethodError::SelfDisableNotAllowed { .. } => {
             let js_tag =
                 JsString::try_new(cx, "AccountDisableAuthMethodErrorSelfDisableNotAllowed")
-                    .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// AccountFetchOpaqueKeyFromVaultError
-
-#[allow(dead_code)]
-fn variant_account_fetch_opaque_key_from_vault_error_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::AccountFetchOpaqueKeyFromVaultError,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
-    js_obj.set(cx, "error", js_display)?;
-    match rs_obj {
-        libparsec::AccountFetchOpaqueKeyFromVaultError::BadVaultKeyAccess { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "AccountFetchOpaqueKeyFromVaultErrorBadVaultKeyAccess")
-                    .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::AccountFetchOpaqueKeyFromVaultError::CorruptedOpaqueKey { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "AccountFetchOpaqueKeyFromVaultErrorCorruptedOpaqueKey")
-                    .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::AccountFetchOpaqueKeyFromVaultError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "AccountFetchOpaqueKeyFromVaultErrorInternal")
-                .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::AccountFetchOpaqueKeyFromVaultError::Offline { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "AccountFetchOpaqueKeyFromVaultErrorOffline").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::AccountFetchOpaqueKeyFromVaultError::UnknownOpaqueKey { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "AccountFetchOpaqueKeyFromVaultErrorUnknownOpaqueKey")
                     .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
@@ -5506,6 +5467,14 @@ fn variant_account_register_new_device_error_rs_to_js<'a>(
                 JsString::try_new(cx, "AccountRegisterNewDeviceErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::AccountRegisterNewDeviceError::RemoteOpaqueKeyUploadFailed { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadFailed",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::AccountRegisterNewDeviceError::StorageNotAvailable { .. } => {
             let js_tag = JsString::try_new(cx, "AccountRegisterNewDeviceErrorStorageNotAvailable")
                 .or_throw(cx)?;
@@ -5521,57 +5490,6 @@ fn variant_account_register_new_device_error_rs_to_js<'a>(
             let js_tag =
                 JsString::try_new(cx, "AccountRegisterNewDeviceErrorUnknownRegistrationDevice")
                     .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// AccountUploadOpaqueKeyInVaultError
-
-#[allow(dead_code)]
-fn variant_account_upload_opaque_key_in_vault_error_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::AccountUploadOpaqueKeyInVaultError,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
-    js_obj.set(cx, "error", js_display)?;
-    match rs_obj {
-        libparsec::AccountUploadOpaqueKeyInVaultError::BadVaultKeyAccess { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "AccountUploadOpaqueKeyInVaultErrorBadVaultKeyAccess")
-                    .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::AccountUploadOpaqueKeyInVaultError::CannotObtainOrganizationVaultStrategy {
-            ..
-        } => {
-            let js_tag = JsString::try_new(
-                cx,
-                "AccountUploadOpaqueKeyInVaultErrorCannotObtainOrganizationVaultStrategy",
-            )
-            .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::AccountUploadOpaqueKeyInVaultError::Internal { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "AccountUploadOpaqueKeyInVaultErrorInternal").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::AccountUploadOpaqueKeyInVaultError::NotAllowedByOrganizationVaultStrategy {
-            ..
-        } => {
-            let js_tag = JsString::try_new(
-                cx,
-                "AccountUploadOpaqueKeyInVaultErrorNotAllowedByOrganizationVaultStrategy",
-            )
-            .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::AccountUploadOpaqueKeyInVaultError::Offline { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "AccountUploadOpaqueKeyInVaultErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -5991,23 +5909,7 @@ fn variant_available_device_type_js_to_rs<'a>(
 ) -> NeonResult<libparsec::AvailableDeviceType> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
-        "AvailableDeviceTypeAccountVault" => {
-            let ciphertext_key_id = {
-                let js_val: Handle<JsString> = obj.get(cx, "ciphertextKeyId")?;
-                {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<libparsec::AccountVaultItemOpaqueKeyID, _> {
-                            libparsec::AccountVaultItemOpaqueKeyID::from_hex(s.as_str())
-                                .map_err(|e| e.to_string())
-                        };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            Ok(libparsec::AvailableDeviceType::AccountVault { ciphertext_key_id })
-        }
+        "AvailableDeviceTypeAccountVault" => Ok(libparsec::AvailableDeviceType::AccountVault {}),
         "AvailableDeviceTypeKeyring" => Ok(libparsec::AvailableDeviceType::Keyring {}),
         "AvailableDeviceTypePassword" => Ok(libparsec::AvailableDeviceType::Password {}),
         "AvailableDeviceTypeRecovery" => Ok(libparsec::AvailableDeviceType::Recovery {}),
@@ -6023,23 +5925,9 @@ fn variant_available_device_type_rs_to_js<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
-        libparsec::AvailableDeviceType::AccountVault {
-            ciphertext_key_id, ..
-        } => {
+        libparsec::AvailableDeviceType::AccountVault { .. } => {
             let js_tag = JsString::try_new(cx, "AvailableDeviceTypeAccountVault").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_ciphertext_key_id = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |x: libparsec::AccountVaultItemOpaqueKeyID| -> Result<String, &'static str> {
-                        Ok(x.hex())
-                    };
-                match custom_to_rs_string(ciphertext_key_id) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "ciphertextKeyId", js_ciphertext_key_id)?;
         }
         libparsec::AvailableDeviceType::Keyring { .. } => {
             let js_tag = JsString::try_new(cx, "AvailableDeviceTypeKeyring").or_throw(cx)?;
@@ -6104,9 +5992,25 @@ fn variant_bootstrap_organization_error_rs_to_js<'a>(
                 .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::BootstrapOrganizationError::SaveDeviceError { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "BootstrapOrganizationErrorSaveDeviceError").or_throw(cx)?;
+        libparsec::BootstrapOrganizationError::SaveDeviceInvalidPath { .. } => {
+            let js_tag = JsString::try_new(cx, "BootstrapOrganizationErrorSaveDeviceInvalidPath")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::BootstrapOrganizationError::SaveDeviceRemoteOpaqueKeyUploadFailed { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadFailed",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::BootstrapOrganizationError::SaveDeviceStorageNotAvailable { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "BootstrapOrganizationErrorSaveDeviceStorageNotAvailable",
+            )
+            .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::BootstrapOrganizationError::TimestampOutOfBallpark {
@@ -6173,6 +6077,44 @@ fn variant_cancel_error_rs_to_js<'a>(
         }
         libparsec::CancelError::NotBound { .. } => {
             let js_tag = JsString::try_new(cx, "CancelErrorNotBound").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClaimFinalizeError
+
+#[allow(dead_code)]
+fn variant_claim_finalize_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClaimFinalizeError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClaimFinalizeError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "ClaimFinalizeErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClaimFinalizeError::InvalidPath { .. } => {
+            let js_tag = JsString::try_new(cx, "ClaimFinalizeErrorInvalidPath").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClaimFinalizeError::RemoteOpaqueKeyUploadFailed { .. } => {
+            let js_tag = JsString::try_new(cx, "ClaimFinalizeErrorRemoteOpaqueKeyUploadFailed")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClaimFinalizeError::RemoteOpaqueKeyUploadOffline { .. } => {
+            let js_tag = JsString::try_new(cx, "ClaimFinalizeErrorRemoteOpaqueKeyUploadOffline")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClaimFinalizeError::StorageNotAvailable { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClaimFinalizeErrorStorageNotAvailable").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -8470,6 +8412,18 @@ fn variant_client_start_error_rs_to_js<'a>(
                 JsString::try_new(cx, "ClientStartErrorLoadDeviceInvalidPath").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::ClientStartError::LoadDeviceRemoteOpaqueKeyFetchFailed { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchFailed")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientStartError::LoadDeviceRemoteOpaqueKeyFetchOffline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchOffline")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
     }
     Ok(js_obj)
 }
@@ -8706,21 +8660,20 @@ fn variant_device_access_strategy_js_to_rs<'a>(
                     }
                 }
             };
-            let ciphertext_key = {
-                let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "ciphertextKey")?;
+            let account_handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "accountHandle")?;
                 {
-                    #[allow(clippy::unnecessary_mut_passed)]
-                    match js_val.as_slice(cx).try_into() {
-                        Ok(val) => val,
-                        // err can't infer type in some case, because of the previous `try_into`
-                        #[allow(clippy::useless_format)]
-                        Err(err) => return cx.throw_type_error(format!("{}", err)),
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
                     }
+                    let v = v as u32;
+                    v
                 }
             };
             Ok(libparsec::DeviceAccessStrategy::AccountVault {
                 key_file,
-                ciphertext_key,
+                account_handle,
             })
         }
         "DeviceAccessStrategyKeyring" => {
@@ -8788,7 +8741,7 @@ fn variant_device_access_strategy_rs_to_js<'a>(
     match rs_obj {
         libparsec::DeviceAccessStrategy::AccountVault {
             key_file,
-            ciphertext_key,
+            account_handle,
             ..
         } => {
             let js_tag = JsString::try_new(cx, "DeviceAccessStrategyAccountVault").or_throw(cx)?;
@@ -8806,12 +8759,8 @@ fn variant_device_access_strategy_rs_to_js<'a>(
             })
             .or_throw(cx)?;
             js_obj.set(cx, "keyFile", js_key_file)?;
-            let js_ciphertext_key = {
-                let rs_buff = { ciphertext_key.as_ref() };
-                let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
-                js_buff
-            };
-            js_obj.set(cx, "ciphertextKey", js_ciphertext_key)?;
+            let js_account_handle = JsNumber::new(cx, account_handle as f64);
+            js_obj.set(cx, "accountHandle", js_account_handle)?;
         }
         libparsec::DeviceAccessStrategy::Keyring { key_file, .. } => {
             let js_tag = JsString::try_new(cx, "DeviceAccessStrategyKeyring").or_throw(cx)?;
@@ -8882,36 +8831,18 @@ fn variant_device_save_strategy_js_to_rs<'a>(
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
         "DeviceSaveStrategyAccountVault" => {
-            let ciphertext_key_id = {
-                let js_val: Handle<JsString> = obj.get(cx, "ciphertextKeyId")?;
+            let account_handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "accountHandle")?;
                 {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<libparsec::AccountVaultItemOpaqueKeyID, _> {
-                            libparsec::AccountVaultItemOpaqueKeyID::from_hex(s.as_str())
-                                .map_err(|e| e.to_string())
-                        };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
                     }
+                    let v = v as u32;
+                    v
                 }
             };
-            let ciphertext_key = {
-                let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "ciphertextKey")?;
-                {
-                    #[allow(clippy::unnecessary_mut_passed)]
-                    match js_val.as_slice(cx).try_into() {
-                        Ok(val) => val,
-                        // err can't infer type in some case, because of the previous `try_into`
-                        #[allow(clippy::useless_format)]
-                        Err(err) => return cx.throw_type_error(format!("{}", err)),
-                    }
-                }
-            };
-            Ok(libparsec::DeviceSaveStrategy::AccountVault {
-                ciphertext_key_id,
-                ciphertext_key,
-            })
+            Ok(libparsec::DeviceSaveStrategy::AccountVault { account_handle })
         }
         "DeviceSaveStrategyKeyring" => Ok(libparsec::DeviceSaveStrategy::Keyring {}),
         "DeviceSaveStrategyPassword" => {
@@ -8947,31 +8878,11 @@ fn variant_device_save_strategy_rs_to_js<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
-        libparsec::DeviceSaveStrategy::AccountVault {
-            ciphertext_key_id,
-            ciphertext_key,
-            ..
-        } => {
+        libparsec::DeviceSaveStrategy::AccountVault { account_handle, .. } => {
             let js_tag = JsString::try_new(cx, "DeviceSaveStrategyAccountVault").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_ciphertext_key_id = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |x: libparsec::AccountVaultItemOpaqueKeyID| -> Result<String, &'static str> {
-                        Ok(x.hex())
-                    };
-                match custom_to_rs_string(ciphertext_key_id) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "ciphertextKeyId", js_ciphertext_key_id)?;
-            let js_ciphertext_key = {
-                let rs_buff = { ciphertext_key.as_ref() };
-                let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
-                js_buff
-            };
-            js_obj.set(cx, "ciphertextKey", js_ciphertext_key)?;
+            let js_account_handle = JsNumber::new(cx, account_handle as f64);
+            js_obj.set(cx, "accountHandle", js_account_handle)?;
         }
         libparsec::DeviceSaveStrategy::Keyring { .. } => {
             let js_tag = JsString::try_new(cx, "DeviceSaveStrategyKeyring").or_throw(cx)?;
@@ -9634,6 +9545,12 @@ fn variant_import_recovery_device_error_rs_to_js<'a>(
         }
         libparsec::ImportRecoveryDeviceError::Offline { .. } => {
             let js_tag = JsString::try_new(cx, "ImportRecoveryDeviceErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ImportRecoveryDeviceError::RemoteOpaqueKeyUploadFailed { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadFailed")
+                    .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ImportRecoveryDeviceError::Stopped { .. } => {
@@ -13660,6 +13577,16 @@ fn variant_update_device_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "UpdateDeviceErrorInvalidPath").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::UpdateDeviceError::RemoteOpaqueKeyOperationFailed { .. } => {
+            let js_tag = JsString::try_new(cx, "UpdateDeviceErrorRemoteOpaqueKeyOperationFailed")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::UpdateDeviceError::RemoteOpaqueKeyOperationOffline { .. } => {
+            let js_tag = JsString::try_new(cx, "UpdateDeviceErrorRemoteOpaqueKeyOperationOffline")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::UpdateDeviceError::StorageNotAvailable { .. } => {
             let js_tag =
                 JsString::try_new(cx, "UpdateDeviceErrorStorageNotAvailable").or_throw(cx)?;
@@ -16081,7 +16008,7 @@ fn account_create_registration_device(mut cx: FunctionContext) -> JsResult<JsPro
         .spawn(async move {
             let ret = libparsec::account_create_registration_device(
                 account,
-                &existing_local_device_access,
+                existing_local_device_access,
             )
             .await;
 
@@ -16287,76 +16214,6 @@ fn account_disable_auth_method(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_err =
                             variant_account_disable_auth_method_error_rs_to_js(&mut cx, err)?;
-                        js_obj.set(&mut cx, "error", js_err)?;
-                        js_obj
-                    }
-                };
-                Ok(js_ret)
-            });
-        });
-
-    Ok(promise)
-}
-
-// account_fetch_opaque_key_from_vault
-fn account_fetch_opaque_key_from_vault(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    crate::init_sentry();
-    let account = {
-        let js_val = cx.argument::<JsNumber>(0)?;
-        {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            v
-        }
-    };
-    let key_id = {
-        let js_val = cx.argument::<JsString>(1)?;
-        {
-            let custom_from_rs_string =
-                |s: String| -> Result<libparsec::AccountVaultItemOpaqueKeyID, _> {
-                    libparsec::AccountVaultItemOpaqueKeyID::from_hex(s.as_str())
-                        .map_err(|e| e.to_string())
-                };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let channel = cx.channel();
-    let (deferred, promise) = cx.promise();
-
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
-    let _handle = crate::TOKIO_RUNTIME
-        .lock()
-        .expect("Mutex is poisoned")
-        .spawn(async move {
-            let ret = libparsec::account_fetch_opaque_key_from_vault(account, key_id).await;
-
-            deferred.settle_with(&channel, move |mut cx| {
-                let js_ret = match ret {
-                    Ok(ok) => {
-                        let js_obj = JsObject::new(&mut cx);
-                        let js_tag = JsBoolean::new(&mut cx, true);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = {
-                            let rs_buff = { ok.as_ref() };
-                            let js_buff = JsTypedArray::from_slice(&mut cx, rs_buff.as_ref())?;
-                            js_buff
-                        };
-                        js_obj.set(&mut cx, "value", js_value)?;
-                        js_obj
-                    }
-                    Err(err) => {
-                        let js_obj = cx.empty_object();
-                        let js_tag = JsBoolean::new(&mut cx, false);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_account_fetch_opaque_key_from_vault_error_rs_to_js(
-                            &mut cx, err,
-                        )?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -17056,87 +16913,6 @@ fn account_register_new_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
-// account_upload_opaque_key_in_vault
-fn account_upload_opaque_key_in_vault(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    crate::init_sentry();
-    let account = {
-        let js_val = cx.argument::<JsNumber>(0)?;
-        {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            v
-        }
-    };
-    let organization_id = {
-        let js_val = cx.argument::<JsString>(1)?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let channel = cx.channel();
-    let (deferred, promise) = cx.promise();
-
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
-    let _handle = crate::TOKIO_RUNTIME.lock().expect("Mutex is poisoned").spawn(async move {
-
-        let ret = libparsec::account_upload_opaque_key_in_vault(
-            account,
-            organization_id,
-        ).await;
-
-        deferred.settle_with(&channel, move |mut cx| {
-            let js_ret = match ret {
-    Ok(ok) => {
-        let js_obj = JsObject::new(&mut cx);
-        let js_tag = JsBoolean::new(&mut cx, true);
-        js_obj.set(&mut cx, "ok", js_tag)?;
-        let js_value = {
-    let (x0, x1) = ok;
-    let js_array = JsArray::new(&mut cx, 2);
-    let js_value = JsString::try_new(&mut cx,{
-    let custom_to_rs_string = |x: libparsec::AccountVaultItemOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) };
-    match custom_to_rs_string(x0) {
-        Ok(ok) => ok,
-        Err(err) => return cx.throw_type_error(err),
-    }
-}).or_throw(&mut cx)?;
-    js_array.set(&mut cx, 0, js_value)?;
-    let js_value = {
-    let rs_buff = {x1.as_ref()};
-    let js_buff = JsTypedArray::from_slice(&mut cx, rs_buff.as_ref())?;
-    js_buff
-};
-    js_array.set(&mut cx, 1, js_value)?;
-    js_array
-};
-        js_obj.set(&mut cx, "value", js_value)?;
-        js_obj
-    }
-    Err(err) => {
-        let js_obj = cx.empty_object();
-        let js_tag = JsBoolean::new(&mut cx, false);
-        js_obj.set(&mut cx, "ok", js_tag)?;
-        let js_err = variant_account_upload_opaque_key_in_vault_error_rs_to_js(&mut cx, err)?;
-        js_obj.set(&mut cx, "error", js_err)?;
-        js_obj
-    }
-};
-            Ok(js_ret)
-        });
-    });
-
-    Ok(promise)
-}
-
 // archive_device
 fn archive_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -17421,7 +17197,7 @@ fn claimer_device_finalize_save_local_device(mut cx: FunctionContext) -> JsResul
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_claim_in_progress_error_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_claim_finalize_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -17970,7 +17746,7 @@ fn claimer_shamir_recovery_finalize_save_local_device(
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_claim_in_progress_error_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_claim_finalize_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -18472,7 +18248,7 @@ fn claimer_user_finalize_save_local_device(mut cx: FunctionContext) -> JsResult<
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_claim_in_progress_error_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_claim_finalize_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -20813,7 +20589,7 @@ fn client_start(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::client_start(config, &access).await;
+            let ret = libparsec::client_start(config, access).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -27259,10 +27035,6 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("accountDelete2Proceed", account_delete_2_proceed)?;
     cx.export_function("accountDisableAuthMethod", account_disable_auth_method)?;
-    cx.export_function(
-        "accountFetchOpaqueKeyFromVault",
-        account_fetch_opaque_key_from_vault,
-    )?;
     cx.export_function("accountInfo", account_info)?;
     cx.export_function("accountListAuthMethods", account_list_auth_methods)?;
     cx.export_function("accountListInvitations", account_list_invitations)?;
@@ -27279,10 +27051,6 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("accountRecover2Proceed", account_recover_2_proceed)?;
     cx.export_function("accountRegisterNewDevice", account_register_new_device)?;
-    cx.export_function(
-        "accountUploadOpaqueKeyInVault",
-        account_upload_opaque_key_in_vault,
-    )?;
     cx.export_function("archiveDevice", archive_device)?;
     cx.export_function("bootstrapOrganization", bootstrap_organization)?;
     cx.export_function(

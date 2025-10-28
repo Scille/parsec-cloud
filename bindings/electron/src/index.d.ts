@@ -590,6 +590,10 @@ export interface AccountCreateRegistrationDeviceErrorOffline {
     tag: "AccountCreateRegistrationDeviceErrorOffline"
     error: string
 }
+export interface AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchFailed {
+    tag: "AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchFailed"
+    error: string
+}
 export interface AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark {
     tag: "AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark"
     error: string
@@ -603,6 +607,7 @@ export type AccountCreateRegistrationDeviceError =
   | AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath
   | AccountCreateRegistrationDeviceErrorNotAllowedByOrganizationVaultStrategy
   | AccountCreateRegistrationDeviceErrorOffline
+  | AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchFailed
   | AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark
 
 
@@ -717,35 +722,6 @@ export type AccountDisableAuthMethodError =
   | AccountDisableAuthMethodErrorInternal
   | AccountDisableAuthMethodErrorOffline
   | AccountDisableAuthMethodErrorSelfDisableNotAllowed
-
-
-// AccountFetchOpaqueKeyFromVaultError
-export interface AccountFetchOpaqueKeyFromVaultErrorBadVaultKeyAccess {
-    tag: "AccountFetchOpaqueKeyFromVaultErrorBadVaultKeyAccess"
-    error: string
-}
-export interface AccountFetchOpaqueKeyFromVaultErrorCorruptedOpaqueKey {
-    tag: "AccountFetchOpaqueKeyFromVaultErrorCorruptedOpaqueKey"
-    error: string
-}
-export interface AccountFetchOpaqueKeyFromVaultErrorInternal {
-    tag: "AccountFetchOpaqueKeyFromVaultErrorInternal"
-    error: string
-}
-export interface AccountFetchOpaqueKeyFromVaultErrorOffline {
-    tag: "AccountFetchOpaqueKeyFromVaultErrorOffline"
-    error: string
-}
-export interface AccountFetchOpaqueKeyFromVaultErrorUnknownOpaqueKey {
-    tag: "AccountFetchOpaqueKeyFromVaultErrorUnknownOpaqueKey"
-    error: string
-}
-export type AccountFetchOpaqueKeyFromVaultError =
-  | AccountFetchOpaqueKeyFromVaultErrorBadVaultKeyAccess
-  | AccountFetchOpaqueKeyFromVaultErrorCorruptedOpaqueKey
-  | AccountFetchOpaqueKeyFromVaultErrorInternal
-  | AccountFetchOpaqueKeyFromVaultErrorOffline
-  | AccountFetchOpaqueKeyFromVaultErrorUnknownOpaqueKey
 
 
 // AccountInfoError
@@ -936,6 +912,10 @@ export interface AccountRegisterNewDeviceErrorOffline {
     tag: "AccountRegisterNewDeviceErrorOffline"
     error: string
 }
+export interface AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadFailed {
+    tag: "AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadFailed"
+    error: string
+}
 export interface AccountRegisterNewDeviceErrorStorageNotAvailable {
     tag: "AccountRegisterNewDeviceErrorStorageNotAvailable"
     error: string
@@ -954,38 +934,10 @@ export type AccountRegisterNewDeviceError =
   | AccountRegisterNewDeviceErrorInternal
   | AccountRegisterNewDeviceErrorInvalidPath
   | AccountRegisterNewDeviceErrorOffline
+  | AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadFailed
   | AccountRegisterNewDeviceErrorStorageNotAvailable
   | AccountRegisterNewDeviceErrorTimestampOutOfBallpark
   | AccountRegisterNewDeviceErrorUnknownRegistrationDevice
-
-
-// AccountUploadOpaqueKeyInVaultError
-export interface AccountUploadOpaqueKeyInVaultErrorBadVaultKeyAccess {
-    tag: "AccountUploadOpaqueKeyInVaultErrorBadVaultKeyAccess"
-    error: string
-}
-export interface AccountUploadOpaqueKeyInVaultErrorCannotObtainOrganizationVaultStrategy {
-    tag: "AccountUploadOpaqueKeyInVaultErrorCannotObtainOrganizationVaultStrategy"
-    error: string
-}
-export interface AccountUploadOpaqueKeyInVaultErrorInternal {
-    tag: "AccountUploadOpaqueKeyInVaultErrorInternal"
-    error: string
-}
-export interface AccountUploadOpaqueKeyInVaultErrorNotAllowedByOrganizationVaultStrategy {
-    tag: "AccountUploadOpaqueKeyInVaultErrorNotAllowedByOrganizationVaultStrategy"
-    error: string
-}
-export interface AccountUploadOpaqueKeyInVaultErrorOffline {
-    tag: "AccountUploadOpaqueKeyInVaultErrorOffline"
-    error: string
-}
-export type AccountUploadOpaqueKeyInVaultError =
-  | AccountUploadOpaqueKeyInVaultErrorBadVaultKeyAccess
-  | AccountUploadOpaqueKeyInVaultErrorCannotObtainOrganizationVaultStrategy
-  | AccountUploadOpaqueKeyInVaultErrorInternal
-  | AccountUploadOpaqueKeyInVaultErrorNotAllowedByOrganizationVaultStrategy
-  | AccountUploadOpaqueKeyInVaultErrorOffline
 
 
 // ActiveUsersLimit
@@ -1050,7 +1002,6 @@ export type ArchiveDeviceError =
 // AvailableDeviceType
 export interface AvailableDeviceTypeAccountVault {
     tag: "AvailableDeviceTypeAccountVault"
-    ciphertext_key_id: string
 }
 export interface AvailableDeviceTypeKeyring {
     tag: "AvailableDeviceTypeKeyring"
@@ -1097,8 +1048,16 @@ export interface BootstrapOrganizationErrorOrganizationExpired {
     tag: "BootstrapOrganizationErrorOrganizationExpired"
     error: string
 }
-export interface BootstrapOrganizationErrorSaveDeviceError {
-    tag: "BootstrapOrganizationErrorSaveDeviceError"
+export interface BootstrapOrganizationErrorSaveDeviceInvalidPath {
+    tag: "BootstrapOrganizationErrorSaveDeviceInvalidPath"
+    error: string
+}
+export interface BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadFailed {
+    tag: "BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadFailed"
+    error: string
+}
+export interface BootstrapOrganizationErrorSaveDeviceStorageNotAvailable {
+    tag: "BootstrapOrganizationErrorSaveDeviceStorageNotAvailable"
     error: string
 }
 export interface BootstrapOrganizationErrorTimestampOutOfBallpark {
@@ -1116,7 +1075,9 @@ export type BootstrapOrganizationError =
   | BootstrapOrganizationErrorInvalidToken
   | BootstrapOrganizationErrorOffline
   | BootstrapOrganizationErrorOrganizationExpired
-  | BootstrapOrganizationErrorSaveDeviceError
+  | BootstrapOrganizationErrorSaveDeviceInvalidPath
+  | BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadFailed
+  | BootstrapOrganizationErrorSaveDeviceStorageNotAvailable
   | BootstrapOrganizationErrorTimestampOutOfBallpark
 
 
@@ -1132,6 +1093,35 @@ export interface CancelErrorNotBound {
 export type CancelError =
   | CancelErrorInternal
   | CancelErrorNotBound
+
+
+// ClaimFinalizeError
+export interface ClaimFinalizeErrorInternal {
+    tag: "ClaimFinalizeErrorInternal"
+    error: string
+}
+export interface ClaimFinalizeErrorInvalidPath {
+    tag: "ClaimFinalizeErrorInvalidPath"
+    error: string
+}
+export interface ClaimFinalizeErrorRemoteOpaqueKeyUploadFailed {
+    tag: "ClaimFinalizeErrorRemoteOpaqueKeyUploadFailed"
+    error: string
+}
+export interface ClaimFinalizeErrorRemoteOpaqueKeyUploadOffline {
+    tag: "ClaimFinalizeErrorRemoteOpaqueKeyUploadOffline"
+    error: string
+}
+export interface ClaimFinalizeErrorStorageNotAvailable {
+    tag: "ClaimFinalizeErrorStorageNotAvailable"
+    error: string
+}
+export type ClaimFinalizeError =
+  | ClaimFinalizeErrorInternal
+  | ClaimFinalizeErrorInvalidPath
+  | ClaimFinalizeErrorRemoteOpaqueKeyUploadFailed
+  | ClaimFinalizeErrorRemoteOpaqueKeyUploadOffline
+  | ClaimFinalizeErrorStorageNotAvailable
 
 
 // ClaimInProgressError
@@ -2093,12 +2083,22 @@ export interface ClientStartErrorLoadDeviceInvalidPath {
     tag: "ClientStartErrorLoadDeviceInvalidPath"
     error: string
 }
+export interface ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchFailed {
+    tag: "ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchFailed"
+    error: string
+}
+export interface ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchOffline {
+    tag: "ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchOffline"
+    error: string
+}
 export type ClientStartError =
   | ClientStartErrorDeviceUsedByAnotherProcess
   | ClientStartErrorInternal
   | ClientStartErrorLoadDeviceDecryptionFailed
   | ClientStartErrorLoadDeviceInvalidData
   | ClientStartErrorLoadDeviceInvalidPath
+  | ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchFailed
+  | ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchOffline
 
 
 // ClientStartInvitationGreetError
@@ -2235,7 +2235,7 @@ export type ClientUserUpdateProfileError =
 export interface DeviceAccessStrategyAccountVault {
     tag: "DeviceAccessStrategyAccountVault"
     key_file: string
-    ciphertext_key: Uint8Array
+    account_handle: number
 }
 export interface DeviceAccessStrategyKeyring {
     tag: "DeviceAccessStrategyKeyring"
@@ -2260,8 +2260,7 @@ export type DeviceAccessStrategy =
 // DeviceSaveStrategy
 export interface DeviceSaveStrategyAccountVault {
     tag: "DeviceSaveStrategyAccountVault"
-    ciphertext_key_id: string
-    ciphertext_key: Uint8Array
+    account_handle: number
 }
 export interface DeviceSaveStrategyKeyring {
     tag: "DeviceSaveStrategyKeyring"
@@ -2437,6 +2436,10 @@ export interface ImportRecoveryDeviceErrorOffline {
     tag: "ImportRecoveryDeviceErrorOffline"
     error: string
 }
+export interface ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadFailed {
+    tag: "ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadFailed"
+    error: string
+}
 export interface ImportRecoveryDeviceErrorStopped {
     tag: "ImportRecoveryDeviceErrorStopped"
     error: string
@@ -2461,6 +2464,7 @@ export type ImportRecoveryDeviceError =
   | ImportRecoveryDeviceErrorInvalidPassphrase
   | ImportRecoveryDeviceErrorInvalidPath
   | ImportRecoveryDeviceErrorOffline
+  | ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadFailed
   | ImportRecoveryDeviceErrorStopped
   | ImportRecoveryDeviceErrorStorageNotAvailable
   | ImportRecoveryDeviceErrorTimestampOutOfBallpark
@@ -2996,6 +3000,14 @@ export interface UpdateDeviceErrorInvalidPath {
     tag: "UpdateDeviceErrorInvalidPath"
     error: string
 }
+export interface UpdateDeviceErrorRemoteOpaqueKeyOperationFailed {
+    tag: "UpdateDeviceErrorRemoteOpaqueKeyOperationFailed"
+    error: string
+}
+export interface UpdateDeviceErrorRemoteOpaqueKeyOperationOffline {
+    tag: "UpdateDeviceErrorRemoteOpaqueKeyOperationOffline"
+    error: string
+}
 export interface UpdateDeviceErrorStorageNotAvailable {
     tag: "UpdateDeviceErrorStorageNotAvailable"
     error: string
@@ -3005,6 +3017,8 @@ export type UpdateDeviceError =
   | UpdateDeviceErrorInternal
   | UpdateDeviceErrorInvalidData
   | UpdateDeviceErrorInvalidPath
+  | UpdateDeviceErrorRemoteOpaqueKeyOperationFailed
+  | UpdateDeviceErrorRemoteOpaqueKeyOperationOffline
   | UpdateDeviceErrorStorageNotAvailable
 
 
@@ -4256,10 +4270,6 @@ export function accountDisableAuthMethod(
     account: number,
     auth_method_id: string
 ): Promise<Result<null, AccountDisableAuthMethodError>>
-export function accountFetchOpaqueKeyFromVault(
-    account: number,
-    key_id: string
-): Promise<Result<Uint8Array, AccountFetchOpaqueKeyFromVaultError>>
 export function accountInfo(
     account: number
 ): Promise<Result<AccountInfo, AccountInfoError>>
@@ -4302,10 +4312,6 @@ export function accountRegisterNewDevice(
     new_device_label: string,
     save_strategy: DeviceSaveStrategy
 ): Promise<Result<AvailableDevice, AccountRegisterNewDeviceError>>
-export function accountUploadOpaqueKeyInVault(
-    account: number,
-    organization_id: string
-): Promise<Result<[string, Uint8Array], AccountUploadOpaqueKeyInVaultError>>
 export function archiveDevice(
     config_dir: string,
     device_path: string
@@ -4328,7 +4334,7 @@ export function cancel(
 export function claimerDeviceFinalizeSaveLocalDevice(
     handle: number,
     save_strategy: DeviceSaveStrategy
-): Promise<Result<AvailableDevice, ClaimInProgressError>>
+): Promise<Result<AvailableDevice, ClaimFinalizeError>>
 export function claimerDeviceInProgress1DoDenyTrust(
     canceller: number,
     handle: number
@@ -4364,7 +4370,7 @@ export function claimerShamirRecoveryAddShare(
 export function claimerShamirRecoveryFinalizeSaveLocalDevice(
     handle: number,
     save_strategy: DeviceSaveStrategy
-): Promise<Result<AvailableDevice, ClaimInProgressError>>
+): Promise<Result<AvailableDevice, ClaimFinalizeError>>
 export function claimerShamirRecoveryInProgress1DoDenyTrust(
     canceller: number,
     handle: number
@@ -4396,7 +4402,7 @@ export function claimerShamirRecoveryRecoverDevice(
 export function claimerUserFinalizeSaveLocalDevice(
     handle: number,
     save_strategy: DeviceSaveStrategy
-): Promise<Result<AvailableDevice, ClaimInProgressError>>
+): Promise<Result<AvailableDevice, ClaimFinalizeError>>
 export function claimerUserInProgress1DoDenyTrust(
     canceller: number,
     handle: number
