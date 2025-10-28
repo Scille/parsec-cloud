@@ -131,7 +131,7 @@
                 class="file-handler-topbar-buttons__item"
                 id="file-handler-open-editor"
                 @click="openEditor(contentInfo.path)"
-                v-if="!atDateTime && handlerMode === FileHandlerMode.View && isFileEditable(contentInfo.fileName)"
+                v-if="!atDateTime && handlerMode === FileHandlerMode.View && isFileEditable(contentInfo.fileName) && !isReader"
               >
                 <ion-icon
                   :icon="create"
@@ -221,6 +221,7 @@ import {
   WorkspaceHistoryEntryStatFile,
   ClientInfo,
   getClientInfo,
+  WorkspaceRole,
 } from '@/parsec';
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import {
@@ -287,6 +288,7 @@ const handlerComponent: Ref<typeof FileEditor | typeof FileViewer | null> = shal
 const handlerMode = ref<FileHandlerMode | undefined>(undefined);
 const sidebarMenuVisibleOnMounted = ref(false);
 const userInfo: Ref<ClientInfo | undefined> = ref(undefined);
+const isReader: Ref<boolean> = ref(true);
 const saveState = ref<SaveState>(SaveState.None);
 const savedIconRef = useTemplateRef<InstanceType<typeof IonIcon>>('savedIcon');
 const unsavedIconRef = useTemplateRef<InstanceType<typeof MsImage>>('unsavedIcon');
@@ -558,6 +560,14 @@ onMounted(async () => {
   handlerMode.value = getFileHandlerMode();
   const query = getCurrentRouteQuery();
   readOnly.value = Boolean(query.readOnly);
+
+  const workspaceHandle = getWorkspaceHandle();
+  if (workspaceHandle) {
+    const infoResult = await getWorkspaceInfo(workspaceHandle);
+    if (infoResult.ok) {
+      isReader.value = infoResult.value.currentSelfRole === WorkspaceRole.Reader;
+    }
+  }
 
   const clientInfoResult = await getClientInfo();
   if (clientInfoResult.ok) {
