@@ -5,10 +5,10 @@
 #![allow(clippy::unwrap_used)]
 
 use libparsec_tests_fixtures::prelude::*;
-use libparsec_types::prelude::*;
 
 use crate::{
-    archive_device, load_device, save_device, tests::utils::key_is_archived, LoadDeviceError,
+    archive_device, load_device, save_device, tests::utils::key_is_archived, DeviceAccessStrategy,
+    DeviceSaveStrategy, LoadDeviceError,
 };
 
 #[parsec_test(testbed = "minimal")]

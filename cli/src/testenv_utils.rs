@@ -7,12 +7,12 @@ use std::{
 
 use libparsec::{
     authenticated_cmds::latest::{device_create, user_create},
-    AuthenticatedCmds, Bytes, CertificateSigner, ClientConfig, DateTime, DeviceAccessStrategy,
-    DeviceCertificate, DeviceID, DeviceLabel, DevicePurpose, DeviceSaveStrategy, HumanHandle,
-    LocalDevice, MaybeRedacted, OrganizationID, ParsecAddr, PrivateKeyAlgorithm, ProxyConfig,
-    SigningKey, SigningKeyAlgorithm, UserCertificate, UserProfile, PARSEC_BASE_CONFIG_DIR,
-    PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR, PARSEC_SCHEME,
+    AuthenticatedCmds, Bytes, CertificateSigner, ClientConfig, DateTime, DeviceCertificate,
+    DeviceID, DeviceLabel, DevicePurpose, HumanHandle, LocalDevice, MaybeRedacted, OrganizationID,
+    ParsecAddr, PrivateKeyAlgorithm, ProxyConfig, SigningKey, SigningKeyAlgorithm, UserCertificate,
+    UserProfile, PARSEC_BASE_CONFIG_DIR, PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR, PARSEC_SCHEME,
 };
+use libparsec_client::{DeviceAccessStrategy, DeviceSaveStrategy};
 
 use crate::{
     commands::organization::{

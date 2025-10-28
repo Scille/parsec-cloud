@@ -9,6 +9,7 @@ use std::collections::{HashMap, HashSet};
 use libparsec_client_connection::{
     test_register_sequence_of_send_hooks, test_send_hook_vault_item_list,
 };
+use libparsec_platform_device_loader::DeviceSaveStrategy;
 use libparsec_protocol::{authenticated_account_cmds, authenticated_cmds};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;

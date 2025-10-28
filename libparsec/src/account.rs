@@ -21,9 +21,12 @@ pub use libparsec_account::{
 use libparsec_client_connection::{AnonymousAccountCmds, ConnectionError, ProxyConfig};
 use libparsec_types::prelude::*;
 
-use crate::handle::{
-    borrow_from_handle, iter_opened_handles, register_handle, take_and_close_handle, Handle,
-    HandleItem,
+use crate::{
+    handle::{
+        borrow_from_handle, iter_opened_handles, register_handle, take_and_close_handle, Handle,
+        HandleItem,
+    },
+    AvailableDevice, DeviceAccessStrategy, DeviceSaveStrategy,
 };
 
 // TODO: must reimplement this structure since the bindings doesn't support
@@ -273,26 +276,6 @@ pub async fn account_list_organizations(
     account.list_organizations().await
 }
 
-pub async fn account_fetch_opaque_key_from_vault(
-    account: Handle,
-    key_id: AccountVaultItemOpaqueKeyID,
-) -> Result<SecretKey, AccountFetchOpaqueKeyFromVaultError> {
-    let account_handle = account;
-    let account = borrow_account(account_handle)?;
-
-    account.fetch_opaque_key_from_vault(key_id).await
-}
-
-pub async fn account_upload_opaque_key_in_vault(
-    account: Handle,
-    organization_id: OrganizationID,
-) -> Result<(AccountVaultItemOpaqueKeyID, SecretKey), AccountUploadOpaqueKeyInVaultError> {
-    let account_handle = account;
-    let account = borrow_account(account_handle)?;
-
-    account.upload_opaque_key_in_vault(organization_id).await
-}
-
 pub async fn account_list_registration_devices(
     account: Handle,
 ) -> Result<HashSet<(OrganizationID, UserID)>, AccountListRegistrationDevicesError> {
@@ -304,14 +287,15 @@ pub async fn account_list_registration_devices(
 
 pub async fn account_create_registration_device(
     account: Handle,
-    existing_local_device_access: &DeviceAccessStrategy,
+    existing_local_device_access: DeviceAccessStrategy,
 ) -> Result<(), AccountCreateRegistrationDeviceError> {
     let account_handle = account;
     let account = borrow_account(account_handle)?;
+    let existing_local_device_access = existing_local_device_access.convert_with_side_effects()?;
 
     let existing_local_device = libparsec_platform_device_loader::load_device(
         account.config_dir(),
-        existing_local_device_access,
+        &existing_local_device_access,
     )
     .await?;
 
@@ -331,6 +315,7 @@ pub async fn account_register_new_device(
 ) -> Result<AvailableDevice, AccountRegisterNewDeviceError> {
     let account_handle = account;
     let account = borrow_account(account_handle)?;
+    let save_strategy = save_strategy.convert_with_side_effects()?;
 
     account
         .register_new_device(organization_id, user_id, new_device_label, save_strategy)
@@ -393,6 +378,11 @@ pub enum AccountCreateRegistrationDeviceError {
         ballpark_client_early_offset: f64,
         ballpark_client_late_offset: f64,
     },
+    /// Note only a subset of load strategies requires server access to
+    /// fetch an opaque key that itself protects the ciphertext key
+    /// (e.g. account vault).
+    #[error("Remote opaque key fetch failed: {0}")]
+    RemoteOpaqueKeyFetchFailed(anyhow::Error),
 }
 
 impl From<libparsec_platform_device_loader::LoadDeviceError>
@@ -406,6 +396,8 @@ impl From<libparsec_platform_device_loader::LoadDeviceError>
             LoadDeviceError::InvalidData => Self::LoadDeviceInvalidData,
             LoadDeviceError::DecryptionFailed => Self::LoadDeviceDecryptionFailed,
             LoadDeviceError::Internal(e) => Self::Internal(e),
+            LoadDeviceError::RemoteOpaqueKeyFetchOffline(e) => Self::Offline(e),
+            LoadDeviceError::RemoteOpaqueKeyFetchFailed(e) => Self::RemoteOpaqueKeyFetchFailed(e),
         }
     }
 }

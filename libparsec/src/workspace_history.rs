@@ -13,8 +13,11 @@ pub use libparsec_client::{
 };
 use libparsec_types::prelude::*;
 
-use crate::handle::{
-    borrow_from_handle, register_handle_with_init, take_and_close_handle, Handle, HandleItem,
+use crate::{
+    device::DeviceAccessStrategy,
+    handle::{
+        borrow_from_handle, register_handle_with_init, take_and_close_handle, Handle, HandleItem,
+    },
 };
 
 fn borrow_workspace_history(
@@ -129,6 +132,8 @@ pub async fn workspace_history_start_with_realm_export(
         for raw_decryptor in decryptors {
             let cooked_decryptor = match raw_decryptor {
                 WorkspaceHistoryRealmExportDecryptor::User { access } => {
+                    let access = access.convert_with_side_effects()?;
+
                     let device =
                         libparsec_platform_device_loader::load_device(&config.config_dir, &access)
                             .await

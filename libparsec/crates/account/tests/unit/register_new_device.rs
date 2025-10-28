@@ -8,6 +8,9 @@ use libparsec_client::ProxyConfig;
 use libparsec_client_connection::{
     test_register_sequence_of_send_hooks, test_send_hook_vault_item_list, AuthenticatedCmds,
 };
+use libparsec_platform_device_loader::{
+    AvailableDevice, AvailableDeviceType, DeviceAccessStrategy, DeviceSaveStrategy,
+};
 use libparsec_protocol::{authenticated_account_cmds, authenticated_cmds};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;

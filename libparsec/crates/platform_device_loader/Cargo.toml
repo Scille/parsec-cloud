@@ -16,6 +16,7 @@ test-with-testbed = ["libparsec_testbed"]
 vendored-dbus = ["keyring/vendored"]
 
 [dependencies]
+libparsec_client_connection = { workspace = true }
 libparsec_crypto = { workspace = true }
 libparsec_platform_async = { workspace = true }
 libparsec_platform_pki = { workspace = true }
@@ -68,3 +69,5 @@ libparsec_tests_lite = { workspace = true }
 libparsec_tests_fixtures = { workspace = true, features = [
     "test-with-platform-device-loader-testbed",
 ] }
+
+crc32fast = { workspace = true }

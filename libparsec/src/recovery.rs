@@ -1,12 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use libparsec_client::{ClientExportRecoveryDeviceError, ImportRecoveryDeviceError};
-use libparsec_types::DeviceSaveStrategy;
-use libparsec_types::{AvailableDevice, DeviceLabel};
+use libparsec_types::DeviceLabel;
 
-use crate::handle::{borrow_from_handle, HandleItem};
-use crate::ClientConfig;
-use crate::Handle;
+use crate::{
+    handle::{borrow_from_handle, Handle, HandleItem},
+    AvailableDevice, ClientConfig, DeviceSaveStrategy,
+};
 
 pub async fn import_recovery_device(
     config: ClientConfig,
@@ -15,6 +15,8 @@ pub async fn import_recovery_device(
     device_label: DeviceLabel,
     save_strategy: DeviceSaveStrategy,
 ) -> Result<AvailableDevice, ImportRecoveryDeviceError> {
+    let save_strategy = save_strategy.convert_with_side_effects()?;
+
     libparsec_client::import_recovery_device(
         &config.config_dir,
         recovery_device,

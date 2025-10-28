@@ -92,7 +92,7 @@ async fn ok_mocked(env: &TestbedEnv) {
     );
 
     let (ciphertext_key_id, ciphertext_key) =
-        account.upload_opaque_key_in_vault(org_id).await.unwrap();
+        account.upload_opaque_key_in_vault(&org_id).await.unwrap();
 
     let (expected_ciphertext_key_id, expected_ciphertext_key) =
         expected_stuff.lock().unwrap().clone().unwrap();
@@ -178,7 +178,7 @@ async fn offline(
     }
 
     p_assert_matches!(
-        account.upload_opaque_key_in_vault(org_id).await,
+        account.upload_opaque_key_in_vault(&org_id).await,
         Err(AccountUploadOpaqueKeyInVaultError::Offline(_))
     );
 }
@@ -231,7 +231,7 @@ async fn fingerprint_already_exists(env: &TestbedEnv) {
     );
 
     p_assert_matches!(
-        account.upload_opaque_key_in_vault(org_id).await,
+        account.upload_opaque_key_in_vault(&org_id).await,
         Err(AccountUploadOpaqueKeyInVaultError::Internal(err))
         if format!("{err}") == "Unexpected server response: FingerprintAlreadyExists"
     );
@@ -261,7 +261,7 @@ async fn bad_vault_key_access(env: &TestbedEnv) {
     );
 
     p_assert_matches!(
-        account.upload_opaque_key_in_vault(org_id).await,
+        account.upload_opaque_key_in_vault(&org_id).await,
         Err(AccountUploadOpaqueKeyInVaultError::BadVaultKeyAccess(_))
     );
 }
@@ -362,7 +362,7 @@ async fn unknown_server_response(
     }
 
     p_assert_matches!(
-        account.upload_opaque_key_in_vault(org_id).await,
+        account.upload_opaque_key_in_vault(&org_id).await,
         Err(AccountUploadOpaqueKeyInVaultError::Internal(err))
         if format!("{err}") == "Unexpected server response: UnknownStatus { unknown_status: \"unknown\", reason: None }"
     );
@@ -395,7 +395,7 @@ async fn cannot_obtain_organization_vault_strategy(env: &TestbedEnv) {
     );
 
     p_assert_matches!(
-        account.upload_opaque_key_in_vault(org_id).await,
+        account.upload_opaque_key_in_vault(&org_id).await,
         Err(AccountUploadOpaqueKeyInVaultError::CannotObtainOrganizationVaultStrategy)
     );
 }
@@ -443,7 +443,7 @@ async fn not_allowed_by_organization_vault_strategy(env: &TestbedEnv) {
     );
 
     p_assert_matches!(
-        account.upload_opaque_key_in_vault(org_id).await,
+        account.upload_opaque_key_in_vault(&org_id).await,
         Err(AccountUploadOpaqueKeyInVaultError::NotAllowedByOrganizationVaultStrategy)
     );
 }

@@ -9,8 +9,9 @@ use std::path::{Path, PathBuf};
 use libparsec_types::prelude::*;
 
 use crate::{
-    ArchiveDeviceError, ListAvailableDeviceError, LoadCiphertextKeyError, ReadFileError,
-    RemoveDeviceError, SaveDeviceError, UpdateDeviceError,
+    AccountVaultOperationsFetchOpaqueKeyError, ArchiveDeviceError, AvailableDevice,
+    DeviceAccessStrategy, DeviceSaveStrategy, ListAvailableDeviceError, LoadCiphertextKeyError,
+    ReadFileError, RemoveDeviceError, SaveDeviceError, UpdateDeviceError,
 };
 use internal::Storage;
 
@@ -76,9 +77,25 @@ pub(super) async fn load_ciphertext_key(
             }
         }
 
-        DeviceAccessStrategy::AccountVault { ciphertext_key, .. } => {
-            if let DeviceFile::AccountVault(_) = device_file {
-                Ok(ciphertext_key.clone())
+        DeviceAccessStrategy::AccountVault { operations, .. } => {
+            if let DeviceFile::AccountVault(device) = device_file {
+                let ciphertext_key = operations
+                    .fetch_opaque_key(device.ciphertext_key_id)
+                    .await
+                    .map_err(|err| match err {
+                        AccountVaultOperationsFetchOpaqueKeyError::BadVaultKeyAccess(_)
+                        | AccountVaultOperationsFetchOpaqueKeyError::UnknownOpaqueKey
+                        | AccountVaultOperationsFetchOpaqueKeyError::CorruptedOpaqueKey => {
+                            LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed(err.into())
+                        }
+                        AccountVaultOperationsFetchOpaqueKeyError::Offline(err) => {
+                            LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline(err)
+                        }
+                        AccountVaultOperationsFetchOpaqueKeyError::Internal(err) => {
+                            LoadCiphertextKeyError::Internal(err)
+                        }
+                    })?;
+                Ok(ciphertext_key)
             } else {
                 Err(LoadCiphertextKeyError::InvalidData)
             }

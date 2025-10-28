@@ -2341,11 +2341,13 @@ dependencies = [
 name = "libparsec_platform_device_loader"
 version = "3.5.3-a.0+dev"
 dependencies = [
+ "crc32fast",
  "data-encoding",
  "dirs",
  "error_set",
  "itertools 0.14.0",
  "keyring",
+ "libparsec_client_connection",
  "libparsec_crypto",
  "libparsec_platform_async",
  "libparsec_platform_pki",

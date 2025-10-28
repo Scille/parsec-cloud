@@ -8,7 +8,10 @@ use std::{
 use libparsec_platform_async::{lock::Mutex, stream::StreamExt};
 use libparsec_types::prelude::*;
 
-use crate::web::wrapper::{DirEntry, DirOrFileHandle, OpenOptions};
+use crate::{
+    web::wrapper::{DirEntry, DirOrFileHandle, OpenOptions},
+    AccountVaultOperationsUploadOpaqueKeyError, AvailableDevice, DeviceSaveStrategy,
+};
 
 use super::{
     error::*,
@@ -135,11 +138,24 @@ impl Storage {
 
                 self.save_device_file(&key_file, &file_data).await?;
             }
-            DeviceSaveStrategy::AccountVault {
-                ciphertext_key_id,
-                ciphertext_key,
-                ..
-            } => {
+            DeviceSaveStrategy::AccountVault { operations } => {
+                let (ciphertext_key_id, ciphertext_key) = operations
+                    .upload_opaque_key(device.organization_id().to_owned())
+                    .await
+                    .map_err(|err| match err {
+                        err @ (AccountVaultOperationsUploadOpaqueKeyError::NotAllowedByOrganizationVaultStrategy
+                        | AccountVaultOperationsUploadOpaqueKeyError::CannotObtainOrganizationVaultStrategy
+                        | AccountVaultOperationsUploadOpaqueKeyError::BadVaultKeyAccess(_)) => {
+                            SaveDeviceError::RemoteOpaqueKeyUploadFailed(err.into())
+                        }
+                        AccountVaultOperationsUploadOpaqueKeyError::Offline(err) => {
+                            SaveDeviceError::RemoteOpaqueKeyUploadOffline(err)
+                        }
+                        AccountVaultOperationsUploadOpaqueKeyError::Internal(err) => {
+                            SaveDeviceError::Internal(err)
+                        }
+                    })?;
+
                 let ciphertext = crate::encrypt_device(device, &ciphertext_key);
                 let file_data = DeviceFile::AccountVault(DeviceFileAccountVault {
                     created_on,
@@ -150,7 +166,7 @@ impl Storage {
                     device_id: device.device_id,
                     human_handle: device.human_handle.clone(),
                     device_label: device.device_label.clone(),
-                    ciphertext_key_id: *ciphertext_key_id,
+                    ciphertext_key_id,
                     ciphertext,
                 });
 

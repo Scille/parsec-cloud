@@ -7,6 +7,7 @@ use std::{
 };
 
 use libparsec_client_connection::{AnonymousAccountCmds, AuthenticatedAccountCmds, ProxyConfig};
+use libparsec_platform_device_loader::{AvailableDevice, DeviceSaveStrategy};
 use libparsec_types::prelude::*;
 
 mod account_create;
@@ -259,6 +260,10 @@ impl Account {
     ///
     /// This key is typically supposed to be used to decrypt the `ciphertext`
     /// field of a `DeviceFileAccountVault`.
+    ///
+    /// This method is only supposed to be used by `libparsec_platform_device_loader`
+    /// through its `AccountVaultOperations` trait (that is itself implemented
+    /// in `libparsec/src/device.rs`).
     pub async fn fetch_opaque_key_from_vault(
         &self,
         key_id: AccountVaultItemOpaqueKeyID,
@@ -276,9 +281,13 @@ impl Account {
     /// to be used with must be provided so that the organization's account vault
     /// strategy can be retrieved and enforced client-side (note it would be pointless
     /// to have this check done server-side since the uploaded data are encrypted).
+    ///
+    /// This method is only supposed to be used by `libparsec_platform_device_loader`
+    /// through its `AccountVaultOperations` trait (that is itself implemented
+    /// in `libparsec/src/device.rs`).
     pub async fn upload_opaque_key_in_vault(
         &self,
-        organization_id: OrganizationID,
+        organization_id: &OrganizationID,
     ) -> Result<(AccountVaultItemOpaqueKeyID, SecretKey), AccountUploadOpaqueKeyInVaultError> {
         account_upload_opaque_key_in_vault(self, organization_id).await
     }

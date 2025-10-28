@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 #![doc = include_str!("../README.md")]
+
 mod certif;
 mod client;
 mod config;
@@ -23,6 +24,11 @@ pub use device::remove_device;
 pub use event_bus::*;
 pub use invite::*;
 pub use workspace_history::*;
+
+// Re-expose device save/access objects since they are part of this crate interface
+pub use libparsec_platform_device_loader::{
+    AvailableDevice, AvailableDeviceType, DeviceAccessStrategy, DeviceSaveStrategy,
+};
 
 // Testing on web requires this macro configuration to be present anywhere in
 // the crate.

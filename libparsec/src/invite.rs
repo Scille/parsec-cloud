@@ -19,7 +19,7 @@ use libparsec_types::prelude::*;
 
 use crate::{
     handle::{borrow_from_handle, register_handle, take_and_close_handle, Handle, HandleItem},
-    listen_canceller, ClientConfig, OnEventCallbackPlugged,
+    listen_canceller, AvailableDevice, ClientConfig, DeviceSaveStrategy, OnEventCallbackPlugged,
 };
 
 /*
@@ -100,6 +100,8 @@ pub async fn bootstrap_organization(
     //   obtained from libparsec).
     sequester_authority_verify_key_pem: Option<&str>,
 ) -> Result<AvailableDevice, BootstrapOrganizationError> {
+    let save_strategy = save_strategy.convert_with_side_effects()?;
+
     let sequester_authority_verify_key = match sequester_authority_verify_key_pem {
         None => None,
         Some(raw) => {
@@ -1008,6 +1010,8 @@ pub async fn claimer_user_finalize_save_local_device(
     handle: Handle,
     save_strategy: DeviceSaveStrategy,
 ) -> Result<AvailableDevice, ClaimInProgressError> {
+    let save_strategy = save_strategy.convert()?;
+
     let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::UserClaimFinalize(ctx) => Ok(ctx),
         _ => Err(x),
@@ -1024,6 +1028,8 @@ pub async fn claimer_device_finalize_save_local_device(
     handle: Handle,
     save_strategy: DeviceSaveStrategy,
 ) -> Result<AvailableDevice, ClaimInProgressError> {
+    let save_strategy = save_strategy.convert()?;
+
     let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::DeviceClaimFinalize(ctx) => Ok(ctx),
         _ => Err(x),
@@ -1040,6 +1046,8 @@ pub async fn claimer_shamir_recovery_finalize_save_local_device(
     handle: Handle,
     save_strategy: DeviceSaveStrategy,
 ) -> Result<AvailableDevice, ClaimInProgressError> {
+    let save_strategy = save_strategy.convert()?;
+
     let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::ShamirRecoveryClaimFinalize(ctx) => Ok(ctx),
         _ => Err(x),

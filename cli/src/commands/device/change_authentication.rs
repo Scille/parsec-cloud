@@ -65,7 +65,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
             key_file: device.key_file_path.clone(),
         },
 
-        AvailableDeviceType::AccountVault { .. } => {
+        AvailableDeviceType::AccountVault => {
             // In theory we should support this authentication method here,
             // however:
             // - It is cumbersome since it requires obtaining the account authentication
