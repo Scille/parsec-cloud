@@ -2493,7 +2493,7 @@
                 "fileTooBig": "Fichier trop volumineux",
                 "impossibleToOpen": "Impossible d'éditer ce fichier",
                 "genericError": "Impossible d'ouvrir ce fichier",
-                "unSupportedFileType": "Type de fichier non pris en charge par Parsec",
+                "unsupportedFileType": "Type de fichier non pris en charge par Parsec",
                 "editionNotAvailable": "Parsec Edition indisponible"
             },
             "informationEditDownload": "Si vous souhaitez modifier ce fichier, vous pouvez le télécharger et l'ouvrir localement sur votre appareil.",

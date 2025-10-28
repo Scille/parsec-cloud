@@ -2492,7 +2492,7 @@
                 "fileTooBig": "File size is too big",
                 "impossibleToOpen": "Cannot edit this file",
                 "genericError": "Failed to open the file",
-                "unSupportedFileType": "File not supported by Parsec",
+                "unsupportedFileType": "File not supported by Parsec",
                 "editionNotAvailable": "Parsec Edition unavailable"
             },
             "informationEditDownload": "If you want to edit this file, you can download it and open it locally on your device.",
