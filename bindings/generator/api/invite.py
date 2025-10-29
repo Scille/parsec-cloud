@@ -67,7 +67,13 @@ class BootstrapOrganizationError(ErrorVariant):
         ballpark_client_early_offset: float
         ballpark_client_late_offset: float
 
-    class SaveDeviceError:
+    class SaveDeviceStorageNotAvailable:
+        pass
+
+    class SaveDeviceInvalidPath:
+        pass
+
+    class SaveDeviceRemoteOpaqueKeyUploadFailed:
         pass
 
     class Internal:
@@ -159,6 +165,23 @@ class ClaimInProgressError(ErrorVariant):
         pass
 
     class Cancelled:
+        pass
+
+
+class ClaimFinalizeError(ErrorVariant):
+    class StorageNotAvailable:
+        pass
+
+    class InvalidPath:
+        pass
+
+    class RemoteOpaqueKeyUploadOffline:
+        pass
+
+    class RemoteOpaqueKeyUploadFailed:
+        pass
+
+    class Internal:
         pass
 
 
@@ -520,21 +543,21 @@ async def claimer_shamir_recovery_recover_device(
 async def claimer_user_finalize_save_local_device(
     handle: Handle,
     save_strategy: DeviceSaveStrategy,
-) -> Result[AvailableDevice, ClaimInProgressError]:
+) -> Result[AvailableDevice, ClaimFinalizeError]:
     raise NotImplementedError
 
 
 async def claimer_device_finalize_save_local_device(
     handle: Handle,
     save_strategy: DeviceSaveStrategy,
-) -> Result[AvailableDevice, ClaimInProgressError]:
+) -> Result[AvailableDevice, ClaimFinalizeError]:
     raise NotImplementedError
 
 
 async def claimer_shamir_recovery_finalize_save_local_device(
     handle: Handle,
     save_strategy: DeviceSaveStrategy,
-) -> Result[AvailableDevice, ClaimInProgressError]:
+) -> Result[AvailableDevice, ClaimFinalizeError]:
     raise NotImplementedError
 
 
