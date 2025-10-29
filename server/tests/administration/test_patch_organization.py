@@ -303,7 +303,7 @@ async def test_set_unset_tos(
         assert dump[coolorg.organization_id].tos is None
 
 
-async def test_404(
+async def test_unknown_organization(
     administration_client: httpx.AsyncClient,
     backend: Backend,
 ) -> None:
