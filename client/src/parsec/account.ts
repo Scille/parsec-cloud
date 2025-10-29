@@ -15,7 +15,6 @@ import {
   AccountCreateSendValidationEmailErrorTag,
   AccountDeleteProceedError,
   AccountDeleteSendValidationEmailError,
-  AccountFetchOpaqueKeyFromVaultError,
   AccountHandle,
   AccountInfo,
   AccountInfoError,
@@ -31,20 +30,15 @@ import {
   AccountRecoverProceedError,
   AccountRecoverSendValidationEmailError,
   AccountRegisterNewDeviceError,
-  AccountRegisterNewDeviceErrorTag,
-  AccountUploadOpaqueKeyInVaultError,
-  AccountVaultItemOpaqueKeyID,
   AuthMethodInfo,
   AvailableDevice,
   AvailableDeviceTypeTag,
   DeviceAccessStrategy,
   DeviceSaveStrategy,
   DeviceSaveStrategyTag,
-  OrganizationID,
   ParsecAddr,
   RegistrationDevice,
   Result,
-  SecretKey,
 } from '@/parsec/types';
 import { generateNoHandleError } from '@/parsec/utils';
 import { libparsec } from '@/plugins/libparsec';
@@ -285,12 +279,7 @@ class _ParsecAccount {
       }
       let saveStrategy!: DeviceSaveStrategy;
       if (isWeb()) {
-        const keyResult = await libparsec.accountUploadOpaqueKeyInVault(this.handle, regDevice.organizationId);
-        if (!keyResult.ok) {
-          window.electronAPI.log('error', `Failed to upload opaque key: ${keyResult.error.tag} (${keyResult.error.error})`);
-          continue;
-        }
-        saveStrategy = { tag: DeviceSaveStrategyTag.AccountVault, ciphertextKeyId: keyResult.value[0], ciphertextKey: keyResult.value[1] };
+        saveStrategy = { tag: DeviceSaveStrategyTag.AccountVault, accountHandle: this.handle };
       } else {
         saveStrategy = { tag: DeviceSaveStrategyTag.Keyring };
       }
@@ -357,17 +346,12 @@ class _ParsecAccount {
     if (existingDevice !== undefined) {
       return { ok: true, value: existingDevice };
     }
-    const keyResult = await libparsec.accountUploadOpaqueKeyInVault(this.handle, registrationDevice.organizationId);
-    if (!keyResult.ok) {
-      window.electronAPI.log('error', `Failed to upload opaque key: ${keyResult.error.tag} (${keyResult.error.error})`);
-      return { ok: false, error: { tag: AccountRegisterNewDeviceErrorTag.BadVaultKeyAccess, error: 'failed to get key' } };
-    }
     const regResult = await libparsec.accountRegisterNewDevice(
       this.handle,
       registrationDevice.organizationId,
       registrationDevice.userId,
       getAccountDefaultDeviceName(),
-      { tag: DeviceSaveStrategyTag.AccountVault, ciphertextKeyId: keyResult.value[0], ciphertextKey: keyResult.value[1] },
+      { tag: DeviceSaveStrategyTag.AccountVault, accountHandle: this.handle },
     );
     return regResult;
   }
@@ -453,23 +437,6 @@ class _ParsecAccount {
       this.handle = undefined;
     }
     return result;
-  }
-
-  async fetchKeyFromVault(cipherKeyId: string): Promise<Result<SecretKey, AccountFetchOpaqueKeyFromVaultError>> {
-    if (!this.handle) {
-      return generateNoHandleError<AccountFetchOpaqueKeyFromVaultError>();
-    }
-    return await libparsec.accountFetchOpaqueKeyFromVault(this.handle, cipherKeyId);
-  }
-
-  async uploadKeyInVault(
-    organizationId: OrganizationID,
-  ): Promise<Result<[AccountVaultItemOpaqueKeyID, SecretKey], AccountUploadOpaqueKeyInVaultError>> {
-    if (!this.handle) {
-      return generateNoHandleError<AccountUploadOpaqueKeyInVaultError>();
-    }
-    const keyResult = await libparsec.accountUploadOpaqueKeyInVault(this.handle, organizationId);
-    return keyResult;
   }
 
   async recoveryRequest(email: string, server: string): Promise<Result<null, AccountRecoverSendValidationEmailError>> {
