@@ -176,7 +176,6 @@ impl AccountVaultOperations for MockedAccountVaultOperations {
 
     fn upload_opaque_key(
         &self,
-        _organization_id: OrganizationID,
     ) -> AccountVaultOperationsFutureResult<
         (AccountVaultItemOpaqueKeyID, SecretKey),
         AccountVaultOperationsUploadOpaqueKeyError,

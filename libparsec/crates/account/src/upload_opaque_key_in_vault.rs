@@ -7,13 +7,7 @@ use super::Account;
 
 #[derive(Debug, thiserror::Error)]
 pub enum AccountUploadOpaqueKeyInVaultError {
-    #[error(
-        "The organization's configuration does not allow uploading sensitive data in the vault"
-    )]
-    NotAllowedByOrganizationVaultStrategy,
-    #[error("The organization's configuration cannot be obtained (organization doesn't exist, or user not part of it ?")]
-    CannotObtainOrganizationVaultStrategy,
-    #[error("Cannot decrypt the vault key access return by the server: {0}")]
+    #[error("Cannot decrypt the vault key access returned by the server: {0}")]
     BadVaultKeyAccess(DataError),
     #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),
@@ -23,7 +17,6 @@ pub enum AccountUploadOpaqueKeyInVaultError {
 
 pub(super) async fn account_upload_opaque_key_in_vault(
     account: &Account,
-    organization_id: &OrganizationID,
 ) -> Result<(AccountVaultItemOpaqueKeyID, SecretKey), AccountUploadOpaqueKeyInVaultError> {
     // 1. Load the vault key
 
@@ -50,52 +43,7 @@ pub(super) async fn account_upload_opaque_key_in_vault(
         access.vault_key
     };
 
-    // 2. Check the organization's account vault strategy
-
-    // TODO: Ugly temporary hack used by the GUI during organization bootstrap,
-    // since this code needs a profound refactoring to be able to provide the
-    // organization ID to this function...
-    if organization_id.as_ref() != "__no_check__" {
-        use libparsec_protocol::authenticated_account_cmds::latest::organization_self_list::{
-            AccountVaultStrategy, Rep, Req,
-        };
-
-        let req = Req {};
-        let rep = account.cmds.send(req).await?;
-
-        let user = match rep {
-            Rep::Ok { active, .. } => {
-                let found = active
-                    .into_iter()
-                    .find(|u| u.organization_id == *organization_id);
-                match found {
-                    Some(user) => user,
-                    // Multiple explanations here:
-                    // - The organization doesn't exist
-                    // - The organization exist, but the user is not part (or no longer) of it
-                    //
-                    // In theory those are exotic cases, since we most likely need an opaque vault key
-                    // to upload a newly created device... however it can also be a bug (typically the
-                    // provided organization ID doesn't match with the one from the newly created device).
-                    None => {
-                        return Err(AccountUploadOpaqueKeyInVaultError::CannotObtainOrganizationVaultStrategy);
-                    }
-                }
-            }
-            bad_rep @ Rep::UnknownStatus { .. } => {
-                return Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into());
-            }
-        };
-
-        if matches!(
-            user.organization_config.account_vault_strategy,
-            AccountVaultStrategy::Forbidden
-        ) {
-            return Err(AccountUploadOpaqueKeyInVaultError::NotAllowedByOrganizationVaultStrategy);
-        }
-    }
-
-    // 3. Encrypt the key and save it in the account vault
+    // 2. Encrypt the key and save it in the account vault
 
     let key_id = AccountVaultItemOpaqueKeyID::default();
     let key = SecretKey::generate();

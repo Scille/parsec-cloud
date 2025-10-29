@@ -287,9 +287,8 @@ impl Account {
     /// in `libparsec/src/device.rs`).
     pub async fn upload_opaque_key_in_vault(
         &self,
-        organization_id: &OrganizationID,
     ) -> Result<(AccountVaultItemOpaqueKeyID, SecretKey), AccountUploadOpaqueKeyInVaultError> {
-        account_upload_opaque_key_in_vault(self, organization_id).await
+        account_upload_opaque_key_in_vault(self).await
     }
 
     /// Fetch the account vault items from the server and return all available registration devices

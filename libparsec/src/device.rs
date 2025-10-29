@@ -66,7 +66,6 @@ mod strategy {
 
         fn upload_opaque_key(
             &self,
-            organization_id: OrganizationID,
         ) -> AccountVaultOperationsFutureResult<
             (AccountVaultItemOpaqueKeyID, SecretKey),
             AccountVaultOperationsUploadOpaqueKeyError,
@@ -74,13 +73,20 @@ mod strategy {
             let account = self.account.clone();
 
             Box::pin(async move {
-                account.upload_opaque_key_in_vault(&organization_id).await.map_err(|err| match err {
-                    AccountUploadOpaqueKeyInVaultError::NotAllowedByOrganizationVaultStrategy => AccountVaultOperationsUploadOpaqueKeyError::NotAllowedByOrganizationVaultStrategy,
-                    AccountUploadOpaqueKeyInVaultError::CannotObtainOrganizationVaultStrategy => AccountVaultOperationsUploadOpaqueKeyError::CannotObtainOrganizationVaultStrategy,
-                    AccountUploadOpaqueKeyInVaultError::BadVaultKeyAccess(err) => AccountVaultOperationsUploadOpaqueKeyError::BadVaultKeyAccess(err),
-                    AccountUploadOpaqueKeyInVaultError::Offline(err) => AccountVaultOperationsUploadOpaqueKeyError::Offline(err),
-                    AccountUploadOpaqueKeyInVaultError::Internal(err) => AccountVaultOperationsUploadOpaqueKeyError::Internal(err),
-                })
+                account
+                    .upload_opaque_key_in_vault()
+                    .await
+                    .map_err(|err| match err {
+                        AccountUploadOpaqueKeyInVaultError::BadVaultKeyAccess(err) => {
+                            AccountVaultOperationsUploadOpaqueKeyError::BadVaultKeyAccess(err)
+                        }
+                        AccountUploadOpaqueKeyInVaultError::Offline(err) => {
+                            AccountVaultOperationsUploadOpaqueKeyError::Offline(err)
+                        }
+                        AccountUploadOpaqueKeyInVaultError::Internal(err) => {
+                            AccountVaultOperationsUploadOpaqueKeyError::Internal(err)
+                        }
+                    })
             })
         }
     }

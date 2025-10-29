@@ -397,14 +397,10 @@ pub(super) async fn save_device(
 
         DeviceSaveStrategy::AccountVault { operations } => {
             let (ciphertext_key_id, ciphertext_key) = operations
-                .upload_opaque_key(device.organization_id().to_owned())
+                .upload_opaque_key()
                 .await
                 .map_err(|err| match err {
-                    err @ (
-                        AccountVaultOperationsUploadOpaqueKeyError::NotAllowedByOrganizationVaultStrategy
-                        | AccountVaultOperationsUploadOpaqueKeyError::CannotObtainOrganizationVaultStrategy
-                        | AccountVaultOperationsUploadOpaqueKeyError::BadVaultKeyAccess(_)
-                    ) => {
+                    AccountVaultOperationsUploadOpaqueKeyError::BadVaultKeyAccess(err) => {
                         SaveDeviceError::RemoteOpaqueKeyUploadFailed(err.into())
                     }
                     AccountVaultOperationsUploadOpaqueKeyError::Offline(err) => {

@@ -11,7 +11,7 @@ use libparsec_types::prelude::*;
 
 #[derive(Debug, thiserror::Error)]
 pub enum AccountVaultOperationsFetchOpaqueKeyError {
-    #[error("Cannot decrypt the vault key access return by the server: {0}")]
+    #[error("Cannot decrypt the vault key access returned by the server: {0}")]
     BadVaultKeyAccess(DataError),
     #[error("No opaque key with this ID among the vault items")]
     UnknownOpaqueKey,
@@ -25,13 +25,7 @@ pub enum AccountVaultOperationsFetchOpaqueKeyError {
 
 #[derive(Debug, thiserror::Error)]
 pub enum AccountVaultOperationsUploadOpaqueKeyError {
-    #[error(
-        "The organization's configuration does not allow uploading sensitive data in the vault"
-    )]
-    NotAllowedByOrganizationVaultStrategy,
-    #[error("The organization's configuration cannot be obtained (organization doesn't exist, or user not part of it ?")]
-    CannotObtainOrganizationVaultStrategy,
-    #[error("Cannot decrypt the vault key access return by the server: {0}")]
+    #[error("Cannot decrypt the vault key access returned by the server: {0}")]
     BadVaultKeyAccess(DataError),
     #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),
@@ -61,7 +55,6 @@ pub trait AccountVaultOperations: std::fmt::Debug + Send + Sync {
     ) -> AccountVaultOperationsFutureResult<SecretKey, AccountVaultOperationsFetchOpaqueKeyError>;
     fn upload_opaque_key(
         &self,
-        organization_id: OrganizationID,
     ) -> AccountVaultOperationsFutureResult<
         (AccountVaultItemOpaqueKeyID, SecretKey),
         AccountVaultOperationsUploadOpaqueKeyError,
