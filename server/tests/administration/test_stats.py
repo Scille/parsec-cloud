@@ -329,3 +329,12 @@ async def test_server_stats_at(
     response = await server_stats("1969-01-01T00:00:00Z")
     expected = {"stats": []}
     assert response == expected
+
+
+async def test_unknown_organization(
+    administration_client: httpx.AsyncClient,
+) -> None:
+    response = await administration_client.get(
+        "http://parsec.invalid/administration/organizations/Dummy/stats",
+    )
+    assert response.status_code == 404, response.content

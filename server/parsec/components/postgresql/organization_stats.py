@@ -21,11 +21,11 @@ from parsec.components.postgresql.utils import (
 _q_get_stats = Q(
     """
 WITH my_org AS (
-    SELECT
-        _id,
-        COALESCE(_created_on <= $at, FALSE) AS found
+    SELECT _id
     FROM organization
-    WHERE organization_id = $organization_id
+    WHERE
+        organization_id = $organization_id
+        AND _created_on <= $at
 ),
 
 -- We cannot use `current_profile` column from `user_` since in this query we
@@ -50,12 +50,10 @@ my_realms AS (
 )
 
 SELECT
-    my_org.found AS organization_found,
     my_users.organization_users,
     my_vlob_atoms.organization_metadata_size,
     my_blocks.organization_data_size,
     (SELECT COUNT(*) FROM my_realms) AS organization_realms
-
 FROM
     my_org,
 
@@ -113,16 +111,10 @@ async def _get_organization_stats(
 ) -> OrganizationStats | OrganizationStatsBadOutcome:
     at = at or DateTime.now()
     row = await connection.fetchrow(*_q_get_stats(organization_id=organization.str, at=at))
-    assert row is not None
 
-    match row["organization_found"]:
-        case True:
-            pass
-        # `None` if the orga doesn't exist, `False` if the orga exists but is too recent
-        case False | None:
-            return OrganizationStatsBadOutcome.ORGANIZATION_NOT_FOUND
-        case _:
-            assert False, row
+    # No row is returned if the organization does not exists at the specified datetime
+    if row is None:
+        return OrganizationStatsBadOutcome.ORGANIZATION_NOT_FOUND
 
     users = 0
     active_users = 0
