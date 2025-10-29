@@ -84,7 +84,7 @@ async def test_ok(
     }
 
 
-async def test_404(
+async def test_unknown_organization(
     administration_client: httpx.AsyncClient,
 ) -> None:
     url = "http://parsec.invalid/administration/organizations/Dummy"
