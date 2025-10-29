@@ -175,11 +175,9 @@ async function onLoginSuccess(_token: AuthenticationToken, info: PersonalInforma
     if (isWeb() && ParsecAccount.isLoggedIn() && ParsecAccount.addressMatchesAccountServer(props.bootstrapLink)) {
       const parseResult = await parseParsecAddr(props.bootstrapLink);
       if (parseResult.ok && parseResult.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
-        const result = await SaveStrategy.useAccountVault(parseResult.value.organizationId);
-        if (result.ok) {
-          // Skip the auth page
-          await onAuthenticationChosen(result.value);
-        }
+        const saveStrategy = SaveStrategy.useAccountVault();
+        // Skip the auth page
+        await onAuthenticationChosen(saveStrategy);
       }
     }
   }
@@ -195,13 +193,10 @@ async function onOrganizationNameChosen(chosenOrganizationName: OrganizationID, 
   }
   organizationName.value = chosenOrganizationName;
   sequesterKey.value = seqKey;
-  if (
-    isWeb() &&
-    ParsecAccount.isLoggedIn() &&
-    Env.getSaasServers().some((addr) => ParsecAccount.addressMatchesAccountServer(`parsec3://${addr}`))
-  ) {
+  const accountHandle = ParsecAccount.getHandle();
+  if (isWeb() && accountHandle && Env.getSaasServers().some((addr) => ParsecAccount.addressMatchesAccountServer(`parsec3://${addr}`))) {
     // Fake one, will get overwritten later
-    saveStrategy.value = { tag: DeviceSaveStrategyTag.AccountVault, ciphertextKey: new Uint8Array(), ciphertextKeyId: '' };
+    saveStrategy.value = { tag: DeviceSaveStrategyTag.AccountVault, accountHandle };
     step.value = Steps.Summary;
   } else {
     step.value = Steps.Authentication;
@@ -269,15 +264,7 @@ async function onCreateClicked(): Promise<void> {
       bootstrapLink = response.data.bootstrapLink;
       if (isWeb() && ParsecAccount.isLoggedIn() && ParsecAccount.addressMatchesAccountServer(bootstrapLink)) {
         // Don't like it, but we can't create the organization from the tests
-        const result = await SaveStrategy.useAccountVault(window.isTesting() ? '__no_check__' : organizationName.value);
-        if (result.ok) {
-          saveStrategy.value = result.value;
-        } else {
-          window.electronAPI.log('error', `Failed to create a save strategy using account: ${result.error.tag} (${result.error.error})`);
-          // No idea what to do here. Going back to auth choice, but it's not ideal
-          step.value = Steps.Authentication;
-          return;
-        }
+        saveStrategy.value = SaveStrategy.useAccountVault();
       }
     }
   }
