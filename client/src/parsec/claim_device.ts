@@ -4,6 +4,7 @@ import {
   AnyClaimRetrievedInfoDevice,
   AnyClaimRetrievedInfoTag,
   AvailableDevice,
+  ClaimFinalizeError,
   ClaimInProgressError,
   ClaimerRetrieveInfoError,
   ConnectionHandle,
@@ -141,7 +142,7 @@ export class DeviceClaim {
     return result;
   }
 
-  async finalize(saveStrategy: DeviceSaveStrategy): Promise<Result<AvailableDevice, ClaimInProgressError>> {
+  async finalize(saveStrategy: DeviceSaveStrategy): Promise<Result<AvailableDevice, ClaimFinalizeError>> {
     this._assertState(true, false);
     const result = await libparsec.claimerDeviceFinalizeSaveLocalDevice(this.handle!, saveStrategy);
     if (result.ok) {
