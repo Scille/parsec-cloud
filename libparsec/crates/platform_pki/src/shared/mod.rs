@@ -4,7 +4,9 @@ mod signature_verification;
 
 use crate::{
     encrypt_message,
-    errors::{InvalidPemContent, VerifyCertificateError, VerifySignatureError},
+    errors::{
+        InvalidPemContent, ValidatePayloadError, VerifyCertificateError, VerifySignatureError,
+    },
     shared::signature_verification::{RsassaPssSha256SignatureVerifier, SUPPORTED_SIG_ALGS},
     EncryptedMessage, SignatureAlgorithm,
 };
@@ -38,7 +40,7 @@ impl<'a> Certificate<'a> {
         Certificate::new(self.internal.clone().into_owned())
     }
 
-    pub fn into_end_certificate(&self) -> Result<EndEntityCert<'_>, WebPkiError> {
+    pub fn to_end_certificate(&self) -> Result<EndEntityCert<'_>, WebPkiError> {
         EndEntityCert::try_from(&self.internal)
     }
 }
@@ -61,15 +63,14 @@ pub struct SignedMessage {
     pub message: Vec<u8>,
 }
 
-pub fn verify_message<'message>(
+pub fn verify_message<'message, 'a>(
     signed_message: &'message SignedMessage,
-    certificate: Certificate<'_>,
+    certificate: &'a EndEntityCert<'a>,
 ) -> Result<&'message [u8], VerifySignatureError> {
     let verifier = match signed_message.algo {
         SignatureAlgorithm::RsassaPssSha256 => &RsassaPssSha256SignatureVerifier,
     };
-    EndEntityCert::try_from(&certificate.internal)
-        .map_err(VerifySignatureError::InvalidCertificateDer)?
+    certificate
         .verify_signature(verifier, &signed_message.message, &signed_message.signature)
         .map(|_| signed_message.message.as_ref())
         .map_err(|e| match e {
@@ -133,4 +134,36 @@ pub fn verify_certificate<'der>(
             None,
         )
         .map_err(VerifyCertificateError::Untrusted)
+}
+
+pub fn load_submit_payload(
+    der_certificate: &[u8],
+    signed_message: &SignedMessage,
+    now: DateTime,
+) -> Result<PkiEnrollmentSubmitPayload, crate::errors::LoadSubmitPayloadError> {
+    let validated_payload = validate_payload(der_certificate, signed_message, now)?;
+    PkiEnrollmentSubmitPayload::load(validated_payload).map_err(Into::into)
+}
+
+pub fn validate_payload<'message>(
+    der_certificate: &[u8],
+    signed_message: &'message SignedMessage,
+    now: DateTime,
+) -> Result<&'message [u8], ValidatePayloadError> {
+    let binding = Certificate::from_der(der_certificate);
+    let untrusted_cert = binding
+        .to_end_certificate()
+        .map_err(ValidatePayloadError::InvalidCertificateDer)?;
+    let trusted_anchor = crate::list_trusted_root_certificate_anchor()?;
+    let verified_path = verify_certificate(
+        &untrusted_cert,
+        &trusted_anchor,
+        // TODO: Consider listing intermediate certificate
+        &[],
+        now,
+        KeyUsage::client_auth(),
+    )?;
+    let trusted_cert = verified_path.end_entity();
+
+    verify_message(signed_message, trusted_cert).map_err(Into::into)
 }

@@ -26,7 +26,7 @@ pub fn main() -> anyhow::Result<()> {
         .context("Cannot get certificate")?;
 
     let end_cert = untrusted_certificate
-        .into_end_certificate()
+        .to_end_certificate()
         .context("Invalid certificate")?;
     println!("Untrusted certificate: {}", utils::display_cert(&end_cert));
 
