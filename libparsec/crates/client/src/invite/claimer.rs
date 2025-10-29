@@ -94,6 +94,8 @@ impl From<ConnectionError> for ClaimInProgressError {
     }
 }
 
+pub type ClaimFinalizeError = libparsec_platform_device_loader::SaveDeviceError;
+
 // Cancel greeting attempt helper
 
 async fn cancel_greeting_attempt(
@@ -1773,7 +1775,7 @@ impl UserClaimFinalizeCtx {
         self,
         strategy: &DeviceSaveStrategy,
         key_file: &Path,
-    ) -> Result<AvailableDevice, anyhow::Error> {
+    ) -> Result<AvailableDevice, ClaimFinalizeError> {
         // Claiming a user means we are it first device, hence we know there
         // is no existing user manifest (hence our placeholder is non-speculative)
         libparsec_platform_storage::user::user_storage_non_speculative_init(
@@ -1781,7 +1783,7 @@ impl UserClaimFinalizeCtx {
             &self.new_local_device,
         )
         .await
-        .map_err(|e| anyhow::anyhow!("Error while initializing device's user storage: {e}"))?;
+        .map_err(|e| ClaimFinalizeError::Internal(e.context("Cannot initialize device storage")))?;
 
         libparsec_platform_device_loader::save_device(
             &self.config.config_dir,
@@ -1790,7 +1792,6 @@ impl UserClaimFinalizeCtx {
             key_file.to_path_buf(),
         )
         .await
-        .map_err(|e| anyhow::anyhow!("Error while saving the device file: {e}"))
 
         // Note that we don't call invite_complete here, as it is done on the greeter's side.
         // See "invite_complete command" section in RFC 1011
@@ -1816,7 +1817,7 @@ impl DeviceClaimFinalizeCtx {
         self,
         strategy: &DeviceSaveStrategy,
         key_file: &Path,
-    ) -> Result<AvailableDevice, anyhow::Error> {
+    ) -> Result<AvailableDevice, ClaimFinalizeError> {
         libparsec_platform_device_loader::save_device(
             &self.config.config_dir,
             strategy,
@@ -1824,7 +1825,6 @@ impl DeviceClaimFinalizeCtx {
             key_file.to_path_buf(),
         )
         .await
-        .map_err(|e| anyhow::anyhow!("Error while saving the device file: {e}"))
 
         // Note that we don't call invite_complete here, as it is done on the greeter's side.
         // See "invite_complete command" section in RFC 1011
@@ -1851,15 +1851,14 @@ impl ShamirRecoveryClaimFinalizeCtx {
         self,
         strategy: &DeviceSaveStrategy,
         key_file: &Path,
-    ) -> Result<AvailableDevice, anyhow::Error> {
+    ) -> Result<AvailableDevice, ClaimFinalizeError> {
         let available_device = libparsec_platform_device_loader::save_device(
             &self.config.config_dir,
             strategy,
             &self.new_local_device,
             key_file.to_path_buf(),
         )
-        .await
-        .map_err(|e| anyhow::anyhow!("Error while saving the device file: {e}"))?;
+        .await?;
 
         // After the device has been successfully saved, we still have to mark the invitation as completed,
         // because the greeter cannot know if the process is complete

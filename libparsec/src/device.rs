@@ -15,6 +15,7 @@ mod strategy {
         Account, AccountFetchOpaqueKeyFromVaultError, AccountUploadOpaqueKeyInVaultError,
     };
     use libparsec_crypto::{Password, SecretKey};
+    use libparsec_platform_async::pretend_future_is_send_on_web;
     use libparsec_platform_device_loader::{
         AccountVaultOperationsFetchOpaqueKeyError, AccountVaultOperationsFutureResult,
         AccountVaultOperationsUploadOpaqueKeyError,
@@ -40,7 +41,7 @@ mod strategy {
         {
             let account = self.account.clone();
 
-            Box::pin(async move {
+            Box::pin(pretend_future_is_send_on_web(async move {
                 account
                     .fetch_opaque_key_from_vault(ciphertext_key_id)
                     .await
@@ -61,7 +62,7 @@ mod strategy {
                             AccountVaultOperationsFetchOpaqueKeyError::Internal(err)
                         }
                     })
-            })
+            }))
         }
 
         fn upload_opaque_key(
@@ -72,7 +73,7 @@ mod strategy {
         > {
             let account = self.account.clone();
 
-            Box::pin(async move {
+            Box::pin(pretend_future_is_send_on_web(async move {
                 account
                     .upload_opaque_key_in_vault()
                     .await
@@ -87,7 +88,7 @@ mod strategy {
                             AccountVaultOperationsUploadOpaqueKeyError::Internal(err)
                         }
                     })
-            })
+            }))
         }
     }
 
