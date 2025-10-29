@@ -7,7 +7,7 @@ use super::{fetch_vault_items, Account, FetchVaultItemsError};
 
 #[derive(Debug, thiserror::Error)]
 pub enum AccountFetchOpaqueKeyFromVaultError {
-    #[error("Cannot decrypt the vault key access return by the server: {0}")]
+    #[error("Cannot decrypt the vault key access returned by the server: {0}")]
     BadVaultKeyAccess(DataError),
     #[error("No opaque key with this ID among the vault items")]
     UnknownOpaqueKey,

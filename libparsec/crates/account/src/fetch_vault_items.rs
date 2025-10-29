@@ -17,7 +17,7 @@ pub struct AccountListRegistrationDeviceItems {
 
 #[derive(Debug, thiserror::Error)]
 pub enum FetchVaultItemsError {
-    #[error("Cannot decrypt the vault key access return by the server: {0}")]
+    #[error("Cannot decrypt the vault key access returned by the server: {0}")]
     BadVaultKeyAccess(DataError),
     #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),

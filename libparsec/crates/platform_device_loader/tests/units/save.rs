@@ -201,7 +201,7 @@ async fn remote_error(
             p_assert_matches!(
                 save_device(&tmp_path, &save_strategy, &alice_device, key_file.clone()).await,
                 Err(SaveDeviceError::RemoteOpaqueKeyUploadFailed(err))
-                if err.to_string() == "Cannot decrypt the vault key access return by the server: Invalid encryption"
+                if err.to_string() == "Invalid encryption"
             );
         }
 
