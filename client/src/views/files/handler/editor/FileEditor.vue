@@ -76,6 +76,7 @@ import {
 } from '@/services/cryptpad';
 import { longLocaleCodeToShort } from '@/services/translation';
 import { SaveState } from '@/views/files/handler/editor';
+import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const fileEditorRef = useTemplateRef('fileEditor');
@@ -83,6 +84,8 @@ const documentType = ref<CryptpadDocumentType | null>(null);
 const cryptpadInstance = ref<Cryptpad | null>(null);
 const fileUrl = ref<string | null>(null);
 const error = ref('');
+const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+let eventCbId: null | string = null;
 
 const { contentInfo, fileInfo, readOnly, userInfo } = defineProps<{
   contentInfo: FileContentInfo;
@@ -120,12 +123,24 @@ onMounted(async () => {
   } else {
     emits('fileError');
   }
+
+  eventCbId = await eventDistributor.registerCallback(Events.Online | Events.Offline, async (event: Events) => {
+    if (event === Events.Offline) {
+      emits('onSaveStateChange', SaveState.Offline);
+    } else if (event === Events.Online) {
+      emits('onSaveStateChange', SaveState.None);
+    }
+  });
 });
 
 onUnmounted(() => {
   cryptpadInstance.value = null;
   if (fileUrl.value) {
     URL.revokeObjectURL(fileUrl.value);
+  }
+
+  if (eventCbId) {
+    eventDistributor.removeCallback(eventCbId);
   }
 });
 
