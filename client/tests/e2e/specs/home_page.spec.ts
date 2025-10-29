@@ -260,8 +260,7 @@ msTest('Warn on Safari', async ({ context }) => {
 
 msTest('Empty home page default state', async ({ context }) => {
   const page = (await context.newPage()) as MsPage;
-
-  await setupNewPage(page, { skipTestbed: true });
+  await setupNewPage(page, { libparsecMockFunctions: [{ name: 'listAvailableDevices', result: { ok: true, value: [] } }] });
   const container = page.locator('.no-devices');
   await expect(container).toBeVisible();
   await expect(container.locator('.create-organization-text__title')).toHaveText('New to Parsec?');

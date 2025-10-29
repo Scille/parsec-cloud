@@ -46,10 +46,19 @@ const FUNCTIONS_TO_SKIP: Array<SkipData> = [
   },
 ];
 
+const MOCKS: Array<{ name: string; funct: (..._args: Array<any>) => Promise<any> }> = [];
+
 class ParsecProxy {
   get(target: LibParsecPlugin, name: any) {
     return async (...args: any[]): Promise<any> => {
       try {
+        if ((window as any).TESTING) {
+          const mock = MOCKS.find((mock) => mock.name === name);
+          if (mock) {
+            console.log(`Using mocked '${name}'`);
+            return await mock.funct(...args);
+          }
+        }
         // @ts-expect-error Dont know how to fix the `...arg` properly so that the linter doesn't complain
         const result = await target[name as keyof LibParsecPlugin](...args);
         if (
@@ -67,6 +76,14 @@ class ParsecProxy {
       }
     };
   }
+  set(_target: LibParsecPlugin, name: any, value: any) {
+    if (!(window as any).TESTING) {
+      return false;
+    }
+    console.log(`Replacing '${name}'`);
+    MOCKS.push({ name: name, funct: value });
+    return false;
+  }
 }
 
 const proxy = new Proxy(_libparsec, new ParsecProxy());
@@ -81,4 +98,4 @@ declare global {
     libparsec: LibParsecPlugin;
   }
 }
-window.libparsec = proxy;
+window.libparsec = libparsec;
