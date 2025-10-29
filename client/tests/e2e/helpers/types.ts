@@ -2,6 +2,7 @@
 
 import { BrowserContext, Page } from '@playwright/test';
 import { OrganizationInformation, UserData } from '@tests/e2e/helpers/data';
+import { LibParsecFunction } from '@tests/e2e/helpers/libparsec';
 
 export enum DisplaySize {
   Small = 'small',
@@ -24,6 +25,7 @@ export interface SetupOptions {
   cryptpadServer?: string;
   openBaoServer?: string;
   expectTimeout?: number;
+  libparsecMockFunctions?: Array<LibParsecFunction>;
 }
 
 export interface MsPage extends Page {

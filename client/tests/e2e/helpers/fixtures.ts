@@ -6,6 +6,7 @@ import { MockBms, MockClientAreaOverload, MockRouteOptions } from '@tests/e2e/he
 import { CRYPTPAD_SERVER } from '@tests/e2e/helpers/cryptpad';
 import { DEFAULT_USER_INFORMATION, generateDefaultOrganizationInformation, generateDefaultUserData } from '@tests/e2e/helpers/data';
 import { mockExternalWebsites } from '@tests/e2e/helpers/externalWebsites';
+import { mockLibParsec } from '@tests/e2e/helpers/libparsec';
 import { dropTestbed, initTestBed } from '@tests/e2e/helpers/testbed';
 import { DisplaySize, MsContext, MsPage, SetupOptions } from '@tests/e2e/helpers/types';
 import { createWorkspace, fillInputModal, fillIonInput, importDefaultFiles, logout } from '@tests/e2e/helpers/utils';
@@ -146,6 +147,10 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
   // Wait for app to initialize with longer timeout for CI stability
   await expect(page.locator('#app')).toHaveAttribute('app-state', 'initializing', { timeout: expectTimeout });
 
+  if (opts.libparsecMockFunctions) {
+    await mockLibParsec(page, opts.libparsecMockFunctions);
+  }
+
   let testbed: string | undefined;
   if (!opts.skipTestbed) {
     testbed = await initTestBed(page, opts.testbedPath);
@@ -155,6 +160,7 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
       await nextStage(undefined, 'en-US');
     });
   }
+
   page.userData = generateDefaultUserData();
   page.orgInfo = generateDefaultOrganizationInformation();
   page.isReleased = false;
