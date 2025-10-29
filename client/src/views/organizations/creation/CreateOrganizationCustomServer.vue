@@ -157,15 +157,9 @@ async function onOrganizationNameAndServerChosen(
       name.value = infoResult.value.humanHandle.label;
       if (isWeb()) {
         // Create a new vault save strategy
-        // Little hack to be able to create the save strategy before creating the org
-        const result = await SaveStrategy.useAccountVault('__no_check__');
-        if (result.ok) {
-          // Skip the auth page
-          await onAuthenticationChosen(result.value);
-        } else {
-          // We failed to generate a save strategy, we'll ask for password normally. A new device can be created later if needed.
-          step.value = Steps.Authentication;
-        }
+        const saveStrategy = SaveStrategy.useAccountVault();
+        // Skip the auth page
+        await onAuthenticationChosen(saveStrategy);
       } else {
         step.value = Steps.Authentication;
       }

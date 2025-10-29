@@ -268,18 +268,18 @@ export const AccessStrategy = {
       keyFile: device.keyFilePath,
     };
   },
-  async useAccountVault(device: AvailableDevice): Promise<DeviceAccessStrategyAccountVault> {
+  useAccountVault(device: AvailableDevice): DeviceAccessStrategyAccountVault {
     if (device.ty.tag !== AvailableDeviceTypeTag.AccountVault) {
       throw new Error('Invalid device type, expected account vault');
     }
-    const keyResult = await ParsecAccount.fetchKeyFromVault(device.ty.ciphertextKeyId);
-    if (!keyResult.ok) {
-      throw new Error(`Failed to fetch key from vault: ${keyResult.error.tag} (${keyResult.error.error})`);
+    const accountHandle = ParsecAccount.getHandle();
+    if (!accountHandle) {
+      throw new Error('Account handle is null');
     }
     return {
       tag: DeviceAccessStrategyTag.AccountVault,
       keyFile: device.keyFilePath,
-      ciphertextKey: keyResult.value,
+      accountHandle,
     };
   },
   async fromSaveStrategy(device: AvailableDevice, saveStrategy: DeviceSaveStrategy): Promise<DeviceAccessStrategy> {
@@ -310,18 +310,14 @@ export const SaveStrategy = {
       tag: DeviceSaveStrategyTag.Keyring,
     };
   },
-  async useAccountVault(organizationId: OrganizationID): Promise<Result<DeviceSaveStrategyAccountVault, any>> {
-    const keyResult = await ParsecAccount.uploadKeyInVault(organizationId);
-    if (!keyResult.ok) {
-      return keyResult;
+  useAccountVault(): DeviceSaveStrategyAccountVault {
+    const accountHandle = ParsecAccount.getHandle();
+    if (!accountHandle) {
+      throw new Error('Account handle is null');
     }
     return {
-      ok: true,
-      value: {
-        tag: DeviceSaveStrategyTag.AccountVault,
-        ciphertextKeyId: keyResult.value[0],
-        ciphertextKey: keyResult.value[1],
-      },
+      tag: DeviceSaveStrategyTag.AccountVault,
+      accountHandle,
     };
   },
   useSSO(): DeviceSaveStrategySSO {
