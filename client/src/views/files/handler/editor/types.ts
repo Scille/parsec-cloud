@@ -6,4 +6,5 @@ export enum SaveState {
   Saving = 'saving',
   Saved = 'saved',
   Error = 'save-error',
+  Offline = 'offline',
 }
