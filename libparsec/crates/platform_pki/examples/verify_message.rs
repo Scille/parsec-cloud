@@ -44,7 +44,10 @@ fn main() -> anyhow::Result<()> {
         message: data,
     };
 
-    match verify_message(&signed_message, cert) {
+    match verify_message(
+        &signed_message,
+        &cert.to_end_certificate().context("Invalid certificate")?,
+    ) {
         Ok(_) => {
             println!("The message as a correct signature")
         }
