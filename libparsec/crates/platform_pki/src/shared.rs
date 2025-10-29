@@ -5,6 +5,7 @@ use crate::{
     errors::{InvalidPemContent, VerifySignatureError},
     EncryptedMessage, SignatureAlgorithm,
 };
+use bytes::Bytes;
 use libparsec_types::{
     DateTime, EnrollmentID, LocalPendingEnrollment, ParsecPkiEnrollmentAddr,
     PkiEnrollmentSubmitPayload, PrivateParts, SecretKey, X509CertificateReference,
@@ -159,4 +160,10 @@ pub fn create_local_pending(
         ciphertext: ciphered_private_parts,
     };
     Ok(local_pending)
+}
+
+pub fn load_submit_payload(der_certificate: &[u8], payload_signature: &[u8], payload: &[u8]) {}
+
+fn validate_payload(der_certificate: &[u8], payload_signature: &[u8], payload: &[u8]) {
+    let root_certs = crate::list_trusted_root_certificate_der()?;
 }

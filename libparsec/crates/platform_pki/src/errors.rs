@@ -42,4 +42,5 @@ error_set::error_set! {
         InvalidPemContent(rustls_pki_types::pem::Error)
     };
     CreateLocalPendingError = EncryptMessageError;
+    ValidatePayload = ListTrustedRootCertificatesError;
 }
