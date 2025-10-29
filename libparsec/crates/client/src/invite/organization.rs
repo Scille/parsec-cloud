@@ -208,12 +208,15 @@ pub fn test_organization_bootstrap_finalize_ctx_factory(
     }
 }
 
+pub type OrganizationBootstrapFinalizeSaveLocalDeviceError =
+    libparsec_platform_device_loader::SaveDeviceError;
+
 impl OrganizationBootstrapFinalizeCtx {
     pub async fn save_local_device(
         self,
         strategy: &DeviceSaveStrategy,
         key_file: &Path,
-    ) -> Result<AvailableDevice, anyhow::Error> {
+    ) -> Result<AvailableDevice, OrganizationBootstrapFinalizeSaveLocalDeviceError> {
         // The organization is brand new, of course there is no existing
         // remote user manifest, hence our placeholder is non-speculative.
         libparsec_platform_storage::user::user_storage_non_speculative_init(
@@ -222,8 +225,9 @@ impl OrganizationBootstrapFinalizeCtx {
         )
         .await
         .map_err(|e| {
-            // TODO: log error
-            anyhow::anyhow!("Error while initializing device's user storage: {e}")
+            OrganizationBootstrapFinalizeSaveLocalDeviceError::Internal(
+                e.context("Cannot initialize device storage"),
+            )
         })?;
 
         libparsec_platform_device_loader::save_device(
@@ -233,9 +237,5 @@ impl OrganizationBootstrapFinalizeCtx {
             key_file.to_path_buf(),
         )
         .await
-        .map_err(|e| {
-            // TODO: log error
-            anyhow::anyhow!("Error while saving the device file: {e}")
-        })
     }
 }

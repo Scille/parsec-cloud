@@ -2,15 +2,19 @@
 
 use std::sync::Arc;
 
-use libparsec_client_connection::ProxyConfig;
-use libparsec_platform_device_loader::DeviceSaveStrategy;
+use libparsec_client_connection::{ConnectionError, ProxyConfig};
+use libparsec_platform_device_loader::{
+    AccountVaultOperations, AccountVaultOperationsFetchOpaqueKeyError,
+    AccountVaultOperationsFutureResult, AccountVaultOperationsUploadOpaqueKeyError,
+    DeviceSaveStrategy,
+};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
     bootstrap_organization, test_organization_bootstrap_finalize_ctx_factory,
     BootstrapOrganizationError, Client, ClientConfig, EventBus, MountpointMountStrategy,
-    WorkspaceStorageCacheSize,
+    OrganizationBootstrapFinalizeSaveLocalDeviceError, WorkspaceStorageCacheSize,
 };
 
 // should be the same as bootstrap token defined in server/parsec/backend.py L91 as TEST_BOOTSTRAP_TOKEN
@@ -119,16 +123,18 @@ async fn finalize(tmp_path: TmpPath, env: &TestbedEnv) {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-enum BadFinalizeKind {
-    DeviceSaveError,
-    UserStorageInitError,
-}
-
-#[cfg(not(target_arch = "wasm32"))]
 #[parsec_test(testbed = "minimal")]
-#[case::device_save_error(BadFinalizeKind::DeviceSaveError)]
-#[case::user_storage_init_error(BadFinalizeKind::UserStorageInitError)]
-async fn bad_finalize(tmp_path: TmpPath, #[case] kind: BadFinalizeKind, env: &TestbedEnv) {
+async fn bad_finalize(
+    #[values(
+        "user_storage_init_error",
+        "invalid_path",
+        "remote_opaque_key_upload_offline",
+        "remote_opaque_key_upload_failed"
+    )]
+    kind: &str,
+    tmp_path: TmpPath,
+    env: &TestbedEnv,
+) {
     let device = env.local_device("alice@dev1");
     let config = {
         let mut config = make_config(env);
@@ -137,28 +143,136 @@ async fn bad_finalize(tmp_path: TmpPath, #[case] kind: BadFinalizeKind, env: &Te
         p.data_base_dir = tmp_path.join("data");
         config
     };
-    let save_strategy = DeviceSaveStrategy::Password {
-        password: "P@ssw0rd.".to_owned().into(),
-    };
     let key_file = config.config_dir.join("alice.keys");
+    let finalize_ctx = test_organization_bootstrap_finalize_ctx_factory(config.clone(), device);
 
-    // Simple way to make the folder unwritable
     match kind {
-        BadFinalizeKind::DeviceSaveError => {
-            std::fs::write(&config.config_dir, b"").unwrap();
-        }
-        BadFinalizeKind::UserStorageInitError => {
+        "user_storage_init_error" => {
+            // Simple way to make the folder unwritable
             std::fs::write(&config.data_base_dir, b"").unwrap();
-        }
-    }
 
-    let finalize_ctx = test_organization_bootstrap_finalize_ctx_factory(config, device);
-    p_assert_matches!(
-        finalize_ctx
-            .save_local_device(&save_strategy, &key_file)
-            .await,
-        Err(anyhow::Error { .. })
-    );
+            let save_strategy = DeviceSaveStrategy::Password {
+                password: "P@ssw0rd.".to_owned().into(),
+            };
+            p_assert_matches!(
+                finalize_ctx
+                    .save_local_device(&save_strategy, &key_file)
+                    .await,
+                Err(OrganizationBootstrapFinalizeSaveLocalDeviceError::Internal(
+                    _
+                ))
+            );
+        }
+
+        "invalid_path" => {
+            // Simple way to make the folder unwritable
+            std::fs::write(&config.config_dir, b"").unwrap();
+
+            let save_strategy = DeviceSaveStrategy::Password {
+                password: "P@ssw0rd.".to_owned().into(),
+            };
+            p_assert_matches!(
+                finalize_ctx
+                    .save_local_device(&save_strategy, &key_file)
+                    .await,
+                Err(OrganizationBootstrapFinalizeSaveLocalDeviceError::InvalidPath(_))
+            );
+        }
+
+        "remote_opaque_key_upload_offline" => {
+            #[derive(Debug)]
+            struct MockedAccountVaultOperations;
+            impl AccountVaultOperations for MockedAccountVaultOperations {
+                fn account_email(&self) -> &EmailAddress {
+                    unreachable!()
+                }
+                fn fetch_opaque_key(
+                    &self,
+                    _ciphertext_key_id: AccountVaultItemOpaqueKeyID,
+                ) -> AccountVaultOperationsFutureResult<
+                    SecretKey,
+                    AccountVaultOperationsFetchOpaqueKeyError,
+                > {
+                    unreachable!()
+                }
+                fn upload_opaque_key(
+                    &self,
+                ) -> AccountVaultOperationsFutureResult<
+                    (AccountVaultItemOpaqueKeyID, SecretKey),
+                    AccountVaultOperationsUploadOpaqueKeyError,
+                > {
+                    Box::pin(async move {
+                        Err(AccountVaultOperationsUploadOpaqueKeyError::Offline(
+                            ConnectionError::NoResponse(None),
+                        ))
+                    })
+                }
+            }
+
+            let save_strategy = DeviceSaveStrategy::AccountVault {
+                operations: Arc::new(MockedAccountVaultOperations),
+            };
+            p_assert_matches!(
+                finalize_ctx
+                    .save_local_device(&save_strategy, &key_file)
+                    .await,
+                Err(
+                    OrganizationBootstrapFinalizeSaveLocalDeviceError::RemoteOpaqueKeyUploadOffline(
+                        _
+                    )
+                )
+            );
+        }
+
+        "remote_opaque_key_upload_failed" => {
+            #[derive(Debug)]
+            struct MockedAccountVaultOperations;
+            impl AccountVaultOperations for MockedAccountVaultOperations {
+                fn account_email(&self) -> &EmailAddress {
+                    unreachable!()
+                }
+                fn fetch_opaque_key(
+                    &self,
+                    _ciphertext_key_id: AccountVaultItemOpaqueKeyID,
+                ) -> AccountVaultOperationsFutureResult<
+                    SecretKey,
+                    AccountVaultOperationsFetchOpaqueKeyError,
+                > {
+                    unreachable!()
+                }
+                fn upload_opaque_key(
+                    &self,
+                ) -> AccountVaultOperationsFutureResult<
+                    (AccountVaultItemOpaqueKeyID, SecretKey),
+                    AccountVaultOperationsUploadOpaqueKeyError,
+                > {
+                    Box::pin(async move {
+                        Err(
+                            AccountVaultOperationsUploadOpaqueKeyError::BadVaultKeyAccess(
+                                DataError::Decryption,
+                            ),
+                        )
+                    })
+                }
+            }
+
+            let save_strategy = DeviceSaveStrategy::AccountVault {
+                operations: Arc::new(MockedAccountVaultOperations),
+            };
+            p_assert_matches!(
+                finalize_ctx
+                    .save_local_device(&save_strategy, &key_file)
+                    .await,
+                Err(
+                    OrganizationBootstrapFinalizeSaveLocalDeviceError::RemoteOpaqueKeyUploadFailed(
+                        _
+                    )
+                )
+            );
+        }
+
+        _ => panic!("Unknown kind: {kind}"),
+    }
 }
 
 #[parsec_test(testbed = "empty")]
