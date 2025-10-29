@@ -83,6 +83,12 @@
                 ref="unsavedIcon"
                 :image="UnsavedIcon"
               />
+              <ion-icon
+                v-show="saveState === SaveState.Offline"
+                class="save-info-icon save-info-icon-ko"
+                ref="offlineIcon"
+                :icon="warning"
+              />
               <ion-text
                 v-show="saveState !== SaveState.None && showSaveStateText && isLargeDisplay"
                 class="save-info-text button-small"
@@ -253,7 +259,7 @@ import SmallDisplayViewerActionMenu from '@/views/files/handler/SmallDisplayView
 import { FileViewer } from '@/views/files/handler/viewer';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { IonButton, IonContent, IonIcon, IonPage, IonText, modalController } from '@ionic/vue';
-import { alert, chevronDown, chevronUp, create, ellipsisHorizontal, informationCircle, link, open, save } from 'ionicons/icons';
+import { alert, chevronDown, chevronUp, create, ellipsisHorizontal, informationCircle, link, open, save, warning } from 'ionicons/icons';
 import { DateTime } from 'luxon';
 import {
   Answer,
@@ -293,6 +299,7 @@ const saveState = ref<SaveState>(SaveState.None);
 const savedIconRef = useTemplateRef<InstanceType<typeof IonIcon>>('savedIcon');
 const unsavedIconRef = useTemplateRef<InstanceType<typeof MsImage>>('unsavedIcon');
 const errorIconRef = useTemplateRef<InstanceType<typeof IonIcon>>('errorIcon');
+const offlineIconRef = useTemplateRef<InstanceType<typeof IonIcon>>('offlineIcon');
 const showSaveStateText = ref(true);
 const readOnly = ref(false);
 
@@ -332,6 +339,8 @@ const saveStateText = computed(() => {
       return '';
     case SaveState.Error:
       return 'fileEditors.saving.error';
+    case SaveState.Offline:
+      return 'fileEditors.saving.offline';
     default:
       return 'fileEditors.saving.unsaved';
   }
@@ -597,6 +606,9 @@ onMounted(async () => {
   }
   if (errorIconRef.value) {
     attachMouseOverTooltip(errorIconRef.value.$el, 'fileEditors.saving.tooltipError');
+  }
+  if (offlineIconRef.value) {
+    attachMouseOverTooltip(offlineIconRef.value.$el, 'fileEditors.saving.tooltipOffline');
   }
 });
 
@@ -1028,6 +1040,7 @@ async function openSmallDisplayActionMenu(): Promise<void> {
             color: var(--parsec-color-light-primary-600);
           }
           &-ko {
+            color: var(--parsec-color-light-secondary-grey);
             --fill-color: var(--parsec-color-light-secondary-grey);
           }
         }

@@ -76,6 +76,7 @@ import { IonButton, IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
 import { I18n, Translatable } from 'megashark-lib';
 import { inject, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
+import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const fileEditorRef = useTemplateRef('fileEditor');
@@ -83,6 +84,8 @@ const documentType = ref<CryptpadDocumentType | null>(null);
 const cryptpadInstance = ref<Cryptpad | null>(null);
 const fileUrl = ref<string | null>(null);
 const error = ref('');
+const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+let eventCbId: null | string = null;
 
 const {
   contentInfo,
@@ -125,12 +128,24 @@ onMounted(async () => {
   } else {
     emits('fileError');
   }
+
+  eventCbId = await eventDistributor.registerCallback(Events.Online | Events.Offline, async (event: Events) => {
+    if (event === Events.Offline) {
+      emits('onSaveStateChange', SaveState.Offline);
+    } else if (event === Events.Online) {
+      emits('onSaveStateChange', SaveState.None);
+    }
+  });
 });
 
 onUnmounted(() => {
   cryptpadInstance.value = null;
   if (fileUrl.value) {
     URL.revokeObjectURL(fileUrl.value);
+  }
+
+  if (eventCbId) {
+    eventDistributor.removeCallback(eventCbId);
   }
 });
 
