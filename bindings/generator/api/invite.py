@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from typing import Optional
 
 from .addr import (
     ParsecInvitationAddr,
@@ -81,7 +80,7 @@ async def bootstrap_organization(
     save_strategy: DeviceSaveStrategy,
     human_handle: HumanHandle,
     device_label: DeviceLabel,
-    sequester_authority_verify_key_pem: Optional[Ref[str]],
+    sequester_authority_verify_key_pem: Ref[str] | None,
 ) -> Result[AvailableDevice, BootstrapOrganizationError]:
     raise NotImplementedError
 
@@ -172,7 +171,7 @@ class UserOnlineStatus(Enum):
 class ShamirRecoveryRecipient(Structure):
     user_id: UserID
     human_handle: HumanHandle
-    revoked_on: Optional[DateTime]
+    revoked_on: DateTime | None
     shares: NonZeroU8
     online_status: UserOnlineStatus
 
@@ -190,7 +189,7 @@ class UserGreetingAdministrator(Structure):
     user_id: UserID
     human_handle: HumanHandle
     online_status: UserOnlineStatus
-    last_greeting_attempt_joined_on: Optional[DateTime]
+    last_greeting_attempt_joined_on: DateTime | None
 
 
 class AnyClaimRetrievedInfo(Variant):
@@ -199,7 +198,7 @@ class AnyClaimRetrievedInfo(Variant):
         claimer_email: EmailAddress
         created_by: InviteInfoInvitationCreatedBy
         administrators: list[UserGreetingAdministrator]
-        preferred_greeter: Optional[UserGreetingAdministrator]
+        preferred_greeter: UserGreetingAdministrator | None
 
     class Device:
         handle: Handle
@@ -229,7 +228,7 @@ class UserClaimInitialInfo(Structure):
     greeter_user_id: UserID
     greeter_human_handle: HumanHandle
     online_status: UserOnlineStatus
-    last_greeting_attempt_joined_on: Optional[DateTime]
+    last_greeting_attempt_joined_on: DateTime | None
 
 
 class UserClaimListInitialInfosError(ErrorVariant):

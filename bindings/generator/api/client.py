@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from typing import Optional
 
 from .addr import ParsecOrganizationAddr
 from .common import (
@@ -9,11 +8,16 @@ from .common import (
     DeviceID,
     DeviceLabel,
     EntryName,
+    Enum,
+    EnumItemUnit,
     ErrorVariant,
     Handle,
     HumanHandle,
+    NonZeroU8,
     OrganizationID,
     Path,
+    RealmRole,
+    Ref,
     Result,
     SizeInt,
     Structure,
@@ -23,15 +27,10 @@ from .common import (
     VariantItemTuple,
     VariantItemUnit,
     VlobID,
-    RealmRole,
-    Ref,
-    Enum,
-    EnumItemUnit,
-    NonZeroU8,
 )
-from .device import DeviceAccessStrategy
-from .invite import DeviceSaveStrategy, AvailableDevice
 from .config import ClientConfig
+from .device import DeviceAccessStrategy
+from .invite import AvailableDevice, DeviceSaveStrategy
 
 
 def list_started_clients() -> list[tuple[Handle, DeviceID]]:
@@ -169,9 +168,9 @@ class UserInfo(Structure):
     human_handle: HumanHandle
     current_profile: UserProfile
     created_on: DateTime
-    created_by: Optional[DeviceID]
-    revoked_on: Optional[DateTime]
-    revoked_by: Optional[DeviceID]
+    created_by: DeviceID | None
+    revoked_on: DateTime | None
+    revoked_by: DeviceID | None
 
 
 class DevicePurpose(Enum):
@@ -186,7 +185,7 @@ class DeviceInfo(Structure):
     purpose: DevicePurpose
     device_label: DeviceLabel
     created_on: DateTime
-    created_by: Optional[DeviceID]
+    created_by: DeviceID | None
 
 
 class ClientRevokeUserError(ErrorVariant):
@@ -440,7 +439,7 @@ async def client_share_workspace(
     client: Handle,
     realm_id: VlobID,
     recipient: UserID,
-    role: Optional[RealmRole],
+    role: RealmRole | None,
 ) -> Result[None, ClientShareWorkspaceError]:
     raise NotImplementedError
 

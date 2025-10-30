@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from typing import ClassVar, Optional
+from typing import ClassVar
 
 from .common import (
     BytesBasedType,
@@ -72,6 +72,6 @@ class ShowCertificateSelectionDialogError(ErrorVariant):
 
 
 async def show_certificate_selection_dialog_windows_only() -> Result[
-    Optional[X509CertificateReference], ShowCertificateSelectionDialogError
+    X509CertificateReference | None, ShowCertificateSelectionDialogError
 ]:
     raise NotImplementedError

@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+from .client import ClientConfig, DeviceAccessStrategy
 from .common import (
     U64,
     DateTime,
@@ -8,19 +9,17 @@ from .common import (
     ErrorVariant,
     FsPath,
     Handle,
+    Path,
     Ref,
     Result,
+    SequesterServiceID,
     SizeInt,
+    Structure,
     Variant,
     VersionInt,
     VlobID,
-    Structure,
-    Path,
-    SequesterServiceID,
 )
 from .workspace import FileDescriptor
-from .client import ClientConfig, DeviceAccessStrategy
-
 
 #
 # Start workspace history
