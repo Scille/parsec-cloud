@@ -7,8 +7,9 @@ use clap::{
     builder::{NonEmptyStringValueParser, TypedValueParser},
     error::{Error, ErrorKind},
 };
-use libparsec_platform_pki::Certificate;
+use libparsec_platform_pki::{x509::DistinguishedNameValue, Certificate};
 use libparsec_types::X509CertificateHash;
+use x509_cert::der::{DecodeValue, Header, SliceReader, Tag};
 
 #[derive(Debug, Clone)]
 pub struct CertificateSRIHashParser;
@@ -97,4 +98,45 @@ impl CertificateOrRef {
 
         Ok(cert)
     }
+}
+
+/// Used to display x509 certificate subject and issuer field
+// Not all examples need to display x509 name
+#[allow(dead_code)]
+pub fn display_x509_raw_name(raw_name: &[u8]) -> impl std::fmt::Display {
+    struct DisplayName(Vec<DistinguishedNameValue>);
+
+    impl std::fmt::Display for DisplayName {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(f, "{:?}", self.0)
+        }
+    }
+
+    let components = x509_cert::name::Name::decode_value(
+        &mut SliceReader::new(raw_name).unwrap(),
+        Header::new(Tag::Sequence, raw_name.len()).unwrap(),
+    )
+    .map(libparsec_platform_pki::x509::extract_dn_list_from_rnd_seq)
+    .unwrap_or_default();
+
+    DisplayName(components)
+}
+
+// Not all example need to display a x509 cert
+#[allow(dead_code)]
+pub fn display_cert<'der>(cert: &'der webpki::Cert<'der>) -> impl std::fmt::Display + use<'der> {
+    struct DisplayCert<'der>(&'der webpki::Cert<'der>);
+
+    impl<'der> std::fmt::Display for DisplayCert<'der> {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(
+                f,
+                "subject={subject}, issuer={issuer}",
+                subject = display_x509_raw_name(self.0.subject()),
+                issuer = display_x509_raw_name(self.0.issuer())
+            )
+        }
+    }
+
+    DisplayCert(cert)
 }
