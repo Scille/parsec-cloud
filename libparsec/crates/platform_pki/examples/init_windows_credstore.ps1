@@ -56,6 +56,8 @@ $CAParam = @{
     NotAfter = (Get-Date).AddHours(24)
     # We cannot add it directly to `CA` store as the command only allow for `My` store
     CertStoreLocation = 'Cert:\CurrentUser\My'
+    # Use RSA-PSS-SHA256 over RSASSA-SHA256 for signature
+    AlternateSignatureAlgorithm = $true
 }
 $test_ca = New-SelfSignedCertificate @CAParam
 
@@ -79,6 +81,8 @@ $SharedUserCertificate = @{
     NotBefore = $test_ca.NotBefore
     NotAfter = $test_ca.NotAfter
     CertStoreLocation = 'Cert:\CurrentUser\My'
+    # Use RSA-PSS-SHA256 over RSASSA-SHA256 for signature
+    AlternateSignatureAlgorithm = $true
 }
 
 echo "Create certificate 'cert:\CurrentUser\My\test_ca_alice'"

@@ -184,6 +184,7 @@ orgname
 parsecdoc
 patchelf
 pdflatex
+peekable
 pemfile
 pems
 perflint

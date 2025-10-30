@@ -2413,6 +2413,7 @@ version = "3.5.3-a.0+dev"
 dependencies = [
  "anyhow",
  "bytes",
+ "chrono",
  "clap",
  "cryptoki",
  "data-encoding",
