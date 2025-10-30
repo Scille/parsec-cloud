@@ -1088,6 +1088,7 @@
                 "summary": "The device {label} has been added to your profile.",
                 "getDeviceInfo": "Waiting for you to fill the information on the guest device.",
                 "waitForGuest": "Parsec must be open on both devices during the onboarding process.",
+                "waitForGuestVersionInfo": "Before you start, make sure you are using the latest version of Parsec on both devices.",
                 "scanOrShare1": "Scan the QR Code ",
                 "scanOrShare2": "or ",
                 "scanOrShare3": "share the link",
@@ -1248,7 +1249,14 @@
         }
     },
     "SasCodeChoice": {
-        "noneOfTheChoices": "None shown"
+        "noneOfTheChoices": "Can't find the code?",
+        "securityInfo": "For security reasons, never select a code randomly.",
+        "info": {
+            "title": "No matching code",
+            "subtitle": "If you can't find the matching code, quit and start the process over. If the problem persists, please contact your administrator.",
+            "yesText": "Quit process",
+            "noText": "Back"
+        }
     },
     "JoinOrganization": {
         "logIn": "Log In",
@@ -1400,6 +1408,7 @@
             "subtitles": {
                 "waitForGuest1": "To greet a new user, you have to be in direct contact with them during the greeting process (around 2 minutes).",
                 "waitForGuest2": "Please do not close this window during the greeting process.",
+                "waitForGuestVersionInfo": "Before you start, make sure that both you and your guest are using the latest version of Parsec.",
                 "provideHostCode": "Give the code below to the guest.",
                 "getGuestCode": "Click on the code given to you by the guest.",
                 "getUserInfo": "Please wait while the guest enters their contact details. You will have to review them.",

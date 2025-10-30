@@ -39,7 +39,7 @@
       id="noneChoicesButton"
       fill="clear"
       :disabled="disabled"
-      @click="$emit('select', null)"
+      @click="onNoneClicked"
     >
       {{ $msTranslate('SasCodeChoice.noneOfTheChoices') }}
     </ion-button>
@@ -48,15 +48,26 @@
 
 <script setup lang="ts">
 import { IonButton } from '@ionic/vue';
+import { Answer, askQuestion } from 'megashark-lib';
 
 defineProps<{
   choices: string[];
   disabled?: boolean;
 }>();
 
-defineEmits<{
+const emits = defineEmits<{
   (e: 'select', value: string | null): void;
 }>();
+
+async function onNoneClicked(): Promise<void> {
+  const answer = await askQuestion('SasCodeChoice.info.title', 'SasCodeChoice.info.subtitle', {
+    yesText: 'SasCodeChoice.info.yesText',
+    noText: 'SasCodeChoice.info.noText',
+  });
+  if (answer === Answer.Yes) {
+    emits('select', null);
+  }
+}
 </script>
 
 <style scoped lang="scss">
