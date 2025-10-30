@@ -63,6 +63,9 @@
           <ms-informative-text>
             {{ $msTranslate('UsersPage.greet.subtitles.waitForGuest2') }}
           </ms-informative-text>
+          <ms-report-text :theme="MsReportTheme.Info">
+            {{ $msTranslate('UsersPage.greet.subtitles.waitForGuestVersionInfo') }}
+          </ms-report-text>
         </div>
 
         <!-- give code step -->
@@ -78,6 +81,9 @@
           v-show="pageStep === GreetUserStep.GetGuestSasCode"
           class="step"
         >
+          <ms-report-text :theme="MsReportTheme.Info">
+            {{ $msTranslate('SasCodeChoice.securityInfo') }}
+          </ms-report-text>
           <sas-code-choice
             :disabled="querying"
             :choices="greeter.SASCodeChoices"
@@ -196,6 +202,8 @@ import {
   Translatable,
   MsDropdownChangeEvent,
   useWindowSize,
+  MsReportText,
+  MsReportTheme,
 } from 'megashark-lib';
 import { close, personAdd } from 'ionicons/icons';
 import { Ref, computed, onMounted, ref, useTemplateRef } from 'vue';
