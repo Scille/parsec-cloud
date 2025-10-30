@@ -215,6 +215,7 @@ htmlhelp_basename = "parsecdoc"
 
 latex_engine = "lualatex"
 
+# https://sphinx-themed.readthedocs.io/en/latest/latex.html
 latex_elements = {
     #  Additional stuff for the LaTeX preamble.
     "preamble": "\n".join(
@@ -250,20 +251,6 @@ latex_documents = [
         "parsec.tex",
         "Parsec Documentation",
         "dev-parsec+fullguide@scille.fr",
-        "howto",
-    ),
-    (
-        "userguide/index",
-        "parsec-userguide.tex",
-        "Parsec User Guide",
-        "dev-parsec+userguide@scille.fr",
-        "howto",
-    ),
-    (
-        "hosting/index",
-        "parsec-hosting-guide.tex",
-        "Parsec Hosting Guide",
-        "dev-parsec+hostingguide@scille.fr",
         "howto",
     ),
 ]

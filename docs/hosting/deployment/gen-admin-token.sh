@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+# shellcheck disable=SC2148
 set -euo pipefail
 
 ENV_FILE=parsec-admin-token.env

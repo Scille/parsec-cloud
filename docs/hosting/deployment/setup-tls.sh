@@ -1,5 +1,4 @@
-#!/usr/bin/env bash
-
+# shellcheck disable=SC2148
 function generate_cert_conf() {
     local name=$1
     local san=$2
