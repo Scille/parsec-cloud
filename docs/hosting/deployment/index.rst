@@ -333,8 +333,6 @@ Start the server
 
   .. code-block:: bash
 
-    #!/bin/bash
-
     # Load the virtualenv.
     source venv/bin/activate
 
