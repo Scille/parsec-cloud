@@ -5,16 +5,15 @@ from __future__ import annotations
 import argparse
 import subprocess
 from collections import OrderedDict, namedtuple
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from importlib import import_module
 from inspect import isclass, iscoroutinefunction, isfunction, signature
 from pathlib import Path
-from types import ModuleType
-from typing import (
+from types import ModuleType, UnionType
+from typing import (  # noqa: UP035
     Any,
-    Callable,
     Dict,
-    Iterable,
     List,
     Set,
     Tuple,
@@ -193,33 +192,35 @@ class BaseTypeInUse:
     kind: str
 
     @staticmethod
-    def parse(param: type) -> "BaseTypeInUse":
+    def parse(param: type) -> BaseTypeInUse:
         assert not isinstance(param, str), (
             f"Bad param `{param!r}`, passing type as string is not supported"
         )
         origin = getattr(param, "__origin__", None)
         args = get_args(param)
-        if origin is Union:  # Python resolves `Optional[Foo]` as `Union[Foo, None]`
+        if origin is Union or isinstance(
+            param, UnionType
+        ):  # Python resolves `Optional[Foo]` as `Union[Foo, None]`
             assert len(args) == 2 and type(None) in args
             elem_param = next(x for x in args if x is not type(None))
             return OptionalTypeInUse(BaseTypeInUse.parse(elem_param))
 
-        elif origin in (list, List):
+        elif origin is list:
             assert len(args) == 1
             return ListTypeInUse(BaseTypeInUse.parse(args[0]))
 
-        elif origin in (set, Set):
+        elif origin is set:
             assert len(args) == 1
             return SetTypeInUse(BaseTypeInUse.parse(args[0]))
 
-        elif origin in (dict, Dict):
+        elif origin is dict:
             assert len(args) == 2
             return DictTypeInUse(
                 key=BaseTypeInUse.parse(args[0]),
                 value=BaseTypeInUse.parse(args[1]),
             )
 
-        elif origin in (tuple, Tuple):
+        elif origin is tuple:
             return TupleTypeInUse([BaseTypeInUse.parse(x) for x in args])
 
         elif origin is Result:
@@ -302,6 +303,9 @@ class BaseTypeInUse:
             )
 
         else:
+            assert origin in (List, Dict, Set, Tuple), (  # noqa: UP006
+                "Don't use List/Dict/Set/Tuple from `typing` module, use instead `list/dict/set/tuple`!"
+            )
             typespec = TYPES_DB.get(param)
             assert typespec is not None, (
                 f"Bad param `{param!r}`, not a scalar/variant/struct/enum (bases={param.__bases__})"
@@ -342,7 +346,7 @@ class SetTypeInUse(BaseTypeInUse):
 @dataclass
 class TupleTypeInUse(BaseTypeInUse):
     kind = "tuple"
-    values: List[BaseTypeInUse]
+    values: list[BaseTypeInUse]
 
 
 @dataclass
@@ -381,7 +385,7 @@ class VariantItemSpec(BaseTypeInUse):
     is_tuple: bool = False
     is_unit: bool = False
     is_struct: bool = False
-    tuple: List[BaseTypeInUse] | None = None
+    tuple: list[BaseTypeInUse] | None = None
     struct: StructSpec | None = None
 
 
@@ -389,7 +393,7 @@ class VariantItemSpec(BaseTypeInUse):
 class VariantSpec(BaseTypeInUse):
     kind = "variant"
     name: str
-    values: List[VariantItemSpec]
+    values: list[VariantItemSpec]
     is_error_variant: bool
 
 
@@ -522,18 +526,18 @@ class BasedTypeSpec:
 
 @dataclass
 class ApiSpecs:
-    str_based_types: List[BasedTypeSpec]
-    bytes_based_types: List[BasedTypeSpec]
-    f64_based_types: List[BasedTypeSpec]
-    u8_based_types: List[BasedTypeSpec]
-    i32_based_types: List[BasedTypeSpec]
-    u32_based_types: List[BasedTypeSpec]
-    i64_based_types: List[BasedTypeSpec]
-    u64_based_types: List[BasedTypeSpec]
-    meths: List[MethSpec]
-    structs: List[StructSpec]
-    variants: List[VariantSpec]
-    enums: List[EnumSpec]
+    str_based_types: list[BasedTypeSpec]
+    bytes_based_types: list[BasedTypeSpec]
+    f64_based_types: list[BasedTypeSpec]
+    u8_based_types: list[BasedTypeSpec]
+    i32_based_types: list[BasedTypeSpec]
+    u32_based_types: list[BasedTypeSpec]
+    i64_based_types: list[BasedTypeSpec]
+    u64_based_types: list[BasedTypeSpec]
+    meths: list[MethSpec]
+    structs: list[StructSpec]
+    variants: list[VariantSpec]
+    enums: list[EnumSpec]
     rust_code_to_inject: str | None  # Hack for the dummy test api
 
 
@@ -693,7 +697,7 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
 
     T = TypeVar("T", BasedTypeSpec, EnumSpec, VariantSpec, StructSpec, MethSpec)
 
-    def sorted_by_name(items: Iterable[T]) -> List[T]:
+    def sorted_by_name(items: Iterable[T]) -> list[T]:
         return sorted(items, key=lambda x: x.name)
 
     return ApiSpecs(

@@ -1,18 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from typing import Callable
+from collections.abc import Callable
 
 from .common import (
     ApiVersion,
     DateTime,
+    DeviceID,
+    GreetingAttemptID,
     Handle,
     IndexInt,
     InvitationStatus,
     InvitationToken,
-    GreetingAttemptID,
     SizeInt,
     Variant,
-    DeviceID,
     VlobID,
 )
 

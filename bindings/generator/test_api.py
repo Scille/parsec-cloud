@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 # Dummy API for testing the generator in different use cases
-from typing import Generic, List, Optional, TypeVar
+from typing import Generic, TypeVar
 
 # Meta-types, not part of the API but to be used to describe the API
 
@@ -167,7 +167,7 @@ class Data(Structure):
     p4: str
     p5: bytes
     p6: SubData
-    p7: Optional[SubData]
+    p7: SubData | None
 
 
 class V1or2(Variant):
@@ -210,7 +210,7 @@ def f_r7() -> bytes:
     raise NotImplementedError
 
 
-def f_r8() -> Optional[Data]:
+def f_r8() -> Data | None:
     raise NotImplementedError
 
 
@@ -247,15 +247,15 @@ def f_p9() -> Data:
     raise NotImplementedError
 
 
-def f_p10(_a: Optional[bool]) -> None:
+def f_p10(_a: bool | None) -> None:
     raise NotImplementedError
 
 
-def f_p11(_a: Ref[Optional[Data]]) -> None:
+def f_p11(_a: Ref[Data | None]) -> None:
     raise NotImplementedError
 
 
-def f_p111(_a: Optional[Ref[Data]]) -> None:
+def f_p111(_a: Ref[Data] | None) -> None:
     raise NotImplementedError
 
 
@@ -272,11 +272,11 @@ def f_p14() -> Result[bool, V1or2]:
     raise NotImplementedError
 
 
-def f_p15(_a: Ref[List[Data]]) -> None:
+def f_p15(_a: Ref[list[Data]]) -> None:
     raise NotImplementedError
 
 
-def f_p16() -> List[Data]:
+def f_p16() -> list[Data]:
     raise NotImplementedError
 
 
@@ -333,7 +333,7 @@ async def af_p7(_a: Ref[bytes]) -> None:
     raise NotImplementedError
 
 
-async def af_r8() -> Optional[Data]:
+async def af_r8() -> Data | None:
     raise NotImplementedError
 
 
@@ -345,11 +345,11 @@ async def af_p9() -> Data:
     raise NotImplementedError
 
 
-async def af_p10(_a: Optional[bool]) -> None:
+async def af_p10(_a: bool | None) -> None:
     raise NotImplementedError
 
 
-async def af_p11(_a: Ref[Optional[Data]]) -> None:
+async def af_p11(_a: Ref[Data | None]) -> None:
     raise NotImplementedError
 
 
@@ -365,9 +365,9 @@ async def af_p14() -> Result[bool, V1or2]:
     raise NotImplementedError
 
 
-async def af_p15(_a: Ref[List[Data]]) -> None:
+async def af_p15(_a: Ref[list[Data]]) -> None:
     raise NotImplementedError
 
 
-async def af_p16() -> List[Data]:
+async def af_p16() -> list[Data]:
     raise NotImplementedError

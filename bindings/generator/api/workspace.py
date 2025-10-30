@@ -1,7 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from typing import Optional
 
+from .addr import (
+    ParsecWorkspacePathAddr,
+)
 from .common import (
     U64,
     DateTime,
@@ -10,20 +12,17 @@ from .common import (
     ErrorVariant,
     FsPath,
     Handle,
+    Path,
+    RealmRole,
     Ref,
     Result,
     SizeInt,
+    Structure,
+    U32BasedType,
     Variant,
     VariantItemUnit,
     VersionInt,
     VlobID,
-    Structure,
-    RealmRole,
-    U32BasedType,
-    Path,
-)
-from .addr import (
-    ParsecWorkspacePathAddr,
 )
 
 
@@ -308,7 +307,7 @@ class WorkspaceStatEntryError(ErrorVariant):
 
 class EntryStat(Variant):
     class File:
-        confinement_point: Optional[VlobID]
+        confinement_point: VlobID | None
         id: VlobID
         parent: VlobID
         created: DateTime
@@ -320,7 +319,7 @@ class EntryStat(Variant):
         last_updater: DeviceID
 
     class Folder:
-        confinement_point: Optional[VlobID]
+        confinement_point: VlobID | None
         id: VlobID
         parent: VlobID
         created: DateTime

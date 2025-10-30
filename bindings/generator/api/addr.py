@@ -1,10 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from typing import Optional
 
 from .common import (
     U32,
     ErrorVariant,
+    IndexInt,
     InvitationToken,
     OrganizationID,
     Ref,
@@ -12,7 +12,6 @@ from .common import (
     StrBasedType,
     Variant,
     VlobID,
-    IndexInt,
 )
 
 
@@ -70,7 +69,7 @@ class ParsedParsecAddr(Variant):
         port: U32
         use_ssl: bool
         organization_id: OrganizationID
-        token: Optional[str]
+        token: str | None
 
     class WorkspacePath:
         hostname: str

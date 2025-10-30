@@ -1,34 +1,34 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 
+from .addr import ParsecAddr, ParsecInvitationAddr
+from .client import ActiveUsersLimit
 from .common import (
+    AccountAuthMethodID,
+    AccountVaultItemOpaqueKeyID,
+    DateTime,
+    DeviceLabel,
+    EmailAddress,
+    Enum,
+    EnumItemUnit,
+    ErrorVariant,
+    Handle,
     HumanHandle,
     InvitationToken,
     InvitationType,
-    Password,
-    Ref,
-    Path,
-    Result,
-    EmailAddress,
-    ErrorVariant,
-    Handle,
-    OrganizationID,
-    UserID,
-    DeviceLabel,
     KeyDerivation,
-    DateTime,
+    OrganizationID,
+    Password,
+    Path,
+    Ref,
+    Result,
     SecretKey,
-    AccountAuthMethodID,
-    AccountVaultItemOpaqueKeyID,
-    Variant,
     Structure,
+    UserID,
     UserProfile,
-    Enum,
-    EnumItemUnit,
+    Variant,
 )
-from .addr import ParsecAddr, ParsecInvitationAddr
-from .device import DeviceAccessStrategy, DeviceSaveStrategy, AvailableDevice
-from .client import ActiveUsersLimit
+from .device import AvailableDevice, DeviceAccessStrategy, DeviceSaveStrategy
 
 
 def list_started_accounts() -> list[Handle]:

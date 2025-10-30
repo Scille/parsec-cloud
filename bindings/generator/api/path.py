@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from typing import Optional
 
 from .common import EntryName, FsPath, Ref
 
@@ -13,7 +12,7 @@ def path_parent(path: Ref[FsPath]) -> FsPath:
     raise NotImplementedError
 
 
-def path_filename(path: Ref[FsPath]) -> Optional[EntryName]:
+def path_filename(path: Ref[FsPath]) -> EntryName | None:
     raise NotImplementedError
 
 
