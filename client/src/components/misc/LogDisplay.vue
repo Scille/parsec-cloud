@@ -28,9 +28,18 @@
       class="loading"
       v-show="loading"
     >
-      <ion-skeleton-text :animated="true" />
-      <ion-skeleton-text :animated="true" />
-      <ion-skeleton-text :animated="true" />
+      <ion-skeleton-text
+        :animated="true"
+        class="skeleton"
+      />
+      <ion-skeleton-text
+        :animated="true"
+        class="skeleton"
+      />
+      <ion-skeleton-text
+        :animated="true"
+        class="skeleton"
+      />
     </div>
   </div>
 </template>
@@ -95,5 +104,9 @@ window.electronAPI.receive('parsec-log-records', async (logRecords: Array<LogEnt
   &:nth-child(odd) {
     background-color: var(--parsec-color-light-secondary-background);
   }
+}
+
+.skeleton {
+  height: 70px;
 }
 </style>
