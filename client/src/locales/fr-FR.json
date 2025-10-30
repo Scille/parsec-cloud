@@ -1242,7 +1242,19 @@
         }
     },
     "SasCodeChoice": {
-        "noneOfTheChoices": "Aucun de ces codes"
+        "noneOfTheChoices": "Vous ne voyez pas le bon code ?",
+        "securityInfo": "Pour des raisons de sécurité, ne sélectionnez jamais un code de façon aléatoire.",
+        "info": {
+            "title": "Aucun code correspondant",
+            "message": {
+                "line1": "Si vous ne voyez pas le code correspondant à celui fourni par l'autre personne, suivez les étapes suivantes :",
+                "line2": "1. Vérifier que la version de l'application est au moins 3.6.0",
+                "line3": "2. Quitter et recommencer le processus",
+                "line4": "3. Si le code n'apparaît toujours pas, veuillez contacter votre administrateur."
+            },
+            "yesText": "Quitter le processus",
+            "noText": "Reprendre"
+        }
     },
     "JoinOrganization": {
         "logIn": "Me connecter",

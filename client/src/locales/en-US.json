@@ -1243,7 +1243,19 @@
         }
     },
     "SasCodeChoice": {
-        "noneOfTheChoices": "None shown"
+        "noneOfTheChoices": "Can't find the code?",
+        "securityInfo": "For security reasons, never randomly select a code.",
+        "info": {
+            "title": "No matching code",
+            "message": {
+                "line1": "If you can't find the matching code, follow these steps:",
+                "line2": "1. Check that their application version is at least 3.6.0",
+                "line3": "2. Quit and start the process over",
+                "line4": "3. If you still can't find the matching code, please contact your administrator."
+            },
+            "yesText": "Quit process",
+            "noText": "Back"
+        }
     },
     "JoinOrganization": {
         "logIn": "Log In",

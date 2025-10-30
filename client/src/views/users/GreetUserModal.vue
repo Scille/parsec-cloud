@@ -78,6 +78,9 @@
           v-show="pageStep === GreetUserStep.GetGuestSasCode"
           class="step"
         >
+          <ms-report-text :theme="MsReportTheme.Info">
+            {{ $msTranslate('SasCodeChoice.securityInfo') }}
+          </ms-report-text>
           <sas-code-choice
             :disabled="querying"
             :choices="greeter.SASCodeChoices"
@@ -196,6 +199,8 @@ import {
   Translatable,
   MsDropdownChangeEvent,
   useWindowSize,
+  MsReportText,
+  MsReportTheme,
 } from 'megashark-lib';
 import { close, personAdd } from 'ionicons/icons';
 import { Ref, computed, onMounted, ref, useTemplateRef } from 'vue';
