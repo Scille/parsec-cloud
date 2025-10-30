@@ -58,4 +58,5 @@ error_set::error_set! {
         DataError(libparsec_types::DataError)
     }
     LoadSubmitPayloadError := ValidatePayloadError || DataError
+    LoadAnswerPayloadError := ValidatePayloadError || DataError
 }
