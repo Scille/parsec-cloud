@@ -70,6 +70,9 @@
           class="step organization-name"
         >
           <information-join-device />
+          <ms-report-text :theme="MsReportTheme.Info">
+            {{ $msTranslate('DevicesPage.greet.subtitles.waitForGuestVersionInfo') }}
+          </ms-report-text>
         </div>
 
         <!-- part 2 (host code)-->
@@ -77,6 +80,9 @@
           v-show="pageStep === DeviceJoinOrganizationStep.GetHostSasCode"
           class="step"
         >
+          <ms-report-text :theme="MsReportTheme.Info">
+            {{ $msTranslate('SasCodeChoice.securityInfo') }}
+          </ms-report-text>
           <sas-code-choice
             :choices="claimer.SASCodeChoices"
             @select="selectHostSas($event)"
@@ -168,6 +174,8 @@ import {
   MsWizardStepper,
   Translatable,
   useWindowSize,
+  MsReportText,
+  MsReportTheme,
 } from 'megashark-lib';
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
 

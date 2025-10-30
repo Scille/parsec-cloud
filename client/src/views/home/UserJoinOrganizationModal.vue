@@ -109,6 +109,9 @@
                 })
               }}
             </ms-informative-text>
+            <ms-report-text :theme="MsReportTheme.Info">
+              {{ $msTranslate('UsersPage.greet.subtitles.waitForGuestVersionInfo') }}
+            </ms-report-text>
           </div>
         </div>
 
@@ -117,6 +120,9 @@
           v-show="pageStep === UserJoinOrganizationStep.GetHostSasCode"
           class="step"
         >
+          <ms-report-text :theme="MsReportTheme.Info">
+            {{ $msTranslate('SasCodeChoice.securityInfo') }}
+          </ms-report-text>
           <sas-code-choice
             :disabled="querying"
             :choices="claimer.SASCodeChoices"
@@ -226,6 +232,8 @@ import {
   askQuestion,
   asyncComputed,
   useWindowSize,
+  MsReportText,
+  MsReportTheme,
 } from 'megashark-lib';
 import { Ref, computed, onMounted, ref, useTemplateRef } from 'vue';
 

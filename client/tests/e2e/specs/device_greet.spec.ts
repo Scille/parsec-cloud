@@ -33,8 +33,11 @@ async function initModals(hostPage: MsPage, guestPage: MsPage): Promise<[ModalDa
   await hostPage.locator('.profile-content-item').locator('#add-device-button').click();
   const greetModal = hostPage.locator('.greet-organization-modal');
   await expect(greetModal.locator('.modal-header__title')).toHaveText('Create a new device');
-  await expect(greetModal.locator('.first-step').locator('.container-textinfo__text')).toHaveText(
+  await expect(greetModal.locator('.first-step').locator('.container-textinfo__text').nth(0)).toHaveText(
     'Parsec must be open on both devices during the onboarding process.',
+  );
+  await expect(greetModal.locator('.first-step').locator('.container-textinfo__text').nth(1)).toHaveText(
+    'Before you start, make sure you are using the latest version of Parsec on both devices.',
   );
   await expect(greetModal.locator('#next-button')).toHaveText('Start');
   await expect(greetModal.locator('.closeBtn')).toBeVisible();
@@ -361,8 +364,19 @@ msTest('Host selects no SAS code', async ({ myProfilePage }) => {
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code'], 1);
   await expect(greetData.title).toHaveText('Get guest code');
   await expect(greetData.subtitle).toHaveText('Click on the code that appears on the guest device.');
-  await expect(greetData.content.locator('#noneChoicesButton')).toHaveText('None shown');
+  await expect(greetData.content.locator('#noneChoicesButton')).toHaveText("Can't find the code?");
   await greetData.content.locator('#noneChoicesButton').click();
+
+  const questionModal = myProfilePage.locator('.question-modal');
+  await expect(questionModal).toBeVisible();
+  await expect(questionModal.locator('.ms-modal-header__title')).toHaveText('No matching code');
+  await expect(questionModal.locator('.ms-modal-header__text')).toHaveText(
+    "If you can't find the matching code, quit and start the process over. If the problem persists, please contact your administrator.",
+  );
+  await questionModal.locator('#cancel-button').click();
+  await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code'], 1);
+  await greetData.content.locator('#noneChoicesButton').click();
+  await questionModal.locator('#next-button').click();
 
   await expect(secondTab).toShowToast('The process has been cancelled from the other device.', 'Error');
   await expect(myProfilePage).toShowToast(
@@ -488,6 +502,17 @@ msTest('Guest selects no SAS code', async ({ myProfilePage }) => {
   await expect(joinData.subtitle).toHaveText('Click on the code you see on the main device.');
   await expect(joinData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Authentication'], 0);
   await joinData.content.locator('.button-clear').nth(0).click();
+
+  const questionModal = secondTab.locator('.question-modal');
+  await expect(questionModal).toBeVisible();
+  await expect(questionModal.locator('.ms-modal-header__title')).toHaveText('No matching code');
+  await expect(questionModal.locator('.ms-modal-header__text')).toHaveText(
+    "If you can't find the matching code, quit and start the process over. If the problem persists, please contact your administrator.",
+  );
+  await questionModal.locator('#cancel-button').click();
+  await expect(joinData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Authentication'], 0);
+  await joinData.content.locator('.button-clear').nth(0).click();
+  await questionModal.locator('#next-button').click();
 
   await expect(secondTab).toShowToast(
     'If you did not see the correct code, this could be a sign of a security issue during the onboarding. Please restart the process.',

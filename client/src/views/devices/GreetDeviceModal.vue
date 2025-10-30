@@ -172,6 +172,9 @@
               </div>
             </div>
           </div>
+          <ms-report-text :theme="MsReportTheme.Info">
+            {{ $msTranslate('DevicesPage.greet.subtitles.waitForGuestVersionInfo') }}
+          </ms-report-text>
         </div>
 
         <!-- give code step -->
@@ -187,6 +190,9 @@
           v-show="pageStep === GreetDeviceStep.GetGuestSasCode"
           class="step"
         >
+          <ms-report-text :theme="MsReportTheme.Info">
+            {{ $msTranslate('SasCodeChoice.securityInfo') }}
+          </ms-report-text>
           <sas-code-choice
             :choices="greeter.SASCodeChoices"
             @select="selectGuestSas"
@@ -274,6 +280,8 @@ import {
   askQuestion,
   startCounter,
   useWindowSize,
+  MsReportText,
+  MsReportTheme,
 } from 'megashark-lib';
 import QRCodeVue3 from 'qrcode-vue3';
 import { computed, onMounted, ref } from 'vue';

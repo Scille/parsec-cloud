@@ -324,8 +324,19 @@ msTest('Host selects no SAS code', async ({ usersPage }) => {
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 1);
   await expect(greetData.title).toHaveText('Get guest code');
   await expect(greetData.subtitle).toHaveText('Click on the code given to you by the guest.');
-  await expect(greetData.content.locator('#noneChoicesButton')).toHaveText('None shown');
+  await expect(greetData.content.locator('#noneChoicesButton')).toHaveText("Can't find the code?");
   await greetData.content.locator('#noneChoicesButton').click();
+
+  const questionModal = usersPage.locator('.question-modal');
+  await expect(questionModal).toBeVisible();
+  await expect(questionModal.locator('.ms-modal-header__title')).toHaveText('No matching code');
+  await expect(questionModal.locator('.ms-modal-header__text')).toHaveText(
+    "If you can't find the matching code, quit and start the process over. If the problem persists, please contact your administrator.",
+  );
+  await questionModal.locator('#cancel-button').click();
+  await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 1);
+  await greetData.content.locator('#noneChoicesButton').click();
+  await questionModal.locator('#next-button').click();
 
   await expect(secondTab).toShowToast('The host has cancelled the process.', 'Error');
 
@@ -450,8 +461,19 @@ msTest('Guest selects no SAS code', async ({ usersPage }) => {
   // Check the enter code page from the guest and select the code
   await expect(joinData.title).toHaveText('Get host code');
   await expect(joinData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details', 'Authentication'], 0);
-  await expect(joinData.content.locator('#noneChoicesButton')).toHaveText('None shown');
+  await expect(joinData.content.locator('#noneChoicesButton')).toHaveText("Can't find the code?");
   await joinData.content.locator('#noneChoicesButton').click();
+
+  const questionModal = secondTab.locator('.question-modal');
+  await expect(questionModal).toBeVisible();
+  await expect(questionModal.locator('.ms-modal-header__title')).toHaveText('No matching code');
+  await expect(questionModal.locator('.ms-modal-header__text')).toHaveText(
+    "If you can't find the matching code, quit and start the process over. If the problem persists, please contact your administrator.",
+  );
+  await questionModal.locator('#cancel-button').click();
+  await expect(joinData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details', 'Authentication'], 0);
+  await joinData.content.locator('#noneChoicesButton').click();
+  await questionModal.locator('#next-button').click();
 
   await expect(secondTab).toShowToast(
     'If you did not see the correct code, this could be a sign of a security issue during the onboarding. Please restart the process.',

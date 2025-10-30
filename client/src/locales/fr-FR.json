@@ -1087,6 +1087,7 @@
                 "summary": "L'appareil {label} a été ajouté à votre profil.",
                 "getDeviceInfo": "En attente des informations de l'appareil invité.",
                 "waitForGuest": "Vous devez avoir Parsec ouvert sur les deux appareils pendant la durée du processus d'ajout.",
+                "waitForGuestVersionInfo": "Avant de commencer, assurez-vous d'utiliser la version la plus récente de Parsec sur vos deux appareils.",
                 "scanOrShare1": "Scanner le QR Code ",
                 "scanOrShare2": "ou ",
                 "scanOrShare3": "partager le lien",
@@ -1247,7 +1248,14 @@
         }
     },
     "SasCodeChoice": {
-        "noneOfTheChoices": "Aucun de ces codes"
+        "noneOfTheChoices": "Vous ne voyez pas le bon code ?",
+        "securityInfo": "Pour des raisons de sécurité, ne sélectionnez jamais un code de façon aléatoire.",
+        "info": {
+            "title": "Aucun code correspondant",
+            "subtitle": "Si vous ne voyez pas le code correspondant à celui fourni par l'autre personne, quittez et recommencez le processus. Si cela persiste, veuillez contacter votre administrateur.",
+            "yesText": "Quitter le processus",
+            "noText": "Reprendre"
+        }
     },
     "JoinOrganization": {
         "logIn": "Me connecter",
@@ -1399,6 +1407,7 @@
             "subtitles": {
                 "waitForGuest1": "Pour accueillir un nouvel utilisateur, vous devez être en contact direct avec la personne pendant la durée du processus d'accueil (environ 2 minutes).",
                 "waitForGuest2": "Il ne faudra pas quitter la session.",
+                "waitForGuestVersionInfo": "Avant de commencer, assurez-vous que vous et votre invité utilisez la version la plus récente de Parsec.",
                 "provideHostCode": "Veuillez communiquer le code ci-dessous à l'invité.",
                 "getGuestCode": "Sélectionnez le code que vous donne l'invité.",
                 "getUserInfo": "Patientez le temps que l'invité saisisse ses coordonnées.",
