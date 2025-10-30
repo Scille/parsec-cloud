@@ -1,8 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { expect, login, msTest, waitUntilSaved } from '@tests/e2e/helpers';
+import { expect, login, msTest, waitUntilLoaded, waitUntilSaved } from '@tests/e2e/helpers';
 
-msTest.skip('Open editor with header option', async ({ parsecEditics }) => {
+msTest('Open editor with header option', async ({ parsecEditics }) => {
+  msTest.setTimeout(120_000);
   const entries = parsecEditics.locator('.folder-container').locator('.file-list-item');
 
   await entries.nth(2).hover();
@@ -10,20 +11,28 @@ msTest.skip('Open editor with header option', async ({ parsecEditics }) => {
   const actionBar = parsecEditics.locator('#folders-ms-action-bar');
   await expect(actionBar.locator('ion-button').nth(1)).toHaveText('Edit');
   await actionBar.locator('ion-button').nth(1).click();
-  await expect(parsecEditics.locator('#cryptpad-editor')).toBeVisible();
+  const frame = await waitUntilLoaded(parsecEditics);
+  const editor = frame.locator('#cp-app-code-editor').locator('.CodeMirror-code');
+  await expect(editor).toBeVisible();
+  await expect(editor.locator('pre').nth(0)).toHaveText('A simple text file', { timeout: 30000 });
 });
 
-msTest.skip('Open editor with contextual menu', async ({ parsecEditics }) => {
+msTest('Open editor with contextual menu', async ({ parsecEditics }) => {
+  msTest.setTimeout(120_000);
   const entries = parsecEditics.locator('.folder-container').locator('.file-list-item');
   await entries.nth(2).click({ button: 'right' });
   const menu = parsecEditics.locator('#file-context-menu');
   await expect(menu).toBeVisible();
   await expect(menu.getByRole('listitem').nth(2)).toHaveText('Edit');
   await menu.getByRole('listitem').nth(2).click();
-  await expect(parsecEditics.locator('#cryptpad-editor')).toBeVisible();
+  const frame = await waitUntilLoaded(parsecEditics);
+  const editor = frame.locator('#cp-app-code-editor').locator('.CodeMirror-code');
+  await expect(editor).toBeVisible();
+  await expect(editor.locator('pre').nth(0)).toHaveText('A simple text file', { timeout: 30000 });
 });
 
-msTest.skip('Open editor from viewer', async ({ parsecEditics }) => {
+msTest('Open editor from viewer', async ({ parsecEditics }) => {
+  msTest.setTimeout(120_000);
   const entries = parsecEditics.locator('.folder-container').locator('.file-list-item');
   await entries.nth(2).dblclick();
   await expect(parsecEditics.locator('.ms-spinner-modal')).toBeVisible();
@@ -38,10 +47,13 @@ msTest.skip('Open editor from viewer', async ({ parsecEditics }) => {
     .nth(1);
   await expect(topbarEditButton).toHaveText('Edit');
   await topbarEditButton.click();
-  await expect(parsecEditics.locator('#cryptpad-editor')).toBeVisible();
+  const frame = await waitUntilLoaded(parsecEditics);
+  const editor = frame.locator('#cp-app-code-editor').locator('.CodeMirror-code');
+  await expect(editor).toBeVisible();
+  await expect(editor.locator('pre').nth(0)).toHaveText('A simple text file', { timeout: 30000 });
 });
 
-msTest.skip('Check edited file in viewer', async ({ parsecEditics }) => {
+msTest('Check edited file in viewer', async ({ parsecEditics }) => {
   msTest.setTimeout(120_000);
   await parsecEditics.locator('.header-label-name').click();
 
@@ -52,24 +64,12 @@ msTest.skip('Check edited file in viewer', async ({ parsecEditics }) => {
   const actionBar = parsecEditics.locator('#folders-ms-action-bar');
   await expect(actionBar.locator('ion-button').nth(1)).toHaveText('Edit');
   await actionBar.locator('ion-button').nth(1).click();
-  await expect(parsecEditics.locator('#cryptpad-editor')).toBeVisible();
-  const mainFrame = parsecEditics.locator('#cryptpad-editor').contentFrame();
-  await expect(mainFrame.locator('.placeholder-message-container')).toBeVisible();
-  await expect(mainFrame.locator('.placeholder-message-container')).toHaveText('Loading...');
-  // Takes an incredibly long time to load on the CI
-  await parsecEditics.waitForTimeout(10000);
-
-  await expect(mainFrame.locator('#sbox-iframe')).toBeVisible();
-  const editor = parsecEditics
-    .locator('#cryptpad-editor')
-    .contentFrame()
-    .locator('#sbox-iframe')
-    .contentFrame()
-    .locator('#cp-app-code-editor')
-    .locator('.CodeMirror-code');
+  const frame = await waitUntilLoaded(parsecEditics);
+  const editor = frame.locator('#cp-app-code-editor').locator('.CodeMirror-code');
   await expect(editor).toBeVisible();
   await expect(editor.locator('pre').nth(0)).toHaveText(
     '# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS',
+    { timeout: 30000 },
   );
   await parsecEditics.waitForTimeout(200);
   await editor.locator('pre').nth(0).fill('ABCD');
