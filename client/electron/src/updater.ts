@@ -396,15 +396,13 @@ export default class AppUpdater {
     this.updater.autoDownload = true;
     this.updater.autoInstallOnAppQuit = false;
 
-    console.log('=============================');
-    console.log(`App version: ${this.updater.currentVersion}`);
-    console.log(`Nightly build: ${publishOption.nightlyBuild}`);
-    console.log(`Auto download: ${this.updater.autoDownload}`);
-    console.log(`Auto install on app quit: ${this.updater.autoInstallOnAppQuit}`);
-    console.log(`Allow prerelease: ${this.updater.allowPrerelease}`);
-    console.log(`Allow downgrade: ${this.updater.allowDowngrade}`);
-    console.log(`Update channel: ${this.updater.channel}`);
-    console.log('=============================');
+    console.info(`App version: ${this.updater.currentVersion}`);
+    console.debug(`Nightly build: ${publishOption.nightlyBuild}`);
+    console.debug(`Auto download: ${this.updater.autoDownload}`);
+    console.debug(`Auto install on app quit: ${this.updater.autoInstallOnAppQuit}`);
+    console.debug(`Allow prerelease: ${this.updater.allowPrerelease}`);
+    console.debug(`Allow downgrade: ${this.updater.allowDowngrade}`);
+    console.debug(`Update channel: ${this.updater.channel}`);
 
     // https://www.electron.build/auto-update#event-error
     this.updater.on('error', (error) => {
