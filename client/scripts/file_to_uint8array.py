@@ -1,8 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import argparse
-import sys
 import pathlib
+import sys
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

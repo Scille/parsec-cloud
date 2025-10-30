@@ -2,10 +2,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 
-import sys
 import subprocess
+import sys
 from pathlib import Path
-
 
 BASEDIR = Path(__file__).parent
 PKG_DIR = BASEDIR / "../pkg"
