@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { answerQuestion, DisplaySize, expect, fillIonInput, initGreetUserModals, msTest } from '@tests/e2e/helpers';
+import { answerQuestion, DisplaySize, expect, fillIonInput, initGreetUserModals, mockLibParsec, msTest } from '@tests/e2e/helpers';
 
 msTest('Greet user whole process in small display', async ({ usersPage }) => {
   // Very slow test since it syncs the greet and join
@@ -512,9 +512,137 @@ msTest('Guest closes greet process', async ({ usersPage }) => {
     expectedNegativeText: 'Resume',
   });
   await expect(joinData.modal).toBeHidden();
+  await expect(secondTab).toShowToast('The process has been cancelled.', 'Error');
+});
 
-  // Does not seem to work properly on host side
-  // await expect(usersPage).toShowToast('The host has cancelled the process.', 'Error');
-  // await expect(greetData.nextButton).toHaveText('Start');
-  // await expect(greetData.title).toHaveText('Onboard a new user');
+msTest.skip('Greet user whole process with smartcard auth', async ({ usersPage }) => {
+  // Very slow test since it syncs the greet and join
+  msTest.setTimeout(120_000);
+
+  const secondTab = await usersPage.openNewTab();
+
+  await mockLibParsec(secondTab, [
+    {
+      name: 'showCertificateSelectionDialogWindowsOnly',
+      result: {
+        ok: true,
+        value: {
+          hash: 'ABCD',
+          uris: [{ tag: 'X509URIFlavorValueWindowsCNG', x1: new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]) }],
+        },
+      },
+    },
+  ]);
+
+  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm');
+
+  // Check the provide code page from the host and retrieve the code
+  await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
+  await expect(greetData.title).toHaveText('Share your code');
+  await expect(greetData.subtitle).toHaveText('Give the code below to the guest.');
+  const greetCode = (await greetData.content.locator('.host-code').locator('.code').textContent()) ?? '';
+  expect(greetCode).toMatch(/^[A-Z0-9]{4}$/);
+
+  // Check the enter code page from the guest and select the code
+  await expect(joinData.title).toHaveText('Get host code');
+  await expect(joinData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details', 'Authentication'], 0);
+  await expect(joinData.content.locator('.button-choice')).toHaveCount(4);
+  await joinData.content.locator('.button-choice', { hasText: greetCode }).click();
+
+  // Check the provide code page from the guest and retrieve the code
+  await expect(joinData.title).toHaveText('Share your code');
+  await expect(joinData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details', 'Authentication'], 1);
+  const joinCode = (await joinData.content.locator('.guest-code').locator('.code').textContent()) ?? '';
+  expect(joinCode).toMatch(/^[A-Z0-9]{4}$/);
+
+  // Check the enter code page from the host and select the code
+  await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 1);
+  await expect(greetData.title).toHaveText('Get guest code');
+  await expect(greetData.subtitle).toHaveText('Click on the code given to you by the guest.');
+  await expect(greetData.content.locator('.button-choice')).toHaveCount(4);
+  await greetData.content.locator('.button-choice', { hasText: joinCode }).click();
+
+  // Host waits for guest to fill out the information
+  await expect(greetData.title).toHaveText('Contact details');
+  await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 2);
+  await expect(greetData.nextButton).toBeHidden();
+
+  // Fill out the joiner information
+  await expect(joinData.title).toHaveText('Your contact details');
+  await expect(joinData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details', 'Authentication'], 2);
+  await expect(joinData.nextButton).toHaveDisabledAttribute();
+  await fillIonInput(joinData.content.locator('#get-user-info').locator('ion-input').nth(0), 'Gordon Freeman');
+  await expect(joinData.content.locator('#get-user-info').locator('ion-input').nth(1).locator('input')).toHaveValue(
+    'gordon.freeman@blackmesa.nm',
+  );
+  await joinData.nextButton.click();
+  await expect(joinData.nextButton).toBeHidden();
+  await expect(joinData.modal.locator('.spinner-container')).toBeVisible();
+  await expect(joinData.modal.locator('.spinner-container')).toHaveText('(Waiting for the administrator)');
+
+  // host reviews the information and chose profile
+  await expect(greetData.title).toHaveText('Contact details');
+  await expect(greetData.subtitle).toHaveText('You can update the user name, device and profile.');
+  await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 2);
+  await expect(greetData.nextButton).toBeVisible();
+  await expect(greetData.nextButton).toHaveDisabledAttribute();
+  await expect(greetData.content.locator('.user-info-page').locator('ion-input').nth(0).locator('input')).toHaveValue('Gordon Freeman');
+  await expect(greetData.content.locator('.user-info-page').locator('ion-input').nth(1)).toHaveTheClass('input-disabled');
+  await expect(greetData.content.locator('.user-info-page').locator('ion-input').nth(1).locator('input')).toHaveValue(
+    'gordon.freeman@blackmesa.nm',
+  );
+  const profileButton = greetData.content.locator('.user-info-page').locator('.dropdown-button');
+  await expect(profileButton).toHaveText('Choose a profile');
+  await profileButton.click();
+  const profileDropdown = usersPage.locator('.dropdown-popover');
+  await expect(profileDropdown.getByRole('listitem').locator('.option-text__label')).toHaveText(['Administrator', 'Member', 'External']);
+  await profileDropdown.getByRole('listitem').nth(1).click();
+  await expect(profileButton).toHaveText('Member');
+  await expect(greetData.nextButton).toNotHaveDisabledAttribute();
+  await expect(greetData.nextButton).toHaveText('Approve');
+  await greetData.nextButton.click();
+
+  // Joiner chose auth
+  await expect(joinData.title).toHaveText('Authentication');
+  await expect(joinData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details', 'Authentication'], 3);
+  await expect(joinData.nextButton).toHaveText('Join the organization');
+  await expect(joinData.nextButton).toHaveDisabledAttribute();
+
+  // host is done
+  await expect(greetData.title).toHaveText('User has been added successfully!');
+  await expect(greetData.nextButton).not.toHaveDisabledAttribute();
+  await expect(greetData.nextButton).toBeVisible();
+  await expect(greetData.content.locator('.final-step').locator('.person-name')).toHaveText('Gordon Freeman');
+  await expect(greetData.content.locator('.final-step').locator('.user-info__email').locator('.cell')).toHaveText(
+    'gordon.freeman@blackmesa.nm',
+  );
+  await expect(greetData.content.locator('.final-step').locator('.user-info__role').locator('.label-profile')).toHaveText('Member');
+  await greetData.nextButton.click();
+  await expect(greetData.modal).toBeHidden();
+  await expect(usersPage).toShowToast('Gordon Freeman can now access the organization.', 'Success');
+  await expect(usersPage.locator('#users-page-user-list').getByRole('listitem').locator('.person-name')).toHaveText([
+    'Alicey McAliceFace',
+    'Boby McBobFace',
+    'Gordon Freeman',
+    'Malloryy McMalloryFace',
+  ]);
+
+  const authRadio = joinData.content.locator('.choose-auth-page').locator('.radio-list-item:visible');
+  await expect(authRadio).toHaveCount(3);
+  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
+  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
+  await expect(authRadio.nth(1)).toHaveText('Password');
+  await expect(authRadio.nth(2).locator('.authentication-card-text__title')).toHaveText('Smartcard');
+  const certBtn = joinData.content.locator('.choose-certificate-button');
+  await expect(certBtn).toBeHidden();
+  await authRadio.nth(2).click();
+  await expect(certBtn).toBeVisible();
+  await expect(certBtn).toHaveText('Choose a certificate');
+  await expect(joinData.content.locator('.choose-certificate-selected__text')).toBeHidden();
+  await certBtn.click();
+  await expect(joinData.content.locator('.choose-certificate-selected__text')).toBeVisible();
+  await expect(joinData.content.locator('.choose-certificate-selected__text')).toHaveText('Certificate selected');
+  await expect(certBtn).toHaveText('Update');
+
+  await expect(joinData.nextButton).toNotHaveDisabledAttribute();
 });

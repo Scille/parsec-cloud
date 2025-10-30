@@ -8,6 +8,7 @@ import {
   fillInputModal,
   fillIonInput,
   getTestbedBootstrapAddr,
+  mockLibParsec,
   MsPage,
   msTest,
   setupNewPage,
@@ -718,3 +719,118 @@ for (const displaySize of ['small', 'large']) {
     },
   );
 }
+
+msTest.skip('Go through custom org creation process with smartcard auth', async ({ home }) => {
+  await mockLibParsec(home, [
+    {
+      name: 'showCertificateSelectionDialogWindowsOnly',
+      result: {
+        ok: true,
+        value: {
+          hash: 'ABCD',
+          uris: [{ tag: 'X509URIFlavorValueWindowsCNG', x1: new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]) }],
+        },
+      },
+    },
+  ]);
+  const modal = await openCreateOrganizationModal(home);
+
+  const uniqueOrgName = `${home.orgInfo.name}-${randomInt(2 ** 47)}`;
+
+  const orgServerContainer = modal.locator('.organization-name-and-server-page');
+  await expect(orgServerContainer.locator('.modal-header-title__text')).toHaveText('Create organization on my Parsec server');
+  const orgPrevious = orgServerContainer.locator('.organization-name-and-server-page-footer').locator('ion-button').nth(0);
+  const orgNext = orgServerContainer.locator('.organization-name-and-server-page-footer').locator('ion-button').nth(1);
+  await expect(orgPrevious).toBeVisible();
+  await expect(orgNext).toHaveDisabledAttribute();
+  await fillIonInput(orgServerContainer.locator('ion-input').nth(0), uniqueOrgName);
+  await expect(orgNext).toHaveDisabledAttribute();
+  await fillIonInput(orgServerContainer.locator('ion-input').nth(1), home.orgInfo.serverAddr);
+  await expect(orgNext).toNotHaveDisabledAttribute();
+  await orgNext.click();
+
+  const userInfoContainer = modal.locator('.user-information-page');
+  const userPrevious = modal.locator('.user-information-page-footer').locator('ion-button').nth(0);
+  const userNext = modal.locator('.user-information-page-footer').locator('ion-button').nth(1);
+  await expect(orgServerContainer).toBeHidden();
+  await expect(userInfoContainer).toBeVisible();
+  await expect(userPrevious).toBeVisible();
+  await expect(userPrevious).toNotHaveDisabledAttribute();
+  await expect(userNext).toBeVisible();
+  await expect(userNext).toHaveDisabledAttribute();
+  await expect(userInfoContainer.locator('.modal-header-title__text')).toHaveText('Enter your personal information');
+  await fillIonInput(userInfoContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.name);
+  await expect(userNext).toHaveDisabledAttribute();
+  await fillIonInput(userInfoContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.email);
+  await expect(userNext).toNotHaveDisabledAttribute();
+
+  await userNext.click();
+
+  const authContainer = modal.locator('.authentication-page');
+  const authPrevious = modal.locator('.authentication-page-footer').locator('ion-button').nth(0);
+  const authNext = modal.locator('.authentication-page-footer').locator('ion-button').nth(1);
+  await expect(orgServerContainer).toBeHidden();
+  await expect(userInfoContainer).toBeHidden();
+  await expect(authContainer).toBeVisible();
+  await expect(authPrevious).toBeVisible();
+  await expect(authPrevious).toNotHaveDisabledAttribute();
+  await expect(authNext).toBeVisible();
+  await expect(authNext).toHaveDisabledAttribute();
+
+  const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
+  await expect(authRadio).toHaveCount(3);
+  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
+  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
+  await expect(authRadio.nth(1)).toHaveText('Password');
+  await expect(authRadio.nth(2).locator('.authentication-card-text__title')).toHaveText('Smartcard');
+  const certBtn = authContainer.locator('.choose-certificate-button');
+  await expect(certBtn).toBeHidden();
+  await authRadio.nth(2).click();
+  await expect(certBtn).toBeVisible();
+  await expect(certBtn).toHaveText('Choose a certificate');
+  await expect(authContainer.locator('.choose-certificate-selected__text')).toBeHidden();
+  await certBtn.click();
+  await expect(authContainer.locator('.choose-certificate-selected__text')).toBeVisible();
+  await expect(authContainer.locator('.choose-certificate-selected__text')).toHaveText('Certificate selected');
+  await expect(certBtn).toHaveText('Update');
+
+  await expect(authNext).toNotHaveDisabledAttribute();
+  await authNext.click();
+
+  const summaryContainer = modal.locator('.summary-page');
+  const summaryPrevious = modal.locator('.summary-page-footer').locator('ion-button').nth(0);
+  const summaryNext = modal.locator('.summary-page-footer').locator('ion-button').nth(1);
+  const summaryEditButtons = modal.locator('.summary-item__button');
+  await expect(orgServerContainer).toBeHidden();
+  await expect(userInfoContainer).toBeHidden();
+  await expect(authContainer).toBeHidden();
+  await expect(summaryContainer).toBeVisible();
+  await expect(summaryContainer.locator('.modal-header-title__text')).toHaveText('Overview of your organization');
+  await expect(summaryPrevious).toBeVisible();
+  await expect(summaryPrevious).toNotHaveDisabledAttribute();
+  await expect(summaryNext).toBeVisible();
+  await expect(summaryNext).toNotHaveDisabledAttribute();
+
+  // Everything can be updated
+  await expect(summaryEditButtons.nth(0)).toBeVisible();
+  await expect(summaryEditButtons.nth(1)).toBeVisible();
+  await expect(summaryEditButtons.nth(2)).toBeVisible();
+  await expect(summaryEditButtons.nth(3)).toBeVisible();
+  await expect(summaryEditButtons.nth(4)).toBeVisible();
+
+  await expect(summaryContainer.locator('.summary-item__label')).toHaveText([
+    'Organization',
+
+    'Full name',
+    'Email',
+    'Server choice',
+    'Authentication method',
+  ]);
+  await expect(summaryContainer.locator('.summary-item__text')).toHaveText([
+    uniqueOrgName,
+    DEFAULT_USER_INFORMATION.name,
+    DEFAULT_USER_INFORMATION.email,
+    'Custom Server',
+    'Certificate',
+  ]);
+});
