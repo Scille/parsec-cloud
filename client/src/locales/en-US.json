@@ -1160,7 +1160,7 @@
                 },
                 "selectButton": "Choose a certificate",
                 "selectOther": "Update",
-                "selectInstructions": "A pop-up will open, prompting you to chose the certificate.",
+                "selectInstructions": "A pop-up will open, prompting you to choose the certificate.",
                 "certificateSelected": "Certificate selected"
             },
             "sso": {
