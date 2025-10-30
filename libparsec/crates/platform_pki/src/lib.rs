@@ -35,7 +35,7 @@ mod platform {
         unimplemented!("platform not supported")
     }
 
-    pub fn list_trusted_root_certificate_der(
+    pub fn list_trusted_root_certificate_anchor(
     ) -> Result<Vec<rustls_pki_types::TrustAnchor<'static>>, ListTrustedRootCertificatesError> {
         unimplemented!("platform not supported")
     }
@@ -112,7 +112,7 @@ pub struct CertificateDer {
 }
 
 pub use errors::ListTrustedRootCertificatesError;
-pub use platform::list_trusted_root_certificate_der;
+pub use platform::list_trusted_root_certificate_anchor;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SignatureAlgorithm {
@@ -176,3 +176,6 @@ pub use errors::CreateLocalPendingError;
 pub use shared::create_local_pending;
 
 pub use platform::is_available;
+
+pub use errors::VerifyCertificateError;
+pub use shared::verify_certificate;

@@ -145,7 +145,7 @@ fn get_id_and_hash_from_cert_context(
     Ok(X509CertificateReference::from(hash).add_or_replace_uri(id))
 }
 
-pub fn list_trusted_root_certificate_der(
+pub fn list_trusted_root_certificate_anchor(
 ) -> Result<Vec<rustls_pki_types::TrustAnchor<'static>>, ListTrustedRootCertificatesError> {
     let store = CertStore::open_current_user("Root")
         .map_err(ListTrustedRootCertificatesError::CannotOpenStore)?;
