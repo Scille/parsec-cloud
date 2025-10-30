@@ -77,6 +77,9 @@
           v-show="pageStep === DeviceJoinOrganizationStep.GetHostSasCode"
           class="step"
         >
+          <ms-report-text :theme="MsReportTheme.Info">
+            {{ $msTranslate('SasCodeChoice.securityInfo') }}
+          </ms-report-text>
           <sas-code-choice
             :choices="claimer.SASCodeChoices"
             @select="selectHostSas($event)"
@@ -168,6 +171,8 @@ import {
   Translatable,
   asyncComputed,
   useWindowSize,
+  MsReportText,
+  MsReportTheme,
 } from 'megashark-lib';
 import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
 import { checkmarkCircle, close, phonePortrait } from 'ionicons/icons';
