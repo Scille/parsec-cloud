@@ -182,3 +182,6 @@ pub use shared::verify_certificate;
 
 pub use errors::LoadSubmitPayloadError;
 pub use shared::load_submit_payload;
+
+pub use errors::LoadAnswerPayloadError;
+pub use shared::load_answer_payload;
