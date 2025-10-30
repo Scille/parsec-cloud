@@ -2414,6 +2414,137 @@ fn struct_organization_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// PkiEnrollmentListItem
+
+#[allow(dead_code)]
+fn struct_pki_enrollment_list_item_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::PkiEnrollmentListItem> {
+    let enrollment_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "enrollmentId")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::EnrollmentID, _> {
+                libparsec::EnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let submitted_on = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "submittedOn")?;
+        {
+            let v = js_val.value(cx);
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            match custom_from_rs_f64(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let der_x509_certificate = {
+        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "derX509Certificate")?;
+        {
+            let custom_from_rs_bytes =
+                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+            #[allow(clippy::unnecessary_mut_passed)]
+            match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                Ok(val) => val,
+                // err can't infer type in some case, because of the previous `try_into`
+                #[allow(clippy::useless_format)]
+                Err(err) => return cx.throw_type_error(format!("{}", err)),
+            }
+        }
+    };
+    let payload_signature = {
+        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "payloadSignature")?;
+        {
+            let custom_from_rs_bytes =
+                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+            #[allow(clippy::unnecessary_mut_passed)]
+            match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                Ok(val) => val,
+                // err can't infer type in some case, because of the previous `try_into`
+                #[allow(clippy::useless_format)]
+                Err(err) => return cx.throw_type_error(format!("{}", err)),
+            }
+        }
+    };
+    let payload = {
+        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "payload")?;
+        {
+            let custom_from_rs_bytes =
+                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+            #[allow(clippy::unnecessary_mut_passed)]
+            match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                Ok(val) => val,
+                // err can't infer type in some case, because of the previous `try_into`
+                #[allow(clippy::useless_format)]
+                Err(err) => return cx.throw_type_error(format!("{}", err)),
+            }
+        }
+    };
+    Ok(libparsec::PkiEnrollmentListItem {
+        enrollment_id,
+        submitted_on,
+        der_x509_certificate,
+        payload_signature,
+        payload,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_pki_enrollment_list_item_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::PkiEnrollmentListItem,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_enrollment_id = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::EnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.enrollment_id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "enrollmentId", js_enrollment_id)?;
+    let js_submitted_on = JsNumber::new(cx, {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        match custom_to_rs_f64(rs_obj.submitted_on) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    });
+    js_obj.set(cx, "submittedOn", js_submitted_on)?;
+    let js_der_x509_certificate = {
+        let rs_buff = { rs_obj.der_x509_certificate.as_ref() };
+        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+        js_buff
+    };
+    js_obj.set(cx, "derX509Certificate", js_der_x509_certificate)?;
+    let js_payload_signature = {
+        let rs_buff = { rs_obj.payload_signature.as_ref() };
+        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+        js_buff
+    };
+    js_obj.set(cx, "payloadSignature", js_payload_signature)?;
+    let js_payload = {
+        let rs_buff = { rs_obj.payload.as_ref() };
+        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+        js_buff
+    };
+    js_obj.set(cx, "payload", js_payload)?;
+    Ok(js_obj)
+}
+
 // ServerConfig
 
 #[allow(dead_code)]
@@ -11953,6 +12084,34 @@ fn variant_parsed_parsec_addr_rs_to_js<'a>(
                 js_buff
             };
             js_obj.set(cx, "encryptedPath", js_encrypted_path)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// PkiEnrollmentListError
+
+#[allow(dead_code)]
+fn variant_pki_enrollment_list_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::PkiEnrollmentListError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::PkiEnrollmentListError::AuthorNotAllowed { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "PkiEnrollmentListErrorAuthorNotAllowed").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::PkiEnrollmentListError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "PkiEnrollmentListErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::PkiEnrollmentListError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "PkiEnrollmentListErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
         }
     }
     Ok(js_obj)

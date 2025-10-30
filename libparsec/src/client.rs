@@ -12,7 +12,8 @@ pub use libparsec_client::{
     ClientListWorkspaceUsersError, ClientOrganizationInfoError, ClientRenameWorkspaceError,
     ClientRevokeUserError, ClientSetupShamirRecoveryError, ClientShareWorkspaceError,
     ClientUserUpdateProfileError, DeviceInfo, OrganizationInfo, OtherShamirRecoveryInfo,
-    SelfShamirRecoveryInfo, Tos, UserInfo, WorkspaceInfo, WorkspaceUserAccessInfo,
+    PkiEnrollmentListError, PkiEnrollmentListItem, SelfShamirRecoveryInfo, Tos, UserInfo,
+    WorkspaceInfo, WorkspaceUserAccessInfo,
 };
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_types::prelude::*;
@@ -662,4 +663,11 @@ pub async fn client_get_organization_bootstrap_date(
 ) -> Result<DateTime, ClientGetOrganizationBootstrapDateError> {
     let client = borrow_client(client)?;
     client.get_organization_bootstrap_date().await
+}
+
+pub async fn client_pki_list_enrollments(
+    client: Handle,
+) -> Result<Vec<PkiEnrollmentListItem>, PkiEnrollmentListError> {
+    let client = borrow_client(client)?;
+    client.pki_list_enrollments().await
 }

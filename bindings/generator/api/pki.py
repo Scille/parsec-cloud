@@ -3,7 +3,10 @@
 from typing import ClassVar
 
 from .common import (
+    Bytes,
     BytesBasedType,
+    DateTime,
+    EnrollmentID,
     ErrorVariant,
     Result,
     StrBasedType,
@@ -75,3 +78,19 @@ async def show_certificate_selection_dialog_windows_only() -> Result[
     X509CertificateReference | None, ShowCertificateSelectionDialogError
 ]:
     raise NotImplementedError
+
+
+class PkiEnrollmentListItem(Structure):
+    enrollment_id: EnrollmentID
+    submitted_on: DateTime
+    der_x509_certificate: Bytes
+    payload_signature: Bytes
+    payload: Bytes
+
+
+class PkiEnrollmentListError(ErrorVariant):
+    class Offline: ...
+
+    class AuthorNotAllowed: ...
+
+    class Internal: ...

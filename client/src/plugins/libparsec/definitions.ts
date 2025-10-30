@@ -98,6 +98,7 @@ export type ApiVersion = string
 export type DeviceID = string
 export type DeviceLabel = string
 export type EmailAddress = string
+export type EnrollmentID = string
 export type EntryName = string
 export type FsPath = string
 export type GreetingAttemptID = string
@@ -302,6 +303,14 @@ export interface OpenOptions {
 export interface OrganizationInfo {
     totalBlockBytes: SizeInt
     totalMetadataBytes: SizeInt
+}
+
+export interface PkiEnrollmentListItem {
+    enrollmentId: EnrollmentID
+    submittedOn: DateTime
+    derX509Certificate: Bytes
+    payloadSignature: Bytes
+    payload: Bytes
 }
 
 export interface ServerConfig {
@@ -3234,6 +3243,30 @@ export type ParsedParsecAddr =
   | ParsedParsecAddrPkiEnrollment
   | ParsedParsecAddrServer
   | ParsedParsecAddrWorkspacePath
+
+// PkiEnrollmentListError
+export enum PkiEnrollmentListErrorTag {
+    AuthorNotAllowed = 'PkiEnrollmentListErrorAuthorNotAllowed',
+    Internal = 'PkiEnrollmentListErrorInternal',
+    Offline = 'PkiEnrollmentListErrorOffline',
+}
+
+export interface PkiEnrollmentListErrorAuthorNotAllowed {
+    tag: PkiEnrollmentListErrorTag.AuthorNotAllowed
+    error: string
+}
+export interface PkiEnrollmentListErrorInternal {
+    tag: PkiEnrollmentListErrorTag.Internal
+    error: string
+}
+export interface PkiEnrollmentListErrorOffline {
+    tag: PkiEnrollmentListErrorTag.Offline
+    error: string
+}
+export type PkiEnrollmentListError =
+  | PkiEnrollmentListErrorAuthorNotAllowed
+  | PkiEnrollmentListErrorInternal
+  | PkiEnrollmentListErrorOffline
 
 // SelfShamirRecoveryInfo
 export enum SelfShamirRecoveryInfoTag {
