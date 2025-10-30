@@ -33,7 +33,7 @@ error_set::error_set! {
         #[display("Invalid certificate: {0}")]
         InvalidCertificateDer(webpki::Error),
     }
-    VerifySignatureError := InvalidCertificateDer || {
+    VerifySignatureError := {
         #[display("Invalid signature for the given message and certificate")]
         InvalidSignature,
         #[display("Unexpected signature will verifying signature of a message: {0}")]
@@ -50,4 +50,12 @@ error_set::error_set! {
         #[display("The provided certificate cannot be trusted: {0}")]
         Untrusted(webpki::Error),
     }
+    ValidatePayloadError := InvalidCertificateDer
+        || ListTrustedRootCertificatesError
+        || VerifyCertificateError
+        || VerifySignatureError
+    DataError := {
+        DataError(libparsec_types::DataError)
+    }
+    LoadSubmitPayloadError := ValidatePayloadError || DataError
 }
