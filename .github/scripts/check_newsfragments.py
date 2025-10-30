@@ -13,7 +13,6 @@ import json
 import os
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Optional
 from urllib.request import HTTPError, Request, urlopen
 
 # This list should be keep up to date with `misc/releaser.py::FRAGMENT_TYPES.keys()`
@@ -29,7 +28,7 @@ HEADERS: dict[str, str] = {
 }
 
 
-def check_newsfragment(fragment: Path) -> Optional[bool]:
+def check_newsfragment(fragment: Path) -> bool | None:
     fragment_name = fragment.name
 
     # Check news fragment TYPE

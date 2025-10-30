@@ -6,12 +6,11 @@ from typing import override
 from parsec._parsec import (
     DateTime,
     OrganizationID,
+    SequesterRevokedServiceCertificate,
     SequesterServiceCertificate,
     SequesterServiceID,
-    SequesterRevokedServiceCertificate,
 )
 from parsec.ballpark import RequireGreaterTimestamp
-from parsec.components.events import EventBus
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.sequester_create_service import sequester_create_service
 from parsec.components.postgresql.sequester_get_service import (
