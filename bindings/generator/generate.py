@@ -303,8 +303,8 @@ class BaseTypeInUse:
             )
 
         else:
-            assert origin in (List, Dict, Set, Tuple), (  # noqa: UP006
-                "Don't use List/Dict/Set/Tuple from `typing` module, use instead `list/dict/set/tuple`!"
+            assert origin not in (List, Dict, Set, Tuple), (  # noqa: UP006
+                f"Don't use List/Dict/Set/Tuple from `typing` module, use instead `list/dict/set/tuple`! ({type(param)=} {param=!r} {type(origin)=} {origin=!r})"
             )
             typespec = TYPES_DB.get(param)
             assert typespec is not None, (

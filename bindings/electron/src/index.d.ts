@@ -287,6 +287,15 @@ export interface OrganizationInfo {
 }
 
 
+export interface PkiEnrollmentListItem {
+    enrollmentId: string
+    submittedOn: number
+    derX509Certificate: Uint8Array
+    payloadSignature: Uint8Array
+    payload: Uint8Array
+}
+
+
 export interface ServerConfig {
     userProfileOutsiderAllowed: boolean
     activeUsersLimit: ActiveUsersLimit
@@ -2729,6 +2738,25 @@ export type ParsedParsecAddr =
   | ParsedParsecAddrPkiEnrollment
   | ParsedParsecAddrServer
   | ParsedParsecAddrWorkspacePath
+
+
+// PkiEnrollmentListError
+export interface PkiEnrollmentListErrorAuthorNotAllowed {
+    tag: "PkiEnrollmentListErrorAuthorNotAllowed"
+    error: string
+}
+export interface PkiEnrollmentListErrorInternal {
+    tag: "PkiEnrollmentListErrorInternal"
+    error: string
+}
+export interface PkiEnrollmentListErrorOffline {
+    tag: "PkiEnrollmentListErrorOffline"
+    error: string
+}
+export type PkiEnrollmentListError =
+  | PkiEnrollmentListErrorAuthorNotAllowed
+  | PkiEnrollmentListErrorInternal
+  | PkiEnrollmentListErrorOffline
 
 
 // SelfShamirRecoveryInfo

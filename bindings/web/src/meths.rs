@@ -2563,6 +2563,123 @@ fn struct_organization_info_rs_to_js(
     Ok(js_obj)
 }
 
+// PkiEnrollmentListItem
+
+#[allow(dead_code)]
+fn struct_pki_enrollment_list_item_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::PkiEnrollmentListItem, JsValue> {
+    let enrollment_id = {
+        let js_val = Reflect::get(&obj, &"enrollmentId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<libparsec::EnrollmentID, _> {
+                    libparsec::EnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let submitted_on = {
+        let js_val = Reflect::get(&obj, &"submittedOn".into())?;
+        {
+            let v = js_val.dyn_into::<Number>()?.value_of();
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            v
+        }
+    };
+    let der_x509_certificate = {
+        let js_val = Reflect::get(&obj, &"derX509Certificate".into())?;
+        js_val
+            .dyn_into::<Uint8Array>()
+            .map(|x| x.to_vec())
+            .map_err(|_| TypeError::new("Not a Uint8Array"))
+            .and_then(|x| {
+                let custom_from_rs_bytes =
+                    |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+                custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let payload_signature = {
+        let js_val = Reflect::get(&obj, &"payloadSignature".into())?;
+        js_val
+            .dyn_into::<Uint8Array>()
+            .map(|x| x.to_vec())
+            .map_err(|_| TypeError::new("Not a Uint8Array"))
+            .and_then(|x| {
+                let custom_from_rs_bytes =
+                    |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+                custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let payload = {
+        let js_val = Reflect::get(&obj, &"payload".into())?;
+        js_val
+            .dyn_into::<Uint8Array>()
+            .map(|x| x.to_vec())
+            .map_err(|_| TypeError::new("Not a Uint8Array"))
+            .and_then(|x| {
+                let custom_from_rs_bytes =
+                    |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+                custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    Ok(libparsec::PkiEnrollmentListItem {
+        enrollment_id,
+        submitted_on,
+        der_x509_certificate,
+        payload_signature,
+        payload,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_pki_enrollment_list_item_rs_to_js(
+    rs_obj: libparsec::PkiEnrollmentListItem,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_enrollment_id = JsValue::from_str({
+        let custom_to_rs_string =
+            |x: libparsec::EnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.enrollment_id) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"enrollmentId".into(), &js_enrollment_id)?;
+    let js_submitted_on = {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        let v = match custom_to_rs_f64(rs_obj.submitted_on) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        };
+        JsValue::from(v)
+    };
+    Reflect::set(&js_obj, &"submittedOn".into(), &js_submitted_on)?;
+    let js_der_x509_certificate =
+        JsValue::from(Uint8Array::from(rs_obj.der_x509_certificate.as_ref()));
+    Reflect::set(
+        &js_obj,
+        &"derX509Certificate".into(),
+        &js_der_x509_certificate,
+    )?;
+    let js_payload_signature = JsValue::from(Uint8Array::from(rs_obj.payload_signature.as_ref()));
+    Reflect::set(&js_obj, &"payloadSignature".into(), &js_payload_signature)?;
+    let js_payload = JsValue::from(Uint8Array::from(rs_obj.payload.as_ref()));
+    Reflect::set(&js_obj, &"payload".into(), &js_payload)?;
+    Ok(js_obj)
+}
+
 // ServerConfig
 
 #[allow(dead_code)]
@@ -13078,6 +13195,41 @@ fn variant_parsed_parsec_addr_rs_to_js(
             Reflect::set(&js_obj, &"keyIndex".into(), &js_key_index)?;
             let js_encrypted_path = JsValue::from(Uint8Array::from(encrypted_path.as_ref()));
             Reflect::set(&js_obj, &"encryptedPath".into(), &js_encrypted_path)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// PkiEnrollmentListError
+
+#[allow(dead_code)]
+fn variant_pki_enrollment_list_error_rs_to_js(
+    rs_obj: libparsec::PkiEnrollmentListError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::PkiEnrollmentListError::AuthorNotAllowed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiEnrollmentListErrorAuthorNotAllowed".into(),
+            )?;
+        }
+        libparsec::PkiEnrollmentListError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiEnrollmentListErrorInternal".into(),
+            )?;
+        }
+        libparsec::PkiEnrollmentListError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiEnrollmentListErrorOffline".into(),
+            )?;
         }
     }
     Ok(js_obj)
