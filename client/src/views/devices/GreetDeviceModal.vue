@@ -172,6 +172,9 @@
               </div>
             </div>
           </div>
+          <ms-report-text :theme="MsReportTheme.Info">
+            {{ $msTranslate('DevicesPage.greet.subtitles.waitForGuestVersionInfo') }}
+          </ms-report-text>
         </div>
 
         <!-- give code step -->
@@ -187,6 +190,9 @@
           v-show="pageStep === GreetDeviceStep.GetGuestSasCode"
           class="step"
         >
+          <ms-report-text :theme="MsReportTheme.Info">
+            {{ $msTranslate('SasCodeChoice.securityInfo') }}
+          </ms-report-text>
           <sas-code-choice
             :choices="greeter.SASCodeChoices"
             @select="selectGuestSas"
@@ -270,6 +276,8 @@ import {
   startCounter,
   MsSpinner,
   useWindowSize,
+  MsReportText,
+  MsReportTheme,
 } from 'megashark-lib';
 import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
 import { checkmarkCircle, close, copy, phonePortrait } from 'ionicons/icons';
