@@ -90,12 +90,6 @@ error_set::error_set! {
         ReadToEnd(ReadToEndError),
         RmpDecode(libparsec_types::RmpDecodeError)
     }
-    InvalidPathError := {
-        #[display("Invalid path {}", path.display())]
-        InvalidPath {
-            path: PathBuf
-        }
-    }
     ReadFile := {
         GetFile(GetFileHandleError),
         ReadFile(ReadToEndError),
