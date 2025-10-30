@@ -5,14 +5,16 @@ mod signature_verification;
 use crate::{
     encrypt_message,
     errors::{
-        InvalidPemContent, ValidatePayloadError, VerifyCertificateError, VerifySignatureError,
+        InvalidPemContent, LoadAnswerPayloadError, ValidatePayloadError, VerifyCertificateError,
+        VerifySignatureError,
     },
     shared::signature_verification::{RsassaPssSha256SignatureVerifier, SUPPORTED_SIG_ALGS},
     EncryptedMessage, SignatureAlgorithm,
 };
 use libparsec_types::{
     DateTime, EnrollmentID, LocalPendingEnrollment, ParsecPkiEnrollmentAddr,
-    PkiEnrollmentSubmitPayload, PrivateParts, SecretKey, X509CertificateReference,
+    PkiEnrollmentAnswerPayload, PkiEnrollmentSubmitPayload, PrivateParts, SecretKey,
+    X509CertificateReference,
 };
 use rustls_pki_types::{pem::PemObject, CertificateDer, TrustAnchor};
 use webpki::{EndEntityCert, Error as WebPkiError, KeyUsage};
@@ -166,4 +168,13 @@ pub fn validate_payload<'message>(
     let trusted_cert = verified_path.end_entity();
 
     verify_message(signed_message, trusted_cert).map_err(Into::into)
+}
+
+pub fn load_answer_payload(
+    der_certificate: &[u8],
+    signed_message: &SignedMessage,
+    now: DateTime,
+) -> Result<PkiEnrollmentAnswerPayload, LoadAnswerPayloadError> {
+    let validated_payload = validate_payload(der_certificate, signed_message, now)?;
+    PkiEnrollmentAnswerPayload::load(validated_payload).map_err(Into::into)
 }
