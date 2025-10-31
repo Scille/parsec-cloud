@@ -7,6 +7,7 @@ from .common import (
     DateTime,
     DeviceID,
     DeviceLabel,
+    EnrollmentID,
     EntryName,
     Enum,
     EnumItemUnit,
@@ -31,6 +32,7 @@ from .common import (
 from .config import ClientConfig
 from .device import DeviceAccessStrategy
 from .invite import AvailableDevice, DeviceSaveStrategy
+from .pki import PkiEnrollmentRejectError
 
 
 def list_started_clients() -> list[tuple[Handle, DeviceID]]:
@@ -794,4 +796,10 @@ class ClientGetOrganizationBootstrapDateError(ErrorVariant):
 async def client_get_organization_bootstrap_date(
     client_handle: Handle,
 ) -> Result[DateTime, ClientGetOrganizationBootstrapDateError]:
+    raise NotImplementedError
+
+
+async def client_pki_enrollment_reject(
+    client_handle: Handle, enrollment_id: EnrollmentID
+) -> Result[None, PkiEnrollmentRejectError]:
     raise NotImplementedError

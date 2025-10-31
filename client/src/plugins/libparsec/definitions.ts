@@ -3268,6 +3268,42 @@ export type PkiEnrollmentListError =
   | PkiEnrollmentListErrorInternal
   | PkiEnrollmentListErrorOffline
 
+// PkiEnrollmentRejectError
+export enum PkiEnrollmentRejectErrorTag {
+    AuthorNotAllowed = 'PkiEnrollmentRejectErrorAuthorNotAllowed',
+    EnrollmentNoLongerAvailable = 'PkiEnrollmentRejectErrorEnrollmentNoLongerAvailable',
+    EnrollmentNotFound = 'PkiEnrollmentRejectErrorEnrollmentNotFound',
+    Internal = 'PkiEnrollmentRejectErrorInternal',
+    Offline = 'PkiEnrollmentRejectErrorOffline',
+}
+
+export interface PkiEnrollmentRejectErrorAuthorNotAllowed {
+    tag: PkiEnrollmentRejectErrorTag.AuthorNotAllowed
+    error: string
+}
+export interface PkiEnrollmentRejectErrorEnrollmentNoLongerAvailable {
+    tag: PkiEnrollmentRejectErrorTag.EnrollmentNoLongerAvailable
+    error: string
+}
+export interface PkiEnrollmentRejectErrorEnrollmentNotFound {
+    tag: PkiEnrollmentRejectErrorTag.EnrollmentNotFound
+    error: string
+}
+export interface PkiEnrollmentRejectErrorInternal {
+    tag: PkiEnrollmentRejectErrorTag.Internal
+    error: string
+}
+export interface PkiEnrollmentRejectErrorOffline {
+    tag: PkiEnrollmentRejectErrorTag.Offline
+    error: string
+}
+export type PkiEnrollmentRejectError =
+  | PkiEnrollmentRejectErrorAuthorNotAllowed
+  | PkiEnrollmentRejectErrorEnrollmentNoLongerAvailable
+  | PkiEnrollmentRejectErrorEnrollmentNotFound
+  | PkiEnrollmentRejectErrorInternal
+  | PkiEnrollmentRejectErrorOffline
+
 // SelfShamirRecoveryInfo
 export enum SelfShamirRecoveryInfoTag {
     Deleted = 'SelfShamirRecoveryInfoDeleted',
@@ -5322,6 +5358,10 @@ export interface LibParsecPlugin {
     clientOrganizationInfo(
         client_handle: Handle
     ): Promise<Result<OrganizationInfo, ClientOrganizationInfoError>>
+    clientPkiEnrollmentReject(
+        client_handle: Handle,
+        enrollment_id: EnrollmentID
+    ): Promise<Result<null, PkiEnrollmentRejectError>>
     clientRenameWorkspace(
         client: Handle,
         realm_id: VlobID,

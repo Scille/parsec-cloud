@@ -6,7 +6,7 @@ use libparsec_types::prelude::*;
 use std::sync::Arc;
 
 #[derive(Debug, thiserror::Error)]
-pub enum ClientPkiEnrollmentRejectError {
+pub enum PkiEnrollmentRejectError {
     #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),
     #[error(transparent)]
@@ -22,14 +22,14 @@ pub enum ClientPkiEnrollmentRejectError {
 pub async fn reject(
     cmds: &Arc<AuthenticatedCmds>,
     enrollment_id: EnrollmentID,
-) -> Result<(), ClientPkiEnrollmentRejectError> {
+) -> Result<(), PkiEnrollmentRejectError> {
     match cmds.send(Req { enrollment_id }).await? {
         Rep::Ok => Ok(()),
-        Rep::AuthorNotAllowed => Err(ClientPkiEnrollmentRejectError::AuthorNotAllowed),
+        Rep::AuthorNotAllowed => Err(PkiEnrollmentRejectError::AuthorNotAllowed),
         Rep::EnrollmentNoLongerAvailable => {
-            Err(ClientPkiEnrollmentRejectError::EnrollmentNoLongerAvailable)
+            Err(PkiEnrollmentRejectError::EnrollmentNoLongerAvailable)
         }
-        Rep::EnrollmentNotFound => Err(ClientPkiEnrollmentRejectError::EnrollmentNotFound),
+        Rep::EnrollmentNotFound => Err(PkiEnrollmentRejectError::EnrollmentNotFound),
         bad_rep @ Rep::UnknownStatus { .. } => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
         }

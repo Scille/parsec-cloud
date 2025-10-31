@@ -12,8 +12,8 @@ pub use libparsec_client::{
     ClientListWorkspaceUsersError, ClientOrganizationInfoError, ClientRenameWorkspaceError,
     ClientRevokeUserError, ClientSetupShamirRecoveryError, ClientShareWorkspaceError,
     ClientUserUpdateProfileError, DeviceInfo, OrganizationInfo, OtherShamirRecoveryInfo,
-    PkiEnrollmentListError, PkiEnrollmentListItem, SelfShamirRecoveryInfo, Tos, UserInfo,
-    WorkspaceInfo, WorkspaceUserAccessInfo,
+    PkiEnrollmentListError, PkiEnrollmentListItem, PkiEnrollmentRejectError,
+    SelfShamirRecoveryInfo, Tos, UserInfo, WorkspaceInfo, WorkspaceUserAccessInfo,
 };
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_types::prelude::*;
@@ -670,4 +670,12 @@ pub async fn client_pki_list_enrollments(
 ) -> Result<Vec<PkiEnrollmentListItem>, PkiEnrollmentListError> {
     let client = borrow_client(client)?;
     client.pki_list_enrollments().await
+}
+
+pub async fn client_pki_enrollment_reject(
+    client: Handle,
+    enrollment_id: EnrollmentID,
+) -> Result<(), PkiEnrollmentRejectError> {
+    let client = borrow_client(client)?;
+    client.pki_enrollment_reject(enrollment_id).await
 }

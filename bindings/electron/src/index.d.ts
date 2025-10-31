@@ -2759,6 +2759,35 @@ export type PkiEnrollmentListError =
   | PkiEnrollmentListErrorOffline
 
 
+// PkiEnrollmentRejectError
+export interface PkiEnrollmentRejectErrorAuthorNotAllowed {
+    tag: "PkiEnrollmentRejectErrorAuthorNotAllowed"
+    error: string
+}
+export interface PkiEnrollmentRejectErrorEnrollmentNoLongerAvailable {
+    tag: "PkiEnrollmentRejectErrorEnrollmentNoLongerAvailable"
+    error: string
+}
+export interface PkiEnrollmentRejectErrorEnrollmentNotFound {
+    tag: "PkiEnrollmentRejectErrorEnrollmentNotFound"
+    error: string
+}
+export interface PkiEnrollmentRejectErrorInternal {
+    tag: "PkiEnrollmentRejectErrorInternal"
+    error: string
+}
+export interface PkiEnrollmentRejectErrorOffline {
+    tag: "PkiEnrollmentRejectErrorOffline"
+    error: string
+}
+export type PkiEnrollmentRejectError =
+  | PkiEnrollmentRejectErrorAuthorNotAllowed
+  | PkiEnrollmentRejectErrorEnrollmentNoLongerAvailable
+  | PkiEnrollmentRejectErrorEnrollmentNotFound
+  | PkiEnrollmentRejectErrorInternal
+  | PkiEnrollmentRejectErrorOffline
+
+
 // SelfShamirRecoveryInfo
 export interface SelfShamirRecoveryInfoDeleted {
     tag: "SelfShamirRecoveryInfoDeleted"
@@ -4480,6 +4509,10 @@ export function clientNewUserInvitation(
 export function clientOrganizationInfo(
     client_handle: number
 ): Promise<Result<OrganizationInfo, ClientOrganizationInfoError>>
+export function clientPkiEnrollmentReject(
+    client_handle: number,
+    enrollment_id: string
+): Promise<Result<null, PkiEnrollmentRejectError>>
 export function clientRenameWorkspace(
     client: number,
     realm_id: string,

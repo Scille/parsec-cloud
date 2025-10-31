@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use crate::client::{
-    pki_enrollment_reject::ClientPkiEnrollmentRejectError, tests::utils::client_factory,
+    pki_enrollment_reject::PkiEnrollmentRejectError, tests::utils::client_factory,
 };
 use libparsec_client_connection::test_register_send_hook;
 use libparsec_protocol::authenticated_cmds;
@@ -38,7 +38,7 @@ async fn author_not_allowed(env: &TestbedEnv) {
     });
     assert!(matches!(
         alice_client.pki_enrollment_reject(id).await.unwrap_err(),
-        ClientPkiEnrollmentRejectError::AuthorNotAllowed
+        PkiEnrollmentRejectError::AuthorNotAllowed
     ))
 }
 
@@ -56,7 +56,7 @@ async fn enrollment_not_found(env: &TestbedEnv) {
     });
     assert!(matches!(
         alice_client.pki_enrollment_reject(id).await.unwrap_err(),
-        ClientPkiEnrollmentRejectError::EnrollmentNotFound
+        PkiEnrollmentRejectError::EnrollmentNotFound
     ))
 }
 #[parsec_test(testbed = "coolorg")]
@@ -73,6 +73,6 @@ async fn enrollment_no_longer_available(env: &TestbedEnv) {
     });
     assert!(matches!(
         alice_client.pki_enrollment_reject(id).await.unwrap_err(),
-        ClientPkiEnrollmentRejectError::EnrollmentNoLongerAvailable
+        PkiEnrollmentRejectError::EnrollmentNoLongerAvailable
     ))
 }
