@@ -44,4 +44,10 @@ error_set::error_set! {
         InvalidPemContent(rustls_pki_types::pem::Error)
     }
     CreateLocalPendingError := EncryptMessageError
+    VerifyCertificateError := {
+        #[display("Time out of valid range: {0}")]
+        DateTimeOutOfRange(chrono::OutOfRangeError),
+        #[display("The provided certificate cannot be trusted: {0}")]
+        Untrusted(webpki::Error),
+    }
 }

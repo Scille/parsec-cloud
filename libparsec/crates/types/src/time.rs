@@ -118,6 +118,14 @@ impl DateTime {
     pub fn from_rfc3339(s: &str) -> Result<Self, chrono::ParseError> {
         s.parse().map(|dt: chrono::DateTime<chrono::Utc>| dt.into())
     }
+
+    pub fn duration_since_unix_epoch(
+        &self,
+    ) -> Result<std::time::Duration, chrono::OutOfRangeError> {
+        self.0
+            .signed_duration_since(chrono::Utc.timestamp_nanos(0))
+            .to_std()
+    }
 }
 
 impl std::convert::AsRef<chrono::DateTime<chrono::Utc>> for DateTime {
