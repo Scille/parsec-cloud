@@ -33,8 +33,8 @@ use std::{
 
 pub use self::{
     list_frozen_users::ClientListFrozenUsersError,
-    pki_enrollment_list::PkiEnrollmentListError,
-    pki_enrollment_list::PkiEnrollmentListItem,
+    pki_enrollment_list::{PkiEnrollmentListError, PkiEnrollmentListItem},
+    pki_enrollment_reject::PkiEnrollmentRejectError,
     start_invitation_greet::ClientStartShamirRecoveryInvitationGreetError,
     tos::{ClientAcceptTosError, ClientGetTosError, Tos},
     workspace_bootstrap::ClientEnsureWorkspacesBootstrappedError,
@@ -48,7 +48,6 @@ pub use self::{
 };
 use crate::{
     certif::{CertifPollServerError, CertificateOps},
-    client::pki_enrollment_reject::ClientPkiEnrollmentRejectError,
     config::{ClientConfig, ServerConfig},
     event_bus::EventBus,
     monitors::{
@@ -691,7 +690,7 @@ impl Client {
     pub async fn pki_enrollment_reject(
         &self,
         enrollment_id: EnrollmentID,
-    ) -> Result<(), ClientPkiEnrollmentRejectError> {
+    ) -> Result<(), PkiEnrollmentRejectError> {
         pki_enrollment_reject::reject(&self.cmds, enrollment_id).await
     }
 }
