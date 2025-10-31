@@ -38,7 +38,7 @@ jobs:
             docs
         timeout-minutes: 2
 
-      - uses: taiki-e/install-action@c5b1b6f479c32f356cc6f4ba672a47f63853b13b # pin v2.62.38
+      - uses: taiki-e/install-action@81ecf985428d5c2ea81dbf079bceca32bc9604ab # pin v2.62.43
         with:
           tool: ripgrep
 
