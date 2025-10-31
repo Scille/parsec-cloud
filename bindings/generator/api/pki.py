@@ -94,3 +94,7 @@ class PkiEnrollmentListError(ErrorVariant):
     class AuthorNotAllowed: ...
 
     class Internal: ...
+
+
+async def is_pki_available() -> bool:
+    raise NotImplementedError

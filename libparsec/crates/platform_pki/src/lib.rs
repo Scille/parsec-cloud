@@ -70,6 +70,10 @@ mod platform {
     ) -> Result<Option<X509CertificateReference>, ShowCertificateSelectionDialogError> {
         unimplemented!("platform not supported")
     }
+
+    pub fn is_available() -> bool {
+        false
+    }
 }
 
 #[derive(Debug)]
@@ -170,3 +174,5 @@ pub use platform::decrypt_message;
 
 pub use errors::CreateLocalPendingError;
 pub use shared::create_local_pending;
+
+pub use platform::is_available;

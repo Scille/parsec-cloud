@@ -20923,6 +20923,16 @@ pub fn isKeyringAvailable() -> Promise {
     }))
 }
 
+// is_pki_available
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn isPkiAvailable() -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::is_pki_available().await;
+        Ok(ret.into())
+    }))
+}
+
 // libparsec_init_native_only_init
 #[allow(non_snake_case)]
 #[wasm_bindgen]
