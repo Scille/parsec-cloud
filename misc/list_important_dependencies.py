@@ -230,21 +230,22 @@ def list_rust_deps(_versions: dict[str, str]) -> set[Dependency]:
     IMPORTANT_RUST_DEPS = (
         # Crypto
         "argon2",
+        "blahaj",
         "blake2",
         "crypto_box",
         "crypto_secretbox",
+        "cryptoki",
         "digest",
         "ed25519-dalek",
-        "x25519-dalek",
         "getrandom",
-        "libsodium-sys-stable",
+        "keyring",
         "libsodium-rs",
+        "libsodium-sys-stable",
         "openssl",
+        "rsa",
         "sha2",
         "uuid",
-        "rsa",
-        "blahaj",
-        "keyring",
+        "x25519-dalek",
         # HTTP Client
         "reqwest",
         # bindings
