@@ -6,10 +6,10 @@ use anyhow::anyhow;
 use dialoguer::FuzzySelect;
 use libparsec::{
     internal::{Client, EventBus},
-    list_available_devices, AuthenticatedCmds, AvailableDevice, AvailableDeviceType,
-    DeviceAccessStrategy, DeviceLabel, HumanHandle, LocalDevice, Password, ProxyConfig, SASCode,
-    UserProfile,
+    list_available_devices, AuthenticatedCmds, AvailableDevice, AvailableDeviceType, DeviceLabel,
+    HumanHandle, LocalDevice, Password, ProxyConfig, SASCode, UserProfile,
 };
+use libparsec_client::DeviceAccessStrategy;
 use libparsec_platform_ipc::{
     lock_device_for_use, try_lock_device_for_use, InUseDeviceLockGuard, TryLockDeviceForUseError,
 };
@@ -256,7 +256,7 @@ pub async fn load_and_unlock_device(
         AvailableDeviceType::Keyring => DeviceAccessStrategy::Keyring {
             key_file: device.key_file_path.clone(),
         },
-        AvailableDeviceType::AccountVault { .. } => {
+        AvailableDeviceType::AccountVault => {
             // In theory we should support this authentication method here,
             // however:
             // - It is cumbersome since it requires obtaining the account authentication

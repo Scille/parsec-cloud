@@ -4,7 +4,15 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
-use crate::{load_device, LoadDeviceError};
+use std::sync::Arc;
+
+use super::utils::MockedAccountVaultOperations;
+use crate::{
+    load_device, save_device, AccountVaultOperationsFetchOpaqueKeyError, DeviceAccessStrategy,
+    DeviceSaveStrategy, LoadDeviceError,
+};
+
+use libparsec_client_connection::ConnectionError;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
@@ -97,12 +105,17 @@ async fn invalid_salt_size(tmp_path: TmpPath) {
 
 #[parsec_test(testbed = "empty")]
 async fn testbed(env: &TestbedEnv) {
-    env.customize(|builder| {
-        builder.bootstrap_organization("alice"); // alice@dev1
-        builder.new_user("bob"); // bob@dev1
-        builder.new_device("alice"); // alice@dev2
-    })
-    .await;
+    let alice_email = env
+        .customize(|builder| {
+            let alice_email = builder
+                .bootstrap_organization("alice")
+                .map(|u| u.first_user_human_handle.email().to_owned()); // alice@dev1
+            builder.new_user("bob"); // bob@dev1
+            builder.new_device("alice"); // alice@dev2
+
+            alice_email
+        })
+        .await;
 
     // Ok (device created during organization bootstrap)
 
@@ -124,12 +137,9 @@ async fn testbed(env: &TestbedEnv) {
 
     // Ok (new device for an existing user)
 
-    let alice2_ciphertext_key: SecretKey =
-        hex!("8997c1865cf9339c15ae812de1fe1979547e0919c65ab9d0a1888d9cc0b9b8b7").into();
-
     let access = DeviceAccessStrategy::AccountVault {
         key_file: env.discriminant_dir.join("devices/alice@dev2.keys"),
-        ciphertext_key: alice2_ciphertext_key.clone(),
+        operations: Arc::new(MockedAccountVaultOperations::new(alice_email)),
     };
     let device = load_device(&env.discriminant_dir, &access).await.unwrap();
     p_assert_eq!(device.device_id, "alice@dev2".parse().unwrap());
@@ -156,24 +166,84 @@ async fn testbed(env: &TestbedEnv) {
         Err(LoadDeviceError::InvalidPath(_))
     );
 
-    // Ok with bad ciphertext key ID (since this field is ignored during device load)
-
-    let access = DeviceAccessStrategy::AccountVault {
-        key_file: env.discriminant_dir.join("devices/alice@dev2.keys"),
-        ciphertext_key: alice2_ciphertext_key.clone(),
-    };
-    let device = load_device(&env.discriminant_dir, &access).await.unwrap();
-    p_assert_eq!(device.device_id, "alice@dev2".parse().unwrap());
-
-    // Bad ciphertext key (for account vault)
+    // Bad account used
 
     let bad_ciphertext_access = DeviceAccessStrategy::AccountVault {
         key_file: env.discriminant_dir.join("devices/alice@dev2.keys"),
-        ciphertext_key: hex!("f71eab23e31235512b4ca7e2b3786acf0684be08e096e583ba8466561a26f5e3")
-            .into(),
+        operations: Arc::new(MockedAccountVaultOperations::new(
+            "dummy@example.invalid".parse().unwrap(),
+        )),
     };
     p_assert_matches!(
         load_device(&env.discriminant_dir, &bad_ciphertext_access).await,
         Err(LoadDeviceError::DecryptionFailed)
     );
+}
+
+#[parsec_test]
+async fn remote_error(
+    #[values("remote_opaque_key_fetch_offline", "remote_opaque_key_fetch_failed")] kind: &str,
+    tmp_path: TmpPath,
+) {
+    let key_file = tmp_path.join("devices/keyring_file.keys");
+    let url = ParsecOrganizationAddr::from_any(
+        // cspell:disable-next-line
+        "parsec3://test.invalid/Org?no_ssl=true&p=xCD7SjlysFv3d4mTkRu-ZddRjIZPGraSjUnoOHT9s8rmLA",
+    )
+    .unwrap();
+    let device = LocalDevice::generate_new_device(
+        url,
+        UserProfile::Admin,
+        HumanHandle::from_raw("alice@dev1", "alice").unwrap(),
+        "alice label".parse().unwrap(),
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    );
+
+    let account_vault_operations = Arc::new(MockedAccountVaultOperations::new(
+        device.human_handle.email().to_owned(),
+    ));
+    let save_strategy = DeviceSaveStrategy::AccountVault {
+        operations: account_vault_operations.clone(),
+    };
+    let access_strategy = save_strategy.clone().into_access(key_file.clone());
+    save_device(&tmp_path, &save_strategy, &device, key_file.clone())
+        .await
+        .unwrap();
+
+    match kind {
+        "remote_opaque_key_fetch_offline" => {
+            account_vault_operations.inject_next_error_fetch_opaque_key(
+                AccountVaultOperationsFetchOpaqueKeyError::Offline(ConnectionError::NoResponse(
+                    None,
+                )),
+            );
+
+            p_assert_matches!(
+                load_device(&tmp_path, &access_strategy).await,
+                Err(LoadDeviceError::RemoteOpaqueKeyFetchOffline(
+                    ConnectionError::NoResponse(None)
+                ))
+            );
+        }
+
+        "remote_opaque_key_fetch_failed" => {
+            account_vault_operations.inject_next_error_fetch_opaque_key(
+                AccountVaultOperationsFetchOpaqueKeyError::UnknownOpaqueKey,
+            );
+
+            p_assert_matches!(
+                load_device(&tmp_path, &access_strategy).await,
+                Err(LoadDeviceError::RemoteOpaqueKeyFetchFailed(err))
+                if err.to_string() == "No opaque key with this ID among the vault items"
+            );
+        }
+
+        unknown => panic!("Unknown kind: {unknown}"),
+    }
 }

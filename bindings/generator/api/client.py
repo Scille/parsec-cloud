@@ -62,13 +62,19 @@ class ClientStartError(ErrorVariant):
     class LoadDeviceDecryptionFailed:
         pass
 
+    class LoadDeviceRemoteOpaqueKeyFetchOffline:
+        pass
+
+    class LoadDeviceRemoteOpaqueKeyFetchFailed:
+        pass
+
     class Internal:
         pass
 
 
 async def client_start(
     config: ClientConfig,
-    access: Ref[DeviceAccessStrategy],
+    access: DeviceAccessStrategy,
 ) -> Result[Handle, ClientStartError]:
     raise NotImplementedError
 
@@ -495,6 +501,9 @@ class ImportRecoveryDeviceError(ErrorVariant):
         client_timestamp: DateTime
         ballpark_client_early_offset: float
         ballpark_client_late_offset: float
+
+    class RemoteOpaqueKeyUploadFailed:
+        pass
 
 
 class ClientExportRecoveryDeviceError(ErrorVariant):

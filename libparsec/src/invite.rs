@@ -10,6 +10,7 @@ pub use libparsec_client::{
     ShamirRecoveryClaimRecoverDeviceError, UserClaimInitialCtx,
 };
 pub use libparsec_platform_async::future::join_all;
+use libparsec_platform_device_loader::SaveDeviceError;
 pub use libparsec_protocol::authenticated_cmds::latest::invite_list::InvitationCreatedBy as InviteListInvitationCreatedBy;
 pub use libparsec_protocol::invited_cmds::latest::invite_info::{
     InvitationCreatedBy as InviteInfoInvitationCreatedBy, ShamirRecoveryRecipient,
@@ -19,7 +20,7 @@ use libparsec_types::prelude::*;
 
 use crate::{
     handle::{borrow_from_handle, register_handle, take_and_close_handle, Handle, HandleItem},
-    listen_canceller, ClientConfig, OnEventCallbackPlugged,
+    listen_canceller, AvailableDevice, ClientConfig, DeviceSaveStrategy, OnEventCallbackPlugged,
 };
 
 /*
@@ -45,8 +46,15 @@ pub enum BootstrapOrganizationError {
         ballpark_client_early_offset: f64,
         ballpark_client_late_offset: f64,
     },
-    #[error("Cannot save device: {0}")]
-    SaveDeviceError(anyhow::Error),
+    #[error("Cannot save device: device storage is not available")]
+    SaveDeviceStorageNotAvailable,
+    #[error("Cannot save device: invalid path: {0}")]
+    SaveDeviceInvalidPath(anyhow::Error),
+    /// Note only a subset of save strategies requires server access to
+    /// upload an opaque key that itself protects the ciphertext key
+    /// (e.g. account vault).
+    #[error("Cannot save device: remote opaque key upload failed: {0}")]
+    SaveDeviceRemoteOpaqueKeyUploadFailed(anyhow::Error),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -100,6 +108,8 @@ pub async fn bootstrap_organization(
     //   obtained from libparsec).
     sequester_authority_verify_key_pem: Option<&str>,
 ) -> Result<AvailableDevice, BootstrapOrganizationError> {
+    let save_strategy = save_strategy.convert_with_side_effects()?;
+
     let sequester_authority_verify_key = match sequester_authority_verify_key_pem {
         None => None,
         Some(raw) => {
@@ -143,7 +153,21 @@ pub async fn bootstrap_organization(
         .save_local_device(&save_strategy, &key_file)
         .await
         .inspect_err(|e| log::error!("Error while saving device: {e}"))
-        .map_err(BootstrapOrganizationError::SaveDeviceError)?;
+        .map_err(|err| match err {
+            SaveDeviceError::StorageNotAvailable => {
+                BootstrapOrganizationError::SaveDeviceStorageNotAvailable
+            }
+            SaveDeviceError::InvalidPath(err) => {
+                BootstrapOrganizationError::SaveDeviceInvalidPath(err)
+            }
+            SaveDeviceError::RemoteOpaqueKeyUploadOffline(_) => BootstrapOrganizationError::Offline,
+            SaveDeviceError::RemoteOpaqueKeyUploadFailed(err) => {
+                BootstrapOrganizationError::SaveDeviceRemoteOpaqueKeyUploadFailed(err)
+            }
+            SaveDeviceError::Internal(err) => {
+                BootstrapOrganizationError::Internal(err.context("Cannot save device"))
+            }
+        })?;
 
     Ok(available_device)
 }
@@ -152,8 +176,8 @@ pub async fn bootstrap_organization(
  * Invitation claimer
  */
 
-pub use libparsec_client::ClaimInProgressError;
 pub use libparsec_client::ClaimerRetrieveInfoError;
+pub use libparsec_client::{ClaimFinalizeError, ClaimInProgressError};
 
 pub async fn claimer_retrieve_info(
     config: ClientConfig,
@@ -1007,11 +1031,16 @@ pub async fn claimer_shamir_recovery_recover_device(
 pub async fn claimer_user_finalize_save_local_device(
     handle: Handle,
     save_strategy: DeviceSaveStrategy,
-) -> Result<AvailableDevice, ClaimInProgressError> {
+) -> Result<AvailableDevice, ClaimFinalizeError> {
+    let save_strategy = save_strategy
+        .convert_with_side_effects()
+        .map_err(ClaimFinalizeError::Internal)?;
+
     let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::UserClaimFinalize(ctx) => Ok(ctx),
         _ => Err(x),
-    })?;
+    })
+    .map_err(ClaimFinalizeError::Internal)?;
 
     let key_file = ctx.get_default_key_file();
 
@@ -1023,11 +1052,16 @@ pub async fn claimer_user_finalize_save_local_device(
 pub async fn claimer_device_finalize_save_local_device(
     handle: Handle,
     save_strategy: DeviceSaveStrategy,
-) -> Result<AvailableDevice, ClaimInProgressError> {
+) -> Result<AvailableDevice, ClaimFinalizeError> {
+    let save_strategy = save_strategy
+        .convert_with_side_effects()
+        .map_err(ClaimFinalizeError::Internal)?;
+
     let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::DeviceClaimFinalize(ctx) => Ok(ctx),
         _ => Err(x),
-    })?;
+    })
+    .map_err(ClaimFinalizeError::Internal)?;
 
     let key_file = ctx.get_default_key_file();
 
@@ -1039,11 +1073,16 @@ pub async fn claimer_device_finalize_save_local_device(
 pub async fn claimer_shamir_recovery_finalize_save_local_device(
     handle: Handle,
     save_strategy: DeviceSaveStrategy,
-) -> Result<AvailableDevice, ClaimInProgressError> {
+) -> Result<AvailableDevice, ClaimFinalizeError> {
+    let save_strategy = save_strategy
+        .convert_with_side_effects()
+        .map_err(ClaimFinalizeError::Internal)?;
+
     let ctx = take_and_close_handle(handle, |x| match *x {
         HandleItem::ShamirRecoveryClaimFinalize(ctx) => Ok(ctx),
         _ => Err(x),
-    })?;
+    })
+    .map_err(ClaimFinalizeError::Internal)?;
 
     let key_file = ctx.get_default_key_file();
 

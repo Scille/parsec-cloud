@@ -1,8 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::path::Path;
+use std::{path::Path, sync::Arc};
 
-use crate::{load_available_device, load_device, save_device};
+use super::utils::MockedAccountVaultOperations;
+use crate::{load_available_device, load_device, save_device, AvailableDevice, DeviceSaveStrategy};
 use libparsec_tests_fixtures::{tmp_path, TmpPath};
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
@@ -76,14 +77,10 @@ async fn save_load(#[case] kind: &str, tmp_path: TmpPath) {
         }
 
         "account_vault" => {
-            let ciphertext_key_id =
-                AccountVaultItemOpaqueKeyID::from_hex("4ce154500ce340bcaa4d44dcb9b841a1").unwrap();
             let save_strategy = DeviceSaveStrategy::AccountVault {
-                ciphertext_key_id,
-                ciphertext_key: hex!(
-                    "c102ac8b5c1cf2705711c00aec72a11bcd5f34b483ef25627e1c1f9ed6eefd76"
-                )
-                .into(),
+                operations: Arc::new(MockedAccountVaultOperations::new(
+                    device.human_handle.email().to_owned(),
+                )),
             };
             let access_strategy = save_strategy.clone().into_access(key_file.clone());
             let expected_available_device = AvailableDevice {

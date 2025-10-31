@@ -11,6 +11,7 @@ mod remove;
 mod save;
 mod save_list;
 mod save_load;
+mod strategy;
 mod update_device_change_authentication;
 mod update_device_overwrite_server_addr;
 mod utils;
