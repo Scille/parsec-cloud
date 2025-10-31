@@ -33,7 +33,6 @@ sentry = { workspace = true, features = [
     "reqwest",
     "transport",
 ] }
-sentry-log = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread"] }
 log = { workspace = true }
 
