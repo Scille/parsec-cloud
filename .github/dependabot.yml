@@ -83,6 +83,7 @@ updates:
           - openssl
           - rand
           - rsa
+          - rustls-*
           - schannel
           - sha2
           - x25519-dalek
