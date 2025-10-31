@@ -24,6 +24,10 @@ use windows_sys::Win32::Security::Cryptography::{
     NCRYPT_SHA256_ALGORITHM, UI::CryptUIDlgSelectCertificateFromStore,
 };
 
+pub fn is_available() -> bool {
+    open_store().is_ok()
+}
+
 fn open_store() -> std::io::Result<CertStore> {
     CertStore::open_current_user("My")
 }

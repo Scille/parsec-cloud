@@ -4621,6 +4621,8 @@ export function importRecoveryDevice(
 ): Promise<Result<AvailableDevice, ImportRecoveryDeviceError>>
 export function isKeyringAvailable(
 ): Promise<boolean>
+export function isPkiAvailable(
+): Promise<boolean>
 export function libparsecInitNativeOnlyInit(
     config: ClientConfig
 ): Promise<null>

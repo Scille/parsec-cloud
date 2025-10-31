@@ -7,3 +7,7 @@ pub async fn show_certificate_selection_dialog_windows_only(
 ) -> Result<Option<X509CertificateReference>, ShowCertificateSelectionDialogError> {
     libparsec_platform_pki::show_certificate_selection_dialog_windows_only()
 }
+
+pub async fn is_pki_available() -> bool {
+    libparsec_platform_pki::is_available()
+}

@@ -22478,6 +22478,28 @@ fn is_keyring_available(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// is_pki_available
+fn is_pki_available(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::is_pki_available().await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = JsBoolean::new(&mut cx, ret);
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // libparsec_init_native_only_init
 fn libparsec_init_native_only_init(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -27393,6 +27415,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("importRecoveryDevice", import_recovery_device)?;
     cx.export_function("isKeyringAvailable", is_keyring_available)?;
+    cx.export_function("isPkiAvailable", is_pki_available)?;
     cx.export_function(
         "libparsecInitNativeOnlyInit",
         libparsec_init_native_only_init,
