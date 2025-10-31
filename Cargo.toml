@@ -115,7 +115,7 @@ libparsec_zstd = { path = "libparsec/crates/zstd", default-features = false }
 android_logger = { version = "0.15", default-features = false }
 anyhow = { version = "1.0.100", default-features = false }
 argon2 = { version = "0.5.3", default-features = false }
-assert_cmd = { version = "2.0.17", default-features = false }
+assert_cmd = { version = "2.1.1", default-features = false }
 async-broadcast = { version = "0.7.2", default-features = false }
 async-lock = { version = "3.4.1", default-features = false }
 blahaj = "0.6.0"
