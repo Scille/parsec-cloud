@@ -1,1 +1,0 @@
-Shows tooltip on file, workspace and user name on mouse over
