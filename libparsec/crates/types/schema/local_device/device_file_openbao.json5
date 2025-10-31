@@ -1,0 +1,102 @@
+{
+    // ⚠️ Note the device file (i.e. the stuff defined by this schema!) is not
+    // stored on OpenBao.
+    // Instead it is encrypted by the ciphertext key that is itself stored on
+    // OpenBao.
+    // This way getting access to the device private keys require both exfiltrating
+    // the secret stored on OpenBao AND the device file stored on the end user's machine.
+    "label": "DeviceFileOpenBao",
+    "type": "openbao",
+    // Introduced in Parsec 3.7.0
+    "introduced_in_revision": 370,
+    "other_fields": [
+        {
+            // This refers to when the device file has been originally created.
+            "name": "created_on",
+            "type": "DateTime"
+        },
+        {
+            // This field gets updated every time the device file changes its protection.
+            "name": "protected_on",
+            "type": "DateTime"
+        },
+        {
+            // Url to the server in the format `https://parsec.example.com:443`.
+            // Note we don't use the `parsec3://` scheme here to avoid compatibility
+            // issue if we later decide to change the scheme.
+            "name": "server_url",
+            "type": "String"
+        },
+        {
+            "name": "organization_id",
+            "type": "OrganizationID"
+        },
+        {
+            "name": "user_id",
+            "type": "UserID"
+        },
+        {
+            "name": "device_id",
+            "type": "DeviceID"
+        },
+        {
+            "name": "human_handle",
+            "type": "HumanHandle"
+        },
+        {
+            "name": "device_label",
+            "type": "DeviceLabel"
+        },
+        {
+            // `LocalDevice` encrypted with a secret key which is itself stored
+            // on the OpenBao server.
+            "name": "ciphertext",
+            "type": "Bytes"
+        },
+        // A word about the OpenBao info stored here.
+        //
+        // To fetch/upload an OpenBao secret we need multiple things:
+        // 1. The address of the OpenBao server.
+        // 2. The authentication to use (e.g. "OIDC SSO with Github as identity provider").
+        // 3. The mount path of the authentication method (e.g. `auth/oidc/github`).
+        // 4. The mount path of the secret store (e.g. `secrets/parsec-keys`).
+        // 5. The path of the secret within the secret store.
+        //
+        // However all those info are not stored in (and hence obtained from) this
+        // device keys file since it would make them complex to change in the future.
+        // So instead the OpenBao server configuration (i.e. server address, list
+        // of supported authentication methods, mount paths) is to be obtained
+        // from the Parsec server each time we need to load this device keys file.
+        {
+            // Arbitrary field only used by the GUI.
+            //
+            // In practice, it is expected to contain a `OpenBaoAuthType` as string
+            // corresponding to the authentication method that have been used
+            // to authenticate to OpenBao during the creation of this device keys file.
+            //
+            // The idea here is to allow the GUI to use this again during subsequent
+            // access of this device keys file in order to pre-select the
+            // authentication method that should be used.
+            "name": "openbao_preferred_auth_id",
+            "type": "String"
+        },
+        {
+            // Entity ID basically correspond to an account ID in OpenBao.
+            // So the GUI should authenticate as this entity in OpenBao in order
+            // to be able to fetch the secret containing the ciphertext key.
+            "name": "openbao_entity_id",
+            "type": "String"
+        },
+        {
+            // The ciphertext key is stored in OpenBao as a secret that is has
+            // for path `<entity_id>/<ciphertext key UUID>`.
+            //
+            // Note we don't just use the ciphertext key UUID as path since OpenBao
+            // is expected to be configured with path-based access policy (i.e.
+            // a given entity is only allowed to access the secrets starting with
+            // its entity ID).
+            "name": "openbao_ciphertext_key_path",
+            "type": "String"
+        }
+    ]
+}
