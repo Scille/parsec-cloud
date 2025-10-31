@@ -179,6 +179,42 @@ impl_transparent_data_format_conversion!(
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(into = "DeviceFileOpenBaoData", from = "DeviceFileOpenBaoData")]
+pub struct DeviceFileOpenBao {
+    pub created_on: DateTime,
+    pub protected_on: DateTime,
+    pub server_url: String,
+    pub organization_id: OrganizationID,
+    pub user_id: UserID,
+    pub device_id: DeviceID,
+    pub human_handle: HumanHandle,
+    pub device_label: DeviceLabel,
+    pub openbao_preferred_auth_id: String,
+    pub openbao_entity_id: String,
+    pub openbao_ciphertext_key_path: String,
+    pub ciphertext: Bytes,
+}
+
+parsec_data!("schema/local_device/device_file_openbao.json5");
+
+impl_transparent_data_format_conversion!(
+    DeviceFileOpenBao,
+    DeviceFileOpenBaoData,
+    created_on,
+    protected_on,
+    server_url,
+    organization_id,
+    user_id,
+    device_id,
+    human_handle,
+    device_label,
+    openbao_preferred_auth_id,
+    openbao_entity_id,
+    openbao_ciphertext_key_path,
+    ciphertext,
+);
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum DeviceFile {
     Keyring(DeviceFileKeyring),
@@ -186,6 +222,7 @@ pub enum DeviceFile {
     Recovery(DeviceFileRecovery),
     Smartcard(DeviceFileSmartcard),
     AccountVault(DeviceFileAccountVault),
+    OpenBao(DeviceFileOpenBao),
 }
 
 impl DeviceFile {
@@ -204,6 +241,7 @@ impl DeviceFile {
             DeviceFile::Recovery(device) => &device.ciphertext,
             DeviceFile::Smartcard(device) => &device.ciphertext,
             DeviceFile::AccountVault(device) => &device.ciphertext,
+            DeviceFile::OpenBao(device) => &device.ciphertext,
         }
     }
 
@@ -214,6 +252,7 @@ impl DeviceFile {
             DeviceFile::Recovery(device) => device.created_on,
             DeviceFile::Smartcard(device) => device.created_on,
             DeviceFile::AccountVault(device) => device.created_on,
+            DeviceFile::OpenBao(device) => device.created_on,
         }
     }
 }
