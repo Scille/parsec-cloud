@@ -71,3 +71,4 @@ libparsec_tests_fixtures = { workspace = true, features = [
 ] }
 
 crc32fast = { workspace = true }
+uuid = { workspace = true }

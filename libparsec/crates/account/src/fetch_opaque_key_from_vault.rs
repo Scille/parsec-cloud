@@ -7,13 +7,13 @@ use super::{fetch_vault_items, Account, FetchVaultItemsError};
 
 #[derive(Debug, thiserror::Error)]
 pub enum AccountFetchOpaqueKeyFromVaultError {
-    #[error("Cannot decrypt the vault key access returned by the server: {0}")]
+    #[error("Cannot decrypt the vault key access returned by the Parsec account server: {0}")]
     BadVaultKeyAccess(DataError),
-    #[error("No opaque key with this ID among the vault items")]
+    #[error("No opaque key with this ID among the vault items in the Parsec account server")]
     UnknownOpaqueKey,
-    #[error("The vault item containing this opaque key is corrupted")]
+    #[error("The vault item returned by the Parsec account server and containing this opaque key is corrupted")]
     CorruptedOpaqueKey,
-    #[error("Cannot communicate with the server: {0}")]
+    #[error("Cannot communicate with the Parsec account server: {0}")]
     Offline(#[from] ConnectionError),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
