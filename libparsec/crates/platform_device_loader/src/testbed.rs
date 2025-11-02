@@ -332,6 +332,21 @@ pub(crate) fn maybe_load_device(
                         if access.key_file() != c_key_file {
                             return None;
                         }
+                        // This assert does nothing at runtime, however at compilation time it
+                        // ensures `DeviceAccessStrategy` (and incidentally `DeviceSaveStrategy`
+                        // since they are always in sync) contains the variants we expect.
+                        // This is important since `match (access, c_save_strategy)` is not
+                        // an exhaustive match, and hence any new variant added to
+                        // `DeviceAccessStrategy` will silently fall through the default
+                        // case and create a bug :/
+                        debug_assert!(matches!(
+                            access,
+                            DeviceAccessStrategy::Password { .. }
+                                | DeviceAccessStrategy::Smartcard { .. }
+                                | DeviceAccessStrategy::Keyring { .. }
+                                | DeviceAccessStrategy::AccountVault { .. }
+                                | DeviceAccessStrategy::OpenBao { .. }
+                        ));
                         match (access, c_save_strategy) {
                             (
                                 DeviceAccessStrategy::Password { password: pwd, .. },
@@ -362,6 +377,20 @@ pub(crate) fn maybe_load_device(
                                     Some(Err(LoadDeviceError::DecryptionFailed))
                                 }
                             }
+                            (
+                                DeviceAccessStrategy::OpenBao { operations, .. },
+                                DeviceSaveStrategy::OpenBao {
+                                    operations: c_operations,
+                                },
+                            ) => {
+                                if operations.openbao_entity_id()
+                                    == c_operations.openbao_entity_id()
+                                {
+                                    Some(Ok(c_device.to_owned()))
+                                } else {
+                                    Some(Err(LoadDeviceError::DecryptionFailed))
+                                }
+                            }
                             _ => None,
                         }
                     });
@@ -382,6 +411,7 @@ pub(crate) fn maybe_load_device(
                     }
                     DeviceAccessStrategy::Smartcard { .. } => true,
                     DeviceAccessStrategy::AccountVault { .. } => true,
+                    DeviceAccessStrategy::OpenBao { .. } => true,
                 };
                 // We don't try to resolve the path of `key_file` into an absolute one here !
                 // This is because in practice the path is always provided absolute given it
@@ -401,6 +431,7 @@ pub(crate) fn maybe_load_device(
                         DeviceAccessStrategy::AccountVault { .. } => {
                             AvailableDeviceType::AccountVault
                         }
+                        DeviceAccessStrategy::OpenBao { .. } => todo!(),
                     };
                     access
                         .clone()
