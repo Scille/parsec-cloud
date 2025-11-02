@@ -382,6 +382,7 @@ pub(crate) fn maybe_load_device(
                     }
                     DeviceAccessStrategy::Smartcard { .. } => true,
                     DeviceAccessStrategy::AccountVault { .. } => true,
+                    DeviceAccessStrategy::OpenBao { .. } => true,
                 };
                 // We don't try to resolve the path of `key_file` into an absolute one here !
                 // This is because in practice the path is always provided absolute given it
@@ -401,6 +402,7 @@ pub(crate) fn maybe_load_device(
                         DeviceAccessStrategy::AccountVault { .. } => {
                             AvailableDeviceType::AccountVault
                         }
+                        DeviceAccessStrategy::OpenBao { .. } => todo!(),
                     };
                     access
                         .clone()

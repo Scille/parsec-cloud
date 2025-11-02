@@ -9,35 +9,15 @@ use libparsec_client_connection::ConnectionError;
 use libparsec_crypto::{Password, SecretKey};
 use libparsec_types::prelude::*;
 
-#[derive(Debug, thiserror::Error)]
-pub enum AccountVaultOperationsFetchOpaqueKeyError {
-    #[error("Cannot decrypt the vault key access returned by the server: {0}")]
-    BadVaultKeyAccess(DataError),
-    #[error("No opaque key with this ID among the vault items")]
-    UnknownOpaqueKey,
-    #[error("The vault item containing this opaque key is corrupted")]
-    CorruptedOpaqueKey,
-    #[error("Cannot communicate with the server: {0}")]
-    Offline(#[from] ConnectionError),
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum AccountVaultOperationsUploadOpaqueKeyError {
-    #[error("Cannot decrypt the vault key access returned by the server: {0}")]
-    BadVaultKeyAccess(DataError),
-    #[error("Cannot communicate with the server: {0}")]
-    Offline(#[from] ConnectionError),
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
-}
-
-// Note we cannot use `async fn` in the trait since it is not compatible
+// Note we cannot use `async fn` in the traits since it is not compatible
 // with dyn object (and we need to store the object implementing the trait
 // as `Arc<dyn AccountVaultOperations>`).
-pub type AccountVaultOperationsFutureResult<O, E> =
+pub type PinBoxFutureResult<O, E> =
     std::pin::Pin<Box<dyn std::future::Future<Output = Result<O, E>> + Send>>;
+
+/*
+ * Account vault operations
+ */
 
 /// This trait is needed to break a recursive dependency:
 /// - `libparsec_platform_device_loader` depends on `libparsec_account` to
@@ -52,14 +32,90 @@ pub trait AccountVaultOperations: std::fmt::Debug + Send + Sync {
     fn fetch_opaque_key(
         &self,
         ciphertext_key_id: AccountVaultItemOpaqueKeyID,
-    ) -> AccountVaultOperationsFutureResult<SecretKey, AccountVaultOperationsFetchOpaqueKeyError>;
+    ) -> PinBoxFutureResult<SecretKey, AccountVaultOperationsFetchOpaqueKeyError>;
     fn upload_opaque_key(
         &self,
-    ) -> AccountVaultOperationsFutureResult<
+    ) -> PinBoxFutureResult<
         (AccountVaultItemOpaqueKeyID, SecretKey),
         AccountVaultOperationsUploadOpaqueKeyError,
     >;
 }
+
+#[derive(Debug, thiserror::Error)]
+pub enum AccountVaultOperationsFetchOpaqueKeyError {
+    #[error("Cannot decrypt the vault key access returned by the server: {0}")]
+    BadVaultKeyAccess(DataError),
+    #[error("No opaque key with this ID among the vault items")]
+    UnknownOpaqueKey,
+    #[error("The vault item containing this opaque key is corrupted")]
+    CorruptedOpaqueKey,
+    #[error("Cannot communicate with the Parsec account server: {0}")]
+    Offline(#[from] ConnectionError),
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum AccountVaultOperationsUploadOpaqueKeyError {
+    #[error("Cannot decrypt the vault key access returned by the server: {0}")]
+    BadVaultKeyAccess(DataError),
+    #[error("Cannot communicate with the Parsec account server: {0}")]
+    Offline(#[from] ConnectionError),
+    #[error("The Parsec account server returned an unexpected response: {0}")]
+    BadServerResponse(anyhow::Error),
+}
+
+/*
+ * OpenBao operations
+ */
+
+/// We need to split the OpenBao trait between save and access operations since
+/// `openbao_entity_id` & `openbao_preferred_auth_id` are only needed for save.
+pub trait OpenBaoDeviceSaveOperations: std::fmt::Debug + Send + Sync {
+    fn openbao_entity_id(&self) -> &str;
+    fn openbao_preferred_auth_id(&self) -> &str;
+    /// Returns `(<openbao_ciphertext_key_path>, <opaque_key>)`
+    fn upload_opaque_key(
+        &self,
+    ) -> PinBoxFutureResult<(String, SecretKey), OpenBaoOperationsUploadOpaqueKeyError>;
+    fn to_access_operations(&self) -> Arc<dyn OpenBaoDeviceAccessOperations>;
+}
+
+pub trait OpenBaoDeviceAccessOperations: std::fmt::Debug + Send + Sync {
+    fn openbao_entity_id(&self) -> &str;
+    fn fetch_opaque_key(
+        &self,
+        openbao_ciphertext_key_path: String,
+    ) -> PinBoxFutureResult<SecretKey, OpenBaoOperationsFetchOpaqueKeyError>;
+    fn to_save_operations(
+        &self,
+        openbao_preferred_auth_id: String,
+    ) -> Arc<dyn OpenBaoDeviceSaveOperations>;
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum OpenBaoOperationsFetchOpaqueKeyError {
+    #[error("Invalid OpenBao server URL: {0}")]
+    BadURL(anyhow::Error),
+    #[error("No response from the OpenBao server: {0}")]
+    NoServerResponse(anyhow::Error),
+    #[error("The OpenBao server returned an unexpected response: {0}")]
+    BadServerResponse(anyhow::Error),
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum OpenBaoOperationsUploadOpaqueKeyError {
+    #[error("Invalid OpenBao server URL: {0}")]
+    BadURL(anyhow::Error),
+    #[error("No response from the OpenBao server: {0}")]
+    NoServerResponse(anyhow::Error),
+    #[error("The OpenBao server returned an unexpected response: {0}")]
+    BadServerResponse(anyhow::Error),
+}
+
+/*
+ * DeviceSaveStrategy
+ */
 
 /// Represent how (not where) to save a device file
 #[derive(Debug, Clone)]
@@ -73,6 +129,9 @@ pub enum DeviceSaveStrategy {
     },
     AccountVault {
         operations: Arc<dyn AccountVaultOperations>,
+    },
+    OpenBao {
+        operations: Arc<dyn OpenBaoDeviceSaveOperations>,
     },
 }
 
@@ -88,6 +147,10 @@ impl DeviceSaveStrategy {
                 key_file,
                 operations,
             },
+            DeviceSaveStrategy::OpenBao { operations } => DeviceAccessStrategy::OpenBao {
+                key_file,
+                operations: operations.to_access_operations(),
+            },
         }
     }
 
@@ -97,9 +160,17 @@ impl DeviceSaveStrategy {
             Self::Password { .. } => AvailableDeviceType::Password,
             Self::Smartcard { .. } => AvailableDeviceType::Smartcard,
             Self::AccountVault { .. } => AvailableDeviceType::AccountVault,
+            Self::OpenBao { operations } => AvailableDeviceType::OpenBao {
+                openbao_entity_id: operations.openbao_entity_id().to_owned(),
+                openbao_preferred_auth_id: operations.openbao_preferred_auth_id().to_owned(),
+            },
         }
     }
 }
+
+/*
+ * DeviceAccessStrategy
+ */
 
 /// Represent how to load a device file
 #[derive(Debug, Clone)]
@@ -118,6 +189,10 @@ pub enum DeviceAccessStrategy {
         key_file: PathBuf,
         operations: Arc<dyn AccountVaultOperations>,
     },
+    OpenBao {
+        key_file: PathBuf,
+        operations: Arc<dyn OpenBaoDeviceAccessOperations>,
+    },
 }
 
 impl DeviceAccessStrategy {
@@ -127,6 +202,7 @@ impl DeviceAccessStrategy {
             Self::Password { key_file, .. } => key_file,
             Self::Smartcard { key_file, .. } => key_file,
             Self::AccountVault { key_file, .. } => key_file,
+            Self::OpenBao { key_file, .. } => key_file,
         }
     }
 
@@ -159,17 +235,36 @@ impl DeviceAccessStrategy {
                     None
                 }
             }
+            DeviceAccessStrategy::OpenBao { operations, .. } => match extra_info {
+                AvailableDeviceType::OpenBao {
+                    openbao_entity_id,
+                    openbao_preferred_auth_id,
+                } if openbao_entity_id == operations.openbao_entity_id() => {
+                    Some(DeviceSaveStrategy::OpenBao {
+                        operations: operations.to_save_operations(openbao_preferred_auth_id),
+                    })
+                }
+                _ => None,
+            },
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+/*
+ * AvailableDevice
+ */
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum AvailableDeviceType {
     Keyring,
     Password,
     Recovery,
     Smartcard,
     AccountVault,
+    OpenBao {
+        openbao_entity_id: String,
+        openbao_preferred_auth_id: String,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
