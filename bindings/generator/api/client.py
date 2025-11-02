@@ -513,6 +513,9 @@ class ImportRecoveryDeviceError(ErrorVariant):
         ballpark_client_early_offset: float
         ballpark_client_late_offset: float
 
+    class RemoteOpaqueKeyUploadOffline:
+        pass
+
     class RemoteOpaqueKeyUploadFailed:
         pass
 
