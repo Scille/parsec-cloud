@@ -102,10 +102,11 @@ pub enum ClientStartError {
     /// access strategies (e.g. account vault), where the ciphertext key
     /// protecting the device is itself encrypted by an opaque key that
     /// must first be remotely fetched.
-    #[error(
-        "Cannot load device file: remote opaque key fetch failed: cannot communicate with the server: {0}"
-    )]
-    LoadDeviceRemoteOpaqueKeyFetchOffline(#[from] ConnectionError),
+    #[error("Cannot load device file: remote opaque key fetch failed: server rejection: {0}")]
+    // We don't use `ConnectionError` here since this type only corresponds to
+    // an answer from the Parsec server and here any arbitrary server may have
+    // been (unsuccessfully) requested (e.g. OpenBao server).
+    LoadDeviceRemoteOpaqueKeyFetchOffline(anyhow::Error),
     /// Note only a subset of load strategies requires server access to
     /// fetch an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
