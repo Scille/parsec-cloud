@@ -381,6 +381,14 @@ pub enum AccountCreateRegistrationDeviceError {
     /// Note only a subset of load strategies requires server access to
     /// fetch an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
+    #[error("Remote opaque key fetch failed: server rejection: {0}")]
+    // We don't use `ConnectionError` here since this type only corresponds to
+    // an answer from the Parsec server and here any arbitrary server may have
+    // been (unsuccessfully) requested (e.g. OpenBao server).
+    RemoteOpaqueKeyFetchOffline(anyhow::Error),
+    /// Note only a subset of load strategies requires server access to
+    /// fetch an opaque key that itself protects the ciphertext key
+    /// (e.g. account vault).
     #[error("Remote opaque key fetch failed: {0}")]
     RemoteOpaqueKeyFetchFailed(anyhow::Error),
 }
@@ -396,7 +404,7 @@ impl From<libparsec_platform_device_loader::LoadDeviceError>
             LoadDeviceError::InvalidData => Self::LoadDeviceInvalidData,
             LoadDeviceError::DecryptionFailed => Self::LoadDeviceDecryptionFailed,
             LoadDeviceError::Internal(e) => Self::Internal(e),
-            LoadDeviceError::RemoteOpaqueKeyFetchOffline(e) => Self::Offline(e),
+            LoadDeviceError::RemoteOpaqueKeyFetchOffline(e) => Self::RemoteOpaqueKeyFetchOffline(e),
             LoadDeviceError::RemoteOpaqueKeyFetchFailed(e) => Self::RemoteOpaqueKeyFetchFailed(e),
         }
     }
