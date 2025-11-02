@@ -162,8 +162,9 @@ async fn testbed(env: &TestbedEnv) {
         password: "P@ssw0rd.".to_owned().into(),
     };
     p_assert_matches!(
-        load_device(&env.discriminant_dir, &bad_path_access).await,
-        Err(LoadDeviceError::InvalidPath(_))
+        load_device(&env.discriminant_dir, &bad_path_access).await.unwrap_err(),
+        err @ LoadDeviceError::InvalidPath(_)
+        if err.to_string().starts_with("Invalid path:")
     );
 
     // Bad account used
@@ -225,10 +226,9 @@ async fn remote_error(
             );
 
             p_assert_matches!(
-                load_device(&tmp_path, &access_strategy).await,
-                Err(LoadDeviceError::RemoteOpaqueKeyFetchOffline(
-                    ConnectionError::NoResponse(None)
-                ))
+                load_device(&tmp_path, &access_strategy).await.unwrap_err(),
+                err @ LoadDeviceError::RemoteOpaqueKeyFetchOffline(_)
+                if err.to_string() == "Remote opaque key fetch failed from server rejection: Cannot communicate with the Parsec account server: Failed to retrieve the response: Server unavailable"
             );
         }
 
@@ -238,9 +238,9 @@ async fn remote_error(
             );
 
             p_assert_matches!(
-                load_device(&tmp_path, &access_strategy).await,
-                Err(LoadDeviceError::RemoteOpaqueKeyFetchFailed(err))
-                if err.to_string() == "No opaque key with this ID among the vault items"
+                load_device(&tmp_path, &access_strategy).await.unwrap_err(),
+                err @ LoadDeviceError::RemoteOpaqueKeyFetchFailed(_)
+                if err.to_string() == "Remote opaque key fetch failed: No opaque key with this ID among the vault items"
             );
         }
 

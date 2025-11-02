@@ -1,13 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 pub use libparsec_types::prelude::*;
 pub use platform::*;
 
 pub use crate::{
     AccountVaultOperations, AccountVaultOperationsFetchOpaqueKeyError,
-    AccountVaultOperationsFutureResult, AccountVaultOperationsUploadOpaqueKeyError,
+    AccountVaultOperationsUploadOpaqueKeyError, OpenBaoDeviceAccessOperations,
+    OpenBaoDeviceSaveOperations, OpenBaoOperationsFetchOpaqueKeyError,
+    OpenBaoOperationsUploadOpaqueKeyError, PinBoxFutureResult,
 };
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -88,9 +90,13 @@ mod platform {
     }
 }
 
+/*
+ * MockedAccountVaultOperations
+ */
+
 #[derive(Debug)]
 pub(super) struct MockedAccountVaultOperations {
-    pub account_email: EmailAddress,
+    account_email: EmailAddress,
     next_error_fetch_opaque_key: Mutex<Option<AccountVaultOperationsFetchOpaqueKeyError>>,
     next_error_upload_opaque_key: Mutex<Option<AccountVaultOperationsUploadOpaqueKeyError>>,
 }
@@ -137,7 +143,7 @@ fn hash_email(account_email: &EmailAddress) -> [u8; 4] {
     hash.to_le_bytes()
 }
 
-fn key_from_key_id(key_id: AccountVaultItemOpaqueKeyID) -> SecretKey {
+fn key_from_account_vault_ciphertext_key_id(key_id: AccountVaultItemOpaqueKeyID) -> SecretKey {
     let mut raw_key = [0; 32];
     raw_key[0..16].copy_from_slice(key_id.as_bytes());
     raw_key[16..32].copy_from_slice(key_id.as_bytes());
@@ -152,8 +158,7 @@ impl AccountVaultOperations for MockedAccountVaultOperations {
     fn fetch_opaque_key(
         &self,
         ciphertext_key_id: AccountVaultItemOpaqueKeyID,
-    ) -> AccountVaultOperationsFutureResult<SecretKey, AccountVaultOperationsFetchOpaqueKeyError>
-    {
+    ) -> PinBoxFutureResult<SecretKey, AccountVaultOperationsFetchOpaqueKeyError> {
         {
             let mut guard = self
                 .next_error_fetch_opaque_key
@@ -167,7 +172,7 @@ impl AccountVaultOperations for MockedAccountVaultOperations {
         let outcome = if ciphertext_key_id.as_bytes()[0..4] != hash_email(&self.account_email) {
             Err(AccountVaultOperationsFetchOpaqueKeyError::UnknownOpaqueKey)
         } else {
-            let key = key_from_key_id(ciphertext_key_id);
+            let key = key_from_account_vault_ciphertext_key_id(ciphertext_key_id);
             Ok(key)
         };
 
@@ -176,7 +181,7 @@ impl AccountVaultOperations for MockedAccountVaultOperations {
 
     fn upload_opaque_key(
         &self,
-    ) -> AccountVaultOperationsFutureResult<
+    ) -> PinBoxFutureResult<
         (AccountVaultItemOpaqueKeyID, SecretKey),
         AccountVaultOperationsUploadOpaqueKeyError,
     > {
@@ -202,8 +207,106 @@ impl AccountVaultOperations for MockedAccountVaultOperations {
             AccountVaultItemOpaqueKeyID::from(raw_id)
         };
 
-        let key = key_from_key_id(key_id);
+        let key = key_from_account_vault_ciphertext_key_id(key_id);
 
         Box::pin(async move { Ok((key_id, key)) })
+    }
+}
+
+/*
+ * MockedOpenBaoOperations
+ */
+
+#[derive(Debug, Clone)]
+pub(super) struct MockedOpenBaoOperations {
+    openbao_entity_id: String,
+}
+
+impl MockedOpenBaoOperations {
+    pub fn new(account_email: EmailAddress) -> Self {
+        Self {
+            openbao_entity_id: openbao_entity_id_from_email(&account_email),
+        }
+    }
+}
+
+fn key_from_openbao_ciphertext_key_path(key_path: &str) -> SecretKey {
+    let bytes = {
+        let mut hasher = crc32fast::Hasher::new();
+        hasher.update(key_path.as_bytes());
+        let hash = hasher.finalize();
+        hash.to_le_bytes()
+    };
+
+    let mut raw_key = [0; 32];
+    raw_key[0..4].copy_from_slice(&bytes);
+    SecretKey::from(raw_key)
+}
+
+fn openbao_entity_id_from_email(email: &EmailAddress) -> String {
+    let hash = hash_email(email);
+    // OpenBao identity ID is an UUID (e.g `65732d02-bb5f-7ce7-eae4-69067383b61d`)
+    let openbao_entity_id = format!(
+        "{:x}{:x}{:x}{:x}-0000-0000-0000-000000000000",
+        hash[0], hash[1], hash[2], hash[3]
+    );
+    assert_eq!(openbao_entity_id.len(), 36); // 36 characters: four dashes + 128bits UUID as hex
+    openbao_entity_id
+}
+
+impl OpenBaoDeviceSaveOperations for MockedOpenBaoOperations {
+    fn openbao_entity_id(&self) -> &str {
+        &self.openbao_entity_id
+    }
+
+    fn openbao_preferred_auth_id(&self) -> &str {
+        "HEXAGONE"
+    }
+
+    fn upload_opaque_key(
+        &self,
+    ) -> PinBoxFutureResult<(String, SecretKey), OpenBaoOperationsUploadOpaqueKeyError> {
+        let key_path = format!(
+            "{}/{}",
+            &self.openbao_entity_id,
+            uuid::Uuid::new_v4().as_simple()
+        );
+        let key = key_from_openbao_ciphertext_key_path(&key_path);
+
+        Box::pin(async move { Ok((key_path, key)) })
+    }
+
+    fn to_access_operations(&self) -> Arc<dyn OpenBaoDeviceAccessOperations> {
+        Arc::new(self.to_owned())
+    }
+}
+
+impl OpenBaoDeviceAccessOperations for MockedOpenBaoOperations {
+    fn openbao_entity_id(&self) -> &str {
+        &self.openbao_entity_id
+    }
+
+    fn fetch_opaque_key(
+        &self,
+        ciphertext_key_path: String,
+    ) -> PinBoxFutureResult<SecretKey, OpenBaoOperationsFetchOpaqueKeyError> {
+        let outcome = if !ciphertext_key_path.starts_with(&self.openbao_entity_id) {
+            Err(OpenBaoOperationsFetchOpaqueKeyError::BadServerResponse(
+                anyhow::anyhow!("Secret not found"),
+            ))
+        } else {
+            let key = key_from_openbao_ciphertext_key_path(&ciphertext_key_path);
+            Ok(key)
+        };
+
+        Box::pin(async move { outcome })
+    }
+
+    fn to_save_operations(
+        &self,
+        openbao_preferred_auth_id: String,
+    ) -> Arc<dyn OpenBaoDeviceSaveOperations> {
+        assert_eq!(self.openbao_preferred_auth_id(), openbao_preferred_auth_id);
+        Arc::new(self.clone())
     }
 }
