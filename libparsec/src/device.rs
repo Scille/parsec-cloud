@@ -17,8 +17,8 @@ mod strategy {
     use libparsec_crypto::{Password, SecretKey};
     use libparsec_platform_async::pretend_future_is_send_on_web;
     use libparsec_platform_device_loader::{
-        AccountVaultOperationsFetchOpaqueKeyError, AccountVaultOperationsFutureResult,
-        AccountVaultOperationsUploadOpaqueKeyError,
+        AccountVaultOperationsFetchOpaqueKeyError, AccountVaultOperationsUploadOpaqueKeyError,
+        PinBoxFutureResult,
     };
     use libparsec_types::prelude::*;
 
@@ -37,8 +37,7 @@ mod strategy {
         fn fetch_opaque_key(
             &self,
             ciphertext_key_id: AccountVaultItemOpaqueKeyID,
-        ) -> AccountVaultOperationsFutureResult<SecretKey, AccountVaultOperationsFetchOpaqueKeyError>
-        {
+        ) -> PinBoxFutureResult<SecretKey, AccountVaultOperationsFetchOpaqueKeyError> {
             let account = self.account.clone();
 
             Box::pin(pretend_future_is_send_on_web(async move {
@@ -67,7 +66,7 @@ mod strategy {
 
         fn upload_opaque_key(
             &self,
-        ) -> AccountVaultOperationsFutureResult<
+        ) -> PinBoxFutureResult<
             (AccountVaultItemOpaqueKeyID, SecretKey),
             AccountVaultOperationsUploadOpaqueKeyError,
         > {

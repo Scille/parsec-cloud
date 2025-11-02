@@ -5,8 +5,7 @@ use std::sync::Arc;
 use libparsec_client_connection::{ConnectionError, ProxyConfig};
 use libparsec_platform_device_loader::{
     AccountVaultOperations, AccountVaultOperationsFetchOpaqueKeyError,
-    AccountVaultOperationsFutureResult, AccountVaultOperationsUploadOpaqueKeyError,
-    DeviceSaveStrategy,
+    AccountVaultOperationsUploadOpaqueKeyError, DeviceSaveStrategy, PinBoxFutureResult,
 };
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -189,15 +188,13 @@ async fn bad_finalize(
                 fn fetch_opaque_key(
                     &self,
                     _ciphertext_key_id: AccountVaultItemOpaqueKeyID,
-                ) -> AccountVaultOperationsFutureResult<
-                    SecretKey,
-                    AccountVaultOperationsFetchOpaqueKeyError,
-                > {
+                ) -> PinBoxFutureResult<SecretKey, AccountVaultOperationsFetchOpaqueKeyError>
+                {
                     unreachable!()
                 }
                 fn upload_opaque_key(
                     &self,
-                ) -> AccountVaultOperationsFutureResult<
+                ) -> PinBoxFutureResult<
                     (AccountVaultItemOpaqueKeyID, SecretKey),
                     AccountVaultOperationsUploadOpaqueKeyError,
                 > {
@@ -234,15 +231,13 @@ async fn bad_finalize(
                 fn fetch_opaque_key(
                     &self,
                     _ciphertext_key_id: AccountVaultItemOpaqueKeyID,
-                ) -> AccountVaultOperationsFutureResult<
-                    SecretKey,
-                    AccountVaultOperationsFetchOpaqueKeyError,
-                > {
+                ) -> PinBoxFutureResult<SecretKey, AccountVaultOperationsFetchOpaqueKeyError>
+                {
                     unreachable!()
                 }
                 fn upload_opaque_key(
                     &self,
-                ) -> AccountVaultOperationsFutureResult<
+                ) -> PinBoxFutureResult<
                     (AccountVaultItemOpaqueKeyID, SecretKey),
                     AccountVaultOperationsUploadOpaqueKeyError,
                 > {

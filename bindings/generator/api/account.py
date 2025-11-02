@@ -336,6 +336,9 @@ class AccountCreateRegistrationDeviceError(ErrorVariant):
     class TimestampOutOfBallpark:
         pass
 
+    class RemoteOpaqueKeyFetchOffline:
+        pass
+
     class RemoteOpaqueKeyFetchFailed:
         pass
 
@@ -370,6 +373,9 @@ class AccountRegisterNewDeviceError(ErrorVariant):
         pass
 
     class TimestampOutOfBallpark:
+        pass
+
+    class RemoteOpaqueKeyUploadOffline:
         pass
 
     class RemoteOpaqueKeyUploadFailed:
