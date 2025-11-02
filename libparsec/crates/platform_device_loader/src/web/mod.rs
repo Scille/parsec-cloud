@@ -11,8 +11,8 @@ use libparsec_types::prelude::*;
 use crate::{
     AccountVaultOperationsFetchOpaqueKeyError, ArchiveDeviceError, AvailableDevice,
     DeviceAccessStrategy, DeviceSaveStrategy, ListAvailableDeviceError, ListPkiLocalPendingError,
-    LoadCiphertextKeyError, ReadFileError, RemoveDeviceError, SaveDeviceError,
-    SavePkiLocalPendingError, UpdateDeviceError,
+    LoadCiphertextKeyError, OpenBaoOperationsFetchOpaqueKeyError, ReadFileError, RemoveDeviceError,
+    SaveDeviceError, SavePkiLocalPendingError, UpdateDeviceError,
 };
 use internal::Storage;
 
@@ -89,11 +89,43 @@ pub(super) async fn load_ciphertext_key(
                         | AccountVaultOperationsFetchOpaqueKeyError::CorruptedOpaqueKey => {
                             LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed(err.into())
                         }
-                        AccountVaultOperationsFetchOpaqueKeyError::Offline(err) => {
-                            LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline(err)
+                        // Note it's important to serialize the whole error (and not the sub-error
+                        // it wraps): by doing so we keep the information of which server was
+                        // involved (since different save strategy communicate with different
+                        // server, e.g. Parsec account vs OpenBao).
+                        err @ AccountVaultOperationsFetchOpaqueKeyError::Offline(_) => {
+                            LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline(anyhow::anyhow!(
+                                err
+                            ))
                         }
                         AccountVaultOperationsFetchOpaqueKeyError::Internal(err) => {
                             LoadCiphertextKeyError::Internal(err)
+                        }
+                    })?;
+                Ok(ciphertext_key)
+            } else {
+                Err(LoadCiphertextKeyError::InvalidData)
+            }
+        }
+
+        DeviceAccessStrategy::OpenBao { operations, .. } => {
+            if let DeviceFile::OpenBao(device) = device_file {
+                let ciphertext_key = operations
+                    .fetch_opaque_key(device.openbao_ciphertext_key_path.clone())
+                    .await
+                    .map_err(|err| match err {
+                        // Note it's important to serialize the whole error (and not the sub-error
+                        // it wraps): by doing so we keep the information of which server was
+                        // involved (since different save strategy communicate with different
+                        // server, e.g. Parsec account vs OpenBao).
+                        err @ (OpenBaoOperationsFetchOpaqueKeyError::BadURL(_)
+                        | OpenBaoOperationsFetchOpaqueKeyError::BadServerResponse(_)) => {
+                            LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed(anyhow::anyhow!(err))
+                        }
+                        err @ OpenBaoOperationsFetchOpaqueKeyError::NoServerResponse(_) => {
+                            LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline(anyhow::anyhow!(
+                                err
+                            ))
                         }
                     })?;
                 Ok(ciphertext_key)

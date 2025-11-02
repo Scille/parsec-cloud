@@ -2,7 +2,7 @@
 
 use std::{path::Path, sync::Arc};
 
-use super::utils::MockedAccountVaultOperations;
+use super::utils::{MockedAccountVaultOperations, MockedOpenBaoOperations};
 use crate::{load_available_device, load_device, save_device, AvailableDevice, DeviceSaveStrategy};
 use libparsec_tests_fixtures::{tmp_path, TmpPath};
 use libparsec_tests_lite::prelude::*;
@@ -12,6 +12,7 @@ use libparsec_types::prelude::*;
 #[case("password")]
 #[cfg_attr(not(target_arch = "wasm32"), case("keyring"))]
 #[case("account_vault")]
+#[case("openbao")]
 // TODO #11269
 // #[cfg_attr(target_os = "windows", case("smartcard"))]
 async fn save_load(#[case] kind: &str, tmp_path: TmpPath) {
@@ -79,6 +80,28 @@ async fn save_load(#[case] kind: &str, tmp_path: TmpPath) {
         "account_vault" => {
             let save_strategy = DeviceSaveStrategy::AccountVault {
                 operations: Arc::new(MockedAccountVaultOperations::new(
+                    device.human_handle.email().to_owned(),
+                )),
+            };
+            let access_strategy = save_strategy.clone().into_access(key_file.clone());
+            let expected_available_device = AvailableDevice {
+                key_file_path: key_file.clone(),
+                created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
+                protected_on: "2000-01-01T00:00:00Z".parse().unwrap(),
+                server_url: "http://test.invalid/".to_string(),
+                organization_id: device.organization_id().to_owned(),
+                user_id: device.user_id,
+                device_id: device.device_id,
+                human_handle: device.human_handle.clone(),
+                device_label: device.device_label.clone(),
+                ty: save_strategy.ty(),
+            };
+            (access_strategy, save_strategy, expected_available_device)
+        }
+
+        "openbao" => {
+            let save_strategy = DeviceSaveStrategy::OpenBao {
+                operations: Arc::new(MockedOpenBaoOperations::new(
                     device.human_handle.email().to_owned(),
                 )),
             };

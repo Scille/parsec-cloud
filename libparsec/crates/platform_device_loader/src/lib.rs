@@ -20,7 +20,6 @@ use std::{
 };
 use zeroize::Zeroizing;
 
-use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 #[cfg(not(target_arch = "wasm32"))]
 use native as platform;
@@ -54,8 +53,11 @@ enum LoadCiphertextKeyError {
     /// Note only a subset of load strategies requires server access to
     /// fetch an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
-    #[error("Remote opaque key fetch failed: cannot communicate with the server: {0}")]
-    RemoteOpaqueKeyFetchOffline(#[from] ConnectionError),
+    #[error("Remote opaque key fetch failed from server rejection: {0}")]
+    // We don't use `ConnectionError` here since this type only corresponds to
+    // an answer from the Parsec server and here any arbitrary server may have
+    // been (unsuccessfully) requested (e.g. OpenBao server).
+    RemoteOpaqueKeyFetchOffline(anyhow::Error),
     /// Note only a subset of load strategies requires server access to
     /// fetch an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
@@ -229,8 +231,11 @@ pub enum LoadDeviceError {
     /// Note only a subset of load strategies requires server access to
     /// fetch an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
-    #[error("Remote opaque key fetch failed: cannot communicate with the server: {0}")]
-    RemoteOpaqueKeyFetchOffline(#[from] ConnectionError),
+    #[error("Remote opaque key fetch failed from server rejection: {0}")]
+    // We don't use `ConnectionError` here since this type only corresponds to
+    // an answer from the Parsec server and here any arbitrary server may have
+    // been (unsuccessfully) requested (e.g. OpenBao server).
+    RemoteOpaqueKeyFetchOffline(anyhow::Error),
     /// Note only a subset of load strategies requires server access to
     /// fetch an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
@@ -288,8 +293,11 @@ pub enum SaveDeviceError {
     /// Note only a subset of save strategies requires server access to
     /// upload an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
-    #[error("Remote opaque key upload failed: cannot communicate with the server: {0}")]
-    RemoteOpaqueKeyUploadOffline(#[from] ConnectionError),
+    #[error("Remote opaque key upload failed from server rejection: {0}")]
+    // We don't use `ConnectionError` here since this type only corresponds to
+    // an answer from the Parsec server and here any arbitrary server may have
+    // been (unsuccessfully) requested (e.g. OpenBao server).
+    RemoteOpaqueKeyUploadOffline(anyhow::Error),
     /// Note only a subset of save strategies requires server access to
     /// upload an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
@@ -329,8 +337,11 @@ pub enum UpdateDeviceError {
     /// Note only a subset of load/save strategies requires server access to
     /// fetch/upload an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
-    #[error("Remote opaque key server operation failed: cannot communicate with the server: {0}")]
-    RemoteOpaqueKeyOperationOffline(#[from] ConnectionError),
+    #[error("Remote opaque key server operation failed from server rejection: {0}")]
+    // We don't use `ConnectionError` here since this type only corresponds to
+    // an answer from the Parsec server and here any arbitrary server may have
+    // been (unsuccessfully) requested (e.g. OpenBao server).
+    RemoteOpaqueKeyOperationOffline(anyhow::Error),
     /// Note only a subset of load/save strategies requires server access to
     /// fetch/upload an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
@@ -686,6 +697,20 @@ fn load_available_device_from_blob(
         ),
         DeviceFile::AccountVault(device) => (
             AvailableDeviceType::AccountVault,
+            device.created_on,
+            device.protected_on,
+            device.server_url,
+            device.organization_id,
+            device.user_id,
+            device.device_id,
+            device.human_handle,
+            device.device_label,
+        ),
+        DeviceFile::OpenBao(device) => (
+            AvailableDeviceType::OpenBao {
+                openbao_entity_id: device.openbao_entity_id,
+                openbao_preferred_auth_id: device.openbao_preferred_auth_id,
+            },
             device.created_on,
             device.protected_on,
             device.server_url,
