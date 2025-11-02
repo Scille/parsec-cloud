@@ -12,6 +12,7 @@ use libparsec_types::prelude::*;
 use crate::{
     web::wrapper::{DirEntry, DirOrFileHandle, OpenOptions},
     AccountVaultOperationsUploadOpaqueKeyError, AvailableDevice, DeviceSaveStrategy,
+    OpenBaoOperationsUploadOpaqueKeyError,
 };
 
 use super::{
@@ -147,19 +148,22 @@ impl Storage {
 
                 self.save_device_file(&key_file, &file_data).await?;
             }
+
             DeviceSaveStrategy::AccountVault { operations } => {
                 let (ciphertext_key_id, ciphertext_key) = operations
                     .upload_opaque_key()
                     .await
                     .map_err(|err| match err {
-                        AccountVaultOperationsUploadOpaqueKeyError::BadVaultKeyAccess(err) => {
+                        // Note it's important to serialize the whole error (and not the sub-error
+                        // it wraps): by doing so we keep the information of which server was
+                        // involved (since different save strategy communicate with different
+                        // server, e.g. Parsec account vs OpenBao).
+                        err @ (AccountVaultOperationsUploadOpaqueKeyError::BadVaultKeyAccess(_)
+                        | AccountVaultOperationsUploadOpaqueKeyError::BadServerResponse(_)) => {
                             SaveDeviceError::RemoteOpaqueKeyUploadFailed(err.into())
                         }
-                        AccountVaultOperationsUploadOpaqueKeyError::Offline(err) => {
-                            SaveDeviceError::RemoteOpaqueKeyUploadOffline(err)
-                        }
-                        AccountVaultOperationsUploadOpaqueKeyError::Internal(err) => {
-                            SaveDeviceError::Internal(err)
+                        err @ AccountVaultOperationsUploadOpaqueKeyError::Offline(_) => {
+                            SaveDeviceError::RemoteOpaqueKeyUploadOffline(anyhow::anyhow!(err))
                         }
                     })?;
 
@@ -179,6 +183,45 @@ impl Storage {
 
                 self.save_device_file(&key_file, &file_data).await?;
             }
+
+            DeviceSaveStrategy::OpenBao { operations } => {
+                let (openbao_ciphertext_key_path, ciphertext_key) = operations
+                    .upload_opaque_key()
+                    .await
+                    .map_err(|err| match err {
+                        // Note it's important to serialize the whole error (and not the sub-error
+                        // it wraps): by doing so we keep the information of which server was
+                        // involved (since different save strategy communicate with different
+                        // server, e.g. Parsec account vs OpenBao).
+                        err @ OpenBaoOperationsUploadOpaqueKeyError::NoServerResponse(_) => {
+                            SaveDeviceError::RemoteOpaqueKeyUploadOffline(anyhow::anyhow!(err))
+                        }
+                        err @ (OpenBaoOperationsUploadOpaqueKeyError::BadURL(_)
+                        | OpenBaoOperationsUploadOpaqueKeyError::BadServerResponse(_)) => {
+                            SaveDeviceError::RemoteOpaqueKeyUploadFailed(err.into())
+                        }
+                    })?;
+
+                let ciphertext = crate::encrypt_device(device, &ciphertext_key);
+
+                let file_data = DeviceFile::OpenBao(DeviceFileOpenBao {
+                    created_on,
+                    protected_on,
+                    server_url: server_url.clone(),
+                    organization_id: device.organization_id().to_owned(),
+                    user_id: device.user_id,
+                    device_id: device.device_id,
+                    human_handle: device.human_handle.to_owned(),
+                    device_label: device.device_label.to_owned(),
+                    openbao_preferred_auth_id: operations.openbao_preferred_auth_id().to_owned(),
+                    openbao_entity_id: operations.openbao_entity_id().to_owned(),
+                    openbao_ciphertext_key_path,
+                    ciphertext,
+                });
+
+                self.save_device_file(&key_file, &file_data).await?;
+            }
+
             DeviceSaveStrategy::Keyring { .. } => panic!("Keyring not supported on Web"),
             DeviceSaveStrategy::Smartcard { .. } => panic!("Smartcard not supported on Web"),
         }

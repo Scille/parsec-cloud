@@ -10,7 +10,8 @@ use crate::{
     encrypt_device, get_device_archive_path, AccountVaultOperationsFetchOpaqueKeyError,
     AccountVaultOperationsUploadOpaqueKeyError, ArchiveDeviceError, AvailableDevice,
     DeviceAccessStrategy, DeviceSaveStrategy, ListAvailableDeviceError, ListPkiLocalPendingError,
-    LoadCiphertextKeyError, LoadDeviceError, ReadFileError, RemoveDeviceError, SaveDeviceError,
+    LoadCiphertextKeyError, LoadDeviceError, OpenBaoOperationsFetchOpaqueKeyError,
+    OpenBaoOperationsUploadOpaqueKeyError, ReadFileError, RemoveDeviceError, SaveDeviceError,
     SavePkiLocalPendingError, UpdateDeviceError, DEVICE_FILE_EXT, LOCAL_PENDING_EXT,
 };
 use libparsec_platform_pki::{decrypt_message, encrypt_message};
@@ -192,11 +193,43 @@ pub(super) async fn load_ciphertext_key(
                         | AccountVaultOperationsFetchOpaqueKeyError::CorruptedOpaqueKey => {
                             LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed(err.into())
                         }
-                        AccountVaultOperationsFetchOpaqueKeyError::Offline(err) => {
-                            LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline(err)
+                        // Note it's important to serialize the whole error (and not the sub-error
+                        // it wraps): by doing so we keep the information of which server was
+                        // involved (since different save strategy communicate with different
+                        // server, e.g. Parsec account vs OpenBao).
+                        err @ AccountVaultOperationsFetchOpaqueKeyError::Offline(_) => {
+                            LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline(anyhow::anyhow!(
+                                err
+                            ))
                         }
                         AccountVaultOperationsFetchOpaqueKeyError::Internal(err) => {
                             LoadCiphertextKeyError::Internal(err)
+                        }
+                    })?;
+                Ok(ciphertext_key)
+            } else {
+                Err(LoadCiphertextKeyError::InvalidData)
+            }
+        }
+
+        DeviceAccessStrategy::OpenBao { operations, .. } => {
+            if let DeviceFile::OpenBao(device) = device_file {
+                let ciphertext_key = operations
+                    .fetch_opaque_key(device.openbao_ciphertext_key_path.clone())
+                    .await
+                    .map_err(|err| match err {
+                        // Note it's important to serialize the whole error (and not the sub-error
+                        // it wraps): by doing so we keep the information of which server was
+                        // involved (since different save strategy communicate with different
+                        // server, e.g. Parsec account vs OpenBao).
+                        err @ (OpenBaoOperationsFetchOpaqueKeyError::BadURL(_)
+                        | OpenBaoOperationsFetchOpaqueKeyError::BadServerResponse(_)) => {
+                            LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed(anyhow::anyhow!(err))
+                        }
+                        err @ OpenBaoOperationsFetchOpaqueKeyError::NoServerResponse(_) => {
+                            LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline(anyhow::anyhow!(
+                                err
+                            ))
                         }
                     })?;
                 Ok(ciphertext_key)
@@ -398,14 +431,16 @@ pub(super) async fn save_device(
                 .upload_opaque_key()
                 .await
                 .map_err(|err| match err {
-                    AccountVaultOperationsUploadOpaqueKeyError::BadVaultKeyAccess(err) => {
+                    // Note it's important to serialize the whole error (and not the sub-error
+                    // it wraps): by doing so we keep the information of which server was
+                    // involved (since different save strategy communicate with different
+                    // server, e.g. Parsec account vs OpenBao).
+                    err @ (AccountVaultOperationsUploadOpaqueKeyError::BadVaultKeyAccess(_)
+                    | AccountVaultOperationsUploadOpaqueKeyError::BadServerResponse(_)) => {
                         SaveDeviceError::RemoteOpaqueKeyUploadFailed(err.into())
                     }
-                    AccountVaultOperationsUploadOpaqueKeyError::Offline(err) => {
-                        SaveDeviceError::RemoteOpaqueKeyUploadOffline(err)
-                    }
-                    AccountVaultOperationsUploadOpaqueKeyError::Internal(err) => {
-                        SaveDeviceError::Internal(err)
+                    err @ AccountVaultOperationsUploadOpaqueKeyError::Offline(_) => {
+                        SaveDeviceError::RemoteOpaqueKeyUploadOffline(anyhow::anyhow!(err))
                     }
                 })?;
 
@@ -421,6 +456,46 @@ pub(super) async fn save_device(
                 human_handle: device.human_handle.to_owned(),
                 device_label: device.device_label.to_owned(),
                 ciphertext_key_id,
+                ciphertext,
+            });
+
+            let file_content = file_content.dump();
+
+            save_content(&key_file, &file_content).await?;
+        }
+
+        DeviceSaveStrategy::OpenBao { operations } => {
+            let (openbao_ciphertext_key_path, ciphertext_key) = operations
+                .upload_opaque_key()
+                .await
+                .map_err(|err| match err {
+                    // Note it's important to serialize the whole error (and not the sub-error
+                    // it wraps): by doing so we keep the information of which server was
+                    // involved (since different save strategy communicate with different
+                    // server, e.g. Parsec account vs OpenBao).
+                    err @ OpenBaoOperationsUploadOpaqueKeyError::NoServerResponse(_) => {
+                        SaveDeviceError::RemoteOpaqueKeyUploadOffline(anyhow::anyhow!(err))
+                    }
+                    err @ (OpenBaoOperationsUploadOpaqueKeyError::BadURL(_)
+                    | OpenBaoOperationsUploadOpaqueKeyError::BadServerResponse(_)) => {
+                        SaveDeviceError::RemoteOpaqueKeyUploadFailed(err.into())
+                    }
+                })?;
+
+            let ciphertext = super::encrypt_device(device, &ciphertext_key);
+
+            let file_content = DeviceFile::OpenBao(DeviceFileOpenBao {
+                created_on,
+                protected_on,
+                server_url: server_url.clone(),
+                organization_id: device.organization_id().to_owned(),
+                user_id: device.user_id,
+                device_id: device.device_id,
+                human_handle: device.human_handle.to_owned(),
+                device_label: device.device_label.to_owned(),
+                openbao_preferred_auth_id: operations.openbao_preferred_auth_id().to_owned(),
+                openbao_entity_id: operations.openbao_entity_id().to_owned(),
+                openbao_ciphertext_key_path,
                 ciphertext,
             });
 

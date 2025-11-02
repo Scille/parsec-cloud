@@ -362,7 +362,34 @@ pub(crate) fn maybe_load_device(
                                     Some(Err(LoadDeviceError::DecryptionFailed))
                                 }
                             }
-                            _ => None,
+                            (
+                                DeviceAccessStrategy::OpenBao { operations, .. },
+                                DeviceSaveStrategy::OpenBao {
+                                    operations: c_operations,
+                                },
+                            ) => {
+                                if operations.openbao_entity_id()
+                                    == c_operations.openbao_entity_id()
+                                {
+                                    Some(Ok(c_device.to_owned()))
+                                } else {
+                                    Some(Err(LoadDeviceError::DecryptionFailed))
+                                }
+                            }
+                            // Don't use a `_ => None` fallthrough match here to avoid
+                            // silent bug whenever a new variant is added :/
+                            (
+                                DeviceAccessStrategy::Password { .. }
+                                | DeviceAccessStrategy::Smartcard { .. }
+                                | DeviceAccessStrategy::Keyring { .. }
+                                | DeviceAccessStrategy::AccountVault { .. }
+                                | DeviceAccessStrategy::OpenBao { .. },
+                                DeviceSaveStrategy::Password { .. }
+                                | DeviceSaveStrategy::Smartcard { .. }
+                                | DeviceSaveStrategy::Keyring
+                                | DeviceSaveStrategy::AccountVault { .. }
+                                | DeviceSaveStrategy::OpenBao { .. },
+                            ) => None,
                         }
                     });
 
@@ -382,6 +409,7 @@ pub(crate) fn maybe_load_device(
                     }
                     DeviceAccessStrategy::Smartcard { .. } => true,
                     DeviceAccessStrategy::AccountVault { .. } => true,
+                    DeviceAccessStrategy::OpenBao { .. } => true,
                 };
                 // We don't try to resolve the path of `key_file` into an absolute one here !
                 // This is because in practice the path is always provided absolute given it
@@ -401,6 +429,7 @@ pub(crate) fn maybe_load_device(
                         DeviceAccessStrategy::AccountVault { .. } => {
                             AvailableDeviceType::AccountVault
                         }
+                        DeviceAccessStrategy::OpenBao { .. } => todo!(),
                     };
                     access
                         .clone()
