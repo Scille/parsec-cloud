@@ -134,7 +134,7 @@ pub enum ImportRecoveryDeviceError {
     DecryptionFailed,
     #[error(transparent)]
     InvalidPath(anyhow::Error),
-    #[error("Remote opaque key upload failed: server rejection: {0}")]
+    #[error("Remote opaque key upload failed from server rejection: {0}")]
     // We don't use `ConnectionError` here since this type only corresponds to
     // an answer from the Parsec server and here any arbitrary server may have
     // been (unsuccessfully) requested (e.g. OpenBao server).
