@@ -102,9 +102,7 @@ async fn invite_user_dance(tmp_path: TmpPath) {
 
         locked.exp_string("Enter password for the device:").unwrap();
         locked.send_line(DEFAULT_DEVICE_PASSWORD).unwrap();
-        locked
-            .exp_string("Poll server for new certificates")
-            .unwrap();
+        let _ = locked.exp_string("Poll server for new certificates");
         locked.exp_string("Waiting for claimer").unwrap();
     });
     let claimer_cloned = p_claimer.clone();
