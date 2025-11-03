@@ -2160,6 +2160,7 @@ dependencies = [
  "libparsec_client",
  "libparsec_client_connection",
  "libparsec_crypto",
+ "libparsec_openbao",
  "libparsec_platform_async",
  "libparsec_platform_device_loader",
  "libparsec_platform_ipc",
@@ -2310,6 +2311,21 @@ dependencies = [
  "wasm-bindgen-test",
  "x25519-dalek",
  "zeroize",
+]
+
+[[package]]
+name = "libparsec_openbao"
+version = "3.6.2-a.0+dev"
+dependencies = [
+ "data-encoding",
+ "libparsec_platform_async",
+ "libparsec_tests_fixtures",
+ "libparsec_tests_lite",
+ "libparsec_types",
+ "reqwest",
+ "serde_json",
+ "thiserror 2.0.17",
+ "url",
 ]
 
 [[package]]
