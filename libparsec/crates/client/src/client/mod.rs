@@ -35,6 +35,7 @@ pub use self::{
     list_frozen_users::ClientListFrozenUsersError,
     pki_enrollment_list::{PkiEnrollmentListError, PkiEnrollmentListItem},
     pki_enrollment_reject::PkiEnrollmentRejectError,
+    pki_enrollment_submit::{pki_enrollment_submit, PkiEnrollmentSubmitError},
     start_invitation_greet::ClientStartShamirRecoveryInvitationGreetError,
     tos::{ClientAcceptTosError, ClientGetTosError, Tos},
     workspace_bootstrap::ClientEnsureWorkspacesBootstrappedError,
@@ -70,7 +71,6 @@ pub use recovery_device::{
     ImportRecoveryDeviceError, RegisterNewDeviceError,
 };
 
-pub use pki_enrollment_submit::pki_enrollment_submit;
 // Re-exposed for public API
 pub use crate::certif::{
     CertifForgetAllCertificatesError as ClientForgetAllCertificatesError,

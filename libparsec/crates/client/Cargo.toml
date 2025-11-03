@@ -16,11 +16,12 @@ expose-test-methods = []
 
 [dependencies]
 libparsec_client_connection = { workspace = true }
-libparsec_types = { workspace = true }
 libparsec_platform_async = { workspace = true }
 libparsec_platform_device_loader = { workspace = true }
+libparsec_platform_pki = { workspace = true }
 libparsec_platform_storage = { workspace = true }
 libparsec_protocol = { workspace = true }
+libparsec_types = { workspace = true }
 
 paste = { workspace = true }
 log = { workspace = true }
