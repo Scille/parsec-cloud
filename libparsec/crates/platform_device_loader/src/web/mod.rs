@@ -11,7 +11,7 @@ use libparsec_types::prelude::*;
 use crate::{
     AccountVaultOperationsFetchOpaqueKeyError, ArchiveDeviceError, AvailableDevice,
     DeviceAccessStrategy, DeviceSaveStrategy, ListAvailableDeviceError, LoadCiphertextKeyError,
-    ReadFileError, RemoveDeviceError, SaveDeviceError, UpdateDeviceError,
+    ReadFileError, RemoveDeviceError, SaveDeviceError, SavePkiLocalPendingError, UpdateDeviceError,
 };
 use internal::Storage;
 
@@ -173,4 +173,19 @@ pub(super) async fn remove_device(device_path: &Path) -> Result<(), RemoveDevice
         return Err(RemoveDeviceError::StorageNotAvailable);
     };
     storage.remove_device(device_path).await.map_err(Into::into)
+}
+
+pub(super) async fn save_pki_local_pending(
+    local_pending: LocalPendingEnrollment,
+    local_file: PathBuf,
+) -> Result<(), SavePkiLocalPendingError> {
+    let Ok(storage) = Storage::new().await.inspect_err(|e| {
+        log::error!("Failed to access storage: {e}");
+    }) else {
+        return Err(SavePkiLocalPendingError::StorageNotAvailable);
+    };
+    storage
+        .save_pki_local_pending(local_file, local_pending)
+        .await
+        .map_err(Into::into)
 }

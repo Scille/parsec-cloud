@@ -192,10 +192,18 @@ impl Storage {
         &self,
         key: &Path,
         file_data: &DeviceFile,
-    ) -> Result<(), SaveDeviceFileError> {
+    ) -> Result<(), SaveRawDataError> {
         let data = file_data.dump();
-        log::trace!("Saving device file at {}", key.display());
-        let parent = if let Some(parent) = key.parent() {
+        self.save_raw_data(key, &data).await
+    }
+
+    pub(crate) async fn save_raw_data(
+        &self,
+        path: &Path,
+        data: &[u8],
+    ) -> Result<(), SaveRawDataError> {
+        log::trace!("Saving device file at {}", path.display());
+        let parent = if let Some(parent) = path.parent() {
             Some(self.root_dir.create_dir_all(parent).await?)
         } else {
             None
@@ -204,7 +212,7 @@ impl Storage {
             .as_ref()
             .unwrap_or(&self.root_dir)
             .get_file(
-                key.file_name()
+                path.file_name()
                     .and_then(std::ffi::OsStr::to_str)
                     .expect("Missing filename"),
                 Some(OpenOptions::create()),
@@ -246,6 +254,15 @@ impl Storage {
             .remove_entry_from_path(path)
             .await
             .map_err(Into::into)
+    }
+
+    pub(crate) async fn save_pki_local_pending(
+        &self,
+        local_file: PathBuf,
+        file_data: LocalPendingEnrollment,
+    ) -> Result<(), SaveRawDataError> {
+        let data = file_data.dump();
+        self.save_raw_data(&local_file, &data).await
     }
 }
 

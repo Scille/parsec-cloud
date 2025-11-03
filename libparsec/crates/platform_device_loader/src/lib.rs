@@ -135,6 +135,20 @@ pub fn get_default_key_file(config_dir: &Path, device_id: DeviceID) -> PathBuf {
     device_path
 }
 
+pub fn get_default_local_pending_file(config_dir: &Path, enrollment_id: EnrollmentID) -> PathBuf {
+    let mut local_pending_path = get_local_pending_dir(config_dir);
+
+    local_pending_path.push(format!("{}.{LOCAL_PENDING_EXT}", enrollment_id.hex()));
+
+    local_pending_path
+}
+
+const LOCAL_PENDING_EXT: &str = ".pending";
+
+fn get_local_pending_dir(config_dir: &Path) -> PathBuf {
+    config_dir.join("pending_requests")
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum ListAvailableDeviceError {
     #[error("Device storage is not available")]
@@ -726,4 +740,33 @@ fn server_url_from_device(device: &LocalDevice) -> String {
     )
     .to_http_url(None)
     .to_string()
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum SavePkiLocalPendingError {
+    #[error("Device storage is not available")]
+    StorageNotAvailable,
+    #[error(transparent)]
+    InvalidPath(anyhow::Error),
+    #[error(transparent)]
+    Internal(anyhow::Error),
+}
+
+impl From<SaveDeviceError> for SavePkiLocalPendingError {
+    fn from(value: SaveDeviceError) -> Self {
+        match value {
+            SaveDeviceError::StorageNotAvailable => Self::StorageNotAvailable,
+            SaveDeviceError::InvalidPath(error) => Self::InvalidPath(error),
+            SaveDeviceError::Internal(error) => Self::Internal(error),
+            _ => unreachable!(),
+        }
+    }
+}
+
+pub async fn save_pki_local_pending(
+    local_pending: LocalPendingEnrollment,
+    local_file: PathBuf,
+) -> Result<(), SavePkiLocalPendingError> {
+    log::debug!("Saving local device at {}", local_file.display());
+    platform::save_pki_local_pending(local_pending, local_file).await
 }
