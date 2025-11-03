@@ -94,12 +94,12 @@ error_set::error_set! {
         GetFile(GetFileHandleError),
         ReadFile(ReadToEndError),
     }
-    SaveDeviceError := SaveDeviceFileError || {
+    SaveDeviceError := SaveRawDataError || {
         RemoteOpaqueKeyUploadFailed(anyhow::Error),
         RemoteOpaqueKeyUploadOffline(ConnectionError),
         Internal(anyhow::Error),
     }
-    SaveDeviceFileError := GetFileHandleError || WriteAllError
+    SaveRawDataError := GetFileHandleError || WriteAllError
     RemoveEntryError := NotFoundError || DomExceptionError || AwaitPromiseError || GetDirectoryHandleError
     ArchiveDeviceError := RemoveEntryError || {
         GetDeviceToArchive(GetFileHandleError),
@@ -107,7 +107,7 @@ error_set::error_set! {
         CreateArchiveDevice(GetFileHandleError),
         WriteArchiveDevice(WriteAllError),
     }
-    RemoveDeviceError := SaveDeviceFileError
+    RemoveDeviceError := SaveRawDataError
 }
 
 macro_rules! impl_from_new_storage_error {
@@ -209,5 +209,23 @@ impl From<RemoveDeviceError> for crate::RemoveDeviceError {
 impl From<ArchiveDeviceError> for crate::ArchiveDeviceError {
     fn from(value: ArchiveDeviceError) -> Self {
         Self::Internal(anyhow::anyhow!("{value}"))
+    }
+}
+
+impl From<SaveRawDataError> for crate::SavePkiLocalPendingError {
+    fn from(value: SaveRawDataError) -> Self {
+        match value {
+            SaveRawDataError::NotAFile { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
+            SaveRawDataError::NotADirectory { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
+            SaveRawDataError::NotFound { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
+            SaveRawDataError::CreateWritable { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            SaveRawDataError::CannotEdit { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            SaveRawDataError::Write { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            SaveRawDataError::Close { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            SaveRawDataError::DomException { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            SaveRawDataError::Cast { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            SaveRawDataError::Promise { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            SaveRawDataError::NoSpaceLeft { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+        }
     }
 }

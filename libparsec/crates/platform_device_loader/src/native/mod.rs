@@ -10,8 +10,8 @@ use crate::{
     encrypt_device, get_device_archive_path, AccountVaultOperationsFetchOpaqueKeyError,
     AccountVaultOperationsUploadOpaqueKeyError, ArchiveDeviceError, AvailableDevice,
     DeviceAccessStrategy, DeviceSaveStrategy, ListAvailableDeviceError, LoadCiphertextKeyError,
-    LoadDeviceError, ReadFileError, RemoveDeviceError, SaveDeviceError, UpdateDeviceError,
-    DEVICE_FILE_EXT,
+    LoadDeviceError, ReadFileError, RemoveDeviceError, SaveDeviceError, SavePkiLocalPendingError,
+    UpdateDeviceError, DEVICE_FILE_EXT,
 };
 use libparsec_platform_pki::{decrypt_message, encrypt_message};
 use libparsec_types::prelude::*;
@@ -521,4 +521,14 @@ pub(super) fn is_keyring_available() -> bool {
             false
         }
     }
+}
+
+pub async fn save_pki_local_pending(
+    local_pending: LocalPendingEnrollment,
+    local_file: PathBuf,
+) -> Result<(), SavePkiLocalPendingError> {
+    let file_content = local_pending.dump();
+    save_content(&local_file, &file_content)
+        .await
+        .map_err(Into::into)
 }

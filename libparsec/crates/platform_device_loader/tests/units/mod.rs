@@ -6,6 +6,7 @@ libparsec_tests_lite::platform::wasm_bindgen_test_configure!(run_in_browser run_
 mod archive;
 mod list;
 mod load;
+mod pki;
 mod recovery;
 mod remove;
 mod save;
