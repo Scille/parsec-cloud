@@ -3173,6 +3173,7 @@ dependencies = [
  "libparsec_platform_mountpoint",
  "libparsec_tests_fixtures",
  "log",
+ "parsec-cli",
  "predicates",
  "reqwest",
  "rexpect",

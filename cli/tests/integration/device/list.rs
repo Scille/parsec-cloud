@@ -1,9 +1,7 @@
 use libparsec::{tmp_path, TmpPath};
 
-use crate::{
-    integration_tests::bootstrap_cli_test,
-    utils::{GREEN, RESET, YELLOW},
-};
+use crate::bootstrap_cli_test;
+use parsec_cli::utils::{GREEN, RESET, YELLOW};
 
 #[rstest::rstest]
 #[tokio::test]

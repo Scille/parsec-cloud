@@ -8,8 +8,7 @@ use libparsec::{
 };
 
 use crate::{
-    integration_tests::bootstrap_cli_test,
-    std_cmd,
+    bootstrap_cli_test,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
 };
 
@@ -18,7 +17,7 @@ use crate::{
 async fn invite_shared_recovery(tmp_path: TmpPath) {
     let (_, TestOrganization { alice, bob, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
-    crate::integration_tests::shared_recovery_create(&alice, &bob, None);
+    crate::shared_recovery_create(&alice, &bob, None);
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
@@ -38,7 +37,7 @@ async fn invite_shared_recovery(tmp_path: TmpPath) {
 async fn invite_shared_recovery_dance(tmp_path: TmpPath) {
     let (_, TestOrganization { alice, bob, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
-    crate::integration_tests::shared_recovery_create(&alice, &bob, None);
+    crate::shared_recovery_create(&alice, &bob, None);
     let cmds = AuthenticatedCmds::new(
         &get_default_config_dir(),
         bob.clone(),
@@ -71,7 +70,7 @@ async fn invite_shared_recovery_dance(tmp_path: TmpPath) {
     let token = invitation_addr.token();
 
     // spawn greeter thread
-    let program_greeter = std_cmd!(
+    let program_greeter = crate::std_cmd!(
         "invite",
         "greet",
         "--device",
@@ -80,17 +79,15 @@ async fn invite_shared_recovery_dance(tmp_path: TmpPath) {
     );
 
     let p_greeter = Arc::new(Mutex::new(
-        crate::integration_tests::spawn_interactive_command(dbg!(program_greeter), Some(1000))
-            .unwrap(),
+        crate::spawn_interactive_command(dbg!(program_greeter), Some(1000)).unwrap(),
     ));
 
     // spawn claimer thread
 
-    let program_claimer = std_cmd!("invite", "claim", invitation_addr.to_url().as_ref());
+    let program_claimer = crate::std_cmd!("invite", "claim", invitation_addr.to_url().as_ref());
 
     let p_claimer = Arc::new(Mutex::new(
-        crate::integration_tests::spawn_interactive_command(dbg!(program_claimer), Some(10_000))
-            .unwrap(),
+        crate::spawn_interactive_command(dbg!(program_claimer), Some(10_000)).unwrap(),
     ));
 
     // retrieve greeter code

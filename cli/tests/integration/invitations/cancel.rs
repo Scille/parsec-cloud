@@ -4,7 +4,7 @@ use libparsec::{
 };
 
 use crate::{
-    integration_tests::bootstrap_cli_test,
+    bootstrap_cli_test,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
 };
 

@@ -8,11 +8,10 @@ use libparsec::{
 };
 
 use crate::{
-    integration_tests::bootstrap_cli_test,
-    std_cmd,
+    bootstrap_cli_test,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
-    utils::YELLOW,
 };
+use parsec_cli::utils::YELLOW;
 
 #[rstest::rstest]
 #[tokio::test]
@@ -76,7 +75,7 @@ async fn invite_user_dance(tmp_path: TmpPath) {
 
     // spawn greeter thread
 
-    let program_greeter = std_cmd!(
+    let program_greeter = crate::std_cmd!(
         "invite",
         "greet",
         "--device",
@@ -85,17 +84,15 @@ async fn invite_user_dance(tmp_path: TmpPath) {
     );
 
     let p_greeter = Arc::new(Mutex::new(
-        crate::integration_tests::spawn_interactive_command(dbg!(program_greeter), Some(1000))
-            .unwrap(),
+        crate::spawn_interactive_command(dbg!(program_greeter), Some(1000)).unwrap(),
     ));
 
     // spawn claimer thread
 
-    let program_claimer = std_cmd!("invite", "claim", invitation_addr.to_url().as_ref());
+    let program_claimer = crate::std_cmd!("invite", "claim", invitation_addr.to_url().as_ref());
 
     let p_claimer = Arc::new(Mutex::new(
-        crate::integration_tests::spawn_interactive_command(dbg!(program_claimer), Some(10_000))
-            .unwrap(),
+        crate::spawn_interactive_command(dbg!(program_claimer), Some(10_000)).unwrap(),
     ));
 
     // retrieve greeter code

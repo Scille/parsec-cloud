@@ -1,10 +1,10 @@
 use libparsec::{tmp_path, TmpPath};
 
-use crate::integration_tests::shared_recovery_create;
-use crate::testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD};
-use crate::utils::*;
-
-use crate::integration_tests::bootstrap_cli_test;
+use crate::{
+    bootstrap_cli_test, shared_recovery_create,
+    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
+};
+use parsec_cli::utils::{GREEN, RESET};
 
 #[rstest::rstest]
 #[tokio::test]

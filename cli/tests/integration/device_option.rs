@@ -3,12 +3,11 @@ use std::sync::Arc;
 use libparsec::{tmp_path, HumanHandle, LocalDevice, ParsecAddr, TmpPath};
 use predicates::prelude::PredicateBooleanExt;
 
-use super::bootstrap_cli_test;
-use crate::{
-    testenv_utils::TestOrganization,
-    utils::get_minimal_short_id_size,
-    utils::{RESET, YELLOW},
+use super::{
+    bootstrap_cli_test,
+    testenv_utils::{create_new_device, create_new_user, TestOrganization},
 };
+use parsec_cli::utils::{get_minimal_short_id_size, RESET, YELLOW};
 
 #[rstest::rstest]
 #[tokio::test]
@@ -110,7 +109,7 @@ async fn multiple_device_found(tmp_path: TmpPath) {
         .unwrap();
 
     let org_id = super::unique_org_id();
-    let org_addr = crate::commands::organization::create::create_organization_req(
+    let org_addr = parsec_cli::commands::organization::create::create_organization_req(
         &org_id,
         &url,
         crate::testenv_utils::DEFAULT_ADMINISTRATION_TOKEN,
@@ -120,7 +119,7 @@ async fn multiple_device_found(tmp_path: TmpPath) {
 
     let client_config = libparsec::ClientConfig::default();
     let first_available_device =
-        crate::commands::organization::bootstrap::bootstrap_organization_req(
+        parsec_cli::commands::organization::bootstrap::bootstrap_organization_req(
             client_config.clone(),
             org_addr,
             "dev1".parse().unwrap(),
@@ -212,14 +211,14 @@ async fn create_second_device(
     ));
 
     let now = author.now();
-    let (user_cert, redacted_user_cert) = crate::testenv_utils::create_new_user(
+    let (user_cert, redacted_user_cert) = create_new_user(
         second_device.clone(),
         author.clone(),
         libparsec::UserProfile::Standard,
         now,
     );
     let (dev_cert, redacted_dev_cert) =
-        crate::testenv_utils::create_new_device(second_device.clone(), author.clone(), now);
+        create_new_device(second_device.clone(), author.clone(), now);
 
     match cmds
         .send(libparsec::authenticated_cmds::latest::user_create::Req {

@@ -1,10 +1,8 @@
 use libparsec::{tmp_path, TmpPath};
 
 use super::bootstrap_cli_test;
-use crate::{
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
-    utils::start_client,
-};
+use crate::testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD};
+use parsec_cli::utils::start_client;
 
 #[rstest::rstest]
 #[tokio::test]

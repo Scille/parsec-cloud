@@ -2,10 +2,10 @@ use libparsec::{tmp_path, TmpPath};
 use predicates::prelude::PredicateBooleanExt;
 
 use crate::{
-    integration_tests::bootstrap_cli_test,
+    bootstrap_cli_test,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
-    utils::{GREEN, RESET},
 };
+use parsec_cli::utils::{GREEN, RESET};
 
 #[rstest::rstest]
 #[tokio::test]

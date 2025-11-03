@@ -3,10 +3,10 @@ use std::sync::Arc;
 use libparsec::{internal::Client, tmp_path, EntryName, EntryStat, LocalDevice, TmpPath, VlobID};
 
 use crate::{
-    integration_tests::bootstrap_cli_test,
+    bootstrap_cli_test,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
-    utils::{start_client, StartedClient},
 };
+use parsec_cli::utils::{start_client, StartedClient};
 
 struct Setup {
     alice_client: Arc<StartedClient>,

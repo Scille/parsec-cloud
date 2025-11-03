@@ -4,9 +4,11 @@ use libparsec::{tmp_path, OrganizationID, ParsecAddr, TmpPath};
 use predicates::prelude::PredicateBooleanExt;
 
 use crate::{
-    commands::tos::config::{config_tos_for_org_req, TosReq},
-    integration_tests::bootstrap_cli_test,
+    bootstrap_cli_test,
     testenv_utils::{TestOrganization, DEFAULT_ADMINISTRATION_TOKEN, DEFAULT_DEVICE_PASSWORD},
+};
+use parsec_cli::{
+    commands::tos::config::{config_tos_for_org_req, TosReq},
     utils::BULLET_CHAR,
 };
 

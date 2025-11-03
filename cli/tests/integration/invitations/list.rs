@@ -5,10 +5,10 @@ use libparsec::{
 use predicates::prelude::PredicateBooleanExt;
 
 use crate::{
-    integration_tests::bootstrap_cli_test,
+    bootstrap_cli_test,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
-    utils::{RESET, YELLOW},
 };
+use parsec_cli::utils::{RESET, YELLOW};
 
 async fn invite_device(cmds: &AuthenticatedCmds) -> InvitationToken {
     let rep = cmds

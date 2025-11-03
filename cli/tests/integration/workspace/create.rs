@@ -1,10 +1,10 @@
 use libparsec::{tmp_path, RealmRole, TmpPath};
 
 use crate::{
-    integration_tests::bootstrap_cli_test,
+    bootstrap_cli_test,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
-    utils::start_client,
 };
+use parsec_cli::utils::start_client;
 
 #[rstest::rstest]
 #[tokio::test]
