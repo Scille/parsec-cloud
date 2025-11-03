@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import uuid
 from base64 import b64decode, b64encode
+from collections import defaultdict
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any
@@ -54,6 +57,9 @@ from parsec.config import (
     MockedDatabaseConfig,
     MockedEmailConfig,
     MockedSentEmail,
+    OpenBaoAuthConfig,
+    OpenBaoAuthType,
+    OpenBaoConfig,
     PostgreSQLBlockStoreConfig,
     PostgreSQLDatabaseConfig,
 )
@@ -109,6 +115,8 @@ class TestbedBackend:
         # keys: template ID, values: (to duplicate organization ID, CRC, template content)
         self._loaded_templates = {} if loaded_templates is None else loaded_templates
         self.template_per_org: dict[OrganizationID, TestbedTemplateContent] = {}
+        # We expose some routes to simulate a OpenBao server, hence this field
+        self.openbao_secrets: defaultdict[tuple[str, str], list[Any]] = defaultdict(list)
 
     async def get_template(self, template: str) -> TestbedTemplate:
         try:
@@ -356,6 +364,107 @@ async def test_corruption(raw_organization_id: str, request: Request) -> Respons
     return Response(status_code=200, content=b"")
 
 
+def _openbao_entity_id_from_vault_token_header(request: Request) -> str | None:
+    auth_token = request.headers.get("x-vault-token", "")
+    if not auth_token.startswith("s."):
+        return None
+    return str(uuid.UUID(bytes=hashlib.sha256(auth_token.encode()).digest()[:16]))
+
+
+@testbed_router.get("/testbed/mock/openbao/v1/auth/token/lookup-self")
+async def test_openbao_auth_token_lookup_self(request: Request):
+    entity_id = _openbao_entity_id_from_vault_token_header(request)
+    if not entity_id:
+        return Response(status_code=403)
+
+    # See https://openbao.org/api-docs/auth/token/#sample-response-2
+
+    return {
+        "data": {
+            "accessor": "8609694a-cdbc-db9b-d345-e782dbb562ed",
+            "creation_time": 1523979354,
+            "creation_ttl": 2764800,
+            "display_name": "oidc-tesla",
+            "entity_id": entity_id,
+            "expire_time": "2018-05-19T11:35:54.466476215-04:00",
+            "explicit_max_ttl": 0,
+            "id": "cf64a70f-3a12-3f6c-791d-6cef6d390eed",
+            "identity_policies": ["dev-group-policy"],
+            "issue_time": "2018-04-17T11:35:54.466476078-04:00",
+            "meta": {"username": "tesla"},
+            "num_uses": 0,
+            "orphan": True,
+            "path": "auth/oidc/login/tesla",
+            "policies": ["default", "testgroup2-policy"],
+            "renewable": True,
+            "ttl": 2764790,
+        }
+    }
+
+
+@testbed_router.get("/testbed/mock/openbao/v1/secret/parsec-keys/data/{secret_path:path}")
+async def test_openbao_read_secret(secret_path: str, request: Request):
+    testbed: TestbedBackend = request.app.state.testbed
+
+    entity_id = _openbao_entity_id_from_vault_token_header(request)
+    if not entity_id:
+        return Response(status_code=403)
+
+    secret_versions = testbed.openbao_secrets[(entity_id, secret_path)]
+    if not secret_versions:
+        return Response(status_code=404)
+
+    # See https://openbao.org/api-docs/secret/kv/kv-v2/#sample-response-1
+
+    return {
+        "data": {
+            "data": secret_versions[-1],
+            "metadata": {
+                "created_time": "2018-03-22T02:24:06.945319214Z",
+                "custom_metadata": {"owner": "alice", "mission_critical": "false"},
+                "deletion_time": "",
+                "destroyed": False,
+                "version": len(secret_versions),
+            },
+        }
+    }
+
+
+@testbed_router.post("/testbed/mock/openbao/v1/secret/parsec-keys/data/{secret_path:path}")
+async def test_openbao_create_secret(secret_path: str, request: Request):
+    testbed: TestbedBackend = request.app.state.testbed
+
+    entity_id = _openbao_entity_id_from_vault_token_header(request)
+    if not entity_id:
+        return Response(status_code=403)
+
+    # See https://openbao.org/api-docs/secret/kv/kv-v2/#sample-payload-1
+
+    req = await request.json()
+    cas = req.get("option", {}).get("cas")
+    if not (cas is None or isinstance(cas, int)):
+        return Response(status_code=400)
+    secret_data = req.get("data")
+
+    secret_current_version = len(testbed.openbao_secrets.get((entity_id, secret_path), []))
+    if cas is not None and secret_current_version != cas:
+        return Response(status_code=409)
+
+    testbed.openbao_secrets[(entity_id, secret_path)].append(secret_data)
+
+    # See https://openbao.org/api-docs/secret/kv/kv-v2/#sample-payload-1
+
+    return {
+        "data": {
+            "created_time": "2018-03-22T02:36:43.986212308Z",
+            "custom_metadata": {"owner": "alice", "mission_critical": "false"},
+            "deletion_time": "",
+            "destroyed": False,
+            "version": 1,
+        }
+    }
+
+
 @testbed_router.get("/testbed/mailbox/{raw_recipient}")
 async def test_mailbox(raw_recipient: str, request: Request) -> Response:
     testbed: TestbedBackend = request.app.state.testbed
@@ -474,6 +583,20 @@ async def testbed_backend_factory(
         administration_token="s3cr3t",
         fake_account_password_algorithm_seed=SecretKey(b"F" * 32),
         organization_spontaneous_bootstrap=True,
+        openbao_config=OpenBaoConfig(
+            server_url="openbao.parsec.invalid",
+            secret_mount_path="secret/parsec-keys",
+            auths=[
+                OpenBaoAuthConfig(
+                    id=OpenBaoAuthType.HEXAGONE,
+                    mount_path="auth/oidc/hexagone",
+                ),
+                OpenBaoAuthConfig(
+                    id=OpenBaoAuthType.PRO_CONNECT,
+                    mount_path="auth/oidc/pro_connect",
+                ),
+            ],
+        ),
         # Disable the rate limit
         email_rate_limit_cooldown_delay=0,
         email_rate_limit_max_per_hour=0,
