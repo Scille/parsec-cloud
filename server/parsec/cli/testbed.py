@@ -3,16 +3,21 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import uuid
 from base64 import b64decode, b64encode
+from collections import defaultdict
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any
+from urllib.parse import quote_plus
 
 import anyio
 import click
 import structlog
 from fastapi import APIRouter, BackgroundTasks, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 
 from parsec._parsec import (
     AccountAuthMethodID,
@@ -54,6 +59,9 @@ from parsec.config import (
     MockedDatabaseConfig,
     MockedEmailConfig,
     MockedSentEmail,
+    OpenBaoAuthConfig,
+    OpenBaoAuthType,
+    OpenBaoConfig,
     PostgreSQLBlockStoreConfig,
     PostgreSQLDatabaseConfig,
 )
@@ -109,6 +117,8 @@ class TestbedBackend:
         # keys: template ID, values: (to duplicate organization ID, CRC, template content)
         self._loaded_templates = {} if loaded_templates is None else loaded_templates
         self.template_per_org: dict[OrganizationID, TestbedTemplateContent] = {}
+        # We expose some routes to simulate a OpenBao server, hence this field
+        self.openbao_secrets: defaultdict[tuple[str, str], list[Any]] = defaultdict(list)
 
     async def get_template(self, template: str) -> TestbedTemplate:
         try:
@@ -356,6 +366,231 @@ async def test_corruption(raw_organization_id: str, request: Request) -> Respons
     return Response(status_code=200, content=b"")
 
 
+def _openbao_entity_id_from_vault_token_header(request: Request) -> str | None:
+    vault_token = request.headers.get("x-vault-token", "")
+    return _openbao_entity_id_from_vault_token_value(vault_token)
+
+
+def _openbao_entity_id_from_vault_token_value(vault_token: str) -> str | None:
+    if not vault_token.startswith("s."):
+        return None
+    return str(uuid.UUID(bytes=hashlib.sha256(vault_token.encode()).digest()[:16]))
+
+
+@testbed_router.get("/testbed/mock/openbao/v1/auth/token/lookup-self")
+async def test_openbao_auth_token_lookup_self(request: Request):
+    entity_id = _openbao_entity_id_from_vault_token_header(request)
+    if not entity_id:
+        return Response(status_code=403)
+
+    # See https://openbao.org/api-docs/auth/token/#sample-response-2
+
+    return {
+        "data": {
+            "accessor": "8609694a-cdbc-db9b-d345-e782dbb562ed",
+            "creation_time": 1523979354,
+            "creation_ttl": 2764800,
+            "display_name": "oidc-tesla",
+            "entity_id": entity_id,
+            "expire_time": "2018-05-19T11:35:54.466476215-04:00",
+            "explicit_max_ttl": 0,
+            "id": "cf64a70f-3a12-3f6c-791d-6cef6d390eed",
+            "identity_policies": ["dev-group-policy"],
+            "issue_time": "2018-04-17T11:35:54.466476078-04:00",
+            "meta": {"username": "tesla"},
+            "num_uses": 0,
+            "orphan": True,
+            "path": "auth/oidc/login/tesla",
+            "policies": ["default", "testgroup2-policy"],
+            "renewable": True,
+            "ttl": 2764790,
+        }
+    }
+
+
+@testbed_router.get("/testbed/mock/openbao/v1/secret/parsec-keys/data/{secret_path:path}")
+async def test_openbao_read_secret(secret_path: str, request: Request):
+    testbed: TestbedBackend = request.app.state.testbed
+
+    entity_id = _openbao_entity_id_from_vault_token_header(request)
+    if not entity_id:
+        return Response(status_code=403)
+
+    secret_versions = testbed.openbao_secrets[(entity_id, secret_path)]
+    if not secret_versions:
+        return Response(status_code=404)
+
+    # See https://openbao.org/api-docs/secret/kv/kv-v2/#sample-response-1
+
+    return {
+        "data": {
+            "data": secret_versions[-1],
+            "metadata": {
+                "created_time": "2018-03-22T02:24:06.945319214Z",
+                "custom_metadata": {"owner": "alice", "mission_critical": "false"},
+                "deletion_time": "",
+                "destroyed": False,
+                "version": len(secret_versions),
+            },
+        }
+    }
+
+
+@testbed_router.post("/testbed/mock/openbao/v1/secret/parsec-keys/data/{secret_path:path}")
+async def test_openbao_create_secret(secret_path: str, request: Request):
+    testbed: TestbedBackend = request.app.state.testbed
+
+    entity_id = _openbao_entity_id_from_vault_token_header(request)
+    if not entity_id:
+        return Response(status_code=403)
+
+    # See https://openbao.org/api-docs/secret/kv/kv-v2/#sample-payload-1
+
+    try:
+        req = await request.json()
+    except ValueError:
+        return Response("Bad JSON body", status_code=400)
+    cas = req.get("option", {}).get("cas")
+    if not (cas is None or isinstance(cas, int)):
+        return Response(status_code=400)
+    secret_data = req.get("data")
+
+    secret_current_version = len(testbed.openbao_secrets.get((entity_id, secret_path), []))
+    if cas is not None and secret_current_version != cas:
+        return Response(status_code=409)
+
+    testbed.openbao_secrets[(entity_id, secret_path)].append(secret_data)
+
+    # See https://openbao.org/api-docs/secret/kv/kv-v2/#sample-payload-1
+
+    return {
+        "data": {
+            "created_time": "2018-03-22T02:36:43.986212308Z",
+            "custom_metadata": {"owner": "alice", "mission_critical": "false"},
+            "deletion_time": "",
+            "destroyed": False,
+            "version": 1,
+        }
+    }
+
+
+@testbed_router.post("/testbed/mock/openbao/v1/auth/{auth_provider}/oidc/auth_url")
+async def test_openbao_hexagone_oidc_auth_url(request: Request, auth_provider: str):
+    testbed: TestbedBackend = request.app.state.testbed
+
+    # See https://openbao.org/api-docs/secret/kv/kv-v2/#sample-payload-1
+
+    try:
+        req = await request.json()
+    except ValueError:
+        return Response("Bad JSON body", status_code=400)
+    role = req.get("role")
+    if not isinstance(role, str):
+        return Response("Bad/missing field `role`", status_code=400)
+
+    redirect_uri = req.get("redirect_uri")
+    if not isinstance(redirect_uri, str):
+        return Response("Bad/missing field `redirect_uri`", status_code=400)
+
+    sso_base_url = testbed.backend.config.server_addr.to_http_url("/testbed/mock/sso/authorize")
+    auth_url = f"{sso_base_url}?redirect_uri={quote_plus(redirect_uri)}"
+
+    return {
+        "request_id": str(uuid.uuid4()),
+        "lease_id": "",
+        "renewable": False,
+        "lease_duration": 0,
+        "data": {
+            "auth_url": auth_url,
+        },
+        "wrap_info": None,
+        "warnings": None,
+        "auth": None,
+    }
+
+
+@testbed_router.get("/testbed/mock/sso/authorize")
+async def test_openbao_hexagone_auth_url(request: Request):
+    testbed: TestbedBackend = request.app.state.testbed
+
+    match request.query_params.get("expect"):
+        case "ok" | None:
+            pass
+        case "ko":
+            return Response(status_code=403)
+        case _:
+            return Response(
+                "Bad value for parameter `expect` (allowed: `ok` or `ko`)", status_code=400
+            )
+
+    # Since we don't actually do authentication, the discriminant field is used to be
+    # able to isolate different authentication attempts.
+    # The discriminant field is used to generate the `code` field that in turn
+    # is used to compute the vault token... which itself it used to obtain the
+    # entity ID!
+    discriminant = request.query_params.get("discriminant", "alice@example.com")
+    code = hashlib.sha256(discriminant.encode()).hexdigest()
+
+    sso_base_url = testbed.backend.config.server_addr.to_http_url("/testbed/mock/sso/authorize")
+    redirect_uri = request.query_params.get("redirect_uri")
+    if redirect_uri is None:
+        return Response("`redirect_uri` parameter required", status_code=400)
+    redirect_uri = (
+        # cspell: disable-next-line
+        f"{redirect_uri}?code={code}&state=st_VXANtcosv3cCZThfaPLz&iss={quote_plus(sso_base_url)}"  # 
+    )
+
+    return RedirectResponse(url=redirect_uri, status_code=302)
+
+
+@testbed_router.get("/testbed/mock/openbao/v1/auth/{auth_provider}/oidc/callback")
+async def test_openbao_hexagone_oidc_callback(request: Request, auth_provider: str):
+    # See https://openbao.org/api-docs/auth/jwt/#sample-response-3
+
+    state = request.query_params.get("state")
+    if state is None:
+        return Response("Missing parameter `state`", status_code=400)
+    # cspell: disable-next-line
+    if state != "st_VXANtcosv3cCZThfaPLz":
+        return Response(
+            # cspell: disable-next-line
+            "Bad value for field `state` (always expects the dummy constant `st_VXANtcosv3cCZThfaPLz`)",
+            status_code=400,
+        )
+
+    code = request.query_params.get("code")
+    if code is None:
+        return Response("Missing parameter `code`", status_code=400)
+
+    vault_token = "s." + code
+    entity_id = _openbao_entity_id_from_vault_token_value(vault_token)
+    assert entity_id is not None
+
+    return {
+        "request_id": str(uuid.uuid4()),
+        "lease_id": "",
+        "renewable": False,
+        "lease_duration": 0,
+        "data": None,
+        "wrap_info": None,
+        "warnings": None,
+        "auth": {
+            "client_token": vault_token,
+            "accessor": "9MOq1KMqjLpsEJ3baKfx1qh5",
+            "policies": ["default"],
+            "token_policies": ["default"],
+            "metadata": {"role": "default"},
+            "lease_duration": 60,
+            "renewable": True,
+            "entity_id": entity_id,
+            "token_type": "service",
+            "orphan": True,
+            "mfa_requirement": None,
+            "num_uses": 0,
+        },
+    }
+
+
 @testbed_router.get("/testbed/mailbox/{raw_recipient}")
 async def test_mailbox(raw_recipient: str, request: Request) -> Response:
     testbed: TestbedBackend = request.app.state.testbed
@@ -474,6 +709,20 @@ async def testbed_backend_factory(
         administration_token="s3cr3t",
         fake_account_password_algorithm_seed=SecretKey(b"F" * 32),
         organization_spontaneous_bootstrap=True,
+        openbao_config=OpenBaoConfig(
+            server_url=server_addr.to_http_url("/testbed/mock/openbao"),
+            secret_mount_path="secret/parsec-keys",
+            auths=[
+                OpenBaoAuthConfig(
+                    id=OpenBaoAuthType.HEXAGONE,
+                    mount_path="auth/hexagone",
+                ),
+                OpenBaoAuthConfig(
+                    id=OpenBaoAuthType.PRO_CONNECT,
+                    mount_path="auth/pro_connect",
+                ),
+            ],
+        ),
         # Disable the rate limit
         email_rate_limit_cooldown_delay=0,
         email_rate_limit_max_per_hour=0,
@@ -506,11 +755,10 @@ async def testbed_backend_factory(
 @click.option(
     "--server-addr",
     envvar="PARSEC_SERVER_ADDR",
-    default="parsec3://saas.parsec.invalid",
-    show_default=True,
     metavar="URL",
-    type=ParsecAddr.from_url,
-    help="URL to reach this server (typically used in invitation emails)",
+    help="""URL to reach this server (typically used in invitation emails)
+[default: parsec3://localhost:$PORT?no_ssl=True]
+""",
 )
 @click.option(
     "--with-postgresql",
@@ -535,7 +783,7 @@ async def testbed_backend_factory(
 def testbed_cmd(
     host: str,
     port: int,
-    server_addr: ParsecAddr,
+    server_addr: str | None,
     with_postgresql: str | None,
     stop_after_process: int | None,
     log_level: LogLevel,
@@ -543,6 +791,10 @@ def testbed_cmd(
     log_file: str | None,
     debug: bool,
 ) -> None:
+    if server_addr is None:
+        server_addr = f"parsec3://localhost:{port}?no_ssl=True"
+    cooked_server_addr = ParsecAddr.from_url(server_addr)
+
     async def _run_testbed():
         # Task group must be enclosed by backend (and not the other way around !)
         # given we will sleep forever in it __aexit__ part
@@ -563,7 +815,7 @@ def testbed_cmd(
                 tg.start_soon(_watch_and_stop_after_process, stop_after_process, tg.cancel_scope)
 
             async with testbed_backend_factory(
-                server_addr=server_addr, with_postgresql=with_postgresql
+                server_addr=cooked_server_addr, with_postgresql=with_postgresql
             ) as testbed:
                 click.secho("All set !", fg="yellow")
                 click.echo("Don't forget to export `TESTBED_SERVER` environ variable:")
