@@ -2238,6 +2238,7 @@ dependencies = [
  "libparsec_client_connection",
  "libparsec_platform_async",
  "libparsec_platform_device_loader",
+ "libparsec_platform_pki",
  "libparsec_platform_realm_export",
  "libparsec_platform_storage",
  "libparsec_protocol",
