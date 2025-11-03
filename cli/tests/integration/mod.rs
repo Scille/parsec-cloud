@@ -1,3 +1,5 @@
+#![allow(clippy::unwrap_used)]
+
 mod certificate;
 mod device;
 mod device_option;
@@ -18,19 +20,18 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::utils::*;
 use libparsec::LocalDevice;
 use libparsec::{
     ClientConfig, OrganizationID, ParsecAddr, TmpPath, PARSEC_BASE_CONFIG_DIR,
     PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR,
 };
+use parsec_cli::utils::{GREEN, RED, RESET};
 use std::sync::Arc;
 
-use crate::testenv_utils::DEFAULT_DEVICE_PASSWORD;
-
-use crate::testenv_utils::{
+pub use parsec_cli::testenv_utils;
+use parsec_cli::testenv_utils::{
     initialize_test_organization, new_environment, parsec_addr_from_http_url, TestOrganization,
-    TestenvConfig, TESTBED_SERVER,
+    TestenvConfig, DEFAULT_DEVICE_PASSWORD, TESTBED_SERVER,
 };
 
 fn get_testenv_config() -> TestenvConfig {
@@ -129,8 +130,7 @@ macro_rules! assert_cmd {
             .write_stdin(format!("{password}\n", password = $pass))
     };
     ($($cmd:expr),+) => {
-        assert_cmd::Command::cargo_bin("parsec-cli")
-            .unwrap()
+        assert_cmd::cargo::cargo_bin_cmd!("parsec-cli")
             .args([$($cmd),+])
     };
 }
@@ -154,8 +154,7 @@ macro_rules! assert_cmd_failure {
 macro_rules! std_cmd {
     ($($args:expr),*) => {
         {
-            use assert_cmd::cargo::CommandCargoExt;
-            let mut command = std::process::Command::cargo_bin("parsec-cli").unwrap();
+            let mut command = std::process::Command::new(assert_cmd::cargo::cargo_bin!("parsec-cli"));
             command.args([$($args),*]);
             command
         }

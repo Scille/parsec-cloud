@@ -13,6 +13,10 @@ autotests = false
 name = "minimal_short_id"
 harness = false
 
+[[test]]
+name = "integration"
+path = "tests/integration/mod.rs"
+
 [features]
 use-libsodium = ["libparsec_crypto/use-libsodium"]
 vendored-openssl = ["libparsec_crypto/vendored-openssl"]
@@ -47,6 +51,7 @@ itertools = { workspace = true, features = ["use_std"] }
 [dev-dependencies]
 libparsec = { workspace = true, features = ["cli-tests"] }
 libparsec_tests_fixtures = { workspace = true }
+parsec-cli = { path = ".", features = ["testenv"] }
 
 assert_cmd = { workspace = true }
 predicates = { workspace = true, features = ["regex"] }

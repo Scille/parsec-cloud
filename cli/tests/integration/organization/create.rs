@@ -1,8 +1,9 @@
 use libparsec::{tmp_path, TmpPath};
 
 use crate::{
-    integration_tests::{bootstrap_cli_test, unique_org_id},
+    bootstrap_cli_test,
     testenv_utils::{DEFAULT_ADMINISTRATION_TOKEN, TESTBED_SERVER},
+    unique_org_id,
 };
 
 #[rstest::rstest]

@@ -1,10 +1,11 @@
 use libparsec::{tmp_path, SequesterKeySize, SequesterSigningKeyDer, TmpPath};
 
 use crate::{
-    commands::organization::create::create_organization_req,
-    integration_tests::{bootstrap_cli_test, unique_org_id},
+    bootstrap_cli_test,
     testenv_utils::{DEFAULT_ADMINISTRATION_TOKEN, DEFAULT_DEVICE_PASSWORD, TESTBED_SERVER},
+    unique_org_id,
 };
+use parsec_cli::commands::organization::create::create_organization_req;
 
 #[rstest::rstest]
 #[tokio::test]

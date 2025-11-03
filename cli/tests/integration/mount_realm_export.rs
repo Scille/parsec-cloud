@@ -63,9 +63,7 @@ async fn sequester_decryptor(tmp_path: TmpPath) {
             // Ensure parsec-cli is built (since `assert_cmd::cargo::cargo_bin` just return
             // a path to the binary without doing such check)
             tokio::task::spawn_blocking(|| {
-                assert_cmd::Command::cargo_bin("parsec-cli")
-                    .unwrap()
-                    .args(["mount-realm-export", "--help"])
+                crate::assert_cmd!("mount-realm-export", "--help")
                     .ok()
                     .unwrap();
             })
@@ -77,23 +75,21 @@ async fn sequester_decryptor(tmp_path: TmpPath) {
                 .await
                 .unwrap();
 
-            let cli_path = assert_cmd::cargo::cargo_bin("parsec-cli");
-            let cli_process = std::process::Command::new(cli_path)
-                .current_dir(&base_mountpoint_path)
-                .args([
-                    "mount-realm-export",
-                    "--decryptor",
-                    &format!(
-                        "sequester:{}:{}",
-                        sequester_id,
-                        sequester_private_key_path.to_string_lossy()
-                    ),
-                    "--timestamp",
-                    "2000-01-16T00:00:00Z",
-                    &export_db_path.to_string_lossy(),
-                ])
-                .spawn()
-                .unwrap();
+            let cli_process = crate::std_cmd!(
+                "mount-realm-export",
+                "--decryptor",
+                &format!(
+                    "sequester:{}:{}",
+                    sequester_id,
+                    sequester_private_key_path.to_string_lossy()
+                ),
+                "--timestamp",
+                "2000-01-16T00:00:00Z",
+                &export_db_path.to_string_lossy()
+            )
+            .current_dir(&base_mountpoint_path)
+            .spawn()
+            .unwrap();
 
             struct KillOnDrop(std::process::Child);
             impl Drop for KillOnDrop {

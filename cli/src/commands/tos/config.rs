@@ -50,7 +50,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
 }
 
 #[derive(serde::Serialize)]
-pub(crate) struct TosReq<'a> {
+pub struct TosReq<'a> {
     tos: Option<HashMap<&'a str, &'a str>>,
 }
 
@@ -59,12 +59,12 @@ impl<'a> TosReq<'a> {
         Self { tos: None }
     }
 
-    pub(crate) fn set_tos(tos: HashMap<&'a str, &'a str>) -> Self {
+    pub fn set_tos(tos: HashMap<&'a str, &'a str>) -> Self {
         Self { tos: Some(tos) }
     }
 }
 
-pub(crate) async fn config_tos_for_org_req<'a>(
+pub async fn config_tos_for_org_req<'a>(
     addr: &ParsecAddr,
     token: &'a str,
     organization: &OrganizationID,

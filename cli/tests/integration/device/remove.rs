@@ -1,21 +1,15 @@
 use std::io::{BufReader, Write};
 
-use assert_cmd::cargo::CommandCargoExt;
 use libparsec::{tmp_path, TmpPath};
 
-use crate::{
-    integration_tests::{bootstrap_cli_test, wait_for},
-    testenv_utils::TestOrganization,
-};
+use crate::{bootstrap_cli_test, testenv_utils::TestOrganization, wait_for};
 
 #[rstest::rstest]
 #[tokio::test]
 async fn remove_device(tmp_path: TmpPath) {
     let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
-    let mut process = std::process::Command::cargo_bin("parsec-cli")
-        .unwrap()
-        .args(["device", "remove", "--device", &alice.device_id.hex()])
+    let mut process = crate::std_cmd!("device", "remove", "--device", &alice.device_id.hex())
         .stdin(std::process::Stdio::piped())
         .stderr(std::process::Stdio::inherit())
         .stdout(std::process::Stdio::piped())
