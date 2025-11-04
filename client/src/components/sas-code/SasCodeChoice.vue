@@ -37,7 +37,7 @@
     <ion-button
       class="button-medium"
       id="noneChoicesButton"
-      fill="clear"
+      fill="outline"
       :disabled="disabled"
       @click="onNoneClicked"
     >
@@ -100,16 +100,6 @@ ion-button {
     border: none;
   }
 
-  &:last-child {
-    grid-area: 3 / 1 / 4 / 3;
-    position: relative;
-  }
-
-  @include ms.responsive-breakpoint('sm') {
-    height: 4rem;
-    margin: 0;
-  }
-
   &:focus-within {
     outline: 2px solid var(--parsec-color-light-primary-400);
     outline-offset: 3px;
@@ -120,6 +110,35 @@ ion-button {
   &:hover {
     background-color: var(--parsec-color-light-primary-100);
     border-color: var(--parsec-color-light-primary-600);
+  }
+
+  &:last-child {
+    grid-area: 3 / 1 / 4 / 3;
+    position: relative;
+    height: 2.5rem;
+
+    @include ms.responsive-breakpoint('sm') {
+      height: 3rem;
+      font-size: 1rem;
+    }
+
+    &::part(native) {
+      border: 2px solid var(--parsec-color-light-primary-300);
+    }
+
+    &:hover {
+      background-color: var(--parsec-color-light-primary-50);
+    }
+
+    &:focus-within::part(native) {
+      border: none;
+      color: var(--parsec-color-light-primary-700);
+    }
+  }
+
+  @include ms.responsive-breakpoint('sm') {
+    height: 4rem;
+    margin: 0;
   }
 }
 
