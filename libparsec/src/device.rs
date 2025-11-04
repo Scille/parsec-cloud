@@ -15,14 +15,20 @@ mod strategy {
         Account, AccountFetchOpaqueKeyFromVaultError, AccountUploadOpaqueKeyInVaultError,
     };
     use libparsec_crypto::{Password, SecretKey};
+    use libparsec_openbao::{OpenBaoCmds, OpenBaoFetchOpaqueKeyError, OpenBaoUploadOpaqueKeyError};
     use libparsec_platform_async::pretend_future_is_send_on_web;
     use libparsec_platform_device_loader::{
         AccountVaultOperationsFetchOpaqueKeyError, AccountVaultOperationsUploadOpaqueKeyError,
+        OpenBaoOperationsFetchOpaqueKeyError, OpenBaoOperationsUploadOpaqueKeyError,
         PinBoxFutureResult,
     };
     use libparsec_types::prelude::*;
 
     use crate::handle::{borrow_from_handle, Handle, HandleItem};
+
+    /*
+     * Account vault operations
+     */
 
     #[derive(Debug)]
     struct AccountVaultOperations {
@@ -83,13 +89,112 @@ mod strategy {
                         AccountUploadOpaqueKeyInVaultError::Offline(err) => {
                             AccountVaultOperationsUploadOpaqueKeyError::Offline(err)
                         }
-                        AccountUploadOpaqueKeyInVaultError::Internal(err) => {
-                            AccountVaultOperationsUploadOpaqueKeyError::Internal(err)
+                        AccountUploadOpaqueKeyInVaultError::BadServerResponse(err) => {
+                            AccountVaultOperationsUploadOpaqueKeyError::BadServerResponse(err)
                         }
                     })
             }))
         }
     }
+
+    /*
+     * OpenBao operations
+     */
+
+    #[derive(Debug)]
+    struct OpenBaoDeviceAccessOperations {
+        cmds: Arc<libparsec_openbao::OpenBaoCmds>,
+    }
+
+    #[derive(Debug)]
+    struct OpenBaoDeviceSaveOperations {
+        cmds: Arc<libparsec_openbao::OpenBaoCmds>,
+        openbao_preferred_auth_id: String,
+    }
+
+    impl libparsec_platform_device_loader::OpenBaoDeviceSaveOperations for OpenBaoDeviceSaveOperations {
+        fn openbao_entity_id(&self) -> &str {
+            self.cmds.openbao_entity_id()
+        }
+
+        fn openbao_preferred_auth_id(&self) -> &str {
+            &self.openbao_preferred_auth_id
+        }
+
+        fn upload_opaque_key(
+            &self,
+        ) -> PinBoxFutureResult<(String, SecretKey), OpenBaoOperationsUploadOpaqueKeyError>
+        {
+            let cmds = self.cmds.clone();
+
+            Box::pin(pretend_future_is_send_on_web(async move {
+                cmds.upload_opaque_key().await.map_err(|err| match err {
+                    OpenBaoUploadOpaqueKeyError::BadURL(err) => {
+                        OpenBaoOperationsUploadOpaqueKeyError::BadURL(err)
+                    }
+                    OpenBaoUploadOpaqueKeyError::NoServerResponse(err) => {
+                        OpenBaoOperationsUploadOpaqueKeyError::NoServerResponse(err.into())
+                    }
+                    OpenBaoUploadOpaqueKeyError::BadServerResponse(err) => {
+                        OpenBaoOperationsUploadOpaqueKeyError::BadServerResponse(err)
+                    }
+                })
+            }))
+        }
+
+        fn to_access_operations(
+            &self,
+        ) -> Arc<dyn libparsec_platform_device_loader::OpenBaoDeviceAccessOperations> {
+            Arc::new(OpenBaoDeviceAccessOperations {
+                cmds: self.cmds.clone(),
+            })
+        }
+    }
+
+    impl libparsec_platform_device_loader::OpenBaoDeviceAccessOperations
+        for OpenBaoDeviceAccessOperations
+    {
+        fn openbao_entity_id(&self) -> &str {
+            self.cmds.openbao_entity_id()
+        }
+
+        fn fetch_opaque_key(
+            &self,
+            openbao_ciphertext_key_path: String,
+        ) -> PinBoxFutureResult<SecretKey, OpenBaoOperationsFetchOpaqueKeyError> {
+            let cmds = self.cmds.clone();
+
+            Box::pin(pretend_future_is_send_on_web(async move {
+                cmds.fetch_opaque_key(&openbao_ciphertext_key_path)
+                    .await
+                    .map_err(|err| match err {
+                        OpenBaoFetchOpaqueKeyError::BadURL(err) => {
+                            OpenBaoOperationsFetchOpaqueKeyError::BadURL(err)
+                        }
+                        OpenBaoFetchOpaqueKeyError::NoServerResponse(err) => {
+                            OpenBaoOperationsFetchOpaqueKeyError::NoServerResponse(err.into())
+                        }
+                        OpenBaoFetchOpaqueKeyError::BadServerResponse(err) => {
+                            OpenBaoOperationsFetchOpaqueKeyError::BadServerResponse(err)
+                        }
+                    })
+            }))
+        }
+
+        fn to_save_operations(
+            &self,
+            openbao_preferred_auth_id: String,
+        ) -> Arc<dyn libparsec_platform_device_loader::OpenBaoDeviceSaveOperations> {
+            Arc::new(OpenBaoDeviceSaveOperations {
+                cmds: self.cmds.clone(),
+                openbao_preferred_auth_id,
+            })
+        }
+    }
+
+    /*
+     * DeviceSaveStrategy
+     */
 
     #[derive(Debug, Clone)]
     pub enum DeviceSaveStrategy {
@@ -102,6 +207,13 @@ mod strategy {
         },
         AccountVault {
             account_handle: Handle,
+        },
+        OpenBao {
+            openbao_server_url: String,
+            openbao_secret_mount_path: String,
+            openbao_entity_id: String,
+            openbao_auth_token: String,
+            openbao_preferred_auth_id: String,
         },
     }
 
@@ -135,9 +247,39 @@ mod strategy {
                         operations: Arc::new(AccountVaultOperations { account }),
                     }
                 }
+                DeviceSaveStrategy::OpenBao {
+                    openbao_server_url,
+                    openbao_secret_mount_path,
+                    openbao_entity_id,
+                    openbao_auth_token,
+                    openbao_preferred_auth_id,
+                } => {
+                    let client = libparsec_client_connection::build_client_with_proxy(
+                        libparsec_client_connection::ProxyConfig::default(),
+                    )?;
+
+                    let cmds = Arc::new(OpenBaoCmds::new(
+                        client,
+                        openbao_server_url,
+                        openbao_secret_mount_path,
+                        openbao_entity_id,
+                        openbao_auth_token,
+                    ));
+
+                    libparsec_platform_device_loader::DeviceSaveStrategy::OpenBao {
+                        operations: Arc::new(OpenBaoDeviceSaveOperations {
+                            cmds,
+                            openbao_preferred_auth_id,
+                        }),
+                    }
+                }
             })
         }
     }
+
+    /*
+     * DeviceAccessStrategy
+     */
 
     /// Represent how to load a device file
     #[derive(Debug, Clone)]
@@ -155,6 +297,13 @@ mod strategy {
         AccountVault {
             key_file: PathBuf,
             account_handle: Handle,
+        },
+        OpenBao {
+            key_file: PathBuf,
+            openbao_server_url: String,
+            openbao_secret_mount_path: String,
+            openbao_entity_id: String,
+            openbao_auth_token: String,
         },
     }
 
@@ -191,6 +340,27 @@ mod strategy {
                     libparsec_platform_device_loader::DeviceAccessStrategy::AccountVault {
                         key_file,
                         operations: Arc::new(AccountVaultOperations { account }),
+                    }
+                }
+                DeviceAccessStrategy::OpenBao {
+                    key_file,
+                    openbao_server_url,
+                    openbao_secret_mount_path,
+                    openbao_entity_id,
+                    openbao_auth_token,
+                } => {
+                    let client = libparsec_client_connection::build_client()?;
+                    let cmds = Arc::new(OpenBaoCmds::new(
+                        client,
+                        openbao_server_url,
+                        openbao_secret_mount_path,
+                        openbao_entity_id,
+                        openbao_auth_token,
+                    ));
+
+                    libparsec_platform_device_loader::DeviceAccessStrategy::OpenBao {
+                        key_file,
+                        operations: Arc::new(OpenBaoDeviceAccessOperations { cmds }),
                     }
                 }
             })
