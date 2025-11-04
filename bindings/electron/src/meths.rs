@@ -12073,6 +12073,59 @@ fn variant_pki_enrollment_reject_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// PkiEnrollmentSubmitError
+
+#[allow(dead_code)]
+fn variant_pki_enrollment_submit_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::PkiEnrollmentSubmitError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::PkiEnrollmentSubmitError::AlreadyEnrolled { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "PkiEnrollmentSubmitErrorAlreadyEnrolled").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::PkiEnrollmentSubmitError::AlreadySubmitted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "PkiEnrollmentSubmitErrorAlreadySubmitted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::PkiEnrollmentSubmitError::EmailAlreadyUsed { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "PkiEnrollmentSubmitErrorEmailAlreadyUsed").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::PkiEnrollmentSubmitError::IdAlreadyUsed { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "PkiEnrollmentSubmitErrorIdAlreadyUsed").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::PkiEnrollmentSubmitError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "PkiEnrollmentSubmitErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::PkiEnrollmentSubmitError::InvalidPayload { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "PkiEnrollmentSubmitErrorInvalidPayload").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::PkiEnrollmentSubmitError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "PkiEnrollmentSubmitErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::PkiEnrollmentSubmitError::PkiOperationError { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "PkiEnrollmentSubmitErrorPkiOperationError").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // SelfShamirRecoveryInfo
 
 #[allow(dead_code)]
@@ -22903,6 +22956,102 @@ fn path_split(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// pki_enrollment_submit
+fn pki_enrollment_submit(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let config = {
+        let js_val = cx.argument::<JsObject>(0)?;
+        struct_client_config_js_to_rs(&mut cx, js_val)?
+    };
+    let addr = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecPkiEnrollmentAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let cert_ref = {
+        let js_val = cx.argument::<JsObject>(2)?;
+        struct_x509_certificate_reference_js_to_rs(&mut cx, js_val)?
+    };
+    let human_handle = {
+        let js_val = cx.argument::<JsObject>(3)?;
+        struct_human_handle_js_to_rs(&mut cx, js_val)?
+    };
+    let device_label = {
+        let js_val = cx.argument::<JsString>(4)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let force = {
+        let js_val = cx.argument::<JsBoolean>(5)?;
+        js_val.value(&mut cx)
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::pki_enrollment_submit(
+                config,
+                addr,
+                cert_ref,
+                human_handle,
+                device_label,
+                force,
+            )
+            .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = JsNumber::new(&mut cx, {
+                            let custom_to_rs_f64 =
+                                |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                                };
+                            match custom_to_rs_f64(ok) {
+                                Ok(ok) => ok,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        });
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_pki_enrollment_submit_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // show_certificate_selection_dialog_windows_only
 fn show_certificate_selection_dialog_windows_only(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -27310,6 +27459,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("pathNormalize", path_normalize)?;
     cx.export_function("pathParent", path_parent)?;
     cx.export_function("pathSplit", path_split)?;
+    cx.export_function("pkiEnrollmentSubmit", pki_enrollment_submit)?;
     cx.export_function(
         "showCertificateSelectionDialogWindowsOnly",
         show_certificate_selection_dialog_windows_only,

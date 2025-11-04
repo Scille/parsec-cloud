@@ -6,6 +6,7 @@ from .common import (
     DeviceID,
     DeviceLabel,
     ErrorVariant,
+    Handle,
     HumanHandle,
     OrganizationID,
     Password,
@@ -16,7 +17,6 @@ from .common import (
     UserID,
     Variant,
     VariantItemUnit,
-    Handle,
 )
 from .pki import X509CertificateReference
 
