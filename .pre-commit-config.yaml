@@ -288,7 +288,7 @@ repos:
             const { spawnSync } = require('child_process');
             const { exit, argv } = require('process');
             let files = argv.slice(1).map(function (x) { return x.replace(/^client\//, '') });
-            let ret = spawnSync('npx', ['eslint', '--max-warnings=0'].concat(files), {cwd: './client', stdio: 'inherit'});
+            let ret = spawnSync('npx', ['eslint', '--no-warn-ignored', '--max-warnings=0'].concat(files), {cwd: './client', stdio: 'inherit'});
             exit(ret.status);
           "
         require_serial: true
