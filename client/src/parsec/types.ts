@@ -421,22 +421,12 @@ interface AuthMethodInfo extends ParsecAuthMethodInfo {
   current: boolean;
 }
 
-enum CustomDeviceSaveStrategyTag {
-  SSO = 'DeviceSaveStrategySSO',
-}
-
-interface DeviceSaveStrategySSO {
-  tag: CustomDeviceSaveStrategyTag;
-}
-
 export {
   AccountHandle,
   AccountInvitation,
   AuthMethodInfo,
   ConnectionHandle,
-  CustomDeviceSaveStrategyTag,
   DateTime,
-  DeviceSaveStrategySSO,
   EntryID,
   EntryStat,
   EntryStatFile,
