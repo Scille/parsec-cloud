@@ -11,74 +11,6 @@ use neon::{
 };
 use std::str::FromStr;
 
-// AccountOrganizationsAccountVaultStrategy
-
-#[allow(dead_code)]
-fn enum_account_organizations_account_vault_strategy_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    raw_value: &str,
-) -> NeonResult<libparsec::AccountOrganizationsAccountVaultStrategy> {
-    match raw_value {
-        "AccountOrganizationsAccountVaultStrategyAllowed" => {
-            Ok(libparsec::AccountOrganizationsAccountVaultStrategy::Allowed)
-        }
-        "AccountOrganizationsAccountVaultStrategyForbidden" => {
-            Ok(libparsec::AccountOrganizationsAccountVaultStrategy::Forbidden)
-        }
-        _ => cx.throw_range_error(format!(
-            "Invalid value `{raw_value}` for enum AccountOrganizationsAccountVaultStrategy"
-        )),
-    }
-}
-
-#[allow(dead_code)]
-fn enum_account_organizations_account_vault_strategy_rs_to_js(
-    value: libparsec::AccountOrganizationsAccountVaultStrategy,
-) -> &'static str {
-    match value {
-        libparsec::AccountOrganizationsAccountVaultStrategy::Allowed => {
-            "AccountOrganizationsAccountVaultStrategyAllowed"
-        }
-        libparsec::AccountOrganizationsAccountVaultStrategy::Forbidden => {
-            "AccountOrganizationsAccountVaultStrategyForbidden"
-        }
-    }
-}
-
-// AccountOrganizationsAllowedClientAgent
-
-#[allow(dead_code)]
-fn enum_account_organizations_allowed_client_agent_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    raw_value: &str,
-) -> NeonResult<libparsec::AccountOrganizationsAllowedClientAgent> {
-    match raw_value {
-        "AccountOrganizationsAllowedClientAgentNativeOnly" => {
-            Ok(libparsec::AccountOrganizationsAllowedClientAgent::NativeOnly)
-        }
-        "AccountOrganizationsAllowedClientAgentNativeOrWeb" => {
-            Ok(libparsec::AccountOrganizationsAllowedClientAgent::NativeOrWeb)
-        }
-        _ => cx.throw_range_error(format!(
-            "Invalid value `{raw_value}` for enum AccountOrganizationsAllowedClientAgent"
-        )),
-    }
-}
-
-#[allow(dead_code)]
-fn enum_account_organizations_allowed_client_agent_rs_to_js(
-    value: libparsec::AccountOrganizationsAllowedClientAgent,
-) -> &'static str {
-    match value {
-        libparsec::AccountOrganizationsAllowedClientAgent::NativeOnly => {
-            "AccountOrganizationsAllowedClientAgentNativeOnly"
-        }
-        libparsec::AccountOrganizationsAllowedClientAgent::NativeOrWeb => {
-            "AccountOrganizationsAllowedClientAgentNativeOrWeb"
-        }
-    }
-}
-
 // CancelledGreetingAttemptReason
 
 #[allow(dead_code)]
@@ -684,26 +616,10 @@ fn struct_account_organizations_organization_config_js_to_rs<'a>(
         let js_val: Handle<JsObject> = obj.get(cx, "activeUsersLimit")?;
         variant_active_users_limit_js_to_rs(cx, js_val)?
     };
-    let allowed_client_agent = {
-        let js_val: Handle<JsString> = obj.get(cx, "allowedClientAgent")?;
-        {
-            let js_string = js_val.value(cx);
-            enum_account_organizations_allowed_client_agent_js_to_rs(cx, js_string.as_str())?
-        }
-    };
-    let account_vault_strategy = {
-        let js_val: Handle<JsString> = obj.get(cx, "accountVaultStrategy")?;
-        {
-            let js_string = js_val.value(cx);
-            enum_account_organizations_account_vault_strategy_js_to_rs(cx, js_string.as_str())?
-        }
-    };
     Ok(libparsec::AccountOrganizationsOrganizationConfig {
         is_expired,
         user_profile_outsider_allowed,
         active_users_limit,
-        allowed_client_agent,
-        account_vault_strategy,
     })
 }
 
@@ -723,18 +639,6 @@ fn struct_account_organizations_organization_config_rs_to_js<'a>(
     )?;
     let js_active_users_limit = variant_active_users_limit_rs_to_js(cx, rs_obj.active_users_limit)?;
     js_obj.set(cx, "activeUsersLimit", js_active_users_limit)?;
-    let js_allowed_client_agent = JsString::try_new(
-        cx,
-        enum_account_organizations_allowed_client_agent_rs_to_js(rs_obj.allowed_client_agent),
-    )
-    .or_throw(cx)?;
-    js_obj.set(cx, "allowedClientAgent", js_allowed_client_agent)?;
-    let js_account_vault_strategy = JsString::try_new(
-        cx,
-        enum_account_organizations_account_vault_strategy_rs_to_js(rs_obj.account_vault_strategy),
-    )
-    .or_throw(cx)?;
-    js_obj.set(cx, "accountVaultStrategy", js_account_vault_strategy)?;
     Ok(js_obj)
 }
 
@@ -1353,9 +1257,9 @@ fn struct_client_info_js_to_rs<'a>(
             enum_user_profile_js_to_rs(cx, js_string.as_str())?
         }
     };
-    let server_config = {
-        let js_val: Handle<JsObject> = obj.get(cx, "serverConfig")?;
-        struct_server_config_js_to_rs(cx, js_val)?
+    let server_organization_config = {
+        let js_val: Handle<JsObject> = obj.get(cx, "serverOrganizationConfig")?;
+        struct_server_organization_config_js_to_rs(cx, js_val)?
     };
     let is_server_online = {
         let js_val: Handle<JsBoolean> = obj.get(cx, "isServerOnline")?;
@@ -1377,7 +1281,7 @@ fn struct_client_info_js_to_rs<'a>(
         device_label,
         human_handle,
         current_profile,
-        server_config,
+        server_organization_config,
         is_server_online,
         is_organization_expired,
         must_accept_tos,
@@ -1431,8 +1335,13 @@ fn struct_client_info_rs_to_js<'a>(
     let js_current_profile =
         JsString::try_new(cx, enum_user_profile_rs_to_js(rs_obj.current_profile)).or_throw(cx)?;
     js_obj.set(cx, "currentProfile", js_current_profile)?;
-    let js_server_config = struct_server_config_rs_to_js(cx, rs_obj.server_config)?;
-    js_obj.set(cx, "serverConfig", js_server_config)?;
+    let js_server_organization_config =
+        struct_server_organization_config_rs_to_js(cx, rs_obj.server_organization_config)?;
+    js_obj.set(
+        cx,
+        "serverOrganizationConfig",
+        js_server_organization_config,
+    )?;
     let js_is_server_online = JsBoolean::new(cx, rs_obj.is_server_online);
     js_obj.set(cx, "isServerOnline", js_is_server_online)?;
     let js_is_organization_expired = JsBoolean::new(cx, rs_obj.is_organization_expired);
@@ -2316,6 +2225,63 @@ fn struct_new_invitation_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// OpenBaoConfig
+
+#[allow(dead_code)]
+fn struct_open_bao_config_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::OpenBaoConfig> {
+    let server_url = {
+        let js_val: Handle<JsString> = obj.get(cx, "serverUrl")?;
+        js_val.value(cx)
+    };
+    let secret = {
+        let js_val: Handle<JsObject> = obj.get(cx, "secret")?;
+        variant_open_bao_secret_config_js_to_rs(cx, js_val)?
+    };
+    let auths = {
+        let js_val: Handle<JsArray> = obj.get(cx, "auths")?;
+        {
+            let size = js_val.len(cx);
+            let mut v = Vec::with_capacity(size as usize);
+            for i in 0..size {
+                let js_item: Handle<JsObject> = js_val.get(cx, i)?;
+                v.push(variant_open_bao_auth_config_js_to_rs(cx, js_item)?);
+            }
+            v
+        }
+    };
+    Ok(libparsec::OpenBaoConfig {
+        server_url,
+        secret,
+        auths,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_open_bao_config_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::OpenBaoConfig,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_server_url = JsString::try_new(cx, rs_obj.server_url).or_throw(cx)?;
+    js_obj.set(cx, "serverUrl", js_server_url)?;
+    let js_secret = variant_open_bao_secret_config_rs_to_js(cx, rs_obj.secret)?;
+    js_obj.set(cx, "secret", js_secret)?;
+    let js_auths = {
+        // JsArray::new allocates with `undefined` value, that's why we `set` value
+        let js_array = JsArray::new(cx, rs_obj.auths.len());
+        for (i, elem) in rs_obj.auths.into_iter().enumerate() {
+            let js_elem = variant_open_bao_auth_config_rs_to_js(cx, elem)?;
+            js_array.set(cx, i as u32, js_elem)?;
+        }
+        js_array
+    };
+    js_obj.set(cx, "auths", js_auths)?;
+    Ok(js_obj)
+}
+
 // OpenOptions
 
 #[allow(dead_code)]
@@ -2577,6 +2543,65 @@ fn struct_server_config_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::ServerConfig> {
+    let client_agent = {
+        let js_val: Handle<JsObject> = obj.get(cx, "clientAgent")?;
+        variant_client_agent_config_js_to_rs(cx, js_val)?
+    };
+    let account = {
+        let js_val: Handle<JsObject> = obj.get(cx, "account")?;
+        variant_account_config_js_to_rs(cx, js_val)?
+    };
+    let organization_bootstrap = {
+        let js_val: Handle<JsObject> = obj.get(cx, "organizationBootstrap")?;
+        variant_organization_bootstrap_config_js_to_rs(cx, js_val)?
+    };
+    let openbao = {
+        let js_val: Handle<JsValue> = obj.get(cx, "openbao")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsObject, _>(cx)?;
+                Some(struct_open_bao_config_js_to_rs(cx, js_val)?)
+            }
+        }
+    };
+    Ok(libparsec::ServerConfig {
+        client_agent,
+        account,
+        organization_bootstrap,
+        openbao,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_server_config_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ServerConfig,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_client_agent = variant_client_agent_config_rs_to_js(cx, rs_obj.client_agent)?;
+    js_obj.set(cx, "clientAgent", js_client_agent)?;
+    let js_account = variant_account_config_rs_to_js(cx, rs_obj.account)?;
+    js_obj.set(cx, "account", js_account)?;
+    let js_organization_bootstrap =
+        variant_organization_bootstrap_config_rs_to_js(cx, rs_obj.organization_bootstrap)?;
+    js_obj.set(cx, "organizationBootstrap", js_organization_bootstrap)?;
+    let js_openbao = match rs_obj.openbao {
+        Some(elem) => struct_open_bao_config_rs_to_js(cx, elem)?.as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "openbao", js_openbao)?;
+    Ok(js_obj)
+}
+
+// ServerOrganizationConfig
+
+#[allow(dead_code)]
+fn struct_server_organization_config_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::ServerOrganizationConfig> {
     let user_profile_outsider_allowed = {
         let js_val: Handle<JsBoolean> = obj.get(cx, "userProfileOutsiderAllowed")?;
         js_val.value(cx)
@@ -2585,16 +2610,16 @@ fn struct_server_config_js_to_rs<'a>(
         let js_val: Handle<JsObject> = obj.get(cx, "activeUsersLimit")?;
         variant_active_users_limit_js_to_rs(cx, js_val)?
     };
-    Ok(libparsec::ServerConfig {
+    Ok(libparsec::ServerOrganizationConfig {
         user_profile_outsider_allowed,
         active_users_limit,
     })
 }
 
 #[allow(dead_code)]
-fn struct_server_config_rs_to_js<'a>(
+fn struct_server_organization_config_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::ServerConfig,
+    rs_obj: libparsec::ServerOrganizationConfig,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_user_profile_outsider_allowed = JsBoolean::new(cx, rs_obj.user_profile_outsider_allowed);
@@ -4773,6 +4798,45 @@ fn variant_account_auth_method_strategy_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// AccountConfig
+
+#[allow(dead_code)]
+fn variant_account_config_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::AccountConfig> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "AccountConfigDisabled" => Ok(libparsec::AccountConfig::Disabled),
+        "AccountConfigEnabledWithVault" => Ok(libparsec::AccountConfig::EnabledWithVault),
+        "AccountConfigEnabledWithoutVault" => Ok(libparsec::AccountConfig::EnabledWithoutVault),
+        _ => cx.throw_type_error("Object is not a AccountConfig"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_account_config_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AccountConfig,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::AccountConfig::Disabled => {
+            let js_tag = JsString::try_new(cx, "AccountConfigDisabled").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountConfig::EnabledWithVault => {
+            let js_tag = JsString::try_new(cx, "AccountConfigEnabledWithVault").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountConfig::EnabledWithoutVault => {
+            let js_tag = JsString::try_new(cx, "AccountConfigEnabledWithoutVault").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // AccountCreateAuthMethodError
 
 #[allow(dead_code)]
@@ -4847,44 +4911,68 @@ fn variant_account_create_registration_device_error_rs_to_js<'a>(
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::AccountCreateRegistrationDeviceError::BadVaultKeyAccess{  .. } => {
-            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorBadVaultKeyAccess").or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::BadVaultKeyAccess { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorBadVaultKeyAccess")
+                    .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::CannotObtainOrganizationVaultStrategy{  .. } => {
-            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorCannotObtainOrganizationVaultStrategy").or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorInternal")
+                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::Internal{  .. } => {
-            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorInternal").or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceDecryptionFailed { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed",
+            )
+            .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceDecryptionFailed{  .. } => {
-            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed").or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidData { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData",
+            )
+            .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidData{  .. } => {
-            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData").or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidPath { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath",
+            )
+            .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidPath{  .. } => {
-            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath").or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorOffline")
+                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::NotAllowedByOrganizationVaultStrategy{  .. } => {
-            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorNotAllowedByOrganizationVaultStrategy").or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::RemoteOpaqueKeyFetchFailed { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchFailed",
+            )
+            .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::Offline{  .. } => {
-            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorOffline").or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::RemoteOpaqueKeyFetchOffline { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchOffline",
+            )
+            .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::RemoteOpaqueKeyFetchFailed{  .. } => {
-            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchFailed").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::AccountCreateRegistrationDeviceError::TimestampOutOfBallpark{  .. } => {
-            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark").or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::TimestampOutOfBallpark { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark",
+            )
+            .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -5500,6 +5588,14 @@ fn variant_account_register_new_device_error_rs_to_js<'a>(
             .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::AccountRegisterNewDeviceError::RemoteOpaqueKeyUploadOffline { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadOffline",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::AccountRegisterNewDeviceError::StorageNotAvailable { .. } => {
             let js_tag = JsString::try_new(cx, "AccountRegisterNewDeviceErrorStorageNotAvailable")
                 .or_throw(cx)?;
@@ -5937,6 +6033,20 @@ fn variant_available_device_type_js_to_rs<'a>(
     match tag.as_str() {
         "AvailableDeviceTypeAccountVault" => Ok(libparsec::AvailableDeviceType::AccountVault {}),
         "AvailableDeviceTypeKeyring" => Ok(libparsec::AvailableDeviceType::Keyring {}),
+        "AvailableDeviceTypeOpenBao" => {
+            let openbao_preferred_auth_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoPreferredAuthId")?;
+                js_val.value(cx)
+            };
+            let openbao_entity_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoEntityId")?;
+                js_val.value(cx)
+            };
+            Ok(libparsec::AvailableDeviceType::OpenBao {
+                openbao_preferred_auth_id,
+                openbao_entity_id,
+            })
+        }
         "AvailableDeviceTypePassword" => Ok(libparsec::AvailableDeviceType::Password {}),
         "AvailableDeviceTypeRecovery" => Ok(libparsec::AvailableDeviceType::Recovery {}),
         "AvailableDeviceTypeSmartcard" => Ok(libparsec::AvailableDeviceType::Smartcard {}),
@@ -5958,6 +6068,19 @@ fn variant_available_device_type_rs_to_js<'a>(
         libparsec::AvailableDeviceType::Keyring { .. } => {
             let js_tag = JsString::try_new(cx, "AvailableDeviceTypeKeyring").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AvailableDeviceType::OpenBao {
+            openbao_preferred_auth_id,
+            openbao_entity_id,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "AvailableDeviceTypeOpenBao").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_openbao_preferred_auth_id =
+                JsString::try_new(cx, openbao_preferred_auth_id).or_throw(cx)?;
+            js_obj.set(cx, "openbaoPreferredAuthId", js_openbao_preferred_auth_id)?;
+            let js_openbao_entity_id = JsString::try_new(cx, openbao_entity_id).or_throw(cx)?;
+            js_obj.set(cx, "openbaoEntityId", js_openbao_entity_id)?;
         }
         libparsec::AvailableDeviceType::Password { .. } => {
             let js_tag = JsString::try_new(cx, "AvailableDeviceTypePassword").or_throw(cx)?;
@@ -6321,6 +6444,40 @@ fn variant_client_accept_tos_error_rs_to_js<'a>(
         }
         libparsec::ClientAcceptTosError::TosMismatch { .. } => {
             let js_tag = JsString::try_new(cx, "ClientAcceptTosErrorTosMismatch").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientAgentConfig
+
+#[allow(dead_code)]
+fn variant_client_agent_config_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::ClientAgentConfig> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "ClientAgentConfigNativeOnly" => Ok(libparsec::ClientAgentConfig::NativeOnly),
+        "ClientAgentConfigNativeOrWeb" => Ok(libparsec::ClientAgentConfig::NativeOrWeb),
+        _ => cx.throw_type_error("Object is not a ClientAgentConfig"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_client_agent_config_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientAgentConfig,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::ClientAgentConfig::NativeOnly => {
+            let js_tag = JsString::try_new(cx, "ClientAgentConfigNativeOnly").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientAgentConfig::NativeOrWeb => {
+            let js_tag = JsString::try_new(cx, "ClientAgentConfigNativeOrWeb").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -8714,6 +8871,42 @@ fn variant_device_access_strategy_js_to_rs<'a>(
             };
             Ok(libparsec::DeviceAccessStrategy::Keyring { key_file })
         }
+        "DeviceAccessStrategyOpenBao" => {
+            let key_file = {
+                let js_val: Handle<JsString> = obj.get(cx, "keyFile")?;
+                {
+                    let custom_from_rs_string =
+                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let openbao_server_url = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoServerUrl")?;
+                js_val.value(cx)
+            };
+            let openbao_secret_mount_path = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoSecretMountPath")?;
+                js_val.value(cx)
+            };
+            let openbao_entity_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoEntityId")?;
+                js_val.value(cx)
+            };
+            let openbao_auth_token = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoAuthToken")?;
+                js_val.value(cx)
+            };
+            Ok(libparsec::DeviceAccessStrategy::OpenBao {
+                key_file,
+                openbao_server_url,
+                openbao_secret_mount_path,
+                openbao_entity_id,
+                openbao_auth_token,
+            })
+        }
         "DeviceAccessStrategyPassword" => {
             let password = {
                 let js_val: Handle<JsString> = obj.get(cx, "password")?;
@@ -8803,6 +8996,39 @@ fn variant_device_access_strategy_rs_to_js<'a>(
             .or_throw(cx)?;
             js_obj.set(cx, "keyFile", js_key_file)?;
         }
+        libparsec::DeviceAccessStrategy::OpenBao {
+            key_file,
+            openbao_server_url,
+            openbao_secret_mount_path,
+            openbao_entity_id,
+            openbao_auth_token,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "DeviceAccessStrategyOpenBao").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_key_file = JsString::try_new(cx, {
+                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                    path.into_os_string()
+                        .into_string()
+                        .map_err(|_| "Path contains non-utf8 characters")
+                };
+                match custom_to_rs_string(key_file) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err.to_string()),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "keyFile", js_key_file)?;
+            let js_openbao_server_url = JsString::try_new(cx, openbao_server_url).or_throw(cx)?;
+            js_obj.set(cx, "openbaoServerUrl", js_openbao_server_url)?;
+            let js_openbao_secret_mount_path =
+                JsString::try_new(cx, openbao_secret_mount_path).or_throw(cx)?;
+            js_obj.set(cx, "openbaoSecretMountPath", js_openbao_secret_mount_path)?;
+            let js_openbao_entity_id = JsString::try_new(cx, openbao_entity_id).or_throw(cx)?;
+            js_obj.set(cx, "openbaoEntityId", js_openbao_entity_id)?;
+            let js_openbao_auth_token = JsString::try_new(cx, openbao_auth_token).or_throw(cx)?;
+            js_obj.set(cx, "openbaoAuthToken", js_openbao_auth_token)?;
+        }
         libparsec::DeviceAccessStrategy::Password {
             password, key_file, ..
         } => {
@@ -8869,6 +9095,35 @@ fn variant_device_save_strategy_js_to_rs<'a>(
             Ok(libparsec::DeviceSaveStrategy::AccountVault { account_handle })
         }
         "DeviceSaveStrategyKeyring" => Ok(libparsec::DeviceSaveStrategy::Keyring {}),
+        "DeviceSaveStrategyOpenBao" => {
+            let openbao_server_url = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoServerUrl")?;
+                js_val.value(cx)
+            };
+            let openbao_secret_mount_path = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoSecretMountPath")?;
+                js_val.value(cx)
+            };
+            let openbao_entity_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoEntityId")?;
+                js_val.value(cx)
+            };
+            let openbao_auth_token = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoAuthToken")?;
+                js_val.value(cx)
+            };
+            let openbao_preferred_auth_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoPreferredAuthId")?;
+                js_val.value(cx)
+            };
+            Ok(libparsec::DeviceSaveStrategy::OpenBao {
+                openbao_server_url,
+                openbao_secret_mount_path,
+                openbao_entity_id,
+                openbao_auth_token,
+                openbao_preferred_auth_id,
+            })
+        }
         "DeviceSaveStrategyPassword" => {
             let password = {
                 let js_val: Handle<JsString> = obj.get(cx, "password")?;
@@ -8911,6 +9166,29 @@ fn variant_device_save_strategy_rs_to_js<'a>(
         libparsec::DeviceSaveStrategy::Keyring { .. } => {
             let js_tag = JsString::try_new(cx, "DeviceSaveStrategyKeyring").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::DeviceSaveStrategy::OpenBao {
+            openbao_server_url,
+            openbao_secret_mount_path,
+            openbao_entity_id,
+            openbao_auth_token,
+            openbao_preferred_auth_id,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "DeviceSaveStrategyOpenBao").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_openbao_server_url = JsString::try_new(cx, openbao_server_url).or_throw(cx)?;
+            js_obj.set(cx, "openbaoServerUrl", js_openbao_server_url)?;
+            let js_openbao_secret_mount_path =
+                JsString::try_new(cx, openbao_secret_mount_path).or_throw(cx)?;
+            js_obj.set(cx, "openbaoSecretMountPath", js_openbao_secret_mount_path)?;
+            let js_openbao_entity_id = JsString::try_new(cx, openbao_entity_id).or_throw(cx)?;
+            js_obj.set(cx, "openbaoEntityId", js_openbao_entity_id)?;
+            let js_openbao_auth_token = JsString::try_new(cx, openbao_auth_token).or_throw(cx)?;
+            js_obj.set(cx, "openbaoAuthToken", js_openbao_auth_token)?;
+            let js_openbao_preferred_auth_id =
+                JsString::try_new(cx, openbao_preferred_auth_id).or_throw(cx)?;
+            js_obj.set(cx, "openbaoPreferredAuthId", js_openbao_preferred_auth_id)?;
         }
         libparsec::DeviceSaveStrategy::Password { password, .. } => {
             let js_tag = JsString::try_new(cx, "DeviceSaveStrategyPassword").or_throw(cx)?;
@@ -9373,6 +9651,29 @@ fn variant_entry_stat_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// GetServerConfigError
+
+#[allow(dead_code)]
+fn variant_get_server_config_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::GetServerConfigError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::GetServerConfigError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "GetServerConfigErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::GetServerConfigError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "GetServerConfigErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // GreetInProgressError
 
 #[allow(dead_code)]
@@ -9574,6 +9875,12 @@ fn variant_import_recovery_device_error_rs_to_js<'a>(
         libparsec::ImportRecoveryDeviceError::RemoteOpaqueKeyUploadFailed { .. } => {
             let js_tag =
                 JsString::try_new(cx, "ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadFailed")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ImportRecoveryDeviceError::RemoteOpaqueKeyUploadOffline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadOffline")
                     .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
@@ -10405,6 +10712,133 @@ fn variant_move_entry_mode_rs_to_js<'a>(
         }
         libparsec::MoveEntryMode::NoReplace => {
             let js_tag = JsString::try_new(cx, "MoveEntryModeNoReplace").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// OpenBaoAuthConfig
+
+#[allow(dead_code)]
+fn variant_open_bao_auth_config_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::OpenBaoAuthConfig> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "OpenBaoAuthConfigOIDCHexagone" => {
+            let mount_path = {
+                let js_val: Handle<JsString> = obj.get(cx, "mountPath")?;
+                js_val.value(cx)
+            };
+            Ok(libparsec::OpenBaoAuthConfig::OIDCHexagone { mount_path })
+        }
+        "OpenBaoAuthConfigOIDCProConnect" => {
+            let mount_path = {
+                let js_val: Handle<JsString> = obj.get(cx, "mountPath")?;
+                js_val.value(cx)
+            };
+            Ok(libparsec::OpenBaoAuthConfig::OIDCProConnect { mount_path })
+        }
+        _ => cx.throw_type_error("Object is not a OpenBaoAuthConfig"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_open_bao_auth_config_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::OpenBaoAuthConfig,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::OpenBaoAuthConfig::OIDCHexagone { mount_path, .. } => {
+            let js_tag = JsString::try_new(cx, "OpenBaoAuthConfigOIDCHexagone").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_mount_path = JsString::try_new(cx, mount_path).or_throw(cx)?;
+            js_obj.set(cx, "mountPath", js_mount_path)?;
+        }
+        libparsec::OpenBaoAuthConfig::OIDCProConnect { mount_path, .. } => {
+            let js_tag = JsString::try_new(cx, "OpenBaoAuthConfigOIDCProConnect").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_mount_path = JsString::try_new(cx, mount_path).or_throw(cx)?;
+            js_obj.set(cx, "mountPath", js_mount_path)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// OpenBaoSecretConfig
+
+#[allow(dead_code)]
+fn variant_open_bao_secret_config_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::OpenBaoSecretConfig> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "OpenBaoSecretConfigKV2" => {
+            let mount_path = {
+                let js_val: Handle<JsString> = obj.get(cx, "mountPath")?;
+                js_val.value(cx)
+            };
+            Ok(libparsec::OpenBaoSecretConfig::KV2 { mount_path })
+        }
+        _ => cx.throw_type_error("Object is not a OpenBaoSecretConfig"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_open_bao_secret_config_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::OpenBaoSecretConfig,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::OpenBaoSecretConfig::KV2 { mount_path, .. } => {
+            let js_tag = JsString::try_new(cx, "OpenBaoSecretConfigKV2").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_mount_path = JsString::try_new(cx, mount_path).or_throw(cx)?;
+            js_obj.set(cx, "mountPath", js_mount_path)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// OrganizationBootstrapConfig
+
+#[allow(dead_code)]
+fn variant_organization_bootstrap_config_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::OrganizationBootstrapConfig> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "OrganizationBootstrapConfigSpontaneous" => {
+            Ok(libparsec::OrganizationBootstrapConfig::Spontaneous)
+        }
+        "OrganizationBootstrapConfigWithBootstrapToken" => {
+            Ok(libparsec::OrganizationBootstrapConfig::WithBootstrapToken)
+        }
+        _ => cx.throw_type_error("Object is not a OrganizationBootstrapConfig"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_organization_bootstrap_config_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::OrganizationBootstrapConfig,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::OrganizationBootstrapConfig::Spontaneous => {
+            let js_tag =
+                JsString::try_new(cx, "OrganizationBootstrapConfigSpontaneous").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::OrganizationBootstrapConfig::WithBootstrapToken => {
+            let js_tag = JsString::try_new(cx, "OrganizationBootstrapConfigWithBootstrapToken")
+                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -21371,6 +21805,68 @@ fn get_platform(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// get_server_config
+fn get_server_config(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let config_dir = {
+        let js_val = cx.argument::<JsString>(0)?;
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let addr = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::get_server_config(&config_dir, addr).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_server_config_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_get_server_config_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // greeter_device_in_progress_1_do_wait_peer_trust
 fn greeter_device_in_progress_1_do_wait_peer_trust(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -27561,6 +28057,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         get_default_mountpoint_base_dir,
     )?;
     cx.export_function("getPlatform", get_platform)?;
+    cx.export_function("getServerConfig", get_server_config)?;
     cx.export_function(
         "greeterDeviceInProgress1DoWaitPeerTrust",
         greeter_device_in_progress_1_do_wait_peer_trust,

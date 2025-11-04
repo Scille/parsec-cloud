@@ -13,78 +13,6 @@ use wasm_bindgen::JsCast;
 #[allow(unused_imports)]
 use wasm_bindgen_futures::*;
 
-// AccountOrganizationsAccountVaultStrategy
-
-#[allow(dead_code)]
-fn enum_account_organizations_account_vault_strategy_js_to_rs(
-    raw_value: &str,
-) -> Result<libparsec::AccountOrganizationsAccountVaultStrategy, JsValue> {
-    match raw_value {
-        "AccountOrganizationsAccountVaultStrategyAllowed" => {
-            Ok(libparsec::AccountOrganizationsAccountVaultStrategy::Allowed)
-        }
-        "AccountOrganizationsAccountVaultStrategyForbidden" => {
-            Ok(libparsec::AccountOrganizationsAccountVaultStrategy::Forbidden)
-        }
-        _ => {
-            let range_error =
-                RangeError::new("Invalid value for enum AccountOrganizationsAccountVaultStrategy");
-            range_error.set_cause(&JsValue::from(raw_value));
-            Err(JsValue::from(range_error))
-        }
-    }
-}
-
-#[allow(dead_code)]
-fn enum_account_organizations_account_vault_strategy_rs_to_js(
-    value: libparsec::AccountOrganizationsAccountVaultStrategy,
-) -> &'static str {
-    match value {
-        libparsec::AccountOrganizationsAccountVaultStrategy::Allowed => {
-            "AccountOrganizationsAccountVaultStrategyAllowed"
-        }
-        libparsec::AccountOrganizationsAccountVaultStrategy::Forbidden => {
-            "AccountOrganizationsAccountVaultStrategyForbidden"
-        }
-    }
-}
-
-// AccountOrganizationsAllowedClientAgent
-
-#[allow(dead_code)]
-fn enum_account_organizations_allowed_client_agent_js_to_rs(
-    raw_value: &str,
-) -> Result<libparsec::AccountOrganizationsAllowedClientAgent, JsValue> {
-    match raw_value {
-        "AccountOrganizationsAllowedClientAgentNativeOnly" => {
-            Ok(libparsec::AccountOrganizationsAllowedClientAgent::NativeOnly)
-        }
-        "AccountOrganizationsAllowedClientAgentNativeOrWeb" => {
-            Ok(libparsec::AccountOrganizationsAllowedClientAgent::NativeOrWeb)
-        }
-        _ => {
-            let range_error =
-                RangeError::new("Invalid value for enum AccountOrganizationsAllowedClientAgent");
-            range_error.set_cause(&JsValue::from(raw_value));
-            Err(JsValue::from(range_error))
-        }
-    }
-}
-
-#[allow(dead_code)]
-fn enum_account_organizations_allowed_client_agent_rs_to_js(
-    value: libparsec::AccountOrganizationsAllowedClientAgent,
-) -> &'static str {
-    match value {
-        libparsec::AccountOrganizationsAllowedClientAgent::NativeOnly => {
-            "AccountOrganizationsAllowedClientAgentNativeOnly"
-        }
-        libparsec::AccountOrganizationsAllowedClientAgent::NativeOrWeb => {
-            "AccountOrganizationsAllowedClientAgentNativeOrWeb"
-        }
-    }
-}
-
 // CancelledGreetingAttemptReason
 
 #[allow(dead_code)]
@@ -712,34 +640,10 @@ fn struct_account_organizations_organization_config_js_to_rs(
         let js_val = Reflect::get(&obj, &"activeUsersLimit".into())?;
         variant_active_users_limit_js_to_rs(js_val)?
     };
-    let allowed_client_agent = {
-        let js_val = Reflect::get(&obj, &"allowedClientAgent".into())?;
-        {
-            let raw_string = js_val.as_string().ok_or_else(|| {
-                let type_error = TypeError::new("value is not a string");
-                type_error.set_cause(&js_val);
-                JsValue::from(type_error)
-            })?;
-            enum_account_organizations_allowed_client_agent_js_to_rs(raw_string.as_str())
-        }?
-    };
-    let account_vault_strategy = {
-        let js_val = Reflect::get(&obj, &"accountVaultStrategy".into())?;
-        {
-            let raw_string = js_val.as_string().ok_or_else(|| {
-                let type_error = TypeError::new("value is not a string");
-                type_error.set_cause(&js_val);
-                JsValue::from(type_error)
-            })?;
-            enum_account_organizations_account_vault_strategy_js_to_rs(raw_string.as_str())
-        }?
-    };
     Ok(libparsec::AccountOrganizationsOrganizationConfig {
         is_expired,
         user_profile_outsider_allowed,
         active_users_limit,
-        allowed_client_agent,
-        account_vault_strategy,
     })
 }
 
@@ -758,22 +662,6 @@ fn struct_account_organizations_organization_config_rs_to_js(
     )?;
     let js_active_users_limit = variant_active_users_limit_rs_to_js(rs_obj.active_users_limit)?;
     Reflect::set(&js_obj, &"activeUsersLimit".into(), &js_active_users_limit)?;
-    let js_allowed_client_agent = JsValue::from_str(
-        enum_account_organizations_allowed_client_agent_rs_to_js(rs_obj.allowed_client_agent),
-    );
-    Reflect::set(
-        &js_obj,
-        &"allowedClientAgent".into(),
-        &js_allowed_client_agent,
-    )?;
-    let js_account_vault_strategy = JsValue::from_str(
-        enum_account_organizations_account_vault_strategy_rs_to_js(rs_obj.account_vault_strategy),
-    );
-    Reflect::set(
-        &js_obj,
-        &"accountVaultStrategy".into(),
-        &js_account_vault_strategy,
-    )?;
     Ok(js_obj)
 }
 
@@ -1436,9 +1324,9 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
             enum_user_profile_js_to_rs(raw_string.as_str())
         }?
     };
-    let server_config = {
-        let js_val = Reflect::get(&obj, &"serverConfig".into())?;
-        struct_server_config_js_to_rs(js_val)?
+    let server_organization_config = {
+        let js_val = Reflect::get(&obj, &"serverOrganizationConfig".into())?;
+        struct_server_organization_config_js_to_rs(js_val)?
     };
     let is_server_online = {
         let js_val = Reflect::get(&obj, &"isServerOnline".into())?;
@@ -1469,7 +1357,7 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
         device_label,
         human_handle,
         current_profile,
-        server_config,
+        server_organization_config,
         is_server_online,
         is_organization_expired,
         must_accept_tos,
@@ -1519,8 +1407,13 @@ fn struct_client_info_rs_to_js(rs_obj: libparsec::ClientInfo) -> Result<JsValue,
     Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
     let js_current_profile = JsValue::from_str(enum_user_profile_rs_to_js(rs_obj.current_profile));
     Reflect::set(&js_obj, &"currentProfile".into(), &js_current_profile)?;
-    let js_server_config = struct_server_config_rs_to_js(rs_obj.server_config)?;
-    Reflect::set(&js_obj, &"serverConfig".into(), &js_server_config)?;
+    let js_server_organization_config =
+        struct_server_organization_config_rs_to_js(rs_obj.server_organization_config)?;
+    Reflect::set(
+        &js_obj,
+        &"serverOrganizationConfig".into(),
+        &js_server_organization_config,
+    )?;
     let js_is_server_online = rs_obj.is_server_online.into();
     Reflect::set(&js_obj, &"isServerOnline".into(), &js_is_server_online)?;
     let js_is_organization_expired = rs_obj.is_organization_expired.into();
@@ -2458,6 +2351,63 @@ fn struct_new_invitation_info_rs_to_js(
     Ok(js_obj)
 }
 
+// OpenBaoConfig
+
+#[allow(dead_code)]
+fn struct_open_bao_config_js_to_rs(obj: JsValue) -> Result<libparsec::OpenBaoConfig, JsValue> {
+    let server_url = {
+        let js_val = Reflect::get(&obj, &"serverUrl".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+    };
+    let secret = {
+        let js_val = Reflect::get(&obj, &"secret".into())?;
+        variant_open_bao_secret_config_js_to_rs(js_val)?
+    };
+    let auths = {
+        let js_val = Reflect::get(&obj, &"auths".into())?;
+        {
+            let js_val = js_val
+                .dyn_into::<Array>()
+                .map_err(|_| TypeError::new("Not an array"))?;
+            let mut converted = Vec::with_capacity(js_val.length() as usize);
+            for x in js_val.iter() {
+                let x_converted = variant_open_bao_auth_config_js_to_rs(x)?;
+                converted.push(x_converted);
+            }
+            converted
+        }
+    };
+    Ok(libparsec::OpenBaoConfig {
+        server_url,
+        secret,
+        auths,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_open_bao_config_rs_to_js(rs_obj: libparsec::OpenBaoConfig) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_server_url = rs_obj.server_url.into();
+    Reflect::set(&js_obj, &"serverUrl".into(), &js_server_url)?;
+    let js_secret = variant_open_bao_secret_config_rs_to_js(rs_obj.secret)?;
+    Reflect::set(&js_obj, &"secret".into(), &js_secret)?;
+    let js_auths = {
+        // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+        let js_array = Array::new_with_length(rs_obj.auths.len() as u32);
+        for (i, elem) in rs_obj.auths.into_iter().enumerate() {
+            let js_elem = variant_open_bao_auth_config_rs_to_js(elem)?;
+            js_array.set(i as u32, js_elem);
+        }
+        js_array.into()
+    };
+    Reflect::set(&js_obj, &"auths".into(), &js_auths)?;
+    Ok(js_obj)
+}
+
 // OpenOptions
 
 #[allow(dead_code)]
@@ -2710,6 +2660,62 @@ fn struct_pki_enrollment_list_item_rs_to_js(
 
 #[allow(dead_code)]
 fn struct_server_config_js_to_rs(obj: JsValue) -> Result<libparsec::ServerConfig, JsValue> {
+    let client_agent = {
+        let js_val = Reflect::get(&obj, &"clientAgent".into())?;
+        variant_client_agent_config_js_to_rs(js_val)?
+    };
+    let account = {
+        let js_val = Reflect::get(&obj, &"account".into())?;
+        variant_account_config_js_to_rs(js_val)?
+    };
+    let organization_bootstrap = {
+        let js_val = Reflect::get(&obj, &"organizationBootstrap".into())?;
+        variant_organization_bootstrap_config_js_to_rs(js_val)?
+    };
+    let openbao = {
+        let js_val = Reflect::get(&obj, &"openbao".into())?;
+        if js_val.is_null() {
+            None
+        } else {
+            Some(struct_open_bao_config_js_to_rs(js_val)?)
+        }
+    };
+    Ok(libparsec::ServerConfig {
+        client_agent,
+        account,
+        organization_bootstrap,
+        openbao,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_server_config_rs_to_js(rs_obj: libparsec::ServerConfig) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_client_agent = variant_client_agent_config_rs_to_js(rs_obj.client_agent)?;
+    Reflect::set(&js_obj, &"clientAgent".into(), &js_client_agent)?;
+    let js_account = variant_account_config_rs_to_js(rs_obj.account)?;
+    Reflect::set(&js_obj, &"account".into(), &js_account)?;
+    let js_organization_bootstrap =
+        variant_organization_bootstrap_config_rs_to_js(rs_obj.organization_bootstrap)?;
+    Reflect::set(
+        &js_obj,
+        &"organizationBootstrap".into(),
+        &js_organization_bootstrap,
+    )?;
+    let js_openbao = match rs_obj.openbao {
+        Some(val) => struct_open_bao_config_rs_to_js(val)?,
+        None => JsValue::NULL,
+    };
+    Reflect::set(&js_obj, &"openbao".into(), &js_openbao)?;
+    Ok(js_obj)
+}
+
+// ServerOrganizationConfig
+
+#[allow(dead_code)]
+fn struct_server_organization_config_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::ServerOrganizationConfig, JsValue> {
     let user_profile_outsider_allowed = {
         let js_val = Reflect::get(&obj, &"userProfileOutsiderAllowed".into())?;
         js_val
@@ -2721,14 +2727,16 @@ fn struct_server_config_js_to_rs(obj: JsValue) -> Result<libparsec::ServerConfig
         let js_val = Reflect::get(&obj, &"activeUsersLimit".into())?;
         variant_active_users_limit_js_to_rs(js_val)?
     };
-    Ok(libparsec::ServerConfig {
+    Ok(libparsec::ServerOrganizationConfig {
         user_profile_outsider_allowed,
         active_users_limit,
     })
 }
 
 #[allow(dead_code)]
-fn struct_server_config_rs_to_js(rs_obj: libparsec::ServerConfig) -> Result<JsValue, JsValue> {
+fn struct_server_organization_config_rs_to_js(
+    rs_obj: libparsec::ServerOrganizationConfig,
+) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_user_profile_outsider_allowed = rs_obj.user_profile_outsider_allowed.into();
     Reflect::set(
@@ -5022,6 +5030,49 @@ fn variant_account_auth_method_strategy_rs_to_js(
     Ok(js_obj)
 }
 
+// AccountConfig
+
+#[allow(dead_code)]
+fn variant_account_config_js_to_rs(obj: JsValue) -> Result<libparsec::AccountConfig, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "AccountConfigDisabled" => Ok(libparsec::AccountConfig::Disabled),
+        "AccountConfigEnabledWithVault" => Ok(libparsec::AccountConfig::EnabledWithVault),
+        "AccountConfigEnabledWithoutVault" => Ok(libparsec::AccountConfig::EnabledWithoutVault),
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a AccountConfig",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_account_config_rs_to_js(rs_obj: libparsec::AccountConfig) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::AccountConfig::Disabled => {
+            Reflect::set(&js_obj, &"tag".into(), &"AccountConfigDisabled".into())?;
+        }
+        libparsec::AccountConfig::EnabledWithVault => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountConfigEnabledWithVault".into(),
+            )?;
+        }
+        libparsec::AccountConfig::EnabledWithoutVault => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountConfigEnabledWithoutVault".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // AccountCreateAuthMethodError
 
 #[allow(dead_code)]
@@ -5101,35 +5152,68 @@ fn variant_account_create_registration_device_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::AccountCreateRegistrationDeviceError::BadVaultKeyAccess{   .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorBadVaultKeyAccess".into())?;
+        libparsec::AccountCreateRegistrationDeviceError::BadVaultKeyAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateRegistrationDeviceErrorBadVaultKeyAccess".into(),
+            )?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::CannotObtainOrganizationVaultStrategy{   .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorCannotObtainOrganizationVaultStrategy".into())?;
+        libparsec::AccountCreateRegistrationDeviceError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateRegistrationDeviceErrorInternal".into(),
+            )?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::Internal{   .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorInternal".into())?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceDecryptionFailed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed".into(),
+            )?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceDecryptionFailed{   .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed".into())?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidData { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData".into(),
+            )?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidData{   .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData".into())?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidPath { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath".into(),
+            )?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidPath{   .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath".into())?;
+        libparsec::AccountCreateRegistrationDeviceError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateRegistrationDeviceErrorOffline".into(),
+            )?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::NotAllowedByOrganizationVaultStrategy{   .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorNotAllowedByOrganizationVaultStrategy".into())?;
+        libparsec::AccountCreateRegistrationDeviceError::RemoteOpaqueKeyFetchFailed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchFailed".into(),
+            )?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::Offline{   .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorOffline".into())?;
+        libparsec::AccountCreateRegistrationDeviceError::RemoteOpaqueKeyFetchOffline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchOffline".into(),
+            )?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::RemoteOpaqueKeyFetchFailed{   .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchFailed".into())?;
-        }
-        libparsec::AccountCreateRegistrationDeviceError::TimestampOutOfBallpark{   .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark".into())?;
+        libparsec::AccountCreateRegistrationDeviceError::TimestampOutOfBallpark { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -5792,6 +5876,13 @@ fn variant_account_register_new_device_error_rs_to_js(
                 &"AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadFailed".into(),
             )?;
         }
+        libparsec::AccountRegisterNewDeviceError::RemoteOpaqueKeyUploadOffline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadOffline".into(),
+            )?;
+        }
         libparsec::AccountRegisterNewDeviceError::StorageNotAvailable { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6280,6 +6371,28 @@ fn variant_available_device_type_js_to_rs(
     match tag.as_str() {
         "AvailableDeviceTypeAccountVault" => Ok(libparsec::AvailableDeviceType::AccountVault {}),
         "AvailableDeviceTypeKeyring" => Ok(libparsec::AvailableDeviceType::Keyring {}),
+        "AvailableDeviceTypeOpenBao" => {
+            let openbao_preferred_auth_id = {
+                let js_val = Reflect::get(&obj, &"openbaoPreferredAuthId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let openbao_entity_id = {
+                let js_val = Reflect::get(&obj, &"openbaoEntityId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            Ok(libparsec::AvailableDeviceType::OpenBao {
+                openbao_preferred_auth_id,
+                openbao_entity_id,
+            })
+        }
         "AvailableDeviceTypePassword" => Ok(libparsec::AvailableDeviceType::Password {}),
         "AvailableDeviceTypeRecovery" => Ok(libparsec::AvailableDeviceType::Recovery {}),
         "AvailableDeviceTypeSmartcard" => Ok(libparsec::AvailableDeviceType::Smartcard {}),
@@ -6304,6 +6417,21 @@ fn variant_available_device_type_rs_to_js(
         }
         libparsec::AvailableDeviceType::Keyring { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"AvailableDeviceTypeKeyring".into())?;
+        }
+        libparsec::AvailableDeviceType::OpenBao {
+            openbao_preferred_auth_id,
+            openbao_entity_id,
+            ..
+        } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AvailableDeviceTypeOpenBao".into())?;
+            let js_openbao_preferred_auth_id = openbao_preferred_auth_id.into();
+            Reflect::set(
+                &js_obj,
+                &"openbaoPreferredAuthId".into(),
+                &js_openbao_preferred_auth_id,
+            )?;
+            let js_openbao_entity_id = openbao_entity_id.into();
+            Reflect::set(&js_obj, &"openbaoEntityId".into(), &js_openbao_entity_id)?;
         }
         libparsec::AvailableDeviceType::Password { .. } => {
             Reflect::set(
@@ -6738,6 +6866,49 @@ fn variant_client_accept_tos_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ClientAcceptTosErrorTosMismatch".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientAgentConfig
+
+#[allow(dead_code)]
+fn variant_client_agent_config_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::ClientAgentConfig, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "ClientAgentConfigNativeOnly" => Ok(libparsec::ClientAgentConfig::NativeOnly),
+        "ClientAgentConfigNativeOrWeb" => Ok(libparsec::ClientAgentConfig::NativeOrWeb),
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a ClientAgentConfig",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_client_agent_config_rs_to_js(
+    rs_obj: libparsec::ClientAgentConfig,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::ClientAgentConfig::NativeOnly => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientAgentConfigNativeOnly".into(),
+            )?;
+        }
+        libparsec::ClientAgentConfig::NativeOrWeb => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientAgentConfigNativeOrWeb".into(),
             )?;
         }
     }
@@ -9464,6 +9635,61 @@ fn variant_device_access_strategy_js_to_rs(
             };
             Ok(libparsec::DeviceAccessStrategy::Keyring { key_file })
         }
+        "DeviceAccessStrategyOpenBao" => {
+            let key_file = {
+                let js_val = Reflect::get(&obj, &"keyFile".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
+                            Ok(std::path::PathBuf::from(s))
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            };
+            let openbao_server_url = {
+                let js_val = Reflect::get(&obj, &"openbaoServerUrl".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let openbao_secret_mount_path = {
+                let js_val = Reflect::get(&obj, &"openbaoSecretMountPath".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let openbao_entity_id = {
+                let js_val = Reflect::get(&obj, &"openbaoEntityId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let openbao_auth_token = {
+                let js_val = Reflect::get(&obj, &"openbaoAuthToken".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            Ok(libparsec::DeviceAccessStrategy::OpenBao {
+                key_file,
+                openbao_server_url,
+                openbao_secret_mount_path,
+                openbao_entity_id,
+                openbao_auth_token,
+            })
+        }
         "DeviceAccessStrategyPassword" => {
             let password = {
                 let js_val = Reflect::get(&obj, &"password".into())?;
@@ -9569,6 +9795,45 @@ fn variant_device_access_strategy_rs_to_js(
             });
             Reflect::set(&js_obj, &"keyFile".into(), &js_key_file)?;
         }
+        libparsec::DeviceAccessStrategy::OpenBao {
+            key_file,
+            openbao_server_url,
+            openbao_secret_mount_path,
+            openbao_entity_id,
+            openbao_auth_token,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"DeviceAccessStrategyOpenBao".into(),
+            )?;
+            let js_key_file = JsValue::from_str({
+                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                    path.into_os_string()
+                        .into_string()
+                        .map_err(|_| "Path contains non-utf8 characters")
+                };
+                match custom_to_rs_string(key_file) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"keyFile".into(), &js_key_file)?;
+            let js_openbao_server_url = openbao_server_url.into();
+            Reflect::set(&js_obj, &"openbaoServerUrl".into(), &js_openbao_server_url)?;
+            let js_openbao_secret_mount_path = openbao_secret_mount_path.into();
+            Reflect::set(
+                &js_obj,
+                &"openbaoSecretMountPath".into(),
+                &js_openbao_secret_mount_path,
+            )?;
+            let js_openbao_entity_id = openbao_entity_id.into();
+            Reflect::set(&js_obj, &"openbaoEntityId".into(), &js_openbao_entity_id)?;
+            let js_openbao_auth_token = openbao_auth_token.into();
+            Reflect::set(&js_obj, &"openbaoAuthToken".into(), &js_openbao_auth_token)?;
+        }
         libparsec::DeviceAccessStrategy::Password {
             password, key_file, ..
         } => {
@@ -9646,6 +9911,55 @@ fn variant_device_save_strategy_js_to_rs(
             Ok(libparsec::DeviceSaveStrategy::AccountVault { account_handle })
         }
         "DeviceSaveStrategyKeyring" => Ok(libparsec::DeviceSaveStrategy::Keyring {}),
+        "DeviceSaveStrategyOpenBao" => {
+            let openbao_server_url = {
+                let js_val = Reflect::get(&obj, &"openbaoServerUrl".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let openbao_secret_mount_path = {
+                let js_val = Reflect::get(&obj, &"openbaoSecretMountPath".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let openbao_entity_id = {
+                let js_val = Reflect::get(&obj, &"openbaoEntityId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let openbao_auth_token = {
+                let js_val = Reflect::get(&obj, &"openbaoAuthToken".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let openbao_preferred_auth_id = {
+                let js_val = Reflect::get(&obj, &"openbaoPreferredAuthId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            Ok(libparsec::DeviceSaveStrategy::OpenBao {
+                openbao_server_url,
+                openbao_secret_mount_path,
+                openbao_entity_id,
+                openbao_auth_token,
+                openbao_preferred_auth_id,
+            })
+        }
         "DeviceSaveStrategyPassword" => {
             let password = {
                 let js_val = Reflect::get(&obj, &"password".into())?;
@@ -9694,6 +10008,34 @@ fn variant_device_save_strategy_rs_to_js(
         }
         libparsec::DeviceSaveStrategy::Keyring { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"DeviceSaveStrategyKeyring".into())?;
+        }
+        libparsec::DeviceSaveStrategy::OpenBao {
+            openbao_server_url,
+            openbao_secret_mount_path,
+            openbao_entity_id,
+            openbao_auth_token,
+            openbao_preferred_auth_id,
+            ..
+        } => {
+            Reflect::set(&js_obj, &"tag".into(), &"DeviceSaveStrategyOpenBao".into())?;
+            let js_openbao_server_url = openbao_server_url.into();
+            Reflect::set(&js_obj, &"openbaoServerUrl".into(), &js_openbao_server_url)?;
+            let js_openbao_secret_mount_path = openbao_secret_mount_path.into();
+            Reflect::set(
+                &js_obj,
+                &"openbaoSecretMountPath".into(),
+                &js_openbao_secret_mount_path,
+            )?;
+            let js_openbao_entity_id = openbao_entity_id.into();
+            Reflect::set(&js_obj, &"openbaoEntityId".into(), &js_openbao_entity_id)?;
+            let js_openbao_auth_token = openbao_auth_token.into();
+            Reflect::set(&js_obj, &"openbaoAuthToken".into(), &js_openbao_auth_token)?;
+            let js_openbao_preferred_auth_id = openbao_preferred_auth_id.into();
+            Reflect::set(
+                &js_obj,
+                &"openbaoPreferredAuthId".into(),
+                &js_openbao_preferred_auth_id,
+            )?;
         }
         libparsec::DeviceSaveStrategy::Password { password, .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"DeviceSaveStrategyPassword".into())?;
@@ -10182,6 +10524,34 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
     Ok(js_obj)
 }
 
+// GetServerConfigError
+
+#[allow(dead_code)]
+fn variant_get_server_config_error_rs_to_js(
+    rs_obj: libparsec::GetServerConfigError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::GetServerConfigError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"GetServerConfigErrorInternal".into(),
+            )?;
+        }
+        libparsec::GetServerConfigError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"GetServerConfigErrorOffline".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // GreetInProgressError
 
 #[allow(dead_code)]
@@ -10440,6 +10810,13 @@ fn variant_import_recovery_device_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadFailed".into(),
+            )?;
+        }
+        libparsec::ImportRecoveryDeviceError::RemoteOpaqueKeyUploadOffline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadOffline".into(),
             )?;
         }
         libparsec::ImportRecoveryDeviceError::Stopped { .. } => {
@@ -11361,6 +11738,163 @@ fn variant_move_entry_mode_rs_to_js(rs_obj: libparsec::MoveEntryMode) -> Result<
         }
         libparsec::MoveEntryMode::NoReplace => {
             Reflect::set(&js_obj, &"tag".into(), &"MoveEntryModeNoReplace".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// OpenBaoAuthConfig
+
+#[allow(dead_code)]
+fn variant_open_bao_auth_config_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::OpenBaoAuthConfig, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "OpenBaoAuthConfigOIDCHexagone" => {
+            let mount_path = {
+                let js_val = Reflect::get(&obj, &"mountPath".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            Ok(libparsec::OpenBaoAuthConfig::OIDCHexagone { mount_path })
+        }
+        "OpenBaoAuthConfigOIDCProConnect" => {
+            let mount_path = {
+                let js_val = Reflect::get(&obj, &"mountPath".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            Ok(libparsec::OpenBaoAuthConfig::OIDCProConnect { mount_path })
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a OpenBaoAuthConfig",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_open_bao_auth_config_rs_to_js(
+    rs_obj: libparsec::OpenBaoAuthConfig,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::OpenBaoAuthConfig::OIDCHexagone { mount_path, .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"OpenBaoAuthConfigOIDCHexagone".into(),
+            )?;
+            let js_mount_path = mount_path.into();
+            Reflect::set(&js_obj, &"mountPath".into(), &js_mount_path)?;
+        }
+        libparsec::OpenBaoAuthConfig::OIDCProConnect { mount_path, .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"OpenBaoAuthConfigOIDCProConnect".into(),
+            )?;
+            let js_mount_path = mount_path.into();
+            Reflect::set(&js_obj, &"mountPath".into(), &js_mount_path)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// OpenBaoSecretConfig
+
+#[allow(dead_code)]
+fn variant_open_bao_secret_config_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::OpenBaoSecretConfig, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "OpenBaoSecretConfigKV2" => {
+            let mount_path = {
+                let js_val = Reflect::get(&obj, &"mountPath".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            Ok(libparsec::OpenBaoSecretConfig::KV2 { mount_path })
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a OpenBaoSecretConfig",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_open_bao_secret_config_rs_to_js(
+    rs_obj: libparsec::OpenBaoSecretConfig,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::OpenBaoSecretConfig::KV2 { mount_path, .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"OpenBaoSecretConfigKV2".into())?;
+            let js_mount_path = mount_path.into();
+            Reflect::set(&js_obj, &"mountPath".into(), &js_mount_path)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// OrganizationBootstrapConfig
+
+#[allow(dead_code)]
+fn variant_organization_bootstrap_config_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::OrganizationBootstrapConfig, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "OrganizationBootstrapConfigSpontaneous" => {
+            Ok(libparsec::OrganizationBootstrapConfig::Spontaneous)
+        }
+        "OrganizationBootstrapConfigWithBootstrapToken" => {
+            Ok(libparsec::OrganizationBootstrapConfig::WithBootstrapToken)
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a OrganizationBootstrapConfig",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_organization_bootstrap_config_rs_to_js(
+    rs_obj: libparsec::OrganizationBootstrapConfig,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::OrganizationBootstrapConfig::Spontaneous => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"OrganizationBootstrapConfigSpontaneous".into(),
+            )?;
+        }
+        libparsec::OrganizationBootstrapConfig::WithBootstrapToken => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"OrganizationBootstrapConfigWithBootstrapToken".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -20566,6 +21100,43 @@ pub fn getPlatform() -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::get_platform();
         Ok(JsValue::from_str(enum_platform_rs_to_js(ret)))
+    }))
+}
+
+// get_server_config
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn getServerConfig(config_dir: String, addr: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config_dir = {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let addr = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::get_server_config(&config_dir, addr).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_server_config_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_get_server_config_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
     }))
 }
 
