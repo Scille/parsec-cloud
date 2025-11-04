@@ -9,16 +9,6 @@ export type Result<T, E = Error> =
   | { ok: true; value: T }
   | { ok: false; error: E }
 
-export enum AccountOrganizationsAccountVaultStrategy {
-    Allowed = 'AccountOrganizationsAccountVaultStrategyAllowed',
-    Forbidden = 'AccountOrganizationsAccountVaultStrategyForbidden',
-}
-
-export enum AccountOrganizationsAllowedClientAgent {
-    NativeOnly = 'AccountOrganizationsAllowedClientAgentNativeOnly',
-    NativeOrWeb = 'AccountOrganizationsAllowedClientAgentNativeOrWeb',
-}
-
 export enum CancelledGreetingAttemptReason {
     AutomaticallyCancelled = 'CancelledGreetingAttemptReasonAutomaticallyCancelled',
     InconsistentPayload = 'CancelledGreetingAttemptReasonInconsistentPayload',
@@ -122,8 +112,6 @@ export interface AccountOrganizationsOrganizationConfig {
     isExpired: boolean
     userProfileOutsiderAllowed: boolean
     activeUsersLimit: ActiveUsersLimit
-    allowedClientAgent: AccountOrganizationsAllowedClientAgent
-    accountVaultStrategy: AccountOrganizationsAccountVaultStrategy
 }
 
 
@@ -178,7 +166,7 @@ export interface ClientInfo {
     deviceLabel: string
     humanHandle: HumanHandle
     currentProfile: UserProfile
-    serverConfig: ServerConfig
+    serverOrganizationConfig: ServerOrganizationConfig
     isServerOnline: boolean
     isOrganizationExpired: boolean
     mustAcceptTos: boolean
@@ -272,6 +260,13 @@ export interface NewInvitationInfo {
 }
 
 
+export interface OpenBaoConfig {
+    serverUrl: string
+    secret: OpenBaoSecretConfig
+    auths: Array<OpenBaoAuthConfig>
+}
+
+
 export interface OpenOptions {
     read: boolean
     write: boolean
@@ -318,6 +313,14 @@ export interface PkiEnrollmentSubmitPayload {
 
 
 export interface ServerConfig {
+    clientAgent: ClientAgentConfig
+    account: AccountConfig
+    organizationBootstrap: OrganizationBootstrapConfig
+    openbao: OpenBaoConfig | null
+}
+
+
+export interface ServerOrganizationConfig {
     userProfileOutsiderAllowed: boolean
     activeUsersLimit: ActiveUsersLimit
 }
@@ -535,6 +538,22 @@ export type AccountAuthMethodStrategy =
   | AccountAuthMethodStrategyPassword
 
 
+// AccountConfig
+export interface AccountConfigDisabled {
+    tag: "AccountConfigDisabled"
+}
+export interface AccountConfigEnabledWithVault {
+    tag: "AccountConfigEnabledWithVault"
+}
+export interface AccountConfigEnabledWithoutVault {
+    tag: "AccountConfigEnabledWithoutVault"
+}
+export type AccountConfig =
+  | AccountConfigDisabled
+  | AccountConfigEnabledWithVault
+  | AccountConfigEnabledWithoutVault
+
+
 // AccountCreateAuthMethodError
 export interface AccountCreateAuthMethodErrorBadVaultKeyAccess {
     tag: "AccountCreateAuthMethodErrorBadVaultKeyAccess"
@@ -583,10 +602,6 @@ export interface AccountCreateRegistrationDeviceErrorBadVaultKeyAccess {
     tag: "AccountCreateRegistrationDeviceErrorBadVaultKeyAccess"
     error: string
 }
-export interface AccountCreateRegistrationDeviceErrorCannotObtainOrganizationVaultStrategy {
-    tag: "AccountCreateRegistrationDeviceErrorCannotObtainOrganizationVaultStrategy"
-    error: string
-}
 export interface AccountCreateRegistrationDeviceErrorInternal {
     tag: "AccountCreateRegistrationDeviceErrorInternal"
     error: string
@@ -603,10 +618,6 @@ export interface AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath {
     tag: "AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath"
     error: string
 }
-export interface AccountCreateRegistrationDeviceErrorNotAllowedByOrganizationVaultStrategy {
-    tag: "AccountCreateRegistrationDeviceErrorNotAllowedByOrganizationVaultStrategy"
-    error: string
-}
 export interface AccountCreateRegistrationDeviceErrorOffline {
     tag: "AccountCreateRegistrationDeviceErrorOffline"
     error: string
@@ -615,20 +626,23 @@ export interface AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchFailed 
     tag: "AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchFailed"
     error: string
 }
+export interface AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchOffline {
+    tag: "AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchOffline"
+    error: string
+}
 export interface AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark {
     tag: "AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark"
     error: string
 }
 export type AccountCreateRegistrationDeviceError =
   | AccountCreateRegistrationDeviceErrorBadVaultKeyAccess
-  | AccountCreateRegistrationDeviceErrorCannotObtainOrganizationVaultStrategy
   | AccountCreateRegistrationDeviceErrorInternal
   | AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed
   | AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData
   | AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath
-  | AccountCreateRegistrationDeviceErrorNotAllowedByOrganizationVaultStrategy
   | AccountCreateRegistrationDeviceErrorOffline
   | AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchFailed
+  | AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchOffline
   | AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark
 
 
@@ -937,6 +951,10 @@ export interface AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadFailed {
     tag: "AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadFailed"
     error: string
 }
+export interface AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadOffline {
+    tag: "AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadOffline"
+    error: string
+}
 export interface AccountRegisterNewDeviceErrorStorageNotAvailable {
     tag: "AccountRegisterNewDeviceErrorStorageNotAvailable"
     error: string
@@ -956,6 +974,7 @@ export type AccountRegisterNewDeviceError =
   | AccountRegisterNewDeviceErrorInvalidPath
   | AccountRegisterNewDeviceErrorOffline
   | AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadFailed
+  | AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadOffline
   | AccountRegisterNewDeviceErrorStorageNotAvailable
   | AccountRegisterNewDeviceErrorTimestampOutOfBallpark
   | AccountRegisterNewDeviceErrorUnknownRegistrationDevice
@@ -1027,6 +1046,11 @@ export interface AvailableDeviceTypeAccountVault {
 export interface AvailableDeviceTypeKeyring {
     tag: "AvailableDeviceTypeKeyring"
 }
+export interface AvailableDeviceTypeOpenBao {
+    tag: "AvailableDeviceTypeOpenBao"
+    openbao_preferred_auth_id: string
+    openbao_entity_id: string
+}
 export interface AvailableDeviceTypePassword {
     tag: "AvailableDeviceTypePassword"
 }
@@ -1039,6 +1063,7 @@ export interface AvailableDeviceTypeSmartcard {
 export type AvailableDeviceType =
   | AvailableDeviceTypeAccountVault
   | AvailableDeviceTypeKeyring
+  | AvailableDeviceTypeOpenBao
   | AvailableDeviceTypePassword
   | AvailableDeviceTypeRecovery
   | AvailableDeviceTypeSmartcard
@@ -1077,6 +1102,10 @@ export interface BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadFailed
     tag: "BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadFailed"
     error: string
 }
+export interface BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadOffline {
+    tag: "BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadOffline"
+    error: string
+}
 export interface BootstrapOrganizationErrorSaveDeviceStorageNotAvailable {
     tag: "BootstrapOrganizationErrorSaveDeviceStorageNotAvailable"
     error: string
@@ -1098,6 +1127,7 @@ export type BootstrapOrganizationError =
   | BootstrapOrganizationErrorOrganizationExpired
   | BootstrapOrganizationErrorSaveDeviceInvalidPath
   | BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadFailed
+  | BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadOffline
   | BootstrapOrganizationErrorSaveDeviceStorageNotAvailable
   | BootstrapOrganizationErrorTimestampOutOfBallpark
 
@@ -1272,6 +1302,18 @@ export type ClientAcceptTosError =
   | ClientAcceptTosErrorNoTos
   | ClientAcceptTosErrorOffline
   | ClientAcceptTosErrorTosMismatch
+
+
+// ClientAgentConfig
+export interface ClientAgentConfigNativeOnly {
+    tag: "ClientAgentConfigNativeOnly"
+}
+export interface ClientAgentConfigNativeOrWeb {
+    tag: "ClientAgentConfigNativeOrWeb"
+}
+export type ClientAgentConfig =
+  | ClientAgentConfigNativeOnly
+  | ClientAgentConfigNativeOrWeb
 
 
 // ClientCancelInvitationError
@@ -2262,6 +2304,14 @@ export interface DeviceAccessStrategyKeyring {
     tag: "DeviceAccessStrategyKeyring"
     key_file: string
 }
+export interface DeviceAccessStrategyOpenBao {
+    tag: "DeviceAccessStrategyOpenBao"
+    key_file: string
+    openbao_server_url: string
+    openbao_secret_mount_path: string
+    openbao_entity_id: string
+    openbao_auth_token: string
+}
 export interface DeviceAccessStrategyPassword {
     tag: "DeviceAccessStrategyPassword"
     password: string
@@ -2274,6 +2324,7 @@ export interface DeviceAccessStrategySmartcard {
 export type DeviceAccessStrategy =
   | DeviceAccessStrategyAccountVault
   | DeviceAccessStrategyKeyring
+  | DeviceAccessStrategyOpenBao
   | DeviceAccessStrategyPassword
   | DeviceAccessStrategySmartcard
 
@@ -2286,6 +2337,14 @@ export interface DeviceSaveStrategyAccountVault {
 export interface DeviceSaveStrategyKeyring {
     tag: "DeviceSaveStrategyKeyring"
 }
+export interface DeviceSaveStrategyOpenBao {
+    tag: "DeviceSaveStrategyOpenBao"
+    openbao_server_url: string
+    openbao_secret_mount_path: string
+    openbao_entity_id: string
+    openbao_auth_token: string
+    openbao_preferred_auth_id: string
+}
 export interface DeviceSaveStrategyPassword {
     tag: "DeviceSaveStrategyPassword"
     password: string
@@ -2297,6 +2356,7 @@ export interface DeviceSaveStrategySmartcard {
 export type DeviceSaveStrategy =
   | DeviceSaveStrategyAccountVault
   | DeviceSaveStrategyKeyring
+  | DeviceSaveStrategyOpenBao
   | DeviceSaveStrategyPassword
   | DeviceSaveStrategySmartcard
 
@@ -2330,6 +2390,20 @@ export interface EntryStatFolder {
 export type EntryStat =
   | EntryStatFile
   | EntryStatFolder
+
+
+// GetServerConfigError
+export interface GetServerConfigErrorInternal {
+    tag: "GetServerConfigErrorInternal"
+    error: string
+}
+export interface GetServerConfigErrorOffline {
+    tag: "GetServerConfigErrorOffline"
+    error: string
+}
+export type GetServerConfigError =
+  | GetServerConfigErrorInternal
+  | GetServerConfigErrorOffline
 
 
 // GreetInProgressError
@@ -2461,6 +2535,10 @@ export interface ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadFailed {
     tag: "ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadFailed"
     error: string
 }
+export interface ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadOffline {
+    tag: "ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadOffline"
+    error: string
+}
 export interface ImportRecoveryDeviceErrorStopped {
     tag: "ImportRecoveryDeviceErrorStopped"
     error: string
@@ -2486,6 +2564,7 @@ export type ImportRecoveryDeviceError =
   | ImportRecoveryDeviceErrorInvalidPath
   | ImportRecoveryDeviceErrorOffline
   | ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadFailed
+  | ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadOffline
   | ImportRecoveryDeviceErrorStopped
   | ImportRecoveryDeviceErrorStorageNotAvailable
   | ImportRecoveryDeviceErrorTimestampOutOfBallpark
@@ -2696,6 +2775,41 @@ export type MoveEntryMode =
   | MoveEntryModeNoReplace
 
 
+// OpenBaoAuthConfig
+export interface OpenBaoAuthConfigOIDCHexagone {
+    tag: "OpenBaoAuthConfigOIDCHexagone"
+    mount_path: string
+}
+export interface OpenBaoAuthConfigOIDCProConnect {
+    tag: "OpenBaoAuthConfigOIDCProConnect"
+    mount_path: string
+}
+export type OpenBaoAuthConfig =
+  | OpenBaoAuthConfigOIDCHexagone
+  | OpenBaoAuthConfigOIDCProConnect
+
+
+// OpenBaoSecretConfig
+export interface OpenBaoSecretConfigKV2 {
+    tag: "OpenBaoSecretConfigKV2"
+    mount_path: string
+}
+export type OpenBaoSecretConfig =
+  | OpenBaoSecretConfigKV2
+
+
+// OrganizationBootstrapConfig
+export interface OrganizationBootstrapConfigSpontaneous {
+    tag: "OrganizationBootstrapConfigSpontaneous"
+}
+export interface OrganizationBootstrapConfigWithBootstrapToken {
+    tag: "OrganizationBootstrapConfigWithBootstrapToken"
+}
+export type OrganizationBootstrapConfig =
+  | OrganizationBootstrapConfigSpontaneous
+  | OrganizationBootstrapConfigWithBootstrapToken
+
+
 // OtherShamirRecoveryInfo
 export interface OtherShamirRecoveryInfoDeleted {
     tag: "OtherShamirRecoveryInfoDeleted"
@@ -2782,6 +2896,7 @@ export interface ParsedParsecAddrInvitationDevice {
     tag: "ParsedParsecAddrInvitationDevice"
     hostname: string
     port: number
+    is_default_port: boolean
     use_ssl: boolean
     organization_id: string
     token: string
@@ -2790,6 +2905,7 @@ export interface ParsedParsecAddrInvitationShamirRecovery {
     tag: "ParsedParsecAddrInvitationShamirRecovery"
     hostname: string
     port: number
+    is_default_port: boolean
     use_ssl: boolean
     organization_id: string
     token: string
@@ -2798,6 +2914,7 @@ export interface ParsedParsecAddrInvitationUser {
     tag: "ParsedParsecAddrInvitationUser"
     hostname: string
     port: number
+    is_default_port: boolean
     use_ssl: boolean
     organization_id: string
     token: string
@@ -2806,6 +2923,7 @@ export interface ParsedParsecAddrOrganization {
     tag: "ParsedParsecAddrOrganization"
     hostname: string
     port: number
+    is_default_port: boolean
     use_ssl: boolean
     organization_id: string
 }
@@ -2813,6 +2931,7 @@ export interface ParsedParsecAddrOrganizationBootstrap {
     tag: "ParsedParsecAddrOrganizationBootstrap"
     hostname: string
     port: number
+    is_default_port: boolean
     use_ssl: boolean
     organization_id: string
     token: string | null
@@ -2821,6 +2940,7 @@ export interface ParsedParsecAddrPkiEnrollment {
     tag: "ParsedParsecAddrPkiEnrollment"
     hostname: string
     port: number
+    is_default_port: boolean
     use_ssl: boolean
     organization_id: string
 }
@@ -2828,12 +2948,14 @@ export interface ParsedParsecAddrServer {
     tag: "ParsedParsecAddrServer"
     hostname: string
     port: number
+    is_default_port: boolean
     use_ssl: boolean
 }
 export interface ParsedParsecAddrWorkspacePath {
     tag: "ParsedParsecAddrWorkspacePath"
     hostname: string
     port: number
+    is_default_port: boolean
     use_ssl: boolean
     organization_id: string
     workspace_id: string
@@ -4604,6 +4726,11 @@ export function bootstrapOrganization(
     device_label: string,
     sequester_authority_verify_key_pem: string | null
 ): Promise<Result<AvailableDevice, BootstrapOrganizationError>>
+export function buildParsecAddr(
+    hostname: string,
+    port: number | null,
+    use_ssl: boolean
+): Promise<string>
 export function buildParsecOrganizationBootstrapAddr(
     addr: string,
     organization_id: string
@@ -4873,6 +5000,10 @@ export function getDefaultMountpointBaseDir(
 ): Promise<string>
 export function getPlatform(
 ): Promise<Platform>
+export function getServerConfig(
+    config_dir: string,
+    addr: string
+): Promise<Result<ServerConfig, GetServerConfigError>>
 export function greeterDeviceInProgress1DoWaitPeerTrust(
     canceller: number,
     handle: number
