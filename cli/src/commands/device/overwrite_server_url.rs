@@ -56,6 +56,15 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
         AvailableDeviceType::Recovery => {
             return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(device.ty).into());
         }
+
+        AvailableDeviceType::OpenBao { .. } => {
+            // In theory we should support this authentication method here,
+            // however:
+            // - It is cumbersome since it requires opening a browser window for login
+            //   and redirect its result to a server listening on localhost...
+            // - In practice it is a niche usage that will most likely only be used in the GUI.
+            return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(device.ty).into());
+        }
     };
 
     let short_id = &device.device_id.hex()[..3];
