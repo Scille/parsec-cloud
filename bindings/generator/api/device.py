@@ -28,6 +28,10 @@ class AvailableDeviceType(Variant):
     Smartcard = VariantItemUnit
     AccountVault = VariantItemUnit
 
+    class OpenBao:
+        openbao_preferred_auth: str
+        openbao_entity_id: str
+
 
 class DeviceSaveStrategy(Variant):
     class Keyring:
@@ -41,6 +45,13 @@ class DeviceSaveStrategy(Variant):
 
     class AccountVault:
         account_handle: Handle
+
+    class OpenBao:
+        openbao_server_url: str
+        openbao_secret_mount_path: str
+        openbao_entity_id: str
+        openbao_auth_token: str
+        openbao_preferred_auth: str
 
 
 class DeviceAccessStrategy(Variant):
@@ -57,6 +68,13 @@ class DeviceAccessStrategy(Variant):
     class AccountVault:
         key_file: Path
         account_handle: Handle
+
+    class OpenBao:
+        key_file: Path
+        openbao_server_url: str
+        openbao_secret_mount_path: str
+        openbao_entity_id: str
+        openbao_auth_token: str
 
 
 class AvailableDevice(Structure):
