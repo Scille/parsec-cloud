@@ -4,6 +4,7 @@
 from .addr import ParsecOrganizationAddr
 from .common import (
     U64,
+    Bytes,
     DateTime,
     DeviceID,
     DeviceLabel,
@@ -32,7 +33,7 @@ from .common import (
 from .config import ClientConfig
 from .device import DeviceAccessStrategy
 from .invite import AvailableDevice, DeviceSaveStrategy
-from .pki import PkiEnrollmentRejectError
+from .pki import PkiEnrollmentRejectError, X509CertificateReference, PkiEnrollmentAcceptError
 
 
 def list_started_clients() -> list[tuple[Handle, DeviceID]]:
@@ -811,4 +812,15 @@ async def client_get_organization_bootstrap_date(
 async def client_pki_enrollment_reject(
     client_handle: Handle, enrollment_id: EnrollmentID
 ) -> Result[None, PkiEnrollmentRejectError]:
+    raise NotImplementedError
+
+
+async def client_pki_enrollment_accept(
+    client_handle: Handle,
+    profile: UserProfile,
+    enrollment_id: EnrollmentID,
+    human_handle: Ref[HumanHandle],
+    cert_ref: Ref[X509CertificateReference],
+    submit_payload: Bytes,
+) -> Result[None, PkiEnrollmentAcceptError]:
     raise NotImplementedError
