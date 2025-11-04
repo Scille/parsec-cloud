@@ -41,9 +41,8 @@ import {
   AvailableDevice,
   BootstrapOrganizationError,
   BootstrapOrganizationErrorTag,
-  CustomDeviceSaveStrategyTag,
   DeviceSaveStrategy,
-  DeviceSaveStrategySSO,
+  DeviceSaveStrategyTag,
   OrganizationID,
   bootstrapOrganization as parsecBootstrapOrganization,
   createOrganization as parsecCreateOrganization,
@@ -85,7 +84,7 @@ const emits = defineEmits<{
 const step = ref<Steps>(Steps.PersonalInformation);
 const email = ref<string | undefined>(undefined);
 const name = ref<string | undefined>(undefined);
-const saveStrategy = ref<DeviceSaveStrategy | DeviceSaveStrategySSO | undefined>(undefined);
+const saveStrategy = ref<DeviceSaveStrategy | undefined>(undefined);
 const availableDevice = ref<AvailableDevice | undefined>(undefined);
 const currentError = ref<Translatable | undefined>(undefined);
 const organizationName = ref<OrganizationID | undefined>(undefined);
@@ -112,7 +111,7 @@ async function createOrganization(): Promise<Result<AvailableDevice, BootstrapOr
   }
 
   let deviceName = getDefaultDeviceName();
-  if (isOpenBaoAvailable() && saveStrategy.value.tag === CustomDeviceSaveStrategyTag.SSO) {
+  if (isOpenBaoAvailable() && saveStrategy.value.tag === DeviceSaveStrategyTag.OpenBao) {
     const client = getOpenBaoClient();
     if (!client) {
       window.electronAPI.log('error', 'OpenBAO not logged in');
@@ -172,7 +171,7 @@ async function bootstrapOrganization(): Promise<Result<AvailableDevice, Bootstra
   return result;
 }
 
-async function onAuthenticationChosen(strategy: DeviceSaveStrategy | DeviceSaveStrategySSO): Promise<void> {
+async function onAuthenticationChosen(strategy: DeviceSaveStrategy): Promise<void> {
   if (!name.value || !email.value) {
     window.electronAPI.log('error', 'Missing data on org creation step, should not happen');
     return;
