@@ -155,9 +155,9 @@ async fn fingerprint_already_exists(env: &TestbedEnv) {
     );
 
     p_assert_matches!(
-        account.upload_opaque_key_in_vault().await,
-        Err(AccountUploadOpaqueKeyInVaultError::Internal(err))
-        if format!("{err}") == "Unexpected server response: FingerprintAlreadyExists"
+        account.upload_opaque_key_in_vault().await.unwrap_err(),
+        err @ AccountUploadOpaqueKeyInVaultError::BadServerResponse(_)
+        if err.to_string() == "The Parsec account server returned an unexpected response: FingerprintAlreadyExists"
     );
 }
 
@@ -238,8 +238,8 @@ async fn unknown_server_response(
     }
 
     p_assert_matches!(
-        account.upload_opaque_key_in_vault().await,
-        Err(AccountUploadOpaqueKeyInVaultError::Internal(err))
-        if format!("{err}") == "Unexpected server response: UnknownStatus { unknown_status: \"unknown\", reason: None }"
+        account.upload_opaque_key_in_vault().await.unwrap_err(),
+        err @ AccountUploadOpaqueKeyInVaultError::BadServerResponse(_)
+        if err.to_string() == "The Parsec account server returned an unexpected response: UnknownStatus { unknown_status: \"unknown\", reason: None }"
     );
 }
