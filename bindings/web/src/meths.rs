@@ -13209,6 +13209,76 @@ fn variant_pki_enrollment_reject_error_rs_to_js(
     Ok(js_obj)
 }
 
+// PkiEnrollmentSubmitError
+
+#[allow(dead_code)]
+fn variant_pki_enrollment_submit_error_rs_to_js(
+    rs_obj: libparsec::PkiEnrollmentSubmitError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::PkiEnrollmentSubmitError::AlreadyEnrolled { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiEnrollmentSubmitErrorAlreadyEnrolled".into(),
+            )?;
+        }
+        libparsec::PkiEnrollmentSubmitError::AlreadySubmitted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiEnrollmentSubmitErrorAlreadySubmitted".into(),
+            )?;
+        }
+        libparsec::PkiEnrollmentSubmitError::EmailAlreadyUsed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiEnrollmentSubmitErrorEmailAlreadyUsed".into(),
+            )?;
+        }
+        libparsec::PkiEnrollmentSubmitError::IdAlreadyUsed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiEnrollmentSubmitErrorIdAlreadyUsed".into(),
+            )?;
+        }
+        libparsec::PkiEnrollmentSubmitError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiEnrollmentSubmitErrorInternal".into(),
+            )?;
+        }
+        libparsec::PkiEnrollmentSubmitError::InvalidPayload { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiEnrollmentSubmitErrorInvalidPayload".into(),
+            )?;
+        }
+        libparsec::PkiEnrollmentSubmitError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiEnrollmentSubmitErrorOffline".into(),
+            )?;
+        }
+        libparsec::PkiEnrollmentSubmitError::PkiOperationError { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiEnrollmentSubmitErrorPkiOperationError".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // SelfShamirRecoveryInfo
 
 #[allow(dead_code)]
@@ -21225,6 +21295,77 @@ pub fn pathSplit(path: String) -> Promise {
                 js_array.set(i as u32, js_elem);
             }
             js_array.into()
+        })
+    }))
+}
+
+// pki_enrollment_submit
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn pkiEnrollmentSubmit(
+    config: Object,
+    addr: String,
+    cert_ref: Object,
+    human_handle: Object,
+    device_label: String,
+    force: bool,
+) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config = config.into();
+        let config = struct_client_config_js_to_rs(config)?;
+
+        let addr = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecPkiEnrollmentAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let cert_ref = cert_ref.into();
+        let cert_ref = struct_x509_certificate_reference_js_to_rs(cert_ref)?;
+
+        let human_handle = human_handle.into();
+        let human_handle = struct_human_handle_js_to_rs(human_handle)?;
+
+        let device_label = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(device_label).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::pki_enrollment_submit(
+            config,
+            addr,
+            cert_ref,
+            human_handle,
+            device_label,
+            force,
+        )
+        .await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                        Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                    };
+                    let v = match custom_to_rs_f64(value) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    };
+                    JsValue::from(v)
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_pki_enrollment_submit_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
         })
     }))
 }

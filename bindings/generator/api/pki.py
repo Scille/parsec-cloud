@@ -2,12 +2,15 @@
 
 from typing import ClassVar
 
+from .addr import ParsecPkiEnrollmentAddr
 from .common import (
     Bytes,
     BytesBasedType,
     DateTime,
+    DeviceLabel,
     EnrollmentID,
     ErrorVariant,
+    HumanHandle,
     Result,
     StrBasedType,
     Structure,
@@ -15,6 +18,7 @@ from .common import (
     Variant,
     VariantItemTuple,
 )
+from .config import ClientConfig
 
 
 class X509CertificateHash(StrBasedType):
@@ -110,3 +114,32 @@ class PkiEnrollmentRejectError(ErrorVariant):
     class EnrollmentNoLongerAvailable: ...
 
     class EnrollmentNotFound: ...
+
+
+class PkiEnrollmentSubmitError(ErrorVariant):
+    class Offline: ...
+
+    class Internal: ...
+
+    class AlreadyEnrolled: ...
+
+    class AlreadySubmitted: ...
+
+    class EmailAlreadyUsed: ...
+
+    class IdAlreadyUsed: ...
+
+    class InvalidPayload: ...
+
+    class PkiOperationError: ...
+
+
+async def pki_enrollment_submit(
+    config: ClientConfig,
+    addr: ParsecPkiEnrollmentAddr,
+    cert_ref: X509CertificateReference,
+    human_handle: HumanHandle,
+    device_label: DeviceLabel,
+    force: bool,
+) -> Result[DateTime, PkiEnrollmentSubmitError]:
+    raise NotImplementedError

@@ -3308,6 +3308,60 @@ export type PkiEnrollmentRejectError =
   | PkiEnrollmentRejectErrorInternal
   | PkiEnrollmentRejectErrorOffline
 
+// PkiEnrollmentSubmitError
+export enum PkiEnrollmentSubmitErrorTag {
+    AlreadyEnrolled = 'PkiEnrollmentSubmitErrorAlreadyEnrolled',
+    AlreadySubmitted = 'PkiEnrollmentSubmitErrorAlreadySubmitted',
+    EmailAlreadyUsed = 'PkiEnrollmentSubmitErrorEmailAlreadyUsed',
+    IdAlreadyUsed = 'PkiEnrollmentSubmitErrorIdAlreadyUsed',
+    Internal = 'PkiEnrollmentSubmitErrorInternal',
+    InvalidPayload = 'PkiEnrollmentSubmitErrorInvalidPayload',
+    Offline = 'PkiEnrollmentSubmitErrorOffline',
+    PkiOperationError = 'PkiEnrollmentSubmitErrorPkiOperationError',
+}
+
+export interface PkiEnrollmentSubmitErrorAlreadyEnrolled {
+    tag: PkiEnrollmentSubmitErrorTag.AlreadyEnrolled
+    error: string
+}
+export interface PkiEnrollmentSubmitErrorAlreadySubmitted {
+    tag: PkiEnrollmentSubmitErrorTag.AlreadySubmitted
+    error: string
+}
+export interface PkiEnrollmentSubmitErrorEmailAlreadyUsed {
+    tag: PkiEnrollmentSubmitErrorTag.EmailAlreadyUsed
+    error: string
+}
+export interface PkiEnrollmentSubmitErrorIdAlreadyUsed {
+    tag: PkiEnrollmentSubmitErrorTag.IdAlreadyUsed
+    error: string
+}
+export interface PkiEnrollmentSubmitErrorInternal {
+    tag: PkiEnrollmentSubmitErrorTag.Internal
+    error: string
+}
+export interface PkiEnrollmentSubmitErrorInvalidPayload {
+    tag: PkiEnrollmentSubmitErrorTag.InvalidPayload
+    error: string
+}
+export interface PkiEnrollmentSubmitErrorOffline {
+    tag: PkiEnrollmentSubmitErrorTag.Offline
+    error: string
+}
+export interface PkiEnrollmentSubmitErrorPkiOperationError {
+    tag: PkiEnrollmentSubmitErrorTag.PkiOperationError
+    error: string
+}
+export type PkiEnrollmentSubmitError =
+  | PkiEnrollmentSubmitErrorAlreadyEnrolled
+  | PkiEnrollmentSubmitErrorAlreadySubmitted
+  | PkiEnrollmentSubmitErrorEmailAlreadyUsed
+  | PkiEnrollmentSubmitErrorIdAlreadyUsed
+  | PkiEnrollmentSubmitErrorInternal
+  | PkiEnrollmentSubmitErrorInvalidPayload
+  | PkiEnrollmentSubmitErrorOffline
+  | PkiEnrollmentSubmitErrorPkiOperationError
+
 // SelfShamirRecoveryInfo
 export enum SelfShamirRecoveryInfoTag {
     Deleted = 'SelfShamirRecoveryInfoDeleted',
@@ -5554,6 +5608,14 @@ export interface LibParsecPlugin {
     pathSplit(
         path: FsPath
     ): Promise<Array<EntryName>>
+    pkiEnrollmentSubmit(
+        config: ClientConfig,
+        addr: ParsecPkiEnrollmentAddr,
+        cert_ref: X509CertificateReference,
+        human_handle: HumanHandle,
+        device_label: DeviceLabel,
+        force: boolean
+    ): Promise<Result<DateTime, PkiEnrollmentSubmitError>>
     showCertificateSelectionDialogWindowsOnly(
     ): Promise<Result<X509CertificateReference | null, ShowCertificateSelectionDialogError>>
     testCheckMailbox(

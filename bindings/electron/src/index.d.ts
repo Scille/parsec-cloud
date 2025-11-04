@@ -2792,6 +2792,50 @@ export type PkiEnrollmentRejectError =
   | PkiEnrollmentRejectErrorOffline
 
 
+// PkiEnrollmentSubmitError
+export interface PkiEnrollmentSubmitErrorAlreadyEnrolled {
+    tag: "PkiEnrollmentSubmitErrorAlreadyEnrolled"
+    error: string
+}
+export interface PkiEnrollmentSubmitErrorAlreadySubmitted {
+    tag: "PkiEnrollmentSubmitErrorAlreadySubmitted"
+    error: string
+}
+export interface PkiEnrollmentSubmitErrorEmailAlreadyUsed {
+    tag: "PkiEnrollmentSubmitErrorEmailAlreadyUsed"
+    error: string
+}
+export interface PkiEnrollmentSubmitErrorIdAlreadyUsed {
+    tag: "PkiEnrollmentSubmitErrorIdAlreadyUsed"
+    error: string
+}
+export interface PkiEnrollmentSubmitErrorInternal {
+    tag: "PkiEnrollmentSubmitErrorInternal"
+    error: string
+}
+export interface PkiEnrollmentSubmitErrorInvalidPayload {
+    tag: "PkiEnrollmentSubmitErrorInvalidPayload"
+    error: string
+}
+export interface PkiEnrollmentSubmitErrorOffline {
+    tag: "PkiEnrollmentSubmitErrorOffline"
+    error: string
+}
+export interface PkiEnrollmentSubmitErrorPkiOperationError {
+    tag: "PkiEnrollmentSubmitErrorPkiOperationError"
+    error: string
+}
+export type PkiEnrollmentSubmitError =
+  | PkiEnrollmentSubmitErrorAlreadyEnrolled
+  | PkiEnrollmentSubmitErrorAlreadySubmitted
+  | PkiEnrollmentSubmitErrorEmailAlreadyUsed
+  | PkiEnrollmentSubmitErrorIdAlreadyUsed
+  | PkiEnrollmentSubmitErrorInternal
+  | PkiEnrollmentSubmitErrorInvalidPayload
+  | PkiEnrollmentSubmitErrorOffline
+  | PkiEnrollmentSubmitErrorPkiOperationError
+
+
 // SelfShamirRecoveryInfo
 export interface SelfShamirRecoveryInfoDeleted {
     tag: "SelfShamirRecoveryInfoDeleted"
@@ -4703,6 +4747,14 @@ export function pathParent(
 export function pathSplit(
     path: string
 ): Promise<Array<string>>
+export function pkiEnrollmentSubmit(
+    config: ClientConfig,
+    addr: string,
+    cert_ref: X509CertificateReference,
+    human_handle: HumanHandle,
+    device_label: string,
+    force: boolean
+): Promise<Result<number, PkiEnrollmentSubmitError>>
 export function showCertificateSelectionDialogWindowsOnly(
 ): Promise<Result<X509CertificateReference | null, ShowCertificateSelectionDialogError>>
 export function testCheckMailbox(
