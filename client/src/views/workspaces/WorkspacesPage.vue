@@ -287,10 +287,12 @@ async function loadFavorites(): Promise<void> {
 }
 
 onMounted(async (): Promise<void> => {
+  window.electronAPI.log('debug', 'Mounted WorkspacePage');
   displayView.value = (
     await storageManager.retrieveComponentData<WorkspacesPageSavedData>(WORKSPACES_PAGE_DATA_KEY, WorkspaceDefaultData)
   ).displayState;
 
+  window.electronAPI.log('debug', 'Loading favorite workspaces');
   await loadFavorites();
 
   hotkeys = hotkeyManager.newHotkeys();
@@ -328,9 +330,13 @@ onMounted(async (): Promise<void> => {
     },
   );
 
+  window.electronAPI.log('debug', 'Getting user profile');
   clientProfile.value = await getClientProfile();
+
+  window.electronAPI.log('debug', 'Refreshing workspace list');
   await refreshWorkspacesList();
 
+  window.electronAPI.log('debug', 'Getting Parsec client info');
   const infoResult = await parsecGetClientInfo();
 
   if (infoResult.ok) {
@@ -341,8 +347,10 @@ onMounted(async (): Promise<void> => {
 
   const query = getCurrentRouteQuery();
   if (query.fileLink) {
+    window.electronAPI.log('debug', 'Handling file link');
     const success = await handleFileLink(query.fileLink);
     if (!success) {
+      window.electronAPI.log('warn', 'Could not handle file link, going back to workspaces');
       await navigateTo(Routes.Workspaces, { query: {} });
     }
   }
@@ -438,9 +446,11 @@ async function refreshWorkspacesList(): Promise<void> {
     return;
   }
   querying.value = true;
+  console.debug('Starting Parsec list workspaces');
   const result = await parsecListWorkspaces();
   if (result.ok) {
     for (const wk of result.value) {
+      console.debug(`Processing workspace: ${wk.currentName}`);
       const sharingResult = await parsecGetWorkspaceSharing(wk.id, false);
       if (sharingResult.ok) {
         wk.sharing = sharingResult.value;
@@ -466,6 +476,7 @@ async function refreshWorkspacesList(): Promise<void> {
     }
     await recentDocumentManager.saveToStorage(storageManager);
   } else {
+    console.error('Error listing workspaces');
     informationManager.present(
       new Information({
         message: 'WorkspacesPage.listError',

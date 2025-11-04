@@ -565,6 +565,7 @@ async function openJoinByLinkModal(link: string): Promise<void> {
 
 async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
   if (await isDeviceLoggedIn(device)) {
+    window.electronAPI.log('debug', 'Selected organization is already logged in, switching to it');
     const handle = await getDeviceHandle(device);
     switchOrganization(handle ?? null, false);
   } else {
@@ -573,6 +574,7 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
       storedDeviceDataDict.value[device.deviceId]?.orgCreationDate &&
       isExpired(getDurationBeforeExpiration(storedDeviceDataDict.value[device.deviceId].orgCreationDate as DateTime))
     ) {
+      window.electronAPI.log('debug', 'Selected expired trial organization');
       const answer = await askQuestion('HomePage.expiredDevice.questionTitle', 'HomePage.expiredDevice.questionMessage', {
         yesIsDangerous: true,
         yesText: 'HomePage.expiredDevice.questionYes',
@@ -580,6 +582,7 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
         backdropDismiss: true,
       });
       if (answer === Answer.Yes) {
+        window.electronAPI.log('debug', 'Archiving expired trial organization');
         const result = await archiveDevice(device);
         if (result.ok) {
           informationManager.present(
@@ -592,6 +595,7 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
           await refreshDeviceList();
           return;
         } else {
+          window.electronAPI.log('error', 'Could not archive expired trial organization');
           informationManager.present(
             new Information({
               message: 'HomePage.expiredDevice.archiveFailure',
@@ -603,8 +607,10 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
       }
     }
     if (device.ty.tag === AvailableDeviceTypeTag.Keyring) {
+      window.electronAPI.log('debug', 'Logging in with Keyring');
       await login(device, AccessStrategy.useKeyring(device));
     } else if (device.ty.tag === AvailableDeviceTypeTag.Smartcard) {
+      window.electronAPI.log('debug', 'Logging in with Smartcard');
       await login(device, AccessStrategy.useSmartcard(device));
     } else if (device.ty.tag === AvailableDeviceTypeTag.AccountVault) {
       try {
@@ -621,6 +627,7 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
         );
       }
     } else {
+      window.electronAPI.log('debug', 'Logging in with Password');
       selectedDevice.value = device;
       state.value = HomePageState.Login;
     }
@@ -629,6 +636,7 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
 
 async function handleLoginError(device: AvailableDevice, error: ClientStartError): Promise<void> {
   if (device.ty.tag === AvailableDeviceTypeTag.Password) {
+    window.electronAPI.log('debug', 'Handling Password login error');
     selectedDevice.value = device;
     state.value = HomePageState.Login;
     await nextTick();
@@ -636,6 +644,7 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
       loginPageRef.value.setLoginError(error);
     }
   } else if (device.ty.tag === AvailableDeviceTypeTag.Keyring) {
+    window.electronAPI.log('debug', 'Handling Keyring login error');
     if (error.tag === ClientStartErrorTag.LoadDeviceDecryptionFailed) {
       const answer = await askQuestion('HomePage.loginErrors.keyringFailedTitle', 'HomePage.loginErrors.keyringFailedQuestion', {
         yesIsDangerous: false,
@@ -708,8 +717,10 @@ async function handleRegistration(device: AvailableDevice, access: DeviceAccessS
 async function login(device: AvailableDevice, access: DeviceAccessStrategy): Promise<void> {
   const eventDistributor = new EventDistributor();
   loginInProgress.value = true;
+  window.electronAPI.log('debug', 'Starting Parsec login');
   const result = await parsecLogin(device, access);
   if (result.ok) {
+    window.electronAPI.log('debug', 'getOrganizationCreationDate');
     const creationDateResult = await getOrganizationCreationDate(result.value);
     storedDeviceDataDict.value[device.deviceId] = {
       lastLogin: DateTime.now(),
@@ -733,10 +744,12 @@ async function login(device: AvailableDevice, access: DeviceAccessStrategy): Pro
     if (!injectionProvider.hasInjections(result.value)) {
       injectionProvider.createNewInjections(result.value, eventDistributor);
     }
+    window.electronAPI.log('debug', 'navigateTo: Routes.Loading');
     await navigateTo(Routes.Loading, { skipHandle: true, replace: true, query: { loginInfo: Base64.fromObject(routeData) } });
     state.value = HomePageState.OrganizationList;
     loginInProgress.value = false;
   } else {
+    window.electronAPI.log('error', `Parsec login error: ${result.error}`);
     await handleLoginError(device, result.error);
     loginInProgress.value = false;
   }

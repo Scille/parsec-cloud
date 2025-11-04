@@ -211,6 +211,8 @@ impl Drop for Mountpoint {
 pub async fn clean_base_mountpoint_dir(
     mountpoint_base_path: std::path::PathBuf,
 ) -> anyhow::Result<(), libparsec_types::anyhow::Error> {
+    log::trace!("Starting clean_base_mountpoint_dir");
+
     // Check if path is not empty
     if mountpoint_base_path.components().next().is_none() {
         log::error!(
@@ -306,6 +308,7 @@ fn create_suitable_mountpoint_dir(
     base_mountpoint_path: &std::path::Path,
     workspace_name: &EntryName,
 ) -> anyhow::Result<(std::path::PathBuf, u64)> {
+    log::trace!("Starting create_suitable_mountpoint_dir");
     // In case of hard crash, it's possible the FUSE mountpoint is still mounted
     // but points to nothing. In such case any FS operation on it will fail.
     // For this reason, we cannot consider FS errors as rare & unexpected and let
