@@ -3248,6 +3248,60 @@ export type ParsedParsecAddr =
   | ParsedParsecAddrServer
   | ParsedParsecAddrWorkspacePath
 
+// PkiEnrollmentAcceptError
+export enum PkiEnrollmentAcceptErrorTag {
+    ActiveUsersLimitReached = 'PkiEnrollmentAcceptErrorActiveUsersLimitReached',
+    AuthorNotAllowed = 'PkiEnrollmentAcceptErrorAuthorNotAllowed',
+    EnrollmentNoLongerAvailable = 'PkiEnrollmentAcceptErrorEnrollmentNoLongerAvailable',
+    EnrollmentNotFound = 'PkiEnrollmentAcceptErrorEnrollmentNotFound',
+    HumanHandleAlreadyTaken = 'PkiEnrollmentAcceptErrorHumanHandleAlreadyTaken',
+    Internal = 'PkiEnrollmentAcceptErrorInternal',
+    Offline = 'PkiEnrollmentAcceptErrorOffline',
+    PkiOperationError = 'PkiEnrollmentAcceptErrorPkiOperationError',
+}
+
+export interface PkiEnrollmentAcceptErrorActiveUsersLimitReached {
+    tag: PkiEnrollmentAcceptErrorTag.ActiveUsersLimitReached
+    error: string
+}
+export interface PkiEnrollmentAcceptErrorAuthorNotAllowed {
+    tag: PkiEnrollmentAcceptErrorTag.AuthorNotAllowed
+    error: string
+}
+export interface PkiEnrollmentAcceptErrorEnrollmentNoLongerAvailable {
+    tag: PkiEnrollmentAcceptErrorTag.EnrollmentNoLongerAvailable
+    error: string
+}
+export interface PkiEnrollmentAcceptErrorEnrollmentNotFound {
+    tag: PkiEnrollmentAcceptErrorTag.EnrollmentNotFound
+    error: string
+}
+export interface PkiEnrollmentAcceptErrorHumanHandleAlreadyTaken {
+    tag: PkiEnrollmentAcceptErrorTag.HumanHandleAlreadyTaken
+    error: string
+}
+export interface PkiEnrollmentAcceptErrorInternal {
+    tag: PkiEnrollmentAcceptErrorTag.Internal
+    error: string
+}
+export interface PkiEnrollmentAcceptErrorOffline {
+    tag: PkiEnrollmentAcceptErrorTag.Offline
+    error: string
+}
+export interface PkiEnrollmentAcceptErrorPkiOperationError {
+    tag: PkiEnrollmentAcceptErrorTag.PkiOperationError
+    error: string
+}
+export type PkiEnrollmentAcceptError =
+  | PkiEnrollmentAcceptErrorActiveUsersLimitReached
+  | PkiEnrollmentAcceptErrorAuthorNotAllowed
+  | PkiEnrollmentAcceptErrorEnrollmentNoLongerAvailable
+  | PkiEnrollmentAcceptErrorEnrollmentNotFound
+  | PkiEnrollmentAcceptErrorHumanHandleAlreadyTaken
+  | PkiEnrollmentAcceptErrorInternal
+  | PkiEnrollmentAcceptErrorOffline
+  | PkiEnrollmentAcceptErrorPkiOperationError
+
 // PkiEnrollmentListError
 export enum PkiEnrollmentListErrorTag {
     AuthorNotAllowed = 'PkiEnrollmentListErrorAuthorNotAllowed',
@@ -5420,6 +5474,14 @@ export interface LibParsecPlugin {
     clientOrganizationInfo(
         client_handle: Handle
     ): Promise<Result<OrganizationInfo, ClientOrganizationInfoError>>
+    clientPkiEnrollmentAccept(
+        client_handle: Handle,
+        profile: UserProfile,
+        enrollment_id: EnrollmentID,
+        human_handle: HumanHandle,
+        cert_ref: X509CertificateReference,
+        submit_payload: Bytes
+    ): Promise<Result<null, PkiEnrollmentAcceptError>>
     clientPkiEnrollmentReject(
         client_handle: Handle,
         enrollment_id: EnrollmentID

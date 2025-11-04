@@ -2744,6 +2744,50 @@ export type ParsedParsecAddr =
   | ParsedParsecAddrWorkspacePath
 
 
+// PkiEnrollmentAcceptError
+export interface PkiEnrollmentAcceptErrorActiveUsersLimitReached {
+    tag: "PkiEnrollmentAcceptErrorActiveUsersLimitReached"
+    error: string
+}
+export interface PkiEnrollmentAcceptErrorAuthorNotAllowed {
+    tag: "PkiEnrollmentAcceptErrorAuthorNotAllowed"
+    error: string
+}
+export interface PkiEnrollmentAcceptErrorEnrollmentNoLongerAvailable {
+    tag: "PkiEnrollmentAcceptErrorEnrollmentNoLongerAvailable"
+    error: string
+}
+export interface PkiEnrollmentAcceptErrorEnrollmentNotFound {
+    tag: "PkiEnrollmentAcceptErrorEnrollmentNotFound"
+    error: string
+}
+export interface PkiEnrollmentAcceptErrorHumanHandleAlreadyTaken {
+    tag: "PkiEnrollmentAcceptErrorHumanHandleAlreadyTaken"
+    error: string
+}
+export interface PkiEnrollmentAcceptErrorInternal {
+    tag: "PkiEnrollmentAcceptErrorInternal"
+    error: string
+}
+export interface PkiEnrollmentAcceptErrorOffline {
+    tag: "PkiEnrollmentAcceptErrorOffline"
+    error: string
+}
+export interface PkiEnrollmentAcceptErrorPkiOperationError {
+    tag: "PkiEnrollmentAcceptErrorPkiOperationError"
+    error: string
+}
+export type PkiEnrollmentAcceptError =
+  | PkiEnrollmentAcceptErrorActiveUsersLimitReached
+  | PkiEnrollmentAcceptErrorAuthorNotAllowed
+  | PkiEnrollmentAcceptErrorEnrollmentNoLongerAvailable
+  | PkiEnrollmentAcceptErrorEnrollmentNotFound
+  | PkiEnrollmentAcceptErrorHumanHandleAlreadyTaken
+  | PkiEnrollmentAcceptErrorInternal
+  | PkiEnrollmentAcceptErrorOffline
+  | PkiEnrollmentAcceptErrorPkiOperationError
+
+
 // PkiEnrollmentListError
 export interface PkiEnrollmentListErrorAuthorNotAllowed {
     tag: "PkiEnrollmentListErrorAuthorNotAllowed"
@@ -4559,6 +4603,14 @@ export function clientNewUserInvitation(
 export function clientOrganizationInfo(
     client_handle: number
 ): Promise<Result<OrganizationInfo, ClientOrganizationInfoError>>
+export function clientPkiEnrollmentAccept(
+    client_handle: number,
+    profile: UserProfile,
+    enrollment_id: string,
+    human_handle: HumanHandle,
+    cert_ref: X509CertificateReference,
+    submit_payload: Uint8Array
+): Promise<Result<null, PkiEnrollmentAcceptError>>
 export function clientPkiEnrollmentReject(
     client_handle: number,
     enrollment_id: string
