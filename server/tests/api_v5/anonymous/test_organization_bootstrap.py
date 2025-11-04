@@ -108,9 +108,9 @@ async def test_anonymous_organization_bootstrap_ok(
 
     # 1) To do the bootstrap we need certificates, so steal them from another organization
     if config.sequestered:
-        _, _, testbed_template_content = await testbed.get_template("coolorg")
-    else:
         _, _, testbed_template_content = await testbed.get_template("sequestered")
+    else:
+        _, _, testbed_template_content = await testbed.get_template("coolorg")
     bootstrap_event = testbed_template_content.events[0]
     assert isinstance(bootstrap_event, tb.TestbedEventBootstrapOrganization)
     user_certificate = bootstrap_event.first_user_raw_certificate
@@ -190,9 +190,9 @@ async def test_anonymous_organization_bootstrap_invalid_certificate(
 
     # 1) To do the bootstrap we need certificates, so steal them from another organization
     if config.sequestered:
-        _, _, testbed_template_content = await testbed.get_template("coolorg")
-    else:
         _, _, testbed_template_content = await testbed.get_template("sequestered")
+    else:
+        _, _, testbed_template_content = await testbed.get_template("coolorg")
     bootstrap_event = testbed_template_content.events[0]
     assert isinstance(bootstrap_event, tb.TestbedEventBootstrapOrganization)
     user_certificate = override_certif_data.user or bootstrap_event.first_user_raw_certificate
@@ -238,9 +238,9 @@ async def test_anonymous_organization_bootstrap_organization_already_bootstrappe
 
     # 1) To do the bootstrap we need certificates, so steal them from another organization
     if config.sequestered:
-        _, _, testbed_template_content = await testbed.get_template("coolorg")
-    else:
         _, _, testbed_template_content = await testbed.get_template("sequestered")
+    else:
+        _, _, testbed_template_content = await testbed.get_template("coolorg")
     bootstrap_event = testbed_template_content.events[0]
     assert isinstance(bootstrap_event, tb.TestbedEventBootstrapOrganization)
     user_certificate = bootstrap_event.first_user_raw_certificate
@@ -288,9 +288,9 @@ async def test_anonymous_organization_bootstrap_invalid_bootstrap_token(
 
     # 1) To do the bootstrap we need certificates, so steal them from another organization
     if config.sequestered:
-        _, _, testbed_template_content = await testbed.get_template("coolorg")
-    else:
         _, _, testbed_template_content = await testbed.get_template("sequestered")
+    else:
+        _, _, testbed_template_content = await testbed.get_template("coolorg")
     bootstrap_event = testbed_template_content.events[0]
     assert isinstance(bootstrap_event, tb.TestbedEventBootstrapOrganization)
     user_certificate = bootstrap_event.first_user_raw_certificate
