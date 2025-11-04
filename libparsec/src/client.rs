@@ -140,7 +140,9 @@ pub async fn client_start(
     access: DeviceAccessStrategy,
 ) -> Result<Handle, ClientStartError> {
     log::trace!("Starting client_start");
-    let access = access.convert_with_side_effects()?;
+    let access = access
+        .convert_with_side_effects()
+        .map_err(ClientStartError::Internal)?;
 
     let config: Arc<libparsec_client::ClientConfig> = config.into();
 
