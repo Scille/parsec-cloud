@@ -139,7 +139,9 @@ pub async fn client_start(
     config: ClientConfig,
     access: DeviceAccessStrategy,
 ) -> Result<Handle, ClientStartError> {
-    let access = access.convert_with_side_effects()?;
+    let access = access
+        .convert_with_side_effects()
+        .map_err(ClientStartError::Internal)?;
 
     let config: Arc<libparsec_client::ClientConfig> = config.into();
 
