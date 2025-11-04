@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { libparsec, X509CertificateReference } from '@/plugins/libparsec';
+import { DeviceSaveStrategyOpenBao, libparsec, X509CertificateReference } from '@/plugins/libparsec';
 
 import { ParsecAccount } from '@/parsec/account';
 import { getClientConfig } from '@/parsec/internals';
@@ -13,7 +13,6 @@ import {
   ClientStartError,
   ClientStopError,
   ConnectionHandle,
-  CustomDeviceSaveStrategyTag,
   DeviceAccessStrategy,
   DeviceAccessStrategyAccountVault,
   DeviceAccessStrategyKeyring,
@@ -26,7 +25,6 @@ import {
   DeviceSaveStrategyKeyring,
   DeviceSaveStrategyPassword,
   DeviceSaveStrategySmartcard,
-  DeviceSaveStrategySSO,
   DeviceSaveStrategyTag,
   ListAvailableDeviceError,
   OrganizationID,
@@ -320,9 +318,20 @@ export const SaveStrategy = {
       accountHandle,
     };
   },
-  useSSO(): DeviceSaveStrategySSO {
+  useOpenBao(
+    openbaoServerUrl: string,
+    openbaoSecretMountPath: string,
+    openbaoEntityId: string,
+    openbaoAuthToken: string,
+    openbaoPreferredAuthId: string,
+  ): DeviceSaveStrategyOpenBao {
     return {
-      tag: CustomDeviceSaveStrategyTag.SSO,
+      tag: DeviceSaveStrategyTag.OpenBao,
+      openbaoServerUrl,
+      openbaoSecretMountPath,
+      openbaoEntityId,
+      openbaoAuthToken,
+      openbaoPreferredAuthId,
     };
   },
   useSmartCard(certificate: X509CertificateReference): DeviceSaveStrategySmartcard {

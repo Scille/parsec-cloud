@@ -66,13 +66,13 @@
           v-show="isOpenBaoAvailable()"
           class="item-radio radio-list-item"
           label-placement="end"
-          :value="CustomDeviceSaveStrategyTag.SSO"
+          :value="DeviceSaveStrategyTag.OpenBao"
           justify="start"
         >
           <authentication-card
             :state="AuthenticationCardState.Default"
-            @click="onMethodSelected(CustomDeviceSaveStrategyTag.SSO)"
-            :auth-method="CustomDeviceSaveStrategyTag.SSO"
+            @click="onMethodSelected(DeviceSaveStrategyTag.OpenBao)"
+            :auth-method="DeviceSaveStrategyTag.OpenBao"
           />
         </ion-radio>
       </ion-radio-group>
@@ -122,11 +122,11 @@
         <choose-certificate ref="chooseCertificate" />
       </div>
 
-      <div v-if="authentication === CustomDeviceSaveStrategyTag.SSO">
+      <div v-if="authentication === DeviceSaveStrategyTag.OpenBao">
         <div class="method-chosen">
           <ion-text class="method-chosen__title subtitles-sm">{{ $msTranslate('Authentication.methodChosen') }}</ion-text>
           <authentication-card
-            :auth-method="CustomDeviceSaveStrategyTag.SSO"
+            :auth-method="DeviceSaveStrategyTag.OpenBao"
             :state="AuthenticationCardState.Update"
             @update-clicked="changeAuthenticationMethod()"
           />
@@ -149,7 +149,6 @@ import authenticationCard from '@/components/profile/AuthenticationCard.vue';
 import { AuthenticationCardState } from '@/components/profile/types';
 import {
   AvailableDeviceTypeTag,
-  CustomDeviceSaveStrategyTag,
   DeviceSaveStrategy,
   DeviceSaveStrategyTag,
   SaveStrategy,
@@ -163,7 +162,7 @@ import { IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
 import { MsChoosePasswordInput } from 'megashark-lib';
 import { onMounted, ref, toRaw, useTemplateRef } from 'vue';
 
-const authentication = ref<DeviceSaveStrategyTag | CustomDeviceSaveStrategyTag | undefined>(undefined);
+const authentication = ref<DeviceSaveStrategyTag | undefined>(undefined);
 const keyringAvailable = ref(false);
 const choosePasswordRef = useTemplateRef<InstanceType<typeof MsChoosePasswordInput>>('choosePassword');
 const chooseCertificateRef = useTemplateRef<InstanceType<typeof ChooseCertificate>>('chooseCertificate');
@@ -216,7 +215,7 @@ function getAuthCardState(auth: AvailableDeviceTypeTag): AuthenticationCardState
   }
 }
 
-async function onMethodSelected(method: DeviceSaveStrategyTag | CustomDeviceSaveStrategyTag): Promise<void> {
+async function onMethodSelected(method: DeviceSaveStrategyTag): Promise<void> {
   authentication.value = method;
 }
 
@@ -227,8 +226,8 @@ async function changeAuthenticationMethod(): Promise<void> {
 function getSaveStrategy(): DeviceSaveStrategy | undefined {
   if (authentication.value === DeviceSaveStrategyTag.Keyring) {
     return SaveStrategy.useKeyring();
-  } else if (authentication.value === CustomDeviceSaveStrategyTag.SSO) {
-    return SaveStrategy.useSSO() as any as DeviceSaveStrategy;
+  } else if (authentication.value === DeviceSaveStrategyTag.OpenBao) {
+    return SaveStrategy.useOpenBao() as any as DeviceSaveStrategy;
   } else if (authentication.value === DeviceSaveStrategyTag.Smartcard) {
     if (chooseCertificateRef.value && chooseCertificateRef.value.getCertificate()) {
       return SaveStrategy.useSmartCard(toRaw(chooseCertificateRef.value.getCertificate() as X509CertificateReference));
@@ -246,7 +245,7 @@ async function areFieldsCorrect(): Promise<boolean> {
     return true;
   } else if (authentication.value === DeviceSaveStrategyTag.Password && choosePasswordRef.value) {
     return await choosePasswordRef.value.areFieldsCorrect();
-  } else if (authentication.value === CustomDeviceSaveStrategyTag.SSO && openBaoLoggedIn.value) {
+  } else if (authentication.value === DeviceSaveStrategyTag.OpenBao && openBaoLoggedIn.value) {
     return true;
   } else if (authentication.value === DeviceSaveStrategyTag.Smartcard && chooseCertificateRef.value) {
     return chooseCertificateRef.value.getCertificate() !== undefined;
