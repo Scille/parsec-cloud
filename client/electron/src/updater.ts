@@ -69,6 +69,7 @@ function isChannelMissmatch(current: string, next: string): boolean {
 //  - `getChannelFilePrefix` method from `Provider` which we need to override.
 //  - `getLatestVersion` method that we need to override to allow the use of the nightly channel.
 class CustomGithubProvider extends GitHubProvider {
+  private logger;
   constructor(
     protected readonly options: CustomGitHubOptions,
     protected readonly updater: _AppUpdater,
@@ -82,6 +83,7 @@ class CustomGithubProvider extends GitHubProvider {
       updater,
       runtimeOptions,
     );
+    this.logger = log.scope('github provider');
   }
 
   /**
@@ -109,22 +111,22 @@ class CustomGithubProvider extends GitHubProvider {
     const cancellationToken = new CancellationToken();
 
     // 1. Fetch the latest release.
-    log.scope('github provider').debug('Fetching release feed');
+    this.logger.debug('Fetching release feed');
     const feed = await this.fetchReleaseFeed(cancellationToken);
-    log.scope('github provider').debug('Finding latest release');
+    this.logger.debug('Finding latest release');
     const latestReleaseData = await this.findLatestRelease(feed, cancellationToken);
 
     if (latestReleaseData.tag === null) {
       throw newError('No published versions on GitHub', ErrorCodes.NoPublishedVersions);
     }
 
-    log.scope('github provider').debug(`Latest release tag: ${latestReleaseData.tag}`);
+    this.logger.debug(`Latest release tag: ${latestReleaseData.tag}`);
 
     // 2. Fetch the channel file.
     let rawData: string;
     let channelFile = '';
     let channelFileUrl: any = '';
-    log.scope('github provider').debug('Fetching channel file');
+    this.logger.debug('Fetching channel file');
     const fetchData = async (channelName: string) => {
       channelFile = getChannelFilename(channelName);
       channelFileUrl = newUrlFromBase(this.getBaseDownloadPath(latestReleaseData.tag, channelFile), this.baseUrl);
@@ -154,7 +156,7 @@ class CustomGithubProvider extends GitHubProvider {
     }
 
     // 3. Parse the channel file.
-    log.scope('github provider').debug('Parsing channel file');
+    this.logger.debug('Parsing channel file');
     const result = parseUpdateInfo(rawData, channelFile, channelFileUrl);
     if (result.releaseName === null) {
       result.releaseName = latestReleaseData.feedElement.elementValueOrEmpty('title');
@@ -208,8 +210,9 @@ class CustomGithubProvider extends GitHubProvider {
   }
 
   private findLatestPreRelease(tag: string, latestRelease: XElement, feed: XElement): [string, XElement] {
+    const logger = log.scope('findLatestPreRelease');
     const currentChannel = this.getCurrentChannel();
-    log.scope('findLatestPreRelease').debug(`Current channel: ${currentChannel}`);
+    logger.debug(`Current channel: ${currentChannel}`);
 
     // If we don't have a channel, we use the first entry in the feed.
     if (currentChannel === null) {
@@ -225,7 +228,7 @@ class CustomGithubProvider extends GitHubProvider {
 
         // Current entry GitHub tag.
         const hrefTag = hrefElement[1];
-        log.scope('findLatestPreRelease').debug(`hrefTag: ${hrefTag}`);
+        logger.debug(`hrefTag: ${hrefTag}`);
 
         const rawHrefChannel =
           hrefTag === PreReleaseTypes.Nightly ? PreReleaseTypes.Nightly : (semver.prerelease(hrefTag)?.[0] as string) || null;
@@ -236,7 +239,7 @@ class CustomGithubProvider extends GitHubProvider {
 
         const channelMismatch = isChannelMissmatch(currentChannel, hrefChannel);
 
-        log.scope('findLatestPreRelease').debug({
+        logger.debug({
           hrefChannel,
           shouldFetchVersion,
           isCustomChannel,
@@ -249,7 +252,7 @@ class CustomGithubProvider extends GitHubProvider {
         }
 
         const isNextPreRelease = hrefChannel && hrefChannel === currentChannel;
-        log.scope('findLatestPreRelease').debug({ isNextPreRelease });
+        logger.debug({ isNextPreRelease });
         if (isNextPreRelease) {
           latestRelease = element;
           tag = hrefTag;
@@ -316,16 +319,17 @@ function loadPublishOption(): (CustomPublishOptions & CustomGitHubOptions) | und
 }
 
 export function createAppUpdater(): AppUpdater | undefined {
+  const logger = log.scope('updater');
   try {
     const publishOption = loadPublishOption();
     if (publishOption === undefined) {
-      log.scope('updater').error('Failed to load publish options, disabling updates');
+      logger.error('Failed to load publish options, disabling updates');
       return undefined;
     }
     const updater = new AppUpdater(publishOption);
     return updater;
   } catch (error: any) {
-    log.scope('updater').error(error);
+    logger.error(error);
     return undefined;
   }
 }
@@ -366,21 +370,23 @@ export default class AppUpdater {
     [UpdaterState.DownloadingUpdate]: [],
     [UpdaterState.UpdateDownloaded]: [],
   };
+  private logger;
 
   constructor(publishOption: CustomGitHubOptions) {
+    this.logger = log.scope('updater');
     switch (process.platform) {
       case 'darwin':
-        log.scope('updater').debug('Using MacUpdater');
+        this.logger.debug('Using MacUpdater');
         const { MacUpdater } = require('electron-updater');
         this.updater = new MacUpdater();
         break;
       case 'win32':
-        log.scope('updater').debug('Using NsisUpdater');
+        this.logger.debug('Using NsisUpdater');
         const { NsisUpdater } = require('electron-updater');
         this.updater = new NsisUpdater();
         break;
       default:
-        log.scope('updater').debug(`Using default autoUpdater (platform: ${process.platform})`);
+        this.logger.debug(`Using default autoUpdater (platform: ${process.platform})`);
         const { autoUpdater } = require('electron-updater');
         this.updater = autoUpdater;
         break;
@@ -398,50 +404,50 @@ export default class AppUpdater {
     this.updater.autoDownload = true;
     this.updater.autoInstallOnAppQuit = false;
 
-    log.scope('updater').info(`App version: ${this.updater.currentVersion}`);
-    log.scope('updater').debug(`Nightly build: ${publishOption.nightlyBuild}`);
-    log.scope('updater').debug(`Auto download: ${this.updater.autoDownload}`);
-    log.scope('updater').debug(`Auto install on app quit: ${this.updater.autoInstallOnAppQuit}`);
-    log.scope('updater').debug(`Allow prerelease: ${this.updater.allowPrerelease}`);
-    log.scope('updater').debug(`Allow downgrade: ${this.updater.allowDowngrade}`);
-    log.scope('updater').debug(`Update channel: ${this.updater.channel}`);
+    this.logger.info(`App version: ${this.updater.currentVersion}`);
+    this.logger.debug(`Nightly build: ${publishOption.nightlyBuild}`);
+    this.logger.debug(`Auto download: ${this.updater.autoDownload}`);
+    this.logger.debug(`Auto install on app quit: ${this.updater.autoInstallOnAppQuit}`);
+    this.logger.debug(`Allow prerelease: ${this.updater.allowPrerelease}`);
+    this.logger.debug(`Allow downgrade: ${this.updater.allowDowngrade}`);
+    this.logger.debug(`Update channel: ${this.updater.channel}`);
 
     // https://www.electron.build/auto-update#event-error
     this.updater.on('error', (error) => {
-      log.scope('updater').error('Update error', error);
+      this.logger.error('Update error', error);
       this.state = UpdaterState.Idle;
       this.lastError = error;
       this.emit(this.state);
     });
     // https://www.electron.build/auto-update#event-checking-for-update
     this.updater.on('checking-for-update', () => {
-      log.scope('updater').debug('Checking for update');
+      this.logger.debug('Checking for update');
       this.state = UpdaterState.CheckingForUpdate;
       this.emit(this.state);
     });
     // https://www.electron.build/auto-update#event-update-available
     this.updater.on('update-available', (info) => {
-      log.scope('updater').debug('Update available', info);
+      this.logger.debug('Update available', info);
       this.state = UpdaterState.UpdateAvailable;
       this.lastUpdateInfo = info;
       this.emit(this.state, this.lastUpdateInfo);
     });
     // https://www.electron.build/auto-update#event-update-not-available
     this.updater.on('update-not-available', (info) => {
-      log.scope('updater').debug('Update not available', info);
+      this.logger.debug('Update not available', info);
       this.state = UpdaterState.UpdateNotAvailable;
       this.lastUpdateInfo = info;
       this.emit(this.state, this.lastUpdateInfo);
     });
     // https://www.electron.build/auto-update#event-download-progress
     this.updater.on('download-progress', (progress) => {
-      log.scope('updater').debug('Download progress', progress);
+      this.logger.debug('Download progress', progress);
       this.state = UpdaterState.DownloadingUpdate;
       this.emit(this.state, progress);
     });
     // https://www.electron.build/auto-update#event-update-downloaded
     this.updater.on('update-downloaded', (info) => {
-      log.scope('updater').debug('Update downloaded', info);
+      this.logger.debug('Update downloaded', info);
       this.state = UpdaterState.UpdateDownloaded;
       this.lastDownloadedUpdate = info;
       this.emit(this.state, this.lastDownloadedUpdate);
@@ -455,10 +461,10 @@ export default class AppUpdater {
   }
 
   async checkForUpdates(): Promise<UpdateAvailable | undefined> {
-    log.scope('updater').debug('Will check for updates');
+    this.logger.debug('Will check for updates');
     try {
       if (!this.canCheckForUpdates()) {
-        log.scope('updater').debug('Cannot check for updates in current state', this.state);
+        this.logger.debug('Cannot check for updates in current state', this.state);
         return;
       }
       this.state = UpdaterState.CheckingForUpdate as UpdaterState;
@@ -472,20 +478,20 @@ export default class AppUpdater {
         return { version: this.lastUpdateInfo!.version };
       }
     } catch (error: any) {
-      log.scope('updater').error('Could not check for updates', error);
+      this.logger.error('Could not check for updates', error);
     }
   }
 
   quitAndInstall(): boolean {
     try {
       if (!this.isUpdateDownloaded()) {
-        log.scope('updater').warn('quitAndInstall() called but update has not been downloaded yet');
+        this.logger.warn('quitAndInstall() called but update has not been downloaded yet');
         return;
       }
       this.updater.quitAndInstall();
       return true;
     } catch (error: any) {
-      log.scope('updater').error('Could not install update', error);
+      this.logger.error('Could not install update', error);
       return false;
     }
   }
