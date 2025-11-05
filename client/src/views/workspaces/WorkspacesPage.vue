@@ -287,10 +287,12 @@ async function loadFavorites(): Promise<void> {
 }
 
 onMounted(async (): Promise<void> => {
+  window.electronAPI.log('debug', 'Mounted WorkspacePage');
   displayView.value = (
     await storageManager.retrieveComponentData<WorkspacesPageSavedData>(WORKSPACES_PAGE_DATA_KEY, WorkspaceDefaultData)
   ).displayState;
 
+  window.electronAPI.log('debug', 'Loading favorite workspaces');
   await loadFavorites();
 
   hotkeys = hotkeyManager.newHotkeys();
@@ -322,15 +324,19 @@ onMounted(async (): Promise<void> => {
           }
           break;
         default:
-          console.log(`Unhandled event ${event}`);
+          window.electronAPI.log('warn', `Unhandled event ${event}`);
           break;
       }
     },
   );
 
+  window.electronAPI.log('debug', 'Getting user profile');
   clientProfile.value = await getClientProfile();
+
+  window.electronAPI.log('debug', 'Refreshing workspace list');
   await refreshWorkspacesList();
 
+  window.electronAPI.log('debug', 'Getting Parsec client info');
   const infoResult = await parsecGetClientInfo();
 
   if (infoResult.ok) {
@@ -341,8 +347,10 @@ onMounted(async (): Promise<void> => {
 
   const query = getCurrentRouteQuery();
   if (query.fileLink) {
+    window.electronAPI.log('debug', 'Handling file link');
     const success = await handleFileLink(query.fileLink);
     if (!success) {
+      window.electronAPI.log('warn', 'Could not handle file link, going back to workspaces');
       await navigateTo(Routes.Workspaces, { query: {} });
     }
   }
@@ -438,21 +446,23 @@ async function refreshWorkspacesList(): Promise<void> {
     return;
   }
   querying.value = true;
+  window.electronAPI.log('debug', 'Starting Parsec list workspaces');
   const result = await parsecListWorkspaces();
   if (result.ok) {
     for (const wk of result.value) {
+      window.electronAPI.log('debug', `Processing workspace: ${wk.currentName}`);
       const sharingResult = await parsecGetWorkspaceSharing(wk.id, false);
       if (sharingResult.ok) {
         wk.sharing = sharingResult.value;
       } else {
-        console.warn(`Failed to get sharing for ${wk.currentName}`);
+        window.electronAPI.log('warn', `Failed to get sharing for ${wk.currentName}`);
       }
       if (isDesktop() && wk.mountpoints.length === 0) {
         const mountResult = await parsecMountWorkspace(wk.handle);
         if (mountResult.ok) {
           wk.mountpoints.push(mountResult.value);
         } else {
-          console.warn(`Failed to mount ${wk.currentName}: ${mountResult.error.error}`);
+          window.electronAPI.log('warn', `Failed to mount ${wk.currentName}: ${mountResult.error.error}`);
         }
       }
     }
@@ -466,6 +476,7 @@ async function refreshWorkspacesList(): Promise<void> {
     }
     await recentDocumentManager.saveToStorage(storageManager);
   } else {
+    window.electronAPI.log('error', 'Error listing workspaces');
     informationManager.present(
       new Information({
         message: 'WorkspacesPage.listError',

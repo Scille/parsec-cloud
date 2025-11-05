@@ -72,6 +72,7 @@ export class ElectronCapacitorApp {
   private splash: SplashScreen | null = null;
 
   constructor(capacitorFileConfig: CapacitorElectronConfig, appMenuBarMenuTemplate?: (MenuItemConstructorOptions | MenuItem)[]) {
+    this.log('debug', 'Creating application');
     this.CapacitorFileConfig = capacitorFileConfig;
 
     this.customScheme = this.CapacitorFileConfig.electron?.customUrlScheme ?? 'capacitor-electron';
@@ -93,7 +94,7 @@ export class ElectronCapacitorApp {
       // We're only interested in potential Parsec links
       if (arg.startsWith('parsec3://')) {
         if (this.storedLink) {
-          log.info('Multiple links were passed as arguments, using only the first.');
+          this.log('warn', `Multiple links were passed as arguments, using only the first: ${this.storedLink}`);
         } else {
           this.storedLink = arg;
         }
@@ -101,7 +102,7 @@ export class ElectronCapacitorApp {
       if (arg === '--log-debug') {
         log.transports.file.level = 'debug';
         log.transports.console.level = 'debug';
-        log.debug('Setting log level to DEBUG');
+        this.log('debug', 'Setting log level to DEBUG');
       }
     }
 
@@ -113,14 +114,16 @@ export class ElectronCapacitorApp {
     this.forceClose = false;
 
     // Setup our web app loader, this lets us load apps like react, vue, and angular without changing their build chains.
+    this.log('debug', 'Setting up web app loader');
     this.loadWebApp = electronServe({
       directory: join(app.getAppPath(), 'app'),
       scheme: this.customScheme,
     });
 
     if (Env.DISABLE_UPDATES) {
-      log['info']('Updates are disabled');
+      this.log('info', 'Disabled application updates');
     } else {
+      this.log('info', 'Setting up application updates');
       this.updater = createAppUpdater();
     }
 
@@ -134,7 +137,7 @@ export class ElectronCapacitorApp {
         await this.updater.checkForUpdates();
       }, CHECK_UPDATE_INTERVAL);
     } else if (!electronIsDev) {
-      console.warn("We are in a production build but the updater isn't available.");
+      this.log('warn', 'Could not enable application updates');
     }
   }
 
@@ -154,11 +157,13 @@ export class ElectronCapacitorApp {
   }
 
   sendEvent(event: WindowToPageChannel, ...args: any[]): void {
-    this.MainWindow.webContents.send(event, ...args);
+    if (this.MainWindow) {
+      this.MainWindow.webContents.send(event, ...args);
+    }
   }
 
   log(level: 'debug' | 'info' | 'warn' | 'error', message: string): void {
-    log[level](message);
+    log.scope('app')[level](message);
     if (electronIsDev) {
       this.sendEvent(WindowToPageChannel.PrintToConsole, level, message);
     }
@@ -188,11 +193,12 @@ export class ElectronCapacitorApp {
 
   updateApp(): void {
     if (this.updater && this.updater.isUpdateDownloaded()) {
+      this.log('debug', 'Update downloaded, will quit app and install');
       this.forceClose = true;
       this.macOSForceQuit = true;
       this.updater.quitAndInstall();
     } else {
-      console.warn('Update app has been called but no update has been downloaded');
+      this.log('warn', 'Update app has been called but no update has been downloaded');
     }
   }
 
@@ -213,6 +219,7 @@ export class ElectronCapacitorApp {
   }
 
   updateConfig(newConfig: object): void {
+    this.log('debug', 'Updating configuration');
     this.config = newConfig;
 
     const locale = this.config.hasOwnProperty('locale') ? (this.config as any).locale : 'en-US';
@@ -236,6 +243,7 @@ export class ElectronCapacitorApp {
   }
 
   updateMountpoint(path: string): void {
+    this.log('debug', 'Updating mountpoint');
     fs.mkdirSync(path, { recursive: true });
     this.winRegistry.addMountpointToQuickAccess(path, this.getIconPaths().tray);
   }
@@ -383,7 +391,7 @@ export class ElectronCapacitorApp {
   }
 
   onRendererInitError(error?: string): void {
-    error && log.error(error);
+    error && this.log('error', error);
     this.MainWindow.show();
     if (this.splash) {
       this.splash.destroy();
@@ -392,6 +400,7 @@ export class ElectronCapacitorApp {
   }
 
   async init(): Promise<void> {
+    this.log('debug', 'Initializing application');
     const iconPaths = this.getIconPaths();
     const appIcon = nativeImage.createFromPath(iconPaths.app);
     const trayIcon = nativeImage.createFromPath(iconPaths.tray);
@@ -417,6 +426,7 @@ export class ElectronCapacitorApp {
     });
     this.MainWindow.setMenu(null);
     this.MainWindow.hide();
+    this.log('debug', `MainWindow created at '${this.MainWindow.getPosition()}' with size '${this.MainWindow.getSize()}'`);
 
     if (this.CapacitorFileConfig.electron.splashScreenEnabled) {
       this.splash = new SplashScreen({ width: 624, height: 424 });
@@ -428,6 +438,7 @@ export class ElectronCapacitorApp {
           splashPath = customSplashPath;
         }
       }
+      this.log('debug', 'Loading Splash Screen');
       await this.splash.load(splashPath);
     }
 
@@ -437,6 +448,7 @@ export class ElectronCapacitorApp {
 
     // If we close the main window with the splashscreen enabled we need to destroy the ref.
     this.MainWindow.on('closed', () => {
+      this.log('debug', 'MainWindow closed event');
       if (this.splash) {
         this.splash.destroy();
         this.splash = null;
@@ -444,12 +456,14 @@ export class ElectronCapacitorApp {
     });
 
     this.MainWindow.on('show', () => {
+      this.log('debug', 'MainWindow show event');
       setTimeout(() => {
         this.MainWindow.focus();
       }, 200);
     });
 
     this.MainWindow.on('close', (event) => {
+      this.log('debug', 'MainWindow close event');
       if (process.platform === 'darwin') {
         if (!this.macOSForceQuit) {
           // Red X clicked
@@ -497,6 +511,7 @@ export class ElectronCapacitorApp {
     this.MainWindow.setMenu(null);
     // Menu.setApplicationMenu(Menu.buildFromTemplate(this.AppMenuBarMenuTemplate));
 
+    this.log('debug', 'Loading MainWindow');
     this.loadMainWindow(this);
 
     // Security

@@ -36,12 +36,14 @@ onMounted(async () => {
   // If we do it too fast, it causes a blink, so we masquerade this as a feature,
   // showing the user a "please wait" message.
 
+  window.electronAPI.log('debug', 'Mounted LoadingLayout');
   const query = getCurrentRouteQuery();
   if (query.loginInfo) {
     try {
       const loginInfo = Base64.toObject(query.loginInfo) as RouteBackup;
       setTimeout(
         async () => {
+          window.electronAPI.log('debug', `navigateTo: ${query.loginInfo}`);
           await navigateTo(loginInfo.data.route, {
             params: loginInfo.data.params,
             query: loginInfo.data.query,
@@ -53,11 +55,11 @@ onMounted(async () => {
         import.meta.env.PARSEC_APP_TESTBED_SERVER ? 0 : 1500,
       );
     } catch (e: any) {
-      window.electronAPI.log('error', `Invalid log in info provided: ${e}`);
+      window.electronAPI.log('error', `Invalid login info provided: ${e}`);
       await navigateTo(Routes.Home, { skipHandle: true, replace: true });
     }
   } else {
-    window.electronAPI.log('error', 'Trying to log in with no log in info provided');
+    window.electronAPI.log('error', 'Trying to login with no login info provided');
     await navigateTo(Routes.Home, { skipHandle: true, replace: true });
   }
 });
