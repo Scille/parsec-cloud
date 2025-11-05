@@ -50,9 +50,6 @@ function initSentry(): void {
   }
 }
 
-// Force gtk3 (https://github.com/electron/electron/issues/46538)
-app.commandLine.appendSwitch('gtk-version', '3');
-
 // Define our menu templates (these are optional)
 const appMenuBarMenuTemplate: (MenuItemConstructorOptions | MenuItem)[] = [
   { role: process.platform === 'darwin' ? 'appMenu' : 'fileMenu' },

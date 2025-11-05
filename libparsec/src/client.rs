@@ -138,6 +138,7 @@ pub async fn client_start(
     config: ClientConfig,
     access: DeviceAccessStrategy,
 ) -> Result<Handle, ClientStartError> {
+    log::trace!("Starting client_start");
     let access = access.convert_with_side_effects()?;
 
     let config: Arc<libparsec_client::ClientConfig> = config.into();
@@ -163,6 +164,8 @@ pub(super) async fn client_start_from_local_device(
         AlreadyRegistered(Handle),
         ConcurrentRegister(EventListener),
     }
+
+    log::debug!("Starting client for device: {}", device.device_id);
 
     let initializing = loop {
         let outcome = register_handle_with_init(
@@ -241,6 +244,8 @@ pub(super) async fn client_start_from_local_device(
             _ => unreachable!(),
         }
     });
+
+    log::debug!("Client started for device: {}", device_id);
 
     on_event_callback(handle, ClientEvent::ClientStarted { device_id });
 
