@@ -225,16 +225,20 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         if author_user.current_profile != UserProfile.ADMIN:
             return PkiEnrollmentListBadOutcome.AUTHOR_NOT_ALLOWED
 
-        return [
-            PkiEnrollmentListItem(
-                enrollment_id=enrollment.enrollment_id,
-                payload=enrollment.submit_payload,
-                payload_signature=enrollment.submit_payload_signature,
-                submitted_on=enrollment.submitted_on,
-                der_x509_certificate=enrollment.submitter_der_x509_certificate,
-            )
-            for enrollment in org.pki_enrollments.values()
-        ]
+        return sorted(
+            [
+                PkiEnrollmentListItem(
+                    enrollment_id=enrollment.enrollment_id,
+                    payload=enrollment.submit_payload,
+                    payload_signature=enrollment.submit_payload_signature,
+                    submitted_on=enrollment.submitted_on,
+                    der_x509_certificate=enrollment.submitter_der_x509_certificate,
+                )
+                for enrollment in org.pki_enrollments.values()
+                if enrollment.enrollment_state == MemoryPkiEnrollmentState.SUBMITTED
+            ],
+            key=lambda x: x.submitted_on,
+        )
 
     @override
     async def reject(
