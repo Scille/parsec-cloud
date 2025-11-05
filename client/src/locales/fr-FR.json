@@ -1407,7 +1407,8 @@
             "subtitles": {
                 "waitForGuest1": "Pour accueillir un nouvel utilisateur, vous devez être en contact direct avec la personne pendant la durée du processus d'accueil (environ 2 minutes).",
                 "waitForGuest2": "Il ne faudra pas quitter la session.",
-                "waitForGuestVersionInfo": "Avant de commencer, assurez-vous que vous et votre invité utilisez la version la plus récente de Parsec.",
+                "waitForGuestVersionInfo": "Avant de commencer, assurez-vous que vous et votre invité(e) utilisez la version la plus récente de Parsec.",
+                "waitForGreeterVersionInfo": "Avant de commencer, assurez-vous que vous et votre inviteur utilisez la version la plus récente de Parsec.",
                 "provideHostCode": "Veuillez communiquer le code ci-dessous à l'invité.",
                 "getGuestCode": "Sélectionnez le code que vous donne l'invité.",
                 "getUserInfo": "Patientez le temps que l'invité saisisse ses coordonnées.",
