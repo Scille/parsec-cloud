@@ -402,6 +402,8 @@ export class ElectronCapacitorApp {
     this.MainWindow = new BrowserWindow({
       icon: appIcon,
       show: false,
+      width: 1600,
+      height: 900,
       minWidth: 1280,
       minHeight: 720,
       webPreferences: {
