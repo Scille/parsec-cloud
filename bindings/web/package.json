@@ -1,7 +1,7 @@
 {
     "name": "libparsec_bindings_web",
     "private": true,
-    "version": "3.6.0-rc.3",
+    "version": "3.6.0-rc.4+dev",
     "license": "BUSL-1.1",
     "scripts": {
         "build": "node scripts/build.js",
