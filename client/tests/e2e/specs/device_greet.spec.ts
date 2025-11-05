@@ -501,7 +501,7 @@ msTest('Guest selects no SAS code', async ({ myProfilePage }) => {
   await expect(joinData.title).toHaveText('Get host code');
   await expect(joinData.subtitle).toHaveText('Click on the code you see on the main device.');
   await expect(joinData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Authentication'], 0);
-  await joinData.content.locator('.button-clear').nth(0).click();
+  await joinData.content.locator('.button-outline').nth(4).click();
 
   const questionModal = secondTab.locator('.question-modal');
   await expect(questionModal).toBeVisible();
@@ -511,7 +511,7 @@ msTest('Guest selects no SAS code', async ({ myProfilePage }) => {
   );
   await questionModal.locator('#cancel-button').click();
   await expect(joinData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Authentication'], 0);
-  await joinData.content.locator('.button-clear').nth(0).click();
+  await joinData.content.locator('.button-outline').nth(4).click();
   await questionModal.locator('#next-button').click();
 
   await expect(secondTab).toShowToast(
