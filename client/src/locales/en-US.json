@@ -1409,6 +1409,7 @@
                 "waitForGuest1": "To greet a new user, you have to be in direct contact with them during the greeting process (around 2 minutes).",
                 "waitForGuest2": "Please do not close this window during the greeting process.",
                 "waitForGuestVersionInfo": "Before you start, make sure that both you and your guest are using the latest version of Parsec.",
+                "waitForGreeterVersionInfo": "Before you start, make sure that both you and your greeter are using the latest version of Parsec.",
                 "provideHostCode": "Give the code below to the guest.",
                 "getGuestCode": "Click on the code given to you by the guest.",
                 "getUserInfo": "Please wait while the guest enters their contact details. You will have to review them.",

@@ -110,7 +110,7 @@
               }}
             </ms-informative-text>
             <ms-report-text :theme="MsReportTheme.Info">
-              {{ $msTranslate('UsersPage.greet.subtitles.waitForGuestVersionInfo') }}
+              {{ $msTranslate('UsersPage.greet.subtitles.waitForGreeterVersionInfo') }}
             </ms-report-text>
           </div>
         </div>
