@@ -7,6 +7,7 @@ import type { MenuItemConstructorOptions } from 'electron';
 import { BrowserWindow, Menu, MenuItem, Tray, app, nativeImage, session, shell } from 'electron';
 import log from 'electron-log/main';
 import electronServe from 'electron-serve';
+import windowStateKeeper from 'electron-window-state';
 import fs from 'fs';
 import { join } from 'path';
 import { WindowToPageChannel } from './communicationChannels';
@@ -59,6 +60,7 @@ export class ElectronCapacitorApp {
     { role: process.platform === 'darwin' ? 'appMenu' : 'fileMenu' },
     { role: 'viewMenu' },
   ];
+  private mainWindowState;
   private loadWebApp;
   private customScheme: string;
   private config: object;
@@ -405,14 +407,17 @@ export class ElectronCapacitorApp {
     const appIcon = nativeImage.createFromPath(iconPaths.app);
     const trayIcon = nativeImage.createFromPath(iconPaths.tray);
 
+    this.mainWindowState = windowStateKeeper({
+      defaultWidth: 1600,
+      defaultHeight: 900,
+    });
     // Setup preload script path and construct our main window.
     const preloadPath = join(app.getAppPath(), 'build', 'src', 'preload.js');
-
+    const windowState = process.platform === 'linux' ? {} : this.mainWindowState;
     this.MainWindow = new BrowserWindow({
       icon: appIcon,
       show: false,
-      width: 1600,
-      height: 900,
+      ...windowState,
       minWidth: 1280,
       minHeight: 720,
       webPreferences: {
@@ -424,6 +429,9 @@ export class ElectronCapacitorApp {
         preload: preloadPath,
       },
     });
+    if (process.platform !== 'linux') {
+      this.mainWindowState.manage(this.MainWindow);
+    }
     this.MainWindow.setMenu(null);
     this.MainWindow.hide();
     this.log('debug', `MainWindow created at '${this.MainWindow.getPosition()}' with size '${this.MainWindow.getSize()}'`);
