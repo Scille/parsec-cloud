@@ -9,7 +9,6 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, ConfigDict, Field
 
 from parsec._parsec import (
-    EnrollmentID,
     UserProfile,
     authenticated_cmds,
 )
@@ -221,13 +220,13 @@ class EventPkiEnrollment(BaseModel, ClientBroadcastableEvent):
     a request for PKI invitation (given this kind of invitation is initiated by
     the greeter that uses his own PKI's signing key to prove he is legit to
     request such invitation).
+    This event is also triggered whenever an enrollment gets accepted/rejected.
     """
 
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["PKI_ENROLLMENT"] = "PKI_ENROLLMENT"
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationIDField
-    enrollment_id: EnrollmentID
 
     @override
     def is_event_for_client(self, client: RegisteredClient) -> bool:

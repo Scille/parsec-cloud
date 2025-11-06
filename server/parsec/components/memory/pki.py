@@ -92,12 +92,14 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                                 enrollment.info_cancelled = MemoryPkiEnrollmentInfoCancelled(
                                     cancelled_on=now
                                 )
-                                await self._event_bus.send(
-                                    EventPkiEnrollment(
-                                        organization_id=organization_id,
-                                        enrollment_id=enrollment_id,
-                                    )
-                                )
+                                # Note we don't send a `EventPkiEnrollment` event related
+                                # to the cancelled enrollement here.
+                                # This is because this function already sends a `EventPkiEnrollment`
+                                # no matter what, and the type of event doesn't specify the
+                                # enrollment ID as its role is only to inform the client
+                                # that something has changed (so that the client knows it
+                                # should re-fetch the list of PKI enrollements from the
+                                # server).
                             else:
                                 # ...otherwise nothing we can do
                                 return PkiEnrollmentSubmitX509CertificateAlreadySubmitted(
@@ -142,7 +144,6 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             await self._event_bus.send(
                 EventPkiEnrollment(
                     organization_id=organization_id,
-                    enrollment_id=enrollment_id,
                 )
             )
 
@@ -286,7 +287,6 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             await self._event_bus.send(
                 EventPkiEnrollment(
                     organization_id=organization_id,
-                    enrollment_id=enrollment_id,
                 )
             )
 
@@ -417,7 +417,6 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             await self._event_bus.send(
                 EventPkiEnrollment(
                     organization_id=organization_id,
-                    enrollment_id=enrollment_id,
                 )
             )
 
