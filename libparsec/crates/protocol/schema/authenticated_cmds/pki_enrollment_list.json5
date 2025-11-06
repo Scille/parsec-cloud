@@ -47,6 +47,10 @@
                         "type": "Bytes"
                     },
                     {
+                        "name": "payload_signature_algorithm",
+                        "type": "PkiSignatureAlgorithm"
+                    },
+                    {
                         // The payload, it's a `PkiEnrollmentSubmitPayload` formatted in msgpack
                         "name": "payload",
                         "type": "Bytes"

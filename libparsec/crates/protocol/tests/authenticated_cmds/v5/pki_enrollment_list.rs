@@ -69,6 +69,7 @@ pub fn rep_ok() {
                             .unwrap(),
                         payload: hex!("3c64756d6d793e").as_ref().into(),
                         payload_signature: hex!("3c7369676e61747572653e").as_ref().into(),
+                        payload_signature_algorithm: PkiSignatureAlgorithm::RsassaPssSha256,
                         submitted_on: DateTime::from_timestamp_micros(1668594983390001).unwrap(),
                         der_x509_certificate: hex!("3c78353039206365727469663e").as_ref().into(),
                     },
