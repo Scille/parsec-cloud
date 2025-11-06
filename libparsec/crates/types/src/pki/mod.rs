@@ -222,19 +222,6 @@ impl LocalPendingEnrollment {
             exc: e.to_string(),
         })
     }
-
-    pub fn list(config_dir: &Path) -> Vec<Self> {
-        config_dir
-            .join(Self::DIRECTORY_NAME)
-            .read_dir()
-            .map(|read_dir| {
-                read_dir
-                    .filter_map(|entry| entry.ok())
-                    .filter_map(|entry| Self::load_from_path(&entry.path()).ok())
-                    .collect()
-            })
-            .unwrap_or_default()
-    }
 }
 
 parsec_data!("schema/pki/local_pending_enrollment.json5");

@@ -770,3 +770,17 @@ pub async fn save_pki_local_pending(
     log::debug!("Saving local device at {}", local_file.display());
     platform::save_pki_local_pending(local_pending, local_file).await
 }
+
+#[derive(Debug, thiserror::Error)]
+pub enum ListPkiLocalPendingError {
+    #[error("Device storage is not available")]
+    StorageNotAvailable,
+    #[error(transparent)]
+    Internal(anyhow::Error),
+}
+
+pub async fn list_pki_local_pending(
+    config_dir: &Path,
+) -> Result<Vec<LocalPendingEnrollment>, ListPkiLocalPendingError> {
+    platform::list_pki_local_pending(config_dir).await
+}

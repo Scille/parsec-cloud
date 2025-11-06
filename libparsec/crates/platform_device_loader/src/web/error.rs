@@ -77,11 +77,23 @@ error_set::error_set! {
         }
     }
     NewStorageError := GetRootDirectoryError
-    ListAvailableDevicesError := GetDirectoryHandleError
+    ListFileEntriesError := GetDirectoryHandleError
+    ListAvailableDevicesError := ListFileEntriesError
+        || LoadAvailableDeviceError
         || AwaitPromiseError
         || {
             ReadToEnd(ReadToEndError)
         }
+    ListPkiLocalPendingError := GetDirectoryHandleError
+        || LoadPkiLocalPendingError
+        || AwaitPromiseError
+        || {
+            ReadToEnd(ReadToEndError)
+        }
+    LoadPkiLocalPendingError := {
+        ReadToEnd(ReadToEndError),
+        DataError(libparsec_types::DataError)
+    }
     DeviceMissingError := NotFoundError
     RmpDecodeError := {
         RmpDecode(libparsec_types::RmpDecodeError)
