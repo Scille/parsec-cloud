@@ -21,6 +21,7 @@ from parsec._parsec import (
     UserProfile,
     authenticated_cmds,
 )
+from parsec.events import EventPkiEnrollment
 from tests.api_v5.authenticated.test_user_create import (
     NEW_MIKE_DEVICE_ID,
     NEW_MIKE_DEVICE_LABEL,
@@ -124,12 +125,20 @@ def generate_accept_params(
 
 async def test_authenticated_pki_enrollment_accept_ok(
     coolorg: CoolorgRpcClients,
+    backend: Backend,
     enrollment_id: EnrollmentID,
 ) -> None:
-    rep = await coolorg.alice.pki_enrollment_accept(
-        **generate_accept_params(coolorg, enrollment_id)
-    )
-    assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepOk()
+    with backend.event_bus.spy() as spy:
+        rep = await coolorg.alice.pki_enrollment_accept(
+            **generate_accept_params(coolorg, enrollment_id)
+        )
+        assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepOk()
+
+        await spy.wait_event_occurred(
+            EventPkiEnrollment(
+                organization_id=coolorg.organization_id,
+            )
+        )
 
 
 async def test_authenticated_pki_enrollment_accept_active_users_limit_reached(

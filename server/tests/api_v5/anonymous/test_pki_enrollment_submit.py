@@ -26,6 +26,8 @@ from parsec._parsec import (
     UserProfile,
     anonymous_cmds,
 )
+from parsec.components.pki import PkiEnrollmentInfoCancelled, PkiEnrollmentInfoSubmitted
+from parsec.events import EventPinged, EventPkiEnrollment
 from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
 
 
@@ -50,22 +52,30 @@ def submit_payload() -> bytes:
 
 
 @pytest.fixture
-async def existing_enrollment(coolorg: CoolorgRpcClients, submit_payload: bytes) -> Enrollment:
+async def existing_enrollment(
+    coolorg: CoolorgRpcClients, backend: Backend, submit_payload: bytes
+) -> Enrollment:
     enrollment_id = EnrollmentID.new()
     submitter_der_x509_certificate = b"<mike der x509 certificate>"
     submitter_der_x509_certificate_email = EmailAddress("mike@example.invalid")
     submit_payload_signature = b"<mike submit payload signature>"
 
-    rep = await coolorg.anonymous.pki_enrollment_submit(
-        enrollment_id=enrollment_id,
-        force=False,
-        der_x509_certificate=submitter_der_x509_certificate,
-        payload_signature=submit_payload_signature,
-        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
-        payload=submit_payload,
-    )
-    assert isinstance(rep, anonymous_cmds.latest.pki_enrollment_submit.RepOk)
+    with backend.event_bus.spy() as spy:
+        rep = await coolorg.anonymous.pki_enrollment_submit(
+            enrollment_id=enrollment_id,
+            force=False,
+            der_x509_certificate=submitter_der_x509_certificate,
+            payload_signature=submit_payload_signature,
+            payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
+            payload=submit_payload,
+        )
+        assert isinstance(rep, anonymous_cmds.latest.pki_enrollment_submit.RepOk)
 
+        await spy.wait_event_occurred(
+            EventPkiEnrollment(
+                organization_id=coolorg.organization_id,
+            )
+        )
     return Enrollment(
         enrollment_id=enrollment_id,
         submitter_der_x509_certificate=submitter_der_x509_certificate,
@@ -77,31 +87,81 @@ async def existing_enrollment(coolorg: CoolorgRpcClients, submit_payload: bytes)
 
 
 async def test_anonymous_pki_enrollment_submit_ok(
-    coolorg: CoolorgRpcClients, submit_payload: bytes
+    coolorg: CoolorgRpcClients, backend: Backend, submit_payload: bytes
 ) -> None:
-    rep = await coolorg.anonymous.pki_enrollment_submit(
-        enrollment_id=EnrollmentID.new(),
-        force=False,
-        der_x509_certificate=b"<philip der x509 certificate>",
-        payload_signature=b"<philip submit payload signature>",
-        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
-        payload=submit_payload,
+    enrollment_id = EnrollmentID.new()
+    with backend.event_bus.spy() as spy:
+        rep = await coolorg.anonymous.pki_enrollment_submit(
+            enrollment_id=enrollment_id,
+            force=False,
+            der_x509_certificate=b"<philip der x509 certificate>",
+            payload_signature=b"<philip submit payload signature>",
+            payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
+            payload=submit_payload,
+        )
+        assert isinstance(rep, anonymous_cmds.latest.pki_enrollment_submit.RepOk)
+
+        await spy.wait_event_occurred(
+            EventPkiEnrollment(
+                organization_id=coolorg.organization_id,
+            )
+        )
+
+    # The new enrollment is expected to start in a submitted state
+    outcome = await backend.pki.info(
+        organization_id=coolorg.organization_id, enrollment_id=enrollment_id
     )
-    assert isinstance(rep, anonymous_cmds.latest.pki_enrollment_submit.RepOk)
+    assert isinstance(outcome, PkiEnrollmentInfoSubmitted)
 
 
 async def test_anonymous_pki_enrollment_submit_ok_with_force(
-    coolorg: CoolorgRpcClients, existing_enrollment: Enrollment, submit_payload: bytes
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+    existing_enrollment: Enrollment,
+    submit_payload: bytes,
 ) -> None:
-    rep = await coolorg.anonymous.pki_enrollment_submit(
-        enrollment_id=EnrollmentID.new(),
-        force=True,
-        der_x509_certificate=existing_enrollment.submitter_der_x509_certificate,
-        payload_signature=b"<philip submit payload signature>",
-        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
-        payload=submit_payload,
+    enrollment_id = EnrollmentID.new()
+    with backend.event_bus.spy() as spy:
+        rep = await coolorg.anonymous.pki_enrollment_submit(
+            enrollment_id=enrollment_id,
+            force=True,
+            der_x509_certificate=existing_enrollment.submitter_der_x509_certificate,
+            payload_signature=b"<philip submit payload signature>",
+            payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
+            payload=submit_payload,
+        )
+        assert isinstance(rep, anonymous_cmds.latest.pki_enrollment_submit.RepOk)
+
+        # Force the dispatch of an unrelated event to ensure there is no pki event
+        # that are still in-flight.
+        await coolorg.alice.ping(ping="ping")
+        await spy.wait_event_occurred(
+            EventPinged(
+                organization_id=coolorg.organization_id,
+                ping="ping",
+            )
+        )
+
+        # Note we get only a single event, even if there is two enrollments modified
+        # (i.e. the newly created one and the old one being cancelled).
+        pki_events = [
+            e
+            for e in spy.events
+            if isinstance(e, EventPkiEnrollment) and e.organization_id == coolorg.organization_id
+        ]
+        assert len(pki_events) == 1
+
+    # Now th old enrollment should have been cancelled...
+    outcome = await backend.pki.info(
+        organization_id=coolorg.organization_id, enrollment_id=existing_enrollment.enrollment_id
     )
-    assert isinstance(rep, anonymous_cmds.latest.pki_enrollment_submit.RepOk)
+    assert isinstance(outcome, PkiEnrollmentInfoCancelled)
+
+    # ...and the new one in a submitted state
+    outcome = await backend.pki.info(
+        organization_id=coolorg.organization_id, enrollment_id=enrollment_id
+    )
+    assert isinstance(outcome, PkiEnrollmentInfoSubmitted)
 
 
 async def test_anonymous_pki_enrollment_submit_ok_with_email_from_revoked_user(
