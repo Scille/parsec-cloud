@@ -9,7 +9,7 @@ use crate::{
         VerifySignatureError,
     },
     shared::signature_verification::{RsassaPssSha256SignatureVerifier, SUPPORTED_SIG_ALGS},
-    EncryptedMessage, SignatureAlgorithm,
+    EncryptedMessage, PkiSignatureAlgorithm,
 };
 use libparsec_types::{
     DateTime, EnrollmentID, LocalPendingEnrollment, ParsecPkiEnrollmentAddr,
@@ -60,7 +60,7 @@ impl AsRef<[u8]> for Certificate<'_> {
 }
 
 pub struct SignedMessage {
-    pub algo: SignatureAlgorithm,
+    pub algo: PkiSignatureAlgorithm,
     pub signature: Vec<u8>,
     pub message: Vec<u8>,
 }
@@ -70,7 +70,7 @@ pub fn verify_message<'message, 'a>(
     certificate: &'a EndEntityCert<'a>,
 ) -> Result<&'message [u8], VerifySignatureError> {
     let verifier = match signed_message.algo {
-        SignatureAlgorithm::RsassaPssSha256 => &RsassaPssSha256SignatureVerifier,
+        PkiSignatureAlgorithm::RsassaPssSha256 => &RsassaPssSha256SignatureVerifier,
     };
     certificate
         .verify_signature(verifier, &signed_message.message, &signed_message.signature)

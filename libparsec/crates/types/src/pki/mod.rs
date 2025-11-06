@@ -314,6 +314,38 @@ impl Display for EncryptionAlgorithm {
     }
 }
 
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, serde_with::DeserializeFromStr, serde_with::SerializeDisplay,
+)]
+pub enum PkiSignatureAlgorithm {
+    RsassaPssSha256,
+}
+
+impl From<PkiSignatureAlgorithm> for &'static str {
+    fn from(value: PkiSignatureAlgorithm) -> Self {
+        match value {
+            PkiSignatureAlgorithm::RsassaPssSha256 => "RSASSA-PSS-SHA256",
+        }
+    }
+}
+
+impl Display for PkiSignatureAlgorithm {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str((*self).into())
+    }
+}
+
+impl FromStr for PkiSignatureAlgorithm {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "RSASSA-PSS-SHA256" => Ok(Self::RsassaPssSha256),
+            _ => Err("Unknown signature algorithm"),
+        }
+    }
+}
+
 #[cfg(test)]
 #[path = "../../tests/unit/pki.rs"]
 #[allow(clippy::unwrap_used)]

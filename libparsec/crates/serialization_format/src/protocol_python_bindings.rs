@@ -945,6 +945,9 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
             quote_rs_to_py_class!(crate::data::X509CertificateReference)
         }
         FieldType::EncryptionAlgorithm => quote_rs_to_py_class!(crate::data::EncryptionAlgorithm),
+        FieldType::PkiSignatureAlgorithm => {
+            quote_rs_to_py_class!(crate::data::PkiSignatureAlgorithm)
+        }
         FieldType::ShamirRecoveryShareData => {
             quote_rs_to_py_class!(crate::shamir::ShamirRecoveryShareData)
         }
@@ -1045,6 +1048,7 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         FieldType::X509Certificate => quote! { crate::data::X509Certificate },
         FieldType::X509CertificateReference => quote! { crate::data::X509CertificateReference },
         FieldType::EncryptionAlgorithm => quote! { crate::data::EncryptionAlgorithm },
+        FieldType::PkiSignatureAlgorithm => quote! { crate::data::PkiSignatureAlgorithm },
         FieldType::ShamirRecoveryShareData => {
             quote! { crate::shamir::ShamirRecoveryShareData}
         }
@@ -1191,6 +1195,7 @@ fn internal_quote_field_as_fn_new_conversion(field_name: &Ident, ty: &FieldType)
         | FieldType::X509Certificate
         | FieldType::X509CertificateReference
         | FieldType::EncryptionAlgorithm
+        | FieldType::PkiSignatureAlgorithm
         | FieldType::GreetingAttemptID
         | FieldType::CancelledGreetingAttemptReason
         | FieldType::GreeterOrClaimer

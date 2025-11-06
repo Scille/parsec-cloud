@@ -10,8 +10,7 @@ pub mod x509;
 #[path = "../tests/units/mod.rs"]
 mod test;
 
-use libparsec_types::{EncryptionAlgorithm, X509CertificateReference};
-use std::{fmt::Display, str::FromStr};
+use libparsec_types::{EncryptionAlgorithm, PkiSignatureAlgorithm, X509CertificateReference};
 
 use bytes::Bytes;
 
@@ -114,38 +113,8 @@ pub struct CertificateDer {
 pub use errors::ListTrustedRootCertificatesError;
 pub use platform::list_trusted_root_certificate_anchor;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SignatureAlgorithm {
-    RsassaPssSha256,
-}
-
-impl From<SignatureAlgorithm> for &'static str {
-    fn from(value: SignatureAlgorithm) -> Self {
-        match value {
-            SignatureAlgorithm::RsassaPssSha256 => "RSASSA-PSS-SHA256",
-        }
-    }
-}
-
-impl Display for SignatureAlgorithm {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str((*self).into())
-    }
-}
-
-impl FromStr for SignatureAlgorithm {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "RSASSA-PSS-SHA256" => Ok(Self::RsassaPssSha256),
-            _ => Err("Unknown signature algorithm"),
-        }
-    }
-}
-
 pub struct SignedMessageFromPki {
-    pub algo: SignatureAlgorithm,
+    pub algo: PkiSignatureAlgorithm,
     pub cert_ref: X509CertificateReference,
     pub signature: Bytes,
 }
