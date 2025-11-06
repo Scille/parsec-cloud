@@ -2,12 +2,7 @@
 
 mod cert_ref;
 
-use std::{
-    collections::HashMap,
-    fmt::Display,
-    path::{Path, PathBuf},
-    str::FromStr,
-};
+use std::{collections::HashMap, fmt::Display, str::FromStr};
 
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
@@ -19,8 +14,7 @@ use crate::{
     self as libparsec_types, impl_transparent_data_format_conversion,
     serialization::{format_v0_dump, format_vx_load},
     DataResult, DateTime, DeviceID, DeviceLabel, EnrollmentID, HumanHandle, ParsecAddr,
-    ParsecPkiEnrollmentAddr, PkiEnrollmentLocalPendingError, PkiEnrollmentLocalPendingResult,
-    UserID, UserProfile,
+    ParsecPkiEnrollmentAddr, UserID, UserProfile,
 };
 pub use cert_ref::{
     X509CertificateHash, X509CertificateReference, X509Pkcs11URI, X509URIFlavorValue,
@@ -161,66 +155,12 @@ pub struct LocalPendingEnrollment {
 }
 
 impl LocalPendingEnrollment {
-    const DIRECTORY_NAME: &'static str = "enrollment_requests";
-
-    fn path_from_enrollment_id(config_dir: &Path, enrollment_id: EnrollmentID) -> PathBuf {
-        config_dir
-            .join(Self::DIRECTORY_NAME)
-            .join(enrollment_id.hex())
-    }
-
     pub fn load(raw: &[u8]) -> DataResult<Self> {
         format_vx_load(raw)
     }
 
     pub fn dump(&self) -> Vec<u8> {
         format_v0_dump(&self)
-    }
-
-    pub fn save(&self, config_dir: &Path) -> PkiEnrollmentLocalPendingResult<PathBuf> {
-        let path = Self::path_from_enrollment_id(config_dir, self.enrollment_id);
-        let parent = path.parent().expect("Unreachable");
-        std::fs::create_dir_all(parent).map_err(|e| {
-            PkiEnrollmentLocalPendingError::CannotSave {
-                path: path.clone(),
-                exc: e.to_string(),
-            }
-        })?;
-        std::fs::write(&path, self.dump()).map_err(|e| {
-            PkiEnrollmentLocalPendingError::CannotSave {
-                path: path.clone(),
-                exc: e.to_string(),
-            }
-        })?;
-
-        Ok(path)
-    }
-
-    pub fn load_from_path(path: &Path) -> PkiEnrollmentLocalPendingResult<Self> {
-        let data = std::fs::read(path).map_err(|e| PkiEnrollmentLocalPendingError::CannotRead {
-            path: path.to_path_buf(),
-            exc: e.to_string(),
-        })?;
-        Self::load(&data).map_err(|exc| PkiEnrollmentLocalPendingError::Validation { exc })
-    }
-
-    pub fn load_from_enrollment_id(
-        config_dir: &Path,
-        enrollment_id: EnrollmentID,
-    ) -> PkiEnrollmentLocalPendingResult<Self> {
-        let path = Self::path_from_enrollment_id(config_dir, enrollment_id);
-        Self::load_from_path(&path)
-    }
-
-    pub fn remove_from_enrollment_id(
-        config_dir: &Path,
-        enrollment_id: EnrollmentID,
-    ) -> PkiEnrollmentLocalPendingResult<()> {
-        let path = Self::path_from_enrollment_id(config_dir, enrollment_id);
-        std::fs::remove_file(&path).map_err(|e| PkiEnrollmentLocalPendingError::CannotRemove {
-            path,
-            exc: e.to_string(),
-        })
     }
 }
 
