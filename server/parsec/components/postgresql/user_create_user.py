@@ -140,7 +140,7 @@ new_device AS (
         FROM new_user
     )
     ON CONFLICT DO NOTHING
-    RETURNING TRUE
+    RETURNING _id
 ),
 
 updated_common_topic AS (
@@ -156,8 +156,8 @@ updated_common_topic AS (
 SELECT
     (SELECT human_already_taken FROM my_checks) AS human_already_taken,
     (SELECT active_users_limit_reached FROM my_checks) AS active_users_limit_reached,
-    COALESCE((SELECT TRUE FROM new_user), FALSE) AS insert_new_user_ok,
-    COALESCE((SELECT * FROM new_device), FALSE) AS insert_new_device_ok,
+    (SELECT _id FROM new_user) AS new_user_internal_id,
+    (SELECT _id FROM new_device) AS new_device_internal_id,
     COALESCE((SELECT * FROM updated_common_topic), FALSE) AS update_common_topic_ok
 """)
 
@@ -259,18 +259,18 @@ async def user_create_user(
         case _:
             assert False, row
 
-    match row["insert_new_user_ok"]:
-        case True:
+    match row["new_user_internal_id"]:
+        case int():
             pass
-        case False:
+        case None:
             return UserCreateUserStoreBadOutcome.USER_ALREADY_EXISTS
         case _:
             assert False, row
 
-    match row["insert_new_device_ok"]:
-        case True:
+    match row["new_device_internal_id"]:
+        case int():
             pass
-        case False:
+        case None:
             return UserCreateUserStoreBadOutcome.USER_ALREADY_EXISTS
         case _:
             assert False, row

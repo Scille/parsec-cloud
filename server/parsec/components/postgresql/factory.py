@@ -18,6 +18,7 @@ from parsec.components.postgresql.handler import asyncpg_pool_factory
 from parsec.components.postgresql.invite import PGInviteComponent
 from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.ping import PGPingComponent
+from parsec.components.postgresql.pki import PGPkiEnrollmentComponent
 from parsec.components.postgresql.realm import PGRealmComponent
 from parsec.components.postgresql.sequester import PGSequesterComponent
 from parsec.components.postgresql.shamir import PGShamirComponent
@@ -46,6 +47,7 @@ async def components_factory(
                 webhooks = WebhooksComponent(config, http_client)
                 events = PGEventsComponent(pool=pool, config=config, event_bus=event_bus)
                 ping = PGPingComponent(pool=pool)
+                pki = PGPkiEnrollmentComponent(pool=pool)
                 organization = PGOrganizationComponent(pool=pool, webhooks=webhooks, config=config)
                 auth = PGAuthComponent(pool=pool, event_bus=event_bus, config=config)
                 invite = PGInviteComponent(pool=pool, config=config)
@@ -57,8 +59,6 @@ async def components_factory(
                 )
                 block = PGBlockComponent(pool=pool, blockstore=blockstore)
                 shamir = PGShamirComponent(pool=pool)
-
-                pki = None
                 sequester = PGSequesterComponent(pool=pool)
                 account = PGAccountComponent(pool=pool, config=config)
 

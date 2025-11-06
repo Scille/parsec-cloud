@@ -173,8 +173,6 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
     if item.get_closest_marker("postgresql"):
         if not item.config.getoption("--postgresql"):
             pytest.skip("need --postgresql option to run")
-    if "pki" in item.name and item.config.getoption("--postgresql"):
-        pytest.skip("PKI tests are not compatible with PostgreSQL backend yet")
 
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
