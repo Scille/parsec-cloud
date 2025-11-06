@@ -46,6 +46,7 @@ from parsec.components.pki import (
     pki_enrollment_accept_validate,
 )
 from parsec.events import EventCommonCertificate, EventPkiEnrollment
+from parsec.locks import AdvisoryLock
 
 
 class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
@@ -64,6 +65,8 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         submit_payload_signature: bytes,
         submit_payload: bytes,
     ) -> None | PkiEnrollmentSubmitBadOutcome | PkiEnrollmentSubmitX509CertificateAlreadySubmitted:
+        # 1) Check organization exists and is not expired
+
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
@@ -71,65 +74,81 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         if org.is_expired:
             return PkiEnrollmentSubmitBadOutcome.ORGANIZATION_EXPIRED
 
-        async with org.topics_lock(read=["common"]):
+        # 2) Validate payload
+
+        try:
+            payload = PkiEnrollmentSubmitPayload.load(submit_payload)
+        except ValueError:
+            return PkiEnrollmentSubmitBadOutcome.INVALID_SUBMIT_PAYLOAD
+        submitter_email = payload.human_handle.email
+
+        # 3) Take lock to prevent any concurrent PKI enrollment creation
+        # We also take the common topic lock since PKI enrollment is not
+        # allowed for existing users!
+
+        async with (
+            org.advisory_lock_exclusive(AdvisoryLock.InvitationCreation),
+            org.topics_lock(read=["common"]),
+        ):
+            # 4) Check enrollment_id is not already used
+
             if enrollment_id in org.pki_enrollments:
                 return PkiEnrollmentSubmitBadOutcome.ENROLLMENT_ID_ALREADY_USED
 
-            try:
-                payload = PkiEnrollmentSubmitPayload.load(submit_payload)
-            except ValueError:
-                return PkiEnrollmentSubmitBadOutcome.INVALID_SUBMIT_PAYLOAD
-            submitter_email = payload.human_handle.email
+            # 5) Check for previous enrollment with same x509 certificate
 
-            # Try to retrieve the last attempt with this x509 certificate
-            for enrollment in org.pki_enrollments.values():
-                if enrollment.submitter_der_x509_certificate == submitter_der_x509_certificate:
-                    match enrollment.enrollment_state:
-                        case MemoryPkiEnrollmentState.SUBMITTED:
-                            # Previous attempt is still pending, overwrite it if force flag is set...
-                            if force:
-                                enrollment.enrollment_state = MemoryPkiEnrollmentState.CANCELLED
-                                enrollment.info_cancelled = MemoryPkiEnrollmentInfoCancelled(
-                                    cancelled_on=now
-                                )
-                                # Note we don't send a `EventPkiEnrollment` event related
-                                # to the cancelled enrollement here.
-                                # This is because this function already sends a `EventPkiEnrollment`
-                                # no matter what, and the type of event doesn't specify the
-                                # enrollment ID as its role is only to inform the client
-                                # that something has changed (so that the client knows it
-                                # should re-fetch the list of PKI enrollements from the
-                                # server).
-                            else:
-                                # ...otherwise nothing we can do
-                                return PkiEnrollmentSubmitX509CertificateAlreadySubmitted(
-                                    submitted_on=enrollment.submitted_on,
-                                )
+            for enrollment in reversed(
+                sorted(org.pki_enrollments.values(), key=lambda x: x.submitted_on)
+            ):
+                if enrollment.submitter_der_x509_certificate != submitter_der_x509_certificate:
+                    continue
 
-                        case MemoryPkiEnrollmentState.REJECTED | MemoryPkiEnrollmentState.CANCELLED:
-                            # Previous attempt was unsuccessful, so we are clear to submit a new attempt !
-                            pass
+                match enrollment.enrollment_state:
+                    case MemoryPkiEnrollmentState.SUBMITTED:
+                        # Previous attempt is still pending, overwrite it if force flag is set...
+                        if force:
+                            enrollment.enrollment_state = MemoryPkiEnrollmentState.CANCELLED
+                            enrollment.info_cancelled = MemoryPkiEnrollmentInfoCancelled(
+                                cancelled_on=now
+                            )
+                            # Note we don't send a `EventPkiEnrollment` event related
+                            # to the cancelled enrollment here.
+                            # This is because this function already sends a `EventPkiEnrollment`
+                            # no matter what, and the type of event doesn't specify the
+                            # enrollment ID as its role is only to inform the client
+                            # that something has changed (so that the client knows it
+                            # should re-fetch the list of PKI enrollments from the
+                            # server).
+                        else:
+                            # ...otherwise nothing we can do
+                            return PkiEnrollmentSubmitX509CertificateAlreadySubmitted(
+                                submitted_on=enrollment.submitted_on,
+                            )
 
-                        case MemoryPkiEnrollmentState.ACCEPTED:
-                            # Previous attempt end successfully, we are not allowed to submit
-                            # unless the created user has been revoked
-                            assert enrollment.submitter_accepted_user_id is not None
-                            assert enrollment.submitter_accepted_device_id is not None
-                            user = org.users[enrollment.submitter_accepted_user_id]
-                            if not user.is_revoked:
-                                return (
-                                    PkiEnrollmentSubmitBadOutcome.X509_CERTIFICATE_ALREADY_ENROLLED
-                                )
+                    case MemoryPkiEnrollmentState.REJECTED | MemoryPkiEnrollmentState.CANCELLED:
+                        # Previous attempt was unsuccessful, so we are clear to submit a new attempt !
+                        pass
 
-                    # There is no need looking for older enrollments given the
-                    # last one represent the current state of this x509 certificate.
-                    break
+                    case MemoryPkiEnrollmentState.ACCEPTED:
+                        # Previous attempt end successfully, we are not allowed to submit
+                        # unless the created user has been revoked
+                        assert enrollment.submitter_accepted_user_id is not None
+                        assert enrollment.submitter_accepted_device_id is not None
+                        user = org.users[enrollment.submitter_accepted_user_id]
+                        if not user.is_revoked:
+                            return PkiEnrollmentSubmitBadOutcome.X509_CERTIFICATE_ALREADY_ENROLLED
+
+                # There is no need looking for older enrollments given the
+                # last one represent the current state of this x509 certificate.
+                break
+
+            # 6) Check that the email is not already enrolled
 
             for user in org.users.values():
                 if not user.is_revoked and user.cooked.human_handle.email == submitter_email:
                     return PkiEnrollmentSubmitBadOutcome.USER_EMAIL_ALREADY_ENROLLED
 
-            # All checks are good, now we do the actual insertion
+            # 7) All checks are good, now we do the actual insertion
 
             submitter_der_x509_certificate_sha1 = sha1(submitter_der_x509_certificate).digest()
             org.pki_enrollments[enrollment_id] = MemoryPkiEnrollment(
@@ -319,6 +338,8 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         if org.is_expired:
             return PkiEnrollmentAcceptStoreBadOutcome.ORGANIZATION_EXPIRED
 
+        # 1) Write lock common topic
+
         async with org.topics_lock(write=["common"]) as (common_topic_last_timestamp,):
             try:
                 author_device = org.devices[author]
@@ -332,6 +353,8 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
 
             if author_user.current_profile != UserProfile.ADMIN:
                 return PkiEnrollmentAcceptStoreBadOutcome.AUTHOR_NOT_ALLOWED
+
+            # 2) Validate certificates
 
             try:
                 PkiEnrollmentAnswerPayload.load(payload)
@@ -352,6 +375,15 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 case error:
                     return error
 
+            # 3) Ensure we are not breaking causality by adding a newer timestamp.
+
+            # We already ensured user and device certificates' timestamps are consistent,
+            # so only need to check one of them here
+            if common_topic_last_timestamp >= u_certif.timestamp:
+                return RequireGreaterTimestamp(strictly_greater_than=common_topic_last_timestamp)
+
+            # 4) Retrieve the enrollment
+
             try:
                 enrollment = org.pki_enrollments[enrollment_id]
             except KeyError:
@@ -359,6 +391,9 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
 
             if enrollment.enrollment_state != MemoryPkiEnrollmentState.SUBMITTED:
                 return PkiEnrollmentAcceptStoreBadOutcome.ENROLLMENT_NO_LONGER_AVAILABLE
+
+            # 5) Check the user_id/device_id don't already exists and human_handle
+            # is not already taken
 
             if org.active_user_limit_reached():
                 return PkiEnrollmentAcceptStoreBadOutcome.ACTIVE_USERS_LIMIT_REACHED
@@ -372,14 +407,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             ):
                 return PkiEnrollmentAcceptStoreBadOutcome.HUMAN_HANDLE_ALREADY_TAKEN
 
-            # Ensure we are not breaking causality by adding a newer timestamp.
-
-            # We already ensured user and device certificates' timestamps are consistent,
-            # so only need to check one of them here
-            if common_topic_last_timestamp >= u_certif.timestamp:
-                return RequireGreaterTimestamp(strictly_greater_than=common_topic_last_timestamp)
-
-            # All checks are good, now we do the actual insertion
+            # 6) All checks are good, now we do the actual insertion
 
             org.per_topic_last_timestamp["common"] = u_certif.timestamp
 
