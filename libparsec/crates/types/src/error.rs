@@ -1,7 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::path::PathBuf;
-
 use thiserror::Error;
 
 use libparsec_crypto::CryptoError;
@@ -69,20 +67,3 @@ pub enum DataError {
 }
 
 pub type DataResult<T> = Result<T, DataError>;
-
-#[derive(Error, Debug, Clone, PartialEq, Eq)]
-pub enum PkiEnrollmentLocalPendingError {
-    #[error("Cannot read {path}: {exc}")]
-    CannotRead { path: PathBuf, exc: String },
-
-    #[error("Cannot remove {path}: {exc}")]
-    CannotRemove { path: PathBuf, exc: String },
-
-    #[error("Cannot save {path}: {exc}")]
-    CannotSave { path: PathBuf, exc: String },
-
-    #[error("Cannot load local enrollment request: {exc}")]
-    Validation { exc: DataError },
-}
-
-pub type PkiEnrollmentLocalPendingResult<T> = Result<T, PkiEnrollmentLocalPendingError>;
