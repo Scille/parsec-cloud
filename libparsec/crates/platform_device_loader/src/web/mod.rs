@@ -10,8 +10,9 @@ use libparsec_types::prelude::*;
 
 use crate::{
     AccountVaultOperationsFetchOpaqueKeyError, ArchiveDeviceError, AvailableDevice,
-    DeviceAccessStrategy, DeviceSaveStrategy, ListAvailableDeviceError, LoadCiphertextKeyError,
-    ReadFileError, RemoveDeviceError, SaveDeviceError, SavePkiLocalPendingError, UpdateDeviceError,
+    DeviceAccessStrategy, DeviceSaveStrategy, ListAvailableDeviceError, ListPkiLocalPendingError,
+    LoadCiphertextKeyError, ReadFileError, RemoveDeviceError, SaveDeviceError,
+    SavePkiLocalPendingError, UpdateDeviceError,
 };
 use internal::Storage;
 
@@ -188,4 +189,24 @@ pub(super) async fn save_pki_local_pending(
         .save_pki_local_pending(local_file, local_pending)
         .await
         .map_err(Into::into)
+}
+
+pub(super) async fn list_pki_local_pending(
+    config_dir: &Path,
+) -> Result<Vec<LocalPendingEnrollment>, ListPkiLocalPendingError> {
+    let Ok(storage) = Storage::new().await.inspect_err(|e| {
+        log::error!("Failed to access storage: {e}");
+    }) else {
+        return Err(ListPkiLocalPendingError::StorageNotAvailable);
+    };
+    storage
+        .list_pki_local_pending(config_dir)
+        .await
+        .inspect(|v| {
+            log::trace!("Found the following devices: {v:?}");
+        })
+        .inspect_err(|e| {
+            log::error!("Failed to list available devices: {e}");
+        })
+        .map_err(|e| ListPkiLocalPendingError::Internal(anyhow::anyhow!("{e}")))
 }

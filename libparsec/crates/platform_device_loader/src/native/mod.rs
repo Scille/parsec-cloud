@@ -2,16 +2,16 @@
 
 use itertools::Itertools as _;
 use keyring::Entry as KeyringEntry;
-use libparsec_platform_async::future::FutureExt as _;
+use libparsec_platform_async::{future::FutureExt as _, stream::StreamExt as _};
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
 use crate::{
     encrypt_device, get_device_archive_path, AccountVaultOperationsFetchOpaqueKeyError,
     AccountVaultOperationsUploadOpaqueKeyError, ArchiveDeviceError, AvailableDevice,
-    DeviceAccessStrategy, DeviceSaveStrategy, ListAvailableDeviceError, LoadCiphertextKeyError,
-    LoadDeviceError, ReadFileError, RemoveDeviceError, SaveDeviceError, SavePkiLocalPendingError,
-    UpdateDeviceError, DEVICE_FILE_EXT,
+    DeviceAccessStrategy, DeviceSaveStrategy, ListAvailableDeviceError, ListPkiLocalPendingError,
+    LoadCiphertextKeyError, LoadDeviceError, ReadFileError, RemoveDeviceError, SaveDeviceError,
+    SavePkiLocalPendingError, UpdateDeviceError, DEVICE_FILE_EXT, LOCAL_PENDING_EXT,
 };
 use libparsec_platform_pki::{decrypt_message, encrypt_message};
 use libparsec_types::prelude::*;
@@ -91,22 +91,20 @@ pub(super) async fn list_available_devices(
 }
 
 #[derive(Debug, thiserror::Error)]
-enum LoadAvailableDeviceFileError {
+enum LoadFileError {
     #[error(transparent)]
     InvalidPath(anyhow::Error),
     #[error("Cannot deserialize file content")]
     InvalidData,
 }
 
-fn load_available_device(
-    key_file_path: PathBuf,
-) -> Result<AvailableDevice, LoadAvailableDeviceFileError> {
+fn load_available_device(key_file_path: PathBuf) -> Result<AvailableDevice, LoadFileError> {
     // TODO: make file access on a worker thread !
-    let content = std::fs::read(&key_file_path)
-        .map_err(|e| LoadAvailableDeviceFileError::InvalidPath(e.into()))?;
+    let content =
+        std::fs::read(&key_file_path).map_err(|e| LoadFileError::InvalidPath(e.into()))?;
 
     super::load_available_device_from_blob(key_file_path, &content)
-        .map_err(|_| LoadAvailableDeviceFileError::InvalidData)
+        .map_err(|_| LoadFileError::InvalidData)
 }
 
 /*
@@ -531,4 +529,58 @@ pub async fn save_pki_local_pending(
     save_content(&local_file, &file_content)
         .await
         .map_err(Into::into)
+}
+
+pub async fn list_pki_local_pending(
+    config_dir: &Path,
+) -> Result<Vec<LocalPendingEnrollment>, ListPkiLocalPendingError> {
+    let pending_dir = crate::get_local_pending_dir(config_dir);
+    let mut files = find_local_pending_files(&pending_dir).await?;
+
+    // Sort entries so result is deterministic
+    files.sort();
+    log::trace!(files:?; "Found pending request files");
+
+    Ok(libparsec_platform_async::stream::iter(files)
+        .filter_map(async |path| load_pki_pending_file(&path).await.ok())
+        .collect::<Vec<_>>()
+        .await)
+}
+
+async fn find_local_pending_files(path: &Path) -> Result<Vec<PathBuf>, ListPkiLocalPendingError> {
+    let mut entries = match tokio::fs::read_dir(path).await {
+        Ok(v) => v,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(err) => {
+            log::error!(path:% = path.display(), err:%; "Cannot list pending request files");
+            return Err(ListPkiLocalPendingError::StorageNotAvailable);
+        }
+    };
+    let mut files = Vec::new();
+
+    while let Some(entry) = entries.next_entry().await.unwrap_or_default() {
+        let Ok(metadata) = entry.metadata().await else {
+            continue;
+        };
+        let path = entry.path();
+        if metadata.is_dir() {
+            let mut sub_files = Box::pin(find_local_pending_files(&path)).await?;
+            files.append(&mut sub_files);
+        } else if metadata.is_file() && path.extension() == Some(LOCAL_PENDING_EXT.as_ref()) {
+            files.push(path);
+        }
+    }
+    Ok(files)
+}
+
+async fn load_pki_pending_file(path: &Path) -> Result<LocalPendingEnrollment, LoadFileError> {
+    let content = tokio::fs::read(path)
+        .await
+        .map_err(Into::into)
+        .map_err(LoadFileError::InvalidPath)?;
+    LocalPendingEnrollment::load(&content)
+        .inspect_err(
+            |err| log::debug!(path:% = path.display(), err:%; "Failed to load pki pending file"),
+        )
+        .map_err(|_| LoadFileError::InvalidData)
 }
