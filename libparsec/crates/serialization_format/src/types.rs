@@ -258,6 +258,7 @@ generate_field_type_enum!(
     X509Certificate => libparsec_types::X509Certificate,
     X509CertificateReference => libparsec_types::X509CertificateReference,
     EncryptionAlgorithm => libparsec_types::EncryptionAlgorithm,
+    PkiSignatureAlgorithm => libparsec_types::PkiSignatureAlgorithm,
     GreetingAttemptID => libparsec_types::GreetingAttemptID,
     GreeterOrClaimer => libparsec_types::GreeterOrClaimer,
     CancelledGreetingAttemptReason => libparsec_types::CancelledGreetingAttemptReason,

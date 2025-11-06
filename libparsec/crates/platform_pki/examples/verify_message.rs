@@ -3,8 +3,8 @@
 
 use anyhow::Context;
 use clap::Parser;
-use libparsec_platform_pki::{verify_message, SignatureAlgorithm, SignedMessage};
-use libparsec_types::X509CertificateHash;
+use libparsec_platform_pki::{verify_message, SignedMessage};
+use libparsec_types::{PkiSignatureAlgorithm, X509CertificateHash};
 use sha2::Digest;
 
 mod utils;
@@ -15,7 +15,7 @@ struct Args {
     cert: utils::CertificateOrRef,
     #[command(flatten)]
     content: utils::ContentOpts,
-    signature_header: SignatureAlgorithm,
+    signature_header: PkiSignatureAlgorithm,
     /// Signature in base64
     signature: String,
 }

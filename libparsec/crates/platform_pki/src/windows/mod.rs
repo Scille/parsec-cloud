@@ -4,12 +4,14 @@ use std::ffi::c_void;
 
 use crate::{
     CertificateDer, DecryptMessageError, DecryptedMessage, EncryptMessageError, EncryptedMessage,
-    EncryptionAlgorithm, GetDerEncodedCertificateError, ListTrustedRootCertificatesError,
-    ShowCertificateSelectionDialogError, SignMessageError, SignatureAlgorithm,
-    SignedMessageFromPki,
+    GetDerEncodedCertificateError, ListTrustedRootCertificatesError,
+    ShowCertificateSelectionDialogError, SignMessageError, SignedMessageFromPki,
 };
 use bytes::Bytes;
-use libparsec_types::{X509CertificateHash, X509CertificateReference, X509WindowsCngURI};
+use libparsec_types::{
+    EncryptionAlgorithm, PkiSignatureAlgorithm, X509CertificateHash, X509CertificateReference,
+    X509WindowsCngURI,
+};
 use schannel::{
     cert_context::{CertContext, HashAlgorithm, PrivateKey},
     cert_store::CertStore,
@@ -256,8 +258,8 @@ fn get_keypair(context: &CertContext) -> Result<PrivateKey, crate::errors::BaseK
 fn ncrypt_sign_message_with_rsa(
     message: &[u8],
     handle: &NcryptKey,
-) -> std::io::Result<(SignatureAlgorithm, Vec<u8>)> {
-    const ALGO: SignatureAlgorithm = SignatureAlgorithm::RsassaPssSha256;
+) -> std::io::Result<(PkiSignatureAlgorithm, Vec<u8>)> {
+    const ALGO: PkiSignatureAlgorithm = PkiSignatureAlgorithm::RsassaPssSha256;
     let hash = sha2::Sha256::digest(message);
     // SAFETY: NcryptKey is obtain from an NCRYPT_KEY_HANDLE, here we retrieve the underlying
     // handle.
