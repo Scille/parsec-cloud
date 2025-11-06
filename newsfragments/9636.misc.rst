@@ -1,1 +1,0 @@
-Added an explanation text when trying to copy user workspace roles containing Manager or Owner roles to an External user.
