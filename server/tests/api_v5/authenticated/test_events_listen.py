@@ -69,7 +69,7 @@ ALICE_USER_ID = UserID.test_from_nickname("alice")
             id="invitation",
         ),
         pytest.param(
-            functools.partial(events.EventPkiEnrollment, enrollment_id=ENROLLMENT_ID),
+            functools.partial(events.EventPkiEnrollment),
             authenticated_cmds.latest.events_listen.APIEventPkiEnrollment(),
             id="pki_enrollment",
         ),
