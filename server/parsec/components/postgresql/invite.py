@@ -73,6 +73,7 @@ from parsec.events import (
     EventGreetingAttemptReady,
     EventInvitation,
 )
+from parsec.locks import AdvisoryLock
 
 ShamirRecoveryRecipient = invited_cmds.latest.invite_info.ShamirRecoveryRecipient
 
@@ -725,17 +726,11 @@ LIMIT 1
 """
 )
 
-_q_lock = Q(
-    # Use 66 as magic number to represent invitation creation lock
-    # (note this is not strictly needed right now given there is no other
-    # advisory lock in the application, but may avoid weird error if we
-    # introduce a new advisory lock while forgetting about this one)
-    """
-SELECT PG_ADVISORY_XACT_LOCK(66, _id)
+_q_lock = Q(f"""
+SELECT PG_ADVISORY_XACT_LOCK({AdvisoryLock.InvitationCreation}, _id)
 FROM organization
 WHERE organization_id = $organization_id
-"""
-)
+""")
 
 
 async def q_take_invitation_create_write_lock(
