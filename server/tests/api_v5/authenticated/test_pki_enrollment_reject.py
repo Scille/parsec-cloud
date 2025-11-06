@@ -14,6 +14,7 @@ from parsec._parsec import (
     UserProfile,
     authenticated_cmds,
 )
+from parsec.events import EventPkiEnrollment
 from tests.common import (
     Backend,
     CoolorgRpcClients,
@@ -51,10 +52,18 @@ async def enrollment_id(
 
 async def test_authenticated_pki_enrollment_reject_ok(
     coolorg: CoolorgRpcClients,
+    backend: Backend,
     enrollment_id: EnrollmentID,
 ) -> None:
-    rep = await coolorg.alice.pki_enrollment_reject(enrollment_id=enrollment_id)
-    assert rep == authenticated_cmds.latest.pki_enrollment_reject.RepOk()
+    with backend.event_bus.spy() as spy:
+        rep = await coolorg.alice.pki_enrollment_reject(enrollment_id=enrollment_id)
+        assert rep == authenticated_cmds.latest.pki_enrollment_reject.RepOk()
+
+        await spy.wait_event_occurred(
+            EventPkiEnrollment(
+                organization_id=coolorg.organization_id,
+            )
+        )
 
 
 @pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
