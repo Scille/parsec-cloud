@@ -36,6 +36,7 @@ from tests.common import (
     AnonymousRpcClient,
     AsyncClient,
     Backend,
+    MinimalorgRpcClients,
     TestbedBackend,
     next_organization_id,
 )
@@ -428,3 +429,65 @@ def test_anonymous_organization_bootstrap_http_common_errors() -> None:
     # Nothing to do here: the organization doesn't exist yet so nothing can be missing or expired !
     # (this test is only present to please `test_each_cmd_req_rep_has_dedicated_test`)
     pass
+
+
+@pytest.mark.usefixtures("ballpark_always_ok")
+async def test_anonymous_organization_bootstrap_no_org_existence_oracle(
+    client: AsyncClient,
+    backend: Backend,
+    testbed: TestbedBackend,
+    minimalorg: MinimalorgRpcClients,
+) -> None:
+    # 1) To do the bootstrap we need certificates, so steal them from another organization
+    _, _, testbed_template_content = await testbed.get_template("coolorg")
+
+    bootstrap_event = testbed_template_content.events[0]
+    assert isinstance(bootstrap_event, tb.TestbedEventBootstrapOrganization)
+    user_certificate = bootstrap_event.first_user_raw_certificate
+    redacted_user_certificate = bootstrap_event.first_user_raw_redacted_certificate
+    device_certificate = bootstrap_event.first_user_first_device_raw_certificate
+    redacted_device_certificate = bootstrap_event.first_user_first_device_raw_redacted_certificate
+    root_verify_key = bootstrap_event.root_signing_key.verify_key
+
+    # 2) The boostrap should not leak info about other organizations
+
+    to_bootstrap_org_id = next_organization_id(prefix="NewOrg")
+    bootstrap_token = await backend.organization.create(
+        now=DateTime.now(),
+        id=to_bootstrap_org_id,
+    )
+    assert isinstance(bootstrap_token, BootstrapToken), bootstrap_token
+
+    boostrapped_org_id = minimalorg.organization_id
+    non_existing_org_id = next_organization_id(prefix="NewOrg")
+
+    # 3) Test with an invalid token
+
+    bad_bootstrap_token = BootstrapToken.new()
+    for org_id in (to_bootstrap_org_id, boostrapped_org_id, non_existing_org_id):
+        rep = await AnonymousRpcClient(client, org_id).organization_bootstrap(
+            bootstrap_token=bad_bootstrap_token,
+            root_verify_key=root_verify_key,
+            user_certificate=user_certificate,
+            device_certificate=device_certificate,
+            redacted_user_certificate=redacted_user_certificate,
+            redacted_device_certificate=redacted_device_certificate,
+            sequester_authority_certificate=None,
+        )
+
+        assert rep == anonymous_cmds.latest.organization_bootstrap.RepInvalidBootstrapToken()
+
+    # 3) Test with a valid token, but for a different organization
+
+    for org_id in (boostrapped_org_id, non_existing_org_id):
+        rep = await AnonymousRpcClient(client, org_id).organization_bootstrap(
+            bootstrap_token=bootstrap_token,
+            root_verify_key=root_verify_key,
+            user_certificate=user_certificate,
+            device_certificate=device_certificate,
+            redacted_user_certificate=redacted_user_certificate,
+            redacted_device_certificate=redacted_device_certificate,
+            sequester_authority_certificate=None,
+        )
+
+        assert rep == anonymous_cmds.latest.organization_bootstrap.RepOk()
