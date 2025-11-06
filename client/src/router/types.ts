@@ -1,6 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { ConnectionHandle, EntryName, FsPath, ParsecAccount, ParsecWorkspacePathAddr, WorkspaceHandle, WorkspaceName } from '@/parsec';
+import {
+  ConnectionHandle,
+  EntryName,
+  FsPath,
+  getClientInfo,
+  ParsecAccount,
+  ParsecWorkspacePathAddr,
+  WorkspaceHandle,
+  WorkspaceName,
+} from '@/parsec';
 import { DeviceID, OrganizationID } from '@/plugins/libparsec';
 import { Env } from '@/services/environment';
 import { ServerType } from '@/services/parsecServers';
@@ -8,7 +17,7 @@ import { FileHandlerMode } from '@/views/files/handler';
 import { InvitationView } from '@/views/invitations/types';
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { Ref } from 'vue';
-import { RouteLocationNormalizedLoaded, RouteRecordRaw, Router } from 'vue-router';
+import { RouteLocationNormalizedLoaded, Router, RouteRecordRaw } from 'vue-router';
 
 export enum Routes {
   Home = 'home',
@@ -234,29 +243,42 @@ const router: Router = createRouter({
 
 const visitedLastHistory = new Map<Routes, RouteBackup>();
 
-router.beforeEach((to, from, next) => {
-  // Clearing history if we come from a page that has no handle.
-  // Not taking any risk.
+router.beforeEach(async (to, from) => {
+  // Used by the UI
+  // If we navigate from or to a route that has no handle,
+  // just clear the history
   if (!to.params.handle || !from.params.handle) {
     visitedLastHistory.clear();
   }
-  if (!to.name || !to.params.handle) {
-    next();
-    return;
+  const handle = to.params.handle;
+
+  // Not navigating to a route with a handle,
+  // no problem, go ahead
+  if (!handle) {
+    return true;
   }
-  const routeName = to.name as Routes;
-  if (visitedLastHistory.has(to.name as Routes)) {
-    visitedLastHistory.delete(routeName);
+  // Check if the handle is valid
+  const result = await getClientInfo(Number(handle));
+  if (result.ok) {
+    // Update the history
+    const routeName = to.name as Routes;
+    if (visitedLastHistory.has(routeName)) {
+      visitedLastHistory.delete(routeName);
+    }
+    visitedLastHistory.set(routeName, {
+      handle: Number(to.params.handle),
+      data: {
+        route: routeName,
+        params: to.params,
+        query: to.query,
+      },
+    });
+    // Go ahead
+    return true;
+  } else {
+    window.electronAPI.log('warn', `Trying to navigate to ${to.name as string} with an invalid handle`);
+    return false;
   }
-  visitedLastHistory.set(routeName, {
-    handle: Number(to.params.handle),
-    data: {
-      route: routeName,
-      params: to.params,
-      query: to.query,
-    },
-  });
-  next();
 });
 
 export function getRouter(): Router {
