@@ -57,6 +57,7 @@ from parsec.components.invite import InvitationCreatedBy
 from parsec.components.organization import TermsOfService
 from parsec.components.sequester import SequesterServiceType
 from parsec.config import AccountVaultStrategy, AllowedClientAgent
+from parsec.locks import AdvisoryLock
 
 type CommonTopicCertificate = (
     UserCertificate
@@ -74,18 +75,6 @@ type RealmTopicCertificate = (
     | RealmNameCertificate
     | RealmArchivingCertificate
 )
-
-
-class AdvisoryLock(Enum):
-    """
-    Advisory lock must be taken for certain operations to avoid concurrency issue.
-
-    - Invitation creation: Only one active invitation is allowed per email, this is something
-      that cannot be enforced purely in PostgreSQL with unique constraint (given previous
-      invitations merely got a deleted flag set).
-    """
-
-    InvitationCreation = auto()
 
 
 TopicAndDiscriminant = (
