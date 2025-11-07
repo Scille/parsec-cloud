@@ -4,6 +4,7 @@ from typing import ClassVar
 
 from .addr import ParsecPkiEnrollmentAddr
 from .common import (
+    DISPLAY_TO_STRING,
     Bytes,
     BytesBasedType,
     DateTime,
@@ -23,9 +24,7 @@ from .config import ClientConfig
 
 class X509CertificateHash(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<_, String> { <libparsec::X509CertificateHash as std::str::FromStr>::from_str(s.as_str()).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = (
-        "|x: libparsec::X509CertificateHash| -> Result<_, &'static str> { Ok(x.to_string()) }"
-    )
+    custom_to_rs_string = DISPLAY_TO_STRING
 
 
 class X509WindowsCngURI(BytesBasedType):
