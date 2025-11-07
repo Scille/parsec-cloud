@@ -9,7 +9,7 @@
                 {
                     // The enrollment ID for which information is requested
                     "name": "enrollment_id",
-                    "type": "EnrollmentID"
+                    "type": "PKIEnrollmentID"
                 }
             ]
         },

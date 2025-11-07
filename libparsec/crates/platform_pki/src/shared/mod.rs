@@ -12,7 +12,7 @@ use crate::{
     EncryptedMessage, PkiSignatureAlgorithm,
 };
 use libparsec_types::{
-    DateTime, EnrollmentID, LocalPendingEnrollment, ParsecPkiEnrollmentAddr,
+    DateTime, LocalPendingEnrollment, PKIEnrollmentID, ParsecPkiEnrollmentAddr,
     PkiEnrollmentAnswerPayload, PkiEnrollmentSubmitPayload, PrivateParts, SecretKey,
     X509CertificateReference,
 };
@@ -84,7 +84,7 @@ pub fn verify_message<'message, 'a>(
 pub fn create_local_pending(
     cert_ref: &X509CertificateReference,
     addr: ParsecPkiEnrollmentAddr,
-    enrollment_id: EnrollmentID,
+    enrollment_id: PKIEnrollmentID,
     submitted_on: DateTime,
     payload: PkiEnrollmentSubmitPayload,
     private_parts: PrivateParts,

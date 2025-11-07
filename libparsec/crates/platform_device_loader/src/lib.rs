@@ -135,7 +135,10 @@ pub fn get_default_key_file(config_dir: &Path, device_id: DeviceID) -> PathBuf {
     device_path
 }
 
-pub fn get_default_local_pending_file(config_dir: &Path, enrollment_id: EnrollmentID) -> PathBuf {
+pub fn get_default_local_pending_file(
+    config_dir: &Path,
+    enrollment_id: PKIEnrollmentID,
+) -> PathBuf {
     let mut local_pending_path = get_local_pending_dir(config_dir);
 
     local_pending_path.push(format!("{}.{LOCAL_PENDING_EXT}", enrollment_id.hex()));

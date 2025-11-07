@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from parsec._parsec import DateTime, EnrollmentID
+from parsec._parsec import DateTime, PKIEnrollmentID
 
 class PkiEnrollmentInfoStatus:
     pass
@@ -49,10 +49,10 @@ class PkiEnrollmentInfoStatusCancelled(PkiEnrollmentInfoStatus):
     def submitted_on(self) -> DateTime: ...
 
 class Req:
-    def __init__(self, enrollment_id: EnrollmentID) -> None: ...
+    def __init__(self, enrollment_id: PKIEnrollmentID) -> None: ...
     def dump(self) -> bytes: ...
     @property
-    def enrollment_id(self) -> EnrollmentID: ...
+    def enrollment_id(self) -> PKIEnrollmentID: ...
 
 class Rep:
     @staticmethod

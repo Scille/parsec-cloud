@@ -9,7 +9,7 @@ from .common import (
     BytesBasedType,
     DateTime,
     DeviceLabel,
-    EnrollmentID,
+    PKIEnrollmentID,
     ErrorVariant,
     HumanHandle,
     Result,
@@ -88,7 +88,7 @@ async def show_certificate_selection_dialog_windows_only() -> Result[
 
 
 class PkiEnrollmentListItem(Structure):
-    enrollment_id: EnrollmentID
+    enrollment_id: PKIEnrollmentID
     submitted_on: DateTime
     der_x509_certificate: Bytes
     payload_signature: Bytes

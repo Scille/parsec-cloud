@@ -4,8 +4,8 @@ from __future__ import annotations
 from parsec._parsec import (
     DateTime,
     DeviceID,
-    EnrollmentID,
     OrganizationID,
+    PKIEnrollmentID,
     UserProfile,
 )
 from parsec.components.pki import (
@@ -48,7 +48,7 @@ async def pki_reject(
     now: DateTime,
     author: DeviceID,
     organization_id: OrganizationID,
-    enrollment_id: EnrollmentID,
+    enrollment_id: PKIEnrollmentID,
 ) -> None | PkiEnrollmentRejectBadOutcome:
     # We lock the common topic to ensure the user doesn't change its role
     # after we checked it.

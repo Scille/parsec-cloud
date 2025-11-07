@@ -7,7 +7,7 @@ from parsec._parsec import (
     DateTime,
     DeviceCertificate,
     DeviceID,
-    EnrollmentID,
+    PKIEnrollmentID,
     OrganizationID,
     UserCertificate,
     VerifyKey,
@@ -45,7 +45,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
-        enrollment_id: EnrollmentID,
+        enrollment_id: PKIEnrollmentID,
         force: bool,
         submitter_der_x509_certificate: bytes,
         submit_payload_signature: bytes,
@@ -68,7 +68,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         self,
         conn: AsyncpgConnection,
         organization_id: OrganizationID,
-        enrollment_id: EnrollmentID,
+        enrollment_id: PKIEnrollmentID,
     ) -> PkiEnrollmentInfo | PkiEnrollmentInfoBadOutcome:
         return await pki_info(
             conn,
@@ -98,7 +98,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         now: DateTime,
         author: DeviceID,
         organization_id: OrganizationID,
-        enrollment_id: EnrollmentID,
+        enrollment_id: PKIEnrollmentID,
     ) -> None | PkiEnrollmentRejectBadOutcome:
         return await pki_reject(
             conn,
@@ -117,7 +117,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         organization_id: OrganizationID,
         author: DeviceID,
         author_verify_key: VerifyKey,
-        enrollment_id: EnrollmentID,
+        enrollment_id: PKIEnrollmentID,
         payload: bytes,
         payload_signature: bytes,
         accepter_der_x509_certificate: bytes,

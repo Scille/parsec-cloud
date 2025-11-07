@@ -11,10 +11,10 @@ from parsec._parsec import (
     CancelledGreetingAttemptReason,
     DateTime,
     EmailAddress,
-    EnrollmentID,
     GreetingAttemptID,
     HashDigest,
     InvitationToken,
+    PKIEnrollmentID,
     PkiSignatureAlgorithm,
     SecretKey,
     SequesterServiceID,
@@ -64,7 +64,7 @@ class BaseAnonymousRpcClient:
         return anonymous_cmds.latest.ping.Rep.load(raw_rep)
 
     async def pki_enrollment_info(
-        self, enrollment_id: EnrollmentID
+        self, enrollment_id: PKIEnrollmentID
     ) -> anonymous_cmds.latest.pki_enrollment_info.Rep:
         req = anonymous_cmds.latest.pki_enrollment_info.Req(enrollment_id=enrollment_id)
         raw_rep = await self._do_request(req.dump(), "anonymous")
@@ -72,7 +72,7 @@ class BaseAnonymousRpcClient:
 
     async def pki_enrollment_submit(
         self,
-        enrollment_id: EnrollmentID,
+        enrollment_id: PKIEnrollmentID,
         force: bool,
         der_x509_certificate: bytes,
         payload_signature: bytes,
@@ -299,7 +299,7 @@ class BaseAuthenticatedRpcClient:
 
     async def pki_enrollment_accept(
         self,
-        enrollment_id: EnrollmentID,
+        enrollment_id: PKIEnrollmentID,
         payload: bytes,
         payload_signature: bytes,
         accepter_der_x509_certificate: bytes,
@@ -329,7 +329,7 @@ class BaseAuthenticatedRpcClient:
         return authenticated_cmds.latest.pki_enrollment_list.Rep.load(raw_rep)
 
     async def pki_enrollment_reject(
-        self, enrollment_id: EnrollmentID
+        self, enrollment_id: PKIEnrollmentID
     ) -> authenticated_cmds.latest.pki_enrollment_reject.Rep:
         req = authenticated_cmds.latest.pki_enrollment_reject.Req(enrollment_id=enrollment_id)
         raw_rep = await self._do_request(req.dump(), "authenticated")

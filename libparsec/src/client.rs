@@ -697,7 +697,7 @@ pub async fn client_pki_list_enrollments(
 
 pub async fn client_pki_enrollment_reject(
     client: Handle,
-    enrollment_id: EnrollmentID,
+    enrollment_id: PKIEnrollmentID,
 ) -> Result<(), PkiEnrollmentRejectError> {
     let client = borrow_client(client)?;
     client.pki_enrollment_reject(enrollment_id).await
@@ -706,7 +706,7 @@ pub async fn client_pki_enrollment_reject(
 pub async fn client_pki_enrollment_accept(
     client: Handle,
     profile: UserProfile,
-    enrollment_id: EnrollmentID,
+    enrollment_id: PKIEnrollmentID,
     human_handle: &HumanHandle,
     cert_ref: &X509CertificateReference,
     submit_payload: Bytes,

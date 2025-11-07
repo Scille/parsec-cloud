@@ -2578,8 +2578,8 @@ fn struct_pki_enrollment_list_item_js_to_rs(
             .and_then(|s| s.as_string())
             .ok_or_else(|| TypeError::new("Not a string"))
             .and_then(|x| {
-                let custom_from_rs_string = |s: String| -> Result<libparsec::EnrollmentID, _> {
-                    libparsec::EnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                let custom_from_rs_string = |s: String| -> Result<libparsec::PKIEnrollmentID, _> {
+                    libparsec::PKIEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
             })?
@@ -2648,7 +2648,7 @@ fn struct_pki_enrollment_list_item_rs_to_js(
     let js_obj = Object::new().into();
     let js_enrollment_id = JsValue::from_str({
         let custom_to_rs_string =
-            |x: libparsec::EnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
+            |x: libparsec::PKIEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.enrollment_id) {
             Ok(ok) => ok,
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
@@ -19892,8 +19892,8 @@ pub fn clientPkiEnrollmentAccept(
         let profile = enum_user_profile_js_to_rs(&profile)?;
 
         let enrollment_id = {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::EnrollmentID, _> {
-                libparsec::EnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::PKIEnrollmentID, _> {
+                libparsec::PKIEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
             custom_from_rs_string(enrollment_id).map_err(|e| TypeError::new(e.as_ref()))
         }?;
@@ -19945,8 +19945,8 @@ pub fn clientPkiEnrollmentAccept(
 pub fn clientPkiEnrollmentReject(client_handle: u32, enrollment_id: String) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let enrollment_id = {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::EnrollmentID, _> {
-                libparsec::EnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::PKIEnrollmentID, _> {
+                libparsec::PKIEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
             custom_from_rs_string(enrollment_id).map_err(|e| TypeError::new(e.as_ref()))
         }?;

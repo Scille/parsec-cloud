@@ -7,9 +7,9 @@ from parsec._parsec import (
     DateTime,
     DeviceLabel,
     EmailAddress,
-    EnrollmentID,
     HumanHandle,
     PkiEnrollmentAnswerPayload,
+    PKIEnrollmentID,
     PkiEnrollmentSubmitPayload,
     PrivateKey,
     SigningKey,
@@ -31,7 +31,7 @@ from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
 async def test_anonymous_pki_enrollment_info_ok(
     coolorg: CoolorgRpcClients, backend: Backend, kind: str
 ) -> None:
-    enrollment_id = EnrollmentID.new()
+    enrollment_id = PKIEnrollmentID.new()
     submitted_on = DateTime.now()
     submit_payload = PkiEnrollmentSubmitPayload(
         verify_key=SigningKey.generate().verify_key,
@@ -108,7 +108,7 @@ async def test_anonymous_pki_enrollment_info_ok(
 
             # Submit a new enrollment for this X509 certificate to cancel the previous one
 
-            new_enrollment_id = EnrollmentID.new()
+            new_enrollment_id = PKIEnrollmentID.new()
             submit_payload = PkiEnrollmentSubmitPayload(
                 verify_key=SigningKey.generate().verify_key,
                 public_key=PrivateKey.generate().public_key,
@@ -166,7 +166,7 @@ async def test_anonymous_pki_enrollment_info_ok(
 async def test_anonymous_pki_enrollment_info_enrollment_not_found(
     coolorg: CoolorgRpcClients,
 ) -> None:
-    rep = await coolorg.anonymous.pki_enrollment_info(enrollment_id=EnrollmentID.new())
+    rep = await coolorg.anonymous.pki_enrollment_info(enrollment_id=PKIEnrollmentID.new())
     assert rep == anonymous_cmds.latest.pki_enrollment_info.RepEnrollmentNotFound()
 
 
@@ -175,7 +175,7 @@ async def test_anonymous_pki_enrollment_info_http_common_errors(
     backend: Backend,
     anonymous_http_common_errors_tester: HttpCommonErrorsTester,
 ) -> None:
-    enrollment_id = EnrollmentID.new()
+    enrollment_id = PKIEnrollmentID.new()
     submitted_on = DateTime.now()
     submit_payload = PkiEnrollmentSubmitPayload(
         verify_key=SigningKey.generate().verify_key,

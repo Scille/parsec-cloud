@@ -45,7 +45,7 @@ pub fn req() {
         .as_ref()
         .into(),
         submitter_device_certificate: hex!("3c64756d6d793e").as_ref().into(),
-        enrollment_id: EnrollmentID::from_hex("56f48ed307984f10830e197287399c22").unwrap(),
+        enrollment_id: PKIEnrollmentID::from_hex("56f48ed307984f10830e197287399c22").unwrap(),
         submitter_redacted_device_certificate: hex!("3c64756d6d793e").as_ref().into(),
         submitter_redacted_user_certificate: hex!("3c64756d6d793e").as_ref().into(),
         submitter_user_certificate: hex!("3c64756d6d793e").as_ref().into(),

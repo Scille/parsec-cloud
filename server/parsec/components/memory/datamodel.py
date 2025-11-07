@@ -21,7 +21,6 @@ from parsec._parsec import (
     DeviceCertificate,
     DeviceID,
     EmailAddress,
-    EnrollmentID,
     GreeterOrClaimer,
     GreetingAttemptID,
     HashDigest,
@@ -30,6 +29,7 @@ from parsec._parsec import (
     InvitationToken,
     InvitationType,
     OrganizationID,
+    PKIEnrollmentID,
     RealmArchivingCertificate,
     RealmKeyRotationCertificate,
     RealmNameCertificate,
@@ -158,7 +158,7 @@ class MemoryOrganization:
     devices: dict[DeviceID, MemoryDevice] = field(default_factory=dict)
     invitations: dict[InvitationToken, MemoryInvitation] = field(default_factory=dict)
     greeting_attempts: dict[GreetingAttemptID, MemoryGreetingAttempt] = field(default_factory=dict)
-    pki_enrollments: dict[EnrollmentID, MemoryPkiEnrollment] = field(default_factory=dict)
+    pki_enrollments: dict[PKIEnrollmentID, MemoryPkiEnrollment] = field(default_factory=dict)
     realms: dict[VlobID, MemoryRealm] = field(default_factory=dict)
     blocks: dict[BlockID, MemoryBlock] = field(default_factory=dict)
     block_store: dict[BlockID, bytes] = field(default_factory=dict, repr=False)
@@ -740,7 +740,7 @@ class MemoryPkiEnrollmentInfoCancelled:
 
 @dataclass(slots=True)
 class MemoryPkiEnrollment:
-    enrollment_id: EnrollmentID
+    enrollment_id: PKIEnrollmentID
     submitter_der_x509_certificate: bytes = field(repr=False)
     submitter_der_x509_certificate_sha1: bytes = field(repr=False)
 

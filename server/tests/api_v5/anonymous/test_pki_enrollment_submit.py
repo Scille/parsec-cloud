@@ -11,9 +11,9 @@ from parsec._parsec import (
     DeviceLabel,
     DevicePurpose,
     EmailAddress,
-    EnrollmentID,
     HumanHandle,
     PkiEnrollmentAnswerPayload,
+    PKIEnrollmentID,
     PkiEnrollmentSubmitPayload,
     PkiSignatureAlgorithm,
     PrivateKey,
@@ -33,7 +33,7 @@ from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
 
 @dataclass
 class Enrollment:
-    enrollment_id: EnrollmentID
+    enrollment_id: PKIEnrollmentID
     submitter_der_x509_certificate: bytes
     submitter_der_x509_certificate_email: EmailAddress
     submit_payload_signature: bytes
@@ -55,7 +55,7 @@ def submit_payload() -> bytes:
 async def existing_enrollment(
     coolorg: CoolorgRpcClients, backend: Backend, submit_payload: bytes
 ) -> Enrollment:
-    enrollment_id = EnrollmentID.new()
+    enrollment_id = PKIEnrollmentID.new()
     submitter_der_x509_certificate = b"<mike der x509 certificate>"
     submitter_der_x509_certificate_email = EmailAddress("mike@example.invalid")
     submit_payload_signature = b"<mike submit payload signature>"
@@ -89,7 +89,7 @@ async def existing_enrollment(
 async def test_anonymous_pki_enrollment_submit_ok(
     coolorg: CoolorgRpcClients, backend: Backend, submit_payload: bytes
 ) -> None:
-    enrollment_id = EnrollmentID.new()
+    enrollment_id = PKIEnrollmentID.new()
     with backend.event_bus.spy() as spy:
         rep = await coolorg.anonymous.pki_enrollment_submit(
             enrollment_id=enrollment_id,
@@ -120,7 +120,7 @@ async def test_anonymous_pki_enrollment_submit_ok_with_force(
     existing_enrollment: Enrollment,
     submit_payload: bytes,
 ) -> None:
-    enrollment_id = EnrollmentID.new()
+    enrollment_id = PKIEnrollmentID.new()
     with backend.event_bus.spy() as spy:
         rep = await coolorg.anonymous.pki_enrollment_submit(
             enrollment_id=enrollment_id,
@@ -183,7 +183,7 @@ async def test_anonymous_pki_enrollment_submit_ok_with_email_from_revoked_user(
     assert isinstance(outcome, RevokedUserCertificate)
 
     rep = await coolorg.anonymous.pki_enrollment_submit(
-        enrollment_id=EnrollmentID.new(),
+        enrollment_id=PKIEnrollmentID.new(),
         force=False,
         der_x509_certificate=b"<bob der x509 certificate>",
         payload_signature=b"<bob submit payload signature>",
@@ -208,7 +208,7 @@ async def test_anonymous_pki_enrollment_submit_ok_with_cancelled_enrollment(
     assert outcome is None
 
     rep = await coolorg.anonymous.pki_enrollment_submit(
-        enrollment_id=EnrollmentID.new(),
+        enrollment_id=PKIEnrollmentID.new(),
         force=False,
         der_x509_certificate=existing_enrollment.submitter_der_x509_certificate,
         payload_signature=existing_enrollment.submit_payload_signature,
@@ -224,7 +224,7 @@ async def test_anonymous_pki_enrollment_submit_already_submitted(
     submit_payload: bytes,
 ) -> None:
     rep = await coolorg.anonymous.pki_enrollment_submit(
-        enrollment_id=EnrollmentID.new(),
+        enrollment_id=PKIEnrollmentID.new(),
         force=False,
         der_x509_certificate=existing_enrollment.submitter_der_x509_certificate,
         payload_signature=b"<philip submit payload signature>",
@@ -269,7 +269,7 @@ async def test_anonymous_pki_enrollment_submit_email_already_used(
     coolorg: CoolorgRpcClients,
 ) -> None:
     rep = await coolorg.anonymous.pki_enrollment_submit(
-        enrollment_id=EnrollmentID.new(),
+        enrollment_id=PKIEnrollmentID.new(),
         force=False,
         der_x509_certificate=b"<philip der x509 certificate>",
         payload_signature=b"<philip submit payload signature>",
@@ -363,7 +363,7 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
     assert isinstance(outcome, tuple)
 
     rep = await coolorg.anonymous.pki_enrollment_submit(
-        enrollment_id=EnrollmentID.new(),
+        enrollment_id=PKIEnrollmentID.new(),
         force=False,
         der_x509_certificate=existing_enrollment.submitter_der_x509_certificate,
         payload_signature=b"<philip submit payload signature>",
@@ -377,7 +377,7 @@ async def test_anonymous_pki_enrollment_submit_invalid_payload(
     coolorg: CoolorgRpcClients,
 ) -> None:
     rep = await coolorg.anonymous.pki_enrollment_submit(
-        enrollment_id=EnrollmentID.new(),
+        enrollment_id=PKIEnrollmentID.new(),
         force=False,
         der_x509_certificate=b"<philip der x509 certificate>",
         payload_signature=b"<philip submit payload signature>",
@@ -394,7 +394,7 @@ async def test_anonymous_pki_enrollment_submit_http_common_errors(
 ) -> None:
     async def do():
         await coolorg.anonymous.pki_enrollment_submit(
-            enrollment_id=EnrollmentID.new(),
+            enrollment_id=PKIEnrollmentID.new(),
             force=False,
             der_x509_certificate=b"<philip der x509 certificate>",
             payload_signature=b"<philip submit payload signature>",

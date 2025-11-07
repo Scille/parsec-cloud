@@ -98,12 +98,12 @@ export type ApiVersion = string
 export type DeviceID = string
 export type DeviceLabel = string
 export type EmailAddress = string
-export type EnrollmentID = string
 export type EntryName = string
 export type FsPath = string
 export type GreetingAttemptID = string
 export type InvitationToken = string
 export type OrganizationID = string
+export type PKIEnrollmentID = string
 export type ParsecAddr = string
 export type ParsecInvitationAddr = string
 export type ParsecOrganizationAddr = string
@@ -307,7 +307,7 @@ export interface OrganizationInfo {
 }
 
 export interface PkiEnrollmentListItem {
-    enrollmentId: EnrollmentID
+    enrollmentId: PKIEnrollmentID
     submittedOn: DateTime
     derX509Certificate: Bytes
     payloadSignature: Bytes
@@ -5478,14 +5478,14 @@ export interface LibParsecPlugin {
     clientPkiEnrollmentAccept(
         client_handle: Handle,
         profile: UserProfile,
-        enrollment_id: EnrollmentID,
+        enrollment_id: PKIEnrollmentID,
         human_handle: HumanHandle,
         cert_ref: X509CertificateReference,
         submit_payload: Bytes
     ): Promise<Result<null, PkiEnrollmentAcceptError>>
     clientPkiEnrollmentReject(
         client_handle: Handle,
-        enrollment_id: EnrollmentID
+        enrollment_id: PKIEnrollmentID
     ): Promise<Result<null, PkiEnrollmentRejectError>>
     clientRenameWorkspace(
         client: Handle,

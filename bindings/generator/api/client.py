@@ -8,7 +8,7 @@ from .common import (
     DateTime,
     DeviceID,
     DeviceLabel,
-    EnrollmentID,
+    PKIEnrollmentID,
     EntryName,
     Enum,
     EnumItemUnit,
@@ -810,7 +810,7 @@ async def client_get_organization_bootstrap_date(
 
 
 async def client_pki_enrollment_reject(
-    client_handle: Handle, enrollment_id: EnrollmentID
+    client_handle: Handle, enrollment_id: PKIEnrollmentID
 ) -> Result[None, PkiEnrollmentRejectError]:
     raise NotImplementedError
 
@@ -818,7 +818,7 @@ async def client_pki_enrollment_reject(
 async def client_pki_enrollment_accept(
     client_handle: Handle,
     profile: UserProfile,
-    enrollment_id: EnrollmentID,
+    enrollment_id: PKIEnrollmentID,
     human_handle: Ref[HumanHandle],
     cert_ref: Ref[X509CertificateReference],
     submit_payload: Bytes,

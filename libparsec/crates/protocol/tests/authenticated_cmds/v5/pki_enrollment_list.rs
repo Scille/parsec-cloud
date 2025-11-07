@@ -65,8 +65,10 @@ pub fn rep_ok() {
             authenticated_cmds::pki_enrollment_list::Rep::Ok {
                 enrollments: vec![
                     authenticated_cmds::pki_enrollment_list::PkiEnrollmentListItem {
-                        enrollment_id: EnrollmentID::from_hex("e1fe88bd0f054261887a6c8039710b40")
-                            .unwrap(),
+                        enrollment_id: PKIEnrollmentID::from_hex(
+                            "e1fe88bd0f054261887a6c8039710b40",
+                        )
+                        .unwrap(),
                         payload: hex!("3c64756d6d793e").as_ref().into(),
                         payload_signature: hex!("3c7369676e61747572653e").as_ref().into(),
                         submitted_on: DateTime::from_timestamp_micros(1668594983390001).unwrap(),

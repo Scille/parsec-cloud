@@ -6,8 +6,8 @@ from parsec._parsec import (
     DateTime,
     DeviceLabel,
     EmailAddress,
-    EnrollmentID,
     HumanHandle,
+    PKIEnrollmentID,
     PkiEnrollmentSubmitPayload,
     PrivateKey,
     SigningKey,
@@ -38,7 +38,7 @@ async def test_authenticated_pki_enrollment_list_ok(
         authenticated_cmds.latest.pki_enrollment_list.PkiEnrollmentListItem
     ] = []
     for i in range(4):
-        enrollment_id = EnrollmentID.new()
+        enrollment_id = PKIEnrollmentID.new()
         submitted_on = DateTime.now()
         submit_payload = PkiEnrollmentSubmitPayload(
             verify_key=SigningKey.generate().verify_key,
@@ -96,7 +96,7 @@ async def test_authenticated_pki_enrollment_list_ok(
     assert outcome is None
 
     to_cancel = expected_enrollments.pop()
-    canceller_enrollment_id = EnrollmentID.new()
+    canceller_enrollment_id = PKIEnrollmentID.new()
     canceller_submitted_on = DateTime.now()
     canceller_submit_payload = PkiEnrollmentSubmitPayload(
         verify_key=SigningKey.generate().verify_key,

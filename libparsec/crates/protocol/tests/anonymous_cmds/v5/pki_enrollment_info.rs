@@ -24,7 +24,7 @@ pub fn req() {
 
     let expected =
         anonymous_cmds::AnyCmdReq::PkiEnrollmentInfo(anonymous_cmds::pki_enrollment_info::Req {
-            enrollment_id: EnrollmentID::from_hex("829d8cff327b4edbb39246a3c6767b07").unwrap(),
+            enrollment_id: PKIEnrollmentID::from_hex("829d8cff327b4edbb39246a3c6767b07").unwrap(),
         });
 
     let data = anonymous_cmds::AnyCmdReq::load(&raw).unwrap();

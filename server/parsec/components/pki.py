@@ -8,8 +8,8 @@ from parsec._parsec import (
     DateTime,
     DeviceCertificate,
     DeviceID,
-    EnrollmentID,
     OrganizationID,
+    PKIEnrollmentID,
     UserCertificate,
     VerifyKey,
     anonymous_cmds,
@@ -100,13 +100,13 @@ def pki_enrollment_accept_validate(
 
 @dataclass(slots=True)
 class PkiEnrollmentInfoSubmitted:
-    enrollment_id: EnrollmentID
+    enrollment_id: PKIEnrollmentID
     submitted_on: DateTime
 
 
 @dataclass(slots=True)
 class PkiEnrollmentInfoAccepted:
-    enrollment_id: EnrollmentID
+    enrollment_id: PKIEnrollmentID
     submitted_on: DateTime
     accepted_on: DateTime
     accepter_der_x509_certificate: bytes
@@ -116,21 +116,21 @@ class PkiEnrollmentInfoAccepted:
 
 @dataclass(slots=True)
 class PkiEnrollmentInfoRejected:
-    enrollment_id: EnrollmentID
+    enrollment_id: PKIEnrollmentID
     submitted_on: DateTime
     rejected_on: DateTime
 
 
 @dataclass(slots=True)
 class PkiEnrollmentInfoCancelled:
-    enrollment_id: EnrollmentID
+    enrollment_id: PKIEnrollmentID
     submitted_on: DateTime
     cancelled_on: DateTime
 
 
 @dataclass(slots=True)
 class PkiEnrollmentListItem:
-    enrollment_id: EnrollmentID
+    enrollment_id: PKIEnrollmentID
     submitted_on: DateTime
     der_x509_certificate: bytes
     payload_signature: bytes
@@ -203,7 +203,7 @@ class BasePkiEnrollmentComponent:
         self,
         now: DateTime,
         organization_id: OrganizationID,
-        enrollment_id: EnrollmentID,
+        enrollment_id: PKIEnrollmentID,
         force: bool,
         submitter_der_x509_certificate: bytes,
         submit_payload_signature: bytes,
@@ -214,7 +214,7 @@ class BasePkiEnrollmentComponent:
     async def info(
         self,
         organization_id: OrganizationID,
-        enrollment_id: EnrollmentID,
+        enrollment_id: PKIEnrollmentID,
     ) -> PkiEnrollmentInfo | PkiEnrollmentInfoBadOutcome:
         raise NotImplementedError
 
@@ -230,7 +230,7 @@ class BasePkiEnrollmentComponent:
         now: DateTime,
         author: DeviceID,
         organization_id: OrganizationID,
-        enrollment_id: EnrollmentID,
+        enrollment_id: PKIEnrollmentID,
     ) -> None | PkiEnrollmentRejectBadOutcome:
         raise NotImplementedError
 
@@ -240,7 +240,7 @@ class BasePkiEnrollmentComponent:
         organization_id: OrganizationID,
         author: DeviceID,
         author_verify_key: VerifyKey,
-        enrollment_id: EnrollmentID,
+        enrollment_id: PKIEnrollmentID,
         payload: bytes,
         payload_signature: bytes,
         accepter_der_x509_certificate: bytes,
