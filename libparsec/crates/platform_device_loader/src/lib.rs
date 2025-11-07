@@ -767,7 +767,7 @@ impl From<SaveDeviceError> for SavePkiLocalPendingError {
 }
 
 pub async fn save_pki_local_pending(
-    local_pending: LocalPendingEnrollment,
+    local_pending: PKILocalPendingEnrollment,
     local_file: PathBuf,
 ) -> Result<(), SavePkiLocalPendingError> {
     log::debug!("Saving local device at {}", local_file.display());
@@ -784,6 +784,6 @@ pub enum ListPkiLocalPendingError {
 
 pub async fn list_pki_local_pending(
     config_dir: &Path,
-) -> Result<Vec<LocalPendingEnrollment>, ListPkiLocalPendingError> {
+) -> Result<Vec<PKILocalPendingEnrollment>, ListPkiLocalPendingError> {
     platform::list_pki_local_pending(config_dir).await
 }

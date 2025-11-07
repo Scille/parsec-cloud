@@ -522,7 +522,7 @@ pub(super) fn is_keyring_available() -> bool {
 }
 
 pub async fn save_pki_local_pending(
-    local_pending: LocalPendingEnrollment,
+    local_pending: PKILocalPendingEnrollment,
     local_file: PathBuf,
 ) -> Result<(), SavePkiLocalPendingError> {
     let file_content = local_pending.dump();
@@ -533,7 +533,7 @@ pub async fn save_pki_local_pending(
 
 pub async fn list_pki_local_pending(
     config_dir: &Path,
-) -> Result<Vec<LocalPendingEnrollment>, ListPkiLocalPendingError> {
+) -> Result<Vec<PKILocalPendingEnrollment>, ListPkiLocalPendingError> {
     let pending_dir = crate::get_local_pending_dir(config_dir);
     let mut files = find_local_pending_files(&pending_dir).await?;
 
@@ -573,12 +573,12 @@ async fn find_local_pending_files(path: &Path) -> Result<Vec<PathBuf>, ListPkiLo
     Ok(files)
 }
 
-async fn load_pki_pending_file(path: &Path) -> Result<LocalPendingEnrollment, LoadFileError> {
+async fn load_pki_pending_file(path: &Path) -> Result<PKILocalPendingEnrollment, LoadFileError> {
     let content = tokio::fs::read(path)
         .await
         .map_err(Into::into)
         .map_err(LoadFileError::InvalidPath)?;
-    LocalPendingEnrollment::load(&content)
+    PKILocalPendingEnrollment::load(&content)
         .inspect_err(
             |err| log::debug!(path:% = path.display(), err:%; "Failed to load pki pending file"),
         )

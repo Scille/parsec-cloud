@@ -116,7 +116,7 @@ and verify that the chosen certificate is able to sign a payload by default by u
 
 ### Create the local part of the async enrollment
 
-[`pki_enrollment_create_local_pending`] create a pending enrollment ([`LocalPendingEnrollment`]) consisting of the following information:
+[`pki_enrollment_create_local_pending`] create a pending enrollment ([`PKILocalPendingEnrollment`]) consisting of the following information:
 
 - Certificate ref (provided)
 - Server addr (provided)
@@ -128,7 +128,7 @@ and verify that the chosen certificate is able to sign a payload by default by u
 
 The pending enrollment contains almost everything to create a device only missing the organization verification key that will be sent with the "accept" payload response ([`pki_enrollment_load_accept_payload`])
 
-[`LocalPendingEnrollment`]: https://github.com/Scille/parsec-cloud/blob/df7bc6891989830c4d93f0b88ddaac9ade6b620c/libparsec/crates/types/schema/pki/local_pending_enrollment.json5
+[`PKILocalPendingEnrollment`]: https://github.com/Scille/parsec-cloud/blob/df7bc6891989830c4d93f0b88ddaac9ade6b620c/libparsec/crates/types/schema/pki/local_pending_enrollment.json5
 
 ### Submit the request to join an organization
 

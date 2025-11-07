@@ -209,7 +209,7 @@ fn serde_pki_enrollment_submit_payload() {
         "6f454350e17d34cb15e3f2cd88067b5d4ab38d4c08a001"
     )[..],
     Box::new(|alice: &Device| {
-        LocalPendingEnrollment {
+        PKILocalPendingEnrollment {
             cert_ref: X509CertificateReference::from(X509CertificateHash::fake_sha256())
                 .add_or_replace_uri(X509WindowsCngURI::from(&b"foo"[..])),
             addr: ParsecPkiEnrollmentAddr::from_str(
@@ -265,7 +265,7 @@ fn serde_pki_enrollment_submit_payload() {
         "75bbae9cd9062204d0"
     )[..],
     Box::new(|alice: &Device| {
-        LocalPendingEnrollment {
+        PKILocalPendingEnrollment {
             cert_ref: X509CertificateReference::from(X509CertificateHash::fake_sha256()),
             addr: ParsecPkiEnrollmentAddr::from_str(
                 "parsec3://parsec.example.com/my_org?a=pki_enrollment",
@@ -288,17 +288,17 @@ fn serde_pki_enrollment_submit_payload() {
 fn serde_local_pending_enrollment(
     alice: &Device,
     #[case] raw: &[u8],
-    #[case] generate_expected: Box<dyn FnOnce(&Device) -> LocalPendingEnrollment>,
+    #[case] generate_expected: Box<dyn FnOnce(&Device) -> PKILocalPendingEnrollment>,
 ) {
     let expected = generate_expected(alice);
 
     println!("***expected: {:?}", expected.dump());
-    let data = LocalPendingEnrollment::load(raw).unwrap();
+    let data = PKILocalPendingEnrollment::load(raw).unwrap();
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw = data.dump();
-    let data = LocalPendingEnrollment::load(&raw).unwrap();
+    let data = PKILocalPendingEnrollment::load(&raw).unwrap();
 
     p_assert_eq!(data, expected);
 }
