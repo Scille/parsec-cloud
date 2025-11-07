@@ -16,6 +16,7 @@ Dorg
 Déselect
 Editics
 FRFX
+Hexagone
 HKCR
 LATEXMKOPTS
 Ljava
