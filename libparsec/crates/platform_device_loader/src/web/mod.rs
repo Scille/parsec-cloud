@@ -177,7 +177,7 @@ pub(super) async fn remove_device(device_path: &Path) -> Result<(), RemoveDevice
 }
 
 pub(super) async fn save_pki_local_pending(
-    local_pending: LocalPendingEnrollment,
+    local_pending: PKILocalPendingEnrollment,
     local_file: PathBuf,
 ) -> Result<(), SavePkiLocalPendingError> {
     let Ok(storage) = Storage::new().await.inspect_err(|e| {
@@ -193,7 +193,7 @@ pub(super) async fn save_pki_local_pending(
 
 pub(super) async fn list_pki_local_pending(
     config_dir: &Path,
-) -> Result<Vec<LocalPendingEnrollment>, ListPkiLocalPendingError> {
+) -> Result<Vec<PKILocalPendingEnrollment>, ListPkiLocalPendingError> {
     let Ok(storage) = Storage::new().await.inspect_err(|e| {
         log::error!("Failed to access storage: {e}");
     }) else {

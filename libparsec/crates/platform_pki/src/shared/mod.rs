@@ -12,7 +12,7 @@ use crate::{
     EncryptedMessage, PkiSignatureAlgorithm,
 };
 use libparsec_types::{
-    DateTime, LocalPendingEnrollment, PKIEnrollmentID, ParsecPkiEnrollmentAddr,
+    DateTime, PKIEnrollmentID, PKILocalPendingEnrollment, ParsecPkiEnrollmentAddr,
     PkiEnrollmentAnswerPayload, PkiEnrollmentSubmitPayload, PrivateParts, SecretKey,
     X509CertificateReference,
 };
@@ -88,7 +88,7 @@ pub fn create_local_pending(
     submitted_on: DateTime,
     payload: PkiEnrollmentSubmitPayload,
     private_parts: PrivateParts,
-) -> Result<LocalPendingEnrollment, crate::errors::CreateLocalPendingError> {
+) -> Result<PKILocalPendingEnrollment, crate::errors::CreateLocalPendingError> {
     let key = SecretKey::generate();
     let EncryptedMessage {
         cert_ref,
@@ -97,7 +97,7 @@ pub fn create_local_pending(
     } = encrypt_message(key.as_ref(), cert_ref)?;
     let ciphered_private_parts = key.encrypt(&private_parts.dump()).into();
 
-    let local_pending = LocalPendingEnrollment {
+    let local_pending = PKILocalPendingEnrollment {
         cert_ref,
         addr,
         submitted_on,

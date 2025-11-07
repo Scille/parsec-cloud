@@ -4,7 +4,7 @@ use libparsec_testbed::TestbedEnv;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_tests_lite::parsec_test;
 use libparsec_types::{
-    Bytes, LocalPendingEnrollment, PKIEnrollmentID, ParsecPkiEnrollmentAddr,
+    Bytes, PKIEnrollmentID, PKILocalPendingEnrollment, ParsecPkiEnrollmentAddr,
     PkiEnrollmentSubmitPayload, X509CertificateHash,
 };
 
@@ -19,7 +19,7 @@ async fn ok_simple(tmp_path: TmpPath, env: &TestbedEnv) {
         alice_device.organization_addr.clone(),
         alice_device.organization_id().clone(),
     );
-    let local_pending = LocalPendingEnrollment {
+    let local_pending = PKILocalPendingEnrollment {
         cert_ref: X509CertificateHash::fake_sha256().into(),
         addr: pki_addr,
         submitted_on: "2000-01-01T00:00:00Z".parse().unwrap(),

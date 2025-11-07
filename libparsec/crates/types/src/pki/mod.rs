@@ -140,10 +140,10 @@ impl_transparent_data_format_conversion!(
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(
-    into = "LocalPendingEnrollmentData",
-    try_from = "LocalPendingEnrollmentData"
+    into = "PKILocalPendingEnrollmentData",
+    try_from = "PKILocalPendingEnrollmentData"
 )]
-pub struct LocalPendingEnrollment {
+pub struct PKILocalPendingEnrollment {
     pub cert_ref: X509CertificateReference,
     pub addr: ParsecPkiEnrollmentAddr,
     pub submitted_on: DateTime,
@@ -154,7 +154,7 @@ pub struct LocalPendingEnrollment {
     pub ciphertext: Bytes,
 }
 
-impl LocalPendingEnrollment {
+impl PKILocalPendingEnrollment {
     pub fn load(raw: &[u8]) -> DataResult<Self> {
         format_vx_load(raw)
     }
@@ -166,10 +166,10 @@ impl LocalPendingEnrollment {
 
 parsec_data!("schema/pki/local_pending_enrollment.json5");
 
-impl TryFrom<LocalPendingEnrollmentData> for LocalPendingEnrollment {
+impl TryFrom<PKILocalPendingEnrollmentData> for PKILocalPendingEnrollment {
     type Error = &'static str;
 
-    fn try_from(data: LocalPendingEnrollmentData) -> Result<Self, Self::Error> {
+    fn try_from(data: PKILocalPendingEnrollmentData) -> Result<Self, Self::Error> {
         let addr = {
             let server_addr =
                 ParsecAddr::from_http_url(&data.server_url).map_err(|_| "Invalid server URL")?;
@@ -188,8 +188,8 @@ impl TryFrom<LocalPendingEnrollmentData> for LocalPendingEnrollment {
     }
 }
 
-impl From<LocalPendingEnrollment> for LocalPendingEnrollmentData {
-    fn from(obj: LocalPendingEnrollment) -> Self {
+impl From<PKILocalPendingEnrollment> for PKILocalPendingEnrollmentData {
+    fn from(obj: PKILocalPendingEnrollment) -> Self {
         let server_url = {
             let server_addr = ParsecAddr::new(
                 obj.addr.hostname().to_string(),
