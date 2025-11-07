@@ -15,6 +15,7 @@ from parsec._parsec import (
     GreetingAttemptID,
     HashDigest,
     InvitationToken,
+    PkiSignatureAlgorithm,
     SecretKey,
     SequesterServiceID,
     UntrustedPasswordAlgorithm,
@@ -75,6 +76,7 @@ class BaseAnonymousRpcClient:
         force: bool,
         der_x509_certificate: bytes,
         payload_signature: bytes,
+        payload_signature_algorithm: PkiSignatureAlgorithm,
         payload: bytes,
     ) -> anonymous_cmds.latest.pki_enrollment_submit.Rep:
         req = anonymous_cmds.latest.pki_enrollment_submit.Req(
@@ -82,6 +84,7 @@ class BaseAnonymousRpcClient:
             force=force,
             der_x509_certificate=der_x509_certificate,
             payload_signature=payload_signature,
+            payload_signature_algorithm=payload_signature_algorithm,
             payload=payload,
         )
         raw_rep = await self._do_request(req.dump(), "anonymous")

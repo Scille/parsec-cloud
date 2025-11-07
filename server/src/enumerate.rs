@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use pyo3::{pyclass, pymethods, types::PyTuple, Python};
+use pyo3::{pyclass, pymethods, Python};
 
 // #[non_exhaustive] macro must be set for every enum like type,
 // because we would like to call `is` in `python`, then

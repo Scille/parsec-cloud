@@ -68,6 +68,7 @@ pub async fn pki_enrollment_submit(
             force,
             payload: raw_payload.into(),
             payload_signature: payload_signature.signature,
+            payload_signature_algorithm: payload_signature.algo,
         })
         .await?
     {

@@ -91,6 +91,7 @@ from parsec._parsec_pyi.misc import ApiVersion, ValidationCode
 from parsec._parsec_pyi.pki import (
     PkiEnrollmentAnswerPayload,
     PkiEnrollmentSubmitPayload,
+    PkiSignatureAlgorithm,
     X509Certificate,
 )
 from parsec._parsec_pyi.protocol import (
@@ -197,6 +198,7 @@ __all__ = [
     # Pki
     "PkiEnrollmentAnswerPayload",
     "PkiEnrollmentSubmitPayload",
+    "PkiSignatureAlgorithm",
     "X509Certificate",
     # Protocol Cmd
     "ActiveUsersLimit",

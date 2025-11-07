@@ -6,6 +6,14 @@ from parsec._parsec_pyi.crypto import PublicKey, VerifyKey
 from parsec._parsec_pyi.enumerate import UserProfile
 from parsec._parsec_pyi.ids import DeviceID, DeviceLabel, HumanHandle, UserID
 
+class PkiSignatureAlgorithm:
+    RSASSA_PSS_SHA256: PkiSignatureAlgorithm
+
+    @classmethod
+    def from_str(cls, value: str) -> PkiSignatureAlgorithm: ...
+    @property
+    def str(self) -> str: ...
+
 class PkiEnrollmentAnswerPayload:
     def __init__(
         self,
