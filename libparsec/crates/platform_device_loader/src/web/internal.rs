@@ -268,7 +268,7 @@ impl Storage {
     pub(crate) async fn save_pki_local_pending(
         &self,
         local_file: PathBuf,
-        file_data: LocalPendingEnrollment,
+        file_data: PKILocalPendingEnrollment,
     ) -> Result<(), SaveRawDataError> {
         let data = file_data.dump();
         self.save_raw_data(&local_file, &data).await
@@ -277,7 +277,7 @@ impl Storage {
     pub(crate) async fn list_pki_local_pending(
         &self,
         config_dir: &Path,
-    ) -> Result<Vec<LocalPendingEnrollment>, ListPkiLocalPendingError> {
+    ) -> Result<Vec<PKILocalPendingEnrollment>, ListPkiLocalPendingError> {
         let pending_dir = crate::get_local_pending_dir(config_dir);
         let file_entries = self
             .list_file_entries(&pending_dir, crate::LOCAL_PENDING_EXT)
@@ -318,12 +318,12 @@ async fn load_available_device(file: &File) -> Result<AvailableDevice, LoadAvail
 
 async fn load_pki_local_pending(
     file: &File,
-) -> Result<LocalPendingEnrollment, LoadPkiLocalPendingError> {
+) -> Result<PKILocalPendingEnrollment, LoadPkiLocalPendingError> {
     let raw_data = file
         .read_to_end()
         .await
         .map_err(LoadPkiLocalPendingError::ReadToEnd)?;
-    LocalPendingEnrollment::load(&raw_data)
+    PKILocalPendingEnrollment::load(&raw_data)
         .inspect_err(|err| {
             log::warn!(
                 path:% = file.path().display(),

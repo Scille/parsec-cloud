@@ -1,5 +1,5 @@
 {
-    "label": "LocalPendingEnrollment",
+    "label": "PKILocalPendingEnrollment",
     "type": "local_pending_enrollment",
     "other_fields": [
         {
