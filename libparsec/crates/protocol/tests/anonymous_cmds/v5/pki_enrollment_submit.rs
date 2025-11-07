@@ -12,21 +12,22 @@ use super::anonymous_cmds;
 // Request
 
 pub fn req() {
-    // Generated from Parsec 3.5.1-a.0+dev
+    // Generated from Parsec 3.5.3-a.0+dev
     // Content:
     //   cmd: 'pki_enrollment_submit'
     //   enrollment_id: ext(2, 0xe1fe88bd0f054261887a6c8039710b40)
     //   force: True
     //   der_x509_certificate: 0x3c78353039206365727469663e
     //   payload_signature: 0x3c7369676e61747572653e
+    //   payload_signature_algorithm: 'RSASSA-PSS-SHA256'
     //   payload: 0x3c64756d6d793e
     let raw: &[u8] = hex!(
         "87a3636d64b5706b695f656e726f6c6c6d656e745f7375626d6974ad656e726f6c6c6d"
         "656e745f6964d802e1fe88bd0f054261887a6c8039710b40a5666f726365c3b4646572"
-        "5f783530395f6365727469666963617465c40d3c78353039206365727469663eba6465"
-        "725f783530395f63657274696669636174655f656d61696cad6d61696c406d61696c2e"
-        "636f6db17061796c6f61645f7369676e6174757265c40b3c7369676e61747572653ea7"
-        "7061796c6f6164c4073c64756d6d793e"
+        "5f783530395f6365727469666963617465c40d3c78353039206365727469663eb17061"
+        "796c6f61645f7369676e6174757265c40b3c7369676e61747572653ebb7061796c6f61"
+        "645f7369676e61747572655f616c676f726974686db15253415353412d5053532d5348"
+        "41323536a77061796c6f6164c4073c64756d6d793e"
     )
     .as_ref();
     let req = anonymous_cmds::pki_enrollment_submit::Req {
@@ -35,6 +36,7 @@ pub fn req() {
         force: true,
         payload: hex!("3c64756d6d793e").as_ref().into(),
         payload_signature: hex!("3c7369676e61747572653e").as_ref().into(),
+        payload_signature_algorithm: PkiSignatureAlgorithm::RsassaPssSha256,
     };
     println!("***expected: {:?}", req.dump().unwrap());
 

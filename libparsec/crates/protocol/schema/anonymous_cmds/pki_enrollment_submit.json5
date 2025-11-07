@@ -28,6 +28,10 @@
                     "type": "Bytes"
                 },
                 {
+                    "name": "payload_signature_algorithm",
+                    "type": "PkiSignatureAlgorithm"
+                },
+                {
                     // PkiEnrollmentSubmitPayload serialized in msgpack format
                     "name": "payload",
                     "type": "Bytes"

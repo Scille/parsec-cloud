@@ -15,6 +15,7 @@ from parsec._parsec import (
     HumanHandle,
     PkiEnrollmentAnswerPayload,
     PkiEnrollmentSubmitPayload,
+    PkiSignatureAlgorithm,
     PrivateKey,
     PrivateKeyAlgorithm,
     RevokedUserCertificate,
@@ -60,6 +61,7 @@ async def existing_enrollment(coolorg: CoolorgRpcClients, submit_payload: bytes)
         force=False,
         der_x509_certificate=submitter_der_x509_certificate,
         payload_signature=submit_payload_signature,
+        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         payload=submit_payload,
     )
     assert isinstance(rep, anonymous_cmds.latest.pki_enrollment_submit.RepOk)
@@ -82,6 +84,7 @@ async def test_anonymous_pki_enrollment_submit_ok(
         force=False,
         der_x509_certificate=b"<philip der x509 certificate>",
         payload_signature=b"<philip submit payload signature>",
+        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         payload=submit_payload,
     )
     assert isinstance(rep, anonymous_cmds.latest.pki_enrollment_submit.RepOk)
@@ -95,6 +98,7 @@ async def test_anonymous_pki_enrollment_submit_ok_with_force(
         force=True,
         der_x509_certificate=existing_enrollment.submitter_der_x509_certificate,
         payload_signature=b"<philip submit payload signature>",
+        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         payload=submit_payload,
     )
     assert isinstance(rep, anonymous_cmds.latest.pki_enrollment_submit.RepOk)
@@ -123,6 +127,7 @@ async def test_anonymous_pki_enrollment_submit_ok_with_email_from_revoked_user(
         force=False,
         der_x509_certificate=b"<bob der x509 certificate>",
         payload_signature=b"<bob submit payload signature>",
+        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         payload=submit_payload,
     )
     assert isinstance(rep, anonymous_cmds.latest.pki_enrollment_submit.RepOk)
@@ -147,6 +152,7 @@ async def test_anonymous_pki_enrollment_submit_ok_with_cancelled_enrollment(
         force=False,
         der_x509_certificate=existing_enrollment.submitter_der_x509_certificate,
         payload_signature=existing_enrollment.submit_payload_signature,
+        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         payload=existing_enrollment.submit_payload,
     )
     assert isinstance(rep, anonymous_cmds.latest.pki_enrollment_submit.RepOk)
@@ -162,6 +168,7 @@ async def test_anonymous_pki_enrollment_submit_already_submitted(
         force=False,
         der_x509_certificate=existing_enrollment.submitter_der_x509_certificate,
         payload_signature=b"<philip submit payload signature>",
+        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         payload=submit_payload,
     )
     assert rep == anonymous_cmds.latest.pki_enrollment_submit.RepAlreadySubmitted(
@@ -192,6 +199,7 @@ async def test_anonymous_pki_enrollment_submit_id_already_used(
         force=False,
         der_x509_certificate=b"<philip der x509 certificate>",
         payload_signature=b"<philip submit payload signature>",
+        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         payload=submit_payload,
     )
     assert rep == anonymous_cmds.latest.pki_enrollment_submit.RepIdAlreadyUsed()
@@ -205,6 +213,7 @@ async def test_anonymous_pki_enrollment_submit_email_already_used(
         force=False,
         der_x509_certificate=b"<philip der x509 certificate>",
         payload_signature=b"<philip submit payload signature>",
+        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         payload=PkiEnrollmentSubmitPayload(
             verify_key=SigningKey.generate().verify_key,
             public_key=PrivateKey.generate().public_key,
@@ -298,6 +307,7 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
         force=False,
         der_x509_certificate=existing_enrollment.submitter_der_x509_certificate,
         payload_signature=b"<philip submit payload signature>",
+        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         payload=submit_payload,
     )
     assert rep == anonymous_cmds.latest.pki_enrollment_submit.RepAlreadyEnrolled()
@@ -311,6 +321,7 @@ async def test_anonymous_pki_enrollment_submit_invalid_payload(
         force=False,
         der_x509_certificate=b"<philip der x509 certificate>",
         payload_signature=b"<philip submit payload signature>",
+        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         payload=b"<dummy data>",
     )
     assert isinstance(rep, anonymous_cmds.latest.pki_enrollment_submit.RepInvalidPayload)
@@ -327,6 +338,7 @@ async def test_anonymous_pki_enrollment_submit_http_common_errors(
             force=False,
             der_x509_certificate=b"<philip der x509 certificate>",
             payload_signature=b"<philip submit payload signature>",
+            payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
             payload=submit_payload,
         )
 
