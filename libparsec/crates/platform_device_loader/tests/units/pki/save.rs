@@ -33,7 +33,7 @@ async fn ok_simple(tmp_path: TmpPath, env: &TestbedEnv) {
             human_handle: alice_device.human_handle.clone(),
         },
         encrypted_key: Bytes::from_static(b"encrypted key"),
-        encrypted_key_algo: libparsec_types::EncryptionAlgorithm::RsaesOaepSha256,
+        encrypted_key_algo: libparsec_types::PKIEncryptionAlgorithm::RsaesOaepSha256,
         ciphertext: Bytes::from_static(b"encrypted secret part"),
     };
     save_pki_local_pending(local_pending, path).await.unwrap();
