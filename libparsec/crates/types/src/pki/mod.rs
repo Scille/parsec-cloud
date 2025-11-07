@@ -315,7 +315,14 @@ impl Display for EncryptionAlgorithm {
 }
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, serde_with::DeserializeFromStr, serde_with::SerializeDisplay,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    serde_with::DeserializeFromStr,
+    serde_with::SerializeDisplay,
 )]
 pub enum PkiSignatureAlgorithm {
     RsassaPssSha256,

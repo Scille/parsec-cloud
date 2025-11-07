@@ -42,7 +42,7 @@ pub fn req() {
 pub fn rep_ok() {
     let raw_expected = [
         (
-            // Generated from Parsec 3.5.1-a.0+dev
+            // Generated from Parsec 3.5.3-a.0+dev
             // Content:
             //   status: 'ok'
             //   enrollments: [
@@ -51,15 +51,17 @@ pub fn rep_ok() {
             //       enrollment_id: ext(2, 0xe1fe88bd0f054261887a6c8039710b40),
             //       payload: 0x3c64756d6d793e,
             //       payload_signature: 0x3c7369676e61747572653e,
+            //       payload_signature_algorithm: 'RSASSA-PSS-SHA256',
             //       submitted_on: ext(1, 1668594983390001) i.e. 2022-11-16T11:36:23.390001Z,
             //     },
             //   ]
             hex!(
-                "82a6737461747573a26f6bab656e726f6c6c6d656e74739185b46465725f783530395f"
+                "82a6737461747573a26f6bab656e726f6c6c6d656e74739186b46465725f783530395f"
                 "6365727469666963617465c40d3c78353039206365727469663ead656e726f6c6c6d65"
                 "6e745f6964d802e1fe88bd0f054261887a6c8039710b40a77061796c6f6164c4073c64"
                 "756d6d793eb17061796c6f61645f7369676e6174757265c40b3c7369676e6174757265"
-                "3eac7375626d69747465645f6f6ed7010005ed940b424b31"
+                "3ebb7061796c6f61645f7369676e61747572655f616c676f726974686db15253415353"
+                "412d5053532d534841323536ac7375626d69747465645f6f6ed7010005ed940b424b31"
             )
             .as_ref(),
             authenticated_cmds::pki_enrollment_list::Rep::Ok {
@@ -89,6 +91,7 @@ pub fn rep_ok() {
     ];
 
     for (raw, expected) in raw_expected {
+        println!("***expected: {:?}", expected.dump().unwrap());
         let data = authenticated_cmds::pki_enrollment_list::Rep::load(raw).unwrap();
 
         p_assert_eq!(data, expected);

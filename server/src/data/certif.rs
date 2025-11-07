@@ -9,7 +9,7 @@ use std::{
 use pyo3::{
     exceptions::{PyAttributeError, PyValueError},
     prelude::*,
-    types::{PyBytes, PyDict, PySet, PyTuple, PyType},
+    types::{PyBytes, PyDict, PySet, PyType},
     Bound, IntoPyObjectExt,
 };
 

@@ -33,7 +33,7 @@ from .common import (
 from .config import ClientConfig
 from .device import DeviceAccessStrategy
 from .invite import AvailableDevice, DeviceSaveStrategy
-from .pki import PkiEnrollmentRejectError, X509CertificateReference, PkiEnrollmentAcceptError
+from .pki import PkiEnrollmentAcceptError, PkiEnrollmentRejectError, X509CertificateReference
 
 
 def list_started_clients() -> list[tuple[Handle, DeviceID]]:

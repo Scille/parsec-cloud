@@ -307,7 +307,7 @@ macro_rules! gen_py_wrapper_class_for_enum {
                         Python::with_gil(|py| {
                             use ::pyo3::conversion::IntoPyObjectExt;
 
-                            PyTuple::new(py, [
+                            ::pyo3::types::PyTuple::new(py, [
                                 $(
                                     $class :: $fn_name ()
                                 ),*
