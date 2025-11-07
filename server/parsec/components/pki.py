@@ -10,6 +10,7 @@ from parsec._parsec import (
     DeviceID,
     OrganizationID,
     PKIEnrollmentID,
+    PkiSignatureAlgorithm,
     UserCertificate,
     VerifyKey,
     anonymous_cmds,
@@ -134,6 +135,7 @@ class PkiEnrollmentListItem:
     submitted_on: DateTime
     der_x509_certificate: bytes
     payload_signature: bytes
+    payload_signature_algorithm: PkiSignatureAlgorithm
     payload: bytes
 
 
@@ -207,6 +209,7 @@ class BasePkiEnrollmentComponent:
         force: bool,
         submitter_der_x509_certificate: bytes,
         submit_payload_signature: bytes,
+        submit_payload_signature_algorithm: PkiSignatureAlgorithm,
         submit_payload: bytes,
     ) -> None | PkiEnrollmentSubmitBadOutcome | PkiEnrollmentSubmitX509CertificateAlreadySubmitted:
         raise NotImplementedError
@@ -313,6 +316,7 @@ class BasePkiEnrollmentComponent:
             force=req.force,
             submitter_der_x509_certificate=req.der_x509_certificate,
             submit_payload_signature=req.payload_signature,
+            submit_payload_signature_algorithm=req.payload_signature_algorithm,
             submit_payload=req.payload,
         )
         match outcome:
@@ -356,6 +360,7 @@ class BasePkiEnrollmentComponent:
                             e.submitted_on,
                             e.der_x509_certificate,
                             e.payload_signature,
+                            e.payload_signature_algorithm,
                             e.payload,
                         )
                         for e in enrollments

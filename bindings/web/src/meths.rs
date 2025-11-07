@@ -2620,6 +2620,16 @@ fn struct_pki_enrollment_list_item_js_to_rs(
                 custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
             })?
     };
+    let payload_signature_algorithm = {
+        let js_val = Reflect::get(&obj, &"payloadSignatureAlgorithm".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+            .parse()
+            .map_err(|_| TypeError::new("Not a valid PkiSignatureAlgorithm"))?
+    };
     let payload = {
         let js_val = Reflect::get(&obj, &"payload".into())?;
         js_val
@@ -2637,6 +2647,7 @@ fn struct_pki_enrollment_list_item_js_to_rs(
         submitted_on,
         der_x509_certificate,
         payload_signature,
+        payload_signature_algorithm,
         payload,
     })
 }
@@ -2676,6 +2687,20 @@ fn struct_pki_enrollment_list_item_rs_to_js(
     )?;
     let js_payload_signature = JsValue::from(Uint8Array::from(rs_obj.payload_signature.as_ref()));
     Reflect::set(&js_obj, &"payloadSignature".into(), &js_payload_signature)?;
+    let js_payload_signature_algorithm = JsValue::from_str({
+        let custom_to_rs_string =
+            |v| -> Result<_, std::convert::Infallible> { Ok(std::string::ToString::to_string(&v)) };
+        match custom_to_rs_string(rs_obj.payload_signature_algorithm) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(
+        &js_obj,
+        &"payloadSignatureAlgorithm".into(),
+        &js_payload_signature_algorithm,
+    )?;
     let js_payload = JsValue::from(Uint8Array::from(rs_obj.payload.as_ref()));
     Reflect::set(&js_obj, &"payload".into(), &js_payload)?;
     Ok(js_obj)

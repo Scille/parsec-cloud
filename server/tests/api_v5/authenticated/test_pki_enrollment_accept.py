@@ -14,6 +14,7 @@ from parsec._parsec import (
     PkiEnrollmentAnswerPayload,
     PKIEnrollmentID,
     PkiEnrollmentSubmitPayload,
+    PkiSignatureAlgorithm,
     PrivateKey,
     RevokedUserCertificate,
     SigningKey,
@@ -58,6 +59,7 @@ async def enrollment_id(
         force=False,
         submitter_der_x509_certificate=b"<philip der x509 certificate>",
         submit_payload_signature=b"<philip submit payload signature>",
+        submit_payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         submit_payload=submit_payload,
     )
     assert outcome is None
