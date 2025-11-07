@@ -150,7 +150,7 @@ pub struct PKILocalPendingEnrollment {
     pub enrollment_id: PKIEnrollmentID,
     pub payload: PkiEnrollmentSubmitPayload,
     pub encrypted_key: Bytes,
-    pub encrypted_key_algo: EncryptionAlgorithm,
+    pub encrypted_key_algo: PKIEncryptionAlgorithm,
     pub ciphertext: Bytes,
 }
 
@@ -225,19 +225,19 @@ impl PrivateParts {
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, serde_with::DeserializeFromStr, serde_with::SerializeDisplay,
 )]
-pub enum EncryptionAlgorithm {
+pub enum PKIEncryptionAlgorithm {
     RsaesOaepSha256,
 }
 
-impl From<EncryptionAlgorithm> for &'static str {
-    fn from(value: EncryptionAlgorithm) -> Self {
+impl From<PKIEncryptionAlgorithm> for &'static str {
+    fn from(value: PKIEncryptionAlgorithm) -> Self {
         match value {
-            EncryptionAlgorithm::RsaesOaepSha256 => "RSAES-OAEP-SHA256",
+            PKIEncryptionAlgorithm::RsaesOaepSha256 => "RSAES-OAEP-SHA256",
         }
     }
 }
 
-impl FromStr for EncryptionAlgorithm {
+impl FromStr for PKIEncryptionAlgorithm {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -248,7 +248,7 @@ impl FromStr for EncryptionAlgorithm {
     }
 }
 
-impl Display for EncryptionAlgorithm {
+impl Display for PKIEncryptionAlgorithm {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str((*self).into())
     }

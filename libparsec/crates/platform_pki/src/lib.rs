@@ -10,7 +10,7 @@ pub mod x509;
 #[path = "../tests/units/mod.rs"]
 mod test;
 
-use libparsec_types::{EncryptionAlgorithm, PkiSignatureAlgorithm, X509CertificateReference};
+use libparsec_types::{PKIEncryptionAlgorithm, PkiSignatureAlgorithm, X509CertificateReference};
 
 use bytes::Bytes;
 
@@ -25,7 +25,7 @@ mod platform {
         DecryptedMessage, EncryptMessageError, EncryptedMessage, GetDerEncodedCertificateError,
         ShowCertificateSelectionDialogError, SignMessageError, SignedMessageFromPki,
     };
-    use libparsec_types::{EncryptionAlgorithm, X509CertificateReference};
+    use libparsec_types::{PKIEncryptionAlgorithm, X509CertificateReference};
 
     pub fn get_der_encoded_certificate(
         certificate_ref: &X509CertificateReference,
@@ -57,7 +57,7 @@ mod platform {
     }
 
     pub fn decrypt_message(
-        algo: EncryptionAlgorithm,
+        algo: PKIEncryptionAlgorithm,
         encrypted_message: &[u8],
         certificate_ref: &X509CertificateReference,
     ) -> Result<DecryptedMessage, DecryptMessageError> {
@@ -125,7 +125,7 @@ pub use platform::sign_message;
 pub use shared::{verify_message, Certificate, SignedMessage};
 
 pub struct EncryptedMessage {
-    pub algo: EncryptionAlgorithm,
+    pub algo: PKIEncryptionAlgorithm,
     pub cert_ref: X509CertificateReference,
     pub ciphered: Bytes,
 }
