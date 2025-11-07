@@ -9,7 +9,7 @@ use crate::{
 };
 use bytes::Bytes;
 use libparsec_types::{
-    EncryptionAlgorithm, PkiSignatureAlgorithm, X509CertificateHash, X509CertificateReference,
+    PKIEncryptionAlgorithm, PkiSignatureAlgorithm, X509CertificateHash, X509CertificateReference,
     X509WindowsCngURI,
 };
 use schannel::{
@@ -352,8 +352,8 @@ pub fn encrypt_message(
 fn ncrypt_encrypt_message_with_rsa(
     message: &[u8],
     handle: &NcryptKey,
-) -> std::io::Result<(EncryptionAlgorithm, Vec<u8>)> {
-    const ALGO: EncryptionAlgorithm = EncryptionAlgorithm::RsaesOaepSha256;
+) -> std::io::Result<(PKIEncryptionAlgorithm, Vec<u8>)> {
+    const ALGO: PKIEncryptionAlgorithm = PKIEncryptionAlgorithm::RsaesOaepSha256;
     // SAFETY: NcryptKey is obtain from an NCRYPT_KEY_HANDLE, here we retrieve the underlying
     // handle.
     let raw_handle = unsafe { RawPointer::as_ptr(handle) } as NCRYPT_KEY_HANDLE;
@@ -413,7 +413,7 @@ fn ncrypt_encrypt_message_with_rsa(
 }
 
 pub fn decrypt_message(
-    algo: EncryptionAlgorithm,
+    algo: PKIEncryptionAlgorithm,
     encrypted_message: &[u8],
     certificate_ref: &X509CertificateReference,
 ) -> Result<DecryptedMessage, DecryptMessageError> {
@@ -430,7 +430,7 @@ pub fn decrypt_message(
         }
         // Handle to a CryptoGraphy Next Generation (CNG) API
         PrivateKey::NcryptKey(handle) => {
-            if algo != EncryptionAlgorithm::RsaesOaepSha256 {
+            if algo != PKIEncryptionAlgorithm::RsaesOaepSha256 {
                 todo!("Unsupported encryption algo '{algo}'");
             }
             ncrypt_decrypt_message_with_rsa(encrypted_message, &handle).map(Into::into)

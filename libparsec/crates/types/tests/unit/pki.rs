@@ -225,7 +225,7 @@ fn serde_pki_enrollment_submit_payload() {
                 human_handle: alice.human_handle.clone()
             },
             encrypted_key: b"foo".as_ref().into(),
-            encrypted_key_algo: EncryptionAlgorithm::RsaesOaepSha256,
+            encrypted_key_algo: PKIEncryptionAlgorithm::RsaesOaepSha256,
             ciphertext: b"foo".as_ref().into(),
         }
     })
@@ -280,7 +280,7 @@ fn serde_pki_enrollment_submit_payload() {
                 human_handle: alice.human_handle.clone()
             },
             encrypted_key: b"foo".as_ref().into(),
-            encrypted_key_algo: EncryptionAlgorithm::RsaesOaepSha256,
+            encrypted_key_algo: PKIEncryptionAlgorithm::RsaesOaepSha256,
             ciphertext: b"foo".as_ref().into(),
         }
     })

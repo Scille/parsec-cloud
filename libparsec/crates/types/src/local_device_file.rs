@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use libparsec_serialization_format::parsec_data;
 
-use crate::{self as libparsec_types, DataError, EncryptionAlgorithm, X509CertificateReference};
+use crate::{self as libparsec_types, DataError, PKIEncryptionAlgorithm, X509CertificateReference};
 use crate::{
     impl_transparent_data_format_conversion, AccountVaultItemOpaqueKeyID, DateTime, DeviceID,
     DeviceLabel, HumanHandle, OrganizationID, PasswordAlgorithm, UserID,
@@ -119,7 +119,7 @@ pub struct DeviceFileSmartcard {
     pub human_handle: HumanHandle,
     pub device_label: DeviceLabel,
     pub certificate_ref: X509CertificateReference,
-    pub algorithm_for_encrypted_key: EncryptionAlgorithm,
+    pub algorithm_for_encrypted_key: PKIEncryptionAlgorithm,
     pub encrypted_key: Bytes,
     pub ciphertext: Bytes,
 }
