@@ -292,6 +292,7 @@ export interface PkiEnrollmentListItem {
     submittedOn: number
     derX509Certificate: Uint8Array
     payloadSignature: Uint8Array
+    payloadSignatureAlgorithm: string
     payload: Uint8Array
 }
 

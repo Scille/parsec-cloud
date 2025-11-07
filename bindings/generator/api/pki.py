@@ -84,11 +84,21 @@ async def show_certificate_selection_dialog_windows_only() -> Result[
     raise NotImplementedError
 
 
+CUSTOM_TO_RS_STRING_DISPLAY = (
+    "|v| -> Result<_, std::convert::Infallible> { Ok(std::string::ToString::to_string(&v)) }"
+)
+
+
+class PkiSignatureAlgorithm(StrBasedType):
+    custom_to_rs_string = CUSTOM_TO_RS_STRING_DISPLAY
+
+
 class PkiEnrollmentListItem(Structure):
     enrollment_id: EnrollmentID
     submitted_on: DateTime
     der_x509_certificate: Bytes
     payload_signature: Bytes
+    payload_signature_algorithm: PkiSignatureAlgorithm
     payload: Bytes
 
 

@@ -546,7 +546,7 @@ JsValue::from_str({%- if type.custom_to_rs_string -%}
     let custom_to_rs_string = {{ type.custom_to_rs_string }};
     match custom_to_rs_string({{ rs_value }}) {
         Ok(ok) => ok,
-        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
     }.as_ref()
 }
 {%- else -%}

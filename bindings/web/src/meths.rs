@@ -483,7 +483,7 @@ fn struct_account_info_rs_to_js(rs_obj: libparsec::AccountInfo) -> Result<JsValu
         };
         match custom_to_rs_string(rs_obj.server_addr) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -493,7 +493,7 @@ fn struct_account_info_rs_to_js(rs_obj: libparsec::AccountInfo) -> Result<JsValu
             |x: libparsec::AccountAuthMethodID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.in_use_auth_method) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -658,7 +658,7 @@ fn struct_account_organizations_active_user_rs_to_js(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.user_id) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -867,7 +867,7 @@ fn struct_account_organizations_revoked_user_rs_to_js(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.user_id) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -971,7 +971,7 @@ fn struct_auth_method_info_rs_to_js(rs_obj: libparsec::AuthMethodInfo) -> Result
             |x: libparsec::AccountAuthMethodID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.auth_method_id) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -1140,7 +1140,7 @@ fn struct_available_device_rs_to_js(
         };
         match custom_to_rs_string(rs_obj.key_file_path) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -1176,7 +1176,7 @@ fn struct_available_device_rs_to_js(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.user_id) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -1186,7 +1186,7 @@ fn struct_available_device_rs_to_js(
             |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.device_id) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -1296,7 +1296,7 @@ fn struct_client_config_rs_to_js(rs_obj: libparsec::ClientConfig) -> Result<JsVa
         };
         match custom_to_rs_string(rs_obj.config_dir) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -1309,7 +1309,7 @@ fn struct_client_config_rs_to_js(rs_obj: libparsec::ClientConfig) -> Result<JsVa
         };
         match custom_to_rs_string(rs_obj.data_base_dir) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -1486,7 +1486,7 @@ fn struct_client_info_rs_to_js(rs_obj: libparsec::ClientInfo) -> Result<JsValue,
             };
         match custom_to_rs_string(rs_obj.organization_addr) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -1498,7 +1498,7 @@ fn struct_client_info_rs_to_js(rs_obj: libparsec::ClientInfo) -> Result<JsValue,
             |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.device_id) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -1508,7 +1508,7 @@ fn struct_client_info_rs_to_js(rs_obj: libparsec::ClientInfo) -> Result<JsValue,
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.user_id) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -1664,7 +1664,7 @@ fn struct_device_claim_in_progress1_info_rs_to_js(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.greeter_user_id) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -2136,7 +2136,7 @@ fn struct_device_info_rs_to_js(rs_obj: libparsec::DeviceInfo) -> Result<JsValue,
             |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.id) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -2162,7 +2162,7 @@ fn struct_device_info_rs_to_js(rs_obj: libparsec::DeviceInfo) -> Result<JsValue,
                 |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
             match custom_to_rs_string(val) {
                 Ok(ok) => ok,
-                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
         }),
@@ -2269,7 +2269,7 @@ fn struct_file_stat_rs_to_js(rs_obj: libparsec::FileStat) -> Result<JsValue, JsV
             |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.id) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -2352,7 +2352,7 @@ fn struct_human_handle_rs_to_js(rs_obj: libparsec::HumanHandle) -> Result<JsValu
                 |x: libparsec::EmailAddress| -> Result<_, &'static str> { Ok(x.to_string()) };
             match custom_to_rs_string(custom_getter(&rs_obj)) {
                 Ok(ok) => ok,
-                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
         })
@@ -2435,7 +2435,7 @@ fn struct_new_invitation_info_rs_to_js(
             };
         match custom_to_rs_string(rs_obj.addr) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -2445,7 +2445,7 @@ fn struct_new_invitation_info_rs_to_js(
             |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.token) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -2619,6 +2619,16 @@ fn struct_pki_enrollment_list_item_js_to_rs(
                 custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
             })?
     };
+    let payload_signature_algorithm = {
+        let js_val = Reflect::get(&obj, &"payloadSignatureAlgorithm".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+            .parse()
+            .map_err(|_| TypeError::new("Not a valid PkiSignatureAlgorithm"))?
+    };
     let payload = {
         let js_val = Reflect::get(&obj, &"payload".into())?;
         js_val
@@ -2636,6 +2646,7 @@ fn struct_pki_enrollment_list_item_js_to_rs(
         submitted_on,
         der_x509_certificate,
         payload_signature,
+        payload_signature_algorithm,
         payload,
     })
 }
@@ -2650,7 +2661,7 @@ fn struct_pki_enrollment_list_item_rs_to_js(
             |x: libparsec::EnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.enrollment_id) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -2675,6 +2686,20 @@ fn struct_pki_enrollment_list_item_rs_to_js(
     )?;
     let js_payload_signature = JsValue::from(Uint8Array::from(rs_obj.payload_signature.as_ref()));
     Reflect::set(&js_obj, &"payloadSignature".into(), &js_payload_signature)?;
+    let js_payload_signature_algorithm = JsValue::from_str({
+        let custom_to_rs_string =
+            |v| -> Result<_, std::convert::Infallible> { Ok(std::string::ToString::to_string(&v)) };
+        match custom_to_rs_string(rs_obj.payload_signature_algorithm) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(
+        &js_obj,
+        &"payloadSignatureAlgorithm".into(),
+        &js_payload_signature_algorithm,
+    )?;
     let js_payload = JsValue::from(Uint8Array::from(rs_obj.payload.as_ref()));
     Reflect::set(&js_obj, &"payload".into(), &js_payload)?;
     Ok(js_obj)
@@ -2812,7 +2837,7 @@ fn struct_shamir_recovery_claim_in_progress1_info_rs_to_js(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.greeter_user_id) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -2984,7 +3009,7 @@ fn struct_shamir_recovery_claim_initial_info_rs_to_js(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.greeter_user_id) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -3330,7 +3355,7 @@ fn struct_shamir_recovery_recipient_rs_to_js(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.user_id) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -3489,7 +3514,7 @@ fn struct_started_workspace_info_rs_to_js(
             |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.id) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -3517,7 +3542,7 @@ fn struct_started_workspace_info_rs_to_js(
                     };
                     match custom_to_rs_string(x2) {
                         Ok(ok) => ok,
-                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
                 });
@@ -3747,7 +3772,7 @@ fn struct_user_claim_in_progress1_info_rs_to_js(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.greeter_user_id) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -3948,7 +3973,7 @@ fn struct_user_claim_initial_info_rs_to_js(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.greeter_user_id) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -4328,7 +4353,7 @@ fn struct_user_greeting_administrator_rs_to_js(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.user_id) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -4479,7 +4504,7 @@ fn struct_user_info_rs_to_js(rs_obj: libparsec::UserInfo) -> Result<JsValue, JsV
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.id) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -4505,7 +4530,7 @@ fn struct_user_info_rs_to_js(rs_obj: libparsec::UserInfo) -> Result<JsValue, JsV
                 |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
             match custom_to_rs_string(val) {
                 Ok(ok) => ok,
-                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
         }),
@@ -4532,7 +4557,7 @@ fn struct_user_info_rs_to_js(rs_obj: libparsec::UserInfo) -> Result<JsValue, JsV
                 |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
             match custom_to_rs_string(val) {
                 Ok(ok) => ok,
-                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
         }),
@@ -4627,7 +4652,7 @@ fn struct_workspace_history_file_stat_rs_to_js(
             |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.id) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -4735,7 +4760,7 @@ fn struct_workspace_info_rs_to_js(rs_obj: libparsec::WorkspaceInfo) -> Result<Js
             |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.id) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -4816,7 +4841,7 @@ fn struct_workspace_user_access_info_rs_to_js(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.user_id) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
@@ -4912,7 +4937,7 @@ fn struct_x509_certificate_reference_rs_to_js(
                 };
             match custom_to_rs_string(custom_getter(&rs_obj)) {
                 Ok(ok) => ok,
-                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
         })
@@ -5580,7 +5605,7 @@ fn variant_account_login_strategy_rs_to_js(
                     |x: libparsec::EmailAddress| -> Result<_, &'static str> { Ok(x.to_string()) };
                 match custom_to_rs_string(email) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -6082,7 +6107,7 @@ fn variant_any_claim_retrieved_info_rs_to_js(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(greeter_user_id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -6117,7 +6142,7 @@ fn variant_any_claim_retrieved_info_rs_to_js(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(claimer_user_id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -6189,7 +6214,7 @@ fn variant_any_claim_retrieved_info_rs_to_js(
                     |x: libparsec::EmailAddress| -> Result<_, &'static str> { Ok(x.to_string()) };
                 match custom_to_rs_string(claimer_email) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -7479,7 +7504,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(device_id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -7492,7 +7517,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(device_id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -7523,7 +7548,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -7535,7 +7560,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     };
                 match custom_to_rs_string(greeting_attempt) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -7556,7 +7581,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -7568,7 +7593,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     };
                 match custom_to_rs_string(greeting_attempt) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -7589,7 +7614,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -7601,7 +7626,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     };
                 match custom_to_rs_string(greeting_attempt) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -7624,7 +7649,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     };
                 match custom_to_rs_string(api_version) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -7640,7 +7665,9 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                             };
                         match custom_to_rs_string(elem) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
                         }
                         .as_ref()
                     });
@@ -7681,7 +7708,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -7819,7 +7846,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(realm_id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -7829,7 +7856,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(entry_id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -7848,7 +7875,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(realm_id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -7858,7 +7885,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(entry_id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -7877,7 +7904,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(realm_id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -7887,7 +7914,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(entry_id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -7911,7 +7938,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(realm_id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -7921,7 +7948,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(entry_id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -7946,7 +7973,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(realm_id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -7956,7 +7983,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(entry_id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -7975,7 +8002,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(realm_id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -7985,7 +8012,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(entry_id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -9514,7 +9541,7 @@ fn variant_device_access_strategy_rs_to_js(
                 };
                 match custom_to_rs_string(key_file) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -9536,7 +9563,7 @@ fn variant_device_access_strategy_rs_to_js(
                 };
                 match custom_to_rs_string(key_file) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -9560,7 +9587,7 @@ fn variant_device_access_strategy_rs_to_js(
                 };
                 match custom_to_rs_string(key_file) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -9580,7 +9607,7 @@ fn variant_device_access_strategy_rs_to_js(
                 };
                 match custom_to_rs_string(key_file) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -9998,7 +10025,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
                         |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                     match custom_to_rs_string(val) {
                         Ok(ok) => ok,
-                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
                 }),
@@ -10010,7 +10037,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -10020,7 +10047,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(parent) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -10060,7 +10087,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(last_updater) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -10085,7 +10112,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
                         |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                     match custom_to_rs_string(val) {
                         Ok(ok) => ok,
-                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
                 }),
@@ -10097,7 +10124,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -10107,7 +10134,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(parent) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -10145,7 +10172,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(last_updater) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -10562,7 +10589,7 @@ fn variant_invite_info_invitation_created_by_rs_to_js(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(user_id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -10656,7 +10683,7 @@ fn variant_invite_list_invitation_created_by_rs_to_js(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(user_id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -10946,7 +10973,7 @@ fn variant_invite_list_item_rs_to_js(
                     };
                 match custom_to_rs_string(addr) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -10956,7 +10983,7 @@ fn variant_invite_list_item_rs_to_js(
                     |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -10999,7 +11026,7 @@ fn variant_invite_list_item_rs_to_js(
                     };
                 match custom_to_rs_string(addr) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -11009,7 +11036,7 @@ fn variant_invite_list_item_rs_to_js(
                     |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -11032,7 +11059,7 @@ fn variant_invite_list_item_rs_to_js(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(claimer_user_id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -11072,7 +11099,7 @@ fn variant_invite_list_item_rs_to_js(
                     };
                 match custom_to_rs_string(addr) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -11082,7 +11109,7 @@ fn variant_invite_list_item_rs_to_js(
                     |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -11105,7 +11132,7 @@ fn variant_invite_list_item_rs_to_js(
                     |x: libparsec::EmailAddress| -> Result<_, &'static str> { Ok(x.to_string()) };
                 match custom_to_rs_string(claimer_email) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -11229,7 +11256,7 @@ fn variant_mountpoint_mount_strategy_rs_to_js(
                 };
                 match custom_to_rs_string(base_dir) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -11977,7 +12004,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(user_id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -11998,7 +12025,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(created_by) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -12021,7 +12048,9 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(key) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
                         }
                         .as_ref()
                     });
@@ -12059,7 +12088,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(deleted_by) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -12083,7 +12112,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(user_id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -12104,7 +12133,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(created_by) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -12127,7 +12156,9 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(key) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
                         }
                         .as_ref()
                     });
@@ -12169,7 +12200,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(user_id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -12190,7 +12221,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(created_by) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -12213,7 +12244,9 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(key) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
                         }
                         .as_ref()
                     });
@@ -12244,7 +12277,9 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(elem) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
                         }
                         .as_ref()
                     });
@@ -12273,7 +12308,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(user_id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -12294,7 +12329,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(created_by) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -12317,7 +12352,9 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(key) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
                         }
                         .as_ref()
                     });
@@ -12348,7 +12385,9 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(elem) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
                         }
                         .as_ref()
                     });
@@ -12930,7 +12969,7 @@ fn variant_parsed_parsec_addr_rs_to_js(
                     |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -12962,7 +13001,7 @@ fn variant_parsed_parsec_addr_rs_to_js(
                     |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -12994,7 +13033,7 @@ fn variant_parsed_parsec_addr_rs_to_js(
                     |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -13111,7 +13150,7 @@ fn variant_parsed_parsec_addr_rs_to_js(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(workspace_id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -13939,7 +13978,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(created_by) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -13962,7 +14001,9 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(key) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
                         }
                         .as_ref()
                     });
@@ -14000,7 +14041,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(deleted_by) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -14041,7 +14082,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(created_by) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -14064,7 +14105,9 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(key) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
                         }
                         .as_ref()
                     });
@@ -14116,7 +14159,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(created_by) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -14139,7 +14182,9 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(key) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
                         }
                         .as_ref()
                     });
@@ -14170,7 +14215,9 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(elem) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
                         }
                         .as_ref()
                     });
@@ -14209,7 +14256,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(created_by) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -14232,7 +14279,9 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(key) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
                         }
                         .as_ref()
                     });
@@ -14263,7 +14312,9 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(elem) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
                         }
                         .as_ref()
                     });
@@ -14636,7 +14687,7 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_rs_to_js(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(claimer_user_id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -14690,7 +14741,9 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_rs_to_js(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(key) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
                         }
                         .as_ref()
                     });
@@ -14729,7 +14782,7 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_rs_to_js(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(claimer_user_id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -15803,7 +15856,7 @@ fn variant_workspace_history_entry_stat_rs_to_js(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -15813,7 +15866,7 @@ fn variant_workspace_history_entry_stat_rs_to_js(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(parent) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -15849,7 +15902,7 @@ fn variant_workspace_history_entry_stat_rs_to_js(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(last_updater) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -15874,7 +15927,7 @@ fn variant_workspace_history_entry_stat_rs_to_js(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -15884,7 +15937,7 @@ fn variant_workspace_history_entry_stat_rs_to_js(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(parent) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -15918,7 +15971,7 @@ fn variant_workspace_history_entry_stat_rs_to_js(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(last_updater) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -16251,7 +16304,7 @@ fn variant_workspace_history_realm_export_decryptor_rs_to_js(
                     };
                 match custom_to_rs_string(sequester_service_id) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -16268,7 +16321,7 @@ fn variant_workspace_history_realm_export_decryptor_rs_to_js(
                 };
                 match custom_to_rs_string(private_key_pem_path) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
@@ -17839,7 +17892,7 @@ pub fn accountListInvitations(account: u32) -> Promise {
                                 match custom_to_rs_string(x1) {
                                     Ok(ok) => ok,
                                     Err(err) => {
-                                        return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                        return Err(JsValue::from(TypeError::new(&err.to_string())))
                                     }
                                 }
                                 .as_ref()
@@ -17852,7 +17905,7 @@ pub fn accountListInvitations(account: u32) -> Promise {
                                 match custom_to_rs_string(x3) {
                                     Ok(ok) => ok,
                                     Err(err) => {
-                                        return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                        return Err(JsValue::from(TypeError::new(&err.to_string())))
                                     }
                                 }
                                 .as_ref()
@@ -17933,7 +17986,7 @@ pub fn accountListRegistrationDevices(account: u32) -> Promise {
                                 match custom_to_rs_string(x2) {
                                     Ok(ok) => ok,
                                     Err(err) => {
-                                        return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                        return Err(JsValue::from(TypeError::new(&err.to_string())))
                                     }
                                 }
                                 .as_ref()
@@ -18332,7 +18385,7 @@ pub fn buildParsecOrganizationBootstrapAddr(addr: String, organization_id: Strin
                 };
             match custom_to_rs_string(ret) {
                 Ok(ok) => ok,
-                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
         }))
@@ -19179,7 +19232,7 @@ pub fn clientCreateWorkspace(client: u32, name: String) -> Promise {
                         |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                     match custom_to_rs_string(value) {
                         Ok(ok) => ok,
-                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
                 });
@@ -19495,7 +19548,7 @@ pub fn clientListFrozenUsers(client_handle: u32) -> Promise {
                             match custom_to_rs_string(elem) {
                                 Ok(ok) => ok,
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                    return Err(JsValue::from(TypeError::new(&err.to_string())))
                                 }
                             }
                             .as_ref()
@@ -20456,7 +20509,7 @@ pub fn getDefaultConfigDir() -> Promise {
             };
             match custom_to_rs_string(ret) {
                 Ok(ok) => ok,
-                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
         }))
@@ -20477,7 +20530,7 @@ pub fn getDefaultDataBaseDir() -> Promise {
             };
             match custom_to_rs_string(ret) {
                 Ok(ok) => ok,
-                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
         }))
@@ -20498,7 +20551,7 @@ pub fn getDefaultMountpointBaseDir() -> Promise {
             };
             match custom_to_rs_string(ret) {
                 Ok(ok) => ok,
-                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
         }))
@@ -21191,7 +21244,9 @@ pub fn listStartedClients() -> Promise {
                             };
                         match custom_to_rs_string(x2) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
                         }
                         .as_ref()
                     });
@@ -21229,7 +21284,7 @@ pub fn mountpointToOsPath(mountpoint: u32, parsec_path: String) -> Promise {
                     };
                     match custom_to_rs_string(value) {
                         Ok(ok) => ok,
-                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
                 });
@@ -21352,7 +21407,7 @@ pub fn pathJoin(parent: String, child: String) -> Promise {
                 |path: libparsec::FsPath| -> Result<_, &'static str> { Ok(path.to_string()) };
             match custom_to_rs_string(ret) {
                 Ok(ok) => ok,
-                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
         }))
@@ -21376,7 +21431,7 @@ pub fn pathNormalize(path: String) -> Promise {
                 |path: libparsec::FsPath| -> Result<_, &'static str> { Ok(path.to_string()) };
             match custom_to_rs_string(ret) {
                 Ok(ok) => ok,
-                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
         }))
@@ -21400,7 +21455,7 @@ pub fn pathParent(path: String) -> Promise {
                 |path: libparsec::FsPath| -> Result<_, &'static str> { Ok(path.to_string()) };
             match custom_to_rs_string(ret) {
                 Ok(ok) => ok,
-                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
         }))
@@ -21570,7 +21625,7 @@ pub fn testCheckMailbox(server_addr: String, email: String) -> Promise {
                                 match custom_to_rs_string(x1) {
                                     Ok(ok) => ok,
                                     Err(err) => {
-                                        return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                        return Err(JsValue::from(TypeError::new(&err.to_string())))
                                     }
                                 }
                                 .as_ref()
@@ -21666,7 +21721,9 @@ pub fn testGetTestbedBootstrapOrganizationAddr(discriminant_dir: String) -> Prom
                         let custom_to_rs_string = |addr: libparsec::ParsecOrganizationBootstrapAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
                         match custom_to_rs_string(val) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
                         }
                         .as_ref()
                     }),
@@ -21792,7 +21849,7 @@ pub fn testNewTestbed(template: String, test_server: Option<String>) -> Promise 
                     };
                     match custom_to_rs_string(value) {
                         Ok(ok) => ok,
-                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
                 });
@@ -21891,7 +21948,7 @@ pub fn updateDeviceOverwriteServerAddr(
                         };
                     match custom_to_rs_string(value) {
                         Ok(ok) => ok,
-                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
                 });
@@ -22040,7 +22097,7 @@ pub fn workspaceCreateFile(workspace: u32, path: String) -> Promise {
                         |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                     match custom_to_rs_string(value) {
                         Ok(ok) => ok,
-                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
                 });
@@ -22079,7 +22136,7 @@ pub fn workspaceCreateFolder(workspace: u32, path: String) -> Promise {
                         |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                     match custom_to_rs_string(value) {
                         Ok(ok) => ok,
-                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
                 });
@@ -22118,7 +22175,7 @@ pub fn workspaceCreateFolderAll(workspace: u32, path: String) -> Promise {
                         |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                     match custom_to_rs_string(value) {
                         Ok(ok) => ok,
-                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
                 });
@@ -22159,7 +22216,7 @@ pub fn workspaceDecryptPathAddr(workspace: u32, link: String) -> Promise {
                     };
                     match custom_to_rs_string(value) {
                         Ok(ok) => ok,
-                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
                 });
@@ -22471,7 +22528,7 @@ pub fn workspaceGeneratePathAddr(workspace: u32, path: String) -> Promise {
                         };
                     match custom_to_rs_string(value) {
                         Ok(ok) => ok,
-                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
                 });
@@ -22760,7 +22817,9 @@ pub fn workspaceHistoryOpenFileAndGetId(workspace_history: u32, path: String) ->
                             |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(x2) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
                         }
                         .as_ref()
                     });
@@ -23178,7 +23237,9 @@ pub fn workspaceMount(workspace: u32) -> Promise {
                         };
                         match custom_to_rs_string(x2) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
                         }
                         .as_ref()
                     });
@@ -23322,7 +23383,9 @@ pub fn workspaceOpenFileAndGetId(workspace: u32, path: String, mode: Object) -> 
                             |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(x2) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
                         }
                         .as_ref()
                     });
@@ -23825,7 +23888,7 @@ pub fn workspaceWatchEntryOneshot(workspace: u32, path: String) -> Promise {
                         |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                     match custom_to_rs_string(value) {
                         Ok(ok) => ok,
-                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
                 });

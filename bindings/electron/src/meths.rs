@@ -469,7 +469,7 @@ fn struct_account_info_rs_to_js<'a>(
         };
         match custom_to_rs_string(rs_obj.server_addr) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -479,7 +479,7 @@ fn struct_account_info_rs_to_js<'a>(
             |x: libparsec::AccountAuthMethodID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.in_use_auth_method) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -639,7 +639,7 @@ fn struct_account_organizations_active_user_rs_to_js<'a>(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.user_id) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -826,7 +826,7 @@ fn struct_account_organizations_revoked_user_rs_to_js<'a>(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.user_id) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -922,7 +922,7 @@ fn struct_auth_method_info_rs_to_js<'a>(
             |x: libparsec::AccountAuthMethodID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.auth_method_id) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -1081,7 +1081,7 @@ fn struct_available_device_rs_to_js<'a>(
         };
         match custom_to_rs_string(rs_obj.key_file_path) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -1115,7 +1115,7 @@ fn struct_available_device_rs_to_js<'a>(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.user_id) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -1125,7 +1125,7 @@ fn struct_available_device_rs_to_js<'a>(
             |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.device_id) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -1230,7 +1230,7 @@ fn struct_client_config_rs_to_js<'a>(
         };
         match custom_to_rs_string(rs_obj.config_dir) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -1243,7 +1243,7 @@ fn struct_client_config_rs_to_js<'a>(
         };
         match custom_to_rs_string(rs_obj.data_base_dir) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -1397,7 +1397,7 @@ fn struct_client_info_rs_to_js<'a>(
             };
         match custom_to_rs_string(rs_obj.organization_addr) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -1409,7 +1409,7 @@ fn struct_client_info_rs_to_js<'a>(
             |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.device_id) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -1419,7 +1419,7 @@ fn struct_client_info_rs_to_js<'a>(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.user_id) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -1562,7 +1562,7 @@ fn struct_device_claim_in_progress1_info_rs_to_js<'a>(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.greeter_user_id) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -1999,7 +1999,7 @@ fn struct_device_info_rs_to_js<'a>(
             |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.id) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -2025,7 +2025,7 @@ fn struct_device_info_rs_to_js<'a>(
                 |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
             match custom_to_rs_string(elem) {
                 Ok(ok) => ok,
-                Err(err) => return cx.throw_type_error(err),
+                Err(err) => return cx.throw_type_error(err.to_string()),
             }
         })
         .or_throw(cx)?
@@ -2133,7 +2133,7 @@ fn struct_file_stat_rs_to_js<'a>(
             |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.id) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -2214,7 +2214,7 @@ fn struct_human_handle_rs_to_js<'a>(
                 |x: libparsec::EmailAddress| -> Result<_, &'static str> { Ok(x.to_string()) };
             match custom_to_rs_string(custom_getter(&rs_obj)) {
                 Ok(ok) => ok,
-                Err(err) => return cx.throw_type_error(err),
+                Err(err) => return cx.throw_type_error(err.to_string()),
             }
         })
         .or_throw(cx)?
@@ -2291,7 +2291,7 @@ fn struct_new_invitation_info_rs_to_js<'a>(
             };
         match custom_to_rs_string(rs_obj.addr) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -2301,7 +2301,7 @@ fn struct_new_invitation_info_rs_to_js<'a>(
             |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.token) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -2475,6 +2475,15 @@ fn struct_pki_enrollment_list_item_js_to_rs<'a>(
             }
         }
     };
+    let payload_signature_algorithm = {
+        let js_val: Handle<JsString> = obj.get(cx, "payloadSignatureAlgorithm")?;
+        {
+            match js_val.value(cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
     let payload = {
         let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "payload")?;
         {
@@ -2494,6 +2503,7 @@ fn struct_pki_enrollment_list_item_js_to_rs<'a>(
         submitted_on,
         der_x509_certificate,
         payload_signature,
+        payload_signature_algorithm,
         payload,
     })
 }
@@ -2509,7 +2519,7 @@ fn struct_pki_enrollment_list_item_rs_to_js<'a>(
             |x: libparsec::EnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.enrollment_id) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -2536,6 +2546,20 @@ fn struct_pki_enrollment_list_item_rs_to_js<'a>(
         js_buff
     };
     js_obj.set(cx, "payloadSignature", js_payload_signature)?;
+    let js_payload_signature_algorithm = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |v| -> Result<_, std::convert::Infallible> { Ok(std::string::ToString::to_string(&v)) };
+        match custom_to_rs_string(rs_obj.payload_signature_algorithm) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err.to_string()),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(
+        cx,
+        "payloadSignatureAlgorithm",
+        js_payload_signature_algorithm,
+    )?;
     let js_payload = {
         let rs_buff = { rs_obj.payload.as_ref() };
         let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
@@ -2671,7 +2695,7 @@ fn struct_shamir_recovery_claim_in_progress1_info_rs_to_js<'a>(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.greeter_user_id) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -2828,7 +2852,7 @@ fn struct_shamir_recovery_claim_initial_info_rs_to_js<'a>(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.greeter_user_id) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -3151,7 +3175,7 @@ fn struct_shamir_recovery_recipient_rs_to_js<'a>(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.user_id) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -3294,7 +3318,7 @@ fn struct_started_workspace_info_rs_to_js<'a>(
             |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.id) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -3321,7 +3345,7 @@ fn struct_started_workspace_info_rs_to_js<'a>(
                     };
                     match custom_to_rs_string(x1) {
                         Ok(ok) => ok,
-                        Err(err) => return cx.throw_type_error(err),
+                        Err(err) => return cx.throw_type_error(err.to_string()),
                     }
                 })
                 .or_throw(cx)?;
@@ -3555,7 +3579,7 @@ fn struct_user_claim_in_progress1_info_rs_to_js<'a>(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.greeter_user_id) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -3742,7 +3766,7 @@ fn struct_user_claim_initial_info_rs_to_js<'a>(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.greeter_user_id) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -4095,7 +4119,7 @@ fn struct_user_greeting_administrator_rs_to_js<'a>(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.user_id) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -4252,7 +4276,7 @@ fn struct_user_info_rs_to_js<'a>(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.id) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -4278,7 +4302,7 @@ fn struct_user_info_rs_to_js<'a>(
                 |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
             match custom_to_rs_string(elem) {
                 Ok(ok) => ok,
-                Err(err) => return cx.throw_type_error(err),
+                Err(err) => return cx.throw_type_error(err.to_string()),
             }
         })
         .or_throw(cx)?
@@ -4306,7 +4330,7 @@ fn struct_user_info_rs_to_js<'a>(
                 |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
             match custom_to_rs_string(elem) {
                 Ok(ok) => ok,
-                Err(err) => return cx.throw_type_error(err),
+                Err(err) => return cx.throw_type_error(err.to_string()),
             }
         })
         .or_throw(cx)?
@@ -4404,7 +4428,7 @@ fn struct_workspace_history_file_stat_rs_to_js<'a>(
             |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.id) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -4502,7 +4526,7 @@ fn struct_workspace_info_rs_to_js<'a>(
             |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.id) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -4575,7 +4599,7 @@ fn struct_workspace_user_access_info_rs_to_js<'a>(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.user_id) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
@@ -4671,7 +4695,7 @@ fn struct_x509_certificate_reference_rs_to_js<'a>(
                 };
             match custom_to_rs_string(custom_getter(&rs_obj)) {
                 Ok(ok) => ok,
-                Err(err) => return cx.throw_type_error(err),
+                Err(err) => return cx.throw_type_error(err.to_string()),
             }
         })
         .or_throw(cx)?
@@ -5300,7 +5324,7 @@ fn variant_account_login_strategy_rs_to_js<'a>(
                     |x: libparsec::EmailAddress| -> Result<_, &'static str> { Ok(x.to_string()) };
                 match custom_to_rs_string(email) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -5761,7 +5785,7 @@ fn variant_any_claim_retrieved_info_rs_to_js<'a>(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(greeter_user_id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -5790,7 +5814,7 @@ fn variant_any_claim_retrieved_info_rs_to_js<'a>(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(claimer_user_id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -5849,7 +5873,7 @@ fn variant_any_claim_retrieved_info_rs_to_js<'a>(
                     |x: libparsec::EmailAddress| -> Result<_, &'static str> { Ok(x.to_string()) };
                 match custom_to_rs_string(claimer_email) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -6974,7 +6998,7 @@ fn variant_client_event_rs_to_js<'a>(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(device_id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -6988,7 +7012,7 @@ fn variant_client_event_rs_to_js<'a>(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(device_id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -7015,7 +7039,7 @@ fn variant_client_event_rs_to_js<'a>(
                     |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -7027,7 +7051,7 @@ fn variant_client_event_rs_to_js<'a>(
                     };
                 match custom_to_rs_string(greeting_attempt) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -7045,7 +7069,7 @@ fn variant_client_event_rs_to_js<'a>(
                     |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -7057,7 +7081,7 @@ fn variant_client_event_rs_to_js<'a>(
                     };
                 match custom_to_rs_string(greeting_attempt) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -7075,7 +7099,7 @@ fn variant_client_event_rs_to_js<'a>(
                     |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -7087,7 +7111,7 @@ fn variant_client_event_rs_to_js<'a>(
                     };
                 match custom_to_rs_string(greeting_attempt) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -7107,7 +7131,7 @@ fn variant_client_event_rs_to_js<'a>(
                     };
                 match custom_to_rs_string(api_version) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -7123,7 +7147,7 @@ fn variant_client_event_rs_to_js<'a>(
                             };
                         match custom_to_rs_string(elem) {
                             Ok(ok) => ok,
-                            Err(err) => return cx.throw_type_error(err),
+                            Err(err) => return cx.throw_type_error(err.to_string()),
                         }
                     })
                     .or_throw(cx)?;
@@ -7152,7 +7176,7 @@ fn variant_client_event_rs_to_js<'a>(
                     |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -7273,7 +7297,7 @@ fn variant_client_event_rs_to_js<'a>(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(realm_id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -7283,7 +7307,7 @@ fn variant_client_event_rs_to_js<'a>(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(entry_id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -7300,7 +7324,7 @@ fn variant_client_event_rs_to_js<'a>(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(realm_id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -7310,7 +7334,7 @@ fn variant_client_event_rs_to_js<'a>(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(entry_id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -7327,7 +7351,7 @@ fn variant_client_event_rs_to_js<'a>(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(realm_id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -7337,7 +7361,7 @@ fn variant_client_event_rs_to_js<'a>(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(entry_id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -7359,7 +7383,7 @@ fn variant_client_event_rs_to_js<'a>(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(realm_id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -7369,7 +7393,7 @@ fn variant_client_event_rs_to_js<'a>(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(entry_id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -7392,7 +7416,7 @@ fn variant_client_event_rs_to_js<'a>(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(realm_id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -7402,7 +7426,7 @@ fn variant_client_event_rs_to_js<'a>(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(entry_id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -7419,7 +7443,7 @@ fn variant_client_event_rs_to_js<'a>(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(realm_id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -7429,7 +7453,7 @@ fn variant_client_event_rs_to_js<'a>(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(entry_id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -8754,7 +8778,7 @@ fn variant_device_access_strategy_rs_to_js<'a>(
                 };
                 match custom_to_rs_string(key_file) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -8773,7 +8797,7 @@ fn variant_device_access_strategy_rs_to_js<'a>(
                 };
                 match custom_to_rs_string(key_file) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -8794,7 +8818,7 @@ fn variant_device_access_strategy_rs_to_js<'a>(
                 };
                 match custom_to_rs_string(key_file) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -8811,7 +8835,7 @@ fn variant_device_access_strategy_rs_to_js<'a>(
                 };
                 match custom_to_rs_string(key_file) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -9193,7 +9217,7 @@ fn variant_entry_stat_rs_to_js<'a>(
                         |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                     match custom_to_rs_string(elem) {
                         Ok(ok) => ok,
-                        Err(err) => return cx.throw_type_error(err),
+                        Err(err) => return cx.throw_type_error(err.to_string()),
                     }
                 })
                 .or_throw(cx)?
@@ -9206,7 +9230,7 @@ fn variant_entry_stat_rs_to_js<'a>(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -9216,7 +9240,7 @@ fn variant_entry_stat_rs_to_js<'a>(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(parent) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -9254,7 +9278,7 @@ fn variant_entry_stat_rs_to_js<'a>(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(last_updater) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -9280,7 +9304,7 @@ fn variant_entry_stat_rs_to_js<'a>(
                         |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                     match custom_to_rs_string(elem) {
                         Ok(ok) => ok,
-                        Err(err) => return cx.throw_type_error(err),
+                        Err(err) => return cx.throw_type_error(err.to_string()),
                     }
                 })
                 .or_throw(cx)?
@@ -9293,7 +9317,7 @@ fn variant_entry_stat_rs_to_js<'a>(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -9303,7 +9327,7 @@ fn variant_entry_stat_rs_to_js<'a>(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(parent) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -9339,7 +9363,7 @@ fn variant_entry_stat_rs_to_js<'a>(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(last_updater) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -9677,7 +9701,7 @@ fn variant_invite_info_invitation_created_by_rs_to_js<'a>(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(user_id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -9757,7 +9781,7 @@ fn variant_invite_list_invitation_created_by_rs_to_js<'a>(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(user_id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -10027,7 +10051,7 @@ fn variant_invite_list_item_rs_to_js<'a>(
                     };
                 match custom_to_rs_string(addr) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -10037,7 +10061,7 @@ fn variant_invite_list_item_rs_to_js<'a>(
                     |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -10077,7 +10101,7 @@ fn variant_invite_list_item_rs_to_js<'a>(
                     };
                 match custom_to_rs_string(addr) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -10087,7 +10111,7 @@ fn variant_invite_list_item_rs_to_js<'a>(
                     |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -10109,7 +10133,7 @@ fn variant_invite_list_item_rs_to_js<'a>(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(claimer_user_id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -10146,7 +10170,7 @@ fn variant_invite_list_item_rs_to_js<'a>(
                     };
                 match custom_to_rs_string(addr) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -10156,7 +10180,7 @@ fn variant_invite_list_item_rs_to_js<'a>(
                     |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -10178,7 +10202,7 @@ fn variant_invite_list_item_rs_to_js<'a>(
                     |x: libparsec::EmailAddress| -> Result<_, &'static str> { Ok(x.to_string()) };
                 match custom_to_rs_string(claimer_email) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -10285,7 +10309,7 @@ fn variant_mountpoint_mount_strategy_rs_to_js<'a>(
                 };
                 match custom_to_rs_string(base_dir) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -11003,7 +11027,7 @@ fn variant_other_shamir_recovery_info_rs_to_js<'a>(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(user_id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -11023,7 +11047,7 @@ fn variant_other_shamir_recovery_info_rs_to_js<'a>(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(created_by) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -11047,7 +11071,7 @@ fn variant_other_shamir_recovery_info_rs_to_js<'a>(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(key) {
                             Ok(ok) => ok,
-                            Err(err) => return cx.throw_type_error(err),
+                            Err(err) => return cx.throw_type_error(err.to_string()),
                         }
                     })
                     .or_throw(cx)?;
@@ -11083,7 +11107,7 @@ fn variant_other_shamir_recovery_info_rs_to_js<'a>(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(deleted_by) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -11105,7 +11129,7 @@ fn variant_other_shamir_recovery_info_rs_to_js<'a>(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(user_id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -11125,7 +11149,7 @@ fn variant_other_shamir_recovery_info_rs_to_js<'a>(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(created_by) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -11149,7 +11173,7 @@ fn variant_other_shamir_recovery_info_rs_to_js<'a>(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(key) {
                             Ok(ok) => ok,
-                            Err(err) => return cx.throw_type_error(err),
+                            Err(err) => return cx.throw_type_error(err.to_string()),
                         }
                     })
                     .or_throw(cx)?;
@@ -11188,7 +11212,7 @@ fn variant_other_shamir_recovery_info_rs_to_js<'a>(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(user_id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -11208,7 +11232,7 @@ fn variant_other_shamir_recovery_info_rs_to_js<'a>(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(created_by) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -11232,7 +11256,7 @@ fn variant_other_shamir_recovery_info_rs_to_js<'a>(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(key) {
                             Ok(ok) => ok,
-                            Err(err) => return cx.throw_type_error(err),
+                            Err(err) => return cx.throw_type_error(err.to_string()),
                         }
                     })
                     .or_throw(cx)?;
@@ -11262,7 +11286,7 @@ fn variant_other_shamir_recovery_info_rs_to_js<'a>(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(elem) {
                             Ok(ok) => ok,
-                            Err(err) => return cx.throw_type_error(err),
+                            Err(err) => return cx.throw_type_error(err.to_string()),
                         }
                     })
                     .or_throw(cx)?;
@@ -11289,7 +11313,7 @@ fn variant_other_shamir_recovery_info_rs_to_js<'a>(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(user_id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -11309,7 +11333,7 @@ fn variant_other_shamir_recovery_info_rs_to_js<'a>(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(created_by) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -11333,7 +11357,7 @@ fn variant_other_shamir_recovery_info_rs_to_js<'a>(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(key) {
                             Ok(ok) => ok,
-                            Err(err) => return cx.throw_type_error(err),
+                            Err(err) => return cx.throw_type_error(err.to_string()),
                         }
                     })
                     .or_throw(cx)?;
@@ -11363,7 +11387,7 @@ fn variant_other_shamir_recovery_info_rs_to_js<'a>(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(elem) {
                             Ok(ok) => ok,
-                            Err(err) => return cx.throw_type_error(err),
+                            Err(err) => return cx.throw_type_error(err.to_string()),
                         }
                     })
                     .or_throw(cx)?;
@@ -11823,7 +11847,7 @@ fn variant_parsed_parsec_addr_rs_to_js<'a>(
                     |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -11853,7 +11877,7 @@ fn variant_parsed_parsec_addr_rs_to_js<'a>(
                     |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -11882,7 +11906,7 @@ fn variant_parsed_parsec_addr_rs_to_js<'a>(
                     |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -11989,7 +12013,7 @@ fn variant_parsed_parsec_addr_rs_to_js<'a>(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(workspace_id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -12755,7 +12779,7 @@ fn variant_self_shamir_recovery_info_rs_to_js<'a>(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(created_by) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -12779,7 +12803,7 @@ fn variant_self_shamir_recovery_info_rs_to_js<'a>(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(key) {
                             Ok(ok) => ok,
-                            Err(err) => return cx.throw_type_error(err),
+                            Err(err) => return cx.throw_type_error(err.to_string()),
                         }
                     })
                     .or_throw(cx)?;
@@ -12815,7 +12839,7 @@ fn variant_self_shamir_recovery_info_rs_to_js<'a>(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(deleted_by) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -12850,7 +12874,7 @@ fn variant_self_shamir_recovery_info_rs_to_js<'a>(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(created_by) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -12874,7 +12898,7 @@ fn variant_self_shamir_recovery_info_rs_to_js<'a>(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(key) {
                             Ok(ok) => ok,
-                            Err(err) => return cx.throw_type_error(err),
+                            Err(err) => return cx.throw_type_error(err.to_string()),
                         }
                     })
                     .or_throw(cx)?;
@@ -12922,7 +12946,7 @@ fn variant_self_shamir_recovery_info_rs_to_js<'a>(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(created_by) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -12946,7 +12970,7 @@ fn variant_self_shamir_recovery_info_rs_to_js<'a>(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(key) {
                             Ok(ok) => ok,
-                            Err(err) => return cx.throw_type_error(err),
+                            Err(err) => return cx.throw_type_error(err.to_string()),
                         }
                     })
                     .or_throw(cx)?;
@@ -12976,7 +13000,7 @@ fn variant_self_shamir_recovery_info_rs_to_js<'a>(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(elem) {
                             Ok(ok) => ok,
-                            Err(err) => return cx.throw_type_error(err),
+                            Err(err) => return cx.throw_type_error(err.to_string()),
                         }
                     })
                     .or_throw(cx)?;
@@ -13012,7 +13036,7 @@ fn variant_self_shamir_recovery_info_rs_to_js<'a>(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(created_by) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -13036,7 +13060,7 @@ fn variant_self_shamir_recovery_info_rs_to_js<'a>(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(key) {
                             Ok(ok) => ok,
-                            Err(err) => return cx.throw_type_error(err),
+                            Err(err) => return cx.throw_type_error(err.to_string()),
                         }
                     })
                     .or_throw(cx)?;
@@ -13066,7 +13090,7 @@ fn variant_self_shamir_recovery_info_rs_to_js<'a>(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(elem) {
                             Ok(ok) => ok,
-                            Err(err) => return cx.throw_type_error(err),
+                            Err(err) => return cx.throw_type_error(err.to_string()),
                         }
                     })
                     .or_throw(cx)?;
@@ -13404,7 +13428,7 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_rs_to_js<'a>(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(claimer_user_id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -13450,7 +13474,7 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_rs_to_js<'a>(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(key) {
                             Ok(ok) => ok,
-                            Err(err) => return cx.throw_type_error(err),
+                            Err(err) => return cx.throw_type_error(err.to_string()),
                         }
                     })
                     .or_throw(cx)?;
@@ -13491,7 +13515,7 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_rs_to_js<'a>(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(claimer_user_id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -14403,7 +14427,7 @@ fn variant_workspace_history_entry_stat_rs_to_js<'a>(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -14413,7 +14437,7 @@ fn variant_workspace_history_entry_stat_rs_to_js<'a>(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(parent) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -14447,7 +14471,7 @@ fn variant_workspace_history_entry_stat_rs_to_js<'a>(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(last_updater) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -14469,7 +14493,7 @@ fn variant_workspace_history_entry_stat_rs_to_js<'a>(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -14479,7 +14503,7 @@ fn variant_workspace_history_entry_stat_rs_to_js<'a>(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(parent) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -14511,7 +14535,7 @@ fn variant_workspace_history_entry_stat_rs_to_js<'a>(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(last_updater) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -14793,7 +14817,7 @@ fn variant_workspace_history_realm_export_decryptor_rs_to_js<'a>(
                     };
                 match custom_to_rs_string(sequester_service_id) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -14806,7 +14830,7 @@ fn variant_workspace_history_realm_export_decryptor_rs_to_js<'a>(
                 };
                 match custom_to_rs_string(private_key_pem_path) {
                     Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+                    Err(err) => return cx.throw_type_error(err.to_string()),
                 }
             })
             .or_throw(cx)?;
@@ -16470,7 +16494,7 @@ fn account_list_invitations(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let custom_to_rs_string = |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
     match custom_to_rs_string(x0) {
         Ok(ok) => ok,
-        Err(err) => return cx.throw_type_error(err),
+        Err(err) => return cx.throw_type_error(err.to_string()),
     }
 }).or_throw(&mut cx)?;
     js_array.set(&mut cx, 0, js_value)?;
@@ -16480,7 +16504,7 @@ fn account_list_invitations(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let custom_to_rs_string = |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
     match custom_to_rs_string(x2) {
         Ok(ok) => ok,
-        Err(err) => return cx.throw_type_error(err),
+        Err(err) => return cx.throw_type_error(err.to_string()),
     }
 }).or_throw(&mut cx)?;
     js_array.set(&mut cx, 2, js_value)?;
@@ -16609,7 +16633,9 @@ fn account_list_registration_devices(mut cx: FunctionContext) -> JsResult<JsProm
                                             };
                                         match custom_to_rs_string(x1) {
                                             Ok(ok) => ok,
-                                            Err(err) => return cx.throw_type_error(err),
+                                            Err(err) => {
+                                                return cx.throw_type_error(err.to_string())
+                                            }
                                         }
                                     })
                                     .or_throw(&mut cx)?;
@@ -17210,7 +17236,7 @@ fn build_parsec_organization_bootstrap_addr(mut cx: FunctionContext) -> JsResult
             };
         match custom_to_rs_string(ret) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(&mut cx)?;
@@ -18990,7 +19016,7 @@ fn client_create_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
                                 };
                             match custom_to_rs_string(ok) {
                                 Ok(ok) => ok,
-                                Err(err) => return cx.throw_type_error(err),
+                                Err(err) => return cx.throw_type_error(err.to_string()),
                             }
                         })
                         .or_throw(&mut cx)?;
@@ -19582,7 +19608,7 @@ fn client_list_frozen_users(mut cx: FunctionContext) -> JsResult<JsPromise> {
                                         };
                                     match custom_to_rs_string(elem) {
                                         Ok(ok) => ok,
-                                        Err(err) => return cx.throw_type_error(err),
+                                        Err(err) => return cx.throw_type_error(err.to_string()),
                                     }
                                 })
                                 .or_throw(&mut cx)?;
@@ -21283,7 +21309,7 @@ fn get_default_config_dir(mut cx: FunctionContext) -> JsResult<JsPromise> {
         };
         match custom_to_rs_string(ret) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(&mut cx)?;
@@ -21304,7 +21330,7 @@ fn get_default_data_base_dir(mut cx: FunctionContext) -> JsResult<JsPromise> {
         };
         match custom_to_rs_string(ret) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(&mut cx)?;
@@ -21325,7 +21351,7 @@ fn get_default_mountpoint_base_dir(mut cx: FunctionContext) -> JsResult<JsPromis
         };
         match custom_to_rs_string(ret) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(&mut cx)?;
@@ -22770,7 +22796,7 @@ fn list_started_clients(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                     match custom_to_rs_string(x1) {
                         Ok(ok) => ok,
-                        Err(err) => return cx.throw_type_error(err),
+                        Err(err) => return cx.throw_type_error(err.to_string()),
                     }
                 })
                 .or_throw(&mut cx)?;
@@ -22836,7 +22862,7 @@ fn mountpoint_to_os_path(mut cx: FunctionContext) -> JsResult<JsPromise> {
                             };
                             match custom_to_rs_string(ok) {
                                 Ok(ok) => ok,
-                                Err(err) => return cx.throw_type_error(err),
+                                Err(err) => return cx.throw_type_error(err.to_string()),
                             }
                         })
                         .or_throw(&mut cx)?;
@@ -23014,7 +23040,7 @@ fn path_join(mut cx: FunctionContext) -> JsResult<JsPromise> {
             |path: libparsec::FsPath| -> Result<_, &'static str> { Ok(path.to_string()) };
         match custom_to_rs_string(ret) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(&mut cx)?;
@@ -23044,7 +23070,7 @@ fn path_normalize(mut cx: FunctionContext) -> JsResult<JsPromise> {
             |path: libparsec::FsPath| -> Result<_, &'static str> { Ok(path.to_string()) };
         match custom_to_rs_string(ret) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(&mut cx)?;
@@ -23074,7 +23100,7 @@ fn path_parent(mut cx: FunctionContext) -> JsResult<JsPromise> {
             |path: libparsec::FsPath| -> Result<_, &'static str> { Ok(path.to_string()) };
         match custom_to_rs_string(ret) {
             Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
+            Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(&mut cx)?;
@@ -23310,7 +23336,7 @@ fn test_check_mailbox(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let custom_to_rs_string = |x: libparsec::EmailAddress| -> Result<_, &'static str> { Ok(x.to_string()) };
     match custom_to_rs_string(x0) {
         Ok(ok) => ok,
-        Err(err) => return cx.throw_type_error(err),
+        Err(err) => return cx.throw_type_error(err.to_string()),
     }
 }).or_throw(&mut cx)?;
     js_array.set(&mut cx, 0, js_value)?;
@@ -23429,7 +23455,7 @@ fn test_get_testbed_bootstrap_organization_addr(mut cx: FunctionContext) -> JsRe
     let custom_to_rs_string = |addr: libparsec::ParsecOrganizationBootstrapAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
     match custom_to_rs_string(elem) {
         Ok(ok) => ok,
-        Err(err) => return cx.throw_type_error(err),
+        Err(err) => return cx.throw_type_error(err.to_string()),
     }
 }).or_throw(&mut cx)?.as_value(&mut cx)
     }
@@ -23604,7 +23630,7 @@ fn test_new_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
                             };
                             match custom_to_rs_string(ok) {
                                 Ok(ok) => ok,
-                                Err(err) => return cx.throw_type_error(err),
+                                Err(err) => return cx.throw_type_error(err.to_string()),
                             }
                         })
                         .or_throw(&mut cx)?;
@@ -23745,7 +23771,7 @@ fn update_device_overwrite_server_addr(mut cx: FunctionContext) -> JsResult<JsPr
                                 };
                             match custom_to_rs_string(ok) {
                                 Ok(ok) => ok,
-                                Err(err) => return cx.throw_type_error(err),
+                                Err(err) => return cx.throw_type_error(err.to_string()),
                             }
                         })
                         .or_throw(&mut cx)?;
@@ -23982,7 +24008,7 @@ fn workspace_create_file(mut cx: FunctionContext) -> JsResult<JsPromise> {
                                 };
                             match custom_to_rs_string(ok) {
                                 Ok(ok) => ok,
-                                Err(err) => return cx.throw_type_error(err),
+                                Err(err) => return cx.throw_type_error(err.to_string()),
                             }
                         })
                         .or_throw(&mut cx)?;
@@ -24054,7 +24080,7 @@ fn workspace_create_folder(mut cx: FunctionContext) -> JsResult<JsPromise> {
                                 };
                             match custom_to_rs_string(ok) {
                                 Ok(ok) => ok,
-                                Err(err) => return cx.throw_type_error(err),
+                                Err(err) => return cx.throw_type_error(err.to_string()),
                             }
                         })
                         .or_throw(&mut cx)?;
@@ -24126,7 +24152,7 @@ fn workspace_create_folder_all(mut cx: FunctionContext) -> JsResult<JsPromise> {
                                 };
                             match custom_to_rs_string(ok) {
                                 Ok(ok) => ok,
-                                Err(err) => return cx.throw_type_error(err),
+                                Err(err) => return cx.throw_type_error(err.to_string()),
                             }
                         })
                         .or_throw(&mut cx)?;
@@ -24198,7 +24224,7 @@ fn workspace_decrypt_path_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
                                 };
                             match custom_to_rs_string(ok) {
                                 Ok(ok) => ok,
-                                Err(err) => return cx.throw_type_error(err),
+                                Err(err) => return cx.throw_type_error(err.to_string()),
                             }
                         })
                         .or_throw(&mut cx)?;
@@ -24874,7 +24900,7 @@ fn workspace_generate_path_addr(mut cx: FunctionContext) -> JsResult<JsPromise> 
     let custom_to_rs_string = |addr: libparsec::ParsecWorkspacePathAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
     match custom_to_rs_string(ok) {
         Ok(ok) => ok,
-        Err(err) => return cx.throw_type_error(err),
+        Err(err) => return cx.throw_type_error(err.to_string()),
     }
 }).or_throw(&mut cx)?;
         js_obj.set(&mut cx, "value", js_value)?;
@@ -25385,7 +25411,7 @@ fn workspace_history_open_file_and_get_id(mut cx: FunctionContext) -> JsResult<J
                                     };
                                 match custom_to_rs_string(x1) {
                                     Ok(ok) => ok,
-                                    Err(err) => return cx.throw_type_error(err),
+                                    Err(err) => return cx.throw_type_error(err.to_string()),
                                 }
                             })
                             .or_throw(&mut cx)?;
@@ -26126,7 +26152,7 @@ fn workspace_mount(mut cx: FunctionContext) -> JsResult<JsPromise> {
                                     };
                                 match custom_to_rs_string(x1) {
                                     Ok(ok) => ok,
-                                    Err(err) => return cx.throw_type_error(err),
+                                    Err(err) => return cx.throw_type_error(err.to_string()),
                                 }
                             })
                             .or_throw(&mut cx)?;
@@ -26377,7 +26403,7 @@ fn workspace_open_file_and_get_id(mut cx: FunctionContext) -> JsResult<JsPromise
                                     };
                                 match custom_to_rs_string(x1) {
                                     Ok(ok) => ok,
-                                    Err(err) => return cx.throw_type_error(err),
+                                    Err(err) => return cx.throw_type_error(err.to_string()),
                                 }
                             })
                             .or_throw(&mut cx)?;
@@ -27296,7 +27322,7 @@ fn workspace_watch_entry_oneshot(mut cx: FunctionContext) -> JsResult<JsPromise>
                                 };
                             match custom_to_rs_string(ok) {
                                 Ok(ok) => ok,
-                                Err(err) => return cx.throw_type_error(err),
+                                Err(err) => return cx.throw_type_error(err.to_string()),
                             }
                         })
                         .or_throw(&mut cx)?;

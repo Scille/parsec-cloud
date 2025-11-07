@@ -112,6 +112,7 @@ export type ParsecPkiEnrollmentAddr = string
 export type ParsecWorkspacePathAddr = string
 export type Password = string
 export type Path = string
+export type PkiSignatureAlgorithm = string
 export type SASCode = string
 export type SequesterServiceID = string
 export type UserID = string
@@ -310,6 +311,7 @@ export interface PkiEnrollmentListItem {
     submittedOn: DateTime
     derX509Certificate: Bytes
     payloadSignature: Bytes
+    payloadSignatureAlgorithm: PkiSignatureAlgorithm
     payload: Bytes
 }
 
