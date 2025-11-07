@@ -4,7 +4,7 @@ use libparsec_testbed::TestbedEnv;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_tests_lite::parsec_test;
 use libparsec_types::{
-    Bytes, EnrollmentID, LocalPendingEnrollment, ParsecPkiEnrollmentAddr,
+    Bytes, LocalPendingEnrollment, PKIEnrollmentID, ParsecPkiEnrollmentAddr,
     PkiEnrollmentSubmitPayload, X509CertificateHash,
 };
 
@@ -23,7 +23,7 @@ async fn ok_simple(tmp_path: TmpPath, env: &TestbedEnv) {
         cert_ref: X509CertificateHash::fake_sha256().into(),
         addr: pki_addr,
         submitted_on: "2000-01-01T00:00:00Z".parse().unwrap(),
-        enrollment_id: EnrollmentID::default(),
+        enrollment_id: PKIEnrollmentID::default(),
         payload: PkiEnrollmentSubmitPayload {
             // We reuse `alice_device` attribute for simplicity sake.
             // IRL, those values are RNG and provided by the user.

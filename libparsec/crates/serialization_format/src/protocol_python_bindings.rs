@@ -909,7 +909,7 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         FieldType::OrganizationID => quote_rs_to_py_class!(crate::ids::OrganizationID),
         FieldType::UserID => quote_rs_to_py_class!(crate::ids::UserID),
         FieldType::VlobID => quote_rs_to_py_class!(crate::ids::VlobID),
-        FieldType::EnrollmentID => quote_rs_to_py_class!(crate::ids::EnrollmentID),
+        FieldType::PKIEnrollmentID => quote_rs_to_py_class!(crate::ids::PKIEnrollmentID),
         FieldType::SequesterServiceID => quote_rs_to_py_class!(crate::ids::SequesterServiceID),
         FieldType::AccountAuthMethodID => quote_rs_to_py_class!(crate::ids::AccountAuthMethodID),
         FieldType::AccountVaultItemOpaqueKeyID => {
@@ -1020,7 +1020,7 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         FieldType::OrganizationID => quote! { crate::ids::OrganizationID },
         FieldType::UserID => quote! { crate::ids::UserID },
         FieldType::VlobID => quote! { crate::ids::VlobID },
-        FieldType::EnrollmentID => quote! { crate::ids::EnrollmentID },
+        FieldType::PKIEnrollmentID => quote! { crate::ids::PKIEnrollmentID },
         FieldType::SequesterServiceID => quote! { crate::ids::SequesterServiceID },
         FieldType::AccountAuthMethodID => quote! { crate::ids::AccountAuthMethodID },
         FieldType::AccountVaultItemOpaqueKeyID => {
@@ -1168,7 +1168,7 @@ fn internal_quote_field_as_fn_new_conversion(field_name: &Ident, ty: &FieldType)
         | FieldType::OrganizationID
         | FieldType::UserID
         | FieldType::VlobID
-        | FieldType::EnrollmentID
+        | FieldType::PKIEnrollmentID
         | FieldType::SequesterServiceID
         | FieldType::AccountAuthMethodID
         | FieldType::AccountVaultItemOpaqueKeyID

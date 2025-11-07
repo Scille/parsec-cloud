@@ -15,8 +15,8 @@ from parsec._parsec import (
     BlockID,
     DateTime,
     DeviceID,
-    EnrollmentID,
     GreetingAttemptID,
+    PKIEnrollmentID,
     SequesterServiceID,
     UserID,
     VlobID,
@@ -38,7 +38,7 @@ SqlQueryParam = (
     | BlockID
     | DateTime
     | DeviceID
-    | EnrollmentID
+    | PKIEnrollmentID
     | GreetingAttemptID
     | SequesterServiceID
     | UserID

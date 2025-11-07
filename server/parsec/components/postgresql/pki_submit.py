@@ -5,8 +5,8 @@ from hashlib import sha1
 
 from parsec._parsec import (
     DateTime,
-    EnrollmentID,
     OrganizationID,
+    PKIEnrollmentID,
     PkiEnrollmentSubmitPayload,
 )
 from parsec.components.pki import (
@@ -143,7 +143,7 @@ async def pki_submit(
     conn: AsyncpgConnection,
     now: DateTime,
     organization_id: OrganizationID,
-    enrollment_id: EnrollmentID,
+    enrollment_id: PKIEnrollmentID,
     force: bool,
     submitter_der_x509_certificate: bytes,
     submit_payload_signature: bytes,

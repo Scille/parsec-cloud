@@ -4,12 +4,12 @@
 
 from __future__ import annotations
 
-from parsec._parsec import DateTime, EnrollmentID
+from parsec._parsec import DateTime, PKIEnrollmentID
 
 class PkiEnrollmentListItem:
     def __init__(
         self,
-        enrollment_id: EnrollmentID,
+        enrollment_id: PKIEnrollmentID,
         submitted_on: DateTime,
         der_x509_certificate: bytes,
         payload_signature: bytes,
@@ -18,7 +18,7 @@ class PkiEnrollmentListItem:
     @property
     def der_x509_certificate(self) -> bytes: ...
     @property
-    def enrollment_id(self) -> EnrollmentID: ...
+    def enrollment_id(self) -> PKIEnrollmentID: ...
     @property
     def payload(self) -> bytes: ...
     @property

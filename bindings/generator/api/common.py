@@ -186,10 +186,10 @@ class DeviceID(StrBasedType):
     custom_to_rs_string = "|x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) }"
 
 
-class EnrollmentID(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<libparsec::EnrollmentID, _> { libparsec::EnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
+class PKIEnrollmentID(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<libparsec::PKIEnrollmentID, _> { libparsec::PKIEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
     custom_to_rs_string = (
-        "|x: libparsec::EnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) }"
+        "|x: libparsec::PKIEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) }"
     )
 
 

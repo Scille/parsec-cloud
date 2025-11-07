@@ -8,9 +8,9 @@ from parsec._parsec import (
     DateTime,
     DeviceCertificate,
     DeviceID,
-    EnrollmentID,
     OrganizationID,
     PkiEnrollmentAnswerPayload,
+    PKIEnrollmentID,
     PkiEnrollmentSubmitPayload,
     UserCertificate,
     UserProfile,
@@ -59,7 +59,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         self,
         now: DateTime,
         organization_id: OrganizationID,
-        enrollment_id: EnrollmentID,
+        enrollment_id: PKIEnrollmentID,
         force: bool,
         submitter_der_x509_certificate: bytes,
         submit_payload_signature: bytes,
@@ -170,7 +170,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
     async def info(
         self,
         organization_id: OrganizationID,
-        enrollment_id: EnrollmentID,
+        enrollment_id: PKIEnrollmentID,
     ) -> PkiEnrollmentInfo | PkiEnrollmentInfoBadOutcome:
         try:
             org = self._data.organizations[organization_id]
@@ -266,7 +266,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         now: DateTime,
         author: DeviceID,
         organization_id: OrganizationID,
-        enrollment_id: EnrollmentID,
+        enrollment_id: PKIEnrollmentID,
     ) -> None | PkiEnrollmentRejectBadOutcome:
         try:
             org = self._data.organizations[organization_id]
@@ -316,7 +316,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         organization_id: OrganizationID,
         author: DeviceID,
         author_verify_key: VerifyKey,
-        enrollment_id: EnrollmentID,
+        enrollment_id: PKIEnrollmentID,
         payload: bytes,
         payload_signature: bytes,
         accepter_der_x509_certificate: bytes,

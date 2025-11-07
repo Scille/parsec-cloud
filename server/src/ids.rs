@@ -119,8 +119,8 @@ crate::binding_utils::gen_py_wrapper_class_for_id!(
 gen_uuid!(SequesterServiceID);
 
 crate::binding_utils::gen_py_wrapper_class_for_id!(
-    EnrollmentID,
-    libparsec_types::EnrollmentID,
+    PKIEnrollmentID,
+    libparsec_types::PKIEnrollmentID,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -128,7 +128,7 @@ crate::binding_utils::gen_py_wrapper_class_for_id!(
     __richcmp__ ord,
     __hash__,
 );
-gen_uuid!(EnrollmentID);
+gen_uuid!(PKIEnrollmentID);
 
 crate::binding_utils::gen_py_wrapper_class_for_id!(
     GreetingAttemptID,

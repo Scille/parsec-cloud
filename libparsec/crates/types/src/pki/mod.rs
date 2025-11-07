@@ -13,7 +13,7 @@ use libparsec_serialization_format::parsec_data;
 use crate::{
     self as libparsec_types, impl_transparent_data_format_conversion,
     serialization::{format_v0_dump, format_vx_load},
-    DataResult, DateTime, DeviceID, DeviceLabel, EnrollmentID, HumanHandle, ParsecAddr,
+    DataResult, DateTime, DeviceID, DeviceLabel, HumanHandle, PKIEnrollmentID, ParsecAddr,
     ParsecPkiEnrollmentAddr, UserID, UserProfile,
 };
 pub use cert_ref::{
@@ -147,7 +147,7 @@ pub struct LocalPendingEnrollment {
     pub cert_ref: X509CertificateReference,
     pub addr: ParsecPkiEnrollmentAddr,
     pub submitted_on: DateTime,
-    pub enrollment_id: EnrollmentID,
+    pub enrollment_id: PKIEnrollmentID,
     pub payload: PkiEnrollmentSubmitPayload,
     pub encrypted_key: Bytes,
     pub encrypted_key_algo: EncryptionAlgorithm,

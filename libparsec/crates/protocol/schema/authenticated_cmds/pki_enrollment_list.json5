@@ -27,7 +27,7 @@
                     {
                         // UUID of the request
                         "name": "enrollment_id",
-                        "type": "EnrollmentID"
+                        "type": "PKIEnrollmentID"
                     },
                     {
                         // When the request was made

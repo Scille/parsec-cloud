@@ -2425,8 +2425,8 @@ fn struct_pki_enrollment_list_item_js_to_rs<'a>(
     let enrollment_id = {
         let js_val: Handle<JsString> = obj.get(cx, "enrollmentId")?;
         {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::EnrollmentID, _> {
-                libparsec::EnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::PKIEnrollmentID, _> {
+                libparsec::PKIEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
             match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
@@ -2507,7 +2507,7 @@ fn struct_pki_enrollment_list_item_rs_to_js<'a>(
     let js_obj = cx.empty_object();
     let js_enrollment_id = JsString::try_new(cx, {
         let custom_to_rs_string =
-            |x: libparsec::EnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
+            |x: libparsec::PKIEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.enrollment_id) {
             Ok(ok) => ok,
             Err(err) => return cx.throw_type_error(err.to_string()),
@@ -20264,8 +20264,8 @@ fn client_pki_enrollment_accept(mut cx: FunctionContext) -> JsResult<JsPromise> 
     let enrollment_id = {
         let js_val = cx.argument::<JsString>(2)?;
         {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::EnrollmentID, _> {
-                libparsec::EnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::PKIEnrollmentID, _> {
+                libparsec::PKIEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
             match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
@@ -20360,8 +20360,8 @@ fn client_pki_enrollment_reject(mut cx: FunctionContext) -> JsResult<JsPromise> 
     let enrollment_id = {
         let js_val = cx.argument::<JsString>(1)?;
         {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::EnrollmentID, _> {
-                libparsec::EnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::PKIEnrollmentID, _> {
+                libparsec::PKIEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
             match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,

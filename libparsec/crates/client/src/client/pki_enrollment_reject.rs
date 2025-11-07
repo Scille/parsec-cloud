@@ -21,7 +21,7 @@ pub enum PkiEnrollmentRejectError {
 
 pub async fn reject(
     cmds: &Arc<AuthenticatedCmds>,
-    enrollment_id: EnrollmentID,
+    enrollment_id: PKIEnrollmentID,
 ) -> Result<(), PkiEnrollmentRejectError> {
     match cmds.send(Req { enrollment_id }).await? {
         Rep::Ok => Ok(()),

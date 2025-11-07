@@ -24,7 +24,7 @@ pub fn req() {
 
     let expected = authenticated_cmds::AnyCmdReq::PkiEnrollmentReject(
         authenticated_cmds::pki_enrollment_reject::Req {
-            enrollment_id: EnrollmentID::from_hex("88a75cc10b8d43d9b1f91ad8a12be8ee").unwrap(),
+            enrollment_id: PKIEnrollmentID::from_hex("88a75cc10b8d43d9b1f91ad8a12be8ee").unwrap(),
         },
     );
 

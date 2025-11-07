@@ -9,7 +9,7 @@
                 {
                     // The enrollment ID to be accepted
                     "name": "enrollment_id",
-                    "type": "EnrollmentID"
+                    "type": "PKIEnrollmentID"
                 },
                 {
                     // `PkiEnrollmentAnswerPayload` in msgpack format

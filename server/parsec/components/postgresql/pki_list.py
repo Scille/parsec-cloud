@@ -4,8 +4,8 @@ from __future__ import annotations
 from parsec._parsec import (
     DateTime,
     DeviceID,
-    EnrollmentID,
     OrganizationID,
+    PKIEnrollmentID,
     UserProfile,
 )
 from parsec.components.pki import (
@@ -65,7 +65,7 @@ async def pki_list(
     for row in rows:
         match row["enrollment_id"]:
             case str() as raw_enrollment_id:
-                enrollment_id = EnrollmentID.from_hex(raw_enrollment_id)
+                enrollment_id = PKIEnrollmentID.from_hex(raw_enrollment_id)
             case _:
                 assert False, row
 

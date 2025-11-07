@@ -692,7 +692,7 @@ impl Client {
 
     pub async fn pki_enrollment_reject(
         &self,
-        enrollment_id: EnrollmentID,
+        enrollment_id: PKIEnrollmentID,
     ) -> Result<(), PkiEnrollmentRejectError> {
         pki_enrollment_reject::reject(&self.cmds, enrollment_id).await
     }
@@ -700,7 +700,7 @@ impl Client {
     pub async fn pki_enrollment_accept(
         &self,
         profile: UserProfile,
-        enrollment_id: EnrollmentID,
+        enrollment_id: PKIEnrollmentID,
         human_handle: &HumanHandle,
         cert_ref: &X509CertificateReference,
         submit_payload: &PkiEnrollmentSubmitPayload,

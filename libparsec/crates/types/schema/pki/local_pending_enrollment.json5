@@ -23,7 +23,7 @@
         },
         {
             "name": "enrollment_id",
-            "type": "EnrollmentID"
+            "type": "PKIEnrollmentID"
         },
         {
             "name": "payload",

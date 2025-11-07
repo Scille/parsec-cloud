@@ -251,7 +251,7 @@ new_uuid_type!(pub VlobID);
 new_uuid_type!(pub BlockID);
 new_uuid_type!(pub ChunkID);
 new_uuid_type!(pub SequesterServiceID);
-new_uuid_type!(pub EnrollmentID);
+new_uuid_type!(pub PKIEnrollmentID);
 new_uuid_type!(pub GreetingAttemptID);
 new_uuid_type!(pub AccountAuthMethodID);
 new_uuid_type!(pub AccountVaultItemOpaqueKeyID);

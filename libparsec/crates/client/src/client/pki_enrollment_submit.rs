@@ -41,7 +41,7 @@ pub async fn pki_enrollment_submit(
         config.proxy.clone(),
     )?;
 
-    let enrollment_id = EnrollmentID::default();
+    let enrollment_id = PKIEnrollmentID::default();
     let signing_key = SigningKey::generate();
     let private_key = PrivateKey::generate();
 

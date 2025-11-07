@@ -217,7 +217,7 @@ fn serde_pki_enrollment_submit_payload() {
             )
             .unwrap(),
             submitted_on: "2000-01-02T00:00:00Z".parse().unwrap(),
-            enrollment_id: EnrollmentID::from_hex("d4e678ea63cc4025a0739c6c46476794").unwrap(),
+            enrollment_id: PKIEnrollmentID::from_hex("d4e678ea63cc4025a0739c6c46476794").unwrap(),
             payload: PkiEnrollmentSubmitPayload {
                 verify_key: alice.verify_key(),
                 public_key: alice.public_key(),
@@ -272,7 +272,7 @@ fn serde_pki_enrollment_submit_payload() {
             )
             .unwrap(),
             submitted_on: "2000-01-02T00:00:00Z".parse().unwrap(),
-            enrollment_id: EnrollmentID::from_hex("d4e678ea63cc4025a0739c6c46476794").unwrap(),
+            enrollment_id: PKIEnrollmentID::from_hex("d4e678ea63cc4025a0739c6c46476794").unwrap(),
             payload: PkiEnrollmentSubmitPayload {
                 verify_key: alice.verify_key(),
                 public_key: alice.public_key(),

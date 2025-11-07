@@ -6,8 +6,8 @@ from parsec._parsec import (
     DateTime,
     DeviceLabel,
     EmailAddress,
-    EnrollmentID,
     HumanHandle,
+    PKIEnrollmentID,
     PkiEnrollmentSubmitPayload,
     PrivateKey,
     SigningKey,
@@ -27,8 +27,8 @@ from tests.common import (
 async def enrollment_id(
     coolorg: CoolorgRpcClients,
     backend: Backend,
-) -> EnrollmentID:
-    enrollment_id = EnrollmentID.new()
+) -> PKIEnrollmentID:
+    enrollment_id = PKIEnrollmentID.new()
     submitted_on = DateTime.now()
     submit_payload = PkiEnrollmentSubmitPayload(
         verify_key=SigningKey.generate().verify_key,
@@ -53,7 +53,7 @@ async def enrollment_id(
 async def test_authenticated_pki_enrollment_reject_ok(
     coolorg: CoolorgRpcClients,
     backend: Backend,
-    enrollment_id: EnrollmentID,
+    enrollment_id: PKIEnrollmentID,
 ) -> None:
     with backend.event_bus.spy() as spy:
         rep = await coolorg.alice.pki_enrollment_reject(enrollment_id=enrollment_id)
@@ -68,7 +68,7 @@ async def test_authenticated_pki_enrollment_reject_ok(
 
 @pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
 async def test_authenticated_pki_enrollment_reject_author_not_allowed(
-    coolorg: CoolorgRpcClients, backend: Backend, enrollment_id: EnrollmentID, kind: str
+    coolorg: CoolorgRpcClients, backend: Backend, enrollment_id: PKIEnrollmentID, kind: str
 ) -> None:
     match kind:
         case "never_allowed":
@@ -90,7 +90,7 @@ async def test_authenticated_pki_enrollment_reject_author_not_allowed(
 async def test_authenticated_pki_enrollment_reject_enrollment_no_longer_available(
     coolorg: CoolorgRpcClients,
     backend: Backend,
-    enrollment_id: EnrollmentID,
+    enrollment_id: PKIEnrollmentID,
 ) -> None:
     outcome = await backend.pki.reject(
         now=DateTime.now(),
@@ -107,13 +107,13 @@ async def test_authenticated_pki_enrollment_reject_enrollment_no_longer_availabl
 async def test_authenticated_pki_enrollment_reject_enrollment_not_found(
     coolorg: CoolorgRpcClients,
 ) -> None:
-    rep = await coolorg.alice.pki_enrollment_reject(enrollment_id=EnrollmentID.new())
+    rep = await coolorg.alice.pki_enrollment_reject(enrollment_id=PKIEnrollmentID.new())
     assert rep == authenticated_cmds.latest.pki_enrollment_reject.RepEnrollmentNotFound()
 
 
 async def test_authenticated_pki_enrollment_reject_http_common_errors(
     coolorg: CoolorgRpcClients,
-    enrollment_id: EnrollmentID,
+    enrollment_id: PKIEnrollmentID,
     authenticated_http_common_errors_tester: HttpCommonErrorsTester,
 ) -> None:
     async def do():

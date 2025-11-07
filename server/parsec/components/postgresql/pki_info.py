@@ -5,8 +5,8 @@ from asyncpg import Record
 
 from parsec._parsec import (
     DateTime,
-    EnrollmentID,
     OrganizationID,
+    PKIEnrollmentID,
 )
 from parsec.components.pki import (
     PkiEnrollmentInfo,
@@ -60,7 +60,7 @@ SELECT
 async def pki_info(
     conn: AsyncpgConnection,
     organization_id: OrganizationID,
-    enrollment_id: EnrollmentID,
+    enrollment_id: PKIEnrollmentID,
 ) -> PkiEnrollmentInfo | PkiEnrollmentInfoBadOutcome:
     row = await conn.fetchrow(
         *_q_get_enrollment_info(

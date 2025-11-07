@@ -37,7 +37,7 @@ enum PkiAcceptOutcome {
 pub async fn accept(
     client: &Client,
     profile: UserProfile,
-    enrollment_id: EnrollmentID,
+    enrollment_id: PKIEnrollmentID,
     human_handle: &HumanHandle,
     cert_ref: &X509CertificateReference,
     submit_payload: &PkiEnrollmentSubmitPayload,
@@ -72,7 +72,7 @@ pub async fn accept(
 async fn accept_internal(
     client: &Client,
     profile: UserProfile,
-    enrollment_id: EnrollmentID,
+    enrollment_id: PKIEnrollmentID,
     human_handle: &HumanHandle,
     cert_ref: &X509CertificateReference,
     now: DateTime,

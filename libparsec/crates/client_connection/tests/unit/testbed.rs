@@ -31,7 +31,7 @@ async fn low_level_send_hook(env: &TestbedEnv) {
 
     let rep = cmds
         .send(anonymous_cmds::pki_enrollment_info::Req {
-            enrollment_id: EnrollmentID::default(),
+            enrollment_id: PKIEnrollmentID::default(),
         })
         .await;
     assert!(
@@ -48,7 +48,7 @@ async fn low_level_send_hook(env: &TestbedEnv) {
 
     let rep = cmds
         .send(anonymous_cmds::pki_enrollment_info::Req {
-            enrollment_id: EnrollmentID::default(),
+            enrollment_id: PKIEnrollmentID::default(),
         })
         .await;
     assert!(
@@ -68,7 +68,7 @@ async fn low_level_send_hook(env: &TestbedEnv) {
     for _ in 0..3 {
         let rep = cmds
             .send(anonymous_cmds::pki_enrollment_info::Req {
-                enrollment_id: EnrollmentID::default(),
+                enrollment_id: PKIEnrollmentID::default(),
             })
             .await;
         assert!(
@@ -88,7 +88,7 @@ async fn low_level_send_hook(env: &TestbedEnv) {
 
     let rep = cmds
         .send(anonymous_cmds::pki_enrollment_info::Req {
-            enrollment_id: EnrollmentID::default(),
+            enrollment_id: PKIEnrollmentID::default(),
         })
         .await;
     assert!(
@@ -114,7 +114,7 @@ async fn high_level_send_hook(env: &TestbedEnv) {
 
     let rep = cmds
         .send(anonymous_cmds::pki_enrollment_info::Req {
-            enrollment_id: EnrollmentID::default(),
+            enrollment_id: PKIEnrollmentID::default(),
         })
         .await;
     assert!(
@@ -129,7 +129,7 @@ async fn high_level_send_hook(env: &TestbedEnv) {
 
     let rep = cmds
         .send(anonymous_cmds::pki_enrollment_info::Req {
-            enrollment_id: EnrollmentID::default(),
+            enrollment_id: PKIEnrollmentID::default(),
         })
         .await;
     assert!(

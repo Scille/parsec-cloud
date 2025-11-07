@@ -183,7 +183,7 @@ impl_crc_hash_for_uuid_based!(VlobID);
 impl_crc_hash_for_uuid_based!(BlockID);
 impl_crc_hash_for_uuid_based!(ChunkID);
 impl_crc_hash_for_uuid_based!(SequesterServiceID);
-impl_crc_hash_for_uuid_based!(EnrollmentID);
+impl_crc_hash_for_uuid_based!(PKIEnrollmentID);
 impl_crc_hash_for_uuid_based!(GreetingAttemptID);
 
 macro_rules! impl_crc_hash_for_token_based {
