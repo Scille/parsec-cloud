@@ -311,6 +311,7 @@ export interface PkiEnrollmentListItem {
     submittedOn: DateTime
     derX509Certificate: Bytes
     payloadSignature: Bytes
+    payloadSignatureAlgorithm: PkiSignatureAlgorithm
     payload: Bytes
 }
 

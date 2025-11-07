@@ -2476,6 +2476,15 @@ fn struct_pki_enrollment_list_item_js_to_rs<'a>(
             }
         }
     };
+    let payload_signature_algorithm = {
+        let js_val: Handle<JsString> = obj.get(cx, "payloadSignatureAlgorithm")?;
+        {
+            match js_val.value(cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
     let payload = {
         let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "payload")?;
         {
@@ -2495,6 +2504,7 @@ fn struct_pki_enrollment_list_item_js_to_rs<'a>(
         submitted_on,
         der_x509_certificate,
         payload_signature,
+        payload_signature_algorithm,
         payload,
     })
 }
@@ -2537,6 +2547,20 @@ fn struct_pki_enrollment_list_item_rs_to_js<'a>(
         js_buff
     };
     js_obj.set(cx, "payloadSignature", js_payload_signature)?;
+    let js_payload_signature_algorithm = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |v| -> Result<_, std::convert::Infallible> { Ok(std::string::ToString::to_string(&v)) };
+        match custom_to_rs_string(rs_obj.payload_signature_algorithm) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err.to_string()),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(
+        cx,
+        "payloadSignatureAlgorithm",
+        js_payload_signature_algorithm,
+    )?;
     let js_payload = {
         let rs_buff = { rs_obj.payload.as_ref() };
         let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;

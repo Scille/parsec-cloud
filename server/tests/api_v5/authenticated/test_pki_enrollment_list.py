@@ -9,6 +9,7 @@ from parsec._parsec import (
     HumanHandle,
     PKIEnrollmentID,
     PkiEnrollmentSubmitPayload,
+    PkiSignatureAlgorithm,
     PrivateKey,
     SigningKey,
     UserProfile,
@@ -54,6 +55,7 @@ async def test_authenticated_pki_enrollment_list_ok(
                 submitted_on=submitted_on,
                 der_x509_certificate=f"<user{i} der x509 certificate>".encode(),
                 payload_signature=f"<user{i} submit payload signature>".encode(),
+                payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
                 payload=submit_payload,
             )
         )
@@ -64,6 +66,7 @@ async def test_authenticated_pki_enrollment_list_ok(
             force=False,
             submitter_der_x509_certificate=expected_enrollment_item.der_x509_certificate,
             submit_payload_signature=expected_enrollment_item.payload_signature,
+            submit_payload_signature_algorithm=expected_enrollment_item.payload_signature_algorithm,
             submit_payload=expected_enrollment_item.payload,
         )
         assert outcome is None
@@ -112,6 +115,7 @@ async def test_authenticated_pki_enrollment_list_ok(
             submitted_on=canceller_submitted_on,
             der_x509_certificate=to_cancel.der_x509_certificate,
             payload_signature=b"<canceller submit payload signature>",
+            payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
             payload=canceller_submit_payload,
         )
     )
@@ -122,6 +126,7 @@ async def test_authenticated_pki_enrollment_list_ok(
         force=True,
         submitter_der_x509_certificate=canceller_expected_enrollment_item.der_x509_certificate,
         submit_payload_signature=canceller_expected_enrollment_item.payload_signature,
+        submit_payload_signature_algorithm=canceller_expected_enrollment_item.payload_signature_algorithm,
         submit_payload=canceller_expected_enrollment_item.payload,
     )
     assert outcome is None

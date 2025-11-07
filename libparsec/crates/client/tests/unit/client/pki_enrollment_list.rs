@@ -19,6 +19,7 @@ async fn ok(env: &TestbedEnv) {
         enrollment_id: PKIEnrollmentID::from_hex("e1fe88bd0f054261887a6c8039710b40").unwrap(),
         payload: hex!("3c64756d6d793e").as_ref().into(),
         payload_signature: hex!("3c7369676e61747572653e").as_ref().into(),
+        payload_signature_algorithm: PkiSignatureAlgorithm::RsassaPssSha256,
         submitted_on: DateTime::from_timestamp_micros(1668594983390001).unwrap(),
     };
     let pki_enrollment_item_clone = pki_enrollment_item.clone();

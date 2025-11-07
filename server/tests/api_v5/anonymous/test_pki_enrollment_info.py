@@ -11,6 +11,7 @@ from parsec._parsec import (
     PkiEnrollmentAnswerPayload,
     PKIEnrollmentID,
     PkiEnrollmentSubmitPayload,
+    PkiSignatureAlgorithm,
     PrivateKey,
     SigningKey,
     UserProfile,
@@ -46,6 +47,7 @@ async def test_anonymous_pki_enrollment_info_ok(
         force=False,
         submitter_der_x509_certificate=b"<mike der x509 certificate>",
         submit_payload_signature=b"<mike submit payload signature>",
+        submit_payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         submit_payload=submit_payload,
     )
     assert outcome is None
@@ -124,6 +126,7 @@ async def test_anonymous_pki_enrollment_info_ok(
                 force=True,
                 submitter_der_x509_certificate=b"<mike der x509 certificate>",
                 submit_payload_signature=b"<mike submit payload signature>",
+                submit_payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
                 submit_payload=submit_payload,
             )
             assert outcome is None
@@ -190,6 +193,7 @@ async def test_anonymous_pki_enrollment_info_http_common_errors(
         force=False,
         submitter_der_x509_certificate=b"<mike der x509 certificate>",
         submit_payload_signature=b"<mike submit payload signature>",
+        submit_payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         submit_payload=submit_payload,
     )
     assert outcome is None

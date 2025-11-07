@@ -30,6 +30,7 @@ from parsec._parsec import (
     InvitationType,
     OrganizationID,
     PKIEnrollmentID,
+    PkiSignatureAlgorithm,
     RealmArchivingCertificate,
     RealmKeyRotationCertificate,
     RealmNameCertificate,
@@ -745,6 +746,7 @@ class MemoryPkiEnrollment:
     submitter_der_x509_certificate_sha1: bytes = field(repr=False)
 
     submit_payload_signature: bytes = field(repr=False)
+    submit_payload_signature_algorithm: PkiSignatureAlgorithm
     submit_payload: bytes = field(repr=False)
     submitted_on: DateTime
 

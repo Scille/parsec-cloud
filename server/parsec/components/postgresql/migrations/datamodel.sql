@@ -447,6 +447,8 @@ CREATE TYPE pki_enrollment_info_cancelled AS (
     cancelled_on TIMESTAMPTZ
 );
 
+CREATE TYPE pki_signature_algorithm AS ENUM ('RSASSA_PSS_SHA256');
+
 CREATE TABLE pki_enrollment (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
@@ -466,6 +468,9 @@ CREATE TABLE pki_enrollment (
     info_accepted PKI_ENROLLMENT_INFO_ACCEPTED,
     info_rejected PKI_ENROLLMENT_INFO_REJECTED,
     info_cancelled PKI_ENROLLMENT_INFO_CANCELLED,
+
+    -- Added in migration 0016
+    submit_payload_signature_algorithm PKI_SIGNATURE_ALGORITHM NOT NULL,
 
     UNIQUE (organization, enrollment_id)
 );

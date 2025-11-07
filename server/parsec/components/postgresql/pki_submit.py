@@ -8,6 +8,7 @@ from parsec._parsec import (
     OrganizationID,
     PKIEnrollmentID,
     PkiEnrollmentSubmitPayload,
+    PkiSignatureAlgorithm,
 )
 from parsec.components.pki import (
     PkiEnrollmentSubmitBadOutcome,
@@ -98,6 +99,7 @@ INSERT INTO pki_enrollment (
     submitter_der_x509_certificate,
     submitter_der_x509_certificate_sha1,
     submit_payload_signature,
+    submit_payload_signature_algorithm,
     submit_payload,
     submitted_on,
     enrollment_state
@@ -108,6 +110,7 @@ VALUES (
     $submitter_der_x509_certificate,
     $submitter_der_x509_certificate_sha1,
     $submit_payload_signature,
+    $submit_payload_signature_algorithm,
     $submit_payload,
     $submitted_on,
     'SUBMITTED'
@@ -147,6 +150,7 @@ async def pki_submit(
     force: bool,
     submitter_der_x509_certificate: bytes,
     submit_payload_signature: bytes,
+    submit_payload_signature_algorithm: PkiSignatureAlgorithm,
     submit_payload: bytes,
 ) -> None | PkiEnrollmentSubmitBadOutcome | PkiEnrollmentSubmitX509CertificateAlreadySubmitted:
     # 1) Check organization exists and is not expired
@@ -290,6 +294,7 @@ async def pki_submit(
             submitter_der_x509_certificate=submitter_der_x509_certificate,
             submitter_der_x509_certificate_sha1=submitter_der_x509_certificate_sha1,
             submit_payload_signature=submit_payload_signature,
+            submit_payload_signature_algorithm=submit_payload_signature_algorithm.str,
             submit_payload=submit_payload,
             submitted_on=now,
         )

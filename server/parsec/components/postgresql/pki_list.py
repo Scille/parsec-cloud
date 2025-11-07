@@ -6,6 +6,7 @@ from parsec._parsec import (
     DeviceID,
     OrganizationID,
     PKIEnrollmentID,
+    PkiSignatureAlgorithm,
     UserProfile,
 )
 from parsec.components.pki import (
@@ -26,6 +27,7 @@ SELECT
     submitted_on,
     submitter_der_x509_certificate,
     submit_payload_signature,
+    submit_payload_signature_algorithm,
     submit_payload
 FROM pki_enrollment
 WHERE
@@ -87,6 +89,14 @@ async def pki_list(
             case _:
                 assert False, row
 
+        match row["submit_payload_signature_algorithm"]:
+            case str() as raw_payload_signature_algorithm:
+                payload_signature_algorithm = PkiSignatureAlgorithm.from_str(
+                    raw_payload_signature_algorithm
+                )
+            case _:
+                assert False, row
+
         match row["submit_payload"]:
             case bytes() as payload:
                 pass
@@ -99,6 +109,7 @@ async def pki_list(
                 submitted_on=submitted_on,
                 der_x509_certificate=der_x509_certificate,
                 payload_signature=payload_signature,
+                payload_signature_algorithm=payload_signature_algorithm,
                 payload=payload,
             )
         )

@@ -92,6 +92,7 @@ class PkiEnrollmentListItem(Structure):
     submitted_on: DateTime
     der_x509_certificate: Bytes
     payload_signature: Bytes
+    payload_signature_algorithm: PkiSignatureAlgorithm
     payload: Bytes
 
 
