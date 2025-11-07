@@ -191,7 +191,7 @@ jobs:
             artifact_tag: windows-exe
           - name: 🍎 macOS x86
             platform: macos
-            os: macos-13
+            os: macos-15-intel
             raw_latest_file: latest-mac.yml
             extensions: dmg zip
             os_alias: mac
