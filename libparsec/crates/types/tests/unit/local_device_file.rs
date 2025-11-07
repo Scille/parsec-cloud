@@ -322,7 +322,7 @@ fn smartcard_device_file(alice: &Device) {
         encrypted_key: b"foo".as_ref().into(),
         certificate_ref: X509CertificateReference::from(X509CertificateHash::fake_sha256())
             .add_or_replace_uri(X509WindowsCngURI::from(Bytes::from_static(b"foo"))),
-        algorithm_for_encrypted_key: EncryptionAlgorithm::RsaesOaepSha256,
+        algorithm_for_encrypted_key: PKIEncryptionAlgorithm::RsaesOaepSha256,
         ciphertext: hex!(
             "a73aff77a2aa692b4393e094bfd2c2ccad4b0a8d010960caf27165b787fb412ed2aeeb"
             "99f492a87063e368cebe38dc1f20c65273cb3254480cc9e4b519a53241205b531b41ed"

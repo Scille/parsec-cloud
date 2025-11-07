@@ -6,7 +6,7 @@ mod utils;
 use anyhow::Context;
 use clap::Parser;
 use libparsec_platform_pki::decrypt_message;
-use libparsec_types::{EncryptionAlgorithm, X509CertificateHash};
+use libparsec_types::{PKIEncryptionAlgorithm, X509CertificateHash};
 
 #[derive(Debug, Parser)]
 struct Args {
@@ -16,8 +16,8 @@ struct Args {
     #[command(flatten)]
     content: utils::ContentOpts,
     /// The algorithm used to encrypt the content.
-    #[arg(long, default_value_t = EncryptionAlgorithm::RsaesOaepSha256)]
-    algorithm: EncryptionAlgorithm,
+    #[arg(long, default_value_t = PKIEncryptionAlgorithm::RsaesOaepSha256)]
+    algorithm: PKIEncryptionAlgorithm,
 }
 
 fn main() -> anyhow::Result<()> {
