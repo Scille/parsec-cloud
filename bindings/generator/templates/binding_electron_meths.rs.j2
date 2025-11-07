@@ -531,7 +531,7 @@ JsString::try_new({{ mut_cx_ref }},
     let custom_to_rs_string = {{ type.custom_to_rs_string }};
     match custom_to_rs_string({{ rs_value }}) {
         Ok(ok) => ok,
-        Err(err) => return cx.throw_type_error(err),
+        Err(err) => return cx.throw_type_error(err.to_string()),
     }
 }
 {%- else -%}

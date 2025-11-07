@@ -12,6 +12,10 @@ OK = TypeVar("OK")
 ERR = TypeVar("ERR")
 REFERENCED = TypeVar("REFERENCED")
 
+DISPLAY_TO_STRING = (
+    "|v| -> Result<_, std::convert::Infallible> { Ok(std::string::ToString::to_string(&v)) }"
+)
+
 
 class Result(Generic[OK, ERR]):
     pass
@@ -165,9 +169,7 @@ class Handle(U32BasedType):
 
 class ApiVersion(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::ApiVersion::try_from(s.as_str()).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = (
-        "|x: libparsec::ApiVersion| -> Result<String, &'static str> { Ok(x.to_string()) }"
-    )
+    custom_to_rs_string = DISPLAY_TO_STRING
 
 
 class OrganizationID(StrBasedType):
@@ -197,9 +199,7 @@ class DeviceLabel(StrBasedType):
 
 class EmailAddress(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = (
-        "|x: libparsec::EmailAddress| -> Result<_, &'static str> { Ok(x.to_string()) }"
-    )
+    custom_to_rs_string = DISPLAY_TO_STRING
 
 
 class HumanHandle(Structure):
@@ -238,9 +238,7 @@ class Path(StrBasedType):
 
 class FsPath(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<_, String> { s.parse::<libparsec::FsPath>().map_err(|e| e.to_string()) }"
-    custom_to_rs_string = (
-        "|path: libparsec::FsPath| -> Result<_, &'static str> { Ok(path.to_string()) }"
-    )
+    custom_to_rs_string = DISPLAY_TO_STRING
 
 
 class SequesterServiceID(StrBasedType):
