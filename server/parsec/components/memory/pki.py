@@ -16,6 +16,7 @@ from parsec._parsec import (
     UserProfile,
     VerifyKey,
 )
+from parsec._parsec_pyi.pki import PkiSignatureAlgorithm
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.events import EventBus
 from parsec.components.memory.datamodel import (
@@ -62,6 +63,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         force: bool,
         submitter_der_x509_certificate: bytes,
         submit_payload_signature: bytes,
+        submit_payload_signature_algorithm: PkiSignatureAlgorithm,
         submit_payload: bytes,
     ) -> None | PkiEnrollmentSubmitBadOutcome | PkiEnrollmentSubmitX509CertificateAlreadySubmitted:
         try:
@@ -136,6 +138,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 submitter_der_x509_certificate_sha1=submitter_der_x509_certificate_sha1,
                 submit_payload_signature=submit_payload_signature,
                 submit_payload=submit_payload,
+                submit_payload_signature_algorithm=submit_payload_signature_algorithm,
                 submitted_on=now,
             )
 
@@ -230,6 +233,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 enrollment_id=enrollment.enrollment_id,
                 payload=enrollment.submit_payload,
                 payload_signature=enrollment.submit_payload_signature,
+                payload_signature_algorithm=enrollment.submit_payload_signature_algorithm,
                 submitted_on=enrollment.submitted_on,
                 der_x509_certificate=enrollment.submitter_der_x509_certificate,
             )

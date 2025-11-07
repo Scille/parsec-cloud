@@ -9,6 +9,7 @@ from parsec._parsec import (
     EnrollmentID,
     HumanHandle,
     PkiEnrollmentSubmitPayload,
+    PkiSignatureAlgorithm,
     PrivateKey,
     SigningKey,
     UserProfile,
@@ -60,6 +61,7 @@ async def test_authenticated_pki_enrollment_list_ok(
                     submitted_on=submitted_on,
                     der_x509_certificate=b"<philip der x509 certificate>",
                     payload_signature=b"<philip submit payload signature>",
+                    payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
                     payload=submit_payload,
                 )
             ]

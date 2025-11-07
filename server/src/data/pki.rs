@@ -257,7 +257,7 @@ crate::binding_utils::gen_py_wrapper_class_for_enum!(
     PkiSignatureAlgorithm,
     libparsec_types::PkiSignatureAlgorithm,
     [
-        "RSASSAPSSSHA256",
+        "RSASSA_PSS_SHA256",
         rsassa_pss_sha256,
         libparsec_types::PkiSignatureAlgorithm::RsassaPssSha256
     ],

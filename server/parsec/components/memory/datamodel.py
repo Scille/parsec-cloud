@@ -52,6 +52,7 @@ from parsec._parsec import (
     VerifyKey,
     VlobID,
 )
+from parsec._parsec_pyi.pki import PkiSignatureAlgorithm
 from parsec.components.account import ValidationCodeInfo
 from parsec.components.invite import InvitationCreatedBy
 from parsec.components.organization import TermsOfService
@@ -756,6 +757,7 @@ class MemoryPkiEnrollment:
     submitter_der_x509_certificate_sha1: bytes = field(repr=False)
 
     submit_payload_signature: bytes = field(repr=False)
+    submit_payload_signature_algorithm: PkiSignatureAlgorithm
     submit_payload: bytes = field(repr=False)
     submitted_on: DateTime
 
