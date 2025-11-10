@@ -42,7 +42,7 @@ describe('User List Item', () => {
       global: {
         provide: getDefaultProvideConfig(),
         stubs: {
-          TagProfile: {
+          UserProfileTag: {
             template: '{{ profile }}',
             props: {
               profile: UserProfile,

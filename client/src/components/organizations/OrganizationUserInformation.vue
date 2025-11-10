@@ -61,14 +61,14 @@
         <div class="user-active-list">
           <!-- Admin -->
           <div class="user-active-list-item">
-            <tag-profile :profile="UserProfile.Admin" />
+            <user-profile-tag :profile="UserProfile.Admin" />
             <ion-text class="user-active-list-item__value title-h4">
               {{ orgInfo.users.admins }}
             </ion-text>
           </div>
           <!-- Standard -->
           <div class="user-active-list-item">
-            <tag-profile :profile="UserProfile.Standard" />
+            <user-profile-tag :profile="UserProfile.Standard" />
             <ion-text class="user-active-list-item__value title-h4">
               {{ orgInfo.users.standards }}
             </ion-text>
@@ -78,7 +78,7 @@
             v-if="orgInfo.outsidersAllowed"
             class="user-active-list-item"
           >
-            <tag-profile :profile="UserProfile.Outsider" />
+            <user-profile-tag :profile="UserProfile.Outsider" />
             <ion-text class="user-active-list-item__value title-h4">
               {{ orgInfo.users.outsiders }}
             </ion-text>
@@ -133,7 +133,7 @@
 </template>
 
 <script setup lang="ts">
-import TagProfile from '@/components/users/TagProfile.vue';
+import UserProfileTag from '@/components/users/UserProfileTag.vue';
 import { ClientInfo, listOrganizationJoinRequests, listUserInvitations, OrganizationInfo, UserProfile } from '@/parsec';
 import { navigateTo, Routes } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';

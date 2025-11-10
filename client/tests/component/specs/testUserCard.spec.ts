@@ -33,7 +33,7 @@ describe('User Card', () => {
       global: {
         provide: getDefaultProvideConfig(),
         stubs: {
-          TagProfile: {
+          UserProfileTag: {
             template: '{{ profile }}',
             props: {
               profile: UserProfile,
