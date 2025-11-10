@@ -62,7 +62,7 @@
         </ion-text>
       </div>
       <div class="user-card-profile">
-        <tag-profile :profile="user.currentProfile" />
+        <user-profile-tag :profile="user.currentProfile" />
         <div
           v-if="!user.isActive()"
           class="user-revoked user-suspended"
@@ -84,8 +84,8 @@
 </template>
 
 <script setup lang="ts">
-import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
+import UserProfileTag from '@/components/users/UserProfileTag.vue';
 import UserStatusTag from '@/components/users/UserStatusTag.vue';
 import { UserModel } from '@/components/users/types';
 import { IonIcon, IonItem, IonText } from '@ionic/vue';

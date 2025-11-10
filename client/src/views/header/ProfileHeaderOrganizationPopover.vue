@@ -6,7 +6,7 @@
       <ion-text class="body-sm header-list-email">
         {{ email }}
       </ion-text>
-      <tag-profile :profile="profile" />
+      <user-profile-tag :profile="profile" />
     </div>
     <div class="main-list">
       <download-parsec
@@ -148,7 +148,7 @@ export enum ProfilePopoverOption {
 
 <script setup lang="ts">
 import DownloadParsec from '@/components/misc/DownloadParsec.vue';
-import TagProfile from '@/components/users/TagProfile.vue';
+import UserProfileTag from '@/components/users/UserProfileTag.vue';
 import { isMobile, isWeb, UserProfile } from '@/parsec';
 import { APP_VERSION, Env } from '@/services/environment';
 import { UpdateAvailabilityData } from '@/services/eventDistributor';
