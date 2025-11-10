@@ -84,7 +84,7 @@
               <ion-text class="item-container__name cell">
                 {{ sharedWorkspace.workspace.currentName }}
               </ion-text>
-              <workspace-tag-role
+              <workspace-role-tag
                 class="item-container__tag"
                 :role="sharedWorkspace.userRole"
               />
@@ -105,7 +105,7 @@
 <script setup lang="ts">
 import { TechnicalId } from '@/components/misc';
 import UserStatusTag from '@/components/users/UserStatusTag.vue';
-import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
+import WorkspaceRoleTag from '@/components/workspaces/WorkspaceRoleTag.vue';
 import { SharedWithInfo, UserInfo, getWorkspacesSharedWith } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { IonCard, IonCardContent, IonIcon, IonList, IonPage, IonText } from '@ionic/vue';

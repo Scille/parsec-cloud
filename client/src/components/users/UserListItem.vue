@@ -74,7 +74,7 @@
           {{ user.humanHandle.email }}
         </ion-text>
         <div class="user-mobile-text__profile-status">
-          <tag-profile
+          <user-profile-tag
             :profile="user.currentProfile"
             class="user-mobile-text__profile"
           />
@@ -91,7 +91,7 @@
 
     <!-- user profile -->
     <div class="user-profile">
-      <tag-profile :profile="user.currentProfile" />
+      <user-profile-tag :profile="user.currentProfile" />
     </div>
 
     <!-- user mail -->
@@ -142,7 +142,7 @@
 </template>
 
 <script setup lang="ts">
-import TagProfile from '@/components/users/TagProfile.vue';
+import UserProfileTag from '@/components/users/UserProfileTag.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import UserStatusTag from '@/components/users/UserStatusTag.vue';
 import { UserModel } from '@/components/users/types';

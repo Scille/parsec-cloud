@@ -15,7 +15,7 @@
           :user-name="user.info.humanHandle.label"
           class="users-list-item-content__avatar body"
         />
-        <workspace-tag-role
+        <workspace-role-tag
           :role="user.role"
           class="users-list-item-content__body body"
         />
@@ -26,7 +26,7 @@
 
 <script setup lang="ts">
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
-import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
+import WorkspaceRoleTag from '@/components/workspaces/WorkspaceRoleTag.vue';
 import { UserInfo, WorkspaceRole, getUserInfo } from '@/parsec';
 import { EventDistributor } from '@/services/eventDistributor';
 import { MultipleUsersJoinWorkspaceData } from '@/services/informationManager';

@@ -9,7 +9,7 @@ export {
 } from '@/components/workspaces/utils';
 
 import WorkspaceFilter from '@/components/workspaces/WorkspaceFilter.vue';
-import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
+import WorkspaceRoleTag from '@/components/workspaces/WorkspaceRoleTag.vue';
 
 export type { WorkspacesPageFilters, WorkspacesPageSavedData } from '@/components/workspaces/utils';
-export { WorkspaceFilter, WorkspaceTagRole };
+export { WorkspaceFilter, WorkspaceRoleTag };

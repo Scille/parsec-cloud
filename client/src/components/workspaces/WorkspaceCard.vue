@@ -47,7 +47,7 @@
       </div>
     </div>
     <div class="workspace-card-bottom">
-      <workspace-tag-role
+      <workspace-role-tag
         class="workspace-card-bottom__role"
         :role="workspace.currentSelfRole"
       />
@@ -78,7 +78,7 @@
 
 <script setup lang="ts">
 import { formatFileSize } from '@/common/file';
-import { WorkspaceTagRole } from '@/components/workspaces';
+import { WorkspaceRoleTag } from '@/components/workspaces';
 import { UserProfile, WorkspaceInfo } from '@/parsec';
 import { IonIcon, IonText } from '@ionic/vue';
 import { cloudDone, cloudOffline, ellipsisHorizontal, shareSocial, star } from 'ionicons/icons';

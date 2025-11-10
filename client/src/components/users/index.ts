@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import TagProfile from '@/components/users/TagProfile.vue';
+import UserProfileTag from '@/components/users/UserProfileTag.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import UserCard from '@/components/users/UserCard.vue';
 import UserFilter from '@/components/users/UserFilter.vue';
@@ -10,4 +10,4 @@ import UserSelect from '@/components/users/UserSelect.vue';
 
 export { InvitationAction, SortProperty, UserCollection } from '@/components/users/types';
 export type { UserFilterChangeEvent, UserFilterLabels, UserModel } from '@/components/users/types';
-export { TagProfile, UserAvatarName, UserCard, UserFilter, UserInformation, UserListItem, UserSelect };
+export { UserProfileTag, UserAvatarName, UserCard, UserFilter, UserInformation, UserListItem, UserSelect };
