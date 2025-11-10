@@ -1463,14 +1463,14 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "poetry-lock-package"
-version = "0.5.2"
+version = "0.5.3"
 description = "Poetry lock package generator"
 optional = false
-python-versions = "<4.0.0,>=3.9.0"
+python-versions = ">=3.9.0"
 groups = ["dev"]
 files = [
-    {file = "poetry_lock_package-0.5.2-py3-none-any.whl", hash = "sha256:32e40b36afe3a3b8b25a5c71e0207d4d400230a32f7a7bc735642706ef3a5ffa"},
-    {file = "poetry_lock_package-0.5.2.tar.gz", hash = "sha256:c50a32200962f72e0d3e0aec5905d38394e5200945e2a04ea8ca08fba07deafb"},
+    {file = "poetry_lock_package-0.5.3-py3-none-any.whl", hash = "sha256:ffb16a8b9b7ba35961a1601c11cea391dafd3fd4df95cdf72c7b037b55d557da"},
+    {file = "poetry_lock_package-0.5.3.tar.gz", hash = "sha256:7bf01a2230df3dad9b7c7265f5b763f57c3f3621aa7604f0d4cb922cc400f2d4"},
 ]
 
 [package.dependencies]
