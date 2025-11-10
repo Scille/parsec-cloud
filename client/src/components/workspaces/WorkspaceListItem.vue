@@ -47,7 +47,7 @@
 
     <!-- role user -->
     <div class="workspace-role">
-      <workspace-tag-role :role="workspace.currentSelfRole" />
+      <workspace-role-tag :role="workspace.currentSelfRole" />
     </div>
 
     <!-- user avatars -->
@@ -111,7 +111,7 @@
 <script setup lang="ts">
 import { formatFileSize } from '@/common/file';
 import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
-import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
+import WorkspaceRoleTag from '@/components/workspaces/WorkspaceRoleTag.vue';
 import { UserProfile, WorkspaceInfo } from '@/parsec';
 import { IonButton, IonIcon, IonItem, IonLabel } from '@ionic/vue';
 import { business, cloudDone, cloudOffline, ellipsisHorizontal, star } from 'ionicons/icons';
