@@ -11,12 +11,12 @@
     <ion-text class="profile-info-card__email body">
       {{ email }}
     </ion-text>
-    <tag-profile :profile="currentProfile" />
+    <user-profile-tag :profile="currentProfile" />
   </div>
 </template>
 
 <script setup lang="ts">
-import TagProfile from '@/components/users/TagProfile.vue';
+import UserProfileTag from '@/components/users/UserProfileTag.vue';
 import { UserProfile } from '@/parsec';
 import { IonText } from '@ionic/vue';
 

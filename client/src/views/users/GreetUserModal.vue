@@ -136,7 +136,7 @@
             </div>
             <div class="user-info__role">
               <ion-text class="info-label body">{{ $msTranslate('UsersPage.success.profile') }}</ion-text>
-              <tag-profile :profile="profile ? profile : UserProfile.Outsider" />
+              <user-profile-tag :profile="profile ? profile : UserProfile.Outsider" />
             </div>
           </div>
         </div>
@@ -178,9 +178,9 @@ import SmallDisplayModalHeader from '@/components/header/SmallDisplayModalHeader
 import SmallDisplayStepModalHeader from '@/components/header/SmallDisplayStepModalHeader.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
-import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
+import UserProfileTag from '@/components/users/UserProfileTag.vue';
 import { CancelledGreetingAttemptReason, GreetInProgressErrorTag, UserGreet, UserInvitation, UserProfile } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';

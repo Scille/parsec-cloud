@@ -14,7 +14,7 @@
         {{ $msTranslate('UsersPage.currentUser') }}
       </span>
 
-      <tag-profile
+      <user-profile-tag
         v-if="user.profile === UserProfile.Outsider"
         :profile="UserProfile.Outsider"
       />
@@ -33,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import { TagProfile, UserAvatarName } from '@/components/users';
+import { UserAvatarName, UserProfileTag } from '@/components/users';
 import { canChangeRole } from '@/components/workspaces/utils';
 import { UserProfile, UserTuple, WorkspaceRole } from '@/parsec';
 import { getWorkspaceRoleTranslationKey } from '@/services/translation';

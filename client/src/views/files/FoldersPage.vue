@@ -12,9 +12,9 @@
         :buttons="actionBarOptionsFoldersPage"
       >
         <div class="right-side">
-          <workspace-tag-role
+          <workspace-role-tag
             :role="ownRole"
-            class="workspace-tag-role"
+            class="workspace-role-tag"
           />
 
           <div class="counter">
@@ -221,7 +221,7 @@ import {
 } from '@/components/files';
 import { EntrySyncStatus } from '@/components/files/types';
 import SmallDisplayHeaderTitle from '@/components/header/SmallDisplayHeaderTitle.vue';
-import { WorkspaceTagRole } from '@/components/workspaces';
+import { WorkspaceRoleTag } from '@/components/workspaces';
 import {
   ClientInfo,
   EntryName,
@@ -1719,7 +1719,7 @@ const actionBarOptionsFoldersPage = computed(() => {
   }
 }
 
-.workspace-tag-role {
+.workspace-role-tag {
   background: var(--parsec-color-light-secondary-white);
   padding: 0.25rem;
   border-radius: var(--parsec-radius-32);
