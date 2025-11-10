@@ -64,7 +64,7 @@ maturin = "^1.9.5"
 patchelf = { version = "^0.17.2.4", markers = "platform_system=='Linux'" }
 setuptools = "^80.9.0"
 # lint
-deptry = "^0.23.0"
+deptry = "^0.24.0"
 editorconfig-checker = "^3.2.1"
 pyright = "^1.1.353"
 ruff = "^0.14.0"
