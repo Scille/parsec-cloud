@@ -13,9 +13,17 @@ from uuid import UUID
 import anyio
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 
-from parsec._parsec import DeviceID, OrganizationID, UserID, UserProfile, VlobID
-from parsec.client_context import AuthenticatedClientContext
-from parsec.config import BackendConfig
+from parsec._parsec import (
+    DeviceID,
+    OrganizationID,
+    UserID,
+    UserProfile,
+    VlobID,
+    anonymous_server_cmds,
+)
+from parsec.api import api
+from parsec.client_context import AnonymousServerClientContext, AuthenticatedClientContext
+from parsec.config import AccountConfig, AllowedClientAgent, BackendConfig
 from parsec.events import (
     ClientBroadcastableEvent,
     Event,
@@ -246,6 +254,7 @@ class SseAPiEventsListenBadOutcome(BadOutcomeEnum):
 class BaseEventsComponent:
     def __init__(self, config: BackendConfig, event_bus: EventBus):
         self._stopped = False
+        self._config = config
         self._event_bus = event_bus
         # Key is `id(client_ctx)`
         self._registered_clients: dict[int, RegisteredClient] = {}
@@ -477,3 +486,67 @@ class BaseEventsComponent:
                 # It's vital to unregister the client here given the memory location of the
                 # client (and hence the id resulting of it) will most likely be re-used !
                 self._registered_clients.pop(id(client_ctx))
+
+    # This API has obviously nothing to do with the Event component...
+    # It has been put there since it is an orphan feature and giving it its own
+    # component would double the amount of code for no real benefit.
+    # Of course if this method's body starts growing out of control we should
+    # reassess this ;-)
+    @api
+    async def api_server_config(
+        self,
+        client_ctx: AnonymousServerClientContext,
+        req: anonymous_server_cmds.latest.server_config.Req,
+    ) -> anonymous_server_cmds.latest.server_config.Rep:
+        match self._config.allowed_client_agent:
+            case AllowedClientAgent.NATIVE_OR_WEB:
+                allowed_client_agent = (
+                    anonymous_server_cmds.latest.server_config.ClientAgentConfig.NATIVE_OR_WEB
+                )
+            case AllowedClientAgent.NATIVE_ONLY:
+                allowed_client_agent = (
+                    anonymous_server_cmds.latest.server_config.ClientAgentConfig.NATIVE_ONLY
+                )
+
+        match self._config.account_config:
+            case AccountConfig.DISABLED:
+                account = anonymous_server_cmds.latest.server_config.AccountConfig.DISABLED
+            case AccountConfig.ENABLED_WITHOUT_VAULT:
+                account = (
+                    anonymous_server_cmds.latest.server_config.AccountConfig.ENABLED_WITHOUT_VAULT
+                )
+            case AccountConfig.ENABLED_WITH_VAULT:
+                account = (
+                    anonymous_server_cmds.latest.server_config.AccountConfig.ENABLED_WITH_VAULT
+                )
+
+        if self._config.organization_spontaneous_bootstrap:
+            organization_bootstrap = (
+                anonymous_server_cmds.latest.server_config.OrganizationBootstrapConfig.SPONTANEOUS
+            )
+        else:
+            organization_bootstrap = anonymous_server_cmds.latest.server_config.OrganizationBootstrapConfig.WITH_BOOTSTRAP_TOKEN
+
+        if self._config.openbao_config is None:
+            openbao = anonymous_server_cmds.latest.server_config.OpenBaoConfigDisabled()
+        else:
+            openbao = anonymous_server_cmds.latest.server_config.OpenBaoConfigEnabled(
+                server_url=self._config.openbao_config.server_url,
+                secret=anonymous_server_cmds.latest.server_config.OpenBaoSecretConfigKV2(
+                    mount_path=self._config.openbao_config.secret_mount_path
+                ),
+                auths=[
+                    anonymous_server_cmds.latest.server_config.OpenBaoAuthConfig(
+                        id=auth.id.str,
+                        mount_path=auth.mount_path,
+                    )
+                    for auth in self._config.openbao_config.auths
+                ],
+            )
+
+        return anonymous_server_cmds.latest.server_config.RepOk(
+            client_agent=allowed_client_agent,
+            account=account,
+            organization_bootstrap=organization_bootstrap,
+            openbao=openbao,
+        )
