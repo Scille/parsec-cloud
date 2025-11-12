@@ -5,7 +5,7 @@
 #![allow(clippy::unwrap_used)]
 
 use libparsec_client_connection::{
-    protocol::{anonymous_account_cmds, authenticated_account_cmds},
+    protocol::{anonymous_server_cmds, authenticated_account_cmds},
     test_register_sequence_of_send_hooks, ProxyConfig,
 };
 use libparsec_tests_fixtures::prelude::*;
@@ -67,9 +67,9 @@ async fn login_with_password(env: &TestbedEnv) {
         &env.discriminant_dir,
         {
             let email = email.clone();
-            move |req: anonymous_account_cmds::latest::auth_method_password_get_algorithm::Req| {
+            move |req: anonymous_server_cmds::latest::auth_method_password_get_algorithm::Req| {
                 p_assert_eq!(req.email, email);
-                anonymous_account_cmds::latest::auth_method_password_get_algorithm::Rep::Ok {
+                anonymous_server_cmds::latest::auth_method_password_get_algorithm::Rep::Ok {
                     password_algorithm: UntrustedPasswordAlgorithm::Argon2id {
                         opslimit: 3,
                         memlimit_kb: 128 * 1024,
@@ -109,9 +109,9 @@ async fn login_with_password_server_returns_bad_config(env: &TestbedEnv) {
 
     test_register_sequence_of_send_hooks!(&env.discriminant_dir, {
         let email = email.clone();
-        move |req: anonymous_account_cmds::latest::auth_method_password_get_algorithm::Req| {
+        move |req: anonymous_server_cmds::latest::auth_method_password_get_algorithm::Req| {
             p_assert_eq!(req.email, email);
-            anonymous_account_cmds::latest::auth_method_password_get_algorithm::Rep::Ok {
+            anonymous_server_cmds::latest::auth_method_password_get_algorithm::Rep::Ok {
                 password_algorithm: UntrustedPasswordAlgorithm::Argon2id {
                     opslimit: 3,
                     memlimit_kb: 1, // Too small !

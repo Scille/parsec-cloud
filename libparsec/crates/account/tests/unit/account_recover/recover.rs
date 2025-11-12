@@ -10,8 +10,8 @@ use std::{
 };
 
 use libparsec_client_connection::{
-    protocol::{anonymous_account_cmds, authenticated_account_cmds},
-    test_register_sequence_of_send_hooks, AnonymousAccountCmds, ProxyConfig,
+    protocol::{anonymous_server_cmds, authenticated_account_cmds},
+    test_register_sequence_of_send_hooks, AnonymousServerCmds, ProxyConfig,
 };
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -29,7 +29,7 @@ async fn ok(#[values("master_secret", "password")] kind: &str, env: &TestbedEnv)
         "4a2bd7ff1096b61cc520eb237a3ccb53d517d60679f5afd55f2a0a780f26ed85"
     ));
     let validation_code: ValidationCode = "AD3FXJ".parse().unwrap();
-    let cmds = AnonymousAccountCmds::new(
+    let cmds = AnonymousServerCmds::new(
         &env.discriminant_dir,
         env.server_addr.clone(),
         ProxyConfig::default(),
@@ -57,7 +57,7 @@ async fn ok(#[values("master_secret", "password")] kind: &str, env: &TestbedEnv)
         let expected_email = email.clone();
         let expected_validation_code = validation_code.clone();
         let retrieved_stuff = retrieved_stuff.clone();
-        move |req: anonymous_account_cmds::latest::account_recover_proceed::Req| {
+        move |req: anonymous_server_cmds::latest::account_recover_proceed::Req| {
             p_assert_eq!(req.validation_code, expected_validation_code);
             p_assert_eq!(req.email, expected_email);
 
@@ -68,7 +68,7 @@ async fn ok(#[values("master_secret", "password")] kind: &str, env: &TestbedEnv)
                 req.new_vault_key_access,
             ));
 
-            anonymous_account_cmds::latest::account_recover_proceed::Rep::Ok
+            anonymous_server_cmds::latest::account_recover_proceed::Rep::Ok
         }
     });
 
@@ -87,8 +87,8 @@ async fn ok(#[values("master_secret", "password")] kind: &str, env: &TestbedEnv)
         test_register_sequence_of_send_hooks!(
             &env.discriminant_dir,
             {
-                move |_req: anonymous_account_cmds::latest::auth_method_password_get_algorithm::Req| {
-                    anonymous_account_cmds::latest::auth_method_password_get_algorithm::Rep::Ok {
+                move |_req: anonymous_server_cmds::latest::auth_method_password_get_algorithm::Req| {
+                    anonymous_server_cmds::latest::auth_method_password_get_algorithm::Rep::Ok {
                         password_algorithm: auth_method_password_algorithm.unwrap(),
                     }
                 }
@@ -138,7 +138,7 @@ async fn offline(env: &TestbedEnv) {
         "4a2bd7ff1096b61cc520eb237a3ccb53d517d60679f5afd55f2a0a780f26ed85"
     ));
     let validation_code: ValidationCode = "AD3FXJ".parse().unwrap();
-    let cmds = AnonymousAccountCmds::new(
+    let cmds = AnonymousServerCmds::new(
         &env.discriminant_dir,
         env.server_addr.clone(),
         ProxyConfig::default(),
@@ -165,7 +165,7 @@ async fn unknown_status(env: &TestbedEnv) {
         "4a2bd7ff1096b61cc520eb237a3ccb53d517d60679f5afd55f2a0a780f26ed85"
     ));
     let validation_code: ValidationCode = "AD3FXJ".parse().unwrap();
-    let cmds = AnonymousAccountCmds::new(
+    let cmds = AnonymousServerCmds::new(
         &env.discriminant_dir,
         env.server_addr.clone(),
         ProxyConfig::default(),
@@ -174,8 +174,8 @@ async fn unknown_status(env: &TestbedEnv) {
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
-        move |_req: anonymous_account_cmds::latest::account_recover_proceed::Req| {
-            anonymous_account_cmds::latest::account_recover_proceed::Rep::UnknownStatus {
+        move |_req: anonymous_server_cmds::latest::account_recover_proceed::Req| {
+            anonymous_server_cmds::latest::account_recover_proceed::Rep::UnknownStatus {
                 unknown_status: "unknown".to_string(),
                 reason: None,
             }
@@ -198,7 +198,7 @@ async fn invalid_validation_code(env: &TestbedEnv) {
         "4a2bd7ff1096b61cc520eb237a3ccb53d517d60679f5afd55f2a0a780f26ed85"
     ));
     let validation_code: ValidationCode = "AD3FXJ".parse().unwrap();
-    let cmds = AnonymousAccountCmds::new(
+    let cmds = AnonymousServerCmds::new(
         &env.discriminant_dir,
         env.server_addr.clone(),
         ProxyConfig::default(),
@@ -207,8 +207,8 @@ async fn invalid_validation_code(env: &TestbedEnv) {
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
-        move |_req: anonymous_account_cmds::latest::account_recover_proceed::Req| {
-            anonymous_account_cmds::latest::account_recover_proceed::Rep::InvalidValidationCode
+        move |_req: anonymous_server_cmds::latest::account_recover_proceed::Req| {
+            anonymous_server_cmds::latest::account_recover_proceed::Rep::InvalidValidationCode
         }
     );
 
@@ -232,7 +232,7 @@ async fn send_validation_email_required(env: &TestbedEnv) {
         "4a2bd7ff1096b61cc520eb237a3ccb53d517d60679f5afd55f2a0a780f26ed85"
     ));
     let validation_code: ValidationCode = "AD3FXJ".parse().unwrap();
-    let cmds = AnonymousAccountCmds::new(
+    let cmds = AnonymousServerCmds::new(
         &env.discriminant_dir,
         env.server_addr.clone(),
         ProxyConfig::default(),
@@ -241,8 +241,8 @@ async fn send_validation_email_required(env: &TestbedEnv) {
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
-        move |_req: anonymous_account_cmds::latest::account_recover_proceed::Req| {
-            anonymous_account_cmds::latest::account_recover_proceed::Rep::SendValidationEmailRequired
+        move |_req: anonymous_server_cmds::latest::account_recover_proceed::Req| {
+            anonymous_server_cmds::latest::account_recover_proceed::Rep::SendValidationEmailRequired
         }
     );
 
@@ -266,7 +266,7 @@ async fn auth_method_id_already_exists(env: &TestbedEnv) {
         "4a2bd7ff1096b61cc520eb237a3ccb53d517d60679f5afd55f2a0a780f26ed85"
     ));
     let validation_code: ValidationCode = "AD3FXJ".parse().unwrap();
-    let cmds = AnonymousAccountCmds::new(
+    let cmds = AnonymousServerCmds::new(
         &env.discriminant_dir,
         env.server_addr.clone(),
         ProxyConfig::default(),
@@ -275,8 +275,8 @@ async fn auth_method_id_already_exists(env: &TestbedEnv) {
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
-        move |_req: anonymous_account_cmds::latest::account_recover_proceed::Req| {
-            anonymous_account_cmds::latest::account_recover_proceed::Rep::AuthMethodIdAlreadyExists
+        move |_req: anonymous_server_cmds::latest::account_recover_proceed::Req| {
+            anonymous_server_cmds::latest::account_recover_proceed::Rep::AuthMethodIdAlreadyExists
         }
     );
 
