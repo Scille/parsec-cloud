@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use libparsec_serialization_format::parsec_data;
 
-use crate::{self as libparsec_types, DataError, PKIEncryptionAlgorithm, X509CertificateReference};
+use crate::{self as libparsec_types, PKIEncryptionAlgorithm, X509CertificateReference};
 use crate::{
     impl_transparent_data_format_conversion, AccountVaultItemOpaqueKeyID, DateTime, DeviceID,
     DeviceLabel, HumanHandle, OrganizationID, PasswordAlgorithm, UserID,
@@ -126,55 +126,22 @@ pub struct DeviceFileSmartcard {
 
 parsec_data!("schema/local_device/device_file_smartcard.json5");
 
-impl TryFrom<DeviceFileSmartcardData> for DeviceFileSmartcard {
-    type Error = DataError;
-
-    fn try_from(value: DeviceFileSmartcardData) -> Result<Self, Self::Error> {
-        let algorithm_for_encrypted_key =
-            value
-                .algorithm_for_encrypted_key
-                .parse()
-                .map_err(|_| DataError::DataIntegrity {
-                    data_type: "algorithm for encrypted key",
-                    invariant: "unknown algorithm",
-                })?;
-        Ok(DeviceFileSmartcard {
-            created_on: value.created_on,
-            protected_on: value.protected_on,
-            server_url: value.server_url,
-            organization_id: value.organization_id,
-            user_id: value.user_id,
-            device_id: value.device_id,
-            human_handle: value.human_handle,
-            device_label: value.device_label,
-            certificate_ref: value.certificate_ref,
-            algorithm_for_encrypted_key,
-            encrypted_key: value.encrypted_key,
-            ciphertext: value.ciphertext,
-        })
-    }
-}
-
-impl From<DeviceFileSmartcard> for DeviceFileSmartcardData {
-    fn from(value: DeviceFileSmartcard) -> Self {
-        let algorithm_for_encrypted_key = value.algorithm_for_encrypted_key.to_string();
-        DeviceFileSmartcardData {
-            created_on: value.created_on,
-            protected_on: value.protected_on,
-            server_url: value.server_url,
-            organization_id: value.organization_id,
-            user_id: value.user_id,
-            device_id: value.device_id,
-            human_handle: value.human_handle,
-            device_label: value.device_label,
-            certificate_ref: value.certificate_ref,
-            algorithm_for_encrypted_key,
-            encrypted_key: value.encrypted_key,
-            ciphertext: value.ciphertext,
-            ty: DeviceFileSmartcardDataType,
-        }
-    }
-}
+impl_transparent_data_format_conversion!(
+    DeviceFileSmartcard,
+    DeviceFileSmartcardData,
+    created_on,
+    protected_on,
+    server_url,
+    organization_id,
+    user_id,
+    device_id,
+    human_handle,
+    device_label,
+    certificate_ref,
+    algorithm_for_encrypted_key,
+    encrypted_key,
+    ciphertext,
+);
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(

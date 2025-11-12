@@ -48,7 +48,7 @@
         {
             // Used to encrypt the secret key
             "name": "algorithm_for_encrypted_key",
-            "type": "String"
+            "type": "PKIEncryptionAlgorithm"
         },
         {
             // `SecretKey` encrypted by asymmetric key from the smartcard.
