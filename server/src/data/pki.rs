@@ -3,13 +3,11 @@
 use pyo3::{
     exceptions::PyValueError,
     pyclass, pymethods,
-    types::{IntoPyDict, PyBytes, PyDict, PyType},
+    types::{PyBytes, PyType},
     Bound, PyObject, PyResult, Python,
 };
-use std::collections::HashMap;
 
 use crate::{
-    binding_utils::BytesWrapper,
     crypto::{PublicKey, VerifyKey},
     enumerate::UserProfile,
     ids::{DeviceID, DeviceLabel, HumanHandle, UserID},
@@ -142,114 +140,6 @@ impl PkiEnrollmentSubmitPayload {
 
     fn dump<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
         PyBytes::new(py, &self.0.dump())
-    }
-}
-
-#[pyclass]
-#[derive(Clone)]
-pub(crate) struct X509Certificate(pub libparsec_types::X509Certificate);
-
-crate::binding_utils::gen_proto!(X509Certificate, __repr__);
-crate::binding_utils::gen_proto!(X509Certificate, __copy__);
-crate::binding_utils::gen_proto!(X509Certificate, __deepcopy__);
-crate::binding_utils::gen_proto!(X509Certificate, __richcmp__, eq);
-
-#[pymethods]
-impl X509Certificate {
-    #[new]
-    #[pyo3(signature = (issuer, subject, der_x509_certificate, certificate_sha1, certificate_id=None))]
-    fn new(
-        issuer: HashMap<String, String>,
-        subject: HashMap<String, String>,
-        der_x509_certificate: BytesWrapper,
-        certificate_sha1: BytesWrapper,
-        certificate_id: Option<String>,
-    ) -> Self {
-        crate::binding_utils::unwrap_bytes!(der_x509_certificate, certificate_sha1);
-        Self(libparsec_types::X509Certificate {
-            issuer,
-            subject,
-            der_x509_certificate,
-            certificate_sha1,
-            certificate_id,
-        })
-    }
-
-    #[pyo3(signature = (**py_kwargs))]
-    fn evolve(&self, py_kwargs: Option<Bound<'_, PyDict>>) -> PyResult<Self> {
-        crate::binding_utils::parse_kwargs_optional!(
-            py_kwargs,
-            [issuer: HashMap<String, String>, "issuer"],
-            [subject: HashMap<String, String>, "subject"],
-            [der_x509_certificate: BytesWrapper, "der_x509_certificate"],
-            [certificate_sha1: BytesWrapper, "certificate_sha1"],
-            [certificate_id: Option<String>, "certificate_id"],
-        );
-        crate::binding_utils::unwrap_bytes!(der_x509_certificate, certificate_sha1);
-
-        let mut r = self.0.clone();
-
-        if let Some(v) = issuer {
-            r.issuer = v;
-        }
-        if let Some(v) = subject {
-            r.subject = v;
-        }
-        if let Some(v) = der_x509_certificate {
-            r.der_x509_certificate = v;
-        }
-        if let Some(v) = certificate_sha1 {
-            r.certificate_sha1 = v;
-        }
-        if let Some(v) = certificate_id {
-            r.certificate_id = v
-        }
-
-        Ok(Self(r))
-    }
-
-    fn is_available_locally(&self) -> bool {
-        self.0.is_available_locally()
-    }
-
-    #[getter]
-    fn subject_common_name(&self) -> Option<&String> {
-        self.0.subject_common_name()
-    }
-
-    #[getter]
-    fn subject_email_address(&self) -> Option<&String> {
-        self.0.subject_email_address()
-    }
-
-    #[getter]
-    fn issuer_common_name(&self) -> Option<&String> {
-        self.0.issuer_common_name()
-    }
-
-    #[getter]
-    fn issuer<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
-        self.0.issuer.clone().into_py_dict(py)
-    }
-
-    #[getter]
-    fn subject<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
-        self.0.subject.clone().into_py_dict(py)
-    }
-
-    #[getter]
-    fn der_x509_certificate<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new(py, &self.0.der_x509_certificate)
-    }
-
-    #[getter]
-    fn certificate_sha1<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new(py, &self.0.certificate_sha1)
-    }
-
-    #[getter]
-    fn certificate_id(&self) -> Option<&String> {
-        self.0.certificate_id.as_ref()
     }
 }
 
