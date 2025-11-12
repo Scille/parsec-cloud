@@ -11,6 +11,7 @@ from . import (
     account_recover_send_validation_email,
     auth_method_password_get_algorithm,
     ping,
+    server_config,
 )
 
 class AnyCmdReq:
@@ -24,6 +25,7 @@ class AnyCmdReq:
         | account_recover_send_validation_email.Req
         | auth_method_password_get_algorithm.Req
         | ping.Req
+        | server_config.Req
     ): ...
 
 __all__ = [
@@ -34,4 +36,5 @@ __all__ = [
     "account_recover_send_validation_email",
     "auth_method_password_get_algorithm",
     "ping",
+    "server_config",
 ]
