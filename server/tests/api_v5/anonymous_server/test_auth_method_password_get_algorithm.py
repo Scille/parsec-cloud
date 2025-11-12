@@ -7,18 +7,18 @@ from parsec._parsec import (
     EmailAddress,
     SecretKey,
     UntrustedPasswordAlgorithmArgon2id,
-    anonymous_account_cmds,
+    anonymous_server_cmds,
 )
 from tests.common import (
-    AnonymousAccountRpcClient,
+    AnonymousServerRpcClient,
     AuthenticatedAccountRpcClient,
     Backend,
     HttpCommonErrorsTester,
 )
 
 
-async def test_anonymous_account_auth_method_password_get_algorithm_ok_existing(
-    anonymous_account: AnonymousAccountRpcClient,
+async def test_anonymous_server_auth_method_password_get_algorithm_ok_existing(
+    anonymous_server: AnonymousServerRpcClient,
     alice_account: AuthenticatedAccountRpcClient,
     bob_account: AuthenticatedAccountRpcClient,
     backend: Backend,
@@ -28,10 +28,10 @@ async def test_anonymous_account_auth_method_password_get_algorithm_ok_existing(
         memlimit_kb=3,
         parallelism=1,
     )
-    rep = await anonymous_account.auth_method_password_get_algorithm(
+    rep = await anonymous_server.auth_method_password_get_algorithm(
         email=alice_account.account_email
     )
-    assert rep == anonymous_account_cmds.latest.auth_method_password_get_algorithm.RepOk(
+    assert rep == anonymous_server_cmds.latest.auth_method_password_get_algorithm.RepOk(
         password_algorithm=expected_password_algorithm_1
     )
 
@@ -56,23 +56,23 @@ async def test_anonymous_account_auth_method_password_get_algorithm_ok_existing(
         new_auth_method_password_algorithm=expected_password_algorithm_2,
         items={},
     )
-    rep = await anonymous_account.auth_method_password_get_algorithm(
+    rep = await anonymous_server.auth_method_password_get_algorithm(
         email=alice_account.account_email
     )
-    assert rep == anonymous_account_cmds.latest.auth_method_password_get_algorithm.RepOk(
+    assert rep == anonymous_server_cmds.latest.auth_method_password_get_algorithm.RepOk(
         password_algorithm=expected_password_algorithm_2
     )
 
 
-async def test_anonymous_account_auth_method_password_get_algorithm_ok_stable_fake(
-    anonymous_account: AnonymousAccountRpcClient,
+async def test_anonymous_server_auth_method_password_get_algorithm_ok_stable_fake(
+    anonymous_server: AnonymousServerRpcClient,
     # Use `alice_account` as an unrelated existing account to ensure it is ignored
     alice_account: AuthenticatedAccountRpcClient,
 ) -> None:
     unknown_email = EmailAddress("dummy@example.com")
 
-    rep = await anonymous_account.auth_method_password_get_algorithm(email=unknown_email)
-    assert rep == anonymous_account_cmds.latest.auth_method_password_get_algorithm.RepOk(
+    rep = await anonymous_server.auth_method_password_get_algorithm(email=unknown_email)
+    assert rep == anonymous_server_cmds.latest.auth_method_password_get_algorithm.RepOk(
         password_algorithm=UntrustedPasswordAlgorithmArgon2id(
             opslimit=3,
             memlimit_kb=131072,
@@ -82,17 +82,17 @@ async def test_anonymous_account_auth_method_password_get_algorithm_ok_stable_fa
 
     # The result must be stable across multiple queries
 
-    rep2 = await anonymous_account.auth_method_password_get_algorithm(email=unknown_email)
+    rep2 = await anonymous_server.auth_method_password_get_algorithm(email=unknown_email)
     assert rep2 == rep
 
 
-async def test_anonymous_account_auth_method_password_get_algorithm_http_common_errors(
-    anonymous_account: AnonymousAccountRpcClient,
-    anonymous_account_http_common_errors_tester: HttpCommonErrorsTester,
+async def test_anonymous_server_auth_method_password_get_algorithm_http_common_errors(
+    anonymous_server: AnonymousServerRpcClient,
+    anonymous_server_http_common_errors_tester: HttpCommonErrorsTester,
 ) -> None:
     async def do():
-        await anonymous_account.auth_method_password_get_algorithm(
+        await anonymous_server.auth_method_password_get_algorithm(
             email=EmailAddress("zack@example.com")
         )
 
-    await anonymous_account_http_common_errors_tester(do)
+    await anonymous_server_http_common_errors_tester(do)
