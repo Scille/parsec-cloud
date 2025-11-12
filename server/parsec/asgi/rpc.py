@@ -280,6 +280,16 @@ def _handshake_abort(status: CustomHttpStatus, api_version: ApiVersion, **header
     )
 
 
+def _handshake_abort_bad_user_agent(**headers: str) -> NoReturn:
+    status = CustomHttpStatus.WebClientNotAllowedByOrganizationConfig
+    detail = CUSTOM_HTTP_STATUS_DETAILS[status]
+    raise HTTPException(
+        status_code=status.value,
+        headers=headers,
+        detail=detail,
+    )
+
+
 def _handshake_abort_bad_content(api_version: ApiVersion) -> NoReturn:
     _handshake_abort(CustomHttpStatus.BadContentTypeOrInvalidBodyOrUnknownCommand, api_version)
 
@@ -297,7 +307,6 @@ class ParsedAuthHeaders:
     organization_id: OrganizationID
     settled_api_version: ApiVersion
     client_api_version: ApiVersion
-    user_agent: str
     authenticated_token: AuthenticatedToken | None
     invited_token: InvitationToken | None
     last_event_id: UUID | None
@@ -338,8 +347,7 @@ def _parse_auth_headers_or_abort(
             api_version=settled_api_version,
         )
 
-    # 3) Check User-Agent, Content-Type & Accept
-    user_agent = headers.get("User-Agent", "unknown")
+    # 3) Check Content-Type & Accept
     if expected_content_type and headers.get("Content-Type") != expected_content_type:
         _handshake_abort_bad_content(api_version=settled_api_version)
     if expected_accept_type and headers.get("Accept") != expected_accept_type:
@@ -403,7 +411,6 @@ def _parse_auth_headers_or_abort(
         organization_id=organization_id,
         settled_api_version=settled_api_version,
         client_api_version=client_api_version,
-        user_agent=user_agent,
         last_event_id=last_event_id,
         authenticated_token=authenticated_token,
         invited_token=invited_token,
@@ -414,7 +421,6 @@ def _parse_auth_headers_or_abort(
 class AccountParsedAuthHeaders:
     settled_api_version: ApiVersion
     client_api_version: ApiVersion
-    user_agent: str
     authentication_token: AccountAuthenticationToken
 
 
@@ -441,8 +447,7 @@ def _parse_account_auth_headers_or_abort(
         )
     # From now on the version is settled, our reply must have the `Api-Version` header
 
-    # 3) Check User-Agent, Content-Type
-    user_agent = headers.get("User-Agent", "unknown")
+    # 3) Check Content-Type
     if headers.get("Content-Type") != CONTENT_TYPE_MSGPACK:
         _handshake_abort_bad_content(api_version=settled_api_version)
 
@@ -469,7 +474,6 @@ def _parse_account_auth_headers_or_abort(
     return AccountParsedAuthHeaders(
         settled_api_version=settled_api_version,
         client_api_version=client_api_version,
-        user_agent=user_agent,
         authentication_token=authentication_token,
     )
 
@@ -478,7 +482,6 @@ def _parse_account_auth_headers_or_abort(
 class AnonymousServerParsedAuthHeaders:
     settled_api_version: ApiVersion
     client_api_version: ApiVersion
-    user_agent: str
 
 
 def _parse_anonymous_server_auth_headers_or_abort(
@@ -504,31 +507,28 @@ def _parse_anonymous_server_auth_headers_or_abort(
         )
     # From now on the version is settled, our reply must have the `Api-Version` header
 
-    # 3) Check User-Agent, Content-Type
-    user_agent = headers.get("User-Agent", "unknown")
+    # 3) Check Content-Type
     if headers.get("Content-Type") != CONTENT_TYPE_MSGPACK:
         _handshake_abort_bad_content(api_version=settled_api_version)
 
     return AnonymousServerParsedAuthHeaders(
         settled_api_version=settled_api_version,
         client_api_version=client_api_version,
-        user_agent=user_agent,
     )
 
 
 def _check_user_agent_or_abort(
-    headers: ParsedAuthHeaders, allowed_client_agent: AllowedClientAgent
-) -> None:
+    headers: Headers,
+    allowed_client_agent: AllowedClientAgent,
+) -> str:
+    user_agent = headers.get("User-Agent", "unknown")
     match allowed_client_agent:
         case AllowedClientAgent.NATIVE_OR_WEB:
-            return
+            pass
         case AllowedClientAgent.NATIVE_ONLY:
-            if not headers.user_agent.startswith("Parsec-Client/"):
-                _handshake_abort(
-                    CustomHttpStatus.WebClientNotAllowedByOrganizationConfig,
-                    api_version=headers.settled_api_version,
-                )
-            return
+            if not user_agent.startswith("Parsec-Client/"):
+                _handshake_abort_bad_user_agent()
+    return user_agent
 
 
 async def run_request(
@@ -578,6 +578,9 @@ async def run_request(
 async def anonymous_api(raw_organization_id: str, request: Request) -> Response:
     backend: Backend = request.app.state.backend
 
+    client_user_agent = _check_user_agent_or_abort(
+        request.headers, backend.config.allowed_client_agent
+    )
     parsed = _parse_auth_headers_or_abort(
         headers=request.headers,
         raw_organization_id=raw_organization_id,
@@ -608,11 +611,10 @@ async def anonymous_api(raw_organization_id: str, request: Request) -> Response:
                 api_version=parsed.settled_api_version,
             )
 
-    _check_user_agent_or_abort(parsed, auth_info.organization_allowed_client_agent)
-
     # Handshake is done
 
     client_ctx = AnonymousClientContext(
+        client_user_agent=client_user_agent,
         client_api_version=parsed.client_api_version,
         settled_api_version=parsed.settled_api_version,
         organization_id=auth_info.organization_id,
@@ -644,6 +646,10 @@ async def anonymous_api(raw_organization_id: str, request: Request) -> Response:
 @rpc_router.post("/anonymous_server")
 async def anonymous_server_api(request: Request) -> Response:
     backend: Backend = request.app.state.backend
+
+    client_user_agent = _check_user_agent_or_abort(
+        request.headers, backend.config.allowed_client_agent
+    )
     parsed = _parse_anonymous_server_auth_headers_or_abort(
         headers=request.headers,
     )
@@ -651,9 +657,9 @@ async def anonymous_server_api(request: Request) -> Response:
     # Handshake is done
 
     client_ctx = AnonymousServerClientContext(
+        client_user_agent=client_user_agent,
         client_api_version=parsed.client_api_version,
         settled_api_version=parsed.settled_api_version,
-        client_user_agent=parsed.user_agent,
         client_ip_address=request.client.host if request.client is not None else "",
     )
 
@@ -672,6 +678,10 @@ async def anonymous_server_api(request: Request) -> Response:
 @rpc_router.post("/authenticated_account")
 async def authenticated_account_api(request: Request) -> Response:
     backend: Backend = request.app.state.backend
+
+    client_user_agent = _check_user_agent_or_abort(
+        request.headers, backend.config.allowed_client_agent
+    )
     parsed = _parse_account_auth_headers_or_abort(
         headers=request.headers,
     )
@@ -702,11 +712,11 @@ async def authenticated_account_api(request: Request) -> Response:
     # Handshake is done
 
     client_ctx = AuthenticatedAccountClientContext(
+        client_user_agent=client_user_agent,
         client_api_version=parsed.client_api_version,
         settled_api_version=parsed.settled_api_version,
         account_email=auth_info.account_email,
         auth_method_id=auth_info.auth_method_id,
-        client_user_agent=parsed.user_agent,
         client_ip_address=request.client.host if request.client is not None else "",
     )
 
@@ -723,6 +733,10 @@ async def authenticated_account_api(request: Request) -> Response:
 @rpc_router.post("/invited/{raw_organization_id}")
 async def invited_api(raw_organization_id: str, request: Request) -> Response:
     backend: Backend = request.app.state.backend
+
+    client_user_agent = _check_user_agent_or_abort(
+        request.headers, backend.config.allowed_client_agent
+    )
     parsed = _parse_auth_headers_or_abort(
         headers=request.headers,
         raw_organization_id=raw_organization_id,
@@ -760,8 +774,6 @@ async def invited_api(raw_organization_id: str, request: Request) -> Response:
                 api_version=parsed.settled_api_version,
             )
 
-    _check_user_agent_or_abort(parsed, auth_info.organization_allowed_client_agent)
-
     # Handshake is done
 
     client_ctx = InvitedClientContext(
@@ -772,6 +784,7 @@ async def invited_api(raw_organization_id: str, request: Request) -> Response:
         type=auth_info.type,
         token=auth_info.token,
         invitation_internal_id=auth_info.invitation_internal_id,
+        client_user_agent=client_user_agent,
     )
 
     body: bytes = await _rpc_get_body_with_limit_check(request)
@@ -790,6 +803,9 @@ async def invited_api(raw_organization_id: str, request: Request) -> Response:
 async def authenticated_api(raw_organization_id: str, request: Request) -> Response:
     backend: Backend = request.app.state.backend
 
+    client_user_agent = _check_user_agent_or_abort(
+        request.headers, backend.config.allowed_client_agent
+    )
     parsed = _parse_auth_headers_or_abort(
         headers=request.headers,
         raw_organization_id=raw_organization_id,
@@ -848,11 +864,10 @@ async def authenticated_api(raw_organization_id: str, request: Request) -> Respo
                 api_version=parsed.settled_api_version,
             )
 
-    _check_user_agent_or_abort(parsed, auth_info.organization_allowed_client_agent)
-
     # Handshake is done
 
     client_ctx = AuthenticatedClientContext(
+        client_user_agent=client_user_agent,
         client_api_version=parsed.client_api_version,
         settled_api_version=parsed.settled_api_version,
         organization_id=auth_info.organization_id,
@@ -877,6 +892,9 @@ async def authenticated_api(raw_organization_id: str, request: Request) -> Respo
 async def authenticated_events_api(raw_organization_id: str, request: Request) -> Response:
     backend: Backend = request.app.state.backend
 
+    client_user_agent = _check_user_agent_or_abort(
+        request.headers, backend.config.allowed_client_agent
+    )
     parsed = _parse_auth_headers_or_abort(
         headers=request.headers,
         raw_organization_id=raw_organization_id,
@@ -935,11 +953,10 @@ async def authenticated_events_api(raw_organization_id: str, request: Request) -
                 api_version=parsed.settled_api_version,
             )
 
-    _check_user_agent_or_abort(parsed, auth_info.organization_allowed_client_agent)
-
     # Handshake is done
 
     client_ctx = AuthenticatedClientContext(
+        client_user_agent=client_user_agent,
         client_api_version=parsed.client_api_version,
         settled_api_version=parsed.settled_api_version,
         organization_id=auth_info.organization_id,
@@ -1153,6 +1170,9 @@ class StreamingResponseMiddleware(StreamingResponse):
 async def tos_api(raw_organization_id: str, request: Request) -> Response:
     backend: Backend = request.app.state.backend
 
+    client_user_agent = _check_user_agent_or_abort(
+        request.headers, backend.config.allowed_client_agent
+    )
     parsed = _parse_auth_headers_or_abort(
         headers=request.headers,
         raw_organization_id=raw_organization_id,
@@ -1211,11 +1231,10 @@ async def tos_api(raw_organization_id: str, request: Request) -> Response:
             # outcome should not happen.
             assert False, "Code should be unreachable!"
 
-    _check_user_agent_or_abort(parsed, auth_info.organization_allowed_client_agent)
-
     # Handshake is done
 
     client_ctx = AuthenticatedClientContext(
+        client_user_agent=client_user_agent,
         client_api_version=parsed.client_api_version,
         settled_api_version=parsed.settled_api_version,
         organization_id=auth_info.organization_id,
