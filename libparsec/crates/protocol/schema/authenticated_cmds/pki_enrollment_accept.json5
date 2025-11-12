@@ -22,6 +22,10 @@
                     "type": "Bytes"
                 },
                 {
+                    "name": "payload_signature_algorithm",
+                    "type": "PkiSignatureAlgorithm"
+                },
+                {
                     // Certificate used by the accepter to sign the payload
                     "name": "accepter_der_x509_certificate",
                     "type": "Bytes"

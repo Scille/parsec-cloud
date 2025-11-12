@@ -432,11 +432,16 @@ CREATE TYPE enrollment_state AS ENUM (
     'CANCELLED'
 );
 
+CREATE TYPE pki_signature_algorithm AS ENUM ('RSASSA_PSS_SHA256');
+
 CREATE TYPE pki_enrollment_info_accepted AS (
     accepted_on TIMESTAMPTZ,
     accepter_der_x509_certificate BYTEA,
     accept_payload_signature BYTEA,
-    accept_payload BYTEA
+    accept_payload BYTEA,
+
+    -- Added in migration 0016
+    accept_payload_signature_algorithm PKI_SIGNATURE_ALGORITHM
 );
 
 CREATE TYPE pki_enrollment_info_rejected AS (
@@ -446,8 +451,6 @@ CREATE TYPE pki_enrollment_info_rejected AS (
 CREATE TYPE pki_enrollment_info_cancelled AS (
     cancelled_on TIMESTAMPTZ
 );
-
-CREATE TYPE pki_signature_algorithm AS ENUM ('RSASSA_PSS_SHA256');
 
 CREATE TABLE pki_enrollment (
     _id SERIAL PRIMARY KEY,

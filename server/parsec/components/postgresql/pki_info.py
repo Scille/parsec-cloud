@@ -7,6 +7,7 @@ from parsec._parsec import (
     DateTime,
     OrganizationID,
     PKIEnrollmentID,
+    PkiSignatureAlgorithm,
 )
 from parsec.components.pki import (
     PkiEnrollmentInfo,
@@ -110,9 +111,12 @@ async def pki_info(
                     "accepter_der_x509_certificate": bytes() as accepter_der_x509_certificate,
                     "accept_payload_signature": bytes() as accept_payload_signature,
                     "accept_payload": bytes() as accept_payload,
+                    "accept_payload_signature_algorithm": str() as raw_accept_payload_signature_algorithm,
                     **rest,
                 } if not rest:
-                    pass
+                    _accept_payload_signature_algorithm = PkiSignatureAlgorithm.from_str(
+                        raw_accept_payload_signature_algorithm
+                    )
                 case _:
                     assert False, row
 

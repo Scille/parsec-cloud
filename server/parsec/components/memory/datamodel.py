@@ -726,6 +726,7 @@ class MemoryPkiEnrollmentInfoAccepted:
     accepted_on: DateTime
     accepter_der_x509_certificate: bytes = field(repr=False)
     accept_payload_signature: bytes = field(repr=False)
+    accept_payload_signature_algorithm: PkiSignatureAlgorithm
     accept_payload: bytes = field(repr=False)
 
 

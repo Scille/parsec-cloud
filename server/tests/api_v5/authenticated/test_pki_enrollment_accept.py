@@ -71,6 +71,7 @@ class AcceptParams(TypedDict):
     enrollment_id: PKIEnrollmentID
     payload: bytes
     payload_signature: bytes
+    payload_signature_algorithm: PkiSignatureAlgorithm
     accepter_der_x509_certificate: bytes
     submitter_device_certificate: bytes
     submitter_user_certificate: bytes
@@ -113,16 +114,17 @@ def generate_accept_params(
         root_verify_key=coolorg.root_verify_key,
     ).dump()
 
-    return {
-        "enrollment_id": enrollment_id,
-        "payload": payload,
-        "payload_signature": b"<alice accept payload signature>",
-        "accepter_der_x509_certificate": b"<alice der x509 certificate>",
-        "submitter_user_certificate": u_certif,
-        "submitter_device_certificate": d_certif,
-        "submitter_redacted_user_certificate": redacted_u_certif,
-        "submitter_redacted_device_certificate": redacted_d_certif,
-    }
+    return AcceptParams(
+        enrollment_id=enrollment_id,
+        payload=payload,
+        payload_signature=b"<alice accept payload signature>",
+        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
+        accepter_der_x509_certificate=b"<alice der x509 certificate>",
+        submitter_user_certificate=u_certif,
+        submitter_device_certificate=d_certif,
+        submitter_redacted_user_certificate=redacted_u_certif,
+        submitter_redacted_device_certificate=redacted_d_certif,
+    )
 
 
 async def test_authenticated_pki_enrollment_accept_ok(

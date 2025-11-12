@@ -101,8 +101,7 @@ async fn accept_internal(
 
     // sign payload with accepter x509certificate
     let payload_signature = sign_message(&payload, cert_ref)
-        .map_err(|e| PkiEnrollmentAcceptError::PkiOperationError(e.into()))?
-        .signature;
+        .map_err(|e| PkiEnrollmentAcceptError::PkiOperationError(e.into()))?;
 
     // send request
     match client
@@ -111,7 +110,8 @@ async fn accept_internal(
             enrollment_id,
             accepter_der_x509_certificate,
             payload,
-            payload_signature,
+            payload_signature: payload_signature.signature,
+            payload_signature_algorithm: payload_signature.algo,
             submitter_device_certificate,
             submitter_redacted_device_certificate,
             submitter_redacted_user_certificate,
