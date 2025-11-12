@@ -663,6 +663,15 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
         PresentationMode.Toast,
       );
     }
+  } else if (device.ty.tag === AvailableDeviceTypeTag.OpenBao) {
+    window.electronAPI.log('error', `Failed to login with OpenBAO: ${error.tag} (${error.error})`);
+    informationManager.present(
+      new Information({
+        message: 'HomePage.loginErrors.openBaoFailed',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
   } else {
     window.electronAPI.log('error', `Unhandled error for device authentication type ${device.ty.tag}`);
   }

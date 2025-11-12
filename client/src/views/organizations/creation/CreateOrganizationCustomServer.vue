@@ -25,6 +25,7 @@
     <organization-authentication-page
       v-show="step === Steps.Authentication"
       :class="step === Steps.Authentication ? 'active' : ''"
+      :server-config="serverConfig"
       @authentication-chosen="onAuthenticationChosen"
       @close-requested="$emit('closeRequested')"
       @go-back-requested="onGoBackRequested"
@@ -76,6 +77,8 @@ import {
   BootstrapOrganizationErrorTag,
   DeviceSaveStrategy,
   DeviceSaveStrategyTag,
+  forgeServerAddr,
+  getServerConfig,
   isWeb,
   OrganizationID,
   ParsecAccount,
@@ -85,6 +88,7 @@ import {
   parseParsecAddr,
   Result,
   SaveStrategy,
+  ServerConfig,
 } from '@/parsec';
 import { wait } from '@/parsec/internals';
 import { ServerType } from '@/services/parsecServers';
@@ -128,13 +132,14 @@ const currentError = ref<Translatable | undefined>(undefined);
 const availableDevice = ref<AvailableDevice | undefined>(undefined);
 const initialized = ref(false);
 const sequesterKey = ref<string | undefined>(undefined);
+const serverConfig = ref<ServerConfig | undefined>(undefined);
 
 onMounted(async () => {
   if (bootstrapLink.value) {
     const result = await parseParsecAddr(bootstrapLink.value);
     if (result.ok && result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
       organizationName.value = result.value.organizationId;
-      serverAddr.value = `parsec3://${result.value.hostname}:${result.value.port}`;
+      serverAddr.value = await forgeServerAddr(result.value);
     }
   }
   initialized.value = true;
@@ -148,6 +153,10 @@ async function onOrganizationNameAndServerChosen(
   if (!props.bootstrapLink) {
     organizationName.value = chosenOrganizationName;
     serverAddr.value = chosenServerAddr;
+  }
+  const serverConfigResult = await getServerConfig(serverAddr.value as string);
+  if (serverConfigResult.ok) {
+    serverConfig.value = serverConfigResult.value;
   }
   sequesterKey.value = seqKey;
   if (ParsecAccount.isLoggedIn() && ParsecAccount.addressMatchesAccountServer(serverAddr.value as string)) {
