@@ -5,7 +5,7 @@
 #![allow(clippy::unwrap_used)]
 
 use libparsec_client_connection::{
-    protocol::anonymous_account_cmds, test_register_sequence_of_send_hooks, AnonymousAccountCmds,
+    protocol::anonymous_server_cmds, test_register_sequence_of_send_hooks, AnonymousServerCmds,
     ProxyConfig,
 };
 use libparsec_tests_fixtures::prelude::*;
@@ -21,7 +21,7 @@ async fn ok_with_server_then_check_code_and_create(env: &TestbedEnv) {
     let email: EmailAddress = format!("{}@example.com", uuid::Uuid::new_v4())
         .parse()
         .unwrap();
-    let cmds = AnonymousAccountCmds::new(
+    let cmds = AnonymousServerCmds::new(
         &env.discriminant_dir,
         env.server_addr.clone(),
         ProxyConfig::default(),
@@ -61,7 +61,7 @@ async fn ok_with_server_then_check_code_and_create(env: &TestbedEnv) {
 
     let human_handle = HumanHandle::new(email, "Zack").unwrap();
 
-    let cmds = AnonymousAccountCmds::new(
+    let cmds = AnonymousServerCmds::new(
         &env.discriminant_dir,
         env.server_addr.clone(),
         ProxyConfig::default(),
@@ -106,7 +106,7 @@ async fn ok_with_server_then_check_code_and_create(env: &TestbedEnv) {
 #[parsec_test(testbed = "empty")]
 async fn ok_mocked(env: &TestbedEnv) {
     let email: EmailAddress = "zack@example.com".parse().unwrap();
-    let cmds = AnonymousAccountCmds::new(
+    let cmds = AnonymousServerCmds::new(
         &env.discriminant_dir,
         env.server_addr.clone(),
         ProxyConfig::default(),
@@ -115,9 +115,9 @@ async fn ok_mocked(env: &TestbedEnv) {
 
     test_register_sequence_of_send_hooks!(&env.discriminant_dir, {
         let email = email.clone();
-        move |req: anonymous_account_cmds::latest::account_create_send_validation_email::Req| {
+        move |req: anonymous_server_cmds::latest::account_create_send_validation_email::Req| {
             p_assert_eq!(req.email, email);
-            anonymous_account_cmds::latest::account_create_send_validation_email::Rep::Ok
+            anonymous_server_cmds::latest::account_create_send_validation_email::Rep::Ok
         }
     });
 
@@ -130,7 +130,7 @@ async fn ok_mocked(env: &TestbedEnv) {
 #[parsec_test(testbed = "empty")]
 async fn offline(env: &TestbedEnv) {
     let email: EmailAddress = "zack@example.com".parse().unwrap();
-    let cmds = AnonymousAccountCmds::new(
+    let cmds = AnonymousServerCmds::new(
         &env.discriminant_dir,
         env.server_addr.clone(),
         ProxyConfig::default(),
@@ -148,7 +148,7 @@ async fn offline(env: &TestbedEnv) {
 #[parsec_test(testbed = "empty")]
 async fn email_recipient_refused(env: &TestbedEnv) {
     let email: EmailAddress = "zack@example.com".parse().unwrap();
-    let cmds = AnonymousAccountCmds::new(
+    let cmds = AnonymousServerCmds::new(
         &env.discriminant_dir,
         env.server_addr.clone(),
         ProxyConfig::default(),
@@ -157,9 +157,9 @@ async fn email_recipient_refused(env: &TestbedEnv) {
 
     test_register_sequence_of_send_hooks!(&env.discriminant_dir, {
         let email = email.clone();
-        move |req: anonymous_account_cmds::latest::account_create_send_validation_email::Req| {
+        move |req: anonymous_server_cmds::latest::account_create_send_validation_email::Req| {
             p_assert_eq!(req.email, email);
-            anonymous_account_cmds::latest::account_create_send_validation_email::Rep::EmailRecipientRefused
+            anonymous_server_cmds::latest::account_create_send_validation_email::Rep::EmailRecipientRefused
         }
     });
 
@@ -174,7 +174,7 @@ async fn email_recipient_refused(env: &TestbedEnv) {
 #[parsec_test(testbed = "empty")]
 async fn email_server_unavailable(env: &TestbedEnv) {
     let email: EmailAddress = "zack@example.com".parse().unwrap();
-    let cmds = AnonymousAccountCmds::new(
+    let cmds = AnonymousServerCmds::new(
         &env.discriminant_dir,
         env.server_addr.clone(),
         ProxyConfig::default(),
@@ -183,9 +183,9 @@ async fn email_server_unavailable(env: &TestbedEnv) {
 
     test_register_sequence_of_send_hooks!(&env.discriminant_dir, {
         let email = email.clone();
-        move |req: anonymous_account_cmds::latest::account_create_send_validation_email::Req| {
+        move |req: anonymous_server_cmds::latest::account_create_send_validation_email::Req| {
             p_assert_eq!(req.email, email);
-            anonymous_account_cmds::latest::account_create_send_validation_email::Rep::EmailServerUnavailable
+            anonymous_server_cmds::latest::account_create_send_validation_email::Rep::EmailServerUnavailable
         }
     });
 
@@ -200,7 +200,7 @@ async fn email_server_unavailable(env: &TestbedEnv) {
 #[parsec_test(testbed = "empty")]
 async fn email_sending_rate_limited(env: &TestbedEnv) {
     let email: EmailAddress = "zack@example.com".parse().unwrap();
-    let cmds = AnonymousAccountCmds::new(
+    let cmds = AnonymousServerCmds::new(
         &env.discriminant_dir,
         env.server_addr.clone(),
         ProxyConfig::default(),
@@ -210,9 +210,9 @@ async fn email_sending_rate_limited(env: &TestbedEnv) {
 
     test_register_sequence_of_send_hooks!(&env.discriminant_dir, {
         let email = email.clone();
-        move |req: anonymous_account_cmds::latest::account_create_send_validation_email::Req| {
+        move |req: anonymous_server_cmds::latest::account_create_send_validation_email::Req| {
             p_assert_eq!(req.email, email);
-            anonymous_account_cmds::latest::account_create_send_validation_email::Rep::EmailSendingRateLimited {
+            anonymous_server_cmds::latest::account_create_send_validation_email::Rep::EmailSendingRateLimited {
                 wait_until: expected_wait_until
             }
         }
@@ -229,7 +229,7 @@ async fn email_sending_rate_limited(env: &TestbedEnv) {
 #[parsec_test(testbed = "empty")]
 async fn unknown_status(env: &TestbedEnv) {
     let email: EmailAddress = "zack@example.com".parse().unwrap();
-    let cmds = AnonymousAccountCmds::new(
+    let cmds = AnonymousServerCmds::new(
         &env.discriminant_dir,
         env.server_addr.clone(),
         ProxyConfig::default(),
@@ -238,9 +238,9 @@ async fn unknown_status(env: &TestbedEnv) {
 
     test_register_sequence_of_send_hooks!(&env.discriminant_dir, {
         let email = email.clone();
-        move |req: anonymous_account_cmds::latest::account_create_send_validation_email::Req| {
+        move |req: anonymous_server_cmds::latest::account_create_send_validation_email::Req| {
             p_assert_eq!(req.email, email);
-            anonymous_account_cmds::latest::account_create_send_validation_email::Rep::UnknownStatus { unknown_status: "unknown".to_string(), reason: None }
+            anonymous_server_cmds::latest::account_create_send_validation_email::Rep::UnknownStatus { unknown_status: "unknown".to_string(), reason: None }
         }
     });
 

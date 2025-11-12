@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec_client_connection::{AnonymousAccountCmds, ConnectionError};
+use libparsec_client_connection::{AnonymousServerCmds, ConnectionError};
 use libparsec_types::prelude::*;
 
 use crate::AccountAuthMethodStrategy;
@@ -20,10 +20,10 @@ pub enum AccountCreateSendValidationEmailError {
 }
 
 pub(super) async fn account_create_send_validation_email(
-    cmds: &AnonymousAccountCmds,
+    cmds: &AnonymousServerCmds,
     email: EmailAddress,
 ) -> Result<(), AccountCreateSendValidationEmailError> {
-    use libparsec_protocol::anonymous_account_cmds::v5::account_create_send_validation_email::{
+    use libparsec_protocol::anonymous_server_cmds::v5::account_create_send_validation_email::{
         Rep, Req,
     };
 
@@ -70,10 +70,10 @@ pub(super) enum AccountCreateStep<'a> {
 }
 
 pub(super) async fn account_create(
-    cmds: &AnonymousAccountCmds,
+    cmds: &AnonymousServerCmds,
     step: AccountCreateStep<'_>,
 ) -> Result<(), AccountCreateError> {
-    use libparsec_protocol::anonymous_account_cmds::v5::account_create_proceed::{
+    use libparsec_protocol::anonymous_server_cmds::v5::account_create_proceed::{
         AccountCreateStep as ReqAccountCreateStep, Rep, Req,
     };
 
