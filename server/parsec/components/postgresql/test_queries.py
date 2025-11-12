@@ -194,9 +194,7 @@ new_organization_ids AS (
         _created_on,
         sequester_authority_certificate,
         sequester_authority_verify_key_der,
-        minimum_archiving_period,
-        allowed_client_agent,
-        account_vault_strategy
+        minimum_archiving_period
     )
     SELECT
         $target_id AS organization_id,
@@ -210,9 +208,7 @@ new_organization_ids AS (
         _created_on,
         sequester_authority_certificate,
         sequester_authority_verify_key_der,
-        minimum_archiving_period,
-        allowed_client_agent,
-        account_vault_strategy
+        minimum_archiving_period
     FROM organization
     WHERE organization_id = $source_id
     RETURNING _id
