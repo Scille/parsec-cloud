@@ -18,7 +18,7 @@ pub use libparsec_account::{
     AccountRecoverSendValidationEmailError, AccountRegisterNewDeviceError,
     AccountUploadOpaqueKeyInVaultError, AuthMethodInfo,
 };
-use libparsec_client_connection::{AnonymousAccountCmds, ConnectionError, ProxyConfig};
+use libparsec_client_connection::{AnonymousServerCmds, ConnectionError, ProxyConfig};
 use libparsec_platform_device_loader::{LoadDeviceError, RemoteOperationServer};
 use libparsec_types::prelude::*;
 
@@ -102,7 +102,7 @@ pub async fn account_create_1_send_validation_email(
     addr: ParsecAddr,
     email: EmailAddress,
 ) -> Result<(), AccountCreateSendValidationEmailError> {
-    let cmds = AnonymousAccountCmds::new(config_dir, addr, ProxyConfig::default())?;
+    let cmds = AnonymousServerCmds::new(config_dir, addr, ProxyConfig::default())?;
     libparsec_account::Account::create_1_send_validation_email(&cmds, email).await
 }
 
@@ -122,7 +122,7 @@ pub async fn account_create_2_check_validation_code(
     let validation_code: ValidationCode = validation_code
         .parse()
         .map_err(|_| AccountCreateError::InvalidValidationCode)?;
-    let cmds = AnonymousAccountCmds::new(config_dir, addr, ProxyConfig::default())?;
+    let cmds = AnonymousServerCmds::new(config_dir, addr, ProxyConfig::default())?;
     libparsec_account::Account::create_2_check_validation_code(&cmds, validation_code, email).await
 }
 
@@ -143,7 +143,7 @@ pub async fn account_create_3_proceed(
     let validation_code: ValidationCode = validation_code
         .parse()
         .map_err(|_| AccountCreateError::InvalidValidationCode)?;
-    let cmds = AnonymousAccountCmds::new(config_dir, addr, ProxyConfig::default())?;
+    let cmds = AnonymousServerCmds::new(config_dir, addr, ProxyConfig::default())?;
     libparsec_account::Account::create_3_proceed(
         &cmds,
         validation_code,
@@ -458,7 +458,7 @@ pub async fn account_recover_1_send_validation_email(
     addr: ParsecAddr,
     email: EmailAddress,
 ) -> Result<(), AccountRecoverSendValidationEmailError> {
-    let cmds = AnonymousAccountCmds::new(config_dir, addr, ProxyConfig::default())?;
+    let cmds = AnonymousServerCmds::new(config_dir, addr, ProxyConfig::default())?;
     libparsec_account::Account::recover_1_send_validation_email(&cmds, email).await
 }
 
@@ -479,7 +479,7 @@ pub async fn account_recover_2_proceed(
     let validation_code: ValidationCode = validation_code
         .parse()
         .map_err(|_| AccountRecoverProceedError::InvalidValidationCode)?;
-    let cmds = AnonymousAccountCmds::new(config_dir, addr, ProxyConfig::default())?;
+    let cmds = AnonymousServerCmds::new(config_dir, addr, ProxyConfig::default())?;
     libparsec_account::Account::recover_2_proceed(
         &cmds,
         validation_code,

@@ -23,7 +23,7 @@ const API_LATEST_MAJOR_VERSION: u32 = API_LATEST_VERSION.version;
 
 /// Send commands in an anonymous context.
 #[derive(Debug)]
-pub struct AnonymousAccountCmds {
+pub struct AnonymousServerCmds {
     // Note the `pub(super)` for some fields here, their solely purpose is to
     // implement `AuthenticatedAccountCmds::from_anonymous`
     /// HTTP Client that contain the basic configuration to communicate with the server.
@@ -34,7 +34,7 @@ pub struct AnonymousAccountCmds {
     pub(super) send_hook: SendHookConfig,
 }
 
-impl AnonymousAccountCmds {
+impl AnonymousServerCmds {
     pub fn new(config_dir: &Path, addr: ParsecAddr, proxy: ProxyConfig) -> anyhow::Result<Self> {
         let client = crate::build_client_with_proxy(proxy)?;
         Ok(Self::from_client(client, config_dir, addr))
@@ -45,7 +45,7 @@ impl AnonymousAccountCmds {
     }
 
     pub fn from_client(client: Client, _config_dir: &Path, addr: ParsecAddr) -> Self {
-        let url = addr.to_anonymous_account_url();
+        let url = addr.to_anonymous_server_url();
 
         #[cfg(feature = "test-with-testbed")]
         let send_hook = get_send_hook(_config_dir);
@@ -160,5 +160,5 @@ fn prepare_request(
 }
 
 #[cfg(test)]
-#[path = "../tests/unit/anonymous_account.rs"]
+#[path = "../tests/unit/anonymous_server.rs"]
 mod tests;

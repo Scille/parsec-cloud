@@ -6,7 +6,7 @@ use std::{
     sync::Arc,
 };
 
-use libparsec_client_connection::{AnonymousAccountCmds, AuthenticatedAccountCmds, ProxyConfig};
+use libparsec_client_connection::{AnonymousServerCmds, AuthenticatedAccountCmds, ProxyConfig};
 use libparsec_platform_device_loader::{AvailableDevice, DeviceSaveStrategy};
 use libparsec_types::prelude::*;
 
@@ -129,7 +129,7 @@ impl Account {
     /// To create a new account, the user's email address must first be validated.
     /// This method ask the server to send an email containing a validation code.
     pub async fn create_1_send_validation_email(
-        cmds: &AnonymousAccountCmds,
+        cmds: &AnonymousServerCmds,
         email: EmailAddress,
     ) -> Result<(), AccountCreateSendValidationEmailError> {
         account_create_send_validation_email(cmds, email).await
@@ -144,7 +144,7 @@ impl Account {
     /// validation code leads to a full invalidation of the attempt and requires
     /// a new validation email to be sent.
     pub async fn create_2_check_validation_code(
-        cmds: &AnonymousAccountCmds,
+        cmds: &AnonymousServerCmds,
         validation_code: ValidationCode,
         email: EmailAddress,
     ) -> Result<(), AccountCreateError> {
@@ -161,7 +161,7 @@ impl Account {
     /// Similar to `create_2_check_validation_code`, but this time we actually want
     /// to create the account!
     pub async fn create_3_proceed(
-        cmds: &AnonymousAccountCmds,
+        cmds: &AnonymousServerCmds,
         validation_code: ValidationCode,
         human_handle: HumanHandle,
         auth_method_strategy: AccountAuthMethodStrategy<'_>,
@@ -351,7 +351,7 @@ impl Account {
     /// Before recovering the account, a confirmation email containing a validation
     /// code must first be send to the user's email address.
     pub async fn recover_1_send_validation_email(
-        cmds: &AnonymousAccountCmds,
+        cmds: &AnonymousServerCmds,
         email: EmailAddress,
     ) -> Result<(), AccountRecoverSendValidationEmailError> {
         account_recover_send_validation_email(cmds, email).await
@@ -368,7 +368,7 @@ impl Account {
     /// flavor here. This is because since the user has no configuration to provide
     /// there is no need to validate a code before actually trying to use it.
     pub async fn recover_2_proceed(
-        cmds: &AnonymousAccountCmds,
+        cmds: &AnonymousServerCmds,
         validation_code: ValidationCode,
         email: EmailAddress,
         auth_method_strategy: AccountAuthMethodStrategy<'_>,

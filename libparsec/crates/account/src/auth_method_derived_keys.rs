@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec_client_connection::{AnonymousAccountCmds, ConnectionError};
+use libparsec_client_connection::{AnonymousServerCmds, ConnectionError};
 use libparsec_types::prelude::*;
 
 #[derive(Debug, thiserror::Error)]
@@ -14,7 +14,7 @@ pub(super) enum RetrieveAuthMethodMasterSecretFromPasswordError {
 }
 
 pub(super) async fn retrieve_auth_method_master_secret_from_password(
-    cmds: &AnonymousAccountCmds,
+    cmds: &AnonymousServerCmds,
     email: &EmailAddress,
     password: &Password,
 ) -> Result<KeyDerivation, RetrieveAuthMethodMasterSecretFromPasswordError> {
@@ -22,7 +22,7 @@ pub(super) async fn retrieve_auth_method_master_secret_from_password(
     // to know how to turn the password into `auth_method_master_secret`.
 
     let untrusted_password_algorithm = {
-        use libparsec_protocol::anonymous_account_cmds::latest::auth_method_password_get_algorithm::{Rep, Req};
+        use libparsec_protocol::anonymous_server_cmds::latest::auth_method_password_get_algorithm::{Rep, Req};
 
         let req = Req {
             email: email.clone(),
