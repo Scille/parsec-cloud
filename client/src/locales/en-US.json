@@ -1584,7 +1584,7 @@
             "tabShort": "PKI",
             "emptyState": "No pending PKI requests.",
             "copyLink": "Copy link (PKI)",
-            "pkiFeature": "The PKI feature required a PKI infrastructure to be used.",
+            "pkiFeature": "This feature requires a PKI (Public Key Infrastructure).",
             "listDisplayTitles": {
                 "name": "Name",
                 "email": "Email",
@@ -1599,7 +1599,7 @@
             },
             "rootCertificate": {
                 "missingCertificateTitle": "Missing root certificate",
-                "missingCertificateDescription": "A root certificate is required to validate requests received by PKI. For security reasons, the certificate must be provided each time the organization is reopened.",
+                "missingCertificateDescription": "A root certificate is required to validate PKI join requests. For security reasons, the certificate is not stored, and must be provided each time you login to the organization.",
                 "setRootCertificate": "Set root certificate",
                 "updateRootCertificate": "Update root certificate"
             },
