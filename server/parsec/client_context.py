@@ -181,7 +181,7 @@ class AuthenticatedClientContext:
 
 
 @dataclass(slots=True)
-class AnonymousAccountClientContext:
+class AnonymousServerClientContext:
     client_api_version: ApiVersion
     settled_api_version: ApiVersion
     logger: ParsecBoundLogger = field(init=False)
@@ -197,7 +197,7 @@ class AnonymousAccountClientContext:
         self.logger = logger.bind(
             request=request_id,
             api=f"{self.settled_api_version.version}.{self.settled_api_version.revision}",
-            auth="anonymous_account",
+            auth="anonymous_server",
         )
 
 
