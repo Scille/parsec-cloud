@@ -47,8 +47,13 @@
         </div>
       </ion-card-content>
       <ion-footer class="login-card-footer">
+        <sso-provider-card
+          v-if="device.ty.tag === AvailableDeviceTypeTag.OpenBao"
+          :provider="(device.ty as AvailableDeviceTypeOpenBao).openbaoPreferredAuthId as OpenBaoAuthConfigTag"
+          @click="onLoginSSOClick((device.ty as AvailableDeviceTypeOpenBao).openbaoPreferredAuthId as OpenBaoAuthConfigTag)"
+        />
         <ion-button
-          v-if="!device.deviceLabel.startsWith('sso_')"
+          v-else
           @click="onLoginClick()"
           size="large"
           :disabled="password.length == 0 || loginInProgress === true"
@@ -61,11 +66,6 @@
             :speed="2"
           />
         </ion-button>
-        <sso-provider-card
-          v-else
-          :provider="SSOProvider.ProConnect"
-          @click="onLoginSSOClick()"
-        />
       </ion-footer>
     </ion-card>
     <!-- end of login -->
@@ -73,10 +73,21 @@
 </template>
 
 <script setup lang="ts">
-import { SSOProvider, SsoProviderCard } from '@/components/devices';
+import { SsoProviderCard } from '@/components/devices';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
-import { AccessStrategy, AvailableDevice, ClientStartError, ClientStartErrorTag, DeviceAccessStrategyPassword } from '@/parsec';
-import { useOpenBao } from '@/services/openBao';
+import {
+  AccessStrategy,
+  AvailableDevice,
+  AvailableDeviceTypeOpenBao,
+  AvailableDeviceTypeTag,
+  ClientStartError,
+  ClientStartErrorTag,
+  DeviceAccessStrategyOpenBao,
+  DeviceAccessStrategyPassword,
+  getServerConfig,
+  OpenBaoAuthConfigTag,
+} from '@/parsec';
+import { openBaoConnect } from '@/services/openBao';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonFooter, IonText } from '@ionic/vue';
 import { MsInput, MsPasswordInput, MsSpinner } from 'megashark-lib';
 import { onMounted, ref, useTemplateRef } from 'vue';
@@ -87,7 +98,7 @@ const props = defineProps<{
 }>();
 
 const emits = defineEmits<{
-  (e: 'loginClick', device: AvailableDevice, access: DeviceAccessStrategyPassword): void;
+  (e: 'loginClick', device: AvailableDevice, access: DeviceAccessStrategyPassword | DeviceAccessStrategyOpenBao): void;
   (e: 'forgottenPasswordClick', device: AvailableDevice): void;
 }>();
 
@@ -96,25 +107,33 @@ const password = ref('');
 const errorMessage = ref('');
 const passwordIsInvalid = ref(false);
 const email = props.device.humanHandle.email;
-const { openBaoConnect } = useOpenBao();
 
 onMounted(async () => {
   await passwordInputRef.value?.setFocus();
 });
 
-async function onLoginSSOClick(): Promise<void> {
-  const connResult = await openBaoConnect();
+async function onLoginSSOClick(provider: OpenBaoAuthConfigTag): Promise<void> {
+  if (props.loginInProgress) {
+    return;
+  }
+  const serverConfigResult = await getServerConfig(props.device.serverUrl);
+
+  if (!serverConfigResult.ok || !serverConfigResult.value.openbao) {
+    window.electronAPI.log('error', 'OpenBao not available on this server');
+    return;
+  }
+  const provInfo = serverConfigResult.value.openbao.auths.find((v) => v.tag === provider);
+  if (!provInfo) {
+    window.electronAPI.log('error', `Provider '${provider}' not handled by this server.`);
+    return;
+  }
+  const connResult = await openBaoConnect(serverConfigResult.value.openbao.serverUrl, provInfo.tag, provInfo.mountPath);
 
   if (!connResult.ok) {
     console.error('Failed to log in to openbao');
     return;
   }
-  const retrieveResult = await connResult.value.retrieve(props.device.deviceLabel);
-  if (!retrieveResult.ok) {
-    console.error('Failed to retrieve');
-    return;
-  }
-  emits('loginClick', props.device, AccessStrategy.usePassword(props.device, retrieveResult.value.passKey));
+  emits('loginClick', props.device, AccessStrategy.useOpenBao(props.device, connResult.value.getConnectionInfo()));
 }
 
 async function onLoginClick(): Promise<void> {

@@ -91,13 +91,16 @@
           <sas-code-provide :code="claimer.guestSASCode" />
         </div>
 
-        <!-- part 4 (get password)-->
+        <!-- part 4 (get auth)-->
         <div
           v-show="pageStep === DeviceJoinOrganizationStep.Authentication"
           class="step"
           id="get-password"
         >
-          <choose-authentication ref="authChoice" />
+          <choose-authentication
+            ref="authChoice"
+            :server-config="serverConfig"
+          />
         </div>
         <!-- part 5 (finish the process)-->
         <div
@@ -150,9 +153,12 @@ import {
   ClaimInProgressErrorTag,
   DeviceClaim,
   DeviceSaveStrategy,
-  ParsedParsecAddrInvitationDevice,
+  forgeServerAddr,
+  getServerConfig,
+  OrganizationID,
   ParsedParsecAddrTag,
   parseParsecAddr,
+  ServerConfig,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
@@ -181,10 +187,11 @@ enum DeviceJoinOrganizationStep {
 
 const { isLargeDisplay } = useWindowSize();
 const pageStep = ref(DeviceJoinOrganizationStep.Information);
-const serverAddr = ref<ParsedParsecAddrInvitationDevice | null>(null);
+const organizationName = ref<OrganizationID>('');
 const claimer = ref(new DeviceClaim());
 const authChoiceRef = useTemplateRef<InstanceType<typeof ChooseAuthentication>>('authChoice');
 const cancelled = ref(false);
+const serverConfig = ref<ServerConfig | undefined>(undefined);
 
 const props = defineProps<{
   invitationLink: string;
@@ -211,7 +218,7 @@ const steps = computed(() => [
     title: {
       key: 'ClaimDeviceModal.titles.done',
       data: {
-        org: serverAddr.value ? serverAddr.value.organizationId : '',
+        org: organizationName.value,
       },
     },
   },
@@ -451,8 +458,19 @@ async function restartProcess(): Promise<void> {
 onMounted(async () => {
   const addrResult = await parseParsecAddr(props.invitationLink);
 
-  if (addrResult.ok && addrResult.value.tag === ParsedParsecAddrTag.InvitationDevice) {
-    serverAddr.value = addrResult.value as ParsedParsecAddrInvitationDevice;
+  if (addrResult.ok) {
+    if (addrResult.value.tag !== ParsedParsecAddrTag.InvitationDevice) {
+      window.electronAPI.log('error', 'Not a device invitation link');
+      return;
+    }
+    organizationName.value = addrResult.value.organizationId;
+    const configResult = await getServerConfig(await forgeServerAddr(addrResult.value));
+    if (configResult.ok) {
+      serverConfig.value = configResult.value;
+    }
+  } else {
+    window.electronAPI.log('error', `Failed to parse invitation link: ${addrResult.error.tag} (${addrResult.error.error})`);
+    return;
   }
   await startProcess();
 });

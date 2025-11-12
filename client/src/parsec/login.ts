@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { DeviceSaveStrategyOpenBao, libparsec, X509CertificateReference } from '@/plugins/libparsec';
+import { libparsec, X509CertificateReference } from '@/plugins/libparsec';
 
 import { ParsecAccount } from '@/parsec/account';
 import { getClientConfig } from '@/parsec/internals';
@@ -16,6 +16,7 @@ import {
   DeviceAccessStrategy,
   DeviceAccessStrategyAccountVault,
   DeviceAccessStrategyKeyring,
+  DeviceAccessStrategyOpenBao,
   DeviceAccessStrategyPassword,
   DeviceAccessStrategySmartcard,
   DeviceAccessStrategyTag,
@@ -23,6 +24,7 @@ import {
   DeviceSaveStrategy,
   DeviceSaveStrategyAccountVault,
   DeviceSaveStrategyKeyring,
+  DeviceSaveStrategyOpenBao,
   DeviceSaveStrategyPassword,
   DeviceSaveStrategySmartcard,
   DeviceSaveStrategyTag,
@@ -34,6 +36,7 @@ import {
 } from '@/parsec/types';
 import { generateNoHandleError } from '@/parsec/utils';
 import { getConnectionHandle } from '@/router';
+import { OpenBaoConnectionInfo } from '@/services/openBao';
 import { DateTime } from 'luxon';
 
 export interface LoggedInDeviceInfo {
@@ -266,6 +269,19 @@ export const AccessStrategy = {
       keyFile: device.keyFilePath,
     };
   },
+  useOpenBao(device: AvailableDevice, connInfo: OpenBaoConnectionInfo): DeviceAccessStrategyOpenBao {
+    if (device.ty.tag !== AvailableDeviceTypeTag.OpenBao) {
+      throw new Error('Invalid device type, expected openbao');
+    }
+    return {
+      tag: DeviceAccessStrategyTag.OpenBao,
+      keyFile: device.keyFilePath,
+      openbaoServerUrl: connInfo.server,
+      openbaoSecretMountPath: connInfo.mountpoint,
+      openbaoEntityId: connInfo.userId,
+      openbaoAuthToken: connInfo.token,
+    };
+  },
   useAccountVault(device: AvailableDevice): DeviceAccessStrategyAccountVault {
     if (device.ty.tag !== AvailableDeviceTypeTag.AccountVault) {
       throw new Error('Invalid device type, expected account vault');
@@ -318,20 +334,14 @@ export const SaveStrategy = {
       accountHandle,
     };
   },
-  useOpenBao(
-    openbaoServerUrl: string,
-    openbaoSecretMountPath: string,
-    openbaoEntityId: string,
-    openbaoAuthToken: string,
-    openbaoPreferredAuth: string,
-  ): DeviceSaveStrategyOpenBao {
+  useOpenBao(connInfo: OpenBaoConnectionInfo): DeviceSaveStrategyOpenBao {
     return {
       tag: DeviceSaveStrategyTag.OpenBao,
-      openbaoServerUrl,
-      openbaoSecretMountPath,
-      openbaoEntityId,
-      openbaoAuthToken,
-      openbaoPreferredAuth,
+      openbaoServerUrl: connInfo.server,
+      openbaoSecretMountPath: connInfo.mountpoint,
+      openbaoEntityId: connInfo.userId,
+      openbaoAuthToken: connInfo.token,
+      openbaoPreferredAuthId: connInfo.provider,
     };
   },
   useSmartCard(certificate: X509CertificateReference): DeviceSaveStrategySmartcard {

@@ -63,7 +63,7 @@
         </ion-radio>
 
         <ion-radio
-          v-show="isOpenBaoAvailable()"
+          v-show="serverConfig?.openbao && serverConfig?.openbao.auths"
           class="item-radio radio-list-item"
           label-placement="end"
           :value="DeviceSaveStrategyTag.OpenBao"
@@ -122,7 +122,7 @@
         <choose-certificate ref="chooseCertificate" />
       </div>
 
-      <div v-if="authentication === DeviceSaveStrategyTag.OpenBao">
+      <div v-if="authentication === DeviceSaveStrategyTag.OpenBao && serverConfig?.openbao">
         <div class="method-chosen">
           <ion-text class="method-chosen__title subtitles-sm">{{ $msTranslate('Authentication.methodChosen') }}</ion-text>
           <authentication-card
@@ -132,8 +132,10 @@
           />
         </div>
         <sso-provider-card
-          :provider="SSOProvider.ProConnect"
-          @click="onSSOLoginClicked(SSOProvider.ProConnect)"
+          v-for="auth in serverConfig?.openbao.auths"
+          :key="auth.tag"
+          :provider="auth.tag"
+          @click="onSSOLoginClicked(auth.tag)"
         />
       </div>
     </div>
@@ -144,20 +146,21 @@
 import ChooseCertificate from '@/components/devices/ChooseCertificate.vue';
 import KeyringInformation from '@/components/devices/KeyringInformation.vue';
 import SsoProviderCard from '@/components/devices/SsoProviderCard.vue';
-import { SSOProvider } from '@/components/devices/types';
 import authenticationCard from '@/components/profile/AuthenticationCard.vue';
 import { AuthenticationCardState } from '@/components/profile/types';
 import {
   AvailableDeviceTypeTag,
   DeviceSaveStrategy,
   DeviceSaveStrategyTag,
+  OpenBaoAuthConfigTag,
   SaveStrategy,
+  ServerConfig,
   X509CertificateReference,
   isKeyringAvailable,
   isSmartcardAvailable,
   isWeb,
 } from '@/parsec';
-import { useOpenBao } from '@/services/openBao';
+import { OpenBaoClient, openBaoConnect } from '@/services/openBao';
 import { IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
 import { MsChoosePasswordInput } from 'megashark-lib';
 import { onMounted, ref, toRaw, useTemplateRef } from 'vue';
@@ -166,13 +169,13 @@ const authentication = ref<DeviceSaveStrategyTag | undefined>(undefined);
 const keyringAvailable = ref(false);
 const choosePasswordRef = useTemplateRef<InstanceType<typeof MsChoosePasswordInput>>('choosePassword');
 const chooseCertificateRef = useTemplateRef<InstanceType<typeof ChooseCertificate>>('chooseCertificate');
-const { openBaoConnect, isOpenBaoAvailable } = useOpenBao();
-const openBaoLoggedIn = ref(false);
+const openBaoClient = ref<undefined | OpenBaoClient>(undefined);
 const smartcardAvailable = ref(false);
 
 const props = defineProps<{
   showTitle?: boolean;
   activeAuth?: AvailableDeviceTypeTag;
+  serverConfig?: ServerConfig;
 }>();
 
 defineExpose({
@@ -227,7 +230,11 @@ function getSaveStrategy(): DeviceSaveStrategy | undefined {
   if (authentication.value === DeviceSaveStrategyTag.Keyring) {
     return SaveStrategy.useKeyring();
   } else if (authentication.value === DeviceSaveStrategyTag.OpenBao) {
-    return SaveStrategy.useOpenBao() as any as DeviceSaveStrategy;
+    if (!openBaoClient.value) {
+      window.electronAPI.log('error', 'Selected auth is openBao but no client available');
+      return undefined;
+    }
+    return SaveStrategy.useOpenBao(openBaoClient.value.getConnectionInfo()) as any as DeviceSaveStrategy;
   } else if (authentication.value === DeviceSaveStrategyTag.Smartcard) {
     if (chooseCertificateRef.value && chooseCertificateRef.value.getCertificate()) {
       return SaveStrategy.useSmartCard(toRaw(chooseCertificateRef.value.getCertificate() as X509CertificateReference));
@@ -245,7 +252,7 @@ async function areFieldsCorrect(): Promise<boolean> {
     return true;
   } else if (authentication.value === DeviceSaveStrategyTag.Password && choosePasswordRef.value) {
     return await choosePasswordRef.value.areFieldsCorrect();
-  } else if (authentication.value === DeviceSaveStrategyTag.OpenBao && openBaoLoggedIn.value) {
+  } else if (authentication.value === DeviceSaveStrategyTag.OpenBao && openBaoClient.value !== undefined) {
     return true;
   } else if (authentication.value === DeviceSaveStrategyTag.Smartcard && chooseCertificateRef.value) {
     return chooseCertificateRef.value.getCertificate() !== undefined;
@@ -253,12 +260,21 @@ async function areFieldsCorrect(): Promise<boolean> {
   return false;
 }
 
-async function onSSOLoginClicked(_provider: SSOProvider): Promise<void> {
-  const result = await openBaoConnect();
+async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> {
+  if (!props.serverConfig?.openbao) {
+    window.electronAPI.log('error', 'OpenBao not enabled on this server');
+    return;
+  }
+  const auth = props.serverConfig.openbao.auths.find((v) => v.tag === provider);
+  if (!auth) {
+    window.electronAPI.log('error', `Provider '${provider}' selected but is not available in server config`);
+    return;
+  }
+  const result = await openBaoConnect(props.serverConfig.openbao.serverUrl, auth.tag, auth.mountPath);
   if (!result.ok) {
     window.electronAPI.log('error', `Error while connecting with SSO: ${(result.error.errors as Array<string>)[0]}`);
   } else {
-    openBaoLoggedIn.value = true;
+    openBaoClient.value = result.value;
   }
 }
 </script>

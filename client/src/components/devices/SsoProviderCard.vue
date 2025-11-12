@@ -2,7 +2,7 @@
 
 <template>
   <div
-    v-if="provider === SSOProvider.ProConnect"
+    v-if="provider === OpenBaoAuthConfigTag.OIDCProConnect"
     class="sso-provider-card"
   >
     <div class="proconnect-group">
@@ -16,15 +16,21 @@
       </p>
     </div>
   </div>
+  <div
+    v-if="provider === OpenBaoAuthConfigTag.OIDCHexagone"
+    class="sso-provider-card"
+  >
+    {{ 'Hexagone' }}
+  </div>
 </template>
 
 <script setup lang="ts">
-import { SSOProvider } from '@/components/devices/types';
+import { OpenBaoAuthConfigTag } from '@/parsec';
 import { Env } from '@/services/environment';
 import { I18n } from 'megashark-lib';
 
 defineProps<{
-  provider: SSOProvider;
+  provider: OpenBaoAuthConfigTag;
 }>();
 </script>
 

@@ -15,6 +15,7 @@
       v-show="step === Steps.Authentication"
       :class="step === Steps.Authentication ? 'active' : ''"
       :is-last-step="true"
+      :server-config="serverConfig"
       @authentication-chosen="onAuthenticationChosen"
       @go-back-requested="onGoBackRequested"
       @close-requested="$emit('closeRequested')"
@@ -42,18 +43,18 @@ import {
   BootstrapOrganizationError,
   BootstrapOrganizationErrorTag,
   DeviceSaveStrategy,
-  DeviceSaveStrategyTag,
+  forgeServerAddr,
+  getServerConfig,
   OrganizationID,
   bootstrapOrganization as parsecBootstrapOrganization,
   createOrganization as parsecCreateOrganization,
   ParsedParsecAddrTag,
   parseParsecAddr,
   Result,
-  SaveStrategy,
+  ServerConfig,
 } from '@/parsec';
 import { wait } from '@/parsec/internals';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { useOpenBao } from '@/services/openBao';
 import { getTrialServerAddress } from '@/services/parsecServers';
 import OrganizationAuthenticationPage from '@/views/organizations/creation/OrganizationAuthenticationPage.vue';
 import OrganizationCreatedPage from '@/views/organizations/creation/OrganizationCreatedPage.vue';
@@ -88,14 +89,25 @@ const saveStrategy = ref<DeviceSaveStrategy | undefined>(undefined);
 const availableDevice = ref<AvailableDevice | undefined>(undefined);
 const currentError = ref<Translatable | undefined>(undefined);
 const organizationName = ref<OrganizationID | undefined>(undefined);
-const { getOpenBaoClient, isOpenBaoAvailable } = useOpenBao();
+const serverConfig = ref<ServerConfig | undefined>(undefined);
 
 onMounted(async () => {
+  let server!: string;
   if (props.bootstrapLink) {
     const result = await parseParsecAddr(props.bootstrapLink);
     if (result.ok && result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
       organizationName.value = result.value.organizationId;
+      server = await forgeServerAddr(result.value);
+    } else {
+      server = getTrialServerAddress();
     }
+  } else {
+    server = getTrialServerAddress();
+  }
+  const configResult = await getServerConfig(server);
+  if (configResult.ok) {
+    serverConfig.value = configResult.value;
+    console.log(serverConfig.value);
   }
 });
 
@@ -110,22 +122,6 @@ async function createOrganization(): Promise<Result<AvailableDevice, BootstrapOr
     return { ok: false, error: { tag: BootstrapOrganizationErrorTag.Internal, error: 'Missing data' } };
   }
 
-  let deviceName = getDefaultDeviceName();
-  if (isOpenBaoAvailable() && saveStrategy.value.tag === DeviceSaveStrategyTag.OpenBao) {
-    const client = getOpenBaoClient();
-    if (!client) {
-      window.electronAPI.log('error', 'OpenBAO not logged in');
-      return { ok: false, error: { tag: BootstrapOrganizationErrorTag.Internal, error: 'open bao not logged in' } };
-    }
-    deviceName = `sso_${crypto.randomUUID().slice(0, 24)}`;
-    const passKey = crypto.randomUUID();
-    saveStrategy.value = SaveStrategy.usePassword(passKey);
-    const result = await client.store(deviceName, { passKey: passKey });
-    if (!result.ok) {
-      window.electronAPI.log('error', `Failed to store passkey: ${result.error.errors}`);
-    }
-  }
-
   let retry = 0;
 
   while (retry < 2) {
@@ -135,7 +131,7 @@ async function createOrganization(): Promise<Result<AvailableDevice, BootstrapOr
       orgName,
       name.value,
       email.value,
-      deviceName,
+      getDefaultDeviceName(),
       (isProxy(saveStrategy.value) ? toRaw(saveStrategy.value) : saveStrategy.value) as DeviceSaveStrategy,
     );
     if (result.ok) {
