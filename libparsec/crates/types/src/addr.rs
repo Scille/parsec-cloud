@@ -482,8 +482,8 @@ impl ParsecAddr {
     }
 
     /// Return an [Url] that points to the server endpoint for anonymous account commands.
-    pub fn to_anonymous_account_url(&self) -> Url {
-        self.base.to_http_url(Some("/anonymous_account"))
+    pub fn to_anonymous_server_url(&self) -> Url {
+        self.base.to_http_url(Some("/anonymous_server"))
     }
 }
 

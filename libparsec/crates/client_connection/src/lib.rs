@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 #![doc = include_str!("../README.md")]
 
-mod anonymous_account_cmds;
 mod anonymous_cmds;
+mod anonymous_server_cmds;
 mod authenticated_account_cmds;
 mod authenticated_cmds;
 mod error;
@@ -12,8 +12,8 @@ mod testbed;
 #[cfg(feature = "test-with-testbed")]
 mod testbed_send_hook_helpers;
 
-pub use anonymous_account_cmds::AnonymousAccountCmds;
 pub use anonymous_cmds::AnonymousCmds;
+pub use anonymous_server_cmds::AnonymousServerCmds;
 pub use authenticated_account_cmds::{AccountAuthMethod, AuthenticatedAccountCmds};
 pub use authenticated_cmds::{
     sse::{RateLimiter, SSEEvent, SSEResponseOrMissedEvents, SSEStream},

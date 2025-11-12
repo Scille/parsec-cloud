@@ -10,7 +10,7 @@ use std::{
 };
 
 use libparsec_client_connection::{
-    protocol::{anonymous_account_cmds, authenticated_account_cmds},
+    protocol::{anonymous_server_cmds, authenticated_account_cmds},
     test_register_sequence_of_send_hooks, test_send_hook_vault_item_list, ProxyConfig,
 };
 use libparsec_tests_fixtures::prelude::*;
@@ -148,8 +148,8 @@ async fn ok_mocked(#[values("master_secret", "password")] kind: &str, env: &Test
         test_register_sequence_of_send_hooks!(
             &env.discriminant_dir,
             {
-                move |_req: anonymous_account_cmds::latest::auth_method_password_get_algorithm::Req| {
-                    anonymous_account_cmds::latest::auth_method_password_get_algorithm::Rep::Ok {
+                move |_req: anonymous_server_cmds::latest::auth_method_password_get_algorithm::Req| {
+                    anonymous_server_cmds::latest::auth_method_password_get_algorithm::Rep::Ok {
                         password_algorithm: auth_method_password_algorithm.unwrap(),
                     }
                 }

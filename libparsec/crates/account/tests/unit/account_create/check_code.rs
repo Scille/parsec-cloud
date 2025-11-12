@@ -5,7 +5,7 @@
 #![allow(clippy::unwrap_used)]
 
 use libparsec_client_connection::{
-    protocol::anonymous_account_cmds, test_register_sequence_of_send_hooks, AnonymousAccountCmds,
+    protocol::anonymous_server_cmds, test_register_sequence_of_send_hooks, AnonymousServerCmds,
     ProxyConfig,
 };
 use libparsec_tests_fixtures::prelude::*;
@@ -19,7 +19,7 @@ use crate::{Account, AccountCreateError};
 async fn ok(env: &TestbedEnv) {
     let email: EmailAddress = "zack@example.com".parse().unwrap();
     let validation_code: ValidationCode = "AD3FXJ".parse().unwrap();
-    let cmds = AnonymousAccountCmds::new(
+    let cmds = AnonymousServerCmds::new(
         &env.discriminant_dir,
         env.server_addr.clone(),
         ProxyConfig::default(),
@@ -29,9 +29,9 @@ async fn ok(env: &TestbedEnv) {
     test_register_sequence_of_send_hooks!(&env.discriminant_dir, {
         let email = email.clone();
         let validation_code = validation_code.clone();
-        move |req: anonymous_account_cmds::latest::account_create_proceed::Req| {
-            p_assert_eq!(req.account_create_step, anonymous_account_cmds::latest::account_create_proceed::AccountCreateStep::Number0CheckCode { email, validation_code });
-            anonymous_account_cmds::latest::account_create_proceed::Rep::Ok
+        move |req: anonymous_server_cmds::latest::account_create_proceed::Req| {
+            p_assert_eq!(req.account_create_step, anonymous_server_cmds::latest::account_create_proceed::AccountCreateStep::Number0CheckCode { email, validation_code });
+            anonymous_server_cmds::latest::account_create_proceed::Rep::Ok
         }
     });
 
@@ -45,7 +45,7 @@ async fn ok(env: &TestbedEnv) {
 async fn offline(env: &TestbedEnv) {
     let email: EmailAddress = "zack@example.com".parse().unwrap();
     let validation_code: ValidationCode = "AD3FXJ".parse().unwrap();
-    let cmds = AnonymousAccountCmds::new(
+    let cmds = AnonymousServerCmds::new(
         &env.discriminant_dir,
         env.server_addr.clone(),
         ProxyConfig::default(),
@@ -64,7 +64,7 @@ async fn offline(env: &TestbedEnv) {
 async fn unknown_status(env: &TestbedEnv) {
     let email: EmailAddress = "zack@example.com".parse().unwrap();
     let validation_code: ValidationCode = "AD3FXJ".parse().unwrap();
-    let cmds = AnonymousAccountCmds::new(
+    let cmds = AnonymousServerCmds::new(
         &env.discriminant_dir,
         env.server_addr.clone(),
         ProxyConfig::default(),
@@ -73,8 +73,8 @@ async fn unknown_status(env: &TestbedEnv) {
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
-        move |_req: anonymous_account_cmds::latest::account_create_proceed::Req| {
-            anonymous_account_cmds::latest::account_create_proceed::Rep::UnknownStatus {
+        move |_req: anonymous_server_cmds::latest::account_create_proceed::Req| {
+            anonymous_server_cmds::latest::account_create_proceed::Rep::UnknownStatus {
                 unknown_status: "unknown".to_string(),
                 reason: None,
             }
@@ -98,7 +98,7 @@ async fn unknown_status(env: &TestbedEnv) {
 async fn invalid_validation_code(env: &TestbedEnv) {
     let email: EmailAddress = "zack@example.com".parse().unwrap();
     let validation_code: ValidationCode = "AD3FXJ".parse().unwrap();
-    let cmds = AnonymousAccountCmds::new(
+    let cmds = AnonymousServerCmds::new(
         &env.discriminant_dir,
         env.server_addr.clone(),
         ProxyConfig::default(),
@@ -107,8 +107,8 @@ async fn invalid_validation_code(env: &TestbedEnv) {
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
-        move |_req: anonymous_account_cmds::latest::account_create_proceed::Req| {
-            anonymous_account_cmds::latest::account_create_proceed::Rep::InvalidValidationCode
+        move |_req: anonymous_server_cmds::latest::account_create_proceed::Req| {
+            anonymous_server_cmds::latest::account_create_proceed::Rep::InvalidValidationCode
         }
     );
 
@@ -124,7 +124,7 @@ async fn invalid_validation_code(env: &TestbedEnv) {
 async fn send_validation_email_required(env: &TestbedEnv) {
     let email: EmailAddress = "zack@example.com".parse().unwrap();
     let validation_code: ValidationCode = "AD3FXJ".parse().unwrap();
-    let cmds = AnonymousAccountCmds::new(
+    let cmds = AnonymousServerCmds::new(
         &env.discriminant_dir,
         env.server_addr.clone(),
         ProxyConfig::default(),
@@ -133,8 +133,8 @@ async fn send_validation_email_required(env: &TestbedEnv) {
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
-        move |_req: anonymous_account_cmds::latest::account_create_proceed::Req| {
-            anonymous_account_cmds::latest::account_create_proceed::Rep::SendValidationEmailRequired
+        move |_req: anonymous_server_cmds::latest::account_create_proceed::Req| {
+            anonymous_server_cmds::latest::account_create_proceed::Rep::SendValidationEmailRequired
         }
     );
 
@@ -150,7 +150,7 @@ async fn send_validation_email_required(env: &TestbedEnv) {
 async fn auth_method_id_already_exists(env: &TestbedEnv) {
     let email: EmailAddress = "zack@example.com".parse().unwrap();
     let validation_code: ValidationCode = "AD3FXJ".parse().unwrap();
-    let cmds = AnonymousAccountCmds::new(
+    let cmds = AnonymousServerCmds::new(
         &env.discriminant_dir,
         env.server_addr.clone(),
         ProxyConfig::default(),
@@ -159,8 +159,8 @@ async fn auth_method_id_already_exists(env: &TestbedEnv) {
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
-        move |_req: anonymous_account_cmds::latest::account_create_proceed::Req| {
-            anonymous_account_cmds::latest::account_create_proceed::Rep::AuthMethodIdAlreadyExists
+        move |_req: anonymous_server_cmds::latest::account_create_proceed::Req| {
+            anonymous_server_cmds::latest::account_create_proceed::Rep::AuthMethodIdAlreadyExists
         }
     );
 
