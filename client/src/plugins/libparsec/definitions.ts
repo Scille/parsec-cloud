@@ -332,10 +332,7 @@ export interface PkiEnrollmentAnswerPayload {
 export interface PkiEnrollmentListItem {
     enrollmentId: PKIEnrollmentID
     submittedOn: DateTime
-    derX509Certificate: Bytes
-    payloadSignature: Bytes
-    payloadSignatureAlgorithm: PkiSignatureAlgorithm
-    payload: Bytes
+    payload: PkiEnrollmentSubmitPayload
 }
 
 export interface PkiEnrollmentSubmitPayload {
