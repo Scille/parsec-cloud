@@ -7,7 +7,7 @@
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
 
-use super::anonymous_account_cmds;
+use super::anonymous_server_cmds;
 
 // Request
 
@@ -22,24 +22,24 @@ pub fn req() {
     )
     .as_ref();
 
-    let req = anonymous_account_cmds::auth_method_password_get_algorithm::Req {
+    let req = anonymous_server_cmds::auth_method_password_get_algorithm::Req {
         email: "alice@invalid.com".parse().unwrap(),
     };
 
-    let expected = anonymous_account_cmds::AnyCmdReq::AuthMethodPasswordGetAlgorithm(req.clone());
+    let expected = anonymous_server_cmds::AnyCmdReq::AuthMethodPasswordGetAlgorithm(req.clone());
     println!("***expected: {:?}", req.dump().unwrap());
 
-    let data = anonymous_account_cmds::AnyCmdReq::load(raw).unwrap();
+    let data = anonymous_server_cmds::AnyCmdReq::load(raw).unwrap();
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let anonymous_account_cmds::AnyCmdReq::AuthMethodPasswordGetAlgorithm(req2) = data else {
+    let anonymous_server_cmds::AnyCmdReq::AuthMethodPasswordGetAlgorithm(req2) = data else {
         unreachable!()
     };
 
     let raw2 = req2.dump().unwrap();
 
-    let data2 = anonymous_account_cmds::AnyCmdReq::load(&raw2).unwrap();
+    let data2 = anonymous_server_cmds::AnyCmdReq::load(&raw2).unwrap();
 
     p_assert_eq!(data2, expected);
 }
@@ -58,7 +58,7 @@ pub fn rep_ok() {
     )
     .as_ref();
 
-    let expected = anonymous_account_cmds::auth_method_password_get_algorithm::Rep::Ok {
+    let expected = anonymous_server_cmds::auth_method_password_get_algorithm::Rep::Ok {
         password_algorithm: UntrustedPasswordAlgorithm::Argon2id {
             opslimit: 3,
             memlimit_kb: 128 * 1024,
@@ -67,7 +67,7 @@ pub fn rep_ok() {
     };
     println!("***expected: {:?}", expected.dump().unwrap());
 
-    let data = anonymous_account_cmds::auth_method_password_get_algorithm::Rep::load(raw).unwrap();
+    let data = anonymous_server_cmds::auth_method_password_get_algorithm::Rep::load(raw).unwrap();
 
     p_assert_eq!(data, expected);
 
@@ -75,7 +75,7 @@ pub fn rep_ok() {
     let raw2 = data.dump().unwrap();
 
     let data2 =
-        anonymous_account_cmds::auth_method_password_get_algorithm::Rep::load(&raw2).unwrap();
+        anonymous_server_cmds::auth_method_password_get_algorithm::Rep::load(&raw2).unwrap();
 
     p_assert_eq!(data2, expected);
 }
