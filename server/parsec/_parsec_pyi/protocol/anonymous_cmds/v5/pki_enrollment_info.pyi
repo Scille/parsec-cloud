@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from parsec._parsec import DateTime, PKIEnrollmentID
+from parsec._parsec import DateTime, PKIEnrollmentID, PkiSignatureAlgorithm
 
 class PkiEnrollmentInfoStatus:
     pass
@@ -21,12 +21,15 @@ class PkiEnrollmentInfoStatusAccepted(PkiEnrollmentInfoStatus):
         accepted_on: DateTime,
         accepter_der_x509_certificate: bytes,
         accept_payload_signature: bytes,
+        accept_payload_signature_algorithm: PkiSignatureAlgorithm,
         accept_payload: bytes,
     ) -> None: ...
     @property
     def accept_payload(self) -> bytes: ...
     @property
     def accept_payload_signature(self) -> bytes: ...
+    @property
+    def accept_payload_signature_algorithm(self) -> PkiSignatureAlgorithm: ...
     @property
     def accepted_on(self) -> DateTime: ...
     @property
