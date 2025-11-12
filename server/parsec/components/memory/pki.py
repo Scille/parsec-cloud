@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from hashlib import sha1
 from typing import override
 
 from parsec._parsec import (
@@ -152,11 +151,9 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
 
             # 7) All checks are good, now we do the actual insertion
 
-            submitter_der_x509_certificate_sha1 = sha1(submitter_der_x509_certificate).digest()
             org.pki_enrollments[enrollment_id] = MemoryPkiEnrollment(
                 enrollment_id=enrollment_id,
                 submitter_der_x509_certificate=submitter_der_x509_certificate,
-                submitter_der_x509_certificate_sha1=submitter_der_x509_certificate_sha1,
                 submit_payload_signature=submit_payload_signature,
                 submit_payload_signature_algorithm=submit_payload_signature_algorithm,
                 submit_payload=submit_payload,
