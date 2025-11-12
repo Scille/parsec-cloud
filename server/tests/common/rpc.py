@@ -23,8 +23,8 @@ from parsec._parsec import (
     ValidationCode,
     VerifyKey,
     VlobID,
-    anonymous_account_cmds,
     anonymous_cmds,
+    anonymous_server_cmds,
     authenticated_account_cmds,
     authenticated_cmds,
     invited_cmds,
@@ -93,26 +93,26 @@ class BaseAnonymousRpcClient:
         return anonymous_cmds.latest.pki_enrollment_submit.Rep.load(raw_rep)
 
 
-class BaseAnonymousAccountRpcClient:
+class BaseAnonymousServerRpcClient:
     async def _do_request(self, req: bytes, family: str) -> bytes:
         raise NotImplementedError
 
     async def account_create_proceed(
         self,
-        account_create_step: anonymous_account_cmds.latest.account_create_proceed.AccountCreateStep,
-    ) -> anonymous_account_cmds.latest.account_create_proceed.Rep:
-        req = anonymous_account_cmds.latest.account_create_proceed.Req(
+        account_create_step: anonymous_server_cmds.latest.account_create_proceed.AccountCreateStep,
+    ) -> anonymous_server_cmds.latest.account_create_proceed.Rep:
+        req = anonymous_server_cmds.latest.account_create_proceed.Req(
             account_create_step=account_create_step
         )
-        raw_rep = await self._do_request(req.dump(), "anonymous_account")
-        return anonymous_account_cmds.latest.account_create_proceed.Rep.load(raw_rep)
+        raw_rep = await self._do_request(req.dump(), "anonymous_server")
+        return anonymous_server_cmds.latest.account_create_proceed.Rep.load(raw_rep)
 
     async def account_create_send_validation_email(
         self, email: EmailAddress
-    ) -> anonymous_account_cmds.latest.account_create_send_validation_email.Rep:
-        req = anonymous_account_cmds.latest.account_create_send_validation_email.Req(email=email)
-        raw_rep = await self._do_request(req.dump(), "anonymous_account")
-        return anonymous_account_cmds.latest.account_create_send_validation_email.Rep.load(raw_rep)
+    ) -> anonymous_server_cmds.latest.account_create_send_validation_email.Rep:
+        req = anonymous_server_cmds.latest.account_create_send_validation_email.Req(email=email)
+        raw_rep = await self._do_request(req.dump(), "anonymous_server")
+        return anonymous_server_cmds.latest.account_create_send_validation_email.Rep.load(raw_rep)
 
     async def account_recover_proceed(
         self,
@@ -122,8 +122,8 @@ class BaseAnonymousAccountRpcClient:
         new_auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
         new_auth_method_mac_key: SecretKey,
         new_auth_method_id: AccountAuthMethodID,
-    ) -> anonymous_account_cmds.latest.account_recover_proceed.Rep:
-        req = anonymous_account_cmds.latest.account_recover_proceed.Req(
+    ) -> anonymous_server_cmds.latest.account_recover_proceed.Rep:
+        req = anonymous_server_cmds.latest.account_recover_proceed.Req(
             email=email,
             validation_code=validation_code,
             new_vault_key_access=new_vault_key_access,
@@ -131,27 +131,34 @@ class BaseAnonymousAccountRpcClient:
             new_auth_method_mac_key=new_auth_method_mac_key,
             new_auth_method_id=new_auth_method_id,
         )
-        raw_rep = await self._do_request(req.dump(), "anonymous_account")
-        return anonymous_account_cmds.latest.account_recover_proceed.Rep.load(raw_rep)
+        raw_rep = await self._do_request(req.dump(), "anonymous_server")
+        return anonymous_server_cmds.latest.account_recover_proceed.Rep.load(raw_rep)
 
     async def account_recover_send_validation_email(
         self, email: EmailAddress
-    ) -> anonymous_account_cmds.latest.account_recover_send_validation_email.Rep:
-        req = anonymous_account_cmds.latest.account_recover_send_validation_email.Req(email=email)
-        raw_rep = await self._do_request(req.dump(), "anonymous_account")
-        return anonymous_account_cmds.latest.account_recover_send_validation_email.Rep.load(raw_rep)
+    ) -> anonymous_server_cmds.latest.account_recover_send_validation_email.Rep:
+        req = anonymous_server_cmds.latest.account_recover_send_validation_email.Req(email=email)
+        raw_rep = await self._do_request(req.dump(), "anonymous_server")
+        return anonymous_server_cmds.latest.account_recover_send_validation_email.Rep.load(raw_rep)
 
     async def auth_method_password_get_algorithm(
         self, email: EmailAddress
-    ) -> anonymous_account_cmds.latest.auth_method_password_get_algorithm.Rep:
-        req = anonymous_account_cmds.latest.auth_method_password_get_algorithm.Req(email=email)
-        raw_rep = await self._do_request(req.dump(), "anonymous_account")
-        return anonymous_account_cmds.latest.auth_method_password_get_algorithm.Rep.load(raw_rep)
+    ) -> anonymous_server_cmds.latest.auth_method_password_get_algorithm.Rep:
+        req = anonymous_server_cmds.latest.auth_method_password_get_algorithm.Req(email=email)
+        raw_rep = await self._do_request(req.dump(), "anonymous_server")
+        return anonymous_server_cmds.latest.auth_method_password_get_algorithm.Rep.load(raw_rep)
 
-    async def ping(self, ping: str) -> anonymous_account_cmds.latest.ping.Rep:
-        req = anonymous_account_cmds.latest.ping.Req(ping=ping)
-        raw_rep = await self._do_request(req.dump(), "anonymous_account")
-        return anonymous_account_cmds.latest.ping.Rep.load(raw_rep)
+    async def ping(self, ping: str) -> anonymous_server_cmds.latest.ping.Rep:
+        req = anonymous_server_cmds.latest.ping.Req(ping=ping)
+        raw_rep = await self._do_request(req.dump(), "anonymous_server")
+        return anonymous_server_cmds.latest.ping.Rep.load(raw_rep)
+
+    async def server_config(
+        self,
+    ) -> anonymous_server_cmds.latest.server_config.Rep:
+        req = anonymous_server_cmds.latest.server_config.Req()
+        raw_rep = await self._do_request(req.dump(), "anonymous_server")
+        return anonymous_server_cmds.latest.server_config.Rep.load(raw_rep)
 
 
 class BaseAuthenticatedRpcClient:

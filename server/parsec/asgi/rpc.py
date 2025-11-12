@@ -23,8 +23,8 @@ from parsec._parsec import (
     DateTime,
     InvitationToken,
     OrganizationID,
-    anonymous_account_cmds,
     anonymous_cmds,
+    anonymous_server_cmds,
     authenticated_account_cmds,
     authenticated_cmds,
     invited_cmds,
@@ -32,8 +32,8 @@ from parsec._parsec import (
 )
 from parsec.backend import Backend
 from parsec.client_context import (
-    AnonymousAccountClientContext,
     AnonymousClientContext,
+    AnonymousServerClientContext,
     AuthenticatedAccountClientContext,
     AuthenticatedClientContext,
     InvitedClientContext,
@@ -121,9 +121,9 @@ ANONYMOUS_CMDS_LOAD_FN = {
     for v_version in dir(anonymous_cmds)
     if v_version.startswith("v")
 }
-ANONYMOUS_ACCOUNT_CMDS_LOAD_FN = {
-    int(v_version[1:]): getattr(anonymous_account_cmds, v_version).AnyCmdReq.load
-    for v_version in dir(anonymous_account_cmds)
+ANONYMOUS_SERVER_CMDS_LOAD_FN = {
+    int(v_version[1:]): getattr(anonymous_server_cmds, v_version).AnyCmdReq.load
+    for v_version in dir(anonymous_server_cmds)
     if v_version.startswith("v")
 }
 AUTHENTICATED_ACCOUNT_CMDS_LOAD_FN = {
@@ -415,14 +415,13 @@ class AccountParsedAuthHeaders:
     settled_api_version: ApiVersion
     client_api_version: ApiVersion
     user_agent: str
-    authentication_token: AccountAuthenticationToken | None
+    authentication_token: AccountAuthenticationToken
 
 
 def _parse_account_auth_headers_or_abort(
     headers: Headers,
     # TODO: Use FastAPI' path parsing to handle this once it is fixed upstream
     # (see https://github.com/tiangolo/fastapi/pull/10109)
-    with_authenticated_headers: bool,
 ) -> AccountParsedAuthHeaders:
     # 1) Check API version
     # Parse `Api-version` from the HTTP Header and return the version implemented
@@ -448,34 +447,72 @@ def _parse_account_auth_headers_or_abort(
         _handshake_abort_bad_content(api_version=settled_api_version)
 
     # 4) Check authenticated headers
-    if not with_authenticated_headers:
-        authentication_token = None
+    try:
+        raw_authorization = headers["Authorization"]
+    except KeyError:
+        _handshake_abort(
+            CustomHttpStatus.MissingAuthenticationInfo, api_version=settled_api_version
+        )
 
-    else:
-        try:
-            raw_authorization = headers["Authorization"]
-        except KeyError:
-            _handshake_abort(
-                CustomHttpStatus.MissingAuthenticationInfo, api_version=settled_api_version
-            )
-
-        try:
-            expected_bearer, raw_authentication_token = raw_authorization.split()
-            if expected_bearer.lower() != "bearer":
-                raise ValueError
-            authentication_token = AccountAuthenticationToken.from_raw(
-                raw_authentication_token.encode()
-            )
-        except ValueError:
-            _handshake_abort(
-                CustomHttpStatus.MissingAuthenticationInfo, api_version=settled_api_version
-            )
+    try:
+        expected_bearer, raw_authentication_token = raw_authorization.split()
+        if expected_bearer.lower() != "bearer":
+            raise ValueError
+        authentication_token = AccountAuthenticationToken.from_raw(
+            raw_authentication_token.encode()
+        )
+    except ValueError:
+        _handshake_abort(
+            CustomHttpStatus.MissingAuthenticationInfo, api_version=settled_api_version
+        )
 
     return AccountParsedAuthHeaders(
         settled_api_version=settled_api_version,
         client_api_version=client_api_version,
         user_agent=user_agent,
         authentication_token=authentication_token,
+    )
+
+
+@dataclass
+class AnonymousServerParsedAuthHeaders:
+    settled_api_version: ApiVersion
+    client_api_version: ApiVersion
+    user_agent: str
+
+
+def _parse_anonymous_server_auth_headers_or_abort(
+    headers: Headers,
+    # TODO: Use FastAPI' path parsing to handle this once it is fixed upstream
+    # (see https://github.com/tiangolo/fastapi/pull/10109)
+) -> AnonymousServerParsedAuthHeaders:
+    # 1) Check API version
+    # Parse `Api-version` from the HTTP Header and return the version implemented
+    # by the server that is compatible with the client.
+    try:
+        client_api_version = ApiVersion.from_str(headers.get("Api-Version", ""))
+        settled_api_version, _ = settle_compatible_versions(
+            SUPPORTED_API_VERSIONS, [client_api_version]
+        )
+    except (ValueError, IncompatibleAPIVersionsError):
+        supported_api_versions = ";".join(
+            str(api_version) for api_version in SUPPORTED_API_VERSIONS
+        )
+        raise HTTPException(
+            status_code=CustomHttpStatus.UnsupportedApiVersion.value,
+            headers={"Supported-Api-Versions": supported_api_versions},
+        )
+    # From now on the version is settled, our reply must have the `Api-Version` header
+
+    # 3) Check User-Agent, Content-Type
+    user_agent = headers.get("User-Agent", "unknown")
+    if headers.get("Content-Type") != CONTENT_TYPE_MSGPACK:
+        _handshake_abort_bad_content(api_version=settled_api_version)
+
+    return AnonymousServerParsedAuthHeaders(
+        settled_api_version=settled_api_version,
+        client_api_version=client_api_version,
+        user_agent=user_agent,
     )
 
 
@@ -499,7 +536,7 @@ async def run_request(
     client_ctx: AuthenticatedClientContext
     | InvitedClientContext
     | AnonymousClientContext
-    | AnonymousAccountClientContext
+    | AnonymousServerClientContext
     | AuthenticatedAccountClientContext,
     request: object,
 ) -> object:
@@ -604,17 +641,16 @@ async def anonymous_api(raw_organization_id: str, request: Request) -> Response:
     return _rpc_rep(rep, parsed.settled_api_version)
 
 
-@rpc_router.post("/anonymous_account")
-async def anonymous_account_api(request: Request) -> Response:
+@rpc_router.post("/anonymous_server")
+async def anonymous_server_api(request: Request) -> Response:
     backend: Backend = request.app.state.backend
-    parsed = _parse_account_auth_headers_or_abort(
+    parsed = _parse_anonymous_server_auth_headers_or_abort(
         headers=request.headers,
-        with_authenticated_headers=False,
     )
 
     # Handshake is done
 
-    client_ctx = AnonymousAccountClientContext(
+    client_ctx = AnonymousServerClientContext(
         client_api_version=parsed.client_api_version,
         settled_api_version=parsed.settled_api_version,
         client_user_agent=parsed.user_agent,
@@ -624,7 +660,7 @@ async def anonymous_account_api(request: Request) -> Response:
     body = await _rpc_get_body_with_limit_check(request)
 
     try:
-        req = ANONYMOUS_ACCOUNT_CMDS_LOAD_FN[parsed.settled_api_version.version](body)
+        req = ANONYMOUS_SERVER_CMDS_LOAD_FN[parsed.settled_api_version.version](body)
     except ValueError:
         _handshake_abort_bad_content(api_version=parsed.settled_api_version)
 
@@ -638,7 +674,6 @@ async def authenticated_account_api(request: Request) -> Response:
     backend: Backend = request.app.state.backend
     parsed = _parse_account_auth_headers_or_abort(
         headers=request.headers,
-        with_authenticated_headers=True,
     )
 
     assert parsed.authentication_token is not None
