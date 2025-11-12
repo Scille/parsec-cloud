@@ -458,7 +458,6 @@ CREATE TABLE pki_enrollment (
 
     enrollment_id UUID NOT NULL,
     submitter_der_x509_certificate BYTEA NOT NULL,
-    submitter_der_x509_certificate_sha1 BYTEA NOT NULL,
 
     submit_payload_signature BYTEA NOT NULL,
     submit_payload BYTEA NOT NULL,

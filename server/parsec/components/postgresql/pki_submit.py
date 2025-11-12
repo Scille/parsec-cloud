@@ -1,8 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from hashlib import sha1
-
 from parsec._parsec import (
     DateTime,
     OrganizationID,
@@ -97,7 +95,6 @@ INSERT INTO pki_enrollment (
     organization,
     enrollment_id,
     submitter_der_x509_certificate,
-    submitter_der_x509_certificate_sha1,
     submit_payload_signature,
     submit_payload_signature_algorithm,
     submit_payload,
@@ -108,7 +105,6 @@ VALUES (
     $organization_internal_id,
     $enrollment_id,
     $submitter_der_x509_certificate,
-    $submitter_der_x509_certificate_sha1,
     $submit_payload_signature,
     $submit_payload_signature_algorithm,
     $submit_payload,
@@ -285,14 +281,11 @@ async def pki_submit(
 
     # 7) All checks are good, now we do the actual insertion
 
-    submitter_der_x509_certificate_sha1 = sha1(submitter_der_x509_certificate).digest()
-
     await conn.execute(
         *_q_insert_enrollment(
             organization_internal_id=organization_internal_id,
             enrollment_id=enrollment_id,
             submitter_der_x509_certificate=submitter_der_x509_certificate,
-            submitter_der_x509_certificate_sha1=submitter_der_x509_certificate_sha1,
             submit_payload_signature=submit_payload_signature,
             submit_payload_signature_algorithm=submit_payload_signature_algorithm.str,
             submit_payload=submit_payload,
