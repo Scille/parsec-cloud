@@ -8,6 +8,7 @@ mod list_users;
 mod list_workspace_users;
 mod list_workspaces;
 mod organization_info;
+mod pki_enrollment_info;
 mod pki_enrollment_list;
 mod pki_enrollment_reject;
 mod process_workspaces_needs;
