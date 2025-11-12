@@ -7,50 +7,49 @@
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
 
-use super::anonymous_account_cmds;
+use super::anonymous_server_cmds;
 
 fn step0() {
-    let raw_req = [
-        (
-            // Generated from Parsec 3.4.1-a.0+dev
-            // Content:
-            //   cmd: 'account_create_proceed'
-            //   account_create_step: {
-            //     step: 'NUMBER_0_CHECK_CODE',
-            //     email: 'alice@invalid.com',
-            //     validation_code: 'C88DEE',
-            //   }
-            hex!(
-                "82a3636d64b66163636f756e745f6372656174655f70726f63656564b36163636f756e"
-                "745f6372656174655f7374657083a473746570b34e554d4245525f305f434845434b5f"
-                "434f4445a5656d61696cb1616c69636540696e76616c69642e636f6daf76616c696461"
-                "74696f6e5f636f6465a6433838444545"
-            ).as_ref(),
-            anonymous_account_cmds::account_create_proceed::Req {
-                account_create_step: anonymous_account_cmds::account_create_proceed::AccountCreateStep::Number0CheckCode {
+    let raw_req = [(
+        // Generated from Parsec 3.4.1-a.0+dev
+        // Content:
+        //   cmd: 'account_create_proceed'
+        //   account_create_step: {
+        //     step: 'NUMBER_0_CHECK_CODE',
+        //     email: 'alice@invalid.com',
+        //     validation_code: 'C88DEE',
+        //   }
+        hex!(
+            "82a3636d64b66163636f756e745f6372656174655f70726f63656564b36163636f756e"
+            "745f6372656174655f7374657083a473746570b34e554d4245525f305f434845434b5f"
+            "434f4445a5656d61696cb1616c69636540696e76616c69642e636f6daf76616c696461"
+            "74696f6e5f636f6465a6433838444545"
+        )
+        .as_ref(),
+        anonymous_server_cmds::account_create_proceed::Req {
+            account_create_step:
+                anonymous_server_cmds::account_create_proceed::AccountCreateStep::Number0CheckCode {
                     validation_code: "C88DEE".parse().unwrap(),
-                    email: "alice@invalid.com".parse().unwrap()
+                    email: "alice@invalid.com".parse().unwrap(),
                 },
-            },
-        ),
-
-    ];
+        },
+    )];
 
     for (raw, req) in raw_req {
-        let expected = anonymous_account_cmds::AnyCmdReq::AccountCreateProceed(req.clone());
+        let expected = anonymous_server_cmds::AnyCmdReq::AccountCreateProceed(req.clone());
         println!("***expected: {:?}", req.dump().unwrap());
 
-        let data = anonymous_account_cmds::AnyCmdReq::load(raw).unwrap();
+        let data = anonymous_server_cmds::AnyCmdReq::load(raw).unwrap();
         p_assert_eq!(data, expected);
 
         // Also test serialization round trip
-        let anonymous_account_cmds::AnyCmdReq::AccountCreateProceed(req2) = data else {
+        let anonymous_server_cmds::AnyCmdReq::AccountCreateProceed(req2) = data else {
             unreachable!()
         };
 
         let raw2 = req2.dump().unwrap();
 
-        let data2 = anonymous_account_cmds::AnyCmdReq::load(&raw2).unwrap();
+        let data2 = anonymous_server_cmds::AnyCmdReq::load(&raw2).unwrap();
 
         p_assert_eq!(data2, expected);
     }
@@ -83,8 +82,8 @@ fn step1() {
                 "796d6f757320416c696365af76616c69646174696f6e5f636f6465a6433838444545b0"
                 "7661756c745f6b65795f616363657373c4107661756c745f6b65795f616363657373"
             ).as_ref(),
-            anonymous_account_cmds::account_create_proceed::Req {
-                account_create_step: anonymous_account_cmds::account_create_proceed::AccountCreateStep::Number1Create {
+            anonymous_server_cmds::account_create_proceed::Req {
+                account_create_step: anonymous_server_cmds::account_create_proceed::AccountCreateStep::Number1Create {
                     validation_code: "C88DEE".parse().unwrap(),
                     human_handle: "Anonymous Alice <alice@invalid.com>".parse().unwrap(),
                     vault_key_access: Bytes::from_static(b"vault_key_access"),
@@ -125,8 +124,8 @@ fn step1() {
                 "696f6e5f636f6465a6433838444545b07661756c745f6b65795f616363657373c41076"
                 "61756c745f6b65795f616363657373"
             ).as_ref(),
-            anonymous_account_cmds::account_create_proceed::Req {
-                account_create_step: anonymous_account_cmds::account_create_proceed::AccountCreateStep::Number1Create {
+            anonymous_server_cmds::account_create_proceed::Req {
+                account_create_step: anonymous_server_cmds::account_create_proceed::AccountCreateStep::Number1Create {
                     validation_code: "C88DEE".parse().unwrap(),
                     human_handle: "Anonymous Alice <alice@invalid.com>".parse().unwrap(),
                     vault_key_access: Bytes::from_static(b"vault_key_access"),
@@ -142,20 +141,20 @@ fn step1() {
     ];
 
     for (raw, req) in raw_req {
-        let expected = anonymous_account_cmds::AnyCmdReq::AccountCreateProceed(req.clone());
+        let expected = anonymous_server_cmds::AnyCmdReq::AccountCreateProceed(req.clone());
         println!("***expected: {:?}", req.dump().unwrap());
 
-        let data = anonymous_account_cmds::AnyCmdReq::load(raw).unwrap();
+        let data = anonymous_server_cmds::AnyCmdReq::load(raw).unwrap();
         p_assert_eq!(data, expected);
 
         // Also test serialization round trip
-        let anonymous_account_cmds::AnyCmdReq::AccountCreateProceed(req2) = data else {
+        let anonymous_server_cmds::AnyCmdReq::AccountCreateProceed(req2) = data else {
             unreachable!()
         };
 
         let raw2 = req2.dump().unwrap();
 
-        let data2 = anonymous_account_cmds::AnyCmdReq::load(&raw2).unwrap();
+        let data2 = anonymous_server_cmds::AnyCmdReq::load(&raw2).unwrap();
 
         p_assert_eq!(data2, expected);
     }
@@ -173,17 +172,17 @@ pub fn rep_ok() {
     // Content:
     //   status: 'ok'
     let raw: &[u8] = hex!("81a6737461747573a26f6b").as_ref();
-    let expected = anonymous_account_cmds::account_create_proceed::Rep::Ok {};
+    let expected = anonymous_server_cmds::account_create_proceed::Rep::Ok {};
     println!("***expected: {:?}", expected.dump().unwrap());
 
-    let data = anonymous_account_cmds::account_create_proceed::Rep::load(raw).unwrap();
+    let data = anonymous_server_cmds::account_create_proceed::Rep::load(raw).unwrap();
 
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = anonymous_account_cmds::account_create_proceed::Rep::load(&raw2).unwrap();
+    let data2 = anonymous_server_cmds::account_create_proceed::Rep::load(&raw2).unwrap();
 
     p_assert_eq!(data2, expected);
 }
@@ -199,17 +198,17 @@ pub fn rep_send_validation_email_required() {
     .as_ref();
 
     let expected =
-        anonymous_account_cmds::account_create_proceed::Rep::SendValidationEmailRequired {};
+        anonymous_server_cmds::account_create_proceed::Rep::SendValidationEmailRequired {};
     println!("***expected: {:?}", expected.dump().unwrap());
 
-    let data = anonymous_account_cmds::account_create_proceed::Rep::load(raw).unwrap();
+    let data = anonymous_server_cmds::account_create_proceed::Rep::load(raw).unwrap();
 
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = anonymous_account_cmds::account_create_proceed::Rep::load(&raw2).unwrap();
+    let data2 = anonymous_server_cmds::account_create_proceed::Rep::load(&raw2).unwrap();
 
     p_assert_eq!(data2, expected);
 }
@@ -220,17 +219,17 @@ pub fn rep_invalid_validation_code() {
     //   status: 'invalid_validation_code'
     let raw: &[u8] =
         hex!("81a6737461747573b7696e76616c69645f76616c69646174696f6e5f636f6465").as_ref();
-    let expected = anonymous_account_cmds::account_create_proceed::Rep::InvalidValidationCode {};
+    let expected = anonymous_server_cmds::account_create_proceed::Rep::InvalidValidationCode {};
     println!("***expected: {:?}", expected.dump().unwrap());
 
-    let data = anonymous_account_cmds::account_create_proceed::Rep::load(raw).unwrap();
+    let data = anonymous_server_cmds::account_create_proceed::Rep::load(raw).unwrap();
 
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = anonymous_account_cmds::account_create_proceed::Rep::load(&raw2).unwrap();
+    let data2 = anonymous_server_cmds::account_create_proceed::Rep::load(&raw2).unwrap();
 
     p_assert_eq!(data2, expected);
 }
@@ -245,18 +244,17 @@ pub fn rep_auth_method_id_already_exists() {
     )
     .as_ref();
 
-    let expected =
-        anonymous_account_cmds::account_create_proceed::Rep::AuthMethodIdAlreadyExists {};
+    let expected = anonymous_server_cmds::account_create_proceed::Rep::AuthMethodIdAlreadyExists {};
     println!("***expected: {:?}", expected.dump().unwrap());
 
-    let data = anonymous_account_cmds::account_create_proceed::Rep::load(raw).unwrap();
+    let data = anonymous_server_cmds::account_create_proceed::Rep::load(raw).unwrap();
 
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = anonymous_account_cmds::account_create_proceed::Rep::load(&raw2).unwrap();
+    let data2 = anonymous_server_cmds::account_create_proceed::Rep::load(&raw2).unwrap();
 
     p_assert_eq!(data2, expected);
 }

@@ -4,9 +4,9 @@
 // Concrete test code can be found in tests/<cmd_family>/<api_version>/<cmd>.rs
 use libparsec_serialization_format::protocol_cmds_tests;
 
-protocol_cmds_tests!("schema/invited_cmds");
 protocol_cmds_tests!("schema/anonymous_cmds");
+protocol_cmds_tests!("schema/invited_cmds");
 protocol_cmds_tests!("schema/authenticated_cmds");
-protocol_cmds_tests!("schema/authenticated_account_cmds");
-protocol_cmds_tests!("schema/anonymous_account_cmds");
 protocol_cmds_tests!("schema/tos_cmds");
+protocol_cmds_tests!("schema/anonymous_server_cmds");
+protocol_cmds_tests!("schema/authenticated_account_cmds");
