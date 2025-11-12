@@ -16,7 +16,6 @@ from parsec.components.postgresql import AsyncpgConnection
 from parsec.components.postgresql.utils import (
     Q,
 )
-from parsec.config import AccountVaultStrategy, AllowedClientAgent
 
 _q_insert_organization = Q(
     """
@@ -32,9 +31,7 @@ WITH new_organization AS (
         _expired_on,
         minimum_archiving_period,
         tos_updated_on,
-        tos_per_locale_urls,
-        allowed_client_agent,
-        account_vault_strategy
+        tos_per_locale_urls
     )
     VALUES (
         $organization_id,
@@ -51,9 +48,7 @@ WITH new_organization AS (
                 THEN NULL::TIMESTAMPTZ
             ELSE $created_on
         END,
-        $tos_per_locale_urls,
-        $allowed_client_agent,
-        $account_vault_strategy
+        $tos_per_locale_urls
     )
     -- If the organization exists but hasn't been bootstrapped yet, we can
     -- simply overwrite it.
@@ -67,9 +62,7 @@ WITH new_organization AS (
             _expired_on = excluded._expired_on,
             minimum_archiving_period = excluded.minimum_archiving_period,
             tos_updated_on = excluded.tos_updated_on,
-            tos_per_locale_urls = excluded.tos_per_locale_urls,
-            allowed_client_agent = excluded.allowed_client_agent,
-            account_vault_strategy = excluded.account_vault_strategy
+            tos_per_locale_urls = excluded.tos_per_locale_urls
         WHERE organization.root_verify_key IS NULL
     RETURNING _id
 ),
@@ -110,8 +103,6 @@ async def organization_create(
     user_profile_outsider_allowed: bool,
     minimum_archiving_period: int,
     tos_per_locale_urls: dict[TosLocale, TosUrl] | None,
-    allowed_client_agent: AllowedClientAgent,
-    account_vault_strategy: AccountVaultStrategy,
     bootstrap_token: BootstrapToken | None,
 ) -> int | OrganizationCreateBadOutcome:
     organization_internal_id = await conn.fetchval(
@@ -125,8 +116,6 @@ async def organization_create(
             created_on=now,
             minimum_archiving_period=minimum_archiving_period,
             tos_per_locale_urls=tos_per_locale_urls,
-            allowed_client_agent=allowed_client_agent.value,
-            account_vault_strategy=account_vault_strategy.value,
         )
     )
     match organization_internal_id:

@@ -15,7 +15,6 @@ from parsec.components.postgresql import AsyncpgConnection
 from parsec.components.postgresql.utils import (
     Q,
 )
-from parsec.config import AccountVaultStrategy, AllowedClientAgent
 
 _q_get_organizations = Q("""
 SELECT
@@ -27,8 +26,6 @@ SELECT
     minimum_archiving_period,
     tos_updated_on,
     tos_per_locale_urls,
-    allowed_client_agent,
-    account_vault_strategy,
     (root_verify_key IS NOT NULL) AS is_bootstrapped
 FROM organization
 ORDER BY organization_id
@@ -102,18 +99,6 @@ async def organization_test_dump_organizations(
             case _:
                 assert False, row
 
-        match row["allowed_client_agent"]:
-            case str() as allowed_client_agent_raw:
-                allowed_client_agent = AllowedClientAgent(allowed_client_agent_raw)
-            case _:
-                assert False, row
-
-        match row["account_vault_strategy"]:
-            case str() as account_vault_strategy_raw:
-                account_vault_strategy = AccountVaultStrategy(account_vault_strategy_raw)
-            case _:
-                assert False, row
-
         items[organization_id] = OrganizationDump(
             organization_id=organization_id,
             bootstrap_token=bootstrap_token,
@@ -123,8 +108,6 @@ async def organization_test_dump_organizations(
             user_profile_outsider_allowed=user_profile_outsider_allowed,
             minimum_archiving_period=minimum_archiving_period,
             tos=tos,
-            allowed_client_agent=allowed_client_agent,
-            account_vault_strategy=account_vault_strategy,
         )
 
     return items

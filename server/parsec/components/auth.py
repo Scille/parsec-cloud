@@ -20,7 +20,7 @@ from parsec._parsec import (
 )
 from parsec.ballpark import timestamps_in_the_ballpark
 from parsec.components.events import EventBus
-from parsec.config import AllowedClientAgent, BackendConfig
+from parsec.config import BackendConfig
 from parsec.events import (
     Event,
     EventOrganizationTosUpdated,
@@ -63,7 +63,6 @@ class AuthAuthenticatedAccountAuthBadOutcome(BadOutcomeEnum):
 class AnonymousAuthInfo:
     organization_id: OrganizationID
     organization_internal_id: int
-    organization_allowed_client_agent: AllowedClientAgent
 
 
 @dataclass
@@ -81,7 +80,6 @@ class InvitedAuthInfo:
     type: InvitationType
     organization_internal_id: int
     invitation_internal_id: int
-    organization_allowed_client_agent: AllowedClientAgent
 
 
 @dataclass
@@ -92,7 +90,6 @@ class AuthenticatedAuthInfo:
     device_verify_key: VerifyKey
     organization_internal_id: int
     device_internal_id: int
-    organization_allowed_client_agent: AllowedClientAgent
 
 
 @dataclass
