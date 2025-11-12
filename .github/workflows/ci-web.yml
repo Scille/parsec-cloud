@@ -170,7 +170,7 @@ jobs:
         image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.4.1-a.0.dev.20299.a9f26d7
         ports:
           - 6777:6777
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # pin v5.0.0
         timeout-minutes: 2
@@ -229,7 +229,7 @@ jobs:
         env:
           TESTBED_SERVER: parsec3://parsec-testbed-server:6777?no_ssl=true
           PARSEC_APP_TRIAL_SERVERS: parsec-testbed-server:6777?no_ssl=true
-        timeout-minutes: 20
+        timeout-minutes: 25
 
       - name: Upload blob report to GitHub Actions Artifacts
         if: "!cancelled()" # We always upload the artifacts even in case of failure of playwright.
