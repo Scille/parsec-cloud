@@ -6,6 +6,7 @@ mod list_frozen_users;
 mod organization_info;
 mod pki_enrollment_accept;
 mod pki_enrollment_finalize;
+mod pki_enrollment_info;
 mod pki_enrollment_list;
 mod pki_enrollment_reject;
 mod pki_enrollment_submit;
@@ -37,6 +38,7 @@ pub use self::{
     list_frozen_users::ClientListFrozenUsersError,
     pki_enrollment_accept::PkiEnrollmentAcceptError,
     pki_enrollment_finalize::{finalize as pki_enrollment_finalize, PkiEnrollmentFinalizeError},
+    pki_enrollment_info::{PKIInfoItem, PkiEnrollmentInfoError},
     pki_enrollment_list::{PkiEnrollmentListError, PkiEnrollmentListItem},
     pki_enrollment_reject::PkiEnrollmentRejectError,
     pki_enrollment_submit::{pki_enrollment_submit, PkiEnrollmentSubmitError},
@@ -690,6 +692,14 @@ impl Client {
         &self,
     ) -> Result<Vec<PkiEnrollmentListItem>, PkiEnrollmentListError> {
         pki_enrollment_list::list_enrollments(&self.cmds).await
+    }
+
+    pub async fn pki_enrollment_info(
+        config: Arc<ClientConfig>,
+        addr: ParsecPkiEnrollmentAddr,
+        id: PKIEnrollmentID,
+    ) -> Result<PKIInfoItem, PkiEnrollmentInfoError> {
+        pki_enrollment_info::info(config, addr, id).await
     }
 
     pub async fn pki_enrollment_reject(
