@@ -57,7 +57,7 @@ pub struct ClientConfig {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ServerConfig {
+pub struct ServerOrganizationConfig {
     pub user_profile_outsider_allowed: bool,
     pub active_users_limit: ActiveUsersLimit,
 }
@@ -66,7 +66,7 @@ pub struct ServerConfig {
 // to be always available \o/
 // Note in practice this default config should be overwritten as soon as the client
 // connects to the server (server always starts by sending a SSE event about its config).
-impl Default for ServerConfig {
+impl Default for ServerOrganizationConfig {
     fn default() -> Self {
         Self {
             user_profile_outsider_allowed: false,
