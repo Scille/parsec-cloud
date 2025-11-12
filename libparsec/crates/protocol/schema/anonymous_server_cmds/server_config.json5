@@ -1,0 +1,185 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "server_config",
+        "req": {},
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "client_agent",
+                        "type": "ClientAgentConfig"
+                    },
+                    {
+                        "name": "account",
+                        "type": "AccountConfig"
+                    },
+                    {
+                        "name": "organization_bootstrap",
+                        "type": "OrganizationBootstrapConfig"
+                    },
+                    {
+                        "name": "openbao",
+                        "type": "OpenBaoConfig"
+                    }
+                ]
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "ClientAgentConfig",
+                "variants": [
+                    {
+                        // The server will reject any connection to this organization
+                        // from a web client.
+                        "name": "NativeOnly",
+                        "discriminant_value": "NATIVE_ONLY"
+                    },
+                    {
+                        // The server allows connection to this organization from a web client.
+                        "name": "NativeOrWeb",
+                        "discriminant_value": "NATIVE_OR_WEB"
+                    }
+                ]
+            },
+            {
+                "name": "AccountConfig",
+                "variants": [
+                    {
+                        // Parsec account is not available
+                        "name": "Disabled",
+                        "discriminant_value": "DISABLED"
+                    },
+                    {
+                        // Any anonymous client is allowed to create a Parsec account (as
+                        // long as the user can validate the email address he provided).
+                        // This Parsec account can then be used as a cross-organization
+                        // hub to:
+                        // - List the organization he (i.e. his email address) is part of
+                        // - List the pending invitation related to his email address
+                        // - Use the account vault to store a key itself protecting a
+                        //   local device (used to protect local device on web with the
+                        //   Parsec account authentication instead of a separate password).
+                        // - Use the account vault to store registration device (used, to
+                        //   skip the device-to-device enrollment process when connecting
+                        //   to an organization from a machine with no local device).
+                        "name": "EnabledWithVault",
+                        "discriminant_value": "ENABLED_WITH_VAULT"
+                    },
+                    {
+                        // The user should not store any sensitive data with a low entropy
+                        // key server-side using his account vault (typically storing,
+                        // encrypted with a password, a registration device or a key
+                        // itself protecting a local device).
+                        //
+                        // Note this is a purely advisory configuration since only the
+                        // client can decrypt the vault content, and hence it would be
+                        // pointless to try to enforce it on the server side.
+                        "name": "EnabledWithoutVault",
+                        "discriminant_value": "ENABLED_WITHOUT_VAULT"
+                    }
+                ]
+            },
+            {
+                "name": "OrganizationBootstrapConfig",
+                "variants": [
+                    {
+                        // The organization must have been first created by a server
+                        // administrator, leading to a bootstrap organization URL
+                        // (containing a bootstrap token) that must be used to proceed
+                        // with the bootstrap.
+                        "name": "WithBootstrapToken",
+                        "discriminant_value": "WITH_BOOTSTRAP_TOKEN"
+                    },
+                    {
+                        // If the organization doesn't already exists on the server,
+                        // it will be automatically created when a bootstrap is attempted
+                        // (hence there is no bootstrap token involved in this case and
+                        // any anonymous client is allowed to create an organization,
+                        // use this carefully!).
+                        "name": "Spontaneous",
+                        "discriminant_value": "SPONTANEOUS"
+                    }
+                ]
+            },
+            {
+                // An OpenBao server can be configured to allow SSO (using Open ID
+                // Connect) authentication for users.
+                // This is done by storing an opaque key on the OpenBao server that is
+                // itself typically used to encrypt the local device keys.
+                //
+                // Obviously the level of security is lower than traditional approaches
+                // (e.g. storing the opaque key on the OS Keyring or derive it from a
+                // strong password).
+                // However this is a trade-of to increase user-friendliness, the decision
+                // whether or not to use this is to be made by the server administrator
+                // according to its own threat model.
+                "name": "OpenBaoConfig",
+                "discriminant_field": "type",
+                "variants": [
+                    {
+                        "name": "Disabled",
+                        "discriminant_value": "DISABLED"
+                    },
+                    {
+                        "name": "Enabled",
+                        "discriminant_value": "ENABLED",
+                        "fields": [
+                            {
+                                // Base URL to the OpenBao server
+                                "name": "server_url",
+                                "type": "String"
+                            },
+                            {
+                                "name": "secret",
+                                "type": "OpenBaoSecretConfig"
+                            },
+                            {
+                                "name": "auths",
+                                "type": "List<OpenBaoAuthConfig>"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "OpenBaoSecretConfig",
+                "discriminant_field": "type",
+                "variants": [
+                    {
+                        "name": "KV2",
+                        "discriminant_value": "KV2",
+                        "fields": [
+                            {
+                                // Basically secret are going to be fetched from
+                                // `<openbao_server_url>/<openbao_secret_mount_path>/data/<secret_path>`
+                                // see https://openbao.org/api-docs/secret/kv/kv-v2/#read-secret-version
+                                "name": "mount_path",
+                                "type": "String"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "OpenBaoAuthConfig",
+                "fields": [
+                    {
+                        "name": "id",
+                        "type": "String"
+                    },
+                    {
+                        // Basically OIDC authentication is going to be done with
+                        // `<openbao_server_url>/<openbao_mount_path>/oidc/auth_url`
+                        // see https://openbao.org/api-docs/auth/jwt/#oidc-authorization-url-request
+                        "name": "mount_path",
+                        "type": "String"
+                    }
+                ]
+            }
+        ]
+    }
+]
