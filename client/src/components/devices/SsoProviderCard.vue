@@ -1,12 +1,16 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
+  <!-- If you're adding new providers, don't forget to activate them in openBao.ts -->
   <div
-    v-if="provider === SSOProvider.ProConnect"
+    v-if="provider === OpenBaoAuthConfigTag.OIDCProConnect && isSSOProviderHandled(provider)"
     class="sso-provider-card"
   >
     <div class="proconnect-group">
-      <button class="proconnect-button">
+      <button
+        class="proconnect-button"
+        @click="$emit('ssoSelected', OpenBaoAuthConfigTag.OIDCProConnect)"
+      >
         <span class="proconnect-sr-only">{{ $msTranslate('proConnect.title') }}</span>
       </button>
       <p>
@@ -19,12 +23,17 @@
 </template>
 
 <script setup lang="ts">
-import { SSOProvider } from '@/components/devices/types';
+import { OpenBaoAuthConfigTag } from '@/parsec';
 import { Env } from '@/services/environment';
+import { isSSOProviderHandled } from '@/services/openBao';
 import { I18n } from 'megashark-lib';
 
+defineEmits<{
+  (e: 'ssoSelected', provider: OpenBaoAuthConfigTag): void;
+}>();
+
 defineProps<{
-  provider: SSOProvider;
+  provider: OpenBaoAuthConfigTag;
 }>();
 </script>
 

@@ -109,6 +109,14 @@ export async function parseParsecAddr(addr: string): Promise<Result<ParsedParsec
   return await libparsec.parseParsecAddr(addr);
 }
 
+export async function forgeServerAddr(parsedAddr: ParsedParsecAddr): Promise<string> {
+  let addr = `parsec3://${parsedAddr.hostname}:${parsedAddr.port}`;
+  if (!parsedAddr.useSsl) {
+    addr = `${addr}?no_ssl=true`;
+  }
+  return addr;
+}
+
 export async function getOrganizationInfo(): Promise<Result<OrganizationInfo, OrganizationInfoError>> {
   const handle = getConnectionHandle();
 
