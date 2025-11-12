@@ -120,9 +120,11 @@ export type VlobID = string
 export type X509CertificateHash = string
 export type Bytes = Uint8Array
 export type KeyDerivation = Uint8Array
+export type PublicKey = Uint8Array
 export type SecretKey = Uint8Array
 export type SequesterVerifyKeyDer = Uint8Array
 export type Sha256BoxData = Uint8Array
+export type VerifyKey = Uint8Array
 export type X509WindowsCngURI = Uint8Array
 export type NonZeroU8 = number
 export type U8 = number
@@ -309,10 +311,14 @@ export interface OrganizationInfo {
 export interface PkiEnrollmentListItem {
     enrollmentId: PKIEnrollmentID
     submittedOn: DateTime
-    derX509Certificate: Bytes
-    payloadSignature: Bytes
-    payloadSignatureAlgorithm: PkiSignatureAlgorithm
-    payload: Bytes
+    payload: PkiEnrollmentSubmitPayload
+}
+
+export interface PkiEnrollmentSubmitPayload {
+    verifyKey: VerifyKey
+    publicKey: PublicKey
+    deviceLabel: DeviceLabel
+    humanHandle: HumanHandle
 }
 
 export interface ServerConfig {

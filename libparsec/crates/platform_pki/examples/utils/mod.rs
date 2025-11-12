@@ -3,6 +3,7 @@
 use std::path::PathBuf;
 
 use anyhow::Context;
+use bytes::Bytes;
 use clap::{
     builder::{NonEmptyStringValueParser, TypedValueParser},
     error::{Error, ErrorKind},
@@ -44,10 +45,12 @@ pub struct ContentOpts {
 impl ContentOpts {
     // Not all examples uses `ContentOpts` so `into_bytes` is not always used.
     #[allow(dead_code)]
-    pub fn into_bytes(self) -> anyhow::Result<Vec<u8>> {
+    pub fn into_bytes(self) -> anyhow::Result<Bytes> {
         match (self.content, self.content_file) {
             (Some(content), None) => Ok(content.into()),
-            (None, Some(filepath)) => std::fs::read(filepath).context("Failed to read file"),
+            (None, Some(filepath)) => std::fs::read(filepath)
+                .context("Failed to read file")
+                .map(Into::into),
             (Some(_), Some(_)) | (None, None) => unreachable!("Handled by clap"),
         }
     }

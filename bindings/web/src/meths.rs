@@ -2596,58 +2596,13 @@ fn struct_pki_enrollment_list_item_js_to_rs(
             v
         }
     };
-    let der_x509_certificate = {
-        let js_val = Reflect::get(&obj, &"derX509Certificate".into())?;
-        js_val
-            .dyn_into::<Uint8Array>()
-            .map(|x| x.to_vec())
-            .map_err(|_| TypeError::new("Not a Uint8Array"))
-            .and_then(|x| {
-                let custom_from_rs_bytes =
-                    |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
-                custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
-            })?
-    };
-    let payload_signature = {
-        let js_val = Reflect::get(&obj, &"payloadSignature".into())?;
-        js_val
-            .dyn_into::<Uint8Array>()
-            .map(|x| x.to_vec())
-            .map_err(|_| TypeError::new("Not a Uint8Array"))
-            .and_then(|x| {
-                let custom_from_rs_bytes =
-                    |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
-                custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
-            })?
-    };
-    let payload_signature_algorithm = {
-        let js_val = Reflect::get(&obj, &"payloadSignatureAlgorithm".into())?;
-        js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
-            .map_err(|_| TypeError::new("Not a valid PkiSignatureAlgorithm"))?
-    };
     let payload = {
         let js_val = Reflect::get(&obj, &"payload".into())?;
-        js_val
-            .dyn_into::<Uint8Array>()
-            .map(|x| x.to_vec())
-            .map_err(|_| TypeError::new("Not a Uint8Array"))
-            .and_then(|x| {
-                let custom_from_rs_bytes =
-                    |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
-                custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
-            })?
+        struct_pki_enrollment_submit_payload_js_to_rs(js_val)?
     };
     Ok(libparsec::PkiEnrollmentListItem {
         enrollment_id,
         submitted_on,
-        der_x509_certificate,
-        payload_signature,
-        payload_signature_algorithm,
         payload,
     })
 }
@@ -2678,31 +2633,80 @@ fn struct_pki_enrollment_list_item_rs_to_js(
         JsValue::from(v)
     };
     Reflect::set(&js_obj, &"submittedOn".into(), &js_submitted_on)?;
-    let js_der_x509_certificate =
-        JsValue::from(Uint8Array::from(rs_obj.der_x509_certificate.as_ref()));
-    Reflect::set(
-        &js_obj,
-        &"derX509Certificate".into(),
-        &js_der_x509_certificate,
-    )?;
-    let js_payload_signature = JsValue::from(Uint8Array::from(rs_obj.payload_signature.as_ref()));
-    Reflect::set(&js_obj, &"payloadSignature".into(), &js_payload_signature)?;
-    let js_payload_signature_algorithm = JsValue::from_str({
-        let custom_to_rs_string =
-            |v| -> Result<_, std::convert::Infallible> { Ok(std::string::ToString::to_string(&v)) };
-        match custom_to_rs_string(rs_obj.payload_signature_algorithm) {
-            Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
-        }
-        .as_ref()
-    });
-    Reflect::set(
-        &js_obj,
-        &"payloadSignatureAlgorithm".into(),
-        &js_payload_signature_algorithm,
-    )?;
-    let js_payload = JsValue::from(Uint8Array::from(rs_obj.payload.as_ref()));
+    let js_payload = struct_pki_enrollment_submit_payload_rs_to_js(rs_obj.payload)?;
     Reflect::set(&js_obj, &"payload".into(), &js_payload)?;
+    Ok(js_obj)
+}
+
+// PkiEnrollmentSubmitPayload
+
+#[allow(dead_code)]
+fn struct_pki_enrollment_submit_payload_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::PkiEnrollmentSubmitPayload, JsValue> {
+    let verify_key = {
+        let js_val = Reflect::get(&obj, &"verifyKey".into())?;
+        js_val
+            .dyn_into::<Uint8Array>()
+            .map(|x| x.to_vec())
+            .map_err(|_| TypeError::new("Not a Uint8Array"))
+            .and_then(|x| {
+                let xx: &[u8] = &x;
+                xx.try_into()
+                    .map_err(|_| TypeError::new("Not a valid VerifyKey"))
+            })?
+    };
+    let public_key = {
+        let js_val = Reflect::get(&obj, &"publicKey".into())?;
+        js_val
+            .dyn_into::<Uint8Array>()
+            .map(|x| x.to_vec())
+            .map_err(|_| TypeError::new("Not a Uint8Array"))
+            .and_then(|x| {
+                let xx: &[u8] = &x;
+                xx.try_into()
+                    .map_err(|_| TypeError::new("Not a valid PublicKey"))
+            })?
+    };
+    let device_label = {
+        let js_val = Reflect::get(&obj, &"deviceLabel".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let human_handle = {
+        let js_val = Reflect::get(&obj, &"humanHandle".into())?;
+        struct_human_handle_js_to_rs(js_val)?
+    };
+    Ok(libparsec::PkiEnrollmentSubmitPayload {
+        verify_key,
+        public_key,
+        device_label,
+        human_handle,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_pki_enrollment_submit_payload_rs_to_js(
+    rs_obj: libparsec::PkiEnrollmentSubmitPayload,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_verify_key = JsValue::from(Uint8Array::from(rs_obj.verify_key.as_ref()));
+    Reflect::set(&js_obj, &"verifyKey".into(), &js_verify_key)?;
+    let js_public_key = JsValue::from(Uint8Array::from(rs_obj.public_key.as_ref()));
+    Reflect::set(&js_obj, &"publicKey".into(), &js_public_key)?;
+    let js_device_label = JsValue::from_str(rs_obj.device_label.as_ref());
+    Reflect::set(&js_obj, &"deviceLabel".into(), &js_device_label)?;
+    let js_human_handle = struct_human_handle_rs_to_js(rs_obj.human_handle)?;
+    Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
     Ok(js_obj)
 }
 
