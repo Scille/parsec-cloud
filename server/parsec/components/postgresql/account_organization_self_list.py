@@ -17,7 +17,6 @@ from parsec.components.account import (
 )
 from parsec.components.postgresql import AsyncpgConnection
 from parsec.components.postgresql.utils import Q
-from parsec.config import AccountVaultStrategy, AllowedClientAgent
 
 _q_get_account_email = Q("""
 SELECT account.email
@@ -42,9 +41,7 @@ SELECT
     organization.organization_id,
     organization.is_expired AS organization_is_expired,
     organization.user_profile_outsider_allowed AS organization_user_profile_outsider_allowed,
-    organization.active_users_limit AS organization_active_users_limit,
-    organization.allowed_client_agent AS organization_allowed_client_agent,
-    organization.account_vault_strategy AS organization_account_vault_strategy
+    organization.active_users_limit AS organization_active_users_limit
 FROM user_
 INNER JOIN human ON user_.human = human._id
 INNER JOIN organization ON user_.organization = organization._id
@@ -147,22 +144,6 @@ async def organization_self_list(
             case _:
                 assert False, row
 
-        match row["organization_allowed_client_agent"]:
-            case str() as organization_allowed_client_agent_raw:
-                organization_allowed_client_agent = AllowedClientAgent(
-                    organization_allowed_client_agent_raw
-                )
-            case _:
-                assert False, row
-
-        match row["organization_account_vault_strategy"]:
-            case str() as organization_account_vault_strategy_raw:
-                organization_account_vault_strategy = AccountVaultStrategy(
-                    organization_account_vault_strategy_raw
-                )
-            case _:
-                assert False, row
-
         active.append(
             AccountOrganizationSelfListActiveUser(
                 user_id=user_id,
@@ -173,8 +154,6 @@ async def organization_self_list(
                 organization_is_expired=organization_is_expired,
                 organization_user_profile_outsider_allowed=organization_user_profile_outsider_allowed,
                 organization_active_users_limit=organization_active_users_limit,
-                organization_allowed_client_agent=organization_allowed_client_agent,
-                organization_account_vault_strategy=organization_account_vault_strategy,
             )
         )
 

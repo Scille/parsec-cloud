@@ -8,7 +8,6 @@ import pytest
 
 from parsec._parsec import ActiveUsersLimit
 from parsec.components.organization import OrganizationDump, TermsOfService, TosLocale, TosUrl
-from parsec.config import AccountVaultStrategy, AllowedClientAgent
 from parsec.events import EventOrganizationExpired, EventOrganizationTosUpdated
 from tests.common import AdminUnauthErrorsTester, Backend, CoolorgRpcClients
 
@@ -38,10 +37,6 @@ async def test_get_organization_auth(
         "bad_value_minimum_archiving_period",
         "bad_type_tos",
         "bad_value_tos",
-        "bad_type_allowed_client_agent",
-        "bad_value_allowed_client_agent",
-        "bad_type_account_vault_strategy",
-        "bad_value_account_vault_strategy",
     ),
 )
 async def test_bad_data(
@@ -71,14 +66,6 @@ async def test_bad_data(
             body_args = {"json": {"tos": "{}"}}
         case "bad_value_tos":
             body_args = {"json": {"tos": {"fr": 42}}}
-        case "bad_type_allowed_client_agent":
-            body_args = {"json": {"allowed_client_agent": None}}
-        case "bad_value_allowed_client_agent":
-            body_args = {"json": {"allowed_client_agent": "dummy"}}
-        case "bad_type_account_vault_strategy":
-            body_args = {"json": {"account_vault_strategy": 42}}
-        case "bad_value_account_vault_strategy":
-            body_args = {"json": {"account_vault_strategy": "dummy"}}
         case unknown:
             assert False, unknown
 
@@ -122,8 +109,6 @@ class PatchOrganizationParams(TypedDict):
             "user_profile_outsider_allowed": True,
             "minimum_archiving_period": 0,
             "tos": {"en_HK": "https://parsec.invalid/tos_en"},
-            "allowed_client_agent": "NATIVE_ONLY",
-            "account_vault_strategy": "FORBIDDEN",
         },
     ),
 )
@@ -153,12 +138,6 @@ async def test_ok(
         tos=TermsOfService(updated_on=ANY, per_locale_urls=params["tos"])
         if "tos" in params
         else None,
-        allowed_client_agent=AllowedClientAgent(
-            params.get("allowed_client_agent", "NATIVE_OR_WEB")
-        ),
-        account_vault_strategy=AccountVaultStrategy(
-            params.get("account_vault_strategy", "ALLOWED")
-        ),
     )
 
 

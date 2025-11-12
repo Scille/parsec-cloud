@@ -8,7 +8,6 @@ from parsec._parsec import (
     UserProfile,
     authenticated_account_cmds,
 )
-from parsec.config import AccountVaultStrategy, AllowedClientAgent
 from tests.common import (
     AuthenticatedAccountRpcClient,
     Backend,
@@ -85,8 +84,6 @@ async def test_authenticated_account_organization_self_list_ok(
         is_expired=True,
         active_users_limit=ActiveUsersLimit.limited_to(1),
         user_profile_outsider_allowed=False,
-        allowed_client_agent=AllowedClientAgent.NATIVE_ONLY,
-        account_vault_strategy=AccountVaultStrategy.FORBIDDEN,
     )
     assert outcome is None
 
@@ -105,8 +102,6 @@ async def test_authenticated_account_organization_self_list_ok(
                         is_expired=True,
                         user_profile_outsider_allowed=False,
                         active_users_limit=ActiveUsersLimit.limited_to(1),
-                        allowed_client_agent=authenticated_account_cmds.latest.organization_self_list.AllowedClientAgent.NATIVE_ONLY,
-                        account_vault_strategy=authenticated_account_cmds.latest.organization_self_list.AccountVaultStrategy.FORBIDDEN,
                     ),
                 ),
                 authenticated_account_cmds.latest.organization_self_list.ActiveUser(
@@ -119,8 +114,6 @@ async def test_authenticated_account_organization_self_list_ok(
                         is_expired=False,
                         user_profile_outsider_allowed=True,
                         active_users_limit=ActiveUsersLimit.NO_LIMIT,
-                        allowed_client_agent=authenticated_account_cmds.latest.organization_self_list.AllowedClientAgent.NATIVE_OR_WEB,
-                        account_vault_strategy=authenticated_account_cmds.latest.organization_self_list.AccountVaultStrategy.ALLOWED,
                     ),
                 ),
             ],

@@ -12,7 +12,6 @@ from parsec._parsec import (
     UserProfile,
     authenticated_cmds,
 )
-from parsec.config import AccountVaultStrategy, AllowedClientAgent
 from parsec.types import (
     ActiveUsersLimitField,
     Base64BytesField,
@@ -438,40 +437,16 @@ class EventOrganizationConfig(BaseModel):
     organization_id: OrganizationIDField
     user_profile_outsider_allowed: bool
     active_users_limit: ActiveUsersLimitField
-    allowed_client_agent: AllowedClientAgent
-    account_vault_strategy: AccountVaultStrategy
 
     def is_event_for_client(self, client: RegisteredClient) -> bool:
         return self.organization_id == client.organization_id
 
     def dump_as_apiv5_sse_payload(self, sse_keepalive: int | None) -> bytes:
-        match self.allowed_client_agent:
-            case AllowedClientAgent.NATIVE_OR_WEB:
-                allowed_client_agent_cooked = (
-                    authenticated_cmds.latest.events_listen.AllowedClientAgent.NATIVE_OR_WEB
-                )
-            case AllowedClientAgent.NATIVE_ONLY:
-                allowed_client_agent_cooked = (
-                    authenticated_cmds.latest.events_listen.AllowedClientAgent.NATIVE_ONLY
-                )
-
-        match self.account_vault_strategy:
-            case AccountVaultStrategy.ALLOWED:
-                account_vault_strategy_cooked = (
-                    authenticated_cmds.latest.events_listen.AccountVaultStrategy.ALLOWED
-                )
-            case AccountVaultStrategy.FORBIDDEN:
-                account_vault_strategy_cooked = (
-                    authenticated_cmds.latest.events_listen.AccountVaultStrategy.FORBIDDEN
-                )
-
         return ClientBroadcastableEvent._dump_as_apiv5_sse_payload(
             authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 user_profile_outsider_allowed=self.user_profile_outsider_allowed,
                 active_users_limit=self.active_users_limit,
                 sse_keepalive_seconds=sse_keepalive,
-                allowed_client_agent=allowed_client_agent_cooked,
-                account_vault_strategy=account_vault_strategy_cooked,
             ),
             None,
         )
