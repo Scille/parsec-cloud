@@ -28,6 +28,7 @@ class AnonymousClientContext:
     organization_id: OrganizationID
     organization_internal_id: int
     logger: ParsecBoundLogger = field(init=False)
+    client_user_agent: str
 
     def __post_init__(self):
         # Generate a request ID just for the logs
@@ -67,6 +68,7 @@ class InvitedClientContext:
     organization_internal_id: int
     invitation_internal_id: int
     logger: ParsecBoundLogger = field(init=False)
+    client_user_agent: str
 
     def __post_init__(self):
         # Generate a request ID just for the logs
@@ -129,6 +131,7 @@ class AuthenticatedClientContext:
     organization_internal_id: int
     device_internal_id: int
     logger: ParsecBoundLogger = field(init=False)
+    client_user_agent: str
 
     def __post_init__(self):
         # Generate a request ID just for the logs
