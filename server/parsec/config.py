@@ -1,15 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
+import enum
 import logging
 from dataclasses import dataclass, field, fields
-from enum import Enum
 from typing import TYPE_CHECKING, Literal
 from urllib.parse import urlparse, urlunparse
 
 from jinja2.environment import Environment
 
-from parsec._parsec import ActiveUsersLimit, DateTime, EmailAddress, ParsecAddr, SecretKey
+from parsec._parsec import (
+    ActiveUsersLimit,
+    DateTime,
+    EmailAddress,
+    OpenBaoAuthType,
+    ParsecAddr,
+    SecretKey,
+)
 from parsec.email_rate_limit import EmailRateLimit
 
 if TYPE_CHECKING:
@@ -187,7 +194,7 @@ class MockedEmailConfig:
 EmailConfig = SmtpEmailConfig | MockedEmailConfig
 
 
-class LogLevel(Enum):
+class LogLevel(enum.Enum):
     DEBUG = logging.DEBUG
     INFO = logging.INFO
     WARNING = logging.WARNING
@@ -195,7 +202,7 @@ class LogLevel(Enum):
     CRITICAL = logging.CRITICAL
 
 
-class AllowedClientAgent(Enum):
+class AllowedClientAgent(enum.Enum):
     """
     Client agent allowed to connect to an organization.
 
@@ -203,30 +210,43 @@ class AllowedClientAgent(Enum):
     - `NATIVE_OR_WEB`: Desktop and web clients are allowed
     """
 
-    # Note the enum value is used in the PostgreSQL queries, so modifying it
-    # impacts the datamodel !
-    NATIVE_ONLY = "NATIVE_ONLY"
-    NATIVE_OR_WEB = "NATIVE_OR_WEB"
+    NATIVE_ONLY = enum.auto()
+    NATIVE_OR_WEB = enum.auto()
 
 
-class AccountVaultStrategy(Enum):
+class AccountConfig(enum.Enum):
     """
-    The account vault allows the user to store sensitive data (e.g. device keys)
-    server-side.
+    Account in Parsec is a cross-organization hub typically used to
+    list a user's pending invitations, allow him to connect to new machine
+    without requiring device-to-device enrollment, or protect his local device on web
+    with a just the account password.
 
-    This typically allows simplified authentication on a new machine (i.e. no need
-    for device-to-device enrollment) at a the cost of slightly less security (since
-    the server can try to brute-force the user's password to gain access to his vault).
+    A key feature of the account is its vault allowing the user to store sensitive
+    data (e.g. device keys) server-side, however it comes at the  cost of slightly
+    less security (since the server can try to brute-force the user account's
+    password to gain access to his vault).
 
-    Note this configuration is purely advisory since only the client can decrypt his
-    user's vault content, and hence it would be pointless to try to enforce it on the
-    server side.
+    Note the with vs without vault configuration is purely advisory since only
+    the client can decrypt his user's vault content, and hence it would be pointless
+    to try to enforce it on the server side.
     """
 
-    # Note the enum value is used in the PostgreSQL queries, so modifying it
-    # impacts the datamodel !
-    ALLOWED = "ALLOWED"
-    FORBIDDEN = "FORBIDDEN"
+    DISABLED = enum.auto()
+    ENABLED_WITHOUT_VAULT = enum.auto()
+    ENABLED_WITH_VAULT = enum.auto()
+
+
+@dataclass(slots=True)
+class OpenBaoAuthConfig:
+    id: OpenBaoAuthType
+    mount_path: str
+
+
+@dataclass(slots=True)
+class OpenBaoConfig:
+    server_url: str
+    secret_mount_path: str
+    auths: list[OpenBaoAuthConfig]
 
 
 @dataclass(slots=True, kw_only=True)
@@ -270,6 +290,11 @@ class BackendConfig:
     # environment variable is used, defaulting to trusting only localhost if absent.
     proxy_trusted_addresses: str | None = None
 
+    allowed_client_agent: AllowedClientAgent = AllowedClientAgent.NATIVE_ONLY
+    account_config: AccountConfig = AccountConfig.DISABLED
+
+    openbao_config: OpenBaoConfig | None = None
+
     organization_bootstrap_webhook_url: str | None = None
     organization_spontaneous_bootstrap: bool = False
     organization_initial_active_users_limit: ActiveUsersLimit = field(
@@ -279,8 +304,6 @@ class BackendConfig:
     # Note minimum archiving period must be a positive value !
     organization_initial_minimum_archiving_period: int = 2592000  # seconds (i.e 30 days)
     organization_initial_tos: dict[TosLocale, TosUrl] | None = None
-    organization_initial_allowed_client_agent: AllowedClientAgent = AllowedClientAgent.NATIVE_OR_WEB
-    organization_initial_account_vault_strategy: AccountVaultStrategy = AccountVaultStrategy.ALLOWED
 
     # Number of SSE events kept in memory to allow client to catch up on reconnection
     sse_events_cache_size: int = 1024
