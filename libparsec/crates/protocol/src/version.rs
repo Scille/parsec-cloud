@@ -28,6 +28,16 @@ use libparsec_types::prelude::*;
 //     impact the protocol (as SASCode and shared secret key are computed client-side),
 //     however a server supporting API 5.2 will reject any `(invite|greeter)_claimer_step`
 //     made by clients with API < 5.2.
+// - v5.3 (Parsec 3.7+):
+//   * Remove `allowed_client_agent/account_vault_strategy` fields from `events_listen` response
+//     (compatible change behavior is reverted to what Parsec server < v5.1 does).
+//   * Incompatible change to remove `allowed_client_agent/account_vault_strategy` fields
+//     from `organization_self_list` (we consider this acceptable though since the account
+//     APIs is not yet used in production).
+//   * Incompatible change to rename `/anonymous_account` route `/anonymous_server`
+//     (we consider this acceptable though since the account APIs is not yet used in
+//     production).
+//   * Add `server_config` to anonymous server commands
 pub const API_V1_VERSION: &ApiVersion = &ApiVersion {
     version: 1,
     revision: 3,
@@ -46,7 +56,7 @@ pub const API_V4_VERSION: &ApiVersion = &ApiVersion {
 };
 pub const API_V5_VERSION: &ApiVersion = &ApiVersion {
     version: 5,
-    revision: 2,
+    revision: 3,
 };
 pub const API_LATEST_VERSION: &ApiVersion = API_V5_VERSION;
 
