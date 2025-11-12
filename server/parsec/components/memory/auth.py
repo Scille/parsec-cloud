@@ -44,8 +44,6 @@ class MemoryAuthComponent(BaseAuthComponent):
                     else TermsOfService(
                         updated_on=now, per_locale_urls=self._config.organization_initial_tos
                     ),
-                    allowed_client_agent=self._config.organization_initial_allowed_client_agent,
-                    account_vault_strategy=self._config.organization_initial_account_vault_strategy,
                     created_on=now,
                 )
                 self._data.organizations[organization_id] = org
@@ -59,7 +57,6 @@ class MemoryAuthComponent(BaseAuthComponent):
         return AnonymousAuthInfo(
             organization_id=organization_id,
             organization_internal_id=0,  # Only used by PostgreSQL implementation
-            organization_allowed_client_agent=org.allowed_client_agent,
         )
 
     @override
@@ -88,7 +85,6 @@ class MemoryAuthComponent(BaseAuthComponent):
             type=invitation.type,
             organization_internal_id=0,  # Only used by PostgreSQL implementation
             invitation_internal_id=0,  # Only used by PostgreSQL implementation
-            organization_allowed_client_agent=org.allowed_client_agent,
         )
 
     @override
@@ -124,7 +120,6 @@ class MemoryAuthComponent(BaseAuthComponent):
             device_verify_key=device.cooked.verify_key,
             organization_internal_id=0,  # Only used by PostgreSQL implementation
             device_internal_id=0,  # Only used by PostgreSQL implementation
-            organization_allowed_client_agent=org.allowed_client_agent,
         )
 
     @override

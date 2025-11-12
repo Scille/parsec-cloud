@@ -50,12 +50,9 @@ from parsec.components.sequester import (
     WebhookSequesterService,
 )
 from parsec.components.user import UserFreezeUserBadOutcome, UserInfo, UserListActiveUsersBadOutcome
-from parsec.config import AccountVaultStrategy, AllowedClientAgent
 from parsec.events import ActiveUsersLimitField, DateTimeField, OrganizationIDField, UserIDField
 from parsec.logging import get_logger
 from parsec.types import (
-    AccountVaultStrategyField,
-    AllowedClientAgentField,
     Base64BytesField,
     EmailAddressField,
     SequesterServiceIDField,
@@ -103,8 +100,6 @@ class CreateOrganizationIn(BaseModel):
     active_users_limit: ActiveUsersLimitField | UnsetType = Unset
     minimum_archiving_period: NonNegativeInt | UnsetType = Unset
     tos: dict[TosLocale, TosUrl] | UnsetType = Unset
-    allowed_client_agent: UnsetType | AllowedClientAgentField = Unset
-    account_vault_strategy: UnsetType | AccountVaultStrategyField = Unset
 
 
 class CreateOrganizationOut(BaseModel):
@@ -171,8 +166,6 @@ async def administration_create_organizations(
         active_users_limit=body.active_users_limit,
         minimum_archiving_period=body.minimum_archiving_period,
         tos=body.tos,
-        allowed_client_agent=body.allowed_client_agent,
-        account_vault_strategy=body.account_vault_strategy,
     )
     match outcome:
         case BootstrapToken() as bootstrap_token:
@@ -208,8 +201,6 @@ class GetOrganizationOut(BaseModel):
     active_users_limit: int | None
     minimum_archiving_period: NonNegativeInt
     tos: GetOrganizationOutTos | None
-    allowed_client_agent: AllowedClientAgent
-    account_vault_strategy: AccountVaultStrategy
 
 
 @administration_router.get("/administration/organizations/{raw_organization_id}")
@@ -243,8 +234,6 @@ async def administration_get_organization(
             updated_on=organization.tos.updated_on,
             per_locale_urls=organization.tos.per_locale_urls,
         ),
-        allowed_client_agent=organization.allowed_client_agent,
-        account_vault_strategy=organization.account_vault_strategy,
     )
 
 
@@ -262,8 +251,6 @@ class PatchOrganizationIn(BaseModel):
     active_users_limit: ActiveUsersLimitField | UnsetType = Unset
     minimum_archiving_period: NonNegativeInt | UnsetType = Unset
     tos: UnsetType | dict[TosLocale, TosUrl] | None = Unset
-    allowed_client_agent: UnsetType | AllowedClientAgentField = Unset
-    account_vault_strategy: UnsetType | AccountVaultStrategyField = Unset
 
 
 @administration_router.patch("/administration/organizations/{raw_organization_id}")
@@ -286,8 +273,6 @@ async def administration_patch_organization(
         user_profile_outsider_allowed=body.user_profile_outsider_allowed,
         minimum_archiving_period=body.minimum_archiving_period,
         tos=body.tos,
-        allowed_client_agent=body.allowed_client_agent,
-        account_vault_strategy=body.account_vault_strategy,
     )
     match outcome:
         case None:
