@@ -110,7 +110,7 @@ class ActiveUsersLimit(Variant):
     NoLimit = VariantItemUnit
 
 
-class ServerConfig(Structure):
+class ServerOrganizationConfig(Structure):
     user_profile_outsider_allowed: bool
     active_users_limit: ActiveUsersLimit
 
@@ -123,7 +123,7 @@ class ClientInfo(Structure):
     device_label: DeviceLabel
     human_handle: HumanHandle
     current_profile: UserProfile
-    server_config: ServerConfig
+    server_organization_config: ServerOrganizationConfig
     is_server_online: bool
     is_organization_expired: bool
     must_accept_tos: bool
