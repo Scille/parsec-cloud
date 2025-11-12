@@ -11,10 +11,8 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
-    Account, AccountListOrganizationsError, AccountOrganizations,
-    AccountOrganizationsAccountVaultStrategy, AccountOrganizationsActiveUser,
-    AccountOrganizationsAllowedClientAgent, AccountOrganizationsOrganizationConfig,
-    AccountOrganizationsRevokedUser,
+    Account, AccountListOrganizationsError, AccountOrganizations, AccountOrganizationsActiveUser,
+    AccountOrganizationsOrganizationConfig, AccountOrganizationsRevokedUser,
 };
 
 #[parsec_test(testbed = "empty")]
@@ -41,8 +39,6 @@ async fn ok(env: &TestbedEnv) {
                     is_expired: false,
                     user_profile_outsider_allowed: true,
                     active_users_limit: ActiveUsersLimit::NoLimit,
-                    allowed_client_agent: AccountOrganizationsAllowedClientAgent::NativeOrWeb,
-                    account_vault_strategy: AccountOrganizationsAccountVaultStrategy::Allowed,
                 },
             },
             AccountOrganizationsActiveUser {
@@ -55,8 +51,6 @@ async fn ok(env: &TestbedEnv) {
                     is_expired: true,
                     user_profile_outsider_allowed: false,
                     active_users_limit: ActiveUsersLimit::LimitedTo(8),
-                    allowed_client_agent: AccountOrganizationsAllowedClientAgent::NativeOnly,
-                    account_vault_strategy: AccountOrganizationsAccountVaultStrategy::Forbidden,
                 },
             },
         ],
