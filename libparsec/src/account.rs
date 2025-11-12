@@ -12,8 +12,7 @@ pub use libparsec_account::{
     AccountDisableAuthMethodError, AccountFetchOpaqueKeyFromVaultError,
     AccountListAuthMethodsError, AccountListInvitationsError, AccountListOrganizationsError,
     AccountListRegistrationDevicesError, AccountLoginError, AccountOrganizations,
-    AccountOrganizationsAccountVaultStrategy, AccountOrganizationsActiveUser,
-    AccountOrganizationsAllowedClientAgent, AccountOrganizationsOrganizationConfig,
+    AccountOrganizationsActiveUser, AccountOrganizationsOrganizationConfig,
     AccountOrganizationsRevokedUser, AccountRecoverProceedError,
     AccountRecoverSendValidationEmailError, AccountRegisterNewDeviceError,
     AccountUploadOpaqueKeyInVaultError, AuthMethodInfo,
@@ -360,12 +359,6 @@ pub enum AccountCreateRegistrationDeviceError {
     LoadDeviceInvalidData,
     #[error("Cannot load device file: decryption failed")]
     LoadDeviceDecryptionFailed,
-    #[error(
-        "The organization's configuration does not allow uploading sensitive data in the vault"
-    )]
-    NotAllowedByOrganizationVaultStrategy,
-    #[error("The organization's configuration cannot be obtained (organization doesn't exist, or user not part of it ?")]
-    CannotObtainOrganizationVaultStrategy,
     #[error("Cannot decrypt the vault key access returned by the server: {0}")]
     BadVaultKeyAccess(DataError),
     #[error("Cannot communicate with the server: {0}")]
@@ -423,12 +416,6 @@ impl From<libparsec_account::AccountCreateRegistrationDeviceError>
 {
     fn from(value: libparsec_account::AccountCreateRegistrationDeviceError) -> Self {
         match value {
-            libparsec_account::AccountCreateRegistrationDeviceError::NotAllowedByOrganizationVaultStrategy => {
-                AccountCreateRegistrationDeviceError::NotAllowedByOrganizationVaultStrategy
-            }
-            libparsec_account::AccountCreateRegistrationDeviceError::CannotObtainOrganizationVaultStrategy => {
-                AccountCreateRegistrationDeviceError::CannotObtainOrganizationVaultStrategy
-            }
             libparsec_account::AccountCreateRegistrationDeviceError::BadVaultKeyAccess(err) => {
                 AccountCreateRegistrationDeviceError::BadVaultKeyAccess(err)
             }
