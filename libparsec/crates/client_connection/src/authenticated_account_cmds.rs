@@ -16,7 +16,7 @@ use libparsec_types::prelude::*;
 use crate::testbed::{get_send_hook, SendHookConfig};
 use crate::{
     error::{ConnectionError, ConnectionResult},
-    AnonymousAccountCmds, API_VERSION_HEADER_NAME, PARSEC_CONTENT_TYPE,
+    AnonymousServerCmds, API_VERSION_HEADER_NAME, PARSEC_CONTENT_TYPE,
 };
 
 const API_LATEST_MAJOR_VERSION: u32 = API_LATEST_VERSION.version;
@@ -89,11 +89,8 @@ impl AuthenticatedAccountCmds {
     /// - During tests, the send hook config (contained in anonymous/authenticated cmds)
     ///   shouldn't be dropped if some request registered with
     ///   `test_register_sequence_of_send_hooks` has yet to occur.
-    pub fn from_anonymous(
-        anonymous_cmds: AnonymousAccountCmds,
-        account: AccountAuthMethod,
-    ) -> Self {
-        let AnonymousAccountCmds {
+    pub fn from_anonymous(anonymous_cmds: AnonymousServerCmds, account: AccountAuthMethod) -> Self {
+        let AnonymousServerCmds {
             client,
             addr,
             #[cfg(feature = "test-with-testbed")]

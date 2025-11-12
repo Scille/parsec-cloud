@@ -5,11 +5,11 @@
 #![allow(clippy::unwrap_used)]
 
 use crate::{
-    test_register_low_level_send_hook, AnonymousAccountCmds, ConnectionError, HeaderMap,
-    HeaderName, HeaderValue, ProxyConfig, ResponseMock, StatusCode,
+    test_register_low_level_send_hook, AnonymousServerCmds, ConnectionError, HeaderMap, HeaderName,
+    HeaderValue, ProxyConfig, ResponseMock, StatusCode,
 };
 use libparsec_protocol::{
-    anonymous_account_cmds::latest as anonymous_account_cmds, API_LATEST_VERSION,
+    anonymous_server_cmds::latest as anonymous_server_cmds, API_LATEST_VERSION,
 };
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::ParsecAddr;
@@ -27,7 +27,7 @@ async fn ok_with_server(env: &TestbedEnv) {
 async fn ok(env: &TestbedEnv, mocked: bool) {
     let addr = env.server_addr.clone();
     let cmds =
-        AnonymousAccountCmds::new(&env.discriminant_dir, addr, ProxyConfig::default()).unwrap();
+        AnonymousServerCmds::new(&env.discriminant_dir, addr, ProxyConfig::default()).unwrap();
 
     // Good request
 
@@ -45,13 +45,13 @@ async fn ok(env: &TestbedEnv, mocked: bool) {
             assert!(headers.get("Authorization").is_none());
 
             let body = request.body().unwrap().as_bytes().unwrap();
-            let request = anonymous_account_cmds::AnyCmdReq::load(body).unwrap();
-            p_assert_matches!(request, anonymous_account_cmds::AnyCmdReq::Ping(anonymous_account_cmds::ping::Req { ping }) if ping == "foo");
+            let request = anonymous_server_cmds::AnyCmdReq::load(body).unwrap();
+            p_assert_matches!(request, anonymous_server_cmds::AnyCmdReq::Ping(anonymous_server_cmds::ping::Req { ping }) if ping == "foo");
 
             Ok(ResponseMock::Mocked((
                 StatusCode::OK,
                 HeaderMap::new(),
-                anonymous_account_cmds::ping::Rep::Ok {
+                anonymous_server_cmds::ping::Rep::Ok {
                     pong: "foo".to_owned(),
                 }
                 .dump()
@@ -62,13 +62,13 @@ async fn ok(env: &TestbedEnv, mocked: bool) {
     }
 
     let rep = cmds
-        .send(anonymous_account_cmds::ping::Req {
+        .send(anonymous_server_cmds::ping::Req {
             ping: "foo".to_owned(),
         })
         .await;
     p_assert_eq!(
         rep.unwrap(),
-        anonymous_account_cmds::ping::Rep::Ok {
+        anonymous_server_cmds::ping::Rep::Ok {
             pong: "foo".to_owned()
         }
     );
@@ -82,7 +82,7 @@ macro_rules! register_rpc_http_hook {
         async fn $test_name(env: &TestbedEnv) {
             let addr = ParsecAddr::new("127.0.0.1".into(), None, false);
             let cmds =
-                AnonymousAccountCmds::new(&env.discriminant_dir, addr, ProxyConfig::default()).unwrap();
+                AnonymousServerCmds::new(&env.discriminant_dir, addr, ProxyConfig::default()).unwrap();
 
             test_register_low_level_send_hook(
                 &env.discriminant_dir,
@@ -105,7 +105,7 @@ macro_rules! register_rpc_http_hook {
             );
 
             let err = cmds
-                .send(anonymous_account_cmds::ping::Req {
+                .send(anonymous_server_cmds::ping::Req {
                     ping: "foo".to_owned(),
                 })
                 .await
