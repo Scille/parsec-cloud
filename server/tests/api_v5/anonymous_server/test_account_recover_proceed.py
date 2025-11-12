@@ -9,7 +9,7 @@ from parsec._parsec import (
     SecretKey,
     UntrustedPasswordAlgorithmArgon2id,
     ValidationCode,
-    anonymous_account_cmds,
+    anonymous_server_cmds,
 )
 from parsec.components.account import (
     VALIDATION_CODE_MAX_FAILED_ATTEMPTS,
@@ -20,7 +20,7 @@ from parsec.components.account import (
 from parsec.config import MockedEmailConfig
 from tests.common import (
     ALICE_ACCOUNT_HUMAN_HANDLE,
-    AnonymousAccountRpcClient,
+    AnonymousServerRpcClient,
     AsyncClient,
     AuthenticatedAccountRpcClient,
     Backend,
@@ -47,10 +47,10 @@ async def alice_validation_code(
 
 
 @pytest.mark.parametrize("kind", ("with_password", "without_password"))
-async def test_anonymous_account_account_recover_proceed_ok(
+async def test_anonymous_server_account_recover_proceed_ok(
     kind: str,
     alice_account: AuthenticatedAccountRpcClient,
-    anonymous_account: AnonymousAccountRpcClient,
+    anonymous_server: AnonymousServerRpcClient,
     alice_validation_code: ValidationCode,
     backend: Backend,
     client: AsyncClient,
@@ -80,7 +80,7 @@ async def test_anonymous_account_account_recover_proceed_ok(
 
     # Do the actual recovery
 
-    rep = await anonymous_account.account_recover_proceed(
+    rep = await anonymous_server.account_recover_proceed(
         validation_code=alice_validation_code,
         email=ALICE_ACCOUNT_HUMAN_HANDLE.email,
         new_vault_key_access=b"<new_vault_key_access>",
@@ -88,11 +88,11 @@ async def test_anonymous_account_account_recover_proceed_ok(
         new_auth_method_mac_key=new_auth_method_mac_key,
         new_auth_method_password_algorithm=auth_method_password_algorithm,
     )
-    assert rep == anonymous_account_cmds.latest.account_recover_proceed.RepOk()
+    assert rep == anonymous_server_cmds.latest.account_recover_proceed.RepOk()
 
     # The reset can only be used once for a given validation code!
 
-    rep = await anonymous_account.account_recover_proceed(
+    rep = await anonymous_server.account_recover_proceed(
         validation_code=alice_validation_code,
         email=ALICE_ACCOUNT_HUMAN_HANDLE.email,
         new_vault_key_access=b"<other_vault_key_access>",
@@ -101,8 +101,7 @@ async def test_anonymous_account_account_recover_proceed_ok(
         new_auth_method_password_algorithm=auth_method_password_algorithm,
     )
     assert (
-        rep
-        == anonymous_account_cmds.latest.account_recover_proceed.RepSendValidationEmailRequired()
+        rep == anonymous_server_cmds.latest.account_recover_proceed.RepSendValidationEmailRequired()
     )
 
     # Now ensure that the old auth method is no longer usable...
@@ -143,16 +142,16 @@ async def test_anonymous_account_account_recover_proceed_ok(
     assert outcome.previous_vaults[0].vault_items == {HashDigest.from_data(b"item"): b"<item>"}
 
 
-async def test_anonymous_account_account_recover_proceed_invalid_validation_code(
-    anonymous_account: AnonymousAccountRpcClient,
+async def test_anonymous_server_account_recover_proceed_invalid_validation_code(
+    anonymous_server: AnonymousServerRpcClient,
     alice_validation_code: ValidationCode,
 ):
     bad_validation_code = generate_different_validation_code(alice_validation_code)
 
     async def do_request(
         validation_code: ValidationCode,
-    ) -> anonymous_account_cmds.latest.account_recover_proceed.Rep:
-        return await anonymous_account.account_recover_proceed(
+    ) -> anonymous_server_cmds.latest.account_recover_proceed.Rep:
+        return await anonymous_server.account_recover_proceed(
             validation_code=bad_validation_code,
             email=ALICE_ACCOUNT_HUMAN_HANDLE.email,
             new_vault_key_access=b"vault_key_access",
@@ -165,7 +164,7 @@ async def test_anonymous_account_account_recover_proceed_invalid_validation_code
     for _ in range(VALIDATION_CODE_MAX_FAILED_ATTEMPTS):
         rep = await do_request(bad_validation_code)
         assert (
-            rep == anonymous_account_cmds.latest.account_recover_proceed.RepInvalidValidationCode()
+            rep == anonymous_server_cmds.latest.account_recover_proceed.RepInvalidValidationCode()
         )
 
     # Further attempts are no longer considered even if the good validation code is provided
@@ -173,7 +172,7 @@ async def test_anonymous_account_account_recover_proceed_invalid_validation_code
         rep = await do_request(validation_code)
         assert (
             rep
-            == anonymous_account_cmds.latest.account_recover_proceed.RepSendValidationEmailRequired()
+            == anonymous_server_cmds.latest.account_recover_proceed.RepSendValidationEmailRequired()
         )
 
 
@@ -186,9 +185,9 @@ async def test_anonymous_account_account_recover_proceed_invalid_validation_code
         "wrong_email_address",
     ),
 )
-async def test_anonymous_account_account_recover_proceed_send_validation_email_required(
+async def test_anonymous_server_account_recover_proceed_send_validation_email_required(
     kind: str,
-    anonymous_account: AnonymousAccountRpcClient,
+    anonymous_server: AnonymousServerRpcClient,
     alice_account: AuthenticatedAccountRpcClient,
     bob_account: AuthenticatedAccountRpcClient,
     backend: Backend,
@@ -197,12 +196,12 @@ async def test_anonymous_account_account_recover_proceed_send_validation_email_r
     match kind:
         case "validation_code_already_used":
             # Nothing to do: this has already been testbed at the end of
-            # `test_anonymous_account_account_recover_proceed_ok`
+            # `test_anonymous_server_account_recover_proceed_ok`
             return
 
         case "validation_code_too_many_attemps":
             # Nothing to do: this has already been testbed at the end of
-            # `test_anonymous_account_account_recover_proceed_invalid_validation_code`
+            # `test_anonymous_server_account_recover_proceed_invalid_validation_code`
             return
 
         case "validation_code_too_old":
@@ -223,7 +222,7 @@ async def test_anonymous_account_account_recover_proceed_send_validation_email_r
 
     assert isinstance(validation_code, ValidationCode)
 
-    rep = await anonymous_account.account_recover_proceed(
+    rep = await anonymous_server.account_recover_proceed(
         validation_code=validation_code,
         email=ALICE_ACCOUNT_HUMAN_HANDLE.email,
         new_vault_key_access=b"vault_key_access",
@@ -232,17 +231,16 @@ async def test_anonymous_account_account_recover_proceed_send_validation_email_r
         new_auth_method_mac_key=SecretKey.generate(),
     )
     assert (
-        rep
-        == anonymous_account_cmds.latest.account_recover_proceed.RepSendValidationEmailRequired()
+        rep == anonymous_server_cmds.latest.account_recover_proceed.RepSendValidationEmailRequired()
     )
 
 
-async def test_anonymous_account_account_recover_proceed_auth_method_id_already_exists(
-    anonymous_account: AnonymousAccountRpcClient,
+async def test_anonymous_server_account_recover_proceed_auth_method_id_already_exists(
+    anonymous_server: AnonymousServerRpcClient,
     alice_validation_code: ValidationCode,
     bob_account: AuthenticatedAccountRpcClient,
 ):
-    rep = await anonymous_account.account_recover_proceed(
+    rep = await anonymous_server.account_recover_proceed(
         validation_code=alice_validation_code,
         email=ALICE_ACCOUNT_HUMAN_HANDLE.email,
         new_vault_key_access=b"vault_key_access",
@@ -251,17 +249,17 @@ async def test_anonymous_account_account_recover_proceed_auth_method_id_already_
         new_auth_method_mac_key=SecretKey.generate(),
     )
     assert (
-        rep == anonymous_account_cmds.latest.account_recover_proceed.RepAuthMethodIdAlreadyExists()
+        rep == anonymous_server_cmds.latest.account_recover_proceed.RepAuthMethodIdAlreadyExists()
     )
 
 
-async def test_anonymous_account_account_recover_proceed_http_common_errors(
-    anonymous_account: AnonymousAccountRpcClient,
-    anonymous_account_http_common_errors_tester: HttpCommonErrorsTester,
+async def test_anonymous_server_account_recover_proceed_http_common_errors(
+    anonymous_server: AnonymousServerRpcClient,
+    anonymous_server_http_common_errors_tester: HttpCommonErrorsTester,
     alice_validation_code: ValidationCode,
 ) -> None:
     async def do():
-        await anonymous_account.account_recover_proceed(
+        await anonymous_server.account_recover_proceed(
             validation_code=alice_validation_code,
             email=ALICE_ACCOUNT_HUMAN_HANDLE.email,
             new_vault_key_access=b"vault_key_access",
@@ -270,4 +268,4 @@ async def test_anonymous_account_account_recover_proceed_http_common_errors(
             new_auth_method_mac_key=SecretKey.generate(),
         )
 
-    await anonymous_account_http_common_errors_tester(do)
+    await anonymous_server_http_common_errors_tester(do)

@@ -23,7 +23,7 @@ from parsec._parsec import (
 from parsec.backend import Backend
 from parsec.components.account import UntrustedPasswordAlgorithmArgon2id
 from parsec.config import MockedEmailConfig
-from tests.common.client import AnonymousAccountRpcClient, AuthenticatedAccountRpcClient
+from tests.common.client import AnonymousServerRpcClient, AuthenticatedAccountRpcClient
 from tests.common.postgresql import clear_postgresql_account_data
 
 # Note `alice@invalid.com` is Alice's email in `CoolOrg`, `MinimalOrg` etc.
@@ -86,7 +86,7 @@ async def clear_account_data(
     hence each test involving account need to start by clearing those data.
 
     This fixture is typically not directly used by the test, but instead
-    by the `alice_account`/`bob_account`/`anonymous_account` fixtures the test
+    by the `alice_account`/`bob_account`/`anonymous_server` fixtures the test
     itself relies on.
     """
     if request.config.getoption("--postgresql"):
@@ -148,7 +148,7 @@ async def bob_account(
 
 
 @pytest.fixture
-async def anonymous_account(
+async def anonymous_server(
     clear_account_data: None, client: AsyncClient
-) -> AnonymousAccountRpcClient:
-    return AnonymousAccountRpcClient(client)
+) -> AnonymousServerRpcClient:
+    return AnonymousServerRpcClient(client)

@@ -26,11 +26,11 @@ from parsec._parsec import (
     UserID,
     UserProfile,
     ValidationCode,
-    anonymous_account_cmds,
+    anonymous_server_cmds,
     authenticated_account_cmds,
 )
 from parsec.api import api
-from parsec.client_context import AnonymousAccountClientContext, AuthenticatedAccountClientContext
+from parsec.client_context import AnonymousServerClientContext, AuthenticatedAccountClientContext
 from parsec.components.email import SendEmailBadOutcome, send_email
 from parsec.config import AccountVaultStrategy, AllowedClientAgent, BackendConfig
 from parsec.types import BadOutcomeEnum
@@ -438,20 +438,20 @@ class BaseAccountComponent:
     @api
     async def api_auth_method_password_get_algorithm(
         self,
-        client_ctx: AnonymousAccountClientContext,
-        req: anonymous_account_cmds.latest.auth_method_password_get_algorithm.Req,
-    ) -> anonymous_account_cmds.latest.auth_method_password_get_algorithm.Rep:
+        client_ctx: AnonymousServerClientContext,
+        req: anonymous_server_cmds.latest.auth_method_password_get_algorithm.Req,
+    ) -> anonymous_server_cmds.latest.auth_method_password_get_algorithm.Rep:
         password_algorithm = await self.get_password_algorithm_or_fake_it(req.email)
-        return anonymous_account_cmds.latest.auth_method_password_get_algorithm.RepOk(
+        return anonymous_server_cmds.latest.auth_method_password_get_algorithm.RepOk(
             password_algorithm=password_algorithm
         )
 
     @api
     async def api_account_create_send_validation_email(
         self,
-        client_ctx: AnonymousAccountClientContext,
-        req: anonymous_account_cmds.latest.account_create_send_validation_email.Req,
-    ) -> anonymous_account_cmds.latest.account_create_send_validation_email.Rep:
+        client_ctx: AnonymousServerClientContext,
+        req: anonymous_server_cmds.latest.account_create_send_validation_email.Req,
+    ) -> anonymous_server_cmds.latest.account_create_send_validation_email.Rep:
         now = DateTime.now()
 
         match self._config.email_rate_limit.register_send_intent(
@@ -462,7 +462,7 @@ class BaseAccountComponent:
             case None:
                 pass
             case DateTime() as wait_until:
-                return anonymous_account_cmds.latest.account_create_send_validation_email.RepEmailSendingRateLimited(
+                return anonymous_server_cmds.latest.account_create_send_validation_email.RepEmailSendingRateLimited(
                     wait_until=wait_until,
                 )
 
@@ -472,27 +472,27 @@ class BaseAccountComponent:
         )
         match outcome:
             case ValidationCode():
-                return anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
+                return anonymous_server_cmds.latest.account_create_send_validation_email.RepOk()
 
             case AccountCreateSendValidationEmailBadOutcome.ACCOUNT_ALREADY_EXISTS:
                 # Respond OK without sending token to prevent creating oracle
-                return anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
+                return anonymous_server_cmds.latest.account_create_send_validation_email.RepOk()
 
             case SendEmailBadOutcome.BAD_SMTP_CONFIG | SendEmailBadOutcome.SERVER_UNAVAILABLE:
-                return anonymous_account_cmds.latest.account_create_send_validation_email.RepEmailServerUnavailable()
+                return anonymous_server_cmds.latest.account_create_send_validation_email.RepEmailServerUnavailable()
 
             case SendEmailBadOutcome.RECIPIENT_REFUSED:
-                return anonymous_account_cmds.latest.account_create_send_validation_email.RepEmailRecipientRefused()
+                return anonymous_server_cmds.latest.account_create_send_validation_email.RepEmailRecipientRefused()
 
     @api
     async def api_account_create_proceed(
         self,
-        client_ctx: AnonymousAccountClientContext,
-        req: anonymous_account_cmds.latest.account_create_proceed.Req,
-    ) -> anonymous_account_cmds.latest.account_create_proceed.Rep:
+        client_ctx: AnonymousServerClientContext,
+        req: anonymous_server_cmds.latest.account_create_proceed.Req,
+    ) -> anonymous_server_cmds.latest.account_create_proceed.Rep:
         match req.account_create_step:
             case (
-                anonymous_account_cmds.latest.account_create_proceed.AccountCreateStepNumber0CheckCode() as step
+                anonymous_server_cmds.latest.account_create_proceed.AccountCreateStepNumber0CheckCode() as step
             ):
                 outcome = await self.create_check_validation_code(
                     now=DateTime.now(),
@@ -501,7 +501,7 @@ class BaseAccountComponent:
                 )
 
             case (
-                anonymous_account_cmds.latest.account_create_proceed.AccountCreateStepNumber1Create() as step
+                anonymous_server_cmds.latest.account_create_proceed.AccountCreateStepNumber1Create() as step
             ):
                 outcome = await self.create_proceed(
                     now=DateTime.now(),
@@ -520,18 +520,18 @@ class BaseAccountComponent:
 
         match outcome:
             case None:
-                return anonymous_account_cmds.latest.account_create_proceed.RepOk()
+                return anonymous_server_cmds.latest.account_create_proceed.RepOk()
 
             case AccountCreateProceedBadOutcome.INVALID_VALIDATION_CODE:
                 return (
-                    anonymous_account_cmds.latest.account_create_proceed.RepInvalidValidationCode()
+                    anonymous_server_cmds.latest.account_create_proceed.RepInvalidValidationCode()
                 )
 
             case AccountCreateProceedBadOutcome.SEND_VALIDATION_EMAIL_REQUIRED:
-                return anonymous_account_cmds.latest.account_create_proceed.RepSendValidationEmailRequired()
+                return anonymous_server_cmds.latest.account_create_proceed.RepSendValidationEmailRequired()
 
             case AccountCreateProceedBadOutcome.AUTH_METHOD_ID_ALREADY_EXISTS:
-                return anonymous_account_cmds.latest.account_create_proceed.RepAuthMethodIdAlreadyExists()
+                return anonymous_server_cmds.latest.account_create_proceed.RepAuthMethodIdAlreadyExists()
 
     @api
     async def api_account_delete_send_validation_email(
@@ -591,9 +591,9 @@ class BaseAccountComponent:
     @api
     async def api_account_recover_send_validation_email(
         self,
-        client_ctx: AnonymousAccountClientContext,
-        req: anonymous_account_cmds.latest.account_recover_send_validation_email.Req,
-    ) -> anonymous_account_cmds.latest.account_recover_send_validation_email.Rep:
+        client_ctx: AnonymousServerClientContext,
+        req: anonymous_server_cmds.latest.account_recover_send_validation_email.Req,
+    ) -> anonymous_server_cmds.latest.account_recover_send_validation_email.Rep:
         now = DateTime.now()
 
         match self._config.email_rate_limit.register_send_intent(
@@ -604,31 +604,31 @@ class BaseAccountComponent:
             case None:
                 pass
             case DateTime() as wait_until:
-                return anonymous_account_cmds.latest.account_recover_send_validation_email.RepEmailSendingRateLimited(
+                return anonymous_server_cmds.latest.account_recover_send_validation_email.RepEmailSendingRateLimited(
                     wait_until=wait_until,
                 )
 
         outcome = await self.recover_send_validation_email(now, req.email)
         match outcome:
             case ValidationCode():
-                return anonymous_account_cmds.latest.account_recover_send_validation_email.RepOk()
+                return anonymous_server_cmds.latest.account_recover_send_validation_email.RepOk()
 
             case AccountRecoverSendValidationEmailBadOutcome.ACCOUNT_NOT_FOUND:
                 # Respond OK without sending token to prevent creating oracle
-                return anonymous_account_cmds.latest.account_recover_send_validation_email.RepOk()
+                return anonymous_server_cmds.latest.account_recover_send_validation_email.RepOk()
 
             case SendEmailBadOutcome.BAD_SMTP_CONFIG | SendEmailBadOutcome.SERVER_UNAVAILABLE:
-                return anonymous_account_cmds.latest.account_recover_send_validation_email.RepEmailServerUnavailable()
+                return anonymous_server_cmds.latest.account_recover_send_validation_email.RepEmailServerUnavailable()
 
             case SendEmailBadOutcome.RECIPIENT_REFUSED:
-                return anonymous_account_cmds.latest.account_recover_send_validation_email.RepEmailRecipientRefused()
+                return anonymous_server_cmds.latest.account_recover_send_validation_email.RepEmailRecipientRefused()
 
     @api
     async def api_account_recover_proceed(
         self,
-        client_ctx: AnonymousAccountClientContext,
-        req: anonymous_account_cmds.latest.account_recover_proceed.Req,
-    ) -> anonymous_account_cmds.latest.account_recover_proceed.Rep:
+        client_ctx: AnonymousServerClientContext,
+        req: anonymous_server_cmds.latest.account_recover_proceed.Req,
+    ) -> anonymous_server_cmds.latest.account_recover_proceed.Rep:
         outcome = await self.recover_proceed(
             now=DateTime.now(),
             validation_code=req.validation_code,
@@ -642,18 +642,18 @@ class BaseAccountComponent:
         )
         match outcome:
             case None:
-                return anonymous_account_cmds.latest.account_recover_proceed.RepOk()
+                return anonymous_server_cmds.latest.account_recover_proceed.RepOk()
 
             case AccountRecoverProceedBadOutcome.INVALID_VALIDATION_CODE:
                 return (
-                    anonymous_account_cmds.latest.account_recover_proceed.RepInvalidValidationCode()
+                    anonymous_server_cmds.latest.account_recover_proceed.RepInvalidValidationCode()
                 )
 
             case AccountRecoverProceedBadOutcome.SEND_VALIDATION_EMAIL_REQUIRED:
-                return anonymous_account_cmds.latest.account_recover_proceed.RepSendValidationEmailRequired()
+                return anonymous_server_cmds.latest.account_recover_proceed.RepSendValidationEmailRequired()
 
             case AccountRecoverProceedBadOutcome.AUTH_METHOD_ID_ALREADY_EXISTS:
-                return anonymous_account_cmds.latest.account_recover_proceed.RepAuthMethodIdAlreadyExists()
+                return anonymous_server_cmds.latest.account_recover_proceed.RepAuthMethodIdAlreadyExists()
 
     @api
     async def api_account_vault_item_upload(

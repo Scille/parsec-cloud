@@ -5,8 +5,8 @@
 from __future__ import annotations
 
 from . import (
-    anonymous_account_cmds,
     anonymous_cmds,
+    anonymous_server_cmds,
     authenticated_account_cmds,
     authenticated_cmds,
     invited_cmds,
@@ -34,8 +34,8 @@ class ActiveUsersLimit:
 
 __all__ = [
     "ActiveUsersLimit",
-    "anonymous_account_cmds",
     "anonymous_cmds",
+    "anonymous_server_cmds",
     "authenticated_account_cmds",
     "authenticated_cmds",
     "invited_cmds",
