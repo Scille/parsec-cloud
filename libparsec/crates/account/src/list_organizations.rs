@@ -18,8 +18,6 @@ pub type AccountOrganizationsActiveUser =
 pub type AccountOrganizationsRevokedUser =
     libparsec_protocol::authenticated_account_cmds::latest::organization_self_list::RevokedUser;
 pub type AccountOrganizationsOrganizationConfig = libparsec_protocol::authenticated_account_cmds::latest::organization_self_list::OrganizationConfig;
-pub type AccountOrganizationsAllowedClientAgent = libparsec_protocol::authenticated_account_cmds::latest::organization_self_list::AllowedClientAgent;
-pub type AccountOrganizationsAccountVaultStrategy = libparsec_protocol::authenticated_account_cmds::latest::organization_self_list::AccountVaultStrategy;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AccountOrganizations {
