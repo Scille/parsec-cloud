@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec_client_connection::{AnonymousAccountCmds, ConnectionError};
+use libparsec_client_connection::{AnonymousServerCmds, ConnectionError};
 use libparsec_types::prelude::*;
 
 use crate::AccountAuthMethodStrategy;
@@ -20,10 +20,10 @@ pub enum AccountRecoverSendValidationEmailError {
 }
 
 pub async fn account_recover_send_validation_email(
-    cmds: &AnonymousAccountCmds,
+    cmds: &AnonymousServerCmds,
     email: EmailAddress,
 ) -> Result<(), AccountRecoverSendValidationEmailError> {
-    use libparsec_protocol::anonymous_account_cmds::v5::account_recover_send_validation_email::{
+    use libparsec_protocol::anonymous_server_cmds::v5::account_recover_send_validation_email::{
         Rep, Req,
     };
 
@@ -58,12 +58,12 @@ pub enum AccountRecoverProceedError {
 }
 
 pub async fn account_recover_proceed(
-    cmds: &AnonymousAccountCmds,
+    cmds: &AnonymousServerCmds,
     validation_code: ValidationCode,
     email: EmailAddress,
     auth_method_strategy: AccountAuthMethodStrategy<'_>,
 ) -> Result<(), AccountRecoverProceedError> {
-    use libparsec_protocol::anonymous_account_cmds::v5::account_recover_proceed::{Rep, Req};
+    use libparsec_protocol::anonymous_server_cmds::v5::account_recover_proceed::{Rep, Req};
 
     let (new_auth_method_password_algorithm, new_auth_method_keys) =
         auth_method_strategy.derive_keys(&email);

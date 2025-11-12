@@ -3,7 +3,7 @@
 use std::path::PathBuf;
 
 use libparsec_client_connection::{
-    AccountAuthMethod, AnonymousAccountCmds, AuthenticatedAccountCmds, ConnectionError, ProxyConfig,
+    AccountAuthMethod, AnonymousServerCmds, AuthenticatedAccountCmds, ConnectionError, ProxyConfig,
 };
 use libparsec_types::prelude::*;
 
@@ -38,9 +38,8 @@ pub(super) async fn account_login(
             // The password algorithm configuration is obtained from the server
             // to know how to turn the password into `auth_method_master_secret`.
 
-            let anonymous_cmds =
-                AnonymousAccountCmds::new(&config_dir, addr.clone(), proxy.clone())
-                    .context("Cannot configure server connection")?;
+            let anonymous_cmds = AnonymousServerCmds::new(&config_dir, addr.clone(), proxy.clone())
+                .context("Cannot configure server connection")?;
 
             let auth_method_master_secret =
                 retrieve_auth_method_master_secret_from_password(&anonymous_cmds, email, password)
