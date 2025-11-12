@@ -51,7 +51,7 @@ pub use self::{
 };
 use crate::{
     certif::{CertifPollServerError, CertificateOps},
-    config::{ClientConfig, ServerConfig},
+    config::{ClientConfig, ServerOrganizationConfig},
     event_bus::EventBus,
     monitors::{
         start_certif_poll_monitor, start_connection_monitor, start_server_config_monitor,
@@ -107,7 +107,7 @@ pub type ClientStartWorkspaceHistoryError = WorkspaceHistoryOpsStartError;
 // Should not be `Clone` given it manages underlying resources !
 pub struct Client {
     pub(crate) config: Arc<ClientConfig>,
-    pub(crate) server_config: Mutex<ServerConfig>,
+    pub(crate) server_organization_config: Mutex<ServerOrganizationConfig>,
     pub(crate) device: Arc<LocalDevice>,
     pub(crate) event_bus: EventBus,
     pub(crate) cmds: Arc<AuthenticatedCmds>,
@@ -170,7 +170,7 @@ impl Client {
         );
 
         let client = Arc::new(Self {
-            server_config: Mutex::new(ServerConfig::default()),
+            server_organization_config: Mutex::new(ServerOrganizationConfig::default()),
             config,
             device,
             event_bus,
@@ -296,8 +296,8 @@ impl Client {
         &self.config
     }
 
-    pub fn server_config(&self) -> ServerConfig {
-        self.server_config
+    pub fn server_organization_config(&self) -> ServerOrganizationConfig {
+        self.server_organization_config
             .lock()
             .expect("Mutex is poisoned")
             .clone()
@@ -543,8 +543,14 @@ impl Client {
     /// `ServerConfig` SSE event.
     ///
     /// This method is typically used by a monitor.
-    pub(crate) fn update_server_config(&self, updater: impl FnOnce(&mut ServerConfig)) {
-        let mut guard = self.server_config.lock().expect("Mutex is poisoned");
+    pub(crate) fn update_server_organization_config(
+        &self,
+        updater: impl FnOnce(&mut ServerOrganizationConfig),
+    ) {
+        let mut guard = self
+            .server_organization_config
+            .lock()
+            .expect("Mutex is poisoned");
         updater(&mut guard);
     }
 
