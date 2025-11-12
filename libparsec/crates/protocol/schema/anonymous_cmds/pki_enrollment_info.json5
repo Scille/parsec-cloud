@@ -58,6 +58,10 @@
                                 "name": "accept_payload_signature",
                                 "type": "Bytes"
                             },
+                            {
+                                "name": "accept_payload_signature_algorithm",
+                                "type": "PkiSignatureAlgorithm"
+                            },
                             // Signature should be checked before loading.
                             {
                                 "name": "accept_payload",

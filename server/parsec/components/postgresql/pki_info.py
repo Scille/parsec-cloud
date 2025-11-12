@@ -114,7 +114,7 @@ async def pki_info(
                     "accept_payload_signature_algorithm": str() as raw_accept_payload_signature_algorithm,
                     **rest,
                 } if not rest:
-                    _accept_payload_signature_algorithm = PkiSignatureAlgorithm.from_str(
+                    accept_payload_signature_algorithm = PkiSignatureAlgorithm.from_str(
                         raw_accept_payload_signature_algorithm
                     )
                 case _:
@@ -126,6 +126,7 @@ async def pki_info(
                 accepted_on=accepted_on,
                 accepter_der_x509_certificate=accepter_der_x509_certificate,
                 accept_payload_signature=accept_payload_signature,
+                accept_payload_signature_algorithm=accept_payload_signature_algorithm,
                 accept_payload=accept_payload,
             )
 

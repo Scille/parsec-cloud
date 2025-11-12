@@ -47,26 +47,31 @@ pub fn req() {
 pub fn rep_ok() {
     let raw_expected = [
         (
-            // Generated from Parsec v3.0.0-b.11+dev
+            // Generated from Parsec 3.5.3-a.0+dev
             // Content:
-            //   accept_payload: hex!("64756d6d79")
-            //   accept_payload_signature: hex!("64756d6d79")
-            //   accepted_on: ext(1, 1668768160.714565)
-            //   accepter_der_x509_certificate: hex!("64756d6d79")
-            //   enrollment_status: "ACCEPTED"
-            //   status: "ok"
-            //   submitted_on: ext(1, 1668768160.714573)
-            &hex!(
-                "87a6737461747573a26f6bb1656e726f6c6c6d656e745f737461747573a84143434550"
+            //   status: 'ok'
+            //   enrollment_status: 'ACCEPTED'
+            //   accept_payload: 0x64756d6d79
+            //   accept_payload_signature: 0x64756d6d79
+            //   accept_payload_signature_algorithm: 'RSASSA-PSS-SHA256'
+            //   accepted_on: ext(1, 1668768160714565) i.e. 2022-11-18T11:42:40.714565Z
+            //   accepter_der_x509_certificate: 0x64756d6d79
+            //   submitted_on: ext(1, 1668768160714573) i.e. 2022-11-18T11:42:40.714573Z
+            hex!(
+                "88a6737461747573a26f6bb1656e726f6c6c6d656e745f737461747573a84143434550"
                 "544544ae6163636570745f7061796c6f6164c40564756d6d79b86163636570745f7061"
-                "796c6f61645f7369676e6174757265c40564756d6d79ab61636365707465645f6f6ed7"
-                "010005edbc5d6e8f45bd61636365707465725f6465725f783530395f63657274696669"
-                "63617465c40564756d6d79ac7375626d69747465645f6f6ed7010005edbc5d6e8f4d"
-            )[..],
+                "796c6f61645f7369676e6174757265c40564756d6d79d9226163636570745f7061796c"
+                "6f61645f7369676e61747572655f616c676f726974686db15253415353412d5053532d"
+                "534841323536ab61636365707465645f6f6ed7010005edbc5d6e8f45bd616363657074"
+                "65725f6465725f783530395f6365727469666963617465c40564756d6d79ac7375626d"
+                "69747465645f6f6ed7010005edbc5d6e8f4d"
+            )
+            .as_ref(),
             anonymous_cmds::pki_enrollment_info::Rep::Ok(
                 anonymous_cmds::pki_enrollment_info::PkiEnrollmentInfoStatus::Accepted {
                     accept_payload: hex!("64756d6d79").as_ref().into(),
                     accept_payload_signature: hex!("64756d6d79").as_ref().into(),
+                    accept_payload_signature_algorithm: PkiSignatureAlgorithm::RsassaPssSha256,
                     accepted_on: DateTime::from_timestamp_micros(1668768160714565).unwrap(),
                     accepter_der_x509_certificate: hex!("64756d6d79").as_ref().into(),
                     submitted_on: DateTime::from_timestamp_micros(1668768160714573).unwrap(),
@@ -130,6 +135,7 @@ pub fn rep_ok() {
     ];
 
     for (raw, expected) in raw_expected {
+        println!("***expected: {:?}", expected.dump().unwrap());
         let data = anonymous_cmds::pki_enrollment_info::Rep::load(raw).unwrap();
 
         p_assert_eq!(data, expected);
