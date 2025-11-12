@@ -321,9 +321,11 @@ msTest('User filter popover default state', async ({ usersPage }) => {
 async function toggleFilter(page: Page, name: string): Promise<void> {
   await page.locator('#activate-users-ms-action-bar').locator('#select-filter-popover-button').click();
   const popover = page.locator('.filter-popover');
+  await expect(popover).toBeVisible();
   await popover.getByRole('listitem').filter({ hasText: name }).locator('ion-checkbox').click();
   // Click the backdrop to hide the popover
-  await page.locator('.filter-popover').locator('ion-backdrop').click();
+  await popover.locator('ion-backdrop').click();
+  await expect(popover).toBeHidden();
 }
 
 msTest('Filter users list', async ({ usersPage }) => {
