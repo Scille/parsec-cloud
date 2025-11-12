@@ -3,16 +3,16 @@ from __future__ import annotations
 
 from parsec._parsec import (
     OrganizationID,
-    anonymous_account_cmds,
     anonymous_cmds,
+    anonymous_server_cmds,
     authenticated_account_cmds,
     authenticated_cmds,
     invited_cmds,
 )
 from parsec.api import api
 from parsec.client_context import (
-    AnonymousAccountClientContext,
     AnonymousClientContext,
+    AnonymousServerClientContext,
     AuthenticatedAccountClientContext,
     AuthenticatedClientContext,
     InvitedClientContext,
@@ -43,10 +43,10 @@ class BasePingComponent:
         return anonymous_cmds.latest.ping.RepOk(pong=req.ping)
 
     @api
-    async def anonymous_account_api_ping(
-        self, client_ctx: AnonymousAccountClientContext, req: anonymous_account_cmds.latest.ping.Req
-    ) -> anonymous_account_cmds.latest.ping.Rep:
-        return anonymous_account_cmds.latest.ping.RepOk(pong=req.ping)
+    async def anonymous_server_api_ping(
+        self, client_ctx: AnonymousServerClientContext, req: anonymous_server_cmds.latest.ping.Req
+    ) -> anonymous_server_cmds.latest.ping.Rep:
+        return anonymous_server_cmds.latest.ping.RepOk(pong=req.ping)
 
     @api
     async def authenticated_account_api_ping(

@@ -7,7 +7,7 @@ from parsec._parsec import (
     DateTime,
     EmailAddress,
     ValidationCode,
-    anonymous_account_cmds,
+    anonymous_server_cmds,
 )
 from parsec.components.account import (
     VALIDATION_CODE_VALIDITY_DURATION_SECONDS,
@@ -16,7 +16,7 @@ from parsec.components.account import (
 from parsec.components.email import SendEmailBadOutcome
 from parsec.config import MockedEmailConfig
 from tests.common import (
-    AnonymousAccountRpcClient,
+    AnonymousServerRpcClient,
     Backend,
     HttpCommonErrorsTester,
     extract_validation_code_from_email,
@@ -32,9 +32,9 @@ from tests.common import (
         "out_of_cooldown_and_too_many_attempts_previous",
     ),
 )
-async def test_anonymous_account_account_create_send_validation_email_ok(
+async def test_anonymous_server_account_create_send_validation_email_ok(
     kind: str,
-    anonymous_account: AnonymousAccountRpcClient,
+    anonymous_server: AnonymousServerRpcClient,
     backend: Backend,
 ) -> None:
     assert isinstance(backend.config.email_config, MockedEmailConfig)
@@ -99,8 +99,8 @@ async def test_anonymous_account_account_create_send_validation_email_ok(
 
     assert len(backend.config.email_config.sent_emails) == 0
 
-    rep = await anonymous_account.account_create_send_validation_email(email=email)
-    assert rep == anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
+    rep = await anonymous_server.account_create_send_validation_email(email=email)
+    assert rep == anonymous_server_cmds.latest.account_create_send_validation_email.RepOk()
 
     assert len(backend.config.email_config.sent_emails) == 1
     assert backend.config.email_config.sent_emails[-1].recipient == email
@@ -123,9 +123,9 @@ async def test_anonymous_account_account_create_send_validation_email_ok(
 
 
 @pytest.mark.parametrize("kind", ("still_valid_previous", "too_many_attempts_previous"))
-async def test_anonymous_account_account_create_send_validation_email_email_sending_rate_limited(
+async def test_anonymous_server_account_create_send_validation_email_email_sending_rate_limited(
     kind: str,
-    anonymous_account: AnonymousAccountRpcClient,
+    anonymous_server: AnonymousServerRpcClient,
     backend: Backend,
 ) -> None:
     assert isinstance(backend.config.email_config, MockedEmailConfig)
@@ -136,8 +136,8 @@ async def test_anonymous_account_account_create_send_validation_email_email_send
 
     # Note we cannot use `backend.account.create_send_validation_email()` here
     # since the rate limit is done in a upper layer.
-    rep = await anonymous_account.account_create_send_validation_email(email=email)
-    assert rep == anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
+    rep = await anonymous_server.account_create_send_validation_email(email=email)
+    assert rep == anonymous_server_cmds.latest.account_create_send_validation_email.RepOk()
     assert len(backend.config.email_config.sent_emails) == 1
     validation_code = extract_validation_code_from_email(
         backend.config.email_config.sent_emails[-1].body
@@ -170,10 +170,10 @@ async def test_anonymous_account_account_create_send_validation_email_email_send
 
     # New attempt that is too soon for a new mail
 
-    rep = await anonymous_account.account_create_send_validation_email(email=email)
+    rep = await anonymous_server.account_create_send_validation_email(email=email)
     assert isinstance(
         rep,
-        anonymous_account_cmds.latest.account_create_send_validation_email.RepEmailSendingRateLimited,
+        anonymous_server_cmds.latest.account_create_send_validation_email.RepEmailSendingRateLimited,
     )
     assert len(backend.config.email_config.sent_emails) == 0
 
@@ -185,8 +185,8 @@ async def test_anonymous_account_account_create_send_validation_email_email_send
         SendEmailBadOutcome.SERVER_UNAVAILABLE,
     ),
 )
-async def test_anonymous_account_account_create_send_validation_email_email_server_unavailable(
-    anonymous_account: AnonymousAccountRpcClient,
+async def test_anonymous_server_account_create_send_validation_email_email_server_unavailable(
+    anonymous_server: AnonymousServerRpcClient,
     bad_outcome: SendEmailBadOutcome,
     monkeypatch: pytest.MonkeyPatch,
 ):
@@ -194,39 +194,39 @@ async def test_anonymous_account_account_create_send_validation_email_email_serv
         return bad_outcome
 
     monkeypatch.setattr("parsec.components.account.send_email", _mocked_send_email)
-    rep = await anonymous_account.account_create_send_validation_email(
+    rep = await anonymous_server.account_create_send_validation_email(
         email=EmailAddress("foo@invalid.com")
     )
     assert (
         rep
-        == anonymous_account_cmds.latest.account_create_send_validation_email.RepEmailServerUnavailable()
+        == anonymous_server_cmds.latest.account_create_send_validation_email.RepEmailServerUnavailable()
     )
 
 
-async def test_anonymous_account_account_create_send_validation_email_email_recipient_refused(
-    anonymous_account: AnonymousAccountRpcClient,
+async def test_anonymous_server_account_create_send_validation_email_email_recipient_refused(
+    anonymous_server: AnonymousServerRpcClient,
     monkeypatch: pytest.MonkeyPatch,
 ):
     async def _mocked_send_email(*args, **kwargs):
         return SendEmailBadOutcome.RECIPIENT_REFUSED
 
     monkeypatch.setattr("parsec.components.account.send_email", _mocked_send_email)
-    rep = await anonymous_account.account_create_send_validation_email(
+    rep = await anonymous_server.account_create_send_validation_email(
         email=EmailAddress("foo@invalid.com")
     )
     assert (
         rep
-        == anonymous_account_cmds.latest.account_create_send_validation_email.RepEmailRecipientRefused()
+        == anonymous_server_cmds.latest.account_create_send_validation_email.RepEmailRecipientRefused()
     )
 
 
-async def test_anonymous_account_account_create_send_validation_email_http_common_errors(
-    anonymous_account: AnonymousAccountRpcClient,
-    anonymous_account_http_common_errors_tester: HttpCommonErrorsTester,
+async def test_anonymous_server_account_create_send_validation_email_http_common_errors(
+    anonymous_server: AnonymousServerRpcClient,
+    anonymous_server_http_common_errors_tester: HttpCommonErrorsTester,
 ) -> None:
     async def do():
-        await anonymous_account.account_create_send_validation_email(
+        await anonymous_server.account_create_send_validation_email(
             email=EmailAddress("foo@invalid.com")
         )
 
-    await anonymous_account_http_common_errors_tester(do)
+    await anonymous_server_http_common_errors_tester(do)

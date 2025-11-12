@@ -12,8 +12,8 @@ from typing import (
 
 if TYPE_CHECKING:
     from parsec.client_context import (
-        AnonymousAccountClientContext,
         AnonymousClientContext,
+        AnonymousServerClientContext,
         AuthenticatedAccountClientContext,
         AuthenticatedClientContext,
         InvitedClientContext,
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
         AuthenticatedClientContext,
         InvitedClientContext,
         AnonymousClientContext,
-        AnonymousAccountClientContext,
+        AnonymousServerClientContext,
         AuthenticatedAccountClientContext,
     )
     ApiFn = Callable[[ClientContext, Req], Awaitable[Rep | None]]
@@ -46,7 +46,7 @@ def api(fn: ApiFnWithSelf) -> ApiFnWithSelf:  # pyright: ignore[reportMissingTyp
             "AuthenticatedClientContext": "AuthenticatedClientContext",
             "InvitedClientContext": "InvitedClientContext",
             "AnonymousClientContext": "AnonymousClientContext",
-            "AnonymousAccountClientContext": "AnonymousAccountClientContext",
+            "AnonymousServerClientContext": "AnonymousServerClientContext",
             "AuthenticatedAccountClientContext": "AuthenticatedAccountClientContext",
         },
     )
@@ -65,8 +65,8 @@ def api(fn: ApiFnWithSelf) -> ApiFnWithSelf:  # pyright: ignore[reportMissingTyp
             expected_type_name = "InvitedClientContext"
         case "authenticated_account_cmds":
             expected_type_name = "AuthenticatedAccountClientContext"
-        case "anonymous_account_cmds":
-            expected_type_name = "AnonymousAccountClientContext"
+        case "anonymous_server_cmds":
+            expected_type_name = "AnonymousServerClientContext"
         case "anonymous_cmds":
             expected_type_name = "AnonymousClientContext"
         case _:
