@@ -19,7 +19,6 @@ from parsec.components.organization import (
     TermsOfService,
     UnsetType,
 )
-from parsec.config import AccountVaultStrategy, AllowedClientAgent
 from tests.common import (
     AdminUnauthErrorsTester,
     Backend,
@@ -132,12 +131,6 @@ def organization_initial_params(backend: Backend, request) -> Iterator[None]:
                 "fr_FR": "https://parsec.invalid/tos_fr.pdf",
                 "en_US": "https://parsec.invalid/tos_en.pdf",
             }
-            backend.config.organization_initial_allowed_client_agent = (
-                AllowedClientAgent.NATIVE_ONLY
-            )
-            backend.config.organization_initial_account_vault_strategy = (
-                AccountVaultStrategy.FORBIDDEN
-            )
         case unknown:
             assert False, unknown
     yield
@@ -155,8 +148,6 @@ def organization_initial_params(backend: Backend, request) -> Iterator[None]:
                 "en_HK": "https://parsec.invalid/tos_en.pdf",
                 "cn_HK": "https://parsec.invalid/tos_cn.pdf",
             },
-            "allowed_client_agent": "NATIVE_ONLY",
-            "account_vault_strategy": "FORBIDDEN",
         },
         {"active_user_limit": None, "user_profile_outsider_allowed": False},
     ),
@@ -212,22 +203,6 @@ async def test_ok(
         case tos:
             expected_tos = TermsOfService(updated_on=ANY, per_locale_urls=tos)
 
-    # Expected allowed_client_agent
-    match args.get("allowed_client_agent", UnsetType.Unset):
-        case UnsetType.Unset:
-            expected_allowed_client_agent = backend.config.organization_initial_allowed_client_agent
-        case raw:
-            expected_allowed_client_agent = AllowedClientAgent(raw)
-
-    # Expected expected_account_vault_strategy
-    match args.get("account_vault_strategy", UnsetType.Unset):
-        case UnsetType.Unset:
-            expected_account_vault_strategy = (
-                backend.config.organization_initial_account_vault_strategy
-            )
-        case raw:
-            expected_account_vault_strategy = AccountVaultStrategy(raw)
-
     dump = await backend.organization.test_dump_organizations()
     assert dump[org_id] == OrganizationDump(
         organization_id=org_id,
@@ -238,8 +213,6 @@ async def test_ok(
         user_profile_outsider_allowed=expected_user_profile_outsider_allowed,
         minimum_archiving_period=expected_minimum_archiving_period,
         tos=expected_tos,
-        allowed_client_agent=expected_allowed_client_agent,
-        account_vault_strategy=expected_account_vault_strategy,
     )
 
 
@@ -258,8 +231,6 @@ async def test_overwrite_existing(
         user_profile_outsider_allowed=False,
         minimum_archiving_period=2,
         tos={"en_HK": "https://parsec.invalid/tos_en.pdf"},
-        allowed_client_agent=AllowedClientAgent.NATIVE_ONLY,
-        account_vault_strategy=AccountVaultStrategy.FORBIDDEN,
         force_bootstrap_token=bootstrap_token,
     )
     assert isinstance(outcome, BootstrapToken)
@@ -277,8 +248,6 @@ async def test_overwrite_existing(
         tos=TermsOfService(
             updated_on=t0, per_locale_urls={"en_HK": "https://parsec.invalid/tos_en.pdf"}
         ),
-        allowed_client_agent=AllowedClientAgent.NATIVE_ONLY,
-        account_vault_strategy=AccountVaultStrategy.FORBIDDEN,
     )
 
     url = "http://parsec.invalid/administration/organizations"
@@ -290,8 +259,6 @@ async def test_overwrite_existing(
             "user_profile_outsider_allowed": True,
             "minimum_archiving_period": 1000,
             "tos": {"cn_HK": "https://parsec.invalid/tos_cn.pdf"},
-            "allowed_client_agent": "NATIVE_OR_WEB",
-            "account_vault_strategy": "ALLOWED",
         },
     )
     assert response.status_code == 200, response.content
@@ -312,8 +279,6 @@ async def test_overwrite_existing(
         tos=TermsOfService(
             updated_on=ANY, per_locale_urls={"cn_HK": "https://parsec.invalid/tos_cn.pdf"}
         ),
-        allowed_client_agent=AllowedClientAgent.NATIVE_OR_WEB,
-        account_vault_strategy=AccountVaultStrategy.ALLOWED,
     )
 
 

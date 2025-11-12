@@ -583,8 +583,6 @@ class MemoryAccountComponent(BaseAccountComponent):
                             organization_is_expired=org.is_expired,
                             organization_user_profile_outsider_allowed=org.user_profile_outsider_allowed,
                             organization_active_users_limit=org.active_users_limit,
-                            organization_allowed_client_agent=org.allowed_client_agent,
-                            organization_account_vault_strategy=org.account_vault_strategy,
                         )
                     )
 

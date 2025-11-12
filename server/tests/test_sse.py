@@ -75,8 +75,6 @@ async def test_missed_events(minimalorg: MinimalorgRpcClients, backend: Backend)
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
-                allowed_client_agent=authenticated_cmds.latest.events_listen.AllowedClientAgent.NATIVE_OR_WEB,
-                account_vault_strategy=authenticated_cmds.latest.events_listen.AccountVaultStrategy.ALLOWED,
             )
         )
 
@@ -115,8 +113,6 @@ async def test_close_on_backpressure(minimalorg: MinimalorgRpcClients, backend: 
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
-                allowed_client_agent=authenticated_cmds.latest.events_listen.AllowedClientAgent.NATIVE_OR_WEB,
-                account_vault_strategy=authenticated_cmds.latest.events_listen.AccountVaultStrategy.ALLOWED,
             )
         )
 
@@ -163,8 +159,6 @@ async def test_empty_last_event_id(minimalorg: MinimalorgRpcClients, backend: Ba
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
-                allowed_client_agent=authenticated_cmds.latest.events_listen.AllowedClientAgent.NATIVE_OR_WEB,
-                account_vault_strategy=authenticated_cmds.latest.events_listen.AccountVaultStrategy.ALLOWED,
             )
         )
 
@@ -291,8 +285,6 @@ async def test_close_on_user_revoked(coolorg: CoolorgRpcClients, backend: Backen
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
-                allowed_client_agent=authenticated_cmds.latest.events_listen.AllowedClientAgent.NATIVE_OR_WEB,
-                account_vault_strategy=authenticated_cmds.latest.events_listen.AccountVaultStrategy.ALLOWED,
             )
         )
 
@@ -342,8 +334,6 @@ async def test_close_on_organization_tos_updated(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
-                allowed_client_agent=authenticated_cmds.latest.events_listen.AllowedClientAgent.NATIVE_OR_WEB,
-                account_vault_strategy=authenticated_cmds.latest.events_listen.AccountVaultStrategy.ALLOWED,
             )
         )
 

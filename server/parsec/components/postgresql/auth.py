@@ -32,7 +32,7 @@ from parsec.components.organization import OrganizationCreateBadOutcome
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.organization_create import organization_create
 from parsec.components.postgresql.utils import Q, no_transaction, transaction
-from parsec.config import AllowedClientAgent, BackendConfig
+from parsec.config import BackendConfig
 from parsec.logging import get_logger
 
 logger = get_logger()
@@ -42,8 +42,7 @@ _q_anonymous_get_info = Q(
     """
 SELECT
     _id AS organization_internal_id,
-    is_expired AS organization_is_expired,
-    allowed_client_agent AS organization_allowed_client_agent
+    is_expired AS organization_is_expired
 FROM organization
 WHERE organization_id = $organization_id
 -- Note we don't filter out non-bootstrapped organization here, this is because
@@ -57,7 +56,6 @@ _q_invited_get_info = Q(
 SELECT
     _id AS organization_internal_id,
     is_expired AS organization_is_expired,
-    allowed_client_agent AS organization_allowed_client_agent,
     (
         SELECT invitation._id FROM invitation
         WHERE invitation.organization = organization._id AND invitation.token = $token LIMIT 1
@@ -85,8 +83,7 @@ WITH my_organization AS (
     SELECT
         _id,
         is_expired,
-        tos_updated_on,
-        allowed_client_agent
+        tos_updated_on
     FROM organization
     WHERE
         organization_id = $organization_id
@@ -144,7 +141,6 @@ my_user AS (
 SELECT
     (SELECT _id FROM my_organization) AS organization_internal_id,
     (SELECT is_expired FROM my_organization) AS organization_is_expired,
-    (SELECT allowed_client_agent FROM my_organization) AS organization_allowed_client_agent,
     (SELECT _id FROM my_device) AS device_internal_id,
     (SELECT verify_key FROM my_device) AS device_verify_key,
     (SELECT user_id FROM my_user) AS user_id,
@@ -206,8 +202,6 @@ class PGAuthComponent(BaseAuthComponent):
                     user_profile_outsider_allowed=self._config.organization_initial_user_profile_outsider_allowed,
                     minimum_archiving_period=self._config.organization_initial_minimum_archiving_period,
                     tos_per_locale_urls=self._config.organization_initial_tos,
-                    allowed_client_agent=self._config.organization_initial_allowed_client_agent,
-                    account_vault_strategy=self._config.organization_initial_account_vault_strategy,
                     bootstrap_token=None,
                 )
                 match outcome:
@@ -239,16 +233,9 @@ class PGAuthComponent(BaseAuthComponent):
             case _:
                 assert False, row
 
-        match row["organization_allowed_client_agent"]:
-            case str() as raw_allowed_client_agent:
-                organization_allowed_client_agent = AllowedClientAgent(raw_allowed_client_agent)
-            case _:
-                assert False, row
-
         return AnonymousAuthInfo(
             organization_id=organization_id,
             organization_internal_id=organization_internal_id,
-            organization_allowed_client_agent=organization_allowed_client_agent,
         )
 
     @override
@@ -302,19 +289,12 @@ class PGAuthComponent(BaseAuthComponent):
             case _:
                 assert False, row
 
-        match row["organization_allowed_client_agent"]:
-            case str() as raw_allowed_client_agent:
-                organization_allowed_client_agent = AllowedClientAgent(raw_allowed_client_agent)
-            case _:
-                assert False, row
-
         return InvitedAuthInfo(
             organization_id=organization_id,
             token=token,
             type=invitation_type,
             organization_internal_id=organization_internal_id,
             invitation_internal_id=invitation_internal_id,
-            organization_allowed_client_agent=organization_allowed_client_agent,
         )
 
     @override
@@ -390,12 +370,6 @@ class PGAuthComponent(BaseAuthComponent):
                 case _:
                     assert False, row
 
-        match row["organization_allowed_client_agent"]:
-            case str() as raw_allowed_client_agent:
-                organization_allowed_client_agent = AllowedClientAgent(raw_allowed_client_agent)
-            case _:
-                assert False, row
-
         return AuthenticatedAuthInfo(
             organization_id=organization_id,
             user_id=user_id,
@@ -403,7 +377,6 @@ class PGAuthComponent(BaseAuthComponent):
             device_verify_key=device_verify_key,
             organization_internal_id=organization_internal_id,
             device_internal_id=device_internal_id,
-            organization_allowed_client_agent=organization_allowed_client_agent,
         )
 
     @override
