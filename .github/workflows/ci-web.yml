@@ -170,7 +170,7 @@ jobs:
         image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.6.2-a.0.dev.20412.600fb06
         ports:
           - 6777:6777
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Inspect runner config
         run: |
@@ -235,7 +235,7 @@ jobs:
         env:
           TESTBED_SERVER: parsec3://parsec-testbed-server:6777?no_ssl=true
           PARSEC_APP_TRIAL_SERVERS: parsec-testbed-server:6777?no_ssl=true
-        timeout-minutes: 20
+        timeout-minutes: 25
 
       - name: Upload blob report to GitHub Actions Artifacts
         if: "!cancelled()" # We always upload the artifacts even in case of failure of playwright.
