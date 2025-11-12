@@ -55,7 +55,6 @@ pub fn rep_ok() {
             ),
         ),
         (
-            // Legacy API<5.1 format
             // Generated from Parsec 3.2.5-a.0+dev
             // Content:
             //   status: 'ok'
@@ -74,13 +73,10 @@ pub fn rep_ok() {
                     active_users_limit: ActiveUsersLimit::LimitedTo(8),
                     user_profile_outsider_allowed: true,
                     sse_keepalive_seconds: Some(30.try_into().unwrap()),
-                    allowed_client_agent: Maybe::Absent,
-                    account_vault_strategy: Maybe::Absent,
                 },
             ),
         ),
         (
-            // Legacy API<5.1 format
             // Generated from Parsec 3.2.5-a.0+dev
             // Content:
             //   status: 'ok'
@@ -99,12 +95,11 @@ pub fn rep_ok() {
                     active_users_limit: ActiveUsersLimit::NoLimit,
                     user_profile_outsider_allowed: false,
                     sse_keepalive_seconds: Some(30.try_into().unwrap()),
-                    allowed_client_agent: Maybe::Absent,
-                    account_vault_strategy: Maybe::Absent,
                 },
             ),
         ),
         (
+            // Legacy 5.1>=API<5.3 format (with `allowed_client_agent/account_vault_strategy` fields`)
             // Generated from Parsec 3.4.0-a.7+dev
             // Content:
             //   status: 'ok'
@@ -127,16 +122,11 @@ pub fn rep_ok() {
                     active_users_limit: ActiveUsersLimit::LimitedTo(8),
                     user_profile_outsider_allowed: true,
                     sse_keepalive_seconds: Some(30.try_into().unwrap()),
-                    allowed_client_agent: Maybe::Present(
-                        authenticated_cmds::events_listen::AllowedClientAgent::NativeOrWeb,
-                    ),
-                    account_vault_strategy: Maybe::Present(
-                        authenticated_cmds::events_listen::AccountVaultStrategy::Allowed,
-                    ),
                 },
             ),
         ),
         (
+            // Legacy 5.1>=API<5.3 format (with `allowed_client_agent/account_vault_strategy` fields`)
             // Generated from Parsec 3.4.0-a.7+dev
             // Content:
             //   status: 'ok'
@@ -159,12 +149,6 @@ pub fn rep_ok() {
                     active_users_limit: ActiveUsersLimit::NoLimit,
                     user_profile_outsider_allowed: false,
                     sse_keepalive_seconds: Some(30.try_into().unwrap()),
-                    allowed_client_agent: Maybe::Present(
-                        authenticated_cmds::events_listen::AllowedClientAgent::NativeOnly,
-                    ),
-                    account_vault_strategy: Maybe::Present(
-                        authenticated_cmds::events_listen::AccountVaultStrategy::Forbidden,
-                    ),
                 },
             ),
         ),

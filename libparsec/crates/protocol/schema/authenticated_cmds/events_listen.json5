@@ -21,41 +21,6 @@
         ],
         "nested_types": [
             {
-                "name": "AllowedClientAgent",
-                "variants": [
-                    {
-                        // The server will reject any connection to this organization
-                        // from a web client.
-                        "name": "NativeOnly",
-                        "discriminant_value": "NATIVE_ONLY"
-                    },
-                    {
-                        // The server allows connection to this organization from a web client.
-                        "name": "NativeOrWeb",
-                        "discriminant_value": "NATIVE_OR_WEB"
-                    }
-                ]
-            },
-            {
-                "name": "AccountVaultStrategy",
-                "variants": [
-                    {
-                        "name": "Allowed",
-                        "discriminant_value": "ALLOWED"
-                    },
-                    {
-                        // The user should not store any data related to this organization
-                        // server-side using his account vault.
-                        //
-                        // Note this is a purely advisory configuration since only the
-                        // client can decrypt the vault content, and hence it would be
-                        // pointless to try to enforce it on the server side.
-                        "name": "Forbidden",
-                        "discriminant_value": "FORBIDDEN"
-                    }
-                ]
-            },
-            {
                 "name": "APIEvent",
                 "discriminant_field": "event",
                 "variants": [
@@ -85,18 +50,6 @@
                             {
                                 "name": "sse_keepalive_seconds",
                                 "type": "RequiredOption<NonZeroInteger>"
-                            },
-                            {
-                                "name": "allowed_client_agent",
-                                "type": "AllowedClientAgent",
-                                // Should be considered as `NativeOrWeb` if not provided.
-                                "introduced_in": "5.1"
-                            },
-                            {
-                                "name": "account_vault_strategy",
-                                "type": "AccountVaultStrategy",
-                                // Should be considered as `Allowed` if not provided.
-                                "introduced_in": "5.1"
                             }
                         ]
                     },

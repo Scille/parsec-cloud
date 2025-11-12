@@ -58,7 +58,7 @@ from parsec.components.postgresql.utils import (
     q_organization_internal_id,
     transaction,
 )
-from parsec.config import AccountVaultStrategy, AllowedClientAgent, BackendConfig
+from parsec.config import BackendConfig
 from parsec.types import Unset, UnsetType
 from parsec.webhooks import WebhooksComponent
 
@@ -77,9 +77,7 @@ SELECT
     sequester_authority_verify_key_der,
     minimum_archiving_period,
     tos_updated_on,
-    tos_per_locale_urls,
-    allowed_client_agent,
-    account_vault_strategy
+    tos_per_locale_urls
 FROM organization
 WHERE organization_id = $organization_id{''' FOR UPDATE''' if for_update else ""}
 """)
@@ -126,8 +124,6 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         user_profile_outsider_allowed: UnsetType | bool = Unset,
         minimum_archiving_period: UnsetType | int = Unset,
         tos: UnsetType | dict[TosLocale, TosUrl] = Unset,
-        allowed_client_agent: UnsetType | AllowedClientAgent = Unset,
-        account_vault_strategy: UnsetType | AccountVaultStrategy = Unset,
         force_bootstrap_token: BootstrapToken | None = None,
     ) -> BootstrapToken | OrganizationCreateBadOutcome:
         if minimum_archiving_period is not Unset:
@@ -143,10 +139,6 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         if minimum_archiving_period is Unset:
             minimum_archiving_period = self._config.organization_initial_minimum_archiving_period
         optional_tos = self._config.organization_initial_tos if tos is Unset else tos
-        if allowed_client_agent is Unset:
-            allowed_client_agent = self._config.organization_initial_allowed_client_agent
-        if account_vault_strategy is Unset:
-            account_vault_strategy = self._config.organization_initial_account_vault_strategy
 
         outcome = await organization_create(
             conn,
@@ -156,8 +148,6 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             user_profile_outsider_allowed,
             minimum_archiving_period,
             optional_tos,
-            allowed_client_agent,
-            account_vault_strategy,
             bootstrap_token,
         )
         match outcome:
@@ -242,18 +232,6 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             case _:
                 assert False, row
 
-        match row["allowed_client_agent"]:
-            case str() as allowed_client_agent_raw:
-                allowed_client_agent = AllowedClientAgent(allowed_client_agent_raw)
-            case _:
-                assert False, row
-
-        match row["account_vault_strategy"]:
-            case str() as account_vault_strategy_raw:
-                account_vault_strategy = AccountVaultStrategy(account_vault_strategy_raw)
-            case _:
-                assert False, row
-
         match row["minimum_archiving_period"]:
             case int() as minimum_archiving_period if minimum_archiving_period >= 0:
                 pass
@@ -274,8 +252,6 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             sequester_services_certificates=sequester_services_certificates,
             minimum_archiving_period=minimum_archiving_period,
             tos=tos,
-            allowed_client_agent=allowed_client_agent,
-            account_vault_strategy=account_vault_strategy,
         )
 
     @override
@@ -351,8 +327,6 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         user_profile_outsider_allowed: UnsetType | bool = Unset,
         minimum_archiving_period: UnsetType | int = Unset,
         tos: UnsetType | None | dict[TosLocale, TosUrl] = Unset,
-        allowed_client_agent: UnsetType | AllowedClientAgent = Unset,
-        account_vault_strategy: UnsetType | AccountVaultStrategy = Unset,
     ) -> None | OrganizationUpdateBadOutcome:
         if minimum_archiving_period is not Unset:
             assert minimum_archiving_period >= 0  # Sanity check
@@ -366,8 +340,6 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             user_profile_outsider_allowed,
             minimum_archiving_period,
             tos,
-            allowed_client_agent,
-            account_vault_strategy,
         )
 
     @override
