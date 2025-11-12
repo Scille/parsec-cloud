@@ -95,21 +95,22 @@ impl TryFrom<&str> for ApiVersion {
 /// (with Tos being kind of like Authenticated) that are the regular families used to
 /// interact between the metadata server and the client. And on the other side,
 /// AuthenticatedAccount and AnonymousAccount that are used to store a device key file on
-/// a server (typically used to use parsec's web version)
+/// a server (typically used to use parsec's web version).
 #[derive(Debug, Clone, Copy)]
 pub enum ProtocolFamily {
-    /// Family used for all requests done by a device.
+    /// Family used for all requests done by a device
     Authenticated,
-    /// Special case for requests done by a device before it has accept the server's
-    /// Terms Of Service (TOS).
+    /// Special case for requests done by a device before it has accepted the server's
+    /// Terms Of Service (TOS)
     Tos,
-    /// Family used for requests done without device (typically organization bootstrap).
+    /// Family used for requests done without device (typically organization bootstrap)
     Anonymous,
-    /// Family used by an invitation claimer in order to obtain a device.
+    /// Family used by an invitation claimer in order to obtain a device
     Invited,
-    /// Family used for account anonymous operations. (ex: create account)
-    AnonymousAccount,
-    /// Family used for token protected account operations (ex: list organization for human)
+    /// Family used for non-authentication operations at server level.
+    /// This is used to create a new Parsec account or get the server configuration.
+    AnonymousServer,
+    /// Family used for operations authenticated with Parsec account (ex: list organizations for a given account)
     AuthenticatedAccount,
 }
 

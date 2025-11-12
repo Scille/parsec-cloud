@@ -7,7 +7,7 @@
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
 
-use super::anonymous_account_cmds;
+use super::anonymous_server_cmds;
 
 pub fn req() {
     let raw_req = [
@@ -33,7 +33,7 @@ pub fn req() {
                 "6f645f6964d8029aae259f748045cc9fe7146eab0b132e"
             )
             .as_ref(),
-            anonymous_account_cmds::account_recover_proceed::Req {
+            anonymous_server_cmds::account_recover_proceed::Req {
                 validation_code: "C88DEE".parse().unwrap(),
                 email: "alice@invalid.com".parse().unwrap(),
                 new_vault_key_access: Bytes::from_static(b"<vault_key_access>"),
@@ -72,7 +72,7 @@ pub fn req() {
                 "ab0b132e"
             )
             .as_ref(),
-            anonymous_account_cmds::account_recover_proceed::Req {
+            anonymous_server_cmds::account_recover_proceed::Req {
                 validation_code: "C88DEE".parse().unwrap(),
                 email: "alice@invalid.com".parse().unwrap(),
                 new_vault_key_access: Bytes::from_static(b"<vault_key_access>"),
@@ -89,20 +89,20 @@ pub fn req() {
     ];
 
     for (raw, req) in raw_req {
-        let expected = anonymous_account_cmds::AnyCmdReq::AccountRecoverProceed(req.clone());
+        let expected = anonymous_server_cmds::AnyCmdReq::AccountRecoverProceed(req.clone());
         println!("***expected: {:?}", req.dump().unwrap());
 
-        let data = anonymous_account_cmds::AnyCmdReq::load(raw).unwrap();
+        let data = anonymous_server_cmds::AnyCmdReq::load(raw).unwrap();
         p_assert_eq!(data, expected);
 
         // Also test serialization round trip
-        let anonymous_account_cmds::AnyCmdReq::AccountRecoverProceed(req2) = data else {
+        let anonymous_server_cmds::AnyCmdReq::AccountRecoverProceed(req2) = data else {
             unreachable!()
         };
 
         let raw2 = req2.dump().unwrap();
 
-        let data2 = anonymous_account_cmds::AnyCmdReq::load(&raw2).unwrap();
+        let data2 = anonymous_server_cmds::AnyCmdReq::load(&raw2).unwrap();
 
         p_assert_eq!(data2, expected);
     }
@@ -115,17 +115,17 @@ pub fn rep_ok() {
     // Content:
     //   status: 'ok'
     let raw: &[u8] = hex!("81a6737461747573a26f6b").as_ref();
-    let expected = anonymous_account_cmds::account_recover_proceed::Rep::Ok {};
+    let expected = anonymous_server_cmds::account_recover_proceed::Rep::Ok {};
     println!("***expected: {:?}", expected.dump().unwrap());
 
-    let data = anonymous_account_cmds::account_recover_proceed::Rep::load(raw).unwrap();
+    let data = anonymous_server_cmds::account_recover_proceed::Rep::load(raw).unwrap();
 
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = anonymous_account_cmds::account_recover_proceed::Rep::load(&raw2).unwrap();
+    let data2 = anonymous_server_cmds::account_recover_proceed::Rep::load(&raw2).unwrap();
 
     p_assert_eq!(data2, expected);
 }
@@ -141,17 +141,17 @@ pub fn rep_send_validation_email_required() {
     .as_ref();
 
     let expected =
-        anonymous_account_cmds::account_recover_proceed::Rep::SendValidationEmailRequired {};
+        anonymous_server_cmds::account_recover_proceed::Rep::SendValidationEmailRequired {};
     println!("***expected: {:?}", expected.dump().unwrap());
 
-    let data = anonymous_account_cmds::account_recover_proceed::Rep::load(raw).unwrap();
+    let data = anonymous_server_cmds::account_recover_proceed::Rep::load(raw).unwrap();
 
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = anonymous_account_cmds::account_recover_proceed::Rep::load(&raw2).unwrap();
+    let data2 = anonymous_server_cmds::account_recover_proceed::Rep::load(&raw2).unwrap();
 
     p_assert_eq!(data2, expected);
 }
@@ -162,17 +162,17 @@ pub fn rep_invalid_validation_code() {
     //   status: 'invalid_validation_code'
     let raw: &[u8] =
         hex!("81a6737461747573b7696e76616c69645f76616c69646174696f6e5f636f6465").as_ref();
-    let expected = anonymous_account_cmds::account_recover_proceed::Rep::InvalidValidationCode {};
+    let expected = anonymous_server_cmds::account_recover_proceed::Rep::InvalidValidationCode {};
     println!("***expected: {:?}", expected.dump().unwrap());
 
-    let data = anonymous_account_cmds::account_recover_proceed::Rep::load(raw).unwrap();
+    let data = anonymous_server_cmds::account_recover_proceed::Rep::load(raw).unwrap();
 
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = anonymous_account_cmds::account_recover_proceed::Rep::load(&raw2).unwrap();
+    let data2 = anonymous_server_cmds::account_recover_proceed::Rep::load(&raw2).unwrap();
 
     p_assert_eq!(data2, expected);
 }
@@ -188,17 +188,17 @@ pub fn rep_auth_method_id_already_exists() {
     .as_ref();
 
     let expected =
-        anonymous_account_cmds::account_recover_proceed::Rep::AuthMethodIdAlreadyExists {};
+        anonymous_server_cmds::account_recover_proceed::Rep::AuthMethodIdAlreadyExists {};
     println!("***expected: {:?}", expected.dump().unwrap());
 
-    let data = anonymous_account_cmds::account_recover_proceed::Rep::load(raw).unwrap();
+    let data = anonymous_server_cmds::account_recover_proceed::Rep::load(raw).unwrap();
 
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = anonymous_account_cmds::account_recover_proceed::Rep::load(&raw2).unwrap();
+    let data2 = anonymous_server_cmds::account_recover_proceed::Rep::load(&raw2).unwrap();
 
     p_assert_eq!(data2, expected);
 }

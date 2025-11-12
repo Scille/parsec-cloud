@@ -24,9 +24,9 @@ use libparsec_types;
 // Client side
 // authenticated_cmds::v2::block_create::Req { .. }.dump()
 // authenticated_cmds::v2::block_create::Rep::load(..)
+parsec_protocol_cmds_family!("schema/anonymous_cmds");
 parsec_protocol_cmds_family!("schema/invited_cmds");
 parsec_protocol_cmds_family!("schema/authenticated_cmds");
-parsec_protocol_cmds_family!("schema/anonymous_cmds");
 parsec_protocol_cmds_family!("schema/tos_cmds");
+parsec_protocol_cmds_family!("schema/anonymous_server_cmds");
 parsec_protocol_cmds_family!("schema/authenticated_account_cmds");
-parsec_protocol_cmds_family!("schema/anonymous_account_cmds");
