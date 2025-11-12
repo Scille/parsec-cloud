@@ -255,7 +255,6 @@ generate_field_type_enum!(
     ChunkView => libparsec_types::ChunkView,
     UsersPerProfileDetailItem => libparsec_types::UsersPerProfileDetailItem,
     PkiEnrollmentSubmitPayload => PkiEnrollmentSubmitPayload,
-    X509Certificate => libparsec_types::X509Certificate,
     X509CertificateReference => libparsec_types::X509CertificateReference,
     PKIEncryptionAlgorithm => libparsec_types::PKIEncryptionAlgorithm,
     PkiSignatureAlgorithm => libparsec_types::PkiSignatureAlgorithm,

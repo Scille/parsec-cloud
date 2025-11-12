@@ -940,7 +940,6 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         FieldType::PkiEnrollmentSubmitPayload => {
             quote_rs_to_py_class!(crate::data::PkiEnrollmentSubmitPayload)
         }
-        FieldType::X509Certificate => quote_rs_to_py_class!(crate::data::X509Certificate),
         FieldType::X509CertificateReference => {
             quote_rs_to_py_class!(crate::data::X509CertificateReference)
         }
@@ -1047,7 +1046,6 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         FieldType::ChunkView => quote! { crate::data::ChunkView },
         FieldType::UsersPerProfileDetailItem => quote! { crate::data::UsersPerProfileDetailItem },
         FieldType::PkiEnrollmentSubmitPayload => quote! { crate::data::PkiEnrollmentSubmitPayload },
-        FieldType::X509Certificate => quote! { crate::data::X509Certificate },
         FieldType::X509CertificateReference => quote! { crate::data::X509CertificateReference },
         FieldType::PKIEncryptionAlgorithm => quote! { crate::data::PKIEncryptionAlgorithm },
         FieldType::PkiSignatureAlgorithm => quote! { crate::data::PkiSignatureAlgorithm },
@@ -1194,7 +1192,6 @@ fn internal_quote_field_as_fn_new_conversion(field_name: &Ident, ty: &FieldType)
         | FieldType::ChunkView
         | FieldType::UsersPerProfileDetailItem
         | FieldType::PkiEnrollmentSubmitPayload
-        | FieldType::X509Certificate
         | FieldType::X509CertificateReference
         | FieldType::PKIEncryptionAlgorithm
         | FieldType::PkiSignatureAlgorithm

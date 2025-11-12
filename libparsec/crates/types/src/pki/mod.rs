@@ -2,7 +2,7 @@
 
 mod cert_ref;
 
-use std::{collections::HashMap, fmt::Display, str::FromStr};
+use std::{fmt::Display, str::FromStr};
 
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
@@ -96,47 +96,6 @@ impl PkiEnrollmentSubmitPayload {
         format_v0_dump(&self)
     }
 }
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "X509CertificateData", from = "X509CertificateData")]
-pub struct X509Certificate {
-    pub issuer: HashMap<String, String>,
-    pub subject: HashMap<String, String>,
-    pub der_x509_certificate: Bytes,
-    pub certificate_sha1: Bytes,
-    pub certificate_id: Option<String>,
-}
-
-impl X509Certificate {
-    /// Certificates that are received from another peer are not available locally.
-    pub fn is_available_locally(&self) -> bool {
-        self.certificate_id.is_some()
-    }
-
-    pub fn subject_common_name(&self) -> Option<&String> {
-        self.subject.get("common_name")
-    }
-
-    pub fn subject_email_address(&self) -> Option<&String> {
-        self.subject.get("email_address")
-    }
-
-    pub fn issuer_common_name(&self) -> Option<&String> {
-        self.issuer.get("common_name")
-    }
-}
-
-parsec_data!("schema/pki/x509_certificate.json5");
-
-impl_transparent_data_format_conversion!(
-    X509Certificate,
-    X509CertificateData,
-    issuer,
-    subject,
-    der_x509_certificate,
-    certificate_sha1,
-    certificate_id,
-);
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(
