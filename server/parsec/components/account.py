@@ -32,7 +32,7 @@ from parsec._parsec import (
 from parsec.api import api
 from parsec.client_context import AnonymousServerClientContext, AuthenticatedAccountClientContext
 from parsec.components.email import SendEmailBadOutcome, send_email
-from parsec.config import AccountVaultStrategy, AllowedClientAgent, BackendConfig
+from parsec.config import BackendConfig
 from parsec.types import BadOutcomeEnum
 
 
@@ -166,8 +166,6 @@ class AccountOrganizationSelfListActiveUser:
     organization_is_expired: bool
     organization_user_profile_outsider_allowed: bool
     organization_active_users_limit: ActiveUsersLimit
-    organization_allowed_client_agent: AllowedClientAgent
-    organization_account_vault_strategy: AccountVaultStrategy
 
 
 @dataclass(slots=True)
@@ -832,44 +830,21 @@ class BaseAccountComponent:
             case AccountOrganizationListBadOutcome.ACCOUNT_NOT_FOUND:
                 client_ctx.account_not_found_abort()
 
-        cooked_active = []
-        for active in result.active:
-            match active.organization_allowed_client_agent:
-                case AllowedClientAgent.NATIVE_ONLY:
-                    cooked_allowed_client_agent = (
-                        organization_self_list.AllowedClientAgent.NATIVE_ONLY
-                    )
-                case AllowedClientAgent.NATIVE_OR_WEB:
-                    cooked_allowed_client_agent = (
-                        organization_self_list.AllowedClientAgent.NATIVE_OR_WEB
-                    )
-
-            match active.organization_account_vault_strategy:
-                case AccountVaultStrategy.ALLOWED:
-                    cooked_account_vault_strategy = (
-                        organization_self_list.AccountVaultStrategy.ALLOWED
-                    )
-                case AccountVaultStrategy.FORBIDDEN:
-                    cooked_account_vault_strategy = (
-                        organization_self_list.AccountVaultStrategy.FORBIDDEN
-                    )
-
-            cooked_active.append(
-                organization_self_list.ActiveUser(
-                    user_id=active.user_id,
-                    created_on=active.created_on,
-                    is_frozen=active.is_frozen,
-                    current_profile=active.current_profile,
-                    organization_id=active.organization_id,
-                    organization_config=organization_self_list.OrganizationConfig(
-                        is_expired=active.organization_is_expired,
-                        user_profile_outsider_allowed=active.organization_user_profile_outsider_allowed,
-                        active_users_limit=active.organization_active_users_limit,
-                        allowed_client_agent=cooked_allowed_client_agent,
-                        account_vault_strategy=cooked_account_vault_strategy,
-                    ),
-                )
+        cooked_active = [
+            organization_self_list.ActiveUser(
+                user_id=active.user_id,
+                created_on=active.created_on,
+                is_frozen=active.is_frozen,
+                current_profile=active.current_profile,
+                organization_id=active.organization_id,
+                organization_config=organization_self_list.OrganizationConfig(
+                    is_expired=active.organization_is_expired,
+                    user_profile_outsider_allowed=active.organization_user_profile_outsider_allowed,
+                    active_users_limit=active.organization_active_users_limit,
+                ),
             )
+            for active in result.active
+        ]
 
         cooked_revoked = [
             organization_self_list.RevokedUser(

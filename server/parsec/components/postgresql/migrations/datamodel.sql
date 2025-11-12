@@ -114,9 +114,6 @@ CREATE TABLE account_recover_validation_code (
 -------------------------------------------------------
 
 
-CREATE TYPE allowed_client_agent AS ENUM ('NATIVE_ONLY', 'NATIVE_OR_WEB');
-CREATE TYPE account_vault_strategy AS ENUM ('ALLOWED', 'FORBIDDEN');
-
 CREATE TABLE organization (
     _id SERIAL PRIMARY KEY,
     organization_id VARCHAR(32) UNIQUE NOT NULL,
@@ -144,9 +141,7 @@ CREATE TABLE organization (
     -- NULL if no Term Of Service (TOS) is set
     -- Stores as JSON a mapping of locale as key and URL as value
     -- e.g. {"en_US": "https://example.com/tos_en.html", "fr_FR": "https://example.com/tos_fr.html"}
-    tos_per_locale_urls JSON,
-    allowed_client_agent ALLOWED_CLIENT_AGENT NOT NULL,
-    account_vault_strategy ACCOUNT_VAULT_STRATEGY NOT NULL
+    tos_per_locale_urls JSON
 );
 
 -------------------------------------------------------

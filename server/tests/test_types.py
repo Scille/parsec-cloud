@@ -18,11 +18,7 @@ from parsec._parsec import (
     VlobID,
 )
 from parsec.types import (
-    AccountVaultStrategy,
-    AccountVaultStrategyField,
     ActiveUsersLimitField,
-    AllowedClientAgent,
-    AllowedClientAgentField,
     Base64BytesField,
     DateTimeField,
     DeviceIDField,
@@ -61,8 +57,6 @@ class AllTypesSchema(BaseModel):
     user_profile: UserProfileField | UnsetType = Unset
     active_users_limit: ActiveUsersLimitField | UnsetType = Unset
     email_address: EmailAddressField | UnsetType = Unset
-    allowed_client_agent: AllowedClientAgentField | UnsetType = Unset
-    account_vault_strategy: AccountVaultStrategyField | UnsetType = Unset
 
 
 @pytest.mark.parametrize(
@@ -116,12 +110,6 @@ def test_good(field: str):
         case "email_address":
             data = {"email_address": "zack@example.com"}
             expected = EmailAddress("zack@example.com")
-        case "allowed_client_agent":
-            data = {"allowed_client_agent": "NATIVE_ONLY"}
-            expected = AllowedClientAgent.NATIVE_ONLY
-        case "account_vault_strategy":
-            data = {"account_vault_strategy": "ALLOWED"}
-            expected = AccountVaultStrategy.ALLOWED
         case unknown:
             assert False, unknown
 
@@ -164,10 +152,6 @@ def test_bad_type(field: str):
             data = {"active_users_limit": ""}
         case "email_address":
             data = {"email_address": 42}
-        case "allowed_client_agent":
-            data = {"allowed_client_agent": 42}
-        case "account_vault_strategy":
-            data = {"account_vault_strategy": 42}
         case unknown:
             assert False, unknown
 
@@ -206,10 +190,6 @@ def test_bad_value(field: str):
             data = {"active_users_limit": -1}
         case "email_address":
             data = {"email_address": "<>"}
-        case "allowed_client_agent":
-            data = {"allowed_client_agent": "<>"}
-        case "account_vault_strategy":
-            data = {"account_vault_strategy": "<>"}
         case unknown:
             assert False, unknown
 

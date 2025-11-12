@@ -209,7 +209,7 @@ async fn sse_ok_mocked(env: &TestbedEnv) {
             headers,
             "\
             :keepalive\n\n\
-            data:h6ZzdGF0dXOib2ulZXZlbnSzT1JHQU5JWkFUSU9OX0NPTkZJR7ZhY2NvdW50X3ZhdWx0X3N0cmF0ZWd5p0FMTE9XRUSyYWN0aXZlX3VzZXJzX2xpbWl0wLRhbGxvd2VkX2NsaWVudF9hZ2VudK1OQVRJVkVfT1JfV0VCtXNzZV9rZWVwYWxpdmVfc2Vjb25kcx69dXNlcl9wcm9maWxlX291dHNpZGVyX2FsbG93ZWTD\nid:832ea0c75e0d4ca8aedf123a89b3fcc7\n\n\
+            data:haZzdGF0dXOib2ulZXZlbnSzT1JHQU5JWkFUSU9OX0NPTkZJR7JhY3RpdmVfdXNlcnNfbGltaXTAtXNzZV9rZWVwYWxpdmVfc2Vjb25kcx69dXNlcl9wcm9maWxlX291dHNpZGVyX2FsbG93ZWTD\nid:832ea0c75e0d4ca8aedf123a89b3fcc7\n\n\
             event:missed_events\ndata:\n\n\
             data:g6ZzdGF0dXOib2ulZXZlbnSmUElOR0VEpHBpbmemZ29vZCAx\nid:4fe5b6ddf29f4c159e6002da2132d80f\n\n\
             :keepalive\n\n\
@@ -229,12 +229,6 @@ async fn sse_ok_mocked(env: &TestbedEnv) {
                 active_users_limit: ActiveUsersLimit::NoLimit,
                 user_profile_outsider_allowed: true,
                 sse_keepalive_seconds: Some(30.try_into().unwrap()),
-                allowed_client_agent: Maybe::Present(
-                    authenticated_cmds::events_listen::AllowedClientAgent::NativeOrWeb
-                ),
-                account_vault_strategy: Maybe::Present(
-                    authenticated_cmds::events_listen::AccountVaultStrategy::Allowed
-                ),
             }
         ))
     );
@@ -300,12 +294,6 @@ async fn sse_ok_with_server(env: &TestbedEnv) {
                 active_users_limit: ActiveUsersLimit::NoLimit,
                 user_profile_outsider_allowed: true,
                 sse_keepalive_seconds: Some(30.try_into().unwrap()),
-                allowed_client_agent: Maybe::Present(
-                    authenticated_cmds::events_listen::AllowedClientAgent::NativeOrWeb
-                ),
-                account_vault_strategy: Maybe::Present(
-                    authenticated_cmds::events_listen::AccountVaultStrategy::Allowed
-                ),
             }
         ))
     );
@@ -656,12 +644,6 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
                 active_users_limit: ActiveUsersLimit::NoLimit,
                 user_profile_outsider_allowed: true,
                 sse_keepalive_seconds: Some(30.try_into().unwrap()),
-                allowed_client_agent: Maybe::Present(
-                    authenticated_cmds::events_listen::AllowedClientAgent::NativeOrWeb
-                ),
-                account_vault_strategy: Maybe::Present(
-                    authenticated_cmds::events_listen::AccountVaultStrategy::Allowed
-                ),
             }
         ))
     );
@@ -716,12 +698,6 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
                 active_users_limit: ActiveUsersLimit::NoLimit,
                 user_profile_outsider_allowed: true,
                 sse_keepalive_seconds: Some(30.try_into().unwrap()),
-                allowed_client_agent: Maybe::Present(
-                    authenticated_cmds::events_listen::AllowedClientAgent::NativeOrWeb
-                ),
-                account_vault_strategy: Maybe::Present(
-                    authenticated_cmds::events_listen::AccountVaultStrategy::Allowed
-                ),
             }
         ))
     );
@@ -764,12 +740,6 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
                 active_users_limit: ActiveUsersLimit::NoLimit,
                 user_profile_outsider_allowed: true,
                 sse_keepalive_seconds: Some(30.try_into().unwrap()),
-                allowed_client_agent: Maybe::Present(
-                    authenticated_cmds::events_listen::AllowedClientAgent::NativeOrWeb
-                ),
-                account_vault_strategy: Maybe::Present(
-                    authenticated_cmds::events_listen::AccountVaultStrategy::Allowed
-                ),
             }
         ))
     );
