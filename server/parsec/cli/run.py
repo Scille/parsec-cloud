@@ -25,7 +25,7 @@ from parsec.cli.utils import (
 )
 from parsec.components.organization import TosLocale, TosUrl
 from parsec.config import (
-    AccountVaultStrategy,
+    AccountConfig,
     AllowedClientAgent,
     BackendConfig,
     BaseBlockStoreConfig,
@@ -33,6 +33,9 @@ from parsec.config import (
     EmailConfig,
     LogLevel,
     MockedEmailConfig,
+    OpenBaoAuthConfig,
+    OpenBaoAuthType,
+    OpenBaoConfig,
     SmtpEmailConfig,
 )
 from parsec.logging import get_logger
@@ -69,6 +72,33 @@ def _parse_organization_initial_tos_url(raw_param: str | None) -> dict[TosLocale
 
 
 class DevOption(click.Option):
+    def handle_parse_result(
+        self, ctx: click.Context, opts: Any, args: list[str]
+    ) -> tuple[Any, list[str]]:
+        value, args = super().handle_parse_result(ctx, opts, args)
+        if value:
+            if "port" in opts:
+                server_addr = "parsec3://localhost:" + str(opts["port"])
+            else:
+                server_addr = "parsec3://localhost:" + str(DEFAULT_PORT)
+            for key, value in (
+                ("debug", True),
+                ("db", "MOCKED"),
+                ("server_addr", server_addr),
+                ("email_sender", "no-reply@parsec.com"),
+                ("email_host", "MOCKED"),
+                ("blockstore", ("MOCKED",)),
+                ("administration_token", "s3cr3t"),
+                ("fake_account_password_algorithm_seed", "F4k3"),
+                ("cors_allow_origins", ("*",)),
+            ):
+                if key not in opts:
+                    opts[key] = value
+
+        return value, args
+
+
+class OpenBaoOption(click.Option):
     def handle_parse_result(
         self, ctx: click.Context, opts: Any, args: list[str]
     ) -> tuple[Any, list[str]]:
@@ -166,6 +196,90 @@ For instance:
     """,
 )
 @click.option(
+    "--allowed-client-agent",
+    envvar="PARSEC_ALLOWED_CLIENT_AGENT",
+    show_envvar=True,
+    type=click.Choice(AllowedClientAgent),
+    help="""Limit the type of Parsec client allowed to connect
+(default: NATIVE_OR_WEB if `--with-client-web-app` is used, NATIVE_ONLY else)
+\b
+- NATIVE_ONLY: Only desktop client is allowed
+- NATIVE_OR_WEB: Desktop and web clients are allowed
+""",
+    default=None,
+)
+@click.option(
+    "--account-config",
+    envvar="PARSEC_ACCOUNT_CONFIG",
+    show_envvar=True,
+    help="""Account in Parsec is a cross-organization hub typically used to
+list a user's pending invitations, allow him to connect to new machine
+without requiring device-to-device enrollment, or protect his local device on web
+with a just the account password.
+
+A key feature of the account is its vault allowing the user to store sensitive
+data (e.g. device keys) server-side, however it comes at the  cost of slightly
+less security (since the server can try to brute-force the user account's
+password to gain access to his vault).
+\b
+- DISABLED: Users cannot create account
+- ENABLED_WITH_VAULT: User can create account and store sensitive data in it.
+- ENABLED_WITHOUT_VAULT: User can create account, but should not store sensitive data
+  in it.
+""",
+    type=click.Choice(AccountConfig),
+    default=AccountConfig.DISABLED,
+)
+@click.option(
+    "--openbao-server-url",
+    envvar="PARSEC_OPENBAO_SERVER_URL",
+    show_envvar=True,
+    help="""
+An OpenBao server can be configured to allow SSO (using Open ID
+Connect) authentication for users.
+This is done by storing an opaque key on the OpenBao server that is
+itself typically used to encrypt the local device keys.
+
+Obviously the level of security is lower than traditional approaches
+(e.g. storing the opaque key on the OS Keyring or derive it from a
+strong password).
+
+However this is a trade-of to increase user-friendliness, the decision
+whether or not to use this is to be made by the server administrator
+according to its own threat model.
+""",
+)
+@click.option(
+    "--openbao-secret-mount-path",
+    envvar="PARSEC_OPENBAO_SECRET_MOUNT_PATH",
+    metavar="MOUNT_PATH",
+    show_envvar=True,
+    help="""Configure the mount path of the KV2 secret module used for storage
+
+(see: https://openbao.org/api-docs/secret/kv/kv-v2/)
+""",
+)
+@click.option(
+    "--openbao-auth-pro-connect",
+    envvar="PARSEC_OPENBAO_AUTH_PRO_CONNECT_MOUNT_PATH",
+    metavar="MOUNT_PATH",
+    show_envvar=True,
+    help="""Configure an auth module for end-user authentication using OIDC with ProConnect.
+
+(see: https://openbao.org/api-docs/auth/jwt/)
+""",
+)
+@click.option(
+    "--openbao-auth-hexagone",
+    envvar="PARSEC_OPENBAO_AUTH_HEXAGONE_MOUNT_PATH",
+    metavar="MOUNT_PATH",
+    show_envvar=True,
+    help="""Configure an auth module for end-user authentication using OIDC with Hexagone.
+
+(see: https://openbao.org/api-docs/auth/jwt/)
+""",
+)
+@click.option(
     "--spontaneous-organization-bootstrap",
     envvar="PARSEC_SPONTANEOUS_ORGANIZATION_BOOTSTRAP",
     show_envvar=True,
@@ -221,35 +335,6 @@ in the URL escaped with a backslash).
 For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr`.
 """,
     default=None,
-)
-@click.option(
-    "--organization-initial-allowed-client-agent",
-    envvar="PARSEC_ORGANIZATION_INITIAL_ALLOWED_CLIENT_AGENT",
-    show_envvar=True,
-    type=click.Choice(AllowedClientAgent),
-    help="""Limit the type of Parsec client allowed to connect for the newly created organizations (default: NATIVE_OR_WEB)
-\b
-- NATIVE_ONLY: Only desktop client is allowed
-- NATIVE_OR_WEB: Desktop and web clients are allowed
-""",
-    default=AllowedClientAgent.NATIVE_OR_WEB,
-)
-@click.option(
-    "--organization-initial-account-vault-strategy",
-    envvar="PARSEC_ORGANIZATION_INITIAL_ACCOUNT_VAULT_STRATEGY",
-    show_envvar=True,
-    type=click.Choice(AccountVaultStrategy),
-    help="""Specify if the account vault can be used for the newly created organizations (default: ALLOWED)
-
-    The account vault allows the user to store sensitive data (e.g. device keys)
-    server-side.
-
-    This typically allows simplified authentication on a new machine (i.e. no need to
-    exchange codes with an already authentication machine) at a the cost of slightly
-    less security (since the server can try to brute-force the user's password to gain
-    access to his vault).
-""",
-    default=AccountVaultStrategy.ALLOWED,
 )
 @click.option(
     "--validation-email-rate-limit",
@@ -477,13 +562,17 @@ def run_cmd(
     pause_before_retry_database_connection: float,
     blockstore: BaseBlockStoreConfig,
     administration_token: str,
+    allowed_client_agent: AllowedClientAgent | None,
+    account_config: AccountConfig,
+    openbao_server_url: str | None,
+    openbao_secret_mount_path: str | None,
+    openbao_auth_pro_connect: str | None,
+    openbao_auth_hexagone: str | None,
     spontaneous_organization_bootstrap: bool,
     organization_bootstrap_webhook: str | None,
     organization_initial_active_users_limit: int | None,
     organization_initial_user_profile_outsider_allowed: bool,
     organization_initial_tos: dict[TosLocale, TosUrl] | None,
-    organization_initial_allowed_client_agent: AllowedClientAgent,
-    organization_initial_account_vault_strategy: AccountVaultStrategy,
     # (cooldown in seconds, max number of email per hour)
     validation_email_rate_limit: tuple[int, int],
     fake_account_password_algorithm_seed: SecretKey,
@@ -539,6 +628,44 @@ def run_cmd(
 
         jinja_env = get_environment(template_dir)
 
+        match (allowed_client_agent, with_client_web_app):
+            case (AllowedClientAgent() as cooked_allowed_client_agent, _):
+                pass
+            case (None, Path()):
+                cooked_allowed_client_agent = AllowedClientAgent.NATIVE_OR_WEB
+            case (None, None):
+                cooked_allowed_client_agent = AllowedClientAgent.NATIVE_ONLY
+
+        if openbao_server_url is None:
+            openbao_config = None
+        else:
+            if openbao_secret_mount_path is None:
+                raise ValueError(
+                    "--openbao-secret-mount-path is required when --openbao-server-url is provided"
+                )
+
+            auths = []
+            if openbao_auth_hexagone is not None:
+                auths.append(
+                    OpenBaoAuthConfig(
+                        id=OpenBaoAuthType.HEXAGONE,
+                        mount_path=openbao_auth_hexagone,
+                    )
+                )
+            if openbao_auth_pro_connect is not None:
+                auths.append(
+                    OpenBaoAuthConfig(
+                        id=OpenBaoAuthType.PRO_CONNECT,
+                        mount_path=openbao_auth_pro_connect,
+                    )
+                )
+
+            openbao_config = OpenBaoConfig(
+                server_url=openbao_server_url,
+                secret_mount_path=openbao_secret_mount_path,
+                auths=auths,
+            )
+
         app_config = BackendConfig(
             jinja_env=jinja_env,
             administration_token=administration_token,
@@ -549,6 +676,9 @@ def run_cmd(
             proxy_trusted_addresses=proxy_trusted_addresses,
             server_addr=server_addr,
             debug=debug,
+            allowed_client_agent=cooked_allowed_client_agent,
+            account_config=account_config,
+            openbao_config=openbao_config,
             organization_bootstrap_webhook_url=organization_bootstrap_webhook,
             organization_spontaneous_bootstrap=spontaneous_organization_bootstrap,
             organization_initial_active_users_limit=ActiveUsersLimit.limited_to(
@@ -558,8 +688,6 @@ def run_cmd(
             else ActiveUsersLimit.NO_LIMIT,
             organization_initial_user_profile_outsider_allowed=organization_initial_user_profile_outsider_allowed,
             organization_initial_tos=organization_initial_tos,
-            organization_initial_allowed_client_agent=organization_initial_allowed_client_agent,
-            organization_initial_account_vault_strategy=organization_initial_account_vault_strategy,
             email_rate_limit_cooldown_delay=max(validation_email_rate_limit[0], 0),
             email_rate_limit_max_per_hour=max(validation_email_rate_limit[1], 0),
             fake_account_password_algorithm_seed=fake_account_password_algorithm_seed,
