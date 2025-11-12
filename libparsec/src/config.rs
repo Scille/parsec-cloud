@@ -1,8 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{path::PathBuf, sync::Arc};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 pub use libparsec_client::{MountpointMountStrategy, ProxyConfig, WorkspaceStorageCacheSize};
+use libparsec_client_connection::{AnonymousServerCmds, ConnectionError};
 pub use libparsec_platform_device_loader::{
     get_default_config_dir, get_default_data_base_dir, get_default_mountpoint_base_dir,
     PARSEC_BASE_CONFIG_DIR, PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR,
@@ -69,6 +73,83 @@ impl From<ClientConfig> for libparsec_client::ClientConfig {
                 }),
                 None => PreventSyncPattern::default(),
             },
+        }
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum GetServerConfigError {
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+pub use libparsec_client_connection::protocol::anonymous_server_cmds::latest::server_config::{
+    AccountConfig, ClientAgentConfig, OpenBaoSecretConfig, OrganizationBootstrapConfig,
+};
+
+pub enum OpenBaoAuthConfig {
+    OIDCHexagone { mount_path: String },
+    OIDCProConnect { mount_path: String },
+}
+
+pub struct OpenBaoConfig {
+    pub server_url: String,
+    pub secret: OpenBaoSecretConfig,
+    pub auths: Vec<OpenBaoAuthConfig>,
+}
+
+pub struct ServerConfig {
+    pub client_agent: ClientAgentConfig,
+    pub account: AccountConfig,
+    pub organization_bootstrap: OrganizationBootstrapConfig,
+    pub openbao: Option<OpenBaoConfig>,
+}
+
+pub async fn get_server_config(
+    config_dir: &Path,
+    addr: ParsecAddr,
+) -> Result<ServerConfig, GetServerConfigError> {
+    let cmds = AnonymousServerCmds::new(config_dir, addr, ProxyConfig::default())?;
+
+    use libparsec_client_connection::protocol::anonymous_server_cmds::latest::server_config::{
+        Rep, Req,
+    };
+
+    match cmds.send(Req).await? {
+        Rep::Ok {
+            client_agent,
+            account,
+            organization_bootstrap,
+            openbao,
+        } => Ok(ServerConfig {
+            client_agent,
+            account,
+            organization_bootstrap,
+            openbao: match openbao {
+                libparsec_protocol::anonymous_server_cmds::v5::server_config::OpenBaoConfig::Disabled => None,
+                libparsec_protocol::anonymous_server_cmds::v5::server_config::OpenBaoConfig::Enabled { auths, secret, server_url } => Some(
+                    OpenBaoConfig {
+                        server_url,
+                        secret,
+                        auths: auths
+                            .into_iter()
+                            .filter_map(|auth| match OpenBaoAuthType::try_from(auth.id.as_ref()) {
+                                Ok(OpenBaoAuthType::Hexagone) => Some(OpenBaoAuthConfig::OIDCHexagone { mount_path: auth.mount_path }),
+                                Ok(OpenBaoAuthType::ProConnect) => Some(OpenBaoAuthConfig::OIDCProConnect { mount_path: auth.mount_path }),
+                                // Unknown kind of auth, just ignore it
+                                Err(_) => {
+                                    log::warn!("Server config has returned an unknown type OpenBaoAuthConfig: {:?}", auth);
+                                    None
+                                },
+                        }).collect()
+                    }
+                ),
+            },
+        }),
+        bad_rep @ Rep::UnknownStatus { .. } => {
+            Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
         }
     }
 }
