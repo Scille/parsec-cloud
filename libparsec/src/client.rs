@@ -2,7 +2,6 @@
 
 use std::{collections::HashMap, num::NonZeroU8, path::Path, sync::Arc};
 
-use libparsec_client::ServerConfig;
 pub use libparsec_client::{
     ClientAcceptTosError, ClientCreateWorkspaceError, ClientDeleteShamirRecoveryError,
     ClientForgetAllCertificatesError, ClientGetCurrentSelfProfileError,
@@ -13,8 +12,8 @@ pub use libparsec_client::{
     ClientRevokeUserError, ClientSetupShamirRecoveryError, ClientShareWorkspaceError,
     ClientUserUpdateProfileError, DeviceInfo, OrganizationInfo, OtherShamirRecoveryInfo,
     PkiEnrollmentAcceptError, PkiEnrollmentListError, PkiEnrollmentListItem,
-    PkiEnrollmentRejectError, SelfShamirRecoveryInfo, Tos, UserInfo, WorkspaceInfo,
-    WorkspaceUserAccessInfo,
+    PkiEnrollmentRejectError, SelfShamirRecoveryInfo, ServerOrganizationConfig, Tos, UserInfo,
+    WorkspaceInfo, WorkspaceUserAccessInfo,
 };
 pub use libparsec_client_connection::ConnectionError;
 use libparsec_platform_async::event::{Event, EventListener};
@@ -403,7 +402,7 @@ pub struct ClientInfo {
     pub device_label: DeviceLabel,
     pub human_handle: HumanHandle,
     pub current_profile: UserProfile,
-    pub server_config: ServerConfig,
+    pub server_organization_config: ServerOrganizationConfig,
     pub is_server_online: bool,
     pub is_organization_expired: bool,
     pub must_accept_tos: bool,
@@ -436,7 +435,7 @@ pub async fn client_info(client: Handle) -> Result<ClientInfo, ClientInfoError> 
                     e.context("Cannot retrieve profile").into()
                 }
             })?,
-        server_config: client.server_config(),
+        server_organization_config: client.server_organization_config(),
         is_server_online: client.is_server_online(),
         is_organization_expired: client.is_organization_expired(),
         must_accept_tos: client.must_accept_tos(),

@@ -7,7 +7,7 @@ use libparsec_platform_async::{pretend_future_is_send_on_web, sleep};
 use super::Monitor;
 use crate::{
     event_bus::{EventBus, EventServerConfigChanged, EventServerConfigNotified},
-    Client, ServerConfig,
+    Client, ServerOrganizationConfig,
 };
 
 const SERVER_CONFIG_MONITOR_NAME: &str = "server_config";
@@ -31,13 +31,13 @@ fn task_future_factory(client: Arc<Client>, event_bus: EventBus) -> impl Future<
                 active_users_limit,
                 user_profile_outsider_allowed,
             } = e;
-            let new = ServerConfig {
+            let new = ServerOrganizationConfig {
                 active_users_limit: *active_users_limit,
                 user_profile_outsider_allowed: *user_profile_outsider_allowed,
             };
             let mut config_has_changed = false;
 
-            client.update_server_config(|config| {
+            client.update_server_organization_config(|config| {
                 if *config != new {
                     *config = new;
                     config_has_changed = true;
