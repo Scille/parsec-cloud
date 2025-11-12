@@ -148,6 +148,7 @@ pub use platform::is_available;
 
 pub use errors::VerifyCertificateError;
 pub use shared::verify_certificate;
+pub use webpki::KeyUsage;
 
 pub use errors::LoadSubmitPayloadError;
 pub use shared::load_submit_payload;

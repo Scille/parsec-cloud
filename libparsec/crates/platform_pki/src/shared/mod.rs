@@ -8,6 +8,7 @@ use crate::{
     },
     EncryptedMessage, PkiSignatureAlgorithm,
 };
+use bytes::Bytes;
 use libparsec_types::{
     DateTime, PKIEnrollmentID, PKILocalPendingEnrollment, ParsecPkiEnrollmentAddr,
     PkiEnrollmentAnswerPayload, PkiEnrollmentSubmitPayload, PrivateParts, SecretKey,
@@ -58,8 +59,8 @@ impl AsRef<[u8]> for Certificate<'_> {
 
 pub struct SignedMessage {
     pub algo: PkiSignatureAlgorithm,
-    pub signature: Vec<u8>,
-    pub message: Vec<u8>,
+    pub signature: Bytes,
+    pub message: Bytes,
 }
 
 pub fn verify_message<'message, 'a>(
@@ -138,25 +139,26 @@ pub fn verify_certificate<'der>(
 pub fn load_submit_payload(
     der_certificate: &[u8],
     signed_message: &SignedMessage,
+    trusted_roots: &[TrustAnchor<'_>],
     now: DateTime,
 ) -> Result<PkiEnrollmentSubmitPayload, crate::errors::LoadSubmitPayloadError> {
-    let validated_payload = validate_payload(der_certificate, signed_message, now)?;
+    let validated_payload = validate_payload(der_certificate, signed_message, trusted_roots, now)?;
     PkiEnrollmentSubmitPayload::load(validated_payload).map_err(Into::into)
 }
 
 pub fn validate_payload<'message>(
     der_certificate: &[u8],
     signed_message: &'message SignedMessage,
+    trusted_roots: &[TrustAnchor<'_>],
     now: DateTime,
 ) -> Result<&'message [u8], ValidatePayloadError> {
     let binding = Certificate::from_der(der_certificate);
     let untrusted_cert = binding
         .to_end_certificate()
         .map_err(ValidatePayloadError::InvalidCertificateDer)?;
-    let trusted_anchor = crate::list_trusted_root_certificate_anchor()?;
     let verified_path = verify_certificate(
         &untrusted_cert,
-        &trusted_anchor,
+        trusted_roots,
         // TODO: Consider listing intermediate certificate
         &[],
         now,
@@ -172,6 +174,8 @@ pub fn load_answer_payload(
     signed_message: &SignedMessage,
     now: DateTime,
 ) -> Result<PkiEnrollmentAnswerPayload, LoadAnswerPayloadError> {
-    let validated_payload = validate_payload(der_certificate, signed_message, now)?;
+    let trusted_anchor = crate::list_trusted_root_certificate_anchor()?;
+    let validated_payload =
+        validate_payload(der_certificate, signed_message, &trusted_anchor, now)?;
     PkiEnrollmentAnswerPayload::load(validated_payload).map_err(Into::into)
 }

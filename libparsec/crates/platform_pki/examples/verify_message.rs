@@ -28,6 +28,7 @@ fn main() -> anyhow::Result<()> {
 
     let signature = data_encoding::BASE64
         .decode(args.signature.as_bytes())
+        .map(Into::into)
         .context("Invalid signature format")?;
 
     let cert = args.cert.get_certificate()?;

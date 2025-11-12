@@ -39,13 +39,32 @@ async def show_certificate_selection_dialog_windows_only() -> Result[
     raise NotImplementedError
 
 
+class VerifyKey(BytesBasedType): ...
+
+
+class PublicKey(BytesBasedType): ...
+
+
+class PkiEnrollmentAnswerPayload(Structure):
+    user_id: UserID
+    device_id: DeviceID
+    device_label: DeviceLabel
+    human_handle: HumanHandle
+    profile: UserProfile
+    root_verify_key: VerifyKey
+
+
+class PkiEnrollmentSubmitPayload(Structure):
+    verify_key: VerifyKey
+    public_key: PublicKey
+    device_label: DeviceLabel
+    human_handle: HumanHandle
+
+
 class PkiEnrollmentListItem(Structure):
     enrollment_id: PKIEnrollmentID
     submitted_on: DateTime
-    der_x509_certificate: Bytes
-    payload_signature: Bytes
-    payload_signature_algorithm: PkiSignatureAlgorithm
-    payload: Bytes
+    payload: PkiEnrollmentSubmitPayload
 
 
 class PkiEnrollmentListError(ErrorVariant):
@@ -117,28 +136,6 @@ class PkiEnrollmentAcceptError(ErrorVariant):
     class HumanHandleAlreadyTaken: ...
 
     class PkiOperationError: ...
-
-
-class VerifyKey(BytesBasedType): ...
-
-
-class PublicKey(BytesBasedType): ...
-
-
-class PkiEnrollmentAnswerPayload(Structure):
-    user_id: UserID
-    device_id: DeviceID
-    device_label: DeviceLabel
-    human_handle: HumanHandle
-    profile: UserProfile
-    root_verify_key: VerifyKey
-
-
-class PkiEnrollmentSubmitPayload(Structure):
-    verify_key: VerifyKey
-    public_key: PublicKey
-    device_label: DeviceLabel
-    human_handle: HumanHandle
 
 
 class PKIEncryptionAlgorithm(StrBasedType):
