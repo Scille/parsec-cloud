@@ -14,11 +14,7 @@ use libparsec_protocol::{authenticated_account_cmds, authenticated_cmds};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::{
-    Account, AccountCreateRegistrationDeviceError, AccountOrganizationsAccountVaultStrategy,
-    AccountOrganizationsActiveUser, AccountOrganizationsAllowedClientAgent,
-    AccountOrganizationsOrganizationConfig,
-};
+use crate::{Account, AccountCreateRegistrationDeviceError};
 
 #[parsec_test(testbed = "minimal", with_server)]
 async fn ok_with_server(env: &TestbedEnv) {
@@ -97,28 +93,6 @@ async fn ok_mocked(env: &TestbedEnv) {
         &env.discriminant_dir,
         test_send_hook_vault_item_list!(env, &account.auth_method_secret_key, &vault_key),
         {
-            let active = AccountOrganizationsActiveUser {
-                organization_id: alice.organization_id().to_owned(),
-                user_id: alice.user_id,
-                created_on: "2001-01-01T00:00:00Z".parse().unwrap(),
-                is_frozen: false,
-                current_profile: UserProfile::Admin,
-                organization_config: AccountOrganizationsOrganizationConfig {
-                    is_expired: false,
-                    user_profile_outsider_allowed: true,
-                    active_users_limit: ActiveUsersLimit::NoLimit,
-                    allowed_client_agent: AccountOrganizationsAllowedClientAgent::NativeOrWeb,
-                    account_vault_strategy: AccountOrganizationsAccountVaultStrategy::Allowed,
-                },
-            };
-            move |_req: authenticated_account_cmds::latest::organization_self_list::Req| {
-                authenticated_account_cmds::latest::organization_self_list::Rep::Ok {
-                    active: vec![active],
-                    revoked: vec![],
-                }
-            }
-        },
-        {
             let alice = alice.clone();
 
             move |req: authenticated_cmds::latest::device_create::Req| {
@@ -185,7 +159,6 @@ async fn ok_mocked(env: &TestbedEnv) {
 async fn offline(
     #[values(
         "during_vault_item_list",
-        "during_organization_self_list",
         "during_device_create",
         "during_vault_item_upload"
     )]
@@ -208,19 +181,6 @@ async fn offline(
             // No send hook, so initial `vault_item_list` will fail
         }
 
-        "during_organization_self_list" => {
-            // No send hook, so initial `organization_self_list` will fail
-            test_register_sequence_of_send_hooks!(
-                &env.discriminant_dir,
-                test_send_hook_vault_item_list!(
-                    env,
-                    &account.auth_method_secret_key,
-                    &SecretKey::generate()
-                ),
-                // `organization_self_list` is missing !
-            );
-        }
-
         "during_device_create" => {
             test_register_sequence_of_send_hooks!(
                 &env.discriminant_dir,
@@ -229,30 +189,6 @@ async fn offline(
                     &account.auth_method_secret_key,
                     &SecretKey::generate()
                 ),
-                {
-                    let active = AccountOrganizationsActiveUser {
-                        organization_id: alice.organization_id().to_owned(),
-                        user_id: alice.user_id,
-                        created_on: "2001-01-01T00:00:00Z".parse().unwrap(),
-                        is_frozen: false,
-                        current_profile: UserProfile::Admin,
-                        organization_config: AccountOrganizationsOrganizationConfig {
-                            is_expired: false,
-                            user_profile_outsider_allowed: true,
-                            active_users_limit: ActiveUsersLimit::NoLimit,
-                            allowed_client_agent:
-                                AccountOrganizationsAllowedClientAgent::NativeOrWeb,
-                            account_vault_strategy:
-                                AccountOrganizationsAccountVaultStrategy::Allowed,
-                        },
-                    };
-                    move |_req: authenticated_account_cmds::latest::organization_self_list::Req| {
-                        authenticated_account_cmds::latest::organization_self_list::Rep::Ok {
-                            active: vec![active],
-                            revoked: vec![],
-                        }
-                    }
-                },
                 // `device_create` is missing !
             );
         }
@@ -265,30 +201,6 @@ async fn offline(
                     &account.auth_method_secret_key,
                     &SecretKey::generate()
                 ),
-                {
-                    let active = AccountOrganizationsActiveUser {
-                        organization_id: alice.organization_id().to_owned(),
-                        user_id: alice.user_id,
-                        created_on: "2001-01-01T00:00:00Z".parse().unwrap(),
-                        is_frozen: false,
-                        current_profile: UserProfile::Admin,
-                        organization_config: AccountOrganizationsOrganizationConfig {
-                            is_expired: false,
-                            user_profile_outsider_allowed: true,
-                            active_users_limit: ActiveUsersLimit::NoLimit,
-                            allowed_client_agent:
-                                AccountOrganizationsAllowedClientAgent::NativeOrWeb,
-                            account_vault_strategy:
-                                AccountOrganizationsAccountVaultStrategy::Allowed,
-                        },
-                    };
-                    move |_req: authenticated_account_cmds::latest::organization_self_list::Req| {
-                        authenticated_account_cmds::latest::organization_self_list::Rep::Ok {
-                            active: vec![active],
-                            revoked: vec![],
-                        }
-                    }
-                },
                 move |_req: authenticated_cmds::latest::device_create::Req| {
                     authenticated_cmds::latest::device_create::Rep::Ok
                 } // `vault_item_upload` is missing !
@@ -324,28 +236,6 @@ async fn fingerprint_already_exists(env: &TestbedEnv) {
             &account.auth_method_secret_key,
             &SecretKey::generate()
         ),
-        {
-            let active = AccountOrganizationsActiveUser {
-                organization_id: alice.organization_id().to_owned(),
-                user_id: alice.user_id,
-                created_on: "2001-01-01T00:00:00Z".parse().unwrap(),
-                is_frozen: false,
-                current_profile: UserProfile::Admin,
-                organization_config: AccountOrganizationsOrganizationConfig {
-                    is_expired: false,
-                    user_profile_outsider_allowed: true,
-                    active_users_limit: ActiveUsersLimit::NoLimit,
-                    allowed_client_agent: AccountOrganizationsAllowedClientAgent::NativeOrWeb,
-                    account_vault_strategy: AccountOrganizationsAccountVaultStrategy::Allowed,
-                },
-            };
-            move |_req: authenticated_account_cmds::latest::organization_self_list::Req| {
-                authenticated_account_cmds::latest::organization_self_list::Rep::Ok {
-                    active: vec![active],
-                    revoked: vec![],
-                }
-            }
-        },
         move |_req: authenticated_cmds::latest::device_create::Req| {
             authenticated_cmds::latest::device_create::Rep::Ok
         },
@@ -381,28 +271,6 @@ async fn timestamp_out_of_ballpark(env: &TestbedEnv) {
             &account.auth_method_secret_key,
             &SecretKey::generate()
         ),
-        {
-            let active = AccountOrganizationsActiveUser {
-                organization_id: alice.organization_id().to_owned(),
-                user_id: alice.user_id,
-                created_on: "2001-01-01T00:00:00Z".parse().unwrap(),
-                is_frozen: false,
-                current_profile: UserProfile::Admin,
-                organization_config: AccountOrganizationsOrganizationConfig {
-                    is_expired: false,
-                    user_profile_outsider_allowed: true,
-                    active_users_limit: ActiveUsersLimit::NoLimit,
-                    allowed_client_agent: AccountOrganizationsAllowedClientAgent::NativeOrWeb,
-                    account_vault_strategy: AccountOrganizationsAccountVaultStrategy::Allowed,
-                },
-            };
-            move |_req: authenticated_account_cmds::latest::organization_self_list::Req| {
-                authenticated_account_cmds::latest::organization_self_list::Rep::Ok {
-                    active: vec![active],
-                    revoked: vec![],
-                }
-            }
-        },
         move |_req: authenticated_cmds::latest::device_create::Req| {
             authenticated_cmds::latest::device_create::Rep::TimestampOutOfBallpark {
                 ballpark_client_early_offset: 300.,
@@ -461,7 +329,6 @@ async fn bad_vault_key_access(env: &TestbedEnv) {
 async fn unknown_server_response(
     #[values(
         "during_vault_item_list",
-        "during_organization_self_list",
         "during_device_create",
         "during_vault_item_upload"
     )]
@@ -492,23 +359,6 @@ async fn unknown_server_response(
             );
         }
 
-        "during_organization_self_list" => {
-            test_register_sequence_of_send_hooks!(
-                &env.discriminant_dir,
-                test_send_hook_vault_item_list!(
-                    env,
-                    &account.auth_method_secret_key,
-                    &SecretKey::generate()
-                ),
-                move |_req: authenticated_account_cmds::latest::organization_self_list::Req| {
-                    authenticated_account_cmds::latest::organization_self_list::Rep::UnknownStatus {
-                        unknown_status: "unknown".to_string(),
-                        reason: None,
-                    }
-                }
-            );
-        }
-
         "during_device_create" => {
             test_register_sequence_of_send_hooks!(
                 &env.discriminant_dir,
@@ -517,30 +367,6 @@ async fn unknown_server_response(
                     &account.auth_method_secret_key,
                     &SecretKey::generate()
                 ),
-                {
-                    let active = AccountOrganizationsActiveUser {
-                        organization_id: alice.organization_id().to_owned(),
-                        user_id: alice.user_id,
-                        created_on: "2001-01-01T00:00:00Z".parse().unwrap(),
-                        is_frozen: false,
-                        current_profile: UserProfile::Admin,
-                        organization_config: AccountOrganizationsOrganizationConfig {
-                            is_expired: false,
-                            user_profile_outsider_allowed: true,
-                            active_users_limit: ActiveUsersLimit::NoLimit,
-                            allowed_client_agent:
-                                AccountOrganizationsAllowedClientAgent::NativeOrWeb,
-                            account_vault_strategy:
-                                AccountOrganizationsAccountVaultStrategy::Allowed,
-                        },
-                    };
-                    move |_req: authenticated_account_cmds::latest::organization_self_list::Req| {
-                        authenticated_account_cmds::latest::organization_self_list::Rep::Ok {
-                            active: vec![active],
-                            revoked: vec![],
-                        }
-                    }
-                },
                 move |_req: authenticated_cmds::latest::device_create::Req| {
                     authenticated_cmds::latest::device_create::Rep::UnknownStatus {
                         unknown_status: "unknown".to_string(),
@@ -558,30 +384,6 @@ async fn unknown_server_response(
                     &account.auth_method_secret_key,
                     &SecretKey::generate()
                 ),
-                {
-                    let active = AccountOrganizationsActiveUser {
-                        organization_id: alice.organization_id().to_owned(),
-                        user_id: alice.user_id,
-                        created_on: "2001-01-01T00:00:00Z".parse().unwrap(),
-                        is_frozen: false,
-                        current_profile: UserProfile::Admin,
-                        organization_config: AccountOrganizationsOrganizationConfig {
-                            is_expired: false,
-                            user_profile_outsider_allowed: true,
-                            active_users_limit: ActiveUsersLimit::NoLimit,
-                            allowed_client_agent:
-                                AccountOrganizationsAllowedClientAgent::NativeOrWeb,
-                            account_vault_strategy:
-                                AccountOrganizationsAccountVaultStrategy::Allowed,
-                        },
-                    };
-                    move |_req: authenticated_account_cmds::latest::organization_self_list::Req| {
-                        authenticated_account_cmds::latest::organization_self_list::Rep::Ok {
-                            active: vec![active],
-                            revoked: vec![],
-                        }
-                    }
-                },
                 move |_req: authenticated_cmds::latest::device_create::Req| {
                     authenticated_cmds::latest::device_create::Rep::Ok
                 },
@@ -601,85 +403,5 @@ async fn unknown_server_response(
         account.create_registration_device(alice.clone()).await,
         Err(AccountCreateRegistrationDeviceError::Internal(err))
         if format!("{err}") == "Unexpected server response: UnknownStatus { unknown_status: \"unknown\", reason: None }"
-    );
-}
-
-#[parsec_test(testbed = "minimal")]
-async fn cannot_obtain_organization_vault_strategy(env: &TestbedEnv) {
-    let alice = env.local_device("alice@dev1");
-    let account = Account::test_new(
-        env.discriminant_dir.clone(),
-        env.server_addr.clone(),
-        &KeyDerivation::from(hex!(
-            "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
-        )),
-        "Zack <zack@example.com>".parse().unwrap(),
-    )
-    .await;
-
-    let vault_key = SecretKey::generate();
-
-    test_register_sequence_of_send_hooks!(
-        &env.discriminant_dir,
-        test_send_hook_vault_item_list!(env, &account.auth_method_secret_key, &vault_key),
-        move |_req: authenticated_account_cmds::latest::organization_self_list::Req| {
-            authenticated_account_cmds::latest::organization_self_list::Rep::Ok {
-                active: vec![],
-                revoked: vec![],
-            }
-        }
-    );
-
-    p_assert_matches!(
-        account.create_registration_device(alice.clone()).await,
-        Err(AccountCreateRegistrationDeviceError::CannotObtainOrganizationVaultStrategy)
-    );
-}
-
-#[parsec_test(testbed = "minimal")]
-async fn not_allowed_by_organization_vault_strategy(env: &TestbedEnv) {
-    let alice = env.local_device("alice@dev1");
-    let account = Account::test_new(
-        env.discriminant_dir.clone(),
-        env.server_addr.clone(),
-        &KeyDerivation::from(hex!(
-            "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
-        )),
-        "Zack <zack@example.com>".parse().unwrap(),
-    )
-    .await;
-
-    let vault_key = SecretKey::generate();
-
-    test_register_sequence_of_send_hooks!(
-        &env.discriminant_dir,
-        test_send_hook_vault_item_list!(env, &account.auth_method_secret_key, &vault_key),
-        {
-            let active = AccountOrganizationsActiveUser {
-                organization_id: alice.organization_id().to_owned(),
-                user_id: alice.user_id,
-                created_on: "2001-01-01T00:00:00Z".parse().unwrap(),
-                is_frozen: false,
-                current_profile: UserProfile::Admin,
-                organization_config: AccountOrganizationsOrganizationConfig {
-                    is_expired: false,
-                    user_profile_outsider_allowed: true,
-                    active_users_limit: ActiveUsersLimit::NoLimit,
-                    allowed_client_agent: AccountOrganizationsAllowedClientAgent::NativeOrWeb,
-                    account_vault_strategy: AccountOrganizationsAccountVaultStrategy::Forbidden, // !!!
-                },
-            };
-            move |_req: authenticated_account_cmds::latest::organization_self_list::Req| {
-                authenticated_account_cmds::latest::organization_self_list::Rep::Ok {
-                    active: vec![active],
-                    revoked: vec![],
-                }
-            }
-        },
-    );
-
-    p_assert_matches!(
-        account.create_registration_device(alice.clone()).await,
-        Err(AccountCreateRegistrationDeviceError::NotAllowedByOrganizationVaultStrategy)
     );
 }
