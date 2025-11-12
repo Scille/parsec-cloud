@@ -7,11 +7,11 @@ from parsec._parsec import (
     DateTime,
     DeviceCertificate,
     DeviceID,
-    PKIEnrollmentID,
     OrganizationID,
+    PKIEnrollmentID,
+    PkiSignatureAlgorithm,
     UserCertificate,
     VerifyKey,
-    PkiSignatureAlgorithm,
 )
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.pki import (
@@ -26,13 +26,13 @@ from parsec.components.pki import (
     PkiEnrollmentSubmitBadOutcome,
     PkiEnrollmentSubmitX509CertificateAlreadySubmitted,
 )
-from parsec.components.postgresql.pki_submit import pki_submit
+from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
+from parsec.components.postgresql.pki_accept import pki_accept
 from parsec.components.postgresql.pki_info import pki_info
 from parsec.components.postgresql.pki_list import pki_list
 from parsec.components.postgresql.pki_reject import pki_reject
-from parsec.components.postgresql.pki_accept import pki_accept
-from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
-from parsec.components.postgresql.utils import transaction, no_transaction
+from parsec.components.postgresql.pki_submit import pki_submit
+from parsec.components.postgresql.utils import no_transaction, transaction
 
 
 class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
@@ -123,6 +123,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         enrollment_id: PKIEnrollmentID,
         payload: bytes,
         payload_signature: bytes,
+        payload_signature_algorithm: PkiSignatureAlgorithm,
         accepter_der_x509_certificate: bytes,
         submitter_user_certificate: bytes,
         submitter_redacted_user_certificate: bytes,
@@ -144,6 +145,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             enrollment_id,
             payload,
             payload_signature,
+            payload_signature_algorithm,
             accepter_der_x509_certificate,
             submitter_user_certificate,
             submitter_redacted_user_certificate,

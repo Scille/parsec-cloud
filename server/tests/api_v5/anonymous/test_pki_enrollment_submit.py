@@ -354,6 +354,7 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
             root_verify_key=coolorg.root_verify_key,
         ).dump(),
         payload_signature=b"<accept payload signature>",
+        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         accepter_der_x509_certificate=b"<accepter der x509 certificate>",
         submitter_user_certificate=user_certificate,
         submitter_redacted_user_certificate=redacted_user_certificate,

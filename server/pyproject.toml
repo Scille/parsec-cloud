@@ -181,7 +181,6 @@ include = ["parsec", "tests", "build.py", "../docs", "../misc", "../bindings/gen
 exclude = ["**/__pycache__", "../**/.venv/"]
 ignore = [
     "parsec/components/postgresql/sequester.py",
-    "parsec/components/postgresql/pki.py",
     "tests/cli/test_migrate.py",
     "tests/cli/common.py",
     "tests/cli/test_sequester.py",

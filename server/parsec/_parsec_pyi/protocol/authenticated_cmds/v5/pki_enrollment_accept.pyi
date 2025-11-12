@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from parsec._parsec import DateTime, PKIEnrollmentID
+from parsec._parsec import DateTime, PKIEnrollmentID, PkiSignatureAlgorithm
 
 class Req:
     def __init__(
@@ -12,6 +12,7 @@ class Req:
         enrollment_id: PKIEnrollmentID,
         payload: bytes,
         payload_signature: bytes,
+        payload_signature_algorithm: PkiSignatureAlgorithm,
         accepter_der_x509_certificate: bytes,
         submitter_user_certificate: bytes,
         submitter_device_certificate: bytes,
@@ -27,6 +28,8 @@ class Req:
     def payload(self) -> bytes: ...
     @property
     def payload_signature(self) -> bytes: ...
+    @property
+    def payload_signature_algorithm(self) -> PkiSignatureAlgorithm: ...
     @property
     def submitter_device_certificate(self) -> bytes: ...
     @property

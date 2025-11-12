@@ -8,6 +8,7 @@ from parsec._parsec import (
     OrganizationID,
     PkiEnrollmentAnswerPayload,
     PKIEnrollmentID,
+    PkiSignatureAlgorithm,
     UserCertificate,
     UserProfile,
     VerifyKey,
@@ -52,7 +53,8 @@ WITH my_update AS (
         info_accepted.accepted_on = $now,
         info_accepted.accepter_der_x509_certificate = $accepter_der_x509_certificate,
         info_accepted.accept_payload_signature = $accept_payload_signature,
-        info_accepted.accept_payload = $accept_payload
+        info_accepted.accept_payload = $accept_payload,
+        info_accepted.accept_payload_signature_algorithm = $accept_payload_signature_algorithm
     WHERE _id = $enrollment_internal_id
     RETURNING TRUE
 )
@@ -70,6 +72,7 @@ async def pki_accept(
     enrollment_id: PKIEnrollmentID,
     payload: bytes,
     payload_signature: bytes,
+    payload_signature_algorithm: PkiSignatureAlgorithm,
     accepter_der_x509_certificate: bytes,
     submitter_user_certificate: bytes,
     submitter_redacted_user_certificate: bytes,
@@ -244,6 +247,7 @@ async def pki_accept(
             now=now,
             accepter_der_x509_certificate=accepter_der_x509_certificate,
             accept_payload_signature=payload_signature,
+            accept_payload_signature_algorithm=payload_signature_algorithm.str,
             accept_payload=payload,
         )
     )

@@ -12,33 +12,37 @@ use super::authenticated_cmds;
 // Request
 
 pub fn req() {
-    // Generated from Parsec 3.5.1-a.0+dev
+    // Generated from Parsec 3.5.3-a.0+dev
     // Content:
     //   cmd: 'pki_enrollment_accept'
     //   enrollment_id: ext(2, 0x56f48ed307984f10830e197287399c22)
     //   payload: 0x3c64756d6d793e
     //   payload_signature: 0x3c7369676e61747572653e
+    //   payload_signature_algorithm: 'RSASSA-PSS-SHA256'
     //   accepter_der_x509_certificate: 0x3c61636365707465725f6465725f783530395f63657274696669636174653e
     //   submitter_user_certificate: 0x3c64756d6d793e
     //   submitter_device_certificate: 0x3c64756d6d793e
     //   submitter_redacted_user_certificate: 0x3c64756d6d793e
     //   submitter_redacted_device_certificate: 0x3c64756d6d793e
-    let raw = hex!(
-        "89a3636d64b5706b695f656e726f6c6c6d656e745f616363657074ad656e726f6c6c6d"
+    let raw: &[u8] = hex!(
+        "8aa3636d64b5706b695f656e726f6c6c6d656e745f616363657074ad656e726f6c6c6d"
         "656e745f6964d80256f48ed307984f10830e197287399c22a77061796c6f6164c4073c"
         "64756d6d793eb17061796c6f61645f7369676e6174757265c40b3c7369676e61747572"
-        "653ebd61636365707465725f6465725f783530395f6365727469666963617465c41f3c"
-        "61636365707465725f6465725f783530395f63657274696669636174653eba7375626d"
-        "69747465725f757365725f6365727469666963617465c4073c64756d6d793ebc737562"
-        "6d69747465725f6465766963655f6365727469666963617465c4073c64756d6d793ed9"
-        "237375626d69747465725f72656461637465645f757365725f63657274696669636174"
-        "65c4073c64756d6d793ed9257375626d69747465725f72656461637465645f64657669"
-        "63655f6365727469666963617465c4073c64756d6d793e"
-    );
+        "653ebb7061796c6f61645f7369676e61747572655f616c676f726974686db152534153"
+        "53412d5053532d534841323536bd61636365707465725f6465725f783530395f636572"
+        "7469666963617465c41f3c61636365707465725f6465725f783530395f636572746966"
+        "69636174653eba7375626d69747465725f757365725f6365727469666963617465c407"
+        "3c64756d6d793ebc7375626d69747465725f6465766963655f63657274696669636174"
+        "65c4073c64756d6d793ed9237375626d69747465725f72656461637465645f75736572"
+        "5f6365727469666963617465c4073c64756d6d793ed9257375626d69747465725f7265"
+        "6461637465645f6465766963655f6365727469666963617465c4073c64756d6d793e"
+    )
+    .as_ref();
 
     let req = authenticated_cmds::pki_enrollment_accept::Req {
         payload: hex!("3c64756d6d793e").as_ref().into(),
         payload_signature: hex!("3c7369676e61747572653e").as_ref().into(),
+        payload_signature_algorithm: PkiSignatureAlgorithm::RsassaPssSha256,
         accepter_der_x509_certificate: hex!(
             "3c61636365707465725f6465725f783530395f63657274696669636174653e"
         )
@@ -53,7 +57,7 @@ pub fn req() {
     let expected = authenticated_cmds::AnyCmdReq::PkiEnrollmentAccept(req.clone());
     println!("***expected: {:?}", req.dump().unwrap());
 
-    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(raw).unwrap();
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip

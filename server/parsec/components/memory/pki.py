@@ -323,6 +323,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         enrollment_id: PKIEnrollmentID,
         payload: bytes,
         payload_signature: bytes,
+        payload_signature_algorithm: PkiSignatureAlgorithm,
         accepter_der_x509_certificate: bytes,
         submitter_user_certificate: bytes,
         submitter_redacted_user_certificate: bytes,
@@ -437,6 +438,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 accepted_on=now,
                 accept_payload=payload,
                 accept_payload_signature=payload_signature,
+                accept_payload_signature_algorithm=payload_signature_algorithm,
                 accepter_der_x509_certificate=accepter_der_x509_certificate,
             )
 
