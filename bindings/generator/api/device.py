@@ -17,8 +17,8 @@ from .common import (
     UserID,
     Variant,
     VariantItemUnit,
+    X509CertificateReference,
 )
-from .pki import X509CertificateReference
 
 
 class AvailableDeviceType(Variant):
