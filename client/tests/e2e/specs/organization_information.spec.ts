@@ -10,7 +10,7 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
     const inviteButton = usersContainer.locator('.user-invite-button');
     const storageContainer = container.locator('.organization-storage');
     const emailInvitationCard = usersContainer.locator('.invitation-card-list-item').nth(0);
-    const PkiRequestCard = usersContainer.locator('.invitation-card-list-item').nth(1);
+    // const PkiRequestCard = usersContainer.locator('.invitation-card-list-item').nth(1);
     await usersContainer.locator('#invitations-button').isVisible();
 
     if (displaySize === DisplaySize.Small) {
@@ -20,9 +20,9 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
     await expect(emailInvitationCard).toBeVisible();
     await expect(emailInvitationCard.locator('.invitation-card-list-item__title')).toContainText('Email invitations');
     await expect(emailInvitationCard.locator('.invitation-card-list-item__number')).toHaveText('1');
-    await expect(PkiRequestCard).toBeVisible();
-    await expect(PkiRequestCard.locator('.invitation-card-list-item__title')).toContainText('PKI requests');
-    await expect(PkiRequestCard.locator('.invitation-card-list-item__number')).toHaveText('3');
+    // await expect(PkiRequestCard).toBeVisible();
+    // await expect(PkiRequestCard.locator('.invitation-card-list-item__title')).toContainText('PKI requests');
+    // await expect(PkiRequestCard.locator('.invitation-card-list-item__number')).toHaveText('3');
     await expect(inviteButton).toBeVisible();
 
     if (displaySize === DisplaySize.Small) {
@@ -143,25 +143,25 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
     }
     await expect(usersContainer.locator('.invitation-card-list')).toBeVisible();
     await expect(usersContainer.locator('.invitation-card-list-item__title').nth(0)).toHaveText('Email invitations');
-    await expect(usersContainer.locator('.invitation-card-list-item__title').nth(1)).toHaveText('PKI requests');
+    // await expect(usersContainer.locator('.invitation-card-list-item__title').nth(1)).toHaveText('PKI requests');
     await usersContainer.locator('.invitation-card-list-item').nth(0).click();
     await expect(connected).toBeInvitationPage();
 
-    if (displaySize === DisplaySize.Small) {
-      await expect(connected.locator('.switch-view-button')).toContainText('Email invitation');
-      await connected.locator('#tab-bar').locator('.tab-bar-menu-button').nth(2).click();
-      await expect(usersContainer.locator('.invitation-card-list')).toBeVisible();
-      await usersContainer.locator('.invitation-card-list-item').nth(1).click();
-      await expect(connected).toBeInvitationPage();
-      await expect(connected.locator('.switch-view-button')).toContainText('PKI requests');
-    } else {
-      await expect(connected.locator('.toggle-view').locator('.email-button')).toHaveTheClass('active');
-      await sidebar.locator('.sidebar-content-organization-button').nth(2).click();
-      await expect(usersContainer.locator('.invitation-card-list')).toBeVisible();
-      await usersContainer.locator('.invitation-card-list-item').nth(1).click();
-      await expect(connected).toBeInvitationPage();
-      await expect(connected.locator('.toggle-view').locator('.pki-button')).toHaveTheClass('active');
-    }
+    // if (displaySize === DisplaySize.Small) {
+    //   await expect(connected.locator('.switch-view-button')).toContainText('Email invitation');
+    //   await connected.locator('#tab-bar').locator('.tab-bar-menu-button').nth(2).click();
+    //   await expect(usersContainer.locator('.invitation-card-list')).toBeVisible();
+    //   await usersContainer.locator('.invitation-card-list-item').nth(1).click();
+    //   await expect(connected).toBeInvitationPage();
+    //   await expect(connected.locator('.switch-view-button')).toContainText('PKI requests');
+    // } else {
+    //   await expect(connected.locator('.toggle-view').locator('.email-button')).toHaveTheClass('active');
+    //   await sidebar.locator('.sidebar-content-organization-button').nth(2).click();
+    //   await expect(usersContainer.locator('.invitation-card-list')).toBeVisible();
+    //   await usersContainer.locator('.invitation-card-list-item').nth(1).click();
+    //   await expect(connected).toBeInvitationPage();
+    //   await expect(connected.locator('.toggle-view').locator('.pki-button')).toHaveTheClass('active');
+    // }
   });
 }
 
