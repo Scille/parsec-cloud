@@ -4,7 +4,7 @@ History
 .. towncrier release notes start
 
 
-Parsec v3.6.1-rc.0 (2025-11-13)
+Parsec v3.6.1-rc.1 (2025-11-13)
 -------------------------------
 
 Features
@@ -64,6 +64,10 @@ Bugfixes
   by replacing the custom input and dropdown.
   (`#11328 <https://github.com/Scille/parsec-cloud/issues/11328>`__)
 
+* Linux: Fixed an issue that would prevent the application window from
+  displaying when installed with snap
+  (`#11529 <https://github.com/Scille/parsec-cloud/issues/11529>`__)
+
 
 Miscellaneous internal changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -77,6 +81,13 @@ Miscellaneous internal changes
 
 * Update megashark-lib dependency and PKI tooltips
   (`#11228 <https://github.com/Scille/parsec-cloud/issues/11228>`__)
+
+* Removed Edit button in the Viewer header for read-only users
+  (`#11460 <https://github.com/Scille/parsec-cloud/issues/11460>`__)
+
+* Added information during the invitation sas code exchange to better guide
+  users
+  (`#11483 <https://github.com/Scille/parsec-cloud/issues/11483>`__)
 
 
 
