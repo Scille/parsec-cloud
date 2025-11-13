@@ -1,0 +1,81 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
+use std::path::{Path, PathBuf};
+
+use libparsec_platform_device_loader::{AvailableDevice, DeviceSaveStrategy};
+use libparsec_types::{
+    anyhow::{self, Context},
+    LocalDevice, PKILocalPendingEnrollment, PkiEnrollmentAnswerPayload, PrivateParts, SecretKey,
+};
+
+#[derive(Debug, thiserror::Error)]
+pub enum PkiEnrollmentFinalizeError {
+    #[error("Failed to save device: {0}")]
+    SaveError(#[from] libparsec_platform_device_loader::SaveDeviceError),
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+/// Generates and saves the new device
+pub async fn finalize(
+    config_dir: &Path,
+    key_file: PathBuf,
+    strategy: &DeviceSaveStrategy,
+    accepted: PkiEnrollmentAnswerPayload,
+    local_pending: PKILocalPendingEnrollment,
+) -> Result<AvailableDevice, PkiEnrollmentFinalizeError> {
+    let PKILocalPendingEnrollment {
+        cert_ref,
+        addr,
+        encrypted_key,
+        encrypted_key_algo,
+        ciphertext,
+        ..
+    } = local_pending;
+
+    let key =
+        libparsec_platform_pki::decrypt_message(encrypted_key_algo, &encrypted_key, &cert_ref)
+            .map(|v| v.data)
+            .context("Cannot decrypt key")
+            .and_then(|raw| SecretKey::try_from(raw.as_ref()).context("Invalid key"))?;
+    let raw_private_parts = key
+        .decrypt(&ciphertext)
+        .context("Cannot decrypt local pending")?;
+    let PrivateParts {
+        private_key,
+        signing_key,
+    } = PrivateParts::load(&raw_private_parts).context("Cannot load local pending")?;
+
+    let PkiEnrollmentAnswerPayload {
+        user_id,
+        device_id,
+        device_label,
+        human_handle,
+        profile,
+        root_verify_key,
+    } = accepted;
+    let organization_addr = addr.generate_organization_addr(root_verify_key);
+    let time_provider = None;
+    let user_realm_id = None;
+    let user_realm_key = None;
+
+    let device = LocalDevice::generate_new_device(
+        organization_addr,
+        profile,
+        human_handle,
+        device_label,
+        Some(user_id),
+        Some(device_id),
+        Some(signing_key),
+        Some(private_key),
+        time_provider,
+        user_realm_id,
+        user_realm_key,
+    );
+
+    let available_device =
+        libparsec_platform_device_loader::save_device(config_dir, strategy, &device, key_file)
+            .await?;
+
+    Ok(available_device)
+}

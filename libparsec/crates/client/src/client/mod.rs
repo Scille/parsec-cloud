@@ -5,6 +5,7 @@
 mod list_frozen_users;
 mod organization_info;
 mod pki_enrollment_accept;
+mod pki_enrollment_finalize;
 mod pki_enrollment_list;
 mod pki_enrollment_reject;
 mod pki_enrollment_submit;
@@ -35,6 +36,7 @@ use std::{
 pub use self::{
     list_frozen_users::ClientListFrozenUsersError,
     pki_enrollment_accept::PkiEnrollmentAcceptError,
+    pki_enrollment_finalize::{finalize as pki_enrollment_finalize, PkiEnrollmentFinalizeError},
     pki_enrollment_list::{PkiEnrollmentListError, PkiEnrollmentListItem},
     pki_enrollment_reject::PkiEnrollmentRejectError,
     pki_enrollment_submit::{pki_enrollment_submit, PkiEnrollmentSubmitError},
