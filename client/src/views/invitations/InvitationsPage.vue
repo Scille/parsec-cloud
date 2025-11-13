@@ -3,7 +3,7 @@
 <template>
   <ion-page class="invitations-page">
     <div
-      v-if="isSmallDisplay"
+      v-if="isSmallDisplay && false"
       class="switch-view"
     >
       <ion-button
@@ -47,7 +47,7 @@
           class="toggle-view"
           role="tablist"
           aria-label="Invitation view toggle"
-          v-if="isLargeDisplay"
+          v-if="isLargeDisplay && false"
         >
           <ion-button
             class="toggle-view-button email-button"
