@@ -103,6 +103,7 @@ export type FsPath = string
 export type GreetingAttemptID = string
 export type InvitationToken = string
 export type OrganizationID = string
+export type PKIEncryptionAlgorithm = string
 export type PKIEnrollmentID = string
 export type ParsecAddr = string
 export type ParsecInvitationAddr = string
@@ -120,9 +121,11 @@ export type VlobID = string
 export type X509CertificateHash = string
 export type Bytes = Uint8Array
 export type KeyDerivation = Uint8Array
+export type PublicKey = Uint8Array
 export type SecretKey = Uint8Array
 export type SequesterVerifyKeyDer = Uint8Array
 export type Sha256BoxData = Uint8Array
+export type VerifyKey = Uint8Array
 export type X509WindowsCngURI = Uint8Array
 export type NonZeroU8 = number
 export type U8 = number
@@ -306,6 +309,26 @@ export interface OrganizationInfo {
     totalMetadataBytes: SizeInt
 }
 
+export interface PKILocalPendingEnrollment {
+    certRef: X509CertificateReference
+    addr: ParsecPkiEnrollmentAddr
+    submittedOn: DateTime
+    enrollmentId: PKIEnrollmentID
+    payload: PkiEnrollmentSubmitPayload
+    encryptedKey: Bytes
+    encryptedKeyAlgo: PKIEncryptionAlgorithm
+    ciphertext: Bytes
+}
+
+export interface PkiEnrollmentAnswerPayload {
+    userId: UserID
+    deviceId: DeviceID
+    deviceLabel: DeviceLabel
+    humanHandle: HumanHandle
+    profile: UserProfile
+    rootVerifyKey: VerifyKey
+}
+
 export interface PkiEnrollmentListItem {
     enrollmentId: PKIEnrollmentID
     submittedOn: DateTime
@@ -313,6 +336,13 @@ export interface PkiEnrollmentListItem {
     payloadSignature: Bytes
     payloadSignatureAlgorithm: PkiSignatureAlgorithm
     payload: Bytes
+}
+
+export interface PkiEnrollmentSubmitPayload {
+    verifyKey: VerifyKey
+    publicKey: PublicKey
+    deviceLabel: DeviceLabel
+    humanHandle: HumanHandle
 }
 
 export interface ServerConfig {
@@ -3304,6 +3334,24 @@ export type PkiEnrollmentAcceptError =
   | PkiEnrollmentAcceptErrorOffline
   | PkiEnrollmentAcceptErrorPkiOperationError
 
+// PkiEnrollmentFinalizeError
+export enum PkiEnrollmentFinalizeErrorTag {
+    Internal = 'PkiEnrollmentFinalizeErrorInternal',
+    SaveError = 'PkiEnrollmentFinalizeErrorSaveError',
+}
+
+export interface PkiEnrollmentFinalizeErrorInternal {
+    tag: PkiEnrollmentFinalizeErrorTag.Internal
+    error: string
+}
+export interface PkiEnrollmentFinalizeErrorSaveError {
+    tag: PkiEnrollmentFinalizeErrorTag.SaveError
+    error: string
+}
+export type PkiEnrollmentFinalizeError =
+  | PkiEnrollmentFinalizeErrorInternal
+  | PkiEnrollmentFinalizeErrorSaveError
+
 // PkiEnrollmentListError
 export enum PkiEnrollmentListErrorTag {
     AuthorNotAllowed = 'PkiEnrollmentListErrorAuthorNotAllowed',
@@ -5672,6 +5720,12 @@ export interface LibParsecPlugin {
     pathSplit(
         path: FsPath
     ): Promise<Array<EntryName>>
+    pkiEnrollmentFinalize(
+        config: ClientConfig,
+        save_strategy: DeviceSaveStrategy,
+        accepted: PkiEnrollmentAnswerPayload,
+        local_pending: PKILocalPendingEnrollment
+    ): Promise<Result<AvailableDevice, PkiEnrollmentFinalizeError>>
     pkiEnrollmentSubmit(
         config: ClientConfig,
         addr: ParsecPkiEnrollmentAddr,

@@ -2415,6 +2415,293 @@ fn struct_organization_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// PKILocalPendingEnrollment
+
+#[allow(dead_code)]
+fn struct_pki_local_pending_enrollment_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::PKILocalPendingEnrollment> {
+    let cert_ref = {
+        let js_val: Handle<JsObject> = obj.get(cx, "certRef")?;
+        struct_x509_certificate_reference_js_to_rs(cx, js_val)?
+    };
+    let addr = {
+        let js_val: Handle<JsString> = obj.get(cx, "addr")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecPkiEnrollmentAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let submitted_on = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "submittedOn")?;
+        {
+            let v = js_val.value(cx);
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            match custom_from_rs_f64(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let enrollment_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "enrollmentId")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::PKIEnrollmentID, _> {
+                libparsec::PKIEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let payload = {
+        let js_val: Handle<JsObject> = obj.get(cx, "payload")?;
+        struct_pki_enrollment_submit_payload_js_to_rs(cx, js_val)?
+    };
+    let encrypted_key = {
+        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "encryptedKey")?;
+        {
+            let custom_from_rs_bytes =
+                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+            #[allow(clippy::unnecessary_mut_passed)]
+            match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                Ok(val) => val,
+                // err can't infer type in some case, because of the previous `try_into`
+                #[allow(clippy::useless_format)]
+                Err(err) => return cx.throw_type_error(format!("{}", err)),
+            }
+        }
+    };
+    let encrypted_key_algo = {
+        let js_val: Handle<JsString> = obj.get(cx, "encryptedKeyAlgo")?;
+        {
+            match js_val.value(cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let ciphertext = {
+        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "ciphertext")?;
+        {
+            let custom_from_rs_bytes =
+                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+            #[allow(clippy::unnecessary_mut_passed)]
+            match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                Ok(val) => val,
+                // err can't infer type in some case, because of the previous `try_into`
+                #[allow(clippy::useless_format)]
+                Err(err) => return cx.throw_type_error(format!("{}", err)),
+            }
+        }
+    };
+    Ok(libparsec::PKILocalPendingEnrollment {
+        cert_ref,
+        addr,
+        submitted_on,
+        enrollment_id,
+        payload,
+        encrypted_key,
+        encrypted_key_algo,
+        ciphertext,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_pki_local_pending_enrollment_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::PKILocalPendingEnrollment,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_cert_ref = struct_x509_certificate_reference_rs_to_js(cx, rs_obj.cert_ref)?;
+    js_obj.set(cx, "certRef", js_cert_ref)?;
+    let js_addr = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |addr: libparsec::ParsecPkiEnrollmentAddr| -> Result<String, &'static str> {
+                Ok(addr.to_url().into())
+            };
+        match custom_to_rs_string(rs_obj.addr) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err.to_string()),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "addr", js_addr)?;
+    let js_submitted_on = JsNumber::new(cx, {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        match custom_to_rs_f64(rs_obj.submitted_on) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    });
+    js_obj.set(cx, "submittedOn", js_submitted_on)?;
+    let js_enrollment_id = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::PKIEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.enrollment_id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err.to_string()),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "enrollmentId", js_enrollment_id)?;
+    let js_payload = struct_pki_enrollment_submit_payload_rs_to_js(cx, rs_obj.payload)?;
+    js_obj.set(cx, "payload", js_payload)?;
+    let js_encrypted_key = {
+        let rs_buff = { rs_obj.encrypted_key.as_ref() };
+        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+        js_buff
+    };
+    js_obj.set(cx, "encryptedKey", js_encrypted_key)?;
+    let js_encrypted_key_algo = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |v| -> Result<_, std::convert::Infallible> { Ok(std::string::ToString::to_string(&v)) };
+        match custom_to_rs_string(rs_obj.encrypted_key_algo) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err.to_string()),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "encryptedKeyAlgo", js_encrypted_key_algo)?;
+    let js_ciphertext = {
+        let rs_buff = { rs_obj.ciphertext.as_ref() };
+        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+        js_buff
+    };
+    js_obj.set(cx, "ciphertext", js_ciphertext)?;
+    Ok(js_obj)
+}
+
+// PkiEnrollmentAnswerPayload
+
+#[allow(dead_code)]
+fn struct_pki_enrollment_answer_payload_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::PkiEnrollmentAnswerPayload> {
+    let user_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "userId")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let device_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "deviceId")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let device_label = {
+        let js_val: Handle<JsString> = obj.get(cx, "deviceLabel")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let human_handle = {
+        let js_val: Handle<JsObject> = obj.get(cx, "humanHandle")?;
+        struct_human_handle_js_to_rs(cx, js_val)?
+    };
+    let profile = {
+        let js_val: Handle<JsString> = obj.get(cx, "profile")?;
+        {
+            let js_string = js_val.value(cx);
+            enum_user_profile_js_to_rs(cx, js_string.as_str())?
+        }
+    };
+    let root_verify_key = {
+        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "rootVerifyKey")?;
+        {
+            #[allow(clippy::unnecessary_mut_passed)]
+            match js_val.as_slice(cx).try_into() {
+                Ok(val) => val,
+                // err can't infer type in some case, because of the previous `try_into`
+                #[allow(clippy::useless_format)]
+                Err(err) => return cx.throw_type_error(format!("{}", err)),
+            }
+        }
+    };
+    Ok(libparsec::PkiEnrollmentAnswerPayload {
+        user_id,
+        device_id,
+        device_label,
+        human_handle,
+        profile,
+        root_verify_key,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_pki_enrollment_answer_payload_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::PkiEnrollmentAnswerPayload,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_user_id = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.user_id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err.to_string()),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "userId", js_user_id)?;
+    let js_device_id = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.device_id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err.to_string()),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "deviceId", js_device_id)?;
+    let js_device_label = JsString::try_new(cx, rs_obj.device_label).or_throw(cx)?;
+    js_obj.set(cx, "deviceLabel", js_device_label)?;
+    let js_human_handle = struct_human_handle_rs_to_js(cx, rs_obj.human_handle)?;
+    js_obj.set(cx, "humanHandle", js_human_handle)?;
+    let js_profile =
+        JsString::try_new(cx, enum_user_profile_rs_to_js(rs_obj.profile)).or_throw(cx)?;
+    js_obj.set(cx, "profile", js_profile)?;
+    let js_root_verify_key = {
+        let rs_buff = { rs_obj.root_verify_key.as_ref() };
+        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+        js_buff
+    };
+    js_obj.set(cx, "rootVerifyKey", js_root_verify_key)?;
+    Ok(js_obj)
+}
+
 // PkiEnrollmentListItem
 
 #[allow(dead_code)]
@@ -2567,6 +2854,86 @@ fn struct_pki_enrollment_list_item_rs_to_js<'a>(
         js_buff
     };
     js_obj.set(cx, "payload", js_payload)?;
+    Ok(js_obj)
+}
+
+// PkiEnrollmentSubmitPayload
+
+#[allow(dead_code)]
+fn struct_pki_enrollment_submit_payload_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::PkiEnrollmentSubmitPayload> {
+    let verify_key = {
+        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "verifyKey")?;
+        {
+            #[allow(clippy::unnecessary_mut_passed)]
+            match js_val.as_slice(cx).try_into() {
+                Ok(val) => val,
+                // err can't infer type in some case, because of the previous `try_into`
+                #[allow(clippy::useless_format)]
+                Err(err) => return cx.throw_type_error(format!("{}", err)),
+            }
+        }
+    };
+    let public_key = {
+        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "publicKey")?;
+        {
+            #[allow(clippy::unnecessary_mut_passed)]
+            match js_val.as_slice(cx).try_into() {
+                Ok(val) => val,
+                // err can't infer type in some case, because of the previous `try_into`
+                #[allow(clippy::useless_format)]
+                Err(err) => return cx.throw_type_error(format!("{}", err)),
+            }
+        }
+    };
+    let device_label = {
+        let js_val: Handle<JsString> = obj.get(cx, "deviceLabel")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let human_handle = {
+        let js_val: Handle<JsObject> = obj.get(cx, "humanHandle")?;
+        struct_human_handle_js_to_rs(cx, js_val)?
+    };
+    Ok(libparsec::PkiEnrollmentSubmitPayload {
+        verify_key,
+        public_key,
+        device_label,
+        human_handle,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_pki_enrollment_submit_payload_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::PkiEnrollmentSubmitPayload,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_verify_key = {
+        let rs_buff = { rs_obj.verify_key.as_ref() };
+        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+        js_buff
+    };
+    js_obj.set(cx, "verifyKey", js_verify_key)?;
+    let js_public_key = {
+        let rs_buff = { rs_obj.public_key.as_ref() };
+        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+        js_buff
+    };
+    js_obj.set(cx, "publicKey", js_public_key)?;
+    let js_device_label = JsString::try_new(cx, rs_obj.device_label).or_throw(cx)?;
+    js_obj.set(cx, "deviceLabel", js_device_label)?;
+    let js_human_handle = struct_human_handle_rs_to_js(cx, rs_obj.human_handle)?;
+    js_obj.set(cx, "humanHandle", js_human_handle)?;
     Ok(js_obj)
 }
 
@@ -12079,6 +12446,31 @@ fn variant_pki_enrollment_accept_error_rs_to_js<'a>(
         libparsec::PkiEnrollmentAcceptError::PkiOperationError { .. } => {
             let js_tag =
                 JsString::try_new(cx, "PkiEnrollmentAcceptErrorPkiOperationError").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// PkiEnrollmentFinalizeError
+
+#[allow(dead_code)]
+fn variant_pki_enrollment_finalize_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::PkiEnrollmentFinalizeError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::PkiEnrollmentFinalizeError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "PkiEnrollmentFinalizeErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::PkiEnrollmentFinalizeError::SaveError { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "PkiEnrollmentFinalizeErrorSaveError").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -23140,6 +23532,63 @@ fn path_split(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// pki_enrollment_finalize
+fn pki_enrollment_finalize(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let config = {
+        let js_val = cx.argument::<JsObject>(0)?;
+        struct_client_config_js_to_rs(&mut cx, js_val)?
+    };
+    let save_strategy = {
+        let js_val = cx.argument::<JsObject>(1)?;
+        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+    };
+    let accepted = {
+        let js_val = cx.argument::<JsObject>(2)?;
+        struct_pki_enrollment_answer_payload_js_to_rs(&mut cx, js_val)?
+    };
+    let local_pending = {
+        let js_val = cx.argument::<JsObject>(3)?;
+        struct_pki_local_pending_enrollment_js_to_rs(&mut cx, js_val)?
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::pki_enrollment_finalize(config, save_strategy, accepted, local_pending)
+                    .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_available_device_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_pki_enrollment_finalize_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // pki_enrollment_submit
 fn pki_enrollment_submit(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -27652,6 +28101,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("pathNormalize", path_normalize)?;
     cx.export_function("pathParent", path_parent)?;
     cx.export_function("pathSplit", path_split)?;
+    cx.export_function("pkiEnrollmentFinalize", pki_enrollment_finalize)?;
     cx.export_function("pkiEnrollmentSubmit", pki_enrollment_submit)?;
     cx.export_function(
         "showCertificateSelectionDialogWindowsOnly",

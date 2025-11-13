@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from typing import ClassVar
 
 from .addr import ParsecPkiEnrollmentAddr
 from .common import (
@@ -8,71 +7,24 @@ from .common import (
     Bytes,
     BytesBasedType,
     DateTime,
+    DeviceID,
     DeviceLabel,
-    PKIEnrollmentID,
     ErrorVariant,
     HumanHandle,
+    PKIEnrollmentID,
     Result,
     StrBasedType,
     Structure,
-    UnitStructure,
-    Variant,
-    VariantItemTuple,
+    UserID,
+    UserProfile,
+    X509CertificateReference,
 )
 from .config import ClientConfig
+from .device import AvailableDevice, DeviceSaveStrategy
 
 
 class PkiSignatureAlgorithm(StrBasedType):
     custom_to_rs_string = DISPLAY_TO_STRING
-
-
-class X509CertificateHash(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { <libparsec::X509CertificateHash as std::str::FromStr>::from_str(s.as_str()).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = DISPLAY_TO_STRING
-
-
-class X509WindowsCngURI(BytesBasedType):
-    custom_from_rs_bytes = (
-        "|v: &[u8]| -> Result<_, String> { Ok(libparsec::Bytes::copy_from_slice(v).into()) }"
-    )
-    custom_to_rs_bytes = (
-        "|v: libparsec::X509WindowsCngURI| -> Result<Vec<u8>, String> { Ok(v.into()) }"
-    )
-
-
-class X509Pkcs11URI(UnitStructure):
-    pass
-
-
-class X509URIFlavorValue(Variant):
-    WindowsCNG = VariantItemTuple(X509WindowsCngURI)
-    PKCS11 = VariantItemTuple(X509Pkcs11URI)
-
-
-class X509CertificateReference(Structure):
-    uris: list[X509URIFlavorValue]
-    hash: X509CertificateHash
-    custom_getters: ClassVar = {
-        "uris": """
-        |o: &libparsec::X509CertificateReference| -> Vec<libparsec::X509URIFlavorValue> {
-            o.uris().cloned().collect()
-        }
-        """,
-        "hash": """
-        |o: &libparsec::X509CertificateReference| -> libparsec::X509CertificateHash {
-            o.hash.clone()
-        }
-        """,
-    }
-    custom_init: str = """
-        |uris: Vec<libparsec::X509URIFlavorValue>, hash: libparsec::X509CertificateHash| -> Result<_, String> {
-            let mut cert_ref = libparsec::X509CertificateReference::from(hash);
-            for uri in uris {
-                cert_ref = cert_ref.add_or_replace_uri_wrapped(uri);
-            }
-            Ok(cert_ref)
-        }
-    """
 
 
 class ShowCertificateSelectionDialogError(ErrorVariant):
@@ -165,3 +117,55 @@ class PkiEnrollmentAcceptError(ErrorVariant):
     class HumanHandleAlreadyTaken: ...
 
     class PkiOperationError: ...
+
+
+class VerifyKey(BytesBasedType): ...
+
+
+class PublicKey(BytesBasedType): ...
+
+
+class PkiEnrollmentAnswerPayload(Structure):
+    user_id: UserID
+    device_id: DeviceID
+    device_label: DeviceLabel
+    human_handle: HumanHandle
+    profile: UserProfile
+    root_verify_key: VerifyKey
+
+
+class PkiEnrollmentSubmitPayload(Structure):
+    verify_key: VerifyKey
+    public_key: PublicKey
+    device_label: DeviceLabel
+    human_handle: HumanHandle
+
+
+class PKIEncryptionAlgorithm(StrBasedType):
+    custom_to_rs_string = DISPLAY_TO_STRING
+
+
+class PKILocalPendingEnrollment(Structure):
+    cert_ref: X509CertificateReference
+    addr: ParsecPkiEnrollmentAddr
+    submitted_on: DateTime
+    enrollment_id: PKIEnrollmentID
+    payload: PkiEnrollmentSubmitPayload
+    encrypted_key: Bytes
+    encrypted_key_algo: PKIEncryptionAlgorithm
+    ciphertext: Bytes
+
+
+class PkiEnrollmentFinalizeError(ErrorVariant):
+    class SaveError: ...
+
+    class Internal: ...
+
+
+async def pki_enrollment_finalize(
+    config: ClientConfig,
+    save_strategy: DeviceSaveStrategy,
+    accepted: PkiEnrollmentAnswerPayload,
+    local_pending: PKILocalPendingEnrollment,
+) -> Result[AvailableDevice, PkiEnrollmentFinalizeError]:
+    raise NotImplementedError

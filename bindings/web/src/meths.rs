@@ -2564,6 +2564,286 @@ fn struct_organization_info_rs_to_js(
     Ok(js_obj)
 }
 
+// PKILocalPendingEnrollment
+
+#[allow(dead_code)]
+fn struct_pki_local_pending_enrollment_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::PKILocalPendingEnrollment, JsValue> {
+    let cert_ref = {
+        let js_val = Reflect::get(&obj, &"certRef".into())?;
+        struct_x509_certificate_reference_js_to_rs(js_val)?
+    };
+    let addr = {
+        let js_val = Reflect::get(&obj, &"addr".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::ParsecPkiEnrollmentAddr::from_any(&s).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let submitted_on = {
+        let js_val = Reflect::get(&obj, &"submittedOn".into())?;
+        {
+            let v = js_val.dyn_into::<Number>()?.value_of();
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            v
+        }
+    };
+    let enrollment_id = {
+        let js_val = Reflect::get(&obj, &"enrollmentId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<libparsec::PKIEnrollmentID, _> {
+                    libparsec::PKIEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let payload = {
+        let js_val = Reflect::get(&obj, &"payload".into())?;
+        struct_pki_enrollment_submit_payload_js_to_rs(js_val)?
+    };
+    let encrypted_key = {
+        let js_val = Reflect::get(&obj, &"encryptedKey".into())?;
+        js_val
+            .dyn_into::<Uint8Array>()
+            .map(|x| x.to_vec())
+            .map_err(|_| TypeError::new("Not a Uint8Array"))
+            .and_then(|x| {
+                let custom_from_rs_bytes =
+                    |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+                custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let encrypted_key_algo = {
+        let js_val = Reflect::get(&obj, &"encryptedKeyAlgo".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+            .parse()
+            .map_err(|_| TypeError::new("Not a valid PKIEncryptionAlgorithm"))?
+    };
+    let ciphertext = {
+        let js_val = Reflect::get(&obj, &"ciphertext".into())?;
+        js_val
+            .dyn_into::<Uint8Array>()
+            .map(|x| x.to_vec())
+            .map_err(|_| TypeError::new("Not a Uint8Array"))
+            .and_then(|x| {
+                let custom_from_rs_bytes =
+                    |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+                custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    Ok(libparsec::PKILocalPendingEnrollment {
+        cert_ref,
+        addr,
+        submitted_on,
+        enrollment_id,
+        payload,
+        encrypted_key,
+        encrypted_key_algo,
+        ciphertext,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_pki_local_pending_enrollment_rs_to_js(
+    rs_obj: libparsec::PKILocalPendingEnrollment,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_cert_ref = struct_x509_certificate_reference_rs_to_js(rs_obj.cert_ref)?;
+    Reflect::set(&js_obj, &"certRef".into(), &js_cert_ref)?;
+    let js_addr = JsValue::from_str({
+        let custom_to_rs_string =
+            |addr: libparsec::ParsecPkiEnrollmentAddr| -> Result<String, &'static str> {
+                Ok(addr.to_url().into())
+            };
+        match custom_to_rs_string(rs_obj.addr) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"addr".into(), &js_addr)?;
+    let js_submitted_on = {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        let v = match custom_to_rs_f64(rs_obj.submitted_on) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        };
+        JsValue::from(v)
+    };
+    Reflect::set(&js_obj, &"submittedOn".into(), &js_submitted_on)?;
+    let js_enrollment_id = JsValue::from_str({
+        let custom_to_rs_string =
+            |x: libparsec::PKIEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.enrollment_id) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"enrollmentId".into(), &js_enrollment_id)?;
+    let js_payload = struct_pki_enrollment_submit_payload_rs_to_js(rs_obj.payload)?;
+    Reflect::set(&js_obj, &"payload".into(), &js_payload)?;
+    let js_encrypted_key = JsValue::from(Uint8Array::from(rs_obj.encrypted_key.as_ref()));
+    Reflect::set(&js_obj, &"encryptedKey".into(), &js_encrypted_key)?;
+    let js_encrypted_key_algo = JsValue::from_str({
+        let custom_to_rs_string =
+            |v| -> Result<_, std::convert::Infallible> { Ok(std::string::ToString::to_string(&v)) };
+        match custom_to_rs_string(rs_obj.encrypted_key_algo) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"encryptedKeyAlgo".into(), &js_encrypted_key_algo)?;
+    let js_ciphertext = JsValue::from(Uint8Array::from(rs_obj.ciphertext.as_ref()));
+    Reflect::set(&js_obj, &"ciphertext".into(), &js_ciphertext)?;
+    Ok(js_obj)
+}
+
+// PkiEnrollmentAnswerPayload
+
+#[allow(dead_code)]
+fn struct_pki_enrollment_answer_payload_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::PkiEnrollmentAnswerPayload, JsValue> {
+    let user_id = {
+        let js_val = Reflect::get(&obj, &"userId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                    libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let device_id = {
+        let js_val = Reflect::get(&obj, &"deviceId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                    libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let device_label = {
+        let js_val = Reflect::get(&obj, &"deviceLabel".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let human_handle = {
+        let js_val = Reflect::get(&obj, &"humanHandle".into())?;
+        struct_human_handle_js_to_rs(js_val)?
+    };
+    let profile = {
+        let js_val = Reflect::get(&obj, &"profile".into())?;
+        {
+            let raw_string = js_val.as_string().ok_or_else(|| {
+                let type_error = TypeError::new("value is not a string");
+                type_error.set_cause(&js_val);
+                JsValue::from(type_error)
+            })?;
+            enum_user_profile_js_to_rs(raw_string.as_str())
+        }?
+    };
+    let root_verify_key = {
+        let js_val = Reflect::get(&obj, &"rootVerifyKey".into())?;
+        js_val
+            .dyn_into::<Uint8Array>()
+            .map(|x| x.to_vec())
+            .map_err(|_| TypeError::new("Not a Uint8Array"))
+            .and_then(|x| {
+                let xx: &[u8] = &x;
+                xx.try_into()
+                    .map_err(|_| TypeError::new("Not a valid VerifyKey"))
+            })?
+    };
+    Ok(libparsec::PkiEnrollmentAnswerPayload {
+        user_id,
+        device_id,
+        device_label,
+        human_handle,
+        profile,
+        root_verify_key,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_pki_enrollment_answer_payload_rs_to_js(
+    rs_obj: libparsec::PkiEnrollmentAnswerPayload,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_user_id = JsValue::from_str({
+        let custom_to_rs_string =
+            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.user_id) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
+    let js_device_id = JsValue::from_str({
+        let custom_to_rs_string =
+            |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.device_id) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"deviceId".into(), &js_device_id)?;
+    let js_device_label = JsValue::from_str(rs_obj.device_label.as_ref());
+    Reflect::set(&js_obj, &"deviceLabel".into(), &js_device_label)?;
+    let js_human_handle = struct_human_handle_rs_to_js(rs_obj.human_handle)?;
+    Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
+    let js_profile = JsValue::from_str(enum_user_profile_rs_to_js(rs_obj.profile));
+    Reflect::set(&js_obj, &"profile".into(), &js_profile)?;
+    let js_root_verify_key = JsValue::from(Uint8Array::from(rs_obj.root_verify_key.as_ref()));
+    Reflect::set(&js_obj, &"rootVerifyKey".into(), &js_root_verify_key)?;
+    Ok(js_obj)
+}
+
 // PkiEnrollmentListItem
 
 #[allow(dead_code)]
@@ -2703,6 +2983,78 @@ fn struct_pki_enrollment_list_item_rs_to_js(
     )?;
     let js_payload = JsValue::from(Uint8Array::from(rs_obj.payload.as_ref()));
     Reflect::set(&js_obj, &"payload".into(), &js_payload)?;
+    Ok(js_obj)
+}
+
+// PkiEnrollmentSubmitPayload
+
+#[allow(dead_code)]
+fn struct_pki_enrollment_submit_payload_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::PkiEnrollmentSubmitPayload, JsValue> {
+    let verify_key = {
+        let js_val = Reflect::get(&obj, &"verifyKey".into())?;
+        js_val
+            .dyn_into::<Uint8Array>()
+            .map(|x| x.to_vec())
+            .map_err(|_| TypeError::new("Not a Uint8Array"))
+            .and_then(|x| {
+                let xx: &[u8] = &x;
+                xx.try_into()
+                    .map_err(|_| TypeError::new("Not a valid VerifyKey"))
+            })?
+    };
+    let public_key = {
+        let js_val = Reflect::get(&obj, &"publicKey".into())?;
+        js_val
+            .dyn_into::<Uint8Array>()
+            .map(|x| x.to_vec())
+            .map_err(|_| TypeError::new("Not a Uint8Array"))
+            .and_then(|x| {
+                let xx: &[u8] = &x;
+                xx.try_into()
+                    .map_err(|_| TypeError::new("Not a valid PublicKey"))
+            })?
+    };
+    let device_label = {
+        let js_val = Reflect::get(&obj, &"deviceLabel".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let human_handle = {
+        let js_val = Reflect::get(&obj, &"humanHandle".into())?;
+        struct_human_handle_js_to_rs(js_val)?
+    };
+    Ok(libparsec::PkiEnrollmentSubmitPayload {
+        verify_key,
+        public_key,
+        device_label,
+        human_handle,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_pki_enrollment_submit_payload_rs_to_js(
+    rs_obj: libparsec::PkiEnrollmentSubmitPayload,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_verify_key = JsValue::from(Uint8Array::from(rs_obj.verify_key.as_ref()));
+    Reflect::set(&js_obj, &"verifyKey".into(), &js_verify_key)?;
+    let js_public_key = JsValue::from(Uint8Array::from(rs_obj.public_key.as_ref()));
+    Reflect::set(&js_obj, &"publicKey".into(), &js_public_key)?;
+    let js_device_label = JsValue::from_str(rs_obj.device_label.as_ref());
+    Reflect::set(&js_obj, &"deviceLabel".into(), &js_device_label)?;
+    let js_human_handle = struct_human_handle_rs_to_js(rs_obj.human_handle)?;
+    Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
     Ok(js_obj)
 }
 
@@ -13235,6 +13587,34 @@ fn variant_pki_enrollment_accept_error_rs_to_js(
     Ok(js_obj)
 }
 
+// PkiEnrollmentFinalizeError
+
+#[allow(dead_code)]
+fn variant_pki_enrollment_finalize_error_rs_to_js(
+    rs_obj: libparsec::PkiEnrollmentFinalizeError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::PkiEnrollmentFinalizeError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiEnrollmentFinalizeErrorInternal".into(),
+            )?;
+        }
+        libparsec::PkiEnrollmentFinalizeError::SaveError { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiEnrollmentFinalizeErrorSaveError".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // PkiEnrollmentListError
 
 #[allow(dead_code)]
@@ -21486,6 +21866,50 @@ pub fn pathSplit(path: String) -> Promise {
                 js_array.set(i as u32, js_elem);
             }
             js_array.into()
+        })
+    }))
+}
+
+// pki_enrollment_finalize
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn pkiEnrollmentFinalize(
+    config: Object,
+    save_strategy: Object,
+    accepted: Object,
+    local_pending: Object,
+) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config = config.into();
+        let config = struct_client_config_js_to_rs(config)?;
+
+        let save_strategy = save_strategy.into();
+        let save_strategy = variant_device_save_strategy_js_to_rs(save_strategy)?;
+
+        let accepted = accepted.into();
+        let accepted = struct_pki_enrollment_answer_payload_js_to_rs(accepted)?;
+
+        let local_pending = local_pending.into();
+        let local_pending = struct_pki_local_pending_enrollment_js_to_rs(local_pending)?;
+
+        let ret =
+            libparsec::pki_enrollment_finalize(config, save_strategy, accepted, local_pending)
+                .await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_available_device_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_pki_enrollment_finalize_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
         })
     }))
 }

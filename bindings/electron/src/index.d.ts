@@ -287,6 +287,28 @@ export interface OrganizationInfo {
 }
 
 
+export interface PKILocalPendingEnrollment {
+    certRef: X509CertificateReference
+    addr: string
+    submittedOn: number
+    enrollmentId: string
+    payload: PkiEnrollmentSubmitPayload
+    encryptedKey: Uint8Array
+    encryptedKeyAlgo: string
+    ciphertext: Uint8Array
+}
+
+
+export interface PkiEnrollmentAnswerPayload {
+    userId: string
+    deviceId: string
+    deviceLabel: string
+    humanHandle: HumanHandle
+    profile: UserProfile
+    rootVerifyKey: Uint8Array
+}
+
+
 export interface PkiEnrollmentListItem {
     enrollmentId: string
     submittedOn: number
@@ -294,6 +316,14 @@ export interface PkiEnrollmentListItem {
     payloadSignature: Uint8Array
     payloadSignatureAlgorithm: string
     payload: Uint8Array
+}
+
+
+export interface PkiEnrollmentSubmitPayload {
+    verifyKey: Uint8Array
+    publicKey: Uint8Array
+    deviceLabel: string
+    humanHandle: HumanHandle
 }
 
 
@@ -2789,6 +2819,20 @@ export type PkiEnrollmentAcceptError =
   | PkiEnrollmentAcceptErrorPkiOperationError
 
 
+// PkiEnrollmentFinalizeError
+export interface PkiEnrollmentFinalizeErrorInternal {
+    tag: "PkiEnrollmentFinalizeErrorInternal"
+    error: string
+}
+export interface PkiEnrollmentFinalizeErrorSaveError {
+    tag: "PkiEnrollmentFinalizeErrorSaveError"
+    error: string
+}
+export type PkiEnrollmentFinalizeError =
+  | PkiEnrollmentFinalizeErrorInternal
+  | PkiEnrollmentFinalizeErrorSaveError
+
+
 // PkiEnrollmentListError
 export interface PkiEnrollmentListErrorAuthorNotAllowed {
     tag: "PkiEnrollmentListErrorAuthorNotAllowed"
@@ -4800,6 +4844,12 @@ export function pathParent(
 export function pathSplit(
     path: string
 ): Promise<Array<string>>
+export function pkiEnrollmentFinalize(
+    config: ClientConfig,
+    save_strategy: DeviceSaveStrategy,
+    accepted: PkiEnrollmentAnswerPayload,
+    local_pending: PKILocalPendingEnrollment
+): Promise<Result<AvailableDevice, PkiEnrollmentFinalizeError>>
 export function pkiEnrollmentSubmit(
     config: ClientConfig,
     addr: string,

@@ -2,13 +2,15 @@
 
 use std::sync::Arc;
 
-pub use libparsec_client::PkiEnrollmentSubmitError;
+use libparsec_client::AvailableDevice;
+pub use libparsec_client::{PkiEnrollmentFinalizeError, PkiEnrollmentSubmitError};
 pub use libparsec_platform_pki::ShowCertificateSelectionDialogError;
 use libparsec_types::{
-    DateTime, DeviceLabel, HumanHandle, ParsecPkiEnrollmentAddr, X509CertificateReference,
+    DateTime, DeviceLabel, HumanHandle, PKILocalPendingEnrollment, ParsecPkiEnrollmentAddr,
+    PkiEnrollmentAnswerPayload, X509CertificateReference,
 };
 
-use crate::ClientConfig;
+use crate::{ClientConfig, DeviceSaveStrategy};
 
 pub async fn show_certificate_selection_dialog_windows_only(
 ) -> Result<Option<X509CertificateReference>, ShowCertificateSelectionDialogError> {
@@ -36,6 +38,30 @@ pub async fn pki_enrollment_submit(
         human_handle,
         device_label,
         force,
+    )
+    .await
+}
+
+pub async fn pki_enrollment_finalize(
+    config: ClientConfig,
+    save_strategy: DeviceSaveStrategy,
+    accepted: PkiEnrollmentAnswerPayload,
+    local_pending: PKILocalPendingEnrollment,
+) -> Result<AvailableDevice, PkiEnrollmentFinalizeError> {
+    let strategy = save_strategy
+        .convert_with_side_effects()
+        .map_err(PkiEnrollmentFinalizeError::Internal)?;
+    let config: Arc<libparsec_client::ClientConfig> = config.into();
+
+    let config_dir = &config.config_dir;
+    let key_file =
+        libparsec_platform_device_loader::get_default_key_file(config_dir, accepted.device_id);
+    libparsec_client::pki_enrollment_finalize(
+        config_dir,
+        key_file,
+        &strategy,
+        accepted,
+        local_pending,
     )
     .await
 }
