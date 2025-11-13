@@ -61,6 +61,7 @@ fn entrypoint(py: Python, m: Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<RealmRole>()?;
     m.add_class::<UserProfile>()?;
     m.add_class::<DevicePurpose>()?;
+    m.add_class::<OpenBaoAuthType>()?;
 
     m.add_class::<OrganizationID>()?;
     m.add_class::<VlobID>()?;
