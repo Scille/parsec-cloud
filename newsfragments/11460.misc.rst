@@ -1,0 +1,1 @@
+Removed Edit button in the Viewer header for read-only users
