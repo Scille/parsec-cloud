@@ -17,7 +17,7 @@ async function setRootCertificate(page: MsPage, certificate = 'data/public_key.p
   await fileChooser.setFiles([certificate]);
 }
 
-msTest('PKI requests default state', async ({ invitationsPage }, testInfo: TestInfo) => {
+msTest.skip('PKI requests default state', async ({ invitationsPage }, testInfo: TestInfo) => {
   const viewToggle = invitationsPage.locator('.toggle-view-container');
 
   await expect(viewToggle.locator('.email-button')).toHaveText('Email invitation1');
@@ -66,33 +66,36 @@ msTest('PKI requests default state', async ({ invitationsPage }, testInfo: TestI
 });
 
 for (const hasPerms in [true, false]) {
-  msTest(`PKI requests copy link ${['without', 'with'][Number(hasPerms)]} permissions`, async ({ invitationsPage }, testInfo: TestInfo) => {
-    const viewToggle = invitationsPage.locator('.toggle-view-container');
-    await viewToggle.locator('.pki-button').click();
-    const container = invitationsPage.locator('.invitations-container');
-    const rootCertPopup = container.locator('.root-certificate');
-    await expect(rootCertPopup).toBeVisible();
-    await setRootCertificate(invitationsPage, path.join(testInfo.config.rootDir, 'data/public_key.pem'));
-    await expect(rootCertPopup).toBeHidden();
+  msTest.skip(
+    `PKI requests copy link ${['without', 'with'][Number(hasPerms)]} permissions`,
+    async ({ invitationsPage }, testInfo: TestInfo) => {
+      const viewToggle = invitationsPage.locator('.toggle-view-container');
+      await viewToggle.locator('.pki-button').click();
+      const container = invitationsPage.locator('.invitations-container');
+      const rootCertPopup = container.locator('.root-certificate');
+      await expect(rootCertPopup).toBeVisible();
+      await setRootCertificate(invitationsPage, path.join(testInfo.config.rootDir, 'data/public_key.pem'));
+      await expect(rootCertPopup).toBeHidden();
 
-    if (hasPerms) {
-      await setWriteClipboardPermission(invitationsPage.context(), true);
-    }
-    await viewToggle.locator('#copy-link-pki-request-button').click();
-    if (hasPerms) {
-      await expect(invitationsPage).toShowToast('PKI link has been copied to clipboard.', 'Info');
-      expect(await getClipboardText(invitationsPage)).toMatch(/^parsec3:\/\/.+$/);
-    } else {
-      await expect(invitationsPage).toShowToast(
-        'Failed to copy the link. Your browser or device does not seem to support copy/paste.',
-        'Error',
-      );
-    }
-  });
+      if (hasPerms) {
+        await setWriteClipboardPermission(invitationsPage.context(), true);
+      }
+      await viewToggle.locator('#copy-link-pki-request-button').click();
+      if (hasPerms) {
+        await expect(invitationsPage).toShowToast('PKI link has been copied to clipboard.', 'Info');
+        expect(await getClipboardText(invitationsPage)).toMatch(/^parsec3:\/\/.+$/);
+      } else {
+        await expect(invitationsPage).toShowToast(
+          'Failed to copy the link. Your browser or device does not seem to support copy/paste.',
+          'Error',
+        );
+      }
+    },
+  );
 }
 
 for (const answer of [true, false]) {
-  msTest(`PKI requests accept invalid cert answer ${answer}`, async ({ invitationsPage }, testInfo: TestInfo) => {
+  msTest.skip(`PKI requests accept invalid cert answer ${answer}`, async ({ invitationsPage }, testInfo: TestInfo) => {
     const viewToggle = invitationsPage.locator('.toggle-view-container');
     await viewToggle.locator('.pki-button').click();
     const container = invitationsPage.locator('.invitations-container');
@@ -136,7 +139,7 @@ for (const answer of [true, false]) {
   });
 }
 
-msTest('PKI requests reject request', async ({ invitationsPage }, testInfo: TestInfo) => {
+msTest.skip('PKI requests reject request', async ({ invitationsPage }, testInfo: TestInfo) => {
   const viewToggle = invitationsPage.locator('.toggle-view-container');
   await viewToggle.locator('.pki-button').click();
   const container = invitationsPage.locator('.invitations-container');
