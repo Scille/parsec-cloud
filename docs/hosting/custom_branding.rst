@@ -85,4 +85,4 @@ The directory should contain the following files:
 
    You can base your customization on the default server's templates `found here <parsec-server-template-src_>`_.
 
-.. _parsec-server-template-src: https://github.com/Scille/parsec-cloud/tree/v3.6.1-a.0+dev/server/parsec/templates
+.. _parsec-server-template-src: https://github.com/Scille/parsec-cloud/tree/v3.6.1-rc.0/server/parsec/templates
