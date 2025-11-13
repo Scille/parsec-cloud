@@ -138,3 +138,18 @@ crate::binding_utils::gen_py_wrapper_class_for_enum!(
         libparsec_types::DevicePurpose::Registration
     ]
 );
+
+crate::binding_utils::gen_py_wrapper_class_for_enum!(
+    OpenBaoAuthType,
+    libparsec_types::OpenBaoAuthType,
+    [
+        "HEXAGONE",
+        hexagone,
+        libparsec_types::OpenBaoAuthType::Hexagone
+    ],
+    [
+        "PRO_CONNECT",
+        pro_connect,
+        libparsec_types::OpenBaoAuthType::ProConnect
+    ],
+);

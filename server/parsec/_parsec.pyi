@@ -57,6 +57,7 @@ from parsec._parsec_pyi.enumerate import (
     GreeterOrClaimer,
     InvitationStatus,
     InvitationType,
+    OpenBaoAuthType,
     RealmRole,
     UserProfile,
 )
@@ -155,6 +156,7 @@ __all__ = [
     "InvitationStatus",
     "InvitationType",
     "InvitationType",
+    "OpenBaoAuthType",
     "RealmRole",
     "UserProfile",
     # Ids
