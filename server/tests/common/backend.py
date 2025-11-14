@@ -11,6 +11,7 @@ from parsec.backend import Backend, backend_factory
 from parsec.cli.testbed import TestbedBackend, TestbedTemplate
 from parsec.components.memory.organization import MemoryOrganization, OrganizationID
 from parsec.config import (
+    AllowedClientAgent,
     BackendConfig,
     BaseBlockStoreConfig,
     BaseDatabaseConfig,
@@ -44,6 +45,7 @@ def backend_config(
         blockstore_config=blockstore_config,
         administration_token="s3cr3t",
         fake_account_password_algorithm_seed=SecretKey(b"F" * 32),
+        allowed_client_agent=AllowedClientAgent.NATIVE_OR_WEB,
         organization_spontaneous_bootstrap=False,
         organization_bootstrap_webhook_url=None,
         backend_mocked_data=backend_mocked_data,

@@ -8,8 +8,6 @@ from .common import (
     DateTime,
     DeviceLabel,
     EmailAddress,
-    Enum,
-    EnumItemUnit,
     ErrorVariant,
     Handle,
     HumanHandle,
@@ -242,22 +240,10 @@ class AccountListOrganizationsError(ErrorVariant):
         pass
 
 
-class AccountOrganizationsAllowedClientAgent(Enum):
-    NativeOnly = EnumItemUnit
-    NativeOrWeb = EnumItemUnit
-
-
-class AccountOrganizationsAccountVaultStrategy(Enum):
-    Allowed = EnumItemUnit
-    Forbidden = EnumItemUnit
-
-
 class AccountOrganizationsOrganizationConfig(Structure):
     is_expired: bool
     user_profile_outsider_allowed: bool
     active_users_limit: ActiveUsersLimit
-    allowed_client_agent: AccountOrganizationsAllowedClientAgent
-    account_vault_strategy: AccountOrganizationsAccountVaultStrategy
 
 
 class AccountOrganizationsActiveUser(Structure):
@@ -316,12 +302,6 @@ class AccountCreateRegistrationDeviceError(ErrorVariant):
         pass
 
     class LoadDeviceDecryptionFailed:
-        pass
-
-    class NotAllowedByOrganizationVaultStrategy:
-        pass
-
-    class CannotObtainOrganizationVaultStrategy:
         pass
 
     class BadVaultKeyAccess:

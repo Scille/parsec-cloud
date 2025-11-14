@@ -20,7 +20,7 @@ from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.realm import PGRealmComponent
 from parsec.components.postgresql.user import PGUserComponent
 from parsec.components.postgresql.utils import Q, transaction
-from parsec.config import AccountVaultStrategy, AllowedClientAgent, BackendConfig
+from parsec.config import BackendConfig
 from parsec.events import Event, EventOrganizationConfig
 from parsec.logging import get_logger
 
@@ -101,9 +101,7 @@ WITH my_organization AS (
         _id,
         is_expired,
         user_profile_outsider_allowed,
-        active_users_limit,
-        allowed_client_agent,
-        account_vault_strategy
+        active_users_limit
     FROM organization
     WHERE
         organization_id = $organization_id
@@ -151,8 +149,6 @@ SELECT
     (SELECT is_expired FROM my_organization) AS organization_is_expired,
     (SELECT user_profile_outsider_allowed FROM my_organization) AS organization_user_profile_outsider_allowed,
     (SELECT active_users_limit FROM my_organization) AS organization_active_users_limit,
-    (SELECT allowed_client_agent FROM my_organization) AS organization_allowed_client_agent,
-    (SELECT account_vault_strategy FROM my_organization) AS organization_account_vault_strategy,
     (SELECT _id FROM my_user) AS user_internal_id,
     (SELECT revoked FROM my_user) AS user_is_revoked,
     (SELECT user_id FROM my_user) AS user_id,
@@ -224,18 +220,6 @@ class PGEventsComponent(BaseEventsComponent):
             case _:
                 assert False, row
 
-        match row["organization_allowed_client_agent"]:
-            case str() as allowed_client_agent_raw:
-                allowed_client_agent = AllowedClientAgent(allowed_client_agent_raw)
-            case _:
-                assert False, row
-
-        match row["organization_account_vault_strategy"]:
-            case str() as account_vault_strategy_raw:
-                account_vault_strategy = AccountVaultStrategy(account_vault_strategy_raw)
-            case _:
-                assert False, row
-
         # 2) Check user
 
         match row["user_internal_id"]:
@@ -280,8 +264,6 @@ class PGEventsComponent(BaseEventsComponent):
             organization_id=organization_id,
             user_profile_outsider_allowed=organization_user_profile_outsider_allowed,
             active_users_limit=organization_active_users_limit,
-            allowed_client_agent=allowed_client_agent,
-            account_vault_strategy=account_vault_strategy,
         )
 
         return org_config, user_current_profile, user_realms

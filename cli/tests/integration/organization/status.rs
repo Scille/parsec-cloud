@@ -10,8 +10,6 @@ async fn status_organization(tmp_path: TmpPath) {
     let expect = format!(
         "{:#}\n",
         serde_json::json!({
-            "account_vault_strategy": "ALLOWED",
-            "allowed_client_agent": "NATIVE_OR_WEB",
             "active_users_limit": null,
             "is_bootstrapped": true,
             "is_expired": false,

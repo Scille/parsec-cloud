@@ -14,26 +14,6 @@ from parsec._parsec import (
     VlobID,
 )
 
-class AllowedClientAgent:
-    VALUES: tuple[AllowedClientAgent]
-    NATIVE_ONLY: AllowedClientAgent
-    NATIVE_OR_WEB: AllowedClientAgent
-
-    @classmethod
-    def from_str(cls, value: str) -> AllowedClientAgent: ...
-    @property
-    def str(self) -> str: ...
-
-class AccountVaultStrategy:
-    VALUES: tuple[AccountVaultStrategy]
-    ALLOWED: AccountVaultStrategy
-    FORBIDDEN: AccountVaultStrategy
-
-    @classmethod
-    def from_str(cls, value: str) -> AccountVaultStrategy: ...
-    @property
-    def str(self) -> str: ...
-
 class APIEvent:
     pass
 
@@ -48,15 +28,9 @@ class APIEventOrganizationConfig(APIEvent):
         user_profile_outsider_allowed: bool,
         active_users_limit: ActiveUsersLimit,
         sse_keepalive_seconds: int | None,
-        allowed_client_agent: AllowedClientAgent,
-        account_vault_strategy: AccountVaultStrategy,
     ) -> None: ...
     @property
-    def account_vault_strategy(self) -> AccountVaultStrategy: ...
-    @property
     def active_users_limit(self) -> ActiveUsersLimit: ...
-    @property
-    def allowed_client_agent(self) -> AllowedClientAgent: ...
     @property
     def sse_keepalive_seconds(self) -> int | None: ...
     @property

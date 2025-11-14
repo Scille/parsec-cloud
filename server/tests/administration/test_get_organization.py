@@ -3,7 +3,6 @@
 import httpx
 
 from parsec._parsec import ActiveUsersLimit, DateTime
-from parsec.config import AccountVaultStrategy, AllowedClientAgent
 from tests.common import AdminUnauthErrorsTester, Backend, CoolorgRpcClients
 
 
@@ -46,8 +45,6 @@ async def test_ok(
         "user_profile_outsider_allowed": True,
         "minimum_archiving_period": 2592000,  # 30 days
         "tos": None,
-        "allowed_client_agent": "NATIVE_OR_WEB",
-        "account_vault_strategy": "ALLOWED",
     }
 
     # Also ensure the API reflects the changes
@@ -60,8 +57,6 @@ async def test_ok(
         user_profile_outsider_allowed=False,
         minimum_archiving_period=10,
         tos={"en_HK": "https://parsec.invalid/tos_en"},
-        allowed_client_agent=AllowedClientAgent.NATIVE_ONLY,
-        account_vault_strategy=AccountVaultStrategy.FORBIDDEN,
     )
 
     url = f"http://parsec.invalid/administration/organizations/{coolorg.organization_id.str}"
@@ -79,8 +74,6 @@ async def test_ok(
             "updated_on": "2020-01-01T00:00:00Z",
             "per_locale_urls": {"en_HK": "https://parsec.invalid/tos_en"},
         },
-        "allowed_client_agent": "NATIVE_ONLY",
-        "account_vault_strategy": "FORBIDDEN",
     }
 
 
