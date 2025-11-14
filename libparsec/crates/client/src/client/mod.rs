@@ -6,6 +6,7 @@ mod list_frozen_users;
 mod organization_info;
 mod pki_enrollment_accept;
 mod pki_enrollment_finalize;
+mod pki_enrollment_info;
 mod pki_enrollment_list;
 mod pki_enrollment_reject;
 mod pki_enrollment_submit;
@@ -53,6 +54,7 @@ pub use self::{
 };
 use crate::{
     certif::{CertifPollServerError, CertificateOps},
+    client::pki_enrollment_info::{PKIInfoItem, PkiEnrollmentInfoError},
     config::{ClientConfig, ServerConfig},
     event_bus::EventBus,
     monitors::{
@@ -690,6 +692,14 @@ impl Client {
         &self,
     ) -> Result<Vec<PkiEnrollmentListItem>, PkiEnrollmentListError> {
         pki_enrollment_list::list_enrollments(&self.cmds).await
+    }
+
+    pub async fn pki_enrollment_info(
+        config: Arc<ClientConfig>,
+        addr: ParsecPkiEnrollmentAddr,
+        id: PKIEnrollmentID,
+    ) -> Result<PKIInfoItem, PkiEnrollmentInfoError> {
+        pki_enrollment_info::info(config, addr, id).await
     }
 
     pub async fn pki_enrollment_reject(
