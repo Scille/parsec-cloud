@@ -86,7 +86,7 @@ pub enum GetServerConfigError {
 }
 
 pub use libparsec_client_connection::protocol::anonymous_server_cmds::latest::server_config::{
-    AccountConfig, ClientAgentConfig, OpenBaoSecretConfig, OrganizationBootstrapConfig,
+    AccountConfig, OpenBaoSecretConfig, OrganizationBootstrapConfig,
 };
 
 pub enum OpenBaoAuthConfig {
@@ -101,7 +101,6 @@ pub struct OpenBaoConfig {
 }
 
 pub struct ServerConfig {
-    pub client_agent: ClientAgentConfig,
     pub account: AccountConfig,
     pub organization_bootstrap: OrganizationBootstrapConfig,
     pub openbao: Option<OpenBaoConfig>,
@@ -119,12 +118,10 @@ pub async fn get_server_config(
 
     match cmds.send(Req).await? {
         Rep::Ok {
-            client_agent,
             account,
             organization_bootstrap,
             openbao,
         } => Ok(ServerConfig {
-            client_agent,
             account,
             organization_bootstrap,
             openbao: match openbao {

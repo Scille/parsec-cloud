@@ -2910,10 +2910,6 @@ fn struct_server_config_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::ServerConfig> {
-    let client_agent = {
-        let js_val: Handle<JsObject> = obj.get(cx, "clientAgent")?;
-        variant_client_agent_config_js_to_rs(cx, js_val)?
-    };
     let account = {
         let js_val: Handle<JsObject> = obj.get(cx, "account")?;
         variant_account_config_js_to_rs(cx, js_val)?
@@ -2934,7 +2930,6 @@ fn struct_server_config_js_to_rs<'a>(
         }
     };
     Ok(libparsec::ServerConfig {
-        client_agent,
         account,
         organization_bootstrap,
         openbao,
@@ -2947,8 +2942,6 @@ fn struct_server_config_rs_to_js<'a>(
     rs_obj: libparsec::ServerConfig,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
-    let js_client_agent = variant_client_agent_config_rs_to_js(cx, rs_obj.client_agent)?;
-    js_obj.set(cx, "clientAgent", js_client_agent)?;
     let js_account = variant_account_config_rs_to_js(cx, rs_obj.account)?;
     js_obj.set(cx, "account", js_account)?;
     let js_organization_bootstrap =
@@ -6811,40 +6804,6 @@ fn variant_client_accept_tos_error_rs_to_js<'a>(
         }
         libparsec::ClientAcceptTosError::TosMismatch { .. } => {
             let js_tag = JsString::try_new(cx, "ClientAcceptTosErrorTosMismatch").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// ClientAgentConfig
-
-#[allow(dead_code)]
-fn variant_client_agent_config_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::ClientAgentConfig> {
-    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
-    match tag.as_str() {
-        "ClientAgentConfigNativeOnly" => Ok(libparsec::ClientAgentConfig::NativeOnly),
-        "ClientAgentConfigNativeOrWeb" => Ok(libparsec::ClientAgentConfig::NativeOrWeb),
-        _ => cx.throw_type_error("Object is not a ClientAgentConfig"),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_client_agent_config_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::ClientAgentConfig,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    match rs_obj {
-        libparsec::ClientAgentConfig::NativeOnly => {
-            let js_tag = JsString::try_new(cx, "ClientAgentConfigNativeOnly").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::ClientAgentConfig::NativeOrWeb => {
-            let js_tag = JsString::try_new(cx, "ClientAgentConfigNativeOrWeb").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }

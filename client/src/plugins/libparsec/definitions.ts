@@ -340,7 +340,6 @@ export interface PkiEnrollmentSubmitPayload {
 }
 
 export interface ServerConfig {
-    clientAgent: ClientAgentConfig
     account: AccountConfig
     organizationBootstrap: OrganizationBootstrapConfig
     openbao: OpenBaoConfig | null
@@ -1483,22 +1482,6 @@ export type ClientAcceptTosError =
   | ClientAcceptTosErrorNoTos
   | ClientAcceptTosErrorOffline
   | ClientAcceptTosErrorTosMismatch
-
-// ClientAgentConfig
-export enum ClientAgentConfigTag {
-    NativeOnly = 'ClientAgentConfigNativeOnly',
-    NativeOrWeb = 'ClientAgentConfigNativeOrWeb',
-}
-
-export interface ClientAgentConfigNativeOnly {
-    tag: ClientAgentConfigTag.NativeOnly
-}
-export interface ClientAgentConfigNativeOrWeb {
-    tag: ClientAgentConfigTag.NativeOrWeb
-}
-export type ClientAgentConfig =
-  | ClientAgentConfigNativeOnly
-  | ClientAgentConfigNativeOrWeb
 
 // ClientCancelInvitationError
 export enum ClientCancelInvitationErrorTag {

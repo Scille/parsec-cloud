@@ -323,7 +323,6 @@ export interface PkiEnrollmentSubmitPayload {
 
 
 export interface ServerConfig {
-    clientAgent: ClientAgentConfig
     account: AccountConfig
     organizationBootstrap: OrganizationBootstrapConfig
     openbao: OpenBaoConfig | null
@@ -1307,18 +1306,6 @@ export type ClientAcceptTosError =
   | ClientAcceptTosErrorNoTos
   | ClientAcceptTosErrorOffline
   | ClientAcceptTosErrorTosMismatch
-
-
-// ClientAgentConfig
-export interface ClientAgentConfigNativeOnly {
-    tag: "ClientAgentConfigNativeOnly"
-}
-export interface ClientAgentConfigNativeOrWeb {
-    tag: "ClientAgentConfigNativeOrWeb"
-}
-export type ClientAgentConfig =
-  | ClientAgentConfigNativeOnly
-  | ClientAgentConfigNativeOrWeb
 
 
 // ClientCancelInvitationError
