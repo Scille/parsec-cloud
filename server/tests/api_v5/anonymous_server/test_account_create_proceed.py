@@ -9,7 +9,7 @@ from parsec._parsec import (
     SecretKey,
     UntrustedPasswordAlgorithmArgon2id,
     ValidationCode,
-    anonymous_account_cmds,
+    anonymous_server_cmds,
 )
 from parsec.components.account import (
     VALIDATION_CODE_MAX_FAILED_ATTEMPTS,
@@ -18,7 +18,7 @@ from parsec.components.account import (
 from parsec.config import MockedEmailConfig
 from tests.common import (
     ALICE_ACCOUNT_HUMAN_HANDLE,
-    AnonymousAccountRpcClient,
+    AnonymousServerRpcClient,
     AsyncClient,
     AuthenticatedAccountRpcClient,
     Backend,
@@ -41,8 +41,8 @@ async def alice_validation_code(backend: Backend) -> ValidationCode:
     return validation_code
 
 
-async def test_anonymous_account_account_create_proceed_ok(
-    anonymous_account: AnonymousAccountRpcClient,
+async def test_anonymous_server_account_create_proceed_ok(
+    anonymous_server: AnonymousServerRpcClient,
     alice_validation_code: ValidationCode,
     client: AsyncClient,
 ) -> None:
@@ -53,25 +53,25 @@ async def test_anonymous_account_account_create_proceed_ok(
     for attempt in range(2):
         # Optional step 0
 
-        rep = await anonymous_account.account_create_proceed(
-            account_create_step=anonymous_account_cmds.latest.account_create_proceed.AccountCreateStepNumber0CheckCode(
+        rep = await anonymous_server.account_create_proceed(
+            account_create_step=anonymous_server_cmds.latest.account_create_proceed.AccountCreateStepNumber0CheckCode(
                 validation_code=alice_validation_code,
                 email=ALICE_ACCOUNT_HUMAN_HANDLE.email,
             )
         )
 
         if attempt == 0:
-            assert rep == anonymous_account_cmds.latest.account_create_proceed.RepOk()
+            assert rep == anonymous_server_cmds.latest.account_create_proceed.RepOk()
         else:
             assert (
                 rep
-                == anonymous_account_cmds.latest.account_create_proceed.RepSendValidationEmailRequired()
+                == anonymous_server_cmds.latest.account_create_proceed.RepSendValidationEmailRequired()
             )
 
         # Step 1
 
-        rep = await anonymous_account.account_create_proceed(
-            account_create_step=anonymous_account_cmds.latest.account_create_proceed.AccountCreateStepNumber1Create(
+        rep = await anonymous_server.account_create_proceed(
+            account_create_step=anonymous_server_cmds.latest.account_create_proceed.AccountCreateStepNumber1Create(
                 validation_code=alice_validation_code,
                 human_handle=ALICE_ACCOUNT_HUMAN_HANDLE,
                 auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
@@ -83,11 +83,11 @@ async def test_anonymous_account_account_create_proceed_ok(
             )
         )
         if attempt == 0:
-            assert rep == anonymous_account_cmds.latest.account_create_proceed.RepOk()
+            assert rep == anonymous_server_cmds.latest.account_create_proceed.RepOk()
         else:
             assert (
                 rep
-                == anonymous_account_cmds.latest.account_create_proceed.RepSendValidationEmailRequired()
+                == anonymous_server_cmds.latest.account_create_proceed.RepSendValidationEmailRequired()
             )
 
     # Finally ensure we can connect to the new account
@@ -102,9 +102,9 @@ async def test_anonymous_account_account_create_proceed_ok(
 
 
 @pytest.mark.parametrize("kind", ("step_0", "step_1"))
-async def test_anonymous_account_account_create_proceed_invalid_validation_code(
+async def test_anonymous_server_account_create_proceed_invalid_validation_code(
     kind: str,
-    anonymous_account: AnonymousAccountRpcClient,
+    anonymous_server: AnonymousServerRpcClient,
     alice_validation_code: ValidationCode,
 ):
     bad_validation_code = generate_different_validation_code(alice_validation_code)
@@ -114,9 +114,9 @@ async def test_anonymous_account_account_create_proceed_invalid_validation_code(
 
             async def do_request(
                 validation_code: ValidationCode,
-            ) -> anonymous_account_cmds.latest.account_create_proceed.Rep:
-                return await anonymous_account.account_create_proceed(
-                    account_create_step=anonymous_account_cmds.latest.account_create_proceed.AccountCreateStepNumber0CheckCode(
+            ) -> anonymous_server_cmds.latest.account_create_proceed.Rep:
+                return await anonymous_server.account_create_proceed(
+                    account_create_step=anonymous_server_cmds.latest.account_create_proceed.AccountCreateStepNumber0CheckCode(
                         validation_code=bad_validation_code,
                         email=ALICE_ACCOUNT_HUMAN_HANDLE.email,
                     )
@@ -126,9 +126,9 @@ async def test_anonymous_account_account_create_proceed_invalid_validation_code(
 
             async def do_request(
                 validation_code: ValidationCode,
-            ) -> anonymous_account_cmds.latest.account_create_proceed.Rep:
-                return await anonymous_account.account_create_proceed(
-                    account_create_step=anonymous_account_cmds.latest.account_create_proceed.AccountCreateStepNumber1Create(
+            ) -> anonymous_server_cmds.latest.account_create_proceed.Rep:
+                return await anonymous_server.account_create_proceed(
+                    account_create_step=anonymous_server_cmds.latest.account_create_proceed.AccountCreateStepNumber1Create(
                         validation_code=bad_validation_code,
                         human_handle=ALICE_ACCOUNT_HUMAN_HANDLE,
                         auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
@@ -148,16 +148,14 @@ async def test_anonymous_account_account_create_proceed_invalid_validation_code(
     # Multiple bad attempts
     for _ in range(VALIDATION_CODE_MAX_FAILED_ATTEMPTS):
         rep = await do_request(bad_validation_code)
-        assert (
-            rep == anonymous_account_cmds.latest.account_create_proceed.RepInvalidValidationCode()
-        )
+        assert rep == anonymous_server_cmds.latest.account_create_proceed.RepInvalidValidationCode()
 
     # Further attempts are no longer considered even if the good validation code is provided
     for validation_code in (bad_validation_code, alice_validation_code):
         rep = await do_request(validation_code)
         assert (
             rep
-            == anonymous_account_cmds.latest.account_create_proceed.RepSendValidationEmailRequired()
+            == anonymous_server_cmds.latest.account_create_proceed.RepSendValidationEmailRequired()
         )
 
 
@@ -170,9 +168,9 @@ async def test_anonymous_account_account_create_proceed_invalid_validation_code(
         "wrong_email_address",
     ),
 )
-async def test_anonymous_account_account_create_proceed_send_validation_email_required(
+async def test_anonymous_server_account_create_proceed_send_validation_email_required(
     kind: str,
-    anonymous_account: AnonymousAccountRpcClient,
+    anonymous_server: AnonymousServerRpcClient,
     bob_account: AuthenticatedAccountRpcClient,
     backend: Backend,
 ):
@@ -180,12 +178,12 @@ async def test_anonymous_account_account_create_proceed_send_validation_email_re
     match kind:
         case "validation_code_already_used":
             # Nothing to do: this has already been testbed at the end of
-            # `test_anonymous_account_account_create_proceed_ok`
+            # `test_anonymous_server_account_create_proceed_ok`
             return
 
         case "validation_code_too_many_attemps":
             # Nothing to do: this has already been testbed at the end of
-            # `test_anonymous_account_account_create_proceed_invalid_validation_code`
+            # `test_anonymous_server_account_create_proceed_invalid_validation_code`
             return
 
         case "validation_code_too_old":
@@ -206,8 +204,8 @@ async def test_anonymous_account_account_create_proceed_send_validation_email_re
 
     assert isinstance(validation_code, ValidationCode)
 
-    rep = await anonymous_account.account_create_proceed(
-        account_create_step=anonymous_account_cmds.latest.account_create_proceed.AccountCreateStepNumber1Create(
+    rep = await anonymous_server.account_create_proceed(
+        account_create_step=anonymous_server_cmds.latest.account_create_proceed.AccountCreateStepNumber1Create(
             validation_code=validation_code,
             human_handle=ALICE_ACCOUNT_HUMAN_HANDLE,
             auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
@@ -219,17 +217,17 @@ async def test_anonymous_account_account_create_proceed_send_validation_email_re
         )
     )
     assert (
-        rep == anonymous_account_cmds.latest.account_create_proceed.RepSendValidationEmailRequired()
+        rep == anonymous_server_cmds.latest.account_create_proceed.RepSendValidationEmailRequired()
     )
 
 
-async def test_anonymous_account_account_create_proceed_auth_method_id_already_exists(
-    anonymous_account: AnonymousAccountRpcClient,
+async def test_anonymous_server_account_create_proceed_auth_method_id_already_exists(
+    anonymous_server: AnonymousServerRpcClient,
     alice_validation_code: ValidationCode,
     bob_account: AuthenticatedAccountRpcClient,
 ):
-    rep = await anonymous_account.account_create_proceed(
-        account_create_step=anonymous_account_cmds.latest.account_create_proceed.AccountCreateStepNumber1Create(
+    rep = await anonymous_server.account_create_proceed(
+        account_create_step=anonymous_server_cmds.latest.account_create_proceed.AccountCreateStepNumber1Create(
             validation_code=alice_validation_code,
             human_handle=ALICE_ACCOUNT_HUMAN_HANDLE,
             auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
@@ -240,22 +238,20 @@ async def test_anonymous_account_account_create_proceed_auth_method_id_already_e
             auth_method_id=bob_account.auth_method_id,
         )
     )
-    assert (
-        rep == anonymous_account_cmds.latest.account_create_proceed.RepAuthMethodIdAlreadyExists()
-    )
+    assert rep == anonymous_server_cmds.latest.account_create_proceed.RepAuthMethodIdAlreadyExists()
 
 
-async def test_anonymous_account_account_create_proceed_http_common_errors(
-    anonymous_account: AnonymousAccountRpcClient,
-    anonymous_account_http_common_errors_tester: HttpCommonErrorsTester,
+async def test_anonymous_server_account_create_proceed_http_common_errors(
+    anonymous_server: AnonymousServerRpcClient,
+    anonymous_server_http_common_errors_tester: HttpCommonErrorsTester,
     alice_validation_code: ValidationCode,
 ) -> None:
     async def do():
-        await anonymous_account.account_create_proceed(
-            account_create_step=anonymous_account_cmds.latest.account_create_proceed.AccountCreateStepNumber0CheckCode(
+        await anonymous_server.account_create_proceed(
+            account_create_step=anonymous_server_cmds.latest.account_create_proceed.AccountCreateStepNumber0CheckCode(
                 validation_code=alice_validation_code,
                 email=ALICE_ACCOUNT_HUMAN_HANDLE.email,
             )
         )
 
-    await anonymous_account_http_common_errors_tester(do)
+    await anonymous_server_http_common_errors_tester(do)

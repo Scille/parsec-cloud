@@ -819,12 +819,12 @@ async def anonymous_http_common_errors_tester(
 
 
 @pytest.fixture(params=("",))
-async def anonymous_account_http_common_errors_tester(
+async def anonymous_server_http_common_errors_tester(
     request: pytest.FixtureRequest, coolorg: CoolorgRpcClients, backend: Backend
 ) -> AsyncGenerator[HttpCommonErrorsTester, None]:
     tester_called = False
 
-    async def _anonymous_account_http_common_errors_tester(do: HttpCommonErrorsTesterDoCallback):
+    async def _anonymous_server_http_common_errors_tester(do: HttpCommonErrorsTesterDoCallback):
         nonlocal tester_called
         tester_called = True
         # TODO
@@ -846,7 +846,7 @@ async def anonymous_account_http_common_errors_tester(
         # except RpcTransportError as err:
         #     assert err.rep.status_code == expected_http_status, err
 
-    yield _anonymous_account_http_common_errors_tester
+    yield _anonymous_server_http_common_errors_tester
 
     # assert tester_called
 

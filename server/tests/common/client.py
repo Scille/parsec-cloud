@@ -42,8 +42,8 @@ from parsec.components.auth import (
 )
 from tests.common.backend import SERVER_DOMAIN, TestbedBackend
 from tests.common.rpc import (
-    BaseAnonymousAccountRpcClient,
     BaseAnonymousRpcClient,
+    BaseAnonymousServerRpcClient,
     BaseAuthenticatedAccountRpcClient,
     BaseAuthenticatedRpcClient,
     BaseInvitedRpcClient,
@@ -74,10 +74,10 @@ class AnonymousRpcClient(BaseAnonymousRpcClient):
         return rep.content
 
 
-class AnonymousAccountRpcClient(BaseAnonymousAccountRpcClient):
+class AnonymousServerRpcClient(BaseAnonymousServerRpcClient):
     def __init__(self, raw_client: AsyncClient):
         self.raw_client = raw_client
-        self.url = f"http://{SERVER_DOMAIN}/anonymous_account"
+        self.url = f"http://{SERVER_DOMAIN}/anonymous_server"
         self.headers = {
             "Content-Type": "application/msgpack",
             "Api-Version": str(ApiVersion.API_LATEST_VERSION),
@@ -293,7 +293,7 @@ class CoolorgRpcClients:
     testbed_template: tb.TestbedTemplateContent
     organization_id: OrganizationID
     _anonymous: AnonymousRpcClient | None = None
-    _anonymous_account: AnonymousAccountRpcClient | None = None
+    _anonymous_server: AnonymousServerRpcClient | None = None
     _authenticated_account: AuthenticatedAccountRpcClient | None = None
     _alice: AuthenticatedRpcClient | None = None
     _bob: AuthenticatedRpcClient | None = None
@@ -309,11 +309,11 @@ class CoolorgRpcClients:
         return self._anonymous
 
     @property
-    def anonymous_account(self) -> AnonymousAccountRpcClient:
-        self._anonymous_account = self._anonymous_account or AnonymousAccountRpcClient(
+    def anonymous_server(self) -> AnonymousServerRpcClient:
+        self._anonymous_server = self._anonymous_server or AnonymousServerRpcClient(
             self.raw_client,
         )
-        return self._anonymous_account
+        return self._anonymous_server
 
     @property
     def wksp1_id(self) -> VlobID:

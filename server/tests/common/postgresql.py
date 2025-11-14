@@ -144,7 +144,7 @@ async def clear_postgresql_account_data() -> None:
     hence each test involving account need to start by clearing those data.
 
     This is typically done by by the `clear_account_data` fixture, in turn used
-    by the `alice_account`/`bob_account`/`anonymous_account` fixtures.
+    by the `alice_account`/`bob_account`/`anonymous_server` fixtures.
     """
     assert _pg_db_url is not None
     await execute_pg_queries(_pg_db_url, _Q_CLEAR_POSTGRESQL_ACCOUNT_DATA)

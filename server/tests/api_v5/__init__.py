@@ -2,7 +2,7 @@
 
 # ruff: noqa: F403
 from .anonymous import *
-from .anonymous_account import *
+from .anonymous_server import *
 from .authenticated import *
 from .authenticated_account import *
 from .invited import *
