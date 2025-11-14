@@ -682,15 +682,17 @@ const actionBarOptionsUsersPage = computed(() => {
   const actionArray = [];
 
   if (users.value.selectedCount() === 0 && isAdmin.value) {
-    actionArray.push(
-      {
-        label: 'UsersPage.inviteUser',
-        icon: personAdd,
-        onClick: async (): Promise<void> => {
-          await navigateTo(Routes.Invitations, { query: { openInvite: true } });
-        },
+    actionArray.push({
+      label: 'UsersPage.inviteUser',
+      icon: personAdd,
+      onClick: async (): Promise<void> => {
+        await navigateTo(Routes.Invitations, { query: { openInvite: true } });
       },
-      {
+    });
+    // eslint-disable-next-line no-constant-condition
+    if (false) {
+      // TODO enable with PKI support
+      actionArray.push({
         label: 'InvitationsPage.pkiRequests.copyLink',
         icon: link,
         onClick: async (): Promise<void> => {
@@ -704,8 +706,8 @@ const actionBarOptionsUsersPage = computed(() => {
             );
           }
         },
-      },
-    );
+      });
+    }
   }
 
   if (users.value.selectedCount() >= 1 && isAdmin.value) {
