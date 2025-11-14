@@ -43,8 +43,8 @@ msgid "Download the CLI by following this link:"
 msgstr "Téléchargez la CLI en suivant ce lien :"
 
 #: ../../hosting/install_cli.rst:16
-msgid "`Parsec CLI v3.6.1`_."
-msgstr "`Parsec CLI v3.6.1`_."
+msgid "`Parsec CLI v3.6.2-a.0+dev`_."
+msgstr "`Parsec CLI v3.6.2-a.0+dev`_."
 
 #: ../../hosting/install_cli.rst:18
 msgid "Make the file executable"
