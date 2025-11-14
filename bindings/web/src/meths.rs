@@ -3012,10 +3012,6 @@ fn struct_pki_enrollment_submit_payload_rs_to_js(
 
 #[allow(dead_code)]
 fn struct_server_config_js_to_rs(obj: JsValue) -> Result<libparsec::ServerConfig, JsValue> {
-    let client_agent = {
-        let js_val = Reflect::get(&obj, &"clientAgent".into())?;
-        variant_client_agent_config_js_to_rs(js_val)?
-    };
     let account = {
         let js_val = Reflect::get(&obj, &"account".into())?;
         variant_account_config_js_to_rs(js_val)?
@@ -3033,7 +3029,6 @@ fn struct_server_config_js_to_rs(obj: JsValue) -> Result<libparsec::ServerConfig
         }
     };
     Ok(libparsec::ServerConfig {
-        client_agent,
         account,
         organization_bootstrap,
         openbao,
@@ -3043,8 +3038,6 @@ fn struct_server_config_js_to_rs(obj: JsValue) -> Result<libparsec::ServerConfig
 #[allow(dead_code)]
 fn struct_server_config_rs_to_js(rs_obj: libparsec::ServerConfig) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_client_agent = variant_client_agent_config_rs_to_js(rs_obj.client_agent)?;
-    Reflect::set(&js_obj, &"clientAgent".into(), &js_client_agent)?;
     let js_account = variant_account_config_rs_to_js(rs_obj.account)?;
     Reflect::set(&js_obj, &"account".into(), &js_account)?;
     let js_organization_bootstrap =
@@ -7218,49 +7211,6 @@ fn variant_client_accept_tos_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ClientAcceptTosErrorTosMismatch".into(),
-            )?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// ClientAgentConfig
-
-#[allow(dead_code)]
-fn variant_client_agent_config_js_to_rs(
-    obj: JsValue,
-) -> Result<libparsec::ClientAgentConfig, JsValue> {
-    let tag = Reflect::get(&obj, &"tag".into())?;
-    let tag = tag
-        .as_string()
-        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
-    match tag.as_str() {
-        "ClientAgentConfigNativeOnly" => Ok(libparsec::ClientAgentConfig::NativeOnly),
-        "ClientAgentConfigNativeOrWeb" => Ok(libparsec::ClientAgentConfig::NativeOrWeb),
-        _ => Err(JsValue::from(TypeError::new(
-            "Object is not a ClientAgentConfig",
-        ))),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_client_agent_config_rs_to_js(
-    rs_obj: libparsec::ClientAgentConfig,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    match rs_obj {
-        libparsec::ClientAgentConfig::NativeOnly => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"ClientAgentConfigNativeOnly".into(),
-            )?;
-        }
-        libparsec::ClientAgentConfig::NativeOrWeb => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"ClientAgentConfigNativeOrWeb".into(),
             )?;
         }
     }
