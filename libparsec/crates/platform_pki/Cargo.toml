@@ -11,11 +11,10 @@ repository.workspace = true
 [lints]
 workspace = true
 
-
 [dependencies]
 bytes = { workspace = true }
 error_set = { workspace = true }
-rustls-webpki = { workspace = true, features = ["std"] }
+rustls-webpki = { workspace = true, features = ["std", "ring"] }
 rustls-pki-types = { workspace = true }
 rsa = { workspace = true }
 sha2 = { workspace = true }

@@ -1,14 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-mod signature_verification;
-
 use crate::{
     encrypt_message,
     errors::{
         InvalidPemContent, LoadAnswerPayloadError, ValidatePayloadError, VerifyCertificateError,
         VerifySignatureError,
     },
-    shared::signature_verification::{RsassaPssSha256SignatureVerifier, SUPPORTED_SIG_ALGS},
     EncryptedMessage, PkiSignatureAlgorithm,
 };
 use libparsec_types::{
@@ -70,7 +67,7 @@ pub fn verify_message<'message, 'a>(
     certificate: &'a EndEntityCert<'a>,
 ) -> Result<&'message [u8], VerifySignatureError> {
     let verifier = match signed_message.algo {
-        PkiSignatureAlgorithm::RsassaPssSha256 => &RsassaPssSha256SignatureVerifier,
+        PkiSignatureAlgorithm::RsassaPssSha256 => webpki::ring::RSA_PSS_2048_8192_SHA256_LEGACY_KEY,
     };
     certificate
         .verify_signature(verifier, &signed_message.message, &signed_message.signature)
@@ -123,7 +120,7 @@ pub fn verify_certificate<'der>(
     );
     certificate
         .verify_for_usage(
-            SUPPORTED_SIG_ALGS,
+            webpki::ALL_VERIFICATION_ALGS,
             trusted_roots,
             intermediate_certs,
             time,
