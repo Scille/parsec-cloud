@@ -10,10 +10,6 @@
                 "status": "ok",
                 "fields": [
                     {
-                        "name": "client_agent",
-                        "type": "ClientAgentConfig"
-                    },
-                    {
                         "name": "account",
                         "type": "AccountConfig"
                     },
@@ -29,23 +25,6 @@
             }
         ],
         "nested_types": [
-            {
-                "name": "ClientAgentConfig",
-                "variants": [
-                    {
-                        // The server will reject any connection from a web client
-                        // (i.e. only request containing a user-agent starting
-                        // with `Parsec-client/` is allowed).
-                        "name": "NativeOnly",
-                        "discriminant_value": "NATIVE_ONLY"
-                    },
-                    {
-                        // The server allows connection from a web client.
-                        "name": "NativeOrWeb",
-                        "discriminant_value": "NATIVE_OR_WEB"
-                    }
-                ]
-            },
             {
                 "name": "AccountConfig",
                 "variants": [

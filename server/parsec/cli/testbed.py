@@ -53,7 +53,6 @@ from parsec.backend import Backend, backend_factory
 from parsec.cli.options import debug_config_options, logging_config_options
 from parsec.cli.utils import cli_exception_handler
 from parsec.config import (
-    AllowedClientAgent,
     BackendConfig,
     LogLevel,
     MockedBlockStoreConfig,
@@ -709,7 +708,6 @@ async def testbed_backend_factory(
         blockstore_config=blockstore_config,
         administration_token="s3cr3t",
         fake_account_password_algorithm_seed=SecretKey(b"F" * 32),
-        allowed_client_agent=AllowedClientAgent.NATIVE_OR_WEB,
         organization_spontaneous_bootstrap=True,
         openbao_config=OpenBaoConfig(
             server_url=server_addr.to_http_url("/testbed/mock/openbao"),

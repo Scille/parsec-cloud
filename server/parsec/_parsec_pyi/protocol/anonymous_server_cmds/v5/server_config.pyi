@@ -4,16 +4,6 @@
 
 from __future__ import annotations
 
-class ClientAgentConfig:
-    VALUES: tuple[ClientAgentConfig]
-    NATIVE_ONLY: ClientAgentConfig
-    NATIVE_OR_WEB: ClientAgentConfig
-
-    @classmethod
-    def from_str(cls, value: str) -> ClientAgentConfig: ...
-    @property
-    def str(self) -> str: ...
-
 class AccountConfig:
     VALUES: tuple[AccountConfig]
     DISABLED: AccountConfig
@@ -90,15 +80,12 @@ class RepUnknownStatus(Rep):
 class RepOk(Rep):
     def __init__(
         self,
-        client_agent: ClientAgentConfig,
         account: AccountConfig,
         organization_bootstrap: OrganizationBootstrapConfig,
         openbao: OpenBaoConfig,
     ) -> None: ...
     @property
     def account(self) -> AccountConfig: ...
-    @property
-    def client_agent(self) -> ClientAgentConfig: ...
     @property
     def openbao(self) -> OpenBaoConfig: ...
     @property

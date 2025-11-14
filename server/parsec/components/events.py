@@ -23,7 +23,7 @@ from parsec._parsec import (
 )
 from parsec.api import api
 from parsec.client_context import AnonymousServerClientContext, AuthenticatedClientContext
-from parsec.config import AccountConfig, AllowedClientAgent, BackendConfig
+from parsec.config import AccountConfig, BackendConfig
 from parsec.events import (
     ClientBroadcastableEvent,
     Event,
@@ -498,16 +498,6 @@ class BaseEventsComponent:
         client_ctx: AnonymousServerClientContext,
         req: anonymous_server_cmds.latest.server_config.Req,
     ) -> anonymous_server_cmds.latest.server_config.Rep:
-        match self._config.allowed_client_agent:
-            case AllowedClientAgent.NATIVE_OR_WEB:
-                allowed_client_agent = (
-                    anonymous_server_cmds.latest.server_config.ClientAgentConfig.NATIVE_OR_WEB
-                )
-            case AllowedClientAgent.NATIVE_ONLY:
-                allowed_client_agent = (
-                    anonymous_server_cmds.latest.server_config.ClientAgentConfig.NATIVE_ONLY
-                )
-
         match self._config.account_config:
             case AccountConfig.DISABLED:
                 account = anonymous_server_cmds.latest.server_config.AccountConfig.DISABLED
@@ -545,7 +535,6 @@ class BaseEventsComponent:
             )
 
         return anonymous_server_cmds.latest.server_config.RepOk(
-            client_agent=allowed_client_agent,
             account=account,
             organization_bootstrap=organization_bootstrap,
             openbao=openbao,
