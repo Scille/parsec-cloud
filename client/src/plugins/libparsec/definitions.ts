@@ -118,8 +118,8 @@ export type Sha256BoxData = Uint8Array
 export type VerifyKey = Uint8Array
 export type X509WindowsCngURI = Uint8Array
 export type NonZeroU8 = number
-export type U16 = number
 export type U8 = number
+export type U16 = number
 export type I32 = number
 export type CacheSize = number
 export type FileDescriptor = number
@@ -178,7 +178,7 @@ export interface AvailableDevice {
     keyFilePath: Path
     createdOn: DateTime
     protectedOn: DateTime
-    serverUrl: string
+    serverAddr: ParsecAddr
     organizationId: OrganizationID
     userId: UserID
     deviceId: DeviceID
@@ -338,7 +338,6 @@ export interface PkiEnrollmentSubmitPayload {
 }
 
 export interface ServerConfig {
-    clientAgent: ClientAgentConfig
     account: AccountConfig
     organizationBootstrap: OrganizationBootstrapConfig
     openbao: OpenBaoConfig | null
@@ -1487,22 +1486,6 @@ export type ClientAcceptTosError =
   | ClientAcceptTosErrorNoTos
   | ClientAcceptTosErrorOffline
   | ClientAcceptTosErrorTosMismatch
-
-// ClientAgentConfig
-export enum ClientAgentConfigTag {
-    NativeOnly = 'ClientAgentConfigNativeOnly',
-    NativeOrWeb = 'ClientAgentConfigNativeOrWeb',
-}
-
-export interface ClientAgentConfigNativeOnly {
-    tag: ClientAgentConfigTag.NativeOnly
-}
-export interface ClientAgentConfigNativeOrWeb {
-    tag: ClientAgentConfigTag.NativeOrWeb
-}
-export type ClientAgentConfig =
-  | ClientAgentConfigNativeOnly
-  | ClientAgentConfigNativeOrWeb
 
 // ClientCancelInvitationError
 export enum ClientCancelInvitationErrorTag {

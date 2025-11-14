@@ -897,9 +897,17 @@ fn struct_available_device_js_to_rs<'a>(
             }
         }
     };
-    let server_url = {
-        let js_val: Handle<JsString> = obj.get(cx, "serverUrl")?;
-        js_val.value(cx)
+    let server_addr = {
+        let js_val: Handle<JsString> = obj.get(cx, "serverAddr")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
     };
     let organization_id = {
         let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
@@ -961,7 +969,7 @@ fn struct_available_device_js_to_rs<'a>(
         key_file_path,
         created_on,
         protected_on,
-        server_url,
+        server_addr,
         organization_id,
         user_id,
         device_id,
@@ -1010,8 +1018,17 @@ fn struct_available_device_rs_to_js<'a>(
         }
     });
     js_obj.set(cx, "protectedOn", js_protected_on)?;
-    let js_server_url = JsString::try_new(cx, rs_obj.server_url).or_throw(cx)?;
-    js_obj.set(cx, "serverUrl", js_server_url)?;
+    let js_server_addr = JsString::try_new(cx, {
+        let custom_to_rs_string = |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
+            Ok(addr.to_url().into())
+        };
+        match custom_to_rs_string(rs_obj.server_addr) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err.to_string()),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "serverAddr", js_server_addr)?;
     let js_organization_id = JsString::try_new(cx, rs_obj.organization_id).or_throw(cx)?;
     js_obj.set(cx, "organizationId", js_organization_id)?;
     let js_user_id = JsString::try_new(cx, {
@@ -2830,10 +2847,6 @@ fn struct_server_config_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::ServerConfig> {
-    let client_agent = {
-        let js_val: Handle<JsObject> = obj.get(cx, "clientAgent")?;
-        variant_client_agent_config_js_to_rs(cx, js_val)?
-    };
     let account = {
         let js_val: Handle<JsObject> = obj.get(cx, "account")?;
         variant_account_config_js_to_rs(cx, js_val)?
@@ -2854,7 +2867,6 @@ fn struct_server_config_js_to_rs<'a>(
         }
     };
     Ok(libparsec::ServerConfig {
-        client_agent,
         account,
         organization_bootstrap,
         openbao,
@@ -2867,8 +2879,6 @@ fn struct_server_config_rs_to_js<'a>(
     rs_obj: libparsec::ServerConfig,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
-    let js_client_agent = variant_client_agent_config_rs_to_js(cx, rs_obj.client_agent)?;
-    js_obj.set(cx, "clientAgent", js_client_agent)?;
     let js_account = variant_account_config_rs_to_js(cx, rs_obj.account)?;
     js_obj.set(cx, "account", js_account)?;
     let js_organization_bootstrap =
@@ -6741,40 +6751,6 @@ fn variant_client_accept_tos_error_rs_to_js<'a>(
         }
         libparsec::ClientAcceptTosError::TosMismatch { .. } => {
             let js_tag = JsString::try_new(cx, "ClientAcceptTosErrorTosMismatch").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// ClientAgentConfig
-
-#[allow(dead_code)]
-fn variant_client_agent_config_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::ClientAgentConfig> {
-    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
-    match tag.as_str() {
-        "ClientAgentConfigNativeOnly" => Ok(libparsec::ClientAgentConfig::NativeOnly),
-        "ClientAgentConfigNativeOrWeb" => Ok(libparsec::ClientAgentConfig::NativeOrWeb),
-        _ => cx.throw_type_error("Object is not a ClientAgentConfig"),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_client_agent_config_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::ClientAgentConfig,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    match rs_obj {
-        libparsec::ClientAgentConfig::NativeOnly => {
-            let js_tag = JsString::try_new(cx, "ClientAgentConfigNativeOnly").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::ClientAgentConfig::NativeOrWeb => {
-            let js_tag = JsString::try_new(cx, "ClientAgentConfigNativeOrWeb").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -18033,10 +18009,10 @@ fn build_parsec_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
         Some(v) => match v.downcast::<JsNumber, _>(&mut cx) {
             Ok(js_val) => Some({
                 let v = js_val.value(&mut cx);
-                if v < (u8::MIN as f64) || (u8::MAX as f64) < v {
-                    cx.throw_type_error("Not an u8 number")?
+                if v < (u16::MIN as f64) || (u16::MAX as f64) < v {
+                    cx.throw_type_error("Not an u16 number")?
                 }
-                let v = v as u8;
+                let v = v as u16;
                 v
             }),
             Err(_) => None,

@@ -137,7 +137,7 @@ export interface AvailableDevice {
     keyFilePath: string
     createdOn: number
     protectedOn: number
-    serverUrl: string
+    serverAddr: string
     organizationId: string
     userId: string
     deviceId: string
@@ -320,7 +320,6 @@ export interface PkiEnrollmentSubmitPayload {
 
 
 export interface ServerConfig {
-    clientAgent: ClientAgentConfig
     account: AccountConfig
     organizationBootstrap: OrganizationBootstrapConfig
     openbao: OpenBaoConfig | null
@@ -1309,18 +1308,6 @@ export type ClientAcceptTosError =
   | ClientAcceptTosErrorNoTos
   | ClientAcceptTosErrorOffline
   | ClientAcceptTosErrorTosMismatch
-
-
-// ClientAgentConfig
-export interface ClientAgentConfigNativeOnly {
-    tag: "ClientAgentConfigNativeOnly"
-}
-export interface ClientAgentConfigNativeOrWeb {
-    tag: "ClientAgentConfigNativeOrWeb"
-}
-export type ClientAgentConfig =
-  | ClientAgentConfigNativeOnly
-  | ClientAgentConfigNativeOrWeb
 
 
 // ClientCancelInvitationError
