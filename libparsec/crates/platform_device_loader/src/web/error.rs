@@ -2,7 +2,6 @@
 
 use std::path::PathBuf;
 
-use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 use web_sys::wasm_bindgen::JsValue;
 
@@ -108,7 +107,7 @@ error_set::error_set! {
     }
     SaveDeviceError := SaveRawDataError || {
         RemoteOpaqueKeyUploadFailed(anyhow::Error),
-        RemoteOpaqueKeyUploadOffline(ConnectionError),
+        RemoteOpaqueKeyUploadOffline(anyhow::Error),
         Internal(anyhow::Error),
     }
     SaveRawDataError := GetFileHandleError || WriteAllError

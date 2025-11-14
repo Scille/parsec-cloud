@@ -31,7 +31,7 @@ from .common import (
     VlobID,
 )
 from .config import ClientConfig
-from .device import DeviceAccessStrategy
+from .device import DeviceAccessStrategy, DeviceSaveStrategy, AvailableDevice
 from .invite import AvailableDevice, DeviceSaveStrategy
 from .pki import PkiEnrollmentAcceptError, PkiEnrollmentRejectError, X509CertificateReference
 
@@ -504,6 +504,9 @@ class ImportRecoveryDeviceError(ErrorVariant):
         client_timestamp: DateTime
         ballpark_client_early_offset: float
         ballpark_client_late_offset: float
+
+    class RemoteOpaqueKeyUploadOffline:
+        pass
 
     class RemoteOpaqueKeyUploadFailed:
         pass

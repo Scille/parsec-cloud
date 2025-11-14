@@ -11,8 +11,8 @@ pub enum AccountUploadOpaqueKeyInVaultError {
     BadVaultKeyAccess(DataError),
     #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
+    #[error("The Parsec account server returned an unexpected response: {0}")]
+    BadServerResponse(anyhow::Error),
 }
 
 pub(super) async fn account_upload_opaque_key_in_vault(
@@ -29,7 +29,9 @@ pub(super) async fn account_upload_opaque_key_in_vault(
         match rep {
             Rep::Ok { key_access, .. } => key_access,
             bad_rep @ Rep::UnknownStatus { .. } => {
-                return Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into());
+                return Err(AccountUploadOpaqueKeyInVaultError::BadServerResponse(
+                    anyhow::anyhow!("{:?}", bad_rep),
+                ));
             }
         }
     };
@@ -75,7 +77,7 @@ pub(super) async fn account_upload_opaque_key_in_vault(
                 Rep::FingerprintAlreadyExists
                 | Rep::UnknownStatus { .. }
             ) => {
-                return Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into());
+                return Err(AccountUploadOpaqueKeyInVaultError::BadServerResponse(anyhow::anyhow!("{:?}", bad_rep)));
             }
         }
     }

@@ -309,6 +309,60 @@ async fn list_devices(tmp_path: TmpPath) {
     )
     .as_ref();
 
+    // OpenBao
+
+    let openbao_expected = DeviceFileOpenBao {
+        created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
+        protected_on: "2000-01-01T00:00:01Z".parse().unwrap(),
+        server_url: "https://parsec.invalid".to_string(),
+        organization_id: "CoolOrg".parse().unwrap(),
+        user_id: "alice".parse().unwrap(),
+        device_id: "alice@dev2".parse().unwrap(),
+        human_handle: "Alice <alice@parsec.invalid>".parse().unwrap(),
+        device_label: "My dev2 machine".parse().unwrap(),
+        openbao_entity_id: "65732d02-bb5f-7ce7-eae4-69067383b61d".to_string(),
+        openbao_preferred_auth_id: "HEXAGONE".to_string(),
+        openbao_ciphertext_key_path:
+            "65732d02-bb5f-7ce7-eae4-69067383b61d/e89eb9b36b704ff292db320b553fcd32".to_string(),
+        ciphertext: b"<ciphertext>".as_ref().into(),
+    };
+    println!(
+        "***expected: {:?}",
+        DeviceFile::OpenBao(openbao_expected.clone()).dump()
+    );
+
+    // Generated from Parsec 3.5.3-a.0+dev
+    // Content:
+    //   type: 'openbao'
+    //   created_on: ext(1, 946684800000000) i.e. 2000-01-01T01:00:00Z
+    //   protected_on: ext(1, 946684801000000) i.e. 2000-01-01T01:00:01Z
+    //   server_url: 'https://parsec.invalid'
+    //   organization_id: 'CoolOrg'
+    //   user_id: ext(2, 0xa11cec00100000000000000000000000)
+    //   device_id: ext(2, 0xde20a11cec0010000000000000000000)
+    //   human_handle: [ 'alice@parsec.invalid', 'Alice', ]
+    //   device_label: 'My dev2 machine'
+    //   ciphertext: 0x3c636970686572746578743e
+    //   openbao_preferred_auth_id: 'HEXAGONE'
+    //   openbao_entity_id: '65732d02-bb5f-7ce7-eae4-69067383b61d'
+    //   openbao_ciphertext_key_path: '65732d02-bb5f-7ce7-eae4-69067383b61d/e89eb9b36b704ff292db320b553fcd32'
+    let openbao_raw: &[u8] = hex!(
+        "8da474797065a76f70656e62616faa637265617465645f6f6ed70100035d013b37e000"
+        "ac70726f7465637465645f6f6ed70100035d013b472240aa7365727665725f75726cb6"
+        "68747470733a2f2f7061727365632e696e76616c6964af6f7267616e697a6174696f6e"
+        "5f6964a7436f6f6c4f7267a7757365725f6964d802a11cec0010000000000000000000"
+        "0000a96465766963655f6964d802de20a11cec0010000000000000000000ac68756d61"
+        "6e5f68616e646c6592b4616c696365407061727365632e696e76616c6964a5416c6963"
+        "65ac6465766963655f6c6162656caf4d792064657632206d616368696e65aa63697068"
+        "657274657874c40c3c636970686572746578743eb96f70656e62616f5f707265666572"
+        "7265645f617574685f6964a848455841474f4e45b16f70656e62616f5f656e74697479"
+        "5f6964d92436353733326430322d626235662d376365372d656165342d363930363733"
+        "383362363164bb6f70656e62616f5f636970686572746578745f6b65795f70617468d9"
+        "4536353733326430322d626235662d376365372d656165342d36393036373338336236"
+        "31642f6538396562396233366237303466663239326462333230623535336663643332"
+    )
+    .as_ref();
+
     // 2. Store the raws in files
 
     let keyring_path = tmp_path.join("devices/94a8691e9765497984d63aad3c7df9e0.keys");
@@ -317,6 +371,7 @@ async fn list_devices(tmp_path: TmpPath) {
     let smartcard_path = tmp_path.join("devices/foo/bar/spam/whatever2.keys");
     let recovery_path = tmp_path.join("devices/foo/whatever.keys");
     let account_vault_path = tmp_path.join("devices/whatever.keys");
+    let openbao_path = tmp_path.join("devices/whatever2.keys");
 
     for (path, raw) in [
         (&keyring_path, keyring_raw),
@@ -324,6 +379,7 @@ async fn list_devices(tmp_path: TmpPath) {
         (&smartcard_path, smartcard_raw),
         (&recovery_path, recovery_raw),
         (&account_vault_path, account_vault_raw),
+        (&openbao_path, openbao_raw),
     ] {
         crate::tests::utils::create_device_file(path, raw).await;
     }
@@ -392,6 +448,21 @@ async fn list_devices(tmp_path: TmpPath) {
             human_handle: account_vault_expected.human_handle,
             device_label: account_vault_expected.device_label,
             ty: AvailableDeviceType::AccountVault,
+        },
+        AvailableDevice {
+            key_file_path: openbao_path,
+            created_on: openbao_expected.created_on,
+            protected_on: openbao_expected.protected_on,
+            server_url: openbao_expected.server_url,
+            organization_id: openbao_expected.organization_id,
+            user_id: openbao_expected.user_id,
+            device_id: openbao_expected.device_id,
+            human_handle: openbao_expected.human_handle,
+            device_label: openbao_expected.device_label,
+            ty: AvailableDeviceType::OpenBao {
+                openbao_preferred_auth_id: "HEXAGONE".to_string(),
+                openbao_entity_id: "65732d02-bb5f-7ce7-eae4-69067383b61d".to_string(),
+            },
         },
     ]);
 

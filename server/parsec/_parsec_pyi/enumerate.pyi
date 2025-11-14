@@ -83,3 +83,13 @@ class DevicePurpose:
     def from_str(cls, value: str) -> DevicePurpose: ...
     @property
     def str(self) -> str: ...
+
+class OpenBaoAuthType:
+    HEXAGONE: OpenBaoAuthType
+    PRO_CONNECT: OpenBaoAuthType
+    VALUES: tuple[OpenBaoAuthType, ...]
+
+    @classmethod
+    def from_str(cls, value: str) -> OpenBaoAuthType: ...
+    @property
+    def str(self) -> str: ...
