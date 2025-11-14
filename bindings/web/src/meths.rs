@@ -929,13 +929,19 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
             v
         }
     };
-    let server_url = {
-        let js_val = Reflect::get(&obj, &"serverUrl".into())?;
+    let server_addr = {
+        let js_val = Reflect::get(&obj, &"serverAddr".into())?;
         js_val
             .dyn_into::<JsString>()
             .ok()
             .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
     };
     let organization_id = {
         let js_val = Reflect::get(&obj, &"organizationId".into())?;
@@ -1005,7 +1011,7 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
         key_file_path,
         created_on,
         protected_on,
-        server_url,
+        server_addr,
         organization_id,
         user_id,
         device_id,
@@ -1055,8 +1061,17 @@ fn struct_available_device_rs_to_js(
         JsValue::from(v)
     };
     Reflect::set(&js_obj, &"protectedOn".into(), &js_protected_on)?;
-    let js_server_url = rs_obj.server_url.into();
-    Reflect::set(&js_obj, &"serverUrl".into(), &js_server_url)?;
+    let js_server_addr = JsValue::from_str({
+        let custom_to_rs_string = |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
+            Ok(addr.to_url().into())
+        };
+        match custom_to_rs_string(rs_obj.server_addr) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"serverAddr".into(), &js_server_addr)?;
     let js_organization_id = JsValue::from_str(rs_obj.organization_id.as_ref());
     Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
     let js_user_id = JsValue::from_str({
@@ -2870,10 +2885,6 @@ fn struct_pki_enrollment_submit_payload_rs_to_js(
 
 #[allow(dead_code)]
 fn struct_server_config_js_to_rs(obj: JsValue) -> Result<libparsec::ServerConfig, JsValue> {
-    let client_agent = {
-        let js_val = Reflect::get(&obj, &"clientAgent".into())?;
-        variant_client_agent_config_js_to_rs(js_val)?
-    };
     let account = {
         let js_val = Reflect::get(&obj, &"account".into())?;
         variant_account_config_js_to_rs(js_val)?
@@ -2891,7 +2902,6 @@ fn struct_server_config_js_to_rs(obj: JsValue) -> Result<libparsec::ServerConfig
         }
     };
     Ok(libparsec::ServerConfig {
-        client_agent,
         account,
         organization_bootstrap,
         openbao,
@@ -2901,8 +2911,6 @@ fn struct_server_config_js_to_rs(obj: JsValue) -> Result<libparsec::ServerConfig
 #[allow(dead_code)]
 fn struct_server_config_rs_to_js(rs_obj: libparsec::ServerConfig) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_client_agent = variant_client_agent_config_rs_to_js(rs_obj.client_agent)?;
-    Reflect::set(&js_obj, &"clientAgent".into(), &js_client_agent)?;
     let js_account = variant_account_config_rs_to_js(rs_obj.account)?;
     Reflect::set(&js_obj, &"account".into(), &js_account)?;
     let js_organization_bootstrap =
@@ -7085,49 +7093,6 @@ fn variant_client_accept_tos_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ClientAcceptTosErrorTosMismatch".into(),
-            )?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// ClientAgentConfig
-
-#[allow(dead_code)]
-fn variant_client_agent_config_js_to_rs(
-    obj: JsValue,
-) -> Result<libparsec::ClientAgentConfig, JsValue> {
-    let tag = Reflect::get(&obj, &"tag".into())?;
-    let tag = tag
-        .as_string()
-        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
-    match tag.as_str() {
-        "ClientAgentConfigNativeOnly" => Ok(libparsec::ClientAgentConfig::NativeOnly),
-        "ClientAgentConfigNativeOrWeb" => Ok(libparsec::ClientAgentConfig::NativeOrWeb),
-        _ => Err(JsValue::from(TypeError::new(
-            "Object is not a ClientAgentConfig",
-        ))),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_client_agent_config_rs_to_js(
-    rs_obj: libparsec::ClientAgentConfig,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    match rs_obj {
-        libparsec::ClientAgentConfig::NativeOnly => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"ClientAgentConfigNativeOnly".into(),
-            )?;
-        }
-        libparsec::ClientAgentConfig::NativeOrWeb => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"ClientAgentConfigNativeOrWeb".into(),
             )?;
         }
     }
@@ -19868,7 +19833,7 @@ pub fn bootstrapOrganization(
 // build_parsec_addr
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn buildParsecAddr(hostname: String, port: Option<u8>, use_ssl: bool) -> Promise {
+pub fn buildParsecAddr(hostname: String, port: Option<u16>, use_ssl: bool) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let port = match port {
             Some(port) => Some(port),
