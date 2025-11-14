@@ -26,7 +26,6 @@ from parsec.cli.utils import (
 from parsec.components.organization import TosLocale, TosUrl
 from parsec.config import (
     AccountConfig,
-    AllowedClientAgent,
     BackendConfig,
     BaseBlockStoreConfig,
     BaseDatabaseConfig,
@@ -167,19 +166,6 @@ For instance:
 
     A typical way to generate a good value is to use `openssl rand -hex 32`
     """,
-)
-@click.option(
-    "--allowed-client-agent",
-    envvar="PARSEC_ALLOWED_CLIENT_AGENT",
-    show_envvar=True,
-    type=click.Choice(AllowedClientAgent),
-    help="""Limit the type of Parsec client allowed to connect
-(default: NATIVE_OR_WEB if `--with-client-web-app` is used, NATIVE_ONLY else)
-\b
-- NATIVE_ONLY: Only desktop client is allowed
-- NATIVE_OR_WEB: Desktop and web clients are allowed
-""",
-    default=None,
 )
 @click.option(
     "--account-config",
@@ -535,7 +521,6 @@ def run_cmd(
     pause_before_retry_database_connection: float,
     blockstore: BaseBlockStoreConfig,
     administration_token: str,
-    allowed_client_agent: AllowedClientAgent | None,
     account_config: AccountConfig,
     openbao_server_url: str | None,
     openbao_secret_mount_path: str | None,
@@ -601,14 +586,6 @@ def run_cmd(
 
         jinja_env = get_environment(template_dir)
 
-        match (allowed_client_agent, with_client_web_app):
-            case (AllowedClientAgent() as cooked_allowed_client_agent, _):
-                pass
-            case (None, Path()):
-                cooked_allowed_client_agent = AllowedClientAgent.NATIVE_OR_WEB
-            case (None, None):
-                cooked_allowed_client_agent = AllowedClientAgent.NATIVE_ONLY
-
         if openbao_server_url is None:
             openbao_config = None
         else:
@@ -654,7 +631,6 @@ def run_cmd(
             proxy_trusted_addresses=proxy_trusted_addresses,
             server_addr=server_addr,
             debug=debug,
-            allowed_client_agent=cooked_allowed_client_agent,
             account_config=account_config,
             openbao_config=openbao_config,
             organization_bootstrap_webhook_url=organization_bootstrap_webhook,

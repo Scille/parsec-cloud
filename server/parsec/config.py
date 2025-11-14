@@ -290,7 +290,6 @@ class BackendConfig:
     # environment variable is used, defaulting to trusting only localhost if absent.
     proxy_trusted_addresses: str | None = None
 
-    allowed_client_agent: AllowedClientAgent = AllowedClientAgent.NATIVE_ONLY
     account_config: AccountConfig = AccountConfig.DISABLED
 
     openbao_config: OpenBaoConfig | None = None
