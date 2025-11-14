@@ -2735,63 +2735,13 @@ fn struct_pki_enrollment_list_item_js_to_rs<'a>(
             }
         }
     };
-    let der_x509_certificate = {
-        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "derX509Certificate")?;
-        {
-            let custom_from_rs_bytes =
-                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
-            #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(cx)) {
-                Ok(val) => val,
-                // err can't infer type in some case, because of the previous `try_into`
-                #[allow(clippy::useless_format)]
-                Err(err) => return cx.throw_type_error(format!("{}", err)),
-            }
-        }
-    };
-    let payload_signature = {
-        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "payloadSignature")?;
-        {
-            let custom_from_rs_bytes =
-                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
-            #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(cx)) {
-                Ok(val) => val,
-                // err can't infer type in some case, because of the previous `try_into`
-                #[allow(clippy::useless_format)]
-                Err(err) => return cx.throw_type_error(format!("{}", err)),
-            }
-        }
-    };
-    let payload_signature_algorithm = {
-        let js_val: Handle<JsString> = obj.get(cx, "payloadSignatureAlgorithm")?;
-        {
-            match js_val.value(cx).parse() {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
     let payload = {
-        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "payload")?;
-        {
-            let custom_from_rs_bytes =
-                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
-            #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(cx)) {
-                Ok(val) => val,
-                // err can't infer type in some case, because of the previous `try_into`
-                #[allow(clippy::useless_format)]
-                Err(err) => return cx.throw_type_error(format!("{}", err)),
-            }
-        }
+        let js_val: Handle<JsObject> = obj.get(cx, "payload")?;
+        struct_pki_enrollment_submit_payload_js_to_rs(cx, js_val)?
     };
     Ok(libparsec::PkiEnrollmentListItem {
         enrollment_id,
         submitted_on,
-        der_x509_certificate,
-        payload_signature,
-        payload_signature_algorithm,
         payload,
     })
 }
@@ -2822,37 +2772,7 @@ fn struct_pki_enrollment_list_item_rs_to_js<'a>(
         }
     });
     js_obj.set(cx, "submittedOn", js_submitted_on)?;
-    let js_der_x509_certificate = {
-        let rs_buff = { rs_obj.der_x509_certificate.as_ref() };
-        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
-        js_buff
-    };
-    js_obj.set(cx, "derX509Certificate", js_der_x509_certificate)?;
-    let js_payload_signature = {
-        let rs_buff = { rs_obj.payload_signature.as_ref() };
-        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
-        js_buff
-    };
-    js_obj.set(cx, "payloadSignature", js_payload_signature)?;
-    let js_payload_signature_algorithm = JsString::try_new(cx, {
-        let custom_to_rs_string =
-            |v| -> Result<_, std::convert::Infallible> { Ok(std::string::ToString::to_string(&v)) };
-        match custom_to_rs_string(rs_obj.payload_signature_algorithm) {
-            Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err.to_string()),
-        }
-    })
-    .or_throw(cx)?;
-    js_obj.set(
-        cx,
-        "payloadSignatureAlgorithm",
-        js_payload_signature_algorithm,
-    )?;
-    let js_payload = {
-        let rs_buff = { rs_obj.payload.as_ref() };
-        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
-        js_buff
-    };
+    let js_payload = struct_pki_enrollment_submit_payload_rs_to_js(cx, rs_obj.payload)?;
     js_obj.set(cx, "payload", js_payload)?;
     Ok(js_obj)
 }

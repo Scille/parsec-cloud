@@ -312,10 +312,15 @@ export interface PkiEnrollmentAnswerPayload {
 export interface PkiEnrollmentListItem {
     enrollmentId: string
     submittedOn: number
-    derX509Certificate: Uint8Array
-    payloadSignature: Uint8Array
-    payloadSignatureAlgorithm: string
-    payload: Uint8Array
+    payload: PkiEnrollmentSubmitPayload
+}
+
+
+export interface PkiEnrollmentSubmitPayload {
+    verifyKey: Uint8Array
+    publicKey: Uint8Array
+    deviceLabel: string
+    humanHandle: HumanHandle
 }
 
 

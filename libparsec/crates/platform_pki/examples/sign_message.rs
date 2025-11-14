@@ -22,7 +22,7 @@ fn main() -> anyhow::Result<()> {
     println!("args={args:?}");
 
     let cert_ref = args.certificate_hash.into();
-    let data: Vec<u8> = args.content.into_bytes()?;
+    let data = args.content.into_bytes()?;
     let res = sign_message(&data, &cert_ref).context("Failed to sign message")?;
 
     println!(

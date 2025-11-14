@@ -4,7 +4,6 @@
 from .addr import ParsecPkiEnrollmentAddr
 from .common import (
     DISPLAY_TO_STRING,
-    Bytes,
     BytesBasedType,
     DateTime,
     DeviceID,
@@ -39,13 +38,25 @@ async def show_certificate_selection_dialog_windows_only() -> Result[
     raise NotImplementedError
 
 
+class VerifyKey(BytesBasedType):
+    pass
+
+
+class PublicKey(BytesBasedType):
+    pass
+
+
+class PkiEnrollmentSubmitPayload(Structure):
+    verify_key: VerifyKey
+    public_key: PublicKey
+    device_label: DeviceLabel
+    human_handle: HumanHandle
+
+
 class PkiEnrollmentListItem(Structure):
     enrollment_id: PKIEnrollmentID
     submitted_on: DateTime
-    der_x509_certificate: Bytes
-    payload_signature: Bytes
-    payload_signature_algorithm: PkiSignatureAlgorithm
-    payload: Bytes
+    payload: PkiEnrollmentSubmitPayload
 
 
 class PkiEnrollmentListError(ErrorVariant):
