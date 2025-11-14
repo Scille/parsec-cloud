@@ -163,8 +163,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard_index: [1, 2]
-        shard_total: [2]
+        shard_index: [1, 2, 3, 4]
+        shard_total: [4]
     services:
       parsec-testbed-server:
         image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.4.1-a.0.dev.20299.a9f26d7
