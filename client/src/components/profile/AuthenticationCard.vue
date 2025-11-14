@@ -54,7 +54,7 @@ import idCardGradient from '@/assets/images/id-card-gradient.svg';
 import KeypadGradient from '@/assets/images/keypad-gradient.svg';
 import personCircleGradient from '@/assets/images/person-circle-gradient.svg';
 import { AuthenticationCardState } from '@/components/profile/types';
-import { CustomDeviceSaveStrategyTag, DeviceSaveStrategyTag, isDesktop, isKeyringAvailable, isWeb } from '@/parsec';
+import { DeviceSaveStrategyTag, isDesktop, isKeyringAvailable, isWeb } from '@/parsec';
 import { IonButton, IonIcon, IonText } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
 import { Translatable } from 'megashark-lib';
@@ -62,7 +62,7 @@ import { computed, onMounted, ref } from 'vue';
 
 const props = defineProps<{
   state: AuthenticationCardState;
-  authMethod: DeviceSaveStrategyTag | CustomDeviceSaveStrategyTag;
+  authMethod: DeviceSaveStrategyTag;
   disabled?: boolean;
 }>();
 
@@ -83,7 +83,7 @@ defineEmits<{
 }>();
 
 const methodConfig: Record<
-  DeviceSaveStrategyTag | CustomDeviceSaveStrategyTag,
+  DeviceSaveStrategyTag,
   {
     imageSrc: string;
     imageAlt: string;
@@ -116,9 +116,9 @@ const methodConfig: Record<
     methodName: '',
     description: '',
   },
-  [CustomDeviceSaveStrategyTag.SSO]: {
+  [DeviceSaveStrategyTag.OpenBao]: {
     imageSrc: personCircleGradient,
-    imageAlt: 'Smartcard',
+    imageAlt: 'OpenBao',
     methodName: 'Authentication.method.sso.title',
     description: 'Authentication.method.sso.description',
   },
