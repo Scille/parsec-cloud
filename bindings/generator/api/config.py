@@ -68,11 +68,6 @@ def get_default_mountpoint_base_dir() -> Path:
     raise NotImplementedError
 
 
-class ClientAgentConfig(Variant):
-    NativeOnly = VariantItemUnit()
-    NativeOrWeb = VariantItemUnit()
-
-
 class AccountConfig(Variant):
     Disabled = VariantItemUnit()
     EnabledWithVault = VariantItemUnit()
@@ -104,7 +99,6 @@ class OpenBaoConfig(Structure):
 
 
 class ServerConfig(Structure):
-    client_agent: ClientAgentConfig
     account: AccountConfig
     organization_bootstrap: OrganizationBootstrapConfig
     openbao: OpenBaoConfig | None

@@ -43,17 +43,14 @@ pub fn rep_ok() {
             // Content:
             //   status: 'ok'
             //   account: 'DISABLED'
-            //   client_agent: 'NATIVE_ONLY'
             //   openbao: { type: 'DISABLED', }
             //   organization_bootstrap: 'WITH_BOOTSTRAP_TOKEN'
             hex!(
-                "85a6737461747573a26f6ba76163636f756e74a844495341424c4544ac636c69656e74"
-                "5f6167656e74ab4e41544956455f4f4e4c59a76f70656e62616f81a474797065a84449"
-                "5341424c4544b66f7267616e697a6174696f6e5f626f6f747374726170b4574954485f"
-                "424f4f5453545241505f544f4b454e"
+                "84a6737461747573a26f6ba76163636f756e74a844495341424c4544a76f70656e6261"
+                "6f81a474797065a844495341424c4544b66f7267616e697a6174696f6e5f626f6f7473"
+                "74726170b4574954485f424f4f5453545241505f544f4b454e"
             ).as_ref(),
             anonymous_server_cmds::server_config::Rep::Ok {
-                client_agent: anonymous_server_cmds::server_config::ClientAgentConfig::NativeOnly,
                 account: anonymous_server_cmds::server_config::AccountConfig::Disabled,
                 organization_bootstrap: anonymous_server_cmds::server_config::OrganizationBootstrapConfig::WithBootstrapToken,
                 openbao: anonymous_server_cmds::server_config::OpenBaoConfig::Disabled,
@@ -63,29 +60,7 @@ pub fn rep_ok() {
             // Generated from Parsec 3.5.3-a.0+dev
             // Content:
             //   status: 'ok'
-            //   account: 'ENABLED_WITHOUT_VAULT'
-            //   client_agent: 'NATIVE_ONLY'
-            //   openbao: { type: 'DISABLED', }
-            //   organization_bootstrap: 'WITH_BOOTSTRAP_TOKEN'
-            hex!(
-                "85a6737461747573a26f6ba76163636f756e74b5454e41424c45445f574954484f5554"
-                "5f5641554c54ac636c69656e745f6167656e74ab4e41544956455f4f4e4c59a76f7065"
-                "6e62616f81a474797065a844495341424c4544b66f7267616e697a6174696f6e5f626f"
-                "6f747374726170b4574954485f424f4f5453545241505f544f4b454e"
-            ).as_ref(),
-            anonymous_server_cmds::server_config::Rep::Ok {
-                client_agent: anonymous_server_cmds::server_config::ClientAgentConfig::NativeOnly,
-                account: anonymous_server_cmds::server_config::AccountConfig::EnabledWithoutVault,
-                organization_bootstrap: anonymous_server_cmds::server_config::OrganizationBootstrapConfig::WithBootstrapToken,
-                openbao: anonymous_server_cmds::server_config::OpenBaoConfig::Disabled,
-            }
-        ),
-        (
-            // Generated from Parsec 3.5.3-a.0+dev
-            // Content:
-            //   status: 'ok'
             //   account: 'ENABLED_WITH_VAULT'
-            //   client_agent: 'NATIVE_OR_WEB'
             //   openbao: {
             //     type: 'ENABLED',
             //     auths: [
@@ -97,18 +72,16 @@ pub fn rep_ok() {
             //   }
             //   organization_bootstrap: 'SPONTANEOUS'
             hex!(
-                "85a6737461747573a26f6ba76163636f756e74b2454e41424c45445f574954485f5641"
-                "554c54ac636c69656e745f6167656e74ad4e41544956455f4f525f574542a76f70656e"
-                "62616f84a474797065a7454e41424c4544a561757468739282a26964a848455841474f"
-                "4e45aa6d6f756e745f70617468ad617574682f68657861676f6e6582a26964ab50524f"
-                "5f434f4e4e454354aa6d6f756e745f70617468b0617574682f70726f5f636f6e6e6563"
-                "74a673656372657482a474797065a34b5632aa6d6f756e745f70617468a77365637265"
-                "7473aa7365727665725f75726cbe68747470733a2f2f6f70656e62616f2e7061727365"
-                "632e696e76616c6964b66f7267616e697a6174696f6e5f626f6f747374726170ab5350"
-                "4f4e54414e454f5553"
+                "84a6737461747573a26f6ba76163636f756e74b2454e41424c45445f574954485f5641"
+                "554c54a76f70656e62616f84a474797065a7454e41424c4544a561757468739282a269"
+                "64a848455841474f4e45aa6d6f756e745f70617468ad617574682f68657861676f6e65"
+                "82a26964ab50524f5f434f4e4e454354aa6d6f756e745f70617468b0617574682f7072"
+                "6f5f636f6e6e656374a673656372657482a474797065a34b5632aa6d6f756e745f7061"
+                "7468a773656372657473aa7365727665725f75726cbe68747470733a2f2f6f70656e62"
+                "616f2e7061727365632e696e76616c6964b66f7267616e697a6174696f6e5f626f6f74"
+                "7374726170ab53504f4e54414e454f5553"
             ).as_ref(),
             anonymous_server_cmds::server_config::Rep::Ok {
-                client_agent: anonymous_server_cmds::server_config::ClientAgentConfig::NativeOrWeb,
                 account: anonymous_server_cmds::server_config::AccountConfig::EnabledWithVault,
                 organization_bootstrap: anonymous_server_cmds::server_config::OrganizationBootstrapConfig::Spontaneous,
                 openbao: anonymous_server_cmds::server_config::OpenBaoConfig::Enabled {
