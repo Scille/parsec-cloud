@@ -1,1 +1,0 @@
-Update component library (megashark-lib) and show/hide action bar buttons based on the screen size
