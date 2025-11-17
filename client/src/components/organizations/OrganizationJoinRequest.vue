@@ -3,38 +3,44 @@
 <template>
   <div
     class="organization-request"
-    :class="request.status"
+    :class="{
+      pending: request.info.tag === PendingAsyncEnrollmentInfoTag.Submitted,
+      rejected: request.info.tag === PendingAsyncEnrollmentInfoTag.Rejected,
+      accepted: request.info.tag === PendingAsyncEnrollmentInfoTag.Accepted,
+      cancelled: request.info.tag === PendingAsyncEnrollmentInfoTag.Cancelled,
+    }"
   >
     <ion-card-content class="organization-request-content">
       <div class="organization-request-info">
-        <ion-text class="organization-request-organization title-h4">{{ request.organization }}</ion-text>
-        <ion-text class="organization-request-username body">{{ request.humanHandle.label }}</ion-text>
+        <ion-text class="organization-request-organization title-h4">{{ request.organizationId }}</ion-text>
+        <ion-text class="organization-request-username body">{{ request.enrollment.requestedHumanHandle.label }}</ion-text>
       </div>
       <div class="organization-request-status-container">
         <ion-text
           class="organization-request-status button-small"
-          :class="`status-${request.status}`"
-          ref="statusText"
+          :class="{
+            'status-pending': request.info.tag === PendingAsyncEnrollmentInfoTag.Submitted,
+            'status-rejected': request.info.tag === PendingAsyncEnrollmentInfoTag.Rejected,
+            'status-accepted': request.info.tag === PendingAsyncEnrollmentInfoTag.Accepted,
+            'status-cancelled': request.info.tag === PendingAsyncEnrollmentInfoTag.Cancelled,
+          }"
+          ref="statusTextEl"
         >
           <span v-if="statusText">{{ $msTranslate(statusText) }}</span>
         </ion-text>
         <ion-icon
-          v-if="request.status !== JoinRequestStatus.Accepted"
+          v-if="request.info.tag !== PendingAsyncEnrollmentInfoTag.Accepted"
           @click="$emit('deleteRequest', request)"
           :icon="closeCircle"
           class="organization-request-icon"
         />
         <ion-button
-          v-if="request.status === JoinRequestStatus.Accepted"
+          v-if="request.info.tag === PendingAsyncEnrollmentInfoTag.Accepted"
           fill="clear"
           class="organization-request-button"
           @click="$emit('joinOrganization', request)"
         >
           {{ $msTranslate('HomePage.organizationRequest.joinButton') }}
-          <ion-icon
-            :icon="arrowForward"
-            class="button-icon"
-          />
         </ion-button>
       </div>
     </ion-card-content>
@@ -42,49 +48,56 @@
 </template>
 
 <script lang="ts" setup>
-import { JoinRequestStatus, LocalJoinRequest } from '@/parsec';
+import { AsyncEnrollmentRequest, PendingAsyncEnrollmentInfoTag } from '@/parsec';
 import { IonButton, IonCardContent, IonIcon, IonText } from '@ionic/vue';
-import { arrowForward, closeCircle } from 'ionicons/icons';
+import { closeCircle } from 'ionicons/icons';
 import { attachMouseOverTooltip } from 'megashark-lib';
 import { computed, onMounted, useTemplateRef, watch } from 'vue';
 
-const statusTextRef = useTemplateRef<InstanceType<typeof IonText>>('statusText');
+const statusTextRef = useTemplateRef<InstanceType<typeof IonText>>('statusTextEl');
 
 const props = defineProps<{
-  request: LocalJoinRequest;
+  request: AsyncEnrollmentRequest;
 }>();
 
 onMounted(async () => {
-  if (statusTextRef.value && props.request.status === JoinRequestStatus.Pending) {
-    attachMouseOverTooltip(statusTextRef.value.$el, 'HomePage.organizationRequest.pending.tooltip');
-  } else if (statusTextRef.value && props.request.status === JoinRequestStatus.Rejected) {
-    attachMouseOverTooltip(statusTextRef.value.$el, 'HomePage.organizationRequest.rejected.tooltip');
-  }
+  attachTooltip(statusTextRef.value?.$el, props.request.info.tag);
 });
 
 watch(
-  () => props.request.status,
+  () => props.request.info.tag,
   (newStatus) => {
-    if (statusTextRef.value && newStatus === JoinRequestStatus.Pending) {
-      attachMouseOverTooltip(statusTextRef.value.$el, 'HomePage.organizationRequest.pending.tooltip');
-    } else if (statusTextRef.value && newStatus === JoinRequestStatus.Rejected) {
-      attachMouseOverTooltip(statusTextRef.value.$el, 'HomePage.organizationRequest.rejected.tooltip');
-    }
+    attachTooltip(statusTextRef.value?.$el, newStatus);
   },
 );
 
+function attachTooltip(el: HTMLElement | undefined, status: PendingAsyncEnrollmentInfoTag): void {
+  if (!el) {
+    return;
+  }
+  if (status === PendingAsyncEnrollmentInfoTag.Submitted) {
+    attachMouseOverTooltip(el, 'HomePage.organizationRequest.pending.tooltip');
+  } else if (status === PendingAsyncEnrollmentInfoTag.Rejected) {
+    attachMouseOverTooltip(el, 'HomePage.organizationRequest.rejected.tooltip');
+  } else if (status === PendingAsyncEnrollmentInfoTag.Cancelled) {
+    attachMouseOverTooltip(el, 'HomePage.organizationRequest.cancelled.tooltip');
+  } else if (status === PendingAsyncEnrollmentInfoTag.Accepted) {
+    attachMouseOverTooltip(el, 'HomePage.organizationRequest.accepted.tooltip');
+  }
+}
+
 defineEmits<{
-  (e: 'joinOrganization', request: LocalJoinRequest): void;
-  (e: 'deleteRequest', request: LocalJoinRequest): void;
+  (e: 'joinOrganization', request: AsyncEnrollmentRequest): void;
+  (e: 'deleteRequest', request: AsyncEnrollmentRequest): void;
 }>();
 
 const statusText = computed(() => {
-  switch (props.request.status) {
-    case JoinRequestStatus.Pending:
+  switch (props.request.info.tag) {
+    case PendingAsyncEnrollmentInfoTag.Submitted:
       return 'HomePage.organizationRequest.status.pending';
-    case JoinRequestStatus.Rejected:
+    case PendingAsyncEnrollmentInfoTag.Rejected:
       return 'HomePage.organizationRequest.status.rejected';
-    case JoinRequestStatus.Cancelled:
+    case PendingAsyncEnrollmentInfoTag.Cancelled:
       return 'HomePage.organizationRequest.status.cancelled';
     default:
       return undefined;
@@ -149,15 +162,19 @@ const statusText = computed(() => {
       padding: 0.125rem 0.5rem;
       flex-shrink: 0;
 
-      &.status-pending {
+      &.status-cancelled {
         background-color: var(--parsec-color-light-secondary-grey);
         color: var(--parsec-color-light-secondary-white);
       }
 
-      &.status-rejected,
-      &.status-cancelled {
+      &.status-rejected {
         background-color: var(--parsec-color-light-danger-500);
         color: var(--parsec-color-light-secondary-white);
+      }
+
+      &.status-pending {
+        background-color: var(--parsec-color-light-warning-100);
+        color: var(--parsec-color-light-warning-700);
       }
     }
 
@@ -196,7 +213,7 @@ const statusText = computed(() => {
 
     &:hover {
       color: var(--parsec-color-light-secondary-white);
-      background: var(--parsec-color-light-secondary-inversed-contrast);
+      background: var(--parsec-color-light-secondary-contrast);
       box-shadow: var(--parsec-shadow-soft);
     }
   }
@@ -205,7 +222,7 @@ const statusText = computed(() => {
     border-color: var(--parsec-color-light-secondary-light);
 
     .organization-request-icon {
-      color: var(--parsec-color-light-secondary-light);
+      color: var(--parsec-color-light-secondary-grey);
 
       &:hover {
         color: var(--parsec-color-light-secondary-text);
@@ -221,6 +238,12 @@ const statusText = computed(() => {
   &.accepted {
     border: 1px solid var(--parsec-color-light-secondary-medium);
     background: var(--parsec-color-light-secondary-white);
+    transition: all 0.15s ease-in-out;
+
+    &:hover {
+      box-shadow: var(--parsec-shadow-soft);
+      background: var(--parsec-color-light-secondary-background);
+    }
   }
 }
 </style>

@@ -2,7 +2,7 @@
 
 enum InvitationView {
   EmailInvitation = 'email-invitation',
-  PkiRequest = 'pki-request',
+  AsyncEnrollmentRequest = 'async-enrollment-request',
 }
 
 export { InvitationView };

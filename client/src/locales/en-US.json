@@ -316,18 +316,25 @@
         "lostDevice": "Lost your access?",
         "recoverDevice": "Recover my session",
         "organizationRequest": {
+            "notAvailable": "Requests to join an organization using a certificate is not yet supported on your system.",
             "title": "Pending requests",
             "status": {
                 "pending": "Pending",
-                "rejected": "Rejected"
+                "rejected": "Rejected",
+                "cancelled": "Cancelled"
             },
             "requestSent": {
                 "success": "Your request to join the organization has been sent.",
-                "failure": "Failed to send the request. Please try again later."
+                "failure": "Failed to send the request. Please try again later.",
+                "emailUsed": "This email is already used.",
+                "alreadyEnrolled": "A user with this certificate is already a member of this organization.",
+                "alreadySubmitted": "A request has already been made with this certificate.",
+                "offline": "Cannot contact the server. Please check your internet connection."
             },
             "requestCancelled": "Your request to join the organization has been cancelled.",
+            "requestCancelError": "Could not cancel the request.",
             "requestDeleted": "Your request to join the organization has been deleted.",
-            "joinButton": "Join",
+            "joinButton": "Add to my organizations",
             "pending": {
                 "title": "Organization request pending",
                 "message": "Your request to join the organization is still pending. Are you sure you want to cancel it?",
@@ -344,7 +351,44 @@
             },
             "accepted": {
                 "joinSuccess": "You successfully joined the organization.",
-                "joinFailure": "Failed to join the organization. Please try again later."
+                "joinFailure": "Failed to join the organization. Please try again later.",
+                "tooltip": "Your request to join this organization has been accepted by an Administrator."
+            },
+            "cancelled": {
+                "tooltip": "Your request to join this organization has been cancelled."
+            },
+            "asyncEnrollmentModal": {
+                "title": "Join organization {organization}",
+                "chooseMethod": "Choose your authentication method",
+                "sso": {
+                    "label": "Continue with Single Sign-On",
+                    "title": "Single Sign-On (SSO)",
+                    "description": "Log in with SSO to access the organization.",
+                    "noEmail": "No email registered on OpenBAO.",
+                    "join": "Join with Single Sign-On",
+                    "connected": "You are connected with ProConnect."
+                },
+                "pki": {
+                    "label": "Continue with PKI",
+                    "title": "Certificate Authentication (PKI)",
+                    "description": "Use a certificate to authenticate with your Parsec organization."
+                },
+                "errors": {
+                    "invalidLink": "PKI is not available on this system, and this server does not Support Single Sign-on (SSO).",
+                    "pkiSsoNotAvailable": "The link to join the organization is invalid.",
+                    "failedToGetEmailsFromOpenBao": "Failed to get email addresses from SSO provider. Please try again.",
+                    "existingEmail": "A user with this email already exists. Please use another email address.",
+                    "problemWithRequestCertificate": "There is a problem with the request certificate.",
+                    "offline": "You are offline. Please make sure you are connected to the Internet and try again.",
+                    "failedToJoinWithPKI": "Could not join the organization using PKI. Check the certificate provided and try again..",
+                    "failedToJoinWithOpenBao": "Could not join the organization using OpenBAO. Please make sure you are connected and try again.",
+                    "couldNotContactServer": "Could not contact the server. Please make sure you are online."
+                },
+                "buttons": {
+                    "next": "Continue",
+                    "previous": "Previous",
+                    "cancel": "Cancel"
+                }
             }
         }
     },
@@ -508,7 +552,7 @@
         "titles": {
             "workspaces": "My workspaces",
             "about": "About",
-            "invitations": "Invitations",
+            "invitationsRequests": "Invitations & Requests",
             "users": "Users",
             "organization": {
                 "storage": "Storage",
@@ -1028,7 +1072,7 @@
             "addUser": "Add a user",
             "invitations": {
                 "emailInvitations": "Email invitations",
-                "pkiRequests": "PKI requests"
+                "linkRequests": "Link requests"
             }
         },
         "size": {
@@ -1085,7 +1129,7 @@
         "hidden": "Hidden",
         "noWorkspace": "No workspaces",
         "users": "Users",
-        "invitations": "Invitations",
+        "invitationsRequests": "Invitations & Requests",
         "storage": "Storage",
         "information": "Information",
         "goToHome": "My workspaces",
@@ -1233,10 +1277,15 @@
                     "yes": "Continue",
                     "no": "Keep current method"
                 },
-                "selectButton": "Choose a certificate",
+                "selectButton": "Add a certificate",
                 "selectOther": "Update",
                 "selectInstructions": "A pop-up will open, prompting you to choose the certificate.",
-                "certificateSelected": "Certificate selected"
+                "certificateSelected": "Certificate selected",
+                "errors": {
+                    "noCertificate": "No certificate was selected.",
+                    "invalidCertificate": "The selected certificate is invalid. Please choose another one.",
+                    "globalError": "An error has occurred while selecting the certificate. Please try again."
+                }
             },
             "sso": {
                 "title": "Single Sign-On",
@@ -1662,53 +1711,29 @@
                 "copyLink": "Copy link"
             }
         },
-        "pkiRequests": {
-            "tab": "PKI requests",
-            "tabShort": "PKI",
-            "emptyState": "No pending PKI requests.",
-            "copyLink": "Copy link (PKI)",
-            "pkiFeature": "This feature requires a PKI (Public Key Infrastructure).",
+        "asyncEnrollmentRequest": {
+            "tab": "Link requests",
+            "emptyState": "No pending link requests. These requests are for PKI or SSO users.",
+            "copyLink": "Copy link (PKI/SSO)",
+            "accept": "Accept",
+            "reject": "Reject request",
             "listDisplayTitles": {
                 "name": "Name",
                 "email": "Email",
                 "createdOn": "Request date",
-                "certificate": "Certificate"
+                "type": "Request type"
             },
-            "accept": "Accept",
-            "certificate": {
-                "valid": "Valid",
-                "invalid": "Invalid",
-                "unknown": "Unknown"
-            },
-            "rootCertificate": {
-                "missingCertificateTitle": "Missing root certificate",
-                "missingCertificateDescription": "A root certificate is required to validate PKI join requests. For security reasons, the certificate is not stored, and must be provided each time you login to the organization.",
-                "setRootCertificate": "Set root certificate",
-                "updateRootCertificate": "Update root certificate"
-            },
-            "validationModal": {
-                "error": {
-                    "unknown": {
-                        "title": "Adding a user with an unknown certificate",
-                        "description": "You are about to add a user with an unknown certificate. Their identity cannot be verified. Are you sure you want to proceed?"
-                    },
-                    "notValid": {
-                        "title": "Adding a user with an invalid certificate",
-                        "description": "The certificate provided by the user does not match the root certificate. Are you sure you want to add this user?"
-                    }
-                },
-                "button": {
-                    "cancel": "Cancel",
-                    "confirm": "Confirm adding user"
-                },
-                "acceptedFailed": "Failed to accept this request",
-                "acceptedSuccess": "This request has been accepted",
-                "rejectedFailed": "Failed to reject this request",
-                "rejectedSuccess": "This request has been rejected"
+            "type": {
+                "pki": "PKI",
+                "sso": "SSO",
+                "pkiCorrupted": "PKI (corrupted)"
             },
             "linkCopiedToClipboard": {
                 "success": "PKI link has been copied to clipboard.",
                 "failed": "Failed to copy the PKI link. Your browser or device does not seem to support copy/paste."
+            },
+            "tooltips": {
+                "reject": "Reject request"
             },
             "selectProfileModal": {
                 "title": "Complete user information",
@@ -1722,8 +1747,45 @@
                     "noProfile": "You must select a profile."
                 }
             },
-            "tooltips": {
-                "reject": "Reject request"
+            "validationModal": {
+                "button": {
+                    "cancel": "Cancel",
+                    "confirm": "Confirm adding user"
+                },
+                "acceptedFailed": "Failed to accept this request",
+                "acceptedSuccess": "This request has been accepted",
+                "rejectedFailed": "Failed to reject this request",
+                "rejectedSuccess": "This request has been rejected"
+            },
+            "pkiRequests": {
+                "modal": {
+                    "title": "A certificate is required to accept the request",
+                    "description": "A certificate is required to validate requests received by PKI. For security reasons, it must be provided each time the organization is reopened.",
+                    "next": "Continue",
+                    "cancel": "Cancel",
+                    "setRootCertificate": "Set your certificate",
+                    "updateRootCertificate": "Update your certificate"
+                }
+            },
+            "ssoRequests": {
+                "connectWithSSO": "Connect with SSO",
+                "modal": {
+                    "title": "You must be logged in to accept the request",
+                    "description": "The user has requested to join the organization using SSO. Please log in below for accepting the request.",
+                    "next": "Continue",
+                    "cancel": "Cancel"
+                }
+            },
+            "errors": {
+                "failToListRequests": "Failed to retrieve link requests. Please make sure you are online.",
+                "noSsoConfigured": "SSO is not configured.",
+                "pkiNotAvailable": "PKI is not available on this organization.",
+                "unknownIdentitySystem": "The identity system used for this request is unknown.",
+                "problemWithRequestCertificate": "There is a problem with the request certificate.",
+                "unknownName": "Unknown name",
+                "unknownEmail": "Unknown email",
+                "offline": "You are offline. Please make sure you are connected to the Internet and try again.",
+                "couldNotContactServer": "Could not contact the server. Please make sure you are connected to the Internet and try again."
             }
         },
         "confirm": "Confirm"

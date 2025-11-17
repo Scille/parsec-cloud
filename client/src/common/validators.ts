@@ -138,17 +138,14 @@ export const claimAndBootstrapLinkValidator: IValidator = async function (value:
   if (value.length === 0) {
     return { validity: Validity.Intermediate };
   }
-  // TODO: REPLACE WHEN LIBPARSEC HANDLES PKI LINKS
-  if (value.includes('a=pki_enrollment')) {
-    return { validity: Validity.Valid };
-  }
   const result = await parseParsecAddr(value);
 
   if (
     result.ok &&
     (result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap ||
       result.value.tag === ParsedParsecAddrTag.InvitationUser ||
-      result.value.tag === ParsedParsecAddrTag.InvitationDevice)
+      result.value.tag === ParsedParsecAddrTag.InvitationDevice ||
+      result.value.tag === ParsedParsecAddrTag.AsyncEnrollment)
   ) {
     return { validity: Validity.Valid };
   }
@@ -247,14 +244,14 @@ export const secretKeyValidator: IValidator = async function (value: string) {
   return { validity: /^([A-Z0-9]{4}-){12}[A-Z0-9]{4}$/.test(value) ? Validity.Valid : Validity.Invalid };
 };
 
-export const pkiLinkValidator: IValidator = async function (value: string) {
+export const asyncEnrollmentLinkValidator: IValidator = async function (value: string) {
   value = value.trim();
   if (value.length === 0) {
     return { validity: Validity.Intermediate };
   }
-  // TODO: REPLACE WHEN LIBPARSEC HANDLES PKI LINKS
-  if (value.includes('a=pki_enrollment')) {
-    return { validity: Validity.Valid };
+  const result = await parseParsecAddr(value);
+  if (result.ok) {
+    return result.value.tag === ParsedParsecAddrTag.AsyncEnrollment ? { validity: Validity.Valid } : { validity: Validity.Invalid };
   }
-  return { validity: Validity.Invalid };
+  return { validity: Validity.Invalid, reason: '' };
 };

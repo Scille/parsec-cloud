@@ -27,19 +27,19 @@
 
       <ion-radio
         class="switch-item"
-        :value="InvitationView.PkiRequest"
+        :value="InvitationView.AsyncEnrollmentRequest"
         @click="$event.preventDefault()"
-        :class="{ 'radio-checked': invitationView === InvitationView.PkiRequest }"
+        :class="{ 'radio-checked': invitationView === InvitationView.AsyncEnrollmentRequest }"
       >
         <ion-icon
           :icon="idCard"
           class="switch-item__icon"
         />
-        <ion-text class="subtitles-normal">{{ $msTranslate('InvitationsPage.pkiRequests.tab') }}</ion-text>
-        <span class="switch-item__count button-small">{{ pkiRequestsCount }}</span>
+        <ion-text class="subtitles-normal">{{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.tab') }}</ion-text>
+        <span class="switch-item__count button-small">{{ asyncEnrollmentRequestsCount }}</span>
 
         <ion-icon
-          v-if="invitationView === InvitationView.PkiRequest"
+          v-if="invitationView === InvitationView.AsyncEnrollmentRequest"
           :icon="checkmarkCircle"
           class="switch-item__check-icon"
         />
@@ -66,7 +66,7 @@ import { ref } from 'vue';
 
 const props = defineProps<{
   invitationsCount: number;
-  pkiRequestsCount: number;
+  asyncEnrollmentRequestsCount: number;
   defaultView: InvitationView;
 }>();
 

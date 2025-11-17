@@ -2,15 +2,15 @@
 
 <template>
   <ms-modal
-    title="InvitationsPage.pkiRequests.selectProfileModal.title"
+    title="InvitationsPage.asyncEnrollmentRequest.selectProfileModal.title"
     :close-button="{ visible: true }"
     :confirm-button="{
       disabled: selectedProfile === undefined,
-      label: 'InvitationsPage.pkiRequests.selectProfileModal.actions.confirm',
+      label: 'InvitationsPage.asyncEnrollmentRequest.selectProfileModal.actions.confirm',
       onClick: validateProfile,
     }"
     :cancel-button="{
-      label: 'InvitationsPage.pkiRequests.selectProfileModal.actions.cancel',
+      label: 'InvitationsPage.asyncEnrollmentRequest.selectProfileModal.actions.cancel',
       disabled: false,
       onClick: dismissModal,
     }"
@@ -25,8 +25,8 @@
       />
       <ms-dropdown
         class="dropdown"
-        title="InvitationsPage.pkiRequests.selectProfileModal.profileLabel"
-        label="InvitationsPage.pkiRequests.selectProfileModal.profilePlaceholder"
+        title="InvitationsPage.asyncEnrollmentRequest.selectProfileModal.profileLabel"
+        label="InvitationsPage.asyncEnrollmentRequest.selectProfileModal.profilePlaceholder"
         :options="profileOptions"
         @change="selectedProfile = $event.option.key"
       />
