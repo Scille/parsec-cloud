@@ -71,7 +71,7 @@ ruff = "^0.14.0"
 sqlfluff = "^3.5.0"
 # test
 httpx-sse = "^0.4.1"
-pytest = "^8.4.0"
+pytest = "^9.0.1"
 pytest-asyncio = "^1.0.0"
 pytest-cov = "^7.0.0"
 pytest-rerunfailures = "^16.0"
