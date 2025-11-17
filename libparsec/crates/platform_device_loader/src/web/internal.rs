@@ -70,7 +70,7 @@ impl Storage {
         let dir = match self.root_dir.get_directory_from_path(&dir, None).await {
             Ok(dir) => dir,
             Err(GetDirectoryHandleError::NotFound { .. }) => {
-                log::debug!("Could not found devices dir");
+                log::debug!("Could not find devices dir");
                 return Ok(Vec::new());
             }
             Err(e) => return Err(e.into()),
