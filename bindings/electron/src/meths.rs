@@ -12541,6 +12541,25 @@ fn variant_pki_enrollment_submit_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// PkiGetAddrError
+
+#[allow(dead_code)]
+fn variant_pki_get_addr_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::PkiGetAddrError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::PkiGetAddrError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "PkiGetAddrErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // SelfShamirRecoveryInfo
 
 #[allow(dead_code)]
@@ -20759,6 +20778,62 @@ fn client_pki_enrollment_reject(mut cx: FunctionContext) -> JsResult<JsPromise> 
     Ok(promise)
 }
 
+// client_pki_get_addr
+fn client_pki_get_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME.lock().expect("Mutex is poisoned").spawn(async move {
+
+        let ret = libparsec::client_pki_get_addr(
+            client,
+        ).await;
+
+        deferred.settle_with(&channel, move |mut cx| {
+            let js_ret = match ret {
+    Ok(ok) => {
+        let js_obj = JsObject::new(&mut cx);
+        let js_tag = JsBoolean::new(&mut cx, true);
+        js_obj.set(&mut cx, "ok", js_tag)?;
+        let js_value = JsString::try_new(&mut cx,{
+    let custom_to_rs_string = |addr: libparsec::ParsecPkiEnrollmentAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
+    match custom_to_rs_string(ok) {
+        Ok(ok) => ok,
+        Err(err) => return cx.throw_type_error(err.to_string()),
+    }
+}).or_throw(&mut cx)?;
+        js_obj.set(&mut cx, "value", js_value)?;
+        js_obj
+    }
+    Err(err) => {
+        let js_obj = cx.empty_object();
+        let js_tag = JsBoolean::new(&mut cx, false);
+        js_obj.set(&mut cx, "ok", js_tag)?;
+        let js_err = variant_pki_get_addr_error_rs_to_js(&mut cx, err)?;
+        js_obj.set(&mut cx, "error", js_err)?;
+        js_obj
+    }
+};
+            Ok(js_ret)
+        });
+    });
+
+    Ok(promise)
+}
+
 // client_pki_list_enrollments
 fn client_pki_list_enrollments(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -28031,6 +28106,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("clientOrganizationInfo", client_organization_info)?;
     cx.export_function("clientPkiEnrollmentAccept", client_pki_enrollment_accept)?;
     cx.export_function("clientPkiEnrollmentReject", client_pki_enrollment_reject)?;
+    cx.export_function("clientPkiGetAddr", client_pki_get_addr)?;
     cx.export_function("clientPkiListEnrollments", client_pki_list_enrollments)?;
     cx.export_function("clientRenameWorkspace", client_rename_workspace)?;
     cx.export_function("clientRevokeUser", client_revoke_user)?;

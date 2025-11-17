@@ -3481,6 +3481,18 @@ export type PkiEnrollmentSubmitError =
   | PkiEnrollmentSubmitErrorOffline
   | PkiEnrollmentSubmitErrorPkiOperationError
 
+// PkiGetAddrError
+export enum PkiGetAddrErrorTag {
+    Internal = 'PkiGetAddrErrorInternal',
+}
+
+export interface PkiGetAddrErrorInternal {
+    tag: PkiGetAddrErrorTag.Internal
+    error: string
+}
+export type PkiGetAddrError =
+  | PkiGetAddrErrorInternal
+
 // SelfShamirRecoveryInfo
 export enum SelfShamirRecoveryInfoTag {
     Deleted = 'SelfShamirRecoveryInfoDeleted',
@@ -5551,6 +5563,9 @@ export interface LibParsecPlugin {
         client_handle: Handle,
         enrollment_id: PKIEnrollmentID
     ): Promise<Result<null, PkiEnrollmentRejectError>>
+    clientPkiGetAddr(
+        client: Handle
+    ): Promise<Result<ParsecPkiEnrollmentAddr, PkiGetAddrError>>
     clientPkiListEnrollments(
         client_handle: Handle
     ): Promise<Result<Array<PkiEnrollmentListItem>, PkiEnrollmentListError>>
