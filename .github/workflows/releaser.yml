@@ -132,8 +132,8 @@ jobs:
           # Python Files
           cp ${CP_ARGS} artifacts/Linux-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
           cp ${CP_ARGS} artifacts/Linux-X64-wheel/requirements.txt release-files/python-linux-requirements.txt
-          cp ${CP_ARGS} artifacts/macOS-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
-          cp ${CP_ARGS} artifacts/macOS-X64-wheel/requirements.txt release-files/python-macos-requirements.txt
+          cp ${CP_ARGS} artifacts/macOS-ARM64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
+          cp ${CP_ARGS} artifacts/macOS-ARM64-wheel/requirements.txt release-files/python-macos-requirements.txt
           cp ${CP_ARGS} artifacts/Windows-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
           cp ${CP_ARGS} artifacts/Windows-X64-wheel/requirements.txt release-files/python-win-requirements.txt
 
