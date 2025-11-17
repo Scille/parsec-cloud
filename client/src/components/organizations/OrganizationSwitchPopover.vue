@@ -110,19 +110,21 @@ const filteredOrgs: Ref<Array<ConnectedOrganization>> = ref([]);
 
 onMounted(async () => {
   const result = await getLoggedInDevices();
-  connectedOrgs.value = result.map((info) => {
-    return {
-      id: info.device.organizationId,
-      active: getConnectionHandle() === info.handle,
-      handle: info.handle,
-      userLabel: info.device.humanHandle.label,
-      userEmail: info.device.humanHandle.email,
-      device: info.device,
-      trial: isTrialOrganizationDevice(info.device),
-      isOrganizationExpired: info.isOrganizationExpired,
-      isOnline: info.isOnline,
-    };
-  });
+  connectedOrgs.value = await Promise.all(
+    result.map(async (info) => {
+      return {
+        id: info.device.organizationId,
+        active: getConnectionHandle() === info.handle,
+        handle: info.handle,
+        userLabel: info.device.humanHandle.label,
+        userEmail: info.device.humanHandle.email,
+        device: info.device,
+        trial: await isTrialOrganizationDevice(info.device),
+        isOrganizationExpired: info.isOrganizationExpired,
+        isOnline: info.isOnline,
+      };
+    }),
+  );
   currentOrg.value = connectedOrgs.value.find((org) => org.active);
   filteredOrgs.value = connectedOrgs.value.filter(
     (org) => org.id !== currentOrg.value?.id || org.userEmail !== currentOrg.value?.userEmail,

@@ -150,9 +150,9 @@ async function updateInformation(): Promise<void> {
       window.electronAPI.log('error', `Failed to retrieve user info: ${result.error.tag} (${result.error.error})`);
     }
   });
-  getCurrentAvailableDevice().then((result) => {
+  getCurrentAvailableDevice().then(async (result) => {
     if (result.ok) {
-      isTrialOrg.value = isTrialOrganizationDevice(result.value);
+      isTrialOrg.value = await isTrialOrganizationDevice(result.value);
     } else {
       window.electronAPI.log('error', `Failed to retrieve current device: ${result.error.tag}`);
     }

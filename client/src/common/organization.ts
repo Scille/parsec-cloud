@@ -1,7 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { AvailableDevice } from '@/parsec';
-import { ServerType, TRIAL_EXPIRATION_DAYS, getServerTypeFromHost } from '@/services/parsecServers';
+import { libparsec } from '@/plugins/libparsec';
+import { ServerType, TRIAL_EXPIRATION_DAYS, getServerTypeFromParsedParsecAddr } from '@/services/parsecServers';
 import { DateTime, Duration } from 'luxon';
 import { Translatable } from 'megashark-lib';
 
@@ -39,8 +40,11 @@ export function formatExpirationTime(duration: Duration): Translatable {
   return 'HomePage.organizationList.expiration.expired';
 }
 
-export function isTrialOrganizationDevice(device: AvailableDevice): boolean {
-  const url = new URL(device.serverUrl);
-  const serverType = getServerTypeFromHost(url.hostname, url.port.length > 0 ? parseInt(url.port) : undefined);
+export async function isTrialOrganizationDevice(device: AvailableDevice): Promise<boolean> {
+  const result = await libparsec.parseParsecAddr(device.serverAddr);
+  if (!result.ok) {
+    throw Error(`Invalid \`serverAddr\` field for AvailableDevice: ${device}`);
+  }
+  const serverType = getServerTypeFromParsedParsecAddr(result.value);
   return serverType === ServerType.Trial;
 }

@@ -102,7 +102,7 @@ const props = defineProps<{
 }>();
 
 onMounted(async () => {
-  isTrialOrg.value = isTrialOrganizationDevice(props.device);
+  isTrialOrg.value = await isTrialOrganizationDevice(props.device);
   if (isTrialOrg.value && props.orgCreationDate) {
     expirationDuration.value = getDurationBeforeExpiration(props.orgCreationDate);
   }
