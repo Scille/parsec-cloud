@@ -288,7 +288,7 @@ pub struct AvailableDevice {
     pub key_file_path: PathBuf,
     pub created_on: DateTime,
     pub protected_on: DateTime,
-    pub server_url: String,
+    pub server_addr: ParsecAddr,
     pub organization_id: OrganizationID,
     pub user_id: UserID,
     pub device_id: DeviceID,

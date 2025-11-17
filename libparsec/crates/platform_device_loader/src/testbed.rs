@@ -206,13 +206,11 @@ fn populate_template_available_devices(
                 _ => return None,
             };
 
-            let server_url = env.server_addr.to_http_url(None).to_string();
-
             let available_device = AvailableDevice {
                 key_file_path: get_device_key_file(config_dir, device_id),
                 created_on,
                 protected_on: created_on,
-                server_url,
+                server_addr: env.server_addr.clone(),
                 organization_id: env.organization_id.clone(),
                 user_id,
                 device_id,
@@ -243,18 +241,10 @@ pub(crate) fn maybe_list_available_devices(config_dir: &Path) -> Option<Vec<Avai
                 // Sanity check
                 assert!(!already_accessed_key_files.destroyed.contains(key_file));
 
-                let server_url = {
-                    ParsecAddr::new(
-                        device.organization_addr.hostname().to_owned(),
-                        Some(device.organization_addr.port()),
-                        device.organization_addr.use_ssl(),
-                    )
-                    .to_http_url(None)
-                    .to_string()
-                };
+                let server_addr: ParsecAddr = device.organization_addr.clone().into();
                 available_devices.push(AvailableDevice {
                     key_file_path: key_file.clone(),
-                    server_url,
+                    server_addr,
                     created_on: *created_on,
                     protected_on: *created_on,
                     organization_id: device.organization_id().to_owned(),
@@ -479,19 +469,9 @@ pub(crate) fn maybe_save_device(
                 created_on,
             ));
 
-            let server_url = {
-                ParsecAddr::new(
-                    device.organization_addr.hostname().to_owned(),
-                    Some(device.organization_addr.port()),
-                    device.organization_addr.use_ssl(),
-                )
-                .to_http_url(None)
-                .to_string()
-            };
-
             Ok(AvailableDevice {
                 key_file_path: key_file,
-                server_url,
+                server_addr: device.organization_addr.clone().into(),
                 created_on,
                 protected_on: created_on,
                 organization_id: device.organization_id().to_owned(),

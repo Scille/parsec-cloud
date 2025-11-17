@@ -306,7 +306,7 @@ pub(super) async fn save_device(
     key_file: PathBuf,
 ) -> Result<AvailableDevice, SaveDeviceError> {
     let protected_on = device.now();
-    let server_url = super::server_url_from_device(device);
+    let server_addr: ParsecAddr = device.organization_addr.clone().into();
 
     match strategy {
         DeviceSaveStrategy::Keyring => {
@@ -337,7 +337,7 @@ pub(super) async fn save_device(
             let file_content = DeviceFile::Keyring(DeviceFileKeyring {
                 created_on,
                 protected_on,
-                server_url: server_url.clone(),
+                server_url: server_addr.clone(),
                 organization_id: device.organization_id().clone(),
                 user_id: device.user_id,
                 device_id: device.device_id,
@@ -365,7 +365,7 @@ pub(super) async fn save_device(
             let file_content = DeviceFile::Password(DeviceFilePassword {
                 created_on,
                 protected_on,
-                server_url: server_url.clone(),
+                server_url: server_addr.clone(),
                 organization_id: device.organization_id().to_owned(),
                 user_id: device.user_id,
                 device_id: device.device_id,
@@ -410,7 +410,7 @@ pub(super) async fn save_device(
             let file_content = DeviceFile::Smartcard(DeviceFileSmartcard {
                 created_on,
                 protected_on,
-                server_url: server_url.clone(),
+                server_url: server_addr.clone(),
                 organization_id: device.organization_id().to_owned(),
                 user_id: device.user_id,
                 device_id: device.device_id,
@@ -452,7 +452,7 @@ pub(super) async fn save_device(
             let file_content = DeviceFile::AccountVault(DeviceFileAccountVault {
                 created_on,
                 protected_on,
-                server_url: server_url.clone(),
+                server_url: server_addr.clone(),
                 organization_id: device.organization_id().to_owned(),
                 user_id: device.user_id,
                 device_id: device.device_id,
@@ -492,7 +492,7 @@ pub(super) async fn save_device(
             let file_content = DeviceFile::OpenBao(DeviceFileOpenBao {
                 created_on,
                 protected_on,
-                server_url: server_url.clone(),
+                server_url: server_addr.clone(),
                 organization_id: device.organization_id().to_owned(),
                 user_id: device.user_id,
                 device_id: device.device_id,
@@ -512,7 +512,7 @@ pub(super) async fn save_device(
 
     Ok(AvailableDevice {
         key_file_path: key_file,
-        server_url,
+        server_addr,
         created_on,
         protected_on,
         organization_id: device.organization_id().to_owned(),

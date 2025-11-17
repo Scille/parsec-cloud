@@ -62,11 +62,11 @@ fn format_devices(
         let organization_id = &device.organization_id();
         let human_handle = &device.human_handle;
         let device_label = &device.device_label;
-        let server_url = ParsecAddr::from(&device.organization_addr).to_http_url(None);
+        let server_addr: ParsecAddr = device.organization_addr.clone().into();
 
         writeln!(
             writer,
-            "{YELLOW}{short_id}{RESET} - {organization_id}: {human_handle} @ {device_label} ({server_url})"
+            "{YELLOW}{short_id}{RESET} - {organization_id}: {human_handle} @ {device_label} ({server_addr})"
         )?;
     }
     Ok(())

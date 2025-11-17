@@ -61,7 +61,7 @@ async fn list_devices(tmp_path: TmpPath) {
     let keyring_expected = DeviceFileKeyring {
         created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
         protected_on: "2000-01-01T00:00:01Z".parse().unwrap(),
-        server_url: "https://parsec.invalid".to_string(),
+        server_url: "parsec3://parsec.invalid".parse().unwrap(),
         organization_id: "CoolOrg".parse().unwrap(),
         user_id: "alice".parse().unwrap(),
         device_id: "alice@dev1".parse().unwrap(),
@@ -109,7 +109,7 @@ async fn list_devices(tmp_path: TmpPath) {
     let password_expected = DeviceFilePassword {
         created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
         protected_on: "2000-01-01T00:00:01Z".parse().unwrap(),
-        server_url: "https://parsec.invalid".to_string(),
+        server_url: "parsec3://parsec.invalid".parse().unwrap(),
         organization_id: "CoolOrg".parse().unwrap(),
         user_id: "bob".parse().unwrap(),
         device_id: "bob@dev1".parse().unwrap(),
@@ -161,7 +161,7 @@ async fn list_devices(tmp_path: TmpPath) {
     let smartcard_expected = DeviceFileSmartcard {
         created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
         protected_on: "2000-01-01T00:00:01Z".parse().unwrap(),
-        server_url: "https://parsec.invalid".to_string(),
+        server_url: "parsec3://parsec.invalid".parse().unwrap(),
         organization_id: "CoolOrg".parse().unwrap(),
         user_id: "mallory".parse().unwrap(),
         device_id: "mallory@dev1".parse().unwrap(),
@@ -224,7 +224,7 @@ async fn list_devices(tmp_path: TmpPath) {
     let recovery_expected = DeviceFileRecovery {
         created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
         protected_on: "2000-01-01T00:00:01Z".parse().unwrap(),
-        server_url: "https://parsec.invalid".to_string(),
+        server_url: "parsec3://parsec.invalid".parse().unwrap(),
         organization_id: "CoolOrg".parse().unwrap(),
         user_id: "mike".parse().unwrap(),
         device_id: "mike@dev1".parse().unwrap(),
@@ -266,7 +266,7 @@ async fn list_devices(tmp_path: TmpPath) {
     let account_vault_expected = DeviceFileAccountVault {
         created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
         protected_on: "2000-01-01T00:00:01Z".parse().unwrap(),
-        server_url: "https://parsec.invalid".to_string(),
+        server_url: "parsec3://parsec.invalid".parse().unwrap(),
         organization_id: "CoolOrg".parse().unwrap(),
         user_id: "philip".parse().unwrap(),
         device_id: "philip@dev1".parse().unwrap(),
@@ -314,7 +314,7 @@ async fn list_devices(tmp_path: TmpPath) {
     let openbao_expected = DeviceFileOpenBao {
         created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
         protected_on: "2000-01-01T00:00:01Z".parse().unwrap(),
-        server_url: "https://parsec.invalid".to_string(),
+        server_url: "parsec3://parsec.invalid".parse().unwrap(),
         organization_id: "CoolOrg".parse().unwrap(),
         user_id: "alice".parse().unwrap(),
         device_id: "alice@dev2".parse().unwrap(),
@@ -393,7 +393,7 @@ async fn list_devices(tmp_path: TmpPath) {
             key_file_path: keyring_path,
             created_on: keyring_expected.created_on,
             protected_on: keyring_expected.protected_on,
-            server_url: keyring_expected.server_url,
+            server_addr: keyring_expected.server_url,
             organization_id: keyring_expected.organization_id,
             user_id: keyring_expected.user_id,
             device_id: keyring_expected.device_id,
@@ -405,7 +405,7 @@ async fn list_devices(tmp_path: TmpPath) {
             key_file_path: password_path,
             created_on: password_expected.created_on,
             protected_on: password_expected.protected_on,
-            server_url: password_expected.server_url,
+            server_addr: password_expected.server_url,
             organization_id: password_expected.organization_id,
             user_id: password_expected.user_id,
             device_id: password_expected.device_id,
@@ -417,7 +417,7 @@ async fn list_devices(tmp_path: TmpPath) {
             key_file_path: smartcard_path,
             created_on: smartcard_expected.created_on,
             protected_on: smartcard_expected.protected_on,
-            server_url: smartcard_expected.server_url,
+            server_addr: smartcard_expected.server_url,
             organization_id: smartcard_expected.organization_id,
             user_id: smartcard_expected.user_id,
             device_id: smartcard_expected.device_id,
@@ -429,7 +429,7 @@ async fn list_devices(tmp_path: TmpPath) {
             key_file_path: recovery_path,
             created_on: recovery_expected.created_on,
             protected_on: recovery_expected.protected_on,
-            server_url: recovery_expected.server_url,
+            server_addr: recovery_expected.server_url,
             organization_id: recovery_expected.organization_id,
             user_id: recovery_expected.user_id,
             device_id: recovery_expected.device_id,
@@ -441,7 +441,7 @@ async fn list_devices(tmp_path: TmpPath) {
             key_file_path: account_vault_path,
             created_on: account_vault_expected.created_on,
             protected_on: account_vault_expected.protected_on,
-            server_url: account_vault_expected.server_url,
+            server_addr: account_vault_expected.server_url,
             organization_id: account_vault_expected.organization_id,
             user_id: account_vault_expected.user_id,
             device_id: account_vault_expected.device_id,
@@ -453,7 +453,7 @@ async fn list_devices(tmp_path: TmpPath) {
             key_file_path: openbao_path,
             created_on: openbao_expected.created_on,
             protected_on: openbao_expected.protected_on,
-            server_url: openbao_expected.server_url,
+            server_addr: openbao_expected.server_url,
             organization_id: openbao_expected.organization_id,
             user_id: openbao_expected.user_id,
             device_id: openbao_expected.device_id,
@@ -607,27 +607,27 @@ async fn testbed(env: &TestbedEnv) {
     p_assert_eq!(
         devices
             .into_iter()
-            .map(|a| (a.device_id, a.server_url, a.ty))
-            .collect::<Vec<(DeviceID, String, AvailableDeviceType)>>(),
+            .map(|a| (a.device_id, a.server_addr, a.ty))
+            .collect::<Vec<(DeviceID, ParsecAddr, AvailableDeviceType)>>(),
         [
             (
                 bob2.device_id,
-                "https://noserver.example.com/".to_string(),
+                "parsec3://noserver.example.com/".parse().unwrap(),
                 AvailableDeviceType::AccountVault,
             ),
             (
                 mallory.device_id,
-                "https://noserver.example.com/".to_string(),
+                "parsec3://noserver.example.com/".parse().unwrap(),
                 AvailableDeviceType::Password,
             ),
             (
                 bob1.device_id,
-                "https://newhost.example.com/".to_string(),
+                "parsec3://newhost.example.com/".parse().unwrap(),
                 AvailableDeviceType::Password,
             ),
             (
                 zack.device_id,
-                "https://noserver.example.com/".to_string(),
+                "parsec3://noserver.example.com/".parse().unwrap(),
                 AvailableDeviceType::AccountVault,
             ),
         ]
