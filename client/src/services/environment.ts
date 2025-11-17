@@ -163,8 +163,17 @@ function getOpenBaoServer(): string | undefined {
  Links
 */
 
-const CLEAN_APP_VERSION = `${APP_VERSION.slice(0, APP_VERSION.indexOf('+') === -1 ? undefined : APP_VERSION.indexOf('+'))}`;
-const APP_VERSION_PREFIX = `v${CLEAN_APP_VERSION}`;
+function normalizeAppVersion(version: string): string {
+  version = version.trim();
+  if (version.startsWith('v')) {
+    return version;
+  }
+  return `v${version}`;
+}
+
+const CLEAN_APP_VERSION = normalizeAppVersion(
+  `${APP_VERSION.slice(0, APP_VERSION.indexOf('+') === -1 ? undefined : APP_VERSION.indexOf('+'))}`,
+);
 
 async function openUrl(url: string): Promise<void> {
   window.electronAPI.log('debug', `Opening ${url}`);
@@ -186,16 +195,16 @@ type Pages =
 
 async function openDocumentationUserGuideLink(page: Pages, anchor = ''): Promise<void> {
   await openUrl(
-    I18n.translate({ key: 'MenuPage.documentationGuideLink', data: { version: APP_VERSION_PREFIX, page: page, anchor: anchor } }),
+    I18n.translate({ key: 'MenuPage.documentationGuideLink', data: { version: CLEAN_APP_VERSION, page: page, anchor: anchor } }),
   );
 }
 
 async function openDocumentationLink(): Promise<void> {
-  await openUrl(I18n.translate({ key: 'MenuPage.documentationLink', data: { version: APP_VERSION_PREFIX } }));
+  await openUrl(I18n.translate({ key: 'MenuPage.documentationLink', data: { version: CLEAN_APP_VERSION } }));
 }
 
 async function openSequesterDocumentationLink(): Promise<void> {
-  await openUrl(I18n.translate({ key: 'CreateOrganization.sequester.link', data: { version: APP_VERSION_PREFIX } }));
+  await openUrl(I18n.translate({ key: 'CreateOrganization.sequester.link', data: { version: CLEAN_APP_VERSION } }));
 }
 
 async function openDownloadParsecLink(): Promise<void> {
@@ -207,11 +216,11 @@ async function openContactLink(): Promise<void> {
 }
 
 async function openLicenseLink(): Promise<void> {
-  await openUrl(I18n.translate({ key: 'app.licenseLink', data: { version: APP_VERSION_PREFIX } }));
+  await openUrl(I18n.translate({ key: 'app.licenseLink', data: { version: CLEAN_APP_VERSION } }));
 }
 
 async function openChangelogLink(version?: string): Promise<void> {
-  await openUrl(I18n.translate({ key: 'app.history', data: { version: version ?? APP_VERSION_PREFIX } }));
+  await openUrl(I18n.translate({ key: 'app.history', data: { version: version ? normalizeAppVersion(version) : CLEAN_APP_VERSION } }));
 }
 
 async function openSourcesLink(): Promise<void> {
