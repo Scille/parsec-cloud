@@ -15,7 +15,7 @@ describe('Organization Card', () => {
 
   const DEVICE: AvailableDevice = {
     keyFilePath: '/path',
-    serverUrl: 'https://parsec.invalid',
+    serverAddr: 'parsec3://parsec.invalid',
     createdOn: DateTime.utc(),
     protectedOn: DateTime.utc(),
     organizationId: 'Black Mesa',

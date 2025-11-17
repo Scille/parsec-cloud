@@ -378,7 +378,7 @@ class _ParsecAccount {
   }
 
   async isDeviceRegistered(device: AvailableDevice): Promise<Result<boolean, AccountListRegistrationDevicesError>> {
-    if (!this.addressMatchesAccountServer(device.serverUrl)) {
+    if (!this.addressMatchesAccountServer(device.serverAddr)) {
       return { ok: false, error: { tag: AccountListRegistrationDevicesErrorTag.Internal, error: 'no-server-match' } };
     }
     const infoResult = await this.getInfo();

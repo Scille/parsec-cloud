@@ -24,8 +24,7 @@ export async function availableDeviceMatchesServer(
   device: AvailableDevice,
   serverInfo: { hostname: string; port?: number; organization?: OrganizationID },
 ): Promise<boolean> {
-  const deviceAddr = device.serverUrl.replace('http://', 'parsec3://').replace('https://', 'parsec3://');
-  const parseResult = await parseParsecAddr(deviceAddr);
+  const parseResult = await parseParsecAddr(device.serverAddr);
   if (!parseResult.ok) {
     return false;
   }
