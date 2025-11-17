@@ -425,7 +425,7 @@ function getTitleForRoute(): Translatable {
     case Routes.Users:
       return 'HeaderPage.titles.users';
     case Routes.Invitations:
-      return 'HeaderPage.titles.invitations';
+      return 'HeaderPage.titles.invitationsRequests';
     case Routes.Storage:
       return 'HeaderPage.titles.organization.storage';
     case Routes.Organization:

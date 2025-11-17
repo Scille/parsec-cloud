@@ -148,7 +148,7 @@ import {
   UserID,
   UserInfo,
   UserProfile,
-  getPkiJoinOrganizationLink,
+  getAsyncEnrollmentAddr,
   getClientInfo as parsecGetClientInfo,
   listUsers as parsecListUsers,
   revokeUser as parsecRevokeUser,
@@ -695,16 +695,16 @@ const actionBarOptionsUsersPage = computed(() => {
     if (false) {
       // TODO enable with PKI support
       actionArray.push({
-        label: 'InvitationsPage.pkiRequests.copyLink',
+        label: 'InvitationsPage.asyncEnrollmentRequest.copyLink',
         icon: link,
         onClick: async (): Promise<void> => {
-          const result = await getPkiJoinOrganizationLink();
+          const result = await getAsyncEnrollmentAddr();
           if (result.ok) {
             await copyToClipboard(
               result.value,
               informationManager,
-              'InvitationsPage.pkiRequests.linkCopiedToClipboard.success',
-              'InvitationsPage.pkiRequests.linkCopiedToClipboard.failed',
+              'InvitationsPage.asyncEnrollmentRequest.linkCopiedToClipboard.success',
+              'InvitationsPage.asyncEnrollmentRequest.linkCopiedToClipboard.failed',
             );
           }
         },

@@ -39,10 +39,10 @@
                   @recover-click="onForgottenPasswordClicked"
                   @create-or-join-organization-click="openCreateOrJoin"
                   @invitation-click="onInvitationClicked"
-                  @pki-request-click="onPkiRequestClicked"
+                  @join-request-click="onJoinRequestClicked"
                   :device-list="deviceList"
                   :invitation-list="invitationList"
-                  :pki-request-list="pkiRequestList"
+                  :join-request-list="joinRequests"
                   :querying="querying"
                 />
               </template>
@@ -83,45 +83,56 @@
 <script setup lang="ts">
 import { getDurationBeforeExpiration, isExpired, isTrialOrganizationDevice } from '@/common/organization';
 import {
+  asyncEnrollmentLinkValidator,
   bootstrapLinkValidator,
   claimAndBootstrapLinkValidator,
   claimDeviceLinkValidator,
   claimUserLinkValidator,
-  pkiLinkValidator,
 } from '@/common/validators';
 import { SmallDisplayCreateJoinModal } from '@/components/small-display';
 import {
+  AcceptFinalizeAsyncEnrollmentIdentityStrategy,
   AccessStrategy,
   AccountInvitation,
+  AsyncEnrollmentRequest,
   AvailableDevice,
   AvailableDeviceTypeTag,
+  AvailablePendingAsyncEnrollmentIdentitySystemPKI,
+  AvailablePendingAsyncEnrollmentIdentitySystemTag,
   ClientStartError,
   ClientStartErrorTag,
   DeviceAccessStrategy,
   DeviceAccessStrategyTag,
-  JoinRequestStatus,
+  DeviceSaveStrategy,
   ListAvailableDeviceErrorTag,
-  LocalJoinRequest,
   ParsecAccount,
+  ParsedParsecAddrTag,
+  PendingAsyncEnrollmentInfoTag,
+  SaveStrategy,
   archiveDevice,
-  cancelLocalJoinRequest,
-  confirmLocalJoinRequest,
+  buildParsecAddr,
+  confirmJoinRequest,
+  deleteJoinRequest,
   getDeviceHandle,
   getOrganizationCreationDate,
+  getServerConfig,
   isDeviceLoggedIn,
+  isSmartcardAvailable,
   isWeb,
   listAvailableDevices,
   listAvailableDevicesWithError,
-  listLocalJoinRequests,
+  listJoinRequests,
+  makeAcceptOpenBaoIdentityStrategy,
+  makeAcceptPkiIdentityStrategy,
   parseParsecAddr,
   login as parsecLogin,
-  requestJoinOrganization,
 } from '@/parsec';
 import { RouteBackup, Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, switchOrganization, watchRoute } from '@/router';
 import { EventData, EventDistributor, Events } from '@/services/eventDistributor';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
+import { OpenBaoClient } from '@/services/openBao';
 import { ServerType, getServerTypeFromParsedParsecAddr } from '@/services/parsecServers';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
 import AccountSettingsPage from '@/views/account/AccountSettingsPage.vue';
@@ -136,6 +147,8 @@ import LoginPage from '@/views/home/LoginPage.vue';
 import OrganizationListPage from '@/views/home/OrganizationListPage.vue';
 import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vue';
 import CreateOrganizationModal from '@/views/organizations/creation/CreateOrganizationModal.vue';
+import AsyncEnrollmentModal from '@/views/users/AsyncEnrollmentModal.vue';
+import AsyncEnrollmentOpenBaoAuthModal from '@/views/users/AsyncEnrollmentOpenBaoAuthModal.vue';
 import { IonContent, IonPage, modalController, popoverController } from '@ionic/vue';
 import { DateTime } from 'luxon';
 import {
@@ -174,7 +187,7 @@ const loginInProgress = ref(false);
 const queryInProgress = ref(false);
 const querying = ref(true);
 const deviceList: Ref<AvailableDevice[]> = ref([]);
-const pkiRequestList: Ref<LocalJoinRequest[]> = ref([]);
+const joinRequests = ref<Array<AsyncEnrollmentRequest>>([]);
 const invitationList = ref<Array<AccountInvitation>>([]);
 const activeTab = ref(AccountSettingsTabs.Settings);
 let eventCallbackId!: string;
@@ -241,7 +254,7 @@ onMounted(async () => {
   storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
 
   await handleQuery();
-  await Promise.allSettled([refreshDeviceList(), refreshInvitationList(), refreshPkiRequestsList()]);
+  await Promise.allSettled([refreshDeviceList(), refreshInvitationList(), refreshJoinRequestsList()]);
 });
 
 onUnmounted(() => {
@@ -330,13 +343,13 @@ async function refreshDeviceList(): Promise<void> {
   querying.value = false;
 }
 
-async function refreshPkiRequestsList(): Promise<void> {
+async function refreshJoinRequestsList(): Promise<void> {
   queryInProgress.value = true;
-  const result = await listLocalJoinRequests();
+  const result = await listJoinRequests();
   if (result.ok) {
-    pkiRequestList.value = result.value;
+    joinRequests.value = result.value;
   } else {
-    pkiRequestList.value = [];
+    joinRequests.value = [];
   }
   queryInProgress.value = false;
 }
@@ -351,6 +364,8 @@ async function handleQuery(): Promise<void> {
     await openJoinByLinkModal(query.claimLink);
   } else if (query.bootstrapLink) {
     await openCreateOrganizationModal(query.bootstrapLink);
+  } else if (query.asyncEnrollmentLink) {
+    await handleAsyncEnrollment(query.asyncEnrollmentLink);
   } else if (query.deviceId) {
     const availableDevices = await listAvailableDevices();
     const device = availableDevices.find((d) => d.deviceId === query.deviceId);
@@ -417,82 +432,133 @@ async function onJoinOrganizationClicked(): Promise<void> {
   if (link) {
     if ((await bootstrapLinkValidator(link)).validity === Validity.Valid) {
       await openCreateOrganizationModal(link);
-    } else if ((await pkiLinkValidator(link)).validity === Validity.Valid) {
-      await handleJoinByPki(link);
+    } else if ((await asyncEnrollmentLinkValidator(link)).validity === Validity.Valid) {
+      await handleAsyncEnrollment(link);
     } else {
       await openJoinByLinkModal(link);
     }
   }
 }
 
-async function handleJoinByPki(link: string): Promise<void> {
-  const result = await requestJoinOrganization(link);
+async function handleAsyncEnrollment(link: string): Promise<void> {
+  const addrResult = await parseParsecAddr(link);
 
-  if (result.ok) {
-    await refreshPkiRequestsList();
+  if (!addrResult.ok || addrResult.value.tag !== ParsedParsecAddrTag.AsyncEnrollment) {
     informationManager.present(
       new Information({
-        message: 'HomePage.organizationRequest.requestSent.success',
-        level: InformationLevel.Success,
-      }),
-      PresentationMode.Toast,
-    );
-  } else {
-    informationManager.present(
-      new Information({
-        message: 'HomePage.organizationRequest.requestSent.failure',
+        message: 'HomePage.organizationRequest.asyncEnrollmentModal.errors.invalidLink',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
     );
+    return;
   }
+
+  const pkiAvailable = await isSmartcardAvailable();
+  const addr = await buildParsecAddr(addrResult.value);
+  const serverConfigResult = await getServerConfig(addr);
+
+  // We don't have PKI and openbao is not configured on the server, can't do anything
+  if (
+    !pkiAvailable &&
+    (!serverConfigResult.ok || !serverConfigResult.value.openbao || serverConfigResult.value.openbao.auths.length === 0)
+  ) {
+    informationManager.present(
+      new Information({
+        message: 'HomePage.organizationRequest.asyncEnrollmentModal.errors.pkiSsoNotAvailable',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+    return;
+  }
+
+  const modal = await modalController.create({
+    component: AsyncEnrollmentModal,
+    showBackdrop: true,
+    backdropDismiss: false,
+    componentProps: {
+      link: link,
+      addr: addrResult.value,
+      serverConfig: serverConfigResult.ok ? serverConfigResult.value : undefined,
+      pkiAvailable: pkiAvailable,
+    },
+    cssClass: 'join-async-modal',
+  });
+  await modal.present();
+  const { role } = await modal.onDidDismiss();
+  await modal.dismiss();
+
+  if (role !== MsModalResult.Confirm) {
+    return;
+  }
+
+  informationManager.present(
+    new Information({
+      message: 'HomePage.organizationRequest.requestSent.success',
+      level: InformationLevel.Success,
+    }),
+    PresentationMode.Toast,
+  );
+
+  await refreshJoinRequestsList();
 }
 
-async function onPkiRequestClicked(pkiRequest: LocalJoinRequest): Promise<void> {
-  if (pkiRequest.status === JoinRequestStatus.Pending) {
+async function onJoinRequestClicked(request: AsyncEnrollmentRequest): Promise<void> {
+  if (request.info.tag === PendingAsyncEnrollmentInfoTag.Submitted) {
     const answer = await askQuestion('HomePage.organizationRequest.pending.title', 'HomePage.organizationRequest.pending.message', {
       yesText: 'HomePage.organizationRequest.pending.yes',
       noText: 'HomePage.organizationRequest.pending.no',
     });
     if (answer === Answer.Yes) {
-      await cancelLocalJoinRequest(pkiRequest);
-      informationManager.present(
-        new Information({
-          message: 'HomePage.organizationRequest.requestCancelled',
-          level: InformationLevel.Success,
-        }),
-        PresentationMode.Toast,
-      );
+      const result = await deleteJoinRequest(request);
+      if (result.ok) {
+        informationManager.present(
+          new Information({
+            message: 'HomePage.organizationRequest.requestCancelled',
+            level: InformationLevel.Info,
+          }),
+          PresentationMode.Toast,
+        );
+      } else {
+        window.electronAPI.log('error', `Failed to cancel async join request: ${result.error.tag} (${result.error.error})`);
+        informationManager.present(
+          new Information({
+            message: 'HomePage.organizationRequest.requestCancelError',
+            level: InformationLevel.Error,
+          }),
+          PresentationMode.Toast,
+        );
+      }
     }
-  } else if (pkiRequest.status === JoinRequestStatus.Rejected) {
-    const answer = await askQuestion('HomePage.organizationRequest.rejected.title', 'HomePage.organizationRequest.rejected.message', {
-      yesText: 'HomePage.organizationRequest.rejected.yes',
-      noText: 'HomePage.organizationRequest.rejected.no',
-    });
-    if (answer === Answer.Yes) {
-      await cancelLocalJoinRequest(pkiRequest);
-      informationManager.present(
-        new Information({
-          message: 'HomePage.organizationRequest.requestDeleted',
-          level: InformationLevel.Success,
-        }),
-        PresentationMode.Toast,
-      );
-    }
-  } else if (pkiRequest.status === JoinRequestStatus.Accepted) {
-    const result = await confirmLocalJoinRequest(pkiRequest);
-    if (result.ok) {
-      informationManager.present(
-        new Information({
-          message: 'HomePage.organizationRequest.accepted.joinSuccess',
-          level: InformationLevel.Success,
-        }),
-        PresentationMode.Toast,
-      );
-      await refreshDeviceList();
-      // TODO: automatically login with the new device
-      // await login(result.value, AccessStrategy.useSmartcard(result.value));
-    } else {
+  } else if (request.info.tag === PendingAsyncEnrollmentInfoTag.Rejected) {
+    await deleteJoinRequest(request);
+    informationManager.present(
+      new Information({
+        message: 'HomePage.organizationRequest.requestDeleted',
+        level: InformationLevel.Info,
+      }),
+      PresentationMode.Toast,
+    );
+  } else if (request.info.tag === PendingAsyncEnrollmentInfoTag.Cancelled) {
+    await deleteJoinRequest(request);
+  } else if (request.info.tag === PendingAsyncEnrollmentInfoTag.Accepted) {
+    await finalizeRequest(request);
+  }
+  await refreshJoinRequestsList();
+}
+
+async function finalizeRequest(request: AsyncEnrollmentRequest): Promise<void> {
+  if (request.info.tag !== PendingAsyncEnrollmentInfoTag.Accepted) {
+    return;
+  }
+
+  let identityStrategy!: AcceptFinalizeAsyncEnrollmentIdentityStrategy;
+  let saveStrategy!: DeviceSaveStrategy;
+
+  if (request.enrollment.identitySystem.tag === AvailablePendingAsyncEnrollmentIdentitySystemTag.PKI) {
+    if (!(await isSmartcardAvailable())) {
+      // Should never happen.
       informationManager.present(
         new Information({
           message: 'HomePage.organizationRequest.accepted.joinFailure',
@@ -500,9 +566,85 @@ async function onPkiRequestClicked(pkiRequest: LocalJoinRequest): Promise<void> 
         }),
         PresentationMode.Toast,
       );
+      window.electronAPI.log('error', 'Weird case of PKI not being available when creating the device from the async request');
+      return;
     }
+    const identitySystem = request.enrollment.identitySystem as AvailablePendingAsyncEnrollmentIdentitySystemPKI;
+    identityStrategy = makeAcceptPkiIdentityStrategy(toRaw(identitySystem.certificateRef));
+    saveStrategy = SaveStrategy.useSmartCard(toRaw(identitySystem.certificateRef));
+  } else if (request.enrollment.identitySystem.tag === AvailablePendingAsyncEnrollmentIdentitySystemTag.OpenBao) {
+    const parsedAddrResult = await parseParsecAddr(request.enrollment.addr);
+    if (!parsedAddrResult.ok) {
+      window.electronAPI.log('error', 'Failed to parse request enrollment address');
+      return;
+    }
+    const serverAddr = await buildParsecAddr(parsedAddrResult.value);
+    const serverConfigResult = await getServerConfig(serverAddr);
+
+    if (!serverConfigResult.ok) {
+      informationManager.present(
+        new Information({
+          message: 'HomePage.organizationRequest.accepted.joinFailure',
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Toast,
+      );
+      window.electronAPI.log('error', 'Failed to get server config when creating the device from the async request');
+      return;
+    }
+    if (!serverConfigResult.value?.openbao || serverConfigResult.value.openbao.auths.length === 0) {
+      // Should never happen.
+      informationManager.present(
+        new Information({
+          message: 'HomePage.organizationRequest.accepted.joinFailure',
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Toast,
+      );
+      window.electronAPI.log('error', 'No openbao auths available when creating the device from the async request');
+      return;
+    }
+    const ssoModal = await modalController.create({
+      component: AsyncEnrollmentOpenBaoAuthModal,
+      cssClass: 'async-enrollment-openbao-modal',
+      componentProps: {
+        serverConfig: serverConfigResult.value,
+      },
+    });
+    await ssoModal.present();
+    const { role, data } = await ssoModal.onWillDismiss();
+    await ssoModal.dismiss();
+    if (role !== MsModalResult.Confirm || !data.openBaoClient) {
+      return;
+    }
+    identityStrategy = makeAcceptOpenBaoIdentityStrategy(data.openBaoClient as OpenBaoClient);
+    saveStrategy = SaveStrategy.useOpenBao((data.openBaoClient as OpenBaoClient).getConnectionInfo());
+  } else {
+    window.electronAPI.log('error', 'Unknown identity system');
+    return;
   }
-  await refreshPkiRequestsList();
+
+  const confirmResult = await confirmJoinRequest(request, saveStrategy, identityStrategy);
+
+  if (confirmResult.ok) {
+    informationManager.present(
+      new Information({
+        message: 'HomePage.organizationRequest.accepted.joinSuccess',
+        level: InformationLevel.Success,
+      }),
+      PresentationMode.Toast,
+    );
+    await refreshDeviceList();
+    await login(confirmResult.value, await AccessStrategy.fromSaveStrategy(confirmResult.value, saveStrategy));
+  } else {
+    informationManager.present(
+      new Information({
+        message: 'HomePage.organizationRequest.accepted.joinFailure',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+  }
 }
 
 async function openCreateOrganizationModal(bootstrapLink?: string, defaultServerChoice?: ServerType): Promise<void> {
@@ -732,7 +874,6 @@ async function handleRegistration(device: AvailableDevice, access: DeviceAccessS
 }
 
 async function login(device: AvailableDevice, access: DeviceAccessStrategy): Promise<void> {
-  const eventDistributor = new EventDistributor();
   loginInProgress.value = true;
   window.electronAPI.log('debug', 'Starting Parsec login');
   const result = await parsecLogin(device, access);
@@ -759,6 +900,7 @@ async function login(device: AvailableDevice, access: DeviceAccessStrategy): Pro
       },
     };
     if (!injectionProvider.hasInjections(result.value)) {
+      const eventDistributor = new EventDistributor();
       injectionProvider.createNewInjections(result.value, eventDistributor);
     }
     await navigateTo(Routes.Loading, { skipHandle: true, replace: true, query: { loginInfo: Base64.fromObject(routeData) } });
