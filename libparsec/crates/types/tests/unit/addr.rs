@@ -1022,3 +1022,33 @@ fn action_addr_from_any_bad(#[case] url: &str) {
     let err = ParsecActionAddr::from_any(url);
     assert!(err.is_err());
 }
+
+#[test]
+fn comparison_with_implicit_port() {
+    let https_implicit_parse: ParsecAddr = "parsec3://parsec.example.com".parse().unwrap();
+    let https_explicit_parse: ParsecAddr = "parsec3://parsec.example.com:443".parse().unwrap();
+    let https_implicit_new: ParsecAddr =
+        ParsecAddr::new("parsec.example.com".to_string(), None, true);
+    let https_explicit_new: ParsecAddr =
+        ParsecAddr::new("parsec.example.com".to_string(), Some(443), true);
+
+    p_assert_eq!(https_implicit_parse, https_explicit_parse);
+    p_assert_eq!(https_implicit_parse, https_implicit_new);
+    p_assert_eq!(https_implicit_parse, https_explicit_new);
+
+    let http_implicit_parse: ParsecAddr =
+        "parsec3://parsec.example.com?no_ssl=true".parse().unwrap();
+    let http_explicit_parse: ParsecAddr = "parsec3://parsec.example.com:80?no_ssl=true"
+        .parse()
+        .unwrap();
+    let http_implicit_new: ParsecAddr =
+        ParsecAddr::new("parsec.example.com".to_string(), None, false);
+    let http_explicit_new: ParsecAddr =
+        ParsecAddr::new("parsec.example.com".to_string(), Some(80), false);
+
+    p_assert_eq!(http_implicit_parse, http_explicit_parse);
+    p_assert_eq!(http_implicit_parse, http_implicit_new);
+    p_assert_eq!(http_implicit_parse, http_explicit_new);
+
+    p_assert_ne!(http_implicit_parse, https_implicit_parse);
+}
