@@ -5533,6 +5533,9 @@ export interface LibParsecPlugin {
         client_handle: Handle,
         enrollment_id: PKIEnrollmentID
     ): Promise<Result<null, PkiEnrollmentRejectError>>
+    clientPkiListEnrollments(
+        client_handle: Handle
+    ): Promise<Result<Array<PkiEnrollmentListItem>, PkiEnrollmentListError>>
     clientRenameWorkspace(
         client: Handle,
         realm_id: VlobID,
