@@ -4657,6 +4657,9 @@ export function clientPkiEnrollmentReject(
     client_handle: number,
     enrollment_id: string
 ): Promise<Result<null, PkiEnrollmentRejectError>>
+export function clientPkiListEnrollments(
+    client_handle: number
+): Promise<Result<Array<PkiEnrollmentListItem>, PkiEnrollmentListError>>
 export function clientRenameWorkspace(
     client: number,
     realm_id: string,

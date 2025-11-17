@@ -33,7 +33,13 @@ from .common import (
 from .config import ClientConfig
 from .device import DeviceAccessStrategy
 from .invite import AvailableDevice, DeviceSaveStrategy
-from .pki import PkiEnrollmentAcceptError, PkiEnrollmentRejectError, X509CertificateReference
+from .pki import (
+    PkiEnrollmentAcceptError,
+    PkiEnrollmentRejectError,
+    X509CertificateReference,
+    PkiEnrollmentListItem,
+    PkiEnrollmentListError,
+)
 
 
 def list_started_clients() -> list[tuple[Handle, DeviceID]]:
@@ -823,4 +829,10 @@ async def client_pki_enrollment_accept(
     cert_ref: Ref[X509CertificateReference],
     submit_payload: Bytes,
 ) -> Result[None, PkiEnrollmentAcceptError]:
+    raise NotImplementedError
+
+
+async def client_pki_list_enrollments(
+    client_handle: Handle,
+) -> Result[list[PkiEnrollmentListItem], PkiEnrollmentListError]:
     raise NotImplementedError
