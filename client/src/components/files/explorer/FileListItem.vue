@@ -54,6 +54,7 @@
               class="label-name cell"
               :title="entry.name"
               @click="!($event.metaKey || $event.ctrlKey) && $emit('openItem', $event, entry)"
+              @dblclick.stop
             >
               {{ entry.name }}
             </ion-text>
