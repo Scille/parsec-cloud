@@ -56,17 +56,20 @@ class ParsedParsecAddr(Variant):
     class Server:
         hostname: str
         port: U32
+        is_default_port: bool
         use_ssl: bool
 
     class Organization:
         hostname: str
         port: U32
+        is_default_port: bool
         use_ssl: bool
         organization_id: OrganizationID
 
     class OrganizationBootstrap:
         hostname: str
         port: U32
+        is_default_port: bool
         use_ssl: bool
         organization_id: OrganizationID
         token: str | None
@@ -74,6 +77,7 @@ class ParsedParsecAddr(Variant):
     class WorkspacePath:
         hostname: str
         port: U32
+        is_default_port: bool
         use_ssl: bool
         organization_id: OrganizationID
         workspace_id: VlobID
@@ -83,6 +87,7 @@ class ParsedParsecAddr(Variant):
     class InvitationUser:
         hostname: str
         port: U32
+        is_default_port: bool
         use_ssl: bool
         organization_id: OrganizationID
         token: InvitationToken
@@ -90,6 +95,7 @@ class ParsedParsecAddr(Variant):
     class InvitationDevice:
         hostname: str
         port: U32
+        is_default_port: bool
         use_ssl: bool
         organization_id: OrganizationID
         token: InvitationToken
@@ -97,6 +103,7 @@ class ParsedParsecAddr(Variant):
     class InvitationShamirRecovery:
         hostname: str
         port: U32
+        is_default_port: bool
         use_ssl: bool
         organization_id: OrganizationID
         token: InvitationToken
@@ -104,6 +111,7 @@ class ParsedParsecAddr(Variant):
     class PkiEnrollment:
         hostname: str
         port: U32
+        is_default_port: bool
         use_ssl: bool
         organization_id: OrganizationID
 
