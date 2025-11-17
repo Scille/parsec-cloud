@@ -270,79 +270,44 @@ pub enum AddrError {
     InvalidOrganizationID,
 }
 
-#[derive(Clone, PartialEq, Eq, Hash)]
-struct BaseParsecAddr {
-    hostname: String,
-    port: Option<u16>,
-    use_ssl: bool,
-}
+// Define `BaseParsecAddr` in its own sub-module to make sure it can only
+// be constructed using `BaseParsecAddr::new()`
+mod base {
+    use super::*;
 
-impl BaseParsecAddr {
-    fn from_url(parsed: &ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
-        let hostname = parsed
-            .0
-            .host_str()
-            .expect("cannot-be-a-base url must contain a hostname");
-
-        // `ParsecUrlAsHTTPScheme`'s creation has consumed the `no_ssl` param to
-        // determine if it should be an http or https
-        let use_ssl = match parsed.0.scheme() {
-            "http" => false,
-            "https" => true,
-            _ => unreachable!("scheme can only be http or https"),
-        };
-
-        let default_port = if use_ssl {
-            PARSEC_SSL_DEFAULT_PORT
-        } else {
-            PARSEC_NO_SSL_DEFAULT_PORT
-        };
-        let port = parsed
-            .0
-            .port()
-            .and_then(|p| if p == default_port { None } else { Some(p) });
-
-        Ok(Self {
-            hostname: hostname.to_owned(),
-            port,
-            use_ssl,
-        })
+    #[derive(Clone, PartialEq, Eq, Hash)]
+    pub(super) struct BaseParsecAddr {
+        hostname: String,
+        port: Option<u16>,
+        use_ssl: bool,
     }
 
-    /// create a url in parsec format (i.e.: `parsec3://foo.bar[...]`)
-    pub fn to_url(&self) -> Url {
-        let mut url = Url::parse(&format!("{}://{}", PARSEC_SCHEME, &self.hostname))
-            .expect("hostname already validated");
-        url.set_port(self.port).expect("port already validated");
-        if !self.use_ssl {
-            url.query_pairs_mut().append_pair("no_ssl", "true");
+    impl BaseParsecAddr {
+        pub fn new(hostname: String, port: Option<u16>, use_ssl: bool) -> Self {
+            // Discard port if it corresponds to the default value
+            let default_port = if use_ssl {
+                PARSEC_SSL_DEFAULT_PORT
+            } else {
+                PARSEC_NO_SSL_DEFAULT_PORT
+            };
+            let port = port.and_then(|p| if p == default_port { None } else { Some(p) });
+
+            Self {
+                hostname,
+                port,
+                use_ssl,
+            }
         }
-        url
-    }
 
-    /// Create a url for http request with an optional path.
-    pub fn to_http_url(&self, path: Option<&str>) -> Url {
-        let scheme = if self.use_ssl { "https" } else { "http" };
-        let mut url = Url::parse(&format!("{}://{}", scheme, &self.hostname))
-            .expect("hostname already validated");
-        url.set_port(self.port).expect("port already validated");
-        let path = path.unwrap_or("");
-        url.set_path(path);
-        url
-    }
-}
-
-macro_rules! expose_base_parsec_addr_fields {
-    () => {
         pub fn hostname(&self) -> &str {
-            &self.base.hostname
+            &self.hostname
         }
 
         pub fn port(&self) -> u16 {
-            match self.base.port {
+            match self.port {
                 Some(port) => port,
                 None => {
-                    if self.base.use_ssl {
+                    if self.use_ssl {
                         PARSEC_SSL_DEFAULT_PORT
                     } else {
                         PARSEC_NO_SSL_DEFAULT_PORT
@@ -353,11 +318,72 @@ macro_rules! expose_base_parsec_addr_fields {
 
         /// `true` when the default port is overloaded.
         pub fn is_default_port(&self) -> bool {
-            self.base.port.is_none()
+            self.port.is_none()
         }
 
         pub fn use_ssl(&self) -> bool {
-            self.base.use_ssl
+            self.use_ssl
+        }
+
+        pub fn from_url(parsed: &ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
+            let hostname = parsed
+                .0
+                .host_str()
+                .expect("cannot-be-a-base url must contain a hostname");
+
+            // `ParsecUrlAsHTTPScheme`'s creation has consumed the `no_ssl` param to
+            // determine if it should be an http or https
+            let use_ssl = match parsed.0.scheme() {
+                "http" => false,
+                "https" => true,
+                _ => unreachable!("scheme can only be http or https"),
+            };
+
+            Ok(Self::new(hostname.to_owned(), parsed.0.port(), use_ssl))
+        }
+
+        /// create a url in parsec format (i.e.: `parsec3://foo.bar[...]`)
+        pub fn to_url(&self) -> Url {
+            let mut url = Url::parse(&format!("{}://{}", PARSEC_SCHEME, &self.hostname))
+                .expect("hostname already validated");
+            url.set_port(self.port).expect("port already validated");
+            if !self.use_ssl {
+                url.query_pairs_mut().append_pair("no_ssl", "true");
+            }
+            url
+        }
+
+        /// Create a url for http request with an optional path.
+        pub fn to_http_url(&self, path: Option<&str>) -> Url {
+            let scheme = if self.use_ssl { "https" } else { "http" };
+            let mut url = Url::parse(&format!("{}://{}", scheme, &self.hostname))
+                .expect("hostname already validated");
+            url.set_port(self.port).expect("port already validated");
+            let path = path.unwrap_or("");
+            url.set_path(path);
+            url
+        }
+    }
+}
+use base::BaseParsecAddr;
+
+macro_rules! expose_base_parsec_addr_fields {
+    () => {
+        pub fn hostname(&self) -> &str {
+            self.base.hostname()
+        }
+
+        pub fn port(&self) -> u16 {
+            self.base.port()
+        }
+
+        /// `true` when the default port is overloaded.
+        pub fn is_default_port(&self) -> bool {
+            self.base.is_default_port()
+        }
+
+        pub fn use_ssl(&self) -> bool {
+            self.base.use_ssl()
         }
     };
 }
@@ -442,11 +468,7 @@ impl ParsecAddr {
             panic!("Hostname cannot be empty !")
         }
         Self {
-            base: BaseParsecAddr {
-                hostname,
-                port,
-                use_ssl,
-            },
+            base: BaseParsecAddr::new(hostname, port, use_ssl),
         }
     }
 
@@ -702,15 +724,7 @@ impl ParsecOrganizationBootstrapAddr {
 
     pub fn generate_organization_addr(&self, root_verify_key: VerifyKey) -> ParsecOrganizationAddr {
         ParsecOrganizationAddr::new(
-            ParsecAddr::new(
-                self.hostname().into(),
-                if !self.is_default_port() {
-                    Some(self.port())
-                } else {
-                    None
-                },
-                self.use_ssl(),
-            ),
+            ParsecAddr::new(self.hostname().into(), Some(self.port()), self.use_ssl()),
             self.organization_id().clone(),
             root_verify_key,
         )
@@ -907,15 +921,7 @@ impl ParsecInvitationAddr {
 
     pub fn generate_organization_addr(&self, root_verify_key: VerifyKey) -> ParsecOrganizationAddr {
         ParsecOrganizationAddr::new(
-            ParsecAddr::new(
-                self.hostname().into(),
-                if !self.is_default_port() {
-                    Some(self.port())
-                } else {
-                    None
-                },
-                self.use_ssl(),
-            ),
+            ParsecAddr::new(self.hostname().into(), Some(self.port()), self.use_ssl()),
             self.organization_id().clone(),
             root_verify_key,
         )
@@ -980,15 +986,7 @@ impl ParsecPkiEnrollmentAddr {
 
     pub fn generate_organization_addr(&self, root_verify_key: VerifyKey) -> ParsecOrganizationAddr {
         ParsecOrganizationAddr::new(
-            ParsecAddr::new(
-                self.hostname().into(),
-                if !self.is_default_port() {
-                    Some(self.port())
-                } else {
-                    None
-                },
-                self.use_ssl(),
-            ),
+            ParsecAddr::new(self.hostname().into(), Some(self.port()), self.use_ssl()),
             self.organization_id().clone(),
             root_verify_key,
         )
