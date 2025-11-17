@@ -2936,6 +2936,15 @@ export type PkiEnrollmentSubmitError =
   | PkiEnrollmentSubmitErrorPkiOperationError
 
 
+// PkiGetAddrError
+export interface PkiGetAddrErrorInternal {
+    tag: "PkiGetAddrErrorInternal"
+    error: string
+}
+export type PkiGetAddrError =
+  | PkiGetAddrErrorInternal
+
+
 // SelfShamirRecoveryInfo
 export interface SelfShamirRecoveryInfoDeleted {
     tag: "SelfShamirRecoveryInfoDeleted"
@@ -4671,6 +4680,9 @@ export function clientPkiEnrollmentReject(
     client_handle: number,
     enrollment_id: string
 ): Promise<Result<null, PkiEnrollmentRejectError>>
+export function clientPkiGetAddr(
+    client: number
+): Promise<Result<string, PkiGetAddrError>>
 export function clientPkiListEnrollments(
     client_handle: number
 ): Promise<Result<Array<PkiEnrollmentListItem>, PkiEnrollmentListError>>

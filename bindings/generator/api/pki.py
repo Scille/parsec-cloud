@@ -77,6 +77,10 @@ class PkiEnrollmentListError(ErrorVariant):
     class Internal: ...
 
 
+class PkiGetAddrError(ErrorVariant):
+    class Internal: ...
+
+
 async def is_pki_available() -> bool:
     raise NotImplementedError
 

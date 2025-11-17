@@ -13729,6 +13729,23 @@ fn variant_pki_enrollment_submit_error_rs_to_js(
     Ok(js_obj)
 }
 
+// PkiGetAddrError
+
+#[allow(dead_code)]
+fn variant_pki_get_addr_error_rs_to_js(
+    rs_obj: libparsec::PkiGetAddrError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::PkiGetAddrError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"PkiGetAddrErrorInternal".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // SelfShamirRecoveryInfo
 
 #[allow(dead_code)]
@@ -20329,6 +20346,41 @@ pub fn clientPkiEnrollmentReject(client_handle: u32, enrollment_id: String) -> P
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_pki_enrollment_reject_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// client_pki_get_addr
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientPkiGetAddr(client: u32) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::client_pki_get_addr(client).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from_str({
+                    let custom_to_rs_string =
+                        |addr: libparsec::ParsecPkiEnrollmentAddr| -> Result<String, &'static str> {
+                            Ok(addr.to_url().into())
+                        };
+                    match custom_to_rs_string(value) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
+                    .as_ref()
+                });
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_pki_get_addr_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

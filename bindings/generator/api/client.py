@@ -33,12 +33,14 @@ from .config import ClientConfig
 from .device import DeviceAccessStrategy
 from .invite import AvailableDevice, DeviceSaveStrategy
 from .pki import (
+    ParsecPkiEnrollmentAddr,
     PkiEnrollmentAcceptError,
     PkiEnrollmentRejectError,
     X509CertificateReference,
     PkiEnrollmentListItem,
     PkiEnrollmentListError,
     PkiEnrollmentSubmitPayload,
+    PkiGetAddrError,
 )
 
 
@@ -812,6 +814,12 @@ class ClientGetOrganizationBootstrapDateError(ErrorVariant):
 async def client_get_organization_bootstrap_date(
     client_handle: Handle,
 ) -> Result[DateTime, ClientGetOrganizationBootstrapDateError]:
+    raise NotImplementedError
+
+
+async def client_pki_get_addr(
+    client: Handle,
+) -> Result[ParsecPkiEnrollmentAddr, PkiGetAddrError]:
     raise NotImplementedError
 
 

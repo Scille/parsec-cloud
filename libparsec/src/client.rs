@@ -695,6 +695,19 @@ pub async fn client_pki_list_enrollments(
     client.pki_list_enrollments().await
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum PkiGetAddrError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+pub async fn client_pki_get_addr(
+    client: Handle,
+) -> Result<ParsecPkiEnrollmentAddr, PkiGetAddrError> {
+    let client = borrow_client(client)?;
+    Ok(client.pki_get_addr().await)
+}
+
 pub async fn client_pki_enrollment_reject(
     client: Handle,
     enrollment_id: PKIEnrollmentID,

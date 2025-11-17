@@ -10,6 +10,7 @@ mod pki_enrollment_info;
 mod pki_enrollment_list;
 mod pki_enrollment_reject;
 mod pki_enrollment_submit;
+mod pki_get_addr;
 mod recovery_device;
 mod shamir_recovery_delete;
 mod shamir_recovery_list;
@@ -685,6 +686,10 @@ impl Client {
         &self,
     ) -> Result<DateTime, ClientGetOrganizationBootstrapDateError> {
         organization_info::get_organization_bootstrap_date(self).await
+    }
+
+    pub async fn pki_get_addr(&self) -> ParsecPkiEnrollmentAddr {
+        pki_get_addr::get_addr(self).await
     }
 
     /// List pending PKI enrollments (requests to join an organization)
