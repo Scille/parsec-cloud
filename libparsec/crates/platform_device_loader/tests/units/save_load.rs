@@ -21,7 +21,7 @@ async fn save_load(#[case] kind: &str, tmp_path: TmpPath) {
     let key_file = tmp_path.join("devices/keyring_file.keys");
     let url = ParsecOrganizationAddr::from_any(
         // cspell:disable-next-line
-        "parsec3://test.invalid/Org?no_ssl=true&p=xCD7SjlysFv3d4mTkRu-ZddRjIZPGraSjUnoOHT9s8rmLA",
+        "parsec3://test.invalid/Org?p=xCD7SjlysFv3d4mTkRu-ZddRjIZPGraSjUnoOHT9s8rmLA",
     )
     .unwrap();
     let device = LocalDevice::generate_new_device(
@@ -46,7 +46,7 @@ async fn save_load(#[case] kind: &str, tmp_path: TmpPath) {
                 key_file_path: key_file.clone(),
                 created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
                 protected_on: "2000-01-01T00:00:00Z".parse().unwrap(),
-                server_url: "http://test.invalid/".to_string(),
+                server_addr: "parsec3://test.invalid".parse().unwrap(),
                 organization_id: device.organization_id().to_owned(),
                 user_id: device.user_id,
                 device_id: device.device_id,
@@ -66,7 +66,7 @@ async fn save_load(#[case] kind: &str, tmp_path: TmpPath) {
                 key_file_path: key_file.clone(),
                 created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
                 protected_on: "2000-01-01T00:00:00Z".parse().unwrap(),
-                server_url: "http://test.invalid/".to_string(),
+                server_addr: "parsec3://test.invalid".parse().unwrap(),
                 organization_id: device.organization_id().to_owned(),
                 user_id: device.user_id,
                 device_id: device.device_id,
@@ -88,7 +88,7 @@ async fn save_load(#[case] kind: &str, tmp_path: TmpPath) {
                 key_file_path: key_file.clone(),
                 created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
                 protected_on: "2000-01-01T00:00:00Z".parse().unwrap(),
-                server_url: "http://test.invalid/".to_string(),
+                server_addr: "parsec3://test.invalid".parse().unwrap(),
                 organization_id: device.organization_id().to_owned(),
                 user_id: device.user_id,
                 device_id: device.device_id,
@@ -110,7 +110,7 @@ async fn save_load(#[case] kind: &str, tmp_path: TmpPath) {
                 key_file_path: key_file.clone(),
                 created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
                 protected_on: "2000-01-01T00:00:00Z".parse().unwrap(),
-                server_url: "http://test.invalid/".to_string(),
+                server_addr: "parsec3://test.invalid".parse().unwrap(),
                 organization_id: device.organization_id().to_owned(),
                 user_id: device.user_id,
                 device_id: device.device_id,

@@ -619,15 +619,7 @@ pub fn load_recovery_device(
 /// its corresponding passphrase to be used for decryption).
 pub fn dump_recovery_device(recovery_device: &LocalDevice) -> (SecretKeyPassphrase, Vec<u8>) {
     let created_on = recovery_device.now();
-    let server_url = {
-        ParsecAddr::new(
-            recovery_device.organization_addr.hostname().to_owned(),
-            Some(recovery_device.organization_addr.port()),
-            recovery_device.organization_addr.use_ssl(),
-        )
-        .to_http_url(None)
-        .to_string()
-    };
+    let server_addr: ParsecAddr = recovery_device.organization_addr.clone().into();
 
     let (passphrase, key) = SecretKey::generate_recovery_passphrase();
 
@@ -641,7 +633,7 @@ pub fn dump_recovery_device(recovery_device: &LocalDevice) -> (SecretKeyPassphra
         created_on,
         // Note recovery device is not supposed to change its protection
         protected_on: created_on,
-        server_url,
+        server_url: server_addr,
         organization_id: recovery_device.organization_id().to_owned(),
         user_id: recovery_device.user_id,
         device_id: recovery_device.device_id,
@@ -664,7 +656,7 @@ fn load_available_device_from_blob(
         ty,
         created_on,
         protected_on,
-        server_url,
+        server_addr,
         organization_id,
         user_id,
         device_id,
@@ -746,7 +738,7 @@ fn load_available_device_from_blob(
         key_file_path: path,
         created_on,
         protected_on,
-        server_url,
+        server_addr,
         organization_id,
         user_id,
         device_id,
@@ -778,16 +770,6 @@ fn decrypt_device_file(
         .map_err(DecryptDeviceFileError::Decrypt)
         .map(zeroize::Zeroizing::new)?;
     LocalDevice::load(&cleartext).map_err(DecryptDeviceFileError::Load)
-}
-
-fn server_url_from_device(device: &LocalDevice) -> String {
-    ParsecAddr::new(
-        device.organization_addr.hostname().to_owned(),
-        Some(device.organization_addr.port()),
-        device.organization_addr.use_ssl(),
-    )
-    .to_http_url(None)
-    .to_string()
 }
 
 #[derive(Debug, thiserror::Error)]

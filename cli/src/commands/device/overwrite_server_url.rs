@@ -77,11 +77,8 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
 
     println!("You are about to update the following device:");
     println!("{YELLOW}{short_id}{RESET} - {organization_id}: {human_handle} @ {device_label}");
-    println!("Current server URL: {YELLOW}{}{RESET}", device.server_url);
-    println!(
-        "New server URL: {YELLOW}{}{RESET}",
-        args.server_url.to_http_url(None)
-    );
+    println!("Current server URL: {YELLOW}{}{RESET}", device.server_addr);
+    println!("New server URL: {YELLOW}{}{RESET}", args.server_url);
     println!("Are you sure? (y/n)");
 
     let mut input = String::new();
