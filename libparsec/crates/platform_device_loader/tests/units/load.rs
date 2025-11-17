@@ -8,8 +8,9 @@ use std::sync::Arc;
 
 use super::utils::MockedAccountVaultOperations;
 use crate::{
-    load_device, save_device, AccountVaultOperationsFetchOpaqueKeyError, DeviceAccessStrategy,
-    DeviceSaveStrategy, LoadDeviceError,
+    archive_device, load_device, remove_device, save_device, update_device_overwrite_server_addr,
+    AccountVaultOperationsFetchOpaqueKeyError, DeviceAccessStrategy, DeviceSaveStrategy,
+    LoadDeviceError,
 };
 
 use libparsec_client_connection::ConnectionError;
@@ -105,43 +106,50 @@ async fn invalid_salt_size(tmp_path: TmpPath) {
 
 #[parsec_test(testbed = "empty")]
 async fn testbed(env: &TestbedEnv) {
-    let alice_email = env
-        .customize(|builder| {
-            let alice_email = builder
-                .bootstrap_organization("alice")
-                .map(|u| u.first_user_human_handle.email().to_owned()); // alice@dev1
-            builder.new_user("bob"); // bob@dev1
-            builder.new_device("alice"); // alice@dev2
+    env.customize(|builder| {
+        builder.bootstrap_organization("alice"); // alice@dev1
+        builder.new_user("bob"); // bob@dev1
+        builder.new_device("alice"); // alice@dev2
+        builder.new_device("bob"); // bob@dev2
+        builder.new_user("mallory"); // mallory@dev1
+    })
+    .await;
 
-            alice_email
-        })
-        .await;
+    let alice = env.local_device("alice@dev1");
+    let alice1_key_file = env.discriminant_dir.join("devices/alice@dev1.keys");
+    let alice2_key_file = env.discriminant_dir.join("devices/alice@dev2.keys");
 
-    // Ok (device created during organization bootstrap)
-
-    let access = DeviceAccessStrategy::Password {
-        key_file: env.discriminant_dir.join("devices/alice@dev1.keys"),
+    let alice1_access = DeviceAccessStrategy::Password {
+        key_file: alice1_key_file.clone(),
         password: "P@ssw0rd.".to_owned().into(),
     };
-    let device = load_device(&env.discriminant_dir, &access).await.unwrap();
+    let device = load_device(&env.discriminant_dir, &alice1_access)
+        .await
+        .unwrap();
     p_assert_eq!(device.device_id, "alice@dev1".parse().unwrap());
 
     // Ok (device created during user creation)
 
-    let access = DeviceAccessStrategy::Password {
+    let bob1_access = DeviceAccessStrategy::Password {
         key_file: env.discriminant_dir.join("devices/bob@dev1.keys"),
         password: "P@ssw0rd.".to_owned().into(),
     };
-    let device = load_device(&env.discriminant_dir, &access).await.unwrap();
+    let device = load_device(&env.discriminant_dir, &bob1_access)
+        .await
+        .unwrap();
     p_assert_eq!(device.device_id, "bob@dev1".parse().unwrap());
 
     // Ok (new device for an existing user)
 
-    let access = DeviceAccessStrategy::AccountVault {
-        key_file: env.discriminant_dir.join("devices/alice@dev2.keys"),
-        operations: Arc::new(MockedAccountVaultOperations::new(alice_email)),
+    let alice2_access = DeviceAccessStrategy::AccountVault {
+        key_file: alice2_key_file.clone(),
+        operations: Arc::new(MockedAccountVaultOperations::new(
+            alice.human_handle.email().to_owned(),
+        )),
     };
-    let device = load_device(&env.discriminant_dir, &access).await.unwrap();
+    let device = load_device(&env.discriminant_dir, &alice2_access)
+        .await
+        .unwrap();
     p_assert_eq!(device.device_id, "alice@dev2".parse().unwrap());
 
     // Bad password
@@ -179,6 +187,85 @@ async fn testbed(env: &TestbedEnv) {
         load_device(&env.discriminant_dir, &bad_ciphertext_access).await,
         Err(LoadDeviceError::DecryptionFailed)
     );
+
+    // Remove actually removes ?
+
+    remove_device(&env.discriminant_dir, &alice1_key_file)
+        .await
+        .unwrap();
+
+    p_assert_matches!(
+        load_device(&env.discriminant_dir, &bad_path_access).await.unwrap_err(),
+        err @ LoadDeviceError::InvalidPath(_)
+        if err.to_string().starts_with("Invalid path:")
+    );
+
+    // Archive actually archive ?
+
+    archive_device(&env.discriminant_dir, &alice2_key_file)
+        .await
+        .unwrap();
+
+    p_assert_matches!(
+        load_device(&env.discriminant_dir, &bad_path_access).await.unwrap_err(),
+        err @ LoadDeviceError::InvalidPath(_)
+        if err.to_string().starts_with("Invalid path:")
+    );
+
+    // Newly created device
+
+    let zack_key_file = env.discriminant_dir.join("zack_new_device.keys");
+    let zack_human_handle = HumanHandle::from_raw("zack@example.invalid", "Zack").unwrap();
+    let zack = save_device(
+        &env.discriminant_dir,
+        &DeviceSaveStrategy::AccountVault {
+            operations: Arc::new(MockedAccountVaultOperations::new(
+                zack_human_handle.email().to_owned(),
+            )),
+        },
+        &LocalDevice::generate_new_device(
+            alice.organization_addr.clone(),
+            UserProfile::Admin,
+            zack_human_handle.clone(),
+            "PC1".parse().unwrap(),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ),
+        zack_key_file.clone(),
+    )
+    .await
+    .unwrap();
+
+    let zack_access = DeviceAccessStrategy::AccountVault {
+        key_file: zack_key_file,
+        operations: Arc::new(MockedAccountVaultOperations::new(
+            zack_human_handle.email().to_owned(),
+        )),
+    };
+    let device = load_device(&env.discriminant_dir, &zack_access)
+        .await
+        .unwrap();
+    p_assert_eq!(device.device_id, zack.device_id);
+
+    // Updated device
+
+    update_device_overwrite_server_addr(
+        &env.discriminant_dir,
+        &bob1_access,
+        ParsecAddr::new("newhost.example.com".to_string(), None, true),
+    )
+    .await
+    .unwrap();
+
+    let device = load_device(&env.discriminant_dir, &bob1_access)
+        .await
+        .unwrap();
+    p_assert_eq!(device.device_id, "bob@dev1".parse().unwrap());
 }
 
 #[parsec_test]
