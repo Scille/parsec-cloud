@@ -724,7 +724,7 @@ impl ParsecOrganizationBootstrapAddr {
 
     pub fn generate_organization_addr(&self, root_verify_key: VerifyKey) -> ParsecOrganizationAddr {
         ParsecOrganizationAddr::new(
-            ParsecAddr::new(self.hostname().into(), Some(self.port()), self.use_ssl()),
+            self.clone(),
             self.organization_id().clone(),
             root_verify_key,
         )
@@ -921,7 +921,7 @@ impl ParsecInvitationAddr {
 
     pub fn generate_organization_addr(&self, root_verify_key: VerifyKey) -> ParsecOrganizationAddr {
         ParsecOrganizationAddr::new(
-            ParsecAddr::new(self.hostname().into(), Some(self.port()), self.use_ssl()),
+            self.clone(),
             self.organization_id().clone(),
             root_verify_key,
         )
@@ -986,7 +986,7 @@ impl ParsecPkiEnrollmentAddr {
 
     pub fn generate_organization_addr(&self, root_verify_key: VerifyKey) -> ParsecOrganizationAddr {
         ParsecOrganizationAddr::new(
-            ParsecAddr::new(self.hostname().into(), Some(self.port()), self.use_ssl()),
+            self.clone(),
             self.organization_id().clone(),
             root_verify_key,
         )

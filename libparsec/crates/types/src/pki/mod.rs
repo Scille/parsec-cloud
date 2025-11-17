@@ -152,11 +152,7 @@ impl TryFrom<PKILocalPendingEnrollmentData> for PKILocalPendingEnrollment {
 impl From<PKILocalPendingEnrollment> for PKILocalPendingEnrollmentData {
     fn from(obj: PKILocalPendingEnrollment) -> Self {
         let server_url = {
-            let server_addr = ParsecAddr::new(
-                obj.addr.hostname().to_string(),
-                Some(obj.addr.port()),
-                obj.addr.use_ssl(),
-            );
+            let server_addr: ParsecAddr = obj.addr.clone().into();
             server_addr.to_http_url(None).to_string()
         };
         Self {

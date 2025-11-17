@@ -188,11 +188,7 @@ impl TryFrom<LocalDeviceData> for LocalDevice {
 impl From<LocalDevice> for LocalDeviceData {
     fn from(obj: LocalDevice) -> Self {
         let server_url = {
-            let server_addr = ParsecAddr::new(
-                obj.organization_addr.hostname().to_string(),
-                Some(obj.organization_addr.port()),
-                obj.organization_addr.use_ssl(),
-            );
+            let server_addr: ParsecAddr = obj.organization_addr.clone().into();
             server_addr.to_http_url(None).to_string()
         };
         Self {
