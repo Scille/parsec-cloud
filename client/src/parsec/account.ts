@@ -172,7 +172,7 @@ export const ParsecAccountAccess = {
 class _ParsecAccount {
   handle: AccountHandle | undefined = undefined;
   skipped: boolean = false;
-  server: ParsecAddr | undefined = undefined;
+  serverAddr: ParsecAddr | undefined = undefined;
 
   async init(): Promise<void> {
     if (!Env.isAccountEnabled()) {
@@ -217,7 +217,7 @@ class _ParsecAccount {
       const infoResult = await libparsec.accountInfo(startedAccounts[0]);
       if (infoResult.ok) {
         this.handle = startedAccounts[0];
-        this.server = infoResult.value.serverAddr;
+        this.serverAddr = infoResult.value.serverAddr;
         await this.registerAllDevices();
       } else {
         window.electronAPI.log('error', `One account started but failed to get info: ${infoResult.error.tag} (${infoResult.error.error})`);
@@ -230,7 +230,7 @@ class _ParsecAccount {
   }
 
   getServer(): string | undefined {
-    return this.server;
+    return this.serverAddr;
   }
 
   isLoggedIn(): boolean {
@@ -251,7 +251,7 @@ class _ParsecAccount {
       return result;
     }
     this.handle = result.value;
-    this.server = server;
+    this.serverAddr = server;
     await this.registerAllDevices();
     return result;
   }
@@ -364,12 +364,12 @@ class _ParsecAccount {
   }
 
   addressMatchesAccountServer(addr: string): boolean {
-    if (!this.server) {
+    if (!this.serverAddr) {
       return false;
     }
     try {
       const addrUrl = new URL(addr.replace('parsec3:', 'https:'));
-      const accountUrl = new URL(this.server.replace('parsec3:', 'https:'));
+      const accountUrl = new URL(this.serverAddr.replace('parsec3:', 'https:'));
       return addrUrl.host === accountUrl.host && addrUrl.port === accountUrl.port;
     } catch (e: any) {
       window.electronAPI.log('error', `Failed to compare device address with server address: ${e.toString()}`);
@@ -415,7 +415,7 @@ class _ParsecAccount {
     const result = await libparsec.accountLogout(this.handle);
     if (result.ok) {
       this.handle = undefined;
-      this.server = undefined;
+      this.serverAddr = undefined;
     }
     return result;
   }
