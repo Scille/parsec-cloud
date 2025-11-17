@@ -555,7 +555,7 @@ export class ElectronCapacitorApp {
     this.MainWindow.webContents.on('dom-ready', () => {
       setTimeout(() => {
         if (electronIsDev || process.env.OPEN_DEV_TOOLS == 'true') {
-          this.MainWindow.webContents.openDevTools();
+          this.MainWindow.webContents.openDevTools({ mode: 'detach' });
         }
         CapElectronEventEmitter.emit('CAPELECTRON_DeeplinkListenerInitialized', '');
       }, 400);

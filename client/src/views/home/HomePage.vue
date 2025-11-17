@@ -99,16 +99,17 @@ import {
   ClientStartErrorTag,
   DeviceAccessStrategy,
   DeviceAccessStrategyTag,
-  JoinRequestStatus,
   ListAvailableDeviceErrorTag,
-  LocalJoinRequest,
+  PKIInfoItemTag,
   ParsecAccount,
+  PkiLocalRequest,
   archiveDevice,
   cancelLocalJoinRequest,
   confirmLocalJoinRequest,
   getDeviceHandle,
   getOrganizationCreationDate,
   isDeviceLoggedIn,
+  isSmartcardAvailable,
   isWeb,
   listAvailableDevices,
   listAvailableDevicesWithError,
@@ -135,6 +136,7 @@ import LoginPage from '@/views/home/LoginPage.vue';
 import OrganizationListPage from '@/views/home/OrganizationListPage.vue';
 import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vue';
 import CreateOrganizationModal from '@/views/organizations/creation/CreateOrganizationModal.vue';
+import JoinWithSmartcardModal from '@/views/users/JoinWithSmartcardModal.vue';
 import { IonContent, IonPage, modalController, popoverController } from '@ionic/vue';
 import { DateTime } from 'luxon';
 import {
@@ -173,7 +175,7 @@ const loginInProgress = ref(false);
 const queryInProgress = ref(false);
 const querying = ref(true);
 const deviceList: Ref<AvailableDevice[]> = ref([]);
-const pkiRequestList: Ref<LocalJoinRequest[]> = ref([]);
+const pkiRequestList: Ref<PkiLocalRequest[]> = ref([]);
 const invitationList = ref<Array<AccountInvitation>>([]);
 const activeTab = ref(AccountSettingsTabs.Settings);
 let eventCallbackId!: string;
@@ -350,6 +352,8 @@ async function handleQuery(): Promise<void> {
     await openJoinByLinkModal(query.claimLink);
   } else if (query.bootstrapLink) {
     await openCreateOrganizationModal(query.bootstrapLink);
+  } else if (query.pkiLink) {
+    await handleJoinByPki(query.pkiLink);
   } else if (query.deviceId) {
     const availableDevices = await listAvailableDevices();
     const device = availableDevices.find((d) => d.deviceId === query.deviceId);
@@ -418,7 +422,36 @@ async function onJoinOrganizationClicked(): Promise<void> {
 }
 
 async function handleJoinByPki(link: string): Promise<void> {
-  const result = await requestJoinOrganization(link);
+  const pkiAvailable = await isSmartcardAvailable();
+
+  if (!pkiAvailable) {
+    informationManager.present(
+      new Information({
+        message: 'HomePage.organizationRequest.notAvailable',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+    return;
+  }
+
+  const modal = await modalController.create({
+    component: JoinWithSmartcardModal,
+    showBackdrop: true,
+    backdropDismiss: false,
+    componentProps: {
+      addr: link,
+    },
+  });
+  await modal.present();
+  const { role, data } = await modal.onDidDismiss();
+  await modal.dismiss();
+
+  if (role !== MsModalResult.Confirm) {
+    return;
+  }
+
+  const result = await requestJoinOrganization(data.certificate, data.humanHandle, link);
 
   if (result.ok) {
     await refreshPkiRequestsList();
@@ -440,14 +473,14 @@ async function handleJoinByPki(link: string): Promise<void> {
   }
 }
 
-async function onPkiRequestClicked(pkiRequest: LocalJoinRequest): Promise<void> {
-  if (pkiRequest.status === JoinRequestStatus.Pending) {
+async function onPkiRequestClicked(pkiRequest: PkiLocalRequest): Promise<void> {
+  if (pkiRequest.info.tag === PKIInfoItemTag.Submitted) {
     const answer = await askQuestion('HomePage.organizationRequest.pending.title', 'HomePage.organizationRequest.pending.message', {
       yesText: 'HomePage.organizationRequest.pending.yes',
       noText: 'HomePage.organizationRequest.pending.no',
     });
     if (answer === Answer.Yes) {
-      await cancelLocalJoinRequest(pkiRequest);
+      await cancelLocalJoinRequest(toRaw(pkiRequest));
       informationManager.present(
         new Information({
           message: 'HomePage.organizationRequest.requestCancelled',
@@ -456,13 +489,13 @@ async function onPkiRequestClicked(pkiRequest: LocalJoinRequest): Promise<void> 
         PresentationMode.Toast,
       );
     }
-  } else if (pkiRequest.status === JoinRequestStatus.Rejected) {
+  } else if (pkiRequest.info.tag === PKIInfoItemTag.Rejected) {
     const answer = await askQuestion('HomePage.organizationRequest.rejected.title', 'HomePage.organizationRequest.rejected.message', {
       yesText: 'HomePage.organizationRequest.rejected.yes',
       noText: 'HomePage.organizationRequest.rejected.no',
     });
     if (answer === Answer.Yes) {
-      await cancelLocalJoinRequest(pkiRequest);
+      await cancelLocalJoinRequest(toRaw(pkiRequest));
       informationManager.present(
         new Information({
           message: 'HomePage.organizationRequest.requestDeleted',
@@ -471,8 +504,8 @@ async function onPkiRequestClicked(pkiRequest: LocalJoinRequest): Promise<void> 
         PresentationMode.Toast,
       );
     }
-  } else if (pkiRequest.status === JoinRequestStatus.Accepted) {
-    const result = await confirmLocalJoinRequest(pkiRequest);
+  } else if (pkiRequest.info.tag === PKIInfoItemTag.Accepted) {
+    const result = await confirmLocalJoinRequest(toRaw(pkiRequest));
     if (result.ok) {
       informationManager.present(
         new Information({
@@ -482,8 +515,7 @@ async function onPkiRequestClicked(pkiRequest: LocalJoinRequest): Promise<void> 
         PresentationMode.Toast,
       );
       await refreshDeviceList();
-      // TODO: automatically login with the new device
-      // await login(result.value, AccessStrategy.useSmartcard(result.value));
+      await login(result.value, AccessStrategy.useSmartcard(result.value));
     } else {
       informationManager.present(
         new Information({

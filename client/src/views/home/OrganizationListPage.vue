@@ -270,7 +270,7 @@
           </ion-text>
           <organization-pki-request
             v-for="pkiRequest in pkiRequestList"
-            :key="pkiRequest.certificate"
+            :key="pkiRequest.enrollment.enrollmentId"
             :request="pkiRequest"
             @join-organization="$emit('pkiRequestClick', $event)"
             @delete-request="$emit('pkiRequestClick', $event)"
@@ -320,7 +320,7 @@ import MailUnreadGradient from '@/assets/images/mail-unread-gradient.svg?raw';
 import { bootstrapLinkValidator, claimAndBootstrapLinkValidator } from '@/common/validators';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import OrganizationPkiRequest from '@/components/organizations/OrganizationPkiRequest.vue';
-import { AccountInvitation, AvailableDevice, getLoggedInDevices, LocalJoinRequest, LoggedInDeviceInfo } from '@/parsec';
+import { AccountInvitation, AvailableDevice, getLoggedInDevices, LoggedInDeviceInfo, PkiLocalRequest } from '@/parsec';
 import { Routes } from '@/router';
 import { Env } from '@/services/environment';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
@@ -351,13 +351,13 @@ const emits = defineEmits<{
   (e: 'recoverClick'): void;
   (e: 'createOrJoinOrganizationClick', event: Event): void;
   (e: 'invitationClick', invitation: AccountInvitation): void;
-  (e: 'pkiRequestClick', pkiRequest: LocalJoinRequest): void;
+  (e: 'pkiRequestClick', pkiRequest: PkiLocalRequest): void;
 }>();
 
 const props = defineProps<{
   deviceList: AvailableDevice[];
   invitationList: AccountInvitation[];
-  pkiRequestList: LocalJoinRequest[];
+  pkiRequestList: PkiLocalRequest[];
   querying: boolean;
 }>();
 

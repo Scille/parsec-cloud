@@ -61,6 +61,9 @@ export {
   MountpointToOsPathErrorTag,
   ParsedParsecAddrTag,
   ParseParsecAddrErrorTag,
+  PkiEnrollmentFinalizeErrorTag,
+  PkiEnrollmentListItemTag,
+  PKIInfoItemTag,
   Platform,
   ShowCertificateSelectionDialogErrorTag,
   UpdateDeviceErrorTag,
@@ -181,12 +184,15 @@ export type {
   GreetingAttemptID,
   GreetInProgressError,
   ImportRecoveryDeviceError,
+  InvalidityReason,
   InviteListItem,
   ListAvailableDeviceError,
   ListInvitationsError,
+  ListPkiLocalPendingError,
   MountpointToOsPathError,
   NewInvitationInfo,
   ParsecAddr,
+  ParsecPkiEnrollmentAddr,
   ParsecWorkspacePathAddr,
   ParsedParsecAddr,
   ParsedParsecAddrInvitationDevice,
@@ -197,6 +203,17 @@ export type {
   ParsedParsecAddrServer,
   ParsedParsecAddrWorkspacePath,
   ParseParsecAddrError,
+  PkiEnrollmentAcceptError,
+  PkiEnrollmentFinalizeError,
+  PkiEnrollmentListError,
+  PkiEnrollmentListItem,
+  PkiEnrollmentListItemValid,
+  PkiEnrollmentRejectError,
+  PkiEnrollmentSubmitError,
+  PkiEnrollmentSubmitPayload,
+  PkiGetAddrError,
+  PKIInfoItemAccepted,
+  PKILocalPendingEnrollment,
   Result,
   SASCode,
   SecretKey,
@@ -263,6 +280,8 @@ import type {
   WorkspaceHistoryEntryStatFolder as ParsecWorkspaceHistoryEntryStatFolder,
   WorkspaceInfo as ParsecWorkspaceInfo,
   Path,
+  PKIInfoItem,
+  PKILocalPendingEnrollment,
   UserID,
   UserProfile,
   VlobID,
@@ -429,6 +448,11 @@ interface DeviceSaveStrategySSO {
   tag: CustomDeviceSaveStrategyTag;
 }
 
+interface PkiLocalRequest {
+  info: PKIInfoItem;
+  enrollment: PKILocalPendingEnrollment;
+}
+
 export {
   AccountHandle,
   AccountInvitation,
@@ -457,6 +481,7 @@ export {
   OrganizationInfoErrorTag,
   OwnDeviceInfo,
   ParsecOrganizationAddr,
+  PkiLocalRequest,
   RegistrationDevice,
   StartedWorkspaceInfo,
   SystemPath,

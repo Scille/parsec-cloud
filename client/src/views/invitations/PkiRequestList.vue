@@ -1,11 +1,31 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-list class="list pkiRequests-container-list">
+  <div
+    v-for="request in requests"
+    :key="request.enrollmentId"
+  >
+    <div v-if="request.tag === PkiEnrollmentListItemTag.Valid">
+      {{ (request as PkiEnrollmentListItemValid).payload.humanHandle.label }}
+      {{ (request as PkiEnrollmentListItemValid).payload.humanHandle.email }}
+      {{ $msTranslate(formatTimeSince(request.submittedOn, '--', 'short')) }}
+      <ion-button @click="$emit('rejectClick', request)">{{ 'REJECT' }}</ion-button>
+      <ion-button @click="$emit('acceptClick', request)">{{ 'ACCEPT' }}</ion-button>
+    </div>
+    <div v-if="request.tag === PkiEnrollmentListItemTag.Invalid">
+      {{ 'NOP' }}
+      {{ $msTranslate(formatTimeSince(request.submittedOn, '--', 'short')) }}
+      <ion-button @click="$emit('rejectClick', request)">{{ 'REJECT' }}</ion-button>
+    </div>
+  </div>
+
+  <ion-list
+    class="list pkiRequests-container-list"
+    v-if="false"
+  >
     <ion-list-header
       class="pkiRequests-list-header"
       lines="full"
-      v-if="isLargeDisplay"
     >
       <ion-text class="pkiRequests-list-header__label cell-title label-name">
         {{ $msTranslate('InvitationsPage.pkiRequests.listDisplayTitles.name') }}
@@ -24,7 +44,7 @@
     <pki-request-item
       v-for="request in requests"
       class="request"
-      :key="request.certificate"
+      :key="request.enrollmentId"
       :request="request"
       @accept-click="$emit('acceptClick', request)"
       @reject-click="$emit('rejectClick', request)"
@@ -34,19 +54,19 @@
 
 <script setup lang="ts">
 import PkiRequestItem from '@/components/invitations/PkiRequestItem.vue';
-import { OrganizationJoinRequest } from '@/parsec';
-import { IonList, IonListHeader, IonText } from '@ionic/vue';
-import { useWindowSize } from 'megashark-lib';
+import { PkiEnrollmentListItem, PkiEnrollmentListItemTag, PkiEnrollmentListItemValid } from '@/parsec';
+import { IonButton, IonList, IonListHeader, IonText } from '@ionic/vue';
+import { formatTimeSince, useWindowSize } from 'megashark-lib';
 
 const { isLargeDisplay } = useWindowSize();
 
 defineProps<{
-  requests: Array<OrganizationJoinRequest>;
+  requests: Array<PkiEnrollmentListItem>;
 }>();
 
 defineEmits<{
-  (e: 'acceptClick', invitation: OrganizationJoinRequest): void;
-  (e: 'rejectClick', invitation: OrganizationJoinRequest): void;
+  (e: 'acceptClick', invitation: PkiEnrollmentListItem): void;
+  (e: 'rejectClick', invitation: PkiEnrollmentListItem): void;
   (e: 'copyJoinLinkClick'): void;
 }>();
 </script>

@@ -315,6 +315,7 @@
         "lostDevice": "Lost your access?",
         "recoverDevice": "Recover my session",
         "organizationRequest": {
+            "notAvailable": "Requests to join an organization using a certificate is not yet supported on your system.",
             "title": "Pending requests",
             "status": {
                 "pending": "Pending",
@@ -1584,6 +1585,7 @@
             "tabShort": "PKI",
             "emptyState": "No pending PKI requests.",
             "copyLink": "Copy link (PKI)",
+            "notAvailable": "Unavailable",
             "pkiFeature": "The PKI feature required a PKI infrastructure to be used.",
             "listDisplayTitles": {
                 "name": "Name",

@@ -314,6 +314,7 @@
         "lostDevice": "Vous avez perdu votre accès ?",
         "recoverDevice": "Récupérer ma session",
         "organizationRequest": {
+            "notAvailable": "Les requêtes pour rejoindre une organisation en utilisant un certificat ne sont pas encore disponibles sur votre système.",
             "title": "Demandes en attente",
             "status": {
                 "pending": "En attente",
@@ -1583,6 +1584,7 @@
             "tabShort": "PKI",
             "emptyState": "Aucune demande PKI en attente.",
             "copyLink": "Copier le lien (PKI)",
+            "notAvailable": "Non disponible",
             "pkiFeature": "La fonctionnalité PKI nécessite une infrastructure PKI pour être utilisée.",
             "listDisplayTitles": {
                 "name": "Nom",
