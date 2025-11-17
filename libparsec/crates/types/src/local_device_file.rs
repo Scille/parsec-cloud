@@ -7,16 +7,16 @@ use libparsec_serialization_format::parsec_data;
 
 use crate::{self as libparsec_types, PKIEncryptionAlgorithm, X509CertificateReference};
 use crate::{
-    impl_transparent_data_format_conversion, AccountVaultItemOpaqueKeyID, DateTime, DeviceID,
-    DeviceLabel, HumanHandle, OrganizationID, PasswordAlgorithm, UserID,
+    impl_transparent_data_format_conversion, AccountVaultItemOpaqueKeyID, DateTime, DeviceID, DeviceLabel,
+    HumanHandle, OrganizationID, ParsecAddr, PasswordAlgorithm, UserID,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "DeviceFileKeyringData", from = "DeviceFileKeyringData")]
+#[serde(into = "DeviceFileKeyringData", try_from = "DeviceFileKeyringData")]
 pub struct DeviceFileKeyring {
     pub created_on: DateTime,
     pub protected_on: DateTime,
-    pub server_url: String,
+    pub server_url: ParsecAddr,
     pub organization_id: OrganizationID,
     pub user_id: UserID,
     pub device_id: DeviceID,
@@ -46,11 +46,11 @@ impl_transparent_data_format_conversion!(
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "DeviceFilePasswordData", from = "DeviceFilePasswordData")]
+#[serde(into = "DeviceFilePasswordData", try_from = "DeviceFilePasswordData")]
 pub struct DeviceFilePassword {
     pub created_on: DateTime,
     pub protected_on: DateTime,
-    pub server_url: String,
+    pub server_url: ParsecAddr,
     pub organization_id: OrganizationID,
     pub user_id: UserID,
     pub device_id: DeviceID,
@@ -78,11 +78,11 @@ impl_transparent_data_format_conversion!(
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "DeviceFileRecoveryData", from = "DeviceFileRecoveryData")]
+#[serde(into = "DeviceFileRecoveryData", try_from = "DeviceFileRecoveryData")]
 pub struct DeviceFileRecovery {
     pub created_on: DateTime,
     pub protected_on: DateTime,
-    pub server_url: String,
+    pub server_url: ParsecAddr,
     pub organization_id: OrganizationID,
     pub user_id: UserID,
     pub device_id: DeviceID,
@@ -112,7 +112,7 @@ impl_transparent_data_format_conversion!(
 pub struct DeviceFileSmartcard {
     pub created_on: DateTime,
     pub protected_on: DateTime,
-    pub server_url: String,
+    pub server_url: ParsecAddr,
     pub organization_id: OrganizationID,
     pub user_id: UserID,
     pub device_id: DeviceID,
@@ -146,12 +146,12 @@ impl_transparent_data_format_conversion!(
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(
     into = "DeviceFileAccountVaultData",
-    from = "DeviceFileAccountVaultData"
+    try_from = "DeviceFileAccountVaultData"
 )]
 pub struct DeviceFileAccountVault {
     pub created_on: DateTime,
     pub protected_on: DateTime,
-    pub server_url: String,
+    pub server_url: ParsecAddr,
     pub organization_id: OrganizationID,
     pub user_id: UserID,
     pub device_id: DeviceID,
@@ -179,11 +179,11 @@ impl_transparent_data_format_conversion!(
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "DeviceFileOpenBaoData", from = "DeviceFileOpenBaoData")]
+#[serde(into = "DeviceFileOpenBaoData", try_from = "DeviceFileOpenBaoData")]
 pub struct DeviceFileOpenBao {
     pub created_on: DateTime,
     pub protected_on: DateTime,
-    pub server_url: String,
+    pub server_url: ParsecAddr,
     pub organization_id: OrganizationID,
     pub user_id: UserID,
     pub device_id: DeviceID,

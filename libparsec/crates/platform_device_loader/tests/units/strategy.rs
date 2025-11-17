@@ -16,7 +16,7 @@ fn available_device() {
         key_file_path: "/foo/bar".into(),
         created_on: "2010-01-01T00:00:00Z".parse().unwrap(),
         protected_on: "2010-01-10T00:00:00Z".parse().unwrap(),
-        server_url: "https://parsec.invalid".to_string(),
+        server_addr: "parsec3://parsec.invalid".parse().unwrap(),
         organization_id: org.clone(),
         user_id: "alice".parse().unwrap(),
         device_id: "alice@dev1".parse().unwrap(),

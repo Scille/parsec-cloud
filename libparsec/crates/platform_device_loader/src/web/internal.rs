@@ -123,7 +123,7 @@ impl Storage {
         created_on: DateTime,
     ) -> Result<AvailableDevice, SaveDeviceError> {
         let protected_on = device.now();
-        let server_url = crate::server_url_from_device(device);
+        let server_addr: ParsecAddr = device.organization_addr.clone().into();
 
         match strategy {
             DeviceSaveStrategy::Password { password, .. } => {
@@ -136,7 +136,7 @@ impl Storage {
                 let file_data = DeviceFile::Password(DeviceFilePassword {
                     created_on,
                     protected_on,
-                    server_url: server_url.clone(),
+                    server_url: server_addr.clone(),
                     organization_id: device.organization_id().to_owned(),
                     user_id: device.user_id,
                     device_id: device.device_id,
@@ -173,7 +173,7 @@ impl Storage {
                 let file_data = DeviceFile::AccountVault(DeviceFileAccountVault {
                     created_on,
                     protected_on,
-                    server_url: server_url.clone(),
+                    server_url: server_addr.clone(),
                     organization_id: device.organization_id().to_owned(),
                     user_id: device.user_id,
                     device_id: device.device_id,
@@ -211,7 +211,7 @@ impl Storage {
                 let file_data = DeviceFile::OpenBao(DeviceFileOpenBao {
                     created_on,
                     protected_on,
-                    server_url: server_url.clone(),
+                    server_url: server_addr.clone(),
                     organization_id: device.organization_id().to_owned(),
                     user_id: device.user_id,
                     device_id: device.device_id,
@@ -234,7 +234,7 @@ impl Storage {
             key_file_path: key_file.to_owned(),
             created_on,
             protected_on,
-            server_url,
+            server_addr,
             organization_id: device.organization_id().to_owned(),
             user_id: device.user_id,
             device_id: device.device_id,
