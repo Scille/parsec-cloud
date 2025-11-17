@@ -3,6 +3,7 @@
 
 from .common import (
     U32,
+    U16,
     ErrorVariant,
     IndexInt,
     InvitationToken,
@@ -123,4 +124,12 @@ def parse_parsec_addr(url: Ref[str]) -> Result[ParsedParsecAddr, ParseParsecAddr
 def build_parsec_organization_bootstrap_addr(
     addr: ParsecAddr, organization_id: OrganizationID
 ) -> ParsecOrganizationBootstrapAddr:
+    raise NotImplementedError
+
+
+def build_parsec_addr(
+    hostname: str,
+    port: U16 | None,
+    use_ssl: bool,
+) -> ParsecAddr:
     raise NotImplementedError
