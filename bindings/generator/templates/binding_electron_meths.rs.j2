@@ -24,7 +24,7 @@ JsValue
 JsNull
 {%- elif type.kind == "bool" -%}
 JsBoolean
-{%- elif type.kind in ("u8_based", "i32_based", "u32_based", "f64_based", "float") -%}
+{%- elif type.kind in ("u8_based", "u16_based", "i32_based", "u32_based", "f64_based", "float") -%}
 JsNumber
 {%- elif type.kind in ("i64_based", "u64_based") -%}
 JsBigInt
@@ -168,6 +168,23 @@ JsString
     {% if type.custom_from_rs_u8 -%}
     let custom_from_rs_u8 = {{ type.custom_from_rs_u8 }};
     match custom_from_rs_u8(v) {
+        Ok(val) => val,
+        Err(err) => return cx.throw_type_error(err),
+    }
+    {%- else -%}
+    v
+    {%- endif %}
+}
+{%- elif type.kind == "u16_based" -%}
+{
+    let v = {{ js_val }}.value({{ mut_cx_ref }});
+    if v < (u16::MIN as f64) || (u16::MAX as f64) < v {
+        cx.throw_type_error("Not an u16 number")?
+    }
+    let v = v as u16;
+    {% if type.custom_from_rs_u16 -%}
+    let custom_from_rs_u16 = {{ type.custom_from_rs_u16 }};
+    match custom_from_rs_u16(v) {
         Ok(val) => val,
         Err(err) => return cx.throw_type_error(err),
     }
@@ -439,6 +456,21 @@ JsNumber::new({{ mut_cx_ref }},
 {
     let custom_to_rs_u8 = {{ type.custom_to_rs_u8 }};
     match custom_to_rs_u8({{ rs_value }}) {
+        Ok(ok) => ok,
+        Err(err) => return cx.throw_type_error(err),
+    }
+}
+{%- else -%}
+{{ rs_value }}
+{%- endif %}
+ as f64
+)
+{%- elif type.kind == "u16_based" -%}
+JsNumber::new({{ mut_cx_ref }},
+{%- if type.custom_to_rs_u16 -%}
+{
+    let custom_to_rs_u16 = {{ type.custom_to_rs_u16 }};
+    match custom_to_rs_u16({{ rs_value }}) {
         Ok(ok) => ok,
         Err(err) => return cx.throw_type_error(err),
     }

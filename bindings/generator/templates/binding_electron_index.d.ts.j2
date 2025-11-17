@@ -26,7 +26,7 @@ Array<{{ render_type(t.elem) }}>
 null
 {%- elif t.kind == "bool" -%}
 boolean
-{%- elif t.kind in ("u8_based", "i32_based", "u32_based", "i64_based", "u64_based", "f64_based", "float") -%}
+{%- elif t.kind in ("u8_based", "u16_based", "i32_based", "u32_based", "i64_based", "u64_based", "f64_based", "float") -%}
 number
 {%- elif t.kind in ("str", "str_based") -%}
 string

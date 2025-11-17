@@ -29,6 +29,8 @@ null
 bool
 {%- elif type.kind == "u8_based" -%}
 u8
+{%- elif type.kind == "u16_based" -%}
+u16
 {%- elif type.kind == "i32_based" -%}
 i32
 {%- elif type.kind == "u32_based" -%}
@@ -101,6 +103,12 @@ let {{ param_name }} =
 let {{ param_name }} = {
     let custom_from_rs_u8 = {{ type.custom_from_rs_u8 }};
     custom_from_rs_u8({{ param_name }})
+        .map_err(|e| TypeError::new(e.as_ref()))
+}?;
+{% elif type.kind == "u16_based" and type.custom_from_rs_u16 %}
+let {{ param_name }} = {
+    let custom_from_rs_u16 = {{ type.custom_from_rs_u16 }};
+    custom_from_rs_u16({{ param_name }})
         .map_err(|e| TypeError::new(e.as_ref()))
 }?;
 {% elif type.kind == "u32_based" and type.custom_from_rs_u32 %}
@@ -245,6 +253,23 @@ if {{ js_val }}.is_null() {
     {% if type.custom_from_rs_u8 -%}
     let custom_from_rs_u8 = {{ type.custom_from_rs_u8 }};
     match custom_from_rs_u8(v) {
+        Ok(val) => val,
+        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+    }
+    {%- else -%}
+    v
+    {%- endif %}
+}
+{%- elif type.kind == "u16_based" -%}
+{
+    let v = {{ js_val }}.dyn_into::<Number>().map_err(|_| TypeError::new("Not a number"))?.value_of();
+    if v < (u16::MIN as f64) || (u16::MAX as f64) < v {
+        return Err(JsValue::from(TypeError::new("Not an u16 number")));
+    }
+    let v = v as u16;
+    {% if type.custom_from_rs_u16 -%}
+    let custom_from_rs_u16 = {{ type.custom_from_rs_u16 }};
+    match custom_from_rs_u16(v) {
         Ok(val) => val,
         Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
     }
@@ -467,6 +492,19 @@ match {{ rs_value }} {
 {
     let custom_to_rs_u8 = {{ type.custom_to_rs_u8 }};
     let v = match custom_to_rs_u8({{ rs_value }}) {
+        Ok(ok) => ok,
+        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+    };
+    JsValue::from(v)
+}
+{% else -%}
+JsValue::from({{ rs_value }})
+{%- endif -%}
+{%- elif type.kind == "u16_based" -%}
+{%- if type.custom_to_rs_u16 %}
+{
+    let custom_to_rs_u16 = {{ type.custom_to_rs_u16 }};
+    let v = match custom_to_rs_u16({{ rs_value }}) {
         Ok(ok) => ok,
         Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
     };

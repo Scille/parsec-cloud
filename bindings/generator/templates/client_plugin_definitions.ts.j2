@@ -30,7 +30,7 @@ boolean
 number
 {%- elif t.kind == "str" -%}
 string
-{%- elif t.kind in ("str_based", "bytes_based", "u8_based", "i32_based", "u32_based", "i64_based", "u64_based", "f64_based") -%}
+{%- elif t.kind in ("str_based", "bytes_based", "u8_based", "u16_based", "i32_based", "u32_based", "i64_based", "u64_based", "f64_based") -%}
 {{ t.name }}
 {%- elif t.kind == "bytes" -%}
 Uint8Array
@@ -82,7 +82,7 @@ export type {{ type.name }} = Uint8Array
 {% endif %}
 {% endfor %}
 {# Number-based types #}
-{% for type in api.u8_based_types + api.i32_based_types + api.u32_based_types + api.f64_based_types %}
+{% for type in api.u8_based_types + api.u16_based_types + api.i32_based_types + api.u32_based_types + api.f64_based_types %}
 {% if type.custom_ts_type_declaration %}
 {{ type.custom_ts_type_declaration }}
 {% else %}
