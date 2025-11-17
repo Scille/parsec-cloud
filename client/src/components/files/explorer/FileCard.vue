@@ -54,6 +54,7 @@
         <ion-text
           class="file-card__title cell"
           @click="!($event.metaKey || $event.ctrlKey) && $emit('openItem', $event, entry)"
+          @dblclick.stop
           :title="entry.name"
         >
           {{ entry.name }}
