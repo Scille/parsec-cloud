@@ -5527,7 +5527,7 @@ export interface LibParsecPlugin {
         enrollment_id: PKIEnrollmentID,
         human_handle: HumanHandle,
         cert_ref: X509CertificateReference,
-        submit_payload: Bytes
+        submit_payload: PkiEnrollmentSubmitPayload
     ): Promise<Result<null, PkiEnrollmentAcceptError>>
     clientPkiEnrollmentReject(
         client_handle: Handle,
