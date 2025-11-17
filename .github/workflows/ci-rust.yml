@@ -230,7 +230,7 @@ jobs:
       matrix:
         include:
           - name: 🍎 macOS
-            os: macos-14
+            os: macos-15
           - name: 🏁 Windows
             os: windows-2022
     name: "${{ matrix.name }}: 🦀 Rust tests"
