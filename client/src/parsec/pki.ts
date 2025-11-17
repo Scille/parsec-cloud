@@ -2,7 +2,7 @@
 
 import { getDefaultDeviceName } from '@/common/device';
 import { getClientInfo } from '@/parsec/login';
-import { getOrganizationInfo } from '@/parsec/organization';
+import { getOrganizationInfo, parseParsecAddr } from '@/parsec/organization';
 import {
   AvailableDevice,
   AvailableDeviceTypeTag,
@@ -40,7 +40,7 @@ export interface LocalJoinRequest {
   status: JoinRequestStatus;
   humanHandle: HumanHandle;
   organization: OrganizationID;
-  server: ParsecAddr;
+  serverAddr: ParsecAddr;
   certificate: string;
 }
 
@@ -125,7 +125,7 @@ interface _Request {
   validity: JoinRequestValidity;
   createdOn: DateTime;
   organization: OrganizationID;
-  server: string;
+  serverAddr: ParsecAddr;
   status: JoinRequestStatus;
 }
 
@@ -134,6 +134,11 @@ const REQUESTS: Array<_Request> = [];
 export async function requestJoinOrganization(
   link: ParsecOrganizationAddr,
 ): Promise<Result<LocalJoinRequest, RequestJoinOrganizationError>> {
+  const result = await parseParsecAddr(link);
+  if (!result.ok) {
+    throw new Error(`Invalid ParsecOrganizationAddr \`${link}\``);
+  }
+  const serverAddr = await libparsec.buildParsecAddr(result.value.hostname, result.value.port, result.value.useSsl);
   // Will be prompted for the certificate
   const newRequest: _Request = {
     status: JoinRequestStatus.Pending,
@@ -146,7 +151,7 @@ export async function requestJoinOrganization(
       email: 'isaac.kleiner@blackmesa.nm',
     },
     organization: 'Black Mesa',
-    server: link,
+    serverAddr,
     certificate: '',
   };
   REQUESTS.push(newRequest);
@@ -156,7 +161,7 @@ export async function requestJoinOrganization(
       humanHandle: newRequest.humanHandle,
       status: newRequest.status,
       organization: newRequest.organization,
-      server: newRequest.server,
+      serverAddr: newRequest.serverAddr,
       certificate: newRequest.certificate,
     },
   };
@@ -173,7 +178,7 @@ export async function listLocalJoinRequests(error = false): Promise<Result<Array
         humanHandle: r.humanHandle,
         status: r.status,
         organization: r.organization,
-        server: r.server,
+        serverAddr: r.serverAddr,
         certificate: r.certificate,
       };
     }),
@@ -195,7 +200,7 @@ export async function confirmLocalJoinRequest(request: LocalJoinRequest): Promis
       keyFilePath: '/',
       createdOn: DateTime.utc(),
       protectedOn: DateTime.utc(),
-      serverAddr: request.server,
+      serverAddr: request.serverAddr,
       organizationId: request.organization,
       userId: 'user_id',
       deviceId: 'device_id',
