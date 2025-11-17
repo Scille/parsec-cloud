@@ -484,7 +484,7 @@ async function loadAll(): Promise<void> {
 
   const deviceResult = await getCurrentAvailableDevice();
   if (deviceResult.ok) {
-    isTrialOrg.value = isTrialOrganizationDevice(deviceResult.value);
+    isTrialOrg.value = await isTrialOrganizationDevice(deviceResult.value);
     const orgCreationDateResult = await getOrganizationCreationDate();
     if (isTrialOrg.value && orgCreationDateResult.ok) {
       expirationDuration.value = getDurationBeforeExpiration(orgCreationDateResult.value);
