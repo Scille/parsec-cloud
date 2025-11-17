@@ -3,7 +3,6 @@
 /// <reference types="vitest" />
 
 import { sentryVitePlugin } from '@sentry/vite-plugin';
-import basicSsl from '@vitejs/plugin-basic-ssl';
 import vue from '@vitejs/plugin-vue';
 import path from 'path';
 import { ConfigEnv, defineConfig, loadEnv, PluginOption, UserConfigFnObject } from 'vite';

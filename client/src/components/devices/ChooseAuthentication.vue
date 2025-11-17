@@ -48,7 +48,6 @@
         </ion-radio>
 
         <ion-radio
-          v-show="smartcardAvailable"
           class="item-radio radio-list-item"
           label-placement="end"
           justify="start"

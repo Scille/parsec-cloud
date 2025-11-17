@@ -1,27 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { TestInfo } from '@playwright/test';
-import { answerQuestion, expect, getClipboardText, MsPage, msTest, setWriteClipboardPermission } from '@tests/e2e/helpers';
-import path from 'path';
+import { expect, getClipboardText, msTest, setWriteClipboardPermission } from '@tests/e2e/helpers';
 
-async function setRootCertificate(page: MsPage, certificate = 'data/public_key.pem'): Promise<void> {
-  const fileChooserPromise = page.waitForEvent('filechooser');
-
-  if (await page.locator('.root-certificate').isVisible()) {
-    await page.locator('.root-certificate').locator('ion-button').click();
-  } else {
-    await page.locator('.toggle-view-container').locator('#update-root-certificate-button').click();
-  }
-  const fileChooser = await fileChooserPromise;
-  expect(fileChooser.isMultiple()).toBe(false);
-  await fileChooser.setFiles([certificate]);
-}
-
-msTest.skip('PKI requests default state', async ({ invitationsPage }, testInfo: TestInfo) => {
+msTest('PKI requests default state', async ({ invitationsPage }) => {
   const viewToggle = invitationsPage.locator('.toggle-view-container');
 
   await expect(viewToggle.locator('.email-button')).toHaveText('Email invitation1');
-  await expect(viewToggle.locator('.pki-button')).toHaveText('PKI requests3');
+  await expect(viewToggle.locator('.pki-button')).toHaveText('PKI requests6');
   await expect(viewToggle.locator('.email-button')).toBeTrulyDisabled();
   await expect(viewToggle.locator('.pki-button')).toBeTrulyEnabled();
   await viewToggle.locator('.pki-button').click();
@@ -31,7 +16,14 @@ msTest.skip('PKI requests default state', async ({ invitationsPage }, testInfo: 
   const container = invitationsPage.locator('.invitations-container');
   const rootCertPopup = container.locator('.root-certificate');
   await expect(rootCertPopup).toBeVisible();
-  await setRootCertificate(invitationsPage, path.join(testInfo.config.rootDir, 'data/public_key.pem'));
+  await expect(rootCertPopup.locator('.root-certificate-text__title')).toHaveText('Missing your certificate');
+  await expect(rootCertPopup.locator('.root-certificate-text__description')).toHaveText(
+    `A certificate is required to validate requests received by PKI.
+For security reasons, the certificate must be provided each time the organization is reopened.`,
+  );
+
+  await expect(rootCertPopup.locator('ion-button')).toHaveText('Set your certificate');
+  await rootCertPopup.locator('ion-button').click();
   await expect(rootCertPopup).toBeHidden();
 
   await expect(viewToggle.locator('#invite-user-button')).toBeHidden();
@@ -39,20 +31,30 @@ msTest.skip('PKI requests default state', async ({ invitationsPage }, testInfo: 
   await expect(viewToggle.locator('#copy-link-pki-request-button')).toBeVisible();
   await expect(viewToggle.locator('#copy-link-pki-request-button')).toHaveText('Copy link (PKI)');
 
-  await expect(container.locator('.pkiRequests-container-list').locator('.pkiRequests-list-header__label')).toHaveText([
+  const invalidRequests = container.locator('.requests-container-list').locator('.invalid-request');
+  await expect(invalidRequests).toHaveCount(5);
+  await expect(invalidRequests.locator('.invalid-request-text__description')).toHaveText([
+    'This certificate cannot be trusted.',
+    'This certificate is invalid.',
+    'Could not find a root certificate matching the provided certificate.',
+    'The provided certificate is expired.',
+    'Could not get any information in the certificate.',
+  ]);
+
+  await expect(container.locator('.requests-container-list').locator('.requests-list-header__label')).toHaveText([
     'Name',
     'Email',
     'Request date',
     'Certificate',
     '',
   ]);
-  const reqs = container.locator('.pkiRequests-container-list').locator('.pkiRequest-list-item');
-  await expect(reqs).toHaveCount(3);
+  const reqs = container.locator('.requests-container-list').locator('.request-list-item');
+  await expect(reqs).toHaveCount(1);
   await expect(reqs.nth(0).locator('.person-name')).toHaveText('Gordon Freeman');
-  await expect(reqs.nth(0).locator('.pkiRequest-email')).toHaveText('gordon.freeman@blackmesa.nm');
-  await expect(reqs.nth(0).locator('.pkiRequest-createdOn__label')).toHaveText(/^now|< 1 minute$/);
-  await expect(reqs.nth(0).locator('.pkiRequest-certificate__label')).toHaveText('Invalid');
-  const actions = reqs.nth(0).locator('.pkiRequest-actions').locator('ion-button');
+  await expect(reqs.nth(0).locator('.request-email')).toHaveText('gordon.freeman@blackmesa.nm');
+  await expect(reqs.nth(0).locator('.request-createdOn__label')).toHaveText(/^now|< 1 minute$/);
+  await expect(reqs.nth(0).locator('.request-certificate__label')).toHaveText('Valid');
+  const actions = reqs.nth(0).locator('.request-actions').locator('ion-button');
   await expect(actions.nth(0)).toHaveText('Accept');
 
   const tooltip = invitationsPage.locator('.tooltip-popover');
@@ -61,95 +63,68 @@ msTest.skip('PKI requests default state', async ({ invitationsPage }, testInfo: 
   await expect(tooltip).toBeVisible();
   await expect(tooltip).toHaveText('Reject request');
   // Hide the tooltip
-  await reqs.nth(0).locator('.pkiRequest-email').hover();
+  await reqs.nth(0).locator('.request-email').hover();
   // Not adding anything else right now because it's all mocked.
 });
 
+msTest('PKI requests accept request', async ({ invitationsPage }) => {
+  const viewToggle = invitationsPage.locator('.toggle-view-container');
+
+  await expect(viewToggle.locator('.email-button')).toHaveText('Email invitation1');
+  await expect(viewToggle.locator('.pki-button')).toHaveText('PKI requests6');
+  await viewToggle.locator('.pki-button').click();
+
+  const container = invitationsPage.locator('.invitations-container');
+  const rootCertPopup = container.locator('.root-certificate');
+  await expect(rootCertPopup).toBeVisible();
+  await rootCertPopup.locator('ion-button').click();
+  await expect(rootCertPopup).toBeHidden();
+
+  const reqs = container.locator('.requests-container-list').locator('.request-list-item');
+  await expect(reqs).toHaveCount(1);
+  const actions = reqs.nth(0).locator('.request-actions').locator('ion-button');
+  await expect(actions.nth(0)).toHaveText('Accept');
+  const modal = invitationsPage.locator('.select-profile-modal');
+  await expect(modal).toBeHidden();
+  await actions.nth(0).click();
+  await expect(modal).toBeVisible();
+});
+
 for (const hasPerms in [true, false]) {
-  msTest.skip(
-    `PKI requests copy link ${['without', 'with'][Number(hasPerms)]} permissions`,
-    async ({ invitationsPage }, testInfo: TestInfo) => {
-      const viewToggle = invitationsPage.locator('.toggle-view-container');
-      await viewToggle.locator('.pki-button').click();
-      const container = invitationsPage.locator('.invitations-container');
-      const rootCertPopup = container.locator('.root-certificate');
-      await expect(rootCertPopup).toBeVisible();
-      await setRootCertificate(invitationsPage, path.join(testInfo.config.rootDir, 'data/public_key.pem'));
-      await expect(rootCertPopup).toBeHidden();
-
-      if (hasPerms) {
-        await setWriteClipboardPermission(invitationsPage.context(), true);
-      }
-      await viewToggle.locator('#copy-link-pki-request-button').click();
-      if (hasPerms) {
-        await expect(invitationsPage).toShowToast('PKI link has been copied to clipboard.', 'Info');
-        expect(await getClipboardText(invitationsPage)).toMatch(/^parsec3:\/\/.+$/);
-      } else {
-        await expect(invitationsPage).toShowToast(
-          'Failed to copy the link. Your browser or device does not seem to support copy/paste.',
-          'Error',
-        );
-      }
-    },
-  );
-}
-
-for (const answer of [true, false]) {
-  msTest.skip(`PKI requests accept invalid cert answer ${answer}`, async ({ invitationsPage }, testInfo: TestInfo) => {
+  msTest(`PKI requests copy link ${['without', 'with'][Number(hasPerms)]} permissions`, async ({ invitationsPage }) => {
     const viewToggle = invitationsPage.locator('.toggle-view-container');
     await viewToggle.locator('.pki-button').click();
-    const container = invitationsPage.locator('.invitations-container');
-    const rootCertPopup = container.locator('.root-certificate');
-    await expect(rootCertPopup).toBeVisible();
-    await setRootCertificate(invitationsPage, path.join(testInfo.config.rootDir, 'data/public_key.pem'));
-    await expect(rootCertPopup).toBeHidden();
-    const reqs = container.locator('.pkiRequests-container-list').locator('.pkiRequest-list-item');
-    await expect(reqs).toHaveCount(3);
-    const modal = invitationsPage.locator('.select-profile-modal');
-    await expect(modal).toBeHidden();
-    const actions = reqs.nth(0).locator('.pkiRequest-actions').locator('ion-button');
-    await actions.nth(0).click();
-    await answerQuestion(invitationsPage, answer, {
-      expectedNegativeText: 'Cancel',
-      expectedPositiveText: 'Confirm adding user',
-      expectedQuestionText:
-        'The certificate provided by the user does not match the root certificate. Are you sure you want to add this user?',
-      expectedTitleText: 'Adding a user with an invalid certificate',
-    });
-    if (answer) {
-      await expect(modal).toBeVisible();
-      const inputs = modal.locator('ion-input');
-      await expect(inputs.locator('input').nth(0)).toHaveValue('Gordon Freeman');
-      await expect(inputs.locator('input').nth(1)).toHaveValue('gordon.freeman@blackmesa.nm');
-      await expect(modal.locator('.dropdown-button')).toHaveText('Select a profile');
-      const dropdown = invitationsPage.locator('.dropdown-popover');
-      await expect(dropdown).toBeHidden();
-      await expect(modal.locator('#next-button')).toBeTrulyDisabled();
-      await modal.locator('.dropdown-button').click();
-      await expect(dropdown).toBeVisible();
-      await expect(dropdown.locator('.option-text__label')).toHaveText(['Administrator', 'Member', 'External']);
-      await dropdown.locator('.option-text__label').nth(0).click();
-      await expect(modal.locator('#next-button')).toBeTrulyEnabled();
-      await modal.locator('#next-button').click();
-      await expect(modal).toBeHidden();
-      await expect(invitationsPage).toShowToast('This request has been accepted', 'Success');
+
+    if (hasPerms) {
+      await setWriteClipboardPermission(invitationsPage.context(), true);
+    }
+    await viewToggle.locator('#copy-link-pki-request-button').click();
+    if (hasPerms) {
+      await expect(invitationsPage).toShowToast('PKI link has been copied to clipboard.', 'Info');
+      expect(await getClipboardText(invitationsPage)).toMatch(/^parsec3:\/\/.+$/);
     } else {
-      await expect(modal).toBeHidden();
+      await expect(invitationsPage).toShowToast(
+        'Failed to copy the link. Your browser or device does not seem to support copy/paste.',
+        'Error',
+      );
     }
   });
 }
 
-msTest.skip('PKI requests reject request', async ({ invitationsPage }, testInfo: TestInfo) => {
+msTest('PKI requests reject request', async ({ invitationsPage }) => {
   const viewToggle = invitationsPage.locator('.toggle-view-container');
+
+  await expect(viewToggle.locator('.email-button')).toHaveText('Email invitation1');
+  await expect(viewToggle.locator('.pki-button')).toHaveText('PKI requests6');
   await viewToggle.locator('.pki-button').click();
+
   const container = invitationsPage.locator('.invitations-container');
   const rootCertPopup = container.locator('.root-certificate');
-  await expect(rootCertPopup).toBeVisible();
-  await setRootCertificate(invitationsPage, path.join(testInfo.config.rootDir, 'data/public_key.pem'));
+  await rootCertPopup.locator('ion-button').click();
   await expect(rootCertPopup).toBeHidden();
-  const reqs = container.locator('.pkiRequests-container-list').locator('.pkiRequest-list-item');
-  await expect(reqs).toHaveCount(3);
-  const actions = reqs.nth(0).locator('.pkiRequest-actions').locator('ion-button');
-  await actions.nth(1).click();
+
+  const invalidRequests = container.locator('.requests-container-list').locator('.invalid-request');
+  await expect(invalidRequests).toHaveCount(5);
+  await invalidRequests.nth(0).locator('.invalid-request__button').click();
   await expect(invitationsPage).toShowToast('This request has been rejected', 'Info');
 });
