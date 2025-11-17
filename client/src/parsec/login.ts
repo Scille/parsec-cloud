@@ -144,7 +144,7 @@ export async function listAvailableDevicesWithError(filter = true): Promise<Resu
   for (const ad of sortedDevices) {
     // If one is already in, it will have been created more recently since we ordered the devices by creation time
     const found = devices.find((d) => {
-      return d.organizationId === ad.organizationId && ad.serverUrl === d.serverUrl && ad.humanHandle.email === d.humanHandle.email;
+      return d.organizationId === ad.organizationId && ad.serverAddr === d.serverAddr && ad.humanHandle.email === d.humanHandle.email;
     });
     if (!found) {
       devices.push(ad);

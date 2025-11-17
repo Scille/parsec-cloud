@@ -38,7 +38,7 @@
 <script setup lang="ts">
 import { AccessStrategy, AvailableDevice, DeviceSaveStrategy, OrganizationID, ParsedParsecAddrTag, parseParsecAddr } from '@/parsec';
 import { InformationManager } from '@/services/informationManager';
-import { getServerTypeFromHost, ServerType } from '@/services/parsecServers';
+import { getServerTypeFromParsedParsecAddr, ServerType } from '@/services/parsecServers';
 import CreateOrganizationCustomServer from '@/views/organizations/creation/CreateOrganizationCustomServer.vue';
 import CreateOrganizationSaas from '@/views/organizations/creation/CreateOrganizationSaas.vue';
 import CreateOrganizationTrial from '@/views/organizations/creation/CreateOrganizationTrial.vue';
@@ -59,7 +59,7 @@ onMounted(async () => {
   if (props.bootstrapLink) {
     const result = await parseParsecAddr(props.bootstrapLink);
     if (result.ok && result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
-      serverType.value = getServerTypeFromHost(result.value.hostname, result.value.port, result.value.useSsl);
+      serverType.value = getServerTypeFromParsedParsecAddr(result.value);
     }
   }
 });

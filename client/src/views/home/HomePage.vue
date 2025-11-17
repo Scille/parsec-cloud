@@ -113,6 +113,7 @@ import {
   listAvailableDevices,
   listAvailableDevicesWithError,
   listLocalJoinRequests,
+  parseParsecAddr,
   login as parsecLogin,
   requestJoinOrganization,
 } from '@/parsec';
@@ -121,7 +122,7 @@ import { EventData, EventDistributor, Events } from '@/services/eventDistributor
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
-import { ServerType, getServerTypeFromAddress } from '@/services/parsecServers';
+import { ServerType, getServerTypeFromParsedParsecAddr } from '@/services/parsecServers';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
 import AccountSettingsPage from '@/views/account/AccountSettingsPage.vue';
 import { AccountSettingsTabs } from '@/views/account/types';
@@ -360,10 +361,17 @@ async function handleQuery(): Promise<void> {
     }
   } else if (query.bmsOrganizationId) {
     const availableDevices = await listAvailableDevices();
-    const device = availableDevices.find((d) => {
-      const serverType = getServerTypeFromAddress(d.serverUrl);
-      return serverType === ServerType.Saas && d.organizationId === query.bmsOrganizationId;
-    });
+    let device = undefined;
+    for (const d of availableDevices) {
+      const result = await parseParsecAddr(d.serverAddr);
+      if (!result.ok) {
+        throw Error(`Invalid \`serverAddr\` field for AvailableDevice: ${d}`);
+      }
+      const serverType = getServerTypeFromParsedParsecAddr(result.value);
+      if (serverType === ServerType.Saas && d.organizationId === query.bmsOrganizationId) {
+        device = d;
+      }
+    }
     if (device) {
       await onOrganizationSelected(device);
     } else {
@@ -569,7 +577,7 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
     switchOrganization(handle ?? null, false);
   } else {
     if (
-      isTrialOrganizationDevice(device) &&
+      (await isTrialOrganizationDevice(device)) &&
       storedDeviceDataDict.value[device.deviceId]?.orgCreationDate &&
       isExpired(getDurationBeforeExpiration(storedDeviceDataDict.value[device.deviceId].orgCreationDate as DateTime))
     ) {

@@ -318,7 +318,7 @@ export async function confirmLocalJoinRequest(request: LocalJoinRequest): Promis
       keyFilePath: '/',
       createdOn: DateTime.utc(),
       protectedOn: DateTime.utc(),
-      serverUrl: request.server,
+      serverAddr: request.server,
       organizationId: request.organization,
       userId: 'user_id',
       deviceId: 'device_id',
