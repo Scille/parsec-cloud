@@ -709,11 +709,9 @@ pub async fn client_pki_enrollment_accept(
     enrollment_id: PKIEnrollmentID,
     human_handle: &HumanHandle,
     cert_ref: &X509CertificateReference,
-    submit_payload: Bytes,
+    submit_payload: PkiEnrollmentSubmitPayload,
 ) -> Result<(), PkiEnrollmentAcceptError> {
     let client = borrow_client(client)?;
-    let submit_payload = PkiEnrollmentSubmitPayload::load(&submit_payload)
-        .map_err(|e| PkiEnrollmentAcceptError::PkiOperationError(e.into()))?;
     client
         .pki_enrollment_accept(
             profile,

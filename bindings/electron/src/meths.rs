@@ -20618,18 +20618,8 @@ fn client_pki_enrollment_accept(mut cx: FunctionContext) -> JsResult<JsPromise> 
         struct_x509_certificate_reference_js_to_rs(&mut cx, js_val)?
     };
     let submit_payload = {
-        let js_val = cx.argument::<JsTypedArray<u8>>(5)?;
-        {
-            let custom_from_rs_bytes =
-                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
-            #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
-                Ok(val) => val,
-                // err can't infer type in some case, because of the previous `try_into`
-                #[allow(clippy::useless_format)]
-                Err(err) => return cx.throw_type_error(format!("{}", err)),
-            }
-        }
+        let js_val = cx.argument::<JsObject>(5)?;
+        struct_pki_enrollment_submit_payload_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();

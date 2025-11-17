@@ -4651,7 +4651,7 @@ export function clientPkiEnrollmentAccept(
     enrollment_id: string,
     human_handle: HumanHandle,
     cert_ref: X509CertificateReference,
-    submit_payload: Uint8Array
+    submit_payload: PkiEnrollmentSubmitPayload
 ): Promise<Result<null, PkiEnrollmentAcceptError>>
 export function clientPkiEnrollmentReject(
     client_handle: number,

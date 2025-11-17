@@ -20223,7 +20223,7 @@ pub fn clientPkiEnrollmentAccept(
     enrollment_id: String,
     human_handle: Object,
     cert_ref: Object,
-    submit_payload: Uint8Array,
+    submit_payload: Object,
 ) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let profile = enum_user_profile_js_to_rs(&profile)?;
@@ -20240,11 +20240,9 @@ pub fn clientPkiEnrollmentAccept(
         let cert_ref = cert_ref.into();
         let cert_ref = struct_x509_certificate_reference_js_to_rs(cert_ref)?;
 
-        let submit_payload = {
-            let custom_from_rs_bytes =
-                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
-            custom_from_rs_bytes(&submit_payload.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
+        let submit_payload = submit_payload.into();
+        let submit_payload = struct_pki_enrollment_submit_payload_js_to_rs(submit_payload)?;
+
         let ret = libparsec::client_pki_enrollment_accept(
             client_handle,
             profile,
