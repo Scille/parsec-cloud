@@ -102,6 +102,17 @@ jobs:
         run: choco install yq
         timeout-minutes: 3
 
+      # Building OpenSSL requires a perl interpreter.
+      # The default one does not provide windows-style filesystem
+      # paths so we have to switch to Strawberry.
+      - name: Set Perl environment variables
+        if: matrix.platform == 'windows'
+        shell: bash
+        run: |
+          echo OPENSSL_SRC_PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
+          echo PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
+        timeout-minutes: 1
+
       - name: Build wheel
         uses: pypa/cibuildwheel@63fd63b352a9a8bdcc24791c9dbee952ee9a8abc  # pin v3.3.0
         with:
