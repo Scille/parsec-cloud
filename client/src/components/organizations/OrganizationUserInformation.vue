@@ -117,15 +117,15 @@
           v-if="false"
           button
           class="invitation-card-list-item"
-          @click="goToInvitations(InvitationView.PkiRequest)"
+          @click="goToInvitations(InvitationView.AsyncEnrollmentRequest)"
         >
-          <ion-text class="invitation-card-list-item__number title-h1">{{ pkiRequestCount }}</ion-text>
+          <ion-text class="invitation-card-list-item__number title-h1">{{ asyncEnrollmentsCount }}</ion-text>
           <ion-text class="invitation-card-list-item__title button-large">
-            {{ $msTranslate('OrganizationPage.users.invitations.pkiRequests') }}
+            {{ $msTranslate('OrganizationPage.users.invitations.linkRequests') }}
           </ion-text>
           <ion-icon
             class="invitation-card-list-item__icon"
-            :icon="idCard"
+            :icon="link"
           />
         </div>
       </div>
@@ -135,12 +135,12 @@
 
 <script setup lang="ts">
 import UserProfileTag from '@/components/users/UserProfileTag.vue';
-import { ClientInfo, listOrganizationJoinRequests, listUserInvitations, OrganizationInfo, UserProfile } from '@/parsec';
+import { ClientInfo, listAsyncEnrollments, listUserInvitations, OrganizationInfo, UserProfile } from '@/parsec';
 import { navigateTo, Routes } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { InvitationView } from '@/views/invitations/types';
 import { IonButton, IonIcon, IonText, IonTitle } from '@ionic/vue';
-import { idCard, mailUnread, personAdd } from 'ionicons/icons';
+import { link, mailUnread, personAdd } from 'ionicons/icons';
 import { inject, onMounted, onUnmounted, ref } from 'vue';
 
 defineProps<{
@@ -149,7 +149,7 @@ defineProps<{
 }>();
 
 const invitationCount = ref(0);
-const pkiRequestCount = ref(0);
+const asyncEnrollmentsCount = ref(0);
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 let cbId: string | undefined = undefined;
 
@@ -172,8 +172,8 @@ onUnmounted(async () => {
 async function refresh(): Promise<void> {
   const invResult = await listUserInvitations();
   invitationCount.value = invResult.ok ? invResult.value.length : 0;
-  const pkiResult = await listOrganizationJoinRequests();
-  pkiRequestCount.value = pkiResult.ok ? pkiResult.value.length : 0;
+  const enrollmentsResult = await listAsyncEnrollments();
+  asyncEnrollmentsCount.value = enrollmentsResult.ok ? enrollmentsResult.value.length : 0;
 }
 
 async function goToInvitations(view: InvitationView): Promise<void> {

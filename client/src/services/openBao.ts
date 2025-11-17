@@ -74,52 +74,6 @@ export class OpenBaoClient {
       provider: this._provider,
     };
   }
-
-  private async _store(key: string, data: object): Promise<OpenBaoResult<undefined>> {
-    try {
-      const path = `${this._secretMountpoint}/${this._userId}/${key}`;
-      await this._client.post(
-        path,
-        { data: data },
-        {
-          validateStatus: (status) => {
-            return status === 200;
-          },
-        },
-      );
-      return { ok: true, value: undefined };
-    } catch (err: any) {
-      if (err.response) {
-        return {
-          ok: false,
-          error: { type: OpenBaoErrorType.HTTPError, httpStatus: err.response.status, errors: err.response.data.errors },
-        };
-      } else {
-        return { ok: false, error: { type: OpenBaoErrorType.NetworkError, detail: err.toString() } };
-      }
-    }
-  }
-
-  private async _retrieve(key: string): Promise<OpenBaoResult<any>> {
-    try {
-      const path = `${this._secretMountpoint}/${this._userId}/${key}`;
-      const response = await this._client.get(path, {
-        validateStatus: (status) => {
-          return status === 200;
-        },
-      });
-      return { ok: true, value: response.data.data.data };
-    } catch (err: any) {
-      if (err.response) {
-        return {
-          ok: false,
-          error: { type: OpenBaoErrorType.HTTPError, httpStatus: err.response.status, errors: err.response.data.errors },
-        };
-      } else {
-        return { ok: false, error: { type: OpenBaoErrorType.NetworkError, detail: err.toString() } };
-      }
-    }
-  }
 }
 
 async function getConnectionUrl(openBaoServer: string, mountpoint: string): Promise<OpenBaoResult<string>> {

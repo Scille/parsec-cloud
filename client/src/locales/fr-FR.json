@@ -315,18 +315,25 @@
         "lostDevice": "Vous avez perdu votre accès ?",
         "recoverDevice": "Récupérer ma session",
         "organizationRequest": {
+            "notAvailable": "Les requêtes pour rejoindre une organisation en utilisant un certificat ne sont pas encore disponibles sur votre système.",
             "title": "Demandes en attente",
             "status": {
                 "pending": "En attente",
-                "rejected": "Rejetée"
+                "rejected": "Rejetée",
+                "cancelled": "Annulée"
             },
             "requestSent": {
                 "success": "Votre demande pour rejoindre l'organisation a été envoyée.",
-                "failure": "Échec de l'envoi de la demande. Veuillez réessayer plus tard."
+                "failure": "Échec de l'envoi de la demande. Veuillez réessayer plus tard.",
+                "emailUsed": "Cet email est déjà utilisé.",
+                "alreadyEnrolled": "Un utilisateur avec ce certificat est déjà membre de l'organisation.",
+                "alreadySubmitted": "Une requête pour rejoindre l'organisation a déjà été soumise avec ce certificat.",
+                "offline": "Impossible de contacter le serveur. Veuillez vérifier que vous êtes connecté(e) à Internet."
             },
             "requestCancelled": "Votre demande pour rejoindre l'organisation a bien été annulée.",
+            "requestCancelError": "Impossible d'annuler la requête.",
             "requestDeleted": "Votre demande pour rejoindre l'organisation a bien été supprimée.",
-            "joinButton": "Rejoindre",
+            "joinButton": "Ajouter à mes organisations",
             "pending": {
                 "title": "Demande d'organisation en attente",
                 "message": "Votre demande pour rejoindre l'organisation est toujours en attente. Êtes-vous sûr de vouloir l'annuler ?",
@@ -343,7 +350,44 @@
             },
             "accepted": {
                 "joinSuccess": "Vous avez rejoint l'organisation avec succès.",
-                "joinFailure": "Échec de l'adhésion à l'organisation. Veuillez réessayer plus tard."
+                "joinFailure": "Échec de l'adhésion à l'organisation. Veuillez réessayer plus tard.",
+                "tooltip": "Votre demande pour rejoindre cette organisation a été acceptée par un administrateur."
+            },
+            "cancelled": {
+                "tooltip": "Votre demande pour rejoindre cette organisation a été annulée."
+            },
+            "asyncEnrollmentModal": {
+                "title": "Rejoindre l'organisation {organization}",
+                "chooseMethod": "Choisissez votre méthode d'authentification",
+                "sso": {
+                    "label": "Continuer avec SSO",
+                    "title": "Authentification unique (SSO)",
+                    "description": "Connectez-vous avec le SSO pour accéder à l'organisation.",
+                    "noEmail": "Aucun email enregistré sur OpenBAO.",
+                    "join": "Rejoindre avec SSO",
+                    "connected": "Vous êtes connecté avec ProConnect."
+                },
+                "pki": {
+                    "label": "Continuer avec PKI",
+                    "title": "Authentification par certificat (PKI)",
+                    "description": "Utilisez un certificat pour vous authentifier auprès de votre organisation Parsec."
+                },
+                "errors": {
+                    "invalidLink": "La PKI n'est pas disponible sur ce système et ce serveur ne prend pas en charge l'authentification unique (SSO).",
+                    "pkiSsoNotAvailable": "Le lien pour rejoindre l'organisation n'est pas valide.",
+                    "failedToGetEmailsFromOpenBao": "Impossible d'obtenir les adresses e-mail auprès du fournisseur SSO. Veuillez réessayer.",
+                    "existingEmail": "Un utilisateur avec cet e-mail existe déjà. Veuillez utiliser une autre adresse e-mail.",
+                    "problemWithRequestCertificate": "Il y a un problème avec le certificat de demande.",
+                    "offline": "Vous êtes hors ligne. Veuillez vous assurer que vous êtes connecté à Internet et réessayer.",
+                    "failedToJoinWithPKI": "Impossible de rejoindre l'organisation en utilisant PKI. Vérifier le certificat fournis et réessayer.",
+                    "failedToJoinWithOpenBao": "Impossible de rejoindre l'organisation en utilisant OpenBAO. Veuillez vérifier que vous êtes connecté(e) à Internet.",
+                    "couldNotContactServer": "Impossible de contacter le serveur. Veuillez vérifier que vous êtes connecté(e) à Internet et que l'adresse du serveur est correcte."
+                },
+                "buttons": {
+                    "next": "Continuer",
+                    "previous": "Précédent",
+                    "cancel": "Annuler"
+                }
             }
         }
     },
@@ -508,7 +552,7 @@
             "workspaces": "Mes espaces",
             "about": "À propos",
             "users": "Utilisateurs",
-            "invitations": "Invitations",
+            "invitationsRequests": "Invitations & Demandes",
             "organization": {
                 "storage": "Stockage",
                 "information": "Informations"
@@ -1028,7 +1072,7 @@
             "addUser": "Ajouter un utilisateur",
             "invitations": {
                 "emailInvitations": "Invitations par e-mail",
-                "pkiRequests": "Demandes PKI"
+                "linkRequests": "Demandes par lien"
             }
         },
         "size": {
@@ -1085,7 +1129,7 @@
         "hidden": "Masqués",
         "noWorkspace": "Aucun espace de travail",
         "users": "Utilisateurs",
-        "invitations": "Invitations",
+        "invitationsRequests": "Invitations & Demandes",
         "storage": "Stockage",
         "information": "Informations",
         "goToHome": "Mes espaces",
@@ -1233,10 +1277,15 @@
                     "yes": "Continuer",
                     "no": "Conserver la méthode actuelle"
                 },
-                "selectButton": "Choisir un certificat",
+                "selectButton": "Ajouter un certificat",
                 "selectOther": "Modifier",
                 "selectInstructions": "Une fenêtre va s'ouvrir pour vous demander de sélectionner le certificat.",
-                "certificateSelected": "Certificat sélectionné"
+                "certificateSelected": "Certificat sélectionné",
+                "errors": {
+                    "noCertificate": "Aucun certificat n'a été sélectionné.",
+                    "invalidCertificate": "Le certificat sélectionné est invalide. Veuillez en choisir un autre.",
+                    "globalError": "Une erreur est survenue lors de la sélection du certificat. Veuillez réessayer."
+                }
             },
             "sso": {
                 "title": "Authentification unique (SSO)",
@@ -1662,55 +1711,28 @@
                 "copyLink": "Copier le lien"
             }
         },
-        "pkiRequests": {
-            "tab": "Demandes par PKI",
-            "tabShort": "PKI",
-            "emptyState": "Aucune demande PKI en attente.",
-            "copyLink": "Copier le lien (PKI)",
-            "pkiFeature": "Cette fonctionnalité nécessite une PKI (Infrastructure à clés publiques).",
+        "asyncEnrollmentRequest": {
+            "tab": "Demandes par lien",
+            "emptyState": "Aucune invitation en attente. Ces demandes concernent les utilisateurs utilisant la PKI ou le service SSO.",
+            "copyLink": "Copier le lien (PKI/SSO)",
+            "accept": "Accepter",
             "listDisplayTitles": {
                 "name": "Nom",
                 "email": "Email",
                 "createdOn": "Date de la demande",
-                "certificate": "Certificat"
+                "type": "Type de demande"
             },
-            "accept": "Accepter",
-            "certificate": {
-                "valid": "Valide",
-                "invalid": "Invalide",
-                "unknown": "Inconnu"
-            },
-            "rootCertificate": {
-                "missingCertificateTitle": "Certificat racine requis",
-                "missingCertificateDescription": "Un certificat racine est nécessaire pour valider les demandes à rejoindre l'organisation via PKI. Pour des raisons de sécurité, nous ne sauvegardons pas le certificat, il vous sera demandé à chaque connexion à votre organisation.",
-                "setRootCertificate": "Ajouter le certificat racine",
-                "updateRootCertificate": "Mettre à jour le certificat racine"
-            },
-            "validationModal": {
-                "error": {
-                    "unknown": {
-                        "title": "Ajout d'un utilisateur avec certificat inconnu",
-                        "description": "Vous êtes sur le point d'ajouter un utilisateur possédant un certificat inconnu. Nous ne pouvons vérifier son identité. Êtes-vous sûr de confirmer l'ajout de cet utilisateur ?"
-                    },
-                    "notValid": {
-                        "title": "Ajout d'un utilisateur avec certificat non valide",
-                        "description": "Le certificat fourni par l'utilisateur ne correspond pas au certificat racine. Êtes-vous sûr de confirmer l'ajout de cet utilisateur ?",
-                        "no": "Annuler",
-                        "yes": "Confirmer l'ajout"
-                    }
-                },
-                "button": {
-                    "cancel": "Annuler",
-                    "confirm": "Confirmer l'ajout de l'utilisateur"
-                },
-                "acceptedFailed": "Échec de l'acceptation de cette demande",
-                "acceptedSuccess": "Cette demande a été acceptée",
-                "rejectedFailed": "Échec du rejet de cette demande",
-                "rejectedSuccess": "Cette demande a été rejetée"
+            "type": {
+                "pki": "PKI",
+                "sso": "SSO",
+                "pkiCorrupted": "PKI (corrompu)"
             },
             "linkCopiedToClipboard": {
                 "success": "Le lien PKI a été copié dans le presse-papiers.",
                 "failed": "Échec de la copie du lien PKI. Votre navigateur ou appareil ne semble pas prendre en charge le copier/coller."
+            },
+            "tooltips": {
+                "reject": "Refuser la demande"
             },
             "selectProfileModal": {
                 "title": "Compléter les informations de l'utilisateur",
@@ -1724,8 +1746,45 @@
                     "noProfile": "Vous devez sélectionner un profil."
                 }
             },
-            "tooltips": {
-                "reject": "Refuser la demande"
+            "validationModal": {
+                "button": {
+                    "cancel": "Annuler",
+                    "confirm": "Confirmer l'ajout de l'utilisateur"
+                },
+                "acceptedFailed": "Échec de l'acceptation de cette demande",
+                "acceptedSuccess": "Cette demande a été acceptée",
+                "rejectedFailed": "Échec du rejet de cette demande",
+                "rejectedSuccess": "Cette demande a été rejetée"
+            },
+            "pkiRequests": {
+                "modal": {
+                    "title": "Un certificat est requis pour accepter la demande",
+                    "description": "Un certificat est nécessaire pour valider les demandes à rejoindre l'organisation via PKI. Pour des raisons de sécurité, nous ne sauvegardons pas le certificat, il vous sera demandé à chaque connexion à votre organisation.",
+                    "next": "Continuer",
+                    "cancel": "Annuler",
+                    "setRootCertificate": "Sélectionner un certificat",
+                    "updateRootCertificate": "Mettre à jour le certificat"
+                }
+            },
+            "ssoRequests": {
+                "connectWithSSO": "Se connecter avec SSO",
+                "modal": {
+                    "title": "Vous devez être connecté pour accepter la demande",
+                    "description": "L'utilisateur a demandé à rejoindre l'organisation en utilisant SSO. Veuillez vous connecter ci-dessous pour accepter la demande.",
+                    "next": "Continuer",
+                    "cancel": "Annuler"
+                }
+            },
+            "errors": {
+                "failToListRequests": "Échec de la récupération des demandes. Veuillez vous assurer que vous êtes en ligne.",
+                "noSsoConfigured": "SSO n'est pas configuré.",
+                "pkiNotAvailable": "PKI n'est pas disponible dans cette organisation.",
+                "unknownIdentitySystem": "Le système d'identité utilisé pour cette demande est inconnu.",
+                "problemWithRequestCertificate": "Il y a un problème avec le certificat de la demande.",
+                "unknownName": "Nom inconnu",
+                "unknownEmail": "Email inconnu",
+                "offline": "Vous êtes hors ligne. Veuillez vous assurer que vous êtes connecté à Internet et réessayer.",
+                "couldNotContactServer": "Impossible de contacter le serveur. Veuillez vous assurer que vous êtes connecté à Internet et réessayer."
             }
         },
         "confirm": "Confirmer"

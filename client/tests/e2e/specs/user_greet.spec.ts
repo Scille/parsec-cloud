@@ -660,7 +660,7 @@ msTest.skip('Greet user whole process with smartcard auth', async ({ usersPage }
   await expect(certBtn).toBeHidden();
   await authRadio.nth(2).click();
   await expect(certBtn).toBeVisible();
-  await expect(certBtn).toHaveText('Choose a certificate');
+  await expect(certBtn).toHaveText('Add a certificate');
   await expect(joinData.content.locator('.choose-certificate-selected__text')).toBeHidden();
   await certBtn.click();
   await expect(joinData.content.locator('.choose-certificate-selected__text')).toBeVisible();

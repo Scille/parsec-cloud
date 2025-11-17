@@ -541,6 +541,7 @@ function setupWebElectronAPI(injectionProvider: InjectionProvider): void {
       const height = 800;
       const left = window.screenX + (window.outerWidth - width) / 2;
       const top = window.screenY + (window.outerHeight - height) / 2;
+
       const popup = window.open(url, 'Login', `width=${width},height=${height},left=${left},top=${top}`);
 
       if (!popup) {

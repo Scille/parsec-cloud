@@ -8,7 +8,7 @@
 .user-list-header,
 .folder-list-header,
 .invitations-list-header,
-.pkiRequests-list-header {
+.requests-list-header {
   color: var(--parsec-color-light-secondary-grey);
   padding-inline-start: 0;
   position: sticky;
@@ -510,7 +510,7 @@
 
 // ------- Invitation emails + PKI -------
 .invitations-container-list,
-.pkiRequests-container-list {
+.requests-container-list {
   padding: 0 !important;
 
   @include ms.responsive-breakpoint('sm') {
@@ -518,7 +518,7 @@
   }
 
   .invitation-actions,
-  .pkiRequest-actions {
+  .request-actions {
     display: flex;
     gap: 1.25rem;
     justify-content: center;
@@ -563,14 +563,14 @@
   }
 
   .invitations-list-header,
-  .pkiRequests-list-header {
+  .requests-list-header {
     display: flex;
     align-items: center;
     padding: 0 1rem 0 2rem;
   }
 
   .invitation-list-item,
-  .pkiRequest-list-item {
+  .request-list-item {
     display: flex;
     width: 100%;
     padding: 0;
@@ -643,9 +643,9 @@
 }
 
 // ------- PKI Requests only -------
-.pkiRequests-container-list {
+.requests-container-list {
   .label-name,
-  .pkiRequest-name {
+  .request-name {
     width: 100%;
     min-width: 11.25rem;
     max-width: 25rem;
@@ -658,9 +658,9 @@
   }
 
   .label-email,
-  .pkiRequest-email {
+  .request-email {
     min-width: 16rem;
-    max-width: 18rem;
+    max-width: 16rem;
     flex-grow: 1;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -678,7 +678,7 @@
   }
 
   .label-createdOn,
-  .pkiRequest-createdOn {
+  .request-createdOn {
     min-width: 11.25rem;
     flex-grow: 0;
 
@@ -687,13 +687,19 @@
     }
   }
 
-  .label-certificate,
-  .pkiRequest-certificate {
-    flex: 0 0 12rem;
+  .label-type,
+  .request-type {
+    min-width: 12rem;
+    max-width: 12rem;
+
+    @include ms.responsive-breakpoint('sm') {
+      min-width: fit-content;
+      flex-basis: auto;
+    }
   }
 
   .label-space,
-  .pkiRequest-actions {
+  .request-actions {
     min-height: 1rem;
     min-width: 10rem;
     margin-left: auto;
