@@ -81,7 +81,7 @@ class AvailableDevice(Structure):
     key_file_path: Path
     created_on: DateTime
     protected_on: DateTime
-    server_url: str
+    server_addr: ParsecAddr
     organization_id: OrganizationID
     user_id: UserID
     device_id: DeviceID

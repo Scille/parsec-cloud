@@ -7,16 +7,16 @@ use libparsec_serialization_format::parsec_data;
 
 use crate::{self as libparsec_types, PKIEncryptionAlgorithm, X509CertificateReference};
 use crate::{
-    impl_transparent_data_format_conversion, AccountVaultItemOpaqueKeyID, DateTime, DeviceID,
-    DeviceLabel, HumanHandle, OrganizationID, PasswordAlgorithm, UserID,
+    impl_data_format_conversion, AccountVaultItemOpaqueKeyID, DateTime, DeviceID, DeviceLabel,
+    HumanHandle, OrganizationID, ParsecAddr, PasswordAlgorithm, UserID,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "DeviceFileKeyringData", from = "DeviceFileKeyringData")]
+#[serde(into = "DeviceFileKeyringData", try_from = "DeviceFileKeyringData")]
 pub struct DeviceFileKeyring {
     pub created_on: DateTime,
     pub protected_on: DateTime,
-    pub server_url: String,
+    pub server_url: ParsecAddr,
     pub organization_id: OrganizationID,
     pub user_id: UserID,
     pub device_id: DeviceID,
@@ -29,12 +29,17 @@ pub struct DeviceFileKeyring {
 
 parsec_data!("schema/local_device/device_file_keyring.json5");
 
-impl_transparent_data_format_conversion!(
+impl_data_format_conversion!(
     DeviceFileKeyring,
     DeviceFileKeyringData,
     created_on,
     protected_on,
-    server_url,
+    server_url with_hooks {
+        serialize: |addr: ParsecAddr| -> String { addr.to_http_url(None).to_string() };
+        deserialize: |raw: String| -> Result<ParsecAddr, &'static str> {
+            ParsecAddr::from_http_url(&raw).map_err(|_| "Invalid server URL")
+        };
+    },
     organization_id,
     user_id,
     device_id,
@@ -46,11 +51,11 @@ impl_transparent_data_format_conversion!(
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "DeviceFilePasswordData", from = "DeviceFilePasswordData")]
+#[serde(into = "DeviceFilePasswordData", try_from = "DeviceFilePasswordData")]
 pub struct DeviceFilePassword {
     pub created_on: DateTime,
     pub protected_on: DateTime,
-    pub server_url: String,
+    pub server_url: ParsecAddr,
     pub organization_id: OrganizationID,
     pub user_id: UserID,
     pub device_id: DeviceID,
@@ -62,12 +67,17 @@ pub struct DeviceFilePassword {
 
 parsec_data!("schema/local_device/device_file_password.json5");
 
-impl_transparent_data_format_conversion!(
+impl_data_format_conversion!(
     DeviceFilePassword,
     DeviceFilePasswordData,
     created_on,
     protected_on,
-    server_url,
+    server_url with_hooks {
+        serialize: |addr: ParsecAddr| -> String { addr.to_http_url(None).to_string() };
+        deserialize: |raw: String| -> Result<ParsecAddr, &'static str> {
+            ParsecAddr::from_http_url(&raw).map_err(|_| "Invalid server URL")
+        };
+    },
     organization_id,
     user_id,
     device_id,
@@ -78,11 +88,11 @@ impl_transparent_data_format_conversion!(
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "DeviceFileRecoveryData", from = "DeviceFileRecoveryData")]
+#[serde(into = "DeviceFileRecoveryData", try_from = "DeviceFileRecoveryData")]
 pub struct DeviceFileRecovery {
     pub created_on: DateTime,
     pub protected_on: DateTime,
-    pub server_url: String,
+    pub server_url: ParsecAddr,
     pub organization_id: OrganizationID,
     pub user_id: UserID,
     pub device_id: DeviceID,
@@ -93,12 +103,17 @@ pub struct DeviceFileRecovery {
 
 parsec_data!("schema/local_device/device_file_recovery.json5");
 
-impl_transparent_data_format_conversion!(
+impl_data_format_conversion!(
     DeviceFileRecovery,
     DeviceFileRecoveryData,
     created_on,
     protected_on,
-    server_url,
+    server_url with_hooks {
+        serialize: |addr: ParsecAddr| -> String { addr.to_http_url(None).to_string() };
+        deserialize: |raw: String| -> Result<ParsecAddr, &'static str> {
+            ParsecAddr::from_http_url(&raw).map_err(|_| "Invalid server URL")
+        };
+    },
     organization_id,
     user_id,
     device_id,
@@ -112,7 +127,7 @@ impl_transparent_data_format_conversion!(
 pub struct DeviceFileSmartcard {
     pub created_on: DateTime,
     pub protected_on: DateTime,
-    pub server_url: String,
+    pub server_url: ParsecAddr,
     pub organization_id: OrganizationID,
     pub user_id: UserID,
     pub device_id: DeviceID,
@@ -126,12 +141,17 @@ pub struct DeviceFileSmartcard {
 
 parsec_data!("schema/local_device/device_file_smartcard.json5");
 
-impl_transparent_data_format_conversion!(
+impl_data_format_conversion!(
     DeviceFileSmartcard,
     DeviceFileSmartcardData,
     created_on,
     protected_on,
-    server_url,
+    server_url with_hooks {
+        serialize: |addr: ParsecAddr| -> String { addr.to_http_url(None).to_string() };
+        deserialize: |raw: String| -> Result<ParsecAddr, &'static str> {
+            ParsecAddr::from_http_url(&raw).map_err(|_| "Invalid server URL")
+        };
+    },
     organization_id,
     user_id,
     device_id,
@@ -146,12 +166,12 @@ impl_transparent_data_format_conversion!(
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(
     into = "DeviceFileAccountVaultData",
-    from = "DeviceFileAccountVaultData"
+    try_from = "DeviceFileAccountVaultData"
 )]
 pub struct DeviceFileAccountVault {
     pub created_on: DateTime,
     pub protected_on: DateTime,
-    pub server_url: String,
+    pub server_url: ParsecAddr,
     pub organization_id: OrganizationID,
     pub user_id: UserID,
     pub device_id: DeviceID,
@@ -163,12 +183,17 @@ pub struct DeviceFileAccountVault {
 
 parsec_data!("schema/local_device/device_file_account_vault.json5");
 
-impl_transparent_data_format_conversion!(
+impl_data_format_conversion!(
     DeviceFileAccountVault,
     DeviceFileAccountVaultData,
     created_on,
     protected_on,
-    server_url,
+    server_url with_hooks {
+        serialize: |addr: ParsecAddr| -> String { addr.to_http_url(None).to_string() };
+        deserialize: |raw: String| -> Result<ParsecAddr, &'static str> {
+            ParsecAddr::from_http_url(&raw).map_err(|_| "Invalid server URL")
+        };
+    },
     organization_id,
     user_id,
     device_id,
@@ -179,11 +204,11 @@ impl_transparent_data_format_conversion!(
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "DeviceFileOpenBaoData", from = "DeviceFileOpenBaoData")]
+#[serde(into = "DeviceFileOpenBaoData", try_from = "DeviceFileOpenBaoData")]
 pub struct DeviceFileOpenBao {
     pub created_on: DateTime,
     pub protected_on: DateTime,
-    pub server_url: String,
+    pub server_url: ParsecAddr,
     pub organization_id: OrganizationID,
     pub user_id: UserID,
     pub device_id: DeviceID,
@@ -197,12 +222,17 @@ pub struct DeviceFileOpenBao {
 
 parsec_data!("schema/local_device/device_file_openbao.json5");
 
-impl_transparent_data_format_conversion!(
+impl_data_format_conversion!(
     DeviceFileOpenBao,
     DeviceFileOpenBaoData,
     created_on,
     protected_on,
-    server_url,
+    server_url with_hooks {
+        serialize: |addr: ParsecAddr| -> String { addr.to_http_url(None).to_string() };
+        deserialize: |raw: String| -> Result<ParsecAddr, &'static str> {
+            ParsecAddr::from_http_url(&raw).map_err(|_| "Invalid server URL")
+        };
+    },
     organization_id,
     user_id,
     device_id,

@@ -356,7 +356,10 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
     p_assert_eq!(available_device.device_label, device_label);
     p_assert_eq!(available_device.human_handle, human_handle);
     p_assert_eq!(available_device.ty, AvailableDeviceType::Password);
-    p_assert_eq!(available_device.server_url, "https://noserver.example.com/");
+    p_assert_eq!(
+        available_device.server_addr,
+        "parsec3://noserver.example.com/".parse().unwrap()
+    );
     p_assert_eq!(available_device.user_id, user_id);
     // created_on and protected_on date times not checked
 

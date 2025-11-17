@@ -39,18 +39,15 @@ async fn ok(tmp_path: TmpPath) {
     let mut buf = String::new();
     wait_for(&mut stdout, &mut buf, "Are you sure? (y/n)");
 
-    let old_server_url = ParsecAddr::new(
-        alice.organization_addr.hostname().to_owned(),
-        Some(alice.organization_addr.port()),
-        alice.organization_addr.use_ssl(),
-    )
-    .to_http_url(None);
+    let old_server_addr: ParsecAddr = alice.organization_addr.clone().into();
     assert!(
-        buf.contains(&format!("Current server URL: {YELLOW}{old_server_url}")),
+        buf.contains(&format!("Current server URL: {YELLOW}{old_server_addr}")),
         "stdout: {buf}"
     );
     assert!(
-        buf.contains(&format!("New server URL: {YELLOW}https://new.invalid:123/")),
+        buf.contains(&format!(
+            "New server URL: {YELLOW}parsec3://new.invalid:123"
+        )),
         "stdout: {buf}"
     );
 

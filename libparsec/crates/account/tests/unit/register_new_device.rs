@@ -77,7 +77,7 @@ async fn ok_with_server(env: &TestbedEnv) {
             key_file_path: available_device.key_file_path.clone(),
             created_on: available_device.created_on,
             protected_on: available_device.created_on, // Protected and created should be the same
-            server_url: env.server_addr.to_http_url(None).to_string(),
+            server_addr: env.server_addr.clone(),
             organization_id: org_id.clone(),
             user_id: org_user_id,
             device_id: available_device.device_id,
@@ -181,7 +181,7 @@ async fn ok_mocked(env: &TestbedEnv) {
             key_file_path: available_device.key_file_path.clone(),
             created_on: available_device.created_on,
             protected_on: available_device.created_on, // Protected and created should be the same
-            server_url: env.server_addr.to_http_url(None).to_string(),
+            server_addr: env.server_addr.clone(),
             organization_id: alice.organization_id().to_owned(),
             user_id: alice.user_id,
             device_id: available_device.device_id,

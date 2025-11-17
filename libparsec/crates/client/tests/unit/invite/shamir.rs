@@ -253,9 +253,7 @@ async fn shamir_full_greeting(tmp_path: TmpPath, env: &TestbedEnv) {
         .unwrap();
 
     let access = save_strategy.into_access(key_file.clone());
-    let expected_server_url = ParsecAddr::from(bob.organization_addr.clone())
-        .to_http_url(None)
-        .to_string();
+    let expected_server_addr: ParsecAddr = bob.organization_addr.clone().into();
     p_assert_eq!(available_device.key_file_path, tmp_path.join("device.keys"));
     p_assert_eq!(
         available_device.organization_id,
@@ -269,7 +267,7 @@ async fn shamir_full_greeting(tmp_path: TmpPath, env: &TestbedEnv) {
         available_device.organization_id,
         bob.organization_id().clone()
     );
-    p_assert_eq!(available_device.server_url, expected_server_url);
+    p_assert_eq!(available_device.server_addr, expected_server_addr);
     p_assert_eq!(available_device.user_id, alice.user_id);
 
     // Check that the new device can be loaded
