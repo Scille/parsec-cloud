@@ -3199,6 +3199,40 @@ export type OtherShamirRecoveryInfo =
   | OtherShamirRecoveryInfoSetupButUnusable
   | OtherShamirRecoveryInfoSetupWithRevokedRecipients
 
+// PKIInfoItem
+export enum PKIInfoItemTag {
+    Accepted = 'PKIInfoItemAccepted',
+    Cancelled = 'PKIInfoItemCancelled',
+    Rejected = 'PKIInfoItemRejected',
+    Submitted = 'PKIInfoItemSubmitted',
+}
+
+export interface PKIInfoItemAccepted {
+    tag: PKIInfoItemTag.Accepted
+    answer: PkiEnrollmentAnswerPayload
+    submittedOn: DateTime
+    acceptedOn: DateTime
+}
+export interface PKIInfoItemCancelled {
+    tag: PKIInfoItemTag.Cancelled
+    submittedOn: DateTime
+    cancelledOn: DateTime
+}
+export interface PKIInfoItemRejected {
+    tag: PKIInfoItemTag.Rejected
+    submittedOn: DateTime
+    rejectedOn: DateTime
+}
+export interface PKIInfoItemSubmitted {
+    tag: PKIInfoItemTag.Submitted
+    submittedOn: DateTime
+}
+export type PKIInfoItem =
+  | PKIInfoItemAccepted
+  | PKIInfoItemCancelled
+  | PKIInfoItemRejected
+  | PKIInfoItemSubmitted
+
 // ParseParsecAddrError
 export enum ParseParsecAddrErrorTag {
     InvalidUrl = 'ParseParsecAddrErrorInvalidUrl',
@@ -3366,6 +3400,36 @@ export interface PkiEnrollmentFinalizeErrorSaveError {
 export type PkiEnrollmentFinalizeError =
   | PkiEnrollmentFinalizeErrorInternal
   | PkiEnrollmentFinalizeErrorSaveError
+
+// PkiEnrollmentInfoError
+export enum PkiEnrollmentInfoErrorTag {
+    EnrollmentNotFound = 'PkiEnrollmentInfoErrorEnrollmentNotFound',
+    Internal = 'PkiEnrollmentInfoErrorInternal',
+    InvalidAcceptPayload = 'PkiEnrollmentInfoErrorInvalidAcceptPayload',
+    Offline = 'PkiEnrollmentInfoErrorOffline',
+}
+
+export interface PkiEnrollmentInfoErrorEnrollmentNotFound {
+    tag: PkiEnrollmentInfoErrorTag.EnrollmentNotFound
+    error: string
+}
+export interface PkiEnrollmentInfoErrorInternal {
+    tag: PkiEnrollmentInfoErrorTag.Internal
+    error: string
+}
+export interface PkiEnrollmentInfoErrorInvalidAcceptPayload {
+    tag: PkiEnrollmentInfoErrorTag.InvalidAcceptPayload
+    error: string
+}
+export interface PkiEnrollmentInfoErrorOffline {
+    tag: PkiEnrollmentInfoErrorTag.Offline
+    error: string
+}
+export type PkiEnrollmentInfoError =
+  | PkiEnrollmentInfoErrorEnrollmentNotFound
+  | PkiEnrollmentInfoErrorInternal
+  | PkiEnrollmentInfoErrorInvalidAcceptPayload
+  | PkiEnrollmentInfoErrorOffline
 
 // PkiEnrollmentListError
 export enum PkiEnrollmentListErrorTag {
@@ -5762,6 +5826,11 @@ export interface LibParsecPlugin {
         accepted: PkiEnrollmentAnswerPayload,
         local_pending: PKILocalPendingEnrollment
     ): Promise<Result<AvailableDevice, PkiEnrollmentFinalizeError>>
+    pkiEnrollmentInfo(
+        config: ClientConfig,
+        addr: ParsecPkiEnrollmentAddr,
+        enrollment_id: PKIEnrollmentID
+    ): Promise<Result<PKIInfoItem, PkiEnrollmentInfoError>>
     pkiEnrollmentSubmit(
         config: ClientConfig,
         addr: ParsecPkiEnrollmentAddr,

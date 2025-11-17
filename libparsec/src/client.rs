@@ -12,9 +12,9 @@ pub use libparsec_client::{
     ClientListWorkspaceUsersError, ClientOrganizationInfoError, ClientRenameWorkspaceError,
     ClientRevokeUserError, ClientSetupShamirRecoveryError, ClientShareWorkspaceError,
     ClientUserUpdateProfileError, DeviceInfo, OrganizationInfo, OtherShamirRecoveryInfo,
-    PkiEnrollmentAcceptError, PkiEnrollmentListError, PkiEnrollmentListItem,
-    PkiEnrollmentRejectError, SelfShamirRecoveryInfo, Tos, UserInfo, WorkspaceInfo,
-    WorkspaceUserAccessInfo,
+    PKIInfoItem, PkiEnrollmentAcceptError, PkiEnrollmentInfoError, PkiEnrollmentListError,
+    PkiEnrollmentListItem, PkiEnrollmentRejectError, SelfShamirRecoveryInfo, Tos, UserInfo,
+    WorkspaceInfo, WorkspaceUserAccessInfo,
 };
 pub use libparsec_client_connection::ConnectionError;
 use libparsec_platform_async::event::{Event, EventListener};
