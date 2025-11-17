@@ -2,7 +2,7 @@
 
 enum UserAction {
   Invite = 'user-invite',
-  CopyPkiLink = 'user-copy-pki-link',
+  CopyAsyncEnrollmentLink = 'user-copy-async-enrollment-link',
   Revoke = 'user-revoke',
   Details = 'user-details',
   AssignRoles = 'user-assign-roles',

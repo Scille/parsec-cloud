@@ -784,7 +784,7 @@ msTest.skip('Go through custom org creation process with smartcard auth', async 
   await expect(certBtn).toBeHidden();
   await authRadio.nth(2).click();
   await expect(certBtn).toBeVisible();
-  await expect(certBtn).toHaveText('Choose a certificate');
+  await expect(certBtn).toHaveText('Add a certificate');
   await expect(authContainer.locator('.choose-certificate-selected__text')).toBeHidden();
   await certBtn.click();
   await expect(authContainer.locator('.choose-certificate-selected__text')).toBeVisible();

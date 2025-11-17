@@ -48,12 +48,11 @@
         </ion-radio>
 
         <ion-radio
-          v-show="smartcardAvailable"
           class="item-radio radio-list-item"
           label-placement="end"
           justify="start"
           :value="DeviceSaveStrategyTag.PKI"
-          :disabled="!smartcardAvailable || activeAuth === AvailableDeviceTypeTag.PKI"
+          :disabled="!smartcardAvailable"
         >
           <authentication-card
             @click="onMethodSelected(DeviceSaveStrategyTag.PKI)"

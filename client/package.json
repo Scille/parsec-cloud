@@ -84,7 +84,7 @@
         "@types/w3c-image-capture": "^1.0.11",
         "@typescript-eslint/eslint-plugin": "^8.46.2",
         "@typescript-eslint/parser": "^8.46.2",
-        "@vitejs/plugin-basic-ssl": "^1.2.0",
+        "@vitejs/plugin-basic-ssl": "^2.1.4",
         "@vitejs/plugin-vue": "^5.2.4",
         "@vue/eslint-config-typescript": "^14.6.0",
         "@vue/test-utils": "^2.4.6",
