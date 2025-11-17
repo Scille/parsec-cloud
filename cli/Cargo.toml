@@ -36,7 +36,7 @@ clap = { workspace = true, features = ["default", "derive", "env"] }
 # `termination` feature enable handling of SIGHUP/SIGTERM on top of SIGINT
 ctrlc = { workspace = true, features = ["termination"] }
 dialoguer = { workspace = true, features = ["fuzzy-select"] }
-env_logger = { workspace = true, features = ["auto-color", "humantime", "regex"] }
+env_logger = { workspace = true, features = ["auto-color", "humantime", "regex", "kv"] }
 log = { workspace = true }
 reqwest = { workspace = true, features = ["json"] }
 rpassword = { workspace = true }
