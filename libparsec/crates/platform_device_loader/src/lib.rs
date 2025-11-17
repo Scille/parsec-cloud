@@ -494,11 +494,7 @@ pub async fn update_device_overwrite_server_addr(
             DecryptDeviceFileError::Load(_) => UpdateDeviceError::InvalidData,
         })?;
 
-    let old_server_addr = ParsecAddr::new(
-        device.organization_addr.hostname().to_owned(),
-        Some(device.organization_addr.port()),
-        device.organization_addr.use_ssl(),
-    );
+    let old_server_addr: ParsecAddr = device.organization_addr.clone().into();
     device.organization_addr = ParsecOrganizationAddr::new(
         new_server_addr,
         device.organization_addr.organization_id().to_owned(),
