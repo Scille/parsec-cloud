@@ -156,3 +156,7 @@ pub fn build_parsec_organization_bootstrap_addr(
 ) -> ParsecOrganizationBootstrapAddr {
     ParsecOrganizationBootstrapAddr::new(addr, organization_id, None)
 }
+
+pub fn build_parsec_addr(hostname: String, port: Option<u16>, use_ssl: bool) -> ParsecAddr {
+    ParsecAddr::new(hostname, port, use_ssl)
+}
