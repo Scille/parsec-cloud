@@ -12,17 +12,20 @@ pub enum ParsedParsecAddr {
     Server {
         hostname: String,
         port: u32,
+        is_default_port: bool,
         use_ssl: bool,
     },
     Organization {
         hostname: String,
         port: u32,
+        is_default_port: bool,
         use_ssl: bool,
         organization_id: OrganizationID,
     },
     OrganizationBootstrap {
         hostname: String,
         port: u32,
+        is_default_port: bool,
         use_ssl: bool,
         organization_id: OrganizationID,
         token: Option<String>,
@@ -30,6 +33,7 @@ pub enum ParsedParsecAddr {
     WorkspacePath {
         hostname: String,
         port: u32,
+        is_default_port: bool,
         use_ssl: bool,
         organization_id: OrganizationID,
         workspace_id: VlobID,
@@ -39,6 +43,7 @@ pub enum ParsedParsecAddr {
     InvitationUser {
         hostname: String,
         port: u32,
+        is_default_port: bool,
         use_ssl: bool,
         organization_id: OrganizationID,
         token: InvitationToken,
@@ -46,6 +51,7 @@ pub enum ParsedParsecAddr {
     InvitationDevice {
         hostname: String,
         port: u32,
+        is_default_port: bool,
         use_ssl: bool,
         organization_id: OrganizationID,
         token: InvitationToken,
@@ -53,6 +59,7 @@ pub enum ParsedParsecAddr {
     InvitationShamirRecovery {
         hostname: String,
         port: u32,
+        is_default_port: bool,
         use_ssl: bool,
         organization_id: OrganizationID,
         token: InvitationToken,
@@ -60,6 +67,7 @@ pub enum ParsedParsecAddr {
     PkiEnrollment {
         hostname: String,
         port: u32,
+        is_default_port: bool,
         use_ssl: bool,
         organization_id: OrganizationID,
     },
@@ -72,6 +80,7 @@ pub fn parse_parsec_addr(url: &str) -> Result<ParsedParsecAddr, ParseParsecAddrE
                 ParsedParsecAddr::OrganizationBootstrap {
                     hostname: addr.hostname().into(),
                     port: addr.port() as u32,
+                    is_default_port: addr.is_default_port(),
                     use_ssl: addr.use_ssl(),
                     organization_id: addr.organization_id().clone(),
                     token: addr.token().map(|x| x.to_string()),
@@ -80,6 +89,7 @@ pub fn parse_parsec_addr(url: &str) -> Result<ParsedParsecAddr, ParseParsecAddrE
             ParsecActionAddr::WorkspacePath(addr) => ParsedParsecAddr::WorkspacePath {
                 hostname: addr.hostname().into(),
                 port: addr.port() as u32,
+                is_default_port: addr.is_default_port(),
                 use_ssl: addr.use_ssl(),
                 organization_id: addr.organization_id().clone(),
                 encrypted_path: addr.encrypted_path().clone(),
@@ -90,6 +100,7 @@ pub fn parse_parsec_addr(url: &str) -> Result<ParsedParsecAddr, ParseParsecAddrE
                 InvitationType::User => ParsedParsecAddr::InvitationUser {
                     hostname: addr.hostname().into(),
                     port: addr.port() as u32,
+                    is_default_port: addr.is_default_port(),
                     use_ssl: addr.use_ssl(),
                     organization_id: addr.organization_id().clone(),
                     token: addr.token(),
@@ -97,6 +108,7 @@ pub fn parse_parsec_addr(url: &str) -> Result<ParsedParsecAddr, ParseParsecAddrE
                 InvitationType::Device => ParsedParsecAddr::InvitationDevice {
                     hostname: addr.hostname().into(),
                     port: addr.port() as u32,
+                    is_default_port: addr.is_default_port(),
                     use_ssl: addr.use_ssl(),
                     organization_id: addr.organization_id().clone(),
                     token: addr.token(),
@@ -104,6 +116,7 @@ pub fn parse_parsec_addr(url: &str) -> Result<ParsedParsecAddr, ParseParsecAddrE
                 InvitationType::ShamirRecovery => ParsedParsecAddr::InvitationShamirRecovery {
                     hostname: addr.hostname().into(),
                     port: addr.port() as u32,
+                    is_default_port: addr.is_default_port(),
                     use_ssl: addr.use_ssl(),
                     organization_id: addr.organization_id().clone(),
                     token: addr.token(),
@@ -112,6 +125,7 @@ pub fn parse_parsec_addr(url: &str) -> Result<ParsedParsecAddr, ParseParsecAddrE
             ParsecActionAddr::PkiEnrollment(addr) => ParsedParsecAddr::PkiEnrollment {
                 hostname: addr.hostname().into(),
                 port: addr.port() as u32,
+                is_default_port: addr.is_default_port(),
                 use_ssl: addr.use_ssl(),
                 organization_id: addr.organization_id().clone(),
             },
@@ -120,6 +134,7 @@ pub fn parse_parsec_addr(url: &str) -> Result<ParsedParsecAddr, ParseParsecAddrE
         Ok(ParsedParsecAddr::Organization {
             hostname: addr.hostname().into(),
             port: addr.port() as u32,
+            is_default_port: addr.is_default_port(),
             use_ssl: addr.use_ssl(),
             organization_id: addr.organization_id().clone(),
         })
@@ -127,6 +142,7 @@ pub fn parse_parsec_addr(url: &str) -> Result<ParsedParsecAddr, ParseParsecAddrE
         Ok(ParsedParsecAddr::Server {
             hostname: addr.hostname().into(),
             port: addr.port() as u32,
+            is_default_port: addr.is_default_port(),
             use_ssl: addr.use_ssl(),
         })
     } else {
