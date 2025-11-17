@@ -537,7 +537,7 @@ async def test_openbao_hexagone_auth_url(request: Request):
         return Response("`redirect_uri` parameter required", status_code=400)
     redirect_uri = (
         # cspell: disable-next-line
-        f"{redirect_uri}?code={code}&state=st_VXANtcosv3cCZThfaPLz&iss={quote_plus(sso_base_url)}"  # 
+        f"{redirect_uri}?code={code}&state=st_VXANtcosv3cCZThfaPLz&iss={quote_plus(sso_base_url)}"
     )
 
     return RedirectResponse(url=redirect_uri, status_code=302)
