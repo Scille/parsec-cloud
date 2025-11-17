@@ -2,12 +2,12 @@
 
 use std::sync::Arc;
 
-use libparsec_client::AvailableDevice;
+use libparsec_client::{AvailableDevice, PKIInfoItem, PkiEnrollmentInfoError};
 pub use libparsec_client::{PkiEnrollmentFinalizeError, PkiEnrollmentSubmitError};
 pub use libparsec_platform_pki::ShowCertificateSelectionDialogError;
 use libparsec_types::{
-    DateTime, DeviceLabel, HumanHandle, PKILocalPendingEnrollment, ParsecPkiEnrollmentAddr,
-    PkiEnrollmentAnswerPayload, X509CertificateReference,
+    DateTime, DeviceLabel, HumanHandle, PKIEnrollmentID, PKILocalPendingEnrollment,
+    ParsecPkiEnrollmentAddr, PkiEnrollmentAnswerPayload, X509CertificateReference,
 };
 
 use crate::{ClientConfig, DeviceSaveStrategy};
@@ -64,4 +64,12 @@ pub async fn pki_enrollment_finalize(
         local_pending,
     )
     .await
+}
+
+pub async fn pki_enrollment_info(
+    config: ClientConfig,
+    addr: ParsecPkiEnrollmentAddr,
+    enrollment_id: PKIEnrollmentID,
+) -> Result<PKIInfoItem, PkiEnrollmentInfoError> {
+    libparsec_client::pki_enrollment_info(config.into(), addr, enrollment_id).await
 }

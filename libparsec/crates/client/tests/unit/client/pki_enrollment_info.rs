@@ -5,7 +5,7 @@ use libparsec_types::prelude::*;
 
 use crate::{
     client::pki_enrollment_info::{PKIInfoItem, PkiEnrollmentInfoError},
-    Client,
+    pki_enrollment_info,
 };
 
 use super::utils::client_factory;
@@ -82,7 +82,7 @@ async fn ok(#[case] status: &str, env: &TestbedEnv) {
         }
     });
 
-    let enrollment_info = Client::pki_enrollment_info(
+    let enrollment_info = pki_enrollment_info(
         alice_client.config.clone(),
         ParsecPkiEnrollmentAddr::new(
             alice_client.organization_addr(),
@@ -142,7 +142,7 @@ async fn enrollment_not_found(env: &TestbedEnv) {
         }
     });
 
-    let rep = Client::pki_enrollment_info(
+    let rep = pki_enrollment_info(
         mallory_client.config.clone(),
         ParsecPkiEnrollmentAddr::new(
             mallory_client.organization_addr(),

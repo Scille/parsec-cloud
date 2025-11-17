@@ -2703,6 +2703,34 @@ export type OtherShamirRecoveryInfo =
   | OtherShamirRecoveryInfoSetupWithRevokedRecipients
 
 
+// PKIInfoItem
+export interface PKIInfoItemAccepted {
+    tag: "PKIInfoItemAccepted"
+    answer: PkiEnrollmentAnswerPayload
+    submitted_on: number
+    accepted_on: number
+}
+export interface PKIInfoItemCancelled {
+    tag: "PKIInfoItemCancelled"
+    submitted_on: number
+    cancelled_on: number
+}
+export interface PKIInfoItemRejected {
+    tag: "PKIInfoItemRejected"
+    submitted_on: number
+    rejected_on: number
+}
+export interface PKIInfoItemSubmitted {
+    tag: "PKIInfoItemSubmitted"
+    submitted_on: number
+}
+export type PKIInfoItem =
+  | PKIInfoItemAccepted
+  | PKIInfoItemCancelled
+  | PKIInfoItemRejected
+  | PKIInfoItemSubmitted
+
+
 // ParseParsecAddrError
 export interface ParseParsecAddrErrorInvalidUrl {
     tag: "ParseParsecAddrErrorInvalidUrl"
@@ -2842,6 +2870,30 @@ export interface PkiEnrollmentFinalizeErrorSaveError {
 export type PkiEnrollmentFinalizeError =
   | PkiEnrollmentFinalizeErrorInternal
   | PkiEnrollmentFinalizeErrorSaveError
+
+
+// PkiEnrollmentInfoError
+export interface PkiEnrollmentInfoErrorEnrollmentNotFound {
+    tag: "PkiEnrollmentInfoErrorEnrollmentNotFound"
+    error: string
+}
+export interface PkiEnrollmentInfoErrorInternal {
+    tag: "PkiEnrollmentInfoErrorInternal"
+    error: string
+}
+export interface PkiEnrollmentInfoErrorInvalidAcceptPayload {
+    tag: "PkiEnrollmentInfoErrorInvalidAcceptPayload"
+    error: string
+}
+export interface PkiEnrollmentInfoErrorOffline {
+    tag: "PkiEnrollmentInfoErrorOffline"
+    error: string
+}
+export type PkiEnrollmentInfoError =
+  | PkiEnrollmentInfoErrorEnrollmentNotFound
+  | PkiEnrollmentInfoErrorInternal
+  | PkiEnrollmentInfoErrorInvalidAcceptPayload
+  | PkiEnrollmentInfoErrorOffline
 
 
 // PkiEnrollmentListError
@@ -4879,6 +4931,11 @@ export function pkiEnrollmentFinalize(
     accepted: PkiEnrollmentAnswerPayload,
     local_pending: PKILocalPendingEnrollment
 ): Promise<Result<AvailableDevice, PkiEnrollmentFinalizeError>>
+export function pkiEnrollmentInfo(
+    config: ClientConfig,
+    addr: string,
+    enrollment_id: string
+): Promise<Result<PKIInfoItem, PkiEnrollmentInfoError>>
 export function pkiEnrollmentSubmit(
     config: ClientConfig,
     addr: string,

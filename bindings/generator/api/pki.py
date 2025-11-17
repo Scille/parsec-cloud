@@ -17,6 +17,7 @@ from .common import (
     Structure,
     UserID,
     UserProfile,
+    Variant,
     X509CertificateReference,
     Path,
     Ref,
@@ -185,4 +186,42 @@ class ListPkiLocalPendingError(ErrorVariant):
 async def list_pki_local_pending_enrollments(
     config_dir: Ref[Path],
 ) -> Result[list[PKILocalPendingEnrollment], ListPkiLocalPendingError]:
+    raise NotImplementedError
+
+
+class PKIInfoItem(Variant):
+    class Accepted:
+        answer: PkiEnrollmentAnswerPayload
+        submitted_on: DateTime
+        accepted_on: DateTime
+
+    class Rejected:
+        submitted_on: DateTime
+        rejected_on: DateTime
+
+    class Cancelled:
+        submitted_on: DateTime
+        cancelled_on: DateTime
+
+    class Submitted:
+        submitted_on: DateTime
+
+
+class PkiEnrollmentInfoError(ErrorVariant):
+    class Offline:
+        pass
+
+    class EnrollmentNotFound:
+        pass
+
+    class InvalidAcceptPayload:
+        pass
+
+    class Internal:
+        pass
+
+
+async def pki_enrollment_info(
+    config: ClientConfig, addr: ParsecPkiEnrollmentAddr, enrollment_id: PKIEnrollmentID
+) -> Result[PKIInfoItem, PkiEnrollmentInfoError]:
     raise NotImplementedError

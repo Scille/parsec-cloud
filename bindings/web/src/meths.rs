@@ -12714,6 +12714,241 @@ fn variant_other_shamir_recovery_info_rs_to_js(
     Ok(js_obj)
 }
 
+// PKIInfoItem
+
+#[allow(dead_code)]
+fn variant_pki_info_item_js_to_rs(obj: JsValue) -> Result<libparsec::PKIInfoItem, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "PKIInfoItemAccepted" => {
+            let answer = {
+                let js_val = Reflect::get(&obj, &"answer".into())?;
+                struct_pki_enrollment_answer_payload_js_to_rs(js_val)?
+            };
+            let submitted_on = {
+                let js_val = Reflect::get(&obj, &"submittedOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            let accepted_on = {
+                let js_val = Reflect::get(&obj, &"acceptedOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            Ok(libparsec::PKIInfoItem::Accepted {
+                answer,
+                submitted_on,
+                accepted_on,
+            })
+        }
+        "PKIInfoItemCancelled" => {
+            let submitted_on = {
+                let js_val = Reflect::get(&obj, &"submittedOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            let cancelled_on = {
+                let js_val = Reflect::get(&obj, &"cancelledOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            Ok(libparsec::PKIInfoItem::Cancelled {
+                submitted_on,
+                cancelled_on,
+            })
+        }
+        "PKIInfoItemRejected" => {
+            let submitted_on = {
+                let js_val = Reflect::get(&obj, &"submittedOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            let rejected_on = {
+                let js_val = Reflect::get(&obj, &"rejectedOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            Ok(libparsec::PKIInfoItem::Rejected {
+                submitted_on,
+                rejected_on,
+            })
+        }
+        "PKIInfoItemSubmitted" => {
+            let submitted_on = {
+                let js_val = Reflect::get(&obj, &"submittedOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            Ok(libparsec::PKIInfoItem::Submitted { submitted_on })
+        }
+        _ => Err(JsValue::from(TypeError::new("Object is not a PKIInfoItem"))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_pki_info_item_rs_to_js(rs_obj: libparsec::PKIInfoItem) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::PKIInfoItem::Accepted {
+            answer,
+            submitted_on,
+            accepted_on,
+            ..
+        } => {
+            Reflect::set(&js_obj, &"tag".into(), &"PKIInfoItemAccepted".into())?;
+            let js_answer = struct_pki_enrollment_answer_payload_rs_to_js(answer)?;
+            Reflect::set(&js_obj, &"answer".into(), &js_answer)?;
+            let js_submitted_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(submitted_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"submittedOn".into(), &js_submitted_on)?;
+            let js_accepted_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(accepted_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"acceptedOn".into(), &js_accepted_on)?;
+        }
+        libparsec::PKIInfoItem::Cancelled {
+            submitted_on,
+            cancelled_on,
+            ..
+        } => {
+            Reflect::set(&js_obj, &"tag".into(), &"PKIInfoItemCancelled".into())?;
+            let js_submitted_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(submitted_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"submittedOn".into(), &js_submitted_on)?;
+            let js_cancelled_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(cancelled_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"cancelledOn".into(), &js_cancelled_on)?;
+        }
+        libparsec::PKIInfoItem::Rejected {
+            submitted_on,
+            rejected_on,
+            ..
+        } => {
+            Reflect::set(&js_obj, &"tag".into(), &"PKIInfoItemRejected".into())?;
+            let js_submitted_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(submitted_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"submittedOn".into(), &js_submitted_on)?;
+            let js_rejected_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(rejected_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"rejectedOn".into(), &js_rejected_on)?;
+        }
+        libparsec::PKIInfoItem::Submitted { submitted_on, .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"PKIInfoItemSubmitted".into())?;
+            let js_submitted_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(submitted_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"submittedOn".into(), &js_submitted_on)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ParseParsecAddrError
 
 #[allow(dead_code)]
@@ -13569,6 +13804,48 @@ fn variant_pki_enrollment_finalize_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"PkiEnrollmentFinalizeErrorSaveError".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// PkiEnrollmentInfoError
+
+#[allow(dead_code)]
+fn variant_pki_enrollment_info_error_rs_to_js(
+    rs_obj: libparsec::PkiEnrollmentInfoError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::PkiEnrollmentInfoError::EnrollmentNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiEnrollmentInfoErrorEnrollmentNotFound".into(),
+            )?;
+        }
+        libparsec::PkiEnrollmentInfoError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiEnrollmentInfoErrorInternal".into(),
+            )?;
+        }
+        libparsec::PkiEnrollmentInfoError::InvalidAcceptPayload { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiEnrollmentInfoErrorInvalidAcceptPayload".into(),
+            )?;
+        }
+        libparsec::PkiEnrollmentInfoError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiEnrollmentInfoErrorOffline".into(),
             )?;
         }
     }
@@ -21989,6 +22266,46 @@ pub fn pkiEnrollmentFinalize(
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_pki_enrollment_finalize_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// pki_enrollment_info
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn pkiEnrollmentInfo(config: Object, addr: String, enrollment_id: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config = config.into();
+        let config = struct_client_config_js_to_rs(config)?;
+
+        let addr = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecPkiEnrollmentAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let enrollment_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::PKIEnrollmentID, _> {
+                libparsec::PKIEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(enrollment_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::pki_enrollment_info(config, addr, enrollment_id).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = variant_pki_info_item_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_pki_enrollment_info_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
