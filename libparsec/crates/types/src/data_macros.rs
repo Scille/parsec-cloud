@@ -2,7 +2,7 @@
 
 #[macro_export]
 macro_rules! impl_transparent_data_format_conversion {
-    ($obj_type:ty, $data_type:ty, $($field:ident),* $(hooks: $($hook:expr),*)? $(,)?) => {
+    ($obj_type:ty, $data_type:ty, $($field:ident),* $(,)?) => {
 
         impl From<$data_type> for $obj_type {
             #[allow(unused_variables)]
