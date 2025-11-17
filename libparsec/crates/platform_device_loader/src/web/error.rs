@@ -96,9 +96,6 @@ error_set::error_set! {
         DataError(libparsec_types::DataError)
     }
     DeviceMissingError := NotFoundError
-    RmpDecodeError := {
-        RmpDecode(libparsec_types::RmpDecodeError)
-    }
     LoadAvailableDeviceError := {
         ReadToEnd(ReadToEndError),
         RmpDecode(libparsec_types::RmpDecodeError)
