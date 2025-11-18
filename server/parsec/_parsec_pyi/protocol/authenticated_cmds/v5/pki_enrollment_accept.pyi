@@ -14,6 +14,7 @@ class Req:
         payload_signature: bytes,
         payload_signature_algorithm: PkiSignatureAlgorithm,
         accepter_der_x509_certificate: bytes,
+        accepter_intermediate_der_x509_certificates: list[bytes],
         submitter_user_certificate: bytes,
         submitter_device_certificate: bytes,
         submitter_redacted_user_certificate: bytes,
@@ -22,6 +23,8 @@ class Req:
     def dump(self) -> bytes: ...
     @property
     def accepter_der_x509_certificate(self) -> bytes: ...
+    @property
+    def accepter_intermediate_der_x509_certificates(self) -> list[bytes]: ...
     @property
     def enrollment_id(self) -> PKIEnrollmentID: ...
     @property

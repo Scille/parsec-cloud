@@ -73,6 +73,7 @@ class AcceptParams(TypedDict):
     payload_signature: bytes
     payload_signature_algorithm: PkiSignatureAlgorithm
     accepter_der_x509_certificate: bytes
+    accepter_intermediate_der_x509_certificates: list[bytes]
     submitter_device_certificate: bytes
     submitter_user_certificate: bytes
     submitter_redacted_device_certificate: bytes
@@ -120,6 +121,7 @@ def generate_accept_params(
         payload_signature=b"<alice accept payload signature>",
         payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         accepter_der_x509_certificate=b"<alice der x509 certificate>",
+        accepter_intermediate_der_x509_certificates=[],
         submitter_user_certificate=u_certif,
         submitter_device_certificate=d_certif,
         submitter_redacted_user_certificate=redacted_u_certif,
