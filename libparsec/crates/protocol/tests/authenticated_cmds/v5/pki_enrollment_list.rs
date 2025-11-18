@@ -49,6 +49,7 @@ pub fn rep_ok() {
             //     {
             //       der_x509_certificate: 0x3c78353039206365727469663e,
             //       enrollment_id: ext(2, 0xe1fe88bd0f054261887a6c8039710b40),
+            //       intermediate_der_x509_certificates: [ 0x6465616462656566, ],
             //       payload: 0x3c64756d6d793e,
             //       payload_signature: 0x3c7369676e61747572653e,
             //       payload_signature_algorithm: 'RSASSA-PSS-SHA256',
@@ -56,12 +57,14 @@ pub fn rep_ok() {
             //     },
             //   ]
             hex!(
-                "82a6737461747573a26f6bab656e726f6c6c6d656e74739186b46465725f783530395f"
+                "82a6737461747573a26f6bab656e726f6c6c6d656e74739187b46465725f783530395f"
                 "6365727469666963617465c40d3c78353039206365727469663ead656e726f6c6c6d65"
-                "6e745f6964d802e1fe88bd0f054261887a6c8039710b40a77061796c6f6164c4073c64"
-                "756d6d793eb17061796c6f61645f7369676e6174757265c40b3c7369676e6174757265"
-                "3ebb7061796c6f61645f7369676e61747572655f616c676f726974686db15253415353"
-                "412d5053532d534841323536ac7375626d69747465645f6f6ed7010005ed940b424b31"
+                "6e745f6964d802e1fe88bd0f054261887a6c8039710b40d922696e7465726d65646961"
+                "74655f6465725f783530395f63657274696669636174657391c4086465616462656566"
+                "a77061796c6f6164c4073c64756d6d793eb17061796c6f61645f7369676e6174757265"
+                "c40b3c7369676e61747572653ebb7061796c6f61645f7369676e61747572655f616c67"
+                "6f726974686db15253415353412d5053532d534841323536ac7375626d69747465645f"
+                "6f6ed7010005ed940b424b31"
             )
             .as_ref(),
             authenticated_cmds::pki_enrollment_list::Rep::Ok {
@@ -76,6 +79,7 @@ pub fn rep_ok() {
                         payload_signature_algorithm: PkiSignatureAlgorithm::RsassaPssSha256,
                         submitted_on: DateTime::from_timestamp_micros(1668594983390001).unwrap(),
                         der_x509_certificate: hex!("3c78353039206365727469663e").as_ref().into(),
+                        intermediate_der_x509_certificates: [b"deadbeef".as_ref().into()].to_vec(),
                     },
                 ],
             },

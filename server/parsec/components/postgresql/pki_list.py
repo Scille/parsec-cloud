@@ -108,6 +108,8 @@ async def pki_list(
                 enrollment_id=enrollment_id,
                 submitted_on=submitted_on,
                 der_x509_certificate=der_x509_certificate,
+                # TODO: https://github.com/Scille/parsec-cloud/issues/11564
+                intermediate_der_x509_certificates=[],
                 payload_signature=payload_signature,
                 payload_signature_algorithm=payload_signature_algorithm,
                 payload=payload,
