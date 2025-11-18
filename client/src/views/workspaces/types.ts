@@ -10,6 +10,7 @@ enum WorkspaceAction {
   ShowHistory = 'workspace-show-history',
   OpenInExplorer = 'workspace-open-in-explorer',
   Mount = 'workspace-mount',
+  UnMount = 'workspace-unmount',
   Favorite = 'workspace-favorite',
 }
 
