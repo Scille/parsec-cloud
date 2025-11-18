@@ -161,7 +161,7 @@ for (const mode of ['grid', 'list', 'sidebar']) {
     await expect(favorites).toBeVisible();
     await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.Button);
     const popover = workspaces.locator('.workspace-context-menu');
-    await popover.getByRole('listitem').nth(7).click();
+    await popover.getByRole('listitem').nth(8).click();
     await expect(popover).toBeHidden();
 
     let wk;
@@ -182,7 +182,7 @@ for (const mode of ['grid', 'list', 'sidebar']) {
     await expect(workspaces.locator('.workspace-sharing-modal')).toBeHidden();
     await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.Button);
     const popover = workspaces.locator('.workspace-context-menu');
-    await popover.getByRole('listitem').nth(5).click();
+    await popover.getByRole('listitem').nth(6).click();
     await expect(workspaces.locator('.workspace-sharing-modal')).toBeVisible();
     await expect(workspaces.locator('.workspace-sharing-modal').locator('.ms-modal-header__title')).toHaveText('wksp1');
   });
