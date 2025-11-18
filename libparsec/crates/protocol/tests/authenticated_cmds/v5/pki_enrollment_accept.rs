@@ -119,37 +119,16 @@ pub fn rep_author_not_allowed() {
     p_assert_eq!(data2, expected)
 }
 
-pub fn rep_invalid_certificate() {
-    // Generated from Rust implementation (Parsec v3.0.0+dev)
+pub fn rep_invalid_payload() {
+    // Generated from Parsec 3.5.3-a.0+dev
     // Content:
-    //   status: "invalid_certificate"
-    //
-    let raw = hex!("81a6737461747573b3696e76616c69645f6365727469666963617465");
+    //   status: 'invalid_payload'
+    let raw: &[u8] = hex!("81a6737461747573af696e76616c69645f7061796c6f6164").as_ref();
 
-    let expected = authenticated_cmds::pki_enrollment_accept::Rep::InvalidCertificate;
+    let expected = authenticated_cmds::pki_enrollment_accept::Rep::InvalidPayload;
+    println!("***expected: {:?}", expected.dump().unwrap());
 
-    let data = authenticated_cmds::pki_enrollment_accept::Rep::load(&raw).unwrap();
-
-    p_assert_eq!(data, expected);
-
-    // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
-
-    let data2 = authenticated_cmds::pki_enrollment_accept::Rep::load(&raw2).unwrap();
-
-    p_assert_eq!(data2, expected)
-}
-
-pub fn rep_invalid_payload_data() {
-    // Generated from Rust implementation (Parsec v3.0.0+dev)
-    // Content:
-    //   status: "invalid_payload_data"
-    //
-    let raw = hex!("81a6737461747573b4696e76616c69645f7061796c6f61645f64617461");
-
-    let expected = authenticated_cmds::pki_enrollment_accept::Rep::InvalidPayloadData;
-
-    let data = authenticated_cmds::pki_enrollment_accept::Rep::load(&raw).unwrap();
+    let data = authenticated_cmds::pki_enrollment_accept::Rep::load(raw).unwrap();
 
     p_assert_eq!(data, expected);
 
@@ -321,6 +300,75 @@ pub fn rep_require_greater_timestamp() {
     };
 
     let data = authenticated_cmds::pki_enrollment_accept::Rep::load(&raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::pki_enrollment_accept::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected)
+}
+
+pub fn rep_invalid_der_x509_certificate() {
+    // Generated from Parsec 3.5.3-a.0+dev
+    // Content:
+    //   status: 'invalid_der_x509_certificate'
+    let raw: &[u8] = hex!(
+        "81a6737461747573bc696e76616c69645f6465725f783530395f636572746966696361"
+        "7465"
+    )
+    .as_ref();
+
+    let expected = authenticated_cmds::pki_enrollment_accept::Rep::InvalidDerX509Certificate;
+    println!("***expected: {:?}", expected.dump().unwrap());
+
+    let data = authenticated_cmds::pki_enrollment_accept::Rep::load(raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::pki_enrollment_accept::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected)
+}
+
+pub fn rep_invalid_payload_signature() {
+    // Generated from Parsec 3.5.3-a.0+dev
+    // Content:
+    //   status: 'invalid_payload_signature'
+    let raw: &[u8] =
+        hex!("81a6737461747573b9696e76616c69645f7061796c6f61645f7369676e6174757265").as_ref();
+
+    let expected = authenticated_cmds::pki_enrollment_accept::Rep::InvalidPayloadSignature;
+    println!("***expected: {:?}", expected.dump().unwrap());
+
+    let data = authenticated_cmds::pki_enrollment_accept::Rep::load(raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::pki_enrollment_accept::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected)
+}
+
+pub fn rep_invalid_x509_trustchain() {
+    // Generated from Parsec 3.5.3-a.0+dev
+    // Content:
+    //   status: 'invalid_x509_trustchain'
+    let raw: &[u8] =
+        hex!("81a6737461747573b7696e76616c69645f783530395f7472757374636861696e").as_ref();
+
+    let expected = authenticated_cmds::pki_enrollment_accept::Rep::InvalidX509Trustchain;
+    println!("***expected: {:?}", expected.dump().unwrap());
+
+    let data = authenticated_cmds::pki_enrollment_accept::Rep::load(raw).unwrap();
 
     p_assert_eq!(data, expected);
 

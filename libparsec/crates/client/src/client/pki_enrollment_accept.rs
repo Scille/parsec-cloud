@@ -153,10 +153,14 @@ async fn accept_internal(
             //     ballpark_client_late_offset,
             // })
         }
-        Rep::UserAlreadyExists => todo!(),
-        bad_rep @ (Rep::InvalidCertificate
-        | Rep::InvalidPayloadData
-        | Rep::UnknownStatus { .. }) => {
+        Rep::UserAlreadyExists
+        /* TODO: https://github.com/Scille/parsec-cloud/issues/11648 */
+        | Rep::InvalidPayloadSignature
+        | Rep::InvalidDerX509Certificate
+        | Rep::InvalidX509Trustchain
+        /* END-TODO: https://github.com/Scille/parsec-cloud/issues/11648 */
+        => todo!(),
+        bad_rep @ (Rep::InvalidPayload | Rep::UnknownStatus { .. }) => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
         }
     }

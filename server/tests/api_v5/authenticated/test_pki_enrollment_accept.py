@@ -226,24 +226,14 @@ async def test_authenticated_pki_enrollment_accept_human_handle_already_taken(
     assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepHumanHandleAlreadyTaken()
 
 
-async def test_authenticated_pki_enrollment_accept_invalid_certificate(
-    coolorg: CoolorgRpcClients,
-    enrollment_id: PKIEnrollmentID,
-) -> None:
-    params = generate_accept_params(coolorg, enrollment_id)
-    params["submitter_user_certificate"] = b"<dummy>"
-    rep = await coolorg.alice.pki_enrollment_accept(**params)
-    assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepInvalidCertificate()
-
-
-async def test_authenticated_pki_enrollment_accept_invalid_payload_data(
+async def test_authenticated_pki_enrollment_accept_invalid_payload(
     coolorg: CoolorgRpcClients,
     enrollment_id: PKIEnrollmentID,
 ) -> None:
     params = generate_accept_params(coolorg, enrollment_id)
     params["payload"] = b"<dummy>"
     rep = await coolorg.alice.pki_enrollment_accept(**params)
-    assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepInvalidPayloadData()
+    assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepInvalidPayload()
 
 
 async def test_authenticated_pki_enrollment_accept_timestamp_out_of_ballpark(
@@ -313,6 +303,21 @@ async def test_authenticated_pki_enrollment_accept_require_greater_timestamp(
     assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepRequireGreaterTimestamp(
         strictly_greater_than=now
     )
+
+
+@pytest.mark.xfail(reason="TODO: https://github.com/Scille/parsec-cloud/issues/11648")
+async def test_authenticated_pki_enrollment_accept_invalid_der_x509_certificate() -> None:
+    raise NotImplementedError
+
+
+@pytest.mark.xfail(reason="TODO: https://github.com/Scille/parsec-cloud/issues/11648")
+async def test_authenticated_pki_enrollment_accept_invalid_payload_signature() -> None:
+    raise NotImplementedError
+
+
+@pytest.mark.xfail(reason="TODO: https://github.com/Scille/parsec-cloud/issues/11648")
+async def test_authenticated_pki_enrollment_accept_invalid_x509_trustchain() -> None:
+    raise NotImplementedError
 
 
 async def test_authenticated_pki_enrollment_accept_http_common_errors(
