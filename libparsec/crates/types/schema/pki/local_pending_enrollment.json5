@@ -30,6 +30,8 @@
             "type": "PkiEnrollmentSubmitPayload"
         },
         {
+            // Generated `SecretKey` encrypted by asymmetric key from the smartcard,
+            // with encrypted_key_algo.
             "name": "encrypted_key",
             "type": "Bytes"
         },
