@@ -274,14 +274,14 @@ import {
   Clipboard,
   MsInformativeText,
   MsModalResult,
+  MsReportText,
+  MsReportTheme,
   MsSpinner,
   MsWizardStepper,
   Translatable,
   askQuestion,
   startCounter,
   useWindowSize,
-  MsReportText,
-  MsReportTheme,
 } from 'megashark-lib';
 import QRCodeVue3 from 'qrcode-vue3';
 import { computed, onMounted, ref } from 'vue';

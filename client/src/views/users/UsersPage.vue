@@ -689,7 +689,7 @@ const actionBarOptionsUsersPage = computed(() => {
         await navigateTo(Routes.Invitations, { query: { openInvite: true } });
       },
     });
-    // eslint-disable-next-line no-constant-condition
+
     if (false) {
       // TODO enable with PKI support
       actionArray.push({

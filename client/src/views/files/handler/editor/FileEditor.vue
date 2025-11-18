@@ -68,6 +68,7 @@ import {
   getCryptpadDocumentType,
 } from '@/services/cryptpad';
 import { Env } from '@/services/environment';
+import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { longLocaleCodeToShort } from '@/services/translation';
 import { SaveState } from '@/views/files/handler/editor';
@@ -76,7 +77,6 @@ import { IonButton, IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
 import { I18n, Translatable } from 'megashark-lib';
 import { inject, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
-import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const fileEditorRef = useTemplateRef('fileEditor');

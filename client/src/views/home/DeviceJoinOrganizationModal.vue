@@ -170,12 +170,12 @@ import {
   asyncComputed,
   MsInformativeText,
   MsModalResult,
+  MsReportText,
+  MsReportTheme,
   MsSpinner,
   MsWizardStepper,
   Translatable,
   useWindowSize,
-  MsReportText,
-  MsReportTheme,
 } from 'megashark-lib';
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
 
