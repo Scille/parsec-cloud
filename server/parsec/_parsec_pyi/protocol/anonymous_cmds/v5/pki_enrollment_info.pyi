@@ -20,6 +20,7 @@ class PkiEnrollmentInfoStatusAccepted(PkiEnrollmentInfoStatus):
         submitted_on: DateTime,
         accepted_on: DateTime,
         accepter_der_x509_certificate: bytes,
+        accepter_intermediate_der_x509_certificates: list[bytes],
         accept_payload_signature: bytes,
         accept_payload_signature_algorithm: PkiSignatureAlgorithm,
         accept_payload: bytes,
@@ -34,6 +35,8 @@ class PkiEnrollmentInfoStatusAccepted(PkiEnrollmentInfoStatus):
     def accepted_on(self) -> DateTime: ...
     @property
     def accepter_der_x509_certificate(self) -> bytes: ...
+    @property
+    def accepter_intermediate_der_x509_certificates(self) -> list[bytes]: ...
     @property
     def submitted_on(self) -> DateTime: ...
 

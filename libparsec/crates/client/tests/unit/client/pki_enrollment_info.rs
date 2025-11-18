@@ -47,14 +47,14 @@ async fn ok(#[case] status: &str, env: &TestbedEnv) {
                 root_verify_key: alice_device.root_verify_key().clone(),
             };
 
-            let cert_hash = X509CertificateHash::fake_sha256();
-            let cert_ref = cert_hash.clone().into();
+            let cert_ref = X509CertificateHash::fake_sha256().into();
             let signed = sign_message(&expected_answer.dump(), &cert_ref)
                 .context("Failed to sign message")
                 .unwrap();
 
             PkiEnrollmentInfoStatus::Accepted {
-                accepter_der_x509_certificate: cert_hash.to_string().into(),
+                accepter_der_x509_certificate: b"a cert".as_ref().into(),
+                accepter_intermediate_der_x509_certificates: [b"deadbeef".as_ref().into()].to_vec(),
                 accept_payload: expected_answer.dump().into(),
                 accept_payload_signature: signed.signature,
                 accept_payload_signature_algorithm: signed.algo,

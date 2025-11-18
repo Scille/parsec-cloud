@@ -56,15 +56,18 @@ pub fn rep_ok() {
             //   accept_payload_signature_algorithm: 'RSASSA-PSS-SHA256'
             //   accepted_on: ext(1, 1668768160714565) i.e. 2022-11-18T11:42:40.714565Z
             //   accepter_der_x509_certificate: 0x64756d6d79
+            //   accepter_intermediate_der_x509_certificates: [ 0x6465616462656566, ]
             //   submitted_on: ext(1, 1668768160714573) i.e. 2022-11-18T11:42:40.714573Z
             hex!(
-                "88a6737461747573a26f6bb1656e726f6c6c6d656e745f737461747573a84143434550"
+                "89a6737461747573a26f6bb1656e726f6c6c6d656e745f737461747573a84143434550"
                 "544544ae6163636570745f7061796c6f6164c40564756d6d79b86163636570745f7061"
                 "796c6f61645f7369676e6174757265c40564756d6d79d9226163636570745f7061796c"
                 "6f61645f7369676e61747572655f616c676f726974686db15253415353412d5053532d"
                 "534841323536ab61636365707465645f6f6ed7010005edbc5d6e8f45bd616363657074"
-                "65725f6465725f783530395f6365727469666963617465c40564756d6d79ac7375626d"
-                "69747465645f6f6ed7010005edbc5d6e8f4d"
+                "65725f6465725f783530395f6365727469666963617465c40564756d6d79d92b616363"
+                "65707465725f696e7465726d6564696174655f6465725f783530395f63657274696669"
+                "636174657391c4086465616462656566ac7375626d69747465645f6f6ed7010005edbc"
+                "5d6e8f4d"
             )
             .as_ref(),
             anonymous_cmds::pki_enrollment_info::Rep::Ok(
@@ -74,6 +77,8 @@ pub fn rep_ok() {
                     accept_payload_signature_algorithm: PkiSignatureAlgorithm::RsassaPssSha256,
                     accepted_on: DateTime::from_timestamp_micros(1668768160714565).unwrap(),
                     accepter_der_x509_certificate: hex!("64756d6d79").as_ref().into(),
+                    accepter_intermediate_der_x509_certificates: [b"deadbeef".as_ref().into()]
+                        .to_vec(),
                     submitted_on: DateTime::from_timestamp_micros(1668768160714573).unwrap(),
                 },
             ),
