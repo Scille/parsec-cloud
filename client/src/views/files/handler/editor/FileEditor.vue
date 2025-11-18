@@ -71,6 +71,7 @@ import { Env } from '@/services/environment';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { longLocaleCodeToShort } from '@/services/translation';
 import { SaveState } from '@/views/files/handler/editor';
+import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { IonButton, IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
@@ -83,6 +84,8 @@ const documentType = ref<CryptpadDocumentType | null>(null);
 const cryptpadInstance = ref<Cryptpad | null>(null);
 const fileUrl = ref<string | null>(null);
 const error = ref('');
+const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+let eventCbId: null | string = null;
 
 const {
   contentInfo,
@@ -125,12 +128,24 @@ onMounted(async () => {
   } else {
     emits('fileError');
   }
+
+  eventCbId = await eventDistributor.registerCallback(Events.Online | Events.Offline, async (event: Events) => {
+    if (event === Events.Offline) {
+      emits('onSaveStateChange', SaveState.Offline);
+    } else if (event === Events.Online) {
+      emits('onSaveStateChange', SaveState.None);
+    }
+  });
 });
 
 onUnmounted(() => {
   cryptpadInstance.value = null;
   if (fileUrl.value) {
     URL.revokeObjectURL(fileUrl.value);
+  }
+
+  if (eventCbId) {
+    eventDistributor.removeCallback(eventCbId);
   }
 });
 
