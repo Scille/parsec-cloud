@@ -39,7 +39,7 @@ import { DateTime } from 'luxon';
 export async function initializeWorkspace(
   workspaceId: WorkspaceID,
   connectionHandle: ConnectionHandle | null = null,
-): Promise<Result<StartedWorkspaceInfo, WorkspaceInfoError | ClientStartWorkspaceError | WorkspaceMountError>> {
+): Promise<Result<StartedWorkspaceInfo, WorkspaceInfoError | ClientStartWorkspaceError>> {
   const startResult = await startWorkspace(workspaceId, connectionHandle);
   if (!startResult.ok) {
     console.error(`Failed to start workspace ${workspaceId}: ${startResult.error}`);
@@ -51,18 +51,6 @@ export async function initializeWorkspace(
     console.error(`Failed to get started workspace info ${workspaceId}: ${startedWorkspaceResult.error}`);
     return startedWorkspaceResult;
   }
-  let mountpoint: [MountpointHandle, SystemPath] | undefined = undefined;
-  if (startedWorkspaceResult.value.mountpoints.length === 0) {
-    const mountResult = await mountWorkspace(startResult.value);
-    if (!mountResult.ok) {
-      console.error(`Failed to mount workspace ${workspaceId}: ${mountResult.error}`);
-      return mountResult;
-    }
-    mountpoint = mountResult.value;
-  } else {
-    mountpoint = startedWorkspaceResult.value.mountpoints[0];
-  }
-  startedWorkspaceResult.value.mountpoints.push(mountpoint);
   return startedWorkspaceResult;
 }
 
