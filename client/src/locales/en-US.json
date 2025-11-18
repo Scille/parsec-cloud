@@ -2503,10 +2503,13 @@
                 "impossibleToOpen": "Cannot edit this file",
                 "genericError": "Failed to open the file",
                 "unsupportedFileType": "File not supported by Parsec",
-                "editionNotAvailable": "Parsec Edition unavailable"
+                "editionNotAvailable": "Document editing is unavailable",
+                "tooLongToOpen": "The file is taking too long to open"
             },
             "informationEditDownload": "If you want to edit this file, you can download it and open it locally on your device.",
             "informationPreviewDownload": "If you want to preview this file, you can download it and open it locally on your device.",
+            "tooLongToOpenOnWeb": "You can try downloading it and opening with default app (right click on file > 'Download').",
+            "tooLongToOpenOnDesktop": "You can try opening it with default app (right click on file > 'Open with default app').",
             "unknownFileExtension": "This file type extension could not be identified. Please check that it's correctly written (.txt, .pdf, .doc, etc.).",
             "noContentFileType": "Could not open this file in the Parsec editor as its type could not be identified.",
             "noFolderPreview": "Cannot preview folders.",

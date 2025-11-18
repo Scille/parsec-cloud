@@ -189,12 +189,28 @@ describe('CryptPad Service', () => {
         autosave: 5000,
         events: {
           onSave: vi.fn(),
+          onReady: vi.fn(),
         },
       };
 
+      // Mock CryptPadAPI to call onReady immediately
+      mockCryptPadAPI.mockImplementation((_containerId: string, cfg: any) => {
+        if (cfg.events.onReady) {
+          cfg.events.onReady();
+        }
+      });
+
       await cryptpad.open(config);
 
-      expect(mockCryptPadAPI).toHaveBeenCalledWith(containerElement.id, config);
+      expect(mockCryptPadAPI).toHaveBeenCalledWith(
+        containerElement.id,
+        expect.objectContaining({
+          document: config.document,
+          documentType: config.documentType,
+          editorConfig: config.editorConfig,
+          autosave: config.autosave,
+        }),
+      );
     });
 
     it('should throw error for unsupported document types', async () => {

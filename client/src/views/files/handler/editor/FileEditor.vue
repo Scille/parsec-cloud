@@ -57,14 +57,15 @@
 
 <script setup lang="ts">
 import { DetectedFileType } from '@/common/fileTypes';
-import { ClientInfo, closeFile, FileDescriptor, openFile, writeFile } from '@/parsec';
-import { getWorkspaceHandle, routerGoBack } from '@/router';
+import { ClientInfo, closeFile, FileDescriptor, isWeb, openFile, writeFile } from '@/parsec';
+import { currentRouteIs, getFileHandlerMode, getWorkspaceHandle, routerGoBack, Routes } from '@/router';
 import {
   Cryptpad,
   CryptpadAppMode,
   CryptpadDocumentType,
   CryptpadError,
   CryptpadErrorCode,
+  CryptpadOpenError,
   getCryptpadDocumentType,
 } from '@/services/cryptpad';
 import { Env } from '@/services/environment';
@@ -72,6 +73,7 @@ import { EventDistributor, EventDistributorKey, Events } from '@/services/eventD
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { longLocaleCodeToShort } from '@/services/translation';
 import { SaveState } from '@/views/files/handler/editor';
+import { FileHandlerMode } from '@/views/files/handler/types';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { IonButton, IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
@@ -99,6 +101,19 @@ const {
   userInfo?: ClientInfo;
 }>();
 
+enum ErrorTitle {
+  GenericError = 'fileViewers.errors.titles.genericError',
+  UnsupportedFileType = 'fileViewers.errors.titles.unsupportedFileType',
+  EditionNotAvailable = 'fileViewers.errors.titles.editionNotAvailable',
+  CorruptedFile = 'fileViewers.errors.titles.tooLongToOpen',
+}
+
+enum ErrorMessage {
+  EditableOnlyOnSystem = 'fileViewers.errors.informationEditDownload',
+  CorruptedFileOnWeb = 'fileViewers.errors.tooLongToOpenOnWeb',
+  CorruptedFileOnDesktop = 'fileViewers.errors.tooLongToOpenOnDesktop',
+}
+
 const emits = defineEmits<{
   (event: 'fileLoaded'): void;
   (event: 'fileError'): void;
@@ -109,21 +124,15 @@ onMounted(async () => {
   documentType.value = getCryptpadDocumentType(fileInfo.type);
 
   if (documentType.value === CryptpadDocumentType.Unsupported) {
-    error.value = 'fileViewers.errors.titles.unsupportedFileType';
-    await informationManager.present(
-      new Information({
-        title: 'fileViewers.errors.titles.unsupportedFileType',
-        message: 'fileViewers.errors.informationEditDownload',
-        level: InformationLevel.Info,
-      }),
-      PresentationMode.Modal,
-    );
+    error.value = ErrorTitle.UnsupportedFileType;
+    await openRedirectionModal(ErrorTitle.UnsupportedFileType, ErrorMessage.EditableOnlyOnSystem, InformationLevel.Info);
     return;
   }
   if (!(await loadCryptpad())) {
     return;
   }
-  if (await openFileWithCryptpad()) {
+  const openResult = await openFileWithCryptpad();
+  if (openResult) {
     emits('fileLoaded');
   } else {
     emits('fileError');
@@ -139,7 +148,10 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  cryptpadInstance.value = null;
+  // Clean up CryptPad instance and event listeners
+  if (cryptpadInstance.value) {
+    cryptpadInstance.value = null;
+  }
   if (fileUrl.value) {
     URL.revokeObjectURL(fileUrl.value);
   }
@@ -158,32 +170,41 @@ async function loadCryptpad(): Promise<boolean> {
 
     // Always create a new instance for each document to avoid conflicts
     cryptpadInstance.value = new Cryptpad(fileEditorRef.value as HTMLDivElement, Env.getDefaultCryptpadServer());
+
     await cryptpadInstance.value.init();
     return true;
   } catch (e: unknown) {
-    let title: Translatable = 'fileViewers.errors.titles.genericError';
-    const message: Translatable = 'fileViewers.errors.informationEditDownload';
-    const level: InformationLevel = InformationLevel.Info;
-
     if (e instanceof CryptpadError) {
       switch (e.code) {
         case CryptpadErrorCode.NotEnabled:
-          title = 'fileViewers.errors.titles.editionNotAvailable';
+          await openRedirectionModal(ErrorTitle.EditionNotAvailable, ErrorMessage.EditableOnlyOnSystem, InformationLevel.Warning);
           break;
         case CryptpadErrorCode.ScriptElementCreationFailed:
         case CryptpadErrorCode.InitFailed:
-          title = 'fileViewers.errors.titles.genericError';
+          error.value = ErrorMessage.EditableOnlyOnSystem;
+          break;
       }
     }
-    await informationManager.present(
-      new Information({
-        title,
-        message,
-        level,
-      }),
-      PresentationMode.Modal,
-    );
     return false;
+  }
+}
+
+async function openRedirectionModal(title: Translatable, message: Translatable, level: InformationLevel): Promise<void> {
+  await informationManager.present(
+    new Information({
+      title,
+      message,
+      level,
+    }),
+    PresentationMode.Modal,
+  );
+  await routerGoBack();
+  // TODO: find why we have router problems causing routerGoBack to stay on same page
+  // https://github.com/Scille/parsec-cloud/issues/11749
+  // Seems similar to the header back button double click issue
+  // For now, we'll force navigation if page is still the same after modal
+  if (currentRouteIs(Routes.FileHandler) && getFileHandlerMode() === FileHandlerMode.Edit) {
+    await routerGoBack();
   }
 }
 
@@ -194,14 +215,7 @@ async function openFileWithCryptpad(): Promise<boolean> {
   const user = userInfo ? { name: userInfo.humanHandle.label, id: userInfo.userId } : undefined;
 
   if (!workspaceHandle) {
-    error.value = 'fileViewers.errors.genericError';
-    await informationManager.present(
-      new Information({
-        message: 'fileViewers.errors.titles.genericError',
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
+    error.value = ErrorTitle.GenericError;
     return false;
   }
   fileUrl.value = URL.createObjectURL(new Blob([contentInfo.data as Uint8Array<ArrayBuffer>], { type: 'application/octet-stream' }));
@@ -224,6 +238,9 @@ async function openFileWithCryptpad(): Promise<boolean> {
     autosave: (window as any).TESTING_EDITICS_SAVE_TIMEOUT ?? 10,
     mode: readOnly ? CryptpadAppMode.View : CryptpadAppMode.Edit,
     events: {
+      onReady: (): void => {
+        window.electronAPI.log('info', 'CryptPad editor is ready and document loaded successfully');
+      },
       onSave: async (file: Blob, callback: () => void): Promise<void> => {
         let hasError = false;
         let fd: FileDescriptor | undefined = undefined;
@@ -279,6 +296,11 @@ async function openFileWithCryptpad(): Promise<boolean> {
           emits('onSaveStateChange', SaveState.Unsaved);
         }
       },
+      onError: (errorData: { message: string; errorType: string; originalError: string }): void => {
+        window.electronAPI.log('error', `CryptPad error [${errorData.errorType}]: ${errorData.message}`);
+        error.value = 'fileViewers.errors.titles.genericError';
+        emits('fileError');
+      },
     },
   };
 
@@ -287,28 +309,33 @@ async function openFileWithCryptpad(): Promise<boolean> {
     window.electronAPI.log('info', 'CryptPad editor initialized successfully');
     return true;
   } catch (e: unknown) {
-    let title: Translatable = 'fileViewers.errors.titles.genericError';
-    const message: Translatable = 'fileViewers.errors.informationEditDownload';
-    const level: InformationLevel = InformationLevel.Info;
-
+    // Check if this is a timeout error (corrupted file)
     if (e instanceof CryptpadError) {
       switch (e.code) {
         case CryptpadErrorCode.NotInitialized:
-          title = 'fileViewers.errors.titles.genericError';
+          error.value = ErrorMessage.EditableOnlyOnSystem;
           break;
         case CryptpadErrorCode.DocumentTypeNotEnabled:
-          title = 'fileViewers.errors.titles.editionNotAvailable';
+          await openRedirectionModal(ErrorTitle.EditionNotAvailable, ErrorMessage.EditableOnlyOnSystem, InformationLevel.Info);
+          break;
+        case CryptpadErrorCode.LoadingTimeout:
+          // TODO: Fix DOCX timeout false positives - OnlyOffice doesn't reliably call onReady for 'doc' type
+          // See: https://github.com/Scille/parsec-cloud/issues/11753
+          // For now, we ignore timeout errors for DOCX files to avoid false positive "corrupted file" modals
+          if ((e as CryptpadOpenError).documentType === CryptpadDocumentType.Doc) {
+            window.electronAPI.log('info', 'Ignoring timeout for DOCX file (known OnlyOffice onReady issue)');
+            return true;
+          }
+          window.electronAPI.log('warn', 'CryptPad loading timeout - file appears to be corrupted or too large');
+          await openRedirectionModal(
+            ErrorTitle.CorruptedFile,
+            isWeb() ? ErrorMessage.CorruptedFileOnWeb : ErrorMessage.CorruptedFileOnDesktop,
+            InformationLevel.Warning,
+          );
+          break;
       }
     }
 
-    await informationManager.present(
-      new Information({
-        title,
-        message,
-        level,
-      }),
-      PresentationMode.Modal,
-    );
     return false;
   }
 }
@@ -361,17 +388,12 @@ async function openFileWithCryptpad(): Promise<boolean> {
     gap: 1rem;
 
     &__item {
+      width: 100%;
       &:first-child {
-        --background: none;
-        --color: var(--parsec-color-light-secondary-text);
+        --background: var(--parsec-color-light-secondary-text);
+        --color: var(--parsec-color-light-secondary-white);
         --border-color: var(--parsec-color-light-secondary-text);
         --color-hover: var(--parsec-color-light-secondary-text);
-        --background-hover: var(--parsec-color-light-secondary-medium);
-      }
-
-      &:last-child {
-        --color: var(--parsec-color-light-secondary-white);
-        --background: var(--parsec-color-light-secondary-text);
         --background-hover: var(--parsec-color-light-secondary-contrast);
       }
     }

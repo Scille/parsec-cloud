@@ -2504,10 +2504,13 @@
                 "impossibleToOpen": "Impossible d'éditer ce fichier",
                 "genericError": "Impossible d'ouvrir ce fichier",
                 "unsupportedFileType": "Type de fichier non pris en charge par Parsec",
-                "editionNotAvailable": "Parsec Edition indisponible"
+                "editionNotAvailable": "L'édition de documents n'est pas disponible",
+                "tooLongToOpen": "Le fichier met trop de temps à s'ouvrir"
             },
             "informationEditDownload": "Si vous souhaitez modifier ce fichier, vous pouvez le télécharger et l'ouvrir localement sur votre appareil.",
             "informationPreviewDownload": "Si vous souhaitez prévisualiser ce fichier, vous pouvez le faire dans Parsec ou le télécharger pour l'ouvrir localement sur votre appareil.",
+            "tooLongToOpenOnWeb": "Vous pouvez essayer de le télécharger et de l'ouvrir avec l'application par défaut (clic droit sur le fichier > 'Télécharger').",
+            "tooLongToOpenOnDesktop": "Vous pouvez essayer de l'ouvrir avec l'application par défaut (clic droit sur le fichier > 'Ouvrir avec l'app par défaut').",
             "unknownFileExtension": "L'extension de ce fichier n'a pas pu être reconnue. Veuillez vérifier qu'elle est correctement écrite (.txt, .pdf, .doc, etc.).",
             "noContentFileType": "Impossible d'ouvrir ce fichier, son type n'ayant pas pu être reconnu dans l'éditeur de Parsec.",
             "noFolderPreview": "Impossible d'afficher l'aperçu d'un dossier.",
@@ -2600,11 +2603,13 @@
     },
     "openFallback": {
         "title": "Parsec Edition n'est pas disponible",
-        "subtitleDownload": "Si vous souhaitez modifier ce fichier, vous pouvez le télécharger et l'ouvrir localement sur votre appareil.",
-        "subtitlePreviewDownload": "Si vous souhaitez prévisualiser ce fichier, vous pouvez le faire dans Parsec ou le télécharger pour l'ouvrir localement sur votre appareil.",
+        "subtitle": {
+            "download": "Si vous souhaitez modifier ce fichier, vous pouvez le télécharger et l'ouvrir localement sur votre appareil.",
+            "previewDownload": "Si vous souhaitez prévisualiser ce fichier, vous pouvez le faire dans Parsec ou le télécharger pour l'ouvrir localement sur votre appareil."
+        },
         "actions": {
-            "viewer": "Ouvrir dans le visualiseur",
-            "download": "Télécharger le fichier",
+            "viewer": "Prévisualiser (dans Parsec)",
+            "download": "Télécharger",
             "open": "Afficher dans l'explorateur",
             "cancel": "Annuler"
         }
