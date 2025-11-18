@@ -66,11 +66,7 @@
             },
             {
                 // The payload is not correctly formatted
-                "status": "invalid_payload_data"
-            },
-            {
-                // The provided certificate is not valid
-                "status": "invalid_certificate"
+                "status": "invalid_payload"
             },
             {
                 // The server did not found a request for the provided ID
@@ -123,6 +119,17 @@
                         "type": "DateTime"
                     }
                 ]
+            },
+            {
+                // A provided certificates is invalid
+                "status": "invalid_der_x509_certificate"
+            },
+            {
+                "status": "invalid_payload_signature"
+            },
+            {
+                // Cannot trust provided chain
+                "status": "invalid_x509_trustchain"
             }
         ]
     }

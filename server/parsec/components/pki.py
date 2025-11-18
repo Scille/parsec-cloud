@@ -430,7 +430,7 @@ class BasePkiEnrollmentComponent:
         # https://github.com/Scille/parsec-cloud/issues/11559
         # https://github.com/Scille/parsec-cloud/issues/11561
         if req.accepter_intermediate_der_x509_certificates:
-            return authenticated_cmds.latest.pki_enrollment_accept.RepInvalidPayloadData()
+            return authenticated_cmds.latest.pki_enrollment_accept.RepInvalidPayload()
         outcome = await self.accept(
             now=DateTime.now(),
             organization_id=client_ctx.organization_id,
@@ -465,9 +465,10 @@ class BasePkiEnrollmentComponent:
             case PkiEnrollmentAcceptStoreBadOutcome.AUTHOR_NOT_ALLOWED:
                 return authenticated_cmds.latest.pki_enrollment_accept.RepAuthorNotAllowed()
             case PkiEnrollmentAcceptStoreBadOutcome.INVALID_ACCEPT_PAYLOAD:
-                return authenticated_cmds.latest.pki_enrollment_accept.RepInvalidPayloadData()
+                return authenticated_cmds.latest.pki_enrollment_accept.RepInvalidPayload()
+            # TODO: https://github.com/Scille/parsec-cloud/issues/11648
             case PkiEnrollmentAcceptValidateBadOutcome():
-                return authenticated_cmds.latest.pki_enrollment_accept.RepInvalidCertificate()
+                raise NotImplementedError()
             case TimestampOutOfBallpark() as error:
                 return authenticated_cmds.latest.pki_enrollment_accept.RepTimestampOutOfBallpark(
                     server_timestamp=error.server_timestamp,

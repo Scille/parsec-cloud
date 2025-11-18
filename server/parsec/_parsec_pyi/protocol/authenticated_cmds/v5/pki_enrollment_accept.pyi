@@ -64,12 +64,7 @@ class RepAuthorNotAllowed(Rep):
         self,
     ) -> None: ...
 
-class RepInvalidPayloadData(Rep):
-    def __init__(
-        self,
-    ) -> None: ...
-
-class RepInvalidCertificate(Rep):
+class RepInvalidPayload(Rep):
     def __init__(
         self,
     ) -> None: ...
@@ -120,3 +115,18 @@ class RepRequireGreaterTimestamp(Rep):
     def __init__(self, strictly_greater_than: DateTime) -> None: ...
     @property
     def strictly_greater_than(self) -> DateTime: ...
+
+class RepInvalidDerX509Certificate(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
+class RepInvalidPayloadSignature(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
+class RepInvalidX509Trustchain(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
