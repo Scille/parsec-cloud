@@ -35,6 +35,7 @@ from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
 class Enrollment:
     enrollment_id: PKIEnrollmentID
     submitter_der_x509_certificate: bytes
+    submitter_intermediate_der_x509_certificates: list[bytes]
     submitter_der_x509_certificate_email: EmailAddress
     submit_payload_signature: bytes
     submit_payload: bytes
@@ -57,6 +58,7 @@ async def existing_enrollment(
 ) -> Enrollment:
     enrollment_id = PKIEnrollmentID.new()
     submitter_der_x509_certificate = b"<mike der x509 certificate>"
+    submitter_intermediate_der_x509_certificates = []
     submitter_der_x509_certificate_email = EmailAddress("mike@example.invalid")
     submit_payload_signature = b"<mike submit payload signature>"
 
@@ -65,6 +67,7 @@ async def existing_enrollment(
             enrollment_id=enrollment_id,
             force=False,
             der_x509_certificate=submitter_der_x509_certificate,
+            intermediate_der_x509_certificates=submitter_intermediate_der_x509_certificates,
             payload_signature=submit_payload_signature,
             payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
             payload=submit_payload,
@@ -79,6 +82,7 @@ async def existing_enrollment(
     return Enrollment(
         enrollment_id=enrollment_id,
         submitter_der_x509_certificate=submitter_der_x509_certificate,
+        submitter_intermediate_der_x509_certificates=submitter_intermediate_der_x509_certificates,
         submitter_der_x509_certificate_email=submitter_der_x509_certificate_email,
         submit_payload_signature=submit_payload_signature,
         submit_payload=submit_payload,
@@ -95,6 +99,7 @@ async def test_anonymous_pki_enrollment_submit_ok(
             enrollment_id=enrollment_id,
             force=False,
             der_x509_certificate=b"<philip der x509 certificate>",
+            intermediate_der_x509_certificates=[],
             payload_signature=b"<philip submit payload signature>",
             payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
             payload=submit_payload,
@@ -126,6 +131,7 @@ async def test_anonymous_pki_enrollment_submit_ok_with_force(
             enrollment_id=enrollment_id,
             force=True,
             der_x509_certificate=existing_enrollment.submitter_der_x509_certificate,
+            intermediate_der_x509_certificates=[],
             payload_signature=b"<philip submit payload signature>",
             payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
             payload=submit_payload,
@@ -186,6 +192,7 @@ async def test_anonymous_pki_enrollment_submit_ok_with_email_from_revoked_user(
         enrollment_id=PKIEnrollmentID.new(),
         force=False,
         der_x509_certificate=b"<bob der x509 certificate>",
+        intermediate_der_x509_certificates=[],
         payload_signature=b"<bob submit payload signature>",
         payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         payload=submit_payload,
@@ -211,6 +218,7 @@ async def test_anonymous_pki_enrollment_submit_ok_with_cancelled_enrollment(
         enrollment_id=PKIEnrollmentID.new(),
         force=False,
         der_x509_certificate=existing_enrollment.submitter_der_x509_certificate,
+        intermediate_der_x509_certificates=[],
         payload_signature=existing_enrollment.submit_payload_signature,
         payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         payload=existing_enrollment.submit_payload,
@@ -227,6 +235,7 @@ async def test_anonymous_pki_enrollment_submit_already_submitted(
         enrollment_id=PKIEnrollmentID.new(),
         force=False,
         der_x509_certificate=existing_enrollment.submitter_der_x509_certificate,
+        intermediate_der_x509_certificates=[],
         payload_signature=b"<philip submit payload signature>",
         payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         payload=submit_payload,
@@ -258,6 +267,7 @@ async def test_anonymous_pki_enrollment_submit_id_already_used(
         enrollment_id=existing_enrollment.enrollment_id,
         force=False,
         der_x509_certificate=b"<philip der x509 certificate>",
+        intermediate_der_x509_certificates=[],
         payload_signature=b"<philip submit payload signature>",
         payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         payload=submit_payload,
@@ -272,6 +282,7 @@ async def test_anonymous_pki_enrollment_submit_email_already_used(
         enrollment_id=PKIEnrollmentID.new(),
         force=False,
         der_x509_certificate=b"<philip der x509 certificate>",
+        intermediate_der_x509_certificates=[],
         payload_signature=b"<philip submit payload signature>",
         payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         payload=PkiEnrollmentSubmitPayload(
@@ -368,6 +379,7 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
         enrollment_id=PKIEnrollmentID.new(),
         force=False,
         der_x509_certificate=existing_enrollment.submitter_der_x509_certificate,
+        intermediate_der_x509_certificates=[],
         payload_signature=b"<philip submit payload signature>",
         payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         payload=submit_payload,
@@ -382,6 +394,7 @@ async def test_anonymous_pki_enrollment_submit_invalid_payload(
         enrollment_id=PKIEnrollmentID.new(),
         force=False,
         der_x509_certificate=b"<philip der x509 certificate>",
+        intermediate_der_x509_certificates=[],
         payload_signature=b"<philip submit payload signature>",
         payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         payload=b"<dummy data>",
@@ -399,6 +412,7 @@ async def test_anonymous_pki_enrollment_submit_http_common_errors(
             enrollment_id=PKIEnrollmentID.new(),
             force=False,
             der_x509_certificate=b"<philip der x509 certificate>",
+            intermediate_der_x509_certificates=[],
             payload_signature=b"<philip submit payload signature>",
             payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
             payload=submit_payload,

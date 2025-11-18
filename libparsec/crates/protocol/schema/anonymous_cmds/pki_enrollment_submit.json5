@@ -23,6 +23,11 @@
                     "type": "Bytes"
                 },
                 {
+                    // The intermediate certificates need to verify the trustchain
+                    "name": "intermediate_der_x509_certificates",
+                    "type": "List<Bytes>"
+                },
+                {
                     // The signature of the payload
                     "name": "payload_signature",
                     "type": "Bytes"
