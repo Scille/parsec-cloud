@@ -39,6 +39,12 @@ body:
     validations:
       required: true
   - type: textarea
+    id: behavior
+    attributes:
+      label: How should the application behave
+      description: >
+        Instead of the bug, what would you have expected to happen
+  - type: textarea
     id: steps
     attributes:
       label: Reproduction steps
