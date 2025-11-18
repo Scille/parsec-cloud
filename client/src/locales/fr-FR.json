@@ -2504,10 +2504,12 @@
                 "impossibleToOpen": "Impossible d'éditer ce fichier",
                 "genericError": "Impossible d'ouvrir ce fichier",
                 "unsupportedFileType": "Type de fichier non pris en charge par Parsec",
-                "editionNotAvailable": "Parsec Edition indisponible"
+                "editionNotAvailable": "Parsec Edition indisponible",
+                "corruptedFile": "Fichier corrompu ou trop volumineux"
             },
             "informationEditDownload": "Si vous souhaitez modifier ce fichier, vous pouvez le télécharger et l'ouvrir localement sur votre appareil.",
             "informationPreviewDownload": "Si vous souhaitez prévisualiser ce fichier, vous pouvez le faire dans Parsec ou le télécharger pour l'ouvrir localement sur votre appareil.",
+            "corruptedFileMessage": "Ce fichier semble être corrompu ou est trop volumineux pour être chargé. Veuillez essayer de le télécharger ou d'ouvrir un autre fichier.",
             "unknownFileExtension": "L'extension de ce fichier n'a pas pu être reconnue. Veuillez vérifier qu'elle est correctement écrite (.txt, .pdf, .doc, etc.).",
             "noContentFileType": "Impossible d'ouvrir ce fichier, son type n'ayant pas pu être reconnu dans l'éditeur de Parsec.",
             "noFolderPreview": "Impossible d'afficher l'aperçu d'un dossier.",
