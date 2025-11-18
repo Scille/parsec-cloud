@@ -309,13 +309,6 @@ export interface PkiEnrollmentAnswerPayload {
 }
 
 
-export interface PkiEnrollmentListItem {
-    enrollmentId: string
-    submittedOn: number
-    payload: PkiEnrollmentSubmitPayload
-}
-
-
 export interface PkiEnrollmentSubmitPayload {
     verifyKey: Uint8Array
     publicKey: Uint8Array
@@ -2498,6 +2491,50 @@ export type ImportRecoveryDeviceError =
   | ImportRecoveryDeviceErrorTimestampOutOfBallpark
 
 
+// InvalidityReason
+export interface InvalidityReasonCannotGetCertificateInfo {
+    tag: "InvalidityReasonCannotGetCertificateInfo"
+}
+export interface InvalidityReasonCannotOpenStore {
+    tag: "InvalidityReasonCannotOpenStore"
+}
+export interface InvalidityReasonDataError {
+    tag: "InvalidityReasonDataError"
+}
+export interface InvalidityReasonDateTimeOutOfRange {
+    tag: "InvalidityReasonDateTimeOutOfRange"
+}
+export interface InvalidityReasonInvalidCertificateDer {
+    tag: "InvalidityReasonInvalidCertificateDer"
+}
+export interface InvalidityReasonInvalidRootCertificate {
+    tag: "InvalidityReasonInvalidRootCertificate"
+}
+export interface InvalidityReasonInvalidSignature {
+    tag: "InvalidityReasonInvalidSignature"
+}
+export interface InvalidityReasonNotFound {
+    tag: "InvalidityReasonNotFound"
+}
+export interface InvalidityReasonUnexpectedError {
+    tag: "InvalidityReasonUnexpectedError"
+}
+export interface InvalidityReasonUntrusted {
+    tag: "InvalidityReasonUntrusted"
+}
+export type InvalidityReason =
+  | InvalidityReasonCannotGetCertificateInfo
+  | InvalidityReasonCannotOpenStore
+  | InvalidityReasonDataError
+  | InvalidityReasonDateTimeOutOfRange
+  | InvalidityReasonInvalidCertificateDer
+  | InvalidityReasonInvalidRootCertificate
+  | InvalidityReasonInvalidSignature
+  | InvalidityReasonNotFound
+  | InvalidityReasonUnexpectedError
+  | InvalidityReasonUntrusted
+
+
 // InviteInfoInvitationCreatedBy
 export interface InviteInfoInvitationCreatedByExternalService {
     tag: "InviteInfoInvitationCreatedByExternalService"
@@ -2913,6 +2950,25 @@ export type PkiEnrollmentListError =
   | PkiEnrollmentListErrorAuthorNotAllowed
   | PkiEnrollmentListErrorInternal
   | PkiEnrollmentListErrorOffline
+
+
+// PkiEnrollmentListItem
+export interface PkiEnrollmentListItemInvalid {
+    tag: "PkiEnrollmentListItemInvalid"
+    enrollment_id: string
+    submitted_on: number
+    reason: InvalidityReason
+    details: string
+}
+export interface PkiEnrollmentListItemValid {
+    tag: "PkiEnrollmentListItemValid"
+    enrollment_id: string
+    submitted_on: number
+    payload: PkiEnrollmentSubmitPayload
+}
+export type PkiEnrollmentListItem =
+  | PkiEnrollmentListItemInvalid
+  | PkiEnrollmentListItemValid
 
 
 // PkiEnrollmentRejectError

@@ -2844,80 +2844,6 @@ fn struct_pki_enrollment_answer_payload_rs_to_js(
     Ok(js_obj)
 }
 
-// PkiEnrollmentListItem
-
-#[allow(dead_code)]
-fn struct_pki_enrollment_list_item_js_to_rs(
-    obj: JsValue,
-) -> Result<libparsec::PkiEnrollmentListItem, JsValue> {
-    let enrollment_id = {
-        let js_val = Reflect::get(&obj, &"enrollmentId".into())?;
-        js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))
-            .and_then(|x| {
-                let custom_from_rs_string = |s: String| -> Result<libparsec::PKIEnrollmentID, _> {
-                    libparsec::PKIEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
-                };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })?
-    };
-    let submitted_on = {
-        let js_val = Reflect::get(&obj, &"submittedOn".into())?;
-        {
-            let v = js_val.dyn_into::<Number>()?.value_of();
-            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
-                    .map_err(|_| "Out-of-bound datetime")
-            };
-            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
-            v
-        }
-    };
-    let payload = {
-        let js_val = Reflect::get(&obj, &"payload".into())?;
-        struct_pki_enrollment_submit_payload_js_to_rs(js_val)?
-    };
-    Ok(libparsec::PkiEnrollmentListItem {
-        enrollment_id,
-        submitted_on,
-        payload,
-    })
-}
-
-#[allow(dead_code)]
-fn struct_pki_enrollment_list_item_rs_to_js(
-    rs_obj: libparsec::PkiEnrollmentListItem,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_enrollment_id = JsValue::from_str({
-        let custom_to_rs_string =
-            |x: libparsec::PKIEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
-        match custom_to_rs_string(rs_obj.enrollment_id) {
-            Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
-        }
-        .as_ref()
-    });
-    Reflect::set(&js_obj, &"enrollmentId".into(), &js_enrollment_id)?;
-    let js_submitted_on = {
-        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
-        };
-        let v = match custom_to_rs_f64(rs_obj.submitted_on) {
-            Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-        };
-        JsValue::from(v)
-    };
-    Reflect::set(&js_obj, &"submittedOn".into(), &js_submitted_on)?;
-    let js_payload = struct_pki_enrollment_submit_payload_rs_to_js(rs_obj.payload)?;
-    Reflect::set(&js_obj, &"payload".into(), &js_payload)?;
-    Ok(js_obj)
-}
-
 // PkiEnrollmentSubmitPayload
 
 #[allow(dead_code)]
@@ -10791,6 +10717,109 @@ fn variant_import_recovery_device_error_rs_to_js(
     Ok(js_obj)
 }
 
+// InvalidityReason
+
+#[allow(dead_code)]
+fn variant_invalidity_reason_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::InvalidityReason, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "InvalidityReasonCannotGetCertificateInfo" => {
+            Ok(libparsec::InvalidityReason::CannotGetCertificateInfo {})
+        }
+        "InvalidityReasonCannotOpenStore" => Ok(libparsec::InvalidityReason::CannotOpenStore {}),
+        "InvalidityReasonDataError" => Ok(libparsec::InvalidityReason::DataError {}),
+        "InvalidityReasonDateTimeOutOfRange" => {
+            Ok(libparsec::InvalidityReason::DateTimeOutOfRange {})
+        }
+        "InvalidityReasonInvalidCertificateDer" => {
+            Ok(libparsec::InvalidityReason::InvalidCertificateDer {})
+        }
+        "InvalidityReasonInvalidRootCertificate" => {
+            Ok(libparsec::InvalidityReason::InvalidRootCertificate {})
+        }
+        "InvalidityReasonInvalidSignature" => Ok(libparsec::InvalidityReason::InvalidSignature {}),
+        "InvalidityReasonNotFound" => Ok(libparsec::InvalidityReason::NotFound {}),
+        "InvalidityReasonUnexpectedError" => Ok(libparsec::InvalidityReason::UnexpectedError {}),
+        "InvalidityReasonUntrusted" => Ok(libparsec::InvalidityReason::Untrusted {}),
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a InvalidityReason",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_invalidity_reason_rs_to_js(
+    rs_obj: libparsec::InvalidityReason,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::InvalidityReason::CannotGetCertificateInfo { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"InvalidityReasonCannotGetCertificateInfo".into(),
+            )?;
+        }
+        libparsec::InvalidityReason::CannotOpenStore { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"InvalidityReasonCannotOpenStore".into(),
+            )?;
+        }
+        libparsec::InvalidityReason::DataError { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"InvalidityReasonDataError".into())?;
+        }
+        libparsec::InvalidityReason::DateTimeOutOfRange { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"InvalidityReasonDateTimeOutOfRange".into(),
+            )?;
+        }
+        libparsec::InvalidityReason::InvalidCertificateDer { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"InvalidityReasonInvalidCertificateDer".into(),
+            )?;
+        }
+        libparsec::InvalidityReason::InvalidRootCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"InvalidityReasonInvalidRootCertificate".into(),
+            )?;
+        }
+        libparsec::InvalidityReason::InvalidSignature { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"InvalidityReasonInvalidSignature".into(),
+            )?;
+        }
+        libparsec::InvalidityReason::NotFound { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"InvalidityReasonNotFound".into())?;
+        }
+        libparsec::InvalidityReason::UnexpectedError { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"InvalidityReasonUnexpectedError".into(),
+            )?;
+        }
+        libparsec::InvalidityReason::Untrusted { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"InvalidityReasonUntrusted".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // InviteInfoInvitationCreatedBy
 
 #[allow(dead_code)]
@@ -13882,6 +13911,189 @@ fn variant_pki_enrollment_list_error_rs_to_js(
                 &"tag".into(),
                 &"PkiEnrollmentListErrorOffline".into(),
             )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// PkiEnrollmentListItem
+
+#[allow(dead_code)]
+fn variant_pki_enrollment_list_item_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::PkiEnrollmentListItem, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "PkiEnrollmentListItemInvalid" => {
+            let enrollment_id = {
+                let js_val = Reflect::get(&obj, &"enrollmentId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string =
+                            |s: String| -> Result<libparsec::PKIEnrollmentID, _> {
+                                libparsec::PKIEnrollmentID::from_hex(s.as_str())
+                                    .map_err(|e| e.to_string())
+                            };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            };
+            let submitted_on = {
+                let js_val = Reflect::get(&obj, &"submittedOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            let reason = {
+                let js_val = Reflect::get(&obj, &"reason".into())?;
+                variant_invalidity_reason_js_to_rs(js_val)?
+            };
+            let details = {
+                let js_val = Reflect::get(&obj, &"details".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            Ok(libparsec::PkiEnrollmentListItem::Invalid {
+                enrollment_id,
+                submitted_on,
+                reason,
+                details,
+            })
+        }
+        "PkiEnrollmentListItemValid" => {
+            let enrollment_id = {
+                let js_val = Reflect::get(&obj, &"enrollmentId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string =
+                            |s: String| -> Result<libparsec::PKIEnrollmentID, _> {
+                                libparsec::PKIEnrollmentID::from_hex(s.as_str())
+                                    .map_err(|e| e.to_string())
+                            };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            };
+            let submitted_on = {
+                let js_val = Reflect::get(&obj, &"submittedOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            let payload = {
+                let js_val = Reflect::get(&obj, &"payload".into())?;
+                struct_pki_enrollment_submit_payload_js_to_rs(js_val)?
+            };
+            Ok(libparsec::PkiEnrollmentListItem::Valid {
+                enrollment_id,
+                submitted_on,
+                payload,
+            })
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a PkiEnrollmentListItem",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_pki_enrollment_list_item_rs_to_js(
+    rs_obj: libparsec::PkiEnrollmentListItem,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::PkiEnrollmentListItem::Invalid {
+            enrollment_id,
+            submitted_on,
+            reason,
+            details,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiEnrollmentListItemInvalid".into(),
+            )?;
+            let js_enrollment_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::PKIEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(enrollment_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"enrollmentId".into(), &js_enrollment_id)?;
+            let js_submitted_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(submitted_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"submittedOn".into(), &js_submitted_on)?;
+            let js_reason = variant_invalidity_reason_rs_to_js(reason)?;
+            Reflect::set(&js_obj, &"reason".into(), &js_reason)?;
+            let js_details = details.into();
+            Reflect::set(&js_obj, &"details".into(), &js_details)?;
+        }
+        libparsec::PkiEnrollmentListItem::Valid {
+            enrollment_id,
+            submitted_on,
+            payload,
+            ..
+        } => {
+            Reflect::set(&js_obj, &"tag".into(), &"PkiEnrollmentListItemValid".into())?;
+            let js_enrollment_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::PKIEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(enrollment_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"enrollmentId".into(), &js_enrollment_id)?;
+            let js_submitted_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(submitted_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"submittedOn".into(), &js_submitted_on)?;
+            let js_payload = struct_pki_enrollment_submit_payload_rs_to_js(payload)?;
+            Reflect::set(&js_obj, &"payload".into(), &js_payload)?;
         }
     }
     Ok(js_obj)
@@ -20679,7 +20891,7 @@ pub fn clientPkiListEnrollments(client_handle: u32) -> Promise {
                     // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                     let js_array = Array::new_with_length(value.len() as u32);
                     for (i, elem) in value.into_iter().enumerate() {
-                        let js_elem = struct_pki_enrollment_list_item_rs_to_js(elem)?;
+                        let js_elem = variant_pki_enrollment_list_item_rs_to_js(elem)?;
                         js_array.set(i as u32, js_elem);
                     }
                     js_array.into()
