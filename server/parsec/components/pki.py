@@ -312,6 +312,13 @@ class BasePkiEnrollmentComponent:
         req: anonymous_cmds.latest.pki_enrollment_submit.Req,
     ) -> anonymous_cmds.latest.pki_enrollment_submit.Rep:
         now = DateTime.now()
+        # TODO: Current we do not support provided intermediate certificate,
+        # Anyway the client should also not send them for now.
+        # https://github.com/Scille/parsec-cloud/issues/11557
+        # https://github.com/Scille/parsec-cloud/issues/11563
+        if req.intermediate_der_x509_certificates:
+            return anonymous_cmds.latest.pki_enrollment_submit.RepInvalidPayload()
+
         outcome = await self.submit(
             now=now,
             organization_id=client_ctx.organization_id,

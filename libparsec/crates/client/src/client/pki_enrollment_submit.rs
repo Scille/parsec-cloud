@@ -64,6 +64,8 @@ pub async fn pki_enrollment_submit(
     let submitted_on = match cmds
         .send(Req {
             der_x509_certificate: der_x509_certificate.der_content,
+            // TODO: https://github.com/Scille/parsec-cloud/issues/11670
+            intermediate_der_x509_certificates: vec![],
             enrollment_id,
             force,
             payload: raw_payload.into(),

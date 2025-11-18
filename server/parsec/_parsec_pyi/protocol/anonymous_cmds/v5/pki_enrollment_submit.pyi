@@ -12,6 +12,7 @@ class Req:
         enrollment_id: PKIEnrollmentID,
         force: bool,
         der_x509_certificate: bytes,
+        intermediate_der_x509_certificates: list[bytes],
         payload_signature: bytes,
         payload_signature_algorithm: PkiSignatureAlgorithm,
         payload: bytes,
@@ -23,6 +24,8 @@ class Req:
     def enrollment_id(self) -> PKIEnrollmentID: ...
     @property
     def force(self) -> bool: ...
+    @property
+    def intermediate_der_x509_certificates(self) -> list[bytes]: ...
     @property
     def payload(self) -> bytes: ...
     @property
