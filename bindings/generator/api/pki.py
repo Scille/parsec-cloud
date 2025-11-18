@@ -21,6 +21,7 @@ from .common import (
     X509CertificateReference,
     Path,
     Ref,
+    Variant,
 )
 from .config import ClientConfig
 from .device import AvailableDevice, DeviceSaveStrategy
@@ -64,10 +65,49 @@ class PkiEnrollmentSubmitPayload(Structure):
     human_handle: HumanHandle
 
 
-class PkiEnrollmentListItem(Structure):
-    enrollment_id: PKIEnrollmentID
-    submitted_on: DateTime
-    payload: PkiEnrollmentSubmitPayload
+class InvalidityReason(Variant):
+    class InvalidCertificateDer:
+        pass
+
+    class InvalidRootCertificate:
+        pass
+
+    class CannotOpenStore:
+        pass
+
+    class NotFound:
+        pass
+
+    class CannotGetCertificateInfo:
+        pass
+
+    class DateTimeOutOfRange:
+        pass
+
+    class Untrusted:
+        pass
+
+    class InvalidSignature:
+        pass
+
+    class UnexpectedError:
+        pass
+
+    class DataError:
+        pass
+
+
+class PkiEnrollmentListItem(Variant):
+    class Valid:
+        enrollment_id: PKIEnrollmentID
+        submitted_on: DateTime
+        payload: PkiEnrollmentSubmitPayload
+
+    class Invalid:
+        enrollment_id: PKIEnrollmentID
+        submitted_on: DateTime
+        reason: InvalidityReason
+        details: str
 
 
 class PkiEnrollmentListError(ErrorVariant):

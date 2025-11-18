@@ -329,12 +329,6 @@ export interface PkiEnrollmentAnswerPayload {
     rootVerifyKey: VerifyKey
 }
 
-export interface PkiEnrollmentListItem {
-    enrollmentId: PKIEnrollmentID
-    submittedOn: DateTime
-    payload: PkiEnrollmentSubmitPayload
-}
-
 export interface PkiEnrollmentSubmitPayload {
     verifyKey: VerifyKey
     publicKey: PublicKey
@@ -2946,6 +2940,62 @@ export type ImportRecoveryDeviceError =
   | ImportRecoveryDeviceErrorStorageNotAvailable
   | ImportRecoveryDeviceErrorTimestampOutOfBallpark
 
+// InvalidityReason
+export enum InvalidityReasonTag {
+    CannotGetCertificateInfo = 'InvalidityReasonCannotGetCertificateInfo',
+    CannotOpenStore = 'InvalidityReasonCannotOpenStore',
+    DataError = 'InvalidityReasonDataError',
+    DateTimeOutOfRange = 'InvalidityReasonDateTimeOutOfRange',
+    InvalidCertificateDer = 'InvalidityReasonInvalidCertificateDer',
+    InvalidRootCertificate = 'InvalidityReasonInvalidRootCertificate',
+    InvalidSignature = 'InvalidityReasonInvalidSignature',
+    NotFound = 'InvalidityReasonNotFound',
+    UnexpectedError = 'InvalidityReasonUnexpectedError',
+    Untrusted = 'InvalidityReasonUntrusted',
+}
+
+export interface InvalidityReasonCannotGetCertificateInfo {
+    tag: InvalidityReasonTag.CannotGetCertificateInfo
+}
+export interface InvalidityReasonCannotOpenStore {
+    tag: InvalidityReasonTag.CannotOpenStore
+}
+export interface InvalidityReasonDataError {
+    tag: InvalidityReasonTag.DataError
+}
+export interface InvalidityReasonDateTimeOutOfRange {
+    tag: InvalidityReasonTag.DateTimeOutOfRange
+}
+export interface InvalidityReasonInvalidCertificateDer {
+    tag: InvalidityReasonTag.InvalidCertificateDer
+}
+export interface InvalidityReasonInvalidRootCertificate {
+    tag: InvalidityReasonTag.InvalidRootCertificate
+}
+export interface InvalidityReasonInvalidSignature {
+    tag: InvalidityReasonTag.InvalidSignature
+}
+export interface InvalidityReasonNotFound {
+    tag: InvalidityReasonTag.NotFound
+}
+export interface InvalidityReasonUnexpectedError {
+    tag: InvalidityReasonTag.UnexpectedError
+}
+export interface InvalidityReasonUntrusted {
+    tag: InvalidityReasonTag.Untrusted
+}
+export type InvalidityReason =
+  | InvalidityReasonCannotGetCertificateInfo
+  | InvalidityReasonCannotOpenStore
+  | InvalidityReasonDataError
+  | InvalidityReasonDateTimeOutOfRange
+  | InvalidityReasonInvalidCertificateDer
+  | InvalidityReasonInvalidRootCertificate
+  | InvalidityReasonInvalidSignature
+  | InvalidityReasonNotFound
+  | InvalidityReasonUnexpectedError
+  | InvalidityReasonUntrusted
+
 // InviteInfoInvitationCreatedBy
 export enum InviteInfoInvitationCreatedByTag {
     ExternalService = 'InviteInfoInvitationCreatedByExternalService',
@@ -3454,6 +3504,29 @@ export type PkiEnrollmentListError =
   | PkiEnrollmentListErrorAuthorNotAllowed
   | PkiEnrollmentListErrorInternal
   | PkiEnrollmentListErrorOffline
+
+// PkiEnrollmentListItem
+export enum PkiEnrollmentListItemTag {
+    Invalid = 'PkiEnrollmentListItemInvalid',
+    Valid = 'PkiEnrollmentListItemValid',
+}
+
+export interface PkiEnrollmentListItemInvalid {
+    tag: PkiEnrollmentListItemTag.Invalid
+    enrollmentId: PKIEnrollmentID
+    submittedOn: DateTime
+    reason: InvalidityReason
+    details: string
+}
+export interface PkiEnrollmentListItemValid {
+    tag: PkiEnrollmentListItemTag.Valid
+    enrollmentId: PKIEnrollmentID
+    submittedOn: DateTime
+    payload: PkiEnrollmentSubmitPayload
+}
+export type PkiEnrollmentListItem =
+  | PkiEnrollmentListItemInvalid
+  | PkiEnrollmentListItemValid
 
 // PkiEnrollmentRejectError
 export enum PkiEnrollmentRejectErrorTag {

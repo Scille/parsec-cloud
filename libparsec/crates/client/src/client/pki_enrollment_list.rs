@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use libparsec_platform_pki::LoadSubmitPayloadError;
 use libparsec_types::anyhow::Context;
 use libparsec_types::prelude::*;
 
@@ -22,10 +23,55 @@ pub enum PkiEnrollmentListError {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct PkiEnrollmentListItem {
-    pub enrollment_id: PKIEnrollmentID,
-    pub submitted_on: DateTime,
-    pub payload: PkiEnrollmentSubmitPayload,
+pub enum PkiEnrollmentListItem {
+    Valid {
+        enrollment_id: PKIEnrollmentID,
+        submitted_on: DateTime,
+        payload: PkiEnrollmentSubmitPayload,
+    },
+    Invalid {
+        enrollment_id: PKIEnrollmentID,
+        submitted_on: DateTime,
+        reason: InvalidityReason,
+        details: String,
+    },
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum InvalidityReason {
+    InvalidCertificateDer,
+    InvalidRootCertificate,
+    CannotOpenStore,
+    NotFound,
+    CannotGetCertificateInfo,
+    DateTimeOutOfRange,
+    Untrusted,
+    InvalidSignature,
+    UnexpectedError,
+    DataError,
+}
+
+impl From<LoadSubmitPayloadError> for InvalidityReason {
+    fn from(value: LoadSubmitPayloadError) -> Self {
+        match value {
+            LoadSubmitPayloadError::InvalidCertificateDer(..) => {
+                InvalidityReason::InvalidCertificateDer
+            }
+            LoadSubmitPayloadError::InvalidRootCertificate(..) => {
+                InvalidityReason::InvalidRootCertificate
+            }
+            LoadSubmitPayloadError::CannotOpenStore(..) => InvalidityReason::CannotOpenStore,
+            LoadSubmitPayloadError::NotFound => InvalidityReason::NotFound,
+            LoadSubmitPayloadError::CannotGetCertificateInfo(..) => {
+                InvalidityReason::CannotGetCertificateInfo
+            }
+            LoadSubmitPayloadError::DateTimeOutOfRange(..) => InvalidityReason::DateTimeOutOfRange,
+            LoadSubmitPayloadError::Untrusted(..) => InvalidityReason::Untrusted,
+            LoadSubmitPayloadError::InvalidSignature => InvalidityReason::InvalidSignature,
+            LoadSubmitPayloadError::UnexpectedError(..) => InvalidityReason::UnexpectedError,
+            LoadSubmitPayloadError::DataError(..) => InvalidityReason::DataError,
+        }
+    }
 }
 
 pub async fn list_enrollments(
@@ -57,30 +103,38 @@ pub async fn list_enrollments(
 
         let items = pki_requests
             .into_iter()
-            .filter_map(|req| {
+            .map(|req| {
                 let message = libparsec_platform_pki::SignedMessage {
                     algo: req.payload_signature_algorithm,
                     signature: req.payload_signature,
                     message: req.payload,
                 };
-                let Ok(payload) = libparsec_platform_pki::load_submit_payload(
+                let payload = match libparsec_platform_pki::load_submit_payload(
                     &req.der_x509_certificate,
                     &message,
                     &root_certs,
                     now,
-                )
-                .inspect_err(|err| log::debug!(err:%; "Cannot validate submit payload")) else {
-                    return None;
+                ) {
+                    Ok(payload) => payload,
+                    Err(err) => {
+                        log::debug!(err:%; "Cannot validate submit payload");
+                        return PkiEnrollmentListItem::Invalid {
+                            enrollment_id: req.enrollment_id,
+                            submitted_on: req.submitted_on,
+                            details: err.to_string(),
+                            reason: err.into(),
+                        };
+                    }
                 };
 
                 // We successfully parsed the payload, we can drop the message.
                 drop(message);
 
-                Some(PkiEnrollmentListItem {
+                PkiEnrollmentListItem::Valid {
                     enrollment_id: req.enrollment_id,
                     submitted_on: req.submitted_on,
                     payload,
-                })
+                }
             })
             .collect::<Vec<_>>();
         Ok(items)
