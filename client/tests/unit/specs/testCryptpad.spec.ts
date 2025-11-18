@@ -125,7 +125,7 @@ describe('CryptPad Service', () => {
       mockScript.onerror?.('Script load failed');
 
       await expect(initPromise).rejects.toThrow();
-      expect(mockElectronAPI.log).toHaveBeenCalledWith('error', 'Failed to load CryptPad script: Script load failed');
+      expect(mockElectronAPI.log).toHaveBeenCalledWith('error', 'Failed to load CryptPad script: "Script load failed"');
       expect(mockElectronAPI.log).toHaveBeenCalledWith(
         'error',
         'This might be due to HTTPS requirements. Check if CryptPad server requires secure context.',

@@ -87,7 +87,7 @@ if (process.env.PARSEC_APP_SENTRY_AUTH_TOKEN) {
 }
 
 // 3) Add dev specific plugins
-if (process.env.NODE_ENV === 'development' || process.env.CI) {
+if (process.env.NODE_ENV === 'development' && !process.env.CI) {
   plugins.push(basicSsl());
 }
 
