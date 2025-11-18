@@ -226,14 +226,14 @@ import {
   Answer,
   MsInformativeText,
   MsModalResult,
+  MsReportText,
+  MsReportTheme,
   MsSpinner,
   MsWizardStepper,
   Translatable,
   askQuestion,
   asyncComputed,
   useWindowSize,
-  MsReportText,
-  MsReportTheme,
 } from 'megashark-lib';
 import { Ref, computed, onMounted, ref, useTemplateRef } from 'vue';
 

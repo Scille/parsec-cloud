@@ -198,13 +198,13 @@ import {
   MsInformativeText,
   MsModalResult,
   MsOptions,
+  MsReportText,
+  MsReportTheme,
   MsSpinner,
   MsWizardStepper,
   Translatable,
   askQuestion,
   useWindowSize,
-  MsReportText,
-  MsReportTheme,
 } from 'megashark-lib';
 import { Ref, computed, onMounted, ref, useTemplateRef } from 'vue';
 
