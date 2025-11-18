@@ -646,6 +646,8 @@
             "actionShare": "Partage et rôles",
             "actionDetails": "Détails",
             "actionCopyLink": "Copier le lien",
+            "actionUnMount": "Masquer cet espace",
+            "actionMount": "Afficher cet espace",
             "actionAddFavorite": "Épingler",
             "actionRemoveFavorite": "Désépingler"
         },
