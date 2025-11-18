@@ -55,6 +55,10 @@
                                 "type": "Bytes"
                             },
                             {
+                                "name": "accepter_intermediate_der_x509_certificates",
+                                "type": "List<Bytes>"
+                            },
+                            {
                                 "name": "accept_payload_signature",
                                 "type": "Bytes"
                             },

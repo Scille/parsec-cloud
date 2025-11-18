@@ -125,6 +125,8 @@ async def pki_info(
                 submitted_on=submitted_on,
                 accepted_on=accepted_on,
                 accepter_der_x509_certificate=accepter_der_x509_certificate,
+                # TODO: https://github.com/Scille/parsec-cloud/issues/11562
+                accepter_intermediate_der_x509_certificates=[],
                 accept_payload_signature=accept_payload_signature,
                 accept_payload_signature_algorithm=accept_payload_signature_algorithm,
                 accept_payload=accept_payload,

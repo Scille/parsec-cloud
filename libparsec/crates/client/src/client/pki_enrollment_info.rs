@@ -86,6 +86,8 @@ pub async fn info(
             accept_payload_signature,
             accepted_on,
             accepter_der_x509_certificate,
+            // TODO: https://github.com/Scille/parsec-cloud/issues/11565
+            accepter_intermediate_der_x509_certificates: _,
             submitted_on,
             accept_payload_signature_algorithm,
         } => {

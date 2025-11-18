@@ -198,6 +198,8 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                     accept_payload=enrollment.info_accepted.accept_payload,
                     accept_payload_signature=enrollment.info_accepted.accept_payload_signature,
                     accept_payload_signature_algorithm=enrollment.info_accepted.accept_payload_signature_algorithm,
+                    # TODO: https://github.com/Scille/parsec-cloud/issues/11560
+                    accepter_intermediate_der_x509_certificates=[],
                     accepted_on=enrollment.info_accepted.accepted_on,
                     accepter_der_x509_certificate=enrollment.info_accepted.accepter_der_x509_certificate,
                 )

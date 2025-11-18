@@ -111,6 +111,7 @@ class PkiEnrollmentInfoAccepted:
     submitted_on: DateTime
     accepted_on: DateTime
     accepter_der_x509_certificate: bytes
+    accepter_intermediate_der_x509_certificates: list[bytes]
     accept_payload_signature: bytes
     accept_payload_signature_algorithm: PkiSignatureAlgorithm
     accept_payload: bytes
@@ -283,6 +284,7 @@ class BasePkiEnrollmentComponent:
                     submitted_on=info.submitted_on,
                     accepted_on=info.accepted_on,
                     accepter_der_x509_certificate=info.accepter_der_x509_certificate,
+                    accepter_intermediate_der_x509_certificates=info.accepter_intermediate_der_x509_certificates,
                     accept_payload_signature=info.accept_payload_signature,
                     accept_payload_signature_algorithm=info.accept_payload_signature_algorithm,
                     accept_payload=info.accept_payload,

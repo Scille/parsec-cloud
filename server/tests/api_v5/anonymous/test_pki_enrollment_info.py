@@ -102,6 +102,7 @@ async def test_anonymous_pki_enrollment_info_ok(
                     submitted_on=submitted_on,
                     accepted_on=accepted_on,
                     accepter_der_x509_certificate=b"<alice der x509 certificate>",
+                    accepter_intermediate_der_x509_certificates=[],
                     accept_payload_signature=b"<alice accept payload signature>",
                     accept_payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
                     accept_payload=accept_payload,
