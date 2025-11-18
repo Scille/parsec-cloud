@@ -11485,6 +11485,34 @@ fn variant_list_invitations_error_rs_to_js(
     Ok(js_obj)
 }
 
+// ListPkiLocalPendingError
+
+#[allow(dead_code)]
+fn variant_list_pki_local_pending_error_rs_to_js(
+    rs_obj: libparsec::ListPkiLocalPendingError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ListPkiLocalPendingError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ListPkiLocalPendingErrorInternal".into(),
+            )?;
+        }
+        libparsec::ListPkiLocalPendingError::StorageNotAvailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ListPkiLocalPendingErrorStorageNotAvailable".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // MountpointMountStrategy
 
 #[allow(dead_code)]
@@ -21542,6 +21570,45 @@ pub fn listAvailableDevices(path: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_list_available_device_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// list_pki_local_pending_enrollments
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn listPkiLocalPendingEnrollments(config_dir: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config_dir = {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::list_pki_local_pending_enrollments(&config_dir).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(value.len() as u32);
+                    for (i, elem) in value.into_iter().enumerate() {
+                        let js_elem = struct_pki_local_pending_enrollment_rs_to_js(elem)?;
+                        js_array.set(i as u32, js_elem);
+                    }
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_list_pki_local_pending_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

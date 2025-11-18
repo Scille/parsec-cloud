@@ -2590,6 +2590,20 @@ export type ListInvitationsError =
   | ListInvitationsErrorOffline
 
 
+// ListPkiLocalPendingError
+export interface ListPkiLocalPendingErrorInternal {
+    tag: "ListPkiLocalPendingErrorInternal"
+    error: string
+}
+export interface ListPkiLocalPendingErrorStorageNotAvailable {
+    tag: "ListPkiLocalPendingErrorStorageNotAvailable"
+    error: string
+}
+export type ListPkiLocalPendingError =
+  | ListPkiLocalPendingErrorInternal
+  | ListPkiLocalPendingErrorStorageNotAvailable
+
+
 // MountpointMountStrategy
 export interface MountpointMountStrategyDirectory {
     tag: "MountpointMountStrategyDirectory"
@@ -4812,6 +4826,9 @@ export function libparsecInitSetOnEventCallback(
 export function listAvailableDevices(
     path: string
 ): Promise<Result<Array<AvailableDevice>, ListAvailableDeviceError>>
+export function listPkiLocalPendingEnrollments(
+    config_dir: string
+): Promise<Result<Array<PKILocalPendingEnrollment>, ListPkiLocalPendingError>>
 export function listStartedAccounts(
 ): Promise<Array<number>>
 export function listStartedClients(

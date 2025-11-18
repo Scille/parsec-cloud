@@ -3059,6 +3059,24 @@ export type ListInvitationsError =
   | ListInvitationsErrorInternal
   | ListInvitationsErrorOffline
 
+// ListPkiLocalPendingError
+export enum ListPkiLocalPendingErrorTag {
+    Internal = 'ListPkiLocalPendingErrorInternal',
+    StorageNotAvailable = 'ListPkiLocalPendingErrorStorageNotAvailable',
+}
+
+export interface ListPkiLocalPendingErrorInternal {
+    tag: ListPkiLocalPendingErrorTag.Internal
+    error: string
+}
+export interface ListPkiLocalPendingErrorStorageNotAvailable {
+    tag: ListPkiLocalPendingErrorTag.StorageNotAvailable
+    error: string
+}
+export type ListPkiLocalPendingError =
+  | ListPkiLocalPendingErrorInternal
+  | ListPkiLocalPendingErrorStorageNotAvailable
+
 // MountpointMountStrategy
 export enum MountpointMountStrategyTag {
     Directory = 'MountpointMountStrategyDirectory',
@@ -5688,6 +5706,9 @@ export interface LibParsecPlugin {
     listAvailableDevices(
         path: Path
     ): Promise<Result<Array<AvailableDevice>, ListAvailableDeviceError>>
+    listPkiLocalPendingEnrollments(
+        config_dir: Path
+    ): Promise<Result<Array<PKILocalPendingEnrollment>, ListPkiLocalPendingError>>
     listStartedAccounts(
     ): Promise<Array<Handle>>
     listStartedClients(
