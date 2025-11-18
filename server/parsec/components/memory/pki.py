@@ -255,6 +255,8 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                     payload_signature_algorithm=enrollment.submit_payload_signature_algorithm,
                     submitted_on=enrollment.submitted_on,
                     der_x509_certificate=enrollment.submitter_der_x509_certificate,
+                    # TODO: https://github.com/Scille/parsec-cloud/issues/11558
+                    intermediate_der_x509_certificates=[],
                 )
                 for enrollment in org.pki_enrollments.values()
                 if enrollment.enrollment_state == MemoryPkiEnrollmentState.SUBMITTED

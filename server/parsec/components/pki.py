@@ -135,6 +135,7 @@ class PkiEnrollmentListItem:
     enrollment_id: PKIEnrollmentID
     submitted_on: DateTime
     der_x509_certificate: bytes
+    intermediate_der_x509_certificates: list[bytes]
     payload_signature: bytes
     payload_signature_algorithm: PkiSignatureAlgorithm
     payload: bytes
@@ -370,6 +371,7 @@ class BasePkiEnrollmentComponent:
                             e.enrollment_id,
                             e.submitted_on,
                             e.der_x509_certificate,
+                            e.intermediate_der_x509_certificates,
                             e.payload_signature,
                             e.payload_signature_algorithm,
                             e.payload,

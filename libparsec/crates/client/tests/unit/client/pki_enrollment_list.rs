@@ -29,6 +29,7 @@ async fn ok(env: &TestbedEnv) {
     let valid_pki_enrollment_item =
         authenticated_cmds::latest::pki_enrollment_list::PkiEnrollmentListItem {
             der_x509_certificate: hex!("3c78353039206365727469663e").as_ref().into(),
+            intermediate_der_x509_certificates: [b"deadbeef".as_ref().into()].to_vec(),
             enrollment_id: PKIEnrollmentID::from_hex("e1fe88bd0f054261887a6c8039710b40").unwrap(),
             payload: raw_payload.clone().into(),
             payload_signature: hex!("3c7369676e61747572653e").as_ref().into(),
@@ -38,6 +39,7 @@ async fn ok(env: &TestbedEnv) {
     let invalid_pki_enrollment_item =
         authenticated_cmds::latest::pki_enrollment_list::PkiEnrollmentListItem {
             der_x509_certificate: hex!("3c78353039206365727469663e").as_ref().into(),
+            intermediate_der_x509_certificates: [b"deadbeef".as_ref().into()].to_vec(),
             enrollment_id: PKIEnrollmentID::from_hex("e1fe88bd0f054261887a6c8039710b40").unwrap(),
             payload: raw_payload.into(),
             payload_signature: hex!("1234").as_ref().into(),
