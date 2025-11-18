@@ -10,8 +10,10 @@ import {
   WorkspaceRole,
   getClientProfile,
   getSystemPath,
+  mountWorkspace,
   getPathLink as parsecGetPathLink,
   renameWorkspace as parsecRenameWorkspace,
+  unmountWorkspace,
 } from '@/parsec';
 import { Routes, navigateTo } from '@/router';
 import { EventDistributor } from '@/services/eventDistributor';
@@ -138,6 +140,7 @@ export async function openWorkspaceContextMenu(
         clientProfile: clientProfile,
         clientRole: workspace.currentSelfRole,
         isFavorite: workspaceAttributes.isFavorite(workspace.id),
+        isHidden: workspaceAttributes.isHidden(workspace.id),
       },
     });
 
@@ -156,6 +159,7 @@ export async function openWorkspaceContextMenu(
         clientProfile: clientProfile,
         clientRole: workspace.currentSelfRole,
         isFavorite: workspaceAttributes.isFavorite(workspace.id),
+        isHidden: workspaceAttributes.isHidden(workspace.id),
       },
     });
 
@@ -184,10 +188,26 @@ export async function openWorkspaceContextMenu(
       case WorkspaceAction.ShowHistory:
         await navigateTo(Routes.History, { query: { documentPath: '/', workspaceHandle: workspace.handle } });
         break;
+      case WorkspaceAction.Mount:
+        workspaceAttributes.toggleHidden(workspace.id);
+        await mountWorkspace(workspace.handle);
+        break;
+      case WorkspaceAction.UnMount:
+        workspaceAttributes.toggleHidden(workspace.id);
+        await unmountWorkspace(workspace);
+        break;
       default:
         console.warn('No WorkspaceAction match found');
     }
   }
+}
+
+export async function showWorkspace(workspace: WorkspaceInfo, hidden: WorkspaceID[]): Promise<void> {
+  const index = hidden.indexOf(workspace.id);
+  if (index !== -1) {
+    hidden.splice(index, 1);
+  }
+  await mountWorkspace(workspace.handle);
 }
 
 async function openWorkspace(workspace: WorkspaceInfo, informationManager: InformationManager): Promise<void> {
