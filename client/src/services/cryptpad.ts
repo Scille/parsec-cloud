@@ -46,6 +46,8 @@ interface CryptpadConfig {
     onSave: (file: Blob, callback: () => void) => void;
     onNewKey?: (data: { new: string; old: string }, callback: (key: string) => void) => void;
     onHasUnsavedChanges?: (unsaved: boolean) => void;
+    onError?: (error: { message: string; errorType: string; originalError: string }) => void;
+    onReady?: () => void;
   };
 }
 
@@ -55,6 +57,7 @@ export enum CryptpadErrorCode {
   InitFailed = 'init-failed',
   ScriptElementCreationFailed = 'script-element-creation-failed',
   DocumentTypeNotEnabled = 'document-type-not-enabled',
+  LoadingTimeout = 'loading-timeout',
 }
 
 export class CryptpadError extends Error {
@@ -80,7 +83,11 @@ export class CryptpadInitError extends CryptpadError {
 export class CryptpadOpenError extends CryptpadError {
   public documentType: string;
 
-  constructor(code: CryptpadErrorCode.NotInitialized | CryptpadErrorCode.DocumentTypeNotEnabled, documentType: string, message?: string) {
+  constructor(
+    code: CryptpadErrorCode.NotInitialized | CryptpadErrorCode.DocumentTypeNotEnabled | CryptpadErrorCode.LoadingTimeout,
+    documentType: string,
+    message?: string,
+  ) {
     super(code, message ?? `Failed to open document type '${documentType}' with Cryptpad: ${code}`);
     this.documentType = documentType;
   }
@@ -132,11 +139,13 @@ export class Cryptpad {
           }
         };
 
-        // Add error handling for HTTPS/security issues
+        // Add error handling for HTTPS/security, network issues
         (script as HTMLScriptElement).onerror = (error): void => {
           window.electronAPI.log('error', `Failed to load CryptPad script: ${error.toString()}`);
           window.electronAPI.log('error', 'This might be due to HTTPS requirements. Check if CryptPad server requires secure context.');
           reject(new CryptpadInitError(CryptpadErrorCode.InitFailed, error.toString()));
+          // We remove the faulty script to allow retrying
+          script?.remove();
         };
       });
     } else {
@@ -164,7 +173,44 @@ export class Cryptpad {
       throw new CryptpadOpenError(CryptpadErrorCode.DocumentTypeNotEnabled, config.documentType);
     }
 
-    (window as any).CryptPadAPI(this.containerElement.id, { ...config });
+    // Set up a loading timeout (30 seconds) to detect stuck/corrupted files
+    const LOADING_TIMEOUT_MS = 30000;
+    let loadingTimeoutId: any = undefined;
+
+    // Create a promise that will be resolved when CryptPad successfully loads
+    let resolveLoading!: () => void;
+    const loadingComplete = new Promise<void>((resolve) => {
+      resolveLoading = resolve;
+    });
+
+    const timeoutPromise = new Promise<void>((_, reject) => {
+      loadingTimeoutId = window.setTimeout(() => {
+        const message = 'CryptPad loading timeout - the file may be corrupted, too large, or the server is not responding.';
+        window.electronAPI.log('warn', message);
+        reject(new CryptpadOpenError(CryptpadErrorCode.LoadingTimeout, config.documentType, message));
+      }, LOADING_TIMEOUT_MS);
+    });
+    // Wrap the original onReady callback to signal successful loading
+    const originalOnReady = config.events.onReady;
+    config.events.onReady = () => {
+      resolveLoading();
+      if (originalOnReady) originalOnReady();
+    };
+
+    // Store config globally so CryptPad customization can access the onError callback
+    (window as any).cryptpadConfig = config;
+
+    try {
+      // Start CryptPad API (doesn't wait for loading to complete)
+      void (window as any).CryptPadAPI(this.containerElement.id, { ...config });
+
+      // Race between successful loading (onReady callback) and timeout
+      await Promise.race([loadingComplete, timeoutPromise]);
+    } finally {
+      window.clearTimeout(loadingTimeoutId);
+      // Clean up global config reference
+      delete (window as any).cryptpadConfig;
+    }
   }
 }
 

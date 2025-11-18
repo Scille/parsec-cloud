@@ -3,7 +3,7 @@
 <template>
   <ms-modal
     :title="title ?? 'openFallback.title'"
-    :subtitle="subtitle ?? 'openFallback.subtitleDownload'"
+    :subtitle="subtitle ?? 'openFallback.subtitle.download'"
     :close-button="{ visible: true }"
   >
     <div class="open-fallback-buttons">
