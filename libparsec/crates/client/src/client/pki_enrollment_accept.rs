@@ -109,6 +109,8 @@ async fn accept_internal(
         .send(Req {
             enrollment_id,
             accepter_der_x509_certificate,
+            // TODO: https://github.com/Scille/parsec-cloud/issues/11671
+            accepter_intermediate_der_x509_certificates: vec![],
             payload,
             payload_signature: payload_signature.signature,
             payload_signature_algorithm: payload_signature.algo,

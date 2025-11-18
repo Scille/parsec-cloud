@@ -356,6 +356,7 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
         payload_signature=b"<accept payload signature>",
         payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         accepter_der_x509_certificate=b"<accepter der x509 certificate>",
+        accepter_intermediate_der_x509_certificates=[],
         submitter_user_certificate=user_certificate,
         submitter_redacted_user_certificate=redacted_user_certificate,
         submitter_device_certificate=device_certificate,

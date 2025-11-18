@@ -31,6 +31,10 @@
                     "type": "Bytes"
                 },
                 {
+                    "name": "accepter_intermediate_der_x509_certificates",
+                    "type": "List<Bytes>"
+                },
+                {
                     // User certificate for the submitter (created by the accepter)
                     "name": "submitter_user_certificate",
                     "type": "Bytes"
