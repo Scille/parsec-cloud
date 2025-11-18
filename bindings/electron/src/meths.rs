@@ -10550,6 +10550,30 @@ fn variant_list_invitations_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// ListPkiLocalPendingError
+
+#[allow(dead_code)]
+fn variant_list_pki_local_pending_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ListPkiLocalPendingError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ListPkiLocalPendingError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "ListPkiLocalPendingErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ListPkiLocalPendingError::StorageNotAvailable { .. } => {
+            let js_tag = JsString::try_new(cx, "ListPkiLocalPendingErrorStorageNotAvailable")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // MountpointMountStrategy
 
 #[allow(dead_code)]
@@ -23122,6 +23146,65 @@ fn list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// list_pki_local_pending_enrollments
+fn list_pki_local_pending_enrollments(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let config_dir = {
+        let js_val = cx.argument::<JsString>(0)?;
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::list_pki_local_pending_enrollments(&config_dir).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            // JsArray::new allocates with `undefined` value, that's why we `set` value
+                            let js_array = JsArray::new(&mut cx, ok.len());
+                            for (i, elem) in ok.into_iter().enumerate() {
+                                let js_elem =
+                                    struct_pki_local_pending_enrollment_rs_to_js(&mut cx, elem)?;
+                                js_array.set(&mut cx, i as u32, js_elem)?;
+                            }
+                            js_array
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_list_pki_local_pending_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // list_started_accounts
 fn list_started_accounts(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -28060,6 +28143,10 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         libparsec_init_set_on_event_callback,
     )?;
     cx.export_function("listAvailableDevices", list_available_devices)?;
+    cx.export_function(
+        "listPkiLocalPendingEnrollments",
+        list_pki_local_pending_enrollments,
+    )?;
     cx.export_function("listStartedAccounts", list_started_accounts)?;
     cx.export_function("listStartedClients", list_started_clients)?;
     cx.export_function("mountpointToOsPath", mountpoint_to_os_path)?;

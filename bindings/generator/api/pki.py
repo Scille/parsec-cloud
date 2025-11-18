@@ -18,6 +18,8 @@ from .common import (
     UserID,
     UserProfile,
     X509CertificateReference,
+    Path,
+    Ref,
 )
 from .config import ClientConfig
 from .device import AvailableDevice, DeviceSaveStrategy
@@ -165,4 +167,18 @@ async def pki_enrollment_finalize(
     accepted: PkiEnrollmentAnswerPayload,
     local_pending: PKILocalPendingEnrollment,
 ) -> Result[AvailableDevice, PkiEnrollmentFinalizeError]:
+    raise NotImplementedError
+
+
+class ListPkiLocalPendingError(ErrorVariant):
+    class StorageNotAvailable:
+        pass
+
+    class Internal:
+        pass
+
+
+async def list_pki_local_pending_enrollments(
+    config_dir: Ref[Path],
+) -> Result[list[PKILocalPendingEnrollment], ListPkiLocalPendingError]:
     raise NotImplementedError
