@@ -74,3 +74,18 @@ class RepInvalidPayload(Rep):
     def __init__(
         self,
     ) -> None: ...
+
+class RepInvalidDerX509Certificate(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
+class RepInvalidPayloadSignature(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
+class RepInvalidX509Trustchain(Rep):
+    def __init__(
+        self,
+    ) -> None: ...

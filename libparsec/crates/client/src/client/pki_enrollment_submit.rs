@@ -82,6 +82,9 @@ pub async fn pki_enrollment_submit(
         Rep::EmailAlreadyUsed => Err(PkiEnrollmentSubmitError::EmailAlreadyUsed),
         Rep::IdAlreadyUsed => Err(PkiEnrollmentSubmitError::IdAlreadyUsed),
         Rep::InvalidPayload => Err(PkiEnrollmentSubmitError::InvalidPayload),
+        Rep::InvalidPayloadSignature
+        | Rep::InvalidDerX509Certificate
+        | Rep::InvalidX509Trustchain => todo!(),
         bad_rep @ Rep::UnknownStatus { .. } => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
         }
