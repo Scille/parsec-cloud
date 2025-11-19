@@ -2567,6 +2567,10 @@
     "fileEditors": {
         "globalTitle": "Impossible d'ouvrir le fichier",
         "errors": {
+            "titles": {
+                "networkOffline": "Connexion réseau perdue"
+            },
+            "networkOfflineMessage": "Votre connexion réseau a été perdue. Veuillez vérifier votre connexion internet et réessayer. Les modifications non enregistrées peuvent être perdues.",
             "contentInfoMissing": "Les informations sur le contenu du fichier sont vides ou manquantes.",
             "fileExtensionMissing": "Le type de fichier (extension) est manquant ou vide.",
             "fileNameMissing": "Le nom du fichier est vide ou manquant.",
