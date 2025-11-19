@@ -9,6 +9,22 @@ use libparsec_client_connection::ConnectionError;
 use libparsec_crypto::{Password, SecretKey};
 use libparsec_types::prelude::*;
 
+#[derive(Debug, Copy, Clone)]
+pub enum RemoteOperationServer {
+    ParsecAccount,
+    OpenBao,
+}
+
+impl std::fmt::Display for RemoteOperationServer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let name = match self {
+            RemoteOperationServer::ParsecAccount => "Parsec account",
+            RemoteOperationServer::OpenBao => "OpenBao",
+        };
+        write!(f, "{}", name)
+    }
+}
+
 // Note we cannot use `async fn` in the traits since it is not compatible
 // with dyn object (and we need to store the object implementing the trait
 // as `Arc<dyn AccountVaultOperations>`).
@@ -43,13 +59,13 @@ pub trait AccountVaultOperations: std::fmt::Debug + Send + Sync {
 
 #[derive(Debug, thiserror::Error)]
 pub enum AccountVaultOperationsFetchOpaqueKeyError {
-    #[error("Cannot decrypt the vault key access returned by the Parsec account server: {0}")]
+    #[error("Cannot decrypt the vault key access returned by the server: {0}")]
     BadVaultKeyAccess(DataError),
-    #[error("No opaque key with this ID among the vault items in the Parsec account server")]
+    #[error("No opaque key with this ID among the vault items in the server")]
     UnknownOpaqueKey,
-    #[error("The vault item returned by the Parsec account server and containing this opaque key is corrupted")]
+    #[error("The vault item returned by the server and containing this opaque key is corrupted")]
     CorruptedOpaqueKey,
-    #[error("Cannot communicate with the Parsec account server: {0}")]
+    #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
@@ -57,11 +73,11 @@ pub enum AccountVaultOperationsFetchOpaqueKeyError {
 
 #[derive(Debug, thiserror::Error)]
 pub enum AccountVaultOperationsUploadOpaqueKeyError {
-    #[error("Cannot decrypt the vault key access returned by the Parsec account server: {0}")]
+    #[error("Cannot decrypt the vault key access returned by the server: {0}")]
     BadVaultKeyAccess(DataError),
-    #[error("Cannot communicate with the Parsec account server: {0}")]
+    #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),
-    #[error("The Parsec account server returned an unexpected response: {0}")]
+    #[error("The server returned an unexpected response: {0}")]
     BadServerResponse(anyhow::Error),
 }
 
@@ -95,21 +111,21 @@ pub trait OpenBaoDeviceAccessOperations: std::fmt::Debug + Send + Sync {
 
 #[derive(Debug, thiserror::Error)]
 pub enum OpenBaoOperationsFetchOpaqueKeyError {
-    #[error("Invalid OpenBao server URL: {0}")]
+    #[error("Invalid server URL: {0}")]
     BadURL(anyhow::Error),
-    #[error("No response from the OpenBao server: {0}")]
+    #[error("No response from the server: {0}")]
     NoServerResponse(anyhow::Error),
-    #[error("The OpenBao server returned an unexpected response: {0}")]
+    #[error("The server returned an unexpected response: {0}")]
     BadServerResponse(anyhow::Error),
 }
 
 #[derive(Debug, thiserror::Error)]
 pub enum OpenBaoOperationsUploadOpaqueKeyError {
-    #[error("Invalid OpenBao server URL: {0}")]
+    #[error("Invalid server URL: {0}")]
     BadURL(anyhow::Error),
-    #[error("No response from the OpenBao server: {0}")]
+    #[error("No response from the server: {0}")]
     NoServerResponse(anyhow::Error),
-    #[error("The OpenBao server returned an unexpected response: {0}")]
+    #[error("The server returned an unexpected response: {0}")]
     BadServerResponse(anyhow::Error),
 }
 

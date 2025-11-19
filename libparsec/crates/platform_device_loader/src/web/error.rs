@@ -5,6 +5,8 @@ use std::path::PathBuf;
 use libparsec_types::prelude::*;
 use web_sys::wasm_bindgen::JsValue;
 
+use crate::RemoteOperationServer;
+
 error_set::error_set! {
     DomExceptionError := {
         #[display("DOM exception: {exception:?}")]
@@ -106,8 +108,16 @@ error_set::error_set! {
         ReadFile(ReadToEndError),
     }
     SaveDeviceError := SaveRawDataError || {
-        RemoteOpaqueKeyUploadFailed(anyhow::Error),
-        RemoteOpaqueKeyUploadOffline(anyhow::Error),
+        #[display("{server} server opaque key upload failed: {error}")]
+        RemoteOpaqueKeyUploadFailed {
+            server: RemoteOperationServer,
+            error: anyhow::Error,
+        },
+        #[display("No response from {server} server: {error}")]
+        RemoteOpaqueKeyUploadOffline {
+            server: RemoteOperationServer,
+            error: anyhow::Error,
+        },
         Internal(anyhow::Error),
     }
     SaveRawDataError := GetFileHandleError || WriteAllError
@@ -155,11 +165,11 @@ impl From<SaveDeviceError> for crate::SaveDeviceError {
             SaveDeviceError::Cast { .. } => Self::Internal(anyhow::anyhow!("{value}")),
             SaveDeviceError::Promise { .. } => Self::Internal(anyhow::anyhow!("{value}")),
             SaveDeviceError::NoSpaceLeft { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveDeviceError::RemoteOpaqueKeyUploadFailed(err) => {
-                Self::RemoteOpaqueKeyUploadFailed(err)
+            SaveDeviceError::RemoteOpaqueKeyUploadFailed { server, error } => {
+                Self::RemoteOpaqueKeyUploadFailed { server, error }
             }
-            SaveDeviceError::RemoteOpaqueKeyUploadOffline(err) => {
-                Self::RemoteOpaqueKeyUploadOffline(err)
+            SaveDeviceError::RemoteOpaqueKeyUploadOffline { server, error } => {
+                Self::RemoteOpaqueKeyUploadOffline { server, error }
             }
             SaveDeviceError::Internal(err) => Self::Internal(err),
         }
@@ -180,11 +190,11 @@ impl From<SaveDeviceError> for crate::UpdateDeviceError {
             SaveDeviceError::Cast { .. } => Self::Internal(anyhow::anyhow!("{value}")),
             SaveDeviceError::Promise { .. } => Self::Internal(anyhow::anyhow!("{value}")),
             SaveDeviceError::NoSpaceLeft { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveDeviceError::RemoteOpaqueKeyUploadFailed(err) => {
-                Self::RemoteOpaqueKeyOperationFailed(err)
+            SaveDeviceError::RemoteOpaqueKeyUploadFailed { server, error } => {
+                Self::RemoteOpaqueKeyOperationFailed { server, error }
             }
-            SaveDeviceError::RemoteOpaqueKeyUploadOffline(err) => {
-                Self::RemoteOpaqueKeyOperationOffline(err)
+            SaveDeviceError::RemoteOpaqueKeyUploadOffline { server, error } => {
+                Self::RemoteOpaqueKeyOperationOffline { server, error }
             }
             SaveDeviceError::Internal(err) => Self::Internal(err),
         }

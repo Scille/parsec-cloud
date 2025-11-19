@@ -53,16 +53,22 @@ enum LoadCiphertextKeyError {
     /// Note only a subset of load strategies requires server access to
     /// fetch an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
-    #[error("Remote opaque key fetch failed from server rejection: {0}")]
+    #[error("No response from {server} server: {error}")]
     // We don't use `ConnectionError` here since this type only corresponds to
     // an answer from the Parsec server and here any arbitrary server may have
     // been (unsuccessfully) requested (e.g. OpenBao server).
-    RemoteOpaqueKeyFetchOffline(anyhow::Error),
+    RemoteOpaqueKeyFetchOffline {
+        server: RemoteOperationServer,
+        error: anyhow::Error,
+    },
     /// Note only a subset of load strategies requires server access to
     /// fetch an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
-    #[error("Remote opaque key fetch failed: {0}")]
-    RemoteOpaqueKeyFetchFailed(anyhow::Error),
+    #[error("{server} server opaque key fetch failed: {error}")]
+    RemoteOpaqueKeyFetchFailed {
+        server: RemoteOperationServer,
+        error: anyhow::Error,
+    },
     #[error(transparent)]
     Internal(anyhow::Error),
 }
@@ -231,16 +237,22 @@ pub enum LoadDeviceError {
     /// Note only a subset of load strategies requires server access to
     /// fetch an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
-    #[error("Remote opaque key fetch failed from server rejection: {0}")]
+    #[error("No response from {server} server: {error}")]
     // We don't use `ConnectionError` here since this type only corresponds to
     // an answer from the Parsec server and here any arbitrary server may have
     // been (unsuccessfully) requested (e.g. OpenBao server).
-    RemoteOpaqueKeyFetchOffline(anyhow::Error),
+    RemoteOpaqueKeyFetchOffline {
+        server: RemoteOperationServer,
+        error: anyhow::Error,
+    },
     /// Note only a subset of load strategies requires server access to
     /// fetch an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
-    #[error("Remote opaque key fetch failed: {0}")]
-    RemoteOpaqueKeyFetchFailed(anyhow::Error),
+    #[error("{server} server opaque key fetch failed: {error}")]
+    RemoteOpaqueKeyFetchFailed {
+        server: RemoteOperationServer,
+        error: anyhow::Error,
+    },
     #[error(transparent)]
     Internal(anyhow::Error),
 }
@@ -269,11 +281,11 @@ pub async fn load_device(
             LoadCiphertextKeyError::InvalidData => LoadDeviceError::InvalidData,
             LoadCiphertextKeyError::DecryptionFailed => LoadDeviceError::DecryptionFailed,
             LoadCiphertextKeyError::Internal(err) => LoadDeviceError::Internal(err),
-            LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline(err) => {
-                LoadDeviceError::RemoteOpaqueKeyFetchOffline(err)
+            LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline { server, error } => {
+                LoadDeviceError::RemoteOpaqueKeyFetchOffline { server, error }
             }
-            LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed(err) => {
-                LoadDeviceError::RemoteOpaqueKeyFetchFailed(err)
+            LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed { server, error } => {
+                LoadDeviceError::RemoteOpaqueKeyFetchFailed { server, error }
             }
         })?;
     let device = decrypt_device_file(&device_file, &ciphertext_key).map_err(|err| match err {
@@ -293,16 +305,22 @@ pub enum SaveDeviceError {
     /// Note only a subset of save strategies requires server access to
     /// upload an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
-    #[error("Remote opaque key upload failed from server rejection: {0}")]
+    #[error("No response from {server} server: {error}")]
     // We don't use `ConnectionError` here since this type only corresponds to
     // an answer from the Parsec server and here any arbitrary server may have
     // been (unsuccessfully) requested (e.g. OpenBao server).
-    RemoteOpaqueKeyUploadOffline(anyhow::Error),
+    RemoteOpaqueKeyUploadOffline {
+        server: RemoteOperationServer,
+        error: anyhow::Error,
+    },
     /// Note only a subset of save strategies requires server access to
     /// upload an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
-    #[error("Remote opaque key upload failed: {0}")]
-    RemoteOpaqueKeyUploadFailed(anyhow::Error),
+    #[error("{server} server opaque key upload failed: {error}")]
+    RemoteOpaqueKeyUploadFailed {
+        server: RemoteOperationServer,
+        error: anyhow::Error,
+    },
     #[error(transparent)]
     Internal(anyhow::Error),
 }
@@ -337,16 +355,22 @@ pub enum UpdateDeviceError {
     /// Note only a subset of load/save strategies requires server access to
     /// fetch/upload an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
-    #[error("Remote opaque key server operation failed from server rejection: {0}")]
+    #[error("No response from {server} server: {error}")]
     // We don't use `ConnectionError` here since this type only corresponds to
     // an answer from the Parsec server and here any arbitrary server may have
     // been (unsuccessfully) requested (e.g. OpenBao server).
-    RemoteOpaqueKeyOperationOffline(anyhow::Error),
+    RemoteOpaqueKeyOperationOffline {
+        server: RemoteOperationServer,
+        error: anyhow::Error,
+    },
     /// Note only a subset of load/save strategies requires server access to
     /// fetch/upload an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
-    #[error("Remote opaque key server operation failed: {0}")]
-    RemoteOpaqueKeyOperationFailed(anyhow::Error),
+    #[error("{server} server opaque key operation failed: {error}")]
+    RemoteOpaqueKeyOperationFailed {
+        server: RemoteOperationServer,
+        error: anyhow::Error,
+    },
     #[error(transparent)]
     Internal(anyhow::Error),
 }
@@ -383,11 +407,11 @@ pub async fn update_device_change_authentication(
             LoadCiphertextKeyError::InvalidData => UpdateDeviceError::InvalidData,
             LoadCiphertextKeyError::DecryptionFailed => UpdateDeviceError::DecryptionFailed,
             LoadCiphertextKeyError::Internal(err) => UpdateDeviceError::Internal(err),
-            LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline(err) => {
-                UpdateDeviceError::RemoteOpaqueKeyOperationOffline(err)
+            LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline { server, error } => {
+                UpdateDeviceError::RemoteOpaqueKeyOperationOffline { server, error }
             }
-            LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed(err) => {
-                UpdateDeviceError::RemoteOpaqueKeyOperationFailed(err)
+            LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed { server, error } => {
+                UpdateDeviceError::RemoteOpaqueKeyOperationFailed { server, error }
             }
         })?;
     let device = decrypt_device_file(&device_file, &ciphertext_key).map_err(|err| match err {
@@ -457,11 +481,11 @@ pub async fn update_device_overwrite_server_addr(
             LoadCiphertextKeyError::InvalidData => UpdateDeviceError::InvalidData,
             LoadCiphertextKeyError::DecryptionFailed => UpdateDeviceError::DecryptionFailed,
             LoadCiphertextKeyError::Internal(err) => UpdateDeviceError::Internal(err),
-            LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline(err) => {
-                UpdateDeviceError::RemoteOpaqueKeyOperationOffline(err)
+            LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline { server, error } => {
+                UpdateDeviceError::RemoteOpaqueKeyOperationOffline { server, error }
             }
-            LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed(err) => {
-                UpdateDeviceError::RemoteOpaqueKeyOperationFailed(err)
+            LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed { server, error } => {
+                UpdateDeviceError::RemoteOpaqueKeyOperationFailed { server, error }
             }
         })?;
     let mut device =

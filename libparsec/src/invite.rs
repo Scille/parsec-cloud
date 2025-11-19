@@ -10,7 +10,7 @@ pub use libparsec_client::{
     ShamirRecoveryClaimRecoverDeviceError, UserClaimInitialCtx,
 };
 pub use libparsec_platform_async::future::join_all;
-use libparsec_platform_device_loader::SaveDeviceError;
+use libparsec_platform_device_loader::{RemoteOperationServer, SaveDeviceError};
 pub use libparsec_protocol::authenticated_cmds::latest::invite_list::InvitationCreatedBy as InviteListInvitationCreatedBy;
 pub use libparsec_protocol::invited_cmds::latest::invite_info::{
     InvitationCreatedBy as InviteInfoInvitationCreatedBy, ShamirRecoveryRecipient,
@@ -50,11 +50,22 @@ pub enum BootstrapOrganizationError {
     SaveDeviceStorageNotAvailable,
     #[error("Cannot save device: invalid path: {0}")]
     SaveDeviceInvalidPath(anyhow::Error),
+    #[error("Cannot save device: no response from {server} server: {error}")]
+    // We don't use `ConnectionError` here since this type only corresponds to
+    // an answer from the Parsec server and here any arbitrary server may have
+    // been (unsuccessfully) requested (e.g. OpenBao server).
+    SaveDeviceRemoteOpaqueKeyUploadOffline {
+        server: RemoteOperationServer,
+        error: anyhow::Error,
+    },
     /// Note only a subset of save strategies requires server access to
     /// upload an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
-    #[error("Cannot save device: remote opaque key upload failed: {0}")]
-    SaveDeviceRemoteOpaqueKeyUploadFailed(anyhow::Error),
+    #[error("Cannot save device: {server} server opaque key upload failed: {error}")]
+    SaveDeviceRemoteOpaqueKeyUploadFailed {
+        server: RemoteOperationServer,
+        error: anyhow::Error,
+    },
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -160,9 +171,11 @@ pub async fn bootstrap_organization(
             SaveDeviceError::InvalidPath(err) => {
                 BootstrapOrganizationError::SaveDeviceInvalidPath(err)
             }
-            SaveDeviceError::RemoteOpaqueKeyUploadOffline(_) => BootstrapOrganizationError::Offline,
-            SaveDeviceError::RemoteOpaqueKeyUploadFailed(err) => {
-                BootstrapOrganizationError::SaveDeviceRemoteOpaqueKeyUploadFailed(err)
+            SaveDeviceError::RemoteOpaqueKeyUploadOffline { server, error } => {
+                BootstrapOrganizationError::SaveDeviceRemoteOpaqueKeyUploadOffline { server, error }
+            }
+            SaveDeviceError::RemoteOpaqueKeyUploadFailed { server, error } => {
+                BootstrapOrganizationError::SaveDeviceRemoteOpaqueKeyUploadFailed { server, error }
             }
             SaveDeviceError::Internal(err) => {
                 BootstrapOrganizationError::Internal(err.context("Cannot save device"))

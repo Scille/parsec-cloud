@@ -185,8 +185,8 @@ async fn remote_error(
 
             p_assert_matches!(
                 save_device(&tmp_path, &save_strategy, &alice_device, key_file.clone()).await.unwrap_err(),
-                err @ SaveDeviceError::RemoteOpaqueKeyUploadOffline(_)
-                if err.to_string() == "Remote opaque key upload failed from server rejection: Cannot communicate with the Parsec account server: Failed to retrieve the response: Server unavailable"
+                err @ SaveDeviceError::RemoteOpaqueKeyUploadOffline { .. }
+                if err.to_string() == "No response from Parsec account server: Cannot communicate with the server: Failed to retrieve the response: Server unavailable"
             );
         }
 
@@ -199,8 +199,8 @@ async fn remote_error(
 
             p_assert_matches!(
                 save_device(&tmp_path, &save_strategy, &alice_device, key_file.clone()).await.unwrap_err(),
-                err @ SaveDeviceError::RemoteOpaqueKeyUploadFailed(_)
-                if err.to_string() == "Remote opaque key upload failed: Cannot decrypt the vault key access returned by the Parsec account server: Invalid encryption"
+                err @ SaveDeviceError::RemoteOpaqueKeyUploadFailed { .. }
+                if err.to_string() == "Parsec account server opaque key upload failed: Cannot decrypt the vault key access returned by the server: Invalid encryption"
             );
         }
 
