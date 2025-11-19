@@ -146,8 +146,8 @@ async function onOptionsClick(event: Event): Promise<void> {
   border-radius: var(--parsec-radius-6);
   transition: color 150ms ease-out;
   position: absolute;
-  right: 1rem;
-  top: 3.75rem;
+  right: 0.75rem;
+  top: 0.75rem;
   z-index: 10;
 
   &__on {
@@ -188,6 +188,7 @@ async function onOptionsClick(event: Event): Promise<void> {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    margin-right: 1.125rem;
 
     ion-text {
       width: 100%;
@@ -208,6 +209,7 @@ async function onOptionsClick(event: Event): Promise<void> {
       font-size: 1rem;
       padding: 0.25rem;
       border-radius: 50%;
+      background: var(--parsec-color-light-secondary-white);
     }
 
     .cloud-overlay-ok {
@@ -230,7 +232,7 @@ async function onOptionsClick(event: Event): Promise<void> {
   }
 
   &:hover {
-    background: var(--parsec-color-light-primary-50) !important;
+    background: var(--parsec-color-light-primary-50);
   }
 }
 

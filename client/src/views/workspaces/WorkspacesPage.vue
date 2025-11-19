@@ -103,37 +103,7 @@
         </div>
 
         <div v-if="filteredWorkspaces.length > 0 && displayView === DisplayState.List">
-          <ion-list class="list">
-            <ion-list-header
-              class="workspace-list-header"
-              lines="full"
-            >
-              <ion-label class="workspace-list-header__label cell-title label-name">
-                {{ $msTranslate('WorkspacesPage.listDisplayTitles.name') }}
-              </ion-label>
-              <ion-label class="workspace-list-header__label cell-title label-role">
-                {{ $msTranslate('WorkspacesPage.listDisplayTitles.role') }}
-              </ion-label>
-              <ion-label
-                class="workspace-list-header__label cell-title label-users"
-                v-show="clientProfile !== UserProfile.Outsider"
-              >
-                {{ $msTranslate('WorkspacesPage.listDisplayTitles.sharedWith') }}
-              </ion-label>
-              <ion-label
-                class="workspace-list-header__label cell-title label-update"
-                v-show="false"
-              >
-                {{ $msTranslate('WorkspacesPage.listDisplayTitles.lastUpdate') }}
-              </ion-label>
-              <ion-label
-                class="workspace-list-header__label cell-title label-size"
-                v-show="false"
-              >
-                {{ $msTranslate('WorkspacesPage.listDisplayTitles.size') }}
-              </ion-label>
-              <ion-label class="workspace-list-header__label cell-title label-space" />
-            </ion-list-header>
+          <ion-list class="workspaces-container-list list">
             <workspace-list-item
               v-for="workspace in filteredWorkspaces"
               :key="workspace.id"
@@ -209,7 +179,7 @@ import { recentDocumentManager } from '@/services/recentDocuments';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { useWorkspaceAttributes } from '@/services/workspaceAttributes';
 import { WorkspaceAction, isWorkspaceAction } from '@/views/workspaces/types';
-import { IonButton, IonContent, IonIcon, IonLabel, IonList, IonListHeader, IonPage, IonText } from '@ionic/vue';
+import { IonButton, IonContent, IonIcon, IonList, IonPage, IonText } from '@ionic/vue';
 import { addCircle } from 'ionicons/icons';
 import {
   Answer,
@@ -717,49 +687,6 @@ async function onFilterUpdate(): Promise<void> {
   }
 }
 
-.workspace-list-header {
-  &__label {
-    padding: 0 1rem;
-    height: 100%;
-    display: flex;
-    align-items: center;
-  }
-
-  .label-name {
-    width: 100%;
-    max-width: 40vw;
-    min-width: 11.25rem;
-    white-space: nowrap;
-    overflow: hidden;
-  }
-
-  .label-role {
-    min-width: 11.25rem;
-    max-width: 10vw;
-    flex-grow: 2;
-  }
-
-  .label-users {
-    min-width: 14.5rem;
-    flex-grow: 0;
-  }
-
-  .label-update {
-    min-width: 11.25rem;
-    flex-grow: 0;
-  }
-
-  .label-size {
-    min-width: 7.5rem;
-  }
-
-  .label-space {
-    width: 4rem;
-    flex-grow: 0;
-    margin-left: auto;
-  }
-}
-
 .workspaces-container-grid {
   display: flex;
   flex-wrap: wrap;
@@ -775,6 +702,17 @@ async function onFilterUpdate(): Promise<void> {
 
   @include ms.responsive-breakpoint('xs') {
     grid-template-columns: repeat(1, 1fr);
+  }
+}
+
+.workspaces-container-list {
+  padding: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  @include ms.responsive-breakpoint('sm') {
+    padding: 1.5rem 1rem;
   }
 }
 </style>

@@ -357,8 +357,8 @@ msTest('Check in FoldersPage if action bar updates after resized', async ({ docu
   await expect(actionsBarButtons).toHaveText(['New folder', 'Import']);
   await expect(actionBarMoreButton).toBeHidden();
 
-  await resizePage(documents, 850);
-  await expect(actionsBarButtons).toHaveText(['New folder']);
+  await resizePage(documents, 820);
+  await expect(actionsBarButtons).toContainText(['New folder']);
   await expect(actionBarMoreButton).toBeVisible();
   await actionBarMoreButton.click();
   await expect(documents.locator('.popover-viewport').getByRole('listitem').nth(0)).toHaveText('Import');

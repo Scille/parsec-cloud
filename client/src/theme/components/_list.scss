@@ -6,7 +6,6 @@
 
 /* ------- Workspaces, Files, Users ------- */
 .user-list-header,
-.workspace-list-header,
 .folder-list-header,
 .invitations-list-header,
 .pkiRequests-list-header {
@@ -19,7 +18,6 @@
   backdrop-filter: blur(10px);
 }
 
-.workspace-list-item,
 .file-list-item,
 .user-list-item {
   border-radius: var(--parsec-radius-4);
@@ -88,7 +86,7 @@
   }
 }
 
-.workspace-list-item > [class^='workspace-'],
+.workspace-list-item-content > [class^='workspace-'],
 .list-item-container > [class^='file-'],
 .user-list-item > [class^='user-'] {
   padding: 0 1rem;
@@ -148,13 +146,13 @@
 }
 
 // ------- Workspaces only -------
-.workspace-list-item > [class^='workspace-'],
+.workspace-list-item-content > [class^='workspace-'],
 .workspace-list-item::part(native) {
   cursor: pointer !important;
 }
 
 .workspace-hovered {
-  box-shadow: var(--parsec-shadow-light) !important;
+  background: var(--parsec-color-light-secondary-white);
 }
 
 // ------- Files/folders only -------
