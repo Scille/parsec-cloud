@@ -15,6 +15,7 @@ error_set::error_set! {
     }
     GetDerEncodedCertificateError := BaseCertStoreError
     ListTrustedRootCertificatesError := BaseCertStoreError || {
+        #[display("Invalid root certificate: {0}")]
        InvalidRootCertificate(webpki::Error)
     }
     SignMessageError := BaseCertStoreError || BaseKeyPairError || {
