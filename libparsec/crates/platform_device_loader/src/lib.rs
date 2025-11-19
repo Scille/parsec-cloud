@@ -146,7 +146,7 @@ pub fn get_default_local_pending_file(
     local_pending_path
 }
 
-const LOCAL_PENDING_EXT: &str = ".pending";
+const LOCAL_PENDING_EXT: &str = "pending";
 
 fn get_local_pending_dir(config_dir: &Path) -> PathBuf {
     config_dir.join("pending_requests")
