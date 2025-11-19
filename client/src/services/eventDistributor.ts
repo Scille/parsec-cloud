@@ -22,7 +22,6 @@ export const EventDistributorKey = 'eventDistributor';
 
 enum Events {
   WorkspaceCreated = 1 << 0,
-  WorkspaceFavorite = 1 << 1,
   Online = 1 << 2,
   Offline = 1 << 3,
   InvitationUpdated = 1 << 4,

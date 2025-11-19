@@ -139,7 +139,7 @@
               :key="workspace.id"
               :workspace="workspace"
               :client-profile="clientProfile"
-              :is-favorite="favorites.includes(workspace.id)"
+              :is-favorite="workspaceAttributes.isFavorite(workspace.id)"
               @click="onWorkspaceClick"
               @favorite-click="onWorkspaceFavoriteClick"
               @menu-click="onOpenWorkspaceContextMenu"
@@ -156,7 +156,7 @@
             :key="workspace.id"
             :workspace="workspace"
             :client-profile="clientProfile"
-            :is-favorite="favorites.includes(workspace.id)"
+            :is-favorite="workspaceAttributes.isFavorite(workspace.id)"
             @click="onWorkspaceClick"
             @favorite-click="onWorkspaceFavoriteClick"
             @menu-click="onOpenWorkspaceContextMenu"
@@ -176,7 +176,6 @@ import {
   WorkspaceFilter,
   WorkspacesPageSavedData,
   openWorkspaceContextMenu,
-  toggleFavorite,
   workspaceShareClick,
 } from '@/components/workspaces';
 import { WorkspacesPageFilters, compareWorkspaceRoles } from '@/components/workspaces/utils';
@@ -188,7 +187,6 @@ import {
   ParsecWorkspacePathAddr,
   Path,
   UserProfile,
-  WorkspaceID,
   WorkspaceInfo,
   WorkspaceName,
   WorkspaceRole,
@@ -209,6 +207,7 @@ import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } fr
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { recentDocumentManager } from '@/services/recentDocuments';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
+import { useWorkspaceAttributes } from '@/services/workspaceAttributes';
 import { WorkspaceAction, isWorkspaceAction } from '@/views/workspaces/types';
 import { IonButton, IonContent, IonIcon, IonLabel, IonList, IonListHeader, IonPage, IonText } from '@ionic/vue';
 import { addCircle } from 'ionicons/icons';
@@ -237,13 +236,14 @@ enum SortWorkspaceBy {
   LastUpdate = 'lastUpdate',
 }
 
+const workspaceAttributes = useWorkspaceAttributes();
+
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 const userInfo: Ref<ClientInfo | null> = ref(null);
 const sortBy = ref(SortWorkspaceBy.Name);
 const sortByAsc = ref(true);
 const workspaceList: Ref<Array<WorkspaceInfo>> = ref([]);
 const displayView = ref(DisplayState.Grid);
-const favorites: Ref<WorkspaceID[]> = ref([]);
 const searchFilterContent = ref('');
 const workspaceFilters = ref<WorkspacesPageFilters>({ owner: true, manager: true, contributor: true, reader: true });
 const querying = ref(true);
@@ -280,12 +280,6 @@ const msSorterLabels = {
 const clientProfile: Ref<UserProfile> = ref(UserProfile.Outsider);
 let hotkeys: HotkeyGroup | null = null;
 
-async function loadFavorites(): Promise<void> {
-  favorites.value = (
-    await storageManager.retrieveComponentData<WorkspacesPageSavedData>(WORKSPACES_PAGE_DATA_KEY, WorkspaceDefaultData)
-  ).favoriteList;
-}
-
 onMounted(async (): Promise<void> => {
   window.electronAPI.log('debug', 'Mounted WorkspacePage');
   displayView.value = (
@@ -293,7 +287,7 @@ onMounted(async (): Promise<void> => {
   ).displayState;
 
   window.electronAPI.log('debug', 'Loading favorite workspaces');
-  await loadFavorites();
+  await workspaceAttributes.load();
 
   hotkeys = hotkeyManager.newHotkeys();
   hotkeys.add(
@@ -308,12 +302,9 @@ onMounted(async (): Promise<void> => {
   );
 
   eventCbId = await eventDistributor.registerCallback(
-    Events.WorkspaceFavorite | Events.WorkspaceUpdated | Events.WorkspaceCreated | Events.MenuAction,
+    Events.WorkspaceUpdated | Events.WorkspaceCreated | Events.MenuAction,
     async (event: Events, data?: EventData) => {
       switch (event) {
-        case Events.WorkspaceFavorite:
-          await loadFavorites();
-          break;
         case Events.WorkspaceUpdated:
         case Events.WorkspaceCreated:
           await refreshWorkspacesList();
@@ -493,8 +484,8 @@ const filteredWorkspaces = computed(() => {
   return Array.from(workspaceList.value)
     .filter((workspace) => workspace.currentName.toLocaleLowerCase().includes(filter) && !isWorkspaceFiltered(workspace.currentSelfRole))
     .sort((a: WorkspaceInfo, b: WorkspaceInfo) => {
-      if (favorites.value.includes(b.id) !== favorites.value.includes(a.id)) {
-        return favorites.value.includes(b.id) ? 1 : -1;
+      if (workspaceAttributes.isFavorite(b.id) !== workspaceAttributes.isFavorite(a.id)) {
+        return workspaceAttributes.isFavorite(b.id) ? 1 : -1;
       }
       if (sortBy.value === SortWorkspaceBy.Name) {
         return sortByAsc.value ? a.currentName.localeCompare(b.currentName) : b.currentName.localeCompare(a.currentName);
@@ -612,7 +603,8 @@ async function onWorkspaceClick(workspace: WorkspaceInfo): Promise<void> {
 }
 
 async function onWorkspaceFavoriteClick(workspace: WorkspaceInfo): Promise<void> {
-  await toggleFavorite(workspace, favorites.value, eventDistributor, storageManager);
+  workspaceAttributes.toggleFavorite(workspace.id);
+  await workspaceAttributes.save();
 }
 
 async function onWorkspaceShareClick(workspace: WorkspaceInfo): Promise<void> {
@@ -627,16 +619,7 @@ async function performWorkspaceAction(action: WorkspaceAction): Promise<void> {
 }
 
 async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event, onFinished?: () => void): Promise<void> {
-  await openWorkspaceContextMenu(
-    event,
-    workspace,
-    favorites.value,
-    eventDistributor,
-    informationManager,
-    storageManager,
-    false,
-    isLargeDisplay.value,
-  );
+  await openWorkspaceContextMenu(event, workspace, workspaceAttributes, eventDistributor, informationManager, false, isLargeDisplay.value);
   await refreshWorkspacesList();
 
   if (onFinished) {

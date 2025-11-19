@@ -14,17 +14,16 @@ import {
   renameWorkspace as parsecRenameWorkspace,
 } from '@/parsec';
 import { Routes, navigateTo } from '@/router';
-import { EventDistributor, Events } from '@/services/eventDistributor';
+import { EventDistributor } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { recentDocumentManager } from '@/services/recentDocuments';
-import { StorageManager } from '@/services/storageManager';
+import { WorkspaceAttributes } from '@/services/workspaceAttributes';
 import SmallDisplayWorkspaceContextMenu from '@/views/workspaces/SmallDisplayWorkspaceContextMenu.vue';
 import { WorkspaceAction } from '@/views/workspaces/types';
 import WorkspaceContextMenu from '@/views/workspaces/WorkspaceContextMenu.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
 import { modalController, popoverController } from '@ionic/vue';
 import { Clipboard, DisplayState, Translatable, getTextFromUser } from 'megashark-lib';
-import { toRaw } from 'vue';
 
 export const WORKSPACES_PAGE_DATA_KEY = 'WorkspacesPage';
 
@@ -36,6 +35,7 @@ interface RoleUpdateAuthorization {
 export interface WorkspacesPageSavedData {
   displayState?: DisplayState;
   favoriteList?: WorkspaceID[];
+  hiddenList?: WorkspaceID[];
 }
 
 export interface WorkspacesPageFilters {
@@ -48,6 +48,7 @@ export interface WorkspacesPageFilters {
 export const WorkspaceDefaultData: Required<WorkspacesPageSavedData> = {
   displayState: DisplayState.Grid,
   favoriteList: [],
+  hiddenList: [],
 };
 
 export function canChangeRole(
@@ -111,32 +112,12 @@ export async function workspaceShareClick(
   await modal.onWillDismiss();
 }
 
-export async function toggleFavorite(
-  workspace: WorkspaceInfo,
-  favorites: WorkspaceID[],
-  eventDistributor: EventDistributor,
-  storageManager: StorageManager,
-): Promise<void> {
-  if (favorites.includes(workspace.id)) {
-    favorites.splice(favorites.indexOf(workspace.id), 1);
-  } else {
-    favorites.push(workspace.id);
-  }
-  await storageManager.updateComponentData<WorkspacesPageSavedData>(
-    WORKSPACES_PAGE_DATA_KEY,
-    { favoriteList: toRaw(favorites) },
-    WorkspaceDefaultData,
-  );
-  eventDistributor.dispatchEvent(Events.WorkspaceFavorite);
-}
-
 export async function openWorkspaceContextMenu(
   event: Event,
   workspace: WorkspaceInfo,
-  favorites: WorkspaceID[],
+  workspaceAttributes: WorkspaceAttributes,
   eventDistributor: EventDistributor,
   informationManager: InformationManager,
-  storageManager: StorageManager,
   fromSidebar = false,
   isLargeDisplay = true,
 ): Promise<void> {
@@ -156,7 +137,7 @@ export async function openWorkspaceContextMenu(
         workspaceName: workspace.currentName,
         clientProfile: clientProfile,
         clientRole: workspace.currentSelfRole,
-        isFavorite: favorites.includes(workspace.id),
+        isFavorite: workspaceAttributes.isFavorite(workspace.id),
       },
     });
 
@@ -174,7 +155,7 @@ export async function openWorkspaceContextMenu(
         workspaceName: workspace.currentName,
         clientProfile: clientProfile,
         clientRole: workspace.currentSelfRole,
-        isFavorite: favorites.includes(workspace.id),
+        isFavorite: workspaceAttributes.isFavorite(workspace.id),
       },
     });
 
@@ -197,7 +178,8 @@ export async function openWorkspaceContextMenu(
         await openRenameWorkspaceModal(workspace, informationManager, isLargeDisplay);
         break;
       case WorkspaceAction.Favorite:
-        await toggleFavorite(workspace, favorites, eventDistributor, storageManager);
+        workspaceAttributes.toggleFavorite(workspace.id);
+        await workspaceAttributes.save();
         break;
       case WorkspaceAction.ShowHistory:
         await navigateTo(Routes.History, { query: { documentPath: '/', workspaceHandle: workspace.handle } });

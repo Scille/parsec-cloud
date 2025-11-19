@@ -4,7 +4,6 @@ export {
   WORKSPACES_PAGE_DATA_KEY,
   WorkspaceDefaultData,
   openWorkspaceContextMenu,
-  toggleFavorite,
   workspaceShareClick,
 } from '@/components/workspaces/utils';
 
