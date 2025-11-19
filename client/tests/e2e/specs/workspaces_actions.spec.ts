@@ -228,7 +228,7 @@ msTest('Check if action bar updates when resizing the window', async ({ connecte
   await expect(actionsBarButtons).toBeVisible();
   await expect(actionsBarButtons).toHaveCount(1);
   await expect(actionsBarButtons.nth(0)).toHaveText('New workspace');
-  await resizePage(connected, 1100);
+  await resizePage(connected, 1000);
   await expect(actionsBarButtons).toHaveCount(1);
   await expect(actionsBarButtons.nth(0)).toBeHidden();
   await expect(actionBarMoreButton).toBeVisible();

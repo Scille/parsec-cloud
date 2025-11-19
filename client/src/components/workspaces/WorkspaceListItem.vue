@@ -11,28 +11,7 @@
     @mouseleave="isHovered = false"
     @contextmenu="onOptionsClick"
   >
-    <!-- workspace name -->
-    <div class="workspace-name">
-      <div class="workspace-name__icons">
-        <ion-icon
-          class="main-icon"
-          :icon="business"
-          size="default"
-        />
-        <ion-icon
-          class="cloud-overlay"
-          :class="workspace.availableOffline ? 'cloud-overlay-ok' : 'cloud-overlay-ko'"
-          :icon="workspace.availableOffline ? cloudDone : cloudOffline"
-        />
-      </div>
-      <ion-label
-        class="workspace-name__label cell"
-        :title="workspace.currentName"
-      >
-        {{ workspace.currentName }}
-      </ion-label>
-
-      <!-- favorites -->
+    <div class="workspace-list-item-content">
       <div
         class="workspace-favorite-icon"
         :class="{
@@ -43,67 +22,97 @@
       >
         <ion-icon :icon="star" />
       </div>
-    </div>
-
-    <!-- role user -->
-    <div class="workspace-role">
-      <workspace-role-tag :role="workspace.currentSelfRole" />
-    </div>
-
-    <!-- user avatars -->
-    <div
-      class="workspace-users"
-      v-show="clientProfile !== UserProfile.Outsider"
-    >
-      <avatar-group
-        v-show="workspace.sharing.length > 0"
-        class="shared-group"
-        :people="workspace.sharing.map((item) => item[0].humanHandle.label)"
-        :max-display="2"
-        @click.stop="$emit('shareClick', workspace, $event)"
+      <ion-icon
+        class="cloud-overlay"
+        :class="workspace.availableOffline ? 'cloud-overlay-ok' : 'cloud-overlay-ko'"
+        :icon="workspace.availableOffline ? cloudDone : cloudOffline"
       />
-      <ion-label
-        class="not-shared-label cell"
-        v-show="workspace.sharing.length === 0"
-        @click.stop="$emit('shareClick', workspace, $event)"
+      <!-- workspace name -->
+      <div
+        class="workspace-name"
+        :title="workspace.currentName"
       >
-        {{ $msTranslate('WorkspacesPage.Workspace.notShared') }}
-      </ion-label>
-    </div>
+        <ion-text class="workspace-name__label title-h4">
+          {{ workspace.currentName }}
+        </ion-text>
+      </div>
 
-    <!-- last update -->
-    <div
-      class="workspace-last-update"
-      v-show="false"
-    >
-      <ion-label class="label-last-update cell">
-        {{ $msTranslate(formatTimeSince(workspace.lastUpdated, '--', 'short')) }}
-      </ion-label>
-    </div>
-
-    <!-- workspace size -->
-    <div
-      class="workspace-size"
-      v-show="false"
-    >
-      <ion-label class="label-size cell">
-        {{ $msTranslate(formatFileSize(workspace.size)) }}
-      </ion-label>
-    </div>
-
-    <!-- options -->
-    <div class="workspace-options">
-      <ion-button
-        fill="clear"
-        class="options-button"
-        @click.stop="onOptionsClick($event)"
-      >
-        <ion-icon
-          :icon="ellipsisHorizontal"
-          slot="icon-only"
-          class="options-button__icon"
+      <!-- role user -->
+      <div class="workspace-role">
+        <workspace-role-tag
+          :role="workspace.currentSelfRole"
+          class="workspace-role-tag"
         />
-      </ion-button>
+      </div>
+
+      <!-- user avatars -->
+      <div
+        class="workspace-users"
+        v-show="clientProfile !== UserProfile.Outsider"
+        v-if="isLargeDisplay && windowWidth >= WindowSizeBreakpoints.MD"
+      >
+        <avatar-group
+          v-show="workspace.sharing.length > 0"
+          class="shared-group"
+          :people="workspace.sharing.map((item) => item[0].humanHandle.label)"
+          :max-display="2"
+          @click.stop="$emit('shareClick', workspace, $event)"
+        />
+        <ion-label
+          class="not-shared-label cell"
+          v-show="workspace.sharing.length === 0"
+          @click.stop="$emit('shareClick', workspace, $event)"
+        >
+          {{ $msTranslate('WorkspacesPage.Workspace.notShared') }}
+        </ion-label>
+      </div>
+
+      <!-- last update -->
+      <div
+        class="workspace-last-update"
+        v-show="false"
+      >
+        <ion-label class="label-last-update cell">
+          {{ $msTranslate(formatTimeSince(workspace.lastUpdated, '--', 'short')) }}
+        </ion-label>
+      </div>
+
+      <!-- workspace size -->
+      <div
+        class="workspace-size"
+        v-show="false"
+      >
+        <ion-label class="label-size cell">
+          {{ $msTranslate(formatFileSize(workspace.size)) }}
+        </ion-label>
+      </div>
+
+      <!-- options -->
+      <div class="workspace-options">
+        <ion-button
+          fill="clear"
+          class="options-button"
+          @click.stop="$emit('shareClick', workspace, $event)"
+          v-if="windowWidth < WindowSizeBreakpoints.MD"
+        >
+          <ion-icon
+            :icon="shareSocial"
+            slot="icon-only"
+            class="options-button__icon"
+          />
+        </ion-button>
+        <ion-button
+          fill="clear"
+          class="options-button"
+          @click.stop="onOptionsClick($event)"
+        >
+          <ion-icon
+            :icon="ellipsisHorizontal"
+            slot="icon-only"
+            class="options-button__icon"
+          />
+        </ion-button>
+      </div>
     </div>
   </ion-item>
 </template>
@@ -113,13 +122,14 @@ import { formatFileSize } from '@/common/file';
 import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
 import WorkspaceRoleTag from '@/components/workspaces/WorkspaceRoleTag.vue';
 import { UserProfile, WorkspaceInfo } from '@/parsec';
-import { IonButton, IonIcon, IonItem, IonLabel } from '@ionic/vue';
-import { business, cloudDone, cloudOffline, ellipsisHorizontal, star } from 'ionicons/icons';
-import { formatTimeSince } from 'megashark-lib';
+import { IonButton, IonIcon, IonItem, IonLabel, IonText } from '@ionic/vue';
+import { cloudDone, cloudOffline, ellipsisHorizontal, shareSocial, star } from 'ionicons/icons';
+import { formatTimeSince, useWindowSize, WindowSizeBreakpoints } from 'megashark-lib';
 import { ref } from 'vue';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);
+const { isLargeDisplay, windowWidth } = useWindowSize();
 
 const props = defineProps<{
   workspace: WorkspaceInfo;
@@ -144,57 +154,144 @@ async function onOptionsClick(event: Event): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
-.workspace-name {
-  padding: 0.75rem 1rem;
+.workspace-list-item {
+  cursor: pointer;
+  text-align: center;
+  user-select: none;
+  border-radius: var(--parsec-radius-12);
+  border: 1px solid var(--parsec-color-light-secondary-disabled);
+  --background: var(--parsec-color-light-secondary-white);
   width: 100%;
-  max-width: 40vw;
-  white-space: nowrap;
   overflow: hidden;
+  transition: all 0.15s ease-in-out;
 
-  &__icons {
-    position: relative;
-    padding: 5px;
+  &::part(native) {
+    width: -webkit-fill-available;
+    padding-left: 0;
+    margin: 0.25rem;
+    --background-hover: var(--parsec-color-light-secondary-white);
+  }
 
-    .main-icon {
-      color: var(--parsec-color-light-secondary-text);
-      font-size: 1.5rem;
+  &-content {
+    display: flex;
+    background: var(--parsec-color-light-secondary-background);
+    border-radius: var(--parsec-radius-8);
+    align-items: center;
+    width: 100%;
+    height: 3rem;
+  }
+
+  &:hover {
+    box-shadow: var(--parsec-shadow-input);
+
+    .workspace-list-item-content {
+      background: var(--parsec-color-light-primary-30);
     }
+  }
+}
 
-    .cloud-overlay {
-      height: 40%;
-      width: 40%;
-      position: absolute;
-      font-size: 1.5rem;
-      bottom: 1px;
-      left: 53%;
-      padding: 2px;
-      background: var(--parsec-color-light-secondary-inversed-contrast);
-      border-radius: 50%;
-    }
+.workspace-favorite-icon {
+  display: flex;
+  align-items: center;
+  font-size: 1.25rem;
+  padding: 0.25rem;
+  margin-left: 0.5rem;
+  border-radius: var(--parsec-radius-6);
+  transition: color 150ms ease-out;
+  flex-shrink: 0;
 
-    .cloud-overlay-ok {
-      color: var(--parsec-color-light-primary-500);
-    }
+  &__on {
+    color: var(--parsec-color-light-primary-600);
 
-    .cloud-overlay-ko {
-      color: var(--parsec-color-light-secondary-text);
+    &:hover {
+      background: var(--parsec-color-light-primary-50);
+      color: var(--parsec-color-light-primary-700);
     }
   }
 
-  &__label {
+  &__off {
+    color: var(--parsec-color-light-secondary-disabled);
+
+    &:hover {
+      background: var(--parsec-color-light-primary-50);
+      color: var(--parsec-color-light-primary-600);
+    }
+  }
+}
+
+.cloud-overlay {
+  position: sticky;
+  margin-left: 0.75rem;
+  left: 0;
+  display: flex;
+  align-items: center;
+  right: 0;
+  font-size: 1rem;
+  bottom: 1px;
+  padding: 2px;
+  background: var(--parsec-color-light-secondary-white);
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  &-ok {
+    color: var(--parsec-color-light-primary-500);
+  }
+
+  &-ko {
     color: var(--parsec-color-light-secondary-text);
-    margin-left: 1em;
+  }
+}
+
+.workspace-name {
+  padding-inline: 0.5rem 1rem;
+  width: 100%;
+  height: 100%;
+  min-width: 15rem;
+  max-width: 45vw;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  @include ms.responsive-breakpoint('sm') {
+    min-width: 5rem;
+  }
+
+  &__label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: left;
+    color: var(--parsec-color-light-secondary-text);
+    min-width: 0;
   }
 }
 
 .workspace-role {
-  min-width: 11.25rem;
-  max-width: 10vw;
+  min-width: 8rem;
+  max-width: 6vw;
   flex-grow: 2;
+  position: relative;
+  z-index: 10;
+
+  .workspace-role-tag {
+    border: 1px solid var(--parsec-color-light-secondary-medium);
+    border-radius: var(--parsec-radius-18);
+    background: var(--parsec-color-light-secondary-white);
+  }
+
+  @include ms.responsive-breakpoint('md') {
+    min-width: 5rem;
+    max-width: 8rem;
+  }
+
+  @include ms.responsive-breakpoint('sm') {
+    padding-inline: 0.125rem;
+  }
 }
 
 .workspace-users {
-  min-width: 14.5rem;
+  min-width: 10rem;
+  max-width: 15rem;
   flex-grow: 0;
   overflow: visible;
 
@@ -236,6 +333,11 @@ async function onOptionsClick(event: Event): Promise<void> {
   flex-grow: 0;
   margin-left: auto;
   align-items: center;
+  flex-shrink: 0;
+  display: flex;
+  gap: 0.5rem;
+  position: relative;
+  z-index: 8;
 
   ion-button::part(native) {
     padding: 0;
@@ -243,43 +345,22 @@ async function onOptionsClick(event: Event): Promise<void> {
 
   .options-button {
     --background-hover: none;
+    background: none;
+    border-radius: var(--parsec-radius-8);
+    padding: 0.375rem;
 
     &__icon {
       color: var(--parsec-color-light-secondary-grey);
+      font-size: 1.25rem;
+      flex-shrink: 0;
     }
 
     &:hover {
+      background: var(--parsec-color-light-secondary-disabled);
+
       .options-button__icon {
         color: var(--parsec-color-light-primary-500);
       }
-    }
-  }
-}
-
-.workspace-favorite-icon {
-  display: flex;
-  align-items: center;
-  font-size: 1.25rem;
-  margin-left: auto;
-  padding: 0.25rem;
-  border-radius: var(--parsec-radius-6);
-  transition: color 150ms ease-out;
-
-  &__on {
-    color: var(--parsec-color-light-primary-600);
-
-    &:hover {
-      background: var(--parsec-color-light-primary-50);
-      color: var(--parsec-color-light-primary-700);
-    }
-  }
-
-  &__off {
-    color: var(--parsec-color-light-secondary-disabled);
-
-    &:hover {
-      background: var(--parsec-color-light-primary-50);
-      color: var(--parsec-color-light-primary-600);
     }
   }
 }
