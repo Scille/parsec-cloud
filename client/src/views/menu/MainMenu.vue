@@ -184,7 +184,7 @@
               :workspace="currentWorkspace"
               @workspace-click="goToWorkspace"
               @context-menu-requested="
-                openWorkspaceContextMenu($event, currentWorkspace, favorites, eventDistributor, informationManager, storageManager, true)
+                openWorkspaceContextMenu($event, currentWorkspace, workspaceAttributes, eventDistributor, informationManager, true)
               "
             />
           </div>
@@ -214,7 +214,7 @@
                 :workspace="workspace"
                 @workspace-clicked="goToWorkspace"
                 @context-menu-requested="
-                  openWorkspaceContextMenu($event, workspace, favorites, eventDistributor, informationManager, storageManager, true)
+                  openWorkspaceContextMenu($event, workspace, workspaceAttributes, eventDistributor, informationManager, true)
                 "
               />
             </div>
@@ -243,7 +243,7 @@
                 :key="workspace.id"
                 @workspace-clicked="goToWorkspace"
                 @context-menu-requested="
-                  openWorkspaceContextMenu($event, workspace, favorites, eventDistributor, informationManager, storageManager, true)
+                  openWorkspaceContextMenu($event, workspace, workspaceAttributes, eventDistributor, informationManager, true)
                 "
               />
             </div>
@@ -330,7 +330,7 @@ import { getSecurityWarnings, RecommendationAction, SecurityWarnings } from '@/c
 import RecommendationChecklistPopoverModal from '@/components/misc/RecommendationChecklistPopoverModal.vue';
 import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
 import { SidebarMenuList, SidebarRecentFileItem, SidebarWorkspaceItem } from '@/components/sidebar';
-import { openWorkspaceContextMenu, WorkspaceDefaultData, WORKSPACES_PAGE_DATA_KEY, WorkspacesPageSavedData } from '@/components/workspaces';
+import { openWorkspaceContextMenu } from '@/components/workspaces';
 import {
   ClientInfo,
   getClientInfo,
@@ -341,7 +341,6 @@ import {
   listWorkspaces,
   LoggedInDeviceInfo,
   UserProfile,
-  WorkspaceID,
   WorkspaceInfo,
   WorkspaceRole,
 } from '@/parsec';
@@ -372,6 +371,7 @@ import { recentDocumentManager, RecentFile } from '@/services/recentDocuments';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
+import { useWorkspaceAttributes } from '@/services/workspaceAttributes';
 import { FolderGlobalAction } from '@/views/files';
 import { MenuAction, SIDEBAR_MENU_DATA_KEY, SidebarDefaultData, SidebarSavedData } from '@/views/menu';
 import TabBarMenu from '@/views/menu/TabBarMenu.vue';
@@ -424,13 +424,13 @@ const emits = defineEmits<{
   (event: 'sidebarWidthChanged', value: number): void;
 }>();
 
+const workspaceAttributes = useWorkspaceAttributes();
 const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
 const customTabBar = useCustomTabBar();
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 const workspaces: Ref<Array<WorkspaceInfo>> = ref([]);
-const favorites: Ref<WorkspaceID[]> = ref([]);
 const { width: sidebarWidth, isVisible: isSidebarVisible, setWidth: setSidebarWidth } = useSidebarMenu();
 const sidebarWidthProperty = ref('');
 const dividerRef = useTemplateRef('divider');
@@ -480,9 +480,7 @@ const currentWorkspace = computed(() => {
 });
 
 async function loadAll(): Promise<void> {
-  favorites.value = (
-    await storageManager.retrieveComponentData<WorkspacesPageSavedData>(WORKSPACES_PAGE_DATA_KEY, WorkspaceDefaultData)
-  ).favoriteList;
+  await workspaceAttributes.load();
 
   const deviceResult = await getCurrentAvailableDevice();
   if (deviceResult.ok) {
@@ -505,10 +503,10 @@ async function loadAll(): Promise<void> {
 
 const favoritesWorkspaces = computed(() => {
   return Array.from(workspaces.value)
-    .filter((workspace: WorkspaceInfo) => favorites.value.includes(workspace.id))
+    .filter((workspace: WorkspaceInfo) => workspaceAttributes.isFavorite(workspace.id))
     .sort((a: WorkspaceInfo, b: WorkspaceInfo) => {
-      if (favorites.value.includes(b.id) !== favorites.value.includes(a.id)) {
-        return favorites.value.includes(b.id) ? 1 : -1;
+      if (workspaceAttributes.isFavorite(b.id) !== workspaceAttributes.isFavorite(a.id)) {
+        return workspaceAttributes.isFavorite(b.id) ? 1 : -1;
       }
       return 0;
     });
@@ -591,7 +589,6 @@ const watchRouteCancel = watchRoute(async () => {
 onMounted(async () => {
   eventDistributorCbId = await eventDistributor.registerCallback(
     Events.WorkspaceCreated |
-      Events.WorkspaceFavorite |
       Events.WorkspaceUpdated |
       Events.ExpiredOrganization |
       Events.MenuAction |
@@ -601,7 +598,7 @@ onMounted(async () => {
       if (event === Events.WorkspaceCreated) {
         await loadAll();
         securityWarnings.value = await getSecurityWarnings();
-      } else if (event === Events.WorkspaceFavorite || event === Events.WorkspaceUpdated) {
+      } else if (event === Events.WorkspaceUpdated) {
         const connectionHandle = getConnectionHandle();
         if (connectionHandle) {
           await recentDocumentManager.refreshWorkspaces(connectionHandle);
