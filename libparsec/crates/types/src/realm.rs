@@ -68,12 +68,23 @@ impl RealmKeysBundle {
 
 parsec_data!("schema/realm/realm_keys_bundle.json5");
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct EmptyRealmKeysBundle;
+
+impl std::error::Error for EmptyRealmKeysBundle {}
+
+impl std::fmt::Display for EmptyRealmKeysBundle {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("RealmKeysBundle must have at least one key")
+    }
+}
+
 impl TryFrom<RealmKeysBundleData> for RealmKeysBundle {
-    type Error = &'static str;
+    type Error = EmptyRealmKeysBundle;
 
     fn try_from(data: RealmKeysBundleData) -> Result<Self, Self::Error> {
         if data.keys.is_empty() {
-            return Err("RealmKeysBundle must have at least one key");
+            return Err(EmptyRealmKeysBundle);
         }
         Ok(Self {
             author: data.author,

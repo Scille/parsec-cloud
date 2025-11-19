@@ -252,11 +252,22 @@ impl Blocksize {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct InvalidBlockSize;
+
+impl std::error::Error for InvalidBlockSize {}
+
+impl std::fmt::Display for InvalidBlockSize {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("Invalid blocksize")
+    }
+}
+
 impl TryFrom<SizeInt> for Blocksize {
-    type Error = &'static str;
+    type Error = InvalidBlockSize;
     fn try_from(data: SizeInt) -> Result<Self, Self::Error> {
         if data < 8 {
-            return Err("Invalid blocksize");
+            return Err(InvalidBlockSize);
         }
 
         Ok(Self(data))
@@ -412,7 +423,7 @@ impl FileManifest {
 }
 
 impl TryFrom<FileManifestData> for FileManifest {
-    type Error = &'static str;
+    type Error = InvalidBlockSize;
     fn try_from(data: FileManifestData) -> Result<Self, Self::Error> {
         Ok(Self {
             author: data.author,

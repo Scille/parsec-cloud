@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
 use libparsec_crypto::prelude::*;
@@ -159,12 +160,12 @@ impl LocalDevice {
 parsec_data!("schema/local_device/local_device.json5");
 
 impl TryFrom<LocalDeviceData> for LocalDevice {
-    type Error = &'static str;
+    type Error = anyhow::Error;
 
     fn try_from(data: LocalDeviceData) -> Result<Self, Self::Error> {
         let organization_addr = {
             let server_addr =
-                ParsecAddr::from_http_url(&data.server_url).map_err(|_| "Invalid server URL")?;
+                ParsecAddr::from_http_url(&data.server_url).context("Invalid server URL")?;
             ParsecOrganizationAddr::new(server_addr, data.organization_id, data.root_verify_key)
         };
         Ok(Self {

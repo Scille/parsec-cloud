@@ -47,7 +47,7 @@ impl ApiVersion {
     fn from_str(_cls: Bound<'_, PyType>, version_str: &str) -> PyResult<Self> {
         libparsec_types::ApiVersion::try_from(version_str)
             .map(Self)
-            .map_err(PyValueError::new_err)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 
     #[getter]
