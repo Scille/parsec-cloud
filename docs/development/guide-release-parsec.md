@@ -180,25 +180,50 @@ Then follow the remaining steps described in [after the release build script](#a
 
 ### Acknowledge the release
 
-If you were dealing with a final release (e.g. `3.2.0`)
+Acknowledge (or "ack") is the process of merging changes from a release branch (`releases/3.2`)
+back into the base branch (`master`). This is particularily important when there are hotfix commits
+in the release branch and those changes are not yet in `master`.
 
-You need to acknowledge the release (that means merge it back to the main branch).
+1. Make sure your local branches `master` and `releases/3.2` are up to date
 
-Use the following command:
+    ```shell
+    git fetch origin master:master releases/3.2:releases/3.2
+    ```
 
-```shell
-python misc/releaser.py acknowledge 3.2.0
-```
+2. Acknowledge the release with the following command:
 
-This command will:
+    ```shell
+    python misc/releaser.py acknowledge 3.2.0
+    ```
 
-- Ensure the version we want to acknowledge is indeed a release version (no pre-release, dev or local part).
-- Create the acknowledgment branch `acknowledges/3.2.0`.
-- Push the branch to the remote server.
-- Create the pull-request using [`Github cli`](https://cli.github.com/)
+    This command will:
+      - Ensure the version to acknowledge is indeed a release version (no pre-release, dev or local part).
+      - Create a local branch `acknowledges/3.2.0`.
+      - Push the acknowledge branch to the remote server.
+      - Create a draft pull-request for the acknowledge (using [`Github cli`](https://cli.github.com/))
 
-After the comment, it's recommended to rebase the acknowledge branch with the base branch to fix potential merge conflict since the base branch as likely diverged since.
-Take this as an opportunity to squash some commits (like the `Bump version A -> B`, `[..] B -> C` that could be squashed into `Bump version A -> C`)
+3. Rebase the acknowledge branch to fix potential merge conflicts (this is common when branches diverged).
+
+    ```shell
+    git rebase -i origin/master
+    ```
+
+    If there are multiple version bump commits, reorder and `squash` them all together into a single commit (`Bump version A -> B` & `Bump version B -> C` can be squashed into `Bump version A -> C`).
+
+    ⚠️ Fix merge conflicts carefully. If in doubt, do not hesitate to ask the commit authors.
+
+4. (PATCH release) In case you acknowledge a patch version, e.g. `3.2.5`, it is likely that previous versions
+   (`3.2.0`-`3.2.4`) have already been acknowledge. In that case, ensure to remove commits from the PR that have already
+   been acknowledge. Look for the previous ack PRs and compare descriptions to identify which commits to remove from
+   your current ack PR.
+
+5. You may need to add new commits to your ack PR:
+
+   - to fix any CI issue (format, lint)
+   - to remove newsfragment files that are already present in the changelog (there shouldn't be any
+     newsfragment if rebase was done right and the release branch is up to date).
+
+6. Check the ack PR changes & commit history. If everything seems OK mark it "Ready for review".
 
 ### The release train diagram
 
