@@ -68,7 +68,6 @@ import {
   getCryptpadDocumentType,
 } from '@/services/cryptpad';
 import { Env } from '@/services/environment';
-import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { longLocaleCodeToShort } from '@/services/translation';
 import { SaveState } from '@/views/files/handler/editor';
@@ -84,8 +83,6 @@ const documentType = ref<CryptpadDocumentType | null>(null);
 const cryptpadInstance = ref<Cryptpad | null>(null);
 const fileUrl = ref<string | null>(null);
 const error = ref('');
-const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
-let eventCbId: null | string = null;
 
 const {
   contentInfo,
@@ -135,13 +132,30 @@ onMounted(async () => {
     emits('fileError');
   }
 
-  eventCbId = await eventDistributor.registerCallback(Events.Online | Events.Offline, async (event: Events) => {
-    if (event === Events.Offline) {
-      emits('onSaveStateChange', SaveState.Offline);
-    } else if (event === Events.Online) {
-      emits('onSaveStateChange', SaveState.None);
-    }
-  });
+  // Monitor browser network state for CryptPad connectivity
+  const handleOffline = async (): Promise<void> => {
+    window.electronAPI.log('warn', 'Network connection lost while editing');
+    emits('onSaveStateChange', SaveState.Offline);
+    await informationManager.present(
+      new Information({
+        title: 'fileEditors.errors.titles.networkOffline',
+        message: 'fileEditors.errors.networkOfflineMessage',
+        level: InformationLevel.Warning,
+      }),
+      PresentationMode.Modal,
+    );
+  };
+
+  const handleOnline = (): void => {
+    window.electronAPI.log('info', 'Network connection restored');
+    emits('onSaveStateChange', SaveState.None);
+  };
+
+  window.addEventListener('offline', handleOffline);
+  window.addEventListener('online', handleOnline);
+
+  // Store handlers for cleanup
+  (window as any).__cryptpadNetworkHandlers = { handleOffline, handleOnline };
 });
 
 onUnmounted(() => {
@@ -154,8 +168,12 @@ onUnmounted(() => {
     URL.revokeObjectURL(fileUrl.value);
   }
 
-  if (eventCbId) {
-    eventDistributor.removeCallback(eventCbId);
+  // Remove network event listeners
+  const handlers = (window as any).__cryptpadNetworkHandlers;
+  if (handlers) {
+    window.removeEventListener('offline', handlers.handleOffline);
+    window.removeEventListener('online', handlers.handleOnline);
+    delete (window as any).__cryptpadNetworkHandlers;
   }
 });
 
@@ -285,7 +303,7 @@ async function openFileWithCryptpad(): Promise<boolean> {
       },
       onError: (errorData: { message: string; errorType: string; originalError: string }): void => {
         window.electronAPI.log('error', `CryptPad error [${errorData.errorType}]: ${errorData.message}`);
-        error.value = 'fileViewers.errors.titles.genericError';
+        error.value = 'fileEditors.errors.titles.genericError';
         emits('fileError');
       },
     },
