@@ -10,10 +10,8 @@ import {
   WorkspaceRole,
   getClientProfile,
   getSystemPath,
-  mountWorkspace,
   getPathLink as parsecGetPathLink,
   renameWorkspace as parsecRenameWorkspace,
-  unmountWorkspace,
 } from '@/parsec';
 import { Routes, navigateTo } from '@/router';
 import { EventDistributor } from '@/services/eventDistributor';
