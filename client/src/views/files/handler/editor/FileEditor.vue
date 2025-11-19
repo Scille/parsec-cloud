@@ -140,8 +140,18 @@ onMounted(async () => {
 
   eventCbId = await eventDistributor.registerCallback(Events.Online | Events.Offline, async (event: Events) => {
     if (event === Events.Offline) {
+      window.electronAPI.log('warn', 'Network connection lost while editing');
       emits('onSaveStateChange', SaveState.Offline);
+      await informationManager.present(
+        new Information({
+          title: 'fileEditors.errors.titles.networkOffline',
+          message: 'fileEditors.errors.networkOfflineMessage',
+          level: InformationLevel.Warning,
+        }),
+        PresentationMode.Modal,
+      );
     } else if (event === Events.Online) {
+      window.electronAPI.log('info', 'Network connection restored');
       emits('onSaveStateChange', SaveState.None);
     }
   });

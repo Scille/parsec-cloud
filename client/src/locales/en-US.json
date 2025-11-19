@@ -2572,6 +2572,10 @@
     "fileEditors": {
         "globalTitle": "Cannot open file",
         "errors": {
+            "titles": {
+                "networkOffline": "Network connection lost"
+            },
+            "networkOfflineMessage": "Your network connection has been lost. Please check your internet connection and try again. Any unsaved changes may be lost.",
             "contentInfoMissing": "The file content information is empty or missing.",
             "fileExtensionMissing": "The file type (extension) is missing or empty.",
             "fileNameMissing": "The file name is empty or missing.",
@@ -2612,7 +2616,7 @@
             "previewDownload": "If you want to preview this file, you can do so in Parsec or download it to open it locally on your device."
         },
         "actions": {
-            "viewer": "Preview (in Parsec)",
+            "viewer": "Preview",
             "download": "Download",
             "open": "Show in explorer",
             "cancel": "Cancel"
