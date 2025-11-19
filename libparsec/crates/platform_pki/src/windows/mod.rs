@@ -167,11 +167,20 @@ pub fn list_trusted_root_certificate_anchor(
         //     }
         //     Err(err) => { log::trace!(cert_name:?=ctx.friendly_name().ok(), err:?; "Certificate with no valid use, skipping"); false },
         // })
-        .map(|ctx| {
-            webpki::anchor_from_trusted_cert(&ctx.to_der().into()).map(|anchor| anchor.to_owned())
+        .filter_map(|ctx| {
+            webpki::anchor_from_trusted_cert(&ctx.to_der().into())
+                .map(|anchor| anchor.to_owned())
+                .inspect_err(|err| {
+                    log::warn!(
+                            name:? = ctx.friendly_name().ok(),
+                            fingerprint:? = ctx.fingerprint(HashAlgorithm::sha256()).ok(),
+                            err:%;
+                            "Invalid root certificate"
+                    )
+                })
+                .ok()
         })
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(ListTrustedRootCertificatesError::InvalidRootCertificate)?;
+        .collect::<Vec<_>>();
 
     Ok(res)
 }
