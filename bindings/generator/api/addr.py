@@ -2,7 +2,6 @@
 
 
 from .common import (
-    U32,
     U16,
     ErrorVariant,
     IndexInt,
@@ -56,20 +55,20 @@ class ParseParsecAddrError(ErrorVariant):
 class ParsedParsecAddr(Variant):
     class Server:
         hostname: str
-        port: U32
+        port: U16
         is_default_port: bool
         use_ssl: bool
 
     class Organization:
         hostname: str
-        port: U32
+        port: U16
         is_default_port: bool
         use_ssl: bool
         organization_id: OrganizationID
 
     class OrganizationBootstrap:
         hostname: str
-        port: U32
+        port: U16
         is_default_port: bool
         use_ssl: bool
         organization_id: OrganizationID
@@ -77,7 +76,7 @@ class ParsedParsecAddr(Variant):
 
     class WorkspacePath:
         hostname: str
-        port: U32
+        port: U16
         is_default_port: bool
         use_ssl: bool
         organization_id: OrganizationID
@@ -87,7 +86,7 @@ class ParsedParsecAddr(Variant):
 
     class InvitationUser:
         hostname: str
-        port: U32
+        port: U16
         is_default_port: bool
         use_ssl: bool
         organization_id: OrganizationID
@@ -95,7 +94,7 @@ class ParsedParsecAddr(Variant):
 
     class InvitationDevice:
         hostname: str
-        port: U32
+        port: U16
         is_default_port: bool
         use_ssl: bool
         organization_id: OrganizationID
@@ -103,7 +102,7 @@ class ParsedParsecAddr(Variant):
 
     class InvitationShamirRecovery:
         hostname: str
-        port: U32
+        port: U16
         is_default_port: bool
         use_ssl: bool
         organization_id: OrganizationID
@@ -111,7 +110,7 @@ class ParsedParsecAddr(Variant):
 
     class PkiEnrollment:
         hostname: str
-        port: U32
+        port: U16
         is_default_port: bool
         use_ssl: bool
         organization_id: OrganizationID
