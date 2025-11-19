@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     self as libparsec_types, BlockAccess, BlockID, Blocksize, ChunkID, DataError, DataResult,
-    DateTime, DeviceID, FileManifest, VlobID, DEFAULT_BLOCK_SIZE,
+    DateTime, DeviceID, FileManifest, InvalidBlockSize, VlobID, DEFAULT_BLOCK_SIZE,
 };
 
 use super::impl_local_manifest_dump;
@@ -50,7 +50,7 @@ pub struct LocalFileManifest {
 parsec_data!("schema/local_manifest/local_file_manifest.json5");
 
 impl TryFrom<LocalFileManifestData> for LocalFileManifest {
-    type Error = &'static str;
+    type Error = InvalidBlockSize;
     fn try_from(data: LocalFileManifestData) -> Result<Self, Self::Error> {
         Ok(Self {
             base: data.base,

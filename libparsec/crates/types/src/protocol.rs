@@ -61,29 +61,31 @@ impl Display for ApiVersion {
     }
 }
 
+#[derive(thiserror::Error, Debug, PartialEq)]
+pub enum ParseApiVersionError {
+    #[error("Api version string must be follow this pattern `<version>.<revision>`")]
+    MissingSeparator,
+    #[error("Invalid version number: {0}")]
+    InvalidVersionNumber(std::num::ParseIntError),
+    #[error("Invalid revision number: {0}")]
+    InvalidRevisionNumber(std::num::ParseIntError),
+}
+
 impl TryFrom<&str> for ApiVersion {
-    type Error = &'static str;
+    type Error = ParseApiVersionError;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        if value.split('.').count() != 2 {
-            return Err(
-                "Wrong number of `.` version string must be follow this pattern `<version>.<revision>`"
-            );
-        }
-
         let (version_str, revision_str) = value
             .split_once('.')
-            .ok_or("Api version string must be follow this pattern `<version>.<revision>`")?;
+            .ok_or(ParseApiVersionError::MissingSeparator)?;
 
-        let version = version_str.parse::<u32>();
-        let revision = revision_str.parse::<u32>();
-        match (version, revision) {
-            (Ok(a), Ok(b)) => Ok(ApiVersion {
-                version: a,
-                revision: b,
-            }),
-            _ => Err("Failed to parse version number (<version>.<revision>)"),
-        }
+        let version = version_str
+            .parse::<u32>()
+            .map_err(ParseApiVersionError::InvalidVersionNumber)?;
+        let revision = revision_str
+            .parse::<u32>()
+            .map_err(ParseApiVersionError::InvalidRevisionNumber)?;
+        Ok(ApiVersion { version, revision })
     }
 }
 

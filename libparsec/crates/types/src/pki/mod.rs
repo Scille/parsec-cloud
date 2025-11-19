@@ -4,6 +4,7 @@ mod cert_ref;
 
 use std::{fmt::Display, str::FromStr};
 
+use anyhow::Context;
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 
@@ -126,12 +127,13 @@ impl PKILocalPendingEnrollment {
 parsec_data!("schema/pki/local_pending_enrollment.json5");
 
 impl TryFrom<PKILocalPendingEnrollmentData> for PKILocalPendingEnrollment {
-    type Error = &'static str;
+    // Can use anyhow since it's used by serde anyway
+    type Error = anyhow::Error;
 
     fn try_from(data: PKILocalPendingEnrollmentData) -> Result<Self, Self::Error> {
         let addr = {
             let server_addr =
-                ParsecAddr::from_http_url(&data.server_url).map_err(|_| "Invalid server URL")?;
+                ParsecAddr::from_http_url(&data.server_url).context("Invalid server URL")?;
             ParsecPkiEnrollmentAddr::new(server_addr, data.organization_id)
         };
         Ok(Self {
