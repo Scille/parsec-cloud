@@ -419,3 +419,18 @@ async def test_anonymous_pki_enrollment_submit_http_common_errors(
         )
 
     await anonymous_http_common_errors_tester(do)
+
+
+@pytest.mark.xfail(reason="TODO: https://github.com/Scille/parsec-cloud/issues/11648")
+async def test_anonymous_pki_enrollment_submit_invalid_der_x509_certificate() -> None:
+    raise NotImplementedError
+
+
+@pytest.mark.xfail(reason="TODO: https://github.com/Scille/parsec-cloud/issues/11648")
+async def test_anonymous_pki_enrollment_submit_invalid_payload_signature() -> None:
+    raise NotImplementedError
+
+
+@pytest.mark.xfail(reason="TODO: https://github.com/Scille/parsec-cloud/issues/11648")
+async def test_anonymous_pki_enrollment_submit_invalid_x509_trustchain() -> None:
+    raise NotImplementedError

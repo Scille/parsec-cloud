@@ -162,3 +162,54 @@ pub fn rep_invalid_payload() {
     let data2 = anonymous_cmds::pki_enrollment_submit::Rep::load(&raw2).unwrap();
     p_assert_eq!(data2, expected);
 }
+
+pub fn rep_invalid_payload_signature() {
+    // Generated from Parsec 3.5.3-a.0+dev
+    // Content:
+    //   status: 'invalid_payload_signature'
+    let raw: &[u8] =
+        hex!("81a6737461747573b9696e76616c69645f7061796c6f61645f7369676e6174757265").as_ref();
+    let expected = anonymous_cmds::pki_enrollment_submit::Rep::InvalidPayloadSignature {};
+    println!("***expected: {:?}", expected.dump().unwrap());
+
+    let data = anonymous_cmds::pki_enrollment_submit::Rep::load(raw).unwrap();
+    p_assert_eq!(data, expected);
+    let raw2 = data.dump().unwrap();
+    let data2 = anonymous_cmds::pki_enrollment_submit::Rep::load(&raw2).unwrap();
+    p_assert_eq!(data2, expected);
+}
+
+pub fn rep_invalid_x509_trustchain() {
+    // Generated from Parsec 3.5.3-a.0+dev
+    // Content:
+    //   status: 'invalid_x509_trustchain'
+    let raw: &[u8] =
+        hex!("81a6737461747573b7696e76616c69645f783530395f7472757374636861696e").as_ref();
+    let expected = anonymous_cmds::pki_enrollment_submit::Rep::InvalidX509Trustchain {};
+    println!("***expected: {:?}", expected.dump().unwrap());
+
+    let data = anonymous_cmds::pki_enrollment_submit::Rep::load(raw).unwrap();
+    p_assert_eq!(data, expected);
+    let raw2 = data.dump().unwrap();
+    let data2 = anonymous_cmds::pki_enrollment_submit::Rep::load(&raw2).unwrap();
+    p_assert_eq!(data2, expected);
+}
+
+pub fn rep_invalid_der_x509_certificate() {
+    // Generated from Parsec 3.5.3-a.0+dev
+    // Content:
+    //   status: 'invalid_der_x509_certificate'
+    let raw: &[u8] = hex!(
+        "81a6737461747573bc696e76616c69645f6465725f783530395f636572746966696361"
+        "7465"
+    )
+    .as_ref();
+    let expected = anonymous_cmds::pki_enrollment_submit::Rep::InvalidDerX509Certificate {};
+    println!("***expected: {:?}", expected.dump().unwrap());
+
+    let data = anonymous_cmds::pki_enrollment_submit::Rep::load(raw).unwrap();
+    p_assert_eq!(data, expected);
+    let raw2 = data.dump().unwrap();
+    let data2 = anonymous_cmds::pki_enrollment_submit::Rep::load(&raw2).unwrap();
+    p_assert_eq!(data2, expected);
+}

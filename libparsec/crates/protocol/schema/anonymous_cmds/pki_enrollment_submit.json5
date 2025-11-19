@@ -78,6 +78,17 @@
             {
                 // The server tries to deserialize the payload to check if it use the correct format.
                 "status": "invalid_payload"
+            },
+            {
+                // A provided x509 certificate is invalid
+                "status": "invalid_der_x509_certificate"
+            },
+            {
+                "status": "invalid_payload_signature"
+            },
+            {
+                // Cannot trust provided trustchain
+                "status": "invalid_x509_trustchain"
             }
         ]
     }
