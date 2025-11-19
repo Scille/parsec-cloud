@@ -18,6 +18,7 @@ pub use libparsec_client::{
 };
 pub use libparsec_client_connection::ConnectionError;
 use libparsec_platform_async::event::{Event, EventListener};
+use libparsec_platform_device_loader::RemoteOperationServer;
 use libparsec_types::prelude::*;
 pub use libparsec_types::RealmRole;
 
@@ -102,16 +103,22 @@ pub enum ClientStartError {
     /// access strategies (e.g. account vault), where the ciphertext key
     /// protecting the device is itself encrypted by an opaque key that
     /// must first be remotely fetched.
-    #[error("Cannot load device file: remote opaque key fetch failed: server rejection: {0}")]
+    #[error("Cannot load device file: no response from {server} server: {error}")]
     // We don't use `ConnectionError` here since this type only corresponds to
     // an answer from the Parsec server and here any arbitrary server may have
     // been (unsuccessfully) requested (e.g. OpenBao server).
-    LoadDeviceRemoteOpaqueKeyFetchOffline(anyhow::Error),
+    LoadDeviceRemoteOpaqueKeyFetchOffline {
+        server: RemoteOperationServer,
+        error: anyhow::Error,
+    },
     /// Note only a subset of load strategies requires server access to
     /// fetch an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
-    #[error("Cannot load device file: remote opaque key fetch failed: {0}")]
-    LoadDeviceRemoteOpaqueKeyFetchFailed(anyhow::Error),
+    #[error("Cannot load device file: {server} server opaque key fetch failed: {error}")]
+    LoadDeviceRemoteOpaqueKeyFetchFailed {
+        server: RemoteOperationServer,
+        error: anyhow::Error,
+    },
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -125,11 +132,11 @@ impl From<libparsec_platform_device_loader::LoadDeviceError> for ClientStartErro
             LoadDeviceError::InvalidData => Self::LoadDeviceInvalidData,
             LoadDeviceError::DecryptionFailed => Self::LoadDeviceDecryptionFailed,
             LoadDeviceError::Internal(e) => Self::Internal(e),
-            LoadDeviceError::RemoteOpaqueKeyFetchOffline(e) => {
-                Self::LoadDeviceRemoteOpaqueKeyFetchOffline(e)
+            LoadDeviceError::RemoteOpaqueKeyFetchOffline { server, error } => {
+                Self::LoadDeviceRemoteOpaqueKeyFetchOffline { server, error }
             }
-            LoadDeviceError::RemoteOpaqueKeyFetchFailed(e) => {
-                Self::LoadDeviceRemoteOpaqueKeyFetchFailed(e)
+            LoadDeviceError::RemoteOpaqueKeyFetchFailed { server, error } => {
+                Self::LoadDeviceRemoteOpaqueKeyFetchFailed { server, error }
             }
         }
     }

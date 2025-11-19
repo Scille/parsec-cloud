@@ -12,7 +12,7 @@ use libparsec_types::prelude::*;
 use crate::{
     web::wrapper::{DirEntry, DirOrFileHandle, OpenOptions},
     AccountVaultOperationsUploadOpaqueKeyError, AvailableDevice, DeviceSaveStrategy,
-    OpenBaoOperationsUploadOpaqueKeyError,
+    OpenBaoOperationsUploadOpaqueKeyError, RemoteOperationServer,
 };
 
 use super::{
@@ -154,16 +154,18 @@ impl Storage {
                     .upload_opaque_key()
                     .await
                     .map_err(|err| match err {
-                        // Note it's important to serialize the whole error (and not the sub-error
-                        // it wraps): by doing so we keep the information of which server was
-                        // involved (since different save strategy communicate with different
-                        // server, e.g. Parsec account vs OpenBao).
-                        err @ (AccountVaultOperationsUploadOpaqueKeyError::BadVaultKeyAccess(_)
-                        | AccountVaultOperationsUploadOpaqueKeyError::BadServerResponse(_)) => {
-                            SaveDeviceError::RemoteOpaqueKeyUploadFailed(err.into())
+                        AccountVaultOperationsUploadOpaqueKeyError::BadVaultKeyAccess(_)
+                        | AccountVaultOperationsUploadOpaqueKeyError::BadServerResponse(_) => {
+                            SaveDeviceError::RemoteOpaqueKeyUploadFailed {
+                                server: RemoteOperationServer::ParsecAccount,
+                                error: err.into(),
+                            }
                         }
-                        err @ AccountVaultOperationsUploadOpaqueKeyError::Offline(_) => {
-                            SaveDeviceError::RemoteOpaqueKeyUploadOffline(anyhow::anyhow!(err))
+                        AccountVaultOperationsUploadOpaqueKeyError::Offline(_) => {
+                            SaveDeviceError::RemoteOpaqueKeyUploadOffline {
+                                server: RemoteOperationServer::ParsecAccount,
+                                error: err.into(),
+                            }
                         }
                     })?;
 
@@ -189,16 +191,18 @@ impl Storage {
                     .upload_opaque_key()
                     .await
                     .map_err(|err| match err {
-                        // Note it's important to serialize the whole error (and not the sub-error
-                        // it wraps): by doing so we keep the information of which server was
-                        // involved (since different save strategy communicate with different
-                        // server, e.g. Parsec account vs OpenBao).
-                        err @ OpenBaoOperationsUploadOpaqueKeyError::NoServerResponse(_) => {
-                            SaveDeviceError::RemoteOpaqueKeyUploadOffline(anyhow::anyhow!(err))
+                        OpenBaoOperationsUploadOpaqueKeyError::NoServerResponse(_) => {
+                            SaveDeviceError::RemoteOpaqueKeyUploadOffline {
+                                server: RemoteOperationServer::ParsecAccount,
+                                error: err.into(),
+                            }
                         }
-                        err @ (OpenBaoOperationsUploadOpaqueKeyError::BadURL(_)
-                        | OpenBaoOperationsUploadOpaqueKeyError::BadServerResponse(_)) => {
-                            SaveDeviceError::RemoteOpaqueKeyUploadFailed(err.into())
+                        OpenBaoOperationsUploadOpaqueKeyError::BadURL(_)
+                        | OpenBaoOperationsUploadOpaqueKeyError::BadServerResponse(_) => {
+                            SaveDeviceError::RemoteOpaqueKeyUploadFailed {
+                                server: RemoteOperationServer::ParsecAccount,
+                                error: err.into(),
+                            }
                         }
                     })?;
 

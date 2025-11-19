@@ -19,6 +19,7 @@ pub use libparsec_account::{
     AccountUploadOpaqueKeyInVaultError, AuthMethodInfo,
 };
 use libparsec_client_connection::{AnonymousAccountCmds, ConnectionError, ProxyConfig};
+use libparsec_platform_device_loader::{LoadDeviceError, RemoteOperationServer};
 use libparsec_types::prelude::*;
 
 use crate::{
@@ -381,31 +382,38 @@ pub enum AccountCreateRegistrationDeviceError {
     /// Note only a subset of load strategies requires server access to
     /// fetch an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
-    #[error("Remote opaque key fetch failed: server rejection: {0}")]
+    #[error("No response from {server} server: {error}")]
     // We don't use `ConnectionError` here since this type only corresponds to
     // an answer from the Parsec server and here any arbitrary server may have
     // been (unsuccessfully) requested (e.g. OpenBao server).
-    RemoteOpaqueKeyFetchOffline(anyhow::Error),
+    RemoteOpaqueKeyFetchOffline {
+        server: RemoteOperationServer,
+        error: anyhow::Error,
+    },
     /// Note only a subset of load strategies requires server access to
     /// fetch an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
-    #[error("Remote opaque key fetch failed: {0}")]
-    RemoteOpaqueKeyFetchFailed(anyhow::Error),
+    #[error("{server} server opaque key fetch failed: {error}")]
+    RemoteOpaqueKeyFetchFailed {
+        server: RemoteOperationServer,
+        error: anyhow::Error,
+    },
 }
 
-impl From<libparsec_platform_device_loader::LoadDeviceError>
-    for AccountCreateRegistrationDeviceError
-{
-    fn from(value: libparsec_platform_device_loader::LoadDeviceError) -> Self {
-        use libparsec_platform_device_loader::LoadDeviceError;
+impl From<LoadDeviceError> for AccountCreateRegistrationDeviceError {
+    fn from(value: LoadDeviceError) -> Self {
         match value {
             e @ LoadDeviceError::StorageNotAvailable => Self::LoadDeviceInvalidPath(e.into()),
             LoadDeviceError::InvalidPath(err) => Self::LoadDeviceInvalidPath(err),
             LoadDeviceError::InvalidData => Self::LoadDeviceInvalidData,
             LoadDeviceError::DecryptionFailed => Self::LoadDeviceDecryptionFailed,
             LoadDeviceError::Internal(e) => Self::Internal(e),
-            LoadDeviceError::RemoteOpaqueKeyFetchOffline(e) => Self::RemoteOpaqueKeyFetchOffline(e),
-            LoadDeviceError::RemoteOpaqueKeyFetchFailed(e) => Self::RemoteOpaqueKeyFetchFailed(e),
+            LoadDeviceError::RemoteOpaqueKeyFetchOffline { server, error } => {
+                Self::RemoteOpaqueKeyFetchOffline { server, error }
+            }
+            LoadDeviceError::RemoteOpaqueKeyFetchFailed { server, error } => {
+                Self::RemoteOpaqueKeyFetchFailed { server, error }
+            }
         }
     }
 }

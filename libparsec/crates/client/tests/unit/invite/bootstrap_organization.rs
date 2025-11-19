@@ -214,9 +214,7 @@ async fn bad_finalize(
                     .save_local_device(&save_strategy, &key_file)
                     .await,
                 Err(
-                    OrganizationBootstrapFinalizeSaveLocalDeviceError::RemoteOpaqueKeyUploadOffline(
-                        _
-                    )
+                    OrganizationBootstrapFinalizeSaveLocalDeviceError::RemoteOpaqueKeyUploadOffline { .. }
                 )
             );
         }
@@ -259,9 +257,7 @@ async fn bad_finalize(
                     .save_local_device(&save_strategy, &key_file)
                     .await,
                 Err(
-                    OrganizationBootstrapFinalizeSaveLocalDeviceError::RemoteOpaqueKeyUploadFailed(
-                        _
-                    )
+                    OrganizationBootstrapFinalizeSaveLocalDeviceError::RemoteOpaqueKeyUploadFailed { .. }
                 )
             );
         }
