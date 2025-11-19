@@ -5,7 +5,7 @@ use std::path::Path;
 use libparsec_client_connection::{AuthenticatedCmds, ConnectionError, ProxyConfig};
 use libparsec_platform_device_loader::{
     get_default_key_file, save_device, AvailableDevice, DeviceSaveStrategy,
-    LoadRecoveryDeviceError, SaveDeviceError,
+    LoadRecoveryDeviceError, RemoteOperationServer, SaveDeviceError,
 };
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_protocol::authenticated_cmds::latest::device_create;
@@ -134,16 +134,22 @@ pub enum ImportRecoveryDeviceError {
     DecryptionFailed,
     #[error(transparent)]
     InvalidPath(anyhow::Error),
-    #[error("Remote opaque key upload failed from server rejection: {0}")]
+    #[error("No response from {server} server: {error}")]
     // We don't use `ConnectionError` here since this type only corresponds to
     // an answer from the Parsec server and here any arbitrary server may have
     // been (unsuccessfully) requested (e.g. OpenBao server).
-    RemoteOpaqueKeyUploadOffline(anyhow::Error),
+    RemoteOpaqueKeyUploadOffline {
+        server: RemoteOperationServer,
+        error: anyhow::Error,
+    },
     /// Note only a subset of save strategies requires server access to
     /// upload an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
-    #[error("Remote opaque key upload failed: {0}")]
-    RemoteOpaqueKeyUploadFailed(anyhow::Error),
+    #[error("{server} server opaque key upload failed: {error}")]
+    RemoteOpaqueKeyUploadFailed {
+        server: RemoteOperationServer,
+        error: anyhow::Error,
+    },
 }
 
 impl From<LoadRecoveryDeviceError> for ImportRecoveryDeviceError {
@@ -186,11 +192,11 @@ impl From<SaveDeviceError> for ImportRecoveryDeviceError {
             SaveDeviceError::StorageNotAvailable => ImportRecoveryDeviceError::StorageNotAvailable,
             SaveDeviceError::InvalidPath(error) => ImportRecoveryDeviceError::InvalidPath(error),
             SaveDeviceError::Internal(error) => ImportRecoveryDeviceError::Internal(error),
-            SaveDeviceError::RemoteOpaqueKeyUploadOffline(error) => {
-                ImportRecoveryDeviceError::RemoteOpaqueKeyUploadOffline(error)
+            SaveDeviceError::RemoteOpaqueKeyUploadOffline { server, error } => {
+                ImportRecoveryDeviceError::RemoteOpaqueKeyUploadOffline { server, error }
             }
-            SaveDeviceError::RemoteOpaqueKeyUploadFailed(error) => {
-                ImportRecoveryDeviceError::RemoteOpaqueKeyUploadFailed(error)
+            SaveDeviceError::RemoteOpaqueKeyUploadFailed { server, error } => {
+                ImportRecoveryDeviceError::RemoteOpaqueKeyUploadFailed { server, error }
             }
         }
     }

@@ -5,7 +5,8 @@ use std::sync::Arc;
 use libparsec_client::RegisterNewDeviceError;
 use libparsec_client_connection::{AuthenticatedCmds, ConnectionError};
 use libparsec_platform_device_loader::{
-    get_default_key_file, save_device, AvailableDevice, DeviceSaveStrategy, SaveDeviceError,
+    get_default_key_file, save_device, AvailableDevice, DeviceSaveStrategy, RemoteOperationServer,
+    SaveDeviceError,
 };
 use libparsec_types::prelude::*;
 
@@ -34,19 +35,22 @@ pub enum AccountRegisterNewDeviceError {
         ballpark_client_early_offset: f64,
         ballpark_client_late_offset: f64,
     },
-    /// Note only a subset of save strategies requires server access to
-    /// upload an opaque key that itself protects the ciphertext key
-    /// (e.g. account vault).
-    #[error("Remote opaque key upload failed from server rejection: {0}")]
+    #[error("No response from {server} server: {error}")]
     // We don't use `ConnectionError` here since this type only corresponds to
     // an answer from the Parsec server and here any arbitrary server may have
     // been (unsuccessfully) requested (e.g. OpenBao server).
-    RemoteOpaqueKeyUploadOffline(anyhow::Error),
+    RemoteOpaqueKeyUploadOffline {
+        server: RemoteOperationServer,
+        error: anyhow::Error,
+    },
     /// Note only a subset of save strategies requires server access to
     /// upload an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
-    #[error("Remote opaque key upload failed: {0}")]
-    RemoteOpaqueKeyUploadFailed(anyhow::Error),
+    #[error("{server} server opaque key upload failed: {error}")]
+    RemoteOpaqueKeyUploadFailed {
+        server: RemoteOperationServer,
+        error: anyhow::Error,
+    },
 }
 
 pub(super) async fn account_register_new_device(
@@ -151,11 +155,11 @@ pub(super) async fn account_register_new_device(
                     AccountRegisterNewDeviceError::InvalidPath(error)
                 }
                 SaveDeviceError::Internal(error) => AccountRegisterNewDeviceError::Internal(error),
-                SaveDeviceError::RemoteOpaqueKeyUploadOffline(error) => {
-                    AccountRegisterNewDeviceError::RemoteOpaqueKeyUploadOffline(error)
+                SaveDeviceError::RemoteOpaqueKeyUploadOffline { server, error } => {
+                    AccountRegisterNewDeviceError::RemoteOpaqueKeyUploadOffline { server, error }
                 }
-                SaveDeviceError::RemoteOpaqueKeyUploadFailed(error) => {
-                    AccountRegisterNewDeviceError::RemoteOpaqueKeyUploadFailed(error)
+                SaveDeviceError::RemoteOpaqueKeyUploadFailed { server, error } => {
+                    AccountRegisterNewDeviceError::RemoteOpaqueKeyUploadFailed { server, error }
                 }
             })?;
 

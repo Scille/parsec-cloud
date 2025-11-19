@@ -11,8 +11,9 @@ use libparsec_types::prelude::*;
 use crate::{
     AccountVaultOperationsFetchOpaqueKeyError, ArchiveDeviceError, AvailableDevice,
     DeviceAccessStrategy, DeviceSaveStrategy, ListAvailableDeviceError, ListPkiLocalPendingError,
-    LoadCiphertextKeyError, OpenBaoOperationsFetchOpaqueKeyError, ReadFileError, RemoveDeviceError,
-    SaveDeviceError, SavePkiLocalPendingError, UpdateDeviceError,
+    LoadCiphertextKeyError, OpenBaoOperationsFetchOpaqueKeyError, ReadFileError,
+    RemoteOperationServer, RemoveDeviceError, SaveDeviceError, SavePkiLocalPendingError,
+    UpdateDeviceError,
 };
 use internal::Storage;
 
@@ -87,16 +88,16 @@ pub(super) async fn load_ciphertext_key(
                         AccountVaultOperationsFetchOpaqueKeyError::BadVaultKeyAccess(_)
                         | AccountVaultOperationsFetchOpaqueKeyError::UnknownOpaqueKey
                         | AccountVaultOperationsFetchOpaqueKeyError::CorruptedOpaqueKey => {
-                            LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed(err.into())
+                            LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed {
+                                server: RemoteOperationServer::ParsecAccount,
+                                error: err.into(),
+                            }
                         }
-                        // Note it's important to serialize the whole error (and not the sub-error
-                        // it wraps): by doing so we keep the information of which server was
-                        // involved (since different save strategy communicate with different
-                        // server, e.g. Parsec account vs OpenBao).
-                        err @ AccountVaultOperationsFetchOpaqueKeyError::Offline(_) => {
-                            LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline(anyhow::anyhow!(
-                                err
-                            ))
+                        AccountVaultOperationsFetchOpaqueKeyError::Offline(_) => {
+                            LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline {
+                                server: RemoteOperationServer::ParsecAccount,
+                                error: err.into(),
+                            }
                         }
                         AccountVaultOperationsFetchOpaqueKeyError::Internal(err) => {
                             LoadCiphertextKeyError::Internal(err)
@@ -114,18 +115,18 @@ pub(super) async fn load_ciphertext_key(
                     .fetch_opaque_key(device.openbao_ciphertext_key_path.clone())
                     .await
                     .map_err(|err| match err {
-                        // Note it's important to serialize the whole error (and not the sub-error
-                        // it wraps): by doing so we keep the information of which server was
-                        // involved (since different save strategy communicate with different
-                        // server, e.g. Parsec account vs OpenBao).
-                        err @ (OpenBaoOperationsFetchOpaqueKeyError::BadURL(_)
-                        | OpenBaoOperationsFetchOpaqueKeyError::BadServerResponse(_)) => {
-                            LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed(anyhow::anyhow!(err))
+                        OpenBaoOperationsFetchOpaqueKeyError::BadURL(_)
+                        | OpenBaoOperationsFetchOpaqueKeyError::BadServerResponse(_) => {
+                            LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed {
+                                server: RemoteOperationServer::OpenBao,
+                                error: err.into(),
+                            }
                         }
-                        err @ OpenBaoOperationsFetchOpaqueKeyError::NoServerResponse(_) => {
-                            LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline(anyhow::anyhow!(
-                                err
-                            ))
+                        OpenBaoOperationsFetchOpaqueKeyError::NoServerResponse(_) => {
+                            LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline {
+                                server: RemoteOperationServer::OpenBao,
+                                error: err.into(),
+                            }
                         }
                     })?;
                 Ok(ciphertext_key)

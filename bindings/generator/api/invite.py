@@ -76,6 +76,9 @@ class BootstrapOrganizationError(ErrorVariant):
     class SaveDeviceRemoteOpaqueKeyUploadFailed:
         pass
 
+    class SaveDeviceRemoteOpaqueKeyUploadOffline:
+        pass
+
     class Internal:
         pass
 

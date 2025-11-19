@@ -102,6 +102,9 @@ impl OpenBaoCmds {
             OpenBaoFetchOpaqueKeyError::BadServerResponse(anyhow::anyhow!("Not JSON: {:?}", err))
         })?;
 
+        // Note this won't panic field is missing: instead a `serde_json::Value` object
+        // representing `undefined` is returned that will itself return another
+        // `undefined` if another field is looked into it.
         let key = rep_json["data"]["data"]["opaque_key"]
             .as_str()
             .and_then(|b64_raw| {

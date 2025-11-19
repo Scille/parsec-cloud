@@ -521,11 +521,11 @@ pub(crate) fn maybe_update_device(
                     LoadDeviceError::InvalidData => UpdateDeviceError::InvalidData,
                     LoadDeviceError::DecryptionFailed => UpdateDeviceError::DecryptionFailed,
                     LoadDeviceError::Internal(err) => UpdateDeviceError::Internal(err),
-                    LoadDeviceError::RemoteOpaqueKeyFetchOffline(err) => {
-                        UpdateDeviceError::RemoteOpaqueKeyOperationOffline(err)
+                    LoadDeviceError::RemoteOpaqueKeyFetchOffline { server, error } => {
+                        UpdateDeviceError::RemoteOpaqueKeyOperationOffline { server, error }
                     }
-                    LoadDeviceError::RemoteOpaqueKeyFetchFailed(err) => {
-                        UpdateDeviceError::RemoteOpaqueKeyOperationFailed(err)
+                    LoadDeviceError::RemoteOpaqueKeyFetchFailed { server, error } => {
+                        UpdateDeviceError::RemoteOpaqueKeyOperationFailed { server, error }
                     }
                 }))
             }
@@ -558,11 +558,11 @@ pub(crate) fn maybe_update_device(
                     SaveDeviceError::StorageNotAvailable => UpdateDeviceError::StorageNotAvailable,
                     SaveDeviceError::InvalidPath(err) => UpdateDeviceError::InvalidPath(err),
                     SaveDeviceError::Internal(err) => UpdateDeviceError::Internal(err),
-                    SaveDeviceError::RemoteOpaqueKeyUploadOffline(err) => {
-                        UpdateDeviceError::RemoteOpaqueKeyOperationOffline(err)
+                    SaveDeviceError::RemoteOpaqueKeyUploadOffline { server, error } => {
+                        UpdateDeviceError::RemoteOpaqueKeyOperationOffline { server, error }
                     }
-                    SaveDeviceError::RemoteOpaqueKeyUploadFailed(err) => {
-                        UpdateDeviceError::RemoteOpaqueKeyOperationFailed(err)
+                    SaveDeviceError::RemoteOpaqueKeyUploadFailed { server, error } => {
+                        UpdateDeviceError::RemoteOpaqueKeyOperationFailed { server, error }
                     }
                 }))
             }

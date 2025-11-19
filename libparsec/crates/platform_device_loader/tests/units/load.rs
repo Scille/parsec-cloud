@@ -314,8 +314,8 @@ async fn remote_error(
 
             p_assert_matches!(
                 load_device(&tmp_path, &access_strategy).await.unwrap_err(),
-                err @ LoadDeviceError::RemoteOpaqueKeyFetchOffline(_)
-                if err.to_string() == "Remote opaque key fetch failed from server rejection: Cannot communicate with the Parsec account server: Failed to retrieve the response: Server unavailable"
+                err @ LoadDeviceError::RemoteOpaqueKeyFetchOffline { .. }
+                if err.to_string() == "No response from Parsec account server: Cannot communicate with the server: Failed to retrieve the response: Server unavailable"
             );
         }
 
@@ -326,8 +326,8 @@ async fn remote_error(
 
             p_assert_matches!(
                 load_device(&tmp_path, &access_strategy).await.unwrap_err(),
-                err @ LoadDeviceError::RemoteOpaqueKeyFetchFailed(_)
-                if err.to_string() == "Remote opaque key fetch failed: No opaque key with this ID among the vault items in the Parsec account server"
+                err @ LoadDeviceError::RemoteOpaqueKeyFetchFailed { .. }
+                if err.to_string() == "Parsec account server opaque key fetch failed: No opaque key with this ID among the vault items in the server"
             );
         }
 
