@@ -109,7 +109,7 @@
 
         <ion-item
           button
-          v-show="isDesktop() && !isHidden"
+          v-show="!isHidden"
           @click="onClick(WorkspaceAction.UnMount)"
           class="ion-no-padding list-group-item"
         >
@@ -123,7 +123,7 @@
         </ion-item>
         <ion-item
           button
-          v-show="isDesktop() && isHidden"
+          v-show="isHidden"
           @click="onClick(WorkspaceAction.Mount)"
           class="ion-no-padding list-group-item"
         >
