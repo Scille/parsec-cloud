@@ -23,9 +23,10 @@ import { WorkspaceAttributes } from '@/services/workspaceAttributes';
 import SmallDisplayWorkspaceContextMenu from '@/views/workspaces/SmallDisplayWorkspaceContextMenu.vue';
 import { WorkspaceAction } from '@/views/workspaces/types';
 import WorkspaceContextMenu from '@/views/workspaces/WorkspaceContextMenu.vue';
+import WorkspaceHiddenModal from '@/views/workspaces/WorkspaceHiddenModal.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
 import { modalController, popoverController } from '@ionic/vue';
-import { Clipboard, DisplayState, Translatable, getTextFromUser } from 'megashark-lib';
+import { Clipboard, DisplayState, MsModalResult, Translatable, getTextFromUser } from 'megashark-lib';
 
 export const WORKSPACES_PAGE_DATA_KEY = 'WorkspacesPage';
 
@@ -193,8 +194,7 @@ export async function openWorkspaceContextMenu(
         await mountWorkspace(workspace.handle);
         break;
       case WorkspaceAction.UnMount:
-        workspaceAttributes.toggleHidden(workspace.id);
-        await unmountWorkspace(workspace);
+        await openUnmountWorkspaceConfirmation(workspaceAttributes, workspace);
         break;
       default:
         console.warn('No WorkspaceAction match found');
@@ -262,6 +262,26 @@ async function renameWorkspace(workspace: WorkspaceInfo, newName: WorkspaceName,
       PresentationMode.Toast,
     );
   }
+}
+
+async function openUnmountWorkspaceConfirmation(
+  workspaceAttributes: WorkspaceAttributes,
+  workspace: WorkspaceInfo,
+): Promise<void> {
+  const modal = await modalController.create({
+    component: WorkspaceHiddenModal,
+    cssClass: 'workspace-hidden-modal',
+    componentProps: {
+      workspaceName: workspace.handle,
+    },
+  });
+  await modal.present();
+  const { data, role } = await modal.onWillDismiss();
+  await modal.dismiss();
+  if (role === MsModalResult.Confirm && data) {
+    workspaceAttributes.toggleHidden(workspace.id);
+    await unmountWorkspace(workspace);
+  };
 }
 
 async function openRenameWorkspaceModal(
