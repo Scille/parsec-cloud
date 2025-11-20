@@ -118,7 +118,7 @@
             :icon="eyeOff"
           />
           <ion-text class="body list-group-item__label">
-            {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionUnMount') }}
+            {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionHide') }}
           </ion-text>
         </ion-item>
         <ion-item
@@ -132,7 +132,7 @@
             :icon="eye"
           />
           <ion-text class="body list-group-item__label">
-            {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionMount') }}
+            {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionShow') }}
           </ion-text>
         </ion-item>
       </ion-item-group>
