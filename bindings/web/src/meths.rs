@@ -14235,6 +14235,33 @@ fn variant_pki_get_addr_error_rs_to_js(
     Ok(js_obj)
 }
 
+// RemoveDeviceError
+
+#[allow(dead_code)]
+fn variant_remove_device_error_rs_to_js(
+    rs_obj: libparsec::RemoveDeviceError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::RemoveDeviceError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"RemoveDeviceErrorInternal".into())?;
+        }
+        libparsec::RemoveDeviceError::NotFound { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"RemoveDeviceErrorNotFound".into())?;
+        }
+        libparsec::RemoveDeviceError::StorageNotAvailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"RemoveDeviceErrorStorageNotAvailable".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // SelfShamirRecoveryInfo
 
 #[allow(dead_code)]
@@ -22589,6 +22616,43 @@ pub fn pkiEnrollmentSubmit(
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_pki_enrollment_submit_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// pki_remove_local_pending
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn pkiRemoveLocalPending(config: Object, id: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config = config.into();
+        let config = struct_client_config_js_to_rs(config)?;
+
+        let id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::PKIEnrollmentID, _> {
+                libparsec::PKIEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::pki_remove_local_pending(config, id).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_remove_device_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

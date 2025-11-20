@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use libparsec_client::{AvailableDevice, PKIInfoItem, PkiEnrollmentInfoError};
 pub use libparsec_client::{PkiEnrollmentFinalizeError, PkiEnrollmentSubmitError};
+pub use libparsec_platform_device_loader::RemoveDeviceError;
 pub use libparsec_platform_pki::ShowCertificateSelectionDialogError;
 use libparsec_types::{
     DateTime, DeviceLabel, HumanHandle, PKIEnrollmentID, PKILocalPendingEnrollment,
@@ -51,7 +52,6 @@ pub async fn pki_enrollment_finalize(
     let strategy = save_strategy
         .convert_with_side_effects()
         .map_err(PkiEnrollmentFinalizeError::Internal)?;
-    let config: Arc<libparsec_client::ClientConfig> = config.into();
 
     let config_dir = &config.config_dir;
     let key_file =
@@ -72,4 +72,13 @@ pub async fn pki_enrollment_info(
     enrollment_id: PKIEnrollmentID,
 ) -> Result<PKIInfoItem, PkiEnrollmentInfoError> {
     libparsec_client::pki_enrollment_info(config.into(), addr, enrollment_id).await
+}
+
+pub async fn pki_remove_local_pending(
+    config: ClientConfig,
+    id: PKIEnrollmentID,
+) -> Result<(), RemoveDeviceError> {
+    let path =
+        libparsec_platform_device_loader::get_default_local_pending_file(&config.config_dir, id);
+    libparsec_platform_device_loader::remove_device(&config.config_dir, &path).await
 }

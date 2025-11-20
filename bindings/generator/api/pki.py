@@ -11,7 +11,9 @@ from .common import (
     DeviceLabel,
     ErrorVariant,
     HumanHandle,
+    Path,
     PKIEnrollmentID,
+    Ref,
     Result,
     StrBasedType,
     Structure,
@@ -19,12 +21,9 @@ from .common import (
     UserProfile,
     Variant,
     X509CertificateReference,
-    Path,
-    Ref,
-    Variant,
 )
 from .config import ClientConfig
-from .device import AvailableDevice, DeviceSaveStrategy
+from .device import AvailableDevice, DeviceSaveStrategy, RemoveDeviceError
 
 
 class PkiSignatureAlgorithm(StrBasedType):
@@ -264,4 +263,10 @@ class PkiEnrollmentInfoError(ErrorVariant):
 async def pki_enrollment_info(
     config: ClientConfig, addr: ParsecPkiEnrollmentAddr, enrollment_id: PKIEnrollmentID
 ) -> Result[PKIInfoItem, PkiEnrollmentInfoError]:
+    raise NotImplementedError
+
+
+async def pki_remove_local_pending(
+    config: ClientConfig, id: PKIEnrollmentID
+) -> Result[None, RemoveDeviceError]:
     raise NotImplementedError
