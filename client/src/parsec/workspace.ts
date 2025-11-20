@@ -33,7 +33,6 @@ import {
 } from '@/parsec/types';
 import { generateNoHandleError } from '@/parsec/utils';
 import { MountpointUnmountError, WorkspaceStopError, libparsec } from '@/plugins/libparsec';
-import { MountpointUnmountError, WorkspaceStopError, libparsec } from '@/plugins/libparsec';
 import { getConnectionHandle } from '@/router';
 import { DateTime } from 'luxon';
 
