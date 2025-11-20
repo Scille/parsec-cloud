@@ -18,6 +18,7 @@ from parsec._parsec import (
     SecretKey,
 )
 from parsec.email_rate_limit import EmailRateLimit
+from parsec.templates import get_environment
 
 if TYPE_CHECKING:
     from parsec.components.memory.organization import MemoryOrganization, OrganizationID
@@ -252,7 +253,7 @@ class OpenBaoConfig:
 @dataclass(slots=True, kw_only=True)
 class BackendConfig:
     debug: bool
-    jinja_env: Environment
+    jinja_env: Environment = field(default_factory=lambda: get_environment(None))
     db_config: BaseDatabaseConfig
     blockstore_config: BaseBlockStoreConfig
     email_config: SmtpEmailConfig | MockedEmailConfig
@@ -266,11 +267,11 @@ class BackendConfig:
     # Bearer token used to authenticate the administration API
     administration_token: str
 
-    # Minimal wait time (in seconds) between two email having the same recipient or initiator IP address
-    email_rate_limit_cooldown_delay: int
-    # Maximum number of mail send per hour for any given recipient or initiator IP address
-    # Note setting it to `0` disable the check.
-    email_rate_limit_max_per_hour: int
+    # Minimal wait time (in seconds) between two emails having the same recipient or initiator IP address
+    email_rate_limit_cooldown_delay: int = 0
+    # Maximum number of mails sent per hour for any given recipient or initiator IP address
+    # Note setting it to `0` disables the check.
+    email_rate_limit_max_per_hour: int = 0
     # Small hack here: since the rate limit system is purely in-memory and configured
     # only by fields from this class, we instantiate here to simplify passing it
     # to the different components needing it.
