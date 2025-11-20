@@ -1,5 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+// TODO: This test has been disabled since OpenBao support is currently broken
+//       in the GUI.
+//       This test will be fixed by PR https://github.com/Scille/parsec-cloud/pull/11639
+
 import { Locator, Page } from '@playwright/test';
 import { DEFAULT_USER_INFORMATION, expect, fillIonInput, logout, mockSso, MsPage, msTest, setupNewPage } from '@tests/e2e/helpers';
 import { OPEN_BAO_SERVER } from '@tests/e2e/helpers/sso';
