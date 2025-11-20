@@ -222,6 +222,7 @@ import {
 import { EntrySyncStatus } from '@/components/files/types';
 import SmallDisplayHeaderTitle from '@/components/header/SmallDisplayHeaderTitle.vue';
 import { WorkspaceRoleTag } from '@/components/workspaces';
+import { showWorkspace } from '@/components/workspaces/utils';
 import {
   ClientInfo,
   EntryName,
@@ -259,6 +260,7 @@ import {
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
+import { useWorkspaceAttributes } from '@/services/workspaceAttributes';
 import {
   FileAction,
   FileDetailsModal,
@@ -276,6 +278,7 @@ import { arrowRedo, create, download, duplicate, eye, folderOpen, informationCir
 import { Ref, computed, inject, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const customTabBar = useCustomTabBar();
+const workspaceAttributes = useWorkspaceAttributes();
 
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 
@@ -1387,6 +1390,23 @@ async function openEntries(entries: EntryModel[], options: OpenPathOptions): Pro
   const entry = entries[0] as EntryStatFile;
   const workspaceHandle = workspaceInfo.value.handle;
 
+  if (workspaceAttributes.isHidden(workspaceInfo.value.id)) {
+    const answer = await askQuestion(
+      'WorkspacesPage.openInExplorerModal.file.title',
+      'WorkspacesPage.openInExplorerModal.file.description',
+      {
+        yesText: 'WorkspacesPage.openInExplorerModal.actionConfirm',
+        noText: 'WorkspacesPage.openInExplorerModal.actionCancel',
+      },
+    );
+
+    if (answer === Answer.Yes) {
+      await showWorkspace(workspaceInfo.value, workspaceAttributes, informationManager);
+      await openPath(workspaceHandle, entry.path, informationManager, fileOperationManager, options);
+    }
+    return;
+  }
+
   await openPath(workspaceHandle, entry.path, informationManager, fileOperationManager, options);
   selectionEnabled.value = false;
 }
@@ -1509,6 +1529,22 @@ async function seeInExplorer(entries: EntryModel[]): Promise<void> {
     return;
   }
   if (entries[0].isFile()) {
+    if (workspaceAttributes.isHidden(workspaceInfo.value.id)) {
+      const answer = await askQuestion(
+        'WorkspacesPage.openInExplorerModal.file.title',
+        'WorkspacesPage.openInExplorerModal.file.description',
+        {
+          yesText: 'WorkspacesPage.openInExplorerModal.actionConfirm',
+          noText: 'WorkspacesPage.openInExplorerModal.actionCancel',
+        },
+      );
+
+      if (answer === Answer.Yes) {
+        await showWorkspace(workspaceInfo.value, workspaceAttributes, informationManager);
+        await showInExplorer(workspaceInfo.value.handle, entries[0].path, informationManager);
+      }
+      return;
+    }
     await showInExplorer(workspaceInfo.value.handle, entries[0].path, informationManager);
   } else {
     await openPath(workspaceInfo.value.handle, entries[0].path, informationManager, fileOperationManager, { skipViewers: true });
