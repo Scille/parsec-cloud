@@ -150,9 +150,9 @@ import {
   ClaimInProgressErrorTag,
   DeviceClaim,
   DeviceSaveStrategy,
-  ParsedParsecAddrInvitationDevice,
-  ParsedParsecAddrTag,
-  parseParsecAddr,
+  ParsedParsecAnyAddrInvitationDevice,
+  ParsedParsecAnyAddrTag,
+  parseParsecAnyAddr,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
@@ -181,7 +181,7 @@ enum DeviceJoinOrganizationStep {
 
 const { isLargeDisplay } = useWindowSize();
 const pageStep = ref(DeviceJoinOrganizationStep.Information);
-const serverAddr = ref<ParsedParsecAddrInvitationDevice | null>(null);
+const serverAddr = ref<ParsedParsecAnyAddrInvitationDevice | null>(null);
 const claimer = ref(new DeviceClaim());
 const authChoiceRef = useTemplateRef<InstanceType<typeof ChooseAuthentication>>('authChoice');
 const cancelled = ref(false);
@@ -449,10 +449,10 @@ async function restartProcess(): Promise<void> {
 }
 
 onMounted(async () => {
-  const addrResult = await parseParsecAddr(props.invitationLink);
+  const addrResult = await parseParsecAnyAddr(props.invitationLink);
 
-  if (addrResult.ok && addrResult.value.tag === ParsedParsecAddrTag.InvitationDevice) {
-    serverAddr.value = addrResult.value as ParsedParsecAddrInvitationDevice;
+  if (addrResult.ok && addrResult.value.tag === ParsedParsecAnyAddrTag.InvitationDevice) {
+    serverAddr.value = addrResult.value as ParsedParsecAnyAddrInvitationDevice;
   }
   await startProcess();
 });

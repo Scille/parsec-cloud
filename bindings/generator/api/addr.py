@@ -47,12 +47,12 @@ class ParsecPkiEnrollmentAddr(StrBasedType):
     custom_to_rs_string = "|addr: libparsec::ParsecPkiEnrollmentAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
 
 
-class ParseParsecAddrError(ErrorVariant):
+class ParseParsecAnyAddrError(ErrorVariant):
     class InvalidUrl:
         pass
 
 
-class ParsedParsecAddr(Variant):
+class ParsedParsecAnyAddr(Variant):
     class Server:
         hostname: str
         port: U16
@@ -116,7 +116,7 @@ class ParsedParsecAddr(Variant):
         organization_id: OrganizationID
 
 
-def parse_parsec_addr(url: Ref[str]) -> Result[ParsedParsecAddr, ParseParsecAddrError]:
+def parse_parsec_any_addr(url: Ref[str]) -> Result[ParsedParsecAnyAddr, ParseParsecAnyAddrError]:
     raise NotImplementedError
 
 

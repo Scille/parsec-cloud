@@ -21,9 +21,9 @@ import {
   OrganizationInfo,
   OrganizationInfoError,
   OrganizationInfoErrorTag,
-  ParseParsecAddrError,
+  ParseParsecAnyAddrError,
   ParsecAddr,
-  ParsedParsecAddr,
+  ParsedParsecAnyAddr,
   Result,
   UserProfile,
 } from '@/parsec/types';
@@ -105,8 +105,8 @@ export async function bootstrapOrganization(
   return result;
 }
 
-export async function parseParsecAddr(addr: string): Promise<Result<ParsedParsecAddr, ParseParsecAddrError>> {
-  return await libparsec.parseParsecAddr(addr);
+export async function parseParsecAnyAddr(addr: string): Promise<Result<ParsedParsecAnyAddr, ParseParsecAnyAddrError>> {
+  return await libparsec.parseParsecAnyAddr(addr);
 }
 
 export async function getOrganizationInfo(): Promise<Result<OrganizationInfo, OrganizationInfoError>> {

@@ -2,7 +2,7 @@
 
 import { getDefaultDeviceName } from '@/common/device';
 import { getClientInfo } from '@/parsec/login';
-import { getOrganizationInfo, parseParsecAddr } from '@/parsec/organization';
+import { getOrganizationInfo, parseParsecAnyAddr } from '@/parsec/organization';
 import {
   AvailableDevice,
   AvailableDeviceTypeTag,
@@ -257,7 +257,7 @@ const REQUESTS: Array<_Request> = [];
 export async function requestJoinOrganization(
   link: ParsecOrganizationAddr,
 ): Promise<Result<LocalJoinRequest, RequestJoinOrganizationError>> {
-  const result = await parseParsecAddr(link);
+  const result = await parseParsecAnyAddr(link);
   if (!result.ok) {
     throw new Error(`Invalid ParsecOrganizationAddr \`${link}\``);
   }
