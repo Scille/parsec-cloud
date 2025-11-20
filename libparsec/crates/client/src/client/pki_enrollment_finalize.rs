@@ -77,5 +77,16 @@ pub async fn finalize(
         libparsec_platform_device_loader::save_device(config_dir, strategy, &device, key_file)
             .await?;
 
+    let local_pending_path = libparsec_platform_device_loader::get_default_local_pending_file(
+        config_dir,
+        local_pending.enrollment_id,
+    );
+    // Remove local pending part as best effort.
+    drop(
+        libparsec_platform_device_loader::remove_device(config_dir, &local_pending_path)
+            .await
+            .inspect_err(|err| log::warn!(err:%; "Failed to remove pki local pending file")),
+    );
+
     Ok(available_device)
 }
