@@ -3630,6 +3630,30 @@ export interface PkiGetAddrErrorInternal {
 export type PkiGetAddrError =
   | PkiGetAddrErrorInternal
 
+// RemoveDeviceError
+export enum RemoveDeviceErrorTag {
+    Internal = 'RemoveDeviceErrorInternal',
+    NotFound = 'RemoveDeviceErrorNotFound',
+    StorageNotAvailable = 'RemoveDeviceErrorStorageNotAvailable',
+}
+
+export interface RemoveDeviceErrorInternal {
+    tag: RemoveDeviceErrorTag.Internal
+    error: string
+}
+export interface RemoveDeviceErrorNotFound {
+    tag: RemoveDeviceErrorTag.NotFound
+    error: string
+}
+export interface RemoveDeviceErrorStorageNotAvailable {
+    tag: RemoveDeviceErrorTag.StorageNotAvailable
+    error: string
+}
+export type RemoveDeviceError =
+  | RemoveDeviceErrorInternal
+  | RemoveDeviceErrorNotFound
+  | RemoveDeviceErrorStorageNotAvailable
+
 // SelfShamirRecoveryInfo
 export enum SelfShamirRecoveryInfoTag {
     Deleted = 'SelfShamirRecoveryInfoDeleted',
@@ -5912,6 +5936,10 @@ export interface LibParsecPlugin {
         device_label: DeviceLabel,
         force: boolean
     ): Promise<Result<DateTime, PkiEnrollmentSubmitError>>
+    pkiRemoveLocalPending(
+        config: ClientConfig,
+        id: PKIEnrollmentID
+    ): Promise<Result<null, RemoveDeviceError>>
     showCertificateSelectionDialogWindowsOnly(
     ): Promise<Result<X509CertificateReference | null, ShowCertificateSelectionDialogError>>
     testCheckMailbox(

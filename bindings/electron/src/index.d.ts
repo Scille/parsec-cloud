@@ -3053,6 +3053,25 @@ export type PkiGetAddrError =
   | PkiGetAddrErrorInternal
 
 
+// RemoveDeviceError
+export interface RemoveDeviceErrorInternal {
+    tag: "RemoveDeviceErrorInternal"
+    error: string
+}
+export interface RemoveDeviceErrorNotFound {
+    tag: "RemoveDeviceErrorNotFound"
+    error: string
+}
+export interface RemoveDeviceErrorStorageNotAvailable {
+    tag: "RemoveDeviceErrorStorageNotAvailable"
+    error: string
+}
+export type RemoveDeviceError =
+  | RemoveDeviceErrorInternal
+  | RemoveDeviceErrorNotFound
+  | RemoveDeviceErrorStorageNotAvailable
+
+
 // SelfShamirRecoveryInfo
 export interface SelfShamirRecoveryInfoDeleted {
     tag: "SelfShamirRecoveryInfoDeleted"
@@ -5000,6 +5019,10 @@ export function pkiEnrollmentSubmit(
     device_label: string,
     force: boolean
 ): Promise<Result<number, PkiEnrollmentSubmitError>>
+export function pkiRemoveLocalPending(
+    config: ClientConfig,
+    id: string
+): Promise<Result<null, RemoveDeviceError>>
 export function showCertificateSelectionDialogWindowsOnly(
 ): Promise<Result<X509CertificateReference | null, ShowCertificateSelectionDialogError>>
 export function testCheckMailbox(
