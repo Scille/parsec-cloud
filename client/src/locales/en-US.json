@@ -1740,7 +1740,8 @@
         "title": "Changes"
     },
     "MyProfilePage": {
-        "titleActualPassword": "Enter your current password",
+        "titleCurrentPassword": "Enter your current password",
+        "titleCurrentOpenBao": "Connect to your SSO provider",
         "titleNewAuthentication": "Change authentication method",
         "password": "Password",
         "systemAuthentication": "This session is handled with the authentication of your system.",
@@ -1765,7 +1766,7 @@
             }
         },
         "errors": {
-            "wrongPassword": "Wrong password. Please try again.",
+            "wrongAuthentication": "Invalid authentication.",
             "cannotChangeAuthentication": "Failed to update authentication",
             "failedToRetrieveInformation": "Failed to retrieve information. Please make sure you are online."
         }

@@ -89,7 +89,7 @@ msTest('Change password', async ({ myProfilePage }) => {
   await expect(changePasswordModal.locator('#next-button')).toBeTrulyEnabled();
   await changePasswordModal.locator('#next-button').click();
   await expect(currentPasswordContainer.locator('.form-error')).toBeVisible();
-  await expect(currentPasswordContainer.locator('.form-error')).toHaveText('Wrong password. Please try again.');
+  await expect(currentPasswordContainer.locator('.form-error')).toHaveText('Invalid authentication.');
 
   await fillIonInput(currentPasswordContainer.locator('ion-input'), 'P@ssw0rd.');
   await changePasswordModal.locator('#next-button').click();
@@ -98,10 +98,11 @@ msTest('Change password', async ({ myProfilePage }) => {
   await expect(changePasswordModal.locator('#next-button')).toHaveDisabledAttribute();
 
   const authRadio = changePasswordModal.locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(2);
+  await expect(authRadio).toHaveCount(3);
   await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
   await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
   await expect(authRadio.nth(1)).toHaveText('Password');
+  await expect(authRadio.nth(2)).toHaveText('Single Sign-OnLogin with an external account');
   await authRadio.nth(1).click();
 
   await expect(changePasswordModal.locator('.method-chosen').locator('.authentication-card__update-button')).toHaveText('Update');
