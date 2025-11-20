@@ -264,6 +264,7 @@ generate_field_type_enum!(
     ValidationCode => libparsec_types::ValidationCode,
     TrustedPasswordAlgorithm => libparsec_types::TrustedPasswordAlgorithm,
     UntrustedPasswordAlgorithm => libparsec_types::UntrustedPasswordAlgorithm,
+    ParsecAddr => libparsec_types::ParsecAddr,
     // Used only in shamir
     ShamirRecoveryShareData => libparsec_types::ShamirRecoveryShareData,
     ShamirShare =>  libparsec_types::ShamirShare,

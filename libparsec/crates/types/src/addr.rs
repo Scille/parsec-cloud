@@ -15,6 +15,8 @@
 //! - Parsec URLs are not serializable with serde as we shouldn't use them in the data
 //!   schemes. This is so that we can change the URL format without breaking the data
 //!   serialization format.
+//!   The only exception is the Parsec server URL (i.e. `ParsecAddr`) that gets serialized
+//!   as a regular http(s) URL (typically used in the device_file_* schemas).
 
 use std::str::FromStr;
 
@@ -506,6 +508,49 @@ impl ParsecAddr {
     /// Return an [Url] that points to the server endpoint for anonymous account commands.
     pub fn to_anonymous_server_url(&self) -> Url {
         self.base.to_http_url(Some("/anonymous_server"))
+    }
+}
+
+// Parsec URLs are not serializable with serde as we shouldn't use them in the data
+// schemes. This is so that we can change the URL format without breaking the data
+// serialization format.
+// The only exception is the Parsec server URL (i.e. `ParsecAddr`) that gets serialized
+// as a regular http(s) URL (typically used in the device_file_* schemas).
+
+impl ::serde::Serialize for ParsecAddr {
+    #[inline]
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ::serde::Serializer,
+    {
+        serializer.serialize_str(self.to_http_url(None).as_ref())
+    }
+}
+
+impl<'de> ::serde::Deserialize<'de> for ParsecAddr {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: ::serde::Deserializer<'de>,
+    {
+        struct Visitor;
+
+        impl<'de> serde::de::Visitor<'de> for Visitor {
+            type Value = ParsecAddr;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("a `ParsecAddr` URL")
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                ParsecAddr::from_http_url(v)
+                    .map_err(|_| ::serde::de::Error::custom("Invalid server URL"))
+            }
+        }
+
+        deserializer.deserialize_str(Visitor)
     }
 }
 
