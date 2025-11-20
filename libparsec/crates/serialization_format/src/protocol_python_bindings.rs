@@ -903,6 +903,7 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         FieldType::UntrustedPasswordAlgorithm => {
             quote! { crate::crypto::UntrustedPasswordAlgorithm::convert(py, #field_path.to_owned())? }
         }
+        FieldType::ParsecAddr => quote_rs_to_py_class!(crate::addr::ParsecAddr),
         FieldType::DateTime => quote_rs_to_py_class!(crate::time::DateTime),
         FieldType::BlockID => quote_rs_to_py_class!(crate::ids::BlockID),
         FieldType::DeviceID => quote_rs_to_py_class!(crate::ids::DeviceID),
@@ -1015,6 +1016,7 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         FieldType::SequesterPublicKeyDer => quote! { crate::crypto::SequesterPublicKeyDer },
         FieldType::TrustedPasswordAlgorithm => quote!(crate::crypto::TrustedPasswordAlgorithm),
         FieldType::UntrustedPasswordAlgorithm => quote!(crate::crypto::UntrustedPasswordAlgorithm),
+        FieldType::ParsecAddr => quote!(crate::addr::ParsecAddr),
         FieldType::DateTime => quote! { crate::time::DateTime },
         FieldType::BlockID => quote! { crate::ids::BlockID },
         FieldType::DeviceID => quote! { crate::ids::DeviceID },

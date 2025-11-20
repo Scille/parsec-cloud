@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
 use libparsec_crypto::prelude::*;
@@ -8,7 +7,7 @@ use libparsec_serialization_format::parsec_data;
 
 use crate::{
     self as libparsec_types, DateTime, DeviceID, DeviceLabel, HumanHandle, OrganizationID,
-    ParsecAddr, ParsecOrganizationAddr, TimeProvider, UserID, UserProfile, VlobID,
+    ParsecOrganizationAddr, TimeProvider, UserID, UserProfile, VlobID,
 };
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -159,16 +158,14 @@ impl LocalDevice {
 
 parsec_data!("schema/local_device/local_device.json5");
 
-impl TryFrom<LocalDeviceData> for LocalDevice {
-    type Error = anyhow::Error;
-
-    fn try_from(data: LocalDeviceData) -> Result<Self, Self::Error> {
-        let organization_addr = {
-            let server_addr =
-                ParsecAddr::from_http_url(&data.server_url).context("Invalid server URL")?;
-            ParsecOrganizationAddr::new(server_addr, data.organization_id, data.root_verify_key)
-        };
-        Ok(Self {
+impl From<LocalDeviceData> for LocalDevice {
+    fn from(data: LocalDeviceData) -> Self {
+        let organization_addr = ParsecOrganizationAddr::new(
+            data.server_url,
+            data.organization_id,
+            data.root_verify_key,
+        );
+        Self {
             organization_addr,
             user_id: data.user_id,
             device_id: data.device_id,
@@ -181,21 +178,17 @@ impl TryFrom<LocalDeviceData> for LocalDevice {
             user_realm_key: data.user_realm_key,
             local_symkey: data.local_symkey,
             time_provider: TimeProvider::default(),
-        })
+        }
     }
 }
 
 impl From<LocalDevice> for LocalDeviceData {
     fn from(obj: LocalDevice) -> Self {
-        let server_url = {
-            let server_addr: ParsecAddr = obj.organization_addr.clone().into();
-            server_addr.to_http_url(None).to_string()
-        };
         Self {
             ty: Default::default(),
             organization_id: obj.organization_addr.organization_id().clone(),
             root_verify_key: obj.organization_addr.root_verify_key().clone(),
-            server_url,
+            server_url: obj.organization_addr.clone().into(),
             user_id: obj.user_id,
             device_id: obj.device_id,
             device_label: obj.device_label,

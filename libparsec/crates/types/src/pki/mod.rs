@@ -4,7 +4,6 @@ mod cert_ref;
 
 use std::{fmt::Display, str::FromStr};
 
-use anyhow::Context;
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 
@@ -14,7 +13,7 @@ use libparsec_serialization_format::parsec_data;
 use crate::{
     self as libparsec_types, impl_transparent_data_format_conversion,
     serialization::{format_v0_dump, format_vx_load},
-    DataResult, DateTime, DeviceID, DeviceLabel, HumanHandle, PKIEnrollmentID, ParsecAddr,
+    DataResult, DateTime, DeviceID, DeviceLabel, HumanHandle, PKIEnrollmentID,
     ParsecPkiEnrollmentAddr, UserID, UserProfile,
 };
 pub use cert_ref::{
@@ -126,18 +125,10 @@ impl PKILocalPendingEnrollment {
 
 parsec_data!("schema/pki/local_pending_enrollment.json5");
 
-impl TryFrom<PKILocalPendingEnrollmentData> for PKILocalPendingEnrollment {
-    // Can use anyhow since it's used by serde anyway
-    type Error = anyhow::Error;
-
-    fn try_from(data: PKILocalPendingEnrollmentData) -> Result<Self, Self::Error> {
-        let addr = {
-            let server_addr =
-                ParsecAddr::from_http_url(&data.server_url).context("Invalid server URL")?;
-            ParsecPkiEnrollmentAddr::new(server_addr, data.organization_id)
-        };
-        Ok(Self {
-            addr,
+impl From<PKILocalPendingEnrollmentData> for PKILocalPendingEnrollment {
+    fn from(data: PKILocalPendingEnrollmentData) -> Self {
+        Self {
+            addr: ParsecPkiEnrollmentAddr::new(data.server_url, data.organization_id),
             cert_ref: data.x509_certificate_ref,
             submitted_on: data.submitted_on,
             enrollment_id: data.enrollment_id,
@@ -145,19 +136,15 @@ impl TryFrom<PKILocalPendingEnrollmentData> for PKILocalPendingEnrollment {
             encrypted_key: data.encrypted_key,
             encrypted_key_algo: data.encrypted_key_algo,
             ciphertext: data.ciphertext,
-        })
+        }
     }
 }
 
 impl From<PKILocalPendingEnrollment> for PKILocalPendingEnrollmentData {
     fn from(obj: PKILocalPendingEnrollment) -> Self {
-        let server_url = {
-            let server_addr: ParsecAddr = obj.addr.clone().into();
-            server_addr.to_http_url(None).to_string()
-        };
         Self {
             ty: Default::default(),
-            server_url,
+            server_url: obj.addr.clone().into(),
             organization_id: obj.addr.organization_id().clone(),
             x509_certificate_ref: obj.cert_ref,
             submitted_on: obj.submitted_on,

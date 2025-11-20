@@ -7,8 +7,8 @@ use libparsec_serialization_format::parsec_data;
 
 use crate::{self as libparsec_types, PKIEncryptionAlgorithm, X509CertificateReference};
 use crate::{
-    impl_transparent_data_format_conversion, AccountVaultItemOpaqueKeyID, DateTime, DeviceID, DeviceLabel,
-    HumanHandle, OrganizationID, ParsecAddr, PasswordAlgorithm, UserID,
+    impl_transparent_data_format_conversion, AccountVaultItemOpaqueKeyID, DateTime, DeviceID,
+    DeviceLabel, HumanHandle, OrganizationID, ParsecAddr, PasswordAlgorithm, UserID,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
