@@ -11,15 +11,22 @@ export enum ServerType {
   Custom = 'custom',
 }
 
-function matchesHost(hostList: Array<string>, host: string): boolean {
-  return hostList.find((h) => h.trim().toLocaleLowerCase() === host.trim().toLocaleLowerCase()) !== undefined;
+function matchesHost(hostList: Array<string>, addr: ParsedParsecAddr): boolean {
+  for (const host of hostList) {
+    const aTrimmed = host.trim().toLocaleLowerCase();
+    const bTrimmed = addr.hostname.trim().toLocaleLowerCase();
+
+    if (aTrimmed === bTrimmed || `${bTrimmed}:${addr.port}` === aTrimmed) {
+      return true;
+    }
+  }
+  return false;
 }
 
 export function getServerTypeFromParsedParsecAddr(addr: ParsedParsecAddr): ServerType {
-  // TODO
-  if (matchesHost(Env.getSaasServers(), addr.hostname)) {
+  if (matchesHost(Env.getSaasServers(), addr)) {
     return ServerType.Saas;
-  } else if (matchesHost(Env.getTrialServers(), addr.hostname)) {
+  } else if (matchesHost(Env.getTrialServers(), addr)) {
     return ServerType.Trial;
   }
   return ServerType.Custom;
