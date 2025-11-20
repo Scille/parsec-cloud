@@ -19,6 +19,11 @@
           :state="AuthenticationCardState.Current"
           v-show="currentDevice && currentDevice.ty.tag === AvailableDeviceTypeTag.Smartcard"
         />
+        <authentication-card
+          :auth-method="DeviceSaveStrategyTag.OpenBao"
+          :state="AuthenticationCardState.Current"
+          v-show="currentDevice && currentDevice.ty.tag === AvailableDeviceTypeTag.OpenBao"
+        />
         <ion-button
           id="change-authentication-button"
           class="update-auth-button button-default"
@@ -26,8 +31,7 @@
           @click="openChangeAuthentication()"
         >
           <ion-label class="update-auth-button__label">
-            <span v-if="isWeb()">{{ $msTranslate('Authentication.changePasswordButton') }}</span>
-            <span v-else>{{ $msTranslate('Authentication.changeAuthenticationButton') }}</span>
+            <span>{{ $msTranslate('Authentication.changeAuthenticationButton') }}</span>
           </ion-label>
         </ion-button>
       </div>
@@ -46,7 +50,7 @@
 <script setup lang="ts">
 import authenticationCard from '@/components/profile/AuthenticationCard.vue';
 import { AuthenticationCardState } from '@/components/profile/types';
-import { AvailableDevice, AvailableDeviceTypeTag, DeviceSaveStrategyTag, getCurrentAvailableDevice, isWeb } from '@/parsec';
+import { AvailableDevice, AvailableDeviceTypeTag, DeviceSaveStrategyTag, getCurrentAvailableDevice, getServerConfig } from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import UpdateAuthenticationModal from '@/views/users/UpdateAuthenticationModal.vue';
 import { IonButton, IonIcon, IonLabel, IonText, modalController } from '@ionic/vue';
@@ -59,7 +63,20 @@ const informationManager: InformationManager = inject(InformationManagerKey)!;
 const error = ref('');
 
 async function openChangeAuthentication(): Promise<void> {
-  if (currentDevice.value && currentDevice.value.ty.tag === AvailableDeviceTypeTag.Smartcard) {
+  if (!currentDevice.value) {
+    return;
+  }
+
+  const configResult = await getServerConfig(currentDevice.value.serverAddr);
+
+  if (currentDevice.value.ty.tag === AvailableDeviceTypeTag.OpenBao) {
+    if (!configResult.ok || !configResult.value.openbao) {
+      error.value = 'Authentication.invalidOpenBaoData';
+      return;
+    }
+  }
+
+  if (currentDevice.value.ty.tag === AvailableDeviceTypeTag.Smartcard) {
     const answer = await askQuestion('Authentication.method.smartcard.warn.title', 'Authentication.method.smartcard.warn.subtitle', {
       yesText: 'Authentication.method.smartcard.warn.yes',
       noText: 'Authentication.method.smartcard.warn.no',
@@ -76,6 +93,7 @@ async function openChangeAuthentication(): Promise<void> {
     componentProps: {
       currentDevice: currentDevice.value,
       informationManager: informationManager,
+      serverConfig: configResult.ok ? configResult.value : undefined,
     },
   });
   await modal.present();
@@ -105,8 +123,8 @@ onMounted(async () => {
     );
     error.value = 'MyProfilePage.errors.failedToRetrieveInformation';
   } else {
-    currentDevice.value = deviceResult.value;
     error.value = '';
+    currentDevice.value = deviceResult.value;
   }
 });
 </script>

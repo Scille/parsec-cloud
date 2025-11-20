@@ -1741,7 +1741,8 @@
         "title": "Journal des modifications"
     },
     "MyProfilePage": {
-        "titleActualPassword": "Saisissez votre mot de passe",
+        "titleCurrentPassword": "Saisissez votre mot de passe",
+        "titleCurrentOpenBao": "Connectez-vous à votre fournisseur de SSO",
         "titleNewAuthentication": "Changer de méthode d'authentification",
         "password": "Mot de passe",
         "systemAuthentication": "Votre session est gérée avec l'authentification votre appareil.",
@@ -1766,7 +1767,7 @@
             }
         },
         "errors": {
-            "wrongPassword": "Mot de passe incorrect. Veuillez réessayer.",
+            "wrongAuthentication": "Authentification invalide.",
             "cannotChangeAuthentication": "Impossible de changer l'authentification",
             "failedToRetrieveInformation": "Impossible de récupérer les informations. Veuillez vérifier que vous êtes bien connecté(e) à Internet."
         }

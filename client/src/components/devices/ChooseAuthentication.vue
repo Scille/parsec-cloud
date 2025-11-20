@@ -68,9 +68,10 @@
           label-placement="end"
           :value="DeviceSaveStrategyTag.OpenBao"
           justify="start"
+          :disabled="activeAuth === AvailableDeviceTypeTag.OpenBao"
         >
           <authentication-card
-            :state="AuthenticationCardState.Default"
+            :state="getAuthCardState(AvailableDeviceTypeTag.OpenBao)"
             @click="onMethodSelected(DeviceSaveStrategyTag.OpenBao)"
             :auth-method="DeviceSaveStrategyTag.OpenBao"
           />
@@ -226,6 +227,8 @@ function getAuthCardState(auth: AvailableDeviceTypeTag): AuthenticationCardState
       if (!smartcardAvailable.value) {
         return AuthenticationCardState.Unavailable;
       }
+      return auth === props.activeAuth ? AuthenticationCardState.Active : AuthenticationCardState.Default;
+    case AvailableDeviceTypeTag.OpenBao:
       return auth === props.activeAuth ? AuthenticationCardState.Active : AuthenticationCardState.Default;
     default:
       return AuthenticationCardState.Default;
