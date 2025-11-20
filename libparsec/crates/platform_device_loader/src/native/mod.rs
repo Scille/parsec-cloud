@@ -494,7 +494,7 @@ pub(super) async fn remove_device(device_path: &Path) -> Result<(), RemoveDevice
 
     tokio::fs::remove_file(device_path)
         .await
-        .map_err(|e| RemoveDeviceError::Internal(e.into()))
+        .map_err(Into::into)
 }
 
 pub(super) fn is_keyring_available() -> bool {

@@ -528,8 +528,20 @@ pub async fn archive_device(
 pub enum RemoveDeviceError {
     #[error("Device storage is not available")]
     StorageNotAvailable,
+    #[error("Device not found")]
+    NotFound,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
+}
+
+impl From<std::io::Error> for RemoveDeviceError {
+    fn from(value: std::io::Error) -> Self {
+        use std::io::ErrorKind;
+        match value.kind() {
+            ErrorKind::NotFound => RemoveDeviceError::NotFound,
+            _ => RemoveDeviceError::Internal(value.into()),
+        }
+    }
 }
 
 pub async fn remove_device(
