@@ -227,7 +227,9 @@ function getSaveStrategy(): DeviceSaveStrategy | undefined {
   if (authentication.value === DeviceSaveStrategyTag.Keyring) {
     return SaveStrategy.useKeyring();
   } else if (authentication.value === DeviceSaveStrategyTag.OpenBao) {
-    return SaveStrategy.useOpenBao() as any as DeviceSaveStrategy;
+    // TODO: Will be fixed in PR https://github.com/Scille/parsec-cloud/pull/11639
+    throw Error('OpenBao not supported yet !');
+    // return SaveStrategy.useOpenBao() as any as DeviceSaveStrategy;
   } else if (authentication.value === DeviceSaveStrategyTag.Smartcard) {
     if (chooseCertificateRef.value && chooseCertificateRef.value.getCertificate()) {
       return SaveStrategy.useSmartCard(toRaw(chooseCertificateRef.value.getCertificate() as X509CertificateReference));
