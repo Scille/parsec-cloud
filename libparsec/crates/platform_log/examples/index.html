@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en-US">
+
+<head>
+  <meta charset="utf-8" />
+  <title>Tracing example web</title>
+</head>
+
+<body>
+  <script type="module">
+    /*
+    ** To run this html example first compile the lib with:
+    **
+    ** ```shell
+    ** wasm-pack build --target web libparsec/crates/platform_log -- --features example
+    ** ```
+    **
+    ** Then use a simple http server like
+    **
+    ** ```shell
+    ** python3 -m http.server -d libparsec/crates/platform_log
+    ** ```
+    */
+    import init, * as mods from "../pkg/libparsec_platform_log.js";
+
+    init().then(() => {
+      console.log(mods);
+      mods.web_init_logger("trace")
+      mods.test_tracing()
+    })
+  </script>
+</body>
+
+</html>

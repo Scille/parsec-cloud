@@ -9,6 +9,7 @@ members = [
     "libparsec/crates/platform_async",
     "libparsec/crates/platform_device_loader",
     "libparsec/crates/platform_ipc",
+    "libparsec/crates/platform_log",
     "libparsec/crates/platform_mountpoint",
     "libparsec/crates/platform_pki",
     "libparsec/crates/platform_realm_export",
@@ -37,6 +38,7 @@ default-members = [
     "libparsec/crates/platform_async",
     "libparsec/crates/platform_device_loader",
     "libparsec/crates/platform_ipc",
+    "libparsec/crates/platform_log",
     "libparsec/crates/platform_mountpoint",
     "libparsec/crates/platform_pki",
     "libparsec/crates/platform_realm_export",
@@ -204,6 +206,8 @@ sqlx = { version = "0.8.6", default-features = false }
 syn = { version = "2.0.108", default-features = false }
 thiserror = { version = "2.0.17", default-features = false }
 tokio = { version = "1.48.0", default-features = false }
+tracing = { version = "0.1.41", default-features = false }
+tracing-subscriber = { version = "0.3.20", default-features = false }
 unicode-normalization = { version = "0.1.25", default-features = false }
 url = { version = "2.5.7", default-features = false }
 uuid = { version = "1.18.1", default-features = false }

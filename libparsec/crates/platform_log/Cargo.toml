@@ -1,0 +1,28 @@
+[package]
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+name = "libparsec_platform_log"
+publish.workspace = true
+repository.workspace = true
+version.workspace = true
+
+[features]
+example = ["log"]
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+tracing = { workspace = true, features = ["std", "log"] }
+tracing-subscriber = { workspace = true, features = ["env-filter", "tracing-log", "json"] }
+anyhow = { workspace = true }
+log = { workspace = true, features = ["kv"], optional = true }
+
+[target.'cfg(target_family = "wasm")'.dependencies]
+tracing-subscriber-wasm = { version = "0.1.0" }
+wasm-bindgen = { workspace = true }
+
+[dev-dependencies]
+log = { workspace = true }
