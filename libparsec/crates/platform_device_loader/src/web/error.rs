@@ -214,7 +214,10 @@ impl From<RemoveDeviceError> for crate::UpdateDeviceError {
 
 impl From<RemoveDeviceError> for crate::RemoveDeviceError {
     fn from(value: RemoveDeviceError) -> Self {
-        Self::Internal(anyhow::anyhow!("{value}"))
+        match value {
+            RemoveDeviceError::NotFound { .. } => Self::NotFound,
+            _ => Self::Internal(anyhow::anyhow!("{value}")),
+        }
     }
 }
 
