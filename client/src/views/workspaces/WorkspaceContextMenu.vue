@@ -123,7 +123,7 @@
         </ion-item>
         <ion-item
           button
-          v-show="clientProfile !== UserProfile.Outsider&& isDesktop() && isHidden"
+          v-show="clientProfile !== UserProfile.Outsider && isDesktop() && isHidden"
           @click="onClick(WorkspaceAction.Mount)"
           class="ion-no-padding list-group-item"
         >
