@@ -62,7 +62,7 @@ const MENU = [
   },
   {
     title: 'Miscellaneous',
-    actions: ['Pin'],
+    actions: ['Add to favorites'],
   },
 ];
 
@@ -159,7 +159,7 @@ for (const mode of ['grid', 'list', 'sidebar']) {
     await expect(favorites).toBeVisible();
     await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.Button);
     const popover = workspaces.locator('.workspace-context-menu');
-    await popover.getByRole('listitem').nth(7).click();
+    await popover.getByRole('listitem').nth(8).click();
     await expect(popover).toBeHidden();
     if (mode === 'sidebar') {
       await workspaces.locator('.sidebar').locator('#sidebar-all-workspaces').click();
@@ -175,14 +175,14 @@ for (const mode of ['grid', 'list', 'sidebar']) {
     }
     await expect(wk.locator('.workspace-favorite-icon')).toHaveTheClass('workspace-favorite-icon__on');
     await expect(favorites).toBeVisible();
-    await expect(favorites.locator('.sidebar-content-organization-button__text')).toHaveText('Pinned');
+    await expect(favorites.locator('.sidebar-content-organization-button__text')).toHaveText('Favorites');
   });
 
   msTest(`Open workspace sharing ${mode}`, async ({ workspaces }) => {
     await expect(workspaces.locator('.workspace-sharing-modal')).toBeHidden();
     await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.Button);
     const popover = workspaces.locator('.workspace-context-menu');
-    await popover.getByRole('listitem').nth(5).click();
+    await popover.getByRole('listitem').nth(6).click();
     await expect(workspaces.locator('.workspace-sharing-modal')).toBeVisible();
     await expect(workspaces.locator('.ms-modal-header__title')).toHaveText('Share the workspace');
     await expect(workspaces.locator('.sharing-modal__title')).toHaveText('wksp1');

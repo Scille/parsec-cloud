@@ -421,13 +421,15 @@ msTest.describe(() => {
     await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText([
       'All workspaces',
       'Recently viewed',
-      'Pinned',
+      'Favorites',
+      'Hidden',
     ]);
 
     await expect(workspaceCategoriesSidebar.locator('.sidebar-content-organization-button__text')).toHaveText([
       'All workspaces',
       'Recently viewed',
-      'Pinned',
+      'Favorites',
+      'Hidden',
     ]);
 
     async function checkActiveCategories(activeItemsClicked: Locator, activeItemsResult: Locator, activeIndex: number): Promise<void> {
@@ -438,8 +440,8 @@ msTest.describe(() => {
       }
     }
 
-    await checkActiveCategories(workspaceCategoriesMenuItem, workspaceCategoriesSidebarItem, 3);
-    await checkActiveCategories(workspaceCategoriesSidebarItem, workspaceCategoriesMenuItem, 3);
+    await checkActiveCategories(workspaceCategoriesMenuItem, workspaceCategoriesSidebarItem, 4);
+    await checkActiveCategories(workspaceCategoriesSidebarItem, workspaceCategoriesMenuItem, 4);
   });
 });
 
