@@ -45,7 +45,6 @@
             :icon="workspace.availableOffline ? cloudDone : cloudOffline"
           />
         </ion-text>
-
         <ion-text
           class="workspace-card-content__size body-sm"
           v-if="false"

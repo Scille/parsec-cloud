@@ -710,6 +710,34 @@
             "successDesktopShown": "The workspace is now visible in Parsec and your explorer.",
             "successWebShown": "The workspace is now visible in Parsec.",
             "failedShown": "Failed to show the workspace. Please try again."
+        },
+        "workspaceHiddenModal": {
+            "title": "Hide a workspace",
+            "affectedWorkspaces": "You are about to hide the workspace {workspace} and it will no longer be visible from the file explorer.",
+            "info": "You can check “Show hidden workspaces” to show it on Parsec.",
+            "actionConfirm": "Hide workspace",
+            "actionCancel": "Cancel",
+            "noReminder": "Don't remind me again",
+            "showWorkspace": {
+                "toastSuccess": "The workspace {workspace} is now visible.",
+                "toastFailure": "Failed to show the workspace {workspace}. Please try again."
+            },
+            "hideWorkspace": {
+                "toastSuccess": "The workspace {workspace} is now hidden.",
+                "toastFailure": "Failed to hide the workspace {workspace}. Please try again."
+            }
+        },
+        "openInExplorerModal": {
+            "file": {
+                "title": "Failed to open the file in your explorer",
+                "description": "You must make this workspace visible in order to view your file in your explorer."
+            },
+            "workspace": {
+                "title": "Failed to open the workspace in your explorer",
+                "description": "You must make this workspace visible in order to view it from your file explorer."
+            },
+            "actionConfirm": "Make this workspace visible",
+            "actionCancel": "Cancel"
         }
     },
     "FoldersPage": {

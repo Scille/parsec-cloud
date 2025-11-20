@@ -592,7 +592,16 @@ async function performWorkspaceAction(action: WorkspaceAction): Promise<void> {
 }
 
 async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event, onFinished?: () => void): Promise<void> {
-  await openWorkspaceContextMenu(event, workspace, workspaceAttributes, eventDistributor, informationManager, false, isLargeDisplay.value);
+  await openWorkspaceContextMenu(
+    event,
+    workspace,
+    workspaceAttributes,
+    eventDistributor,
+    informationManager,
+    false,
+    isLargeDisplay.value,
+    storageManager,
+  );
   await refreshWorkspacesList();
 
   if (onFinished) {
