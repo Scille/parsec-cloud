@@ -10,6 +10,11 @@
     @contextmenu="onContextMenu"
   >
     <div class="sidebar-item-workspace">
+      <ion-icon
+        v-if="isHidden"
+        :icon="eyeOff"
+        class="sidebar-item-workspace__hide"
+      />
       <ion-text
         class="sidebar-item-workspace__label"
         :title="workspace.currentName"
@@ -30,10 +35,11 @@
 import { WorkspaceInfo } from '@/parsec';
 import { currentRouteIsWorkspaceRoute } from '@/router';
 import { IonIcon, IonItem, IonText } from '@ionic/vue';
-import { ellipsisHorizontal } from 'ionicons/icons';
+import { ellipsisHorizontal, eyeOff } from 'ionicons/icons';
 
 defineProps<{
   workspace: WorkspaceInfo;
+  isHidden: boolean;
 }>();
 
 const emits = defineEmits<{
@@ -68,6 +74,13 @@ async function onContextMenu(event: Event): Promise<void> {
     align-items: center;
     justify-content: space-between;
     width: 100%;
+
+    &__hide {
+      margin-right: 0.5rem;
+      font-size: 1rem;
+      color: var(--parsec-color-light-primary-30);
+      flex-shrink: 0;
+    }
 
     &__label {
       text-overflow: ellipsis;

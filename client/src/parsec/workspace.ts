@@ -249,11 +249,12 @@ export async function mountWorkspace(
   return await libparsec.workspaceMount(workspaceHandle);
 }
 
-export async function unmountWorkspace(workspace: WorkspaceInfo): Promise<Result<null, MountpointUnmountError>> {
+export async function unmountWorkspace(workspace: WorkspaceInfo | StartedWorkspaceInfo): Promise<Result<null, MountpointUnmountError>> {
   let error: MountpointUnmountError | null = null;
 
   for (let i = workspace.mountpoints.length - 1; i >= 0; i--) {
     const result = await libparsec.mountpointUnmount(workspace.mountpoints[i][0]);
+
     if (result.ok) {
       workspace.mountpoints.splice(i, 1);
     } else {
