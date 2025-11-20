@@ -3,6 +3,7 @@
 import { workspaceNameValidator } from '@/common/validators';
 import {
   ClientRenameWorkspaceErrorTag,
+  StartedWorkspaceInfo,
   UserProfile,
   WorkspaceID,
   WorkspaceInfo,
@@ -10,6 +11,7 @@ import {
   WorkspaceRole,
   getClientProfile,
   getSystemPath,
+  getWorkspaceInfo,
   isDesktop,
   mountWorkspace,
   getPathLink as parsecGetPathLink,
@@ -17,16 +19,18 @@ import {
   unmountWorkspace,
 } from '@/parsec';
 import { Routes, navigateTo } from '@/router';
-import { EventDistributor } from '@/services/eventDistributor';
+import { EventDistributor, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { recentDocumentManager } from '@/services/recentDocuments';
+import { StorageManager } from '@/services/storageManager';
 import { WorkspaceAttributes } from '@/services/workspaceAttributes';
 import SmallDisplayWorkspaceContextMenu from '@/views/workspaces/SmallDisplayWorkspaceContextMenu.vue';
 import { WorkspaceAction } from '@/views/workspaces/types';
 import WorkspaceContextMenu from '@/views/workspaces/WorkspaceContextMenu.vue';
+import WorkspaceHiddenModal from '@/views/workspaces/WorkspaceHiddenModal.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
 import { modalController, popoverController } from '@ionic/vue';
-import { Clipboard, DisplayState, Translatable, getTextFromUser } from 'megashark-lib';
+import { Answer, Clipboard, DisplayState, MsModalResult, Translatable, askQuestion, getTextFromUser } from 'megashark-lib';
 
 export const WORKSPACES_PAGE_DATA_KEY = 'WorkspacesPage';
 
@@ -121,6 +125,7 @@ export async function openWorkspaceContextMenu(
   workspaceAttributes: WorkspaceAttributes,
   eventDistributor: EventDistributor,
   informationManager: InformationManager,
+  storageManager: StorageManager,
   fromSidebar = false,
   isLargeDisplay = true,
 ): Promise<void> {
@@ -177,7 +182,7 @@ export async function openWorkspaceContextMenu(
         await copyLinkToClipboard(workspace, informationManager);
         break;
       case WorkspaceAction.OpenInExplorer:
-        await openWorkspace(workspace, informationManager);
+        await seeInExplorer(workspace, informationManager, workspaceAttributes, eventDistributor);
         break;
       case WorkspaceAction.Rename:
         await openRenameWorkspaceModal(workspace, informationManager, isLargeDisplay);
@@ -190,10 +195,25 @@ export async function openWorkspaceContextMenu(
         await navigateTo(Routes.History, { query: { documentPath: '/', workspaceHandle: workspace.handle } });
         break;
       case WorkspaceAction.Mount:
-        await showWorkspace(workspace, workspaceAttributes, informationManager);
+        await showWorkspace(workspace, workspaceAttributes, informationManager, eventDistributor);
         break;
       case WorkspaceAction.UnMount:
-        await hideWorkspace(workspace, workspaceAttributes, informationManager);
+        if (storageManager !== undefined) {
+          if (isDesktop()) {
+            const refreshWorkspaces = await getWorkspaceInfo(workspace.handle);
+            if (refreshWorkspaces.ok) {
+              await unmountWorkspaceConfirmation(
+                workspaceAttributes,
+                refreshWorkspaces.value,
+                informationManager,
+                eventDistributor,
+                storageManager,
+              );
+            }
+          } else {
+            await hideWorkspace(workspace, workspaceAttributes, informationManager, eventDistributor);
+          }
+        }
         break;
       default:
         console.warn('No WorkspaceAction match found');
@@ -202,10 +222,11 @@ export async function openWorkspaceContextMenu(
 }
 
 export async function showWorkspace(
-  workspace: WorkspaceInfo,
+  workspace: WorkspaceInfo | StartedWorkspaceInfo,
   workspaceAttributes: WorkspaceAttributes,
   informationManager: InformationManager,
-): Promise<void> {
+  eventDistributor?: EventDistributor,
+): Promise<boolean> {
   let ok = true;
   if (isDesktop()) {
     const result = await mountWorkspace(workspace.handle);
@@ -214,6 +235,8 @@ export async function showWorkspace(
 
   if (ok) {
     workspaceAttributes.removeHidden(workspace.id);
+    await workspaceAttributes.save();
+
     informationManager.present(
       new Information({
         message: {
@@ -224,6 +247,11 @@ export async function showWorkspace(
       }),
       PresentationMode.Toast,
     );
+    if (eventDistributor !== undefined)
+      await eventDistributor.dispatchEvent(Events.WorkspaceMountpointsSync, {
+        workspaceId: workspace.id,
+        isMounted: true,
+      });
   } else {
     informationManager.present(
       new Information({
@@ -236,21 +264,26 @@ export async function showWorkspace(
       PresentationMode.Toast,
     );
   }
+
+  return ok;
 }
 
 export async function hideWorkspace(
-  workspace: WorkspaceInfo,
+  workspace: WorkspaceInfo | StartedWorkspaceInfo,
   workspaceAttributes: WorkspaceAttributes,
   informationManager: InformationManager,
+  eventDistributor: EventDistributor,
 ): Promise<void> {
   let ok = true;
   if (isDesktop()) {
-    const result = await unmountWorkspace(workspace);
+    const result = await unmountWorkspace(workspace as WorkspaceInfo);
     ok = result.ok;
   }
 
   if (ok) {
     workspaceAttributes.addHidden(workspace.id);
+    await workspaceAttributes.save();
+
     informationManager.present(
       new Information({
         message: {
@@ -261,6 +294,10 @@ export async function hideWorkspace(
       }),
       PresentationMode.Toast,
     );
+    await eventDistributor.dispatchEvent(Events.WorkspaceMountpointsSync, {
+      workspaceId: workspace.id,
+      isMounted: false,
+    });
   } else {
     informationManager.present(
       new Information({
@@ -275,16 +312,35 @@ export async function hideWorkspace(
   }
 }
 
-async function openWorkspace(workspace: WorkspaceInfo, informationManager: InformationManager): Promise<void> {
-  const result = await getSystemPath(workspace.handle, '/');
+async function seeInExplorer(
+  workspace: WorkspaceInfo,
+  informationManager: InformationManager,
+  workspaceAttributes: WorkspaceAttributes,
+  eventDistributor?: EventDistributor,
+): Promise<void> {
+  if (workspaceAttributes.isHidden(workspace.id)) {
+    const answer = await askQuestion(
+      'WorkspacesPage.openInExplorerModal.workspace.title',
+      'WorkspacesPage.openInExplorerModal.workspace.description',
+      {
+        yesText: 'WorkspacesPage.openInExplorerModal.actionConfirm',
+        noText: 'WorkspacesPage.openInExplorerModal.actionCancel',
+      },
+    );
 
+    if (answer === Answer.Yes) {
+      await showWorkspace(workspace, workspaceAttributes, informationManager, eventDistributor);
+    }
+  }
+
+  const result = await getSystemPath(workspace.handle, '/');
   if (!result.ok) {
     await informationManager.present(
       new Information({
         message: { key: 'FoldersPage.open.folderFailed', data: { name: workspace.currentName } },
         level: InformationLevel.Error,
       }),
-      PresentationMode.Modal,
+      PresentationMode.Toast,
     );
   } else {
     window.electronAPI.openFile(result.value);
@@ -326,6 +382,42 @@ async function renameWorkspace(workspace: WorkspaceInfo, newName: WorkspaceName,
       }),
       PresentationMode.Toast,
     );
+  }
+}
+
+async function unmountWorkspaceConfirmation(
+  workspaceAttributes: WorkspaceAttributes,
+  workspace: WorkspaceInfo | StartedWorkspaceInfo,
+  informationManager: InformationManager,
+  eventDistributor: EventDistributor,
+  storageManager: StorageManager,
+): Promise<void> {
+  const config = await storageManager.retrieveConfig();
+
+  if (config.skipWorkspaceHiddenWarning === true) {
+    await hideWorkspace(workspace, workspaceAttributes, informationManager, eventDistributor);
+    return;
+  }
+
+  const modal = await modalController.create({
+    component: WorkspaceHiddenModal,
+    cssClass: 'workspace-hidden-modal',
+    componentProps: {
+      workspaceName: workspace.currentName,
+    },
+  });
+
+  await modal.present();
+  const { data, role } = await modal.onWillDismiss();
+  await modal.dismiss();
+
+  if (role === MsModalResult.Confirm) {
+    if (data?.skipWorkspaceHiddenWarning === true) {
+      config.skipWorkspaceHiddenWarning = true;
+      await storageManager.storeConfig(config);
+    }
+
+    await hideWorkspace(workspace, workspaceAttributes, informationManager, eventDistributor);
   }
 }
 
