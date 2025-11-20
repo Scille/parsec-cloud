@@ -7,9 +7,9 @@ import {
   isValidOrganizationName,
   isValidUserName,
   isValidWorkspaceName,
-  parseParsecAddr,
+  parseParsecAnyAddr,
 } from '@/parsec';
-import { ParsedParsecAddrTag } from '@/plugins/libparsec';
+import { ParsedParsecAnyAddrTag } from '@/plugins/libparsec';
 import { IValidator, Validity } from 'megashark-lib';
 
 export const emailValidator: IValidator = async function (value: string) {
@@ -57,8 +57,8 @@ export const parsecAddrValidator: IValidator = async function (value: string) {
   if (value.length === 0) {
     return { validity: Validity.Intermediate };
   }
-  const result = await parseParsecAddr(value);
-  if (result.ok && result.value.tag === ParsedParsecAddrTag.Server) {
+  const result = await parseParsecAnyAddr(value);
+  if (result.ok && result.value.tag === ParsedParsecAnyAddrTag.Server) {
     return { validity: Validity.Valid };
   }
   let reason = '';
@@ -74,9 +74,9 @@ export const parsecOrganizationAddrValidator: IValidator = async function (value
   if (value.length === 0) {
     return { validity: Validity.Intermediate };
   }
-  const result = await parseParsecAddr(value);
+  const result = await parseParsecAnyAddr(value);
   if (result.ok) {
-    return result.value.tag === ParsedParsecAddrTag.Organization ? { validity: Validity.Valid } : { validity: Validity.Invalid };
+    return result.value.tag === ParsedParsecAnyAddrTag.Organization ? { validity: Validity.Valid } : { validity: Validity.Invalid };
   }
   return { validity: Validity.Invalid };
 };
@@ -103,9 +103,9 @@ export const claimLinkValidator: IValidator = async function (value: string) {
   if (value.length === 0) {
     return { validity: Validity.Intermediate };
   }
-  const result = await parseParsecAddr(value);
+  const result = await parseParsecAnyAddr(value);
   if (result.ok) {
-    if (result.value.tag === ParsedParsecAddrTag.InvitationUser || result.value.tag === ParsedParsecAddrTag.InvitationDevice) {
+    if (result.value.tag === ParsedParsecAnyAddrTag.InvitationUser || result.value.tag === ParsedParsecAnyAddrTag.InvitationDevice) {
       return { validity: Validity.Valid };
     } else {
       return { validity: Validity.Invalid, reason: 'validators.claimLink.invalidAction' };
@@ -135,13 +135,13 @@ export const claimAndBootstrapLinkValidator: IValidator = async function (value:
   if (value.includes('a=pki_join')) {
     return { validity: Validity.Valid };
   }
-  const result = await parseParsecAddr(value);
+  const result = await parseParsecAnyAddr(value);
 
   if (
     result.ok &&
-    (result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap ||
-      result.value.tag === ParsedParsecAddrTag.InvitationUser ||
-      result.value.tag === ParsedParsecAddrTag.InvitationDevice)
+    (result.value.tag === ParsedParsecAnyAddrTag.OrganizationBootstrap ||
+      result.value.tag === ParsedParsecAnyAddrTag.InvitationUser ||
+      result.value.tag === ParsedParsecAnyAddrTag.InvitationDevice)
   ) {
     return { validity: Validity.Valid };
   }
@@ -153,9 +153,9 @@ export const fileLinkValidator: IValidator = async function (value: string) {
   if (value.length === 0) {
     return { validity: Validity.Intermediate };
   }
-  const result = await parseParsecAddr(value);
+  const result = await parseParsecAnyAddr(value);
   if (result.ok) {
-    return result.value.tag === ParsedParsecAddrTag.WorkspacePath ? { validity: Validity.Valid } : { validity: Validity.Invalid };
+    return result.value.tag === ParsedParsecAnyAddrTag.WorkspacePath ? { validity: Validity.Valid } : { validity: Validity.Invalid };
   }
   return { validity: Validity.Invalid };
 };
@@ -165,9 +165,9 @@ export const claimUserLinkValidator: IValidator = async function (value: string)
   if (value.length === 0) {
     return { validity: Validity.Intermediate };
   }
-  const result = await parseParsecAddr(value);
+  const result = await parseParsecAnyAddr(value);
   if (result.ok) {
-    return result.value.tag === ParsedParsecAddrTag.InvitationUser ? { validity: Validity.Valid } : { validity: Validity.Invalid };
+    return result.value.tag === ParsedParsecAnyAddrTag.InvitationUser ? { validity: Validity.Valid } : { validity: Validity.Invalid };
   }
   let reason = '';
   if (!value.startsWith('parsec3://')) {
@@ -189,9 +189,9 @@ export const claimDeviceLinkValidator: IValidator = async function (value: strin
   if (value.length === 0) {
     return { validity: Validity.Intermediate };
   }
-  const result = await parseParsecAddr(value);
+  const result = await parseParsecAnyAddr(value);
   if (result.ok) {
-    return result.value.tag === ParsedParsecAddrTag.InvitationDevice ? { validity: Validity.Valid } : { validity: Validity.Invalid };
+    return result.value.tag === ParsedParsecAnyAddrTag.InvitationDevice ? { validity: Validity.Valid } : { validity: Validity.Invalid };
   }
   let reason = '';
   if (!value.startsWith('parsec3://')) {
@@ -213,9 +213,11 @@ export const bootstrapLinkValidator: IValidator = async function (value: string)
   if (value.length === 0) {
     return { validity: Validity.Intermediate };
   }
-  const result = await parseParsecAddr(value);
+  const result = await parseParsecAnyAddr(value);
   if (result.ok) {
-    return result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap ? { validity: Validity.Valid } : { validity: Validity.Invalid };
+    return result.value.tag === ParsedParsecAnyAddrTag.OrganizationBootstrap
+      ? { validity: Validity.Valid }
+      : { validity: Validity.Invalid };
   }
   let reason = '';
   if (!value.startsWith('parsec3://')) {

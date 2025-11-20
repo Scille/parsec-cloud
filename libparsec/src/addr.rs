@@ -8,7 +8,7 @@ pub enum ParseParsecAddrError {
     InvalidUrl,
 }
 
-pub enum ParsedParsecAddr {
+pub enum ParsedParsecAnyAddr {
     Server {
         hostname: String,
         port: u16,
@@ -73,11 +73,11 @@ pub enum ParsedParsecAddr {
     },
 }
 
-pub fn parse_parsec_addr(url: &str) -> Result<ParsedParsecAddr, ParseParsecAddrError> {
+pub fn parse_parsec_any_addr(url: &str) -> Result<ParsedParsecAnyAddr, ParseParsecAddrError> {
     if let Ok(addr) = ParsecActionAddr::from_any(url) {
         Ok(match addr {
             ParsecActionAddr::OrganizationBootstrap(addr) => {
-                ParsedParsecAddr::OrganizationBootstrap {
+                ParsedParsecAnyAddr::OrganizationBootstrap {
                     hostname: addr.hostname().into(),
                     port: addr.port(),
                     is_default_port: addr.is_default_port(),
@@ -86,7 +86,7 @@ pub fn parse_parsec_addr(url: &str) -> Result<ParsedParsecAddr, ParseParsecAddrE
                     token: addr.token().map(|x| x.to_string()),
                 }
             }
-            ParsecActionAddr::WorkspacePath(addr) => ParsedParsecAddr::WorkspacePath {
+            ParsecActionAddr::WorkspacePath(addr) => ParsedParsecAnyAddr::WorkspacePath {
                 hostname: addr.hostname().into(),
                 port: addr.port(),
                 is_default_port: addr.is_default_port(),
@@ -97,7 +97,7 @@ pub fn parse_parsec_addr(url: &str) -> Result<ParsedParsecAddr, ParseParsecAddrE
                 workspace_id: addr.workspace_id(),
             },
             ParsecActionAddr::Invitation(addr) => match addr.invitation_type() {
-                InvitationType::User => ParsedParsecAddr::InvitationUser {
+                InvitationType::User => ParsedParsecAnyAddr::InvitationUser {
                     hostname: addr.hostname().into(),
                     port: addr.port(),
                     is_default_port: addr.is_default_port(),
@@ -105,7 +105,7 @@ pub fn parse_parsec_addr(url: &str) -> Result<ParsedParsecAddr, ParseParsecAddrE
                     organization_id: addr.organization_id().clone(),
                     token: addr.token(),
                 },
-                InvitationType::Device => ParsedParsecAddr::InvitationDevice {
+                InvitationType::Device => ParsedParsecAnyAddr::InvitationDevice {
                     hostname: addr.hostname().into(),
                     port: addr.port(),
                     is_default_port: addr.is_default_port(),
@@ -113,7 +113,7 @@ pub fn parse_parsec_addr(url: &str) -> Result<ParsedParsecAddr, ParseParsecAddrE
                     organization_id: addr.organization_id().clone(),
                     token: addr.token(),
                 },
-                InvitationType::ShamirRecovery => ParsedParsecAddr::InvitationShamirRecovery {
+                InvitationType::ShamirRecovery => ParsedParsecAnyAddr::InvitationShamirRecovery {
                     hostname: addr.hostname().into(),
                     port: addr.port(),
                     is_default_port: addr.is_default_port(),
@@ -122,7 +122,7 @@ pub fn parse_parsec_addr(url: &str) -> Result<ParsedParsecAddr, ParseParsecAddrE
                     token: addr.token(),
                 },
             },
-            ParsecActionAddr::PkiEnrollment(addr) => ParsedParsecAddr::PkiEnrollment {
+            ParsecActionAddr::PkiEnrollment(addr) => ParsedParsecAnyAddr::PkiEnrollment {
                 hostname: addr.hostname().into(),
                 port: addr.port(),
                 is_default_port: addr.is_default_port(),
@@ -131,7 +131,7 @@ pub fn parse_parsec_addr(url: &str) -> Result<ParsedParsecAddr, ParseParsecAddrE
             },
         })
     } else if let Ok(addr) = ParsecOrganizationAddr::from_any(url) {
-        Ok(ParsedParsecAddr::Organization {
+        Ok(ParsedParsecAnyAddr::Organization {
             hostname: addr.hostname().into(),
             port: addr.port(),
             is_default_port: addr.is_default_port(),
@@ -139,7 +139,7 @@ pub fn parse_parsec_addr(url: &str) -> Result<ParsedParsecAddr, ParseParsecAddrE
             organization_id: addr.organization_id().clone(),
         })
     } else if let Ok(addr) = ParsecAddr::from_any(url) {
-        Ok(ParsedParsecAddr::Server {
+        Ok(ParsedParsecAnyAddr::Server {
             hostname: addr.hostname().into(),
             port: addr.port(),
             is_default_port: addr.is_default_port(),

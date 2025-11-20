@@ -4,7 +4,7 @@ import { DeviceSaveStrategyOpenBao, libparsec, X509CertificateReference } from '
 
 import { ParsecAccount } from '@/parsec/account';
 import { getClientConfig } from '@/parsec/internals';
-import { parseParsecAddr } from '@/parsec/organization';
+import { parseParsecAnyAddr } from '@/parsec/organization';
 import {
   AvailableDevice,
   AvailableDeviceTypeTag,
@@ -103,7 +103,7 @@ export async function getOrganizationHandle(orgInfo: OrganizationInfo): Promise<
     if (!clientInfo.ok) {
       continue;
     }
-    const parsedAddr = await parseParsecAddr(clientInfo.value.organizationAddr);
+    const parsedAddr = await parseParsecAnyAddr(clientInfo.value.organizationAddr);
     if (!parsedAddr.ok) {
       continue;
     }

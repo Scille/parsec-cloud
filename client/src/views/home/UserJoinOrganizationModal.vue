@@ -209,9 +209,9 @@ import {
   ClaimerRetrieveInfoErrorTag,
   DeviceSaveStrategy,
   OrganizationID,
-  ParsedParsecAddrTag,
+  ParsedParsecAnyAddrTag,
   UserClaim,
-  parseParsecAddr,
+  parseParsecAnyAddr,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
@@ -560,8 +560,8 @@ async function restartProcess(): Promise<void> {
 }
 
 onMounted(async () => {
-  const result = await parseParsecAddr(props.invitationLink);
-  if (result.ok && result.value.tag === ParsedParsecAddrTag.InvitationUser) {
+  const result = await parseParsecAnyAddr(props.invitationLink);
+  if (result.ok && result.value.tag === ParsedParsecAnyAddrTag.InvitationUser) {
     organizationName.value = result.value.organizationId;
   }
   await startProcess();

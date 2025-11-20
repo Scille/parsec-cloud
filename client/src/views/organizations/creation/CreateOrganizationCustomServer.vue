@@ -81,8 +81,8 @@ import {
   ParsecAccount,
   bootstrapOrganization as parsecBootstrapOrganization,
   createOrganization as parsecCreateOrganization,
-  ParsedParsecAddrTag,
-  parseParsecAddr,
+  ParsedParsecAnyAddrTag,
+  parseParsecAnyAddr,
   Result,
   SaveStrategy,
 } from '@/parsec';
@@ -131,8 +131,8 @@ const sequesterKey = ref<string | undefined>(undefined);
 
 onMounted(async () => {
   if (bootstrapLink.value) {
-    const result = await parseParsecAddr(bootstrapLink.value);
-    if (result.ok && result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
+    const result = await parseParsecAnyAddr(bootstrapLink.value);
+    if (result.ok && result.value.tag === ParsedParsecAnyAddrTag.OrganizationBootstrap) {
       organizationName.value = result.value.organizationId;
       serverAddr.value = `parsec3://${result.value.hostname}:${result.value.port}`;
     }

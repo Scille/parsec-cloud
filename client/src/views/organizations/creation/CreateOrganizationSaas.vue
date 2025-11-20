@@ -83,8 +83,8 @@ import {
   isWeb,
   OrganizationID,
   ParsecAccount,
-  ParsedParsecAddrTag,
-  parseParsecAddr,
+  ParsedParsecAnyAddrTag,
+  parseParsecAnyAddr,
   SaveStrategy,
 } from '@/parsec';
 import { wait } from '@/parsec/internals';
@@ -141,8 +141,8 @@ const sequesterKey = ref<string | undefined>(undefined);
 
 onMounted(async () => {
   if (props.bootstrapLink) {
-    const result = await parseParsecAddr(props.bootstrapLink);
-    if (result.ok && result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
+    const result = await parseParsecAnyAddr(props.bootstrapLink);
+    if (result.ok && result.value.tag === ParsedParsecAnyAddrTag.OrganizationBootstrap) {
       organizationName.value = result.value.organizationId;
     }
   }
@@ -173,8 +173,8 @@ async function onLoginSuccess(_token: AuthenticationToken, info: PersonalInforma
   step.value = Steps.OrganizationName;
   if (props.bootstrapLink) {
     if (isWeb() && ParsecAccount.isLoggedIn() && ParsecAccount.addressMatchesAccountServer(props.bootstrapLink)) {
-      const parseResult = await parseParsecAddr(props.bootstrapLink);
-      if (parseResult.ok && parseResult.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
+      const parseResult = await parseParsecAnyAddr(props.bootstrapLink);
+      if (parseResult.ok && parseResult.value.tag === ParsedParsecAnyAddrTag.OrganizationBootstrap) {
         const saveStrategy = SaveStrategy.useAccountVault();
         // Skip the auth page
         await onAuthenticationChosen(saveStrategy);

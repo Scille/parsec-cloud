@@ -2,7 +2,7 @@
 
 import { AvailableDevice } from '@/parsec';
 import { libparsec } from '@/plugins/libparsec';
-import { ServerType, TRIAL_EXPIRATION_DAYS, getServerTypeFromParsedParsecAddr } from '@/services/parsecServers';
+import { ServerType, TRIAL_EXPIRATION_DAYS, getServerTypeFromParsedParsecAnyAddr } from '@/services/parsecServers';
 import { DateTime, Duration } from 'luxon';
 import { Translatable } from 'megashark-lib';
 
@@ -41,10 +41,10 @@ export function formatExpirationTime(duration: Duration): Translatable {
 }
 
 export async function isTrialOrganizationDevice(device: AvailableDevice): Promise<boolean> {
-  const result = await libparsec.parseParsecAddr(device.serverAddr);
+  const result = await libparsec.parseParsecAnyAddr(device.serverAddr);
   if (!result.ok) {
     throw Error(`Invalid \`serverAddr\` field for AvailableDevice: ${device}`);
   }
-  const serverType = getServerTypeFromParsedParsecAddr(result.value);
+  const serverType = getServerTypeFromParsedParsecAnyAddr(result.value);
   return serverType === ServerType.Trial;
 }

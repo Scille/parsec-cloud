@@ -11,10 +11,10 @@ import {
   FileType,
   FsPath,
   OpenOptions,
-  ParseParsecAddrError,
-  ParseParsecAddrErrorTag,
-  ParsedParsecAddrTag,
-  ParsedParsecAddrWorkspacePath,
+  ParseParsecAnyAddrError,
+  ParseParsecAnyAddrErrorTag,
+  ParsedParsecAnyAddrTag,
+  ParsedParsecAnyAddrWorkspacePath,
   Result,
   WorkspaceCreateFileError,
   WorkspaceCreateFolderError,
@@ -166,12 +166,12 @@ export interface CopyError {
   tag: CopyErrorTag.Internal;
 }
 
-export async function parseFileLink(link: string): Promise<Result<ParsedParsecAddrWorkspacePath, ParseParsecAddrError>> {
-  const result = await libparsec.parseParsecAddr(link);
-  if (result.ok && result.value.tag !== ParsedParsecAddrTag.WorkspacePath) {
-    return { ok: false, error: { tag: ParseParsecAddrErrorTag.InvalidUrl, error: 'not a file link' } };
+export async function parseFileLink(link: string): Promise<Result<ParsedParsecAnyAddrWorkspacePath, ParseParsecAnyAddrError>> {
+  const result = await libparsec.parseParsecAnyAddr(link);
+  if (result.ok && result.value.tag !== ParsedParsecAnyAddrTag.WorkspacePath) {
+    return { ok: false, error: { tag: ParseParsecAnyAddrErrorTag.InvalidUrl, error: 'not a file link' } };
   }
-  return result as Result<ParsedParsecAddrWorkspacePath, ParseParsecAddrError>;
+  return result as Result<ParsedParsecAnyAddrWorkspacePath, ParseParsecAnyAddrError>;
 }
 
 export async function createReadStream(

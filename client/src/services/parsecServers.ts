@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { ParsedParsecAddr } from '@/plugins/libparsec';
+import { ParsedParsecAnyAddr } from '@/plugins/libparsec';
 import { Env } from '@/services/environment';
 
 export const TRIAL_EXPIRATION_DAYS = 15;
@@ -15,7 +15,7 @@ function matchesHost(hostList: Array<string>, host: string): boolean {
   return hostList.find((h) => h.trim().toLocaleLowerCase() === host.trim().toLocaleLowerCase()) !== undefined;
 }
 
-export function getServerTypeFromParsedParsecAddr(addr: ParsedParsecAddr): ServerType {
+export function getServerTypeFromParsedParsecAnyAddr(addr: ParsedParsecAnyAddr): ServerType {
   // TODO
   if (matchesHost(Env.getSaasServers(), addr.hostname)) {
     return ServerType.Saas;

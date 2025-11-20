@@ -46,8 +46,8 @@ import {
   OrganizationID,
   bootstrapOrganization as parsecBootstrapOrganization,
   createOrganization as parsecCreateOrganization,
-  ParsedParsecAddrTag,
-  parseParsecAddr,
+  ParsedParsecAnyAddrTag,
+  parseParsecAnyAddr,
   Result,
   SaveStrategy,
 } from '@/parsec';
@@ -92,8 +92,8 @@ const { getOpenBaoClient, isOpenBaoAvailable } = useOpenBao();
 
 onMounted(async () => {
   if (props.bootstrapLink) {
-    const result = await parseParsecAddr(props.bootstrapLink);
-    if (result.ok && result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
+    const result = await parseParsecAnyAddr(props.bootstrapLink);
+    if (result.ok && result.value.tag === ParsedParsecAnyAddrTag.OrganizationBootstrap) {
       organizationName.value = result.value.organizationId;
     }
   }
