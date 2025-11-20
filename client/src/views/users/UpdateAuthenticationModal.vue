@@ -57,6 +57,7 @@
           <choose-authentication
             ref="chooseAuth"
             :active-auth="currentDevice.ty.tag"
+            :server-config="serverConfig"
           />
         </div>
       </div>
@@ -101,8 +102,9 @@ import {
   isAuthenticationValid,
   updateDeviceChangeAuthentication,
 } from '@/parsec';
-import { DeviceAccessStrategyKeyring, DeviceAccessStrategySmartcard } from '@/plugins/libparsec';
+import { DeviceAccessStrategyKeyring, DeviceAccessStrategyOpenBao, DeviceAccessStrategySmartcard, ServerConfig } from '@/plugins/libparsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { OpenBaoConnectionInfo } from '@/services/openBao';
 import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonTitle, modalController } from '@ionic/vue';
 import { close } from 'ionicons/icons';
 import { MsModalResult, MsPasswordInput, MsSpinner, Translatable, asyncComputed, useWindowSize } from 'megashark-lib';
@@ -117,6 +119,8 @@ enum ChangeAuthenticationStep {
 const props = defineProps<{
   currentDevice: AvailableDevice;
   informationManager: InformationManager;
+  serverConfig?: ServerConfig;
+  openBaoConnInfo?: OpenBaoConnectionInfo;
 }>();
 
 const { isLargeDisplay } = useWindowSize();
@@ -168,7 +172,11 @@ const canGoForward = asyncComputed(async () => {
 });
 
 async function changeAuthentication(): Promise<void> {
-  let accessStrategy: DeviceAccessStrategyKeyring | DeviceAccessStrategyPassword | DeviceAccessStrategySmartcard;
+  let accessStrategy:
+    | DeviceAccessStrategyKeyring
+    | DeviceAccessStrategyPassword
+    | DeviceAccessStrategySmartcard
+    | DeviceAccessStrategyOpenBao;
 
   if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.Keyring) {
     accessStrategy = {
@@ -185,6 +193,26 @@ async function changeAuthentication(): Promise<void> {
     accessStrategy = {
       tag: DeviceAccessStrategyTag.Smartcard,
       keyFile: props.currentDevice.keyFilePath,
+    };
+  } else if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.OpenBao) {
+    if (!props.openBaoConnInfo) {
+      window.electronAPI.log('error', 'No OpenBao connection info given');
+      props.informationManager.present(
+        new Information({
+          message: 'MyProfilePage.errors.cannotChangeAuthentication',
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Toast,
+      );
+      return;
+    }
+    accessStrategy = {
+      tag: DeviceAccessStrategyTag.OpenBao,
+      keyFile: props.currentDevice.keyFilePath,
+      openbaoServerUrl: props.openBaoConnInfo.server,
+      openbaoSecretMountPath: props.openBaoConnInfo.secretMountpoint,
+      openbaoEntityId: props.openBaoConnInfo.userId,
+      openbaoAuthToken: props.openBaoConnInfo.token,
     };
   } else {
     // Should not happen

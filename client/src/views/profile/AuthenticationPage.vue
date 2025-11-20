@@ -19,6 +19,11 @@
           :state="AuthenticationCardState.Current"
           v-show="currentDevice && currentDevice.ty.tag === AvailableDeviceTypeTag.Smartcard"
         />
+        <authentication-card
+          :auth-method="DeviceSaveStrategyTag.OpenBao"
+          :state="AuthenticationCardState.Current"
+          v-show="currentDevice && currentDevice.ty.tag === AvailableDeviceTypeTag.OpenBao"
+        />
         <ion-button
           id="change-authentication-button"
           class="update-auth-button button-default"
@@ -26,8 +31,8 @@
           @click="openChangeAuthentication()"
         >
           <ion-label class="update-auth-button__label">
-            <span v-if="isWeb()">{{ $msTranslate('Authentication.changePasswordButton') }}</span>
-            <span v-else>{{ $msTranslate('Authentication.changeAuthenticationButton') }}</span>
+            <span v-if="multipleAuthAvailable()">{{ $msTranslate('Authentication.changeAuthenticationButton') }}</span>
+            <span v-else>{{ $msTranslate('Authentication.changePasswordButton') }}</span>
           </ion-label>
         </ion-button>
       </div>
@@ -46,8 +51,18 @@
 <script setup lang="ts">
 import authenticationCard from '@/components/profile/AuthenticationCard.vue';
 import { AuthenticationCardState } from '@/components/profile/types';
-import { AvailableDevice, AvailableDeviceTypeTag, DeviceSaveStrategyTag, getCurrentAvailableDevice, isWeb } from '@/parsec';
+import {
+  AvailableDevice,
+  AvailableDeviceTypeOpenBao,
+  AvailableDeviceTypeTag,
+  DeviceSaveStrategyTag,
+  getCurrentAvailableDevice,
+  getServerConfig,
+  isWeb,
+  ServerConfig,
+} from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { isSSOProviderHandled, OpenBaoClient, openBaoConnect, OpenBaoConnectionInfo } from '@/services/openBao';
 import UpdateAuthenticationModal from '@/views/users/UpdateAuthenticationModal.vue';
 import { IonButton, IonIcon, IonLabel, IonText, modalController } from '@ionic/vue';
 import { warning } from 'ionicons/icons';
@@ -57,8 +72,47 @@ import { inject, onMounted, Ref, ref } from 'vue';
 const currentDevice: Ref<AvailableDevice | null> = ref(null);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const error = ref('');
+const serverConfig = ref<ServerConfig | undefined>(undefined);
+
+function multipleAuthAvailable(): boolean {
+  if (!isWeb()) {
+    return true;
+  }
+
+  return (serverConfig.value?.openbao && serverConfig.value?.openbao.auths.some((auth) => isSSOProviderHandled(auth.tag))) === true;
+}
+
+async function getOpenBaoClient(): Promise<OpenBaoClient | void> {
+  if (!serverConfig.value || !currentDevice.value) {
+    window.electronAPI.log('error', 'Server config or current device not found');
+    return;
+  }
+  if (!serverConfig.value.openbao) {
+    window.electronAPI.log('error', 'OpenBao not enabled on this server');
+    return;
+  }
+  const provider = (currentDevice.value.ty as AvailableDeviceTypeOpenBao).openbaoPreferredAuthId;
+  const auth = serverConfig.value.openbao.auths.find((v) => v.tag === provider);
+  if (!auth) {
+    window.electronAPI.log('error', `Provider '${provider}' selected but is not available in server config`);
+    return;
+  }
+  const result = await openBaoConnect(
+    serverConfig.value.openbao.serverUrl,
+    auth.tag,
+    auth.mountPath,
+    serverConfig.value.openbao.secret.mountPath,
+  );
+  if (!result.ok) {
+    window.electronAPI.log('error', `Error while connecting with SSO: ${JSON.stringify(result.error)}`);
+  } else {
+    return result.value;
+  }
+}
 
 async function openChangeAuthentication(): Promise<void> {
+  let openBaoConnInfo: OpenBaoConnectionInfo | undefined = undefined;
+
   if (currentDevice.value && currentDevice.value.ty.tag === AvailableDeviceTypeTag.Smartcard) {
     const answer = await askQuestion('Authentication.method.smartcard.warn.title', 'Authentication.method.smartcard.warn.subtitle', {
       yesText: 'Authentication.method.smartcard.warn.yes',
@@ -68,6 +122,12 @@ async function openChangeAuthentication(): Promise<void> {
     if (answer === Answer.No) {
       return;
     }
+  } else if (currentDevice.value && currentDevice.value.ty.tag === AvailableDeviceTypeTag.OpenBao) {
+    const connResult = await getOpenBaoClient();
+    if (!connResult) {
+      return;
+    }
+    openBaoConnInfo = connResult.getConnectionInfo();
   }
 
   const modal = await modalController.create({
@@ -76,6 +136,8 @@ async function openChangeAuthentication(): Promise<void> {
     componentProps: {
       currentDevice: currentDevice.value,
       informationManager: informationManager,
+      serverConfig: serverConfig.value,
+      openBaoConnInfo: openBaoConnInfo,
     },
   });
   await modal.present();
@@ -106,6 +168,10 @@ onMounted(async () => {
     error.value = 'MyProfilePage.errors.failedToRetrieveInformation';
   } else {
     currentDevice.value = deviceResult.value;
+    const configResult = await getServerConfig(currentDevice.value.serverAddr);
+    if (configResult.ok) {
+      serverConfig.value = configResult.value;
+    }
     error.value = '';
   }
 });
