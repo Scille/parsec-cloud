@@ -231,7 +231,7 @@ jobs:
           # But Github action only allows to set `entrypoint` and `command` option for `docker run`.
           # Fortunately, Github does not sanitize the input of `entrypoint` so we can inject `--user` option by doing some shell quote escape shenanigan.
           entrypoint: sh" --user "${{ steps.user.outputs.id }}
-          args: -c "cd client; npm run test:e2e:headless -- --shard=${{ matrix.shard_index }}/${{ matrix.shard_total }}"
+          args: -c "cd client; npm run test:e2e:headless -- --max-failures=1 --shard=${{ matrix.shard_index }}/${{ matrix.shard_total }}"
         env:
           TESTBED_SERVER: parsec3://parsec-testbed-server:6777?no_ssl=true
           PARSEC_APP_TRIAL_SERVERS: parsec-testbed-server:6777?no_ssl=true
