@@ -7,7 +7,7 @@
             // Note we don't use the `parsec3://` scheme here to avoid compatibility
             // issue if we later decide to change the scheme.
             "name": "server_url",
-            "type": "String"
+            "type": "ParsecAddr"
         },
         {
             "name": "organization_id",

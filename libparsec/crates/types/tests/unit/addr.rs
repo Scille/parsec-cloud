@@ -1052,3 +1052,43 @@ fn comparison_with_implicit_port() {
 
     p_assert_ne!(http_implicit_parse, https_implicit_parse);
 }
+
+#[rstest]
+#[case::simple("parsec3://parsec.example.com".parse().unwrap(), "https://parsec.example.com/")]
+#[case::with_port("parsec3://parsec.example.com:888".parse().unwrap(), "https://parsec.example.com:888/")]
+#[case::explicit_default_http_port("parsec3://parsec.example.com:80?no_ssl=true".parse().unwrap(), "http://parsec.example.com/")]
+#[case::explicit_default_https_port("parsec3://parsec.example.com:443".parse().unwrap(), "https://parsec.example.com/")]
+#[case::no_ssl("parsec3://parsec.example.com?no_ssl=true".parse().unwrap(), "http://parsec.example.com/")]
+#[case::yes_ssl("parsec3://parsec.example.com?no_ssl=false".parse().unwrap(), "https://parsec.example.com/")]
+fn server_addr_serialize_ok(#[case] addr: ParsecAddr, #[case] serialized: &'static str) {
+    serde_test::assert_tokens(&addr, &[serde_test::Token::BorrowedStr(serialized)]);
+}
+
+#[test]
+fn server_addr_deserialize_no_trailing_slash_ok() {
+    // We normally serialize the URL with a trailing slash (e.g. `parsec3://a.b` -> `https://a.b/`),
+    // however we also accept without trailing slash during deserialization.
+    let serialized_without_trailing_slash = "https://parsec.example.com";
+    let expected: ParsecAddr = "parsec3://parsec.example.com".parse().unwrap();
+    serde_test::assert_de_tokens(
+        &expected,
+        &[serde_test::Token::BorrowedStr(
+            serialized_without_trailing_slash,
+        )],
+    );
+}
+
+#[rstest]
+#[case::empty("")]
+#[case::no_scheme("parsec.example.com")]
+#[case::bad_port("parsec.example.com:0")]
+#[case::unknown_scheme("dummy://parsec.example.com")]
+#[case::parsec3_scheme_not_allowed("parsec3://parsec.example.com")]
+#[case::with_path("parsec3://parsec.example.com/CoolOrg")]
+#[case::with_params("parsec3://parsec.example.com/?foo=bar")]
+fn server_addr_serialize_ko(#[case] bad: &'static str) {
+    serde_test::assert_de_tokens_error::<ParsecAddr>(
+        &[serde_test::Token::Str(bad)],
+        "Invalid server URL",
+    );
+}
