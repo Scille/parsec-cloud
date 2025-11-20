@@ -635,6 +635,7 @@
         "noWorkspacesExternal": "You do not have access to any workspaces. Workspaces that have been shared with you will be listed here.",
         "loading": "Loading your workspaces...",
         "noMatchingWorkspaces": "No workspace match this search filter.",
+        "allWorkspacesHidden": "All your workspaces are hidden. Go to the \"Hidden\" category or click the button below to show them.",
         "listError": "Failed to list the workspaces.",
         "newWorkspaceError": "Failed to create a new workspace.",
         "newWorkspaceSuccess": "The workspace '{workspace}' has been created!",
@@ -650,9 +651,11 @@
             "actionHistory": "History",
             "actionShare": "Sharing and roles",
             "actionDetails": "Details",
+            "actionHide": "Hide this workspace",
+            "actionShow": "Show this workspace",
             "actionCopyLink": "Copy link",
-            "actionAddFavorite": "Pin",
-            "actionRemoveFavorite": "Unpin"
+            "actionAddFavorite": "Add to favorites",
+            "actionRemoveFavorite": "Remove from favorites"
         },
         "CreateWorkspaceModal": {
             "pageTitle": "Create a new workspace",
@@ -699,14 +702,58 @@
         "linkNotCopiedToClipboard": "Failed to copy the link. Your browser or device does not seem to support copy/paste.",
         "filter": {
             "title": "Filter",
-            "roles": "Role"
+            "roles": "Role",
+            "show": "Show",
+            "reset": "Reset"
         },
         "categoriesMenu": {
             "all": "All workspaces",
+            "allShort": "All",
             "recents": "Recently viewed",
-            "favorites": "Pinned",
+            "recentsShort": "Recent",
+            "favorites": "Favorites",
+            "hidden": "Hidden",
             "noRecentWorkspaces": "You have not consulted any workspaces yet. Recently consulted workspaces will be listed here.",
-            "noFavoriteWorkspaces": "You have not pinned any workspaces yet. Pin a workspace to have it be listed here."
+            "noFavoriteWorkspaces": "You have not set any workspaces as favorite. Favorite a workspace to have it be listed here.",
+            "noHiddenWorkspaces": "You have not hidden any workspaces yet. Hidden workspaces will be listed here.",
+            "showHiddenWorkspaces": "Show hidden workspaces"
+        },
+        "showHideWorkspace": {
+            "failedStarted": "Failed to get started workspace information. Please try again.",
+            "successDesktopHidden": "The workspace is now hidden and will no longer appear in your explorer.",
+            "successWebHidden": "The workspace is now hidden in Parsec.",
+            "failedHidden": "Failed to hide the workspace. Please try again.",
+            "successDesktopShown": "The workspace is now visible in Parsec and your explorer.",
+            "successWebShown": "The workspace is now visible in Parsec.",
+            "failedShown": "Failed to show the workspace. Please try again."
+        },
+        "workspaceHiddenModal": {
+            "title": "Hide a workspace",
+            "affectedWorkspaces": "You are about to hide the workspace {workspace} and it will no longer be visible from the file explorer.",
+            "info": "You can check “Show hidden workspaces” to see it in Parsec.",
+            "actionConfirm": "Hide workspace",
+            "actionCancel": "Cancel",
+            "noReminder": "Don't remind me again",
+            "showWorkspace": {
+                "toastSuccess": "The workspace {workspace} is now visible.",
+                "toastFailure": "Failed to show the workspace {workspace}. Please try again."
+            },
+            "hideWorkspace": {
+                "toastSuccess": "The workspace {workspace} is now hidden.",
+                "toastFailure": "Failed to hide the workspace {workspace}. Please try again."
+            }
+        },
+        "openInExplorerModal": {
+            "file": {
+                "title": "Failed to open the file in your explorer",
+                "description": "You must make this workspace visible in order to view your file in your explorer."
+            },
+            "workspace": {
+                "title": "Failed to open the workspace in your explorer",
+                "description": "You must make this workspace visible in order to view it from your file explorer."
+            },
+            "actionConfirm": "Make this workspace visible",
+            "actionCancel": "Cancel"
         }
     },
     "FoldersPage": {
@@ -1034,10 +1081,9 @@
         "organization": "Organization",
         "workspaces": "My workspaces",
         "recentWorkspaces": "Recently viewed",
-        "favorites": "Pinned",
-        "noFavorites": "No pinned workspaces",
+        "favorites": "Favorites",
+        "hidden": "Hidden",
         "noWorkspace": "No workspaces",
-        "noRecentWorkspace": "No recent workspaces",
         "users": "Users",
         "invitations": "Invitations",
         "storage": "Storage",
@@ -1569,7 +1615,8 @@
             "profile": "Profile",
             "admin": "Administrator",
             "standard": "Member",
-            "outsider": "External"
+            "outsider": "External",
+            "reset": "Reset"
         },
         "assignRoles": {
             "title": "Copy workspace roles",

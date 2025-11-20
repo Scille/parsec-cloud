@@ -37,10 +37,7 @@
         </ion-item>
       </ion-item-group>
 
-      <ion-item-group
-        class="list-group"
-        v-show="isDesktop() || clientRole === WorkspaceRole.Owner"
-      >
+      <ion-item-group class="list-group">
         <ion-item class="list-group-title button-small">
           <ion-text class="list-group-title__label">
             {{ $msTranslate('WorkspacesPage.workspaceContextMenu.titleManage') }}
@@ -104,6 +101,35 @@
           />
           <ion-text class="button-medium list-group-item__label">
             {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionDetails') }}
+          </ion-text>
+        </ion-item>
+
+        <ion-item
+          button
+          v-show="!isHidden"
+          @click="onClick(WorkspaceAction.UnMount)"
+          class="ion-no-padding list-group-item"
+        >
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="eyeOff"
+          />
+          <ion-text class="button-medium list-group-item__label">
+            {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionHide') }}
+          </ion-text>
+        </ion-item>
+        <ion-item
+          button
+          v-show="isHidden"
+          @click="onClick(WorkspaceAction.Mount)"
+          class="ion-no-padding list-group-item"
+        >
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="eye"
+          />
+          <ion-text class="button-medium list-group-item__label">
+            {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionShow') }}
           </ion-text>
         </ion-item>
       </ion-item-group>
@@ -176,7 +202,7 @@
 import { UserProfile, WorkspaceName, WorkspaceRole, isDesktop } from '@/parsec';
 import { WorkspaceAction } from '@/views/workspaces/types';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonList, IonText, popoverController } from '@ionic/vue';
-import { cloudy, informationCircle, link, open, shareSocial, star, time } from 'ionicons/icons';
+import { cloudy, eye, eyeOff, informationCircle, link, open, shareSocial, star, time } from 'ionicons/icons';
 import { MsImage, RenameIcon } from 'megashark-lib';
 
 function onClick(action: WorkspaceAction): Promise<boolean> {
@@ -188,6 +214,7 @@ defineProps<{
   clientProfile: UserProfile;
   clientRole: WorkspaceRole;
   isFavorite: boolean;
+  isHidden: boolean;
 }>();
 </script>
 

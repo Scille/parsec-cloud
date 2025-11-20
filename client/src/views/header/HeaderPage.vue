@@ -637,9 +637,14 @@ async function openSecurityWarningsModal(): Promise<void> {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
+    width: 100%;
+    overflow: hidden;
 
     &__orga {
       color: var(--parsec-color-light-secondary-grey);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     &__title {

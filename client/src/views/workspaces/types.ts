@@ -10,6 +10,7 @@ enum WorkspaceAction {
   ShowHistory = 'workspace-show-history',
   OpenInExplorer = 'workspace-open-in-explorer',
   Mount = 'workspace-mount',
+  UnMount = 'workspace-unmount',
   Favorite = 'workspace-favorite',
 }
 
@@ -17,6 +18,7 @@ enum WorkspaceMenu {
   All = 'all',
   Recents = 'recents',
   Favorites = 'favorites',
+  Hidden = 'hidden',
 }
 
 function isWorkspaceAction(value: any): value is WorkspaceAction {

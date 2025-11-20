@@ -634,6 +634,7 @@
         "noWorkspacesExternal": "Vous n'avez pas encore accès à un espace de travail. Les espaces de travail qui vous seront partagés s'afficheront ici.",
         "loading": "Chargement de vos espaces de travail...",
         "noMatchingWorkspaces": "Aucun espace de travail ne correspond à cette recherche.",
+        "allWorkspacesHidden": "Tous vos espaces de travail sont masqués. Allez dans la catégorie \"Masqués\" ou cliquez sur le bouton ci-dessous pour les afficher.",
         "listError": "Impossible de lister les espaces de travail.",
         "newWorkspaceError": "Impossible de créer le nouvel espace de travail.",
         "newWorkspaceSuccess": "L'espace de travail '{workspace}' a été créé !",
@@ -650,8 +651,10 @@
             "actionShare": "Partage et rôles",
             "actionDetails": "Détails",
             "actionCopyLink": "Copier le lien",
-            "actionAddFavorite": "Épingler",
-            "actionRemoveFavorite": "Désépingler"
+            "actionHide": "Masquer cet espace",
+            "actionShow": "Afficher cet espace",
+            "actionAddFavorite": "Ajouter aux favoris",
+            "actionRemoveFavorite": "Supprimer des favoris"
         },
         "CreateWorkspaceModal": {
             "pageTitle": "Créer un nouvel espace de travail",
@@ -698,14 +701,58 @@
         "linkNotCopiedToClipboard": "Impossible de copier le lien. Il est possible que votre navigateur ou votre appareil n'autorise pas le copier/coller.",
         "filter": {
             "title": "Filtrer",
-            "roles": "Rôle"
+            "roles": "Rôle",
+            "show": "Afficher",
+            "reset": "Réinitialiser"
         },
         "categoriesMenu": {
             "all": "Tous les espaces",
+            "allShort": "Tous",
             "recents": "Vus récemment",
-            "favorites": "Épinglés",
+            "recentsShort": "Récents",
+            "favorites": "Favoris",
+            "hidden": "Masqués",
             "noRecentWorkspaces": "Vous n'avez encore consulté aucun espace de travail. Les espaces consultés récemment apparaîtront ici.",
-            "noFavoriteWorkspaces": "Vous n'avez encore épinglé aucun espace de travail. Épinglez un espace pour qu'il apparaisse ici."
+            "noFavoriteWorkspaces": "Vous n'avez encore aucun espace de travail favori. Les espaces favoris apparaîtront ici.",
+            "noHiddenWorkspaces": "Vous n'avez encore aucun espace de travail masqué. Les espaces masqués apparaîtront ici.",
+            "showHiddenWorkspaces": "Afficher les espaces masqués"
+        },
+        "showHideWorkspace": {
+            "failedStarted": "Impossible d'obtenir les informations relatives à l'espace de travail. Veuillez réessayer.",
+            "successDesktopHidden": "L'espace de travail est maintenant masqué et n'apparaîtra plus dans votre explorateur.",
+            "successWebHidden": "L'espace de travail est maintenant masqué dans Parsec.",
+            "failedHidden": "Impossible de masquer l'espace de travail. Veuillez réessayer.",
+            "successDesktopShown": "L'espace de travail est maintenant visible dans Parsec et votre explorateur.",
+            "successWebShown": "L'espace de travail est maintenant visible dans Parsec.",
+            "failedShown": "Impossible d'afficher l'espace de travail. Veuillez réessayer."
+        },
+        "workspaceHiddenModal": {
+            "title": "Masquer un espace de travail",
+            "affectedWorkspaces": "Vous êtes sur le point de masquer l'espace de travail {workspace}. Cet espace de travail ne sera plus visible depuis l'explorateur de fichiers.",
+            "info": "Vous pouvez cocher “Afficher les espaces masqués” pour le voir dans Parsec.",
+            "actionConfirm": "Masquer l'espace de travail",
+            "actionCancel": "Annuler",
+            "noReminder": "Ne plus me rappeler",
+            "showWorkspace": {
+                "toastSuccess": "L'espace de travail {workspace} est maintenant visible.",
+                "toastFailure": "Impossible d'afficher l'espace de travail {workspace}. Veuillez réessayer."
+            },
+            "hideWorkspace": {
+                "toastSuccess": "L'espace de travail {workspace} est maintenant masqué.",
+                "toastFailure": "Impossible de masquer l'espace de travail {workspace}. Veuillez réessayer."
+            }
+        },
+        "openInExplorerModal": {
+            "file": {
+                "title": "Impossible d'ouvrir le fichier",
+                "description": "Vous devez rendre visible cet espace de travail pour pouvoir le consulter depuis votre explorateur de fichiers."
+            },
+            "workspace": {
+                "title": "Impossible d'ouvrir l'espace de travail",
+                "description": "Vous devez rendre visible cet espace de travail pour pouvoir le consulter depuis votre explorateur de fichiers."
+            },
+            "actionConfirm": "Rendre cet espace de travail visible",
+            "actionCancel": "Annuler"
         }
     },
     "FoldersPage": {
@@ -1034,10 +1081,9 @@
         "organization": "Organisation",
         "workspaces": "Mes espaces de travail",
         "recentWorkspaces": "Vus récemment",
-        "favorites": "Épinglés",
-        "noFavorites": "Aucun espace de travail épinglé",
+        "favorites": "Favoris",
+        "hidden": "Masqués",
         "noWorkspace": "Aucun espace de travail",
-        "noRecentWorkspace": "Aucun espace de travail récent",
         "users": "Utilisateurs",
         "invitations": "Invitations",
         "storage": "Stockage",
@@ -1569,7 +1615,8 @@
             "profile": "Profil",
             "admin": "Administrateur",
             "standard": "Membre",
-            "outsider": "Externe"
+            "outsider": "Externe",
+            "reset": "Réinitialiser"
         },
         "assignRoles": {
             "title": "Transférer les rôles",
