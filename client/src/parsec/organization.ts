@@ -149,12 +149,12 @@ export async function getOrganizationInfo(): Promise<Result<OrganizationInfo, Or
         frozen: usersResult.value.filter((user) => user.isFrozen() && !user.isRevoked()).length,
       },
       size: orgSize,
-      outsidersAllowed: clientInfoResult.value.serverConfig.userProfileOutsiderAllowed,
+      outsidersAllowed: clientInfoResult.value.serverOrganizationConfig.userProfileOutsiderAllowed,
       userLimit:
-        clientInfoResult.value.serverConfig.activeUsersLimit.tag === ActiveUsersLimitTag.LimitedTo
-          ? Number((clientInfoResult.value.serverConfig.activeUsersLimit as ActiveUsersLimitLimitedTo).x1)
+        clientInfoResult.value.serverOrganizationConfig.activeUsersLimit.tag === ActiveUsersLimitTag.LimitedTo
+          ? Number((clientInfoResult.value.serverOrganizationConfig.activeUsersLimit as ActiveUsersLimitLimitedTo).x1)
           : undefined,
-      hasUserLimit: clientInfoResult.value.serverConfig.activeUsersLimit.tag !== ActiveUsersLimitTag.NoLimit,
+      hasUserLimit: clientInfoResult.value.serverOrganizationConfig.activeUsersLimit.tag !== ActiveUsersLimitTag.NoLimit,
       organizationAddr: clientInfoResult.value.organizationAddr,
       organizationId: clientInfoResult.value.organizationId,
       creationDate: creationDateResult.ok ? creationDateResult.value : undefined,
