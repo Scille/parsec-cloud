@@ -6,9 +6,9 @@ import { randomInt } from 'crypto';
 function getPkiJoinLink(orgName: string): string {
   const orgAddr = getOrganizationAddr(orgName);
   if (orgAddr.includes('?')) {
-    return `${orgAddr}&a=pki_join`;
+    return `${orgAddr}&a=pki_enrollment`;
   } else {
-    return `${orgAddr}?a=pki_join`;
+    return `${orgAddr}?a=pki_enrollment`;
   }
 }
 

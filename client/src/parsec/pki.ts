@@ -293,9 +293,9 @@ export async function getPkiJoinOrganizationLink(): Promise<Result<string, GetPk
     return { ok: false, error: { tag: GetPkiJoinOrganizationLinkErrorTag.Internal, error: 'failed to get organization info' } };
   }
   if (result.value.organizationAddr.includes('?')) {
-    return { ok: true, value: `${result.value.organizationAddr}&a=pki_join` };
+    return { ok: true, value: `${result.value.organizationAddr}&a=pki_enrollment` };
   }
-  return { ok: true, value: `${result.value.organizationAddr}?a=pki_join` };
+  return { ok: true, value: `${result.value.organizationAddr}?a=pki_enrollment` };
 }
 
 export async function selectCertificate(): Promise<Result<X509CertificateReference | null, ShowCertificateSelectionDialogError>> {
