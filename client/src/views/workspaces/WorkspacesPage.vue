@@ -103,10 +103,11 @@
         </div>
 
         <div v-if="filteredWorkspaces.length > 0 && displayView === DisplayState.List">
-          <ion-list class="list">
+          <ion-list class="workspaces-container-list list">
             <ion-list-header
               class="workspace-list-header"
               lines="full"
+              v-if="false"
             >
               <ion-label class="workspace-list-header__label cell-title label-name">
                 {{ $msTranslate('WorkspacesPage.listDisplayTitles.name') }}
@@ -140,6 +141,7 @@
               :workspace="workspace"
               :client-profile="clientProfile"
               :is-favorite="workspaceAttributes.isFavorite(workspace.id)"
+              :is-hidden="workspaceAttributes.isHidden(workspace.id)"
               @click="onWorkspaceClick"
               @favorite-click="onWorkspaceFavoriteClick"
               @menu-click="onOpenWorkspaceContextMenu"
@@ -157,6 +159,7 @@
             :workspace="workspace"
             :client-profile="clientProfile"
             :is-favorite="workspaceAttributes.isFavorite(workspace.id)"
+            :is-hidden="workspaceAttributes.isHidden(workspace.id)"
             @click="onWorkspaceClick"
             @favorite-click="onWorkspaceFavoriteClick"
             @menu-click="onOpenWorkspaceContextMenu"
@@ -729,6 +732,7 @@ async function onFilterUpdate(): Promise<void> {
   .label-name {
     width: 100%;
     max-width: 40vw;
+    margin-left: 0.25rem;
     min-width: 11.25rem;
     white-space: nowrap;
     overflow: hidden;
@@ -776,6 +780,17 @@ async function onFilterUpdate(): Promise<void> {
 
   @include ms.responsive-breakpoint('xs') {
     grid-template-columns: repeat(1, 1fr);
+  }
+}
+
+.workspaces-container-list {
+  padding: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  @include ms.responsive-breakpoint('sm') {
+    padding: 1.5rem 1rem;
   }
 }
 </style>
