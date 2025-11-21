@@ -315,10 +315,12 @@
         "lostDevice": "Lost your access?",
         "recoverDevice": "Recover my session",
         "organizationRequest": {
+            "notAvailable": "Requests to join an organization using a certificate is not yet supported on your system.",
             "title": "Pending requests",
             "status": {
                 "pending": "Pending",
-                "rejected": "Rejected"
+                "rejected": "Rejected",
+                "cancelled": "Cancelled"
             },
             "requestSent": {
                 "success": "Your request to join the organization has been sent.",
@@ -1326,7 +1328,23 @@
         "cancelConfirm": "Cancel the onboarding",
         "cancelConfirmSubtitle": "Are you sure you want to cancel the onboarding process? Information will not be saved, you will have to restart.",
         "cancelYes": "Cancel process",
-        "cancelNo": "Resume"
+        "cancelNo": "Resume",
+        "joinPkiModal": {
+            "title": "Join organization with Smartcard",
+            "certificate": {
+                "label": "Certificate selection",
+                "addButton": "Add a certificate",
+                "updateButton": "Update",
+                "selected": "Certificate selected",
+                "description": "Certificate verified your identity and allows you to securely join the organization."
+            },
+            "notAvailable": "Smartcard is not available on this system.",
+            "buttons": {
+                "join": "Request to join organization",
+                "cancel": "Cancel",
+                "close": "Close"
+            }
+        }
     },
     "UsersPage": {
         "listDisplayTitles": {
@@ -1584,7 +1602,9 @@
             "tabShort": "PKI",
             "emptyState": "No pending PKI requests.",
             "copyLink": "Copy link (PKI)",
+            "notAvailable": "Unavailable",
             "pkiFeature": "The PKI feature required a PKI infrastructure to be used.",
+            "invalidRequest": "Invalid PKI request",
             "listDisplayTitles": {
                 "name": "Name",
                 "email": "Email",
@@ -1598,10 +1618,10 @@
                 "unknown": "Unknown"
             },
             "rootCertificate": {
-                "missingCertificateTitle": "Missing root certificate",
-                "missingCertificateDescription": "A root certificate is required to validate requests received by PKI. For security reasons, the certificate must be provided each time the organization is reopened.",
-                "setRootCertificate": "Set root certificate",
-                "updateRootCertificate": "Update root certificate"
+                "missingCertificateTitle": "Missing your certificate",
+                "missingCertificateDescription": "A certificate is required to validate requests received by PKI. For security reasons, the certificate must be provided each time the organization is reopened.",
+                "setRootCertificate": "Set your certificate",
+                "updateRootCertificate": "Update your certificate"
             },
             "validationModal": {
                 "error": {

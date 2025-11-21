@@ -9,20 +9,21 @@
     <!-- request - mobile version -->
     <div
       class="pkiRequest-mobile"
-      v-if="isSmallDisplay"
+      v-if="isSmallDisplay && request.tag === PkiEnrollmentListItemTag.Valid"
     >
       <div class="pkiRequest-mobile-header">
-        <ion-text class="pkiRequest-mobile-header__name subtitles-normal">{{ request.humanHandle.label }}</ion-text>
-        <ion-text class="pkiRequest-mobile-header__email button-medium">{{ request.humanHandle.email }}</ion-text>
+        <ion-text class="pkiRequest-mobile-header__name subtitles-normal">
+          {{ (request as PkiEnrollmentListItemValid).payload.humanHandle.label }}
+        </ion-text>
+        <ion-text class="pkiRequest-mobile-header__email button-medium">
+          {{ (request as PkiEnrollmentListItemValid).payload.humanHandle.email }}
+        </ion-text>
       </div>
       <div class="pkiRequest-mobile-content">
         <ion-text class="pkiRequest-mobile-content__createdOn body-sm">
-          {{ $msTranslate(formatTimeSince(request.createdOn, '--', 'short')) }}
+          {{ $msTranslate(formatTimeSince(request.submittedOn, '--', 'short')) }}
         </ion-text>
-        <div
-          class="certificate button-small"
-          :class="`certificate-${request.validity}`"
-        >
+        <div class="certificate button-small certificate-valid">
           <ion-icon
             :icon="validity.icon"
             class="certificate-icon"
@@ -35,12 +36,12 @@
     <!-- request avatar -->
     <div
       class="pkiRequest-name"
-      v-if="isLargeDisplay"
+      v-if="isLargeDisplay && request.tag === PkiEnrollmentListItemTag.Valid"
     >
       <ion-text class="pkiRequest-name__label cell">
         <user-avatar-name
-          :user-avatar="request.humanHandle.label"
-          :user-name="request.humanHandle.label"
+          :user-avatar="(request as PkiEnrollmentListItemValid).payload.humanHandle.label"
+          :user-name="(request as PkiEnrollmentListItemValid).payload.humanHandle.label"
         />
       </ion-text>
     </div>
@@ -48,10 +49,10 @@
     <!-- request mail -->
     <div
       class="pkiRequest-email"
-      v-if="isLargeDisplay"
+      v-if="isLargeDisplay && request.tag === PkiEnrollmentListItemTag.Valid"
     >
       <ion-text class="pkiRequest-email__label cell">
-        {{ request.humanHandle.email }}
+        {{ (request as PkiEnrollmentListItemValid).payload.humanHandle.email }}
       </ion-text>
     </div>
 
@@ -61,20 +62,17 @@
       v-if="isLargeDisplay"
     >
       <ion-text class="pkiRequest-createdOn__label cell">
-        {{ $msTranslate(formatTimeSince(request.createdOn, '--', 'short')) }}
+        {{ $msTranslate(formatTimeSince(request.submittedOn, '--', 'short')) }}
       </ion-text>
     </div>
 
     <!-- request certificate -->
     <div
       class="pkiRequest-certificate"
-      v-if="isLargeDisplay"
+      v-if="isLargeDisplay && request.tag === PkiEnrollmentListItemTag.Valid"
     >
       <ion-text class="pkiRequest-certificate__label cell">
-        <div
-          class="certificate button-small"
-          :class="`certificate-${request.validity}`"
-        >
+        <div class="certificate button-small certificate-valid">
           <ion-icon
             :icon="validity.icon"
             class="certificate-icon"
@@ -112,9 +110,9 @@
 
 <script setup lang="ts">
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
-import { JoinRequestValidity, OrganizationJoinRequest } from '@/parsec';
+import { PkiEnrollmentListItem, PkiEnrollmentListItemTag, PkiEnrollmentListItemValid } from '@/parsec';
 import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
-import { checkmarkCircle, closeCircle, warning } from 'ionicons/icons';
+import { checkmarkCircle, closeCircle } from 'ionicons/icons';
 import { attachMouseOverTooltip, formatTimeSince, useWindowSize } from 'megashark-lib';
 import { computed, onMounted, useTemplateRef } from 'vue';
 
@@ -122,21 +120,19 @@ const { isSmallDisplay, isLargeDisplay } = useWindowSize();
 const rejectButtonRef = useTemplateRef<InstanceType<typeof IonButton>>('rejectButton');
 
 const props = defineProps<{
-  request: OrganizationJoinRequest;
+  request: PkiEnrollmentListItem;
 }>();
 
 defineEmits<{
-  (e: 'acceptClick', invitation: OrganizationJoinRequest): void;
-  (e: 'rejectClick', invitation: OrganizationJoinRequest): void;
+  (e: 'acceptClick', invitation: PkiEnrollmentListItem): void;
+  (e: 'rejectClick', invitation: PkiEnrollmentListItem): void;
 }>();
 
 const validity = computed(() => {
-  if (props.request.validity === JoinRequestValidity.Valid) {
+  if (props.request.tag === PkiEnrollmentListItemTag.Valid) {
     return { text: 'InvitationsPage.pkiRequests.certificate.valid', icon: checkmarkCircle };
-  } else if (props.request.validity === JoinRequestValidity.Invalid) {
-    return { text: 'InvitationsPage.pkiRequests.certificate.invalid', icon: closeCircle };
   } else {
-    return { text: 'InvitationsPage.pkiRequests.certificate.unknown', icon: warning };
+    return { text: 'InvitationsPage.pkiRequests.certificate.invalid', icon: closeCircle };
   }
 });
 

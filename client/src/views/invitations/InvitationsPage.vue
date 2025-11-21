@@ -3,7 +3,7 @@
 <template>
   <ion-page class="invitations-page">
     <div
-      v-if="isSmallDisplay && false"
+      v-if="isSmallDisplay"
       class="switch-view"
     >
       <ion-button
@@ -47,7 +47,7 @@
           class="toggle-view"
           role="tablist"
           aria-label="Invitation view toggle"
-          v-if="isLargeDisplay && false"
+          v-if="isLargeDisplay"
         >
           <ion-button
             class="toggle-view-button email-button"
@@ -67,9 +67,13 @@
           </ion-button>
           <ion-button
             class="toggle-view-button pki-button"
-            :class="{ active: view === InvitationView.PkiRequest }"
+            :class="{
+              active: view === InvitationView.PkiRequest,
+              disabled: !pkiAvailable,
+            }"
             @click="switchView(InvitationView.PkiRequest)"
-            :disabled="view === InvitationView.PkiRequest"
+            ref="switchToPkiButton"
+            :disabled="!pkiAvailable || view === InvitationView.PkiRequest"
           >
             <ion-icon
               :icon="idCard"
@@ -79,13 +83,25 @@
               <span v-if="windowWidth > WindowSizeBreakpoints.MD">{{ $msTranslate('InvitationsPage.pkiRequests.tab') }}</span>
               <span v-else>{{ $msTranslate('InvitationsPage.pkiRequests.tabShort') }}</span>
             </ion-text>
-            <span class="toggle-view-button__count">{{ pkiRequests.length }}</span>
+            <span
+              class="toggle-view-button__count"
+              v-show="pkiAvailable"
+            >
+              {{ pkiRequests.length }}
+            </span>
           </ion-button>
+          <ion-text
+            class="toggle-view-unavailable button-medium"
+            v-show="!pkiAvailable"
+            ref="pkiUnavailable"
+          >
+            {{ $msTranslate('InvitationsPage.pkiRequests.notAvailable') }}
+          </ion-text>
         </div>
 
         <ion-button
-          v-if="view === InvitationView.PkiRequest && rootCertificate"
-          @click="selectRootCertificate"
+          v-if="view === InvitationView.PkiRequest && adminCertificate"
+          @click="selectAdminCertificate"
           id="update-root-certificate-button"
           class="button-medium button-default certificate-button"
           fill="clear"
@@ -158,17 +174,11 @@
       </div>
       <div
         class="invitations-container scroll"
-        v-if="view === InvitationView.PkiRequest"
+        v-if="pkiAvailable && view === InvitationView.PkiRequest"
       >
-        <input
-          type="file"
-          ref="input"
-          hidden
-          @change="onInputChange"
-        />
         <div
           class="root-certificate"
-          v-if="!rootCertificate"
+          v-if="!adminCertificate"
         >
           <div class="root-certificate-content">
             <ms-image
@@ -191,7 +201,7 @@
             </ms-report-text>
             <ion-button
               class="button-large button-default"
-              @click="selectRootCertificate"
+              @click="selectAdminCertificate"
             >
               <ms-image
                 :image="DocumentImport"
@@ -202,7 +212,7 @@
           </div>
         </div>
         <div
-          v-show="invitations.length === 0"
+          v-show="pkiRequests.length === 0"
           class="no-active body-lg"
         >
           <div class="no-active-content">
@@ -212,7 +222,7 @@
             </ion-text>
           </div>
         </div>
-        <div v-show="(invitations.length > 0 && isLargeDisplay) || (rootCertificate && pkiRequests.length > 0)">
+        <div v-show="pkiRequests.length > 0">
           <pki-request-list
             :requests="pkiRequests"
             @accept-click="onAcceptPkiRequestClicked"
@@ -236,13 +246,16 @@ import {
   ClientNewUserInvitationErrorTag,
   getPkiJoinOrganizationLink,
   InvitationEmailSentStatus,
-  JoinRequestValidity,
+  isSmartcardAvailable,
   listOrganizationJoinRequests,
   listUserInvitations,
-  OrganizationJoinRequest,
   inviteUser as parsecInviteUser,
+  PkiEnrollmentListItem,
+  PkiEnrollmentListItemTag,
   rejectOrganizationJoinRequest,
+  selectCertificate,
   UserInvitation,
+  X509CertificateReference,
 } from '@/parsec';
 import { currentRouteIs, getCurrentRouteQuery, navigateTo, Routes, watchRoute } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
@@ -269,7 +282,7 @@ import {
   useWindowSize,
   WindowSizeBreakpoints,
 } from 'megashark-lib';
-import { inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
+import { inject, onMounted, onUnmounted, ref, toRaw, useTemplateRef, watch } from 'vue';
 
 const { isLargeDisplay, isSmallDisplay, windowWidth } = useWindowSize();
 const view = ref(InvitationView.EmailInvitation);
@@ -277,10 +290,10 @@ const informationManager: InformationManager = inject(InformationManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 
 const invitations = ref<Array<UserInvitation>>([]);
-const pkiRequests = ref<Array<OrganizationJoinRequest>>([]);
-const rootCertificate = ref<string | undefined>(undefined);
-const inputRef = useTemplateRef<HTMLInputElement>('input');
-const updateRootCertificateButtonRef = useTemplateRef<InstanceType<typeof IonButton>>('updateRootCertificateButton');
+const pkiRequests = ref<Array<PkiEnrollmentListItem>>([]);
+const adminCertificate = ref<X509CertificateReference | undefined>(undefined);
+const updateAdminCertificateButtonRef = useTemplateRef<InstanceType<typeof IonButton>>('updateRootCertificateButton');
+const pkiAvailable = ref(false);
 
 let eventCbId: string | null = null;
 
@@ -308,6 +321,8 @@ onMounted(async (): Promise<void> => {
       await refreshInvitationList();
     }
   });
+  pkiAvailable.value = await isSmartcardAvailable();
+
   await refreshAll();
   const query = getCurrentRouteQuery();
 
@@ -322,7 +337,7 @@ onMounted(async (): Promise<void> => {
   }
 });
 
-watch(updateRootCertificateButtonRef, (el) => {
+watch(updateAdminCertificateButtonRef, (el) => {
   if (el && el.$el) {
     attachMouseOverTooltip(el.$el, 'InvitationsPage.pkiRequests.rootCertificate.updateRootCertificate');
   }
@@ -599,41 +614,30 @@ async function onCopyJoinLinkClicked(): Promise<void> {
       'InvitationsPage.pkiRequests.linkCopiedToClipboard.success',
       'InvitationsPage.pkiRequests.linkCopiedToClipboard.failed',
     );
+  } else {
+    informationManager.present(
+      new Information({
+        message: 'InvitationsPage.pkiRequests.linkCopiedToClipboard.failed',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
   }
 }
 
-async function onAcceptPkiRequestClicked(req: OrganizationJoinRequest): Promise<void> {
-  if (req.validity === JoinRequestValidity.Unknown) {
-    const answer = await askQuestion(
-      'InvitationsPage.pkiRequests.validationModal.error.unknown.title',
-      'InvitationsPage.pkiRequests.validationModal.error.unknown.description',
-      {
-        yesText: 'InvitationsPage.pkiRequests.validationModal.button.confirm',
-        noText: 'InvitationsPage.pkiRequests.validationModal.button.cancel',
-      },
-    );
-    if (answer !== Answer.Yes) {
-      return;
-    }
-  } else if (req.validity === JoinRequestValidity.Invalid) {
-    const answer = await askQuestion(
-      'InvitationsPage.pkiRequests.validationModal.error.notValid.title',
-      'InvitationsPage.pkiRequests.validationModal.error.notValid.description',
-      {
-        yesText: 'InvitationsPage.pkiRequests.validationModal.button.confirm',
-        noText: 'InvitationsPage.pkiRequests.validationModal.button.cancel',
-      },
-    );
-    if (answer !== Answer.Yes) {
-      return;
-    }
+async function onAcceptPkiRequestClicked(request: PkiEnrollmentListItem): Promise<void> {
+  if (!adminCertificate.value) {
+    return;
+  }
+  if (request.tag !== PkiEnrollmentListItemTag.Valid) {
+    return;
   }
 
   const modal = await modalController.create({
     component: SelectProfileModal,
     componentProps: {
-      email: req.humanHandle.email,
-      name: req.humanHandle.label,
+      email: request.payload.humanHandle.email,
+      name: request.payload.humanHandle.label,
     },
     cssClass: 'select-profile-modal',
   });
@@ -645,7 +649,7 @@ async function onAcceptPkiRequestClicked(req: OrganizationJoinRequest): Promise<
     return;
   }
 
-  const result = await acceptOrganizationJoinRequest(req, data.profile);
+  const result = await acceptOrganizationJoinRequest(toRaw(request), data.profile, toRaw(adminCertificate.value));
   if (result.ok) {
     informationManager.present(
       new Information({
@@ -665,8 +669,8 @@ async function onAcceptPkiRequestClicked(req: OrganizationJoinRequest): Promise<
   }
 }
 
-async function onRejectPkiRequestClicked(req: OrganizationJoinRequest): Promise<void> {
-  const result = await rejectOrganizationJoinRequest(req);
+async function onRejectPkiRequestClicked(request: PkiEnrollmentListItem): Promise<void> {
+  const result = await rejectOrganizationJoinRequest(request);
   if (result.ok) {
     informationManager.present(
       new Information({
@@ -686,17 +690,13 @@ async function onRejectPkiRequestClicked(req: OrganizationJoinRequest): Promise<
   }
 }
 
-async function selectRootCertificate(): Promise<void> {
-  inputRef.value?.click();
-}
-
-async function onInputChange(): Promise<void> {
-  if (!inputRef.value?.files) {
-    return;
+async function selectAdminCertificate(): Promise<void> {
+  const result = await selectCertificate();
+  if (result.ok && result.value) {
+    adminCertificate.value = result.value;
+  } else {
+    adminCertificate.value = undefined;
   }
-  const file = inputRef.value.files.item(0) as File;
-  rootCertificate.value = await file.text();
-  await refreshPkiRequestList();
 }
 
 async function refreshInvitationList(): Promise<void> {
@@ -709,7 +709,10 @@ async function refreshInvitationList(): Promise<void> {
 }
 
 async function refreshPkiRequestList(): Promise<void> {
-  const result = await listOrganizationJoinRequests(rootCertificate.value);
+  if (!pkiAvailable.value) {
+    return;
+  }
+  const result = await listOrganizationJoinRequests();
   if (result.ok) {
     pkiRequests.value = result.value;
   } else {
@@ -762,8 +765,8 @@ async function refreshAll(): Promise<void> {
     background: var(--parsec-color-light-secondary-medium);
     border: 2px solid var(--parsec-color-light-secondary-medium);
     border-radius: var(--parsec-radius-8);
-    overflow: hidden;
     box-shadow: 0 0 11px 0 rgba(0, 0, 0, 0.05) inset;
+    position: relative;
 
     @include ms.responsive-breakpoint('lg') {
       border: 1px solid var(--parsec-color-light-secondary-medium);
@@ -812,6 +815,7 @@ async function refreshAll(): Promise<void> {
         --color: var(--parsec-color-light-primary-700);
         cursor: default;
         opacity: 1;
+        display: flex;
       }
 
       &:not(.active) {
@@ -826,6 +830,30 @@ async function refreshAll(): Promise<void> {
           --background-hover: var(--parsec-color-light-secondary-medium);
         }
       }
+
+      &.disabled {
+        .toggle-view-button__icon,
+        .toggle-view-button__label {
+          opacity: 0.8;
+        }
+
+        .toggle-view-button__count {
+          background: var(--parsec-color-light-secondary-soft-text);
+          color: var(--parsec-color-light-secondary-white);
+          padding: 3px 0.4rem;
+        }
+      }
+    }
+
+    &-unavailable {
+      top: -0.65rem;
+      right: -2rem;
+      color: var(--parsec-color-light-secondary-white);
+      align-self: center;
+      padding: 0.125rem 0.5rem;
+      margin-right: 0.25rem;
+      background: var(--parsec-color-light-secondary-text);
+      border-radius: var(--parsec-radius-8);
     }
   }
 
