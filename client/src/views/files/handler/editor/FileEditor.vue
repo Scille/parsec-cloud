@@ -99,6 +99,18 @@ const {
   userInfo?: ClientInfo;
 }>();
 
+enum ErrorTitle {
+  GenericError = 'fileViewers.errors.titles.genericError',
+  UnsupportedFileType = 'fileViewers.errors.titles.unsupportedFileType',
+  EditionNotAvailable = 'fileViewers.errors.titles.editionNotAvailable',
+  CorruptedFile = 'fileViewers.errors.titles.corruptedFile',
+}
+
+enum ErrorMessage {
+  EditableOnlyOnSystem = 'fileViewers.errors.informationEditDownload',
+  CorruptedFile = 'fileViewers.errors.corruptedFileMessage',
+}
+
 const emits = defineEmits<{
   (event: 'fileLoaded'): void;
   (event: 'fileError'): void;
@@ -109,21 +121,15 @@ onMounted(async () => {
   documentType.value = getCryptpadDocumentType(fileInfo.type);
 
   if (documentType.value === CryptpadDocumentType.Unsupported) {
-    error.value = 'fileViewers.errors.titles.unsupportedFileType';
-    await informationManager.present(
-      new Information({
-        title: 'fileViewers.errors.titles.unsupportedFileType',
-        message: 'fileViewers.errors.informationEditDownload',
-        level: InformationLevel.Info,
-      }),
-      PresentationMode.Modal,
-    );
+    error.value = ErrorTitle.UnsupportedFileType;
+    await openRedirectionModal(ErrorTitle.UnsupportedFileType, ErrorMessage.EditableOnlyOnSystem, InformationLevel.Info);
     return;
   }
   if (!(await loadCryptpad())) {
     return;
   }
-  if (await openFileWithCryptpad()) {
+  const openResult = await openFileWithCryptpad();
+  if (openResult) {
     emits('fileLoaded');
   } else {
     emits('fileError');
@@ -139,7 +145,11 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  cryptpadInstance.value = null;
+  // Clean up CryptPad instance and event listeners
+  if (cryptpadInstance.value) {
+    cryptpadInstance.value.destroy();
+    cryptpadInstance.value = null;
+  }
   if (fileUrl.value) {
     URL.revokeObjectURL(fileUrl.value);
   }
@@ -158,33 +168,34 @@ async function loadCryptpad(): Promise<boolean> {
 
     // Always create a new instance for each document to avoid conflicts
     cryptpadInstance.value = new Cryptpad(fileEditorRef.value as HTMLDivElement, Env.getDefaultCryptpadServer());
+
     await cryptpadInstance.value.init();
     return true;
   } catch (e: unknown) {
-    let title: Translatable = 'fileViewers.errors.titles.genericError';
-    const message: Translatable = 'fileViewers.errors.informationEditDownload';
-    const level: InformationLevel = InformationLevel.Info;
-
     if (e instanceof CryptpadError) {
       switch (e.code) {
         case CryptpadErrorCode.NotEnabled:
-          title = 'fileViewers.errors.titles.editionNotAvailable';
+          await openRedirectionModal(ErrorTitle.EditionNotAvailable, ErrorMessage.EditableOnlyOnSystem, InformationLevel.Warning);
           break;
         case CryptpadErrorCode.ScriptElementCreationFailed:
         case CryptpadErrorCode.InitFailed:
-          title = 'fileViewers.errors.titles.genericError';
+          error.value = ErrorMessage.EditableOnlyOnSystem;
       }
     }
-    await informationManager.present(
-      new Information({
-        title,
-        message,
-        level,
-      }),
-      PresentationMode.Modal,
-    );
     return false;
   }
+}
+
+async function openRedirectionModal(title: Translatable, message: Translatable, level: InformationLevel): Promise<void> {
+  await informationManager.present(
+    new Information({
+      title,
+      message,
+      level,
+    }),
+    PresentationMode.Modal,
+  );
+  await routerGoBack();
 }
 
 async function openFileWithCryptpad(): Promise<boolean> {
@@ -194,14 +205,7 @@ async function openFileWithCryptpad(): Promise<boolean> {
   const user = userInfo ? { name: userInfo.humanHandle.label, id: userInfo.userId } : undefined;
 
   if (!workspaceHandle) {
-    error.value = 'fileViewers.errors.genericError';
-    await informationManager.present(
-      new Information({
-        message: 'fileViewers.errors.titles.genericError',
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
+    error.value = ErrorTitle.GenericError;
     return false;
   }
   fileUrl.value = URL.createObjectURL(new Blob([contentInfo.data as Uint8Array<ArrayBuffer>], { type: 'application/octet-stream' }));
@@ -279,6 +283,11 @@ async function openFileWithCryptpad(): Promise<boolean> {
           emits('onSaveStateChange', SaveState.Unsaved);
         }
       },
+      onError: (errorData: { message: string; errorType: string; originalError: string }): void => {
+        window.electronAPI.log('error', `CryptPad error [${errorData.errorType}]: ${errorData.message}`);
+        error.value = 'fileViewers.errors.titles.genericError';
+        emits('fileError');
+      },
     },
   };
 
@@ -287,28 +296,22 @@ async function openFileWithCryptpad(): Promise<boolean> {
     window.electronAPI.log('info', 'CryptPad editor initialized successfully');
     return true;
   } catch (e: unknown) {
-    let title: Translatable = 'fileViewers.errors.titles.genericError';
-    const message: Translatable = 'fileViewers.errors.informationEditDownload';
-    const level: InformationLevel = InformationLevel.Info;
-
-    if (e instanceof CryptpadError) {
+    // Check if this is a timeout error (corrupted file)
+    if (e instanceof Error && e.message.includes('timeout')) {
+      window.electronAPI.log('error', 'CryptPad loading timeout - file appears to be corrupted or too large');
+      await openRedirectionModal(ErrorTitle.CorruptedFile, ErrorMessage.CorruptedFile, InformationLevel.Warning);
+    } else if (e instanceof CryptpadError) {
       switch (e.code) {
         case CryptpadErrorCode.NotInitialized:
-          title = 'fileViewers.errors.titles.genericError';
+          error.value = ErrorMessage.EditableOnlyOnSystem;
           break;
         case CryptpadErrorCode.DocumentTypeNotEnabled:
-          title = 'fileViewers.errors.titles.editionNotAvailable';
+          await openRedirectionModal(ErrorTitle.EditionNotAvailable, ErrorMessage.EditableOnlyOnSystem, InformationLevel.Info);
       }
     }
 
-    await informationManager.present(
-      new Information({
-        title,
-        message,
-        level,
-      }),
-      PresentationMode.Modal,
-    );
+    // Redirect user back to files list after modal closes
+    await routerGoBack();
     return false;
   }
 }
