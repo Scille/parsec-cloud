@@ -149,23 +149,12 @@ new-client-dependencies-project: &new-client-dependencies-project
 
 # The web jobs need to be run when:
 # - The ci workflow has changed
-# - The rust has changed
-#   - The dependencies
-#   - The pure code has changed
-#   - Platform code specific to the web interface
-# - The rust web binding has changed
 # - The Web code / test has changed
 # - The web dependencies has changed
 # > Note: We don't use `rust-changes` because it include all the change made to the rust code
 # > including change made to the python part.
 web-jobs:
   - .github/workflows/ci-web.yml
-  - *rust-dependencies-workspace
-  - *libparsec-rust-not-platform
-  - *rust-platform-crates-web
-  - *libparsec-schema-file
-  - *rust-toolchain
-  - *rust-web-binding
   - *new-client-dependencies-project
   - *web
 
