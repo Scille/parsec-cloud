@@ -10,20 +10,24 @@ import {
   WorkspaceRole,
   getClientProfile,
   getSystemPath,
+  mountWorkspace,
   getPathLink as parsecGetPathLink,
   renameWorkspace as parsecRenameWorkspace,
+  unmountWorkspace,
 } from '@/parsec';
 import { Routes, navigateTo } from '@/router';
 import { EventDistributor } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { recentDocumentManager } from '@/services/recentDocuments';
+import { StorageManager } from '@/services/storageManager';
 import { WorkspaceAttributes } from '@/services/workspaceAttributes';
 import SmallDisplayWorkspaceContextMenu from '@/views/workspaces/SmallDisplayWorkspaceContextMenu.vue';
 import { WorkspaceAction } from '@/views/workspaces/types';
 import WorkspaceContextMenu from '@/views/workspaces/WorkspaceContextMenu.vue';
+import WorkspaceHiddenModal from '@/views/workspaces/WorkspaceHiddenModal.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
 import { modalController, popoverController } from '@ionic/vue';
-import { Clipboard, DisplayState, Translatable, getTextFromUser } from 'megashark-lib';
+import { Clipboard, DisplayState, MsModalResult, Translatable, getTextFromUser } from 'megashark-lib';
 
 export const WORKSPACES_PAGE_DATA_KEY = 'WorkspacesPage';
 
@@ -120,6 +124,7 @@ export async function openWorkspaceContextMenu(
   informationManager: InformationManager,
   fromSidebar = false,
   isLargeDisplay = true,
+  storageManager?: StorageManager,
 ): Promise<void> {
   const clientProfile = await getClientProfile();
   let data: { action: WorkspaceAction } | undefined;
@@ -138,6 +143,7 @@ export async function openWorkspaceContextMenu(
         clientProfile: clientProfile,
         clientRole: workspace.currentSelfRole,
         isFavorite: workspaceAttributes.isFavorite(workspace.id),
+        isHidden: workspaceAttributes.isHidden(workspace.id),
       },
     });
 
@@ -156,6 +162,7 @@ export async function openWorkspaceContextMenu(
         clientProfile: clientProfile,
         clientRole: workspace.currentSelfRole,
         isFavorite: workspaceAttributes.isFavorite(workspace.id),
+        isHidden: workspaceAttributes.isHidden(workspace.id),
       },
     });
 
@@ -184,10 +191,24 @@ export async function openWorkspaceContextMenu(
       case WorkspaceAction.ShowHistory:
         await navigateTo(Routes.History, { query: { documentPath: '/', workspaceHandle: workspace.handle } });
         break;
+      case WorkspaceAction.Mount:
+        await mountWorkspaceConfirmation(workspaceAttributes, workspace, informationManager);
+        break;
+      case WorkspaceAction.UnMount:if(storageManager)
+        await unmountWorkspaceConfirmation(workspaceAttributes, workspace, informationManager, storageManager);
+        break;
       default:
         console.warn('No WorkspaceAction match found');
     }
   }
+}
+
+export async function showWorkspace(workspace: WorkspaceInfo, hidden: WorkspaceID[]): Promise<void> {
+  const index = hidden.indexOf(workspace.id);
+  if (index !== -1) {
+    hidden.splice(index, 1);
+  }
+  await mountWorkspace(workspace.handle);
 }
 
 async function openWorkspace(workspace: WorkspaceInfo, informationManager: InformationManager): Promise<void> {
@@ -238,6 +259,107 @@ async function renameWorkspace(workspace: WorkspaceInfo, newName: WorkspaceName,
       new Information({
         message: message,
         level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+  }
+}
+
+async function unmountWorkspaceConfirmation(
+  workspaceAttributes: WorkspaceAttributes,
+  workspace: WorkspaceInfo,
+  informationManager: InformationManager,
+  storageManager: StorageManager,
+): Promise<void> {
+  const config = await storageManager.retrieveConfig();
+
+  const modal = await modalController.create({
+    component: WorkspaceHiddenModal,
+    cssClass: 'workspace-hidden-modal',
+    componentProps: {
+      workspaceName: workspace.currentName,
+    },
+  });
+
+  if (config.skipWorkspaceHiddenWarning === false) {
+    workspaceAttributes.toggleHidden(workspace.id);
+    const result = await unmountWorkspace(workspace);
+
+    if (!result.ok) {
+      informationManager.present(
+        new Information({
+          message: { key: 'WorkspacesPage.WorkspaceHiddenModal.hideWorkspace.toastFailure', data: { workspace: workspace.currentName } },
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Toast,
+      );
+    } else {
+      informationManager.present(
+        new Information({
+          message: { key: 'WorkspacesPage.WorkspaceHiddenModal.hideWorkspace.toastSuccess', data: { workspace: workspace.currentName } },
+          level: InformationLevel.Success,
+        }),
+        PresentationMode.Toast,
+      );
+    }
+    return;
+  }
+
+  await modal.present();
+  const { data, role } = await modal.onWillDismiss();
+  await modal.dismiss();
+
+  if (role === MsModalResult.Confirm && data) {
+    if (data.skipWorkspaceHiddenWarning === true) {
+      config.skipWorkspaceHiddenWarning = true;
+      await storageManager.storeConfig(config);
+    }
+
+    workspaceAttributes.toggleHidden(workspace.id);
+    const result = await unmountWorkspace(workspace);
+
+    if (!result.ok) {
+      informationManager.present(
+        new Information({
+          message: { key: 'WorkspacesPage.WorkspaceHiddenModal.hideWorkspace.toastFailure', data: { workspace: workspace.currentName } },
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Toast,
+      );
+      return;
+    } else {
+      informationManager.present(
+        new Information({
+          message: { key: 'WorkspacesPage.WorkspaceHiddenModal.hideWorkspace.toastSuccess', data: { workspace: workspace.currentName } },
+          level: InformationLevel.Success,
+        }),
+        PresentationMode.Toast,
+      );
+    }
+  };
+}
+
+async function mountWorkspaceConfirmation(
+  workspaceAttributes: WorkspaceAttributes,
+  workspace: WorkspaceInfo,
+  informationManager: InformationManager,
+): Promise<void> {
+  workspaceAttributes.toggleHidden(workspace.id);
+  const result = await mountWorkspace(workspace.handle);
+
+  if (!result.ok) {
+    informationManager.present(
+      new Information({
+        message: { key: 'WorkspacesPage.WorkspaceHiddenModal.showWorkspace.toastFailure', data: { workspace: workspace.currentName } },
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+  } else {
+    informationManager.present(
+      new Information({
+        message: { key: 'WorkspacesPage.WorkspaceHiddenModal.showWorkspace.toastSuccess', data: { workspace: workspace.currentName } },
+        level: InformationLevel.Success,
       }),
       PresentationMode.Toast,
     );

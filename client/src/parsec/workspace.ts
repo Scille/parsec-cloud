@@ -32,7 +32,7 @@ import {
   WorkspaceRole,
 } from '@/parsec/types';
 import { generateNoHandleError } from '@/parsec/utils';
-import { WorkspaceStopError, libparsec } from '@/plugins/libparsec';
+import { MountpointUnmountError, WorkspaceStopError, libparsec } from '@/plugins/libparsec';
 import { getConnectionHandle } from '@/router';
 import { DateTime } from 'luxon';
 
@@ -247,6 +247,27 @@ export async function mountWorkspace(
     }
   }
   return await libparsec.workspaceMount(workspaceHandle);
+}
+
+export async function unmountWorkspace(workspace: WorkspaceInfo): Promise<Result<null, MountpointUnmountError>> {
+  let lastError: MountpointUnmountError | null = null;
+
+  if (workspace.mountpoints.length === 0) {
+    return { ok: true, value: null };
+  }
+
+  for (let i = workspace.mountpoints.length - 1; i >= 0; i--) {
+    const result = await libparsec.mountpointUnmount(workspace.mountpoints[i][0]);
+    if (result.ok) {
+      workspace.mountpoints.splice(i, 1);
+    } else {
+      lastError = result.error;
+    }
+  }
+  if (lastError) {
+    return { ok: false, error: lastError };
+  }
+  return { ok: true, value: null };
 }
 
 export async function getPathLink(
