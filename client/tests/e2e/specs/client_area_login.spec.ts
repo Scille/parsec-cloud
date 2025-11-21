@@ -2,7 +2,7 @@
 
 import { DEFAULT_USER_INFORMATION, MockBms, answerQuestion, expect, fillIonInput, msTest, setupNewPage } from '@tests/e2e/helpers';
 
-msTest('Log into the customer area', async ({ home }) => {
+msTest('Log into the customer area', { tag: '@important' }, async ({ home }) => {
   await MockBms.mockLogin(home);
   await MockBms.mockUserRoute(home);
   await MockBms.mockListOrganizations(home);

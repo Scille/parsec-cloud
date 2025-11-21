@@ -14,6 +14,7 @@
         "lint:fix": "npm run lint:eslint -- --fix && npm run lint:tsc",
         "test:unit": "vitest run --dom",
         "test:e2e": "npx playwright test --headed --timeout=30000",
+        "test:e2e:important": "npx playwright test --timeout=30000 --grep '@important'",
         "test:e2e:headless": "npx playwright test --timeout=30000",
         "web:open": "vite --open",
         "web:release": "vite build",

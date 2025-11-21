@@ -124,7 +124,7 @@ msTest('Greet user whole process in small display', async ({ usersPage }) => {
   await expect(secondTab).toBeWorkspacePage();
 });
 
-msTest('Greet user whole process in large display', async ({ usersPage }) => {
+msTest('Greet user whole process in large display', { tag: '@important' }, async ({ usersPage }) => {
   // Very slow test since it syncs the greet and join
   msTest.setTimeout(120_000);
 

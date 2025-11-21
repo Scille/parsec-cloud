@@ -27,7 +27,7 @@ msTest('Check workspace card', async ({ workspaces }) => {
 });
 
 for (const gridMode of [false, true]) {
-  msTest.fail(`Empty workspaces in ${gridMode ? 'grid' : 'list'} mode`, async ({ connected }) => {
+  msTest.fail(`Empty workspaces in ${gridMode ? 'grid' : 'list'} mode`, { tag: '@important' }, async ({ connected }) => {
     if (!gridMode) {
       await toggleViewMode(connected);
     }
