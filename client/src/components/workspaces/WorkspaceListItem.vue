@@ -135,7 +135,7 @@ import { formatFileSize } from '@/common/file';
 import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
 import WorkspaceRoleTag from '@/components/workspaces/WorkspaceRoleTag.vue';
 import { UserProfile, WorkspaceInfo } from '@/parsec';
-import { IonButton, IonIcon, IonItem, IonLabel } from '@ionic/vue';
+import { IonButton, IonIcon, IonItem, IonLabel, IonText } from '@ionic/vue';
 import { cloudDone, cloudOffline, ellipsisHorizontal, eyeOff, shareSocial, star } from 'ionicons/icons';
 import { formatTimeSince, useWindowSize, WindowSizeBreakpoints } from 'megashark-lib';
 import { ref } from 'vue';
