@@ -152,13 +152,16 @@
             @on-enter-keyup="nextStep()"
           />
         </div>
-        <!-- part 5 (get password)-->
+        <!-- part 5 (get auth)-->
         <div
           v-show="pageStep === UserJoinOrganizationStep.Authentication"
           class="step"
           id="get-password"
         >
-          <choose-authentication ref="authChoice" />
+          <choose-authentication
+            ref="authChoice"
+            :server-config="serverConfig"
+          />
         </div>
         <!-- part 6 (finish the process)-->
         <div
@@ -216,7 +219,10 @@ import {
   DeviceSaveStrategy,
   OrganizationID,
   ParsedParsecAddrTag,
+  ServerConfig,
   UserClaim,
+  forgeServerAddr,
+  getServerConfig,
   parseParsecAddr,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
@@ -254,7 +260,7 @@ const fieldsUpdated = ref(false);
 const cancelled = ref(false);
 const organizationName: Ref<OrganizationID> = ref('');
 const querying = ref(false);
-
+const serverConfig = ref<ServerConfig | undefined>(undefined);
 const claimer = ref(new UserClaim());
 
 const props = defineProps<{
@@ -569,8 +575,19 @@ async function restartProcess(): Promise<void> {
 
 onMounted(async () => {
   const result = await parseParsecAddr(props.invitationLink);
-  if (result.ok && result.value.tag === ParsedParsecAddrTag.InvitationUser) {
+  if (result.ok) {
+    if (result.value.tag !== ParsedParsecAddrTag.InvitationUser) {
+      window.electronAPI.log('error', 'Not a user invitation link');
+      return;
+    }
     organizationName.value = result.value.organizationId;
+    const configResult = await getServerConfig(await forgeServerAddr(result.value));
+    if (configResult.ok) {
+      serverConfig.value = configResult.value;
+    }
+  } else {
+    window.electronAPI.log('error', `Failed to parse invitation link: ${result.error.tag} (${result.error.error})`);
+    return;
   }
   await startProcess();
 });

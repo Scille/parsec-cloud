@@ -9,6 +9,5 @@ export * from '@tests/e2e/helpers/fixtures';
 export * from '@tests/e2e/helpers/greet';
 export * from '@tests/e2e/helpers/libparsec';
 export * from '@tests/e2e/helpers/mediaAssertions';
-export * from '@tests/e2e/helpers/sso';
 export * from '@tests/e2e/helpers/types';
 export * from '@tests/e2e/helpers/utils';

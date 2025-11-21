@@ -3,5 +3,4 @@
 import ChooseCertificate from '@/components/devices/ChooseCertificate.vue';
 import SsoProviderCard from '@/components/devices/SsoProviderCard.vue';
 
-export * from '@/components/devices/types';
 export { ChooseCertificate, SsoProviderCard };
