@@ -42,7 +42,7 @@ async function cancelAndResume(page: Page, currentContainer: Locator): Promise<v
   await expect(page.locator('.create-organization-modal')).toBeVisible();
 }
 
-msTest('Go through saas org creation process', async ({ home }) => {
+msTest('Go through saas org creation process', { tag: '@important' }, async ({ home }) => {
   const modal = await openCreateOrganizationModal(home);
 
   const uniqueOrgName = `${home.orgInfo.name}-${randomInt(2 ** 47)}`;

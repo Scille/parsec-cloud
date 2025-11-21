@@ -50,7 +50,7 @@ function getStatusForUser(user: any): string {
 }
 
 for (const displaySize of ['small', 'large']) {
-  msTest(`Check user list items on ${displaySize} display`, async ({ usersPage }) => {
+  msTest(`Check user list items on ${displaySize} display`, { tag: '@important' }, async ({ usersPage }) => {
     if (displaySize === 'small') {
       await usersPage.setDisplaySize(DisplaySize.Small);
     }

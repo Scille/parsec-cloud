@@ -15,7 +15,7 @@ import {
 const USER_NAMES = ['Alicey McAliceFace', 'Boby McBobFace', 'Malloryy McMalloryFace'];
 
 for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
-  msTest(`Home default state with devices on ${displaySize} display`, async ({ home }) => {
+  msTest(`Home default state with devices on ${displaySize} display`, { tag: '@important' }, async ({ home }) => {
     if (displaySize === 'small') {
       await home.setDisplaySize(DisplaySize.Small);
     }
@@ -258,7 +258,7 @@ msTest('Warn on Safari', async ({ context }) => {
   await page.release();
 });
 
-msTest('Empty home page default state', async ({ context }) => {
+msTest('Empty home page default state', { tag: '@important' }, async ({ context }) => {
   const page = (await context.newPage()) as MsPage;
   await setupNewPage(page, { libparsecMockFunctions: [{ name: 'listAvailableDevices', result: { ok: true, value: [] } }] });
   const container = page.locator('.no-devices');

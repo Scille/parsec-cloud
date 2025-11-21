@@ -31,7 +31,7 @@ async function checkFilesUploaded(page: Page, expectedCount: number): Promise<vo
 }
 
 for (const mode of ['list', 'grid']) {
-  msTest(`Import by drag and drop in ${mode} mode`, async ({ workspaces }, testInfo: TestInfo) => {
+  msTest(`Import by drag and drop in ${mode} mode`, { tag: '@important' }, async ({ workspaces }, testInfo: TestInfo) => {
     // Start with an empty workspace
     await createWorkspace(workspaces, 'New_Workspace');
     await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
