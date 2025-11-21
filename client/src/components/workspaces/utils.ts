@@ -122,9 +122,9 @@ export async function openWorkspaceContextMenu(
   workspaceAttributes: WorkspaceAttributes,
   eventDistributor: EventDistributor,
   informationManager: InformationManager,
-  storageManager?: StorageManager,
   fromSidebar = false,
   isLargeDisplay = true,
+  storageManager?: StorageManager,
 ): Promise<void> {
   const clientProfile = await getClientProfile();
   let data: { action: WorkspaceAction } | undefined;

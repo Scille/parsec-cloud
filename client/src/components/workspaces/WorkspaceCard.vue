@@ -3,7 +3,10 @@
 <template>
   <div
     class="workspace-card-item ion-no-padding"
-    :class="{ 'workspace-hovered': isHovered || menuOpened }"
+    :class="{
+      'workspace-hovered': isHovered || menuOpened,
+      'workspace-hidden': isHidden
+    }"
     @click="$emit('click', workspace, $event)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
@@ -284,5 +287,10 @@ async function onOptionsClick(event: Event): Promise<void> {
       padding: 0 0.25rem;
     }
   }
+}
+
+.workspace-hidden .workspace-card-content{
+  opacity: 0.8;
+  filter: brightness(0.8);
 }
 </style>

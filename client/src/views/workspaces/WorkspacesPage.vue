@@ -627,9 +627,9 @@ async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event
     workspaceAttributes,
     eventDistributor,
     informationManager,
-    storageManager,
     false,
-    isLargeDisplay.value);
+    isLargeDisplay.value,
+    storageManager);
   await refreshWorkspacesList();
 
   if (onFinished) {
