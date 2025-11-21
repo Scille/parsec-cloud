@@ -195,8 +195,7 @@ export async function openWorkspaceContextMenu(
         await mountWorkspaceConfirmation(workspaceAttributes, workspace, informationManager);
         break;
       case WorkspaceAction.UnMount:if(storageManager)
-        if(storageManager)
-          await unmountWorkspaceConfirmation(workspaceAttributes, workspace, informationManager, storageManager);
+        await unmountWorkspaceConfirmation(workspaceAttributes, workspace, informationManager, storageManager);
         break;
       default:
         console.warn('No WorkspaceAction match found');
