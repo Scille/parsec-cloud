@@ -25,7 +25,7 @@ const TIME_MATCHER_ARRAY = new Array(9).fill(TIME_MATCHER);
 const SIZE_MATCHER_ARRAY = new Array(1).fill('').concat(new Array(8).fill(SIZE_MATCHER));
 
 for (const displaySize of ['small', 'large']) {
-  msTest(`Documents page default state on ${displaySize} display`, async ({ documents }) => {
+  msTest(`Documents page default state on ${displaySize} display`, { tag: '@important' }, async ({ documents }) => {
     const entries = documents.locator('.folder-container').locator('.file-list-item');
     if (displaySize === DisplaySize.Small) {
       await documents.setDisplaySize(DisplaySize.Small);

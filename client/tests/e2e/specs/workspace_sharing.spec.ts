@@ -3,7 +3,7 @@
 import { DisplaySize, expect, fillIonInput, login, MsPage, msTest } from '@tests/e2e/helpers';
 
 for (const displaySize of ['small', 'large']) {
-  msTest(`Workspace sharing modal default state on ${displaySize} display`, async ({ workspaceSharingModal }) => {
+  msTest(`Workspace sharing modal default state on ${displaySize} display`, { tag: '@important' }, async ({ workspaceSharingModal }) => {
     if (displaySize === 'small') {
       await (workspaceSharingModal.page() as MsPage).setDisplaySize(DisplaySize.Small);
     }

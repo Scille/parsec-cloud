@@ -2,7 +2,7 @@
 
 import { expect, msTest, openFileType, testFileViewerZoomLevel } from '@tests/e2e/helpers';
 
-msTest('Image viewer', async ({ documents }) => {
+msTest('Image viewer', { tag: '@important' }, async ({ documents }) => {
   await openFileType(documents, 'png');
   await expect(documents).toBeViewerPage();
   await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.png$/);
