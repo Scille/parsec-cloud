@@ -285,7 +285,7 @@
 
           <ion-text
             class="organization-list__title title-h5"
-            v-if="pkiRequestList.length > 0"
+            v-if="filteredDevices.length > 0"
           >
             {{ $msTranslate('HomePage.organizationList.subtitle') }}
           </ion-text>

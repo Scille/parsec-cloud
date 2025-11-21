@@ -318,7 +318,8 @@
             "title": "Demandes en attente",
             "status": {
                 "pending": "En attente",
-                "rejected": "Rejetée"
+                "rejected": "Rejetée",
+                "cancelled": "Annulée"
             },
             "requestSent": {
                 "success": "Votre demande pour rejoindre l'organisation a été envoyée.",
@@ -1326,7 +1327,23 @@
         "cancelConfirm": "Annulation",
         "cancelConfirmSubtitle": "Êtes-vous sûr(e) de vouloir annuler le processus ? Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut.",
         "cancelYes": "Annuler le processus",
-        "cancelNo": "Reprendre"
+        "cancelNo": "Reprendre",
+        "joinPkiModal": {
+            "title": "Rejoindre avec une carte à puce",
+            "certificate": {
+                "label": "Sélection du certificat",
+                "addButton": "Ajouter un certificat",
+                "updateButton": "Mettre à jour",
+                "selected": "Certificat sélectionné",
+                "description": "Le certificat vérifie votre identité et vous permet de rejoindre l'organisation en toute sécurité."
+            },
+            "notAvailable": "La carte à puce n'est pas disponible sur ce système.",
+            "buttons": {
+                "join": "Demander à rejoindre l'organisation",
+                "cancel": "Annuler",
+                "close": "Fermer"
+            }
+        }
     },
     "UsersPage": {
         "listDisplayTitles": {
@@ -1586,6 +1603,7 @@
             "copyLink": "Copier le lien (PKI)",
             "notAvailable": "Non disponible",
             "pkiFeature": "La fonctionnalité PKI nécessite une infrastructure PKI pour être utilisée.",
+            "invalidRequest": "Demande PKI invalide",
             "listDisplayTitles": {
                 "name": "Nom",
                 "email": "Email",

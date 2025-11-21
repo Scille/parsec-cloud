@@ -164,15 +164,19 @@ const statusText = computed(() => {
       padding: 0.125rem 0.5rem;
       flex-shrink: 0;
 
-      &.status-pending {
+      &.status-cancelled {
         background-color: var(--parsec-color-light-secondary-grey);
         color: var(--parsec-color-light-secondary-white);
       }
 
-      &.status-rejected,
-      &.status-cancelled {
+      &.status-rejected {
         background-color: var(--parsec-color-light-danger-500);
         color: var(--parsec-color-light-secondary-white);
+      }
+
+      &.status-pending {
+        background-color: var(--parsec-color-light-warning-100);
+        color: var(--parsec-color-light-warning-700);
       }
     }
 
@@ -220,7 +224,7 @@ const statusText = computed(() => {
     border-color: var(--parsec-color-light-secondary-light);
 
     .organization-request-icon {
-      color: var(--parsec-color-light-secondary-light);
+      color: var(--parsec-color-light-secondary-grey);
 
       &:hover {
         color: var(--parsec-color-light-secondary-text);

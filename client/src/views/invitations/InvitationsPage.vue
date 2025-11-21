@@ -67,7 +67,10 @@
           </ion-button>
           <ion-button
             class="toggle-view-button pki-button"
-            :class="{ active: view === InvitationView.PkiRequest }"
+            :class="{
+              active: view === InvitationView.PkiRequest,
+              disabled: !pkiAvailable,
+            }"
             @click="switchView(InvitationView.PkiRequest)"
             ref="switchToPkiButton"
             :disabled="!pkiAvailable || view === InvitationView.PkiRequest"
@@ -86,13 +89,14 @@
             >
               {{ pkiRequests.length }}
             </span>
-            <span
-              class="toggle-view-button__count"
-              v-show="!pkiAvailable"
-            >
-              {{ $msTranslate('InvitationsPage.pkiRequests.notAvailable') }}
-            </span>
           </ion-button>
+          <ion-text
+            class="toggle-view-unavailable button-medium"
+            v-show="!pkiAvailable"
+            ref="pkiUnavailable"
+          >
+            {{ $msTranslate('InvitationsPage.pkiRequests.notAvailable') }}
+          </ion-text>
         </div>
 
         <ion-button
@@ -761,8 +765,8 @@ async function refreshAll(): Promise<void> {
     background: var(--parsec-color-light-secondary-medium);
     border: 2px solid var(--parsec-color-light-secondary-medium);
     border-radius: var(--parsec-radius-8);
-    overflow: hidden;
     box-shadow: 0 0 11px 0 rgba(0, 0, 0, 0.05) inset;
+    position: relative;
 
     @include ms.responsive-breakpoint('lg') {
       border: 1px solid var(--parsec-color-light-secondary-medium);
@@ -811,6 +815,7 @@ async function refreshAll(): Promise<void> {
         --color: var(--parsec-color-light-primary-700);
         cursor: default;
         opacity: 1;
+        display: flex;
       }
 
       &:not(.active) {
@@ -825,6 +830,30 @@ async function refreshAll(): Promise<void> {
           --background-hover: var(--parsec-color-light-secondary-medium);
         }
       }
+
+      &.disabled {
+        .toggle-view-button__icon,
+        .toggle-view-button__label {
+          opacity: 0.8;
+        }
+
+        .toggle-view-button__count {
+          background: var(--parsec-color-light-secondary-soft-text);
+          color: var(--parsec-color-light-secondary-white);
+          padding: 3px 0.4rem;
+        }
+      }
+    }
+
+    &-unavailable {
+      top: -0.65rem;
+      right: -2rem;
+      color: var(--parsec-color-light-secondary-white);
+      align-self: center;
+      padding: 0.125rem 0.5rem;
+      margin-right: 0.25rem;
+      background: var(--parsec-color-light-secondary-text);
+      border-radius: var(--parsec-radius-8);
     }
   }
 
