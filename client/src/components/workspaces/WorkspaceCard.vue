@@ -25,6 +25,11 @@
         class="workspace-card-content__title subtitles-sm"
         :title="workspace.currentName"
       >
+        <ion-icon
+          v-if="isHidden"
+          class="workspace-card-content__icon-hidden"
+          :icon="eyeOff"
+        />
         {{ workspace.currentName }}
       </ion-text>
 
@@ -37,7 +42,6 @@
             :icon="workspace.availableOffline ? cloudDone : cloudOffline"
           />
         </ion-text>
-
         <ion-text
           class="workspace-card-content__size body-sm"
           v-if="false"
@@ -81,7 +85,7 @@ import { formatFileSize } from '@/common/file';
 import { WorkspaceRoleTag } from '@/components/workspaces';
 import { UserProfile, WorkspaceInfo } from '@/parsec';
 import { IonIcon, IonText } from '@ionic/vue';
-import { cloudDone, cloudOffline, ellipsisHorizontal, shareSocial, star } from 'ionicons/icons';
+import { cloudDone, cloudOffline, ellipsisHorizontal, eyeOff, shareSocial, star } from 'ionicons/icons';
 import { formatTimeSince } from 'megashark-lib';
 import { ref } from 'vue';
 
@@ -92,6 +96,7 @@ const props = defineProps<{
   workspace: WorkspaceInfo;
   clientProfile: UserProfile;
   isFavorite: boolean;
+  isHidden: boolean;
 }>();
 
 const emits = defineEmits<{
@@ -188,6 +193,9 @@ async function onOptionsClick(event: Event): Promise<void> {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 
     ion-text {
       width: 100%;
