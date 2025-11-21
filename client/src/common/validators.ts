@@ -132,7 +132,7 @@ export const claimAndBootstrapLinkValidator: IValidator = async function (value:
     return { validity: Validity.Intermediate };
   }
   // TODO: REPLACE WHEN LIBPARSEC HANDLES PKI LINKS
-  if (value.includes('a=pki_join')) {
+  if (value.includes('a=pki_enrollment')) {
     return { validity: Validity.Valid };
   }
   const result = await parseParsecAddr(value);
@@ -246,7 +246,7 @@ export const pkiLinkValidator: IValidator = async function (value: string) {
     return { validity: Validity.Intermediate };
   }
   // TODO: REPLACE WHEN LIBPARSEC HANDLES PKI LINKS
-  if (value.includes('a=pki_join')) {
+  if (value.includes('a=pki_enrollment')) {
     return { validity: Validity.Valid };
   }
   return { validity: Validity.Invalid };
