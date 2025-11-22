@@ -1,1 +1,0 @@
-Fixed an issue where a folder could be open twice and prevent further navigation
