@@ -23,8 +23,9 @@ fn main() -> anyhow::Result<()> {
         .cert
         .get_certificate()
         .context("Invalid cert arguments")?;
-    let cert = libparsec_platform_pki::x509::Certificate::load_der(raw_cert.as_ref())
-        .context("Invalid cert content")?;
+    let cert =
+        libparsec_platform_pki::x509::X509CertificateInformation::load_der(raw_cert.as_ref())
+            .context("Invalid cert content")?;
     println!("{cert:#x?}");
 
     Ok(())
