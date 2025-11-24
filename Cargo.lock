@@ -3158,6 +3158,7 @@ dependencies = [
  "futures",
  "lazy_static",
  "libparsec_crypto",
+ "libparsec_platform_pki",
  "libparsec_protocol",
  "libparsec_serialization_format",
  "libparsec_testbed",
@@ -3167,6 +3168,7 @@ dependencies = [
  "regex",
  "rmp-serde",
  "serde",
+ "sha2",
  "tokio",
  "uuid",
 ]

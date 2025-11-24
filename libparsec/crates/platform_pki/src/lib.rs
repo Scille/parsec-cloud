@@ -122,7 +122,7 @@ pub struct SignedMessageFromPki {
 pub use errors::SignMessageError;
 pub use platform::sign_message;
 
-pub use shared::{verify_message, Certificate, SignedMessage};
+pub use shared::{verify_message, Certificate, SignedMessage, X509EndCertificate};
 
 pub struct EncryptedMessage {
     pub algo: PKIEncryptionAlgorithm,
