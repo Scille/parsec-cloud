@@ -47,7 +47,7 @@ jobs:
     # All linux jobs must run the same ubuntu version to avoid Rust caching issues!
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # pin v5.0.0
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # pin v6.0.0
         timeout-minutes: 5
 
       - name: Retrieve runner specs
