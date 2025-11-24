@@ -1560,6 +1560,10 @@
             "update": "Profile",
             "revoke": "Revoke",
             "roles": "Roles"
+        },
+        "copyEmail": {
+            "success": "The email address has been copied to the clipboard.",
+            "failed": "Failed to copy the email address. Your browser or device may not support copy/paste."
         }
     },
     "InvitationsPage": {
