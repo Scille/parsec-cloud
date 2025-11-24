@@ -480,8 +480,8 @@ function setupWebElectronAPI(injectionProvider: InjectionProvider): void {
     sendMountpointFolder: (_path: string): void => {
       console.log('SetMountpointFolder: Not available.');
     },
-    getUpdateAvailability: (): void => {
-      if (window.usesTestbed()) {
+    getUpdateAvailability: (force?: boolean): void => {
+      if ((window as any).TESTING_ENABLE_UPDATE_EVENT === true || force) {
         injectionProvider.distributeEventToAll(Events.UpdateAvailability, { updateAvailable: true, version: '13.37' });
         injectionProvider.notifyAll(
           new Information({
@@ -584,7 +584,7 @@ declare global {
       receive: (channel: string, f: (...args: any[]) => Promise<void>) => void;
       openFile: (path: string) => void;
       sendMountpointFolder: (path: string) => void;
-      getUpdateAvailability: () => void;
+      getUpdateAvailability: (force?: boolean) => void;
       updateApp: () => void;
       prepareUpdate: () => void;
       log: (level: LogLevel, message: string) => void;
