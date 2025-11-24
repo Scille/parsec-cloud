@@ -1,7 +1,19 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Locator, Page } from '@playwright/test';
-import { addUser, answerQuestion, DisplaySize, expect, fillIonInput, inviteUsers, msTest, resizePage, sortBy } from '@tests/e2e/helpers';
+import {
+  addUser,
+  answerQuestion,
+  DisplaySize,
+  expect,
+  fillIonInput,
+  getClipboardText,
+  inviteUsers,
+  msTest,
+  resizePage,
+  setWriteClipboardPermission,
+  sortBy,
+} from '@tests/e2e/helpers';
 
 const USERS = [
   {
@@ -783,4 +795,15 @@ msTest('Check in UsersPage if action bar updates after resized', async ({ usersP
   await topbarButton.click();
   await expect(actionsBarButtons).toHaveText(['Revoke this user', 'Change profile', 'View details']);
   await expect(actionBarMoreButton).toBeHidden();
+});
+
+msTest('Copy email address to clipboard', async ({ usersPage }) => {
+  const item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
+  await item.hover();
+  await setWriteClipboardPermission(usersPage.context(), true);
+  const copyButton = item.locator('.user-email__label');
+  await expect(copyButton).toBeVisible();
+  await copyButton.click();
+  await expect(usersPage).toShowToast('The email address has been copied to the clipboard.', 'Info');
+  expect(await getClipboardText(usersPage)).toContain('bob@example.com');
 });

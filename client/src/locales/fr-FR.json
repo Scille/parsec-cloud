@@ -1564,6 +1564,10 @@
             "update": "Profil",
             "revoke": "Révoquer",
             "roles": "Rôles"
+        },
+        "copyEmail": {
+            "success": "L'adresse email a été copiée dans le presse-papier.",
+            "failed": "Impossible de copier l'adresse email. Il est possible que votre navigateur ou votre appareil n'autorise pas le copier/coller."
         }
     },
     "InvitationsPage": {
