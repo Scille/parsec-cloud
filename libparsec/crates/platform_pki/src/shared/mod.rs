@@ -15,8 +15,10 @@ use libparsec_types::{
     X509CertificateReference,
 };
 use rustls_pki_types::{pem::PemObject, CertificateDer, TrustAnchor};
-use webpki::{EndEntityCert, Error as WebPkiError, KeyUsage};
+pub use webpki::EndEntityCert as X509EndCertificate;
+use webpki::{Error as WebPkiError, KeyUsage};
 
+#[derive(Clone)]
 pub struct Certificate<'a> {
     internal: CertificateDer<'a>,
 }
@@ -40,8 +42,8 @@ impl<'a> Certificate<'a> {
         Certificate::new(self.internal.clone().into_owned())
     }
 
-    pub fn to_end_certificate(&self) -> Result<EndEntityCert<'_>, WebPkiError> {
-        EndEntityCert::try_from(&self.internal)
+    pub fn to_end_certificate(&self) -> Result<X509EndCertificate<'_>, WebPkiError> {
+        X509EndCertificate::try_from(&self.internal)
     }
 }
 
@@ -65,7 +67,7 @@ pub struct SignedMessage {
 
 pub fn verify_message<'message, 'a>(
     signed_message: &'message SignedMessage,
-    certificate: &'a EndEntityCert<'a>,
+    certificate: &'a X509EndCertificate<'a>,
 ) -> Result<&'message [u8], VerifySignatureError> {
     let verifier = match signed_message.algo {
         PkiSignatureAlgorithm::RsassaPssSha256 => webpki::ring::RSA_PSS_2048_8192_SHA256_LEGACY_KEY,
@@ -109,7 +111,7 @@ pub fn create_local_pending(
 }
 
 pub fn verify_certificate<'der>(
-    certificate: &'der EndEntityCert<'der>,
+    certificate: &'der X509EndCertificate<'der>,
     trusted_roots: &'der [TrustAnchor<'_>],
     intermediate_certs: &'der [CertificateDer<'der>],
     now: DateTime,

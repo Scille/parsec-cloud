@@ -152,3 +152,46 @@ crate::binding_utils::gen_py_wrapper_class_for_enum!(
         libparsec_types::PkiSignatureAlgorithm::RsassaPssSha256
     ],
 );
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct X509Certificate(pub libparsec_platform_pki::Certificate<'static>);
+
+impl X509Certificate {
+    fn to_end_certificate(&self) -> PyResult<libparsec_platform_pki::X509EndCertificate<'_>> {
+        self.0
+            .to_end_certificate()
+            .map_err(|e| PyValueError::new_err(e.to_string()))
+    }
+}
+
+#[pymethods]
+impl X509Certificate {
+    #[classmethod]
+    fn try_from_pem(_cls: Bound<'_, PyType>, raw_pem: &[u8]) -> PyResult<Self> {
+        libparsec_platform_pki::Certificate::try_from_pem(raw_pem)
+            .map(|v| v.into_owned())
+            .map_err(|e| PyValueError::new_err(e.to_string()))
+            .map(Self)
+    }
+
+    #[classmethod]
+    fn from_der(_cls: Bound<'_, PyType>, raw_der: &[u8]) -> Self {
+        Self(libparsec_platform_pki::Certificate::from_der(raw_der).into_owned())
+    }
+
+    fn issuer<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
+        self.to_end_certificate()
+            .map(|v| PyBytes::new(py, v.issuer()))
+    }
+
+    fn subject<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
+        self.to_end_certificate()
+            .map(|v| PyBytes::new(py, v.subject()))
+    }
+
+    #[getter]
+    fn der<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
+        PyBytes::new(py, self.0.as_ref())
+    }
+}

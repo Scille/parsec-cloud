@@ -27,6 +27,7 @@ libparsec_protocol = { workspace = true }
 libparsec_serialization_format = { workspace = true, features = ["python-bindings-support"] }
 libparsec_types = { workspace = true }
 libparsec_testbed = { workspace = true, optional = true }
+libparsec_platform_pki = { workspace = true }
 
 regex = { workspace = true, features = ["std", "perf", "unicode"] }
 paste = { workspace = true }
@@ -38,3 +39,4 @@ futures = { workspace = true, features = ["std", "async-await", "executor"] }
 rmp-serde = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 chrono = { workspace = true }
+sha2 = { workspace = true }
