@@ -187,7 +187,7 @@ async function setupApp(): Promise<void> {
   window.isTesting = (): boolean => 'TESTING' in window && (window.TESTING as boolean);
 
   if (!isElectron()) {
-    setupWebElectronAPI(injectionProvider);
+    setupWebElectronAPI();
   }
   await ResourcesManager.instance().loadAll();
 
@@ -469,7 +469,7 @@ async function setupApp(): Promise<void> {
   }
 }
 
-function setupWebElectronAPI(injectionProvider: InjectionProvider): void {
+function setupWebElectronAPI(): void {
   window.electronAPI = {
     sendConfig: (_config: Config): void => {},
     closeApp: (): void => {},
@@ -481,19 +481,7 @@ function setupWebElectronAPI(injectionProvider: InjectionProvider): void {
       console.log('SetMountpointFolder: Not available.');
     },
     getUpdateAvailability: (): void => {
-      if (window.usesTestbed()) {
-        injectionProvider.distributeEventToAll(Events.UpdateAvailability, { updateAvailable: true, version: '13.37' });
-        injectionProvider.notifyAll(
-          new Information({
-            message: '',
-            level: InformationLevel.Info,
-            unique: true,
-            data: { type: InformationDataType.NewVersionAvailable, newVersion: '13.37' },
-          }),
-          PresentationMode.Notification,
-        );
-        console.log('GetUpdateAvailability: MOCKED');
-      }
+      if ((window as any).TESTING_ENABLE_UPDATE_EVENT !== true) {}
     },
     updateApp: (): void => {
       console.log('UpdateApp: Not available.');

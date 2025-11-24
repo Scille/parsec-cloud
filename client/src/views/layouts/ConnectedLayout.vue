@@ -13,7 +13,16 @@
 <script lang="ts" setup>
 import { acceptTOS, getClientInfo, getTOS, listStartedClients, logout as parsecLogout } from '@/parsec';
 import { getConnectionHandle, navigateTo, Routes } from '@/router';
-import { EntryDeletedData, EntryRenamedData, EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
+import { APP_VERSION } from '@/services/environment';
+import {
+  EntryDeletedData,
+  EntryRenamedData,
+  EventData,
+  EventDistributor,
+  EventDistributorKey,
+  Events,
+  UpdateAvailabilityData,
+} from '@/services/eventDistributor';
 import { FileOperationManagerKey } from '@/services/fileOperationManager';
 import useUploadMenu from '@/services/fileUploadMenu';
 import { Information, InformationLevel, InformationManagerKey, PresentationMode } from '@/services/informationManager';
@@ -21,6 +30,8 @@ import { InjectionProvider, InjectionProviderKey, Injections } from '@/services/
 import { recentDocumentManager } from '@/services/recentDocuments';
 import useRefreshWarning from '@/services/refreshWarning';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
+import { dismissUpdate, updateAvailability, updateDismissed } from '@/services/updateManager';
+import UpdateAppModal from '@/views/about/UpdateAppModal.vue';
 import TOSModal from '@/views/organizations/TOSModal.vue';
 import { IonPage, IonRouterOutlet, modalController } from '@ionic/vue';
 import { DateTime } from 'luxon';
@@ -76,7 +87,8 @@ onMounted(async () => {
       Events.IncompatibleServer |
       Events.ExpiredOrganization |
       Events.ClientRevoked |
-      Events.ClientFrozen,
+      Events.ClientFrozen |
+      Events.UpdateAvailability,
     eventCallback,
   );
 
@@ -187,6 +199,12 @@ async function eventCallback(event: Events, data?: EventData): Promise<void> {
         PresentationMode.Modal,
       );
       break;
+    case Events.UpdateAvailability:
+      updateAvailability.value = data as UpdateAvailabilityData;
+      if (!updateDismissed.value) {
+        await tryOpeningUpdateModal(data as UpdateAvailabilityData);
+      }
+      break;
   }
 }
 
@@ -209,6 +227,13 @@ async function tryOpeningTOSModal(): Promise<void> {
     }
     await showTOSModal();
   }
+}
+
+async function tryOpeningUpdateModal(updateData: UpdateAvailabilityData): Promise<void> {
+  if (!updateData || !updateData.updateAvailable || modalOpened.value || updateDismissed.value) {
+    return;
+  }
+  await showUpdateModal(updateData);
 }
 
 async function logout(): Promise<void> {
@@ -315,5 +340,38 @@ async function showTOSModal(): Promise<void> {
   }
   modalOpened.value = false;
   await logout();
+}
+
+async function showUpdateModal(updateData: UpdateAvailabilityData): Promise<void> {
+  if (!updateData) {
+    window.electronAPI.log('error', 'Missing update data when trying to update');
+    return;
+  }
+  if (!updateData.version) {
+    window.electronAPI.log('error', 'Version missing from update data');
+    return;
+  }
+
+  const modal = await modalController.create({
+    component: UpdateAppModal,
+    canDismiss: true,
+    cssClass: 'update-app-modal',
+    backdropDismiss: false,
+    componentProps: {
+      currentVersion: APP_VERSION,
+      targetVersion: updateData.version,
+    },
+  });
+  await modal.present();
+  const { role } = await modal.onWillDismiss();
+  await modal.dismiss();
+
+  modalOpened.value = false;
+
+  if (role === MsModalResult.Confirm) {
+    window.electronAPI.prepareUpdate();
+  } else if (role === MsModalResult.Cancel) {
+    dismissUpdate();
+  }
 }
 </script>

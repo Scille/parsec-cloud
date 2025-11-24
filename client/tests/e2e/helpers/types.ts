@@ -26,6 +26,7 @@ export interface SetupOptions {
   openBaoServer?: string;
   expectTimeout?: number;
   libparsecMockFunctions?: Array<LibParsecFunction>;
+  enableUpdateEvent?: boolean;
 }
 
 export interface MsPage extends Page {
