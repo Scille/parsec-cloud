@@ -27,6 +27,7 @@ export interface SetupOptions {
   expectTimeout?: number;
   libparsecMockFunctions?: Array<LibParsecFunction>;
   enableStripe?: boolean;
+  enableUpdateEvent?: boolean;
 }
 
 export interface MsPage extends Page {
