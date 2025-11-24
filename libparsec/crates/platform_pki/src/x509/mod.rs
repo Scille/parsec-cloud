@@ -20,13 +20,13 @@ error_set::error_set! {
 }
 
 #[derive(Debug)]
-pub struct Certificate {
+pub struct X509CertificateInformation {
     pub subject: Vec<DistinguishedNameValue>,
     pub issuer: Vec<DistinguishedNameValue>,
     pub extensions: Extensions,
 }
 
-impl Certificate {
+impl X509CertificateInformation {
     pub fn load_der(der: &[u8]) -> Result<Self, X509LoadError> {
         x509_cert::Certificate::decode(&mut SliceReader::new(der)?)
             .map_err(Into::into)
@@ -34,7 +34,7 @@ impl Certificate {
     }
 }
 
-impl TryFrom<x509_cert::Certificate> for Certificate {
+impl TryFrom<x509_cert::Certificate> for X509CertificateInformation {
     type Error = X509LoadError;
 
     fn try_from(value: x509_cert::Certificate) -> Result<Self, Self::Error> {
@@ -55,7 +55,7 @@ impl TryFrom<x509_cert::Certificate> for Certificate {
             Default::default()
         };
 
-        Ok(Certificate {
+        Ok(X509CertificateInformation {
             subject,
             issuer,
             extensions,
