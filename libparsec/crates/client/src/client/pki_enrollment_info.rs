@@ -86,8 +86,7 @@ pub async fn info(
             accept_payload_signature,
             accepted_on,
             accepter_der_x509_certificate,
-            // TODO: https://github.com/Scille/parsec-cloud/issues/11565
-            accepter_intermediate_der_x509_certificates: _,
+            accepter_intermediate_der_x509_certificates,
             submitted_on,
             accept_payload_signature_algorithm,
         } => {
@@ -96,8 +95,14 @@ pub async fn info(
                 signature: accept_payload_signature,
                 message: accept_payload,
             };
-            let answer = load_answer_payload(&accepter_der_x509_certificate, &message, accepted_on)
-                .map_err(|_| PkiEnrollmentInfoError::InvalidAcceptPayload)?;
+
+            let answer = load_answer_payload(
+                &accepter_der_x509_certificate,
+                &message,
+                &accepter_intermediate_der_x509_certificates,
+                accepted_on,
+            )
+            .map_err(|_| PkiEnrollmentInfoError::InvalidAcceptPayload)?;
             PKIInfoItem::Accepted {
                 answer,
                 accepted_on,

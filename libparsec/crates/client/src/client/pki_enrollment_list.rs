@@ -109,10 +109,12 @@ pub async fn list_enrollments(
                     signature: req.payload_signature,
                     message: req.payload,
                 };
+
                 let payload = match libparsec_platform_pki::load_submit_payload(
                     &req.der_x509_certificate,
                     &message,
                     &root_certs,
+                    &req.intermediate_der_x509_certificates,
                     now,
                 ) {
                     Ok(payload) => payload,

@@ -142,9 +142,16 @@ pub fn load_submit_payload(
     der_certificate: &[u8],
     signed_message: &SignedMessage,
     trusted_roots: &[TrustAnchor<'_>],
+    intermediate_certs: &[Bytes],
     now: DateTime,
 ) -> Result<PkiEnrollmentSubmitPayload, crate::errors::LoadSubmitPayloadError> {
-    let validated_payload = validate_payload(der_certificate, signed_message, trusted_roots, now)?;
+    let validated_payload = validate_payload(
+        der_certificate,
+        signed_message,
+        trusted_roots,
+        intermediate_certs,
+        now,
+    )?;
     PkiEnrollmentSubmitPayload::load(validated_payload).map_err(Into::into)
 }
 
@@ -152,17 +159,23 @@ pub fn validate_payload<'message>(
     der_certificate: &[u8],
     signed_message: &'message SignedMessage,
     trusted_roots: &[TrustAnchor<'_>],
+    intermediate_certs: &[Bytes],
     now: DateTime,
 ) -> Result<&'message [u8], ValidatePayloadError> {
+    let intermediate_certs: Vec<_> = intermediate_certs
+        .iter()
+        .map(Bytes::as_ref)
+        .map(CertificateDer::from)
+        .collect();
     let binding = Certificate::from_der(der_certificate);
+
     let untrusted_cert = binding
         .to_end_certificate()
         .map_err(ValidatePayloadError::InvalidCertificateDer)?;
     let verified_path = verify_certificate(
         &untrusted_cert,
         trusted_roots,
-        // TODO: Consider listing intermediate certificate
-        &[],
+        &intermediate_certs,
         now,
         KeyUsage::client_auth(),
     )?;
@@ -174,10 +187,16 @@ pub fn validate_payload<'message>(
 pub fn load_answer_payload(
     der_certificate: &[u8],
     signed_message: &SignedMessage,
+    intermediate_certs: &[Bytes],
     now: DateTime,
 ) -> Result<PkiEnrollmentAnswerPayload, LoadAnswerPayloadError> {
     let trusted_anchor = crate::list_trusted_root_certificate_anchor()?;
-    let validated_payload =
-        validate_payload(der_certificate, signed_message, &trusted_anchor, now)?;
+    let validated_payload = validate_payload(
+        der_certificate,
+        signed_message,
+        &trusted_anchor,
+        intermediate_certs,
+        now,
+    )?;
     PkiEnrollmentAnswerPayload::load(validated_payload).map_err(Into::into)
 }
