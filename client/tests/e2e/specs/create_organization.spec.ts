@@ -1,6 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { DEFAULT_USER_INFORMATION, MockBms, expect, fillIonInput, msTest, openExternalLink } from '@tests/e2e/helpers';
+import {
+  DEFAULT_USER_INFORMATION,
+  MockBms,
+  MsPage,
+  expect,
+  fillIonInput,
+  msTest,
+  openExternalLink,
+  setupNewPage,
+} from '@tests/e2e/helpers';
 
 msTest('Opens the create organization modal', async ({ home }) => {
   await expect(home.locator('#create-organization-button')).toHaveText('Create or join');
@@ -26,7 +35,7 @@ msTest('Opens the create organization modal', async ({ home }) => {
   const nextButton = modal.locator('.server-page-footer').locator('ion-button').nth(1);
   await expect(nextButton).toBeTrulyDisabled();
   await expect(nextButton).toHaveText('Continue');
-  await modal.locator('.server-choice-item').nth(0).click();
+  await modal.locator('.server-choice-item').nth(1).click();
   await expect(nextButton).toBeTrulyEnabled();
 
   // Check if the close button closes the modal
@@ -35,7 +44,10 @@ msTest('Opens the create organization modal', async ({ home }) => {
   await expect(modal).toBeHidden();
 });
 
-msTest('Return to server selection after selecting server type', async ({ home }) => {
+msTest('Return to server selection after selecting server type', async ({ context }) => {
+  const home = (await context.newPage()) as MsPage;
+  await setupNewPage(home, { enableStripe: true });
+
   await home.locator('#create-organization-button').click();
   await home.locator('.popover-viewport').getByRole('listitem').nth(0).click();
   const modal = home.locator('.create-organization-modal');

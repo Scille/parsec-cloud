@@ -27,7 +27,7 @@ function getStripeApiKey(): { key: string; mode: EnvironmentType } {
 }
 
 function isStripeDisabled(): boolean {
-  return import.meta.env[STRIPE_DISABLE_ENV_VARIABLE] === 'true';
+  return import.meta.env[STRIPE_DISABLE_ENV_VARIABLE] === 'true' || (window as any).TESTING_DISABLE_STRIPE === true;
 }
 
 /*

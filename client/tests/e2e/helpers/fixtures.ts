@@ -64,6 +64,7 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
       }
 
       (window as any).TESTING = true;
+      (window as any).TESTING_DISABLE_STRIPE = !options.enableStripe;
       if (options.openBaoServer) {
         (window as any).TESTING_OPEN_BAO_SERVER = options.openBaoServer;
       }
@@ -506,7 +507,10 @@ export const msTest = debugTest.extend<{
     await use(modal);
   },
 
-  clientArea: async ({ home }, use) => {
+  clientArea: async ({ context }, use) => {
+    const home = (await context.newPage()) as MsPage;
+    await setupNewPage(home, { enableStripe: true });
+
     home.userData.reset();
     await MockBms.mockLogin(home);
     await MockBms.mockUserRoute(home);
@@ -545,9 +549,13 @@ export const msTest = debugTest.extend<{
     await expect(orgSwitchButton).toHaveText(home.orgInfo.name);
 
     await use(home);
+    await home.release();
   },
 
-  clientAreaCustomOrder: async ({ home, clientAreaCustomOrderInitialMocks }, use) => {
+  clientAreaCustomOrder: async ({ context, clientAreaCustomOrderInitialMocks }, use) => {
+    const home = (await context.newPage()) as MsPage;
+    await setupNewPage(home, { enableStripe: true });
+
     home.userData.reset();
     await MockBms.mockLogin(home);
     await MockBms.mockUserRoute(home, { billingSystem: 'CUSTOM_ORDER' });
@@ -586,6 +594,7 @@ export const msTest = debugTest.extend<{
     await expect(home).toHaveURL(/.+\/clientArea$/);
 
     await use(home);
+    await home.release();
   },
 
   clientAreaCustomOrderInitialMocks: [
