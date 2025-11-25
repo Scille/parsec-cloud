@@ -9,6 +9,7 @@ from base64 import b64decode, b64encode
 from collections import defaultdict
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
+from copy import deepcopy
 from typing import TYPE_CHECKING, Any
 from urllib.parse import quote_plus
 
@@ -17,7 +18,7 @@ import click
 import structlog
 from fastapi import APIRouter, BackgroundTasks, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 
 from parsec._parsec import (
     AccountAuthMethodID,
@@ -52,6 +53,7 @@ from parsec.asgi import AsgiApp, app_factory, serve_parsec_asgi_app
 from parsec.backend import Backend, backend_factory
 from parsec.cli.options import debug_config_options, logging_config_options
 from parsec.cli.utils import cli_exception_handler
+from parsec.components.memory.user import MemoryDatamodel, MemoryUserComponent
 from parsec.config import (
     BackendConfig,
     LogLevel,
@@ -119,6 +121,14 @@ class TestbedBackend:
         self.template_per_org: dict[OrganizationID, TestbedTemplateContent] = {}
         # We expose some routes to simulate a OpenBao server, hence this field
         self.openbao_secrets: defaultdict[tuple[str, str], list[Any]] = defaultdict(list)
+        # If the testbed server run with the memory backend, we can copy the datamodel
+        # object to create snapshots and overwrite the initial one to rollback.
+        self._data_snapshots: list[tuple[DateTime, MemoryDatamodel]] = []
+        self._data: MemoryDatamodel | None
+        if isinstance(backend.user, MemoryUserComponent):
+            self._data = backend.user._data
+        else:
+            self._data = None  # Snapshot support is disabled
 
     async def get_template(self, template: str) -> TestbedTemplate:
         try:
@@ -591,6 +601,49 @@ async def test_openbao_hexagone_oidc_callback(request: Request, auth_provider: s
     }
 
 
+@testbed_router.post("/testbed/snapshot/create")
+async def test_snapshot(request: Request) -> Response:
+    testbed: TestbedBackend = request.app.state.testbed
+
+    if testbed._data is None:
+        return Response(
+            status_code=400, content="Snapshot&rollback is only supported with the memory backend"
+        )
+
+    now = DateTime.now()
+    testbed._data_snapshots.append((now, deepcopy(testbed._data)))
+    id = len(testbed._data_snapshots)
+    return JSONResponse(status_code=200, content={"id": id, "timestamp": now.to_rfc3339()})
+
+
+@testbed_router.post("/testbed/snapshot/rollback/{id}")
+async def test_rollback(id: int, request: Request) -> Response:
+    testbed: TestbedBackend = request.app.state.testbed
+
+    if testbed._data is None:
+        return Response(
+            status_code=400, content="Snapshot&rollback is only supported with the memory backend"
+        )
+
+    if id <= 0 or id > len(testbed._data_snapshots):
+        match len(testbed._data_snapshots):
+            case 0:
+                msg = "No snapshot created so far (use `POST /testbed/snapshot/create`)"
+            case last_id:
+                msg = f"Not found, last valid snapshot ID is {last_id}"
+        return Response(status_code=404, content=msg)
+
+    ts, save = deepcopy(testbed._data_snapshots[id - 1])
+
+    # We must overwrite the content of the original data object (and not just
+    # do `testbed._data = save`) since each component in the backend points to
+    # this object.
+    for field in testbed._data.__dataclass_fields__.keys():
+        setattr(testbed._data, field, getattr(save, field))
+
+    return JSONResponse(status_code=200, content={"timestamp": ts.to_rfc3339()})
+
+
 @testbed_router.get("/testbed/mailbox/{raw_recipient}")
 async def test_mailbox(raw_recipient: str, request: Request) -> Response:
     testbed: TestbedBackend = request.app.state.testbed
@@ -696,7 +749,6 @@ async def testbed_backend_factory(
         )
 
     jinja_env = get_environment(None)
-
     config = BackendConfig(
         jinja_env=jinja_env,
         debug=True,
