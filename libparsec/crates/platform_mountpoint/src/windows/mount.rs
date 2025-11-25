@@ -44,8 +44,13 @@ impl Mountpoint {
 
     pub async fn mount(ops: Arc<WorkspaceOps>) -> anyhow::Result<Self> {
         let (workspace_name, self_role) = ops.get_current_name_and_self_role();
+        log::debug!("Preparing mounting of workspace {workspace_name} for role {self_role}");
         let is_read_only = !self_role.can_write();
         let volume_label = generate_volume_label(&workspace_name);
+        log::debug!(
+            "Volume label for workspace {workspace_name} is {}",
+            volume_label.display()
+        );
 
         let filesystem_interface = super::filesystem::ParsecFileSystemInterface::new(
             is_read_only,
@@ -78,6 +83,10 @@ impl Mountpoint {
         mountpoint_name_hint: EntryName,
     ) -> anyhow::Result<Self> {
         let volume_label = generate_volume_label(&mountpoint_name_hint);
+        log::debug!(
+            "Volume label for history mountpoint {mountpoint_name_hint} is {}",
+            volume_label.display()
+        );
 
         let filesystem_interface = super::history::ParsecFileSystemInterface::new(
             ops.clone(),
