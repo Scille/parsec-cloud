@@ -120,7 +120,6 @@
         <ion-text class="body-sm version"> {{ $msTranslate('MenuPage.downloadParsec') }} </ion-text>
       </ion-item>
       <ion-item
-        v-if="!Env.isStripeDisabled()"
         class="footer-list__item"
         @click="onOptionClick(ProfilePopoverOption.ReportBug)"
       >

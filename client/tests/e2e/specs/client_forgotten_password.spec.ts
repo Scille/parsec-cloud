@@ -1,8 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { DEFAULT_USER_INFORMATION, MockBms, expect, fillIonInput, msTest } from '@tests/e2e/helpers';
+import { DEFAULT_USER_INFORMATION, MockBms, MsPage, expect, fillIonInput, msTest, setupNewPage } from '@tests/e2e/helpers';
 
-msTest('Client area forgot password', async ({ home }) => {
+msTest('Client area forgot password', async ({ context }) => {
+  const home = (await context.newPage()) as MsPage;
+  await setupNewPage(home, { enableStripe: true });
+
   await MockBms.mockChangePassword(home);
   const button = home.locator('.homepage-header').locator('#trigger-customer-area-button');
   await expect(button).toHaveText('Customer area');
@@ -26,7 +29,10 @@ msTest('Client area forgot password', async ({ home }) => {
   await expect(home.locator('.saas-login-container').locator('.saas-login__title')).toHaveText('Log in to your customer account');
 });
 
-msTest('Client area forgot password failed', async ({ home }) => {
+msTest('Client area forgot password failed', async ({ context }) => {
+  const home = (await context.newPage()) as MsPage;
+  await setupNewPage(home, { enableStripe: true });
+
   await MockBms.mockChangePassword(home, { POST: { errors: { status: 400 } } });
   const button = home.locator('.homepage-header').locator('#trigger-customer-area-button');
   await button.click();
@@ -46,7 +52,10 @@ msTest('Client area forgot password failed', async ({ home }) => {
   await expect(buttons.nth(1)).toBeTrulyEnabled();
 });
 
-msTest('Client area forgot password go back', async ({ home }) => {
+msTest('Client area forgot password go back', async ({ context }) => {
+  const home = (await context.newPage()) as MsPage;
+  await setupNewPage(home, { enableStripe: true });
+
   await MockBms.mockChangePassword(home);
   const button = home.locator('.homepage-header').locator('#trigger-customer-area-button');
   await button.click();
