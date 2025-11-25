@@ -95,6 +95,7 @@ msTest('Account create org saas with server matching', async ({ context }) => {
     parsecAccountAutoLogin: true,
     location: '/page',
     saasServers: process.env.TESTBED_SERVER?.replace('parsec3://', ''),
+    enableStripe: true,
   });
   await expect(page).toHaveURL(/.+\/home$/);
 

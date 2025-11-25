@@ -54,6 +54,9 @@ class _WebLogger {
   }
 
   async log(level: LogLevel, message: string): Promise<void> {
+    if ((window as any).TESTING === true) {
+      return;
+    }
     if (!this.db) {
       return;
     }

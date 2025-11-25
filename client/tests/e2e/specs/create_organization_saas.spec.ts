@@ -42,7 +42,10 @@ async function cancelAndResume(page: Page, currentContainer: Locator): Promise<v
   await expect(page.locator('.create-organization-modal')).toBeVisible();
 }
 
-msTest('Go through saas org creation process', { tag: '@important' }, async ({ home }) => {
+msTest('Go through saas org creation process', { tag: '@important' }, async ({ context }) => {
+  const home = (await context.newPage()) as MsPage;
+  await setupNewPage(home, { enableStripe: true });
+
   const modal = await openCreateOrganizationModal(home);
 
   const uniqueOrgName = `${home.orgInfo.name}-${randomInt(2 ** 47)}`;
@@ -208,7 +211,10 @@ for (const testInfo of [
     status: 0,
   },
 ])
-  msTest(`Org creation error (${testInfo.status} - ${testInfo.code})`, async ({ home }) => {
+  msTest(`Org creation error (${testInfo.status} - ${testInfo.code})`, async ({ context }) => {
+    const home = (await context.newPage()) as MsPage;
+    await setupNewPage(home, { enableStripe: true });
+
     const modal = await openCreateOrganizationModal(home);
 
     const uniqueOrgName = `${home.orgInfo.name}-${randomInt(2 ** 47)}`;
@@ -267,7 +273,7 @@ msTest('Go through saas org creation process from bootstrap link', async ({ cont
   const page = (await context.newPage()) as MsPage;
   // Making sure that the testbed is recognized as the saas server
   const testbedUrl = new URL(process.env.TESTBED_SERVER ?? '');
-  await setupNewPage(page, { trialServers: 'unknown.host', saasServers: testbedUrl.host });
+  await setupNewPage(page, { trialServers: 'unknown.host', saasServers: testbedUrl.host, enableStripe: true });
 
   const uniqueOrgName = `${page.orgInfo.name}-${randomInt(2 ** 47)}`;
 
@@ -379,7 +385,10 @@ msTest('Go through saas org creation process from bootstrap link', async ({ cont
   await page.release();
 });
 
-msTest('Open customer account creation', async ({ home }) => {
+msTest('Open customer account creation', async ({ context }) => {
+  const home = (await context.newPage()) as MsPage;
+  await setupNewPage(home, { enableStripe: true });
+
   const modal = await openCreateOrganizationModal(home);
 
   const bmsContainer = modal.locator('.saas-login');
@@ -391,7 +400,10 @@ msTest('Open customer account creation', async ({ home }) => {
   );
 });
 
-msTest('Fail to login to BMS', async ({ home }) => {
+msTest('Fail to login to BMS', async ({ context }) => {
+  const home = (await context.newPage()) as MsPage;
+  await setupNewPage(home, { enableStripe: true });
+
   const modal = await openCreateOrganizationModal(home);
 
   await MockBms.mockLogin(home, { POST: { errors: { status: 401 } } });
@@ -411,7 +423,10 @@ msTest('Fail to login to BMS', async ({ home }) => {
   await expect(bmsContainer.locator('.login-button-error')).toHaveText('Cannot log in. Please check your email and password.');
 });
 
-msTest('Cannot reach the BMS', async ({ home }) => {
+msTest('Cannot reach the BMS', async ({ context }) => {
+  const home = (await context.newPage()) as MsPage;
+  await setupNewPage(home, { enableStripe: true });
+
   await MockBms.mockLogin(home, { POST: { timeout: true } });
   const modal = await openCreateOrganizationModal(home);
 
@@ -432,7 +447,10 @@ msTest('Cannot reach the BMS', async ({ home }) => {
   );
 });
 
-msTest('Edit from summary', async ({ home }) => {
+msTest('Edit from summary', async ({ context }) => {
+  const home = (await context.newPage()) as MsPage;
+  await setupNewPage(home, { enableStripe: true });
+
   const modal = await openCreateOrganizationModal(home);
 
   await MockBms.mockLogin(home);
@@ -515,7 +533,10 @@ msTest('Edit from summary', async ({ home }) => {
   await expect(summaryNext).toBeTrulyEnabled();
 });
 
-msTest('Try to create an org with custom order', async ({ home }) => {
+msTest('Try to create an org with custom order', async ({ context }) => {
+  const home = (await context.newPage()) as MsPage;
+  await setupNewPage(home, { enableStripe: true });
+
   const modal = await openCreateOrganizationModal(home);
 
   await MockBms.mockLogin(home);
@@ -536,7 +557,10 @@ msTest('Try to create an org with custom order', async ({ home }) => {
   );
 });
 
-msTest('Try to create an org without being a client', async ({ home }) => {
+msTest('Try to create an org without being a client', async ({ context }) => {
+  const home = (await context.newPage()) as MsPage;
+  await setupNewPage(home, { enableStripe: true });
+
   const modal = await openCreateOrganizationModal(home);
 
   await MockBms.mockLogin(home);
@@ -554,7 +578,10 @@ msTest('Try to create an org without being a client', async ({ home }) => {
 });
 
 for (const displaySize of ['small', 'large']) {
-  msTest(`Go through saas org creation process with authority key on ${displaySize} display`, async ({ home }, testInfo: TestInfo) => {
+  msTest(`Go through saas org creation process with authority key on ${displaySize} display`, async ({ context }, testInfo: TestInfo) => {
+    const home = (await context.newPage()) as MsPage;
+    await setupNewPage(home, { enableStripe: true });
+
     if (displaySize === DisplaySize.Small) {
       await home.setDisplaySize(DisplaySize.Small);
     }
@@ -704,7 +731,10 @@ for (const displaySize of ['small', 'large']) {
 
   msTest(
     `Go through saas org creation process with invalid authority key on ${displaySize} display`,
-    async ({ home }, testInfo: TestInfo) => {
+    async ({ context }, testInfo: TestInfo) => {
+      const home = (await context.newPage()) as MsPage;
+      await setupNewPage(home, { enableStripe: true });
+
       if (displaySize === DisplaySize.Small) {
         await home.setDisplaySize(DisplaySize.Small);
       }
@@ -798,7 +828,7 @@ for (const displaySize of ['small', 'large']) {
       const page = (await context.newPage()) as MsPage;
       // Making sure that the testbed is recognized as the saas server
       const testbedUrl = new URL(process.env.TESTBED_SERVER ?? '');
-      await setupNewPage(page, { trialServers: 'unknown.host', saasServers: testbedUrl.host });
+      await setupNewPage(page, { trialServers: 'unknown.host', saasServers: testbedUrl.host, enableStripe: true });
 
       if (displaySize === DisplaySize.Small) {
         await page.setDisplaySize(DisplaySize.Small);
