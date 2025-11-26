@@ -102,6 +102,7 @@ async function onAddDeviceClick(): Promise<void> {
   const modal = await modalController.create({
     component: GreetDeviceModal,
     canDismiss: true,
+    backdropDismiss: false,
     cssClass: 'greet-organization-modal',
     componentProps: {
       informationManager: informationManager,
