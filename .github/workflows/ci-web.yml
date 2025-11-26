@@ -158,7 +158,7 @@ jobs:
     if: needs.test-web-app.result == 'success'
     needs:
       - test-web-app
-    runs-on: ubuntu-24.04-large
+    runs-on: ubuntu-24.04
     name: 🌐 Web playwright tests
     strategy:
       fail-fast: false
