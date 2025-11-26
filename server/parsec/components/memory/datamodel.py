@@ -157,6 +157,7 @@ class MemoryOrganization:
     invitations: dict[InvitationToken, MemoryInvitation] = field(default_factory=dict)
     greeting_attempts: dict[GreetingAttemptID, MemoryGreetingAttempt] = field(default_factory=dict)
     pki_enrollments: dict[PKIEnrollmentID, MemoryPkiEnrollment] = field(default_factory=dict)
+    pki_certificates: dict[bytes, MemoryPkiCertificate] = field(default_factory=dict)
     realms: dict[VlobID, MemoryRealm] = field(default_factory=dict)
     blocks: dict[BlockID, MemoryBlock] = field(default_factory=dict)
     block_store: dict[BlockID, bytes] = field(default_factory=dict, repr=False)
@@ -735,6 +736,16 @@ class MemoryPkiEnrollmentInfoRejected:
 @dataclass(slots=True)
 class MemoryPkiEnrollmentInfoCancelled:
     cancelled_on: DateTime
+
+
+@dataclass(slots=True)
+class MemoryPkiCertificate:
+    # Unique key
+    sha256_fingerprint: bytes = field(repr=False)
+    der_content: bytes = field(repr=False)
+
+    # References the certificate that signed the current certificate
+    signed_by: bytes | None = None
 
 
 @dataclass(slots=True)
