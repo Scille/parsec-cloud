@@ -14,6 +14,8 @@ export interface NavigationOptions {
 }
 
 export async function navigateTo(routeName: Routes, options?: NavigationOptions): Promise<void> {
+  window.electronAPI.log('debug', `Navigating to ${routeName}`);
+
   const router = getRouter();
 
   const params = options?.params ?? {};

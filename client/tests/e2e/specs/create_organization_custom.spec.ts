@@ -7,6 +7,7 @@ import {
   expect,
   fillInputModal,
   fillIonInput,
+  getServerAddr,
   getTestbedBootstrapAddr,
   mockLibParsec,
   MsPage,
@@ -138,7 +139,7 @@ msTest('Go through custom org creation process', { tag: '@important' }, async ({
   await expect(authNext).toHaveDisabledAttribute();
 
   const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(2);
+  await expect(authRadio).toHaveCount(3);
   await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
   await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
   await expect(authRadio.nth(1)).toHaveText('Password');
@@ -248,9 +249,7 @@ msTest('Go through custom org creation process from bootstrap link', async ({ co
   await expect(orgServerContainer.locator('ion-input').nth(0)).toHaveTheClass('input-disabled');
   await expect(orgServerContainer.locator('ion-input').nth(0).locator('input')).toHaveValue(uniqueOrgName);
   await expect(orgServerContainer.locator('ion-input').nth(1)).toHaveTheClass('input-disabled');
-  await expect(orgServerContainer.locator('ion-input').nth(1).locator('input')).toHaveValue(
-    `parsec3://${new URL(page.orgInfo.serverAddr).host}`,
-  );
+  await expect(orgServerContainer.locator('ion-input').nth(1).locator('input')).toHaveValue(getServerAddr());
   await orgNext.click();
 
   const userInfoContainer = modal.locator('.user-information-page');
@@ -281,7 +280,7 @@ msTest('Go through custom org creation process from bootstrap link', async ({ co
   await expect(authNext).toHaveDisabledAttribute();
 
   const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(2);
+  await expect(authRadio).toHaveCount(3);
   await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
   await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
   await expect(authRadio.nth(1)).toHaveText('Password');
@@ -419,7 +418,7 @@ for (const displaySize of ['small', 'large']) {
     await expect(authNext).toHaveDisabledAttribute();
 
     const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-    await expect(authRadio).toHaveCount(2);
+    await expect(authRadio).toHaveCount(3);
     await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
     await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
     await expect(authRadio.nth(1)).toHaveText('Password');
@@ -555,7 +554,7 @@ for (const displaySize of ['small', 'large']) {
       await expect(authNext).toHaveDisabledAttribute();
 
       const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-      await expect(authRadio).toHaveCount(2);
+      await expect(authRadio).toHaveCount(3);
       await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
       await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
       await expect(authRadio.nth(1)).toHaveText('Password');
@@ -607,9 +606,7 @@ for (const displaySize of ['small', 'large']) {
       await expect(orgServerContainer.locator('ion-input').nth(0)).toHaveTheClass('input-disabled');
       await expect(orgServerContainer.locator('ion-input').nth(0).locator('input')).toHaveValue(uniqueOrgName);
       await expect(orgServerContainer.locator('ion-input').nth(1)).toHaveTheClass('input-disabled');
-      await expect(orgServerContainer.locator('ion-input').nth(1).locator('input')).toHaveValue(
-        `parsec3://${new URL(page.orgInfo.serverAddr).host}`,
-      );
+      await expect(orgServerContainer.locator('ion-input').nth(1).locator('input')).toHaveValue(getServerAddr());
 
       await orgServerContainer.locator('.advanced-settings').click();
       await orgServerContainer.locator('.sequester-container').locator('ion-toggle').click();
@@ -658,7 +655,7 @@ for (const displaySize of ['small', 'large']) {
       await expect(authNext).toHaveDisabledAttribute();
 
       const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-      await expect(authRadio).toHaveCount(2);
+      await expect(authRadio).toHaveCount(3);
       await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
       await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
       await expect(authRadio.nth(1)).toHaveText('Password');

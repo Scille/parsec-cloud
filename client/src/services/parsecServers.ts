@@ -33,5 +33,9 @@ export function getServerTypeFromParsedParsecAddr(addr: ParsedParsecAddr): Serve
 }
 
 export function getTrialServerAddress(): string {
-  return `parsec3://${Env.getTrialServers()[0]}`;
+  const server = Env.getTrialServers()[0];
+  if (!server) {
+    return '';
+  }
+  return `parsec3://${server}`;
 }

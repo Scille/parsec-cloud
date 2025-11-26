@@ -1,30 +1,57 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
+  <!-- If you're adding new providers, don't forget to activate them in openBao.ts -->
   <div
-    v-if="provider === SSOProvider.ProConnect"
+    v-if="provider === OpenBaoAuthConfigTag.OIDCProConnect && isSSOProviderHandled(provider)"
     class="sso-provider-card"
   >
-    <div class="proconnect-group">
-      <button class="proconnect-button">
+    <div
+      class="proconnect-group"
+      :class="{ 'proconnect-group--connected': isConnected }"
+    >
+      <button
+        class="proconnect-button"
+        @click="$emit('ssoSelected', OpenBaoAuthConfigTag.OIDCProConnect)"
+      >
         <span class="proconnect-sr-only">{{ $msTranslate('proConnect.title') }}</span>
       </button>
-      <p>
+      <p v-if="!isConnected">
         <a @click.stop="Env.Links.openUrl(I18n.translate('proConnect.link'))">
           {{ $msTranslate('proConnect.description') }}
         </a>
       </p>
+      <div
+        class="connected"
+        v-if="isConnected"
+      >
+        <ion-icon
+          :icon="checkmarkCircle"
+          class="connected-icon"
+        />
+        <ion-text class="button-large connected-text">
+          {{ $msTranslate('Authentication.method.sso.connected') }}
+        </ion-text>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { SSOProvider } from '@/components/devices/types';
+import { OpenBaoAuthConfigTag } from '@/parsec';
 import { Env } from '@/services/environment';
+import { isSSOProviderHandled } from '@/services/openBao';
+import { IonIcon, IonText } from '@ionic/vue';
+import { checkmarkCircle } from 'ionicons/icons';
 import { I18n } from 'megashark-lib';
 
+defineEmits<{
+  (e: 'ssoSelected', provider: OpenBaoAuthConfigTag): void;
+}>();
+
 defineProps<{
-  provider: SSOProvider;
+  provider: OpenBaoAuthConfigTag;
+  isConnected?: boolean;
 }>();
 </script>
 
@@ -68,7 +95,6 @@ defineProps<{
   width: 214px;
   height: 56px;
   border: none;
-  margin-bottom: 0.75rem;
 }
 
 .proconnect-button:hover {
@@ -80,6 +106,7 @@ p {
   font-size: 1rem;
   line-height: 1.5rem;
   margin: var(--text-spacing);
+  margin-top: 0.75rem;
 }
 
 a {
@@ -142,5 +169,39 @@ button {
   mask-size: 100% 100%;
   vertical-align: calc((0.75em - var(--icon-size)) * 0.5);
   width: var(--icon-size);
+}
+
+.proconnect-group--connected {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  background: var(--parsec-color-light-success-50);
+  border: 1px solid var(--parsec-color-light-success-500);
+  padding: 0.75rem 1.5rem 0.75rem 1rem;
+  border-radius: var(--parsec-radius-12);
+  box-shadow: var(--parsec-shadow-input);
+  justify-content: space-between;
+  width: 100%;
+
+  .proconnect-button {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .connected {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
+
+  .connected-icon {
+    font-size: 1.25rem;
+    color: var(--parsec-color-light-success-700);
+  }
+
+  .connected-text {
+    color: var(--parsec-color-light-success-700);
+    line-height: 22px;
+  }
 }
 </style>

@@ -747,7 +747,7 @@ msTest('No context menu with standard users and multiple selected', async ({ wor
 // TODO: restore / replace commented code when PKI will be re-enabled
 msTest('Check in UsersPage if action bar updates after resized', async ({ usersPage }) => {
   const actionBar = usersPage.locator('#activate-users-ms-action-bar');
-  const actionsBarButtons = actionBar.locator('.ms-action-bar-button--visible');
+  const actionsBarButtons = actionBar.locator('.ms-action-bar-button:visible');
   const actionBarMoreButton = actionBar.locator('#action-bar-more-button');
 
   await resizePage(usersPage, 1600);

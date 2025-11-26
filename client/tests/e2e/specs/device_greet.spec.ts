@@ -148,7 +148,7 @@ msTest('Greet device whole process on small display', async ({ myProfilePage }) 
   await expect(joinData.nextButton).toHaveDisabledAttribute();
 
   const authRadio = joinData.content.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(2);
+  await expect(authRadio).toHaveCount(3);
   await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
   await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
   await expect(authRadio.nth(1)).toHaveText('Password');
@@ -243,7 +243,7 @@ msTest('Greet device whole process on large display', async ({ myProfilePage }) 
   await expect(joinData.nextButton).toHaveDisabledAttribute();
 
   const authRadio = joinData.content.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(2);
+  await expect(authRadio).toHaveCount(3);
   await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
   await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
   await expect(authRadio.nth(1)).toHaveText('Password');

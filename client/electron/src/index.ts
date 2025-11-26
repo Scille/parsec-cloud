@@ -322,7 +322,8 @@ ipcMain.on(PageToWindowChannel.OpenPopup, async (_event, url: string) => {
     // close the popup and send the infos
     const parsed = new URL(url);
     const params = parsed.searchParams;
-    if ((parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') && params.get('code') && params.get('state')) {
+    // If the hostname changes, don't forget to also change it in the client
+    if (parsed.hostname === 'callback.parsec.cloud.invalid' && params.get('code') && params.get('state')) {
       myCapacitorApp.sendEvent(WindowToPageChannel.SSOComplete, params.get('code'), params.get('state'));
       event.preventDefault();
       popup.hide();

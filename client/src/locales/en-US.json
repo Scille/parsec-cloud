@@ -280,7 +280,8 @@
             "keyringFailedQuestion": "Could not login using the system authentication. Would you like to use a recovery file?",
             "keyringFailedUsedRecovery": "Use a recovery file",
             "keyringFailedAbort": "No",
-            "vaultFailed": "Could not log in using Parsec Account."
+            "vaultFailed": "Could not log in using Parsec Account.",
+            "openBaoFailed": "Could not log in using Single Sign-On. Make sure you are online."
         },
         "bmsOrganizationNotFound": "Could not find the organization {organization} on this device.",
         "noDevices": {
@@ -372,6 +373,7 @@
         "keyringChoice": "System authentication",
         "accountChoice": "Parsec Account",
         "passwordChoice": "Password",
+        "openBaoChoice": "Single Sign-On",
         "smartcardChoice": "Certificate",
         "acceptTOS": {
             "label": "By using Parsec, I accept the ",
@@ -1166,7 +1168,8 @@
             },
             "sso": {
                 "title": "Single Sign-On",
-                "description": "Login with an external account"
+                "description": "Login with an external account",
+                "connected": "Connected"
             }
         },
         "methodChosen": "Method chosen:",
@@ -1179,7 +1182,9 @@
         "useSso": "Single Sign-On",
         "label": "Authentication method",
         "keyringUnavailableOnSystem": "Unavailable on your system",
-        "keyringUnavailableOnWeb": "Unavailable on web"
+        "keyringUnavailableOnWeb": "Unavailable on web",
+        "openBaoUnavailable": "Single Sign-On not available on this server.",
+        "invalidOpenBaoData": "The SSO configuration provided by the server is invalid. Please contact an administrator."
     },
     "PasswordInputModal": {
         "passwordNeeded": "Password needed",
