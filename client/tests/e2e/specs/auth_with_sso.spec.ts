@@ -1,29 +1,28 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-// TODO: This test has been disabled since OpenBao support is currently broken
-//       in the GUI.
-//       This test will be fixed by PR https://github.com/Scille/parsec-cloud/pull/11639
-
 import { Locator, Page } from '@playwright/test';
-import { DEFAULT_USER_INFORMATION, expect, fillIonInput, logout, mockSso, MsPage, msTest, setupNewPage } from '@tests/e2e/helpers';
-import { OPEN_BAO_SERVER } from '@tests/e2e/helpers/sso';
+import { DEFAULT_USER_INFORMATION, expect, fillIonInput, logout, msTest } from '@tests/e2e/helpers';
+import { randomInt } from 'crypto';
 
 async function openCreateOrganizationModal(page: Page): Promise<Locator> {
   await page.locator('#create-organization-button').click();
   await page.locator('.popover-viewport').getByRole('listitem').nth(0).click();
   const modal = page.locator('.create-organization-modal');
-  await modal.locator('.server-choice-item').nth(1).click();
-  await modal.locator('.server-page-footer').locator('ion-button').nth(1).click();
+  await modal.locator('.server-page-footer').locator('ion-button').nth(0).click();
   return modal;
 }
 
-msTest('Go through trial org creation process, auth SSO', async ({ context }) => {
-  const page = (await context.newPage()) as MsPage;
-  await setupNewPage(page, { openBaoServer: OPEN_BAO_SERVER });
+msTest('Go through custom org creation process, auth SSO', async ({ home }) => {
+  const modal = await openCreateOrganizationModal(home);
 
-  // Trust me, mock on the BrowserContext, not on the page
-  await mockSso(context);
-  const modal = await openCreateOrganizationModal(page);
+  const uniqueOrgName = `${home.orgInfo.name}-${randomInt(2 ** 47)}`;
+  const orgServerContainer = modal.locator('.organization-name-and-server-page');
+  const orgNext = orgServerContainer.locator('.organization-name-and-server-page-footer').locator('ion-button').nth(1);
+  await fillIonInput(orgServerContainer.locator('ion-input').nth(0), uniqueOrgName);
+  await fillIonInput(orgServerContainer.locator('ion-input').nth(1), home.orgInfo.serverAddr);
+  await expect(orgNext).toNotHaveDisabledAttribute();
+  await orgNext.click();
+  await expect(orgServerContainer).toBeHidden();
 
   const userInfoContainer = modal.locator('.user-information-page');
   const userNext = modal.locator('.user-information-page-footer').locator('ion-button').nth(1);
@@ -31,7 +30,6 @@ msTest('Go through trial org creation process, auth SSO', async ({ context }) =>
   await expect(userInfoContainer.locator('.modal-header-title__text')).toHaveText('Enter your personal information');
   await fillIonInput(userInfoContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.name);
   await fillIonInput(userInfoContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.email);
-  await userInfoContainer.locator('.checkbox').locator('.native-wrapper').click();
   await expect(userNext).toNotHaveDisabledAttribute();
   await userNext.click();
 
@@ -50,15 +48,14 @@ msTest('Go through trial org creation process, auth SSO', async ({ context }) =>
   await expect(authRadio.nth(2).locator('.authentication-card-text__description')).toHaveText('Login with an external account');
   await authRadio.nth(2).click();
   await expect(authContainer.locator('.proconnect-button')).toBeVisible();
+  await expect(modal.locator('.proconnect-group--connected')).toBeHidden();
   await expect(authNext).toBeTrulyDisabled();
 
   // Fun fact: this event is never triggered if the URL given when opening
   // the pop-up doesn't point to anything, ie:
   // window.open('https://doesnotexist', 'Login');
   // will open the popup (visible in debug mode) but will not trigger that event.
-  // Since we're mocking the routes and we can't mock the route for that page since
-  // it's not opened yet, we have to mock the routes on the BrowserContext instead.
-  const popupPromise = context.waitForEvent('page');
+  const popupPromise = home.context().waitForEvent('page');
   await authContainer.locator('.proconnect-button').click();
   const popup = await popupPromise;
   await popup.waitForLoadState();
@@ -66,30 +63,53 @@ msTest('Go through trial org creation process, auth SSO', async ({ context }) =>
   expect(popup.isClosed()).toBeTruthy();
   await expect(authNext).toBeTrulyEnabled();
 
+  await expect(modal.locator('.proconnect-group--connected')).toBeVisible();
+  await expect(modal.locator('.connected-text')).toHaveText('Connected');
+
   await authNext.click();
 
-  await expect(userInfoContainer).toBeHidden();
   await expect(authContainer).toBeHidden();
+  const summaryContainer = modal.locator('.summary-page');
+  const summaryNext = modal.locator('.summary-page-footer').locator('ion-button').nth(1);
+  await expect(summaryContainer).toBeVisible();
+  await expect(summaryContainer.locator('.modal-header-title__text')).toHaveText('Overview of your organization');
+
+  await expect(summaryContainer.locator('.summary-item__label')).toHaveText([
+    'Organization',
+    'Full name',
+    'Email',
+    'Server choice',
+    'Authentication method',
+  ]);
+  await expect(summaryContainer.locator('.summary-item__text')).toHaveText([
+    uniqueOrgName,
+    DEFAULT_USER_INFORMATION.name,
+    DEFAULT_USER_INFORMATION.email,
+    'Custom Server',
+    'Single Sign-On',
+  ]);
+  await summaryNext.click();
+
   await expect(modal.locator('.creation-page')).toBeVisible();
-  await page.waitForTimeout(1000);
+  await home.waitForTimeout(1000);
 
   await expect(modal.locator('.created-page')).toBeVisible();
   await expect(modal.locator('.creation-page')).toBeHidden();
   await expect(modal.locator('.created-page').locator('.closeBtn')).toBeHidden();
   await modal.locator('.created-page-footer').locator('ion-button').click();
   await expect(modal).toBeHidden();
-  await page.waitForTimeout(1000);
-  await expect(page).toBeWorkspacePage();
+  await home.waitForTimeout(1000);
+  await expect(home).toBeWorkspacePage();
 
-  await logout(page);
-  const cards = page.locator('.organization-list').locator('.organization-card');
+  await logout(home);
+  const cards = home.locator('.organization-list').locator('.organization-card');
   await expect(cards).toHaveCount(4);
-  await expect(cards.nth(3).locator('.organization-card-content').locator('.organization-name')).toHaveText(/^trial-.+$/);
-  await cards.nth(3).click();
-  await expect(page.locator('.login-card-footer').locator('.sso-provider-card')).toBeVisible();
-  await page.locator('.sso-provider-card').locator('.proconnect-button').click();
-  await page.waitForTimeout(1000);
-  await expect(page).toBeWorkspacePage();
+  await expect(cards.nth(0).locator('.organization-card-content').locator('.organization-name')).toHaveText(uniqueOrgName);
+  await cards.nth(0).click();
+  await expect(home.locator('.login-card-footer').locator('.sso-provider-card')).toBeVisible();
+  await home.locator('.sso-provider-card').locator('.proconnect-button').click();
+  await home.waitForTimeout(1000);
+  await expect(home).toBeWorkspacePage();
 
-  await page.release();
+  await home.release();
 });

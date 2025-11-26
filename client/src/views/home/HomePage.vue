@@ -672,6 +672,15 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
         PresentationMode.Toast,
       );
     }
+  } else if (device.ty.tag === AvailableDeviceTypeTag.OpenBao) {
+    window.electronAPI.log('error', `Failed to login with OpenBAO: ${error.tag} (${error.error})`);
+    informationManager.present(
+      new Information({
+        message: 'HomePage.loginErrors.openBaoFailed',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
   } else {
     window.electronAPI.log('error', `Unhandled error for device authentication type ${device.ty.tag}`);
   }
@@ -752,12 +761,10 @@ async function login(device: AvailableDevice, access: DeviceAccessStrategy): Pro
     if (!injectionProvider.hasInjections(result.value)) {
       injectionProvider.createNewInjections(result.value, eventDistributor);
     }
-    window.electronAPI.log('debug', 'navigateTo: Routes.Loading');
     await navigateTo(Routes.Loading, { skipHandle: true, replace: true, query: { loginInfo: Base64.fromObject(routeData) } });
     state.value = HomePageState.OrganizationList;
     loginInProgress.value = false;
   } else {
-    window.electronAPI.log('error', `Parsec login error: ${result.error}`);
     await handleLoginError(device, result.error);
     loginInProgress.value = false;
   }

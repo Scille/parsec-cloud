@@ -555,7 +555,7 @@ export class ElectronCapacitorApp {
     this.MainWindow.webContents.on('dom-ready', () => {
       setTimeout(() => {
         if (electronIsDev || process.env.OPEN_DEV_TOOLS == 'true') {
-          this.MainWindow.webContents.openDevTools();
+          this.MainWindow.webContents.openDevTools({ mode: 'detach' });
         }
         CapElectronEventEmitter.emit('CAPELECTRON_DeeplinkListenerInitialized', '');
       }, 400);
@@ -565,11 +565,6 @@ export class ElectronCapacitorApp {
 
 // Set a CSP up for our application based on the custom scheme
 export function setupContentSecurityPolicy(customScheme: string): void {
-  interface CspDomain {
-    domain: string;
-    directives: string[];
-  }
-
   enum CspDirective {
     DefaultSrc = 'default-src',
     ScriptSrc = 'script-src',
@@ -579,6 +574,11 @@ export function setupContentSecurityPolicy(customScheme: string): void {
     FontSrc = 'font-src',
     FrameSrc = 'frame-src',
     WorkerSrc = 'worker-src',
+  }
+
+  interface CspDomain {
+    domain: string;
+    directives: CspDirective[];
   }
 
   const authorizedDomains: CspDomain[] = [
@@ -634,6 +634,14 @@ export function setupContentSecurityPolicy(customScheme: string): void {
       directives: [CspDirective.ImgSrc, CspDirective.StyleSrc],
     },
   ];
+
+  if (electronIsDev) {
+    // Used for the testbed
+    authorizedDomains.push({
+      domain: 'http://localhost:6770',
+      directives: [CspDirective.ConnectSrc],
+    });
+  }
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     const responseHeaders = { ...details.responseHeaders };
 

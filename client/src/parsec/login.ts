@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { DeviceSaveStrategyOpenBao, libparsec, X509CertificateReference } from '@/plugins/libparsec';
+import { libparsec, X509CertificateReference } from '@/plugins/libparsec';
 
 import { ParsecAccount } from '@/parsec/account';
 import { getClientConfig } from '@/parsec/internals';
@@ -16,6 +16,7 @@ import {
   DeviceAccessStrategy,
   DeviceAccessStrategyAccountVault,
   DeviceAccessStrategyKeyring,
+  DeviceAccessStrategyOpenBao,
   DeviceAccessStrategyPassword,
   DeviceAccessStrategySmartcard,
   DeviceAccessStrategyTag,
@@ -23,6 +24,7 @@ import {
   DeviceSaveStrategy,
   DeviceSaveStrategyAccountVault,
   DeviceSaveStrategyKeyring,
+  DeviceSaveStrategyOpenBao,
   DeviceSaveStrategyPassword,
   DeviceSaveStrategySmartcard,
   DeviceSaveStrategyTag,
@@ -34,6 +36,7 @@ import {
 } from '@/parsec/types';
 import { generateNoHandleError } from '@/parsec/utils';
 import { getConnectionHandle } from '@/router';
+import { OpenBaoConnectionInfo } from '@/services/openBao';
 import { DateTime } from 'luxon';
 
 export interface LoggedInDeviceInfo {
@@ -169,7 +172,6 @@ export async function login(
     return { ok: true, value: foundHandle };
   }
 
-  // TODO: event handling has changed !
   const clientConfig = getClientConfig();
   return await libparsec.clientStart(clientConfig, accessStrategy);
 }
@@ -266,6 +268,19 @@ export const AccessStrategy = {
       keyFile: device.keyFilePath,
     };
   },
+  useOpenBao(device: AvailableDevice, connInfo: OpenBaoConnectionInfo): DeviceAccessStrategyOpenBao {
+    if (device.ty.tag !== AvailableDeviceTypeTag.OpenBao) {
+      throw new Error('Invalid device type, expected openbao');
+    }
+    return {
+      tag: DeviceAccessStrategyTag.OpenBao,
+      keyFile: device.keyFilePath,
+      openbaoServerUrl: connInfo.server,
+      openbaoSecretMountPath: connInfo.secretMountpoint,
+      openbaoEntityId: connInfo.userId,
+      openbaoAuthToken: connInfo.token,
+    };
+  },
   useAccountVault(device: AvailableDevice): DeviceAccessStrategyAccountVault {
     if (device.ty.tag !== AvailableDeviceTypeTag.AccountVault) {
       throw new Error('Invalid device type, expected account vault');
@@ -289,6 +304,15 @@ export const AccessStrategy = {
       return AccessStrategy.usePassword(device, (saveStrategy as DeviceSaveStrategyPassword).password);
     } else if (saveStrategy.tag === DeviceSaveStrategyTag.Smartcard) {
       return AccessStrategy.useSmartcard(device);
+    } else if (saveStrategy.tag === DeviceSaveStrategyTag.OpenBao) {
+      return {
+        tag: DeviceAccessStrategyTag.OpenBao,
+        keyFile: device.keyFilePath,
+        openbaoServerUrl: saveStrategy.openbaoServerUrl,
+        openbaoSecretMountPath: saveStrategy.openbaoSecretMountPath,
+        openbaoEntityId: saveStrategy.openbaoEntityId,
+        openbaoAuthToken: saveStrategy.openbaoAuthToken,
+      };
     } else {
       window.electronAPI.log('error', `Unhandled save strategy '${(saveStrategy as any).tag}'`);
       throw new Error('Unhandled save strategy');
@@ -318,20 +342,14 @@ export const SaveStrategy = {
       accountHandle,
     };
   },
-  useOpenBao(
-    openbaoServerUrl: string,
-    openbaoSecretMountPath: string,
-    openbaoEntityId: string,
-    openbaoAuthToken: string,
-    openbaoPreferredAuthId: string,
-  ): DeviceSaveStrategyOpenBao {
+  useOpenBao(connInfo: OpenBaoConnectionInfo): DeviceSaveStrategyOpenBao {
     return {
       tag: DeviceSaveStrategyTag.OpenBao,
-      openbaoServerUrl,
-      openbaoSecretMountPath,
-      openbaoEntityId,
-      openbaoAuthToken,
-      openbaoPreferredAuthId,
+      openbaoServerUrl: connInfo.server,
+      openbaoSecretMountPath: connInfo.secretMountpoint,
+      openbaoEntityId: connInfo.userId,
+      openbaoAuthToken: connInfo.token,
+      openbaoPreferredAuthId: connInfo.provider,
     };
   },
   useSmartCard(certificate: X509CertificateReference): DeviceSaveStrategySmartcard {

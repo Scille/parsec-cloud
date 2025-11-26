@@ -32,7 +32,11 @@ async function cancelAndResume(page: Page, currentContainer: Locator): Promise<v
   await expect(page.locator('.create-organization-modal')).toBeVisible();
 }
 
-msTest('Go through trial org creation process', async ({ home }) => {
+msTest('Go through trial org creation process', async ({ context }) => {
+  const home = (await context.newPage()) as MsPage;
+  // Making sure that the testbed is recognized as the trial server
+  await setupNewPage(home, { trialServers: process.env.TESTBED_SERVER?.replace('parsec3://', ''), saasServers: 'unknown.host' });
+
   const modal = await openCreateOrganizationModal(home);
 
   const userInfoContainer = modal.locator('.user-information-page');
@@ -90,7 +94,7 @@ msTest('Go through trial org creation process', async ({ home }) => {
   await expect(authContainer.locator('.modal-header-title__text')).toHaveText('Authentication');
 
   const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(2);
+  await expect(authRadio).toHaveCount(3);
   await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
   await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
   await expect(authRadio.nth(1)).toHaveText('Password');
@@ -180,7 +184,7 @@ msTest('Go through trial org creation process from bootstrap link', async ({ con
   await expect(authContainer.locator('.modal-header-title__text')).toHaveText('Authentication');
 
   const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(2);
+  await expect(authRadio).toHaveCount(3);
   await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
   await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
   await expect(authRadio.nth(1)).toHaveText('Password');

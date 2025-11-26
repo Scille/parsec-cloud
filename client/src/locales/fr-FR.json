@@ -279,7 +279,8 @@
             "keyringFailedQuestion": "La connexion en utilisant l'authentification du système a échoué. Souhaitez-vous utiliser un fichier de récupération ?",
             "keyringFailedUsedRecovery": "Utiliser un fichier de récupération",
             "keyringFailedAbort": "Non",
-            "vaultFailed": "Impossible de se connecter avec Parsec Account."
+            "vaultFailed": "Impossible de se connecter avec Parsec Account.",
+            "openBaoFailed": "Impossible de se connecter avec l'authentification unique. Assurez vous d'être en ligne."
         },
         "bmsOrganizationNotFound": "Impossible de trouver l'organisation {organization} sur cet appareil.",
         "noDevices": {
@@ -371,6 +372,7 @@
         "keyringChoice": "Authentification du système",
         "accountChoice": "Parsec Account",
         "passwordChoice": "Mot de passe",
+        "openBaoChoice": "Authentification unique (SSO)",
         "smartcardChoice": "Certificat",
         "acceptTOS": {
             "label": "En utilisant Parsec, j'accepte les",
@@ -1165,7 +1167,8 @@
             },
             "sso": {
                 "title": "Authentification unique (SSO)",
-                "description": "S'authentifier avec un compte externe"
+                "description": "S'authentifier avec un compte externe",
+                "connected": "Connecté"
             }
         },
         "methodChosen": "Méthode choisie :",
@@ -1178,7 +1181,9 @@
         "useSso": "Authentification unique (SSO)",
         "label": "Méthode d'authentification",
         "keyringUnavailableOnSystem": "Indisponible sur votre système",
-        "keyringUnavailableOnWeb": "Indisponible sur le web"
+        "keyringUnavailableOnWeb": "Indisponible sur le web",
+        "openBaoUnavailable": "L'authentification unique (SSO) n'est pas disponible sur ce serveur.",
+        "invalidOpenBaoData": "La configuration SSO fournie par le serveur est invalide. Veuillez contacter un administrateur."
     },
     "PasswordInputModal": {
         "passwordNeeded": "Mot de passe requis",

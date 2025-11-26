@@ -33,6 +33,7 @@
       @authentication-chosen="onAuthenticationChosen"
       @close-requested="$emit('closeRequested', false)"
       @go-back-requested="onGoBackRequested"
+      :server-config="serverConfig"
       :hide-back-button="bootstrapLink !== undefined"
     />
     <organization-summary-page
@@ -80,12 +81,15 @@ import {
   BootstrapOrganizationErrorTag,
   DeviceSaveStrategy,
   DeviceSaveStrategyTag,
+  forgeServerAddr,
+  getServerConfig,
   isWeb,
   OrganizationID,
   ParsecAccount,
   ParsedParsecAddrTag,
   parseParsecAddr,
   SaveStrategy,
+  ServerConfig,
 } from '@/parsec';
 import { wait } from '@/parsec/internals';
 import {
@@ -138,12 +142,21 @@ const currentError = ref<Translatable | undefined>(undefined);
 const saveStrategy = ref<DeviceSaveStrategy | undefined>(undefined);
 const availableDevice = ref<AvailableDevice | undefined>(undefined);
 const sequesterKey = ref<string | undefined>(undefined);
+const serverConfig = ref<ServerConfig | undefined>(undefined);
 
 onMounted(async () => {
+  let server = Env.getSaasServers()[0] ?? '';
   if (props.bootstrapLink) {
     const result = await parseParsecAddr(props.bootstrapLink);
     if (result.ok && result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
       organizationName.value = result.value.organizationId;
+      server = await forgeServerAddr(result.value);
+    }
+  }
+  if (server) {
+    const configResult = await getServerConfig(server);
+    if (configResult.ok) {
+      serverConfig.value = configResult.value;
     }
   }
 });

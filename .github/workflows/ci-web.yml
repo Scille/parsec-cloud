@@ -37,6 +37,9 @@ jobs:
         image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.6.2-a.0.dev.20412.600fb06
         ports:
           - 6777:6777
+        env:
+          # Setting the server addr so that getServerConfig() returns the proper host for openBao
+          PARSEC_SERVER_ADDR: parsec3://parsec-testbed-server:6777?no_ssl=true
     steps:
       - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # pin v6.0.0
         timeout-minutes: 2
@@ -170,6 +173,9 @@ jobs:
         image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.6.2-a.0.dev.20412.600fb06
         ports:
           - 6777:6777
+        env:
+          # Setting the server addr so that getServerConfig() returns the proper host for openBao
+          PARSEC_SERVER_ADDR: parsec3://parsec-testbed-server:6777?no_ssl=true
     timeout-minutes: 25
     steps:
       - name: Inspect runner config
