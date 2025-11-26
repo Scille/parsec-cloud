@@ -844,6 +844,6 @@ async def client_pki_enrollment_accept(
 
 
 async def client_pki_list_enrollments(
-    client_handle: Handle,
+    client_handle: Handle, cert_ref: X509CertificateReference
 ) -> Result[list[PkiEnrollmentListItem], PkiEnrollmentListError]:
     raise NotImplementedError

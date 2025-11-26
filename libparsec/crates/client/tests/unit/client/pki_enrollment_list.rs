@@ -57,7 +57,7 @@ async fn ok(env: &TestbedEnv) {
         }
     });
 
-    let enrollments = alice_client.pki_list_enrollments();
+    let enrollments = alice_client.pki_list_enrollments(X509CertificateHash::fake_sha256().into());
     p_assert_eq!(
         enrollments.await.unwrap(),
         vec![
@@ -89,7 +89,7 @@ async fn ok_empty(env: &TestbedEnv) {
         }
     });
 
-    let enrollments = alice_client.pki_list_enrollments();
+    let enrollments = alice_client.pki_list_enrollments(X509CertificateHash::fake_sha256().into());
     p_assert_eq!(enrollments.await.unwrap(), vec![])
 }
 
@@ -99,7 +99,10 @@ async fn author_not_allowed(env: &TestbedEnv) {
     let mallory_client = client_factory(&env.discriminant_dir, mallory_device).await;
 
     matches!(
-        mallory_client.pki_list_enrollments().await.unwrap_err(),
+        mallory_client
+            .pki_list_enrollments(X509CertificateHash::fake_sha256().into())
+            .await
+            .unwrap_err(),
         PkiEnrollmentListError::AuthorNotAllowed
     );
 }

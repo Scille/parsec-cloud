@@ -4925,7 +4925,8 @@ export function clientPkiGetAddr(
     client: number
 ): Promise<Result<string, PkiGetAddrError>>
 export function clientPkiListEnrollments(
-    client_handle: number
+    client_handle: number,
+    cert_ref: X509CertificateReference
 ): Promise<Result<Array<PkiEnrollmentListItem>, PkiEnrollmentListError>>
 export function clientRenameWorkspace(
     client: number,
