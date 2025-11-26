@@ -1,8 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { DEFAULT_USER_INFORMATION, MockBms, answerQuestion, expect, fillIonInput, msTest, setupNewPage } from '@tests/e2e/helpers';
+import { DEFAULT_USER_INFORMATION, MockBms, MsPage, answerQuestion, expect, fillIonInput, msTest, setupNewPage } from '@tests/e2e/helpers';
 
-msTest('Log into the customer area', { tag: '@important' }, async ({ home }) => {
+msTest('Log into the customer area', { tag: '@important' }, async ({ context }) => {
+  const home = (await context.newPage()) as MsPage;
+  await setupNewPage(home, { enableStripe: true });
+
   await MockBms.mockLogin(home);
   await MockBms.mockUserRoute(home);
   await MockBms.mockListOrganizations(home);
@@ -32,7 +35,10 @@ msTest('Log into the customer area', { tag: '@important' }, async ({ home }) => 
   await expect(home).toHaveURL(/.+\/home$/);
 });
 
-msTest('Log into the customer area failed', async ({ home }) => {
+msTest('Log into the customer area failed', async ({ context }) => {
+  const home = (await context.newPage()) as MsPage;
+  await setupNewPage(home, { enableStripe: true });
+
   await MockBms.mockLogin(home, { POST: { errors: { status: 401, attribute: 'email' } } });
 
   const button = home.locator('.homepage-header').locator('#trigger-customer-area-button');
@@ -124,7 +130,10 @@ msTest('Open settings modal', async ({ clientArea }) => {
 });
 
 for (const frozen of [false, true]) {
-  msTest(`Check org state ${frozen ? 'frozen' : 'active'}`, async ({ home }) => {
+  msTest(`Check org state ${frozen ? 'frozen' : 'active'}`, async ({ context }) => {
+    const home = (await context.newPage()) as MsPage;
+    await setupNewPage(home, { enableStripe: true });
+
     await MockBms.mockLogin(home);
     await MockBms.mockUserRoute(home);
     await MockBms.mockListOrganizations(home);
@@ -154,7 +163,10 @@ for (const frozen of [false, true]) {
   });
 }
 
-msTest('Login in and refresh no remember me', async ({ home }) => {
+msTest('Login in and refresh no remember me', async ({ context }) => {
+  const home = (await context.newPage()) as MsPage;
+  await setupNewPage(home, { enableStripe: true });
+
   await MockBms.mockLogin(home);
   await MockBms.mockUserRoute(home);
   await MockBms.mockListOrganizations(home);
@@ -182,7 +194,10 @@ msTest('Login in and refresh no remember me', async ({ home }) => {
   await expect(loginContainer).toBeVisible();
 });
 
-msTest('Login in and refresh with remember me', async ({ home }) => {
+msTest('Login in and refresh with remember me', async ({ context }) => {
+  const home = (await context.newPage()) as MsPage;
+  await setupNewPage(home, { enableStripe: true });
+
   await MockBms.mockLogin(home);
   await MockBms.mockUserRoute(home);
   await MockBms.mockListOrganizations(home);
