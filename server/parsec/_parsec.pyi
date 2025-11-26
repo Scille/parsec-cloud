@@ -93,6 +93,7 @@ from parsec._parsec_pyi.pki import (
     PkiEnrollmentAnswerPayload,
     PkiEnrollmentSubmitPayload,
     PkiSignatureAlgorithm,
+    X509Certificate,
     X509CertificateInformation,
 )
 from parsec._parsec_pyi.protocol import (
@@ -202,6 +203,7 @@ __all__ = [
     "PkiEnrollmentSubmitPayload",
     "PkiSignatureAlgorithm",
     "X509CertificateInformation",
+    "X509Certificate",
     # Protocol Cmd
     "ActiveUsersLimit",
     "anonymous_cmds",

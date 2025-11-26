@@ -36,12 +36,12 @@ from tests.common import (
     HttpCommonErrorsTester,
     bob_becomes_admin_and_changes_alice,
 )
+from tests.common.pki import TestPki
 
 
 @pytest.fixture
 async def enrollment_id(
-    coolorg: CoolorgRpcClients,
-    backend: Backend,
+    coolorg: CoolorgRpcClients, backend: Backend, test_pki: TestPki
 ) -> PKIEnrollmentID:
     enrollment_id = PKIEnrollmentID.new()
     submitted_on = DateTime.now()
@@ -56,7 +56,8 @@ async def enrollment_id(
         enrollment_id=enrollment_id,
         force=False,
         submitter_human_handle=NEW_MIKE_HUMAN_HANDLE,
-        submitter_der_x509_certificate=b"<philip der x509 certificate>",
+        submitter_der_x509_certificate=test_pki.cert["bob"].der_certificate,
+        intermediate_certificates=[],
         submit_payload_signature=b"<philip submit payload signature>",
         submit_payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         submit_payload=submit_payload,
@@ -82,6 +83,7 @@ class AcceptParams(TypedDict):
 def generate_accept_params(
     coolorg: CoolorgRpcClients,
     enrollment_id: PKIEnrollmentID,
+    test_pki: TestPki,
     now: DateTime | None = None,
     user_id: UserID = NEW_MIKE_USER_ID,
     device_id: DeviceID = NEW_MIKE_DEVICE_ID,
@@ -119,7 +121,7 @@ def generate_accept_params(
         payload=payload,
         payload_signature=b"<alice accept payload signature>",
         payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
-        accepter_der_x509_certificate=b"<alice der x509 certificate>",
+        accepter_der_x509_certificate=test_pki.cert["alice"].der_certificate,
         accepter_intermediate_der_x509_certificates=[],
         submitter_user_certificate=u_certif,
         submitter_device_certificate=d_certif,
@@ -129,13 +131,11 @@ def generate_accept_params(
 
 
 async def test_authenticated_pki_enrollment_accept_ok(
-    coolorg: CoolorgRpcClients,
-    backend: Backend,
-    enrollment_id: PKIEnrollmentID,
+    coolorg: CoolorgRpcClients, backend: Backend, enrollment_id: PKIEnrollmentID, test_pki: TestPki
 ) -> None:
     with backend.event_bus.spy() as spy:
         rep = await coolorg.alice.pki_enrollment_accept(
-            **generate_accept_params(coolorg, enrollment_id)
+            **generate_accept_params(coolorg, enrollment_id, test_pki)
         )
         assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepOk()
 
@@ -147,9 +147,7 @@ async def test_authenticated_pki_enrollment_accept_ok(
 
 
 async def test_authenticated_pki_enrollment_accept_active_users_limit_reached(
-    coolorg: CoolorgRpcClients,
-    backend: Backend,
-    enrollment_id: PKIEnrollmentID,
+    coolorg: CoolorgRpcClients, backend: Backend, enrollment_id: PKIEnrollmentID, test_pki: TestPki
 ) -> None:
     outcome = await backend.organization.update(
         now=DateTime.now(),
@@ -158,7 +156,7 @@ async def test_authenticated_pki_enrollment_accept_active_users_limit_reached(
     )
     assert outcome is None
     rep = await coolorg.alice.pki_enrollment_accept(
-        **generate_accept_params(coolorg, enrollment_id)
+        **generate_accept_params(coolorg, enrollment_id, test_pki)
     )
     assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepActiveUsersLimitReached()
 
@@ -169,6 +167,7 @@ async def test_authenticated_pki_enrollment_accept_author_not_allowed(
     backend: Backend,
     enrollment_id: PKIEnrollmentID,
     kind: str,
+    test_pki: TestPki,
 ) -> None:
     match kind:
         case "never_allowed":
@@ -183,14 +182,14 @@ async def test_authenticated_pki_enrollment_accept_author_not_allowed(
         case unknown:
             assert False, unknown
 
-    rep = await author.pki_enrollment_accept(**generate_accept_params(coolorg, enrollment_id))
+    rep = await author.pki_enrollment_accept(
+        **generate_accept_params(coolorg, enrollment_id, test_pki)
+    )
     assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepAuthorNotAllowed()
 
 
 async def test_authenticated_pki_enrollment_accept_enrollment_no_longer_available(
-    coolorg: CoolorgRpcClients,
-    backend: Backend,
-    enrollment_id: PKIEnrollmentID,
+    coolorg: CoolorgRpcClients, backend: Backend, enrollment_id: PKIEnrollmentID, test_pki: TestPki
 ) -> None:
     outcome = await backend.pki.reject(
         now=DateTime.now(),
@@ -201,35 +200,35 @@ async def test_authenticated_pki_enrollment_accept_enrollment_no_longer_availabl
     assert outcome is None
 
     rep = await coolorg.alice.pki_enrollment_accept(
-        **generate_accept_params(coolorg, enrollment_id)
+        **generate_accept_params(coolorg, enrollment_id, test_pki)
     )
     assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepEnrollmentNoLongerAvailable()
 
 
 async def test_authenticated_pki_enrollment_accept_enrollment_not_found(
-    coolorg: CoolorgRpcClients,
+    coolorg: CoolorgRpcClients, test_pki: TestPki
 ) -> None:
     rep = await coolorg.alice.pki_enrollment_accept(
-        **generate_accept_params(coolorg, PKIEnrollmentID.new())
+        **generate_accept_params(coolorg, PKIEnrollmentID.new(), test_pki)
     )
     assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepEnrollmentNotFound()
 
 
 async def test_authenticated_pki_enrollment_accept_human_handle_already_taken(
-    coolorg: CoolorgRpcClients,
-    enrollment_id: PKIEnrollmentID,
+    coolorg: CoolorgRpcClients, enrollment_id: PKIEnrollmentID, test_pki: TestPki
 ) -> None:
     rep = await coolorg.alice.pki_enrollment_accept(
-        **generate_accept_params(coolorg, enrollment_id, human_handle=coolorg.bob.human_handle)
+        **generate_accept_params(
+            coolorg, enrollment_id, test_pki, human_handle=coolorg.bob.human_handle
+        )
     )
     assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepHumanHandleAlreadyTaken()
 
 
 async def test_authenticated_pki_enrollment_accept_invalid_payload(
-    coolorg: CoolorgRpcClients,
-    enrollment_id: PKIEnrollmentID,
+    coolorg: CoolorgRpcClients, enrollment_id: PKIEnrollmentID, test_pki: TestPki
 ) -> None:
-    params = generate_accept_params(coolorg, enrollment_id)
+    params = generate_accept_params(coolorg, enrollment_id, test_pki)
     params["payload"] = b"<dummy>"
     rep = await coolorg.alice.pki_enrollment_accept(**params)
     assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepInvalidPayload()
@@ -239,9 +238,10 @@ async def test_authenticated_pki_enrollment_accept_timestamp_out_of_ballpark(
     coolorg: CoolorgRpcClients,
     enrollment_id: PKIEnrollmentID,
     timestamp_out_of_ballpark: DateTime,
+    test_pki: TestPki,
 ) -> None:
     rep = await coolorg.alice.pki_enrollment_accept(
-        **generate_accept_params(coolorg, enrollment_id, now=timestamp_out_of_ballpark)
+        **generate_accept_params(coolorg, enrollment_id, test_pki, now=timestamp_out_of_ballpark)
     )
     assert isinstance(
         rep, authenticated_cmds.latest.pki_enrollment_accept.RepTimestampOutOfBallpark
@@ -252,11 +252,10 @@ async def test_authenticated_pki_enrollment_accept_timestamp_out_of_ballpark(
 
 
 async def test_authenticated_pki_enrollment_accept_user_already_exists(
-    coolorg: CoolorgRpcClients,
-    enrollment_id: PKIEnrollmentID,
+    coolorg: CoolorgRpcClients, enrollment_id: PKIEnrollmentID, test_pki: TestPki
 ) -> None:
     rep = await coolorg.alice.pki_enrollment_accept(
-        **generate_accept_params(coolorg, enrollment_id, user_id=coolorg.bob.user_id)
+        **generate_accept_params(coolorg, enrollment_id, test_pki, user_id=coolorg.bob.user_id)
     )
     assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepUserAlreadyExists()
 
@@ -267,6 +266,7 @@ async def test_authenticated_pki_enrollment_accept_require_greater_timestamp(
     backend: Backend,
     enrollment_id: PKIEnrollmentID,
     kind: str,
+    test_pki: TestPki,
 ) -> None:
     now = DateTime.now()
     match kind:
@@ -297,7 +297,7 @@ async def test_authenticated_pki_enrollment_accept_require_greater_timestamp(
     #    with the previous certificate
 
     rep = await coolorg.alice.pki_enrollment_accept(
-        **generate_accept_params(coolorg, enrollment_id, now=accepted_timestamp)
+        **generate_accept_params(coolorg, enrollment_id, test_pki, now=accepted_timestamp)
     )
     assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepRequireGreaterTimestamp(
         strictly_greater_than=now
@@ -323,8 +323,11 @@ async def test_authenticated_pki_enrollment_accept_http_common_errors(
     coolorg: CoolorgRpcClients,
     enrollment_id: PKIEnrollmentID,
     authenticated_http_common_errors_tester: HttpCommonErrorsTester,
+    test_pki: TestPki,
 ) -> None:
     async def do():
-        await coolorg.alice.pki_enrollment_accept(**generate_accept_params(coolorg, enrollment_id))
+        await coolorg.alice.pki_enrollment_accept(
+            **generate_accept_params(coolorg, enrollment_id, test_pki)
+        )
 
     await authenticated_http_common_errors_tester(do)

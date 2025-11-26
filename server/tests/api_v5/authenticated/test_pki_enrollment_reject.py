@@ -22,12 +22,12 @@ from tests.common import (
     HttpCommonErrorsTester,
     bob_becomes_admin_and_changes_alice,
 )
+from tests.common.pki import TestPki
 
 
 @pytest.fixture
 async def enrollment_id(
-    coolorg: CoolorgRpcClients,
-    backend: Backend,
+    coolorg: CoolorgRpcClients, backend: Backend, test_pki: TestPki
 ) -> PKIEnrollmentID:
     enrollment_id = PKIEnrollmentID.new()
     submitted_on = DateTime.now()
@@ -43,7 +43,8 @@ async def enrollment_id(
         enrollment_id=enrollment_id,
         force=False,
         submitter_human_handle=human_handle,
-        submitter_der_x509_certificate=b"<philip der x509 certificate>",
+        submitter_der_x509_certificate=test_pki.cert["bob"].der_certificate,
+        intermediate_certificates=[],
         submit_payload_signature=b"<philip submit payload signature>",
         submit_payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         submit_payload=submit_payload,
