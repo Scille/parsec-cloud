@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import auto
+from hashlib import sha256
 
 from parsec._parsec import (
     DateTime,
@@ -14,6 +15,7 @@ from parsec._parsec import (
     PkiSignatureAlgorithm,
     UserCertificate,
     VerifyKey,
+    X509Certificate,
     X509CertificateInformation,
     anonymous_cmds,
     authenticated_cmds,
@@ -156,6 +158,40 @@ PkiEnrollmentInfo = (
 
 
 @dataclass(slots=True)
+class PkiCertificate:
+    fingerprint_sha256: bytes
+    # fingerprint of the cert of which subject is current cert issuer
+    # cannot be computed from current cert only
+    signed_by: bytes | None
+    content: bytes
+    subject: bytes
+    issuer: bytes
+
+
+def parse_pki_cert(cert: bytes) -> PkiCertificate:
+    parsed = X509Certificate.from_der(cert)
+    fingerprint = sha256(cert)
+    return PkiCertificate(
+        fingerprint_sha256=fingerprint.digest(),
+        signed_by=None,
+        content=cert,
+        subject=parsed.subject(),
+        issuer=parsed.issuer(),
+    )
+
+
+class PkiTrustchainError(BadOutcomeEnum):
+    TrustchainTooLong = auto()
+    ParseError = auto()
+
+
+# TODO choose real value (and maybe move that to a better place)
+# should this be a configurable value ?
+# look up what's an expected value
+MAX_INTERMEDIATE_CERTIFICATES_DEPTH = 100
+
+
+@dataclass(slots=True)
 class PkiEnrollmentSubmitX509CertificateAlreadySubmitted:
     submitted_on: DateTime
 
@@ -168,6 +204,8 @@ class PkiEnrollmentSubmitBadOutcome(BadOutcomeEnum):
     X509_CERTIFICATE_ALREADY_ENROLLED = auto()
     USER_EMAIL_ALREADY_ENROLLED = auto()
     INVALID_SUBMIT_PAYLOAD = auto()
+    INVALID_X509_TRUSTCHAIN = auto()
+    INVALID_DER_X509_CERTIFICATE = auto()
 
 
 class PkiEnrollmentInfoBadOutcome(BadOutcomeEnum):
@@ -217,6 +255,7 @@ class BasePkiEnrollmentComponent:
         force: bool,
         submitter_human_handle: HumanHandle,
         submitter_der_x509_certificate: bytes,
+        intermediate_certificates: list[bytes],
         submit_payload_signature: bytes,
         submit_payload_signature_algorithm: PkiSignatureAlgorithm,
         submit_payload: bytes,
@@ -271,6 +310,54 @@ class BasePkiEnrollmentComponent:
     ):
         raise NotImplementedError
 
+    async def build_trustchain(
+        self,
+        leaf: bytes,
+        intermediate_certificates: list[bytes],
+    ) -> list[PkiCertificate] | PkiTrustchainError:
+        # TODO shortcut if the rest of the trustchain is already in DB
+
+        # Parse leaf cert
+        try:
+            current = parse_pki_cert(leaf)
+        except ValueError:
+            return PkiTrustchainError.ParseError
+
+        # Parse intermediate -> HashMap (subject, cert)
+        try:
+            intermediate = {
+                cert.subject: cert for cert in map(parse_pki_cert, intermediate_certificates)
+            }
+        except ValueError:
+            return PkiTrustchainError.ParseError
+
+        trustchain = {current.subject: current}
+
+        for _ in range(MAX_INTERMEDIATE_CERTIFICATES_DEPTH):
+            # check circular trustchain (allows to stop iteration)
+            if current.issuer in trustchain.keys():
+                return list(trustchain.values())
+
+            # check if there is a cert where cert.subject == current.issuer
+            match intermediate.get(current.issuer):
+                case None:
+                    # TODO check in database
+                    # Otherwise we're at the end of what we can check
+                    return list(trustchain.values())
+
+                case cert:
+                    current.signed_by = cert.fingerprint_sha256
+                    trustchain[cert.subject] = cert
+                    current = cert
+
+        return PkiTrustchainError.TrustchainTooLong
+
+    async def retrieve_trust_chain(self, fingerprint: bytes) -> list[PkiCertificate] | None:
+        raise NotImplementedError
+
+    async def get_cert(self, fingerprint: bytes) -> PkiCertificate | None:
+        raise NotImplementedError
+
     @api
     async def api_pki_enrollment_info(
         self,
@@ -322,12 +409,6 @@ class BasePkiEnrollmentComponent:
         req: anonymous_cmds.latest.pki_enrollment_submit.Req,
     ) -> anonymous_cmds.latest.pki_enrollment_submit.Rep:
         now = DateTime.now()
-        # TODO: Current we do not support provided intermediate certificate,
-        # Anyway the client should also not send them for now.
-        # https://github.com/Scille/parsec-cloud/issues/11557
-        # https://github.com/Scille/parsec-cloud/issues/11563
-        if req.intermediate_der_x509_certificates:
-            return anonymous_cmds.latest.pki_enrollment_submit.RepInvalidPayload()
 
         try:
             cert_info = X509CertificateInformation.load_der(req.der_x509_certificate)
@@ -343,6 +424,7 @@ class BasePkiEnrollmentComponent:
             force=req.force,
             submitter_human_handle=human_handle,
             submitter_der_x509_certificate=req.der_x509_certificate,
+            intermediate_certificates=req.intermediate_der_x509_certificates,
             submit_payload_signature=req.payload_signature,
             submit_payload_signature_algorithm=req.payload_signature_algorithm,
             submit_payload=req.payload,
@@ -364,6 +446,10 @@ class BasePkiEnrollmentComponent:
                 return anonymous_cmds.latest.pki_enrollment_submit.RepIdAlreadyUsed()
             case PkiEnrollmentSubmitBadOutcome.INVALID_SUBMIT_PAYLOAD:
                 return anonymous_cmds.latest.pki_enrollment_submit.RepInvalidPayload()
+            case PkiEnrollmentSubmitBadOutcome.INVALID_X509_TRUSTCHAIN:
+                return anonymous_cmds.latest.pki_enrollment_submit.RepInvalidX509Trustchain()
+            case PkiEnrollmentSubmitBadOutcome.INVALID_DER_X509_CERTIFICATE:
+                return anonymous_cmds.latest.pki_enrollment_submit.RepInvalidDerX509Certificate()
             case PkiEnrollmentSubmitBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case PkiEnrollmentSubmitBadOutcome.ORGANIZATION_EXPIRED:

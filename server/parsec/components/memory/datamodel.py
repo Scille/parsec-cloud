@@ -56,6 +56,7 @@ from parsec._parsec import (
 from parsec.components.account import ValidationCodeInfo
 from parsec.components.invite import InvitationCreatedBy
 from parsec.components.organization import TermsOfService
+from parsec.components.pki import PkiCertificate
 from parsec.components.sequester import SequesterServiceType
 from parsec.locks import AdvisoryLock
 
@@ -157,6 +158,7 @@ class MemoryOrganization:
     invitations: dict[InvitationToken, MemoryInvitation] = field(default_factory=dict)
     greeting_attempts: dict[GreetingAttemptID, MemoryGreetingAttempt] = field(default_factory=dict)
     pki_enrollments: dict[PKIEnrollmentID, MemoryPkiEnrollment] = field(default_factory=dict)
+    pki_certificates: dict[bytes, MemoryPkiCertificate] = field(default_factory=dict)
     realms: dict[VlobID, MemoryRealm] = field(default_factory=dict)
     blocks: dict[BlockID, MemoryBlock] = field(default_factory=dict)
     block_store: dict[BlockID, bytes] = field(default_factory=dict, repr=False)
@@ -467,6 +469,13 @@ class MemoryOrganization:
         # a list offset.
         return enumerate(all_vlob_atoms, start=200)
 
+    async def save_trustchain(self, trustchain: list[PkiCertificate]):
+        for cert in trustchain:
+            if cert.fingerprint_sha256 not in self.pki_certificates:
+                self.pki_certificates[cert.fingerprint_sha256] = MemoryPkiCertificate(
+                    cert.fingerprint_sha256, cert.content, cert.signed_by
+                )
+
 
 @dataclass(slots=True)
 class MemorySequesterService:
@@ -735,6 +744,16 @@ class MemoryPkiEnrollmentInfoRejected:
 @dataclass(slots=True)
 class MemoryPkiEnrollmentInfoCancelled:
     cancelled_on: DateTime
+
+
+@dataclass(slots=True)
+class MemoryPkiCertificate:
+    # Unique key
+    sha256_fingerprint: bytes
+    der_content: bytes = field(repr=False)
+
+    # References the certificate that signed the current certificate
+    signed_by: bytes | None = None
 
 
 @dataclass(slots=True)

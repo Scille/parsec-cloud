@@ -24,11 +24,15 @@ from tests.api_v5.authenticated.test_user_create import (
     generate_new_mike_user_certificates,
 )
 from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
+from tests.common.pki import TestPki
 
 
 @pytest.mark.parametrize("kind", ("submitted", "accepted", "cancelled", "rejected"))
 async def test_anonymous_pki_enrollment_info_ok(
-    coolorg: CoolorgRpcClients, backend: Backend, kind: str
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+    kind: str,
+    test_pki: TestPki,
 ) -> None:
     enrollment_id = PKIEnrollmentID.new()
     submitted_on = DateTime.now()
@@ -43,7 +47,8 @@ async def test_anonymous_pki_enrollment_info_ok(
         enrollment_id=enrollment_id,
         force=False,
         submitter_human_handle=NEW_MIKE_HUMAN_HANDLE,
-        submitter_der_x509_certificate=b"<mike der x509 certificate>",
+        submitter_der_x509_certificate=test_pki.cert["bob"].der_certificate,
+        intermediate_certificates=[],
         submit_payload_signature=b"<mike submit payload signature>",
         submit_payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         submit_payload=submit_payload,
@@ -86,7 +91,7 @@ async def test_anonymous_pki_enrollment_info_ok(
                 payload=accept_payload,
                 payload_signature=b"<alice accept payload signature>",
                 payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
-                accepter_der_x509_certificate=b"<alice der x509 certificate>",
+                accepter_der_x509_certificate=test_pki.cert["alice"].der_certificate,
                 accepter_intermediate_der_x509_certificates=[],
                 submitter_user_certificate=u_certif,
                 submitter_redacted_user_certificate=redacted_u_certif,
@@ -99,7 +104,7 @@ async def test_anonymous_pki_enrollment_info_ok(
                 anonymous_cmds.latest.pki_enrollment_info.PkiEnrollmentInfoStatusAccepted(
                     submitted_on=submitted_on,
                     accepted_on=accepted_on,
-                    accepter_der_x509_certificate=b"<alice der x509 certificate>",
+                    accepter_der_x509_certificate=test_pki.cert["alice"].der_certificate,
                     accepter_intermediate_der_x509_certificates=[],
                     accept_payload_signature=b"<alice accept payload signature>",
                     accept_payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
@@ -124,7 +129,8 @@ async def test_anonymous_pki_enrollment_info_ok(
                 enrollment_id=new_enrollment_id,
                 force=True,
                 submitter_human_handle=NEW_MIKE_HUMAN_HANDLE,
-                submitter_der_x509_certificate=b"<mike der x509 certificate>",
+                submitter_der_x509_certificate=test_pki.cert["bob"].der_certificate,
+                intermediate_certificates=[],
                 submit_payload_signature=b"<mike submit payload signature>",
                 submit_payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
                 submit_payload=submit_payload,
@@ -177,6 +183,7 @@ async def test_anonymous_pki_enrollment_info_http_common_errors(
     coolorg: CoolorgRpcClients,
     backend: Backend,
     anonymous_http_common_errors_tester: HttpCommonErrorsTester,
+    test_pki: TestPki,
 ) -> None:
     enrollment_id = PKIEnrollmentID.new()
     submitted_on = DateTime.now()
@@ -191,7 +198,8 @@ async def test_anonymous_pki_enrollment_info_http_common_errors(
         enrollment_id=enrollment_id,
         force=False,
         submitter_human_handle=NEW_MIKE_HUMAN_HANDLE,
-        submitter_der_x509_certificate=b"<mike der x509 certificate>",
+        submitter_der_x509_certificate=test_pki.cert["bob"].der_certificate,
+        intermediate_certificates=[],
         submit_payload_signature=b"<mike submit payload signature>",
         submit_payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         submit_payload=submit_payload,

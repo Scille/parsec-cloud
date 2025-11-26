@@ -20,6 +20,7 @@ from tests.common import (
     Backend,
     CoolorgRpcClients,
     HttpCommonErrorsTester,
+    TestPki,
     bob_becomes_admin_and_changes_alice,
 )
 
@@ -27,6 +28,7 @@ from tests.common import (
 async def test_authenticated_pki_enrollment_list_ok(
     coolorg: CoolorgRpcClients,
     backend: Backend,
+    test_pki: TestPki,
 ) -> None:
     # 1) Check with no enrollments available
 
@@ -38,6 +40,9 @@ async def test_authenticated_pki_enrollment_list_ok(
     expected_enrollments: list[
         authenticated_cmds.latest.pki_enrollment_list.PkiEnrollmentListItem
     ] = []
+    # works only because test_pki has 4 users
+    # TODO generate bigger test pki
+    certs = [cert.der_certificate for cert in test_pki.cert.values()]
     for i in range(4):
         enrollment_id = PKIEnrollmentID.new()
         submitted_on = DateTime.now()
@@ -51,7 +56,7 @@ async def test_authenticated_pki_enrollment_list_ok(
             authenticated_cmds.latest.pki_enrollment_list.PkiEnrollmentListItem(
                 enrollment_id=enrollment_id,
                 submitted_on=submitted_on,
-                der_x509_certificate=f"<user{i} der x509 certificate>".encode(),
+                der_x509_certificate=certs[i],
                 intermediate_der_x509_certificates=[],
                 payload_signature=f"<user{i} submit payload signature>".encode(),
                 payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
@@ -65,6 +70,7 @@ async def test_authenticated_pki_enrollment_list_ok(
             force=False,
             submitter_human_handle=human_handle,
             submitter_der_x509_certificate=expected_enrollment_item.der_x509_certificate,
+            intermediate_certificates=[],
             submit_payload_signature=expected_enrollment_item.payload_signature,
             submit_payload_signature_algorithm=expected_enrollment_item.payload_signature_algorithm,
             submit_payload=expected_enrollment_item.payload,
@@ -85,7 +91,7 @@ async def test_authenticated_pki_enrollment_list_ok(
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         author_verify_key=coolorg.alice.signing_key.verify_key,
-        **generate_accept_params(coolorg, to_accept.enrollment_id),
+        **generate_accept_params(coolorg, to_accept.enrollment_id, test_pki),
     )
     assert isinstance(outcome, tuple)
 
@@ -125,6 +131,7 @@ async def test_authenticated_pki_enrollment_list_ok(
         force=True,
         submitter_human_handle=human_handle,
         submitter_der_x509_certificate=canceller_expected_enrollment_item.der_x509_certificate,
+        intermediate_certificates=[],
         submit_payload_signature=canceller_expected_enrollment_item.payload_signature,
         submit_payload_signature_algorithm=canceller_expected_enrollment_item.payload_signature_algorithm,
         submit_payload=canceller_expected_enrollment_item.payload,

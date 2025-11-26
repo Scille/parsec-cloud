@@ -44,6 +44,7 @@ from parsec.components.pki import (
     PkiEnrollmentRejectBadOutcome,
     PkiEnrollmentSubmitBadOutcome,
     PkiEnrollmentSubmitX509CertificateAlreadySubmitted,
+    PkiTrustchainError,
     pki_enrollment_accept_validate,
 )
 from parsec.events import EventCommonCertificate, EventPkiEnrollment
@@ -64,6 +65,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         force: bool,
         submitter_human_handle: HumanHandle,
         submitter_der_x509_certificate: bytes,
+        intermediate_certificates: list[bytes],
         submit_payload_signature: bytes,
         submit_payload_signature_algorithm: PkiSignatureAlgorithm,
         submit_payload: bytes,
@@ -151,7 +153,23 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 if not user.is_revoked and user.cooked.human_handle.email == submitter_email:
                     return PkiEnrollmentSubmitBadOutcome.USER_EMAIL_ALREADY_ENROLLED
 
-            # 7) All checks are good, now we do the actual insertion
+            # 7) Build trust chain
+            trustchain = await self.build_trustchain(
+                submitter_der_x509_certificate,
+                intermediate_certificates,
+            )
+            match trustchain:
+                case PkiTrustchainError.TrustchainTooLong:
+                    return PkiEnrollmentSubmitBadOutcome.INVALID_X509_TRUSTCHAIN
+
+                case PkiTrustchainError.ParseError:
+                    return PkiEnrollmentSubmitBadOutcome.INVALID_DER_X509_CERTIFICATE
+
+                case trustchain:
+                    # store trustchain
+                    await org.save_trustchain(trustchain)
+
+            # 8) All checks are good, now we do the actual insertion
 
             org.pki_enrollments[enrollment_id] = MemoryPkiEnrollment(
                 enrollment_id=enrollment_id,

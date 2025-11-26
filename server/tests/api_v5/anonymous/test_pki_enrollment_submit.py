@@ -97,7 +97,7 @@ async def test_anonymous_pki_enrollment_submit_ok(
             enrollment_id=enrollment_id,
             force=False,
             der_x509_certificate=test_pki.cert["bob"].der_certificate,
-            intermediate_der_x509_certificates=[],
+            intermediate_der_x509_certificates=[test_pki.root["black_mesa"].der_certificate],
             payload_signature=b"<philip submit payload signature>",
             payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
             payload=submit_payload,
@@ -444,11 +444,47 @@ async def test_anonymous_pki_enrollment_submit_invalid_der_x509_certificate(
     assert rep == anonymous_cmds.latest.pki_enrollment_submit.RepInvalidDerX509Certificate()
 
 
+# TODO: https://github.com/Scille/parsec-cloud/issues/11720
+async def test_anonymous_pki_enrollment_submit_invalid_der_x509_certificate_in_trustchain(
+    coolorg: CoolorgRpcClients, submit_payload: bytes, test_pki: TestPki, xfail_if_postgresql: None
+) -> None:
+    rep = await coolorg.anonymous.pki_enrollment_submit(
+        enrollment_id=PKIEnrollmentID.new(),
+        force=False,
+        der_x509_certificate=test_pki.cert["bob"].der_certificate,
+        intermediate_der_x509_certificates=[b"not a valid certificate"],
+        payload_signature=b"<philip submit payload signature>",
+        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
+        payload=submit_payload,
+    )
+
+    assert rep == anonymous_cmds.latest.pki_enrollment_submit.RepInvalidDerX509Certificate()
+
+
 @pytest.mark.xfail(reason="TODO: https://github.com/Scille/parsec-cloud/issues/11648")
 async def test_anonymous_pki_enrollment_submit_invalid_payload_signature() -> None:
     raise NotImplementedError
 
 
-@pytest.mark.xfail(reason="TODO: https://github.com/Scille/parsec-cloud/issues/11648")
-async def test_anonymous_pki_enrollment_submit_invalid_x509_trustchain() -> None:
-    raise NotImplementedError
+# TODO: https://github.com/Scille/parsec-cloud/issues/11720
+async def test_anonymous_pki_enrollment_submit_invalid_x509_trustchain(
+    coolorg: CoolorgRpcClients,
+    submit_payload: bytes,
+    test_pki: TestPki,
+    monkeypatch: pytest.MonkeyPatch,
+    xfail_if_postgresql,
+) -> None:
+    from parsec.components import pki
+
+    monkeypatch.setattr(pki, "MAX_INTERMEDIATE_CERTIFICATES_DEPTH", 0)
+    rep = await coolorg.anonymous.pki_enrollment_submit(
+        enrollment_id=PKIEnrollmentID.new(),
+        force=False,
+        der_x509_certificate=test_pki.cert["bob"].der_certificate,
+        intermediate_der_x509_certificates=[test_pki.root["black_mesa"].der_certificate],
+        payload_signature=b"<philip submit payload signature>",
+        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
+        payload=submit_payload,
+    )
+
+    assert rep == anonymous_cmds.latest.pki_enrollment_submit.RepInvalidX509Trustchain()
