@@ -4,6 +4,43 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.7.0 (2025-11-28)
+--------------------------
+
+Features
+~~~~~~~~
+
+* Update component library (megashark-lib) and show/hide action bar buttons
+  based on the screen size
+  (`#11391 <https://github.com/Scille/parsec-cloud/issues/11391>`__)
+
+* Remove support for server-side request rejection of web client based on `User-
+  Agent` header (CORS configuration should be used instead).
+  (`#11628 <https://github.com/Scille/parsec-cloud/issues/11628>`__)
+
+* Added support for Single Sign-On authentication via ProConnect
+  (`#10282 <https://github.com/Scille/parsec-cloud/issues/10282>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Fixed an issue where a folder could be open twice and prevent further
+  navigation
+  (`#11640 <https://github.com/Scille/parsec-cloud/issues/11640>`__)
+
+* Fixed broken server CLI commands (export, inspect, sequester
+  create/list/revoke)
+  (`#11702 <https://github.com/Scille/parsec-cloud/issues/11702>`__)
+
+* Fixed server error on stats route if organization does not exists
+  (`#11477 <https://github.com/Scille/parsec-cloud/issues/11477>`__)
+
+* Enhance CryptPad error management
+  (`#11697 <https://github.com/Scille/parsec-cloud/issues/11697>`__)
+
+
+
 Parsec v3.6.1 (2025-11-14)
 --------------------------
 
