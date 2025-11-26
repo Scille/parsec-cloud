@@ -76,6 +76,7 @@ impl From<LoadSubmitPayloadError> for InvalidityReason {
 
 pub async fn list_enrollments(
     cmds: &AuthenticatedCmds,
+    cert_ref: X509CertificateReference,
 ) -> Result<Vec<PkiEnrollmentListItem>, PkiEnrollmentListError> {
     use authenticated_cmds::latest::pki_enrollment_list::{Rep, Req};
 
@@ -101,6 +102,31 @@ pub async fn list_enrollments(
             .context("Failed to list trusted root certificates")
             .map_err(PkiEnrollmentListError::Internal)?;
 
+        // Obtain the root cert used by the PKI
+        let base_raw_cert = libparsec_platform_pki::get_der_encoded_certificate(&cert_ref)
+            .map(|v| libparsec_platform_pki::Certificate::from_der_owned(v.der_content.into()))
+            .context("Cannot get certificate to use to obtain root cert")
+            .map_err(PkiEnrollmentListError::Internal)?;
+        let base_cert = base_raw_cert
+            .to_end_certificate()
+            .map_err(libparsec_platform_pki::LoadAnswerPayloadError::InvalidCertificateDer)
+            .context("Invalid certificate from PKI")
+            .map_err(PkiEnrollmentListError::Internal)?;
+
+        let verified_path = libparsec_platform_pki::verify_certificate(
+            &base_cert,
+            &root_certs,
+            // TODO: list client intermediate certs
+            // https://github.com/Scille/parsec-cloud/issues/11760
+            &[],
+            now,
+            libparsec_platform_pki::KeyUsage::client_auth(),
+        )
+        .context("Device does not trust user PKI certificate")
+        .map_err(PkiEnrollmentListError::Internal)?;
+
+        let pki_root_certs = [verified_path.anchor().clone()];
+
         let items = pki_requests
             .into_iter()
             .map(|req| {
@@ -113,7 +139,7 @@ pub async fn list_enrollments(
                 let payload = match libparsec_platform_pki::load_submit_payload(
                     &req.der_x509_certificate,
                     &message,
-                    &root_certs,
+                    &pki_root_certs,
                     &req.intermediate_der_x509_certificates,
                     now,
                 ) {

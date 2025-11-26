@@ -21527,9 +21527,12 @@ pub fn clientPkiGetAddr(client: u32) -> Promise {
 // client_pki_list_enrollments
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn clientPkiListEnrollments(client_handle: u32) -> Promise {
+pub fn clientPkiListEnrollments(client_handle: u32, cert_ref: Object) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
-        let ret = libparsec::client_pki_list_enrollments(client_handle).await;
+        let cert_ref = cert_ref.into();
+        let cert_ref = struct_x509_certificate_reference_js_to_rs(cert_ref)?;
+
+        let ret = libparsec::client_pki_list_enrollments(client_handle, cert_ref).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();

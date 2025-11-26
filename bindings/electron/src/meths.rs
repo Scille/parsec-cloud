@@ -21866,6 +21866,10 @@ fn client_pki_list_enrollments(mut cx: FunctionContext) -> JsResult<JsPromise> {
             v
         }
     };
+    let cert_ref = {
+        let js_val = cx.argument::<JsObject>(1)?;
+        struct_x509_certificate_reference_js_to_rs(&mut cx, js_val)?
+    };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
@@ -21874,7 +21878,7 @@ fn client_pki_list_enrollments(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::client_pki_list_enrollments(client_handle).await;
+            let ret = libparsec::client_pki_list_enrollments(client_handle, cert_ref).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
