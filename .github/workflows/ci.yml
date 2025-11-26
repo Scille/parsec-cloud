@@ -6,7 +6,6 @@ on:
   pull_request:
   push:
     branches:
-      - master
       - releases/*
 
 # We set `concurrency` to prevent having this workflow being run on code that is not up-to-date on a PR (a user make multiple push in a quick manner).
