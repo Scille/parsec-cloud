@@ -157,6 +157,7 @@
             :workspace="workspace"
             :client-profile="clientProfile"
             :is-favorite="workspaceAttributes.isFavorite(workspace.id)"
+            :is-hidden="workspaceAttributes.isHidden(workspace.id)"
             @click="onWorkspaceClick"
             @favorite-click="onWorkspaceFavoriteClick"
             @menu-click="onOpenWorkspaceContextMenu"
@@ -439,6 +440,7 @@ async function refreshWorkspacesList(): Promise<void> {
   querying.value = true;
   window.electronAPI.log('debug', 'Starting Parsec list workspaces');
   const result = await parsecListWorkspaces();
+  const hidden = workspaceAttributes.getHidden();
   if (result.ok) {
     for (const wk of result.value) {
       window.electronAPI.log('debug', `Processing workspace: ${wk.currentName}`);
@@ -448,7 +450,7 @@ async function refreshWorkspacesList(): Promise<void> {
       } else {
         window.electronAPI.log('warn', `Failed to get sharing for ${wk.currentName}`);
       }
-      if (isDesktop() && wk.mountpoints.length === 0) {
+      if (isDesktop() && wk.mountpoints.length === 0 && !hidden.value.includes(wk.id)) {
         const mountResult = await parsecMountWorkspace(wk.handle);
         if (mountResult.ok) {
           wk.mountpoints.push(mountResult.value);
@@ -619,7 +621,15 @@ async function performWorkspaceAction(action: WorkspaceAction): Promise<void> {
 }
 
 async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event, onFinished?: () => void): Promise<void> {
-  await openWorkspaceContextMenu(event, workspace, workspaceAttributes, eventDistributor, informationManager, false, isLargeDisplay.value);
+  await openWorkspaceContextMenu(
+    event,
+    workspace,
+    workspaceAttributes,
+    eventDistributor,
+    informationManager,
+    false,
+    isLargeDisplay.value,
+    storageManager);
   await refreshWorkspacesList();
 
   if (onFinished) {

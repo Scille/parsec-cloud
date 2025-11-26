@@ -32,6 +32,7 @@ export interface Config {
   skipLongPathsSupportWarning: boolean;
   disableDownloadWarning: boolean;
   hideParsecDownload: boolean;
+  skipWorkspaceHiddenWarning: boolean;
 }
 
 export class StorageManager {
@@ -56,6 +57,7 @@ export class StorageManager {
       skipLongPathsSupportWarning: false,
       disableDownloadWarning: false,
       hideParsecDownload: false,
+      skipWorkspaceHiddenWarning: false,
     };
   }
 
@@ -168,6 +170,7 @@ export class StorageManager {
       skipLongPathsSupportWarning: data.skipLongPathsSupportWarning,
       disableDownloadWarning: data.disableDownloadWarning,
       hideParsecDownload: data.hideParsecDownload,
+      skipWorkspaceHiddenWarning: data.skipWorkspaceHiddenWarning,
     });
     window.electronAPI.sendConfig(data);
   }
@@ -197,6 +200,7 @@ export class StorageManager {
       skipLongPathsSupportWarning: data.skipLongPathsSupportWarning ?? StorageManager.DEFAULT_CONFIG.skipLongPathsSupportWarning,
       disableDownloadWarning: data.disableDownloadWarning ?? StorageManager.DEFAULT_CONFIG.disableDownloadWarning,
       hideParsecDownload: data.hideParsecDownload ?? StorageManager.DEFAULT_CONFIG.hideParsecDownload,
+      skipWorkspaceHiddenWarning: data.skipWorkspaceHiddenWarning ?? StorageManager.DEFAULT_CONFIG.skipWorkspaceHiddenWarning,
     };
     return config;
   }
