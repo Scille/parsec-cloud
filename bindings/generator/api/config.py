@@ -1,19 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 
+from .addr import ParsecAddr
 from .common import (
     Enum,
     EnumItemUnit,
+    ErrorVariant,
     Path,
+    Ref,
+    Result,
     Structure,
     U32BasedType,
     Variant,
     VariantItemUnit,
-    ErrorVariant,
-    Ref,
-    Result,
 )
-from .addr import ParsecAddr
 
 
 class CacheSize(U32BasedType):

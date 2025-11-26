@@ -261,7 +261,10 @@ class PkiEnrollmentInfoError(ErrorVariant):
 
 
 async def pki_enrollment_info(
-    config: ClientConfig, addr: ParsecPkiEnrollmentAddr, enrollment_id: PKIEnrollmentID
+    config: ClientConfig,
+    addr: ParsecPkiEnrollmentAddr,
+    cert_ref: X509CertificateReference,
+    enrollment_id: PKIEnrollmentID,
 ) -> Result[PKIInfoItem, PkiEnrollmentInfoError]:
     raise NotImplementedError
 

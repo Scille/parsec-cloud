@@ -6,7 +6,7 @@ use crate::{
         InvalidPemContent, LoadAnswerPayloadError, ValidatePayloadError, VerifyCertificateError,
         VerifySignatureError,
     },
-    EncryptedMessage, PkiSignatureAlgorithm,
+    get_der_encoded_certificate, EncryptedMessage, PkiSignatureAlgorithm,
 };
 use bytes::Bytes;
 use libparsec_types::{
@@ -185,16 +185,35 @@ pub fn validate_payload<'message>(
 }
 
 pub fn load_answer_payload(
+    cert_ref: &X509CertificateReference,
     der_certificate: &[u8],
     signed_message: &SignedMessage,
     intermediate_certs: &[Bytes],
     now: DateTime,
 ) -> Result<PkiEnrollmentAnswerPayload, LoadAnswerPayloadError> {
-    let trusted_anchor = crate::list_trusted_root_certificate_anchor()?;
+    let trusted_anchors = crate::list_trusted_root_certificate_anchor()?;
+
+    // Obtain the root cert used by the PKI
+    let base_raw_cert = get_der_encoded_certificate(cert_ref)
+        .map(|v| Certificate::from_der_owned(v.der_content.into()))?;
+    let base_cert = base_raw_cert
+        .to_end_certificate()
+        .map_err(LoadAnswerPayloadError::InvalidCertificateDer)?;
+
+    let verified_path = verify_certificate(
+        &base_cert,
+        &trusted_anchors,
+        // TODO: list client intermediate certs
+        // https://github.com/Scille/parsec-cloud/issues/11757
+        &[],
+        now,
+        KeyUsage::client_auth(),
+    )?;
+
     let validated_payload = validate_payload(
         der_certificate,
         signed_message,
-        &trusted_anchor,
+        &[verified_path.anchor().clone()],
         intermediate_certs,
         now,
     )?;

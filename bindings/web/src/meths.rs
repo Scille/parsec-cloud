@@ -23172,7 +23172,12 @@ pub fn pkiEnrollmentFinalize(
 // pki_enrollment_info
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn pkiEnrollmentInfo(config: Object, addr: String, enrollment_id: String) -> Promise {
+pub fn pkiEnrollmentInfo(
+    config: Object,
+    addr: String,
+    cert_ref: Object,
+    enrollment_id: String,
+) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let config = config.into();
         let config = struct_client_config_js_to_rs(config)?;
@@ -23183,13 +23188,16 @@ pub fn pkiEnrollmentInfo(config: Object, addr: String, enrollment_id: String) ->
             };
             custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
         }?;
+        let cert_ref = cert_ref.into();
+        let cert_ref = struct_x509_certificate_reference_js_to_rs(cert_ref)?;
+
         let enrollment_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::PKIEnrollmentID, _> {
                 libparsec::PKIEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
             custom_from_rs_string(enrollment_id).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-        let ret = libparsec::pki_enrollment_info(config, addr, enrollment_id).await;
+        let ret = libparsec::pki_enrollment_info(config, addr, cert_ref, enrollment_id).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
