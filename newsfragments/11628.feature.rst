@@ -1,1 +1,0 @@
-Remove support for server-side request rejection of web client based on `User-Agent` header (CORS configuration should be used instead).
