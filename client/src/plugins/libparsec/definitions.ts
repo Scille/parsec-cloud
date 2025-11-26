@@ -6068,6 +6068,7 @@ export interface LibParsecPlugin {
     pkiEnrollmentInfo(
         config: ClientConfig,
         addr: ParsecPkiEnrollmentAddr,
+        cert_ref: X509CertificateReference,
         enrollment_id: PKIEnrollmentID
     ): Promise<Result<PKIInfoItem, PkiEnrollmentInfoError>>
     pkiEnrollmentSubmit(

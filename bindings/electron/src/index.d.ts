@@ -5127,6 +5127,7 @@ export function pkiEnrollmentFinalize(
 export function pkiEnrollmentInfo(
     config: ClientConfig,
     addr: string,
+    cert_ref: X509CertificateReference,
     enrollment_id: string
 ): Promise<Result<PKIInfoItem, PkiEnrollmentInfoError>>
 export function pkiEnrollmentSubmit(

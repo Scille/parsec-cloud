@@ -88,6 +88,7 @@ async fn ok(#[case] status: &str, env: &TestbedEnv) {
             alice_client.organization_addr(),
             alice_client.organization_id().clone(),
         ),
+        X509CertificateHash::fake_sha256().into(),
         enrollment_id,
     )
     .await
@@ -148,6 +149,7 @@ async fn enrollment_not_found(env: &TestbedEnv) {
             mallory_client.organization_addr(),
             mallory_client.organization_id().clone(),
         ),
+        X509CertificateHash::fake_sha256().into(),
         PKIEnrollmentID::default(),
     )
     .await;

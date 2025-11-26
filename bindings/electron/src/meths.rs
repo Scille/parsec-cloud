@@ -24815,8 +24815,12 @@ fn pki_enrollment_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
             }
         }
     };
+    let cert_ref = {
+        let js_val = cx.argument::<JsObject>(2)?;
+        struct_x509_certificate_reference_js_to_rs(&mut cx, js_val)?
+    };
     let enrollment_id = {
-        let js_val = cx.argument::<JsString>(2)?;
+        let js_val = cx.argument::<JsString>(3)?;
         {
             let custom_from_rs_string = |s: String| -> Result<libparsec::PKIEnrollmentID, _> {
                 libparsec::PKIEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
@@ -24835,7 +24839,7 @@ fn pki_enrollment_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::pki_enrollment_info(config, addr, enrollment_id).await;
+            let ret = libparsec::pki_enrollment_info(config, addr, cert_ref, enrollment_id).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {

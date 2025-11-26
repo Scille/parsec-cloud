@@ -44,6 +44,7 @@ pub enum PKIInfoItem {
 pub async fn info(
     config: Arc<ClientConfig>,
     addr: ParsecPkiEnrollmentAddr,
+    x509_cert_ref: X509CertificateReference,
     enrollment_id: PKIEnrollmentID,
 ) -> Result<PKIInfoItem, PkiEnrollmentInfoError> {
     use anonymous_cmds::latest::pki_enrollment_info::{Rep, Req};
@@ -97,6 +98,7 @@ pub async fn info(
             };
 
             let answer = load_answer_payload(
+                &x509_cert_ref,
                 &accepter_der_x509_certificate,
                 &message,
                 &accepter_intermediate_der_x509_certificates,

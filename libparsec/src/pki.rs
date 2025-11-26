@@ -69,9 +69,10 @@ pub async fn pki_enrollment_finalize(
 pub async fn pki_enrollment_info(
     config: ClientConfig,
     addr: ParsecPkiEnrollmentAddr,
+    cert_ref: X509CertificateReference,
     enrollment_id: PKIEnrollmentID,
 ) -> Result<PKIInfoItem, PkiEnrollmentInfoError> {
-    libparsec_client::pki_enrollment_info(config.into(), addr, enrollment_id).await
+    libparsec_client::pki_enrollment_info(config.into(), addr, cert_ref, enrollment_id).await
 }
 
 pub async fn pki_remove_local_pending(
