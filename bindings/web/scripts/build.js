@@ -114,6 +114,9 @@ function ensure_rust_target_installed() {
   }
 }
 
+// Note the build output will be split into two parts:
+// - `target/wasm32-unknown-unknown/<profile>`: actual wasm32 code
+// - `target/<profile>`: native build of the proc macros used during compilation
 function build_wasm(cargo_flags) {
   // On Windows only .exe/.bat can be directly execute
   const wasm_build_args = [
@@ -122,11 +125,6 @@ function build_wasm(cargo_flags) {
     "--target=web",
     "--locked",
     ...cargo_flags,
-    // If we don't force the target dir, the default one is used (i.e. `target/<profile>`)
-    // However this clashes with native platform builds (i.e. `cargo build`): both
-    // builds uses the same target dir and overwrite each other work !
-    "--target-dir",
-    path.resolve(ROOT_DIR, "target", TARGET),
   ];
 
   exec_cmd(
