@@ -328,6 +328,7 @@ COMMANDS: dict[tuple[str, ...], Op | tuple[Op, ...]] = {
         ),
     ),
     ("web-release-install",): (
+        Rmdir(BINDINGS_WEB_DIR / "pkg"),
         Cwd(BINDINGS_WEB_DIR),
         Cmd(
             cmd="npm install",
