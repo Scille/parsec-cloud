@@ -248,7 +248,7 @@ jobs:
             echo '| Platform         | Download link |'
             echo '| ---------------- | ------------- |'
             echo "| Windows | $(gen_mk_dl_link ".windows.x86_64.server") |"
-            echo "| Macos   | $(gen_mk_dl_link ".macos.x86_64.server") |"
+            echo "| Macos   | $(gen_mk_dl_link ".macos.arm64.server") |"
             echo "| Linux   | $(gen_mk_dl_link ".linux-gnu.x86_64.server") |"
             echo
             echo '> We provide the wheel for _Windows_ & _Macos_ as best effort basis,'
