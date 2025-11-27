@@ -112,7 +112,7 @@ export class OpenBaoClient {
 
 async function getConnectionUrl(openBaoServer: string, mountpoint: string): Promise<OpenBaoResult<string>> {
   try {
-    const callbackPath = getRouter().resolve('/oidc/callback').path;
+    const callbackPath = getRouter().resolve('/oidc/callback').href;
     let host!: string;
     if (isElectron()) {
       // Fixed host, this is filtered by the SSO. It doesn't have to exist, Electron catches the request.
