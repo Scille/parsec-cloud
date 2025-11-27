@@ -1,0 +1,1 @@
+Added support for Single Sign-On authentication via ProConnect
