@@ -31,7 +31,6 @@ from .common import (
 )
 from .config import ClientConfig
 from .device import AvailableDevice, DeviceAccessStrategy, DeviceSaveStrategy
-from .invite import AvailableDevice, DeviceSaveStrategy
 from .pki import (
     ParsecPkiEnrollmentAddr,
     PkiEnrollmentAcceptError,

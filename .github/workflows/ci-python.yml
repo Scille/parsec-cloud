@@ -190,6 +190,7 @@ jobs:
       - name: Check python code style
         shell: bash -eux {0}
         run: |
+          poetry -P server run ruff version
           for step in ruff-format ruff-check pyright ${{ !inputs.style-only && 'sqlfluff sqlfluff-in-python' || '' }}; do
             python \
               ${{ steps.pre-commit.outputs.install-path }} \

@@ -20,12 +20,12 @@ from .workspace_history import *
 
 
 def libparsec_init_set_on_event_callback(
-    on_event_callback: OnClientEventCallback,
+    on_event_callback: OnClientEventCallback,  # noqa: F405
 ):
     raise NotImplementedError
 
 
 async def libparsec_init_native_only_init(
-    config: ClientConfig,
+    config: ClientConfig,  # noqa: F405
 ):
     raise NotImplementedError
