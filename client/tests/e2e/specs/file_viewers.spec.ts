@@ -74,8 +74,13 @@ msTest('File viewer page details', async ({ documents }) => {
   await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
   await expect(documents).toBeViewerPage();
   await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_.-]+$/);
-  const buttons = documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-button');
-  await expect(buttons).toHaveCount(5);
+  const buttons = documents.locator('.file-handler').locator('.file-handler-topbar-buttons').locator('ion-button:visible');
+  await expect(buttons).toHaveCount(4);
+  await expect(buttons).toHaveText(['Details', 'Copy link', 'Download', 'Show menu']);
+  const modal = documents.locator('.file-details-modal');
+  await expect(modal).toBeHidden();
+  await buttons.nth(0).click();
+  await expect(modal).toBeVisible();
 });
 
 for (const displaySize of ['small', 'large']) {
@@ -162,7 +167,7 @@ for (const displaySize of ['small', 'large']) {
       await expect(actionMenuModal).toBeVisible();
       await modal.locator('#next-button').click();
     } else {
-      await documents.locator('.file-handler-topbar-buttons__item').nth(1).click();
+      await documents.locator('.file-handler-topbar-buttons__item').nth(2).click();
       await modal.locator('#next-button').click();
     }
 
