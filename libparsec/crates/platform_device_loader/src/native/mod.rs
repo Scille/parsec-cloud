@@ -130,11 +130,17 @@ pub(super) async fn load_ciphertext_key(
     match access {
         DeviceAccessStrategy::Keyring { .. } => {
             if let DeviceFile::Keyring(device) = device_file {
+                log::trace!(
+                    "Creating keyring entry (service={service}, user={user})",
+                    service = device.keyring_service,
+                    user = device.keyring_user
+                );
                 let entry = KeyringEntry::new(&device.keyring_service, &device.keyring_user)
                     .map_err(|e| {
                         LoadCiphertextKeyError::Internal(anyhow::anyhow!("OS Keyring error: {e}"))
                     })?;
 
+                log::trace!("Retrieving passphrase from keyring entry");
                 let passphrase = entry
                     .get_password()
                     .map_err(|e| {
@@ -144,6 +150,7 @@ pub(super) async fn load_ciphertext_key(
                     })?
                     .into();
 
+                log::trace!("Obtained passphrase from keyring entry");
                 let key = SecretKey::from_recovery_passphrase(passphrase)
                     .map_err(|_| LoadCiphertextKeyError::DecryptionFailed)?;
 
