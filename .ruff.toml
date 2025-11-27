@@ -1,0 +1,39 @@
+line-length = 100
+
+exclude = ["misc/bench.py", "server/tests/cli/common.py", "server/tests/cli/test_sequester.py"]
+
+target-version = "py312"
+
+[lint]
+# Rule selection: https://docs.astral.sh/ruff/linter/#rule-selection
+# Available rules: https://docs.astral.sh/ruff/rules/
+select = [
+    # Ruff-specific rules
+    "RUF",
+    # FastAPI
+    "FAST",
+    # flake8-async, flake8 plugin for problems related to Trio, AnyIO, or asyncio.
+    "ASYNC",
+    # Perflint, linter for performance anti-patterns
+    "PERF",
+    # refurb, a tool for refurbishing and modernizing Python codebases
+    "FURB",
+    # pyupgrade, a tool to automatically upgrade syntax for newer versions
+    "UP",
+    # flake8-debugger, check for presence of debugger
+    "T10",
+    # Pyflakes
+    "F",
+    # Pycodestyle
+    "E",
+    "W",
+    # isort
+    "I",
+]
+
+# E501: Line too long (we leave this to the formatter)
+# E402 Module level import not at top of file
+ignore = ["E501", "E402"]
+
+[lint.isort]
+known-first-party = ["parsec", "tests"]

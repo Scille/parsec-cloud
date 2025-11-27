@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 # Dummy API for testing the generator in different use cases
-from typing import Generic, TypeVar
+from typing import TypeVar
 
 # Meta-types, not part of the API but to be used to describe the API
 
@@ -10,11 +10,11 @@ ERR = TypeVar("ERR")
 REFERENCED = TypeVar("REFERENCED")
 
 
-class Result(Generic[OK, ERR]):
+class Result[OK, ERR]:
     pass
 
 
-class Ref(Generic[REFERENCED]):
+class Ref[REFERENCED]:
     pass
 
 

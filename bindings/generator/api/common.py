@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from typing import Any, ClassVar, Generic, TypeVar
+from typing import Any, ClassVar, TypeVar
 
 #
 # Meta-types
@@ -17,7 +17,7 @@ DISPLAY_TO_STRING = (
 )
 
 
-class Result(Generic[OK, ERR]):
+class Result[OK, ERR]:
     pass
 
 
@@ -73,7 +73,7 @@ class UnitStructure(Structure):
 
 
 # Represent passing parameter in function by reference
-class Ref(Generic[REFERENCED]):
+class Ref[REFERENCED]:
     pass
 
 
