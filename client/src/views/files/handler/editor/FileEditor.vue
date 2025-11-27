@@ -1,7 +1,8 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div
+  <iframe
+    sandbox="allow-scripts allow-same-origin"
     class="file-editor"
     id="file-editor"
     ref="fileEditor"
@@ -81,7 +82,7 @@ import { I18n, Translatable } from 'megashark-lib';
 import { inject, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;
-const fileEditorRef = useTemplateRef('fileEditor');
+const fileEditorRef = useTemplateRef<HTMLIFrameElement>('fileEditor');
 const documentType = ref<CryptpadDocumentType | null>(null);
 const cryptpadInstance = ref<Cryptpad | null>(null);
 const fileUrl = ref<string | null>(null);
@@ -173,17 +174,12 @@ onUnmounted(() => {
 
 async function loadCryptpad(): Promise<boolean> {
   try {
-    // Clear the DOM element before creating a new instance
-    if (fileEditorRef.value) {
-      fileEditorRef.value.innerHTML = '';
-    }
-
     // Always create a new instance for each document to avoid conflicts
-    cryptpadInstance.value = new Cryptpad(fileEditorRef.value as HTMLDivElement, Env.getDefaultCryptpadServer());
-
+    cryptpadInstance.value = new Cryptpad(fileEditorRef.value as HTMLIFrameElement, Env.getDefaultCryptpadServer());
     await cryptpadInstance.value.init();
     return true;
   } catch (e: unknown) {
+    window.electronAPI.log('error', `Failed to load Cryptpad: ${JSON.stringify(e)}`);
     if (e instanceof CryptpadError) {
       switch (e.code) {
         case CryptpadErrorCode.NotEnabled:
@@ -219,7 +215,10 @@ async function openRedirectionModal(title: Translatable, message: Translatable, 
 }
 
 async function openFileWithCryptpad(): Promise<boolean> {
-  const cryptpadApi = cryptpadInstance.value as Cryptpad;
+  if (!cryptpadInstance.value) {
+    return false;
+  }
+
   const workspaceHandle = getWorkspaceHandle();
   const documentPath = contentInfo.path;
   const user = userInfo ? { name: userInfo.humanHandle.label, id: userInfo.userId } : undefined;
@@ -315,10 +314,11 @@ async function openFileWithCryptpad(): Promise<boolean> {
   };
 
   try {
-    await cryptpadApi.open(cryptpadConfig);
+    await cryptpadInstance.value.open(cryptpadConfig);
     window.electronAPI.log('info', 'CryptPad editor initialized successfully');
     return true;
   } catch (e: unknown) {
+    window.electronAPI.log('error', `Failed to open cryptpad: ${JSON.stringify(e)}`);
     // Check if this is a timeout error (corrupted file)
     if (e instanceof CryptpadError) {
       switch (e.code) {

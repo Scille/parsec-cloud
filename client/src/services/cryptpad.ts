@@ -94,12 +94,10 @@ export class CryptpadOpenError extends CryptpadError {
 }
 
 export class Cryptpad {
-  private scriptId = 'cryptpad-api-js';
-  private containerElement: HTMLElement;
-  private script?: HTMLScriptElement;
+  private containerElement: HTMLIFrameElement;
   private serverUrl: string;
 
-  constructor(containerElement: HTMLElement, serverUrl: string) {
+  constructor(containerElement: HTMLIFrameElement, serverUrl: string) {
     this.containerElement = containerElement;
     this.serverUrl = serverUrl;
   }
@@ -109,27 +107,31 @@ export class Cryptpad {
       throw new CryptpadInitError(CryptpadErrorCode.NotEnabled);
     }
 
-    // Script is already set for this instance (init() called multiple times)
-    if (this.script) {
-      window.electronAPI.log('info', 'CryptPad API script already loaded.');
-      return;
-    }
+    this.containerElement.srcdoc = `
+      <!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+        </head>
+        <body>
+          <div id="cryptpad-container" />
+        </body>
+      </html>
+    `;
 
-    // Check if the script exist in the DOM, maybe created by another instance
-    let script = document.getElementById(this.scriptId) as HTMLScriptElement | null;
-    if (!script) {
-      script = document.createElement('script');
-      if (!script) {
-        throw new CryptpadInitError(CryptpadErrorCode.ScriptElementCreationFailed);
-      }
-      script.id = this.scriptId;
-      script.src = `${this.serverUrl}/cryptpad-api.js`;
-      script.async = true;
-      document.head.appendChild(script);
+    const scriptLoadedPromise = new Promise<void>((resolve, reject) => {
+      this.containerElement.addEventListener('load', () => {
+        const doc = this.containerElement.contentDocument;
+        const script = doc?.createElement('script');
+        if (!script) {
+          throw new CryptpadInitError(CryptpadErrorCode.ScriptElementCreationFailed);
+        }
+        script.src = `${this.serverUrl}/cryptpad-api.js`;
+        script.async = true;
+        doc?.head.appendChild(script);
 
-      await new Promise<void>((resolve, reject) => {
         (script as HTMLScriptElement).onload = (): void => {
-          if (typeof (window as any).CryptPadAPI === 'function') {
+          if (typeof (this.containerElement.contentWindow as any).CryptPadAPI === 'function') {
             window.electronAPI.log('info', 'CryptPad API script loaded successfully.');
             resolve();
           } else {
@@ -144,28 +146,18 @@ export class Cryptpad {
           window.electronAPI.log('error', `Failed to load CryptPad script: ${error.toString()}`);
           window.electronAPI.log('error', 'This might be due to HTTPS requirements. Check if CryptPad server requires secure context.');
           reject(new CryptpadInitError(CryptpadErrorCode.InitFailed, error.toString()));
-          // We remove the faulty script to allow retrying
-          script?.remove();
         };
       });
-    } else {
-      window.electronAPI.log('info', 'CryptPad API script previously loaded, reusing');
-    }
-    this.script = script;
+    });
+
+    await scriptLoadedPromise;
   }
 
   async open(config: CryptpadConfig): Promise<void> {
-    await this.init();
+    console.log(this.containerElement.contentWindow);
 
-    if (!this.containerElement) {
-      window.electronAPI.log('error', 'Container element is not initialized. Please call init() before open().');
-      throw new CryptpadOpenError(CryptpadErrorCode.NotInitialized, config.documentType);
-    }
-
-    // for this case, a simple information modal "Failed to open document"
-    if (!this.script) {
-      window.electronAPI.log('error', 'CryptPad instance is not initialized yet. Please wait for it to initialize before calling open().');
-      throw new CryptpadOpenError(CryptpadErrorCode.NotInitialized, config.documentType);
+    if (typeof (this.containerElement.contentWindow as any).CryptPadAPI !== 'function') {
+      throw new CryptpadOpenError(CryptpadErrorCode.NotInitialized, config.documentType, 'Call init() first');
     }
 
     if (!ENABLED_DOCUMENT_TYPES.includes(config.documentType)) {
@@ -173,23 +165,23 @@ export class Cryptpad {
       throw new CryptpadOpenError(CryptpadErrorCode.DocumentTypeNotEnabled, config.documentType);
     }
 
-    // Set up a loading timeout (30 seconds) to detect stuck/corrupted files
-    const LOADING_TIMEOUT_MS = 30000;
-    let loadingTimeoutId: any = undefined;
+    // // Set up a loading timeout (30 seconds) to detect stuck/corrupted files
+    // const LOADING_TIMEOUT_MS = 30000;
+    // let loadingTimeoutId: any = undefined;
 
-    // Create a promise that will be resolved when CryptPad successfully loads
+    // // Create a promise that will be resolved when CryptPad successfully loads
     let resolveLoading!: () => void;
     const loadingComplete = new Promise<void>((resolve) => {
       resolveLoading = resolve;
     });
 
-    const timeoutPromise = new Promise<void>((_, reject) => {
-      loadingTimeoutId = window.setTimeout(() => {
-        const message = 'CryptPad loading timeout - the file may be corrupted, too large, or the server is not responding.';
-        window.electronAPI.log('warn', message);
-        reject(new CryptpadOpenError(CryptpadErrorCode.LoadingTimeout, config.documentType, message));
-      }, LOADING_TIMEOUT_MS);
-    });
+    // const timeoutPromise = new Promise<void>((_, reject) => {
+    //   loadingTimeoutId = window.setTimeout(() => {
+    //     const message = 'CryptPad loading timeout - the file may be corrupted, too large, or the server is not responding.';
+    //     window.electronAPI.log('warn', message);
+    //     reject(new CryptpadOpenError(CryptpadErrorCode.LoadingTimeout, config.documentType, message));
+    //   }, LOADING_TIMEOUT_MS);
+    // });
     // Wrap the original onReady callback to signal successful loading
     const originalOnReady = config.events.onReady;
     config.events.onReady = () => {
@@ -198,18 +190,20 @@ export class Cryptpad {
     };
 
     // Store config globally so CryptPad customization can access the onError callback
-    (window as any).cryptpadConfig = config;
+    (this.containerElement.contentWindow as any).cryptpadConfig = config;
 
     try {
+      console.log('WINDOW HISTORY BEFORE', window.history.length);
       // Start CryptPad API (doesn't wait for loading to complete)
-      void (window as any).CryptPadAPI(this.containerElement.id, { ...config });
+      (this.containerElement.contentWindow as any).CryptPadAPI('cryptpad-container', { ...config });
 
       // Race between successful loading (onReady callback) and timeout
-      await Promise.race([loadingComplete, timeoutPromise]);
+      // await Promise.race([loadingComplete, timeoutPromise]);
+      await loadingComplete;
+      console.log('WINDOW HISTORY AFTER', window.history.length);
     } finally {
-      window.clearTimeout(loadingTimeoutId);
+      // window.clearTimeout(loadingTimeoutId);
       // Clean up global config reference
-      delete (window as any).cryptpadConfig;
     }
   }
 }
