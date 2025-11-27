@@ -111,7 +111,6 @@
                 class="file-handler-topbar-buttons__item"
                 id="file-handler-details"
                 @click="showDetails"
-                v-if="isDesktop()"
                 :disabled="!handlerReadyRef"
               >
                 <ion-icon

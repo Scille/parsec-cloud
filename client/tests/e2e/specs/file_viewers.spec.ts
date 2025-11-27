@@ -74,8 +74,13 @@ msTest('File viewer page details', async ({ documents }) => {
   await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
   await expect(documents).toBeViewerPage();
   await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_.-]+$/);
-  const buttons = documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-button');
+  const buttons = documents.locator('.file-handler').locator('.file-handler-topbar-buttons').locator('ion-button:visible');
   await expect(buttons).toHaveCount(5);
+  await expect(buttons).toHaveText(['Details', 'Copy link', 'Edit', 'Download', 'Show menu']);
+  const modal = documents.locator('.file-details-modal');
+  await expect(modal).toBeHidden();
+  await buttons.nth(0).click();
+  await expect(modal).toBeVisible();
 });
 
 for (const displaySize of ['small', 'large']) {
