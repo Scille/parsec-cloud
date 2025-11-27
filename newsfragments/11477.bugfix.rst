@@ -1,0 +1,1 @@
+Fixed server error on stats route if organization does not exists
