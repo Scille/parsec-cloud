@@ -138,7 +138,7 @@ jobs:
 
       - name: Build web bindings
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
-        run: npm run build:dev
+        run: npm run build:ci
         working-directory: bindings/web
         timeout-minutes: 10
 
