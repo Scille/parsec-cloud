@@ -73,7 +73,13 @@ WEB_RELEASE_CARGO_FLAGS = "--release"  # Note: on web we use RustCrypto for rele
 # cf. https://github.com/rustwasm/wasm-pack/blob/b4e619c8a13a8441b804895348afbfd4fb1a68a3/src/build/mod.rs#L91-L106
 # and https://github.com/rustwasm/wasm-pack/blob/b4e619c8a13a8441b804895348afbfd4fb1a68a3/src/command/build.rs#L220
 WEB_DEV_CARGO_FLAGS = "--dev -- --features test-utils"
-WEB_CI_CARGO_FLAGS = f"{WEB_DEV_CARGO_FLAGS} --profile=ci-rust"
+# Using profile `ci-python` may seems weird here, but is the correct one: this profile
+# is to be used when the rust code is not the component being tested (since we benefit
+# from a more optimized libparsec, especially given its compilation is entirely skipped
+# for any PR that doesn't touch the libparsec source code \o/).
+# And regarding the name: it's a legacy one and we'd rather not changing it for the
+# moment to avoid messing with CI caches.
+WEB_CI_CARGO_FLAGS = f"{WEB_DEV_CARGO_FLAGS} --profile=ci-python"
 
 CLI_RELEASE_CARGO_FLAGS = f"--profile=release {maybe_force_vendored_dbus_cargo_flags} {maybe_force_vendored_openssl_cargo_flags}"
 
@@ -320,6 +326,7 @@ COMMANDS: dict[tuple[str, ...], Op | tuple[Op, ...]] = {
     ),
     ("web-ci-install",): (
         Rmdir(BINDINGS_WEB_DIR / "pkg"),
+        Cwd(BINDINGS_WEB_DIR),
         Cmd(
             cmd="npm install",
         ),
