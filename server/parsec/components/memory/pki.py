@@ -21,6 +21,7 @@ from parsec.components.events import EventBus
 from parsec.components.memory.datamodel import (
     MemoryDatamodel,
     MemoryDevice,
+    MemoryPkiCertificate,
     MemoryPkiEnrollment,
     MemoryPkiEnrollmentInfoAccepted,
     MemoryPkiEnrollmentInfoCancelled,
@@ -30,6 +31,7 @@ from parsec.components.memory.datamodel import (
 )
 from parsec.components.pki import (
     BasePkiEnrollmentComponent,
+    PkiCertificate,
     PkiEnrollmentAcceptStoreBadOutcome,
     PkiEnrollmentAcceptValidateBadOutcome,
     PkiEnrollmentInfo,
@@ -43,6 +45,7 @@ from parsec.components.pki import (
     PkiEnrollmentRejectBadOutcome,
     PkiEnrollmentSubmitBadOutcome,
     PkiEnrollmentSubmitX509CertificateAlreadySubmitted,
+    PkiTrustchainError,
     pki_enrollment_accept_validate,
 )
 from parsec.events import EventCommonCertificate, EventPkiEnrollment
@@ -55,6 +58,18 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         self._event_bus = event_bus
 
     @override
+    async def save_trustchain(
+        self, organization_id: OrganizationID, trustchain: list[PkiCertificate]
+    ):
+        # TODO error (or should have been checked previously)
+        org = self._data.organizations[organization_id]
+        for cert in trustchain:
+            # TODO what happens if cert already in DB
+            org.pki_certificates[cert.fingerprint] = MemoryPkiCertificate(
+                cert.fingerprint, cert.content, cert.signed_by
+            )
+
+    @override
     async def submit(
         self,
         now: DateTime,
@@ -62,6 +77,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         enrollment_id: PKIEnrollmentID,
         force: bool,
         submitter_der_x509_certificate: bytes,
+        intermediate_certificates: list[bytes],
         submit_payload_signature: bytes,
         submit_payload_signature_algorithm: PkiSignatureAlgorithm,
         submit_payload: bytes,
@@ -149,7 +165,21 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 if not user.is_revoked and user.cooked.human_handle.email == submitter_email:
                     return PkiEnrollmentSubmitBadOutcome.USER_EMAIL_ALREADY_ENROLLED
 
-            # 7) All checks are good, now we do the actual insertion
+            # 7) Build trust chain
+            root = {}  # TODO retrieve root certs
+            trustchain = await self.build_trustchain(
+                submitter_der_x509_certificate, intermediate_certificates, root
+            )
+            match trustchain:
+                case PkiTrustchainError():
+                    # TODO detail errors
+                    return PkiEnrollmentSubmitBadOutcome.TRUSTCHAIN_ERROR
+
+                case trustchain:
+                    # store trustchain
+                    await self.save_trustchain(organization_id, trustchain)
+
+            # 8) All checks are good, now we do the actual insertion
 
             org.pki_enrollments[enrollment_id] = MemoryPkiEnrollment(
                 enrollment_id=enrollment_id,

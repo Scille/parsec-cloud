@@ -150,6 +150,29 @@ PkiEnrollmentInfo = (
 )
 
 
+class PkiCertificate:
+    fingerprint: bytes
+    signed_by: bytes
+    content: bytes
+
+
+def parse_pki_cert(cert: bytes) -> PkiCertificate:
+    # TODO
+    raise NotImplementedError
+
+
+class PkiTrustchainError(BadOutcomeEnum):
+    IncompleteTrustchain = auto()
+    TrustchainTooLong = auto()
+    ParseError = auto()
+    CircularTrustChain = auto()
+
+
+# TODO choose real value (and maybe move that to a better place)
+# should this be a configurable value ?
+MAX_INTERMEDIATE_CERTIFICATES_DEPTH = 10
+
+
 @dataclass(slots=True)
 class PkiEnrollmentSubmitX509CertificateAlreadySubmitted:
     submitted_on: DateTime
@@ -163,6 +186,7 @@ class PkiEnrollmentSubmitBadOutcome(BadOutcomeEnum):
     X509_CERTIFICATE_ALREADY_ENROLLED = auto()
     USER_EMAIL_ALREADY_ENROLLED = auto()
     INVALID_SUBMIT_PAYLOAD = auto()
+    TRUSTCHAIN_ERROR = auto()
 
 
 class PkiEnrollmentInfoBadOutcome(BadOutcomeEnum):
@@ -211,6 +235,7 @@ class BasePkiEnrollmentComponent:
         enrollment_id: PKIEnrollmentID,
         force: bool,
         submitter_der_x509_certificate: bytes,
+        intermediate_certificates: list[bytes],
         submit_payload_signature: bytes,
         submit_payload_signature_algorithm: PkiSignatureAlgorithm,
         submit_payload: bytes,
@@ -265,6 +290,52 @@ class BasePkiEnrollmentComponent:
     ):
         raise NotImplementedError
 
+    async def build_trustchain(
+        self, leaf: bytes, intermediate_certificates: list[bytes], root: dict[bytes, PkiCertificate]
+    ) -> list[PkiCertificate] | PkiTrustchainError:
+        # TODO manage parse error
+        # TODO shortcut if the rest of the trustchain is already in DB
+
+        # Parse leaf cert
+        current = parse_pki_cert(leaf)
+
+        # Parse intermediate -> HashMap (fingerprint, cert)
+        # There should be a prettier way (maybe ?)
+        intermediate = [parse_pki_cert(cert) for cert in intermediate_certificates]
+        intermediate = {cert.fingerprint: cert for cert in intermediate}
+
+        trustchain = []
+        for _ in range(MAX_INTERMEDIATE_CERTIFICATES_DEPTH):
+            match intermediate.get(current.signed_by):
+                case None:
+                    # TODO maybe check if signed by is already in DB
+                    match root.get(current.signed_by):
+                        case None:
+                            # Cannot fully validate trust chain
+                            return PkiTrustchainError.IncompleteTrustchain
+                        case c:
+                            trustchain.append(c)
+                            return trustchain
+                case cert:
+                    # circular trustchain detection
+                    if cert.signed_by in [c.fingerprint for c in trustchain]:
+                        return PkiTrustchainError.CircularTrustChain
+                    current = cert
+
+        return PkiTrustchainError.TrustchainTooLong
+
+    async def retrieve_trust_chain(self, fingerprint: bytes) -> list[PkiCertificate] | None:
+        # could have a generic impl relying on the get below but it relies heavily on DB content
+        pass
+
+    async def get_cert(self, fingerprint: bytes) -> PkiCertificate | None:
+        pass
+
+    async def save_trustchain(
+        self, organization_id: OrganizationID, trustchain: list[PkiCertificate]
+    ):
+        raise NotImplementedError
+
     @api
     async def api_pki_enrollment_info(
         self,
@@ -316,12 +387,6 @@ class BasePkiEnrollmentComponent:
         req: anonymous_cmds.latest.pki_enrollment_submit.Req,
     ) -> anonymous_cmds.latest.pki_enrollment_submit.Rep:
         now = DateTime.now()
-        # TODO: Current we do not support provided intermediate certificate,
-        # Anyway the client should also not send them for now.
-        # https://github.com/Scille/parsec-cloud/issues/11557
-        # https://github.com/Scille/parsec-cloud/issues/11563
-        if req.intermediate_der_x509_certificates:
-            return anonymous_cmds.latest.pki_enrollment_submit.RepInvalidPayload()
 
         outcome = await self.submit(
             now=now,
@@ -329,6 +394,7 @@ class BasePkiEnrollmentComponent:
             enrollment_id=req.enrollment_id,
             force=req.force,
             submitter_der_x509_certificate=req.der_x509_certificate,
+            intermediate_certificates=req.intermediate_der_x509_certificates,
             submit_payload_signature=req.payload_signature,
             submit_payload_signature_algorithm=req.payload_signature_algorithm,
             submit_payload=req.payload,
@@ -350,6 +416,8 @@ class BasePkiEnrollmentComponent:
                 return anonymous_cmds.latest.pki_enrollment_submit.RepIdAlreadyUsed()
             case PkiEnrollmentSubmitBadOutcome.INVALID_SUBMIT_PAYLOAD:
                 return anonymous_cmds.latest.pki_enrollment_submit.RepInvalidPayload()
+            case PkiEnrollmentSubmitBadOutcome.TRUSTCHAIN_ERROR:
+                return anonymous_cmds.latest.pki_enrollment_submit.RepInvalidX509Trustchain()
             case PkiEnrollmentSubmitBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case PkiEnrollmentSubmitBadOutcome.ORGANIZATION_EXPIRED:
