@@ -237,10 +237,12 @@ function getAuthCardState(auth: AvailableDeviceTypeTag): AuthenticationCardState
 
 async function onMethodSelected(method: DeviceSaveStrategyTag): Promise<void> {
   authentication.value = method;
+  error.value = '';
 }
 
 async function changeAuthenticationMethod(): Promise<void> {
   authentication.value = undefined;
+  error.value = '';
 }
 
 function getSaveStrategy(): DeviceSaveStrategy | undefined {
