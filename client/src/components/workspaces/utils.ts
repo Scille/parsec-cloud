@@ -10,10 +10,8 @@ import {
   WorkspaceRole,
   getClientProfile,
   getSystemPath,
-  mountWorkspace,
   getPathLink as parsecGetPathLink,
   renameWorkspace as parsecRenameWorkspace,
-  unmountWorkspace,
 } from '@/parsec';
 import { Routes, navigateTo } from '@/router';
 import { EventDistributor } from '@/services/eventDistributor';
@@ -188,81 +186,9 @@ export async function openWorkspaceContextMenu(
       case WorkspaceAction.ShowHistory:
         await navigateTo(Routes.History, { query: { documentPath: '/', workspaceHandle: workspace.handle } });
         break;
-      case WorkspaceAction.Mount:
-        await showWorkspace(workspace, workspaceAttributes, informationManager);
-        break;
-      case WorkspaceAction.UnMount:
-        await hideWorkspace(workspace, workspaceAttributes, informationManager);
-        break;
       default:
         console.warn('No WorkspaceAction match found');
     }
-  }
-}
-
-export async function showWorkspace(
-  workspace: WorkspaceInfo,
-  workspaceAttributes: WorkspaceAttributes,
-  informationManager: InformationManager,
-): Promise<void> {
-  const result = await mountWorkspace(workspace.handle);
-
-  if (result.ok) {
-    workspaceAttributes.removeHidden(workspace.id);
-    informationManager.present(
-      new Information({
-        message: {
-          key: 'WorkspacesPage.showHideWorkspace.successShown',
-          data: { workspace: workspace.currentName },
-        },
-        level: InformationLevel.Success,
-      }),
-      PresentationMode.Toast,
-    );
-  } else {
-    informationManager.present(
-      new Information({
-        message: {
-          key: 'WorkspacesPage.showHideWorkspace.failedShown',
-          data: { workspace: workspace.currentName },
-        },
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-  }
-}
-
-export async function hideWorkspace(
-  workspace: WorkspaceInfo,
-  workspaceAttributes: WorkspaceAttributes,
-  informationManager: InformationManager,
-): Promise<void> {
-  const result = await unmountWorkspace(workspace);
-
-  if (result.ok) {
-    workspaceAttributes.addHidden(workspace.id);
-    informationManager.present(
-      new Information({
-        message: {
-          key: 'WorkspacesPage.showHideWorkspace.successHidden',
-          data: { workspace: workspace.currentName },
-        },
-        level: InformationLevel.Success,
-      }),
-      PresentationMode.Toast,
-    );
-  } else {
-    informationManager.present(
-      new Information({
-        message: {
-          key: 'WorkspacesPage.showHideWorkspace.failedHidden',
-          data: { workspace: workspace.currentName },
-        },
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
   }
 }
 
