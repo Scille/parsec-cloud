@@ -294,6 +294,7 @@ export interface Query {
   documentPath?: FsPath;
   deviceId?: DeviceID;
   claimLink?: string;
+  pkiLink?: string;
   bootstrapLink?: string;
   fileLink?: ParsecWorkspacePathAddr;
   openInvite?: true;

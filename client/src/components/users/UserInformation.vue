@@ -64,10 +64,20 @@ defineExpose({
   email,
   fullName,
   setFocus,
+  getEmail,
+  getFullName,
 });
 
 async function setFocus(): Promise<void> {
   await firstInputFieldRef.value?.setFocus();
+}
+
+function getEmail(): string {
+  return email.value;
+}
+
+function getFullName(): string {
+  return fullName.value;
 }
 
 async function areFieldsCorrect(): Promise<boolean> {
