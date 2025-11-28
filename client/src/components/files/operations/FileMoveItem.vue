@@ -29,12 +29,12 @@
             })
           }}
         </ion-text>
-        <ion-label
+        <ion-text
           class="element-details__workspace body-sm"
           v-if="workspaceName"
         >
           {{ workspaceName }}
-        </ion-label>
+        </ion-text>
         <div
           class="element-details-progress-container"
           v-show="state === FileOperationState.OperationProgress"
@@ -115,7 +115,7 @@
 import { shortenFileName } from '@/common/file';
 import { EntryName, Path, getWorkspaceName } from '@/parsec';
 import { FileOperationState, MoveData, OperationProgressStateData, StateData } from '@/services/fileOperationManager';
-import { IonButton, IonIcon, IonItem, IonLabel, IonText } from '@ionic/vue';
+import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
 import { checkmarkCircle, closeCircle } from 'ionicons/icons';
 import { Move, MsImage, MsInformationTooltip, MsProgress, MsProgressAppearance } from 'megashark-lib';
 import { Ref, onMounted, ref } from 'vue';

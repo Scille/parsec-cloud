@@ -31,7 +31,7 @@
             class="list-group-item__icon"
             :icon="cloudy"
           />
-          <ion-text class="body list-group-item__label">
+          <ion-text class="button-medium list-group-item__label">
             {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionOffline') }}
           </ion-text>
         </ion-item>
@@ -57,7 +57,7 @@
             class="list-group-item__icon"
             :image="RenameIcon"
           />
-          <ion-text class="body list-group-item__label">
+          <ion-text class="button-medium list-group-item__label">
             {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionRename') }}
           </ion-text>
         </ion-item>
@@ -72,7 +72,7 @@
             class="list-group-item__icon"
             :icon="open"
           />
-          <ion-text class="body list-group-item__label">
+          <ion-text class="button-medium list-group-item__label">
             {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionOpenInExplorer') }}
           </ion-text>
         </ion-item>
@@ -87,7 +87,7 @@
             class="list-group-item__icon"
             :icon="time"
           />
-          <ion-text class="body list-group-item__label">
+          <ion-text class="button-medium list-group-item__label">
             {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionHistory') }}
           </ion-text>
         </ion-item>
@@ -102,7 +102,7 @@
             class="list-group-item__icon"
             :icon="informationCircle"
           />
-          <ion-text class="body list-group-item__label">
+          <ion-text class="button-medium list-group-item__label">
             {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionDetails') }}
           </ion-text>
         </ion-item>
@@ -122,7 +122,7 @@
             class="list-group-item__icon"
             :icon="link"
           />
-          <ion-text class="body list-group-item__label">
+          <ion-text class="button-medium list-group-item__label">
             {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionCopyLink') }}
           </ion-text>
         </ion-item>
@@ -137,7 +137,7 @@
             class="list-group-item__icon"
             :icon="shareSocial"
           />
-          <ion-text class="body list-group-item__label">
+          <ion-text class="button-medium list-group-item__label">
             {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionShare') }}
           </ion-text>
         </ion-item>
@@ -157,7 +157,7 @@
             class="list-group-item__icon"
             :icon="star"
           />
-          <ion-text class="body list-group-item__label">
+          <ion-text class="button-medium list-group-item__label">
             {{
               $msTranslate(
                 isFavorite
