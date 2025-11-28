@@ -784,11 +784,18 @@
 
 .update-app-modal {
   &::part(content) {
-    max-width: var(--parsec-modal-width-sm);
+    max-width: 25rem;
   }
 
   .ms-modal {
-    padding-top: 1.5rem;
+    padding: 1.5rem;
+  }
+
+  .ms-modal-content {
+    @include ms.responsive-breakpoint('sm') {
+      margin-top: 0;
+      padding: 0;
+    }
   }
 }
 

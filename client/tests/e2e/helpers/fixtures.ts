@@ -64,6 +64,11 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
       }
 
       (window as any).TESTING = true;
+      (window as any).TESTING_ENABLE_UPDATE_EVENT = options.enableUpdateEvent;
+
+      if (options.openBaoServer) {
+        (window as any).TESTING_OPEN_BAO_SERVER = options.openBaoServer;
+      }
       if (options.parsecAccountAutoLogin) {
         options.withParsecAccount = true;
         (window as any).TESTING_ACCOUNT_AUTO_LOGIN = true;

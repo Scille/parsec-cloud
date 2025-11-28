@@ -135,6 +135,7 @@ import { APP_VERSION, Env } from '@/services/environment';
 import { EventData, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
+import { dismissUpdate, updateAvailability, updateDismissed } from '@/services/updateManager';
 import { openAboutModal } from '@/views/about';
 import UpdateAppModal from '@/views/about/UpdateAppModal.vue';
 import { AccountSettingsTabs } from '@/views/account/types';
@@ -143,16 +144,16 @@ import { openSettingsModal } from '@/views/settings';
 import { IonButton, IonIcon, IonMenu, IonMenuButton, IonText, modalController } from '@ionic/vue';
 import { arrowBack, arrowForward, caretDown, menu, personCircle } from 'ionicons/icons';
 import { MsModalResult, Translatable, useWindowSize, WindowSizeBreakpoints } from 'megashark-lib';
-import { inject, onMounted, onUnmounted, ref, Ref } from 'vue';
+import { inject, onMounted, onUnmounted, ref } from 'vue';
 
 const { isSmallDisplay, isLargeDisplay, windowWidth } = useWindowSize();
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const eventDistributor = injectionProvider.getDefault().eventDistributor;
 let eventCbId: string | null = null;
-const updateAvailability: Ref<UpdateAvailabilityData | null> = ref(null);
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 
 let hotkeys: HotkeyGroup | null = null;
+let updateTimeoutId: number | null = null;
 const accountLoggedIn = ref(false);
 const accountInfo = ref<AccountInfo | undefined>();
 const activeTab = ref<AccountSettingsTabs>(AccountSettingsTabs.Settings);
@@ -182,6 +183,9 @@ onMounted(async () => {
   eventCbId = await eventDistributor.registerCallback(Events.UpdateAvailability, async (event: Events, data?: EventData) => {
     if (event === Events.UpdateAvailability) {
       updateAvailability.value = data as UpdateAvailabilityData;
+      if (!updateDismissed.value) {
+        await tryOpeningUpdateModal();
+      }
     }
   });
   accountLoggedIn.value = ParsecAccount.isLoggedIn();
@@ -202,8 +206,35 @@ onUnmounted(async () => {
   if (hotkeys) {
     hotkeyManager.unregister(hotkeys);
   }
+
+  if (updateTimeoutId !== null) {
+    window.clearTimeout(updateTimeoutId);
+    updateTimeoutId = null;
+  }
   routeWatchCancel();
 });
+
+async function tryOpeningUpdateModal(): Promise<void> {
+  if (!updateAvailability.value || !updateAvailability.value.updateAvailable || updateDismissed.value) {
+    return;
+  }
+
+  if (await modalController.getTop()) {
+    if (updateTimeoutId !== null) {
+      window.clearTimeout(updateTimeoutId);
+    }
+
+    updateTimeoutId = window.setTimeout(async () => {
+      await tryOpeningUpdateModal();
+    }, 10000);
+  } else {
+    if (updateTimeoutId !== null) {
+      window.clearTimeout(updateTimeoutId);
+      updateTimeoutId = null;
+    }
+    await update();
+  }
+}
 
 async function update(): Promise<void> {
   if (!updateAvailability.value) {
@@ -231,6 +262,8 @@ async function update(): Promise<void> {
 
   if (role === MsModalResult.Confirm) {
     window.electronAPI.prepareUpdate();
+  } else if (role === MsModalResult.Cancel) {
+    dismissUpdate();
   }
 }
 

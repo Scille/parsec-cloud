@@ -1,33 +1,51 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { DisplaySize, expect, msTest } from '@tests/e2e/helpers';
+import { DisplaySize, expect, MsPage, msTest, setupNewPage } from '@tests/e2e/helpers';
 
 async function checkAppUpdateModal(page: Page): Promise<void> {
   const modal = page.locator('.update-app-modal');
   await expect(modal).toBeVisible();
   await expect(modal.locator('.update-version').locator('.update-version__item')).toHaveText('13.37');
-  await expect(modal.locator('.update-version').locator('.update-version__button')).toHaveText("What's new?");
   await expect(modal.locator('.update-footer').locator('ion-button').nth(0)).toHaveText('Update Parsec');
   await expect(modal.locator('.update-footer').locator('ion-button').nth(1)).toHaveText('Later');
 
   const newTabPromise = page.waitForEvent('popup');
-  await modal.locator('.update-version').locator('.update-version__button').click();
+  await modal.locator('.update-version').locator('.update-version__item').click();
   const newTab = await newTabPromise;
   await newTab.waitForLoadState();
   await expect(newTab).toHaveURL(new RegExp('^https://docs\\.parsec\\.cloud/.+'));
   await newTab.close();
 }
 
-msTest('Opens app update modal on home page', async ({ home }) => {
-  const updateContainer = home.locator('.update-container');
-  await expect(updateContainer.locator('.update-text')).toHaveText('A new version is available');
-  await updateContainer.click();
+msTest('Opens app update modal on home page', async ({ context }) => {
+  const home = (await context.newPage()) as MsPage;
+  await setupNewPage(home, { enableUpdateEvent: true });
+
   await checkAppUpdateModal(home);
 });
 
 for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
-  msTest(`Opens app update modal with notification on ${displaySize}`, async ({ connected }) => {
+  msTest(`Opens app update modal with notification on ${displaySize}`, async ({ context }) => {
+    const page = (await context.newPage()) as MsPage;
+    await setupNewPage(page, { enableUpdateEvent: true });
+    const modal = page.locator('.update-app-modal');
+    await expect(modal).toBeVisible();
+    await modal.locator('.update-footer').locator('ion-button').nth(1).click();
+    await expect(modal).toBeHidden();
+    await page.locator('.organization-card').first().click();
+    await expect(page.locator('#password-input')).toBeVisible();
+
+    await expect(page.locator('.login-button')).toHaveDisabledAttribute();
+
+    await page.locator('#password-input').locator('input').fill('P@ssw0rd.');
+    await expect(page.locator('.login-button')).toBeEnabled();
+    await page.locator('.login-button').click();
+    await expect(page.locator('#connected-header')).toContainText('My workspaces');
+    await expect(page.locator('.topbar-right').locator('.text-content-name')).toHaveText('Alicey McAliceFace');
+    await expect(page).toBeWorkspacePage();
+    const connected = page;
+
     const header = connected.locator('#connected-header');
     const notifButton = header.locator('#trigger-notifications-button');
     await expect(notifButton).toHaveTheClass('unread');
@@ -53,7 +71,26 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
   });
 }
 
-msTest('Opens app update modal with profile popover', async ({ connected }) => {
+msTest('Opens app update modal with profile popover', async ({ context }) => {
+  const page = (await context.newPage()) as MsPage;
+  await setupNewPage(page, { enableUpdateEvent: true });
+  const modal = page.locator('.update-app-modal');
+  await expect(modal).toBeVisible();
+  await modal.locator('.update-footer').locator('ion-button').nth(1).click();
+  await expect(modal).toBeHidden();
+  await page.locator('.organization-card').first().click();
+  await expect(page.locator('#password-input')).toBeVisible();
+
+  await expect(page.locator('.login-button')).toHaveDisabledAttribute();
+
+  await page.locator('#password-input').locator('input').fill('P@ssw0rd.');
+  await expect(page.locator('.login-button')).toBeEnabled();
+  await page.locator('.login-button').click();
+  await expect(page.locator('#connected-header')).toContainText('My workspaces');
+  await expect(page.locator('.topbar-right').locator('.text-content-name')).toHaveText('Alicey McAliceFace');
+  await expect(page).toBeWorkspacePage();
+  const connected = page;
+
   const header = connected.locator('#connected-header');
   await expect(header.locator('#profile-button').locator('.text-content-update')).toBeVisible();
   await expect(header.locator('#profile-button').locator('.text-content-update')).toHaveText('Update available');

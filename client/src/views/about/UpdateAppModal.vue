@@ -15,22 +15,20 @@
       </ion-text>
       <div class="update-main">
         <div class="update-version">
-          <ion-text class="title-h3 update-version__item">
+          <ion-text
+            class="title-h3 update-version__item"
+            @click="openChangelog"
+            :title="$msTranslate('HomePage.topbar.changelog')"
+          >
             {{ targetVersion }}
           </ion-text>
-          <ion-button
-            class="update-version__button"
-            @click="openChangelog"
-            fill="clear"
-          >
-            {{ $msTranslate('HomePage.topbar.changelog') }}
-          </ion-button>
         </div>
-        <div class="update-message body">
-          <ion-text class="update-message__curent-version">
-            {{ $msTranslate('HomePage.topbar.currentVersion') }}<span class="subtitles-sm">{{ currentVersion ?? APP_VERSION }}</span>
+        <div class="update-message">
+          <span class="update-message__badge button-medium">{{ $msTranslate('HomePage.topbar.recommended') }}</span>
+          <ion-text class="update-message__curent-version body-lg">
+            {{ $msTranslate('HomePage.topbar.currentVersion') }}<span class="subtitles-normal">{{ currentVersion ?? APP_VERSION }}</span>
           </ion-text>
-          <ion-text>
+          <ion-text class="body-lg">
             {{ $msTranslate('HomePage.topbar.updateConfirmQuestion') }}
           </ion-text>
         </div>
@@ -38,13 +36,13 @@
       <div class="update-footer">
         <ion-button
           @click="dismiss(MsModalResult.Confirm)"
-          class="update-footer__button"
+          class="update-footer__button button-default button-large"
         >
           {{ $msTranslate('HomePage.topbar.updateYes') }}
         </ion-button>
         <ion-button
           @click="dismiss(MsModalResult.Cancel)"
-          class="update-footer__button"
+          class="update-footer__button button-default button-large"
         >
           {{ $msTranslate('HomePage.topbar.updateNo') }}
         </ion-button>
@@ -81,7 +79,7 @@ async function dismiss(role: MsModalResult): Promise<void> {
 .update-content {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
 
   .update__title {
     text-align: center;
@@ -110,16 +108,14 @@ async function dismiss(role: MsModalResult): Promise<void> {
         border-radius: var(--parsec-radius-8);
         color: var(--parsec-color-light-secondary-text);
         padding: 0.5rem 1.25rem;
-      }
-
-      &__button {
-        --color: var(--parsec-color-light-secondary-text);
-        --background-hover: transparent;
-        --padding-end: 0.5rem;
-        --padding-start: 0.5rem;
+        transition: outline 100ms ease-in-out;
+        border: 1px solid var(--parsec-color-light-secondary-medium);
 
         &:hover {
-          text-decoration: underline;
+          cursor: pointer;
+          outline: 1px solid var(--parsec-color-light-primary-500);
+          outline-offset: 2px;
+          color: var(--parsec-color-light-primary-500);
         }
       }
     }
@@ -129,6 +125,15 @@ async function dismiss(role: MsModalResult): Promise<void> {
       display: flex;
       flex-direction: column;
 
+      &__badge {
+        background: var(--parsec-color-light-primary-50);
+        width: fit-content;
+        color: var(--parsec-color-light-primary-700);
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--parsec-radius-8);
+        margin-bottom: 0.5rem;
+      }
+
       &__curent-version span {
         color: var(--parsec-color-light-secondary-text);
       }
@@ -137,13 +142,13 @@ async function dismiss(role: MsModalResult): Promise<void> {
 
   .update-footer {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     gap: 0.5rem;
-    margin-top: 0.5rem;
 
     &__button {
       margin: auto;
-      width: fit-content;
+      width: 100%;
 
       &:nth-child(1) {
         --background: var(--parsec-color-light-gradient-background);
@@ -154,8 +159,6 @@ async function dismiss(role: MsModalResult): Promise<void> {
       }
 
       &:nth-child(2) {
-        position: absolute;
-        right: 2.5rem;
         --background: transparent;
         --background-hover: var(--parsec-color-light-secondary-premiere);
         --color: var(--parsec-color-light-secondary-text);
