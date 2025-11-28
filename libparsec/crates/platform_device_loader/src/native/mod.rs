@@ -481,14 +481,14 @@ pub(super) async fn save_device(
                 .map_err(|err| match err {
                     OpenBaoOperationsUploadOpaqueKeyError::NoServerResponse(_) => {
                         SaveDeviceError::RemoteOpaqueKeyUploadOffline {
-                            server: RemoteOperationServer::ParsecAccount,
+                            server: RemoteOperationServer::OpenBao,
                             error: err.into(),
                         }
                     }
                     OpenBaoOperationsUploadOpaqueKeyError::BadURL(_)
                     | OpenBaoOperationsUploadOpaqueKeyError::BadServerResponse(_) => {
                         SaveDeviceError::RemoteOpaqueKeyUploadFailed {
-                            server: RemoteOperationServer::ParsecAccount,
+                            server: RemoteOperationServer::OpenBao,
                             error: err.into(),
                         }
                     }
