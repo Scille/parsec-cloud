@@ -1183,7 +1183,8 @@
         "keyringUnavailableOnSystem": "Indisponible sur votre système",
         "keyringUnavailableOnWeb": "Indisponible sur le web",
         "openBaoUnavailable": "L'authentification unique (SSO) n'est pas disponible sur ce serveur.",
-        "invalidOpenBaoData": "La configuration SSO fournie par le serveur est invalide. Veuillez contacter un administrateur."
+        "invalidOpenBaoData": "La configuration SSO fournie par le serveur est invalide. Veuillez contacter un administrateur.",
+        "popupBlocked": "Veuillez vous assurer que votre navigateur autorise les pop-ups pour ce site."
     },
     "PasswordInputModal": {
         "passwordNeeded": "Mot de passe requis",
