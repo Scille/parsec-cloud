@@ -1,9 +1,9 @@
 Adamy
 Alicey
 Alicy
+ANSSI
 Apache
 Arkin
-ANSSI
 Bartosz
 bierner
 bkryza
@@ -21,6 +21,7 @@ fifi
 Flagboy
 Fonzie
 fooo
+Glados
 Goku
 Hundt
 Kryza
@@ -56,6 +57,6 @@ titeuf
 touilleman
 Traefik
 vxgmichel
-yzhang
 YubiKey
+yzhang
 zoidberg
