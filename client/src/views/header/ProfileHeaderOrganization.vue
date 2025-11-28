@@ -188,6 +188,7 @@ async function openOrganizationPopover(event: Event): Promise<void> {
   border: 1px solid transparent;
   transition: all ease-in-out 200ms;
   flex-shrink: 0;
+  max-width: 15rem;
 
   & * {
     pointer-events: none;
@@ -244,6 +245,7 @@ async function openOrganizationPopover(event: Event): Promise<void> {
   display: flex;
   flex-direction: column;
   width: 100%;
+  overflow: hidden;
 
   &-name {
     display: flex;
@@ -253,6 +255,10 @@ async function openOrganizationPopover(event: Event): Promise<void> {
 
     &__text {
       font-size: 0.9375rem;
+      width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
 
       @include ms.responsive-breakpoint('md') {
         display: none;
@@ -262,6 +268,7 @@ async function openOrganizationPopover(event: Event): Promise<void> {
     ion-icon {
       transition: transform ease-out 300ms;
       font-size: 1rem;
+      flex-shrink: 0;
 
       &.popover-is-open {
         transform: rotate(180deg);

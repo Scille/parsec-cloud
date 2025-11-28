@@ -14,7 +14,7 @@
             class="list-group-item__icon"
             :icon="folderOpen"
           />
-          <ion-text class="body list-group-item__label">
+          <ion-text class="button-medium list-group-item__label">
             {{ $msTranslate('FoldersPage.createFolder') }}
           </ion-text>
         </ion-item>
@@ -28,7 +28,7 @@
             class="list-group-item__icon"
             :icon="cloudUpload"
           />
-          <ion-text class="body list-group-item__label">
+          <ion-text class="button-medium list-group-item__label">
             {{ $msTranslate('FoldersPage.ImportFile.importFilesAction') }}
           </ion-text>
         </ion-item>
@@ -43,7 +43,7 @@
             class="list-group-item__icon"
             :icon="cloudUpload"
           />
-          <ion-text class="body list-group-item__label">
+          <ion-text class="button-medium list-group-item__label">
             {{ $msTranslate('FoldersPage.ImportFile.importFolderAction') }}
           </ion-text>
         </ion-item>
@@ -58,7 +58,7 @@
             class="list-group-item__icon"
             :icon="open"
           />
-          <ion-text class="body list-group-item__label">
+          <ion-text class="button-medium list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionSeeInExplorer') }}
           </ion-text>
         </ion-item>

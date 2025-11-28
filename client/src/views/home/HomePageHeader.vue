@@ -452,10 +452,12 @@ const emits = defineEmits<{
 }
 
 #create-organization-button {
+  background: var(--parsec-color-light-secondary-white);
   color: var(--parsec-color-light-secondary-soft-text);
   border-radius: var(--parsec-radius-12);
   transition: all 150ms linear;
   border: 1px solid var(--parsec-color-light-secondary-medium);
+  box-shadow: var(--parsec-shadow-input);
 
   & * {
     pointer-events: none;

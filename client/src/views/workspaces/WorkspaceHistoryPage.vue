@@ -86,7 +86,7 @@
               ref="topbarRight"
             >
               <ion-button
-                class="select-button body"
+                class="select-button button-medium button-default"
                 @click="entries.selectAll(!allSelected)"
                 v-if="isLargeDisplay && entries.entriesCount() > 0"
               >
@@ -103,6 +103,7 @@
                 id="restore-button"
                 :disabled="!someSelected || querying"
                 @click="onRestoreClicked"
+                class="button-default button-medium"
               >
                 {{ $msTranslate('workspaceHistory.actions.restore') }}
               </ion-button>
@@ -130,7 +131,7 @@
               :show-parent-node="false"
             />
             <ion-button
-              class="select-button body"
+              class="select-button button-medium button-default"
               @click="entries.selectAll(!allSelected)"
             >
               <span v-if="!allSelected">{{ $msTranslate('workspaceHistory.actions.selectAll') }}</span>
@@ -605,14 +606,13 @@ async function onRestoreClicked(): Promise<void> {
 
     @include ms.responsive-breakpoint('sm') {
       order: 1;
-      padding: 0.25rem 1rem;
+      padding: 0.5rem 1rem;
       flex-shrink: 0;
     }
 
     &__text {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      width: fit-content;
+      max-width: 10rem;
     }
 
     &__icon {

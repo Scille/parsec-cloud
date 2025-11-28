@@ -391,8 +391,8 @@
   &:has(.created-page.active) {
     .ion-page {
       min-height: 18.75rem;
-      max-height: fit-content;
-      --max-height: fit-content;
+      max-height: 20rem;
+      --max-height: 20rem;
 
       @include ms.responsive-breakpoint('sm') {
         max-height: 90vh;
