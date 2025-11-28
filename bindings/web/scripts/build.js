@@ -114,6 +114,9 @@ function ensure_rust_target_installed() {
   }
 }
 
+// Note the build output will be split into two parts:
+// - `target/wasm32-unknown-unknown/<profile>`: actual wasm32 code
+// - `target/<profile>`: native build of the proc macros used during compilation
 function build_wasm(cargo_flags) {
   // On Windows only .exe/.bat can be directly execute
   const wasm_build_args = [
@@ -122,11 +125,6 @@ function build_wasm(cargo_flags) {
     "--target=web",
     "--locked",
     ...cargo_flags,
-    // If we don't force the target dir, the default one is used (i.e. `target/<profile>`)
-    // However this clashes with native platform builds (i.e. `cargo build`): both
-    // builds uses the same target dir and overwrite each other work !
-    "--target-dir",
-    path.resolve(ROOT_DIR, "target", TARGET),
   ];
 
   exec_cmd(
@@ -144,15 +142,47 @@ ensure_wasm_pack_installed();
 
 const cargo_flags = get_cargo_flag(profile);
 
-// Client GUI only separates between `debug` and `release`, hence it won't
-// find the `ci-rust` build.
-// So the solution is to symlink `ci-rust` as `debug`.
+// wasm-pack only separates between `debug` and `release` target folder (depending
+// of the presence of `--dev` parameter), hence it won't find the target folder
+// for build using the CI profile.
+// So the solution is to symlink the CI profile folder as the `debug` one.
+// Note this means both CI and regular dev profile will build in the `debug`
+// folder. This should be okay since 1) on the CI only the CI profile is used and
+// 2) worst case is more code is going to be recompiled when switching between
+// the two profiles which is no big deal.
 switch (profile) {
   case "ci":
-    const source = path.resolve(ROOT_DIR, "target", TARGET, "ci-rust");
-    const dest = path.resolve(ROOT_DIR, "target", TARGET, "debug");
-    console.log(`Create symlink ${source} => ${dest}`);
-    fs.symlinkSync(source, dest, 'dir');
+    const ci_profile = "ci-python"
+
+    // Sanity check on the expected name of the profile
+    if (cargo_flags.find((e) => e == `--profile=${ci_profile}`) == undefined) {
+      console.log(`Expected to find argument \`--profile=${ci_profile}\` in the cargo flags (i.e. \`${cargo_flags.join(" ")}\`)`)
+      exit(1);
+    }
+
+    const ci_target_dir = path.resolve(ROOT_DIR, "target", TARGET)
+    const ci_source_dir = path.resolve(ci_target_dir, ci_profile);
+    const ci_dest_dir_name = "debug"
+    const ci_dest_dir = path.resolve(ci_target_dir, ci_dest_dir_name);
+
+    let ci_source_dir_resolved = undefined
+    try {
+      ci_source_dir_resolved = fs.realpathSync(ci_source_dir);
+    } catch {
+      // Source doesn't exist yet
+    }
+
+    if (ci_source_dir_resolved != ci_dest_dir) {
+      if (ci_source_dir_resolved != undefined) {
+        console.log(`Remove invalid entry ${ci_source_dir}`);
+        fs.rmSync(ci_source_dir, { force: true, recursive: true });
+      }
+      console.log(`Create symlink ${ci_source_dir} => ${ci_dest_dir}`);
+      fs.mkdirSync(ci_dest_dir, { recursive: true });
+      fs.symlinkSync(ci_dest_dir_name, ci_source_dir);
+    }
+
+    break;
 }
 
 // Actually do the compilation
