@@ -4,6 +4,18 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.7.1-a.0.dev.20421+eb5ebb5 (2025-11-29)
+------------------------------------------------
+
+Features
+~~~~~~~~
+
+* User can copy email addresses to clipboard by clicking on them from the user
+  list.
+  (`#11735 <https://github.com/Scille/parsec-cloud/issues/11735>`__)
+
+
+
 Parsec v3.7.0 (2025-11-28)
 --------------------------
 
