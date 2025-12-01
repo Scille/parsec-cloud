@@ -188,7 +188,7 @@ rpassword = { version = "7.4.0", default-features = false }
 rsa = { version = "0.8.2", default-features = false }
 rstest = { version = "0.26.1", default-features = false }
 rstest_reuse = { version = "0.7.0", default-features = false }
-rustls-pki-types = { version = "1.13.0", default-features = false }
+rustls-pki-types = { version = "1.13.1", default-features = false }
 rustls-webpki = { version = "0.103.8", default-features = false }
 ruzstd = { version = "0.8.2", default-features = true }
 schannel = { version = "0.1.28", default-features = false }                              # Crate to interact with windows credential store, it's used notably in `native-tls` crate.
