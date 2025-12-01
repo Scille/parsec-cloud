@@ -32,6 +32,16 @@ impl X509CertificateInformation {
             .map_err(Into::into)
             .and_then(TryInto::try_into)
     }
+
+    pub fn common_name(&self) -> Option<&str> {
+        self.subject.iter().find_map(|i| {
+            if let DistinguishedNameValue::CommonName(cn) = i {
+                Some(cn.as_str())
+            } else {
+                None
+            }
+        })
+    }
 }
 
 impl TryFrom<x509_cert::Certificate> for X509CertificateInformation {

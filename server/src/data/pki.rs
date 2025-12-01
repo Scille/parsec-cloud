@@ -3,7 +3,7 @@
 use pyo3::{
     exceptions::PyValueError,
     pyclass, pymethods,
-    types::{PyBytes, PyType},
+    types::{PyBytes, PyString, PyType},
     Bound, PyObject, PyResult, Python,
 };
 
@@ -199,7 +199,7 @@ impl X509Certificate {
 #[pyclass]
 #[derive(Clone)]
 pub(crate) struct X509CertificateInformation(
-    #[expect(dead_code)] pub libparsec_platform_pki::x509::X509CertificateInformation,
+    pub libparsec_platform_pki::x509::X509CertificateInformation,
 );
 
 #[pymethods]
@@ -209,5 +209,9 @@ impl X509CertificateInformation {
         libparsec_platform_pki::x509::X509CertificateInformation::load_der(raw_der)
             .map(Self)
             .map_err(|e| PyValueError::new_err(e.to_string()))
+    }
+
+    fn common_name<'py>(&self, py: Python<'py>) -> Option<Bound<'py, PyString>> {
+        self.0.common_name().map(|s| PyString::new(py, s))
     }
 }
