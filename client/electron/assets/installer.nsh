@@ -1,4 +1,4 @@
-!define WINFSP_VERSION "2.0.23075"
+!define WINFSP_VERSION "2.1.25156"
 !define WINFSP_FILE "winfsp-${WINFSP_VERSION}.msi"
 
 !macro installWinFSP
