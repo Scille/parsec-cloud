@@ -374,7 +374,7 @@ export class ElectronCapacitorApp {
     this.sendEvent(WindowToPageChannel.IsDevMode, electronIsDev);
     setTimeout(() => {
       this.pageIsInitialized = true;
-      this.MainWindow.show();
+      this.MainWindow.maximize();
       if (this.splash) {
         this.splash.destroy();
         this.splash = null;
@@ -505,12 +505,9 @@ export class ElectronCapacitorApp {
     if (this.CapacitorFileConfig.electron?.trayIconAndMenuEnabled) {
       this.TrayIcon = new Tray(trayIcon);
 
-      const trayToggleVisibility = () => {
+      this.TrayIcon.on(process.platform === 'linux' ? 'click' : ('double-click' as any), () => {
         this.MainWindow.show();
-      };
-
-      // Does not seem to do anything, at least on Linux
-      this.TrayIcon.on('double-click', trayToggleVisibility);
+      });
       this.TrayIcon.setToolTip(app.getName());
       this.TrayIcon.setContextMenu(Menu.buildFromTemplate(this.TrayMenuTemplate));
     }
