@@ -39,7 +39,7 @@ env:
   poetry-version: 2.1.1
   CARGO_CI_FLAGS: --locked --profile=ci-rust
   CARGO_NEXTEST_CI_FLAGS: --profile=ci --locked --cargo-profile=ci-rust
-  WINFSP_VERSION: 2.0.23075
+  WINFSP_VERSION: 2.1.25156
   WINFSP_TEST_EXE: C:/Program Files (x86)/WinFsp/bin/winfsp-tests-x64.exe
   TEST_RUST_LOG: debug,hyper_util=info,reqwest=info,sqlx=info
 
@@ -279,7 +279,7 @@ jobs:
         shell: bash -eux {0}
         run: |
           choco install winfsp -y --version=${{ env.WINFSP_VERSION }}
-          curl -L https://github.com/winfsp/winfsp/releases/download/v2.0/winfsp-tests-${{ env.WINFSP_VERSION }}.zip -o '${{ runner.temp }}/winfsp-tests.zip'
+          curl -L https://github.com/winfsp/winfsp/releases/download/v2.1/winfsp-tests-${{ env.WINFSP_VERSION }}.zip -o '${{ runner.temp }}/winfsp-tests.zip'
           unzip '${{ runner.temp }}/winfsp-tests.zip' -d '${{ runner.temp }}/'
           mv '${{ runner.temp }}/winfsp-tests-x64.exe' 'C:/Program Files (x86)/WinFsp/bin/'
 

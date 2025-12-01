@@ -1,0 +1,1 @@
+Windows: Update winfsp dependency to 2025 version

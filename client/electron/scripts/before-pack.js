@@ -2,11 +2,11 @@
 
 const builder = require('electron-builder');
 
-const WINFSP_VERSION = '2.0.23075';
-const WINFSP_RELEASE_BRANCH = 'v2.0';
+const WINFSP_VERSION = '2.1.25156';
+const WINFSP_RELEASE_BRANCH = 'v2.1';
 const WINFSP_URL = `https://github.com/winfsp/winfsp/releases/download/${WINFSP_RELEASE_BRANCH}/winfsp-${WINFSP_VERSION}.msi`;
 // `wget -O /dev/stdout ${WINFSP_URL} | openssl dgst -sha256 -binary | openssl base64 -A`
-const WINFSP_SHA256SUM = 'YyTcgRlKagj5e2rsowPPXCMlxT7eFTuun8Q3jwg4wQE=';
+const WINFSP_SHA256SUM = 'Bzpw4A93Qj40vtmLhuYA3vkzk7pYIiBPrFeikyTbn3o=';
 const WINFSP_DEST_FILE = `build/winfsp-${WINFSP_VERSION}.msi`;
 
 /**

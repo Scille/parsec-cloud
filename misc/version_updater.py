@@ -67,6 +67,10 @@ TOML_VERSION_FIELD = ReplaceRegex(r'version = ".*"', 'version = "{version}"')
 JSON_LICENSE_FIELD = ReplaceRegex(r'"license": ".*"', '"license": "{version}"')
 JSON_VERSION_FIELD = ReplaceRegex(r'"version": ".*"', '"version": "{version}"')
 CI_WINFSP_VERSION = ReplaceRegex(r"WINFSP_VERSION: .*", "WINFSP_VERSION: {version}")
+WINFSP_RELEASE_DOWNLOAD = ReplaceRegex(
+    r"winfsp/releases/download/v\d+.\d+/",
+    hide_patch_version("winfsp/releases/download/v{version}/"),
+)
 TESTBED_VERSION = ReplaceRegex(
     r"ghcr.io/scille/parsec-cloud/parsec-testbed-server:[^\s]+",
     "ghcr.io/scille/parsec-cloud/parsec-testbed-server:{version}",
@@ -234,7 +238,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         Tool.Nextest: [ReplaceRegex(r"nextest@[0-9.]+", "nextest@{version}")],
         Tool.Testbed: [TESTBED_VERSION],
         Tool.WasmPack: [ReplaceRegex(r"wasm-pack@[0-9.]+", "wasm-pack@{version}")],
-        Tool.WinFSP: [CI_WINFSP_VERSION],
+        Tool.WinFSP: [CI_WINFSP_VERSION, WINFSP_RELEASE_DOWNLOAD],
     },
     ROOT_DIR / ".github/workflows/ci-web.yml": {
         Tool.Node: [NODE_GA_VERSION],
@@ -261,11 +265,11 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
     },
     ROOT_DIR / ".github/workflows/package-cli.yml": {
         Tool.Cross: [ReplaceRegex(r"cross-version: .*", "cross-version: {version}")],
-        Tool.WinFSP: [CI_WINFSP_VERSION],
+        Tool.WinFSP: [CI_WINFSP_VERSION, WINFSP_RELEASE_DOWNLOAD],
     },
     ROOT_DIR / ".github/workflows/package-desktop.yml": {
         Tool.Node: [NODE_GA_VERSION],
-        Tool.WinFSP: [CI_WINFSP_VERSION],
+        Tool.WinFSP: [CI_WINFSP_VERSION, WINFSP_RELEASE_DOWNLOAD],
     },
     ROOT_DIR / ".github/workflows/package-webapp.yml": {
         Tool.Node: [NODE_GA_VERSION],

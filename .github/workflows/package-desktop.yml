@@ -62,7 +62,7 @@ concurrency:
 
 env:
   node-version: 22.14.0
-  WINFSP_VERSION: 2.0.23075
+  WINFSP_VERSION: 2.1.25156
 
 permissions:
   contents: read
@@ -247,7 +247,7 @@ jobs:
         shell: bash -eux {0}
         run: |
           choco install winfsp -y --version=${{ env.WINFSP_VERSION }}
-          curl -L https://github.com/winfsp/winfsp/releases/download/v2.0/winfsp-tests-${{ env.WINFSP_VERSION }}.zip -o '${{ runner.temp }}/winfsp-tests.zip'
+          curl -L https://github.com/winfsp/winfsp/releases/download/v2.1/winfsp-tests-${{ env.WINFSP_VERSION }}.zip -o '${{ runner.temp }}/winfsp-tests.zip'
           unzip '${{ runner.temp }}/winfsp-tests.zip' -d '${{ runner.temp }}/'
           mv '${{ runner.temp }}/winfsp-tests-x64.exe' 'C:/Program Files (x86)/WinFsp/bin/'
         timeout-minutes: 2
