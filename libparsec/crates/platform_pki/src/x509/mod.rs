@@ -19,7 +19,7 @@ error_set::error_set! {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct X509CertificateInformation {
     pub subject: Vec<DistinguishedNameValue>,
     pub issuer: Vec<DistinguishedNameValue>,
