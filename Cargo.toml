@@ -199,7 +199,7 @@ serde-wasm-bindgen = { version = "0.6.4", default-features = false }
 serde_bytes = { version = "0.11.19", default-features = false }
 serde_json = { version = "1.0.145", default-features = false }
 serde_test = { version = "1.0.177", default-features = false }
-serde_with = { version = "3.16.0", default-features = false }
+serde_with = { version = "3.16.1", default-features = false }
 sha2 = { version = "0.10.9", default-features = false }
 smallvec = { version = "1.15.1", default-features = false }
 spinners = { version = "4.1.1", default-features = false }
@@ -226,7 +226,7 @@ zstd = { version = "0.13.3", default-features = false }
 
 [workspace.dependencies.criterion]
 default-features = false
-version = "0.7.0"
+version = "0.8.0"
 # We specify a set of features here instead of defining them in every other crates,
 # since we will use the same set of features.
 features = [
