@@ -169,7 +169,7 @@ import {
   isSmartcardAvailable,
   isWeb,
 } from '@/parsec';
-import { OpenBaoClient, isSSOProviderHandled, openBaoConnect } from '@/services/openBao';
+import { OpenBaoClient, OpenBaoErrorType, isSSOProviderHandled, openBaoConnect } from '@/services/openBao';
 import { IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
 import { MsChoosePasswordInput } from 'megashark-lib';
 import { computed, onMounted, ref, toRaw, useTemplateRef } from 'vue';
@@ -298,7 +298,11 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
     props.serverConfig.openbao.secret.mountPath,
   );
   if (!result.ok) {
-    error.value = 'Authentication.invalidOpenBaoData';
+    if (result.error.type === OpenBaoErrorType.PopupFailed) {
+      error.value = 'Authentication.popupBlocked';
+    } else {
+      error.value = 'Authentication.invalidOpenBaoData';
+    }
     window.electronAPI.log('error', `Error while connecting with SSO: ${JSON.stringify(result.error)}`);
   } else {
     openBaoClient.value = result.value;

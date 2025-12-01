@@ -1184,7 +1184,8 @@
         "keyringUnavailableOnSystem": "Unavailable on your system",
         "keyringUnavailableOnWeb": "Unavailable on web",
         "openBaoUnavailable": "Single Sign-On not available on this server.",
-        "invalidOpenBaoData": "The SSO configuration provided by the server is invalid. Please contact an administrator."
+        "invalidOpenBaoData": "The SSO configuration provided by the server is invalid. Please contact an administrator.",
+        "popupBlocked": "Please make sure that your browser allows pop-ups for this website."
     },
     "PasswordInputModal": {
         "passwordNeeded": "Password needed",
