@@ -3,29 +3,39 @@
 <template>
   <div
     class="organization-request"
-    :class="request.status"
+    :class="{
+      pending: request.info.tag === PKIInfoItemTag.Submitted,
+      rejected: request.info.tag === PKIInfoItemTag.Rejected,
+      accepted: request.info.tag === PKIInfoItemTag.Accepted,
+      cancelled: request.info.tag === PKIInfoItemTag.Cancelled,
+    }"
   >
     <ion-card-content class="organization-request-content">
       <div class="organization-request-info">
-        <ion-text class="organization-request-organization title-h4">{{ request.organization }}</ion-text>
-        <ion-text class="organization-request-username body">{{ request.humanHandle.label }}</ion-text>
+        <ion-text class="organization-request-organization title-h4">{{ addr?.organizationId ?? '' }}</ion-text>
+        <ion-text class="organization-request-username body">{{ request.enrollment.payload.humanHandle.label }}</ion-text>
       </div>
       <div class="organization-request-status-container">
         <ion-text
           class="organization-request-status button-small"
-          :class="`status-${request.status}`"
-          ref="statusText"
+          :class="{
+            'status-pending': request.info.tag === PKIInfoItemTag.Submitted,
+            'status-rejected': request.info.tag === PKIInfoItemTag.Rejected,
+            'status-accepted': request.info.tag === PKIInfoItemTag.Accepted,
+            'status-cancelled': request.info.tag === PKIInfoItemTag.Cancelled,
+          }"
+          ref="statusTextEl"
         >
           <span v-if="statusText">{{ $msTranslate(statusText) }}</span>
         </ion-text>
         <ion-icon
-          v-if="request.status !== JoinRequestStatus.Accepted"
+          v-if="request.info.tag !== PKIInfoItemTag.Accepted"
           @click="$emit('deleteRequest', request)"
           :icon="closeCircle"
           class="organization-request-icon"
         />
         <ion-button
-          v-if="request.status === JoinRequestStatus.Accepted"
+          v-if="request.info.tag === PKIInfoItemTag.Accepted"
           fill="clear"
           class="organization-request-button"
           @click="$emit('joinOrganization', request)"
@@ -42,49 +52,61 @@
 </template>
 
 <script lang="ts" setup>
-import { JoinRequestStatus, LocalJoinRequest } from '@/parsec';
+import { ParsedParsecAddrPkiEnrollment, ParsedParsecAddrTag, parseParsecAddr, PKIInfoItemTag, PkiLocalRequest } from '@/parsec';
 import { IonButton, IonCardContent, IonIcon, IonText } from '@ionic/vue';
 import { arrowForward, closeCircle } from 'ionicons/icons';
 import { attachMouseOverTooltip } from 'megashark-lib';
-import { computed, onMounted, useTemplateRef, watch } from 'vue';
+import { computed, onMounted, ref, useTemplateRef, watch } from 'vue';
 
-const statusTextRef = useTemplateRef<InstanceType<typeof IonText>>('statusText');
+const statusTextRef = useTemplateRef<InstanceType<typeof IonText>>('statusTextEl');
+const addr = ref<ParsedParsecAddrPkiEnrollment | undefined>(undefined);
 
 const props = defineProps<{
-  request: LocalJoinRequest;
+  request: PkiLocalRequest;
 }>();
 
 onMounted(async () => {
-  if (statusTextRef.value && props.request.status === JoinRequestStatus.Pending) {
-    attachMouseOverTooltip(statusTextRef.value.$el, 'HomePage.organizationRequest.pending.tooltip');
-  } else if (statusTextRef.value && props.request.status === JoinRequestStatus.Rejected) {
-    attachMouseOverTooltip(statusTextRef.value.$el, 'HomePage.organizationRequest.rejected.tooltip');
+  attachTooltip(statusTextRef.value?.$el, props.request.info.tag);
+  const addrResult = await parseParsecAddr(props.request.enrollment.addr);
+  if (addrResult.ok && addrResult.value.tag === ParsedParsecAddrTag.PkiEnrollment) {
+    addr.value = addrResult.value;
   }
 });
 
 watch(
-  () => props.request.status,
+  () => props.request.info.tag,
   (newStatus) => {
-    if (statusTextRef.value && newStatus === JoinRequestStatus.Pending) {
-      attachMouseOverTooltip(statusTextRef.value.$el, 'HomePage.organizationRequest.pending.tooltip');
-    } else if (statusTextRef.value && newStatus === JoinRequestStatus.Rejected) {
-      attachMouseOverTooltip(statusTextRef.value.$el, 'HomePage.organizationRequest.rejected.tooltip');
-    }
+    attachTooltip(statusTextRef.value?.$el, newStatus);
   },
 );
 
+function attachTooltip(el: HTMLElement | undefined, status: PKIInfoItemTag): void {
+  if (!el) {
+    return;
+  }
+  if (status === PKIInfoItemTag.Submitted) {
+    attachMouseOverTooltip(el, 'HomePage.organizationRequest.pending.tooltip');
+  } else if (status === PKIInfoItemTag.Rejected) {
+    attachMouseOverTooltip(el, 'HomePage.organizationRequest.rejected.tooltip');
+  } else if (status === PKIInfoItemTag.Cancelled) {
+    attachMouseOverTooltip(el, 'HomePage.organizationRequest.cancelled.tooltip');
+  } else if (status === PKIInfoItemTag.Accepted) {
+    attachMouseOverTooltip(el, 'HomePage.organizationRequest.accepted.tooltip');
+  }
+}
+
 defineEmits<{
-  (e: 'joinOrganization', request: LocalJoinRequest): void;
-  (e: 'deleteRequest', request: LocalJoinRequest): void;
+  (e: 'joinOrganization', request: PkiLocalRequest): void;
+  (e: 'deleteRequest', request: PkiLocalRequest): void;
 }>();
 
 const statusText = computed(() => {
-  switch (props.request.status) {
-    case JoinRequestStatus.Pending:
+  switch (props.request.info.tag) {
+    case PKIInfoItemTag.Submitted:
       return 'HomePage.organizationRequest.status.pending';
-    case JoinRequestStatus.Rejected:
+    case PKIInfoItemTag.Rejected:
       return 'HomePage.organizationRequest.status.rejected';
-    case JoinRequestStatus.Cancelled:
+    case PKIInfoItemTag.Cancelled:
       return 'HomePage.organizationRequest.status.cancelled';
     default:
       return undefined;
@@ -149,15 +171,19 @@ const statusText = computed(() => {
       padding: 0.125rem 0.5rem;
       flex-shrink: 0;
 
-      &.status-pending {
+      &.status-cancelled {
         background-color: var(--parsec-color-light-secondary-grey);
         color: var(--parsec-color-light-secondary-white);
       }
 
-      &.status-rejected,
-      &.status-cancelled {
+      &.status-rejected {
         background-color: var(--parsec-color-light-danger-500);
         color: var(--parsec-color-light-secondary-white);
+      }
+
+      &.status-pending {
+        background-color: var(--parsec-color-light-warning-100);
+        color: var(--parsec-color-light-warning-700);
       }
     }
 
@@ -205,7 +231,7 @@ const statusText = computed(() => {
     border-color: var(--parsec-color-light-secondary-light);
 
     .organization-request-icon {
-      color: var(--parsec-color-light-secondary-light);
+      color: var(--parsec-color-light-secondary-grey);
 
       &:hover {
         color: var(--parsec-color-light-secondary-text);

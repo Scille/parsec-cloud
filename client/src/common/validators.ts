@@ -131,17 +131,14 @@ export const claimAndBootstrapLinkValidator: IValidator = async function (value:
   if (value.length === 0) {
     return { validity: Validity.Intermediate };
   }
-  // TODO: REPLACE WHEN LIBPARSEC HANDLES PKI LINKS
-  if (value.includes('a=pki_enrollment')) {
-    return { validity: Validity.Valid };
-  }
   const result = await parseParsecAddr(value);
 
   if (
     result.ok &&
     (result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap ||
       result.value.tag === ParsedParsecAddrTag.InvitationUser ||
-      result.value.tag === ParsedParsecAddrTag.InvitationDevice)
+      result.value.tag === ParsedParsecAddrTag.InvitationDevice ||
+      result.value.tag === ParsedParsecAddrTag.PkiEnrollment)
   ) {
     return { validity: Validity.Valid };
   }
@@ -245,9 +242,9 @@ export const pkiLinkValidator: IValidator = async function (value: string) {
   if (value.length === 0) {
     return { validity: Validity.Intermediate };
   }
-  // TODO: REPLACE WHEN LIBPARSEC HANDLES PKI LINKS
-  if (value.includes('a=pki_enrollment')) {
-    return { validity: Validity.Valid };
+  const result = await parseParsecAddr(value);
+  if (result.ok) {
+    return result.value.tag === ParsedParsecAddrTag.PkiEnrollment ? { validity: Validity.Valid } : { validity: Validity.Invalid };
   }
-  return { validity: Validity.Invalid };
+  return { validity: Validity.Invalid, reason: '' };
 };

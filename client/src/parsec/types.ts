@@ -53,6 +53,7 @@ export {
   GetServerConfigErrorTag,
   GreetInProgressErrorTag,
   ImportRecoveryDeviceErrorTag,
+  InvalidityReasonTag,
   InvitationEmailSentStatus,
   InvitationStatus,
   InviteListInvitationCreatedByTag,
@@ -63,6 +64,10 @@ export {
   OpenBaoAuthConfigTag,
   ParsedParsecAddrTag,
   ParseParsecAddrErrorTag,
+  PkiEnrollmentFinalizeErrorTag,
+  PkiEnrollmentListItemTag,
+  PkiEnrollmentSubmitErrorTag,
+  PKIInfoItemTag,
   Platform,
   ShowCertificateSelectionDialogErrorTag,
   UpdateDeviceErrorTag,
@@ -190,10 +195,12 @@ export type {
   InviteListItem,
   ListAvailableDeviceError,
   ListInvitationsError,
+  ListPkiLocalPendingError,
   MountpointToOsPathError,
   NewInvitationInfo,
   OpenBaoAuthConfig,
   ParsecAddr,
+  ParsecPkiEnrollmentAddr,
   ParsecWorkspacePathAddr,
   ParsedParsecAddr,
   ParsedParsecAddrInvitationDevice,
@@ -204,6 +211,19 @@ export type {
   ParsedParsecAddrServer,
   ParsedParsecAddrWorkspacePath,
   ParseParsecAddrError,
+  PkiEnrollmentAcceptError,
+  PkiEnrollmentFinalizeError,
+  PkiEnrollmentListError,
+  PkiEnrollmentListItem,
+  PkiEnrollmentListItemInvalid,
+  PkiEnrollmentListItemValid,
+  PkiEnrollmentRejectError,
+  PkiEnrollmentSubmitError,
+  PkiEnrollmentSubmitPayload,
+  PkiGetAddrError,
+  PKIInfoItemAccepted,
+  PKILocalPendingEnrollment,
+  RemoveDeviceError,
   Result,
   SASCode,
   SecretKey,
@@ -271,6 +291,8 @@ import type {
   WorkspaceHistoryEntryStatFolder as ParsecWorkspaceHistoryEntryStatFolder,
   WorkspaceInfo as ParsecWorkspaceInfo,
   Path,
+  PKIInfoItem,
+  PKILocalPendingEnrollment,
   UserID,
   UserProfile,
   VlobID,
@@ -429,6 +451,11 @@ interface AuthMethodInfo extends ParsecAuthMethodInfo {
   current: boolean;
 }
 
+interface PkiLocalRequest {
+  info: PKIInfoItem;
+  enrollment: PKILocalPendingEnrollment;
+}
+
 export {
   AccountHandle,
   AccountInvitation,
@@ -455,6 +482,7 @@ export {
   OrganizationInfoErrorTag,
   OwnDeviceInfo,
   ParsecOrganizationAddr,
+  PkiLocalRequest,
   RegistrationDevice,
   StartedWorkspaceInfo,
   SystemPath,

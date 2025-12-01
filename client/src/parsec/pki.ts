@@ -1,310 +1,499 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { getDefaultDeviceName } from '@/common/device';
-import { getClientInfo } from '@/parsec/login';
-import { getOrganizationInfo, parseParsecAddr } from '@/parsec/organization';
+import { getClientConfig } from '@/parsec/internals';
+import { SaveStrategy } from '@/parsec/login';
 import {
   AvailableDevice,
   AvailableDeviceTypeTag,
   HumanHandle,
-  OrganizationID,
-  ParsecAddr,
+  ListPkiLocalPendingError,
   ParsecOrganizationAddr,
+  ParsecPkiEnrollmentAddr,
+  PkiEnrollmentAcceptError,
+  PkiEnrollmentFinalizeError,
+  PkiEnrollmentFinalizeErrorTag,
+  PkiEnrollmentListError,
+  PkiEnrollmentListItem,
+  PkiEnrollmentListItemTag,
+  PkiEnrollmentListItemValid,
+  PkiEnrollmentRejectError,
+  PkiEnrollmentSubmitError,
+  PkiEnrollmentSubmitPayload,
+  PkiGetAddrError,
+  PKIInfoItemTag,
+  PkiLocalRequest,
+  RemoveDeviceError,
   Result,
   ShowCertificateSelectionDialogError,
   ShowCertificateSelectionDialogErrorTag,
   UserProfile,
   X509CertificateReference,
 } from '@/parsec/types';
-import { libparsec } from '@/plugins/libparsec';
+import { generateNoHandleError } from '@/parsec/utils';
+import { InvalidityReasonTag, libparsec, X509URIFlavorValueTag } from '@/plugins/libparsec';
+import { getConnectionHandle } from '@/router';
 import { DateTime } from 'luxon';
 
-/*
- * This is all mocked to be able to progress the GUI side without the bindings.
- */
+const _PKI_PARSEC_API = {
+  async requestJoinOrganization(
+    certificate: X509CertificateReference,
+    humanHandle: HumanHandle,
+    link: ParsecOrganizationAddr,
+  ): Promise<Result<null, PkiEnrollmentSubmitError>> {
+    const result = await libparsec.pkiEnrollmentSubmit(getClientConfig(), link, certificate, humanHandle, getDefaultDeviceName(), false);
+    if (result.ok) {
+      return { ok: true, value: null };
+    }
+    return result;
+  },
 
-export enum JoinRequestStatus {
-  Pending = 'pending',
-  Accepted = 'accepted',
-  Rejected = 'rejected',
-  Cancelled = 'cancelled',
-}
+  async listLocalJoinRequests(): Promise<Result<Array<PkiLocalRequest>, ListPkiLocalPendingError>> {
+    const result = await libparsec.listPkiLocalPendingEnrollments(getClientConfig().configDir);
 
-export enum JoinRequestValidity {
-  Unknown = 'unknown',
-  Valid = 'valid',
-  Invalid = 'invalid',
-}
-
-export interface LocalJoinRequest {
-  status: JoinRequestStatus;
-  humanHandle: HumanHandle;
-  organization: OrganizationID;
-  serverAddr: ParsecAddr;
-  certificate: string;
-}
-
-export enum RequestJoinOrganizationErrorTag {
-  Internal = 'internal',
-}
-
-export interface RequestJoinOrganizationError {
-  tag: RequestJoinOrganizationErrorTag;
-  error: string;
-}
-
-export interface OrganizationJoinRequest {
-  humanHandle: HumanHandle;
-  certificate: string;
-  createdOn: DateTime;
-  validity: JoinRequestValidity;
-}
-
-export enum ListLocalJoinRequestErrorTag {
-  Internal = 'internal',
-}
-
-interface ListLocalJoinRequestError {
-  tag: ListLocalJoinRequestErrorTag;
-  error: string;
-}
-
-export enum ListOrganizationJoinRequestErrorTag {
-  Internal = 'internal',
-}
-
-interface ListOrganizationJoinRequestError {
-  tag: ListOrganizationJoinRequestErrorTag;
-  error: string;
-}
-
-export enum UpdateLocalJoinStatusErrorTag {
-  Internal = 'internal',
-  InvalidStatus = 'invalid-status',
-  NotFound = 'not-found',
-}
-
-interface UpdateLocalJoinStatusError {
-  tag: UpdateLocalJoinStatusErrorTag;
-  error: string;
-}
-
-export enum UpdateOrganizationJoinStatusErrorTag {
-  Internal = 'internal',
-  InvalidStatus = 'invalid-status',
-  NotFound = 'not-found',
-  InsufficientPermissions = 'insufficient-permissions',
-}
-
-interface UpdateOrganizationJoinStatusError {
-  tag: UpdateOrganizationJoinStatusErrorTag;
-  error: string;
-}
-
-export enum ValidateOrganizationJoinRequestErrorTag {
-  Internal = 'internal',
-}
-
-interface ValidateOrganizationJoinRequestError {
-  tag: ValidateOrganizationJoinRequestErrorTag;
-  error: string;
-}
-
-export enum GetPkiJoinOrganizationLinkErrorTag {
-  Internal = 'internal',
-}
-
-interface GetPkiJoinOrganizationLinkError {
-  tag: GetPkiJoinOrganizationLinkErrorTag;
-  error: string;
-}
-
-interface _Request {
-  humanHandle: HumanHandle;
-  certificate: string;
-  validity: JoinRequestValidity;
-  createdOn: DateTime;
-  organization: OrganizationID;
-  serverAddr: ParsecAddr;
-  status: JoinRequestStatus;
-}
-
-const REQUESTS: Array<_Request> = [];
-
-export async function requestJoinOrganization(
-  link: ParsecOrganizationAddr,
-): Promise<Result<LocalJoinRequest, RequestJoinOrganizationError>> {
-  const result = await parseParsecAddr(link);
-  if (!result.ok) {
-    throw new Error(`Invalid ParsecOrganizationAddr \`${link}\``);
-  }
-  const serverAddr = await libparsec.buildParsecAddr(result.value.hostname, result.value.port, result.value.useSsl);
-  // Will be prompted for the certificate
-  const newRequest: _Request = {
-    status: JoinRequestStatus.Pending,
-    validity: JoinRequestValidity.Unknown,
-    createdOn: DateTime.utc(),
-    humanHandle: {
-      // cspell:disable-next-line
-      label: 'Isaac Kleiner',
-      // cspell:disable-next-line
-      email: 'isaac.kleiner@blackmesa.nm',
-    },
-    organization: 'Black Mesa',
-    serverAddr,
-    certificate: '',
-  };
-  REQUESTS.push(newRequest);
-  return {
-    ok: true,
-    value: {
-      humanHandle: newRequest.humanHandle,
-      status: newRequest.status,
-      organization: newRequest.organization,
-      serverAddr: newRequest.serverAddr,
-      certificate: newRequest.certificate,
-    },
-  };
-}
-
-export async function listLocalJoinRequests(error = false): Promise<Result<Array<LocalJoinRequest>, ListLocalJoinRequestError>> {
-  if (error) {
-    return { ok: false, error: { tag: ListLocalJoinRequestErrorTag.Internal, error: 'generic error' } };
-  }
-  return {
-    ok: true,
-    value: REQUESTS.map((r) => {
-      return {
-        humanHandle: r.humanHandle,
-        status: r.status,
-        organization: r.organization,
-        serverAddr: r.serverAddr,
-        certificate: r.certificate,
-      };
-    }),
-  };
-}
-
-export async function confirmLocalJoinRequest(request: LocalJoinRequest): Promise<Result<AvailableDevice, UpdateLocalJoinStatusError>> {
-  if (request.status !== JoinRequestStatus.Accepted) {
-    return { ok: false, error: { tag: UpdateLocalJoinStatusErrorTag.InvalidStatus, error: 'request not accepted' } };
-  }
-  const idx = REQUESTS.findIndex((r) => r.certificate === request.certificate);
-  if (idx === -1) {
-    return { ok: false, error: { tag: UpdateLocalJoinStatusErrorTag.NotFound, error: 'request does not exist' } };
-  }
-  REQUESTS.splice(idx, 1);
-  return {
-    ok: true,
-    value: {
-      keyFilePath: '/',
-      createdOn: DateTime.utc(),
-      protectedOn: DateTime.utc(),
-      serverAddr: request.serverAddr,
-      organizationId: request.organization,
-      userId: 'user_id',
-      deviceId: 'device_id',
-      humanHandle: {
-        label: request.humanHandle.label,
-        email: request.humanHandle.email,
-      },
-      deviceLabel: getDefaultDeviceName(),
-      ty: {
-        tag: AvailableDeviceTypeTag.Smartcard,
-      },
-    },
-  };
-}
-
-export async function cancelLocalJoinRequest(request: LocalJoinRequest): Promise<Result<null, UpdateLocalJoinStatusError>> {
-  const idx = REQUESTS.findIndex((r) => r.certificate === request.certificate);
-  if (idx === -1) {
-    return { ok: false, error: { tag: UpdateLocalJoinStatusErrorTag.NotFound, error: 'request does not exist' } };
-  }
-  REQUESTS.splice(idx, 1);
-
-  return { ok: true, value: null };
-}
-
-export async function listOrganizationJoinRequests(
-  rootCertificate?: string,
-  error = false,
-): Promise<Result<Array<OrganizationJoinRequest>, ListOrganizationJoinRequestError>> {
-  const joinRequests: OrganizationJoinRequest[] = [];
-  if (error) {
-    return { ok: false, error: { tag: ListOrganizationJoinRequestErrorTag.Internal, error: 'generic error' } };
-  }
-  if (!rootCertificate) {
-    return { ok: true, value: joinRequests };
-  } else {
-    const updated: Array<OrganizationJoinRequest> = [];
-    for (const jr of joinRequests) {
-      const result = await isValidOrganizationJoinRequest(rootCertificate, jr);
-      if (result.ok) {
-        updated.push({ ...jr, validity: result.value ? JoinRequestValidity.Valid : JoinRequestValidity.Invalid });
+    if (!result.ok) {
+      return result;
+    }
+    const list: Array<PkiLocalRequest> = [];
+    for (const enrollment of result.value) {
+      enrollment.submittedOn = DateTime.fromSeconds(enrollment.submittedOn as any as number);
+      const infoResult = await libparsec.pkiEnrollmentInfo(getClientConfig(), enrollment.addr, enrollment.enrollmentId);
+      if (infoResult.ok) {
+        infoResult.value.submittedOn = DateTime.fromSeconds(infoResult.value.submittedOn as any as number);
+        if (infoResult.value.tag === PKIInfoItemTag.Accepted) {
+          infoResult.value.acceptedOn = DateTime.fromSeconds(infoResult.value.acceptedOn as any as number);
+        } else if (infoResult.value.tag === PKIInfoItemTag.Cancelled) {
+          infoResult.value.cancelledOn = DateTime.fromSeconds(infoResult.value.cancelledOn as any as number);
+        } else if (infoResult.value.tag === PKIInfoItemTag.Rejected) {
+          infoResult.value.rejectedOn = DateTime.fromSeconds(infoResult.value.rejectedOn as any as number);
+        }
+        list.push({ info: infoResult.value, enrollment: enrollment });
       }
     }
-    return { ok: true, value: updated };
+    return { ok: true, value: list };
+  },
+
+  async confirmLocalJoinRequest(request: PkiLocalRequest): Promise<Result<AvailableDevice, PkiEnrollmentFinalizeError>> {
+    if (request.info.tag !== PKIInfoItemTag.Accepted) {
+      return {
+        ok: false,
+        error: {
+          tag: PkiEnrollmentFinalizeErrorTag.Internal,
+          error: `Invalid state: should be ${PKIInfoItemTag.Accepted} but is ${request.info.tag}`,
+        },
+      };
+    }
+    (request.enrollment.submittedOn as any as number) = request.enrollment.submittedOn.toSeconds();
+    (request.info.submittedOn as any as number) = request.info.submittedOn.toSeconds();
+    (request.info.acceptedOn as any as number) = request.info.acceptedOn.toSeconds();
+    return await libparsec.pkiEnrollmentFinalize(
+      getClientConfig(),
+      SaveStrategy.useSmartCard(request.enrollment.certRef),
+      request.info.answer,
+      request.enrollment,
+    );
+  },
+
+  async cancelLocalJoinRequest(request: PkiLocalRequest): Promise<Result<null, RemoveDeviceError>> {
+    return await libparsec.pkiRemoveLocalPending(getClientConfig(), request.enrollment.enrollmentId);
+  },
+
+  async listOrganizationJoinRequests(): Promise<Result<Array<PkiEnrollmentListItem>, PkiEnrollmentListError>> {
+    const handle = getConnectionHandle();
+
+    if (!handle) {
+      return generateNoHandleError<PkiEnrollmentListError>();
+    }
+
+    const result = await libparsec.clientPkiListEnrollments(handle);
+    if (result.ok) {
+      result.value = result.value.map((item) => {
+        item.submittedOn = DateTime.fromSeconds(item.submittedOn as any as number);
+        return item;
+      });
+    }
+    return result;
+  },
+
+  async getPkiJoinOrganizationLink(): Promise<Result<ParsecPkiEnrollmentAddr, PkiGetAddrError>> {
+    const handle = getConnectionHandle();
+
+    if (!handle) {
+      return generateNoHandleError<PkiGetAddrError>();
+    }
+
+    return await libparsec.clientPkiGetAddr(handle);
+  },
+
+  async acceptOrganizationJoinRequest(
+    request: PkiEnrollmentListItemValid,
+    profile: UserProfile,
+    adminCert: X509CertificateReference,
+  ): Promise<Result<null, PkiEnrollmentAcceptError>> {
+    const handle = getConnectionHandle();
+
+    if (!handle) {
+      return generateNoHandleError<PkiEnrollmentAcceptError>();
+    }
+    return await libparsec.clientPkiEnrollmentAccept(
+      handle,
+      profile,
+      request.enrollmentId,
+      request.payload.humanHandle,
+      adminCert,
+      request.payload,
+    );
+  },
+
+  async rejectOrganizationJoinRequest(request: PkiEnrollmentListItem): Promise<Result<null, PkiEnrollmentRejectError>> {
+    const handle = getConnectionHandle();
+
+    if (!handle) {
+      return generateNoHandleError<PkiEnrollmentRejectError>();
+    }
+    return await libparsec.clientPkiEnrollmentReject(handle, request.enrollmentId);
+  },
+
+  async selectCertificate(): Promise<Result<X509CertificateReference | undefined, ShowCertificateSelectionDialogError>> {
+    if (!(await this.isSmartcardAvailable())) {
+      return { ok: false, error: { tag: ShowCertificateSelectionDialogErrorTag.CannotOpenStore, error: 'smartcard not available' } };
+    }
+    const result = await libparsec.showCertificateSelectionDialogWindowsOnly();
+    if (result.ok && result.value === null) {
+      return { ok: true, value: undefined };
+    }
+    return result as Result<X509CertificateReference | undefined, ShowCertificateSelectionDialogError>;
+  },
+
+  async isSmartcardAvailable(): Promise<boolean> {
+    return await libparsec.isPkiAvailable();
+  },
+};
+
+const _PKI_MOCKED_API = {
+  async requestJoinOrganization(
+    _certificate: X509CertificateReference,
+    _humanHandle: HumanHandle,
+    _link: ParsecOrganizationAddr,
+  ): Promise<Result<null, PkiEnrollmentSubmitError>> {
+    return { ok: true, value: null };
+  },
+
+  async listLocalJoinRequests(): Promise<Result<Array<PkiLocalRequest>, ListPkiLocalPendingError>> {
+    const PAYLOAD: PkiEnrollmentSubmitPayload = {
+      verifyKey: new Uint8Array(),
+      publicKey: new Uint8Array(),
+      deviceLabel: 'Label',
+      humanHandle: {
+        label: 'Gordon Freeman',
+        email: 'gordon.freeman@blackmesa.nm',
+      },
+    };
+
+    const REQUESTS: Array<PkiLocalRequest> = [
+      {
+        info: {
+          tag: PKIInfoItemTag.Accepted,
+          answer: {
+            userId: 'userId1',
+            deviceId: 'deviceId1',
+            deviceLabel: 'Label1',
+            humanHandle: {
+              label: 'Gordon Freeman',
+              email: 'gordon.freeman@blackmesa.nm',
+            },
+            profile: UserProfile.Standard,
+            rootVerifyKey: new Uint8Array(),
+          },
+          submittedOn: DateTime.utc(),
+          acceptedOn: DateTime.utc(),
+        },
+        enrollment: {
+          certRef: {
+            uris: [
+              {
+                tag: X509URIFlavorValueTag.WindowsCNG,
+                x1: new Uint8Array(),
+              },
+            ],
+            hash: 'abcd1',
+          },
+          addr: 'parsec3://localhost:6770/BlackMesa?no_ssl=true&a=pki_enrollment',
+          submittedOn: DateTime.utc(),
+          enrollmentId: '1',
+          payload: PAYLOAD,
+          encryptedKey: new Uint8Array(),
+          encryptedKeyAlgo: 'algorithm',
+          ciphertext: new Uint8Array(),
+        },
+      },
+      {
+        info: {
+          tag: PKIInfoItemTag.Cancelled,
+          submittedOn: DateTime.utc(),
+          cancelledOn: DateTime.utc(),
+        },
+        enrollment: {
+          certRef: {
+            uris: [
+              {
+                tag: X509URIFlavorValueTag.WindowsCNG,
+                x1: new Uint8Array(),
+              },
+            ],
+            hash: 'abcd2',
+          },
+          addr: 'parsec3://localhost:6770/BlackMesa?no_ssl=true&a=pki_enrollment',
+          submittedOn: DateTime.utc(),
+          enrollmentId: '2',
+          payload: PAYLOAD,
+          encryptedKey: new Uint8Array(),
+          encryptedKeyAlgo: 'algorithm',
+          ciphertext: new Uint8Array(),
+        },
+      },
+      {
+        info: {
+          tag: PKIInfoItemTag.Rejected,
+          submittedOn: DateTime.utc(),
+          rejectedOn: DateTime.utc(),
+        },
+        enrollment: {
+          certRef: {
+            uris: [
+              {
+                tag: X509URIFlavorValueTag.WindowsCNG,
+                x1: new Uint8Array(),
+              },
+            ],
+            hash: 'abcd3',
+          },
+          addr: 'parsec3://localhost:6770/BlackMesa?no_ssl=true&a=pki_enrollment',
+          submittedOn: DateTime.utc(),
+          enrollmentId: '3',
+          payload: PAYLOAD,
+          encryptedKey: new Uint8Array(),
+          encryptedKeyAlgo: 'algorithm',
+          ciphertext: new Uint8Array(),
+        },
+      },
+      {
+        info: {
+          tag: PKIInfoItemTag.Submitted,
+          submittedOn: DateTime.utc(),
+        },
+        enrollment: {
+          certRef: {
+            uris: [
+              {
+                tag: X509URIFlavorValueTag.WindowsCNG,
+                x1: new Uint8Array(),
+              },
+            ],
+            hash: 'abcd4',
+          },
+          addr: 'parsec3://localhost:6770/BlackMesa?no_ssl=true&a=pki_enrollment',
+          submittedOn: DateTime.utc(),
+          enrollmentId: '4',
+          payload: PAYLOAD,
+          encryptedKey: new Uint8Array(),
+          encryptedKeyAlgo: 'algorithm',
+          ciphertext: new Uint8Array(),
+        },
+      },
+    ];
+
+    return { ok: true, value: REQUESTS };
+  },
+
+  async confirmLocalJoinRequest(request: PkiLocalRequest): Promise<Result<AvailableDevice, PkiEnrollmentFinalizeError>> {
+    if (request.info.tag !== PKIInfoItemTag.Accepted) {
+      return {
+        ok: false,
+        error: {
+          tag: PkiEnrollmentFinalizeErrorTag.Internal,
+          error: `Invalid state: should be ${PKIInfoItemTag.Accepted} but is ${request.info.tag}`,
+        },
+      };
+    }
+    (request.enrollment.submittedOn as any as number) = request.enrollment.submittedOn.toSeconds();
+    (request.info.submittedOn as any as number) = request.info.submittedOn.toSeconds();
+    (request.info.acceptedOn as any as number) = request.info.acceptedOn.toSeconds();
+    return {
+      ok: true,
+      value: {
+        keyFilePath: '/keyfilepath',
+        createdOn: DateTime.utc(),
+        protectedOn: DateTime.utc(),
+        serverAddr: 'parsec3://localhost:6770?no_ssl=true',
+        organizationId: 'MyOrg',
+        userId: 'userId',
+        deviceId: 'deviceId',
+        humanHandle: {
+          label: 'Gordon Freeman',
+          email: 'gordon.freeman@blackmesa.nm',
+        },
+        deviceLabel: 'Label',
+        ty: {
+          tag: AvailableDeviceTypeTag.Smartcard,
+        },
+      },
+    };
+  },
+
+  async cancelLocalJoinRequest(_request: PkiLocalRequest): Promise<Result<null, RemoveDeviceError>> {
+    return { ok: true, value: null };
+  },
+
+  async listOrganizationJoinRequests(): Promise<Result<Array<PkiEnrollmentListItem>, PkiEnrollmentListError>> {
+    const handle = getConnectionHandle();
+
+    if (!handle) {
+      return generateNoHandleError<PkiEnrollmentListError>();
+    }
+
+    const ENROLLMENTS: Array<PkiEnrollmentListItem> = [
+      {
+        tag: PkiEnrollmentListItemTag.Invalid,
+        enrollmentId: '2',
+        submittedOn: DateTime.utc(),
+        reason: { tag: InvalidityReasonTag.Untrusted },
+        details: 'Cannot trust the certificate',
+      },
+      {
+        tag: PkiEnrollmentListItemTag.Valid,
+        enrollmentId: '1',
+        submittedOn: DateTime.utc(),
+        payload: {
+          verifyKey: new Uint8Array(),
+          publicKey: new Uint8Array(),
+          deviceLabel: 'Label',
+          humanHandle: {
+            label: 'Gordon Freeman',
+            email: 'gordon.freeman@blackmesa.nm',
+          },
+        },
+      },
+      {
+        tag: PkiEnrollmentListItemTag.Invalid,
+        enrollmentId: '2',
+        submittedOn: DateTime.utc(),
+        reason: { tag: InvalidityReasonTag.CannotOpenStore },
+        details: 'Could not open the certificate store',
+      },
+      {
+        tag: PkiEnrollmentListItemTag.Invalid,
+        enrollmentId: '3',
+        submittedOn: DateTime.utc(),
+        reason: { tag: InvalidityReasonTag.InvalidRootCertificate },
+        details: 'Could not open the certificate store',
+      },
+      {
+        tag: PkiEnrollmentListItemTag.Invalid,
+        enrollmentId: '4',
+        submittedOn: DateTime.utc(),
+        reason: { tag: InvalidityReasonTag.DateTimeOutOfRange },
+        details: 'Could not open the certificate store',
+      },
+      {
+        tag: PkiEnrollmentListItemTag.Invalid,
+        enrollmentId: '5',
+        submittedOn: DateTime.utc(),
+        reason: { tag: InvalidityReasonTag.CannotGetCertificateInfo },
+        details: 'Could not open the certificate store',
+      },
+    ];
+
+    return { ok: true, value: ENROLLMENTS };
+  },
+
+  async getPkiJoinOrganizationLink(): Promise<Result<ParsecPkiEnrollmentAddr, PkiGetAddrError>> {
+    const handle = getConnectionHandle();
+
+    if (!handle) {
+      return generateNoHandleError<PkiGetAddrError>();
+    }
+
+    return { ok: true, value: 'parsec3://localhost:6770/MyOrg?no_ssl=true&a=pki_enrollment' };
+  },
+
+  async acceptOrganizationJoinRequest(
+    _request: PkiEnrollmentListItemValid,
+    _profile: UserProfile,
+    _adminCert: X509CertificateReference,
+  ): Promise<Result<null, PkiEnrollmentAcceptError>> {
+    const handle = getConnectionHandle();
+
+    if (!handle) {
+      return generateNoHandleError<PkiEnrollmentAcceptError>();
+    }
+    return { ok: true, value: null };
+  },
+
+  async rejectOrganizationJoinRequest(_request: PkiEnrollmentListItem): Promise<Result<null, PkiEnrollmentRejectError>> {
+    const handle = getConnectionHandle();
+
+    if (!handle) {
+      return generateNoHandleError<PkiEnrollmentRejectError>();
+    }
+    return { ok: true, value: null };
+  },
+
+  async selectCertificate(): Promise<Result<X509CertificateReference | undefined, ShowCertificateSelectionDialogError>> {
+    return {
+      ok: true,
+      value: {
+        uris: [
+          {
+            tag: X509URIFlavorValueTag.WindowsCNG,
+            x1: new Uint8Array(),
+          },
+        ],
+        hash: 'ijkl',
+      },
+    };
+  },
+
+  async isSmartcardAvailable(): Promise<boolean> {
+    return true;
+  },
+};
+
+// Some glue to switch between mocked and libparsec implementation
+// depending on a variable (useful for test/dev when not on Windows).
+type PkiImpl = typeof _PKI_PARSEC_API;
+
+function pkiCurrentImpl(): PkiImpl {
+  if ((window as any).TESTING_PKI) {
+    return _PKI_MOCKED_API;
   }
+  return _PKI_PARSEC_API;
 }
 
-export async function acceptOrganizationJoinRequest(
-  request: OrganizationJoinRequest,
-  _profile: UserProfile,
-): Promise<Result<null, UpdateOrganizationJoinStatusError>> {
-  const joinRequests: OrganizationJoinRequest[] = [];
-  const idx = joinRequests.findIndex((r) => r.certificate === request.certificate);
-  if (idx === -1) {
-    return { ok: false, error: { tag: UpdateOrganizationJoinStatusErrorTag.NotFound, error: 'request does not exist' } };
-  }
-  const result = await getClientInfo();
-  if (!result.ok || result.value.currentProfile !== UserProfile.Admin) {
-    return { ok: false, error: { tag: UpdateOrganizationJoinStatusErrorTag.InsufficientPermissions, error: 'not admin' } };
-  }
-  joinRequests.splice(idx, 1);
-  return { ok: true, value: null };
+function bind<K extends keyof PkiImpl>(key: K) {
+  return (...args: Parameters<PkiImpl[K]>) => (pkiCurrentImpl()[key] as any)(...args);
 }
 
-export async function rejectOrganizationJoinRequest(
-  request: OrganizationJoinRequest,
-): Promise<Result<null, UpdateOrganizationJoinStatusError>> {
-  const joinRequests: OrganizationJoinRequest[] = [];
-  const idx = joinRequests.findIndex((r) => r.certificate === request.certificate);
-  if (idx === -1) {
-    return { ok: false, error: { tag: UpdateOrganizationJoinStatusErrorTag.NotFound, error: 'request does not exist' } };
-  }
-  const result = await getClientInfo();
-  if (!result.ok || result.value.currentProfile !== UserProfile.Admin) {
-    return { ok: false, error: { tag: UpdateOrganizationJoinStatusErrorTag.InsufficientPermissions, error: 'not admin' } };
-  }
-  return { ok: true, value: null };
-}
+const requestJoinOrganization = bind('requestJoinOrganization');
+const listLocalJoinRequests = bind('listLocalJoinRequests');
+const confirmLocalJoinRequest = bind('confirmLocalJoinRequest');
+const cancelLocalJoinRequest = bind('cancelLocalJoinRequest');
+const listOrganizationJoinRequests = bind('listOrganizationJoinRequests');
+const getPkiJoinOrganizationLink = bind('getPkiJoinOrganizationLink');
+const acceptOrganizationJoinRequest = bind('acceptOrganizationJoinRequest');
+const rejectOrganizationJoinRequest = bind('rejectOrganizationJoinRequest');
+const selectCertificate = bind('selectCertificate');
+const isSmartcardAvailable = bind('isSmartcardAvailable');
 
-export async function isValidOrganizationJoinRequest(
-  rootCertificate: string,
-  request: OrganizationJoinRequest,
-): Promise<Result<boolean, ValidateOrganizationJoinRequestError>> {
-  return { ok: true, value: rootCertificate.trim() === request.certificate.trim() };
-}
-
-export async function getPkiJoinOrganizationLink(): Promise<Result<string, GetPkiJoinOrganizationLinkError>> {
-  const result = await getOrganizationInfo();
-  if (!result.ok) {
-    return { ok: false, error: { tag: GetPkiJoinOrganizationLinkErrorTag.Internal, error: 'failed to get organization info' } };
-  }
-  if (result.value.organizationAddr.includes('?')) {
-    return { ok: true, value: `${result.value.organizationAddr}&a=pki_enrollment` };
-  }
-  return { ok: true, value: `${result.value.organizationAddr}?a=pki_enrollment` };
-}
-
-export async function selectCertificate(): Promise<Result<X509CertificateReference | null, ShowCertificateSelectionDialogError>> {
-  if (!(await isSmartcardAvailable())) {
-    return { ok: false, error: { tag: ShowCertificateSelectionDialogErrorTag.CannotOpenStore, error: 'smartcard not available' } };
-  }
-  return await libparsec.showCertificateSelectionDialogWindowsOnly();
-}
-
-export async function isSmartcardAvailable(): Promise<boolean> {
-  return false;
-}
+export {
+  acceptOrganizationJoinRequest,
+  cancelLocalJoinRequest,
+  confirmLocalJoinRequest,
+  getPkiJoinOrganizationLink,
+  isSmartcardAvailable,
+  listLocalJoinRequests,
+  listOrganizationJoinRequests,
+  rejectOrganizationJoinRequest,
+  requestJoinOrganization,
+  selectCertificate,
+};

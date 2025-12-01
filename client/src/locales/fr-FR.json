@@ -315,16 +315,23 @@
         "lostDevice": "Vous avez perdu votre accès ?",
         "recoverDevice": "Récupérer ma session",
         "organizationRequest": {
+            "notAvailable": "Les requêtes pour rejoindre une organisation en utilisant un certificat ne sont pas encore disponibles sur votre système.",
             "title": "Demandes en attente",
             "status": {
                 "pending": "En attente",
-                "rejected": "Rejetée"
+                "rejected": "Rejetée",
+                "cancelled": "Annulée"
             },
             "requestSent": {
                 "success": "Votre demande pour rejoindre l'organisation a été envoyée.",
-                "failure": "Échec de l'envoi de la demande. Veuillez réessayer plus tard."
+                "failure": "Échec de l'envoi de la demande. Veuillez réessayer plus tard.",
+                "emailUsed": "Cet email est déjà utilisé.",
+                "alreadyEnrolled": "Un utilisateur avec ce certificat est déjà membre de l'organisation.",
+                "alreadySubmitted": "Une requête pour rejoindre l'organisation a déjà été soumise avec ce certificat.",
+                "offline": "Impossible de contacter le serveur. Veuillez vérifier que vous êtes connecté(e) à Internet."
             },
             "requestCancelled": "Votre demande pour rejoindre l'organisation a bien été annulée.",
+            "requestCancelError": "Impossible d'annuler la requête.",
             "requestDeleted": "Votre demande pour rejoindre l'organisation a bien été supprimée.",
             "joinButton": "Rejoindre",
             "pending": {
@@ -343,7 +350,11 @@
             },
             "accepted": {
                 "joinSuccess": "Vous avez rejoint l'organisation avec succès.",
-                "joinFailure": "Échec de l'adhésion à l'organisation. Veuillez réessayer plus tard."
+                "joinFailure": "Échec de l'adhésion à l'organisation. Veuillez réessayer plus tard.",
+                "tooltip": "Votre demande pour rejoindre cette organisation a été acceptée par un administrateur."
+            },
+            "cancelled": {
+                "tooltip": "Votre demande pour rejoindre cette organisation a été annulée."
             }
         }
     },
@@ -1330,7 +1341,23 @@
         "cancelConfirm": "Annulation",
         "cancelConfirmSubtitle": "Êtes-vous sûr(e) de vouloir annuler le processus ? Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut.",
         "cancelYes": "Annuler le processus",
-        "cancelNo": "Reprendre"
+        "cancelNo": "Reprendre",
+        "joinPkiModal": {
+            "title": "Rejoindre avec une carte à puce",
+            "certificate": {
+                "label": "Sélection du certificat",
+                "addButton": "Ajouter un certificat",
+                "updateButton": "Mettre à jour",
+                "selected": "Certificat sélectionné",
+                "description": "Le certificat vérifie votre identité et vous permet de rejoindre l'organisation en toute sécurité."
+            },
+            "notAvailable": "La carte à puce n'est pas disponible sur ce système.",
+            "buttons": {
+                "join": "Demander à rejoindre l'organisation",
+                "cancel": "Annuler",
+                "close": "Fermer"
+            }
+        }
     },
     "UsersPage": {
         "listDisplayTitles": {
@@ -1588,11 +1615,20 @@
             }
         },
         "pkiRequests": {
+            "invalidityReasons": {
+                "expired": "Le certificat fourni a expiré.",
+                "noInfo": "Impossible d'obtenir des informations sur le certificat.",
+                "noRootCertificate": "Aucun certificat racine correspond au certificat fourni.",
+                "untrusted": "Impossible de faire confiance à ce certificat.",
+                "generic": "Le certificat est invalide."
+            },
             "tab": "Demandes par PKI",
             "tabShort": "PKI",
             "emptyState": "Aucune demande PKI en attente.",
             "copyLink": "Copier le lien (PKI)",
-            "pkiFeature": "Cette fonctionnalité nécessite une PKI (Infrastructure à clés publiques).",
+            "notAvailable": "Non disponible",
+            "pkiFeature": "La fonctionnalité PKI nécessite une infrastructure PKI pour être utilisée.",
+            "invalidRequest": "Demande PKI invalide",
             "listDisplayTitles": {
                 "name": "Nom",
                 "email": "Email",
