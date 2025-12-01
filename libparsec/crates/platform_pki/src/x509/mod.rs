@@ -42,6 +42,33 @@ impl X509CertificateInformation {
             }
         })
     }
+
+    /// List emails contained in the certificate
+    ///
+    /// Will favor `subjectAltName` over subject `emailAddress` as the later one is
+    /// deprecated.
+    pub fn emails(&self) -> impl Iterator<Item = &str> {
+        // First look for email in SAN
+        self.extensions
+            .subject_alt_names
+            .iter()
+            .map(|entry| {
+                let SubjectAltName::EmailAddress(email) = entry;
+                email.as_str()
+            })
+            // Then chain `emailAddress` from subject
+            .chain(self.subject.iter().find_map(|entry| {
+                if let DistinguishedNameValue::EmailAddress(email) = entry {
+                    Some(email.as_str())
+                } else {
+                    None
+                }
+            }))
+    }
+
+    pub fn email(&self) -> Option<&str> {
+        self.emails().next()
+    }
 }
 
 impl TryFrom<x509_cert::Certificate> for X509CertificateInformation {
