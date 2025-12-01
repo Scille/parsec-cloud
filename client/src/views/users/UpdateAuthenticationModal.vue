@@ -125,7 +125,7 @@ import {
   updateDeviceChangeAuthentication,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { OpenBaoClient, openBaoConnect } from '@/services/openBao';
+import { OpenBaoClient, OpenBaoErrorType, openBaoConnect } from '@/services/openBao';
 import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonTitle, modalController } from '@ionic/vue';
 import { close } from 'ionicons/icons';
 import { MsModalResult, MsPasswordInput, MsSpinner, Translatable, asyncComputed, useWindowSize } from 'megashark-lib';
@@ -237,21 +237,21 @@ async function onSSOLoginClicked(): Promise<void> {
     window.electronAPI.log('error', `Provider '${provider}' selected but is not available in server config`);
     return;
   }
-  try {
-    querying.value = true;
-    const result = await openBaoConnect(
-      props.serverConfig.openbao.serverUrl,
-      auth.tag,
-      auth.mountPath,
-      props.serverConfig.openbao.secret.mountPath,
-    );
-    if (!result.ok) {
-      window.electronAPI.log('error', `Error while connecting with SSO: ${JSON.stringify(result.error)}`);
+  const result = await openBaoConnect(
+    props.serverConfig.openbao.serverUrl,
+    auth.tag,
+    auth.mountPath,
+    props.serverConfig.openbao.secret.mountPath,
+  );
+  if (!result.ok) {
+    if (result.error.type === OpenBaoErrorType.PopupFailed) {
+      errorMessage.value = 'Authentication.popupBlocked';
     } else {
-      openBaoClient.value = result.value;
+      errorMessage.value = 'Authentication.invalidOpenBaoData';
     }
-  } finally {
-    querying.value = false;
+    window.electronAPI.log('error', `Error while connecting with SSO: ${JSON.stringify(result.error)}`);
+  } else {
+    openBaoClient.value = result.value;
   }
 }
 
