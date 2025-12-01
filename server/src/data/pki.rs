@@ -214,4 +214,12 @@ impl X509CertificateInformation {
     fn common_name<'py>(&self, py: Python<'py>) -> Option<Bound<'py, PyString>> {
         self.0.common_name().map(|s| PyString::new(py, s))
     }
+
+    fn emails<'py>(&self, py: Python<'py>) -> Vec<Bound<'py, PyString>> {
+        self.0.emails().map(|s| PyString::new(py, s)).collect()
+    }
+
+    fn email<'py>(&self, py: Python<'py>) -> Option<Bound<'py, PyString>> {
+        self.0.email().map(|s| PyString::new(py, s))
+    }
 }
