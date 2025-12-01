@@ -5,7 +5,7 @@ use x509_cert::{
     ext::pkix::{self, name::GeneralName},
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[cfg_attr(test, derive(PartialEq))]
 pub enum SubjectAltName {
     EmailAddress(String),

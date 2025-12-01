@@ -13,7 +13,7 @@ use x509_cert::{
 use subject_alt_names::parse_san_octet_string;
 pub use subject_alt_names::SubjectAltName;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct Extensions {
     pub subject_alt_names: Vec<SubjectAltName>,
 }

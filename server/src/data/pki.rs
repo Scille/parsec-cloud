@@ -195,3 +195,19 @@ impl X509Certificate {
         PyBytes::new(py, self.0.as_ref())
     }
 }
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct X509CertificateInformation(
+    #[expect(dead_code)] pub libparsec_platform_pki::x509::X509CertificateInformation,
+);
+
+#[pymethods]
+impl X509CertificateInformation {
+    #[classmethod]
+    fn load_der(_cls: Bound<'_, PyType>, raw_der: &[u8]) -> PyResult<Self> {
+        libparsec_platform_pki::x509::X509CertificateInformation::load_der(raw_der)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
+    }
+}

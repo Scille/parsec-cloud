@@ -12,7 +12,7 @@ use x509_cert::{
     name::RdnSequence,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[cfg_attr(test, derive(PartialEq))]
 pub enum DistinguishedNameValue {
     CommonName(String),
