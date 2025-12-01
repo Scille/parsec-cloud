@@ -13,7 +13,7 @@ from typing import (
     cast,
 )
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt
@@ -68,7 +68,23 @@ logger = get_logger()
 
 
 administration_router = APIRouter(tags=["administration"])
-security = HTTPBearer()
+
+
+# TODO: Use 401 Unauthorized instead of 403 Forbidden on failed authentication
+# Before FastAPI version 0.122.0, when the integrated security utilities returned an error to the client
+# after a failed authentication, they used the HTTP status code 403 Forbidden.
+#
+# Starting with FastAPI version 0.122.0, they use the more appropriate HTTP status code 401 Unauthorized,
+# and return a sensible WWW-Authenticate header in the response, following the HTTP specifications, RFC 7235, RFC 9110.
+#
+# This is a "hack" suggested in FastAPI docs to keep the old behavior.
+# See: https://fastapi.tiangolo.com/how-to/authentication-error-status-code/
+class HTTPBearer403(HTTPBearer):
+    def make_not_authenticated_error(self) -> HTTPException:
+        return HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authenticated")
+
+
+security = HTTPBearer403()
 
 
 def check_administration_auth(
