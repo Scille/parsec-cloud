@@ -242,4 +242,4 @@ function isSSOProviderHandled(provider: OpenBaoAuthConfigTag): boolean {
   return HandledSSOProviders.includes(provider);
 }
 
-export { isOpenBaoAvailable, isSSOProviderHandled, openBaoConnect, OpenBaoError, OpenBaoResult };
+export { isOpenBaoAvailable, isSSOProviderHandled, openBaoConnect, OpenBaoError, OpenBaoErrorType, OpenBaoResult };
