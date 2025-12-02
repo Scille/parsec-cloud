@@ -47,7 +47,6 @@ def submit_payload() -> bytes:
         verify_key=SigningKey.generate().verify_key,
         public_key=PrivateKey.generate().public_key,
         device_label=DeviceLabel("Dev1"),
-        human_handle=HumanHandle(label="Alice", email=EmailAddress("alice@example.invalid")),
     ).dump()
 
 
@@ -318,7 +317,6 @@ async def test_anonymous_pki_enrollment_submit_email_already_used(
             verify_key=SigningKey.generate().verify_key,
             public_key=PrivateKey.generate().public_key,
             device_label=DeviceLabel("Dev1"),
-            human_handle=coolorg.alice.human_handle,
         ).dump(),
     )
 

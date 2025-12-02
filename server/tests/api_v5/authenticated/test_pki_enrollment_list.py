@@ -46,7 +46,6 @@ async def test_authenticated_pki_enrollment_list_ok(
             verify_key=SigningKey.generate().verify_key,
             public_key=PrivateKey.generate().public_key,
             device_label=DeviceLabel("Dev1"),
-            human_handle=human_handle,
         ).dump()
         expected_enrollment_item = (
             authenticated_cmds.latest.pki_enrollment_list.PkiEnrollmentListItem(
@@ -107,7 +106,6 @@ async def test_authenticated_pki_enrollment_list_ok(
         verify_key=SigningKey.generate().verify_key,
         public_key=PrivateKey.generate().public_key,
         device_label=DeviceLabel("Dev1"),
-        human_handle=human_handle,
     ).dump()
     canceller_expected_enrollment_item = (
         authenticated_cmds.latest.pki_enrollment_list.PkiEnrollmentListItem(

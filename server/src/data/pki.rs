@@ -97,17 +97,11 @@ crate::binding_utils::gen_proto!(PkiEnrollmentSubmitPayload, __richcmp__, eq);
 #[pymethods]
 impl PkiEnrollmentSubmitPayload {
     #[new]
-    fn new(
-        verify_key: VerifyKey,
-        public_key: PublicKey,
-        device_label: DeviceLabel,
-        human_handle: HumanHandle,
-    ) -> Self {
+    fn new(verify_key: VerifyKey, public_key: PublicKey, device_label: DeviceLabel) -> Self {
         Self(libparsec_types::PkiEnrollmentSubmitPayload {
             verify_key: verify_key.0,
             public_key: public_key.0,
             device_label: device_label.0,
-            human_handle: human_handle.0,
         })
     }
 
@@ -124,11 +118,6 @@ impl PkiEnrollmentSubmitPayload {
     #[getter]
     fn device_label(&self) -> DeviceLabel {
         DeviceLabel(self.0.device_label.clone())
-    }
-
-    #[getter]
-    fn human_handle(&self) -> HumanHandle {
-        HumanHandle(self.0.human_handle.clone())
     }
 
     #[classmethod]

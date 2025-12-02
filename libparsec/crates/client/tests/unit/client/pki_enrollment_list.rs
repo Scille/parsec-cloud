@@ -20,7 +20,6 @@ async fn ok(env: &TestbedEnv) {
         public_key: PrivateKey::generate().public_key(),
         // We reuse alice device label and human handle for simplicity
         device_label: alice_client.device_label().clone(),
-        human_handle: alice_client.human_handle().clone(),
     };
 
     let raw_payload = payload.dump();

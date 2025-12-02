@@ -37,7 +37,6 @@ pub fn create_pki_local_pending_from_device(device: Arc<LocalDevice>) -> PKILoca
             verify_key: device.signing_key.verify_key(),
             public_key: device.private_key.public_key(),
             device_label: device.device_label.clone(),
-            human_handle: device.human_handle.clone(),
         },
         encrypted_key: Bytes::from_static(b"encrypted key"),
         encrypted_key_algo: libparsec_types::PKIEncryptionAlgorithm::RsaesOaepSha256,

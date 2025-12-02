@@ -156,8 +156,6 @@ fn serde_pki_enrollment_submit_payload() {
         verify_key: VerifyKey::from(hex!(
             "845415cd821748005054dba8d456ac18ad3e71acdf980e19d6a925191362c9f9"
         )),
-        human_handle: HumanHandle::new("alice@example.com".parse().unwrap(), "Alice McAlice")
-            .unwrap(),
     };
     println!("***expected: {:?}", expected.dump());
     let data = PkiEnrollmentSubmitPayload::load(raw).unwrap();
@@ -222,7 +220,6 @@ fn serde_pki_enrollment_submit_payload() {
                 verify_key: alice.verify_key(),
                 public_key: alice.public_key(),
                 device_label: alice.device_label.clone(),
-                human_handle: alice.human_handle.clone()
             },
             encrypted_key: b"foo".as_ref().into(),
             encrypted_key_algo: PKIEncryptionAlgorithm::RsaesOaepSha256,
@@ -277,7 +274,6 @@ fn serde_pki_enrollment_submit_payload() {
                 verify_key: alice.verify_key(),
                 public_key: alice.public_key(),
                 device_label: alice.device_label.clone(),
-                human_handle: alice.human_handle.clone()
             },
             encrypted_key: b"foo".as_ref().into(),
             encrypted_key_algo: PKIEncryptionAlgorithm::RsaesOaepSha256,

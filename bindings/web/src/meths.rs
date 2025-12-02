@@ -2853,15 +2853,10 @@ fn struct_pki_enrollment_submit_payload_js_to_rs(
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
             })?
     };
-    let human_handle = {
-        let js_val = Reflect::get(&obj, &"humanHandle".into())?;
-        struct_human_handle_js_to_rs(js_val)?
-    };
     Ok(libparsec::PkiEnrollmentSubmitPayload {
         verify_key,
         public_key,
         device_label,
-        human_handle,
     })
 }
 
@@ -2876,8 +2871,6 @@ fn struct_pki_enrollment_submit_payload_rs_to_js(
     Reflect::set(&js_obj, &"publicKey".into(), &js_public_key)?;
     let js_device_label = JsValue::from_str(rs_obj.device_label.as_ref());
     Reflect::set(&js_obj, &"deviceLabel".into(), &js_device_label)?;
-    let js_human_handle = struct_human_handle_rs_to_js(rs_obj.human_handle)?;
-    Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
     Ok(js_obj)
 }
 
@@ -23227,7 +23220,6 @@ pub fn pkiEnrollmentSubmit(
     config: Object,
     addr: String,
     cert_ref: Object,
-    human_handle: Object,
     device_label: String,
     force: bool,
 ) -> Promise {
@@ -23244,9 +23236,6 @@ pub fn pkiEnrollmentSubmit(
         let cert_ref = cert_ref.into();
         let cert_ref = struct_x509_certificate_reference_js_to_rs(cert_ref)?;
 
-        let human_handle = human_handle.into();
-        let human_handle = struct_human_handle_js_to_rs(human_handle)?;
-
         let device_label = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
@@ -23254,15 +23243,8 @@ pub fn pkiEnrollmentSubmit(
             custom_from_rs_string(device_label).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
-        let ret = libparsec::pki_enrollment_submit(
-            config,
-            addr,
-            cert_ref,
-            human_handle,
-            device_label,
-            force,
-        )
-        .await;
+        let ret =
+            libparsec::pki_enrollment_submit(config, addr, cert_ref, device_label, force).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
