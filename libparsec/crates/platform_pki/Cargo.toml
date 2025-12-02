@@ -23,6 +23,7 @@ libparsec_types = { workspace = true }
 x509-cert = { workspace = true, features = ["std"] }
 log = { workspace = true, features = ["kv"] }
 chrono = { workspace = true }
+thiserror = { workspace = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 schannel = { workspace = true }
