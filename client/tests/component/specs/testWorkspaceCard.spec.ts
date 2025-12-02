@@ -72,6 +72,7 @@ describe('Workspace Card', () => {
         workspace: WORKSPACE,
         clientProfile: UserProfile.Admin,
         isFavorite: false,
+        isHidden: false,
       },
       global: {
         provide: getDefaultProvideConfig(),

@@ -10,20 +10,24 @@ import {
   WorkspaceRole,
   getClientProfile,
   getSystemPath,
+  mountWorkspace,
   getPathLink as parsecGetPathLink,
   renameWorkspace as parsecRenameWorkspace,
+  unmountWorkspace,
 } from '@/parsec';
 import { Routes, navigateTo } from '@/router';
 import { EventDistributor } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { recentDocumentManager } from '@/services/recentDocuments';
+import { StorageManager } from '@/services/storageManager';
 import { WorkspaceAttributes } from '@/services/workspaceAttributes';
 import SmallDisplayWorkspaceContextMenu from '@/views/workspaces/SmallDisplayWorkspaceContextMenu.vue';
 import { WorkspaceAction } from '@/views/workspaces/types';
 import WorkspaceContextMenu from '@/views/workspaces/WorkspaceContextMenu.vue';
+import WorkspaceHiddenModal from '@/views/workspaces/WorkspaceHiddenModal.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
 import { modalController, popoverController } from '@ionic/vue';
-import { Clipboard, DisplayState, Translatable, getTextFromUser } from 'megashark-lib';
+import { Clipboard, DisplayState, MsModalResult, Translatable, getTextFromUser } from 'megashark-lib';
 
 export const WORKSPACES_PAGE_DATA_KEY = 'WorkspacesPage';
 
@@ -120,6 +124,7 @@ export async function openWorkspaceContextMenu(
   informationManager: InformationManager,
   fromSidebar = false,
   isLargeDisplay = true,
+  storageManager?: StorageManager,
 ): Promise<void> {
   const clientProfile = await getClientProfile();
   let data: { action: WorkspaceAction } | undefined;
@@ -138,6 +143,7 @@ export async function openWorkspaceContextMenu(
         clientProfile: clientProfile,
         clientRole: workspace.currentSelfRole,
         isFavorite: workspaceAttributes.isFavorite(workspace.id),
+        isHidden: workspaceAttributes.isHidden(workspace.id),
       },
     });
 
@@ -156,6 +162,7 @@ export async function openWorkspaceContextMenu(
         clientProfile: clientProfile,
         clientRole: workspace.currentSelfRole,
         isFavorite: workspaceAttributes.isFavorite(workspace.id),
+        isHidden: workspaceAttributes.isHidden(workspace.id),
       },
     });
 
@@ -184,9 +191,85 @@ export async function openWorkspaceContextMenu(
       case WorkspaceAction.ShowHistory:
         await navigateTo(Routes.History, { query: { documentPath: '/', workspaceHandle: workspace.handle } });
         break;
+      case WorkspaceAction.Mount:
+        await showWorkspace(workspace, workspaceAttributes, informationManager);
+        break;
+      case WorkspaceAction.UnMount:
+        if (storageManager === undefined) {
+          console.error('StorageManager is required to unmount a workspace with confirmation');
+          break;
+        }
+        await unmountWorkspaceConfirmation(workspaceAttributes, workspace, informationManager, storageManager);
+        break;
       default:
         console.warn('No WorkspaceAction match found');
     }
+  }
+}
+
+export async function showWorkspace(
+  workspace: WorkspaceInfo,
+  workspaceAttributes: WorkspaceAttributes,
+  informationManager: InformationManager,
+): Promise<void> {
+  const result = await mountWorkspace(workspace.handle);
+
+  if (result.ok) {
+    workspaceAttributes.removeHidden(workspace.id);
+    informationManager.present(
+      new Information({
+        message: {
+          key: 'WorkspacesPage.showHideWorkspace.successShown',
+          data: { workspace: workspace.currentName },
+        },
+        level: InformationLevel.Success,
+      }),
+      PresentationMode.Toast,
+    );
+  } else {
+    informationManager.present(
+      new Information({
+        message: {
+          key: 'WorkspacesPage.showHideWorkspace.failedShown',
+          data: { workspace: workspace.currentName },
+        },
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+  }
+}
+
+export async function hideWorkspace(
+  workspace: WorkspaceInfo,
+  workspaceAttributes: WorkspaceAttributes,
+  informationManager: InformationManager,
+): Promise<void> {
+  const result = await unmountWorkspace(workspace);
+
+  if (result.ok) {
+    workspaceAttributes.addHidden(workspace.id);
+    informationManager.present(
+      new Information({
+        message: {
+          key: 'WorkspacesPage.showHideWorkspace.successHidden',
+          data: { workspace: workspace.currentName },
+        },
+        level: InformationLevel.Success,
+      }),
+      PresentationMode.Toast,
+    );
+  } else {
+    informationManager.present(
+      new Information({
+        message: {
+          key: 'WorkspacesPage.showHideWorkspace.failedHidden',
+          data: { workspace: workspace.currentName },
+        },
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
   }
 }
 
@@ -241,6 +324,41 @@ async function renameWorkspace(workspace: WorkspaceInfo, newName: WorkspaceName,
       }),
       PresentationMode.Toast,
     );
+  }
+}
+
+async function unmountWorkspaceConfirmation(
+  workspaceAttributes: WorkspaceAttributes,
+  workspace: WorkspaceInfo,
+  informationManager: InformationManager,
+  storageManager: StorageManager,
+): Promise<void> {
+  const config = await storageManager.retrieveConfig();
+
+  if (config.skipWorkspaceHiddenWarning === true) {
+    await hideWorkspace(workspace, workspaceAttributes, informationManager);
+    return;
+  }
+
+  const modal = await modalController.create({
+    component: WorkspaceHiddenModal,
+    cssClass: 'workspace-hidden-modal',
+    componentProps: {
+      workspaceName: workspace.currentName,
+    },
+  });
+
+  await modal.present();
+  const { data, role } = await modal.onWillDismiss();
+  await modal.dismiss();
+
+  if (role === MsModalResult.Confirm) {
+    if (data?.skipWorkspaceHiddenWarning === true) {
+      config.skipWorkspaceHiddenWarning = true;
+      await storageManager.storeConfig(config);
+    }
+
+    await hideWorkspace(workspace, workspaceAttributes, informationManager);
   }
 }
 
