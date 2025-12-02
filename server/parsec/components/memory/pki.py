@@ -7,6 +7,7 @@ from parsec._parsec import (
     DateTime,
     DeviceCertificate,
     DeviceID,
+    HumanHandle,
     OrganizationID,
     PkiEnrollmentAnswerPayload,
     PKIEnrollmentID,
@@ -61,6 +62,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         organization_id: OrganizationID,
         enrollment_id: PKIEnrollmentID,
         force: bool,
+        submitter_human_handle: HumanHandle,
         submitter_der_x509_certificate: bytes,
         submit_payload_signature: bytes,
         submit_payload_signature_algorithm: PkiSignatureAlgorithm,
@@ -78,10 +80,10 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         # 2) Validate payload
 
         try:
-            payload = PkiEnrollmentSubmitPayload.load(submit_payload)
+            PkiEnrollmentSubmitPayload.load(submit_payload)
         except ValueError:
             return PkiEnrollmentSubmitBadOutcome.INVALID_SUBMIT_PAYLOAD
-        submitter_email = payload.human_handle.email
+        submitter_email = submitter_human_handle.email
 
         # 3) Take lock to prevent any concurrent PKI enrollment creation
         # We also take the common topic lock since PKI enrollment is not

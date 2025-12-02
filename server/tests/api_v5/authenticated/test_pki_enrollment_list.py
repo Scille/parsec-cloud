@@ -41,13 +41,12 @@ async def test_authenticated_pki_enrollment_list_ok(
     for i in range(4):
         enrollment_id = PKIEnrollmentID.new()
         submitted_on = DateTime.now()
+        human_handle = HumanHandle(label=f"User{i}", email=EmailAddress(f"user{i}@example.invalid"))
         submit_payload = PkiEnrollmentSubmitPayload(
             verify_key=SigningKey.generate().verify_key,
             public_key=PrivateKey.generate().public_key,
             device_label=DeviceLabel("Dev1"),
-            human_handle=HumanHandle(
-                label=f"User{i}", email=EmailAddress(f"user{i}@example.invalid")
-            ),
+            human_handle=human_handle,
         ).dump()
         expected_enrollment_item = (
             authenticated_cmds.latest.pki_enrollment_list.PkiEnrollmentListItem(
@@ -65,6 +64,7 @@ async def test_authenticated_pki_enrollment_list_ok(
             organization_id=coolorg.organization_id,
             enrollment_id=enrollment_id,
             force=False,
+            submitter_human_handle=human_handle,
             submitter_der_x509_certificate=expected_enrollment_item.der_x509_certificate,
             submit_payload_signature=expected_enrollment_item.payload_signature,
             submit_payload_signature_algorithm=expected_enrollment_item.payload_signature_algorithm,
@@ -102,13 +102,12 @@ async def test_authenticated_pki_enrollment_list_ok(
     to_cancel = expected_enrollments.pop()
     canceller_enrollment_id = PKIEnrollmentID.new()
     canceller_submitted_on = DateTime.now()
+    human_handle = HumanHandle(label="Canceller", email=EmailAddress("canceller@example.invalid"))
     canceller_submit_payload = PkiEnrollmentSubmitPayload(
         verify_key=SigningKey.generate().verify_key,
         public_key=PrivateKey.generate().public_key,
         device_label=DeviceLabel("Dev1"),
-        human_handle=HumanHandle(
-            label="Canceller", email=EmailAddress("canceller@example.invalid")
-        ),
+        human_handle=human_handle,
     ).dump()
     canceller_expected_enrollment_item = (
         authenticated_cmds.latest.pki_enrollment_list.PkiEnrollmentListItem(
@@ -126,6 +125,7 @@ async def test_authenticated_pki_enrollment_list_ok(
         organization_id=coolorg.organization_id,
         enrollment_id=canceller_enrollment_id,
         force=True,
+        submitter_human_handle=human_handle,
         submitter_der_x509_certificate=canceller_expected_enrollment_item.der_x509_certificate,
         submit_payload_signature=canceller_expected_enrollment_item.payload_signature,
         submit_payload_signature_algorithm=canceller_expected_enrollment_item.payload_signature_algorithm,

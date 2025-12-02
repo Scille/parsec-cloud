@@ -31,17 +31,19 @@ async def enrollment_id(
 ) -> PKIEnrollmentID:
     enrollment_id = PKIEnrollmentID.new()
     submitted_on = DateTime.now()
+    human_handle = HumanHandle(label="Alice", email=EmailAddress("alice@example.invalid"))
     submit_payload = PkiEnrollmentSubmitPayload(
         verify_key=SigningKey.generate().verify_key,
         public_key=PrivateKey.generate().public_key,
         device_label=DeviceLabel("Dev1"),
-        human_handle=HumanHandle(label="Alice", email=EmailAddress("alice@example.invalid")),
+        human_handle=human_handle,
     ).dump()
     outcome = await backend.pki.submit(
         now=submitted_on,
         organization_id=coolorg.organization_id,
         enrollment_id=enrollment_id,
         force=False,
+        submitter_human_handle=human_handle,
         submitter_der_x509_certificate=b"<philip der x509 certificate>",
         submit_payload_signature=b"<philip submit payload signature>",
         submit_payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
