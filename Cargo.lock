@@ -2456,6 +2456,7 @@ dependencies = [
  "rustls-webpki",
  "schannel",
  "sha2",
+ "thiserror 2.0.17",
  "windows-sys 0.61.2",
  "x509-cert",
 ]

@@ -4,6 +4,7 @@ mod distinguished_name;
 mod extensions;
 
 pub use distinguished_name::extract_dn_list_from_rnd_seq;
+use libparsec_types::HumanHandle;
 use x509_cert::{
     der::{Decode, Error as DERError, SliceReader},
     Version,
@@ -17,6 +18,16 @@ error_set::error_set! {
         #[display("Invalid DER format: {0}")]
         DERError(DERError)
     }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum HandleFromCertInfoError {
+    #[error("missing name")]
+    MissingName,
+    #[error("missing email")]
+    MissingEmail,
+    #[error("invalid human handle: {0}")]
+    InvalidHumanHandle(#[from] libparsec_types::HumanHandleParseError),
 }
 
 #[derive(Debug, Clone)]
@@ -68,6 +79,14 @@ impl X509CertificateInformation {
 
     pub fn email(&self) -> Option<&str> {
         self.emails().next()
+    }
+
+    pub fn human_handle(&self) -> Result<HumanHandle, HandleFromCertInfoError> {
+        let name = self
+            .common_name()
+            .ok_or(HandleFromCertInfoError::MissingName)?;
+        let email = self.email().ok_or(HandleFromCertInfoError::MissingEmail)?;
+        HumanHandle::from_raw(email, name).map_err(Into::into)
     }
 }
 

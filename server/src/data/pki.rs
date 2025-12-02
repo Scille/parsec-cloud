@@ -222,4 +222,11 @@ impl X509CertificateInformation {
     fn email<'py>(&self, py: Python<'py>) -> Option<Bound<'py, PyString>> {
         self.0.email().map(|s| PyString::new(py, s))
     }
+
+    fn human_handle(&self) -> PyResult<HumanHandle> {
+        self.0
+            .human_handle()
+            .map(HumanHandle)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
+    }
 }
