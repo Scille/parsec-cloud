@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from parsec._parsec import (
     DateTime,
+    HumanHandle,
     OrganizationID,
     PKIEnrollmentID,
     PkiEnrollmentSubmitPayload,
@@ -144,6 +145,7 @@ async def pki_submit(
     organization_id: OrganizationID,
     enrollment_id: PKIEnrollmentID,
     force: bool,
+    submitter_human_handle: HumanHandle,
     submitter_der_x509_certificate: bytes,
     submit_payload_signature: bytes,
     submit_payload_signature_algorithm: PkiSignatureAlgorithm,
@@ -177,10 +179,10 @@ async def pki_submit(
     # 2) Validate payload
 
     try:
-        payload = PkiEnrollmentSubmitPayload.load(submit_payload)
+        PkiEnrollmentSubmitPayload.load(submit_payload)
     except ValueError:
         return PkiEnrollmentSubmitBadOutcome.INVALID_SUBMIT_PAYLOAD
-    submitter_email = str(payload.human_handle.email)
+    submitter_email = str(submitter_human_handle.email)
 
     # 3) Take lock to prevent any concurrent PKI enrollment creation
     # We also take the common topic lock since PKI enrollment is not

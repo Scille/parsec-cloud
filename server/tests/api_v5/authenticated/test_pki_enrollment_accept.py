@@ -57,6 +57,7 @@ async def enrollment_id(
         organization_id=coolorg.organization_id,
         enrollment_id=enrollment_id,
         force=False,
+        submitter_human_handle=NEW_MIKE_HUMAN_HANDLE,
         submitter_der_x509_certificate=b"<philip der x509 certificate>",
         submit_payload_signature=b"<philip submit payload signature>",
         submit_payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,

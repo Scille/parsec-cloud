@@ -8,11 +8,13 @@ from parsec._parsec import (
     DateTime,
     DeviceCertificate,
     DeviceID,
+    HumanHandle,
     OrganizationID,
     PKIEnrollmentID,
     PkiSignatureAlgorithm,
     UserCertificate,
     VerifyKey,
+    X509CertificateInformation,
     anonymous_cmds,
     authenticated_cmds,
 )
@@ -23,7 +25,10 @@ from parsec.ballpark import (
     timestamps_in_the_ballpark,
 )
 from parsec.client_context import AnonymousClientContext, AuthenticatedClientContext
+from parsec.logging import get_logger
 from parsec.types import BadOutcomeEnum
+
+logger = get_logger()
 
 
 class PkiEnrollmentAcceptValidateBadOutcome(BadOutcomeEnum):
@@ -210,6 +215,7 @@ class BasePkiEnrollmentComponent:
         organization_id: OrganizationID,
         enrollment_id: PKIEnrollmentID,
         force: bool,
+        submitter_human_handle: HumanHandle,
         submitter_der_x509_certificate: bytes,
         submit_payload_signature: bytes,
         submit_payload_signature_algorithm: PkiSignatureAlgorithm,
@@ -323,11 +329,19 @@ class BasePkiEnrollmentComponent:
         if req.intermediate_der_x509_certificates:
             return anonymous_cmds.latest.pki_enrollment_submit.RepInvalidPayload()
 
+        try:
+            cert_info = X509CertificateInformation.load_der(req.der_x509_certificate)
+            human_handle = cert_info.human_handle()
+        except ValueError as e:
+            logger.info("Invalid certificate", exc_info=e)
+            return anonymous_cmds.latest.pki_enrollment_submit.RepInvalidDerX509Certificate()
+
         outcome = await self.submit(
             now=now,
             organization_id=client_ctx.organization_id,
             enrollment_id=req.enrollment_id,
             force=req.force,
+            submitter_human_handle=human_handle,
             submitter_der_x509_certificate=req.der_x509_certificate,
             submit_payload_signature=req.payload_signature,
             submit_payload_signature_algorithm=req.payload_signature_algorithm,
