@@ -709,7 +709,7 @@
         "WorkspaceHiddenModal": {
             "title": "Masquer un espace de travail",
             "affectedWorkspaces": "Vous êtes sur le point de masquer l'espace de travail {workspace}. Cet espace de travail ne sera plus visible depuis l'explorateur de fichiers.",
-            "info":  "Vous pouvez cocher “Afficher les espaces masqués” pour le voir sur Parsec.",
+            "info": "Vous pouvez cocher “Afficher les espaces masqués” pour le voir sur Parsec.",
             "actionConfirm": "Masquer l'espace de travail",
             "actionCancel": "Annuler",
             "noReminder": "Ne plus me rappeler",

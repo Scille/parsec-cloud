@@ -710,7 +710,7 @@
         "WorkspaceHiddenModal": {
             "title": "Hide a workspace",
             "affectedWorkspaces": "You are about to hide the workspace {workspace} and it will no longer be visible from the file explorer.",
-            "info":  "You can check “Show hidden workspaces” to show it on Parsec.",
+            "info": "You can check “Show hidden workspaces” to show it on Parsec.",
             "actionConfirm": "Hide workspace",
             "actionCancel": "Cancel",
             "noReminder": "Don't remind me again",

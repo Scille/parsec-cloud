@@ -5,7 +5,7 @@
     class="workspace-card-item ion-no-padding"
     :class="{
       'workspace-hovered': isHovered || menuOpened,
-      'workspace-hidden': isHidden
+      'workspace-hidden': isHidden,
     }"
     @click="$emit('click', workspace, $event)"
     @mouseenter="isHovered = true"
@@ -289,7 +289,7 @@ async function onOptionsClick(event: Event): Promise<void> {
   }
 }
 
-.workspace-hidden .workspace-card-content{
+.workspace-hidden .workspace-card-content {
   opacity: 0.8;
   filter: brightness(0.8);
 }

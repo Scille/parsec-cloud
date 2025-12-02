@@ -47,8 +47,8 @@
 <script setup lang="ts">
 import { WorkspaceName } from '@/parsec';
 import { IonPage, IonText, modalController } from '@ionic/vue';
-import { MsModal, MsReportText, MsModalResult, MsCheckbox, MsReportTheme } from 'megashark-lib';
-import { onMounted, ref} from 'vue';
+import { MsCheckbox, MsModal, MsModalResult, MsReportText, MsReportTheme } from 'megashark-lib';
+import { onMounted, ref } from 'vue';
 
 const props = defineProps<{
   workspaceName: WorkspaceName;
@@ -63,10 +63,13 @@ async function confirmHidden(): Promise<boolean> {
     return false;
   }
 
-  return await modalController.dismiss({
-    workspaceName: props.workspaceName,
-    skipWorkspaceHiddenWarning: skipWorkspaceHiddenWarning.value,
-  }, MsModalResult.Confirm);
+  return await modalController.dismiss(
+    {
+      workspaceName: props.workspaceName,
+      skipWorkspaceHiddenWarning: skipWorkspaceHiddenWarning.value,
+    },
+    MsModalResult.Confirm,
+  );
 }
 
 async function cancel(): Promise<boolean> {
