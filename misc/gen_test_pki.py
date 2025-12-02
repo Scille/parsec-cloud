@@ -147,6 +147,7 @@ def main():
     args = parse_args()
     output_dir: Path = args.output_dir
 
+    output_dir.mkdir(parents=True, exist_ok=True)
     gitignore = output_dir / ".gitignore"
     gitignore.write_text("*")
     for chain in TRUSTCHAINS:
