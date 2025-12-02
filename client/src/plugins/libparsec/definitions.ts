@@ -328,7 +328,6 @@ export interface PkiEnrollmentSubmitPayload {
     verifyKey: VerifyKey
     publicKey: PublicKey
     deviceLabel: DeviceLabel
-    humanHandle: HumanHandle
 }
 
 export interface ServerConfig {
@@ -6076,7 +6075,6 @@ export interface LibParsecPlugin {
         config: ClientConfig,
         addr: ParsecPkiEnrollmentAddr,
         cert_ref: X509CertificateReference,
-        human_handle: HumanHandle,
         device_label: DeviceLabel,
         force: boolean
     ): Promise<Result<DateTime, PkiEnrollmentSubmitError>>

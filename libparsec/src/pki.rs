@@ -7,8 +7,8 @@ pub use libparsec_client::{PkiEnrollmentFinalizeError, PkiEnrollmentSubmitError}
 pub use libparsec_platform_device_loader::RemoveDeviceError;
 pub use libparsec_platform_pki::ShowCertificateSelectionDialogError;
 use libparsec_types::{
-    DateTime, DeviceLabel, HumanHandle, PKIEnrollmentID, PKILocalPendingEnrollment,
-    ParsecPkiEnrollmentAddr, PkiEnrollmentAnswerPayload, X509CertificateReference,
+    DateTime, DeviceLabel, PKIEnrollmentID, PKILocalPendingEnrollment, ParsecPkiEnrollmentAddr,
+    PkiEnrollmentAnswerPayload, X509CertificateReference,
 };
 
 use crate::{ClientConfig, DeviceSaveStrategy};
@@ -26,21 +26,12 @@ pub async fn pki_enrollment_submit(
     config: ClientConfig,
     addr: ParsecPkiEnrollmentAddr,
     cert_ref: X509CertificateReference,
-    human_handle: HumanHandle,
     device_label: DeviceLabel,
     force: bool,
 ) -> Result<DateTime, PkiEnrollmentSubmitError> {
     let config: Arc<libparsec_client::ClientConfig> = config.into();
 
-    libparsec_client::pki_enrollment_submit(
-        config,
-        addr,
-        cert_ref,
-        human_handle,
-        device_label,
-        force,
-    )
-    .await
+    libparsec_client::pki_enrollment_submit(config, addr, cert_ref, device_label, force).await
 }
 
 pub async fn pki_enrollment_finalize(

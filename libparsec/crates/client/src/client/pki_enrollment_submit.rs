@@ -31,7 +31,6 @@ pub async fn pki_enrollment_submit(
     config: Arc<ClientConfig>,
     addr: ParsecPkiEnrollmentAddr,
     x509_cert_ref: X509CertificateReference,
-    human_handle: HumanHandle,
     device_label: DeviceLabel,
     force: bool,
 ) -> Result<DateTime, PkiEnrollmentSubmitError> {
@@ -53,7 +52,6 @@ pub async fn pki_enrollment_submit(
         verify_key: signing_key.verify_key(),
         public_key: private_key.public_key(),
         device_label,
-        human_handle,
     };
     let raw_payload = payload.dump();
     let payload_signature = libparsec_platform_pki::sign_message(&raw_payload, &x509_cert_ref)

@@ -61,7 +61,6 @@ class PkiEnrollmentSubmitPayload(Structure):
     verify_key: VerifyKey
     public_key: PublicKey
     device_label: DeviceLabel
-    human_handle: HumanHandle
 
 
 class InvalidityReason(Variant):
@@ -159,7 +158,6 @@ async def pki_enrollment_submit(
     config: ClientConfig,
     addr: ParsecPkiEnrollmentAddr,
     cert_ref: X509CertificateReference,
-    human_handle: HumanHandle,
     device_label: DeviceLabel,
     force: bool,
 ) -> Result[DateTime, PkiEnrollmentSubmitError]:

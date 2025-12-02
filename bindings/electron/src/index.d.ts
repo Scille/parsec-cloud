@@ -308,7 +308,6 @@ export interface PkiEnrollmentSubmitPayload {
     verifyKey: Uint8Array
     publicKey: Uint8Array
     deviceLabel: string
-    humanHandle: HumanHandle
 }
 
 
@@ -5135,7 +5134,6 @@ export function pkiEnrollmentSubmit(
     config: ClientConfig,
     addr: string,
     cert_ref: X509CertificateReference,
-    human_handle: HumanHandle,
     device_label: string,
     force: boolean
 ): Promise<Result<number, PkiEnrollmentSubmitError>>

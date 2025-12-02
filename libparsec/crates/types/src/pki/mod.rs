@@ -74,7 +74,6 @@ pub struct PkiEnrollmentSubmitPayload {
     pub verify_key: VerifyKey,
     pub public_key: PublicKey,
     pub device_label: DeviceLabel,
-    pub human_handle: HumanHandle,
 }
 
 parsec_data!("schema/pki/pki_enrollment_submit_payload.json5");
@@ -85,7 +84,6 @@ impl_transparent_data_format_conversion!(
     verify_key,
     public_key,
     device_label,
-    human_handle,
 );
 
 impl PkiEnrollmentSubmitPayload {

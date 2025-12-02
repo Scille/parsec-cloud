@@ -36,7 +36,6 @@ async def enrollment_id(
         verify_key=SigningKey.generate().verify_key,
         public_key=PrivateKey.generate().public_key,
         device_label=DeviceLabel("Dev1"),
-        human_handle=human_handle,
     ).dump()
     outcome = await backend.pki.submit(
         now=submitted_on,

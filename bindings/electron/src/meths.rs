@@ -2728,15 +2728,10 @@ fn struct_pki_enrollment_submit_payload_js_to_rs<'a>(
             }
         }
     };
-    let human_handle = {
-        let js_val: Handle<JsObject> = obj.get(cx, "humanHandle")?;
-        struct_human_handle_js_to_rs(cx, js_val)?
-    };
     Ok(libparsec::PkiEnrollmentSubmitPayload {
         verify_key,
         public_key,
         device_label,
-        human_handle,
     })
 }
 
@@ -2760,8 +2755,6 @@ fn struct_pki_enrollment_submit_payload_rs_to_js<'a>(
     js_obj.set(cx, "publicKey", js_public_key)?;
     let js_device_label = JsString::try_new(cx, rs_obj.device_label).or_throw(cx)?;
     js_obj.set(cx, "deviceLabel", js_device_label)?;
-    let js_human_handle = struct_human_handle_rs_to_js(cx, rs_obj.human_handle)?;
-    js_obj.set(cx, "humanHandle", js_human_handle)?;
     Ok(js_obj)
 }
 
@@ -24894,12 +24887,8 @@ fn pki_enrollment_submit(mut cx: FunctionContext) -> JsResult<JsPromise> {
         let js_val = cx.argument::<JsObject>(2)?;
         struct_x509_certificate_reference_js_to_rs(&mut cx, js_val)?
     };
-    let human_handle = {
-        let js_val = cx.argument::<JsObject>(3)?;
-        struct_human_handle_js_to_rs(&mut cx, js_val)?
-    };
     let device_label = {
-        let js_val = cx.argument::<JsString>(4)?;
+        let js_val = cx.argument::<JsString>(3)?;
         {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
@@ -24911,7 +24900,7 @@ fn pki_enrollment_submit(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let force = {
-        let js_val = cx.argument::<JsBoolean>(5)?;
+        let js_val = cx.argument::<JsBoolean>(4)?;
         js_val.value(&mut cx)
     };
     let channel = cx.channel();
@@ -24922,15 +24911,8 @@ fn pki_enrollment_submit(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::pki_enrollment_submit(
-                config,
-                addr,
-                cert_ref,
-                human_handle,
-                device_label,
-                force,
-            )
-            .await;
+            let ret =
+                libparsec::pki_enrollment_submit(config, addr, cert_ref, device_label, force).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {

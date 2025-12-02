@@ -13,12 +13,6 @@
         {
             "name": "device_label",
             "type": "DeviceLabel"
-        },
-        // HumanHandle is needed as we are not retrieving the
-        // user name and email from the certificate (yet)
-        {
-            "name": "human_handle",
-            "type": "HumanHandle"
         }
     ]
 }
