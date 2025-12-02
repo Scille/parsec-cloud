@@ -4,6 +4,38 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.7.1 (2025-12-11)
+--------------------------
+
+Features
+~~~~~~~~
+
+* Display a loading page when starting Parsec web application
+  (`#11673 <https://github.com/Scille/parsec-cloud/issues/11673>`__)
+
+* Update the user interface for workspace items in the list view.
+  (`#11574 <https://github.com/Scille/parsec-cloud/issues/11574>`__)
+
+* Application update modal appears automatically when an update is available.
+  (`#11740 <https://github.com/Scille/parsec-cloud/issues/11740>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Minor GUI improvements such as logout button readability, font size
+  harmonization and maximum width for profile name.
+  (`#11785 <https://github.com/Scille/parsec-cloud/issues/11785>`__)
+
+* Display an error message on SSO login if the pop-up window cannot be
+  displayed.
+  (`#11788 <https://github.com/Scille/parsec-cloud/issues/11788>`__)
+
+* Fixed broken navigation when accessing a folder that was not available
+  locally.
+  (`#11823 <https://github.com/Scille/parsec-cloud/issues/11823>`__)
+
+
 Parsec v3.7.0 (2025-11-28)
 --------------------------
 
