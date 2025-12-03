@@ -1,0 +1,27 @@
+{
+    "label": "AsyncEnrollmentSubmitPayload",
+    "type": "async_enrollment_submit_payload",
+    "other_fields": [
+        {
+            "name": "verify_key",
+            "type": "VerifyKey"
+        },
+        {
+            "name": "public_key",
+            "type": "PublicKey"
+        },
+        {
+            // Submitter asks for device_label/human_handle, but accepter has final word on this
+            "name": "requested_device_label",
+            "type": "DeviceLabel"
+        },
+        {
+            // Note the email in the HumanHandle should not be blindly trusted here !
+            // Instead the identity validation step should ensure it correspond with
+            // what is expected (e.g. when using PKI, it corresponds to the `subjectAltName`
+            // field in the submitter's x509 certificate).
+            "name": "requested_human_handle",
+            "type": "HumanHandle"
+        }
+    ]
+}
