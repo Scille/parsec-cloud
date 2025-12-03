@@ -21,6 +21,7 @@ import { WorkspaceAttributes } from '@/services/workspaceAttributes';
 import SmallDisplayWorkspaceContextMenu from '@/views/workspaces/SmallDisplayWorkspaceContextMenu.vue';
 import { WorkspaceAction } from '@/views/workspaces/types';
 import WorkspaceContextMenu from '@/views/workspaces/WorkspaceContextMenu.vue';
+import WorkspaceDetailsModal from '@/views/workspaces/WorkspaceDetailsModal.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
 import { modalController, popoverController } from '@ionic/vue';
 import { Clipboard, DisplayState, Translatable, getTextFromUser } from 'megashark-lib';
@@ -184,6 +185,8 @@ export async function openWorkspaceContextMenu(
       case WorkspaceAction.ShowHistory:
         await navigateTo(Routes.History, { query: { documentPath: '/', workspaceHandle: workspace.handle } });
         break;
+      case WorkspaceAction.ShowDetails:
+        await openWorkspaceDetailsModal(workspace);
       default:
         console.warn('No WorkspaceAction match found');
     }
@@ -266,6 +269,19 @@ async function openRenameWorkspaceModal(
   if (newWorkspaceName) {
     await renameWorkspace(workspace, newWorkspaceName, informationManager);
   }
+}
+
+async function openWorkspaceDetailsModal(workspace: WorkspaceInfo): Promise<void> {
+  const modal = await modalController.create({
+    component: WorkspaceDetailsModal,
+    cssClass: 'file-details-modal',
+    componentProps: {
+      workspaceInfo: workspace,
+      progressStateData: undefined,
+    },
+  });
+  await modal.present();
+  await modal.onWillDismiss();
 }
 
 async function copyLinkToClipboard(workspace: WorkspaceInfo, informationManager: InformationManager): Promise<void> {
