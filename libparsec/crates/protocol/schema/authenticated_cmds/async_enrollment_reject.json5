@@ -1,0 +1,34 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "async_enrollment_reject",
+        "req": {
+            "fields": [
+                {
+                    // The enrollment ID to be rejected
+                    "name": "enrollment_id",
+                    "type": "AsyncEnrollmentID"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                // Only user with ADMIN profile can use this command
+                "status": "author_not_allowed"
+            },
+            {
+                // The server did not found a request for the provided ID
+                "status": "enrollment_not_found"
+            },
+            {
+                // The request is no longer in pending state (either accepted, cancelled or rejected)
+                "status": "enrollment_no_longer_available"
+            }
+        ]
+    }
+]
