@@ -55,6 +55,7 @@ pub mod fixtures;
 
 mod account;
 mod addr;
+mod async_enrollment;
 mod certif;
 pub mod data_macros;
 mod error;
@@ -81,6 +82,7 @@ mod token;
 
 pub use account::*;
 pub use addr::*;
+pub use async_enrollment::*;
 pub use certif::*;
 pub use error::*;
 pub use ext_types::*;
