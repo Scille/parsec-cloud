@@ -2513,13 +2513,10 @@
                 "impossibleToOpen": "Impossible d'éditer ce fichier",
                 "genericError": "Impossible d'ouvrir ce fichier",
                 "unsupportedFileType": "Type de fichier non pris en charge par Parsec",
-                "editionNotAvailable": "L'édition de documents n'est pas disponible",
-                "tooLongToOpen": "Le fichier met trop de temps à s'ouvrir"
+                "editionNotAvailable": "L'édition de documents n'est pas disponible"
             },
             "informationEditDownload": "Si vous souhaitez modifier ce fichier, vous pouvez le télécharger et l'ouvrir localement sur votre appareil.",
             "informationPreviewDownload": "Si vous souhaitez prévisualiser ce fichier, vous pouvez le faire dans Parsec ou le télécharger pour l'ouvrir localement sur votre appareil.",
-            "tooLongToOpenOnWeb": "Vous pouvez essayer de le télécharger et de l'ouvrir avec l'application par défaut (clic droit sur le fichier > 'Télécharger').",
-            "tooLongToOpenOnDesktop": "Vous pouvez essayer de l'ouvrir avec l'application par défaut (clic droit sur le fichier > 'Ouvrir avec l'app par défaut').",
             "unknownFileExtension": "L'extension de ce fichier n'a pas pu être reconnue. Veuillez vérifier qu'elle est correctement écrite (.txt, .pdf, .doc, etc.).",
             "noContentFileType": "Impossible d'ouvrir ce fichier, son type n'ayant pas pu être reconnu dans l'éditeur de Parsec.",
             "noFolderPreview": "Impossible d'afficher l'aperçu d'un dossier.",
@@ -2578,9 +2575,12 @@
         "globalTitle": "Impossible d'ouvrir le fichier",
         "errors": {
             "titles": {
-                "networkOffline": "Connexion réseau perdue"
+                "networkOffline": "Connexion réseau perdue",
+                "tooLongToOpen": "Le fichier semble mettre trop de temps à s'ouvrir"
             },
             "networkOfflineMessage": "Votre connexion réseau a été perdue. Veuillez vérifier votre connexion internet et réessayer. Les modifications non enregistrées peuvent être perdues.",
+            "tooLongToOpenOnWeb": "Vous pouvez essayer de le télécharger et de l'ouvrir avec l'application par défaut (clic droit sur le fichier > 'Télécharger').",
+            "tooLongToOpenOnDesktop": "Vous pouvez essayer de l'ouvrir avec l'application par défaut (clic droit sur le fichier > 'Ouvrir avec l'app par défaut').",
             "contentInfoMissing": "Les informations sur le contenu du fichier sont vides ou manquantes.",
             "fileExtensionMissing": "Le type de fichier (extension) est manquant ou vide.",
             "fileNameMissing": "Le nom du fichier est vide ou manquant.",
@@ -2590,12 +2590,15 @@
         "advices": {
             "title": "Quelques conseils pour résoudre ce problème",
             "advice1": "Vérifier que le fichier s'ouvre correctement depuis un logiciel externe.",
-            "advice2": "Ré-importer le fichier (vérifier les versions).",
-            "advice3": "Si le fichier s'ouvrait avant, essayer de restaurer une version antérieure (via l'historique du fichier)"
+            "advice2": "Si le fichier s'ouvrait avant, essayer de restaurer une version antérieure (via l'historique du fichier)"
         },
         "actions": {
             "backToFiles": "Retour aux fichiers",
-            "retry": "Recharger la page"
+            "retry": "Recharger la page",
+            "openWithDefaultApp": "Ouvrir avec l'app par défaut",
+            "downloadFile": "Télécharger le fichier",
+            "wait": "Attendre",
+            "close": "Fermer"
         },
         "saving": {
             "unsaved": "Modifications non sauvegardées",
