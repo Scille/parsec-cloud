@@ -1,0 +1,32 @@
+{
+    "label": "AsyncEnrollmentLocalPending",
+    "type": "async_enrollment_local_pending",
+    "other_fields": [
+        {
+            // Serialized `AsyncEnrollmentLocalPendingCleartextContent`
+            // It contains all the fields that shouldn't be encrypted (typically
+            // useful to list the pending enrollments without requiring authentication).
+            "name": "cleartext_content",
+            "type": "Bytes"
+        },
+        {
+            // `HashDigest` (i.e. sha256 hash) of the `cleartext_content` field,
+            // encrypted with the ciphertext key (i.e. a `SecretKey`).
+            // This is used to ensure the cleartext data hasn't been tempered.
+            "name": "ciphertext_cleartext_content_digest",
+            "type": "Bytes"
+        },
+        {
+            // To-be-created device's `VerifyKey` encrypted with the ciphertext
+            // key (i.e. a `SecretKey`) from the identity system.
+            "name": "ciphertext_signing_key",
+            "type": "Bytes"
+        },
+        {
+            // To-be-created user's `PrivateKey` encrypted with the ciphertext
+            // key (i.e. a `SecretKey`) from the identity system.
+            "name": "ciphertext_private_key",
+            "type": "Bytes"
+        }
+    ]
+}

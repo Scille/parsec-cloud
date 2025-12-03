@@ -1,0 +1,30 @@
+{
+    "label": "AsyncEnrollmentAcceptPayload",
+    "type": "async_enrollment_accept_payload",
+    "other_fields": [
+        {
+            "name": "user_id",
+            "type": "UserID"
+        },
+        {
+            "name": "device_id",
+            "type": "DeviceID"
+        },
+        {
+            "name": "device_label",
+            "type": "DeviceLabel"
+        },
+        {
+            "name": "human_handle",
+            "type": "HumanHandle"
+        },
+        {
+            "name": "profile",
+            "type": "UserProfile"
+        },
+        {
+            "name": "root_verify_key",
+            "type": "VerifyKey"
+        }
+    ]
+}
