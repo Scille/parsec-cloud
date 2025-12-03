@@ -10,6 +10,7 @@ const EXTERNAL_URLS = [
   'docs.parsec.cloud',
   'sign-dev.parsec.cloud',
   'sign.parsec.cloud',
+  'www.proconnect.gouv.fr',
 ];
 
 export async function mockExternalWebsites(context: MsContext): Promise<void> {

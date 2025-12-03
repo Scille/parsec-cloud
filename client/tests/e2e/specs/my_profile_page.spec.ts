@@ -149,6 +149,56 @@ msTest('Change password', async ({ myProfilePage }) => {
   await expect(profile.locator('.text-content-name')).toHaveText('Alicey McAliceFace');
 });
 
+msTest('Change auth to/from openbao', async ({ myProfilePage }) => {
+  await expect(myProfilePage.locator('.menu-list__item').nth(2)).toHaveText('Authentication');
+  await myProfilePage.locator('.menu-list__item').nth(2).click();
+  await expect(myProfilePage.locator('.profile-content-item').locator('.item-header__title')).toHaveText('Authentication');
+  await myProfilePage.locator('#change-authentication-button').click();
+  const changePasswordModal = myProfilePage.locator('.change-authentication-modal');
+  await expect(changePasswordModal).toBeVisible();
+  await expect(changePasswordModal.locator('.modal-header')).toHaveText('Enter your current password');
+  await expect(changePasswordModal.locator('ion-footer').locator('#next-button')).toBeTrulyDisabled();
+  const currentPasswordContainer = changePasswordModal.locator('.input-container').nth(0);
+
+  await fillIonInput(currentPasswordContainer.locator('ion-input'), 'P@ssw0rd.');
+  await changePasswordModal.locator('#next-button').click();
+
+  await expect(changePasswordModal.locator('.modal-header')).toHaveText('Change authentication method');
+  await expect(changePasswordModal.locator('#next-button')).toHaveDisabledAttribute();
+
+  const authRadio = changePasswordModal.locator('.radio-list-item:visible');
+  await expect(authRadio).toHaveCount(3);
+  await expect(authRadio.nth(2)).toHaveText('Single Sign-OnLogin with an external account');
+  await authRadio.nth(2).click();
+
+  await expect(changePasswordModal.locator('#next-button')).toHaveText('Update');
+  await expect(changePasswordModal.locator('#next-button')).toHaveDisabledAttribute();
+  await changePasswordModal.locator('.proconnect-button').click();
+  await expect(changePasswordModal.locator('#next-button')).toNotHaveDisabledAttribute();
+  await changePasswordModal.locator('#next-button').click();
+  await expect(changePasswordModal).toBeHidden();
+  await expect(myProfilePage).toShowToast('Authentication has been updated.', 'Success');
+
+  await logout(myProfilePage);
+
+  // Alias for clarity
+  const home = myProfilePage;
+
+  await home.locator('.organization-list').locator('.organization-card').nth(0).click();
+  await home.locator('.login-card').locator('.proconnect-button').click();
+  await expect(home).toBeWorkspacePage();
+  await expect(home).toHaveHeader(['My workspaces'], false, false);
+  const profile = home.locator('.topbar').locator('.profile-header');
+  await expect(profile.locator('.text-content-name')).toHaveText('Alicey McAliceFace');
+  await profile.click();
+  const myProfileButton = home.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(2);
+  await expect(myProfileButton).toHaveText('Authentication');
+  await myProfileButton.click();
+  await expect(myProfilePage.locator('.profile-content-item').locator('.item-header__title')).toHaveText('Authentication');
+
+  await myProfilePage.locator('#change-authentication-button').click();
+});
+
 msTest('Check settings section', async ({ myProfilePage }) => {
   await checkMenuItem(myProfilePage, 0, 'Settings');
   await expect(myProfilePage.locator('.profile-content-item').nth(0).locator('.settings-list-group__title')).toHaveText([

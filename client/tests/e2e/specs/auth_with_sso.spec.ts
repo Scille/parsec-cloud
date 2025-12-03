@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Locator, Page } from '@playwright/test';
-import { DEFAULT_USER_INFORMATION, expect, fillIonInput, logout, msTest } from '@tests/e2e/helpers';
+import { DEFAULT_USER_INFORMATION, expect, fillIonInput, logout, msTest, openExternalLink } from '@tests/e2e/helpers';
 import { randomInt } from 'crypto';
 
 async function openCreateOrganizationModal(page: Page): Promise<Locator> {
@@ -112,4 +112,40 @@ msTest('Go through custom org creation process, auth SSO', async ({ home }) => {
   await expect(home).toBeWorkspacePage();
 
   await home.release();
+});
+
+msTest('Check ProConnect link', async ({ home }) => {
+  const modal = await openCreateOrganizationModal(home);
+
+  const uniqueOrgName = `${home.orgInfo.name}-${randomInt(2 ** 47)}`;
+  const orgServerContainer = modal.locator('.organization-name-and-server-page');
+  const orgNext = orgServerContainer.locator('.organization-name-and-server-page-footer').locator('ion-button').nth(1);
+  await fillIonInput(orgServerContainer.locator('ion-input').nth(0), uniqueOrgName);
+  await fillIonInput(orgServerContainer.locator('ion-input').nth(1), home.orgInfo.serverAddr);
+  await expect(orgNext).toNotHaveDisabledAttribute();
+  await orgNext.click();
+  await expect(orgServerContainer).toBeHidden();
+
+  const userInfoContainer = modal.locator('.user-information-page');
+  const userNext = modal.locator('.user-information-page-footer').locator('ion-button').nth(1);
+  await expect(userInfoContainer).toBeVisible();
+  await expect(userInfoContainer.locator('.modal-header-title__text')).toHaveText('Enter your personal information');
+  await fillIonInput(userInfoContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.name);
+  await fillIonInput(userInfoContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.email);
+  await expect(userNext).toNotHaveDisabledAttribute();
+  await userNext.click();
+
+  const authContainer = modal.locator('.authentication-page');
+  await expect(userInfoContainer).toBeHidden();
+  await expect(authContainer).toBeVisible();
+
+  const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
+  await expect(authRadio).toHaveCount(3);
+  await expect(authRadio.nth(2).locator('.authentication-card-text__title')).toHaveText('Single Sign-On');
+  await expect(authRadio.nth(2).locator('.authentication-card-text__description')).toHaveText('Login with an external account');
+  await authRadio.nth(2).click();
+  const card = authContainer.locator('.sso-provider-card');
+  await expect(card).toHaveCount(1);
+  await expect(card.locator('a')).toHaveText("What's ProConnect?");
+  await openExternalLink(home, card.locator('a'), /^https:\/\/www\.proconnect\.gouv\.fr\/?.*$/);
 });
