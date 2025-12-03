@@ -206,6 +206,14 @@ export class Cryptpad {
 
       // Race between successful loading (onReady callback) and timeout
       await Promise.race([loadingComplete, timeoutPromise]);
+
+      // No way to know if the history really changed.
+      // Something changes about it, window.history.length` gets incremented
+      // but the state doesn't change. Tried the navigation API, same things.
+      // Tried to monkeypatch pushState, nop. There's no way to detect that
+      // the iframe navigated, changing the main history enough that
+      // history.back() is required, but not enough that `history.state` changes.
+      window.history.back();
     } finally {
       window.clearTimeout(loadingTimeoutId);
       // Clean up global config reference
@@ -224,12 +232,17 @@ export function getCryptpadDocumentType(contentType: FileContentType): CryptpadD
       return CryptpadDocumentType.Sheet;
     case FileContentType.Document:
       return CryptpadDocumentType.Doc;
+    case FileContentType.Presentation:
+      return CryptpadDocumentType.Presentation;
     default:
       return CryptpadDocumentType.Unsupported;
   }
 }
 
 export function isEnabledCryptpadDocumentType(contentType: FileContentType): boolean {
+  if (!Env.isEditicsEnabled()) {
+    return false;
+  }
   return ENABLED_DOCUMENT_TYPES.includes(getCryptpadDocumentType(contentType));
 }
 
