@@ -122,6 +122,7 @@ getcapacitor
 ghijklmnopqrstu
 gifv
 gloo
+gouv
 gradlew
 gsettings
 hasnt

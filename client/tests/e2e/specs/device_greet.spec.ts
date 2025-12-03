@@ -247,6 +247,7 @@ msTest('Greet device whole process on large display', async ({ myProfilePage }) 
   await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
   await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
   await expect(authRadio.nth(1)).toHaveText('Password');
+  await expect(authRadio.nth(2)).toHaveText('Single Sign-OnLogin with an external account');
   await authRadio.nth(1).click();
   const passwordChoice = joinData.content.locator('#get-password').locator('.choose-password');
   await passwordChoice.scrollIntoViewIfNeeded();
