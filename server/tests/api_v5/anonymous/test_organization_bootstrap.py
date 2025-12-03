@@ -11,10 +11,8 @@ from parsec._parsec import (
     ActiveUsersLimit,
     BootstrapToken,
     DateTime,
-    DeviceCertificate,
     DeviceID,
     DeviceLabel,
-    DevicePurpose,
     EmailAddress,
     HumanHandle,
     OrganizationID,
@@ -24,7 +22,6 @@ from parsec._parsec import (
     SequesterSigningKeyDer,
     SigningKey,
     SigningKeyAlgorithm,
-    UserCertificate,
     UserID,
     UserProfile,
     anonymous_cmds,
@@ -39,6 +36,7 @@ from tests.common import (
     TestbedBackend,
     next_organization_id,
 )
+from tests.common.utils import generate_new_device_certificates, generate_new_user_certificates
 
 
 @dataclass
@@ -357,43 +355,26 @@ async def test_anonymous_organization_bootstrap_timestamp_out_of_ballpark(
     user_human_handle = HumanHandle(EmailAddress("foo@bar.com"), str(user_id))
     device_label = DeviceLabel("device label")
 
-    user_certificate = UserCertificate(
-        author=None,
-        timestamp=late if user_certif_late else now,
-        user_id=user_id,
-        human_handle=user_human_handle,
-        public_key=user_priv_key.public_key,
+    user_certificates = generate_new_user_certificates(
+        late if user_certif_late else now,
+        user_id,
+        user_human_handle,
+        UserProfile.ADMIN,
+        user_priv_key.public_key,
         algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
-        profile=UserProfile.ADMIN,
+        author_device_id=None,
+        author_signing_key=root_signing_key,
     )
-    redacted_user_certificate = UserCertificate(
-        author=user_certificate.author,
-        timestamp=user_certificate.timestamp,
-        user_id=user_certificate.user_id,
-        human_handle=None,
-        public_key=user_certificate.public_key,
-        algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
-        profile=user_certificate.profile,
-    )
-    device_certificate = DeviceCertificate(
-        author=device_id,
-        timestamp=late if device_certif_late else now,
-        purpose=DevicePurpose.STANDARD,
-        user_id=user_id,
-        device_id=device_id,
-        device_label=device_label,
-        verify_key=root_verify_key,
+
+    device_certificates = generate_new_device_certificates(
+        late if device_certif_late else now,
+        user_id,
+        device_id,
+        device_label,
+        root_verify_key,
         algorithm=SigningKeyAlgorithm.ED25519,
-    )
-    redacted_device_certificate = DeviceCertificate(
-        author=device_certificate.author,
-        timestamp=device_certificate.timestamp,
-        purpose=DevicePurpose.STANDARD,
-        user_id=user_id,
-        device_id=device_certificate.device_id,
-        device_label=None,
-        verify_key=device_certificate.verify_key,
-        algorithm=SigningKeyAlgorithm.ED25519,
+        author_device_id=device_id,
+        author_signing_key=root_signing_key,
     )
 
     _, sequester_verify_key = SequesterSigningKeyDer.generate_pair(1024)
@@ -406,10 +387,10 @@ async def test_anonymous_organization_bootstrap_timestamp_out_of_ballpark(
     rep = await anonymous_client.organization_bootstrap(
         bootstrap_token=config.bootstrap_token,
         root_verify_key=root_verify_key,
-        user_certificate=user_certificate.dump_and_sign(root_signing_key),
-        device_certificate=device_certificate.dump_and_sign(root_signing_key),
-        redacted_user_certificate=redacted_user_certificate.dump_and_sign(root_signing_key),
-        redacted_device_certificate=redacted_device_certificate.dump_and_sign(root_signing_key),
+        user_certificate=user_certificates.signed_certificate,
+        device_certificate=device_certificates.signed_certificate,
+        redacted_user_certificate=user_certificates.signed_redacted_certificate,
+        redacted_device_certificate=device_certificates.signed_redacted_certificate,
         sequester_authority_certificate=sequester_authority_certificate.dump_and_sign(
             root_signing_key
         )

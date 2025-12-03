@@ -5,10 +5,8 @@ import pytest
 from parsec._parsec import (
     ActiveUsersLimit,
     DateTime,
-    DeviceCertificate,
     DeviceID,
     DeviceLabel,
-    DevicePurpose,
     EmailAddress,
     HumanHandle,
     PrivateKey,
@@ -16,7 +14,6 @@ from parsec._parsec import (
     RevokedUserCertificate,
     SigningKey,
     SigningKeyAlgorithm,
-    UserCertificate,
     UserID,
     UserProfile,
     authenticated_cmds,
@@ -32,6 +29,7 @@ from tests.common import (
     TestbedBackend,
     bob_becomes_admin_and_changes_alice,
 )
+from tests.common.utils import generate_new_device_certificates, generate_new_user_certificates
 
 NEW_MIKE_USER_ID = UserID.new()
 NEW_MIKE_DEVICE_ID = DeviceID.new()
@@ -47,33 +45,19 @@ def generate_new_mike_device_certificates(
     user_id=NEW_MIKE_USER_ID,
     device_id=NEW_MIKE_DEVICE_ID,
     verify_key=NEW_MIKE_SIGNING_KEY.verify_key,
-    author_device_id=None,
+    author_device_id: DeviceID | None = None,
 ) -> tuple[bytes, bytes]:
-    author_device_id = author_device_id or author.device_id
-
-    raw_device_certificate = DeviceCertificate(
-        author=author_device_id,
+    certs = generate_new_device_certificates(
         timestamp=timestamp,
-        purpose=DevicePurpose.STANDARD,
         user_id=user_id,
         device_id=device_id,
+        verify_key=verify_key,
         device_label=NEW_MIKE_DEVICE_LABEL,
-        verify_key=verify_key,
         algorithm=SigningKeyAlgorithm.ED25519,
-    ).dump_and_sign(author.signing_key)
-
-    raw_redacted_device_certificate = DeviceCertificate(
-        author=author_device_id,
-        timestamp=timestamp,
-        purpose=DevicePurpose.STANDARD,
-        user_id=user_id,
-        device_id=device_id,
-        device_label=None,
-        verify_key=verify_key,
-        algorithm=SigningKeyAlgorithm.ED25519,
-    ).dump_and_sign(author.signing_key)
-
-    return raw_device_certificate, raw_redacted_device_certificate
+        author_device_id=author_device_id or author.device_id,
+        author_signing_key=author.signing_key,
+    )
+    return certs.signed_certificate, certs.signed_redacted_certificate
 
 
 def generate_new_mike_user_certificates(
@@ -83,31 +67,19 @@ def generate_new_mike_user_certificates(
     human_handle=NEW_MIKE_HUMAN_HANDLE,
     public_key=NEW_MIKE_PRIVATE_KEY.public_key,
     profile=UserProfile.STANDARD,
-    author_device_id=None,
+    author_device_id: DeviceID | None = None,
 ) -> tuple[bytes, bytes]:
-    author_device_id = author_device_id or author.device_id
-
-    raw_user_certificate = UserCertificate(
-        author=author_device_id,
+    certs = generate_new_user_certificates(
         timestamp=timestamp,
         user_id=user_id,
         human_handle=human_handle,
-        profile=profile,
         public_key=public_key,
-        algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
-    ).dump_and_sign(author.signing_key)
-
-    raw_redacted_user_certificate = UserCertificate(
-        author=author_device_id,
-        timestamp=timestamp,
-        user_id=user_id,
-        human_handle=None,
         profile=profile,
-        public_key=public_key,
         algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
-    ).dump_and_sign(author.signing_key)
-
-    return raw_user_certificate, raw_redacted_user_certificate
+        author_device_id=author_device_id or author.device_id,
+        author_signing_key=author.signing_key,
+    )
+    return certs.signed_certificate, certs.signed_redacted_certificate
 
 
 async def test_authenticated_user_create_ok(
