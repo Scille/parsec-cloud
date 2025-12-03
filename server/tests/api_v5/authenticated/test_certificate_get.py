@@ -5,16 +5,13 @@ import pytest
 from parsec._parsec import (
     BootstrapToken,
     DateTime,
-    DeviceCertificate,
     DeviceID,
     DeviceLabel,
-    DevicePurpose,
     EmailAddress,
     HashAlgorithm,
     HumanHandle,
     InvitationToken,
     PrivateKey,
-    PrivateKeyAlgorithm,
     RealmKeyRotationCertificate,
     RealmNameCertificate,
     RealmRole,
@@ -25,8 +22,6 @@ from parsec._parsec import (
     ShamirRecoveryDeletionCertificate,
     ShamirRecoveryShareCertificate,
     SigningKey,
-    SigningKeyAlgorithm,
-    UserCertificate,
     UserID,
     UserProfile,
     UserUpdateCertificate,
@@ -46,6 +41,7 @@ from tests.common import (
     next_organization_id,
 )
 from tests.common.data import wksp1_alice_gives_role
+from tests.common.utils import generate_new_device_certificates, generate_new_user_certificates
 
 
 @pytest.mark.parametrize("redacted", (False, True))
@@ -75,47 +71,25 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     alice_privkey = PrivateKey.generate()
     alice_signkey = SigningKey.generate()
 
-    alice_user_certificate = UserCertificate(
-        author=None,
-        timestamp=t1,
-        user_id=alice_user_id,
-        profile=UserProfile.ADMIN,
-        human_handle=HumanHandle(label="Alice", email=EmailAddress("alice@example.invalid")),
-        public_key=alice_privkey.public_key,
-        algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
-    ).dump_and_sign(root_key)
+    alice_user_certificates = generate_new_user_certificates(
+        t1,
+        alice_user_id,
+        HumanHandle(label="Alice", email=EmailAddress("alice@example.invalid")),
+        UserProfile.ADMIN,
+        alice_privkey.public_key,
+        author_device_id=None,
+        author_signing_key=root_key,
+    )
 
-    alice_redacted_user_certificate = UserCertificate(
-        author=None,
-        timestamp=t1,
-        user_id=alice_user_id,
-        profile=UserProfile.ADMIN,
-        human_handle=None,
-        public_key=alice_privkey.public_key,
-        algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
-    ).dump_and_sign(root_key)
-
-    alice_device_certificate = DeviceCertificate(
-        author=None,
-        timestamp=t1,
-        purpose=DevicePurpose.STANDARD,
-        user_id=alice_user_id,
-        device_id=alice1_device_id,
-        device_label=DeviceLabel("Dev1"),
-        verify_key=alice_signkey.verify_key,
-        algorithm=SigningKeyAlgorithm.ED25519,
-    ).dump_and_sign(root_key)
-
-    alice_redacted_device_certificate = DeviceCertificate(
-        author=None,
-        timestamp=t1,
-        purpose=DevicePurpose.STANDARD,
-        user_id=alice_user_id,
-        device_id=alice1_device_id,
-        device_label=None,
-        verify_key=alice_signkey.verify_key,
-        algorithm=SigningKeyAlgorithm.ED25519,
-    ).dump_and_sign(root_key)
+    alice_device_certificates = generate_new_device_certificates(
+        t1,
+        alice_user_id,
+        alice1_device_id,
+        DeviceLabel("Dev1"),
+        alice_signkey.verify_key,
+        author_device_id=None,
+        author_signing_key=root_key,
+    )
 
     bootstrap_token = BootstrapToken.new()
     await backend.organization.create(now=t1, id=org_id, force_bootstrap_token=bootstrap_token)
@@ -124,20 +98,20 @@ async def test_authenticated_certificate_get_ok_common_certificates(
         now=t1,
         bootstrap_token=bootstrap_token,
         root_verify_key=root_key.verify_key,
-        user_certificate=alice_user_certificate,
-        device_certificate=alice_device_certificate,
-        redacted_user_certificate=alice_redacted_user_certificate,
-        redacted_device_certificate=alice_redacted_device_certificate,
+        user_certificate=alice_user_certificates.signed_certificate,
+        device_certificate=alice_device_certificates.signed_certificate,
+        redacted_user_certificate=alice_user_certificates.signed_redacted_certificate,
+        redacted_device_certificate=alice_device_certificates.signed_redacted_certificate,
         sequester_authority_certificate=None,
     )
     assert isinstance(outcome, tuple)
 
     if redacted:
-        expected_common_certificates.append(alice_redacted_user_certificate)
-        expected_common_certificates.append(alice_redacted_device_certificate)
+        expected_common_certificates.append(alice_user_certificates.signed_redacted_certificate)
+        expected_common_certificates.append(alice_device_certificates.signed_redacted_certificate)
     else:
-        expected_common_certificates.append(alice_user_certificate)
-        expected_common_certificates.append(alice_device_certificate)
+        expected_common_certificates.append(alice_user_certificates.signed_certificate)
+        expected_common_certificates.append(alice_device_certificates.signed_certificate)
 
     # 2) Bob is created
 
@@ -145,66 +119,45 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     bob1_device_id = DeviceID.test_from_nickname("bob@dev1")
     bob_privkey = PrivateKey.generate()
     bob_signkey = SigningKey.generate()
-    bob_user_certificate = UserCertificate(
-        author=alice1_device_id,
-        timestamp=t2,
-        user_id=bob_user_id,
-        profile=UserProfile.STANDARD,
-        human_handle=HumanHandle(label="Bob", email=EmailAddress("bob@example.invalid")),
-        public_key=bob_privkey.public_key,
-        algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
-    ).dump_and_sign(alice_signkey)
 
-    bob_redacted_user_certificate = UserCertificate(
-        author=alice1_device_id,
-        timestamp=t2,
-        user_id=bob_user_id,
-        profile=UserProfile.STANDARD,
-        human_handle=None,
-        public_key=bob_privkey.public_key,
-        algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
-    ).dump_and_sign(alice_signkey)
+    bob_user_certificates = generate_new_user_certificates(
+        t2,
+        bob_user_id,
+        HumanHandle(label="Bob", email=EmailAddress("bob@example.invalid")),
+        UserProfile.STANDARD,
+        bob_privkey.public_key,
+        author_device_id=alice1_device_id,
+        author_signing_key=alice_signkey,
+    )
 
-    bob_device_certificate = DeviceCertificate(
-        author=alice1_device_id,
-        timestamp=t2,
-        purpose=DevicePurpose.STANDARD,
-        user_id=bob_user_id,
-        device_id=bob1_device_id,
-        device_label=DeviceLabel("Dev1"),
-        verify_key=bob_signkey.verify_key,
-        algorithm=SigningKeyAlgorithm.ED25519,
-    ).dump_and_sign(alice_signkey)
-
-    bob_redacted_device_certificate = DeviceCertificate(
-        author=alice1_device_id,
-        timestamp=t2,
-        purpose=DevicePurpose.STANDARD,
-        user_id=bob_user_id,
-        device_id=bob1_device_id,
-        device_label=None,
-        verify_key=bob_signkey.verify_key,
-        algorithm=SigningKeyAlgorithm.ED25519,
-    ).dump_and_sign(alice_signkey)
+    bob_device_certificates = generate_new_device_certificates(
+        t2,
+        bob_user_id,
+        bob1_device_id,
+        DeviceLabel("Dev1"),
+        bob_signkey.verify_key,
+        author_device_id=alice1_device_id,
+        author_signing_key=alice_signkey,
+    )
 
     outcome = await backend.user.create_user(
         organization_id=org_id,
         now=t2,
         author=alice1_device_id,
         author_verify_key=alice_signkey.verify_key,
-        user_certificate=bob_user_certificate,
-        device_certificate=bob_device_certificate,
-        redacted_user_certificate=bob_redacted_user_certificate,
-        redacted_device_certificate=bob_redacted_device_certificate,
+        user_certificate=bob_user_certificates.signed_certificate,
+        device_certificate=bob_device_certificates.signed_certificate,
+        redacted_user_certificate=bob_user_certificates.signed_redacted_certificate,
+        redacted_device_certificate=bob_device_certificates.signed_redacted_certificate,
     )
     assert isinstance(outcome, tuple)
 
     if redacted:
-        expected_common_certificates.append(bob_redacted_user_certificate)
-        expected_common_certificates.append(bob_redacted_device_certificate)
+        expected_common_certificates.append(bob_user_certificates.signed_redacted_certificate)
+        expected_common_certificates.append(bob_device_certificates.signed_redacted_certificate)
     else:
-        expected_common_certificates.append(bob_user_certificate)
-        expected_common_certificates.append(bob_device_certificate)
+        expected_common_certificates.append(bob_user_certificates.signed_certificate)
+        expected_common_certificates.append(bob_device_certificates.signed_certificate)
 
     # 3) Bob profile is changed
 
@@ -232,66 +185,45 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     mallory_signkey = SigningKey.generate()
     mallory_user_id = UserID.test_from_nickname("mallory")
     mallory1_device_id = DeviceID.test_from_nickname("mallory@dev1")
-    mallory_user_certificate = UserCertificate(
-        author=alice1_device_id,
-        timestamp=t4,
-        user_id=mallory_user_id,
-        profile=UserProfile.OUTSIDER,
-        human_handle=HumanHandle(label="Mallory", email=EmailAddress("mallory@example.invalid")),
-        public_key=mallory_privkey.public_key,
-        algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
-    ).dump_and_sign(alice_signkey)
 
-    mallory_redacted_user_certificate = UserCertificate(
-        author=alice1_device_id,
-        timestamp=t4,
-        user_id=mallory_user_id,
-        profile=UserProfile.OUTSIDER,
-        human_handle=None,
-        public_key=mallory_privkey.public_key,
-        algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
-    ).dump_and_sign(alice_signkey)
+    mallory_user_certificates = generate_new_user_certificates(
+        t4,
+        mallory_user_id,
+        HumanHandle(label="Mallory", email=EmailAddress("mallory@example.invalid")),
+        UserProfile.OUTSIDER,
+        mallory_privkey.public_key,
+        author_device_id=alice1_device_id,
+        author_signing_key=alice_signkey,
+    )
 
-    mallory_device_certificate = DeviceCertificate(
-        author=alice1_device_id,
-        timestamp=t4,
-        purpose=DevicePurpose.STANDARD,
-        user_id=mallory_user_id,
-        device_id=mallory1_device_id,
-        device_label=DeviceLabel("Dev1"),
-        verify_key=mallory_signkey.verify_key,
-        algorithm=SigningKeyAlgorithm.ED25519,
-    ).dump_and_sign(alice_signkey)
-
-    mallory_redacted_device_certificate = DeviceCertificate(
-        author=alice1_device_id,
-        timestamp=t4,
-        purpose=DevicePurpose.STANDARD,
-        user_id=mallory_user_id,
-        device_id=mallory1_device_id,
-        device_label=None,
-        verify_key=mallory_signkey.verify_key,
-        algorithm=SigningKeyAlgorithm.ED25519,
-    ).dump_and_sign(alice_signkey)
+    mallory_device_certificates = generate_new_device_certificates(
+        t4,
+        mallory_user_id,
+        mallory1_device_id,
+        DeviceLabel("Dev1"),
+        mallory_signkey.verify_key,
+        author_device_id=alice1_device_id,
+        author_signing_key=alice_signkey,
+    )
 
     outcome = await backend.user.create_user(
         organization_id=org_id,
         now=t4,
         author=alice1_device_id,
         author_verify_key=alice_signkey.verify_key,
-        user_certificate=mallory_user_certificate,
-        device_certificate=mallory_device_certificate,
-        redacted_user_certificate=mallory_redacted_user_certificate,
-        redacted_device_certificate=mallory_redacted_device_certificate,
+        user_certificate=mallory_user_certificates.signed_certificate,
+        device_certificate=mallory_device_certificates.signed_certificate,
+        redacted_user_certificate=mallory_user_certificates.signed_redacted_certificate,
+        redacted_device_certificate=mallory_device_certificates.signed_redacted_certificate,
     )
     assert isinstance(outcome, tuple)
 
     if redacted:
-        expected_common_certificates.append(mallory_redacted_user_certificate)
-        expected_common_certificates.append(mallory_redacted_device_certificate)
+        expected_common_certificates.append(mallory_user_certificates.signed_redacted_certificate)
+        expected_common_certificates.append(mallory_device_certificates.signed_redacted_certificate)
     else:
-        expected_common_certificates.append(mallory_user_certificate)
-        expected_common_certificates.append(mallory_device_certificate)
+        expected_common_certificates.append(mallory_user_certificates.signed_certificate)
+        expected_common_certificates.append(mallory_device_certificates.signed_certificate)
 
     # 5) Bob is revoked
 

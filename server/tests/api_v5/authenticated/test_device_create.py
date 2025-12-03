@@ -4,7 +4,6 @@ import pytest
 
 from parsec._parsec import (
     DateTime,
-    DeviceCertificate,
     DeviceID,
     DeviceLabel,
     DevicePurpose,
@@ -23,6 +22,7 @@ from tests.common import (
     MinimalorgRpcClients,
     TestbedBackend,
 )
+from tests.common.utils import generate_new_device_certificates
 
 NEW_ALICE_DEVICE_ID = DeviceID.new()
 NEW_ALICE_SIGNING_KEY = SigningKey.generate()
@@ -38,30 +38,18 @@ def generate_new_alice_device_certificates(
     purpose=DevicePurpose.STANDARD,
     algorithm=SigningKeyAlgorithm.ED25519,
 ) -> tuple[bytes, bytes]:
-    author_device_id = author_device_id or alice.device_id
-    raw_device_certificate = DeviceCertificate(
-        author=author_device_id,
-        timestamp=timestamp,
+    alice_dev_certs = generate_new_device_certificates(
+        timestamp,
+        user_id,
+        device_id,
+        DeviceLabel("New device"),
+        verify_key,
         purpose=purpose,
-        user_id=user_id,
-        device_id=device_id,
-        device_label=DeviceLabel("New device"),
-        verify_key=verify_key,
         algorithm=algorithm,
-    ).dump_and_sign(alice.signing_key)
-
-    raw_redacted_device_certificate = DeviceCertificate(
-        author=author_device_id,
-        timestamp=timestamp,
-        purpose=purpose,
-        user_id=user_id,
-        device_id=device_id,
-        device_label=None,
-        verify_key=verify_key,
-        algorithm=algorithm,
-    ).dump_and_sign(alice.signing_key)
-
-    return raw_device_certificate, raw_redacted_device_certificate
+        author_device_id=author_device_id or alice.device_id,
+        author_signing_key=alice.signing_key,
+    )
+    return alice_dev_certs.signed_certificate, alice_dev_certs.signed_redacted_certificate
 
 
 async def test_authenticated_device_create_ok(

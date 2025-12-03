@@ -3,29 +3,25 @@
 from parsec._parsec import (
     BlockID,
     DateTime,
-    DeviceCertificate,
     DeviceID,
     DeviceLabel,
-    DevicePurpose,
     EmailAddress,
     HashAlgorithm,
     HumanHandle,
     PrivateKey,
-    PrivateKeyAlgorithm,
     RealmKeyRotationCertificate,
     RealmRole,
     RealmRoleCertificate,
     RevokedUserCertificate,
     SecretKeyAlgorithm,
     SigningKey,
-    SigningKeyAlgorithm,
-    UserCertificate,
     UserID,
     UserProfile,
     UserUpdateCertificate,
     VlobID,
 )
 from tests.common import Backend, CoolorgRpcClients
+from tests.common.utils import generate_new_device_certificates, generate_new_user_certificates
 
 
 async def insert_full_data(
@@ -57,143 +53,88 @@ async def insert_full_data(
         block=b"block 2",
     )
 
-    zack_u = UserCertificate(
-        author=coolorg.alice.device_id,
-        timestamp=DateTime.now(),
-        user_id=UserID.new(),
-        human_handle=HumanHandle(EmailAddress("zack@invalid.com"), "Zack"),
-        public_key=PrivateKey.generate().public_key,
-        algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
-        profile=UserProfile.STANDARD,
+    zack_u_certs = generate_new_user_certificates(
+        DateTime.now(),
+        UserID.new(),
+        HumanHandle(EmailAddress("zack@invalid.com"), "Zack"),
+        UserProfile.STANDARD,
+        PrivateKey.generate().public_key,
+        author_device_id=coolorg.alice.device_id,
+        author_signing_key=coolorg.alice.signing_key,
     )
-    zack_ur = UserCertificate(
-        author=coolorg.alice.device_id,
-        timestamp=zack_u.timestamp,
-        user_id=zack_u.user_id,
-        human_handle=None,
-        public_key=zack_u.public_key,
-        algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
-        profile=UserProfile.STANDARD,
+
+    zack_d_certs = generate_new_device_certificates(
+        zack_u_certs.certificate.timestamp,
+        zack_u_certs.certificate.user_id,
+        DeviceID.new(),
+        DeviceLabel("pc42"),
+        SigningKey.generate().verify_key,
+        author_device_id=coolorg.alice.device_id,
+        author_signing_key=coolorg.alice.signing_key,
     )
-    zack_d = DeviceCertificate(
-        author=coolorg.alice.device_id,
-        timestamp=zack_u.timestamp,
-        purpose=DevicePurpose.STANDARD,
-        user_id=zack_u.user_id,
-        device_id=DeviceID.new(),
-        device_label=DeviceLabel("pc42"),
-        verify_key=SigningKey.generate().verify_key,
-        algorithm=SigningKeyAlgorithm.ED25519,
-    )
-    zack_dr = DeviceCertificate(
-        author=coolorg.alice.device_id,
-        timestamp=zack_u.timestamp,
-        purpose=DevicePurpose.STANDARD,
-        user_id=zack_u.user_id,
-        device_id=zack_d.device_id,
-        device_label=None,
-        verify_key=zack_d.verify_key,
-        algorithm=SigningKeyAlgorithm.ED25519,
-    )
+
     outcome = await backend.user.create_user(
         DateTime.now(),
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         author_verify_key=coolorg.alice.signing_key.verify_key,
-        user_certificate=zack_u.dump_and_sign(coolorg.alice.signing_key),
-        redacted_user_certificate=zack_ur.dump_and_sign(coolorg.alice.signing_key),
-        device_certificate=zack_d.dump_and_sign(coolorg.alice.signing_key),
-        redacted_device_certificate=zack_dr.dump_and_sign(coolorg.alice.signing_key),
+        user_certificate=zack_u_certs.signed_certificate,
+        redacted_user_certificate=zack_u_certs.signed_redacted_certificate,
+        device_certificate=zack_d_certs.signed_certificate,
+        redacted_device_certificate=zack_d_certs.signed_redacted_certificate,
     )
     assert isinstance(outcome, tuple)
 
-    marty_u = UserCertificate(
-        author=coolorg.alice.device_id,
-        timestamp=DateTime.now(),
-        user_id=UserID.new(),
-        human_handle=HumanHandle(EmailAddress("marty@invalid.com"), "Marty Mc Fly"),
-        public_key=PrivateKey.generate().public_key,
-        algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
-        profile=UserProfile.ADMIN,
+    marty_u_certs = generate_new_user_certificates(
+        DateTime.now(),
+        UserID.new(),
+        HumanHandle(EmailAddress("marty@invalid.com"), "Marty Mc Fly"),
+        UserProfile.ADMIN,
+        PrivateKey.generate().public_key,
+        author_device_id=coolorg.alice.device_id,
+        author_signing_key=coolorg.alice.signing_key,
     )
-    marty_ur = UserCertificate(
-        author=coolorg.alice.device_id,
-        timestamp=marty_u.timestamp,
-        user_id=marty_u.user_id,
-        human_handle=None,
-        public_key=marty_u.public_key,
-        algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
-        profile=UserProfile.ADMIN,
+
+    marty_d_certs = generate_new_device_certificates(
+        marty_u_certs.certificate.timestamp,
+        marty_u_certs.certificate.user_id,
+        DeviceID.new(),
+        DeviceLabel("Overboard"),
+        SigningKey.generate().verify_key,
+        author_device_id=coolorg.alice.device_id,
+        author_signing_key=coolorg.alice.signing_key,
     )
-    marty_d = DeviceCertificate(
-        author=coolorg.alice.device_id,
-        timestamp=marty_u.timestamp,
-        purpose=DevicePurpose.STANDARD,
-        user_id=marty_u.user_id,
-        device_id=DeviceID.new(),
-        device_label=DeviceLabel("Overboard"),
-        verify_key=SigningKey.generate().verify_key,
-        algorithm=SigningKeyAlgorithm.ED25519,
-    )
-    marty_dr = DeviceCertificate(
-        author=coolorg.alice.device_id,
-        timestamp=marty_u.timestamp,
-        purpose=DevicePurpose.STANDARD,
-        user_id=marty_u.user_id,
-        device_id=marty_d.device_id,
-        device_label=None,
-        verify_key=marty_d.verify_key,
-        algorithm=SigningKeyAlgorithm.ED25519,
-    )
+
     outcome = await backend.user.create_user(
         DateTime.now(),
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         author_verify_key=coolorg.alice.signing_key.verify_key,
-        user_certificate=marty_u.dump_and_sign(coolorg.alice.signing_key),
-        redacted_user_certificate=marty_ur.dump_and_sign(coolorg.alice.signing_key),
-        device_certificate=marty_d.dump_and_sign(coolorg.alice.signing_key),
-        redacted_device_certificate=marty_dr.dump_and_sign(coolorg.alice.signing_key),
+        user_certificate=marty_u_certs.signed_certificate,
+        redacted_user_certificate=marty_u_certs.signed_redacted_certificate,
+        device_certificate=marty_d_certs.signed_certificate,
+        redacted_device_certificate=marty_d_certs.signed_redacted_certificate,
     )
     assert isinstance(outcome, tuple)
 
-    doc_u = UserCertificate(
-        author=coolorg.alice.device_id,
-        timestamp=DateTime.now(),
-        user_id=UserID.new(),
-        human_handle=HumanHandle(EmailAddress("doc@invalid.com"), "Doc Emmett Brown"),
-        public_key=PrivateKey.generate().public_key,
-        algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
-        profile=UserProfile.ADMIN,
+    doc_u_certs = generate_new_user_certificates(
+        DateTime.now(),
+        UserID.new(),
+        HumanHandle(EmailAddress("doc@invalid.com"), "Doc Emmett Brown"),
+        UserProfile.ADMIN,
+        PrivateKey.generate().public_key,
+        author_device_id=coolorg.alice.device_id,
+        author_signing_key=coolorg.alice.signing_key,
     )
-    doc_ur = UserCertificate(
-        author=coolorg.alice.device_id,
-        timestamp=doc_u.timestamp,
-        user_id=doc_u.user_id,
-        human_handle=None,
-        public_key=doc_u.public_key,
-        algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
-        profile=UserProfile.ADMIN,
-    )
-    doc_d = DeviceCertificate(
-        author=coolorg.alice.device_id,
-        timestamp=doc_u.timestamp,
-        purpose=DevicePurpose.STANDARD,
-        user_id=doc_u.user_id,
-        device_id=DeviceID.new(),
-        device_label=DeviceLabel("Delorean"),
-        verify_key=SigningKey.generate().verify_key,
-        algorithm=SigningKeyAlgorithm.ED25519,
-    )
-    doc_dr = DeviceCertificate(
-        author=coolorg.alice.device_id,
-        timestamp=doc_u.timestamp,
-        purpose=DevicePurpose.STANDARD,
-        user_id=doc_u.user_id,
-        device_id=doc_d.device_id,
-        device_label=None,
-        verify_key=doc_d.verify_key,
-        algorithm=SigningKeyAlgorithm.ED25519,
+
+    doc_d_certs = generate_new_device_certificates(
+        doc_u_certs.certificate.timestamp,
+        doc_u_certs.certificate.user_id,
+        DeviceID.new(),
+        DeviceLabel("Delorean"),
+        SigningKey.generate().verify_key,
+        author_device_id=coolorg.alice.device_id,
+        author_signing_key=coolorg.alice.signing_key,
     )
 
     outcome = await backend.user.create_user(
@@ -201,17 +142,17 @@ async def insert_full_data(
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         author_verify_key=coolorg.alice.signing_key.verify_key,
-        user_certificate=doc_u.dump_and_sign(coolorg.alice.signing_key),
-        redacted_user_certificate=doc_ur.dump_and_sign(coolorg.alice.signing_key),
-        device_certificate=doc_d.dump_and_sign(coolorg.alice.signing_key),
-        redacted_device_certificate=doc_dr.dump_and_sign(coolorg.alice.signing_key),
+        user_certificate=doc_u_certs.signed_certificate,
+        redacted_user_certificate=doc_u_certs.signed_redacted_certificate,
+        device_certificate=doc_d_certs.signed_certificate,
+        redacted_device_certificate=doc_d_certs.signed_redacted_certificate,
     )
     assert isinstance(outcome, tuple)
 
     zack_update1 = UserUpdateCertificate(
         author=coolorg.alice.device_id,
         timestamp=DateTime.now(),
-        user_id=zack_u.user_id,
+        user_id=zack_u_certs.certificate.user_id,
         new_profile=UserProfile.OUTSIDER,
     )
     outcome = await backend.user.update_user(
@@ -225,7 +166,7 @@ async def insert_full_data(
     zack_update2 = UserUpdateCertificate(
         author=coolorg.alice.device_id,
         timestamp=DateTime.now(),
-        user_id=zack_u.user_id,
+        user_id=zack_u_certs.certificate.user_id,
         new_profile=UserProfile.ADMIN,
     )
     outcome = await backend.user.update_user(
@@ -240,7 +181,7 @@ async def insert_full_data(
     marty_update1 = UserUpdateCertificate(
         author=coolorg.alice.device_id,
         timestamp=DateTime.now(),
-        user_id=marty_u.user_id,
+        user_id=marty_u_certs.certificate.user_id,
         new_profile=UserProfile.STANDARD,
     )
     outcome = await backend.user.update_user(
@@ -318,7 +259,7 @@ async def insert_full_data(
     marty_rr1 = RealmRoleCertificate(
         author=coolorg.alice.device_id,
         timestamp=DateTime.now(),
-        user_id=marty_u.user_id,
+        user_id=marty_u_certs.certificate.user_id,
         realm_id=coolorg.wksp1_id,
         role=RealmRole.READER,
     )
@@ -336,7 +277,7 @@ async def insert_full_data(
     marty_rr2 = RealmRoleCertificate(
         author=coolorg.alice.device_id,
         timestamp=DateTime.now(),
-        user_id=marty_u.user_id,
+        user_id=marty_u_certs.certificate.user_id,
         realm_id=coolorg.wksp1_id,
         role=RealmRole.CONTRIBUTOR,
     )
@@ -354,7 +295,7 @@ async def insert_full_data(
     zack_rr1 = RealmRoleCertificate(
         author=coolorg.alice.device_id,
         timestamp=DateTime.now(),
-        user_id=zack_u.user_id,
+        user_id=zack_u_certs.certificate.user_id,
         realm_id=coolorg.wksp1_id,
         role=RealmRole.MANAGER,
     )
@@ -372,7 +313,7 @@ async def insert_full_data(
     doc_rr1 = RealmRoleCertificate(
         author=coolorg.alice.device_id,
         timestamp=DateTime.now(),
-        user_id=doc_u.user_id,
+        user_id=doc_u_certs.certificate.user_id,
         realm_id=coolorg.wksp1_id,
         role=RealmRole.CONTRIBUTOR,
     )
@@ -390,7 +331,7 @@ async def insert_full_data(
     doc_rr2 = RealmRoleCertificate(
         author=coolorg.alice.device_id,
         timestamp=DateTime.now(),
-        user_id=doc_u.user_id,
+        user_id=doc_u_certs.certificate.user_id,
         realm_id=coolorg.wksp1_id,
         role=None,
     )
@@ -406,7 +347,7 @@ async def insert_full_data(
     zack_revoke = RevokedUserCertificate(
         author=coolorg.alice.device_id,
         timestamp=DateTime.now(),
-        user_id=zack_u.user_id,
+        user_id=zack_u_certs.certificate.user_id,
     )
     outcome = await backend.user.revoke_user(
         DateTime.now(),
