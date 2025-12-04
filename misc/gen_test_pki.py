@@ -5,7 +5,7 @@ from __future__ import annotations
 import shlex
 import subprocess
 from argparse import ArgumentParser, Namespace
-from collections.abc import Sequence
+from collections.abc import Generator, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum, auto
@@ -74,6 +74,7 @@ class CertificateConfig:
     not_after: datetime
     """Certificate is not valid after that date"""
     type: CertificateType = CertificateType.Leaf
+    extensions: dict[str, str] = field(default_factory=dict)
     signing: list[CertificateConfig] = field(default_factory=list)
     """Certificates that will by signed by this certificate"""
 
@@ -81,61 +82,86 @@ class CertificateConfig:
 now = datetime.now()
 now_24h = now + timedelta(hours=24)
 
+COMMON_NAME = "CN"
+ORGANIZATION = "O"
+ORGANIZATIONAL_UNIT = "OU"
+SUBJECT_ALT_NAME = "subjectAltName"
+SAN_EMAIL = "email"
+EMAIL_ADDRESS = "emailAddress"
+KEY_USAGE = "keyUsage"
+EXTENDED_KEY_USAGE = "extendedKeyUsage"
+BASIC_CONSTRAINTS = "basicConstraints"
+
 TRUSTCHAINS = [
     CertificateConfig(
         name="black_mesa",
         type=CertificateType.Root,
-        subject=dict(CN="Black Mesa CA", O="Black Mesa"),
+        subject={COMMON_NAME: "Black Mesa CA", ORGANIZATION: "Black Mesa"},
         key_algorithm=RSAKeyAlgorithm(length=2048),
         not_before=now,
         not_after=now + timedelta(hours=24),
+        extensions={BASIC_CONSTRAINTS: "CA:TRUE"},
         signing=[
             CertificateConfig(
                 name="alice",
-                subject=dict(CN="Alice", emailAddress="alice@black-mesa.corp"),
+                subject={COMMON_NAME: "Alice"},
                 key_algorithm=RSAKeyAlgorithm(length=2048),
                 not_before=now,
                 not_after=now_24h,
+                extensions={SUBJECT_ALT_NAME: f"{SAN_EMAIL}:alice@black_mesa.corp"},
             ),
             CertificateConfig(
                 name="bob",
-                subject=dict(CN="Bob", emailAddress="bob@black-mesa.corp"),
+                subject={COMMON_NAME: "Bob", EMAIL_ADDRESS: "bob@black-mesa.corp"},
                 key_algorithm=RSAKeyAlgorithm(length=2048),
                 not_before=now,
                 not_after=now_24h,
+                extensions={EXTENDED_KEY_USAGE: "clientAuth"},
             ),
             CertificateConfig(
                 name="old-boby",
-                subject=dict(CN="Boby", emailAddress="boby@black-mesa.corp"),
+                subject={COMMON_NAME: "Boby", EMAIL_ADDRESS: "boby@black-mesa.corp"},
                 key_algorithm=RSAKeyAlgorithm(length=2048),
                 not_before=now,
                 not_after=now,  # Not a typo, we want old-boby cert to be expired
+                extensions={BASIC_CONSTRAINTS: "CA:FALSE"},
             ),
         ],
     ),
     CertificateConfig(
         name="aperture_science",
         type=CertificateType.Root,
-        subject=dict(CN="Aperture Science CA", O="Aperture Science"),
+        subject={COMMON_NAME: "Aperture Science CA", ORGANIZATION: "Aperture Science"},
         key_algorithm=RSAKeyAlgorithm(length=2048),
         not_before=now,
         not_after=now + timedelta(hours=24),
+        extensions={BASIC_CONSTRAINTS: "CA:TRUE"},
         signing=[
             CertificateConfig(
                 name="glados_dev_team",
                 type=CertificateType.Intermediate,
-                subject=dict(CN="Glados dev team", OU="Glados dev team"),
+                subject={COMMON_NAME: "Glados dev team", ORGANIZATIONAL_UNIT: "Glados dev team"},
                 key_algorithm=RSAKeyAlgorithm(length=2048),
                 not_before=now,
                 not_after=now_24h,
+                extensions={BASIC_CONSTRAINTS: "pathlen:5"},
                 signing=[
                     CertificateConfig(
-                        name="mallory",
-                        subject=dict(CN="Mallory", emailAddress="mallory@black-mesa.corp"),
+                        name="mallory-sign",
+                        subject={COMMON_NAME: "Mallory", EMAIL_ADDRESS: "mallory@black-mesa.corp"},
                         key_algorithm=RSAKeyAlgorithm(length=2048),
                         not_before=now,
                         not_after=now_24h,
-                    )
+                        extensions={KEY_USAGE: "digitalSignature"},
+                    ),
+                    CertificateConfig(
+                        name="mallory-encrypt",
+                        subject={COMMON_NAME: "Mallory", EMAIL_ADDRESS: "mallory@black-mesa.corp"},
+                        key_algorithm=RSAKeyAlgorithm(length=2048),
+                        not_before=now,
+                        not_after=now_24h,
+                        extensions={KEY_USAGE: "dataEncipherment"},
+                    ),
                 ],
             )
         ],
@@ -210,12 +236,17 @@ def generate_self_signed_cert(chain, key_file: Path, cert_file: Path):
             "-subj",
             gen_subject_option_arg(chain.subject),
             "-batch",
+            *gen_extensions_args(chain.extensions),
         ]
     )
 
 
 def gen_subject_option_arg(subject: dict[str, str]) -> str:
     return "".join(f"/{k}={v}" for k, v in subject.items())
+
+
+def gen_extensions_args(extensions: dict[str, str]) -> Generator[str, None, None]:
+    return (f"--addext={k}={v}" for k, v in extensions.items())
 
 
 def generate_signed_cert(
@@ -238,6 +269,7 @@ def generate_signed_cert(
             "-subj",
             gen_subject_option_arg(chain.subject),
             "-batch",
+            *gen_extensions_args(chain.extensions),
         ]
     )
 
