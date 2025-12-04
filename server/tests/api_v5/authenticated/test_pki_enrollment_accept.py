@@ -122,7 +122,7 @@ def generate_accept_params(
         payload_signature=b"<alice accept payload signature>",
         payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         accepter_der_x509_certificate=test_pki.cert["alice"].der_certificate,
-        accepter_intermediate_der_x509_certificates=[],
+        accepter_intermediate_der_x509_certificates=[test_pki.root["black_mesa"].der_certificate],
         submitter_user_certificate=u_certif,
         submitter_device_certificate=d_certif,
         submitter_redacted_user_certificate=redacted_u_certif,
@@ -304,9 +304,53 @@ async def test_authenticated_pki_enrollment_accept_require_greater_timestamp(
     )
 
 
-@pytest.mark.xfail(reason="TODO: https://github.com/Scille/parsec-cloud/issues/11648")
-async def test_authenticated_pki_enrollment_accept_invalid_der_x509_certificate() -> None:
-    raise NotImplementedError
+# TODO # 11720
+async def test_authenticated_pki_enrollment_accept_invalid_der_x509_certificate(
+    coolorg: CoolorgRpcClients,
+    enrollment_id: PKIEnrollmentID,
+    test_pki: TestPki,
+    xfail_if_postgresql: None,
+) -> None:
+    now = DateTime.now()
+
+    u_certif, redacted_u_certif = generate_new_mike_user_certificates(
+        author=coolorg.alice,
+        timestamp=now,
+        user_id=NEW_MIKE_USER_ID,
+        human_handle=NEW_MIKE_HUMAN_HANDLE,
+        profile=UserProfile.STANDARD,
+    )
+    d_certif, redacted_d_certif = generate_new_mike_device_certificates(
+        author=coolorg.alice,
+        timestamp=now,
+        user_id=NEW_MIKE_USER_ID,
+        device_id=NEW_MIKE_DEVICE_ID,
+    )
+
+    payload = PkiEnrollmentAnswerPayload(
+        user_id=NEW_MIKE_USER_ID,
+        device_id=NEW_MIKE_DEVICE_ID,
+        device_label=NEW_MIKE_DEVICE_LABEL,
+        human_handle=NEW_MIKE_HUMAN_HANDLE,
+        profile=UserProfile.STANDARD,
+        root_verify_key=coolorg.root_verify_key,
+    ).dump()
+
+    accept_params = AcceptParams(
+        enrollment_id=enrollment_id,
+        payload=payload,
+        payload_signature=b"<alice accept payload signature>",
+        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
+        accepter_der_x509_certificate=test_pki.cert["alice"].der_certificate,
+        accepter_intermediate_der_x509_certificates=[b"not a valid certificate"],
+        submitter_user_certificate=u_certif,
+        submitter_device_certificate=d_certif,
+        submitter_redacted_user_certificate=redacted_u_certif,
+        submitter_redacted_device_certificate=redacted_d_certif,
+    )
+
+    rep = await coolorg.alice.pki_enrollment_accept(**accept_params)
+    assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepInvalidDerX509Certificate()
 
 
 @pytest.mark.xfail(reason="TODO: https://github.com/Scille/parsec-cloud/issues/11648")

@@ -329,6 +329,7 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
     coolorg: CoolorgRpcClients,
     existing_enrollment: Enrollment,
     submit_payload: bytes,
+    test_pki: TestPki,
 ) -> None:
     t1 = DateTime.now()
     user_certificates = generate_new_user_certificates(
@@ -372,7 +373,7 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
         ).dump(),
         payload_signature=b"<accept payload signature>",
         payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
-        accepter_der_x509_certificate=b"<accepter der x509 certificate>",
+        accepter_der_x509_certificate=test_pki.cert["alice"].der_certificate,
         accepter_intermediate_der_x509_certificates=[],
         submitter_user_certificate=user_certificates.signed_certificate,
         submitter_redacted_user_certificate=user_certificates.signed_redacted_certificate,
