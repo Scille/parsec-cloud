@@ -782,7 +782,8 @@
             "copyFailedMaxRecursion": "Trop d'éléments à copier.",
             "copyFailedOneFailed": "Un ou plusieurs éléments n'ont pas pu être copiés.",
             "copyFailedSourceDoesNotExist": "L'élément {source} n'existe pas.",
-            "seeInExplorerFailed": "Impossible d'ouvrir le chemin."
+            "seeInExplorerFailed": "Impossible d'ouvrir le chemin sélectionné dans l'explorateur de fichiers.",
+            "failedToListContent": "Impossible de lister le contenu de ce dossier."
         },
         "CreateFolderModal": {
             "title": "Créer un nouveau dossier",

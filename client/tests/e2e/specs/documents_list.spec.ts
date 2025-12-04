@@ -1,7 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { answerQuestion, createFolder, DisplaySize, expect, fillInputModal, msTest, resizePage } from '@tests/e2e/helpers';
+import {
+  answerQuestion,
+  clearLibParsecMocks,
+  createFolder,
+  DisplaySize,
+  expect,
+  fillInputModal,
+  mockLibParsec,
+  msTest,
+  resizePage,
+} from '@tests/e2e/helpers';
 
 async function isInGridMode(page: Page): Promise<boolean> {
   return (await page.locator('#folders-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
@@ -462,3 +472,36 @@ for (const gridMode of [false, true]) {
     await expect(documents).toBeWorkspacePage();
   });
 }
+
+msTest('List folder with offline mode', async ({ documents }) => {
+  const errorListFolder = documents.locator('.error-list-folder');
+  const noFilesContent = documents.locator('.no-files-content');
+
+  await expect(errorListFolder).toBeHidden();
+  await expect(noFilesContent).toBeHidden();
+
+  await mockLibParsec(documents, [
+    {
+      name: 'workspaceStatFolderChildren',
+      result: { ok: false, error: { tag: 'WorkspaceStatEntryErrorEntryNotFound', error: "Path doesn't exist" } },
+    },
+    {
+      name: 'workspaceStatFolderChildrenById',
+      result: { ok: false, error: { tag: 'WorkspaceStatEntryErrorEntryNotFound', error: "Path doesn't exist" } },
+    },
+  ]);
+
+  await documents.locator('.folder-container').locator('.file-list-item').nth(0).dblclick();
+
+  await expect(errorListFolder.locator('.container-textinfo__text')).toHaveText('Failed to list the content of this folder.');
+  await expect(noFilesContent).toBeHidden();
+  await expect(documents).toHaveHeader(['wksp1', 'Dir_Folder'], true, true);
+
+  await clearLibParsecMocks(documents);
+  await documents.locator('.topbar-left').locator('.back-button').click();
+  await expect(documents).toHaveHeader(['wksp1'], true, true);
+  const entries = documents.locator('.folder-container').locator('.file-list-item');
+  await expect(entries).toHaveCount(9);
+  await expect(noFilesContent).toBeHidden();
+  await expect(errorListFolder).toBeHidden();
+});
