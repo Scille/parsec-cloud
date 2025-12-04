@@ -33,11 +33,11 @@ const { contentInfo, fileInfo } = defineProps<{
 
 const emits = defineEmits<{
   (event: 'fileLoaded'): void;
+  (event: 'fileError'): void;
 }>();
 
 onMounted(async () => {
   await onFileLoaded(contentInfo, fileInfo);
-  emits('fileLoaded');
 });
 
 onUnmounted(() => {
@@ -50,10 +50,12 @@ async function onFileLoaded(contentInfo: FileContentInfo, fileInfo: DetectedFile
 
   const component = await getComponent(fileInfo);
   if (!component) {
-    throwError(`No component for file with extension '${fileInfo.extension}'`);
+    emitError(`No component for file with extension '${fileInfo.extension}'`);
+    return;
   }
 
   viewerComponent.value = component;
+  emits('fileLoaded');
 }
 
 async function getComponent(fileInfo: DetectedFileType): Promise<Component | undefined> {
@@ -75,7 +77,7 @@ async function getComponent(fileInfo: DetectedFileType): Promise<Component | und
   }
 }
 
-function throwError(message: string): never {
+function emitError(message: string): void {
   window.electronAPI.log('error', message);
   informationManager.present(
     new Information({
@@ -84,7 +86,7 @@ function throwError(message: string): never {
     }),
     PresentationMode.Toast,
   );
-  throw new Error(message);
+  emits('fileError');
 }
 </script>
 

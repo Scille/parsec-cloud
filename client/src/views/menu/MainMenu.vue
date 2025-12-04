@@ -269,6 +269,7 @@
               {{ $msTranslate('SideMenu.noRecentDocuments') }}
             </ion-text>
             <sidebar-recent-file-item
+              :disabled="pathOpener.currentlyOpening.value"
               v-for="file in recentDocumentManager.getFiles()"
               :file="file"
               :key="file.entryId"
@@ -363,10 +364,9 @@ import {
   MenuActionData,
   WorkspaceRoleUpdateData,
 } from '@/services/eventDistributor';
-import { openPath } from '@/services/fileOpener';
-import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
 import useUploadMenu from '@/services/fileUploadMenu';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
+import usePathOpener from '@/services/pathOpener';
 import { recentDocumentManager, RecentFile } from '@/services/recentDocuments';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import useSidebarMenu from '@/services/sidebarMenu';
@@ -425,7 +425,6 @@ const emits = defineEmits<{
 }>();
 
 const workspaceAttributes = useWorkspaceAttributes();
-const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
 const customTabBar = useCustomTabBar();
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
@@ -441,6 +440,7 @@ const isExpired = ref(false);
 const menusVisible = ref({ organization: true, workspaces: true, recentFiles: true, recentWorkspaces: true, favorites: true });
 const expirationDuration = ref<Duration | undefined>(undefined);
 const isTrialOrg = ref(false);
+const pathOpener = usePathOpener();
 
 const securityWarnings = ref<SecurityWarnings | undefined>();
 const securityWarningsCount = computed(() => {
@@ -755,9 +755,12 @@ async function openPricingLink(): Promise<void> {
 }
 
 async function openRecentFile(file: RecentFile): Promise<void> {
+  if (pathOpener.currentlyOpening.value) {
+    return;
+  }
   const config = await storageManager.retrieveConfig();
 
-  await openPath(file.workspaceHandle, file.path, informationManager, fileOperationManager, { skipViewers: config.skipViewers });
+  await pathOpener.openPath(file.workspaceHandle, file.path, informationManager, { skipViewers: config.skipViewers });
 }
 
 async function removeRecentFile(file: RecentFile): Promise<void> {

@@ -167,7 +167,6 @@ import {
   getCurrentRouteName,
   getCurrentRouteParams,
   getDocumentPath,
-  getFileHandlerMode,
   getWorkspaceHandle,
   hasHistory,
   navigateTo,
@@ -395,10 +394,6 @@ function getTitleForRoute(): Translatable {
       return 'HeaderPage.titles.myProfile';
     case Routes.History:
       return 'HeaderPage.titles.history';
-    case Routes.FileHandler: {
-      const mode = getFileHandlerMode();
-      return mode === 'edit' ? 'HeaderPage.titles.editor' : 'HeaderPage.titles.viewer';
-    }
     case null:
       return '';
   }

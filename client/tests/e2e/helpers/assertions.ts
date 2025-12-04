@@ -27,10 +27,6 @@ async function checkFileHandlerPage(page: MsPage, mode?: 'view' | 'edit'): Promi
         topbarToggled = true;
       }
 
-      // Check title based on mode
-      const expectedTitle = mode === 'edit' ? 'File editor' : 'File viewer';
-      await baseExpect(page.locator('.topbar-left-text__title')).toHaveText(expectedTitle);
-
       if (topbarToggled) {
         await fileViewerButton.click();
       }

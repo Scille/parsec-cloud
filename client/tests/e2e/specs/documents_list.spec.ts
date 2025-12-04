@@ -445,9 +445,9 @@ for (const gridMode of [false, true]) {
     await expect(documents).toHaveHeader(['wksp1'], true, true);
     if (gridMode) {
       await toggleViewMode(documents);
-      await documents.locator('.folder-container').locator('.file-card-item').nth(2).dblclick();
+      await documents.locator('.folder-container').locator('.file-card-item').nth(4).dblclick();
     } else {
-      await documents.locator('.folder-container').getByRole('listitem').nth(2).dblclick();
+      await documents.locator('.folder-container').getByRole('listitem').nth(4).dblclick();
     }
 
     await expect(documents).toBeViewerPage();

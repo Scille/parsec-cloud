@@ -4,7 +4,7 @@
   <div class="back-button-container">
     <ion-button
       fill="clear"
-      @click="routerGoBack()"
+      @click="goBack()"
       class="back-button"
     >
       <ion-icon
@@ -28,15 +28,22 @@
 
 <script setup lang="ts">
 import { routerGoBack } from '@/router';
+import useFileOpener from '@/services/pathOpener';
 import { IonButton, IonIcon, IonLabel } from '@ionic/vue';
 import { chevronBack } from 'ionicons/icons';
 import { useWindowSize } from 'megashark-lib';
 
 const { isLargeDisplay } = useWindowSize();
+const fileOpener = useFileOpener();
 
 defineProps<{
   short: boolean;
 }>();
+
+async function goBack(): Promise<void> {
+  fileOpener.pathOpened();
+  await routerGoBack();
+}
 </script>
 
 <style scoped lang="scss">
