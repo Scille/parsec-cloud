@@ -383,7 +383,6 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 return PkiEnrollmentAcceptStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
             # 2) Validate certificates
-
             try:
                 PkiEnrollmentAnswerPayload.load(payload)
             except ValueError:
@@ -403,14 +402,30 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 case error:
                     return error
 
-            # 3) Ensure we are not breaking causality by adding a newer timestamp.
+            # 3) Build trust chain
+            trustchain = await self.build_trustchain(
+                accepter_der_x509_certificate,
+                accepter_intermediate_der_x509_certificates,
+            )
+            match trustchain:
+                case PkiTrustchainError.TrustchainTooLong:
+                    return PkiEnrollmentAcceptStoreBadOutcome.INVALID_X509_TRUSTCHAIN
+
+                case PkiTrustchainError.ParseError:
+                    return PkiEnrollmentAcceptStoreBadOutcome.INVALID_DER_X509_CERTIFICATE
+
+                case trustchain:
+                    # store trustchain
+                    await org.save_trustchain(trustchain)
+
+            # 4) Ensure we are not breaking causality by adding a newer timestamp.
 
             # We already ensured user and device certificates' timestamps are consistent,
             # so only need to check one of them here
             if common_topic_last_timestamp >= u_certif.timestamp:
                 return RequireGreaterTimestamp(strictly_greater_than=common_topic_last_timestamp)
 
-            # 4) Retrieve the enrollment
+            # 5) Retrieve the enrollment
 
             try:
                 enrollment = org.pki_enrollments[enrollment_id]
@@ -420,7 +435,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             if enrollment.enrollment_state != MemoryPkiEnrollmentState.SUBMITTED:
                 return PkiEnrollmentAcceptStoreBadOutcome.ENROLLMENT_NO_LONGER_AVAILABLE
 
-            # 5) Check the user_id/device_id don't already exists and human_handle
+            # 6) Check the user_id/device_id don't already exists and human_handle
             # is not already taken
 
             if org.active_user_limit_reached():
@@ -435,7 +450,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             ):
                 return PkiEnrollmentAcceptStoreBadOutcome.HUMAN_HANDLE_ALREADY_TAKEN
 
-            # 6) All checks are good, now we do the actual insertion
+            # 7) All checks are good, now we do the actual insertion
 
             org.per_topic_last_timestamp["common"] = u_certif.timestamp
 

@@ -244,6 +244,8 @@ class PkiEnrollmentAcceptStoreBadOutcome(BadOutcomeEnum):
     HUMAN_HANDLE_ALREADY_TAKEN = auto()
     ACTIVE_USERS_LIMIT_REACHED = auto()
     INVALID_ACCEPT_PAYLOAD = auto()
+    INVALID_X509_TRUSTCHAIN = auto()
+    INVALID_DER_X509_CERTIFICATE = auto()
 
 
 class BasePkiEnrollmentComponent:
@@ -530,11 +532,6 @@ class BasePkiEnrollmentComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.pki_enrollment_accept.Req,
     ) -> authenticated_cmds.latest.pki_enrollment_accept.Rep:
-        # TODO: Currently we do not support intermediate certificates
-        # https://github.com/Scille/parsec-cloud/issues/11559
-        # https://github.com/Scille/parsec-cloud/issues/11561
-        if req.accepter_intermediate_der_x509_certificates:
-            return authenticated_cmds.latest.pki_enrollment_accept.RepInvalidPayload()
         outcome = await self.accept(
             now=DateTime.now(),
             organization_id=client_ctx.organization_id,
@@ -570,6 +567,12 @@ class BasePkiEnrollmentComponent:
                 return authenticated_cmds.latest.pki_enrollment_accept.RepAuthorNotAllowed()
             case PkiEnrollmentAcceptStoreBadOutcome.INVALID_ACCEPT_PAYLOAD:
                 return authenticated_cmds.latest.pki_enrollment_accept.RepInvalidPayload()
+            case PkiEnrollmentAcceptStoreBadOutcome.INVALID_X509_TRUSTCHAIN:
+                return authenticated_cmds.latest.pki_enrollment_accept.RepInvalidX509Trustchain()
+            case PkiEnrollmentAcceptStoreBadOutcome.INVALID_DER_X509_CERTIFICATE:
+                return (
+                    authenticated_cmds.latest.pki_enrollment_accept.RepInvalidDerX509Certificate()
+                )
             # TODO: https://github.com/Scille/parsec-cloud/issues/11648
             case PkiEnrollmentAcceptValidateBadOutcome():
                 raise NotImplementedError()
