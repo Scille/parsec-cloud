@@ -49,3 +49,26 @@ export interface MsPage extends Page {
 export interface MsContext extends BrowserContext {
   testbedConfigPath: string;
 }
+
+export enum ImportDocuments {
+  Docx = 1 << 0,
+  Xlsx = 1 << 1,
+  Pptx = 1 << 2,
+  Py = 1 << 3,
+  Txt = 1 << 4,
+  Png = 1 << 5,
+  Mp3 = 1 << 6,
+  Mp4 = 1 << 7,
+  Pdf = 1 << 8,
+}
+
+export const ImportAllDocuments =
+  ImportDocuments.Docx |
+  ImportDocuments.Xlsx |
+  ImportDocuments.Pptx |
+  ImportDocuments.Py |
+  ImportDocuments.Txt |
+  ImportDocuments.Png |
+  ImportDocuments.Mp3 |
+  ImportDocuments.Mp4 |
+  ImportDocuments.Pdf;
