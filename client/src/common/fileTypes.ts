@@ -11,6 +11,7 @@ enum FileContentType {
   Document = 'document',
   Text = 'text',
   PdfDocument = 'pdf-document',
+  Presentation = 'presentation',
   Unknown = 'unknown',
 }
 
@@ -25,6 +26,7 @@ const DOCUMENTS = ['docx'];
 const PDF_DOCUMENTS = ['pdf'];
 const AUDIOS = ['wav', 'mp3', 'ogg'];
 const VIDEOS = ['mp4', 'mpeg', 'webm'];
+const PRESENTATIONS = ['pptx'];
 
 // For generic text/plain
 const TEXTS = [
@@ -80,7 +82,7 @@ async function getMimeTypeFromBuffer(data: Uint8Array): Promise<string | undefin
   }
 }
 
-function detectFileContentType(name: EntryName): DetectedFileType | undefined {
+function detectFileContentType(name: EntryName): DetectedFileType {
   const ext = Path.getFileExtension(name);
 
   if (IMAGES.includes(ext)) {
@@ -103,6 +105,9 @@ function detectFileContentType(name: EntryName): DetectedFileType | undefined {
   }
   if (TEXTS.includes(ext)) {
     return { type: FileContentType.Text, extension: ext };
+  }
+  if (PRESENTATIONS.includes(ext)) {
+    return { type: FileContentType.Presentation, extension: ext };
   }
   return { type: FileContentType.Unknown, extension: ext };
 }

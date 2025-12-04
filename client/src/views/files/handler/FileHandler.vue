@@ -122,8 +122,7 @@
               <ion-button
                 class="file-handler-topbar-buttons__item"
                 id="file-handler-copy-link"
-                @click="copyPath(contentInfo.path)"
-                v-if="isWeb()"
+                @click="copyLink(contentInfo.path)"
                 :disabled="!handlerReadyRef"
               >
                 <ion-icon
@@ -136,7 +135,8 @@
                 class="file-handler-topbar-buttons__item"
                 id="file-handler-open-editor"
                 @click="openEditor(contentInfo.path)"
-                v-if="!atDateTime && handlerMode === FileHandlerMode.View && isFileEditable(contentInfo.fileName) && !isReader"
+                :disabled="!handlerReadyRef"
+                v-if="!atDateTime && readOnly && isEnabledCryptpadDocumentType(contentInfo.contentType) && !isReader"
               >
                 <ion-icon
                   :icon="create"
@@ -239,11 +239,10 @@ import {
   getFileHandlerMode,
   getWorkspaceHandle,
   navigateTo,
-  routerGoBack,
   Routes,
   watchRoute,
 } from '@/router';
-import { isFileEditable } from '@/services/cryptpad';
+import { isEnabledCryptpadDocumentType } from '@/services/cryptpad';
 import { Env } from '@/services/environment';
 import { openPath } from '@/services/fileOpener';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
@@ -651,7 +650,7 @@ async function openWithSystem(path: FsPath): Promise<boolean> {
   }
 }
 
-async function copyPath(path: FsPath): Promise<void> {
+async function copyLink(path: FsPath): Promise<void> {
   const workspaceHandle = getWorkspaceHandle();
   if (!workspaceHandle) {
     window.electronAPI.log('error', 'Failed to retrieve workspace handle');
@@ -689,14 +688,9 @@ async function showDetails(): Promise<void> {
 }
 
 async function openEditor(path: FsPath): Promise<void> {
-  // Here we want to ensure the router goes back to documents page
-  // before opening the editor for routing purposes (history stack)
-  // Could probably be improved with better routing management
-  // maybe avoiding routing between viewer and editor by loading components directly
-  await routerGoBack();
   const workspaceHandle = getWorkspaceHandle();
   if (workspaceHandle) {
-    await openPath(workspaceHandle, path, informationManager, fileOperationManager, { useEditor: true });
+    await openPath(workspaceHandle, path, informationManager, { readOnly: false });
   }
 }
 
@@ -776,6 +770,9 @@ async function onSaveStateChange(newState: SaveState): Promise<void> {
 }
 
 async function openSmallDisplayActionMenu(): Promise<void> {
+  if (!contentInfo.value) {
+    return;
+  }
   const modal = await modalController.create({
     component: SmallDisplayViewerActionMenu,
     cssClass: 'viewer-action-menu-modal',
@@ -783,7 +780,10 @@ async function openSmallDisplayActionMenu(): Promise<void> {
     breakpoints: [0, 0.5, 1],
     expandToScroll: false,
     initialBreakpoint: 0.5,
-    componentProps: {},
+    componentProps: {
+      canOpenWithSystem: !atDateTime.value && isDesktop(),
+      canEdit: !atDateTime.value && readOnly.value && isEnabledCryptpadDocumentType(contentInfo.value.contentType) && !isReader.value,
+    },
   });
   await modal.present();
   const { data } = await modal.onDidDismiss();
@@ -792,13 +792,14 @@ async function openSmallDisplayActionMenu(): Promise<void> {
       case FileHandlerAction.Details:
         await showDetails();
         break;
-      case FileHandlerAction.CopyPath:
-        if (contentInfo.value) {
-          await copyPath(contentInfo.value.path);
-        }
+      case FileHandlerAction.CopyLink:
+        await copyLink(contentInfo.value.path);
         break;
       case FileHandlerAction.Download:
         await downloadFile();
+        break;
+      case FileHandlerAction.Edit:
+        await openEditor(contentInfo.value.path);
         break;
       case FileHandlerAction.OpenWithSystem:
         if (contentInfo.value) {
@@ -806,7 +807,8 @@ async function openSmallDisplayActionMenu(): Promise<void> {
         }
         break;
       default:
-        console.warn('No ViewerAction match found');
+        window.electronAPI.log('warn', `No match for selected viewer action '${data.action}'`);
+        break;
     }
   }
 }

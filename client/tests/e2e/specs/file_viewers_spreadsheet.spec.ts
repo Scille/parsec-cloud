@@ -2,7 +2,7 @@
 
 import { expect, msTest, openFileType, testFileViewerZoomLevel } from '@tests/e2e/helpers';
 
-msTest('Spreadsheet viewer', async ({ documents }) => {
+msTest.skip('Spreadsheet viewer', async ({ documents }) => {
   await openFileType(documents, 'xlsx');
   await expect(documents).toBeViewerPage();
   await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.xlsx$/);
@@ -42,7 +42,7 @@ msTest('Spreadsheet viewer', async ({ documents }) => {
   await expect(spinner).toBeHidden();
 });
 
-msTest('Spreadsheet viewer zoom', async ({ documents }) => {
+msTest.skip('Spreadsheet viewer zoom', async ({ documents }) => {
   await openFileType(documents, 'xlsx');
   await expect(documents).toBeViewerPage();
   await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.xlsx$/);

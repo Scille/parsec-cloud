@@ -213,7 +213,9 @@ export class Cryptpad {
       // Tried to monkeypatch pushState, nop. There's no way to detect that
       // the iframe navigated, changing the main history enough that
       // history.back() is required, but not enough that `history.state` changes.
-      window.history.back();
+      if (window.history) {
+        window.history.back();
+      }
     } finally {
       window.clearTimeout(loadingTimeoutId);
       // Clean up global config reference

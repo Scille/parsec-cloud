@@ -1,7 +1,18 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { Locator } from '@playwright/test';
-import { DisplaySize, expect, fillInputModal, login, MsPage, msTest, openFileType, setupNewPage } from '@tests/e2e/helpers';
+import { Locator, TestInfo } from '@playwright/test';
+import {
+  DisplaySize,
+  expect,
+  fillInputModal,
+  importDefaultFiles,
+  ImportDocuments,
+  login,
+  MsPage,
+  msTest,
+  openFileType,
+  setupNewPage,
+} from '@tests/e2e/helpers';
 
 async function toggleSidebar(page: MsPage): Promise<void> {
   // Look for toggle button in standard locations - simplified approach
@@ -220,56 +231,241 @@ msTest('Sidebar recommendations checklist in small display', async ({ workspaces
   await expect(checklistModal).toBeHidden();
 });
 
-msTest('Show recently opened files in sidebar', async ({ documents }) => {
-  const sidebarRecentFiles = documents.locator('#sidebar-files');
-  await expect(sidebarRecentFiles.locator('.list-sidebar-header-text')).toHaveText('Recent documents');
-  await expect(sidebarRecentFiles.locator('.sidebar-item')).toHaveCount(0);
+msTest.describe(() => {
+  msTest.use({
+    documentsOptions: {
+      empty: true,
+    },
+  });
 
-  await expect(documents.locator('.information-modal')).toBeHidden();
-  await expect(documents).toHaveHeader(['wksp1'], true, true);
-  const fileItem = documents.locator('.folder-container').getByRole('listitem').nth(2);
-  const fileName = await fileItem.locator('.file-name').textContent();
-  await fileItem.dblclick();
-  await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
-  await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
-  await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
-  await expect(documents).toBeViewerPage();
-  // One file added
-  await expect(sidebarRecentFiles.locator('.sidebar-item')).toHaveText([fileName ?? '']);
+  msTest('Show recently opened files in sidebar', async ({ documents }, testInfo: TestInfo) => {
+    await importDefaultFiles(documents, testInfo, ImportDocuments.Png, false);
 
-  await documents.locator('.file-handler-topbar').locator('#trigger-toggle-menu-button').click();
-  await sidebarRecentFiles.locator('.list-sidebar-header__toggle').click();
-  await expect(sidebarRecentFiles.locator('.list-sidebar-content')).toBeHidden();
-  await sidebarRecentFiles.locator('.list-sidebar-header__toggle').click();
-  await expect(sidebarRecentFiles.locator('.list-sidebar-content')).toBeVisible();
-});
+    const sidebarRecentFiles = documents.locator('#sidebar-files');
+    await expect(sidebarRecentFiles.locator('.list-sidebar-header-text')).toHaveText('Recent documents');
+    await expect(sidebarRecentFiles.locator('.sidebar-item')).toHaveCount(0);
 
-msTest('Recent document updates when file is renamed', async ({ documents }) => {
-  const sidebarRecentFiles = documents.locator('#sidebar-files');
-  await expect(sidebarRecentFiles.locator('.list-sidebar-header-text')).toHaveText('Recent documents');
-  await expect(sidebarRecentFiles.locator('.sidebar-item')).toHaveCount(0);
+    await expect(documents.locator('.information-modal')).toBeHidden();
+    await expect(documents).toHaveHeader(['wksp1'], true, true);
+    const fileItem = documents.locator('.folder-container').getByRole('listitem').nth(0);
+    const fileName = await fileItem.locator('.file-name').textContent();
+    await fileItem.dblclick();
+    // One file added
+    await expect(sidebarRecentFiles.locator('.sidebar-item')).toHaveText([fileName ?? '']);
 
-  await expect(documents.locator('.information-modal')).toBeHidden();
-  await expect(documents).toHaveHeader(['wksp1'], true, true);
-  const fileItem = documents.locator('.folder-container').getByRole('listitem').nth(2);
-  const fileName = await fileItem.locator('.file-name').textContent();
-  await fileItem.dblclick();
-  await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
-  await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
-  await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
-  await expect(documents).toBeViewerPage();
-  // One file added
-  await expect(sidebarRecentFiles.locator('.sidebar-item')).toHaveText([fileName!]);
-  await documents.locator('.file-handler-topbar').locator('.back-button').click();
-  await expect(documents.locator('#connected-header .topbar')).toBeVisible();
-  await expect(documents).toBeDocumentPage();
+    await documents.locator('.file-handler-topbar').locator('#trigger-toggle-menu-button').click();
+    await sidebarRecentFiles.locator('.list-sidebar-header__toggle').click();
+    await expect(sidebarRecentFiles.locator('.list-sidebar-content')).toBeHidden();
+    await sidebarRecentFiles.locator('.list-sidebar-header__toggle').click();
+    await expect(sidebarRecentFiles.locator('.list-sidebar-content')).toBeVisible();
+  });
 
-  await fileItem.click({ button: 'right' });
-  const popover = documents.locator('.file-context-menu');
-  await popover.getByRole('listitem').filter({ hasText: 'Rename' }).click();
-  await fillInputModal(documents, `New-${fileName}`, true);
-  await expect(fileItem.locator('.file-name').locator('.label-name')).toHaveText(`New-${fileName}`);
-  await expect(sidebarRecentFiles.locator('.sidebar-item')).toHaveText([`New-${fileName}`]);
+  msTest('Recent document updates when file is renamed', async ({ documents }, testInfo: TestInfo) => {
+    await importDefaultFiles(documents, testInfo, ImportDocuments.Png, false);
+
+    const sidebarRecentFiles = documents.locator('#sidebar-files');
+    await expect(sidebarRecentFiles.locator('.list-sidebar-header-text')).toHaveText('Recent documents');
+    await expect(sidebarRecentFiles.locator('.sidebar-item')).toHaveCount(0);
+
+    await expect(documents.locator('.information-modal')).toBeHidden();
+    await expect(documents).toHaveHeader(['wksp1'], true, true);
+    const fileItem = documents.locator('.folder-container').getByRole('listitem').nth(0);
+    const fileName = await fileItem.locator('.file-name').textContent();
+    await fileItem.dblclick();
+    await expect(documents).toBeViewerPage();
+    // One file added
+    await expect(sidebarRecentFiles.locator('.sidebar-item')).toHaveText([fileName!]);
+    await documents.locator('.file-handler-topbar').locator('.back-button').click();
+    await expect(documents.locator('#connected-header .topbar')).toBeVisible();
+    await expect(documents).toBeDocumentPage();
+
+    await fileItem.click({ button: 'right' });
+    const popover = documents.locator('.file-context-menu');
+    await popover.getByRole('listitem').filter({ hasText: 'Rename' }).click();
+    await fillInputModal(documents, `New-${fileName}`, true);
+    await expect(fileItem.locator('.file-name').locator('.label-name')).toHaveText(`New-${fileName}`);
+    await expect(sidebarRecentFiles.locator('.sidebar-item')).toHaveText([`New-${fileName}`]);
+  });
+
+  // Sidebar visibility management tests
+  msTest('Sidebar toggle functionality', async ({ documents }) => {
+    const sidebar = documents.locator('.sidebar');
+    const toggleButton = documents.locator('#trigger-toggle-menu-button');
+
+    // Initially sidebar should be visible
+    await expect(sidebar).toBeVisible();
+
+    // Hide sidebar
+    await toggleButton.click();
+    await expect(sidebar).toBeHidden();
+
+    // Show sidebar
+    await toggleButton.click();
+    await expect(sidebar).toBeVisible();
+  });
+
+  msTest('Sidebar visibility persists during same session navigation', async ({ documents }) => {
+    const toggleButton = documents.locator('#trigger-toggle-menu-button');
+
+    // Hide sidebar on documents page
+    await toggleButton.click();
+    await expect(documents.locator('.sidebar')).toBeHidden();
+
+    // Navigate to workspaces
+    await documents.locator('#connected-header').locator('.topbar-left').locator('ion-breadcrumb').nth(0).click();
+    await expect(documents.locator('.workspaces-container')).toBeVisible();
+
+    // Sidebar should remain hidden
+    await expect(documents.locator('.sidebar')).toBeHidden();
+
+    // Show sidebar on workspaces page
+    const workspaceToggleButton = documents.locator('#trigger-toggle-menu-button');
+    await workspaceToggleButton.click();
+    await expect(documents.locator('.sidebar')).toBeVisible();
+
+    // Navigate back to documents
+    await documents.locator('.workspace-card-item').nth(0).click();
+    await expect(documents.locator('.folder-container')).toBeVisible();
+
+    // Sidebar should remain visible
+    await expect(documents.locator('.sidebar')).toBeVisible();
+  });
+
+  msTest('Sidebar responsive behavior', async ({ documents }) => {
+    const sidebar = documents.locator('.sidebar');
+    const toggleButton = documents.locator('#trigger-toggle-menu-button');
+
+    // Test in large display
+    await expect(sidebar).toBeVisible();
+    await expect(toggleButton).toBeVisible();
+
+    // Hide sidebar in large display
+    await toggleButton.click();
+    await expect(sidebar).toBeHidden();
+
+    // Switch to small display
+    await documents.setDisplaySize(DisplaySize.Small);
+    await expect(toggleButton).toBeHidden();
+    await expect(sidebar).toBeHidden();
+
+    // Switch back to large display
+    await documents.setDisplaySize(DisplaySize.Large);
+
+    // Verify sidebar state is consistent - should still be hidden
+    await expect(toggleButton).toBeVisible();
+    await expect(sidebar).toBeHidden();
+
+    // Test that toggle still works after display size change
+    await toggleButton.click();
+    await expect(sidebar).toBeVisible();
+  });
+
+  msTest('Sidebar state persists across page navigation', async ({ documents }) => {
+    // Start on documents page
+    await expect(documents.locator('.sidebar')).toBeVisible();
+
+    // Hide sidebar
+    await toggleSidebar(documents);
+    await expect(documents.locator('.sidebar')).toBeHidden();
+
+    // Navigate to workspaces
+    await documents.locator('#connected-header').locator('.topbar-left').locator('ion-breadcrumb').nth(0).click();
+    await expect(documents.locator('.workspaces-container')).toBeVisible();
+
+    // Verify sidebar stays hidden
+    await expect(documents.locator('.sidebar')).toBeHidden();
+
+    // Navigate back to documents
+    await documents.locator('.workspace-card-item').nth(0).click();
+    await expect(documents.locator('.folder-container')).toBeVisible();
+
+    // Verify sidebar still hidden
+    await expect(documents.locator('.sidebar')).toBeHidden();
+  });
+
+  // Tests for sidebar persistence after page reload
+  msTest('Sidebar persistence after reload - basic visible case', async ({ documents }) => {
+    // Ensure sidebar is visible initially in documents page
+    const sidebar = documents.locator('.sidebar');
+    await expect(sidebar).toBeVisible();
+
+    // Directly reload without opening file viewer to test basic persistence
+    await documents.reload();
+    await setupNewPage(documents);
+    await expect(documents).toBeHomePage();
+    await login(documents, 'Alicey McAliceFace');
+
+    // Verify sidebar visibility is preserved after reload
+    await expect(documents.locator('.sidebar')).toBeVisible();
+  });
+
+  msTest('Sidebar persistence after reload - basic hidden case', async ({ documents }) => {
+    // Hide sidebar initially on documents page
+    const sidebar = documents.locator('.sidebar');
+    const toggleButton = documents.locator('#trigger-toggle-menu-button');
+
+    await expect(sidebar).toBeVisible();
+    await toggleButton.click();
+    await expect(sidebar).toBeHidden();
+
+    // Directly reload to test basic persistence
+    await documents.reload();
+    await setupNewPage(documents);
+    await expect(documents).toBeHomePage();
+    await login(documents, 'Alicey McAliceFace');
+
+    // Verify sidebar remains hidden after reload
+    await expect(documents.locator('.sidebar')).toBeHidden();
+  });
+
+  msTest('Sidebar persistence with file handler navigation and reload', async ({ documents }, testInfo: TestInfo) => {
+    await importDefaultFiles(documents, testInfo, ImportDocuments.Png, false);
+    // Start with sidebar visible on documents page
+    const sidebar = documents.locator('.sidebar');
+    await expect(sidebar).toBeVisible();
+
+    // Open a file to enter file handler view
+    await openFileType(documents, 'png');
+    await expect(documents).toBeViewerPage();
+    await expect(sidebar).toBeHidden();
+
+    // Reload the page (simulating F5)
+    await documents.reload();
+    await setupNewPage(documents);
+    await expect(documents).toBeHomePage();
+    await login(documents, 'Alicey McAliceFace');
+    await expect(documents.locator('.sidebar')).toBeVisible();
+  });
+
+  msTest('Sidebar state change in file handler persists after reload', async ({ documents }, testInfo) => {
+    await importDefaultFiles(documents, testInfo, ImportDocuments.Png, false);
+
+    // Start with sidebar hidden on documents page
+    const sidebar = documents.locator('.sidebar');
+    const toggleButton = documents.locator('#trigger-toggle-menu-button');
+
+    await expect(sidebar).toBeVisible();
+    await toggleButton.click();
+    await expect(sidebar).toBeHidden();
+
+    // Open a file to enter file handler view
+    await openFileType(documents, 'png');
+    await expect(documents).toBeViewerPage();
+    await expect(sidebar).toBeHidden();
+
+    // Try to show sidebar in file handler
+    const fileHandlerToggle = documents.locator('.file-handler-topbar').locator('#trigger-toggle-menu-button');
+    await fileHandlerToggle.click();
+    await expect(sidebar).toBeVisible();
+
+    // Reload the page (simulating F5)
+    await documents.reload();
+    await setupNewPage(documents);
+    await expect(documents).toBeHomePage();
+    await login(documents, 'Alicey McAliceFace');
+
+    await expect(documents.locator('.sidebar')).toBeVisible();
+  });
 });
 
 msTest('Recent workspaces displayed in sidebar', async ({ workspaces }) => {
@@ -339,181 +535,4 @@ msTest('Recent and pinned workspaces are updated when workspace is renamed', asy
 
   await expect(sidebarRecentWorkspaces.locator('.sidebar-item-workspace').nth(0)).toHaveText('New-wksp1');
   await expect(sidebarFavoriteWorkspaces.locator('.sidebar-item-workspace').nth(0)).toHaveText('New-wksp1');
-});
-
-// Sidebar visibility management tests
-msTest('Sidebar toggle functionality', async ({ documents }) => {
-  const sidebar = documents.locator('.sidebar');
-  const toggleButton = documents.locator('#trigger-toggle-menu-button');
-
-  // Initially sidebar should be visible
-  await expect(sidebar).toBeVisible();
-
-  // Hide sidebar
-  await toggleButton.click();
-  await expect(sidebar).toBeHidden();
-
-  // Show sidebar
-  await toggleButton.click();
-  await expect(sidebar).toBeVisible();
-});
-
-msTest('Sidebar visibility persists during same session navigation', async ({ documents, workspaces }) => {
-  const toggleButton = documents.locator('#trigger-toggle-menu-button');
-
-  // Hide sidebar on documents page
-  await toggleButton.click();
-  await expect(documents.locator('.sidebar')).toBeHidden();
-
-  // Navigate to workspaces
-  await documents.locator('#connected-header').locator('.topbar-left').locator('ion-breadcrumb').nth(0).click();
-  await expect(workspaces.locator('.workspaces-container')).toBeVisible();
-
-  // Sidebar should remain hidden
-  await expect(workspaces.locator('.sidebar')).toBeHidden();
-
-  // Show sidebar on workspaces page
-  const workspaceToggleButton = workspaces.locator('#trigger-toggle-menu-button');
-  await workspaceToggleButton.click();
-  await expect(workspaces.locator('.sidebar')).toBeVisible();
-
-  // Navigate back to documents
-  await workspaces.locator('.workspace-card-item').nth(0).click();
-  await expect(documents.locator('.folder-container')).toBeVisible();
-
-  // Sidebar should remain visible
-  await expect(documents.locator('.sidebar')).toBeVisible();
-});
-
-msTest('Sidebar responsive behavior', async ({ documents }) => {
-  const sidebar = documents.locator('.sidebar');
-  const toggleButton = documents.locator('#trigger-toggle-menu-button');
-
-  // Test in large display
-  await expect(sidebar).toBeVisible();
-  await expect(toggleButton).toBeVisible();
-
-  // Hide sidebar in large display
-  await toggleButton.click();
-  await expect(sidebar).toBeHidden();
-
-  // Switch to small display
-  await documents.setDisplaySize(DisplaySize.Small);
-  await expect(toggleButton).toBeHidden();
-  await expect(sidebar).toBeHidden();
-
-  // Switch back to large display
-  await documents.setDisplaySize(DisplaySize.Large);
-
-  // Verify sidebar state is consistent - should still be hidden
-  await expect(toggleButton).toBeVisible();
-  await expect(sidebar).toBeHidden();
-
-  // Test that toggle still works after display size change
-  await toggleButton.click();
-  await expect(sidebar).toBeVisible();
-});
-
-msTest('Sidebar state persists across page navigation', async ({ documents }) => {
-  // Start on documents page
-  await expect(documents.locator('.sidebar')).toBeVisible();
-
-  // Hide sidebar
-  await toggleSidebar(documents);
-  await expect(documents.locator('.sidebar')).toBeHidden();
-
-  // Navigate to workspaces
-  await documents.locator('#connected-header').locator('.topbar-left').locator('ion-breadcrumb').nth(0).click();
-  await expect(documents.locator('.workspaces-container')).toBeVisible();
-
-  // Verify sidebar stays hidden
-  await expect(documents.locator('.sidebar')).toBeHidden();
-
-  // Navigate back to documents
-  await documents.locator('.workspace-card-item').nth(0).click();
-  await expect(documents.locator('.folder-container')).toBeVisible();
-
-  // Verify sidebar still hidden
-  await expect(documents.locator('.sidebar')).toBeHidden();
-});
-
-// Tests for sidebar persistence after page reload
-msTest('Sidebar persistence after reload - basic visible case', async ({ documents }) => {
-  // Ensure sidebar is visible initially in documents page
-  const sidebar = documents.locator('.sidebar');
-  await expect(sidebar).toBeVisible();
-
-  // Directly reload without opening file viewer to test basic persistence
-  await documents.reload();
-  await setupNewPage(documents);
-  await expect(documents).toBeHomePage();
-  await login(documents, 'Alicey McAliceFace');
-
-  // Verify sidebar visibility is preserved after reload
-  await expect(documents.locator('.sidebar')).toBeVisible();
-});
-
-msTest('Sidebar persistence after reload - basic hidden case', async ({ documents }) => {
-  // Hide sidebar initially on documents page
-  const sidebar = documents.locator('.sidebar');
-  const toggleButton = documents.locator('#trigger-toggle-menu-button');
-
-  await expect(sidebar).toBeVisible();
-  await toggleButton.click();
-  await expect(sidebar).toBeHidden();
-
-  // Directly reload to test basic persistence
-  await documents.reload();
-  await setupNewPage(documents);
-  await expect(documents).toBeHomePage();
-  await login(documents, 'Alicey McAliceFace');
-
-  // Verify sidebar remains hidden after reload
-  await expect(documents.locator('.sidebar')).toBeHidden();
-});
-
-msTest('Sidebar persistence with file handler navigation and reload', async ({ documents }) => {
-  // Start with sidebar visible on documents page
-  const sidebar = documents.locator('.sidebar');
-  await expect(sidebar).toBeVisible();
-
-  // Open a file to enter file handler view
-  await openFileType(documents, 'docx');
-  await expect(documents).toBeViewerPage();
-  await expect(sidebar).toBeHidden();
-
-  // Reload the page (simulating F5)
-  await documents.reload();
-  await setupNewPage(documents);
-  await expect(documents).toBeHomePage();
-  await login(documents, 'Alicey McAliceFace');
-  await expect(documents.locator('.sidebar')).toBeVisible();
-});
-
-msTest('Sidebar state change in file handler persists after reload', async ({ documents }) => {
-  // Start with sidebar hidden on documents page
-  const sidebar = documents.locator('.sidebar');
-  const toggleButton = documents.locator('#trigger-toggle-menu-button');
-
-  await expect(sidebar).toBeVisible();
-  await toggleButton.click();
-  await expect(sidebar).toBeHidden();
-
-  // Open a file to enter file handler view
-  await openFileType(documents, 'docx');
-  await expect(documents).toBeViewerPage();
-  await expect(sidebar).toBeHidden();
-
-  // Try to show sidebar in file handler
-  const fileHandlerToggle = documents.locator('.file-handler-topbar').locator('#trigger-toggle-menu-button');
-  await fileHandlerToggle.click();
-  await expect(sidebar).toBeVisible();
-
-  // Reload the page (simulating F5)
-  await documents.reload();
-  await setupNewPage(documents);
-  await expect(documents).toBeHomePage();
-  await login(documents, 'Alicey McAliceFace');
-
-  await expect(documents.locator('.sidebar')).toBeVisible();
 });

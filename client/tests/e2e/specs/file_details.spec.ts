@@ -80,15 +80,14 @@ msTest.describe(() => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Png, false);
 
     await expect(documents.locator('.topbar-left__breadcrumb')).toContainText('wksp1');
-
     await documents.locator('#folders-ms-action-bar').locator('#grid-view').click();
     const files = documents.locator('.folders-container-grid').locator('.file-card-item');
     await expect(files).toHaveCount(1);
-    expect(documents.locator('.file-context-menu')).toBeHidden();
-    expect(documents.locator('.file-details-modal')).toBeHidden();
+    await expect(documents.locator('.file-context-menu')).toBeHidden();
+    await expect(documents.locator('.file-details-modal')).toBeHidden();
     await files.nth(0).hover();
     await files.nth(0).locator('.card-option').click();
-    expect(documents.locator('.file-context-menu').getByRole('listitem')).toHaveCount(11);
+    await expect(documents.locator('.file-context-menu').getByRole('listitem')).toHaveCount(11);
     await documents.locator('.file-context-menu').getByRole('listitem').nth(7).click();
     await expect(documents.locator('.file-details-modal')).toBeVisible();
     const modal = documents.locator('.file-details-modal');

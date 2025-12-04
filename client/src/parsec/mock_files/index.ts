@@ -10,6 +10,7 @@ export enum MockFileType {
   XLSX = 'XLSX',
   MP4 = 'MP4',
   MP3 = 'MP3',
+  PPTX = 'PPTX',
 }
 
 // Import content dynamically so it's not loaded if not needed
@@ -33,5 +34,7 @@ export async function getMockFileContent(type: MockFileType): Promise<Uint8Array
       return (await import('@/parsec/mock_files/mp4')).default;
     case MockFileType.MP3:
       return (await import('@/parsec/mock_files/mp3')).default;
+    case MockFileType.PPTX:
+      return (await import('@/parsec/mock_files/pptx')).default;
   }
 }

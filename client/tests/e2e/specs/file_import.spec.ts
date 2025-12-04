@@ -26,8 +26,11 @@ async function checkFilesUploaded(page: Page, expectedCount: number): Promise<vo
 
   const container = uploadMenu.locator('.element-container');
   const elements = container.locator('.element');
-  await expect(elements).toHaveCount(expectedCount);
-  await expect(elements.locator('.element-details-info__size')).toHaveText(Array(expectedCount).fill(/^[0-9.]+ (G|M|K)?B$/));
+  await expect(elements).toHaveCount(Math.min(expectedCount, 11));
+  await expect(elements.locator('.element-details-info__size')).toHaveText(Array(Math.min(expectedCount, 10)).fill(/^[0-9.]+ (G|M|K)?B$/));
+  if (expectedCount > 10) {
+    await expect(elements.locator('.element-details').last()).toHaveText('One more operation done');
+  }
 }
 
 for (const mode of ['list', 'grid']) {
@@ -132,7 +135,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     expect(fileChooser.isMultiple()).toBe(false);
     const importPath = path.join(testInfo.config.rootDir, 'data', 'imports');
     await fileChooser.setFiles([importPath]);
-    await checkFilesUploaded(documents, 10);
+    await checkFilesUploaded(documents, 11);
     await documents.locator('.upload-menu').locator('.menu-header-icons').locator('ion-icon').nth(1).click();
     await expect(documents.locator('.upload-menu')).toBeHidden();
     await documents.locator('.folder-container').locator('.file-list-item').nth(0).dblclick();
