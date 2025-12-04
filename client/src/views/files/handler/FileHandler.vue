@@ -111,7 +111,7 @@
                 class="file-handler-topbar-buttons__item"
                 id="file-handler-details"
                 @click="showDetails"
-                :disabled="!handlerReadyRef"
+                :disabled="pathOpener.currentlyOpening.value"
               >
                 <ion-icon
                   :icon="informationCircle"
@@ -122,9 +122,8 @@
               <ion-button
                 class="file-handler-topbar-buttons__item"
                 id="file-handler-copy-link"
-                @click="copyPath(contentInfo.path)"
-                v-if="isWeb()"
-                :disabled="!handlerReadyRef"
+                @click="copyLink(contentInfo.path)"
+                :disabled="pathOpener.currentlyOpening.value"
               >
                 <ion-icon
                   :icon="link"
@@ -136,7 +135,8 @@
                 class="file-handler-topbar-buttons__item"
                 id="file-handler-open-editor"
                 @click="openEditor(contentInfo.path)"
-                v-if="!atDateTime && handlerMode === FileHandlerMode.View && isFileEditable(contentInfo.fileName) && !isReader"
+                :disabled="pathOpener.currentlyOpening.value"
+                v-if="!atDateTime && readOnly && isEnabledCryptpadDocumentType(contentInfo.contentType) && !isReader"
               >
                 <ion-icon
                   :icon="create"
@@ -148,7 +148,7 @@
                 class="file-handler-topbar-buttons__item"
                 @click="downloadFile"
                 v-if="isWeb()"
-                :disabled="!handlerReadyRef"
+                :disabled="pathOpener.currentlyOpening.value"
               >
                 <ms-image
                   :image="DownloadIcon"
@@ -161,7 +161,7 @@
                 id="file-handler-open-with-system"
                 @click="openWithSystem(contentInfo.path)"
                 v-show="isDesktop() && !atDateTime"
-                :disabled="!handlerReadyRef"
+                :disabled="pathOpener.currentlyOpening.value"
               >
                 <ion-icon
                   :icon="open"
@@ -195,7 +195,7 @@
             :is="handlerComponent"
             :content-info="contentInfo"
             :file-info="detectedFileType"
-            @file-loaded="handlerReadyRef = true"
+            @file-loaded="pathOpener.pathOpened()"
             v-on="isComponentEditor() ? { onSaveStateChange: onSaveStateChange } : {}"
             v-bind="isComponentEditor() ? { userInfo: userInfo, readOnly: readOnly } : {}"
           />
@@ -239,16 +239,15 @@ import {
   getFileHandlerMode,
   getWorkspaceHandle,
   navigateTo,
-  routerGoBack,
   Routes,
   watchRoute,
 } from '@/router';
-import { isFileEditable } from '@/services/cryptpad';
+import { isEnabledCryptpadDocumentType } from '@/services/cryptpad';
 import { Env } from '@/services/environment';
-import { openPath } from '@/services/fileOpener';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
 import useHeaderControl from '@/services/headerControl';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import usePathOpener from '@/services/pathOpener';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { downloadEntry, FileDetailsModal, FileHandlerAction, openDownloadConfirmationModal } from '@/views/files';
@@ -288,7 +287,6 @@ const loaded = ref(false);
 const atDateTime: Ref<DateTime | undefined> = ref(undefined);
 const { isHeaderVisible, toggleHeader: toggleMainHeader, showHeader, hideHeader } = useHeaderControl();
 const { isVisible: isSidebarMenuVisible, hide: hideSidebarMenu, show: showSidebarMenu } = useSidebarMenu();
-const handlerReadyRef = ref(false);
 const handlerComponent: Ref<typeof FileEditor | typeof FileViewer | null> = shallowRef(null);
 const handlerMode = ref<FileHandlerMode | undefined>(undefined);
 const sidebarMenuVisibleOnMounted = ref(false);
@@ -301,6 +299,7 @@ const errorIconRef = useTemplateRef<InstanceType<typeof IonIcon>>('errorIcon');
 const offlineIconRef = useTemplateRef<InstanceType<typeof IonIcon>>('offlineIcon');
 const showSaveStateText = ref(true);
 const readOnly = ref(false);
+const pathOpener = usePathOpener();
 
 const cancelRouteWatch = watchRoute(async () => {
   if (!currentRouteIs(Routes.FileHandler)) {
@@ -463,7 +462,6 @@ async function loadFile(): Promise<void> {
   detectedFileType.value = null;
   atDateTime.value = undefined;
   handlerComponent.value = null;
-  handlerReadyRef.value = false;
   const workspaceHandle = getWorkspaceHandle();
   if (!workspaceHandle) {
     window.electronAPI.log('error', 'Failed to retrieve workspace handle');
@@ -499,7 +497,6 @@ async function loadFile(): Promise<void> {
   if (!info) {
     contentInfo.value = undefined;
     handlerComponent.value = null;
-    handlerReadyRef.value = false;
     informationManager.present(
       new Information({
         message: 'fileViewers.errors.titles.genericError',
@@ -538,7 +535,6 @@ function loadComponent(): void {
       handlerComponent.value = null;
   }
   if (!handlerComponent.value) {
-    handlerReadyRef.value = false;
     throw new Error(`No component for file with extension '${detectedFileType.value!.extension}'`);
   }
 }
@@ -651,7 +647,7 @@ async function openWithSystem(path: FsPath): Promise<boolean> {
   }
 }
 
-async function copyPath(path: FsPath): Promise<void> {
+async function copyLink(path: FsPath): Promise<void> {
   const workspaceHandle = getWorkspaceHandle();
   if (!workspaceHandle) {
     window.electronAPI.log('error', 'Failed to retrieve workspace handle');
@@ -689,14 +685,9 @@ async function showDetails(): Promise<void> {
 }
 
 async function openEditor(path: FsPath): Promise<void> {
-  // Here we want to ensure the router goes back to documents page
-  // before opening the editor for routing purposes (history stack)
-  // Could probably be improved with better routing management
-  // maybe avoiding routing between viewer and editor by loading components directly
-  await routerGoBack();
   const workspaceHandle = getWorkspaceHandle();
   if (workspaceHandle) {
-    await openPath(workspaceHandle, path, informationManager, fileOperationManager, { useEditor: true });
+    await pathOpener.openPath(workspaceHandle, path, informationManager, { readOnly: false });
   }
 }
 
@@ -776,6 +767,9 @@ async function onSaveStateChange(newState: SaveState): Promise<void> {
 }
 
 async function openSmallDisplayActionMenu(): Promise<void> {
+  if (!contentInfo.value) {
+    return;
+  }
   const modal = await modalController.create({
     component: SmallDisplayViewerActionMenu,
     cssClass: 'viewer-action-menu-modal',
@@ -783,7 +777,10 @@ async function openSmallDisplayActionMenu(): Promise<void> {
     breakpoints: [0, 0.5, 1],
     expandToScroll: false,
     initialBreakpoint: 0.5,
-    componentProps: {},
+    componentProps: {
+      canOpenWithSystem: !atDateTime.value && isDesktop(),
+      canEdit: !atDateTime.value && readOnly.value && isEnabledCryptpadDocumentType(contentInfo.value.contentType) && !isReader.value,
+    },
   });
   await modal.present();
   const { data } = await modal.onDidDismiss();
@@ -792,13 +789,14 @@ async function openSmallDisplayActionMenu(): Promise<void> {
       case FileHandlerAction.Details:
         await showDetails();
         break;
-      case FileHandlerAction.CopyPath:
-        if (contentInfo.value) {
-          await copyPath(contentInfo.value.path);
-        }
+      case FileHandlerAction.CopyLink:
+        await copyLink(contentInfo.value.path);
         break;
       case FileHandlerAction.Download:
         await downloadFile();
+        break;
+      case FileHandlerAction.Edit:
+        await openEditor(contentInfo.value.path);
         break;
       case FileHandlerAction.OpenWithSystem:
         if (contentInfo.value) {
@@ -806,7 +804,8 @@ async function openSmallDisplayActionMenu(): Promise<void> {
         }
         break;
       default:
-        console.warn('No ViewerAction match found');
+        window.electronAPI.log('warn', `No match for selected viewer action '${data.action}'`);
+        break;
     }
   }
 }

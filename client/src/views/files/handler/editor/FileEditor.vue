@@ -321,6 +321,7 @@ async function openFileWithCryptpad(): Promise<boolean> {
   } catch (e: unknown) {
     // Check if this is a timeout error (corrupted file)
     if (e instanceof CryptpadError) {
+      emits('fileError');
       switch (e.code) {
         case CryptpadErrorCode.NotInitialized:
           error.value = ErrorMessage.EditableOnlyOnSystem;
@@ -332,8 +333,11 @@ async function openFileWithCryptpad(): Promise<boolean> {
           // TODO: Fix DOCX timeout false positives - OnlyOffice doesn't reliably call onReady for 'doc' type
           // See: https://github.com/Scille/parsec-cloud/issues/11753
           // For now, we ignore timeout errors for DOCX files to avoid false positive "corrupted file" modals
-          if ((e as CryptpadOpenError).documentType === CryptpadDocumentType.Doc) {
-            window.electronAPI.log('info', 'Ignoring timeout for DOCX file (known OnlyOffice onReady issue)');
+          if ([CryptpadDocumentType.Doc, CryptpadDocumentType.Presentation].includes((e as CryptpadOpenError).documentType as any)) {
+            window.electronAPI.log(
+              'info',
+              `Ignoring timeout for ${(e as CryptpadOpenError).documentType} file (known OnlyOffice onReady issue)`,
+            );
             return true;
           }
           window.electronAPI.log('warn', 'CryptPad loading timeout - file appears to be corrupted or too large');

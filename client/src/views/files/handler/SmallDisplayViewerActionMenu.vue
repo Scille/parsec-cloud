@@ -19,7 +19,21 @@
         </ion-item>
         <ion-item
           button
-          @click="onClick(FileHandlerAction.CopyPath)"
+          @click="onClick(FileHandlerAction.Edit)"
+          class="ion-no-padding list-group-item"
+          v-if="canEdit"
+        >
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="create"
+          />
+          <ion-text class="button-large list-group-item__label-small">
+            {{ $msTranslate('fileViewers.openInEditor') }}
+          </ion-text>
+        </ion-item>
+        <ion-item
+          button
+          @click="onClick(FileHandlerAction.CopyLink)"
           class="ion-no-padding list-group-item"
         >
           <ion-icon
@@ -48,7 +62,7 @@
           button
           @click="onClick(FileHandlerAction.OpenWithSystem)"
           class="ion-no-padding list-group-item"
-          v-show="isDesktop() && !atDateTime"
+          v-if="canOpenWithSystem"
         >
           <ion-icon
             class="list-group-item__icon"
@@ -64,14 +78,16 @@
 </template>
 
 <script setup lang="ts">
-import { DateTime, isDesktop, isWeb } from '@/parsec';
+import { isWeb } from '@/parsec';
 import { FileHandlerAction } from '@/views/files';
 import { IonContent, IonIcon, IonItem, IonList, IonPage, IonText, modalController } from '@ionic/vue';
-import { informationCircle, link, open } from 'ionicons/icons';
+import { create, informationCircle, link, open } from 'ionicons/icons';
 import { DownloadIcon, MsImage } from 'megashark-lib';
-import { ref, Ref } from 'vue';
 
-const atDateTime: Ref<DateTime | undefined> = ref(undefined);
+defineProps<{
+  canEdit: boolean;
+  canOpenWithSystem: boolean;
+}>();
 
 function onClick(action: FileHandlerAction): Promise<boolean> {
   return modalController.dismiss({ action: action });

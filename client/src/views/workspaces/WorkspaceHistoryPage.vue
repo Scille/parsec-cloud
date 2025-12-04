@@ -186,9 +186,9 @@ import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBre
 import { SortProperty } from '@/components/users';
 import { EntryName, FsPath, getWorkspaceInfo, Path, StartedWorkspaceInfo, WorkspaceHistory } from '@/parsec';
 import { currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, Routes, watchRoute } from '@/router';
-import { openPath } from '@/services/fileOpener';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
+import usePathOpener from '@/services/pathOpener';
 import { IonButton, IonContent, IonIcon, IonList, IonPage, IonText } from '@ionic/vue';
 import { chevronBack, chevronForward, home, warning } from 'ionicons/icons';
 import { DateTime } from 'luxon';
@@ -209,6 +209,7 @@ const folderContainerRef = useTemplateRef<HTMLDivElement>('folderContainer');
 const headerButtonsRef = useTemplateRef<HTMLDivElement>('headerButtons');
 const topbarRightRef = useTemplateRef<HTMLDivElement>('topbarRight');
 const { windowWidth, isLargeDisplay, isSmallDisplay } = useWindowSize();
+const pathOpener = usePathOpener();
 
 const entries: Ref<WorkspaceHistoryEntryCollection<WorkspaceHistoryEntryModel>> = ref(
   new WorkspaceHistoryEntryCollection<WorkspaceHistoryEntryModel>(),
@@ -399,8 +400,8 @@ async function onEntryClicked(entry: WorkspaceHistoryEntryModel): Promise<void> 
       return;
     }
 
-    await openPath(workspaceInfo.value.handle, entry.path, informationManager, fileOperationManager, {
-      onlyViewers: true,
+    await pathOpener.openPath(workspaceInfo.value.handle, entry.path, informationManager, {
+      disallowSystem: true,
       atTime: DateTime.fromJSDate(selectedDateTime.value),
     });
   } else {

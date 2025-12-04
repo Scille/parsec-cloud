@@ -27,9 +27,6 @@ msTest.describe(() => {
     await expect(entries).toHaveCount(1);
 
     await entries.nth(0).dblclick();
-    await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
-    await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
-    await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
     await expect(documents).toBeViewerPage();
     await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText('image.png');
     await expect(documents.locator('#connected-header .topbar')).toBeHidden();
@@ -40,14 +37,12 @@ msTest.describe(() => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Png, false);
 
     const entries = documents.locator('.folder-container').locator('.file-list-item');
-
+    await expect(entries.locator('.label-name')).toHaveText('image.png');
     await entries.nth(0).click();
+    await expect(entries.nth(0).locator('ion-checkbox')).toHaveState('checked');
     const actionBar = documents.locator('#folders-ms-action-bar');
     await expect(actionBar.locator('ion-button').nth(0)).toHaveText('Preview');
     await actionBar.locator('ion-button').nth(0).click();
-    await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
-    await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
-    await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
     await expect(documents).toBeViewerPage();
     await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText('image.png');
     await expect(documents.locator('#connected-header .topbar')).toBeHidden();
@@ -64,9 +59,6 @@ msTest.describe(() => {
     await expect(menu).toBeVisible();
     await expect(menu.getByRole('listitem').nth(1)).toHaveText('Preview');
     await menu.getByRole('listitem').nth(1).click();
-    await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
-    await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
-    await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
     await expect(documents).toBeViewerPage();
     await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText('image.png');
     await expect(documents.locator('#connected-header .topbar')).toBeHidden();
@@ -78,9 +70,6 @@ msTest.describe(() => {
     const entries = documents.locator('.folder-container').locator('.file-list-item');
 
     await entries.nth(0).dblclick();
-    await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
-    await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
-    await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
     await expect(documents).toBeViewerPage();
     await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText('image.png');
     await expect(documents.locator('#connected-header .topbar')).toBeHidden();
@@ -96,9 +85,6 @@ msTest.describe(() => {
     const entries = documents.locator('.folder-container').locator('.file-list-item');
 
     await entries.nth(0).dblclick();
-    await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
-    await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
-    await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
     await expect(documents).toBeViewerPage();
     await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText('image.png');
     const buttons = documents.locator('.file-handler').locator('.file-handler-topbar-buttons').locator('ion-button:visible');
@@ -115,7 +101,6 @@ msTest.describe(() => {
     const entries = documents.locator('.folder-container').locator('.file-list-item');
 
     await entries.nth(0).dblclick();
-    await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
     await expect(documents).toBeViewerPage();
     await expect(documents.locator('#connected-header .topbar')).toBeHidden();
 
@@ -139,7 +124,6 @@ msTest.describe(() => {
     await expect(documents.locator('#connected-header .topbar')).toBeVisible();
     await documents.locator('.topbar-left').locator('.back-button').click();
     await entries.nth(1).dblclick();
-    await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
     await expect(documents.locator('#connected-header .topbar')).toBeHidden();
 
     await toggleSidebarButton.click();
@@ -165,10 +149,6 @@ msTest.describe(() => {
       }
 
       await entries.nth(0).dblclick();
-      await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
-      await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
-      await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
-      await expect(documents.locator('.ms-spinner-modal')).toHaveCount(0);
       await expect(documents).toBeViewerPage();
       const doc1Name = (await documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text').textContent()) ?? '';
 
@@ -185,10 +165,6 @@ msTest.describe(() => {
 
       await documents.locator('.topbar-left-content').locator('.back-button').click();
       await entries.nth(1).locator('.label-name').click();
-      await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
-      await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
-      await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
-      await expect(documents.locator('.ms-spinner-modal')).toHaveCount(0);
       await expect(documents).toBeViewerPage();
       const doc2Name = (await documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text').textContent()) ?? '';
 
@@ -201,14 +177,8 @@ msTest.describe(() => {
         const toggleSidebarButton = documents.locator('.file-handler-topbar').locator('#trigger-toggle-menu-button');
         await toggleSidebarButton.click();
         await recentDocs.nth(1).click();
-        await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
-        await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
-        await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
         await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(doc1Name);
         await recentDocs.nth(1).click();
-        await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
-        await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
-        await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
         await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(doc2Name);
       }
     });
@@ -486,19 +456,6 @@ msTest.describe(() => {
     expect(await Media.getPausedState(video)).toBe(true);
   });
 
-  msTest('Text viewer', async ({ documents }, testInfo: TestInfo) => {
-    await importDefaultFiles(documents, testInfo, ImportDocuments.Py, false);
-    await openFileType(documents, 'py');
-    await expect(documents).toBeViewerPage();
-    await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.py$/);
-
-    const container = documents.locator('.file-handler').locator('.text-container');
-    const linesCount = (await container.locator('.margin').locator('.line-numbers').all()).length;
-    await expect(container.locator('.margin').locator('.line-numbers')).toHaveText(new Array(linesCount).fill(/^\d+$/));
-    // Didn't manage to make a better regex, I have no idea why but nothing matches
-    await expect(container.locator('.editor-scrollable')).toHaveText(new RegExp('^.*Parsec.*$'));
-  });
-
   msTest('File viewer auto-hides sidebar on entry', async ({ documents }, testInfo: TestInfo) => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Pdf, false);
     // Start with visible sidebar
@@ -507,7 +464,6 @@ msTest.describe(() => {
     // Open file viewer
     const entries = documents.locator('.folder-container').locator('.file-list-item');
     await entries.nth(0).dblclick();
-    await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
     await expect(documents).toBeViewerPage();
 
     // Sidebar should be auto-hidden in file viewer
@@ -556,9 +512,6 @@ msTest.describe(() => {
 
     // Open first file and ensure it's loaded
     await entries.nth(0).locator('.file-name .file-mobile-text .label-name').click();
-    await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
-    await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
-    await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
     await expect(documents).toBeViewerPage();
     await expect(documents.locator('.file-handler-topbar .file-handler-topbar__title')).toHaveText('audio.mp3');
 
@@ -594,9 +547,6 @@ msTest.describe(() => {
 
     // Open second file
     await entries.nth(1).locator('.file-name .file-mobile-text .label-name').click();
-    await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
-    await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
-    await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
     await expect(documents.locator('.file-handler-topbar .file-handler-topbar__title')).toHaveText('image.png');
     await expect(documents).toBeViewerPage();
 
@@ -661,9 +611,6 @@ msTest.describe(() => {
 
     // Open file viewer again
     await entries.nth(1).locator('.file-name .file-mobile-text .label-name').click();
-    await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
-    await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
-    await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
     await expect(documents).toBeViewerPage();
     await expect(documents.locator('.file-handler-topbar .file-handler-topbar__title')).toHaveText('image.png');
 

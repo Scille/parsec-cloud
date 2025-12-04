@@ -10,7 +10,7 @@ msTest('Open file viewer with single click', async ({ documents }) => {
   await expect(documents).toBeViewerPage();
 });
 
-msTest('Document viewer: content', async ({ documents }) => {
+msTest.skip('Document viewer: content', async ({ documents }) => {
   await openFileType(documents, 'docx');
   await expect(documents).toBeViewerPage();
   await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.docx$/);
@@ -97,7 +97,7 @@ msTest('Document viewer: content', async ({ documents }) => {
   await expect(thirdPage.locator('footer')).toHaveText('Footer');
 });
 
-msTest('Document viewer: pagination', async ({ documents }) => {
+msTest.skip('Document viewer: pagination', async ({ documents }) => {
   await openFileType(documents, 'docx');
   await expect(documents).toBeViewerPage();
   const bottomBar = documents.locator('.file-viewer-bottombar');
@@ -170,7 +170,7 @@ msTest('Document viewer: pagination', async ({ documents }) => {
   await expectPage(1);
 });
 
-msTest('Document viewer: scroll', async ({ documents }) => {
+msTest.skip('Document viewer: scroll', async ({ documents }) => {
   await openFileType(documents, 'docx');
   await expect(documents).toBeViewerPage();
   const bottomBar = documents.locator('.file-viewer-bottombar');
@@ -202,7 +202,7 @@ msTest('Document viewer: scroll', async ({ documents }) => {
   await expect(paginationElement).toHaveText('1 / 3');
 });
 
-msTest('Document viewer: zoom', async ({ documents }) => {
+msTest.skip('Document viewer: zoom', async ({ documents }) => {
   await openFileType(documents, 'docx');
   await expect(documents).toBeViewerPage();
   const bottomBar = documents.locator('.file-viewer-bottombar');

@@ -3,6 +3,7 @@
 <template>
   <ion-item
     lines="none"
+    :disabled="disabled"
     button
     @click="$emit('fileClicked', file)"
     class="sidebar-item button-medium ion-no-padding"
@@ -26,6 +27,7 @@ import { close } from 'ionicons/icons';
 
 defineProps<{
   file: RecentFile;
+  disabled?: boolean;
 }>();
 
 defineEmits<{
