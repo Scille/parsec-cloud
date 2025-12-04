@@ -2,7 +2,7 @@
 
 import { BrowserContext, Locator, Page, TestInfo } from '@playwright/test';
 import { expect } from '@tests/e2e/helpers/assertions';
-import { DisplaySize, MsPage } from '@tests/e2e/helpers/types';
+import { DisplaySize, ImportAllDocuments, ImportDocuments, MsPage } from '@tests/e2e/helpers/types';
 import { readFileSync } from 'fs';
 import path from 'path';
 
@@ -354,26 +354,58 @@ export async function logout(page: MsPage): Promise<void> {
   await expect(page.locator('.homepage-header').locator('.topbar-left-text__subtitle')).toHaveText('Access your organizations');
 }
 
-export async function importDefaultFiles(documentsPage: MsPage, testInfo: TestInfo): Promise<void> {
+export async function importDefaultFiles(
+  documentsPage: MsPage,
+  testInfo: TestInfo,
+  imports: number = ImportAllDocuments,
+  mkdir: boolean = true,
+): Promise<void> {
   await expect(documentsPage).toBeDocumentPage();
-  await createFolder(documentsPage, 'Dir_Folder');
+  if (mkdir) {
+    await createFolder(documentsPage, 'Dir_Folder');
+  }
   const dropZone = documentsPage.locator('.folder-container').locator('.drop-zone').nth(0);
-  await dragAndDropFile(documentsPage, dropZone, [
-    path.join(testInfo.config.rootDir, 'data', 'imports', 'image.png'),
-    path.join(testInfo.config.rootDir, 'data', 'imports', 'document.docx'),
-    path.join(testInfo.config.rootDir, 'data', 'imports', 'pdfDocument.pdf'),
-    path.join(testInfo.config.rootDir, 'data', 'imports', 'video.mp4'),
-    path.join(testInfo.config.rootDir, 'data', 'imports', 'audio.mp3'),
-    path.join(testInfo.config.rootDir, 'data', 'imports', 'spreadsheet.xlsx'),
-    path.join(testInfo.config.rootDir, 'data', 'imports', 'text.txt'),
-    path.join(testInfo.config.rootDir, 'data', 'imports', 'code.py'),
-  ]);
+  let imported = 0;
+  if (imports === ImportAllDocuments) {
+    // Speed up a bit by importing everything
+    await dragAndDropFile(documentsPage, dropZone, [
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'image.png'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'document.docx'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'pdfDocument.pdf'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'video.mp4'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'audio.mp3'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'spreadsheet.xlsx'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'text.txt'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'code.py'),
+    ]);
+    imported = 8;
+  } else {
+    const FILES = new Map([
+      [ImportDocuments.Png, 'image.png'],
+      [ImportDocuments.Docx, 'document.docx'],
+      [ImportDocuments.Pdf, 'pdfDocument.pdf'],
+      [ImportDocuments.Mp4, 'video.mp4'],
+      [ImportDocuments.Mp3, 'audio.mp3'],
+      [ImportDocuments.Xlsx, 'spreadsheet.xlsx'],
+      [ImportDocuments.Txt, 'text.txt'],
+      [ImportDocuments.Py, 'code.py'],
+    ]);
+
+    for (const [flag, document] of FILES.entries()) {
+      if (imports & flag) {
+        await dragAndDropFile(documentsPage, dropZone, [path.join(testInfo.config.rootDir, 'data', 'imports', document)]);
+        imported += 1;
+      }
+    }
+  }
   // Hide the import menu
-  const uploadMenu = documentsPage.locator('.upload-menu');
-  await expect(uploadMenu).toBeVisible();
-  const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
-  await expect(tabs.locator('.text-counter')).toHaveText(['0', '8', '0']);
-  await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
+  if (imported > 0) {
+    const uploadMenu = documentsPage.locator('.upload-menu');
+    await expect(uploadMenu).toBeVisible();
+    const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
+    await expect(tabs.locator('.text-counter')).toHaveText(['0', `${imported}`, '0']);
+    await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
+  }
   await expect(documentsPage.locator('.folder-container').locator('.no-files-content')).toBeHidden();
 }
 

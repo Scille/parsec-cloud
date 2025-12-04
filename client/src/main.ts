@@ -502,6 +502,9 @@ function setupWebElectronAPI(injectionProvider: InjectionProvider): void {
       console.log('PrepareUpdate: Not available');
     },
     log: (level: LogLevel, message: string): void => {
+      if ((window as any).TESTING === true) {
+        return;
+      }
       WebLogger.log(level, message);
       console[level](`[MOCKED-ELECTRON-LOG] ${message}`);
     },

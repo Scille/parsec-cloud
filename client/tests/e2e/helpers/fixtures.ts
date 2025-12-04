@@ -236,7 +236,7 @@ export const msTest = debugTest.extend<{
   workspacesStandard: MsPage;
   workspacesExternal: MsPage;
   workspaces: MsPage;
-  documentsOptions: any;
+  documentsOptions: { empty?: boolean };
   documents: MsPage;
   documentsReadOnly: MsPage;
   usersPage: MsPage;
@@ -366,6 +366,8 @@ export const msTest = debugTest.extend<{
     await expect(home).toHaveHeader(['wksp2-readonly'], true, true);
     await expect(home.locator('.folder-container').locator('.no-files')).toBeVisible();
     await importDefaultFiles(home, testInfo);
+    await expect(home.locator('.folder-container').locator('.no-files')).toBeHidden();
+
     await home.locator('.topbar-left').locator('.back-button').click();
     await expect(home).toBeWorkspacePage();
 
