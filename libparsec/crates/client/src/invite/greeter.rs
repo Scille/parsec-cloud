@@ -1265,7 +1265,7 @@ fn create_new_signed_user_certificates(
         device_label,
         human_handle,
         profile,
-        root_verify_key: author.root_verify_key().clone(),
+        root_verify_key: author.root_verify_key().to_owned(),
     };
 
     (
