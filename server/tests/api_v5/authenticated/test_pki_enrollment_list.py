@@ -26,9 +26,7 @@ from tests.common import (
 
 
 async def test_authenticated_pki_enrollment_list_ok(
-    coolorg: CoolorgRpcClients,
-    backend: Backend,
-    test_pki: TestPki,
+    coolorg: CoolorgRpcClients, backend: Backend, test_pki: TestPki, xfail_if_postgresql: None
 ) -> None:
     # 1) Check with no enrollments available
 
@@ -40,25 +38,52 @@ async def test_authenticated_pki_enrollment_list_ok(
     expected_enrollments: list[
         authenticated_cmds.latest.pki_enrollment_list.PkiEnrollmentListItem
     ] = []
-    # works only because test_pki has 4 users
-    # TODO generate bigger test pki
-    certs = [cert.der_certificate for cert in test_pki.cert.values()]
-    for i in range(4):
+
+    # leaf subject -> (intermediate subject, root subject)
+    certs = {
+        "alice": ("", "black_mesa"),
+        "mallory-encrypt": ("glados_dev_team", "aperture_science"),
+        "bob": ("", "black_mesa"),
+        "old-boby": ("", "black_mesa"),
+    }
+    every_cert = (
+        [test_pki.cert[x] for x in ["alice", "mallory-encrypt", "bob", "old-boby"]]
+        + [test_pki.intermediate["glados_dev_team"]]
+        + [test_pki.root[x] for x in ["black_mesa", "aperture_science"]]
+    )
+    for subject, (i_cert, root_cert) in certs.items():
         enrollment_id = PKIEnrollmentID.new()
         submitted_on = DateTime.now()
-        human_handle = HumanHandle(label=f"User{i}", email=EmailAddress(f"user{i}@example.invalid"))
+        human_handle = HumanHandle(
+            label=f"User{subject}", email=EmailAddress(f"{subject}@example.invalid")
+        )
         submit_payload = PkiEnrollmentSubmitPayload(
             verify_key=SigningKey.generate().verify_key,
             public_key=PrivateKey.generate().public_key,
             device_label=DeviceLabel("Dev1"),
         ).dump()
+
+        if len(i_cert) > 0:
+            i_certs = [
+                test_pki.cert[subject],
+                test_pki.intermediate[i_cert],
+                test_pki.root[root_cert],
+            ]
+
+        else:
+            i_certs = [
+                test_pki.cert[subject],
+                test_pki.root[root_cert],
+            ]
+        intermediate_der_x509_certificates = [cert.der_certificate for cert in i_certs]
+
         expected_enrollment_item = (
             authenticated_cmds.latest.pki_enrollment_list.PkiEnrollmentListItem(
                 enrollment_id=enrollment_id,
                 submitted_on=submitted_on,
-                der_x509_certificate=certs[i],
-                intermediate_der_x509_certificates=[],
-                payload_signature=f"<user{i} submit payload signature>".encode(),
+                der_x509_certificate=test_pki.cert[subject].der_certificate,
+                intermediate_der_x509_certificates=intermediate_der_x509_certificates,
+                payload_signature=f"<user {subject} submit payload signature>".encode(),
                 payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
                 payload=submit_payload,
             )
@@ -70,7 +95,7 @@ async def test_authenticated_pki_enrollment_list_ok(
             force=False,
             submitter_human_handle=human_handle,
             submitter_der_x509_certificate=expected_enrollment_item.der_x509_certificate,
-            intermediate_certificates=[],
+            intermediate_certificates=[x.der_certificate for x in every_cert],
             submit_payload_signature=expected_enrollment_item.payload_signature,
             submit_payload_signature_algorithm=expected_enrollment_item.payload_signature_algorithm,
             submit_payload=expected_enrollment_item.payload,
@@ -79,9 +104,22 @@ async def test_authenticated_pki_enrollment_list_ok(
         expected_enrollments.append(expected_enrollment_item)
 
     rep = await coolorg.alice.pki_enrollment_list()
-    assert rep == authenticated_cmds.latest.pki_enrollment_list.RepOk(
-        enrollments=expected_enrollments
-    )
+    match rep:
+        case authenticated_cmds.latest.pki_enrollment_list.RepOk() as e:
+            for res, expected in zip(e.enrollments, expected_enrollments):
+                assert res.enrollment_id == expected.enrollment_id
+                assert res.submitted_on == expected.submitted_on
+                assert res.der_x509_certificate == expected.der_x509_certificate
+                assert (
+                    res.intermediate_der_x509_certificates
+                    == expected.intermediate_der_x509_certificates
+                )
+                assert res.payload_signature == expected.payload_signature
+                assert res.payload_signature_algorithm == expected.payload_signature_algorithm
+                assert res.payload == expected.payload
+
+        case _:
+            assert False
 
     # 3) Also ensure `ACCEPTED/CANCELLED/REJECTED` enrollments are ignored
 
@@ -118,7 +156,7 @@ async def test_authenticated_pki_enrollment_list_ok(
             enrollment_id=canceller_enrollment_id,
             submitted_on=canceller_submitted_on,
             der_x509_certificate=to_cancel.der_x509_certificate,
-            intermediate_der_x509_certificates=[],
+            intermediate_der_x509_certificates=to_cancel.intermediate_der_x509_certificates,
             payload_signature=b"<canceller submit payload signature>",
             payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
             payload=canceller_submit_payload,
@@ -131,7 +169,7 @@ async def test_authenticated_pki_enrollment_list_ok(
         force=True,
         submitter_human_handle=human_handle,
         submitter_der_x509_certificate=canceller_expected_enrollment_item.der_x509_certificate,
-        intermediate_certificates=[],
+        intermediate_certificates=canceller_expected_enrollment_item.intermediate_der_x509_certificates,
         submit_payload_signature=canceller_expected_enrollment_item.payload_signature,
         submit_payload_signature_algorithm=canceller_expected_enrollment_item.payload_signature_algorithm,
         submit_payload=canceller_expected_enrollment_item.payload,
@@ -140,9 +178,25 @@ async def test_authenticated_pki_enrollment_list_ok(
     expected_enrollments.append(canceller_expected_enrollment_item)
 
     rep = await coolorg.alice.pki_enrollment_list()
-    assert rep == authenticated_cmds.latest.pki_enrollment_list.RepOk(
-        enrollments=expected_enrollments
-    )
+
+    match rep:
+        case authenticated_cmds.latest.pki_enrollment_list.RepOk() as e:
+            assert len(e.enrollments) == len(expected_enrollments)
+
+            for res, expected in zip(e.enrollments, expected_enrollments):
+                assert res.enrollment_id == expected.enrollment_id
+                assert res.submitted_on == expected.submitted_on
+                assert res.der_x509_certificate == expected.der_x509_certificate
+                assert (
+                    res.intermediate_der_x509_certificates
+                    == expected.intermediate_der_x509_certificates
+                )
+                assert res.payload_signature == expected.payload_signature
+                assert res.payload_signature_algorithm == expected.payload_signature_algorithm
+                assert res.payload == expected.payload
+
+        case _:
+            assert False
 
 
 @pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
@@ -173,3 +227,6 @@ async def test_authenticated_pki_enrollment_list_http_common_errors(
         await coolorg.alice.pki_enrollment_list()
 
     await authenticated_http_common_errors_tester(do)
+
+
+# TODO test when leaf fingerprint not in db ->  #11871

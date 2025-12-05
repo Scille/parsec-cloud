@@ -56,7 +56,7 @@ from parsec._parsec import (
 from parsec.components.account import ValidationCodeInfo
 from parsec.components.invite import InvitationCreatedBy
 from parsec.components.organization import TermsOfService
-from parsec.components.pki import PkiCertificate
+from parsec.components.pki import MAX_INTERMEDIATE_CERTIFICATES_DEPTH, PkiCertificate
 from parsec.components.sequester import SequesterServiceType
 from parsec.locks import AdvisoryLock
 
@@ -473,8 +473,37 @@ class MemoryOrganization:
         for cert in trustchain:
             if cert.fingerprint_sha256 not in self.pki_certificates:
                 self.pki_certificates[cert.fingerprint_sha256] = MemoryPkiCertificate(
-                    cert.fingerprint_sha256, cert.content, cert.signed_by
+                    sha256_fingerprint=cert.fingerprint_sha256,
+                    der_content=cert.content,
+                    signed_by=cert.signed_by,
                 )
+
+    async def get_trustchain(self, leaf_fingerprint: bytes) -> list[MemoryPkiCertificate]:
+        """
+        return list ordered by leaf -> last known cert of the trustchain
+        """
+        try:
+            current = self.pki_certificates[leaf_fingerprint]
+        except KeyError:
+            return []
+        sorted_trustchain = [current]
+        for _ in range(MAX_INTERMEDIATE_CERTIFICATES_DEPTH):
+            # check circular trustchain (allows to stop iteration)
+            if current.signed_by is None or current.signed_by in map(
+                lambda x: x.sha256_fingerprint, sorted_trustchain
+            ):
+                return sorted_trustchain
+            try:
+                cert = self.pki_certificates[current.signed_by]
+            # the last signer is not in DB
+            except ValueError:
+                return sorted_trustchain
+            # add signer to trustchain
+            sorted_trustchain.append(cert)
+            current = cert
+        # Raise error trustchain too long ?
+        # in theory it should not have been stored if too long
+        return sorted_trustchain
 
 
 @dataclass(slots=True)

@@ -220,6 +220,7 @@ class PkiEnrollmentListBadOutcome(BadOutcomeEnum):
     AUTHOR_NOT_FOUND = auto()
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
+    INVALID_CERTIFICATE = auto()
 
 
 class PkiEnrollmentRejectBadOutcome(BadOutcomeEnum):
@@ -353,9 +354,6 @@ class BasePkiEnrollmentComponent:
                     current = cert
 
         return PkiTrustchainError.TrustchainTooLong
-
-    async def retrieve_trust_chain(self, fingerprint: bytes) -> list[PkiCertificate] | None:
-        raise NotImplementedError
 
     async def get_cert(self, fingerprint: bytes) -> PkiCertificate | None:
         raise NotImplementedError
@@ -493,6 +491,11 @@ class BasePkiEnrollmentComponent:
                 client_ctx.author_not_found_abort()
             case PkiEnrollmentListBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
+            case PkiEnrollmentListBadOutcome.INVALID_CERTIFICATE:
+                # TODO add parse error to protocol https://github.com/Scille/parsec-cloud/issues/11872
+                return authenticated_cmds.latest.pki_enrollment_list.RepUnknownStatus(
+                    "unexpected parse error", None
+                )
 
     @api
     async def api_pki_enrollment_reject(
