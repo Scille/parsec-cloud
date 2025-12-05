@@ -2736,10 +2736,6 @@ fn struct_pki_enrollment_answer_payload_js_to_rs(
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
             })?
     };
-    let human_handle = {
-        let js_val = Reflect::get(&obj, &"humanHandle".into())?;
-        struct_human_handle_js_to_rs(js_val)?
-    };
     let profile = {
         let js_val = Reflect::get(&obj, &"profile".into())?;
         {
@@ -2767,7 +2763,6 @@ fn struct_pki_enrollment_answer_payload_js_to_rs(
         user_id,
         device_id,
         device_label,
-        human_handle,
         profile,
         root_verify_key,
     })
@@ -2800,8 +2795,6 @@ fn struct_pki_enrollment_answer_payload_rs_to_js(
     Reflect::set(&js_obj, &"deviceId".into(), &js_device_id)?;
     let js_device_label = JsValue::from_str(rs_obj.device_label.as_ref());
     Reflect::set(&js_obj, &"deviceLabel".into(), &js_device_label)?;
-    let js_human_handle = struct_human_handle_rs_to_js(rs_obj.human_handle)?;
-    Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
     let js_profile = JsValue::from_str(enum_user_profile_rs_to_js(rs_obj.profile));
     Reflect::set(&js_obj, &"profile".into(), &js_profile)?;
     let js_root_verify_key = JsValue::from(Uint8Array::from(rs_obj.root_verify_key.as_ref()));
@@ -14616,6 +14609,19 @@ fn variant_pki_enrollment_list_item_js_to_rs(
                     v
                 }
             };
+            let submitter_der_cert = {
+                let js_val = Reflect::get(&obj, &"submitterDerCert".into())?;
+                js_val
+                    .dyn_into::<Uint8Array>()
+                    .map(|x| x.to_vec())
+                    .map_err(|_| TypeError::new("Not a Uint8Array"))
+                    .and_then(|x| {
+                        let custom_from_rs_bytes = |v: &[u8]| -> Result<libparsec::Bytes, String> {
+                            Ok(v.to_vec().into())
+                        };
+                        custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            };
             let payload = {
                 let js_val = Reflect::get(&obj, &"payload".into())?;
                 struct_pki_enrollment_submit_payload_js_to_rs(js_val)?
@@ -14624,6 +14630,7 @@ fn variant_pki_enrollment_list_item_js_to_rs(
                 human_handle,
                 enrollment_id,
                 submitted_on,
+                submitter_der_cert,
                 payload,
             })
         }
@@ -14687,6 +14694,7 @@ fn variant_pki_enrollment_list_item_rs_to_js(
             human_handle,
             enrollment_id,
             submitted_on,
+            submitter_der_cert,
             payload,
             ..
         } => {
@@ -14714,6 +14722,9 @@ fn variant_pki_enrollment_list_item_rs_to_js(
                 JsValue::from(v)
             };
             Reflect::set(&js_obj, &"submittedOn".into(), &js_submitted_on)?;
+            let js_submitter_der_cert =
+                JsValue::from(Uint8Array::from(submitter_der_cert.as_ref()));
+            Reflect::set(&js_obj, &"submitterDerCert".into(), &js_submitter_der_cert)?;
             let js_payload = struct_pki_enrollment_submit_payload_rs_to_js(payload)?;
             Reflect::set(&js_obj, &"payload".into(), &js_payload)?;
         }
@@ -21428,8 +21439,8 @@ pub fn clientPkiEnrollmentAccept(
     client_handle: u32,
     profile: String,
     enrollment_id: String,
-    human_handle: Object,
-    cert_ref: Object,
+    accepter_cert_ref: Object,
+    submitter_der_cert: Uint8Array,
     submit_payload: Object,
 ) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
@@ -21441,11 +21452,15 @@ pub fn clientPkiEnrollmentAccept(
             };
             custom_from_rs_string(enrollment_id).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-        let human_handle = human_handle.into();
-        let human_handle = struct_human_handle_js_to_rs(human_handle)?;
+        let accepter_cert_ref = accepter_cert_ref.into();
+        let accepter_cert_ref = struct_x509_certificate_reference_js_to_rs(accepter_cert_ref)?;
 
-        let cert_ref = cert_ref.into();
-        let cert_ref = struct_x509_certificate_reference_js_to_rs(cert_ref)?;
+        let submitter_der_cert = {
+            let custom_from_rs_bytes =
+                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+            custom_from_rs_bytes(&submitter_der_cert.to_vec())
+                .map_err(|e| TypeError::new(e.as_ref()))
+        }?;
 
         let submit_payload = submit_payload.into();
         let submit_payload = struct_pki_enrollment_submit_payload_js_to_rs(submit_payload)?;
@@ -21454,8 +21469,8 @@ pub fn clientPkiEnrollmentAccept(
             client_handle,
             profile,
             enrollment_id,
-            &human_handle,
-            &cert_ref,
+            &accepter_cert_ref,
+            &submitter_der_cert,
             submit_payload,
         )
         .await;

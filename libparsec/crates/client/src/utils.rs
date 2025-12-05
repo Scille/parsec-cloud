@@ -9,11 +9,11 @@ use libparsec_types::*;
 /// - redacted device
 pub fn create_user_and_device_certificates(
     author: &LocalDevice,
-    device_label: &DeviceLabel,
-    human_handle: &HumanHandle,
+    device_label: DeviceLabel,
+    human_handle: HumanHandle,
     profile: UserProfile,
-    public_key: &PublicKey,
-    verify_key: &VerifyKey,
+    public_key: PublicKey,
+    verify_key: VerifyKey,
     timestamp: DateTime,
 ) -> (UserID, DeviceID, Bytes, Bytes, Bytes, Bytes) {
     let user_id = UserID::default();
@@ -23,7 +23,7 @@ pub fn create_user_and_device_certificates(
         author: CertificateSigner::User(author.device_id),
         timestamp,
         user_id,
-        human_handle: MaybeRedacted::Real(human_handle.clone()),
+        human_handle: MaybeRedacted::Real(human_handle),
         public_key: public_key.clone(),
         algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
         profile,
@@ -34,7 +34,7 @@ pub fn create_user_and_device_certificates(
         timestamp,
         user_id,
         human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(user_id)),
-        public_key: public_key.clone(),
+        public_key,
         algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
         profile,
     };
@@ -45,7 +45,7 @@ pub fn create_user_and_device_certificates(
         purpose: DevicePurpose::Standard,
         user_id,
         device_id,
-        device_label: MaybeRedacted::Real(device_label.clone()),
+        device_label: MaybeRedacted::Real(device_label),
         verify_key: verify_key.clone(),
         algorithm: SigningKeyAlgorithm::Ed25519,
     };
@@ -57,7 +57,7 @@ pub fn create_user_and_device_certificates(
         user_id,
         device_id,
         device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(device_id)),
-        verify_key: verify_key.clone(),
+        verify_key,
         algorithm: SigningKeyAlgorithm::Ed25519,
     };
 

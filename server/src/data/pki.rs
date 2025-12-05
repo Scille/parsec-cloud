@@ -29,7 +29,6 @@ impl PkiEnrollmentAnswerPayload {
         user_id: UserID,
         device_id: DeviceID,
         device_label: DeviceLabel,
-        human_handle: HumanHandle,
         profile: UserProfile,
         root_verify_key: VerifyKey,
     ) -> Self {
@@ -37,7 +36,6 @@ impl PkiEnrollmentAnswerPayload {
             user_id: user_id.0,
             device_id: device_id.0,
             device_label: device_label.0,
-            human_handle: human_handle.0,
             profile: profile.0,
             root_verify_key: root_verify_key.0,
         })
@@ -56,11 +54,6 @@ impl PkiEnrollmentAnswerPayload {
     #[getter]
     fn device_label(&self) -> DeviceLabel {
         DeviceLabel(self.0.device_label.clone())
-    }
-
-    #[getter]
-    fn human_handle(&self) -> HumanHandle {
-        HumanHandle(self.0.human_handle.clone())
     }
 
     #[getter]

@@ -717,16 +717,16 @@ impl Client {
         &self,
         profile: UserProfile,
         enrollment_id: PKIEnrollmentID,
-        human_handle: &HumanHandle,
-        cert_ref: &X509CertificateReference,
-        submit_payload: &PkiEnrollmentSubmitPayload,
+        accepter_cert_ref: &X509CertificateReference,
+        submitter_der_cert: &[u8],
+        submit_payload: PkiEnrollmentSubmitPayload,
     ) -> Result<(), PkiEnrollmentAcceptError> {
         pki_enrollment_accept::accept(
             self,
             profile,
             enrollment_id,
-            human_handle,
-            cert_ref,
+            accepter_cert_ref,
+            submitter_der_cert,
             submit_payload,
         )
         .await

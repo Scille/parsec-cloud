@@ -298,7 +298,6 @@ export interface PkiEnrollmentAnswerPayload {
     userId: string
     deviceId: string
     deviceLabel: string
-    humanHandle: HumanHandle
     profile: UserProfile
     rootVerifyKey: Uint8Array
 }
@@ -3078,6 +3077,7 @@ export interface PkiEnrollmentListItemValid {
     human_handle: HumanHandle
     enrollment_id: string
     submitted_on: number
+    submitter_der_cert: Uint8Array
     payload: PkiEnrollmentSubmitPayload
 }
 export type PkiEnrollmentListItem =
@@ -4918,8 +4918,8 @@ export function clientPkiEnrollmentAccept(
     client_handle: number,
     profile: UserProfile,
     enrollment_id: string,
-    human_handle: HumanHandle,
-    cert_ref: X509CertificateReference,
+    accepter_cert_ref: X509CertificateReference,
+    submitter_der_cert: Uint8Array,
     submit_payload: PkiEnrollmentSubmitPayload
 ): Promise<Result<null, PkiEnrollmentAcceptError>>
 export function clientPkiEnrollmentReject(

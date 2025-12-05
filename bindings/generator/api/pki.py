@@ -52,7 +52,6 @@ class PkiEnrollmentAnswerPayload(Structure):
     user_id: UserID
     device_id: DeviceID
     device_label: DeviceLabel
-    human_handle: HumanHandle
     profile: UserProfile
     root_verify_key: VerifyKey
 
@@ -92,6 +91,7 @@ class PkiEnrollmentListItem(Variant):
         human_handle: HumanHandle
         enrollment_id: PKIEnrollmentID
         submitted_on: DateTime
+        submitter_der_cert: Bytes
         payload: PkiEnrollmentSubmitPayload
 
     class Invalid:

@@ -4,6 +4,7 @@
 from .addr import ParsecOrganizationAddr
 from .common import (
     U64,
+    Bytes,
     DateTime,
     DeviceID,
     DeviceLabel,
@@ -835,8 +836,8 @@ async def client_pki_enrollment_accept(
     client_handle: Handle,
     profile: UserProfile,
     enrollment_id: PKIEnrollmentID,
-    human_handle: Ref[HumanHandle],
-    cert_ref: Ref[X509CertificateReference],
+    accepter_cert_ref: Ref[X509CertificateReference],
+    submitter_der_cert: Ref[Bytes],
     submit_payload: PkiEnrollmentSubmitPayload,
 ) -> Result[None, PkiEnrollmentAcceptError]:
     raise NotImplementedError

@@ -13,8 +13,8 @@ use libparsec_serialization_format::parsec_data;
 use crate::{
     self as libparsec_types, impl_transparent_data_format_conversion,
     serialization::{format_v0_dump, format_vx_load},
-    DataResult, DateTime, DeviceID, DeviceLabel, HumanHandle, PKIEnrollmentID,
-    ParsecPkiEnrollmentAddr, UserID, UserProfile,
+    DataResult, DateTime, DeviceID, DeviceLabel, PKIEnrollmentID, ParsecPkiEnrollmentAddr, UserID,
+    UserProfile,
 };
 pub use cert_ref::{
     X509CertificateHash, X509CertificateReference, X509Pkcs11URI, X509URIFlavorValue,
@@ -34,7 +34,6 @@ pub struct PkiEnrollmentAnswerPayload {
     pub user_id: UserID,
     pub device_id: DeviceID,
     pub device_label: DeviceLabel,
-    pub human_handle: HumanHandle,
     pub profile: UserProfile,
     pub root_verify_key: VerifyKey,
 }
@@ -47,7 +46,6 @@ impl_transparent_data_format_conversion!(
     user_id,
     device_id,
     device_label,
-    human_handle,
     profile,
     root_verify_key,
 );

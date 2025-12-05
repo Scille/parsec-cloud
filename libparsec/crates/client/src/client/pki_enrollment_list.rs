@@ -28,6 +28,7 @@ pub enum PkiEnrollmentListItem {
         human_handle: HumanHandle,
         enrollment_id: PKIEnrollmentID,
         submitted_on: DateTime,
+        submitter_der_cert: Bytes,
         payload: PkiEnrollmentSubmitPayload,
     },
     Invalid {
@@ -186,6 +187,7 @@ pub async fn list_enrollments(
                         human_handle,
                         enrollment_id: req.enrollment_id,
                         submitted_on: req.submitted_on,
+                        submitter_der_cert: req.der_x509_certificate,
                         payload,
                     },
                     Err(e) => PkiEnrollmentListItem::Invalid {

@@ -15,10 +15,6 @@
             "type": "DeviceLabel"
         },
         {
-            "name": "human_handle",
-            "type": "HumanHandle"
-        },
-        {
             "name": "profile",
             "type": "UserProfile"
         },

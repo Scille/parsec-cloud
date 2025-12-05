@@ -66,6 +66,7 @@ async fn ok(test_pki: &TestPKI, env: &TestbedEnv) {
                 human_handle: valid_cert.cert_info.human_handle().unwrap(),
                 enrollment_id: valid_pki_enrollment_item_clone.enrollment_id,
                 submitted_on: valid_pki_enrollment_item_clone.submitted_on,
+                submitter_der_cert: valid_pki_enrollment_item_clone.der_x509_certificate,
                 payload
             },
             PkiEnrollmentListItem::Invalid {

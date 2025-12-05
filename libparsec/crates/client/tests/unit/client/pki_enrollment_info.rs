@@ -38,11 +38,6 @@ async fn ok(#[case] status: &str, env: &TestbedEnv) {
                 user_id: UserID::from_hex("9268b5acc07711f0ae7c2394da79527f").unwrap(),
                 device_id: DeviceID::from_hex("a46105b6c07711f09e41f70f2e4e5650").unwrap(),
                 device_label: DeviceLabel::try_from("new pki device").unwrap(),
-                human_handle: HumanHandle::new(
-                    EmailAddress::try_from("pki@invalid.com").unwrap(),
-                    "pki",
-                )
-                .unwrap(),
                 profile: UserProfile::Standard,
                 root_verify_key: alice_device.root_verify_key().clone(),
             };
