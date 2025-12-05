@@ -42,17 +42,15 @@ async fn ok(tmp_path: TmpPath, env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "workspace_history")]
-async fn read_only(
-    #[values(
-        "truncate_existing",
-        "create_on_existing",
-        "create_on_non_existing",
-        "create_new_on_non_existing"
-    )]
-    kind: &str,
-    tmp_path: TmpPath,
-    env: &TestbedEnv,
-) {
+#[case("truncate_existing")]
+#[cfg_attr(
+    target_os = "windows",
+    ignore = "Ignoring because often the test is stuck on the CI CF issue #11842"
+)]
+#[case("create_on_existing")]
+#[case("create_on_non_existing")]
+#[case("create_new_on_non_existing")]
+async fn read_only(#[case] kind: &str, tmp_path: TmpPath, env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
     let wksp1_v2_timestamp: DateTime = *env.template.get_stuff("wksp1_v2_timestamp");
