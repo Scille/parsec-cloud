@@ -7,6 +7,7 @@ use std::{
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_crypto::{Password, SecretKey};
+use libparsec_platform_async::PinBoxFutureResult;
 use libparsec_types::prelude::*;
 
 #[derive(Debug, Copy, Clone)]
@@ -24,12 +25,6 @@ impl std::fmt::Display for RemoteOperationServer {
         write!(f, "{}", name)
     }
 }
-
-// Note we cannot use `async fn` in the traits since it is not compatible
-// with dyn object (and we need to store the object implementing the trait
-// as `Arc<dyn AccountVaultOperations>`).
-pub type PinBoxFutureResult<O, E> =
-    std::pin::Pin<Box<dyn std::future::Future<Output = Result<O, E>> + Send>>;
 
 /*
  * Account vault operations

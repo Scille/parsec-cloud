@@ -2,6 +2,7 @@
 
 use std::sync::{Arc, Mutex};
 
+pub use libparsec_platform_async::PinBoxFutureResult;
 pub use libparsec_types::prelude::*;
 pub use platform::*;
 
@@ -9,7 +10,7 @@ pub use crate::{
     AccountVaultOperations, AccountVaultOperationsFetchOpaqueKeyError,
     AccountVaultOperationsUploadOpaqueKeyError, OpenBaoDeviceAccessOperations,
     OpenBaoDeviceSaveOperations, OpenBaoOperationsFetchOpaqueKeyError,
-    OpenBaoOperationsUploadOpaqueKeyError, PinBoxFutureResult,
+    OpenBaoOperationsUploadOpaqueKeyError,
 };
 
 #[cfg(not(target_arch = "wasm32"))]
