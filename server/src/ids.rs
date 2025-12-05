@@ -131,6 +131,18 @@ crate::binding_utils::gen_py_wrapper_class_for_id!(
 gen_uuid!(PKIEnrollmentID);
 
 crate::binding_utils::gen_py_wrapper_class_for_id!(
+    AsyncEnrollmentID,
+    libparsec_types::AsyncEnrollmentID,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __str__,
+    __richcmp__ ord,
+    __hash__,
+);
+gen_uuid!(AsyncEnrollmentID);
+
+crate::binding_utils::gen_py_wrapper_class_for_id!(
     GreetingAttemptID,
     libparsec_types::GreetingAttemptID,
     __repr__,
