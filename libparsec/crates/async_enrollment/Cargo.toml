@@ -1,0 +1,27 @@
+[package]
+name = "libparsec_async_enrollment"
+publish.workspace = true
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+version.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+libparsec_types = { workspace = true }
+libparsec_platform_async = { workspace = true }
+libparsec_client_connection = { workspace = true }
+
+reqwest = { workspace = true, features = ["json"] }
+url = { workspace = true }
+serde_json = { workspace = true, features = ["std"] }
+thiserror = { workspace = true }
+data-encoding = { workspace = true, features = ["std"] }
+
+[dev-dependencies]
+libparsec_tests_lite = { workspace = true }
+libparsec_tests_fixtures = { workspace = true, features = ["default"] }
