@@ -28,8 +28,9 @@ enum FileAction {
 
 enum FileHandlerAction {
   Details = 'details',
-  CopyPath = 'copyPath',
+  CopyLink = 'copyLink',
   Download = 'download',
+  Edit = 'edit',
   OpenWithSystem = 'openWithSystem',
 }
 

@@ -176,10 +176,7 @@ export async function openFileType(
     const entryName = (await entry.locator('.file-name').locator('.label-name').textContent()) ?? '';
     if (entryName.endsWith(`.${type}`)) {
       await entry.dblclick();
-      await expect(documentsPage.locator('.ms-spinner-modal')).toBeVisible();
-      await expect(documentsPage.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
-      await expect(documentsPage.locator('.ms-spinner-modal')).toBeHidden();
-      await expect(documentsPage).toBeViewerPage();
+      await expect(documentsPage).toBeFileHandlerPage();
       return;
     }
   }
