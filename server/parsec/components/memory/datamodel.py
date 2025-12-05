@@ -56,7 +56,7 @@ from parsec._parsec import (
 from parsec.components.account import ValidationCodeInfo
 from parsec.components.invite import InvitationCreatedBy
 from parsec.components.organization import TermsOfService
-from parsec.components.pki import PkiCertificate
+from parsec.components.pki import MAX_INTERMEDIATE_CERTIFICATES_DEPTH, PkiCertificate
 from parsec.components.sequester import SequesterServiceType
 from parsec.locks import AdvisoryLock
 
@@ -475,6 +475,31 @@ class MemoryOrganization:
                 self.pki_certificates[cert.fingerprint_sha256] = MemoryPkiCertificate(
                     cert.fingerprint_sha256, cert.content, cert.signed_by
                 )
+
+    async def get_trustchain(self, leaf_fingerprint: bytes) -> list[MemoryPkiCertificate] | None:
+        try:
+            current = self.pki_certificates[leaf_fingerprint]
+        except KeyError:
+            return None
+        trustchain = {leaf_fingerprint: current}
+        for _ in range(MAX_INTERMEDIATE_CERTIFICATES_DEPTH):
+            # check circular trustchain (allows to stop iteration)
+            if current.signed_by in trustchain.keys():
+                return list(trustchain.values())
+            match current.signed_by:
+                # Last cert signed by no one
+                case None:
+                    return list(trustchain.values())
+                case signed_by_fingerprint:
+                    pass
+            try:
+                cert = self.pki_certificates[signed_by_fingerprint]
+            # the last signer is not in DB
+            except ValueError:
+                return list(trustchain.values())
+            # add signer to trust chain
+            trustchain[cert.sha256_fingerprint] = cert
+            current = cert
 
 
 @dataclass(slots=True)
