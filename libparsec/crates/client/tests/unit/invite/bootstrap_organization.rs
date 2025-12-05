@@ -3,9 +3,10 @@
 use std::sync::Arc;
 
 use libparsec_client_connection::{ConnectionError, ProxyConfig};
+use libparsec_platform_async::PinBoxFutureResult;
 use libparsec_platform_device_loader::{
     AccountVaultOperations, AccountVaultOperationsFetchOpaqueKeyError,
-    AccountVaultOperationsUploadOpaqueKeyError, DeviceSaveStrategy, PinBoxFutureResult,
+    AccountVaultOperationsUploadOpaqueKeyError, DeviceSaveStrategy,
 };
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
