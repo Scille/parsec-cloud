@@ -706,6 +706,10 @@ impl Client {
         pki_enrollment_list::list_enrollments(&self.cmds, cert_ref).await
     }
 
+    pub async fn pki_list_enrollments_untrusted(&self) -> Result<Vec<libparsec_protocol::authenticated_cmds::latest::pki_enrollment_list::PkiEnrollmentListItem>, PkiEnrollmentListError>{
+        pki_enrollment_list::list_enrollments_untrusted(&self.cmds).await
+    }
+
     pub async fn pki_enrollment_reject(
         &self,
         enrollment_id: PKIEnrollmentID,
