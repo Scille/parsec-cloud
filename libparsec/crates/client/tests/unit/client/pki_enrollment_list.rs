@@ -9,6 +9,64 @@ use libparsec_types::prelude::*;
 
 use super::utils::client_factory;
 
+#[parsec_test(testbed = "minimal")]
+async fn ok_untrusted(test_pki: &TestPKI, env: &TestbedEnv) {
+    let alice_device = env.local_device("alice@dev1");
+    let alice_client = client_factory(&env.discriminant_dir, alice_device).await;
+
+    let payload = PkiEnrollmentSubmitPayload {
+        // For this test, we do not need to keep the private part
+        verify_key: SigningKey::generate().verify_key(),
+        public_key: PrivateKey::generate().public_key(),
+        // We reuse alice device label and human handle for simplicity
+        device_label: alice_client.device_label().clone(),
+    };
+
+    let raw_payload = payload.dump();
+    let valid_cert = &test_pki.cert["bob"];
+
+    // Test data from libparsec/crates/protocol/tests/authenticated_cmds/v5/pki_enrollment_list.rs
+    let valid_pki_enrollment_item =
+        authenticated_cmds::latest::pki_enrollment_list::PkiEnrollmentListItem {
+            der_x509_certificate: valid_cert.der_certificate.clone(),
+            intermediate_der_x509_certificates: [b"deadbeef".as_ref().into()].to_vec(),
+            enrollment_id: PKIEnrollmentID::from_hex("e1fe88bd0f054261887a6c8039710b40").unwrap(),
+            payload: raw_payload.clone().into(),
+            payload_signature: hex!("3c7369676e61747572653e").as_ref().into(),
+            payload_signature_algorithm: PkiSignatureAlgorithm::RsassaPssSha256,
+            submitted_on: DateTime::from_timestamp_micros(1668594983390001).unwrap(),
+        };
+    let invalid_pki_enrollment_item =
+        authenticated_cmds::latest::pki_enrollment_list::PkiEnrollmentListItem {
+            der_x509_certificate: hex!("3c78353039206365727469663e").as_ref().into(),
+            intermediate_der_x509_certificates: [b"deadbeef".as_ref().into()].to_vec(),
+            enrollment_id: PKIEnrollmentID::from_hex("e1fe88bd0f054261887a6c8039710b40").unwrap(),
+            payload: raw_payload.into(),
+            payload_signature: hex!("1234").as_ref().into(),
+            payload_signature_algorithm: PkiSignatureAlgorithm::RsassaPssSha256,
+            submitted_on: DateTime::from_timestamp_micros(1668594983390001).unwrap(),
+        };
+    let valid_pki_enrollment_item_clone = valid_pki_enrollment_item.clone();
+    let invalid_pki_enrollment_item_clone = invalid_pki_enrollment_item.clone();
+
+    test_register_send_hook(&env.discriminant_dir, {
+        move |_req: authenticated_cmds::latest::pki_enrollment_list::Req| {
+            authenticated_cmds::latest::pki_enrollment_list::Rep::Ok {
+                enrollments: vec![valid_pki_enrollment_item, invalid_pki_enrollment_item],
+            }
+        }
+    });
+
+    let enrollments = alice_client.pki_list_enrollments_untrusted().await.unwrap();
+    p_assert_eq!(
+        enrollments,
+        vec![
+            valid_pki_enrollment_item_clone,
+            invalid_pki_enrollment_item_clone,
+        ]
+    )
+}
+
 #[ignore = "TODO: (#11269) Need to generate a valid payload & signature with a cert that is trusted by it's root certificate"]
 #[parsec_test(testbed = "minimal")]
 async fn ok(test_pki: &TestPKI, env: &TestbedEnv) {
