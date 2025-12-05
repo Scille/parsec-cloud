@@ -3,7 +3,6 @@ members = [
     "server",
     "libparsec",
     "libparsec/crates/account",
-    "libparsec/crates/async_enrollment",
     "libparsec/crates/client",
     "libparsec/crates/client_connection",
     "libparsec/crates/crypto",
@@ -33,7 +32,6 @@ members = [
 default-members = [
     "libparsec",
     "libparsec/crates/account",
-    "libparsec/crates/async_enrollment",
     "libparsec/crates/client",
     "libparsec/crates/client_connection",
     "libparsec/crates/crypto",

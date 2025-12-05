@@ -2204,22 +2204,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "libparsec_async_enrollment"
-version = "3.7.1-a.0+dev"
-dependencies = [
- "data-encoding",
- "libparsec_client_connection",
- "libparsec_platform_async",
- "libparsec_tests_fixtures",
- "libparsec_tests_lite",
- "libparsec_types",
- "reqwest",
- "serde_json",
- "thiserror 2.0.17",
- "url",
-]
-
-[[package]]
 name = "libparsec_bindings_android"
 version = "3.7.1-a.0+dev"
 dependencies = [

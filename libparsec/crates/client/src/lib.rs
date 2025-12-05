@@ -2,6 +2,7 @@
 
 #![doc = include_str!("../README.md")]
 
+mod async_enrollment;
 mod certif;
 mod client;
 mod config;
@@ -18,6 +19,7 @@ pub mod workspace;
 pub mod workspace_history;
 
 // For clarity, user & certificate stuff are re-exposed through client
+pub use async_enrollment::*;
 pub use certif::*;
 pub use client::*;
 pub use config::*;
