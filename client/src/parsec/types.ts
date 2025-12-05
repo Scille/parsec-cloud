@@ -372,9 +372,17 @@ interface WorkspaceInfo extends ParsecWorkspaceInfo {
   size: number;
   lastUpdated: DateTime;
   created?: DateTime;
+  joinedOn?: DateTime;
   availableOffline: boolean;
   handle: WorkspaceHandle;
+  downloadState: WorkspaceDownloadState;
   mountpoints: [MountpointHandle, SystemPath][];
+}
+
+enum WorkspaceDownloadState {
+  NotAvailable,
+  InProgress,
+  Available,
 }
 
 interface StartedWorkspaceInfo extends ParsecStartedWorkspaceInfo {
@@ -461,6 +469,7 @@ export {
   UserID,
   UserInfo,
   UserTuple,
+  WorkspaceDownloadState,
   WorkspaceHandle,
   WorkspaceHistoryEntryStat,
   WorkspaceHistoryEntryStatFile,
