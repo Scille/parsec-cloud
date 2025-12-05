@@ -214,7 +214,7 @@ fn create_new_signed_user_certificates(
     ) = create_user_and_device_certificates(
         author,
         device_label.clone(),
-        human_handle,
+        human_handle.clone(),
         profile,
         public_key,
         verify_key,
