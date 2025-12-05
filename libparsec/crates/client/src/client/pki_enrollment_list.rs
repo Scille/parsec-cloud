@@ -207,3 +207,24 @@ pub async fn list_enrollments(
     .map_err(PkiEnrollmentListError::Internal)
     .and_then(std::convert::identity)
 }
+
+pub async fn list_enrollments_untrusted(
+    cmds: &AuthenticatedCmds,
+) -> Result<
+    Vec<libparsec_protocol::authenticated_cmds::latest::pki_enrollment_list::PkiEnrollmentListItem>,
+    PkiEnrollmentListError,
+> {
+    use authenticated_cmds::latest::pki_enrollment_list::{Rep, Req};
+
+    let rep = cmds.send(Req).await?;
+
+    let pki_requests = match rep {
+        Rep::Ok { enrollments } => enrollments,
+        Rep::AuthorNotAllowed => return Err(PkiEnrollmentListError::AuthorNotAllowed),
+        rep @ Rep::UnknownStatus { .. } => {
+            return Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
+        }
+    };
+
+    Ok(pki_requests)
+}
