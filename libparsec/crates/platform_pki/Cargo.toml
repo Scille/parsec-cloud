@@ -11,6 +11,9 @@ repository.workspace = true
 [lints]
 workspace = true
 
+[features]
+test-fixture = ["libparsec_tests_lite"]
+
 [dependencies]
 bytes = { workspace = true }
 error_set = { workspace = true }
@@ -24,6 +27,8 @@ x509-cert = { workspace = true, features = ["std"] }
 log = { workspace = true, features = ["kv"] }
 chrono = { workspace = true }
 thiserror = { workspace = true }
+
+libparsec_tests_lite = { workspace = true, optional = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 schannel = { workspace = true }

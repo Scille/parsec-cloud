@@ -2448,6 +2448,7 @@ dependencies = [
  "env_logger",
  "error_set",
  "hex-literal",
+ "libparsec_tests_lite",
  "libparsec_types",
  "log",
  "percent-encoding",
