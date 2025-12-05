@@ -45,6 +45,7 @@ from parsec.components.pki import (
     PkiEnrollmentSubmitBadOutcome,
     PkiEnrollmentSubmitX509CertificateAlreadySubmitted,
     PkiTrustchainError,
+    parse_pki_cert,
     pki_enrollment_accept_validate,
 )
 from parsec.events import EventCommonCertificate, EventPkiEnrollment
@@ -268,21 +269,30 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         if author_user.current_profile != UserProfile.ADMIN:
             return PkiEnrollmentListBadOutcome.AUTHOR_NOT_ALLOWED
 
-        return sorted(
-            [
-                PkiEnrollmentListItem(
-                    enrollment_id=enrollment.enrollment_id,
-                    payload=enrollment.submit_payload,
-                    payload_signature=enrollment.submit_payload_signature,
-                    payload_signature_algorithm=enrollment.submit_payload_signature_algorithm,
-                    submitted_on=enrollment.submitted_on,
-                    der_x509_certificate=enrollment.submitter_der_x509_certificate,
-                    # TODO: https://github.com/Scille/parsec-cloud/issues/11558
-                    intermediate_der_x509_certificates=[],
+        ret = []
+        for enrollment in org.pki_enrollments.values():
+            if enrollment.enrollment_state == MemoryPkiEnrollmentState.SUBMITTED:
+                try:
+                    cert = parse_pki_cert(enrollment.submitter_der_x509_certificate)
+                except ValueError:
+                    return PkiEnrollmentListBadOutcome.INVALID_CERTIFICATE
+                trustchain = await org.get_trustchain(cert.fingerprint_sha256)
+                intermediate_der_x509_certificates = [c.der_content for c in trustchain]
+
+                ret.append(
+                    PkiEnrollmentListItem(
+                        enrollment_id=enrollment.enrollment_id,
+                        payload=enrollment.submit_payload,
+                        payload_signature=enrollment.submit_payload_signature,
+                        payload_signature_algorithm=enrollment.submit_payload_signature_algorithm,
+                        submitted_on=enrollment.submitted_on,
+                        der_x509_certificate=enrollment.submitter_der_x509_certificate,
+                        intermediate_der_x509_certificates=intermediate_der_x509_certificates,
+                    )
                 )
-                for enrollment in org.pki_enrollments.values()
-                if enrollment.enrollment_state == MemoryPkiEnrollmentState.SUBMITTED
-            ],
+
+        return sorted(
+            ret,
             key=lambda x: x.submitted_on,
         )
 
