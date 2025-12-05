@@ -40,7 +40,10 @@ pub use self::{
     pki_enrollment_accept::PkiEnrollmentAcceptError,
     pki_enrollment_finalize::{finalize as pki_enrollment_finalize, PkiEnrollmentFinalizeError},
     pki_enrollment_info::{info as pki_enrollment_info, PKIInfoItem, PkiEnrollmentInfoError},
-    pki_enrollment_list::{InvalidityReason, PkiEnrollmentListError, PkiEnrollmentListItem},
+    pki_enrollment_list::{
+        verify_untrusted_items as pki_list_verify_items, InvalidityReason, PkiEnrollmentListError,
+        PkiEnrollmentListItem,
+    },
     pki_enrollment_reject::PkiEnrollmentRejectError,
     pki_enrollment_submit::{pki_enrollment_submit, PkiEnrollmentSubmitError},
     start_invitation_greet::ClientStartShamirRecoveryInvitationGreetError,
@@ -708,6 +711,14 @@ impl Client {
 
     pub async fn pki_list_enrollments_untrusted(&self) -> Result<Vec<libparsec_protocol::authenticated_cmds::latest::pki_enrollment_list::PkiEnrollmentListItem>, PkiEnrollmentListError>{
         pki_enrollment_list::list_enrollments_untrusted(&self.cmds).await
+    }
+
+    pub async fn pki_list_verify_items(
+        &self,
+        cert_ref: X509CertificateReference,
+        untrusted_items: Vec<libparsec_protocol::authenticated_cmds::latest::pki_enrollment_list::PkiEnrollmentListItem>,
+    ) -> Result<Vec<PkiEnrollmentListItem>, PkiEnrollmentListError> {
+        pki_enrollment_list::verify_untrusted_items(&self.cmds, cert_ref, untrusted_items).await
     }
 
     pub async fn pki_enrollment_reject(
