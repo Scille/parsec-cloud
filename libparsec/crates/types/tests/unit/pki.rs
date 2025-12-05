@@ -109,9 +109,6 @@ fn serde_pki_enrollment_answer_payload() {
         user_id: "alice".parse().unwrap(),
         device_id: "alice@dev1".parse().unwrap(),
         device_label: "My dev1 machine".parse().unwrap(),
-        human_handle: ("alice@example.com", "Alicey McAliceFace")
-            .try_into()
-            .unwrap(),
         profile: UserProfile::Admin,
         root_verify_key: VerifyKey::from(hex!(
             "be2976732cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbd"

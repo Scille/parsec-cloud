@@ -111,7 +111,6 @@ def generate_accept_params(
         user_id=user_id,
         device_id=device_id,
         device_label=device_label,
-        human_handle=human_handle,
         profile=profile,
         root_verify_key=coolorg.root_verify_key,
     ).dump()
@@ -331,7 +330,6 @@ async def test_authenticated_pki_enrollment_accept_invalid_der_x509_certificate(
         user_id=NEW_MIKE_USER_ID,
         device_id=NEW_MIKE_DEVICE_ID,
         device_label=NEW_MIKE_DEVICE_LABEL,
-        human_handle=NEW_MIKE_HUMAN_HANDLE,
         profile=UserProfile.STANDARD,
         root_verify_key=coolorg.root_verify_key,
     ).dump()

@@ -366,7 +366,6 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
         payload=PkiEnrollmentAnswerPayload(
             user_id=user_certificates.certificate.user_id,
             device_id=device_certificates.certificate.device_id,
-            human_handle=user_certificates.certificate.human_handle,
             profile=user_certificates.certificate.profile,
             device_label=device_certificates.certificate.device_label,
             root_verify_key=coolorg.root_verify_key,

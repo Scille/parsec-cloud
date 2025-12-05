@@ -1,7 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use libparsec_client_connection::ConnectionError;
-use libparsec_platform_pki::{get_der_encoded_certificate, sign_message};
+use libparsec_platform_pki::{
+    get_der_encoded_certificate, sign_message, x509::X509CertificateInformation,
+};
 use libparsec_protocol::authenticated_cmds::latest::pki_enrollment_accept::{Rep, Req};
 use libparsec_types::prelude::*;
 
@@ -38,21 +40,36 @@ pub async fn accept(
     client: &Client,
     profile: UserProfile,
     enrollment_id: PKIEnrollmentID,
-    human_handle: &HumanHandle,
-    cert_ref: &X509CertificateReference,
-    submit_payload: &PkiEnrollmentSubmitPayload,
+    accepter_cert_ref: &X509CertificateReference,
+    submitter_der_cert: &[u8],
+    submit_payload: PkiEnrollmentSubmitPayload,
 ) -> Result<(), PkiEnrollmentAcceptError> {
     // Keep looping while `RequireGreaterTimestamp` is returned
     let mut to_use_timestamp = client.device.now();
+    let accepter_der_x509_certificate = get_der_encoded_certificate(accepter_cert_ref)
+        .map_err(|e| PkiEnrollmentAcceptError::PkiOperationError(e.into()))?
+        .der_content;
+    let submitter_human_handle = X509CertificateInformation::load_der(submitter_der_cert)
+        .context("Failed to load submitter certificate information")
+        .and_then(|info| {
+            info.human_handle()
+                .context("Missing human handle from submitter certificate")
+        })?;
+
     loop {
         let outcome = accept_internal(
             client,
             profile,
             enrollment_id,
-            human_handle,
-            cert_ref,
+            Accepter {
+                cert_ref: accepter_cert_ref,
+                der_cert: &accepter_der_x509_certificate,
+            },
+            Submitter {
+                payload: submit_payload.clone(),
+                human_handle: submitter_human_handle.clone(),
+            },
             to_use_timestamp,
-            submit_payload,
         )
         .await?;
 
@@ -69,19 +86,24 @@ pub async fn accept(
     }
 }
 
+struct Accepter<'a> {
+    cert_ref: &'a X509CertificateReference,
+    der_cert: &'a [u8],
+}
+
+struct Submitter {
+    payload: PkiEnrollmentSubmitPayload,
+    human_handle: HumanHandle,
+}
+
 async fn accept_internal(
     client: &Client,
     profile: UserProfile,
     enrollment_id: PKIEnrollmentID,
-    human_handle: &HumanHandle,
-    cert_ref: &X509CertificateReference,
+    accepter: Accepter<'_>,
+    submitter: Submitter,
     now: DateTime,
-    submit_payload: &PkiEnrollmentSubmitPayload,
 ) -> Result<PkiAcceptOutcome, PkiEnrollmentAcceptError> {
-    let accepter_der_x509_certificate = get_der_encoded_certificate(cert_ref)
-        .map_err(|e| PkiEnrollmentAcceptError::PkiOperationError(e.into()))?
-        .der_content;
-
     // Generate payload and user/device certificates
     let (
         submitter_user_certificate,
@@ -91,16 +113,16 @@ async fn accept_internal(
         payload,
     ) = create_new_signed_user_certificates(
         &client.device,
-        &submit_payload.device_label,
-        human_handle,
+        submitter.payload.device_label,
+        submitter.human_handle,
         profile,
-        &submit_payload.public_key,
-        &submit_payload.verify_key,
+        submitter.payload.public_key,
+        submitter.payload.verify_key,
         now,
     );
 
     // sign payload with accepter x509certificate
-    let payload_signature = sign_message(&payload, cert_ref)
+    let payload_signature = sign_message(&payload, accepter.cert_ref)
         .map_err(|e| PkiEnrollmentAcceptError::PkiOperationError(e.into()))?;
 
     // send request
@@ -108,7 +130,7 @@ async fn accept_internal(
         .cmds
         .send(Req {
             enrollment_id,
-            accepter_der_x509_certificate,
+            accepter_der_x509_certificate: Bytes::copy_from_slice(accepter.der_cert),
             // TODO: https://github.com/Scille/parsec-cloud/issues/11671
             accepter_intermediate_der_x509_certificates: vec![],
             payload,
@@ -175,11 +197,11 @@ async fn accept_internal(
 /// - accept answer payload
 fn create_new_signed_user_certificates(
     author: &LocalDevice,
-    device_label: &DeviceLabel,
-    human_handle: &HumanHandle,
+    device_label: DeviceLabel,
+    human_handle: HumanHandle,
     profile: UserProfile,
-    public_key: &PublicKey,
-    verify_key: &VerifyKey,
+    public_key: PublicKey,
+    verify_key: VerifyKey,
     timestamp: DateTime,
 ) -> (Bytes, Bytes, Bytes, Bytes, Bytes) {
     let (
@@ -191,7 +213,7 @@ fn create_new_signed_user_certificates(
         redacted_device_certificate_bytes,
     ) = create_user_and_device_certificates(
         author,
-        device_label,
+        device_label.clone(),
         human_handle,
         profile,
         public_key,
@@ -202,8 +224,7 @@ fn create_new_signed_user_certificates(
     let answer_payload = PkiEnrollmentAnswerPayload {
         user_id,
         device_id,
-        device_label: device_label.clone(),
-        human_handle: human_handle.clone(),
+        device_label,
         profile,
         root_verify_key: author.root_verify_key().clone(),
     };

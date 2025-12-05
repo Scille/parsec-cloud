@@ -20,7 +20,6 @@ class PkiEnrollmentAnswerPayload:
         user_id: UserID,
         device_id: DeviceID,
         device_label: DeviceLabel,
-        human_handle: HumanHandle,
         profile: UserProfile,
         root_verify_key: VerifyKey,
     ): ...
@@ -30,8 +29,6 @@ class PkiEnrollmentAnswerPayload:
     def device_id(self) -> DeviceID: ...
     @property
     def device_label(self) -> DeviceLabel: ...
-    @property
-    def human_handle(self) -> HumanHandle: ...
     @property
     def profile(self) -> UserProfile: ...
     @property

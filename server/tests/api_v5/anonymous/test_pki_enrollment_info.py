@@ -77,7 +77,6 @@ async def test_anonymous_pki_enrollment_info_ok(
                 user_id=NEW_MIKE_USER_ID,
                 device_id=NEW_MIKE_DEVICE_ID,
                 device_label=NEW_MIKE_DEVICE_LABEL,
-                human_handle=NEW_MIKE_HUMAN_HANDLE,
                 profile=UserProfile.STANDARD,
                 root_verify_key=coolorg.root_verify_key,
             ).dump()

@@ -3,6 +3,7 @@
 use std::path::{Path, PathBuf};
 
 use libparsec_platform_device_loader::{AvailableDevice, DeviceSaveStrategy};
+use libparsec_platform_pki::x509::X509CertificateInformation;
 use libparsec_types::{
     anyhow::{self, Context},
     LocalDevice, PKILocalPendingEnrollment, PkiEnrollmentAnswerPayload, PrivateParts, SecretKey,
@@ -38,6 +39,18 @@ pub async fn finalize(
             .map(|v| v.data)
             .context("Cannot decrypt key")
             .and_then(|raw| SecretKey::try_from(raw.as_ref()).context("Invalid key"))?;
+    let human_handle = libparsec_platform_pki::get_der_encoded_certificate(&cert_ref)
+        .map(|v| v.der_content)
+        .context("Cannot get certificate content")
+        .and_then(|der| {
+            X509CertificateInformation::load_der(&der)
+                .context("Cannot load user information from certificate")
+        })
+        .and_then(|info| {
+            info.human_handle()
+                .context("Missing human handle from certificate information")
+        })?;
+
     let raw_private_parts = key
         .decrypt(&ciphertext)
         .context("Cannot decrypt local pending")?;
@@ -50,7 +63,6 @@ pub async fn finalize(
         user_id,
         device_id,
         device_label,
-        human_handle,
         profile,
         root_verify_key,
     } = accepted;

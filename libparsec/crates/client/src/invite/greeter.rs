@@ -1251,11 +1251,11 @@ fn create_new_signed_user_certificates(
         redacted_device_certificate_bytes,
     ) = create_user_and_device_certificates(
         author,
-        &device_label,
-        &human_handle,
+        device_label.clone(),
+        human_handle.clone(),
         profile,
-        &public_key,
-        &verify_key,
+        public_key,
+        verify_key,
         timestamp,
     );
 

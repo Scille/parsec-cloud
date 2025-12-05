@@ -2610,10 +2610,6 @@ fn struct_pki_enrollment_answer_payload_js_to_rs<'a>(
             }
         }
     };
-    let human_handle = {
-        let js_val: Handle<JsObject> = obj.get(cx, "humanHandle")?;
-        struct_human_handle_js_to_rs(cx, js_val)?
-    };
     let profile = {
         let js_val: Handle<JsString> = obj.get(cx, "profile")?;
         {
@@ -2637,7 +2633,6 @@ fn struct_pki_enrollment_answer_payload_js_to_rs<'a>(
         user_id,
         device_id,
         device_label,
-        human_handle,
         profile,
         root_verify_key,
     })
@@ -2671,8 +2666,6 @@ fn struct_pki_enrollment_answer_payload_rs_to_js<'a>(
     js_obj.set(cx, "deviceId", js_device_id)?;
     let js_device_label = JsString::try_new(cx, rs_obj.device_label).or_throw(cx)?;
     js_obj.set(cx, "deviceLabel", js_device_label)?;
-    let js_human_handle = struct_human_handle_rs_to_js(cx, rs_obj.human_handle)?;
-    js_obj.set(cx, "humanHandle", js_human_handle)?;
     let js_profile =
         JsString::try_new(cx, enum_user_profile_rs_to_js(rs_obj.profile)).or_throw(cx)?;
     js_obj.set(cx, "profile", js_profile)?;
@@ -13325,6 +13318,20 @@ fn variant_pki_enrollment_list_item_js_to_rs<'a>(
                     }
                 }
             };
+            let submitter_der_cert = {
+                let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "submitterDerCert")?;
+                {
+                    let custom_from_rs_bytes =
+                        |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+                    #[allow(clippy::unnecessary_mut_passed)]
+                    match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                        Ok(val) => val,
+                        // err can't infer type in some case, because of the previous `try_into`
+                        #[allow(clippy::useless_format)]
+                        Err(err) => return cx.throw_type_error(format!("{}", err)),
+                    }
+                }
+            };
             let payload = {
                 let js_val: Handle<JsObject> = obj.get(cx, "payload")?;
                 struct_pki_enrollment_submit_payload_js_to_rs(cx, js_val)?
@@ -13333,6 +13340,7 @@ fn variant_pki_enrollment_list_item_js_to_rs<'a>(
                 human_handle,
                 enrollment_id,
                 submitted_on,
+                submitter_der_cert,
                 payload,
             })
         }
@@ -13391,6 +13399,7 @@ fn variant_pki_enrollment_list_item_rs_to_js<'a>(
             human_handle,
             enrollment_id,
             submitted_on,
+            submitter_der_cert,
             payload,
             ..
         } => {
@@ -13418,6 +13427,12 @@ fn variant_pki_enrollment_list_item_rs_to_js<'a>(
                 }
             });
             js_obj.set(cx, "submittedOn", js_submitted_on)?;
+            let js_submitter_der_cert = {
+                let rs_buff = { submitter_der_cert.as_ref() };
+                let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+                js_buff
+            };
+            js_obj.set(cx, "submitterDerCert", js_submitter_der_cert)?;
             let js_payload = struct_pki_enrollment_submit_payload_rs_to_js(cx, payload)?;
             js_obj.set(cx, "payload", js_payload)?;
         }
@@ -21697,13 +21712,23 @@ fn client_pki_enrollment_accept(mut cx: FunctionContext) -> JsResult<JsPromise> 
             }
         }
     };
-    let human_handle = {
+    let accepter_cert_ref = {
         let js_val = cx.argument::<JsObject>(3)?;
-        struct_human_handle_js_to_rs(&mut cx, js_val)?
-    };
-    let cert_ref = {
-        let js_val = cx.argument::<JsObject>(4)?;
         struct_x509_certificate_reference_js_to_rs(&mut cx, js_val)?
+    };
+    let submitter_der_cert = {
+        let js_val = cx.argument::<JsTypedArray<u8>>(4)?;
+        {
+            let custom_from_rs_bytes =
+                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+            #[allow(clippy::unnecessary_mut_passed)]
+            match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
+                Ok(val) => val,
+                // err can't infer type in some case, because of the previous `try_into`
+                #[allow(clippy::useless_format)]
+                Err(err) => return cx.throw_type_error(format!("{}", err)),
+            }
+        }
     };
     let submit_payload = {
         let js_val = cx.argument::<JsObject>(5)?;
@@ -21721,8 +21746,8 @@ fn client_pki_enrollment_accept(mut cx: FunctionContext) -> JsResult<JsPromise> 
                 client_handle,
                 profile,
                 enrollment_id,
-                &human_handle,
-                &cert_ref,
+                &accepter_cert_ref,
+                &submitter_der_cert,
                 submit_payload,
             )
             .await;

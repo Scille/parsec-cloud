@@ -319,7 +319,6 @@ export interface PkiEnrollmentAnswerPayload {
     userId: UserID
     deviceId: DeviceID
     deviceLabel: DeviceLabel
-    humanHandle: HumanHandle
     profile: UserProfile
     rootVerifyKey: VerifyKey
 }
@@ -3661,6 +3660,7 @@ export interface PkiEnrollmentListItemValid {
     humanHandle: HumanHandle
     enrollmentId: PKIEnrollmentID
     submittedOn: DateTime
+    submitterDerCert: Bytes
     payload: PkiEnrollmentSubmitPayload
 }
 export type PkiEnrollmentListItem =
@@ -5860,8 +5860,8 @@ export interface LibParsecPlugin {
         client_handle: Handle,
         profile: UserProfile,
         enrollment_id: PKIEnrollmentID,
-        human_handle: HumanHandle,
-        cert_ref: X509CertificateReference,
+        accepter_cert_ref: X509CertificateReference,
+        submitter_der_cert: Bytes,
         submit_payload: PkiEnrollmentSubmitPayload
     ): Promise<Result<null, PkiEnrollmentAcceptError>>
     clientPkiEnrollmentReject(
