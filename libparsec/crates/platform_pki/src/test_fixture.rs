@@ -134,20 +134,20 @@ mod platform_implementation {
             let content = std::fs::read(&path).expect("Cannot read entry");
 
             match suffix.map(|v| v.as_bytes()) {
-                Some(b".key") => {
+                Some(b"key") => {
                     store
                         .entry(name)
                         .or_insert_with_key(|k| PartialCertificate::new(k.to_string()))
                         .with_pem_key(content);
                 }
-                Some(b".crt") => {
+                Some(b"crt") => {
                     store
                         .entry(name)
                         .or_insert_with_key(|k| PartialCertificate::new(k.to_string()))
                         .with_pem_certificate(content);
                 }
                 _ => {
-                    log::debug!(
+                    eprintln!(
                         "Ignoring {name}: unknown suffix {suffix:?} (path={})",
                         path.display()
                     )
