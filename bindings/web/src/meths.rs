@@ -11087,6 +11087,9 @@ fn variant_invalidity_reason_js_to_rs(
             Ok(libparsec::InvalidityReason::InvalidRootCertificate {})
         }
         "InvalidityReasonInvalidSignature" => Ok(libparsec::InvalidityReason::InvalidSignature {}),
+        "InvalidityReasonInvalidUserInformation" => {
+            Ok(libparsec::InvalidityReason::InvalidUserInformation {})
+        }
         "InvalidityReasonNotFound" => Ok(libparsec::InvalidityReason::NotFound {}),
         "InvalidityReasonUnexpectedError" => Ok(libparsec::InvalidityReason::UnexpectedError {}),
         "InvalidityReasonUntrusted" => Ok(libparsec::InvalidityReason::Untrusted {}),
@@ -11145,6 +11148,13 @@ fn variant_invalidity_reason_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"InvalidityReasonInvalidSignature".into(),
+            )?;
+        }
+        libparsec::InvalidityReason::InvalidUserInformation { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"InvalidityReasonInvalidUserInformation".into(),
             )?;
         }
         libparsec::InvalidityReason::NotFound { .. } => {
@@ -14517,6 +14527,14 @@ fn variant_pki_enrollment_list_item_js_to_rs(
         .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
     match tag.as_str() {
         "PkiEnrollmentListItemInvalid" => {
+            let human_handle = {
+                let js_val = Reflect::get(&obj, &"humanHandle".into())?;
+                if js_val.is_null() {
+                    None
+                } else {
+                    Some(struct_human_handle_js_to_rs(js_val)?)
+                }
+            };
             let enrollment_id = {
                 let js_val = Reflect::get(&obj, &"enrollmentId".into())?;
                 js_val
@@ -14558,6 +14576,7 @@ fn variant_pki_enrollment_list_item_js_to_rs(
                     .ok_or_else(|| TypeError::new("Not a string"))?
             };
             Ok(libparsec::PkiEnrollmentListItem::Invalid {
+                human_handle,
                 enrollment_id,
                 submitted_on,
                 reason,
@@ -14565,6 +14584,10 @@ fn variant_pki_enrollment_list_item_js_to_rs(
             })
         }
         "PkiEnrollmentListItemValid" => {
+            let human_handle = {
+                let js_val = Reflect::get(&obj, &"humanHandle".into())?;
+                struct_human_handle_js_to_rs(js_val)?
+            };
             let enrollment_id = {
                 let js_val = Reflect::get(&obj, &"enrollmentId".into())?;
                 js_val
@@ -14598,6 +14621,7 @@ fn variant_pki_enrollment_list_item_js_to_rs(
                 struct_pki_enrollment_submit_payload_js_to_rs(js_val)?
             };
             Ok(libparsec::PkiEnrollmentListItem::Valid {
+                human_handle,
                 enrollment_id,
                 submitted_on,
                 payload,
@@ -14616,6 +14640,7 @@ fn variant_pki_enrollment_list_item_rs_to_js(
     let js_obj = Object::new().into();
     match rs_obj {
         libparsec::PkiEnrollmentListItem::Invalid {
+            human_handle,
             enrollment_id,
             submitted_on,
             reason,
@@ -14627,6 +14652,11 @@ fn variant_pki_enrollment_list_item_rs_to_js(
                 &"tag".into(),
                 &"PkiEnrollmentListItemInvalid".into(),
             )?;
+            let js_human_handle = match human_handle {
+                Some(val) => struct_human_handle_rs_to_js(val)?,
+                None => JsValue::NULL,
+            };
+            Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
             let js_enrollment_id = JsValue::from_str({
                 let custom_to_rs_string =
                     |x: libparsec::PKIEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
@@ -14654,12 +14684,15 @@ fn variant_pki_enrollment_list_item_rs_to_js(
             Reflect::set(&js_obj, &"details".into(), &js_details)?;
         }
         libparsec::PkiEnrollmentListItem::Valid {
+            human_handle,
             enrollment_id,
             submitted_on,
             payload,
             ..
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"PkiEnrollmentListItemValid".into())?;
+            let js_human_handle = struct_human_handle_rs_to_js(human_handle)?;
+            Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
             let js_enrollment_id = JsValue::from_str({
                 let custom_to_rs_string =
                     |x: libparsec::PKIEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };

@@ -3027,6 +3027,7 @@ export enum InvalidityReasonTag {
     InvalidCertificateDer = 'InvalidityReasonInvalidCertificateDer',
     InvalidRootCertificate = 'InvalidityReasonInvalidRootCertificate',
     InvalidSignature = 'InvalidityReasonInvalidSignature',
+    InvalidUserInformation = 'InvalidityReasonInvalidUserInformation',
     NotFound = 'InvalidityReasonNotFound',
     UnexpectedError = 'InvalidityReasonUnexpectedError',
     Untrusted = 'InvalidityReasonUntrusted',
@@ -3053,6 +3054,9 @@ export interface InvalidityReasonInvalidRootCertificate {
 export interface InvalidityReasonInvalidSignature {
     tag: InvalidityReasonTag.InvalidSignature
 }
+export interface InvalidityReasonInvalidUserInformation {
+    tag: InvalidityReasonTag.InvalidUserInformation
+}
 export interface InvalidityReasonNotFound {
     tag: InvalidityReasonTag.NotFound
 }
@@ -3070,6 +3074,7 @@ export type InvalidityReason =
   | InvalidityReasonInvalidCertificateDer
   | InvalidityReasonInvalidRootCertificate
   | InvalidityReasonInvalidSignature
+  | InvalidityReasonInvalidUserInformation
   | InvalidityReasonNotFound
   | InvalidityReasonUnexpectedError
   | InvalidityReasonUntrusted
@@ -3645,6 +3650,7 @@ export enum PkiEnrollmentListItemTag {
 
 export interface PkiEnrollmentListItemInvalid {
     tag: PkiEnrollmentListItemTag.Invalid
+    humanHandle: HumanHandle | null
     enrollmentId: PKIEnrollmentID
     submittedOn: DateTime
     reason: InvalidityReason
@@ -3652,6 +3658,7 @@ export interface PkiEnrollmentListItemInvalid {
 }
 export interface PkiEnrollmentListItemValid {
     tag: PkiEnrollmentListItemTag.Valid
+    humanHandle: HumanHandle
     enrollmentId: PKIEnrollmentID
     submittedOn: DateTime
     payload: PkiEnrollmentSubmitPayload

@@ -2,6 +2,7 @@
 
 use crate::{InvalidityReason, PkiEnrollmentListError, PkiEnrollmentListItem};
 use libparsec_client_connection::test_register_send_hook;
+use libparsec_platform_pki::test_fixture::{test_pki, TestPKI};
 use libparsec_protocol::authenticated_cmds;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -10,7 +11,7 @@ use super::utils::client_factory;
 
 #[ignore = "TODO: (#11269) Need to generate a valid payload & signature with a cert that is trusted by it's root certificate"]
 #[parsec_test(testbed = "minimal")]
-async fn ok(env: &TestbedEnv) {
+async fn ok(test_pki: &TestPKI, env: &TestbedEnv) {
     let alice_device = env.local_device("alice@dev1");
     let alice_client = client_factory(&env.discriminant_dir, alice_device).await;
 
@@ -23,11 +24,12 @@ async fn ok(env: &TestbedEnv) {
     };
 
     let raw_payload = payload.dump();
+    let valid_cert = &test_pki.cert["bob"];
 
     // Test data from libparsec/crates/protocol/tests/authenticated_cmds/v5/pki_enrollment_list.rs
     let valid_pki_enrollment_item =
         authenticated_cmds::latest::pki_enrollment_list::PkiEnrollmentListItem {
-            der_x509_certificate: hex!("3c78353039206365727469663e").as_ref().into(),
+            der_x509_certificate: valid_cert.der_certificate.clone(),
             intermediate_der_x509_certificates: [b"deadbeef".as_ref().into()].to_vec(),
             enrollment_id: PKIEnrollmentID::from_hex("e1fe88bd0f054261887a6c8039710b40").unwrap(),
             payload: raw_payload.clone().into(),
@@ -61,11 +63,13 @@ async fn ok(env: &TestbedEnv) {
         enrollments.await.unwrap(),
         vec![
             PkiEnrollmentListItem::Valid {
+                human_handle: valid_cert.cert_info.human_handle().unwrap(),
                 enrollment_id: valid_pki_enrollment_item_clone.enrollment_id,
                 submitted_on: valid_pki_enrollment_item_clone.submitted_on,
                 payload
             },
             PkiEnrollmentListItem::Invalid {
+                human_handle: None,
                 enrollment_id: invalid_pki_enrollment_item_clone.enrollment_id,
                 submitted_on: invalid_pki_enrollment_item_clone.submitted_on,
                 details: "error".to_string(), // Update when real payload is generated

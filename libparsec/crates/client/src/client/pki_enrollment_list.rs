@@ -25,11 +25,15 @@ pub enum PkiEnrollmentListError {
 #[derive(Debug, PartialEq, Eq)]
 pub enum PkiEnrollmentListItem {
     Valid {
+        human_handle: HumanHandle,
         enrollment_id: PKIEnrollmentID,
         submitted_on: DateTime,
         payload: PkiEnrollmentSubmitPayload,
     },
     Invalid {
+        /// We try to provide the human handle from the cert, but we may fail to do so causing the
+        /// item to be invalid
+        human_handle: Option<HumanHandle>,
         enrollment_id: PKIEnrollmentID,
         submitted_on: DateTime,
         reason: InvalidityReason,
@@ -49,6 +53,7 @@ pub enum InvalidityReason {
     InvalidSignature,
     UnexpectedError,
     DataError,
+    InvalidUserInformation,
 }
 
 impl From<LoadSubmitPayloadError> for InvalidityReason {
@@ -136,6 +141,24 @@ pub async fn list_enrollments(
                     message: req.payload,
                 };
 
+                let cert_info =
+                    match libparsec_platform_pki::x509::X509CertificateInformation::load_der(
+                        &req.der_x509_certificate,
+                    ) {
+                        Ok(info) => info,
+                        Err(err) => {
+                            return PkiEnrollmentListItem::Invalid {
+                                human_handle: None,
+                                enrollment_id: req.enrollment_id,
+                                submitted_on: req.submitted_on,
+                                reason: InvalidityReason::InvalidUserInformation,
+                                details: err.to_string(),
+                            }
+                        }
+                    };
+
+                let human_handle = cert_info.human_handle();
+
                 let payload = match libparsec_platform_pki::load_submit_payload(
                     &req.der_x509_certificate,
                     &message,
@@ -147,6 +170,7 @@ pub async fn list_enrollments(
                     Err(err) => {
                         log::debug!(err:%; "Cannot validate submit payload");
                         return PkiEnrollmentListItem::Invalid {
+                            human_handle: human_handle.ok(),
                             enrollment_id: req.enrollment_id,
                             submitted_on: req.submitted_on,
                             details: err.to_string(),
@@ -157,11 +181,20 @@ pub async fn list_enrollments(
 
                 // We successfully parsed the payload, we can drop the message.
                 drop(message);
-
-                PkiEnrollmentListItem::Valid {
-                    enrollment_id: req.enrollment_id,
-                    submitted_on: req.submitted_on,
-                    payload,
+                match human_handle {
+                    Ok(human_handle) => PkiEnrollmentListItem::Valid {
+                        human_handle,
+                        enrollment_id: req.enrollment_id,
+                        submitted_on: req.submitted_on,
+                        payload,
+                    },
+                    Err(e) => PkiEnrollmentListItem::Invalid {
+                        human_handle: None,
+                        enrollment_id: req.enrollment_id,
+                        submitted_on: req.submitted_on,
+                        reason: InvalidityReason::InvalidUserInformation,
+                        details: e.to_string(),
+                    },
                 }
             })
             .collect::<Vec<_>>();

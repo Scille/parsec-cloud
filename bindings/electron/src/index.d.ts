@@ -2578,6 +2578,9 @@ export interface InvalidityReasonInvalidRootCertificate {
 export interface InvalidityReasonInvalidSignature {
     tag: "InvalidityReasonInvalidSignature"
 }
+export interface InvalidityReasonInvalidUserInformation {
+    tag: "InvalidityReasonInvalidUserInformation"
+}
 export interface InvalidityReasonNotFound {
     tag: "InvalidityReasonNotFound"
 }
@@ -2595,6 +2598,7 @@ export type InvalidityReason =
   | InvalidityReasonInvalidCertificateDer
   | InvalidityReasonInvalidRootCertificate
   | InvalidityReasonInvalidSignature
+  | InvalidityReasonInvalidUserInformation
   | InvalidityReasonNotFound
   | InvalidityReasonUnexpectedError
   | InvalidityReasonUntrusted
@@ -3063,6 +3067,7 @@ export type PkiEnrollmentListError =
 // PkiEnrollmentListItem
 export interface PkiEnrollmentListItemInvalid {
     tag: "PkiEnrollmentListItemInvalid"
+    human_handle: HumanHandle | null
     enrollment_id: string
     submitted_on: number
     reason: InvalidityReason
@@ -3070,6 +3075,7 @@ export interface PkiEnrollmentListItemInvalid {
 }
 export interface PkiEnrollmentListItemValid {
     tag: "PkiEnrollmentListItemValid"
+    human_handle: HumanHandle
     enrollment_id: string
     submitted_on: number
     payload: PkiEnrollmentSubmitPayload
