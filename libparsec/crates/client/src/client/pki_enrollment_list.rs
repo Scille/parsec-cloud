@@ -96,8 +96,18 @@ pub async fn list_enrollments(
         }
     };
 
+    verify_untrusted_items(cmds, cert_ref, pki_requests).await
+}
+
+pub async fn verify_untrusted_items(
+    cmds: &AuthenticatedCmds,
+    cert_ref: X509CertificateReference,
+    untrusted_items: Vec<
+        libparsec_protocol::authenticated_cmds::latest::pki_enrollment_list::PkiEnrollmentListItem,
+    >,
+) -> Result<Vec<PkiEnrollmentListItem>, PkiEnrollmentListError> {
     // Early stop
-    if pki_requests.is_empty() {
+    if untrusted_items.is_empty() {
         return Ok(Vec::new());
     }
 
@@ -133,7 +143,7 @@ pub async fn list_enrollments(
 
         let pki_root_certs = [verified_path.anchor().clone()];
 
-        let items = pki_requests
+        let items = untrusted_items
             .into_iter()
             .map(|req| {
                 let message = libparsec_platform_pki::SignedMessage {
