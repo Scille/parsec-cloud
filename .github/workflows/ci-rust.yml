@@ -118,6 +118,13 @@ jobs:
           ) | tee -a $GITHUB_OUTPUT
         timeout-minutes: 2
 
+      - name: Generate test PKI
+        run: |
+          export TEST_PKI_DIR=$(pwd)/test-pki
+          echo "TEST_PKI_DIR=$TEST_PKI_DIR" | tee -a $GITHUB_ENV
+          python misc/gen_test_pki.py --output-dir $TEST_PKI_DIR
+        timeout-minutes: 2
+
       - name: Test agnostic rust codebase
         run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} ${{ steps.crates.outputs.agnostic }}
         env:
