@@ -64,44 +64,38 @@ class PkiEnrollmentSubmitPayload(Structure):
 
 
 class InvalidityReason(Variant):
-    class InvalidCertificateDer:
-        pass
+    class InvalidCertificateDer: ...
 
-    class InvalidRootCertificate:
-        pass
+    class InvalidRootCertificate: ...
 
-    class CannotOpenStore:
-        pass
+    class CannotOpenStore: ...
 
-    class NotFound:
-        pass
+    class NotFound: ...
 
-    class CannotGetCertificateInfo:
-        pass
+    class CannotGetCertificateInfo: ...
 
-    class DateTimeOutOfRange:
-        pass
+    class DateTimeOutOfRange: ...
 
-    class Untrusted:
-        pass
+    class Untrusted: ...
 
-    class InvalidSignature:
-        pass
+    class InvalidSignature: ...
 
-    class UnexpectedError:
-        pass
+    class UnexpectedError: ...
 
-    class DataError:
-        pass
+    class DataError: ...
+
+    class InvalidUserInformation: ...
 
 
 class PkiEnrollmentListItem(Variant):
     class Valid:
+        human_handle: HumanHandle
         enrollment_id: PKIEnrollmentID
         submitted_on: DateTime
         payload: PkiEnrollmentSubmitPayload
 
     class Invalid:
+        human_handle: HumanHandle | None
         enrollment_id: PKIEnrollmentID
         submitted_on: DateTime
         reason: InvalidityReason

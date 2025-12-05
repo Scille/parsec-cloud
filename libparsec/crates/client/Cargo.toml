@@ -32,6 +32,7 @@ thiserror = { workspace = true }
 [dev-dependencies]
 libparsec_tests_lite = { workspace = true }
 libparsec_tests_fixtures = { workspace = true, features = ["default"] }
+libparsec_platform_pki = { workspace = true, features = ["test-fixture"] }
 libparsec_platform_storage = { workspace = true, features = ["expose-test-methods"] }
 libparsec_client = { workspace = true, features = ["expose-test-methods"] }
 
