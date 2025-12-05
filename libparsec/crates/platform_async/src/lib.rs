@@ -141,6 +141,21 @@ pub type BoxStream<'a, R> = futures::stream::LocalBoxStream<'a, R>;
 #[cfg(not(target_arch = "wasm32"))]
 pub type BoxStream<'a, R> = futures::stream::BoxStream<'a, R>;
 
+/// Helper used when having async methods in trait, e.g.:
+/// ```ignore
+/// trait MyTrait: std::fmt::Debug + Send + Sync {
+///     fn do_something_async(
+///         &self,
+///     ) -> PinBoxFuture<u32>;
+/// }
+/// ```
+///
+/// Note we cannot use `async fn` in the traits since it is not compatible
+/// with dyn object (and we need to store the object implementing the trait
+/// as `Arc<dyn AccountVaultOperations>`).
+pub type PinBoxFuture<O> = std::pin::Pin<Box<dyn std::future::Future<Output = O> + Send>>;
+pub type PinBoxFutureResult<O, E> = PinBoxFuture<Result<O, E>>;
+
 #[cfg(test)]
 #[path = "../tests/unit/mod.rs"]
 #[allow(clippy::unwrap_used)]
