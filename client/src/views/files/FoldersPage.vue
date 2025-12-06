@@ -971,15 +971,32 @@ async function listFolder(options?: { selectFile?: EntryName; sameFolder?: boole
 }
 
 async function onEntryClick(entry: EntryModel, _event: Event): Promise<void> {
-  if (!entry.isFile()) {
-    const newPath = await parsec.Path.join(currentPath.value, entry.name);
-    navigateTo(Routes.Documents, {
-      query: { documentPath: newPath, workspaceHandle: workspaceInfo.value?.handle },
-    });
-  } else {
+  if (!workspaceInfo.value) {
+    return;
+  }
+
+  if (entry.isFile()) {
     const config = await storageManager.retrieveConfig();
     await openEntries([entry], { skipViewers: config.skipViewers });
+    return;
   }
+
+  const newPath = await parsec.Path.join(currentPath.value, entry.name);
+  const statResult = await parsec.entryStat(workspaceInfo.value.handle, newPath);
+  if (!statResult.ok) {
+    await informationManager.present(
+      new Information({
+        message: 'FoldersPage.errors.navigateMissingPath',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+    return;
+  }
+
+  await navigateTo(Routes.Documents, {
+    query: { documentPath: newPath, workspaceHandle: workspaceInfo.value.handle },
+  });
 }
 
 async function createFolder(): Promise<void> {
