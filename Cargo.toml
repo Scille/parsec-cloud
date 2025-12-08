@@ -141,7 +141,7 @@ dirs = { version = "6.0.0", default-features = false }
 ed25519-dalek = { version = "2.2.0", default-features = false }
 email-address-parser = { version = "2.0.0", default-features = false }
 env_logger = { version = "0.11.8", default-features = false }
-error_set = { version = "0.9.0", default-features = false }
+error_set = { version = "0.9.1", default-features = false }
 event-listener = { version = "5.4.1", default-features = false }
 eventsource-stream = { version = "0.2.3", default-features = false }
 flume = { version = "0.11.1", default-features = false }
@@ -159,10 +159,10 @@ jni = { version = "0.21.1", default-features = false }
 js-sys = { version = "0.3.78", default-features = false }
 keyring = { version = "3.6.3", default-features = false }
 lazy_static = { version = "1.5.0", default-features = false }
-libc = { version = "0.2.177", default-features = false }
+libc = { version = "0.2.178", default-features = false }
 libsodium-rs = { version = "0.2.1", default-features = false }
 libsqlite3-sys = { version = "0.30.1", default-features = false }
-log = { version = "0.4.28", default-features = false }
+log = { version = "0.4.29", default-features = false }
 miniserde = { version = "0.1.43", default-features = false }
 neon = { version = "1.0.0", default-features = false }
 once_cell = { version = "1.21.3", default-features = false }
@@ -209,7 +209,7 @@ thiserror = { version = "2.0.17", default-features = false }
 tokio = { version = "1.48.0", default-features = false }
 unicode-normalization = { version = "0.1.25", default-features = false }
 url = { version = "2.5.7", default-features = false }
-uuid = { version = "1.18.1", default-features = false }
+uuid = { version = "1.19.0", default-features = false }
 wasm-bindgen = { version = "0.2.101", default-features = false }
 wasm-bindgen-futures = { version = "0.4.51", default-features = false }
 wasm-bindgen-test = { version = "0.3.55", default-features = false, features = ["std"] }
@@ -226,7 +226,7 @@ zstd = { version = "0.13.3", default-features = false }
 
 [workspace.dependencies.criterion]
 default-features = false
-version = "0.8.0"
+version = "0.8.1"
 # We specify a set of features here instead of defining them in every other crates,
 # since we will use the same set of features.
 features = [
