@@ -144,7 +144,7 @@ TRUSTCHAINS = [
                 key_algorithm=RSAKeyAlgorithm(length=2048),
                 not_before=now,
                 not_after=now_24h,
-                extensions={BASIC_CONSTRAINTS: "pathlen:5"},
+                extensions={BASIC_CONSTRAINTS: "CA:TRUE,pathlen:5"},
                 signing=[
                     CertificateConfig(
                         name="mallory-sign",
