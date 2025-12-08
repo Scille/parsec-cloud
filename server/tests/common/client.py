@@ -474,6 +474,17 @@ class MinimalorgRpcClients:
     _alice: AuthenticatedRpcClient | None = None
 
     @property
+    def root_signing_key(self) -> SigningKey:
+        for event in self.testbed_template.events:
+            if isinstance(event, tb.TestbedEventBootstrapOrganization):
+                return event.root_signing_key
+        raise RuntimeError("Organization bootstrap event not found !")
+
+    @property
+    def root_verify_key(self) -> VerifyKey:
+        return self.root_signing_key.verify_key
+
+    @property
     def anonymous(self) -> AnonymousRpcClient:
         self._anonymous = self._anonymous or AnonymousRpcClient(
             self.raw_client, self.organization_id
