@@ -41,7 +41,7 @@ jobs:
           # Setting the server addr so that getServerConfig() returns the proper host for openBao
           PARSEC_SERVER_ADDR: parsec3://parsec-testbed-server:6777?no_ssl=true
     steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # pin v6.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
         timeout-minutes: 2
 
       - name: Retrieve runner specs
@@ -49,7 +49,7 @@ jobs:
         uses: ./.github/actions/system-info
         timeout-minutes: 1
 
-      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903  # pin v6.0.0
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f  # pin v6.1.0
         with:
           node-version: ${{ env.node-version }}
           cache: npm
@@ -131,7 +131,7 @@ jobs:
         timeout-minutes: 5
 
       # Install wasm-pack command
-      - uses: taiki-e/install-action@3575e532701a5fc614b0c842e4119af4cc5fd16d # pin v2.62.60
+      - uses: taiki-e/install-action@50708e9ba8d7b6587a2cb575ddaa9a62e927bc06 # pin v2.62.63
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           tool: wasm-pack@${{ env.wasm-pack-version }}
@@ -184,10 +184,10 @@ jobs:
           grep MemTotal /proc/meminfo
         timeout-minutes: 1
 
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # pin v6.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
         timeout-minutes: 2
 
-      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # pin v6.0.0
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # pin v6.1.0
         with:
           node-version: ${{ env.node-version }}
           cache: npm
@@ -262,10 +262,10 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # pin v6.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
         timeout-minutes: 2
 
-      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903  # pin v6.0.0
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f  # pin v6.1.0
         with:
           node-version: ${{ env.node-version }}
           cache: npm
