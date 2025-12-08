@@ -310,6 +310,17 @@ export interface PkiEnrollmentSubmitPayload {
 }
 
 
+export interface RawPkiEnrollmentListItem {
+    enrollmentId: string
+    submittedOn: number
+    derX509Certificate: Uint8Array
+    intermediateDerX509Certificates: Array<Uint8Array>
+    payloadSignature: Uint8Array
+    payloadSignatureAlgorithm: string
+    payload: Uint8Array
+}
+
+
 export interface ServerConfig {
     account: AccountConfig
     organizationBootstrap: OrganizationBootstrapConfig
@@ -4933,6 +4944,9 @@ export function clientPkiListEnrollments(
     client_handle: number,
     cert_ref: X509CertificateReference
 ): Promise<Result<Array<PkiEnrollmentListItem>, PkiEnrollmentListError>>
+export function clientPkiListEnrollmentsUntrusted(
+    client_handle: number
+): Promise<Result<Array<RawPkiEnrollmentListItem>, PkiEnrollmentListError>>
 export function clientRenameWorkspace(
     client: number,
     realm_id: string,

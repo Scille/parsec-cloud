@@ -2751,6 +2751,206 @@ fn struct_pki_enrollment_submit_payload_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// RawPkiEnrollmentListItem
+
+#[allow(dead_code)]
+fn struct_raw_pki_enrollment_list_item_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::RawPkiEnrollmentListItem> {
+    let enrollment_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "enrollmentId")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::PKIEnrollmentID, _> {
+                libparsec::PKIEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let submitted_on = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "submittedOn")?;
+        {
+            let v = js_val.value(cx);
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            match custom_from_rs_f64(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let der_x509_certificate = {
+        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "derX509Certificate")?;
+        {
+            let custom_from_rs_bytes =
+                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+            #[allow(clippy::unnecessary_mut_passed)]
+            match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                Ok(val) => val,
+                // err can't infer type in some case, because of the previous `try_into`
+                #[allow(clippy::useless_format)]
+                Err(err) => return cx.throw_type_error(format!("{}", err)),
+            }
+        }
+    };
+    let intermediate_der_x509_certificates = {
+        let js_val: Handle<JsArray> = obj.get(cx, "intermediateDerX509Certificates")?;
+        {
+            let size = js_val.len(cx);
+            let mut v = Vec::with_capacity(size as usize);
+            for i in 0..size {
+                let js_item: Handle<JsTypedArray<u8>> = js_val.get(cx, i)?;
+                v.push({
+                    let custom_from_rs_bytes =
+                        |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+                    #[allow(clippy::unnecessary_mut_passed)]
+                    match custom_from_rs_bytes(js_item.as_slice(cx)) {
+                        Ok(val) => val,
+                        // err can't infer type in some case, because of the previous `try_into`
+                        #[allow(clippy::useless_format)]
+                        Err(err) => return cx.throw_type_error(format!("{}", err)),
+                    }
+                });
+            }
+            v
+        }
+    };
+    let payload_signature = {
+        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "payloadSignature")?;
+        {
+            let custom_from_rs_bytes =
+                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+            #[allow(clippy::unnecessary_mut_passed)]
+            match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                Ok(val) => val,
+                // err can't infer type in some case, because of the previous `try_into`
+                #[allow(clippy::useless_format)]
+                Err(err) => return cx.throw_type_error(format!("{}", err)),
+            }
+        }
+    };
+    let payload_signature_algorithm = {
+        let js_val: Handle<JsString> = obj.get(cx, "payloadSignatureAlgorithm")?;
+        {
+            match js_val.value(cx).parse() {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let payload = {
+        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "payload")?;
+        {
+            let custom_from_rs_bytes =
+                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+            #[allow(clippy::unnecessary_mut_passed)]
+            match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                Ok(val) => val,
+                // err can't infer type in some case, because of the previous `try_into`
+                #[allow(clippy::useless_format)]
+                Err(err) => return cx.throw_type_error(format!("{}", err)),
+            }
+        }
+    };
+    Ok(libparsec::RawPkiEnrollmentListItem {
+        enrollment_id,
+        submitted_on,
+        der_x509_certificate,
+        intermediate_der_x509_certificates,
+        payload_signature,
+        payload_signature_algorithm,
+        payload,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_raw_pki_enrollment_list_item_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::RawPkiEnrollmentListItem,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_enrollment_id = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::PKIEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.enrollment_id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err.to_string()),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "enrollmentId", js_enrollment_id)?;
+    let js_submitted_on = JsNumber::new(cx, {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        match custom_to_rs_f64(rs_obj.submitted_on) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    });
+    js_obj.set(cx, "submittedOn", js_submitted_on)?;
+    let js_der_x509_certificate = {
+        let rs_buff = { rs_obj.der_x509_certificate.as_ref() };
+        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+        js_buff
+    };
+    js_obj.set(cx, "derX509Certificate", js_der_x509_certificate)?;
+    let js_intermediate_der_x509_certificates = {
+        // JsArray::new allocates with `undefined` value, that's why we `set` value
+        let js_array = JsArray::new(cx, rs_obj.intermediate_der_x509_certificates.len());
+        for (i, elem) in rs_obj
+            .intermediate_der_x509_certificates
+            .into_iter()
+            .enumerate()
+        {
+            let js_elem = {
+                let rs_buff = { elem.as_ref() };
+                let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+                js_buff
+            };
+            js_array.set(cx, i as u32, js_elem)?;
+        }
+        js_array
+    };
+    js_obj.set(
+        cx,
+        "intermediateDerX509Certificates",
+        js_intermediate_der_x509_certificates,
+    )?;
+    let js_payload_signature = {
+        let rs_buff = { rs_obj.payload_signature.as_ref() };
+        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+        js_buff
+    };
+    js_obj.set(cx, "payloadSignature", js_payload_signature)?;
+    let js_payload_signature_algorithm = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |v| -> Result<_, std::convert::Infallible> { Ok(std::string::ToString::to_string(&v)) };
+        match custom_to_rs_string(rs_obj.payload_signature_algorithm) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err.to_string()),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(
+        cx,
+        "payloadSignatureAlgorithm",
+        js_payload_signature_algorithm,
+    )?;
+    let js_payload = {
+        let rs_buff = { rs_obj.payload.as_ref() };
+        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+        js_buff
+    };
+    js_obj.set(cx, "payload", js_payload)?;
+    Ok(js_obj)
+}
+
 // ServerConfig
 
 #[allow(dead_code)]
@@ -21967,6 +22167,65 @@ fn client_pki_list_enrollments(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// client_pki_list_enrollments_untrusted
+fn client_pki_list_enrollments_untrusted(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client_handle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_pki_list_enrollments_untrusted(client_handle).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            // JsArray::new allocates with `undefined` value, that's why we `set` value
+                            let js_array = JsArray::new(&mut cx, ok.len());
+                            for (i, elem) in ok.into_iter().enumerate() {
+                                let js_elem =
+                                    struct_raw_pki_enrollment_list_item_rs_to_js(&mut cx, elem)?;
+                                js_array.set(&mut cx, i as u32, js_elem)?;
+                            }
+                            js_array
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_pki_enrollment_list_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // client_rename_workspace
 fn client_rename_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -29364,6 +29623,10 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("clientPkiEnrollmentReject", client_pki_enrollment_reject)?;
     cx.export_function("clientPkiGetAddr", client_pki_get_addr)?;
     cx.export_function("clientPkiListEnrollments", client_pki_list_enrollments)?;
+    cx.export_function(
+        "clientPkiListEnrollmentsUntrusted",
+        client_pki_list_enrollments_untrusted,
+    )?;
     cx.export_function("clientRenameWorkspace", client_rename_workspace)?;
     cx.export_function("clientRevokeUser", client_revoke_user)?;
     cx.export_function("clientSetupShamirRecovery", client_setup_shamir_recovery)?;

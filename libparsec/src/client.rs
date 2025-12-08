@@ -13,8 +13,8 @@ pub use libparsec_client::{
     ClientUserUpdateProfileError, DeviceInfo, InvalidityReason, OrganizationInfo,
     OtherShamirRecoveryInfo, PKIInfoItem, PkiEnrollmentAcceptError, PkiEnrollmentInfoError,
     PkiEnrollmentListError, PkiEnrollmentListItem, PkiEnrollmentRejectError,
-    SelfShamirRecoveryInfo, ServerOrganizationConfig, Tos, UserInfo, WorkspaceInfo,
-    WorkspaceUserAccessInfo,
+    RawPkiEnrollmentListItem, SelfShamirRecoveryInfo, ServerOrganizationConfig, Tos, UserInfo,
+    WorkspaceInfo, WorkspaceUserAccessInfo,
 };
 pub use libparsec_client_connection::ConnectionError;
 use libparsec_platform_async::event::{Event, EventListener};
@@ -709,6 +709,13 @@ pub async fn client_pki_list_enrollments(
 ) -> Result<Vec<PkiEnrollmentListItem>, PkiEnrollmentListError> {
     let client = borrow_client(client)?;
     client.pki_list_enrollments(cert_ref).await
+}
+
+pub async fn client_pki_list_enrollments_untrusted(
+    client: Handle,
+) -> Result<Vec<RawPkiEnrollmentListItem>, PkiEnrollmentListError> {
+    let client = borrow_client(client)?;
+    client.pki_list_enrollments_untrusted().await
 }
 
 #[derive(Debug, thiserror::Error)]

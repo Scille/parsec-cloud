@@ -40,6 +40,7 @@ from .pki import (
     PkiEnrollmentRejectError,
     PkiEnrollmentSubmitPayload,
     PkiGetAddrError,
+    RawPkiEnrollmentListItem,
     X509CertificateReference,
 )
 
@@ -846,4 +847,10 @@ async def client_pki_enrollment_accept(
 async def client_pki_list_enrollments(
     client_handle: Handle, cert_ref: X509CertificateReference
 ) -> Result[list[PkiEnrollmentListItem], PkiEnrollmentListError]:
+    raise NotImplementedError
+
+
+async def client_pki_list_enrollments_untrusted(
+    client_handle: Handle,
+) -> Result[list[RawPkiEnrollmentListItem], PkiEnrollmentListError]:
     raise NotImplementedError

@@ -2867,6 +2867,191 @@ fn struct_pki_enrollment_submit_payload_rs_to_js(
     Ok(js_obj)
 }
 
+// RawPkiEnrollmentListItem
+
+#[allow(dead_code)]
+fn struct_raw_pki_enrollment_list_item_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::RawPkiEnrollmentListItem, JsValue> {
+    let enrollment_id = {
+        let js_val = Reflect::get(&obj, &"enrollmentId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<libparsec::PKIEnrollmentID, _> {
+                    libparsec::PKIEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let submitted_on = {
+        let js_val = Reflect::get(&obj, &"submittedOn".into())?;
+        {
+            let v = js_val.dyn_into::<Number>()?.value_of();
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            v
+        }
+    };
+    let der_x509_certificate = {
+        let js_val = Reflect::get(&obj, &"derX509Certificate".into())?;
+        js_val
+            .dyn_into::<Uint8Array>()
+            .map(|x| x.to_vec())
+            .map_err(|_| TypeError::new("Not a Uint8Array"))
+            .and_then(|x| {
+                let custom_from_rs_bytes =
+                    |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+                custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let intermediate_der_x509_certificates = {
+        let js_val = Reflect::get(&obj, &"intermediateDerX509Certificates".into())?;
+        {
+            let js_val = js_val
+                .dyn_into::<Array>()
+                .map_err(|_| TypeError::new("Not an array"))?;
+            let mut converted = Vec::with_capacity(js_val.length() as usize);
+            for x in js_val.iter() {
+                let x_converted = x
+                    .dyn_into::<Uint8Array>()
+                    .map(|x| x.to_vec())
+                    .map_err(|_| TypeError::new("Not a Uint8Array"))
+                    .and_then(|x| {
+                        let custom_from_rs_bytes = |v: &[u8]| -> Result<libparsec::Bytes, String> {
+                            Ok(v.to_vec().into())
+                        };
+                        custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?;
+                converted.push(x_converted);
+            }
+            converted
+        }
+    };
+    let payload_signature = {
+        let js_val = Reflect::get(&obj, &"payloadSignature".into())?;
+        js_val
+            .dyn_into::<Uint8Array>()
+            .map(|x| x.to_vec())
+            .map_err(|_| TypeError::new("Not a Uint8Array"))
+            .and_then(|x| {
+                let custom_from_rs_bytes =
+                    |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+                custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let payload_signature_algorithm = {
+        let js_val = Reflect::get(&obj, &"payloadSignatureAlgorithm".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+            .parse()
+            .map_err(|_| TypeError::new("Not a valid PkiSignatureAlgorithm"))?
+    };
+    let payload = {
+        let js_val = Reflect::get(&obj, &"payload".into())?;
+        js_val
+            .dyn_into::<Uint8Array>()
+            .map(|x| x.to_vec())
+            .map_err(|_| TypeError::new("Not a Uint8Array"))
+            .and_then(|x| {
+                let custom_from_rs_bytes =
+                    |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+                custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    Ok(libparsec::RawPkiEnrollmentListItem {
+        enrollment_id,
+        submitted_on,
+        der_x509_certificate,
+        intermediate_der_x509_certificates,
+        payload_signature,
+        payload_signature_algorithm,
+        payload,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_raw_pki_enrollment_list_item_rs_to_js(
+    rs_obj: libparsec::RawPkiEnrollmentListItem,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_enrollment_id = JsValue::from_str({
+        let custom_to_rs_string =
+            |x: libparsec::PKIEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.enrollment_id) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"enrollmentId".into(), &js_enrollment_id)?;
+    let js_submitted_on = {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        let v = match custom_to_rs_f64(rs_obj.submitted_on) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        };
+        JsValue::from(v)
+    };
+    Reflect::set(&js_obj, &"submittedOn".into(), &js_submitted_on)?;
+    let js_der_x509_certificate =
+        JsValue::from(Uint8Array::from(rs_obj.der_x509_certificate.as_ref()));
+    Reflect::set(
+        &js_obj,
+        &"derX509Certificate".into(),
+        &js_der_x509_certificate,
+    )?;
+    let js_intermediate_der_x509_certificates = {
+        // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+        let js_array =
+            Array::new_with_length(rs_obj.intermediate_der_x509_certificates.len() as u32);
+        for (i, elem) in rs_obj
+            .intermediate_der_x509_certificates
+            .into_iter()
+            .enumerate()
+        {
+            let js_elem = JsValue::from(Uint8Array::from(elem.as_ref()));
+            js_array.set(i as u32, js_elem);
+        }
+        js_array.into()
+    };
+    Reflect::set(
+        &js_obj,
+        &"intermediateDerX509Certificates".into(),
+        &js_intermediate_der_x509_certificates,
+    )?;
+    let js_payload_signature = JsValue::from(Uint8Array::from(rs_obj.payload_signature.as_ref()));
+    Reflect::set(&js_obj, &"payloadSignature".into(), &js_payload_signature)?;
+    let js_payload_signature_algorithm = JsValue::from_str({
+        let custom_to_rs_string =
+            |v| -> Result<_, std::convert::Infallible> { Ok(std::string::ToString::to_string(&v)) };
+        match custom_to_rs_string(rs_obj.payload_signature_algorithm) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(
+        &js_obj,
+        &"payloadSignatureAlgorithm".into(),
+        &js_payload_signature_algorithm,
+    )?;
+    let js_payload = JsValue::from(Uint8Array::from(rs_obj.payload.as_ref()));
+    Reflect::set(&js_obj, &"payload".into(), &js_payload)?;
+    Ok(js_obj)
+}
+
 // ServerConfig
 
 #[allow(dead_code)]
@@ -21583,6 +21768,39 @@ pub fn clientPkiListEnrollments(client_handle: u32, cert_ref: Object) -> Promise
                     let js_array = Array::new_with_length(value.len() as u32);
                     for (i, elem) in value.into_iter().enumerate() {
                         let js_elem = variant_pki_enrollment_list_item_rs_to_js(elem)?;
+                        js_array.set(i as u32, js_elem);
+                    }
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_pki_enrollment_list_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// client_pki_list_enrollments_untrusted
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientPkiListEnrollmentsUntrusted(client_handle: u32) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::client_pki_list_enrollments_untrusted(client_handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(value.len() as u32);
+                    for (i, elem) in value.into_iter().enumerate() {
+                        let js_elem = struct_raw_pki_enrollment_list_item_rs_to_js(elem)?;
                         js_array.set(i as u32, js_elem);
                     }
                     js_array.into()

@@ -71,6 +71,7 @@ use crate::{
 };
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
+pub use libparsec_protocol::authenticated_cmds::latest::pki_enrollment_list::PkiEnrollmentListItem as RawPkiEnrollmentListItem;
 
 use libparsec_types::prelude::*;
 pub use organization_info::{
@@ -709,14 +710,16 @@ impl Client {
         pki_enrollment_list::list_enrollments(&self.cmds, cert_ref).await
     }
 
-    pub async fn pki_list_enrollments_untrusted(&self) -> Result<Vec<libparsec_protocol::authenticated_cmds::latest::pki_enrollment_list::PkiEnrollmentListItem>, PkiEnrollmentListError>{
+    pub async fn pki_list_enrollments_untrusted(
+        &self,
+    ) -> Result<Vec<RawPkiEnrollmentListItem>, PkiEnrollmentListError> {
         pki_enrollment_list::list_enrollments_untrusted(&self.cmds).await
     }
 
     pub async fn pki_list_verify_items(
         &self,
         cert_ref: X509CertificateReference,
-        untrusted_items: Vec<libparsec_protocol::authenticated_cmds::latest::pki_enrollment_list::PkiEnrollmentListItem>,
+        untrusted_items: Vec<RawPkiEnrollmentListItem>,
     ) -> Result<Vec<PkiEnrollmentListItem>, PkiEnrollmentListError> {
         pki_enrollment_list::verify_untrusted_items(&self.cmds, cert_ref, untrusted_items).await
     }
