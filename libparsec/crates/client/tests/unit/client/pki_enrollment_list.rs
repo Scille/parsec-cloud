@@ -69,7 +69,7 @@ async fn ok_untrusted(test_pki: &TestPKI, env: &TestbedEnv) {
 
 #[ignore = "TODO: (#11269) Need to generate a valid payload & signature with a cert that is trusted by it's root certificate"]
 #[parsec_test(testbed = "minimal")]
-async fn ok(test_pki: &TestPKI, env: &TestbedEnv) {
+async fn verify_ok(test_pki: &TestPKI, env: &TestbedEnv) {
     let alice_device = env.local_device("alice@dev1");
     let alice_client = client_factory(&env.discriminant_dir, alice_device).await;
 
@@ -108,17 +108,15 @@ async fn ok(test_pki: &TestPKI, env: &TestbedEnv) {
     let valid_pki_enrollment_item_clone = valid_pki_enrollment_item.clone();
     let invalid_pki_enrollment_item_clone = invalid_pki_enrollment_item.clone();
 
-    test_register_send_hook(&env.discriminant_dir, {
-        move |_req: authenticated_cmds::latest::pki_enrollment_list::Req| {
-            authenticated_cmds::latest::pki_enrollment_list::Rep::Ok {
-                enrollments: vec![valid_pki_enrollment_item, invalid_pki_enrollment_item],
-            }
-        }
-    });
-
-    let enrollments = alice_client.pki_list_enrollments(X509CertificateHash::fake_sha256().into());
+    let enrollments = alice_client
+        .pki_list_verify_items(
+            X509CertificateHash::fake_sha256().into(),
+            vec![valid_pki_enrollment_item, invalid_pki_enrollment_item],
+        )
+        .await
+        .unwrap();
     p_assert_eq!(
-        enrollments.await.unwrap(),
+        enrollments,
         vec![
             PkiEnrollmentListItem::Valid {
                 human_handle: valid_cert.cert_info.human_handle().unwrap(),
@@ -151,7 +149,7 @@ async fn ok_empty(env: &TestbedEnv) {
         }
     });
 
-    let enrollments = alice_client.pki_list_enrollments(X509CertificateHash::fake_sha256().into());
+    let enrollments = alice_client.pki_list_enrollments_untrusted();
     p_assert_eq!(enrollments.await.unwrap(), vec![])
 }
 
@@ -162,7 +160,7 @@ async fn author_not_allowed(env: &TestbedEnv) {
 
     matches!(
         mallory_client
-            .pki_list_enrollments(X509CertificateHash::fake_sha256().into())
+            .pki_list_enrollments_untrusted()
             .await
             .unwrap_err(),
         PkiEnrollmentListError::AuthorNotAllowed

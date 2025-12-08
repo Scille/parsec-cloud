@@ -703,14 +703,6 @@ pub async fn client_get_organization_bootstrap_date(
     client.get_organization_bootstrap_date().await
 }
 
-pub async fn client_pki_list_enrollments(
-    client: Handle,
-    cert_ref: X509CertificateReference,
-) -> Result<Vec<PkiEnrollmentListItem>, PkiEnrollmentListError> {
-    let client = borrow_client(client)?;
-    client.pki_list_enrollments(cert_ref).await
-}
-
 pub async fn client_pki_list_enrollments_untrusted(
     client: Handle,
 ) -> Result<Vec<RawPkiEnrollmentListItem>, PkiEnrollmentListError> {

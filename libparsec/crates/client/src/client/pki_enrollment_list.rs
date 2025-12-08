@@ -80,25 +80,6 @@ impl From<LoadSubmitPayloadError> for InvalidityReason {
     }
 }
 
-pub async fn list_enrollments(
-    cmds: &AuthenticatedCmds,
-    cert_ref: X509CertificateReference,
-) -> Result<Vec<PkiEnrollmentListItem>, PkiEnrollmentListError> {
-    use authenticated_cmds::latest::pki_enrollment_list::{Rep, Req};
-
-    let rep = cmds.send(Req).await?;
-
-    let pki_requests = match rep {
-        Rep::Ok { enrollments } => enrollments,
-        Rep::AuthorNotAllowed => return Err(PkiEnrollmentListError::AuthorNotAllowed),
-        rep @ Rep::UnknownStatus { .. } => {
-            return Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
-        }
-    };
-
-    verify_untrusted_items(cmds, cert_ref, pki_requests).await
-}
-
 pub async fn verify_untrusted_items(
     cmds: &AuthenticatedCmds,
     cert_ref: X509CertificateReference,

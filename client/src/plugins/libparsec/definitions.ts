@@ -5881,10 +5881,6 @@ export interface LibParsecPlugin {
     clientPkiGetAddr(
         client: Handle
     ): Promise<Result<ParsecPkiEnrollmentAddr, PkiGetAddrError>>
-    clientPkiListEnrollments(
-        client_handle: Handle,
-        cert_ref: X509CertificateReference
-    ): Promise<Result<Array<PkiEnrollmentListItem>, PkiEnrollmentListError>>
     clientPkiListEnrollmentsUntrusted(
         client_handle: Handle
     ): Promise<Result<Array<RawPkiEnrollmentListItem>, PkiEnrollmentListError>>
