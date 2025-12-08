@@ -3,19 +3,15 @@
 from parsec._parsec import (
     BlockID,
     DateTime,
-    DeviceID,
     DeviceLabel,
     EmailAddress,
     HashAlgorithm,
     HumanHandle,
-    PrivateKey,
     RealmKeyRotationCertificate,
     RealmRole,
     RealmRoleCertificate,
     RevokedUserCertificate,
     SecretKeyAlgorithm,
-    SigningKey,
-    UserID,
     UserProfile,
     UserUpdateCertificate,
     VlobID,
@@ -54,21 +50,17 @@ async def insert_full_data(
     )
 
     zack_u_certs = generate_new_user_certificates(
-        DateTime.now(),
-        UserID.new(),
-        HumanHandle(EmailAddress("zack@invalid.com"), "Zack"),
-        UserProfile.STANDARD,
-        PrivateKey.generate().public_key,
+        timestamp=DateTime.now(),
+        human_handle=HumanHandle(EmailAddress("zack@invalid.com"), "Zack"),
+        profile=UserProfile.STANDARD,
         author_device_id=coolorg.alice.device_id,
         author_signing_key=coolorg.alice.signing_key,
     )
 
     zack_d_certs = generate_new_device_certificates(
-        zack_u_certs.certificate.timestamp,
-        zack_u_certs.certificate.user_id,
-        DeviceID.new(),
-        DeviceLabel("pc42"),
-        SigningKey.generate().verify_key,
+        timestamp=zack_u_certs.certificate.timestamp,
+        user_id=zack_u_certs.certificate.user_id,
+        device_label=DeviceLabel("pc42"),
         author_device_id=coolorg.alice.device_id,
         author_signing_key=coolorg.alice.signing_key,
     )
@@ -86,21 +78,17 @@ async def insert_full_data(
     assert isinstance(outcome, tuple)
 
     marty_u_certs = generate_new_user_certificates(
-        DateTime.now(),
-        UserID.new(),
-        HumanHandle(EmailAddress("marty@invalid.com"), "Marty Mc Fly"),
-        UserProfile.ADMIN,
-        PrivateKey.generate().public_key,
+        timestamp=DateTime.now(),
+        human_handle=HumanHandle(EmailAddress("marty@invalid.com"), "Marty Mc Fly"),
+        profile=UserProfile.ADMIN,
         author_device_id=coolorg.alice.device_id,
         author_signing_key=coolorg.alice.signing_key,
     )
 
     marty_d_certs = generate_new_device_certificates(
-        marty_u_certs.certificate.timestamp,
-        marty_u_certs.certificate.user_id,
-        DeviceID.new(),
-        DeviceLabel("Overboard"),
-        SigningKey.generate().verify_key,
+        timestamp=marty_u_certs.certificate.timestamp,
+        user_id=marty_u_certs.certificate.user_id,
+        device_label=DeviceLabel("Overboard"),
         author_device_id=coolorg.alice.device_id,
         author_signing_key=coolorg.alice.signing_key,
     )
@@ -118,21 +106,17 @@ async def insert_full_data(
     assert isinstance(outcome, tuple)
 
     doc_u_certs = generate_new_user_certificates(
-        DateTime.now(),
-        UserID.new(),
-        HumanHandle(EmailAddress("doc@invalid.com"), "Doc Emmett Brown"),
-        UserProfile.ADMIN,
-        PrivateKey.generate().public_key,
+        timestamp=DateTime.now(),
+        human_handle=HumanHandle(EmailAddress("doc@invalid.com"), "Doc Emmett Brown"),
+        profile=UserProfile.ADMIN,
         author_device_id=coolorg.alice.device_id,
         author_signing_key=coolorg.alice.signing_key,
     )
 
     doc_d_certs = generate_new_device_certificates(
-        doc_u_certs.certificate.timestamp,
-        doc_u_certs.certificate.user_id,
-        DeviceID.new(),
-        DeviceLabel("Delorean"),
-        SigningKey.generate().verify_key,
+        timestamp=doc_u_certs.certificate.timestamp,
+        user_id=doc_u_certs.certificate.user_id,
+        device_label=DeviceLabel("Delorean"),
         author_device_id=coolorg.alice.device_id,
         author_signing_key=coolorg.alice.signing_key,
     )

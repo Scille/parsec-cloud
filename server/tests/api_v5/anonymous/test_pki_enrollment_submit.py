@@ -6,7 +6,6 @@ import pytest
 
 from parsec._parsec import (
     DateTime,
-    DeviceID,
     DeviceLabel,
     EmailAddress,
     HumanHandle,
@@ -15,12 +14,8 @@ from parsec._parsec import (
     PkiEnrollmentSubmitPayload,
     PkiSignatureAlgorithm,
     PrivateKey,
-    PrivateKeyAlgorithm,
     RevokedUserCertificate,
     SigningKey,
-    SigningKeyAlgorithm,
-    UserID,
-    UserProfile,
     anonymous_cmds,
     authenticated_cmds,
 )
@@ -280,20 +275,15 @@ async def test_anonymous_pki_enrollment_submit_email_already_used(
     # 1. Create a user that use the same email as the submitter certificate
     submitter_cert = test_pki.cert["bob"]
     user_certs = generate_new_user_certificates(
-        DateTime.now(),
-        UserID.new(),
-        submitter_cert.cert_info.human_handle(),
-        UserProfile.STANDARD,
-        PrivateKey.generate().public_key,
+        timestamp=DateTime.now(),
+        human_handle=submitter_cert.cert_info.human_handle(),
         author_device_id=coolorg.alice.device_id,
         author_signing_key=coolorg.alice.signing_key,
     )
     dev_certs = generate_new_device_certificates(
-        user_certs.certificate.timestamp,
-        user_certs.certificate.user_id,
-        DeviceID.new(),
-        DeviceLabel("Bob dev"),
-        SigningKey.generate().verify_key,
+        timestamp=user_certs.certificate.timestamp,
+        user_id=user_certs.certificate.user_id,
+        device_label=DeviceLabel("Bob dev"),
         author_device_id=coolorg.alice.device_id,
         author_signing_key=coolorg.alice.signing_key,
     )
@@ -333,26 +323,19 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
 ) -> None:
     t1 = DateTime.now()
     user_certificates = generate_new_user_certificates(
-        t1,
-        UserID.new(),
-        HumanHandle(
+        timestamp=t1,
+        human_handle=HumanHandle(
             email=existing_enrollment.submitter_der_x509_certificate_email,
             label="Mike",
         ),
-        UserProfile.STANDARD,
-        PrivateKey.generate().public_key,
-        algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
         author_device_id=coolorg.alice.device_id,
         author_signing_key=coolorg.alice.signing_key,
     )
 
     device_certificates = generate_new_device_certificates(
-        t1,
-        user_certificates.certificate.user_id,
-        DeviceID.new(),
-        DeviceLabel("Dev1"),
-        SigningKey.generate().verify_key,
-        algorithm=SigningKeyAlgorithm.ED25519,
+        timestamp=t1,
+        user_id=user_certificates.certificate.user_id,
+        device_label=DeviceLabel("Dev1"),
         author_device_id=coolorg.alice.device_id,
         author_signing_key=coolorg.alice.signing_key,
     )

@@ -39,11 +39,11 @@ def generate_new_alice_device_certificates(
     algorithm=SigningKeyAlgorithm.ED25519,
 ) -> tuple[bytes, bytes]:
     alice_dev_certs = generate_new_device_certificates(
-        timestamp,
-        user_id,
-        device_id,
-        DeviceLabel("New device"),
-        verify_key,
+        timestamp=timestamp,
+        user_id=user_id,
+        device_id=device_id,
+        device_label=DeviceLabel("New device"),
+        verify_key=verify_key,
         purpose=purpose,
         algorithm=algorithm,
         author_device_id=author_device_id or alice.device_id,
