@@ -175,6 +175,78 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
       ]);
     }
   });
+
+  msTest(`Show/hide workspace ${displaySize} display`, async ({ workspaces }) => {
+    if (displaySize === DisplaySize.Small) {
+      await workspaces.setDisplaySize(DisplaySize.Small);
+    }
+    const workspaceCard = workspaces.locator('.workspace-card-item').nth(0);
+    await workspaceCard.click({ button: 'right' });
+    let popover;
+    if (displaySize === DisplaySize.Large) {
+      popover = workspaces.locator('#workspace-context-menu');
+      await expect(popover).toBeVisible();
+      await expect(popover.getByRole('group')).toHaveCount(3);
+      await expect(popover.getByRole('listitem')).toHaveText([
+        'Manage workspace',
+        'Rename',
+        'History',
+        'Hide this workspace',
+        'Collaboration',
+        'Copy link',
+        'Sharing and roles',
+        'Miscellaneous',
+        'Pin',
+      ]);
+      await popover.getByRole('listitem').nth(3).click();
+    } else {
+      popover = workspaces.locator('.workspace-context-sheet-modal');
+      await expect(popover).toBeVisible();
+      await expect(popover.getByRole('listitem')).toHaveText([
+        'Rename',
+        'History',
+        'Hide this workspace',
+        'Copy link',
+        'Sharing and roles',
+        'Pin',
+      ]);
+      await popover.getByRole('listitem').nth(2).click();
+    }
+    await expect(workspaces).toShowToast('The workspace is now hidden in Parsec.', 'Success');
+    await expect(workspaceCard.locator('.workspace-hidden')).toHaveText('Hidden');
+    await workspaceCard.click({ button: 'right' });
+    await expect(popover).toBeVisible();
+    if (displaySize === DisplaySize.Large) {
+      popover = workspaces.locator('#workspace-context-menu');
+      await expect(popover).toBeVisible();
+      await expect(popover.getByRole('group')).toHaveCount(3);
+      await expect(popover.getByRole('listitem')).toHaveText([
+        'Manage workspace',
+        'Rename',
+        'History',
+        'Show this workspace',
+        'Collaboration',
+        'Copy link',
+        'Sharing and roles',
+        'Miscellaneous',
+        'Pin',
+      ]);
+      await popover.getByRole('listitem').nth(3).click();
+    } else {
+      popover = workspaces.locator('.workspace-context-sheet-modal');
+      await expect(popover).toBeVisible();
+      await expect(popover.getByRole('listitem')).toHaveText([
+        'Rename',
+        'History',
+        'Show this workspace',
+        'Copy link',
+        'Sharing and roles',
+        'Pin',
+      ]);
+      await popover.getByRole('listitem').nth(2).click();
+    }
+    await expect(workspaces).toShowToast('The workspace is now visible in Parsec.', 'Success');
+  });
 }
 
 for (const gridMode of [false, true]) {

@@ -23,10 +23,7 @@
           </ion-item>
         </ion-item-group>
 
-        <ion-item-group
-          class="list-group"
-          v-show="isDesktop() || clientRole === WorkspaceRole.Owner"
-        >
+        <ion-item-group class="list-group">
           <ion-item
             button
             v-show="clientRole === WorkspaceRole.Owner"
@@ -89,7 +86,7 @@
 
           <ion-item
             button
-            v-show="isDesktop() && !isHidden"
+            v-show="!isHidden"
             @click="onClick(WorkspaceAction.UnMount)"
             class="ion-no-padding list-group-item"
           >
@@ -104,7 +101,7 @@
 
           <ion-item
             button
-            v-show="isDesktop() && isHidden"
+            v-show="isHidden"
             @click="onClick(WorkspaceAction.Mount)"
             class="ion-no-padding list-group-item"
           >

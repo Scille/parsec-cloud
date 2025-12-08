@@ -10,6 +10,7 @@ import {
   WorkspaceRole,
   getClientProfile,
   getSystemPath,
+  isDesktop,
   mountWorkspace,
   getPathLink as parsecGetPathLink,
   renameWorkspace as parsecRenameWorkspace,
@@ -205,14 +206,18 @@ export async function showWorkspace(
   workspaceAttributes: WorkspaceAttributes,
   informationManager: InformationManager,
 ): Promise<void> {
-  const result = await mountWorkspace(workspace.handle);
+  let ok = true;
+  if (isDesktop()) {
+    const result = await mountWorkspace(workspace.handle);
+    ok = result.ok;
+  }
 
-  if (result.ok) {
+  if (ok) {
     workspaceAttributes.removeHidden(workspace.id);
     informationManager.present(
       new Information({
         message: {
-          key: 'WorkspacesPage.showHideWorkspace.successShown',
+          key: isDesktop() ? 'WorkspacesPage.showHideWorkspace.successDesktopShown' : 'WorkspacesPage.showHideWorkspace.successWebShown',
           data: { workspace: workspace.currentName },
         },
         level: InformationLevel.Success,
@@ -238,14 +243,18 @@ export async function hideWorkspace(
   workspaceAttributes: WorkspaceAttributes,
   informationManager: InformationManager,
 ): Promise<void> {
-  const result = await unmountWorkspace(workspace);
+  let ok = true;
+  if (isDesktop()) {
+    const result = await unmountWorkspace(workspace);
+    ok = result.ok;
+  }
 
-  if (result.ok) {
+  if (ok) {
     workspaceAttributes.addHidden(workspace.id);
     informationManager.present(
       new Information({
         message: {
-          key: 'WorkspacesPage.showHideWorkspace.successHidden',
+          key: isDesktop() ? 'WorkspacesPage.showHideWorkspace.successDesktopHidden' : 'WorkspacesPage.showHideWorkspace.successWebHidden',
           data: { workspace: workspace.currentName },
         },
         level: InformationLevel.Success,

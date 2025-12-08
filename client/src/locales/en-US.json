@@ -704,9 +704,11 @@
         },
         "showHideWorkspace": {
             "failedStarted": "Failed to get started workspace information. Please try again.",
-            "successHidden": "The workspace is now hidden and will no longer appear in your explorer.",
+            "successDesktopHidden": "The workspace is now hidden and will no longer appear in your explorer.",
+            "successWebHidden": "The workspace is now hidden in Parsec.",
             "failedHidden": "Failed to hide the workspace. Please try again.",
-            "successShown": "The workspace is now visible in Parsec and your explorer.",
+            "successDesktopShown": "The workspace is now visible in Parsec and your explorer.",
+            "successWebShown": "The workspace is now visible in Parsec.",
             "failedShown": "Failed to show the workspace. Please try again."
         }
     },
