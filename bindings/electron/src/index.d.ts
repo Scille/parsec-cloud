@@ -4947,6 +4947,11 @@ export function clientPkiListEnrollments(
 export function clientPkiListEnrollmentsUntrusted(
     client_handle: number
 ): Promise<Result<Array<RawPkiEnrollmentListItem>, PkiEnrollmentListError>>
+export function clientPkiListVerifyItems(
+    client_handle: number,
+    cert_ref: X509CertificateReference,
+    untrusted_items: Array<RawPkiEnrollmentListItem>
+): Promise<Result<Array<PkiEnrollmentListItem>, PkiEnrollmentListError>>
 export function clientRenameWorkspace(
     client: number,
     realm_id: string,

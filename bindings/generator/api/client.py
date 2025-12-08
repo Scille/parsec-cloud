@@ -854,3 +854,11 @@ async def client_pki_list_enrollments_untrusted(
     client_handle: Handle,
 ) -> Result[list[RawPkiEnrollmentListItem], PkiEnrollmentListError]:
     raise NotImplementedError
+
+
+async def client_pki_list_verify_items(
+    client_handle: Handle,
+    cert_ref: X509CertificateReference,
+    untrusted_items: list[RawPkiEnrollmentListItem],
+) -> Result[list[PkiEnrollmentListItem], PkiEnrollmentListError]:
+    raise NotImplementedError
