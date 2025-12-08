@@ -702,14 +702,6 @@ impl Client {
         pki_get_addr::get_addr(self).await
     }
 
-    /// List pending PKI enrollments (requests to join an organization)
-    pub async fn pki_list_enrollments(
-        &self,
-        cert_ref: X509CertificateReference,
-    ) -> Result<Vec<PkiEnrollmentListItem>, PkiEnrollmentListError> {
-        pki_enrollment_list::list_enrollments(&self.cmds, cert_ref).await
-    }
-
     pub async fn pki_list_enrollments_untrusted(
         &self,
     ) -> Result<Vec<RawPkiEnrollmentListItem>, PkiEnrollmentListError> {

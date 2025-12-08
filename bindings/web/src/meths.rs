@@ -21750,42 +21750,6 @@ pub fn clientPkiGetAddr(client: u32) -> Promise {
     }))
 }
 
-// client_pki_list_enrollments
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn clientPkiListEnrollments(client_handle: u32, cert_ref: Object) -> Promise {
-    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
-        let cert_ref = cert_ref.into();
-        let cert_ref = struct_x509_certificate_reference_js_to_rs(cert_ref)?;
-
-        let ret = libparsec::client_pki_list_enrollments(client_handle, cert_ref).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = {
-                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
-                    let js_array = Array::new_with_length(value.len() as u32);
-                    for (i, elem) in value.into_iter().enumerate() {
-                        let js_elem = variant_pki_enrollment_list_item_rs_to_js(elem)?;
-                        js_array.set(i as u32, js_elem);
-                    }
-                    js_array.into()
-                };
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_pki_enrollment_list_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    }))
-}
-
 // client_pki_list_enrollments_untrusted
 #[allow(non_snake_case)]
 #[wasm_bindgen]
