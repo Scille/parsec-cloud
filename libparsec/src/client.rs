@@ -718,6 +718,17 @@ pub async fn client_pki_list_enrollments_untrusted(
     client.pki_list_enrollments_untrusted().await
 }
 
+pub async fn client_pki_list_verify_items(
+    client: Handle,
+    cert_ref: X509CertificateReference,
+    untrusted_items: Vec<RawPkiEnrollmentListItem>,
+) -> Result<Vec<PkiEnrollmentListItem>, PkiEnrollmentListError> {
+    let client = borrow_client(client)?;
+    client
+        .pki_list_verify_items(cert_ref, untrusted_items)
+        .await
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum PkiGetAddrError {
     #[error(transparent)]

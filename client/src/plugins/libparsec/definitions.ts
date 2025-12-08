@@ -5888,6 +5888,11 @@ export interface LibParsecPlugin {
     clientPkiListEnrollmentsUntrusted(
         client_handle: Handle
     ): Promise<Result<Array<RawPkiEnrollmentListItem>, PkiEnrollmentListError>>
+    clientPkiListVerifyItems(
+        client_handle: Handle,
+        cert_ref: X509CertificateReference,
+        untrusted_items: Array<RawPkiEnrollmentListItem>
+    ): Promise<Result<Array<PkiEnrollmentListItem>, PkiEnrollmentListError>>
     clientRenameWorkspace(
         client: Handle,
         realm_id: VlobID,

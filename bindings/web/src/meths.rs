@@ -21819,6 +21819,54 @@ pub fn clientPkiListEnrollmentsUntrusted(client_handle: u32) -> Promise {
     }))
 }
 
+// client_pki_list_verify_items
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientPkiListVerifyItems(
+    client_handle: u32,
+    cert_ref: Object,
+    untrusted_items: Vec<Object>,
+) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let cert_ref = cert_ref.into();
+        let cert_ref = struct_x509_certificate_reference_js_to_rs(cert_ref)?;
+
+        let mut untrusted_items_converted = Vec::with_capacity(untrusted_items.len());
+        for js_elem in untrusted_items.iter() {
+            let rs_elem = struct_raw_pki_enrollment_list_item_js_to_rs(js_elem.into())?;
+            untrusted_items_converted.push(rs_elem);
+        }
+        let untrusted_items = untrusted_items_converted;
+
+        let ret =
+            libparsec::client_pki_list_verify_items(client_handle, cert_ref, untrusted_items).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(value.len() as u32);
+                    for (i, elem) in value.into_iter().enumerate() {
+                        let js_elem = variant_pki_enrollment_list_item_rs_to_js(elem)?;
+                        js_array.set(i as u32, js_elem);
+                    }
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_pki_enrollment_list_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
 // client_rename_workspace
 #[allow(non_snake_case)]
 #[wasm_bindgen]

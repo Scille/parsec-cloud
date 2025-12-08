@@ -22226,6 +22226,85 @@ fn client_pki_list_enrollments_untrusted(mut cx: FunctionContext) -> JsResult<Js
     Ok(promise)
 }
 
+// client_pki_list_verify_items
+fn client_pki_list_verify_items(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client_handle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let cert_ref = {
+        let js_val = cx.argument::<JsObject>(1)?;
+        struct_x509_certificate_reference_js_to_rs(&mut cx, js_val)?
+    };
+    let untrusted_items = {
+        let js_val = cx.argument::<JsArray>(2)?;
+        {
+            let size = js_val.len(&mut cx);
+            let mut v = Vec::with_capacity(size as usize);
+            for i in 0..size {
+                let js_item: Handle<JsObject> = js_val.get(&mut cx, i)?;
+                v.push(struct_raw_pki_enrollment_list_item_js_to_rs(
+                    &mut cx, js_item,
+                )?);
+            }
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::client_pki_list_verify_items(client_handle, cert_ref, untrusted_items)
+                    .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            // JsArray::new allocates with `undefined` value, that's why we `set` value
+                            let js_array = JsArray::new(&mut cx, ok.len());
+                            for (i, elem) in ok.into_iter().enumerate() {
+                                let js_elem =
+                                    variant_pki_enrollment_list_item_rs_to_js(&mut cx, elem)?;
+                                js_array.set(&mut cx, i as u32, js_elem)?;
+                            }
+                            js_array
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_pki_enrollment_list_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // client_rename_workspace
 fn client_rename_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -29627,6 +29706,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         "clientPkiListEnrollmentsUntrusted",
         client_pki_list_enrollments_untrusted,
     )?;
+    cx.export_function("clientPkiListVerifyItems", client_pki_list_verify_items)?;
     cx.export_function("clientRenameWorkspace", client_rename_workspace)?;
     cx.export_function("clientRevokeUser", client_revoke_user)?;
     cx.export_function("clientSetupShamirRecovery", client_setup_shamir_recovery)?;
