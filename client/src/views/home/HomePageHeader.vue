@@ -135,6 +135,7 @@ import { APP_VERSION, Env } from '@/services/environment';
 import { EventData, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
+import { useUpdateManager } from '@/services/updateManager';
 import { openAboutModal } from '@/views/about';
 import UpdateAppModal from '@/views/about/UpdateAppModal.vue';
 import { AccountSettingsTabs } from '@/views/account/types';
@@ -146,10 +147,11 @@ import { MsModalResult, Translatable, useWindowSize, WindowSizeBreakpoints } fro
 import { inject, onMounted, onUnmounted, ref, Ref } from 'vue';
 
 const { isSmallDisplay, isLargeDisplay, windowWidth } = useWindowSize();
+const { isUpdatePromptAllowed, suppressUpdatePrompt } = useUpdateManager();
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const eventDistributor = injectionProvider.getDefault().eventDistributor;
-let eventCbId: string | null = null;
 const updateAvailability: Ref<UpdateAvailabilityData | null> = ref(null);
+let eventCbId: string | null = null;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 
 let hotkeys: HotkeyGroup | null = null;
@@ -182,6 +184,9 @@ onMounted(async () => {
   eventCbId = await eventDistributor.registerCallback(Events.UpdateAvailability, async (event: Events, data?: EventData) => {
     if (event === Events.UpdateAvailability) {
       updateAvailability.value = data as UpdateAvailabilityData;
+      if (isUpdatePromptAllowed()) {
+        await update();
+      }
     }
   });
   accountLoggedIn.value = ParsecAccount.isLoggedIn();
@@ -202,10 +207,16 @@ onUnmounted(async () => {
   if (hotkeys) {
     hotkeyManager.unregister(hotkeys);
   }
+
   routeWatchCancel();
 });
 
 async function update(): Promise<void> {
+  const existingModal = await modalController.getTop();
+  if (existingModal) {
+    window.electronAPI.log('debug', 'An existing modal is opened, skipping update prompt');
+    return;
+  }
   if (!updateAvailability.value) {
     window.electronAPI.log('error', 'Missing update data when trying to update');
     return;
@@ -232,6 +243,7 @@ async function update(): Promise<void> {
   if (role === MsModalResult.Confirm) {
     window.electronAPI.prepareUpdate();
   }
+  suppressUpdatePrompt();
 }
 
 async function goToParsecAccountLogin(): Promise<void> {
@@ -243,7 +255,7 @@ async function goToParsecAccountLogin(): Promise<void> {
 
 async function openSettings(): Promise<void> {
   if (!Env.isAccountEnabled()) {
-    return openSettingsModal();
+    await openSettingsModal();
   } else {
     emits('settingsClick');
   }
@@ -452,10 +464,12 @@ const emits = defineEmits<{
 }
 
 #create-organization-button {
+  background: var(--parsec-color-light-secondary-white);
   color: var(--parsec-color-light-secondary-soft-text);
   border-radius: var(--parsec-radius-12);
   transition: all 150ms linear;
   border: 1px solid var(--parsec-color-light-secondary-medium);
+  box-shadow: var(--parsec-shadow-input);
 
   & * {
     pointer-events: none;

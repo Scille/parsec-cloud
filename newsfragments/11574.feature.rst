@@ -1,0 +1,1 @@
+Update the user interface for workspace items in the list view.

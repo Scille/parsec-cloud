@@ -209,6 +209,7 @@
             "changelog": "Voir les nouveautés",
             "currentVersion": "Votre version actuelle : ",
             "updateAvailable": "Mise à jour disponible",
+            "recommended": "Recommandé pour la compatibilité",
             "newVersionAvailable": "Nouvelle version disponible",
             "downloadParsec": "Télécharger l'application de bureau"
         },
@@ -675,7 +676,8 @@
         },
         "Workspace": {
             "lastUpdate": "Dernière modification :",
-            "notShared": "Non partagé"
+            "notShared": "Non partagé",
+            "hidden": "Masqué"
         },
         "listDisplayTitles": {
             "name": "Nom",

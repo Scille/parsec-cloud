@@ -107,6 +107,7 @@ const emit = defineEmits<{
   border: 1px solid transparent;
   transition: all ease-in-out 200ms;
   flex-shrink: 0;
+  max-width: 15rem;
 
   & * {
     pointer-events: none;
@@ -172,6 +173,10 @@ const emit = defineEmits<{
 
     &__text {
       font-size: 0.9375rem;
+      width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
 
       @include ms.responsive-breakpoint('md') {
         display: none;
@@ -181,6 +186,7 @@ const emit = defineEmits<{
     ion-icon {
       transition: transform ease-out 300ms;
       font-size: 1rem;
+      flex-shrink: 0;
 
       &.popover-is-open {
         transform: rotate(180deg);

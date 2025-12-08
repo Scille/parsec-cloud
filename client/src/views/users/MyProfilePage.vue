@@ -181,9 +181,9 @@
                 :icon="logOut"
                 slot="start"
               />
-              <ion-label class="body logout-text">
+              <ion-text class="body logout-text">
                 {{ $msTranslate('HomePage.topbar.logout') }}
-              </ion-label>
+              </ion-text>
             </div>
           </div>
         </ion-radio-group>
@@ -271,7 +271,7 @@ import AboutView from '@/views/about/AboutView.vue';
 import DevicesPage from '@/views/devices/DevicesPage.vue';
 import AuthenticationPage from '@/views/profile/AuthenticationPage.vue';
 import OrganizationRecoveryPage from '@/views/profile/OrganizationRecoveryPage.vue';
-import { IonContent, IonHeader, IonIcon, IonLabel, IonPage, IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
+import { IonContent, IonHeader, IonIcon, IonPage, IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
 import {
   chatbubbles,
   chevronBack,

@@ -404,3 +404,9 @@ export async function resizePage(page: Page, width: number, height?: number): Pr
   await page.setViewportSize({ width, height: height ?? 900 });
   await page.waitForTimeout(100);
 }
+
+export async function sendUpdateEvent(page: MsPage): Promise<void> {
+  await page.evaluate(() => {
+    window.electronAPI.getUpdateAvailability(true);
+  });
+}

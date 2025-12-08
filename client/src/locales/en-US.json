@@ -210,6 +210,7 @@
             "changelog": "What's new?",
             "currentVersion": "Current version: ",
             "updateAvailable": "Update available",
+            "recommended": "Recommended for compatibility",
             "newVersionAvailable": "New update available",
             "downloadParsec": "Download desktop app"
         },
@@ -676,7 +677,8 @@
         },
         "Workspace": {
             "lastUpdate": "Last updated:",
-            "notShared": "Not shared"
+            "notShared": "Not shared",
+            "hidden": "Hidden"
         },
         "listDisplayTitles": {
             "name": "Name",

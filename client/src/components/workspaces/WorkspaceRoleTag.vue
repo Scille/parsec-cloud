@@ -21,10 +21,12 @@ defineProps<{
 <style scoped lang="scss">
 .label-role {
   color: var(--parsec-color-light-secondary-text);
+  display: flex;
+  align-items: center;
 
   &-text {
     background-color: none;
-    padding: 0.25rem 0.5rem;
+    padding: 0.2rem 0.5rem;
     color: var(--parsec-color-light-secondary-text);
   }
 }

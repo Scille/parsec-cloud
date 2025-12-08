@@ -64,6 +64,11 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
       }
 
       (window as any).TESTING = true;
+      (window as any).TESTING_DISABLE_STRIPE = !options.enableStripe;
+      if (options.enableUpdateEvent) {
+        (window as any).TESTING_ENABLE_UPDATE_EVENT = options.enableUpdateEvent;
+      }
+
       if (options.parsecAccountAutoLogin) {
         options.withParsecAccount = true;
         (window as any).TESTING_ACCOUNT_AUTO_LOGIN = true;
@@ -197,8 +202,6 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
     return page.displaySize;
   };
   await page.setDisplaySize(opts.displaySize ?? DisplaySize.Large);
-
-  await expect(page.locator('#app')).toHaveAttribute('app-state', 'ready');
 }
 
 const debugTest = base.extend({

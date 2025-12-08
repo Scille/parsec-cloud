@@ -30,9 +30,9 @@
           fill="clear"
           @click="openChangeAuthentication()"
         >
-          <ion-label class="update-auth-button__label">
+          <ion-text class="update-auth-button__label">
             <span>{{ $msTranslate('Authentication.changeAuthenticationButton') }}</span>
-          </ion-label>
+          </ion-text>
         </ion-button>
       </div>
     </template>
@@ -53,7 +53,7 @@ import { AuthenticationCardState } from '@/components/profile/types';
 import { AvailableDevice, AvailableDeviceTypeTag, DeviceSaveStrategyTag, getCurrentAvailableDevice, getServerConfig } from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import UpdateAuthenticationModal from '@/views/users/UpdateAuthenticationModal.vue';
-import { IonButton, IonIcon, IonLabel, IonText, modalController } from '@ionic/vue';
+import { IonButton, IonIcon, IonText, modalController } from '@ionic/vue';
 import { warning } from 'ionicons/icons';
 import { Answer, askQuestion, MsModalResult } from 'megashark-lib';
 import { inject, onMounted, Ref, ref } from 'vue';

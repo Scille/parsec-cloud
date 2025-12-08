@@ -100,7 +100,11 @@ onMounted(async () => {
 <style lang="scss" scoped>
 .file-selected {
   flex-shrink: 0;
-  max-width: 2.5rem;
+  width: 2.5rem;
+
+  @include ms.responsive-breakpoint('sm') {
+    flex-basis: 2.5rem;
+  }
 }
 
 .file-name {
@@ -122,6 +126,10 @@ onMounted(async () => {
   .label-name {
     color: var(--parsec-color-light-secondary-text);
     margin-left: 1em;
+
+    @include ms.responsive-breakpoint('sm') {
+      margin-left: 0;
+    }
   }
 }
 </style>
