@@ -72,21 +72,21 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     alice_signkey = SigningKey.generate()
 
     alice_user_certificates = generate_new_user_certificates(
-        t1,
-        alice_user_id,
-        HumanHandle(label="Alice", email=EmailAddress("alice@example.invalid")),
-        UserProfile.ADMIN,
-        alice_privkey.public_key,
+        timestamp=t1,
+        user_id=alice_user_id,
+        human_handle=HumanHandle(label="Alice", email=EmailAddress("alice@example.invalid")),
+        profile=UserProfile.ADMIN,
+        public_key=alice_privkey.public_key,
         author_device_id=None,
         author_signing_key=root_key,
     )
 
     alice_device_certificates = generate_new_device_certificates(
-        t1,
-        alice_user_id,
-        alice1_device_id,
-        DeviceLabel("Dev1"),
-        alice_signkey.verify_key,
+        timestamp=t1,
+        user_id=alice_user_id,
+        device_id=alice1_device_id,
+        device_label=DeviceLabel("Dev1"),
+        verify_key=alice_signkey.verify_key,
         author_device_id=None,
         author_signing_key=root_key,
     )
@@ -121,21 +121,21 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     bob_signkey = SigningKey.generate()
 
     bob_user_certificates = generate_new_user_certificates(
-        t2,
-        bob_user_id,
-        HumanHandle(label="Bob", email=EmailAddress("bob@example.invalid")),
-        UserProfile.STANDARD,
-        bob_privkey.public_key,
+        timestamp=t2,
+        user_id=bob_user_id,
+        human_handle=HumanHandle(label="Bob", email=EmailAddress("bob@example.invalid")),
+        profile=UserProfile.STANDARD,
+        public_key=bob_privkey.public_key,
         author_device_id=alice1_device_id,
         author_signing_key=alice_signkey,
     )
 
     bob_device_certificates = generate_new_device_certificates(
-        t2,
-        bob_user_id,
-        bob1_device_id,
-        DeviceLabel("Dev1"),
-        bob_signkey.verify_key,
+        timestamp=t2,
+        user_id=bob_user_id,
+        device_id=bob1_device_id,
+        device_label=DeviceLabel("Dev1"),
+        verify_key=bob_signkey.verify_key,
         author_device_id=alice1_device_id,
         author_signing_key=alice_signkey,
     )
@@ -187,21 +187,21 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     mallory1_device_id = DeviceID.test_from_nickname("mallory@dev1")
 
     mallory_user_certificates = generate_new_user_certificates(
-        t4,
-        mallory_user_id,
-        HumanHandle(label="Mallory", email=EmailAddress("mallory@example.invalid")),
-        UserProfile.OUTSIDER,
-        mallory_privkey.public_key,
+        timestamp=t4,
+        user_id=mallory_user_id,
+        human_handle=HumanHandle(label="Mallory", email=EmailAddress("mallory@example.invalid")),
+        profile=UserProfile.OUTSIDER,
+        public_key=mallory_privkey.public_key,
         author_device_id=alice1_device_id,
         author_signing_key=alice_signkey,
     )
 
     mallory_device_certificates = generate_new_device_certificates(
-        t4,
-        mallory_user_id,
-        mallory1_device_id,
-        DeviceLabel("Dev1"),
-        mallory_signkey.verify_key,
+        timestamp=t4,
+        user_id=mallory_user_id,
+        device_id=mallory1_device_id,
+        device_label=DeviceLabel("Dev1"),
+        verify_key=mallory_signkey.verify_key,
         author_device_id=alice1_device_id,
         author_signing_key=alice_signkey,
     )
