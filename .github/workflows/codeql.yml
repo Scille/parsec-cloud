@@ -34,7 +34,7 @@ jobs:
       poetry-version: 2.2.1
     steps:
       - name: Checkout repository
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # pin v6.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
         timeout-minutes: 5
 
       - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36  # pin v3.0.2
@@ -58,7 +58,7 @@ jobs:
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
         if: steps.should-run-python-analysis.outputs.run == 'true'
-        uses: github/codeql-action/init@fdbfb4d2750291e159f0156def62b853c2798ca2 # pin v4.31.5
+        uses: github/codeql-action/init@cf1bb45a277cb3c205638b2cd5c984db1c46a412 # pin v4.31.7
         with:
           languages: python
           setup-python-dependencies: false
@@ -87,7 +87,7 @@ jobs:
 
       - name: Perform CodeQL Analysis
         if: steps.should-run-python-analysis.outputs.run == 'true'
-        uses: github/codeql-action/analyze@fdbfb4d2750291e159f0156def62b853c2798ca2 # pin v4.31.5
+        uses: github/codeql-action/analyze@cf1bb45a277cb3c205638b2cd5c984db1c46a412 # pin v4.31.7
         with:
           category: /language:python
 
@@ -101,7 +101,7 @@ jobs:
   #     SDK_VERSION: 30.0.3
   #   steps:
   #     - name: Checkout repository
-  #       uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # pin v6.0.0
+  #       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
   #       timeout-minutes: 5
 
   #     - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36  # pin v3.0.2
@@ -142,7 +142,7 @@ jobs:
   #     # Initializes the CodeQL tools for scanning.
   #     - name: Initialize CodeQL
   #       if: steps.should-run-java-analysis.outputs.run == 'true'
-  #       uses: github/codeql-action/init@fdbfb4d2750291e159f0156def62b853c2798ca2 # pin v4.31.5
+  #       uses: github/codeql-action/init@cf1bb45a277cb3c205638b2cd5c984db1c46a412 # pin v4.31.7
   #       with:
   #         languages: java
   #         # If you wish to specify custom queries, you can do so here or in a config file.
@@ -154,7 +154,7 @@ jobs:
 
   #     - name: Autobuild android
   #       if: steps.should-run-java-analysis.outputs.run == 'true'
-  #       uses: github/codeql-action/autobuild@fdbfb4d2750291e159f0156def62b853c2798ca2 # pin v4.31.5
+  #       uses: github/codeql-action/autobuild@cf1bb45a277cb3c205638b2cd5c984db1c46a412 # pin v4.31.7
   #       with:
   #         working-directory: client/android
   #       env:
@@ -162,7 +162,7 @@ jobs:
 
   #     - name: Perform CodeQL Analysis
   #       if: steps.should-run-java-analysis.outputs.run == 'true'
-  #       uses: github/codeql-action/analyze@fdbfb4d2750291e159f0156def62b853c2798ca2 # pin v4.31.5
+  #       uses: github/codeql-action/analyze@cf1bb45a277cb3c205638b2cd5c984db1c46a412 # pin v4.31.7
   #       with:
   #         category: /language:java
 
@@ -171,7 +171,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # pin v6.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
         timeout-minutes: 5
 
       - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36  # pin v3.0.2
@@ -191,7 +191,7 @@ jobs:
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
         if: steps.should-run-js-analysis.outputs.run == 'true'
-        uses: github/codeql-action/init@fdbfb4d2750291e159f0156def62b853c2798ca2 # pin v4.31.5
+        uses: github/codeql-action/init@cf1bb45a277cb3c205638b2cd5c984db1c46a412 # pin v4.31.7
         with:
           languages: typescript
 
@@ -202,12 +202,12 @@ jobs:
 
       - name: Autobuild for typescript
         if: steps.should-run-js-analysis.outputs.run == 'true'
-        uses: github/codeql-action/autobuild@fdbfb4d2750291e159f0156def62b853c2798ca2 # pin v4.31.5
+        uses: github/codeql-action/autobuild@cf1bb45a277cb3c205638b2cd5c984db1c46a412 # pin v4.31.7
         with:
           working-directory: client
 
       - name: Perform CodeQL Analysis
         if: steps.should-run-js-analysis.outputs.run == 'true'
-        uses: github/codeql-action/analyze@fdbfb4d2750291e159f0156def62b853c2798ca2 # pin v4.31.5
+        uses: github/codeql-action/analyze@cf1bb45a277cb3c205638b2cd5c984db1c46a412 # pin v4.31.7
         with:
           category: /language:typescript

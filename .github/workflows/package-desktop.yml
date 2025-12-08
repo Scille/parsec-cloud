@@ -81,7 +81,7 @@ jobs:
     # Always run the job if `version` job is skipped otherwise only if `version` job was successful.
     if: inputs.version_patch_run_id != '' && always() || success()
     steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # pin v6.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
         with:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
@@ -157,7 +157,7 @@ jobs:
           yq --null-input ".linux-gnu.$ARCH.client.snap = \"$FINAL_ARTIFACT_NAME\"" | tee artifacts.yml
 
       # Install syft
-      - uses: taiki-e/install-action@3575e532701a5fc614b0c842e4119af4cc5fd16d # pin v2.62.60
+      - uses: taiki-e/install-action@50708e9ba8d7b6587a2cb575ddaa9a62e927bc06 # pin v2.62.63
         with:
           tool: syft@0.84.0
 
@@ -214,12 +214,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # pin v6.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
         with:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
 
-      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903  # pin v6.0.0
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f  # pin v6.1.0
         with:
           node-version: ${{ env.node-version }}
         timeout-minutes: 2
@@ -384,7 +384,7 @@ jobs:
         timeout-minutes: 1
 
       # Install syft
-      - uses: taiki-e/install-action@3575e532701a5fc614b0c842e4119af4cc5fd16d # pin v2.62.60
+      - uses: taiki-e/install-action@50708e9ba8d7b6587a2cb575ddaa9a62e927bc06 # pin v2.62.63
         with:
           tool: syft@0.84.0
 
