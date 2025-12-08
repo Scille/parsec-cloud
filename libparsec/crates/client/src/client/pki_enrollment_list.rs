@@ -114,7 +114,7 @@ pub async fn verify_untrusted_items(
     let now = cmds.time_provider.now();
     // Potentially expensive check, spawning a new task
     libparsec_platform_async::spawn(async move {
-        let root_certs = libparsec_platform_pki::list_trusted_root_certificate_anchor()
+        let root_certs = libparsec_platform_pki::list_trusted_root_certificate_anchors()
             .context("Failed to list trusted root certificates")
             .map_err(PkiEnrollmentListError::Internal)?;
 

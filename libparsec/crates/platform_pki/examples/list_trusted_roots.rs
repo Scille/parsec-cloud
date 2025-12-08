@@ -3,11 +3,9 @@
 
 mod utils;
 
-use libparsec_platform_pki::list_trusted_root_certificate_anchor;
-
 fn main() -> anyhow::Result<()> {
     env_logger::init();
-    let roots = list_trusted_root_certificate_anchor()?;
+    let roots = libparsec_platform_pki::list_trusted_root_certificate_anchors()?;
 
     println!("Found {} trusted roots", roots.len());
 

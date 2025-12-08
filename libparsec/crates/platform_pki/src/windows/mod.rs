@@ -4,8 +4,9 @@ use std::ffi::c_void;
 
 use crate::{
     CertificateDer, DecryptMessageError, DecryptedMessage, EncryptMessageError, EncryptedMessage,
-    GetDerEncodedCertificateError, ListTrustedRootCertificatesError,
-    ShowCertificateSelectionDialogError, SignMessageError, SignedMessageFromPki,
+    GetDerEncodedCertificateError, ListIntermediateCertificatesError,
+    ListTrustedRootCertificatesError, ShowCertificateSelectionDialogError, SignMessageError,
+    SignedMessageFromPki,
 };
 use bytes::Bytes;
 use libparsec_types::{
@@ -147,7 +148,7 @@ fn get_id_and_hash_from_cert_context(
     Ok(X509CertificateReference::from(hash).add_or_replace_uri(id))
 }
 
-pub fn list_trusted_root_certificate_anchor(
+pub fn list_trusted_root_certificate_anchors(
 ) -> Result<Vec<rustls_pki_types::TrustAnchor<'static>>, ListTrustedRootCertificatesError> {
     let store = CertStore::open_current_user("Root")
         .map_err(ListTrustedRootCertificatesError::CannotOpenStore)?;
@@ -183,6 +184,17 @@ pub fn list_trusted_root_certificate_anchor(
         .collect::<Vec<_>>();
 
     Ok(res)
+}
+
+pub fn list_intermediate_certificates(
+) -> Result<Vec<rustls_pki_types::CertificateDer<'static>>, ListIntermediateCertificatesError> {
+    let store = CertStore::open_current_user("CA")
+        .map_err(ListIntermediateCertificatesError::CannotOpenStore)?;
+
+    Ok(store
+        .certs()
+        .map(|ctx| rustls_pki_types::CertificateDer::from(ctx.to_der()).into_owned())
+        .collect::<Vec<_>>())
 }
 
 pub fn show_certificate_selection_dialog_windows_only(

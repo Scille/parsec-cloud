@@ -191,7 +191,7 @@ pub fn load_answer_payload(
     intermediate_certs: &[Bytes],
     now: DateTime,
 ) -> Result<PkiEnrollmentAnswerPayload, LoadAnswerPayloadError> {
-    let trusted_anchors = crate::list_trusted_root_certificate_anchor()?;
+    let trusted_anchors = crate::list_trusted_root_certificate_anchors()?;
 
     // Obtain the root cert used by the PKI
     let base_raw_cert = get_der_encoded_certificate(cert_ref)

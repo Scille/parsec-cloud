@@ -18,6 +18,7 @@ error_set::error_set! {
         #[display("Invalid root certificate: {0}")]
        InvalidRootCertificate(webpki::Error)
     }
+    ListIntermediateCertificatesError := BaseCertStoreError
     SignMessageError := BaseCertStoreError || BaseKeyPairError || {
         #[display("Cannot sign message: {0}")]
         CannotSign(std::io::Error),

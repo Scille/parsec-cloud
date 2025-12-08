@@ -5,7 +5,6 @@ mod utils;
 
 use anyhow::Context;
 use clap::Parser;
-use libparsec_platform_pki::{list_trusted_root_certificate_anchor, verify_certificate};
 use libparsec_types::DateTime;
 
 #[derive(Debug, Parser)]
@@ -18,8 +17,17 @@ pub fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     println!("args={args:?}");
 
-    let trusted_roots =
-        list_trusted_root_certificate_anchor().context("Cannot list trusted root certificates")?;
+    let trusted_roots = libparsec_platform_pki::list_trusted_root_certificate_anchors()
+        .context("Cannot list trusted root certificates")?;
+    println!("Found {} trusted roots", trusted_roots.len());
+
+    let intermediate_certificates = libparsec_platform_pki::list_intermediate_certificates()
+        .context("Cannot list intermediate certificates")?;
+    println!(
+        "Found {} intermediate certificates",
+        intermediate_certificates.len()
+    );
+
     let untrusted_certificate = args
         .cert
         .get_certificate()
@@ -30,10 +38,10 @@ pub fn main() -> anyhow::Result<()> {
         .context("Invalid certificate")?;
     println!("Untrusted certificate: {}", utils::display_cert(&end_cert));
 
-    let path = verify_certificate(
+    let path = libparsec_platform_pki::verify_certificate(
         &end_cert,
         &trusted_roots,
-        &[],
+        &intermediate_certificates,
         DateTime::now(),
         webpki::KeyUsage::client_auth(),
     )
