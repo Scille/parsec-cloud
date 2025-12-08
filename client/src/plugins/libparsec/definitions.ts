@@ -329,6 +329,16 @@ export interface PkiEnrollmentSubmitPayload {
     deviceLabel: DeviceLabel
 }
 
+export interface RawPkiEnrollmentListItem {
+    enrollmentId: PKIEnrollmentID
+    submittedOn: DateTime
+    derX509Certificate: Bytes
+    intermediateDerX509Certificates: Array<Bytes>
+    payloadSignature: Bytes
+    payloadSignatureAlgorithm: PkiSignatureAlgorithm
+    payload: Bytes
+}
+
 export interface ServerConfig {
     account: AccountConfig
     organizationBootstrap: OrganizationBootstrapConfig
@@ -5875,6 +5885,9 @@ export interface LibParsecPlugin {
         client_handle: Handle,
         cert_ref: X509CertificateReference
     ): Promise<Result<Array<PkiEnrollmentListItem>, PkiEnrollmentListError>>
+    clientPkiListEnrollmentsUntrusted(
+        client_handle: Handle
+    ): Promise<Result<Array<RawPkiEnrollmentListItem>, PkiEnrollmentListError>>
     clientRenameWorkspace(
         client: Handle,
         realm_id: VlobID,

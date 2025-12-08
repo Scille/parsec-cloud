@@ -86,6 +86,16 @@ class InvalidityReason(Variant):
     class InvalidUserInformation: ...
 
 
+class RawPkiEnrollmentListItem(Structure):
+    enrollment_id: PKIEnrollmentID
+    submitted_on: DateTime
+    der_x509_certificate: Bytes
+    intermediate_der_x509_certificates: list[Bytes]
+    payload_signature: Bytes
+    payload_signature_algorithm: PkiSignatureAlgorithm
+    payload: Bytes
+
+
 class PkiEnrollmentListItem(Variant):
     class Valid:
         human_handle: HumanHandle
