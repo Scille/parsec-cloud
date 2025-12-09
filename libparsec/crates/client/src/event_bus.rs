@@ -465,6 +465,17 @@ impl_events!(
     /// - This event is received by all users with ADMIN profile.
     PkiEnrollmentUpdated,
 
+    /// This event is fired by the connection monitor.
+    ///
+    /// An asynchronous enrollment request has changed on server side (i.e. a new
+    /// enrollment is available, or an existing one has been accepted/rejected/cancelled).
+    ///
+    /// Notes:
+    /// - This event will be fired (i.e. the server pushes it to us) even if
+    ///   we are at the origin of the change (e.g. we accepted/rejected the enrollment).
+    /// - This event is received by all users with ADMIN profile.
+    AsyncEnrollmentUpdated,
+
     // ***********************************************************************
     // Vlob related events
     // ***********************************************************************

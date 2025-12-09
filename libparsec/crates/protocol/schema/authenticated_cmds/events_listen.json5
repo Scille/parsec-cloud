@@ -110,8 +110,14 @@
                         ]
                     },
                     {
+                        // Event only fired for organization admins
                         "name": "PkiEnrollment",
                         "discriminant_value": "PKI_ENROLLMENT"
+                    },
+                    {
+                        // Event only fired for organization admins
+                        "name": "AsyncEnrollment",
+                        "discriminant_value": "ASYNC_ENROLLMENT"
                     },
                     // It would be easy to provide the content of the certificate here,
                     // however correctly integrating it on client side is tricky given
@@ -188,16 +194,16 @@
                     {
                         "name": "Vlob",
                         "discriminant_value": "VLOB",
-                       // Unlike for `XXXCertificate`, we provide enough context
-                       // to process the event without any additional query to the server.
-                       // This is because vlob related operations are designed to work
-                       // under concurrency (unlike certificates related operations that
-                       // work in a strict ordered fashion).
-                       // In other words, considering two vlob modifications:
-                       // - two different vlobs are modified, it is fine to fetch the
-                       //   changes in any order
-                       // - the same vlob has been modified twice, it is fine to fetch
-                       //   the change twice (idempotent operation)
+                        // Unlike for `XXXCertificate`, we provide enough context
+                        // to process the event without any additional query to the server.
+                        // This is because vlob related operations are designed to work
+                        // under concurrency (unlike certificates related operations that
+                        // work in a strict ordered fashion).
+                        // In other words, considering two vlob modifications:
+                        // - two different vlobs are modified, it is fine to fetch the
+                        //   changes in any order
+                        // - the same vlob has been modified twice, it is fine to fetch
+                        //   the change twice (idempotent operation)
                         "fields": [
                             {
                                 "name": "realm_id",
