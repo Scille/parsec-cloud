@@ -26,6 +26,7 @@ from parsec._parsec import (
 )
 from parsec.api import collect_apis
 from parsec.components.account import BaseAccountComponent
+from parsec.components.async_enrollment import BaseAsyncEnrollmentComponent
 from parsec.components.auth import BaseAuthComponent
 from parsec.components.block import BaseBlockComponent
 from parsec.components.blockstore import BaseBlockStoreComponent
@@ -88,6 +89,7 @@ async def backend_factory(config: BackendConfig) -> AsyncGenerator[Backend, None
             events=components["events"],
             shamir=components["shamir"],
             account=components["account"],
+            async_enrollment=components["async_enrollment"],
         )
 
 
@@ -113,6 +115,7 @@ class Backend:
     events: BaseEventsComponent
     shamir: BaseShamirComponent
     account: BaseAccountComponent
+    async_enrollment: BaseAsyncEnrollmentComponent
 
     # Only available if `config.db_config.type == "MOCKED"`
     mocked_data: MemoryDatamodel | None = None
@@ -133,6 +136,7 @@ class Backend:
             self.events,
             self.shamir,
             self.account,
+            self.async_enrollment,
             # Ping command is only used in tests
             include_ping=self.config.debug,
         )
