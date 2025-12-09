@@ -51,7 +51,6 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         force: bool,
         submitter_human_handle: HumanHandle,
         submitter_der_x509_certificate: bytes,
-        # TODO #11720
         intermediate_certificates: list[bytes],
         submit_payload_signature: bytes,
         submit_payload_signature_algorithm: PkiSignatureAlgorithm,
