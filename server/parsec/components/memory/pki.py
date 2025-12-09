@@ -102,53 +102,63 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
 
             # 5) Check for previous enrollment with same x509 certificate
             submitter_der_x509_certificate = submitter_trustchain[0]
-            for enrollment in reversed(
-                sorted(org.pki_enrollments.values(), key=lambda x: x.submitted_on)
-            ):
-                if (
-                    enrollment.submitter_der_x509_certificate
-                    != submitter_der_x509_certificate.content
-                ):
-                    continue
+            match await org.get_cert(submitter_der_x509_certificate.fingerprint_sha256):
+                case None:
+                    pass
+                case _:
+                    # This cert is already stored, check if there is a corresponding enrollment
+                    for enrollment in reversed(
+                        sorted(
+                            [
+                                x
+                                for x in org.pki_enrollments.values()
+                                if x.submitter_der_x509_fingerprint
+                                == submitter_der_x509_certificate.fingerprint_sha256
+                            ],
+                            key=lambda x: x.submitted_on,
+                        )
+                    ):
+                        match enrollment.enrollment_state:
+                            case MemoryPkiEnrollmentState.SUBMITTED:
+                                # Previous attempt is still pending, overwrite it if force flag is set...
+                                if force:
+                                    enrollment.enrollment_state = MemoryPkiEnrollmentState.CANCELLED
+                                    enrollment.info_cancelled = MemoryPkiEnrollmentInfoCancelled(
+                                        cancelled_on=now
+                                    )
+                                    # Note we don't send a `EventPkiEnrollment` event related
+                                    # to the cancelled enrollment here.
+                                    # This is because this function already sends a `EventPkiEnrollment`
+                                    # no matter what, and the type of event doesn't specify the
+                                    # enrollment ID as its role is only to inform the client
+                                    # that something has changed (so that the client knows it
+                                    # should re-fetch the list of PKI enrollments from the
+                                    # server).
+                                else:
+                                    # ...otherwise nothing we can do
+                                    return PkiEnrollmentSubmitX509CertificateAlreadySubmitted(
+                                        submitted_on=enrollment.submitted_on,
+                                    )
 
-                match enrollment.enrollment_state:
-                    case MemoryPkiEnrollmentState.SUBMITTED:
-                        # Previous attempt is still pending, overwrite it if force flag is set...
-                        if force:
-                            enrollment.enrollment_state = MemoryPkiEnrollmentState.CANCELLED
-                            enrollment.info_cancelled = MemoryPkiEnrollmentInfoCancelled(
-                                cancelled_on=now
-                            )
-                            # Note we don't send a `EventPkiEnrollment` event related
-                            # to the cancelled enrollment here.
-                            # This is because this function already sends a `EventPkiEnrollment`
-                            # no matter what, and the type of event doesn't specify the
-                            # enrollment ID as its role is only to inform the client
-                            # that something has changed (so that the client knows it
-                            # should re-fetch the list of PKI enrollments from the
-                            # server).
-                        else:
-                            # ...otherwise nothing we can do
-                            return PkiEnrollmentSubmitX509CertificateAlreadySubmitted(
-                                submitted_on=enrollment.submitted_on,
-                            )
+                            case (
+                                MemoryPkiEnrollmentState.REJECTED
+                                | MemoryPkiEnrollmentState.CANCELLED
+                            ):
+                                # Previous attempt was unsuccessful, so we are clear to submit a new attempt !
+                                pass
 
-                    case MemoryPkiEnrollmentState.REJECTED | MemoryPkiEnrollmentState.CANCELLED:
-                        # Previous attempt was unsuccessful, so we are clear to submit a new attempt !
-                        pass
+                            case MemoryPkiEnrollmentState.ACCEPTED:
+                                # Previous attempt end successfully, we are not allowed to submit
+                                # unless the created user has been revoked
+                                assert enrollment.submitter_accepted_user_id is not None
+                                assert enrollment.submitter_accepted_device_id is not None
+                                user = org.users[enrollment.submitter_accepted_user_id]
+                                if not user.is_revoked:
+                                    return PkiEnrollmentSubmitBadOutcome.X509_CERTIFICATE_ALREADY_ENROLLED
 
-                    case MemoryPkiEnrollmentState.ACCEPTED:
-                        # Previous attempt end successfully, we are not allowed to submit
-                        # unless the created user has been revoked
-                        assert enrollment.submitter_accepted_user_id is not None
-                        assert enrollment.submitter_accepted_device_id is not None
-                        user = org.users[enrollment.submitter_accepted_user_id]
-                        if not user.is_revoked:
-                            return PkiEnrollmentSubmitBadOutcome.X509_CERTIFICATE_ALREADY_ENROLLED
-
-                # There is no need looking for older enrollments given the
-                # last one represent the current state of this x509 certificate.
-                break
+                        # There is no need looking for older enrollments given the
+                        # last one represent the current state of this x509 certificate.
+                        break
 
             # 6) Check that the email is not already enrolled
 
@@ -162,8 +172,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
 
             org.pki_enrollments[enrollment_id] = MemoryPkiEnrollment(
                 enrollment_id=enrollment_id,
-                # TODO: use fingerprint
-                submitter_der_x509_certificate=submitter_der_x509_certificate.content,
+                submitter_der_x509_fingerprint=submitter_der_x509_certificate.fingerprint_sha256,
                 submit_payload_signature=submit_payload_signature,
                 submit_payload_signature_algorithm=submit_payload_signature_algorithm,
                 submit_payload=submit_payload,
@@ -270,18 +279,12 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         ret = []
         for enrollment in org.pki_enrollments.values():
             if enrollment.enrollment_state == MemoryPkiEnrollmentState.SUBMITTED:
-                # TODO: https://github.com/Scille/parsec-cloud/issues/11871
-                leaf_fingerprint = get_sha256_fingerprint_from_cert(
-                    enrollment.submitter_der_x509_certificate
-                )
-
-                match await org.get_trustchain(leaf_fingerprint):
+                match await org.get_trustchain(enrollment.submitter_der_x509_fingerprint):
                     case (leaf_cert, trustchain):
                         pass
                     case None:
                         return PkiEnrollmentListBadOutcome.CERTIFICATE_NOT_FOUND
                 intermediate_der_x509_certificates = [c.der_content for c in trustchain]
-
                 ret.append(
                     PkiEnrollmentListItem(
                         enrollment_id=enrollment.enrollment_id,

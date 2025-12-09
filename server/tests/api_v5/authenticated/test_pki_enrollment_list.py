@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+
 import pytest
 
 from parsec._parsec import (
@@ -15,7 +16,9 @@ from parsec._parsec import (
     UserProfile,
     authenticated_cmds,
 )
-from tests.api_v5.authenticated.test_pki_enrollment_accept import generate_accept_params
+from tests.api_v5.authenticated.test_pki_enrollment_accept import (
+    generate_accept_params,
+)
 from tests.common import (
     Backend,
     CoolorgRpcClients,
@@ -98,7 +101,8 @@ async def test_authenticated_pki_enrollment_list_ok(
                 assert res.payload_signature_algorithm == expected.payload_signature_algorithm
                 assert res.payload == expected.payload
 
-        case _:
+        case e:
+            print(e)
             assert False
 
     # 3) Also ensure `ACCEPTED/CANCELLED/REJECTED` enrollments are ignored
@@ -211,6 +215,3 @@ async def test_authenticated_pki_enrollment_list_http_common_errors(
         await coolorg.alice.pki_enrollment_list()
 
     await authenticated_http_common_errors_tester(do)
-
-
-# TODO test when leaf fingerprint not in db ->  #11871

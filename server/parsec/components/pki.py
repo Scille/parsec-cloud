@@ -334,7 +334,6 @@ class BasePkiEnrollmentComponent:
             current = parse_pki_cert(leaf)
         except ValueError:
             return PkiTrustchainError.ParseError
-
         # Parse intermediate -> HashMap (subject, cert)
         try:
             intermediate = {
@@ -363,9 +362,6 @@ class BasePkiEnrollmentComponent:
                     current = cert
 
         return PkiTrustchainError.TrustchainTooLong
-
-    async def get_cert(self, fingerprint: bytes) -> PkiCertificate | None:
-        raise NotImplementedError
 
     @api
     async def api_pki_enrollment_info(
