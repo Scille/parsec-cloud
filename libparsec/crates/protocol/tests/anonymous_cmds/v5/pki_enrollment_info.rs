@@ -173,3 +173,28 @@ pub fn rep_enrollment_not_found() {
 
     p_assert_eq!(data2, expected);
 }
+
+pub fn rep_invalid_accepter_x509_certificates() {
+    // Generated from Parsec 3.7.1-a.0+dev
+    // Content:
+    //   status: 'invalid_accepter_x509_certificates'
+    let raw: &[u8] = hex!(
+        "81a6737461747573d922696e76616c69645f61636365707465725f783530395f636572"
+        "746966696361746573"
+    )
+    .as_ref();
+
+    let expected = anonymous_cmds::pki_enrollment_info::Rep::InvalidAccepterX509Certificates;
+    println!("***expected: {:?}", expected.dump().unwrap());
+
+    let data = anonymous_cmds::pki_enrollment_info::Rep::load(&raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = anonymous_cmds::pki_enrollment_info::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected);
+}

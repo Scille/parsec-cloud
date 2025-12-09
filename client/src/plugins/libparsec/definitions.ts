@@ -3602,6 +3602,7 @@ export enum PkiEnrollmentInfoErrorTag {
     EnrollmentNotFound = 'PkiEnrollmentInfoErrorEnrollmentNotFound',
     Internal = 'PkiEnrollmentInfoErrorInternal',
     InvalidAcceptPayload = 'PkiEnrollmentInfoErrorInvalidAcceptPayload',
+    InvalidAccepterX509Certificates = 'PkiEnrollmentInfoErrorInvalidAccepterX509Certificates',
     Offline = 'PkiEnrollmentInfoErrorOffline',
 }
 
@@ -3617,6 +3618,10 @@ export interface PkiEnrollmentInfoErrorInvalidAcceptPayload {
     tag: PkiEnrollmentInfoErrorTag.InvalidAcceptPayload
     error: string
 }
+export interface PkiEnrollmentInfoErrorInvalidAccepterX509Certificates {
+    tag: PkiEnrollmentInfoErrorTag.InvalidAccepterX509Certificates
+    error: string
+}
 export interface PkiEnrollmentInfoErrorOffline {
     tag: PkiEnrollmentInfoErrorTag.Offline
     error: string
@@ -3625,6 +3630,7 @@ export type PkiEnrollmentInfoError =
   | PkiEnrollmentInfoErrorEnrollmentNotFound
   | PkiEnrollmentInfoErrorInternal
   | PkiEnrollmentInfoErrorInvalidAcceptPayload
+  | PkiEnrollmentInfoErrorInvalidAccepterX509Certificates
   | PkiEnrollmentInfoErrorOffline
 
 // PkiEnrollmentListError

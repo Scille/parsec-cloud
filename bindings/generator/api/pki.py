@@ -251,17 +251,15 @@ class PKIInfoItem(Variant):
 
 
 class PkiEnrollmentInfoError(ErrorVariant):
-    class Offline:
-        pass
+    class Offline: ...
 
-    class EnrollmentNotFound:
-        pass
+    class EnrollmentNotFound: ...
 
-    class InvalidAcceptPayload:
-        pass
+    class InvalidAcceptPayload: ...
 
-    class Internal:
-        pass
+    class InvalidAccepterX509Certificates: ...
+
+    class Internal: ...
 
 
 async def pki_enrollment_info(

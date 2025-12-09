@@ -21,6 +21,12 @@
             {
                 // The server did not found a request for the provided ID
                 "status": "enrollment_not_found"
+            },
+            {
+                // If a accepter certificates is invalid the server would return that error.
+                // Should not happens since the server check the accepter certificates during `pki_accept`, but better safe than sorry.
+                // If that error happens, it would require sys-admin work to cleanup the invalid certificates in the server state.
+                "status": "invalid_accepter_x509_certificates"
             }
         ],
         "nested_types": [

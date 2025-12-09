@@ -13384,6 +13384,12 @@ fn variant_pki_enrollment_info_error_rs_to_js<'a>(
                 JsString::try_new(cx, "PkiEnrollmentInfoErrorInvalidAcceptPayload").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::PkiEnrollmentInfoError::InvalidAccepterX509Certificates { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "PkiEnrollmentInfoErrorInvalidAccepterX509Certificates")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::PkiEnrollmentInfoError::Offline { .. } => {
             let js_tag = JsString::try_new(cx, "PkiEnrollmentInfoErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;

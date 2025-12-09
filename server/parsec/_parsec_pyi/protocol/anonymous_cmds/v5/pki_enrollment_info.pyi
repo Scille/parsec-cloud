@@ -81,3 +81,8 @@ class RepEnrollmentNotFound(Rep):
     def __init__(
         self,
     ) -> None: ...
+
+class RepInvalidAccepterX509Certificates(Rep):
+    def __init__(
+        self,
+    ) -> None: ...

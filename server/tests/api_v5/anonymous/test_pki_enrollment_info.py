@@ -15,6 +15,7 @@ from parsec._parsec import (
     UserProfile,
     anonymous_cmds,
 )
+from parsec.components.memory.pki import MemoryPkiEnrollmentComponent
 from tests.api_v5.authenticated.test_user_create import (
     NEW_MIKE_DEVICE_ID,
     NEW_MIKE_DEVICE_LABEL,
@@ -176,6 +177,76 @@ async def test_anonymous_pki_enrollment_info_enrollment_not_found(
 ) -> None:
     rep = await coolorg.anonymous.pki_enrollment_info(enrollment_id=PKIEnrollmentID.new())
     assert rep == anonymous_cmds.latest.pki_enrollment_info.RepEnrollmentNotFound()
+
+
+@pytest.mark.xfail(reason="Require #11880")
+async def test_anonymous_pki_enrollment_info_invalid_accepter_x509_certificates(
+    coolorg: CoolorgRpcClients, backend: Backend, test_pki: TestPki, xfail_if_postgresql
+) -> None:
+    enrollment_id = PKIEnrollmentID.new()
+    submitted_on = DateTime.now()
+    submit_payload = PkiEnrollmentSubmitPayload(
+        verify_key=SigningKey.generate().verify_key,
+        public_key=PrivateKey.generate().public_key,
+        device_label=DeviceLabel("Dev1"),
+    ).dump()
+    outcome = await backend.pki.submit(
+        now=submitted_on,
+        organization_id=coolorg.organization_id,
+        enrollment_id=enrollment_id,
+        force=False,
+        submitter_human_handle=NEW_MIKE_HUMAN_HANDLE,
+        submitter_der_x509_certificate=test_pki.cert["bob"].der_certificate,
+        intermediate_certificates=[],
+        submit_payload_signature=b"<mike submit payload signature>",
+        submit_payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
+        submit_payload=submit_payload,
+    )
+    assert outcome is None
+
+    accepted_on = submitted_on.add(seconds=1)
+
+    u_certif, redacted_u_certif = generate_new_mike_user_certificates(
+        author=coolorg.alice, timestamp=accepted_on
+    )
+    d_certif, redacted_d_certif = generate_new_mike_device_certificates(
+        author=coolorg.alice, timestamp=accepted_on
+    )
+
+    accept_payload = PkiEnrollmentAnswerPayload(
+        user_id=NEW_MIKE_USER_ID,
+        device_id=NEW_MIKE_DEVICE_ID,
+        device_label=NEW_MIKE_DEVICE_LABEL,
+        profile=UserProfile.STANDARD,
+        root_verify_key=coolorg.root_verify_key,
+    ).dump()
+
+    outcome = await backend.pki.accept(
+        now=accepted_on,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
+        enrollment_id=enrollment_id,
+        payload=accept_payload,
+        payload_signature=b"<alice accept payload signature>",
+        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
+        accepter_der_x509_certificate=test_pki.cert["alice"].der_certificate,
+        accepter_intermediate_der_x509_certificates=[],
+        submitter_user_certificate=u_certif,
+        submitter_redacted_user_certificate=redacted_u_certif,
+        submitter_device_certificate=d_certif,
+        submitter_redacted_device_certificate=redacted_d_certif,
+    )
+    assert isinstance(outcome, tuple)
+
+    assert isinstance(backend.pki, MemoryPkiEnrollmentComponent)
+    org = backend.pki._data.organizations[coolorg.organization_id]
+    info_accepted = org.pki_enrollments[enrollment_id].info_accepted
+    assert info_accepted is not None
+    info_accepted.accepter_der_x509_certificate = b"<not a valid certificate>"
+
+    rep = await coolorg.anonymous.pki_enrollment_info(enrollment_id=enrollment_id)
+    assert rep == anonymous_cmds.latest.pki_enrollment_info.RepInvalidAccepterX509Certificates()
 
 
 async def test_anonymous_pki_enrollment_info_http_common_errors(

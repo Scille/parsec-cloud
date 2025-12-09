@@ -15,6 +15,8 @@ pub enum PkiEnrollmentInfoError {
     EnrollmentNotFound,
     #[error("Invalid accept payload")]
     InvalidAcceptPayload,
+    #[error("Invalid accepter x509 certificates")]
+    InvalidAccepterX509Certificates,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -58,6 +60,9 @@ pub async fn info(
     let status = match rep {
         Rep::Ok(status) => status,
         Rep::EnrollmentNotFound => return Err(PkiEnrollmentInfoError::EnrollmentNotFound),
+        Rep::InvalidAccepterX509Certificates => {
+            return Err(PkiEnrollmentInfoError::InvalidAccepterX509Certificates)
+        }
         rep @ Rep::UnknownStatus { .. } => {
             return Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
         }

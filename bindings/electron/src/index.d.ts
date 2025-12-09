@@ -3044,6 +3044,10 @@ export interface PkiEnrollmentInfoErrorInvalidAcceptPayload {
     tag: "PkiEnrollmentInfoErrorInvalidAcceptPayload"
     error: string
 }
+export interface PkiEnrollmentInfoErrorInvalidAccepterX509Certificates {
+    tag: "PkiEnrollmentInfoErrorInvalidAccepterX509Certificates"
+    error: string
+}
 export interface PkiEnrollmentInfoErrorOffline {
     tag: "PkiEnrollmentInfoErrorOffline"
     error: string
@@ -3052,6 +3056,7 @@ export type PkiEnrollmentInfoError =
   | PkiEnrollmentInfoErrorEnrollmentNotFound
   | PkiEnrollmentInfoErrorInternal
   | PkiEnrollmentInfoErrorInvalidAcceptPayload
+  | PkiEnrollmentInfoErrorInvalidAccepterX509Certificates
   | PkiEnrollmentInfoErrorOffline
 
 
