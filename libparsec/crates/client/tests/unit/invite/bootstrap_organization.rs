@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use libparsec_client_connection::{ConnectionError, ProxyConfig};
+use libparsec_client_connection::ConnectionError;
 use libparsec_platform_async::PinBoxFutureResult;
 use libparsec_platform_device_loader::{
     AccountVaultOperations, AccountVaultOperationsFetchOpaqueKeyError,
@@ -11,10 +11,11 @@ use libparsec_platform_device_loader::{
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
+use super::utils::make_config;
 use crate::{
     bootstrap_organization, test_organization_bootstrap_finalize_ctx_factory,
-    BootstrapOrganizationError, Client, ClientConfig, EventBus, MountpointMountStrategy,
-    OrganizationBootstrapFinalizeSaveLocalDeviceError, WorkspaceStorageCacheSize,
+    BootstrapOrganizationError, Client, EventBus,
+    OrganizationBootstrapFinalizeSaveLocalDeviceError,
 };
 
 // should be the same as bootstrap token defined in server/parsec/backend.py L91 as TEST_BOOTSTRAP_TOKEN
@@ -22,18 +23,6 @@ const TEST_BOOTSTRAP_TOKEN_STR: &str = "672bc6ba9c43455da28344e975dc72b7";
 
 fn test_bootstrap_token() -> BootstrapToken {
     BootstrapToken::from_hex(TEST_BOOTSTRAP_TOKEN_STR).unwrap()
-}
-
-fn make_config(env: &TestbedEnv) -> Arc<ClientConfig> {
-    Arc::new(ClientConfig {
-        config_dir: env.discriminant_dir.clone(),
-        data_base_dir: env.discriminant_dir.clone(),
-        workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
-        proxy: ProxyConfig::default(),
-        mountpoint_mount_strategy: MountpointMountStrategy::Disabled,
-        with_monitors: false,
-        prevent_sync_pattern: PreventSyncPattern::from_regex(r"\.tmp$").unwrap(),
-    })
 }
 
 #[parsec_test(testbed = "empty", with_server)]

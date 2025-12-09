@@ -2312,6 +2312,7 @@ name = "libparsec_client"
 version = "3.7.2-a.0+dev"
 dependencies = [
  "blahaj",
+ "data-encoding",
  "libparsec_client",
  "libparsec_client_connection",
  "libparsec_platform_async",
@@ -2330,6 +2331,7 @@ dependencies = [
  "smallvec",
  "thiserror 2.0.17",
  "tokio",
+ "zeroize",
 ]
 
 [[package]]
