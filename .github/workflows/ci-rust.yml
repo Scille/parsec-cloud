@@ -62,7 +62,6 @@ jobs:
     # https://github.com/Scille/parsec-cloud/pkgs/container/parsec-cloud%2Fparsec-testbed-server
     env:
       TESTBED_SERVER: http://localhost:6777
-      TEST_PKI_DIR: ${{ github.workspace }}/.test-pki
     services:
       parsec-testbed-server:
         image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.6.2-a.0.dev.20412.600fb06
@@ -235,8 +234,6 @@ jobs:
           - name: 🏁 Windows
             os: windows-2025
     name: "${{ matrix.name }}: 🦀 Rust tests"
-    env:
-      TEST_PKI_DIR: ${{ github.workspace }}/.test-pki
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
     timeout-minutes: 60
     runs-on: ${{ matrix.os }}

@@ -97,7 +97,7 @@ mod platform_implementation {
     pub fn test_pki() -> TestPKI {
         let test_pki_dir = std::env::var_os("TEST_PKI_DIR")
             .map(PathBuf::from)
-            .unwrap_or("test-pki".into());
+            .unwrap_or("misc/.test-pki".into());
 
         assert!(test_pki_dir.is_dir());
 

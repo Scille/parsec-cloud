@@ -73,7 +73,7 @@ class PartialCertificate:
 
 @pytest_asyncio.fixture(scope="session", loop_scope="session")
 async def test_pki() -> TestPki:
-    test_pki_dir = Path(os.environ.get("TEST_PKI_DIR", "test-pki"))
+    test_pki_dir = Path(os.environ.get("TEST_PKI_DIR", "misc/.test-pki"))
 
     cert_dir = test_pki_dir / "Cert"
     intermediate_dir = test_pki_dir / "Intermediate"

@@ -34,7 +34,6 @@ env:
     -vv
     -x
   postgresql-version: 16
-  TEST_PKI_DIR: ${{ github.workspace }}/.test-pki
 
 permissions:
   contents: read
