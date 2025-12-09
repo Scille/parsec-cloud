@@ -240,6 +240,33 @@ class EventPkiEnrollment(BaseModel, ClientBroadcastableEvent):
         )
 
 
+class EventAsyncEnrollment(BaseModel, ClientBroadcastableEvent):
+    """
+    Event broadcasted to the organization admins to inform them someone has submit
+    a request for an asynchronous enrollment.
+    This is because this enrollment is initiated by the submitter (i.e. the peer that
+    wants join the organization).
+    This event is also triggered whenever an async enrollment gets accepted/rejected.
+    """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
+    type: Literal["ASYNC_ENROLLMENT"] = "ASYNC_ENROLLMENT"
+    event_id: UUID = Field(default_factory=uuid4)
+    organization_id: OrganizationIDField
+
+    @override
+    def is_event_for_client(self, client: RegisteredClient) -> bool:
+        return (
+            self.organization_id == client.organization_id and client.profile == UserProfile.ADMIN
+        )
+
+    @override
+    def dump_as_apiv5_sse_payload(self) -> bytes:
+        return self._dump_as_apiv5_sse_payload(
+            authenticated_cmds.latest.events_listen.APIEventAsyncEnrollment(), self.event_id
+        )
+
+
 class EventVlob(BaseModel, ClientBroadcastableEvent):
     """
     Event used to inform that a vlob has been modified.
@@ -534,6 +561,7 @@ type Event = (
     | EventGreetingAttemptCancelled
     | EventGreetingAttemptJoined
     | EventPkiEnrollment
+    | EventAsyncEnrollment
     | EventVlob
     | EventCommonCertificate
     | EventSequesterCertificate
