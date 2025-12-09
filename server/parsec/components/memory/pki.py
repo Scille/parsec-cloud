@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
+from hashlib import sha256
 from typing import override
 
 from parsec._parsec import (
@@ -45,7 +46,6 @@ from parsec.components.pki import (
     PkiEnrollmentSubmitBadOutcome,
     PkiEnrollmentSubmitX509CertificateAlreadySubmitted,
     PkiTrustchainError,
-    parse_pki_cert,
     pki_enrollment_accept_validate,
 )
 from parsec.events import EventCommonCertificate, EventPkiEnrollment
@@ -272,11 +272,9 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         ret = []
         for enrollment in org.pki_enrollments.values():
             if enrollment.enrollment_state == MemoryPkiEnrollmentState.SUBMITTED:
-                try:
-                    cert = parse_pki_cert(enrollment.submitter_der_x509_certificate)
-                except ValueError:
-                    return PkiEnrollmentListBadOutcome.INVALID_CERTIFICATE
-                trustchain = await org.get_trustchain(cert.fingerprint_sha256)
+                # TODO: https://github.com/Scille/parsec-cloud/issues/11871
+                leaf_fingerprint = sha256(enrollment.submitter_der_x509_certificate).digest()
+                trustchain = await org.get_trustchain(leaf_fingerprint)
                 intermediate_der_x509_certificates = [c.der_content for c in trustchain]
 
                 ret.append(
