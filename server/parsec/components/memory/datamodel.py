@@ -509,6 +509,9 @@ class MemoryOrganization:
         # in theory it should not have been stored if too long
         return (leaf, sorted_trustchain[1:])
 
+    async def get_cert(self, fingerprint: bytes) -> MemoryPkiCertificate | None:
+        return self.pki_certificates.get(fingerprint)
+
 
 @dataclass(slots=True)
 class MemorySequesterService:
@@ -792,7 +795,8 @@ class MemoryPkiCertificate:
 @dataclass(slots=True)
 class MemoryPkiEnrollment:
     enrollment_id: PKIEnrollmentID
-    submitter_der_x509_certificate: bytes = field(repr=False)
+    # references the cert stored in MemoryPkiCertificate
+    submitter_der_x509_fingerprint: bytes = field(repr=False)
 
     submit_payload_signature: bytes = field(repr=False)
     submit_payload_signature_algorithm: PkiSignatureAlgorithm
