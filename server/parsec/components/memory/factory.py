@@ -10,6 +10,7 @@ import httpx
 
 from parsec.components.blockstore import blockstore_factory
 from parsec.components.memory.account import MemoryAccountComponent
+from parsec.components.memory.async_enrollment import MemoryAsyncEnrollmentComponent
 from parsec.components.memory.auth import MemoryAuthComponent
 from parsec.components.memory.block import MemoryBlockComponent
 from parsec.components.memory.datamodel import MemoryDatamodel
@@ -52,6 +53,7 @@ async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, 
             block = MemoryBlockComponent(data, blockstore)
             events = MemoryEventsComponent(data, config, event_bus)
             account = MemoryAccountComponent(data, config, event_bus)
+            async_enrollment = MemoryAsyncEnrollmentComponent(data, event_bus)
 
             components = {
                 "mocked_data": data,
@@ -71,6 +73,7 @@ async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, 
                 "blockstore": blockstore,
                 "shamir": shamir,
                 "account": account,
+                "async_enrollment": async_enrollment,
             }
 
             yield components

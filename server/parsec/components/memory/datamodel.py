@@ -14,6 +14,9 @@ from typing import Literal
 from parsec._parsec import (
     AccountAuthMethodID,
     ActiveUsersLimit,
+    AsyncEnrollmentAcceptPayload,
+    AsyncEnrollmentID,
+    AsyncEnrollmentSubmitPayload,
     BlockID,
     BootstrapToken,
     CancelledGreetingAttemptReason,
@@ -54,6 +57,7 @@ from parsec._parsec import (
     VlobID,
 )
 from parsec.components.account import ValidationCodeInfo
+from parsec.components.async_enrollment import AsyncEnrollmentPayloadSignature
 from parsec.components.invite import InvitationCreatedBy
 from parsec.components.organization import TermsOfService
 from parsec.components.pki import MAX_INTERMEDIATE_CERTIFICATES_DEPTH, PkiCertificate
@@ -167,6 +171,7 @@ class MemoryOrganization:
         default_factory=lambda: defaultdict(list)
     )
     per_topic_last_timestamp: dict[TopicAndDiscriminant, DateTime] = field(default_factory=dict)
+    async_enrollments: dict[AsyncEnrollmentID, MemoryAsyncEnrollment] = field(default_factory=dict)
 
     # Stores topic name and discriminant (or `None`)
     _topic_write_locked: set[TopicAndDiscriminant] = field(default_factory=set)
@@ -1002,3 +1007,38 @@ class MemoryAuthenticationMethod:
     password_algorithm: UntrustedPasswordAlgorithm | None
     # Note that only the current vault contains auth methods that are not disabled
     disabled_on: DateTime | None = None
+
+
+class MemoryAsyncEnrollmentState(Enum):
+    SUBMITTED = auto()
+    ACCEPTED = auto()
+    REJECTED = auto()
+    CANCELLED = auto()
+
+
+@dataclass(slots=True)
+class MemoryAsyncEnrollment:
+    id: AsyncEnrollmentID
+
+    # Fields for initial submit state
+    submitted_on: DateTime
+    submit_payload: bytes = field(repr=False)
+    cooked_submit_payload: AsyncEnrollmentSubmitPayload
+    submit_payload_signature: AsyncEnrollmentPayloadSignature = field(repr=False)
+
+    state: MemoryAsyncEnrollmentState = MemoryAsyncEnrollmentState.SUBMITTED
+
+    # Additional fields when switching to accepted state
+    accepted_on: DateTime | None = None
+    accepter: DeviceID | None = None
+    accept_payload: bytes | None = None
+    cooked_accept_payload: AsyncEnrollmentAcceptPayload | None = None
+    accept_payload_signature: AsyncEnrollmentPayloadSignature | None = field(
+        repr=False, default=None
+    )
+
+    # Additional fields when switching to rejected state
+    rejected_on: DateTime | None = None
+
+    # Additional fields when switching to cancelled state
+    cancelled_on: DateTime | None = None
