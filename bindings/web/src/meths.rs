@@ -14682,13 +14682,6 @@ fn variant_pki_enrollment_list_error_rs_to_js(
                 &"PkiEnrollmentListErrorInternal".into(),
             )?;
         }
-        libparsec::PkiEnrollmentListError::InvalidSubmitterX509Certificates { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"PkiEnrollmentListErrorInvalidSubmitterX509Certificates".into(),
-            )?;
-        }
         libparsec::PkiEnrollmentListError::Offline { .. } => {
             Reflect::set(
                 &js_obj,

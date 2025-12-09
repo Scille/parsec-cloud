@@ -492,7 +492,10 @@ class BasePkiEnrollmentComponent:
             case PkiEnrollmentListBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
             case PkiEnrollmentListBadOutcome.INVALID_CERTIFICATE:
-                return authenticated_cmds.latest.pki_enrollment_list.RepInvalidSubmitterX509Certificates()
+                # TODO add parse error to protocol https://github.com/Scille/parsec-cloud/issues/11872
+                return authenticated_cmds.latest.pki_enrollment_list.RepUnknownStatus(
+                    "unexpected parse error", None
+                )
 
     @api
     async def api_pki_enrollment_reject(

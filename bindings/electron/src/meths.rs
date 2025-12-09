@@ -13412,12 +13412,6 @@ fn variant_pki_enrollment_list_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "PkiEnrollmentListErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::PkiEnrollmentListError::InvalidSubmitterX509Certificates { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "PkiEnrollmentListErrorInvalidSubmitterX509Certificates")
-                    .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
         libparsec::PkiEnrollmentListError::Offline { .. } => {
             let js_tag = JsString::try_new(cx, "PkiEnrollmentListErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;

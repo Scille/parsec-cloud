@@ -18,12 +18,6 @@
             {
                 // The command should only be used by admin users
                 "status": "author_not_allowed"
-            },
-            {
-                // If a submitter certificates is invalid the server would return that error.
-                // Should not happens since the server check the submitter certificates during `pki_submit`, but better safe than sorry.
-                // If that error happens, it would require sys-admin work to cleanup the invalid certificates in the server state.
-                "status": "invalid_submitter_x509_certificates"
             }
         ],
         "nested_types": [

@@ -3064,10 +3064,6 @@ export interface PkiEnrollmentListErrorInternal {
     tag: "PkiEnrollmentListErrorInternal"
     error: string
 }
-export interface PkiEnrollmentListErrorInvalidSubmitterX509Certificates {
-    tag: "PkiEnrollmentListErrorInvalidSubmitterX509Certificates"
-    error: string
-}
 export interface PkiEnrollmentListErrorOffline {
     tag: "PkiEnrollmentListErrorOffline"
     error: string
@@ -3075,7 +3071,6 @@ export interface PkiEnrollmentListErrorOffline {
 export type PkiEnrollmentListError =
   | PkiEnrollmentListErrorAuthorNotAllowed
   | PkiEnrollmentListErrorInternal
-  | PkiEnrollmentListErrorInvalidSubmitterX509Certificates
   | PkiEnrollmentListErrorOffline
 
 

@@ -15,10 +15,7 @@ from parsec._parsec import (
     UserProfile,
     authenticated_cmds,
 )
-from parsec.components.memory.pki import MemoryPkiEnrollmentComponent
-from tests.api_v5.authenticated.test_pki_enrollment_accept import (
-    generate_accept_params,
-)
+from tests.api_v5.authenticated.test_pki_enrollment_accept import generate_accept_params
 from tests.common import (
     Backend,
     CoolorgRpcClients,
@@ -221,42 +218,6 @@ async def test_authenticated_pki_enrollment_list_author_not_allowed(
 
     rep = await author.pki_enrollment_list()
     assert rep == authenticated_cmds.latest.pki_enrollment_list.RepAuthorNotAllowed()
-
-
-async def test_authenticated_pki_enrollment_list_invalid_submitter_x509_certificates(
-    coolorg: CoolorgRpcClients, backend: Backend, test_pki: TestPki, xfail_if_postgresql
-) -> None:
-    bob = test_pki.cert["bob"]
-    payload = PkiEnrollmentSubmitPayload(
-        verify_key=SigningKey.generate().verify_key,
-        public_key=PrivateKey.generate().public_key,
-        device_label=DeviceLabel("Dev1"),
-    )
-    now = DateTime.now()
-    enrollment_id = PKIEnrollmentID.new()
-    rep = await backend.pki.submit(
-        now=now,
-        organization_id=coolorg.organization_id,
-        enrollment_id=enrollment_id,
-        force=True,
-        submitter_human_handle=bob.cert_info.human_handle(),
-        submitter_der_x509_certificate=bob.der_certificate,
-        intermediate_certificates=[],
-        submit_payload_signature=b"<a signature>",
-        submit_payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
-        submit_payload=payload.dump(),
-    )
-
-    assert rep is None
-
-    assert isinstance(backend.pki, MemoryPkiEnrollmentComponent)
-    org = backend.pki._data.organizations[coolorg.organization_id]
-    org.pki_enrollments[enrollment_id].submitter_der_x509_certificate = b"<not a valid cer>"
-
-    rep = await coolorg.alice.pki_enrollment_list()
-    assert (
-        rep == authenticated_cmds.latest.pki_enrollment_list.RepInvalidSubmitterX509Certificates()
-    )
 
 
 async def test_authenticated_pki_enrollment_list_http_common_errors(
