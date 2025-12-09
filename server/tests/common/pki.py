@@ -73,13 +73,21 @@ class PartialCertificate:
         return self
 
 
+def test_pki_dir() -> Path:
+    match os.environ.get("TEST_PKI_DIR"):
+        case str() as dir:
+            return Path(dir)
+        case None:
+            return Path(__file__).parent / "../../../libparsec/crates/platform_pki/test-pki"
+
+
 @pytest_asyncio.fixture(scope="session", loop_scope="session")
 async def test_pki() -> TestPki:
-    test_pki_dir = Path(os.environ.get("TEST_PKI_DIR", "test-pki"))
+    dir = test_pki_dir()
 
-    cert_dir = test_pki_dir / "Cert"
-    intermediate_dir = test_pki_dir / "Intermediate"
-    root_dir = test_pki_dir / "Root"
+    cert_dir = dir / "Cert"
+    intermediate_dir = dir / "Intermediate"
+    root_dir = dir / "Root"
 
     cert, intermediate, root = await asyncio.gather(
         list_files(cert_dir), list_files(intermediate_dir), list_files(root_dir)

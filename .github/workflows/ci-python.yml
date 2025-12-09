@@ -219,17 +219,10 @@ jobs:
             server/parsec/_parsec.*.so
         timeout-minutes: 2
 
-      - name: Generate test PKI
-        run: python3.12 misc/gen_test_pki.py --output-dir server/test-pki
-        timeout-minutes: 2
-
       - name: Basic tests
         if: (!inputs.style-only)
         run: poetry run pytest ${{ env.pytest-base-args }} tests -n auto
         timeout-minutes: 10
-        env:
-          # DIR relative to working-directory
-          TEST_PKI_DIR: test-pki
         working-directory: server
 
       - name: PostgreSQL tests
@@ -237,6 +230,5 @@ jobs:
         run: poetry run pytest ${{ env.pytest-base-args }} tests -n auto --postgresql
         env:
           PGINSTALLATION: /usr/lib/postgresql/${{ env.postgresql-version }}/bin
-          TEST_PKI_DIR: test-pki
         working-directory: server
         timeout-minutes: 10

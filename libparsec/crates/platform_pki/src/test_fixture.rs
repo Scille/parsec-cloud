@@ -97,9 +97,23 @@ mod platform_implementation {
     pub fn test_pki() -> TestPKI {
         let test_pki_dir = std::env::var_os("TEST_PKI_DIR")
             .map(PathBuf::from)
-            .unwrap_or("test-pki".into());
+            .unwrap_or_else(|| {
+                // TODO: Use `git-root` instead so it can also be used by `parsec-cli`
+                let fixture_manifest_path =
+                    <str as std::convert::AsRef<Path>>::as_ref(std::env!("CARGO_MANIFEST_DIR"));
+                fixture_manifest_path.join("../../../libparsec/crates/platform_pki/test-pki")
+            });
 
-        assert!(test_pki_dir.is_dir());
+        println!("Using test pki form: {}", test_pki_dir.display());
+
+        assert!(
+            test_pki_dir.is_dir(),
+            "{} is not a dir",
+            std::path::absolute(&test_pki_dir)
+                .as_ref()
+                .unwrap_or(&test_pki_dir)
+                .display()
+        );
 
         let cert_dir = test_pki_dir.join("Cert");
         let intermediate_dir = test_pki_dir.join("Intermediate");
