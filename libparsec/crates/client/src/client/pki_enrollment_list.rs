@@ -18,8 +18,6 @@ pub enum PkiEnrollmentListError {
     Offline(#[from] ConnectionError),
     #[error("Not allowed to list enrollments")]
     AuthorNotAllowed,
-    #[error("Invalid submitter x509 certificates")]
-    InvalidSubmitterX509Certificates,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -214,9 +212,6 @@ pub async fn list_enrollments_untrusted(
     let pki_requests = match rep {
         Rep::Ok { enrollments } => enrollments,
         Rep::AuthorNotAllowed => return Err(PkiEnrollmentListError::AuthorNotAllowed),
-        Rep::InvalidSubmitterX509Certificates => {
-            return Err(PkiEnrollmentListError::InvalidSubmitterX509Certificates)
-        }
         rep @ Rep::UnknownStatus { .. } => {
             return Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
         }

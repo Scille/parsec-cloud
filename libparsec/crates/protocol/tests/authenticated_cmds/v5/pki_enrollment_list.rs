@@ -127,25 +127,3 @@ pub fn rep_author_not_allowed() {
 
     p_assert_eq!(data2, expected);
 }
-
-pub fn rep_invalid_submitter_x509_certificates() {
-    // Generated from Parsec 3.7.1-a.0+dev
-    // Content:
-    //   status: 'invalid_submitter_x509_certificates'
-    let raw: &[u8] = hex!(
-        "81a6737461747573d923696e76616c69645f7375626d69747465725f783530395f6365"
-        "72746966696361746573"
-    )
-    .as_ref();
-    let expected = authenticated_cmds::pki_enrollment_list::Rep::InvalidSubmitterX509Certificates;
-    println!("***expected: {:?}", expected.dump().unwrap());
-    let data = authenticated_cmds::pki_enrollment_list::Rep::load(raw).unwrap();
-
-    p_assert_eq!(data, expected);
-
-    let raw2 = data.dump().unwrap();
-
-    let data2 = authenticated_cmds::pki_enrollment_list::Rep::load(&raw2).unwrap();
-
-    p_assert_eq!(data2, expected);
-}
