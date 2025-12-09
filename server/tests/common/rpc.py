@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from parsec._parsec import (
     AccountAuthMethodID,
+    AsyncEnrollmentID,
     BlockID,
     BootstrapToken,
     CancelledGreetingAttemptReason,
@@ -35,6 +36,29 @@ from parsec._parsec import (
 class BaseAnonymousRpcClient:
     async def _do_request(self, req: bytes, family: str) -> bytes:
         raise NotImplementedError
+
+    async def async_enrollment_info(
+        self, enrollment_id: AsyncEnrollmentID
+    ) -> anonymous_cmds.latest.async_enrollment_info.Rep:
+        req = anonymous_cmds.latest.async_enrollment_info.Req(enrollment_id=enrollment_id)
+        raw_rep = await self._do_request(req.dump(), "anonymous")
+        return anonymous_cmds.latest.async_enrollment_info.Rep.load(raw_rep)
+
+    async def async_enrollment_submit(
+        self,
+        enrollment_id: AsyncEnrollmentID,
+        force: bool,
+        submit_payload: bytes,
+        submit_payload_signature: anonymous_cmds.latest.async_enrollment_submit.SubmitPayloadSignature,
+    ) -> anonymous_cmds.latest.async_enrollment_submit.Rep:
+        req = anonymous_cmds.latest.async_enrollment_submit.Req(
+            enrollment_id=enrollment_id,
+            force=force,
+            submit_payload=submit_payload,
+            submit_payload_signature=submit_payload_signature,
+        )
+        raw_rep = await self._do_request(req.dump(), "anonymous")
+        return anonymous_cmds.latest.async_enrollment_submit.Rep.load(raw_rep)
 
     async def organization_bootstrap(
         self,
@@ -164,6 +188,42 @@ class BaseAnonymousServerRpcClient:
 class BaseAuthenticatedRpcClient:
     async def _do_request(self, req: bytes, family: str) -> bytes:
         raise NotImplementedError
+
+    async def async_enrollment_accept(
+        self,
+        enrollment_id: AsyncEnrollmentID,
+        submitter_user_certificate: bytes,
+        submitter_device_certificate: bytes,
+        submitter_redacted_user_certificate: bytes,
+        submitter_redacted_device_certificate: bytes,
+        accept_payload: bytes,
+        accept_payload_signature: authenticated_cmds.latest.async_enrollment_accept.AcceptPayloadSignature,
+    ) -> authenticated_cmds.latest.async_enrollment_accept.Rep:
+        req = authenticated_cmds.latest.async_enrollment_accept.Req(
+            enrollment_id=enrollment_id,
+            submitter_user_certificate=submitter_user_certificate,
+            submitter_device_certificate=submitter_device_certificate,
+            submitter_redacted_user_certificate=submitter_redacted_user_certificate,
+            submitter_redacted_device_certificate=submitter_redacted_device_certificate,
+            accept_payload=accept_payload,
+            accept_payload_signature=accept_payload_signature,
+        )
+        raw_rep = await self._do_request(req.dump(), "authenticated")
+        return authenticated_cmds.latest.async_enrollment_accept.Rep.load(raw_rep)
+
+    async def async_enrollment_list(
+        self,
+    ) -> authenticated_cmds.latest.async_enrollment_list.Rep:
+        req = authenticated_cmds.latest.async_enrollment_list.Req()
+        raw_rep = await self._do_request(req.dump(), "authenticated")
+        return authenticated_cmds.latest.async_enrollment_list.Rep.load(raw_rep)
+
+    async def async_enrollment_reject(
+        self, enrollment_id: AsyncEnrollmentID
+    ) -> authenticated_cmds.latest.async_enrollment_reject.Rep:
+        req = authenticated_cmds.latest.async_enrollment_reject.Req(enrollment_id=enrollment_id)
+        raw_rep = await self._do_request(req.dump(), "authenticated")
+        return authenticated_cmds.latest.async_enrollment_reject.Rep.load(raw_rep)
 
     async def block_create(
         self, block_id: BlockID, realm_id: VlobID, key_index: int, block: bytes
