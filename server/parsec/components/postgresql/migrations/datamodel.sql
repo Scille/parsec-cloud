@@ -419,6 +419,14 @@ CREATE TABLE greeting_step (
 --  PKI enrollment
 -------------------------------------------------------
 
+CREATE TABLE pki_certificate (
+    sha256_fingerprint BYTEA PRIMARY KEY,
+    -- Fingerprint of a certificate that signed this certificate
+    -- Maybe null if not signed by an other known certificate or self-signed.
+    signed_by BYTEA REFERENCES pki_certificate (sha256_fingerprint),
+    -- The DER content of the certificate
+    der_content BYTEA NOT NULL
+);
 
 CREATE TYPE enrollment_state AS ENUM (
     'SUBMITTED',
