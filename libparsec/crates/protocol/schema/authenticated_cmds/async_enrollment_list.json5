@@ -1,0 +1,115 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "async_enrollment_list",
+        "req": {},
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "enrollments",
+                        "type": "List<Enrollment>"
+                    }
+                ]
+            },
+            {
+                // Only user with ADMIN profile can use this command
+                "status": "author_not_allowed"
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "Enrollment",
+                "fields": [
+                    {
+                        // UUID of the request
+                        "name": "enrollment_id",
+                        "type": "AsyncEnrollmentID"
+                    },
+                    {
+                        // When the request was made
+                        "name": "submitted_on",
+                        "type": "DateTime"
+                    },
+                    {
+                        // `AsyncEnrollmentSubmitPayload` serialized in msgpack format,
+                        // Must check `submit_payload_signature` before loading it!
+                        "name": "submit_payload",
+                        "type": "Bytes"
+                    },
+                    {
+                        "name": "submit_payload_signature",
+                        "type": "SubmitPayloadSignature"
+                    }
+                ]
+            },
+            {
+                "name": "SubmitPayloadSignature",
+                "discriminant_field": "type",
+                "variants": [
+                    {
+                        "name": "PKI",
+                        "discriminant_value": "PKI",
+                        "fields": [
+                            {
+                                "name": "signature",
+                                "type": "Bytes"
+                            },
+                            {
+                                "name": "algorithm",
+                                "type": "PkiSignatureAlgorithm"
+                            },
+                            {
+                                // The certificate used by the submitter to sign the request.
+                                // The server does not perform any validation on the certificate,
+                                // those verifications need to be made by the "accepter"
+                                "name": "submitter_der_x509_certificate",
+                                "type": "Bytes"
+                            },
+                            {
+                                // Optional list of intermediate certificates needed to
+                                // validate the certificate chain from `submitter_der_x509_certificate`
+                                // up to the root certificate.
+                                // Also note that both accepter and submitter must share the
+                                // same root certificate for the validation to succeed.
+                                "name": "intermediate_der_x509_certificates",
+                                "type": "List<Bytes>"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "OpenBao",
+                        "discriminant_value": "OPEN_BAO",
+                        "fields": [
+                            {
+                                // Signature returned by OpenBao using API at
+                                // `<openbao_server_url>/v1/transit/sign/entity-<submitter_openbao_entity_id>`
+                                //
+                                // Note this is a string, as OpenBao speaks JSON and its signatures typically looks something like:
+                                // `vault:v1:C4jRZx+ymLou26tN8Q2KDy46dA47W7x/MH6nuEZVqdz+H0RvoaFbQUAHceBKhB+Qow2qXAXiRFAFWKGPZU93CQ==`
+                                "name": "signature",
+                                "type": "String"
+                            },
+                            {
+                                // Key used for signature verification is located at
+                                // `<openbao_server_url>/v1/transit/verify/entity-<submitter_openbao_entity_id>`
+                                //
+                                // Note once the signature verification is done, the submitter's
+                                // email can be obtained from OpenBao using API at
+                                // `<openbao_server_url>/v1/identity/entity/id/<submitter_openbao_entity_id>`.
+                                //
+                                // This is important at the submitter email must match with the
+                                // email specified in the `AsyncEnrollmentSubmitPayload`!
+                                "name": "submitter_openbao_entity_id",
+                                "type": "String"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]

@@ -1,0 +1,208 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "async_enrollment_accept",
+        "req": {
+            "fields": [
+                {
+                    // The enrollment ID to be accepted
+                    "name": "enrollment_id",
+                    "type": "AsyncEnrollmentID"
+                },
+                {
+                    // User certificate for the submitter (created by the accepter)
+                    "name": "submitter_user_certificate",
+                    "type": "Bytes"
+                },
+                {
+                    // Device certificate for the submitter (created by the accepter)
+                    "name": "submitter_device_certificate",
+                    "type": "Bytes"
+                },
+                {
+                    // Same certificate than `submitter_user_certificate` but expunged of `human_handle`
+                    "name": "submitter_redacted_user_certificate",
+                    "type": "Bytes"
+                },
+                {
+                    // Same certificate than `submitter_device_certificate` but expunged of `device_label`
+                    "name": "submitter_redacted_device_certificate",
+                    "type": "Bytes"
+                },
+                {
+                    // `AsyncEnrollmentAcceptPayload` in msgpack format.
+                    // Must check `accept_payload_signature` before loading it!
+                    "name": "accept_payload",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "accept_payload_signature",
+                    "type": "AcceptPayloadSignature"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                // The user does not have the permission required to perform this action
+                "status": "author_not_allowed"
+            },
+            {
+                // One of the provided user or device certificate is not valid
+                "status": "invalid_certificate"
+            },
+            {
+                // `accept_payload` field doesn't correspond to a valid `AsyncEnrollmentAcceptPayload`
+                "status": "invalid_accept_payload"
+            },
+            {
+                // `accept_payload_signature` doesn't match with `accept_payload`
+                "status": "invalid_accept_payload_signature"
+            },
+            {
+                // Accept payload has been signed by a different identity system
+                // than what has been used to signed the submit payload.
+                //
+                // Typically this would mean the submit payload has been created
+                // by someone identified through OpenBao, and another user identified
+                // with a PKI tries to accept it.
+                "status": "submit_and_accept_identity_systems_mismatch"
+            },
+            {
+                // A provided X509 certificate (either the submitter's or an intermediate) is invalid
+                "status": "invalid_der_x509_certificate"
+            },
+            {
+                // Cannot trust provided trustchain.
+                // This usually means the trustchain is technically valid, but
+                // it relies on a X509 root certificate that is not among the
+                // ones trusted by the server.
+                "status": "invalid_x509_trustchain"
+            },
+            {
+                // The server did not found a request for the provided ID
+                "status": "enrollment_not_found"
+            },
+            {
+                // The request is no longer in pending state (either accepted, cancelled or rejected)
+                "status": "enrollment_no_longer_available"
+            },
+            {
+                // The organization has reached the maximum number of active users
+                "status": "active_users_limit_reached"
+            },
+            {
+                // The user already exist in the organization (i.e. user ID already in use)
+                "status": "user_already_exists"
+            },
+            {
+                // The user's human handle is already taken (i.e. email already in use)
+                "status": "human_handle_already_taken"
+            },
+            {
+                // Returned if the timestamp in the certificate is too far away compared
+                // to server clock.
+                "status": "timestamp_out_of_ballpark",
+                "fields": [
+                    {
+                        "name": "ballpark_client_early_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "ballpark_client_late_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "server_timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "client_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                // Returned if another certificate in the server has a timestamp
+                // posterior or equal to our current one.
+                "status": "require_greater_timestamp",
+                "fields": [
+                    {
+                        "name": "strictly_greater_than",
+                        "type": "DateTime"
+                    }
+                ]
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "AcceptPayloadSignature",
+                "discriminant_field": "type",
+                "variants": [
+                    {
+                        "name": "PKI",
+                        "discriminant_value": "PKI",
+                        "fields": [
+                            {
+                                "name": "signature",
+                                "type": "Bytes"
+                            },
+                            {
+                                "name": "algorithm",
+                                "type": "PkiSignatureAlgorithm"
+                            },
+                            {
+                                // Certificate used by the accepter to sign the payload
+                                "name": "accepter_der_x509_certificate",
+                                "type": "Bytes"
+                            },
+                            {
+                                // Optional list of intermediate certificates needed to
+                                // validate the certificate chain from `accepter_der_x509_certificate`
+                                // up to the root certificate.
+                                // Also note that both accepter and submitter must share the
+                                // same root certificate for the validation to succeed.
+                                "name": "intermediate_der_x509_certificates",
+                                "type": "List<Bytes>"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "OpenBao",
+                        "discriminant_value": "OPEN_BAO",
+                        "fields": [
+                            {
+                                // Signature returned by OpenBao using API at
+                                // `<openbao_server_url>/v1/transit/sign/entity<accepter_openbao_entity_id>`
+                                //
+                                // Note this is a string, as OpenBao speaks JSON and its signatures typically looks something like:
+                                // `vault:v1:C4jRZx+ymLou26tN8Q2KDy46dA47W7x/MH6nuEZVqdz+H0RvoaFbQUAHceBKhB+Qow2qXAXiRFAFWKGPZU93CQ==`
+                                "name": "signature",
+                                "type": "String"
+                            },
+                            {
+                                // Key used for signature verification is located at
+                                // `<openbao_server_url>/v1/transit/verify/entity<accepter_openbao_entity_id>`
+                                //
+                                // Note once the signature verification is done, the accepter's
+                                // email can be obtained from OpenBao using API at
+                                // `<openbao_server_url>/v1/identity/entity/id/<accepter_openbao_entity_id>`.
+                                //
+                                // This is purely informative though, since (unlike for
+                                // `AsyncEnrollmentSubmitPayload`) the signer's email is
+                                // not specified (and hence cannot be matched against)
+                                // in the `AsyncEnrollmentAcceptPayload`.
+                                "name": "accepter_openbao_entity_id",
+                                "type": "String"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]
