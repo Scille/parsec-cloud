@@ -62,6 +62,7 @@ jobs:
     # https://github.com/Scille/parsec-cloud/pkgs/container/parsec-cloud%2Fparsec-testbed-server
     env:
       TESTBED_SERVER: http://localhost:6777
+      TEST_PKI_DIR: ${{ github.workspace }}/.test-pki
     services:
       parsec-testbed-server:
         image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.6.2-a.0.dev.20412.600fb06
@@ -116,13 +117,6 @@ jobs:
               echo -n "$type=" && python misc/libparsec_crates_flags.py $type
             done
           ) | tee -a $GITHUB_OUTPUT
-        timeout-minutes: 2
-
-      - name: Generate test PKI
-        run: |
-          export TEST_PKI_DIR=$(pwd)/test-pki
-          echo "TEST_PKI_DIR=$TEST_PKI_DIR" | tee -a $GITHUB_ENV
-          python misc/gen_test_pki.py --output-dir $TEST_PKI_DIR
         timeout-minutes: 2
 
       - name: Test agnostic rust codebase
@@ -241,6 +235,8 @@ jobs:
           - name: 🏁 Windows
             os: windows-2025
     name: "${{ matrix.name }}: 🦀 Rust tests"
+    env:
+      TEST_PKI_DIR: ${{ github.workspace }}/.test-pki
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
     timeout-minutes: 60
     runs-on: ${{ matrix.os }}
