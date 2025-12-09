@@ -15,30 +15,6 @@
     <ion-list class="menu-list">
       <ion-item-group
         class="list-group"
-        v-show="false"
-      >
-        <ion-item class="list-group-title button-small">
-          <ion-text class="list-group-title__label">
-            {{ $msTranslate('WorkspacesPage.workspaceContextMenu.titleOffline') }}
-          </ion-text>
-        </ion-item>
-        <ion-item
-          button
-          @click="onClick(WorkspaceAction.MakeAvailableOffline)"
-          class="ion-no-padding list-group-item"
-        >
-          <ion-icon
-            class="list-group-item__icon"
-            :icon="cloudy"
-          />
-          <ion-text class="button-medium list-group-item__label">
-            {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionOffline') }}
-          </ion-text>
-        </ion-item>
-      </ion-item-group>
-
-      <ion-item-group
-        class="list-group"
         v-show="isDesktop() || clientRole === WorkspaceRole.Owner"
       >
         <ion-item class="list-group-title button-small">
@@ -94,7 +70,20 @@
 
         <ion-item
           button
-          v-show="clientProfile !== UserProfile.Outsider && false"
+          @click="onClick(WorkspaceAction.MakeAvailableOffline)"
+          class="ion-no-padding list-group-item"
+        >
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="cloudy"
+          />
+          <ion-text class="button-medium list-group-item__label">
+            {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionOffline') }}
+          </ion-text>
+        </ion-item>
+
+        <ion-item
+          button
           @click="onClick(WorkspaceAction.ShowDetails)"
           class="ion-no-padding list-group-item"
         >
