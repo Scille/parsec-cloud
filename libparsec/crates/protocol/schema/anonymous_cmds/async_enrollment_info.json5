@@ -1,0 +1,161 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "async_enrollment_info",
+        "req": {
+            "fields": [
+                {
+                    // The enrollment ID for which information is requested
+                    "name": "enrollment_id",
+                    "type": "AsyncEnrollmentID"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "unit": "InfoStatus"
+            },
+            {
+                // The server did not found a request for the provided ID
+                "status": "enrollment_not_found"
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "InfoStatus",
+                "discriminant_field": "enrollment_status",
+                "variants": [
+                    {
+                        "name": "Submitted",
+                        "discriminant_value": "SUBMITTED",
+                        "fields": [
+                            {
+                                "name": "submitted_on",
+                                "type": "DateTime"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Rejected",
+                        "discriminant_value": "REJECTED",
+                        "fields": [
+                            {
+                                "name": "submitted_on",
+                                "type": "DateTime"
+                            },
+                            {
+                                "name": "rejected_on",
+                                "type": "DateTime"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Cancelled",
+                        "discriminant_value": "CANCELLED",
+                        "fields": [
+                            {
+                                "name": "submitted_on",
+                                "type": "DateTime"
+                            },
+                            {
+                                "name": "cancelled_on",
+                                "type": "DateTime"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Accepted",
+                        "discriminant_value": "ACCEPTED",
+                        "fields": [
+                            {
+                                "name": "submitted_on",
+                                "type": "DateTime"
+                            },
+                            {
+                                "name": "accepted_on",
+                                "type": "DateTime"
+                            },
+                            {
+                                // `AsyncEnrollmentAcceptPayload` in msgpack format.
+                                // Must check `accept_payload_signature` before loading it!
+                                "name": "accept_payload",
+                                "type": "Bytes"
+                            },
+                            {
+                                "name": "accept_payload_signature",
+                                "type": "AcceptPayloadSignature"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "AcceptPayloadSignature",
+                "discriminant_field": "type",
+                "variants": [
+                    {
+                        "name": "PKI",
+                        "discriminant_value": "PKI",
+                        "fields": [
+                            {
+                                "name": "signature",
+                                "type": "Bytes"
+                            },
+                            {
+                                "name": "algorithm",
+                                "type": "PkiSignatureAlgorithm"
+                            },
+                            {
+                                // Certificate used by the accepter to sign the payload
+                                "name": "accepter_der_x509_certificate",
+                                "type": "Bytes"
+                            },
+                            {
+                                // Optional list of intermediate certificates needed to
+                                // validate the certificate chain from `submitter_der_x509_certificate`
+                                // up to the root certificate.
+                                // Also note that both accepter and submitter must share the
+                                // same root certificate for the validation to succeed.
+                                "name": "intermediate_der_x509_certificates",
+                                "type": "List<Bytes>"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "OpenBao",
+                        "discriminant_value": "OPEN_BAO",
+                        "fields": [
+                            {
+                                // Signature returned by OpenBao using API at
+                                // `<openbao_server_url>/v1/transit/sign/entity_alias_<accepter_openbao_entity_alias_id>`
+                                //
+                                // Note this is a string, as OpenBao speaks JSON and its signatures typically looks something like:
+                                // `vault:v1:C4jRZx+ymLou26tN8Q2KDy46dA47W7x/MH6nuEZVqdz+H0RvoaFbQUAHceBKhB+Qow2qXAXiRFAFWKGPZU93CQ==`
+                                "name": "signature",
+                                "type": "String"
+                            },
+                            {
+                                // Key used for signature verification is located at
+                                // `<openbao_server_url>/v1/transit/verify/entity_alias_<accepter_openbao_entity_alias_id>`
+                                //
+                                // Note once the signature verification is done, the submitter's
+                                // email can be obtained from OpenBao using API at
+                                // `<openbao_server_url>/v1/identity/entity-alias/id/<submitter_openbao_entity_alias_id>`.
+                                //
+                                // This is purely informative though, since (unlike for
+                                // `AsyncEnrollmentSubmitPayload`) the signer's email is
+                                // not specified (and hence cannot be matched against)
+                                // in the `AsyncEnrollmentAcceptPayload`.
+                                "name": "accepter_openbao_entity_alias_id",
+                                "type": "String"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]
