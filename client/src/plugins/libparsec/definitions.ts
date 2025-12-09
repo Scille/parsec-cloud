@@ -3631,6 +3631,7 @@ export type PkiEnrollmentInfoError =
 export enum PkiEnrollmentListErrorTag {
     AuthorNotAllowed = 'PkiEnrollmentListErrorAuthorNotAllowed',
     Internal = 'PkiEnrollmentListErrorInternal',
+    InvalidSubmitterX509Certificates = 'PkiEnrollmentListErrorInvalidSubmitterX509Certificates',
     Offline = 'PkiEnrollmentListErrorOffline',
 }
 
@@ -3642,6 +3643,10 @@ export interface PkiEnrollmentListErrorInternal {
     tag: PkiEnrollmentListErrorTag.Internal
     error: string
 }
+export interface PkiEnrollmentListErrorInvalidSubmitterX509Certificates {
+    tag: PkiEnrollmentListErrorTag.InvalidSubmitterX509Certificates
+    error: string
+}
 export interface PkiEnrollmentListErrorOffline {
     tag: PkiEnrollmentListErrorTag.Offline
     error: string
@@ -3649,6 +3654,7 @@ export interface PkiEnrollmentListErrorOffline {
 export type PkiEnrollmentListError =
   | PkiEnrollmentListErrorAuthorNotAllowed
   | PkiEnrollmentListErrorInternal
+  | PkiEnrollmentListErrorInvalidSubmitterX509Certificates
   | PkiEnrollmentListErrorOffline
 
 // PkiEnrollmentListItem

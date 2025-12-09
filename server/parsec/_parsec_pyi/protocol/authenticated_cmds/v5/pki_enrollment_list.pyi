@@ -59,3 +59,8 @@ class RepAuthorNotAllowed(Rep):
     def __init__(
         self,
     ) -> None: ...
+
+class RepInvalidSubmitterX509Certificates(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
