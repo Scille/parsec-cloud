@@ -80,7 +80,9 @@ class CertificateConfig:
 
 
 now = datetime.now()
-now_24h = now + timedelta(hours=24)
+now_100y = now + timedelta(days=356 * 100)
+not_before = now
+not_after = now_100y
 
 COMMON_NAME = "CN"
 ORGANIZATION = "O"
@@ -98,32 +100,32 @@ TRUSTCHAINS = [
         type=CertificateType.Root,
         subject={COMMON_NAME: "Black Mesa CA", ORGANIZATION: "Black Mesa"},
         key_algorithm=RSAKeyAlgorithm(length=2048),
-        not_before=now,
-        not_after=now + timedelta(hours=24),
+        not_before=not_before,
+        not_after=not_after,
         extensions={BASIC_CONSTRAINTS: "CA:TRUE"},
         signing=[
             CertificateConfig(
                 name="alice",
                 subject={COMMON_NAME: "Alice"},
                 key_algorithm=RSAKeyAlgorithm(length=2048),
-                not_before=now,
-                not_after=now_24h,
+                not_before=not_before,
+                not_after=not_after,
                 extensions={SUBJECT_ALT_NAME: f"{SAN_EMAIL}:alice@black_mesa.corp"},
             ),
             CertificateConfig(
                 name="bob",
                 subject={COMMON_NAME: "Bob", EMAIL_ADDRESS: "bob@black-mesa.corp"},
                 key_algorithm=RSAKeyAlgorithm(length=2048),
-                not_before=now,
-                not_after=now_24h,
+                not_before=not_before,
+                not_after=not_after,
                 extensions={EXTENDED_KEY_USAGE: "clientAuth"},
             ),
             CertificateConfig(
                 name="old-boby",
                 subject={COMMON_NAME: "Boby", EMAIL_ADDRESS: "boby@black-mesa.corp"},
                 key_algorithm=RSAKeyAlgorithm(length=2048),
-                not_before=now,
-                not_after=now,  # Not a typo, we want old-boby cert to be expired
+                not_before=not_before,
+                not_after=not_before,  # Not a typo, we want old-boby cert to be expired
                 extensions={BASIC_CONSTRAINTS: "CA:FALSE"},
             ),
         ],
@@ -133,7 +135,7 @@ TRUSTCHAINS = [
         type=CertificateType.Root,
         subject={COMMON_NAME: "Aperture Science CA", ORGANIZATION: "Aperture Science"},
         key_algorithm=RSAKeyAlgorithm(length=2048),
-        not_before=now,
+        not_before=not_before,
         not_after=now + timedelta(hours=24),
         extensions={BASIC_CONSTRAINTS: "CA:TRUE"},
         signing=[
@@ -142,24 +144,24 @@ TRUSTCHAINS = [
                 type=CertificateType.Intermediate,
                 subject={COMMON_NAME: "Glados dev team", ORGANIZATIONAL_UNIT: "Glados dev team"},
                 key_algorithm=RSAKeyAlgorithm(length=2048),
-                not_before=now,
-                not_after=now_24h,
+                not_before=not_before,
+                not_after=not_after,
                 extensions={BASIC_CONSTRAINTS: "CA:TRUE,pathlen:5"},
                 signing=[
                     CertificateConfig(
                         name="mallory-sign",
                         subject={COMMON_NAME: "Mallory", EMAIL_ADDRESS: "mallory@black-mesa.corp"},
                         key_algorithm=RSAKeyAlgorithm(length=2048),
-                        not_before=now,
-                        not_after=now_24h,
+                        not_before=not_before,
+                        not_after=not_after,
                         extensions={KEY_USAGE: "digitalSignature"},
                     ),
                     CertificateConfig(
                         name="mallory-encrypt",
                         subject={COMMON_NAME: "Mallory", EMAIL_ADDRESS: "mallory@black-mesa.corp"},
                         key_algorithm=RSAKeyAlgorithm(length=2048),
-                        not_before=now,
-                        not_after=now_24h,
+                        not_before=not_before,
+                        not_after=not_after,
                         extensions={KEY_USAGE: "dataEncipherment"},
                     ),
                 ],
