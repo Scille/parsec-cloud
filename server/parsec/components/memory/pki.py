@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from hashlib import sha256
 from typing import override
 
 from parsec._parsec import (
@@ -46,6 +45,7 @@ from parsec.components.pki import (
     PkiEnrollmentRejectBadOutcome,
     PkiEnrollmentSubmitBadOutcome,
     PkiEnrollmentSubmitX509CertificateAlreadySubmitted,
+    get_sha256_fingerprint_from_cert,
     pki_enrollment_accept_validate,
 )
 from parsec.events import EventCommonCertificate, EventPkiEnrollment
@@ -202,16 +202,25 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 )
             case MemoryPkiEnrollmentState.ACCEPTED:
                 assert enrollment.info_accepted is not None
+
+                leaf_accepter_fingerprint = get_sha256_fingerprint_from_cert(
+                    enrollment.info_accepted.accepter_der_x509_certificate
+                )
+                match await org.get_trustchain(leaf_accepter_fingerprint):
+                    case (leaf_cert, trustchain):
+                        pass
+                    case None:
+                        return PkiEnrollmentInfoBadOutcome.CERTIFICATE_NOT_FOUND
+                intermediate_der_x509_certificates = [c.der_content for c in trustchain]
                 return PkiEnrollmentInfoAccepted(
                     enrollment_id=enrollment_id,
                     submitted_on=enrollment.submitted_on,
                     accept_payload=enrollment.info_accepted.accept_payload,
                     accept_payload_signature=enrollment.info_accepted.accept_payload_signature,
                     accept_payload_signature_algorithm=enrollment.info_accepted.accept_payload_signature_algorithm,
-                    # TODO: https://github.com/Scille/parsec-cloud/issues/11560
-                    accepter_intermediate_der_x509_certificates=[],
+                    accepter_intermediate_der_x509_certificates=intermediate_der_x509_certificates,
                     accepted_on=enrollment.info_accepted.accepted_on,
-                    accepter_der_x509_certificate=enrollment.info_accepted.accepter_der_x509_certificate,
+                    accepter_der_x509_certificate=leaf_cert.der_content,
                 )
             case MemoryPkiEnrollmentState.CANCELLED:
                 assert enrollment.info_cancelled is not None
@@ -262,10 +271,16 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         for enrollment in org.pki_enrollments.values():
             if enrollment.enrollment_state == MemoryPkiEnrollmentState.SUBMITTED:
                 # TODO: https://github.com/Scille/parsec-cloud/issues/11871
-                leaf_fingerprint = sha256(enrollment.submitter_der_x509_certificate).digest()
-                leaf, *intermediate_certs = map(
-                    lambda x: x.der_content, await org.get_trustchain(leaf_fingerprint)
+                leaf_fingerprint = get_sha256_fingerprint_from_cert(
+                    enrollment.submitter_der_x509_certificate
                 )
+
+                match await org.get_trustchain(leaf_fingerprint):
+                    case (leaf_cert, trustchain):
+                        pass
+                    case None:
+                        return PkiEnrollmentListBadOutcome.CERTIFICATE_NOT_FOUND
+                intermediate_der_x509_certificates = [c.der_content for c in trustchain]
 
                 ret.append(
                     PkiEnrollmentListItem(
@@ -274,8 +289,8 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                         payload_signature=enrollment.submit_payload_signature,
                         payload_signature_algorithm=enrollment.submit_payload_signature_algorithm,
                         submitted_on=enrollment.submitted_on,
-                        der_x509_certificate=leaf,
-                        intermediate_der_x509_certificates=intermediate_certs,
+                        der_x509_certificate=leaf_cert.der_content,
+                        intermediate_der_x509_certificates=intermediate_der_x509_certificates,
                     )
                 )
 

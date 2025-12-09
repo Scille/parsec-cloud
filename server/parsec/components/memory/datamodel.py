@@ -478,32 +478,36 @@ class MemoryOrganization:
                     signed_by=cert.signed_by,
                 )
 
-    async def get_trustchain(self, leaf_fingerprint: bytes) -> list[MemoryPkiCertificate]:
+    async def get_trustchain(
+        self, leaf_fingerprint: bytes
+    ) -> tuple[MemoryPkiCertificate, list[MemoryPkiCertificate]] | None:
         """
-        return list ordered by leaf -> last known cert of the trustchain
+        return (leaf cert, list ordered by leaf.signed_by -> last known cert of the trustchain)
+        leaf cert is not in trustchain
         """
         try:
-            current = self.pki_certificates[leaf_fingerprint]
+            leaf = self.pki_certificates[leaf_fingerprint]
         except KeyError:
-            return []
+            return None
+        current = leaf
         sorted_trustchain = [current]
         for _ in range(MAX_INTERMEDIATE_CERTIFICATES_DEPTH):
             # check circular trustchain (allows to stop iteration)
             if current.signed_by is None or current.signed_by in map(
                 lambda x: x.sha256_fingerprint, sorted_trustchain
             ):
-                return sorted_trustchain
+                return (leaf, sorted_trustchain[1:])
             try:
                 cert = self.pki_certificates[current.signed_by]
             # the last signer is not in DB
             except ValueError:
-                return sorted_trustchain
+                return (leaf, sorted_trustchain[1:])
             # add signer to trustchain
             sorted_trustchain.append(cert)
             current = cert
         # Raise error trustchain too long ?
         # in theory it should not have been stored if too long
-        return sorted_trustchain
+        return (leaf, sorted_trustchain[1:])
 
 
 @dataclass(slots=True)
