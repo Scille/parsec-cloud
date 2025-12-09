@@ -22,3 +22,4 @@ class AdvisoryLock(IntEnum):
 
     InvitationCreation = 66
     PKIEnrollmentCreation = 67
+    AsyncEnrollmentCreation = 68
