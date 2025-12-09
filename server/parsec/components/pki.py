@@ -176,14 +176,18 @@ class PkiCertificate:
 
 def parse_pki_cert(cert: bytes, signed_by: bytes | None = None) -> PkiCertificate:
     parsed = X509Certificate.from_der(cert)
-    fingerprint = sha256(cert)
+    fingerprint = get_sha256_fingerprint_from_cert(cert)
     return PkiCertificate(
-        fingerprint_sha256=fingerprint.digest(),
+        fingerprint_sha256=fingerprint,
         signed_by=signed_by,
         content=cert,
         subject=parsed.subject(),
         issuer=parsed.issuer(),
     )
+
+
+def get_sha256_fingerprint_from_cert(cert: bytes) -> bytes:
+    return sha256(cert).digest()
 
 
 class PkiTrustchainError(BadOutcomeEnum):
@@ -218,6 +222,7 @@ class PkiEnrollmentInfoBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     ORGANIZATION_EXPIRED = auto()
     ENROLLMENT_NOT_FOUND = auto()
+    CERTIFICATE_NOT_FOUND = auto()
 
 
 class PkiEnrollmentListBadOutcome(BadOutcomeEnum):
@@ -226,6 +231,7 @@ class PkiEnrollmentListBadOutcome(BadOutcomeEnum):
     AUTHOR_NOT_FOUND = auto()
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
+    CERTIFICATE_NOT_FOUND = auto()
 
 
 class PkiEnrollmentRejectBadOutcome(BadOutcomeEnum):
@@ -402,6 +408,10 @@ class BasePkiEnrollmentComponent:
                 client_ctx.organization_not_found_abort()
             case PkiEnrollmentInfoBadOutcome.ORGANIZATION_EXPIRED:
                 client_ctx.organization_expired_abort()
+            case PkiEnrollmentInfoBadOutcome.CERTIFICATE_NOT_FOUND:
+                return anonymous_cmds.latest.pki_enrollment_info.RepUnknownStatus(
+                    "cert not found", None
+                )
 
         return anonymous_cmds.latest.pki_enrollment_info.RepOk(unit)
 
@@ -503,6 +513,11 @@ class BasePkiEnrollmentComponent:
                 client_ctx.author_not_found_abort()
             case PkiEnrollmentListBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
+            case PkiEnrollmentListBadOutcome.CERTIFICATE_NOT_FOUND:
+                # TODO add not found error to protocol ?
+                return authenticated_cmds.latest.pki_enrollment_list.RepUnknownStatus(
+                    "leaf not found", None
+                )
 
     @api
     async def api_pki_enrollment_reject(

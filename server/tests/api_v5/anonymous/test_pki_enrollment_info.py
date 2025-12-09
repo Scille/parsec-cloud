@@ -15,7 +15,7 @@ from parsec._parsec import (
     UserProfile,
     anonymous_cmds,
 )
-from parsec.components.pki import parse_pki_cert
+from parsec.components.pki import PkiTrustchainError, parse_pki_cert
 from tests.api_v5.authenticated.test_user_create import (
     NEW_MIKE_DEVICE_ID,
     NEW_MIKE_DEVICE_LABEL,
@@ -48,7 +48,10 @@ async def test_anonymous_pki_enrollment_info_ok(
         enrollment_id=enrollment_id,
         force=False,
         submitter_human_handle=NEW_MIKE_HUMAN_HANDLE,
-        submitter_trustchain=[parse_pki_cert(test_pki.cert["bob"].der_certificate)],
+        submitter_trustchain=[
+            parse_pki_cert(test_pki.cert["bob"].der_certificate),
+            parse_pki_cert(test_pki.root["black_mesa"].der_certificate),
+        ],
         submit_payload_signature=b"<mike submit payload signature>",
         submit_payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         submit_payload=submit_payload,
@@ -81,6 +84,18 @@ async def test_anonymous_pki_enrollment_info_ok(
                 root_verify_key=coolorg.root_verify_key,
             ).dump()
 
+            # we need to use build_trustchain here, as it adds the signed_by fields (as opposed to parse_pki_cert)
+            trustchain = await backend.pki.build_trustchain(
+                test_pki.cert["alice"].der_certificate,
+                [test_pki.root["black_mesa"].der_certificate],
+            )
+
+            match trustchain:
+                case PkiTrustchainError():
+                    assert False
+                case _:
+                    pass
+
             outcome = await backend.pki.accept(
                 now=accepted_on,
                 organization_id=coolorg.organization_id,
@@ -90,7 +105,7 @@ async def test_anonymous_pki_enrollment_info_ok(
                 payload=accept_payload,
                 payload_signature=b"<alice accept payload signature>",
                 payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
-                accepter_trustchain=[parse_pki_cert(test_pki.cert["alice"].der_certificate)],
+                accepter_trustchain=trustchain,
                 submitter_user_certificate=u_certif,
                 submitter_redacted_user_certificate=redacted_u_certif,
                 submitter_device_certificate=d_certif,
@@ -103,7 +118,9 @@ async def test_anonymous_pki_enrollment_info_ok(
                     submitted_on=submitted_on,
                     accepted_on=accepted_on,
                     accepter_der_x509_certificate=test_pki.cert["alice"].der_certificate,
-                    accepter_intermediate_der_x509_certificates=[],
+                    accepter_intermediate_der_x509_certificates=[
+                        test_pki.root["black_mesa"].der_certificate,
+                    ],
                     accept_payload_signature=b"<alice accept payload signature>",
                     accept_payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
                     accept_payload=accept_payload,
@@ -161,9 +178,6 @@ async def test_anonymous_pki_enrollment_info_ok(
 
         case unknown:
             assert False, unknown
-
-    rep = await coolorg.anonymous.pki_enrollment_info(enrollment_id=enrollment_id)
-    assert rep == anonymous_cmds.latest.pki_enrollment_info.RepOk(unit=expected_unit)
 
     rep = await coolorg.anonymous.pki_enrollment_info(enrollment_id=enrollment_id)
     assert rep == anonymous_cmds.latest.pki_enrollment_info.RepOk(unit=expected_unit)
