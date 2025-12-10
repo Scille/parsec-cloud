@@ -783,7 +783,8 @@
             "copyFailedMaxRecursion": "Too many entries to copy.",
             "copyFailedOneFailed": "One or more entries could not be copied.",
             "copyFailedSourceDoesNotExist": "Entry {source} does not exist.",
-            "seeInExplorerFailed": "Failed to open the path."
+            "seeInExplorerFailed": "Failed to open the selected entry in file explorer.",
+            "failedToListContent": "Failed to list the content of this folder."
         },
         "CreateFolderModal": {
             "title": "Create a new folder",
