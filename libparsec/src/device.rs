@@ -1,11 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::path::Path;
+use std::{path::Path, sync::Arc};
 
+use crate::config::ClientConfig;
 pub use libparsec_platform_device_loader::{
     ArchiveDeviceError, AvailableDevice, AvailableDeviceType, ListAvailableDeviceError,
     ListPkiLocalPendingError, UpdateDeviceError,
 };
+pub use libparsec_platform_storage::RemoveDeviceDataError;
 use libparsec_types::prelude::*;
 
 mod strategy {
@@ -391,6 +393,15 @@ pub async fn archive_device(
     device_path: &Path,
 ) -> Result<(), ArchiveDeviceError> {
     libparsec_platform_device_loader::archive_device(config_dir, device_path).await
+}
+
+pub async fn remove_device_data(
+    config: ClientConfig,
+    device_id: DeviceID,
+) -> Result<(), RemoveDeviceDataError> {
+    let config: Arc<libparsec_client::ClientConfig> = config.into();
+
+    libparsec_platform_storage::remove_device_data(&config.data_base_dir, device_id).await
 }
 
 pub async fn update_device_change_authentication(

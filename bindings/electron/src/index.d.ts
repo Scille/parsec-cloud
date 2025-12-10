@@ -3202,6 +3202,15 @@ export type PkiGetAddrError =
   | PkiGetAddrErrorInternal
 
 
+// RemoveDeviceDataError
+export interface RemoveDeviceDataErrorFailedToRemoveData {
+    tag: "RemoveDeviceDataErrorFailedToRemoveData"
+    error: string
+}
+export type RemoveDeviceDataError =
+  | RemoveDeviceDataErrorFailedToRemoveData
+
+
 // RemoveDeviceError
 export interface RemoveDeviceErrorInternal {
     tag: "RemoveDeviceErrorInternal"
@@ -5186,6 +5195,10 @@ export function pkiRemoveLocalPending(
     config: ClientConfig,
     id: string
 ): Promise<Result<null, RemoveDeviceError>>
+export function removeDeviceData(
+    config: ClientConfig,
+    device_id: string
+): Promise<Result<null, RemoveDeviceDataError>>
 export function showCertificateSelectionDialogWindowsOnly(
 ): Promise<Result<X509CertificateReference | null, ShowCertificateSelectionDialogError>>
 export function testCheckMailbox(

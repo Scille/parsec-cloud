@@ -19,6 +19,7 @@ from .common import (
     VariantItemUnit,
     X509CertificateReference,
 )
+from .config import ClientConfig
 
 
 class AvailableDeviceType(Variant):
@@ -126,6 +127,16 @@ async def archive_device(
     config_dir: Ref[Path],
     device_path: Ref[Path],
 ) -> Result[None, ArchiveDeviceError]:
+    raise NotImplementedError
+
+
+class RemoveDeviceDataError(ErrorVariant):
+    class FailedToRemoveData: ...
+
+
+async def remove_device_data(
+    config: ClientConfig, device_id: DeviceID
+) -> Result[None, RemoveDeviceDataError]:
     raise NotImplementedError
 
 
