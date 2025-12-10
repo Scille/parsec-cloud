@@ -167,13 +167,18 @@ class PkiCertificate:
     subject: bytes
     issuer: bytes
 
+    def __repr__(self) -> str:
+        fingerprint = self.fingerprint_sha256.hex()
+        signed_by = bytes.hex(self.signed_by) if self.signed_by else None
+        return f"{self.__class__.__qualname__}(fingerprint={fingerprint}, signed_by={signed_by})"
 
-def parse_pki_cert(cert: bytes) -> PkiCertificate:
+
+def parse_pki_cert(cert: bytes, signed_by: bytes | None = None) -> PkiCertificate:
     parsed = X509Certificate.from_der(cert)
     fingerprint = sha256(cert)
     return PkiCertificate(
         fingerprint_sha256=fingerprint.digest(),
-        signed_by=None,
+        signed_by=signed_by,
         content=cert,
         subject=parsed.subject(),
         issuer=parsed.issuer(),
