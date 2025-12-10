@@ -204,6 +204,9 @@ mod strategy {
         Smartcard {
             certificate_reference: X509CertificateReference,
         },
+        PKI {
+            certificate_ref: X509CertificateReference,
+        },
         AccountVault {
             account_handle: Handle,
         },
@@ -235,6 +238,9 @@ mod strategy {
                 } => libparsec_platform_device_loader::DeviceSaveStrategy::Smartcard {
                     certificate_reference,
                 },
+                DeviceSaveStrategy::PKI { certificate_ref } => {
+                    libparsec_platform_device_loader::DeviceSaveStrategy::PKI { certificate_ref }
+                }
                 DeviceSaveStrategy::AccountVault { account_handle } => {
                     // Note `borrow_from_handle` does a side-effect here !
                     let account = borrow_from_handle(account_handle, |x| match x {
@@ -293,6 +299,9 @@ mod strategy {
         Smartcard {
             key_file: PathBuf,
         },
+        PKI {
+            key_file: PathBuf,
+        },
         AccountVault {
             key_file: PathBuf,
             account_handle: Handle,
@@ -325,6 +334,9 @@ mod strategy {
                 }
                 DeviceAccessStrategy::Smartcard { key_file } => {
                     libparsec_platform_device_loader::DeviceAccessStrategy::Smartcard { key_file }
+                }
+                DeviceAccessStrategy::PKI { key_file } => {
+                    libparsec_platform_device_loader::DeviceAccessStrategy::PKI { key_file }
                 }
                 DeviceAccessStrategy::AccountVault {
                     key_file,

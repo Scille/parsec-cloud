@@ -219,6 +219,69 @@ async fn list_devices(tmp_path: TmpPath) {
     )
     .as_ref();
 
+    // PKI
+
+    let pki_expected = DeviceFilePKI {
+        created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
+        protected_on: "2000-01-01T00:00:01Z".parse().unwrap(),
+        server_url: "parsec3://parsec.invalid".parse().unwrap(),
+        organization_id: "CoolOrg".parse().unwrap(),
+        user_id: "mallory".parse().unwrap(),
+        device_id: "mallory@dev2".parse().unwrap(),
+        human_handle: "Mallory McMalloryFace <mallory@parsec.invalid>"
+            .parse()
+            .unwrap(),
+        device_label: "PC1".parse().unwrap(),
+        certificate_ref: X509CertificateReference::from(X509CertificateHash::fake_sha256())
+            .add_or_replace_uri(X509WindowsCngURI::from(Bytes::from_static(
+                b"Mallory's certificate",
+            ))),
+        algorithm: PKIEncryptionAlgorithm::RsaesOaepSha256,
+        encrypted_key: hex!("de5c59cfcc0c52bf997594e0fdd2c24ffee9465b6f25e30bac9238c2f83fd19a")
+            .as_ref()
+            .into(),
+        ciphertext: b"<ciphertext>".as_ref().into(),
+    };
+    println!(
+        "***expected: {:?}",
+        DeviceFile::PKI(pki_expected.clone()).dump()
+    );
+    // Generated from Parsec 3.7.1-a.0+dev
+    // Content:
+    //   type: 'pki'
+    //   created_on: ext(1, 946684800000000) i.e. 2000-01-01T01:00:00Z
+    //   protected_on: ext(1, 946684801000000) i.e. 2000-01-01T01:00:01Z
+    //   server_url: 'https://parsec.invalid/'
+    //   organization_id: 'CoolOrg'
+    //   user_id: ext(2, 0x3a11031c001000000000000000000000)
+    //   device_id: ext(2, 0xde203a11031c00100000000000000000)
+    //   human_handle: [ 'mallory@parsec.invalid', 'Mallory McMalloryFace', ]
+    //   device_label: 'PC1'
+    //   certificate_ref: {
+    //     uris: [ { windowscng: 0x4d616c6c6f72792773206365727469666963617465, }, ],
+    //     hash: 'sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
+    //   }
+    //   algorithm: 'RSAES-OAEP-SHA256'
+    //   encrypted_key: 0xde5c59cfcc0c52bf997594e0fdd2c24ffee9465b6f25e30bac9238c2f83fd19a
+    //   ciphertext: 0x3c636970686572746578743e
+    let pki_raw: &[u8] = hex!(
+        "8da474797065a3706b69aa637265617465645f6f6ed70100035d013b37e000ac70726f"
+        "7465637465645f6f6ed70100035d013b472240aa7365727665725f75726cb768747470"
+        "733a2f2f7061727365632e696e76616c69642faf6f7267616e697a6174696f6e5f6964"
+        "a7436f6f6c4f7267a7757365725f6964d8023a11031c001000000000000000000000a9"
+        "6465766963655f6964d802de203a11031c00100000000000000000ac68756d616e5f68"
+        "616e646c6592b66d616c6c6f7279407061727365632e696e76616c6964b54d616c6c6f"
+        "7279204d634d616c6c6f727946616365ac6465766963655f6c6162656ca3504331af63"
+        "657274696669636174655f72656682a4757269739181aa77696e646f7773636e67c415"
+        "4d616c6c6f72792773206365727469666963617465a468617368d9337368613235362d"
+        "4141414141414141414141414141414141414141414141414141414141414141414141"
+        "41414141414141413da9616c676f726974686db152534145532d4f4145502d53484132"
+        "3536ad656e637279707465645f6b6579c420de5c59cfcc0c52bf997594e0fdd2c24ffe"
+        "e9465b6f25e30bac9238c2f83fd19aaa63697068657274657874c40c3c636970686572"
+        "746578743e"
+    )
+    .as_ref();
+
     // Recovery
 
     let recovery_expected = DeviceFileRecovery {
@@ -369,6 +432,7 @@ async fn list_devices(tmp_path: TmpPath) {
     // Device must have a .keys extension, but can be in nested directories with a random name
     let password_path = tmp_path.join("devices/foo/bar/spam/whatever.keys");
     let smartcard_path = tmp_path.join("devices/foo/bar/spam/whatever2.keys");
+    let pki_path = tmp_path.join("devices/foo/bar/spam/whatever3.keys");
     let recovery_path = tmp_path.join("devices/foo/whatever.keys");
     let account_vault_path = tmp_path.join("devices/whatever.keys");
     let openbao_path = tmp_path.join("devices/whatever2.keys");
@@ -377,6 +441,7 @@ async fn list_devices(tmp_path: TmpPath) {
         (&keyring_path, keyring_raw),
         (&password_path, password_raw),
         (&smartcard_path, smartcard_raw),
+        (&pki_path, pki_raw),
         (&recovery_path, recovery_raw),
         (&account_vault_path, account_vault_raw),
         (&openbao_path, openbao_raw),
@@ -424,6 +489,25 @@ async fn list_devices(tmp_path: TmpPath) {
             human_handle: smartcard_expected.human_handle,
             device_label: smartcard_expected.device_label,
             ty: AvailableDeviceType::Smartcard,
+        },
+        AvailableDevice {
+            key_file_path: pki_path,
+            created_on: pki_expected.created_on,
+            protected_on: pki_expected.protected_on,
+            server_addr: pki_expected.server_url,
+            organization_id: pki_expected.organization_id,
+            user_id: pki_expected.user_id,
+            device_id: pki_expected.device_id,
+            human_handle: pki_expected.human_handle,
+            device_label: pki_expected.device_label,
+            ty: AvailableDeviceType::PKI {
+                certificate_ref: {
+                    X509CertificateReference::from(X509CertificateHash::fake_sha256())
+                        .add_or_replace_uri_wrapped(X509URIFlavorValue::WindowsCNG(
+                            b"Mallory's certificate".as_ref().into(),
+                        ))
+                },
+            },
         },
         AvailableDevice {
             key_file_path: recovery_path,

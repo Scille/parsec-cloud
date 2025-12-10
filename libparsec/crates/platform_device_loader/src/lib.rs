@@ -719,6 +719,19 @@ fn load_available_device_from_blob(
             device.human_handle,
             device.device_label,
         ),
+        DeviceFile::PKI(device) => (
+            AvailableDeviceType::PKI {
+                certificate_ref: device.certificate_ref,
+            },
+            device.created_on,
+            device.protected_on,
+            device.server_url,
+            device.organization_id,
+            device.user_id,
+            device.device_id,
+            device.human_handle,
+            device.device_label,
+        ),
         DeviceFile::AccountVault(device) => (
             AvailableDeviceType::AccountVault,
             device.created_on,
