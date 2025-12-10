@@ -137,6 +137,7 @@ pub(super) async fn load_ciphertext_key(
 
         DeviceAccessStrategy::Keyring { .. } => panic!("Keyring not supported on Web"),
         DeviceAccessStrategy::Smartcard { .. } => panic!("Smartcard not supported on Web"),
+        DeviceAccessStrategy::PKI { .. } => panic!("Smartcard not supported on Web"),
     }
 }
 

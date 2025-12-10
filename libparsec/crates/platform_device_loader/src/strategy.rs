@@ -138,6 +138,9 @@ pub enum DeviceSaveStrategy {
     Smartcard {
         certificate_reference: X509CertificateReference,
     },
+    PKI {
+        certificate_ref: X509CertificateReference,
+    },
     AccountVault {
         operations: Arc<dyn AccountVaultOperations>,
     },
@@ -154,6 +157,7 @@ impl DeviceSaveStrategy {
                 DeviceAccessStrategy::Password { key_file, password }
             }
             DeviceSaveStrategy::Smartcard { .. } => DeviceAccessStrategy::Smartcard { key_file },
+            DeviceSaveStrategy::PKI { .. } => DeviceAccessStrategy::PKI { key_file },
             DeviceSaveStrategy::AccountVault { operations } => DeviceAccessStrategy::AccountVault {
                 key_file,
                 operations,
@@ -170,6 +174,11 @@ impl DeviceSaveStrategy {
             Self::Keyring { .. } => AvailableDeviceType::Keyring,
             Self::Password { .. } => AvailableDeviceType::Password,
             Self::Smartcard { .. } => AvailableDeviceType::Smartcard,
+            Self::PKI {
+                certificate_ref, ..
+            } => AvailableDeviceType::PKI {
+                certificate_ref: certificate_ref.to_owned(),
+            },
             Self::AccountVault { .. } => AvailableDeviceType::AccountVault,
             Self::OpenBao { operations } => AvailableDeviceType::OpenBao {
                 openbao_entity_id: operations.openbao_entity_id().to_owned(),
@@ -196,6 +205,9 @@ pub enum DeviceAccessStrategy {
     Smartcard {
         key_file: PathBuf,
     },
+    PKI {
+        key_file: PathBuf,
+    },
     AccountVault {
         key_file: PathBuf,
         operations: Arc<dyn AccountVaultOperations>,
@@ -212,6 +224,7 @@ impl DeviceAccessStrategy {
             Self::Keyring { key_file } => key_file,
             Self::Password { key_file, .. } => key_file,
             Self::Smartcard { key_file, .. } => key_file,
+            Self::PKI { key_file, .. } => key_file,
             Self::AccountVault { key_file, .. } => key_file,
             Self::OpenBao { key_file, .. } => key_file,
         }
@@ -239,6 +252,12 @@ impl DeviceAccessStrategy {
                 }
             }
             DeviceAccessStrategy::Smartcard { .. } => todo!(),
+            DeviceAccessStrategy::PKI { .. } => match extra_info {
+                AvailableDeviceType::PKI { certificate_ref } => {
+                    Some(DeviceSaveStrategy::PKI { certificate_ref })
+                }
+                _ => None,
+            },
             DeviceAccessStrategy::AccountVault { operations, .. } => {
                 if matches!(extra_info, AvailableDeviceType::AccountVault) {
                     Some(DeviceSaveStrategy::AccountVault { operations })
@@ -265,12 +284,15 @@ impl DeviceAccessStrategy {
  * AvailableDevice
  */
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AvailableDeviceType {
     Keyring,
     Password,
     Recovery,
     Smartcard,
+    PKI {
+        certificate_ref: X509CertificateReference,
+    },
     AccountVault,
     OpenBao {
         openbao_entity_id: String,
@@ -278,7 +300,7 @@ pub enum AvailableDeviceType {
     },
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AvailableDevice {
     pub key_file_path: PathBuf,
     pub created_on: DateTime,

@@ -26,6 +26,10 @@ class AvailableDeviceType(Variant):
     Password = VariantItemUnit
     Recovery = VariantItemUnit
     Smartcard = VariantItemUnit
+
+    class PKI:
+        certificate_ref: X509CertificateReference
+
     AccountVault = VariantItemUnit
 
     class OpenBao:
@@ -42,6 +46,9 @@ class DeviceSaveStrategy(Variant):
 
     class Smartcard:
         certificate_reference: X509CertificateReference
+
+    class PKI:
+        certificate_ref: X509CertificateReference
 
     class AccountVault:
         account_handle: Handle
@@ -63,6 +70,9 @@ class DeviceAccessStrategy(Variant):
         key_file: Path
 
     class Smartcard:
+        key_file: Path
+
+    class PKI:
         key_file: Path
 
     class AccountVault:

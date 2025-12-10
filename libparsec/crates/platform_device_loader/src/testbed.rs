@@ -337,6 +337,9 @@ pub(crate) fn maybe_load_device(
                                 DeviceAccessStrategy::Smartcard { .. },
                                 DeviceSaveStrategy::Smartcard { .. },
                             ) => Some(Ok(c_device.to_owned())),
+                            (DeviceAccessStrategy::PKI { .. }, DeviceSaveStrategy::PKI { .. }) => {
+                                Some(Ok(c_device.to_owned()))
+                            }
                             (DeviceAccessStrategy::Keyring { .. }, DeviceSaveStrategy::Keyring) => {
                                 Some(Ok(c_device.to_owned()))
                             }
@@ -371,11 +374,13 @@ pub(crate) fn maybe_load_device(
                             (
                                 DeviceAccessStrategy::Password { .. }
                                 | DeviceAccessStrategy::Smartcard { .. }
+                                | DeviceAccessStrategy::PKI { .. }
                                 | DeviceAccessStrategy::Keyring { .. }
                                 | DeviceAccessStrategy::AccountVault { .. }
                                 | DeviceAccessStrategy::OpenBao { .. },
                                 DeviceSaveStrategy::Password { .. }
                                 | DeviceSaveStrategy::Smartcard { .. }
+                                | DeviceSaveStrategy::PKI { .. }
                                 | DeviceSaveStrategy::Keyring
                                 | DeviceSaveStrategy::AccountVault { .. }
                                 | DeviceSaveStrategy::OpenBao { .. },
@@ -398,6 +403,7 @@ pub(crate) fn maybe_load_device(
                         decryption_success
                     }
                     DeviceAccessStrategy::Smartcard { .. } => true,
+                    DeviceAccessStrategy::PKI { .. } => true,
                     DeviceAccessStrategy::AccountVault { .. } => true,
                     DeviceAccessStrategy::OpenBao { .. } => true,
                 };
@@ -416,6 +422,7 @@ pub(crate) fn maybe_load_device(
                         DeviceAccessStrategy::Keyring { .. } => AvailableDeviceType::Keyring,
                         DeviceAccessStrategy::Password { .. } => AvailableDeviceType::Password,
                         DeviceAccessStrategy::Smartcard { .. } => todo!(), // TODO #11269
+                        DeviceAccessStrategy::PKI { .. } => todo!(),       // TODO #11269
                         DeviceAccessStrategy::AccountVault { .. } => {
                             AvailableDeviceType::AccountVault
                         }
