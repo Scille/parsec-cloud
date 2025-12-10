@@ -12,8 +12,10 @@ use libparsec_testbed::{
 use libparsec_types::prelude::*;
 
 use crate::{
-    ArchiveDeviceError, AvailableDevice, AvailableDeviceType, DeviceAccessStrategy,
-    DeviceSaveStrategy, LoadDeviceError, RemoveDeviceError, SaveDeviceError, UpdateDeviceError,
+    ArchiveDeviceError, AvailableDevice, AvailableDeviceType, AvailablePendingAsyncEnrollment,
+    DeviceAccessStrategy, DeviceSaveStrategy, ListPendingAsyncEnrollmentsError, LoadDeviceError,
+    RemoveDeviceError, RemovePendingAsyncEnrollmentError, SaveAsyncEnrollmentLocalPendingError,
+    SaveDeviceError, UpdateDeviceError,
 };
 
 const STORE_ENTRY_KEY: &str = "platform_device_loader";
@@ -41,12 +43,14 @@ struct ComponentStore {
     /// devices: the changes from `already_accessed_key_files` must also be taken
     /// into account!
     template_available_devices: Mutex<MaybePopulated<Vec<AvailableDevice>>>,
+    pending_async_enrollments: Mutex<Vec<(PathBuf, Vec<u8>)>>,
 }
 
 fn store_factory(_env: &TestbedEnv) -> Arc<dyn Any + Send + Sync> {
     Arc::new(ComponentStore {
         template_available_devices: Mutex::new(MaybePopulated::Stalled),
         already_accessed_key_files: Mutex::default(),
+        pending_async_enrollments: Mutex::default(),
     })
 }
 
@@ -596,4 +600,61 @@ pub(crate) fn maybe_archive_device(
         r.expect("error never returned");
         Ok(())
     })
+}
+
+pub(crate) fn maybe_save_pending_async_enrollment(
+    config_dir: &Path,
+    content: &[u8],
+    file_path: &Path,
+) -> Option<Result<(), SaveAsyncEnrollmentLocalPendingError>> {
+    test_get_testbed_component_store::<ComponentStore>(config_dir, STORE_ENTRY_KEY, store_factory)
+        .map(|store| {
+            let mut pending_async_enrollments = store
+                .pending_async_enrollments
+                .lock()
+                .expect("Mutex is poisoned");
+
+            pending_async_enrollments.retain(|(c_file_path, _)| c_file_path != file_path);
+
+            pending_async_enrollments.push((file_path.to_owned(), content.to_owned()));
+
+            Ok(())
+        })
+}
+
+pub(crate) fn maybe_list_pending_async_enrollments(
+    config_dir: &Path,
+) -> Option<Result<Vec<AvailablePendingAsyncEnrollment>, ListPendingAsyncEnrollmentsError>> {
+    test_get_testbed_component_store::<ComponentStore>(config_dir, STORE_ENTRY_KEY, store_factory)
+        .map(|store| {
+            let pending_async_enrollments = store
+                .pending_async_enrollments
+                .lock()
+                .expect("Mutex is poisoned");
+
+            let enrollments: Vec<_> = pending_async_enrollments
+                .iter()
+                .filter_map(|(path, raw)| {
+                    super::load_pending_async_enrollment(path.to_owned(), raw).ok()
+                })
+                .collect();
+
+            Ok(enrollments)
+        })
+}
+
+pub(crate) fn maybe_remove_pending_async_enrollment(
+    config_dir: &Path,
+    file_path: &Path,
+) -> Option<Result<(), RemovePendingAsyncEnrollmentError>> {
+    test_get_testbed_component_store::<ComponentStore>(config_dir, STORE_ENTRY_KEY, store_factory)
+        .map(|store| {
+            store
+                .pending_async_enrollments
+                .lock()
+                .expect("Mutex is poisoned")
+                .retain(|(c_file_path, _)| c_file_path != file_path);
+
+            Ok(())
+        })
 }

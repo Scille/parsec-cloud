@@ -9,11 +9,12 @@ use uuid::Uuid;
 use crate::{
     encrypt_device, get_device_archive_path, AccountVaultOperationsFetchOpaqueKeyError,
     AccountVaultOperationsUploadOpaqueKeyError, ArchiveDeviceError, AvailableDevice,
-    DeviceAccessStrategy, DeviceSaveStrategy, ListAvailableDeviceError, ListPkiLocalPendingError,
+    AvailablePendingAsyncEnrollment, DeviceAccessStrategy, DeviceSaveStrategy,
+    ListAvailableDeviceError, ListPendingAsyncEnrollmentsError, ListPkiLocalPendingError,
     LoadCiphertextKeyError, LoadDeviceError, OpenBaoOperationsFetchOpaqueKeyError,
     OpenBaoOperationsUploadOpaqueKeyError, ReadFileError, RemoteOperationServer, RemoveDeviceError,
-    SaveDeviceError, SavePkiLocalPendingError, UpdateDeviceError, DEVICE_FILE_EXT,
-    LOCAL_PENDING_EXT,
+    SaveAsyncEnrollmentLocalPendingError, SaveDeviceError, SavePkiLocalPendingError,
+    UpdateDeviceError, DEVICE_FILE_EXT, LOCAL_PENDING_EXT,
 };
 use libparsec_platform_pki::{decrypt_message, encrypt_message};
 use libparsec_types::prelude::*;
@@ -248,7 +249,7 @@ pub(super) async fn load_ciphertext_key(
     }
 }
 
-async fn save_content(key_file: &PathBuf, file_content: &[u8]) -> Result<(), SaveDeviceError> {
+async fn save_content(key_file: &Path, file_content: &[u8]) -> Result<(), SaveDeviceError> {
     if let Some(parent) = key_file.parent() {
         tokio::fs::create_dir_all(parent)
             .await
@@ -256,7 +257,7 @@ async fn save_content(key_file: &PathBuf, file_content: &[u8]) -> Result<(), Sav
     }
     let tmp_path = match key_file.file_name() {
         Some(file_name) => {
-            let mut tmp_path = key_file.clone();
+            let mut tmp_path = key_file.to_owned();
             {
                 let mut tmp_file_name = file_name.to_owned();
                 tmp_file_name.push(".tmp");
@@ -287,7 +288,7 @@ async fn save_content(key_file: &PathBuf, file_content: &[u8]) -> Result<(), Sav
 }
 
 async fn generate_keyring_user(
-    keyring_user_path: &PathBuf,
+    keyring_user_path: &Path,
 ) -> Result<(SecretKey, String), SaveDeviceError> {
     // Generate a keyring user
     let keyring_user = Uuid::new_v4().to_string();
@@ -670,4 +671,57 @@ async fn load_pki_pending_file(path: &Path) -> Result<PKILocalPendingEnrollment,
             |err| log::debug!(path:% = path.display(), err:%; "Failed to load pki pending file"),
         )
         .map_err(|_| LoadFileError::InvalidData)
+}
+
+pub async fn save_pending_async_enrollment(
+    content: &[u8],
+    file_path: &Path,
+) -> Result<(), SaveAsyncEnrollmentLocalPendingError> {
+    save_content(file_path, content).await.map_err(Into::into)
+}
+
+pub async fn list_pending_async_enrollments(
+    config_dir: &Path,
+) -> Result<Vec<AvailablePendingAsyncEnrollment>, ListPendingAsyncEnrollmentsError> {
+    let pending_dir = crate::get_pending_async_enrollment_dir(config_dir);
+    let mut files = find_pending_async_enrollment_files(&pending_dir).await?;
+
+    // Sort entries so result is deterministic
+    files.sort();
+
+    Ok(libparsec_platform_async::stream::iter(files)
+        .filter_map(async |path| {
+            let raw = tokio::fs::read(&path).await.ok()?;
+            super::load_pending_async_enrollment(path, &raw).ok()
+        })
+        .collect::<Vec<_>>()
+        .await)
+}
+
+async fn find_pending_async_enrollment_files(
+    path: &Path,
+) -> Result<Vec<PathBuf>, ListPendingAsyncEnrollmentsError> {
+    let mut entries = match tokio::fs::read_dir(path).await {
+        Ok(v) => v,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(err) => {
+            log::error!(path:% = path.display(), err:%; "Cannot list pending request files");
+            return Err(ListPendingAsyncEnrollmentsError::StorageNotAvailable);
+        }
+    };
+    let mut files = Vec::new();
+
+    while let Some(entry) = entries.next_entry().await.unwrap_or_default() {
+        let Ok(metadata) = entry.metadata().await else {
+            continue;
+        };
+        let path = entry.path();
+        if metadata.is_dir() {
+            let mut sub_files = Box::pin(find_pending_async_enrollment_files(&path)).await?;
+            files.append(&mut sub_files);
+        } else if metadata.is_file() && path.extension() == Some(LOCAL_PENDING_EXT.as_ref()) {
+            files.push(path);
+        }
+    }
+    Ok(files)
 }

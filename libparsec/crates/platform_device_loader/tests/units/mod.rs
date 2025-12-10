@@ -4,6 +4,7 @@
 libparsec_tests_lite::platform::wasm_bindgen_test_configure!(run_in_browser run_in_shared_worker);
 
 mod archive;
+mod async_enrollment;
 mod list;
 mod load;
 mod pki;
