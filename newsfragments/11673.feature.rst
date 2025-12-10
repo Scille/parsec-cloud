@@ -1,1 +1,0 @@
-Display a loading page when starting Parsec web application

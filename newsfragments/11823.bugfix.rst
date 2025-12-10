@@ -1,1 +1,0 @@
-Fixed broken navigation when accessing a folder that was not available locally.
