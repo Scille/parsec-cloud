@@ -4,17 +4,18 @@ use std::{collections::HashMap, num::NonZeroU8, path::Path, sync::Arc};
 
 pub use libparsec_client::{
     ClientAcceptTosError, ClientCreateWorkspaceError, ClientDeleteShamirRecoveryError,
-    ClientForgetAllCertificatesError, ClientGetCurrentSelfProfileError,
-    ClientGetOrganizationBootstrapDateError, ClientGetSelfShamirRecoveryError, ClientGetTosError,
-    ClientGetUserDeviceError, ClientGetUserInfoError, ClientEditicsGetSessionKeyError, ClientListFrozenUsersError,
-    ClientListShamirRecoveriesForOthersError, ClientListUserDevicesError, ClientListUsersError,
-    ClientListWorkspaceUsersError, ClientOrganizationInfoError, ClientRenameWorkspaceError,
-    ClientRevokeUserError, ClientSetupShamirRecoveryError, ClientShareWorkspaceError,
-    ClientUserUpdateProfileError, DeviceInfo, InvalidityReason, OrganizationInfo,
-    OtherShamirRecoveryInfo, PKIInfoItem, PkiEnrollmentAcceptError, PkiEnrollmentInfoError,
-    PkiEnrollmentListError, PkiEnrollmentListItem, PkiEnrollmentRejectError,
-    RawPkiEnrollmentListItem, SelfShamirRecoveryInfo, ServerOrganizationConfig, Tos, UserInfo,
-    WorkspaceInfo, WorkspaceUserAccessInfo,
+    ClientEditicsGetSessionKeyError, ClientForgetAllCertificatesError,
+    ClientGetCurrentSelfProfileError, ClientGetOrganizationBootstrapDateError,
+    ClientGetSelfShamirRecoveryError, ClientGetTosError, ClientGetUserDeviceError,
+    ClientGetUserInfoError, ClientListFrozenUsersError, ClientListShamirRecoveriesForOthersError,
+    ClientListUserDevicesError, ClientListUsersError, ClientListWorkspaceUsersError,
+    ClientOrganizationInfoError, ClientRenameWorkspaceError, ClientRevokeUserError,
+    ClientSetupShamirRecoveryError, ClientShareWorkspaceError, ClientUserUpdateProfileError,
+    DeviceInfo, InvalidityReason, OrganizationInfo, OtherShamirRecoveryInfo, PKIInfoItem,
+    PkiEnrollmentAcceptError, PkiEnrollmentInfoError, PkiEnrollmentListError,
+    PkiEnrollmentListItem, PkiEnrollmentRejectError, RawPkiEnrollmentListItem,
+    SelfShamirRecoveryInfo, ServerOrganizationConfig, Tos, UserInfo, WorkspaceInfo,
+    WorkspaceUserAccessInfo,
 };
 pub use libparsec_client_connection::ConnectionError;
 use libparsec_platform_async::event::{Event, EventListener};

@@ -855,6 +855,7 @@ async def client_pki_list_verify_items(
     cert_ref: X509CertificateReference,
     untrusted_items: list[RawPkiEnrollmentListItem],
 ) -> Result[list[PkiEnrollmentListItem], PkiEnrollmentListError]:
+    raise NotImplementedError
 
 
 class ClientEditicsGetSessionKeyError(ErrorVariant):
