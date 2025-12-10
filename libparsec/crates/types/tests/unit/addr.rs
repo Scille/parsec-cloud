@@ -28,6 +28,8 @@ const WORKSPACE_PATH_PARAM_KEY_INDEX: IndexInt = 1;
 // cspell:disable-next-line
 const WORKSPACE_PATH_PARAM_WORKSPACE_ID: &[u8] = &hex!("2d4ded1274064608833b7f57f01156e2");
 const INVITATION_TYPE: &str = "claim_user";
+const PKI_ENROLLMENT_TYPE: &str = "pki_enrollment";
+const ASYNC_ENROLLMENT_TYPE: &str = "async_enrollment";
 
 /*
  * Helpers to parametrize the tests on different addr types
@@ -140,6 +142,24 @@ impl Testbed for InvitationAddrTestbed {
     }
 }
 
+struct PKIEnrollmentAddrTestbed {}
+impl Testbed for PKIEnrollmentAddrTestbed {
+    impl_testbed_common!(ParsecPkiEnrollmentAddr);
+    impl_testbed_with_org!(ParsecPkiEnrollmentAddr);
+    fn url(&self) -> String {
+        format!("{PARSEC_SCHEME}://{DOMAIN}/{ORG}?a={PKI_ENROLLMENT_TYPE}",)
+    }
+}
+
+struct AsyncEnrollmentAddrTestbed {}
+impl Testbed for AsyncEnrollmentAddrTestbed {
+    impl_testbed_common!(ParsecAsyncEnrollmentAddr);
+    impl_testbed_with_org!(ParsecAsyncEnrollmentAddr);
+    fn url(&self) -> String {
+        format!("{PARSEC_SCHEME}://{DOMAIN}/{ORG}?a={ASYNC_ENROLLMENT_TYPE}",)
+    }
+}
+
 #[template]
 #[rstest(
     testbed,
@@ -148,6 +168,8 @@ impl Testbed for InvitationAddrTestbed {
     case::organization_bootstrap_addr(&OrganizationBootstrapAddrTestbed{}),
     case::workspace_path_addr(&WorkspacePathAddrTestbed{}),
     case::invitation_addr(&InvitationAddrTestbed{}),
+    case::pki_enrollment_addr(&PKIEnrollmentAddrTestbed{}),
+    case::async_enrollment_addr(&AsyncEnrollmentAddrTestbed{}),
 )]
 fn all_addr(testbed: &dyn Testbed) {}
 
@@ -158,6 +180,8 @@ fn all_addr(testbed: &dyn Testbed) {}
     case::organization_bootstrap_addr(&OrganizationBootstrapAddrTestbed{}),
     case::workspace_path_addr(&WorkspacePathAddrTestbed{}),
     case::invitation_addr(&InvitationAddrTestbed{}),
+    case::pki_enrollment_addr(&PKIEnrollmentAddrTestbed{}),
+    case::async_enrollment_addr(&AsyncEnrollmentAddrTestbed{}),
 )]
 fn addr_with_org(testbed: &dyn Testbed) {}
 
@@ -998,6 +1022,10 @@ fn organization_bootstrap_addr_bad_value(#[case] url: &str, #[case] msg: AddrErr
     "parsec3://parsec.example.com/my_org?a=pki_enrollment",
     "https://parsec.example.com/redirect/my_org?a=pki_enrollment"
 )]
+#[case::async_enrollment(
+    "parsec3://parsec.example.com/my_org?a=async_enrollment",
+    "https://parsec.example.com/redirect/my_org?a=async_enrollment"
+)]
 fn action_addr_good(#[case] url: &str, #[case] redirect_url: &str) {
     let addr: ParsecActionAddr = url.parse().unwrap();
 
@@ -1091,4 +1119,77 @@ fn server_addr_serialize_ko(#[case] bad: &'static str) {
         &[serde_test::Token::Str(bad)],
         "Invalid server URL",
     );
+}
+
+#[rstest]
+fn pki_enrollment_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_type: Option<&str>) {
+    let testbed = PKIEnrollmentAddrTestbed {};
+
+    match bad_type {
+        Some(bad_type) => {
+            // Type param present in the url but with bad and empty value
+            let url = testbed.url().replace("pki_enrollment", bad_type);
+            testbed.assert_addr_err(
+                &url,
+                AddrError::InvalidParamValue {
+                    param: "a",
+                    help: "Expected `a=pki_enrollment`".to_string(),
+                },
+            );
+        }
+        None => {
+            // Type param not present in the url
+            let url = testbed.url().replace("a=pki_enrollment", "");
+            testbed.assert_addr_err(&url, AddrError::MissingParam("a"));
+        }
+    }
+}
+
+#[rstest]
+fn async_enrollment_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_type: Option<&str>) {
+    let testbed = AsyncEnrollmentAddrTestbed {};
+
+    match bad_type {
+        Some(bad_type) => {
+            // Type param present in the url but with bad and empty value
+            let url = testbed.url().replace("async_enrollment", bad_type);
+            testbed.assert_addr_err(
+                &url,
+                AddrError::InvalidParamValue {
+                    param: "a",
+                    help: "Expected `a=async_enrollment`".to_string(),
+                },
+            );
+        }
+        None => {
+            // Type param not present in the url
+            let url = testbed.url().replace("a=async_enrollment", "");
+            testbed.assert_addr_err(&url, AddrError::MissingParam("a"));
+        }
+    }
+}
+
+macro_rules! test_anonymous_addr {
+    ($testbed:expr, $addr_ty:ty) => {
+        let testbed = $testbed;
+        let addr: $addr_ty = testbed.url().parse().unwrap();
+        let anonymous_addr: ParsecAnonymousAddr = addr.into();
+        assert_eq!(
+            anonymous_addr.to_anonymous_http_url(),
+            format!("https://{DOMAIN}/anonymous/{ORG}").parse().unwrap()
+        );
+        assert_eq!(anonymous_addr.organization_id(), &ORG.parse().unwrap(),);
+        let base: ParsecAddr = anonymous_addr.into();
+        assert_eq!(base, format!("{PARSEC_SCHEME}://{DOMAIN}").parse().unwrap(),);
+    };
+}
+
+#[rstest]
+fn anonymous_addr() {
+    test_anonymous_addr!(
+        OrganizationBootstrapAddrTestbed {},
+        ParsecOrganizationBootstrapAddr
+    );
+    test_anonymous_addr!(PKIEnrollmentAddrTestbed {}, ParsecPkiEnrollmentAddr);
+    test_anonymous_addr!(AsyncEnrollmentAddrTestbed {}, ParsecAsyncEnrollmentAddr);
 }

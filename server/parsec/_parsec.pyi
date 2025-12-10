@@ -8,6 +8,7 @@ from parsec._parsec_pyi import (
 from parsec._parsec_pyi.addrs import (
     ParsecActionAddr,
     ParsecAddr,
+    ParsecAsyncEnrollmentAddr,
     ParsecInvitationAddr,
     ParsecOrganizationAddr,
     ParsecOrganizationBootstrapAddr,
@@ -182,6 +183,7 @@ __all__ = [
     # Addrs
     "ParsecActionAddr",
     "ParsecAddr",
+    "ParsecAsyncEnrollmentAddr",
     "ParsecInvitationAddr",
     "ParsecOrganizationAddr",
     "ParsecOrganizationBootstrapAddr",
