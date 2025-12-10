@@ -71,6 +71,13 @@ pub enum ParsedParsecAddr {
         use_ssl: bool,
         organization_id: OrganizationID,
     },
+    AsyncEnrollment {
+        hostname: String,
+        port: u16,
+        is_default_port: bool,
+        use_ssl: bool,
+        organization_id: OrganizationID,
+    },
 }
 
 pub fn parse_parsec_addr(url: &str) -> Result<ParsedParsecAddr, ParseParsecAddrError> {
@@ -123,6 +130,13 @@ pub fn parse_parsec_addr(url: &str) -> Result<ParsedParsecAddr, ParseParsecAddrE
                 },
             },
             ParsecActionAddr::PkiEnrollment(addr) => ParsedParsecAddr::PkiEnrollment {
+                hostname: addr.hostname().into(),
+                port: addr.port(),
+                is_default_port: addr.is_default_port(),
+                use_ssl: addr.use_ssl(),
+                organization_id: addr.organization_id().clone(),
+            },
+            ParsecActionAddr::AsyncEnrollment(addr) => ParsedParsecAddr::AsyncEnrollment {
                 hostname: addr.hostname().into(),
                 port: addr.port(),
                 is_default_port: addr.is_default_port(),

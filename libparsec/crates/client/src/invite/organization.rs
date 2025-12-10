@@ -126,11 +126,7 @@ pub async fn bootstrap_organization(
         None => None,
     };
 
-    let cmds = AnonymousCmds::new(
-        &config.config_dir,
-        ParsecAnonymousAddr::ParsecOrganizationBootstrapAddr(addr),
-        config.proxy.clone(),
-    )?;
+    let cmds = AnonymousCmds::new(&config.config_dir, addr.into(), config.proxy.clone())?;
 
     let req = Req {
         bootstrap_token,

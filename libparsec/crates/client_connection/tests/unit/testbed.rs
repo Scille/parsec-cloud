@@ -23,11 +23,10 @@ async fn low_level_send_hook(env: &TestbedEnv) {
         )))
     });
 
-    let addr = ParsecAnonymousAddr::ParsecPkiEnrollmentAddr(ParsecPkiEnrollmentAddr::new(
-        env.server_addr.clone(),
-        env.organization_id.to_owned(),
-    ));
-    let cmds = AnonymousCmds::new(&env.discriminant_dir, addr, ProxyConfig::default()).unwrap();
+    let addr =
+        ParsecPkiEnrollmentAddr::new(env.server_addr.clone(), env.organization_id.to_owned());
+    let cmds =
+        AnonymousCmds::new(&env.discriminant_dir, addr.into(), ProxyConfig::default()).unwrap();
 
     let rep = cmds
         .send(anonymous_cmds::pki_enrollment_info::Req {
@@ -106,11 +105,10 @@ async fn high_level_send_hook(env: &TestbedEnv) {
         },
     );
 
-    let addr = ParsecAnonymousAddr::ParsecPkiEnrollmentAddr(ParsecPkiEnrollmentAddr::new(
-        env.server_addr.clone(),
-        env.organization_id.to_owned(),
-    ));
-    let cmds = AnonymousCmds::new(&env.discriminant_dir, addr, ProxyConfig::default()).unwrap();
+    let addr =
+        ParsecPkiEnrollmentAddr::new(env.server_addr.clone(), env.organization_id.to_owned());
+    let cmds =
+        AnonymousCmds::new(&env.discriminant_dir, addr.into(), ProxyConfig::default()).unwrap();
 
     let rep = cmds
         .send(anonymous_cmds::pki_enrollment_info::Req {
