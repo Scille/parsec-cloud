@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import auto
 from hashlib import sha256
@@ -261,8 +262,7 @@ class BasePkiEnrollmentComponent:
         enrollment_id: PKIEnrollmentID,
         force: bool,
         submitter_human_handle: HumanHandle,
-        submitter_der_x509_certificate: bytes,
-        intermediate_certificates: list[bytes],
+        submitter_trustchain: list[PkiCertificate],
         submit_payload_signature: bytes,
         submit_payload_signature_algorithm: PkiSignatureAlgorithm,
         submit_payload: bytes,
@@ -320,7 +320,7 @@ class BasePkiEnrollmentComponent:
     async def build_trustchain(
         self,
         leaf: bytes,
-        intermediate_certificates: list[bytes],
+        intermediate_certificates: Iterable[bytes],
     ) -> list[PkiCertificate] | PkiTrustchainError:
         # TODO shortcut if the rest of the trustchain is already in DB
 
@@ -421,14 +421,23 @@ class BasePkiEnrollmentComponent:
             logger.info("Invalid certificate", exc_info=e)
             return anonymous_cmds.latest.pki_enrollment_submit.RepInvalidDerX509Certificate()
 
+        match await self.build_trustchain(
+            req.der_x509_certificate, req.intermediate_der_x509_certificates
+        ):
+            case list() as trustchain:
+                pass
+            case PkiTrustchainError.ParseError:
+                return anonymous_cmds.latest.pki_enrollment_submit.RepInvalidDerX509Certificate()
+            case PkiTrustchainError.TrustchainTooLong:
+                return anonymous_cmds.latest.pki_enrollment_submit.RepInvalidX509Trustchain()
+
         outcome = await self.submit(
             now=now,
             organization_id=client_ctx.organization_id,
             enrollment_id=req.enrollment_id,
             force=req.force,
             submitter_human_handle=human_handle,
-            submitter_der_x509_certificate=req.der_x509_certificate,
-            intermediate_certificates=req.intermediate_der_x509_certificates,
+            submitter_trustchain=trustchain,
             submit_payload_signature=req.payload_signature,
             submit_payload_signature_algorithm=req.payload_signature_algorithm,
             submit_payload=req.payload,

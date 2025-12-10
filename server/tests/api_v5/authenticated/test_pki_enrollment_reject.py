@@ -15,6 +15,7 @@ from parsec._parsec import (
     UserProfile,
     authenticated_cmds,
 )
+from parsec.components.pki import parse_pki_cert
 from parsec.events import EventPkiEnrollment
 from tests.common import (
     Backend,
@@ -43,8 +44,7 @@ async def enrollment_id(
         enrollment_id=enrollment_id,
         force=False,
         submitter_human_handle=human_handle,
-        submitter_der_x509_certificate=test_pki.cert["bob"].der_certificate,
-        intermediate_certificates=[],
+        submitter_trustchain=[parse_pki_cert(test_pki.cert["bob"].der_certificate)],
         submit_payload_signature=b"<philip submit payload signature>",
         submit_payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         submit_payload=submit_payload,
