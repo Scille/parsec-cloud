@@ -16,6 +16,7 @@ from parsec.components.pki import (
 )
 from parsec.components.postgresql import AsyncpgConnection
 from parsec.components.postgresql.events import send_signal
+from parsec.components.postgresql.pki_trustchain import save_trustchain
 from parsec.components.postgresql.queries.q_lock_common import lock_common_read
 from parsec.components.postgresql.utils import Q
 from parsec.events import EventPkiEnrollment
@@ -214,6 +215,8 @@ async def pki_submit(
             submitter_der_x509_certificate=submitter_der_x509_certificate.content,
         )
     )
+
+    await save_trustchain(conn, submitter_trustchain)
 
     if previous_enrollment_row is not None:
         match previous_enrollment_row["enrollment_internal_id"]:

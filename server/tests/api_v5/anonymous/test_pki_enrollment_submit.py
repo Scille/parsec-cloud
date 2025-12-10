@@ -427,9 +427,10 @@ async def test_anonymous_pki_enrollment_submit_invalid_der_x509_certificate(
     assert rep == anonymous_cmds.latest.pki_enrollment_submit.RepInvalidDerX509Certificate()
 
 
-# TODO: https://github.com/Scille/parsec-cloud/issues/11720
 async def test_anonymous_pki_enrollment_submit_invalid_der_x509_certificate_in_trustchain(
-    coolorg: CoolorgRpcClients, submit_payload: bytes, test_pki: TestPki, xfail_if_postgresql: None
+    coolorg: CoolorgRpcClients,
+    submit_payload: bytes,
+    test_pki: TestPki,
 ) -> None:
     rep = await coolorg.anonymous.pki_enrollment_submit(
         enrollment_id=PKIEnrollmentID.new(),
@@ -449,13 +450,11 @@ async def test_anonymous_pki_enrollment_submit_invalid_payload_signature() -> No
     raise NotImplementedError
 
 
-# TODO: https://github.com/Scille/parsec-cloud/issues/11720
 async def test_anonymous_pki_enrollment_submit_invalid_x509_trustchain(
     coolorg: CoolorgRpcClients,
     submit_payload: bytes,
     test_pki: TestPki,
     monkeypatch: pytest.MonkeyPatch,
-    xfail_if_postgresql,
 ) -> None:
     from parsec.components import pki
 
