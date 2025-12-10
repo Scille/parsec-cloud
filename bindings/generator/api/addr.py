@@ -115,6 +115,13 @@ class ParsedParsecAddr(Variant):
         use_ssl: bool
         organization_id: OrganizationID
 
+    class AsyncEnrollment:
+        hostname: str
+        port: U16
+        is_default_port: bool
+        use_ssl: bool
+        organization_id: OrganizationID
+
 
 def parse_parsec_addr(url: Ref[str]) -> Result[ParsedParsecAddr, ParseParsecAddrError]:
     raise NotImplementedError

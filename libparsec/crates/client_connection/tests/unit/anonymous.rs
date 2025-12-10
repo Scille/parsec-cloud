@@ -23,11 +23,10 @@ async fn ok_with_server(env: &TestbedEnv) {
 }
 
 async fn ok(env: &TestbedEnv, mocked: bool) {
-    let addr = ParsecAnonymousAddr::ParsecPkiEnrollmentAddr(ParsecPkiEnrollmentAddr::new(
-        env.server_addr.clone(),
-        env.organization_id.to_owned(),
-    ));
-    let cmds = AnonymousCmds::new(&env.discriminant_dir, addr, ProxyConfig::default()).unwrap();
+    let addr =
+        ParsecPkiEnrollmentAddr::new(env.server_addr.clone(), env.organization_id.to_owned());
+    let cmds =
+        AnonymousCmds::new(&env.discriminant_dir, addr.into(), ProxyConfig::default()).unwrap();
 
     // Good request
 
@@ -80,12 +79,12 @@ macro_rules! register_rpc_http_hook {
     ($test_name: ident, $response_status_code: expr, $assert_err_cb: expr $(, $header_key:literal : $header_value:expr)* $(,)?) => {
         #[parsec_test(testbed = "minimal")]
         async fn $test_name(env: &TestbedEnv) {
-            let addr = ParsecAnonymousAddr::ParsecPkiEnrollmentAddr(ParsecPkiEnrollmentAddr::new(
+            let addr = ParsecPkiEnrollmentAddr::new(
                 env.server_addr.clone(),
                 env.organization_id.to_owned(),
-            ));
+            );
             let cmds =
-                AnonymousCmds::new(&env.discriminant_dir, addr, ProxyConfig::default()).unwrap();
+                AnonymousCmds::new(&env.discriminant_dir, addr.into(), ProxyConfig::default()).unwrap();
 
             test_register_low_level_send_hook(
                 &env.discriminant_dir,
