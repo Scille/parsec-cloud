@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { MockBms, clientAreaNavigateTo, clientAreaSwitchOrganization, expect, msTest } from '@tests/e2e/helpers';
+import { MockBms, clientAreaNavigateTo, clientAreaSwitchOrganization, expect, msTest, setupNewPage } from '@tests/e2e/helpers';
 
 msTest('Test initial status', async ({ clientAreaCustomOrder }) => {
   await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
@@ -60,69 +60,112 @@ msTest('Test initial status for all orgs', async ({ clientAreaCustomOrder }) => 
   await expect(orgSelector).toHaveText('BlackMesa-2');
 });
 
-// TODO: Re-enable this tests, now it needs to try to route to the statistics page without clicking the button
-// https://github.com/Scille/parsec-cloud/issues/10438
-msTest.skip('Test initial status org not bootstrapped', async ({ clientAreaCustomOrder }) => {
-  const title = clientAreaCustomOrder.locator('.header-content').locator('.header-title');
+msTest.describe(() => {
+  msTest.use({ clientAreaInitialParams: { rememberMe: true } });
 
-  await MockBms.mockOrganizationStatus(clientAreaCustomOrder, { isBootstrapped: false });
+  msTest('Test initial status org not bootstrapped', async ({ clientAreaCustomOrder }) => {
+    await MockBms.mockOrganizationStatus(clientAreaCustomOrder, { isBootstrapped: false });
 
-  await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
+    await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
+    const button = clientAreaCustomOrder.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').filter({
+      hasText: 'Statistics',
+    });
+    await expect(button).toBeVisible();
+    await expect(button).toBeTrulyDisabled();
+    // Use setupNewPage with skipTestbed to navigate with full page reload and proper initialization
+    await setupNewPage(clientAreaCustomOrder, {
+      skipTestbed: true,
+      location: '/clientArea?organization=42&page=custom-order-statistics',
+    });
 
-  await clientAreaCustomOrder.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(1).click();
-  await expect(title).toHaveText('Statistics');
-  const page = clientAreaCustomOrder.locator('.client-page-statistics');
-  const error = page.locator('.statistics-error');
-  await expect(error).toBeVisible();
-  await expect(error).toHaveText('Your organization is not bootstrapped yet.');
-});
+    // Now verify the page loaded correctly with the error message
+    const title = clientAreaCustomOrder.locator('.header-content').locator('.header-title');
+    await expect(title).toHaveText('Statistics');
+    const page = clientAreaCustomOrder.locator('.client-page-statistics');
+    const error = page.locator('.statistics-error');
+    await expect(error).toBeVisible();
+    await expect(error).toHaveText('Your organization is not bootstrapped yet.');
+  });
 
-msTest.skip('Custom order stats generic error', async ({ clientAreaCustomOrder }) => {
-  await MockBms.mockOrganizationStats(clientAreaCustomOrder, {}, { GET: { errors: { status: 400 } } });
+  msTest('Custom order stats generic error', async ({ clientAreaCustomOrder }) => {
+    await MockBms.mockOrganizationStats(clientAreaCustomOrder, {}, { GET: { errors: { status: 400 } } });
 
-  await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
-  await clientAreaCustomOrder.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(1).click();
+    await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
+    const button = clientAreaCustomOrder.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').filter({
+      hasText: 'Statistics',
+    });
+    await expect(button).toBeVisible();
+    await expect(button).toBeTrulyDisabled();
+    await setupNewPage(clientAreaCustomOrder, {
+      skipTestbed: true,
+      location: '/clientArea?organization=42&page=custom-order-statistics',
+    });
 
-  const container = clientAreaCustomOrder.locator('.client-page-statistics');
-  const error = container.locator('.statistics-error');
-  await expect(error).toBeVisible();
-  await expect(error).toHaveText('Failed to retrieve organization data.');
-});
+    const container = clientAreaCustomOrder.locator('.client-page-statistics');
+    const error = container.locator('.statistics-error');
+    await expect(error).toBeVisible();
+    await expect(error).toHaveText('Failed to retrieve organization data.');
+  });
 
-msTest.skip('Custom order stats timeout error', async ({ clientAreaCustomOrder }) => {
-  await MockBms.mockOrganizationStats(clientAreaCustomOrder, {}, { GET: { timeout: true } });
+  msTest('Custom order stats timeout error', async ({ clientAreaCustomOrder }) => {
+    await MockBms.mockOrganizationStats(clientAreaCustomOrder, {}, { GET: { timeout: true } });
 
-  await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
-  await clientAreaCustomOrder.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(1).click();
+    await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
+    const button = clientAreaCustomOrder.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').filter({
+      hasText: 'Statistics',
+    });
+    await expect(button).toBeVisible();
+    await expect(button).toBeTrulyDisabled();
+    await setupNewPage(clientAreaCustomOrder, {
+      skipTestbed: true,
+      location: '/clientArea?organization=42&page=custom-order-statistics',
+    });
 
-  const container = clientAreaCustomOrder.locator('.client-page-statistics');
-  const error = container.locator('.statistics-error');
-  await expect(error).toBeVisible();
-  await expect(error).toHaveText('Failed to retrieve organization data.');
-});
+    const container = clientAreaCustomOrder.locator('.client-page-statistics');
+    const error = container.locator('.statistics-error');
+    await expect(error).toBeVisible();
+    await expect(error).toHaveText('Failed to retrieve organization data.');
+  });
 
-msTest.skip('Custom order org status generic error', async ({ clientAreaCustomOrder }) => {
-  await MockBms.mockOrganizationStatus(clientAreaCustomOrder, {}, { GET: { errors: { status: 400 } } });
+  msTest('Custom order org status generic error', async ({ clientAreaCustomOrder }) => {
+    await MockBms.mockOrganizationStatus(clientAreaCustomOrder, {}, { GET: { errors: { status: 400 } } });
 
-  await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
-  await clientAreaCustomOrder.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(1).click();
+    await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
+    const button = clientAreaCustomOrder.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').filter({
+      hasText: 'Statistics',
+    });
+    await expect(button).toBeVisible();
+    await expect(button).toBeTrulyDisabled();
+    await setupNewPage(clientAreaCustomOrder, {
+      skipTestbed: true,
+      location: '/clientArea?organization=42&page=custom-order-statistics',
+    });
 
-  const container = clientAreaCustomOrder.locator('.client-page-statistics');
-  const error = container.locator('.statistics-error');
-  await expect(error).toBeVisible();
-  await expect(error).toHaveText('Failed to retrieve organization data.');
-});
+    const container = clientAreaCustomOrder.locator('.client-page-statistics');
+    const error = container.locator('.statistics-error');
+    await expect(error).toBeVisible();
+    await expect(error).toHaveText('Failed to retrieve organization data.');
+  });
 
-msTest.skip('Custom order org status timeout error', async ({ clientAreaCustomOrder }) => {
-  await MockBms.mockOrganizationStatus(clientAreaCustomOrder, {}, { GET: { timeout: true } });
+  msTest('Custom order org status timeout error', async ({ clientAreaCustomOrder }) => {
+    await MockBms.mockOrganizationStatus(clientAreaCustomOrder, {}, { GET: { timeout: true } });
 
-  await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
-  await clientAreaCustomOrder.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(1).click();
+    await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
+    const button = clientAreaCustomOrder.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').filter({
+      hasText: 'Statistics',
+    });
+    await expect(button).toBeVisible();
+    await expect(button).toBeTrulyDisabled();
+    await setupNewPage(clientAreaCustomOrder, {
+      skipTestbed: true,
+      location: '/clientArea?organization=42&page=custom-order-statistics',
+    });
 
-  const container = clientAreaCustomOrder.locator('.client-page-statistics');
-  const error = container.locator('.statistics-error');
-  await expect(error).toBeVisible();
-  await expect(error).toHaveText('Failed to retrieve organization data.');
+    const container = clientAreaCustomOrder.locator('.client-page-statistics');
+    const error = container.locator('.statistics-error');
+    await expect(error).toBeVisible();
+    await expect(error).toHaveText('Failed to retrieve organization data.');
+  });
 });
 
 msTest('Custom order details generic error', async ({ clientAreaCustomOrder }) => {

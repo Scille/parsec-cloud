@@ -46,8 +46,10 @@ msTest('Test initial status', async ({ clientAreaCustomOrder }) => {
 
 msTest.describe(() => {
   msTest.use({
-    clientAreaCustomOrderInitialMocks: {
-      mockCustomOrderRequest: { overload: { noRequest: true } },
+    clientAreaInitialParams: {
+      mocks: {
+        mockCustomOrderRequest: { overload: { noRequest: true } },
+      },
     },
   });
 
@@ -64,8 +66,10 @@ msTest.describe(() => {
 
 msTest.describe(() => {
   msTest.use({
-    clientAreaCustomOrderInitialMocks: {
-      mockCustomOrderRequest: { options: { GET: { timeout: true } } },
+    clientAreaInitialParams: {
+      mocks: {
+        mockCustomOrderRequest: { options: { GET: { timeout: true } } },
+      },
     },
   });
 

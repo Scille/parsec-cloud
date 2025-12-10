@@ -228,6 +228,19 @@ const debugTest = base.extend({
   }),
 });
 
+interface ClientAreaInitialParams {
+  mocks?: Partial<
+    Record<
+      keyof typeof MockBms,
+      {
+        overload?: MockClientAreaOverload;
+        options?: MockRouteOptions;
+      }
+    >
+  >;
+  rememberMe?: boolean;
+}
+
 export const msTest = debugTest.extend<{
   context: MsContext;
   home: MsPage;
@@ -251,15 +264,7 @@ export const msTest = debugTest.extend<{
   workspaceSharingModal: Locator;
   clientArea: MsPage;
   clientAreaCustomOrder: MsPage;
-  clientAreaCustomOrderInitialMocks?: Partial<
-    Record<
-      keyof typeof MockBms,
-      {
-        overload?: MockClientAreaOverload;
-        options?: MockRouteOptions;
-      }
-    >
-  >;
+  clientAreaInitialParams: ClientAreaInitialParams;
   parsecAccount: MsPage;
   parsecAccountLoggedIn: MsPage;
   parsecEditics: MsPage;
@@ -508,19 +513,19 @@ export const msTest = debugTest.extend<{
     await use(modal);
   },
 
-  clientArea: async ({ context }, use) => {
+  clientArea: async ({ context, clientAreaInitialParams }, use) => {
     const home = (await context.newPage()) as MsPage;
     await setupNewPage(home, { enableStripe: true });
 
     home.userData.reset();
-    await MockBms.mockLogin(home);
     await MockBms.mockUserRoute(home);
-    await MockBms.mockListOrganizations(home);
-    await MockBms.mockOrganizationStats(home);
-    await MockBms.mockOrganizationStatus(home);
-    await MockBms.mockBillingDetails(home);
-    await MockBms.mockGetInvoices(home);
-    await MockBms.mockCustomOrderRequest(home);
+    for (const key of Object.keys(MockBms) as (keyof typeof MockBms)[]) {
+      if (key !== 'mockUserRoute') {
+        const overload = clientAreaInitialParams?.mocks?.[key]?.overload;
+        const options = clientAreaInitialParams?.mocks?.[key]?.options;
+        await MockBms[key](home, overload as any, options);
+      }
+    }
 
     const button = home.locator('.homepage-menu-secondary').locator('#trigger-customer-area-button');
     await expect(button).toHaveText('Customer area');
@@ -532,6 +537,15 @@ export const msTest = debugTest.extend<{
     await expect(loginButton).toBeTrulyDisabled();
     await fillIonInput(saasContainer.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
     await fillIonInput(saasContainer.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
+
+    // Check "remember me" checkbox so tokens persist across page reloads
+    if (clientAreaInitialParams?.rememberMe) {
+      const rememberMeCheckbox = saasContainer.locator('ion-checkbox');
+      await expect(rememberMeCheckbox).toBeVisible();
+      await rememberMeCheckbox.click();
+      await expect(rememberMeCheckbox).toBeChecked();
+    }
+
     await expect(loginButton).toHaveText('Log in');
     await expect(loginButton).toBeTrulyEnabled();
     await loginButton.click();
@@ -553,30 +567,18 @@ export const msTest = debugTest.extend<{
     await home.release();
   },
 
-  clientAreaCustomOrder: async ({ context, clientAreaCustomOrderInitialMocks }, use) => {
+  clientAreaCustomOrder: async ({ context, clientAreaInitialParams }, use) => {
     const home = (await context.newPage()) as MsPage;
     await setupNewPage(home, { enableStripe: true });
 
     home.userData.reset();
-    await MockBms.mockLogin(home);
     await MockBms.mockUserRoute(home, { billingSystem: 'CUSTOM_ORDER' });
-
-    const mockKeys: (keyof typeof MockBms)[] = [
-      'mockListOrganizations',
-      'mockOrganizationStats',
-      'mockOrganizationStatus',
-      'mockBillingDetails',
-      'mockGetInvoices',
-      'mockCustomOrderStatus',
-      'mockCustomOrderDetails',
-      'mockCustomOrderRequest',
-      'mockGetCustomOrderInvoices',
-    ];
-
-    for (const key of mockKeys) {
-      const overload = clientAreaCustomOrderInitialMocks?.[key]?.overload;
-      const options = clientAreaCustomOrderInitialMocks?.[key]?.options;
-      await MockBms[key](home, overload as any, options);
+    for (const key of Object.keys(MockBms) as (keyof typeof MockBms)[]) {
+      if (key !== 'mockUserRoute') {
+        const overload = clientAreaInitialParams?.mocks?.[key]?.overload;
+        const options = clientAreaInitialParams?.mocks?.[key]?.options;
+        await MockBms[key](home, overload as any, options);
+      }
     }
 
     const button = home.locator('.homepage-header').locator('#trigger-customer-area-button');
@@ -589,6 +591,15 @@ export const msTest = debugTest.extend<{
     await expect(loginButton).toBeTrulyDisabled();
     await fillIonInput(saasContainer.locator('.saas-login-content').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
     await fillIonInput(saasContainer.locator('.saas-login-content').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
+
+    // Check "remember me" checkbox so tokens persist across page reloads
+    if (clientAreaInitialParams?.rememberMe) {
+      const rememberMeCheckbox = saasContainer.locator('ion-checkbox');
+      await expect(rememberMeCheckbox).toBeVisible();
+      await rememberMeCheckbox.click();
+      await expect(rememberMeCheckbox).toBeChecked();
+    }
+
     await expect(loginButton).toHaveText('Log in');
     await expect(loginButton).toBeTrulyEnabled();
     await loginButton.click();
@@ -598,9 +609,12 @@ export const msTest = debugTest.extend<{
     await home.release();
   },
 
-  clientAreaCustomOrderInitialMocks: [
+  clientAreaInitialParams: [
     async ({}, use): Promise<void> => {
-      await use(undefined);
+      await use({
+        mocks: undefined,
+        rememberMe: false,
+      });
     },
     { option: true },
   ],
