@@ -36,7 +36,7 @@ pub async fn pki_enrollment_submit(
 ) -> Result<DateTime, PkiEnrollmentSubmitError> {
     let cmds = AnonymousCmds::new(
         &config.config_dir,
-        ParsecAnonymousAddr::ParsecPkiEnrollmentAddr(addr.clone()),
+        addr.clone().into(),
         config.proxy.clone(),
     )?;
 

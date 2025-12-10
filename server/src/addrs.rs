@@ -255,6 +255,11 @@ impl ParsecActionAddr {
                             .into_pyobject(py)
                             .map(BoundObject::into_any)
                     }
+                    libparsec_types::ParsecActionAddr::AsyncEnrollment(v) => {
+                        ParsecAsyncEnrollmentAddr(v)
+                            .into_pyobject(py)
+                            .map(BoundObject::into_any)
+                    }
                 },
                 Err(err) => Err(PyValueError::new_err(err.to_string())),
             },
@@ -275,6 +280,11 @@ impl ParsecActionAddr {
                         .map(BoundObject::into_any),
                     libparsec_types::ParsecActionAddr::PkiEnrollment(v) => {
                         ParsecPkiEnrollmentAddr(v)
+                            .into_pyobject(py)
+                            .map(BoundObject::into_any)
+                    }
+                    libparsec_types::ParsecActionAddr::AsyncEnrollment(v) => {
+                        ParsecAsyncEnrollmentAddr(v)
                             .into_pyobject(py)
                             .map(BoundObject::into_any)
                     }
@@ -844,6 +854,134 @@ impl ParsecPkiEnrollmentAddr {
         organization_id: OrganizationID,
     ) -> Self {
         Self(libparsec_types::ParsecPkiEnrollmentAddr::new(
+            server_addr.0,
+            organization_id.0,
+        ))
+    }
+}
+
+crate::binding_utils::gen_py_wrapper_class!(
+    ParsecAsyncEnrollmentAddr,
+    libparsec_types::ParsecAsyncEnrollmentAddr,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+    __hash__,
+);
+
+#[pymethods]
+impl ParsecAsyncEnrollmentAddr {
+    #[new]
+    #[pyo3(signature = (organization_id, **py_kwargs))]
+    fn new(
+        organization_id: OrganizationID,
+        py_kwargs: Option<Bound<'_, PyDict>>,
+    ) -> PyResult<Self> {
+        let addr = match py_kwargs {
+            Some(dict) => ParsecAddr::new(
+                match dict.get_item("hostname")? {
+                    Some(hostname) => hostname.to_string(),
+                    None => String::from(""),
+                },
+                match dict.get_item("port")? {
+                    Some(port) => port.extract::<u16>().ok(),
+                    None => None,
+                },
+                match dict.get_item("use_ssl")? {
+                    Some(use_ssl) => use_ssl
+                        .extract::<bool>()
+                        .expect("`use_ssl` should be a boolean value"),
+                    None => true,
+                },
+            ),
+            None => return Err(PyValueError::new_err("Missing parameters")),
+        };
+        Ok(Self(libparsec_types::ParsecAsyncEnrollmentAddr::new(
+            addr.0,
+            organization_id.0,
+        )))
+    }
+
+    #[getter]
+    fn hostname(&self) -> &str {
+        self.0.hostname()
+    }
+
+    #[getter]
+    fn port(&self) -> u16 {
+        self.0.port()
+    }
+
+    #[getter]
+    fn use_ssl(&self) -> bool {
+        self.0.use_ssl()
+    }
+
+    #[getter]
+    fn netloc(&self) -> String {
+        if self.0.is_default_port() {
+            String::from(self.0.hostname())
+        } else {
+            format!("{}:{}", self.0.hostname(), self.0.port())
+        }
+    }
+
+    #[getter]
+    fn organization_id(&self) -> OrganizationID {
+        OrganizationID(self.0.organization_id().clone())
+    }
+
+    fn to_url(&self) -> String {
+        self.0.to_url().to_string()
+    }
+
+    fn get_server_addr(&self) -> ParsecAddr {
+        ParsecAddr::new(
+            String::from(self.0.hostname()),
+            if !self.0.is_default_port() {
+                Some(self.0.port())
+            } else {
+                None
+            },
+            self.0.use_ssl(),
+        )
+    }
+
+    fn generate_organization_addr(&self, root_verify_key: VerifyKey) -> ParsecOrganizationAddr {
+        ParsecOrganizationAddr(self.0.generate_organization_addr(root_verify_key.0))
+    }
+
+    fn to_http_redirection_url(&self) -> String {
+        self.0.to_http_redirection_url().to_string()
+    }
+
+    #[classmethod]
+    #[pyo3(signature = (url, allow_http_redirection = false))]
+    fn from_url(
+        _cls: Bound<'_, PyType>,
+        url: &str,
+        allow_http_redirection: bool,
+    ) -> PyResult<Self> {
+        match allow_http_redirection {
+            true => match libparsec_types::ParsecAsyncEnrollmentAddr::from_any(url) {
+                Ok(addr) => Ok(Self(addr)),
+                Err(err) => Err(PyValueError::new_err(err.to_string())),
+            },
+            false => match libparsec_types::ParsecAsyncEnrollmentAddr::from_str(url) {
+                Ok(addr) => Ok(Self(addr)),
+                Err(err) => Err(PyValueError::new_err(err.to_string())),
+            },
+        }
+    }
+
+    #[classmethod]
+    fn build(
+        _cls: Bound<'_, PyType>,
+        server_addr: ParsecAddr,
+        organization_id: OrganizationID,
+    ) -> Self {
+        Self(libparsec_types::ParsecAsyncEnrollmentAddr::new(
             server_addr.0,
             organization_id.0,
         ))
