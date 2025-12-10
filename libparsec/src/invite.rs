@@ -9,7 +9,6 @@ pub use libparsec_client::{
     ShamirRecoveryClaimAddShareError, ShamirRecoveryClaimPickRecipientError,
     ShamirRecoveryClaimRecoverDeviceError, UserClaimInitialCtx,
 };
-pub use libparsec_platform_async::future::join_all;
 use libparsec_platform_device_loader::{RemoteOperationServer, SaveDeviceError};
 pub use libparsec_protocol::authenticated_cmds::latest::invite_list::InvitationCreatedBy as InviteListInvitationCreatedBy;
 pub use libparsec_protocol::invited_cmds::latest::invite_info::{

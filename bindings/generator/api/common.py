@@ -320,6 +320,13 @@ class GreetingAttemptID(StrBasedType):
     )
 
 
+class AsyncEnrollmentID(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<libparsec::AsyncEnrollmentID, _> { libparsec::AsyncEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = (
+        "|x: libparsec::AsyncEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) }"
+    )
+
+
 class UserProfile(Enum):
     Admin = EnumItemUnit
     Standard = EnumItemUnit

@@ -257,10 +257,13 @@ mod strategy {
                         libparsec_client_connection::ProxyConfig::default(),
                     )?;
 
+                    // TODO: Add `openbao_transit_mount_path` to `DeviceAccessStrategy::OpenBao`
+                    let openbao_transit_mount_path = "transit".to_string();
                     let cmds = Arc::new(OpenBaoCmds::new(
                         client,
                         openbao_server_url,
                         openbao_secret_mount_path,
+                        openbao_transit_mount_path,
                         openbao_entity_id,
                         openbao_auth_token,
                     ));
@@ -349,10 +352,13 @@ mod strategy {
                     openbao_auth_token,
                 } => {
                     let client = libparsec_client_connection::build_client()?;
+                    // TODO: Add `openbao_transit_mount_path` to `DeviceAccessStrategy::OpenBao`
+                    let openbao_transit_mount_path = "transit".to_string();
                     let cmds = Arc::new(OpenBaoCmds::new(
                         client,
                         openbao_server_url,
                         openbao_secret_mount_path,
+                        openbao_transit_mount_path,
                         openbao_entity_id,
                         openbao_auth_token,
                     ));
