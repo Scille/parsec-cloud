@@ -1,1 +1,0 @@
-Minor GUI improvements such as logout button readability, font size harmonization and maximum width for profile name.
