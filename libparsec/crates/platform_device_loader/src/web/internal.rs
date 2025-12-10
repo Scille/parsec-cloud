@@ -57,7 +57,7 @@ impl Storage {
         Ok(devices)
     }
 
-    async fn list_file_entries(
+    pub(super) async fn list_file_entries(
         &self,
         dir: &Path,
         extension: impl AsRef<OsStr> + std::fmt::Display,
