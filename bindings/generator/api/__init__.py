@@ -3,6 +3,7 @@
 
 from .account import *
 from .addr import *
+from .async_enrollment import *
 from .cancel import *
 from .client import *
 from .common import *
