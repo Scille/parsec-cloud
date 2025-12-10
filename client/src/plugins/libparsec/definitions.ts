@@ -84,6 +84,7 @@ export enum UserProfile {
 }
 export type AccountAuthMethodID = string
 export type AccountVaultItemOpaqueKeyID = string
+export type AnyhowError = string
 export type ApiVersion = string
 export type DeviceID = string
 export type DeviceLabel = string
@@ -3807,6 +3808,18 @@ export interface PkiGetAddrErrorInternal {
 export type PkiGetAddrError =
   | PkiGetAddrErrorInternal
 
+// RemoveDeviceDataError
+export enum RemoveDeviceDataErrorTag {
+    FailedToRemoveData = 'RemoveDeviceDataErrorFailedToRemoveData',
+}
+
+export interface RemoveDeviceDataErrorFailedToRemoveData {
+    tag: RemoveDeviceDataErrorTag.FailedToRemoveData
+    error: string
+}
+export type RemoveDeviceDataError =
+  | RemoveDeviceDataErrorFailedToRemoveData
+
 // RemoveDeviceError
 export enum RemoveDeviceErrorTag {
     Internal = 'RemoveDeviceErrorInternal',
@@ -6131,6 +6144,10 @@ export interface LibParsecPlugin {
         config: ClientConfig,
         id: PKIEnrollmentID
     ): Promise<Result<null, RemoveDeviceError>>
+    removeDeviceData(
+        config: ClientConfig,
+        device_id: DeviceID
+    ): Promise<Result<null, RemoveDeviceDataError>>
     showCertificateSelectionDialogWindowsOnly(
     ): Promise<Result<X509CertificateReference | null, ShowCertificateSelectionDialogError>>
     testCheckMailbox(

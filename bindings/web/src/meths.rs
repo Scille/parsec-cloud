@@ -15198,6 +15198,27 @@ fn variant_pki_get_addr_error_rs_to_js(
     Ok(js_obj)
 }
 
+// RemoveDeviceDataError
+
+#[allow(dead_code)]
+fn variant_remove_device_data_error_rs_to_js(
+    rs_obj: libparsec::RemoveDeviceDataError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::RemoveDeviceDataError::FailedToRemoveData { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"RemoveDeviceDataErrorFailedToRemoveData".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // RemoveDeviceError
 
 #[allow(dead_code)]
@@ -23726,6 +23747,43 @@ pub fn pkiRemoveLocalPending(config: Object, id: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_remove_device_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// remove_device_data
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn removeDeviceData(config: Object, device_id: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config = config.into();
+        let config = struct_client_config_js_to_rs(config)?;
+
+        let device_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(device_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::remove_device_data(config, device_id).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_remove_device_data_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
