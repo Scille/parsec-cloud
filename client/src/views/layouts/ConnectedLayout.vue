@@ -11,7 +11,16 @@
 </template>
 
 <script lang="ts" setup>
-import { acceptTOS, getClientInfo, getTOS, listStartedClients, logout as parsecLogout } from '@/parsec';
+import {
+  acceptTOS,
+  archiveDevice,
+  AvailableDevice,
+  getClientInfo,
+  getTOS,
+  listAvailableDevices,
+  listStartedClients,
+  logout as parsecLogout,
+} from '@/parsec';
 import { getConnectionHandle, navigateTo, Routes } from '@/router';
 import { APP_VERSION } from '@/services/environment';
 import {
@@ -176,13 +185,6 @@ async function eventCallback(event: Events, data?: EventData): Promise<void> {
       );
       break;
     case Events.ClientRevoked:
-      injections.informationManager.present(
-        new Information({
-          message: 'notification.clientRevoked',
-          level: InformationLevel.Error,
-        }),
-        PresentationMode.Notification,
-      );
       await injections.informationManager.present(
         new Information({
           message: 'globalErrors.clientRevoked',
@@ -190,6 +192,15 @@ async function eventCallback(event: Events, data?: EventData): Promise<void> {
         }),
         PresentationMode.Modal,
       );
+      const clientInfo = await getClientInfo();
+      let currentDevices: Array<AvailableDevice> = [];
+      if (clientInfo.ok) {
+        currentDevices = (await listAvailableDevices(false)).filter((device) => device.userId === clientInfo.value.userId);
+      }
+      for (const device of currentDevices) {
+        await archiveDevice(device);
+      }
+      await logout();
       break;
     case Events.ClientFrozen:
       await injections.informationManager.present(
