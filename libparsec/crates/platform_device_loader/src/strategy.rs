@@ -271,6 +271,7 @@ pub enum AvailableDeviceType {
     Password,
     Recovery,
     Smartcard,
+    PKI,
     AccountVault,
     OpenBao {
         openbao_entity_id: String,
