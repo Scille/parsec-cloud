@@ -88,14 +88,17 @@ async def test_authenticated_pki_enrollment_list_ok(
                 payload=submit_payload,
             )
         )
+        trustchain = await backend.pki.build_trustchain(
+            expected_enrollment_item.der_x509_certificate, (x.der_certificate for x in every_cert)
+        )
+        assert isinstance(trustchain, list)
         outcome = await backend.pki.submit(
             now=submitted_on,
             organization_id=coolorg.organization_id,
             enrollment_id=enrollment_id,
             force=False,
             submitter_human_handle=human_handle,
-            submitter_der_x509_certificate=expected_enrollment_item.der_x509_certificate,
-            intermediate_certificates=[x.der_certificate for x in every_cert],
+            submitter_trustchain=trustchain,
             submit_payload_signature=expected_enrollment_item.payload_signature,
             submit_payload_signature_algorithm=expected_enrollment_item.payload_signature_algorithm,
             submit_payload=expected_enrollment_item.payload,
@@ -162,14 +165,18 @@ async def test_authenticated_pki_enrollment_list_ok(
             payload=canceller_submit_payload,
         )
     )
+    trustchain = await backend.pki.build_trustchain(
+        canceller_expected_enrollment_item.der_x509_certificate,
+        canceller_expected_enrollment_item.intermediate_der_x509_certificates,
+    )
+    assert isinstance(trustchain, list)
     outcome = await backend.pki.submit(
         now=canceller_submitted_on,
         organization_id=coolorg.organization_id,
         enrollment_id=canceller_enrollment_id,
         force=True,
         submitter_human_handle=human_handle,
-        submitter_der_x509_certificate=canceller_expected_enrollment_item.der_x509_certificate,
-        intermediate_certificates=canceller_expected_enrollment_item.intermediate_der_x509_certificates,
+        submitter_trustchain=trustchain,
         submit_payload_signature=canceller_expected_enrollment_item.payload_signature,
         submit_payload_signature_algorithm=canceller_expected_enrollment_item.payload_signature_algorithm,
         submit_payload=canceller_expected_enrollment_item.payload,

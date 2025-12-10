@@ -17,6 +17,7 @@ from parsec._parsec import (
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.pki import (
     BasePkiEnrollmentComponent,
+    PkiCertificate,
     PkiEnrollmentAcceptStoreBadOutcome,
     PkiEnrollmentAcceptValidateBadOutcome,
     PkiEnrollmentInfo,
@@ -50,8 +51,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         enrollment_id: PKIEnrollmentID,
         force: bool,
         submitter_human_handle: HumanHandle,
-        submitter_der_x509_certificate: bytes,
-        intermediate_certificates: list[bytes],
+        submitter_trustchain: list[PkiCertificate],
         submit_payload_signature: bytes,
         submit_payload_signature_algorithm: PkiSignatureAlgorithm,
         submit_payload: bytes,
@@ -63,7 +63,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             enrollment_id,
             force,
             submitter_human_handle,
-            submitter_der_x509_certificate,
+            submitter_trustchain,
             submit_payload_signature,
             submit_payload_signature_algorithm,
             submit_payload,

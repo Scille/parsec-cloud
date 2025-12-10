@@ -10,6 +10,7 @@ from parsec._parsec import (
     PkiSignatureAlgorithm,
 )
 from parsec.components.pki import (
+    PkiCertificate,
     PkiEnrollmentSubmitBadOutcome,
     PkiEnrollmentSubmitX509CertificateAlreadySubmitted,
 )
@@ -146,7 +147,7 @@ async def pki_submit(
     enrollment_id: PKIEnrollmentID,
     force: bool,
     submitter_human_handle: HumanHandle,
-    submitter_der_x509_certificate: bytes,
+    submitter_trustchain: list[PkiCertificate],
     submit_payload_signature: bytes,
     submit_payload_signature_algorithm: PkiSignatureAlgorithm,
     submit_payload: bytes,
@@ -205,10 +206,12 @@ async def pki_submit(
 
     # 5) Check for previous enrollment with same x509 certificate
 
+    submitter_der_x509_certificate = submitter_trustchain[0]
     previous_enrollment_row = await conn.fetchrow(
         *_q_get_previous_enrollment(
             organization_internal_id=organization_internal_id,
-            submitter_der_x509_certificate=submitter_der_x509_certificate,
+            # TODO: Use fingerprint
+            submitter_der_x509_certificate=submitter_der_x509_certificate.content,
         )
     )
 
@@ -287,7 +290,8 @@ async def pki_submit(
         *_q_insert_enrollment(
             organization_internal_id=organization_internal_id,
             enrollment_id=enrollment_id,
-            submitter_der_x509_certificate=submitter_der_x509_certificate,
+            # TODO: Use fingerprint
+            submitter_der_x509_certificate=submitter_der_x509_certificate.content,
             submit_payload_signature=submit_payload_signature,
             submit_payload_signature_algorithm=submit_payload_signature_algorithm.str,
             submit_payload=submit_payload,

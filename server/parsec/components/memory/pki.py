@@ -32,6 +32,7 @@ from parsec.components.memory.datamodel import (
 )
 from parsec.components.pki import (
     BasePkiEnrollmentComponent,
+    PkiCertificate,
     PkiEnrollmentAcceptStoreBadOutcome,
     PkiEnrollmentAcceptValidateBadOutcome,
     PkiEnrollmentInfo,
@@ -65,8 +66,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         enrollment_id: PKIEnrollmentID,
         force: bool,
         submitter_human_handle: HumanHandle,
-        submitter_der_x509_certificate: bytes,
-        intermediate_certificates: list[bytes],
+        submitter_trustchain: list[PkiCertificate],
         submit_payload_signature: bytes,
         submit_payload_signature_algorithm: PkiSignatureAlgorithm,
         submit_payload: bytes,
@@ -102,11 +102,14 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 return PkiEnrollmentSubmitBadOutcome.ENROLLMENT_ID_ALREADY_USED
 
             # 5) Check for previous enrollment with same x509 certificate
-
+            submitter_der_x509_certificate = submitter_trustchain[0]
             for enrollment in reversed(
                 sorted(org.pki_enrollments.values(), key=lambda x: x.submitted_on)
             ):
-                if enrollment.submitter_der_x509_certificate != submitter_der_x509_certificate:
+                if (
+                    enrollment.submitter_der_x509_certificate
+                    != submitter_der_x509_certificate.content
+                ):
                     continue
 
                 match enrollment.enrollment_state:
@@ -154,27 +157,14 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 if not user.is_revoked and user.cooked.human_handle.email == submitter_email:
                     return PkiEnrollmentSubmitBadOutcome.USER_EMAIL_ALREADY_ENROLLED
 
-            # 7) Build trust chain
-            trustchain = await self.build_trustchain(
-                submitter_der_x509_certificate,
-                intermediate_certificates,
-            )
-            match trustchain:
-                case PkiTrustchainError.TrustchainTooLong:
-                    return PkiEnrollmentSubmitBadOutcome.INVALID_X509_TRUSTCHAIN
-
-                case PkiTrustchainError.ParseError:
-                    return PkiEnrollmentSubmitBadOutcome.INVALID_DER_X509_CERTIFICATE
-
-                case trustchain:
-                    # store trustchain
-                    await org.save_trustchain(trustchain)
+            await org.save_trustchain(submitter_trustchain)
 
             # 8) All checks are good, now we do the actual insertion
 
             org.pki_enrollments[enrollment_id] = MemoryPkiEnrollment(
                 enrollment_id=enrollment_id,
-                submitter_der_x509_certificate=submitter_der_x509_certificate,
+                # TODO: use fingerprint
+                submitter_der_x509_certificate=submitter_der_x509_certificate.content,
                 submit_payload_signature=submit_payload_signature,
                 submit_payload_signature_algorithm=submit_payload_signature_algorithm,
                 submit_payload=submit_payload,
