@@ -7,11 +7,13 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import pytest
 import pytest_asyncio
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 
 from parsec._parsec import X509CertificateInformation
+from tests.common.postgresql import clear_postgresql_pki_certificate_data
 
 
 @dataclass
@@ -115,3 +117,9 @@ async def list_files(dir: Path) -> dict[str, Certificate]:
 async def read_file(file: Path) -> tuple[Path, bytes]:
     content = await asyncio.to_thread(Path.read_bytes, file)
     return (file, content)
+
+
+@pytest.fixture
+async def clear_pki_certificate(request: pytest.FixtureRequest) -> None:
+    if request.config.getoption("--postgresql"):
+        await clear_postgresql_pki_certificate_data()

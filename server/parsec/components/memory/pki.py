@@ -263,8 +263,9 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             if enrollment.enrollment_state == MemoryPkiEnrollmentState.SUBMITTED:
                 # TODO: https://github.com/Scille/parsec-cloud/issues/11871
                 leaf_fingerprint = sha256(enrollment.submitter_der_x509_certificate).digest()
-                trustchain = await org.get_trustchain(leaf_fingerprint)
-                intermediate_der_x509_certificates = [c.der_content for c in trustchain]
+                leaf, *intermediate_certs = map(
+                    lambda x: x.der_content, await org.get_trustchain(leaf_fingerprint)
+                )
 
                 ret.append(
                     PkiEnrollmentListItem(
@@ -273,8 +274,8 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                         payload_signature=enrollment.submit_payload_signature,
                         payload_signature_algorithm=enrollment.submit_payload_signature_algorithm,
                         submitted_on=enrollment.submitted_on,
-                        der_x509_certificate=enrollment.submitter_der_x509_certificate,
-                        intermediate_der_x509_certificates=intermediate_der_x509_certificates,
+                        der_x509_certificate=leaf,
+                        intermediate_der_x509_certificates=intermediate_certs,
                     )
                 )
 
