@@ -22,6 +22,7 @@ from parsec.components.pki import (
 )
 from parsec.components.postgresql import AsyncpgConnection
 from parsec.components.postgresql.events import send_signal
+from parsec.components.postgresql.pki_trustchain import save_trustchain
 from parsec.components.postgresql.queries import (
     AuthAndLockCommonOnlyBadOutcome,
     AuthAndLockCommonOnlyData,
@@ -237,6 +238,8 @@ async def pki_accept(
             organization_id=organization_id,
         ),
     )
+
+    await save_trustchain(conn, accepter_trustchain)
 
     # 6) Finally update the enrollment as accepted
 
