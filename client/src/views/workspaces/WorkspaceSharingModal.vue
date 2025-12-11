@@ -3,67 +3,11 @@
 <template>
   <ion-page class="modal">
     <ms-modal
-      :title="I18n.valueAsTranslatable(workspaceName)"
+      :title="$msTranslate('WorkspaceSharing.title')"
       :close-button="{ visible: true }"
     >
-      <div class="report-text-container">
-        <div
-          class="report-text-toggle"
-          @click="isOpenReportTextContainer = !isOpenReportTextContainer"
-          v-if="isOnlyOwner() || (showCheckboxes && orgHasExternalUsers)"
-        >
-          <ion-text class="report-text-toggle__text button-medium">{{ $msTranslate('WorkspaceSharing.information') }}</ion-text>
-          <ion-icon
-            class="report-text-toggle__icon"
-            :icon="chevronDown"
-            :class="{ rotate: isOpenReportTextContainer }"
-          />
-        </div>
-        <div
-          class="report-text-content"
-          :class="{ 'report-text-content--open': isOnlyOwner() || (showCheckboxes && orgHasExternalUsers) }"
-          v-if="isOpenReportTextContainer"
-        >
-          <ms-report-text
-            :theme="MsReportTheme.Info"
-            v-if="isOnlyOwner()"
-            class="only-owner-warning"
-          >
-            <i18n-t
-              keypath="WorkspaceSharing.onlyOwnerWarning"
-              scope="global"
-            >
-              <template #owner>
-                <strong> {{ $msTranslate('WorkspaceSharing.owner') }} </strong>
-              </template>
-            </i18n-t>
-          </ms-report-text>
-          <ms-report-text
-            :theme="MsReportTheme.Info"
-            id="profile-assign-info"
-            v-if="showCheckboxes && orgHasExternalUsers"
-          >
-            <i18n-t
-              keypath="WorkspaceSharing.batchSharing.outsiderRoleWarning"
-              scope="global"
-            >
-              <template #external>
-                <strong> {{ $msTranslate('WorkspaceSharing.batchSharing.external') }} </strong>
-              </template>
-              <template #contributor>
-                <strong> {{ $msTranslate('WorkspaceSharing.batchSharing.contributor') }} </strong>
-              </template>
-              <template #reader>
-                <strong> {{ $msTranslate('WorkspaceSharing.batchSharing.reader') }} </strong>
-              </template>
-            </i18n-t>
-          </ms-report-text>
-        </div>
-      </div>
-      <div
-        class="modal-head-content"
-        :class="{ 'has-report-text': isOpenReportTextContainer }"
-      >
+      <ion-text class="sharing-modal__title body">{{ workspaceName }}</ion-text>
+      <div class="modal-head-content">
         <ms-search-input
           class="modal-head-content__search"
           v-model="search"
@@ -102,6 +46,46 @@
             @change="onBatchRoleChange($event.option)"
           />
         </div>
+      </div>
+
+      <div
+        class="report-text-content"
+        v-if="isOnlyOwner() || orgHasExternalUsers"
+      >
+        <ms-report-text
+          :theme="MsReportTheme.Info"
+          id="only-owner-warning"
+          v-if="isOnlyOwner()"
+        >
+          <i18n-t
+            keypath="WorkspaceSharing.onlyOwnerWarning"
+            scope="global"
+          >
+            <template #owner>
+              <strong> {{ $msTranslate('WorkspaceSharing.owner') }} </strong>
+            </template>
+          </i18n-t>
+        </ms-report-text>
+        <ms-report-text
+          :theme="MsReportTheme.Info"
+          id="profile-assign-info"
+          v-if="orgHasExternalUsers"
+        >
+          <i18n-t
+            keypath="WorkspaceSharing.batchSharing.outsiderRoleWarning"
+            scope="global"
+          >
+            <template #external>
+              <strong> {{ $msTranslate('WorkspaceSharing.batchSharing.external') }} </strong>
+            </template>
+            <template #contributor>
+              <strong> {{ $msTranslate('WorkspaceSharing.batchSharing.contributor') }} </strong>
+            </template>
+            <template #reader>
+              <strong> {{ $msTranslate('WorkspaceSharing.batchSharing.reader') }} </strong>
+            </template>
+          </i18n-t>
+        </ms-report-text>
       </div>
 
       <!-- content -->
@@ -232,7 +216,7 @@ import { EventDistributor, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { getWorkspaceRoleTranslationKey } from '@/services/translation';
 import { IonIcon, IonList, IonPage, IonText } from '@ionic/vue';
-import { checkmarkCircle, chevronDown } from 'ionicons/icons';
+import { checkmarkCircle } from 'ionicons/icons';
 import {
   I18n,
   MsAppearance,
@@ -251,7 +235,6 @@ import { Ref, computed, onMounted, ref, useTemplateRef } from 'vue';
 const search = ref('');
 let ownProfile = UserProfile.Outsider;
 const { isSmallDisplay } = useWindowSize();
-const isOpenReportTextContainer = ref(isSmallDisplay ? true : false);
 
 const props = defineProps<{
   workspaceId: WorkspaceID;
@@ -613,81 +596,36 @@ async function onBatchRoleChange(newRoleOption: MsOption): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-.report-text-container {
+.sharing-modal__title {
+  position: relative;
+  margin-inline: 2rem;
+  z-index: 10;
+  display: block;
+  color: var(--parsec-color-light-secondary-hard-grey);
+}
+
+.report-text-content {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.5rem;
+  position: relative;
+  padding-inline: 2rem;
+  margin-top: 1rem;
 
   @include ms.responsive-breakpoint('sm') {
-    position: relative;
-    z-index: 10;
-    margin: 0;
-  }
-
-  .report-text-toggle {
-    background: var(--parsec-color-light-info-50);
-    padding: 0.5rem 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 0.5rem;
-    z-index: 10;
-    width: 100%;
-    cursor: pointer;
-
-    &:hover {
-      opacity: 0.9;
-    }
-
-    @include ms.responsive-breakpoint('sm') {
-      padding: 0.5rem 1.5rem;
-    }
-
-    &__text {
-      color: var(--parsec-color-light-info-700);
-    }
-
-    &__icon {
-      color: var(--parsec-color-light-info-700);
-      font-size: 1rem;
-      transition: transform 0.2s;
-      transform: rotate(0deg);
-
-      &.rotate {
-        transform: rotate(180deg);
-      }
-
-      &:last-child {
-        margin-left: auto;
-      }
-    }
-  }
-
-  .report-text-content {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    position: relative;
-    padding-inline: 2rem;
-
-    @include ms.responsive-breakpoint('sm') {
-      padding-inline: 1.5rem;
-    }
+    padding-inline: 1.5rem;
   }
 }
 
 .modal-head-content {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: space-between;
+  gap: 1.5rem;
   margin-top: 1rem;
   overflow: hidden !important;
   flex-shrink: 0;
-  padding-inline: 2rem;
-
-  &.has-report-text {
-    margin-top: 1rem;
-  }
+  padding: 0.25rem 2rem;
 
   @include ms.responsive-breakpoint('sm') {
     padding-inline: 1.5rem;
@@ -695,8 +633,8 @@ async function onBatchRoleChange(newRoleOption: MsOption): Promise<void> {
   }
 
   &__search {
-    max-height: 2.25rem;
-    max-width: 15rem;
+    max-height: 2.5rem;
+    max-width: 20rem;
     margin: 0;
 
     @include ms.responsive-breakpoint('sm') {
@@ -706,7 +644,8 @@ async function onBatchRoleChange(newRoleOption: MsOption): Promise<void> {
 
   &-right {
     display: flex;
-    align-items: center;
+    align-items: stretch;
+    flex-shrink: 0;
     gap: 1rem;
 
     @include ms.responsive-breakpoint('sm') {
@@ -773,6 +712,7 @@ async function onBatchRoleChange(newRoleOption: MsOption): Promise<void> {
     color: var(--parsec-color-light-secondary-grey);
     margin-right: auto;
     text-align: center;
+    align-self: center;
 
     @include ms.responsive-breakpoint('sm') {
       margin: auto;

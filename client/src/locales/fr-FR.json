@@ -529,6 +529,7 @@
         }
     },
     "WorkspaceSharing": {
+        "title": "Partager l'espace de travail",
         "searchPlaceholder": "Jean Martin",
         "currentUserLabel": "Moi",
         "unshareSuccess": "L'espace de travail n'est plus partagé avec {user}.",

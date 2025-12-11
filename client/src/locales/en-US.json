@@ -530,6 +530,7 @@
         }
     },
     "WorkspaceSharing": {
+        "title": "Share the workspace",
         "searchPlaceholder": "John Smith",
         "currentUserLabel": "Me",
         "unshareSuccess": "The workspace is no longer shared with {user}.",
