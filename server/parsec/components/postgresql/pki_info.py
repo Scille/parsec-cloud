@@ -1,6 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
+from hashlib import sha256
+
 from asyncpg import Record
 
 from parsec._parsec import (
@@ -18,6 +20,7 @@ from parsec.components.pki import (
     PkiEnrollmentInfoSubmitted,
 )
 from parsec.components.postgresql import AsyncpgConnection
+from parsec.components.postgresql.pki_trustchain import get_trustchain
 from parsec.components.postgresql.utils import Q
 
 _q_get_enrollment_info = Q("""
@@ -108,6 +111,7 @@ async def pki_info(
             match dict(info_accepted.items()):
                 case {
                     "accepted_on": DateTime() as accepted_on,
+                    # TODO: Should be a fingerprint (https://github.com/Scille/parsec-cloud/issues/11914)
                     "accepter_der_x509_certificate": bytes() as accepter_der_x509_certificate,
                     "accept_payload_signature": bytes() as accept_payload_signature,
                     "accept_payload": bytes() as accept_payload,
@@ -120,13 +124,18 @@ async def pki_info(
                 case _:
                     assert False, row
 
+            accepter_x509_sha256_fingerprint = sha256(accepter_der_x509_certificate).digest()
+            cert, *intermediate = map(
+                lambda x: x.der_content,
+                await get_trustchain(conn, accepter_x509_sha256_fingerprint),
+            )
+
             return PkiEnrollmentInfoAccepted(
                 enrollment_id=enrollment_id,
                 submitted_on=submitted_on,
                 accepted_on=accepted_on,
-                accepter_der_x509_certificate=accepter_der_x509_certificate,
-                # TODO: https://github.com/Scille/parsec-cloud/issues/11562
-                accepter_intermediate_der_x509_certificates=[],
+                accepter_der_x509_certificate=cert,
+                accepter_intermediate_der_x509_certificates=intermediate,
                 accept_payload_signature=accept_payload_signature,
                 accept_payload_signature_algorithm=accept_payload_signature_algorithm,
                 accept_payload=accept_payload,
