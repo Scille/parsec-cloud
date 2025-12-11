@@ -7443,6 +7443,34 @@ fn variant_client_delete_shamir_recovery_error_rs_to_js(
     Ok(js_obj)
 }
 
+// ClientEditicsGetSessionKeyError
+
+#[allow(dead_code)]
+fn variant_client_editics_get_session_key_error_rs_to_js(
+    rs_obj: libparsec::ClientEditicsGetSessionKeyError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientEditicsGetSessionKeyError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientEditicsGetSessionKeyErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientEditicsGetSessionKeyError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientEditicsGetSessionKeyErrorOffline".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientEvent
 
 #[allow(dead_code)]
@@ -20987,6 +21015,48 @@ pub fn clientDeleteShamirRecovery(client_handle: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_client_delete_shamir_recovery_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// client_editics_get_session_key
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientEditicsGetSessionKey(
+    client_handle: u32,
+    workspace_id: String,
+    file_id: String,
+) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let workspace_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(workspace_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let file_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(file_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret =
+            libparsec::client_editics_get_session_key(client_handle, workspace_id, file_id).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from(Uint8Array::from(value.as_ref()));
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_editics_get_session_key_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

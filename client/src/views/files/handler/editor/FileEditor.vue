@@ -57,8 +57,9 @@
 
 <script setup lang="ts">
 import { DetectedFileType } from '@/common/fileTypes';
-import { ClientInfo, closeFile, FileDescriptor, isWeb, openFile, writeFile } from '@/parsec';
-import { currentRouteIs, getFileHandlerMode, getWorkspaceHandle, routerGoBack, Routes } from '@/router';
+import { ClientInfo, closeFile, FileDescriptor, getWorkspaceInfo, isWeb, openFile, writeFile } from '@/parsec';
+import { libparsec } from '@/plugins/libparsec';
+import { currentRouteIs, getConnectionHandle, getFileHandlerMode, getWorkspaceHandle, routerGoBack, Routes } from '@/router';
 import {
   Cryptpad,
   CryptpadAppMode,
@@ -231,6 +232,16 @@ async function openFileWithCryptpad(): Promise<boolean> {
   fileUrl.value = URL.createObjectURL(new Blob([contentInfo.data as Uint8Array<ArrayBuffer>], { type: 'application/octet-stream' }));
   let isSaving = false;
 
+  const connHandle = getConnectionHandle();
+  const wkResult = await getWorkspaceInfo(workspaceHandle);
+  if (!wkResult.ok || connHandle === null) {
+    return false;
+  }
+  const keyResult = await libparsec.clientEditicsGetSessionKey(connHandle, wkResult.value.id, contentInfo.fileId);
+  if (!keyResult.ok) {
+    return false;
+  }
+
   const cryptpadConfig = {
     document: {
       url: fileUrl.value,
@@ -238,7 +249,8 @@ async function openFileWithCryptpad(): Promise<boolean> {
       title: contentInfo.fileName,
       // TODO: replace UUID with collaborative session key
       // key: contentInfo.fileId,
-      key: crypto.randomUUID(),
+      // key: crypto.randomUUID(),
+      key: String.fromCharCode(...keyResult.value),
     },
     documentType: documentType.value as CryptpadDocumentType, // Safe since we checked for null earlier
     editorConfig: {

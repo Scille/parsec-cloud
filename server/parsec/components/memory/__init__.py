@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from parsec.components.memory.block import MemoryBlockComponent, MemoryBlockStoreComponent
+from parsec.components.memory.editics import MemoryEditicsComponent
 from parsec.components.memory.events import MemoryEventBus, MemoryEventsComponent
 from parsec.components.memory.factory import components_factory
 from parsec.components.memory.invite import MemoryInviteComponent
@@ -15,6 +16,7 @@ from parsec.components.memory.vlob import MemoryVlobComponent
 __all__ = [
     "MemoryBlockComponent",
     "MemoryBlockStoreComponent",
+    "MemoryEditicsComponent",
     "MemoryEventBus",
     "MemoryEventsComponent",
     "MemoryInviteComponent",

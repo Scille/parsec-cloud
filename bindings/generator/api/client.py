@@ -856,3 +856,17 @@ async def client_pki_list_verify_items(
     untrusted_items: list[RawPkiEnrollmentListItem],
 ) -> Result[list[PkiEnrollmentListItem], PkiEnrollmentListError]:
     raise NotImplementedError
+
+
+class ClientEditicsGetSessionKeyError(ErrorVariant):
+    class Internal:
+        pass
+
+    class Offline:
+        pass
+
+
+async def client_editics_get_session_key(
+    client_handle: Handle, workspace_id: VlobID, file_id: VlobID
+) -> Result[bytes, ClientEditicsGetSessionKeyError]:
+    raise NotImplementedError
