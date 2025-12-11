@@ -288,6 +288,7 @@ msTest.describe(() => {
           await toggleViewMode(documents);
           entries = documents.locator('.folder-container').locator('.file-card-item');
         }
+        await expect(entries).toHaveCount(2);
 
         for (const entry of await entries.all()) {
           await entry.hover();

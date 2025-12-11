@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { answerQuestion, createFolder, DisplaySize, expect, fillInputModal, msTest, resizePage } from '@tests/e2e/helpers';
+import { answerQuestion, createFolder, DisplaySize, expect, fillInputModal, fillIonInput, msTest, resizePage } from '@tests/e2e/helpers';
 
 async function isInGridMode(page: Page): Promise<boolean> {
   return (await page.locator('#folders-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
@@ -313,6 +313,28 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     }
   });
 }
+
+msTest('Create a folder with a name too long', async ({ documents }) => {
+  const entries = documents.locator('.folder-container').locator('.file-list-item');
+  await expect(entries).toHaveCount(9);
+
+  const actionBar = documents.locator('#folders-ms-action-bar');
+  await actionBar.getByText('New folder').click();
+
+  const modal = documents.locator('.text-input-modal');
+  await expect(modal).toBeVisible();
+  const okButton = modal.locator('.ms-modal-footer-buttons').locator('#next-button');
+  await fillIonInput(modal.locator('ion-input'), 'A'.repeat(132));
+  await expect(modal.locator('.form-error')).toBeVisible();
+  await expect(modal.locator('.form-error')).toHaveText('File name is too long, limit is 128 characters.');
+  await fillIonInput(modal.locator('ion-input'), 'A'.repeat(64));
+  await expect(modal.locator('.form-error')).toBeHidden();
+  await expect(okButton).toBeTrulyEnabled();
+  await okButton.click();
+
+  await expect(entries).toHaveCount(10);
+  await expect(entries.locator('.file-name').locator('.label-name').nth(1)).toHaveText('A'.repeat(64));
+});
 
 msTest('Import context menu', async ({ documents }) => {
   await expect(documents.locator('.import-popover')).toBeHidden();

@@ -12,6 +12,8 @@ import {
 import { ParsedParsecAddrTag } from '@/plugins/libparsec';
 import { IValidator, Validity } from 'megashark-lib';
 
+const ENTRY_NAME_LIMIT = 128;
+
 export const emailValidator: IValidator = async function (value: string) {
   value = value.trim();
   if (value.length === 0) {
@@ -40,7 +42,10 @@ export const workspaceNameValidator: IValidator = async function (value: string)
   value = value.trim();
   if (value.length === 0) {
     return { validity: Validity.Intermediate };
+  } else if (value.length > ENTRY_NAME_LIMIT) {
+    return { validity: Validity.Invalid, reason: { key: 'validators.workspaceName.tooLong', data: { limit: ENTRY_NAME_LIMIT } } };
   }
+
   return (await isValidWorkspaceName(value)) ? { validity: Validity.Valid } : { validity: Validity.Invalid };
 };
 
@@ -48,6 +53,8 @@ export const entryNameValidator: IValidator = async function (value: string) {
   value = value.trim();
   if (value.length === 0) {
     return { validity: Validity.Intermediate };
+  } else if (value.length > ENTRY_NAME_LIMIT) {
+    return { validity: Validity.Invalid, reason: { key: 'validators.fileName.tooLong', data: { limit: ENTRY_NAME_LIMIT } } };
   }
   return (await isValidEntryName(value)) ? { validity: Validity.Valid } : { validity: Validity.Invalid };
 };
