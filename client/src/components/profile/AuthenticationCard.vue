@@ -41,6 +41,7 @@
       class="authentication-card__update-button"
       v-if="state === AuthenticationCardState.Update"
       fill="clear"
+      :disabled="disabled"
       @click="$emit('update-clicked')"
     >
       {{ $msTranslate('Authentication.update') }}

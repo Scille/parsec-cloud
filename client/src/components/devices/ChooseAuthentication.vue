@@ -129,16 +129,23 @@
           <authentication-card
             :auth-method="DeviceSaveStrategyTag.OpenBao"
             :state="AuthenticationCardState.Update"
+            :disabled="querying"
             @update-clicked="changeAuthenticationMethod()"
           />
         </div>
-        <sso-provider-card
-          v-for="auth in serverConfig?.openbao.auths.filter((auth) => isSSOProviderHandled(auth.tag))"
-          :key="auth.tag"
-          :provider="auth.tag"
-          :is-connected="openBaoClient !== undefined"
-          @sso-selected="onSSOLoginClicked"
-        />
+        <div class="provider-card">
+          <sso-provider-card
+            v-for="auth in serverConfig?.openbao.auths.filter((auth) => isSSOProviderHandled(auth.tag))"
+            :key="auth.tag"
+            :provider="auth.tag"
+            :is-connected="openBaoClient !== undefined"
+            @sso-selected="onSSOLoginClicked"
+          />
+          <ms-spinner
+            v-if="querying"
+            class="provider-card-spinner"
+          />
+        </div>
       </div>
 
       <span
@@ -171,7 +178,7 @@ import {
 } from '@/parsec';
 import { OpenBaoClient, isSSOProviderHandled, openBaoConnect } from '@/services/openBao';
 import { IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
-import { MsChoosePasswordInput } from 'megashark-lib';
+import { MsChoosePasswordInput, MsSpinner } from 'megashark-lib';
 import { computed, onMounted, ref, toRaw, useTemplateRef } from 'vue';
 
 const authentication = ref<DeviceSaveStrategyTag | undefined>(undefined);
@@ -180,6 +187,7 @@ const choosePasswordRef = useTemplateRef<InstanceType<typeof MsChoosePasswordInp
 const chooseCertificateRef = useTemplateRef<InstanceType<typeof ChooseCertificate>>('chooseCertificate');
 const openBaoClient = ref<undefined | OpenBaoClient>(undefined);
 const smartcardAvailable = ref(false);
+const querying = ref(false);
 
 const error = ref('');
 
@@ -280,6 +288,10 @@ async function areFieldsCorrect(): Promise<boolean> {
 }
 
 async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> {
+  if (querying.value) {
+    window.electronAPI.log('warn', 'Clicked on SSO login while already login in');
+    return;
+  }
   if (!props.serverConfig?.openbao) {
     error.value = 'Authentication.openBaoUnavailable';
     window.electronAPI.log('error', 'OpenBao not enabled on this server');
@@ -291,17 +303,22 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
     window.electronAPI.log('error', `Provider '${provider}' selected but is not available in server config`);
     return;
   }
-  const result = await openBaoConnect(
-    props.serverConfig.openbao.serverUrl,
-    auth.tag,
-    auth.mountPath,
-    props.serverConfig.openbao.secret.mountPath,
-  );
-  if (!result.ok) {
-    error.value = 'Authentication.invalidOpenBaoData';
-    window.electronAPI.log('error', `Error while connecting with SSO: ${JSON.stringify(result.error)}`);
-  } else {
-    openBaoClient.value = result.value;
+  try {
+    querying.value = true;
+    const result = await openBaoConnect(
+      props.serverConfig.openbao.serverUrl,
+      auth.tag,
+      auth.mountPath,
+      props.serverConfig.openbao.secret.mountPath,
+    );
+    if (!result.ok) {
+      error.value = 'Authentication.invalidOpenBaoData';
+      window.electronAPI.log('error', `Error while connecting with SSO: ${JSON.stringify(result.error)}`);
+    } else {
+      openBaoClient.value = result.value;
+    }
+  } finally {
+    querying.value = false;
   }
 }
 </script>
@@ -386,6 +403,18 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
     box-shadow: none;
     padding: 0 0.25rem;
     background: none;
+  }
+}
+
+.provider-card {
+  position: relative;
+  margin-top: 1.25rem;
+
+  .provider-card-spinner {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    transform: translate(-50%, -50%);
   }
 }
 </style>
