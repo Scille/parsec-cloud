@@ -19,7 +19,11 @@ from parsec._parsec import (
     anonymous_cmds,
     authenticated_cmds,
 )
-from parsec.components.pki import PkiEnrollmentInfoCancelled, PkiEnrollmentInfoSubmitted
+from parsec.components.pki import (
+    PkiEnrollmentInfoCancelled,
+    PkiEnrollmentInfoSubmitted,
+    parse_pki_cert,
+)
 from parsec.events import EventPinged, EventPkiEnrollment
 from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester, TestPki
 from tests.common.utils import generate_new_device_certificates, generate_new_user_certificates
@@ -355,8 +359,7 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
         ).dump(),
         payload_signature=b"<accept payload signature>",
         payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
-        accepter_der_x509_certificate=test_pki.cert["alice"].der_certificate,
-        accepter_intermediate_der_x509_certificates=[],
+        accepter_trustchain=[parse_pki_cert(test_pki.cert["alice"].der_certificate)],
         submitter_user_certificate=user_certificates.signed_certificate,
         submitter_redacted_user_certificate=user_certificates.signed_redacted_certificate,
         submitter_device_certificate=device_certificates.signed_certificate,

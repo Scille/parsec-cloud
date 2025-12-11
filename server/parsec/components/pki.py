@@ -302,8 +302,7 @@ class BasePkiEnrollmentComponent:
         payload: bytes,
         payload_signature: bytes,
         payload_signature_algorithm: PkiSignatureAlgorithm,
-        accepter_der_x509_certificate: bytes,
-        accepter_intermediate_der_x509_certificates: list[bytes],
+        accepter_trustchain: list[PkiCertificate],
         submitter_user_certificate: bytes,
         submitter_redacted_user_certificate: bytes,
         submitter_device_certificate: bytes,
@@ -543,6 +542,21 @@ class BasePkiEnrollmentComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.pki_enrollment_accept.Req,
     ) -> authenticated_cmds.latest.pki_enrollment_accept.Rep:
+        trustchain = await self.build_trustchain(
+            req.accepter_der_x509_certificate,
+            req.accepter_intermediate_der_x509_certificates,
+        )
+        match trustchain:
+            case PkiTrustchainError.TrustchainTooLong:
+                return authenticated_cmds.latest.pki_enrollment_accept.RepInvalidX509Trustchain()
+
+            case PkiTrustchainError.ParseError:
+                return (
+                    authenticated_cmds.latest.pki_enrollment_accept.RepInvalidDerX509Certificate()
+                )
+            case trustchain:
+                pass
+
         outcome = await self.accept(
             now=DateTime.now(),
             organization_id=client_ctx.organization_id,
@@ -552,8 +566,7 @@ class BasePkiEnrollmentComponent:
             payload=req.payload,
             payload_signature=req.payload_signature,
             payload_signature_algorithm=req.payload_signature_algorithm,
-            accepter_der_x509_certificate=req.accepter_der_x509_certificate,
-            accepter_intermediate_der_x509_certificates=req.accepter_intermediate_der_x509_certificates,
+            accepter_trustchain=trustchain,
             submitter_device_certificate=req.submitter_device_certificate,
             submitter_user_certificate=req.submitter_user_certificate,
             submitter_redacted_device_certificate=req.submitter_redacted_device_certificate,

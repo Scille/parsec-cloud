@@ -15,6 +15,7 @@ from parsec._parsec import (
 )
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.pki import (
+    PkiCertificate,
     PkiEnrollmentAcceptStoreBadOutcome,
     PkiEnrollmentAcceptValidateBadOutcome,
     pki_enrollment_accept_validate,
@@ -73,7 +74,7 @@ async def pki_accept(
     payload: bytes,
     payload_signature: bytes,
     payload_signature_algorithm: PkiSignatureAlgorithm,
-    accepter_der_x509_certificate: bytes,
+    accepter_trustchain: list[PkiCertificate],
     submitter_user_certificate: bytes,
     submitter_redacted_user_certificate: bytes,
     submitter_device_certificate: bytes,
@@ -245,7 +246,7 @@ async def pki_accept(
             author_internal_id=db_common.device_internal_id,
             new_device_internal_id=new_device_internal_id,
             now=now,
-            accepter_der_x509_certificate=accepter_der_x509_certificate,
+            accepter_der_x509_certificate=accepter_trustchain[0].content,
             accept_payload_signature=payload_signature,
             accept_payload_signature_algorithm=payload_signature_algorithm.str,
             accept_payload=payload,

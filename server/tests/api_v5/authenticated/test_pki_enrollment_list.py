@@ -132,7 +132,7 @@ async def test_authenticated_pki_enrollment_list_ok(
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         author_verify_key=coolorg.alice.signing_key.verify_key,
-        **generate_accept_params(coolorg, to_accept.enrollment_id, test_pki),
+        **generate_accept_params(coolorg, to_accept.enrollment_id, test_pki).__dict__,
     )
     assert isinstance(outcome, tuple)
 
