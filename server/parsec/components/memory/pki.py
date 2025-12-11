@@ -46,7 +46,6 @@ from parsec.components.pki import (
     PkiEnrollmentRejectBadOutcome,
     PkiEnrollmentSubmitBadOutcome,
     PkiEnrollmentSubmitX509CertificateAlreadySubmitted,
-    PkiTrustchainError,
     pki_enrollment_accept_validate,
 )
 from parsec.events import EventCommonCertificate, EventPkiEnrollment
@@ -344,8 +343,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         payload: bytes,
         payload_signature: bytes,
         payload_signature_algorithm: PkiSignatureAlgorithm,
-        accepter_der_x509_certificate: bytes,
-        accepter_intermediate_der_x509_certificates: list[bytes],
+        accepter_trustchain: list[PkiCertificate],
         submitter_user_certificate: bytes,
         submitter_redacted_user_certificate: bytes,
         submitter_device_certificate: bytes,
@@ -400,21 +398,8 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 case error:
                     return error
 
-            # 3) Build trust chain
-            trustchain = await self.build_trustchain(
-                accepter_der_x509_certificate,
-                accepter_intermediate_der_x509_certificates,
-            )
-            match trustchain:
-                case PkiTrustchainError.TrustchainTooLong:
-                    return PkiEnrollmentAcceptStoreBadOutcome.INVALID_X509_TRUSTCHAIN
-
-                case PkiTrustchainError.ParseError:
-                    return PkiEnrollmentAcceptStoreBadOutcome.INVALID_DER_X509_CERTIFICATE
-
-                case trustchain:
-                    # store trustchain
-                    await org.save_trustchain(trustchain)
+            # 3) Save trustchain
+            await org.save_trustchain(accepter_trustchain)
 
             # 4) Ensure we are not breaking causality by adding a newer timestamp.
 
@@ -475,7 +460,8 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 accept_payload=payload,
                 accept_payload_signature=payload_signature,
                 accept_payload_signature_algorithm=payload_signature_algorithm,
-                accepter_der_x509_certificate=accepter_der_x509_certificate,
+                # TODO: Should be a fingerprint
+                accepter_der_x509_certificate=accepter_trustchain[0].content,
             )
 
             await self._event_bus.send(
