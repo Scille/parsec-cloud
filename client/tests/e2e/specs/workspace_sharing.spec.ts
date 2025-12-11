@@ -8,9 +8,10 @@ for (const displaySize of ['small', 'large']) {
       await (workspaceSharingModal.page() as MsPage).setDisplaySize(DisplaySize.Small);
     }
 
-    await expect(workspaceSharingModal.locator('.ms-modal-header__title')).toHaveText('wksp1');
+    await expect(workspaceSharingModal.locator('.ms-modal-header__title')).toHaveText('Share the workspace');
+    await expect(workspaceSharingModal.locator('.sharing-modal__title')).toHaveText('wksp1');
     const content = workspaceSharingModal.locator('.ms-modal-content');
-    await expect(content.locator('.only-owner-warning')).toBeVisible();
+    await expect(content.locator('#only-owner-warning')).toBeVisible();
     const users = content.locator('.user-member-item');
     await expect(users).toHaveCount(2);
     await expect(users.locator('.person-name')).toHaveText(['Alicey McAliceFace', 'Boby McBobFace']);
@@ -169,10 +170,10 @@ msTest('Batch workspace sharing', async ({ workspaceSharingModal }) => {
   const activateBatchButton = content.locator('#batch-activate-button');
   const membersCheckbox = content.locator('#all-members-checkbox');
 
-  await expect(content.locator('#profile-assign-info')).not.toBeVisible();
-  await expect(batchDropdown).not.toBeVisible();
+  await expect(content.locator('#profile-assign-info')).toBeVisible();
+  await expect(batchDropdown).toBeHidden();
   await expect(activateBatchButton).toContainText('Multiple selection');
-  await expect(membersCheckbox).not.toBeVisible();
+  await expect(membersCheckbox).toBeHidden();
 
   // Share with non-external users
   await activateBatchButton.click();
@@ -193,10 +194,10 @@ msTest('Batch workspace sharing', async ({ workspaceSharingModal }) => {
   await roles.nth(4).click();
   await expect(workspaceSharingModal.page()).toShowToast('The workspace is no longer shared with selected members.', 'Success');
 
-  await expect(content.locator('#profile-assign-info')).not.toBeVisible();
-  await expect(batchDropdown).not.toBeVisible();
+  await expect(content.locator('#profile-assign-info')).toBeVisible();
+  await expect(batchDropdown).toBeHidden();
   await expect(activateBatchButton).toContainText('Multiple selection');
-  await expect(membersCheckbox).not.toBeVisible();
+  await expect(membersCheckbox).toBeHidden();
 
   // Check external user restriction
   await activateBatchButton.click();
@@ -215,9 +216,9 @@ msTest('Batch workspace sharing', async ({ workspaceSharingModal }) => {
   }
   await roles.nth(2).click();
   await expect(workspaceSharingModal.page()).toShowToast("Selected members' roles have been updated to Contributor.", 'Success');
-  await expect(batchDropdown).not.toBeVisible();
+  await expect(batchDropdown).toBeHidden();
   await expect(activateBatchButton).toContainText('Multiple selection');
-  await expect(membersCheckbox).not.toBeVisible();
+  await expect(membersCheckbox).toBeHidden();
 });
 
 msTest('Batch workspace sharing hidden when reader', async ({ home }) => {

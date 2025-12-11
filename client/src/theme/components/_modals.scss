@@ -591,7 +591,8 @@
     }
 
     &-header {
-      padding: 2rem 2rem 1rem;
+      padding: 2rem 2rem 0;
+      margin-bottom: 0.5rem;
 
       @include ms.responsive-breakpoint('sm') {
         padding: 0;

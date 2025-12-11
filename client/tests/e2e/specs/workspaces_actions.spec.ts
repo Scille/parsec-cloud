@@ -184,7 +184,8 @@ for (const mode of ['grid', 'list', 'sidebar']) {
     const popover = workspaces.locator('.workspace-context-menu');
     await popover.getByRole('listitem').nth(5).click();
     await expect(workspaces.locator('.workspace-sharing-modal')).toBeVisible();
-    await expect(workspaces.locator('.workspace-sharing-modal').locator('.ms-modal-header__title')).toHaveText('wksp1');
+    await expect(workspaces.locator('.ms-modal-header__title')).toHaveText('Share the workspace');
+    await expect(workspaces.locator('.sharing-modal__title')).toHaveText('wksp1');
   });
 }
 
