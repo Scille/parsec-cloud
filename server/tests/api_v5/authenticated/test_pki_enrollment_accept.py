@@ -340,12 +340,10 @@ async def test_authenticated_pki_enrollment_accept_require_greater_timestamp(
     )
 
 
-# TODO # 11720
 async def test_authenticated_pki_enrollment_accept_invalid_der_x509_certificate(
     coolorg: CoolorgRpcClients,
     enrollment_id: PKIEnrollmentID,
     test_pki: TestPki,
-    xfail_if_postgresql: None,
 ) -> None:
     now = DateTime.now()
 
