@@ -276,6 +276,24 @@ msTest('Check no create workspace button as external', async ({ workspacesExtern
   await expect(workspacesExternal.locator('#new-workspace')).toBeHidden();
 });
 
+msTest('Create new workspace name too long', async ({ workspaces }) => {
+  await expect(workspaces.locator('.workspace-card-content__title')).toHaveText(['wksp1']);
+  await workspaces.locator('#workspaces-ms-action-bar').getByText('New workspace').click();
+  const modal = workspaces.locator('.text-input-modal');
+  await expect(modal).toBeVisible();
+  const okButton = modal.locator('.ms-modal-footer-buttons').locator('#next-button');
+  await fillIonInput(modal.locator('ion-input'), 'A'.repeat(132));
+  await expect(modal.locator('.form-error')).toBeVisible();
+  await expect(modal.locator('.form-error')).toHaveText('Workspace name is too long, limit is 128 characters.');
+  await fillIonInput(modal.locator('ion-input'), 'A'.repeat(64));
+  await expect(modal.locator('.form-error')).toBeHidden();
+  await expect(okButton).toBeTrulyEnabled();
+  await okButton.click();
+  await expect(modal).toBeHidden();
+  await expect(workspaces).toShowToast(`The workspace '${'A'.repeat(64)}' has been created!`, 'Success');
+  await expect(workspaces.locator('.workspace-card-content__title')).toHaveText(['A'.repeat(64), 'wksp1']);
+});
+
 msTest('Create new workspace with similar name', async ({ workspaces }) => {
   await expect(workspaces.locator('.workspace-card-content__title')).toHaveText(['wksp1']);
   await workspaces.locator('#workspaces-ms-action-bar').getByText('New workspace').click();

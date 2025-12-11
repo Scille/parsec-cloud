@@ -1806,6 +1806,12 @@
             "tooLong": "Le nom est trop long, la limite est de 32 symboles.",
             "forbiddenCharacters": "Lettres, chiffres, tirets et tirets bas seulement. Aucun espace. Limité à 32 symboles."
         },
+        "workspaceName": {
+            "tooLong": "Le nom de l'espace est trop long, la limite est de {limit} symboles."
+        },
+        "fileName": {
+            "tooLong": "Le nom du fichier est trop long, la limite est de {limit} symboles."
+        },
         "claimLink": {
             "invalidProtocol": "Le lien doit commencer par 'parsec3://'.",
             "missingAction": "Le lien n'inclut pas d'action.",
