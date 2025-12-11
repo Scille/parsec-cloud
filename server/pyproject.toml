@@ -1,6 +1,6 @@
 [project]
 name = "parsec-cloud"
-version = "3.7.1"
+version = "3.7.2-a.0+dev"
 description = "Secure file sharing in the cloud"
 authors = [{ name = "Scille SAS", email = "contact@scille.fr" }]
 license = "BUSL-1.1"
