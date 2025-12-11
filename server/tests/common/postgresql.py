@@ -150,6 +150,22 @@ async def clear_postgresql_account_data() -> None:
     await execute_pg_queries(_pg_db_url, _Q_CLEAR_POSTGRESQL_ACCOUNT_DATA)
 
 
+_Q_CLEAR_POSTGRESQL_PKI_CERTIFICATE_DATA = """
+TRUNCATE TABLE pki_certificate;
+"""
+
+
+async def clear_postgresql_pki_certificate_data() -> None:
+    """
+    Unlike for organizations, pki_certificates are global across the whole database,
+    hence each test involving account need to start by clearing those data.
+
+    This is typically done by the `clear_pki_certificate_data` fixture.
+    """
+    assert _pg_db_url is not None
+    await execute_pg_queries(_pg_db_url, _Q_CLEAR_POSTGRESQL_PKI_CERTIFICATE_DATA)
+
+
 def get_postgresql_url() -> str | None:
     return _pg_db_url
 

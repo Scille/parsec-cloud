@@ -26,7 +26,7 @@ from tests.common import (
 
 
 async def test_authenticated_pki_enrollment_list_ok(
-    coolorg: CoolorgRpcClients, backend: Backend, test_pki: TestPki, xfail_if_postgresql: None
+    coolorg: CoolorgRpcClients, backend: Backend, test_pki: TestPki, clear_pki_certificate
 ) -> None:
     # 1) Check with no enrollments available
 
@@ -39,19 +39,8 @@ async def test_authenticated_pki_enrollment_list_ok(
         authenticated_cmds.latest.pki_enrollment_list.PkiEnrollmentListItem
     ] = []
 
-    # leaf subject -> (intermediate subject, root subject)
-    certs = {
-        "alice": ("", "black_mesa"),
-        "mallory-encrypt": ("glados_dev_team", "aperture_science"),
-        "bob": ("", "black_mesa"),
-        "old-boby": ("", "black_mesa"),
-    }
-    every_cert = (
-        [test_pki.cert[x] for x in ["alice", "mallory-encrypt", "bob", "old-boby"]]
-        + [test_pki.intermediate["glados_dev_team"]]
-        + [test_pki.root[x] for x in ["black_mesa", "aperture_science"]]
-    )
-    for subject, (i_cert, root_cert) in certs.items():
+    every_cert = [*test_pki.cert.values(), *test_pki.intermediate.values(), *test_pki.root.values()]
+    for subject in ("alice", "mallory-encrypt", "bob", "old-boby"):
         enrollment_id = PKIEnrollmentID.new()
         submitted_on = DateTime.now()
         human_handle = HumanHandle(
@@ -63,35 +52,23 @@ async def test_authenticated_pki_enrollment_list_ok(
             device_label=DeviceLabel("Dev1"),
         ).dump()
 
-        if len(i_cert) > 0:
-            i_certs = [
-                test_pki.cert[subject],
-                test_pki.intermediate[i_cert],
-                test_pki.root[root_cert],
-            ]
-
-        else:
-            i_certs = [
-                test_pki.cert[subject],
-                test_pki.root[root_cert],
-            ]
-        intermediate_der_x509_certificates = [cert.der_certificate for cert in i_certs]
+        trustchain = await backend.pki.build_trustchain(
+            test_pki.cert[subject].der_certificate, (x.der_certificate for x in every_cert)
+        )
+        assert isinstance(trustchain, list)
 
         expected_enrollment_item = (
             authenticated_cmds.latest.pki_enrollment_list.PkiEnrollmentListItem(
                 enrollment_id=enrollment_id,
                 submitted_on=submitted_on,
-                der_x509_certificate=test_pki.cert[subject].der_certificate,
-                intermediate_der_x509_certificates=intermediate_der_x509_certificates,
+                der_x509_certificate=trustchain[0].content,
+                intermediate_der_x509_certificates=list(map(lambda x: x.content, trustchain[1:])),
                 payload_signature=f"<user {subject} submit payload signature>".encode(),
                 payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
                 payload=submit_payload,
             )
         )
-        trustchain = await backend.pki.build_trustchain(
-            expected_enrollment_item.der_x509_certificate, (x.der_certificate for x in every_cert)
-        )
-        assert isinstance(trustchain, list)
+
         outcome = await backend.pki.submit(
             now=submitted_on,
             organization_id=coolorg.organization_id,

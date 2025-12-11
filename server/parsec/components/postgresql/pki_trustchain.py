@@ -63,6 +63,11 @@ class PGPkiCertificate:
     signed_by: bytes | None
     der_content: bytes
 
+    def __repr__(self) -> str:
+        fingerprint = self.sha256_fingerprint.hex()
+        signed_by = self.signed_by.hex() if self.signed_by else None
+        return f"{self.__class__.__qualname__}({fingerprint=}, {signed_by=})"
+
 
 async def get_trustchain(
     conn: AsyncpgConnection, leaf_fingerprint: bytes

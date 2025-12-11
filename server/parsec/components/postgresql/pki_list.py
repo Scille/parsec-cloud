@@ -1,6 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
+from hashlib import sha256
+
 from parsec._parsec import (
     DateTime,
     DeviceID,
@@ -14,6 +16,7 @@ from parsec.components.pki import (
     PkiEnrollmentListItem,
 )
 from parsec.components.postgresql import AsyncpgConnection
+from parsec.components.postgresql.pki_trustchain import get_trustchain
 from parsec.components.postgresql.queries import (
     AuthNoLockBadOutcome,
     AuthNoLockData,
@@ -77,6 +80,7 @@ async def pki_list(
             case _:
                 assert False, row
 
+        # TODO: Should be a fingerprint https://github.com/Scille/parsec-cloud/issues/11914
         match row["submitter_der_x509_certificate"]:
             case bytes() as der_x509_certificate:
                 pass
@@ -103,13 +107,15 @@ async def pki_list(
             case _:
                 assert False, row
 
+        submitter_x509_sha256_fingerprint = sha256(der_x509_certificate).digest()
+        leaf, *intermediate = await get_trustchain(conn, submitter_x509_sha256_fingerprint)
+
         items.append(
             PkiEnrollmentListItem(
                 enrollment_id=enrollment_id,
                 submitted_on=submitted_on,
-                der_x509_certificate=der_x509_certificate,
-                # TODO: https://github.com/Scille/parsec-cloud/issues/11564
-                intermediate_der_x509_certificates=[],
+                der_x509_certificate=leaf.der_content,
+                intermediate_der_x509_certificates=list(map(lambda x: x.der_content, intermediate)),
                 payload_signature=payload_signature,
                 payload_signature_algorithm=payload_signature_algorithm,
                 payload=payload,
