@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Locator, Page } from '@playwright/test';
-import { DEFAULT_USER_INFORMATION, expect, fillIonInput, logout, msTest, openExternalLink } from '@tests/e2e/helpers';
+import { DEFAULT_USER_INFORMATION, expect, fillIonInput, logout, MsPage, msTest, openExternalLink } from '@tests/e2e/helpers';
 import { randomInt } from 'crypto';
 
 async function openCreateOrganizationModal(page: Page): Promise<Locator> {
@@ -113,6 +113,84 @@ msTest('Go through custom org creation process, auth SSO', async ({ home }) => {
 
   await home.release();
 });
+
+async function mockSSOServer(page: MsPage, error: 'timeout' | '400'): Promise<void> {
+  await page.route('**/testbed/mock/openbao/v1/auth/pro_connect/oidc/auth_url', async (route) => {
+    if (error === 'timeout') {
+      await page.waitForTimeout(500);
+      await route.abort('timedout');
+    } else if (error === '400') {
+      await route.fulfill({ status: 400 });
+    } else {
+      await route.continue();
+    }
+  });
+}
+
+for (const error of ['timeout', '400', 'popup']) {
+  msTest(`Custom org creation with SSO error ${error}`, async ({ home }) => {
+    const modal = await openCreateOrganizationModal(home);
+
+    const uniqueOrgName = `${home.orgInfo.name}-${randomInt(2 ** 47)}`;
+    const orgServerContainer = modal.locator('.organization-name-and-server-page');
+    const orgNext = orgServerContainer.locator('.organization-name-and-server-page-footer').locator('ion-button').nth(1);
+    await fillIonInput(orgServerContainer.locator('ion-input').nth(0), uniqueOrgName);
+    await fillIonInput(orgServerContainer.locator('ion-input').nth(1), home.orgInfo.serverAddr);
+    await expect(orgNext).toNotHaveDisabledAttribute();
+    await orgNext.click();
+    await expect(orgServerContainer).toBeHidden();
+
+    const userInfoContainer = modal.locator('.user-information-page');
+    const userNext = modal.locator('.user-information-page-footer').locator('ion-button').nth(1);
+    await expect(userInfoContainer).toBeVisible();
+    await expect(userInfoContainer.locator('.modal-header-title__text')).toHaveText('Enter your personal information');
+    await fillIonInput(userInfoContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.name);
+    await fillIonInput(userInfoContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.email);
+    await expect(userNext).toNotHaveDisabledAttribute();
+    await userNext.click();
+
+    const authContainer = modal.locator('.authentication-page');
+    const authNext = modal.locator('.authentication-page-footer').locator('ion-button').nth(1);
+    await expect(userInfoContainer).toBeHidden();
+    await expect(authContainer).toBeVisible();
+    await expect(authContainer.locator('.modal-header-title__text')).toHaveText('Authentication');
+
+    const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
+    await expect(authRadio).toHaveCount(3);
+    await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
+    await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
+    await expect(authRadio.nth(1)).toHaveText('Password');
+    await expect(authRadio.nth(2).locator('.authentication-card-text__title')).toHaveText('Single Sign-On');
+    await expect(authRadio.nth(2).locator('.authentication-card-text__description')).toHaveText('Login with an external account');
+    await authRadio.nth(2).click();
+    await expect(authContainer.locator('.proconnect-button')).toBeVisible();
+    await expect(modal.locator('.proconnect-group--connected')).toBeHidden();
+    await expect(authNext).toBeTrulyDisabled();
+
+    const formError = authContainer.locator('.choose-auth-choice').locator('.form-error');
+    await expect(formError).toBeHidden();
+
+    if (error === 'popup') {
+      // Cannot set the permissions. Instead we simulate window.open returning null.
+      home.evaluate(() => {
+        window.open = () => null;
+      });
+    } else {
+      await mockSSOServer(home, error as any);
+    }
+
+    await authContainer.locator('.proconnect-button').click();
+
+    if (error === 'timeout') {
+      await expect(authContainer.locator('.authentication-card')).toHaveTheClass('authentication-card--disabled');
+      await expect(authContainer.locator('.authentication-card').locator('.authentication-card__update-button')).toBeTrulyDisabled();
+    }
+
+    await expect(authNext).toBeTrulyDisabled();
+    await expect(formError).toBeVisible();
+    await expect(formError).toHaveText('The SSO configuration provided by the server is invalid. Please contact an administrator.');
+  });
+}
 
 msTest('Check ProConnect link', async ({ home }) => {
   const modal = await openCreateOrganizationModal(home);

@@ -50,12 +50,20 @@
             :error-message="errorMessage"
             ref="currentPasswordInput"
           />
-          <sso-provider-card
+          <div
+            class="provider-card"
             v-if="currentDevice.ty.tag === AvailableDeviceTypeTag.OpenBao"
-            :provider="(currentDevice.ty as AvailableDeviceTypeOpenBao).openbaoPreferredAuthId as OpenBaoAuthConfigTag"
-            :is-connected="openBaoClient !== undefined"
-            @sso-selected="onSSOLoginClicked"
-          />
+          >
+            <sso-provider-card
+              :provider="(currentDevice.ty as AvailableDeviceTypeOpenBao).openbaoPreferredAuthId as OpenBaoAuthConfigTag"
+              :is-connected="openBaoClient !== undefined"
+              @sso-selected="onSSOLoginClicked"
+            />
+            <ms-spinner
+              v-if="querying"
+              class="provider-card-spinner"
+            />
+          </div>
         </div>
         <div
           v-show="pageStep === ChangeAuthenticationStep.ChooseNewAuthMethod"
@@ -211,6 +219,10 @@ const canGoForward = asyncComputed(async () => {
 });
 
 async function onSSOLoginClicked(): Promise<void> {
+  if (querying.value) {
+    window.electronAPI.log('warn', 'Clicked on SSO login while already login in');
+    return;
+  }
   if (!props.serverConfig || !props.serverConfig.openbao) {
     window.electronAPI.log('error', 'Server config or current device not found');
     return;
@@ -225,16 +237,21 @@ async function onSSOLoginClicked(): Promise<void> {
     window.electronAPI.log('error', `Provider '${provider}' selected but is not available in server config`);
     return;
   }
-  const result = await openBaoConnect(
-    props.serverConfig.openbao.serverUrl,
-    auth.tag,
-    auth.mountPath,
-    props.serverConfig.openbao.secret.mountPath,
-  );
-  if (!result.ok) {
-    window.electronAPI.log('error', `Error while connecting with SSO: ${JSON.stringify(result.error)}`);
-  } else {
-    openBaoClient.value = result.value;
+  try {
+    querying.value = true;
+    const result = await openBaoConnect(
+      props.serverConfig.openbao.serverUrl,
+      auth.tag,
+      auth.mountPath,
+      props.serverConfig.openbao.secret.mountPath,
+    );
+    if (!result.ok) {
+      window.electronAPI.log('error', `Error while connecting with SSO: ${JSON.stringify(result.error)}`);
+    } else {
+      openBaoClient.value = result.value;
+    }
+  } finally {
+    querying.value = false;
   }
 }
 
@@ -323,5 +340,17 @@ async function cancel(): Promise<boolean> {
   width: 1rem;
   height: 1rem;
   margin-left: 0.5rem;
+}
+
+.provider-card {
+  position: relative;
+  margin-top: 1.25rem;
+
+  .provider-card-spinner {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    transform: translate(-50%, -50%);
+  }
 }
 </style>
