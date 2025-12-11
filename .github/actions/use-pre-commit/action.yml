@@ -52,9 +52,19 @@ runs:
       shell: bash -eux {0}
       run: |
         mkdir -p ${{ inputs.install-dir }}
-        curl --proto '=https' --tlsv1.2 -sSL \
+        MAX_TRIES=5
+        tries=0
+        until wget \
           https://github.com/pre-commit/pre-commit/releases/download/v${{ inputs.version }}/pre-commit-${{ inputs.version }}.pyz \
-          > ${{ inputs.install-dir }}/pre-commit.pyz
+          -O ${{ inputs.install-dir }}/pre-commit.pyz; do
+          tries=$((tries + 1))
+          if [ $tries -gt $MAX_TRIES ]; then
+            echo "Too many retries"
+            exit 1
+          fi
+          echo "Download failed, retrying in 5sec"
+          sleep 5
+        done
 
     - name: Debug installed python package
       run: |
