@@ -4,8 +4,8 @@ History
 .. towncrier release notes start
 
 
-Parsec v3.7.1-rc.2 (2025-12-10)
--------------------------------
+Parsec v3.7.1 (2025-12-11)
+--------------------------
 
 Features
 ~~~~~~~~
@@ -34,19 +34,6 @@ Bugfixes
 * Fixed broken navigation when accessing a folder that was not available
   locally.
   (`#11823 <https://github.com/Scille/parsec-cloud/issues/11823>`__)
-
-
-
-Parsec v3.7.1-rc.1 (2025-12-02)
--------------------------------
-
-No significant changes.
-
-
-Parsec v3.7.1-rc.0 (2025-12-02)
--------------------------------
-
-No significant changes.
 
 
 Parsec v3.7.0 (2025-11-28)
