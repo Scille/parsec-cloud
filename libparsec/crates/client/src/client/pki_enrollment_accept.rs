@@ -55,6 +55,11 @@ pub async fn accept(
             info.human_handle()
                 .context("Missing human handle from submitter certificate")
         })?;
+    let accepter_intermediate_certs =
+        libparsec_platform_pki::get_intermediate_certs_for_cert(accepter_cert_ref, DateTime::now())
+            .map_err(anyhow::Error::from)
+            .context("Failed to get intermediate certificates for itself")
+            .map_err(PkiEnrollmentAcceptError::PkiOperationError)?;
 
     loop {
         let outcome = accept_internal(
@@ -64,6 +69,7 @@ pub async fn accept(
             Accepter {
                 cert_ref: accepter_cert_ref,
                 der_cert: &accepter_der_x509_certificate,
+                intermediate_der_certs: &accepter_intermediate_certs,
             },
             Submitter {
                 payload: submit_payload.clone(),
@@ -89,6 +95,7 @@ pub async fn accept(
 struct Accepter<'a> {
     cert_ref: &'a X509CertificateReference,
     der_cert: &'a [u8],
+    intermediate_der_certs: &'a [Bytes],
 }
 
 struct Submitter {
@@ -131,8 +138,7 @@ async fn accept_internal(
         .send(Req {
             enrollment_id,
             accepter_der_x509_certificate: Bytes::copy_from_slice(accepter.der_cert),
-            // TODO: https://github.com/Scille/parsec-cloud/issues/11671
-            accepter_intermediate_der_x509_certificates: vec![],
+            accepter_intermediate_der_x509_certificates: accepter.intermediate_der_certs.to_vec(),
             payload,
             payload_signature: payload_signature.signature,
             payload_signature_algorithm: payload_signature.algo,
