@@ -199,8 +199,8 @@ impl PrivateKey {
         Ok(SecretKey::try_from(&raw_512[..Self::SIZE]).expect("valid size"))
     }
 
-    pub fn to_bytes(&self) -> [u8; KEY_SIZE] {
-        self.0.to_bytes()
+    pub fn to_bytes(&self) -> zeroize::Zeroizing<[u8; KEY_SIZE]> {
+        self.0.to_bytes().into()
     }
 }
 

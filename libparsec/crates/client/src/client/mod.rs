@@ -97,11 +97,16 @@ pub use crate::certif::{
     WorkspaceUserAccessInfo,
 };
 pub use crate::invite::{
+    AcceptAsyncEnrollmentError as ClientAcceptAsyncEnrollmentError,
+    AcceptAsyncEnrollmentIdentityStrategy, AsyncEnrollmentUntrusted,
     CancelInvitationError as ClientCancelInvitationError, DeviceGreetInitialCtx,
-    InvitationEmailSentStatus, InviteListItem, ListInvitationsError as ClientListInvitationsError,
+    InvitationEmailSentStatus, InviteListItem,
+    ListAsyncEnrollmentsError as ClientListAsyncEnrollmentsError,
+    ListInvitationsError as ClientListInvitationsError,
     NewDeviceInvitationError as ClientNewDeviceInvitationError,
     NewShamirRecoveryInvitationError as ClientNewShamirRecoveryInvitationError,
-    NewUserInvitationError as ClientNewUserInvitationError, ShamirRecoveryGreetInitialCtx,
+    NewUserInvitationError as ClientNewUserInvitationError,
+    RejectAsyncEnrollmentError as ClientRejectAsyncEnrollmentError, ShamirRecoveryGreetInitialCtx,
     UserGreetInitialCtx,
 };
 pub use crate::workspace::WorkspaceOps;
@@ -738,6 +743,43 @@ impl Client {
             accepter_cert_ref,
             submitter_der_cert,
             submit_payload,
+        )
+        .await
+    }
+
+    pub async fn async_enrollment_get_addr(&self) -> ParsecAsyncEnrollmentAddr {
+        ParsecAsyncEnrollmentAddr::new(
+            self.device.organization_addr.clone(),
+            self.device.organization_id().to_owned(),
+        )
+    }
+
+    pub async fn list_async_enrollments(
+        &self,
+    ) -> Result<Vec<AsyncEnrollmentUntrusted>, ClientListAsyncEnrollmentsError> {
+        crate::invite::list_async_enrollments(&self.cmds).await
+    }
+
+    pub async fn reject_async_enrollment(
+        &self,
+        enrollment_id: AsyncEnrollmentID,
+    ) -> Result<(), ClientRejectAsyncEnrollmentError> {
+        crate::invite::reject_async_enrollment(&self.cmds, enrollment_id).await
+    }
+
+    pub async fn accept_async_enrollment(
+        &self,
+        profile: UserProfile,
+        enrollment_id: AsyncEnrollmentID,
+        identity_strategy: &dyn AcceptAsyncEnrollmentIdentityStrategy,
+    ) -> Result<(), ClientAcceptAsyncEnrollmentError> {
+        crate::invite::accept_async_enrollment(
+            &self.cmds,
+            &self.event_bus,
+            &self.device,
+            enrollment_id,
+            profile,
+            identity_strategy,
         )
         .await
     }

@@ -253,7 +253,7 @@ impl CrcHash for HashDigest {
 impl CrcHash for SigningKey {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
         hasher.update(b"SigningKey");
-        hasher.update(&self.to_bytes());
+        hasher.update(self.to_bytes().as_ref());
     }
 }
 
@@ -267,7 +267,7 @@ impl CrcHash for VerifyKey {
 impl CrcHash for PrivateKey {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
         hasher.update(b"PrivateKey");
-        hasher.update(&self.to_bytes());
+        hasher.update(self.to_bytes().as_ref());
     }
 }
 
