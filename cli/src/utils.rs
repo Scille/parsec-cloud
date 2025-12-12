@@ -253,6 +253,13 @@ pub async fn load_and_unlock_device(
             //     key_file: device.key_file_path.clone(),
             // }
         }
+        AvailableDeviceType::PKI => {
+            todo!("read PKI #11270");
+            // DeviceAccessStrategy::PKI {
+            //     certificate_reference: todo!(),
+            //     key_file: device.key_file_path.clone(),
+            // }
+        }
         AvailableDeviceType::Keyring => DeviceAccessStrategy::Keyring {
             key_file: device.key_file_path.clone(),
         },
