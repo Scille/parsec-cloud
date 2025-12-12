@@ -3,8 +3,8 @@
 use crate::{
     encrypt_message,
     errors::{
-        InvalidPemContent, LoadAnswerPayloadError, ValidatePayloadError, VerifyCertificateError,
-        VerifySignatureError,
+        GetIntermediatesCertsForCertError, InvalidPemContent, LoadAnswerPayloadError,
+        ValidatePayloadError, VerifyCertificateError, VerifySignatureError,
     },
     get_der_encoded_certificate, EncryptedMessage, PkiSignatureAlgorithm,
 };
@@ -218,4 +218,30 @@ pub fn load_answer_payload(
         now,
     )?;
     PkiEnrollmentAnswerPayload::load(validated_payload).map_err(Into::into)
+}
+
+pub fn get_intermediate_certs_for_cert(
+    cert_ref: &X509CertificateReference,
+    now: DateTime,
+) -> Result<Vec<Bytes>, GetIntermediatesCertsForCertError> {
+    let trusted_anchor = crate::list_trusted_root_certificate_anchors()?;
+    let intermediate_certs = crate::list_intermediate_certificates()?;
+    let base_raw_cert = get_der_encoded_certificate(cert_ref)
+        .map(|v| Certificate::from_der_owned(v.der_content.into()))?;
+    let base_cert = base_raw_cert
+        .to_end_certificate()
+        .map_err(GetIntermediatesCertsForCertError::InvalidCertificateDer)?;
+
+    let path = verify_certificate(
+        &base_cert,
+        &trusted_anchor,
+        &intermediate_certs,
+        now,
+        KeyUsage::client_auth(),
+    )?;
+
+    Ok(path
+        .intermediate_certificates()
+        .map(|cert| cert.der().to_vec().into())
+        .collect())
 }
