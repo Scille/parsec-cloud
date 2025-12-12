@@ -98,6 +98,9 @@ pub async fn verify_untrusted_items(
         let root_certs = libparsec_platform_pki::list_trusted_root_certificate_anchors()
             .context("Failed to list trusted root certificates")
             .map_err(PkiEnrollmentListError::Internal)?;
+        let client_inter_certs = libparsec_platform_pki::list_intermediate_certificates()
+            .context("Failed to list trusted root certificates")
+            .map_err(PkiEnrollmentListError::Internal)?;
 
         // Obtain the root cert used by the PKI
         let base_raw_cert = libparsec_platform_pki::get_der_encoded_certificate(&cert_ref)
@@ -113,9 +116,7 @@ pub async fn verify_untrusted_items(
         let verified_path = libparsec_platform_pki::verify_certificate(
             &base_cert,
             &root_certs,
-            // TODO: list client intermediate certs
-            // https://github.com/Scille/parsec-cloud/issues/11760
-            &[],
+            &client_inter_certs,
             now,
             libparsec_platform_pki::KeyUsage::client_auth(),
         )
