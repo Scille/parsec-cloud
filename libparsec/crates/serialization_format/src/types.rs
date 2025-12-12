@@ -232,6 +232,7 @@ generate_field_type_enum!(
     UserID => libparsec_types::UserID,
     VlobID => libparsec_types::VlobID,
     PKIEnrollmentID => libparsec_types::PKIEnrollmentID,
+    AsyncEnrollmentID => libparsec_types::AsyncEnrollmentID,
     SequesterServiceID => libparsec_types::SequesterServiceID,
     AccountAuthMethodID => libparsec_types::AccountAuthMethodID,
     AccountVaultItemOpaqueKeyID => libparsec_types::AccountVaultItemOpaqueKeyID,

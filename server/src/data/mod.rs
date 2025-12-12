@@ -1,9 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+mod async_enrollment;
 mod certif;
 mod manifest;
 mod pki;
 
+pub(crate) use async_enrollment::*;
 pub(crate) use certif::*;
 pub(crate) use manifest::*;
 pub(crate) use pki::*;
@@ -49,6 +51,10 @@ pub(crate) fn add_mod(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PkiSignatureAlgorithm>()?;
     m.add_class::<X509Certificate>()?;
     m.add_class::<X509CertificateInformation>()?;
+
+    // Async enrollment
+    m.add_class::<AsyncEnrollmentSubmitPayload>()?;
+    m.add_class::<AsyncEnrollmentAcceptPayload>()?;
 
     Ok(())
 }

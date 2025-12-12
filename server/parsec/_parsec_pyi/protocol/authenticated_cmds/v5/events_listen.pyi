@@ -69,6 +69,11 @@ class APIEventPkiEnrollment(APIEvent):
         self,
     ) -> None: ...
 
+class APIEventAsyncEnrollment(APIEvent):
+    def __init__(
+        self,
+    ) -> None: ...
+
 class APIEventCommonCertificate(APIEvent):
     def __init__(self, timestamp: DateTime) -> None: ...
     @property

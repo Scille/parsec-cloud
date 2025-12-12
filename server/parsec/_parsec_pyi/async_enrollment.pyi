@@ -1,0 +1,53 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
+from __future__ import annotations
+
+from parsec._parsec_pyi.crypto import PublicKey, VerifyKey
+from parsec._parsec_pyi.enumerate import UserProfile
+from parsec._parsec_pyi.ids import DeviceID, DeviceLabel, HumanHandle, UserID
+
+class AsyncEnrollmentSubmitPayload:
+    def __init__(
+        self,
+        verify_key: VerifyKey,
+        public_key: PublicKey,
+        requested_device_label: DeviceLabel,
+        requested_human_handle: HumanHandle,
+    ) -> None: ...
+    @property
+    def verify_key(self) -> VerifyKey: ...
+    @property
+    def public_key(self) -> PublicKey: ...
+    @property
+    def requested_device_label(self) -> DeviceLabel: ...
+    @property
+    def requested_human_handle(self) -> HumanHandle: ...
+    @classmethod
+    def load(cls, raw: bytes) -> AsyncEnrollmentSubmitPayload: ...
+    def dump(self) -> bytes: ...
+
+class AsyncEnrollmentAcceptPayload:
+    def __init__(
+        self,
+        user_id: UserID,
+        device_id: DeviceID,
+        device_label: DeviceLabel,
+        human_handle: HumanHandle,
+        profile: UserProfile,
+        root_verify_key: VerifyKey,
+    ): ...
+    @property
+    def user_id(self) -> UserID: ...
+    @property
+    def device_id(self) -> DeviceID: ...
+    @property
+    def device_label(self) -> DeviceLabel: ...
+    @property
+    def human_handle(self) -> HumanHandle: ...
+    @property
+    def profile(self) -> UserProfile: ...
+    @property
+    def root_verify_key(self) -> VerifyKey: ...
+    @classmethod
+    def load(cls, raw: bytes) -> AsyncEnrollmentAcceptPayload: ...
+    def dump(self) -> bytes: ...

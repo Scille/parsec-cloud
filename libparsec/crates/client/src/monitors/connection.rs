@@ -121,6 +121,10 @@ fn dispatch_api_event(event: APIEvent, event_bus: &EventBus) {
             let event = EventPkiEnrollmentUpdated {};
             event_bus.send(&event);
         }
+        APIEvent::AsyncEnrollment => {
+            let event = EventAsyncEnrollmentUpdated {};
+            event_bus.send(&event);
+        }
         APIEvent::CommonCertificate { timestamp } => {
             let event = EventCertificatesUpdated {
                 last_timestamps: PerTopicLastTimestamps {

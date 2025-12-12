@@ -5,6 +5,9 @@
 from __future__ import annotations
 
 from . import (
+    async_enrollment_accept,
+    async_enrollment_list,
+    async_enrollment_reject,
     block_create,
     block_read,
     certificate_get,
@@ -48,7 +51,10 @@ class AnyCmdReq:
     def load(
         cls, raw: bytes
     ) -> (
-        block_create.Req
+        async_enrollment_accept.Req
+        | async_enrollment_list.Req
+        | async_enrollment_reject.Req
+        | block_create.Req
         | block_read.Req
         | certificate_get.Req
         | device_create.Req
@@ -88,6 +94,9 @@ class AnyCmdReq:
 
 __all__ = [
     "AnyCmdReq",
+    "async_enrollment_accept",
+    "async_enrollment_list",
+    "async_enrollment_reject",
     "block_create",
     "block_read",
     "certificate_get",

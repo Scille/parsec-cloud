@@ -8,11 +8,16 @@ from parsec._parsec_pyi import (
 from parsec._parsec_pyi.addrs import (
     ParsecActionAddr,
     ParsecAddr,
+    ParsecAsyncEnrollmentAddr,
     ParsecInvitationAddr,
     ParsecOrganizationAddr,
     ParsecOrganizationBootstrapAddr,
     ParsecPkiEnrollmentAddr,
     ParsecWorkspacePathAddr,
+)
+from parsec._parsec_pyi.async_enrollment import (
+    AsyncEnrollmentAcceptPayload,
+    AsyncEnrollmentSubmitPayload,
 )
 from parsec._parsec_pyi.certif import (
     DeviceCertificate,
@@ -63,6 +68,7 @@ from parsec._parsec_pyi.enumerate import (
 )
 from parsec._parsec_pyi.ids import (
     AccountAuthMethodID,
+    AsyncEnrollmentID,
     BlockID,
     BootstrapToken,
     ChunkID,
@@ -116,6 +122,9 @@ __all__ = [
     "ApiVersion",
     "ValidationCode",
     # Data Error
+    # Async enrollment
+    "AsyncEnrollmentAcceptPayload",
+    "AsyncEnrollmentSubmitPayload",
     # Certif
     "DeviceCertificate",
     "HashAlgorithm",
@@ -163,6 +172,7 @@ __all__ = [
     "UserProfile",
     # Ids
     "AccountAuthMethodID",
+    "AsyncEnrollmentID",
     "BlockID",
     "BootstrapToken",
     "ChunkID",
@@ -182,6 +192,7 @@ __all__ = [
     # Addrs
     "ParsecActionAddr",
     "ParsecAddr",
+    "ParsecAsyncEnrollmentAddr",
     "ParsecInvitationAddr",
     "ParsecOrganizationAddr",
     "ParsecOrganizationBootstrapAddr",

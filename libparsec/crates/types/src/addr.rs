@@ -39,6 +39,7 @@ const PARSEC_ACTION_CLAIM_USER: &str = "claim_user";
 const PARSEC_ACTION_CLAIM_DEVICE: &str = "claim_device";
 const PARSEC_ACTION_CLAIM_SHAMIR_RECOVERY: &str = "claim_shamir_recovery";
 const PARSEC_ACTION_PKI_ENROLLMENT: &str = "pki_enrollment";
+const PARSEC_ACTION_ASYNC_ENROLLMENT: &str = "async_enrollment";
 
 /// Url has a special way to parse http/https schemes. This is because those kind
 /// of url have special needs (for instance host cannot be empty).
@@ -643,6 +644,7 @@ pub enum ParsecActionAddr {
     WorkspacePath(ParsecWorkspacePathAddr),
     Invitation(ParsecInvitationAddr),
     PkiEnrollment(ParsecPkiEnrollmentAddr),
+    AsyncEnrollment(ParsecAsyncEnrollmentAddr),
 }
 
 impl ParsecActionAddr {
@@ -653,6 +655,8 @@ impl ParsecActionAddr {
             Ok(ParsecActionAddr::WorkspacePath(addr))
         } else if let Ok(addr) = ParsecInvitationAddr::from_any(url) {
             Ok(ParsecActionAddr::Invitation(addr))
+        } else if let Ok(addr) = ParsecAsyncEnrollmentAddr::from_any(url) {
+            Ok(ParsecActionAddr::AsyncEnrollment(addr))
         } else {
             ParsecPkiEnrollmentAddr::from_any(url).map(ParsecActionAddr::PkiEnrollment)
         }
@@ -667,6 +671,8 @@ impl ParsecActionAddr {
             Ok(ParsecActionAddr::WorkspacePath(addr))
         } else if let Ok(addr) = ParsecInvitationAddr::_from_url(&parsed) {
             Ok(ParsecActionAddr::Invitation(addr))
+        } else if let Ok(addr) = ParsecAsyncEnrollmentAddr::_from_url(&parsed) {
+            Ok(ParsecActionAddr::AsyncEnrollment(addr))
         } else {
             ParsecPkiEnrollmentAddr::_from_url(&parsed).map(ParsecActionAddr::PkiEnrollment)
         }
@@ -686,6 +692,8 @@ impl std::str::FromStr for ParsecActionAddr {
             Ok(ParsecActionAddr::WorkspacePath(addr))
         } else if let Ok(addr) = ParsecInvitationAddr::_from_url(&parsed) {
             Ok(ParsecActionAddr::Invitation(addr))
+        } else if let Ok(addr) = ParsecAsyncEnrollmentAddr::_from_url(&parsed) {
+            Ok(ParsecActionAddr::AsyncEnrollment(addr))
         } else {
             ParsecPkiEnrollmentAddr::_from_url(&parsed).map(ParsecActionAddr::PkiEnrollment)
         }
@@ -1038,27 +1046,135 @@ impl ParsecPkiEnrollmentAddr {
     }
 }
 
+/*
+ * ParsecAsyncEnrollmentAddr
+ */
+
+/// Represent the URL used to request an asynchronous enrollment (i.e. enrollment
+/// started by the submitter using a 3rd party identity system such as a PKI).
+///
+/// (e.g. ``parsec3://parsec.example.com/my_org?a=async_enrollment``)
+#[derive(Clone, PartialEq, Eq, Hash)]
+pub struct ParsecAsyncEnrollmentAddr {
+    base: BaseParsecAddr,
+    organization_id: OrganizationID,
+}
+
+impl_common_stuff!(ParsecAsyncEnrollmentAddr);
+
+impl ParsecAsyncEnrollmentAddr {
+    pub fn new(server_addr: impl Into<ParsecAddr>, organization_id: OrganizationID) -> Self {
+        Self {
+            base: server_addr.into().base,
+            organization_id,
+        }
+    }
+
+    fn _from_url(parsed: &ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
+        let base = BaseParsecAddr::from_url(parsed)?;
+        let organization_id = extract_organization_id(parsed)?;
+        let pairs = parsed.0.query_pairs();
+        extract_param_and_expect_value(
+            &pairs,
+            PARSEC_PARAM_ACTION,
+            PARSEC_ACTION_ASYNC_ENROLLMENT,
+        )?;
+
+        Ok(Self {
+            base,
+            organization_id,
+        })
+    }
+
+    expose_base_parsec_addr_fields!();
+
+    fn _to_url(&self, mut url: Url) -> Url {
+        url.path_segments_mut()
+            .expect("expected url not to be a cannot-be-a-base")
+            .push(self.organization_id.as_ref());
+        url.query_pairs_mut()
+            .append_pair(PARSEC_PARAM_ACTION, PARSEC_ACTION_ASYNC_ENROLLMENT);
+        url
+    }
+
+    pub fn organization_id(&self) -> &OrganizationID {
+        &self.organization_id
+    }
+
+    pub fn generate_organization_addr(&self, root_verify_key: VerifyKey) -> ParsecOrganizationAddr {
+        ParsecOrganizationAddr::new(
+            self.clone(),
+            self.organization_id().clone(),
+            root_verify_key,
+        )
+    }
+}
+
+/*
+ * ParsecActionAddr
+ */
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ParsecAnonymousAddr {
-    ParsecOrganizationBootstrapAddr(ParsecOrganizationBootstrapAddr),
-    ParsecPkiEnrollmentAddr(ParsecPkiEnrollmentAddr),
+    OrganizationBootstrap(ParsecOrganizationBootstrapAddr),
+    PkiEnrollment(ParsecPkiEnrollmentAddr),
+    AsyncEnrollment(ParsecAsyncEnrollmentAddr),
 }
 
 impl ParsecAnonymousAddr {
     /// Return an [Url] that points to the server endpoint for anonymous commands.
     pub fn to_anonymous_http_url(&self) -> Url {
-        let (ParsecAnonymousAddr::ParsecOrganizationBootstrapAddr(
-            ParsecOrganizationBootstrapAddr {
-                base,
-                organization_id,
-                ..
-            },
-        )
-        | ParsecAnonymousAddr::ParsecPkiEnrollmentAddr(ParsecPkiEnrollmentAddr {
+        let (ParsecAnonymousAddr::OrganizationBootstrap(ParsecOrganizationBootstrapAddr {
+            base,
+            organization_id,
+            ..
+        })
+        | ParsecAnonymousAddr::PkiEnrollment(ParsecPkiEnrollmentAddr {
+            base,
+            organization_id,
+        })
+        | ParsecAnonymousAddr::AsyncEnrollment(ParsecAsyncEnrollmentAddr {
             base,
             organization_id,
         })) = self;
         base.to_http_url(Some(&format!("/anonymous/{organization_id}")))
+    }
+
+    pub fn organization_id(&self) -> &OrganizationID {
+        match self {
+            ParsecAnonymousAddr::OrganizationBootstrap(addr) => addr.organization_id(),
+            ParsecAnonymousAddr::PkiEnrollment(addr) => addr.organization_id(),
+            ParsecAnonymousAddr::AsyncEnrollment(addr) => addr.organization_id(),
+        }
+    }
+}
+
+impl From<ParsecOrganizationBootstrapAddr> for ParsecAnonymousAddr {
+    fn from(addr: ParsecOrganizationBootstrapAddr) -> Self {
+        Self::OrganizationBootstrap(addr)
+    }
+}
+
+impl From<ParsecPkiEnrollmentAddr> for ParsecAnonymousAddr {
+    fn from(addr: ParsecPkiEnrollmentAddr) -> Self {
+        Self::PkiEnrollment(addr)
+    }
+}
+
+impl From<ParsecAsyncEnrollmentAddr> for ParsecAnonymousAddr {
+    fn from(addr: ParsecAsyncEnrollmentAddr) -> Self {
+        Self::AsyncEnrollment(addr)
+    }
+}
+
+impl From<ParsecAnonymousAddr> for ParsecAddr {
+    fn from(addr: ParsecAnonymousAddr) -> Self {
+        let base = match addr {
+            ParsecAnonymousAddr::OrganizationBootstrap(addr) => addr.base,
+            ParsecAnonymousAddr::PkiEnrollment(addr) => addr.base,
+            ParsecAnonymousAddr::AsyncEnrollment(addr) => addr.base,
+        };
+        ParsecAddr { base }
     }
 }
 
