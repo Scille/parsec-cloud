@@ -13,6 +13,13 @@ pub(crate) use web as platform;
 pub mod certificates;
 pub mod user;
 pub mod workspace;
+
+#[derive(Debug, thiserror::Error)]
+pub enum RemoveDeviceDataError {
+    #[error("Failed to remove data: {0}")]
+    FailedToRemoveData(#[from] libparsec_types::anyhow::Error),
+}
+
 pub use platform::cleanup::remove_device_data;
 
 // Testbed integration is tested in the `libparsec_tests_fixture` crate.

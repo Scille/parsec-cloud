@@ -14,7 +14,10 @@ async fn drop_db(name: &str) -> anyhow::Result<()> {
         .map_err(anyhow::Error::from)
 }
 
-pub async fn remove_device_data(data_base_dir: &Path, device_id: DeviceID) -> anyhow::Result<()> {
+pub async fn remove_device_data(
+    data_base_dir: &Path,
+    device_id: DeviceID,
+) -> Result<(), crate::RemoveDeviceDataError> {
     drop_db(&get_certificates_storage_db_name(data_base_dir, device_id)).await?;
     drop_db(&get_user_storage_db_name(data_base_dir, device_id)).await?;
 

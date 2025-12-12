@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use libparsec_platform_device_loader::AvailableDevice;
-use libparsec_types::prelude::*;
+use libparsec_platform_storage::RemoveDeviceDataError;
 
 use crate::ClientConfig;
 
@@ -10,7 +10,7 @@ pub enum RemoveDeviceError {
     #[error("Failed to remove device: {}", .0)]
     DeviceRemovalError(libparsec_platform_device_loader::RemoveDeviceError),
     #[error("Failed to remove device data: {}", .0)]
-    DeviceDataRemovalError(anyhow::Error),
+    DeviceDataRemovalError(RemoveDeviceDataError),
 }
 
 /// Remove device from existence.
