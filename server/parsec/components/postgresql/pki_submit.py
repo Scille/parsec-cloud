@@ -59,7 +59,7 @@ SELECT
 FROM pki_enrollment
 WHERE
     organization = $organization_internal_id
-    AND submitter_der_x509_certificate = $submitter_der_x509_certificate
+    AND submitter_x509_cert_sha256_fingerprint = $submitter_x509_cert_sha256_fingerprint
 ORDER BY submitted_on DESC
 LIMIT 1
 """)
@@ -97,7 +97,7 @@ _q_insert_enrollment = Q("""
 INSERT INTO pki_enrollment (
     organization,
     enrollment_id,
-    submitter_der_x509_certificate,
+    submitter_x509_cert_sha256_fingerprint,
     submit_payload_signature,
     submit_payload_signature_algorithm,
     submit_payload,
@@ -107,7 +107,7 @@ INSERT INTO pki_enrollment (
 VALUES (
     $organization_internal_id,
     $enrollment_id,
-    $submitter_der_x509_certificate,
+    $submitter_x509_cert_sha256_fingerprint,
     $submit_payload_signature,
     $submit_payload_signature_algorithm,
     $submit_payload,
@@ -211,8 +211,7 @@ async def pki_submit(
     previous_enrollment_row = await conn.fetchrow(
         *_q_get_previous_enrollment(
             organization_internal_id=organization_internal_id,
-            # TODO: Use fingerprint
-            submitter_der_x509_certificate=submitter_der_x509_certificate.content,
+            submitter_x509_cert_sha256_fingerprint=submitter_der_x509_certificate.fingerprint_sha256,
         )
     )
 
@@ -293,8 +292,7 @@ async def pki_submit(
         *_q_insert_enrollment(
             organization_internal_id=organization_internal_id,
             enrollment_id=enrollment_id,
-            # TODO: Use fingerprint
-            submitter_der_x509_certificate=submitter_der_x509_certificate.content,
+            submitter_x509_cert_sha256_fingerprint=submitter_der_x509_certificate.fingerprint_sha256,
             submit_payload_signature=submit_payload_signature,
             submit_payload_signature_algorithm=submit_payload_signature_algorithm.str,
             submit_payload=submit_payload,

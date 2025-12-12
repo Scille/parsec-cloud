@@ -1,8 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from hashlib import sha256
-
 from parsec._parsec import (
     DateTime,
     DeviceID,
@@ -28,7 +26,7 @@ _q_list_enrollments = Q("""
 SELECT
     enrollment_id,
     submitted_on,
-    submitter_der_x509_certificate,
+    submitter_x509_cert_sha256_fingerprint,
     submit_payload_signature,
     submit_payload_signature_algorithm,
     submit_payload
@@ -80,9 +78,8 @@ async def pki_list(
             case _:
                 assert False, row
 
-        # TODO: Should be a fingerprint https://github.com/Scille/parsec-cloud/issues/11914
-        match row["submitter_der_x509_certificate"]:
-            case bytes() as der_x509_certificate:
+        match row["submitter_x509_cert_sha256_fingerprint"]:
+            case bytes() as submitter_x509_cert_sha256_fingerprint:
                 pass
             case _:
                 assert False, row
@@ -107,8 +104,7 @@ async def pki_list(
             case _:
                 assert False, row
 
-        submitter_x509_sha256_fingerprint = sha256(der_x509_certificate).digest()
-        leaf, *intermediate = await get_trustchain(conn, submitter_x509_sha256_fingerprint)
+        leaf, *intermediate = await get_trustchain(conn, submitter_x509_cert_sha256_fingerprint)
 
         items.append(
             PkiEnrollmentListItem(

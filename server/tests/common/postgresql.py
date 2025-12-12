@@ -151,7 +151,7 @@ async def clear_postgresql_account_data() -> None:
 
 
 _Q_CLEAR_POSTGRESQL_PKI_CERTIFICATE_DATA = """
-TRUNCATE TABLE pki_certificate;
+TRUNCATE TABLE pki_certificate CASCADE;
 """
 
 
