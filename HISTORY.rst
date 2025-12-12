@@ -4,6 +4,27 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.7.1-a.0.dev.20434+d05cf0c (2025-12-12)
+------------------------------------------------
+
+Features
+~~~~~~~~
+
+* Application update modal appears automatically when an update is available.
+  (`#11740 <https://github.com/Scille/parsec-cloud/issues/11740>`__)
+
+* Windows: Update winfsp dependency to 2025 version
+  (`#11803 <https://github.com/Scille/parsec-cloud/issues/11803>`__)
+
+* User can copy email addresses to clipboard by clicking on them from the user
+  list.
+  (`#11735 <https://github.com/Scille/parsec-cloud/issues/11735>`__)
+
+* Update the user interface for workspace items in the list view.
+  (`#11574 <https://github.com/Scille/parsec-cloud/issues/11574>`__)
+
+
+
 Parsec v3.7.0 (2025-11-28)
 --------------------------
 
