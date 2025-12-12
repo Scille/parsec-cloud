@@ -106,7 +106,7 @@ impl SigningKey {
     }
 
     fn encode<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new(py, &self.0.to_bytes())
+        PyBytes::new(py, self.0.to_bytes().as_ref())
     }
 }
 
@@ -266,7 +266,7 @@ impl PrivateKey {
     }
 
     fn encode<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new(py, &self.0.to_bytes())
+        PyBytes::new(py, self.0.to_bytes().as_ref())
     }
 }
 

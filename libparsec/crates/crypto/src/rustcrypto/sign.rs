@@ -53,8 +53,8 @@ impl SigningKey {
         self.0.sign(data).to_bytes()
     }
 
-    pub fn to_bytes(&self) -> [u8; Self::SIZE] {
-        self.0.to_bytes()
+    pub fn to_bytes(&self) -> zeroize::Zeroizing<[u8; Self::SIZE]> {
+        self.0.to_bytes().into()
     }
 }
 
@@ -86,7 +86,7 @@ impl Serialize for SigningKey {
     where
         S: serde::Serializer,
     {
-        serializer.serialize_bytes(&self.to_bytes())
+        serializer.serialize_bytes(self.to_bytes().as_ref())
     }
 }
 

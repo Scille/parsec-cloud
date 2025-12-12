@@ -51,10 +51,11 @@ impl SigningKey {
         sign_detached(data, &self.0).expect("Cannot sign data")
     }
 
-    pub fn to_bytes(&self) -> [u8; Self::SIZE] {
+    pub fn to_bytes(&self) -> zeroize::Zeroizing<[u8; Self::SIZE]> {
         // SecretKey is composed of Seed then PublicKey, we export only seed here
         <[u8; Self::SIZE]>::try_from(&self.0.as_bytes()[..Self::SIZE])
             .expect("The internal array is > Self::SIZE")
+            .into()
     }
 }
 

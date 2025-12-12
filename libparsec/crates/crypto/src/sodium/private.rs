@@ -107,8 +107,8 @@ impl PrivateKey {
         Ok(key)
     }
 
-    pub fn to_bytes(&self) -> [u8; Self::SIZE] {
-        self.0.as_bytes().to_owned()
+    pub fn to_bytes(&self) -> zeroize::Zeroizing<[u8; Self::SIZE]> {
+        self.0.as_bytes().to_owned().into()
     }
 }
 
