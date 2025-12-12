@@ -188,7 +188,11 @@ for (const error of ['timeout', '400', 'popup']) {
 
     await expect(authNext).toBeTrulyDisabled();
     await expect(formError).toBeVisible();
-    await expect(formError).toHaveText('The SSO configuration provided by the server is invalid. Please contact an administrator.');
+    if (error === 'popup') {
+      await expect(formError).toHaveText('Please make sure that your browser allows pop-ups for this website.');
+    } else {
+      await expect(formError).toHaveText('The SSO configuration provided by the server is invalid. Please contact an administrator.');
+    }
   });
 }
 

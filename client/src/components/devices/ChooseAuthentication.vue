@@ -303,21 +303,26 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
     window.electronAPI.log('error', `Provider '${provider}' selected but is not available in server config`);
     return;
   }
-  const result = await openBaoConnect(
-    props.serverConfig.openbao.serverUrl,
-    auth.tag,
-    auth.mountPath,
-    props.serverConfig.openbao.secret.mountPath,
-  );
-  if (!result.ok) {
-    if (result.error.type === OpenBaoErrorType.PopupFailed) {
-      error.value = 'Authentication.popupBlocked';
+  try {
+    querying.value = true;
+    const result = await openBaoConnect(
+      props.serverConfig.openbao.serverUrl,
+      auth.tag,
+      auth.mountPath,
+      props.serverConfig.openbao.secret.mountPath,
+    );
+    if (!result.ok) {
+      if (result.error.type === OpenBaoErrorType.PopupFailed) {
+        error.value = 'Authentication.popupBlocked';
+      } else {
+        error.value = 'Authentication.invalidOpenBaoData';
+      }
+      window.electronAPI.log('error', `Error while connecting with SSO: ${JSON.stringify(result.error)}`);
     } else {
-      error.value = 'Authentication.invalidOpenBaoData';
+      openBaoClient.value = result.value;
     }
-    window.electronAPI.log('error', `Error while connecting with SSO: ${JSON.stringify(result.error)}`);
-  } else {
-    openBaoClient.value = result.value;
+  } finally {
+    querying.value = false;
   }
 }
 </script>
