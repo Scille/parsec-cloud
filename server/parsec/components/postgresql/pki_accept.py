@@ -53,7 +53,7 @@ WITH my_update AS (
         accepter = $author_internal_id,
         submitter_accepted_device = $new_device_internal_id,
         info_accepted.accepted_on = $now,
-        info_accepted.accepter_der_x509_certificate = $accepter_der_x509_certificate,
+        info_accepted.accepter_x509_cert_sha256_fingerprint = $accepter_x509_cert_sha256_fingerprint,
         info_accepted.accept_payload_signature = $accept_payload_signature,
         info_accepted.accept_payload = $accept_payload,
         info_accepted.accept_payload_signature_algorithm = $accept_payload_signature_algorithm
@@ -249,7 +249,7 @@ async def pki_accept(
             author_internal_id=db_common.device_internal_id,
             new_device_internal_id=new_device_internal_id,
             now=now,
-            accepter_der_x509_certificate=accepter_trustchain[0].content,
+            accepter_x509_cert_sha256_fingerprint=accepter_trustchain[0].fingerprint_sha256,
             accept_payload_signature=payload_signature,
             accept_payload_signature_algorithm=payload_signature_algorithm.str,
             accept_payload=payload,

@@ -439,12 +439,13 @@ CREATE TYPE pki_signature_algorithm AS ENUM ('RSASSA_PSS_SHA256');
 
 CREATE TYPE pki_enrollment_info_accepted AS (
     accepted_on TIMESTAMPTZ,
-    accepter_der_x509_certificate BYTEA,
     accept_payload_signature BYTEA,
     accept_payload BYTEA,
 
     -- Added in migration 0016
-    accept_payload_signature_algorithm PKI_SIGNATURE_ALGORITHM
+    accept_payload_signature_algorithm PKI_SIGNATURE_ALGORITHM,
+    -- Added in migration 0019
+    accepter_x509_cert_sha256_fingerprint BYTEA
 );
 
 CREATE TYPE pki_enrollment_info_rejected AS (
@@ -460,7 +461,6 @@ CREATE TABLE pki_enrollment (
     organization INTEGER REFERENCES organization (_id) NOT NULL,
 
     enrollment_id UUID NOT NULL,
-    submitter_der_x509_certificate BYTEA NOT NULL,
 
     submit_payload_signature BYTEA NOT NULL,
     submit_payload BYTEA NOT NULL,
@@ -476,6 +476,8 @@ CREATE TABLE pki_enrollment (
 
     -- Added in migration 0016
     submit_payload_signature_algorithm PKI_SIGNATURE_ALGORITHM NOT NULL,
+    -- Added in migration 0019
+    submitter_x509_cert_sha256_fingerprint BYTEA REFERENCES pki_certificate (sha256_fingerprint) NOT NULL,
 
     UNIQUE (organization, enrollment_id)
 );

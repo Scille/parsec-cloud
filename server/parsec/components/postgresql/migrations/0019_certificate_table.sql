@@ -15,3 +15,13 @@ CREATE TABLE pki_certificate (
     -- The DER content of the certificate
     der_content BYTEA NOT NULL
 );
+
+ALTER TYPE pki_enrollment_info_accepted DROP ATTRIBUTE accepter_der_x509_certificate;
+
+-- Type does not allow to setup references
+ALTER TYPE pki_enrollment_info_accepted ADD ATTRIBUTE accepter_x509_cert_sha256_fingerprint BYTEA;
+
+ALTER TABLE pki_enrollment DROP COLUMN submitter_der_x509_certificate;
+
+ALTER TABLE pki_enrollment
+ADD submitter_x509_cert_sha256_fingerprint BYTEA REFERENCES pki_certificate (sha256_fingerprint) NOT NULL;

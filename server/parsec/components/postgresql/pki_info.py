@@ -1,8 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from hashlib import sha256
-
 from asyncpg import Record
 
 from parsec._parsec import (
@@ -111,8 +109,7 @@ async def pki_info(
             match dict(info_accepted.items()):
                 case {
                     "accepted_on": DateTime() as accepted_on,
-                    # TODO: Should be a fingerprint (https://github.com/Scille/parsec-cloud/issues/11914)
-                    "accepter_der_x509_certificate": bytes() as accepter_der_x509_certificate,
+                    "accepter_x509_cert_sha256_fingerprint": bytes() as accepter_x509_cert_sha256_fingerprint,
                     "accept_payload_signature": bytes() as accept_payload_signature,
                     "accept_payload": bytes() as accept_payload,
                     "accept_payload_signature_algorithm": str() as raw_accept_payload_signature_algorithm,
@@ -124,10 +121,9 @@ async def pki_info(
                 case _:
                     assert False, row
 
-            accepter_x509_sha256_fingerprint = sha256(accepter_der_x509_certificate).digest()
             cert, *intermediate = map(
                 lambda x: x.der_content,
-                await get_trustchain(conn, accepter_x509_sha256_fingerprint),
+                await get_trustchain(conn, accepter_x509_cert_sha256_fingerprint),
             )
 
             return PkiEnrollmentInfoAccepted(
