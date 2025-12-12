@@ -50,7 +50,7 @@ pub async fn info(
     use anonymous_cmds::latest::pki_enrollment_info::{Rep, Req};
     let cmds = AnonymousCmds::new(
         &config.config_dir,
-        ParsecAnonymousAddr::ParsecPkiEnrollmentAddr(addr.clone()),
+        addr.clone().into(),
         config.proxy.clone(),
     )?;
     let rep = cmds.send(Req { enrollment_id }).await?;
