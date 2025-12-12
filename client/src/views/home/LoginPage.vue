@@ -87,7 +87,7 @@ import {
   getServerConfig,
   OpenBaoAuthConfigTag,
 } from '@/parsec';
-import { openBaoConnect } from '@/services/openBao';
+import { openBaoConnect, OpenBaoErrorType } from '@/services/openBao';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonFooter, IonText } from '@ionic/vue';
 import { MsInput, MsPasswordInput, MsSpinner } from 'megashark-lib';
 import { onMounted, ref, useTemplateRef } from 'vue';
@@ -139,7 +139,11 @@ async function onLoginSSOClick(provider: OpenBaoAuthConfigTag): Promise<void> {
   );
 
   if (!connResult.ok) {
-    errorMessage.value = 'Authentication.invalidOpenBaoData';
+    if (connResult.error.type === OpenBaoErrorType.PopupFailed) {
+      errorMessage.value = 'Authentication.popupBlocked';
+    } else {
+      errorMessage.value = 'Authentication.invalidOpenBaoData';
+    }
     window.electronAPI.log('error', `Failed to log in to openbao: ${JSON.stringify(connResult.error)}`);
     return;
   } else {

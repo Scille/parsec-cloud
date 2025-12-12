@@ -99,3 +99,9 @@ declare global {
   }
 }
 window.libparsec = libparsec;
+
+if ((window as any).TESTING) {
+  (window as any).clearLibParsecMocks = () => {
+    MOCKS.splice(0, MOCKS.length);
+  };
+}

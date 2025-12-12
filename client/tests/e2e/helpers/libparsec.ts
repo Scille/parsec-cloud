@@ -17,3 +17,9 @@ export async function mockLibParsec(page: MsPage, functions: Array<LibParsecFunc
     }
   }, functions);
 }
+
+export async function clearLibParsecMocks(page: MsPage): Promise<void> {
+  await page.evaluate(() => {
+    (window as any).clearLibParsecMocks();
+  });
+}

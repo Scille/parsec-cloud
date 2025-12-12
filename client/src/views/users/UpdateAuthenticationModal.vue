@@ -125,7 +125,7 @@ import {
   updateDeviceChangeAuthentication,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { OpenBaoClient, openBaoConnect } from '@/services/openBao';
+import { OpenBaoClient, OpenBaoErrorType, openBaoConnect } from '@/services/openBao';
 import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonTitle, modalController } from '@ionic/vue';
 import { close } from 'ionicons/icons';
 import { MsModalResult, MsPasswordInput, MsSpinner, Translatable, asyncComputed, useWindowSize } from 'megashark-lib';
@@ -246,6 +246,11 @@ async function onSSOLoginClicked(): Promise<void> {
       props.serverConfig.openbao.secret.mountPath,
     );
     if (!result.ok) {
+      if (result.error.type === OpenBaoErrorType.PopupFailed) {
+        errorMessage.value = 'Authentication.popupBlocked';
+      } else {
+        errorMessage.value = 'Authentication.invalidOpenBaoData';
+      }
       window.electronAPI.log('error', `Error while connecting with SSO: ${JSON.stringify(result.error)}`);
     } else {
       openBaoClient.value = result.value;

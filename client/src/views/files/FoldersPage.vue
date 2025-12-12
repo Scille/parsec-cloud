@@ -116,7 +116,25 @@
             @global-menu-click="openGlobalContextMenu"
             :is-reader="ownRole === parsec.WorkspaceRole.Reader"
           >
-            <div class="no-files-content">
+            <div
+              class="error-list-folder"
+              v-if="showErrorListPage"
+            >
+              <ms-image
+                :image="ListFolderError"
+                class="error-list-folder__image"
+              />
+              <ms-report-text
+                :theme="MsReportTheme.Error"
+                class="error-list-folder__text"
+              >
+                {{ $msTranslate('FoldersPage.errors.failedToListContent') }}
+              </ms-report-text>
+            </div>
+            <div
+              class="no-files-content"
+              v-else
+            >
               <ms-image :image="EmptyFolder" />
               <ion-text>
                 {{ $msTranslate('FoldersPage.emptyFolder') }}
@@ -125,7 +143,7 @@
           </file-drop-zone>
         </div>
         <div
-          v-else-if="!querying"
+          v-else-if="!querying && !showErrorListPage"
           class="grid-list-container"
         >
           <div v-if="displayView === DisplayState.List && userInfo">
@@ -189,6 +207,8 @@ import {
   MsImage,
   MsModalResult,
   MsOptions,
+  MsReportText,
+  MsReportTheme,
   MsSorter,
   MsSorterChangeEvent,
   MsSpinner,
@@ -200,6 +220,7 @@ import {
   useWindowSize,
 } from 'megashark-lib';
 
+import ListFolderError from '@/assets/images/list-folder-error.svg?raw';
 import {
   EntryCollection,
   EntryModel,
@@ -232,7 +253,6 @@ import {
   WorkspaceCreateFolderErrorTag,
   WorkspaceID,
   WorkspaceRole,
-  WorkspaceStatFolderChildrenErrorTag,
   entryStat,
   getClientInfo,
   isDesktop,
@@ -403,6 +423,7 @@ const FOLDERS_PAGE_DATA_KEY = 'FoldersPage';
 const currentSortProperty = ref<SortProperty>(SortProperty.Name);
 const currentSortOrder = ref(true);
 
+const showErrorListPage = ref(false);
 const userInfo: Ref<ClientInfo | null> = ref(null);
 const fileOperations: Ref<Array<FileOperationProgress>> = ref([]);
 const currentPath = ref('/');
@@ -939,26 +960,14 @@ async function listFolder(options?: { selectFile?: EntryName; sameFolder?: boole
     files.value.smartUpdate(newFiles);
     folders.value.sort(currentSortProperty.value, currentSortOrder.value);
     files.value.sort(currentSortProperty.value, currentSortOrder.value);
+    showErrorListPage.value = false;
   } else {
+    files.value.clear();
+    folders.value.clear();
+    showErrorListPage.value = true;
     // This happens when the handle becomes invalid (if we're logging out for example) and the app tries to refresh at the same
     // time. Logging out while importing files is a good example of that: logging out will cancel the imports which will trigger
     // a refresh.
-    if (result.error.tag === WorkspaceStatFolderChildrenErrorTag.Internal && result.error.error === 'Invalid Handle') {
-      console.log('Skipping entry stat error because of invalid handle');
-      return;
-    }
-    informationManager.present(
-      new Information({
-        message: {
-          key: 'FoldersPage.errors.listFailed',
-          data: {
-            path: currentPath.value,
-          },
-        },
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
   }
   querying.value = false;
   if (options && options.selectFile) {
@@ -973,6 +982,10 @@ async function listFolder(options?: { selectFile?: EntryName; sameFolder?: boole
 }
 
 async function onEntryClick(entry: EntryModel, _event: Event): Promise<void> {
+  if (!workspaceInfo.value) {
+    return;
+  }
+
   if (!entry.isFile()) {
     const newPath = await parsec.Path.join(currentPath.value, entry.name);
     navigateTo(Routes.Documents, {
@@ -1755,6 +1768,26 @@ const actionBarOptionsFoldersPage = computed(() => {
     .ms-spinner {
       height: 1.5rem;
     }
+  }
+}
+
+.error-list-folder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem 1rem;
+  max-width: 30rem;
+  margin: auto;
+
+  &__image {
+    width: 10rem;
+    height: 10rem !important;
+  }
+
+  &__text {
+    height: fit-content !important;
   }
 }
 </style>

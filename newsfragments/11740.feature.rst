@@ -1,1 +1,0 @@
-Application update modal appears automatically when an update is available.

@@ -783,7 +783,8 @@
             "copyFailedMaxRecursion": "Too many entries to copy.",
             "copyFailedOneFailed": "One or more entries could not be copied.",
             "copyFailedSourceDoesNotExist": "Entry {source} does not exist.",
-            "seeInExplorerFailed": "Failed to open the path."
+            "seeInExplorerFailed": "Failed to open the selected entry in file explorer.",
+            "failedToListContent": "Failed to list the content of this folder."
         },
         "CreateFolderModal": {
             "title": "Create a new folder",
@@ -1186,7 +1187,8 @@
         "keyringUnavailableOnSystem": "Unavailable on your system",
         "keyringUnavailableOnWeb": "Unavailable on web",
         "openBaoUnavailable": "Single Sign-On not available on this server.",
-        "invalidOpenBaoData": "The SSO configuration provided by the server is invalid. Please contact an administrator."
+        "invalidOpenBaoData": "The SSO configuration provided by the server is invalid. Please contact an administrator.",
+        "popupBlocked": "Please make sure that your browser allows pop-ups for this website."
     },
     "PasswordInputModal": {
         "passwordNeeded": "Password needed",
@@ -2521,13 +2523,10 @@
                 "impossibleToOpen": "Cannot edit this file",
                 "genericError": "Failed to open the file",
                 "unsupportedFileType": "File not supported by Parsec",
-                "editionNotAvailable": "Document editing is unavailable",
-                "tooLongToOpen": "The file is taking too long to open"
+                "editionNotAvailable": "Document editing is unavailable"
             },
             "informationEditDownload": "If you want to edit this file, you can download it and open it locally on your device.",
             "informationPreviewDownload": "If you want to preview this file, you can download it and open it locally on your device.",
-            "tooLongToOpenOnWeb": "You can try downloading it and opening with default app (right click on file > 'Download').",
-            "tooLongToOpenOnDesktop": "You can try opening it with default app (right click on file > 'Open with default app').",
             "unknownFileExtension": "This file type extension could not be identified. Please check that it's correctly written (.txt, .pdf, .doc, etc.).",
             "noContentFileType": "Could not open this file in the Parsec editor as its type could not be identified.",
             "noFolderPreview": "Cannot preview folders.",
@@ -2586,9 +2585,12 @@
         "globalTitle": "Cannot open file",
         "errors": {
             "titles": {
-                "networkOffline": "Network connection lost"
+                "networkOffline": "Network connection lost",
+                "tooLongToOpen": "The file seems to be taking too long to open"
             },
             "networkOfflineMessage": "Your network connection has been lost. Please check your internet connection and try again. Any unsaved changes may be lost.",
+            "tooLongToOpenOnWeb": "You can try downloading it and opening with default app (right click on file > 'Download').",
+            "tooLongToOpenOnDesktop": "You can try opening it with default app (right click on file > 'Open with default app').",
             "contentInfoMissing": "The file content information is empty or missing.",
             "fileExtensionMissing": "The file type (extension) is missing or empty.",
             "fileNameMissing": "The file name is empty or missing.",
@@ -2598,12 +2600,15 @@
         "advices": {
             "title": "Some tips to help resolve this issue",
             "advice1": "Check that the file can be opened from an external application.",
-            "advice2": "Re-import the file (check versions).",
-            "advice3": "If the file used to open properly, try restoring a previous version (through file history)"
+            "advice2": "If the file used to open properly, try restoring a previous version (through file history)"
         },
         "actions": {
             "backToFiles": "Back to files",
-            "retry": "Reload page"
+            "retry": "Reload page",
+            "openWithDefaultApp": "Open with default app",
+            "downloadFile": "Download file",
+            "wait": "Wait",
+            "close": "Close"
         },
         "saving": {
             "unsaved": "Changes unsaved",
