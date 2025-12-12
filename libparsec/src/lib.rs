@@ -46,6 +46,8 @@ pub use validation::*;
 pub use workspace::*;
 pub use workspace_history::*;
 
+pub use libparsec_types::anyhow::Error as AnyhowError;
+
 pub mod internal {
     pub use libparsec_client::{
         claimer_retrieve_info, AnyClaimRetrievedInfoCtx, Client, ClientConfig,
