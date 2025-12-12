@@ -121,6 +121,10 @@ const emits = defineEmits<{
 }>();
 
 onMounted(async () => {
+  // Performance tracking: Start overall loading
+  performance.mark('cryptpad-loading-start');
+  window.electronAPI.log('info', `[PERF] Starting document load - Server: ${Env.getDefaultCryptpadServer()}`);
+
   documentType.value = getCryptpadDocumentType(fileInfo.type);
 
   if (documentType.value === CryptpadDocumentType.Unsupported) {
@@ -128,11 +132,25 @@ onMounted(async () => {
     await openRedirectionModal(ErrorTitle.UnsupportedFileType, ErrorMessage.EditableOnlyOnSystem, InformationLevel.Info);
     return;
   }
+
+  // Performance tracking: Start CryptPad initialization
+  performance.mark('cryptpad-init-start');
   if (!(await loadCryptpad())) {
     return;
   }
+  performance.mark('cryptpad-init-end');
+  performance.measure('cryptpad-init-duration', 'cryptpad-init-start', 'cryptpad-init-end');
+  const initDuration = performance.getEntriesByName('cryptpad-init-duration')[0].duration;
+  window.electronAPI.log('info', `[PERF] CryptPad initialization took ${initDuration.toFixed(2)}ms`);
+
+  // Performance tracking: Start document opening
+  performance.mark('cryptpad-open-start');
   const openResult = await openFileWithCryptpad();
   if (openResult) {
+    performance.mark('cryptpad-open-end');
+    performance.measure('cryptpad-open-duration', 'cryptpad-open-start', 'cryptpad-open-end');
+    const openDuration = performance.getEntriesByName('cryptpad-open-duration')[0].duration;
+    window.electronAPI.log('info', `[PERF] Document opening took ${openDuration.toFixed(2)}ms`);
     emits('fileLoaded');
   } else {
     emits('fileError');
@@ -249,9 +267,26 @@ async function openFileWithCryptpad(): Promise<boolean> {
     mode: readOnly ? CryptpadAppMode.View : CryptpadAppMode.Edit,
     events: {
       onReady: (): void => {
+        // Performance tracking: Editor is ready
+        performance.mark('cryptpad-ready');
+        performance.measure('cryptpad-total-loading', 'cryptpad-loading-start', 'cryptpad-ready');
+        performance.measure('cryptpad-ready-after-open', 'cryptpad-open-start', 'cryptpad-ready');
+
+        const totalDuration = performance.getEntriesByName('cryptpad-total-loading')[0].duration;
+        const readyAfterOpen = performance.getEntriesByName('cryptpad-ready-after-open')[0].duration;
+
+        window.electronAPI.log('info', '[PERF] === CryptPad Performance Summary ===');
+        window.electronAPI.log('info', `[PERF] Server: ${Env.getDefaultCryptpadServer()}`);
+        window.electronAPI.log('info', `[PERF] Document type: ${documentType.value}`);
+        window.electronAPI.log('info', `[PERF] File extension: ${contentInfo.extension}`);
+        window.electronAPI.log('info', `[PERF] Total loading time: ${totalDuration.toFixed(2)}ms`);
+        window.electronAPI.log('info', `[PERF] Time from open to ready (includes x2t if OnlyOffice): ${readyAfterOpen.toFixed(2)}ms`);
+        window.electronAPI.log('info', '[PERF] ================================');
         window.electronAPI.log('info', 'CryptPad editor is ready and document loaded successfully');
       },
       onSave: async (file: Blob, callback: () => void): Promise<void> => {
+        // Performance tracking: Start save operation
+        performance.mark('cryptpad-save-start');
         let hasError = false;
         let fd: FileDescriptor | undefined = undefined;
         const start = Date.now();
@@ -284,6 +319,13 @@ async function openFileWithCryptpad(): Promise<boolean> {
             await closeFile(workspaceHandle, fd);
           }
           callback();
+
+          // Performance tracking: Save completed
+          performance.mark('cryptpad-save-end');
+          performance.measure('cryptpad-save-duration', 'cryptpad-save-start', 'cryptpad-save-end');
+          const saveDuration = performance.getEntriesByName('cryptpad-save-duration')[0].duration;
+          window.electronAPI.log('info', `[PERF] Save operation took ${saveDuration.toFixed(2)}ms (file size: ${file.size} bytes)`);
+
           const end = Date.now();
           setTimeout(
             () => {
