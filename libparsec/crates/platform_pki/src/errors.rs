@@ -61,4 +61,8 @@ error_set::error_set! {
     }
     LoadSubmitPayloadError := ValidatePayloadError || DataError
     LoadAnswerPayloadError := ValidatePayloadError || DataError
+    GetIntermediatesCertsForCertError := ListTrustedRootCertificatesError
+        || ListIntermediateCertificatesError
+        || InvalidCertificateDer
+        || VerifyCertificateError
 }

@@ -169,3 +169,6 @@ pub use shared::load_submit_payload;
 
 pub use errors::LoadAnswerPayloadError;
 pub use shared::load_answer_payload;
+
+pub use errors::GetIntermediatesCertsForCertError;
+pub use shared::get_intermediate_certs_for_cert;
