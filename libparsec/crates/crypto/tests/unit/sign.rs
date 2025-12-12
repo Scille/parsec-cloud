@@ -187,7 +187,7 @@ fn signing_key_from() {
     let raw = hex!("78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537");
     let key = SigningKey::from(raw);
 
-    assert_eq!(key.to_bytes(), raw);
+    assert_eq!(*key.to_bytes(), raw);
 }
 
 #[platform::test]
@@ -195,7 +195,7 @@ fn signing_key_try_from_array_of_u8() {
     let raw = hex!("78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537");
     let key = SigningKey::try_from(raw.as_ref()).unwrap();
 
-    assert_eq!(key.to_bytes(), raw);
+    assert_eq!(*key.to_bytes(), raw);
 
     let outcome = SigningKey::try_from(b"<too_small>".as_ref());
 
@@ -207,7 +207,7 @@ fn signing_key_try_from_serde_bytes() {
     let raw = hex!("78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537");
     let key = SigningKey::try_from(serde_bytes::Bytes::new(&raw)).unwrap();
 
-    assert_eq!(key.to_bytes(), raw);
+    assert_eq!(*key.to_bytes(), raw);
 
     let outcome = SigningKey::try_from(serde_bytes::Bytes::new(b"<too_small>"));
 

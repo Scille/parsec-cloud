@@ -186,3 +186,67 @@ fn pubkey_hash() {
     assert_eq!(hash(&vk1), hash(&vk1));
     assert_ne!(hash(&vk1), hash(&vk2));
 }
+
+#[platform::test]
+fn private_key_from() {
+    let raw = hex!("78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537");
+    let key = PrivateKey::from(raw);
+
+    assert_eq!(*key.to_bytes(), raw);
+}
+
+#[platform::test]
+fn private_key_try_from_array_of_u8() {
+    let raw = hex!("78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537");
+    let key = PrivateKey::try_from(raw.as_ref()).unwrap();
+
+    assert_eq!(*key.to_bytes(), raw);
+
+    let outcome = PrivateKey::try_from(b"<too_small>".as_ref());
+
+    assert_eq!(outcome, Err(CryptoError::DataSize));
+}
+
+#[platform::test]
+fn private_key_try_from_serde_bytes() {
+    let raw = hex!("78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537");
+    let key = PrivateKey::try_from(serde_bytes::Bytes::new(&raw)).unwrap();
+
+    assert_eq!(*key.to_bytes(), raw);
+
+    let outcome = PrivateKey::try_from(serde_bytes::Bytes::new(b"<too_small>"));
+
+    assert_eq!(outcome, Err(CryptoError::DataSize));
+}
+
+#[platform::test]
+fn publickey_key_try_from_static_array_of_u8() {
+    let raw = hex!("78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537");
+    let key = PublicKey::from(raw);
+
+    assert_eq!(key.as_ref(), raw);
+}
+
+#[platform::test]
+fn publickey_key_try_from_array_of_u8() {
+    let raw = hex!("78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537");
+    let key = PublicKey::try_from(raw.as_ref()).unwrap();
+
+    assert_eq!(key.as_ref(), raw);
+
+    let outcome = PublicKey::try_from(b"<too_small>".as_ref());
+
+    assert_eq!(outcome, Err(CryptoError::DataSize));
+}
+
+#[platform::test]
+fn publickey_key_try_from_serde_bytes() {
+    let raw = hex!("78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537");
+    let key = PublicKey::try_from(serde_bytes::Bytes::new(&raw)).unwrap();
+
+    assert_eq!(key.as_ref(), raw);
+
+    let outcome = PublicKey::try_from(serde_bytes::Bytes::new(b"<too_small>"));
+
+    assert_eq!(outcome, Err(CryptoError::DataSize));
+}
