@@ -17,7 +17,7 @@ async fn ok(env: &TestbedEnv) {
         env.server_addr
             .to_http_url(Some("testbed/mock/openbao/"))
             .to_string(),
-        "secret/parsec-keys".to_string(),
+        "secret".to_string(),
         "65732d02-bb5f-7ce7-eae4-69067383b61d".to_string(),
         // cspell:disable-next-line
         "s.OyKLFX4EG8aigjz0I61ASvXZ".to_string(),
