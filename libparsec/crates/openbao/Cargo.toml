@@ -24,3 +24,4 @@ data-encoding = { workspace = true, features = ["std"] }
 [dev-dependencies]
 libparsec_tests_lite = { workspace = true }
 libparsec_tests_fixtures = { workspace = true, features = ["default"] }
+sha2 = { version = "0.10.9", default-features = false }
