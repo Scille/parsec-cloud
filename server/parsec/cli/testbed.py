@@ -22,12 +22,14 @@ from fastapi.responses import JSONResponse, RedirectResponse
 
 from parsec._parsec import (
     AccountAuthMethodID,
+    CryptoError,
     DateTime,
     EmailAddress,
     HumanHandle,
     OrganizationID,
     ParsecAddr,
     SecretKey,
+    SigningKey,
     ValidationCode,
     authenticated_cmds,
 )
@@ -121,6 +123,7 @@ class TestbedBackend:
         self.template_per_org: dict[OrganizationID, TestbedTemplateContent] = {}
         # We expose some routes to simulate a OpenBao server, hence this field
         self.openbao_secrets: defaultdict[tuple[str, str], list[Any]] = defaultdict(list)
+        self.openbao_signing_keys: dict[str, SigningKey] = {}
         # If the testbed server run with the memory backend, we can copy the datamodel
         # object to create snapshots and overwrite the initial one to rollback.
         self._data_snapshots: list[tuple[DateTime, MemoryDatamodel]] = []
@@ -418,7 +421,7 @@ async def test_openbao_auth_token_lookup_self(request: Request):
     }
 
 
-@testbed_router.get("/testbed/mock/openbao/v1/secret/parsec-keys/data/{secret_path:path}")
+@testbed_router.get("/testbed/mock/openbao/v1/secret/data/{secret_path:path}")
 async def test_openbao_read_secret(secret_path: str, request: Request):
     testbed: TestbedBackend = request.app.state.testbed
 
@@ -446,7 +449,7 @@ async def test_openbao_read_secret(secret_path: str, request: Request):
     }
 
 
-@testbed_router.post("/testbed/mock/openbao/v1/secret/parsec-keys/data/{secret_path:path}")
+@testbed_router.post("/testbed/mock/openbao/v1/secret/data/{secret_path:path}")
 async def test_openbao_create_secret(secret_path: str, request: Request):
     testbed: TestbedBackend = request.app.state.testbed
 
@@ -512,6 +515,225 @@ async def test_openbao_hexagone_oidc_auth_url(request: Request, auth_provider: s
         "lease_duration": 0,
         "data": {
             "auth_url": auth_url,
+        },
+        "wrap_info": None,
+        "warnings": None,
+        "auth": None,
+    }
+
+
+@testbed_router.post("/testbed/mock/openbao/v1/transit/keys/{key_name}")
+async def test_openbao_create_key(request: Request, key_name: str):
+    testbed: TestbedBackend = request.app.state.testbed
+
+    entity_id = _openbao_entity_id_from_vault_token_header(request)
+    if not entity_id:
+        return Response(status_code=403)
+
+    if key_name != f"user-{entity_id}":
+        return Response(status_code=403)
+
+    # See https://openbao.org/api-docs/secret/transit/#create-key
+
+    try:
+        await request.json()
+    except ValueError:
+        return Response("Bad JSON body", status_code=400)
+
+    try:
+        key = testbed.openbao_signing_keys[entity_id]
+    except KeyError:
+        key = SigningKey.generate()
+        testbed.openbao_signing_keys[entity_id] = key
+
+    return {
+        "request_id": str(uuid.uuid4()),
+        "lease_id": "",
+        "renewable": False,
+        "lease_duration": 0,
+        "data": {
+            "allow_plaintext_backup": False,
+            "auto_rotate_period": 0,
+            "deletion_allowed": False,
+            "derived": False,
+            "exportable": False,
+            "imported_key": False,
+            "keys": {
+                "1": {
+                    "certificate_chain": "",
+                    "creation_time": "2025-12-01T15:50:33.606080602Z",
+                    "name": "ed25519",
+                    "public_key": b64encode(key.verify_key.encode()).decode(),
+                }
+            },
+            "latest_version": 1,
+            "min_available_version": 0,
+            "min_decryption_version": 1,
+            "min_encryption_version": 0,
+            "name": key_name,
+            "soft_deleted": False,
+            "supports_decryption": False,
+            "supports_derivation": True,
+            "supports_encryption": False,
+            "supports_signing": True,
+            "type": "ed25519",
+        },
+        "wrap_info": None,
+        "warnings": None,
+        "auth": None,
+    }
+
+
+@testbed_router.post("/testbed/mock/openbao/v1/transit/sign/{key_name}")
+async def test_openbao_sign(request: Request, key_name: str):
+    testbed: TestbedBackend = request.app.state.testbed
+
+    entity_id = _openbao_entity_id_from_vault_token_header(request)
+    if not entity_id:
+        return Response(status_code=403)
+
+    if key_name != f"user-{entity_id}":
+        return Response(status_code=403)
+
+    # See https://openbao.org/api-docs/secret/transit/#sign-data
+
+    try:
+        req = await request.json()
+    except ValueError:
+        return Response("Bad JSON body", status_code=400)
+
+    input_b64 = req.get("input")
+    if not isinstance(input_b64, str):
+        return Response("Bad/missing field `input`", status_code=400)
+    try:
+        input_raw = b64decode(input_b64)
+    except ValueError:
+        return Response("Bad/missing field `input`", status_code=400)
+
+    try:
+        key = testbed.openbao_signing_keys[entity_id]
+    except KeyError:
+        return JSONResponse(status_code=400, content={"errors": ["signing key not found"]})
+
+    signature_raw = key.sign_only_signature(input_raw)
+    signature = f"vault:v1:{b64encode(signature_raw).decode()}"
+    return {
+        "request_id": str(uuid.uuid4()),
+        "lease_id": "",
+        "renewable": False,
+        "lease_duration": 0,
+        "data": {
+            "key_version": 1,
+            "signature": signature,
+        },
+        "wrap_info": None,
+        "warnings": None,
+        "auth": None,
+    }
+
+
+@testbed_router.post("/testbed/mock/openbao/v1/transit/verify/{key_name}")
+async def test_openbao_verify(request: Request, key_name: str):
+    testbed: TestbedBackend = request.app.state.testbed
+
+    entity_id = _openbao_entity_id_from_vault_token_header(request)
+    if not entity_id:
+        return Response(status_code=403)
+
+    author_entity_id = key_name.removeprefix("user-")
+
+    # See https://openbao.org/api-docs/secret/transit/#verify-signed-data
+
+    try:
+        req = await request.json()
+    except ValueError:
+        return Response("Bad JSON body", status_code=400)
+
+    input_b64 = req.get("input")
+    if not isinstance(input_b64, str):
+        return Response("Bad/missing field `input`", status_code=400)
+    try:
+        input_raw = b64decode(input_b64)
+    except ValueError:
+        return Response("Bad/missing field `input`", status_code=400)
+
+    signature = req.get("signature")
+    if not isinstance(signature, str) or not signature.startswith("vault:v1:"):
+        return Response("Bad/missing field `signature`", status_code=400)
+    try:
+        signature_raw = b64decode(signature.removeprefix("vault:v1:"))
+    except ValueError:
+        return Response("Bad/missing field `signature`", status_code=400)
+
+    try:
+        key = testbed.openbao_signing_keys[author_entity_id]
+    except KeyError:
+        return JSONResponse(
+            status_code=400, content={"errors": ["signature verification key not found"]}
+        )
+
+    try:
+        key.verify_key.verify_with_signature(signature_raw, input_raw)
+        is_valid = True
+    except CryptoError:
+        is_valid = False
+
+    return {
+        "request_id": str(uuid.uuid4()),
+        "lease_id": "",
+        "renewable": False,
+        "lease_duration": 0,
+        "data": {"valid": is_valid},
+        "wrap_info": None,
+        "warnings": None,
+        "auth": None,
+    }
+
+
+@testbed_router.get("/testbed/mock/openbao/v1/identity/entity/id/{other_entity_id}")
+async def test_openbao_get_entity_info(request: Request, other_entity_id: str):
+    self_entity_id = _openbao_entity_id_from_vault_token_header(request)
+    if not self_entity_id:
+        return Response(status_code=403)
+
+    # See https://openbao.org/api-docs/secret/transit/#verify-signed-data
+
+    email = f"{other_entity_id}@example.invalid"
+
+    return {
+        "request_id": str(uuid.uuid4()),
+        "lease_id": "",
+        "renewable": False,
+        "lease_duration": 0,
+        "data": {
+            "aliases": [
+                {
+                    "canonical_id": "217b7a03-b4d0-aff6-eaa8-4e1aa0573193",
+                    "creation_time": "2025-12-01T15:09:53Z",
+                    "custom_metadata": None,
+                    "id": "d42286c0-a41d-bf0f-7dab-c9c27a0f0a58",
+                    "last_update_time": "2025-12-01T15:09:53Z",
+                    "local": False,
+                    "merged_from_canonical_ids": None,
+                    "metadata": {"role": "default"},
+                    "mount_accessor": "auth_oidc_e99f8297",
+                    "mount_path": "auth/oidc/",
+                    "mount_type": "oidc",
+                    "name": email,
+                }
+            ],
+            "creation_time": "2025-12-01T15:09:53Z",
+            "direct_group_ids": [],
+            "disabled": False,
+            "group_ids": [],
+            "id": "217b7a03-b4d0-aff6-eaa8-4e1aa0573193",
+            "inherited_group_ids": [],
+            "last_update_time": "2025-12-01T15:09:53Z",
+            "merged_entity_ids": None,
+            "metadata": None,
+            "name": "entity_46f449cb.root",
+            "namespace_id": "root",
+            "policies": [],
         },
         "wrap_info": None,
         "warnings": None,
@@ -763,7 +985,7 @@ async def testbed_backend_factory(
         organization_spontaneous_bootstrap=True,
         openbao_config=OpenBaoConfig(
             server_url=server_addr.to_http_url("/testbed/mock/openbao"),
-            secret_mount_path="secret/parsec-keys",
+            secret_mount_path="secret",
             auths=[
                 OpenBaoAuthConfig(
                     id=OpenBaoAuthType.HEXAGONE,
