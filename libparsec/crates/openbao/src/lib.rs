@@ -1,9 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use reqwest::{StatusCode, Url};
+use libparsec_types::prelude::*;
 
-use data_encoding::BASE64;
-use libparsec_types::{prelude::*, uuid::Uuid};
+mod opaque_key;
+mod sign;
 
 #[derive(Debug)]
 pub struct OpenBaoCmds {
@@ -14,12 +14,13 @@ pub struct OpenBaoCmds {
     // where the new URL is needed (as `OpenBaoCmds::new` cannot fail).
     openbao_server_url: String,
     openbao_secret_mount_path: String,
+    openbao_transit_mount_path: String,
     openbao_entity_id: String,
     openbao_auth_token: String,
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum OpenBaoFetchOpaqueKeyError {
+pub enum OpenBaoOperationError {
     #[error("Invalid OpenBao server URL: {0}")]
     BadURL(anyhow::Error),
     #[error("No response from the OpenBao server: {0}")]
@@ -28,8 +29,16 @@ pub enum OpenBaoFetchOpaqueKeyError {
     BadServerResponse(anyhow::Error),
 }
 
+pub type OpenBaoFetchOpaqueKeyError = OpenBaoOperationError;
+pub type OpenBaoUploadOpaqueKeyError = OpenBaoOperationError;
+pub type OpenBaoSignError = OpenBaoOperationError;
+
 #[derive(Debug, thiserror::Error)]
-pub enum OpenBaoUploadOpaqueKeyError {
+pub enum OpenBaoVerifyError {
+    #[error("Bad signature")]
+    BadSignature,
+    #[error("Signature is valid, but doesn't come from the expected author!")]
+    UnexpectedAuthor,
     #[error("Invalid OpenBao server URL: {0}")]
     BadURL(anyhow::Error),
     #[error("No response from the OpenBao server: {0}")]
@@ -43,6 +52,7 @@ impl OpenBaoCmds {
         client: reqwest::Client,
         openbao_server_url: String,
         openbao_secret_mount_path: String,
+        openbao_transit_mount_path: String,
         openbao_entity_id: String,
         openbao_auth_token: String,
     ) -> Self {
@@ -50,6 +60,7 @@ impl OpenBaoCmds {
             client,
             openbao_server_url,
             openbao_secret_mount_path,
+            openbao_transit_mount_path,
             openbao_entity_id,
             openbao_auth_token,
         }
@@ -63,114 +74,40 @@ impl OpenBaoCmds {
         &self,
         openbao_ciphertext_key_path: &str,
     ) -> Result<SecretKey, OpenBaoFetchOpaqueKeyError> {
-        let url = {
-            let mut url = self
-                .openbao_server_url
-                .parse::<Url>()
-                .map_err(|err| OpenBaoFetchOpaqueKeyError::BadURL(err.into()))?;
-            {
-                let mut path = url.path_segments_mut().map_err(|()| {
-                    OpenBaoFetchOpaqueKeyError::BadURL(anyhow::anyhow!(
-                        "URL should not be a cannot-be-a-base"
-                    ))
-                })?;
-                path.pop_if_empty();
-                path.push("v1");
-                path.push(&self.openbao_secret_mount_path);
-                path.push("data");
-                path.push(openbao_ciphertext_key_path);
-            }
-            url
-        };
-
-        let rep = self
-            .client
-            .get(url)
-            .header("x-vault-token", self.openbao_auth_token.clone())
-            .send()
-            .await
-            .map_err(OpenBaoFetchOpaqueKeyError::NoServerResponse)?;
-
-        if !matches!(rep.status(), StatusCode::OK) {
-            return Err(OpenBaoFetchOpaqueKeyError::BadServerResponse(
-                anyhow::anyhow!("Bad status code: {}", rep.status()),
-            ));
-        }
-
-        // See https://openbao.org/api-docs/secret/kv/kv-v2/#read-secret-version
-        let rep_json = rep.json::<serde_json::Value>().await.map_err(|err| {
-            OpenBaoFetchOpaqueKeyError::BadServerResponse(anyhow::anyhow!("Not JSON: {:?}", err))
-        })?;
-
-        // Note this won't panic field is missing: instead a `serde_json::Value` object
-        // representing `undefined` is returned that will itself return another
-        // `undefined` if another field is looked into it.
-        let key = rep_json["data"]["data"]["opaque_key"]
-            .as_str()
-            .and_then(|b64_raw| {
-                BASE64
-                    .decode(b64_raw.as_bytes())
-                    .ok()
-                    .and_then(|raw| SecretKey::try_from(raw.as_slice()).ok())
-            })
-            .ok_or_else(|| {
-                OpenBaoFetchOpaqueKeyError::BadServerResponse(anyhow::anyhow!(
-                    "Missing or invalid `data/data/opaque_key` field"
-                ))
-            })?;
-
-        Ok(key)
+        opaque_key::fetch_opaque_key(self, openbao_ciphertext_key_path).await
     }
 
     pub async fn upload_opaque_key(
         &self,
     ) -> Result<(String, SecretKey), OpenBaoUploadOpaqueKeyError> {
-        let key = SecretKey::generate();
-        let key_path = format!("{}/{}", self.openbao_entity_id, Uuid::new_v4().as_simple());
+        opaque_key::upload_opaque_key(self).await
+    }
 
-        let url = {
-            let mut url = self
-                .openbao_server_url
-                .parse::<Url>()
-                .map_err(|err| OpenBaoUploadOpaqueKeyError::BadURL(err.into()))?;
-            {
-                let mut path = url.path_segments_mut().map_err(|()| {
-                    OpenBaoUploadOpaqueKeyError::BadURL(anyhow::anyhow!(
-                        "URL should not be a cannot-be-a-base"
-                    ))
-                })?;
-                path.pop_if_empty();
-                path.push("v1");
-                path.push(&self.openbao_secret_mount_path);
-                path.push("data");
-                path.push(&key_path);
-            }
-            url
-        };
+    /// This signing system relies on the fact OpenBao is configured to only
+    /// allow POST `/transit/sign/user-{entity_id}` (i.e. the signing API) to
+    /// the user referenced in OpenBao by this entity ID.
+    ///
+    /// This way the verify operation knows the entity ID of the author, and can
+    /// then request OpenBao about it to obtain its emails.
+    pub async fn sign(&self, payload: &[u8]) -> Result<String, OpenBaoSignError> {
+        sign::sign(self, payload).await
+    }
 
-        let rep = self
-            .client
-            .post(url)
-            .header("x-vault-token", self.openbao_auth_token.clone())
-            .json(&serde_json::json!({
-                "options": {
-                    "cas": 0,  // Prevent overwriting existing secret
-                },
-                "data": {
-                    "opaque_key": &BASE64.encode(key.as_ref()),
-                },
-            }))
-            .send()
-            .await
-            .map_err(OpenBaoUploadOpaqueKeyError::NoServerResponse)?;
-
-        if !matches!(rep.status(), StatusCode::OK) {
-            return Err(OpenBaoUploadOpaqueKeyError::BadServerResponse(
-                anyhow::anyhow!("Bad status code: {}", rep.status()),
-            ));
-        }
-
-        Ok((key_path, key))
+    pub async fn verify(
+        &self,
+        author_openbao_entity_id: &str,
+        signature: &str,
+        payload: &[u8],
+        expected_author: Option<&EmailAddress>,
+    ) -> Result<(), OpenBaoVerifyError> {
+        sign::verify(
+            self,
+            author_openbao_entity_id,
+            signature,
+            payload,
+            expected_author,
+        )
+        .await
     }
 }
 
