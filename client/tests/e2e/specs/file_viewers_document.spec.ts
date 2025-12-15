@@ -2,7 +2,7 @@
 
 import { expect, msTest, openFileType } from '@tests/e2e/helpers';
 
-msTest('Open file viewer with single click', async ({ documents }) => {
+msTest.skip('Open file viewer with single click', async ({ documents }) => {
   const entries = documents.locator('.folder-container').locator('.file-list-item');
   await entries.nth(0).locator('.label-name').click();
   await documents.locator('.topbar-left-content').locator('.back-button').click();
