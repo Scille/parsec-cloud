@@ -54,7 +54,7 @@ jobs:
 
       - name: Restore cspell cache
         id: cache
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # pin v4.3.0
+        uses: actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb # pin v5.0.1
         with:
           path: |
             package-lock.json
@@ -74,7 +74,7 @@ jobs:
 
       - name: Check spelling in the repository
         id: cspell
-        uses: streetsidesoftware/cspell-action@3294df585d3d639e30f3bc019cb11940b9866e95 # pin v8.0.0
+        uses: streetsidesoftware/cspell-action@e5a858a18b7e0b56e0342b1dcad796308b7341a2 # pin v8.1.1
         with:
           config: .cspell/cspell.config.yml
           # Generate spelling suggestions
@@ -93,7 +93,7 @@ jobs:
         if: >-
           steps.installation.outputs.previous-cache-hash != hashFiles('.cspellcache')
           && contains(github.ref, 'gh-readonly-queue') != 'true'
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # pin v4.3.0
+        uses: actions/cache/save@9255dc7a253b0ccc959486e2bca901246202afeb # pin v5.0.1
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
