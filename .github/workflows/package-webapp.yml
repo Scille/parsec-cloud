@@ -77,7 +77,7 @@ jobs:
         timeout-minutes: 2
 
       - name: Download version.patch artifact
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # pin v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # pin v7.0.0
         with:
           name: version.patch
           path: ${{ runner.temp }}/version.patch
@@ -97,7 +97,7 @@ jobs:
         working-directory: client
 
       # Install syft
-      - uses: taiki-e/install-action@50708e9ba8d7b6587a2cb575ddaa9a62e927bc06 # pin v2.62.63
+      - uses: taiki-e/install-action@d850aa816998e5cf15f67a78c7b933f2a5033f8a # pin v2.63.3
         with:
           tool: syft@0.84.0, wasm-pack@${{ env.wasm-pack-version }}
 
@@ -122,7 +122,7 @@ jobs:
       - name: Generate SBOM
         run: syft packages --config=.syft.yaml --output=spdx-json="${{ runner.temp }}/Parsec-SBOM-Web.spdx.json" .
 
-      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # pin v5.0.0
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # pin v6.0.0
         with:
           name: webapp
           path: |

@@ -101,7 +101,7 @@ jobs:
 
       - name: Restore libparsec if Rust hasn't been modified
         id: cache-libparsec
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # pin v4.3.0
+        uses: actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb # pin v5.0.1
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
@@ -131,7 +131,7 @@ jobs:
         timeout-minutes: 5
 
       # Install wasm-pack command
-      - uses: taiki-e/install-action@50708e9ba8d7b6587a2cb575ddaa9a62e927bc06 # pin v2.62.63
+      - uses: taiki-e/install-action@d850aa816998e5cf15f67a78c7b933f2a5033f8a # pin v2.63.3
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           tool: wasm-pack@${{ env.wasm-pack-version }}
@@ -144,7 +144,7 @@ jobs:
 
       - name: Save libparsec to be reuse later
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # pin v4.3.0
+        uses: actions/cache/save@9255dc7a253b0ccc959486e2bca901246202afeb # pin v5.0.1
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
@@ -207,7 +207,7 @@ jobs:
 
       - name: Restore libparsec if Rust hasn't been modified
         id: cache-libparsec
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # pin v4.3.0
+        uses: actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb # pin v5.0.1
         with:
           # We use the cache setup by `test-web-app`
           fail-on-cache-miss: true
@@ -245,7 +245,7 @@ jobs:
 
       - name: Upload blob report to GitHub Actions Artifacts
         if: "!cancelled()" # We always upload the artifacts even in case of failure of playwright.
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # pin v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # pin v6.0.0
         with:
           name: blob-report-${{ matrix.shard_index }}
           if-no-files-found: error
@@ -273,7 +273,7 @@ jobs:
         timeout-minutes: 2
 
       - name: Download blob reports from GitHub Actions Artifacts
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # pin v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # pin v7.0.0
         with:
           path: client/all-blob-reports
           pattern: blob-report-*
@@ -285,7 +285,7 @@ jobs:
 
       - name: Archive test results
         # Always upload playwright report when playwright tests are run
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # pin v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # pin v6.0.0
         with:
           name: playwright-report
           if-no-files-found: error
