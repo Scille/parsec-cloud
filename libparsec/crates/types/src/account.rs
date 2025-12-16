@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::*;
 use thiserror::Error;
 
+use super::utils::{impl_decrypt_and_load, impl_dump, impl_dump_and_encrypt, impl_load};
 use libparsec_serialization_format::parsec_data;
 
 use crate::{
@@ -26,55 +27,6 @@ pub const AUTH_METHOD_MAC_KEY_DERIVATION_UUID: uuid::Uuid =
     uuid::uuid!("11111111-1111-1111-1111-111111111111");
 pub const AUTH_METHOD_SECRET_KEY_DERIVATION_UUID: uuid::Uuid =
     uuid::uuid!("22222222-2222-2222-2222-222222222222");
-
-/*
- * Helpers
- */
-
-macro_rules! impl_dump {
-    ($name:ident) => {
-        impl $name {
-            pub fn dump(&self) -> Vec<u8> {
-                format_v0_dump(&self)
-            }
-        }
-    };
-}
-
-macro_rules! impl_dump_and_encrypt {
-    ($name:ident) => {
-        impl $name {
-            pub fn dump_and_encrypt(&self, key: &::libparsec_crypto::SecretKey) -> Vec<u8> {
-                let serialized = format_v0_dump(&self);
-                key.encrypt(&serialized)
-            }
-        }
-    };
-}
-
-macro_rules! impl_load {
-    ($name:ident) => {
-        impl $name {
-            pub fn load(serialized: &[u8]) -> Result<$name, DataError> {
-                format_vx_load(&serialized)
-            }
-        }
-    };
-}
-
-macro_rules! impl_decrypt_and_load {
-    ($name:ident) => {
-        impl $name {
-            pub fn decrypt_and_load(
-                encrypted: &[u8],
-                key: &::libparsec_crypto::SecretKey,
-            ) -> Result<$name, DataError> {
-                let serialized = key.decrypt(encrypted).map_err(|_| DataError::Decryption)?;
-                format_vx_load(&serialized)
-            }
-        }
-    };
-}
 
 /*
  * ValidationCode
