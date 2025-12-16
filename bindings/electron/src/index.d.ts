@@ -1059,6 +1059,10 @@ export interface AvailableDeviceTypeOpenBao {
     openbao_preferred_auth_id: string
     openbao_entity_id: string
 }
+export interface AvailableDeviceTypePKI {
+    tag: "AvailableDeviceTypePKI"
+    certificate_ref: X509CertificateReference
+}
 export interface AvailableDeviceTypePassword {
     tag: "AvailableDeviceTypePassword"
 }
@@ -1072,6 +1076,7 @@ export type AvailableDeviceType =
   | AvailableDeviceTypeAccountVault
   | AvailableDeviceTypeKeyring
   | AvailableDeviceTypeOpenBao
+  | AvailableDeviceTypePKI
   | AvailableDeviceTypePassword
   | AvailableDeviceTypeRecovery
   | AvailableDeviceTypeSmartcard
@@ -2308,6 +2313,10 @@ export interface DeviceAccessStrategyOpenBao {
     openbao_entity_id: string
     openbao_auth_token: string
 }
+export interface DeviceAccessStrategyPKI {
+    tag: "DeviceAccessStrategyPKI"
+    key_file: string
+}
 export interface DeviceAccessStrategyPassword {
     tag: "DeviceAccessStrategyPassword"
     password: string
@@ -2321,6 +2330,7 @@ export type DeviceAccessStrategy =
   | DeviceAccessStrategyAccountVault
   | DeviceAccessStrategyKeyring
   | DeviceAccessStrategyOpenBao
+  | DeviceAccessStrategyPKI
   | DeviceAccessStrategyPassword
   | DeviceAccessStrategySmartcard
 
@@ -2341,6 +2351,10 @@ export interface DeviceSaveStrategyOpenBao {
     openbao_auth_token: string
     openbao_preferred_auth_id: string
 }
+export interface DeviceSaveStrategyPKI {
+    tag: "DeviceSaveStrategyPKI"
+    certificate_ref: X509CertificateReference
+}
 export interface DeviceSaveStrategyPassword {
     tag: "DeviceSaveStrategyPassword"
     password: string
@@ -2353,6 +2367,7 @@ export type DeviceSaveStrategy =
   | DeviceSaveStrategyAccountVault
   | DeviceSaveStrategyKeyring
   | DeviceSaveStrategyOpenBao
+  | DeviceSaveStrategyPKI
   | DeviceSaveStrategyPassword
   | DeviceSaveStrategySmartcard
 
@@ -2892,6 +2907,14 @@ export type ParseParsecAddrError =
 
 
 // ParsedParsecAddr
+export interface ParsedParsecAddrAsyncEnrollment {
+    tag: "ParsedParsecAddrAsyncEnrollment"
+    hostname: string
+    port: number
+    is_default_port: boolean
+    use_ssl: boolean
+    organization_id: string
+}
 export interface ParsedParsecAddrInvitationDevice {
     tag: "ParsedParsecAddrInvitationDevice"
     hostname: string
@@ -2963,6 +2986,7 @@ export interface ParsedParsecAddrWorkspacePath {
     encrypted_path: Uint8Array
 }
 export type ParsedParsecAddr =
+  | ParsedParsecAddrAsyncEnrollment
   | ParsedParsecAddrInvitationDevice
   | ParsedParsecAddrInvitationShamirRecovery
   | ParsedParsecAddrInvitationUser
