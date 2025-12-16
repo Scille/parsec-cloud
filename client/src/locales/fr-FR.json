@@ -845,49 +845,51 @@
         "linkNotCopiedToClipboard": "Impossible de copier le lien. Il est possible que votre navigateur ou votre appareil n'autorise pas le copier/coller.",
         "linkCopiedToClipboard": "Le lien a été copié dans le presse-papier.",
         "getLinkError": "Impossible de récupérer un lien vers le fichier",
+        "FileOperations": {
+            "waiting": "En attente",
+            "finalizing": "Finalisation...",
+            "cancelled": "Annulé",
+            "cancelling": "Annulation...",
+            "cancel": "Annuler",
+            "failed": "Échoué",
+            "files": "fichiers"
+        },
         "ImportFile": {
+            "importMultiplesFiles": "Import de {count}",
             "importFilesAction": "Importer des fichiers",
             "importFolderAction": "Importer un dossier",
             "title": "Tâches de fond",
-            "waiting": "en attente",
-            "cancelled": "annulé",
-            "failed": "échoué",
             "failedDetails": "Vérifier votre connexion internet",
             "browse": "Aller à l'emplacement",
             "tabs": {
                 "inProgress": "En cours",
-                "done": "Terminés",
-                "failed": "Échoués"
+                "done": "Terminées",
+                "failed": "Échouées",
+                "clear": "Effacer la liste"
             },
-            "noImportInProgress": "Pas d'import en cours",
+            "noTasks": "Aucune tâche",
+            "noCurrentTasks": "Aucun tâche dans cette catégorie",
             "noImportDone": "Pas d'import terminé",
             "noImportFailed": "Pas d'import échoué",
             "dropInstructions": "Glissez & déposez vos fichiers pour les importer",
             "noDropForReader": "Vous êtes Lecteur sur cet espace de travail et ne pouvez pas importer des fichiers."
         },
         "CopyFile": {
-            "copy": "Copie de {name}",
-            "waiting": "en attente",
-            "cancelled": "annulé",
-            "failed": "échoué",
-            "browse": "Aller à l'emplacement"
+            "copyMultiplesFiles": "Copie de {count}",
+            "copy": "Copie de {name}"
         },
         "MoveFile": {
+            "moveMultiplesFiles": "Déplacement de {count}",
             "move": "Déplacement de {name}",
-            "waiting": "en attente",
-            "cancelled": "annulé",
-            "failed": "échoué",
-            "browse": "Aller à l'emplacement",
-            "failedDetails": "Vérifier votre connexion internet."
+            "failedDetails": "Veuillez vous assurer que vous êtes en ligne."
         },
         "RestoreFile": {
+            "restoreMultiplesFiles": "Restauration de {count}",
             "restore": "Restauration de {name}",
-            "waiting": "en attente",
-            "cancelled": "annulé",
-            "failed": "échoué",
             "failedDetails": "Impossible de restaurer ce fichier ou dossier."
         },
         "DownloadFile": {
+            "download": "Téléchargement de {name}",
             "downloadWarningTitle": "Êtes-vous sûr de vouloir télécharger ce fichier ?",
             "downloadWarningText": "Si vous téléchargez ce fichier en dehors de Parsec, nous ne pourrons plus garantir sa sécurité.",
             "downloadWarningDocMessage": "Pour plus d'informations, vous pouvez consulter notre {0}.",
@@ -900,14 +902,27 @@
             "noPermissions": "Ce site n'a pas les autorisations requises pour sauvegarder un fichier sur votre disque. Veuillez donner les permissions d'édition de fichier à ce site si vous souhaitez télécharger un fichier.",
             "openFailed": "Impossible d'ouvrir le fichier. Vous pouvez essayer en utilisant la liste des téléchargement de votre navigateur.",
             "cancel": "Annuler",
-            "download": "Télécharger le fichier",
+            "downloadButton": "Télécharger le fichier",
             "notRemindMe": "Ne plus me le rappeler",
             "maximumRecursionReached": "Profondeur maximale de sous-dossiers atteinte, impossible de télécharger",
             "maximumFilesReached": "Trop de fichiers sélectionnés, impossible de télécharger",
             "archiveTitle": "Téléchargement de fichiers",
             "archiveQuestion": "Les fichiers sélectionnées seront téléchargés dans une archive, avec une taille totale de {size}. Souhaitez-vous continuer ?",
             "archiveYes": "Télécharger l'archive",
-            "archiveNo": "Annuler"
+            "archiveNo": "Annuler",
+            "archiveDownload": "Téléchargement des fichiers (archive)",
+            "archive": "Création de l'archive"
+        },
+        "ConflictsFile": {
+            "title": "Conflits: noms de fichiers déjà existants",
+            "description": "Certains fichiers possèdent un nom déjà existant dans le dossier de destination, voulez-vous ajouter un nom unique ”ex: Fichier(2)”, les remplacer ou ignorer ?",
+            "fileConcerned": "{count} fichier concerné | {count} fichiers concernés",
+            "moreFiles": "1 autre fichier | {count} autres fichiers",
+            "buttons": {
+                "ignore": "Ignorer",
+                "replace": "Remplacer",
+                "keepAll": "Conserver les deux"
+            }
         },
         "uploadsLeft": "{amount} imports en attente",
         "copiesLeft": "{amount} copies en attente",

@@ -3,12 +3,13 @@
 import { formatFileSize } from '@/common/file';
 import { EntryModel } from '@/components/files';
 import { SmallDisplayCategoryFileContextMenu, SmallDisplayFileContextMenu } from '@/components/small-display';
-import { EntryName, EntryStat, EntryStatFile, EntryTree, FsPath, listTree, WorkspaceHandle, WorkspaceID, WorkspaceRole } from '@/parsec';
+import { EntryName, EntryStat, EntryStatFile, EntryTree, listTree, WorkspaceHandle, WorkspaceID, WorkspaceRole } from '@/parsec';
 import { isFileEditable } from '@/services/cryptpad';
-import { FileOperationManager } from '@/services/fileOperationManager';
+import { DuplicatePolicy } from '@/services/fileOperation';
+import { FileOperationManager } from '@/services/fileOperation/manager';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { StorageManager } from '@/services/storageManager';
-import { FileAction, FileContextMenu, FolderGlobalAction, FolderGlobalContextMenu } from '@/views/files';
+import { FileAction, FileContextMenu, FileOperationConflictsModal, FolderGlobalAction, FolderGlobalContextMenu } from '@/views/files';
 import DownloadWarningModal from '@/views/files/DownloadWarningModal.vue';
 import { modalController, popoverController } from '@ionic/vue';
 import { Answer, askQuestion, I18n, MsModalResult } from 'megashark-lib';
@@ -131,7 +132,6 @@ export async function askDownloadConfirmation(): Promise<{ result: MsModalResult
 }
 
 export async function openDownloadConfirmationModal(storageManager: StorageManager): Promise<MsModalResult> {
-  console.log('openDownloadConfirmationModal called');
   const config = await storageManager.retrieveConfig();
   if (!config.disableDownloadWarning) {
     const { result, noReminder } = await askDownloadConfirmation();
@@ -155,8 +155,7 @@ interface DownloadOptions {
 }
 
 interface DownloadEntryOptions extends DownloadOptions {
-  name: EntryName;
-  path: FsPath;
+  entry: EntryStatFile;
 }
 
 interface DownloadEntriesOptions extends DownloadOptions {
@@ -169,9 +168,9 @@ export async function downloadEntry(options: DownloadEntryOptions): Promise<void
   try {
     const saveHandle = await showSaveFilePicker({
       _preferPolyfill: false,
-      suggestedName: options.name,
+      suggestedName: options.entry.name,
     });
-    await options.fileOperationManager.downloadEntry(options.workspaceHandle, options.workspaceId, saveHandle, options.path);
+    await options.fileOperationManager.download(options.workspaceHandle, options.entry, saveHandle);
   } catch (e: any) {
     if (e.name === 'NotAllowedError') {
       window.electronAPI.log('error', 'No permission for showSaveFilePicker');
@@ -255,7 +254,7 @@ export async function downloadArchive(options: DownloadEntriesOptions): Promise<
 
   const answer = await askQuestion(
     'FoldersPage.DownloadFile.archiveTitle',
-    { key: 'FoldersPage.DownloadFile.archiveQuestion', data: { size: I18n.translate(formatFileSize(totalSize)) } },
+    { key: 'FoldersPage.DownloadFile.archiveQuestion', data: { size: I18n.translate(formatFileSize(totalSize)), files: totalFiles } },
     {
       noText: 'FoldersPage.DownloadFile.archiveNo',
       yesText: 'FoldersPage.DownloadFile.archiveYes',
@@ -270,15 +269,7 @@ export async function downloadArchive(options: DownloadEntriesOptions): Promise<
       _preferPolyfill: false,
       suggestedName: options.archiveName,
     });
-    await options.fileOperationManager.downloadArchive(
-      options.workspaceHandle,
-      options.workspaceId,
-      saveHandle,
-      trees,
-      options.relativePath,
-      totalFiles,
-      totalSize,
-    );
+    await options.fileOperationManager.downloadArchive(options.workspaceHandle, trees, saveHandle, options.relativePath);
   } catch (e: any) {
     if (e.name === 'NotAllowedError') {
       window.electronAPI.log('error', 'No permission for showSaveFilePicker');
@@ -306,4 +297,20 @@ export async function downloadArchive(options: DownloadEntriesOptions): Promise<
       window.electronAPI.log('error', `Failed to select destination file: ${e.toString()}`);
     }
   }
+}
+
+export async function getDuplicatePolicy(files: Array<EntryStat | File>): Promise<DuplicatePolicy | undefined> {
+  if (files.length === 0) {
+    return DuplicatePolicy.AddCounter;
+  }
+  const modal = await modalController.create({
+    component: FileOperationConflictsModal,
+    cssClass: 'file-operation-conflicts-modal',
+    componentProps: {
+      files: files,
+    },
+  });
+  await modal.present();
+  const { data } = await modal.onDidDismiss();
+  return data;
 }

@@ -222,17 +222,10 @@ msTest.describe(() => {
 
       const uploadMenu = documents.locator('.upload-menu');
       await expect(uploadMenu).toBeVisible();
-      const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
-      await expect(tabs.locator('.text-counter')).toHaveText(['0', '2', '0']);
-      await expect(tabs.nth(0)).not.toHaveTheClass('active');
-      await expect(tabs.nth(1)).toHaveTheClass('active');
-      await expect(tabs.nth(2)).not.toHaveTheClass('active');
-
-      const container = uploadMenu.locator('.element-container');
-      const elements = container.locator('.element');
-      await expect(elements).toHaveCount(2);
-      await expect(elements.nth(0).locator('.element-details__name')).toHaveText(/^[A-Za-z0-9_-]+\.pdf$/);
-      await expect(elements.nth(0).locator('.element-details-info__size')).toHaveText('76.9 KB');
+      const opItems = uploadMenu.locator('.upload-menu-list').locator('.file-operation-item');
+      await expect(opItems).toHaveCount(2);
+      await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Downloading pdfDocument.pdf');
+      await expect(opItems.nth(0).locator('.element-details-info').locator('ion-text').nth(0)).toHaveText(' wksp1');
 
       const content = await getDownloadedFile(documents);
       expect(content).toBeTruthy();

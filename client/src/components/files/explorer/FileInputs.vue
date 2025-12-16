@@ -19,8 +19,6 @@
 </template>
 
 <script setup lang="ts">
-import { FileImportTuple } from '@/components/files/utils';
-import { FsPath } from '@/parsec';
 import { onBeforeUnmount, onMounted, useTemplateRef } from 'vue';
 
 defineExpose({
@@ -28,12 +26,8 @@ defineExpose({
   importFolder,
 });
 
-const props = defineProps<{
-  currentPath: FsPath;
-}>();
-
 const emits = defineEmits<{
-  (e: 'filesAdded', imports: FileImportTuple[]): void;
+  (e: 'filesAdded', imports: Array<File>): void;
 }>();
 
 const hiddenInputFilesRef = useTemplateRef<HTMLInputElement>('hiddenInputFiles');
@@ -51,6 +45,7 @@ onBeforeUnmount(() => {
 
 async function onInputChange(event: any): Promise<void> {
   const elem = event.target;
+
   // Would love to use `hiddenInput.value.webkitEntries` instead but it returns
   // an empty list (may be browser dependant).
   // So we have to use `.files` instead, which is a worst API.
@@ -59,10 +54,16 @@ async function onInputChange(event: any): Promise<void> {
     // Converting from `FileList` to `File[]`. No idea why the API is using
     // a worst type.
     for (let i = 0; i < elem.files.length; i++) {
-      const item = elem.files.item(i);
-      if (item) {
-        files.push(item);
+      const item: File | undefined = elem.files.item(i);
+      if (!item) {
+        continue;
       }
+      if (item.webkitRelativePath) {
+        (item as any).relativePath = `/${item.webkitRelativePath}`;
+      } else {
+        (item as any).relativePath = `/${item.name}`;
+      }
+      files.push(item);
     }
     if (files.length > 0) {
       await onFilesImport(files);
@@ -80,10 +81,7 @@ async function importFolder(): Promise<void> {
 }
 
 async function onFilesImport(files: File[]): Promise<void> {
-  const imports: FileImportTuple[] = files.map((file): FileImportTuple => {
-    return { file: file, path: props.currentPath };
-  });
-  emits('filesAdded', imports);
+  emits('filesAdded', files);
 }
 </script>
 

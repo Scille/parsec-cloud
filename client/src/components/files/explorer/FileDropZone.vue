@@ -31,8 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { FileImportTuple, getFilesFromDrop } from '@/components/files/utils';
-import { FsPath } from '@/parsec';
+import { getFilesFromDrop } from '@/components/files/utils';
 import { IonText } from '@ionic/vue';
 import { DocumentImport, MsImage } from 'megashark-lib';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
@@ -42,14 +41,13 @@ defineExpose({
 });
 
 const props = defineProps<{
-  currentPath: FsPath;
   disabled?: boolean;
   showDropMessage?: boolean;
   isReader?: boolean;
 }>();
 
 const emits = defineEmits<{
-  (e: 'filesAdded', imports: FileImportTuple[]): void;
+  (e: 'filesAdded', files: Array<File>): void;
   (e: 'dropAsReader'): void;
   (e: 'globalMenuClick', event: Event): void;
 }>();
@@ -96,9 +94,9 @@ async function onDrop(event: DragEvent): Promise<void> {
   }
   event.stopPropagation();
   dragEnterCount.value = 0;
-  const imports = await getFilesFromDrop(event, props.currentPath);
-  if (imports.length) {
-    emits('filesAdded', imports);
+  const files = await getFilesFromDrop(event);
+  if (files.length) {
+    emits('filesAdded', files);
   }
 }
 

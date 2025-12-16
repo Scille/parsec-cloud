@@ -1,7 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { EntryID, EntryStatFile, EntryStatFolder, WorkspaceHistoryEntryStatFile, WorkspaceHistoryEntryStatFolder } from '@/parsec';
-import { FileOperationData } from '@/services/fileOperationManager';
+import {
+  EntryID,
+  EntryName,
+  EntryStatFile,
+  EntryStatFolder,
+  WorkspaceHistoryEntryStatFile,
+  WorkspaceHistoryEntryStatFolder,
+} from '@/parsec';
+import { FileOperationDataType } from '@/services/fileOperation';
 import { Translatable } from 'megashark-lib';
 
 export enum SortProperty {
@@ -22,14 +29,15 @@ export enum OpenFallbackChoice {
   View,
 }
 
+export interface FileOperationCurrentFolder {
+  entryName: EntryName;
+  type: FileOperationDataType;
+}
+
 export interface FallbackCustomParams {
   title: Translatable;
   subtitle: Translatable;
   viewerOption: boolean;
-}
-export interface FileOperationProgress {
-  data: FileOperationData;
-  progress: number;
 }
 
 export enum EntrySyncStatus {

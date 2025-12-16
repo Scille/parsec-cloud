@@ -126,13 +126,17 @@ export async function sortBy(sortButton: Locator, clickOnLabel: string): Promise
   await expect(popover).toBeHidden();
 }
 
-export async function dragAndDropFile(page: Page, element: Locator, filePaths: Array<string>): Promise<void> {
-  const files: Array<{ content: string; name: string }> = [];
+export async function dragAndDropFile(
+  page: Page,
+  element: Locator,
+  filePaths: Array<string>,
+  fileContents?: Array<{ content: string; name: string }>,
+): Promise<void> {
+  const files: Array<{ content: string; name: string }> = fileContents ?? [];
 
   for (const filePath of filePaths) {
     files.push({ content: readFileSync(filePath).toString('base64'), name: path.basename(filePath) });
   }
-
   const dataTransfer = await page.evaluateHandle(async (filesInfo: Array<{ content: string; name: string }>) => {
     const dt = new DataTransfer();
 
@@ -389,19 +393,21 @@ export async function importDefaultFiles(
       [ImportDocuments.Py, 'code.py'],
     ]);
 
+    const paths: Array<string> = [];
     for (const [flag, document] of FILES.entries()) {
       if (imports & flag) {
-        await dragAndDropFile(documentsPage, dropZone, [path.join(testInfo.config.rootDir, 'data', 'imports', document)]);
-        imported += 1;
+        paths.push(path.join(testInfo.config.rootDir, 'data', 'imports', document));
       }
     }
+
+    await dragAndDropFile(documentsPage, dropZone, paths);
+    imported = paths.length;
   }
   // Hide the import menu
   if (imported > 0) {
     const uploadMenu = documentsPage.locator('.upload-menu');
     await expect(uploadMenu).toBeVisible();
-    const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
-    await expect(tabs.locator('.text-counter')).toHaveText(['0', `${imported}`, '0']);
+    expect(await uploadMenu.locator('.upload-menu-list').locator('.file-operation-item').count()).toBeGreaterThan(0);
     await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
   }
   await expect(documentsPage.locator('.folder-container').locator('.no-files-content')).toBeHidden();

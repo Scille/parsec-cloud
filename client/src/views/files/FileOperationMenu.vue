@@ -25,211 +25,130 @@
     <ion-list class="upload-menu-tabs">
       <ion-item
         class="upload-menu-tabs__item button-medium"
-        :class="{ active: currentTab === Tabs.InProgress }"
-        @click="currentTab = Tabs.InProgress"
+        @click="onFilterSelected(OperationFilter.InProgress)"
+        :class="filter === OperationFilter.InProgress ? 'active' : ''"
       >
         <div class="item-container">
           <ion-text>{{ $msTranslate('FoldersPage.ImportFile.tabs.inProgress') }}</ion-text>
-          <span class="text-counter">{{ inProgressAndQueuedLength > 99 ? '+99' : inProgressAndQueuedLength }}</span>
         </div>
       </ion-item>
-
       <ion-item
         class="upload-menu-tabs__item button-medium"
-        :class="{ active: currentTab === Tabs.Done }"
-        @click="currentTab = Tabs.Done"
+        @click="onFilterSelected(OperationFilter.Done)"
+        :class="filter === OperationFilter.Done ? 'active' : ''"
       >
         <div class="item-container">
           <ion-text>{{ $msTranslate('FoldersPage.ImportFile.tabs.done') }}</ion-text>
-          <span class="text-counter">{{ doneItemsCount > 99 ? '+99' : doneItemsCount }}</span>
         </div>
       </ion-item>
-
       <ion-item
         class="upload-menu-tabs__item button-medium"
-        :class="{ active: currentTab === Tabs.Error }"
-        @click="currentTab = Tabs.Error"
+        @click="onFilterSelected(OperationFilter.Error)"
+        :class="filter === OperationFilter.Error ? 'active' : ''"
       >
         <div class="item-container">
           <ion-text>{{ $msTranslate('FoldersPage.ImportFile.tabs.failed') }}</ion-text>
-          <span class="text-counter">{{ errorItemsCount > 99 ? '+99' : errorItemsCount }}</span>
         </div>
       </ion-item>
+      <ion-button
+        @click="onClearClicked"
+        fill="outline"
+        class="upload-menu-tabs__delete"
+      >
+        {{ $msTranslate('FoldersPage.ImportFile.tabs.clear') }}
+      </ion-button>
     </ion-list>
 
     <ion-list class="upload-menu-list">
-      <template v-if="currentTab === Tabs.InProgress">
-        <file-aggregate-queued-item
-          v-if="queuedUploadItems.length > 0"
-          :amount="queuedUploadItems.length"
-          :type="FileOperationDataType.Import"
-          @cancel="cancelQueuedOperations(queuedUploadItems)"
-        />
-        <file-aggregate-queued-item
-          v-if="queuedCopyItems.length > 0"
-          :amount="queuedCopyItems.length"
-          :type="FileOperationDataType.Copy"
-          @cancel="cancelQueuedOperations(queuedCopyItems)"
-        />
-        <file-aggregate-queued-item
-          v-if="queuedMoveItems.length > 0"
-          :amount="queuedMoveItems.length"
-          :type="FileOperationDataType.Move"
-          @cancel="cancelQueuedOperations(queuedMoveItems)"
-        />
-        <component
-          v-for="item in inProgressItems"
-          :is="getFileOperationComponent(item)"
-          :key="item.data.id"
-          :state="item.state"
-          :state-data="item.stateData"
-          :operation-data="item.data"
-          @cancel="cancelOperation"
-        />
-        <div
-          class="upload-menu-list__empty"
-          v-if="inProgressAndQueuedLength === 0"
-        >
-          <ms-image :image="NoImportInProgress" />
-          <ion-text class="body-lg">
-            {{ $msTranslate('FoldersPage.ImportFile.noImportInProgress') }}
-          </ion-text>
-        </div>
-      </template>
-      <template v-if="currentTab === Tabs.Done">
-        <component
-          v-for="item in doneItems.getEntries()"
-          :is="getFileOperationComponent(item)"
-          :key="item.data.id"
-          :state="item.state"
-          :state-data="item.stateData"
-          :operation-data="item.data"
-          @click="onOperationFinishedClick"
-        />
-        <file-aggregate-done-item
-          v-if="doneItemsCount > MAX_DONE_ERROR_ITEMS"
-          :amount="doneItemsCount - MAX_DONE_ERROR_ITEMS"
-        />
-        <div
-          class="upload-menu-list__empty"
-          v-if="doneItemsCount === 0"
-        >
-          <ms-image :image="NoImportDone" />
-          <ion-text class="body-lg">
-            {{ $msTranslate('FoldersPage.ImportFile.noImportDone') }}
-          </ion-text>
-        </div>
-      </template>
-      <template v-if="currentTab === Tabs.Error">
-        <component
-          v-for="item in errorItems.getEntries()"
-          :is="getFileOperationComponent(item)"
-          :key="item.data.id"
-          :state="item.state"
-          :state-data="item.stateData"
-          :operation-data="item.data"
-        />
-        <file-aggregate-done-item
-          v-if="errorItemsCount > MAX_DONE_ERROR_ITEMS"
-          :amount="errorItemsCount - MAX_DONE_ERROR_ITEMS"
-          :is-error="true"
-        />
-        <div
-          class="upload-menu-list__empty"
-          v-if="errorItemsCount === 0"
-        >
-          <ms-image :image="NoImportError" />
-          <ion-text class="body-lg">
-            {{ $msTranslate('FoldersPage.ImportFile.noImportFailed') }}
-          </ion-text>
-        </div>
-      </template>
+      <component
+        v-for="item in currentItems"
+        :is="getOperationComponent(item)"
+        :key="item.operationData.id"
+        :operation-data="item.operationData"
+        :status="item.status"
+        :event-data="item.eventData"
+        @cancel="onOperationCancelClick"
+        @click="onOperationClick"
+      />
+      <div
+        class="upload-menu-list__empty"
+        v-if="currentItems.length === 0"
+      >
+        <ms-image :image="NoImportInProgress" />
+        <ion-text class="body-lg">
+          {{ $msTranslate(items.length === 0 ? 'FoldersPage.ImportFile.noTasks' : 'FoldersPage.ImportFile.noCurrentTasks') }}
+        </ion-text>
+      </div>
     </ion-list>
   </div>
 </template>
 
 <script setup lang="ts">
-import { FIFO } from '@/common/queue';
+import { FileOperationBase, FileOperationDownloadArchive, FileOperationImport } from '@/components/files';
+import { Path } from '@/parsec';
+import { navigateTo, Routes } from '@/router';
 import {
-  FileAggregateDoneItem,
-  FileAggregateQueuedItem,
-  FileCopyItem,
-  FileDownloadItem,
-  FileMoveItem,
-  FileRestoreItem,
-  FileUploadItem,
-} from '@/components/files';
-import FileDownloadArchive from '@/components/files/FileDownloadArchive.vue';
-import { navigateToWorkspace } from '@/router';
-import {
-  DownloadData,
+  FileOperationCopyData,
   FileOperationData,
   FileOperationDataType,
-  FileOperationManager,
-  FileOperationManagerKey,
-  FileOperationState,
-  ImportData,
-  StateData,
-} from '@/services/fileOperationManager';
+  FileOperationImportData,
+  FileOperationMoveData,
+  FileOperationRestoreData,
+} from '@/services/fileOperation';
+import { FileEventRegistrationCanceller, FileOperationEventData, FileOperationEvents } from '@/services/fileOperation/events';
+import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperation/manager';
 import useUploadMenu from '@/services/fileUploadMenu';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import { IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
+import { IonButton, IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
 import { chevronDown, close } from 'ionicons/icons';
-import { DateTime } from 'luxon';
-import { MsImage, NoImportDone, NoImportError, NoImportInProgress } from 'megashark-lib';
+import { MsImage, NoImportInProgress } from 'megashark-lib';
 import type { Component } from 'vue';
 import { computed, inject, onMounted, onUnmounted, ref } from 'vue';
 
 interface OperationItem {
-  data: FileOperationData;
-  state: FileOperationState;
-  stateData?: StateData;
-  finishedDate?: DateTime;
+  operationData: FileOperationData;
+  status: FileOperationEvents;
+  eventData?: FileOperationEventData;
 }
 
-const MAX_DONE_ERROR_ITEMS: number = 10;
+enum OperationFilter {
+  Done = 'done',
+  InProgress = 'in-progress',
+  Error = 'error',
+}
 
 const menu = useUploadMenu();
-const informationManager: InformationManager = inject(InformationManagerKey)!;
 
 const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
-const errorHappenedInUpload = ref<boolean>(false);
-const inProgressItems = ref<Array<OperationItem>>([]);
-const queuedCopyItems = ref<Array<OperationItem>>([]);
-const queuedMoveItems = ref<Array<OperationItem>>([]);
-const queuedUploadItems = ref<Array<OperationItem>>([]);
-const queuedRestoreItems = ref<Array<OperationItem>>([]);
-const queuedDownloadItems = ref<Array<OperationItem>>([]);
-const queuedArchiveItems = ref<Array<OperationItem>>([]);
 
-const doneItems = ref(new FIFO<OperationItem>(MAX_DONE_ERROR_ITEMS));
-const errorItems = ref(new FIFO<OperationItem>(MAX_DONE_ERROR_ITEMS));
-const doneItemsCount = ref<number>(0);
-const errorItemsCount = ref<number>(0);
+const items = ref<Array<OperationItem>>([]);
 
-const inProgressAndQueuedLength = computed(() => {
-  return (
-    inProgressItems.value.length +
-    queuedUploadItems.value.length +
-    queuedCopyItems.value.length +
-    queuedMoveItems.value.length +
-    queuedRestoreItems.value.length +
-    queuedDownloadItems.value.length +
-    queuedArchiveItems.value.length
-  );
+const filter = ref<OperationFilter | undefined>(undefined);
+
+const currentItems = computed(() => {
+  if (!filter.value) {
+    return items.value;
+  }
+  return items.value.filter((item) => {
+    if (
+      filter.value === OperationFilter.InProgress &&
+      [FileOperationEvents.Added, FileOperationEvents.Progress, FileOperationEvents.Started].includes(item.status)
+    ) {
+      return true;
+    } else if (filter.value === OperationFilter.Done && item.status === FileOperationEvents.Finished) {
+      return true;
+    } else if (
+      filter.value === OperationFilter.Error &&
+      [FileOperationEvents.Cancelled, FileOperationEvents.Failed].includes(item.status)
+    ) {
+      return true;
+    }
+    return false;
+  });
 });
 
-let dbId: string;
+let canceller!: FileEventRegistrationCanceller;
 const isFileOperationManagerActive = ref(false);
 const uploadMenuList = ref();
-
-enum Tabs {
-  InProgress,
-  Done,
-  Error,
-}
-
-const currentTab = ref(Tabs.InProgress);
 
 function toggleMenu(): void {
   if (menu.isMinimized()) {
@@ -239,284 +158,129 @@ function toggleMenu(): void {
   }
 }
 
+function onFilterSelected(newFilter: OperationFilter): void {
+  if (filter.value === newFilter) {
+    filter.value = undefined;
+  } else {
+    filter.value = newFilter;
+  }
+}
+
+function getOperationComponent(item: OperationItem): Component {
+  switch (item.operationData.type) {
+    case FileOperationDataType.Import:
+      return FileOperationImport;
+    case FileOperationDataType.DownloadArchive:
+      return FileOperationDownloadArchive;
+    case FileOperationDataType.Copy:
+    case FileOperationDataType.Move:
+    case FileOperationDataType.Restore:
+    case FileOperationDataType.Download:
+    default:
+      return FileOperationBase;
+  }
+}
+
 onMounted(async () => {
-  dbId = await fileOperationManager.registerCallback(onFileOperationEvent);
+  canceller = await fileOperationManager.registerCallback(onFileOperationEvent);
 });
 
 onUnmounted(async () => {
-  await fileOperationManager.removeCallback(dbId);
+  canceller.cancel();
 });
 
-function getFileOperationComponent(item: OperationItem): Component | undefined {
-  switch (item.data.getDataType()) {
-    case FileOperationDataType.Import:
-      return FileUploadItem;
-    case FileOperationDataType.Copy:
-      return FileCopyItem;
-    case FileOperationDataType.Move:
-      return FileMoveItem;
-    case FileOperationDataType.Restore:
-      return FileRestoreItem;
-    case FileOperationDataType.Download:
-      return FileDownloadItem;
-    case FileOperationDataType.DownloadArchive:
-      return FileDownloadArchive;
-  }
-}
-
-function updateImportState(data: FileOperationData, state: FileOperationState, stateData?: StateData): void {
-  let index: number;
-  const itemDataType: FileOperationDataType = data.getDataType();
-
-  if (state === FileOperationState.OperationProgress) {
-    // Check if item has to be moved from queued to inProgress
-    if (!inProgressItems.value.find((op) => op.data.id === data.id)) {
-      switch (itemDataType) {
-        case FileOperationDataType.Import:
-          index = queuedUploadItems.value.findIndex((op) => op.data.id === data.id);
-          if (queuedUploadItems.value[index]) {
-            const item = queuedUploadItems.value.splice(index, 1)[0];
-            inProgressItems.value.push(item);
-          }
-          break;
-        case FileOperationDataType.Copy:
-          index = queuedCopyItems.value.findIndex((op) => op.data.id === data.id);
-          if (queuedCopyItems.value[index]) {
-            const item = queuedCopyItems.value.splice(index, 1)[0];
-            inProgressItems.value.push(item);
-          }
-          break;
-        case FileOperationDataType.Move:
-          index = queuedMoveItems.value.findIndex((op) => op.data.id === data.id);
-          if (queuedMoveItems.value[index]) {
-            const item = queuedMoveItems.value.splice(index, 1)[0];
-            inProgressItems.value.push(item);
-          }
-          break;
-        case FileOperationDataType.Restore:
-          index = queuedRestoreItems.value.findIndex((op) => op.data.id === data.id);
-          if (queuedRestoreItems.value[index]) {
-            const item = queuedRestoreItems.value.splice(index, 1)[0];
-            inProgressItems.value.push(item);
-          }
-          break;
-        case FileOperationDataType.Download:
-          index = queuedDownloadItems.value.findIndex((op) => op.data.id === data.id);
-          if (queuedDownloadItems.value[index]) {
-            const item = queuedDownloadItems.value.splice(index, 1)[0];
-            inProgressItems.value.push(item);
-          }
-          break;
-        case FileOperationDataType.DownloadArchive:
-          index = queuedArchiveItems.value.findIndex((op) => op.data.id === data.id);
-          if (queuedArchiveItems.value[index]) {
-            const item = queuedArchiveItems.value.splice(index, 1)[0];
-            inProgressItems.value.push(item);
-          }
-          break;
-      }
+async function onFileOperationEvent(
+  event: FileOperationEvents,
+  operationData?: FileOperationData,
+  eventData?: FileOperationEventData,
+): Promise<void> {
+  isFileOperationManagerActive.value = true;
+  if (!operationData) {
+    if (event !== FileOperationEvents.AllFinished) {
+      window.electronAPI.log('warn', `Got event ${event} without operation data`);
+    } else {
+      isFileOperationManagerActive.value = false;
     }
-  }
-
-  index = inProgressItems.value.findIndex((op) => op.data.id === data.id);
-  let currentOperationArray: Array<OperationItem> = inProgressItems.value;
-
-  if (index === -1) {
-    // The item is not in progress but might be queued
-    switch (itemDataType) {
-      case FileOperationDataType.Import:
-        currentOperationArray = queuedUploadItems.value;
-        break;
-      case FileOperationDataType.Copy:
-        currentOperationArray = queuedCopyItems.value;
-        break;
-      case FileOperationDataType.Move:
-        currentOperationArray = queuedMoveItems.value;
-        break;
-      case FileOperationDataType.Restore:
-        currentOperationArray = queuedRestoreItems.value;
-        break;
-      case FileOperationDataType.Download:
-        currentOperationArray = queuedDownloadItems.value;
-        break;
-      case FileOperationDataType.DownloadArchive:
-        currentOperationArray = queuedArchiveItems.value;
-    }
-    index = currentOperationArray.findIndex((op) => op.data.id === data.id);
-  }
-
-  const operation = currentOperationArray[index];
-
-  if (operation) {
-    operation.state = state;
-    operation.stateData = stateData;
-    if (
-      [
-        FileOperationState.FileImported,
-        FileOperationState.EntryMoved,
-        FileOperationState.EntryCopied,
-        FileOperationState.EntryRestored,
-        FileOperationState.EntryDownloaded,
-        FileOperationState.ArchiveDownloaded,
-      ].includes(state)
-    ) {
-      operation.finishedDate = DateTime.now();
-      doneItems.value.push(operation);
-      doneItemsCount.value += 1;
-      currentOperationArray.splice(index, 1);
-    } else if (
-      [
-        FileOperationState.CreateFailed,
-        FileOperationState.MoveFailed,
-        FileOperationState.CopyFailed,
-        FileOperationState.ImportFailed,
-        FileOperationState.Cancelled,
-        FileOperationState.RestoreFailed,
-        FileOperationState.DownloadFailed,
-        FileOperationState.DownloadArchiveFailed,
-      ].includes(state)
-    ) {
-      operation.finishedDate = DateTime.now();
-      errorItems.value.push(operation);
-      errorItemsCount.value += 1;
-      currentOperationArray.splice(index, 1);
-      errorHappenedInUpload.value = true;
-    }
-  }
-}
-
-async function onOperationFinishedClick(operationData: FileOperationData, state: FileOperationState): Promise<void> {
-  if (state !== FileOperationState.FileImported && state !== FileOperationState.EntryDownloaded) {
     return;
   }
-  if (operationData.getDataType() === FileOperationDataType.Import) {
-    await navigateToWorkspace(operationData.workspaceHandle, (operationData as ImportData).path, (operationData as ImportData).file.name);
-    menu.minimize();
-  } else if (operationData.getDataType() === FileOperationDataType.Download) {
-    try {
-      const file = await (operationData as DownloadData).saveHandle.getFile();
-      const url = URL.createObjectURL(file);
-      window.open(url);
-      menu.minimize();
-    } catch (_err: any) {
-      informationManager.present(
-        new Information({
-          message: 'FoldersPage.DownloadFile.openFailed',
-          level: InformationLevel.Error,
-        }),
-        PresentationMode.Toast,
-      );
+  switch (event) {
+    case FileOperationEvents.Added:
+      items.value.unshift({ operationData: operationData, status: event, eventData: eventData });
+      menu.show();
+      menu.expand();
+      scrollToTop();
+      filter.value = undefined;
+      break;
+    case FileOperationEvents.Cancelled:
+    case FileOperationEvents.Failed:
+    case FileOperationEvents.Finished:
+    case FileOperationEvents.Finalizing:
+    case FileOperationEvents.Progress:
+    case FileOperationEvents.Started: {
+      const operation = items.value.find((item) => item.operationData.id === operationData.id);
+      if (operation) {
+        operation.status = event;
+        operation.eventData = eventData;
+      }
+      break;
     }
+    default:
+      break;
   }
 }
 
-async function cancelOperation(importId: string): Promise<void> {
-  await fileOperationManager.cancelOperation(importId);
+async function onClearClicked(): Promise<void> {
+  items.value = items.value.filter((item) =>
+    [FileOperationEvents.Progress, FileOperationEvents.Started, FileOperationEvents.Added].includes(item.status),
+  );
+  filter.value = undefined;
 }
 
-async function cancelQueuedOperations(queuedItems: Array<OperationItem>): Promise<void> {
-  for (const operation of queuedItems) {
-    await fileOperationManager.cancelOperation(operation.data.id);
+async function onOperationClick(
+  operation: FileOperationData,
+  status: FileOperationEvents,
+  _eventData?: FileOperationEventData,
+): Promise<void> {
+  if (status !== FileOperationEvents.Finished) {
+    return;
   }
+  if (operation.type === FileOperationDataType.Import) {
+    const op = operation as FileOperationImportData;
+    await navigateTo(Routes.Documents, {
+      query: {
+        workspaceHandle: operation.workspaceHandle,
+        documentPath: op.destination,
+        selectFile: op.files.length === 1 ? op.files.at(0)?.name : undefined,
+      },
+    });
+  } else if (operation.type === FileOperationDataType.Move || operation.type === FileOperationDataType.Copy) {
+    const op = operation as FileOperationMoveData | FileOperationCopyData;
+    await navigateTo(Routes.Documents, {
+      query: {
+        workspaceHandle: operation.workspaceHandle,
+        documentPath: op.destination,
+        selectFile: op.sources.length === 1 ? op.sources.at(0)?.name : undefined,
+      },
+    });
+  } else if (operation.type === FileOperationDataType.Restore && (operation as FileOperationRestoreData).entries.length === 1) {
+    const op = operation as FileOperationRestoreData;
+    await navigateTo(Routes.Documents, {
+      query: {
+        workspaceHandle: operation.workspaceHandle,
+        documentPath: await Path.parent(op.entries[0].path),
+        selectFile: op.entries.at(0)?.name,
+      },
+    });
+  }
+}
+
+async function onOperationCancelClick(operation: FileOperationData): Promise<void> {
+  await fileOperationManager.cancelOperation(operation.id);
 }
 
 function scrollToTop(): void {
   if (uploadMenuList.value?.$el) {
     uploadMenuList.value.$el.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-}
-
-async function onFileOperationEvent(
-  state: FileOperationState,
-  fileOperationData?: FileOperationData,
-  stateData?: StateData,
-): Promise<void> {
-  switch (state) {
-    case FileOperationState.OperationAllStarted:
-      isFileOperationManagerActive.value = true;
-      currentTab.value = Tabs.InProgress;
-      menu.show();
-      menu.expand();
-      break;
-    case FileOperationState.OperationAllFinished:
-      isFileOperationManagerActive.value = false;
-      if (errorHappenedInUpload.value === true) {
-        currentTab.value = Tabs.Error;
-        errorHappenedInUpload.value = false;
-      } else {
-        currentTab.value = Tabs.Done;
-      }
-      break;
-    case FileOperationState.FileAdded:
-      queuedUploadItems.value.push({
-        data: fileOperationData as FileOperationData,
-        state: state,
-        stateData: stateData,
-      });
-      scrollToTop();
-      break;
-    case FileOperationState.MoveAdded:
-      queuedMoveItems.value.push({
-        data: fileOperationData as FileOperationData,
-        state: state,
-        stateData: stateData,
-      });
-      scrollToTop();
-      break;
-    case FileOperationState.CopyAdded:
-      queuedCopyItems.value.push({
-        data: fileOperationData as FileOperationData,
-        state: state,
-        stateData: stateData,
-      });
-      scrollToTop();
-      break;
-    case FileOperationState.RestoreAdded:
-      queuedRestoreItems.value.push({
-        data: fileOperationData as FileOperationData,
-        state: state,
-        stateData: stateData,
-      });
-      scrollToTop();
-      break;
-    case FileOperationState.DownloadAdded:
-      queuedDownloadItems.value.push({
-        data: fileOperationData as FileOperationData,
-        state: state,
-        stateData: stateData,
-      });
-      scrollToTop();
-      break;
-    case FileOperationState.DownloadArchiveAdded:
-      queuedArchiveItems.value.push({
-        data: fileOperationData as FileOperationData,
-        state: state,
-        stateData: stateData,
-      });
-      scrollToTop();
-      break;
-    case FileOperationState.OperationProgress:
-      updateImportState(fileOperationData as FileOperationData, state, stateData);
-      break;
-    case FileOperationState.FileImported:
-    case FileOperationState.EntryMoved:
-    case FileOperationState.EntryCopied:
-    case FileOperationState.EntryRestored:
-    case FileOperationState.EntryDownloaded:
-    case FileOperationState.ArchiveDownloaded:
-      updateImportState(fileOperationData as FileOperationData, state, stateData);
-      break;
-    case FileOperationState.CreateFailed:
-    case FileOperationState.MoveFailed:
-    case FileOperationState.CopyFailed:
-    case FileOperationState.ImportFailed:
-    case FileOperationState.RestoreFailed:
-    case FileOperationState.DownloadFailed:
-    case FileOperationState.DownloadArchiveFailed:
-      updateImportState(fileOperationData as FileOperationData, state, stateData);
-      break;
-    case FileOperationState.Cancelled:
-      updateImportState(fileOperationData as FileOperationData, state);
   }
 }
 </script>
@@ -555,38 +319,37 @@ async function onFileOperationEvent(
 
   &-tabs {
     display: flex;
-    padding: 0;
+    padding: 0.625rem 0.5rem;
+    gap: 0.5rem;
     overflow: hidden;
     background: var(--parsec-color-light-secondary-white);
     position: relative;
     --current-tab: 0;
+    align-items: center;
 
     @include ms.responsive-breakpoint('sm') {
-      background: var(--parsec-color-light-secondary-premiere);
       padding: 0.25rem;
-      border-radius: var(--parsec-radius-24);
       margin: 1rem 0.5rem 0;
     }
 
     &__item {
       color: var(--parsec-color-light-secondary-grey);
+      border: 1px solid var(--parsec-color-light-secondary-medium);
+      border-radius: var(--parsec-radius-12);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       --padding-start: 0;
       --inner-padding-end: 0px;
+      transition: all 150ms ease-in-out;
 
       &::part(native) {
-        padding: 1rem 0.75rem 0.5rem 0.75rem;
         background: transparent;
+        padding: 0.5rem 0.625rem;
 
         @include ms.responsive-breakpoint('sm') {
           padding: 0.5rem 0.25rem;
-        }
-
-        @include ms.responsive-breakpoint('sm') {
-          padding: 0.5rem 0;
         }
       }
 
@@ -600,61 +363,47 @@ async function onFileOperationEvent(
         align-items: center;
         width: 100%;
         gap: 0.375rem;
-
-        .text-counter {
-          display: flex;
-          flex-direction: column;
-          align-items: baseline;
-          line-height: normal;
-          padding-inline: 0.25rem;
-          background: var(--parsec-color-light-secondary-disabled);
-          border-radius: var(--parsec-radius-12);
-        }
       }
 
       &:hover {
-        color: var(--parsec-color-light-secondary-text);
-
-        .text-counter {
-          background: var(--parsec-color-light-secondary-disabled);
-        }
+        color: var(--parsec-color-light-secondary-hard-grey);
+        border: 1px solid var(--parsec-color-light-secondary-light);
       }
 
       &.active {
-        color: var(--parsec-color-light-primary-500);
+        color: var(--parsec-color-light-primary-600);
+        border: 1px solid var(--parsec-color-light-primary-600);
+        background: var(--parsec-color-light-primary-50);
 
-        .text-counter {
-          background: var(--parsec-color-light-primary-50);
+        &:hover {
+          color: var(--parsec-color-light-primary-700);
+          background: var(--parsec-color-light-primary-100);
+          border: 1px solid var(--parsec-color-light-primary-600);
         }
       }
     }
 
-    &::before {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      height: calc(100% - 0.5rem);
-      width: calc(100% / 3 - 0.5rem);
-      border-radius: var(--parsec-radius-24);
-      background-color: var(--parsec-color-light-secondary-white);
-      transition: transform 250ms ease-in-out;
-    }
+    &__delete {
+      margin-left: auto;
+      background: var(--parsec-color-light-secondary-inversed-contrast);
+      border-radius: var(--parsec-radius-12);
+      transition: all 150ms ease-in-out;
 
-    &:has(.upload-menu-tabs__item:nth-child(1).active) {
-      &::before {
-        transform: translate(0, -0.25rem);
+      &::part(native) {
+        background: none;
+        box-shadow: var(--parsec-shadow-input);
+        border: 1px solid var(--parsec-color-light-secondary-medium);
+        color: var(--parsec-color-light-primary-600);
+        padding: 0.5rem 0.75rem;
       }
-    }
 
-    &:has(.upload-menu-tabs__item:nth-child(2).active) {
-      &::before {
-        transform: translate(calc(100% + 0.5rem), -0.25rem);
+      @include ms.responsive-breakpoint('sm') {
+        margin-left: 0;
       }
-    }
 
-    &:has(.upload-menu-tabs__item:nth-child(3).active) {
-      &::before {
-        transform: translate(calc(200% + 1rem), -0.25rem);
+      &:hover {
+        background: var(--parsec-color-light-secondary-premiere);
+        color: var(--parsec-color-light-primary-700);
       }
     }
   }
@@ -662,10 +411,11 @@ async function onFileOperationEvent(
   &-list {
     display: flex;
     flex-direction: column;
-    padding: 0.5rem 0;
+    padding: 0;
     overflow-y: auto;
-    height: 40vh;
-    max-height: 25rem;
+    height: 60vh;
+    padding-bottom: 2rem;
+    max-height: 28rem;
     transition: all 250ms ease-in-out;
     background: var(--parsec-color-light-secondary-white);
 

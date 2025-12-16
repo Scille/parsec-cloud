@@ -245,7 +245,7 @@ import {
 } from '@/router';
 import { isCryptpadEnabledForDocumentType } from '@/services/cryptpad';
 import { Env } from '@/services/environment';
-import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
+import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperation/manager';
 import useHeaderControl from '@/services/headerControl';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import usePathOpener from '@/services/pathOpener';
@@ -743,12 +743,21 @@ async function downloadFile(): Promise<void> {
     window.electronAPI.log('error', 'No content info when trying to download a file');
     return;
   }
+  const entryResult = await entryStat(workspaceHandle, contentInfo.value.path);
+
+  if (!entryResult.ok) {
+    window.electronAPI.log('error', 'Failed to stat entry when trying to download a file');
+    return;
+  }
+  if (!entryResult.value.isFile()) {
+    window.electronAPI.log('error', 'Entry is not a file');
+    return;
+  }
 
   await downloadEntry({
-    name: contentInfo.value.fileName,
+    entry: entryResult.value as EntryStatFile,
     workspaceHandle: workspaceHandle,
     workspaceId: workspaceInfoResult.value.id,
-    path: contentInfo.value.path,
     informationManager: informationManager,
     fileOperationManager: fileOperationManager,
   });

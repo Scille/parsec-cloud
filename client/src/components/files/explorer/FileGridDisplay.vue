@@ -3,7 +3,6 @@
 <template>
   <file-drop-zone
     ref="fileDropZone"
-    :current-path="currentPath"
     :show-drop-message="true"
     @files-added="$emit('filesAdded', $event)"
     :is-reader="ownRole === WorkspaceRole.Reader"
@@ -41,12 +40,10 @@
           @drop-as-reader="$emit('dropAsReader')"
           v-model="file.isSelected"
         />
-
         <file-card-processing
-          v-for="op in operationsInProgress"
-          :key="op.data.id"
-          :data="op.data"
-          :progress="op.progress"
+          v-for="op in fileOperations"
+          :key="op.entryName"
+          :operation="op"
         />
       </div>
     </div>
@@ -57,18 +54,16 @@
 import FileCard from '@/components/files/explorer/FileCard.vue';
 import FileCardProcessing from '@/components/files/explorer/FileCardProcessing.vue';
 import FileDropZone from '@/components/files/explorer/FileDropZone.vue';
-import { EntryCollection, EntryModel, FileModel, FileOperationProgress, FolderModel } from '@/components/files/types';
-import { FileImportTuple } from '@/components/files/utils';
-import { FsPath, WorkspaceRole } from '@/parsec';
+import { EntryCollection, EntryModel, FileModel, FileOperationCurrentFolder, FolderModel } from '@/components/files/types';
+import { EntryName, WorkspaceRole } from '@/parsec';
 import { useTemplateRef } from 'vue';
 
 const props = defineProps<{
-  operationsInProgress: Array<FileOperationProgress>;
   files: EntryCollection<FileModel>;
   folders: EntryCollection<FolderModel>;
-  currentPath: FsPath;
   ownRole: WorkspaceRole;
   selectionEnabled?: boolean;
+  fileOperations: Array<FileOperationCurrentFolder>;
 }>();
 
 const fileDropZoneRef = useTemplateRef('fileDropZone');
@@ -80,7 +75,7 @@ const emits = defineEmits<{
   (e: 'openItem', entry: EntryModel, event: Event): void;
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
   (e: 'globalMenuClick', event: Event): void;
-  (e: 'filesAdded', imports: FileImportTuple[]): void;
+  (e: 'filesAdded', files: Array<File>, destinationFolder?: EntryName): void;
   (e: 'dropAsReader'): void;
 }>();
 
@@ -97,9 +92,9 @@ defineExpose({
   scrollToSelected,
 });
 
-function onFilesAdded(imports: FileImportTuple[]): void {
+function onFilesAdded(files: Array<File>, destinationFolder?: EntryName): void {
   fileDropZoneRef.value?.reset();
-  emits('filesAdded', imports);
+  emits('filesAdded', files, destinationFolder);
 }
 
 function hasSelected(): boolean {

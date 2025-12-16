@@ -1,0 +1,291 @@
+/* Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS */
+
+.file-operation-item {
+  border: 1px solid var(--parsec-color-light-secondary-medium);
+  transition: background 0.2s ease-in-out;
+  border-radius: var(--parsec-radius-8);
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  margin: 0.5rem 0.5rem 0;
+  box-shadow: var(--parsec-shadow-input);
+
+  strong {
+    font-weight: 700;
+  }
+
+  .element {
+    --background: var(--parsec-color-light-secondary-background);
+    --inner-padding-end: 0;
+    overflow: hidden;
+    position: relative;
+    z-index: 3;
+
+    &::part(native) {
+      padding: 0.825rem 1rem;
+      cursor: default;
+    }
+
+    &:hover {
+      --background: var(--parsec-color-light-secondary-premiere);
+    }
+
+    &_open {
+      --background: var(--parsec-color-light-secondary-background);
+
+      &::part(native) {
+        cursor: pointer;
+      }
+    }
+
+    &-content {
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      width: 100%;
+    }
+
+    &-details {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      margin-inline: 0.875rem;
+      width: 100%;
+      gap: 0.2rem;
+
+      &-title {
+        display: flex;
+        align-items: center;
+        overflow: hidden;
+        gap: 0.25rem;
+
+        &__name {
+          width: fit-content;
+          color: var(--parsec-color-light-secondary-text);
+          display: flex;
+          align-items: center;
+          gap: 0.375rem;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          transform: rotate(0deg);
+        }
+
+        .name-icon {
+          color: var(--parsec-color-light-secondary-grey);
+          margin-left: 0.125rem;
+        }
+
+        &.open .name-icon {
+          transition: transform 0.2s ease-in-out;
+          transform: rotate(180deg);
+        }
+      }
+
+      &-info {
+        color: var(--parsec-color-light-secondary-hard-grey);
+        display: flex;
+        gap: 0.25rem;
+        overflow: hidden;
+
+        &__size {
+          flex-shrink: 0;
+        }
+
+        &__workspace {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      }
+    }
+
+    .checkmark-icon,
+    .cancel-icon,
+    .failed-icon,
+    .waiting-info,
+    .finalizing-info,
+    .cancel-button,
+    .failed-text,
+    .cancel-text,
+    .failed-content {
+      margin-left: auto;
+      flex-shrink: 0;
+      min-width: 2rem;
+    }
+  }
+
+  &:is(.multiple_elements) {
+    .element-details-title {
+      cursor: pointer;
+
+      .element-details-title__name {
+        border-bottom: 1px solid transparent;
+      }
+
+      &:hover {
+        .element-details-title__name {
+          border-bottom-color: var(--parsec-color-light-secondary-grey);
+        }
+      }
+    }
+  }
+
+  // states of the element-container
+  &.waiting,
+  &.progress {
+    .cancel-button {
+      color: var(--parsec-color-light-secondary-text);
+      --background: var(--parsec-color-light-secondary-medium);
+      --background-hover: var(--parsec-color-light-secondary-disabled);
+
+      &::part(native) {
+        padding: 0.375rem 0.625rem;
+        border-radius: var(--parsec-radius-8);
+      }
+    }
+  }
+
+  &.waiting {
+    .waiting-info .waiting-text {
+      color: var(--parsec-color-light-secondary-hard-grey);
+    }
+
+    .waiting-info .cancel-button {
+      display: none;
+    }
+
+    &:hover {
+      .waiting-info .waiting-text {
+        display: none;
+      }
+
+      .waiting-info .cancel-button {
+        display: block;
+      }
+    }
+  }
+
+  &.progress {
+    .progress-info {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+
+      .hover-state {
+        display: none;
+      }
+    }
+
+    .progress-percentage {
+      color: var(--parsec-color-light-secondary-grey);
+    }
+
+    .progress-spinner {
+      margin-left: auto;
+      width: 1.125rem;
+      height: 1.125rem;
+    }
+
+    &:hover {
+      .progress-info {
+        .default-state {
+          display: none;
+        }
+        .hover-state {
+          display: block;
+        }
+      }
+    }
+  }
+
+  &.done {
+    cursor: pointer;
+
+    .hover-state {
+      display: none;
+    }
+
+    &:hover {
+      background: var(--parsec-color-light-primary-50);
+
+      .default-state {
+        display: none;
+      }
+      .hover-state {
+        display: block;
+      }
+    }
+
+    .folder-icon {
+      color: var(--parsec-color-light-secondary-hard-grey);
+      background: var(--parsec-color-light-secondary-white);
+      border: 1px solid var(--parsec-color-light-secondary-medium);
+      padding: 0.5rem;
+      width: 1.125rem;
+      height: 1.125rem;
+      flex-shrink: 0;
+      border-radius: var(--parsec-radius-circle);
+      font-size: 1.25rem;
+      transition: all 0.15s ease-in-out;
+      cursor: pointer !important;
+      position: relative;
+      z-index: 4;
+
+      &:hover {
+        color: var(--parsec-color-light-secondary-text);
+        border-color: var(--parsec-color-light-secondary-light);
+        box-shadow: var(--parsec-shadow-input);
+      }
+    }
+
+    .checkmark-icon {
+      color: var(--parsec-color-light-success-700);
+      font-size: 1.25rem;
+    }
+  }
+
+  &.cancelled {
+    --background: var(--parsec-color-light-danger-500);
+
+    .element {
+      opacity: 0.8;
+      filter: grayscale(100%);
+    }
+
+    .cancel-icon {
+      font-size: 1.25rem;
+      color: var(--parsec-color-light-secondary-text);
+    }
+  }
+}
+
+// Toggle animation
+.file-list-enter-active,
+.file-list-leave-active {
+  transition: all 0.2s ease-in-out;
+}
+
+.file-list-enter-from {
+  opacity: 0;
+  max-height: 0;
+  transform: translateY(-1rem);
+  overflow: hidden;
+}
+
+.file-list-leave-to {
+  opacity: 0;
+  max-height: 0;
+  transform: translateY(-1rem);
+  overflow: hidden;
+}
+
+.file-list-enter-to,
+.file-list-leave-from {
+  opacity: 1;
+  max-height: 10rem;
+  transform: translateY(0);
+  overflow: visible;
+}

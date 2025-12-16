@@ -68,7 +68,6 @@
       <div class="folder-container scroll">
         <file-inputs
           ref="fileInputs"
-          :current-path="currentPath"
           @files-added="startImportFiles"
         />
         <div
@@ -110,7 +109,6 @@
           class="no-files body-lg"
         >
           <file-drop-zone
-            :current-path="currentPath"
             :show-drop-message="true"
             @files-added="startImportFiles"
             @global-menu-click="openGlobalContextMenu"
@@ -152,12 +150,11 @@
               :files="files"
               :folders="folders"
               :own-profile="userInfo.currentProfile"
-              :operations-in-progress="fileOperationsCurrentDir"
-              :current-path="currentPath"
               :own-role="ownRole"
               :selection-enabled="selectionEnabled && isSmallDisplay"
               :current-sort-order="currentSortOrder"
               :current-sort-property="currentSortProperty"
+              :file-operations="fileOperationsCurrentDir"
               @open-item="onEntryClick"
               @menu-click="openEntryContextMenu"
               @files-added="startImportFiles"
@@ -171,10 +168,9 @@
               ref="fileGridDisplay"
               :files="files"
               :folders="folders"
-              :operations-in-progress="fileOperationsCurrentDir"
-              :current-path="currentPath"
               :own-role="ownRole"
               :selection-enabled="selectionEnabled && isSmallDisplay"
+              :file-operations="fileOperationsCurrentDir"
               @open-item="onEntryClick"
               @menu-click="openEntryContextMenu"
               @files-added="startImportFiles"
@@ -227,11 +223,9 @@ import {
   FileDropZone,
   FileGridDisplay,
   FileImportPopover,
-  FileImportTuple,
   FileInputs,
   FileListDisplay,
   FileModel,
-  FileOperationProgress,
   FolderDefaultData,
   FolderModel,
   FoldersPageSavedData,
@@ -240,13 +234,12 @@ import {
   copyPathLinkToClipboard,
   selectFolder,
 } from '@/components/files';
-import { EntrySyncStatus } from '@/components/files/types';
+import { EntrySyncStatus, FileOperationCurrentFolder } from '@/components/files/types';
 import SmallDisplayHeaderTitle from '@/components/header/SmallDisplayHeaderTitle.vue';
 import { WorkspaceRoleTag } from '@/components/workspaces';
 import {
   ClientInfo,
   EntryName,
-  EntryStat,
   EntryStatFile,
   FsPath,
   Path,
@@ -263,18 +256,18 @@ import { Routes, currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorks
 import { isFileEditable } from '@/services/cryptpad';
 import { EntrySyncData, EventData, EventDistributor, EventDistributorKey, Events, MenuActionData } from '@/services/eventDistributor';
 import {
-  CopyData,
+  FileEventRegistrationCanceller,
+  FileOperationCopyData,
   FileOperationData,
   FileOperationDataType,
+  FileOperationEventData,
+  FileOperationEvents,
+  FileOperationImportData,
   FileOperationManager,
   FileOperationManagerKey,
-  FileOperationState,
-  FolderCreatedStateData,
-  ImportData,
-  MoveData,
-  OperationProgressStateData,
-  StateData,
-} from '@/services/fileOperationManager';
+  FileOperationMoveData,
+  FileOperationRestoreData,
+} from '@/services/fileOperation';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import usePathOpener, { OpenPathOptions } from '@/services/pathOpener';
@@ -287,6 +280,7 @@ import {
   openGlobalContextMenu as _openGlobalContextMenu,
   downloadArchive,
   downloadEntry,
+  getDuplicatePolicy,
   isFolderGlobalAction,
   openDownloadConfirmationModal,
 } from '@/views/files';
@@ -425,7 +419,7 @@ const currentSortOrder = ref(true);
 
 const showErrorListPage = ref(false);
 const userInfo: Ref<ClientInfo | null> = ref(null);
-const fileOperations: Ref<Array<FileOperationProgress>> = ref([]);
+const fileOperations = ref<Array<FileOperationData>>([]);
 const currentPath = ref('/');
 const currentFolder: Ref<EntryName> = ref('/');
 const folders = ref(new EntryCollection<FolderModel>());
@@ -450,16 +444,60 @@ const manualSelection = ref<boolean>(false);
 const pathOpener = usePathOpener();
 
 let hotkeys: HotkeyGroup | null = null;
-let callbackId: string | null = null;
+let fileOpCanceller!: FileEventRegistrationCanceller;
 
 const ownRole = computed(() => {
   return workspaceInfo.value ? workspaceInfo.value.currentSelfRole : parsec.WorkspaceRole.Reader;
 });
 
 const itemsToShow = computed(() => {
-  return (
-    folders.value.entriesCount() + files.value.entriesCount() + (fileOperationsCurrentDir.value ? fileOperationsCurrentDir.value.length : 0)
-  );
+  return folders.value.entriesCount() + files.value.entriesCount() + fileOperationsCurrentDir.value.length;
+});
+
+const fileOperationsCurrentDir = asyncComputed(async () => {
+  const entryNames: Array<FileOperationCurrentFolder> = [];
+
+  for (const op of fileOperations.value) {
+    // Early break if it's not the same workspace
+    if (op.workspaceId !== workspaceInfo.value?.id) {
+      continue;
+    }
+    if (op.type === FileOperationDataType.Import) {
+      const importOp = op as FileOperationImportData;
+      // Early break if the current path is not included in the destination
+      if (!importOp.destination.startsWith(currentPath.value)) {
+        continue;
+      }
+      for (const file of importOp.files) {
+        const filePath = await Path.parent(await Path.joinPaths(importOp.destination, (file as any).relativePath));
+        if (Path.areSame(filePath, currentPath.value)) {
+          entryNames.push({ type: op.type, entryName: file.name });
+        }
+      }
+    } else if (op.type === FileOperationDataType.Restore) {
+      const restoreOp = op as FileOperationRestoreData;
+      for (const entry of restoreOp.entries) {
+        if (Path.areSame(await Path.parent(entry.path), currentPath.value)) {
+          entryNames.push({ type: op.type, entryName: entry.name });
+        }
+      }
+    } else if (op.type === FileOperationDataType.Copy || op.type === FileOperationDataType.Move) {
+      let opData: FileOperationCopyData | FileOperationMoveData;
+      if (op.type === FileOperationDataType.Copy) {
+        opData = op as FileOperationCopyData;
+      } else {
+        opData = op as FileOperationMoveData;
+      }
+      // Early break if the destination is not the current path
+      if (!Path.areSame(opData.destination, currentPath.value)) {
+        continue;
+      }
+      for (const entry of opData.sources) {
+        entryNames.push({ type: op.type, entryName: entry.name });
+      }
+    }
+  }
+  return entryNames;
 });
 
 const tabBarWatchCancel = watch([isSmallDisplay, selectedFilesCount], () => {
@@ -630,7 +668,7 @@ onMounted(async () => {
     window.electronAPI.log('error', `Failed to retrieve user info ${JSON.stringify(clientInfoResult.error)}`);
   }
 
-  callbackId = await fileOperationManager.registerCallback(onFileOperationState);
+  fileOpCanceller = await fileOperationManager.registerCallback(onFileOperationEvent);
   currentPath.value = getDocumentPath();
   const query = getCurrentRouteQuery();
   await listFolder({ selectFile: query.selectFile });
@@ -640,9 +678,7 @@ onUnmounted(async () => {
   if (hotkeys) {
     hotkeyManager.unregister(hotkeys);
   }
-  if (callbackId) {
-    fileOperationManager.removeCallback(callbackId);
-  }
+  fileOpCanceller.cancel();
   customTabBar.hide();
   selectionEnabled.value = false;
   routeWatchCancel();
@@ -741,167 +777,78 @@ async function storeComponentData(): Promise<void> {
   });
 }
 
-async function onFileOperationState(state: FileOperationState, operationData?: FileOperationData, stateData?: StateData): Promise<void> {
-  if (state === FileOperationState.FileAdded && operationData) {
-    fileOperations.value.push({ data: operationData, progress: 0 });
-  } else if (state === FileOperationState.MoveAdded && operationData) {
-    fileOperations.value.push({ data: operationData, progress: 0 });
-  } else if (state === FileOperationState.CopyAdded && operationData) {
-    fileOperations.value.push({ data: operationData, progress: 0 });
-  } else if (state === FileOperationState.OperationProgress && operationData) {
-    const op = fileOperations.value.find((item) => item.data.id === operationData.id);
-    if (op) {
-      op.progress = (stateData as OperationProgressStateData).progress;
+async function onFileOperationEvent(
+  event: FileOperationEvents,
+  operationData?: FileOperationData,
+  _eventData?: FileOperationEventData,
+): Promise<void> {
+  if (!operationData) {
+    if (event !== FileOperationEvents.AllFinished) {
+      window.electronAPI.log('warn', `Event ${event} received without operation data`);
     }
-  } else if (
-    [
-      FileOperationState.Cancelled,
-      FileOperationState.CreateFailed,
-      FileOperationState.WriteError,
-      FileOperationState.MoveFailed,
-      FileOperationState.CopyFailed,
-      FileOperationState.ImportFailed,
-    ].includes(state) &&
-    operationData
-  ) {
-    const index = fileOperations.value.findIndex((item) => item.data.id === operationData.id);
-    if (index !== -1) {
-      fileOperations.value.splice(index, 1);
-    }
-  } else if (state === FileOperationState.FileImported && operationData) {
-    const index = fileOperations.value.findIndex((item) => item.data.id === operationData.id);
-    if (index !== -1) {
-      fileOperations.value.splice(index, 1);
-    }
-    const importData = operationData as ImportData;
-    if (importData.workspaceHandle === workspaceInfo.value?.handle && parsec.Path.areSame(importData.path, currentPath.value)) {
-      const importedFilePath = await parsec.Path.join(importData.path, importData.file.name);
-      const statResult = await parsec.entryStat(importData.workspaceHandle, importedFilePath);
-      if (statResult.ok && statResult.value.isFile()) {
-        const existing = files.value.getEntries().find((entry) => entry.id === statResult.value.id);
-        if (!existing) {
-          (statResult.value as FileModel).isSelected = false;
-          (statResult.value as FileModel).syncStatus = statResult.value.needSync ? EntrySyncStatus.NotSynced : EntrySyncStatus.Synced;
-          files.value.append(statResult.value as FileModel);
-        } else {
-          existing.name = statResult.value.name;
-          existing.size = (statResult.value as parsec.EntryStatFile).size;
-          existing.needSync = statResult.value.needSync;
-          existing.syncStatus = statResult.value.needSync ? EntrySyncStatus.NotSynced : EntrySyncStatus.Synced;
-          existing.updated = statResult.value.updated;
-          existing.isSelected = false;
-        }
-        files.value.sort(currentSortProperty.value, currentSortOrder.value);
+    return;
+  }
+  switch (event) {
+    case FileOperationEvents.Added:
+      fileOperations.value.push(operationData);
+      break;
+    case FileOperationEvents.Progress:
+      break;
+    case FileOperationEvents.Cancelled:
+    case FileOperationEvents.Failed: {
+      const index = fileOperations.value.findIndex((item) => item.id === operationData.id);
+      if (index !== -1) {
+        fileOperations.value.splice(index, 1);
       }
+      break;
     }
-  } else if (state === FileOperationState.EntryMoved && operationData) {
-    const index = fileOperations.value.findIndex((item) => item.data.id === operationData.id);
-    if (index !== -1) {
-      fileOperations.value.splice(index, 1);
-    }
-    const moveData = operationData as MoveData;
-    const dstPathParent = await Path.parent(moveData.dstPath);
-    const srcPathParent = await Path.parent(moveData.srcPath);
-    if (
-      moveData.workspaceHandle === workspaceInfo.value?.handle &&
-      (Path.areSame(dstPathParent, currentPath.value) || Path.areSame(srcPathParent, currentPath.value))
-    ) {
-      await listFolder({ sameFolder: true });
-    }
-  } else if (state === FileOperationState.EntryCopied && operationData) {
-    const index = fileOperations.value.findIndex((item) => item.data.id === operationData.id);
-    if (index !== -1) {
-      fileOperations.value.splice(index, 1);
-    }
-    const copyData = operationData as CopyData;
-
-    if (copyData.workspaceHandle === workspaceInfo.value?.handle && Path.areSame(copyData.dstPath, currentPath.value)) {
-      await listFolder({ sameFolder: true });
-    }
-  } else if (state === FileOperationState.FolderCreated) {
-    const folderData = stateData as FolderCreatedStateData;
-    if (folderData.workspaceHandle === workspaceInfo.value?.handle) {
-      const parent = await parsec.Path.parent(folderData.path);
-      if (parsec.Path.areSame(parent, currentPath.value)) {
-        const statResult = await parsec.entryStat(folderData.workspaceHandle, folderData.path);
-        if (statResult.ok && !statResult.value.isFile()) {
-          if (!folders.value.getEntries().find((entry) => entry.id === statResult.value.id)) {
-            (statResult.value as FolderModel).isSelected = false;
-            folders.value.append(statResult.value as FolderModel);
-            folders.value.sort(currentSortProperty.value, currentSortOrder.value);
-          }
-        }
+    case FileOperationEvents.Finished: {
+      const index = fileOperations.value.findIndex((item) => item.id === operationData.id);
+      if (index === -1) {
+        break;
       }
+      fileOperations.value.splice(index, 1);
+      await listFolder({ sameFolder: true });
+      break;
     }
   }
 }
 
-async function startImportFiles(imports: FileImportTuple[]): Promise<void> {
-  const existing: FileImportTuple[] = [];
+async function startImportFiles(files: Array<File>, destinationFolder?: EntryName): Promise<void> {
+  const existing: Array<File> = [];
 
   if (!workspaceInfo.value) {
     return;
   }
 
-  for (const imp of imports) {
-    let importPath = imp.path;
-    let fileName = imp.file.name;
-    if (imp.file.webkitRelativePath) {
-      const parsed = await Path.parse(`/${imp.file.webkitRelativePath}`);
-      importPath = await Path.joinMultiple(imp.path, parsed.slice(0, -1));
-      fileName = parsed[parsed.length - 1];
-      imp.path = importPath;
+  let destination = currentPath.value;
+  if (destinationFolder && destinationFolder !== '/') {
+    destination = await Path.join(destination, destinationFolder);
+  }
+  for (const file of files) {
+    if (!(file as any).relativePath) {
+      (file as any).relativePath = `/${file.name}`;
     }
-    const fullPath = await Path.join(importPath, fileName);
-    const result = await entryStat(workspaceInfo.value.handle, fullPath);
+    const importPath = await Path.joinPaths(destination, (file as any).relativePath);
+    const result = await entryStat(workspaceInfo.value.handle, importPath);
     if (result.ok && result.value.isFile()) {
-      existing.push(imp);
+      existing.push(file);
     }
   }
 
-  if (existing.length > 0) {
-    const answer = await askQuestion(
-      { key: 'FoldersPage.importModal.replaceTitle', count: 1 },
-      { key: 'FoldersPage.importModal.replaceQuestion', data: { file: existing[0].file.name, count: existing.length } },
-      {
-        yesText: { key: 'FoldersPage.importModal.replaceText', count: 1 },
-        noText: { key: 'FoldersPage.importModal.skipText', count: 1 },
-        backdropDismiss: false,
-      },
-    );
-    if (answer === Answer.No) {
-      imports = imports.filter((imp) => {
-        return (
-          existing.find((ex) => {
-            return ex.file.name === imp.file.name && ex.path === imp.path;
-          }) === undefined
-        );
-      });
-    }
+  const dupPolicy = await getDuplicatePolicy(existing);
+
+  if (!dupPolicy) {
+    return;
   }
-  for (const imp of imports) {
-    await fileOperationManager.importFile(workspaceInfo.value.handle, workspaceInfo.value.id, imp.file, imp.path);
-  }
+
+  await fileOperationManager.import(
+    workspaceInfo.value.handle,
+    files,
+    destinationFolder ? await Path.join(currentPath.value, destinationFolder) : currentPath.value,
+    dupPolicy,
+  );
 }
-
-const fileOperationsCurrentDir = asyncComputed(async () => {
-  const operations: Array<FileOperationProgress> = [];
-
-  for (const op of fileOperations.value) {
-    let path = '';
-    if (op.data.getDataType() === FileOperationDataType.Import) {
-      path = (op.data as ImportData).path;
-    } else if (op.data.getDataType() === FileOperationDataType.Move) {
-      path = await parsec.Path.parent((op.data as MoveData).dstPath);
-    } else if (op.data.getDataType() === FileOperationDataType.Copy) {
-      path = (op.data as CopyData).dstPath;
-    }
-    if (op.data.workspaceHandle === workspaceInfo.value?.handle && parsec.Path.areSame(path, currentPath.value)) {
-      operations.push(op);
-    }
-  }
-  return operations;
-});
 
 async function listFolder(options?: { selectFile?: EntryName; sameFolder?: boolean }): Promise<void> {
   if (currentPath.value) {
@@ -928,32 +875,14 @@ async function listFolder(options?: { selectFile?: EntryName; sameFolder?: boole
 
     for (const childStat of result.value) {
       const childName = childStat.name;
-      // Excluding files currently being imported
-      let foundInFileOps = false;
-      for (const fileOp of fileOperationsCurrentDir.value) {
-        if (fileOp.data.getDataType() === FileOperationDataType.Import) {
-          foundInFileOps = (fileOp.data as ImportData).file.name === childName;
-        } else if (fileOp.data.getDataType() === FileOperationDataType.Move) {
-          const fileName = await Path.filename((fileOp.data as MoveData).dstPath);
-          foundInFileOps = fileName === childName;
-        } else if (fileOp.data.getDataType() === FileOperationDataType.Copy) {
-          const fileName = await Path.filename((fileOp.data as CopyData).srcPath);
-          foundInFileOps = fileName === childName;
-        }
-        if (foundInFileOps) {
-          break;
-        }
-      }
-      if (!foundInFileOps) {
-        if (childStat.isFile()) {
-          (childStat as FileModel).isSelected = Boolean(options && options.selectFile && options.selectFile === childName);
-          (childStat as FileModel).syncStatus = !childStat.needSync ? EntrySyncStatus.Synced : undefined;
-          newFiles.push(childStat as FileModel);
-        } else {
-          (childStat as FolderModel).isSelected = false;
-          (childStat as FolderModel).syncStatus = !childStat.needSync ? EntrySyncStatus.Synced : undefined;
-          newFolders.push(childStat as FolderModel);
-        }
+      if (childStat.isFile()) {
+        (childStat as FileModel).isSelected = Boolean(options && options.selectFile && options.selectFile === childName);
+        (childStat as FileModel).syncStatus = !childStat.needSync ? EntrySyncStatus.Synced : undefined;
+        newFiles.push(childStat as FileModel);
+      } else {
+        (childStat as FolderModel).isSelected = false;
+        (childStat as FolderModel).syncStatus = !childStat.needSync ? EntrySyncStatus.Synced : undefined;
+        newFolders.push(childStat as FolderModel);
       }
     }
     folders.value.smartUpdate(newFolders);
@@ -1239,54 +1168,22 @@ async function moveEntriesTo(entries: EntryModel[]): Promise<void> {
   if (!folder) {
     return;
   }
-  // A bit complicated, but bear with me
-  const existingEntries: Array<EntryStat> = [];
-  // First, we try to detect if the destination already contains an entry with the same name
+
+  const existing: Array<EntryModel> = [];
+
   for (const entry of entries) {
-    const dstPath = await parsec.Path.join(folder, entry.name);
-    const statsResult = await entryStat(workspaceInfo.value.handle, dstPath);
-    if (statsResult.ok) {
-      existingEntries.push(entry);
+    const destPath = await Path.join(folder, entry.name);
+    const result = await entryStat(workspaceInfo.value.handle, destPath);
+    if (result.ok) {
+      existing.push(entry);
     }
   }
-  if (existingEntries.length > 0) {
-    const answer = await askQuestion(
-      {
-        key: 'FoldersPage.moveAlreadyExistTitle',
-        count: existingEntries.length,
-      },
-      {
-        key: 'FoldersPage.moveAlreadyExistQuestion',
-        data: existingEntries.length === 1 ? { file: existingEntries[0].name } : undefined,
-        count: existingEntries.length,
-      },
-      {
-        yesText: { key: 'FoldersPage.moveAlreadyExistReplace', count: existingEntries.length },
-        noText: { key: 'FoldersPage.moveAlreadyExistSkip', count: existingEntries.length },
-        yesIsDangerous: true,
-        backdropDismiss: false,
-      },
-    );
-    // User chooses to skip, we remove the existing entries from the entries to move, and we clear existingEntries
-    if (answer === Answer.No) {
-      entries = entries.filter((e) => existingEntries.find((d) => d.id === e.id) === undefined);
-      // Too difficult to add a .clear() method on an array, plus it wouldn't make any sense, why would you ever
-      // want to clear an array?
-      existingEntries.splice(0, existingEntries.length);
-    }
+  const dupPolicy = await getDuplicatePolicy(existing);
+  if (!dupPolicy) {
+    return;
   }
-  for (const entry of entries) {
-    await fileOperationManager.moveEntry(
-      workspaceInfo.value.handle,
-      workspaceInfo.value.id,
-      await parsec.Path.join(currentPath.value, entry.name),
-      await parsec.Path.join(folder, entry.name),
-      // If the file is still in existingEntries, the user has given us
-      // permission to replace it, otherwise we don't want to force.
-      existingEntries.find((e) => e.id === entry.id) !== undefined,
-    );
-    entry.isSelected = false;
-  }
+
+  await fileOperationManager.move(workspaceInfo.value.handle, entries, folder, dupPolicy);
   selectionEnabled.value = false;
 }
 
@@ -1331,10 +1228,21 @@ async function copyEntries(entries: EntryModel[]): Promise<void> {
     return;
   }
 
+  const existing: Array<EntryModel> = [];
+
   for (const entry of entries) {
-    await fileOperationManager.copyEntry(workspaceInfo.value.handle, workspaceInfo.value.id, entry.path, folder);
-    entry.isSelected = false;
+    const destPath = await Path.join(folder, entry.name);
+    const result = await entryStat(workspaceInfo.value.handle, destPath);
+    if (result.ok) {
+      existing.push(entry);
+    }
   }
+  const dupPolicy = await getDuplicatePolicy(existing);
+  if (!dupPolicy) {
+    return;
+  }
+
+  await fileOperationManager.copy(workspaceInfo.value.handle, entries, folder, dupPolicy);
   selectionEnabled.value = false;
 }
 
@@ -1354,8 +1262,7 @@ async function downloadEntries(entries: EntryModel[]): Promise<void> {
 
   if (entries.length === 1 && entries[0].isFile()) {
     await downloadEntry({
-      name: entries[0].name,
-      path: entries[0].path,
+      entry: entries[0] as EntryStatFile,
       workspaceHandle: workspaceInfo.value.handle,
       workspaceId: workspaceInfo.value.id,
       informationManager: informationManager,
