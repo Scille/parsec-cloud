@@ -10,8 +10,11 @@ import {
   WorkspaceRole,
   getClientProfile,
   getSystemPath,
+  isDesktop,
+  mountWorkspace,
   getPathLink as parsecGetPathLink,
   renameWorkspace as parsecRenameWorkspace,
+  unmountWorkspace,
 } from '@/parsec';
 import { Routes, navigateTo } from '@/router';
 import { EventDistributor } from '@/services/eventDistributor';
@@ -138,6 +141,7 @@ export async function openWorkspaceContextMenu(
         clientProfile: clientProfile,
         clientRole: workspace.currentSelfRole,
         isFavorite: workspaceAttributes.isFavorite(workspace.id),
+        isHidden: workspaceAttributes.isHidden(workspace.id),
       },
     });
 
@@ -156,6 +160,7 @@ export async function openWorkspaceContextMenu(
         clientProfile: clientProfile,
         clientRole: workspace.currentSelfRole,
         isFavorite: workspaceAttributes.isFavorite(workspace.id),
+        isHidden: workspaceAttributes.isHidden(workspace.id),
       },
     });
 
@@ -184,9 +189,89 @@ export async function openWorkspaceContextMenu(
       case WorkspaceAction.ShowHistory:
         await navigateTo(Routes.History, { query: { documentPath: '/', workspaceHandle: workspace.handle } });
         break;
+      case WorkspaceAction.Mount:
+        await showWorkspace(workspace, workspaceAttributes, informationManager);
+        break;
+      case WorkspaceAction.UnMount:
+        await hideWorkspace(workspace, workspaceAttributes, informationManager);
+        break;
       default:
         console.warn('No WorkspaceAction match found');
     }
+  }
+}
+
+export async function showWorkspace(
+  workspace: WorkspaceInfo,
+  workspaceAttributes: WorkspaceAttributes,
+  informationManager: InformationManager,
+): Promise<void> {
+  let ok = true;
+  if (isDesktop()) {
+    const result = await mountWorkspace(workspace.handle);
+    ok = result.ok;
+  }
+
+  if (ok) {
+    workspaceAttributes.removeHidden(workspace.id);
+    informationManager.present(
+      new Information({
+        message: {
+          key: isDesktop() ? 'WorkspacesPage.showHideWorkspace.successDesktopShown' : 'WorkspacesPage.showHideWorkspace.successWebShown',
+          data: { workspace: workspace.currentName },
+        },
+        level: InformationLevel.Success,
+      }),
+      PresentationMode.Toast,
+    );
+  } else {
+    informationManager.present(
+      new Information({
+        message: {
+          key: 'WorkspacesPage.showHideWorkspace.failedShown',
+          data: { workspace: workspace.currentName },
+        },
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+  }
+}
+
+export async function hideWorkspace(
+  workspace: WorkspaceInfo,
+  workspaceAttributes: WorkspaceAttributes,
+  informationManager: InformationManager,
+): Promise<void> {
+  let ok = true;
+  if (isDesktop()) {
+    const result = await unmountWorkspace(workspace);
+    ok = result.ok;
+  }
+
+  if (ok) {
+    workspaceAttributes.addHidden(workspace.id);
+    informationManager.present(
+      new Information({
+        message: {
+          key: isDesktop() ? 'WorkspacesPage.showHideWorkspace.successDesktopHidden' : 'WorkspacesPage.showHideWorkspace.successWebHidden',
+          data: { workspace: workspace.currentName },
+        },
+        level: InformationLevel.Success,
+      }),
+      PresentationMode.Toast,
+    );
+  } else {
+    informationManager.present(
+      new Information({
+        message: {
+          key: 'WorkspacesPage.showHideWorkspace.failedHidden',
+          data: { workspace: workspace.currentName },
+        },
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
   }
 }
 

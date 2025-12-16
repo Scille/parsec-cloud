@@ -5,7 +5,10 @@
     button
     class="workspace-list-item no-padding-end"
     :detail="false"
-    :class="{ 'workspace-hovered': isHovered || menuOpened }"
+    :class="{
+      'workspace-hovered': isHovered || menuOpened,
+      'workspace-list-item--hidden': isHidden,
+    }"
     @click="$emit('click', workspace, $event)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
@@ -35,6 +38,16 @@
         <ion-text class="workspace-name__label title-h4">
           {{ workspace.currentName }}
         </ion-text>
+      </div>
+      <div
+        class="workspace-hidden"
+        v-if="isHidden"
+      >
+        <ion-icon
+          class="workspace-hidden__icon"
+          :icon="eyeOff"
+        />
+        <ion-text class="subtitles-sm workspace-hidden__text">{{ $msTranslate('WorkspacesPage.Workspace.hidden') }}</ion-text>
       </div>
 
       <!-- role user -->
@@ -123,7 +136,7 @@ import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
 import WorkspaceRoleTag from '@/components/workspaces/WorkspaceRoleTag.vue';
 import { UserProfile, WorkspaceInfo } from '@/parsec';
 import { IonButton, IonIcon, IonItem, IonLabel, IonText } from '@ionic/vue';
-import { cloudDone, cloudOffline, ellipsisHorizontal, shareSocial, star } from 'ionicons/icons';
+import { cloudDone, cloudOffline, ellipsisHorizontal, eyeOff, shareSocial, star } from 'ionicons/icons';
 import { formatTimeSince, useWindowSize, WindowSizeBreakpoints } from 'megashark-lib';
 import { ref } from 'vue';
 
@@ -135,6 +148,7 @@ const props = defineProps<{
   workspace: WorkspaceInfo;
   clientProfile: UserProfile;
   isFavorite: boolean;
+  isHidden: boolean;
 }>();
 
 const emits = defineEmits<{
@@ -174,7 +188,7 @@ async function onOptionsClick(event: Event): Promise<void> {
 
   &-content {
     display: flex;
-    background: var(--parsec-color-light-secondary-background);
+    background: var(--parsec-color-light-secondary-premiere);
     border-radius: var(--parsec-radius-8);
     align-items: center;
     width: 100%;
@@ -263,6 +277,29 @@ async function onOptionsClick(event: Event): Promise<void> {
     text-align: left;
     color: var(--parsec-color-light-secondary-text);
     min-width: 0;
+  }
+}
+
+.workspace-hidden {
+  background: var(--parsec-color-light-secondary-white);
+  color: var(--parsec-color-light-secondary-contrast);
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 3px 0.5rem;
+  border-radius: var(--parsec-radius-8);
+  flex-shrink: 0;
+
+  &__icon {
+    font-size: 0.875rem;
+    flex-shrink: 0;
+  }
+
+  &__text {
+    @include ms.responsive-breakpoint('xs') {
+      display: none;
+    }
   }
 }
 
@@ -361,6 +398,21 @@ async function onOptionsClick(event: Event): Promise<void> {
       .options-button__icon {
         color: var(--parsec-color-light-primary-500);
       }
+    }
+  }
+}
+
+.workspace-list-item--hidden {
+  border: 1px solid var(--parsec-color-light-secondary-medium);
+
+  .workspace-list-item-content {
+    opacity: 0.9;
+    filter: brightness(0.85);
+  }
+
+  &:hover {
+    .workspace-list-item-content {
+      background: var(--parsec-color-light-secondary-premiere);
     }
   }
 }
