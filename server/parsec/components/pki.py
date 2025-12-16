@@ -510,10 +510,7 @@ class BasePkiEnrollmentComponent:
             case PkiEnrollmentListBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
             case PkiEnrollmentListBadOutcome.CERTIFICATE_NOT_FOUND:
-                # TODO add not found error to protocol ?
-                return authenticated_cmds.latest.pki_enrollment_list.RepUnknownStatus(
-                    "leaf not found", None
-                )
+                return authenticated_cmds.latest.pki_enrollment_list.RepCertificateNotFound()
 
     @api
     async def api_pki_enrollment_reject(

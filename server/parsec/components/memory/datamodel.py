@@ -490,10 +490,12 @@ class MemoryOrganization:
         return (leaf cert, list ordered by leaf.signed_by -> last known cert of the trustchain)
         leaf cert is not in trustchain
         """
-        try:
-            leaf = self.pki_certificates[leaf_fingerprint]
-        except KeyError:
-            return None
+        match await self.get_cert(leaf_fingerprint):
+            case None:
+                return None
+            case leaf:
+                pass
+
         current = leaf
         sorted_trustchain = [current]
         for _ in range(MAX_INTERMEDIATE_CERTIFICATES_DEPTH):

@@ -59,3 +59,8 @@ class RepAuthorNotAllowed(Rep):
     def __init__(
         self,
     ) -> None: ...
+
+class RepCertificateNotFound(Rep):
+    def __init__(
+        self,
+    ) -> None: ...

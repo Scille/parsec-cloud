@@ -213,7 +213,7 @@ pub async fn list_enrollments_untrusted(
     let pki_requests = match rep {
         Rep::Ok { enrollments } => enrollments,
         Rep::AuthorNotAllowed => return Err(PkiEnrollmentListError::AuthorNotAllowed),
-        rep @ Rep::UnknownStatus { .. } => {
+        rep @ (Rep::UnknownStatus { .. } | Rep::CertificateNotFound) => {
             return Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
         }
     };
