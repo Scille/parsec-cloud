@@ -650,6 +650,8 @@
             "actionHistory": "History",
             "actionShare": "Sharing and roles",
             "actionDetails": "Details",
+            "actionHide": "Hide this workspace",
+            "actionShow": "Show this workspace",
             "actionCopyLink": "Copy link",
             "actionAddFavorite": "Pin",
             "actionRemoveFavorite": "Unpin"
@@ -707,6 +709,15 @@
             "favorites": "Pinned",
             "noRecentWorkspaces": "You have not consulted any workspaces yet. Recently consulted workspaces will be listed here.",
             "noFavoriteWorkspaces": "You have not pinned any workspaces yet. Pin a workspace to have it be listed here."
+        },
+        "showHideWorkspace": {
+            "failedStarted": "Failed to get started workspace information. Please try again.",
+            "successDesktopHidden": "The workspace is now hidden and will no longer appear in your explorer.",
+            "successWebHidden": "The workspace is now hidden in Parsec.",
+            "failedHidden": "Failed to hide the workspace. Please try again.",
+            "successDesktopShown": "The workspace is now visible in Parsec and your explorer.",
+            "successWebShown": "The workspace is now visible in Parsec.",
+            "failedShown": "Failed to show the workspace. Please try again."
         }
     },
     "FoldersPage": {

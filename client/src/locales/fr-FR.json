@@ -650,6 +650,8 @@
             "actionShare": "Partage et rôles",
             "actionDetails": "Détails",
             "actionCopyLink": "Copier le lien",
+            "actionHide": "Masquer cet espace",
+            "actionShow": "Afficher cet espace",
             "actionAddFavorite": "Épingler",
             "actionRemoveFavorite": "Désépingler"
         },
@@ -706,6 +708,15 @@
             "favorites": "Épinglés",
             "noRecentWorkspaces": "Vous n'avez encore consulté aucun espace de travail. Les espaces consultés récemment apparaîtront ici.",
             "noFavoriteWorkspaces": "Vous n'avez encore épinglé aucun espace de travail. Épinglez un espace pour qu'il apparaisse ici."
+        },
+        "showHideWorkspace": {
+            "failedStarted": "Impossible d'obtenir les informations relatives à l'espace de travail. Veuillez réessayer.",
+            "successDesktopHidden": "L'espace de travail est maintenant masqué et n'apparaîtra plus dans votre explorateur.",
+            "successWebHidden": "L'espace de travail est maintenant masqué dans Parsec.",
+            "failedHidden": "Impossible de masquer l'espace de travail. Veuillez réessayer.",
+            "successDesktopShown": "L'espace de travail est maintenant visible dans Parsec et votre explorateur.",
+            "successWebShown": "L'espace de travail est maintenant visible dans Parsec.",
+            "failedShown": "Impossible d'afficher l'espace de travail. Veuillez réessayer."
         }
     },
     "FoldersPage": {
