@@ -6782,6 +6782,13 @@ fn variant_available_device_type_js_to_rs(
                 openbao_entity_id,
             })
         }
+        "AvailableDeviceTypePKI" => {
+            let certificate_ref = {
+                let js_val = Reflect::get(&obj, &"certificateRef".into())?;
+                struct_x509_certificate_reference_js_to_rs(js_val)?
+            };
+            Ok(libparsec::AvailableDeviceType::PKI { certificate_ref })
+        }
         "AvailableDeviceTypePassword" => Ok(libparsec::AvailableDeviceType::Password {}),
         "AvailableDeviceTypeRecovery" => Ok(libparsec::AvailableDeviceType::Recovery {}),
         "AvailableDeviceTypeSmartcard" => Ok(libparsec::AvailableDeviceType::Smartcard {}),
@@ -6821,6 +6828,13 @@ fn variant_available_device_type_rs_to_js(
             )?;
             let js_openbao_entity_id = openbao_entity_id.into();
             Reflect::set(&js_obj, &"openbaoEntityId".into(), &js_openbao_entity_id)?;
+        }
+        libparsec::AvailableDeviceType::PKI {
+            certificate_ref, ..
+        } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AvailableDeviceTypePKI".into())?;
+            let js_certificate_ref = struct_x509_certificate_reference_rs_to_js(certificate_ref)?;
+            Reflect::set(&js_obj, &"certificateRef".into(), &js_certificate_ref)?;
         }
         libparsec::AvailableDeviceType::Password { .. } => {
             Reflect::set(
@@ -10045,6 +10059,23 @@ fn variant_device_access_strategy_js_to_rs(
                 openbao_auth_token,
             })
         }
+        "DeviceAccessStrategyPKI" => {
+            let key_file = {
+                let js_val = Reflect::get(&obj, &"keyFile".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
+                            Ok(std::path::PathBuf::from(s))
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            };
+            Ok(libparsec::DeviceAccessStrategy::PKI { key_file })
+        }
         "DeviceAccessStrategyPassword" => {
             let password = {
                 let js_val = Reflect::get(&obj, &"password".into())?;
@@ -10189,6 +10220,22 @@ fn variant_device_access_strategy_rs_to_js(
             let js_openbao_auth_token = openbao_auth_token.into();
             Reflect::set(&js_obj, &"openbaoAuthToken".into(), &js_openbao_auth_token)?;
         }
+        libparsec::DeviceAccessStrategy::PKI { key_file, .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"DeviceAccessStrategyPKI".into())?;
+            let js_key_file = JsValue::from_str({
+                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                    path.into_os_string()
+                        .into_string()
+                        .map_err(|_| "Path contains non-utf8 characters")
+                };
+                match custom_to_rs_string(key_file) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"keyFile".into(), &js_key_file)?;
+        }
         libparsec::DeviceAccessStrategy::Password {
             password, key_file, ..
         } => {
@@ -10315,6 +10362,13 @@ fn variant_device_save_strategy_js_to_rs(
                 openbao_preferred_auth_id,
             })
         }
+        "DeviceSaveStrategyPKI" => {
+            let certificate_ref = {
+                let js_val = Reflect::get(&obj, &"certificateRef".into())?;
+                struct_x509_certificate_reference_js_to_rs(js_val)?
+            };
+            Ok(libparsec::DeviceSaveStrategy::PKI { certificate_ref })
+        }
         "DeviceSaveStrategyPassword" => {
             let password = {
                 let js_val = Reflect::get(&obj, &"password".into())?;
@@ -10391,6 +10445,13 @@ fn variant_device_save_strategy_rs_to_js(
                 &"openbaoPreferredAuthId".into(),
                 &js_openbao_preferred_auth_id,
             )?;
+        }
+        libparsec::DeviceSaveStrategy::PKI {
+            certificate_ref, ..
+        } => {
+            Reflect::set(&js_obj, &"tag".into(), &"DeviceSaveStrategyPKI".into())?;
+            let js_certificate_ref = struct_x509_certificate_reference_rs_to_js(certificate_ref)?;
+            Reflect::set(&js_obj, &"certificateRef".into(), &js_certificate_ref)?;
         }
         libparsec::DeviceSaveStrategy::Password { password, .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"DeviceSaveStrategyPassword".into())?;
@@ -13699,6 +13760,66 @@ fn variant_parsed_parsec_addr_js_to_rs(
         .as_string()
         .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
     match tag.as_str() {
+        "ParsedParsecAddrAsyncEnrollment" => {
+            let hostname = {
+                let js_val = Reflect::get(&obj, &"hostname".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let port = {
+                let js_val = Reflect::get(&obj, &"port".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u16::MIN as f64) || (u16::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u16 number")));
+                    }
+                    let v = v as u16;
+                    v
+                }
+            };
+            let is_default_port = {
+                let js_val = Reflect::get(&obj, &"isDefaultPort".into())?;
+                js_val
+                    .dyn_into::<Boolean>()
+                    .map_err(|_| TypeError::new("Not a boolean"))?
+                    .value_of()
+            };
+            let use_ssl = {
+                let js_val = Reflect::get(&obj, &"useSsl".into())?;
+                js_val
+                    .dyn_into::<Boolean>()
+                    .map_err(|_| TypeError::new("Not a boolean"))?
+                    .value_of()
+            };
+            let organization_id = {
+                let js_val = Reflect::get(&obj, &"organizationId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            libparsec::OrganizationID::try_from(s.as_str())
+                                .map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            };
+            Ok(libparsec::ParsedParsecAddr::AsyncEnrollment {
+                hostname,
+                port,
+                is_default_port,
+                use_ssl,
+                organization_id,
+            })
+        }
         "ParsedParsecAddrInvitationDevice" => {
             let hostname = {
                 let js_val = Reflect::get(&obj, &"hostname".into())?;
@@ -14273,6 +14394,30 @@ fn variant_parsed_parsec_addr_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        libparsec::ParsedParsecAddr::AsyncEnrollment {
+            hostname,
+            port,
+            is_default_port,
+            use_ssl,
+            organization_id,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ParsedParsecAddrAsyncEnrollment".into(),
+            )?;
+            let js_hostname = hostname.into();
+            Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
+            let js_port = JsValue::from(port);
+            Reflect::set(&js_obj, &"port".into(), &js_port)?;
+            let js_is_default_port = is_default_port.into();
+            Reflect::set(&js_obj, &"isDefaultPort".into(), &js_is_default_port)?;
+            let js_use_ssl = use_ssl.into();
+            Reflect::set(&js_obj, &"useSsl".into(), &js_use_ssl)?;
+            let js_organization_id = JsValue::from_str(organization_id.as_ref());
+            Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
+        }
         libparsec::ParsedParsecAddr::InvitationDevice {
             hostname,
             port,

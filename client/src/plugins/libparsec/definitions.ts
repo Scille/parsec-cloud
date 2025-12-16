@@ -1167,6 +1167,7 @@ export enum AvailableDeviceTypeTag {
     AccountVault = 'AvailableDeviceTypeAccountVault',
     Keyring = 'AvailableDeviceTypeKeyring',
     OpenBao = 'AvailableDeviceTypeOpenBao',
+    PKI = 'AvailableDeviceTypePKI',
     Password = 'AvailableDeviceTypePassword',
     Recovery = 'AvailableDeviceTypeRecovery',
     Smartcard = 'AvailableDeviceTypeSmartcard',
@@ -1183,6 +1184,10 @@ export interface AvailableDeviceTypeOpenBao {
     openbaoPreferredAuthId: string
     openbaoEntityId: string
 }
+export interface AvailableDeviceTypePKI {
+    tag: AvailableDeviceTypeTag.PKI
+    certificateRef: X509CertificateReference
+}
 export interface AvailableDeviceTypePassword {
     tag: AvailableDeviceTypeTag.Password
 }
@@ -1196,6 +1201,7 @@ export type AvailableDeviceType =
   | AvailableDeviceTypeAccountVault
   | AvailableDeviceTypeKeyring
   | AvailableDeviceTypeOpenBao
+  | AvailableDeviceTypePKI
   | AvailableDeviceTypePassword
   | AvailableDeviceTypeRecovery
   | AvailableDeviceTypeSmartcard
@@ -2701,6 +2707,7 @@ export enum DeviceAccessStrategyTag {
     AccountVault = 'DeviceAccessStrategyAccountVault',
     Keyring = 'DeviceAccessStrategyKeyring',
     OpenBao = 'DeviceAccessStrategyOpenBao',
+    PKI = 'DeviceAccessStrategyPKI',
     Password = 'DeviceAccessStrategyPassword',
     Smartcard = 'DeviceAccessStrategySmartcard',
 }
@@ -2722,6 +2729,10 @@ export interface DeviceAccessStrategyOpenBao {
     openbaoEntityId: string
     openbaoAuthToken: string
 }
+export interface DeviceAccessStrategyPKI {
+    tag: DeviceAccessStrategyTag.PKI
+    keyFile: Path
+}
 export interface DeviceAccessStrategyPassword {
     tag: DeviceAccessStrategyTag.Password
     password: Password
@@ -2735,6 +2746,7 @@ export type DeviceAccessStrategy =
   | DeviceAccessStrategyAccountVault
   | DeviceAccessStrategyKeyring
   | DeviceAccessStrategyOpenBao
+  | DeviceAccessStrategyPKI
   | DeviceAccessStrategyPassword
   | DeviceAccessStrategySmartcard
 
@@ -2743,6 +2755,7 @@ export enum DeviceSaveStrategyTag {
     AccountVault = 'DeviceSaveStrategyAccountVault',
     Keyring = 'DeviceSaveStrategyKeyring',
     OpenBao = 'DeviceSaveStrategyOpenBao',
+    PKI = 'DeviceSaveStrategyPKI',
     Password = 'DeviceSaveStrategyPassword',
     Smartcard = 'DeviceSaveStrategySmartcard',
 }
@@ -2762,6 +2775,10 @@ export interface DeviceSaveStrategyOpenBao {
     openbaoAuthToken: string
     openbaoPreferredAuthId: string
 }
+export interface DeviceSaveStrategyPKI {
+    tag: DeviceSaveStrategyTag.PKI
+    certificateRef: X509CertificateReference
+}
 export interface DeviceSaveStrategyPassword {
     tag: DeviceSaveStrategyTag.Password
     password: Password
@@ -2774,6 +2791,7 @@ export type DeviceSaveStrategy =
   | DeviceSaveStrategyAccountVault
   | DeviceSaveStrategyKeyring
   | DeviceSaveStrategyOpenBao
+  | DeviceSaveStrategyPKI
   | DeviceSaveStrategyPassword
   | DeviceSaveStrategySmartcard
 
@@ -3435,6 +3453,7 @@ export type ParseParsecAddrError =
 
 // ParsedParsecAddr
 export enum ParsedParsecAddrTag {
+    AsyncEnrollment = 'ParsedParsecAddrAsyncEnrollment',
     InvitationDevice = 'ParsedParsecAddrInvitationDevice',
     InvitationShamirRecovery = 'ParsedParsecAddrInvitationShamirRecovery',
     InvitationUser = 'ParsedParsecAddrInvitationUser',
@@ -3445,6 +3464,14 @@ export enum ParsedParsecAddrTag {
     WorkspacePath = 'ParsedParsecAddrWorkspacePath',
 }
 
+export interface ParsedParsecAddrAsyncEnrollment {
+    tag: ParsedParsecAddrTag.AsyncEnrollment
+    hostname: string
+    port: U16
+    isDefaultPort: boolean
+    useSsl: boolean
+    organizationId: OrganizationID
+}
 export interface ParsedParsecAddrInvitationDevice {
     tag: ParsedParsecAddrTag.InvitationDevice
     hostname: string
@@ -3516,6 +3543,7 @@ export interface ParsedParsecAddrWorkspacePath {
     encryptedPath: Uint8Array
 }
 export type ParsedParsecAddr =
+  | ParsedParsecAddrAsyncEnrollment
   | ParsedParsecAddrInvitationDevice
   | ParsedParsecAddrInvitationShamirRecovery
   | ParsedParsecAddrInvitationUser

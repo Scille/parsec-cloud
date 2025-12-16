@@ -6455,6 +6455,13 @@ fn variant_available_device_type_js_to_rs<'a>(
                 openbao_entity_id,
             })
         }
+        "AvailableDeviceTypePKI" => {
+            let certificate_ref = {
+                let js_val: Handle<JsObject> = obj.get(cx, "certificateRef")?;
+                struct_x509_certificate_reference_js_to_rs(cx, js_val)?
+            };
+            Ok(libparsec::AvailableDeviceType::PKI { certificate_ref })
+        }
         "AvailableDeviceTypePassword" => Ok(libparsec::AvailableDeviceType::Password {}),
         "AvailableDeviceTypeRecovery" => Ok(libparsec::AvailableDeviceType::Recovery {}),
         "AvailableDeviceTypeSmartcard" => Ok(libparsec::AvailableDeviceType::Smartcard {}),
@@ -6489,6 +6496,15 @@ fn variant_available_device_type_rs_to_js<'a>(
             js_obj.set(cx, "openbaoPreferredAuthId", js_openbao_preferred_auth_id)?;
             let js_openbao_entity_id = JsString::try_new(cx, openbao_entity_id).or_throw(cx)?;
             js_obj.set(cx, "openbaoEntityId", js_openbao_entity_id)?;
+        }
+        libparsec::AvailableDeviceType::PKI {
+            certificate_ref, ..
+        } => {
+            let js_tag = JsString::try_new(cx, "AvailableDeviceTypePKI").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_certificate_ref =
+                struct_x509_certificate_reference_rs_to_js(cx, certificate_ref)?;
+            js_obj.set(cx, "certificateRef", js_certificate_ref)?;
         }
         libparsec::AvailableDeviceType::Password { .. } => {
             let js_tag = JsString::try_new(cx, "AvailableDeviceTypePassword").or_throw(cx)?;
@@ -9291,6 +9307,20 @@ fn variant_device_access_strategy_js_to_rs<'a>(
                 openbao_auth_token,
             })
         }
+        "DeviceAccessStrategyPKI" => {
+            let key_file = {
+                let js_val: Handle<JsString> = obj.get(cx, "keyFile")?;
+                {
+                    let custom_from_rs_string =
+                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::DeviceAccessStrategy::PKI { key_file })
+        }
         "DeviceAccessStrategyPassword" => {
             let password = {
                 let js_val: Handle<JsString> = obj.get(cx, "password")?;
@@ -9413,6 +9443,23 @@ fn variant_device_access_strategy_rs_to_js<'a>(
             let js_openbao_auth_token = JsString::try_new(cx, openbao_auth_token).or_throw(cx)?;
             js_obj.set(cx, "openbaoAuthToken", js_openbao_auth_token)?;
         }
+        libparsec::DeviceAccessStrategy::PKI { key_file, .. } => {
+            let js_tag = JsString::try_new(cx, "DeviceAccessStrategyPKI").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_key_file = JsString::try_new(cx, {
+                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                    path.into_os_string()
+                        .into_string()
+                        .map_err(|_| "Path contains non-utf8 characters")
+                };
+                match custom_to_rs_string(key_file) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err.to_string()),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "keyFile", js_key_file)?;
+        }
         libparsec::DeviceAccessStrategy::Password {
             password, key_file, ..
         } => {
@@ -9508,6 +9555,13 @@ fn variant_device_save_strategy_js_to_rs<'a>(
                 openbao_preferred_auth_id,
             })
         }
+        "DeviceSaveStrategyPKI" => {
+            let certificate_ref = {
+                let js_val: Handle<JsObject> = obj.get(cx, "certificateRef")?;
+                struct_x509_certificate_reference_js_to_rs(cx, js_val)?
+            };
+            Ok(libparsec::DeviceSaveStrategy::PKI { certificate_ref })
+        }
         "DeviceSaveStrategyPassword" => {
             let password = {
                 let js_val: Handle<JsString> = obj.get(cx, "password")?;
@@ -9573,6 +9627,15 @@ fn variant_device_save_strategy_rs_to_js<'a>(
             let js_openbao_preferred_auth_id =
                 JsString::try_new(cx, openbao_preferred_auth_id).or_throw(cx)?;
             js_obj.set(cx, "openbaoPreferredAuthId", js_openbao_preferred_auth_id)?;
+        }
+        libparsec::DeviceSaveStrategy::PKI {
+            certificate_ref, ..
+        } => {
+            let js_tag = JsString::try_new(cx, "DeviceSaveStrategyPKI").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_certificate_ref =
+                struct_x509_certificate_reference_rs_to_js(cx, certificate_ref)?;
+            js_obj.set(cx, "certificateRef", js_certificate_ref)?;
         }
         libparsec::DeviceSaveStrategy::Password { password, .. } => {
             let js_tag = JsString::try_new(cx, "DeviceSaveStrategyPassword").or_throw(cx)?;
@@ -12615,6 +12678,50 @@ fn variant_parsed_parsec_addr_js_to_rs<'a>(
 ) -> NeonResult<libparsec::ParsedParsecAddr> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
+        "ParsedParsecAddrAsyncEnrollment" => {
+            let hostname = {
+                let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
+                js_val.value(cx)
+            };
+            let port = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "port")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u16::MIN as f64) || (u16::MAX as f64) < v {
+                        cx.throw_type_error("Not an u16 number")?
+                    }
+                    let v = v as u16;
+                    v
+                }
+            };
+            let is_default_port = {
+                let js_val: Handle<JsBoolean> = obj.get(cx, "isDefaultPort")?;
+                js_val.value(cx)
+            };
+            let use_ssl = {
+                let js_val: Handle<JsBoolean> = obj.get(cx, "useSsl")?;
+                js_val.value(cx)
+            };
+            let organization_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::ParsedParsecAddr::AsyncEnrollment {
+                hostname,
+                port,
+                is_default_port,
+                use_ssl,
+                organization_id,
+            })
+        }
         "ParsedParsecAddrInvitationDevice" => {
             let hostname = {
                 let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
@@ -13050,6 +13157,27 @@ fn variant_parsed_parsec_addr_rs_to_js<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
+        libparsec::ParsedParsecAddr::AsyncEnrollment {
+            hostname,
+            port,
+            is_default_port,
+            use_ssl,
+            organization_id,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "ParsedParsecAddrAsyncEnrollment").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
+            js_obj.set(cx, "hostname", js_hostname)?;
+            let js_port = JsNumber::new(cx, port as f64);
+            js_obj.set(cx, "port", js_port)?;
+            let js_is_default_port = JsBoolean::new(cx, is_default_port);
+            js_obj.set(cx, "isDefaultPort", js_is_default_port)?;
+            let js_use_ssl = JsBoolean::new(cx, use_ssl);
+            js_obj.set(cx, "useSsl", js_use_ssl)?;
+            let js_organization_id = JsString::try_new(cx, organization_id).or_throw(cx)?;
+            js_obj.set(cx, "organizationId", js_organization_id)?;
+        }
         libparsec::ParsedParsecAddr::InvitationDevice {
             hostname,
             port,
