@@ -3,7 +3,6 @@
 <template>
   <file-drop-zone
     ref="fileDropZone"
-    :current-path="currentPath"
     @files-added="$emit('filesAdded', $event)"
     :show-drop-message="true"
     :is-reader="ownRole === WorkspaceRole.Reader"
@@ -112,10 +111,10 @@
             @drop-as-reader="$emit('dropAsReader')"
           />
           <file-list-item-processing
-            v-for="op in operationsInProgress"
-            :key="op.data.id"
-            :data="op.data"
-            :progress="op.progress"
+            v-for="op in fileOperations"
+            :key="op.entryName"
+            :operation="op"
+            :profile="ownProfile"
           />
         </div>
       </ion-list>
@@ -128,9 +127,8 @@ import { SortProperty } from '@/components/files';
 import FileDropZone from '@/components/files/explorer/FileDropZone.vue';
 import FileListItem from '@/components/files/explorer/FileListItem.vue';
 import FileListItemProcessing from '@/components/files/explorer/FileListItemProcessing.vue';
-import { EntryCollection, EntryModel, FileModel, FileOperationProgress, FolderModel } from '@/components/files/types';
-import { FileImportTuple } from '@/components/files/utils';
-import { FsPath, UserProfile, WorkspaceRole } from '@/parsec';
+import { EntryCollection, EntryModel, FileModel, FileOperationCurrentFolder, FolderModel } from '@/components/files/types';
+import { EntryName, UserProfile, WorkspaceRole } from '@/parsec';
 import { IonIcon, IonLabel, IonList, IonListHeader, IonText } from '@ionic/vue';
 import { arrowDown, arrowUp } from 'ionicons/icons';
 import { MsCheckbox, MsSorterChangeEvent, useWindowSize } from 'megashark-lib';
@@ -139,11 +137,10 @@ import { computed, useTemplateRef } from 'vue';
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 const props = defineProps<{
   ownProfile: UserProfile;
-  operationsInProgress: Array<FileOperationProgress>;
   files: EntryCollection<FileModel>;
   folders: EntryCollection<FolderModel>;
-  currentPath: FsPath;
   ownRole: WorkspaceRole;
+  fileOperations: Array<FileOperationCurrentFolder>;
   selectionEnabled?: boolean;
   currentSortProperty: SortProperty;
   currentSortOrder?: boolean;
@@ -154,7 +151,7 @@ const emits = defineEmits<{
   (e: 'sortChange', event: MsSorterChangeEvent): void;
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
   (e: 'globalMenuClick', event: Event): void;
-  (e: 'filesAdded', imports: FileImportTuple[]): void;
+  (e: 'filesAdded', files: Array<File>, destinationFolder?: EntryName): void;
   (e: 'dropAsReader'): void;
 }>();
 
@@ -185,9 +182,9 @@ async function onMenuClick(event: Event, entry: EntryModel, onFinished: () => vo
   emits('menuClick', event, entry, onFinished);
 }
 
-function onFilesAdded(imports: FileImportTuple[]): void {
+function onFilesAdded(files: Array<File>, destinationFolder?: EntryName): void {
   fileDropZoneRef.value?.reset();
-  emits('filesAdded', imports);
+  emits('filesAdded', files, destinationFolder);
 }
 
 async function selectAll(selected: boolean): Promise<void> {

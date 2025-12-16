@@ -55,6 +55,11 @@ async function joinMultiple(path: FsPath, entries: EntryName[]): Promise<FsPath>
   return result;
 }
 
+async function joinPaths(path1: FsPath, path2: FsPath): Promise<FsPath> {
+  const parts = await Path.parse(path2);
+  return await Path.joinMultiple(path1, parts);
+}
+
 export const Path = {
   parse,
   join,
@@ -65,4 +70,5 @@ export const Path = {
   getFileExtension,
   areSame,
   filenameWithoutExtension,
+  joinPaths,
 };
