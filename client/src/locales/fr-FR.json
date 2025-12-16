@@ -652,6 +652,8 @@
             "actionCopyLink": "Copier le lien",
             "actionHide": "Masquer cet espace",
             "actionShow": "Afficher cet espace",
+            "actionHide": "Masquer cet espace",
+            "actionShow": "Afficher cet espace",
             "actionAddFavorite": "Épingler",
             "actionRemoveFavorite": "Désépingler"
         },

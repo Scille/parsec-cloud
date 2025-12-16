@@ -652,6 +652,8 @@
             "actionDetails": "Details",
             "actionHide": "Hide this workspace",
             "actionShow": "Show this workspace",
+            "actionHide": "Hide this workspace",
+            "actionShow": "Show this workspace",
             "actionCopyLink": "Copy link",
             "actionAddFavorite": "Pin",
             "actionRemoveFavorite": "Unpin"
