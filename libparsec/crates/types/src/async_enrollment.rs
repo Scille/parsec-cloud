@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use libparsec_serialization_format::parsec_data;
 
+use super::utils::{impl_dump, impl_load};
 use crate::{
     self as libparsec_types,
     data_macros::impl_transparent_data_format_conversion,
@@ -12,30 +13,6 @@ use crate::{
     AsyncEnrollmentID, DataError, DateTime, DeviceID, DeviceLabel, HumanHandle, OrganizationID,
     ParsecAddr, PublicKey, UserID, UserProfile, VerifyKey,
 };
-
-/*
- * Helpers
- */
-
-macro_rules! impl_dump {
-    ($name:ident) => {
-        impl $name {
-            pub fn dump(&self) -> Vec<u8> {
-                format_v0_dump(&self)
-            }
-        }
-    };
-}
-
-macro_rules! impl_load {
-    ($name:ident) => {
-        impl $name {
-            pub fn load(serialized: &[u8]) -> Result<$name, DataError> {
-                format_vx_load(&serialized)
-            }
-        }
-    };
-}
 
 /*
  * AsyncEnrollmentSubmitPayload

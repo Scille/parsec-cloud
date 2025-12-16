@@ -79,6 +79,7 @@ mod serialization;
 mod shamir;
 mod time;
 mod token;
+mod utils;
 
 pub use account::*;
 pub use addr::*;
