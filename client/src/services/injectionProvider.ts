@@ -2,7 +2,7 @@
 
 import { ConnectionHandle, isWeb } from '@/parsec';
 import { EventData, EventDistributor, Events } from '@/services/eventDistributor';
-import { FileOperationManager } from '@/services/fileOperationManager';
+import { FileOperationManager } from '@/services/fileOperation/manager';
 import { Information, InformationManager } from '@/services/informationManager';
 
 export interface Injections {

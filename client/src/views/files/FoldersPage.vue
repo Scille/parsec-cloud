@@ -274,7 +274,7 @@ import {
   MoveData,
   OperationProgressStateData,
   StateData,
-} from '@/services/fileOperationManager';
+} from '@/services/fileOperation/manager';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import usePathOpener, { OpenPathOptions } from '@/services/pathOpener';

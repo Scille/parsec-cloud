@@ -114,7 +114,7 @@ import {
   FileOperationState,
   OperationProgressStateData,
   StateData,
-} from '@/services/fileOperationManager';
+} from '@/services/fileOperation/manager';
 import { IonIcon, IonItem, IonText } from '@ionic/vue';
 import { checkmarkCircle, closeCircle } from 'ionicons/icons';
 import { Copy, MsImage, MsInformationTooltip, MsProgress, MsProgressAppearance, Translatable } from 'megashark-lib';

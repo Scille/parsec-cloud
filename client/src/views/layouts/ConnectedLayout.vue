@@ -32,7 +32,7 @@ import {
   Events,
   UpdateAvailabilityData,
 } from '@/services/eventDistributor';
-import { FileOperationManagerKey } from '@/services/fileOperationManager';
+import { FileOperationManagerKey } from '@/services/fileOperation/manager';
 import useUploadMenu from '@/services/fileUploadMenu';
 import { Information, InformationLevel, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey, Injections } from '@/services/injectionProvider';
