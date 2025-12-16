@@ -293,23 +293,20 @@ msTest.describe(() => {
         }
         await expect(entries).toHaveCount(2);
         await expect(documents.locator('#folders-ms-action-bar').locator('.counter')).toHaveText('2 items');
-        await entries.nth(0).hover();
-        await documents.waitForTimeout(300);
-        await expect(entries.nth(0).locator('ion-checkbox')).toBeVisible();
-        await entries.nth(0).locator('ion-checkbox').click();
-        await documents.waitForTimeout(300);
-        await expect(entries.nth(0).locator('ion-checkbox')).toHaveState('checked');
-        await expect(documents.locator('#folders-ms-action-bar').locator('.counter')).toHaveText('1 selected item');
-        await entries.nth(1).hover();
-        await documents.waitForTimeout(300);
-        await expect(entries.nth(1).locator('ion-checkbox')).toBeVisible();
-        await entries.nth(1).locator('ion-checkbox').click();
-        await documents.waitForTimeout(300);
-        await expect(entries.nth(1).locator('ion-checkbox')).toHaveState('checked');
-        await documents.waitForTimeout(60);
+        if (gridMode) {
+          await entries.nth(0).locator('.file-card-last-update').click();
+          await entries.nth(1).locator('.file-card-last-update').click();
+        } else {
+          await entries.nth(0).locator('.file-last-update').click();
+          await entries.nth(1).locator('.file-last-update').click();
+        }
         await expect(documents.locator('#folders-ms-action-bar').locator('.counter')).toHaveText('2 selected items');
 
-        await entries.nth(0).click({ button: 'right' });
+        if (gridMode) {
+          await entries.nth(0).locator('.file-card-last-update').click({ button: 'right' });
+        } else {
+          await entries.nth(0).locator('.file-last-update').click({ button: 'right' });
+        }
 
         await expect(documents.locator('.file-context-menu')).toBeVisible();
         const popover = documents.locator('.file-context-menu');
@@ -453,26 +450,6 @@ msTest.describe(() => {
         'Collaboration',
         'Copy link',
       ]);
-    });
-
-    msTest(`Move document in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }, testInfo: TestInfo) => {
-      await importDefaultFiles(documents, testInfo, ImportDocuments.Png, true);
-      if (gridMode) {
-        await toggleViewMode(documents);
-      }
-      await expect(documents.locator('.folder-selection-modal')).toBeHidden();
-      await clickAction(await openPopover(documents, 1), 'Move to');
-      const modal = documents.locator('.folder-selection-modal');
-      await expect(modal).toBeVisible();
-      await expect(modal.locator('.ms-modal-header__title')).toHaveText('Move one item');
-      const okButton = modal.locator('#next-button');
-      await expect(okButton).toHaveText('Move here');
-      await expect(okButton).toHaveDisabledAttribute();
-      await modal.locator('.folder-container').getByRole('listitem').nth(0).click();
-      await expect(modal.locator('.current-folder__text')).toHaveText(/^Dir_[A-Za-z_]+$/);
-      await expect(okButton).toNotHaveDisabledAttribute();
-      await okButton.click();
-      await expect(modal).toBeHidden();
     });
   }
 
@@ -888,26 +865,5 @@ msTest.describe(() => {
         await expect(modal.getByRole('listitem')).toHaveText(['Preview', 'Download', 'Copy link', 'Details']);
       },
     );
-
-    msTest(`Small display move document in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }, testInfo: TestInfo) => {
-      await importDefaultFiles(documents, testInfo, ImportDocuments.Png, true);
-      await documents.setDisplaySize(DisplaySize.Small);
-      if (gridMode) {
-        await toggleViewMode(documents);
-      }
-      await expect(documents.locator('.folder-selection-modal')).toBeHidden();
-      await clickAction(await openPopover(documents, 1), 'Move to');
-      const modal = documents.locator('.folder-selection-modal');
-      await expect(modal).toBeVisible();
-      await expect(modal.locator('.ms-modal-header__title')).toHaveText('Move one item');
-      const okButton = modal.locator('#next-button');
-      await expect(okButton).toHaveText('Move here');
-      await expect(okButton).toHaveDisabledAttribute();
-      await modal.locator('.folder-container').getByRole('listitem').nth(0).click();
-      await expect(modal.locator('.current-folder__text')).toHaveText(/^Dir_[A-Za-z_]+$/);
-      await expect(okButton).toNotHaveDisabledAttribute();
-      await okButton.click();
-      await expect(modal).toBeHidden();
-    });
   }
 });

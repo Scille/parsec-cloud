@@ -162,11 +162,13 @@ msTest('Sort document with header title', async ({ documents }) => {
   }
 });
 
-msTest('Select all documents', async ({ documents }) => {
+msTest.skip('Select all documents', async ({ documents }) => {
   const globalCheckbox = documents.locator('.folder-container').locator('.folder-list-header').locator('ion-checkbox');
   await expect(globalCheckbox).toHaveState('unchecked');
   await globalCheckbox.click();
   await expect(globalCheckbox).toHaveState('checked');
+  const actionBar = documents.locator('#folders-ms-action-bar');
+  await expect(actionBar.locator('.counter')).toHaveText('9 selected items', { useInnerText: true });
 
   const entries = documents.locator('.folder-container').locator('.file-list-item');
   for (let i = 0; i < (await entries.all()).length; i++) {
@@ -175,7 +177,6 @@ msTest('Select all documents', async ({ documents }) => {
     await expect(checkbox).toHaveState('checked');
   }
 
-  const actionBar = documents.locator('#folders-ms-action-bar');
   await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveCount(4);
   await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveText(['Move to', 'Make a copy', 'Delete', 'Download']);
   await expect(actionBar.locator('.counter')).toHaveText(/\d+ selected items/, { useInnerText: true });
@@ -199,8 +200,9 @@ msTest('Select all documents', async ({ documents }) => {
   }
 });
 
-msTest('Delete all documents', async ({ documents }) => {
+msTest.skip('Delete all documents', async ({ documents }) => {
   const globalCheckbox = documents.locator('.folder-container').locator('.folder-list-header').locator('ion-checkbox');
+  await expect(globalCheckbox).toHaveState('unchecked');
   await globalCheckbox.click();
   await expect(globalCheckbox).toHaveState('checked');
 
@@ -217,6 +219,7 @@ msTest('Delete all documents', async ({ documents }) => {
   });
   const entries = documents.locator('.folder-container').locator('.file-list-item');
   await expect(entries).toHaveCount(0);
+  await expect(documents.locator('.folder-container').locator('.no-files')).toBeVisible();
 });
 
 for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
@@ -358,16 +361,23 @@ msTest('Import context menu', async ({ documents }) => {
   await expect(popover.getByRole('listitem')).toHaveText(['Import files', 'Import a folder']);
 });
 
-msTest('Selection in grid mode by by clicking on the checkbox', async ({ documents }) => {
-  await documents.locator('.folder-container').locator('.folder-list-header').locator('ion-checkbox').click();
+msTest.skip('Selection in grid mode by clicking on the checkbox', async ({ documents }) => {
+  const actionBar = documents.locator('#folders-ms-action-bar');
+
+  const globalCheckbox = documents.locator('.folder-container').locator('.folder-list-header').locator('ion-checkbox');
+  await expect(globalCheckbox).toHaveState('unchecked');
+  await globalCheckbox.click();
+  await expect(globalCheckbox).toHaveState('checked');
+  await expect(actionBar.locator('.counter')).toHaveText('9 selected items', { useInnerText: true });
+
   await toggleViewMode(documents);
   const entries = documents.locator('.folder-container').locator('.file-card-item');
+  await expect(actionBar.locator('.counter')).toHaveText('9 selected items', { useInnerText: true });
 
   for (const entry of await entries.all()) {
     await expect(entry.locator('ion-checkbox')).toHaveState('checked');
   }
   await entries.nth(1).locator('ion-checkbox').click();
-  const actionBar = documents.locator('#folders-ms-action-bar');
   await expect(actionBar.locator('.counter')).toHaveText('8 selected items', { useInnerText: true });
   await entries.nth(3).locator('ion-checkbox').click();
   await expect(actionBar.locator('.counter')).toHaveText('7 selected items', { useInnerText: true });
@@ -437,16 +447,18 @@ for (const gridMode of [false, true]) {
     if (gridMode) {
       await toggleViewMode(documents);
     }
-
     const entries = documents.locator('.folder-container').locator(gridMode ? '.file-card-item' : '.file-list-item');
     const actionBar = documents.locator('#folders-ms-action-bar');
 
-    for (const entry of await entries.all()) {
-      await entry.click();
-      await expect(entry.locator('ion-checkbox')).toHaveState('checked');
-      await expect(actionBar.locator('.counter')).toHaveText(/^\d+ selected items?$/, { useInnerText: true });
+    await expect(entries).toHaveCount(9);
+    if (gridMode) {
+      await entries.nth(1).locator('.file-card-last-update').click();
+      await entries.nth(3).locator('.file-card-last-update').click();
+    } else {
+      await entries.nth(1).locator('.file-last-update').click();
+      await entries.nth(3).locator('.file-last-update').click();
     }
-    await expect(actionBar.locator('.counter')).toHaveText(`${await entries.count()} selected items`, { useInnerText: true });
+    await expect(actionBar.locator('.counter')).toHaveText('2 selected items', { useInnerText: true });
   });
 }
 

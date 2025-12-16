@@ -350,6 +350,8 @@ export const msTest = debugTest.extend<{
     if (!documentsOptions.empty) {
       await importDefaultFiles(workspaces, testInfo);
       await expect(workspaces.locator('.folder-container').locator('.no-files')).toBeHidden();
+      await expect(workspaces.locator('.file-list-item')).toHaveCount(9);
+      await expect(workspaces.locator('.file-list-item').nth(0).locator('.label-name')).toHaveText('Dir_Folder');
     }
     use(workspaces);
   },

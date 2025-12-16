@@ -77,7 +77,7 @@
         "openImportedMenu": "Open imported files menu",
         "viewJoinedUsers": "View users",
         "goToDevices": "Go to my devices",
-        "openEnclosingFolder": "Open enclosing folder",
+        "openEnclosingFolder": "Open destination folder",
         "noNotification": "You are up to date!",
         "update": "Update",
         "newVersionAvailable": "A new version is available"
@@ -846,49 +846,51 @@
         "linkNotCopiedToClipboard": "Failed to copy link. Your browser or device does not seem to support copy/paste.",
         "linkCopiedToClipboard": "Link has been copied to clipboard.",
         "getLinkError": "Failed to get a link to the file",
+        "FileOperations": {
+            "waiting": "Queued",
+            "finalizing": "Finalizing...",
+            "cancelled": "Cancelled",
+            "cancelling": "Cancelling...",
+            "cancel": "Cancel",
+            "failed": "Failed",
+            "files": "files"
+        },
         "ImportFile": {
+            "importMultiplesFiles": "Importing {count}",
             "importFilesAction": "Import files",
             "importFolderAction": "Import a folder",
             "title": "Background tasks",
-            "waiting": "waiting",
-            "cancelled": "cancelled",
-            "failed": "failed",
             "failedDetails": "Please make sure you are online.",
-            "browse": "Go to location",
+            "browse": "Show destination folder",
             "tabs": {
                 "inProgress": "In progress",
                 "done": "Done",
-                "failed": "Failed"
+                "failed": "Failed",
+                "clear": "Clear list"
             },
-            "noImportInProgress": "No import in progress",
+            "noTasks": "No tasks",
+            "noCurrentTasks": "No tasks in this category",
             "noImportDone": "No import done",
             "noImportFailed": "No import failed",
             "dropInstructions": "Drag & drop your files to import them",
             "noDropForReader": "You are a Reader on this workspace and cannot import files."
         },
         "CopyFile": {
-            "copy": "Copy of {name}",
-            "waiting": "waiting",
-            "cancelled": "cancelled",
-            "failed": "failed",
-            "browse": "Go to location"
+            "copyMultiplesFiles": "Copying {count}",
+            "copy": "Copying {name}"
         },
         "MoveFile": {
-            "move": "Move of {name}",
-            "waiting": "waiting",
-            "cancelled": "cancelled",
-            "failed": "failed",
-            "browse": "Go to location",
+            "moveMultiplesFiles": "Moving {count}",
+            "move": "Moving {name}",
             "failedDetails": "Please make sure you are online."
         },
         "RestoreFile": {
+            "restoreMultiplesFiles": "Restoring {count}",
             "restore": "Restoration of {name}",
-            "waiting": "waiting",
-            "cancelled": "cancelled",
-            "failed": "failed",
             "failedDetails": "Could not restore this file or folder."
         },
         "DownloadFile": {
+            "download": "Downloading {name}",
             "downloadWarningTitle": "Are you sure you want to download this file?",
             "downloadWarningText": "If you download this file outside of Parsec, we can no longer guarantee its security.",
             "downloadWarningDocMessage": "To find more information, you can read our {0}.",
@@ -901,14 +903,26 @@
             "noPermissions": "Parsec doesn't have the necessary permissions to save a file on your disk. Please allow file editing permissions on this website if you want to be able to download a file.",
             "openFailed": "Could not open the file. You can try using your browser's downloads list.",
             "cancel": "Cancel",
-            "download": "Download file",
+            "downloadButton": "Download file",
             "notRemindMe": "Do not remind me",
             "maximumRecursionReached": "Maximum subfolder depth reached, cannot download",
             "maximumFilesReached": "Too many selected files, cannot download",
             "archiveTitle": "Downloading multiple files",
             "archiveQuestion": "The selected files will be downloaded as an archive, with a total size of {size}. Do you want to continue?",
             "archiveYes": "Download archive",
+            "archiveDownload": "Downloading files (archive)",
             "archiveNo": "Cancel"
+        },
+        "ConflictsFile": {
+            "title": "Conflicts: existing file names",
+            "description": "Some files have an already existing name in the destination folder, would you like to add a unique name ”ex: File(2)”, replace them or ignore?",
+            "fileConcerned": "{count} file concerned | {count} files concerned",
+            "moreFiles": "1 other file | {count} other files",
+            "buttons": {
+                "ignore": "Ignore",
+                "replace": "Replace",
+                "keepAll": "Keep both"
+            }
         },
         "uploadsLeft": "{amount} imports pending",
         "copiesLeft": "{amount} copies pending",

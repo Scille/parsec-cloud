@@ -106,3 +106,13 @@
     }
   }
 }
+
+.upload-menu .progress-spinner {
+  circle.bg {
+    stroke: var(--parsec-color-light-secondary-disabled);
+  }
+
+  circle.fg {
+    stroke: var(--parsec-color-light-secondary-text);
+  }
+}

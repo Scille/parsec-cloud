@@ -17,19 +17,37 @@ async function toggleViewMode(page: Page): Promise<void> {
   }
 }
 
-async function checkFilesUploaded(page: Page, expectedCount: number): Promise<void> {
+async function checkFilesUploaded(page: Page, expectedCount: number, lastOneFilesCount = 1): Promise<void> {
   const uploadMenu = page.locator('.upload-menu');
   await expect(uploadMenu).toBeVisible();
-  const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
-  await expect(tabs.locator('ion-text')).toHaveText(['In progress', 'Done', 'Failed']);
-  await expect(tabs.locator('.text-counter')).toHaveText(['0', `${expectedCount}`, '0']);
+  const opItems = uploadMenu.locator('.upload-menu-list').locator('.file-operation-item');
+  await expect(opItems).toHaveCount(expectedCount);
 
-  const container = uploadMenu.locator('.element-container');
-  const elements = container.locator('.element');
-  await expect(elements).toHaveCount(Math.min(expectedCount, 11));
-  await expect(elements.locator('.element-details-info__size')).toHaveText(Array(Math.min(expectedCount, 10)).fill(/^[0-9.]+ (G|M|K)?B$/));
-  if (expectedCount > 10) {
-    await expect(elements.locator('.element-details').last()).toHaveText('One more operation done');
+  await expect(uploadMenu.locator('.upload-menu-tabs__item').nth(0)).toHaveText('In progress');
+  await uploadMenu.locator('.upload-menu-tabs__item').nth(0).click();
+  await expect(opItems).toHaveCount(0);
+
+  await expect(uploadMenu.locator('.upload-menu-tabs__item').nth(1)).toHaveText('Done');
+  await uploadMenu.locator('.upload-menu-tabs__item').nth(1).click();
+  await expect(opItems).toHaveCount(expectedCount);
+
+  await expect(uploadMenu.locator('.upload-menu-tabs__item').nth(2)).toHaveText('Failed');
+  await uploadMenu.locator('.upload-menu-tabs__item').nth(2).click();
+  await expect(opItems).toHaveCount(0);
+
+  await uploadMenu.locator('.upload-menu-tabs__item').nth(2).click();
+  await expect(opItems).toHaveCount(expectedCount);
+
+  const lastElement = opItems.first();
+  await expect(lastElement.locator('.element-details')).toBeVisible();
+
+  if (lastOneFilesCount > 1) {
+    await expect(lastElement).toHaveTheClass('multiple_elements');
+    await expect(lastElement.locator('.element-details-title__name')).toHaveText(`Importing ${lastOneFilesCount} files`);
+  } else {
+    await expect(lastElement).not.toHaveTheClass('multiple_elements');
+    await expect(lastElement.locator('.element-details-title__name')).toHaveText(/^[A-Za-z0-9-_.]+$/);
+    await expect(lastElement.locator('.element-details-info')).toHaveText(/^[0-9.]+ (G|M|K)?B • [a-zA-Z0-9-_ ]+$/);
   }
 }
 
@@ -49,15 +67,17 @@ for (const mode of ['list', 'grid']) {
       path.join(testInfo.config.rootDir, 'data', 'imports', 'yo.png'),
       path.join(testInfo.config.rootDir, 'data', 'imports', 'hell_yeah.png'),
     ]);
-    await checkFilesUploaded(documents, 2);
+    await checkFilesUploaded(documents, 1, 2);
     const actionBar = documents.locator('#folders-ms-action-bar');
     await expect(actionBar.locator('.counter')).toHaveText('2 items', { useInnerText: true });
     if (mode === 'list') {
       const entries = documents.locator('.folder-container').locator('.file-list-item');
       await expect(entries).toHaveCount(2);
+      await expect(entries.locator('.label-name')).toHaveText(['yo.png', 'hell_yeah.png']);
     } else {
       const entries = documents.locator('.folder-container').locator('.file-card-item');
       await expect(entries).toHaveCount(2);
+      await expect(entries.locator('.file-card__title')).toHaveText(['yo.png', 'hell_yeah.png']);
     }
   });
 }
@@ -89,16 +109,32 @@ for (const mode of ['list', 'grid']) {
       documents.locator('.folder-container').locator('.file-list-item').nth(0).dblclick();
     }
     await expect(workspaces).toHaveHeader(['New_Workspace', 'Folder'], true, true);
-    await checkFilesUploaded(documents, 2);
+    await checkFilesUploaded(documents, 1, 2);
     const actionBar = documents.locator('#folders-ms-action-bar');
     await expect(actionBar.locator('.counter')).toHaveText('2 items', { useInnerText: true });
     if (mode === 'list') {
       const entries = documents.locator('.folder-container').locator('.file-list-item');
       await expect(entries).toHaveCount(2);
+      await expect(entries.locator('.label-name')).toHaveText(['yo.png', 'hell_yeah.png']);
     } else {
       const entries = documents.locator('.folder-container').locator('.file-card-item');
       await expect(entries).toHaveCount(2);
+      await expect(entries.locator('.file-card__title')).toHaveText(['yo.png', 'hell_yeah.png']);
     }
+
+    await documents.locator('#connected-header').locator('.topbar-left').locator('.back-button').click();
+    await expect(workspaces).toHaveHeader(['New_Workspace'], true, true);
+
+    const uploadMenu = workspaces.locator('.upload-menu');
+    await expect(uploadMenu).toBeVisible();
+    const opItems = uploadMenu.locator('.upload-menu-list').locator('.file-operation-item');
+    await expect(opItems).toHaveCount(1);
+    await expect(opItems.nth(0).locator('.folder-icon ')).toBeVisible();
+    await opItems.nth(0).locator('.folder-icon').hover();
+    await expect(opItems.nth(0).locator('.hover-state')).toBeVisible();
+    await expect(opItems.nth(0).locator('.hover-state')).toHaveText('Show destination folder');
+    await opItems.nth(0).locator('.folder-icon').click();
+    await expect(workspaces).toHaveHeader(['New_Workspace', 'Folder'], true, true);
   });
 }
 
@@ -135,7 +171,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     expect(fileChooser.isMultiple()).toBe(false);
     const importPath = path.join(testInfo.config.rootDir, 'data', 'imports');
     await fileChooser.setFiles([importPath]);
-    await checkFilesUploaded(documents, 11);
+    await checkFilesUploaded(documents, 1, 11);
     await documents.locator('.upload-menu').locator('.menu-header-icons').locator('ion-icon').nth(1).click();
     await expect(documents.locator('.upload-menu')).toBeHidden();
     await documents.locator('.folder-container').locator('.file-list-item').nth(0).dblclick();
@@ -184,12 +220,60 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
       path.join(testInfo.config.rootDir, 'data', 'imports', 'yo.png'),
       path.join(testInfo.config.rootDir, 'data', 'imports', 'hell_yeah.png'),
     ]);
-    await checkFilesUploaded(documents, 2);
+    await checkFilesUploaded(documents, 1, 2);
     if (displaySize === DisplaySize.Large) {
       const actionBar = documents.locator('#folders-ms-action-bar');
       await expect(actionBar.locator('.counter')).toHaveText('2 items', { useInnerText: true });
     }
     const entries = documents.locator('.folder-container').locator('.file-list-item');
     await expect(entries).toHaveCount(2);
+    await expect(entries.locator('.label-name')).toHaveText(['yo.png', 'hell_yeah.png']);
+  });
+}
+
+for (const dupPolicy of ['replace', 'ignore', 'addCount']) {
+  msTest(`Import existing file and ${dupPolicy}`, async ({ workspaces }) => {
+    // Start with an empty workspace
+    await createWorkspace(workspaces, 'New_Workspace');
+    await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
+    await expect(workspaces).toHaveHeader(['New_Workspace'], true, true);
+
+    const documents = workspaces;
+    const dropZone = documents.locator('.folder-container').locator('.drop-zone').nth(0);
+    await dragAndDropFile(documents, dropZone, [], [{ name: 'file.txt', content: 'MQ==' }]);
+    await checkFilesUploaded(documents, 1, 1);
+    const actionBar = documents.locator('#folders-ms-action-bar');
+    await expect(actionBar.locator('.counter')).toHaveText('1 item', { useInnerText: true });
+    const entries = documents.locator('.folder-container').locator('.file-list-item');
+    await expect(entries).toHaveCount(1);
+    await expect(entries.nth(0).locator('.label-name')).toHaveText('file.txt');
+    await expect(entries.nth(0).locator('.label-size')).toHaveText('1 B');
+
+    const dupModal = documents.locator('.file-operation-conflicts-modal');
+    await expect(dupModal).toBeHidden();
+
+    await dragAndDropFile(documents, dropZone, [], [{ name: 'file.txt', content: 'MTIzNDU=' }]);
+
+    await expect(dupModal).toBeVisible();
+    const buttons = dupModal.locator('.modal-footer-buttons__item');
+    await expect(buttons).toHaveText(['Ignore', 'Replace', 'Keep both']);
+
+    if (dupPolicy === 'replace') {
+      await buttons.nth(1).click();
+      await expect(entries).toHaveCount(1);
+      await expect(entries.nth(0).locator('.label-name')).toHaveText('file.txt');
+      await expect(entries.nth(0).locator('.label-size')).toHaveText('5 B');
+    } else if (dupPolicy === 'ignore') {
+      await buttons.nth(0).click();
+      await expect(entries).toHaveCount(1);
+      await expect(entries.nth(0).locator('.label-name')).toHaveText('file.txt');
+      await expect(entries.nth(0).locator('.label-size')).toHaveText('1 B');
+    } else {
+      await buttons.nth(2).click();
+      await expect(entries).toHaveCount(2);
+      await expect(entries.locator('.label-name')).toHaveText(['file.txt', 'file (2).txt']);
+      await expect(entries.locator('.label-size')).toHaveText(['1 B', '5 B']);
+    }
+    await checkFilesUploaded(documents, 2, 1);
   });
 }

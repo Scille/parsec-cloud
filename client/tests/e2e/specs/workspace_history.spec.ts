@@ -78,16 +78,10 @@ msTest.describe(() => {
     });
     const uploadMenu = documents.locator('.upload-menu');
     await expect(uploadMenu).toBeVisible();
-    const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
-    await expect(tabs.locator('.text-counter')).toHaveText(['0', '2', '0']);
-    await expect(tabs.nth(0)).not.toHaveTheClass('active');
-    await expect(tabs.nth(1)).toHaveTheClass('active');
-    await expect(tabs.nth(2)).not.toHaveTheClass('active');
-
-    const opContainer = uploadMenu.locator('.element-container');
-    const elements = opContainer.locator('.element');
-    await expect(elements).toHaveCount(2);
-    await expect(elements.locator('.element-details__name').nth(0)).toHaveText(/^Restoration of [A-Za-z0-9_.]+$/);
+    const opItems = uploadMenu.locator('.upload-menu-list').locator('.file-operation-item');
+    await expect(opItems).toHaveCount(2);
+    await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Restoration of image.png');
+    await expect(opItems.nth(0).locator('.element-details-info')).toHaveText('wksp1');
   });
 
   msTest('Test viewer in history', async ({ documents }, testInfo: TestInfo) => {

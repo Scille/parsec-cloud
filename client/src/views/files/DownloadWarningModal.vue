@@ -9,7 +9,7 @@
       label: 'FoldersPage.DownloadFile.cancel',
     }"
     :confirm-button="{
-      label: 'FoldersPage.DownloadFile.download',
+      label: 'FoldersPage.DownloadFile.downloadButton',
       disabled: false,
       theme: MsReportTheme.Success,
       onClick: onConfirmClicked,

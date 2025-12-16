@@ -49,17 +49,10 @@ msTest.describe(() => {
 
     const uploadMenu = documents.locator('.upload-menu');
     await expect(uploadMenu).toBeVisible();
-    const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
-    await expect(tabs.locator('.text-counter')).toHaveText(['0', '2', '0']);
-    await expect(tabs.nth(0)).not.toHaveTheClass('active');
-    await expect(tabs.nth(1)).toHaveTheClass('active');
-    await expect(tabs.nth(2)).not.toHaveTheClass('active');
-
-    const container = uploadMenu.locator('.element-container');
-    const elements = container.locator('.element');
-    await expect(elements).toHaveCount(2);
-    await expect(elements.nth(0).locator('.element-details__name')).toHaveText('audio.mp3');
-    await expect(elements.nth(0).locator('.element-details-info__size')).toHaveText('40.9 KB');
+    const opItems = uploadMenu.locator('.upload-menu-list').locator('.file-operation-item');
+    await expect(opItems).toHaveCount(2);
+    await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Downloading audio.mp3');
+    await expect(opItems.nth(0).locator('.element-details-info').locator('ion-text').nth(0)).toHaveText(' wksp1');
 
     const content = await getDownloadedFile(documents);
     expect(content).toBeTruthy();
@@ -69,33 +62,22 @@ msTest.describe(() => {
   });
 
   msTest('Download multiple files and folder', async ({ documents }, testInfo: TestInfo) => {
+    msTest.setTimeout(45_000);
+
     await importDefaultFiles(documents, testInfo, ImportDocuments.Mp3 | ImportDocuments.Pdf | ImportDocuments.Xlsx, true);
 
-    msTest.setTimeout(45_000);
     const entries = documents.locator('.folder-container').locator('.file-list-item');
     await entries.nth(0).dblclick();
     const dropZone = documents.locator('.folder-container').locator('.drop-zone').nth(0);
     await dragAndDropFile(documents, dropZone, [path.join(testInfo.config.rootDir, 'data', 'imports', 'image.png')]);
     await documents.waitForTimeout(1000);
-    const uploadMenu = documents.locator('.upload-menu');
-    await expect(uploadMenu).toBeVisible();
-    const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
-    await expect(tabs.locator('.text-counter')).toHaveText(['0', '4', '0']);
-    await expect(tabs.nth(0)).not.toHaveTheClass('active');
-    await expect(tabs.nth(1)).toHaveTheClass('active');
-    await expect(tabs.nth(2)).not.toHaveTheClass('active');
-    await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
     await expect(documents.locator('.folder-container').locator('.no-files-content')).toBeHidden();
 
     await documents.locator('#connected-header').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(1).click();
     await expect(documents).toHaveHeader(['wksp1'], true, true);
     await expect(entries).toHaveCount(4);
-    await documents.waitForTimeout(1000);
 
-    for (const entry of await entries.all()) {
-      await entry.hover();
-      await entry.locator('ion-checkbox').click();
-    }
+    await documents.locator('.folder-container').locator('.header-label-selected').click();
     const actionBar = documents.locator('#folders-ms-action-bar');
     await expect(actionBar.locator('.counter')).toHaveText('4 selected items');
     await expect(actionBar.locator('.ms-action-bar-button:visible').nth(3)).toHaveText('Download');
@@ -107,21 +89,14 @@ msTest.describe(() => {
       expectedQuestionText: 'The selected files will be downloaded as an archive, with a total size of 130 KB. Do you want to continue?',
       expectedTitleText: 'Downloading multiple files',
     });
-
     await documents.waitForTimeout(1000);
 
+    const uploadMenu = documents.locator('.upload-menu');
     await expect(uploadMenu).toBeVisible();
-    await expect(tabs.locator('.text-counter')).toHaveText(['0', '5', '0']);
-    await expect(tabs.nth(0)).not.toHaveTheClass('active');
-    await expect(tabs.nth(1)).toHaveTheClass('active');
-    await expect(tabs.nth(2)).not.toHaveTheClass('active');
-
-    const container = uploadMenu.locator('.element-container');
-    const elements = container.locator('.element');
-    await expect(elements).toHaveCount(5);
-
-    await expect(elements.nth(0).locator('.element-details__name')).toHaveText('wksp1_ROOT.zip');
-    await expect(elements.nth(0).locator('.element-details-info__size')).toHaveText('130 KB');
+    const opItems = uploadMenu.locator('.upload-menu-list').locator('.file-operation-item');
+    await expect(opItems).toHaveCount(3);
+    await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Downloading files (archive)');
+    await expect(opItems.nth(0).locator('.element-details-info')).toHaveText('wksp1');
 
     const zipContent = await getDownloadedFile(documents);
     expect(zipContent).toBeTruthy();
@@ -171,16 +146,12 @@ msTest.describe(() => {
     // File was downloaded
     const uploadMenu = documents.locator('.upload-menu');
     await expect(uploadMenu).toBeVisible();
-    const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
-    await expect(tabs.locator('.text-counter')).toHaveText(['0', '3', '0']);
-    const elements = uploadMenu.locator('.element-container').locator('.element');
-    await expect(elements).toHaveCount(3);
-
-    const minimizeButton = documents.locator('.upload-menu .menu-header-icons__item').nth(0);
-    if (await minimizeButton.isVisible()) {
-      await minimizeButton.click();
-      await expect(documents.locator('.upload-menu')).toHaveTheClass('minimize');
-    }
+    const opItems = uploadMenu.locator('.upload-menu-list').locator('.file-operation-item');
+    await expect(opItems).toHaveCount(2);
+    await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Downloading code.py');
+    await expect(opItems.nth(0).locator('.element-details-info')).toHaveText(' wksp1');
+    await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(0).click();
+    await expect(documents.locator('.upload-menu')).toHaveTheClass('minimize');
 
     const pyEntry = documents.locator('.folder-container').locator('.file-list-item').last();
     await pyEntry.hover();
@@ -188,8 +159,9 @@ msTest.describe(() => {
     await documents.locator('.file-context-menu').getByRole('listitem').filter({ hasText: 'Download' }).click();
     // This time the warning doesn't show up
     await documents.waitForTimeout(1000);
-    await expect(tabs.locator('.text-counter')).toHaveText(['0', '4', '0']);
-    await expect(elements).toHaveCount(4);
+    await expect(opItems).toHaveCount(3);
+    await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Downloading audio.mp3');
+    await expect(opItems.nth(0).locator('.element-details-info')).toHaveText(' wksp1');
   });
 
   msTest('Download archive filenames from different alphabets', async ({ documents }, testInfo: TestInfo) => {
@@ -215,10 +187,11 @@ msTest.describe(() => {
       path.join(testInfo.config.rootDir, 'data', 'imports', 'hell_yeah.png'),
     ]);
     await documents.waitForTimeout(1000);
+
     const uploadMenu = documents.locator('.upload-menu');
     await expect(uploadMenu).toBeVisible();
-    const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
-    await expect(tabs.locator('.text-counter')).toHaveText(['0', '2', '0']);
+    const opItems = uploadMenu.locator('.upload-menu-list').locator('.file-operation-item');
+    await expect(opItems).toHaveCount(1);
     await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
     await expect(documents.locator('.folder-container').locator('.no-files-content')).toBeHidden();
     // cspell:disable-next-line
@@ -236,7 +209,6 @@ msTest.describe(() => {
 
     await entries.nth(0).hover();
     await entries.nth(0).locator('ion-checkbox').click();
-    await expect(entries.nth(0).locator('ion-checkbox')).toHaveTheClass('checkbox-checked');
 
     await expect(actionBar.locator('.counter')).toHaveText('1 selected item');
     await expect(actionBar.locator('.ms-action-bar-button')).toHaveCount(7);
@@ -248,14 +220,9 @@ msTest.describe(() => {
     await documents.waitForTimeout(1000);
 
     await expect(uploadMenu).toBeVisible();
-    await expect(tabs.locator('.text-counter')).toHaveText(['0', '3', '0']);
-
-    const container = uploadMenu.locator('.element-container');
-    const elements = container.locator('.element');
-    await expect(elements).toHaveCount(3);
-
-    await expect(elements.nth(0).locator('.element-details__name')).toHaveText('wksp1_ROOT.zip');
-    await expect(elements.nth(0).locator('.element-details-info__size')).toHaveText('244 KB');
+    await expect(opItems).toHaveCount(2);
+    await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Downloading files (archive)');
+    await expect(opItems.nth(0).locator('.element-details-info')).toHaveText('wksp1');
 
     const zipContent = await getDownloadedFile(documents);
     expect(zipContent).toBeTruthy();
@@ -288,12 +255,12 @@ msTest.describe(() => {
     const dropZone = documents.locator('.folder-container').locator('.drop-zone').nth(0);
     await dragAndDropFile(documents, dropZone, [path.join(testInfo.config.rootDir, 'data', 'imports', 'hell_yeah.png')]);
     await documents.waitForTimeout(1000);
+
     const uploadMenu = documents.locator('.upload-menu');
     await expect(uploadMenu).toBeVisible();
-    const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
-    await expect(tabs.locator('.text-counter')).toHaveText(['0', '1', '0']);
-    await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
-    await expect(entries.nth(0).locator('.file-name').locator('.label-name')).toHaveText('hell_yeah.png');
+    const opItems = uploadMenu.locator('.upload-menu-list').locator('.file-operation-item');
+    await expect(opItems).toHaveCount(1);
+    await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('hell_yeah.png');
 
     await documents.locator('#connected-header').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(1).click();
     await documents.waitForTimeout(500);
@@ -312,5 +279,6 @@ msTest.describe(() => {
     await actionBar.locator('.ms-action-bar-button').nth(4).click();
     await confirmDownload(documents, true);
     await expect(documents).toShowToast('Maximum subfolder depth reached, cannot download', 'Error');
+    await expect(opItems).toHaveCount(1);
   });
 });

@@ -15,8 +15,7 @@
   >
     <file-drop-zone
       :disabled="entry.isFile()"
-      :current-path="currentPath"
-      @files-added="$emit('filesAdded', $event)"
+      @files-added="$emit('filesAdded', $event, !entry.isFile() ? entry.name : undefined)"
       :is-reader="isWorkspaceReader"
       @drop-as-reader="$emit('dropAsReader')"
     >
@@ -72,25 +71,14 @@
 import { getFileIcon } from '@/common/file';
 import FileDropZone from '@/components/files/explorer/FileDropZone.vue';
 import { EntryModel, EntrySyncStatus } from '@/components/files/types';
-import { FileImportTuple } from '@/components/files/utils';
-import { FsPath, Path } from '@/parsec';
+import { EntryName } from '@/parsec';
 import { IonIcon, IonItem, IonText } from '@ionic/vue';
 import { cloudDone, cloudOffline, cloudUpload, ellipsisHorizontal } from 'ionicons/icons';
 import { Folder, formatTimeSince, MsCheckbox, MsImage } from 'megashark-lib';
-import { computed, onMounted, Ref, ref } from 'vue';
+import { computed, ref } from 'vue';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);
-
-const currentPath: Ref<FsPath> = ref('/');
-
-onMounted(async () => {
-  if (props.entry.isFile()) {
-    currentPath.value = await Path.parent(props.entry.path);
-  } else {
-    currentPath.value = props.entry.path;
-  }
-});
 
 const props = defineProps<{
   entry: EntryModel;
@@ -102,7 +90,7 @@ const props = defineProps<{
 const emits = defineEmits<{
   (e: 'openItem', event: Event, entry: EntryModel): void;
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
-  (e: 'filesAdded', imports: FileImportTuple[]): void;
+  (e: 'filesAdded', files: Array<File>, destinationFolder?: EntryName): void;
   (e: 'dropAsReader'): void;
   (e: 'update:modelValue', value: boolean): void;
 }>();

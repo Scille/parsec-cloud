@@ -4,7 +4,7 @@
   <ion-item
     button
     lines="full"
-    class="ion-no-padding file-list-item"
+    class="ion-no-padding file-list-item-processing"
   >
     <div class="list-item-container">
       <div class="file-loading">
@@ -15,29 +15,21 @@
       <div class="file-name">
         <ms-image
           v-if="isLargeDisplay"
-          :image="getFileIcon(fileName)"
+          :image="getFileIcon(operation.entryName)"
           class="file-icon"
         />
 
         <ion-text class="label-name cell">
-          {{ fileName }}
+          {{ operation.entryName }}
         </ion-text>
       </div>
 
       <!-- updated by -->
-      <div
-        class="file-updated-by"
-        v-if="clientInfo && isLargeDisplay"
-      >
-        <user-avatar-name
-          :user-avatar="clientInfo.humanHandle.label"
-          :user-name="clientInfo.humanHandle.label"
-        />
-      </div>
+      <div class="file-updated-by" />
 
       <!-- last update -->
       <div
-        v-if="clientInfo?.currentProfile !== UserProfile.Outsider"
+        v-if="profile !== UserProfile.Outsider"
         class="file-last-update"
       >
         <ion-text class="label-last-update cell" />
@@ -46,19 +38,12 @@
       <!-- creation date -->
       <div class="file-creation-date">
         <ion-text class="label-creation-date cell">
-          {{ $msTranslate(getFileOperationLabel()) }}
+          {{ $msTranslate(operationLabel) }}
         </ion-text>
       </div>
 
       <!-- file size -->
-      <div
-        class="file-size"
-        v-if="data.getDataType() === FileOperationDataType.Import && isLargeDisplay"
-      >
-        <ion-text class="label-size cell">
-          {{ $msTranslate(formatFileSize((data as ImportData).file.size)) }}
-        </ion-text>
-      </div>
+      <div class="file-size" />
 
       <!-- options -->
       <div class="file-empty ion-item-child-clickable" />
@@ -67,45 +52,29 @@
 </template>
 
 <script setup lang="ts">
-import { formatFileSize, getFileIcon } from '@/common/file';
-import UserAvatarName from '@/components/users/UserAvatarName.vue';
-import { ClientInfo, EntryName, getClientInfo, Path, UserProfile } from '@/parsec';
-import { CopyData, FileOperationData, FileOperationDataType, ImportData } from '@/services/fileOperationManager';
+import { getFileIcon } from '@/common/file';
+import { FileOperationCurrentFolder } from '@/components/files/types';
+import { UserProfile } from '@/parsec';
+import { FileOperationDataType } from '@/services/fileOperation';
 import { IonItem, IonText } from '@ionic/vue';
 import { MsImage, MsSpinner, Translatable, useWindowSize } from 'megashark-lib';
-import { onMounted, Ref, ref } from 'vue';
 
 const props = defineProps<{
-  data: FileOperationData;
-  progress: number;
+  operation: FileOperationCurrentFolder;
+  profile: UserProfile;
 }>();
 
-const clientInfo: Ref<ClientInfo | null> = ref(null);
-const fileName: Ref<EntryName> = ref('');
 const { isLargeDisplay } = useWindowSize();
-
-onMounted(async () => {
-  const result = await getClientInfo();
-  if (result.ok) {
-    clientInfo.value = result.value;
-  }
-  if (props.data.getDataType() === FileOperationDataType.Import) {
-    fileName.value = (props.data as ImportData).file.name;
-  } else if (props.data.getDataType() === FileOperationDataType.Copy) {
-    fileName.value = (await Path.filename((props.data as CopyData).srcPath)) || '';
-  } else if (props.data.getDataType() === FileOperationDataType.Move) {
-    fileName.value = (await Path.filename((props.data as CopyData).dstPath)) || '';
-  }
-});
-
-function getFileOperationLabel(): Translatable {
-  if (props.data.getDataType() === FileOperationDataType.Copy) {
+const operationLabel: Translatable = (() => {
+  if (props.operation.type === FileOperationDataType.Copy) {
     return 'FoldersPage.File.copying';
-  } else if (props.data.getDataType() === FileOperationDataType.Move) {
+  } else if (props.operation.type === FileOperationDataType.Move) {
     return 'FoldersPage.File.moving';
+  } else if (props.operation.type === FileOperationDataType.Restore) {
+    return 'FoldersPage.File.restoring';
   }
   return 'FoldersPage.File.importing';
-}
+})();
 </script>
 
 <style lang="scss" scoped>
