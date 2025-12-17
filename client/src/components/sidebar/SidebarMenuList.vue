@@ -6,21 +6,12 @@
       lines="none"
       class="list-sidebar-header title-h5"
       :class="isContentVisible ? 'open' : 'close'"
+      @click="emits('update:isContentVisible', !isContentVisible)"
     >
-      <ion-text
-        class="list-sidebar-header-text"
-        :class="{ clickable: isHeaderClickable }"
-        @click="isHeaderClickable && emits('headerClicked')"
-      >
+      <ion-text class="list-sidebar-header-text">
         {{ $msTranslate(title) }}
-        <ms-image
-          class="list-sidebar-header-text__open-icon"
-          v-if="isHeaderClickable"
-          :image="OpenIcon"
-        />
       </ion-text>
       <ion-icon
-        @click="emits('update:isContentVisible', !isContentVisible)"
         class="list-sidebar-header__toggle"
         :icon="isContentVisible ? chevronDown : chevronForward"
       />
@@ -37,17 +28,15 @@
 <script setup lang="ts">
 import { IonHeader, IonIcon, IonList, IonText } from '@ionic/vue';
 import { chevronDown, chevronForward } from 'ionicons/icons';
-import { MsImage, OpenIcon, Translatable } from 'megashark-lib';
+import { Translatable } from 'megashark-lib';
 
 defineProps<{
   title: Translatable;
   isContentVisible: boolean;
-  isHeaderClickable?: boolean;
 }>();
 
 const emits = defineEmits<{
   (event: 'update:isContentVisible', visibility: boolean): void;
-  (event: 'headerClicked'): void;
 }>();
 </script>
 
@@ -71,6 +60,7 @@ const emits = defineEmits<{
     padding: 0 1rem 0.75rem 1.25rem;
     overflow: hidden;
     border-bottom: 1px solid var(--parsec-color-light-primary-30-opacity15);
+    cursor: pointer;
 
     &.open {
       margin-bottom: 1rem;

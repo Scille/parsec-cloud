@@ -138,7 +138,7 @@ msTest.describe(() => {
     await navigateDown();
     await createFolder(documents, 'Subdir 3');
     await expect(entries.locator('.file-name').locator('.label-name')).toHaveText(['Subdir 3']);
-    await documents.locator('.sidebar').locator('#sidebar-workspaces').locator('.list-sidebar-header-text').click();
+    await documents.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-all-workspaces').click();
     await expect(documents).toBeWorkspacePage();
     await expect(documents.locator('.workspace-card-item')).toHaveCount(1);
     await documents.locator('.workspace-card-item').nth(0).locator('.icon-option-container').nth(0).click();
@@ -205,7 +205,8 @@ msTest.describe(() => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Png | ImportDocuments.Pdf, true);
 
     const entries = documents.locator('.folder-list-main').locator('.file-list-item');
-    await documents.locator('.sidebar').locator('#sidebar-workspaces').locator('.list-sidebar-header-text').click();
+    await documents.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-all-workspaces').click();
+    await expect(documents.locator('.workspace-card-item')).toHaveCount(1);
     await expect(documents).toBeWorkspacePage();
     await documents.locator('.workspace-card-item').nth(0).locator('.icon-option-container').nth(0).click();
     const contextMenu = documents.locator('.workspace-context-menu');
