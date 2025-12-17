@@ -260,6 +260,16 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     if (displaySize === DisplaySize.Small) {
       await workspaces.setDisplaySize(DisplaySize.Small);
     }
+
+    let showHiddenWorkspace;
+
+    if (displaySize === DisplaySize.Large) {
+      showHiddenWorkspace = workspaces.locator('.workspace-filters-menu').locator('#show-hidden-workspaces-large');
+    } else {
+      showHiddenWorkspace = workspaces.locator('.mobile-filters-buttons').locator('#show-hidden-workspaces-small');
+    }
+    await expect(showHiddenWorkspace).toHaveState('unchecked');
+
     const workspaceCard = workspaces.locator('.workspace-card-item').nth(0);
     await workspaceCard.click({ button: 'right' });
     let popover;
@@ -292,8 +302,17 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
       ]);
       await popover.getByRole('listitem').nth(2).click();
     }
+
     await expect(workspaces).toShowToast('The workspace is now hidden in Parsec.', 'Success');
+
+    await expect(workspaceCard).toBeHidden();
+    await expect(showHiddenWorkspace).toBeVisible();
+    await expect(showHiddenWorkspace).toHaveState('unchecked');
+    await showHiddenWorkspace.click();
+    await expect(showHiddenWorkspace).toHaveState('checked');
     await expect(workspaceCard.locator('.workspace-hidden')).toHaveText('Hidden');
+    await expect(workspaceCard).toBeVisible();
+
     await workspaceCard.click({ button: 'right' });
     await expect(popover).toBeVisible();
     if (displaySize === DisplaySize.Large) {

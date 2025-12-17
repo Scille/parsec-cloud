@@ -28,11 +28,6 @@
         class="workspace-card-content__title subtitles-sm"
         :title="workspace.currentName"
       >
-        <ion-icon
-          v-if="isHidden"
-          class="workspace-card-content__icon-hidden"
-          :icon="eyeOff"
-        />
         {{ workspace.currentName }}
       </ion-text>
 

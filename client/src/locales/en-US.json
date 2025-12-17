@@ -652,8 +652,6 @@
             "actionDetails": "Details",
             "actionHide": "Hide this workspace",
             "actionShow": "Show this workspace",
-            "actionHide": "Hide this workspace",
-            "actionShow": "Show this workspace",
             "actionCopyLink": "Copy link",
             "actionAddFavorite": "Pin",
             "actionRemoveFavorite": "Unpin"
@@ -707,10 +705,14 @@
         },
         "categoriesMenu": {
             "all": "All workspaces",
+            "allShort": "All",
             "recents": "Recently viewed",
+            "recentsShort": "Recent",
             "favorites": "Pinned",
             "noRecentWorkspaces": "You have not consulted any workspaces yet. Recently consulted workspaces will be listed here.",
-            "noFavoriteWorkspaces": "You have not pinned any workspaces yet. Pin a workspace to have it be listed here."
+            "noFavoriteWorkspaces": "You have not pinned any workspaces yet. Pin a workspace to have it be listed here.",
+            "showHiddenWorkspaces": "Show hidden workspaces",
+            "showHiddenWorkspacesShort": "Hidden workspaces"
         },
         "showHideWorkspace": {
             "failedStarted": "Failed to get started workspace information. Please try again.",
