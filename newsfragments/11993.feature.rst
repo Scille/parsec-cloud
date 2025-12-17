@@ -1,0 +1,1 @@
+User can switch to categories "Recent", "Pinned", and "All workspaces" from the workspace list page or the sidebar.

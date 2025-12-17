@@ -631,7 +631,8 @@
     "WorkspacesPage": {
         "createWorkspace": "New workspace",
         "itemCount": "No items | 1 item | {count} items",
-        "noWorkspaces": "You do not have access to any workspace yet. Workspaces that you create or have been shared with you will be listed here.",
+        "noWorkspaces": "You do not have access to any workspaces yet. Workspaces that you create or have been shared with you will be listed here.",
+        "noWorkspacesExternal": "You do not have access to any workspaces. Workspaces that have been shared with you will be listed here.",
         "loading": "Loading your workspaces...",
         "noMatchingWorkspaces": "No workspace match this search filter.",
         "listError": "Failed to list the workspaces.",
@@ -699,6 +700,13 @@
         "filter": {
             "title": "Filter",
             "roles": "Role"
+        },
+        "categoriesMenu": {
+            "all": "All workspaces",
+            "recents": "Recently viewed",
+            "favorites": "Pinned",
+            "noRecentWorkspaces": "You have not consulted any workspaces yet. Recently consulted workspaces will be listed here.",
+            "noFavoriteWorkspaces": "You have not pinned any workspaces yet. Pin a workspace to have it be listed here."
         }
     },
     "FoldersPage": {
@@ -1011,7 +1019,7 @@
     "SideMenu": {
         "organization": "Organization",
         "workspaces": "My workspaces",
-        "recentWorkspaces": "Recent",
+        "recentWorkspaces": "Recently viewed",
         "favorites": "Pinned",
         "noFavorites": "No pinned workspaces",
         "noWorkspace": "No workspaces",
@@ -1021,6 +1029,7 @@
         "storage": "Storage",
         "information": "Information",
         "goToHome": "My workspaces",
+        "allWorkspaces": "All workspaces",
         "recentDocuments": "Recent documents",
         "noRecentDocuments": "No recent documents",
         "back": "Back",

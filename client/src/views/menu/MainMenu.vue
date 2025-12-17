@@ -172,81 +172,72 @@
           title="SideMenu.workspaces"
           v-model:is-content-visible="menusVisible.workspaces"
           @update:is-content-visible="onWorkspacesMenuVisibilityChanged"
-          @header-clicked="navigateTo(Routes.Workspaces)"
-          :is-header-clickable="currentRouteIs(Routes.Workspaces) ? false : true"
           id="sidebar-workspaces"
         >
-          <div
-            class="sidebar-content-workspaces current-workspace"
-            v-if="!menusVisible.recentWorkspaces && currentWorkspace"
-          >
-            <sidebar-workspace-item
-              :workspace="currentWorkspace"
-              @workspace-click="goToWorkspace"
-              @context-menu-requested="
-                openWorkspaceContextMenu($event, currentWorkspace, workspaceAttributes, eventDistributor, informationManager, true)
-              "
-            />
-          </div>
-          <div class="sidebar-content-workspaces-container">
+          <div class="sidebar-content-organization">
             <div
-              class="sidebar-content-workspaces"
-              id="sidebar-workspaces-favorites"
+              class="sidebar-content-workspaces current-workspace"
+              v-if="currentWorkspace"
             >
-              <ion-text
-                class="sidebar-content-workspaces__title subtitles-sm"
-                @click="onFavoritesMenuVisibilityChanged(!menusVisible.favorites)"
-                :class="{ open: menusVisible.favorites }"
-              >
-                <ion-icon :icon="caretForward" />
-                {{ $msTranslate('SideMenu.favorites') }}
-              </ion-text>
-              <ion-text
-                class="sidebar-content-workspaces--no-recent subtitles-sm"
-                v-if="menusVisible.favorites && favoritesWorkspaces.length === 0"
-              >
-                {{ $msTranslate('SideMenu.noFavorites') }}
-              </ion-text>
               <sidebar-workspace-item
-                v-show="menusVisible.favorites"
-                v-for="workspace in favoritesWorkspaces"
-                :key="workspace.id"
-                :workspace="workspace"
-                @workspace-clicked="goToWorkspace"
+                :workspace="currentWorkspace"
+                @workspace-click="goToWorkspace"
                 @context-menu-requested="
-                  openWorkspaceContextMenu($event, workspace, workspaceAttributes, eventDistributor, informationManager, true)
+                  openWorkspaceContextMenu($event, currentWorkspace, workspaceAttributes, eventDistributor, informationManager, true)
                 "
               />
             </div>
-            <div
-              class="sidebar-content-workspaces"
-              id="sidebar-workspaces-recent"
+
+            <!-- all workspaces -->
+            <ion-text
+              @click="onCategoryMenuChange(WorkspaceMenu.All)"
+              class="sidebar-content-organization-button button-medium"
+              :class="{ active: workspaceMenuState === WorkspaceMenu.All && currentRouteIs(Routes.Workspaces) }"
+              id="sidebar-all-workspaces"
+              button
             >
-              <ion-text
-                class="sidebar-content-workspaces__title subtitles-sm"
-                @click="onRecentWorkspacesMenuVisibilityChanged(!menusVisible.recentWorkspaces)"
-                :class="{ open: menusVisible.recentWorkspaces }"
-              >
-                <ion-icon :icon="caretForward" />
+              <ion-icon
+                class="sidebar-content-organization-button__icon"
+                :icon="rocket"
+              />
+              <span class="sidebar-content-organization-button__text">
+                {{ $msTranslate('SideMenu.allWorkspaces') }}
+              </span>
+            </ion-text>
+
+            <!-- Recent -->
+            <ion-text
+              @click="onCategoryMenuChange(WorkspaceMenu.Recents)"
+              :class="{ active: workspaceMenuState === WorkspaceMenu.Recents && currentRouteIs(Routes.Workspaces) }"
+              class="sidebar-content-organization-button button-medium"
+              id="sidebar-recent-workspaces"
+              button
+            >
+              <ion-icon
+                class="sidebar-content-organization-button__icon"
+                :icon="time"
+              />
+              <span class="sidebar-content-organization-button__text">
                 {{ $msTranslate('SideMenu.recentWorkspaces') }}
-              </ion-text>
-              <ion-text
-                class="sidebar-content-workspaces--no-recent subtitles-sm"
-                v-if="menusVisible.recentWorkspaces && recentDocumentManager.getWorkspaces().length === 0"
-              >
-                {{ $msTranslate('SideMenu.noRecentWorkspace') }}
-              </ion-text>
-              <sidebar-workspace-item
-                v-show="menusVisible.recentWorkspaces && recentDocumentManager.getWorkspaces().length > 0"
-                v-for="workspace in recentDocumentManager.getWorkspaces()"
-                :workspace="workspace"
-                :key="workspace.id"
-                @workspace-clicked="goToWorkspace"
-                @context-menu-requested="
-                  openWorkspaceContextMenu($event, workspace, workspaceAttributes, eventDistributor, informationManager, true)
-                "
+              </span>
+            </ion-text>
+
+            <!-- Favorites -->
+            <ion-text
+              @click="onCategoryMenuChange(WorkspaceMenu.Favorites)"
+              :class="{ active: workspaceMenuState === WorkspaceMenu.Favorites && currentRouteIs(Routes.Workspaces) }"
+              class="sidebar-content-organization-button button-medium"
+              id="sidebar-favorite-workspaces"
+              button
+            >
+              <ion-icon
+                class="sidebar-content-organization-button__icon"
+                :icon="star"
               />
-            </div>
+              <span class="sidebar-content-organization-button__text">
+                {{ $msTranslate('SideMenu.favorites') }}
+              </span>
+            </ion-text>
           </div>
         </sidebar-menu-list>
 
@@ -372,12 +363,14 @@ import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { useWorkspaceAttributes } from '@/services/workspaceAttributes';
+import { workspaceMenuState } from '@/services/workspaceMenuState';
 import { FolderGlobalAction } from '@/views/files';
 import { MenuAction, SIDEBAR_MENU_DATA_KEY, SidebarDefaultData, SidebarSavedData } from '@/views/menu';
 import TabBarMenu from '@/views/menu/TabBarMenu.vue';
 import { useCustomTabBar } from '@/views/menu/utils';
 import { isUserAction, UserAction } from '@/views/users';
 import { WorkspaceAction } from '@/views/workspaces';
+import { WorkspaceMenu } from '@/views/workspaces/types';
 import {
   createGesture,
   GestureDetail,
@@ -399,7 +392,6 @@ import {
 } from '@ionic/vue';
 import {
   addCircle,
-  caretForward,
   chevronForward,
   cloudUpload,
   document as documentIcon,
@@ -409,7 +401,10 @@ import {
   mailUnread,
   people,
   personAdd,
+  rocket,
   snow,
+  star,
+  time,
   warning,
 } from 'ionicons/icons';
 import { Duration } from 'luxon';
@@ -500,17 +495,6 @@ async function loadAll(): Promise<void> {
 
   loggedInDevices.value = await getLoggedInDevices();
 }
-
-const favoritesWorkspaces = computed(() => {
-  return Array.from(workspaces.value)
-    .filter((workspace: WorkspaceInfo) => workspaceAttributes.isFavorite(workspace.id))
-    .sort((a: WorkspaceInfo, b: WorkspaceInfo) => {
-      if (workspaceAttributes.isFavorite(b.id) !== workspaceAttributes.isFavorite(a.id)) {
-        return workspaceAttributes.isFavorite(b.id) ? 1 : -1;
-      }
-      return 0;
-    });
-});
 
 function onMove(detail: GestureDetail): void {
   let width: number;
@@ -690,6 +674,13 @@ onUnmounted(async () => {
   watchWindowWidthCancel();
 });
 
+async function onCategoryMenuChange(menu: WorkspaceMenu): Promise<void> {
+  if (!currentRouteIs(Routes.Workspaces)) {
+    await navigateTo(Routes.Workspaces);
+  }
+  workspaceMenuState.value = menu;
+}
+
 async function onActionClicked(action: MenuAction): Promise<void> {
   await eventDistributor.dispatchEvent(Events.MenuAction, { action: action });
 }
@@ -792,28 +783,6 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
     SIDEBAR_MENU_DATA_KEY,
     {
       recentFilesVisible: visible,
-    },
-    SidebarDefaultData,
-  );
-}
-
-async function onFavoritesMenuVisibilityChanged(visible: boolean): Promise<void> {
-  menusVisible.value.favorites = visible;
-  await storageManager.updateComponentData<SidebarSavedData>(
-    SIDEBAR_MENU_DATA_KEY,
-    {
-      favoritesVisible: visible,
-    },
-    SidebarDefaultData,
-  );
-}
-
-async function onRecentWorkspacesMenuVisibilityChanged(visible: boolean): Promise<void> {
-  menusVisible.value.recentWorkspaces = visible;
-  await storageManager.updateComponentData<SidebarSavedData>(
-    SIDEBAR_MENU_DATA_KEY,
-    {
-      recentWorkspacesVisible: visible,
     },
     SidebarDefaultData,
   );
@@ -994,6 +963,8 @@ async function onRecentWorkspacesMenuVisibilityChanged(visible: boolean): Promis
     color: var(--parsec-color-light-secondary-medium);
     border-radius: var(--parsec-radius-8);
     border: 1px solid transparent;
+    font-size: 0.9375rem;
+    font-weight: 600;
 
     &.active {
       background: var(--parsec-color-light-primary-30-opacity15);
