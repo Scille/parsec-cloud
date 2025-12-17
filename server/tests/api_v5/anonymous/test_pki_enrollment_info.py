@@ -24,7 +24,7 @@ from tests.api_v5.authenticated.test_user_create import (
     generate_new_mike_device_certificates,
     generate_new_mike_user_certificates,
 )
-from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
+from tests.common import Backend, CoolorgRpcClients, Enrollment, HttpCommonErrorsTester
 from tests.common.pki import TestPki
 
 
@@ -220,3 +220,69 @@ async def test_anonymous_pki_enrollment_info_http_common_errors(
         await coolorg.anonymous.pki_enrollment_info(enrollment_id=enrollment_id)
 
     await anonymous_http_common_errors_tester(do)
+
+
+# Not tested if postgre because the database consistency is explicitly enforced
+async def test_anonymous_pki_enrollment_info_certificate_not_found(
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+    existing_enrollment: Enrollment,
+    test_pki: TestPki,
+    monkeypatch: pytest.MonkeyPatch,
+    xfail_if_postgresql,
+) -> None:
+    # Accept enrollment (as this error only happens when we try to
+    # look for the certs while re building the trustchain)
+    accepted_on = existing_enrollment.submitted_on.add(seconds=1)
+
+    u_certif, redacted_u_certif = generate_new_mike_user_certificates(
+        author=coolorg.alice, timestamp=accepted_on
+    )
+    d_certif, redacted_d_certif = generate_new_mike_device_certificates(
+        author=coolorg.alice, timestamp=accepted_on
+    )
+    accept_payload = PkiEnrollmentAnswerPayload(
+        user_id=NEW_MIKE_USER_ID,
+        device_id=NEW_MIKE_DEVICE_ID,
+        device_label=NEW_MIKE_DEVICE_LABEL,
+        profile=UserProfile.STANDARD,
+        root_verify_key=coolorg.root_verify_key,
+    ).dump()
+    # we need to use build_trustchain here, as it adds the signed_by fields (as opposed to parse_pki_cert)
+    trustchain = await backend.pki.build_trustchain(
+        test_pki.cert["alice"].der_certificate,
+        [test_pki.root["black_mesa"].der_certificate],
+    )
+    match trustchain:
+        case PkiTrustchainError():
+            assert False
+        case _:
+            pass
+    outcome = await backend.pki.accept(
+        now=accepted_on,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
+        enrollment_id=existing_enrollment.enrollment_id,
+        payload=accept_payload,
+        payload_signature=b"<alice accept payload signature>",
+        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
+        accepter_trustchain=trustchain,
+        submitter_user_certificate=u_certif,
+        submitter_redacted_user_certificate=redacted_u_certif,
+        submitter_device_certificate=d_certif,
+        submitter_redacted_device_certificate=redacted_d_certif,
+    )
+    assert isinstance(outcome, tuple)
+
+    # DB corruption
+    async def _mocked_get_cert(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(
+        "parsec.components.memory.datamodel.MemoryOrganization.get_cert", _mocked_get_cert
+    )
+    rep = await coolorg.anonymous.pki_enrollment_info(
+        enrollment_id=existing_enrollment.enrollment_id
+    )
+    assert rep == anonymous_cmds.latest.pki_enrollment_info.RepCertificateNotFound()

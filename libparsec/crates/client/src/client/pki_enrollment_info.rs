@@ -58,7 +58,7 @@ pub async fn info(
     let status = match rep {
         Rep::Ok(status) => status,
         Rep::EnrollmentNotFound => return Err(PkiEnrollmentInfoError::EnrollmentNotFound),
-        rep @ Rep::UnknownStatus { .. } => {
+        rep @ (Rep::UnknownStatus { .. } | Rep::CertificateNotFound) => {
             return Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
         }
     };

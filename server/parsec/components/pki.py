@@ -405,9 +405,7 @@ class BasePkiEnrollmentComponent:
             case PkiEnrollmentInfoBadOutcome.ORGANIZATION_EXPIRED:
                 client_ctx.organization_expired_abort()
             case PkiEnrollmentInfoBadOutcome.CERTIFICATE_NOT_FOUND:
-                return anonymous_cmds.latest.pki_enrollment_info.RepUnknownStatus(
-                    "cert not found", None
-                )
+                return anonymous_cmds.latest.pki_enrollment_info.RepCertificateNotFound()
 
         return anonymous_cmds.latest.pki_enrollment_info.RepOk(unit)
 
