@@ -1,9 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use libparsec_types::Bytes;
 use pyo3::{
-    exceptions::PyValueError,
-    pyclass, pymethods,
-    types::{PyBytes, PyString, PyType},
+    create_exception,
+    exceptions::{PyException, PyValueError},
+    pyclass, pyfunction, pymethods,
+    types::{PyBytes, PyBytesMethods, PyString, PyType},
     Bound, PyObject, PyResult, Python,
 };
 
@@ -11,7 +13,12 @@ use crate::{
     crypto::{PublicKey, VerifyKey},
     enumerate::UserProfile,
     ids::{DeviceID, DeviceLabel, HumanHandle, UserID},
+    DateTime,
 };
+
+create_exception!(_parsec, PkiInvalidSignature, PyException);
+create_exception!(_parsec, PkiUntrusted, PyException);
+create_exception!(_parsec, PkiInvalidCertificateDER, PyValueError);
 
 #[pyclass]
 #[derive(Clone)]
@@ -125,6 +132,12 @@ impl PkiEnrollmentSubmitPayload {
     }
 }
 
+impl From<libparsec_types::PkiEnrollmentSubmitPayload> for PkiEnrollmentSubmitPayload {
+    fn from(value: libparsec_types::PkiEnrollmentSubmitPayload) -> Self {
+        Self(value)
+    }
+}
+
 crate::binding_utils::gen_py_wrapper_class_for_enum!(
     PkiSignatureAlgorithm,
     libparsec_types::PkiSignatureAlgorithm,
@@ -143,7 +156,7 @@ impl X509Certificate {
     fn to_end_certificate(&self) -> PyResult<libparsec_platform_pki::X509EndCertificate<'_>> {
         self.0
             .to_end_certificate()
-            .map_err(|e| PyValueError::new_err(e.to_string()))
+            .map_err(|e| PkiInvalidCertificateDER::new_err(e.to_string()))
     }
 }
 
@@ -153,7 +166,7 @@ impl X509Certificate {
     fn try_from_pem(_cls: Bound<'_, PyType>, raw_pem: &[u8]) -> PyResult<Self> {
         libparsec_platform_pki::Certificate::try_from_pem(raw_pem)
             .map(|v| v.into_owned())
-            .map_err(|e| PyValueError::new_err(e.to_string()))
+            .map_err(|e| PkiInvalidCertificateDER::new_err(e.to_string()))
             .map(Self)
     }
 
@@ -190,7 +203,7 @@ impl X509CertificateInformation {
     fn load_der(_cls: Bound<'_, PyType>, raw_der: &[u8]) -> PyResult<Self> {
         libparsec_platform_pki::x509::X509CertificateInformation::load_der(raw_der)
             .map(Self)
-            .map_err(|e| PyValueError::new_err(e.to_string()))
+            .map_err(|e| PkiInvalidCertificateDER::new_err(e.to_string()))
     }
 
     fn common_name<'py>(&self, py: Python<'py>) -> Option<Bound<'py, PyString>> {
@@ -224,7 +237,7 @@ impl TrustAnchor {
         use rustls_pki_types::{pem::PemObject, CertificateDer};
 
         let cert_der = CertificateDer::from_pem_slice(pem_data)
-            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+            .map_err(|e| PkiInvalidCertificateDER::new_err(e.to_string()))?;
 
         let anchor = webpki::anchor_from_trusted_cert(&cert_der)
             .map_err(|e| PyValueError::new_err(e.to_string()))?;
@@ -238,4 +251,48 @@ impl TrustAnchor {
     fn subject<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
         PyBytes::new(py, &self.0.subject)
     }
+}
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct SignedMessage(pub libparsec_platform_pki::SignedMessage);
+
+#[pymethods]
+impl SignedMessage {
+    #[new]
+    fn new(algo: PkiSignatureAlgorithm, signature: &[u8], message: &[u8]) -> Self {
+        Self(libparsec_platform_pki::SignedMessage {
+            algo: algo.0,
+            signature: Bytes::copy_from_slice(signature),
+            message: Bytes::copy_from_slice(message),
+        })
+    }
+}
+
+#[pyfunction]
+pub(crate) fn load_submit_payload<'py>(
+    der_certificate: &[u8],
+    intermediate_certs: Vec<Bound<'py, PyBytes>>,
+    trusted_roots: Vec<TrustAnchor>,
+    now: DateTime,
+    signed_message: SignedMessage,
+) -> PyResult<PkiEnrollmentSubmitPayload> {
+    let trusted_roots = trusted_roots.into_iter().map(|v| v.0).collect::<Vec<_>>();
+    libparsec_platform_pki::load_submit_payload(
+        der_certificate,
+        &signed_message.0,
+        &trusted_roots,
+        intermediate_certs.iter().map(|v| v.as_bytes()),
+        now.0,
+    )
+    .map_err(|e| {
+        use libparsec_platform_pki::LoadSubmitPayloadError::*;
+        match e {
+            InvalidCertificateDer(error) => PkiInvalidCertificateDER::new_err(error.to_string()),
+            DateTimeOutOfRange(..) | Untrusted(..) => PkiUntrusted::new_err(e.to_string()),
+            InvalidSignature => PkiInvalidSignature::new_err(()),
+            UnexpectedError(..) | DataError(..) => PyValueError::new_err(e.to_string()),
+        }
+    })
+    .map(Into::into)
 }

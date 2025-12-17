@@ -59,6 +59,7 @@ impl AsRef<[u8]> for Certificate<'_> {
     }
 }
 
+#[derive(Clone)]
 pub struct SignedMessage {
     pub algo: PkiSignatureAlgorithm,
     pub signature: Bytes,
@@ -138,11 +139,11 @@ pub fn verify_certificate<'der>(
         .map_err(VerifyCertificateError::Untrusted)
 }
 
-pub fn load_submit_payload(
+pub fn load_submit_payload<'cert>(
     der_certificate: &[u8],
     signed_message: &SignedMessage,
     trusted_roots: &[TrustAnchor<'_>],
-    intermediate_certs: &[Bytes],
+    intermediate_certs: impl Iterator<Item = &'cert [u8]>,
     now: DateTime,
 ) -> Result<PkiEnrollmentSubmitPayload, crate::errors::LoadSubmitPayloadError> {
     let validated_payload = validate_payload(
@@ -155,18 +156,14 @@ pub fn load_submit_payload(
     PkiEnrollmentSubmitPayload::load(validated_payload).map_err(Into::into)
 }
 
-pub fn validate_payload<'message>(
+pub fn validate_payload<'message, 'cert>(
     der_certificate: &[u8],
     signed_message: &'message SignedMessage,
     trusted_roots: &[TrustAnchor<'_>],
-    intermediate_certs: &[Bytes],
+    intermediate_certs: impl Iterator<Item = &'cert [u8]>,
     now: DateTime,
 ) -> Result<&'message [u8], ValidatePayloadError> {
-    let intermediate_certs: Vec<_> = intermediate_certs
-        .iter()
-        .map(Bytes::as_ref)
-        .map(CertificateDer::from)
-        .collect();
+    let intermediate_certs: Vec<_> = intermediate_certs.map(CertificateDer::from).collect();
     let binding = Certificate::from_der(der_certificate);
 
     let untrusted_cert = binding
@@ -214,7 +211,7 @@ pub fn load_answer_payload(
         der_certificate,
         signed_message,
         &[verified_path.anchor().clone()],
-        intermediate_certs,
+        intermediate_certs.iter().map(Bytes::as_ref),
         now,
     )?;
     PkiEnrollmentAnswerPayload::load(validated_payload).map_err(Into::into)

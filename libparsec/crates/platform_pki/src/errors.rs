@@ -53,14 +53,15 @@ error_set::error_set! {
         Untrusted(webpki::Error),
     }
     ValidatePayloadError := InvalidCertificateDer
-        || ListTrustedRootCertificatesError
         || VerifyCertificateError
         || VerifySignatureError
     DataError := {
         DataError(libparsec_types::DataError)
     }
     LoadSubmitPayloadError := ValidatePayloadError || DataError
-    LoadAnswerPayloadError := ValidatePayloadError || DataError
+    LoadAnswerPayloadError := ValidatePayloadError
+        || DataError
+        || ListTrustedRootCertificatesError
     GetIntermediatesCertsForCertError := ListTrustedRootCertificatesError
         || ListIntermediateCertificatesError
         || InvalidCertificateDer

@@ -36,7 +36,7 @@ pub(crate) use token::*;
 #[pyo3(name = "_parsec")]
 fn entrypoint(py: Python, m: Bound<'_, PyModule>) -> PyResult<()> {
     crate::crypto::add_mod(py, &m)?;
-    crate::data::add_mod(&m)?;
+    crate::data::add_mod(py, &m)?;
     crate::protocol::add_mod(py, &m)?;
 
     patch_panic_exception_to_inherit_exception(py);

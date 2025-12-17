@@ -343,7 +343,14 @@ macro_rules! gen_py_wrapper_class_for_enum {
     };
 }
 
+macro_rules! export_exception {
+    ($module:expr, $python:expr, $exception:ty) => {
+        $module.add(stringify!($exception), $python.get_type::<$exception>())?;
+    };
+}
+
 pub(crate) use _unwrap_bytes;
+pub(crate) use export_exception;
 pub(crate) use gen_proto;
 pub(crate) use gen_py_wrapper_class;
 pub(crate) use gen_py_wrapper_class_for_enum;
