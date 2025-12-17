@@ -737,6 +737,14 @@
             },
             "actionConfirm": "Rendre cet espace de travail visible",
             "actionCancel": "Annuler"
+        },
+        "categoriesMenu": {
+            "all": "Tous",
+            "recents": "Récents",
+            "favorites": "Favoris",
+            "sharedWithMe": "Partagés avec moi",
+            "showHiddenWorkspaces": "Afficher les espaces masqués",
+            "showHiddenWorkspacesShort": "Espaces masqués"
         }
     },
     "FoldersPage": {
