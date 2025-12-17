@@ -16,6 +16,7 @@ from parsec._parsec import (
     OpenBaoAuthType,
     ParsecAddr,
     SecretKey,
+    TrustAnchor,
 )
 from parsec.email_rate_limit import EmailRateLimit
 from parsec.templates import get_environment
@@ -285,6 +286,8 @@ class BackendConfig:
     # Amount of time (in seconds) before a keep alive message is sent to an SSE
     # connection. Set to `None` to disable keep alive messages.
     sse_keepalive: int | None = None
+
+    x509_trust_anchor: list[TrustAnchor] = field(default_factory=list)
 
     # Comma separated list of IP Addresses, IP Networks, or literals (e.g. UNIX Socket path) to trust with proxy headers
     # Use "*" to trust all proxies. If not provided, the gunicorn/uvicorn `FORWARDED_ALLOW_IPS`

@@ -23,7 +23,7 @@ def test_trust_anchor_opt(test_pki: TestPki):
         TRUST_ANCHOR_DIR = Path("pki")
         os.mkdir(TRUST_ANCHOR_DIR)
         for root in test_pki.root.values():
-            os.symlink(root.certificate_path, TRUST_ANCHOR_DIR / root.certificate_path.name)
+            os.symlink(root.certificate.path, TRUST_ANCHOR_DIR / root.certificate.path.name)
         result = runner.invoke(mini_app, ["--trusted-x509-root-dir", str(TRUST_ANCHOR_DIR)])
         assert result.exit_code == 0
         assert result.stdout == f"Found {len(test_pki.root)} anchors\n"

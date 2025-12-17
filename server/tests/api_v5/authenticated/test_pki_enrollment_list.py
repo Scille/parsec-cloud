@@ -10,7 +10,6 @@ from parsec._parsec import (
     HumanHandle,
     PKIEnrollmentID,
     PkiEnrollmentSubmitPayload,
-    PkiSignatureAlgorithm,
     PrivateKey,
     SigningKey,
     UserProfile,
@@ -26,10 +25,15 @@ from tests.common import (
     TestPki,
     bob_becomes_admin_and_changes_alice,
 )
+from tests.common.pki import sign_message, start_pki_enrollment
 
 
 async def test_authenticated_pki_enrollment_list_ok(
-    coolorg: CoolorgRpcClients, backend: Backend, test_pki: TestPki, clear_pki_certificate
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+    test_pki: TestPki,
+    clear_pki_certificate,
+    backend_with_test_pki_roots,
 ) -> None:
     # 1) Check with no enrollments available
 
@@ -44,46 +48,36 @@ async def test_authenticated_pki_enrollment_list_ok(
 
     every_cert = [*test_pki.cert.values(), *test_pki.intermediate.values(), *test_pki.root.values()]
     for subject in ("alice", "mallory-encrypt", "bob", "old-boby"):
-        enrollment_id = PKIEnrollmentID.new()
         submitted_on = DateTime.now()
-        human_handle = HumanHandle(
-            label=f"User{subject}", email=EmailAddress(f"{subject}@example.invalid")
-        )
         submit_payload = PkiEnrollmentSubmitPayload(
             verify_key=SigningKey.generate().verify_key,
             public_key=PrivateKey.generate().public_key,
             device_label=DeviceLabel("Dev1"),
         ).dump()
 
-        trustchain = await backend.pki.build_trustchain(
-            test_pki.cert[subject].der_certificate, (x.der_certificate for x in every_cert)
+        enrollment = await start_pki_enrollment(
+            submitted_on,
+            backend,
+            coolorg.organization_id,
+            test_pki.cert[subject],
+            [x.certificate.der for x in every_cert],
+            submit_payload,
         )
-        assert isinstance(trustchain, list)
 
         expected_enrollment_item = (
             authenticated_cmds.latest.pki_enrollment_list.PkiEnrollmentListItem(
-                enrollment_id=enrollment_id,
-                submitted_on=submitted_on,
-                der_x509_certificate=trustchain[0].content,
-                intermediate_der_x509_certificates=list(map(lambda x: x.content, trustchain[1:])),
-                payload_signature=f"<user {subject} submit payload signature>".encode(),
-                payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
-                payload=submit_payload,
+                enrollment_id=enrollment.enrollment_id,
+                submitted_on=enrollment.submitted_on,
+                der_x509_certificate=enrollment.submitter_trustchain[0].content,
+                intermediate_der_x509_certificates=list(
+                    map(lambda x: x.content, enrollment.submitter_trustchain[1:])
+                ),
+                payload_signature=enrollment.submit_payload_signature,
+                payload_signature_algorithm=enrollment.submit_payload_signature_algorithm,
+                payload=enrollment.submit_payload,
             )
         )
 
-        outcome = await backend.pki.submit(
-            now=submitted_on,
-            organization_id=coolorg.organization_id,
-            enrollment_id=enrollment_id,
-            force=False,
-            submitter_human_handle=human_handle,
-            submitter_trustchain=trustchain,
-            submit_payload_signature=expected_enrollment_item.payload_signature,
-            submit_payload_signature_algorithm=expected_enrollment_item.payload_signature_algorithm,
-            submit_payload=expected_enrollment_item.payload,
-        )
-        assert outcome is None
         expected_enrollments.append(expected_enrollment_item)
 
     rep = await coolorg.alice.pki_enrollment_list()
@@ -135,14 +129,17 @@ async def test_authenticated_pki_enrollment_list_ok(
         public_key=PrivateKey.generate().public_key,
         device_label=DeviceLabel("Dev1"),
     ).dump()
+    sign_algo, signature = sign_message(
+        test_pki.find_cert_by_cert_der(to_cancel.der_x509_certificate).key, canceller_submit_payload
+    )
     canceller_expected_enrollment_item = (
         authenticated_cmds.latest.pki_enrollment_list.PkiEnrollmentListItem(
             enrollment_id=canceller_enrollment_id,
             submitted_on=canceller_submitted_on,
             der_x509_certificate=to_cancel.der_x509_certificate,
             intermediate_der_x509_certificates=to_cancel.intermediate_der_x509_certificates,
-            payload_signature=b"<canceller submit payload signature>",
-            payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
+            payload_signature=signature,
+            payload_signature_algorithm=sign_algo,
             payload=canceller_submit_payload,
         )
     )

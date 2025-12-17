@@ -48,7 +48,10 @@ async def components_factory(
                 webhooks = WebhooksComponent(config, http_client)
                 events = PGEventsComponent(pool=pool, config=config, event_bus=event_bus)
                 ping = PGPingComponent(pool=pool)
-                pki = PGPkiEnrollmentComponent(pool=pool)
+                pki = PGPkiEnrollmentComponent(
+                    pool=pool,
+                    config=config,
+                )
                 organization = PGOrganizationComponent(pool=pool, webhooks=webhooks, config=config)
                 auth = PGAuthComponent(pool=pool, event_bus=event_bus, config=config)
                 invite = PGInviteComponent(pool=pool, config=config)

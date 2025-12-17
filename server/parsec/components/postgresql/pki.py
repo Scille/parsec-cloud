@@ -35,10 +35,12 @@ from parsec.components.postgresql.pki_list import pki_list
 from parsec.components.postgresql.pki_reject import pki_reject
 from parsec.components.postgresql.pki_submit import pki_submit
 from parsec.components.postgresql.utils import no_transaction, transaction
+from parsec.config import BackendConfig
 
 
 class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
-    def __init__(self, pool: AsyncpgPool) -> None:
+    def __init__(self, pool: AsyncpgPool, config: BackendConfig) -> None:
+        super().__init__(config)
         self.pool = pool
 
     @override
@@ -67,6 +69,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             submit_payload_signature,
             submit_payload_signature_algorithm,
             submit_payload,
+            self._config,
         )
 
     @override

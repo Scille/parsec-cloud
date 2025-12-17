@@ -28,6 +28,7 @@ from parsec.ballpark import (
     timestamps_in_the_ballpark,
 )
 from parsec.client_context import AnonymousClientContext, AuthenticatedClientContext
+from parsec.config import BackendConfig
 from parsec.logging import get_logger
 from parsec.types import BadOutcomeEnum
 
@@ -216,6 +217,7 @@ class PkiEnrollmentSubmitBadOutcome(BadOutcomeEnum):
     INVALID_SUBMIT_PAYLOAD = auto()
     INVALID_X509_TRUSTCHAIN = auto()
     INVALID_DER_X509_CERTIFICATE = auto()
+    INVALID_PAYLOAD_SIGNATURE = auto()
 
 
 class PkiEnrollmentInfoBadOutcome(BadOutcomeEnum):
@@ -261,6 +263,9 @@ class PkiEnrollmentAcceptStoreBadOutcome(BadOutcomeEnum):
 
 
 class BasePkiEnrollmentComponent:
+    def __init__(self, config: BackendConfig):
+        self._config = config
+
     async def submit(
         self,
         now: DateTime,
@@ -464,6 +469,8 @@ class BasePkiEnrollmentComponent:
                 return anonymous_cmds.latest.pki_enrollment_submit.RepIdAlreadyUsed()
             case PkiEnrollmentSubmitBadOutcome.INVALID_SUBMIT_PAYLOAD:
                 return anonymous_cmds.latest.pki_enrollment_submit.RepInvalidPayload()
+            case PkiEnrollmentSubmitBadOutcome.INVALID_PAYLOAD_SIGNATURE:
+                return anonymous_cmds.latest.pki_enrollment_submit.RepInvalidPayloadSignature()
             case PkiEnrollmentSubmitBadOutcome.INVALID_X509_TRUSTCHAIN:
                 return anonymous_cmds.latest.pki_enrollment_submit.RepInvalidX509Trustchain()
             case PkiEnrollmentSubmitBadOutcome.INVALID_DER_X509_CERTIFICATE:

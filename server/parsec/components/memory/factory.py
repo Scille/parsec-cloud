@@ -46,7 +46,7 @@ async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, 
             realm = MemoryRealmComponent(data, event_bus, webhooks)
             vlob = MemoryVlobComponent(data, event_bus, webhooks)
             ping = MemoryPingComponent(event_bus)
-            pki = MemoryPkiEnrollmentComponent(data, event_bus)
+            pki = MemoryPkiEnrollmentComponent(config, data, event_bus)
             sequester = MemorySequesterComponent(data, event_bus)
             shamir = MemoryShamirComponent(data, event_bus)
             blockstore = blockstore_factory(config.blockstore_config, mocked_data=data)

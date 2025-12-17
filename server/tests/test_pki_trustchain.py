@@ -6,7 +6,7 @@ from tests.common.pki import TestPki
 
 
 async def test_build_trustchain_only_leaf(backend: Backend, test_pki: TestPki) -> None:
-    bob_cert = test_pki.cert["bob"].der_certificate
+    bob_cert = test_pki.cert["bob"].certificate.der
     trustchain = await backend.pki.build_trustchain(bob_cert, [])
     assert trustchain == [parse_pki_cert(bob_cert)]
 
@@ -17,10 +17,10 @@ async def test_build_trustchain_useless_intermediate_certs(
     """
     The returned trustchain should only contain certificates that are part of the chain.
     """
-    bob_cert = test_pki.cert["bob"].der_certificate
+    bob_cert = test_pki.cert["bob"].certificate.der
     trustchain = await backend.pki.build_trustchain(
         bob_cert,
-        [test_pki.cert["mallory-sign"].der_certificate, test_pki.cert["old-boby"].der_certificate],
+        [test_pki.cert["mallory-sign"].certificate.der, test_pki.cert["old-boby"].certificate.der],
     )
     assert trustchain == [parse_pki_cert(bob_cert)]
 
@@ -28,8 +28,8 @@ async def test_build_trustchain_useless_intermediate_certs(
 async def test_build_trustchain_with_intermediate_certificate(
     backend: Backend, test_pki: TestPki
 ) -> None:
-    mallory_cert = test_pki.cert["mallory-sign"].der_certificate
-    glados_dt_cert = test_pki.intermediate["glados_dev_team"].der_certificate
+    mallory_cert = test_pki.cert["mallory-sign"].certificate.der
+    glados_dt_cert = test_pki.intermediate["glados_dev_team"].certificate.der
     trustchain = await backend.pki.build_trustchain(
         mallory_cert,
         [glados_dt_cert],
@@ -46,9 +46,9 @@ async def test_build_trustchain_with_intermediate_certificates(
     We test with multiple intermediate certificates to verify if the trustchain list of correctly ordered:
         Leaf -signed_by-> Parent -signed_by-> Parent -signed_by-> ...
     """
-    mallory_cert = test_pki.cert["mallory-sign"].der_certificate
-    glados_dt_cert = test_pki.intermediate["glados_dev_team"].der_certificate
-    aperture_cert = test_pki.root["aperture_science"].der_certificate
+    mallory_cert = test_pki.cert["mallory-sign"].certificate.der
+    glados_dt_cert = test_pki.intermediate["glados_dev_team"].certificate.der
+    aperture_cert = test_pki.root["aperture_science"].certificate.der
     trustchain = await backend.pki.build_trustchain(
         mallory_cert,
         [aperture_cert, glados_dt_cert],
@@ -65,12 +65,12 @@ async def test_build_trustchain_with_intermediate_certificates_and_useless_cert(
     """
     Verify that useless cert does not cause problem when building a trustchain with valid intermediate certificates
     """
-    mallory_cert = test_pki.cert["mallory-sign"].der_certificate
-    glados_dt_cert = test_pki.intermediate["glados_dev_team"].der_certificate
-    aperture_cert = test_pki.root["aperture_science"].der_certificate
+    mallory_cert = test_pki.cert["mallory-sign"].certificate.der
+    glados_dt_cert = test_pki.intermediate["glados_dev_team"].certificate.der
+    aperture_cert = test_pki.root["aperture_science"].certificate.der
     trustchain = await backend.pki.build_trustchain(
         mallory_cert,
-        [aperture_cert, test_pki.cert["bob"].der_certificate, glados_dt_cert],
+        [aperture_cert, test_pki.cert["bob"].certificate.der, glados_dt_cert],
     )
     parsed_aperture = parse_pki_cert(aperture_cert)
     parsed_glados = parse_pki_cert(glados_dt_cert, signed_by=parsed_aperture.fingerprint_sha256)

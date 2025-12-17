@@ -6,8 +6,12 @@ from parsec._parsec import (
     HumanHandle,
     OrganizationID,
     PKIEnrollmentID,
-    PkiEnrollmentSubmitPayload,
+    PkiInvalidCertificateDER,
+    PkiInvalidSignature,
     PkiSignatureAlgorithm,
+    PkiUntrusted,
+    SignedMessage,
+    load_submit_payload,
 )
 from parsec.components.pki import (
     PkiCertificate,
@@ -19,6 +23,7 @@ from parsec.components.postgresql.events import send_signal
 from parsec.components.postgresql.pki_trustchain import save_trustchain
 from parsec.components.postgresql.queries.q_lock_common import lock_common_read
 from parsec.components.postgresql.utils import Q
+from parsec.config import BackendConfig
 from parsec.events import EventPkiEnrollment
 from parsec.locks import AdvisoryLock
 
@@ -152,6 +157,7 @@ async def pki_submit(
     submit_payload_signature: bytes,
     submit_payload_signature_algorithm: PkiSignatureAlgorithm,
     submit_payload: bytes,
+    config: BackendConfig,
 ) -> None | PkiEnrollmentSubmitBadOutcome | PkiEnrollmentSubmitX509CertificateAlreadySubmitted:
     # 1) Check organization exists and is not expired
 
@@ -181,7 +187,21 @@ async def pki_submit(
     # 2) Validate payload
 
     try:
-        PkiEnrollmentSubmitPayload.load(submit_payload)
+        load_submit_payload(
+            submitter_trustchain[0].content,
+            list(map(lambda v: v.content, submitter_trustchain[1:])),
+            config.x509_trust_anchor,
+            now,
+            SignedMessage(
+                submit_payload_signature_algorithm, submit_payload_signature, submit_payload
+            ),
+        )
+    except PkiUntrusted:
+        return PkiEnrollmentSubmitBadOutcome.INVALID_X509_TRUSTCHAIN
+    except PkiInvalidCertificateDER:
+        return PkiEnrollmentSubmitBadOutcome.INVALID_DER_X509_CERTIFICATE
+    except PkiInvalidSignature:
+        return PkiEnrollmentSubmitBadOutcome.INVALID_PAYLOAD_SIGNATURE
     except ValueError:
         return PkiEnrollmentSubmitBadOutcome.INVALID_SUBMIT_PAYLOAD
     submitter_email = str(submitter_human_handle.email)

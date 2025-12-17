@@ -1,14 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from dataclasses import dataclass
 
 import pytest
 
 from parsec._parsec import (
     DateTime,
     DeviceLabel,
-    EmailAddress,
-    HumanHandle,
     PkiEnrollmentAnswerPayload,
     PKIEnrollmentID,
     PkiEnrollmentSubmitPayload,
@@ -26,79 +23,27 @@ from parsec.components.pki import (
 )
 from parsec.events import EventPinged, EventPkiEnrollment
 from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester, TestPki
+from tests.common.pki import PkiEnrollment, sign_message
 from tests.common.utils import generate_new_device_certificates, generate_new_user_certificates
 
 
-@dataclass
-class Enrollment:
-    enrollment_id: PKIEnrollmentID
-    submitter_der_x509_certificate: bytes
-    submitter_intermediate_der_x509_certificates: list[bytes]
-    submitter_der_x509_certificate_email: EmailAddress
-    submit_payload_signature: bytes
-    submit_payload: bytes
-    submitted_on: DateTime
-
-
-@pytest.fixture(scope="session")
-def submit_payload() -> bytes:
-    return PkiEnrollmentSubmitPayload(
-        verify_key=SigningKey.generate().verify_key,
-        public_key=PrivateKey.generate().public_key,
-        device_label=DeviceLabel("Dev1"),
-    ).dump()
-
-
-@pytest.fixture
-async def existing_enrollment(
-    coolorg: CoolorgRpcClients, backend: Backend, submit_payload: bytes, test_pki: TestPki
-) -> Enrollment:
-    enrollment_id = PKIEnrollmentID.new()
-    submitter_der_x509_certificate = test_pki.cert["bob"].der_certificate
-    submitter_intermediate_der_x509_certificates = []
-    submitter_der_x509_certificate_email = EmailAddress("mike@example.invalid")
-    submit_payload_signature = b"<mike submit payload signature>"
-
-    with backend.event_bus.spy() as spy:
-        rep = await coolorg.anonymous.pki_enrollment_submit(
-            enrollment_id=enrollment_id,
-            force=False,
-            der_x509_certificate=submitter_der_x509_certificate,
-            intermediate_der_x509_certificates=submitter_intermediate_der_x509_certificates,
-            payload_signature=submit_payload_signature,
-            payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
-            payload=submit_payload,
-        )
-        assert isinstance(rep, anonymous_cmds.latest.pki_enrollment_submit.RepOk)
-
-        await spy.wait_event_occurred(
-            EventPkiEnrollment(
-                organization_id=coolorg.organization_id,
-            )
-        )
-    return Enrollment(
-        enrollment_id=enrollment_id,
-        submitter_der_x509_certificate=submitter_der_x509_certificate,
-        submitter_intermediate_der_x509_certificates=submitter_intermediate_der_x509_certificates,
-        submitter_der_x509_certificate_email=submitter_der_x509_certificate_email,
-        submit_payload_signature=submit_payload_signature,
-        submit_payload=submit_payload,
-        submitted_on=rep.submitted_on,
-    )
-
-
 async def test_anonymous_pki_enrollment_submit_ok(
-    coolorg: CoolorgRpcClients, backend: Backend, submit_payload: bytes, test_pki: TestPki
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+    submit_payload: bytes,
+    test_pki: TestPki,
+    backend_with_test_pki_roots,
 ) -> None:
     enrollment_id = PKIEnrollmentID.new()
     with backend.event_bus.spy() as spy:
+        sign_algo, payload_signature = sign_message(test_pki.cert["bob"].key, submit_payload)
         rep = await coolorg.anonymous.pki_enrollment_submit(
             enrollment_id=enrollment_id,
             force=False,
-            der_x509_certificate=test_pki.cert["bob"].der_certificate,
-            intermediate_der_x509_certificates=[test_pki.root["black_mesa"].der_certificate],
-            payload_signature=b"<philip submit payload signature>",
-            payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
+            der_x509_certificate=test_pki.cert["bob"].certificate.der,
+            intermediate_der_x509_certificates=[],
+            payload_signature=payload_signature,
+            payload_signature_algorithm=sign_algo,
             payload=submit_payload,
         )
         assert isinstance(rep, anonymous_cmds.latest.pki_enrollment_submit.RepOk)
@@ -119,18 +64,21 @@ async def test_anonymous_pki_enrollment_submit_ok(
 async def test_anonymous_pki_enrollment_submit_ok_with_force(
     coolorg: CoolorgRpcClients,
     backend: Backend,
-    existing_enrollment: Enrollment,
+    existing_pki_enrollment: PkiEnrollment,
     submit_payload: bytes,
+    backend_with_test_pki_roots,
+    test_pki: TestPki,
 ) -> None:
     enrollment_id = PKIEnrollmentID.new()
     with backend.event_bus.spy() as spy:
+        sign_algo, payload_signature = sign_message(test_pki.cert["bob"].key, submit_payload)
         rep = await coolorg.anonymous.pki_enrollment_submit(
             enrollment_id=enrollment_id,
             force=True,
-            der_x509_certificate=existing_enrollment.submitter_der_x509_certificate,
+            der_x509_certificate=existing_pki_enrollment.submitter_trustchain[0].content,
             intermediate_der_x509_certificates=[],
-            payload_signature=b"<philip submit payload signature>",
-            payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
+            payload_signature=payload_signature,
+            payload_signature_algorithm=sign_algo,
             payload=submit_payload,
         )
         assert isinstance(rep, anonymous_cmds.latest.pki_enrollment_submit.RepOk)
@@ -156,7 +104,7 @@ async def test_anonymous_pki_enrollment_submit_ok_with_force(
 
     # Now th old enrollment should have been cancelled...
     outcome = await backend.pki.info(
-        organization_id=coolorg.organization_id, enrollment_id=existing_enrollment.enrollment_id
+        organization_id=coolorg.organization_id, enrollment_id=existing_pki_enrollment.enrollment_id
     )
     assert isinstance(outcome, PkiEnrollmentInfoCancelled)
 
@@ -168,7 +116,11 @@ async def test_anonymous_pki_enrollment_submit_ok_with_force(
 
 
 async def test_anonymous_pki_enrollment_submit_ok_with_email_from_revoked_user(
-    coolorg: CoolorgRpcClients, backend: Backend, submit_payload: bytes, test_pki: TestPki
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+    submit_payload: bytes,
+    test_pki: TestPki,
+    backend_with_test_pki_roots,
 ) -> None:
     t1 = DateTime.now()
     certif = RevokedUserCertificate(
@@ -185,13 +137,14 @@ async def test_anonymous_pki_enrollment_submit_ok_with_email_from_revoked_user(
     )
     assert isinstance(outcome, RevokedUserCertificate)
 
+    sign_algo, payload_signature = sign_message(test_pki.cert["bob"].key, submit_payload)
     rep = await coolorg.anonymous.pki_enrollment_submit(
         enrollment_id=PKIEnrollmentID.new(),
         force=False,
-        der_x509_certificate=test_pki.cert["bob"].der_certificate,
+        der_x509_certificate=test_pki.cert["bob"].certificate.der,
         intermediate_der_x509_certificates=[],
-        payload_signature=b"<bob submit payload signature>",
-        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
+        payload_signature=payload_signature,
+        payload_signature_algorithm=sign_algo,
         payload=submit_payload,
     )
     assert isinstance(rep, anonymous_cmds.latest.pki_enrollment_submit.RepOk)
@@ -200,81 +153,89 @@ async def test_anonymous_pki_enrollment_submit_ok_with_email_from_revoked_user(
 async def test_anonymous_pki_enrollment_submit_ok_with_cancelled_enrollment(
     coolorg: CoolorgRpcClients,
     backend: Backend,
-    existing_enrollment: Enrollment,
+    existing_pki_enrollment: PkiEnrollment,
+    backend_with_test_pki_roots,
 ) -> None:
     t1 = DateTime.now()
     outcome = await backend.pki.reject(
         now=t1,
         author=coolorg.alice.device_id,
         organization_id=coolorg.organization_id,
-        enrollment_id=existing_enrollment.enrollment_id,
+        enrollment_id=existing_pki_enrollment.enrollment_id,
     )
     assert outcome is None
 
     rep = await coolorg.anonymous.pki_enrollment_submit(
         enrollment_id=PKIEnrollmentID.new(),
         force=False,
-        der_x509_certificate=existing_enrollment.submitter_der_x509_certificate,
+        der_x509_certificate=existing_pki_enrollment.submitter_trustchain[0].content,
         intermediate_der_x509_certificates=[],
-        payload_signature=existing_enrollment.submit_payload_signature,
+        payload_signature=existing_pki_enrollment.submit_payload_signature,
         payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
-        payload=existing_enrollment.submit_payload,
+        payload=existing_pki_enrollment.submit_payload,
     )
     assert isinstance(rep, anonymous_cmds.latest.pki_enrollment_submit.RepOk)
 
 
 async def test_anonymous_pki_enrollment_submit_already_submitted(
     coolorg: CoolorgRpcClients,
-    existing_enrollment: Enrollment,
+    existing_pki_enrollment: PkiEnrollment,
     submit_payload: bytes,
+    backend_with_test_pki_roots,
+    test_pki: TestPki,
 ) -> None:
+    sign_algo, payload_signature = sign_message(test_pki.cert["bob"].key, submit_payload)
     rep = await coolorg.anonymous.pki_enrollment_submit(
         enrollment_id=PKIEnrollmentID.new(),
         force=False,
-        der_x509_certificate=existing_enrollment.submitter_der_x509_certificate,
+        der_x509_certificate=existing_pki_enrollment.submitter_trustchain[0].content,
         intermediate_der_x509_certificates=[],
-        payload_signature=b"<philip submit payload signature>",
-        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
+        payload_signature=payload_signature,
+        payload_signature_algorithm=sign_algo,
         payload=submit_payload,
     )
     assert rep == anonymous_cmds.latest.pki_enrollment_submit.RepAlreadySubmitted(
-        submitted_on=existing_enrollment.submitted_on
+        submitted_on=existing_pki_enrollment.submitted_on
     )
 
 
-@pytest.mark.parametrize("existing_enrollment_rejected", (False, True))
+@pytest.mark.parametrize("existing_pki_enrollment_rejected", (False, True))
 async def test_anonymous_pki_enrollment_submit_id_already_used(
     coolorg: CoolorgRpcClients,
     backend: Backend,
-    existing_enrollment: Enrollment,
-    existing_enrollment_rejected: bool,
+    existing_pki_enrollment: PkiEnrollment,
+    existing_pki_enrollment_rejected: bool,
     submit_payload: bytes,
     test_pki: TestPki,
+    backend_with_test_pki_roots,
 ) -> None:
-    if existing_enrollment_rejected:
+    if existing_pki_enrollment_rejected:
         t1 = DateTime.now()
         outcome = await backend.pki.reject(
             now=t1,
             author=coolorg.alice.device_id,
             organization_id=coolorg.organization_id,
-            enrollment_id=existing_enrollment.enrollment_id,
+            enrollment_id=existing_pki_enrollment.enrollment_id,
         )
         assert outcome is None
 
+    sign_algo, payload_signature = sign_message(test_pki.cert["bob"].key, submit_payload)
     rep = await coolorg.anonymous.pki_enrollment_submit(
-        enrollment_id=existing_enrollment.enrollment_id,
+        enrollment_id=existing_pki_enrollment.enrollment_id,
         force=False,
-        der_x509_certificate=test_pki.cert["bob"].der_certificate,
+        der_x509_certificate=test_pki.cert["bob"].certificate.der,
         intermediate_der_x509_certificates=[],
-        payload_signature=b"<philip submit payload signature>",
-        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
+        payload_signature=payload_signature,
+        payload_signature_algorithm=sign_algo,
         payload=submit_payload,
     )
     assert rep == anonymous_cmds.latest.pki_enrollment_submit.RepIdAlreadyUsed()
 
 
 async def test_anonymous_pki_enrollment_submit_email_already_used(
-    coolorg: CoolorgRpcClients, test_pki: TestPki
+    coolorg: CoolorgRpcClients,
+    test_pki: TestPki,
+    backend_with_test_pki_roots,
 ) -> None:
     # 1. Create a user that use the same email as the submitter certificate
     submitter_cert = test_pki.cert["bob"]
@@ -300,18 +261,20 @@ async def test_anonymous_pki_enrollment_submit_email_already_used(
     assert user_creation_rep == authenticated_cmds.latest.user_create.RepOk()
 
     # 2. Create a submit request using a certificate using an email for an already known org's user
+    submit_payload = PkiEnrollmentSubmitPayload(
+        verify_key=SigningKey.generate().verify_key,
+        public_key=PrivateKey.generate().public_key,
+        device_label=DeviceLabel("Dev1"),
+    ).dump()
+    sign_algo, payload_signature = sign_message(test_pki.cert["bob"].key, submit_payload)
     rep = await coolorg.anonymous.pki_enrollment_submit(
         enrollment_id=PKIEnrollmentID.new(),
         force=False,
-        der_x509_certificate=test_pki.cert["bob"].der_certificate,
+        der_x509_certificate=test_pki.cert["bob"].certificate.der,
         intermediate_der_x509_certificates=[],
-        payload_signature=b"<philip submit payload signature>",
-        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
-        payload=PkiEnrollmentSubmitPayload(
-            verify_key=SigningKey.generate().verify_key,
-            public_key=PrivateKey.generate().public_key,
-            device_label=DeviceLabel("Dev1"),
-        ).dump(),
+        payload_signature=payload_signature,
+        payload_signature_algorithm=sign_algo,
+        payload=submit_payload,
     )
 
     # 3. ...
@@ -321,17 +284,15 @@ async def test_anonymous_pki_enrollment_submit_email_already_used(
 async def test_anonymous_pki_enrollment_submit_already_enrolled(
     backend: Backend,
     coolorg: CoolorgRpcClients,
-    existing_enrollment: Enrollment,
+    existing_pki_enrollment: PkiEnrollment,
     submit_payload: bytes,
     test_pki: TestPki,
+    backend_with_test_pki_roots,
 ) -> None:
     t1 = DateTime.now()
     user_certificates = generate_new_user_certificates(
         timestamp=t1,
-        human_handle=HumanHandle(
-            email=existing_enrollment.submitter_der_x509_certificate_email,
-            label="Mike",
-        ),
+        human_handle=existing_pki_enrollment.submitter_human_handle,
         author_device_id=coolorg.alice.device_id,
         author_signing_key=coolorg.alice.signing_key,
     )
@@ -349,7 +310,7 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         author_verify_key=coolorg.alice.signing_key.verify_key,
-        enrollment_id=existing_enrollment.enrollment_id,
+        enrollment_id=existing_pki_enrollment.enrollment_id,
         payload=PkiEnrollmentAnswerPayload(
             user_id=user_certificates.certificate.user_id,
             device_id=device_certificates.certificate.device_id,
@@ -359,7 +320,7 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
         ).dump(),
         payload_signature=b"<accept payload signature>",
         payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
-        accepter_trustchain=[parse_pki_cert(test_pki.cert["alice"].der_certificate)],
+        accepter_trustchain=[parse_pki_cert(test_pki.cert["alice"].certificate.der)],
         submitter_user_certificate=user_certificates.signed_certificate,
         submitter_redacted_user_certificate=user_certificates.signed_redacted_certificate,
         submitter_device_certificate=device_certificates.signed_certificate,
@@ -367,29 +328,34 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
     )
     assert isinstance(outcome, tuple)
 
+    sign_algo, payload_signature = sign_message(test_pki.cert["bob"].key, submit_payload)
     rep = await coolorg.anonymous.pki_enrollment_submit(
         enrollment_id=PKIEnrollmentID.new(),
         force=False,
-        der_x509_certificate=existing_enrollment.submitter_der_x509_certificate,
+        der_x509_certificate=existing_pki_enrollment.submitter_trustchain[0].content,
         intermediate_der_x509_certificates=[],
-        payload_signature=b"<philip submit payload signature>",
-        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
+        payload_signature=payload_signature,
+        payload_signature_algorithm=sign_algo,
         payload=submit_payload,
     )
     assert rep == anonymous_cmds.latest.pki_enrollment_submit.RepAlreadyEnrolled()
 
 
 async def test_anonymous_pki_enrollment_submit_invalid_payload(
-    coolorg: CoolorgRpcClients, test_pki: TestPki
+    coolorg: CoolorgRpcClients,
+    test_pki: TestPki,
+    backend_with_test_pki_roots,
 ) -> None:
+    submit_payload = b"<dummy data>"
+    sign_algo, payload_signature = sign_message(test_pki.cert["bob"].key, submit_payload)
     rep = await coolorg.anonymous.pki_enrollment_submit(
         enrollment_id=PKIEnrollmentID.new(),
         force=False,
-        der_x509_certificate=test_pki.cert["bob"].der_certificate,
+        der_x509_certificate=test_pki.cert["bob"].certificate.der,
         intermediate_der_x509_certificates=[],
-        payload_signature=b"<philip submit payload signature>",
-        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
-        payload=b"<dummy data>",
+        payload_signature=payload_signature,
+        payload_signature_algorithm=sign_algo,
+        payload=submit_payload,
     )
     assert isinstance(rep, anonymous_cmds.latest.pki_enrollment_submit.RepInvalidPayload)
 
@@ -404,7 +370,7 @@ async def test_anonymous_pki_enrollment_submit_http_common_errors(
         await coolorg.anonymous.pki_enrollment_submit(
             enrollment_id=PKIEnrollmentID.new(),
             force=False,
-            der_x509_certificate=test_pki.cert["bob"].der_certificate,
+            der_x509_certificate=test_pki.cert["bob"].certificate.der,
             intermediate_der_x509_certificates=[],
             payload_signature=b"<philip submit payload signature>",
             payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
@@ -415,7 +381,9 @@ async def test_anonymous_pki_enrollment_submit_http_common_errors(
 
 
 async def test_anonymous_pki_enrollment_submit_invalid_der_x509_certificate(
-    coolorg: CoolorgRpcClients, submit_payload: bytes
+    coolorg: CoolorgRpcClients,
+    submit_payload: bytes,
+    backend_with_test_pki_roots,
 ) -> None:
     rep = await coolorg.anonymous.pki_enrollment_submit(
         enrollment_id=PKIEnrollmentID.new(),
@@ -438,7 +406,7 @@ async def test_anonymous_pki_enrollment_submit_invalid_der_x509_certificate_in_t
     rep = await coolorg.anonymous.pki_enrollment_submit(
         enrollment_id=PKIEnrollmentID.new(),
         force=False,
-        der_x509_certificate=test_pki.cert["bob"].der_certificate,
+        der_x509_certificate=test_pki.cert["bob"].certificate.der,
         intermediate_der_x509_certificates=[b"not a valid certificate"],
         payload_signature=b"<philip submit payload signature>",
         payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
@@ -448,25 +416,48 @@ async def test_anonymous_pki_enrollment_submit_invalid_der_x509_certificate_in_t
     assert rep == anonymous_cmds.latest.pki_enrollment_submit.RepInvalidDerX509Certificate()
 
 
-@pytest.mark.xfail(reason="TODO: https://github.com/Scille/parsec-cloud/issues/11648")
-async def test_anonymous_pki_enrollment_submit_invalid_payload_signature() -> None:
-    raise NotImplementedError
+async def test_anonymous_pki_enrollment_submit_invalid_payload_signature(
+    coolorg: CoolorgRpcClients,
+    submit_payload: bytes,
+    test_pki: TestPki,
+    backend_with_test_pki_roots,
+) -> None:
+    rep = await coolorg.anonymous.pki_enrollment_submit(
+        enrollment_id=PKIEnrollmentID.new(),
+        force=False,
+        der_x509_certificate=test_pki.cert["bob"].certificate.der,
+        intermediate_der_x509_certificates=[],
+        payload_signature=b"<philip submit payload signature>",
+        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
+        payload=submit_payload,
+    )
+
+    assert rep == anonymous_cmds.latest.pki_enrollment_submit.RepInvalidPayloadSignature()
 
 
+@pytest.mark.parametrize("kind", ("trust_chain_too_complex", "no_trusted_anchor"))
 async def test_anonymous_pki_enrollment_submit_invalid_x509_trustchain(
     coolorg: CoolorgRpcClients,
     submit_payload: bytes,
     test_pki: TestPki,
     monkeypatch: pytest.MonkeyPatch,
+    backend: Backend,
+    kind: str,
 ) -> None:
     from parsec.components import pki
 
-    monkeypatch.setattr(pki, "MAX_INTERMEDIATE_CERTIFICATES_DEPTH", 0)
+    match kind:
+        case "trust_chain_too_complex":
+            monkeypatch.setattr(pki, "MAX_INTERMEDIATE_CERTIFICATES_DEPTH", 0)
+        case "no_trusted_anchor":
+            backend.pki._config.x509_trust_anchor = []
+        case _:
+            assert False
     rep = await coolorg.anonymous.pki_enrollment_submit(
         enrollment_id=PKIEnrollmentID.new(),
         force=False,
-        der_x509_certificate=test_pki.cert["bob"].der_certificate,
-        intermediate_der_x509_certificates=[test_pki.root["black_mesa"].der_certificate],
+        der_x509_certificate=test_pki.cert["bob"].certificate.der,
+        intermediate_der_x509_certificates=[test_pki.root["black_mesa"].certificate.der],
         payload_signature=b"<philip submit payload signature>",
         payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
         payload=submit_payload,
