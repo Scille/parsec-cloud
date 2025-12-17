@@ -2,12 +2,12 @@
 
 pub mod errors;
 mod shared;
-#[cfg(feature = "test-fixture")]
+#[cfg(any(test, feature = "test-fixture"))]
 pub mod test_fixture;
 #[cfg(target_os = "windows")]
 mod windows;
 pub mod x509;
-#[cfg(feature = "test-fixture")]
+#[cfg(any(test, feature = "test-fixture"))]
 pub use test_fixture::*;
 
 #[cfg(test)]

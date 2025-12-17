@@ -46,3 +46,4 @@ data-encoding = { workspace = true, default-features = true }
 anyhow = { workspace = true }
 env_logger = { workspace = true, features = ["kv"] }
 hex-literal = { workspace = true }
+libparsec_tests_lite = { workspace = true }
