@@ -16,7 +16,7 @@ import {
   WorkspaceHistoryEntryStat,
 } from '@/parsec';
 import { currentRouteIs, getCurrentRouteQuery, getDocumentPath, navigateTo, Routes } from '@/router';
-import { isEnabledCryptpadDocumentType } from '@/services/cryptpad';
+import { isCryptpadEnabledForDocumentType } from '@/services/cryptpad';
 import { Env } from '@/services/environment';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { recentDocumentManager } from '@/services/recentDocuments';
@@ -189,7 +189,7 @@ async function openPath(
   }
   currentlyOpening.value = true;
   // Make sure that the state gets reset if we miss something
-  window.setTimeout(() => {
+  timeoutId = window.setTimeout(() => {
     window.electronAPI.log('warn', 'Resolved path opened with timeout, might be worth investigating...');
     pathOpened();
   }, 30000);
@@ -283,7 +283,7 @@ async function openPath(
     pathOpened();
     return;
   }
-  if (Env.isEditicsEnabled() && isEnabledCryptpadDocumentType(contentType.type)) {
+  if (Env.isEditicsEnabled() && isCryptpadEnabledForDocumentType(contentType.type)) {
     return await _openInEditor(entry, workspaceHandle, options, contentType);
   } else if (ENABLED_FILE_VIEWERS.includes(contentType.type)) {
     return await _openInViewer(entry, workspaceHandle, options, contentType);

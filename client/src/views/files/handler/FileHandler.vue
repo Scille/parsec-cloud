@@ -136,7 +136,7 @@
                 id="file-handler-open-editor"
                 @click="openEditor(contentInfo.path)"
                 :disabled="pathOpener.currentlyOpening.value"
-                v-if="!atDateTime && readOnly && isEnabledCryptpadDocumentType(contentInfo.contentType) && !isReader"
+                v-if="!atDateTime && readOnly && isCryptpadEnabledForDocumentType(contentInfo.contentType) && !isReader"
               >
                 <ion-icon
                   :icon="create"
@@ -196,6 +196,7 @@
             :content-info="contentInfo"
             :file-info="detectedFileType"
             @file-loaded="pathOpener.pathOpened()"
+            @file-error="pathOpener.pathOpened()"
             v-on="isComponentEditor() ? { onSaveStateChange: onSaveStateChange } : {}"
             v-bind="isComponentEditor() ? { userInfo: userInfo, readOnly: readOnly } : {}"
           />
@@ -242,7 +243,7 @@ import {
   Routes,
   watchRoute,
 } from '@/router';
-import { isEnabledCryptpadDocumentType } from '@/services/cryptpad';
+import { isCryptpadEnabledForDocumentType } from '@/services/cryptpad';
 import { Env } from '@/services/environment';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
 import useHeaderControl from '@/services/headerControl';
@@ -779,7 +780,7 @@ async function openSmallDisplayActionMenu(): Promise<void> {
     initialBreakpoint: 0.5,
     componentProps: {
       canOpenWithSystem: !atDateTime.value && isDesktop(),
-      canEdit: !atDateTime.value && readOnly.value && isEnabledCryptpadDocumentType(contentInfo.value.contentType) && !isReader.value,
+      canEdit: !atDateTime.value && readOnly.value && isCryptpadEnabledForDocumentType(contentInfo.value.contentType) && !isReader.value,
     },
   });
   await modal.present();
