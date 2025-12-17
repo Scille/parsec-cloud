@@ -2583,11 +2583,14 @@
         }
     },
     "fileEditors": {
+        "loading": "Chargement du fichier...",
         "globalTitle": "Impossible d'ouvrir le fichier",
         "errors": {
             "titles": {
                 "networkOffline": "Connexion réseau perdue",
-                "tooLongToOpen": "Le fichier semble mettre trop de temps à s'ouvrir"
+                "tooLongToOpen": "Le fichier semble mettre trop de temps à s'ouvrir",
+                "frameLoadFailed": "Impossible de charger l'éditeur. Veuillez vérifier votre connexion.",
+                "openFailed": "Impossible d'ouvrir ce fichier."
             },
             "networkOfflineMessage": "Votre connexion réseau a été perdue. Veuillez vérifier votre connexion internet et réessayer. Les modifications non enregistrées peuvent être perdues.",
             "tooLongToOpenOnWeb": "Vous pouvez essayer de le télécharger et de l'ouvrir avec l'application par défaut (clic droit sur le fichier > 'Télécharger').",

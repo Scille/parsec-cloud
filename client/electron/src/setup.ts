@@ -201,12 +201,6 @@ export class ElectronCapacitorApp {
    * If an update is available, an event will be sent to the web app.
    */
   async checkForUpdates(): Promise<void> {
-    if (electronIsDev) {
-      setTimeout(() => {
-        this.sendEvent(WindowToPageChannel.UpdateAvailability, true, '42.00');
-      }, 10000);
-    }
-
     if (this.updater) {
       await this.updater.checkForUpdates();
     }
@@ -605,6 +599,36 @@ export function setupContentSecurityPolicy(customScheme: string): void {
     // Used for the testbed
     authorizedDomains.push({
       domain: 'http://localhost:6770',
+      directives: [CspDirective.ConnectSrc],
+    });
+    authorizedDomains.push({
+      domain: 'http://localhost:3000',
+      directives: [
+        CspDirective.DefaultSrc,
+        CspDirective.FrameSrc,
+        CspDirective.ScriptSrc,
+        CspDirective.StyleSrc,
+        CspDirective.ImgSrc,
+        CspDirective.ConnectSrc,
+        CspDirective.FontSrc,
+        CspDirective.WorkerSrc,
+      ],
+    });
+    authorizedDomains.push({
+      domain: 'http://safe.localhost:3000',
+      directives: [
+        CspDirective.DefaultSrc,
+        CspDirective.FrameSrc,
+        CspDirective.ScriptSrc,
+        CspDirective.StyleSrc,
+        CspDirective.ImgSrc,
+        CspDirective.ConnectSrc,
+        CspDirective.FontSrc,
+        CspDirective.WorkerSrc,
+      ],
+    });
+    authorizedDomains.push({
+      domain: 'ws://localhost:3000',
       directives: [CspDirective.ConnectSrc],
     });
   }

@@ -2582,11 +2582,14 @@
         }
     },
     "fileEditors": {
+        "loading": "Loading file...",
         "globalTitle": "Cannot open file",
         "errors": {
             "titles": {
                 "networkOffline": "Network connection lost",
-                "tooLongToOpen": "The file seems to be taking too long to open"
+                "tooLongToOpen": "The file seems to be taking too long to open",
+                "frameLoadFailed": "Could not load the editor. Please check your network connection.",
+                "openFailed": "Could not open the file."
             },
             "networkOfflineMessage": "Your network connection has been lost. Please check your internet connection and try again. Any unsaved changes may be lost.",
             "tooLongToOpenOnWeb": "You can try downloading it and opening with default app (right click on file > 'Download').",

@@ -1,12 +1,25 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div
+  <iframe
     class="file-editor"
-    id="file-editor"
-    ref="fileEditor"
+    ref="editorFrame"
     v-if="!error"
+    v-show="frameReady"
   />
+  <div
+    v-if="!frameReady"
+    class="loading-container"
+  >
+    <div class="loading-content">
+      <!-- prettier-ignore -->
+      <ms-image
+        :image="(ResourcesManager.instance().get(Resources.LogoIcon, LogoIconGradient) as string)"
+        class="logo-img"
+      />
+      <ms-spinner title="fileEditors.loading" />
+    </div>
+  </div>
   <div
     v-if="error"
     class="file-editor-error"
@@ -53,16 +66,15 @@ import { DetectedFileType } from '@/common/fileTypes';
 import { ClientInfo, closeFile, FileDescriptor, openFile, writeFile } from '@/parsec';
 import { currentRouteIs, getFileHandlerMode, getWorkspaceHandle, routerGoBack, Routes } from '@/router';
 import {
-  Cryptpad,
-  CryptpadAppMode,
-  CryptpadDocumentType,
+  CryptpadEditors,
   CryptpadError,
-  CryptpadErrorCode,
-  getCryptpadDocumentType,
+  CryptpadErrorCodes,
+  CryptpadOpenModes,
+  getCryptpadEditor,
+  openDocument,
 } from '@/services/cryptpad';
-import { Env } from '@/services/environment';
 import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
-
+import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import { longLocaleCodeToShort } from '@/services/translation';
 import { EditorButtonAction, EditorErrorMessage, EditorErrorTitle, EditorIssueStatus, SaveState } from '@/views/files/handler/editor';
 import EditorIssueModal from '@/views/files/handler/editor/EditorIssueModal.vue';
@@ -70,17 +82,17 @@ import { FileHandlerMode } from '@/views/files/handler/types';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { IonButton, IonIcon, IonItem, IonList, IonText, modalController } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
-import { I18n, MsModalResult } from 'megashark-lib';
+import { I18n, LogoIconGradient, MsImage, MsModalResult, MsSpinner } from 'megashark-lib';
 import { inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
-const fileEditorRef = useTemplateRef('fileEditor');
-const documentType = ref<CryptpadDocumentType | null>(null);
-const cryptpadInstance = ref<Cryptpad | null>(null);
-const fileUrl = ref<string | null>(null);
+const editorFrame = useTemplateRef<HTMLIFrameElement>('editorFrame');
+const documentType = ref<CryptpadEditors>(CryptpadEditors.Unsupported);
 const error = ref('');
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 let eventCbId: null | string = null;
-const fileLoaded = ref(false);
+const loadFinished = ref(false);
+let abortController: AbortController | undefined = undefined;
+const frameReady = ref(false);
 
 const {
   contentInfo,
@@ -101,22 +113,15 @@ const emits = defineEmits<{
 }>();
 
 onMounted(async () => {
-  documentType.value = getCryptpadDocumentType(fileInfo.type);
+  documentType.value = getCryptpadEditor(fileInfo.type);
 
-  if (documentType.value === CryptpadDocumentType.Unsupported) {
+  if (documentType.value === CryptpadEditors.Unsupported) {
     error.value = EditorErrorTitle.UnsupportedFileType;
     await openIssueModal(EditorIssueStatus.UnsupportedFileType);
     return;
   }
-  if (!(await loadCryptpad())) {
-    return;
-  }
-  const openResult = await openFileWithCryptpad();
-  if (openResult) {
-    emits('fileLoaded');
-  } else {
-    emits('fileError');
-  }
+
+  await loadEditor();
 
   eventCbId = await eventDistributor.registerCallback(Events.Online | Events.Offline, async (event: Events) => {
     if (event === Events.Offline) {
@@ -131,12 +136,9 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  // Clean up CryptPad instance and event listeners
-  if (cryptpadInstance.value) {
-    cryptpadInstance.value = null;
-  }
-  if (fileUrl.value) {
-    URL.revokeObjectURL(fileUrl.value);
+  if (abortController) {
+    abortController.abort();
+    abortController = undefined;
   }
 
   if (eventCbId) {
@@ -144,128 +146,44 @@ onUnmounted(() => {
   }
 });
 
-async function loadCryptpad(): Promise<boolean> {
-  try {
-    // Clear the DOM element before creating a new instance
-    if (fileEditorRef.value) {
-      fileEditorRef.value.innerHTML = '';
-    }
-
-    // Always create a new instance for each document to avoid conflicts
-    cryptpadInstance.value = new Cryptpad(fileEditorRef.value as HTMLDivElement, Env.getDefaultCryptpadServer());
-
-    await cryptpadInstance.value.init();
-    return true;
-  } catch (e: unknown) {
-    if (e instanceof CryptpadError) {
-      switch (e.code) {
-        case CryptpadErrorCode.NotEnabled:
-          await openIssueModal(EditorIssueStatus.EditionNotAvailable);
-          break;
-        case CryptpadErrorCode.ScriptElementCreationFailed:
-        case CryptpadErrorCode.InitFailed:
-          error.value = EditorErrorMessage.EditableOnlyOnSystem;
-          break;
-      }
-    }
-    return false;
-  }
-}
-
-async function openIssueModal(status: EditorIssueStatus, redirectAfterDismiss = true): Promise<MsModalResult> {
-  // Safety check: only show modal if we're still on the file handler/editor route
-  if (!currentRouteIs(Routes.FileHandler) || getFileHandlerMode() !== FileHandlerMode.Edit) {
-    window.electronAPI.log('info', 'Skipping modal - user navigated away from editor');
-    return MsModalResult.Cancel;
-  }
-
-  const modal = await modalController.create({
-    component: EditorIssueModal,
-    cssClass: 'editor-issue-modal',
-    componentProps: {
-      status,
-      fileLoaded,
-    },
-    backdropDismiss: false,
-  });
-
-  await modal.present();
-  const { role } = await modal.onWillDismiss();
-
-  // Handle redirection if requested (default is true)
-  if (redirectAfterDismiss) {
-    await routerGoBack();
-    // TODO: find why we have router problems causing routerGoBack to stay on same page
-    // https://github.com/Scille/parsec-cloud/issues/11749
-    // Seems similar to the header back button double click issue
-    // For now, we'll force navigation if page is still the same after modal
-    if (currentRouteIs(Routes.FileHandler) && getFileHandlerMode() === FileHandlerMode.Edit) {
-      await routerGoBack();
-    }
-  }
-
-  return role as MsModalResult;
-}
-
-async function openTimeoutModal(): Promise<'wait' | 'close'> {
-  const role = await openIssueModal(EditorIssueStatus.LoadingTimeout, false);
-
-  // If user clicks primary button (close/dismiss)
-  if (role === MsModalResult.Confirm) {
-    if (fileLoaded.value) {
-      return 'close';
-    } else {
-      return 'wait';
-    }
-  } else if (role === MsModalResult.Cancel) {
-    await routerGoBack();
-    // TODO: find why we have router problems causing routerGoBack to stay on same page
-    // https://github.com/Scille/parsec-cloud/issues/11749
-    if (currentRouteIs(Routes.FileHandler) && getFileHandlerMode() === FileHandlerMode.Edit) {
-      await routerGoBack();
-    }
-    return 'close';
-  }
-
-  // Modal was dismissed (close button) - just close without navigating
-  return 'close';
-}
-
-async function openFileWithCryptpad(): Promise<boolean> {
-  const cryptpadApi = cryptpadInstance.value as Cryptpad;
+async function loadEditor(): Promise<void> {
   const workspaceHandle = getWorkspaceHandle();
-  const documentPath = contentInfo.path;
-  const user = userInfo ? { name: userInfo.humanHandle.label, id: userInfo.userId } : undefined;
 
   if (!workspaceHandle) {
-    error.value = EditorErrorTitle.GenericError;
-    return false;
+    window.electronAPI.log('error', 'Cannot retrieve workspace handle');
+    return;
   }
-  fileUrl.value = URL.createObjectURL(new Blob([contentInfo.data as Uint8Array<ArrayBuffer>], { type: 'application/octet-stream' }));
-  let isSaving = false;
+  if (!editorFrame.value) {
+    window.electronAPI.log('error', 'Cannot get the iframe element');
+    return;
+  }
+  frameReady.value = false;
+  if (abortController) {
+    abortController.abort();
+    abortController = undefined;
+  }
 
-  const cryptpadConfig = {
-    document: {
-      url: fileUrl.value,
-      fileType: contentInfo.extension,
-      title: contentInfo.fileName,
-      // TODO: replace UUID with collaborative session key
-      // key: contentInfo.fileId,
+  let isSaving = false;
+  abortController = await openDocument(
+    {
+      documentContent: contentInfo.data,
+      documentName: contentInfo.fileName,
+      documentExtension: contentInfo.extension,
+      cryptpadEditor: documentType.value as CryptpadEditors,
       key: crypto.randomUUID(),
+      userName: userInfo ? userInfo.humanHandle.label : I18n.translate('UNKNOWN_USER'),
+      userId: userInfo ? userInfo.userId : crypto.randomUUID(),
+      autosaveInterval: 10,
+      mode: readOnly ? CryptpadOpenModes.View : CryptpadOpenModes.Edit,
+      locale: longLocaleCodeToShort(I18n.getLocale()),
     },
-    documentType: documentType.value as CryptpadDocumentType, // Safe since we checked for null earlier
-    editorConfig: {
-      lang: longLocaleCodeToShort(I18n.getLocale()),
-      user,
-    },
-    autosave: (window as any).TESTING_EDITICS_SAVE_TIMEOUT ?? 10,
-    mode: readOnly ? CryptpadAppMode.View : CryptpadAppMode.Edit,
-    events: {
+    {
       onReady: (): void => {
         window.electronAPI.log('info', 'CryptPad editor is ready and document loaded successfully');
-        fileLoaded.value = true;
+        loadFinished.value = true;
+        emits('fileLoaded');
       },
-      onSave: async (file: Blob, callback: () => void): Promise<void> => {
+      onSave: async (file: Blob): Promise<void> => {
         let hasError = false;
         let fd: FileDescriptor | undefined = undefined;
         const start = Date.now();
@@ -276,7 +194,7 @@ async function openFileWithCryptpad(): Promise<boolean> {
           isSaving = true;
           emits('onSaveStateChange', SaveState.Saving);
           // Handle save logic here
-          const openResult = await openFile(workspaceHandle, documentPath, { write: true, truncate: true });
+          const openResult = await openFile(workspaceHandle, contentInfo.path, { write: true, truncate: true });
 
           if (!openResult.ok) {
             window.electronAPI.log('error', `Failed to open file: ${openResult.error.tag} (${openResult.error.error})`);
@@ -297,7 +215,6 @@ async function openFileWithCryptpad(): Promise<boolean> {
           if (fd) {
             await closeFile(workspaceHandle, fd);
           }
-          callback();
           const end = Date.now();
           setTimeout(
             () => {
@@ -320,92 +237,154 @@ async function openFileWithCryptpad(): Promise<boolean> {
           emits('onSaveStateChange', SaveState.Unsaved);
         }
       },
-      onError: (errorData: { message: string; errorType: string; originalError: string }): void => {
-        window.electronAPI.log('error', `CryptPad error [${errorData.errorType}]: ${errorData.message}`);
-        error.value = 'fileViewers.errors.titles.genericError';
+      onError: async (err: unknown): Promise<void> => {
         emits('fileError');
+        loadFinished.value = true;
+        error.value = 'fileViewers.errors.titles.genericError';
+
+        if (err instanceof CryptpadError) {
+          switch (err.code) {
+            case CryptpadErrorCodes.InitFailed:
+              error.value = EditorErrorMessage.EditableOnlyOnSystem;
+              break;
+            case CryptpadErrorCodes.OpenFailed:
+            case CryptpadErrorCodes.OpenInvalidConfig:
+              error.value = 'fileEditors.errors.titles.openFailed';
+              break;
+            case CryptpadErrorCodes.FrameLoadFailed:
+            case CryptpadErrorCodes.FrameNotLoaded:
+              error.value = 'fileEditors.errors.titles.frameLoadFailed';
+              break;
+          }
+        } else {
+          window.electronAPI.log('error', `Unhandled error: ${err} `);
+        }
       },
     },
-  };
+    editorFrame.value,
+  );
+  frameReady.value = true;
 
-  try {
-    // Start CryptPad (non-blocking)
-    await cryptpadApi.open(cryptpadConfig);
+  await handleTimeout();
+}
 
-    // Set up timeout for loading files
-    // If the file does not open before timeout, a dialog is displayed
-    // to ask the user if it wants to keep waiting or go back to files.
-    const LOADING_TIMEOUT_MS = 30000;
-    let shouldContinueWaiting = true;
+async function handleTimeout(): Promise<void> {
+  // Set up timeout for loading files
+  // If the file does not open before timeout, a dialog is displayed
+  // to ask the user if it wants to keep waiting or go back to files.
+  const LOADING_TIMEOUT_MS = 30000;
+  let shouldContinueWaiting = true;
 
-    // TODO: Fix DOCX timeout false positives - OnlyOffice doesn't reliably call onReady for 'doc' type
-    // See: https://github.com/Scille/parsec-cloud/issues/11753
-    // For now, we ignore timeout for DOCX files to avoid false positive "corrupted file" modals
-    const shouldSkipTimeout = documentType.value === CryptpadDocumentType.Doc;
+  // TODO: Fix timeout false positives - OnlyOffice doesn't reliably call onReady in some cases
+  // See: https://github.com/Scille/parsec-cloud/issues/11753
+  // For now, we ignore timeout for some files to avoid false positive "corrupted file" modals
+  const shouldSkipTimeout =
+    documentType.value === CryptpadEditors.Doc ||
+    documentType.value === CryptpadEditors.Presentation ||
+    (documentType.value === CryptpadEditors.Sheet && readOnly);
 
-    if (shouldSkipTimeout) {
-      window.electronAPI.log('info', 'Skipping timeout for DOCX file');
-      return true;
-    }
-
-    // Wait for file to load with timeout and restart capability
-    while (!fileLoaded.value && shouldContinueWaiting) {
-      // Wait for timeout or file load
-      const timeoutOccurred = await new Promise<boolean>((resolve) => {
-        const timeoutId = window.setTimeout(() => {
-          resolve(true); // Timeout occurred
-        }, LOADING_TIMEOUT_MS);
-
-        // Watch for file loaded to resolve immediately
-        const stopWatch = watch(fileLoaded, (loaded) => {
-          if (loaded) {
-            window.clearTimeout(timeoutId);
-            stopWatch();
-            resolve(false); // File loaded
-          }
-        });
-      });
-
-      // If file loaded, exit successfully
-      if (!timeoutOccurred) {
-        window.electronAPI.log('info', 'CryptPad editor initialized successfully');
-        return true;
-      }
-
-      // Timeout occurred - show modal
-      window.electronAPI.log('warn', 'CryptPad loading timeout - file appears to be corrupted or too large');
-      const result = await openTimeoutModal();
-
-      // Check if file loaded while modal was open
-      if (fileLoaded.value) {
-        window.electronAPI.log('info', 'File loaded while modal was open');
-        return true;
-      }
-
-      // Continue waiting if user clicked wait, stop if they clicked close
-      shouldContinueWaiting = result === 'wait';
-      if (shouldContinueWaiting) {
-        window.electronAPI.log('info', 'User chose to wait - restarting timeout');
-      }
-    }
-
-    return fileLoaded.value;
-  } catch (e: unknown) {
-    // Handle initialization errors
-    if (e instanceof CryptpadError) {
-      emits('fileError');
-      switch (e.code) {
-        case CryptpadErrorCode.NotInitialized:
-          error.value = EditorErrorMessage.EditableOnlyOnSystem;
-          break;
-        case CryptpadErrorCode.DocumentTypeNotEnabled:
-          await openIssueModal(EditorIssueStatus.EditionNotAvailable);
-          break;
-      }
-    }
-
-    return false;
+  if (shouldSkipTimeout) {
+    window.electronAPI.log('info', 'Skipping timeout for DOCX and PPTX files');
+    return;
   }
+
+  // Wait for file to load with timeout and restart capability
+  while (!loadFinished.value && shouldContinueWaiting) {
+    // Wait for timeout or file load
+    const timeoutOccurred = await new Promise<boolean>((resolve) => {
+      const timeoutId = window.setTimeout(() => {
+        resolve(true); // Timeout occurred
+      }, LOADING_TIMEOUT_MS);
+
+      // Watch for file loaded to resolve immediately
+      const stopWatch = watch(loadFinished, (loaded) => {
+        if (loaded) {
+          window.clearTimeout(timeoutId);
+          stopWatch();
+          resolve(false); // File loaded
+        }
+      });
+    });
+
+    // If file loaded, exit successfully
+    if (!timeoutOccurred) {
+      window.electronAPI.log('info', 'CryptPad editor initialized successfully');
+      return;
+    }
+
+    // Timeout occurred - show modal
+    window.electronAPI.log('warn', 'CryptPad loading timeout - file appears to be corrupted or too large');
+    const result = await openTimeoutModal();
+
+    // Check if file loaded while modal was open
+    if (loadFinished.value) {
+      window.electronAPI.log('info', 'File loaded while modal was open');
+      return;
+    }
+
+    // Continue waiting if user clicked wait, stop if they clicked close
+    shouldContinueWaiting = result === 'wait';
+    if (shouldContinueWaiting) {
+      window.electronAPI.log('info', 'User chose to wait - restarting timeout');
+    }
+  }
+}
+
+async function openIssueModal(status: EditorIssueStatus, redirectAfterDismiss = true): Promise<MsModalResult> {
+  // Safety check: only show modal if we're still on the file handler/editor route
+  if (!currentRouteIs(Routes.FileHandler) || getFileHandlerMode() !== FileHandlerMode.Edit) {
+    window.electronAPI.log('info', 'Skipping modal - user navigated away from editor');
+    return MsModalResult.Cancel;
+  }
+
+  const modal = await modalController.create({
+    component: EditorIssueModal,
+    cssClass: 'editor-issue-modal',
+    componentProps: {
+      status,
+      loadFinished,
+    },
+    backdropDismiss: false,
+  });
+
+  await modal.present();
+  const { role } = await modal.onWillDismiss();
+
+  // Handle redirection if requested (default is true)
+  if (redirectAfterDismiss) {
+    await routerGoBack();
+    // TODO: find why we have router problems causing routerGoBack to stay on same page
+    // https://github.com/Scille/parsec-cloud/issues/11749
+    if (currentRouteIs(Routes.FileHandler) && getFileHandlerMode() === FileHandlerMode.Edit) {
+      await routerGoBack();
+    }
+  }
+
+  return role as MsModalResult;
+}
+
+async function openTimeoutModal(): Promise<'wait' | 'close'> {
+  const role = await openIssueModal(EditorIssueStatus.LoadingTimeout, false);
+
+  // If user clicks primary button (close/dismiss)
+  if (role === MsModalResult.Confirm) {
+    if (loadFinished.value) {
+      return 'close';
+    } else {
+      return 'wait';
+    }
+  } else if (role === MsModalResult.Cancel) {
+    await routerGoBack();
+    // TODO: find why we have router problems causing routerGoBack to stay on same page
+    // https://github.com/Scille/parsec-cloud/issues/11749
+    if (currentRouteIs(Routes.FileHandler) && getFileHandlerMode() === FileHandlerMode.Edit) {
+      await routerGoBack();
+    }
+    return 'close';
+  }
+
+  // Modal was dismissed (close button) - just close without navigating
+  return 'close';
 }
 </script>
 
@@ -413,6 +392,7 @@ async function openFileWithCryptpad(): Promise<boolean> {
 .file-editor {
   height: 100%;
   background: var(--parsec-color-light-secondary-premiere);
+  border: none;
 }
 
 .file-editor-error {
@@ -500,6 +480,40 @@ async function openFileWithCryptpad(): Promise<boolean> {
         font-size: 1rem;
       }
     }
+  }
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+}
+
+@keyframes LogoFadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.loading-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  width: fit-content;
+  gap: 0.5rem;
+
+  .logo-img {
+    animation: LogoFadeIn 0.8s ease-in-out;
+    width: 3.25rem;
+    height: 3.25rem;
   }
 }
 </style>
