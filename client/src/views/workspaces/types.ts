@@ -13,8 +13,14 @@ enum WorkspaceAction {
   Favorite = 'workspace-favorite',
 }
 
+enum WorkspaceMenu {
+  All = 'all',
+  Recents = 'recents',
+  Favorites = 'favorites',
+}
+
 function isWorkspaceAction(value: any): value is WorkspaceAction {
   return Object.values(WorkspaceAction).includes(value);
 }
 
-export { WorkspaceAction, isWorkspaceAction };
+export { WorkspaceAction, WorkspaceMenu, isWorkspaceAction };

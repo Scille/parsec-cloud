@@ -41,6 +41,16 @@
         </div>
       </ms-action-bar>
 
+      <div
+        class="workspace-filters-menu"
+        v-if="isLargeDisplay"
+      >
+        <workspace-categories-menu
+          :active-menu="workspaceMenuState"
+          @update-menu="workspaceMenuState = $event"
+        />
+      </div>
+
       <!-- workspaces -->
       <div class="workspaces-container scroll">
         <div
@@ -62,6 +72,10 @@
               class="mobile-filters-buttons__sorter"
             />
           </div>
+          <workspace-categories-menu
+            :active-menu="workspaceMenuState"
+            @update-menu="workspaceMenuState = $event"
+          />
           <ms-search-input
             v-model="searchFilterContent"
             placeholder="WorkspacesPage.filterPlaceholder"
@@ -78,17 +92,23 @@
 
         <div
           v-if="!querying && filteredWorkspaces.length === 0"
-          class="no-workspaces body"
+          class="no-workspaces body-lg"
         >
-          <div class="no-workspaces-content">
+          <div
+            class="no-all-workspaces"
+            v-if="workspaceMenuState === WorkspaceMenu.All"
+          >
             <ms-image
               :image="NoWorkspace"
-              class="no-workspaces-content__image"
+              class="no-workspaces__image"
             />
-            <ion-text>
+            <ion-text v-if="clientProfile !== UserProfile.Outsider">
               {{
                 workspaceList.length > 0 ? $msTranslate('WorkspacesPage.noMatchingWorkspaces') : $msTranslate('WorkspacesPage.noWorkspaces')
               }}
+            </ion-text>
+            <ion-text v-else>
+              {{ $msTranslate('WorkspacesPage.noWorkspacesExternal') }}
             </ion-text>
             <ion-button
               v-show="clientProfile !== UserProfile.Outsider"
@@ -99,6 +119,30 @@
               <ion-icon :icon="addCircle" />
               {{ $msTranslate('WorkspacesPage.createWorkspace') }}
             </ion-button>
+          </div>
+          <div
+            class="no-recent-workspaces"
+            v-if="workspaceMenuState === WorkspaceMenu.Recents"
+          >
+            <ms-image
+              :image="NoRecentWorkspaces"
+              class="no-workspaces__image"
+            />
+            <ion-text>
+              {{ $msTranslate('WorkspacesPage.categoriesMenu.noRecentWorkspaces') }}
+            </ion-text>
+          </div>
+          <div
+            class="no-favorite-workspaces"
+            v-if="workspaceMenuState === WorkspaceMenu.Favorites"
+          >
+            <ms-image
+              :image="NoFavoriteWorkspaces"
+              class="no-workspaces__image"
+            />
+            <ion-text>
+              {{ $msTranslate('WorkspacesPage.categoriesMenu.noFavoriteWorkspaces') }}
+            </ion-text>
           </div>
         </div>
 
@@ -139,6 +183,8 @@
 </template>
 
 <script setup lang="ts">
+import NoFavoriteWorkspaces from '@/assets/images/no-favorite-workspaces.svg?raw';
+import NoRecentWorkspaces from '@/assets/images/no-recent-workspaces.svg?raw';
 import { workspaceNameValidator } from '@/common/validators';
 import {
   WORKSPACES_PAGE_DATA_KEY,
@@ -150,6 +196,7 @@ import {
 } from '@/components/workspaces';
 import { WorkspacesPageFilters, compareWorkspaceRoles } from '@/components/workspaces/utils';
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
+import WorkspaceCategoriesMenu from '@/components/workspaces/WorkspaceCategoriesMenu.vue';
 import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
 import {
   ClientInfo,
@@ -178,7 +225,8 @@ import { Information, InformationLevel, InformationManager, InformationManagerKe
 import { recentDocumentManager } from '@/services/recentDocuments';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { useWorkspaceAttributes } from '@/services/workspaceAttributes';
-import { WorkspaceAction, isWorkspaceAction } from '@/views/workspaces/types';
+import { workspaceMenuState } from '@/services/workspaceMenuState';
+import { WorkspaceAction, WorkspaceMenu, isWorkspaceAction } from '@/views/workspaces/types';
 import { IonButton, IonContent, IonIcon, IonList, IonPage, IonText } from '@ionic/vue';
 import { addCircle } from 'ionicons/icons';
 import {
@@ -229,6 +277,7 @@ const routeWatchCancel = watchRoute(async () => {
   if (!currentRouteIs(Routes.Workspaces)) {
     return;
   }
+
   const query = getCurrentRouteQuery();
   if (query.workspaceName) {
     await createWorkspace(query.workspaceName);
@@ -257,6 +306,7 @@ onMounted(async (): Promise<void> => {
   ).displayState;
 
   window.electronAPI.log('debug', 'Loading favorite workspaces');
+
   await workspaceAttributes.load();
 
   hotkeys = hotkeyManager.newHotkeys();
@@ -452,7 +502,21 @@ async function refreshWorkspacesList(): Promise<void> {
 const filteredWorkspaces = computed(() => {
   const filter = searchFilterContent.value.toLocaleLowerCase();
   return Array.from(workspaceList.value)
-    .filter((workspace) => workspace.currentName.toLocaleLowerCase().includes(filter) && !isWorkspaceFiltered(workspace.currentSelfRole))
+    .filter((workspace) => {
+      switch (workspaceMenuState.value) {
+        case WorkspaceMenu.Recents:
+          return recentDocumentManager.getWorkspaces().find((workspaceRecents) => workspaceRecents.id === workspace.id) !== undefined;
+        case WorkspaceMenu.Favorites:
+          return workspaceAttributes.isFavorite(workspace.id);
+        default:
+          break;
+      }
+
+      if (!workspace.currentName.toLocaleLowerCase().includes(filter) || isWorkspaceFiltered(workspace.currentSelfRole)) {
+        return false;
+      }
+      return true;
+    })
     .sort((a: WorkspaceInfo, b: WorkspaceInfo) => {
       if (workspaceAttributes.isFavorite(b.id) !== workspaceAttributes.isFavorite(a.id)) {
         return workspaceAttributes.isFavorite(b.id) ? 1 : -1;
@@ -648,20 +712,24 @@ async function onFilterUpdate(): Promise<void> {
 
 .no-workspaces {
   max-width: 30rem;
-  color: var(--parsec-color-light-secondary-grey);
+  color: var(--parsec-color-light-secondary-soft-text);
   display: flex;
+  justify-content: center;
   margin: auto;
   height: 100%;
   align-items: center;
 
-  &-content,
-  &-loading {
+  &-loading,
+  .no-all-workspaces,
+  .no-recent-workspaces,
+  .no-favorite-workspaces {
     border-radius: var(--parsec-radius-8);
     display: flex;
     height: fit-content;
     text-align: center;
     flex-direction: column;
-    gap: 1rem;
+    justify-content: center;
+    gap: 1.5rem;
     align-items: center;
     padding: 3rem 1rem;
 
@@ -674,6 +742,16 @@ async function onFilterUpdate(): Promise<void> {
         margin-right: 0.375rem;
       }
     }
+  }
+
+  &__image {
+    width: 8rem;
+    height: 8rem;
+  }
+
+  .no-all-workspaces .no-workspaces__image {
+    width: 12.5rem;
+    height: 12.5rem;
   }
 }
 
@@ -692,7 +770,7 @@ async function onFilterUpdate(): Promise<void> {
   flex-wrap: wrap;
   gap: 1.5em;
   overflow: visible;
-  padding: 2rem 0;
+  padding: 1.5rem 0;
 
   @include ms.responsive-breakpoint('sm') {
     padding: 1.5rem 1rem;
@@ -710,9 +788,24 @@ async function onFilterUpdate(): Promise<void> {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  position: relative;
+  z-index: 4;
 
   @include ms.responsive-breakpoint('sm') {
     padding: 1.5rem 1rem;
+  }
+}
+
+.workspace-filters-menu {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding: 1.5rem 2rem 0;
+
+  @include ms.responsive-breakpoint('lg') {
+    width: 100%;
+    flex-direction: column;
+    padding: 1.5rem 1.25rem 0;
   }
 }
 </style>

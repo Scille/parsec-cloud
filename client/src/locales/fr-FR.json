@@ -631,6 +631,7 @@
         "createWorkspace": "Nouvel espace de travail",
         "itemCount": "Aucun élément | 1 élément | {count} éléments",
         "noWorkspaces": "Vous n'avez pas encore accès à un espace de travail. Les espaces de travail que vous créerez ou qui vous seront partagés s'afficheront ici.",
+        "noWorkspacesExternal": "Vous n'avez pas encore accès à un espace de travail. Les espaces de travail qui vous seront partagés s'afficheront ici.",
         "loading": "Chargement de vos espaces de travail...",
         "noMatchingWorkspaces": "Aucun espace de travail ne correspond à cette recherche.",
         "listError": "Impossible de lister les espaces de travail.",
@@ -698,6 +699,13 @@
         "filter": {
             "title": "Filtrer",
             "roles": "Rôle"
+        },
+        "categoriesMenu": {
+            "all": "Tous les espaces",
+            "recents": "Vus récemment",
+            "favorites": "Épinglés",
+            "noRecentWorkspaces": "Vous n'avez encore consulté aucun espace de travail. Les espaces consultés récemment apparaîtront ici.",
+            "noFavoriteWorkspaces": "Vous n'avez encore épinglé aucun espace de travail. Épinglez un espace pour qu'il apparaisse ici."
         }
     },
     "FoldersPage": {
@@ -1010,7 +1018,7 @@
     "SideMenu": {
         "organization": "Organisation",
         "workspaces": "Mes espaces de travail",
-        "recentWorkspaces": "Récents",
+        "recentWorkspaces": "Vus récemment",
         "favorites": "Épinglés",
         "noFavorites": "Aucun espace de travail épinglé",
         "noWorkspace": "Aucun espace de travail",
@@ -1020,6 +1028,7 @@
         "storage": "Stockage",
         "information": "Informations",
         "goToHome": "Mes espaces",
+        "allWorkspaces": "Tous les espaces",
         "recentDocuments": "Documents récents",
         "noRecentDocuments": "Aucun document récent",
         "back": "Retour",
