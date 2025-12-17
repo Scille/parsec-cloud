@@ -15,6 +15,18 @@ async function toggleViewMode(page: Page): Promise<void> {
   }
 }
 
+async function verifyActiveCategory(page: Page, activeIndex: number, totalCategories: number = 3): Promise<void> {
+  const categoriesMenu = page.locator('.workspace-categories-menu');
+  const menuItems = categoriesMenu.locator('.workspace-categories-menu-item');
+
+  await expect(menuItems.nth(activeIndex)).toHaveClass(/workspace-categories-menu-item--active/);
+
+  for (let i = 0; i < totalCategories; i++) {
+    if (i === activeIndex) continue;
+    await expect(menuItems.nth(i)).not.toHaveClass(/workspace-categories-menu-item--active/);
+  }
+}
+
 const WORKSPACES = ['The Copper Coronet', 'Trademeet', "Watcher's Keep", 'wksp1'];
 
 msTest('Check workspace card', async ({ workspaces }) => {
@@ -123,6 +135,29 @@ for (const gridMode of [false, true]) {
       await expect(workspacesStandard.locator('.workspaces-container').locator('.workspace-name__label').last()).toHaveText('wksp1');
     }
   });
+
+  msTest(`Switch to recent workspaces  in ${gridMode ? 'grid' : 'list'} mode`, async ({ workspaces }) => {
+    if (!gridMode) {
+      await toggleViewMode(workspaces);
+      await workspaces.locator('.workspace-list-item').nth(0).click();
+    } else {
+      await workspaces.locator('.workspace-card-item').nth(0).click();
+    }
+
+    await workspaces.locator('#connected-header').locator('.topbar-left').locator('ion-breadcrumb').nth(0).click();
+
+    const categoriesMenu = workspaces.locator('.workspace-categories-menu');
+    const recentWorkspacesButton = categoriesMenu.locator('.workspace-categories-menu-item').nth(1);
+    await recentWorkspacesButton.click();
+    await verifyActiveCategory(workspaces, 1);
+    const recentWorkspaces = workspaces.locator('.workspaces-container');
+
+    if (!gridMode) {
+      await expect(recentWorkspaces.locator('.workspace-list-item').locator('.workspace-name__label').nth(0)).toHaveText('wksp1');
+    } else {
+      await expect(recentWorkspaces.locator('.workspace-card-content__title').nth(0)).toHaveText('wksp1');
+    }
+  });
 }
 
 async function toggleFavorite(page: Page, index: number, displaySize: DisplaySize): Promise<void> {
@@ -155,7 +190,23 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
       'wksp1',
       'The Copper Coronet',
     ]);
-    // Check in list mode too‹
+    const workspaceCategoriesMenu = workspaces.locator('.workspace-categories-menu');
+    const allWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(0);
+    const favoriteWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(2);
+    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText([
+      'All workspaces',
+      'Recents',
+      'Favorites',
+    ]);
+    await expect(workspaceCategoriesMenu).toBeVisible();
+    await expect(favoriteWorkspacesButton).toBeVisible();
+    await favoriteWorkspacesButton.click({ force: true });
+    await allWorkspacesButton.click({ force: true });
+    await expect(workspaces.locator('.workspace-card-item').locator('.workspace-card-content__title')).toHaveText([
+      'wksp1',
+      'The Copper Coronet',
+    ]);
+
     if (displaySize === DisplaySize.Large) {
       await toggleViewMode(workspaces);
       await expect(workspaces.locator('.workspace-list-item').locator('.workspace-name__label')).toHaveText([
@@ -180,6 +231,16 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     if (displaySize === DisplaySize.Small) {
       await workspaces.setDisplaySize(DisplaySize.Small);
     }
+
+    let showHiddenWorkspace;
+
+    if (displaySize === DisplaySize.Large) {
+      showHiddenWorkspace = workspaces.locator('.workspace-filters-menu').locator('#show-hidden-workspaces-large');
+    } else {
+      showHiddenWorkspace = workspaces.locator('.mobile-filters-buttons').locator('#show-hidden-workspaces-small');
+    }
+    await expect(showHiddenWorkspace).toHaveState('unchecked');
+
     const workspaceCard = workspaces.locator('.workspace-card-item').nth(0);
     await workspaceCard.click({ button: 'right' });
     let popover;
@@ -212,8 +273,17 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
       ]);
       await popover.getByRole('listitem').nth(2).click();
     }
+
     await expect(workspaces).toShowToast('The workspace is now hidden in Parsec.', 'Success');
+
+    await expect(workspaceCard).toBeHidden();
+    await expect(showHiddenWorkspace).toBeVisible();
+    await expect(showHiddenWorkspace).toHaveState('unchecked');
+    await showHiddenWorkspace.click();
+    await expect(showHiddenWorkspace).toHaveState('checked');
     await expect(workspaceCard.locator('.workspace-hidden')).toHaveText('Hidden');
+    await expect(workspaceCard).toBeVisible();
+
     await workspaceCard.click({ button: 'right' });
     await expect(popover).toBeVisible();
     if (displaySize === DisplaySize.Large) {
@@ -246,6 +316,35 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
       await popover.getByRole('listitem').nth(2).click();
     }
     await expect(workspaces).toShowToast('The workspace is now visible in Parsec.', 'Success');
+  });
+
+  msTest(`Switch between tabs in ${displaySize} display`, async ({ workspaces }) => {
+    if (displaySize === DisplaySize.Small) {
+      await workspaces.setDisplaySize(DisplaySize.Small);
+    }
+    const workspaceCategoriesMenu = workspaces.locator('.workspace-categories-menu');
+
+    await expect(workspaceCategoriesMenu).toBeVisible();
+    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText([
+      'All workspaces',
+      'Recents',
+      'Favorites',
+    ]);
+
+    const allWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(0);
+    const recentsWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(1);
+    const favoriteWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(2);
+
+    await verifyActiveCategory(workspaces, 0);
+
+    await recentsWorkspacesButton.click({ force: true });
+    await verifyActiveCategory(workspaces, 1);
+
+    await allWorkspacesButton.click({ force: true });
+    await verifyActiveCategory(workspaces, 0);
+
+    await favoriteWorkspacesButton.click({ force: true });
+    await verifyActiveCategory(workspaces, 2);
   });
 }
 

@@ -738,6 +738,14 @@
             },
             "actionConfirm": "Make this workspace visible",
             "actionCancel": "Cancel"
+        },
+        "categoriesMenu": {
+            "all": "All workspaces",
+            "recents": "Recents",
+            "favorites": "Favorites",
+            "sharedWithMe": "Shared with me",
+            "showHiddenWorkspaces": "Show hidden workspaces",
+            "showHiddenWorkspacesShort": "Hidden workspaces"
         }
     },
     "FoldersPage": {

@@ -41,6 +41,35 @@
         </div>
       </ms-action-bar>
 
+      <div
+        class="workspace-filters-menu"
+        v-if="isLargeDisplay"
+      >
+        <workspace-categories-menu
+          :active-menu="activeCategoryMenu"
+          @update-menu="
+            (active) => {
+              activeCategoryMenu = active;
+            }
+          "
+        />
+        <ms-checkbox
+          v-model="hiddenWorkspaces"
+          @click.stop
+          @dblclick.stop
+          label-placement="end"
+          class="hidden-workspaces-checkbox"
+          id="show-hidden-workspaces-large"
+        >
+          <ion-text class="button-medium">
+            <span v-if="windowWidth > WindowSizeBreakpoints.LG">
+              {{ $msTranslate('WorkspacesPage.categoriesMenu.showHiddenWorkspaces') }}
+            </span>
+            <span v-else>{{ $msTranslate('WorkspacesPage.categoriesMenu.showHiddenWorkspacesShort') }}</span>
+          </ion-text>
+        </ms-checkbox>
+      </div>
+
       <!-- workspaces -->
       <div class="workspaces-container scroll">
         <div
@@ -48,6 +77,16 @@
           v-if="isSmallDisplay"
         >
           <div class="mobile-filters-buttons">
+            <ms-checkbox
+              v-model="hiddenWorkspaces"
+              @click.stop
+              @dblclick.stop
+              label-placement="end"
+              class="hidden-workspaces-checkbox"
+              id="show-hidden-workspaces-small"
+            >
+              <ion-text class="button-medium">{{ $msTranslate('WorkspacesPage.categoriesMenu.showHiddenWorkspaces') }}</ion-text>
+            </ms-checkbox>
             <workspace-filter
               :filters="workspaceFilters"
               @change="onFilterUpdate"
@@ -62,6 +101,14 @@
               class="mobile-filters-buttons__sorter"
             />
           </div>
+          <workspace-categories-menu
+            :active-menu="activeCategoryMenu"
+            @update-menu="
+              (active) => {
+                activeCategoryMenu = active;
+              }
+            "
+          />
           <ms-search-input
             v-model="searchFilterContent"
             placeholder="WorkspacesPage.filterPlaceholder"
@@ -152,6 +199,7 @@ import {
 } from '@/components/workspaces';
 import { WorkspacesPageFilters, compareWorkspaceRoles } from '@/components/workspaces/utils';
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
+import WorkspaceCategoriesMenu from '@/components/workspaces/WorkspaceCategoriesMenu.vue';
 import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
 import {
   ClientInfo,
@@ -180,13 +228,14 @@ import { Information, InformationLevel, InformationManager, InformationManagerKe
 import { recentDocumentManager } from '@/services/recentDocuments';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { useWorkspaceAttributes } from '@/services/workspaceAttributes';
-import { WorkspaceAction, isWorkspaceAction } from '@/views/workspaces/types';
+import { WorkspaceAction, WorkspaceMenu, isWorkspaceAction } from '@/views/workspaces/types';
 import { IonButton, IonContent, IonIcon, IonList, IonPage, IonText } from '@ionic/vue';
 import { addCircle } from 'ionicons/icons';
 import {
   Answer,
   DisplayState,
   MsActionBar,
+  MsCheckbox,
   MsGridListToggle,
   MsImage,
   MsOptions,
@@ -195,6 +244,7 @@ import {
   MsSorterChangeEvent,
   MsSpinner,
   NoWorkspace,
+  WindowSizeBreakpoints,
   askQuestion,
   getTextFromUser,
   useWindowSize,
@@ -210,7 +260,7 @@ enum SortWorkspaceBy {
 
 const workspaceAttributes = useWorkspaceAttributes();
 
-const { isLargeDisplay, isSmallDisplay } = useWindowSize();
+const { isLargeDisplay, isSmallDisplay, windowWidth } = useWindowSize();
 const userInfo: Ref<ClientInfo | null> = ref(null);
 const sortBy = ref(SortWorkspaceBy.Name);
 const sortByAsc = ref(true);
@@ -220,6 +270,8 @@ const searchFilterContent = ref('');
 const workspaceFilters = ref<WorkspacesPageFilters>({ owner: true, manager: true, contributor: true, reader: true });
 const querying = ref(true);
 
+const hiddenWorkspaces = ref(false);
+const activeCategoryMenu = ref<WorkspaceMenu>(WorkspaceMenu.All);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
@@ -455,7 +507,30 @@ async function refreshWorkspacesList(): Promise<void> {
 const filteredWorkspaces = computed(() => {
   const filter = searchFilterContent.value.toLocaleLowerCase();
   return Array.from(workspaceList.value)
-    .filter((workspace) => workspace.currentName.toLocaleLowerCase().includes(filter) && !isWorkspaceFiltered(workspace.currentSelfRole))
+    .filter((workspace) => {
+      switch (activeCategoryMenu.value) {
+        case WorkspaceMenu.Recents:
+          return recentDocumentManager
+            .getWorkspaces()
+            .map((w) => w.id)
+            .includes(workspace.id);
+        case WorkspaceMenu.Favorites:
+          return workspaceAttributes.isFavorite(workspace.id);
+        // case WorkspaceMenu.ShareWithMe:
+        //   return workspace.currentSelfRole !== WorkspaceRole.Owner;
+        default:
+          break;
+      }
+
+      if (!hiddenWorkspaces.value && workspaceAttributes.isHidden(workspace.id)) {
+        return false;
+      }
+
+      if (!workspace.currentName.toLocaleLowerCase().includes(filter) || isWorkspaceFiltered(workspace.currentSelfRole)) {
+        return false;
+      }
+      return true;
+    })
     .sort((a: WorkspaceInfo, b: WorkspaceInfo) => {
       if (workspaceAttributes.isFavorite(b.id) !== workspaceAttributes.isFavorite(a.id)) {
         return workspaceAttributes.isFavorite(b.id) ? 1 : -1;
@@ -704,7 +779,7 @@ async function onFilterUpdate(): Promise<void> {
   flex-wrap: wrap;
   gap: 1.5em;
   overflow: visible;
-  padding: 2rem 0;
+  padding: 1.5rem 0;
 
   @include ms.responsive-breakpoint('sm') {
     padding: 1.5rem 1rem;
@@ -722,9 +797,63 @@ async function onFilterUpdate(): Promise<void> {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  position: relative;
+  z-index: 4;
 
   @include ms.responsive-breakpoint('sm') {
     padding: 1.5rem 1rem;
+  }
+}
+
+.workspace-filters-menu {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding: 1.5rem 2rem 0;
+
+  @include ms.responsive-breakpoint('lg') {
+    width: 100%;
+    flex-direction: column;
+    padding: 1.5rem 1.25rem 0;
+  }
+}
+
+.hidden-workspaces-checkbox {
+  position: relative;
+  z-index: 10;
+  align-self: stretch;
+  border-radius: var(--parsec-radius-12);
+  border: 1px solid var(--parsec-color-light-secondary-medium);
+  background: var(--parsec-color-light-secondary-white);
+  padding: 0.5rem 0.875rem;
+  display: flex;
+  align-items: center;
+  color: var(--parsec-color-light-secondary-grey);
+  --checkbox-background-checked: var(--parsec-color-light-secondary-text);
+  --checkbox-border-checked: var(--parsec-color-light-secondary-text);
+  --border-color-checked: var(--parsec-color-light-secondary-text);
+  transition: all 0.2s ease-in-out;
+
+  &::part(label) {
+    margin-left: 0.675rem;
+  }
+
+  &.checkbox-checked::part(container) {
+    border-color: var(--parsec-color-light-secondary-text);
+  }
+
+  &:hover {
+    box-shadow: var(--parsec-shadow-soft);
+  }
+
+  &:is(.checkbox-checked) {
+    box-shadow: var(--parsec-shadow-soft);
+    border-color: var(--parsec-color-light-secondary-light);
+    color: var(--parsec-color-light-secondary-grey);
+  }
+
+  @include ms.responsive-breakpoint('lg') {
+    margin-right: auto;
   }
 }
 </style>
