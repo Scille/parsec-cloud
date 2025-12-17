@@ -51,6 +51,7 @@ pub(crate) fn add_mod(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PkiSignatureAlgorithm>()?;
     m.add_class::<X509Certificate>()?;
     m.add_class::<X509CertificateInformation>()?;
+    m.add_class::<TrustAnchor>()?;
 
     // Async enrollment
     m.add_class::<AsyncEnrollmentSubmitPayload>()?;

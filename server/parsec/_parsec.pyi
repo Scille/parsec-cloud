@@ -99,6 +99,7 @@ from parsec._parsec_pyi.pki import (
     PkiEnrollmentAnswerPayload,
     PkiEnrollmentSubmitPayload,
     PkiSignatureAlgorithm,
+    TrustAnchor,
     X509Certificate,
     X509CertificateInformation,
 )
@@ -215,6 +216,7 @@ __all__ = [
     "PkiSignatureAlgorithm",
     "X509CertificateInformation",
     "X509Certificate",
+    "TrustAnchor",
     # Protocol Cmd
     "ActiveUsersLimit",
     "anonymous_cmds",

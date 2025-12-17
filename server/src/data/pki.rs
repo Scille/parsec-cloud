@@ -212,3 +212,30 @@ impl X509CertificateInformation {
             .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
+
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct TrustAnchor(pub rustls_pki_types::TrustAnchor<'static>);
+
+#[pymethods]
+impl TrustAnchor {
+    #[classmethod]
+    fn try_from_pem(_cls: Bound<'_, PyType>, pem_data: &[u8]) -> PyResult<Self> {
+        use rustls_pki_types::{pem::PemObject, CertificateDer};
+
+        let cert_der = CertificateDer::from_pem_slice(pem_data)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+
+        let anchor = webpki::anchor_from_trusted_cert(&cert_der)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+
+        let anchor = anchor.to_owned();
+
+        Ok(Self(anchor))
+    }
+
+    #[getter]
+    fn subject<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
+        PyBytes::new(py, &self.0.subject)
+    }
+}

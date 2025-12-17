@@ -28,17 +28,23 @@ class Certificate:
     name: str
     cert_info: X509CertificateInformation
     der_certificate: bytes = field(repr=False)
+    certificate_path: Path
     der_key: bytes = field(repr=False)
+    key_path: Path
 
     @classmethod
     def from_partial(cls, partial: PartialCertificate) -> Certificate:
         assert partial.der_certificate is not None
+        assert partial.certificate_path is not None
         assert partial.der_key is not None
+        assert partial.key_path is not None
         cert_info = X509CertificateInformation.load_der(partial.der_certificate)
         return Certificate(
             name=partial.name,
             der_certificate=partial.der_certificate,
+            certificate_path=partial.certificate_path,
             der_key=partial.der_key,
+            key_path=partial.key_path,
             cert_info=cert_info,
         )
 
@@ -47,29 +53,33 @@ class Certificate:
 class PartialCertificate:
     name: str
     der_certificate: bytes | None = field(repr=False, default=None)
+    certificate_path: Path | None = None
     der_key: bytes | None = field(repr=False, default=None)
+    key_path: Path | None = None
 
     @classmethod
-    def load_pem_certificate(cls, name: str, pem_cert: bytes) -> PartialCertificate:
-        return PartialCertificate(name).with_pem_certificate(pem_cert)
+    def load_pem_certificate(cls, path: Path, name: str, pem_cert: bytes) -> PartialCertificate:
+        return PartialCertificate(name).with_pem_certificate(path, pem_cert)
 
-    def with_pem_certificate(self, pem_cert: bytes) -> PartialCertificate:
+    def with_pem_certificate(self, path: Path, pem_cert: bytes) -> PartialCertificate:
         cert = x509.load_pem_x509_certificate(pem_cert)
         self.der_certificate = cert.public_bytes(serialization.Encoding.DER)
+        self.certificate_path = path
 
         return self
 
     @classmethod
-    def load_pem_key(cls, name: str, pem_key: bytes) -> PartialCertificate:
-        return PartialCertificate(name).with_pem_key(pem_key)
+    def load_pem_key(cls, path: Path, name: str, pem_key: bytes) -> PartialCertificate:
+        return PartialCertificate(name).with_pem_key(path, pem_key)
 
-    def with_pem_key(self, pem_key: bytes) -> PartialCertificate:
+    def with_pem_key(self, path: Path, pem_key: bytes) -> PartialCertificate:
         key = serialization.load_pem_private_key(pem_key, password=None)
         self.der_key = key.private_bytes(
             encoding=serialization.Encoding.DER,
             format=serialization.PrivateFormat.PKCS8,
             encryption_algorithm=serialization.NoEncryption(),
         )
+        self.key_path = path
         return self
 
 
@@ -107,14 +117,14 @@ async def list_files(dir: Path) -> dict[str, Certificate]:
         match path.suffix:
             case ".key":
                 if name in store:
-                    store[name].with_pem_key(content)
+                    store[name].with_pem_key(path, content)
                 else:
-                    store[name] = PartialCertificate.load_pem_key(name, content)
+                    store[name] = PartialCertificate.load_pem_key(path, name, content)
             case ".crt":
                 if name in store:
-                    store[name].with_pem_certificate(content)
+                    store[name].with_pem_certificate(path, content)
                 else:
-                    store[name] = PartialCertificate.load_pem_certificate(name, content)
+                    store[name] = PartialCertificate.load_pem_certificate(path, name, content)
             case _:
                 print(f"ignoring {name}: unknown suffix {path.suffix} ({path=})")
                 pass

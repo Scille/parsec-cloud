@@ -8,7 +8,7 @@ from typing import Any
 
 import click
 
-from parsec._parsec import ActiveUsersLimit, EmailAddress, ParsecAddr, SecretKey
+from parsec._parsec import ActiveUsersLimit, EmailAddress, ParsecAddr, SecretKey, TrustAnchor
 from parsec._version import __version__ as server_version
 from parsec.asgi import app_factory, serve_parsec_asgi_app
 from parsec.backend import backend_factory
@@ -20,6 +20,7 @@ from parsec.cli.options import (
     logging_config_options,
     sentry_config_options,
 )
+from parsec.cli.pki import pki_server_options
 from parsec.cli.utils import (
     cli_exception_handler,
 )
@@ -295,6 +296,7 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
 """,
     default=None,
 )
+@pki_server_options
 @click.option(
     "--validation-email-rate-limit",
     default=(60, 3),
@@ -531,6 +533,7 @@ def run_cmd(
     organization_initial_active_users_limit: int | None,
     organization_initial_user_profile_outsider_allowed: bool,
     organization_initial_tos: dict[TosLocale, TosUrl] | None,
+    trusted_x509_root_dir: list[TrustAnchor],
     # (cooldown in seconds, max number of email per hour)
     validation_email_rate_limit: tuple[int, int],
     fake_account_password_algorithm_seed: SecretKey,
