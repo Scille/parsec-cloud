@@ -5,6 +5,11 @@ from __future__ import annotations
 from parsec._parsec_pyi.crypto import PublicKey, VerifyKey
 from parsec._parsec_pyi.enumerate import UserProfile
 from parsec._parsec_pyi.ids import DeviceID, DeviceLabel, HumanHandle, UserID
+from parsec._parsec_pyi.time import DateTime
+
+class PkiInvalidSignature(Exception): ...
+class PkiUntrusted(Exception): ...
+class PkiInvalidCertificateDER(ValueError): ...
 
 class PkiSignatureAlgorithm:
     RSASSA_PSS_SHA256: PkiSignatureAlgorithm
@@ -77,3 +82,14 @@ class TrustAnchor:
     def try_from_pem(cls, raw_pem: bytes) -> TrustAnchor: ...
     @property
     def subject(self) -> bytes: ...
+
+class SignedMessage:
+    def __init__(self, algo: PkiSignatureAlgorithm, signature: bytes, message: bytes) -> None: ...
+
+def load_submit_payload(
+    der_certificate: bytes,
+    intermediate_certs: list[bytes],
+    trusted_roots: list[TrustAnchor],
+    now: DateTime,
+    signed_message: SignedMessage,
+) -> PkiEnrollmentSubmitPayload: ...

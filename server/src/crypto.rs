@@ -25,7 +25,7 @@ pub(crate) fn add_mod(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<UntrustedPasswordAlgorithmArgon2id>()?;
     m.add_function(wrap_pyfunction!(generate_sas_code_nonce, m)?)?;
 
-    m.add("CryptoError", py.get_type::<CryptoError>())?;
+    crate::binding_utils::export_exception!(m, py, CryptoError);
 
     Ok(())
 }

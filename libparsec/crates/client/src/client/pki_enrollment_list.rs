@@ -63,14 +63,6 @@ impl From<LoadSubmitPayloadError> for InvalidityReason {
             LoadSubmitPayloadError::InvalidCertificateDer(..) => {
                 InvalidityReason::InvalidCertificateDer
             }
-            LoadSubmitPayloadError::InvalidRootCertificate(..) => {
-                InvalidityReason::InvalidRootCertificate
-            }
-            LoadSubmitPayloadError::CannotOpenStore(..) => InvalidityReason::CannotOpenStore,
-            LoadSubmitPayloadError::NotFound => InvalidityReason::NotFound,
-            LoadSubmitPayloadError::CannotGetCertificateInfo(..) => {
-                InvalidityReason::CannotGetCertificateInfo
-            }
             LoadSubmitPayloadError::DateTimeOutOfRange(..) => InvalidityReason::DateTimeOutOfRange,
             LoadSubmitPayloadError::Untrusted(..) => InvalidityReason::Untrusted,
             LoadSubmitPayloadError::InvalidSignature => InvalidityReason::InvalidSignature,
@@ -156,7 +148,9 @@ pub async fn verify_untrusted_items(
                     &req.der_x509_certificate,
                     &message,
                     &pki_root_certs,
-                    &req.intermediate_der_x509_certificates,
+                    req.intermediate_der_x509_certificates
+                        .iter()
+                        .map(Bytes::as_ref),
                     now,
                 ) {
                     Ok(payload) => payload,

@@ -98,10 +98,15 @@ from parsec._parsec_pyi.misc import ApiVersion, ValidationCode
 from parsec._parsec_pyi.pki import (
     PkiEnrollmentAnswerPayload,
     PkiEnrollmentSubmitPayload,
+    PkiInvalidCertificateDER,
+    PkiInvalidSignature,
     PkiSignatureAlgorithm,
+    PkiUntrusted,
+    SignedMessage,
     TrustAnchor,
     X509Certificate,
     X509CertificateInformation,
+    load_submit_payload,
 )
 from parsec._parsec_pyi.protocol import (
     ActiveUsersLimit,
@@ -217,6 +222,11 @@ __all__ = [
     "X509CertificateInformation",
     "X509Certificate",
     "TrustAnchor",
+    "load_submit_payload",
+    "PkiUntrusted",
+    "PkiInvalidCertificateDER",
+    "PkiInvalidSignature",
+    "SignedMessage",
     # Protocol Cmd
     "ActiveUsersLimit",
     "anonymous_cmds",
