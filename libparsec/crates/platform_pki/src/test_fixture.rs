@@ -84,10 +84,7 @@ mod platform_implementation {
 // Everything else does provide a filesystem, so using it.
 #[cfg(not(target_arch = "wasm32"))]
 mod platform_implementation {
-    use std::{
-        os::unix::ffi::OsStrExt,
-        path::{Path, PathBuf},
-    };
+    use std::path::{Path, PathBuf};
 
     use super::*;
     use libparsec_tests_lite::rstest;
@@ -142,19 +139,20 @@ mod platform_implementation {
             }
 
             let path = entry.path();
-            let name = String::from_utf8_lossy(path.file_stem().expect("No file name").as_bytes())
-                .to_string();
+            let name =
+                String::from_utf8_lossy(path.file_stem().expect("No file name").as_encoded_bytes())
+                    .to_string();
             let suffix = path.extension();
             let content = std::fs::read(&path).expect("Cannot read entry");
 
-            match suffix.map(|v| v.as_bytes()) {
-                Some(b"key") => {
+            match suffix.and_then(|s| s.to_str()) {
+                Some("key") => {
                     store
                         .entry(name)
                         .or_insert_with_key(|k| PartialCertificate::new(k.to_string()))
                         .with_pem_key(content);
                 }
-                Some(b"crt") => {
+                Some("crt") => {
                     store
                         .entry(name)
                         .or_insert_with_key(|k| PartialCertificate::new(k.to_string()))
