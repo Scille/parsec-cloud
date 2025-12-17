@@ -3180,6 +3180,8 @@ dependencies = [
  "pyo3",
  "regex",
  "rmp-serde",
+ "rustls-pki-types",
+ "rustls-webpki",
  "serde",
  "sha2",
  "tokio",
