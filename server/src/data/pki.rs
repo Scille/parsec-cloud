@@ -8,6 +8,7 @@ use pyo3::{
     types::{PyBytes, PyBytesMethods, PyString, PyType},
     Bound, PyObject, PyResult, Python,
 };
+use rustls_pki_types::CertificateDer;
 
 use crate::{
     crypto::{PublicKey, VerifyKey},
@@ -230,6 +231,19 @@ impl X509CertificateInformation {
 #[derive(Clone)]
 pub(crate) struct TrustAnchor(pub rustls_pki_types::TrustAnchor<'static>);
 
+impl TryFrom<&'_ rustls_pki_types::CertificateDer<'_>> for TrustAnchor {
+    type Error = pyo3::PyErr;
+
+    fn try_from(value: &'_ rustls_pki_types::CertificateDer<'_>) -> Result<Self, Self::Error> {
+        let anchor = webpki::anchor_from_trusted_cert(value)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+
+        let anchor = anchor.to_owned();
+
+        Ok(Self(anchor))
+    }
+}
+
 #[pymethods]
 impl TrustAnchor {
     #[classmethod]
@@ -239,12 +253,13 @@ impl TrustAnchor {
         let cert_der = CertificateDer::from_pem_slice(pem_data)
             .map_err(|e| PkiInvalidCertificateDER::new_err(e.to_string()))?;
 
-        let anchor = webpki::anchor_from_trusted_cert(&cert_der)
-            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+        Self::try_from(&cert_der)
+    }
 
-        let anchor = anchor.to_owned();
-
-        Ok(Self(anchor))
+    #[classmethod]
+    fn from_der(_cls: Bound<'_, PyType>, der_data: &[u8]) -> PyResult<Self> {
+        let cert_der = CertificateDer::from_slice(der_data);
+        Self::try_from(&cert_der)
     }
 
     #[getter]

@@ -11,11 +11,15 @@ from parsec._parsec import (
     OrganizationID,
     PkiEnrollmentAnswerPayload,
     PKIEnrollmentID,
-    PkiEnrollmentSubmitPayload,
+    PkiInvalidCertificateDER,
+    PkiInvalidSignature,
     PkiSignatureAlgorithm,
+    PkiUntrusted,
+    SignedMessage,
     UserCertificate,
     UserProfile,
     VerifyKey,
+    load_submit_payload,
 )
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.events import EventBus
@@ -48,12 +52,14 @@ from parsec.components.pki import (
     get_sha256_fingerprint_from_cert,
     pki_enrollment_accept_validate,
 )
+from parsec.config import BackendConfig
 from parsec.events import EventCommonCertificate, EventPkiEnrollment
 from parsec.locks import AdvisoryLock
 
 
 class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
-    def __init__(self, data: MemoryDatamodel, event_bus: EventBus) -> None:
+    def __init__(self, config: BackendConfig, data: MemoryDatamodel, event_bus: EventBus) -> None:
+        super().__init__(config)
         self._data = data
         self._event_bus = event_bus
 
@@ -82,7 +88,21 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         # 2) Validate payload
 
         try:
-            PkiEnrollmentSubmitPayload.load(submit_payload)
+            load_submit_payload(
+                submitter_trustchain[0].content,
+                list(map(lambda v: v.content, submitter_trustchain[1:])),
+                self._config.x509_trust_anchor,
+                now,
+                SignedMessage(
+                    submit_payload_signature_algorithm, submit_payload_signature, submit_payload
+                ),
+            )
+        except PkiUntrusted:
+            return PkiEnrollmentSubmitBadOutcome.INVALID_X509_TRUSTCHAIN
+        except PkiInvalidCertificateDER:
+            return PkiEnrollmentSubmitBadOutcome.INVALID_DER_X509_CERTIFICATE
+        except PkiInvalidSignature:
+            return PkiEnrollmentSubmitBadOutcome.INVALID_PAYLOAD_SIGNATURE
         except ValueError:
             return PkiEnrollmentSubmitBadOutcome.INVALID_SUBMIT_PAYLOAD
         submitter_email = submitter_human_handle.email

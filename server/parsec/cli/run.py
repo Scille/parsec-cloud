@@ -638,6 +638,7 @@ def run_cmd(
             openbao_config=openbao_config,
             organization_bootstrap_webhook_url=organization_bootstrap_webhook,
             organization_spontaneous_bootstrap=spontaneous_organization_bootstrap,
+            x509_trust_anchor=trusted_x509_root_dir,
             organization_initial_active_users_limit=ActiveUsersLimit.limited_to(
                 organization_initial_active_users_limit
             )
