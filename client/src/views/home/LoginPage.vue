@@ -136,6 +136,7 @@ async function onLoginSSOClick(provider: OpenBaoAuthConfigTag): Promise<void> {
     provInfo.tag,
     provInfo.mountPath,
     serverConfigResult.value.openbao.secret.mountPath,
+    serverConfigResult.value.openbao.transitMountPath,
   );
 
   if (!connResult.ok) {
