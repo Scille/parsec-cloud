@@ -118,6 +118,13 @@
                                 "type": "OpenBaoSecretConfig"
                             },
                             {
+                                // Transit is used for signing/verification
+                                // see https://openbao.org/api-docs/secret/transit
+                                "introduced_in": "3.8",
+                                "name": "transit_mount_path",
+                                "type": "NonRequiredOption<String>"
+                            },
+                            {
                                 "name": "auths",
                                 "type": "List<OpenBaoAuthConfig>"
                             }
@@ -134,7 +141,7 @@
                         "discriminant_value": "KV2",
                         "fields": [
                             {
-                                // Basically secret are going to be fetched from
+                                // Basically secrets are going to be fetched from
                                 // `<openbao_server_url>/<openbao_secret_mount_path>/data/<secret_path>`
                                 // see https://openbao.org/api-docs/secret/kv/kv-v2/#read-secret-version
                                 "name": "mount_path",

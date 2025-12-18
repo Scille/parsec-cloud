@@ -57,6 +57,8 @@ pub fn rep_ok() {
             }
         ),
         (
+            // Legacy format from Parsec < 3.8, missing the `transit_mount_path` field
+            //
             // Generated from Parsec 3.5.3-a.0+dev
             // Content:
             //   status: 'ok'
@@ -89,6 +91,56 @@ pub fn rep_ok() {
                     secret: anonymous_server_cmds::server_config::OpenBaoSecretConfig::KV2 {
                         mount_path: "secrets".to_string(),
                     },
+                    transit_mount_path: None,
+                    auths: vec![
+                        anonymous_server_cmds::server_config::OpenBaoAuthConfig {
+                            id: "HEXAGONE".to_string(),
+                            mount_path: "auth/hexagone".to_string(),
+                        },
+                        anonymous_server_cmds::server_config::OpenBaoAuthConfig {
+                            id: "PRO_CONNECT".to_string(),
+                            mount_path: "auth/pro_connect".to_string(),
+                        }
+                    ]
+                },
+            }
+        ),
+        (
+            // Generated from Parsec 3.7.2-a.0+dev
+            // Content:
+            //   status: 'ok'
+            //   account: 'ENABLED_WITH_VAULT'
+            //   openbao: {
+            //     type: 'ENABLED',
+            //     auths: [
+            //       { id: 'HEXAGONE', mount_path: 'auth/hexagone', },
+            //       { id: 'PRO_CONNECT', mount_path: 'auth/pro_connect', },
+            //     ],
+            //     secret: { type: 'KV2', mount_path: 'secrets', },
+            //     server_url: 'https://openbao.parsec.invalid',
+            //     transit_mount_path: 'transit',
+            //   }
+            //   organization_bootstrap: 'SPONTANEOUS'
+            hex!(
+                "84a6737461747573a26f6ba76163636f756e74b2454e41424c45445f574954485f5641"
+                "554c54a76f70656e62616f85a474797065a7454e41424c4544a561757468739282a269"
+                "64a848455841474f4e45aa6d6f756e745f70617468ad617574682f68657861676f6e65"
+                "82a26964ab50524f5f434f4e4e454354aa6d6f756e745f70617468b0617574682f7072"
+                "6f5f636f6e6e656374a673656372657482a474797065a34b5632aa6d6f756e745f7061"
+                "7468a773656372657473aa7365727665725f75726cbe68747470733a2f2f6f70656e62"
+                "616f2e7061727365632e696e76616c6964b27472616e7369745f6d6f756e745f706174"
+                "68a77472616e736974b66f7267616e697a6174696f6e5f626f6f747374726170ab5350"
+                "4f4e54414e454f5553"
+            ).as_ref(),
+            anonymous_server_cmds::server_config::Rep::Ok {
+                account: anonymous_server_cmds::server_config::AccountConfig::EnabledWithVault,
+                organization_bootstrap: anonymous_server_cmds::server_config::OrganizationBootstrapConfig::Spontaneous,
+                openbao: anonymous_server_cmds::server_config::OpenBaoConfig::Enabled {
+                    server_url: "https://openbao.parsec.invalid".to_string(),
+                    secret: anonymous_server_cmds::server_config::OpenBaoSecretConfig::KV2 {
+                        mount_path: "secrets".to_string(),
+                    },
+                    transit_mount_path: Some("transit".to_string()),
                     auths: vec![
                         anonymous_server_cmds::server_config::OpenBaoAuthConfig {
                             id: "HEXAGONE".to_string(),

@@ -35,7 +35,11 @@ class OpenBaoConfigDisabled(OpenBaoConfig):
 
 class OpenBaoConfigEnabled(OpenBaoConfig):
     def __init__(
-        self, server_url: str, secret: OpenBaoSecretConfig, auths: list[OpenBaoAuthConfig]
+        self,
+        server_url: str,
+        secret: OpenBaoSecretConfig,
+        transit_mount_path: str | None,
+        auths: list[OpenBaoAuthConfig],
     ) -> None: ...
     @property
     def auths(self) -> list[OpenBaoAuthConfig]: ...
@@ -43,6 +47,8 @@ class OpenBaoConfigEnabled(OpenBaoConfig):
     def secret(self) -> OpenBaoSecretConfig: ...
     @property
     def server_url(self) -> str: ...
+    @property
+    def transit_mount_path(self) -> str | None: ...
 
 class OpenBaoSecretConfig:
     pass
