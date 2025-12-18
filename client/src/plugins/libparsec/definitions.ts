@@ -310,6 +310,7 @@ export interface NewInvitationInfo {
 export interface OpenBaoConfig {
     serverUrl: string
     secret: OpenBaoSecretConfig
+    transitMountPath: string
     auths: Array<OpenBaoAuthConfig>
 }
 
@@ -2956,6 +2957,7 @@ export interface DeviceAccessStrategyOpenBao {
     keyFile: Path
     openbaoServerUrl: string
     openbaoSecretMountPath: string
+    openbaoTransitMountPath: string
     openbaoEntityId: string
     openbaoAuthToken: string
 }
@@ -2995,6 +2997,7 @@ export interface DeviceSaveStrategyOpenBao {
     tag: DeviceSaveStrategyTag.OpenBao
     openbaoServerUrl: string
     openbaoSecretMountPath: string
+    openbaoTransitMountPath: string
     openbaoEntityId: string
     openbaoAuthToken: string
     openbaoPreferredAuthId: string
