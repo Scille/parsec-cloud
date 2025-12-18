@@ -887,7 +887,45 @@ Notes:
 - This event is only fired for users with ADMIN profile, since only them can interact
   with the async enrollments.
 
-### 4 - Data: Local pending enrollment
+### 3.7 - Update `server_config`: Provide OpenBao's transit mount path
+
+Add new `transit_mount_path` in the OpenBao config:
+
+```json5
+[
+    {
+        ...
+        "cmd": "server_config",
+        ...
+        "nested_types": [
+            {
+                "name": "OpenBaoConfig",
+                "discriminant_field": "type",
+                "variants": [
+                    ...
+                    {
+                        "name": "Enabled",
+                        "discriminant_value": "ENABLED",
+                        "fields": [
+                            ...
+                            {
+                                // Transit is used for signing/verification
+                                // see https://openbao.org/api-docs/secret/transit
+                                "introduced_in": "3.8",
+                                "name": "transit_mount_path",
+                                "type": "NonRequiredOption<String>"
+                            }
+                        ]
+                    }
+                ]
+            },
+            ...
+        ]
+    }
+]
+```
+
+## 4 - Data: Local pending enrollment
 
 ```json5
 {
