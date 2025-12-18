@@ -57,6 +57,7 @@ class DeviceSaveStrategy(Variant):
     class OpenBao:
         openbao_server_url: str
         openbao_secret_mount_path: str
+        openbao_transit_mount_path: str
         openbao_entity_id: str
         openbao_auth_token: str
         openbao_preferred_auth_id: str
@@ -84,6 +85,7 @@ class DeviceAccessStrategy(Variant):
         key_file: Path
         openbao_server_url: str
         openbao_secret_mount_path: str
+        openbao_transit_mount_path: str
         openbao_entity_id: str
         openbao_auth_token: str
 

@@ -215,6 +215,7 @@ mod strategy {
         OpenBao {
             openbao_server_url: String,
             openbao_secret_mount_path: String,
+            openbao_transit_mount_path: String,
             openbao_entity_id: String,
             openbao_auth_token: String,
             openbao_preferred_auth_id: String,
@@ -257,6 +258,7 @@ mod strategy {
                 DeviceSaveStrategy::OpenBao {
                     openbao_server_url,
                     openbao_secret_mount_path,
+                    openbao_transit_mount_path,
                     openbao_entity_id,
                     openbao_auth_token,
                     openbao_preferred_auth_id,
@@ -265,8 +267,6 @@ mod strategy {
                         libparsec_client_connection::ProxyConfig::default(),
                     )?;
 
-                    // TODO: Add `openbao_transit_mount_path` to `DeviceAccessStrategy::OpenBao`
-                    let openbao_transit_mount_path = "transit".to_string();
                     let cmds = Arc::new(OpenBaoCmds::new(
                         client,
                         openbao_server_url,
@@ -315,6 +315,7 @@ mod strategy {
             key_file: PathBuf,
             openbao_server_url: String,
             openbao_secret_mount_path: String,
+            openbao_transit_mount_path: String,
             openbao_entity_id: String,
             openbao_auth_token: String,
         },
@@ -362,12 +363,11 @@ mod strategy {
                     key_file,
                     openbao_server_url,
                     openbao_secret_mount_path,
+                    openbao_transit_mount_path,
                     openbao_entity_id,
                     openbao_auth_token,
                 } => {
                     let client = libparsec_client_connection::build_client()?;
-                    // TODO: Add `openbao_transit_mount_path` to `DeviceAccessStrategy::OpenBao`
-                    let openbao_transit_mount_path = "transit".to_string();
                     let cmds = Arc::new(OpenBaoCmds::new(
                         client,
                         openbao_server_url,

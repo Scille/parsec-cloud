@@ -95,6 +95,7 @@ class OpenBaoAuthConfig(Variant):
 class OpenBaoConfig(Structure):
     server_url: str
     secret: OpenBaoSecretConfig
+    transit_mount_path: str
     auths: list[OpenBaoAuthConfig]
 
 
