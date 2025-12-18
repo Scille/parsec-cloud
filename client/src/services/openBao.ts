@@ -26,6 +26,7 @@ export interface OpenBaoConnectionInfo {
   server: string;
   provider: OpenBaoAuthConfigTag;
   secretMountpoint: string;
+  transitMountpoint: string;
 }
 
 type OpenBaoResult<T> = { ok: true; value: T } | { ok: false; error: OpenBaoError };
@@ -38,8 +39,17 @@ export class OpenBaoClient {
   _provider: OpenBaoAuthConfigTag;
   _mountpoint: string;
   _secretMountpoint: string;
+  _transitMountpoint: string;
 
-  constructor(token: string, id: string, server: string, provider: OpenBaoAuthConfigTag, mountpoint: string, secretMountpoint: string) {
+  constructor(
+    token: string,
+    id: string,
+    server: string,
+    provider: OpenBaoAuthConfigTag,
+    mountpoint: string,
+    secretMountpoint: string,
+    transitMountpoint: string,
+  ) {
     this._server = server;
     this._client = axios.create({
       baseURL: this._server,
@@ -51,6 +61,7 @@ export class OpenBaoClient {
     this._provider = provider;
     this._mountpoint = mountpoint;
     this._secretMountpoint = secretMountpoint;
+    this._transitMountpoint = transitMountpoint;
   }
 
   getConnectionInfo(): OpenBaoConnectionInfo {
@@ -59,6 +70,7 @@ export class OpenBaoClient {
       token: this._token,
       server: this._server,
       secretMountpoint: this._secretMountpoint,
+      transitMountpoint: this._transitMountpoint,
       provider: this._provider,
     };
   }
@@ -177,6 +189,7 @@ async function openBaoConnect(
   provider: OpenBaoAuthConfigTag,
   mountpoint: string,
   secretMountpoint: string,
+  transitMountpoint: string,
 ): Promise<OpenBaoResult<OpenBaoClient>> {
   const connResult = await getConnectionUrl(openBaoServer, mountpoint);
   if (!connResult.ok) {
@@ -229,7 +242,15 @@ async function openBaoConnect(
     if (!result.ok) {
       return result;
     }
-    const client = new OpenBaoClient(result.value.token, result.value.id, openBaoServer, provider, mountpoint, secretMountpoint);
+    const client = new OpenBaoClient(
+      result.value.token,
+      result.value.id,
+      openBaoServer,
+      provider,
+      mountpoint,
+      secretMountpoint,
+      transitMountpoint,
+    );
     return { ok: true, value: client };
   } catch (err: any) {
     return { ok: false, error: { type: OpenBaoErrorType.InitError, detail: err.toString() } };

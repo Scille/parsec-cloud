@@ -97,6 +97,7 @@ pub enum OpenBaoAuthConfig {
 pub struct OpenBaoConfig {
     pub server_url: String,
     pub secret: OpenBaoSecretConfig,
+    pub transit_mount_path: String,
     pub auths: Vec<OpenBaoAuthConfig>,
 }
 
@@ -126,10 +127,15 @@ pub async fn get_server_config(
             organization_bootstrap,
             openbao: match openbao {
                 libparsec_protocol::anonymous_server_cmds::v5::server_config::OpenBaoConfig::Disabled => None,
-                libparsec_protocol::anonymous_server_cmds::v5::server_config::OpenBaoConfig::Enabled { auths, secret, server_url } => Some(
+                libparsec_protocol::anonymous_server_cmds::v5::server_config::OpenBaoConfig::Enabled {
+                    auths, secret, transit_mount_path, server_url
+                    } => Some(
                     OpenBaoConfig {
                         server_url,
                         secret,
+                        // This field has been introduced in Parsec 3.8, for older server version
+                        // we just assume the mount path is `transit`.
+                        transit_mount_path: transit_mount_path.unwrap_or("transit".to_string()),
                         auths: auths
                             .into_iter()
                             .filter_map(|auth| match OpenBaoAuthType::try_from(auth.id.as_ref()) {

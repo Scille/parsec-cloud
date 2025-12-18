@@ -277,6 +277,7 @@ export const AccessStrategy = {
       keyFile: device.keyFilePath,
       openbaoServerUrl: connInfo.server,
       openbaoSecretMountPath: connInfo.secretMountpoint,
+      openbaoTransitMountPath: connInfo.transitMountpoint,
       openbaoEntityId: connInfo.userId,
       openbaoAuthToken: connInfo.token,
     };
@@ -310,6 +311,7 @@ export const AccessStrategy = {
         keyFile: device.keyFilePath,
         openbaoServerUrl: saveStrategy.openbaoServerUrl,
         openbaoSecretMountPath: saveStrategy.openbaoSecretMountPath,
+        openbaoTransitMountPath: saveStrategy.openbaoTransitMountPath,
         openbaoEntityId: saveStrategy.openbaoEntityId,
         openbaoAuthToken: saveStrategy.openbaoAuthToken,
       };
@@ -347,6 +349,7 @@ export const SaveStrategy = {
       tag: DeviceSaveStrategyTag.OpenBao,
       openbaoServerUrl: connInfo.server,
       openbaoSecretMountPath: connInfo.secretMountpoint,
+      openbaoTransitMountPath: connInfo.transitMountpoint,
       openbaoEntityId: connInfo.userId,
       openbaoAuthToken: connInfo.token,
       openbaoPreferredAuthId: connInfo.provider,

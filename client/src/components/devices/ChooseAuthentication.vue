@@ -310,6 +310,7 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
       auth.tag,
       auth.mountPath,
       props.serverConfig.openbao.secret.mountPath,
+      props.serverConfig.openbao.transitMountPath,
     );
     if (!result.ok) {
       if (result.error.type === OpenBaoErrorType.PopupFailed) {
