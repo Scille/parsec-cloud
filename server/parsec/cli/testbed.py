@@ -986,6 +986,7 @@ async def testbed_backend_factory(
         openbao_config=OpenBaoConfig(
             server_url=server_addr.to_http_url("/testbed/mock/openbao"),
             secret_mount_path="secret",
+            transit_mount_path="transit",
             auths=[
                 OpenBaoAuthConfig(
                     id=OpenBaoAuthType.HEXAGONE,

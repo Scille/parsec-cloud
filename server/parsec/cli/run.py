@@ -214,9 +214,21 @@ according to its own threat model.
     envvar="PARSEC_OPENBAO_SECRET_MOUNT_PATH",
     metavar="MOUNT_PATH",
     show_envvar=True,
-    help="""Configure the mount path of the KV2 secret module used for storage
+    default="secret",
+    help="""Configure the mount path of the OpenBao KV2 secret module used for storage
 
 (see: https://openbao.org/api-docs/secret/kv/kv-v2/)
+""",
+)
+@click.option(
+    "--openbao-transit-mount-path",
+    envvar="PARSEC_OPENBAO_TRANSIT_MOUNT_PATH",
+    metavar="MOUNT_PATH",
+    show_envvar=True,
+    default="transit",
+    help="""Configure the mount path of the OpenBao transit module
+
+(see: https://openbao.org/api-docs/secret/transit/)
 """,
 )
 @click.option(
@@ -525,7 +537,8 @@ def run_cmd(
     administration_token: str,
     account_config: AccountConfig,
     openbao_server_url: str | None,
-    openbao_secret_mount_path: str | None,
+    openbao_secret_mount_path: str,
+    openbao_transit_mount_path: str,
     openbao_auth_pro_connect: str | None,
     openbao_auth_hexagone: str | None,
     spontaneous_organization_bootstrap: bool,
@@ -592,11 +605,6 @@ def run_cmd(
         if openbao_server_url is None:
             openbao_config = None
         else:
-            if openbao_secret_mount_path is None:
-                raise ValueError(
-                    "--openbao-secret-mount-path is required when --openbao-server-url is provided"
-                )
-
             auths = []
             if openbao_auth_hexagone is not None:
                 auths.append(
@@ -621,6 +629,7 @@ def run_cmd(
             openbao_config = OpenBaoConfig(
                 server_url=openbao_server_url,
                 secret_mount_path=openbao_secret_mount_path,
+                transit_mount_path=openbao_transit_mount_path,
                 auths=auths,
             )
 
