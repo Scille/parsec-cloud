@@ -761,6 +761,114 @@ fn struct_account_organizations_revoked_user_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// AsyncEnrollmentUntrusted
+
+#[allow(dead_code)]
+fn struct_async_enrollment_untrusted_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::AsyncEnrollmentUntrusted> {
+    let enrollment_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "enrollmentId")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::AsyncEnrollmentID, _> {
+                libparsec::AsyncEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let submitted_on = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "submittedOn")?;
+        {
+            let v = js_val.value(cx);
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            match custom_from_rs_f64(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let untrusted_requested_device_label = {
+        let js_val: Handle<JsString> = obj.get(cx, "untrustedRequestedDeviceLabel")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let untrusted_requested_human_handle = {
+        let js_val: Handle<JsObject> = obj.get(cx, "untrustedRequestedHumanHandle")?;
+        struct_human_handle_js_to_rs(cx, js_val)?
+    };
+    let identity_system = {
+        let js_val: Handle<JsObject> = obj.get(cx, "identitySystem")?;
+        variant_async_enrollment_identity_system_js_to_rs(cx, js_val)?
+    };
+    Ok(libparsec::AsyncEnrollmentUntrusted {
+        enrollment_id,
+        submitted_on,
+        untrusted_requested_device_label,
+        untrusted_requested_human_handle,
+        identity_system,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_async_enrollment_untrusted_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AsyncEnrollmentUntrusted,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_enrollment_id = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::AsyncEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.enrollment_id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err.to_string()),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "enrollmentId", js_enrollment_id)?;
+    let js_submitted_on = JsNumber::new(cx, {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        match custom_to_rs_f64(rs_obj.submitted_on) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    });
+    js_obj.set(cx, "submittedOn", js_submitted_on)?;
+    let js_untrusted_requested_device_label =
+        JsString::try_new(cx, rs_obj.untrusted_requested_device_label).or_throw(cx)?;
+    js_obj.set(
+        cx,
+        "untrustedRequestedDeviceLabel",
+        js_untrusted_requested_device_label,
+    )?;
+    let js_untrusted_requested_human_handle =
+        struct_human_handle_rs_to_js(cx, rs_obj.untrusted_requested_human_handle)?;
+    js_obj.set(
+        cx,
+        "untrustedRequestedHumanHandle",
+        js_untrusted_requested_human_handle,
+    )?;
+    let js_identity_system =
+        variant_async_enrollment_identity_system_rs_to_js(cx, rs_obj.identity_system)?;
+    js_obj.set(cx, "identitySystem", js_identity_system)?;
+    Ok(js_obj)
+}
+
 // AuthMethodInfo
 
 #[allow(dead_code)]
@@ -1057,6 +1165,172 @@ fn struct_available_device_rs_to_js<'a>(
     js_obj.set(cx, "deviceLabel", js_device_label)?;
     let js_ty = variant_available_device_type_rs_to_js(cx, rs_obj.ty)?;
     js_obj.set(cx, "ty", js_ty)?;
+    Ok(js_obj)
+}
+
+// AvailablePendingAsyncEnrollment
+
+#[allow(dead_code)]
+fn struct_available_pending_async_enrollment_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::AvailablePendingAsyncEnrollment> {
+    let file_path = {
+        let js_val: Handle<JsString> = obj.get(cx, "filePath")?;
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let submitted_on = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "submittedOn")?;
+        {
+            let v = js_val.value(cx);
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            match custom_from_rs_f64(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let server_addr = {
+        let js_val: Handle<JsString> = obj.get(cx, "serverAddr")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let organization_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let enrollment_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "enrollmentId")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::AsyncEnrollmentID, _> {
+                libparsec::AsyncEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let requested_device_label = {
+        let js_val: Handle<JsString> = obj.get(cx, "requestedDeviceLabel")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let requested_human_handle = {
+        let js_val: Handle<JsObject> = obj.get(cx, "requestedHumanHandle")?;
+        struct_human_handle_js_to_rs(cx, js_val)?
+    };
+    let identity_system = {
+        let js_val: Handle<JsObject> = obj.get(cx, "identitySystem")?;
+        variant_available_pending_async_enrollment_identity_system_js_to_rs(cx, js_val)?
+    };
+    Ok(libparsec::AvailablePendingAsyncEnrollment {
+        file_path,
+        submitted_on,
+        server_addr,
+        organization_id,
+        enrollment_id,
+        requested_device_label,
+        requested_human_handle,
+        identity_system,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_available_pending_async_enrollment_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AvailablePendingAsyncEnrollment,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_file_path = JsString::try_new(cx, {
+        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+            path.into_os_string()
+                .into_string()
+                .map_err(|_| "Path contains non-utf8 characters")
+        };
+        match custom_to_rs_string(rs_obj.file_path) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err.to_string()),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "filePath", js_file_path)?;
+    let js_submitted_on = JsNumber::new(cx, {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        match custom_to_rs_f64(rs_obj.submitted_on) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    });
+    js_obj.set(cx, "submittedOn", js_submitted_on)?;
+    let js_server_addr = JsString::try_new(cx, {
+        let custom_to_rs_string = |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
+            Ok(addr.to_url().into())
+        };
+        match custom_to_rs_string(rs_obj.server_addr) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err.to_string()),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "serverAddr", js_server_addr)?;
+    let js_organization_id = JsString::try_new(cx, rs_obj.organization_id).or_throw(cx)?;
+    js_obj.set(cx, "organizationId", js_organization_id)?;
+    let js_enrollment_id = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::AsyncEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.enrollment_id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err.to_string()),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "enrollmentId", js_enrollment_id)?;
+    let js_requested_device_label =
+        JsString::try_new(cx, rs_obj.requested_device_label).or_throw(cx)?;
+    js_obj.set(cx, "requestedDeviceLabel", js_requested_device_label)?;
+    let js_requested_human_handle =
+        struct_human_handle_rs_to_js(cx, rs_obj.requested_human_handle)?;
+    js_obj.set(cx, "requestedHumanHandle", js_requested_human_handle)?;
+    let js_identity_system = variant_available_pending_async_enrollment_identity_system_rs_to_js(
+        cx,
+        rs_obj.identity_system,
+    )?;
+    js_obj.set(cx, "identitySystem", js_identity_system)?;
     Ok(js_obj)
 }
 
@@ -5197,6 +5471,108 @@ fn struct_x509_windows_cng_uri_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// AcceptFinalizeAsyncEnrollmentIdentityStrategy
+
+#[allow(dead_code)]
+fn variant_accept_finalize_async_enrollment_identity_strategy_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "AcceptFinalizeAsyncEnrollmentIdentityStrategyOpenBao" => {
+            let openbao_server_url = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoServerUrl")?;
+                js_val.value(cx)
+            };
+            let openbao_transit_mount_path = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoTransitMountPath")?;
+                js_val.value(cx)
+            };
+            let openbao_secret_mount_path = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoSecretMountPath")?;
+                js_val.value(cx)
+            };
+            let openbao_entity_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoEntityId")?;
+                js_val.value(cx)
+            };
+            let openbao_auth_token = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoAuthToken")?;
+                js_val.value(cx)
+            };
+            Ok(
+                libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy::OpenBao {
+                    openbao_server_url,
+                    openbao_transit_mount_path,
+                    openbao_secret_mount_path,
+                    openbao_entity_id,
+                    openbao_auth_token,
+                },
+            )
+        }
+        "AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI" => {
+            let certificate_reference = {
+                let js_val: Handle<JsObject> = obj.get(cx, "certificateReference")?;
+                struct_x509_certificate_reference_js_to_rs(cx, js_val)?
+            };
+            Ok(
+                libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy::PKI {
+                    certificate_reference,
+                },
+            )
+        }
+        _ => cx.throw_type_error("Object is not a AcceptFinalizeAsyncEnrollmentIdentityStrategy"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_accept_finalize_async_enrollment_identity_strategy_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy::OpenBao {
+            openbao_server_url,
+            openbao_transit_mount_path,
+            openbao_secret_mount_path,
+            openbao_entity_id,
+            openbao_auth_token,
+            ..
+        } => {
+            let js_tag =
+                JsString::try_new(cx, "AcceptFinalizeAsyncEnrollmentIdentityStrategyOpenBao")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_openbao_server_url = JsString::try_new(cx, openbao_server_url).or_throw(cx)?;
+            js_obj.set(cx, "openbaoServerUrl", js_openbao_server_url)?;
+            let js_openbao_transit_mount_path =
+                JsString::try_new(cx, openbao_transit_mount_path).or_throw(cx)?;
+            js_obj.set(cx, "openbaoTransitMountPath", js_openbao_transit_mount_path)?;
+            let js_openbao_secret_mount_path =
+                JsString::try_new(cx, openbao_secret_mount_path).or_throw(cx)?;
+            js_obj.set(cx, "openbaoSecretMountPath", js_openbao_secret_mount_path)?;
+            let js_openbao_entity_id = JsString::try_new(cx, openbao_entity_id).or_throw(cx)?;
+            js_obj.set(cx, "openbaoEntityId", js_openbao_entity_id)?;
+            let js_openbao_auth_token = JsString::try_new(cx, openbao_auth_token).or_throw(cx)?;
+            js_obj.set(cx, "openbaoAuthToken", js_openbao_auth_token)?;
+        }
+        libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy::PKI {
+            certificate_reference,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_certificate_reference =
+                struct_x509_certificate_reference_rs_to_js(cx, certificate_reference)?;
+            js_obj.set(cx, "certificateReference", js_certificate_reference)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // AccountAuthMethodStrategy
 
 #[allow(dead_code)]
@@ -6490,6 +6866,76 @@ fn variant_archive_device_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// AsyncEnrollmentIdentitySystem
+
+#[allow(dead_code)]
+fn variant_async_enrollment_identity_system_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::AsyncEnrollmentIdentitySystem> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "AsyncEnrollmentIdentitySystemOpenBao" => {
+            Ok(libparsec::AsyncEnrollmentIdentitySystem::OpenBao)
+        }
+        "AsyncEnrollmentIdentitySystemPKI" => {
+            let x509_root_certificate_common_name = {
+                let js_val: Handle<JsString> = obj.get(cx, "x509RootCertificateCommonName")?;
+                js_val.value(cx)
+            };
+            let x509_root_certificate_subject = {
+                let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "x509RootCertificateSubject")?;
+                js_val.as_slice(cx).to_vec()
+            };
+            Ok(libparsec::AsyncEnrollmentIdentitySystem::PKI {
+                x509_root_certificate_common_name,
+                x509_root_certificate_subject,
+            })
+        }
+        _ => cx.throw_type_error("Object is not a AsyncEnrollmentIdentitySystem"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_async_enrollment_identity_system_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AsyncEnrollmentIdentitySystem,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::AsyncEnrollmentIdentitySystem::OpenBao => {
+            let js_tag =
+                JsString::try_new(cx, "AsyncEnrollmentIdentitySystemOpenBao").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AsyncEnrollmentIdentitySystem::PKI {
+            x509_root_certificate_common_name,
+            x509_root_certificate_subject,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "AsyncEnrollmentIdentitySystemPKI").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_x509_root_certificate_common_name =
+                JsString::try_new(cx, x509_root_certificate_common_name).or_throw(cx)?;
+            js_obj.set(
+                cx,
+                "x509RootCertificateCommonName",
+                js_x509_root_certificate_common_name,
+            )?;
+            let js_x509_root_certificate_subject = {
+                let js_buff = JsTypedArray::from_slice(cx, x509_root_certificate_subject.as_ref())?;
+                js_buff
+            };
+            js_obj.set(
+                cx,
+                "x509RootCertificateSubject",
+                js_x509_root_certificate_subject,
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // AvailableDeviceType
 
 #[allow(dead_code)]
@@ -6577,6 +7023,78 @@ fn variant_available_device_type_rs_to_js<'a>(
         libparsec::AvailableDeviceType::Smartcard { .. } => {
             let js_tag = JsString::try_new(cx, "AvailableDeviceTypeSmartcard").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// AvailablePendingAsyncEnrollmentIdentitySystem
+
+#[allow(dead_code)]
+fn variant_available_pending_async_enrollment_identity_system_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::AvailablePendingAsyncEnrollmentIdentitySystem> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "AvailablePendingAsyncEnrollmentIdentitySystemOpenBao" => {
+            let openbao_entity_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoEntityId")?;
+                js_val.value(cx)
+            };
+            let openbao_preferred_auth_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoPreferredAuthId")?;
+                js_val.value(cx)
+            };
+            Ok(
+                libparsec::AvailablePendingAsyncEnrollmentIdentitySystem::OpenBao {
+                    openbao_entity_id,
+                    openbao_preferred_auth_id,
+                },
+            )
+        }
+        "AvailablePendingAsyncEnrollmentIdentitySystemPKI" => {
+            let certificate_ref = {
+                let js_val: Handle<JsObject> = obj.get(cx, "certificateRef")?;
+                struct_x509_certificate_reference_js_to_rs(cx, js_val)?
+            };
+            Ok(libparsec::AvailablePendingAsyncEnrollmentIdentitySystem::PKI { certificate_ref })
+        }
+        _ => cx.throw_type_error("Object is not a AvailablePendingAsyncEnrollmentIdentitySystem"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_available_pending_async_enrollment_identity_system_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AvailablePendingAsyncEnrollmentIdentitySystem,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::AvailablePendingAsyncEnrollmentIdentitySystem::OpenBao {
+            openbao_entity_id,
+            openbao_preferred_auth_id,
+            ..
+        } => {
+            let js_tag =
+                JsString::try_new(cx, "AvailablePendingAsyncEnrollmentIdentitySystemOpenBao")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_openbao_entity_id = JsString::try_new(cx, openbao_entity_id).or_throw(cx)?;
+            js_obj.set(cx, "openbaoEntityId", js_openbao_entity_id)?;
+            let js_openbao_preferred_auth_id =
+                JsString::try_new(cx, openbao_preferred_auth_id).or_throw(cx)?;
+            js_obj.set(cx, "openbaoPreferredAuthId", js_openbao_preferred_auth_id)?;
+        }
+        libparsec::AvailablePendingAsyncEnrollmentIdentitySystem::PKI {
+            certificate_ref, ..
+        } => {
+            let js_tag = JsString::try_new(cx, "AvailablePendingAsyncEnrollmentIdentitySystemPKI")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_certificate_ref =
+                struct_x509_certificate_reference_rs_to_js(cx, certificate_ref)?;
+            js_obj.set(cx, "certificateRef", js_certificate_ref)?;
         }
     }
     Ok(js_obj)
@@ -6907,6 +7425,112 @@ fn variant_claimer_retrieve_info_error_rs_to_js<'a>(
         libparsec::ClaimerRetrieveInfoError::OrganizationExpired { .. } => {
             let js_tag = JsString::try_new(cx, "ClaimerRetrieveInfoErrorOrganizationExpired")
                 .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientAcceptAsyncEnrollmentError
+
+#[allow(dead_code)]
+fn variant_client_accept_async_enrollment_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientAcceptAsyncEnrollmentError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientAcceptAsyncEnrollmentError::ActiveUsersLimitReached { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientAcceptAsyncEnrollmentErrorActiveUsersLimitReached",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::AuthorNotAllowed { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientAcceptAsyncEnrollmentErrorAuthorNotAllowed")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::BadSubmitPayload { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientAcceptAsyncEnrollmentErrorBadSubmitPayload")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::EnrollmentNoLongerAvailable { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientAcceptAsyncEnrollmentErrorEnrollmentNoLongerAvailable",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::EnrollmentNotFound { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientAcceptAsyncEnrollmentErrorEnrollmentNotFound")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::HumanHandleAlreadyTaken { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientAcceptAsyncEnrollmentErrorHumanHandleAlreadyTaken",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::IdentityStrategyMismatch { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientAcceptAsyncEnrollmentErrorIdentityStrategyMismatch",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientAcceptAsyncEnrollmentErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::InvalidX509Trustchain { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientAcceptAsyncEnrollmentErrorInvalidX509Trustchain")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientAcceptAsyncEnrollmentErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::OpenBaoBadServerResponse { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientAcceptAsyncEnrollmentErrorOpenBaoBadServerResponse",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::OpenBaoBadURL { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientAcceptAsyncEnrollmentErrorOpenBaoBadURL")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::OpenBaoNoServerResponse { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientAcceptAsyncEnrollmentErrorOpenBaoNoServerResponse",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::TimestampOutOfBallpark { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientAcceptAsyncEnrollmentErrorTimestampOutOfBallpark")
+                    .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -8365,6 +8989,36 @@ fn variant_client_info_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// ClientListAsyncEnrollmentsError
+
+#[allow(dead_code)]
+fn variant_client_list_async_enrollments_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientListAsyncEnrollmentsError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientListAsyncEnrollmentsError::AuthorNotAllowed { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientListAsyncEnrollmentsErrorAuthorNotAllowed")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientListAsyncEnrollmentsError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientListAsyncEnrollmentsErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientListAsyncEnrollmentsError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientListAsyncEnrollmentsErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientListFrozenUsersError
 
 #[allow(dead_code)]
@@ -8625,6 +9279,50 @@ fn variant_client_organization_info_error_rs_to_js<'a>(
         libparsec::ClientOrganizationInfoError::Offline { .. } => {
             let js_tag =
                 JsString::try_new(cx, "ClientOrganizationInfoErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientRejectAsyncEnrollmentError
+
+#[allow(dead_code)]
+fn variant_client_reject_async_enrollment_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientRejectAsyncEnrollmentError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientRejectAsyncEnrollmentError::AuthorNotAllowed { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientRejectAsyncEnrollmentErrorAuthorNotAllowed")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientRejectAsyncEnrollmentError::EnrollmentNoLongerAvailable { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientRejectAsyncEnrollmentErrorEnrollmentNoLongerAvailable",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientRejectAsyncEnrollmentError::EnrollmentNotFound { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientRejectAsyncEnrollmentErrorEnrollmentNotFound")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientRejectAsyncEnrollmentError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientRejectAsyncEnrollmentErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientRejectAsyncEnrollmentError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientRejectAsyncEnrollmentErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -13468,6 +14166,251 @@ fn variant_parsed_parsec_addr_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// PendingAsyncEnrollmentInfo
+
+#[allow(dead_code)]
+fn variant_pending_async_enrollment_info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::PendingAsyncEnrollmentInfo> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "PendingAsyncEnrollmentInfoAccepted" => {
+            let submitted_on = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "submittedOn")?;
+                {
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    match custom_from_rs_f64(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let accepted_on = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "acceptedOn")?;
+                {
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    match custom_from_rs_f64(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::PendingAsyncEnrollmentInfo::Accepted {
+                submitted_on,
+                accepted_on,
+            })
+        }
+        "PendingAsyncEnrollmentInfoCancelled" => {
+            let submitted_on = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "submittedOn")?;
+                {
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    match custom_from_rs_f64(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let cancelled_on = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "cancelledOn")?;
+                {
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    match custom_from_rs_f64(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::PendingAsyncEnrollmentInfo::Cancelled {
+                submitted_on,
+                cancelled_on,
+            })
+        }
+        "PendingAsyncEnrollmentInfoRejected" => {
+            let submitted_on = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "submittedOn")?;
+                {
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    match custom_from_rs_f64(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let rejected_on = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "rejectedOn")?;
+                {
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    match custom_from_rs_f64(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::PendingAsyncEnrollmentInfo::Rejected {
+                submitted_on,
+                rejected_on,
+            })
+        }
+        "PendingAsyncEnrollmentInfoSubmitted" => {
+            let submitted_on = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "submittedOn")?;
+                {
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    match custom_from_rs_f64(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::PendingAsyncEnrollmentInfo::Submitted { submitted_on })
+        }
+        _ => cx.throw_type_error("Object is not a PendingAsyncEnrollmentInfo"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_pending_async_enrollment_info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::PendingAsyncEnrollmentInfo,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::PendingAsyncEnrollmentInfo::Accepted {
+            submitted_on,
+            accepted_on,
+            ..
+        } => {
+            let js_tag =
+                JsString::try_new(cx, "PendingAsyncEnrollmentInfoAccepted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_submitted_on = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(submitted_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "submittedOn", js_submitted_on)?;
+            let js_accepted_on = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(accepted_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "acceptedOn", js_accepted_on)?;
+        }
+        libparsec::PendingAsyncEnrollmentInfo::Cancelled {
+            submitted_on,
+            cancelled_on,
+            ..
+        } => {
+            let js_tag =
+                JsString::try_new(cx, "PendingAsyncEnrollmentInfoCancelled").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_submitted_on = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(submitted_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "submittedOn", js_submitted_on)?;
+            let js_cancelled_on = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(cancelled_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "cancelledOn", js_cancelled_on)?;
+        }
+        libparsec::PendingAsyncEnrollmentInfo::Rejected {
+            submitted_on,
+            rejected_on,
+            ..
+        } => {
+            let js_tag =
+                JsString::try_new(cx, "PendingAsyncEnrollmentInfoRejected").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_submitted_on = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(submitted_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "submittedOn", js_submitted_on)?;
+            let js_rejected_on = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(rejected_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "rejectedOn", js_rejected_on)?;
+        }
+        libparsec::PendingAsyncEnrollmentInfo::Submitted { submitted_on, .. } => {
+            let js_tag =
+                JsString::try_new(cx, "PendingAsyncEnrollmentInfoSubmitted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_submitted_on = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(submitted_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "submittedOn", js_submitted_on)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // PkiEnrollmentAcceptError
 
 #[allow(dead_code)]
@@ -15435,6 +16378,359 @@ fn variant_show_certificate_selection_dialog_error_rs_to_js<'a>(
             let js_tag =
                 JsString::try_new(cx, "ShowCertificateSelectionDialogErrorCannotOpenStore")
                     .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// SubmitAsyncEnrollmentError
+
+#[allow(dead_code)]
+fn variant_submit_async_enrollment_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::SubmitAsyncEnrollmentError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::SubmitAsyncEnrollmentError::EmailAlreadyEnrolled { .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitAsyncEnrollmentErrorEmailAlreadyEnrolled")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::EmailAlreadySubmitted { .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitAsyncEnrollmentErrorEmailAlreadySubmitted")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "SubmitAsyncEnrollmentErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::InvalidPath { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "SubmitAsyncEnrollmentErrorInvalidPath").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::InvalidX509Trustchain { .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitAsyncEnrollmentErrorInvalidX509Trustchain")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitAsyncEnrollmentErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::OpenBaoBadServerResponse { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "SubmitAsyncEnrollmentErrorOpenBaoBadServerResponse")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::OpenBaoBadURL { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "SubmitAsyncEnrollmentErrorOpenBaoBadURL").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::OpenBaoNoServerResponse { .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitAsyncEnrollmentErrorOpenBaoNoServerResponse")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::StorageNotAvailable { .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitAsyncEnrollmentErrorStorageNotAvailable")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// SubmitAsyncEnrollmentIdentityStrategy
+
+#[allow(dead_code)]
+fn variant_submit_async_enrollment_identity_strategy_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::SubmitAsyncEnrollmentIdentityStrategy> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "SubmitAsyncEnrollmentIdentityStrategyOpenBao" => {
+            let requested_human_handle = {
+                let js_val: Handle<JsObject> = obj.get(cx, "requestedHumanHandle")?;
+                struct_human_handle_js_to_rs(cx, js_val)?
+            };
+            let openbao_server_url = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoServerUrl")?;
+                js_val.value(cx)
+            };
+            let openbao_transit_mount_path = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoTransitMountPath")?;
+                js_val.value(cx)
+            };
+            let openbao_secret_mount_path = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoSecretMountPath")?;
+                js_val.value(cx)
+            };
+            let openbao_entity_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoEntityId")?;
+                js_val.value(cx)
+            };
+            let openbao_auth_token = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoAuthToken")?;
+                js_val.value(cx)
+            };
+            let openbao_preferred_auth_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoPreferredAuthId")?;
+                js_val.value(cx)
+            };
+            Ok(libparsec::SubmitAsyncEnrollmentIdentityStrategy::OpenBao {
+                requested_human_handle,
+                openbao_server_url,
+                openbao_transit_mount_path,
+                openbao_secret_mount_path,
+                openbao_entity_id,
+                openbao_auth_token,
+                openbao_preferred_auth_id,
+            })
+        }
+        "SubmitAsyncEnrollmentIdentityStrategyPKI" => {
+            let certificate_reference = {
+                let js_val: Handle<JsObject> = obj.get(cx, "certificateReference")?;
+                struct_x509_certificate_reference_js_to_rs(cx, js_val)?
+            };
+            Ok(libparsec::SubmitAsyncEnrollmentIdentityStrategy::PKI {
+                certificate_reference,
+            })
+        }
+        _ => cx.throw_type_error("Object is not a SubmitAsyncEnrollmentIdentityStrategy"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_submit_async_enrollment_identity_strategy_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::SubmitAsyncEnrollmentIdentityStrategy,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::SubmitAsyncEnrollmentIdentityStrategy::OpenBao {
+            requested_human_handle,
+            openbao_server_url,
+            openbao_transit_mount_path,
+            openbao_secret_mount_path,
+            openbao_entity_id,
+            openbao_auth_token,
+            openbao_preferred_auth_id,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "SubmitAsyncEnrollmentIdentityStrategyOpenBao")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_requested_human_handle =
+                struct_human_handle_rs_to_js(cx, requested_human_handle)?;
+            js_obj.set(cx, "requestedHumanHandle", js_requested_human_handle)?;
+            let js_openbao_server_url = JsString::try_new(cx, openbao_server_url).or_throw(cx)?;
+            js_obj.set(cx, "openbaoServerUrl", js_openbao_server_url)?;
+            let js_openbao_transit_mount_path =
+                JsString::try_new(cx, openbao_transit_mount_path).or_throw(cx)?;
+            js_obj.set(cx, "openbaoTransitMountPath", js_openbao_transit_mount_path)?;
+            let js_openbao_secret_mount_path =
+                JsString::try_new(cx, openbao_secret_mount_path).or_throw(cx)?;
+            js_obj.set(cx, "openbaoSecretMountPath", js_openbao_secret_mount_path)?;
+            let js_openbao_entity_id = JsString::try_new(cx, openbao_entity_id).or_throw(cx)?;
+            js_obj.set(cx, "openbaoEntityId", js_openbao_entity_id)?;
+            let js_openbao_auth_token = JsString::try_new(cx, openbao_auth_token).or_throw(cx)?;
+            js_obj.set(cx, "openbaoAuthToken", js_openbao_auth_token)?;
+            let js_openbao_preferred_auth_id =
+                JsString::try_new(cx, openbao_preferred_auth_id).or_throw(cx)?;
+            js_obj.set(cx, "openbaoPreferredAuthId", js_openbao_preferred_auth_id)?;
+        }
+        libparsec::SubmitAsyncEnrollmentIdentityStrategy::PKI {
+            certificate_reference,
+            ..
+        } => {
+            let js_tag =
+                JsString::try_new(cx, "SubmitAsyncEnrollmentIdentityStrategyPKI").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_certificate_reference =
+                struct_x509_certificate_reference_rs_to_js(cx, certificate_reference)?;
+            js_obj.set(cx, "certificateReference", js_certificate_reference)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// SubmitterFinalizeAsyncEnrollmentError
+
+#[allow(dead_code)]
+fn variant_submitter_finalize_async_enrollment_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::SubmitterFinalizeAsyncEnrollmentError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::BadAcceptPayload{  .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorBadAcceptPayload").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::EnrollmentFileCannotRetrieveCiphertextKey{  .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorEnrollmentFileCannotRetrieveCiphertextKey").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::EnrollmentFileInvalidData{  .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorEnrollmentFileInvalidData").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::EnrollmentFileInvalidPath{  .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorEnrollmentFileInvalidPath").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::EnrollmentNotFoundOnServer{  .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorEnrollmentNotFoundOnServer").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::IdentityStrategyMismatch{  .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorIdentityStrategyMismatch").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::Internal{  .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::InvalidX509Trustchain{  .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorInvalidX509Trustchain").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::NotAccepted{  .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorNotAccepted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::Offline{  .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::OpenBaoBadServerResponse{  .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorOpenBaoBadServerResponse").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::OpenBaoBadURL{  .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorOpenBaoBadURL").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::OpenBaoNoServerResponse{  .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorOpenBaoNoServerResponse").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::SaveDeviceInvalidPath{  .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceInvalidPath").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::SaveDeviceRemoteOpaqueKeyUploadFailed{  .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadFailed").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::SaveDeviceRemoteOpaqueKeyUploadOffline{  .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::StorageNotAvailable{  .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// SubmitterForgetAsyncEnrollmentError
+
+#[allow(dead_code)]
+fn variant_submitter_forget_async_enrollment_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::SubmitterForgetAsyncEnrollmentError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::SubmitterForgetAsyncEnrollmentError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterForgetAsyncEnrollmentErrorInternal")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterForgetAsyncEnrollmentError::NotFound { .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterForgetAsyncEnrollmentErrorNotFound")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterForgetAsyncEnrollmentError::StorageNotAvailable { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "SubmitterForgetAsyncEnrollmentErrorStorageNotAvailable")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// SubmitterGetAsyncEnrollmentInfoError
+
+#[allow(dead_code)]
+fn variant_submitter_get_async_enrollment_info_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::SubmitterGetAsyncEnrollmentInfoError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::SubmitterGetAsyncEnrollmentInfoError::EnrollmentNotFound { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "SubmitterGetAsyncEnrollmentInfoErrorEnrollmentNotFound")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterGetAsyncEnrollmentInfoError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterGetAsyncEnrollmentInfoErrorInternal")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterGetAsyncEnrollmentInfoError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterGetAsyncEnrollmentInfoErrorOffline")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// SubmitterListLocalAsyncEnrollmentsError
+
+#[allow(dead_code)]
+fn variant_submitter_list_local_async_enrollments_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::SubmitterListLocalAsyncEnrollmentsError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::SubmitterListLocalAsyncEnrollmentsError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterListLocalAsyncEnrollmentsErrorInternal")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterListLocalAsyncEnrollmentsError::StorageNotAvailable { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "SubmitterListLocalAsyncEnrollmentsErrorStorageNotAvailable",
+            )
+            .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -20633,6 +21929,90 @@ fn claimer_user_wait_all_peers(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// client_accept_async_enrollment
+fn client_accept_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let profile = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let js_string = js_val.value(&mut cx);
+            enum_user_profile_js_to_rs(&mut cx, js_string.as_str())?
+        }
+    };
+    let enrollment_id = {
+        let js_val = cx.argument::<JsString>(2)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::AsyncEnrollmentID, _> {
+                libparsec::AsyncEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let identity_strategy = {
+        let js_val = cx.argument::<JsObject>(3)?;
+        variant_accept_finalize_async_enrollment_identity_strategy_js_to_rs(&mut cx, js_val)?
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_accept_async_enrollment(
+                client,
+                profile,
+                enrollment_id,
+                identity_strategy,
+            )
+            .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_client_accept_async_enrollment_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // client_accept_tos
 fn client_accept_tos(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -21356,6 +22736,66 @@ fn client_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_err = variant_client_info_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// client_list_async_enrollments
+fn client_list_async_enrollments(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_list_async_enrollments(client).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            // JsArray::new allocates with `undefined` value, that's why we `set` value
+                            let js_array = JsArray::new(&mut cx, ok.len());
+                            for (i, elem) in ok.into_iter().enumerate() {
+                                let js_elem =
+                                    struct_async_enrollment_untrusted_rs_to_js(&mut cx, elem)?;
+                                js_array.set(&mut cx, i as u32, js_elem)?;
+                            }
+                            js_array
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_client_list_async_enrollments_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -22415,6 +23855,73 @@ fn client_pki_list_verify_items(mut cx: FunctionContext) -> JsResult<JsPromise> 
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_err = variant_pki_enrollment_list_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// client_reject_async_enrollment
+fn client_reject_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let enrollment_id = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::AsyncEnrollmentID, _> {
+                libparsec::AsyncEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_reject_async_enrollment(client, enrollment_id).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_client_reject_async_enrollment_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -25620,6 +27127,371 @@ fn show_certificate_selection_dialog_windows_only(mut cx: FunctionContext) -> Js
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_err =
                             variant_show_certificate_selection_dialog_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// submit_async_enrollment
+fn submit_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let config = {
+        let js_val = cx.argument::<JsObject>(0)?;
+        struct_client_config_js_to_rs(&mut cx, js_val)?
+    };
+    let addr = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAsyncEnrollmentAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let force = {
+        let js_val = cx.argument::<JsBoolean>(2)?;
+        js_val.value(&mut cx)
+    };
+    let requested_device_label = {
+        let js_val = cx.argument::<JsString>(3)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let identity_strategy = {
+        let js_val = cx.argument::<JsObject>(4)?;
+        variant_submit_async_enrollment_identity_strategy_js_to_rs(&mut cx, js_val)?
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::submit_async_enrollment(
+                config,
+                addr,
+                force,
+                requested_device_label,
+                identity_strategy,
+            )
+            .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value =
+                            struct_available_pending_async_enrollment_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_submit_async_enrollment_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// submitter_finalize_async_enrollment
+fn submitter_finalize_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let config = {
+        let js_val = cx.argument::<JsObject>(0)?;
+        struct_client_config_js_to_rs(&mut cx, js_val)?
+    };
+    let enrollment_file = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let new_device_save_strategy = {
+        let js_val = cx.argument::<JsObject>(2)?;
+        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+    };
+    let new_device_key_file = {
+        let js_val = cx.argument::<JsString>(3)?;
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let identity_strategy = {
+        let js_val = cx.argument::<JsObject>(4)?;
+        variant_accept_finalize_async_enrollment_identity_strategy_js_to_rs(&mut cx, js_val)?
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::submitter_finalize_async_enrollment(
+                config,
+                &enrollment_file,
+                new_device_save_strategy,
+                &new_device_key_file,
+                identity_strategy,
+            )
+            .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_available_device_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_submitter_finalize_async_enrollment_error_rs_to_js(
+                            &mut cx, err,
+                        )?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// submitter_forget_async_enrollment
+fn submitter_forget_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let config_dir = {
+        let js_val = cx.argument::<JsString>(0)?;
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let enrollment_id = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::AsyncEnrollmentID, _> {
+                libparsec::AsyncEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::submitter_forget_async_enrollment(&config_dir, enrollment_id).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_submitter_forget_async_enrollment_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// submitter_get_async_enrollment_info
+fn submitter_get_async_enrollment_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let config = {
+        let js_val = cx.argument::<JsObject>(0)?;
+        struct_client_config_js_to_rs(&mut cx, js_val)?
+    };
+    let addr = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAsyncEnrollmentAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let enrollment_id = {
+        let js_val = cx.argument::<JsString>(2)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::AsyncEnrollmentID, _> {
+                libparsec::AsyncEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::submitter_get_async_enrollment_info(config, addr, enrollment_id).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = variant_pending_async_enrollment_info_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_submitter_get_async_enrollment_info_error_rs_to_js(
+                            &mut cx, err,
+                        )?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// submitter_list_async_enrollments
+fn submitter_list_async_enrollments(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let config_dir = {
+        let js_val = cx.argument::<JsString>(0)?;
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::submitter_list_async_enrollments(&config_dir).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            // JsArray::new allocates with `undefined` value, that's why we `set` value
+                            let js_array = JsArray::new(&mut cx, ok.len());
+                            for (i, elem) in ok.into_iter().enumerate() {
+                                let js_elem = struct_available_pending_async_enrollment_rs_to_js(
+                                    &mut cx, elem,
+                                )?;
+                                js_array.set(&mut cx, i as u32, js_elem)?;
+                            }
+                            js_array
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_submitter_list_local_async_enrollments_error_rs_to_js(
+                            &mut cx, err,
+                        )?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -29840,6 +31712,10 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("claimerUserListInitialInfo", claimer_user_list_initial_info)?;
     cx.export_function("claimerUserWaitAllPeers", claimer_user_wait_all_peers)?;
+    cx.export_function(
+        "clientAcceptAsyncEnrollment",
+        client_accept_async_enrollment,
+    )?;
     cx.export_function("clientAcceptTos", client_accept_tos)?;
     cx.export_function("clientCancelInvitation", client_cancel_invitation)?;
     cx.export_function("clientCreateWorkspace", client_create_workspace)?;
@@ -29861,6 +31737,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("clientGetUserDevice", client_get_user_device)?;
     cx.export_function("clientGetUserInfo", client_get_user_info)?;
     cx.export_function("clientInfo", client_info)?;
+    cx.export_function("clientListAsyncEnrollments", client_list_async_enrollments)?;
     cx.export_function("clientListFrozenUsers", client_list_frozen_users)?;
     cx.export_function("clientListInvitations", client_list_invitations)?;
     cx.export_function(
@@ -29886,6 +31763,10 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         client_pki_list_enrollments_untrusted,
     )?;
     cx.export_function("clientPkiListVerifyItems", client_pki_list_verify_items)?;
+    cx.export_function(
+        "clientRejectAsyncEnrollment",
+        client_reject_async_enrollment,
+    )?;
     cx.export_function("clientRenameWorkspace", client_rename_workspace)?;
     cx.export_function("clientRevokeUser", client_revoke_user)?;
     cx.export_function("clientSetupShamirRecovery", client_setup_shamir_recovery)?;
@@ -30021,6 +31902,23 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function(
         "showCertificateSelectionDialogWindowsOnly",
         show_certificate_selection_dialog_windows_only,
+    )?;
+    cx.export_function("submitAsyncEnrollment", submit_async_enrollment)?;
+    cx.export_function(
+        "submitterFinalizeAsyncEnrollment",
+        submitter_finalize_async_enrollment,
+    )?;
+    cx.export_function(
+        "submitterForgetAsyncEnrollment",
+        submitter_forget_async_enrollment,
+    )?;
+    cx.export_function(
+        "submitterGetAsyncEnrollmentInfo",
+        submitter_get_async_enrollment_info,
+    )?;
+    cx.export_function(
+        "submitterListAsyncEnrollments",
+        submitter_list_async_enrollments,
     )?;
     cx.export_function("testCheckMailbox", test_check_mailbox)?;
     cx.export_function("testDropTestbed", test_drop_testbed)?;

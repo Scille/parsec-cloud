@@ -124,6 +124,15 @@ export interface AccountOrganizationsRevokedUser {
 }
 
 
+export interface AsyncEnrollmentUntrusted {
+    enrollmentId: string
+    submittedOn: number
+    untrustedRequestedDeviceLabel: string
+    untrustedRequestedHumanHandle: HumanHandle
+    identitySystem: AsyncEnrollmentIdentitySystem
+}
+
+
 export interface AuthMethodInfo {
     authMethodId: string
     createdOn: number
@@ -144,6 +153,18 @@ export interface AvailableDevice {
     humanHandle: HumanHandle
     deviceLabel: string
     ty: AvailableDeviceType
+}
+
+
+export interface AvailablePendingAsyncEnrollment {
+    filePath: string
+    submittedOn: number
+    serverAddr: string
+    organizationId: string
+    enrollmentId: string
+    requestedDeviceLabel: string
+    requestedHumanHandle: HumanHandle
+    identitySystem: AvailablePendingAsyncEnrollmentIdentitySystem
 }
 
 
@@ -536,6 +557,24 @@ export interface X509WindowsCngURI {
     issuer: Uint8Array
     serialNumber: Uint8Array
 }
+
+
+// AcceptFinalizeAsyncEnrollmentIdentityStrategy
+export interface AcceptFinalizeAsyncEnrollmentIdentityStrategyOpenBao {
+    tag: "AcceptFinalizeAsyncEnrollmentIdentityStrategyOpenBao"
+    openbao_server_url: string
+    openbao_transit_mount_path: string
+    openbao_secret_mount_path: string
+    openbao_entity_id: string
+    openbao_auth_token: string
+}
+export interface AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI {
+    tag: "AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI"
+    certificate_reference: X509CertificateReference
+}
+export type AcceptFinalizeAsyncEnrollmentIdentityStrategy =
+  | AcceptFinalizeAsyncEnrollmentIdentityStrategyOpenBao
+  | AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI
 
 
 // AccountAuthMethodStrategy
@@ -1053,6 +1092,20 @@ export type ArchiveDeviceError =
   | ArchiveDeviceErrorStorageNotAvailable
 
 
+// AsyncEnrollmentIdentitySystem
+export interface AsyncEnrollmentIdentitySystemOpenBao {
+    tag: "AsyncEnrollmentIdentitySystemOpenBao"
+}
+export interface AsyncEnrollmentIdentitySystemPKI {
+    tag: "AsyncEnrollmentIdentitySystemPKI"
+    x509_root_certificate_common_name: string
+    x509_root_certificate_subject: Uint8Array
+}
+export type AsyncEnrollmentIdentitySystem =
+  | AsyncEnrollmentIdentitySystemOpenBao
+  | AsyncEnrollmentIdentitySystemPKI
+
+
 // AvailableDeviceType
 export interface AvailableDeviceTypeAccountVault {
     tag: "AvailableDeviceTypeAccountVault"
@@ -1086,6 +1139,21 @@ export type AvailableDeviceType =
   | AvailableDeviceTypePassword
   | AvailableDeviceTypeRecovery
   | AvailableDeviceTypeSmartcard
+
+
+// AvailablePendingAsyncEnrollmentIdentitySystem
+export interface AvailablePendingAsyncEnrollmentIdentitySystemOpenBao {
+    tag: "AvailablePendingAsyncEnrollmentIdentitySystemOpenBao"
+    openbao_entity_id: string
+    openbao_preferred_auth_id: string
+}
+export interface AvailablePendingAsyncEnrollmentIdentitySystemPKI {
+    tag: "AvailablePendingAsyncEnrollmentIdentitySystemPKI"
+    certificate_ref: X509CertificateReference
+}
+export type AvailablePendingAsyncEnrollmentIdentitySystem =
+  | AvailablePendingAsyncEnrollmentIdentitySystemOpenBao
+  | AvailablePendingAsyncEnrollmentIdentitySystemPKI
 
 
 // BootstrapOrganizationError
@@ -1297,6 +1365,80 @@ export type ClaimerRetrieveInfoError =
   | ClaimerRetrieveInfoErrorNotFound
   | ClaimerRetrieveInfoErrorOffline
   | ClaimerRetrieveInfoErrorOrganizationExpired
+
+
+// ClientAcceptAsyncEnrollmentError
+export interface ClientAcceptAsyncEnrollmentErrorActiveUsersLimitReached {
+    tag: "ClientAcceptAsyncEnrollmentErrorActiveUsersLimitReached"
+    error: string
+}
+export interface ClientAcceptAsyncEnrollmentErrorAuthorNotAllowed {
+    tag: "ClientAcceptAsyncEnrollmentErrorAuthorNotAllowed"
+    error: string
+}
+export interface ClientAcceptAsyncEnrollmentErrorBadSubmitPayload {
+    tag: "ClientAcceptAsyncEnrollmentErrorBadSubmitPayload"
+    error: string
+}
+export interface ClientAcceptAsyncEnrollmentErrorEnrollmentNoLongerAvailable {
+    tag: "ClientAcceptAsyncEnrollmentErrorEnrollmentNoLongerAvailable"
+    error: string
+}
+export interface ClientAcceptAsyncEnrollmentErrorEnrollmentNotFound {
+    tag: "ClientAcceptAsyncEnrollmentErrorEnrollmentNotFound"
+    error: string
+}
+export interface ClientAcceptAsyncEnrollmentErrorHumanHandleAlreadyTaken {
+    tag: "ClientAcceptAsyncEnrollmentErrorHumanHandleAlreadyTaken"
+    error: string
+}
+export interface ClientAcceptAsyncEnrollmentErrorIdentityStrategyMismatch {
+    tag: "ClientAcceptAsyncEnrollmentErrorIdentityStrategyMismatch"
+    error: string
+}
+export interface ClientAcceptAsyncEnrollmentErrorInternal {
+    tag: "ClientAcceptAsyncEnrollmentErrorInternal"
+    error: string
+}
+export interface ClientAcceptAsyncEnrollmentErrorInvalidX509Trustchain {
+    tag: "ClientAcceptAsyncEnrollmentErrorInvalidX509Trustchain"
+    error: string
+}
+export interface ClientAcceptAsyncEnrollmentErrorOffline {
+    tag: "ClientAcceptAsyncEnrollmentErrorOffline"
+    error: string
+}
+export interface ClientAcceptAsyncEnrollmentErrorOpenBaoBadServerResponse {
+    tag: "ClientAcceptAsyncEnrollmentErrorOpenBaoBadServerResponse"
+    error: string
+}
+export interface ClientAcceptAsyncEnrollmentErrorOpenBaoBadURL {
+    tag: "ClientAcceptAsyncEnrollmentErrorOpenBaoBadURL"
+    error: string
+}
+export interface ClientAcceptAsyncEnrollmentErrorOpenBaoNoServerResponse {
+    tag: "ClientAcceptAsyncEnrollmentErrorOpenBaoNoServerResponse"
+    error: string
+}
+export interface ClientAcceptAsyncEnrollmentErrorTimestampOutOfBallpark {
+    tag: "ClientAcceptAsyncEnrollmentErrorTimestampOutOfBallpark"
+    error: string
+}
+export type ClientAcceptAsyncEnrollmentError =
+  | ClientAcceptAsyncEnrollmentErrorActiveUsersLimitReached
+  | ClientAcceptAsyncEnrollmentErrorAuthorNotAllowed
+  | ClientAcceptAsyncEnrollmentErrorBadSubmitPayload
+  | ClientAcceptAsyncEnrollmentErrorEnrollmentNoLongerAvailable
+  | ClientAcceptAsyncEnrollmentErrorEnrollmentNotFound
+  | ClientAcceptAsyncEnrollmentErrorHumanHandleAlreadyTaken
+  | ClientAcceptAsyncEnrollmentErrorIdentityStrategyMismatch
+  | ClientAcceptAsyncEnrollmentErrorInternal
+  | ClientAcceptAsyncEnrollmentErrorInvalidX509Trustchain
+  | ClientAcceptAsyncEnrollmentErrorOffline
+  | ClientAcceptAsyncEnrollmentErrorOpenBaoBadServerResponse
+  | ClientAcceptAsyncEnrollmentErrorOpenBaoBadURL
+  | ClientAcceptAsyncEnrollmentErrorOpenBaoNoServerResponse
+  | ClientAcceptAsyncEnrollmentErrorTimestampOutOfBallpark
 
 
 // ClientAcceptTosError
@@ -1729,6 +1871,25 @@ export type ClientInfoError =
   | ClientInfoErrorStopped
 
 
+// ClientListAsyncEnrollmentsError
+export interface ClientListAsyncEnrollmentsErrorAuthorNotAllowed {
+    tag: "ClientListAsyncEnrollmentsErrorAuthorNotAllowed"
+    error: string
+}
+export interface ClientListAsyncEnrollmentsErrorInternal {
+    tag: "ClientListAsyncEnrollmentsErrorInternal"
+    error: string
+}
+export interface ClientListAsyncEnrollmentsErrorOffline {
+    tag: "ClientListAsyncEnrollmentsErrorOffline"
+    error: string
+}
+export type ClientListAsyncEnrollmentsError =
+  | ClientListAsyncEnrollmentsErrorAuthorNotAllowed
+  | ClientListAsyncEnrollmentsErrorInternal
+  | ClientListAsyncEnrollmentsErrorOffline
+
+
 // ClientListFrozenUsersError
 export interface ClientListFrozenUsersErrorAuthorNotAllowed {
     tag: "ClientListFrozenUsersErrorAuthorNotAllowed"
@@ -1887,6 +2048,35 @@ export interface ClientOrganizationInfoErrorOffline {
 export type ClientOrganizationInfoError =
   | ClientOrganizationInfoErrorInternal
   | ClientOrganizationInfoErrorOffline
+
+
+// ClientRejectAsyncEnrollmentError
+export interface ClientRejectAsyncEnrollmentErrorAuthorNotAllowed {
+    tag: "ClientRejectAsyncEnrollmentErrorAuthorNotAllowed"
+    error: string
+}
+export interface ClientRejectAsyncEnrollmentErrorEnrollmentNoLongerAvailable {
+    tag: "ClientRejectAsyncEnrollmentErrorEnrollmentNoLongerAvailable"
+    error: string
+}
+export interface ClientRejectAsyncEnrollmentErrorEnrollmentNotFound {
+    tag: "ClientRejectAsyncEnrollmentErrorEnrollmentNotFound"
+    error: string
+}
+export interface ClientRejectAsyncEnrollmentErrorInternal {
+    tag: "ClientRejectAsyncEnrollmentErrorInternal"
+    error: string
+}
+export interface ClientRejectAsyncEnrollmentErrorOffline {
+    tag: "ClientRejectAsyncEnrollmentErrorOffline"
+    error: string
+}
+export type ClientRejectAsyncEnrollmentError =
+  | ClientRejectAsyncEnrollmentErrorAuthorNotAllowed
+  | ClientRejectAsyncEnrollmentErrorEnrollmentNoLongerAvailable
+  | ClientRejectAsyncEnrollmentErrorEnrollmentNotFound
+  | ClientRejectAsyncEnrollmentErrorInternal
+  | ClientRejectAsyncEnrollmentErrorOffline
 
 
 // ClientRenameWorkspaceError
@@ -3003,6 +3193,33 @@ export type ParsedParsecAddr =
   | ParsedParsecAddrWorkspacePath
 
 
+// PendingAsyncEnrollmentInfo
+export interface PendingAsyncEnrollmentInfoAccepted {
+    tag: "PendingAsyncEnrollmentInfoAccepted"
+    submitted_on: number
+    accepted_on: number
+}
+export interface PendingAsyncEnrollmentInfoCancelled {
+    tag: "PendingAsyncEnrollmentInfoCancelled"
+    submitted_on: number
+    cancelled_on: number
+}
+export interface PendingAsyncEnrollmentInfoRejected {
+    tag: "PendingAsyncEnrollmentInfoRejected"
+    submitted_on: number
+    rejected_on: number
+}
+export interface PendingAsyncEnrollmentInfoSubmitted {
+    tag: "PendingAsyncEnrollmentInfoSubmitted"
+    submitted_on: number
+}
+export type PendingAsyncEnrollmentInfo =
+  | PendingAsyncEnrollmentInfoAccepted
+  | PendingAsyncEnrollmentInfoCancelled
+  | PendingAsyncEnrollmentInfoRejected
+  | PendingAsyncEnrollmentInfoSubmitted
+
+
 // PkiEnrollmentAcceptError
 export interface PkiEnrollmentAcceptErrorActiveUsersLimitReached {
     tag: "PkiEnrollmentAcceptErrorActiveUsersLimitReached"
@@ -3411,6 +3628,221 @@ export interface ShowCertificateSelectionDialogErrorCannotOpenStore {
 export type ShowCertificateSelectionDialogError =
   | ShowCertificateSelectionDialogErrorCannotGetCertificateInfo
   | ShowCertificateSelectionDialogErrorCannotOpenStore
+
+
+// SubmitAsyncEnrollmentError
+export interface SubmitAsyncEnrollmentErrorEmailAlreadyEnrolled {
+    tag: "SubmitAsyncEnrollmentErrorEmailAlreadyEnrolled"
+    error: string
+}
+export interface SubmitAsyncEnrollmentErrorEmailAlreadySubmitted {
+    tag: "SubmitAsyncEnrollmentErrorEmailAlreadySubmitted"
+    error: string
+}
+export interface SubmitAsyncEnrollmentErrorInternal {
+    tag: "SubmitAsyncEnrollmentErrorInternal"
+    error: string
+}
+export interface SubmitAsyncEnrollmentErrorInvalidPath {
+    tag: "SubmitAsyncEnrollmentErrorInvalidPath"
+    error: string
+}
+export interface SubmitAsyncEnrollmentErrorInvalidX509Trustchain {
+    tag: "SubmitAsyncEnrollmentErrorInvalidX509Trustchain"
+    error: string
+}
+export interface SubmitAsyncEnrollmentErrorOffline {
+    tag: "SubmitAsyncEnrollmentErrorOffline"
+    error: string
+}
+export interface SubmitAsyncEnrollmentErrorOpenBaoBadServerResponse {
+    tag: "SubmitAsyncEnrollmentErrorOpenBaoBadServerResponse"
+    error: string
+}
+export interface SubmitAsyncEnrollmentErrorOpenBaoBadURL {
+    tag: "SubmitAsyncEnrollmentErrorOpenBaoBadURL"
+    error: string
+}
+export interface SubmitAsyncEnrollmentErrorOpenBaoNoServerResponse {
+    tag: "SubmitAsyncEnrollmentErrorOpenBaoNoServerResponse"
+    error: string
+}
+export interface SubmitAsyncEnrollmentErrorStorageNotAvailable {
+    tag: "SubmitAsyncEnrollmentErrorStorageNotAvailable"
+    error: string
+}
+export type SubmitAsyncEnrollmentError =
+  | SubmitAsyncEnrollmentErrorEmailAlreadyEnrolled
+  | SubmitAsyncEnrollmentErrorEmailAlreadySubmitted
+  | SubmitAsyncEnrollmentErrorInternal
+  | SubmitAsyncEnrollmentErrorInvalidPath
+  | SubmitAsyncEnrollmentErrorInvalidX509Trustchain
+  | SubmitAsyncEnrollmentErrorOffline
+  | SubmitAsyncEnrollmentErrorOpenBaoBadServerResponse
+  | SubmitAsyncEnrollmentErrorOpenBaoBadURL
+  | SubmitAsyncEnrollmentErrorOpenBaoNoServerResponse
+  | SubmitAsyncEnrollmentErrorStorageNotAvailable
+
+
+// SubmitAsyncEnrollmentIdentityStrategy
+export interface SubmitAsyncEnrollmentIdentityStrategyOpenBao {
+    tag: "SubmitAsyncEnrollmentIdentityStrategyOpenBao"
+    requested_human_handle: HumanHandle
+    openbao_server_url: string
+    openbao_transit_mount_path: string
+    openbao_secret_mount_path: string
+    openbao_entity_id: string
+    openbao_auth_token: string
+    openbao_preferred_auth_id: string
+}
+export interface SubmitAsyncEnrollmentIdentityStrategyPKI {
+    tag: "SubmitAsyncEnrollmentIdentityStrategyPKI"
+    certificate_reference: X509CertificateReference
+}
+export type SubmitAsyncEnrollmentIdentityStrategy =
+  | SubmitAsyncEnrollmentIdentityStrategyOpenBao
+  | SubmitAsyncEnrollmentIdentityStrategyPKI
+
+
+// SubmitterFinalizeAsyncEnrollmentError
+export interface SubmitterFinalizeAsyncEnrollmentErrorBadAcceptPayload {
+    tag: "SubmitterFinalizeAsyncEnrollmentErrorBadAcceptPayload"
+    error: string
+}
+export interface SubmitterFinalizeAsyncEnrollmentErrorEnrollmentFileCannotRetrieveCiphertextKey {
+    tag: "SubmitterFinalizeAsyncEnrollmentErrorEnrollmentFileCannotRetrieveCiphertextKey"
+    error: string
+}
+export interface SubmitterFinalizeAsyncEnrollmentErrorEnrollmentFileInvalidData {
+    tag: "SubmitterFinalizeAsyncEnrollmentErrorEnrollmentFileInvalidData"
+    error: string
+}
+export interface SubmitterFinalizeAsyncEnrollmentErrorEnrollmentFileInvalidPath {
+    tag: "SubmitterFinalizeAsyncEnrollmentErrorEnrollmentFileInvalidPath"
+    error: string
+}
+export interface SubmitterFinalizeAsyncEnrollmentErrorEnrollmentNotFoundOnServer {
+    tag: "SubmitterFinalizeAsyncEnrollmentErrorEnrollmentNotFoundOnServer"
+    error: string
+}
+export interface SubmitterFinalizeAsyncEnrollmentErrorIdentityStrategyMismatch {
+    tag: "SubmitterFinalizeAsyncEnrollmentErrorIdentityStrategyMismatch"
+    error: string
+}
+export interface SubmitterFinalizeAsyncEnrollmentErrorInternal {
+    tag: "SubmitterFinalizeAsyncEnrollmentErrorInternal"
+    error: string
+}
+export interface SubmitterFinalizeAsyncEnrollmentErrorInvalidX509Trustchain {
+    tag: "SubmitterFinalizeAsyncEnrollmentErrorInvalidX509Trustchain"
+    error: string
+}
+export interface SubmitterFinalizeAsyncEnrollmentErrorNotAccepted {
+    tag: "SubmitterFinalizeAsyncEnrollmentErrorNotAccepted"
+    error: string
+}
+export interface SubmitterFinalizeAsyncEnrollmentErrorOffline {
+    tag: "SubmitterFinalizeAsyncEnrollmentErrorOffline"
+    error: string
+}
+export interface SubmitterFinalizeAsyncEnrollmentErrorOpenBaoBadServerResponse {
+    tag: "SubmitterFinalizeAsyncEnrollmentErrorOpenBaoBadServerResponse"
+    error: string
+}
+export interface SubmitterFinalizeAsyncEnrollmentErrorOpenBaoBadURL {
+    tag: "SubmitterFinalizeAsyncEnrollmentErrorOpenBaoBadURL"
+    error: string
+}
+export interface SubmitterFinalizeAsyncEnrollmentErrorOpenBaoNoServerResponse {
+    tag: "SubmitterFinalizeAsyncEnrollmentErrorOpenBaoNoServerResponse"
+    error: string
+}
+export interface SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceInvalidPath {
+    tag: "SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceInvalidPath"
+    error: string
+}
+export interface SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadFailed {
+    tag: "SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadFailed"
+    error: string
+}
+export interface SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadOffline {
+    tag: "SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadOffline"
+    error: string
+}
+export interface SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable {
+    tag: "SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable"
+    error: string
+}
+export type SubmitterFinalizeAsyncEnrollmentError =
+  | SubmitterFinalizeAsyncEnrollmentErrorBadAcceptPayload
+  | SubmitterFinalizeAsyncEnrollmentErrorEnrollmentFileCannotRetrieveCiphertextKey
+  | SubmitterFinalizeAsyncEnrollmentErrorEnrollmentFileInvalidData
+  | SubmitterFinalizeAsyncEnrollmentErrorEnrollmentFileInvalidPath
+  | SubmitterFinalizeAsyncEnrollmentErrorEnrollmentNotFoundOnServer
+  | SubmitterFinalizeAsyncEnrollmentErrorIdentityStrategyMismatch
+  | SubmitterFinalizeAsyncEnrollmentErrorInternal
+  | SubmitterFinalizeAsyncEnrollmentErrorInvalidX509Trustchain
+  | SubmitterFinalizeAsyncEnrollmentErrorNotAccepted
+  | SubmitterFinalizeAsyncEnrollmentErrorOffline
+  | SubmitterFinalizeAsyncEnrollmentErrorOpenBaoBadServerResponse
+  | SubmitterFinalizeAsyncEnrollmentErrorOpenBaoBadURL
+  | SubmitterFinalizeAsyncEnrollmentErrorOpenBaoNoServerResponse
+  | SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceInvalidPath
+  | SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadFailed
+  | SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadOffline
+  | SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable
+
+
+// SubmitterForgetAsyncEnrollmentError
+export interface SubmitterForgetAsyncEnrollmentErrorInternal {
+    tag: "SubmitterForgetAsyncEnrollmentErrorInternal"
+    error: string
+}
+export interface SubmitterForgetAsyncEnrollmentErrorNotFound {
+    tag: "SubmitterForgetAsyncEnrollmentErrorNotFound"
+    error: string
+}
+export interface SubmitterForgetAsyncEnrollmentErrorStorageNotAvailable {
+    tag: "SubmitterForgetAsyncEnrollmentErrorStorageNotAvailable"
+    error: string
+}
+export type SubmitterForgetAsyncEnrollmentError =
+  | SubmitterForgetAsyncEnrollmentErrorInternal
+  | SubmitterForgetAsyncEnrollmentErrorNotFound
+  | SubmitterForgetAsyncEnrollmentErrorStorageNotAvailable
+
+
+// SubmitterGetAsyncEnrollmentInfoError
+export interface SubmitterGetAsyncEnrollmentInfoErrorEnrollmentNotFound {
+    tag: "SubmitterGetAsyncEnrollmentInfoErrorEnrollmentNotFound"
+    error: string
+}
+export interface SubmitterGetAsyncEnrollmentInfoErrorInternal {
+    tag: "SubmitterGetAsyncEnrollmentInfoErrorInternal"
+    error: string
+}
+export interface SubmitterGetAsyncEnrollmentInfoErrorOffline {
+    tag: "SubmitterGetAsyncEnrollmentInfoErrorOffline"
+    error: string
+}
+export type SubmitterGetAsyncEnrollmentInfoError =
+  | SubmitterGetAsyncEnrollmentInfoErrorEnrollmentNotFound
+  | SubmitterGetAsyncEnrollmentInfoErrorInternal
+  | SubmitterGetAsyncEnrollmentInfoErrorOffline
+
+
+// SubmitterListLocalAsyncEnrollmentsError
+export interface SubmitterListLocalAsyncEnrollmentsErrorInternal {
+    tag: "SubmitterListLocalAsyncEnrollmentsErrorInternal"
+    error: string
+}
+export interface SubmitterListLocalAsyncEnrollmentsErrorStorageNotAvailable {
+    tag: "SubmitterListLocalAsyncEnrollmentsErrorStorageNotAvailable"
+    error: string
+}
+export type SubmitterListLocalAsyncEnrollmentsError =
+  | SubmitterListLocalAsyncEnrollmentsErrorInternal
+  | SubmitterListLocalAsyncEnrollmentsErrorStorageNotAvailable
 
 
 // TestbedError
@@ -4881,6 +5313,12 @@ export function claimerUserWaitAllPeers(
     canceller: number,
     handle: number
 ): Promise<Result<UserClaimInProgress1Info, ClaimInProgressError>>
+export function clientAcceptAsyncEnrollment(
+    client: number,
+    profile: UserProfile,
+    enrollment_id: string,
+    identity_strategy: AcceptFinalizeAsyncEnrollmentIdentityStrategy
+): Promise<Result<null, ClientAcceptAsyncEnrollmentError>>
 export function clientAcceptTos(
     client: number,
     tos_updated_on: number
@@ -4923,6 +5361,9 @@ export function clientGetUserInfo(
 export function clientInfo(
     client: number
 ): Promise<Result<ClientInfo, ClientInfoError>>
+export function clientListAsyncEnrollments(
+    client: number
+): Promise<Result<Array<AsyncEnrollmentUntrusted>, ClientListAsyncEnrollmentsError>>
 export function clientListFrozenUsers(
     client_handle: number
 ): Promise<Result<Array<string>, ClientListFrozenUsersError>>
@@ -4987,6 +5428,10 @@ export function clientPkiListVerifyItems(
     cert_ref: X509CertificateReference,
     untrusted_items: Array<RawPkiEnrollmentListItem>
 ): Promise<Result<Array<PkiEnrollmentListItem>, PkiEnrollmentListError>>
+export function clientRejectAsyncEnrollment(
+    client: number,
+    enrollment_id: string
+): Promise<Result<null, ClientRejectAsyncEnrollmentError>>
 export function clientRenameWorkspace(
     client: number,
     realm_id: string,
@@ -5207,6 +5652,32 @@ export function removeDeviceData(
 ): Promise<Result<null, RemoveDeviceDataError>>
 export function showCertificateSelectionDialogWindowsOnly(
 ): Promise<Result<X509CertificateReference | null, ShowCertificateSelectionDialogError>>
+export function submitAsyncEnrollment(
+    config: ClientConfig,
+    addr: string,
+    force: boolean,
+    requested_device_label: string,
+    identity_strategy: SubmitAsyncEnrollmentIdentityStrategy
+): Promise<Result<AvailablePendingAsyncEnrollment, SubmitAsyncEnrollmentError>>
+export function submitterFinalizeAsyncEnrollment(
+    config: ClientConfig,
+    enrollment_file: string,
+    new_device_save_strategy: DeviceSaveStrategy,
+    new_device_key_file: string,
+    identity_strategy: AcceptFinalizeAsyncEnrollmentIdentityStrategy
+): Promise<Result<AvailableDevice, SubmitterFinalizeAsyncEnrollmentError>>
+export function submitterForgetAsyncEnrollment(
+    config_dir: string,
+    enrollment_id: string
+): Promise<Result<null, SubmitterForgetAsyncEnrollmentError>>
+export function submitterGetAsyncEnrollmentInfo(
+    config: ClientConfig,
+    addr: string,
+    enrollment_id: string
+): Promise<Result<PendingAsyncEnrollmentInfo, SubmitterGetAsyncEnrollmentInfoError>>
+export function submitterListAsyncEnrollments(
+    config_dir: string
+): Promise<Result<Array<AvailablePendingAsyncEnrollment>, SubmitterListLocalAsyncEnrollmentsError>>
 export function testCheckMailbox(
     server_addr: string,
     email: string
