@@ -12,7 +12,6 @@ import fs from 'fs';
 import { join } from 'path';
 import { WindowToPageChannel } from './communicationChannels';
 import { Env } from './envVariables';
-import { SplashScreen } from './splashscreen';
 import AppUpdater, { UpdaterState, createAppUpdater } from './updater';
 import { electronIsDev } from './utils';
 import { WinRegistry } from './winRegistry';
@@ -71,7 +70,6 @@ export class ElectronCapacitorApp {
   public pageIsInitialized = false;
   public storedLink = '';
   updater?: AppUpdater;
-  private splash: SplashScreen | null = null;
 
   constructor(capacitorFileConfig: CapacitorElectronConfig, appMenuBarMenuTemplate?: (MenuItemConstructorOptions | MenuItem)[]) {
     this.log('debug', 'Creating application');
@@ -159,7 +157,7 @@ export class ElectronCapacitorApp {
   }
 
   sendEvent(event: WindowToPageChannel, ...args: any[]): void {
-    if (this.MainWindow) {
+    if (this.MainWindow && !this.MainWindow.isDestroyed()) {
       this.MainWindow.webContents.send(event, ...args);
     }
   }
@@ -176,21 +174,15 @@ export class ElectronCapacitorApp {
   }
 
   showMainWindow(): void {
-    if (this.pageIsInitialized) {
-      this.MainWindow.show();
-    }
+    this.MainWindow.show();
   }
 
   hideMainWindow(): void {
-    if (this.pageIsInitialized) {
-      this.MainWindow.hide();
-    }
+    this.MainWindow.hide();
   }
 
   focusMainWindow(): void {
-    if (this.pageIsInitialized) {
-      this.MainWindow.focus();
-    }
+    this.MainWindow.focus();
   }
 
   updateApp(): void {
@@ -265,9 +257,6 @@ export class ElectronCapacitorApp {
   }
 
   isMainWindowVisible(): boolean {
-    if (!this.pageIsInitialized) {
-      return false;
-    }
     if (process.platform === 'darwin') {
       return !this.MainWindow.isMinimized();
     } else {
@@ -374,11 +363,6 @@ export class ElectronCapacitorApp {
     this.sendEvent(WindowToPageChannel.IsDevMode, electronIsDev);
     setTimeout(() => {
       this.pageIsInitialized = true;
-      this.MainWindow.maximize();
-      if (this.splash) {
-        this.splash.destroy();
-        this.splash = null;
-      }
       if (this.storedLink) {
         this.sendEvent(WindowToPageChannel.OpenLink, this.storedLink);
         this.storedLink = '';
@@ -395,10 +379,6 @@ export class ElectronCapacitorApp {
   onRendererInitError(error?: string): void {
     error && this.log('error', error);
     this.MainWindow.show();
-    if (this.splash) {
-      this.splash.destroy();
-      this.splash = null;
-    }
   }
 
   async init(): Promise<void> {
@@ -416,6 +396,7 @@ export class ElectronCapacitorApp {
     const windowState = process.platform === 'linux' ? {} : this.mainWindowState;
     this.MainWindow = new BrowserWindow({
       icon: appIcon,
+      backgroundColor: '#fcfcfc',
       show: false,
       ...windowState,
       minWidth: 1280,
@@ -436,31 +417,28 @@ export class ElectronCapacitorApp {
     this.MainWindow.hide();
     this.log('debug', `MainWindow created at '${this.MainWindow.getPosition()}' with size '${this.MainWindow.getSize()}'`);
 
-    if (this.CapacitorFileConfig.electron.splashScreenEnabled) {
-      this.splash = new SplashScreen({ width: 624, height: 424, icon: appIcon });
-      let splashPath = join(app.getAppPath(), 'assets', 'splash-screen.png');
-
-      if (Env.ENABLE_CUSTOM_BRANDING) {
-        const customSplashPath = join(app.getPath('userData'), 'custom', 'splash.png');
-        if (fs.existsSync(customSplashPath)) {
-          splashPath = customSplashPath;
-        }
-      }
-      this.log('debug', 'Loading Splash Screen');
-      await this.splash.load(splashPath);
-    }
-
     if (this.CapacitorFileConfig.backgroundColor) {
       this.MainWindow.setBackgroundColor(this.CapacitorFileConfig.electron.backgroundColor);
     }
 
-    // If we close the main window with the splashscreen enabled we need to destroy the ref.
     this.MainWindow.on('closed', () => {
       this.log('debug', 'MainWindow closed event');
-      if (this.splash) {
-        this.splash.destroy();
-        this.splash = null;
+    });
+
+    this.MainWindow.webContents.on('dom-ready', () => {
+      this.log('debug', 'DOM is ready, showing the window');
+      if (electronIsDev) {
+        this.MainWindow.maximize();
+      } else {
+        this.MainWindow.show();
       }
+
+      setTimeout(() => {
+        if (electronIsDev || process.env.OPEN_DEV_TOOLS == 'true') {
+          this.MainWindow.webContents.openDevTools({ mode: 'detach' });
+        }
+        CapElectronEventEmitter.emit('CAPELECTRON_DeeplinkListenerInitialized', '');
+      }, 400);
     });
 
     this.MainWindow.on('show', () => {
@@ -548,15 +526,6 @@ export class ElectronCapacitorApp {
 
     // Link electron plugins into the system.
     setupCapacitorElectronPlugins();
-
-    this.MainWindow.webContents.on('dom-ready', () => {
-      setTimeout(() => {
-        if (electronIsDev || process.env.OPEN_DEV_TOOLS == 'true') {
-          this.MainWindow.webContents.openDevTools({ mode: 'detach' });
-        }
-        CapElectronEventEmitter.emit('CAPELECTRON_DeeplinkListenerInitialized', '');
-      }, 400);
-    });
   }
 }
 
