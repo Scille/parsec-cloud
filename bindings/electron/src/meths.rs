@@ -2531,6 +2531,10 @@ fn struct_open_bao_config_js_to_rs<'a>(
         let js_val: Handle<JsObject> = obj.get(cx, "secret")?;
         variant_open_bao_secret_config_js_to_rs(cx, js_val)?
     };
+    let transit_mount_path = {
+        let js_val: Handle<JsString> = obj.get(cx, "transitMountPath")?;
+        js_val.value(cx)
+    };
     let auths = {
         let js_val: Handle<JsArray> = obj.get(cx, "auths")?;
         {
@@ -2546,6 +2550,7 @@ fn struct_open_bao_config_js_to_rs<'a>(
     Ok(libparsec::OpenBaoConfig {
         server_url,
         secret,
+        transit_mount_path,
         auths,
     })
 }
@@ -2560,6 +2565,8 @@ fn struct_open_bao_config_rs_to_js<'a>(
     js_obj.set(cx, "serverUrl", js_server_url)?;
     let js_secret = variant_open_bao_secret_config_rs_to_js(cx, rs_obj.secret)?;
     js_obj.set(cx, "secret", js_secret)?;
+    let js_transit_mount_path = JsString::try_new(cx, rs_obj.transit_mount_path).or_throw(cx)?;
+    js_obj.set(cx, "transitMountPath", js_transit_mount_path)?;
     let js_auths = {
         // JsArray::new allocates with `undefined` value, that's why we `set` value
         let js_array = JsArray::new(cx, rs_obj.auths.len());
@@ -10044,6 +10051,10 @@ fn variant_device_access_strategy_js_to_rs<'a>(
                 let js_val: Handle<JsString> = obj.get(cx, "openbaoSecretMountPath")?;
                 js_val.value(cx)
             };
+            let openbao_transit_mount_path = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoTransitMountPath")?;
+                js_val.value(cx)
+            };
             let openbao_entity_id = {
                 let js_val: Handle<JsString> = obj.get(cx, "openbaoEntityId")?;
                 js_val.value(cx)
@@ -10056,6 +10067,7 @@ fn variant_device_access_strategy_js_to_rs<'a>(
                 key_file,
                 openbao_server_url,
                 openbao_secret_mount_path,
+                openbao_transit_mount_path,
                 openbao_entity_id,
                 openbao_auth_token,
             })
@@ -10153,6 +10165,7 @@ fn variant_device_access_strategy_rs_to_js<'a>(
             key_file,
             openbao_server_url,
             openbao_secret_mount_path,
+            openbao_transit_mount_path,
             openbao_entity_id,
             openbao_auth_token,
             ..
@@ -10177,6 +10190,9 @@ fn variant_device_access_strategy_rs_to_js<'a>(
             let js_openbao_secret_mount_path =
                 JsString::try_new(cx, openbao_secret_mount_path).or_throw(cx)?;
             js_obj.set(cx, "openbaoSecretMountPath", js_openbao_secret_mount_path)?;
+            let js_openbao_transit_mount_path =
+                JsString::try_new(cx, openbao_transit_mount_path).or_throw(cx)?;
+            js_obj.set(cx, "openbaoTransitMountPath", js_openbao_transit_mount_path)?;
             let js_openbao_entity_id = JsString::try_new(cx, openbao_entity_id).or_throw(cx)?;
             js_obj.set(cx, "openbaoEntityId", js_openbao_entity_id)?;
             let js_openbao_auth_token = JsString::try_new(cx, openbao_auth_token).or_throw(cx)?;
@@ -10257,6 +10273,10 @@ fn variant_device_save_strategy_js_to_rs<'a>(
                 let js_val: Handle<JsString> = obj.get(cx, "openbaoSecretMountPath")?;
                 js_val.value(cx)
             };
+            let openbao_transit_mount_path = {
+                let js_val: Handle<JsString> = obj.get(cx, "openbaoTransitMountPath")?;
+                js_val.value(cx)
+            };
             let openbao_entity_id = {
                 let js_val: Handle<JsString> = obj.get(cx, "openbaoEntityId")?;
                 js_val.value(cx)
@@ -10272,6 +10292,7 @@ fn variant_device_save_strategy_js_to_rs<'a>(
             Ok(libparsec::DeviceSaveStrategy::OpenBao {
                 openbao_server_url,
                 openbao_secret_mount_path,
+                openbao_transit_mount_path,
                 openbao_entity_id,
                 openbao_auth_token,
                 openbao_preferred_auth_id,
@@ -10321,6 +10342,7 @@ fn variant_device_save_strategy_rs_to_js<'a>(
         libparsec::DeviceSaveStrategy::OpenBao {
             openbao_server_url,
             openbao_secret_mount_path,
+            openbao_transit_mount_path,
             openbao_entity_id,
             openbao_auth_token,
             openbao_preferred_auth_id,
@@ -10333,6 +10355,9 @@ fn variant_device_save_strategy_rs_to_js<'a>(
             let js_openbao_secret_mount_path =
                 JsString::try_new(cx, openbao_secret_mount_path).or_throw(cx)?;
             js_obj.set(cx, "openbaoSecretMountPath", js_openbao_secret_mount_path)?;
+            let js_openbao_transit_mount_path =
+                JsString::try_new(cx, openbao_transit_mount_path).or_throw(cx)?;
+            js_obj.set(cx, "openbaoTransitMountPath", js_openbao_transit_mount_path)?;
             let js_openbao_entity_id = JsString::try_new(cx, openbao_entity_id).or_throw(cx)?;
             js_obj.set(cx, "openbaoEntityId", js_openbao_entity_id)?;
             let js_openbao_auth_token = JsString::try_new(cx, openbao_auth_token).or_throw(cx)?;
