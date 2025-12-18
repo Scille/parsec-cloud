@@ -525,6 +525,7 @@ class BaseEventsComponent:
                 secret=anonymous_server_cmds.latest.server_config.OpenBaoSecretConfigKV2(
                     mount_path=self._config.openbao_config.secret_mount_path
                 ),
+                transit_mount_path=self._config.openbao_config.transit_mount_path,
                 auths=[
                     anonymous_server_cmds.latest.server_config.OpenBaoAuthConfig(
                         id=auth.id.str,

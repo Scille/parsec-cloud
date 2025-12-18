@@ -248,6 +248,7 @@ class OpenBaoAuthConfig:
 class OpenBaoConfig:
     server_url: str
     secret_mount_path: str
+    transit_mount_path: str
     auths: list[OpenBaoAuthConfig]
 
 
