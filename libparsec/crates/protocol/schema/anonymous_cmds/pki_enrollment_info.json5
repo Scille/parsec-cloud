@@ -21,6 +21,11 @@
             {
                 // The server did not found a request for the provided ID
                 "status": "enrollment_not_found"
+            },
+            {
+                // The certificate was referenced in the enrollment but
+                // is not actually present in the database
+                "status": "certificate_not_found"
             }
         ],
         "nested_types": [

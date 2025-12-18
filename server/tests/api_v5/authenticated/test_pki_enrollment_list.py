@@ -22,6 +22,7 @@ from tests.api_v5.authenticated.test_pki_enrollment_accept import (
 from tests.common import (
     Backend,
     CoolorgRpcClients,
+    Enrollment,
     HttpCommonErrorsTester,
     TestPki,
     bob_becomes_admin_and_changes_alice,
@@ -215,3 +216,21 @@ async def test_authenticated_pki_enrollment_list_http_common_errors(
         await coolorg.alice.pki_enrollment_list()
 
     await authenticated_http_common_errors_tester(do)
+
+
+# Not tested if postgre because the database consistency is explicitly enforced
+async def test_authenticated_pki_enrollment_list_certificate_not_found(
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+    existing_enrollment: Enrollment,
+    monkeypatch: pytest.MonkeyPatch,
+    xfail_if_postgresql,
+) -> None:
+    async def _mocked_get_cert(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(
+        "parsec.components.memory.datamodel.MemoryOrganization.get_cert", _mocked_get_cert
+    )
+    rep = await coolorg.alice.pki_enrollment_list()
+    assert rep == authenticated_cmds.latest.pki_enrollment_list.RepCertificateNotFound()

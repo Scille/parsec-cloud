@@ -18,6 +18,11 @@
             {
                 // The command should only be used by admin users
                 "status": "author_not_allowed"
+            },
+            {
+                // A certificate was referenced in an enrollment but
+                // is not actually present in the database
+                "status": "certificate_not_found"
             }
         ],
         "nested_types": [

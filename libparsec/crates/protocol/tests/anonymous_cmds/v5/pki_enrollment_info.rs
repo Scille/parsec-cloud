@@ -173,3 +173,21 @@ pub fn rep_enrollment_not_found() {
 
     p_assert_eq!(data2, expected);
 }
+
+pub fn rep_certificate_not_found() {
+    // Generated from Parsec 3.7.2-a.0+dev
+    // Content:
+    //   status: 'certificate_not_found'
+    let raw: &[u8] = hex!("81a6737461747573b563657274696669636174655f6e6f745f666f756e64").as_ref();
+    let expected = anonymous_cmds::pki_enrollment_info::Rep::CertificateNotFound;
+    println!("***expected: {:?}", expected.dump().unwrap());
+    let data = anonymous_cmds::pki_enrollment_info::Rep::load(raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    let raw2 = data.dump().unwrap();
+
+    let data2 = anonymous_cmds::pki_enrollment_info::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected);
+}

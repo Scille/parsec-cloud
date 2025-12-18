@@ -1,13 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from dataclasses import dataclass
 
 import pytest
 
 from parsec._parsec import (
     DateTime,
     DeviceLabel,
-    EmailAddress,
     HumanHandle,
     PkiEnrollmentAnswerPayload,
     PKIEnrollmentID,
@@ -25,66 +23,8 @@ from parsec.components.pki import (
     parse_pki_cert,
 )
 from parsec.events import EventPinged, EventPkiEnrollment
-from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester, TestPki
+from tests.common import Backend, CoolorgRpcClients, Enrollment, HttpCommonErrorsTester, TestPki
 from tests.common.utils import generate_new_device_certificates, generate_new_user_certificates
-
-
-@dataclass
-class Enrollment:
-    enrollment_id: PKIEnrollmentID
-    submitter_der_x509_certificate: bytes
-    submitter_intermediate_der_x509_certificates: list[bytes]
-    submitter_der_x509_certificate_email: EmailAddress
-    submit_payload_signature: bytes
-    submit_payload: bytes
-    submitted_on: DateTime
-
-
-@pytest.fixture(scope="session")
-def submit_payload() -> bytes:
-    return PkiEnrollmentSubmitPayload(
-        verify_key=SigningKey.generate().verify_key,
-        public_key=PrivateKey.generate().public_key,
-        device_label=DeviceLabel("Dev1"),
-    ).dump()
-
-
-@pytest.fixture
-async def existing_enrollment(
-    coolorg: CoolorgRpcClients, backend: Backend, submit_payload: bytes, test_pki: TestPki
-) -> Enrollment:
-    enrollment_id = PKIEnrollmentID.new()
-    submitter_der_x509_certificate = test_pki.cert["bob"].der_certificate
-    submitter_intermediate_der_x509_certificates = []
-    submitter_der_x509_certificate_email = EmailAddress("mike@example.invalid")
-    submit_payload_signature = b"<mike submit payload signature>"
-
-    with backend.event_bus.spy() as spy:
-        rep = await coolorg.anonymous.pki_enrollment_submit(
-            enrollment_id=enrollment_id,
-            force=False,
-            der_x509_certificate=submitter_der_x509_certificate,
-            intermediate_der_x509_certificates=submitter_intermediate_der_x509_certificates,
-            payload_signature=submit_payload_signature,
-            payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
-            payload=submit_payload,
-        )
-        assert isinstance(rep, anonymous_cmds.latest.pki_enrollment_submit.RepOk)
-
-        await spy.wait_event_occurred(
-            EventPkiEnrollment(
-                organization_id=coolorg.organization_id,
-            )
-        )
-    return Enrollment(
-        enrollment_id=enrollment_id,
-        submitter_der_x509_certificate=submitter_der_x509_certificate,
-        submitter_intermediate_der_x509_certificates=submitter_intermediate_der_x509_certificates,
-        submitter_der_x509_certificate_email=submitter_der_x509_certificate_email,
-        submit_payload_signature=submit_payload_signature,
-        submit_payload=submit_payload,
-        submitted_on=rep.submitted_on,
-    )
 
 
 async def test_anonymous_pki_enrollment_submit_ok(

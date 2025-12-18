@@ -405,9 +405,7 @@ class BasePkiEnrollmentComponent:
             case PkiEnrollmentInfoBadOutcome.ORGANIZATION_EXPIRED:
                 client_ctx.organization_expired_abort()
             case PkiEnrollmentInfoBadOutcome.CERTIFICATE_NOT_FOUND:
-                return anonymous_cmds.latest.pki_enrollment_info.RepUnknownStatus(
-                    "cert not found", None
-                )
+                return anonymous_cmds.latest.pki_enrollment_info.RepCertificateNotFound()
 
         return anonymous_cmds.latest.pki_enrollment_info.RepOk(unit)
 
@@ -510,10 +508,7 @@ class BasePkiEnrollmentComponent:
             case PkiEnrollmentListBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
             case PkiEnrollmentListBadOutcome.CERTIFICATE_NOT_FOUND:
-                # TODO add not found error to protocol ?
-                return authenticated_cmds.latest.pki_enrollment_list.RepUnknownStatus(
-                    "leaf not found", None
-                )
+                return authenticated_cmds.latest.pki_enrollment_list.RepCertificateNotFound()
 
     @api
     async def api_pki_enrollment_reject(
