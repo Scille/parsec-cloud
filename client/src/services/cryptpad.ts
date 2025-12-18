@@ -155,7 +155,7 @@ export async function openDocument(
       const timeoutId = setTimeout(() => {
         abortController.abort();
         reject();
-      }, 2000);
+      }, 5000);
 
       window.addEventListener(
         'message',

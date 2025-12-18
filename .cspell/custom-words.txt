@@ -126,6 +126,7 @@ gouv
 gradlew
 gsettings
 hasnt
+hcaptcha
 homoglyph
 htmlcov
 humantime
@@ -179,6 +180,7 @@ npmkeep
 ntics
 ntns
 nvlobs
+onlyoffice
 openbao
 opses
 orga
@@ -249,6 +251,7 @@ splashscreen
 splitn
 sqlx
 sshfs
+stripecdn
 styl
 swiftclient
 syft
