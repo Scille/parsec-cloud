@@ -787,6 +787,115 @@ fn struct_account_organizations_revoked_user_rs_to_js(
     Ok(js_obj)
 }
 
+// AsyncEnrollmentUntrusted
+
+#[allow(dead_code)]
+fn struct_async_enrollment_untrusted_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::AsyncEnrollmentUntrusted, JsValue> {
+    let enrollment_id = {
+        let js_val = Reflect::get(&obj, &"enrollmentId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<libparsec::AsyncEnrollmentID, _> {
+                    libparsec::AsyncEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let submitted_on = {
+        let js_val = Reflect::get(&obj, &"submittedOn".into())?;
+        {
+            let v = js_val.dyn_into::<Number>()?.value_of();
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            v
+        }
+    };
+    let untrusted_requested_device_label = {
+        let js_val = Reflect::get(&obj, &"untrustedRequestedDeviceLabel".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let untrusted_requested_human_handle = {
+        let js_val = Reflect::get(&obj, &"untrustedRequestedHumanHandle".into())?;
+        struct_human_handle_js_to_rs(js_val)?
+    };
+    let identity_system = {
+        let js_val = Reflect::get(&obj, &"identitySystem".into())?;
+        variant_async_enrollment_identity_system_js_to_rs(js_val)?
+    };
+    Ok(libparsec::AsyncEnrollmentUntrusted {
+        enrollment_id,
+        submitted_on,
+        untrusted_requested_device_label,
+        untrusted_requested_human_handle,
+        identity_system,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_async_enrollment_untrusted_rs_to_js(
+    rs_obj: libparsec::AsyncEnrollmentUntrusted,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_enrollment_id = JsValue::from_str({
+        let custom_to_rs_string =
+            |x: libparsec::AsyncEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.enrollment_id) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"enrollmentId".into(), &js_enrollment_id)?;
+    let js_submitted_on = {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        let v = match custom_to_rs_f64(rs_obj.submitted_on) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        };
+        JsValue::from(v)
+    };
+    Reflect::set(&js_obj, &"submittedOn".into(), &js_submitted_on)?;
+    let js_untrusted_requested_device_label =
+        JsValue::from_str(rs_obj.untrusted_requested_device_label.as_ref());
+    Reflect::set(
+        &js_obj,
+        &"untrustedRequestedDeviceLabel".into(),
+        &js_untrusted_requested_device_label,
+    )?;
+    let js_untrusted_requested_human_handle =
+        struct_human_handle_rs_to_js(rs_obj.untrusted_requested_human_handle)?;
+    Reflect::set(
+        &js_obj,
+        &"untrustedRequestedHumanHandle".into(),
+        &js_untrusted_requested_human_handle,
+    )?;
+    let js_identity_system =
+        variant_async_enrollment_identity_system_rs_to_js(rs_obj.identity_system)?;
+    Reflect::set(&js_obj, &"identitySystem".into(), &js_identity_system)?;
+    Ok(js_obj)
+}
+
 // AuthMethodInfo
 
 #[allow(dead_code)]
@@ -1100,6 +1209,184 @@ fn struct_available_device_rs_to_js(
     Reflect::set(&js_obj, &"deviceLabel".into(), &js_device_label)?;
     let js_ty = variant_available_device_type_rs_to_js(rs_obj.ty)?;
     Reflect::set(&js_obj, &"ty".into(), &js_ty)?;
+    Ok(js_obj)
+}
+
+// AvailablePendingAsyncEnrollment
+
+#[allow(dead_code)]
+fn struct_available_pending_async_enrollment_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::AvailablePendingAsyncEnrollment, JsValue> {
+    let file_path = {
+        let js_val = Reflect::get(&obj, &"filePath".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string =
+                    |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let submitted_on = {
+        let js_val = Reflect::get(&obj, &"submittedOn".into())?;
+        {
+            let v = js_val.dyn_into::<Number>()?.value_of();
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            v
+        }
+    };
+    let server_addr = {
+        let js_val = Reflect::get(&obj, &"serverAddr".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let organization_id = {
+        let js_val = Reflect::get(&obj, &"organizationId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let enrollment_id = {
+        let js_val = Reflect::get(&obj, &"enrollmentId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<libparsec::AsyncEnrollmentID, _> {
+                    libparsec::AsyncEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let requested_device_label = {
+        let js_val = Reflect::get(&obj, &"requestedDeviceLabel".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let requested_human_handle = {
+        let js_val = Reflect::get(&obj, &"requestedHumanHandle".into())?;
+        struct_human_handle_js_to_rs(js_val)?
+    };
+    let identity_system = {
+        let js_val = Reflect::get(&obj, &"identitySystem".into())?;
+        variant_available_pending_async_enrollment_identity_system_js_to_rs(js_val)?
+    };
+    Ok(libparsec::AvailablePendingAsyncEnrollment {
+        file_path,
+        submitted_on,
+        server_addr,
+        organization_id,
+        enrollment_id,
+        requested_device_label,
+        requested_human_handle,
+        identity_system,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_available_pending_async_enrollment_rs_to_js(
+    rs_obj: libparsec::AvailablePendingAsyncEnrollment,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_file_path = JsValue::from_str({
+        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+            path.into_os_string()
+                .into_string()
+                .map_err(|_| "Path contains non-utf8 characters")
+        };
+        match custom_to_rs_string(rs_obj.file_path) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"filePath".into(), &js_file_path)?;
+    let js_submitted_on = {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        let v = match custom_to_rs_f64(rs_obj.submitted_on) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        };
+        JsValue::from(v)
+    };
+    Reflect::set(&js_obj, &"submittedOn".into(), &js_submitted_on)?;
+    let js_server_addr = JsValue::from_str({
+        let custom_to_rs_string = |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
+            Ok(addr.to_url().into())
+        };
+        match custom_to_rs_string(rs_obj.server_addr) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"serverAddr".into(), &js_server_addr)?;
+    let js_organization_id = JsValue::from_str(rs_obj.organization_id.as_ref());
+    Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
+    let js_enrollment_id = JsValue::from_str({
+        let custom_to_rs_string =
+            |x: libparsec::AsyncEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.enrollment_id) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"enrollmentId".into(), &js_enrollment_id)?;
+    let js_requested_device_label = JsValue::from_str(rs_obj.requested_device_label.as_ref());
+    Reflect::set(
+        &js_obj,
+        &"requestedDeviceLabel".into(),
+        &js_requested_device_label,
+    )?;
+    let js_requested_human_handle = struct_human_handle_rs_to_js(rs_obj.requested_human_handle)?;
+    Reflect::set(
+        &js_obj,
+        &"requestedHumanHandle".into(),
+        &js_requested_human_handle,
+    )?;
+    let js_identity_system = variant_available_pending_async_enrollment_identity_system_rs_to_js(
+        rs_obj.identity_system,
+    )?;
+    Reflect::set(&js_obj, &"identitySystem".into(), &js_identity_system)?;
     Ok(js_obj)
 }
 
@@ -5389,6 +5676,144 @@ fn struct_x509_windows_cng_uri_rs_to_js(
     Ok(js_obj)
 }
 
+// AcceptFinalizeAsyncEnrollmentIdentityStrategy
+
+#[allow(dead_code)]
+fn variant_accept_finalize_async_enrollment_identity_strategy_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "AcceptFinalizeAsyncEnrollmentIdentityStrategyOpenBao" => {
+            let openbao_server_url = {
+                let js_val = Reflect::get(&obj, &"openbaoServerUrl".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let openbao_transit_mount_path = {
+                let js_val = Reflect::get(&obj, &"openbaoTransitMountPath".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let openbao_secret_mount_path = {
+                let js_val = Reflect::get(&obj, &"openbaoSecretMountPath".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let openbao_entity_id = {
+                let js_val = Reflect::get(&obj, &"openbaoEntityId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let openbao_auth_token = {
+                let js_val = Reflect::get(&obj, &"openbaoAuthToken".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            Ok(
+                libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy::OpenBao {
+                    openbao_server_url,
+                    openbao_transit_mount_path,
+                    openbao_secret_mount_path,
+                    openbao_entity_id,
+                    openbao_auth_token,
+                },
+            )
+        }
+        "AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI" => {
+            let certificate_reference = {
+                let js_val = Reflect::get(&obj, &"certificateReference".into())?;
+                struct_x509_certificate_reference_js_to_rs(js_val)?
+            };
+            Ok(
+                libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy::PKI {
+                    certificate_reference,
+                },
+            )
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a AcceptFinalizeAsyncEnrollmentIdentityStrategy",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_accept_finalize_async_enrollment_identity_strategy_rs_to_js(
+    rs_obj: libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy::OpenBao {
+            openbao_server_url,
+            openbao_transit_mount_path,
+            openbao_secret_mount_path,
+            openbao_entity_id,
+            openbao_auth_token,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AcceptFinalizeAsyncEnrollmentIdentityStrategyOpenBao".into(),
+            )?;
+            let js_openbao_server_url = openbao_server_url.into();
+            Reflect::set(&js_obj, &"openbaoServerUrl".into(), &js_openbao_server_url)?;
+            let js_openbao_transit_mount_path = openbao_transit_mount_path.into();
+            Reflect::set(
+                &js_obj,
+                &"openbaoTransitMountPath".into(),
+                &js_openbao_transit_mount_path,
+            )?;
+            let js_openbao_secret_mount_path = openbao_secret_mount_path.into();
+            Reflect::set(
+                &js_obj,
+                &"openbaoSecretMountPath".into(),
+                &js_openbao_secret_mount_path,
+            )?;
+            let js_openbao_entity_id = openbao_entity_id.into();
+            Reflect::set(&js_obj, &"openbaoEntityId".into(), &js_openbao_entity_id)?;
+            let js_openbao_auth_token = openbao_auth_token.into();
+            Reflect::set(&js_obj, &"openbaoAuthToken".into(), &js_openbao_auth_token)?;
+        }
+        libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy::PKI {
+            certificate_reference,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI".into(),
+            )?;
+            let js_certificate_reference =
+                struct_x509_certificate_reference_rs_to_js(certificate_reference)?;
+            Reflect::set(
+                &js_obj,
+                &"certificateReference".into(),
+                &js_certificate_reference,
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // AccountAuthMethodStrategy
 
 #[allow(dead_code)]
@@ -6793,6 +7218,88 @@ fn variant_archive_device_error_rs_to_js(
     Ok(js_obj)
 }
 
+// AsyncEnrollmentIdentitySystem
+
+#[allow(dead_code)]
+fn variant_async_enrollment_identity_system_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::AsyncEnrollmentIdentitySystem, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "AsyncEnrollmentIdentitySystemOpenBao" => {
+            Ok(libparsec::AsyncEnrollmentIdentitySystem::OpenBao)
+        }
+        "AsyncEnrollmentIdentitySystemPKI" => {
+            let x509_root_certificate_common_name = {
+                let js_val = Reflect::get(&obj, &"x509RootCertificateCommonName".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let x509_root_certificate_subject = {
+                let js_val = Reflect::get(&obj, &"x509RootCertificateSubject".into())?;
+                js_val
+                    .dyn_into::<Uint8Array>()
+                    .map_err(|_| TypeError::new("Not a Uint8Array"))?
+                    .to_vec()
+            };
+            Ok(libparsec::AsyncEnrollmentIdentitySystem::PKI {
+                x509_root_certificate_common_name,
+                x509_root_certificate_subject,
+            })
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a AsyncEnrollmentIdentitySystem",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_async_enrollment_identity_system_rs_to_js(
+    rs_obj: libparsec::AsyncEnrollmentIdentitySystem,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::AsyncEnrollmentIdentitySystem::OpenBao => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AsyncEnrollmentIdentitySystemOpenBao".into(),
+            )?;
+        }
+        libparsec::AsyncEnrollmentIdentitySystem::PKI {
+            x509_root_certificate_common_name,
+            x509_root_certificate_subject,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AsyncEnrollmentIdentitySystemPKI".into(),
+            )?;
+            let js_x509_root_certificate_common_name = x509_root_certificate_common_name.into();
+            Reflect::set(
+                &js_obj,
+                &"x509RootCertificateCommonName".into(),
+                &js_x509_root_certificate_common_name,
+            )?;
+            let js_x509_root_certificate_subject =
+                JsValue::from(Uint8Array::from(x509_root_certificate_subject.as_ref()));
+            Reflect::set(
+                &js_obj,
+                &"x509RootCertificateSubject".into(),
+                &js_x509_root_certificate_subject,
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // AvailableDeviceType
 
 #[allow(dead_code)]
@@ -6894,6 +7401,94 @@ fn variant_available_device_type_rs_to_js(
                 &"tag".into(),
                 &"AvailableDeviceTypeRecovery".into(),
             )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// AvailablePendingAsyncEnrollmentIdentitySystem
+
+#[allow(dead_code)]
+fn variant_available_pending_async_enrollment_identity_system_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::AvailablePendingAsyncEnrollmentIdentitySystem, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "AvailablePendingAsyncEnrollmentIdentitySystemOpenBao" => {
+            let openbao_entity_id = {
+                let js_val = Reflect::get(&obj, &"openbaoEntityId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let openbao_preferred_auth_id = {
+                let js_val = Reflect::get(&obj, &"openbaoPreferredAuthId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            Ok(
+                libparsec::AvailablePendingAsyncEnrollmentIdentitySystem::OpenBao {
+                    openbao_entity_id,
+                    openbao_preferred_auth_id,
+                },
+            )
+        }
+        "AvailablePendingAsyncEnrollmentIdentitySystemPKI" => {
+            let certificate_ref = {
+                let js_val = Reflect::get(&obj, &"certificateRef".into())?;
+                struct_x509_certificate_reference_js_to_rs(js_val)?
+            };
+            Ok(libparsec::AvailablePendingAsyncEnrollmentIdentitySystem::PKI { certificate_ref })
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a AvailablePendingAsyncEnrollmentIdentitySystem",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_available_pending_async_enrollment_identity_system_rs_to_js(
+    rs_obj: libparsec::AvailablePendingAsyncEnrollmentIdentitySystem,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::AvailablePendingAsyncEnrollmentIdentitySystem::OpenBao {
+            openbao_entity_id,
+            openbao_preferred_auth_id,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AvailablePendingAsyncEnrollmentIdentitySystemOpenBao".into(),
+            )?;
+            let js_openbao_entity_id = openbao_entity_id.into();
+            Reflect::set(&js_obj, &"openbaoEntityId".into(), &js_openbao_entity_id)?;
+            let js_openbao_preferred_auth_id = openbao_preferred_auth_id.into();
+            Reflect::set(
+                &js_obj,
+                &"openbaoPreferredAuthId".into(),
+                &js_openbao_preferred_auth_id,
+            )?;
+        }
+        libparsec::AvailablePendingAsyncEnrollmentIdentitySystem::PKI {
+            certificate_ref, ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AvailablePendingAsyncEnrollmentIdentitySystemPKI".into(),
+            )?;
+            let js_certificate_ref = struct_x509_certificate_reference_rs_to_js(certificate_ref)?;
+            Reflect::set(&js_obj, &"certificateRef".into(), &js_certificate_ref)?;
         }
     }
     Ok(js_obj)
@@ -7278,6 +7873,118 @@ fn variant_claimer_retrieve_info_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ClaimerRetrieveInfoErrorOrganizationExpired".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientAcceptAsyncEnrollmentError
+
+#[allow(dead_code)]
+fn variant_client_accept_async_enrollment_error_rs_to_js(
+    rs_obj: libparsec::ClientAcceptAsyncEnrollmentError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientAcceptAsyncEnrollmentError::ActiveUsersLimitReached { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientAcceptAsyncEnrollmentErrorActiveUsersLimitReached".into(),
+            )?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::AuthorNotAllowed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientAcceptAsyncEnrollmentErrorAuthorNotAllowed".into(),
+            )?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::BadSubmitPayload { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientAcceptAsyncEnrollmentErrorBadSubmitPayload".into(),
+            )?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::EnrollmentNoLongerAvailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientAcceptAsyncEnrollmentErrorEnrollmentNoLongerAvailable".into(),
+            )?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::EnrollmentNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientAcceptAsyncEnrollmentErrorEnrollmentNotFound".into(),
+            )?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::HumanHandleAlreadyTaken { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientAcceptAsyncEnrollmentErrorHumanHandleAlreadyTaken".into(),
+            )?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::IdentityStrategyMismatch { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientAcceptAsyncEnrollmentErrorIdentityStrategyMismatch".into(),
+            )?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientAcceptAsyncEnrollmentErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::InvalidX509Trustchain { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientAcceptAsyncEnrollmentErrorInvalidX509Trustchain".into(),
+            )?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientAcceptAsyncEnrollmentErrorOffline".into(),
+            )?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::OpenBaoBadServerResponse { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientAcceptAsyncEnrollmentErrorOpenBaoBadServerResponse".into(),
+            )?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::OpenBaoBadURL { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientAcceptAsyncEnrollmentErrorOpenBaoBadURL".into(),
+            )?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::OpenBaoNoServerResponse { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientAcceptAsyncEnrollmentErrorOpenBaoNoServerResponse".into(),
+            )?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::TimestampOutOfBallpark { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientAcceptAsyncEnrollmentErrorTimestampOutOfBallpark".into(),
             )?;
         }
     }
@@ -8914,6 +9621,41 @@ fn variant_client_info_error_rs_to_js(
     Ok(js_obj)
 }
 
+// ClientListAsyncEnrollmentsError
+
+#[allow(dead_code)]
+fn variant_client_list_async_enrollments_error_rs_to_js(
+    rs_obj: libparsec::ClientListAsyncEnrollmentsError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientListAsyncEnrollmentsError::AuthorNotAllowed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientListAsyncEnrollmentsErrorAuthorNotAllowed".into(),
+            )?;
+        }
+        libparsec::ClientListAsyncEnrollmentsError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientListAsyncEnrollmentsErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientListAsyncEnrollmentsError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientListAsyncEnrollmentsErrorOffline".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientListFrozenUsersError
 
 #[allow(dead_code)]
@@ -9216,6 +9958,55 @@ fn variant_client_organization_info_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ClientOrganizationInfoErrorOffline".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientRejectAsyncEnrollmentError
+
+#[allow(dead_code)]
+fn variant_client_reject_async_enrollment_error_rs_to_js(
+    rs_obj: libparsec::ClientRejectAsyncEnrollmentError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientRejectAsyncEnrollmentError::AuthorNotAllowed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientRejectAsyncEnrollmentErrorAuthorNotAllowed".into(),
+            )?;
+        }
+        libparsec::ClientRejectAsyncEnrollmentError::EnrollmentNoLongerAvailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientRejectAsyncEnrollmentErrorEnrollmentNoLongerAvailable".into(),
+            )?;
+        }
+        libparsec::ClientRejectAsyncEnrollmentError::EnrollmentNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientRejectAsyncEnrollmentErrorEnrollmentNotFound".into(),
+            )?;
+        }
+        libparsec::ClientRejectAsyncEnrollmentError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientRejectAsyncEnrollmentErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientRejectAsyncEnrollmentError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientRejectAsyncEnrollmentErrorOffline".into(),
             )?;
         }
     }
@@ -14638,6 +15429,255 @@ fn variant_parsed_parsec_addr_rs_to_js(
     Ok(js_obj)
 }
 
+// PendingAsyncEnrollmentInfo
+
+#[allow(dead_code)]
+fn variant_pending_async_enrollment_info_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::PendingAsyncEnrollmentInfo, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "PendingAsyncEnrollmentInfoAccepted" => {
+            let submitted_on = {
+                let js_val = Reflect::get(&obj, &"submittedOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            let accepted_on = {
+                let js_val = Reflect::get(&obj, &"acceptedOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            Ok(libparsec::PendingAsyncEnrollmentInfo::Accepted {
+                submitted_on,
+                accepted_on,
+            })
+        }
+        "PendingAsyncEnrollmentInfoCancelled" => {
+            let submitted_on = {
+                let js_val = Reflect::get(&obj, &"submittedOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            let cancelled_on = {
+                let js_val = Reflect::get(&obj, &"cancelledOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            Ok(libparsec::PendingAsyncEnrollmentInfo::Cancelled {
+                submitted_on,
+                cancelled_on,
+            })
+        }
+        "PendingAsyncEnrollmentInfoRejected" => {
+            let submitted_on = {
+                let js_val = Reflect::get(&obj, &"submittedOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            let rejected_on = {
+                let js_val = Reflect::get(&obj, &"rejectedOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            Ok(libparsec::PendingAsyncEnrollmentInfo::Rejected {
+                submitted_on,
+                rejected_on,
+            })
+        }
+        "PendingAsyncEnrollmentInfoSubmitted" => {
+            let submitted_on = {
+                let js_val = Reflect::get(&obj, &"submittedOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            Ok(libparsec::PendingAsyncEnrollmentInfo::Submitted { submitted_on })
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a PendingAsyncEnrollmentInfo",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_pending_async_enrollment_info_rs_to_js(
+    rs_obj: libparsec::PendingAsyncEnrollmentInfo,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::PendingAsyncEnrollmentInfo::Accepted {
+            submitted_on,
+            accepted_on,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PendingAsyncEnrollmentInfoAccepted".into(),
+            )?;
+            let js_submitted_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(submitted_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"submittedOn".into(), &js_submitted_on)?;
+            let js_accepted_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(accepted_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"acceptedOn".into(), &js_accepted_on)?;
+        }
+        libparsec::PendingAsyncEnrollmentInfo::Cancelled {
+            submitted_on,
+            cancelled_on,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PendingAsyncEnrollmentInfoCancelled".into(),
+            )?;
+            let js_submitted_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(submitted_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"submittedOn".into(), &js_submitted_on)?;
+            let js_cancelled_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(cancelled_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"cancelledOn".into(), &js_cancelled_on)?;
+        }
+        libparsec::PendingAsyncEnrollmentInfo::Rejected {
+            submitted_on,
+            rejected_on,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PendingAsyncEnrollmentInfoRejected".into(),
+            )?;
+            let js_submitted_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(submitted_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"submittedOn".into(), &js_submitted_on)?;
+            let js_rejected_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(rejected_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"rejectedOn".into(), &js_rejected_on)?;
+        }
+        libparsec::PendingAsyncEnrollmentInfo::Submitted { submitted_on, .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PendingAsyncEnrollmentInfoSubmitted".into(),
+            )?;
+            let js_submitted_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(submitted_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"submittedOn".into(), &js_submitted_on)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // PkiEnrollmentAcceptError
 
 #[allow(dead_code)]
@@ -16758,6 +17798,415 @@ fn variant_show_certificate_selection_dialog_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ShowCertificateSelectionDialogErrorCannotOpenStore".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// SubmitAsyncEnrollmentError
+
+#[allow(dead_code)]
+fn variant_submit_async_enrollment_error_rs_to_js(
+    rs_obj: libparsec::SubmitAsyncEnrollmentError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::SubmitAsyncEnrollmentError::EmailAlreadyEnrolled { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitAsyncEnrollmentErrorEmailAlreadyEnrolled".into(),
+            )?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::EmailAlreadySubmitted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitAsyncEnrollmentErrorEmailAlreadySubmitted".into(),
+            )?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitAsyncEnrollmentErrorInternal".into(),
+            )?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::InvalidPath { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitAsyncEnrollmentErrorInvalidPath".into(),
+            )?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::InvalidX509Trustchain { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitAsyncEnrollmentErrorInvalidX509Trustchain".into(),
+            )?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitAsyncEnrollmentErrorOffline".into(),
+            )?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::OpenBaoBadServerResponse { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitAsyncEnrollmentErrorOpenBaoBadServerResponse".into(),
+            )?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::OpenBaoBadURL { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitAsyncEnrollmentErrorOpenBaoBadURL".into(),
+            )?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::OpenBaoNoServerResponse { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitAsyncEnrollmentErrorOpenBaoNoServerResponse".into(),
+            )?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::StorageNotAvailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitAsyncEnrollmentErrorStorageNotAvailable".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// SubmitAsyncEnrollmentIdentityStrategy
+
+#[allow(dead_code)]
+fn variant_submit_async_enrollment_identity_strategy_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::SubmitAsyncEnrollmentIdentityStrategy, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "SubmitAsyncEnrollmentIdentityStrategyOpenBao" => {
+            let requested_human_handle = {
+                let js_val = Reflect::get(&obj, &"requestedHumanHandle".into())?;
+                struct_human_handle_js_to_rs(js_val)?
+            };
+            let openbao_server_url = {
+                let js_val = Reflect::get(&obj, &"openbaoServerUrl".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let openbao_transit_mount_path = {
+                let js_val = Reflect::get(&obj, &"openbaoTransitMountPath".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let openbao_secret_mount_path = {
+                let js_val = Reflect::get(&obj, &"openbaoSecretMountPath".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let openbao_entity_id = {
+                let js_val = Reflect::get(&obj, &"openbaoEntityId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let openbao_auth_token = {
+                let js_val = Reflect::get(&obj, &"openbaoAuthToken".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let openbao_preferred_auth_id = {
+                let js_val = Reflect::get(&obj, &"openbaoPreferredAuthId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            Ok(libparsec::SubmitAsyncEnrollmentIdentityStrategy::OpenBao {
+                requested_human_handle,
+                openbao_server_url,
+                openbao_transit_mount_path,
+                openbao_secret_mount_path,
+                openbao_entity_id,
+                openbao_auth_token,
+                openbao_preferred_auth_id,
+            })
+        }
+        "SubmitAsyncEnrollmentIdentityStrategyPKI" => {
+            let certificate_reference = {
+                let js_val = Reflect::get(&obj, &"certificateReference".into())?;
+                struct_x509_certificate_reference_js_to_rs(js_val)?
+            };
+            Ok(libparsec::SubmitAsyncEnrollmentIdentityStrategy::PKI {
+                certificate_reference,
+            })
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a SubmitAsyncEnrollmentIdentityStrategy",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_submit_async_enrollment_identity_strategy_rs_to_js(
+    rs_obj: libparsec::SubmitAsyncEnrollmentIdentityStrategy,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::SubmitAsyncEnrollmentIdentityStrategy::OpenBao {
+            requested_human_handle,
+            openbao_server_url,
+            openbao_transit_mount_path,
+            openbao_secret_mount_path,
+            openbao_entity_id,
+            openbao_auth_token,
+            openbao_preferred_auth_id,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitAsyncEnrollmentIdentityStrategyOpenBao".into(),
+            )?;
+            let js_requested_human_handle = struct_human_handle_rs_to_js(requested_human_handle)?;
+            Reflect::set(
+                &js_obj,
+                &"requestedHumanHandle".into(),
+                &js_requested_human_handle,
+            )?;
+            let js_openbao_server_url = openbao_server_url.into();
+            Reflect::set(&js_obj, &"openbaoServerUrl".into(), &js_openbao_server_url)?;
+            let js_openbao_transit_mount_path = openbao_transit_mount_path.into();
+            Reflect::set(
+                &js_obj,
+                &"openbaoTransitMountPath".into(),
+                &js_openbao_transit_mount_path,
+            )?;
+            let js_openbao_secret_mount_path = openbao_secret_mount_path.into();
+            Reflect::set(
+                &js_obj,
+                &"openbaoSecretMountPath".into(),
+                &js_openbao_secret_mount_path,
+            )?;
+            let js_openbao_entity_id = openbao_entity_id.into();
+            Reflect::set(&js_obj, &"openbaoEntityId".into(), &js_openbao_entity_id)?;
+            let js_openbao_auth_token = openbao_auth_token.into();
+            Reflect::set(&js_obj, &"openbaoAuthToken".into(), &js_openbao_auth_token)?;
+            let js_openbao_preferred_auth_id = openbao_preferred_auth_id.into();
+            Reflect::set(
+                &js_obj,
+                &"openbaoPreferredAuthId".into(),
+                &js_openbao_preferred_auth_id,
+            )?;
+        }
+        libparsec::SubmitAsyncEnrollmentIdentityStrategy::PKI {
+            certificate_reference,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitAsyncEnrollmentIdentityStrategyPKI".into(),
+            )?;
+            let js_certificate_reference =
+                struct_x509_certificate_reference_rs_to_js(certificate_reference)?;
+            Reflect::set(
+                &js_obj,
+                &"certificateReference".into(),
+                &js_certificate_reference,
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// SubmitterFinalizeAsyncEnrollmentError
+
+#[allow(dead_code)]
+fn variant_submitter_finalize_async_enrollment_error_rs_to_js(
+    rs_obj: libparsec::SubmitterFinalizeAsyncEnrollmentError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::BadAcceptPayload{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorBadAcceptPayload".into())?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::EnrollmentFileCannotRetrieveCiphertextKey{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorEnrollmentFileCannotRetrieveCiphertextKey".into())?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::EnrollmentFileInvalidData{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorEnrollmentFileInvalidData".into())?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::EnrollmentFileInvalidPath{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorEnrollmentFileInvalidPath".into())?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::EnrollmentNotFoundOnServer{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorEnrollmentNotFoundOnServer".into())?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::IdentityStrategyMismatch{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorIdentityStrategyMismatch".into())?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::Internal{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorInternal".into())?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::InvalidX509Trustchain{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorInvalidX509Trustchain".into())?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::NotAccepted{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorNotAccepted".into())?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::Offline{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorOffline".into())?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::OpenBaoBadServerResponse{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorOpenBaoBadServerResponse".into())?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::OpenBaoBadURL{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorOpenBaoBadURL".into())?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::OpenBaoNoServerResponse{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorOpenBaoNoServerResponse".into())?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::SaveDeviceInvalidPath{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceInvalidPath".into())?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::SaveDeviceRemoteOpaqueKeyUploadFailed{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadFailed".into())?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::SaveDeviceRemoteOpaqueKeyUploadOffline{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadOffline".into())?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::StorageNotAvailable{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// SubmitterForgetAsyncEnrollmentError
+
+#[allow(dead_code)]
+fn variant_submitter_forget_async_enrollment_error_rs_to_js(
+    rs_obj: libparsec::SubmitterForgetAsyncEnrollmentError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::SubmitterForgetAsyncEnrollmentError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitterForgetAsyncEnrollmentErrorInternal".into(),
+            )?;
+        }
+        libparsec::SubmitterForgetAsyncEnrollmentError::NotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitterForgetAsyncEnrollmentErrorNotFound".into(),
+            )?;
+        }
+        libparsec::SubmitterForgetAsyncEnrollmentError::StorageNotAvailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitterForgetAsyncEnrollmentErrorStorageNotAvailable".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// SubmitterGetAsyncEnrollmentInfoError
+
+#[allow(dead_code)]
+fn variant_submitter_get_async_enrollment_info_error_rs_to_js(
+    rs_obj: libparsec::SubmitterGetAsyncEnrollmentInfoError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::SubmitterGetAsyncEnrollmentInfoError::EnrollmentNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitterGetAsyncEnrollmentInfoErrorEnrollmentNotFound".into(),
+            )?;
+        }
+        libparsec::SubmitterGetAsyncEnrollmentInfoError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitterGetAsyncEnrollmentInfoErrorInternal".into(),
+            )?;
+        }
+        libparsec::SubmitterGetAsyncEnrollmentInfoError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitterGetAsyncEnrollmentInfoErrorOffline".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// SubmitterListLocalAsyncEnrollmentsError
+
+#[allow(dead_code)]
+fn variant_submitter_list_local_async_enrollments_error_rs_to_js(
+    rs_obj: libparsec::SubmitterListLocalAsyncEnrollmentsError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::SubmitterListLocalAsyncEnrollmentsError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitterListLocalAsyncEnrollmentsErrorInternal".into(),
+            )?;
+        }
+        libparsec::SubmitterListLocalAsyncEnrollmentsError::StorageNotAvailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitterListLocalAsyncEnrollmentsErrorStorageNotAvailable".into(),
             )?;
         }
     }
@@ -20981,6 +22430,57 @@ pub fn claimerUserWaitAllPeers(canceller: u32, handle: u32) -> Promise {
     }))
 }
 
+// client_accept_async_enrollment
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientAcceptAsyncEnrollment(
+    client: u32,
+    profile: String,
+    enrollment_id: String,
+    identity_strategy: Object,
+) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let profile = enum_user_profile_js_to_rs(&profile)?;
+
+        let enrollment_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::AsyncEnrollmentID, _> {
+                libparsec::AsyncEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(enrollment_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let identity_strategy = identity_strategy.into();
+        let identity_strategy =
+            variant_accept_finalize_async_enrollment_identity_strategy_js_to_rs(identity_strategy)?;
+
+        let ret = libparsec::client_accept_async_enrollment(
+            client,
+            profile,
+            enrollment_id,
+            identity_strategy,
+        )
+        .await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_accept_async_enrollment_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
 // client_accept_tos
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -21359,6 +22859,39 @@ pub fn clientInfo(client: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_client_info_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// client_list_async_enrollments
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientListAsyncEnrollments(client: u32) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::client_list_async_enrollments(client).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(value.len() as u32);
+                    for (i, elem) in value.into_iter().enumerate() {
+                        let js_elem = struct_async_enrollment_untrusted_rs_to_js(elem)?;
+                        js_array.set(i as u32, js_elem);
+                    }
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_list_async_enrollments_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -21948,6 +23481,40 @@ pub fn clientPkiListVerifyItems(
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_pki_enrollment_list_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// client_reject_async_enrollment
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientRejectAsyncEnrollment(client: u32, enrollment_id: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let enrollment_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::AsyncEnrollmentID, _> {
+                libparsec::AsyncEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(enrollment_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::client_reject_async_enrollment(client, enrollment_id).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_reject_async_enrollment_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -23770,6 +25337,248 @@ pub fn showCertificateSelectionDialogWindowsOnly() -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_show_certificate_selection_dialog_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// submit_async_enrollment
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn submitAsyncEnrollment(
+    config: Object,
+    addr: String,
+    force: bool,
+    requested_device_label: String,
+    identity_strategy: Object,
+) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config = config.into();
+        let config = struct_client_config_js_to_rs(config)?;
+
+        let addr = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAsyncEnrollmentAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let requested_device_label = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(requested_device_label).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let identity_strategy = identity_strategy.into();
+        let identity_strategy =
+            variant_submit_async_enrollment_identity_strategy_js_to_rs(identity_strategy)?;
+
+        let ret = libparsec::submit_async_enrollment(
+            config,
+            addr,
+            force,
+            requested_device_label,
+            identity_strategy,
+        )
+        .await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_available_pending_async_enrollment_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_submit_async_enrollment_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// submitter_finalize_async_enrollment
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn submitterFinalizeAsyncEnrollment(
+    config: Object,
+    enrollment_file: String,
+    new_device_save_strategy: Object,
+    new_device_key_file: String,
+    identity_strategy: Object,
+) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config = config.into();
+        let config = struct_client_config_js_to_rs(config)?;
+
+        let enrollment_file = {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            custom_from_rs_string(enrollment_file).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let new_device_save_strategy = new_device_save_strategy.into();
+        let new_device_save_strategy =
+            variant_device_save_strategy_js_to_rs(new_device_save_strategy)?;
+
+        let new_device_key_file = {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            custom_from_rs_string(new_device_key_file).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let identity_strategy = identity_strategy.into();
+        let identity_strategy =
+            variant_accept_finalize_async_enrollment_identity_strategy_js_to_rs(identity_strategy)?;
+
+        let ret = libparsec::submitter_finalize_async_enrollment(
+            config,
+            &enrollment_file,
+            new_device_save_strategy,
+            &new_device_key_file,
+            identity_strategy,
+        )
+        .await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_available_device_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_submitter_finalize_async_enrollment_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// submitter_forget_async_enrollment
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn submitterForgetAsyncEnrollment(config_dir: String, enrollment_id: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config_dir = {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let enrollment_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::AsyncEnrollmentID, _> {
+                libparsec::AsyncEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(enrollment_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::submitter_forget_async_enrollment(&config_dir, enrollment_id).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_submitter_forget_async_enrollment_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// submitter_get_async_enrollment_info
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn submitterGetAsyncEnrollmentInfo(
+    config: Object,
+    addr: String,
+    enrollment_id: String,
+) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config = config.into();
+        let config = struct_client_config_js_to_rs(config)?;
+
+        let addr = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAsyncEnrollmentAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let enrollment_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::AsyncEnrollmentID, _> {
+                libparsec::AsyncEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(enrollment_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::submitter_get_async_enrollment_info(config, addr, enrollment_id).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = variant_pending_async_enrollment_info_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_submitter_get_async_enrollment_info_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// submitter_list_async_enrollments
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn submitterListAsyncEnrollments(config_dir: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config_dir = {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::submitter_list_async_enrollments(&config_dir).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(value.len() as u32);
+                    for (i, elem) in value.into_iter().enumerate() {
+                        let js_elem = struct_available_pending_async_enrollment_rs_to_js(elem)?;
+                        js_array.set(i as u32, js_elem);
+                    }
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_submitter_list_local_async_enrollments_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
