@@ -12,8 +12,9 @@ import { electronIsDev } from './utils';
 import fs from 'fs';
 import path from 'path';
 import { PageToWindowChannel, WindowToPageChannel } from './communicationChannels';
+import { setupContentSecurityPolicy } from './cspRules';
 import { Env } from './envVariables';
-import { ElectronCapacitorApp, setupContentSecurityPolicy, setupReloadWatcher } from './setup';
+import { ElectronCapacitorApp, setupReloadWatcher } from './setup';
 
 const PARSEC_CONFIG_DIR_NAME = 'parsec3';
 const ELECTRON_CONFIG_DIR_NAME = electronIsDev ? 'app-dev' : 'app';
