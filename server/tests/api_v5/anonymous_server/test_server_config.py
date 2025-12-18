@@ -26,7 +26,8 @@ async def test_anonymous_server_server_config_ok(
             backend.config.account_config = AccountConfig.ENABLED_WITH_VAULT
             backend.config.openbao_config = OpenBaoConfig(
                 server_url="https://openbao.parsec.invalid",
-                secret_mount_path="secrets",
+                secret_mount_path="secret",
+                transit_mount_path="transit",
                 auths=[
                     OpenBaoAuthConfig(
                         id=OpenBaoAuthType.HEXAGONE,
@@ -46,8 +47,9 @@ async def test_anonymous_server_server_config_ok(
                 openbao=anonymous_server_cmds.latest.server_config.OpenBaoConfigEnabled(
                     server_url="https://openbao.parsec.invalid",
                     secret=anonymous_server_cmds.latest.server_config.OpenBaoSecretConfigKV2(
-                        "secrets"
+                        "secret"
                     ),
+                    transit_mount_path="transit",
                     auths=[
                         anonymous_server_cmds.latest.server_config.OpenBaoAuthConfig(
                             id="HEXAGONE", mount_path="auth/hexagone"
