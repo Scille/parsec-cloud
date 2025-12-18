@@ -353,11 +353,6 @@ async function openIssueModal(status: EditorIssueStatus, redirectAfterDismiss = 
   // Handle redirection if requested (default is true)
   if (redirectAfterDismiss) {
     await routerGoBack();
-    // TODO: find why we have router problems causing routerGoBack to stay on same page
-    // https://github.com/Scille/parsec-cloud/issues/11749
-    if (currentRouteIs(Routes.FileHandler) && getFileHandlerMode() === FileHandlerMode.Edit) {
-      await routerGoBack();
-    }
   }
 
   return role as MsModalResult;
@@ -375,11 +370,6 @@ async function openTimeoutModal(): Promise<'wait' | 'close'> {
     }
   } else if (role === MsModalResult.Cancel) {
     await routerGoBack();
-    // TODO: find why we have router problems causing routerGoBack to stay on same page
-    // https://github.com/Scille/parsec-cloud/issues/11749
-    if (currentRouteIs(Routes.FileHandler) && getFileHandlerMode() === FileHandlerMode.Edit) {
-      await routerGoBack();
-    }
     return 'close';
   }
 

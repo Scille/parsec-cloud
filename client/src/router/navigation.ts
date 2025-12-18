@@ -2,7 +2,7 @@
 
 import { ConnectionHandle, EntryName, listStartedClients, WorkspaceHandle } from '@/parsec';
 import { getConnectionHandle } from '@/router/params';
-import { ClientAreaQuery, getCurrentRoute, getRouter, Query, RouteBackup, Routes } from '@/router/types';
+import { ClientAreaQuery, getCurrentRoute, getRouteBeforeFileHandler, getRouter, Query, RouteBackup, Routes } from '@/router/types';
 import { Base64 } from 'megashark-lib';
 import { LocationQueryRaw, RouteParamsRaw } from 'vue-router';
 
@@ -53,8 +53,19 @@ export async function navigateToWorkspace(
 }
 
 export async function routerGoBack(): Promise<void> {
-  const router = getRouter();
-  router.back();
+  const backup = getRouteBeforeFileHandler();
+
+  if (backup) {
+    window.electronAPI.log('debug', 'Navigating to saved route instead of going back');
+    await navigateTo(backup.data.route, {
+      replace: true,
+      params: { handle: backup.handle, ...backup.data.params },
+      query: backup.data.query,
+    });
+  } else {
+    const router = getRouter();
+    router.back();
+  }
 }
 
 const routesBackup: Array<RouteBackup> = [];

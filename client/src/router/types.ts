@@ -233,6 +233,11 @@ const router: Router = createRouter({
 });
 
 const visitedLastHistory = new Map<Routes, RouteBackup>();
+let routeBeforeFileHandler: RouteBackup | undefined = undefined;
+
+export function getRouteBeforeFileHandler(): RouteBackup | undefined {
+  return routeBeforeFileHandler;
+}
 
 router.beforeEach((to, from, next) => {
   // Clearing history if we come from a page that has no handle.
@@ -241,6 +246,7 @@ router.beforeEach((to, from, next) => {
     visitedLastHistory.clear();
   }
   if (!to.name || !to.params.handle) {
+    routeBeforeFileHandler = undefined;
     next();
     return;
   }
@@ -256,6 +262,20 @@ router.beforeEach((to, from, next) => {
       query: to.query,
     },
   });
+  if (routeName === Routes.FileHandler) {
+    if ((from.name as Routes) !== Routes.FileHandler) {
+      routeBeforeFileHandler = {
+        handle: Number(from.params.handle),
+        data: {
+          route: from.name as Routes,
+          params: from.params,
+          query: from.query,
+        },
+      };
+    }
+  } else {
+    routeBeforeFileHandler = undefined;
+  }
   next();
 });
 
