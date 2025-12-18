@@ -29,11 +29,9 @@ msTest('Opens app update modal automatically on home page', async ({ home }) => 
 msTest('Prevent to open app update modal automatically if a modal is already opened on home page', async ({ home }) => {
   await expect(home.locator('.settings-modal')).toBeHidden();
   await home.locator('.menu-secondary').locator('#trigger-settings-button').click();
-  await sendUpdateEvent(home);
   await expect(home.locator('.settings-modal')).toBeVisible();
-
-  const modal = home.locator('.update-app-modal');
-  await expect(modal).toBeHidden();
+  await sendUpdateEvent(home);
+  await expect(home.locator('.update-app-modal')).toBeHidden();
 });
 
 msTest('Opens app update modal automatically after being connected', async ({ connected }) => {
