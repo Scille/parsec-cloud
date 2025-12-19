@@ -86,6 +86,12 @@ impl PkiEnrollmentAnswerPayload {
     }
 }
 
+impl From<libparsec_types::PkiEnrollmentAnswerPayload> for PkiEnrollmentAnswerPayload {
+    fn from(value: libparsec_types::PkiEnrollmentAnswerPayload) -> Self {
+        Self(value)
+    }
+}
+
 #[pyclass]
 #[derive(Clone)]
 pub(crate) struct PkiEnrollmentSubmitPayload(pub libparsec_types::PkiEnrollmentSubmitPayload);
@@ -286,11 +292,11 @@ impl SignedMessage {
 
 #[pyfunction]
 pub(crate) fn load_submit_payload<'py>(
+    signed_message: SignedMessage,
     der_certificate: &[u8],
     intermediate_certs: Vec<Bound<'py, PyBytes>>,
     trusted_roots: Vec<TrustAnchor>,
     now: DateTime,
-    signed_message: SignedMessage,
 ) -> PyResult<PkiEnrollmentSubmitPayload> {
     let trusted_roots = trusted_roots.into_iter().map(|v| v.0).collect::<Vec<_>>();
     libparsec_platform_pki::load_submit_payload(
@@ -302,6 +308,34 @@ pub(crate) fn load_submit_payload<'py>(
     )
     .map_err(|e| {
         use libparsec_platform_pki::LoadSubmitPayloadError::*;
+        match e {
+            InvalidCertificateDer(error) => PkiInvalidCertificateDER::new_err(error.to_string()),
+            DateTimeOutOfRange(..) | Untrusted(..) => PkiUntrusted::new_err(e.to_string()),
+            InvalidSignature => PkiInvalidSignature::new_err(()),
+            UnexpectedError(..) | DataError(..) => PyValueError::new_err(e.to_string()),
+        }
+    })
+    .map(Into::into)
+}
+
+#[pyfunction]
+pub(crate) fn load_accept_payload<'py>(
+    signed_message: SignedMessage,
+    der_certificate: &[u8],
+    intermediate_certs: Vec<Bound<'py, PyBytes>>,
+    trusted_roots: Vec<TrustAnchor>,
+    now: DateTime,
+) -> PyResult<PkiEnrollmentAnswerPayload> {
+    let trusted_roots = trusted_roots.into_iter().map(|v| v.0).collect::<Vec<_>>();
+    libparsec_platform_pki::load_answer_payload(
+        &signed_message.0,
+        der_certificate,
+        intermediate_certs.iter().map(|v| v.as_bytes()),
+        &trusted_roots,
+        now.0,
+    )
+    .map_err(|e| {
+        use libparsec_platform_pki::LoadAnswerPayloadError::*;
         match e {
             InvalidCertificateDer(error) => PkiInvalidCertificateDER::new_err(error.to_string()),
             DateTimeOutOfRange(..) | Untrusted(..) => PkiUntrusted::new_err(e.to_string()),

@@ -89,9 +89,16 @@ class SignedMessage:
     def __init__(self, algo: PkiSignatureAlgorithm, signature: bytes, message: bytes) -> None: ...
 
 def load_submit_payload(
+    signed_message: SignedMessage,
     der_certificate: bytes,
     intermediate_certs: list[bytes],
     trusted_roots: list[TrustAnchor],
     now: DateTime,
-    signed_message: SignedMessage,
 ) -> PkiEnrollmentSubmitPayload: ...
+def load_accept_payload(
+    signed_message: SignedMessage,
+    der_certificate: bytes,
+    intermediate_certs: list[bytes],
+    trusted_roots: list[TrustAnchor],
+    now: DateTime,
+) -> PkiEnrollmentAnswerPayload: ...

@@ -89,13 +89,13 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
 
         try:
             load_submit_payload(
+                SignedMessage(
+                    submit_payload_signature_algorithm, submit_payload_signature, submit_payload
+                ),
                 submitter_trustchain[0].content,
                 list(map(lambda v: v.content, submitter_trustchain[1:])),
                 self._config.x509_trust_anchor,
                 now,
-                SignedMessage(
-                    submit_payload_signature_algorithm, submit_payload_signature, submit_payload
-                ),
             )
         except PkiUntrusted:
             return PkiEnrollmentSubmitBadOutcome.INVALID_X509_TRUSTCHAIN

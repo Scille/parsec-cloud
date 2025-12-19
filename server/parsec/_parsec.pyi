@@ -106,6 +106,7 @@ from parsec._parsec_pyi.pki import (
     TrustAnchor,
     X509Certificate,
     X509CertificateInformation,
+    load_accept_payload,
     load_submit_payload,
 )
 from parsec._parsec_pyi.protocol import (
@@ -223,6 +224,7 @@ __all__ = [
     "X509Certificate",
     "TrustAnchor",
     "load_submit_payload",
+    "load_accept_payload",
     "PkiUntrusted",
     "PkiInvalidCertificateDER",
     "PkiInvalidSignature",
