@@ -35,7 +35,7 @@ from tests.common import (
     HttpCommonErrorsTester,
     bob_becomes_admin_and_changes_alice,
 )
-from tests.common.pki import PkiEnrollment, TestPki
+from tests.common.pki import PkiEnrollment, TestPki, sign_message
 
 
 class AcceptParamsReq(TypedDict):
@@ -114,13 +114,17 @@ def generate_accept_params(
         root_verify_key=coolorg.root_verify_key,
     ).dump()
 
+    accepter_cert = test_pki.cert["alice"]
+
+    sign_algo, signature = sign_message(accepter_cert.key, payload)
+
     return AcceptParams(
         enrollment_id=enrollment_id,
         payload=payload,
-        payload_signature=b"<alice accept payload signature>",
-        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
+        payload_signature=signature,
+        payload_signature_algorithm=sign_algo,
         accepter_trustchain=[
-            parse_pki_cert(test_pki.cert["alice"].certificate.der),
+            parse_pki_cert(accepter_cert.certificate.der),
             parse_pki_cert(test_pki.root["black_mesa"].certificate.der),
         ],
         submitter_user_certificate=u_certif,
@@ -223,7 +227,7 @@ async def test_authenticated_pki_enrollment_accept_enrollment_no_longer_availabl
 
 
 async def test_authenticated_pki_enrollment_accept_enrollment_not_found(
-    coolorg: CoolorgRpcClients, test_pki: TestPki
+    coolorg: CoolorgRpcClients, test_pki: TestPki, backend_with_test_pki_roots
 ) -> None:
     rep = await coolorg.alice.pki_enrollment_accept(
         **generate_accept_params(coolorg, PKIEnrollmentID.new(), test_pki).to_request()
@@ -249,7 +253,12 @@ async def test_authenticated_pki_enrollment_accept_invalid_payload(
     coolorg: CoolorgRpcClients, existing_pki_enrollment: PkiEnrollment, test_pki: TestPki
 ) -> None:
     params = generate_accept_params(coolorg, existing_pki_enrollment.enrollment_id, test_pki)
-    params.payload = b"<dummy>"
+    invalid_payload = b"<dummy>"
+    accepter_cert = test_pki.find_cert_by_cert_der(params.accepter_trustchain[0].content)
+    params.payload_signature_algorithm, params.payload_signature = sign_message(
+        accepter_cert.key, invalid_payload
+    )
+    params.payload = invalid_payload
     rep = await coolorg.alice.pki_enrollment_accept(**params.to_request())
     assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepInvalidPayload()
 
@@ -374,14 +383,42 @@ async def test_authenticated_pki_enrollment_accept_invalid_der_x509_certificate(
     assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepInvalidDerX509Certificate()
 
 
-@pytest.mark.xfail(reason="TODO: https://github.com/Scille/parsec-cloud/issues/11648")
-async def test_authenticated_pki_enrollment_accept_invalid_payload_signature() -> None:
-    raise NotImplementedError
+async def test_authenticated_pki_enrollment_accept_invalid_payload_signature(
+    coolorg: CoolorgRpcClients, test_pki: TestPki, existing_pki_enrollment: PkiEnrollment
+) -> None:
+    params = generate_accept_params(coolorg, existing_pki_enrollment.enrollment_id, test_pki)
+    invalid_payload = b"<dummy>"
+    accepter_cert = test_pki.cert["bob"]
+    assert accepter_cert.certificate.der != params.accepter_trustchain[0].content
+    params.payload_signature_algorithm, params.payload_signature = sign_message(
+        accepter_cert.key, invalid_payload
+    )
+    params.payload = invalid_payload
+    rep = await coolorg.alice.pki_enrollment_accept(**params.to_request())
+    assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepInvalidPayloadSignature()
 
 
-@pytest.mark.xfail(reason="TODO: https://github.com/Scille/parsec-cloud/issues/11648")
-async def test_authenticated_pki_enrollment_accept_invalid_x509_trustchain() -> None:
-    raise NotImplementedError
+@pytest.mark.parametrize("kind", ("trust_chain_too_complex", "no_trusted_anchor"))
+async def test_authenticated_pki_enrollment_accept_invalid_x509_trustchain(
+    coolorg: CoolorgRpcClients,
+    test_pki: TestPki,
+    existing_pki_enrollment: PkiEnrollment,
+    monkeypatch: pytest.MonkeyPatch,
+    backend: Backend,
+    kind: str,
+) -> None:
+    from parsec.components import pki
+
+    match kind:
+        case "trust_chain_too_complex":
+            monkeypatch.setattr(pki, "MAX_INTERMEDIATE_CERTIFICATES_DEPTH", 0)
+        case "no_trusted_anchor":
+            backend.pki._config.x509_trust_anchor = []
+        case _:
+            assert False
+    params = generate_accept_params(coolorg, existing_pki_enrollment.enrollment_id, test_pki)
+    rep = await coolorg.alice.pki_enrollment_accept(**params.to_request())
+    assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepInvalidX509Trustchain()
 
 
 async def test_authenticated_pki_enrollment_accept_http_common_errors(

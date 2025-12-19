@@ -6,17 +6,21 @@ from parsec._parsec import (
     DeviceCertificate,
     DeviceID,
     OrganizationID,
-    PkiEnrollmentAnswerPayload,
     PKIEnrollmentID,
+    PkiInvalidCertificateDER,
+    PkiInvalidSignature,
     PkiSignatureAlgorithm,
+    PkiUntrusted,
+    SignedMessage,
     UserCertificate,
     UserProfile,
     VerifyKey,
+    load_accept_payload,
 )
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.pki import (
     PkiCertificate,
-    PkiEnrollmentAcceptStoreBadOutcome,
+    PkiEnrollmentAcceptBadOutcome,
     PkiEnrollmentAcceptValidateBadOutcome,
     pki_enrollment_accept_validate,
 )
@@ -30,6 +34,7 @@ from parsec.components.postgresql.queries import (
 )
 from parsec.components.postgresql.user_create_user import _q_insert_user_and_device
 from parsec.components.postgresql.utils import Q
+from parsec.config import BackendConfig
 from parsec.events import EventCommonCertificate, EventPkiEnrollment
 
 _q_get_enrollment = Q("""
@@ -80,10 +85,11 @@ async def pki_accept(
     submitter_redacted_user_certificate: bytes,
     submitter_device_certificate: bytes,
     submitter_redacted_device_certificate: bytes,
+    config: BackendConfig,
 ) -> (
     tuple[UserCertificate, DeviceCertificate]
     | PkiEnrollmentAcceptValidateBadOutcome
-    | PkiEnrollmentAcceptStoreBadOutcome
+    | PkiEnrollmentAcceptBadOutcome
     | TimestampOutOfBallpark
     | RequireGreaterTimestamp
 ):
@@ -96,23 +102,35 @@ async def pki_accept(
         case AuthAndLockCommonOnlyData() as db_common:
             pass
         case AuthAndLockCommonOnlyBadOutcome.ORGANIZATION_NOT_FOUND:
-            return PkiEnrollmentAcceptStoreBadOutcome.ORGANIZATION_NOT_FOUND
+            return PkiEnrollmentAcceptBadOutcome.ORGANIZATION_NOT_FOUND
         case AuthAndLockCommonOnlyBadOutcome.ORGANIZATION_EXPIRED:
-            return PkiEnrollmentAcceptStoreBadOutcome.ORGANIZATION_EXPIRED
+            return PkiEnrollmentAcceptBadOutcome.ORGANIZATION_EXPIRED
         case AuthAndLockCommonOnlyBadOutcome.AUTHOR_NOT_FOUND:
-            return PkiEnrollmentAcceptStoreBadOutcome.AUTHOR_NOT_FOUND
+            return PkiEnrollmentAcceptBadOutcome.AUTHOR_NOT_FOUND
         case AuthAndLockCommonOnlyBadOutcome.AUTHOR_REVOKED:
-            return PkiEnrollmentAcceptStoreBadOutcome.AUTHOR_REVOKED
+            return PkiEnrollmentAcceptBadOutcome.AUTHOR_REVOKED
 
     if db_common.user_current_profile != UserProfile.ADMIN:
-        return PkiEnrollmentAcceptStoreBadOutcome.AUTHOR_NOT_ALLOWED
+        return PkiEnrollmentAcceptBadOutcome.AUTHOR_NOT_ALLOWED
 
     # 2) Validate certificates
 
     try:
-        PkiEnrollmentAnswerPayload.load(payload)
+        load_accept_payload(
+            SignedMessage(payload_signature_algorithm, payload_signature, payload),
+            accepter_trustchain[0].content,
+            list(map(lambda v: v.content, accepter_trustchain[1:])),
+            config.x509_trust_anchor,
+            now,
+        )
+    except PkiUntrusted:
+        return PkiEnrollmentAcceptBadOutcome.INVALID_X509_TRUSTCHAIN
+    except PkiInvalidCertificateDER:
+        return PkiEnrollmentAcceptBadOutcome.INVALID_DER_X509_CERTIFICATE
+    except PkiInvalidSignature:
+        return PkiEnrollmentAcceptBadOutcome.INVALID_PAYLOAD_SIGNATURE
     except ValueError:
-        return PkiEnrollmentAcceptStoreBadOutcome.INVALID_ACCEPT_PAYLOAD
+        return PkiEnrollmentAcceptBadOutcome.INVALID_ACCEPT_PAYLOAD
 
     match pki_enrollment_accept_validate(
         now=now,
@@ -146,7 +164,7 @@ async def pki_accept(
         )
     )
     if enrollment_row is None:
-        return PkiEnrollmentAcceptStoreBadOutcome.ENROLLMENT_NOT_FOUND
+        return PkiEnrollmentAcceptBadOutcome.ENROLLMENT_NOT_FOUND
 
     match enrollment_row["enrollment_internal_id"]:
         case int() as enrollment_internal_id:
@@ -158,7 +176,7 @@ async def pki_accept(
         case True:
             pass
         case False:
-            return PkiEnrollmentAcceptStoreBadOutcome.ENROLLMENT_NO_LONGER_AVAILABLE
+            return PkiEnrollmentAcceptBadOutcome.ENROLLMENT_NO_LONGER_AVAILABLE
         case _:
             assert False, enrollment_row
 
@@ -190,7 +208,7 @@ async def pki_accept(
         case False:
             pass
         case True:
-            return PkiEnrollmentAcceptStoreBadOutcome.HUMAN_HANDLE_ALREADY_TAKEN
+            return PkiEnrollmentAcceptBadOutcome.HUMAN_HANDLE_ALREADY_TAKEN
         case _:
             assert False, row
 
@@ -198,7 +216,7 @@ async def pki_accept(
         case False:
             pass
         case True:
-            return PkiEnrollmentAcceptStoreBadOutcome.ACTIVE_USERS_LIMIT_REACHED
+            return PkiEnrollmentAcceptBadOutcome.ACTIVE_USERS_LIMIT_REACHED
         case _:
             assert False, row
 
@@ -206,7 +224,7 @@ async def pki_accept(
         case int():
             pass
         case None:
-            return PkiEnrollmentAcceptStoreBadOutcome.USER_ALREADY_EXISTS
+            return PkiEnrollmentAcceptBadOutcome.USER_ALREADY_EXISTS
         case _:
             assert False, row
 
@@ -214,7 +232,7 @@ async def pki_accept(
         case int() as new_device_internal_id:
             pass
         case None:
-            return PkiEnrollmentAcceptStoreBadOutcome.USER_ALREADY_EXISTS
+            return PkiEnrollmentAcceptBadOutcome.USER_ALREADY_EXISTS
         case _:
             assert False, row
 

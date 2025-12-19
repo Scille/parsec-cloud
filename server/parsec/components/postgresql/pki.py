@@ -18,7 +18,7 @@ from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.pki import (
     BasePkiEnrollmentComponent,
     PkiCertificate,
-    PkiEnrollmentAcceptStoreBadOutcome,
+    PkiEnrollmentAcceptBadOutcome,
     PkiEnrollmentAcceptValidateBadOutcome,
     PkiEnrollmentInfo,
     PkiEnrollmentInfoBadOutcome,
@@ -139,7 +139,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
     ) -> (
         tuple[UserCertificate, DeviceCertificate]
         | PkiEnrollmentAcceptValidateBadOutcome
-        | PkiEnrollmentAcceptStoreBadOutcome
+        | PkiEnrollmentAcceptBadOutcome
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
     ):
@@ -158,4 +158,5 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             submitter_redacted_user_certificate,
             submitter_device_certificate,
             submitter_redacted_device_certificate,
+            self._config,
         )
