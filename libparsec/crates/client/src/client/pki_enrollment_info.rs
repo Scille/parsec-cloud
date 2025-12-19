@@ -97,11 +97,20 @@ pub async fn info(
                 message: accept_payload,
             };
 
+            // Get root anchor to use to verify the response
+            let path =
+                libparsec_platform_pki::get_validation_path_for_cert(&x509_cert_ref, accepted_on)
+                    .context("Cannot validate own certificate")
+                    .map_err(PkiEnrollmentInfoError::Internal)?;
+
+            // Verify the response
             let answer = load_answer_payload(
-                &x509_cert_ref,
-                &accepter_der_x509_certificate,
                 &message,
-                &accepter_intermediate_der_x509_certificates,
+                &accepter_der_x509_certificate,
+                accepter_intermediate_der_x509_certificates
+                    .iter()
+                    .map(Bytes::as_ref),
+                &[path.root],
                 accepted_on,
             )
             .map_err(|_| PkiEnrollmentInfoError::InvalidAcceptPayload)?;

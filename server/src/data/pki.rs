@@ -294,10 +294,10 @@ pub(crate) fn load_submit_payload<'py>(
 ) -> PyResult<PkiEnrollmentSubmitPayload> {
     let trusted_roots = trusted_roots.into_iter().map(|v| v.0).collect::<Vec<_>>();
     libparsec_platform_pki::load_submit_payload(
-        der_certificate,
         &signed_message.0,
-        &trusted_roots,
+        der_certificate,
         intermediate_certs.iter().map(|v| v.as_bytes()),
+        &trusted_roots,
         now.0,
     )
     .map_err(|e| {

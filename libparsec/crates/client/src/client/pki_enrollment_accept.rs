@@ -56,7 +56,7 @@ pub async fn accept(
                 .context("Missing human handle from submitter certificate")
         })?;
     let accepter_intermediate_certs =
-        libparsec_platform_pki::get_intermediate_certs_for_cert(accepter_cert_ref, DateTime::now())
+        libparsec_platform_pki::get_validation_path_for_cert(accepter_cert_ref, DateTime::now())
             .map_err(anyhow::Error::from)
             .context("Failed to get intermediate certificates for itself")
             .map_err(PkiEnrollmentAcceptError::PkiOperationError)?;
@@ -69,7 +69,7 @@ pub async fn accept(
             Accepter {
                 cert_ref: accepter_cert_ref,
                 der_cert: &accepter_der_x509_certificate,
-                intermediate_der_certs: &accepter_intermediate_certs,
+                intermediate_der_certs: &accepter_intermediate_certs.intermediate_certs,
             },
             Submitter {
                 payload: submit_payload.clone(),

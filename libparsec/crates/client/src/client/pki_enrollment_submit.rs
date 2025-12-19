@@ -60,7 +60,7 @@ pub async fn pki_enrollment_submit(
         .map_err(PkiEnrollmentSubmitError::PkiOperationError)?;
 
     let intermediate_certificates =
-        libparsec_platform_pki::get_intermediate_certs_for_cert(&x509_cert_ref, DateTime::now())
+        libparsec_platform_pki::get_validation_path_for_cert(&x509_cert_ref, DateTime::now())
             .map_err(anyhow::Error::from)
             .context("Failed to get intermediate certificates for itself")
             .map_err(PkiEnrollmentSubmitError::PkiOperationError)?;
@@ -68,7 +68,7 @@ pub async fn pki_enrollment_submit(
     let submitted_on = match cmds
         .send(Req {
             der_x509_certificate: der_x509_certificate.der_content,
-            intermediate_der_x509_certificates: intermediate_certificates,
+            intermediate_der_x509_certificates: intermediate_certificates.intermediate_certs,
             enrollment_id,
             force,
             payload: raw_payload.into(),
