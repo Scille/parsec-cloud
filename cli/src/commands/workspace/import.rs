@@ -9,10 +9,20 @@ use crate::utils::StartedClient;
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin, workspace]
     pub struct Args {
-        /// Local file to copy
+        /// Local file to import (e.g. "myfile.txt")
         pub(crate) src: PathBuf,
-        /// Workspace destination path
+        /// Destination path in the workspace (e.g. "/path/to/myfile.txt")
+        ///
+        /// The path is absolute from the workspace root directory. The command will fail if the
+        /// parent directories do not exist, unless the `parents` option is enabled.
+        ///
+        /// If the destination file already exists, its content will be replaced.
         pub(crate) dest: FsPath,
+        /// If specified, create parent directories as needed
+        ///
+        /// No error if parent directories already exist (similar to `mkdir -p`)
+        #[clap(long, short, action)]
+        pub(crate) parents: bool,
     }
 );
 
@@ -30,6 +40,7 @@ pub async fn workspace_import(args: Args, client: &StartedClient) -> anyhow::Res
     let Args {
         src,
         dest,
+        parents,
         workspace: wid,
         ..
     } = args;
@@ -40,8 +51,25 @@ pub async fn workspace_import(args: Args, client: &StartedClient) -> anyhow::Res
         dst = dest
     );
 
+    // Start workspace and watch for files need to be synced
     let workspace = client.start_workspace(wid).await?;
     let (files_to_sync, _watch_files_to_sync) = watch_workspace_sync_events(&client.event_bus, wid);
+
+    // Create parent directories if the `--parents` flag was specified
+    if parents {
+        log::debug!("Creating parent directories");
+        let _ = match workspace.create_folder_all(dest.clone().parent()).await {
+            Ok(vlob_id) => Ok(vlob_id),
+            Err(err) => match err {
+                // create_folder_all returns an error if the full path already exists
+                // but in our case this is not a problem so we explicitly ignore it
+                libparsec::WorkspaceCreateFolderError::EntryExists { entry_id } => Ok(entry_id),
+                // All other errors are propagated
+                _ => Err(err),
+            },
+        }?;
+    }
+    // Open the remote file (create it if it does not exists)
     let fd = workspace
         .open_file(
             dest,
@@ -58,14 +86,15 @@ pub async fn workspace_import(args: Args, client: &StartedClient) -> anyhow::Res
     let (notify, _event_conn) =
         notify_sync_completion(&client.event_bus, wid, files_to_sync.clone());
 
+    // Copy content from local file to remote file description
     copy_file_to_fd(src, &workspace, fd).await?;
     log::debug!("Flushing and closing file");
     workspace.fd_flush(fd).await?;
     workspace.fd_close(fd).await?;
 
     // After importing the file, we may need to wait for the workspace to sync its data with the server.
-    // The sync procedure may sync other files that the one related to the operation (think parent & children).
-    // So instead of being peaky about which file to sync or to wait, we just wait for all files to be synced for the workspace.
+    // Note that, in addition to the file being imported, this operation may involve syncing other files.
+    // So instead of being peaky about which file to sync or wait, we just wait for all files to be synced for this workspace.
     if !files_to_sync.lock().expect("Mutex poisoned").is_empty() {
         log::debug!("Waiting for sync");
         notify.notified().await;
@@ -74,7 +103,7 @@ pub async fn workspace_import(args: Args, client: &StartedClient) -> anyhow::Res
     Ok(())
 }
 
-/// Watch for file that need to be synced with the server
+/// Watch for files that need to be synced with the server
 #[must_use]
 fn watch_workspace_sync_events(
     event_bus: &EventBus,
