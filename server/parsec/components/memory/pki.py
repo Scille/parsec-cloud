@@ -9,7 +9,6 @@ from parsec._parsec import (
     DeviceID,
     HumanHandle,
     OrganizationID,
-    PkiEnrollmentAnswerPayload,
     PKIEnrollmentID,
     PkiInvalidCertificateDER,
     PkiInvalidSignature,
@@ -19,6 +18,7 @@ from parsec._parsec import (
     UserCertificate,
     UserProfile,
     VerifyKey,
+    load_accept_payload,
     load_submit_payload,
 )
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
@@ -36,7 +36,7 @@ from parsec.components.memory.datamodel import (
 from parsec.components.pki import (
     BasePkiEnrollmentComponent,
     PkiCertificate,
-    PkiEnrollmentAcceptStoreBadOutcome,
+    PkiEnrollmentAcceptBadOutcome,
     PkiEnrollmentAcceptValidateBadOutcome,
     PkiEnrollmentInfo,
     PkiEnrollmentInfoAccepted,
@@ -390,16 +390,16 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
     ) -> (
         tuple[UserCertificate, DeviceCertificate]
         | PkiEnrollmentAcceptValidateBadOutcome
-        | PkiEnrollmentAcceptStoreBadOutcome
+        | PkiEnrollmentAcceptBadOutcome
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
     ):
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
-            return PkiEnrollmentAcceptStoreBadOutcome.ORGANIZATION_NOT_FOUND
+            return PkiEnrollmentAcceptBadOutcome.ORGANIZATION_NOT_FOUND
         if org.is_expired:
-            return PkiEnrollmentAcceptStoreBadOutcome.ORGANIZATION_EXPIRED
+            return PkiEnrollmentAcceptBadOutcome.ORGANIZATION_EXPIRED
 
         # 1) Write lock common topic
 
@@ -407,21 +407,33 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             try:
                 author_device = org.devices[author]
             except KeyError:
-                return PkiEnrollmentAcceptStoreBadOutcome.AUTHOR_NOT_FOUND
+                return PkiEnrollmentAcceptBadOutcome.AUTHOR_NOT_FOUND
             author_user_id = author_device.cooked.user_id
 
             author_user = org.users[author_user_id]
             if author_user.is_revoked:
-                return PkiEnrollmentAcceptStoreBadOutcome.AUTHOR_REVOKED
+                return PkiEnrollmentAcceptBadOutcome.AUTHOR_REVOKED
 
             if author_user.current_profile != UserProfile.ADMIN:
-                return PkiEnrollmentAcceptStoreBadOutcome.AUTHOR_NOT_ALLOWED
+                return PkiEnrollmentAcceptBadOutcome.AUTHOR_NOT_ALLOWED
 
             # 2) Validate certificates
             try:
-                PkiEnrollmentAnswerPayload.load(payload)
+                load_accept_payload(
+                    SignedMessage(payload_signature_algorithm, payload_signature, payload),
+                    accepter_trustchain[0].content,
+                    list(map(lambda v: v.content, accepter_trustchain[1:])),
+                    self._config.x509_trust_anchor,
+                    now,
+                )
+            except PkiUntrusted:
+                return PkiEnrollmentAcceptBadOutcome.INVALID_X509_TRUSTCHAIN
+            except PkiInvalidCertificateDER:
+                return PkiEnrollmentAcceptBadOutcome.INVALID_DER_X509_CERTIFICATE
+            except PkiInvalidSignature:
+                return PkiEnrollmentAcceptBadOutcome.INVALID_PAYLOAD_SIGNATURE
             except ValueError:
-                return PkiEnrollmentAcceptStoreBadOutcome.INVALID_ACCEPT_PAYLOAD
+                return PkiEnrollmentAcceptBadOutcome.INVALID_ACCEPT_PAYLOAD
 
             match pki_enrollment_accept_validate(
                 now=now,
@@ -452,25 +464,25 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             try:
                 enrollment = org.pki_enrollments[enrollment_id]
             except KeyError:
-                return PkiEnrollmentAcceptStoreBadOutcome.ENROLLMENT_NOT_FOUND
+                return PkiEnrollmentAcceptBadOutcome.ENROLLMENT_NOT_FOUND
 
             if enrollment.enrollment_state != MemoryPkiEnrollmentState.SUBMITTED:
-                return PkiEnrollmentAcceptStoreBadOutcome.ENROLLMENT_NO_LONGER_AVAILABLE
+                return PkiEnrollmentAcceptBadOutcome.ENROLLMENT_NO_LONGER_AVAILABLE
 
             # 6) Check the user_id/device_id don't already exists and human_handle
             # is not already taken
 
             if org.active_user_limit_reached():
-                return PkiEnrollmentAcceptStoreBadOutcome.ACTIVE_USERS_LIMIT_REACHED
+                return PkiEnrollmentAcceptBadOutcome.ACTIVE_USERS_LIMIT_REACHED
 
             if u_certif.user_id in org.users:
-                return PkiEnrollmentAcceptStoreBadOutcome.USER_ALREADY_EXISTS
+                return PkiEnrollmentAcceptBadOutcome.USER_ALREADY_EXISTS
             assert d_certif.device_id not in org.devices
 
             if any(
                 True for u in org.active_users() if u.cooked.human_handle == u_certif.human_handle
             ):
-                return PkiEnrollmentAcceptStoreBadOutcome.HUMAN_HANDLE_ALREADY_TAKEN
+                return PkiEnrollmentAcceptBadOutcome.HUMAN_HANDLE_ALREADY_TAKEN
 
             # 7) All checks are good, now we do the actual insertion
 

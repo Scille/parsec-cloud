@@ -5,26 +5,15 @@ import pytest
 
 from parsec._parsec import (
     DeviceLabel,
-    PkiEnrollmentAnswerPayload,
     PKIEnrollmentID,
     PkiEnrollmentSubmitPayload,
-    PkiSignatureAlgorithm,
     PrivateKey,
     SigningKey,
-    UserProfile,
     anonymous_cmds,
 )
-from parsec.components.pki import PkiTrustchainError
 from tests.api_v5.anonymous.test_pki_enrollment_submit import PkiEnrollment
-from tests.api_v5.authenticated.test_user_create import (
-    NEW_MIKE_DEVICE_ID,
-    NEW_MIKE_DEVICE_LABEL,
-    NEW_MIKE_USER_ID,
-    generate_new_mike_device_certificates,
-    generate_new_mike_user_certificates,
-)
 from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
-from tests.common.pki import TestPki, start_pki_enrollment
+from tests.common.pki import TestPki, accept_pki_enrollment, start_pki_enrollment
 
 
 @pytest.mark.parametrize("kind", ("submitted", "accepted", "cancelled", "rejected"))
@@ -46,62 +35,27 @@ async def test_anonymous_pki_enrollment_info_ok(
         case "accepted":
             accepted_on = existing_pki_enrollment.submitted_on.add(seconds=1)
 
-            u_certif, redacted_u_certif = generate_new_mike_user_certificates(
-                author=coolorg.alice, timestamp=accepted_on
-            )
-            d_certif, redacted_d_certif = generate_new_mike_device_certificates(
-                author=coolorg.alice, timestamp=accepted_on
-            )
-
-            accept_payload = PkiEnrollmentAnswerPayload(
-                user_id=NEW_MIKE_USER_ID,
-                device_id=NEW_MIKE_DEVICE_ID,
-                device_label=NEW_MIKE_DEVICE_LABEL,
-                profile=UserProfile.STANDARD,
-                root_verify_key=coolorg.root_verify_key,
-            ).dump()
-
-            # we need to use build_trustchain here, as it adds the signed_by fields (as opposed to parse_pki_cert)
-            trustchain = await backend.pki.build_trustchain(
-                test_pki.cert["alice"].certificate.der,
-                [test_pki.root["black_mesa"].certificate.der],
+            accepted = await accept_pki_enrollment(
+                accepted_on,
+                backend,
+                coolorg.organization_id,
+                coolorg.alice,
+                test_pki.cert["alice"],
+                [],
+                coolorg.root_verify_key,
+                existing_pki_enrollment,
             )
 
-            match trustchain:
-                case PkiTrustchainError():
-                    assert False
-                case _:
-                    pass
-
-            outcome = await backend.pki.accept(
-                now=accepted_on,
-                organization_id=coolorg.organization_id,
-                author=coolorg.alice.device_id,
-                author_verify_key=coolorg.alice.signing_key.verify_key,
-                enrollment_id=existing_pki_enrollment.enrollment_id,
-                payload=accept_payload,
-                payload_signature=b"<alice accept payload signature>",
-                payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
-                accepter_trustchain=trustchain,
-                submitter_user_certificate=u_certif,
-                submitter_redacted_user_certificate=redacted_u_certif,
-                submitter_device_certificate=d_certif,
-                submitter_redacted_device_certificate=redacted_d_certif,
-            )
-            assert isinstance(outcome, tuple)
-
-            expected_unit = (
-                anonymous_cmds.latest.pki_enrollment_info.PkiEnrollmentInfoStatusAccepted(
-                    submitted_on=existing_pki_enrollment.submitted_on,
-                    accepted_on=accepted_on,
-                    accepter_der_x509_certificate=test_pki.cert["alice"].certificate.der,
-                    accepter_intermediate_der_x509_certificates=[
-                        test_pki.root["black_mesa"].certificate.der,
-                    ],
-                    accept_payload_signature=b"<alice accept payload signature>",
-                    accept_payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
-                    accept_payload=accept_payload,
-                )
+            expected_unit = anonymous_cmds.latest.pki_enrollment_info.PkiEnrollmentInfoStatusAccepted(
+                submitted_on=existing_pki_enrollment.submitted_on,
+                accepted_on=accepted_on,
+                accepter_der_x509_certificate=accepted.accepter_trustchain[0].content,
+                accepter_intermediate_der_x509_certificates=list(
+                    map(lambda x: x.content, accepted.accepter_trustchain[1:])
+                ),
+                accept_payload_signature=accepted.accepter_payload_signature,
+                accept_payload_signature_algorithm=accepted.accepter_payload_signature_algorithm,
+                accept_payload=accepted.accepter_payload,
             )
 
         case "cancelled":

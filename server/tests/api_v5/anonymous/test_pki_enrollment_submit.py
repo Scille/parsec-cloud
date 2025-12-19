@@ -6,7 +6,6 @@ import pytest
 from parsec._parsec import (
     DateTime,
     DeviceLabel,
-    PkiEnrollmentAnswerPayload,
     PKIEnrollmentID,
     PkiEnrollmentSubmitPayload,
     PkiSignatureAlgorithm,
@@ -19,11 +18,10 @@ from parsec._parsec import (
 from parsec.components.pki import (
     PkiEnrollmentInfoCancelled,
     PkiEnrollmentInfoSubmitted,
-    parse_pki_cert,
 )
 from parsec.events import EventPinged, EventPkiEnrollment
 from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester, TestPki
-from tests.common.pki import PkiEnrollment, sign_message
+from tests.common.pki import PkiEnrollment, accept_pki_enrollment, sign_message
 from tests.common.utils import generate_new_device_certificates, generate_new_user_certificates
 
 
@@ -290,43 +288,16 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
     backend_with_test_pki_roots,
 ) -> None:
     t1 = DateTime.now()
-    user_certificates = generate_new_user_certificates(
-        timestamp=t1,
-        human_handle=existing_pki_enrollment.submitter_human_handle,
-        author_device_id=coolorg.alice.device_id,
-        author_signing_key=coolorg.alice.signing_key,
+    await accept_pki_enrollment(
+        t1,
+        backend,
+        coolorg.organization_id,
+        coolorg.alice,
+        test_pki.cert["alice"],
+        [],
+        coolorg.root_verify_key,
+        existing_pki_enrollment,
     )
-
-    device_certificates = generate_new_device_certificates(
-        timestamp=t1,
-        user_id=user_certificates.certificate.user_id,
-        device_label=DeviceLabel("Dev1"),
-        author_device_id=coolorg.alice.device_id,
-        author_signing_key=coolorg.alice.signing_key,
-    )
-
-    outcome = await backend.pki.accept(
-        now=DateTime.now(),
-        organization_id=coolorg.organization_id,
-        author=coolorg.alice.device_id,
-        author_verify_key=coolorg.alice.signing_key.verify_key,
-        enrollment_id=existing_pki_enrollment.enrollment_id,
-        payload=PkiEnrollmentAnswerPayload(
-            user_id=user_certificates.certificate.user_id,
-            device_id=device_certificates.certificate.device_id,
-            profile=user_certificates.certificate.profile,
-            device_label=device_certificates.certificate.device_label,
-            root_verify_key=coolorg.root_verify_key,
-        ).dump(),
-        payload_signature=b"<accept payload signature>",
-        payload_signature_algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
-        accepter_trustchain=[parse_pki_cert(test_pki.cert["alice"].certificate.der)],
-        submitter_user_certificate=user_certificates.signed_certificate,
-        submitter_redacted_user_certificate=user_certificates.signed_redacted_certificate,
-        submitter_device_certificate=device_certificates.signed_certificate,
-        submitter_redacted_device_certificate=device_certificates.signed_redacted_certificate,
-    )
-    assert isinstance(outcome, tuple)
 
     sign_algo, payload_signature = sign_message(test_pki.cert["bob"].key, submit_payload)
     rep = await coolorg.anonymous.pki_enrollment_submit(

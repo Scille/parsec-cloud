@@ -20,19 +20,22 @@ from parsec._parsec import (
     DeviceLabel,
     HumanHandle,
     OrganizationID,
+    PkiEnrollmentAnswerPayload,
     PKIEnrollmentID,
     PkiEnrollmentSubmitPayload,
     PkiSignatureAlgorithm,
     PrivateKey,
     SigningKey,
     TrustAnchor,
+    VerifyKey,
     X509CertificateInformation,
 )
 from parsec.backend import Backend
 from parsec.components.pki import PkiCertificate as ParsedPkiCertificate
 from parsec.events import EventPkiEnrollment
-from tests.common.client import CoolorgRpcClients
+from tests.common.client import AuthenticatedRpcClient, CoolorgRpcClients
 from tests.common.postgresql import clear_postgresql_pki_certificate_data
+from tests.common.utils import generate_new_device_certificates, generate_new_user_certificates
 
 
 @dataclass
@@ -287,4 +290,80 @@ async def existing_pki_enrollment(
         test_pki.cert["bob"],
         submitter_intermediate_der_x509_certificates,
         submit_payload,
+    )
+
+
+@dataclass
+class PkiAcceptedEnrollment:
+    accepted_on: DateTime
+    enrollment_id: PKIEnrollmentID
+    accepter_payload: bytes
+    accepter_payload_signature: bytes
+    accepter_payload_signature_algorithm: PkiSignatureAlgorithm
+    accepter_trustchain: list[ParsedPkiCertificate]
+
+
+async def accept_pki_enrollment(
+    now: DateTime,
+    backend: Backend,
+    org_id: OrganizationID,
+    client: AuthenticatedRpcClient,
+    client_cert: PkiCertificate,
+    client_intermediate_certs: list[bytes],
+    root_verify_key: VerifyKey,
+    enrollment: PkiEnrollment,
+) -> PkiAcceptedEnrollment:
+    user_certificates = generate_new_user_certificates(
+        timestamp=now,
+        human_handle=enrollment.submitter_human_handle,
+        author_device_id=client.device_id,
+        author_signing_key=client.signing_key,
+    )
+
+    device_certificates = generate_new_device_certificates(
+        timestamp=now,
+        user_id=user_certificates.certificate.user_id,
+        device_label=DeviceLabel("Dev1"),
+        author_device_id=client.device_id,
+        author_signing_key=client.signing_key,
+    )
+
+    payload = PkiEnrollmentAnswerPayload(
+        user_id=user_certificates.certificate.user_id,
+        device_id=device_certificates.certificate.device_id,
+        device_label=device_certificates.certificate.device_label,
+        profile=user_certificates.certificate.profile,
+        root_verify_key=root_verify_key,
+    ).dump()
+    sign_algo, signature = sign_message(client_cert.key, payload)
+    trustchain = await backend.pki.build_trustchain(
+        client_cert.certificate.der, client_intermediate_certs
+    )
+    assert isinstance(trustchain, list)
+
+    outcome = await backend.pki.accept(
+        now=now,
+        organization_id=org_id,
+        author=client.device_id,
+        author_verify_key=client.signing_key.verify_key,
+        enrollment_id=enrollment.enrollment_id,
+        payload=payload,
+        payload_signature=signature,
+        payload_signature_algorithm=sign_algo,
+        accepter_trustchain=trustchain,
+        submitter_user_certificate=user_certificates.signed_certificate,
+        submitter_redacted_user_certificate=user_certificates.signed_redacted_certificate,
+        submitter_device_certificate=device_certificates.signed_certificate,
+        submitter_redacted_device_certificate=device_certificates.signed_redacted_certificate,
+    )
+
+    assert isinstance(outcome, tuple), repr(outcome)
+
+    return PkiAcceptedEnrollment(
+        enrollment_id=enrollment.enrollment_id,
+        accepted_on=now,
+        accepter_trustchain=trustchain,
+        accepter_payload=payload,
+        accepter_payload_signature=signature,
+        accepter_payload_signature_algorithm=sign_algo,
     )

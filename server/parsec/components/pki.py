@@ -246,7 +246,7 @@ class PkiEnrollmentRejectBadOutcome(BadOutcomeEnum):
     ENROLLMENT_NO_LONGER_AVAILABLE = auto()
 
 
-class PkiEnrollmentAcceptStoreBadOutcome(BadOutcomeEnum):
+class PkiEnrollmentAcceptBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     ORGANIZATION_EXPIRED = auto()
     AUTHOR_NOT_FOUND = auto()
@@ -258,6 +258,7 @@ class PkiEnrollmentAcceptStoreBadOutcome(BadOutcomeEnum):
     HUMAN_HANDLE_ALREADY_TAKEN = auto()
     ACTIVE_USERS_LIMIT_REACHED = auto()
     INVALID_ACCEPT_PAYLOAD = auto()
+    INVALID_PAYLOAD_SIGNATURE = auto()
     INVALID_X509_TRUSTCHAIN = auto()
     INVALID_DER_X509_CERTIFICATE = auto()
 
@@ -321,7 +322,7 @@ class BasePkiEnrollmentComponent:
     ) -> (
         tuple[UserCertificate, DeviceCertificate]
         | PkiEnrollmentAcceptValidateBadOutcome
-        | PkiEnrollmentAcceptStoreBadOutcome
+        | PkiEnrollmentAcceptBadOutcome
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
     ):
@@ -593,28 +594,31 @@ class BasePkiEnrollmentComponent:
         match outcome:
             case (_, _):
                 return authenticated_cmds.latest.pki_enrollment_accept.RepOk()
-            case PkiEnrollmentAcceptStoreBadOutcome.ENROLLMENT_NO_LONGER_AVAILABLE:
+            case PkiEnrollmentAcceptBadOutcome.ENROLLMENT_NO_LONGER_AVAILABLE:
                 return (
                     authenticated_cmds.latest.pki_enrollment_accept.RepEnrollmentNoLongerAvailable()
                 )
-            case PkiEnrollmentAcceptStoreBadOutcome.USER_ALREADY_EXISTS:
+            case PkiEnrollmentAcceptBadOutcome.USER_ALREADY_EXISTS:
                 return authenticated_cmds.latest.pki_enrollment_accept.RepUserAlreadyExists()
-            case PkiEnrollmentAcceptStoreBadOutcome.HUMAN_HANDLE_ALREADY_TAKEN:
+            case PkiEnrollmentAcceptBadOutcome.HUMAN_HANDLE_ALREADY_TAKEN:
                 return authenticated_cmds.latest.pki_enrollment_accept.RepHumanHandleAlreadyTaken()
-            case PkiEnrollmentAcceptStoreBadOutcome.ACTIVE_USERS_LIMIT_REACHED:
+            case PkiEnrollmentAcceptBadOutcome.ACTIVE_USERS_LIMIT_REACHED:
                 return authenticated_cmds.latest.pki_enrollment_accept.RepActiveUsersLimitReached()
-            case PkiEnrollmentAcceptStoreBadOutcome.ENROLLMENT_NOT_FOUND:
+            case PkiEnrollmentAcceptBadOutcome.ENROLLMENT_NOT_FOUND:
                 return authenticated_cmds.latest.pki_enrollment_accept.RepEnrollmentNotFound()
-            case PkiEnrollmentAcceptStoreBadOutcome.AUTHOR_NOT_ALLOWED:
+            case PkiEnrollmentAcceptBadOutcome.AUTHOR_NOT_ALLOWED:
                 return authenticated_cmds.latest.pki_enrollment_accept.RepAuthorNotAllowed()
-            case PkiEnrollmentAcceptStoreBadOutcome.INVALID_ACCEPT_PAYLOAD:
+            case PkiEnrollmentAcceptBadOutcome.INVALID_ACCEPT_PAYLOAD:
                 return authenticated_cmds.latest.pki_enrollment_accept.RepInvalidPayload()
-            case PkiEnrollmentAcceptStoreBadOutcome.INVALID_X509_TRUSTCHAIN:
+            case PkiEnrollmentAcceptBadOutcome.INVALID_X509_TRUSTCHAIN:
                 return authenticated_cmds.latest.pki_enrollment_accept.RepInvalidX509Trustchain()
-            case PkiEnrollmentAcceptStoreBadOutcome.INVALID_DER_X509_CERTIFICATE:
+            case PkiEnrollmentAcceptBadOutcome.INVALID_DER_X509_CERTIFICATE:
                 return (
                     authenticated_cmds.latest.pki_enrollment_accept.RepInvalidDerX509Certificate()
                 )
+            case PkiEnrollmentAcceptBadOutcome.INVALID_PAYLOAD_SIGNATURE:
+                return authenticated_cmds.latest.pki_enrollment_accept.RepInvalidPayloadSignature()
+
             # TODO: https://github.com/Scille/parsec-cloud/issues/11648
             case PkiEnrollmentAcceptValidateBadOutcome():
                 raise NotImplementedError()
@@ -629,11 +633,11 @@ class BasePkiEnrollmentComponent:
                 return authenticated_cmds.latest.pki_enrollment_accept.RepRequireGreaterTimestamp(
                     strictly_greater_than=error.strictly_greater_than
                 )
-            case PkiEnrollmentAcceptStoreBadOutcome.ORGANIZATION_NOT_FOUND:
+            case PkiEnrollmentAcceptBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
-            case PkiEnrollmentAcceptStoreBadOutcome.ORGANIZATION_EXPIRED:
+            case PkiEnrollmentAcceptBadOutcome.ORGANIZATION_EXPIRED:
                 client_ctx.organization_expired_abort()
-            case PkiEnrollmentAcceptStoreBadOutcome.AUTHOR_NOT_FOUND:
+            case PkiEnrollmentAcceptBadOutcome.AUTHOR_NOT_FOUND:
                 client_ctx.author_not_found_abort()
-            case PkiEnrollmentAcceptStoreBadOutcome.AUTHOR_REVOKED:
+            case PkiEnrollmentAcceptBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
