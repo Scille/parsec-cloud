@@ -3,7 +3,7 @@
 use crate::{
     encrypt_message,
     errors::{
-        GetIntermediatesCertsForCertError, InvalidPemContent, LoadAnswerPayloadError,
+        GetValidationPathForCertError, InvalidPemContent, LoadAnswerPayloadError,
         ValidatePayloadError, VerifyCertificateError, VerifySignatureError,
     },
     get_der_encoded_certificate, EncryptedMessage, PkiSignatureAlgorithm,
@@ -140,10 +140,10 @@ pub fn verify_certificate<'der>(
 }
 
 pub fn load_submit_payload<'cert>(
-    der_certificate: &[u8],
     signed_message: &SignedMessage,
-    trusted_roots: &[TrustAnchor<'_>],
+    der_certificate: &[u8],
     intermediate_certs: impl Iterator<Item = &'cert [u8]>,
+    trusted_roots: &[TrustAnchor<'_>],
     now: DateTime,
 ) -> Result<PkiEnrollmentSubmitPayload, crate::errors::LoadSubmitPayloadError> {
     let validated_payload = validate_payload(
@@ -181,53 +181,39 @@ pub fn validate_payload<'message, 'cert>(
     verify_message(signed_message, trusted_cert).map_err(Into::into)
 }
 
-pub fn load_answer_payload(
-    cert_ref: &X509CertificateReference,
-    der_certificate: &[u8],
+pub fn load_answer_payload<'cert>(
     signed_message: &SignedMessage,
-    intermediate_certs: &[Bytes],
+    der_certificate: &[u8],
+    intermediate_certs: impl Iterator<Item = &'cert [u8]>,
+    trusted_roots: &[TrustAnchor<'_>],
     now: DateTime,
 ) -> Result<PkiEnrollmentAnswerPayload, LoadAnswerPayloadError> {
-    let trusted_anchors = crate::list_trusted_root_certificate_anchors()?;
-
-    // Obtain the root cert used by the PKI
-    let base_raw_cert = get_der_encoded_certificate(cert_ref)
-        .map(|v| Certificate::from_der_owned(v.der_content.into()))?;
-    let base_cert = base_raw_cert
-        .to_end_certificate()
-        .map_err(LoadAnswerPayloadError::InvalidCertificateDer)?;
-
-    let verified_path = verify_certificate(
-        &base_cert,
-        &trusted_anchors,
-        // TODO: list client intermediate certs
-        // https://github.com/Scille/parsec-cloud/issues/11757
-        &[],
-        now,
-        KeyUsage::client_auth(),
-    )?;
-
     let validated_payload = validate_payload(
         der_certificate,
         signed_message,
-        &[verified_path.anchor().clone()],
-        intermediate_certs.iter().map(Bytes::as_ref),
+        trusted_roots,
+        intermediate_certs,
         now,
     )?;
     PkiEnrollmentAnswerPayload::load(validated_payload).map_err(Into::into)
 }
 
-pub fn get_intermediate_certs_for_cert(
+pub struct ValidationPathOwned {
+    pub root: TrustAnchor<'static>,
+    pub intermediate_certs: Vec<Bytes>,
+}
+
+pub fn get_validation_path_for_cert(
     cert_ref: &X509CertificateReference,
     now: DateTime,
-) -> Result<Vec<Bytes>, GetIntermediatesCertsForCertError> {
+) -> Result<ValidationPathOwned, GetValidationPathForCertError> {
     let trusted_anchor = crate::list_trusted_root_certificate_anchors()?;
     let intermediate_certs = crate::list_intermediate_certificates()?;
     let base_raw_cert = get_der_encoded_certificate(cert_ref)
         .map(|v| Certificate::from_der_owned(v.der_content.into()))?;
     let base_cert = base_raw_cert
         .to_end_certificate()
-        .map_err(GetIntermediatesCertsForCertError::InvalidCertificateDer)?;
+        .map_err(GetValidationPathForCertError::InvalidCertificateDer)?;
 
     let path = verify_certificate(
         &base_cert,
@@ -237,8 +223,14 @@ pub fn get_intermediate_certs_for_cert(
         KeyUsage::client_auth(),
     )?;
 
-    Ok(path
+    let intermediate_certs = path
         .intermediate_certificates()
         .map(|cert| cert.der().to_vec().into())
-        .collect())
+        .collect();
+    let root = path.anchor().to_owned();
+
+    Ok(ValidationPathOwned {
+        root,
+        intermediate_certs,
+    })
 }

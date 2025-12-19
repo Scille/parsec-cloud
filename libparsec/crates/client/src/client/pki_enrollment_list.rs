@@ -87,35 +87,12 @@ pub async fn verify_untrusted_items(
     let now = cmds.time_provider.now();
     // Potentially expensive check, spawning a new task
     libparsec_platform_async::spawn(async move {
-        let root_certs = libparsec_platform_pki::list_trusted_root_certificate_anchors()
-            .context("Failed to list trusted root certificates")
-            .map_err(PkiEnrollmentListError::Internal)?;
-        let client_inter_certs = libparsec_platform_pki::list_intermediate_certificates()
-            .context("Failed to list trusted root certificates")
-            .map_err(PkiEnrollmentListError::Internal)?;
-
         // Obtain the root cert used by the PKI
-        let base_raw_cert = libparsec_platform_pki::get_der_encoded_certificate(&cert_ref)
-            .map(|v| libparsec_platform_pki::Certificate::from_der_owned(v.der_content.into()))
-            .context("Cannot get certificate to use to obtain root cert")
-            .map_err(PkiEnrollmentListError::Internal)?;
-        let base_cert = base_raw_cert
-            .to_end_certificate()
-            .map_err(libparsec_platform_pki::LoadAnswerPayloadError::InvalidCertificateDer)
-            .context("Invalid certificate from PKI")
+        let path = libparsec_platform_pki::get_validation_path_for_cert(&cert_ref, now)
+            .context("Failed to validate own certificate")
             .map_err(PkiEnrollmentListError::Internal)?;
 
-        let verified_path = libparsec_platform_pki::verify_certificate(
-            &base_cert,
-            &root_certs,
-            &client_inter_certs,
-            now,
-            libparsec_platform_pki::KeyUsage::client_auth(),
-        )
-        .context("Device does not trust user PKI certificate")
-        .map_err(PkiEnrollmentListError::Internal)?;
-
-        let pki_root_certs = [verified_path.anchor().clone()];
+        let pki_root_certs = [path.root];
 
         let items = untrusted_items
             .into_iter()
@@ -145,12 +122,12 @@ pub async fn verify_untrusted_items(
                 let human_handle = cert_info.human_handle();
 
                 let payload = match libparsec_platform_pki::load_submit_payload(
-                    &req.der_x509_certificate,
                     &message,
-                    &pki_root_certs,
+                    &req.der_x509_certificate,
                     req.intermediate_der_x509_certificates
                         .iter()
                         .map(Bytes::as_ref),
+                    &pki_root_certs,
                     now,
                 ) {
                     Ok(payload) => payload,

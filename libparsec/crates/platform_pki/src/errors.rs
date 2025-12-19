@@ -62,7 +62,7 @@ error_set::error_set! {
     LoadAnswerPayloadError := ValidatePayloadError
         || DataError
         || ListTrustedRootCertificatesError
-    GetIntermediatesCertsForCertError := ListTrustedRootCertificatesError
+    GetValidationPathForCertError := ListTrustedRootCertificatesError
         || ListIntermediateCertificatesError
         || InvalidCertificateDer
         || VerifyCertificateError
