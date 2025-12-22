@@ -3,6 +3,7 @@
 use itertools::Itertools as _;
 use keyring::Entry as KeyringEntry;
 use libparsec_platform_async::{future::FutureExt as _, stream::StreamExt as _};
+use libparsec_platform_filesystem::native::save_content;
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
@@ -263,44 +264,6 @@ pub(super) async fn load_ciphertext_key(
             }
         }
     }
-}
-
-async fn save_content(key_file: &PathBuf, file_content: &[u8]) -> Result<(), SaveDeviceError> {
-    if let Some(parent) = key_file.parent() {
-        tokio::fs::create_dir_all(parent)
-            .await
-            .map_err(|e| SaveDeviceError::InvalidPath(e.into()))?;
-    }
-    let tmp_path = match key_file.file_name() {
-        Some(file_name) => {
-            let mut tmp_path = key_file.clone();
-            {
-                let mut tmp_file_name = file_name.to_owned();
-                tmp_file_name.push(".tmp");
-                tmp_path.set_file_name(tmp_file_name);
-            }
-            tmp_path
-        }
-        None => {
-            return Err(SaveDeviceError::InvalidPath(anyhow::anyhow!(
-                "Path is missing a file name"
-            )))
-        }
-    };
-
-    // Classic pattern for atomic file creation:
-    // - First write the file in a temporary location
-    // - Then move the file to it final location
-    // This way a crash during file write won't end up with a corrupted
-    // file in the final location.
-    tokio::fs::write(&tmp_path, file_content)
-        .await
-        .map_err(|e| SaveDeviceError::InvalidPath(e.into()))?;
-    tokio::fs::rename(&tmp_path, key_file)
-        .await
-        .map_err(|e| SaveDeviceError::InvalidPath(e.into()))?;
-
-    Ok(())
 }
 
 async fn generate_keyring_user(
