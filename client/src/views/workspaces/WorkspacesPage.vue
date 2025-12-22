@@ -814,44 +814,44 @@ async function onFilterUpdate(): Promise<void> {
     flex-direction: column;
     padding: 1.5rem 1.25rem 0;
   }
+}
 
-  .hidden-workspaces-checkbox {
-    position: relative;
-    z-index: 10;
-    align-self: stretch;
-    border-radius: var(--parsec-radius-12);
-    border: 1px solid var(--parsec-color-light-secondary-medium);
-    background: var(--parsec-color-light-secondary-white);
-    padding: 0.5rem 0.875rem;
-    display: flex;
-    align-items: center;
+.hidden-workspaces-checkbox {
+  position: relative;
+  z-index: 10;
+  align-self: stretch;
+  border-radius: var(--parsec-radius-12);
+  border: 1px solid var(--parsec-color-light-secondary-medium);
+  background: var(--parsec-color-light-secondary-white);
+  padding: 0.5rem 0.875rem;
+  display: flex;
+  align-items: center;
+  color: var(--parsec-color-light-secondary-grey);
+  --checkbox-background-checked: var(--parsec-color-light-secondary-text);
+  --checkbox-border-checked: var(--parsec-color-light-secondary-text);
+  --border-color-checked: var(--parsec-color-light-secondary-text);
+  transition: all 0.2s ease-in-out;
+
+  &::part(label) {
+    margin-left: 0.675rem;
+  }
+
+  &.checkbox-checked::part(container) {
+    border-color: var(--parsec-color-light-secondary-text);
+  }
+
+  &:hover {
+    box-shadow: var(--parsec-shadow-soft);
+  }
+
+  &:is(.checkbox-checked) {
+    box-shadow: var(--parsec-shadow-soft);
+    border-color: var(--parsec-color-light-secondary-light);
     color: var(--parsec-color-light-secondary-grey);
-    --checkbox-background-checked: var(--parsec-color-light-secondary-text);
-    --checkbox-border-checked: var(--parsec-color-light-secondary-text);
-    --border-color-checked: var(--parsec-color-light-secondary-text);
-    transition: all 0.2s ease-in-out;
+  }
 
-    &::part(label) {
-      margin-left: 0.675rem;
-    }
-
-    &.checkbox-checked::part(container) {
-      border-color: var(--parsec-color-light-secondary-text);
-    }
-
-    &:hover {
-      box-shadow: var(--parsec-shadow-soft);
-    }
-
-    &:is(.checkbox-checked) {
-      box-shadow: var(--parsec-shadow-soft);
-      border-color: var(--parsec-color-light-secondary-light);
-      color: var(--parsec-color-light-secondary-grey);
-    }
-
-    @include ms.responsive-breakpoint('lg') {
-      margin-right: auto;
-    }
+  @include ms.responsive-breakpoint('lg') {
+    margin-right: auto;
   }
 }
 </style>
