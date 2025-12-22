@@ -4,6 +4,7 @@
 
 mod account;
 mod addr;
+mod async_enrollment;
 mod cancel;
 mod client;
 mod config;
@@ -22,6 +23,7 @@ mod workspace_history;
 
 pub use account::*;
 pub use addr::*;
+pub use async_enrollment::*;
 pub use cancel::*;
 pub use client::*;
 pub use config::*;

@@ -28,6 +28,8 @@ log = { workspace = true }
 blahaj = { workspace = true }
 smallvec = { workspace = true }
 thiserror = { workspace = true }
+# `alloc` feature is required to properly erase struct containing vec/string
+zeroize = { workspace = true, features = ["alloc"] }
 
 [dev-dependencies]
 libparsec_tests_lite = { workspace = true }
@@ -35,6 +37,8 @@ libparsec_tests_fixtures = { workspace = true, features = ["default"] }
 libparsec_platform_pki = { workspace = true, features = ["test-fixture"] }
 libparsec_platform_storage = { workspace = true, features = ["expose-test-methods"] }
 libparsec_client = { workspace = true, features = ["expose-test-methods"] }
+
+data-encoding = { workspace = true, features = ["std"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 # Realm export database support is not available on web.
