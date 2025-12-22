@@ -797,6 +797,8 @@ async function onFilterUpdate(): Promise<void> {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  position: relative;
+  z-index: 4;
 
   @include ms.responsive-breakpoint('sm') {
     padding: 1.5rem 1rem;

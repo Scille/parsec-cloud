@@ -110,7 +110,7 @@ const workspaceMenuList = computed(() => [
     box-shadow: var(--parsec-shadow-filter);
     position: relative;
     border-radius: var(--parsec-radius-8);
-    z-index: 1;
+    z-index: 3;
     transition: background-color 0.2s ease-in-out;
 
     @include ms.responsive-breakpoint('lg') {
