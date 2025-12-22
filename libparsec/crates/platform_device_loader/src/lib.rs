@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 mod strategy;
+use libparsec_platform_filesystem::SaveContentError;
 pub use strategy::*;
 #[cfg(not(target_arch = "wasm32"))]
 mod native;
@@ -323,6 +324,16 @@ pub enum SaveDeviceError {
     },
     #[error(transparent)]
     Internal(anyhow::Error),
+}
+
+impl From<SaveContentError> for SaveDeviceError {
+    fn from(value: SaveContentError) -> Self {
+        match value {
+            SaveContentError::StorageNotAvailable => SaveDeviceError::StorageNotAvailable,
+            SaveContentError::InvalidPath(error) => SaveDeviceError::InvalidPath(error),
+            SaveContentError::Internal(error) => SaveDeviceError::Internal(error),
+        }
+    }
 }
 
 /// Note `config_dir` is only used as discriminant for the testbed here
@@ -807,13 +818,12 @@ pub enum SavePkiLocalPendingError {
     Internal(anyhow::Error),
 }
 
-impl From<SaveDeviceError> for SavePkiLocalPendingError {
-    fn from(value: SaveDeviceError) -> Self {
+impl From<SaveContentError> for SavePkiLocalPendingError {
+    fn from(value: SaveContentError) -> Self {
         match value {
-            SaveDeviceError::StorageNotAvailable => Self::StorageNotAvailable,
-            SaveDeviceError::InvalidPath(error) => Self::InvalidPath(error),
-            SaveDeviceError::Internal(error) => Self::Internal(error),
-            _ => unreachable!(),
+            SaveContentError::StorageNotAvailable => Self::StorageNotAvailable,
+            SaveContentError::InvalidPath(error) => Self::InvalidPath(error),
+            SaveContentError::Internal(error) => Self::Internal(error),
         }
     }
 }

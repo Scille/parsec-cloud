@@ -9,6 +9,7 @@ members = [
     "libparsec/crates/openbao",
     "libparsec/crates/platform_async",
     "libparsec/crates/platform_device_loader",
+    "libparsec/crates/platform_filesystem",
     "libparsec/crates/platform_ipc",
     "libparsec/crates/platform_mountpoint",
     "libparsec/crates/platform_pki",
@@ -38,6 +39,7 @@ default-members = [
     "libparsec/crates/openbao",
     "libparsec/crates/platform_async",
     "libparsec/crates/platform_device_loader",
+    "libparsec/crates/platform_filesystem",
     "libparsec/crates/platform_ipc",
     "libparsec/crates/platform_mountpoint",
     "libparsec/crates/platform_pki",
@@ -99,6 +101,7 @@ libparsec_crypto = { path = "libparsec/crates/crypto", default-features = false 
 libparsec_openbao = { path = "libparsec/crates/openbao", default-features = false }
 libparsec_platform_async = { path = "libparsec/crates/platform_async", default-features = false }
 libparsec_platform_device_loader = { path = "libparsec/crates/platform_device_loader", default-features = false }
+libparsec_platform_filesystem = { path = "libparsec/crates/platform_filesystem", default-features = false }
 libparsec_platform_http_proxy = { path = "libparsec/crates/platform_http_proxy", default-features = false }
 libparsec_platform_ipc = { path = "libparsec/crates/platform_ipc", default-features = false }
 libparsec_platform_mountpoint = { path = "libparsec/crates/platform_mountpoint", default-features = false }

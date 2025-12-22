@@ -2371,6 +2371,7 @@ dependencies = [
  "libparsec_client_connection",
  "libparsec_crypto",
  "libparsec_platform_async",
+ "libparsec_platform_filesystem",
  "libparsec_platform_pki",
  "libparsec_testbed",
  "libparsec_tests_fixtures",
@@ -2384,6 +2385,18 @@ dependencies = [
  "wasm-bindgen-futures",
  "web-sys",
  "zeroize",
+]
+
+[[package]]
+name = "libparsec_platform_filesystem"
+version = "3.7.2-a.0+dev"
+dependencies = [
+ "dirs",
+ "keyring",
+ "libparsec_types",
+ "thiserror 2.0.17",
+ "tokio",
+ "uuid",
 ]
 
 [[package]]

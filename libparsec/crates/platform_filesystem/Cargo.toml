@@ -1,0 +1,27 @@
+[package]
+name = "libparsec_platform_filesystem"
+publish.workspace = true
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+version.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+libparsec_types = { workspace = true }
+thiserror = { workspace = true }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+dirs = { workspace = true }
+keyring = { workspace = true, features = [
+    # Persistent means we use DBus's secret-services on linux
+    "linux-native-sync-persistent",
+    "apple-native",
+    "windows-native",
+] }
+uuid = { workspace = true }
+tokio = { workspace = true, features = ["fs"] }
