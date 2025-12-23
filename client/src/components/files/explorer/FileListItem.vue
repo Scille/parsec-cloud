@@ -20,7 +20,7 @@
         'file-list-item-mobile': isSmallDisplay,
       }"
       @dblclick="$emit('openItem', $event, entry)"
-      @click="$emit('update:modelValue', !props.entry.isSelected)"
+      @click.stop="$emit('update:modelValue', !props.entry.isSelected)"
       @mouseenter="isHovered = true"
       @mouseleave="isHovered = false"
       @contextmenu="onOptionsClick"

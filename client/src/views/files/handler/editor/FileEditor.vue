@@ -227,7 +227,7 @@ async function loadEditor(): Promise<void> {
                 }
               }
             },
-            Math.max(1000 - (end - start), 0),
+            (window as any).TESTING === true ? 0 : Math.max(1000 - (end - start), 0),
           );
         }
       },

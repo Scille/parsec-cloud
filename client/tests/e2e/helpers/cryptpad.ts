@@ -9,6 +9,90 @@ export const CRYPTPAD_SERVER = 'cryptpad-dev.parsec.cloud';
 interface MockCryptpadOptions {
   timeout?: boolean;
   httpErrorCode?: number;
+  failInit?: boolean;
+  failOpen?: boolean;
+  customInitFunction?: string;
+  customOpenFunction?: string;
+}
+
+const FRAME_CONTENT = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script src="./frame.js" defer></script>
+</head>
+<body>
+  <div id="editor-container"></div>
+</body>
+</html>
+<style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    border: none;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+  }
+  #editor-container {
+    height: 100%;
+    width: 100%;
+    border: none;
+  }
+</style>
+`;
+
+const DEFAULT_INIT_FUNCTION = `
+  sendToParent({ command: 'editics-init-result', success: true });
+`;
+
+const DEFAULT_OPEN_FUNCTION = `
+  sendToParent({ command: 'editics-open-result', success: true });
+  document.getElementById('editor-container').innerText = data.documentName;
+  setTimeout(() => {
+    sendToParent({ command: 'editics-event', event: 'ready' });
+  }, 100);
+`;
+
+function generateScriptContent(initFunction: string = DEFAULT_INIT_FUNCTION, openFunction: string = DEFAULT_OPEN_FUNCTION): string {
+  return `
+  (function () {
+    let origin = undefined;
+
+    function sendToParent(data) {
+      window.parent.postMessage(data, origin);
+    }
+
+    function initialize() {
+      ${initFunction}
+    }
+
+    function openFile(data) {
+      ${openFunction}
+    }
+
+    window.addEventListener('message', (event) => {
+      if (event.data.command === 'editics-hello') {
+        origin = event.origin;
+        return;
+      }
+      switch (event.data.command) {
+        case 'editics-init': {
+          initialize();
+          break;
+        }
+        case 'editics-open': {
+          openFile(event.data);
+          break;
+        }
+      }
+    });
+
+    // Signaling everyone that we're ready
+    window.parent.postMessage({ command: 'editics-ready' }, '*');
+  })();
+  `;
 }
 
 export async function mockCryptpadServer(page: MsPage, opts?: MockCryptpadOptions): Promise<void> {
@@ -17,8 +101,35 @@ export async function mockCryptpadServer(page: MsPage, opts?: MockCryptpadOption
       await route.abort('timedout');
     } else if (opts?.httpErrorCode) {
       await route.fulfill({ status: opts.httpErrorCode });
+    } else if (route.request().url().endsWith('/frame.html')) {
+      await route.fulfill({ status: 200, body: FRAME_CONTENT });
+    } else if (route.request().url().endsWith('/frame.js')) {
+      let initFunction = DEFAULT_INIT_FUNCTION;
+      let openFunction = DEFAULT_OPEN_FUNCTION;
+
+      if (opts?.failInit && opts?.customInitFunction) {
+        throw new Error('Both `failInit` and `customInitFunction` set, use only one');
+      }
+      if (opts?.failOpen && opts?.customOpenFunction) {
+        throw new Error('Both `failOpen` and `customOpenFunction` set, use only one');
+      }
+
+      if (opts?.failInit) {
+        initFunction = "sendToParent({ command: 'editics-init-result', success: false, error: 'init-failed', details: 'It failed.' });";
+      }
+      if (opts?.failOpen) {
+        openFunction = "sendToParent({ command: 'editics-open-result', success: false, error: 'open-failed', details: 'It failed.' });";
+      }
+      if (opts?.customInitFunction) {
+        initFunction = opts?.customInitFunction;
+      }
+      if (opts?.customOpenFunction) {
+        openFunction = opts?.customOpenFunction;
+      }
+
+      await route.fulfill({ status: 200, body: generateScriptContent(initFunction, openFunction) });
     } else {
-      await route.continue();
+      console.error(`Route not mocked: '${route.request().url()}'`);
     }
   });
 }

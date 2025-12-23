@@ -1,92 +1,338 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { expect, login, msTest, waitUntilSaved } from '@tests/e2e/helpers';
+import { TestInfo } from '@playwright/test';
+import {
+  answerQuestion,
+  expect,
+  getClipboardText,
+  importDefaultFiles,
+  ImportDocuments,
+  login,
+  mockCryptpadServer,
+  msTest,
+  waitUntilSaved,
+} from '@tests/e2e/helpers';
 
-msTest.skip('Open editor with header option', async ({ parsecEditics }) => {
-  const entries = parsecEditics.locator('.folder-container').locator('.file-list-item');
+msTest.describe(() => {
+  msTest.use({
+    documentsOptions: {
+      empty: true,
+    },
+  });
 
-  await entries.nth(2).hover();
-  await entries.nth(2).locator('ion-checkbox').click();
-  const actionBar = parsecEditics.locator('#folders-ms-action-bar');
-  await expect(actionBar.locator('ion-button').nth(1)).toHaveText('Edit');
-  await actionBar.locator('ion-button').nth(1).click();
-  await expect(parsecEditics.locator('#cryptpad-editor')).toBeVisible();
-});
+  for (const [mode, method] of [
+    ['edit', 'context'],
+    ['view', 'context'],
+    ['edit', 'header'],
+    ['view', 'header'],
+  ]) {
+    msTest(`Open cryptpad in ${mode} mode with ${method}`, async ({ parsecEditics }, testInfo: TestInfo) => {
+      await mockCryptpadServer(parsecEditics);
+      await importDefaultFiles(parsecEditics, testInfo, ImportDocuments.Docx, false);
+      const entry = parsecEditics.locator('.folder-container').locator('.file-list-item').nth(0);
 
-msTest.skip('Open editor with contextual menu', async ({ parsecEditics }) => {
-  const entries = parsecEditics.locator('.folder-container').locator('.file-list-item');
-  await entries.nth(2).click({ button: 'right' });
-  const menu = parsecEditics.locator('#file-context-menu');
-  await expect(menu).toBeVisible();
-  await expect(menu.getByRole('listitem').nth(2)).toHaveText('Edit');
-  await menu.getByRole('listitem').nth(2).click();
-  await expect(parsecEditics.locator('#cryptpad-editor')).toBeVisible();
-});
+      if (method === 'header') {
+        await entry.locator('.file-last-update').click();
+        const actionBar = parsecEditics.locator('#folders-ms-action-bar');
+        if (mode === 'edit') {
+          await expect(actionBar.locator('ion-button').nth(1)).toHaveText('Edit');
+          await actionBar.locator('ion-button').nth(1).click();
+        } else {
+          await expect(actionBar.locator('ion-button').nth(0)).toHaveText('Preview');
+          await actionBar.locator('ion-button').nth(0).click();
+        }
+      } else {
+        await entry.click({ button: 'right' });
+        const menu = parsecEditics.locator('#file-context-menu');
+        await expect(menu).toBeVisible();
+        if (mode === 'edit') {
+          await expect(menu.getByRole('listitem').nth(2)).toHaveText('Edit');
+          await menu.getByRole('listitem').nth(2).click();
+        } else {
+          await expect(menu.getByRole('listitem').nth(1)).toHaveText('Preview');
+          await menu.getByRole('listitem').nth(1).click();
+        }
+      }
+      await expect(parsecEditics.locator('.file-editor')).toBeVisible();
+      const frame = parsecEditics.frameLocator('.file-editor');
+      await expect(frame.locator('#editor-container')).toBeVisible();
+      const topbar = parsecEditics.locator('.file-handler-topbar');
+      await expect(topbar.locator('.file-handler-topbar__title')).toHaveText('document.docx');
+      await expect(topbar.locator('.back-button')).toBeVisible();
+      const topbarButtons = topbar.locator('.file-handler-topbar-buttons').locator('.file-handler-topbar-buttons__item:visible');
+      if (mode === 'edit') {
+        await expect(topbar.locator('.save-info')).toBeHidden();
+        await expect(topbarButtons).toHaveCount(4);
+        await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Download', 'Show menu']);
+      } else {
+        await expect(topbar.locator('.save-info')).toBeVisible();
+        await expect(topbar.locator('.save-info')).toHaveText('Read only document');
+        await expect(topbarButtons).toHaveCount(5);
+        await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Edit', 'Download', 'Show menu']);
+      }
+      await expect(frame.locator('#editor-container')).toHaveText('document.docx');
+    });
+  }
 
-msTest.skip('Open editor from viewer', async ({ parsecEditics }) => {
-  const entries = parsecEditics.locator('.folder-container').locator('.file-list-item');
-  await entries.nth(2).dblclick();
-  await expect(parsecEditics.locator('.ms-spinner-modal')).toBeVisible();
-  await expect(parsecEditics.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
-  await expect(parsecEditics.locator('.ms-spinner-modal')).toBeHidden();
-  await expect(parsecEditics).toBeViewerPage();
+  for (const action of ['details', 'copy_link', 'edit', 'download', 'show_menu']) {
+    msTest(`File editor header '${action}' action`, async ({ parsecEditics }, testInfo: TestInfo) => {
+      await mockCryptpadServer(parsecEditics);
+      await importDefaultFiles(parsecEditics, testInfo, ImportDocuments.Docx, false);
+      const entry = parsecEditics.locator('.folder-container').locator('.file-list-item').nth(0);
 
-  const topbarEditButton = parsecEditics
-    .locator('.file-handler-topbar')
-    .locator('.file-handler-topbar-buttons')
-    .locator('ion-button')
-    .nth(1);
-  await expect(topbarEditButton).toHaveText('Edit');
-  await topbarEditButton.click();
-  await expect(parsecEditics.locator('#cryptpad-editor')).toBeVisible();
-});
+      await entry.click({ button: 'right' });
+      const menu = parsecEditics.locator('#file-context-menu');
+      await expect(menu).toBeVisible();
+      await expect(menu.getByRole('listitem').nth(1)).toHaveText('Preview');
+      await menu.getByRole('listitem').nth(1).click();
 
-msTest.skip('Check edited file in viewer', async ({ parsecEditics }) => {
-  msTest.setTimeout(120_000);
-  await parsecEditics.locator('.header-label-name').click();
+      await expect(parsecEditics.locator('.file-editor')).toBeVisible();
+      const frame = parsecEditics.frameLocator('.file-editor');
+      await expect(frame.locator('#editor-container')).toBeVisible();
+      await expect(frame.locator('#editor-container')).toHaveText('document.docx');
+      const topbar = parsecEditics.locator('.file-handler-topbar');
+      await expect(topbar.locator('.file-handler-topbar__title')).toHaveText('document.docx');
+      await expect(topbar.locator('.back-button')).toBeVisible();
+      const topbarButtons = topbar.locator('.file-handler-topbar-buttons').locator('.file-handler-topbar-buttons__item:visible');
+      await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Edit', 'Download', 'Show menu']);
+      await expect(topbar.locator('.save-info')).toBeVisible();
+      await expect(topbar.locator('.save-info')).toHaveText('Read only document');
 
-  const entries = parsecEditics.locator('.folder-container').locator('.file-list-item');
+      if (action === 'details') {
+        const modal = parsecEditics.locator('.file-details-modal');
+        await expect(modal).toBeHidden();
+        await topbarButtons.nth(0).click();
+        await expect(modal).toBeVisible();
+      } else if (action === 'copy_link') {
+        await parsecEditics.context().grantPermissions(['clipboard-write']);
+        await topbarButtons.nth(1).click();
+        await expect(parsecEditics).toShowToast('Link has been copied to clipboard.', 'Info');
+        expect(await getClipboardText(parsecEditics)).toMatch(/^parsec3:\/\/.+$/);
+      } else if (action === 'edit') {
+        await topbarButtons.nth(2).click();
+        await expect(topbar.locator('.save-info')).toBeHidden();
+        await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Download', 'Show menu']);
+      } else if (action === 'download') {
+        const modal = parsecEditics.locator('.download-warning-modal');
+        await expect(modal).toBeHidden();
+        await topbarButtons.nth(3).click();
+        await expect(modal).toBeVisible();
+      } else if (action === 'show_menu') {
+        const header = parsecEditics.locator('#connected-header');
+        await expect(header).toBeHidden();
+        await topbarButtons.nth(4).click();
+        await expect(header).toBeVisible();
+      }
+    });
+  }
 
-  await entries.nth(2).hover();
-  await entries.nth(2).locator('ion-checkbox').click();
-  const actionBar = parsecEditics.locator('#folders-ms-action-bar');
-  await expect(actionBar.locator('ion-button').nth(1)).toHaveText('Edit');
-  await actionBar.locator('ion-button').nth(1).click();
-  await expect(parsecEditics.locator('#cryptpad-editor')).toBeVisible();
-  const mainFrame = parsecEditics.locator('#cryptpad-editor').contentFrame();
-  await expect(mainFrame.locator('.placeholder-message-container')).toBeVisible();
-  await expect(mainFrame.locator('.placeholder-message-container')).toHaveText('Loading...');
-  // Takes an incredibly long time to load on the CI
-  await parsecEditics.waitForTimeout(10000);
+  for (const error of ['404', 'timeout']) {
+    msTest(`File editor failing to get frame because of ${error}`, async ({ parsecEditics }, testInfo: TestInfo) => {
+      await mockCryptpadServer(parsecEditics, { timeout: error === 'timeout', httpErrorCode: error === '404' ? 404 : 200 });
+      await importDefaultFiles(parsecEditics, testInfo, ImportDocuments.Docx, false);
+      const entry = parsecEditics.locator('.folder-container').locator('.file-list-item').nth(0);
 
-  await expect(mainFrame.locator('#sbox-iframe')).toBeVisible();
-  const editor = parsecEditics
-    .locator('#cryptpad-editor')
-    .contentFrame()
-    .locator('#sbox-iframe')
-    .contentFrame()
-    .locator('#cp-app-code-editor')
-    .locator('.CodeMirror-code');
-  await expect(editor).toBeVisible();
-  await expect(editor.locator('pre').nth(0)).toHaveText(
-    '# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS',
-  );
-  await parsecEditics.waitForTimeout(200);
-  await editor.locator('pre').nth(0).fill('ABCD');
-  await expect(editor.locator('pre').nth(0)).toHaveText('ABCD');
-  await editor.blur();
-  await expect(parsecEditics.locator('#unsaved-changes')).toBeVisible();
-  await parsecEditics.waitForTimeout(500);
-  await waitUntilSaved(parsecEditics);
+      await entry.click({ button: 'right' });
+      const menu = parsecEditics.locator('#file-context-menu');
+      await expect(menu).toBeVisible();
+      await expect(menu.getByRole('listitem').nth(1)).toHaveText('Preview');
+      await menu.getByRole('listitem').nth(1).click();
 
-  await parsecEditics.locator('.file-handler-topbar').locator('.back-button').click();
-  await entries.nth(2).dblclick();
-  await expect(parsecEditics.locator('.ms-spinner-modal')).toBeVisible();
-  await expect(parsecEditics.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
-  await expect(parsecEditics.locator('.ms-spinner-modal')).toBeHidden();
-  await expect(parsecEditics).toBeViewerPage();
-  const content = await parsecEditics.locator('.file-viewer-wrapper').locator('.editor-scrollable').textContent();
-  expect(content?.startsWith('ABCD')).toBeTruthy();
+      await expect(parsecEditics.locator('.file-editor')).toBeHidden();
+      const errorContainer = parsecEditics.locator('.file-editor-error');
+      await expect(errorContainer).toBeVisible();
+      await expect(errorContainer.locator('.error-content-text__title')).toHaveText('Cannot open file');
+      await expect(errorContainer.locator('.error-content-text__message')).toHaveText(
+        'Could not load the editor. Please check your network connection.',
+      );
+    });
+  }
+
+  for (const error of ['initFail', 'openFail']) {
+    msTest(`File editor failing to get frame because of ${error}`, async ({ parsecEditics }, testInfo: TestInfo) => {
+      await mockCryptpadServer(parsecEditics, { failInit: error === 'initFail', failOpen: error === 'openFail' });
+      await importDefaultFiles(parsecEditics, testInfo, ImportDocuments.Docx, false);
+      const entry = parsecEditics.locator('.folder-container').locator('.file-list-item').nth(0);
+
+      await entry.click({ button: 'right' });
+      const menu = parsecEditics.locator('#file-context-menu');
+      await expect(menu).toBeVisible();
+      await expect(menu.getByRole('listitem').nth(1)).toHaveText('Preview');
+      await menu.getByRole('listitem').nth(1).click();
+
+      await expect(parsecEditics.locator('.file-editor')).toBeHidden();
+      const errorContainer = parsecEditics.locator('.file-editor-error');
+      await expect(errorContainer).toBeVisible();
+      await expect(errorContainer.locator('.error-content-text__title')).toHaveText('Cannot open file');
+      if (error === 'initFail') {
+        await expect(errorContainer.locator('.error-content-text__message')).toHaveText(
+          'If you want to edit this file, you can download it and open it locally on your device.',
+        );
+      } else {
+        await expect(errorContainer.locator('.error-content-text__message')).toHaveText('Could not open the file.');
+      }
+    });
+  }
+
+  msTest('Error after load', async ({ parsecEditics }, testInfo: TestInfo) => {
+    await mockCryptpadServer(parsecEditics, {
+      customOpenFunction: `
+        sendToParent({ command: 'editics-open-result', success: true });
+        setTimeout(() => {
+          sendToParent({ command: 'editics-event', event: 'ready' });
+        }, 100);
+        setTimeout(() => {
+          sendToParent({ command: 'editics-event', event: 'error', 'details': 'file error' });
+        }, 800);
+      `,
+    });
+    await importDefaultFiles(parsecEditics, testInfo, ImportDocuments.Docx, false);
+    const entry = parsecEditics.locator('.folder-container').locator('.file-list-item').nth(0);
+
+    await entry.click({ button: 'right' });
+    const menu = parsecEditics.locator('#file-context-menu');
+    await expect(menu).toBeVisible();
+    await expect(menu.getByRole('listitem').nth(1)).toHaveText('Preview');
+    await menu.getByRole('listitem').nth(1).click();
+
+    await expect(parsecEditics.locator('.file-editor')).toBeHidden();
+    const errorContainer = parsecEditics.locator('.file-editor-error');
+    await expect(errorContainer).toBeVisible();
+    await expect(errorContainer.locator('.error-content-text__title')).toHaveText('Cannot open file');
+    await expect(errorContainer.locator('.error-content-text__message')).toHaveText('Failed to open the file');
+  });
+
+  msTest('File editor save status', async ({ parsecEditics }, testInfo: TestInfo) => {
+    /* eslint-disable max-len */
+    await mockCryptpadServer(parsecEditics, {
+      customOpenFunction: `
+        sendToParent({ command: 'editics-open-result', success: true });
+        document.getElementById('editor-container').innerText = data.documentName;
+        setTimeout(() => {
+          sendToParent({ command: 'editics-event', event: 'ready' });
+        }, 100);
+        setTimeout(() => {
+          sendToParent({ command: 'editics-event', event: 'save-status', saved: false });
+        }, 300);
+        setTimeout(() => {
+          sendToParent({ command: 'editics-event', event: 'save', documentContent: new Blob([42, 42, 42, 42, 42, 42, 42], { type: 'application/octet-stream' }) });
+        }, 800);
+        setTimeout(() => {
+          sendToParent({ command: 'editics-event', event: 'save-status', saved: true });
+          }, 1000);
+      `,
+    });
+    /* eslint-enable max-len */
+    await importDefaultFiles(parsecEditics, testInfo, ImportDocuments.Docx, false);
+    const entry = parsecEditics.locator('.folder-container').locator('.file-list-item').nth(0);
+
+    await entry.click({ button: 'right' });
+    const menu = parsecEditics.locator('#file-context-menu');
+    await expect(menu).toBeVisible();
+    await expect(menu.getByRole('listitem').nth(2)).toHaveText('Edit');
+    await menu.getByRole('listitem').nth(2).click();
+
+    const frame = parsecEditics.frameLocator('.file-editor');
+    await expect(frame.locator('#editor-container')).toBeVisible();
+    await expect(frame.locator('#editor-container')).toHaveText('document.docx');
+    await expect(parsecEditics.locator('.file-editor-error')).toBeHidden();
+    const topbar = parsecEditics.locator('.file-handler-topbar');
+    await expect(topbar.locator('.save-info')).toBeVisible();
+    await expect(topbar.locator('.save-info-text')).toBeVisible();
+    await expect(topbar.locator('.save-info-text')).toHaveText('Changes unsaved');
+    await parsecEditics.waitForTimeout(800);
+    await expect(topbar.locator('.save-info-text')).toHaveText('File saved');
+  });
+
+  msTest('Go back with unsaved status', async ({ parsecEditics }, testInfo: TestInfo) => {
+    await mockCryptpadServer(parsecEditics, {
+      customOpenFunction: `
+        sendToParent({ command: 'editics-open-result', success: true });
+        document.getElementById('editor-container').innerText = data.documentName;
+        setTimeout(() => {
+          sendToParent({ command: 'editics-event', event: 'ready' });
+        }, 100);
+        setTimeout(() => {
+          sendToParent({ command: 'editics-event', event: 'save-status', saved: false });
+        }, 300);
+      `,
+    });
+    await importDefaultFiles(parsecEditics, testInfo, ImportDocuments.Docx, false);
+    const entry = parsecEditics.locator('.folder-container').locator('.file-list-item').nth(0);
+
+    await entry.click({ button: 'right' });
+    const menu = parsecEditics.locator('#file-context-menu');
+    await expect(menu).toBeVisible();
+    await expect(menu.getByRole('listitem').nth(2)).toHaveText('Edit');
+    await menu.getByRole('listitem').nth(2).click();
+
+    const frame = parsecEditics.frameLocator('.file-editor');
+    await expect(frame.locator('#editor-container')).toBeVisible();
+    await expect(frame.locator('#editor-container')).toHaveText('document.docx');
+    await expect(parsecEditics.locator('.file-editor-error')).toBeHidden();
+    const topbar = parsecEditics.locator('.file-handler-topbar');
+    await parsecEditics.waitForTimeout(500);
+    await expect(topbar.locator('.save-info')).toBeVisible();
+    await expect(topbar.locator('.save-info-text')).toBeVisible();
+    await expect(topbar.locator('.save-info-text')).toHaveText('Changes unsaved');
+    await topbar.locator('.back-button').click();
+    await answerQuestion(parsecEditics, true, {
+      expectedNegativeText: 'Stay on page',
+      expectedPositiveText: 'Discard changes',
+      expectedQuestionText: 'Some changes have not been saved yet. Do you want to discard them?',
+      expectedTitleText: 'Discard changes?',
+    });
+    await expect(parsecEditics).toBeDocumentPage();
+  });
+
+  msTest('Update text file', async ({ parsecEditics }, testInfo: TestInfo) => {
+    /* eslint-disable max-len */
+    await mockCryptpadServer(parsecEditics, {
+      customOpenFunction: `
+        sendToParent({ command: 'editics-open-result', success: true });
+        document.getElementById('editor-container').innerText = new TextDecoder().decode(data.documentContent);
+        setTimeout(() => {
+          sendToParent({ command: 'editics-event', event: 'ready' });
+        }, 100);
+        setTimeout(() => {
+          const bytes = new TextEncoder().encode('A simple text file with updates');
+          sendToParent({ command: 'editics-event', event: 'save', documentContent: new Blob([new Uint8Array(bytes)], { type: 'application/octet-stream' }) });
+        }, 300);
+      `,
+    });
+    /* eslint-enable max-len */
+    await importDefaultFiles(parsecEditics, testInfo, ImportDocuments.Txt, false);
+    const entry = parsecEditics.locator('.folder-container').locator('.file-list-item').nth(0);
+
+    await expect(entry.locator('.file-size')).toHaveText('19 B');
+
+    await entry.click({ button: 'right' });
+    const menu = parsecEditics.locator('#file-context-menu');
+    await expect(menu).toBeVisible();
+    await expect(menu.getByRole('listitem').nth(2)).toHaveText('Edit');
+    await menu.getByRole('listitem').nth(2).click();
+    await expect(menu).toBeHidden();
+
+    const frame = parsecEditics.frameLocator('.file-editor');
+    await expect(frame.locator('#editor-container')).toBeVisible();
+    await expect(frame.locator('#editor-container')).toHaveText('A simple text file');
+    await expect(parsecEditics.locator('.file-editor-error')).toBeHidden();
+    const topbar = parsecEditics.locator('.file-handler-topbar');
+    await parsecEditics.waitForTimeout(800);
+    await topbar.locator('.back-button').click();
+    await expect(parsecEditics).toBeDocumentPage();
+    await expect(entry.locator('.file-size')).toHaveText('31 B');
+
+    await entry.click({ button: 'right' });
+    parsecEditics.locator('#file-context-menu');
+    await expect(menu).toBeVisible();
+    await expect(menu.getByRole('listitem').nth(2)).toHaveText('Edit');
+    await menu.getByRole('listitem').nth(2).click();
+    await expect(menu).toBeHidden();
+
+    await expect(frame.locator('#editor-container')).toBeVisible();
+    await expect(frame.locator('#editor-container')).toHaveText('A simple text file with updates');
+  });
 });
 
 // TODO: re-enable when collaborative editing is properly supported
