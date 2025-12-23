@@ -204,6 +204,21 @@ async function onOptionsClick(event: Event): Promise<void> {
   }
 }
 
+.workspace-list-item--hidden {
+  border: 1px solid var(--parsec-color-light-secondary-medium);
+
+  .workspace-list-item-content {
+    opacity: 0.8;
+    filter: brightness(0.8);
+  }
+
+  &:hover {
+    .workspace-list-item-content {
+      background: var(--parsec-color-light-secondary-premiere);
+    }
+  }
+}
+
 .workspace-favorite-icon {
   display: flex;
   align-items: center;
