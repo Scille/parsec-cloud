@@ -66,6 +66,7 @@ export enum CryptpadErrorCodes {
   InitFailed = CryptpadCommAPI.ErrorCodes.InitFailed,
   FrameNotLoaded = 'frame-not-loaded',
   FrameLoadFailed = 'frame-load-failed',
+  EventError = 'event-error',
 }
 
 export type OpenDocumentOptions = CryptpadCommAPI.OpenDocumentOptions;
@@ -152,10 +153,13 @@ export async function openDocument(
     await new Promise<void>((resolve, reject) => {
       const abortController = new AbortController();
 
-      const timeoutId = setTimeout(() => {
-        abortController.abort();
-        reject();
-      }, 5000);
+      const timeoutId = setTimeout(
+        () => {
+          abortController.abort();
+          reject();
+        },
+        (window as any).TESTING === true ? 500 : 5000,
+      );
 
       window.addEventListener(
         'message',
@@ -212,7 +216,7 @@ export async function openDocument(
         case CryptpadCommAPI.Commands.Event: {
           switch (event.data.event) {
             case CryptpadCommAPI.Events.Error: {
-              handlers.onError(event.data.details);
+              handlers.onError(new CryptpadError(CryptpadErrorCodes.EventError, event.data.details));
               break;
             }
             case CryptpadCommAPI.Events.Ready: {
