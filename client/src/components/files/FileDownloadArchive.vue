@@ -122,7 +122,7 @@
 
 <script setup lang="ts">
 import { formatFileSize, shortenFileName } from '@/common/file';
-import { DownloadArchiveData, DownloadOperationProgressStateData, FileOperationState, StateData } from '@/services/fileOperationManager';
+import { DownloadArchiveData, DownloadOperationProgressStateData, FileOperationState, StateData } from '@/services/fileOperation/manager';
 import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
 import { checkmarkCircle, closeCircle } from 'ionicons/icons';
 import { File, MsImage, MsInformationTooltip, MsProgress, MsProgressAppearance } from 'megashark-lib';

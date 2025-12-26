@@ -34,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import { FileOperationDataType } from '@/services/fileOperationManager';
+import { FileOperationDataType } from '@/services/fileOperation/manager';
 import { IonIcon, IonItem, IonText } from '@ionic/vue';
 import { closeCircle } from 'ionicons/icons';
 import { Copy, ImportMultipleFiles, Move, MsImage, MsSpinner } from 'megashark-lib';

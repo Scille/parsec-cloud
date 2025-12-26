@@ -245,7 +245,7 @@ import {
 } from '@/router';
 import { isCryptpadEnabledForDocumentType } from '@/services/cryptpad';
 import { Env } from '@/services/environment';
-import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
+import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperation/manager';
 import useHeaderControl from '@/services/headerControl';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import usePathOpener from '@/services/pathOpener';

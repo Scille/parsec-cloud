@@ -22,6 +22,7 @@ import {
   createReadStream,
   deleteFile,
   entryStat,
+  getWorkspaceInfo,
   listTree,
   listTreeAt,
   moveEntry,
@@ -36,266 +37,28 @@ import * as zipjs from '@zip.js/zip.js';
 import { DateTime } from 'luxon';
 import { FileSystemFileHandle } from 'native-file-system-adapter';
 import { v4 as uuid4 } from 'uuid';
+import { FileOperationCopyData, FileOperationData, FileOperationDataType, FileOperationDownloadArchiveData, FileOperationDownloadData, FileOperationID, FileOperationImportData, FileOperationMoveData, FileOperationRestoreData } from '@/services/fileOperation/operationData';
+import { FileEventRegistrationCanceller, FileOperationCallback, FileOperationEventDistributor, FileOperationEvents, OperationFailedErrors } from '@/services/fileOperation/events';
+import { FileOperationCancelled, FileOperationException } from './types';
 
 const MAX_SIMULTANEOUS_OPERATIONS = 3;
 const MIN_OPERATION_TIME_MS = 500;
 
 export const FileOperationManagerKey = 'fileOperationManager';
 
-enum FileOperationState {
-  OperationAllStarted = 1,
-  OperationAllFinished,
-  OperationProgress,
-  FileImported,
-  FileAdded,
-  MoveAdded,
-  CopyAdded,
-  ImportStarted,
-  ImportFailed,
-  MoveStarted,
-  CopyStarted,
-  CreateFailed,
-  MoveFailed,
-  CopyFailed,
-  WriteError,
-  Cancelled,
-  FolderCreated,
-  EntryMoved,
-  EntryCopied,
-  RestoreAdded,
-  RestoreStarted,
-  RestoreFailed,
-  EntryRestored,
-  DownloadAdded,
-  DownloadStarted,
-  DownloadFailed,
-  EntryDownloaded,
-  DownloadArchiveAdded,
-  DownloadArchiveStarted,
-  DownloadArchiveFailed,
-  ArchiveDownloaded,
-}
-
-export interface OperationProgressStateData {
-  progress: number;
-}
-
-export interface DownloadOperationProgressStateData extends OperationProgressStateData {
-  currentFile: EntryName;
-  currentFileSize: number;
-}
-
-export interface CreateFailedStateData {
-  error: WorkspaceOpenFileErrorTag | WorkspaceCreateFolderErrorTag;
-}
-
-export interface WriteErrorStateData {
-  error: WorkspaceFdWriteErrorTag;
-}
-
-export interface FolderCreatedStateData {
-  path: FsPath;
-  workspaceHandle: WorkspaceHandle;
-}
-
-export interface MoveFailedStateData {
-  error: WorkspaceMoveEntryErrorTag;
-}
-
-export enum CopyFailedError {
-  MaxRecursionReached = 'max-recursion-reached',
-  MaxFilesReached = 'max-files-reached',
-  SourceDoesNotExist = 'source-does-not-exist',
-  OneFailed = 'one-failed',
-}
-
-export interface CopyFailedStateData {
-  error: CopyFailedError;
-}
-
-export enum RestoreFailedError {
-  MaxRecursionReached = 'max-recursion-reached',
-  MaxFilesReached = 'max-files-reached',
-  SourceDoesNotExist = 'source-does-not-exist',
-  OneFailed = 'one-failed',
-}
-
-export interface RestoreFailedStateData {
-  error: RestoreFailedError;
-  path: FsPath;
-  workspaceHandle: WorkspaceHandle;
-}
-
-export type StateData =
-  | OperationProgressStateData
-  | CreateFailedStateData
-  | WriteErrorStateData
-  | FolderCreatedStateData
-  | MoveFailedStateData
-  | CopyFailedStateData
-  | RestoreFailedStateData
-  | DownloadOperationProgressStateData;
-
-type FileOperationCallback = (state: FileOperationState, operationData?: FileOperationData, stateData?: StateData) => Promise<void>;
-type FileOperationID = string;
-
-export enum FileOperationDataType {
-  Base,
-  Import,
-  Copy,
-  Move,
-  Restore,
-  Download,
-  DownloadArchive,
-}
-
-interface IFileOperationDataType {
-  getDataType(): FileOperationDataType;
-}
-
-class FileOperationData implements IFileOperationDataType {
-  id: FileOperationID;
-  workspaceHandle: WorkspaceHandle;
-  workspaceId: WorkspaceID;
-
-  constructor(workspaceHandle: WorkspaceHandle, workspaceId: WorkspaceID) {
-    this.id = uuid4();
-    this.workspaceHandle = workspaceHandle;
-    this.workspaceId = workspaceId;
-  }
-
-  getDataType(): FileOperationDataType {
-    return FileOperationDataType.Base;
-  }
-}
-
-class ImportData extends FileOperationData {
-  file: File;
-  path: FsPath;
-
-  constructor(workspaceHandle: WorkspaceHandle, workspaceId: WorkspaceID, file: File, path: FsPath) {
-    super(workspaceHandle, workspaceId);
-    this.file = file;
-    this.path = path;
-  }
-
-  getDataType(): FileOperationDataType {
-    return FileOperationDataType.Import;
-  }
-}
-
-class CopyData extends FileOperationData {
-  srcPath: FsPath;
-  dstPath: FsPath;
-
-  constructor(workspaceHandle: WorkspaceHandle, workspaceId: WorkspaceID, srcPath: FsPath, dstPath: FsPath) {
-    super(workspaceHandle, workspaceId);
-    this.srcPath = srcPath;
-    this.dstPath = dstPath;
-  }
-
-  getDataType(): FileOperationDataType {
-    return FileOperationDataType.Copy;
-  }
-}
-
-class MoveData extends FileOperationData {
-  srcPath: FsPath;
-  dstPath: FsPath;
-  forceReplace: boolean;
-
-  constructor(workspaceHandle: WorkspaceHandle, workspaceId: WorkspaceID, srcPath: FsPath, dstPath: FsPath, forceReplace: boolean) {
-    super(workspaceHandle, workspaceId);
-    this.srcPath = srcPath;
-    this.dstPath = dstPath;
-    this.forceReplace = forceReplace;
-  }
-
-  getDataType(): FileOperationDataType {
-    return FileOperationDataType.Move;
-  }
-}
-
-class RestoreData extends FileOperationData {
-  path: FsPath;
-  dateTime: DateTime;
-
-  constructor(workspaceHandle: WorkspaceHandle, workspaceId: WorkspaceID, path: FsPath, dateTime: DateTime) {
-    super(workspaceHandle, workspaceId);
-    this.path = path;
-    this.dateTime = dateTime;
-  }
-
-  getDataType(): FileOperationDataType {
-    return FileOperationDataType.Restore;
-  }
-}
-
-class DownloadData extends FileOperationData {
-  path: FsPath;
-  dateTime?: DateTime;
-  saveHandle: FileSystemFileHandle;
-
-  constructor(
-    workspaceHandle: WorkspaceHandle,
-    workspaceId: WorkspaceID,
-    path: FsPath,
-    saveHandle: FileSystemFileHandle,
-    dateTime?: DateTime,
-  ) {
-    super(workspaceHandle, workspaceId);
-    this.saveHandle = saveHandle;
-    this.path = path;
-    this.dateTime = dateTime;
-  }
-
-  getDataType(): FileOperationDataType {
-    return FileOperationDataType.Download;
-  }
-}
-
-class DownloadArchiveData extends FileOperationData {
-  trees: Array<EntryTree>;
-  saveHandle: FileSystemFileHandle;
-  rootPath: FsPath;
-  totalFiles: number;
-  totalSize: number;
-
-  constructor(
-    workspaceHandle: WorkspaceHandle,
-    workspaceId: WorkspaceID,
-    saveHandle: FileSystemFileHandle,
-    trees: Array<EntryTree>,
-    rootPath: FsPath,
-    totalFiles: number,
-    totalSize: number,
-  ) {
-    super(workspaceHandle, workspaceId);
-    this.saveHandle = saveHandle;
-    this.trees = trees;
-    this.rootPath = rootPath;
-    this.totalFiles = totalFiles;
-    this.totalSize = totalSize;
-  }
-
-  getDataType(): FileOperationDataType {
-    return FileOperationDataType.DownloadArchive;
-  }
-}
-
-class FileOperationManager {
-  private fileOperationData: Array<FileOperationData>;
-  private callbacks: Array<[string, FileOperationCallback]>;
+export class FileOperationManager {
   private cancelList: Array<FileOperationID>;
   private running: boolean;
-  private operationJobs: Array<[FileOperationID, Promise<void>]>;
+  private operations: Map<FileOperationID, Promise<void>>;
+  private pendingOperations: Array<FileOperationData>;
+  private eventDistributor: FileOperationEventDistributor;
 
   constructor() {
-    this.fileOperationData = [];
-    this.callbacks = [];
+    this.operations = new Map<FileOperationID, Promise<void>>;
+    this.pendingOperations = [];
     this.cancelList = [];
-    this.operationJobs = [];
     this.running = false;
+    this.eventDistributor = new FileOperationEventDistributor();
     this.start();
   }
 
@@ -304,83 +67,147 @@ class FileOperationManager {
   }
 
   hasOperations(): boolean {
-    return this.operationJobs.length + this.fileOperationData.length > 0;
+    return (this.operations.size + this.pendingOperations.length) > 0;
   }
 
-  async importFile(workspaceHandle: WorkspaceHandle, workspaceId: WorkspaceID, file: File, path: FsPath): Promise<void> {
+  async import(workspaceHandle: WorkspaceHandle, files: Array<File>, destination: FsPath, replace = false): Promise<boolean> {
+    const workspaceResult = await getWorkspaceInfo(workspaceHandle);
+    if (!workspaceResult.ok) {
+      return false;
+    }
+
+    const data: FileOperationImportData = {
+      type: FileOperationDataType.Import,
+      id: uuid4(),
+      workspaceHandle: workspaceHandle,
+      workspaceId: workspaceResult.value.id,
+      files: files,
+      destination: destination,
+      replace: replace,
+    };
+    await this.eventDistributor.distribute(FileOperationEvents.Added, data);
+    this.pendingOperations.unshift(data);
     if (!this.isRunning) {
       this.start();
     }
-    const newData = new ImportData(workspaceHandle, workspaceId, file, path);
-    // Sending the information before adding to the list, else the file may get imported before
-    // we've even informed that it was added
-    await this.sendState(FileOperationState.FileAdded, newData);
-    this.fileOperationData.unshift(newData);
+    return true;
   }
 
-  async moveEntry(
-    workspaceHandle: WorkspaceHandle,
-    workspaceId: WorkspaceID,
-    srcPath: FsPath,
-    dstPath: FsPath,
-    forceReplace = false,
-  ): Promise<void> {
+  async move(workspaceHandle: WorkspaceHandle, sources: Array<FsPath>, destination: FsPath, replace = false): Promise<boolean> {
+    const workspaceResult = await getWorkspaceInfo(workspaceHandle);
+    if (!workspaceResult.ok) {
+      return false;
+    }
+
+    const data: FileOperationMoveData = {
+      type: FileOperationDataType.Move,
+      id: uuid4(),
+      workspaceHandle: workspaceHandle,
+      workspaceId: workspaceResult.value.id,
+      sources: sources,
+      destination: destination,
+      replace: replace,
+    };
+    await this.eventDistributor.distribute(FileOperationEvents.Added, data);
+    this.pendingOperations.unshift(data);
     if (!this.isRunning) {
       this.start();
     }
-    const newData = new MoveData(workspaceHandle, workspaceId, srcPath, dstPath, forceReplace);
-    await this.sendState(FileOperationState.MoveAdded, newData);
-    this.fileOperationData.unshift(newData);
+    return true;
   }
 
-  async copyEntry(workspaceHandle: WorkspaceHandle, workspaceId: WorkspaceID, srcPath: FsPath, dstPath: FsPath): Promise<void> {
+  async copy(workspaceHandle: WorkspaceHandle, sources: Array<FsPath>, destination: FsPath, replace = false): Promise<boolean> {
+    const workspaceResult = await getWorkspaceInfo(workspaceHandle);
+    if (!workspaceResult.ok) {
+      return false;
+    }
+
+    const data: FileOperationCopyData = {
+      type: FileOperationDataType.Copy,
+      id: uuid4(),
+      workspaceHandle: workspaceHandle,
+      workspaceId: workspaceResult.value.id,
+      sources: sources,
+      destination: destination,
+      replace: replace,
+    };
+    await this.eventDistributor.distribute(FileOperationEvents.Added, data);
+    this.pendingOperations.unshift(data);
     if (!this.isRunning) {
       this.start();
     }
-    const newData = new CopyData(workspaceHandle, workspaceId, srcPath, dstPath);
-    await this.sendState(FileOperationState.CopyAdded, newData);
-    this.fileOperationData.unshift(newData);
+    return true;
   }
 
-  async restoreEntry(workspaceHandle: WorkspaceHandle, workspaceId: WorkspaceID, path: FsPath, dateTime: DateTime): Promise<void> {
+  async restore(workspaceHandle: WorkspaceHandle, paths: Array<FsPath>, dateTime: DateTime, replace = false): Promise<boolean> {
+    const workspaceResult = await getWorkspaceInfo(workspaceHandle);
+    if (!workspaceResult.ok) {
+      return false;
+    }
+
+    const data: FileOperationRestoreData = {
+      type: FileOperationDataType.Restore,
+      id: uuid4(),
+      workspaceHandle: workspaceHandle,
+      workspaceId: workspaceResult.value.id,
+      paths: paths,
+      dateTime: dateTime,
+      replace: replace,
+    };
+    await this.eventDistributor.distribute(FileOperationEvents.Added, data);
+    this.pendingOperations.unshift(data);
     if (!this.isRunning) {
       this.start();
     }
-    const newData = new RestoreData(workspaceHandle, workspaceId, path, dateTime);
-    await this.sendState(FileOperationState.RestoreAdded, newData);
-    this.fileOperationData.unshift(newData);
+    return true;
   }
 
-  async downloadEntry(
-    workspaceHandle: WorkspaceHandle,
-    workspaceId: WorkspaceID,
-    saveStream: FileSystemFileHandle,
-    path: FsPath,
-    dateTime?: DateTime,
-  ): Promise<void> {
+  async download(workspaceHandle: WorkspaceHandle, path: FsPath, saveHandle: FileSystemFileHandle, dateTime?: DateTime): Promise<boolean> {
+    const workspaceResult = await getWorkspaceInfo(workspaceHandle);
+    if (!workspaceResult.ok) {
+      return false;
+    }
+
+    const data: FileOperationDownloadData = {
+      type: FileOperationDataType.Download,
+      id: uuid4(),
+      workspaceHandle: workspaceHandle,
+      workspaceId: workspaceResult.value.id,
+      path: path,
+      saveHandle: saveHandle,
+      dateTime: dateTime,
+    };
+    await this.eventDistributor.distribute(FileOperationEvents.Added, data);
+    this.pendingOperations.unshift(data);
     if (!this.isRunning) {
       this.start();
     }
-    const newData = new DownloadData(workspaceHandle, workspaceId, path, saveStream, dateTime);
-    await this.sendState(FileOperationState.DownloadAdded, newData);
-    this.fileOperationData.unshift(newData);
+    return true;
   }
 
-  async downloadArchive(
-    workspaceHandle: WorkspaceHandle,
-    workspaceId: WorkspaceID,
-    saveStream: FileSystemFileHandle,
-    trees: Array<EntryTree>,
-    rootPath: FsPath,
-    totalFiles: number,
-    totalSize: number,
-  ): Promise<void> {
+  async downloadArchive(workspaceHandle: WorkspaceHandle, trees: Array<EntryTree>, saveHandle: FileSystemFileHandle, root: FsPath): Promise<boolean> {
+    const workspaceResult = await getWorkspaceInfo(workspaceHandle);
+    if (!workspaceResult.ok) {
+      return false;
+    }
+
+    const data: FileOperationDownloadArchiveData = {
+      type: FileOperationDataType.DownloadArchive,
+      id: uuid4(),
+      workspaceHandle: workspaceHandle,
+      workspaceId: workspaceResult.value.id,
+      trees: trees,
+      saveHandle: saveHandle,
+      rootPath: root,
+      totalFiles: trees.reduce((acc, el) => acc + el.entries.length, 0),
+      totalSize: trees.reduce((acc, el) => acc + el.totalSize, 0),
+    };
+    await this.eventDistributor.distribute(FileOperationEvents.Added, data);
+    this.pendingOperations.unshift(data);
     if (!this.isRunning) {
       this.start();
     }
-    const newData = new DownloadArchiveData(workspaceHandle, workspaceId, saveStream, trees, rootPath, totalFiles, totalSize);
-    await this.sendState(FileOperationState.DownloadArchiveAdded, newData);
-    this.fileOperationData.unshift(newData);
+    return true;
   }
 
   async cancelOperation(id: FileOperationID): Promise<void> {
@@ -390,35 +217,20 @@ class FileOperationManager {
   }
 
   async cancelAll(): Promise<void> {
-    for (const elem of this.operationJobs) {
+    for (const elem of this.operations) {
       await this.cancelOperation(elem[0]);
     }
-    for (const elem of this.fileOperationData) {
+    for (const elem of this.pendingOperations) {
       await this.cancelOperation(elem.id);
     }
   }
 
-  async registerCallback(cb: FileOperationCallback): Promise<string> {
-    const id = uuid4();
-    this.callbacks.push([id, cb]);
-    return id;
+  async registerCallback(cb: FileOperationCallback): Promise<FileEventRegistrationCanceller> {
+    return this.eventDistributor.registerCallback(cb);
   }
 
-  async removeCallback(id: string): Promise<void> {
-    this.callbacks = this.callbacks.filter((elem) => elem[0] !== id);
-  }
-
-  private async sendState(state: FileOperationState, operationData?: FileOperationData, stateData?: StateData): Promise<void> {
-    for (const elem of this.callbacks) {
-      await elem[1](state, operationData, stateData);
-    }
-  }
-
-  private async doCopy(data: CopyData): Promise<void> {
-    await this.sendState(FileOperationState.CopyStarted, data);
-
+  private async _doCopy(data: CopyData): Promise<void> {
     let tree: EntryTree;
-    const start = DateTime.now();
 
     const statResult = await entryStat(data.workspaceHandle, data.srcPath);
     if (!statResult.ok) {
@@ -578,17 +390,9 @@ class FileOperationManager {
         }
       }
     }
-    const end = DateTime.now();
-    const diff = end.toMillis() - start.toMillis();
-
-    if (diff < MIN_OPERATION_TIME_MS) {
-      await wait(MIN_OPERATION_TIME_MS - diff);
-    }
-    await this.sendState(FileOperationState.EntryCopied, data);
   }
 
-  private async doMove(data: MoveData): Promise<void> {
-    await this.sendState(FileOperationState.MoveStarted, data);
+  private async _doMove(data: MoveData): Promise<void> {
     await this.sendState(FileOperationState.OperationProgress, data, { progress: 0 });
 
     const start = DateTime.now();
@@ -619,23 +423,15 @@ class FileOperationManager {
         await this.sendState(FileOperationState.MoveFailed, data, { error: moveResult.error.tag });
       }
     } else {
-      const end = DateTime.now();
-      const diff = end.toMillis() - start.toMillis();
-
-      if (diff < MIN_OPERATION_TIME_MS) {
-        await wait(MIN_OPERATION_TIME_MS - diff);
-      }
       await this.sendState(FileOperationState.EntryMoved, data);
     }
   }
 
-  private async doRestore(data: RestoreData): Promise<void> {
-    await this.sendState(FileOperationState.RestoreStarted, data);
+  private async _doRestore(data: RestoreData): Promise<void> {
     await this.sendState(FileOperationState.OperationProgress, data, { progress: 0 });
 
     let tree: HistoryEntryTree | undefined;
 
-    const start = DateTime.now();
     const history = new WorkspaceHistory(data.workspaceId);
 
     try {
@@ -786,12 +582,6 @@ class FileOperationManager {
           }
         }
       }
-      const end = DateTime.now();
-      const diff = end.toMillis() - start.toMillis();
-
-      if (diff < MIN_OPERATION_TIME_MS) {
-        await wait(MIN_OPERATION_TIME_MS - diff);
-      }
       await this.sendState(FileOperationState.EntryRestored, data);
     } catch (e: any) {
       window.electronAPI.log('error', `Error while restoring: ${e.toString()}`);
@@ -800,8 +590,7 @@ class FileOperationManager {
     }
   }
 
-  private async doDownload(data: DownloadData): Promise<void> {
-    await this.sendState(FileOperationState.DownloadStarted, data);
+  private async _doDownload(data: DownloadData): Promise<void> {
     await this.sendState(FileOperationState.OperationProgress, data, { progress: 0 });
 
     // First, get the file size
@@ -819,7 +608,6 @@ class FileOperationManager {
     let cancelled = false;
 
     try {
-      const start = DateTime.now();
       while (true) {
         // Check if the download has been cancelled
         let shouldCancel = false;
@@ -846,12 +634,6 @@ class FileOperationManager {
         }
       }
       wStream.close();
-      const end = DateTime.now();
-      const diff = end.toMillis() - start.toMillis();
-
-      if (diff < MIN_OPERATION_TIME_MS) {
-        await wait(MIN_OPERATION_TIME_MS - diff);
-      }
       await this.sendState(FileOperationState.EntryDownloaded, data);
     } catch (e: any) {
       await wStream.abort();
@@ -865,8 +647,7 @@ class FileOperationManager {
     }
   }
 
-  private async doDownloadArchive(data: DownloadArchiveData): Promise<void> {
-    await this.sendState(FileOperationState.DownloadArchiveStarted, data);
+  private async _doDownloadArchive(data: DownloadArchiveData): Promise<void> {
     await this.sendState(FileOperationState.OperationProgress, data, { progress: 0 });
 
     const totalSize = data.totalSize;
@@ -884,7 +665,6 @@ class FileOperationManager {
         zip64: false,
       });
 
-      const start = DateTime.now();
       let totalSizeRead = 0;
 
       for (const tree of data.trees) {
@@ -921,13 +701,6 @@ class FileOperationManager {
         }
       }
 
-      const end = DateTime.now();
-      const diff = end.toMillis() - start.toMillis();
-
-      if (diff < MIN_OPERATION_TIME_MS) {
-        await wait(MIN_OPERATION_TIME_MS - diff);
-      }
-      await this.sendState(FileOperationState.ArchiveDownloaded, data);
     } catch (e: any) {
       if (wStream) {
         await wStream.abort();
@@ -946,8 +719,8 @@ class FileOperationManager {
     }
   }
 
-  private async doImport(data: ImportData): Promise<void> {
-    await this.sendState(FileOperationState.ImportStarted, data);
+  private async _doImport(data: ImportData): Promise<void> {
+
     const tmpFileName = `._${crypto.randomUUID()}`;
     const reader = data.file.stream().getReader();
     const tmpFilePath = await Path.join(data.path, tmpFileName);
@@ -962,8 +735,6 @@ class FileOperationManager {
         return;
       }
     }
-
-    const start = DateTime.now();
 
     const openResult = await openFile(data.workspaceHandle, tmpFilePath, { write: true, truncate: true, create: true });
 
@@ -1038,19 +809,11 @@ class FileOperationManager {
       return;
     }
 
-    const end = DateTime.now();
-    const diff = end.toMillis() - start.toMillis();
-
-    if (diff < MIN_OPERATION_TIME_MS) {
-      await wait(MIN_OPERATION_TIME_MS - diff);
-    }
-
-    await this.sendState(FileOperationState.FileImported, data);
   }
 
   async stop(): Promise<void> {
     await this.cancelAll();
-    while (this.operationJobs.length > 0) {
+    while (this.operations.size > 0) {
       await wait(100);
     }
     this.running = false;
@@ -1061,80 +824,101 @@ class FileOperationManager {
       return;
     }
     this.running = true;
-    let importStarted = false;
 
     while (true) {
       if (!this.running) {
         break;
       }
 
-      if (this.operationJobs.length >= MAX_SIMULTANEOUS_OPERATIONS) {
-        // Remove the files that have been cancelled but have not yet
-        // started their import
-        for (const cancelId of this.cancelList.slice()) {
-          const index = this.fileOperationData.findIndex((item) => item.id === cancelId);
-          if (index !== -1) {
-            // Remove from cancelList
-            this.cancelList.slice(
-              this.cancelList.findIndex((item) => cancelId === item),
-              1,
-            );
-            // Inform of the cancel
-            const elem = this.fileOperationData[index];
-            await this.sendState(FileOperationState.Cancelled, elem);
-            // Remove from file list
-            this.fileOperationData.slice(index, 1);
-          }
+      // Remove the files that have been cancelled but have not yet
+      // started their import
+      for (const cancelId of this.cancelList.slice()) {
+        const index = this.pendingOperations.findIndex((item) => item.id === cancelId);
+        if (index !== -1) {
+          // Inform of the cancel
+          const elem = this.pendingOperations[index];
+          await this.eventDistributor.distribute(FileOperationEvents.Cancelled, elem);
+          // Remove from file list
+          this.pendingOperations.slice(index, 1);
+          // Remove from cancelList
+          this.cancelList.slice(
+            this.cancelList.findIndex((item) => cancelId === item),
+            1,
+          );
         }
+      }
 
+      if (this.operations.size >= MAX_SIMULTANEOUS_OPERATIONS) {
         await wait(500);
         continue;
       }
-      const elem = this.fileOperationData.pop();
+      const elem = this.pendingOperations.pop();
 
       if (elem) {
-        if (!importStarted) {
-          await this.sendState(FileOperationState.OperationAllStarted);
-          importStarted = true;
-        }
         const elemId = elem.id;
         // check if elem is in cancel list
         const index = this.cancelList.findIndex((item) => item === elemId);
         if (index !== -1) {
           this.cancelList.splice(index, 1);
-          await this.sendState(FileOperationState.Cancelled, elem as ImportData);
+          await this.eventDistributor.distribute(FileOperationEvents.Cancelled, elem);
           continue;
         }
         let job: Promise<void>;
-        if (elem.getDataType() === FileOperationDataType.Import) {
-          job = this.doImport(elem as ImportData);
-        } else if (elem.getDataType() === FileOperationDataType.Move) {
-          job = this.doMove(elem as MoveData);
-        } else if (elem.getDataType() === FileOperationDataType.Copy) {
-          job = this.doCopy(elem as CopyData);
-        } else if (elem.getDataType() === FileOperationDataType.Restore) {
-          job = this.doRestore(elem as RestoreData);
-        } else if (elem.getDataType() === FileOperationDataType.Download) {
-          job = this.doDownload(elem as DownloadData);
-        } else if (elem.getDataType() === FileOperationDataType.DownloadArchive) {
-          job = this.doDownloadArchive(elem as DownloadArchiveData);
-        } else {
-          console.warn(`Unhandled file operation '${elem.getDataType()}'`);
-          continue;
+        const start = Date.now();
+        switch (elem.type) {
+          case FileOperationDataType.Import: {
+            job = this._doImport(elem);
+            break;
+          }
+          case FileOperationDataType.Move: {
+            job = this._doMove(elem);
+            break;
+          }
+          case FileOperationDataType.Copy: {
+            job = this._doCopy(elem);
+            break;
+          }
+          case FileOperationDataType.Restore: {
+            job = this._doRestore(elem);
+            break;
+          }
+          case FileOperationDataType.Download: {
+            job = this._doDownload(elem);
+            break;
+          }
+          case FileOperationDataType.DownloadArchive: {
+            job = this._doDownloadArchive(elem);
+            break;
+          }
+          default:
+            window.electronAPI.log('warn', `Unhandled file operation '${elem.type}'`);
+            continue;
         }
-        this.operationJobs.push([elem.id, job]);
+        await this.eventDistributor.distribute(FileOperationEvents.Started, elem);
+        this.operations.set(elem.id, job);
         job
-          .catch((reason: any) => {
-            window.electronAPI.log('error', `File operation unexpected failure: ${reason}`);
+          .then(() => {
+            this.eventDistributor.distribute(FileOperationEvents.Finished, elem);
+          })
+          .catch((exc: any) => {
+            if (exc instanceof FileOperationCancelled) {
+              this.eventDistributor.distribute(FileOperationEvents.Cancelled, elem);
+            }
+            if (exc instanceof FileOperationException) {
+              this.eventDistributor.distribute(FileOperationEvents.Failed, elem, { error: exc.error, details: exc.details });
+            } else {
+              this.eventDistributor.distribute(FileOperationEvents.Failed, elem, { error: OperationFailedErrors.Unhandled, detail: exc.toString() });
+            }
           })
           .finally(async () => {
-            const index = this.operationJobs.findIndex((item) => item[1] === job);
-            if (index !== -1) {
-              this.operationJobs.splice(index, 1);
+            const end = Date.now();
+            const diff = end - start;
+            if (diff < MIN_OPERATION_TIME_MS) {
+              await wait(MIN_OPERATION_TIME_MS - diff);
             }
-            if (this.operationJobs.length === 0 && this.fileOperationData.length === 0) {
-              await this.sendState(FileOperationState.OperationAllFinished);
-              importStarted = false;
+            this.operations.delete(elem.id);
+            if (this.operations.size === 0 && this.pendingOperations.length === 0) {
+              await this.eventDistributor.distribute(FileOperationEvents.AllFinished);
             }
           });
       } else {
@@ -1143,15 +927,3 @@ class FileOperationManager {
     }
   }
 }
-
-export {
-  CopyData,
-  DownloadArchiveData,
-  DownloadData,
-  FileOperationData,
-  FileOperationManager,
-  FileOperationState,
-  ImportData,
-  MoveData,
-  RestoreData,
-};
