@@ -4,6 +4,21 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.7.2-a.0.dev.20448+b8a1d9f (2025-12-26)
+------------------------------------------------
+
+Features
+~~~~~~~~
+
+* Windows: Update winfsp dependency to 2025 version
+  (`#11803 <https://github.com/Scille/parsec-cloud/issues/11803>`__)
+
+* User can copy email addresses to clipboard by clicking on them from the user
+  list.
+  (`#11735 <https://github.com/Scille/parsec-cloud/issues/11735>`__)
+
+
+
 Parsec v3.7.1 (2025-12-11)
 --------------------------
 
