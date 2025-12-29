@@ -5343,6 +5343,52 @@ fn struct_x509_certificate_reference_rs_to_js(
     Ok(js_obj)
 }
 
+// X509WindowsCngURI
+
+#[allow(dead_code)]
+fn struct_x509_windows_cng_uri_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::X509WindowsCngURI, JsValue> {
+    let issuer = {
+        let js_val = Reflect::get(&obj, &"issuer".into())?;
+        js_val
+            .dyn_into::<Uint8Array>()
+            .map(|x| x.to_vec())
+            .map_err(|_| TypeError::new("Not a Uint8Array"))
+            .and_then(|x| {
+                let custom_from_rs_bytes = |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
+                custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let serial_number = {
+        let js_val = Reflect::get(&obj, &"serialNumber".into())?;
+        js_val
+            .dyn_into::<Uint8Array>()
+            .map(|x| x.to_vec())
+            .map_err(|_| TypeError::new("Not a Uint8Array"))
+            .and_then(|x| {
+                let custom_from_rs_bytes = |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
+                custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    Ok(libparsec::X509WindowsCngURI {
+        issuer,
+        serial_number,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_x509_windows_cng_uri_rs_to_js(
+    rs_obj: libparsec::X509WindowsCngURI,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_issuer = JsValue::from(Uint8Array::from(rs_obj.issuer.as_ref()));
+    Reflect::set(&js_obj, &"issuer".into(), &js_issuer)?;
+    let js_serial_number = JsValue::from(Uint8Array::from(rs_obj.serial_number.as_ref()));
+    Reflect::set(&js_obj, &"serialNumber".into(), &js_serial_number)?;
+    Ok(js_obj)
+}
+
 // AccountAuthMethodStrategy
 
 #[allow(dead_code)]
@@ -19287,16 +19333,7 @@ fn variant_x509_uri_flavor_value_js_to_rs(
         "X509URIFlavorValueWindowsCNG" => {
             let x1 = {
                 let js_val = Reflect::get(&obj, &"x1".into())?;
-                js_val
-                    .dyn_into::<Uint8Array>()
-                    .map(|x| x.to_vec())
-                    .map_err(|_| TypeError::new("Not a Uint8Array"))
-                    .and_then(|x| {
-                        let custom_from_rs_bytes = |v: &[u8]| -> Result<_, String> {
-                            Ok(libparsec::Bytes::copy_from_slice(v).into())
-                        };
-                        custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
-                    })?
+                struct_x509_windows_cng_uri_js_to_rs(js_val)?
             };
             Ok(libparsec::X509URIFlavorValue::WindowsCNG(x1))
         }
@@ -19326,15 +19363,7 @@ fn variant_x509_uri_flavor_value_rs_to_js(
                 &"tag".into(),
                 &"X509URIFlavorValueWindowsCNG".into(),
             )?;
-            let js_x1 = JsValue::from(Uint8Array::from({
-                let custom_to_rs_bytes =
-                    |v: libparsec::X509WindowsCngURI| -> Result<Vec<u8>, String> { Ok(v.into()) };
-                match custom_to_rs_bytes(x1) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            }));
+            let js_x1 = struct_x509_windows_cng_uri_rs_to_js(x1)?;
             Reflect::set(&js_obj, &"x1".into(), &js_x1.into())?;
         }
     }

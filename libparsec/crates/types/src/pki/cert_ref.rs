@@ -2,7 +2,6 @@
 
 use std::{fmt::Display, str::FromStr};
 
-use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 
 use crate::DataError;
@@ -128,25 +127,13 @@ impl From<X509CertificateHash> for X509CertificateReference {
     }
 }
 
+#[serde_with::serde_as]
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
-pub struct X509WindowsCngURI(Bytes);
-
-impl From<Bytes> for X509WindowsCngURI {
-    fn from(value: Bytes) -> Self {
-        Self(value)
-    }
-}
-
-impl From<X509WindowsCngURI> for Vec<u8> {
-    fn from(value: X509WindowsCngURI) -> Self {
-        value.0.into()
-    }
-}
-
-impl From<&'static [u8]> for X509WindowsCngURI {
-    fn from(value: &'static [u8]) -> Self {
-        Self(Bytes::from_static(value))
-    }
+pub struct X509WindowsCngURI {
+    #[serde_as(as = "serde_with::Bytes")]
+    pub issuer: Vec<u8>,
+    #[serde_as(as = "serde_with::Bytes")]
+    pub serial_number: Vec<u8>,
 }
 
 impl X509URIFlavor for X509WindowsCngURI {
@@ -163,16 +150,11 @@ impl Display for X509WindowsCngURI {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{}:{}",
+            "{}:{}:{}",
             Self::HEADER,
-            data_encoding::BASE64.encode_display(&self.0)
+            data_encoding::BASE64.encode_display(&self.issuer),
+            data_encoding::BASE64.encode_display(&self.serial_number)
         )
-    }
-}
-
-impl AsRef<[u8]> for X509WindowsCngURI {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
     }
 }
 

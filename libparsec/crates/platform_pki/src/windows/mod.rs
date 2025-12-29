@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::ffi::c_void;
+mod find_in_store;
+mod schannel_utils;
 
 use crate::{
     CertificateDer, DecryptMessageError, DecryptedMessage, EncryptMessageError, EncryptedMessage,
@@ -17,14 +18,12 @@ use schannel::{
     cert_context::{CertContext, HashAlgorithm, PrivateKey},
     cert_store::CertStore,
     ncrypt_key::NcryptKey,
-    RawPointer,
 };
 use sha2::Digest as _;
 use windows_sys::Win32::Security::Cryptography::{
-    CertGetCertificateContextProperty, NCryptDecrypt, NCryptEncrypt, NCryptSignHash,
-    BCRYPT_OAEP_PADDING_INFO, BCRYPT_PSS_PADDING_INFO, CERT_CONTEXT, CERT_KEY_PROV_INFO_PROP_ID,
-    HCERTSTORE, NCRYPT_KEY_HANDLE, NCRYPT_PAD_OAEP_FLAG, NCRYPT_PAD_PSS_FLAG,
-    NCRYPT_SHA256_ALGORITHM, UI::CryptUIDlgSelectCertificateFromStore,
+    NCryptDecrypt, NCryptEncrypt, NCryptSignHash, BCRYPT_OAEP_PADDING_INFO,
+    BCRYPT_PSS_PADDING_INFO, NCRYPT_PAD_OAEP_FLAG, NCRYPT_PAD_PSS_FLAG, NCRYPT_SHA256_ALGORITHM,
+    UI::CryptUIDlgSelectCertificateFromStore,
 };
 
 pub fn is_available() -> bool {
@@ -38,15 +37,6 @@ fn open_store() -> std::io::Result<CertStore> {
 fn get_hash_algo(hash: &X509CertificateHash) -> HashAlgorithm {
     match hash {
         X509CertificateHash::SHA256(..) => HashAlgorithm::sha256(),
-    }
-}
-
-fn cert_cmp_hash(hash: &X509CertificateHash, other: &CertContext) -> bool {
-    let Ok(cert_hash) = other.fingerprint(get_hash_algo(hash)) else {
-        return false;
-    };
-    match hash {
-        X509CertificateHash::SHA256(data) => data.as_ref() == cert_hash.as_slice(),
     }
 }
 
@@ -65,60 +55,52 @@ fn find_certificate(
     store: &CertStore,
     certificate_ref: &X509CertificateReference,
 ) -> Option<CertContext> {
-    let matcher: Box<dyn Fn(&CertContext) -> bool> =
-        match certificate_ref.get_uri::<X509WindowsCngURI>() {
-            None => Box::new(move |candidate: &CertContext| {
-                cert_cmp_hash(&certificate_ref.hash, candidate)
-            }),
-            Some(id) => Box::new(move |candidate: &CertContext| {
-                cert_cmp_id(candidate, id).unwrap_or_default()
-                    || cert_cmp_hash(&certificate_ref.hash, candidate)
-            }),
-        };
-
-    store.certs().find(matcher)
+    certificate_ref
+        .get_uri::<X509WindowsCngURI>()
+        .and_then(|uri| {
+            log::trace!("Looking for cert with uri: {uri}");
+            let mut uri = uri.clone();
+            find_in_store::find_cert_in_store(store, find_in_store::CertFilter::cert_id(&mut uri))
+                .next()
+        })
+        .inspect(|_v| log::trace!("Certificate found using uri"))
+        .or_else(|| {
+            log::trace!("Certificate not found by uri, trying by fingerprint");
+            let hash_algo = get_hash_algo(&certificate_ref.hash);
+            store.certs().find(|candidate: &CertContext| {
+                let Ok(cert_hash) = candidate.fingerprint(hash_algo) else {
+                    return false;
+                };
+                match &certificate_ref.hash {
+                    X509CertificateHash::SHA256(data) => data.as_ref() == cert_hash.as_slice(),
+                }
+            })
+        })
 }
 
-fn cert_cmp_id(
-    cert_context: &CertContext,
-    expected_id: &X509WindowsCngURI,
-) -> std::io::Result<bool> {
-    get_certificate_id(cert_context).map(|cert_id| cert_id == expected_id.as_ref())
-}
+fn get_certificate_uri(cert_context: &CertContext) -> X509WindowsCngURI {
+    let raw_context = schannel_utils::cert_context_to_raw(cert_context);
+    // SAFETY: The raw pointer come from the inner valid pointer of `cert_context`
+    // that is of type `Cryptography::CERT_CONTEXT`
+    let cert_info = unsafe { *(*raw_context).pCertInfo };
 
-fn get_certificate_id(cert_context: &CertContext) -> std::io::Result<Vec<u8>> {
-    // SAFETY: We use `CertGetCertificateContextProperty` by using a correct windows pointer and
-    // first getting the required size to allocate a buffer.
-    unsafe {
-        let raw_context = RawPointer::as_ptr(cert_context) as *const CERT_CONTEXT;
-        // 1. Get size of cert id
-        let mut len = 0u32;
-        // Documentation can be found here:
-        // https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/nf-wincrypt-certgetcertificatecontextproperty
-        // Rust doc:
-        // https://docs.rs/windows-sys/latest/windows_sys/Win32/Security/Cryptography/fn.CertGetCertificateContextProperty.html
-        let ret = CertGetCertificateContextProperty(
-            raw_context,
-            CERT_KEY_PROV_INFO_PROP_ID,
-            std::ptr::null_mut(),
-            &mut len,
-        );
-        if ret == 0 {
-            return Err(std::io::Error::last_os_error());
-        }
-        // 2. Get actual cert id
-        let mut buf = vec![0u8; len as usize];
-        let ret = CertGetCertificateContextProperty(
-            raw_context,
-            CERT_KEY_PROV_INFO_PROP_ID,
-            buf.as_mut_ptr() as *mut c_void,
-            &mut len,
-        );
-        if ret == 0 {
-            Err(std::io::Error::last_os_error())
-        } else {
-            Ok(buf)
-        }
+    // SAFETY: Issuer is of type `CRYPT_INTEGER_BLOB` and is obtain from a valid cert_context.
+    let issuer = unsafe {
+        std::slice::from_raw_parts(cert_info.Issuer.pbData, cert_info.Issuer.cbData as usize)
+    }
+    .to_vec();
+    // SAFETY: SerialNumber is of type `CRYPT_INTEGER_BLOB` and is obtain from a valid cert_context.
+    let serial_number = unsafe {
+        std::slice::from_raw_parts(
+            cert_info.SerialNumber.pbData,
+            cert_info.SerialNumber.cbData as usize,
+        )
+    }
+    .to_vec();
+
+    X509WindowsCngURI {
+        issuer,
+        serial_number,
     }
 }
 
@@ -142,10 +124,10 @@ pub fn get_der_encoded_certificate(
 fn get_id_and_hash_from_cert_context(
     context: &CertContext,
 ) -> std::io::Result<X509CertificateReference> {
-    let id = X509WindowsCngURI::from(Bytes::from(get_certificate_id(context)?));
+    let uri = get_certificate_uri(context);
     let hash = hash_from_certificate_context(context)?;
 
-    Ok(X509CertificateReference::from(hash).add_or_replace_uri(id))
+    Ok(X509CertificateReference::from(hash).add_or_replace_uri(uri))
 }
 
 pub fn list_trusted_root_certificate_anchors(
@@ -208,10 +190,7 @@ pub fn show_certificate_selection_dialog_windows_only(
 }
 
 fn ask_user_to_select_certificate(store: &CertStore) -> Option<CertContext> {
-    // SAFETY: Ideally we would use `schannel::Inner::as_inner` to get the already typed type, but it's a
-    // private trait.
-    // Instead, the following that require to cast to the correct type.
-    let raw_store = unsafe { RawPointer::as_ptr(store) } as HCERTSTORE;
+    let raw_store = schannel_utils::get_raw_store(store);
 
     // SAFETY: We use `CryptUIDlgSelectCertificateFromStore` by providing it with a correct pointer
     // that come from windows, and use default value (NULL) as detailed by the documentation.
@@ -233,9 +212,7 @@ fn ask_user_to_select_certificate(store: &CertStore) -> Option<CertContext> {
         if raw_cert_context.is_null() {
             None
         } else {
-            Some(schannel::RawPointer::from_ptr(
-                raw_cert_context as *mut std::os::raw::c_void,
-            ))
+            Some(schannel_utils::cert_context_from_raw(raw_cert_context))
         }
     }
 }
@@ -282,9 +259,7 @@ fn ncrypt_sign_message_with_rsa(
 ) -> std::io::Result<(PkiSignatureAlgorithm, Vec<u8>)> {
     const ALGO: PkiSignatureAlgorithm = PkiSignatureAlgorithm::RsassaPssSha256;
     let hash = sha2::Sha256::digest(message);
-    // SAFETY: NcryptKey is obtain from an NCRYPT_KEY_HANDLE, here we retrieve the underlying
-    // handle.
-    let raw_handle = unsafe { RawPointer::as_ptr(handle) } as NCRYPT_KEY_HANDLE;
+    let raw_handle = schannel_utils::ncrypt_key_to_ptr(handle);
 
     // SAFETY: We follow the windows documentation by correctly passing the correct flags according
     // to padding_info type, and the other pointer are either coming from allocated buffer or null
@@ -375,9 +350,7 @@ fn ncrypt_encrypt_message_with_rsa(
     handle: &NcryptKey,
 ) -> std::io::Result<(PKIEncryptionAlgorithm, Vec<u8>)> {
     const ALGO: PKIEncryptionAlgorithm = PKIEncryptionAlgorithm::RsaesOaepSha256;
-    // SAFETY: NcryptKey is obtain from an NCRYPT_KEY_HANDLE, here we retrieve the underlying
-    // handle.
-    let raw_handle = unsafe { RawPointer::as_ptr(handle) } as NCRYPT_KEY_HANDLE;
+    let raw_handle = schannel_utils::ncrypt_key_to_ptr(handle);
 
     // SAFETY: We follow the windows documentation by correctly passing the correct flags according
     // to padding_info type, and the other pointer are either coming from allocated buffer or null
@@ -469,9 +442,7 @@ fn ncrypt_decrypt_message_with_rsa(
     encrypted_message: &[u8],
     handle: &NcryptKey,
 ) -> std::io::Result<Vec<u8>> {
-    // SAFETY: NcryptKey is obtain from an NCRYPT_KEY_HANDLE, here we retrieve the underlying
-    // handle.
-    let raw_handle = unsafe { RawPointer::as_ptr(handle) } as NCRYPT_KEY_HANDLE;
+    let raw_handle = schannel_utils::ncrypt_key_to_ptr(handle);
 
     // SAFETY: We follow the windows documentation by correctly passing the correct flags according
     // to padding_info type, and the other pointer are either coming from allocated buffer or null

@@ -8,7 +8,7 @@ use std::fmt::Debug;
 use anyhow::Context;
 use clap::Parser;
 use libparsec_platform_pki::get_der_encoded_certificate;
-use libparsec_types::{X509CertificateHash, X509CertificateReference};
+use libparsec_types::{X509CertificateHash, X509CertificateReference, X509URIFlavorValue};
 use sha2::Digest;
 
 #[derive(Debug, Parser)]
@@ -16,6 +16,8 @@ struct Args {
     /// Hash of the certificate to get content of.
     #[arg(value_parser = utils::CertificateSRIHashParser)]
     certificate_hash: Option<X509CertificateHash>,
+    #[arg(value_parser = utils::Base64SerdeParser::<X509URIFlavorValue>::default())]
+    certificate_uri: Option<X509URIFlavorValue>,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -24,7 +26,14 @@ fn main() -> anyhow::Result<()> {
     log::debug!("args={args:x?}");
 
     let cert_ref: X509CertificateReference = match args.certificate_hash {
-        Some(hash) => hash.into(),
+        Some(hash) => {
+            let h: X509CertificateReference = hash.into();
+            if let Some(uri) = args.certificate_uri {
+                h.add_or_replace_uri_wrapped(uri)
+            } else {
+                h
+            }
+        }
         #[cfg(target_os = "windows")]
         None => libparsec_platform_pki::show_certificate_selection_dialog_windows_only()
             .map_err(anyhow::Error::from)
@@ -38,9 +47,15 @@ fn main() -> anyhow::Result<()> {
         }
     };
 
+    if let Some(uri) = cert_ref.uris().next() {
+        println!("original uri: {uri}");
+    }
+    println!("original fingerprint: {}", cert_ref.hash);
     let cert = get_der_encoded_certificate(&cert_ref).context("Get certificate")?;
 
-    println!("id: {}", &cert.cert_ref.uris().next().unwrap());
+    let uri = cert.cert_ref.uris().next().unwrap();
+    println!("uri: {uri}");
+    println!("serialized uri: {}", display_serialized_uri(uri));
     println!("fingerprint: {}", cert.cert_ref.hash);
     {
         let digest = sha2::Sha256::digest(&cert.der_content);
@@ -53,4 +68,9 @@ fn main() -> anyhow::Result<()> {
     );
 
     Ok(())
+}
+
+fn display_serialized_uri(uri: &X509URIFlavorValue) -> impl std::fmt::Display {
+    let encoded = rmp_serde::encode::to_vec(uri).unwrap();
+    data_encoding::BASE64.encode(&encoded)
 }

@@ -585,7 +585,7 @@ JsString::try_new({{ mut_cx_ref }},
             Err(err) => return cx.throw_type_error(err),
         }
         {%- else -%}
-        {{ rs_value }}.as_ref()
+        {{ rs_value }}
         {%- endif -%}
     };
     let js_buff = JsTypedArray::from_slice({{ mut_cx_ref }}, rs_buff.as_ref())?;

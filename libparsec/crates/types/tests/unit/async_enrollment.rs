@@ -128,7 +128,7 @@ fn async_enrollment_local_pending() {
 fn async_enrollment_local_pending_cleartext_content(alice: &Device) {
     for (raw, expected) in [
         (
-            // Generated from Parsec 3.7.1-a.0+dev
+            // Generated from Parsec 3.7.2-a.0+dev
             // Content:
             //   type: 'async_enrollment_local_pending_cleartext_content'
             //   server_url: 'http://alice_dev1.example.com:9999/'
@@ -141,23 +141,28 @@ fn async_enrollment_local_pending_cleartext_content(alice: &Device) {
             //     type: 'PKI',
             //     algorithm: 'RSAES-OAEP-SHA256',
             //     certificate_ref: {
-            //       uris: [ { windowscng: 0x666f6f, }, ],
+            //       uris: [
+            //         {
+            //           windowscng: { issuer: [ 102, 111, 111, ], serial_number: [ 98, 97, 114, ], },
+            //         },
+            //       ],
             //       hash: 'sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
             //     },
             //     encrypted_key: 0x3c656e637279707465645f6b65793e,
             //   }
             hex!(
-                "0028b52ffd00582d0b00b656523d308d930ec000611aa4919e90316afd984fbb06520c"
-                "8d9d0e638c84c8ed4ab6dc3ae5129b7693ce9e08fff179c298a9d2fae8aa207b9f437a"
-                "187502f56d3a0048003e0050455e6141bdadb37d8ac16848dd4ec0e7c969c953f293a4"
-                "f9cd91ad16794bfd632be26d7c693d65f1ade6c3f7a2e42fc6d554029f4b55773204ed"
-                "3d3f4db814a13919d9502202e541030dc0f091a2a10220a56d49858401cd04048acac4"
-                "088eabbd7b21c8344344b2e3c5b860a4ede2b8ad14963592d183c96432190d1859c59f"
-                "141f26d0f5ca183d05e1e081c7870bf03dabb9aadee6b7f59c2903c661a9cef641270a"
-                "4c3afc3556b758e1e4ceeb98428b05f566a9383cef20fad6d9526f2b090e0440a92e61"
-                "b5b75449c62f41005d32302ed4cd021f37d57562e450a044cc66486cbc21241538cc95"
-                "53c702e772bd952d675b9e7932302ea0069b8bc706d471d96c409b0800661ee18a43ec"
-                "b21a63094c995d2e73d52a3510d3308c14"
+                "0028b52ffd0058c50b004618573e308d930ec000611aa41123d918f7cf2e632626bc69"
+                "06b99487fc9110b95dc9965ba724d2d26ef29b66c43d4c1c1c445635165f75ac56e131"
+                "96421714db163e004b004800b151fc5150414e5161ddb1b77d8ac16450ddd380d09315"
+                "93b7e42749f39b63630df296fad798c4ebf8147bdae263cd87ef45c9678dafa90542a7"
+                "aef66408e7e8636f6bdd31f79eaf285c8ed0988c6c3821c1f2a0890860f038d1400170"
+                "e2f643317140538910805229c191b9772fe454538424395e8c0c46dc328edb5a615925"
+                "1941984c2693c980010d8471611139d85c3a34228ecb4623da7894c0a95746e9698807"
+                "103a3e5c80ef794d76f536df2de84d1bb40dcbf5b62f325950d2e1cfb14e8c1556d379"
+                "a7a6d05261dd59ae0dd00b0a100820717d02736fea928dff49105d302e2c749a0642d3"
+                "d4c923952322cf8115b3a72b3f3f317644e4ab39174488c46d7e44c7fb416281c35c59"
+                "79423a97ecad6d3bdbf2010800661e018e43ecb21a63094c995d2e73d52a3510d3308c"
+                "14"
             )
             .as_ref(),
             AsyncEnrollmentLocalPendingCleartextContent {
@@ -173,7 +178,10 @@ fn async_enrollment_local_pending_cleartext_content(alice: &Device) {
                     certificate_ref: X509CertificateReference::from(
                         X509CertificateHash::fake_sha256(),
                     )
-                    .add_or_replace_uri(X509WindowsCngURI::from(Bytes::from_static(b"foo"))),
+                    .add_or_replace_uri(X509WindowsCngURI {
+                        issuer: b"foo".into(),
+                        serial_number: b"bar".into(),
+                    }),
                     algorithm: PKIEncryptionAlgorithm::RsaesOaepSha256,
                 },
             },

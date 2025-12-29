@@ -279,6 +279,10 @@ class Bytes(BytesBasedType):
     )
 
 
+class BytesVec(BytesBasedType):
+    custom_from_rs_bytes = "|v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) }"
+
+
 class Sha256BoxData(BytesBasedType):
     custom_from_rs_bytes = '|v: &[u8]| -> Result<Box<[u8;32]>, String> { Ok(Box::from( <[u8; 32]>::try_from(v).map_err(|_| "invalid value length")?)) }'
     custom_to_rs_bytes = "|v: Box<[u8;32]>| -> Result<Vec<u8>, String> {Ok((*v).into())}"
@@ -358,13 +362,9 @@ class X509CertificateHash(StrBasedType):
     custom_to_rs_string = DISPLAY_TO_STRING
 
 
-class X509WindowsCngURI(BytesBasedType):
-    custom_from_rs_bytes = (
-        "|v: &[u8]| -> Result<_, String> { Ok(libparsec::Bytes::copy_from_slice(v).into()) }"
-    )
-    custom_to_rs_bytes = (
-        "|v: libparsec::X509WindowsCngURI| -> Result<Vec<u8>, String> { Ok(v.into()) }"
-    )
+class X509WindowsCngURI(Structure):
+    issuer: BytesVec
+    serial_number: BytesVec
 
 
 class X509Pkcs11URI(UnitStructure):
