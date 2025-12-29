@@ -257,6 +257,7 @@ onUnmounted(async (): Promise<void> => {
     background: var(--parsec-color-light-secondary-white);
     border-radius: var(--parsec-radius-12);
     padding: 1.5rem 0 0;
+    box-shadow: var(--parsec-shadow-input);
 
     &__title {
       color: var(--parsec-color-light-primary-700);

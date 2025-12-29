@@ -60,13 +60,9 @@ const { isLargeDisplay, isSmallDisplay } = useWindowSize();
     transition: all 0.3s ease-in-out;
 
     @include ms.responsive-breakpoint('sm') {
-      width: 40rem;
-      height: 67%;
-    }
-
-    @include ms.responsive-breakpoint('xs') {
-      width: 30rem;
-      height: 49%;
+      width: 100%;
+      height: 100%;
+      background-position: center;
     }
   }
 
@@ -91,6 +87,7 @@ const { isLargeDisplay, isSmallDisplay } = useWindowSize();
     align-items: center;
     gap: 0.5rem;
     color: var(--parsec-color-light-secondary-white);
+    height: fit-content;
   }
 
   &__spinner {

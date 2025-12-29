@@ -472,7 +472,6 @@ onUnmounted(async () => {
   z-index: 10;
 
   @include ms.responsive-breakpoint('sm') {
-    height: auto;
     position: sticky;
     background: var(--parsec-color-light-secondary-white);
     box-shadow: var(--parsec-shadow-strong);
@@ -541,9 +540,6 @@ onUnmounted(async () => {
       @include ms.responsive-breakpoint('sm') {
         max-width: 100%;
         height: -webkit-fill-available;
-      }
-
-      @include ms.responsive-breakpoint('xs') {
         padding: 1.5rem;
       }
 
