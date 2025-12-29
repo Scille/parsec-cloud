@@ -14,8 +14,9 @@ struct Args {
 }
 
 pub fn main() -> anyhow::Result<()> {
+    env_logger::init();
     let args = Args::parse();
-    println!("args={args:?}");
+    log::debug!("args={args:?}");
 
     let trusted_roots = libparsec_platform_pki::list_trusted_root_certificate_anchors()
         .context("Cannot list trusted root certificates")?;

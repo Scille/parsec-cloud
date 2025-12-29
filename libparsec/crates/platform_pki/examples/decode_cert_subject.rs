@@ -14,10 +14,9 @@ struct Args {
 }
 
 fn main() -> anyhow::Result<()> {
-    let args = Args::parse();
-    println!("args={args:?}");
-
     env_logger::init();
+    let args = Args::parse();
+    log::debug!("args={args:?}");
 
     let raw_cert = args
         .cert
