@@ -1,4 +1,4 @@
-cargo-deny = "0.18.1"
+cargo-deny = "0.18.9"
 cargo-udeps = "0.1.56"
 cross = "v0.2.5"
 license = "BUSL-1.1"
