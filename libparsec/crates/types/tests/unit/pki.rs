@@ -24,27 +24,35 @@ fn serde_cert_hash(#[case] raw: &'static str, #[case] expected: X509CertificateH
 #[test]
 fn serde_cert_ref() {
     let cert_ref = X509CertificateReference::from(X509CertificateHash::fake_sha256())
-        .add_or_replace_uri(X509WindowsCngURI::from(&b"DEADBEEF"[..]));
+        .add_or_replace_uri(X509WindowsCngURI {
+            issuer: b"DEAD".into(),
+            serial_number: b"BEEF".into(),
+        });
     let expected_tokens = [
         Token::Struct {
             name: "X509CertificateReference",
             len: 2,
         },
-        Token::Str("uris"),
+        Token::Str("uris"), // Start uris field
         Token::Seq { len: Some(1) },
         Token::NewtypeVariant {
             name: "X509URIFlavorValue",
             // cspell:disable-next-line
             variant: "windowscng",
         },
-        Token::NewtypeStruct {
+        Token::Struct {
             name: "X509WindowsCngURI",
+            len: 2,
         },
-        Token::Bytes(b"DEADBEEF"),
+        Token::Str("issuer"),
+        Token::Bytes(b"DEAD"),
+        Token::Str("serial_number"),
+        Token::Bytes(b"BEEF"),
+        Token::StructEnd, // End X509WindowsCngURI
         Token::SeqEnd,
-        Token::Str("hash"),
+        Token::Str("hash"), // Start hash field
         Token::BorrowedStr("sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="),
-        Token::StructEnd,
+        Token::StructEnd, // End X509CertificateReference
     ];
 
     // We test both readable and compact form, both should result in the same representation as we
@@ -167,13 +175,17 @@ fn serde_pki_enrollment_submit_payload() {
 
 #[rstest]
 #[case::with_cert_uri(
-    // Generated from Parsec 3.5.3-a.0+dev
+    // Generated from Parsec 3.7.2-a.0+dev
     // Content:
     //   type: 'local_pending_enrollment'
     //   server_url: 'https://parsec.example.com/'
     //   organization_id: 'my_org'
     //   x509_certificate_ref: {
-    //     uris: [ { windowscng: 0x666f6f, }, ],
+    //     uris: [
+    //       {
+    //         windowscng: { issuer: [ 102, 111, 111, ], serial_number: [ 98, 97, 114, ], },
+    //       },
+    //     ],
     //     hash: 'sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
     //   }
     //   submitted_on: ext(1, 946771200000000) i.e. 2000-01-02T01:00:00Z
@@ -183,30 +195,29 @@ fn serde_pki_enrollment_submit_payload() {
     //     verify_key: 0x845415cd821748005054dba8d456ac18ad3e71acdf980e19d6a925191362c9f9,
     //     public_key: 0xe1b20b860a78ef778d0c776121c7027cd90ce04b4d2f1a291a48d911f145724d,
     //     device_label: 'My dev1 machine',
-    //     human_handle: [ 'alice@example.com', 'Alicey McAliceFace', ],
     //   }
     //   encrypted_key: 0x666f6f
     //   encrypted_key_algo: 'RSAES-OAEP-SHA256'
     //   ciphertext: 0x666f6f
     &hex!(
-        "0028b52ffd00588d0d00065a63441073d401002b4ae167b409d52316a1191dc6b53f2b"
-        "544a99238a0f92e9d925644b659452ae3fd3de3b8994b8e118bcc2aaafd5c5f1099b73"
-        "f168c129333f290e86851d12480052005d009faf47e86081876381dd0a3b0d857c48eb"
-        "e7d6f0b4b15b5b3a5a8d253eadd69c9744c7b76da7f300db9c3317f36ef07ae93af632"
-        "756dce7aa9438cbea46ee1ec58670bb75d3e81081e64d7d9b54d41029380324de01324"
-        "1f199107b7e32563433e44613e042e8460d06000d4a0154acff935d2863f0816e7c463"
-        "d2196eb0ca7067a75a2f8d0aa3119baaa46ff23888c07fb713cbe5177aeef8572dd349"
-        "3da1c72fb9fc4417e4a3c02a34a260a4239a900364b5210323419b4042987a70013e08"
-        "48e9883f499bf57ec4201910215941436440091c5f860828049f85171537545230a103"
-        "2c3342543a6c549dafc0eefaeb250fc25fb12f02b55e1a55e63c5fcfec47efc4636285"
-        "469c14904581330259a30a2e159b0d53b55e1ae9d976375247796c9428da741e7f5aa9"
-        "8fc79fed32c2a7a49d41dada967d4e3f8bad6d18945c6e3a510b0036a70dde29564389"
-        "6f454350e17d34cb15e3f2cd88067b5d4ab38d4c08a001"
+        "0028b52ffd00582d0d00669961452073d30180781b790c580db836dcab18e8ffc451bf"
+        "491a6b88119e697c765bdbd214a594ebbfb4f74e5296bde94cd5896083607dd81df3c7"
+        "f7a2b865dbaa93e2b47ea1430246004b005c00df123a58e0e954646fa1b7b54c87d57a"
+        "8e1bbcc6ecad4bb55949d2f46eb16b12d9f8e3adaa07f8e6acb1a0cfc1efd137fe72ed"
+        "8d52fbb561567dd6be904669e98abe5e367d0810953921800124c326036046b57076ce"
+        "be5d1c3e41b03a269e92a8e106290d47cdf4f162f9be36ae421afd1ba3acc558be398c"
+        "bda5945589497656277d1d42607fce54c2fa61e7281df31c1a170922e90304694717c0"
+        "8380171cd2e9c5ddafc78bcb40c8080a19210346d8386988804270ba1073a2460a4a06"
+        "74a0140324658503e3b50af430ff1e7d10baca6db132a3a55ebc26446413245012b8c4"
+        "c8090ca9a3cb11a3a1313dd6621b98dc75fed6aecbcfc4536281441d948f55a123fa58"
+        "220b296c46237cb116dbccced77b591bd5d53519370e83514f8e1772a17d450a5bfaa8"
+        "e729f41f1e0552201105225588c28d8f1487090036a70784ef21a8c63e9ae58a712bd6"
+        "881f7b5d63b30d5908a001"
     )[..],
     Box::new(|alice: &Device| {
         PKILocalPendingEnrollment {
             cert_ref: X509CertificateReference::from(X509CertificateHash::fake_sha256())
-                .add_or_replace_uri(X509WindowsCngURI::from(&b"foo"[..])),
+                .add_or_replace_uri(X509WindowsCngURI{issuer: b"foo".into(), serial_number: b"bar".into() }),
             addr: ParsecPkiEnrollmentAddr::from_str(
                 "parsec3://parsec.example.com/my_org?a=pki_enrollment",
             )

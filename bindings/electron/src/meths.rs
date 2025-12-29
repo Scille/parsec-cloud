@@ -2543,7 +2543,7 @@ fn struct_pki_local_pending_enrollment_rs_to_js<'a>(
     let js_payload = struct_pki_enrollment_submit_payload_rs_to_js(cx, rs_obj.payload)?;
     js_obj.set(cx, "payload", js_payload)?;
     let js_encrypted_key = {
-        let rs_buff = { rs_obj.encrypted_key.as_ref() };
+        let rs_buff = { rs_obj.encrypted_key };
         let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
         js_buff
     };
@@ -2559,7 +2559,7 @@ fn struct_pki_local_pending_enrollment_rs_to_js<'a>(
     .or_throw(cx)?;
     js_obj.set(cx, "encryptedKeyAlgo", js_encrypted_key_algo)?;
     let js_ciphertext = {
-        let rs_buff = { rs_obj.ciphertext.as_ref() };
+        let rs_buff = { rs_obj.ciphertext };
         let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
         js_buff
     };
@@ -2670,7 +2670,7 @@ fn struct_pki_enrollment_answer_payload_rs_to_js<'a>(
         JsString::try_new(cx, enum_user_profile_rs_to_js(rs_obj.profile)).or_throw(cx)?;
     js_obj.set(cx, "profile", js_profile)?;
     let js_root_verify_key = {
-        let rs_buff = { rs_obj.root_verify_key.as_ref() };
+        let rs_buff = { rs_obj.root_verify_key };
         let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
         js_buff
     };
@@ -2735,13 +2735,13 @@ fn struct_pki_enrollment_submit_payload_rs_to_js<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_verify_key = {
-        let rs_buff = { rs_obj.verify_key.as_ref() };
+        let rs_buff = { rs_obj.verify_key };
         let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
         js_buff
     };
     js_obj.set(cx, "verifyKey", js_verify_key)?;
     let js_public_key = {
-        let rs_buff = { rs_obj.public_key.as_ref() };
+        let rs_buff = { rs_obj.public_key };
         let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
         js_buff
     };
@@ -2895,7 +2895,7 @@ fn struct_raw_pki_enrollment_list_item_rs_to_js<'a>(
     });
     js_obj.set(cx, "submittedOn", js_submitted_on)?;
     let js_der_x509_certificate = {
-        let rs_buff = { rs_obj.der_x509_certificate.as_ref() };
+        let rs_buff = { rs_obj.der_x509_certificate };
         let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
         js_buff
     };
@@ -2909,7 +2909,7 @@ fn struct_raw_pki_enrollment_list_item_rs_to_js<'a>(
             .enumerate()
         {
             let js_elem = {
-                let rs_buff = { elem.as_ref() };
+                let rs_buff = { elem };
                 let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
                 js_buff
             };
@@ -2923,7 +2923,7 @@ fn struct_raw_pki_enrollment_list_item_rs_to_js<'a>(
         js_intermediate_der_x509_certificates,
     )?;
     let js_payload_signature = {
-        let rs_buff = { rs_obj.payload_signature.as_ref() };
+        let rs_buff = { rs_obj.payload_signature };
         let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
         js_buff
     };
@@ -2943,7 +2943,7 @@ fn struct_raw_pki_enrollment_list_item_rs_to_js<'a>(
         js_payload_signature_algorithm,
     )?;
     let js_payload = {
-        let rs_buff = { rs_obj.payload.as_ref() };
+        let rs_buff = { rs_obj.payload };
         let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
         js_buff
     };
@@ -5137,6 +5137,66 @@ fn struct_x509_certificate_reference_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// X509WindowsCngURI
+
+#[allow(dead_code)]
+fn struct_x509_windows_cng_uri_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::X509WindowsCngURI> {
+    let issuer = {
+        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "issuer")?;
+        {
+            let custom_from_rs_bytes = |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
+            #[allow(clippy::unnecessary_mut_passed)]
+            match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                Ok(val) => val,
+                // err can't infer type in some case, because of the previous `try_into`
+                #[allow(clippy::useless_format)]
+                Err(err) => return cx.throw_type_error(format!("{}", err)),
+            }
+        }
+    };
+    let serial_number = {
+        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "serialNumber")?;
+        {
+            let custom_from_rs_bytes = |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
+            #[allow(clippy::unnecessary_mut_passed)]
+            match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                Ok(val) => val,
+                // err can't infer type in some case, because of the previous `try_into`
+                #[allow(clippy::useless_format)]
+                Err(err) => return cx.throw_type_error(format!("{}", err)),
+            }
+        }
+    };
+    Ok(libparsec::X509WindowsCngURI {
+        issuer,
+        serial_number,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_x509_windows_cng_uri_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::X509WindowsCngURI,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_issuer = {
+        let rs_buff = { rs_obj.issuer };
+        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+        js_buff
+    };
+    js_obj.set(cx, "issuer", js_issuer)?;
+    let js_serial_number = {
+        let rs_buff = { rs_obj.serial_number };
+        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+        js_buff
+    };
+    js_obj.set(cx, "serialNumber", js_serial_number)?;
+    Ok(js_obj)
+}
+
 // AccountAuthMethodStrategy
 
 #[allow(dead_code)]
@@ -5190,7 +5250,7 @@ fn variant_account_auth_method_strategy_rs_to_js<'a>(
                 JsString::try_new(cx, "AccountAuthMethodStrategyMasterSecret").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_master_secret = {
-                let rs_buff = { master_secret.as_ref() };
+                let rs_buff = { master_secret };
                 let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
                 js_buff
             };
@@ -5804,7 +5864,7 @@ fn variant_account_login_strategy_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "AccountLoginStrategyMasterSecret").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_master_secret = {
-                let rs_buff = { master_secret.as_ref() };
+                let rs_buff = { master_secret };
                 let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
                 js_buff
             };
@@ -13756,7 +13816,7 @@ fn variant_pki_enrollment_list_item_rs_to_js<'a>(
             });
             js_obj.set(cx, "submittedOn", js_submitted_on)?;
             let js_submitter_der_cert = {
-                let rs_buff = { submitter_der_cert.as_ref() };
+                let rs_buff = { submitter_der_cert };
                 let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
                 js_buff
             };
@@ -17462,19 +17522,8 @@ fn variant_x509_uri_flavor_value_js_to_rs<'a>(
         }
         "X509URIFlavorValueWindowsCNG" => {
             let x0 = {
-                let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "x0")?;
-                {
-                    let custom_from_rs_bytes = |v: &[u8]| -> Result<_, String> {
-                        Ok(libparsec::Bytes::copy_from_slice(v).into())
-                    };
-                    #[allow(clippy::unnecessary_mut_passed)]
-                    match custom_from_rs_bytes(js_val.as_slice(cx)) {
-                        Ok(val) => val,
-                        // err can't infer type in some case, because of the previous `try_into`
-                        #[allow(clippy::useless_format)]
-                        Err(err) => return cx.throw_type_error(format!("{}", err)),
-                    }
-                }
+                let js_val: Handle<JsObject> = obj.get(cx, "x0")?;
+                struct_x509_windows_cng_uri_js_to_rs(cx, js_val)?
             };
             Ok(libparsec::X509URIFlavorValue::WindowsCNG(x0))
         }
@@ -17501,20 +17550,7 @@ fn variant_x509_uri_flavor_value_rs_to_js<'a>(
         libparsec::X509URIFlavorValue::WindowsCNG(x0, ..) => {
             let js_tag = JsString::try_new(cx, "X509URIFlavorValueWindowsCNG").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_x0 = {
-                let rs_buff = {
-                    let custom_to_rs_bytes =
-                        |v: libparsec::X509WindowsCngURI| -> Result<Vec<u8>, String> {
-                            Ok(v.into())
-                        };
-                    match custom_to_rs_bytes(x0) {
-                        Ok(ok) => ok,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                };
-                let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
-                js_buff
-            };
+            let js_x0 = struct_x509_windows_cng_uri_rs_to_js(cx, x0)?;
             js_obj.set(cx, "x0", js_x0)?;
         }
     }
@@ -25881,7 +25917,7 @@ fn test_new_account(mut cx: FunctionContext) -> JsResult<JsPromise> {
                             let js_value = struct_human_handle_rs_to_js(&mut cx, x0)?;
                             js_array.set(&mut cx, 0, js_value)?;
                             let js_value = {
-                                let rs_buff = { x1.as_ref() };
+                                let rs_buff = { x1 };
                                 let js_buff = JsTypedArray::from_slice(&mut cx, rs_buff.as_ref())?;
                                 js_buff
                             };

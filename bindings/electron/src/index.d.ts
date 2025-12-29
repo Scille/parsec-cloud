@@ -532,6 +532,12 @@ export interface X509Pkcs11URI {
 }
 
 
+export interface X509WindowsCngURI {
+    issuer: Uint8Array
+    serialNumber: Uint8Array
+}
+
+
 // AccountAuthMethodStrategy
 export interface AccountAuthMethodStrategyMasterSecret {
     tag: "AccountAuthMethodStrategyMasterSecret"
@@ -4664,7 +4670,7 @@ export interface X509URIFlavorValuePKCS11 {
 }
 export interface X509URIFlavorValueWindowsCNG {
     tag: "X509URIFlavorValueWindowsCNG"
-    x1: Uint8Array
+    x1: X509WindowsCngURI
 }
 export type X509URIFlavorValue =
   | X509URIFlavorValuePKCS11
