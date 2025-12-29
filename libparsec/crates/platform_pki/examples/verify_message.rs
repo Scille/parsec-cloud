@@ -2,6 +2,7 @@
 #![allow(clippy::unwrap_used)]
 
 use anyhow::Context;
+use bytes::Bytes;
 use clap::Parser;
 use libparsec_platform_pki::{verify_message, SignedMessage};
 use libparsec_types::{PkiSignatureAlgorithm, X509CertificateHash};
@@ -16,8 +17,8 @@ struct Args {
     #[command(flatten)]
     content: utils::ContentOpts,
     signature_header: PkiSignatureAlgorithm,
-    /// Signature in base64
-    signature: String,
+    #[arg(value_parser = utils::Base64Parser)]
+    signature: Bytes,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -26,11 +27,6 @@ fn main() -> anyhow::Result<()> {
     log::debug!("args={args:?}");
 
     let data = args.content.into_bytes()?;
-
-    let signature = data_encoding::BASE64
-        .decode(args.signature.as_bytes())
-        .map(Into::into)
-        .context("Invalid signature format")?;
 
     let cert = args.cert.get_certificate()?;
 
@@ -42,7 +38,7 @@ fn main() -> anyhow::Result<()> {
 
     let signed_message = SignedMessage {
         algo: args.signature_header,
-        signature,
+        signature: args.signature,
         message: data,
     };
 
