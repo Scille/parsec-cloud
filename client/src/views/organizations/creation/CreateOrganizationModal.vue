@@ -106,7 +106,7 @@ async function onBackToServerChoice(): Promise<void> {
   height: 100%;
   overflow: auto;
 
-  @media only screen and (max-height: 500px) {
+  @media only screen and (max-height: 500px) and (min-width: 600px) {
     --height: 90vh;
     height: 90vh;
   }

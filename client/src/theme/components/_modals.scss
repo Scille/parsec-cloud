@@ -255,6 +255,12 @@
 }
 
 .create-organization-modal {
+  .ion-page:not(.modal-content) {
+    @include ms.responsive-breakpoint('sm') {
+      height: 100%;
+    }
+  }
+
   .page-modal-container {
     padding: 2rem;
     display: flex;
@@ -304,7 +310,8 @@
   }
 
   &:has(.organization-name-page.active),
-  &:has(.organization-name-and-server-page.active) {
+  &:has(.organization-name-and-server-page.active),
+  &:has(.user-information-page.active) {
     @include ms.responsive-breakpoint('sm') {
       .ion-page {
         position: absolute;
@@ -437,7 +444,6 @@
       padding: 1rem 1.5rem 2rem;
       gap: 1rem;
       flex-direction: column;
-      max-width: 35rem;
       box-shadow: var(--parsec-shadow-soft);
     }
 
