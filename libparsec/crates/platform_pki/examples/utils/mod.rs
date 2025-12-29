@@ -35,6 +35,36 @@ impl TypedValueParser for Base64Parser {
     }
 }
 
+// Not all examples uses `Base64Parser` so it is not always used.
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+pub struct Base64SerdeParser<T>(std::marker::PhantomData<T>);
+
+impl<T> Default for Base64SerdeParser<T> {
+    fn default() -> Self {
+        Self(Default::default())
+    }
+}
+
+impl<T> TypedValueParser for Base64SerdeParser<T>
+where
+    T: Send + Sync + Clone + 'static,
+    T: for<'a> serde::Deserialize<'a>,
+{
+    type Value = T;
+
+    fn parse_ref(
+        &self,
+        cmd: &clap::Command,
+        arg: Option<&clap::Arg>,
+        value: &std::ffi::OsStr,
+    ) -> Result<Self::Value, clap::Error> {
+        let inner = Base64Parser.parse_ref(cmd, arg, value)?;
+        rmp_serde::decode::from_slice(inner.as_ref())
+            .map_err(|e| Error::raw(ErrorKind::InvalidValue, e))
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct CertificateSRIHashParser;
 
