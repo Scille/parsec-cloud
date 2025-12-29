@@ -12,6 +12,29 @@ use libparsec_platform_pki::{x509::DistinguishedNameValue, Certificate};
 use libparsec_types::X509CertificateHash;
 use x509_cert::der::{DecodeValue, Header, SliceReader, Tag};
 
+// Not all examples uses `Base64Parser` so it is not always used.
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+pub struct Base64Parser;
+
+impl TypedValueParser for Base64Parser {
+    type Value = Bytes;
+
+    fn parse_ref(
+        &self,
+        cmd: &clap::Command,
+        arg: Option<&clap::Arg>,
+        value: &std::ffi::OsStr,
+    ) -> Result<Self::Value, clap::Error> {
+        let inner = clap::builder::OsStringValueParser::new();
+        let val = inner.parse_ref(cmd, arg, value)?;
+        data_encoding::BASE64
+            .decode(val.as_encoded_bytes())
+            .map_err(|e| Error::raw(ErrorKind::InvalidValue, e))
+            .map(Bytes::from)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct CertificateSRIHashParser;
 
