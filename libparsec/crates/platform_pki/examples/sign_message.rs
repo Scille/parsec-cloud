@@ -18,8 +18,9 @@ struct Args {
 }
 
 fn main() -> anyhow::Result<()> {
+    env_logger::init();
     let args = Args::parse();
-    println!("args={args:?}");
+    log::debug!("args={args:?}");
 
     let cert_ref = args.certificate_hash.into();
     let data = args.content.into_bytes()?;

@@ -276,6 +276,7 @@ mod unix_only {
 }
 
 fn main() -> anyhow::Result<()> {
+    env_logger::init();
     #[cfg(target_os = "linux")]
     unix_only::main()?;
     Ok(())
