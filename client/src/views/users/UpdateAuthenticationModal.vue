@@ -116,8 +116,8 @@ import {
   AvailableDeviceTypeTag,
   DeviceAccessStrategyKeyring,
   DeviceAccessStrategyOpenBao,
+  DeviceAccessStrategyPKI,
   DeviceAccessStrategyPassword,
-  DeviceAccessStrategySmartcard,
   OpenBaoAuthConfigTag,
   ServerConfig,
   UpdateDeviceErrorTag,
@@ -261,17 +261,13 @@ async function onSSOLoginClicked(): Promise<void> {
 }
 
 async function changeAuthentication(): Promise<void> {
-  let accessStrategy:
-    | DeviceAccessStrategyKeyring
-    | DeviceAccessStrategyPassword
-    | DeviceAccessStrategySmartcard
-    | DeviceAccessStrategyOpenBao;
+  let accessStrategy: DeviceAccessStrategyKeyring | DeviceAccessStrategyPassword | DeviceAccessStrategyPKI | DeviceAccessStrategyOpenBao;
 
   if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.Keyring) {
     accessStrategy = AccessStrategy.useKeyring(props.currentDevice);
   } else if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.Password) {
     accessStrategy = AccessStrategy.usePassword(props.currentDevice, currentPassword.value);
-  } else if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.Smartcard) {
+  } else if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.PKI) {
     accessStrategy = AccessStrategy.useSmartcard(props.currentDevice);
   } else if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.OpenBao) {
     if (!openBaoClient.value) {

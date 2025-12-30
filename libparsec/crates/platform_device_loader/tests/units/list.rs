@@ -156,70 +156,6 @@ async fn list_devices(tmp_path: TmpPath) {
     )
     .as_ref();
 
-    // Smartcard
-
-    let smartcard_expected = DeviceFileSmartcard {
-        created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
-        protected_on: "2000-01-01T00:00:01Z".parse().unwrap(),
-        server_url: "parsec3://parsec.invalid".parse().unwrap(),
-        organization_id: "CoolOrg".parse().unwrap(),
-        user_id: "mallory".parse().unwrap(),
-        device_id: "mallory@dev1".parse().unwrap(),
-        human_handle: "Mallory McMalloryFace <mallory@parsec.invalid>"
-            .parse()
-            .unwrap(),
-        device_label: "PC1".parse().unwrap(),
-        certificate_ref: X509CertificateReference::from(X509CertificateHash::fake_sha256())
-            .add_or_replace_uri(X509WindowsCngURI {
-                issuer: b"foo".into(),
-                serial_number: b"bar".into(),
-            }),
-        algorithm_for_encrypted_key: PKIEncryptionAlgorithm::RsaesOaepSha256,
-        encrypted_key: hex!("de5c59cfcc0c52bf997594e0fdd2c24ffee9465b6f25e30bac9238c2f83fd19a")
-            .as_ref()
-            .into(),
-        ciphertext: b"<ciphertext>".as_ref().into(),
-    };
-    println!(
-        "***expected: {:?}",
-        DeviceFile::Smartcard(smartcard_expected.clone()).dump()
-    );
-    // Generated from Parsec 3.5.1-a.0+dev
-    // Content:
-    //   type: 'smartcard'
-    //   created_on: ext(1, 946684800000000) i.e. 2000-01-01T01:00:00Z
-    //   protected_on: ext(1, 946684801000000) i.e. 2000-01-01T01:00:01Z
-    //   server_url: 'https://parsec.invalid'
-    //   organization_id: 'CoolOrg'
-    //   user_id: ext(2, 0x3a11031c001000000000000000000000)
-    //   device_id: ext(2, 0xde103a11031c00100000000000000000)
-    //   human_handle: [ 'mallory@parsec.invalid', 'Mallory McMalloryFace', ]
-    //   device_label: 'PC1'
-    //   certificate_ref: {
-    //     uri: 0x4d616c6c6f72792773206365727469666963617465,
-    //     hash: 'sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
-    //   }
-    //   algorithm_for_encrypted_key: 'RSAES-OAEP-SHA256'
-    //   encrypted_key: 0xde5c59cfcc0c52bf997594e0fdd2c24ffee9465b6f25e30bac9238c2f83fd19a
-    //   ciphertext: 0x3c636970686572746578743e
-    let smartcard_raw: &[u8] = hex!(
-        "8da474797065a9736d61727463617264aa637265617465645f6f6ed70100035d013b37"
-        "e000ac70726f7465637465645f6f6ed70100035d013b472240aa7365727665725f7572"
-        "6cb668747470733a2f2f7061727365632e696e76616c6964af6f7267616e697a617469"
-        "6f6e5f6964a7436f6f6c4f7267a7757365725f6964d8023a11031c0010000000000000"
-        "00000000a96465766963655f6964d802de103a11031c00100000000000000000ac6875"
-        "6d616e5f68616e646c6592b66d616c6c6f7279407061727365632e696e76616c6964b5"
-        "4d616c6c6f7279204d634d616c6c6f727946616365ac6465766963655f6c6162656ca3"
-        "504331af63657274696669636174655f72656682a47572697391d92877696e646f7773"
-        "2d636e673a54574673624739796553647a49474e6c636e52705a6d6c6a5958526ca468"
-        "617368d9337368613235362d4141414141414141414141414141414141414141414141"
-        "41414141414141414141414141414141414141413dbb616c676f726974686d5f666f72"
-        "5f656e637279707465645f6b6579b152534145532d4f4145502d534841323536ad656e"
-        "637279707465645f6b6579c420de5c59cfcc0c52bf997594e0fdd2c24ffee9465b6f25"
-        "e30bac9238c2f83fd19aaa63697068657274657874c40c3c636970686572746578743e"
-    )
-    .as_ref();
-
     // PKI
 
     let pki_expected = DeviceFilePKI {
@@ -433,7 +369,6 @@ async fn list_devices(tmp_path: TmpPath) {
     let keyring_path = tmp_path.join("devices/94a8691e9765497984d63aad3c7df9e0.keys");
     // Device must have a .keys extension, but can be in nested directories with a random name
     let password_path = tmp_path.join("devices/foo/bar/spam/whatever.keys");
-    let smartcard_path = tmp_path.join("devices/foo/bar/spam/whatever2.keys");
     let pki_path = tmp_path.join("devices/foo/bar/spam/whatever3.keys");
     let recovery_path = tmp_path.join("devices/foo/whatever.keys");
     let account_vault_path = tmp_path.join("devices/whatever.keys");
@@ -442,7 +377,6 @@ async fn list_devices(tmp_path: TmpPath) {
     for (path, raw) in [
         (&keyring_path, keyring_raw),
         (&password_path, password_raw),
-        (&smartcard_path, smartcard_raw),
         (&pki_path, pki_raw),
         (&recovery_path, recovery_raw),
         (&account_vault_path, account_vault_raw),
@@ -479,18 +413,6 @@ async fn list_devices(tmp_path: TmpPath) {
             human_handle: password_expected.human_handle,
             device_label: password_expected.device_label,
             ty: AvailableDeviceType::Password,
-        },
-        AvailableDevice {
-            key_file_path: smartcard_path,
-            created_on: smartcard_expected.created_on,
-            protected_on: smartcard_expected.protected_on,
-            server_addr: smartcard_expected.server_url,
-            organization_id: smartcard_expected.organization_id,
-            user_id: smartcard_expected.user_id,
-            device_id: smartcard_expected.device_id,
-            human_handle: smartcard_expected.human_handle,
-            device_label: smartcard_expected.device_label,
-            ty: AvailableDeviceType::Smartcard,
         },
         AvailableDevice {
             key_file_path: pki_path,

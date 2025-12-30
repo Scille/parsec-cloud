@@ -1176,7 +1176,6 @@ export enum AvailableDeviceTypeTag {
     PKI = 'AvailableDeviceTypePKI',
     Password = 'AvailableDeviceTypePassword',
     Recovery = 'AvailableDeviceTypeRecovery',
-    Smartcard = 'AvailableDeviceTypeSmartcard',
 }
 
 export interface AvailableDeviceTypeAccountVault {
@@ -1200,9 +1199,6 @@ export interface AvailableDeviceTypePassword {
 export interface AvailableDeviceTypeRecovery {
     tag: AvailableDeviceTypeTag.Recovery
 }
-export interface AvailableDeviceTypeSmartcard {
-    tag: AvailableDeviceTypeTag.Smartcard
-}
 export type AvailableDeviceType =
   | AvailableDeviceTypeAccountVault
   | AvailableDeviceTypeKeyring
@@ -1210,7 +1206,6 @@ export type AvailableDeviceType =
   | AvailableDeviceTypePKI
   | AvailableDeviceTypePassword
   | AvailableDeviceTypeRecovery
-  | AvailableDeviceTypeSmartcard
 
 // BootstrapOrganizationError
 export enum BootstrapOrganizationErrorTag {
@@ -2715,7 +2710,6 @@ export enum DeviceAccessStrategyTag {
     OpenBao = 'DeviceAccessStrategyOpenBao',
     PKI = 'DeviceAccessStrategyPKI',
     Password = 'DeviceAccessStrategyPassword',
-    Smartcard = 'DeviceAccessStrategySmartcard',
 }
 
 export interface DeviceAccessStrategyAccountVault {
@@ -2744,17 +2738,12 @@ export interface DeviceAccessStrategyPassword {
     password: Password
     keyFile: Path
 }
-export interface DeviceAccessStrategySmartcard {
-    tag: DeviceAccessStrategyTag.Smartcard
-    keyFile: Path
-}
 export type DeviceAccessStrategy =
   | DeviceAccessStrategyAccountVault
   | DeviceAccessStrategyKeyring
   | DeviceAccessStrategyOpenBao
   | DeviceAccessStrategyPKI
   | DeviceAccessStrategyPassword
-  | DeviceAccessStrategySmartcard
 
 // DeviceSaveStrategy
 export enum DeviceSaveStrategyTag {
@@ -2763,7 +2752,6 @@ export enum DeviceSaveStrategyTag {
     OpenBao = 'DeviceSaveStrategyOpenBao',
     PKI = 'DeviceSaveStrategyPKI',
     Password = 'DeviceSaveStrategyPassword',
-    Smartcard = 'DeviceSaveStrategySmartcard',
 }
 
 export interface DeviceSaveStrategyAccountVault {
@@ -2789,17 +2777,12 @@ export interface DeviceSaveStrategyPassword {
     tag: DeviceSaveStrategyTag.Password
     password: Password
 }
-export interface DeviceSaveStrategySmartcard {
-    tag: DeviceSaveStrategyTag.Smartcard
-    certificateReference: X509CertificateReference
-}
 export type DeviceSaveStrategy =
   | DeviceSaveStrategyAccountVault
   | DeviceSaveStrategyKeyring
   | DeviceSaveStrategyOpenBao
   | DeviceSaveStrategyPKI
   | DeviceSaveStrategyPassword
-  | DeviceSaveStrategySmartcard
 
 // EntryStat
 export enum EntryStatTag {

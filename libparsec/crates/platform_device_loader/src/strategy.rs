@@ -135,9 +135,6 @@ pub enum DeviceSaveStrategy {
     Password {
         password: Password,
     },
-    Smartcard {
-        certificate_reference: X509CertificateReference,
-    },
     PKI {
         certificate_ref: X509CertificateReference,
     },
@@ -156,7 +153,6 @@ impl DeviceSaveStrategy {
             DeviceSaveStrategy::Password { password } => {
                 DeviceAccessStrategy::Password { key_file, password }
             }
-            DeviceSaveStrategy::Smartcard { .. } => DeviceAccessStrategy::Smartcard { key_file },
             DeviceSaveStrategy::PKI { .. } => DeviceAccessStrategy::PKI { key_file },
             DeviceSaveStrategy::AccountVault { operations } => DeviceAccessStrategy::AccountVault {
                 key_file,
@@ -173,7 +169,6 @@ impl DeviceSaveStrategy {
         match self {
             Self::Keyring { .. } => AvailableDeviceType::Keyring,
             Self::Password { .. } => AvailableDeviceType::Password,
-            Self::Smartcard { .. } => AvailableDeviceType::Smartcard,
             Self::PKI {
                 certificate_ref, ..
             } => AvailableDeviceType::PKI {
@@ -202,9 +197,6 @@ pub enum DeviceAccessStrategy {
         key_file: PathBuf,
         password: Password,
     },
-    Smartcard {
-        key_file: PathBuf,
-    },
     PKI {
         key_file: PathBuf,
     },
@@ -223,7 +215,6 @@ impl DeviceAccessStrategy {
         match self {
             Self::Keyring { key_file } => key_file,
             Self::Password { key_file, .. } => key_file,
-            Self::Smartcard { key_file, .. } => key_file,
             Self::PKI { key_file, .. } => key_file,
             Self::AccountVault { key_file, .. } => key_file,
             Self::OpenBao { key_file, .. } => key_file,
@@ -251,7 +242,6 @@ impl DeviceAccessStrategy {
                     None
                 }
             }
-            DeviceAccessStrategy::Smartcard { .. } => todo!(),
             DeviceAccessStrategy::PKI { .. } => match extra_info {
                 AvailableDeviceType::PKI { certificate_ref } => {
                     Some(DeviceSaveStrategy::PKI { certificate_ref })
@@ -289,7 +279,6 @@ pub enum AvailableDeviceType {
     Keyring,
     Password,
     Recovery,
-    Smartcard,
     PKI {
         certificate_ref: X509CertificateReference,
     },

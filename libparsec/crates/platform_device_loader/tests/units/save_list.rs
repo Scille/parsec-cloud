@@ -14,7 +14,6 @@ use libparsec_types::prelude::*;
 #[case("account_vault")]
 #[case("openbao")]
 // TODO #11269
-// #[cfg_attr(target_os = "windows", case("smartcard"))]
 // #[cfg_attr(target_os = "windows", case("pki"))]
 async fn save_list(#[case] kind: &str, tmp_path: TmpPath) {
     use crate::tests::utils::key_present_in_system;
@@ -119,7 +118,6 @@ async fn save_list(#[case] kind: &str, tmp_path: TmpPath) {
             (save_strategy, expected_available_device)
         }
 
-        "smartcard" => todo!(),
         "pki" => todo!(),
 
         unknown => panic!("Unknown kind: {unknown:?}"),

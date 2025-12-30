@@ -1,11 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { getDefaultDeviceName } from '@/common/device';
 import { getClientInfo } from '@/parsec/login';
 import { getOrganizationInfo, parseParsecAddr } from '@/parsec/organization';
 import {
   AvailableDevice,
-  AvailableDeviceTypeTag,
   HumanHandle,
   OrganizationID,
   ParsecAddr,
@@ -194,26 +192,29 @@ export async function confirmLocalJoinRequest(request: LocalJoinRequest): Promis
     return { ok: false, error: { tag: UpdateLocalJoinStatusErrorTag.NotFound, error: 'request does not exist' } };
   }
   REQUESTS.splice(idx, 1);
-  return {
-    ok: true,
-    value: {
-      keyFilePath: '/',
-      createdOn: DateTime.utc(),
-      protectedOn: DateTime.utc(),
-      serverAddr: request.serverAddr,
-      organizationId: request.organization,
-      userId: 'user_id',
-      deviceId: 'device_id',
-      humanHandle: {
-        label: request.humanHandle.label,
-        email: request.humanHandle.email,
-      },
-      deviceLabel: getDefaultDeviceName(),
-      ty: {
-        tag: AvailableDeviceTypeTag.Smartcard,
-      },
-    },
-  };
+  throw new Error('Not implemented, need to pass a valid certificate reference');
+  // return {
+  //   ok: true,
+  //   value: {
+  //     keyFilePath: '/',
+  //     createdOn: DateTime.utc(),
+  //     protectedOn: DateTime.utc(),
+  //     serverAddr: request.serverAddr,
+  //     organizationId: request.organization,
+  //     userId: 'user_id',
+  //     deviceId: 'device_id',
+  //     humanHandle: {
+  //       label: request.humanHandle.label,
+  //       email: request.humanHandle.email,
+  //     },
+  //     deviceLabel: getDefaultDeviceName(),
+  //     ty: {
+  //       tag: AvailableDeviceTypeTag.PKI,
+  //       // TODO:
+  //       certificateRef: undefined
+  //     },
+  //   },
+  // };
 }
 
 export async function cancelLocalJoinRequest(request: LocalJoinRequest): Promise<Result<null, UpdateLocalJoinStatusError>> {

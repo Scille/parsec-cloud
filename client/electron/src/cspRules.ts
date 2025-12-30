@@ -310,7 +310,9 @@ export function setupContentSecurityPolicy(customScheme: string): void {
 
     if (!matchingRule) {
       log.error(
-        `No CSP rule found for protocol: ${url.protocol}, host: ${url.host}, path: ${url.pathname.substring(0, 100)}${url.pathname.length > 100 ? '...' : ''}`,
+        `No CSP rule found for protocol: ${url.protocol}, host: ${url.host}, path: ${url.pathname.substring(0, 100)}${
+          url.pathname.length > 100 ? '...' : ''
+        }`,
       );
       // Apply a strict CSP to block potentially dangerous resources
       responseHeaders['Content-Security-Policy'] = ["default-src 'none'"];

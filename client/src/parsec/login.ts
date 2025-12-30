@@ -18,7 +18,7 @@ import {
   DeviceAccessStrategyKeyring,
   DeviceAccessStrategyOpenBao,
   DeviceAccessStrategyPassword,
-  DeviceAccessStrategySmartcard,
+  DeviceAccessStrategyPKI,
   DeviceAccessStrategyTag,
   DeviceID,
   DeviceSaveStrategy,
@@ -26,7 +26,7 @@ import {
   DeviceSaveStrategyKeyring,
   DeviceSaveStrategyOpenBao,
   DeviceSaveStrategyPassword,
-  DeviceSaveStrategySmartcard,
+  DeviceSaveStrategyPKI,
   DeviceSaveStrategyTag,
   ListAvailableDeviceError,
   OrganizationID,
@@ -262,9 +262,9 @@ export const AccessStrategy = {
       keyFile: device.keyFilePath,
     };
   },
-  useSmartcard(device: AvailableDevice): DeviceAccessStrategySmartcard {
+  useSmartcard(device: AvailableDevice): DeviceAccessStrategyPKI {
     return {
-      tag: DeviceAccessStrategyTag.Smartcard,
+      tag: DeviceAccessStrategyTag.PKI,
       keyFile: device.keyFilePath,
     };
   },
@@ -302,7 +302,7 @@ export const AccessStrategy = {
       return await AccessStrategy.useAccountVault(device);
     } else if (saveStrategy.tag === DeviceSaveStrategyTag.Password) {
       return AccessStrategy.usePassword(device, (saveStrategy as DeviceSaveStrategyPassword).password);
-    } else if (saveStrategy.tag === DeviceSaveStrategyTag.Smartcard) {
+    } else if (saveStrategy.tag === DeviceSaveStrategyTag.PKI) {
       return AccessStrategy.useSmartcard(device);
     } else if (saveStrategy.tag === DeviceSaveStrategyTag.OpenBao) {
       return {
@@ -352,10 +352,10 @@ export const SaveStrategy = {
       openbaoPreferredAuthId: connInfo.provider,
     };
   },
-  useSmartCard(certificate: X509CertificateReference): DeviceSaveStrategySmartcard {
+  useSmartCard(certificate: X509CertificateReference): DeviceSaveStrategyPKI {
     return {
-      tag: DeviceSaveStrategyTag.Smartcard,
-      certificateReference: certificate,
+      tag: DeviceSaveStrategyTag.PKI,
+      certificateRef: certificate,
     };
   },
 };

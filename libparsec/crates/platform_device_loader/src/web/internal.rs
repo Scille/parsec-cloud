@@ -227,7 +227,6 @@ impl Storage {
             }
 
             DeviceSaveStrategy::Keyring { .. } => panic!("Keyring not supported on Web"),
-            DeviceSaveStrategy::Smartcard { .. } => panic!("Smartcard not supported on Web"),
             DeviceSaveStrategy::PKI { .. } => panic!("PKI not supported on Web"),
         }
 
