@@ -536,3 +536,28 @@ msTest('Recent and pinned workspaces are updated when workspace is renamed', asy
   await expect(sidebarRecentWorkspaces.locator('.sidebar-item-workspace').nth(0)).toHaveText('New-wksp1');
   await expect(sidebarFavoriteWorkspaces.locator('.sidebar-item-workspace').nth(0)).toHaveText('New-wksp1');
 });
+
+msTest('Trying to navigate through the workspace content, profile, invitations, and back to workspaces page', async ({ connected }) => {
+  await expect(connected).toBeWorkspacePage();
+
+  await connected.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
+  await expect(connected).toBeDocumentPage();
+
+  await connected.locator('.topbar').locator('.profile-header').click();
+  const myProfileButton = connected.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(0);
+  await expect(myProfileButton).toHaveText('Settings');
+  await myProfileButton.click();
+  await expect(connected).toHavePageTitle('My profile');
+  await expect(connected).toBeMyProfilePage();
+
+  const sidebar = connected.locator('.sidebar');
+
+  await sidebar.locator('#sidebar-invitations').click();
+  await expect(connected).toHavePageTitle('Invitations');
+  await expect(connected).toBeInvitationPage();
+
+  const allWorkspacesButton = sidebar.locator('#sidebar-workspaces').locator('.list-sidebar-header-text');
+  await expect(allWorkspacesButton).toHaveText('My workspaces');
+  await allWorkspacesButton.click();
+  await expect(connected).toBeWorkspacePage();
+});
