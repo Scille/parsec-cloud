@@ -160,7 +160,7 @@
           </ion-text>
           <ion-text
             class="summary-item__text body-lg"
-            v-if="saveStrategy === DeviceSaveStrategyTag.Smartcard"
+            v-if="saveStrategy === DeviceSaveStrategyTag.PKI"
           >
             {{ $msTranslate('CreateOrganization.smartcardChoice') }}
           </ion-text>

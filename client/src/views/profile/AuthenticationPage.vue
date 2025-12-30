@@ -15,9 +15,9 @@
           v-show="currentDevice && currentDevice.ty.tag === AvailableDeviceTypeTag.Password"
         />
         <authentication-card
-          :auth-method="DeviceSaveStrategyTag.Smartcard"
+          :auth-method="DeviceSaveStrategyTag.PKI"
           :state="AuthenticationCardState.Current"
-          v-show="currentDevice && currentDevice.ty.tag === AvailableDeviceTypeTag.Smartcard"
+          v-show="currentDevice && currentDevice.ty.tag === AvailableDeviceTypeTag.PKI"
         />
         <authentication-card
           :auth-method="DeviceSaveStrategyTag.OpenBao"
@@ -76,7 +76,7 @@ async function openChangeAuthentication(): Promise<void> {
     }
   }
 
-  if (currentDevice.value.ty.tag === AvailableDeviceTypeTag.Smartcard) {
+  if (currentDevice.value.ty.tag === AvailableDeviceTypeTag.PKI) {
     const answer = await askQuestion('Authentication.method.smartcard.warn.title', 'Authentication.method.smartcard.warn.subtitle', {
       yesText: 'Authentication.method.smartcard.warn.yes',
       noText: 'Authentication.method.smartcard.warn.no',

@@ -17,6 +17,7 @@ import {
   X509CertificateReference,
 } from '@/parsec/types';
 import { libparsec } from '@/plugins/libparsec';
+import { X509Certificate } from 'crypto';
 import { DateTime } from 'luxon';
 
 /*
@@ -194,26 +195,29 @@ export async function confirmLocalJoinRequest(request: LocalJoinRequest): Promis
     return { ok: false, error: { tag: UpdateLocalJoinStatusErrorTag.NotFound, error: 'request does not exist' } };
   }
   REQUESTS.splice(idx, 1);
-  return {
-    ok: true,
-    value: {
-      keyFilePath: '/',
-      createdOn: DateTime.utc(),
-      protectedOn: DateTime.utc(),
-      serverAddr: request.serverAddr,
-      organizationId: request.organization,
-      userId: 'user_id',
-      deviceId: 'device_id',
-      humanHandle: {
-        label: request.humanHandle.label,
-        email: request.humanHandle.email,
-      },
-      deviceLabel: getDefaultDeviceName(),
-      ty: {
-        tag: AvailableDeviceTypeTag.Smartcard,
-      },
-    },
-  };
+  throw new Error('Not implemented, need to pass a valid certificate reference');
+  // return {
+  //   ok: true,
+  //   value: {
+  //     keyFilePath: '/',
+  //     createdOn: DateTime.utc(),
+  //     protectedOn: DateTime.utc(),
+  //     serverAddr: request.serverAddr,
+  //     organizationId: request.organization,
+  //     userId: 'user_id',
+  //     deviceId: 'device_id',
+  //     humanHandle: {
+  //       label: request.humanHandle.label,
+  //       email: request.humanHandle.email,
+  //     },
+  //     deviceLabel: getDefaultDeviceName(),
+  //     ty: {
+  //       tag: AvailableDeviceTypeTag.PKI,
+  //       // TODO:
+  //       certificateRef: undefined
+  //     },
+  //   },
+  // };
 }
 
 export async function cancelLocalJoinRequest(request: LocalJoinRequest): Promise<Result<null, UpdateLocalJoinStatusError>> {

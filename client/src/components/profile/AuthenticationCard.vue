@@ -104,13 +104,6 @@ const methodConfig: Record<
     imageAlt: 'Password',
     methodName: 'Authentication.method.password',
   },
-  [DeviceSaveStrategyTag.Smartcard]: {
-    imageSrc: idCardGradient,
-    imageAlt: 'Smartcard',
-    methodName: 'Authentication.method.smartcard.title',
-    description: 'Authentication.method.smartcard.description',
-    unavailableExplanation: 'Authentication.method.smartcard.unavailable',
-  },
   [DeviceSaveStrategyTag.PKI]: {
     imageSrc: idCardGradient,
     imageAlt: 'Smartcard',

@@ -173,23 +173,6 @@ pub(super) async fn load_ciphertext_key(
             }
         }
 
-        DeviceAccessStrategy::Smartcard { .. } => {
-            if let DeviceFile::Smartcard(device) = device_file {
-                Ok(decrypt_message(
-                    device.algorithm_for_encrypted_key,
-                    device.encrypted_key.as_ref(),
-                    &device.certificate_ref,
-                )
-                .map_err(|_| LoadCiphertextKeyError::InvalidData)?
-                .data
-                .as_ref()
-                .try_into()
-                .map_err(|_| LoadCiphertextKeyError::InvalidData)?)
-            } else {
-                Err(LoadCiphertextKeyError::InvalidData)
-            }
-        }
-
         DeviceAccessStrategy::PKI { .. } => {
             if let DeviceFile::PKI(device) = device_file {
                 Ok(decrypt_message(
@@ -404,53 +387,6 @@ pub(super) async fn save_device(
             save_content(&key_file, &file_content).await?;
         }
 
-        DeviceSaveStrategy::Smartcard {
-            certificate_reference,
-        } => {
-            // Generate a random key
-            let secret_key = SecretKey::generate();
-
-            // Encrypt the key using the public key related to a certificate from the store
-            let encrypted_message = encrypt_message(secret_key.as_ref(), certificate_reference)
-                .map_err(|e| SaveDeviceError::Internal(e.into()))?;
-
-            // May check if we are able to decrypt the encrypted key from the previous step
-            assert_eq!(
-                decrypt_message(
-                    encrypted_message.algo,
-                    &encrypted_message.ciphered,
-                    certificate_reference,
-                )
-                .map_err(|e| SaveDeviceError::Internal(e.into()))?
-                .data
-                .as_ref(),
-                secret_key.as_ref()
-            );
-
-            // Use the generated key to encrypt the device content
-            let ciphertext = encrypt_device(device, &secret_key);
-
-            // Save
-            let file_content = DeviceFile::Smartcard(DeviceFileSmartcard {
-                created_on,
-                protected_on,
-                server_url: server_addr.clone(),
-                organization_id: device.organization_id().to_owned(),
-                user_id: device.user_id,
-                device_id: device.device_id,
-                human_handle: device.human_handle.to_owned(),
-                device_label: device.device_label.to_owned(),
-                certificate_ref: encrypted_message.cert_ref,
-                encrypted_key: encrypted_message.ciphered,
-                ciphertext,
-                algorithm_for_encrypted_key: encrypted_message.algo,
-            });
-
-            let file_content = file_content.dump();
-
-            save_content(&key_file, &file_content).await?;
-        }
-
         DeviceSaveStrategy::PKI { certificate_ref } => {
             // Generate a random key
             let secret_key = SecretKey::generate();
@@ -476,7 +412,7 @@ pub(super) async fn save_device(
             let ciphertext = encrypt_device(device, &secret_key);
 
             // Save
-            let file_content = DeviceFile::Smartcard(DeviceFileSmartcard {
+            let file_content = DeviceFile::PKI(DeviceFilePKI {
                 created_on,
                 protected_on,
                 server_url: server_addr.clone(),
@@ -488,7 +424,7 @@ pub(super) async fn save_device(
                 certificate_ref: encrypted_message.cert_ref,
                 encrypted_key: encrypted_message.ciphered,
                 ciphertext,
-                algorithm_for_encrypted_key: encrypted_message.algo,
+                algorithm: encrypted_message.algo,
             });
 
             let file_content = file_content.dump();
