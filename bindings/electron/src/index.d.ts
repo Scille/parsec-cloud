@@ -1075,9 +1075,6 @@ export interface AvailableDeviceTypePassword {
 export interface AvailableDeviceTypeRecovery {
     tag: "AvailableDeviceTypeRecovery"
 }
-export interface AvailableDeviceTypeSmartcard {
-    tag: "AvailableDeviceTypeSmartcard"
-}
 export type AvailableDeviceType =
   | AvailableDeviceTypeAccountVault
   | AvailableDeviceTypeKeyring
@@ -1085,7 +1082,6 @@ export type AvailableDeviceType =
   | AvailableDeviceTypePKI
   | AvailableDeviceTypePassword
   | AvailableDeviceTypeRecovery
-  | AvailableDeviceTypeSmartcard
 
 
 // BootstrapOrganizationError
@@ -2328,17 +2324,12 @@ export interface DeviceAccessStrategyPassword {
     password: string
     key_file: string
 }
-export interface DeviceAccessStrategySmartcard {
-    tag: "DeviceAccessStrategySmartcard"
-    key_file: string
-}
 export type DeviceAccessStrategy =
   | DeviceAccessStrategyAccountVault
   | DeviceAccessStrategyKeyring
   | DeviceAccessStrategyOpenBao
   | DeviceAccessStrategyPKI
   | DeviceAccessStrategyPassword
-  | DeviceAccessStrategySmartcard
 
 
 // DeviceSaveStrategy
@@ -2365,17 +2356,12 @@ export interface DeviceSaveStrategyPassword {
     tag: "DeviceSaveStrategyPassword"
     password: string
 }
-export interface DeviceSaveStrategySmartcard {
-    tag: "DeviceSaveStrategySmartcard"
-    certificate_reference: X509CertificateReference
-}
 export type DeviceSaveStrategy =
   | DeviceSaveStrategyAccountVault
   | DeviceSaveStrategyKeyring
   | DeviceSaveStrategyOpenBao
   | DeviceSaveStrategyPKI
   | DeviceSaveStrategyPassword
-  | DeviceSaveStrategySmartcard
 
 
 // EntryStat

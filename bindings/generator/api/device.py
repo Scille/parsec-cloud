@@ -26,7 +26,6 @@ class AvailableDeviceType(Variant):
     Keyring = VariantItemUnit
     Password = VariantItemUnit
     Recovery = VariantItemUnit
-    Smartcard = VariantItemUnit
 
     class PKI:
         certificate_ref: X509CertificateReference
@@ -44,9 +43,6 @@ class DeviceSaveStrategy(Variant):
 
     class Password:
         password: Password
-
-    class Smartcard:
-        certificate_reference: X509CertificateReference
 
     class PKI:
         certificate_ref: X509CertificateReference
@@ -68,9 +64,6 @@ class DeviceAccessStrategy(Variant):
 
     class Password:
         password: Password
-        key_file: Path
-
-    class Smartcard:
         key_file: Path
 
     class PKI:

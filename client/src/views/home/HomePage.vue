@@ -617,7 +617,7 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
     if (device.ty.tag === AvailableDeviceTypeTag.Keyring) {
       window.electronAPI.log('debug', 'Logging in with Keyring');
       await login(device, AccessStrategy.useKeyring(device));
-    } else if (device.ty.tag === AvailableDeviceTypeTag.Smartcard) {
+    } else if (device.ty.tag === AvailableDeviceTypeTag.PKI) {
       window.electronAPI.log('debug', 'Logging in with Smartcard');
       await login(device, AccessStrategy.useSmartcard(device));
     } else if (device.ty.tag === AvailableDeviceTypeTag.AccountVault) {

@@ -32,14 +32,6 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
             }
         }
 
-        AvailableDeviceType::Smartcard => {
-            todo!("read smartcard #11270");
-            // DeviceAccessStrategy::Smartcard {
-            //     certificate_reference: todo!(),
-            //     key_file: device.key_file_path.clone(),
-            // }
-        }
-
         AvailableDeviceType::PKI { .. } => {
             todo!("read PKI #11270");
             // DeviceAccessStrategy::PKI {

@@ -203,9 +203,6 @@ mod strategy {
         Password {
             password: Password,
         },
-        Smartcard {
-            certificate_reference: X509CertificateReference,
-        },
         PKI {
             certificate_ref: X509CertificateReference,
         },
@@ -235,11 +232,6 @@ mod strategy {
                 DeviceSaveStrategy::Password { password } => {
                     libparsec_platform_device_loader::DeviceSaveStrategy::Password { password }
                 }
-                DeviceSaveStrategy::Smartcard {
-                    certificate_reference,
-                } => libparsec_platform_device_loader::DeviceSaveStrategy::Smartcard {
-                    certificate_reference,
-                },
                 DeviceSaveStrategy::PKI { certificate_ref } => {
                     libparsec_platform_device_loader::DeviceSaveStrategy::PKI { certificate_ref }
                 }
@@ -298,9 +290,6 @@ mod strategy {
             key_file: PathBuf,
             password: Password,
         },
-        Smartcard {
-            key_file: PathBuf,
-        },
         PKI {
             key_file: PathBuf,
         },
@@ -333,9 +322,6 @@ mod strategy {
                         key_file,
                         password,
                     }
-                }
-                DeviceAccessStrategy::Smartcard { key_file } => {
-                    libparsec_platform_device_loader::DeviceAccessStrategy::Smartcard { key_file }
                 }
                 DeviceAccessStrategy::PKI { key_file } => {
                     libparsec_platform_device_loader::DeviceAccessStrategy::PKI { key_file }

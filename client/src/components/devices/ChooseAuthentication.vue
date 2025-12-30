@@ -52,13 +52,13 @@
           class="item-radio radio-list-item"
           label-placement="end"
           justify="start"
-          :value="DeviceSaveStrategyTag.Smartcard"
-          :disabled="!smartcardAvailable || activeAuth === AvailableDeviceTypeTag.Smartcard"
+          :value="DeviceSaveStrategyTag.PKI"
+          :disabled="!smartcardAvailable || activeAuth === AvailableDeviceTypeTag.PKI"
         >
           <authentication-card
-            @click="onMethodSelected(DeviceSaveStrategyTag.Smartcard)"
-            :state="getAuthCardState(AvailableDeviceTypeTag.Smartcard)"
-            :auth-method="DeviceSaveStrategyTag.Smartcard"
+            @click="onMethodSelected(DeviceSaveStrategyTag.PKI)"
+            :state="getAuthCardState(AvailableDeviceTypeTag.PKI)"
+            :auth-method="DeviceSaveStrategyTag.PKI"
           />
         </ion-radio>
 
@@ -111,11 +111,11 @@
         />
       </div>
 
-      <div v-if="authentication === DeviceSaveStrategyTag.Smartcard">
+      <div v-if="authentication === DeviceSaveStrategyTag.PKI">
         <div class="method-chosen">
           <ion-text class="method-chosen__title subtitles-sm">{{ $msTranslate('Authentication.methodChosen') }}</ion-text>
           <authentication-card
-            :auth-method="DeviceSaveStrategyTag.Smartcard"
+            :auth-method="DeviceSaveStrategyTag.PKI"
             :state="AuthenticationCardState.Update"
             @update-clicked="changeAuthenticationMethod"
           />
@@ -231,7 +231,7 @@ function getAuthCardState(auth: AvailableDeviceTypeTag): AuthenticationCardState
         return AuthenticationCardState.Unavailable;
       }
       return auth === props.activeAuth ? AuthenticationCardState.Active : AuthenticationCardState.Default;
-    case AvailableDeviceTypeTag.Smartcard:
+    case AvailableDeviceTypeTag.PKI:
       if (!smartcardAvailable.value) {
         return AuthenticationCardState.Unavailable;
       }
@@ -262,7 +262,7 @@ function getSaveStrategy(): DeviceSaveStrategy | undefined {
       return undefined;
     }
     return SaveStrategy.useOpenBao(openBaoClient.value.getConnectionInfo()) as any as DeviceSaveStrategy;
-  } else if (authentication.value === DeviceSaveStrategyTag.Smartcard) {
+  } else if (authentication.value === DeviceSaveStrategyTag.PKI) {
     if (chooseCertificateRef.value && chooseCertificateRef.value.getCertificate()) {
       return SaveStrategy.useSmartCard(toRaw(chooseCertificateRef.value.getCertificate() as X509CertificateReference));
     }
@@ -281,7 +281,7 @@ async function areFieldsCorrect(): Promise<boolean> {
     return await choosePasswordRef.value.areFieldsCorrect();
   } else if (authentication.value === DeviceSaveStrategyTag.OpenBao && openBaoClient.value !== undefined) {
     return true;
-  } else if (authentication.value === DeviceSaveStrategyTag.Smartcard && chooseCertificateRef.value) {
+  } else if (authentication.value === DeviceSaveStrategyTag.PKI && chooseCertificateRef.value) {
     return chooseCertificateRef.value.getCertificate() !== undefined;
   }
   return false;

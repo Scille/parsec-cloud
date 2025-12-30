@@ -6837,7 +6837,6 @@ fn variant_available_device_type_js_to_rs(
         }
         "AvailableDeviceTypePassword" => Ok(libparsec::AvailableDeviceType::Password {}),
         "AvailableDeviceTypeRecovery" => Ok(libparsec::AvailableDeviceType::Recovery {}),
-        "AvailableDeviceTypeSmartcard" => Ok(libparsec::AvailableDeviceType::Smartcard {}),
         _ => Err(JsValue::from(TypeError::new(
             "Object is not a AvailableDeviceType",
         ))),
@@ -6894,13 +6893,6 @@ fn variant_available_device_type_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"AvailableDeviceTypeRecovery".into(),
-            )?;
-        }
-        libparsec::AvailableDeviceType::Smartcard { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AvailableDeviceTypeSmartcard".into(),
             )?;
         }
     }
@@ -10152,23 +10144,6 @@ fn variant_device_access_strategy_js_to_rs(
             };
             Ok(libparsec::DeviceAccessStrategy::Password { password, key_file })
         }
-        "DeviceAccessStrategySmartcard" => {
-            let key_file = {
-                let js_val = Reflect::get(&obj, &"keyFile".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
-                            Ok(std::path::PathBuf::from(s))
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })?
-            };
-            Ok(libparsec::DeviceAccessStrategy::Smartcard { key_file })
-        }
         _ => Err(JsValue::from(TypeError::new(
             "Object is not a DeviceAccessStrategy",
         ))),
@@ -10306,26 +10281,6 @@ fn variant_device_access_strategy_rs_to_js(
             });
             Reflect::set(&js_obj, &"keyFile".into(), &js_key_file)?;
         }
-        libparsec::DeviceAccessStrategy::Smartcard { key_file, .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"DeviceAccessStrategySmartcard".into(),
-            )?;
-            let js_key_file = JsValue::from_str({
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(key_file) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
-                }
-                .as_ref()
-            });
-            Reflect::set(&js_obj, &"keyFile".into(), &js_key_file)?;
-        }
     }
     Ok(js_obj)
 }
@@ -10431,15 +10386,6 @@ fn variant_device_save_strategy_js_to_rs(
             };
             Ok(libparsec::DeviceSaveStrategy::Password { password })
         }
-        "DeviceSaveStrategySmartcard" => {
-            let certificate_reference = {
-                let js_val = Reflect::get(&obj, &"certificateReference".into())?;
-                struct_x509_certificate_reference_js_to_rs(js_val)?
-            };
-            Ok(libparsec::DeviceSaveStrategy::Smartcard {
-                certificate_reference,
-            })
-        }
         _ => Err(JsValue::from(TypeError::new(
             "Object is not a DeviceSaveStrategy",
         ))),
@@ -10503,23 +10449,6 @@ fn variant_device_save_strategy_rs_to_js(
             Reflect::set(&js_obj, &"tag".into(), &"DeviceSaveStrategyPassword".into())?;
             let js_password = JsValue::from_str(password.as_ref());
             Reflect::set(&js_obj, &"password".into(), &js_password)?;
-        }
-        libparsec::DeviceSaveStrategy::Smartcard {
-            certificate_reference,
-            ..
-        } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"DeviceSaveStrategySmartcard".into(),
-            )?;
-            let js_certificate_reference =
-                struct_x509_certificate_reference_rs_to_js(certificate_reference)?;
-            Reflect::set(
-                &js_obj,
-                &"certificateReference".into(),
-                &js_certificate_reference,
-            )?;
         }
     }
     Ok(js_obj)
