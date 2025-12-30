@@ -108,42 +108,6 @@ impl_transparent_data_format_conversion!(
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "DeviceFileSmartcardData", try_from = "DeviceFileSmartcardData")]
-pub struct DeviceFileSmartcard {
-    pub created_on: DateTime,
-    pub protected_on: DateTime,
-    pub server_url: ParsecAddr,
-    pub organization_id: OrganizationID,
-    pub user_id: UserID,
-    pub device_id: DeviceID,
-    pub human_handle: HumanHandle,
-    pub device_label: DeviceLabel,
-    pub certificate_ref: X509CertificateReference,
-    pub algorithm_for_encrypted_key: PKIEncryptionAlgorithm,
-    pub encrypted_key: Bytes,
-    pub ciphertext: Bytes,
-}
-
-parsec_data!("schema/local_device/device_file_smartcard.json5");
-
-impl_transparent_data_format_conversion!(
-    DeviceFileSmartcard,
-    DeviceFileSmartcardData,
-    created_on,
-    protected_on,
-    server_url,
-    organization_id,
-    user_id,
-    device_id,
-    human_handle,
-    device_label,
-    certificate_ref,
-    algorithm_for_encrypted_key,
-    encrypted_key,
-    ciphertext,
-);
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "DeviceFilePKIData", try_from = "DeviceFilePKIData")]
 pub struct DeviceFilePKI {
     pub created_on: DateTime,
@@ -256,7 +220,6 @@ pub enum DeviceFile {
     Keyring(DeviceFileKeyring),
     Password(DeviceFilePassword),
     Recovery(DeviceFileRecovery),
-    Smartcard(DeviceFileSmartcard),
     PKI(DeviceFilePKI),
     AccountVault(DeviceFileAccountVault),
     OpenBao(DeviceFileOpenBao),
@@ -276,7 +239,6 @@ impl DeviceFile {
             DeviceFile::Keyring(device) => &device.ciphertext,
             DeviceFile::Password(device) => &device.ciphertext,
             DeviceFile::Recovery(device) => &device.ciphertext,
-            DeviceFile::Smartcard(device) => &device.ciphertext,
             DeviceFile::PKI(device) => &device.ciphertext,
             DeviceFile::AccountVault(device) => &device.ciphertext,
             DeviceFile::OpenBao(device) => &device.ciphertext,
@@ -288,7 +250,6 @@ impl DeviceFile {
             DeviceFile::Keyring(device) => device.created_on,
             DeviceFile::Password(device) => device.created_on,
             DeviceFile::Recovery(device) => device.created_on,
-            DeviceFile::Smartcard(device) => device.created_on,
             DeviceFile::PKI(device) => device.created_on,
             DeviceFile::AccountVault(device) => device.created_on,
             DeviceFile::OpenBao(device) => device.created_on,
