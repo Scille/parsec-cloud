@@ -1,0 +1,1 @@
+User can return to the list of workspaces from the sidebar without displaying the contents of the workspace.

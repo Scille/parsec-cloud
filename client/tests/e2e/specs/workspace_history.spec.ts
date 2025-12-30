@@ -205,7 +205,6 @@ msTest.describe(() => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Png | ImportDocuments.Pdf, true);
 
     const entries = documents.locator('.folder-list-main').locator('.file-list-item');
-    await expect(documents.locator('.workspace-card-item')).toHaveCount(1);
     await documents.locator('.sidebar').locator('#sidebar-workspaces').locator('.list-sidebar-header-text').click();
     await expect(documents).toBeWorkspacePage();
     await documents.locator('.workspace-card-item').nth(0).locator('.icon-option-container').nth(0).click();

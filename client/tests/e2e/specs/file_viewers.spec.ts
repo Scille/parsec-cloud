@@ -36,10 +36,12 @@ msTest.describe(() => {
   msTest('Open viewer with header option', async ({ documents }, testInfo: TestInfo) => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Png, false);
 
-    const entries = documents.locator('.folder-container').locator('.file-list-item');
-    await expect(entries.locator('.label-name')).toHaveText('image.png');
-    await entries.nth(0).click();
-    await expect(entries.nth(0).locator('ion-checkbox')).toHaveState('checked');
+    const entry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
+    await expect(entry.locator('.label-name')).toHaveText('image.png');
+    await entry.hover();
+    await expect(entry).toBeVisible();
+    await entry.click({ force: true });
+    await expect(entry).toContainClass('selected');
     const actionBar = documents.locator('#folders-ms-action-bar');
     await expect(actionBar.locator('ion-button').nth(0)).toHaveText('Preview');
     await actionBar.locator('ion-button').nth(0).click();
